@@ -4,7 +4,7 @@
 
     Line breaking and layout for inline-level boxes.
 
-    :copyright: Copyright 2011-2014 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
@@ -34,7 +34,7 @@ def iter_line_boxes(context, box, position_y, skip_stack, containing_block,
     ``line`` is a laid-out LineBox with as much content as possible that
     fits in the available width.
 
-    :param linebox: a non-laid-out :class:`LineBox`
+    :param box: a non-laid-out :class:`LineBox`
     :param position_y: vertical top position of the line box on the page
     :param skip_stack: ``None`` to start at the beginning of ``linebox``,
                        or a ``resume_at`` value to continue just after an
@@ -44,6 +44,12 @@ def iter_line_boxes(context, box, position_y, skip_stack, containing_block,
     :param device_size: ``(width, height)`` of the current page.
 
     """
+    resolve_percentages(box, containing_block)
+    if skip_stack is None:
+        # TODO: wrong, see https://github.com/Kozea/WeasyPrint/issues/679
+        resolve_one_percentage(box, 'text_indent', containing_block.width)
+    else:
+        box.text_indent = 0
     while 1:
         line, resume_at = get_next_linebox(
             context, box, position_y, skip_stack, containing_block,
@@ -56,6 +62,7 @@ def iter_line_boxes(context, box, position_y, skip_stack, containing_block,
         if resume_at is None:
             return
         skip_stack = resume_at
+        box.text_indent = 0
         first_letter_style = None
 
 
@@ -63,15 +70,6 @@ def get_next_linebox(context, linebox, position_y, skip_stack,
                      containing_block, device_size, absolute_boxes,
                      fixed_boxes, first_letter_style):
     """Return ``(line, resume_at)``."""
-    resolve_percentages(linebox, containing_block)
-    if skip_stack is None:
-        # text-indent only at the start of the first line
-        # Other percentages (margins, width, ...) do not apply.
-        resolve_one_percentage(linebox, 'text_indent', containing_block.width)
-    else:
-        linebox.text_indent = 0
-        first_letter_style = None
-
     skip_stack = skip_first_whitespace(linebox, skip_stack)
     if skip_stack == 'continue':
         return None, None
@@ -101,7 +99,7 @@ def get_next_linebox(context, linebox, position_y, skip_stack,
         waiting_floats = []
 
         (line, resume_at, preserved_line_break, first_letter,
-         last_letter) = split_inline_box(
+         last_letter, float_width) = split_inline_box(
              context, linebox, position_x, max_x, skip_stack, containing_block,
              device_size, line_absolutes, line_fixed, line_placeholders,
              waiting_floats, line_children=[])
@@ -114,6 +112,8 @@ def get_next_linebox(context, linebox, position_y, skip_stack,
 
         new_position_x, _, new_available_width = avoid_collisions(
             context, linebox, containing_block, outer=False)
+        # TODO: handle rtl
+        new_available_width -= float_width['right']
         alignment_available_width = (
             new_available_width + new_position_x - linebox.position_x)
         offset_x = text_align(
@@ -569,6 +569,7 @@ def split_inline_level(context, box, position_x, max_x, skip_stack,
 
     """
     resolve_percentages(box, containing_block)
+    float_widths = {'left': 0, 'right': 0}
     if isinstance(box, boxes.TextBox):
         box.position_x = position_x
         if skip_stack is None:
@@ -599,7 +600,7 @@ def split_inline_level(context, box, position_x, max_x, skip_stack,
         if box.margin_right == 'auto':
             box.margin_right = 0
         (new_box, resume_at, preserved_line_break, first_letter,
-         last_letter) = split_inline_box(
+         last_letter, float_widths) = split_inline_box(
             context, box, position_x, max_x, skip_stack, containing_block,
             device_size, absolute_boxes, fixed_boxes, line_placeholders,
             waiting_floats, line_children)
@@ -628,7 +629,9 @@ def split_inline_level(context, box, position_x, max_x, skip_stack,
         last_letter = '\u2e80'
     else:  # pragma: no cover
         raise TypeError('Layout for %s not handled yet' % type(box).__name__)
-    return new_box, resume_at, preserved_line_break, first_letter, last_letter
+    return (
+        new_box, resume_at, preserved_line_break, first_letter, last_letter,
+        float_widths)
 
 
 def split_inline_box(context, box, position_x, max_x, skip_stack,
@@ -653,15 +656,13 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
                     box.border_left_width)
     right_spacing = (box.padding_right + box.margin_right +
                      box.border_right_width)
-    if is_start:
-        position_x += left_spacing
     content_box_left = position_x
 
     children = []
     waiting_children = []
     preserved_line_break = False
     first_letter = last_letter = None
-    float_translate = 0
+    float_widths = {'left': 0, 'right': 0}
     float_resume_at = 0
 
     if box.style['position'] == 'relative':
@@ -710,22 +711,19 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
                 waiting_children.append((index, child))
 
                 # Translate previous line children
+                dx = max(child.margin_width(), 0)
+                float_widths[child.style['float']] += dx
                 if child.style['float'] == 'left':
-                    dx = max(child.margin_width(), 0)
                     if isinstance(box, boxes.LineBox):
                         # The parent is the line, update the current position
                         # for the next child. When the parent is not the line
                         # (it is an inline block), the current position of the
-                        # line is updated by the block itself (see next
+                        # line is updated by the box itself (see next
                         # split_inline_level call).
                         position_x += dx
                 elif child.style['float'] == 'right':
-                    dx = min(-child.margin_width(), 0)
                     # Update the maximum x position for the next children
-                    max_x += dx
-                # The float_translate variable will be used to translate the
-                # current box if it's an inline block that has floats inside.
-                float_translate += dx
+                    max_x -= dx
                 for _, old_child in line_children:
                     if not old_child.is_in_normal_flow():
                         continue
@@ -739,18 +737,29 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
 
         last_child = (i == len(box_children) - 1)
         available_width = max_x
-        new_child, resume_at, preserved, first, last = split_inline_level(
-            context, child, position_x, available_width, skip_stack,
-            containing_block, device_size, absolute_boxes, fixed_boxes,
-            line_placeholders, waiting_floats, line_children)
+        child_waiting_floats = []
+        new_child, resume_at, preserved, first, last, new_float_widths = (
+            split_inline_level(
+                context, child, position_x, available_width, skip_stack,
+                containing_block, device_size, absolute_boxes, fixed_boxes,
+                line_placeholders, child_waiting_floats, line_children))
         if last_child and right_spacing and resume_at is None:
             # TODO: we should take care of children added into absolute_boxes,
             # fixed_boxes and other lists.
-            available_width -= right_spacing
-            new_child, resume_at, preserved, first, last = split_inline_level(
-                context, child, position_x, available_width, skip_stack,
-                containing_block, device_size, absolute_boxes, fixed_boxes,
-                line_placeholders, waiting_floats, line_children)
+            if box.style['direction'] == 'rtl':
+                available_width -= left_spacing
+            else:
+                available_width -= right_spacing
+            new_child, resume_at, preserved, first, last, new_float_widths = (
+                split_inline_level(
+                    context, child, position_x, available_width, skip_stack,
+                    containing_block, device_size, absolute_boxes, fixed_boxes,
+                    line_placeholders, child_waiting_floats, line_children))
+
+        if box.style['direction'] == 'rtl':
+            max_x -= new_float_widths['left']
+        else:
+            max_x -= new_float_widths['right']
 
         skip_stack = None
         if preserved:
@@ -815,7 +824,7 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
                             # waiting child again with this constraint. We may
                             # find a better way.
                             max_x = child.position_x + child.margin_width() - 1
-                            child_new_child, child_resume_at, _, _, _ = (
+                            child_new_child, child_resume_at, _, _, _, _ = (
                                 split_inline_level(
                                     context, child, child.position_x, max_x,
                                     None, box, device_size,
@@ -879,11 +888,13 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
                     # Too wide, can't break waiting children and the inline is
                     # non-empty: put child entirely on the next line.
                     resume_at = (children[-1][0] + 1, None)
+                    child_waiting_floats = []
                     break
 
             position_x = new_position_x
             waiting_children.append((index, new_child))
 
+        waiting_floats.extend(child_waiting_floats)
         if resume_at is not None:
             children.extend(waiting_children)
             resume_at = (index, resume_at)
@@ -892,18 +903,30 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
         children.extend(waiting_children)
         resume_at = None
 
+    is_end = resume_at is None
     new_box = box.copy_with_children(
         [box_child for index, box_child in children],
-        is_start=is_start, is_end=resume_at is None)
+        is_start=is_start, is_end=is_end)
     if isinstance(box, boxes.LineBox):
-        # Line boxes already have a position_x which may not be the same
-        # as content_box_left when text-indent is non-zero.
-        # This is important for justified text.
-        new_box.width = position_x - new_box.position_x
+        # We must reset line box width according to its new children
+        in_flow_children = [
+            box_child for box_child in new_box.children
+            if box_child.is_in_normal_flow()]
+        if in_flow_children:
+            new_box.width = (
+                in_flow_children[-1].position_x +
+                in_flow_children[-1].margin_width() -
+                new_box.position_x)
+        else:
+            new_box.width = 0
     else:
         new_box.position_x = initial_position_x
+        if (is_start and box.style['direction'] == 'ltr') or (
+                is_end and box.style['direction'] == 'rtl'):
+            for child in new_box.children:
+                child.translate(dx=left_spacing)
         new_box.width = position_x - content_box_left
-        new_box.translate(dx=float_translate, ignore_floats=True)
+        new_box.translate(dx=float_widths['left'], ignore_floats=True)
 
     line_height, new_box.baseline = strut_layout(box.style, context)
     new_box.height = box.style['font_size']
@@ -923,7 +946,9 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
         if resume_at[0] < float_resume_at:
             resume_at = (float_resume_at, None)
 
-    return new_box, resume_at, preserved_line_break, first_letter, last_letter
+    return (
+        new_box, resume_at, preserved_line_break, first_letter, last_letter,
+        float_widths)
 
 
 def split_text_box(context, box, available_width, skip):
@@ -952,7 +977,7 @@ def split_text_box(context, box, available_width, skip):
     # No need to encode what’s after resume_at (if set) or length (if
     # resume_at is not set). One code point is one or more byte, so
     # UTF-8 indexes are always bigger or equal to Unicode indexes.
-    new_text = layout.text_bytes.decode('utf8')
+    new_text = layout.text
     encoded = text.encode('utf8')
     if resume_at is not None:
         between = encoded[length:resume_at].decode('utf8')
@@ -1170,10 +1195,10 @@ def text_align(context, line, available_width, last):
             justify_line(context, line, offset)
         return 0
     if align == 'center':
-        offset /= 2.
+        return offset / 2
     else:
         assert align == 'right'
-    return offset
+        return offset
 
 
 def justify_line(context, line, extra_width):

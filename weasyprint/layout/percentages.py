@@ -4,7 +4,7 @@
 
     Resolve percentages into fixed values.
 
-    :copyright: Copyright 2011-2014 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
@@ -91,12 +91,15 @@ def resolve_percentages(box, containing_block, main_flex_direction=None):
         else:
             assert height.unit == 'px'
             box.height = height.value
-        resolve_one_percentage(box, 'min_height', 0)
-        resolve_one_percentage(box, 'max_height', float('inf'))
+        resolve_one_percentage(box, 'min_height', 0, main_flex_direction)
+        resolve_one_percentage(
+            box, 'max_height', float('inf'), main_flex_direction)
     else:
         resolve_one_percentage(box, 'height', cb_height)
-        resolve_one_percentage(box, 'min_height', cb_height)
-        resolve_one_percentage(box, 'max_height', cb_height)
+        resolve_one_percentage(
+            box, 'min_height', cb_height, main_flex_direction)
+        resolve_one_percentage(
+            box, 'max_height', cb_height, main_flex_direction)
 
     # Used value == computed value
     for side in ['top', 'right', 'bottom', 'left']:

@@ -4,7 +4,7 @@
 
     Test the CSS parsing, cascade, inherited and computed values.
 
-    :copyright: Copyright 2011-2014 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """

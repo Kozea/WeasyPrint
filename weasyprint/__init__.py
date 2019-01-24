@@ -7,12 +7,14 @@
     The public API is what is accessible from this "root" packages
     without importing sub-modules.
 
-    :copyright: Copyright 2011-2014 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
 
+import os
 import sys
+from pathlib import Path
 
 import contextlib
 import html5lib
@@ -25,8 +27,20 @@ if sys.version_info.major < 3:
         'WeasyPrint does not support Python 2.x anymore. '
         'Please use Python 3 or install an older version of WeasyPrint.')
 
-VERSION = '0.42'
-__version__ = VERSION
+if hasattr(sys, 'frozen'):
+    if hasattr(sys, '_MEIPASS'):
+        # Frozen with PyInstaller
+        # See https://github.com/Kozea/WeasyPrint/pull/540
+        ROOT = sys._MEIPASS
+    else:
+        # Frozen with something else (py2exe, etc.)
+        # See https://github.com/Kozea/WeasyPrint/pull/269
+        ROOT = os.path.dirname(sys.executable)
+else:
+    ROOT = os.path.dirname(__file__)
+
+with open(os.path.join(ROOT, 'VERSION')) as fp:
+    VERSION = __version__ = fp.read().strip()
 
 # Used for 'User-Agent' in HTTP and 'Creator' in PDF
 VERSION_STRING = 'WeasyPrint %s (http://weasyprint.org/)' % VERSION
@@ -38,7 +52,7 @@ __all__ = ['HTML', 'CSS', 'Attachment', 'Document', 'Page',
 # Import after setting the version, as the version is used in other modules
 from .urls import (fetch, default_url_fetcher, path2url, ensure_url,
                    url_is_absolute)  # noqa
-from .logger import LOGGER  # noqa
+from .logger import LOGGER, PROGRESS_LOGGER  # noqa
 # Some imports are at the end of the file (after the CSS class)
 # to work around circular imports.
 
@@ -57,7 +71,7 @@ class HTML(object):
         absolute.
     :param url: An absolute, fully qualified URL.
     :param file_obj: A file-like: any object with a :meth:`~file.read` method.
-    :param string: A string of HTML source. (This argument must be named.)
+    :param string: A string of HTML source.
 
     Specifying multiple inputs is an error:
     ``HTML(filename="foo.html", url="localhost://bar.html")``
@@ -82,7 +96,7 @@ class HTML(object):
     def __init__(self, guess=None, filename=None, url=None, file_obj=None,
                  string=None, encoding=None, base_url=None,
                  url_fetcher=default_url_fetcher, media_type='print'):
-        LOGGER.info(
+        PROGRESS_LOGGER.info(
             'Step 1 - Fetching and parsing HTML - %s',
             guess or filename or url or
             getattr(file_obj, 'name', 'HTML string'))
@@ -237,8 +251,8 @@ class HTML(object):
 class CSS(object):
     """Represents a CSS stylesheet parsed by tinycss2.
 
-    An instance is created in the same way as :class:`HTML`, except that
-    the ``tree`` argument is not available. All other arguments are the same.
+    An instance is created in the same way as :class:`HTML`, with the same
+    arguments.
 
     An additional argument called ``font_config`` must be provided to handle
     ``@font-config`` rules. The same ``fonts.FontConfiguration`` object must be
@@ -254,7 +268,7 @@ class CSS(object):
                  url_fetcher=default_url_fetcher, _check_mime_type=False,
                  media_type='print', font_config=None, matcher=None,
                  page_rules=None):
-        LOGGER.info(
+        PROGRESS_LOGGER.info(
             'Step 2 - Fetching and parsing CSS - %s',
             filename or url or getattr(file_obj, 'name', 'CSS string'))
         result = _select_source(
@@ -323,6 +337,8 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
     elif guess is not None:
         if hasattr(guess, 'read'):
             type_ = 'file_obj'
+        elif isinstance(guess, Path):
+            type_ = 'filename'
         elif url_is_absolute(guess):
             type_ = 'url'
         else:
@@ -334,6 +350,8 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
         with result as result:
             yield result
     elif filename is not None:
+        if isinstance(filename, Path):
+            filename = str(filename)
         if base_url is None:
             base_url = path2url(filename)
         with open(filename, 'rb') as file_obj:

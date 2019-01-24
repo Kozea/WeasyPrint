@@ -4,7 +4,7 @@
 
     Take an "after layout" box tree and draw it onto a cairo context.
 
-    :copyright: Copyright 2011-2014 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
@@ -1015,7 +1015,10 @@ def draw_text(context, textbox, enable_hinting):
 
     context.move_to(textbox.position_x, textbox.position_y + textbox.baseline)
     context.set_source_rgba(*textbox.style['color'])
-    show_first_line(context, textbox.pango_layout, enable_hinting)
+
+    textbox.pango_layout.reactivate(textbox.style)
+    show_first_line(context, textbox)
+
     values = textbox.style['text_decoration']
 
     thickness = textbox.style['font_size'] / 18  # Like other browsers do
@@ -1041,6 +1044,8 @@ def draw_text(context, textbox, enable_hinting):
             context, textbox,
             textbox.baseline - metrics.strikethrough_position,
             thickness, enable_hinting)
+
+    textbox.pango_layout.deactivate()
 
 
 def draw_text_decoration(context, textbox, offset_y, thickness,

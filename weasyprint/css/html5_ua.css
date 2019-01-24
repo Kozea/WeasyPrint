@@ -237,6 +237,7 @@ dd { display: block; margin-left: 40px; unicode-bidi: isolate; }
 dd[dir=ltr][dir][dir] { margin-left: 0; margin-right: 40px; }
 dd[dir=rtl][dir][dir] { margin-left: 40px; margin-right: 0; }
 
+details { display: block; unicode-bidi: isolate; }
 del { text-decoration: line-through; }
 dfn { font-style: italic; }
 

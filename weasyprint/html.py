@@ -9,7 +9,7 @@
     have intrinsic dimensions. But the only replaced elements currently
     supported in WeasyPrint are images with intrinsic dimensions.
 
-    :copyright: Copyright 2011-2014 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
@@ -17,10 +17,9 @@
 import logging
 import os.path
 import re
-import sys
 from urllib.parse import urljoin
 
-from . import CSS
+from . import CSS, ROOT
 from .css import get_child_text
 from .formatting_structure import boxes
 from .logger import LOGGER
@@ -30,19 +29,8 @@ from .urls import get_url_attribute
 level = LOGGER.level
 LOGGER.setLevel(logging.ERROR)
 
-if hasattr(sys, 'frozen'):
-    if hasattr(sys, '_MEIPASS'):
-        # Frozen with PyInstaller
-        # See https://github.com/Kozea/WeasyPrint/pull/540
-        root = sys._MEIPASS
-    else:
-        # Frozen with something else (py2exe, etc.)
-        # See https://github.com/Kozea/WeasyPrint/pull/269
-        root = os.path.dirname(sys.executable)
-else:
-    root = os.path.dirname(__file__)
-HTML5_UA_STYLESHEET = CSS(filename=os.path.join(root, 'css', 'html5_ua.css'))
-HTML5_PH_STYLESHEET = CSS(filename=os.path.join(root, 'css', 'html5_ph.css'))
+HTML5_UA_STYLESHEET = CSS(filename=os.path.join(ROOT, 'css', 'html5_ua.css'))
+HTML5_PH_STYLESHEET = CSS(filename=os.path.join(ROOT, 'css', 'html5_ph.css'))
 
 LOGGER.setLevel(level)
 
@@ -124,7 +112,12 @@ def make_replaced_box(element, box, image):
     else:
         # TODO: support images with 'display: table-cell'?
         type_ = boxes.InlineReplacedBox
-    return type_(element.tag, box.style, image)
+    new_box = type_(element.tag, box.style, image)
+    # TODO: check other attributes that need to be copied
+    # TODO: find another solution
+    new_box.string_set = box.string_set
+    new_box.bookmark_label = box.bookmark_label
+    return new_box
 
 
 @handler('img')
@@ -347,22 +340,22 @@ def strip_whitespace(string):
 W3C_DATE_RE = re.compile('''
     ^
     [ \t\n\f\r]*
-    (?P<year>\d\d\d\d)
+    (?P<year>\\d\\d\\d\\d)
     (?:
-        -(?P<month>0\d|1[012])
+        -(?P<month>0\\d|1[012])
         (?:
-            -(?P<day>[012]\d|3[01])
+            -(?P<day>[012]\\d|3[01])
             (?:
-                T(?P<hour>[01]\d|2[0-3])
-                :(?P<minute>[0-5]\d)
+                T(?P<hour>[01]\\d|2[0-3])
+                :(?P<minute>[0-5]\\d)
                 (?:
-                    :(?P<second>[0-5]\d)
-                    (?:\.\d+)?  # Second fraction, ignored
+                    :(?P<second>[0-5]\\d)
+                    (?:\\.\\d+)?  # Second fraction, ignored
                 )?
                 (?:
                     Z |  # UTC
-                    (?P<tz_hour>[+-](?:[01]\d|2[0-3]))
-                    :(?P<tz_minute>[0-5]\d)
+                    (?P<tz_hour>[+-](?:[01]\\d|2[0-3]))
+                    :(?P<tz_minute>[0-5]\\d)
                 )
             )?
         )?

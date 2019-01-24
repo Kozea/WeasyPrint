@@ -4,7 +4,7 @@
 
     Test WeasyPrint Web tools.
 
-    :copyright: Copyright 2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
@@ -12,7 +12,7 @@
 import io
 from urllib.parse import urlencode
 
-from pdfrw import PdfReader
+import cairocffi as cairo
 
 from ..tools import navigator, renderer
 from ..urls import path2url
@@ -73,12 +73,10 @@ def test_navigator(tmpdir):
     status, headers, body = wsgi_client(navigator, '/pdf/' + url)
     assert status == '200 OK'
     assert headers['Content-Type'] == 'application/pdf'
-    pdf = PdfReader(fdata=body)
-    assert pdf.Root.Pages.Kids[0].Annots[0].A == {
-        '/Type': '/Action', '/URI': '(http://weasyprint.org)',
-        '/S': '/URI'}
-    assert pdf.Root.Outlines.First.Title == '(Lorem ipsum)'
-    assert pdf.Root.Outlines.Last.Title == '(Lorem ipsum)'
+    assert body.startswith(b'%PDF')
+    if cairo.cairo_version() >= 11504:
+        assert b'/URI (http://weasyprint.org)' in body
+        assert b'/Title (Lorem ipsum)' in body
 
 
 @assert_no_logs

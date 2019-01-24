@@ -12,12 +12,13 @@
     :func:`get_all_computed_styles` function does everything, but it is itsef
     based on other functions in this module.
 
-    :copyright: Copyright 2011-2014 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
 
 from collections import namedtuple
+from logging import DEBUG, WARNING
 
 import cssselect2
 import tinycss2
@@ -27,7 +28,7 @@ from .properties import INITIAL_NOT_COMPUTED
 from .utils import remove_whitespace
 from .validation import preprocess_declarations
 from .validation.descriptors import preprocess_descriptors
-from ..logger import LOGGER
+from ..logger import LOGGER, PROGRESS_LOGGER
 from ..urls import get_url_attribute, url_join, URLFetchingError
 from .. import CSS
 
@@ -61,7 +62,7 @@ class StyleFor:
         #     values: a PropertyValue-like object
         self._computed_styles = computed_styles = {}
 
-        LOGGER.info('Step 3 - Applying CSS')
+        PROGRESS_LOGGER.info('Step 3 - Applying CSS')
         for specificity, attributes in find_style_attributes(
                 html.etree_element, presentational_hints, html.base_url):
             element, declarations, base_url = attributes
@@ -369,8 +370,11 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
                     element, style_attribute)
         elif element.tag in ('tr', 'td', 'th', 'thead', 'tbody', 'tfoot'):
             align = element.get('align', '').lower()
-            if align in ('left', 'right', 'justify'):
-                # TODO: we should align descendants too
+            # TODO: we should align descendants too
+            if align == 'middle':
+                yield specificity, check_style_attribute(
+                    element, 'text-align:center')
+            elif align in ('center', 'left', 'right', 'justify'):
                 yield specificity, check_style_attribute(
                     element, 'text-align:%s' % align)
             if element.get('background'):
@@ -400,7 +404,10 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
         elif element.tag == 'caption':
             align = element.get('align', '').lower()
             # TODO: we should align descendants too
-            if align in ('left', 'right', 'justify'):
+            if align == 'middle':
+                yield specificity, check_style_attribute(
+                    element, 'text-align:center')
+            elif align in ('center', 'left', 'right', 'justify'):
                 yield specificity, check_style_attribute(
                     element, 'text-align:%s' % align)
         elif element.tag == 'col':
@@ -732,18 +739,27 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
             declarations = list(preprocess_declarations(
                 base_url, tinycss2.parse_declaration_list(rule.content)))
             if declarations:
+                logger_level = WARNING
                 try:
                     selectors = cssselect2.compile_selector_list(rule.prelude)
                     for selector in selectors:
                         matcher.add_selector(selector, declarations)
                         if selector.pseudo_element not in PSEUDO_ELEMENTS:
-                            raise cssselect2.SelectorError(
-                                'Unknown pseudo-element: %s'
-                                % selector.pseudo_element)
+                            if selector.pseudo_element.startswith('-'):
+                                logger_level = DEBUG
+                                raise cssselect2.SelectorError(
+                                    'ignored prefixed pseudo-element: %s'
+                                    % selector.pseudo_element)
+                            else:
+                                raise cssselect2.SelectorError(
+                                    'unknown pseudo-element: %s'
+                                    % selector.pseudo_element)
                     ignore_imports = True
                 except cssselect2.SelectorError as exc:
-                    LOGGER.warning("Invalid or unsupported selector '%s', %s",
-                                   tinycss2.serialize(rule.prelude), exc)
+                    LOGGER.log(
+                        logger_level,
+                        "Invalid or unsupported selector '%s', %s",
+                        tinycss2.serialize(rule.prelude), exc)
                     continue
             else:
                 ignore_imports = True

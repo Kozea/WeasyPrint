@@ -1064,7 +1064,8 @@ def flex_wrap(keyword):
 def justify_content(keyword):
     """``justify-content`` property validation."""
     return keyword in (
-        'flex-start', 'flex-end', 'center', 'space-between', 'space-around')
+        'flex-start', 'flex-end', 'center', 'space-between', 'space-around',
+        'space-evenly', 'stretch')
 
 
 @property()
@@ -1089,7 +1090,7 @@ def align_content(keyword):
     """``align-content`` property validation."""
     return keyword in (
         'flex-start', 'flex-end', 'center', 'space-between', 'space-around',
-        'stretch')
+        'space-evenly', 'stretch')
 
 
 @property(unstable=True)

@@ -492,7 +492,7 @@ def expand_flex(base_url, name, tokens):
         yield 'flex-shrink', 0
         yield 'flex-basis', 'auto'
     else:
-        grow, shrink, basis = 0, 1, Dimension(0, 'px')
+        grow, shrink, basis = 1, 1, Dimension(0, 'px')
         grow_found, shrink_found, basis_found = False, False, False
         for token in tokens:
             # "A unitless zero that is not already preceded by two flex factors

@@ -1,2 +1,2 @@
 .. currentmodule:: weasyprint
-.. include:: ../CHANGES
+.. include:: ../NEWS.rst

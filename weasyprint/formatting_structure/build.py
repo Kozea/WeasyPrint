@@ -8,7 +8,7 @@
     This includes creating anonymous boxes and processing whitespace
     as necessary.
 
-    :copyright: Copyright 2011-2014 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
@@ -22,6 +22,7 @@ import tinycss2.color3
 from . import boxes, counters
 from .. import html
 from ..css import properties
+from ..logger import LOGGER
 
 # Maps values of the ``display`` CSS property to box types.
 BOX_TYPE_FROM_DISPLAY = {
@@ -321,9 +322,15 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
             texts.append(separator.join(
                 counters.format(counter_value, counter_style)
                 for counter_value in counter_values.get(counter_name, [0])))
-        elif type_ == 'string()' and in_page_context:
-            # string() is only valid in @page context
-            texts.append(context.get_string_set_for(page, *value))
+        elif type_ == 'string()':
+            if in_page_context:
+                texts.append(context.get_string_set_for(page, *value))
+            else:
+                # string() is currently only valid in @page context
+                # See https://github.com/Kozea/WeasyPrint/issues/723
+                LOGGER.warn(
+                    '"string(%s)" is only allowed in page margins' %
+                    (' '.join(value)))
         elif type_ == 'target-counter()':
             anchor_token, counter_name, counter_style = value
             lookup_target = target_collector.lookup_target(
@@ -406,7 +413,8 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
         target_collector.collect_missing_counters(
             parent_box, css_token, parse_again, missing_counters,
             missing_target_counters)
-    return boxlist
+
+    return boxlist if (texts or boxlist) else None
 
 
 def content_to_boxes(style, parent_box, quote_depth, counter_values,
@@ -431,17 +439,26 @@ def content_to_boxes(style, parent_box, quote_depth, counter_values,
         local_children.extend(content_to_boxes(
             style, parent_box, orig_quote_depth, local_counters,
             get_image_from_uri, target_collector))
-        parent_box.children = local_children
+
+        # TODO: redo the formatting structure of the parent instead of hacking
+        # the already formatted structure. Find why inline_in_blocks has
+        # sometimes already been called, and sometimes not.
+        if (len(parent_box.children) == 1 and
+                isinstance(parent_box.children[0], boxes.LineBox)):
+            parent_box.children[0].children = local_children
+        else:
+            parent_box.children = local_children
 
     if style['content'] == 'inhibit':
         return []
 
     orig_quote_depth = quote_depth[:]
     css_token = 'content'
-    return compute_content_list(
+    box_list = compute_content_list(
         style['content'], parent_box, counter_values, css_token, parse_again,
         target_collector, get_image_from_uri, quote_depth, style['quotes'],
         context, page)
+    return box_list or []
 
 
 def compute_string_set(element, box, string_name, content_list,
@@ -466,7 +483,7 @@ def compute_string_set(element, box, string_name, content_list,
     box_list = compute_content_list(
         content_list, box, counter_values, css_token, parse_again,
         target_collector, element=element)
-    if box_list:
+    if box_list is not None:
         string = ''.join(
             box.text for box in box_list if isinstance(box, boxes.TextBox))
         # Avoid duplicates, care for parse_again and missing counters, don't
@@ -498,8 +515,12 @@ def compute_bookmark_label(element, box, content_list, counter_values,
     box_list = compute_content_list(
         content_list, box, counter_values, css_token, parse_again,
         target_collector, element=element)
-    box.bookmark_label = ''.join(
-        box.text for box in box_list if isinstance(box, boxes.TextBox))
+
+    if box_list is None:
+        box.bookmark_label = ''
+    else:
+        box.bookmark_label = ''.join(
+            box.text for box in box_list if isinstance(box, boxes.TextBox))
 
 
 def set_content_lists(element, box, style, counter_values, target_collector):
@@ -608,7 +629,7 @@ def add_box_marker(box, counter_values, get_image_from_uri):
         box.outside_list_marker = marker_box
 
 
-def is_whitespace(box, _has_non_whitespace=re.compile('\S').search):
+def is_whitespace(box, _has_non_whitespace=re.compile('\\S').search):
     """Return True if ``box`` is a TextBox with only whitespace."""
     return isinstance(box, boxes.TextBox) and not _has_non_whitespace(box.text)
 

@@ -15,7 +15,7 @@
       fonts and various non-fatal problems;
     - infos are used to advertise rendering steps.
 
-    :copyright: Copyright 2011-2014 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
@@ -25,3 +25,5 @@ import logging
 LOGGER = logging.getLogger('weasyprint')
 LOGGER.setLevel(logging.WARNING)
 LOGGER.addHandler(logging.NullHandler())
+
+PROGRESS_LOGGER = logging.getLogger('weasyprint.progress')

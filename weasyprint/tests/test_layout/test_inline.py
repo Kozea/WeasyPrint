@@ -79,6 +79,66 @@ def test_breaking_linebox():
 
 
 @assert_no_logs
+def test_position_x_ltr():
+    page, = parse('''
+      <style>
+        span {
+          padding: 0 10px 0 15px;
+          margin: 0 2px 0 3px;
+          border: 1px solid;
+         }
+      </style>
+      <body><span>a<br>b<br>c</span>''')
+    html, = page.children
+    body, = html.children
+    line1, line2, line3 = body.children
+    span1, = line1.children
+    assert span1.position_x == 0
+    text1, br1 = span1.children
+    assert text1.position_x == 15 + 3 + 1
+    span2, = line2.children
+    assert span2.position_x == 0
+    text2, br2 = span2.children
+    assert text2.position_x == 0
+    span3, = line3.children
+    assert span3.position_x == 0
+    text3, = span3.children
+    assert text3.position_x == 0
+
+
+@assert_no_logs
+def test_position_x_rtl():
+    page, = parse('''
+      <style>
+        body {
+          direction: rtl;
+          width: 100px;
+        }
+        span {
+          padding: 0 10px 0 15px;
+          margin: 0 2px 0 3px;
+          border: 1px solid;
+         }
+      </style>
+      <body><span>a<br>b<br>c</span>''')
+    html, = page.children
+    body, = html.children
+    line1, line2, line3 = body.children
+    span1, = line1.children
+    text1, br1 = span1.children
+    assert span1.position_x == 100 - text1.width - (10 + 2 + 1)
+    assert text1.position_x == 100 - text1.width - (10 + 2 + 1)
+    span2, = line2.children
+    text2, br2 = span2.children
+    assert span2.position_x == 100 - text2.width
+    assert text2.position_x == 100 - text2.width
+    span3, = line3.children
+    text3, = span3.children
+    assert span3.position_x == 100 - text3.width - (15 + 3 + 1)
+    assert text3.position_x == 100 - text3.width
+
+
+@assert_no_logs
 def test_breaking_linebox_regression_1():
     # See http://unicode.org/reports/tr14/
     page, = parse('<pre>a\nb\rc\r\nd\u2029e</pre>')

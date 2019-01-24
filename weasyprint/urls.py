@@ -4,7 +4,7 @@
 
     Various utility functions and classes.
 
-    :copyright: Copyright 2011-2014 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
@@ -232,6 +232,10 @@ def default_url_fetcher(url, timeout=10):
 
     """
     if UNICODE_SCHEME_RE.match(url):
+        # See https://bugs.python.org/issue34702
+        if url.startswith('file://'):
+            url = url.split('?')[0]
+
         url = iri_to_uri(url)
         response = urlopen(Request(url, headers=HTTP_HEADERS), timeout=timeout)
         response_info = response.info()
@@ -271,9 +275,7 @@ def fetch(url_fetcher, url):
     try:
         result = url_fetcher(url)
     except Exception as exc:
-        name = type(exc).__name__
-        value = str(exc)
-        raise URLFetchingError('%s: %s' % (name, value) if value else name)
+        raise URLFetchingError('%s: %s' % (type(exc).__name__, str(exc)))
     result.setdefault('redirected_url', url)
     result.setdefault('mime_type', None)
     if 'file_obj' in result:

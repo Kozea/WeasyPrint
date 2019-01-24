@@ -28,6 +28,28 @@ If you have many documents to convert you may prefer using the Python API
 in long-lived processes to avoid paying the start-up costs every time.
 
 
+Adjusting Document Dimensions
+.............................
+
+Currently, WeasyPrint does not provide support for adjusting page size
+or document margins via command-line flags. This is best accomplished
+with the CSS ``@page`` at-rule. Consider the following example:
+
+.. code-block:: css
+
+  @page {
+    size: Letter; /* Change from the default size of A4 */
+    margin: 2.5cm; /* Set margin on each page */
+  }
+
+There is much more which can be achieved with the ``@page`` at-rule,
+such as page numbers, headers, etc. Read more about the page_ at-rule,
+and find an example here_.
+
+.. _page: https://developer.mozilla.org/en-US/docs/Web/CSS/@page
+.. _here: https://weasyprint.org
+
+
 As a Python library
 -------------------
 .. currentmodule:: weasyprint
@@ -81,7 +103,7 @@ that, although the argument must be named:
 
 .. code-block:: python
 
-    from weasyprint import HTML
+    from weasyprint import HTML, CSS
 
     # HTML('<h1>foo') would be filename
     HTML(string='''
@@ -250,23 +272,10 @@ by configuring the ``weasyprint`` logger object:
     logger = logging.getLogger('weasyprint')
     logger.addHandler(logging.FileHandler('/path/to/weasyprint.log'))
 
-The ``INFO`` level is used to report the rendering progress. It is useful to
-get feedback when WeasyPrint is launched in a terminal (using the ``--verbose``
-option), or to give this feedback to end users when used as a library. To catch
-these logs, you can for example use a filter:
-
-.. code-block:: python
-
-    import logging
-
-    class LoggerFilter(logging.Filter):
-        def filter(self, record):
-            if record.level == logging.INFO:
-                print(record.getMessage())
-                return False
-
-    logger = logging.getLogger('weasyprint')
-    logger.addFilter(LoggerFilter())
+The ``weasyprint.progress`` logger is used to report the rendering progress. It
+is useful to get feedback when WeasyPrint is launched in a terminal (using the
+``--verbose`` or ``--debug`` option), or to give this feedback to end users
+when used as a library.
 
 See the documentation of the :mod:`logging` module for details.
 
@@ -321,7 +330,7 @@ WeasyPrint as a PNG image. Start it with:
 Security
 --------
 
-When used with untrusted HTMl or untrusted CSS, WeasyPrint can meet security
+When used with untrusted HTML or untrusted CSS, WeasyPrint can meet security
 problems. You will need extra configuration in your Python application to avoid
 high memory use, endless renderings or local files leaks.
 

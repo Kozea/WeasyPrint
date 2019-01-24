@@ -2,7 +2,7 @@
     weasyprint.document
     -------------------
 
-    :copyright: Copyright 2011-2014 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
@@ -22,18 +22,20 @@ from .draw import draw_page, stacked
 from .fonts import FontConfiguration
 from .formatting_structure import boxes
 from .formatting_structure.build import build_formatting_structure
+from .html import W3C_DATE_RE
 from .images import get_image_from_uri as original_get_image_from_uri
 from .layout import layout_document
 from .layout.backgrounds import percentage
-from .logger import LOGGER
+from .logger import LOGGER, PROGRESS_LOGGER
 from .pdf import write_pdf_metadata
 
 if cairo.cairo_version() < 11504:
     warnings.warn(
-        'There are known rendering problems with cairo < 1.15.4. '
-        'WeasyPrint may work with older versions, but please read the note '
-        'about the needed cairo version on the "Install" page of the '
-        'documentation before reporting bugs.')
+        'There are known rendering problems and missing features with '
+        'cairo < 1.15.4. WeasyPrint may work with older versions, but please '
+        'read the note about the needed cairo version on the "Install" page '
+        'of the documentation before reporting bugs. '
+        'http://weasyprint.readthedocs.io/en/latest/install.html')
 
 
 def _get_matrix(box):
@@ -140,6 +142,31 @@ def _gather_links_and_bookmarks(box, bookmarks, links, anchors, matrix):
 
     for child in box.all_children():
         _gather_links_and_bookmarks(child, bookmarks, links, anchors, matrix)
+
+
+def _w3c_date_to_iso(string, attr_name):
+    """Tranform W3C date to ISO-8601 format."""
+    if string is None:
+        return None
+    match = W3C_DATE_RE.match(string)
+    if match is None:
+        LOGGER.warning('Invalid %s date: %r', attr_name, string)
+        return None
+    groups = match.groupdict()
+    iso_date = '%04i-%02i-%02iT%02i:%02i:%02i' % (
+        int(groups['year']),
+        int(groups['month'] or 1),
+        int(groups['day'] or 1),
+        int(groups['hour'] or 0),
+        int(groups['minute'] or 0),
+        int(groups['second'] or 0))
+    if groups['hour']:
+        assert groups['minute']
+        assert groups['tz_hour'].startswith(('+', '-'))
+        assert groups['tz_minute']
+        iso_date += '%+03i:%02i' % (
+            int(groups['tz_hour']), int(groups['tz_minute']))
+    return iso_date
 
 
 class Page(object):
@@ -322,7 +349,7 @@ class Document(object):
             page_rules, target_collector)
         get_image_from_uri = functools.partial(
             original_get_image_from_uri, {}, html.url_fetcher)
-        LOGGER.info('Step 4 - Creating formatting structure')
+        PROGRESS_LOGGER.info('Step 4 - Creating formatting structure')
         root_box = build_formatting_structure(
             html.etree_element, style_for, get_image_from_uri,
             html.base_url, target_collector)
@@ -390,7 +417,8 @@ class Document(object):
         """Resolve internal hyperlinks.
 
         Links to a missing anchor are removed with a warning.
-        If multiple anchors have the same name, the first is used.
+
+        If multiple anchors have the same name, the first one is used.
 
         :returns:
             A generator yielding lists (one per page) like :attr:`Page.links`,
@@ -400,26 +428,29 @@ class Document(object):
             and ``x, y`` are in CSS pixels from the top-left of the page.
 
         """
-        anchors = {}
+        anchors = set()
+        paged_anchors = []
         for i, page in enumerate(self.pages):
+            paged_anchors.append([])
             for anchor_name, (point_x, point_y) in page.anchors.items():
-                anchors.setdefault(anchor_name, (i, point_x, point_y))
+                if anchor_name not in anchors:
+                    paged_anchors[-1].append((anchor_name, point_x, point_y))
+                    anchors.add(anchor_name)
         for page in self.pages:
             page_links = []
             for link in page.links:
                 link_type, anchor_name, rectangle = link
                 if link_type == 'internal':
-                    target = anchors.get(anchor_name)
-                    if target is None:
+                    if anchor_name not in anchors:
                         LOGGER.error(
                             'No anchor #%s for internal URI reference',
                             anchor_name)
                     else:
-                        page_links.append((link_type, target, rectangle))
+                        page_links.append((link_type, anchor_name, rectangle))
                 else:
                     # External link
                     page_links.append(link)
-            yield page_links
+            yield page_links, paged_anchors.pop(0)
 
     def make_bookmark_tree(self):
         """Make a tree of all bookmarks in the document.
@@ -466,6 +497,41 @@ class Document(object):
                 last_by_depth.append(children)
         return root
 
+    def add_hyperlinks(self, links, anchors, context, scale):
+        """Include hyperlinks in current page."""
+        if cairo.cairo_version() < 11504:
+            return
+
+        # We round floats to avoid locale problems, see
+        # https://github.com/Kozea/WeasyPrint/issues/742
+
+        # TODO: Instead of using rects, we could use the drawing rectangles
+        # defined by cairo when drawing targets. This would give a feeling
+        # similiar to what browsers do with links that span multiple lines.
+        for link in links:
+            link_type, link_target, rectangle = link
+            if link_type == 'external':
+                attributes = "rect=[{} {} {} {}] uri='{}'".format(*(
+                    [int(round(i * scale)) for i in rectangle] +
+                    [link_target.replace("'", '%27')]))
+            elif link_type == 'internal':
+                attributes = "rect=[{} {} {} {}] dest='{}'".format(*(
+                    [int(round(i * scale)) for i in rectangle] +
+                    [link_target.replace("'", '%27')]))
+            elif link_type == 'attachment':
+                # Attachments are handled in write_pdf_metadata
+                continue
+            context.tag_begin(cairo.TAG_LINK, attributes)
+            context.tag_end(cairo.TAG_LINK)
+
+        for anchor in anchors:
+            anchor_name, x, y = anchor
+            attributes = "name='{}' x={} y={}".format(
+                anchor_name.replace("'", '%27'), int(round(x * scale)),
+                int(round(y * scale)))
+            context.tag_begin(cairo.TAG_DEST, attributes)
+            context.tag_end(cairo.TAG_DEST)
+
     def write_pdf(self, target=None, zoom=1, attachments=None):
         """Paint the pages in a PDF file, with meta-data.
 
@@ -496,8 +562,13 @@ class Document(object):
         # (1, 1) is overridden by .set_size() below.
         surface = cairo.PDFSurface(file_obj, 1, 1)
         context = cairo.Context(surface)
-        LOGGER.info('Step 6 - Drawing')
-        for page in self.pages:
+
+        PROGRESS_LOGGER.info('Step 6 - Drawing')
+
+        paged_links_and_anchors = list(self.resolve_links())
+        for page, links_and_anchors in zip(
+                self.pages, paged_links_and_anchors):
+            links, anchors = links_and_anchors
             surface.set_size(
                 math.floor(scale * (
                     page.width + page.bleed['left'] + page.bleed['right'])),
@@ -507,12 +578,73 @@ class Document(object):
                 context.translate(
                     page.bleed['left'] * scale, page.bleed['top'] * scale)
                 page.paint(context, scale=scale)
+                self.add_hyperlinks(links, anchors, context, scale)
                 surface.show_page()
+
+        PROGRESS_LOGGER.info('Step 7 - Adding PDF metadata')
+
+        # TODO: overwrite producer when possible in cairo
+        if cairo.cairo_version() >= 11504:
+            # Set document information
+            for attr, key in (
+                    ('title', cairo.PDF_METADATA_TITLE),
+                    ('description', cairo.PDF_METADATA_SUBJECT),
+                    ('generator', cairo.PDF_METADATA_CREATOR)):
+                value = getattr(self.metadata, attr)
+                if value is not None:
+                    surface.set_metadata(key, value)
+            for attr, key in (
+                    ('authors', cairo.PDF_METADATA_AUTHOR),
+                    ('keywords', cairo.PDF_METADATA_KEYWORDS)):
+                value = getattr(self.metadata, attr)
+                if value is not None:
+                    surface.set_metadata(key, ', '.join(value))
+            for attr, key in (
+                    ('created', cairo.PDF_METADATA_CREATE_DATE),
+                    ('modified', cairo.PDF_METADATA_MOD_DATE)):
+                value = getattr(self.metadata, attr)
+                if value is not None:
+                    surface.set_metadata(key, _w3c_date_to_iso(value, attr))
+
+            # Set bookmarks
+            bookmarks = self.make_bookmark_tree()
+            levels = [cairo.PDF_OUTLINE_ROOT] * len(bookmarks)
+            while bookmarks:
+                title, destination, children = bookmarks.pop(0)
+                page, x, y = destination
+
+                # We round floats to avoid locale problems, see
+                # https://github.com/Kozea/WeasyPrint/issues/742
+                link_attribs = 'page={} pos=[{} {}]'.format(
+                    page + 1, int(round(x * scale)),
+                    int(round(y * scale)))
+
+                outline = surface.add_outline(
+                    levels.pop(), title, link_attribs, 0)
+                levels.extend([outline] * len(children))
+                bookmarks = children + bookmarks
+
         surface.finish()
 
-        LOGGER.info('Step 7 - Adding PDF metadata')
-        write_pdf_metadata(self, file_obj, scale, self.metadata, attachments,
-                           self.url_fetcher)
+        # Add extra PDF metadata: attachments, embedded files
+        attachment_links = [
+            [link for link in page_links if link[0] == 'attachment']
+            for page_links, page_anchors in paged_links_and_anchors]
+        # Write extra PDF metadata only when there is a least one from:
+        # - attachments in metadata
+        # - attachments as function parameters
+        # - attachments as PDF links
+        # - bleed boxes
+        condition = (
+            self.metadata.attachments or
+            attachments or
+            any(attachment_links) or
+            any(any(page.bleed.values()) for page in self.pages))
+        if condition:
+            write_pdf_metadata(
+                file_obj, scale, self.url_fetcher,
+                self.metadata.attachments + (attachments or []),
+                attachment_links, self.pages)
 
         if target is None:
             return file_obj.getvalue()
@@ -541,7 +673,7 @@ class Document(object):
             cairo.FORMAT_ARGB32, max_width, sum_heights)
         context = cairo.Context(surface)
         pos_y = 0
-        LOGGER.info('Step 6 - Drawing')
+        PROGRESS_LOGGER.info('Step 6 - Drawing')
         for page, width, height in zip(self.pages, widths, heights):
             pos_x = (max_width - width) / 2
             page.paint(context, pos_x, pos_y, scale=dppx, clip=True)

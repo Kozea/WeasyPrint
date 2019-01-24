@@ -2,7 +2,9 @@
     weasyprint.float
     ----------------
 
-    :copyright: Copyright 2011-2014 Simon Sapin and contributors, see AUTHORS.
+    Layout for floating boxes.
+
+    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
@@ -26,7 +28,7 @@ def float_width(box, context, containing_block):
 def float_layout(context, box, containing_block, device_size, absolute_boxes,
                  fixed_boxes):
     """Set the width and position of floating ``box``."""
-    # avoid a circular imports
+    # Avoid circular imports
     from .blocks import block_container_layout
     from .flex import flex_layout
     from .inlines import inline_replaced_box_width_height

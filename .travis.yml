@@ -12,6 +12,8 @@ matrix:
       python: 3.5
     - os: linux
       python: 3.6
+    - dist: xenial
+      python: 3.7
     - os: osx
       language: generic
       env: PYTHON_VERSION=3
@@ -28,15 +30,15 @@ before_install:
 
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew tap caskroom/fonts; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew pin numpy gdal postgis; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew upgrade python; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew cask install font-dejavu-sans; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install cairo pango gdk-pixbuf libffi; fi
 
 install:
-  # First line needed because of https://github.com/pypa/setuptools/pull/1089
+  # Needed because of https://github.com/pypa/setuptools/pull/1089
   # Can be removed as soon as setuptools-36.2.0 is not the default version anymore on Travis with Python 3.4
   - pip$PYTHON_VERSION install --upgrade setuptools
-  - pip$PYTHON_VERSION install --upgrade -e.[test]
 
 script:
   - python$PYTHON_VERSION setup.py test

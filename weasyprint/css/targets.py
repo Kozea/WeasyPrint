@@ -8,7 +8,7 @@
     counter_values and stuff needed to build pending targets later,
     when the layout of all targetted anchors has been done.
 
-    :copyright: Copyright 2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
