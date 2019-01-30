@@ -319,7 +319,7 @@ def test_links():
       <p id=hello>Hello, World</p>
       <p id=lipsum>
         <a style="display: block; page-break-before: always; height: 30pt"
-           href="#hel%6Co"></a>
+           href="#hel%6Co"></a>a
       </p>
     ''', base_url=resource_filename('<inline HTML>')).write_pdf(target=fileobj)
     pdf_file = pdf.PDFFile(fileobj)
@@ -379,7 +379,7 @@ def test_links():
     # 100% wide (block), 0pt high
     fileobj = io.BytesIO()
     FakeHTML(
-        string='<a href="../lipsum" style="display: block">',
+        string='<a href="../lipsum" style="display: block"></a>a',
         base_url='http://weasyprint.org/foo/bar/').write_pdf(target=fileobj)
     pdf_file = pdf.PDFFile(fileobj)
     link, = [
@@ -398,7 +398,7 @@ def test_relative_links():
     # Relative URI reference without a base URI: allowed for anchors
     fileobj = io.BytesIO()
     FakeHTML(
-        string='<a href="../lipsum" style="display: block">',
+        string='<a href="../lipsum" style="display: block"></a>a',
         base_url=None).write_pdf(target=fileobj)
     pdf_file = pdf.PDFFile(fileobj)
     annots = pdf_file.pages[0].get_indirect_dict_array('Annots', pdf_file)[0]
@@ -430,7 +430,7 @@ def test_relative_links_internal():
     # Internal URI reference without a base URI: OK
     fileobj = io.BytesIO()
     FakeHTML(
-        string='<a href="#lipsum" id="lipsum" style="display: block">',
+        string='<a href="#lipsum" id="lipsum" style="display: block"></a>a',
         base_url=None).write_pdf(target=fileobj)
     pdf_file = pdf.PDFFile(fileobj)
     annots = pdf_file.pages[0].get_indirect_dict_array('Annots', pdf_file)[0]
@@ -455,7 +455,7 @@ def test_relative_links_internal():
 def test_relative_links_anchors():
     fileobj = io.BytesIO()
     FakeHTML(
-        string='<div style="-weasy-link: url(#lipsum)" id="lipsum">',
+        string='<div style="-weasy-link: url(#lipsum)" id="lipsum"></div>a',
         base_url=None).write_pdf(target=fileobj)
     pdf_file = pdf.PDFFile(fileobj)
     annots = pdf_file.pages[0].get_indirect_dict_array('Annots', pdf_file)[0]
@@ -483,7 +483,7 @@ def test_missing_links():
         FakeHTML(string='''
           <style> a { display: block; height: 15pt } </style>
           <a href="#lipsum"></a>
-          <a href="#missing" id="lipsum"></a>
+          <a href="#missing" id="lipsum"></a>a
         ''', base_url=None).write_pdf(target=fileobj)
     pdf_file = pdf.PDFFile(fileobj)
     annots = pdf_file.pages[0].get_indirect_dict_array('Annots', pdf_file)[0]
