@@ -327,15 +327,15 @@ def bleed(token):
 def marks(tokens):
     """``marks`` property validation."""
     if len(tokens) == 2:
-        keywords = [get_keyword(token) for token in tokens]
+        keywords = tuple(get_keyword(token) for token in tokens)
         if 'crop' in keywords and 'cross' in keywords:
             return keywords
     elif len(tokens) == 1:
         keyword = get_keyword(tokens[0])
         if keyword in ('crop', 'cross'):
-            return [keyword]
+            return (keyword,)
         elif keyword == 'none':
-            return 'none'
+            return ()
 
 
 @property('outline-style')
