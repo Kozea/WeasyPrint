@@ -162,6 +162,21 @@ For Alpine Linux 3.6 or newer:
     apk --update --upgrade add gcc musl-dev jpeg-dev zlib-dev libffi-dev cairo-dev pango-dev gdk-pixbuf-dev
 
 
+.. note::
+
+    Some Alpine images do not resolv the library path via ctypes.utils.find_library. So if you get 
+    `OSError: dlopen() failed to load a library: cairo / cairo-2 / cairo-gobject-2`
+    then change find_library and open the library directly:
+    /usr/local/lib/python3.7/site-packages/cairocffi/__init__.py
+    ```
+    try:        
+        lib = ffi.dlopen(name)                                    
+        if lib:
+    ....
+    cairo = dlopen(ffi, 'libcairo.so.2')                                      
+    ```
+    
+    
 .. _macos:
 
 macOS
