@@ -244,7 +244,7 @@ def parse_2d_position(tokens):
     if length_1 and keyword_2 in ('top', 'center', 'bottom'):
         return length_1, BACKGROUND_POSITION_PERCENTAGES[keyword_2]
     elif length_2 and keyword_1 in ('left', 'center', 'right'):
-            return BACKGROUND_POSITION_PERCENTAGES[keyword_1], length_2
+        return BACKGROUND_POSITION_PERCENTAGES[keyword_1], length_2
     elif (keyword_1 in ('left', 'center', 'right') and
           keyword_2 in ('top', 'center', 'bottom')):
         return (BACKGROUND_POSITION_PERCENTAGES[keyword_1],
