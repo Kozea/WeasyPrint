@@ -87,7 +87,8 @@ WeasyPrint! Otherwise, please copy the full error message and
        CSS rules.
 
 .. [#] setuptools ≥ 30.3.0 is required to install WeasyPrint, but 39.2.0 is
-       required to build the package.
+       required to build the package. setuptools << 40.8.0 will not include
+       the LICENSE file.
 
 .. [#] Without it, PNG and SVG are the only supported image formats.
        JPEG, GIF and others are not available.
