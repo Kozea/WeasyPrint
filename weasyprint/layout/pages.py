@@ -642,7 +642,8 @@ def make_page(context, root_box, page_type, resume_at, page_number,
                 if 'pages' not in missed_counters:
                     continue
                 # Adjust 'pages_wanted'
-                item = target_collector.items.get(anchor_name, None)
+                item = target_collector.target_lookup_items.get(
+                    anchor_name, None)
                 page_maker_index = item.page_maker_index
                 if page_maker_index >= 0 and anchor_name in cached_anchors:
                     page_maker[page_maker_index][-1]['pages_wanted'] = True
