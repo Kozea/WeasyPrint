@@ -619,7 +619,17 @@ def make_page(context, root_box, page_type, resume_at, page_number,
                 cached_lookups.append(counter_lookup_id)
                 counter_lookup.page_maker_index = page_number - 1
 
-            # Step 1: local counters
+            # Step 1: page based back-references
+            # Marked as pending by target_collector.cache_target_page_counters
+            if counter_lookup.pending:
+                if page_counter_values != \
+                        counter_lookup.cached_page_counter_values:
+                    counter_lookup.cached_page_counter_values = \
+                        copy.deepcopy(page_counter_values)
+                counter_lookup.pending = False
+                call_parse_again = True
+
+            # Step 2: local counters
             # If the box mixed-in page counters changed, update the content
             # and cache the new values.
             missing_counters = counter_lookup.missing_counters
@@ -635,8 +645,10 @@ def make_page(context, root_box, page_type, resume_at, page_number,
                             counter_name, None)
                         if counter_value is not None:
                             call_parse_again = True
+                            # no need to loop them all
+                            break
 
-            # Step 2: targeted counters
+            # Step 3: targeted counters
             target_missing = counter_lookup.missing_target_counters
             for anchor_name, missed_counters in target_missing.items():
                 if 'pages' not in missed_counters:
