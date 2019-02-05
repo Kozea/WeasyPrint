@@ -622,10 +622,10 @@ def make_page(context, root_box, page_type, resume_at, page_number,
             # Step 1: page based back-references
             # Marked as pending by target_collector.cache_target_page_counters
             if counter_lookup.pending:
-                if page_counter_values != \
-                        counter_lookup.cached_page_counter_values:
-                    counter_lookup.cached_page_counter_values = \
-                        copy.deepcopy(page_counter_values)
+                if (page_counter_values !=
+                        counter_lookup.cached_page_counter_values):
+                    counter_lookup.cached_page_counter_values = copy.deepcopy(
+                        page_counter_values)
                 counter_lookup.pending = False
                 call_parse_again = True
 
