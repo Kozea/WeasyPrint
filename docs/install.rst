@@ -3,7 +3,7 @@ Installing
 
 WeasyPrint |version| depends on:
 
-* CPython_ ≥ 3.4.0
+* CPython_ ≥ 3.5.0
 * cairo_ ≥ 1.15.4 [#]_
 * Pango_ ≥ 1.38.0 [#]_
 * setuptools_ ≥ 30.3.0 [#]_
