@@ -116,6 +116,8 @@ def main(argv=None, stdout=None, stdin=None):
                         help='Show warnings and information messages.')
     parser.add_argument('-d', '--debug', action='store_true',
                         help='Show debugging messages.')
+    parser.add_argument('-q', '--quiet', action='store_true',
+                        help='Hide logging messages.')
     parser.add_argument(
         'input', help='URL or filename of the HTML input, or - for stdin')
     parser.add_argument(
@@ -176,9 +178,10 @@ def main(argv=None, stdout=None, stdin=None):
         LOGGER.setLevel(logging.DEBUG)
     elif args.verbose:
         LOGGER.setLevel(logging.INFO)
-    handler = logging.StreamHandler()
-    handler.setFormatter(logging.Formatter('%(levelname)s: %(message)s'))
-    LOGGER.addHandler(handler)
+    if not args.quiet:
+        handler = logging.StreamHandler()
+        handler.setFormatter(logging.Formatter('%(levelname)s: %(message)s'))
+        LOGGER.addHandler(handler)
 
     html = HTML(source, base_url=args.base_url, encoding=args.encoding,
                 media_type=args.media_type)
