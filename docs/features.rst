@@ -223,8 +223,10 @@ supported:
 - the ``text-space-collapse`` and ``text-space-trim`` properties;
 - the ``text-wrap``, ``wrap-before``, ``wrap-after`` and ``wrap-inside``
   properties;
+- the ``text-align`` property with an alignment character;
 - the ``pre-wrap-auto`` value of the ``white-space`` property; and
 - the ``text-spacing`` property.
+
 
 .. _CSS Text Module Level 3: https://www.w3.org/TR/css-text-3/
 .. _CSS Text Module Level 4: https://www.w3.org/TR/css-text-4/
