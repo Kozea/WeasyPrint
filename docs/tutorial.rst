@@ -162,7 +162,7 @@ on any type of cairo surface.
 
 .. [#] Pages in the same document do not always have the same size.
 
-See the :ref:`python-api` for details. A few random example:
+See the :ref:`python-api` for details. A few random examples:
 
 .. code-block:: python
 
