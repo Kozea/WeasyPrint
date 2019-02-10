@@ -765,14 +765,15 @@ def remake_page(index, context, root_box, html, cascaded_styles,
             'anchors': [],
             'content_lookups': [],
         }
+        # Setting content_changed to True ensures remake.
+        # If resume_at is None (last page) it must be False to prevent endless
+        # loops and list index out of range (see #794).
+        remake_state['content_changed'] = resume_at is not None
         # page_state is already a deepcopy
         item = resume_at, next_page, right_page, page_state, remake_state
         if index + 1 >= len(page_maker):
-            # content_changed must be False otherwise: enldess loop
             page_maker.append(item)
         else:
-            # content_changed must be True otherwise: no remake
-            remake_state['content_changed'] = True
             page_maker[index + 1] = item
 
     return page, resume_at
