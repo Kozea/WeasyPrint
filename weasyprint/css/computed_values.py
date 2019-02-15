@@ -112,6 +112,34 @@ PAGE_SIZES = dict(
         Dimension(11, 'in'),
         Dimension(17, 'in'),
     ),
+    paperback_massmarket=(
+        Dimension(4.25, 'in'),
+        Dimension(6.87, 'in'),
+    ),
+    paperback_novella=(
+        Dimension(5, 'in'),
+        Dimension(8, 'in'),
+    ),
+    paperback_digest=(
+        Dimension(5.5, 'in'),
+        Dimension(8.5, 'in'),
+    ),
+    paperback_us_trade=(
+        Dimension(6, 'in'),
+        Dimension(9, 'in'),
+    ),
+    textbook_small=(
+        Dimension(6, 'in'),
+        Dimension(9, 'in'),
+    ),
+    textbook_medium=(
+        Dimension(7, 'in'),
+        Dimension(10, 'in'),
+    ),
+    textbook_fullsize=(
+        Dimension(8.5, 'in'),
+        Dimension(11, 'in'),
+    )   
 )
 # In "portrait" orientation.
 for w, h in PAGE_SIZES.values():
