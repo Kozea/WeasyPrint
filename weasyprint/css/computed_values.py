@@ -139,7 +139,7 @@ PAGE_SIZES = dict(
     textbook_fullsize=(
         Dimension(8.5, 'in'),
         Dimension(11, 'in'),
-    )   
+    ),
 )
 # In "portrait" orientation.
 for w, h in PAGE_SIZES.values():
