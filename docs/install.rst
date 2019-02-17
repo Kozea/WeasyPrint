@@ -86,9 +86,9 @@ WeasyPrint! Otherwise, please copy the full error message and
 .. [#] pango ≥ 1.29.3 is required, but 1.38.0 is needed to handle `@font-face`
        CSS rules.
 
-.. [#] setuptools ≥ 30.3.0 is required to install WeasyPrint, but 39.2.0 is
-       required to build the package. setuptools << 40.8.0 will not include
-       the LICENSE file.
+.. [#] setuptools ≥ 30.3.0 is required to install WeasyPrint from wheel, but
+       39.2.0 is required to build the package or install from
+       source. setuptools < 40.8.0 will not include the LICENSE file.
 
 .. [#] Without it, PNG and SVG are the only supported image formats.
        JPEG, GIF and others are not available.
