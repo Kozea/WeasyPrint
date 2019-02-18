@@ -23,7 +23,7 @@ addons:
 
 before_install:
   # As setup.py doesn't use pip, setuptools is not updated before installing dependencies
-  - python$PYTHON_VERSION install --upgrade setuptools
+  - python$PYTHON_VERSION -m pip install --upgrade setuptools
 
   # Pango 1.38+ is needed to make @font-face work, remove these two lines when it's available on Travis
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then mkdir -p ~/.fonts; fi
