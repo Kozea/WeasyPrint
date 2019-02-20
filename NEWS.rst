@@ -3,6 +3,76 @@
 ======
 
 
+Version 45
+----------
+
+Released on 2019-02-20.
+
+WeasyPrint now has a `code of conduct
+<https://github.com/Kozea/WeasyPrint/blob/master/CODE_OF_CONDUCT.rst>`_.
+
+A new website has been launched, with beautiful and useful graphs about speed
+and memory use across versions: check `WeasyPerf
+<https://kozea.github.io/WeasyPerf/index.html>`_.
+
+Dependencies:
+
+* Python 3.5+ is now needed, Python 3.4 is not supported anymore
+
+Bug fixes:
+
+* `#798 <https://github.com/Kozea/WeasyPrint/pull/798>`_:
+  Prevent endless loop and index out of range in pagination
+* `#767 <https://github.com/Kozea/WeasyPrint/issues/767>`_:
+  Add a ``--quiet`` CLI parameter
+* `#784 <https://github.com/Kozea/WeasyPrint/pull/784>`_:
+  Fix library loading on Alpine
+* `#791 <https://github.com/Kozea/WeasyPrint/pull/791>`_:
+  Use path2url in tests for Windows
+* `#789 <https://github.com/Kozea/WeasyPrint/pull/789>`_:
+  Add LICENSE file to distributed sources
+* `#788 <https://github.com/Kozea/WeasyPrint/pull/788>`_:
+  Fix pending references
+* `#780 <https://github.com/Kozea/WeasyPrint/issues/780>`_:
+  Don't draw patterns for empty page backgrounds
+* `#774 <https://github.com/Kozea/WeasyPrint/issues/774>`_:
+  Don't crash when links include quotes
+* `#637 <https://github.com/Kozea/WeasyPrint/issues/637>`_:
+  Fix a problem with justified text
+* `#763 <https://github.com/Kozea/WeasyPrint/pull/763>`_:
+  Launch tests with Python 3.7
+* `#704 <https://github.com/Kozea/WeasyPrint/issues/704>`_:
+  Fix a corner case with tables
+* `#804 <https://github.com/Kozea/WeasyPrint/pull/804>`_:
+  Don't logger handlers defined before importing WeasyPrint
+* `#109 <https://github.com/Kozea/WeasyPrint/issues/109>`_,
+  `#748 <https://github.com/Kozea/WeasyPrint/issues/748>`_:
+  Don't include punctuation for hyphenation
+* `#770 <https://github.com/Kozea/WeasyPrint/issues/770>`_:
+  Don't crash when people use uppercase words from old-fashioned Microsoft
+  fonts in tables, especially when there's an 5th column
+* Use a `separate logger
+  <https://weasyprint.readthedocs.io/en/latest/tutorial.html#logging>`_ to
+  report the rendering process
+* Add a ``--debug`` CLI parameter and set debug level for unknown prefixed CSS
+  properties
+* Define minimal versions of Python and setuptools in setup.cfg
+
+Documentation
+
+* `#796 <https://github.com/Kozea/WeasyPrint/pull/796>`_:
+  Fix a small typo in the tutorial
+* `#792 <https://github.com/Kozea/WeasyPrint/pull/792>`_:
+  Document no alignement character support
+* `#773 <https://github.com/Kozea/WeasyPrint/pull/773>`_:
+  Fix phrasing in Hacking section
+* `#402 <https://github.com/Kozea/WeasyPrint/issues/402>`_:
+  Add a paragraph about fontconfig error
+* `#764 <https://github.com/Kozea/WeasyPrint/pull/764>`_:
+  Fix list of dependencies for Alpine
+* Fix API documentation of HTML and CSS classes
+
+
 Version 44
 ----------
 
