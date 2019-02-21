@@ -658,6 +658,22 @@ class Document(object):
                     shutil.copyfileobj(file_obj, fd)
 
     def write_image_surface(self, resolution=96):
+        """Render pages on a Cairo image surface.
+
+        There is no decoration around pages other than those specified in CSS
+        with ``@page`` rules. The final image is as wide as the widest page.
+        Each page is below the previous one, centered horizontally.
+
+        :type resolution: float
+        :param resolution:
+            The output resolution in PNG pixels per CSS inch. At 96 dpi
+            (the default), PNG pixels match the CSS ``px`` unit.
+        :returns:
+            A ``(surface, png_width, png_height)`` tuple. :obj:`surface` is a
+            Cairo image surface. :obj:`png_width` and :obj:`png_height` are
+            the size of the final image, in PNG pixels.
+
+        """
         dppx = resolution / 96
 
         # This duplicates the hinting logic in Page.paint. There is a

@@ -200,6 +200,33 @@ class HTML(object):
 
     def write_image_surface(self, stylesheets=None, resolution=96,
                             presentational_hints=False, font_config=None):
+        """Paint the pages vertically to a single PNG image.
+
+        There is no decoration around pages other than those specified in CSS
+        with ``@page`` rules. The final image is as wide as the widest page.
+        Each page is below the previous one, centered horizontally.
+
+        This is a shortcut for calling :meth:`render`, then
+        :meth:`Document.write_png() <document.Document.write_png>`.
+
+        :param target:
+            A filename, file-like object, or :obj:`None`.
+        :param stylesheets:
+            An optional list of user stylesheets.  The list's elements
+            are :class:`CSS` objects, filenames, URLs, or file-like
+            objects. (See :ref:`stylesheet-origins`.)
+        :type resolution: float
+        :param resolution:
+            The output resolution in PNG pixels per CSS inch. At 96 dpi
+            (the default), PNG pixels match the CSS ``px`` unit.
+        :type presentational_hints: bool
+        :param presentational_hints: Whether HTML presentational hints are
+            followed.
+        :type font_config: :class:`~fonts.FontConfiguration`
+        :param font_config: A font configuration handling @font-face rules.
+        :returns: The Cairo image surface.
+
+        """
         surface, _width, _height = (
             self.render(stylesheets, enable_hinting=True,
                         presentational_hints=presentational_hints,
@@ -257,8 +284,8 @@ class CSS(object):
     ``@font-config`` rules. The same ``fonts.FontConfiguration`` object must be
     used for different ``CSS`` objects applied to the same document.
 
-    ``CSS`` objects have no public attribute or method. They are only meant to
-    be used in the :meth:`~HTML.write_pdf`, :meth:`~HTML.write_png` and
+    ``CSS`` objects have no public attributes or methods. They are only meant
+    to be used in the :meth:`~HTML.write_pdf`, :meth:`~HTML.write_png` and
     :meth:`~HTML.render` methods of :class:`HTML` objects.
 
     """

@@ -30,7 +30,7 @@ ZERO_FONTSIZE_CRASHES_CAIRO = False
 
 
 class FontConfiguration:
-    """Font configuration"""
+    """Font configuration."""
 
     def __init__(self):
         """Create a font configuration before rendering a document."""
@@ -240,7 +240,7 @@ else:
 
     class FontConfiguration(FontConfiguration):
         def __init__(self):
-            """Create a FT2 font configuration.
+            """Create a FreeType2 font configuration.
 
             See Behdad's blog:
             https://mces.blogspot.fr/2015/05/
