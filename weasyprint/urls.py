@@ -208,14 +208,14 @@ def default_url_fetcher(url, timeout=10):
     :obj:`url_fetcher` argument to :class:`HTML` or :class:`CSS`.
     (See :ref:`url-fetchers`.)
 
-    :type url: Unicode string
+    :type url: str
     :param url: The URL of the resource to fetch.
-    :raises: An exception indicating failure, e.g. ``ValueError`` on
+    :raises: An exception indicating failure, e.g. :obj:`ValueError` on
         syntactically invalid URL.
-    :returns: A dict with the following keys:
+    :returns: A :obj:`dict` with the following keys:
 
-        * One of ``string`` (a byte string) or ``file_obj``
-          (a file-like object)
+        * One of ``string`` (a :obj:`bytestring <bytes>`) or ``file_obj``
+          (a :term:`file object`).
         * Optionally: ``mime_type``, a MIME type extracted e.g. from a
           *Content-Type* header. If not provided, the type is guessed from the
           file extension in the URL.

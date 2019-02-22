@@ -81,7 +81,7 @@ The Python version of the above example goes like this:
 Instantiating HTML and CSS objects
 ..................................
 
-If you have a file name, an absolute URL or a readable file-like object,
+If you have a file name, an absolute URL or a readable :term:`file object`,
 you can just pass it to :class:`HTML` or :class:`CSS` to create an instance.
 Alternatively, use a named argument so that no guessing is involved:
 
@@ -141,7 +141,7 @@ Once you have a :class:`HTML` object, call its :meth:`~HTML.write_pdf` or
 PDF or PNG file.
 
 Without arguments, these methods return a byte string in memory. If you
-pass a file name or a writable file-like object, they will write there
+pass a file name or a writable :term:`file object`, they will write there
 directly instead. (**Warning**: with a filename, these methods will
 overwrite existing files silently.)
 
@@ -444,9 +444,9 @@ Leaks can include (but are not restricted to):
 - network configuration (IPv4 and IPv6 support, IP addressing, firewall
   configuration, using ``http://`` URIs and tracking time used to render
   documents),
-- hardware and software used for graphical rendering (as Cairo renderings
+- hardware and software used for graphical rendering (as cairo renderings
   can change with CPU and GPU features),
-- Python, Cairo, Pango and other libraries versions (implementation details
+- Python, cairo, Pango and other libraries versions (implementation details
   lead to different renderings).
 
 SVG images

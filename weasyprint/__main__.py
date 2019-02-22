@@ -27,7 +27,7 @@ def main(argv=None, stdout=None, stdin=None):
     HTML from stdin. The output is a filename, or ``-`` to write to stdout.
 
     Options can be mixed anywhere before, between, or after the input and
-    output:
+    output.
 
     .. option:: -e <input_encoding>, --encoding <input_encoding>
 
@@ -40,7 +40,7 @@ def main(argv=None, stdout=None, stdin=None):
 
     .. option:: -s <filename_or_URL>, --stylesheet <filename_or_URL>
 
-        Filename or URL of a user CSS stylesheet (see
+        Filename or URL of a user cascading stylesheet (see
         :ref:`stylesheet-origins`) to add to the document
         (e.g. ``-s print.css``). Multiple stylesheets are allowed.
 
@@ -66,7 +66,9 @@ def main(argv=None, stdout=None, stdin=None):
 
     .. option:: -p, --presentational-hints
 
-        Follow HTML presentational hints.
+        Follow `HTML presentational hints
+        <https://www.w3.org/TR/html/rendering.html\
+        #the-css-user-agent-style-sheet-and-presentational-hints>`_.
 
     .. option:: -v, --verbose
 

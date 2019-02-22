@@ -239,8 +239,22 @@ else:
         #     fontdir.encode('mbcs'))
 
     class FontConfiguration(FontConfiguration):
+        """A FreeType font configuration.
+
+        .. versionadded:: 0.32
+
+        Keep a list of fonts, including fonts installed on the system, fonts
+        installed for the current user, and fonts referenced by cascading
+        stylesheets.
+
+        When created, an instance of this class gathers available fonts. It can
+        then be given to :class:`weasyprint.HTML` methods or to
+        :class:`weasyprint.CSS` to find fonts in ``@font-face`` rules.
+
+        """
+
         def __init__(self):
-            """Create a FreeType2 font configuration.
+            """Create a FreeType font configuration.
 
             See Behdad's blog:
             https://mces.blogspot.fr/2015/05/

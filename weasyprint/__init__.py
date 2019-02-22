@@ -62,30 +62,39 @@ class HTML(object):
     You can just create an instance with a positional argument:
     ``doc = HTML(something)``
     The class will try to guess if the input is a filename, an absolute URL,
-    or a file-like object.
+    or a :term:`file object`.
 
     Alternatively, use **one** named argument so that no guessing is involved:
 
+    :type filename: str or pathlib.Path
     :param filename: A filename, relative to the current directory, or
         absolute.
+    :type url: str
     :param url: An absolute, fully qualified URL.
-    :param file_obj: A file-like: any object with a :meth:`~file.read` method.
+    :type file_obj: :term:`file object`
+    :param file_obj: Any object with a ``read`` method.
+    :type string: str
     :param string: A string of HTML source.
 
     Specifying multiple inputs is an error:
     ``HTML(filename="foo.html", url="localhost://bar.html")``
-    will raise a TypeError.
+    will raise a :obj:`TypeError`.
 
     You can also pass optional named arguments:
 
+    :type encoding: str
     :param encoding: Force the source character encoding.
+    :type base_url: str
     :param base_url: The base used to resolve relative URLs
         (e.g. in ``<img src="../foo.png">``). If not provided, try to use
-        the input filename, URL, or ``name`` attribute of file-like objects.
+        the input filename, URL, or ``name`` attribute of :term:`file objects
+        <file object>`.
+    :type url_fetcher: function
     :param url_fetcher: A function or other callable
         with the same signature as :func:`default_url_fetcher` called to
         fetch external resources such as stylesheets and images.
         (See :ref:`url-fetchers`.)
+    :type media_type: str
     :param media_type: The media type to use for ``@media``.
         Defaults to ``'print'``. **Note:** In some cases like
         ``HTML(string=foo)`` relative URLs will be invalid if ``base_url``
@@ -129,7 +138,7 @@ class HTML(object):
     def render(self, stylesheets=None, enable_hinting=False,
                presentational_hints=False, font_config=None):
         """Lay out and paginate the document, but do not (yet) export it
-        to PDF or another format.
+        to PDF or PNG.
 
         This returns a :class:`~document.Document` object which provides
         access to individual pages and various meta-data.
@@ -137,9 +146,10 @@ class HTML(object):
 
         .. versionadded:: 0.15
 
+        :type stylesheets: list
         :param stylesheets:
             An optional list of user stylesheets. List elements are
-            :class:`CSS` objects, filenames, URLs, or file-like
+            :class:`CSS` objects, filenames, URLs, or file
             objects. (See :ref:`stylesheet-origins`.)
         :type enable_hinting: bool
         :param enable_hinting:
@@ -150,7 +160,7 @@ class HTML(object):
         :param presentational_hints: Whether HTML presentational hints are
             followed.
         :type font_config: :class:`~fonts.FontConfiguration`
-        :param font_config: A font configuration handling @font-face rules.
+        :param font_config: A font configuration handling ``@font-face`` rules.
         :returns: A :class:`~document.Document` object.
 
         """
@@ -166,18 +176,22 @@ class HTML(object):
         This is a shortcut for calling :meth:`render`, then
         :meth:`Document.write_pdf() <document.Document.write_pdf>`.
 
+        :type target: str, pathlib.Path or file object
         :param target:
-            A filename, file-like object, or :obj:`None`.
+            A filename where the PDF file is generated, a file object, or
+            :obj:`None`.
+        :type stylesheets: list
         :param stylesheets:
             An optional list of user stylesheets. The list's elements
             are :class:`CSS` objects, filenames, URLs, or file-like
-            objects.  (See :ref:`stylesheet-origins`.)
+            objects. (See :ref:`stylesheet-origins`.)
         :type zoom: float
         :param zoom:
             The zoom factor in PDF units per CSS units.  **Warning**:
             All CSS units are affected, including physical units like
             ``cm`` and named sizes like ``A4``.  For values other than
             1, the physical CSS units will thus be "wrong".
+        :type attachments: list
         :param attachments: A list of additional file attachments for the
             generated PDF document or :obj:`None`. The list's elements are
             :class:`Attachment` objects, filenames, URLs or file-like objects.
@@ -185,11 +199,11 @@ class HTML(object):
         :param presentational_hints: Whether HTML presentational hints are
             followed.
         :type font_config: :class:`~fonts.FontConfiguration`
-        :param font_config: A font configuration handling @font-face rules.
+        :param font_config: A font configuration handling ``@font-face`` rules.
         :returns:
-            The PDF as byte string if :obj:`target` is not provided or
+            The PDF as :obj:`bytes` if ``target`` is not provided or
             :obj:`None`, otherwise :obj:`None` (the PDF is written to
-            :obj:`target`).
+            ``target``).
 
         """
         return self.render(
@@ -200,17 +214,19 @@ class HTML(object):
 
     def write_image_surface(self, stylesheets=None, resolution=96,
                             presentational_hints=False, font_config=None):
-        """Paint the pages vertically to a single PNG image.
+        """Render pages vertically on a cairo image surface.
+
+        .. versionadded:: 0.17
 
         There is no decoration around pages other than those specified in CSS
         with ``@page`` rules. The final image is as wide as the widest page.
         Each page is below the previous one, centered horizontally.
 
         This is a shortcut for calling :meth:`render`, then
-        :meth:`Document.write_png() <document.Document.write_png>`.
+        :meth:`Document.write_image_surface()
+        <document.Document.write_image_surface>`.
 
-        :param target:
-            A filename, file-like object, or :obj:`None`.
+        :type stylesheets: list
         :param stylesheets:
             An optional list of user stylesheets.  The list's elements
             are :class:`CSS` objects, filenames, URLs, or file-like
@@ -223,8 +239,8 @@ class HTML(object):
         :param presentational_hints: Whether HTML presentational hints are
             followed.
         :type font_config: :class:`~fonts.FontConfiguration`
-        :param font_config: A font configuration handling @font-face rules.
-        :returns: The Cairo image surface.
+        :param font_config: A font configuration handling ``@font-face`` rules.
+        :returns: A cairo :class:`ImageSurface <cairocffi.ImageSurface>`.
 
         """
         surface, _width, _height = (
@@ -245,10 +261,13 @@ class HTML(object):
         This is a shortcut for calling :meth:`render`, then
         :meth:`Document.write_png() <document.Document.write_png>`.
 
+        :type target: str, pathlib.Path or file object
         :param target:
-            A filename, file-like object, or :obj:`None`.
+            A filename where the PNG file is generated, a file object, or
+            :obj:`None`.
+        :type stylesheets: list
         :param stylesheets:
-            An optional list of user stylesheets.  The list's elements
+            An optional list of user stylesheets. The list's elements
             are :class:`CSS` objects, filenames, URLs, or file-like
             objects. (See :ref:`stylesheet-origins`.)
         :type resolution: float
@@ -259,11 +278,11 @@ class HTML(object):
         :param presentational_hints: Whether HTML presentational hints are
             followed.
         :type font_config: :class:`~fonts.FontConfiguration`
-        :param font_config: A font configuration handling @font-face rules.
+        :param font_config: A font configuration handling ``@font-face`` rules.
         :returns:
-            The image as byte string if :obj:`target` is not provided or
+            The image as :obj:`bytes` if ``target`` is not provided or
             :obj:`None`, otherwise :obj:`None` (the image is written to
-            :obj:`target`.)
+            ``target``.)
 
         """
         png_bytes, _width, _height = (
@@ -324,12 +343,15 @@ class CSS(object):
 class Attachment(object):
     """Represents a file attachment for a PDF document.
 
-    An instance is created in the same way as :class:`HTML`, except that
-    the HTML specific arguments are not supported. An optional description can
-    be provided with the ``description`` argument.
+    .. versionadded:: 0.22
+
+    An instance is created in the same way as :class:`HTML`, except that the
+    HTML specific arguments (``encoding`` and ``media_type``) are not
+    supported. An optional description can be provided with the ``description``
+    argument.
 
     :param description: A description of the attachment to be included in the
-        PDF document. May be :obj:`None`
+        PDF document. May be :obj:`None`.
 
     """
     def __init__(self, guess=None, filename=None, url=None, file_obj=None,

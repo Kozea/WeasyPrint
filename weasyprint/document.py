@@ -185,59 +185,62 @@ class Page(object):
         #: The page height, including margins, in CSS pixels.
         self.height = page_box.margin_height()
 
-        #: The page bleed width, in CSS pixels.
+        #: The page bleed widths as a :obj:`dict` with ``'top'``, ``'right'``,
+        #: ``'bottom'`` and ``'left'`` as keys, and values in CSS pixels.
         self.bleed = {
             side: page_box.style['bleed_%s' % side].value
             for side in ('top', 'right', 'bottom', 'left')}
 
-        #: A list of ``(bookmark_level, bookmark_label, target)`` tuples.
-        #: :obj:`bookmark_level` and :obj:`bookmark_label` are respectively
-        #: an integer and a Unicode string, based on the CSS properties
-        #: of the same names. :obj:`target` is an ``(x, y)`` point
-        #: in CSS pixels from the top-left of the page.
-        self.bookmarks = bookmarks = []
+        #: The :obj:`list` of ``(bookmark_level, bookmark_label, target)``
+        #: :obj:`tuples <tuple>`. ``bookmark_level`` and ``bookmark_label``
+        #: are respectively an :obj:`int` and a :obj:`string <str>`, based on
+        #: the CSS properties of the same names. ``target`` is an ``(x, y)``
+        #: point in CSS pixels from the top-left of the page.
+        self.bookmarks = []
 
-        #: A list of ``(link_type, target, rectangle)`` tuples.
-        #: A rectangle is ``(x, y, width, height)``, in CSS pixels from
-        #: the top-left of the page. :obj:`link_type` is one of two strings:
+        #: The :obj:`list` of ``(link_type, target, rectangle)`` :obj:`tuples
+        #: <tuple>`. A ``rectangle`` is ``(x, y, width, height)``, in CSS
+        #: pixels from the top-left of the page. ``link_type`` is one of three
+        #: strings:
         #:
-        #: * ``'external'``: :obj:`target` is an absolute URL
-        #: * ``'internal'``: :obj:`target` is an anchor name (see
+        #: * ``'external'``: ``target`` is an absolute URL
+        #: * ``'internal'``: ``target`` is an anchor name (see
         #:   :attr:`Page.anchors`).
-        #    The anchor might be defined in another page,
-        #    in multiple pages (in which case the first occurence is used),
-        #    or not at all.
-        #: * ``'attachment'``: :obj:`target` is an absolute URL and points
+        #:   The anchor might be defined in another page,
+        #:   in multiple pages (in which case the first occurence is used),
+        #:   or not at all.
+        #: * ``'attachment'``: ``target`` is an absolute URL and points
         #:   to a resource to attach to the document.
-        self.links = links = []
+        self.links = []
 
-        #: A dict mapping each anchor name to its target, an ``(x, y)`` point
-        #: in CSS pixels from the top-left of the page.
-        self.anchors = anchors = {}
+        #: The :obj:`dict` mapping each anchor name to its target, an
+        #: ``(x, y)`` point in CSS pixels from the top-left of the page.
+        self.anchors = {}
 
         _gather_links_and_bookmarks(
-            page_box, bookmarks, links, anchors, matrix=None)
+            page_box, self.bookmarks, self.links, self.anchors, matrix=None)
         self._page_box = page_box
         self._enable_hinting = enable_hinting
 
     def paint(self, cairo_context, left_x=0, top_y=0, scale=1, clip=False):
         """Paint the page in cairo, on any type of surface.
 
+        :type cairo_context: :class:`cairocffi.Context`
         :param cairo_context:
-            Any :class:`cairocffi.Context` object.
+            Any cairo context object.
+        :type left_x: float
         :param left_x:
             X coordinate of the left of the page, in cairo user units.
+        :type top_y: float
         :param top_y:
             Y coordinate of the top of the page, in cairo user units.
+        :type scale: float
         :param scale:
             Zoom scale in cairo user units per CSS pixel.
+        :type clip: bool
         :param clip:
             Whether to clip/cut content outside the page. If false or
             not provided, content can overflow.
-        :type left_x: float
-        :type top_y: float
-        :type scale: float
-        :type clip: bool
 
         """
         with stacked(cairo_context):
@@ -268,12 +271,11 @@ class Page(object):
 
 
 class DocumentMetadata(object):
-    """Contains meta-information about a :class:`Document`
-    that belongs to the whole document rather than specific pages.
+    """Meta-information belonging to a whole :class:`Document`.
+
+    .. versionadded:: 0.20
 
     New attributes may be added in future versions of WeasyPrint.
-
-    .. _W3C’s profile of ISO 8601: http://www.w3.org/TR/NOTE-datetime
 
     """
     def __init__(self, title=None, authors=None, description=None,
@@ -283,7 +285,8 @@ class DocumentMetadata(object):
         #: Extracted from the ``<title>`` element in HTML
         #: and written to the ``/Title`` info field in PDF.
         self.title = title
-        #: The authors of the document as a list of strings.
+        #: The authors of the document, as a list of strings.
+        #: (Defaults to the empty list.)
         #: Extracted from the ``<meta name=author>`` elements in HTML
         #: and written to the ``/Author`` info field in PDF.
         self.authors = authors or []
@@ -303,31 +306,33 @@ class DocumentMetadata(object):
         self.generator = generator
         #: The creation date of the document, as a string or :obj:`None`.
         #: Dates are in one of the six formats specified in
-        #: `W3C’s profile of ISO 8601`_.
+        #: `W3C’s profile of ISO 8601 <http://www.w3.org/TR/NOTE-datetime>`_.
         #: Extracted from the ``<meta name=dcterms.created>`` element in HTML
         #: and written to the ``/CreationDate`` info field in PDF.
         self.created = created
         #: The modification date of the document, as a string or :obj:`None`.
         #: Dates are in one of the six formats specified in
-        #: `W3C’s profile of ISO 8601`_.
+        #: `W3C’s profile of ISO 8601 <http://www.w3.org/TR/NOTE-datetime>`_.
         #: Extracted from the ``<meta name=dcterms.modified>`` element in HTML
         #: and written to the ``/ModDate`` info field in PDF.
         self.modified = modified
-        #: File attachments as a list of tuples of URL and a description or
-        #: :obj:`None`.
+        #: File attachments, as a list of tuples of URL and a description or
+        #: :obj:`None`. (Defaults to the empty list.)
         #: Extracted from the ``<link rel=attachment>`` elements in HTML
         #: and written to the ``/EmbeddedFiles`` dictionary in PDF.
+        #:
+        #: .. versionadded:: 0.22
         self.attachments = attachments or []
 
 
 class Document(object):
-    """A rendered document, with access to individual pages
-    ready to be painted on any cairo surfaces.
+    """A rendered document ready to be painted on a cairo surface.
 
-    Typically obtained from :meth:`HTML.render() <weasyprint.HTML.render>`,
-    but can also be instantiated directly
-    with a list of :class:`pages <Page>`,
-    a set of :class:`metadata <DocumentMetadata>`, and a ``url_fetcher``.
+    Typically obtained from :meth:`HTML.render() <weasyprint.HTML.render>`, but
+    can also be instantiated directly with a list of :class:`pages <Page>`, a
+    set of :class:`metadata <DocumentMetadata>`, a :func:`url_fetcher
+    <weasyprint.default_url_fetcher>` function, and a :class:`font_config
+    <weasyprint.fonts.FontConfiguration>`.
 
     """
     @classmethod
@@ -370,8 +375,9 @@ class Document(object):
         #: Contains information that does not belong to a specific page
         #: but to the whole document.
         self.metadata = metadata
-        #: A ``url_fetcher`` for resources that have to be read when writing
-        #: the output.
+        #: A function or other callable with the same signature as
+        #: :func:`default_url_fetcher` called to fetch external resources such
+        #: as stylesheets and images.  (See :ref:`url-fetchers`.)
         self.url_fetcher = url_fetcher
         # Keep a reference to font_config to avoid its garbage collection until
         # rendering is destroyed. This is needed as font_config.__del__ removes
@@ -381,6 +387,9 @@ class Document(object):
     def copy(self, pages='all'):
         """Take a subset of the pages.
 
+        .. versionadded:: 0.15
+
+        :type pages: :term:`iterable`
         :param pages:
             An iterable of :class:`Page` objects from :attr:`pages`.
         :return:
@@ -417,13 +426,15 @@ class Document(object):
     def resolve_links(self):
         """Resolve internal hyperlinks.
 
+        .. versionadded:: 0.15
+
         Links to a missing anchor are removed with a warning.
 
         If multiple anchors have the same name, the first one is used.
 
         :returns:
             A generator yielding lists (one per page) like :attr:`Page.links`,
-            except that :obj:`target` for internal hyperlinks is
+            except that ``target`` for internal hyperlinks is
             ``(page_number, x, y)`` instead of an anchor name.
             The page number is a 0-based index into the :attr:`pages` list,
             and ``x, y`` are in CSS pixels from the top-left of the page.
@@ -456,10 +467,12 @@ class Document(object):
     def make_bookmark_tree(self):
         """Make a tree of all bookmarks in the document.
 
-        :return: a list of bookmark subtrees.
-            A subtree is ``(label, target, children)``. :obj:`label` is
-            a string, :obj:`target` is ``(page_number, x, y)`` like in
-            :meth:`resolve_links`, and :obj:`children` is a
+        .. versionadded:: 0.15
+
+        :return: A list of bookmark subtrees.
+            A subtree is ``(label, target, children)``. ``label`` is
+            a string, ``target`` is ``(page_number, x, y)`` like in
+            :meth:`resolve_links`, and ``children`` is a
             list of child subtrees.
 
         """
@@ -499,7 +512,12 @@ class Document(object):
         return root
 
     def add_hyperlinks(self, links, anchors, context, scale):
-        """Include hyperlinks in current page."""
+        """Include hyperlinks in current PDF page.
+
+        .. versionadded:: 43
+
+
+        """
         if cairo.cairo_version() < 11504:
             return
 
@@ -539,20 +557,24 @@ class Document(object):
         PDF files written directly by cairo do not have meta-data such as
         bookmarks/outlines and hyperlinks.
 
+        :type target: str, pathlib.Path or file object
         :param target:
-            A filename, file-like object, or :obj:`None`.
+            A filename where the PDF file is generated, a file object, or
+            :obj:`None`.
         :type zoom: float
         :param zoom:
             The zoom factor in PDF units per CSS units.  **Warning**:
             All CSS units are affected, including physical units like
             ``cm`` and named sizes like ``A4``.  For values other than
-            1, the physical CSS units will thus be “wrong”.
+            1, the physical CSS units will thus be "wrong".
+        :type attachments: list
         :param attachments: A list of additional file attachments for the
             generated PDF document or :obj:`None`. The list's elements are
-            :class:`Attachment` objects, filenames, URLs, or file-like objects.
+            :class:`Attachment` objects, filenames, URLs or file-like objects.
         :returns:
-            The PDF as byte string if :obj:`target` is :obj:`None`, otherwise
-            :obj:`None` (the PDF is written to :obj:`target`).
+            The PDF as :obj:`bytes` if ``target`` is not provided or
+            :obj:`None`, otherwise :obj:`None` (the PDF is written to
+            ``target``).
 
         """
         # 0.75 = 72 PDF point (cairo units) per inch / 96 CSS pixel per inch
@@ -658,7 +680,9 @@ class Document(object):
                     shutil.copyfileobj(file_obj, fd)
 
     def write_image_surface(self, resolution=96):
-        """Render pages on a Cairo image surface.
+        """Render pages on a cairo image surface.
+
+        .. versionadded:: 0.17
 
         There is no decoration around pages other than those specified in CSS
         with ``@page`` rules. The final image is as wide as the widest page.
@@ -669,9 +693,9 @@ class Document(object):
             The output resolution in PNG pixels per CSS inch. At 96 dpi
             (the default), PNG pixels match the CSS ``px`` unit.
         :returns:
-            A ``(surface, png_width, png_height)`` tuple. :obj:`surface` is a
-            Cairo image surface. :obj:`png_width` and :obj:`png_height` are
-            the size of the final image, in PNG pixels.
+            A ``(surface, png_width, png_height)`` tuple. ``surface`` is a
+            cairo :class:`ImageSurface <cairocffi.ImageSurface>`. ``png_width``
+            and ``png_height`` are the size of the final image, in PNG pixels.
 
         """
         dppx = resolution / 96
@@ -711,11 +735,10 @@ class Document(object):
             The output resolution in PNG pixels per CSS inch. At 96 dpi
             (the default), PNG pixels match the CSS ``px`` unit.
         :returns:
-            A ``(png_bytes, png_width, png_height)`` tuple. :obj:`png_bytes`
-            is a byte string if :obj:`target` is :obj:`None`, otherwise
-            :obj:`None` (the image is written to :obj:`target`).
-            :obj:`png_width` and :obj:`png_height` are the size of the
-            final image, in PNG pixels.
+            A ``(png_bytes, png_width, png_height)`` tuple. ``png_bytes`` is a
+            byte string if ``target`` is :obj:`None`, otherwise :obj:`None`
+            (the image is written to ``target``).  ``png_width`` and
+            ``png_height`` are the size of the final image, in PNG pixels.
 
         """
         surface, max_width, sum_heights = self.write_image_surface(resolution)

@@ -220,7 +220,7 @@ Dear Windows user, please follow these steps carefully.
 Really carefully. Don’t cheat.
 
 Besides a proper Python installation and a few Python packages, WeasyPrint
-needs the Pango, Cairo and GDK-PixBuf libraries. They are required for the
+needs the Pango, cairo and GDK-PixBuf libraries. They are required for the
 graphical stuff: Text and image rendering.  These libraries aren't Python
 packages. They are part of `GTK+ <https://en.wikipedia.org/wiki/GTK+>`_
 (formerly known as GIMP Toolkit), and must be installed separately.
@@ -420,7 +420,7 @@ Open a fresh *Command Prompt* and execute
     python -m weasyprint http://weasyprint.org weasyprint.pdf
 
 If you get an error like ``OSError: dlopen() failed to load a library: cairo /
-cairo-2`` it’s probably because Cairo (or another GTK+ library mentioned in the
+cairo-2`` it’s probably because cairo (or another GTK+ library mentioned in the
 error message) is not properly available in the folders listed in your ``PATH``
 environment variable.
 

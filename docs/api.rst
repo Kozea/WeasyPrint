@@ -5,13 +5,12 @@ API stability
 -------------
 
 Everything described here is considered “public”: this is what you can rely
-on. We will try to maintain backward-compatibility, although there is no
-hard promise until version 1.0.
+on. We will try to maintain backward-compatibility, although there is no hard
+promise (that's why we only release major versions).
 
-Anything else should not be used outside of WeasyPrint itself: we reserve
+Anything else should not be used outside of WeasyPrint itself. We reserve
 the right to change it or remove it at any point. Use it at your own risk,
-or have dependency to a specific WeasyPrint version in your ``setup.py``
-or ``requirements.txt`` file.
+or have dependency to a specific WeasyPrint version.
 
 
 .. _command-line-api:
@@ -31,12 +30,16 @@ Python API
 .. autoclass:: HTML(input, **kwargs)
     :members:
 .. autoclass:: CSS(input, **kwargs)
+.. autoclass:: Attachment(input, **kwargs)
 .. autofunction:: default_url_fetcher
 
 .. module:: weasyprint.document
 .. autoclass:: Document
     :members:
-.. autoclass:: DocumentMetadata
+.. autoclass:: DocumentMetadata()
     :members:
 .. autoclass:: Page()
     :members:
+
+.. module:: weasyprint.fonts
+.. autoclass:: FontConfiguration()

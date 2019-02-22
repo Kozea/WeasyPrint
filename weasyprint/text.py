@@ -1214,7 +1214,7 @@ def split_first_line(text, style, context, max_width, justification_spacing,
 
 
 def show_first_line(context, textbox):
-    """Draw the given ``textbox`` line to the Cairo ``context``."""
+    """Draw the given ``textbox`` line to the cairo ``context``."""
     pango.pango_layout_set_single_paragraph_mode(
         textbox.pango_layout.layout, True)
     first_line, _ = textbox.pango_layout.get_first_line()

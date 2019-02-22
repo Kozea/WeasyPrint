@@ -291,7 +291,7 @@ def rounded_box_path(context, radii):
     the border box. Radii are adjusted from these values. Default is (0, 0, 0,
     0).
 
-    Inspired by Cairo Cookbook
+    Inspired by cairo cookbook
     http://cairographics.org/cookbook/roundedrectangles/
 
     """
