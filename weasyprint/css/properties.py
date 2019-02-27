@@ -121,6 +121,7 @@ INITIAL_VALUES = {
     'font_weight': 400,
 
     # Fragmentation 3 (CR): https://www.w3.org/TR/css-break-3/
+    'box_decoration_break': 'slice',
     'break_after': 'auto',
     'break_before': 'auto',
     'break_inside': 'auto',
