@@ -686,7 +686,7 @@ class Layout(object):
             style['font_variant_position'], style['font_variant_caps'],
             style['font_variant_numeric'], style['font_variant_alternates'],
             style['font_variant_east_asian'], style['font_feature_settings'])
-        if features:
+        if features and context:
             features = ','.join(
                 ('%s %i' % (key, value)) for key, value in features.items())
 
