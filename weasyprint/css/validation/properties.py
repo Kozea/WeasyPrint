@@ -301,6 +301,13 @@ def break_inside(keyword):
     return keyword in ('auto', 'avoid', 'avoid-page', 'avoid-column')
 
 
+@property()
+@single_keyword
+def box_decoration_break(keyword):
+    """``box-decoration-break`` property validation."""
+    return keyword in ('slice', 'clone')
+
+
 @property(unstable=True)
 @single_token
 def page(token):
