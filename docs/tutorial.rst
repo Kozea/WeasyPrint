@@ -252,18 +252,17 @@ instead of a network call for static and media files.
 
 A custom fetcher should be returning a :obj:`dict` with
 
-    * One of ``string`` (a :obj:`bytestring <bytes>`) or ``file_obj``
-      (a :term:`file object`).
-    * Optionally: ``mime_type``, a MIME type extracted e.g. from a
-      *Content-Type* header. If not provided, the type is guessed from the
-      file extension in the URL.
-    * Optionally: ``encoding``, a character encoding extracted e.g. from a
-      *charset* parameter in a *Content-Type* header
-    * Optionally: ``redirected_url``, the actual URL of the resource
-      if there were e.g. HTTP redirects.
-    * Optionally: ``filename``, the filename of the resource. Usually
-      derived from the *filename* parameter in a *Content-Disposition*
-      header
+* One of ``string`` (a :obj:`bytestring <bytes>`) or ``file_obj`` (a
+  :term:`file object`).
+* Optionally: ``mime_type``, a MIME type extracted e.g. from a Content-Type*
+  *header. If not provided, the type is guessed from the file extension in the
+  *URL.
+* Optionally: ``encoding``, a character encoding extracted e.g. from a charset*
+  *parameter in a *Content-Type* header
+* Optionally: ``redirected_url``, the actual URL of the resource if there were
+  e.g. HTTP redirects.
+* Optionally: ``filename``, the filename of the resource. Usually derived from
+  the *filename* parameter in a *Content-Disposition* header
 
 If a ``file_obj`` is given, the resource will be closed automatically by
 the function internally used by WeasyPrint to retreive data.
