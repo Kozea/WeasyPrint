@@ -266,7 +266,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
         context.create_block_formatting_context()
 
     is_start = skip_stack is None
-    if not is_start:
+    if box.style['box_decoration_break'] == 'slice' and not is_start:
         # Remove top margin, border and padding:
         box._remove_decoration(start=True, end=False)
 

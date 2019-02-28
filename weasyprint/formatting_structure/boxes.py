@@ -335,7 +335,8 @@ class ParentBox(Box):
         new_box.children = tuple(new_children)
         if not is_start:
             new_box.outside_list_marker = None
-        new_box._remove_decoration(not is_start, not is_end)
+        if self.style['box_decoration_break'] == 'slice':
+            new_box._remove_decoration(not is_start, not is_end)
         return new_box
 
     def descendants(self):
