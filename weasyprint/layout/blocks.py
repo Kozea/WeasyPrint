@@ -363,10 +363,19 @@ def block_container_layout(context, box, max_position_y, skip_stack,
             for line, resume_at in lines_iterator:
                 line.resume_at = resume_at
                 new_position_y = line.position_y + line.height
+
+                # Add bottom padding and border to the bottom position of the
+                # box if needed
+                if resume_at is None or (
+                        box.style['box_decoration_break'] == 'clone'):
+                    offset_y = box.border_bottom_width + box.padding_bottom
+                else:
+                    offset_y = 0
+
                 # Allow overflow if the first line of the page is higher
                 # than the page itself so that we put *something* on this
                 # page and can advance in the context.
-                if new_position_y > max_position_y and (
+                if new_position_y + offset_y > max_position_y and (
                         new_children or not page_is_empty):
                     over_orphans = len(new_children) - box.style['orphans']
                     if over_orphans < 0 and not page_is_empty:
