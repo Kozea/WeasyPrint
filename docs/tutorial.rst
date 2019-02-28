@@ -246,12 +246,12 @@ to the default fetcher:
     source = '<img src="graph:42,10.3,87">'
     HTML(string=source, url_fetcher=my_fetcher).write_pdf('out.pdf')
 
-Flask-WeasyPrint_ for Flask_ and Django-Weasyprint_ for Django both make 
-use of a custom URL fetcher to integrate WeasyPrint and use the filesystem 
+Flask-WeasyPrint_ for Flask_ and Django-Weasyprint_ for Django_ both make
+use of a custom URL fetcher to integrate WeasyPrint and use the filesystem
 instead of a network call for static and media files.
 
 A custom fetcher should be returning a :obj:`dict` with
- 
+
     * One of ``string`` (a :obj:`bytestring <bytes>`) or ``file_obj``
       (a :term:`file object`).
     * Optionally: ``mime_type``, a MIME type extracted e.g. from a
@@ -266,7 +266,7 @@ A custom fetcher should be returning a :obj:`dict` with
       header
 
 If a ``file_obj`` is given, the resource will be closed automatically by
-:func:`~weasyprint.urls.fetch`.
+the function internally used by WeasyPrint to retreive data.
 
 .. _Flask-WeasyPrint: http://packages.python.org/Flask-WeasyPrint/
 .. _Flask: http://flask.pocoo.org/
