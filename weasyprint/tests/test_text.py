@@ -885,6 +885,43 @@ def test_white_space_10():
 
 
 @assert_no_logs
+def test_white_space_11():
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/813
+    page, = render_pages('''
+      <style>
+        pre { width: 0 }
+      </style>
+      <body><pre>This<br/>is text''')
+    html, = page.children
+    body, = html.children
+    pre, = body.children
+    line1, line2 = pre.children
+    text1, box = line1.children
+    assert text1.text == 'This'
+    assert box.element_tag == 'br'
+    text2, = line2.children
+    assert text2.text == 'is text'
+
+
+@assert_no_logs
+def test_white_space_12():
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/813
+    page, = render_pages('''
+      <style>
+        pre { width: 0 }
+      </style>
+      <body><pre>This is <span>lol</span> text''')
+    html, = page.children
+    body, = html.children
+    pre, = body.children
+    line1, = pre.children
+    text1, span, text2 = line1.children
+    assert text1.text == 'This is '
+    assert span.element_tag == 'span'
+    assert text2.text == ' text'
+
+
+@assert_no_logs
 @pytest.mark.parametrize('value, width', (
     (8, 144),  # (2 + (8 - 1)) * 16
     (4, 80),  # (2 + (4 - 1)) * 16
