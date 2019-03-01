@@ -16,7 +16,6 @@ import cairocffi as cairo
 
 from ..testing_utils import FakeHTML, resource_filename
 
-
 # RGBA to native-endian ARGB
 as_pixel = (
     lambda x: x[:-1][::-1] + x[-1:]

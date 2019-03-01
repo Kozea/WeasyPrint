@@ -21,8 +21,8 @@
 from collections import defaultdict
 
 from .absolute import absolute_box_layout
-from .pages import make_all_pages, make_margin_boxes
 from .backgrounds import layout_backgrounds
+from .pages import make_all_pages, make_margin_boxes
 from ..formatting_structure import boxes
 from ..logger import PROGRESS_LOGGER
 

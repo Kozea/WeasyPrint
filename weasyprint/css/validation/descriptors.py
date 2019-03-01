@@ -13,10 +13,10 @@
 import tinycss2
 
 from . import properties
-from ...logger import LOGGER
 from ..utils import (
     InvalidValues, comma_separated_list, get_keyword, get_single_keyword,
     get_url, remove_whitespace, single_keyword, single_token)
+from ...logger import LOGGER
 
 DESCRIPTORS = {}
 

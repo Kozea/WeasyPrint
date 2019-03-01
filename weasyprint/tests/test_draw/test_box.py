@@ -12,8 +12,8 @@
 import itertools
 
 from . import B, G, R, _, assert_different_renderings, assert_pixels, b, g
-from ... import HTML
 from ..testing_utils import assert_no_logs
+from ... import HTML
 
 
 @assert_no_logs
