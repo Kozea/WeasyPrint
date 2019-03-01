@@ -11,8 +11,8 @@
 """
 
 from base64 import b64encode
-from cgi import parse_qs
 from io import BytesIO
+from urllib.parse import parse_qs
 from wsgiref.simple_server import make_server
 
 from weasyprint import HTML
