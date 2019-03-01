@@ -974,3 +974,12 @@ def test_text_transform():
     line5, = p5.children
     text5, = line5.children
     assert text5.text == 'hé lO1'
+
+
+@assert_no_logs
+def test_text_floating_pre_line():
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/610
+    page, = render_pages('''
+      <div style="float: left; white-space: pre-line">This is
+      oh this end </div>
+    ''')

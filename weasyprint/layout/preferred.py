@@ -703,11 +703,14 @@ def trailing_whitespace_size(context, box):
     if box.style['font_size'] == 0 or len(stripped_text) == len(box.text):
         return 0
     if stripped_text:
-        old_box, _, _ = split_text_box(context, box, None, 0)
+        resume = 0
+        while resume is not None:
+            old_resume = resume
+            old_box, resume, _ = split_text_box(context, box, None, resume)
         assert old_box
         stripped_box = box.copy_with_text(stripped_text)
         stripped_box, resume, _ = split_text_box(
-            context, stripped_box, None, 0)
+            context, stripped_box, None, old_resume)
         assert stripped_box is not None
         assert resume is None
         return old_box.width - stripped_box.width
