@@ -482,6 +482,7 @@ def atomic_box(context, box, position_x, skip_stack, containing_block,
                device_size, absolute_boxes, fixed_boxes):
     """Compute the width and the height of the atomic ``box``."""
     if isinstance(box, boxes.ReplacedBox):
+        box = box.copy()
         if getattr(box, 'is_list_marker', False):
             image_marker_layout(box)
         else:
