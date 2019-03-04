@@ -18,7 +18,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'WeasyPrint'
-copyright = '2011-2018, Simon Sapin and contributors, see AUTHORs'
+copyright = '2011-2019, Simon Sapin and contributors, see AUTHORS'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
