@@ -114,7 +114,7 @@ def preprocess_declarations(base_url, declarations):
                     unprefixed_name)
                 continue
 
-        if name.startswith('-'):
+        if name.startswith('-') and not name.startswith('--'):
             validation_error('debug', 'prefixed selectors are ignored')
             continue
 

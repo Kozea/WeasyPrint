@@ -10,6 +10,7 @@
 
 """
 
+from tinycss2.ast import FunctionBlock
 from tinycss2.color3 import parse_color
 
 from .. import computed_values
@@ -80,6 +81,9 @@ def property(property_name=None, proprietary=False, unstable=False,
 
 def validate_non_shorthand(base_url, name, tokens, required=False):
     """Default validator for non-shorthand properties."""
+    if name.startswith('--'):
+        return ((name, tokens),)
+
     if not required and name not in KNOWN_PROPERTIES:
         hyphens_name = name.replace('_', '-')
         if hyphens_name in KNOWN_PROPERTIES:
@@ -89,6 +93,10 @@ def validate_non_shorthand(base_url, name, tokens, required=False):
 
     if not required and name not in PROPERTIES:
         raise InvalidValues('property not supported yet')
+
+    for token in tokens:
+        if isinstance(token, FunctionBlock) and token.name == 'var':
+            return ((name, tokens),)
 
     keyword = get_single_keyword(tokens)
     if keyword in ('initial', 'inherit'):

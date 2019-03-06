@@ -12,6 +12,7 @@
 
 from urllib.parse import unquote
 
+from tinycss2.ast import FunctionBlock
 from tinycss2.color3 import parse_color
 
 from .properties import INITIAL_VALUES, Dimension
@@ -167,6 +168,7 @@ def compute(element, pseudo_type, specified, computed, parent_style,
     :param target_collector: A target collector used to get computed targets.
 
     """
+    from .validation.properties import PROPERTIES
 
     def computer():
         """Dummy object that holds attributes."""
@@ -187,6 +189,10 @@ def compute(element, pseudo_type, specified, computed, parent_style,
 
     getter = COMPUTER_FUNCTIONS.get
 
+    for name in specified:
+        if name.startswith(('--', '__')):
+            computed[name] = specified[name]
+
     for name in COMPUTING_ORDER:
         if name in computed:
             # Already computed
@@ -194,6 +200,13 @@ def compute(element, pseudo_type, specified, computed, parent_style,
 
         value = specified[name]
         function = getter(name)
+
+        if isinstance(value, tuple):
+            for child in value:
+                if isinstance(child, FunctionBlock) and child.name == 'var':
+                    variable_name = child.arguments[0].value.replace('-', '_')
+                    value = PROPERTIES[name](computed[variable_name])
+
         if function is not None:
             value = function(computer, name, value)
         # else: same as specified
