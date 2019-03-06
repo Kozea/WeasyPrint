@@ -78,7 +78,9 @@ def preprocess_declarations(base_url, declarations):
         if declaration.type != 'declaration':
             continue
 
-        name = declaration.lower_name
+        name = declaration.name
+        if not name.startswith('--'):
+            name = declaration.lower_name
 
         def validation_error(level, reason):
             getattr(LOGGER, level)(
