@@ -12,10 +12,9 @@
 
 from urllib.parse import unquote
 
-from tinycss2.ast import FunctionBlock
 from tinycss2.color3 import parse_color
 
-from .properties import INITIAL_VALUES, Dimension
+from .properties import INHERITED, INITIAL_VALUES, Dimension
 from .utils import (
     ANGLE_TO_RADIANS, LENGTH_UNITS, LENGTHS_TO_PIXELS, safe_urljoin)
 from .. import text
@@ -201,11 +200,27 @@ def compute(element, pseudo_type, specified, computed, parent_style,
         value = specified[name]
         function = getter(name)
 
-        if isinstance(value, tuple):
-            for child in value:
-                if isinstance(child, FunctionBlock) and child.name == 'var':
-                    variable_name = child.arguments[0].value.replace('-', '_')
-                    value = PROPERTIES[name](computed[variable_name])
+        if isinstance(value, tuple) and value[0] == 'var()':
+            variable_name, default = value[1]
+            computed_value = computed.get(variable_name, default)
+            new_value = PROPERTIES[name](computed_value)
+
+            # See https://drafts.csswg.org/css-variables/#invalid-variables
+            if new_value is None:
+                try:
+                    computed_value = ''.join(
+                        token.serialize() for token in computed_value)
+                except BaseException:
+                    pass
+                LOGGER.warning(
+                    'Unsupported computed value `%s` set in variable `%s` '
+                    'for property `%s`.', computed_value, variable_name, name)
+                if name in INHERITED and parent_style:
+                    value = parent_style[name]
+                else:
+                    value = INITIAL_VALUES[name]
+            else:
+                value = new_value
 
         if function is not None:
             value = function(computer, name, value)

@@ -367,7 +367,7 @@ def parse_function(function_token):
     space-separated arguments. Return ``None`` otherwise.
 
     """
-    if not function_token.type == 'function':
+    if not getattr(function_token, 'type', None) == 'function':
         return
 
     content = list(remove_whitespace(function_token.arguments))
@@ -487,6 +487,21 @@ def check_string_function(token):
             ident = 'first'
 
         return ('string()', (custom_ident, ident))
+
+
+def check_var_function(token):
+    function = parse_function(token)
+    if function is None:
+        return
+    name, args = function
+    if name == 'var' and args:
+        ident = args.pop(0)
+        if ident.type != 'ident' or not ident.value.startswith('--'):
+            return
+
+        # TODO: we should check authorized tokens
+        # https://drafts.csswg.org/css-syntax-3/#typedef-declaration-value
+        return ('var()', (ident.value.replace('-', '_'), args or None))
 
 
 def get_string(token):

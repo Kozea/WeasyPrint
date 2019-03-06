@@ -10,16 +10,15 @@
 
 """
 
-from tinycss2.ast import FunctionBlock
 from tinycss2.color3 import parse_color
 
 from .. import computed_values
 from ..properties import KNOWN_PROPERTIES, Dimension
 from ..utils import (
-    InvalidValues, comma_separated_list, get_angle, get_content_list,
-    get_content_list_token, get_image, get_keyword, get_length, get_resolution,
-    get_single_keyword, get_url, parse_2d_position, parse_background_position,
-    parse_function, single_keyword, single_token)
+    InvalidValues, check_var_function, comma_separated_list, get_angle,
+    get_content_list, get_content_list_token, get_image, get_keyword,
+    get_length, get_resolution, get_single_keyword, get_url, parse_2d_position,
+    parse_background_position, parse_function, single_keyword, single_token)
 from ...formatting_structure import counters
 
 PREFIX = '-weasy-'
@@ -95,8 +94,9 @@ def validate_non_shorthand(base_url, name, tokens, required=False):
         raise InvalidValues('property not supported yet')
 
     for token in tokens:
-        if isinstance(token, FunctionBlock) and token.name == 'var':
-            return ((name, tokens),)
+        var_function = check_var_function(token)
+        if var_function:
+            return ((name, var_function),)
 
     keyword = get_single_keyword(tokens)
     if keyword in ('initial', 'inherit'):
