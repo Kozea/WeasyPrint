@@ -190,7 +190,7 @@ def compute(element, pseudo_type, specified, computed, parent_style,
     getter = COMPUTER_FUNCTIONS.get
 
     for name in specified:
-        if name.startswith(('--', '__')):
+        if name.startswith('__'):
             computed[name] = specified[name]
 
     for name in COMPUTING_ORDER:
