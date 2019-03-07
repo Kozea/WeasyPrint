@@ -218,7 +218,7 @@ def compute(element, pseudo_type, specified, computed, parent_style,
         if value and isinstance(value, tuple) and value[0] == 'var()':
             variable_name, default = value[1]
             computed_value = _resolve_var(computed, variable_name, default)
-            new_value = PROPERTIES[name](computed_value)
+            new_value = PROPERTIES[name.replace('_', '-')](computed_value)
 
             # See https://drafts.csswg.org/css-variables/#invalid-variables
             if new_value is None:
