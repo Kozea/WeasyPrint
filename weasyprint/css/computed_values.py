@@ -16,7 +16,8 @@ from tinycss2.color3 import parse_color
 
 from .properties import INHERITED, INITIAL_VALUES, Dimension
 from .utils import (
-    ANGLE_TO_RADIANS, LENGTH_UNITS, LENGTHS_TO_PIXELS, safe_urljoin)
+    ANGLE_TO_RADIANS, LENGTH_UNITS, LENGTHS_TO_PIXELS, check_var_function,
+    safe_urljoin)
 from .. import text
 from ..logger import LOGGER
 from ..urls import get_link_attribute
@@ -139,6 +140,20 @@ COMPUTING_ORDER = _computing_order()
 COMPUTER_FUNCTIONS = {}
 
 
+def _resolve_var(computed, variable_name, default):
+    computed_value = computed.get(variable_name, default)
+    while (computed_value and
+            isinstance(computed_value, tuple)
+            and len(computed_value) == 1):
+        var_function = check_var_function(computed_value[0])
+        if var_function:
+            variable_name, default = var_function[1]
+            computed_value = computed.get(variable_name, default)
+        else:
+            break
+    return computed_value
+
+
 def register_computer(name):
     """Decorator registering a property ``name`` for a function."""
     name = name.replace('-', '_')
@@ -202,7 +217,7 @@ def compute(element, pseudo_type, specified, computed, parent_style,
 
         if value and isinstance(value, tuple) and value[0] == 'var()':
             variable_name, default = value[1]
-            computed_value = computed.get(variable_name, default)
+            computed_value = _resolve_var(computed, variable_name, default)
             new_value = PROPERTIES[name](computed_value)
 
             # See https://drafts.csswg.org/css-variables/#invalid-variables
@@ -214,7 +229,8 @@ def compute(element, pseudo_type, specified, computed, parent_style,
                     pass
                 LOGGER.warning(
                     'Unsupported computed value `%s` set in variable `%s` '
-                    'for property `%s`.', computed_value, variable_name, name)
+                    'for property `%s`.', computed_value,
+                    variable_name.replace('_', '-'), name.replace('_', '-'))
                 if name in INHERITED and parent_style:
                     value = parent_style[name]
                 else:
