@@ -100,8 +100,7 @@ def layout_document(enable_hinting, style_for, get_image_from_uri, root_box,
     """Lay out the whole document.
 
     This includes line breaks, page breaks, absolute size and position for all
-    boxes.
-    Page based counters might require multiple passes
+    boxes. Page based counters might require multiple passes.
 
     :param root_box: root of the box tree (formatting structure of the html)
                      the pages' boxes are created from that tree, i.e. this
