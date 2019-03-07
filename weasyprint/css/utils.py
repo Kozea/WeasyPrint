@@ -387,7 +387,7 @@ def parse_function(function_token):
                 if argument_function is None:
                     return
             arguments.append(token)
-    if is_comma:
+    if last_is_comma:
         return
     return function_token.lower_name, arguments
 
