@@ -81,6 +81,7 @@ def property(property_name=None, proprietary=False, unstable=False,
 def validate_non_shorthand(base_url, name, tokens, required=False):
     """Default validator for non-shorthand properties."""
     if name.startswith('--'):
+        # TODO: validate content
         return ((name, tokens),)
 
     if not required and name not in KNOWN_PROPERTIES:
