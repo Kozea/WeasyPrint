@@ -154,6 +154,7 @@ def _resolve_var(computed, variable_name, default):
                 break
             known_variable_names.append(new_variable_name)
             computed_value = computed.get(new_variable_name, new_default)
+            default = new_default
         else:
             break
     return computed_value
