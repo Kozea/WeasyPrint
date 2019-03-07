@@ -20,7 +20,7 @@
 
 from collections import defaultdict
 
-from .absolute import absolute_box_layout
+from .absolute import absolute_box_layout, absolute_layout
 from .backgrounds import layout_backgrounds
 from .pages import make_all_pages, make_margin_boxes
 from ..formatting_structure import boxes
@@ -85,13 +85,20 @@ def layout_fixed_boxes(context, pages, containing_page):
         for box in page.fixed_boxes:
             # As replaced boxes are never copied during layout, ensure that we
             # have different boxes (with a possibly different layout) for
-            # each pages
+            # each pages.
             if isinstance(box, boxes.ReplacedBox):
                 box = box.copy()
-            # Use an empty list as last argument because the fixed boxes in the
-            # fixed box has already been added to page.fixed_boxes, we don't
-            # want to get them again
-            yield absolute_box_layout(context, box, containing_page, [])
+            # Absolute boxes in fixed boxes are rendered as fixed boxes'
+            # children, even when they are fixed themselves.
+            absolute_boxes = []
+            yield absolute_box_layout(
+                context, box, containing_page, absolute_boxes)
+            while absolute_boxes:
+                new_absolute_boxes = []
+                for box in absolute_boxes:
+                    absolute_layout(
+                        context, box, containing_page, new_absolute_boxes)
+                absolute_boxes = new_absolute_boxes
 
 
 def layout_document(enable_hinting, style_for, get_image_from_uri, root_box,
