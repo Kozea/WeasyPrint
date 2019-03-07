@@ -141,6 +141,7 @@ COMPUTER_FUNCTIONS = {}
 
 
 def _resolve_var(computed, variable_name, default):
+    known_variable_names = [variable_name]
     computed_value = computed.get(variable_name, default)
     while (computed_value and
             isinstance(computed_value, tuple)
@@ -148,9 +149,10 @@ def _resolve_var(computed, variable_name, default):
         var_function = check_var_function(computed_value[0])
         if var_function:
             new_variable_name, new_default = var_function[1]
-            if new_variable_name == variable_name:
+            if new_variable_name in known_variable_names:
                 computed_value = default
                 break
+            known_variable_names.append(new_variable_name)
             computed_value = computed.get(new_variable_name, new_default)
         else:
             break
