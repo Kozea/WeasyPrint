@@ -147,8 +147,11 @@ def _resolve_var(computed, variable_name, default):
             and len(computed_value) == 1):
         var_function = check_var_function(computed_value[0])
         if var_function:
-            variable_name, default = var_function[1]
-            computed_value = computed.get(variable_name, default)
+            new_variable_name, new_default = var_function[1]
+            if new_variable_name == variable_name:
+                computed_value = default
+                break
+            computed_value = computed.get(new_variable_name, new_default)
         else:
             break
     return computed_value
@@ -218,7 +221,10 @@ def compute(element, pseudo_type, specified, computed, parent_style,
         if value and isinstance(value, tuple) and value[0] == 'var()':
             variable_name, default = value[1]
             computed_value = _resolve_var(computed, variable_name, default)
-            new_value = PROPERTIES[name.replace('_', '-')](computed_value)
+            if computed_value is None:
+                new_value = None
+            else:
+                new_value = PROPERTIES[name.replace('_', '-')](computed_value)
 
             # See https://drafts.csswg.org/css-variables/#invalid-variables
             if new_value is None:
