@@ -200,7 +200,7 @@ def compute(element, pseudo_type, specified, computed, parent_style,
         value = specified[name]
         function = getter(name)
 
-        if isinstance(value, tuple) and value[0] == 'var()':
+        if value and isinstance(value, tuple) and value[0] == 'var()':
             variable_name, default = value[1]
             computed_value = computed.get(variable_name, default)
             new_value = PROPERTIES[name](computed_value)
