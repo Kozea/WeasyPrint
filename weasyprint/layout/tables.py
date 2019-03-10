@@ -9,10 +9,10 @@
 
 """
 
-from .percentages import resolve_one_percentage, resolve_percentages
-from .preferred import max_content_width, table_and_columns_preferred_widths
 from ..formatting_structure import boxes
 from ..logger import LOGGER
+from .percentages import resolve_one_percentage, resolve_percentages
+from .preferred import max_content_width, table_and_columns_preferred_widths
 
 
 def table_layout(context, table, max_position_y, skip_stack,

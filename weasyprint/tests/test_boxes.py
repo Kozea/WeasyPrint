@@ -13,12 +13,12 @@ import functools
 
 import pytest
 
-from .testing_utils import BASE_URL, FakeHTML, assert_no_logs, capture_logs
 from .. import images
 from ..css import PageType, get_all_computed_styles
 from ..css.targets import TargetCollector
 from ..formatting_structure import boxes, build, counters
 from ..layout.pages import set_page_type_computed_styles
+from .testing_utils import BASE_URL, FakeHTML, assert_no_logs, capture_logs
 
 PROPER_CHILDREN = dict((key, tuple(map(tuple, value))) for key, value in {
     # Children can be of *any* type in *one* of the lists.

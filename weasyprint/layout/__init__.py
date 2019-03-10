@@ -20,11 +20,11 @@
 
 from collections import defaultdict
 
+from ..formatting_structure import boxes
+from ..logger import PROGRESS_LOGGER
 from .absolute import absolute_box_layout, absolute_layout
 from .backgrounds import layout_backgrounds
 from .pages import make_all_pages, make_margin_boxes
-from ..formatting_structure import boxes
-from ..logger import PROGRESS_LOGGER
 
 
 def initialize_page_maker(context, root_box):

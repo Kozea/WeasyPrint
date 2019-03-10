@@ -11,9 +11,9 @@
 
 import pytest
 
+from ...formatting_structure import boxes
 from ..test_boxes import render_pages as parse
 from ..testing_utils import SANS_FONTS, assert_no_logs
-from ...formatting_structure import boxes
 
 
 @assert_no_logs

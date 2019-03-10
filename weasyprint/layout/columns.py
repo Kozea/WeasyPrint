@@ -11,9 +11,9 @@
 
 from math import floor
 
+from ..formatting_structure import boxes
 from .absolute import absolute_layout
 from .percentages import resolve_percentages
-from ..formatting_structure import boxes
 
 
 def columns_layout(context, box, max_position_y, skip_stack, containing_block,

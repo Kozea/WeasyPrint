@@ -14,9 +14,9 @@ from urllib.parse import urlencode
 
 import cairocffi as cairo
 
-from .testing_utils import assert_no_logs
 from ..tools import navigator, renderer
 from ..urls import path2url
+from .testing_utils import assert_no_logs
 
 
 def wsgi_client(module, path_info, qs_args=None, method='GET'):

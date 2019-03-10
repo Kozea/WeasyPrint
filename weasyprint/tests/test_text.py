@@ -11,10 +11,10 @@
 
 import pytest
 
-from .test_boxes import render_pages
-from .testing_utils import MONO_FONTS, SANS_FONTS, assert_no_logs
 from ..css.properties import INITIAL_VALUES
 from ..text import split_first_line
+from .test_boxes import render_pages
+from .testing_utils import MONO_FONTS, SANS_FONTS, assert_no_logs
 
 
 def make_text(text, width=None, **style):

@@ -15,9 +15,9 @@
 
 import sys
 
-from .replaced import default_image_sizing
 from .. import text
 from ..formatting_structure import boxes
+from .replaced import default_image_sizing
 
 
 def shrink_to_fit(context, box, available_width):

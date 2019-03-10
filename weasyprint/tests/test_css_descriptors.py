@@ -11,9 +11,9 @@
 
 import tinycss2
 
-from .testing_utils import assert_no_logs, capture_logs
 from ..css import preprocess_stylesheet
 from ..css.validation.descriptors import preprocess_descriptors
+from .testing_utils import assert_no_logs, capture_logs
 
 
 @assert_no_logs

@@ -14,12 +14,12 @@ from urllib.parse import unquote
 
 from tinycss2.color3 import parse_color
 
-from .properties import INITIAL_VALUES, Dimension
-from .utils import (
-    ANGLE_TO_RADIANS, LENGTH_UNITS, LENGTHS_TO_PIXELS, safe_urljoin)
 from .. import text
 from ..logger import LOGGER
 from ..urls import get_link_attribute
+from .properties import INITIAL_VALUES, Dimension
+from .utils import (
+    ANGLE_TO_RADIANS, LENGTH_UNITS, LENGTHS_TO_PIXELS, safe_urljoin)
 
 ZERO_PIXELS = Dimension(0, 'px')
 

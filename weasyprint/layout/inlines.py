@@ -11,6 +11,10 @@
 
 import unicodedata
 
+from ..css import computed_from_cascaded
+from ..css.computed_values import ex_ratio, strut_layout
+from ..formatting_structure import boxes
+from ..text import can_break_text, split_first_line
 from .absolute import AbsolutePlaceholder, absolute_layout
 from .flex import flex_layout
 from .float import avoid_collisions, float_layout
@@ -20,10 +24,6 @@ from .preferred import (
     inline_min_content_width, shrink_to_fit, trailing_whitespace_size)
 from .replaced import image_marker_layout
 from .tables import find_in_flow_baseline, table_wrapper_width
-from ..css import computed_from_cascaded
-from ..css.computed_values import ex_ratio, strut_layout
-from ..formatting_structure import boxes
-from ..text import can_break_text, split_first_line
 
 
 def iter_line_boxes(context, box, position_y, skip_stack, containing_block,

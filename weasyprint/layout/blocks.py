@@ -9,6 +9,7 @@
 
 """
 
+from ..formatting_structure import boxes
 from .absolute import AbsolutePlaceholder, absolute_layout
 from .columns import columns_layout
 from .flex import flex_layout
@@ -20,7 +21,6 @@ from .markers import list_marker_layout
 from .min_max import handle_min_max_width
 from .percentages import resolve_percentages, resolve_position_percentages
 from .tables import table_layout, table_wrapper_width
-from ..formatting_structure import boxes
 
 
 def block_level_layout(context, box, max_position_y, skip_stack,

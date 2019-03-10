@@ -12,6 +12,7 @@
 
 from tinycss2.color3 import parse_color
 
+from ...formatting_structure import counters
 from .. import computed_values
 from ..properties import KNOWN_PROPERTIES, Dimension
 from ..utils import (
@@ -19,7 +20,6 @@ from ..utils import (
     get_content_list_token, get_image, get_keyword, get_length, get_resolution,
     get_single_keyword, get_url, parse_2d_position, parse_background_position,
     parse_function, single_keyword, single_token)
-from ...formatting_structure import counters
 
 PREFIX = '-weasy-'
 PROPRIETARY = set()

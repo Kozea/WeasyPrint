@@ -9,9 +9,9 @@
 
 import pytest
 
+from ..stacking import StackingContext
 from .test_boxes import render_pages, serialize
 from .testing_utils import assert_no_logs
-from ..stacking import StackingContext
 
 
 def serialize_stacking(context):

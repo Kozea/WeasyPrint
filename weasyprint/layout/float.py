@@ -9,12 +9,12 @@
 
 """
 
+from ..formatting_structure import boxes
 from .markers import list_marker_layout
 from .min_max import handle_min_max_width
 from .percentages import resolve_percentages, resolve_position_percentages
 from .preferred import shrink_to_fit
 from .tables import table_wrapper_width
-from ..formatting_structure import boxes
 
 
 @handle_min_max_width

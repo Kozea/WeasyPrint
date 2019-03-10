@@ -12,12 +12,12 @@
 import sys
 from math import log10
 
+from ..css.properties import Dimension
+from ..formatting_structure import boxes
 from .markers import list_marker_layout
 from .percentages import resolve_one_percentage, resolve_percentages
 from .preferred import max_content_width, min_content_width
 from .tables import find_in_flow_baseline
-from ..css.properties import Dimension
-from ..formatting_structure import boxes
 
 
 class FlexLine(list):

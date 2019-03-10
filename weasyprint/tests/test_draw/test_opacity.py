@@ -9,8 +9,8 @@
 
 """
 
-from . import assert_same_rendering
 from ..testing_utils import assert_no_logs
+from . import assert_same_rendering
 
 opacity_source = '''
     <style>
