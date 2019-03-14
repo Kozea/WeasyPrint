@@ -81,7 +81,7 @@ CSS
 As with HTML, CSS stylesheets are parsed in the :class:`weasyprint.CSS` class
 with an external library, tinycss2_.
 
-After the In addition to the actual parsing, the :mod:`weasyprint.css` and
+In addition to the actual parsing, the :mod:`weasyprint.css` and
 :mod:`weasyprint.css.validation` modules do some pre-processing:
 
 * Unknown and unsupported declarations are ignored with warnings.
@@ -212,7 +212,7 @@ The final result of the layout is a list of :class:`PageBox` objects.
 Stacking & Drawing
 ..................
 
-In step 6, the boxes are reorder by the :mod:`weasyprint.stacking` module
+In step 6, the boxes are reordered by the :mod:`weasyprint.stacking` module
 to observe `stacking rules`_ such as the ``z-index`` property.
 The result is a tree of *stacking contexts*.
 
