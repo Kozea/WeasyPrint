@@ -124,21 +124,21 @@ def resolve_percentages(box, containing_block, main_flex_direction=None):
 
     # Keep at least min_* >= 0 to prevent funny output in case box.width or
     # box.height become negative.
-    # Restricting max_* seems reasonable, too.
+    # Restricting width, height and max_* seems reasonable, too.
     if deltahorz > 0:
         if box.width != 'auto':
-            box.width -= deltahorz
+            box.width = max(0, box.width-deltahorz)
         if box.max_width != float('inf'):
             box.max_width = max(0, box.max_width-deltahorz)
         if box.min_width != 'auto':
             box.min_width = max(0, box.min_width-deltahorz)
     if deltavert > 0:
         if box.height != 'auto':
-            box.height -= deltavert
+            box.height = max(0, box.height-deltavert)
         if box.max_height != float('inf'):
-            box.max_height = max(0, box.max_height-deltahorz)
+            box.max_height = max(0, box.max_height-deltavert)
         if box.min_height != 'auto':
-            box.min_height = max(0, box.min_height-deltahorz)
+            box.min_height = max(0, box.min_height-deltavert)
 
 
 def resolve_radii_percentages(box):
