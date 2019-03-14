@@ -260,20 +260,25 @@ def test_block_percentage_heights():
 
 
 @assert_no_logs
-def test_box_sizing():
+@pytest.mark.parametrize('size', (
+    ('width: 10%; height: 1000px',),
+    ('max-width: 10%; max-height: 1000px; height: 2000px',),
+    ('width: 5%; min-width: 10%; min-height: 1000px',),
+    ('width: 10%; height: 1000px; min-width: auto; max-height: none',),
+))
+def test_box_sizing(size):
     # http://www.w3.org/TR/css3-ui/#box-sizing
     page, = parse('''
       <style>
         @page { size: 100000px }
         body { width: 10000px; margin: 0 }
-        div { width: 10%; height: 1000px;
-              margin: 100px; padding: 10px; border: 1px solid }
+        div { %s; margin: 100px; padding: 10px; border: 1px solid }
       </style>
       <div></div>
       <div style="box-sizing: content-box"></div>
       <div style="box-sizing: padding-box"></div>
       <div style="box-sizing: border-box"></div>
-    ''')
+    ''' % size)
     html, = page.children
     body, = html.children
     div_1, div_2, div_3, div_4 = body.children

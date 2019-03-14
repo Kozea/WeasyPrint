@@ -110,35 +110,35 @@ def resolve_percentages(box, containing_block, main_flex_direction=None):
     # Thanks heavens and the spec: Our validator rejects negative values
     # for padding and border-width
     if box.style['box_sizing'] == 'border-box':
-        deltahorz = (box.padding_left + box.padding_right +
-                     box.border_left_width + box.border_right_width)
-        deltavert = (box.padding_top + box.padding_bottom +
-                     box.border_top_width + box.border_bottom_width)
+        horizontal_delta = (
+            box.padding_left + box.padding_right +
+            box.border_left_width + box.border_right_width)
+        vertical_delta = (
+            box.padding_top + box.padding_bottom +
+            box.border_top_width + box.border_bottom_width)
     elif box.style['box_sizing'] == 'padding-box':
-        deltahorz = box.padding_left + box.padding_right
-        deltavert = box.padding_top + box.padding_bottom
+        horizontal_delta = box.padding_left + box.padding_right
+        vertical_delta = box.padding_top + box.padding_bottom
     else:
         assert box.style['box_sizing'] == 'content-box'
-        deltahorz = 0
-        deltavert = 0
+        horizontal_delta = 0
+        vertical_delta = 0
 
     # Keep at least min_* >= 0 to prevent funny output in case box.width or
     # box.height become negative.
     # Restricting max_* seems reasonable, too.
-    if deltahorz > 0:
+    if horizontal_delta > 0:
         if box.width != 'auto':
-            box.width -= deltahorz
-        if box.max_width != float('inf'):
-            box.max_width = max(0, box.max_width-deltahorz)
+            box.width = max(0, box.width - horizontal_delta)
+        box.max_width = max(0, box.max_width - horizontal_delta)
         if box.min_width != 'auto':
-            box.min_width = max(0, box.min_width-deltahorz)
-    if deltavert > 0:
+            box.min_width = max(0, box.min_width - horizontal_delta)
+    if vertical_delta > 0:
         if box.height != 'auto':
-            box.height -= deltavert
-        if box.max_height != float('inf'):
-            box.max_height = max(0, box.max_height-deltahorz)
+            box.height = max(0, box.height - vertical_delta)
+        box.max_height = max(0, box.max_height - vertical_delta)
         if box.min_height != 'auto':
-            box.min_height = max(0, box.min_height-deltahorz)
+            box.min_height = max(0, box.min_height - vertical_delta)
 
 
 def resolve_radii_percentages(box):
