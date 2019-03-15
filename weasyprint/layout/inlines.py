@@ -922,8 +922,12 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
             new_box.width = 0
     else:
         new_box.position_x = initial_position_x
-        if (is_start and box.style['direction'] == 'ltr') or (
-                is_end and box.style['direction'] == 'rtl'):
+        if box.style['box_decoration_break'] == 'clone':
+            translation_needed = True
+        else:
+            translation_needed = (
+                is_start if box.style['direction'] == 'ltr' else is_end)
+        if translation_needed:
             for child in new_box.children:
                 child.translate(dx=left_spacing)
         new_box.width = position_x - content_box_left

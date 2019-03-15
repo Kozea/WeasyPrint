@@ -854,3 +854,65 @@ def test_vertical_align_13():
     img_1, = line_2.children
     assert img_1.element_tag == 'img'
     assert img_1.position_y == 0
+
+
+@assert_no_logs
+def test_box_decoration_break_inline_slice():
+    # http://www.w3.org/TR/css3-background/#the-box-decoration-break
+    page_1, = parse('''
+      <style>
+        @font-face { src: url(AHEM____.TTF); font-family: ahem }
+        @page { size: 100px }
+        span { font-family: ahem; box-decoration-break: slice;
+               padding: 5px; border: 1px solid black }
+      </style>
+      <span>a<br/>b<br/>c</span>''')
+    html, = page_1.children
+    body, = html.children
+    line_1, line_2, line_3 = body.children
+    span, = line_1.children
+    assert span.width == 16
+    assert span.margin_width() == 16 + 5 + 1
+    text, br = span.children
+    assert text.position_x == 5 + 1
+    span, = line_2.children
+    assert span.width == 16
+    assert span.margin_width() == 16
+    text, br = span.children
+    assert text.position_x == 0
+    span, = line_3.children
+    assert span.width == 16
+    assert span.margin_width() == 16 + 5 + 1
+    text, = span.children
+    assert text.position_x == 0
+
+
+@assert_no_logs
+def test_box_decoration_break_inline_clone():
+    # http://www.w3.org/TR/css3-background/#the-box-decoration-break
+    page_1, = parse('''
+      <style>
+        @font-face { src: url(AHEM____.TTF); font-family: ahem }
+        @page { size: 100px }
+        span { font-family: ahem; box-decoration-break: clone;
+               padding: 5px; border: 1px solid black }
+      </style>
+      <span>a<br/>b<br/>c</span>''')
+    html, = page_1.children
+    body, = html.children
+    line_1, line_2, line_3 = body.children
+    span, = line_1.children
+    assert span.width == 16
+    assert span.margin_width() == 16 + 2 * (5 + 1)
+    text, br = span.children
+    assert text.position_x == 5 + 1
+    span, = line_2.children
+    assert span.width == 16
+    assert span.margin_width() == 16 + 2 * (5 + 1)
+    text, br = span.children
+    assert text.position_x == 5 + 1
+    span, = line_3.children
+    assert span.width == 16
+    assert span.margin_width() == 16 + 2 * (5 + 1)
+    text, = span.children
+    assert text.position_x == 5 + 1
