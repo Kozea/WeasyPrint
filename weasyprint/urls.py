@@ -4,7 +4,7 @@
 
     Various utility functions and classes.
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
@@ -228,7 +228,10 @@ def default_url_fetcher(url, timeout=10):
           header
 
         If a ``file_obj`` key is given, it is the caller’s responsibility
-        to call ``file_obj.close()``.
+        to call ``file_obj.close()``. The default function used internally to
+        fetch data in WeasyPrint tries to close the file object after
+        retreiving; but if this URL fetcher is used elsewhere, the file object
+        has to be closed manually.
 
     """
     if UNICODE_SCHEME_RE.match(url):

@@ -5,15 +5,15 @@
     Validate properties.
     See http://www.w3.org/TR/CSS21/propidx.html and various CSS3 modules.
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
 
 from tinycss2.color3 import parse_color
 
-from .. import computed_values
 from ...formatting_structure import counters
+from .. import computed_values
 from ..properties import KNOWN_PROPERTIES, Dimension
 from ..utils import (
     InvalidValues, comma_separated_list, get_angle, get_content_list,

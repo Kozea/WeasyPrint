@@ -241,18 +241,36 @@ to the default fetcher:
             graph_data = map(float, url[6:].split(','))
             return dict(string=generate_graph(graph_data),
                         mime_type='image/png')
-        else:
-            return weasyprint.default_url_fetcher(url)
+        return weasyprint.default_url_fetcher(url)
 
     source = '<img src="graph:42,10.3,87">'
     HTML(string=source, url_fetcher=my_fetcher).write_pdf('out.pdf')
 
-Flask-WeasyPrint_ makes use of a custom URL fetcher to integrate WeasyPrint
-with a Flask_ application and short-cut the network for resources that are
-within the same application.
+Flask-WeasyPrint_ for Flask_ and Django-Weasyprint_ for Django_ both make
+use of a custom URL fetcher to integrate WeasyPrint and use the filesystem
+instead of a network call for static and media files.
+
+A custom fetcher should be returning a :obj:`dict` with
+
+* One of ``string`` (a :obj:`bytestring <bytes>`) or ``file_obj`` (a
+  :term:`file object`).
+* Optionally: ``mime_type``, a MIME type extracted e.g. from a Content-Type*
+  *header. If not provided, the type is guessed from the file extension in the
+  *URL.
+* Optionally: ``encoding``, a character encoding extracted e.g. from a charset*
+  *parameter in a *Content-Type* header
+* Optionally: ``redirected_url``, the actual URL of the resource if there were
+  e.g. HTTP redirects.
+* Optionally: ``filename``, the filename of the resource. Usually derived from
+  the *filename* parameter in a *Content-Disposition* header
+
+If a ``file_obj`` is given, the resource will be closed automatically by
+the function internally used by WeasyPrint to retreive data.
 
 .. _Flask-WeasyPrint: http://packages.python.org/Flask-WeasyPrint/
 .. _Flask: http://flask.pocoo.org/
+.. _Django-WeasyPrint: https://pypi.org/project/django-weasyprint/
+.. _Django: https://www.djangoproject.com/
 
 
 Logging

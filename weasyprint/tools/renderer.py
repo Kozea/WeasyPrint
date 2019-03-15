@@ -5,14 +5,14 @@
     A simple web application allowing to type HTML and instantly visualize the
     result rendered by WeasyPrint.
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
 
 from base64 import b64encode
-from cgi import parse_qs
 from io import BytesIO
+from urllib.parse import parse_qs
 from wsgiref.simple_server import make_server
 
 from weasyprint import HTML

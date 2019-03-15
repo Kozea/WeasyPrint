@@ -4,14 +4,14 @@
 
     Test how tables are drawn.
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
 
-from . import B, R, S, _, as_pixel, assert_pixels, p
 from ...html import HTML_HANDLERS
 from ..testing_utils import assert_no_logs, requires
+from . import B, R, S, _, as_pixel, assert_pixels, p
 
 # rgba(255, 0, 0, 0.5) above #fff
 r = as_pixel(b'\xff\x7f\x7f\xff')

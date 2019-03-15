@@ -13,18 +13,18 @@
 
     See http://www.w3.org/TR/CSS21/cascade.html#used-value
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
 
 from collections import defaultdict
 
-from .absolute import absolute_box_layout
-from .pages import make_all_pages, make_margin_boxes
-from .backgrounds import layout_backgrounds
 from ..formatting_structure import boxes
 from ..logger import PROGRESS_LOGGER
+from .absolute import absolute_box_layout, absolute_layout
+from .backgrounds import layout_backgrounds
+from .pages import make_all_pages, make_margin_boxes
 
 
 def initialize_page_maker(context, root_box):
@@ -85,13 +85,20 @@ def layout_fixed_boxes(context, pages, containing_page):
         for box in page.fixed_boxes:
             # As replaced boxes are never copied during layout, ensure that we
             # have different boxes (with a possibly different layout) for
-            # each pages
+            # each pages.
             if isinstance(box, boxes.ReplacedBox):
                 box = box.copy()
-            # Use an empty list as last argument because the fixed boxes in the
-            # fixed box has already been added to page.fixed_boxes, we don't
-            # want to get them again
-            yield absolute_box_layout(context, box, containing_page, [])
+            # Absolute boxes in fixed boxes are rendered as fixed boxes'
+            # children, even when they are fixed themselves.
+            absolute_boxes = []
+            yield absolute_box_layout(
+                context, box, containing_page, absolute_boxes)
+            while absolute_boxes:
+                new_absolute_boxes = []
+                for box in absolute_boxes:
+                    absolute_layout(
+                        context, box, containing_page, new_absolute_boxes)
+                absolute_boxes = new_absolute_boxes
 
 
 def layout_document(enable_hinting, style_for, get_image_from_uri, root_box,
@@ -100,8 +107,7 @@ def layout_document(enable_hinting, style_for, get_image_from_uri, root_box,
     """Lay out the whole document.
 
     This includes line breaks, page breaks, absolute size and position for all
-    boxes.
-    Page based counters might require multiple passes
+    boxes. Page based counters might require multiple passes.
 
     :param root_box: root of the box tree (formatting structure of the html)
                      the pages' boxes are created from that tree, i.e. this

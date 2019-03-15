@@ -4,7 +4,7 @@
 
     Validate properties, expanders and descriptors.
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
@@ -12,11 +12,10 @@
 
 from tinycss2 import serialize
 
+from ... import LOGGER
+from ..utils import InvalidValues, remove_whitespace
 from .expanders import EXPANDERS
 from .properties import PREFIX, PROPRIETARY, UNSTABLE, validate_non_shorthand
-from ..utils import InvalidValues, remove_whitespace
-from ... import LOGGER
-
 
 # Not applicable to the print media
 NOT_PRINT_MEDIA = {

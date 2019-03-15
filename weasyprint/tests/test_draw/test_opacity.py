@@ -4,13 +4,13 @@
 
     Test opacity.
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
 
-from . import assert_same_rendering
 from ..testing_utils import assert_no_logs
+from . import assert_same_rendering
 
 opacity_source = '''
     <style>

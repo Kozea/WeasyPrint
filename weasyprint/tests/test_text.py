@@ -4,7 +4,7 @@
 
     Test the text layout.
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
@@ -885,6 +885,43 @@ def test_white_space_10():
 
 
 @assert_no_logs
+def test_white_space_11():
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/813
+    page, = render_pages('''
+      <style>
+        pre { width: 0 }
+      </style>
+      <body><pre>This<br/>is text''')
+    html, = page.children
+    body, = html.children
+    pre, = body.children
+    line1, line2 = pre.children
+    text1, box = line1.children
+    assert text1.text == 'This'
+    assert box.element_tag == 'br'
+    text2, = line2.children
+    assert text2.text == 'is text'
+
+
+@assert_no_logs
+def test_white_space_12():
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/813
+    page, = render_pages('''
+      <style>
+        pre { width: 0 }
+      </style>
+      <body><pre>This is <span>lol</span> text''')
+    html, = page.children
+    body, = html.children
+    pre, = body.children
+    line1, = pre.children
+    text1, span, text2 = line1.children
+    assert text1.text == 'This is '
+    assert span.element_tag == 'span'
+    assert text2.text == ' text'
+
+
+@assert_no_logs
 @pytest.mark.parametrize('value, width', (
     (8, 144),  # (2 + (8 - 1)) * 16
     (4, 80),  # (2 + (4 - 1)) * 16
@@ -937,3 +974,12 @@ def test_text_transform():
     line5, = p5.children
     text5, = line5.children
     assert text5.text == 'hé lO1'
+
+
+@assert_no_logs
+def test_text_floating_pre_line():
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/610
+    page, = render_pages('''
+      <div style="float: left; white-space: pre-line">This is
+      oh this end </div>
+    ''')

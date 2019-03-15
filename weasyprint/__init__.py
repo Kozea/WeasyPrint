@@ -7,20 +7,19 @@
     The public API is what is accessible from this "root" packages
     without importing sub-modules.
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
 
+import contextlib
 import os
 import sys
 from pathlib import Path
 
-import contextlib
-import html5lib
 import cssselect2
+import html5lib
 import tinycss2
-
 
 if sys.version_info.major < 3:
     raise RuntimeError(
@@ -49,9 +48,9 @@ __all__ = ['HTML', 'CSS', 'Attachment', 'Document', 'Page',
 
 
 # Import after setting the version, as the version is used in other modules
-from .urls import (fetch, default_url_fetcher, path2url, ensure_url,
-                   url_is_absolute)  # noqa
-from .logger import LOGGER, PROGRESS_LOGGER  # noqa
+from .urls import (  # noqa isort:skip
+    fetch, default_url_fetcher, path2url, ensure_url, url_is_absolute)
+from .logger import LOGGER, PROGRESS_LOGGER  # noqa isort:skip
 # Some imports are at the end of the file (after the CSS class)
 # to work around circular imports.
 
@@ -439,8 +438,7 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
         raise TypeError('Expected exactly one source, got ' + sources_names)
 
 # Work around circular imports.
-from .css import preprocess_stylesheet  # noqa
-from .html import (
-    find_base_url, HTML5_UA_STYLESHEET, HTML5_PH_STYLESHEET,
-    get_html_metadata)  # noqa
-from .document import Document, Page  # noqa
+from .css import preprocess_stylesheet  # noqa isort:skip
+from .html import (  # noqa isort:skip
+    HTML5_UA_STYLESHEET, HTML5_PH_STYLESHEET, find_base_url, get_html_metadata)
+from .document import Document, Page  # noqa isort:skip

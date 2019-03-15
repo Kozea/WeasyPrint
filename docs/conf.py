@@ -1,6 +1,6 @@
 # WeasyPrint documentation build configuration file.
 
-import os
+from pathlib import Path
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
@@ -18,17 +18,14 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'WeasyPrint'
-copyright = '2011-2018, Simon Sapin and contributors, see AUTHORs'
+copyright = '2011-2019, Simon Sapin and contributors, see AUTHORS'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
 # The full version, including alpha/beta/rc tags.
-release = open(
-    os.path.join(
-        os.path.dirname(__file__), os.pardir,
-        'weasyprint', 'VERSION')).read().strip()
+release = (Path(__file__).parent.parent / 'weasyprint' / 'VERSION').read_text()
 
 # The short X.Y version.
 version = release

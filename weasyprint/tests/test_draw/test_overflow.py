@@ -4,15 +4,15 @@
 
     Test overflow and clipping.
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
 
 import pytest
 
-from . import B, _, assert_pixels, g, r
 from ..testing_utils import assert_no_logs, requires
+from . import B, _, assert_pixels, g, r
 
 
 @assert_no_logs
