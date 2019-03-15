@@ -540,9 +540,8 @@ def test_vertical_space_9(margin_1, margin_2, result):
 
 
 @assert_no_logs
-def test_box_decoration_break():
+def test_box_decoration_break_block_slice():
     # http://www.w3.org/TR/css3-background/#the-box-decoration-break
-    # Property not implemented yet, always "slice".
     page_1, page_2 = parse('''
       <style>
         @page { size: 100px }
@@ -587,3 +586,61 @@ def test_box_decoration_break():
     assert paragraph.border_bottom_width == 3
     assert paragraph.margin_bottom == 5
     assert paragraph.margin_height() == 90
+
+
+@assert_no_logs
+def test_box_decoration_break_block_clone():
+    # http://www.w3.org/TR/css3-background/#the-box-decoration-break
+    page_1, page_2 = parse('''
+      <style>
+        @page { size: 100px }
+        p { padding: 2px; border: 3px solid; margin: 5px;
+            box-decoration-break: clone }
+        img { height: 40px; vertical-align: top }
+      </style>
+      <p>
+        <img src=pattern.png><br>
+        <img src=pattern.png><br>
+        <img src=pattern.png><br>
+        <img src=pattern.png><br>''')
+    html, = page_1.children
+    body, = html.children
+    paragraph, = body.children
+    line_1, line_2 = paragraph.children
+    assert paragraph.position_y == 0
+    assert paragraph.margin_top == 5
+    assert paragraph.border_top_width == 3
+    assert paragraph.padding_top == 2
+    assert paragraph.content_box_y() == 10
+    assert line_1.position_y == 10
+    assert line_2.position_y == 50
+    assert paragraph.height == 80
+    # TODO: bottom margin should be 0
+    # https://www.w3.org/TR/css-break-3/#valdef-box-decoration-break-clone
+    # "Cloned margins are truncated on block-level boxes."
+    # See https://github.com/Kozea/WeasyPrint/issues/115
+    assert paragraph.margin_bottom == 5
+    assert paragraph.border_bottom_width == 3
+    assert paragraph.padding_bottom == 2
+    assert paragraph.margin_height() == 100
+
+    html, = page_2.children
+    body, = html.children
+    paragraph, = body.children
+    line_1, line_2 = paragraph.children
+    assert paragraph.position_y == 0
+    # TODO: top margin should be 0
+    # https://www.w3.org/TR/css-break-3/#valdef-box-decoration-break-clone
+    # "Cloned margins are truncated on block-level boxes."
+    # See https://github.com/Kozea/WeasyPrint/issues/115
+    assert paragraph.margin_top == 5
+    assert paragraph.border_top_width == 3
+    assert paragraph.padding_top == 2
+    assert paragraph.content_box_y() == 10
+    assert line_1.position_y == 10
+    assert line_2.position_y == 50
+    assert paragraph.height == 80
+    assert paragraph.padding_bottom == 2
+    assert paragraph.border_bottom_width == 3
+    assert paragraph.margin_bottom == 5
+    assert paragraph.margin_height() == 100
