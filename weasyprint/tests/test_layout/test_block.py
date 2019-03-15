@@ -565,11 +565,11 @@ def test_box_decoration_break():
     assert paragraph.content_box_y() == 10
     assert line_1.position_y == 10
     assert line_2.position_y == 50
-    assert paragraph.height == 80
+    assert paragraph.height == 90
     assert paragraph.margin_bottom == 0
     assert paragraph.border_bottom_width == 0
     assert paragraph.padding_bottom == 0
-    assert paragraph.margin_height() == 90
+    assert paragraph.margin_height() == 100
 
     html, = page_2.children
     body, = html.children

@@ -324,7 +324,7 @@ def test_page_breaks_complex_5():
     html, = page_1.children
     body, = html.children
     div, = body.children
-    assert div.height == 30
+    assert div.height == 100
     html, = page_2.children
     body, = html.children
     div, img_4 = body.children
@@ -357,17 +357,18 @@ def test_page_breaks_complex_6():
     html, = page_1.children
     body, = html.children
     div, = body.children
-    assert div.height == 30
+    assert div.height == 100
     html, = page_2.children
     body, = html.children
     div, = body.children
     section, = div.children
     img_2, = section.children
     assert img_2.height == 30
-    # TODO: currently this is 60: we do not decrease the used height of
-    # blocks with 'height: auto' when we remove children from them for
-    # some page-break-*: avoid.
-    # assert div.height == 30
+    # TODO: currently this is 60: we do not increase the used height of blocks
+    # to make them fill the blank space at the end of the age when we remove
+    # children from them for some break-*: avoid.
+    # See TODOs in blocks.block_container_layout
+    # assert div.height == 100
     html, = page_3.children
     body, = html.children
     div, img_4, img_5, = body.children

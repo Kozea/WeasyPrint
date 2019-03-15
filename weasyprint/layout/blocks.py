@@ -332,7 +332,6 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                     new_child.index = index
                     new_children.append(new_child)
                 else:
-
                     for previous_child in reversed(new_children):
                         if previous_child.is_in_normal_flow():
                             last_in_flow_child = previous_child
@@ -340,6 +339,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                     page_break = block_level_page_break(
                         last_in_flow_child, child)
                     if new_children and page_break in ('avoid', 'avoid-page'):
+                        # TODO: fill the blank space at the bottom of the page
                         result = find_earlier_page_break(
                             new_children, absolute_boxes, fixed_boxes)
                         if result:
@@ -411,6 +411,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                 # See http://dev.w3.org/csswg/css3-page/#allowed-pg-brk
                 # "When an unforced page break occurs here, both the adjoining
                 #  ‘margin-top’ and ‘margin-bottom’ are set to zero."
+                # See https://github.com/Kozea/WeasyPrint/issues/115
                 elif page_is_empty and new_position_y > max_position_y:
                     # Remove the top border when a page is empty and the box is
                     # too high to be drawn in one page
@@ -545,6 +546,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
             if new_child is None:
                 # Nothing fits in the remaining space of this page: break
                 if page_break in ('avoid', 'avoid-page'):
+                    # TODO: fill the blank space at the bottom of the page
                     result = find_earlier_page_break(
                         new_children, absolute_boxes, fixed_boxes)
                     if result:
@@ -642,10 +644,18 @@ def block_container_layout(context, box, max_position_y, skip_stack,
     if not isinstance(new_box, boxes.BlockBox):
         context.finish_block_formatting_context(new_box)
 
-    # After finish_block_formatting_context which may increment new_box.height
-    new_box.height = max(
-        min(new_box.height, new_box.max_height),
-        new_box.min_height)
+    if resume_at is None:
+        # After finish_block_formatting_context which may increment
+        # new_box.height
+        new_box.height = max(
+            min(new_box.height, new_box.max_height),
+            new_box.min_height)
+    else:
+        # Make the box fill the blank space at the bottom of the page
+        # https://www.w3.org/TR/css-break-3/#box-splitting
+        new_box.height = (
+            max_position_y - new_box.position_y -
+            (new_box.margin_height() - new_box.height))
 
     if next_page['page'] is None:
         next_page['page'] = new_box.page_values()[1]
