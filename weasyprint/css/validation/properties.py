@@ -1299,9 +1299,11 @@ def string_set(tokens, base_url):
     """Validation for ``string-set``."""
     # Spec asks for strings after custom keywords, but we allow content-lists
     if len(tokens) >= 2:
-        var_name = get_keyword(tokens[0])
-        if var_name is None:
+        # Cant use get_keyword here because string names are case sensitive
+        if tokens[0].type != 'ident':
             return
+        # could .value be None?
+        var_name = tokens[0].value
         parsed_tokens = tuple(
             get_content_list_token(token, base_url) for token in tokens[1:])
         if None not in parsed_tokens:
