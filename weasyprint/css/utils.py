@@ -432,7 +432,7 @@ def check_counter_function(token, allowed_type=None):
         ident = args.pop(0)
         if ident.type != 'ident':
             return
-        arguments.append(ident.lower_value)
+        arguments.append(ident.value)
 
         if name == 'counters':
             string = args.pop(0)
@@ -626,7 +626,7 @@ def get_target(token, base_url):
         ident = args.pop(0)
         if ident.type != 'ident':
             return
-        values.append(ident.lower_value)
+        values.append(ident.value)
 
         if name == 'target-counters':
             string = get_string(args.pop(0))
