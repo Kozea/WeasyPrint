@@ -1477,7 +1477,7 @@ def test_margin_box_string_set_7():
     # Test regression: https://github.com/Kozea/WeasyPrint/issues/722
     page_1, = render_pages('''
       <style>
-        img { string-set: left  attr(alt) }
+        img { string-set: left attr(alt) }
         img + img { string-set: right attr(alt) }
         @page { @top-left  { content: '[' string(left)  ']' }
                 @top-right { content: '{' string(right) '}' } }
@@ -1495,15 +1495,16 @@ def test_margin_box_string_set_7():
     assert right_text_box.text == '{Cake}'
 
 
+@assert_no_logs
 def test_margin_box_string_set_8():
     # Test regression: https://github.com/Kozea/WeasyPrint/issues/726
     page_1, page_2, page_3 = render_pages('''
       <style>
         @page { @top-left  { content: '[' string(left) ']' } }
         p { page-break-before: always }
-        .initial { -weasy-string-set: left 'initial' }
-        .empty   { -weasy-string-set: left ''        }
-        .space   { -weasy-string-set: left ' '       }
+        .initial { string-set: left 'initial' }
+        .empty   { string-set: left ''        }
+        .space   { string-set: left ' '       }
       </style>
 
       <p class="initial">Initial</p>
