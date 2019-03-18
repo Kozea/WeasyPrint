@@ -43,7 +43,7 @@ def block_level_layout(context, box, max_position_y, skip_stack,
 
         if (context.current_page > 1 and page_is_empty):
             # TODO: we should take care of cases when this box doesn't have
-            # collaping margins with the first child of the page, see
+            # collapsing margins with the first child of the page, see
             # test_margin_break_clearance.
             if box.style['margin_break'] == 'discard':
                 box.margin_top = 0
