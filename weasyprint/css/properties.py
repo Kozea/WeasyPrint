@@ -124,6 +124,7 @@ INITIAL_VALUES = {
     'break_after': 'auto',
     'break_before': 'auto',
     'break_inside': 'auto',
+    'margin_break': 'auto',
     'orphans': 2,
     'widows': 2,
 

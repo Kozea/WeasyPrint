@@ -204,6 +204,7 @@ class LayoutContext(object):
         self.excluded_shapes = None  # Not initialized yet
         self.string_set = defaultdict(lambda: defaultdict(lambda: list()))
         self.current_page = None
+        self.forced_break = False
 
         # Cache
         self.strut_layouts = {}

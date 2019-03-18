@@ -301,6 +301,13 @@ def break_inside(keyword):
     return keyword in ('auto', 'avoid', 'avoid-page', 'avoid-column')
 
 
+@property()
+@single_keyword
+def margin_break(keyword):
+    """``margin-break`` property validation."""
+    return keyword in ('auto', 'keep', 'discard')
+
+
 @property(unstable=True)
 @single_token
 def page(token):
