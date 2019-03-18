@@ -172,13 +172,23 @@ def comma_separated_list(function):
 
 
 def get_keyword(token):
-    """If ``value`` is a keyword, return its name.
+    """If ``token`` is a keyword, return its lowercase name.
 
     Otherwise return ``None``.
 
     """
     if token.type == 'ident':
         return token.lower_value
+
+
+def get_custom_ident(token):
+    """If ``token`` is a keyword, return its name.
+
+    Otherwise return ``None``.
+
+    """
+    if token.type == 'ident':
+        return token.value
 
 
 def get_single_keyword(tokens):

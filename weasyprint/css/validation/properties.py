@@ -17,9 +17,9 @@ from .. import computed_values
 from ..properties import KNOWN_PROPERTIES, Dimension
 from ..utils import (
     InvalidValues, comma_separated_list, get_angle, get_content_list,
-    get_content_list_token, get_image, get_keyword, get_length, get_resolution,
-    get_single_keyword, get_url, parse_2d_position, parse_background_position,
-    parse_function, single_keyword, single_token)
+    get_content_list_token, get_custom_ident, get_image, get_keyword,
+    get_length, get_resolution, get_single_keyword, get_url, parse_2d_position,
+    parse_background_position, parse_function, single_keyword, single_token)
 
 PREFIX = '-weasy-'
 PROPRIETARY = set()
@@ -1299,16 +1299,14 @@ def string_set(tokens, base_url):
     """Validation for ``string-set``."""
     # Spec asks for strings after custom keywords, but we allow content-lists
     if len(tokens) >= 2:
-        # Cant use get_keyword here because string names are case sensitive
-        if tokens[0].type != 'ident':
+        var_name = get_custom_ident(tokens[0])
+        if var_name is None:
             return
-        # could .value be None?
-        var_name = tokens[0].value
         parsed_tokens = tuple(
             get_content_list_token(token, base_url) for token in tokens[1:])
         if None not in parsed_tokens:
             return (var_name, parsed_tokens)
-    elif tokens and tokens[0].value == 'none':
+    elif tokens and get_keyword(tokens[0]) == 'none':
         return 'none'
 
 
