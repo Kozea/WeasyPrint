@@ -656,6 +656,8 @@ def find_in_flow_baseline(box, last=False, baseline_types=(boxes.LineBox,)):
     Return the absolute Y position for the first (or last) in-flow baseline
     if any, or None.
     """
+    # TODO: synthetize baseline when needed
+    # See https://www.w3.org/TR/css-align-3/#synthesize-baseline
     if isinstance(box, baseline_types):
         return box.position_y + box.baseline
     if isinstance(box, boxes.ParentBox) and not isinstance(

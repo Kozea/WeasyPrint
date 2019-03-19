@@ -853,10 +853,9 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
 
                             # We have to check whether the child we're breaking
                             # is the one broken by the initial skip stack.
-                            broken_child = bool(
-                                initial_skip_stack and
-                                initial_skip_stack[0] == child_index and
-                                initial_skip_stack[1])
+                            broken_child = same_broken_child(
+                                initial_skip_stack,
+                                (child_index, child_resume_at))
                             if broken_child:
                                 # As this child has already been broken
                                 # following the original skip stack, we have to
@@ -1285,4 +1284,15 @@ def can_break_inside(box):
             return any(can_break_inside(child) for child in box.children)
         else:
             return False
+    return False
+
+
+def same_broken_child(skip_stack_1, skip_stack_2):
+    """Check that the skip stacks design the same text box."""
+    while isinstance(skip_stack_1, tuple) and isinstance(skip_stack_2, tuple):
+        if skip_stack_1[1] is None and skip_stack_2[1] is None:
+            return True
+        if skip_stack_1[0] != skip_stack_2[0]:
+            return False
+        skip_stack_1, skip_stack_2 = skip_stack_1[1], skip_stack_2[1]
     return False

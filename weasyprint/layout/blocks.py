@@ -41,6 +41,15 @@ def block_level_layout(context, box, max_position_y, skip_stack,
         if box.margin_bottom == 'auto':
             box.margin_bottom = 0
 
+        if (context.current_page > 1 and page_is_empty):
+            # TODO: we should take care of cases when this box doesn't have
+            # collapsing margins with the first child of the page, see
+            # test_margin_break_clearance.
+            if box.style['margin_break'] == 'discard':
+                box.margin_top = 0
+            elif box.style['margin_break'] == 'auto' and context.forced_break:
+                box.margin_top = 0
+
         collapsed_margin = collapse_margin(
             adjoining_margins + [box.margin_top])
         box.clearance = get_clearance(context, box, collapsed_margin)
@@ -438,11 +447,6 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                 page_name = block_level_page_name(last_in_flow_child, child)
                 if page_name or page_break in (
                         'page', 'left', 'right', 'recto', 'verso'):
-                    if page_break == 'page':
-                        page_break = 'any'
-                    elif page_break not in ('left', 'right', 'recto', 'verso'):
-                        assert page_name
-                        page_break = 'any'
                     page_name = child.page_values()[0]
                     next_page = {'break': page_break, 'page': page_name}
                     resume_at = (index, None)

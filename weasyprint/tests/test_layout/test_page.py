@@ -429,6 +429,75 @@ def test_page_breaks_complex_8():
 
 
 @assert_no_logs
+@pytest.mark.parametrize('break_after, margin_break, margin_top', (
+    ('page', 'auto', 0),
+    ('auto', 'auto', 5),
+    ('page', 'keep', 5),
+    ('auto', 'keep', 5),
+    ('page', 'discard', 0),
+    ('auto', 'discard', 0),
+))
+def test_margin_break(break_after, margin_break, margin_top):
+    page_1, page_2 = render_pages('''
+      <style>
+        @page { size: 70px; margin: 0 }
+        div { height: 63px; margin: 5px 0 8px;
+              break-after: %s; margin-break: %s }
+      </style>
+      <section>
+        <div></div>
+      </section>
+      <section>
+        <div></div>
+      </section>
+    ''' % (break_after, margin_break))
+    html, = page_1.children
+    body, = html.children
+    section, = body.children
+    div, = section.children
+    assert div.margin_top == 5
+
+    html, = page_2.children
+    body, = html.children
+    section, = body.children
+    div, = section.children
+    assert div.margin_top == margin_top
+
+
+@pytest.mark.xfail
+@assert_no_logs
+def test_margin_break_clearance():
+    page_1, page_2 = render_pages('''
+      <style>
+        @page { size: 70px; margin: 0 }
+        div { height: 63px; margin: 5px 0 8px; break-after: page }
+      </style>
+      <section>
+        <div></div>
+      </section>
+      <section>
+        <div style="border-top: 1px solid black">
+          <div></div>
+        </div>
+      </section>
+    ''')
+    html, = page_1.children
+    body, = html.children
+    section, = body.children
+    div, = section.children
+    assert div.margin_top == 5
+
+    html, = page_2.children
+    body, = html.children
+    section, = body.children
+    div_1, = section.children
+    assert div_1.margin_top == 0
+    div_2, = div_1.children
+    assert div_2.margin_top == 5
+    assert div_2.content_box_y() == 5
+
+
+@assert_no_logs
 def test_page_names_1():
     pages = render_pages('''
       <style>

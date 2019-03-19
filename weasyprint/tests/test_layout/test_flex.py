@@ -353,3 +353,20 @@ def test_flex_item_min_height():
         div_3.height ==
         article.height ==
         50)
+
+
+@assert_no_logs
+def test_flex_auto_margin():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/800
+    page, = render_pages('<div style="display: flex; margin: auto">')
+    page, = render_pages(
+        '<div style="display: flex; flex-direction: column; margin: auto">')
+
+
+@assert_no_logs
+def test_flex_no_baseline():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/765
+    page, = render_pages('''
+      <div class="references" style="display: flex; align-items: baseline;">
+        <div></div>
+      </div>''')
