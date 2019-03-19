@@ -450,7 +450,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                     parent_box, device_size, page_is_empty, absolute_boxes,
                     fixed_boxes, adjoining_margins=[]))
 
-            child._baseline = find_in_flow_baseline(new_child)
+            child._baseline = find_in_flow_baseline(new_child) or 0
             if cross == 'height':
                 child.height = new_child.height
                 # As flex items margins never collapse (with other flex items
@@ -853,8 +853,9 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
         if axis == 'width':  # and main text direction is horizontal
             box.baseline = flex_lines[0].lower_baseline if flex_lines else 0
         else:
-            box.baseline = (
-                find_in_flow_baseline(box.children[0]) if box.children else 0)
+            box.baseline = ((
+                find_in_flow_baseline(box.children[0])
+                if box.children else 0) or 0)
 
     context.finish_block_formatting_context(box)
 
