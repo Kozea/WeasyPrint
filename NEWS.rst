@@ -3,6 +3,50 @@
 ======
 
 
+Version 46
+----------
+
+Released on 2019-03-20.
+
+New features:
+
+* `#771 <https://github.com/Kozea/WeasyPrint/issues/771>`_:
+  Handle ``box-decoration-break``
+* `#115 <https://github.com/Kozea/WeasyPrint/issues/115>`_:
+  Handle ``margin-break``
+* `#821 <https://github.com/Kozea/WeasyPrint/issues/821>`_:
+  Continuous integration includes tests on Windows
+
+Bug fixes:
+
+* `#765 <https://github.com/Kozea/WeasyPrint/issues/765>`_,
+  `#754 <https://github.com/Kozea/WeasyPrint/issues/754>`_,
+  `#800 <https://github.com/Kozea/WeasyPrint/issues/800>`_:
+  Fix many crashes related to the flex layout
+* `#783 <https://github.com/Kozea/WeasyPrint/issues/783>`_:
+  Fix a couple of crashes with strange texts
+* `#827 <https://github.com/Kozea/WeasyPrint/pull/827>`_:
+  Named strings and counters are case-sensitive
+* `#823 <https://github.com/Kozea/WeasyPrint/pull/823>`_:
+  Shrink min/max-height/width according to box-sizing
+* `#728 <https://github.com/Kozea/WeasyPrint/issues/728>`_,
+  `#171 <https://github.com/Kozea/WeasyPrint/issues/171>`_:
+  Don't crash when fixed boxes are nested
+* `#610 <https://github.com/Kozea/WeasyPrint/issues/610>`_,
+  `#828 <https://github.com/Kozea/WeasyPrint/issues/828>`_:
+  Don't crash when preformatted text lines end with a space
+* `#808 <https://github.com/Kozea/WeasyPrint/issues/808>`_,
+  `#387 <https://github.com/Kozea/WeasyPrint/issues/387>`_:
+  Fix position of some images
+* `#813 <https://github.com/Kozea/WeasyPrint/issues/813>`_:
+  Don't crash when long preformatted text lines end with ``\n``
+
+Documentation:
+
+* `#815 <https://github.com/Kozea/WeasyPrint/pull/815>`_:
+  Add documentation about custom ``url_fetcher``
+
+
 Version 45
 ----------
 
@@ -58,7 +102,7 @@ Bug fixes:
   properties
 * Define minimal versions of Python and setuptools in setup.cfg
 
-Documentation
+Documentation:
 
 * `#796 <https://github.com/Kozea/WeasyPrint/pull/796>`_:
   Fix a small typo in the tutorial
@@ -108,6 +152,7 @@ Bug fixes:
 
 This version also includes the changes from unstable rc1 and rc2 versions
 listed below.
+
 
 Version 43rc2
 -------------
