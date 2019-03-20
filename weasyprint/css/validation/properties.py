@@ -117,7 +117,7 @@ def background_attachment(keyword):
 @property('border-right-color')
 @property('border-bottom-color')
 @property('border-left-color')
-@property('column-rule-color')
+@property('column-rule-color', unstable=True)
 @single_token
 def other_colors(token):
     return parse_color(token)
@@ -179,7 +179,7 @@ def list_style_image(token, base_url):
                 return 'url', parsed_url[1][1]
 
 
-@property(unstable=True)
+@property()
 def transform_origin(tokens):
     # TODO: parse (and ignore) a third value for Z.
     return parse_2d_position(tokens)
@@ -275,7 +275,7 @@ def border_corner_radius(tokens):
 @property('border-right-style')
 @property('border-left-style')
 @property('border-bottom-style')
-@property('column-rule-style')
+@property('column-rule-style', unstable=True)
 @single_keyword
 def border_style(keyword):
     """``border-*-style`` properties validation."""
@@ -308,7 +308,7 @@ def box_decoration_break(keyword):
     return keyword in ('slice', 'clone')
 
 
-@property()
+@property(unstable=True)
 @single_keyword
 def margin_break(keyword):
     """``margin-break`` property validation."""
@@ -323,10 +323,10 @@ def page(token):
         return 'auto' if token.lower_value == 'auto' else token.value
 
 
-@property("bleed-left")
-@property("bleed-right")
-@property("bleed-top")
-@property("bleed-bottom")
+@property('bleed-left', unstable=True)
+@property('bleed-right', unstable=True)
+@property('bleed-top', unstable=True)
+@property('bleed-bottom', unstable=True)
 @single_token
 def bleed(token):
     """``bleed`` property validation."""
@@ -337,7 +337,7 @@ def bleed(token):
         return get_length(token)
 
 
-@property()
+@property(unstable=True)
 def marks(tokens):
     """``marks`` property validation."""
     if len(tokens) == 2:
@@ -364,7 +364,7 @@ def outline_style(keyword):
 @property('border-right-width')
 @property('border-left-width')
 @property('border-bottom-width')
-@property('column-rule-width')
+@property('column-rule-width', unstable=True)
 @property('outline-width')
 @single_token
 def border_width(token):
@@ -377,7 +377,7 @@ def border_width(token):
         return keyword
 
 
-@property()
+@property(unstable=True)
 @single_token
 def column_width(token):
     """``column-width`` property validation."""
@@ -389,7 +389,7 @@ def column_width(token):
         return keyword
 
 
-@property()
+@property(unstable=True)
 @single_keyword
 def column_span(keyword):
     """``column-span`` property validation."""
@@ -540,7 +540,7 @@ def width_height(token):
         return 'auto'
 
 
-@property()
+@property(unstable=True)
 @single_token
 def column_gap(token):
     """Validation for the ``column-gap`` property."""
@@ -552,7 +552,7 @@ def column_gap(token):
         return keyword
 
 
-@property()
+@property(unstable=True)
 @single_keyword
 def column_fill(keyword):
     """``column-fill`` property validation."""
@@ -914,7 +914,7 @@ def orphans_widows(token):
             return value
 
 
-@property()
+@property(unstable=True)
 @single_token
 def column_count(token):
     """Validation for the ``column-count`` property."""
@@ -1324,7 +1324,7 @@ def string_set(tokens, base_url):
         return 'none'
 
 
-@property(unstable=True)
+@property()
 def transform(tokens):
     if get_single_keyword(tokens) == 'none':
         return ()
