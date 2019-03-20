@@ -283,6 +283,11 @@ def block_container_layout(context, box, max_position_y, skip_stack,
     if adjoining_margins is None:
         adjoining_margins = []
 
+    if box.style['box_decoration_break'] == 'clone':
+        max_position_y -= (
+            box.padding_bottom + box.border_bottom_width +
+            box.margin_bottom)
+
     adjoining_margins.append(box.margin_top)
     this_box_adjoining_margins = adjoining_margins
 
@@ -660,6 +665,10 @@ def block_container_layout(context, box, max_position_y, skip_stack,
         new_box.height = (
             max_position_y - new_box.position_y -
             (new_box.margin_height() - new_box.height))
+        if box.style['box_decoration_break'] == 'clone':
+            new_box.height += (
+                box.padding_bottom + box.border_bottom_width +
+                box.margin_bottom)
 
     if next_page['page'] is None:
         next_page['page'] = new_box.page_values()[1]
