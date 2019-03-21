@@ -23,14 +23,14 @@ from logging import DEBUG, WARNING
 import cssselect2
 import tinycss2
 
+from .. import CSS
+from ..logger import LOGGER, PROGRESS_LOGGER
+from ..urls import URLFetchingError, get_url_attribute, url_join
 from . import computed_values
 from .properties import INHERITED, INITIAL_NOT_COMPUTED, INITIAL_VALUES
 from .utils import remove_whitespace, split_on_comma
 from .validation import preprocess_declarations
 from .validation.descriptors import preprocess_descriptors
-from .. import CSS
-from ..logger import LOGGER, PROGRESS_LOGGER
-from ..urls import URLFetchingError, get_url_attribute, url_join
 
 # Reject anything not in here:
 PSEUDO_ELEMENTS = (None, 'before', 'after', 'first-line', 'first-letter')

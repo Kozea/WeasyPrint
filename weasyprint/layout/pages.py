@@ -11,15 +11,15 @@
 
 import copy
 
+from ..css import (
+    PageType, computed_from_cascaded, matching_page_types, set_computed_styles)
+from ..formatting_structure import boxes, build
+from ..logger import PROGRESS_LOGGER
 from .absolute import absolute_layout
 from .blocks import block_container_layout, block_level_layout
 from .min_max import handle_min_max_height, handle_min_max_width
 from .percentages import resolve_percentages
 from .preferred import max_content_width, min_content_width
-from ..css import (
-    PageType, computed_from_cascaded, matching_page_types, set_computed_styles)
-from ..formatting_structure import boxes, build
-from ..logger import PROGRESS_LOGGER
 
 
 class OrientedBox(object):
@@ -545,6 +545,7 @@ def make_page(context, root_box, page_type, resume_at, page_number,
     # See http://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
     assert isinstance(root_box, (boxes.BlockBox, boxes.FlexContainerBox))
     context.create_block_formatting_context()
+    context.current_page = page_number
     page_is_empty = True
     adjoining_margins = []
     positioned_boxes = []  # Mixed absolute and fixed
@@ -722,15 +723,19 @@ def remake_page(index, context, root_box, html, cascaded_styles,
     page_state = copy.deepcopy(initial_page_state)
     next_page_name = initial_next_page['page']
     first = index == 0
+    # TODO: handle recto/verso and add test
     blank = ((initial_next_page['break'] == 'left' and right_page) or
              (initial_next_page['break'] == 'right' and not right_page))
     if blank:
         next_page_name = None
     side = 'right' if right_page else 'left'
-    page_type = PageType(
-        side, blank, first, name=(next_page_name or None))
+    page_type = PageType(side, blank, first, name=(next_page_name or None))
     set_page_type_computed_styles(
         page_type, cascaded_styles, computed_styles, html)
+
+    context.forced_break = (
+        initial_next_page['break'] != 'any' or initial_next_page['page'])
+    context.margin_clearance = False
 
     # make_page wants a page_number of index + 1
     page_number = index + 1

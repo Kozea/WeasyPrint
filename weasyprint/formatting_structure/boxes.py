@@ -307,6 +307,16 @@ class ParentBox(Box):
         self.style['margin_%s' % side] = Dimension(0, 'px')
         self.style['padding_%s' % side] = Dimension(0, 'px')
         self.style['border_%s_width' % side] = 0
+        if side in ('top', 'bottom'):
+            self.style['border_%s_left_radius' % side] = (
+                Dimension(0, 'px'), Dimension(0, 'px'))
+            self.style['border_%s_right_radius' % side] = (
+                Dimension(0, 'px'), Dimension(0, 'px'))
+        else:
+            self.style['border_bottom_%s_radius' % side] = (
+                Dimension(0, 'px'), Dimension(0, 'px'))
+            self.style['border_top_%s_radius' % side] = (
+                Dimension(0, 'px'), Dimension(0, 'px'))
         setattr(self, 'margin_%s' % side, 0)
         setattr(self, 'padding_%s' % side, 0)
         setattr(self, 'border_%s_width' % side, 0)
@@ -325,7 +335,8 @@ class ParentBox(Box):
         new_box.children = tuple(new_children)
         if not is_start:
             new_box.outside_list_marker = None
-        new_box._remove_decoration(not is_start, not is_end)
+        if self.style['box_decoration_break'] == 'slice':
+            new_box._remove_decoration(not is_start, not is_end)
         return new_box
 
     def descendants(self):

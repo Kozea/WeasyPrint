@@ -17,10 +17,10 @@ import re
 import cairocffi
 import pytest
 
-from .testing_utils import (
-    FakeHTML, assert_no_logs, capture_logs, requires, resource_filename)
 from .. import Attachment, pdf
 from ..urls import path2url
+from .testing_utils import (
+    FakeHTML, assert_no_logs, capture_logs, requires, resource_filename)
 
 # Top of the page is 297mm ~= 842pt
 TOP = 842

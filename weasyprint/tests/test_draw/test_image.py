@@ -11,8 +11,8 @@
 
 import pytest
 
-from . import B, _, a, assert_pixels, assert_same_rendering, r
 from ..testing_utils import assert_no_logs, capture_logs
+from . import B, _, a, assert_pixels, assert_same_rendering, r
 
 centered_image = [
     _ + _ + _ + _ + _ + _ + _ + _,

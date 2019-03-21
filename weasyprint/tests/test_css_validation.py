@@ -14,11 +14,11 @@ import math
 import pytest
 import tinycss2
 
-from .testing_utils import assert_no_logs, capture_logs
 from ..css import preprocess_declarations
 from ..css.computed_values import ZERO_PIXELS
 from ..css.properties import INITIAL_VALUES, Dimension
 from ..images import LinearGradient, RadialGradient
+from .testing_utils import assert_no_logs, capture_logs
 
 
 def expand_to_dict(css, expected_error=None):

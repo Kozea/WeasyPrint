@@ -9,11 +9,11 @@
 
 """
 
+from ..formatting_structure import boxes
+from ..text import split_first_line
 from .percentages import resolve_percentages
 from .replaced import image_marker_layout
 from .tables import find_in_flow_baseline
-from ..formatting_structure import boxes
-from ..text import split_first_line
 
 
 def list_marker_layout(context, box):

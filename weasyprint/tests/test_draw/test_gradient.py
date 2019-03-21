@@ -9,8 +9,8 @@
 
 """
 
-from . import B, V, _, assert_pixels, html_to_pixels, r, v
 from ..testing_utils import assert_no_logs, requires
+from . import B, V, _, assert_pixels, html_to_pixels, r, v
 
 
 @assert_no_logs

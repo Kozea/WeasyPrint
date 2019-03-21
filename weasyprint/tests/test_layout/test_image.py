@@ -11,9 +11,9 @@
 
 import pytest
 
+from ...formatting_structure import boxes
 from ..test_boxes import render_pages as parse
 from ..testing_utils import assert_no_logs, capture_logs, requires
-from ...formatting_structure import boxes
 
 
 def get_img(html):

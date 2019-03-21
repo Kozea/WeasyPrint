@@ -9,10 +9,10 @@
 
 """
 
+from .. import HTML
 from .test_draw import assert_pixels_equal, image_to_pixels
 from .testing_utils import (
     assert_no_logs, capture_logs, requires, resource_filename)
-from .. import HTML
 
 
 @assert_no_logs

@@ -9,8 +9,8 @@
 
 """
 
-from . import B, _, assert_pixels, r
 from ..testing_utils import assert_no_logs
+from . import B, _, assert_pixels, r
 
 
 @assert_no_logs

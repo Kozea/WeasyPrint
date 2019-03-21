@@ -9,9 +9,9 @@
 
 """
 
-from . import B, R, S, _, as_pixel, assert_pixels, p
-from ..testing_utils import assert_no_logs, requires
 from ...html import HTML_HANDLERS
+from ..testing_utils import assert_no_logs, requires
+from . import B, R, S, _, as_pixel, assert_pixels, p
 
 # rgba(255, 0, 0, 0.5) above #fff
 r = as_pixel(b'\xff\x7f\x7f\xff')

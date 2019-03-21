@@ -16,10 +16,10 @@ from urllib.parse import unquote, urljoin
 
 from tinycss2.color3 import parse_color
 
-from .properties import Dimension
 from ..formatting_structure import counters
 from ..images import LinearGradient, RadialGradient
 from ..urls import iri_to_uri, url_is_absolute
+from .properties import Dimension
 
 # http://dev.w3.org/csswg/css3-values/#angles
 # 1<unit> is this many radians.
@@ -172,13 +172,23 @@ def comma_separated_list(function):
 
 
 def get_keyword(token):
-    """If ``value`` is a keyword, return its name.
+    """If ``token`` is a keyword, return its lowercase name.
 
     Otherwise return ``None``.
 
     """
     if token.type == 'ident':
         return token.lower_value
+
+
+def get_custom_ident(token):
+    """If ``token`` is a keyword, return its name.
+
+    Otherwise return ``None``.
+
+    """
+    if token.type == 'ident':
+        return token.value
 
 
 def get_single_keyword(tokens):
@@ -434,7 +444,7 @@ def check_counter_function(token, allowed_type=None):
         ident = args.pop(0)
         if ident.type != 'ident':
             return
-        arguments.append(ident.lower_value)
+        arguments.append(ident.value)
 
         if name == 'counters':
             string = args.pop(0)
@@ -643,7 +653,7 @@ def get_target(token, base_url):
         ident = args.pop(0)
         if ident.type != 'ident':
             return
-        values.append(ident.lower_value)
+        values.append(ident.value)
 
         if name == 'target-counters':
             string = get_string(args.pop(0))

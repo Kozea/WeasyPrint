@@ -12,12 +12,12 @@
 import sys
 from math import log10
 
+from ..css.properties import Dimension
+from ..formatting_structure import boxes
 from .markers import list_marker_layout
 from .percentages import resolve_one_percentage, resolve_percentages
 from .preferred import max_content_width, min_content_width
 from .tables import find_in_flow_baseline
-from ..css.properties import Dimension
-from ..formatting_structure import boxes
 
 
 class FlexLine(list):
@@ -39,13 +39,18 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
     else:
         axis, cross = 'height', 'width'
 
+    margin_left = 0 if box.margin_left == 'auto' else box.margin_left
+    margin_right = 0 if box.margin_right == 'auto' else box.margin_right
+    margin_top = 0 if box.margin_top == 'auto' else box.margin_top
+    margin_bottom = 0 if box.margin_bottom == 'auto' else box.margin_bottom
+
     if getattr(box, axis) != 'auto':
         available_main_space = getattr(box, axis)
     else:
         if axis == 'width':
             available_main_space = (
                 containing_block.width -
-                box.margin_left - box.margin_right -
+                margin_left - margin_right -
                 box.padding_left - box.padding_right -
                 box.border_left_width - box.border_right_width)
         else:
@@ -58,7 +63,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                     main_space = min(main_space, containing_block.height)
             available_main_space = (
                 main_space -
-                box.margin_top - box.margin_bottom -
+                margin_top - margin_bottom -
                 box.padding_top - box.padding_bottom -
                 box.border_top_width - box.border_bottom_width)
 
@@ -75,24 +80,28 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                     main_space = min(main_space, containing_block.height)
             available_cross_space = (
                 main_space -
-                box.margin_top - box.margin_bottom -
+                margin_top - margin_bottom -
                 box.padding_top - box.padding_bottom -
                 box.border_top_width - box.border_bottom_width)
         else:
             available_cross_space = (
                 containing_block.width -
-                box.margin_left - box.margin_right -
+                margin_left - margin_right -
                 box.padding_left - box.padding_right -
                 box.border_left_width - box.border_right_width)
 
     # Step 3
     children = box.children
-    resolve_percentages(box, containing_block)
-    if box.margin_top == 'auto':
-        box.margin_top = 0
-    if box.margin_bottom == 'auto':
-        box.margin_bottom = 0
     parent_box = box.copy_with_children(children)
+    resolve_percentages(parent_box, containing_block)
+    if parent_box.margin_top == 'auto':
+        box.margin_top = 0
+    if parent_box.margin_bottom == 'auto':
+        box.margin_bottom = 0
+    if parent_box.margin_left == 'auto':
+        box.margin_left = 0
+    if parent_box.margin_right == 'auto':
+        box.margin_right = 0
     if isinstance(parent_box, boxes.FlexBox):
         blocks.block_level_width(parent_box, containing_block)
     else:
@@ -441,7 +450,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                     parent_box, device_size, page_is_empty, absolute_boxes,
                     fixed_boxes, adjoining_margins=[]))
 
-            child._baseline = find_in_flow_baseline(new_child)
+            child._baseline = find_in_flow_baseline(new_child) or 0
             if cross == 'height':
                 child.height = new_child.height
                 # As flex items margins never collapse (with other flex items
@@ -844,8 +853,9 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
         if axis == 'width':  # and main text direction is horizontal
             box.baseline = flex_lines[0].lower_baseline if flex_lines else 0
         else:
-            box.baseline = (
-                find_in_flow_baseline(box.children[0]) if box.children else 0)
+            box.baseline = ((
+                find_in_flow_baseline(box.children[0])
+                if box.children else 0) or 0)
 
     context.finish_block_formatting_context(box)
 

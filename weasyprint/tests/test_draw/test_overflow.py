@@ -11,8 +11,8 @@
 
 import pytest
 
-from . import B, _, assert_pixels, g, r
 from ..testing_utils import assert_no_logs, requires
+from . import B, _, assert_pixels, g, r
 
 
 @assert_no_logs

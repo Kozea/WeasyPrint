@@ -9,8 +9,8 @@
 
 """
 
-from .testing_utils import BASE_URL, assert_no_logs
 from .. import CSS, HTML
+from .testing_utils import BASE_URL, assert_no_logs
 
 PH_TESTING_CSS = CSS(string='''
 @page {margin: 0; size: 1000px 1000px}
