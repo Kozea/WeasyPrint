@@ -129,7 +129,10 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
         if child.min_width == 'auto':
             specified_size = (
                 child.width if child.width != 'auto' else float('inf'))
-            new_child = child.copy_with_children(child.children)
+            if isinstance(child, boxes.ParentBox):
+                new_child = child.copy_with_children(child.children)
+            else:
+                new_child = child.copy()
             new_child.style = child.style.copy()
             new_child.style['width'] = 'auto'
             new_child.style['min_width'] = Dimension(0, 'px')
@@ -140,7 +143,10 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
             # TODO: find a way to get min-content-height
             specified_size = (
                 child.height if child.height != 'auto' else float('inf'))
-            new_child = child.copy_with_children(child.children)
+            if isinstance(child, boxes.ParentBox):
+                new_child = child.copy_with_children(child.children)
+            else:
+                new_child = child.copy()
             new_child.style = child.style.copy()
             new_child.style['height'] = 'auto'
             new_child.style['min_height'] = Dimension(0, 'px')
@@ -200,7 +206,10 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                 if axis == 'width':
                     child.flex_base_size = max_content_width(context, child)
                 else:
-                    new_child = child.copy_with_children(child.children)
+                    if isinstance(child, boxes.ParentBox):
+                        new_child = child.copy_with_children(child.children)
+                    else:
+                        new_child = child.copy()
                     new_child.width = float('inf')
                     new_child = blocks.block_level_layout(
                         context, new_child, float('inf'), child_skip_stack,
@@ -212,7 +221,10 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                 if axis == 'width':
                     child.flex_base_size = min_content_width(context, child)
                 else:
-                    new_child = child.copy_with_children(child.children)
+                    if isinstance(child, boxes.ParentBox):
+                        new_child = child.copy_with_children(child.children)
+                    else:
+                        new_child = child.copy()
                     new_child.width = 0
                     new_child = blocks.block_level_layout(
                         context, new_child, float('inf'), child_skip_stack,
@@ -442,7 +454,10 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                 child.margin_top = 0
             if child.margin_bottom == 'auto':
                 child.margin_bottom = 0
-            child_copy = child.copy_with_children(child.children)
+            if isinstance(child, boxes.ParentBox):
+                child_copy = child.copy_with_children(child.children)
+            else:
+                child_copy = child.copy()
             blocks.block_level_width(child_copy, parent_box)
             new_child, _, _, adjoining_margins, _ = (
                 blocks.block_level_layout_switch(
