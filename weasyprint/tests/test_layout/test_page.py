@@ -430,8 +430,8 @@ def test_page_breaks_complex_8():
 
 @assert_no_logs
 @pytest.mark.parametrize('break_after, margin_break, margin_top', (
-    ('page', 'auto', 0),
-    ('auto', 'auto', 5),
+    ('page', 'auto', 5),
+    ('auto', 'auto', 0),
     ('page', 'keep', 5),
     ('auto', 'keep', 5),
     ('page', 'discard', 0),
