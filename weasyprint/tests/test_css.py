@@ -189,46 +189,46 @@ def test_page():
     set_page_type_computed_styles(standard_page_type, document, style_for)
 
     style = style_for(PageType(
-        side='left', first=True, blank=False, index=None, name=None))
+        side='left', first=True, blank=False, index=0, name=None))
     assert style['margin_top'] == (5, 'px')
     assert style['margin_left'] == (10, 'px')
     assert style['margin_bottom'] == (10, 'px')
     assert style['color'] == (1, 0, 0, 1)  # red, inherited from html
 
     style = style_for(PageType(
-        side='right', first=True, blank=False, index=None, name=None))
+        side='right', first=True, blank=False, index=0, name=None))
     assert style['margin_top'] == (5, 'px')
     assert style['margin_left'] == (10, 'px')
     assert style['margin_bottom'] == (16, 'px')
     assert style['color'] == (0, 0, 1, 1)  # blue
 
     style = style_for(PageType(
-        side='left', first=False, blank=False, index=None, name=None))
+        side='left', first=False, blank=False, index=1, name=None))
     assert style['margin_top'] == (10, 'px')
     assert style['margin_left'] == (10, 'px')
     assert style['margin_bottom'] == (10, 'px')
     assert style['color'] == (1, 0, 0, 1)  # red, inherited from html
 
     style = style_for(PageType(
-        side='right', first=False, blank=False, index=None, name=None))
+        side='right', first=False, blank=False, index=1, name=None))
     assert style['margin_top'] == (10, 'px')
     assert style['margin_left'] == (10, 'px')
     assert style['margin_bottom'] == (16, 'px')
     assert style['color'] == (0, 0, 1, 1)  # blue
 
     style = style_for(
-        PageType(side='left', first=True, blank=False, index=None, name=None),
+        PageType(side='left', first=True, blank=False, index=0, name=None),
         '@top-left')
     assert style is None
 
     style = style_for(PageType(
-        side='right', first=True, blank=False, index=None, name=None),
+        side='right', first=True, blank=False, index=0, name=None),
         '@top-left')
     assert style['font_size'] == 20  # inherited from @page
     assert style['width'] == (200, 'px')
 
     style = style_for(
-        PageType(side='right', first=True, blank=False, index=None, name=None),
+        PageType(side='right', first=True, blank=False, index=0, name=None),
         '@top-right')
     assert style['font_size'] == 10
 
@@ -237,24 +237,24 @@ def test_page():
 @pytest.mark.parametrize('style, selectors', (
     ('@page {}', [{
         'side': None, 'blank': False, 'first': False, 'name': None,
-        'specificity': [0, 0, 0]}]),
+        'index': None, 'specificity': [0, 0, 0]}]),
     ('@page :left {}', [{
         'side': 'left', 'blank': False, 'first': False, 'name': None,
-        'specificity': [0, 0, 1]}]),
+        'index': None, 'specificity': [0, 0, 1]}]),
     ('@page:first:left {}', [{
         'side': 'left', 'blank': False, 'first': True, 'name': None,
-        'specificity': [0, 1, 1]}]),
+        'index': None, 'specificity': [0, 1, 1]}]),
     ('@page pagename {}', [{
         'side': None, 'blank': False, 'first': False, 'name': 'pagename',
-        'specificity': [1, 0, 0]}]),
+        'index': None, 'specificity': [1, 0, 0]}]),
     ('@page pagename:first:right:blank {}', [{
         'side': 'right', 'blank': True, 'first': True, 'name': 'pagename',
-        'specificity': [1, 2, 1]}]),
+        'index': None, 'specificity': [1, 2, 1]}]),
     ('@page pagename, :first {}', [
         {'side': None, 'blank': False, 'first': False, 'name': 'pagename',
-         'specificity': [1, 0, 0]},
+         'index': None, 'specificity': [1, 0, 0]},
         {'side': None, 'blank': False, 'first': True, 'name': None,
-         'specificity': [0, 1, 0]}]),
+         'index': None, 'specificity': [0, 1, 0]}]),
     ('@page page page {}', None),
     ('@page :left page {}', None),
     ('@page :left, {}', None),
