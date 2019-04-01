@@ -142,6 +142,13 @@ COMPUTER_FUNCTIONS = {}
 
 def _resolve_var(computed, variable_name, default):
     known_variable_names = [variable_name]
+
+    computed_value = computed.get(variable_name)
+    if computed_value and len(computed_value) == 1:
+        value = computed_value[0]
+        if value.type == 'ident' and value.value == 'initial':
+            return default
+
     computed_value = computed.get(variable_name, default)
     while (computed_value and
             isinstance(computed_value, tuple)
