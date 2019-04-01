@@ -385,10 +385,13 @@ def test_whitespace():
 
 @assert_no_logs
 @pytest.mark.parametrize('page_type, top, right, bottom, left', (
-    (PageType(side='left', first=True, blank=False, name=None), 20, 3, 3, 10),
-    (PageType(side='right', first=True, blank=False, name=None), 20, 10, 3, 3),
-    (PageType(side='left', first=False, blank=False, name=None), 10, 3, 3, 10),
-    (PageType(side='right', first=False, blank=False, name=None),
+    (PageType(side='left', first=True, index=None, blank=False, name=None),
+     20, 3, 3, 10),
+    (PageType(side='right', first=True, index=None, blank=False, name=None),
+     20, 10, 3, 3),
+    (PageType(side='left', first=False, index=None, blank=False, name=None),
+     10, 3, 3, 10),
+    (PageType(side='right', first=False, index=None, blank=False, name=None),
      10, 10, 3, 3),
 ))
 def test_page_style(page_type, top, right, bottom, left):
@@ -405,7 +408,7 @@ def test_page_style(page_type, top, right, bottom, left):
     # Force the generation of the style for all possible page types as it's
     # generally only done during the rendering for needed page types.
     standard_page_type = PageType(
-        side=None, blank=False, first=False, name=None)
+        side=None, blank=False, first=False, index=None, name=None)
     set_page_type_computed_styles(standard_page_type, document, style_for)
 
     style = style_for(page_type)

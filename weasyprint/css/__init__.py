@@ -36,7 +36,7 @@ from .validation.descriptors import preprocess_descriptors
 PSEUDO_ELEMENTS = (None, 'before', 'after', 'first-line', 'first-letter')
 
 
-PageType = namedtuple('PageType', ['side', 'blank', 'first', 'name'])
+PageType = namedtuple('PageType', ['side', 'blank', 'first', 'index', 'name'])
 
 
 class StyleFor:
@@ -533,15 +533,19 @@ def matching_page_types(page_type, names=()):
         page_type.side]
     blanks = (True, False) if page_type.blank is False else (True,)
     firsts = (True, False) if page_type.first is False else (True,)
+    indexes = list(range(100)) if page_type.index is None else (
+        page_type.index,)
     names = (
         tuple(names) + (None,) if page_type.name is None
         else (page_type.name,))
     for side in sides:
         for blank in blanks:
             for first in firsts:
-                for name in names:
-                    yield PageType(
-                        side=side, blank=blank, first=first, name=name)
+                for index in indexes:
+                    if (first and index) or (not first and not index):
+                        continue
+                    for name in names:
+                        yield PageType(side, blank, first, index, name)
 
 
 def declaration_precedence(origin, importance):
@@ -651,6 +655,7 @@ def parse_page_selectors(rule):
     - 'side' ('left', 'right' or None),
     - 'blank' (True or False),
     - 'first' (True or False),
+    - 'index' (page number or None),
     - 'name' (page name string or None), and
     - 'spacificity' (list of numbers).
 
@@ -665,14 +670,14 @@ def parse_page_selectors(rule):
     # TODO: Specificity is probably wrong, should clean and test that.
     if not tokens:
         page_data.append({
-            'side': None, 'blank': False, 'first': False, 'name': None,
-            'specificity': [0, 0, 0]})
+            'side': None, 'blank': False, 'first': False, 'index': None,
+            'name': None, 'specificity': [0, 0, 0]})
         return page_data
 
     while tokens:
         types = {
-            'side': None, 'blank': False, 'first': False, 'name': None,
-            'specificity': [0, 0, 0]}
+            'side': None, 'blank': False, 'first': False, 'index': None,
+            'name': None, 'specificity': [0, 0, 0]}
 
         if tokens[0].type == 'ident':
             token = tokens.pop(0)
@@ -691,22 +696,38 @@ def parse_page_selectors(rule):
                 return None
 
             if literal.value == ':':
-                if not tokens or tokens[0].type != 'ident':
+                if not tokens:
                     return None
-                ident = tokens.pop(0)
-                pseudo_class = ident.lower_value
-                if pseudo_class in ('left', 'right'):
-                    if types['side']:
+
+                if tokens[0].type == 'ident':
+                    ident = tokens.pop(0)
+                    pseudo_class = ident.lower_value
+                    if pseudo_class in ('left', 'right'):
+                        if types['side']:
+                            return None
+                        types['side'] = pseudo_class
+                        types['specificity'][2] += 1
+                        continue
+                    elif pseudo_class in ('blank', 'first'):
+                        if types[pseudo_class]:
+                            return None
+                        types[pseudo_class] = True
+                        types['specificity'][1] += 1
+                        continue
+                elif tokens[0].type == 'function':
+                    function = tokens.pop(0)
+                    if function.name != 'nth':
                         return None
-                    types['side'] = pseudo_class
-                    types['specificity'][2] += 1
-                elif pseudo_class in ('blank', 'first'):
-                    if types[pseudo_class]:
+                    arguments = function.arguments
+                    if len(arguments) != 1:
                         return None
-                    types[pseudo_class] = True
-                    types['specificity'][1] += 1
-                else:
-                    return None
+                    number = arguments[0]
+                    if number.type != 'number':
+                        return None
+                    types['index'] = number.value - 1
+                    continue
+
+                return None
             elif literal.value == ',':
                 if tokens and any(types['specificity']):
                     break
