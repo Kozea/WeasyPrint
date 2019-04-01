@@ -1230,14 +1230,13 @@ def add_word_spacing(context, box, justification_spacing, x_advance):
         box.position_x += x_advance
         nb_spaces = count_spaces(box)
         if nb_spaces > 0:
-            layout, _, resume_at, width, _, _ = split_first_line(
+            layout, _, resume_at, _, _, _ = split_first_line(
                 box.text, box.style, context, float('inf'),
                 box.justification_spacing)
             assert resume_at is None
-            # XXX new_box.width - box.width is always 0???
-            # x_advance +=  new_box.width - box.width
-            x_advance += justification_spacing * nb_spaces
-            box.width = width
+            extra_space = justification_spacing * nb_spaces
+            x_advance += extra_space
+            box.width += extra_space
             box.pango_layout = layout
     elif isinstance(box, (boxes.LineBox, boxes.InlineBox)):
         box.position_x += x_advance
