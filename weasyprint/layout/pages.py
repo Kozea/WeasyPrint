@@ -11,8 +11,7 @@
 
 import copy
 
-from ..css import (
-    PageType, computed_from_cascaded, matching_page_types, set_computed_styles)
+from ..css import PageType, computed_from_cascaded, matching_page_types
 from ..formatting_structure import boxes, build
 from ..logger import PROGRESS_LOGGER
 from .absolute import absolute_layout
@@ -681,8 +680,8 @@ def set_page_type_computed_styles(page_type, html, style_for):
             continue
 
         # Apply style for page
-        set_computed_styles(
-            style_for, matching_page_type,
+        style_for.set_computed_styles(
+            matching_page_type,
             # @page inherits from the root element:
             # http://lists.w3.org/Archives/Public/www-style/2012Jan/1164.html
             root=html.etree_element, parent=html.etree_element,
@@ -691,8 +690,8 @@ def set_page_type_computed_styles(page_type, html, style_for):
         # Apply style for page pseudo-elements (margin boxes)
         for element, pseudo_type in style_for.get_cascaded_styles():
             if pseudo_type and element == matching_page_type:
-                set_computed_styles(
-                    style_for, element, pseudo_type=pseudo_type,
+                style_for.set_computed_styles(
+                    element, pseudo_type=pseudo_type,
                     # The pseudo-element inherits from the element.
                     root=html.etree_element, parent=element,
                     base_url=html.base_url)

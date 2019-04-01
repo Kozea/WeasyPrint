@@ -39,7 +39,6 @@ PSEUDO_ELEMENTS = (None, 'before', 'after', 'first-line', 'first-letter')
 PageType = namedtuple('PageType', ['side', 'blank', 'first', 'name'])
 
 
-# This is mostly useful to make pseudo_type optional.
 class StyleFor:
     """Convenience function to get the computed styles for an element."""
     def __init__(self, html, sheets, presentational_hints, target_collector):
@@ -89,10 +88,9 @@ class StyleFor:
                             cascaded_styles, name, values, weight,
                             element.etree_element, pseudo_type)
             parent = element.parent.etree_element if element.parent else None
-            set_computed_styles(
-                self, element.etree_element, root=html.etree_element,
-                parent=parent, base_url=html.base_url,
-                target_collector=target_collector)
+            self.set_computed_styles(
+                element.etree_element, root=html.etree_element, parent=parent,
+                base_url=html.base_url, target_collector=target_collector)
 
         page_names = {style['page'] for style in computed_styles.values()}
 
@@ -121,8 +119,8 @@ class StyleFor:
         # might as well not exist.)
         for element, pseudo_type in cascaded_styles:
             if pseudo_type and not isinstance(element, PageType):
-                set_computed_styles(
-                    self, element, pseudo_type=pseudo_type,
+                self.set_computed_styles(
+                    element, pseudo_type=pseudo_type,
                     # The pseudo-element inherits from the element.
                     root=html.etree_element, parent=element,
                     base_url=html.base_url, target_collector=target_collector)
@@ -144,6 +142,35 @@ class StyleFor:
                         style['margin_' + side] = computed_values.ZERO_PIXELS
 
         return style
+
+    def set_computed_styles(self, element, parent, root=None, pseudo_type=None,
+                            base_url=None, target_collector=None):
+        """Set the computed values of styles to ``element``.
+
+        Take the properties left by ``apply_style_rule`` on an element or
+        pseudo-element and assign computed values with respect to the cascade,
+        declaration priority (ie. ``!important``) and selector specificity.
+
+        """
+        cascaded_styles = self.get_cascaded_styles()
+        computed_styles = self.get_computed_styles()
+        if element == root and pseudo_type is None:
+            assert parent is None
+            parent_style = None
+            root_style = {
+                # When specified on the font-size property of the root element,
+                # the rem units refer to the property’s initial value.
+                'font_size': INITIAL_VALUES['font_size'],
+            }
+        else:
+            assert parent is not None
+            parent_style = computed_styles[parent, None]
+            root_style = computed_styles[root, None]
+
+        cascaded = cascaded_styles.get((element, pseudo_type), {})
+        computed_styles[element, pseudo_type] = computed_from_cascaded(
+            element, cascaded, parent_style, pseudo_type, root_style, base_url,
+            target_collector)
 
     def get_cascaded_styles(self):
         return self._cascaded_styles
@@ -551,37 +578,6 @@ def add_declaration(cascaded_styles, prop_name, prop_values, weight, element,
     _values, previous_weight = style.get(prop_name, (None, None))
     if previous_weight is None or previous_weight <= weight:
         style[prop_name] = prop_values, weight
-
-
-def set_computed_styles(style_for, element, parent, root=None,
-                        pseudo_type=None, base_url=None,
-                        target_collector=None):
-    """Set the computed values of styles to ``element``.
-
-    Take the properties left by ``apply_style_rule`` on an element or
-    pseudo-element and assign computed values with respect to the cascade,
-    declaration priority (ie. ``!important``) and selector specificity.
-
-    """
-    cascaded_styles = style_for.get_cascaded_styles()
-    computed_styles = style_for.get_computed_styles()
-    if element == root and pseudo_type is None:
-        assert parent is None
-        parent_style = None
-        root_style = {
-            # When specified on the font-size property of the root element, the
-            # rem units refer to the property’s initial value.
-            'font_size': INITIAL_VALUES['font_size'],
-        }
-    else:
-        assert parent is not None
-        parent_style = computed_styles[parent, None]
-        root_style = computed_styles[root, None]
-
-    cascaded = cascaded_styles.get((element, pseudo_type), {})
-    computed_styles[element, pseudo_type] = computed_from_cascaded(
-        element, cascaded, parent_style, pseudo_type, root_style, base_url,
-        target_collector)
 
 
 def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
