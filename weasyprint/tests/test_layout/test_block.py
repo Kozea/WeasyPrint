@@ -629,21 +629,17 @@ def test_box_decoration_break_block_clone():
     paragraph, = body.children
     img_1, img_2 = paragraph.children
     assert paragraph.position_y == 0
-    # TODO: top margin should be 0
-    # https://www.w3.org/TR/css-break-3/#valdef-box-decoration-break-clone
-    # "Cloned margins are truncated on block-level boxes."
-    # See https://github.com/Kozea/WeasyPrint/issues/115
-    assert paragraph.margin_top == 5
+    assert paragraph.margin_top == 0
     assert paragraph.border_top_width == 3
     assert paragraph.padding_top == 2
-    assert paragraph.content_box_y() == 10
-    assert img_1.position_y == 10
-    assert img_2.position_y == 50
+    assert paragraph.content_box_y() == 5
+    assert img_1.position_y == 5
+    assert img_2.position_y == 45
     assert paragraph.height == 80
     assert paragraph.padding_bottom == 2
     assert paragraph.border_bottom_width == 3
     assert paragraph.margin_bottom == 5
-    assert paragraph.margin_height() == 100
+    assert paragraph.margin_height() == 95
 
 
 @assert_no_logs

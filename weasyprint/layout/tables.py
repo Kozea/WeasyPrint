@@ -62,6 +62,7 @@ def table_layout(context, table, max_position_y, skip_stack,
     def group_layout(group, position_y, max_position_y,
                      page_is_empty, skip_stack):
         resume_at = None
+        original_page_is_empty = page_is_empty
         resolve_percentages(group, containing_block=table)
         group.position_x = rows_x
         group.position_y = position_y
@@ -215,7 +216,7 @@ def table_layout(context, table, max_position_y, skip_stack,
 
         # Do not keep the row group if we made a page break
         # before any of its rows or with 'avoid'
-        if resume_at and (
+        if resume_at and not original_page_is_empty and (
                 group.style['break_inside'] in ('avoid', 'avoid-page') or
                 not new_group_children):
             return None, None

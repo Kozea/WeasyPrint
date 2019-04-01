@@ -47,8 +47,9 @@ def block_level_layout(context, box, max_position_y, skip_stack,
             # test_margin_break_clearance.
             if box.style['margin_break'] == 'discard':
                 box.margin_top = 0
-            elif box.style['margin_break'] == 'auto' and context.forced_break:
-                box.margin_top = 0
+            elif box.style['margin_break'] == 'auto':
+                if not context.forced_break:
+                    box.margin_top = 0
 
         collapsed_margin = collapse_margin(
             adjoining_margins + [box.margin_top])
