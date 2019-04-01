@@ -4,15 +4,15 @@
 
     Test how lists are drawn.
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
 
 import pytest
 
-from . import B, _, assert_pixels, r
 from ..testing_utils import SANS_FONTS, assert_no_logs
+from . import B, _, assert_pixels, r
 
 
 @assert_no_logs

@@ -4,7 +4,7 @@
 
     Helpers for tests.
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
@@ -25,7 +25,7 @@ from ..urls import path2url
 
 # Lists of fonts with many variants (including condensed)
 if sys.platform.startswith('win'):
-    SANS_FONTS = 'Arial Nova, Arial, sans'
+    SANS_FONTS = 'DejaVu Sans, Arial Nova, Arial, sans'
     MONO_FONTS = 'Courier New, Courier, monospace'
 elif sys.platform.startswith('darwin'):
     # Pango on macOS doesn't handle multiple fonts

@@ -4,15 +4,15 @@
 
     Test how images are drawn.
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
 
 import pytest
 
-from . import B, _, a, assert_pixels, assert_same_rendering, r
 from ..testing_utils import assert_no_logs, capture_logs
+from . import B, _, a, assert_pixels, assert_same_rendering, r
 
 centered_image = [
     _ + _ + _ + _ + _ + _ + _ + _,
@@ -69,6 +69,25 @@ page_break = [
     _ + _ + B + B + B + B + _ + _,
     _ + _ + B + B + B + B + _ + _,
     _ + _ + B + B + B + B + _ + _,
+    _ + _ + _ + _ + _ + _ + _ + _,
+    _ + _ + _ + _ + _ + _ + _ + _,
+]
+table = [
+    _ + _ + _ + _ + _ + _ + _ + _,
+    _ + _ + _ + _ + _ + _ + _ + _,
+    _ + _ + r + B + B + B + _ + _,
+    _ + _ + B + B + B + B + _ + _,
+    _ + _ + B + B + B + B + _ + _,
+    _ + _ + B + B + B + B + _ + _,
+    _ + _ + _ + _ + _ + _ + _ + _,
+    _ + _ + _ + _ + _ + _ + _ + _,
+
+    _ + _ + r + B + B + B + _ + _,
+    _ + _ + B + B + B + B + _ + _,
+    _ + _ + B + B + B + B + _ + _,
+    _ + _ + B + B + B + B + _ + _,
+    _ + _ + _ + _ + _ + _ + _ + _,
+    _ + _ + _ + _ + _ + _ + _ + _,
     _ + _ + _ + _ + _ + _ + _ + _,
     _ + _ + _ + _ + _ + _ + _ + _,
 ]
@@ -196,6 +215,52 @@ def test_images_page_break():
       </style>
       <div><img src="pattern.png"></div>
       <div style="page-break-before: right"><img src="pattern.png"></div>''')
+
+
+@assert_no_logs
+def test_image_repeat_inline():
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/808
+    assert_pixels('image_page_repeat_inline', 8, 2 * 8, table, '''
+      <style>
+        @page { size: 8px; margin: 0; background: #fff }
+        table { border-collapse: collapse; margin: 2px }
+        th, td { border: none; padding: 0 }
+        th { height: 4px; line-height: 4px }
+        td { height: 2px }
+        img { vertical-align: top }
+      </style>
+      <table>
+        <thead>
+          <tr><th><img src="pattern.png"></th></tr>
+        </thead>
+        <tbody>
+          <tr><td></td></tr>
+          <tr><td></td></tr>
+        </tbody>
+      </table>''')
+
+
+@assert_no_logs
+def test_image_repeat_block():
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/808
+    assert_pixels('image_page_repeat_block', 8, 2 * 8, table, '''
+      <style>
+        @page { size: 8px; margin: 0; background: #fff }
+        table { border-collapse: collapse; margin: 2px }
+        th, td { border: none; padding: 0 }
+        th { height: 4px }
+        td { height: 2px }
+        img { display: block }
+      </style>
+      <table>
+        <thead>
+          <tr><th><img src="pattern.png"></th></tr>
+        </thead>
+        <tbody>
+          <tr><td></td></tr>
+          <tr><td></td></tr>
+        </tbody>
+      </table>''')
 
 
 @assert_no_logs

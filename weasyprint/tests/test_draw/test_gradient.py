@@ -4,13 +4,13 @@
 
     Test how gradients are drawn.
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
 
-from . import B, V, _, assert_pixels, html_to_pixels, r, v
 from ..testing_utils import assert_no_logs, requires
+from . import B, V, _, assert_pixels, html_to_pixels, r, v
 
 
 @assert_no_logs

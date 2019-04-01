@@ -4,13 +4,13 @@
 
     Test visibility.
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
 
-from . import B, _, assert_pixels, r
 from ..testing_utils import assert_no_logs
+from . import B, _, assert_pixels, r
 
 visibility_source = '''
   <style>

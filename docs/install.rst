@@ -3,7 +3,7 @@ Installing
 
 WeasyPrint |version| depends on:
 
-* CPython_ ≥ 3.4.0
+* CPython_ ≥ 3.5.0
 * cairo_ ≥ 1.15.4 [#]_
 * Pango_ ≥ 1.38.0 [#]_
 * setuptools_ ≥ 30.3.0 [#]_
@@ -86,8 +86,9 @@ WeasyPrint! Otherwise, please copy the full error message and
 .. [#] pango ≥ 1.29.3 is required, but 1.38.0 is needed to handle `@font-face`
        CSS rules.
 
-.. [#] setuptools ≥ 30.3.0 is required to install WeasyPrint, but 39.2.0 is
-       required to build the package.
+.. [#] setuptools ≥ 30.3.0 is required to install WeasyPrint from wheel, but
+       39.2.0 is required to build the package or install from
+       source. setuptools < 40.8.0 will not include the LICENSE file.
 
 .. [#] Without it, PNG and SVG are the only supported image formats.
        JPEG, GIF and others are not available.
@@ -161,6 +162,21 @@ For Alpine Linux 3.6 or newer:
 
     apk --update --upgrade add gcc musl-dev jpeg-dev zlib-dev libffi-dev cairo-dev pango-dev gdk-pixbuf-dev
 
+.. note::
+
+    Some Alpine images do not resolv the library path via ctypes.utils.find_library. So if you get
+    ``OSError: dlopen() failed to load a library: cairo / cairo-2 / cairo-gobject-2``
+    then change find_library and open the library directly:
+    ``/usr/local/lib/python3.7/site-packages/cairocffi/__init__.py``
+
+    .. code-block:: python
+
+        try:
+            lib = ffi.dlopen(name)
+            if lib:
+        ...
+        cairo = dlopen(ffi, 'libcairo.so.2')
+
 
 .. _macos:
 
@@ -204,7 +220,7 @@ Dear Windows user, please follow these steps carefully.
 Really carefully. Don’t cheat.
 
 Besides a proper Python installation and a few Python packages, WeasyPrint
-needs the Pango, Cairo and GDK-PixBuf libraries. They are required for the
+needs the Pango, cairo and GDK-PixBuf libraries. They are required for the
 graphical stuff: Text and image rendering.  These libraries aren't Python
 packages. They are part of `GTK+ <https://en.wikipedia.org/wiki/GTK+>`_
 (formerly known as GIMP Toolkit), and must be installed separately.
@@ -404,7 +420,7 @@ Open a fresh *Command Prompt* and execute
     python -m weasyprint http://weasyprint.org weasyprint.pdf
 
 If you get an error like ``OSError: dlopen() failed to load a library: cairo /
-cairo-2`` it’s probably because Cairo (or another GTK+ library mentioned in the
+cairo-2`` it’s probably because cairo (or another GTK+ library mentioned in the
 error message) is not properly available in the folders listed in your ``PATH``
 environment variable.
 

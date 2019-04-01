@@ -4,7 +4,7 @@
 
     Take an "after layout" box tree and draw it onto a cairo context.
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
@@ -291,7 +291,7 @@ def rounded_box_path(context, radii):
     the border box. Radii are adjusted from these values. Default is (0, 0, 0,
     0).
 
-    Inspired by Cairo Cookbook
+    Inspired by cairo cookbook
     http://cairographics.org/cookbook/roundedrectangles/
 
     """

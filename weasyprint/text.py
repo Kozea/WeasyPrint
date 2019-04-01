@@ -4,7 +4,7 @@
 
     Interface with Pango to decide where to do line breaks and to draw text.
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
@@ -686,7 +686,7 @@ class Layout(object):
             style['font_variant_position'], style['font_variant_caps'],
             style['font_variant_numeric'], style['font_variant_alternates'],
             style['font_variant_east_asian'], style['font_feature_settings'])
-        if features:
+        if features and context:
             features = ','.join(
                 ('%s %i' % (key, value)) for key, value in features.items())
 
@@ -1043,6 +1043,8 @@ def split_first_line(text, style, context, max_width, justification_spacing,
             else:
                 # Second line is none
                 resume_at = first_line.length + 1
+                if resume_at >= len(text.encode('utf-8')):
+                    resume_at = None
     elif first_line_text:
         # We found something on the first line but we did not find a word on
         # the next line, no need to hyphenate, we can keep the current layout
@@ -1205,16 +1207,16 @@ def split_first_line(text, style, context, max_width, justification_spacing,
         layout.set_text(first_line_text)
         first_line, index = layout.get_first_line()
         resume_at = index or first_line.length
+        if resume_at >= len(text.encode('utf-8')):
+            resume_at = None
 
-    if resume_at is not None and resume_at >= len(text.encode('utf-8')):
-        resume_at = None
     return first_line_metrics(
         first_line, text, layout, resume_at, space_collapse, style, hyphenated,
         style['hyphenate_character'])
 
 
 def show_first_line(context, textbox):
-    """Draw the given ``textbox`` line to the Cairo ``context``."""
+    """Draw the given ``textbox`` line to the cairo ``context``."""
     pango.pango_layout_set_single_paragraph_mode(
         textbox.pango_layout.layout, True)
     first_line, _ = textbox.pango_layout.get_first_line()

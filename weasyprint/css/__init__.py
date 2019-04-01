@@ -12,7 +12,7 @@
     :func:`get_all_computed_styles` function does everything, but it is itsef
     based on other functions in this module.
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
@@ -23,15 +23,14 @@ from logging import DEBUG, WARNING
 import cssselect2
 import tinycss2
 
-from . import computed_values, media_queries, properties
-from .properties import INITIAL_NOT_COMPUTED
+from .. import CSS
+from ..logger import LOGGER, PROGRESS_LOGGER
+from ..urls import URLFetchingError, get_url_attribute, url_join
+from . import computed_values, media_queries
+from .properties import INHERITED, INITIAL_NOT_COMPUTED, INITIAL_VALUES
 from .utils import remove_whitespace
 from .validation import preprocess_declarations
 from .validation.descriptors import preprocess_descriptors
-from ..logger import LOGGER, PROGRESS_LOGGER
-from ..urls import get_url_attribute, url_join, URLFetchingError
-from .. import CSS
-
 
 # Reject anything not in here:
 PSEUDO_ELEMENTS = (None, 'before', 'after', 'first-line', 'first-letter')
@@ -572,7 +571,7 @@ def set_computed_styles(style_for, element, parent, root=None,
         root_style = {
             # When specified on the font-size property of the root element, the
             # rem units refer to the property’s initial value.
-            'font_size': properties.INITIAL_VALUES['font_size'],
+            'font_size': INITIAL_VALUES['font_size'],
         }
     else:
         assert parent is not None
@@ -592,8 +591,8 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
     if not cascaded and parent_style is not None:
         # Fast path for anonymous boxes:
         # no cascaded style, only implicitly initial or inherited values.
-        computed = dict(properties.INITIAL_VALUES)
-        for name in properties.INHERITED:
+        computed = dict(INITIAL_VALUES)
+        for name in INHERITED:
             computed[name] = parent_style[name]
         # page is not inherited but taken from the ancestor if 'auto'
         computed['page'] = parent_style['page']
@@ -608,12 +607,12 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
     # Handle inheritance and initial values
     specified = {}
     computed = {}
-    for name, initial in properties.INITIAL_VALUES.items():
+    for name, initial in INITIAL_VALUES.items():
         if name in cascaded:
             value, _precedence = cascaded[name]
             keyword = value
         else:
-            if name in properties.INHERITED:
+            if name in INHERITED:
                 keyword = 'inherit'
             else:
                 keyword = 'initial'

@@ -5,18 +5,18 @@
     Validate descriptors used for @font-face rules.
     See https://www.w3.org/TR/css-fonts-3/#font-resources.
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
 
 import tinycss2
 
-from . import properties
 from ...logger import LOGGER
 from ..utils import (
     InvalidValues, comma_separated_list, get_keyword, get_single_keyword,
     get_url, remove_whitespace, single_keyword, single_token)
+from . import properties
 
 DESCRIPTORS = {}
 

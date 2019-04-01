@@ -4,13 +4,13 @@
 
     Test how columns are drawn.
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
 
-from . import _, a, assert_pixels, r
 from ..testing_utils import assert_no_logs, requires
+from . import _, a, assert_pixels, r
 
 
 @assert_no_logs

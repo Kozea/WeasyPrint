@@ -223,8 +223,10 @@ supported:
 - the ``text-space-collapse`` and ``text-space-trim`` properties;
 - the ``text-wrap``, ``wrap-before``, ``wrap-after`` and ``wrap-inside``
   properties;
+- the ``text-align`` property with an alignment character;
 - the ``pre-wrap-auto`` value of the ``white-space`` property; and
 - the ``text-spacing`` property.
+
 
 .. _CSS Text Module Level 3: https://www.w3.org/TR/css-text-3/
 .. _CSS Text Module Level 4: https://www.w3.org/TR/css-text-4/
@@ -543,3 +545,30 @@ The ``column-fill`` property is supported, with a column balancing algorithm
 that should be efficient with simple cases.
 
 .. _CSS Multi-column Layout Module: https://www.w3.org/TR/css3-multicol/
+
+
+CSS Fragmentation Module Level 3 / 4
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The `CSS Fragmentation Module Level 3`_ "describes the fragmentation model that
+partitions a flow into pages, columns, or regions. It builds on the Page model
+module and introduces and defines the fragmentation model. It adds
+functionality for pagination, breaking variable fragment size and orientation,
+widows and orphans."
+
+The `CSS Fragment Module Level 4`_ is a working draft on the same subject.
+
+The ``break-before``, ``break-after`` and ``break-inside`` properties are
+supported for pages, but **not** for columns and regions. ``page-break-*``
+aliases as defined in CSS2 are supported too.
+
+The ``orphans`` and ``widows`` properties are supported.
+
+The ``box-decoration-break`` property is supported, but backgrounds are always
+repeated and not extended through the whole box as it should be with 'slice'
+value.
+
+The ``margin-break`` property is supported.
+
+.. _CSS Fragmentation Module Level 3: https://www.w3.org/TR/css-break-3/
+.. _CSS Fragmentation Module Level 4: https://www.w3.org/TR/css-break-4/

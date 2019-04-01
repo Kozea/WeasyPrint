@@ -4,7 +4,7 @@
 
     Test that the "before layout" box tree is correctly constructed.
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
@@ -1064,6 +1064,25 @@ def test_counters_6():
 
 
 @assert_no_logs
+def test_counters_7():
+    # Test that counters are case-sensitive
+    # See https://github.com/Kozea/WeasyPrint/pull/827
+    assert_tree(parse_all('''
+      <style>
+        p { counter-increment: p 2 }
+        p:before { content: counter(p) '.' counter(P); }
+      </style>
+      <p></p>
+      <p style="counter-increment: P 3"></p>
+      <p></p>'''), [
+        ('p', 'Block', [
+            ('p', 'Line', [
+                ('p::before', 'Inline', [
+                    ('p::before', 'Text', counter)])])])
+        for counter in '2.0 2.3 4.3'.split()])
+
+
+@assert_no_logs
 def test_counter_styles_1():
     assert_tree(parse_all('''
       <style>
@@ -1475,7 +1494,7 @@ def test_margin_box_string_set_7():
     # Test regression: https://github.com/Kozea/WeasyPrint/issues/722
     page_1, = render_pages('''
       <style>
-        img { string-set: left  attr(alt) }
+        img { string-set: left attr(alt) }
         img + img { string-set: right attr(alt) }
         @page { @top-left  { content: '[' string(left)  ']' }
                 @top-right { content: '{' string(right) '}' } }
@@ -1493,15 +1512,16 @@ def test_margin_box_string_set_7():
     assert right_text_box.text == '{Cake}'
 
 
+@assert_no_logs
 def test_margin_box_string_set_8():
     # Test regression: https://github.com/Kozea/WeasyPrint/issues/726
     page_1, page_2, page_3 = render_pages('''
       <style>
         @page { @top-left  { content: '[' string(left) ']' } }
         p { page-break-before: always }
-        .initial { -weasy-string-set: left 'initial' }
-        .empty   { -weasy-string-set: left ''        }
-        .space   { -weasy-string-set: left ' '       }
+        .initial { string-set: left 'initial' }
+        .empty   { string-set: left ''        }
+        .space   { string-set: left ' '       }
       </style>
 
       <p class="initial">Initial</p>
@@ -1522,6 +1542,31 @@ def test_margin_box_string_set_8():
     left_line_box, = top_left.children
     left_text_box, = left_line_box.children
     assert left_text_box.text == '[ ]'
+
+
+@assert_no_logs
+def test_margin_box_string_set_9():
+    # Test that named strings are case-sensitive
+    # See https://github.com/Kozea/WeasyPrint/pull/827
+    page_1, = render_pages('''
+      <style>
+        @page {
+          @top-center {
+            content: string(text_header, first)
+                     ' ' string(TEXT_header, first)
+          }
+        }
+        p { string-set: text_header content() }
+        div { string-set: TEXT_header content() }
+      </style>
+      <p>first assignment</p>
+      <div>second assignment</div>
+    ''')
+
+    html, top_center = page_1.children
+    line_box, = top_center.children
+    text_box, = line_box.children
+    assert text_box.text == 'first assignment second assignment'
 
 
 @assert_no_logs

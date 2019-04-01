@@ -4,7 +4,7 @@
 
     Command-line interface to WeasyPrint.
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
@@ -27,7 +27,7 @@ def main(argv=None, stdout=None, stdin=None):
     HTML from stdin. The output is a filename, or ``-`` to write to stdout.
 
     Options can be mixed anywhere before, between, or after the input and
-    output:
+    output.
 
     .. option:: -e <input_encoding>, --encoding <input_encoding>
 
@@ -40,7 +40,7 @@ def main(argv=None, stdout=None, stdin=None):
 
     .. option:: -s <filename_or_URL>, --stylesheet <filename_or_URL>
 
-        Filename or URL of a user CSS stylesheet (see
+        Filename or URL of a user cascading stylesheet (see
         :ref:`stylesheet-origins`) to add to the document
         (e.g. ``-s print.css``). Multiple stylesheets are allowed.
 
@@ -66,7 +66,9 @@ def main(argv=None, stdout=None, stdin=None):
 
     .. option:: -p, --presentational-hints
 
-        Follow HTML presentational hints.
+        Follow `HTML presentational hints
+        <https://www.w3.org/TR/html/rendering.html\
+        #the-css-user-agent-style-sheet-and-presentational-hints>`_.
 
     .. option:: -v, --verbose
 
@@ -116,6 +118,8 @@ def main(argv=None, stdout=None, stdin=None):
                         help='Show warnings and information messages.')
     parser.add_argument('-d', '--debug', action='store_true',
                         help='Show debugging messages.')
+    parser.add_argument('-q', '--quiet', action='store_true',
+                        help='Hide logging messages.')
     parser.add_argument(
         'input', help='URL or filename of the HTML input, or - for stdin')
     parser.add_argument(
@@ -176,9 +180,10 @@ def main(argv=None, stdout=None, stdin=None):
         LOGGER.setLevel(logging.DEBUG)
     elif args.verbose:
         LOGGER.setLevel(logging.INFO)
-    handler = logging.StreamHandler()
-    handler.setFormatter(logging.Formatter('%(levelname)s: %(message)s'))
-    LOGGER.addHandler(handler)
+    if not args.quiet:
+        handler = logging.StreamHandler()
+        handler.setFormatter(logging.Formatter('%(levelname)s: %(message)s'))
+        LOGGER.addHandler(handler)
 
     html = HTML(source, base_url=args.base_url, encoding=args.encoding,
                 media_type=args.media_type)

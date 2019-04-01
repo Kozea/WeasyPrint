@@ -4,7 +4,7 @@
 
     Layout for pages and CSS3 margin boxes.
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
@@ -545,6 +545,7 @@ def make_page(context, root_box, page_type, resume_at, page_number,
     # See http://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
     assert isinstance(root_box, (boxes.BlockBox, boxes.FlexContainerBox))
     context.create_block_formatting_context()
+    context.current_page = page_number
     page_is_empty = True
     adjoining_margins = []
     positioned_boxes = []  # Mixed absolute and fixed
@@ -619,7 +620,17 @@ def make_page(context, root_box, page_type, resume_at, page_number,
                 cached_lookups.append(counter_lookup_id)
                 counter_lookup.page_maker_index = page_number - 1
 
-            # Step 1: local counters
+            # Step 1: page based back-references
+            # Marked as pending by target_collector.cache_target_page_counters
+            if counter_lookup.pending:
+                if (page_counter_values !=
+                        counter_lookup.cached_page_counter_values):
+                    counter_lookup.cached_page_counter_values = copy.deepcopy(
+                        page_counter_values)
+                counter_lookup.pending = False
+                call_parse_again = True
+
+            # Step 2: local counters
             # If the box mixed-in page counters changed, update the content
             # and cache the new values.
             missing_counters = counter_lookup.missing_counters
@@ -635,14 +646,17 @@ def make_page(context, root_box, page_type, resume_at, page_number,
                             counter_name, None)
                         if counter_value is not None:
                             call_parse_again = True
+                            # no need to loop them all
+                            break
 
-            # Step 2: targeted counters
+            # Step 3: targeted counters
             target_missing = counter_lookup.missing_target_counters
             for anchor_name, missed_counters in target_missing.items():
                 if 'pages' not in missed_counters:
                     continue
                 # Adjust 'pages_wanted'
-                item = target_collector.items.get(anchor_name, None)
+                item = target_collector.target_lookup_items.get(
+                    anchor_name, None)
                 page_maker_index = item.page_maker_index
                 if page_maker_index >= 0 and anchor_name in cached_anchors:
                     page_maker[page_maker_index][-1]['pages_wanted'] = True
@@ -706,6 +720,7 @@ def remake_page(index, context, root_box, html, style_for):
     page_state = copy.deepcopy(initial_page_state)
     next_page_name = initial_next_page['page']
     first = index == 0
+    # TODO: handle recto/verso and add test
     blank = ((initial_next_page['break'] == 'left' and right_page) or
              (initial_next_page['break'] == 'right' and not right_page))
     if blank:
@@ -714,6 +729,10 @@ def remake_page(index, context, root_box, html, style_for):
     page_type = PageType(
         side, blank, first, name=(next_page_name or None))
     set_page_type_computed_styles(page_type, html, style_for)
+
+    context.forced_break = (
+        initial_next_page['break'] != 'any' or initial_next_page['page'])
+    context.margin_clearance = False
 
     # make_page wants a page_number of index + 1
     page_number = index + 1
@@ -748,14 +767,15 @@ def remake_page(index, context, root_box, html, style_for):
             'anchors': [],
             'content_lookups': [],
         }
+        # Setting content_changed to True ensures remake.
+        # If resume_at is None (last page) it must be False to prevent endless
+        # loops and list index out of range (see #794).
+        remake_state['content_changed'] = resume_at is not None
         # page_state is already a deepcopy
         item = resume_at, next_page, right_page, page_state, remake_state
         if index + 1 >= len(page_maker):
-            # content_changed must be False otherwise: enldess loop
             page_maker.append(item)
         else:
-            # content_changed must be True otherwise: no remake
-            remake_state['content_changed'] = True
             page_maker[index + 1] = item
 
     return page, resume_at

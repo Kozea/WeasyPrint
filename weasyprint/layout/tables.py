@@ -4,7 +4,7 @@
 
     Layout for tables and internal table boxes.
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
@@ -62,6 +62,7 @@ def table_layout(context, table, max_position_y, skip_stack,
     def group_layout(group, position_y, max_position_y,
                      page_is_empty, skip_stack):
         resume_at = None
+        original_page_is_empty = page_is_empty
         resolve_percentages(group, containing_block=table)
         group.position_x = rows_x
         group.position_y = position_y
@@ -215,7 +216,7 @@ def table_layout(context, table, max_position_y, skip_stack,
 
         # Do not keep the row group if we made a page break
         # before any of its rows or with 'avoid'
-        if resume_at and (
+        if resume_at and not original_page_is_empty and (
                 group.style['break_inside'] in ('avoid', 'avoid-page') or
                 not new_group_children):
             return None, None
@@ -656,6 +657,8 @@ def find_in_flow_baseline(box, last=False, baseline_types=(boxes.LineBox,)):
     Return the absolute Y position for the first (or last) in-flow baseline
     if any, or None.
     """
+    # TODO: synthetize baseline when needed
+    # See https://www.w3.org/TR/css-align-3/#synthesize-baseline
     if isinstance(box, baseline_types):
         return box.position_y + box.baseline
     if isinstance(box, boxes.ParentBox) and not isinstance(

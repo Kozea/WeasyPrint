@@ -9,13 +9,12 @@
     have intrinsic dimensions. But the only replaced elements currently
     supported in WeasyPrint are images with intrinsic dimensions.
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
 
 import logging
-import os.path
 import re
 from urllib.parse import urljoin
 
@@ -29,8 +28,8 @@ from .urls import get_url_attribute
 level = LOGGER.level
 LOGGER.setLevel(logging.ERROR)
 
-HTML5_UA_STYLESHEET = CSS(filename=os.path.join(ROOT, 'css', 'html5_ua.css'))
-HTML5_PH_STYLESHEET = CSS(filename=os.path.join(ROOT, 'css', 'html5_ph.css'))
+HTML5_UA_STYLESHEET = CSS(filename=(ROOT / 'css' / 'html5_ua.css'))
+HTML5_PH_STYLESHEET = CSS(filename=(ROOT / 'css' / 'html5_ph.css'))
 
 LOGGER.setLevel(level)
 
