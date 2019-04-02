@@ -723,10 +723,9 @@ def remake_page(index, context, root_box, html, style_for):
     blank = ((initial_next_page['break'] == 'left' and right_page) or
              (initial_next_page['break'] == 'right' and not right_page))
     if blank:
-        next_page_name = None
+        next_page_name = ''
     side = 'right' if right_page else 'left'
-    page_type = PageType(
-        side, blank, first, index, name=(next_page_name or None))
+    page_type = PageType(side, blank, first, index, name=next_page_name)
     set_page_type_computed_styles(page_type, html, style_for)
 
     context.forced_break = (

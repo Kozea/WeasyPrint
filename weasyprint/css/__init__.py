@@ -536,7 +536,7 @@ def matching_page_types(page_type, names=()):
     indexes = list(range(100)) if page_type.index is None else (
         page_type.index,)
     names = (
-        tuple(names) + (None,) if page_type.name is None
+        tuple(names) + ('',) if page_type.name == ''
         else (page_type.name,))
     for side in sides:
         for blank in blanks:
@@ -656,7 +656,7 @@ def parse_page_selectors(rule):
     - 'blank' (True or False),
     - 'first' (True or False),
     - 'index' (page number or None),
-    - 'name' (page name string or None), and
+    - 'name' (page name string or empty string), and
     - 'spacificity' (list of numbers).
 
     Return ``None` if something went wrong while parsing the rule.
@@ -671,13 +671,13 @@ def parse_page_selectors(rule):
     if not tokens:
         page_data.append({
             'side': None, 'blank': False, 'first': False, 'index': None,
-            'name': None, 'specificity': [0, 0, 0]})
+            'name': '', 'specificity': [0, 0, 0]})
         return page_data
 
     while tokens:
         types = {
             'side': None, 'blank': False, 'first': False, 'index': None,
-            'name': None, 'specificity': [0, 0, 0]}
+            'name': '', 'specificity': [0, 0, 0]}
 
         if tokens[0].type == 'ident':
             token = tokens.pop(0)
