@@ -703,7 +703,7 @@ def parse_page_selectors(rule):
                     ident = tokens.pop(0)
                     pseudo_class = ident.lower_value
                     if pseudo_class in ('left', 'right'):
-                        if types['side']:
+                        if types['side'] and types['side'] != pseudo_class:
                             return None
                         types['side'] = pseudo_class
                         types['specificity'][2] += 1

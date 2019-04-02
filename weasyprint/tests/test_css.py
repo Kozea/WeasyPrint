@@ -255,6 +255,12 @@ def test_page():
          'index': None, 'specificity': [1, 0, 0]},
         {'side': None, 'blank': False, 'first': True, 'name': '',
          'index': None, 'specificity': [0, 1, 0]}]),
+    ('@page :first:first {}', [{
+        'side': None, 'blank': False, 'first': True, 'name': '',
+        'index': None, 'specificity': [0, 2, 0]}]),
+    ('@page :left:left {}', [{
+        'side': 'left', 'blank': False, 'first': False, 'name': '',
+        'index': None, 'specificity': [0, 0, 2]}]),
     ('@page page page {}', None),
     ('@page :left page {}', None),
     ('@page :left, {}', None),
@@ -262,7 +268,6 @@ def test_page():
     ('@page :left, test, {}', None),
     ('@page :wrong {}', None),
     ('@page :left:wrong {}', None),
-    ('@page :first:first {}', None),
     ('@page :left:right {}', None),
 ))
 def test_page_selectors(style, selectors):
