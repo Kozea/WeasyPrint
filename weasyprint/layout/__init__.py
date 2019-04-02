@@ -117,7 +117,6 @@ def layout_document(enable_hinting, style_for, get_image_from_uri, root_box,
     context = LayoutContext(
         enable_hinting, style_for, get_image_from_uri, font_config,
         target_collector)
-    # initialize context.page_maker
     initialize_page_maker(context, root_box)
     pages = []
     actual_total_pages = 0
@@ -134,7 +133,7 @@ def layout_document(enable_hinting, style_for, get_image_from_uri, root_box,
         # Check whether another round is required
         reloop_content = False
         reloop_pages = False
-        for idx, page_data in enumerate(context.page_maker):
+        for page_data in context.page_maker:
             # Update pages
             _, _, _, page_state, remake_state = page_data
             page_counter_values = page_state[1]
