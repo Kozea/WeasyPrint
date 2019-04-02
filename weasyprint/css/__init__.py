@@ -709,8 +709,6 @@ def parse_page_selectors(rule):
                         types['specificity'][2] += 1
                         continue
                     elif pseudo_class in ('blank', 'first'):
-                        if types[pseudo_class]:
-                            return None
                         types[pseudo_class] = True
                         types['specificity'][1] += 1
                         continue
