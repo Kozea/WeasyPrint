@@ -397,6 +397,8 @@ def test_whitespace():
      5, 10, 3, 15),
     (PageType(side='right', first=None, index=2, blank=None, name='name'),
      5, 10, 1, 15),
+    (PageType(side='right', first=None, index=8, blank=None, name='name'),
+     5, 10, 2, 15),
 ))
 def test_page_style(page_type, top, right, bottom, left):
     document = FakeHTML(string='''
@@ -404,6 +406,7 @@ def test_page_style(page_type, top, right, bottom, left):
         @page { margin: 3px }
         @page name { margin-left: 15px; margin-top: 5px }
         @page :nth(3) { margin-bottom: 1px }
+        @page :nth(5n+4) { margin-bottom: 2px }
         @page :first { margin-top: 20px }
         @page :right { margin-right: 10px; margin-top: 10px }
         @page :left { margin-left: 10px; margin-top: 10px }

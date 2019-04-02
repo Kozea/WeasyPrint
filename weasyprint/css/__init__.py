@@ -181,9 +181,23 @@ class StyleFor:
 
     @staticmethod
     def _page_type_match(selector_page_type, page_type):
-        for selector_prop, prop in zip(selector_page_type, page_type):
-            if selector_prop not in (None, prop):
-                return False
+        if selector_page_type.side not in (None, page_type.side):
+            return False
+        if selector_page_type.blank not in (None, page_type.blank):
+            return False
+        if selector_page_type.first not in (None, page_type.first):
+            return False
+        if selector_page_type.name not in (None, page_type.name):
+            return False
+        if selector_page_type.index is not None:
+            a, b, group = selector_page_type.index
+            # TODO: handle group
+            if a:
+                if (page_type.index + 1 - b) % a:
+                    return False
+            else:
+                if page_type.index + 1 != b:
+                    return False
         return True
 
 
@@ -730,15 +744,12 @@ def parse_page_selectors(rule):
                         group, = group
                         if group.type != 'ident':
                             return None
+                        group = group.value
 
                         # TODO: handle page groups
                         return None
 
-                    # TODO: handle An+B form
-                    if nth_values[0]:
-                        return None
-
-                    types['index'] = nth_values[1] - 1
+                    types['index'] = (*nth_values, group)
                     # TODO: specificity is not specified yet
                     # https://github.com/w3c/csswg-drafts/issues/3791
                     types['specificity'][1] += 1

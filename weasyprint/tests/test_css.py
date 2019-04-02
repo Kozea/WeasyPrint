@@ -267,10 +267,22 @@ def test_page():
         'index': None, 'specificity': [0, 0, 2]}]),
     ('@page :nth(2) {}', [{
         'side': None, 'blank': None, 'first': None, 'name': None,
-        'index': 1, 'specificity': [0, 1, 0]}]),
+        'index': (0, 2, None), 'specificity': [0, 1, 0]}]),
+    ('@page :nth(2n + 4) {}', [{
+        'side': None, 'blank': None, 'first': None, 'name': None,
+        'index': (2, 4, None), 'specificity': [0, 1, 0]}]),
+    ('@page :nth(3n) {}', [{
+        'side': None, 'blank': None, 'first': None, 'name': None,
+        'index': (3, 0, None), 'specificity': [0, 1, 0]}]),
+    ('@page :nth( n+2 ) {}', [{
+        'side': None, 'blank': None, 'first': None, 'name': None,
+        'index': (1, 2, None), 'specificity': [0, 1, 0]}]),
+    ('@page :nth(even) {}', [{
+        'side': None, 'blank': None, 'first': None, 'name': None,
+        'index': (2, 0, None), 'specificity': [0, 1, 0]}]),
     ('@page pagename:nth(2) {}', [{
         'side': None, 'blank': None, 'first': None, 'name': 'pagename',
-        'index': 1, 'specificity': [1, 1, 0]}]),
+        'index': (0, 2, None), 'specificity': [1, 1, 0]}]),
     ('@page page page {}', None),
     ('@page :left page {}', None),
     ('@page :left, {}', None),
