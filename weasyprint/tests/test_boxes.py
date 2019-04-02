@@ -385,13 +385,13 @@ def test_whitespace():
 
 @assert_no_logs
 @pytest.mark.parametrize('page_type, top, right, bottom, left', (
-    (PageType(side='left', first=True, index=0, blank=False, name=''),
+    (PageType(side='left', first=True, index=0, blank=None, name=None),
      20, 3, 3, 10),
-    (PageType(side='right', first=True, index=0, blank=False, name=''),
+    (PageType(side='right', first=True, index=0, blank=None, name=None),
      20, 10, 3, 3),
-    (PageType(side='left', first=False, index=1, blank=False, name=''),
+    (PageType(side='left', first=None, index=1, blank=None, name=None),
      10, 3, 3, 10),
-    (PageType(side='right', first=False, index=1, blank=False, name=''),
+    (PageType(side='right', first=None, index=1, blank=None, name=None),
      10, 10, 3, 3),
 ))
 def test_page_style(page_type, top, right, bottom, left):

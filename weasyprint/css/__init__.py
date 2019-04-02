@@ -58,7 +58,9 @@ class StyleFor:
         # values: style dict objects:
         #     keys: property name as a string
         #     values: a PropertyValue-like object
-        self._computed_styles = computed_styles = {}
+        self._computed_styles = {}
+
+        self._sheets = sheets
 
         PROGRESS_LOGGER.info('Step 3 - Applying CSS')
         for specificity, attributes in find_style_attributes(
@@ -91,23 +93,6 @@ class StyleFor:
             self.set_computed_styles(
                 element.etree_element, root=html.etree_element, parent=parent,
                 base_url=html.base_url, target_collector=target_collector)
-
-        page_names = {style['page'] for style in computed_styles.values()}
-
-        for sheet, origin, sheet_specificity in sheets:
-            # Add declarations for page elements
-            for _rule, selector_list, declarations in sheet.page_rules:
-                for selector in selector_list:
-                    specificity, pseudo_type, match = selector
-                    specificity = sheet_specificity or specificity
-                    for page_type in match(page_names):
-                        for name, values, importance in declarations:
-                            precedence = declaration_precedence(
-                                origin, importance)
-                            weight = (precedence, specificity)
-                            add_declaration(
-                                cascaded_styles, name, values, weight,
-                                page_type, pseudo_type)
 
         # Then computed styles for pseudo elements, in any order.
         # Pseudo-elements inherit from their associated element so they come
@@ -172,11 +157,33 @@ class StyleFor:
             element, cascaded, parent_style, pseudo_type, root_style, base_url,
             target_collector)
 
+    def add_page_declarations(self, page_type):
+        for sheet, origin, sheet_specificity in self._sheets:
+            for _rule, selector_list, declarations in sheet.page_rules:
+                for selector in selector_list:
+                    specificity, pseudo_type, selector_page_type = selector
+                    if self._page_type_match(selector_page_type, page_type):
+                        specificity = sheet_specificity or specificity
+                        for name, values, importance in declarations:
+                            precedence = declaration_precedence(
+                                origin, importance)
+                            weight = (precedence, specificity)
+                            add_declaration(
+                                self._cascaded_styles, name, values, weight,
+                                page_type, pseudo_type)
+
     def get_cascaded_styles(self):
         return self._cascaded_styles
 
     def get_computed_styles(self):
         return self._computed_styles
+
+    @staticmethod
+    def _page_type_match(selector_page_type, page_type):
+        for selector_prop, prop in zip(selector_page_type, page_type):
+            if selector_prop not in (None, prop):
+                return False
+        return True
 
 
 def get_child_text(element):
@@ -528,26 +535,6 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
                     'counter-increment:none' % element.get('value'))
 
 
-def matching_page_types(page_type, names=()):
-    sides = ['left', 'right', None] if page_type.side is None else [
-        page_type.side]
-    blanks = (True, False) if page_type.blank is False else (True,)
-    firsts = (True, False) if page_type.first is False else (True,)
-    indexes = list(range(100)) if page_type.index is None else (
-        page_type.index,)
-    names = (
-        tuple(names) + ('',) if page_type.name == ''
-        else (page_type.name,))
-    for side in sides:
-        for blank in blanks:
-            for first in firsts:
-                for index in indexes:
-                    if (first and index) or (not first and not index):
-                        continue
-                    for name in names:
-                        yield PageType(side, blank, first, index, name)
-
-
 def declaration_precedence(origin, importance):
     """Return the precedence for a declaration.
 
@@ -653,11 +640,11 @@ def parse_page_selectors(rule):
     dict containing:
 
     - 'side' ('left', 'right' or None),
-    - 'blank' (True or False),
-    - 'first' (True or False),
+    - 'blank' (True or None),
+    - 'first' (True or None),
     - 'index' (page number or None),
-    - 'name' (page name string or empty string), and
-    - 'spacificity' (list of numbers).
+    - 'name' (page name string or None), and
+    - 'specificity' (list of numbers).
 
     Return ``None` if something went wrong while parsing the rule.
 
@@ -670,14 +657,14 @@ def parse_page_selectors(rule):
     # TODO: Specificity is probably wrong, should clean and test that.
     if not tokens:
         page_data.append({
-            'side': None, 'blank': False, 'first': False, 'index': None,
-            'name': '', 'specificity': [0, 0, 0]})
+            'side': None, 'blank': None, 'first': None, 'index': None,
+            'name': None, 'specificity': [0, 0, 0]})
         return page_data
 
     while tokens:
         types = {
-            'side': None, 'blank': False, 'first': False, 'index': None,
-            'name': '', 'specificity': [0, 0, 0]}
+            'side': None, 'blank': None, 'first': None, 'index': None,
+            'name': None, 'specificity': [0, 0, 0]}
 
         if tokens[0].type == 'ident':
             token = tokens.pop(0)
@@ -850,15 +837,11 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
             for page_type in data:
                 specificity = page_type.pop('specificity')
                 page_type = PageType(**page_type)
-                # Use a double lambda to have a closure that holds page_types
-                match = (lambda page_type: lambda page_names: list(
-                    matching_page_types(page_type, names=page_names)))(
-                        page_type)
                 content = tinycss2.parse_declaration_list(rule.content)
                 declarations = list(preprocess_declarations(base_url, content))
 
                 if declarations:
-                    selector_list = [(specificity, None, match)]
+                    selector_list = [(specificity, None, page_type)]
                     page_rules.append((rule, selector_list, declarations))
 
                 for margin_rule in content:
@@ -871,7 +854,7 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                     if declarations:
                         selector_list = [(
                             specificity, '@' + margin_rule.lower_at_keyword,
-                            match)]
+                            page_type)]
                         page_rules.append(
                             (margin_rule, selector_list, declarations))
 

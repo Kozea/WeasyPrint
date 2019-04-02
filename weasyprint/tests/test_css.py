@@ -240,30 +240,30 @@ def test_page():
 @assert_no_logs
 @pytest.mark.parametrize('style, selectors', (
     ('@page {}', [{
-        'side': None, 'blank': False, 'first': False, 'name': '',
+        'side': None, 'blank': None, 'first': None, 'name': None,
         'index': None, 'specificity': [0, 0, 0]}]),
     ('@page :left {}', [{
-        'side': 'left', 'blank': False, 'first': False, 'name': '',
+        'side': 'left', 'blank': None, 'first': None, 'name': None,
         'index': None, 'specificity': [0, 0, 1]}]),
     ('@page:first:left {}', [{
-        'side': 'left', 'blank': False, 'first': True, 'name': '',
+        'side': 'left', 'blank': None, 'first': True, 'name': None,
         'index': None, 'specificity': [0, 1, 1]}]),
     ('@page pagename {}', [{
-        'side': None, 'blank': False, 'first': False, 'name': 'pagename',
+        'side': None, 'blank': None, 'first': None, 'name': 'pagename',
         'index': None, 'specificity': [1, 0, 0]}]),
     ('@page pagename:first:right:blank {}', [{
         'side': 'right', 'blank': True, 'first': True, 'name': 'pagename',
         'index': None, 'specificity': [1, 2, 1]}]),
     ('@page pagename, :first {}', [
-        {'side': None, 'blank': False, 'first': False, 'name': 'pagename',
+        {'side': None, 'blank': None, 'first': None, 'name': 'pagename',
          'index': None, 'specificity': [1, 0, 0]},
-        {'side': None, 'blank': False, 'first': True, 'name': '',
+        {'side': None, 'blank': None, 'first': True, 'name': None,
          'index': None, 'specificity': [0, 1, 0]}]),
     ('@page :first:first {}', [{
-        'side': None, 'blank': False, 'first': True, 'name': '',
+        'side': None, 'blank': None, 'first': True, 'name': None,
         'index': None, 'specificity': [0, 2, 0]}]),
     ('@page :left:left {}', [{
-        'side': 'left', 'blank': False, 'first': False, 'name': '',
+        'side': 'left', 'blank': None, 'first': None, 'name': None,
         'index': None, 'specificity': [0, 0, 2]}]),
     ('@page page page {}', None),
     ('@page :left page {}', None),

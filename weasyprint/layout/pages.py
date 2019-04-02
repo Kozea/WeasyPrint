@@ -674,6 +674,8 @@ def make_page(context, root_box, page_type, resume_at, page_number,
 
 def set_page_type_computed_styles(page_type, html, style_for):
     """Set style for page types and pseudo-types matching ``page_type``."""
+    style_for.add_page_declarations(page_type)
+
     # Apply style for page
     style_for.set_computed_styles(
         page_type,
