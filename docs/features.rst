@@ -89,14 +89,15 @@ install a new font. WeasyPrint should support `any font format handled by
 FreeType <https://en.wikipedia.org/wiki/FreeType#File_formats>`_ (any format
 widely used except WOFF2).
 
-On Windows and macOS, **Pango >= 1.38** is required to use fontconfig and 
-FreeType like it does on Linux. 
-Both, ``fc-list`` and ``fc-match`` probably will be present, too. 
-Installing new fonts on your system as usual should make them available to Pango.
+On Windows and macOS, **Pango >= 1.38** is required to use fontconfig and
+FreeType like it does on Linux. Both, ``fc-list`` and ``fc-match`` probably
+will be present, too. Installing new fonts on your system as usual should make
+them available to Pango.
 
-Otherwise (Pango < 1.38) on Windows and macOS, the native font-managing libraries are used. 
-You must then use the tools provided by your OS to know which fonts are available.
-WeasyPrint should support any font format that’s supported by the operating system.
+Otherwise (Pango < 1.38) on Windows and macOS, the native font-managing
+libraries are used.  You must then use the tools provided by your OS to know
+which fonts are available.  WeasyPrint should support any font format that’s
+supported by the operating system.
 
 
 CSS
@@ -556,7 +557,7 @@ module and introduces and defines the fragmentation model. It adds
 functionality for pagination, breaking variable fragment size and orientation,
 widows and orphans."
 
-The `CSS Fragment Module Level 4`_ is a working draft on the same subject.
+The `CSS Fragmentation Module Level 4`_ is a working draft on the same subject.
 
 The ``break-before``, ``break-after`` and ``break-inside`` properties are
 supported for pages, but **not** for columns and regions. ``page-break-*``
