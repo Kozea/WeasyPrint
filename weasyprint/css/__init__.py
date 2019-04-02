@@ -723,6 +723,9 @@ def parse_page_selectors(rule):
                     if number.type != 'number':
                         return None
                     types['index'] = number.value - 1
+                    # TODO: specificity is not specified yet
+                    # https://github.com/w3c/csswg-drafts/issues/3791
+                    types['specificity'][1] += 1
                     continue
 
                 return None
