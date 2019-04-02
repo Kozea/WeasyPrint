@@ -405,11 +405,9 @@ def test_page_style(page_type, top, right, bottom, left):
     ''')
     style_for = get_all_computed_styles(document)
 
-    # Force the generation of the style for all possible page types as it's
-    # generally only done during the rendering for needed page types.
-    standard_page_type = PageType(
-        side=None, blank=False, first=False, index=None, name='')
-    set_page_type_computed_styles(standard_page_type, document, style_for)
+    # Force the generation of the style for this page type as it's generally
+    # only done during the rendering.
+    set_page_type_computed_styles(page_type, document, style_for)
 
     style = style_for(page_type)
     assert style['margin_top'] == (top, 'px')

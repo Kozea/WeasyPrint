@@ -11,7 +11,7 @@
 
 import copy
 
-from ..css import PageType, computed_from_cascaded, matching_page_types
+from ..css import PageType, computed_from_cascaded
 from ..formatting_structure import boxes, build
 from ..logger import PROGRESS_LOGGER
 from .absolute import absolute_layout
@@ -674,27 +674,22 @@ def make_page(context, root_box, page_type, resume_at, page_number,
 
 def set_page_type_computed_styles(page_type, html, style_for):
     """Set style for page types and pseudo-types matching ``page_type``."""
-    for matching_page_type in matching_page_types(page_type):
-        # No style for matching page type, loop
-        if style_for((matching_page_type, None), None):
-            continue
+    # Apply style for page
+    style_for.set_computed_styles(
+        page_type,
+        # @page inherits from the root element:
+        # http://lists.w3.org/Archives/Public/www-style/2012Jan/1164.html
+        root=html.etree_element, parent=html.etree_element,
+        base_url=html.base_url)
 
-        # Apply style for page
-        style_for.set_computed_styles(
-            matching_page_type,
-            # @page inherits from the root element:
-            # http://lists.w3.org/Archives/Public/www-style/2012Jan/1164.html
-            root=html.etree_element, parent=html.etree_element,
-            base_url=html.base_url)
-
-        # Apply style for page pseudo-elements (margin boxes)
-        for element, pseudo_type in style_for.get_cascaded_styles():
-            if pseudo_type and element == matching_page_type:
-                style_for.set_computed_styles(
-                    element, pseudo_type=pseudo_type,
-                    # The pseudo-element inherits from the element.
-                    root=html.etree_element, parent=element,
-                    base_url=html.base_url)
+    # Apply style for page pseudo-elements (margin boxes)
+    for element, pseudo_type in style_for.get_cascaded_styles():
+        if pseudo_type and element == page_type:
+            style_for.set_computed_styles(
+                element, pseudo_type=pseudo_type,
+                # The pseudo-element inherits from the element.
+                root=html.etree_element, parent=element,
+                base_url=html.base_url)
 
 
 def remake_page(index, context, root_box, html, style_for):
