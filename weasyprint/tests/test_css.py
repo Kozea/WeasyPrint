@@ -265,6 +265,12 @@ def test_page():
     ('@page :left:left {}', [{
         'side': 'left', 'blank': None, 'first': None, 'name': None,
         'index': None, 'specificity': [0, 0, 2]}]),
+    ('@page :nth(2) {}', [{
+        'side': None, 'blank': None, 'first': None, 'name': None,
+        'index': 1, 'specificity': [0, 1, 0]}]),
+    ('@page pagename:nth(2) {}', [{
+        'side': None, 'blank': None, 'first': None, 'name': 'pagename',
+        'index': 1, 'specificity': [1, 1, 0]}]),
     ('@page page page {}', None),
     ('@page :left page {}', None),
     ('@page :left, {}', None),
