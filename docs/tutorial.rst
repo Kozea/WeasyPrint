@@ -254,11 +254,11 @@ A custom fetcher should be returning a :obj:`dict` with
 
 * One of ``string`` (a :obj:`bytestring <bytes>`) or ``file_obj`` (a
   :term:`file object`).
-* Optionally: ``mime_type``, a MIME type extracted e.g. from a Content-Type*
-  *header. If not provided, the type is guessed from the file extension in the
-  *URL.
-* Optionally: ``encoding``, a character encoding extracted e.g. from a charset*
-  *parameter in a *Content-Type* header
+* Optionally: ``mime_type``, a MIME type extracted e.g. from a *Content-Type*
+  header. If not provided, the type is guessed from the file extension in the
+  URL.
+* Optionally: ``encoding``, a character encoding extracted e.g. from a
+  *charset* parameter in a *Content-Type* header
 * Optionally: ``redirected_url``, the actual URL of the resource if there were
   e.g. HTTP redirects.
 * Optionally: ``filename``, the filename of the resource. Usually derived from
