@@ -362,7 +362,7 @@ class Document(object):
             enable_hinting, style_for, get_image_from_uri, root_box,
             font_config, html, target_collector)
         rendering = cls(
-            [Page(p, enable_hinting) for p in page_boxes],
+            [Page(page_box, enable_hinting) for page_box in page_boxes],
             DocumentMetadata(**html._get_metadata()),
             html.url_fetcher, font_config)
         return rendering
