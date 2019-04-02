@@ -22,6 +22,7 @@ from logging import DEBUG, WARNING
 
 import cssselect2
 import tinycss2
+import tinycss2.nth
 
 from .. import CSS
 from ..logger import LOGGER, PROGRESS_LOGGER
@@ -689,27 +690,55 @@ def parse_page_selectors(rule):
                 if tokens[0].type == 'ident':
                     ident = tokens.pop(0)
                     pseudo_class = ident.lower_value
+
                     if pseudo_class in ('left', 'right'):
                         if types['side'] and types['side'] != pseudo_class:
                             return None
                         types['side'] = pseudo_class
                         types['specificity'][2] += 1
                         continue
+
                     elif pseudo_class in ('blank', 'first'):
                         types[pseudo_class] = True
                         types['specificity'][1] += 1
                         continue
+
                 elif tokens[0].type == 'function':
                     function = tokens.pop(0)
                     if function.name != 'nth':
                         return None
-                    arguments = function.arguments
-                    if len(arguments) != 1:
+                    for i, argument in enumerate(function.arguments):
+                        if argument.type == 'ident' and argument.value == 'of':
+                            nth = function.arguments[:i - 1]
+                            group = function.arguments[i:]
+                            break
+                    else:
+                        nth = function.arguments
+                        group = None
+
+                    nth_values = tinycss2.nth.parse_nth(nth)
+                    if nth_values is None:
                         return None
-                    number = arguments[0]
-                    if number.type != 'number':
+
+                    if group is not None:
+                        group = [
+                            token for token in group
+                            if token.type not in (
+                                'comment', 'whitespacespace')]
+                        if len(group) != 1:
+                            return None
+                        group, = group
+                        if group.type != 'ident':
+                            return None
+
+                        # TODO: handle page groups
                         return None
-                    types['index'] = number.value - 1
+
+                    # TODO: handle An+B form
+                    if nth_values[0]:
+                        return None
+
+                    types['index'] = nth_values[1] - 1
                     # TODO: specificity is not specified yet
                     # https://github.com/w3c/csswg-drafts/issues/3791
                     types['specificity'][1] += 1
