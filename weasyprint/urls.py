@@ -201,7 +201,7 @@ HTTP_HEADERS = {
 }
 
 
-def default_url_fetcher(url, timeout=10):
+def default_url_fetcher(url, timeout=10, ssl_context=None):
     """Fetch an external resource such as an image or stylesheet.
 
     Another callable with the same signature can be given as the
@@ -240,7 +240,8 @@ def default_url_fetcher(url, timeout=10):
             url = url.split('?')[0]
 
         url = iri_to_uri(url)
-        response = urlopen(Request(url, headers=HTTP_HEADERS), timeout=timeout)
+        response = urlopen(Request(url, headers=HTTP_HEADERS),
+                           timeout=timeout, context=ssl_context)
         response_info = response.info()
         result = dict(redirected_url=response.geturl(),
                       mime_type=response_info.get_content_type(),
