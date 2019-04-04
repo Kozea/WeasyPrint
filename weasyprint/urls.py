@@ -244,9 +244,11 @@ def default_url_fetcher(url, timeout=10, verify=True):
         if verify:
             ctx = ssl.create_default_context()
             ctx.check_hostname = False
-            response = urlopen(Request(url, headers=HTTP_HEADERS), timeout=timeout, context=ctx)
+            response = urlopen(Request(url, headers=HTTP_HEADERS),
+                               timeout=timeout, context=ctx)
         else:
-            response = urlopen(Request(url, headers=HTTP_HEADERS), timeout=timeout)
+            response = urlopen(Request(url, headers=HTTP_HEADERS),
+                               timeout=timeout)
         response_info = response.info()
         result = dict(redirected_url=response.geturl(),
                       mime_type=response_info.get_content_type(),
