@@ -16,10 +16,10 @@ import gzip
 import io
 import os.path
 import re
+import ssl
 import sys
 import traceback
 import zlib
-import ssl
 from base64 import decodebytes
 from gzip import GzipFile
 from urllib.parse import quote, unquote, urljoin, urlsplit
