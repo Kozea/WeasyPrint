@@ -11,8 +11,7 @@
 
 import copy
 
-from ..css import (
-    PageType, computed_from_cascaded, matching_page_types, set_computed_styles)
+from ..css import PageType, computed_from_cascaded
 from ..formatting_structure import boxes, build
 from ..logger import PROGRESS_LOGGER
 from .absolute import absolute_layout
@@ -673,35 +672,29 @@ def make_page(context, root_box, page_type, resume_at, page_number,
     return page, resume_at, next_page
 
 
-def set_page_type_computed_styles(page_type, cascaded_styles, computed_styles,
-                                  html):
+def set_page_type_computed_styles(page_type, html, style_for):
     """Set style for page types and pseudo-types matching ``page_type``."""
-    for matching_page_type in matching_page_types(page_type):
-        # No style for matching page type, loop
-        if computed_styles.get((matching_page_type, None), None):
-            continue
+    style_for.add_page_declarations(page_type)
 
-        # Apply style for page
-        set_computed_styles(
-            cascaded_styles, computed_styles, matching_page_type,
-            # @page inherits from the root element:
-            # http://lists.w3.org/Archives/Public/www-style/2012Jan/1164.html
-            root=html.etree_element, parent=html.etree_element,
-            base_url=html.base_url)
+    # Apply style for page
+    style_for.set_computed_styles(
+        page_type,
+        # @page inherits from the root element:
+        # http://lists.w3.org/Archives/Public/www-style/2012Jan/1164.html
+        root=html.etree_element, parent=html.etree_element,
+        base_url=html.base_url)
 
-        # Apply style for page pseudo-elements (margin boxes)
-        for element, pseudo_type in cascaded_styles:
-            if pseudo_type and element == matching_page_type:
-                set_computed_styles(
-                    cascaded_styles, computed_styles, element,
-                    pseudo_type=pseudo_type,
-                    # The pseudo-element inherits from the element.
-                    root=html.etree_element, parent=element,
-                    base_url=html.base_url)
+    # Apply style for page pseudo-elements (margin boxes)
+    for element, pseudo_type in style_for.get_cascaded_styles():
+        if pseudo_type and element == page_type:
+            style_for.set_computed_styles(
+                element, pseudo_type=pseudo_type,
+                # The pseudo-element inherits from the element.
+                root=html.etree_element, parent=element,
+                base_url=html.base_url)
 
 
-def remake_page(index, context, root_box, html, cascaded_styles,
-                computed_styles):
+def remake_page(index, context, root_box, html, style_for):
     """Return one laid out page without margin boxes.
 
     Start with the initial values from ``context.page_maker[index]``.
@@ -727,11 +720,10 @@ def remake_page(index, context, root_box, html, cascaded_styles,
     blank = ((initial_next_page['break'] == 'left' and right_page) or
              (initial_next_page['break'] == 'right' and not right_page))
     if blank:
-        next_page_name = None
+        next_page_name = ''
     side = 'right' if right_page else 'left'
-    page_type = PageType(side, blank, first, name=(next_page_name or None))
-    set_page_type_computed_styles(
-        page_type, cascaded_styles, computed_styles, html)
+    page_type = PageType(side, blank, first, index, name=next_page_name)
+    set_page_type_computed_styles(page_type, html, style_for)
 
     context.forced_break = (
         initial_next_page['break'] != 'any' or initial_next_page['page'])
@@ -784,8 +776,7 @@ def remake_page(index, context, root_box, html, cascaded_styles,
     return page, resume_at
 
 
-def make_all_pages(context, root_box, html, cascaded_styles, computed_styles,
-                   pages):
+def make_all_pages(context, root_box, html, pages, style_for):
     """Return a list of laid out pages without margin boxes.
 
     Re-make pages only if necessary.
@@ -804,7 +795,7 @@ def make_all_pages(context, root_box, html, cascaded_styles, computed_styles,
             remake_state['anchors'] = []
             remake_state['content_lookups'] = []
             page, resume_at = remake_page(
-                i, context, root_box, html, cascaded_styles, computed_styles)
+                i, context, root_box, html, style_for)
             yield page
         else:
             PROGRESS_LOGGER.info(

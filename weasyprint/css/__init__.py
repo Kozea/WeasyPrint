@@ -22,13 +22,14 @@ from logging import DEBUG, WARNING
 
 import cssselect2
 import tinycss2
+import tinycss2.nth
 
 from .. import CSS
 from ..logger import LOGGER, PROGRESS_LOGGER
 from ..urls import URLFetchingError, get_url_attribute, url_join
-from . import computed_values
+from . import computed_values, media_queries
 from .properties import INHERITED, INITIAL_NOT_COMPUTED, INITIAL_VALUES
-from .utils import remove_whitespace, split_on_comma
+from .utils import remove_whitespace
 from .validation import preprocess_declarations
 from .validation.descriptors import preprocess_descriptors
 
@@ -36,7 +37,168 @@ from .validation.descriptors import preprocess_descriptors
 PSEUDO_ELEMENTS = (None, 'before', 'after', 'first-line', 'first-letter')
 
 
-PageType = namedtuple('PageType', ['side', 'blank', 'first', 'name'])
+PageType = namedtuple('PageType', ['side', 'blank', 'first', 'index', 'name'])
+
+
+class StyleFor:
+    """Convenience function to get the computed styles for an element."""
+    def __init__(self, html, sheets, presentational_hints, target_collector):
+        # keys: (element, pseudo_element_type)
+        #    element: an ElementTree Element or the '@page' string
+        #    pseudo_element_type: a string such as 'first' (for @page) or
+        #        'after', or None for normal elements
+        # values: dicts of
+        #     keys: property name as a string
+        #     values: (values, weight)
+        #         values: a PropertyValue-like object
+        #         weight: values with a greater weight take precedence, see
+        #             http://www.w3.org/TR/CSS21/cascade.html#cascading-order
+        self._cascaded_styles = cascaded_styles = {}
+
+        # keys: (element, pseudo_element_type), like cascaded_styles
+        # values: style dict objects:
+        #     keys: property name as a string
+        #     values: a PropertyValue-like object
+        self._computed_styles = {}
+
+        self._sheets = sheets
+
+        PROGRESS_LOGGER.info('Step 3 - Applying CSS')
+        for specificity, attributes in find_style_attributes(
+                html.etree_element, presentational_hints, html.base_url):
+            element, declarations, base_url = attributes
+            for name, values, importance in preprocess_declarations(
+                    base_url, declarations):
+                precedence = declaration_precedence('author', importance)
+                weight = (precedence, specificity)
+                add_declaration(cascaded_styles, name, values, weight, element)
+
+        # First, add declarations and set computed styles for "real" elements
+        # *in tree order*. Tree order is important so that parents have
+        # computed styles before their children, for inheritance.
+
+        # Iterate on all elements, even if there is no cascaded style for them.
+        for element in html.wrapper_element.iter_subtree():
+            for sheet, origin, sheet_specificity in sheets:
+                # Add declarations for matched elements
+                for selector in sheet.matcher.match(element):
+                    specificity, order, pseudo_type, declarations = selector
+                    specificity = sheet_specificity or specificity
+                    for name, values, importance in declarations:
+                        precedence = declaration_precedence(origin, importance)
+                        weight = (precedence, specificity)
+                        add_declaration(
+                            cascaded_styles, name, values, weight,
+                            element.etree_element, pseudo_type)
+            parent = element.parent.etree_element if element.parent else None
+            self.set_computed_styles(
+                element.etree_element, root=html.etree_element, parent=parent,
+                base_url=html.base_url, target_collector=target_collector)
+
+        # Then computed styles for pseudo elements, in any order.
+        # Pseudo-elements inherit from their associated element so they come
+        # last. Do them in a second pass as there is no easy way to iterate
+        # on the pseudo-elements for a given element with the current structure
+        # of cascaded_styles. (Keys are (element, pseudo_type) tuples.)
+
+        # Only iterate on pseudo-elements that have cascaded styles. (Others
+        # might as well not exist.)
+        for element, pseudo_type in cascaded_styles:
+            if pseudo_type and not isinstance(element, PageType):
+                self.set_computed_styles(
+                    element, pseudo_type=pseudo_type,
+                    # The pseudo-element inherits from the element.
+                    root=html.etree_element, parent=element,
+                    base_url=html.base_url, target_collector=target_collector)
+
+    def __call__(self, element, pseudo_type=None):
+        style = self._computed_styles.get((element, pseudo_type))
+
+        if style:
+            if 'table' in style['display']:
+                if (style['display'] in ('table', 'inline-table') and
+                        style['border_collapse'] == 'collapse'):
+                    # Padding do not apply
+                    for side in ['top', 'bottom', 'left', 'right']:
+                        style['padding_' + side] = computed_values.ZERO_PIXELS
+                if (style['display'].startswith('table-') and
+                        style['display'] != 'table-caption'):
+                    # Margins do not apply
+                    for side in ['top', 'bottom', 'left', 'right']:
+                        style['margin_' + side] = computed_values.ZERO_PIXELS
+
+        return style
+
+    def set_computed_styles(self, element, parent, root=None, pseudo_type=None,
+                            base_url=None, target_collector=None):
+        """Set the computed values of styles to ``element``.
+
+        Take the properties left by ``apply_style_rule`` on an element or
+        pseudo-element and assign computed values with respect to the cascade,
+        declaration priority (ie. ``!important``) and selector specificity.
+
+        """
+        cascaded_styles = self.get_cascaded_styles()
+        computed_styles = self.get_computed_styles()
+        if element == root and pseudo_type is None:
+            assert parent is None
+            parent_style = None
+            root_style = {
+                # When specified on the font-size property of the root element,
+                # the rem units refer to the property’s initial value.
+                'font_size': INITIAL_VALUES['font_size'],
+            }
+        else:
+            assert parent is not None
+            parent_style = computed_styles[parent, None]
+            root_style = computed_styles[root, None]
+
+        cascaded = cascaded_styles.get((element, pseudo_type), {})
+        computed_styles[element, pseudo_type] = computed_from_cascaded(
+            element, cascaded, parent_style, pseudo_type, root_style, base_url,
+            target_collector)
+
+    def add_page_declarations(self, page_type):
+        for sheet, origin, sheet_specificity in self._sheets:
+            for _rule, selector_list, declarations in sheet.page_rules:
+                for selector in selector_list:
+                    specificity, pseudo_type, selector_page_type = selector
+                    if self._page_type_match(selector_page_type, page_type):
+                        specificity = sheet_specificity or specificity
+                        for name, values, importance in declarations:
+                            precedence = declaration_precedence(
+                                origin, importance)
+                            weight = (precedence, specificity)
+                            add_declaration(
+                                self._cascaded_styles, name, values, weight,
+                                page_type, pseudo_type)
+
+    def get_cascaded_styles(self):
+        return self._cascaded_styles
+
+    def get_computed_styles(self):
+        return self._computed_styles
+
+    @staticmethod
+    def _page_type_match(selector_page_type, page_type):
+        if selector_page_type.side not in (None, page_type.side):
+            return False
+        if selector_page_type.blank not in (None, page_type.blank):
+            return False
+        if selector_page_type.first not in (None, page_type.first):
+            return False
+        if selector_page_type.name not in (None, page_type.name):
+            return False
+        if selector_page_type.index is not None:
+            a, b, group = selector_page_type.index
+            # TODO: handle group
+            if a:
+                if (page_type.index + 1 - b) % a:
+                    return False
+            else:
+                if page_type.index + 1 != b:
+                    return False
+        return True
 
 
 def get_child_text(element):
@@ -65,7 +227,7 @@ def find_stylesheets(wrapper_element, device_media_type, url_fetcher, base_url,
             continue
         media_attr = element.get('media', '').strip() or 'all'
         media = [media_type.strip() for media_type in media_attr.split(',')]
-        if not evaluate_media_query(media, device_media_type):
+        if not media_queries.evaluate_media_query(media, device_media_type):
             continue
         if element.tag == 'style':
             # Content is text that is directly in the <style> element, not its
@@ -388,34 +550,6 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
                     'counter-increment:none' % element.get('value'))
 
 
-def matching_page_types(page_type, names=()):
-    sides = ['left', 'right', None] if page_type.side is None else [
-        page_type.side]
-    blanks = (True, False) if page_type.blank is False else (True,)
-    firsts = (True, False) if page_type.first is False else (True,)
-    names = (
-        tuple(names) + (None,) if page_type.name is None
-        else (page_type.name,))
-    for side in sides:
-        for blank in blanks:
-            for first in firsts:
-                for name in names:
-                    yield PageType(
-                        side=side, blank=blank, first=first, name=name)
-
-
-def evaluate_media_query(query_list, device_media_type):
-    """Return the boolean evaluation of `query_list` for the given
-    `device_media_type`.
-
-    :attr query_list: a cssutilts.stlysheets.MediaList
-    :attr device_media_type: a media type string (for now)
-
-    """
-    # TODO: actual support for media queries, not just media types
-    return 'all' in query_list or device_media_type in query_list
-
-
 def declaration_precedence(origin, importance):
     """Return the precedence for a declaration.
 
@@ -450,35 +584,6 @@ def add_declaration(cascaded_styles, prop_name, prop_values, weight, element,
     _values, previous_weight = style.get(prop_name, (None, None))
     if previous_weight is None or previous_weight <= weight:
         style[prop_name] = prop_values, weight
-
-
-def set_computed_styles(cascaded_styles, computed_styles, element, parent,
-                        root=None, pseudo_type=None, base_url=None,
-                        target_collector=None):
-    """Set the computed values of styles to ``element``.
-
-    Take the properties left by ``apply_style_rule`` on an element or
-    pseudo-element and assign computed values with respect to the cascade,
-    declaration priority (ie. ``!important``) and selector specificity.
-
-    """
-    if element == root and pseudo_type is None:
-        assert parent is None
-        parent_style = None
-        root_style = {
-            # When specified on the font-size property of the root element, the
-            # rem units refer to the property’s initial value.
-            'font_size': INITIAL_VALUES['font_size'],
-        }
-    else:
-        assert parent is not None
-        parent_style = computed_styles[parent, None]
-        root_style = computed_styles[root, None]
-
-    cascaded = cascaded_styles.get((element, pseudo_type), {})
-    computed_styles[element, pseudo_type] = computed_from_cascaded(
-        element, cascaded, parent_style, pseudo_type, root_style, base_url,
-        target_collector)
 
 
 def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
@@ -550,10 +655,11 @@ def parse_page_selectors(rule):
     dict containing:
 
     - 'side' ('left', 'right' or None),
-    - 'blank' (True or False),
-    - 'first' (True or False),
+    - 'blank' (True or None),
+    - 'first' (True or None),
+    - 'index' (page number or None),
     - 'name' (page name string or None), and
-    - 'spacificity' (list of numbers).
+    - 'specificity' (list of numbers).
 
     Return ``None` if something went wrong while parsing the rule.
 
@@ -566,14 +672,14 @@ def parse_page_selectors(rule):
     # TODO: Specificity is probably wrong, should clean and test that.
     if not tokens:
         page_data.append({
-            'side': None, 'blank': False, 'first': False, 'name': None,
-            'specificity': [0, 0, 0]})
+            'side': None, 'blank': None, 'first': None, 'index': None,
+            'name': None, 'specificity': [0, 0, 0]})
         return page_data
 
     while tokens:
         types = {
-            'side': None, 'blank': False, 'first': False, 'name': None,
-            'specificity': [0, 0, 0]}
+            'side': None, 'blank': None, 'first': None, 'index': None,
+            'name': None, 'specificity': [0, 0, 0]}
 
         if tokens[0].type == 'ident':
             token = tokens.pop(0)
@@ -592,22 +698,64 @@ def parse_page_selectors(rule):
                 return None
 
             if literal.value == ':':
-                if not tokens or tokens[0].type != 'ident':
+                if not tokens:
                     return None
-                ident = tokens.pop(0)
-                pseudo_class = ident.lower_value
-                if pseudo_class in ('left', 'right'):
-                    if types['side']:
+
+                if tokens[0].type == 'ident':
+                    ident = tokens.pop(0)
+                    pseudo_class = ident.lower_value
+
+                    if pseudo_class in ('left', 'right'):
+                        if types['side'] and types['side'] != pseudo_class:
+                            return None
+                        types['side'] = pseudo_class
+                        types['specificity'][2] += 1
+                        continue
+
+                    elif pseudo_class in ('blank', 'first'):
+                        types[pseudo_class] = True
+                        types['specificity'][1] += 1
+                        continue
+
+                elif tokens[0].type == 'function':
+                    function = tokens.pop(0)
+                    if function.name != 'nth':
                         return None
-                    types['side'] = pseudo_class
-                    types['specificity'][2] += 1
-                elif pseudo_class in ('blank', 'first'):
-                    if types[pseudo_class]:
+                    for i, argument in enumerate(function.arguments):
+                        if argument.type == 'ident' and argument.value == 'of':
+                            nth = function.arguments[:i - 1]
+                            group = function.arguments[i:]
+                            break
+                    else:
+                        nth = function.arguments
+                        group = None
+
+                    nth_values = tinycss2.nth.parse_nth(nth)
+                    if nth_values is None:
                         return None
-                    types[pseudo_class] = True
+
+                    if group is not None:
+                        group = [
+                            token for token in group
+                            if token.type not in (
+                                'comment', 'whitespacespace')]
+                        if len(group) != 1:
+                            return None
+                        group, = group
+                        if group.type != 'ident':
+                            return None
+                        group = group.value
+
+                        # TODO: handle page groups
+                        return None
+
+                    types['index'] = (*nth_values, group)
+                    # TODO: specificity is not specified yet
+                    # https://github.com/w3c/csswg-drafts/issues/3791
                     types['specificity'][1] += 1
-                else:
-                    return None
+                    continue
+
+                return None
             elif literal.value == ',':
                 if tokens and any(types['specificity']):
                     break
@@ -673,14 +821,15 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                 url = tokens[0].value
             else:
                 continue
-            media = parse_media_query(tokens[1:])
+            media = media_queries.parse_media_query(tokens[1:])
             if media is None:
                 LOGGER.warning('Invalid media type "%s" '
                                'the whole @import rule was ignored at %s:%s.',
                                tinycss2.serialize(rule.prelude),
                                rule.source_line, rule.source_column)
                 continue
-            if not evaluate_media_query(media, device_media_type):
+            if not media_queries.evaluate_media_query(
+                    media, device_media_type):
                 continue
             url = url_join(
                 base_url, url, allow_relative=False,
@@ -697,7 +846,7 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                         'Failed to load stylesheet at %s : %s', url, exc)
 
         elif rule.type == 'at-rule' and rule.lower_at_keyword == 'media':
-            media = parse_media_query(rule.prelude)
+            media = media_queries.parse_media_query(rule.prelude)
             if media is None:
                 LOGGER.warning('Invalid media type "%s" '
                                'the whole @media rule was ignored at %s:%s.',
@@ -705,7 +854,8 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                                rule.source_line, rule.source_column)
                 continue
             ignore_imports = True
-            if not evaluate_media_query(media, device_media_type):
+            if not media_queries.evaluate_media_query(
+                    media, device_media_type):
                 continue
             content_rules = tinycss2.parse_rule_list(rule.content)
             preprocess_stylesheet(
@@ -727,15 +877,11 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
             for page_type in data:
                 specificity = page_type.pop('specificity')
                 page_type = PageType(**page_type)
-                # Use a double lambda to have a closure that holds page_types
-                match = (lambda page_type: lambda page_names: list(
-                    matching_page_types(page_type, names=page_names)))(
-                        page_type)
                 content = tinycss2.parse_declaration_list(rule.content)
                 declarations = list(preprocess_declarations(base_url, content))
 
                 if declarations:
-                    selector_list = [(specificity, None, match)]
+                    selector_list = [(specificity, None, page_type)]
                     page_rules.append((rule, selector_list, declarations))
 
                 for margin_rule in content:
@@ -748,7 +894,7 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                     if declarations:
                         selector_list = [(
                             specificity, '@' + margin_rule.lower_at_keyword,
-                            match)]
+                            page_type)]
                         page_rules.append(
                             (margin_rule, selector_list, declarations))
 
@@ -769,23 +915,6 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                         rule_descriptors, url_fetcher)
                     if font_filename:
                         fonts.append(font_filename)
-
-
-def parse_media_query(tokens):
-    tokens = remove_whitespace(tokens)
-    if not tokens:
-        return ['all']
-    else:
-        media = []
-        for part in split_on_comma(tokens):
-            types = [token.type for token in part]
-            if types == ['ident']:
-                media.append(part[0].lower_value)
-            else:
-                LOGGER.warning(
-                    'Expected a media type, got %s', tinycss2.serialize(part))
-                return
-        return media
 
 
 def get_all_computed_styles(html, user_stylesheets=None,
@@ -813,108 +942,4 @@ def get_all_computed_styles(html, user_stylesheets=None,
     for sheet in (user_stylesheets or []):
         sheets.append((sheet, 'user', None))
 
-    # keys: (element, pseudo_element_type)
-    #    element: an ElementTree Element or the '@page' string for @page styles
-    #    pseudo_element_type: a string such as 'first' (for @page) or 'after',
-    #        or None for normal elements
-    # values: dicts of
-    #     keys: property name as a string
-    #     values: (values, weight)
-    #         values: a PropertyValue-like object
-    #         weight: values with a greater weight take precedence, see
-    #             http://www.w3.org/TR/CSS21/cascade.html#cascading-order
-    cascaded_styles = {}
-
-    PROGRESS_LOGGER.info('Step 3 - Applying CSS')
-    for specificity, attributes in find_style_attributes(
-            html.etree_element, presentational_hints, html.base_url):
-        element, declarations, base_url = attributes
-        for name, values, importance in preprocess_declarations(
-                base_url, declarations):
-            precedence = declaration_precedence('author', importance)
-            weight = (precedence, specificity)
-            add_declaration(cascaded_styles, name, values, weight, element)
-
-    # keys: (element, pseudo_element_type), like cascaded_styles
-    # values: style dict objects:
-    #     keys: property name as a string
-    #     values: a PropertyValue-like object
-    computed_styles = {}
-
-    # First, add declarations and set computed styles for "real" elements *in
-    # tree order*. Tree order is important so that parents have computed
-    # styles before their children, for inheritance.
-
-    # Iterate on all elements, even if there is no cascaded style for them.
-    for element in html.wrapper_element.iter_subtree():
-        for sheet, origin, sheet_specificity in sheets:
-            # Add declarations for matched elements
-            for selector in sheet.matcher.match(element):
-                specificity, order, pseudo_type, declarations = selector
-                specificity = sheet_specificity or specificity
-                for name, values, importance in declarations:
-                    precedence = declaration_precedence(origin, importance)
-                    weight = (precedence, specificity)
-                    add_declaration(
-                        cascaded_styles, name, values, weight,
-                        element.etree_element, pseudo_type)
-        set_computed_styles(
-            cascaded_styles, computed_styles, element.etree_element,
-            root=html.etree_element,
-            parent=(element.parent.etree_element if element.parent else None),
-            base_url=html.base_url, target_collector=target_collector)
-
-    page_names = set(style['page'] for style in computed_styles.values())
-
-    for sheet, origin, sheet_specificity in sheets:
-        # Add declarations for page elements
-        for _rule, selector_list, declarations in sheet.page_rules:
-            for selector in selector_list:
-                specificity, pseudo_type, match = selector
-                specificity = sheet_specificity or specificity
-                for page_type in match(page_names):
-                    for name, values, importance in declarations:
-                        precedence = declaration_precedence(origin, importance)
-                        weight = (precedence, specificity)
-                        add_declaration(
-                            cascaded_styles, name, values, weight, page_type,
-                            pseudo_type)
-
-    # Then computed styles for pseudo elements, in any order.
-    # Pseudo-elements inherit from their associated element so they come
-    # last. Do them in a second pass as there is no easy way to iterate
-    # on the pseudo-elements for a given element with the current structure
-    # of cascaded_styles. (Keys are (element, pseudo_type) tuples.)
-
-    # Only iterate on pseudo-elements that have cascaded styles. (Others
-    # might as well not exist.)
-    for element, pseudo_type in cascaded_styles:
-        if pseudo_type and not isinstance(element, PageType):
-            set_computed_styles(
-                cascaded_styles, computed_styles, element,
-                pseudo_type=pseudo_type,
-                # The pseudo-element inherits from the element.
-                root=html.etree_element, parent=element,
-                base_url=html.base_url, target_collector=target_collector)
-
-    # This is mostly useful to make pseudo_type optional.
-    def style_for(element, pseudo_type=None, __get=computed_styles.get):
-        """Convenience function to get the computed styles for an element."""
-        style = __get((element, pseudo_type))
-
-        if style:
-            if 'table' in style['display']:
-                if (style['display'] in ('table', 'inline-table') and
-                        style['border_collapse'] == 'collapse'):
-                    # Padding do not apply
-                    for side in ['top', 'bottom', 'left', 'right']:
-                        style['padding_' + side] = computed_values.ZERO_PIXELS
-                if (style['display'].startswith('table-') and
-                        style['display'] != 'table-caption'):
-                    # Margins do not apply
-                    for side in ['top', 'bottom', 'left', 'right']:
-                        style['margin_' + side] = computed_values.ZERO_PIXELS
-
-        return style
-
-    return style_for, cascaded_styles, computed_styles
+    return StyleFor(html, sheets, presentational_hints, target_collector)

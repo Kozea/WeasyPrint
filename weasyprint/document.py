@@ -349,7 +349,7 @@ class Document(object):
                     guess=css, media_type=html.media_type,
                     font_config=font_config)
             user_stylesheets.append(css)
-        style_for, cascaded_styles, computed_styles = get_all_computed_styles(
+        style_for = get_all_computed_styles(
             html, user_stylesheets, presentational_hints, font_config,
             page_rules, target_collector)
         get_image_from_uri = functools.partial(
@@ -360,10 +360,9 @@ class Document(object):
             html.base_url, target_collector)
         page_boxes = layout_document(
             enable_hinting, style_for, get_image_from_uri, root_box,
-            font_config, html, cascaded_styles, computed_styles,
-            target_collector)
+            font_config, html, target_collector)
         rendering = cls(
-            [Page(p, enable_hinting) for p in page_boxes],
+            [Page(page_box, enable_hinting) for page_box in page_boxes],
             DocumentMetadata(**html._get_metadata()),
             html.url_fetcher, font_config)
         return rendering

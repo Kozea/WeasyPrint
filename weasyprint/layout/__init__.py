@@ -102,8 +102,7 @@ def layout_fixed_boxes(context, pages, containing_page):
 
 
 def layout_document(enable_hinting, style_for, get_image_from_uri, root_box,
-                    font_config, html, cascaded_styles, computed_styles,
-                    target_collector, max_loops=8):
+                    font_config, html, target_collector, max_loops=8):
     """Lay out the whole document.
 
     This includes line breaks, page breaks, absolute size and position for all
@@ -118,7 +117,6 @@ def layout_document(enable_hinting, style_for, get_image_from_uri, root_box,
     context = LayoutContext(
         enable_hinting, style_for, get_image_from_uri, font_config,
         target_collector)
-    # initialize context.page_maker
     initialize_page_maker(context, root_box)
     pages = []
     actual_total_pages = 0
@@ -129,14 +127,13 @@ def layout_document(enable_hinting, style_for, get_image_from_uri, root_box,
                 'Step 5 - Creating layout - Repagination #%i' % loop)
 
         initial_total_pages = actual_total_pages
-        pages = list(make_all_pages(
-            context, root_box, html, cascaded_styles, computed_styles, pages))
+        pages = list(make_all_pages(context, root_box, html, pages, style_for))
         actual_total_pages = len(pages)
 
         # Check whether another round is required
         reloop_content = False
         reloop_pages = False
-        for idx, page_data in enumerate(context.page_maker):
+        for page_data in context.page_maker:
             # Update pages
             _, _, _, page_state, remake_state = page_data
             page_counter_values = page_state[1]
