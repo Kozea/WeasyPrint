@@ -10,7 +10,7 @@ WeasyPrint |version| depends on:
 * CFFI_ ≥ 0.6
 * html5lib_ ≥ 0.999999999
 * cairocffi_ ≥ 0.9.0
-* tinycss2_ ≥ 0.5
+* tinycss2_ ≥ 1.0.0
 * cssselect2_ ≥ 0.1
 * CairoSVG_ ≥ 1.0.20
 * Pyphen_ ≥ 0.8

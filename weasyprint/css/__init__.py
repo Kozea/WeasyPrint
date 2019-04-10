@@ -594,8 +594,9 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
         # Fast path for anonymous boxes:
         # no cascaded style, only implicitly initial or inherited values.
         computed = dict(INITIAL_VALUES)
-        for name in INHERITED:
-            computed[name] = parent_style[name]
+        for name in parent_style:
+            if name in INHERITED or name.startswith('__'):
+                computed[name] = parent_style[name]
         # page is not inherited but taken from the ancestor if 'auto'
         computed['page'] = parent_style['page']
         # border-*-style is none, so border-width computes to zero.
@@ -609,6 +610,15 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
     # Handle inheritance and initial values
     specified = {}
     computed = {}
+
+    if parent_style:
+        for name in parent_style:
+            if name.startswith('__'):
+                specified[name] = parent_style[name]
+    for name in cascaded:
+        if name.startswith('__'):
+            specified[name] = cascaded[name][0]
+
     for name, initial in INITIAL_VALUES.items():
         if name in cascaded:
             value, _precedence = cascaded[name]
