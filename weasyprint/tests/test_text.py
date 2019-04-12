@@ -47,7 +47,7 @@ def test_line_with_any_width():
 
 @assert_no_logs
 def test_line_breaking():
-    string = 'This is a text for test'
+    string = 'Thïs is a text for test'
 
     # These two tests do not really rely on installed fonts
     _, _, resume_at, _, _, _ = make_text(string, 90, font_size=1)
@@ -74,11 +74,6 @@ def test_line_breaking_rtl():
     _, _, resume_at, _, _, _ = make_text(string, 90, font_size=100)
     assert string.encode('utf-8')[resume_at:].decode('utf-8') == (
         'ايبسوم دولا')
-
-    _, _, resume_at, _, _, _ = make_text(
-        string, 100, font_family=SANS_FONTS.split(','), font_size=16)
-    assert string.encode('utf-8')[resume_at:].decode('utf-8') == (
-        'دولا')
 
 
 @assert_no_logs
