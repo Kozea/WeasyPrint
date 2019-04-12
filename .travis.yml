@@ -16,11 +16,12 @@ matrix:
     - os: osx
       language: generic
       env: PYTHON=python3
-  allow_failures:
     - os: windows
       # Windows doesn't support python or even generic language
       language: cpp
       env: PYTHON=/c/Python37/python
+  allow_failures:
+    - os: windows
 
 addons:
   apt:
