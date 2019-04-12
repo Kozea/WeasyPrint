@@ -3,6 +3,30 @@
 ======
 
 
+Version 47
+----------
+
+Released on 2019-04-12.
+
+New features:
+
+* `#843 <https://github.com/Kozea/WeasyPrint/pull/843>`_:
+  Handle CSS variables
+* `#846 <https://github.com/Kozea/WeasyPrint/pull/846>`_:
+  Handle ``:nth()`` page selector
+* `#847 <https://github.com/Kozea/WeasyPrint/pull/847>`_:
+  Allow users to use a custom SSL context for HTTP requests
+
+Bug fixes:
+
+* `#797 <https://github.com/Kozea/WeasyPrint/issues/797>`_:
+  Fix underlined justified text
+* `#836 <https://github.com/Kozea/WeasyPrint/issues/836>`_:
+  Fix crash when flex items are replaced boxes
+* `#835 <https://github.com/Kozea/WeasyPrint/issues/835>`_:
+  Fix ``margin-break: auto``
+
+
 Version 46
 ----------
 
