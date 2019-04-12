@@ -592,3 +592,16 @@ The ``margin-break`` property is supported.
 
 .. _CSS Fragmentation Module Level 3: https://www.w3.org/TR/css-break-3/
 .. _CSS Fragmentation Module Level 4: https://www.w3.org/TR/css-break-4/
+
+
+CSS Custom Properties for Cascading Variables Module Level 1
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The `CSS Custom Properties for Cascading Variables Module Level 1`_ "introduces
+cascading variables as a new primitive value type that is accepted by all CSS
+properties, and custom properties for defining them."
+
+The custom properties and the ``var()`` notation are supported.
+
+.. _CSS Custom Properties for Cascading Variables Module Level 1:
+   https://www.w3.org/TR/css-variables/
