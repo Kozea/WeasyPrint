@@ -54,11 +54,31 @@ def test_line_breaking():
     assert resume_at is None
 
     _, _, resume_at, _, _, _ = make_text(string, 90, font_size=100)
-    assert string[resume_at:] == 'is a text for test'
+    assert string.encode('utf-8')[resume_at:].decode('utf-8') == (
+        'is a text for test')
 
     _, _, resume_at, _, _, _ = make_text(
         string, 100, font_family=SANS_FONTS.split(','), font_size=19)
-    assert string[resume_at:] == 'text for test'
+    assert string.encode('utf-8')[resume_at:].decode('utf-8') == (
+        'text for test')
+
+
+@assert_no_logs
+def test_line_breaking_rtl():
+    string = 'لوريم ايبسوم دولا'
+
+    # These two tests do not really rely on installed fonts
+    _, _, resume_at, _, _, _ = make_text(string, 90, font_size=1)
+    assert resume_at is None
+
+    _, _, resume_at, _, _, _ = make_text(string, 90, font_size=100)
+    assert string.encode('utf-8')[resume_at:].decode('utf-8') == (
+        'ايبسوم دولا')
+
+    _, _, resume_at, _, _, _ = make_text(
+        string, 100, font_family=SANS_FONTS.split(','), font_size=16)
+    assert string.encode('utf-8')[resume_at:].decode('utf-8') == (
+        'دولا')
 
 
 @assert_no_logs

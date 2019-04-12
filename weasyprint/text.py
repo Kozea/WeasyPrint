@@ -718,7 +718,9 @@ class Layout(object):
             pango.pango_layout_iter_free)
         first_line = pango.pango_layout_iter_get_line_readonly(layout_iter)
         if pango.pango_layout_iter_next_line(layout_iter):
-            index = pango.pango_layout_iter_get_index(layout_iter)
+            second_line = pango.pango_layout_iter_get_line_readonly(
+                layout_iter)
+            index = second_line.start_index
         else:
             index = None
         return first_line, index
