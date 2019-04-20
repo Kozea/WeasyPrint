@@ -128,6 +128,7 @@ def background_attachment(keyword):
 @property('border-bottom-color')
 @property('border-left-color')
 @property('column-rule-color', unstable=True)
+@property('text-decoration-color')
 @single_token
 def other_colors(token):
     return parse_color(token)
@@ -977,8 +978,8 @@ def text_align(keyword):
 
 
 @property()
-def text_decoration(tokens):
-    """``text-decoration`` property validation."""
+def text_decoration_line(tokens):
+    """``text-decoration-line`` property validation."""
     keywords = [get_keyword(v) for v in tokens]
     if keywords == ['none']:
         return 'none'
@@ -990,6 +991,14 @@ def text_decoration(tokens):
             # blink is accepted but ignored
             # "Conforming user agents may simply not blink the text."
             return frozenset(unique - set(['blink']))
+
+
+@property()
+@single_keyword
+def text_decoration_style(keyword):
+    """``text-decoration-style`` property validation."""
+    if keyword in ('solid', 'double', 'dotted', 'dashed', 'wavy'):
+        return keyword
 
 
 @property()

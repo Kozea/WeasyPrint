@@ -1019,12 +1019,15 @@ def draw_text(context, textbox, enable_hinting):
     textbox.pango_layout.reactivate(textbox.style)
     show_first_line(context, textbox)
 
-    values = textbox.style['text_decoration']
+    values = textbox.style['text_decoration_line']
 
     thickness = textbox.style['font_size'] / 18  # Like other browsers do
     if enable_hinting and thickness < 1:
         thickness = 1
 
+    color = textbox.style['text_decoration_color']
+    if color == 'currentColor':
+        color = textbox.style['color']
     if ('overline' in values or
             'line-through' in values or
             'underline' in values):
@@ -1033,29 +1036,43 @@ def draw_text(context, textbox, enable_hinting):
         draw_text_decoration(
             context, textbox,
             textbox.baseline - metrics.ascent + thickness / 2,
-            thickness, enable_hinting)
+            thickness, enable_hinting, color)
     if 'underline' in values:
         draw_text_decoration(
             context, textbox,
             textbox.baseline - metrics.underline_position + thickness / 2,
-            thickness, enable_hinting)
+            thickness, enable_hinting, color)
     if 'line-through' in values:
         draw_text_decoration(
             context, textbox,
             textbox.baseline - metrics.strikethrough_position,
-            thickness, enable_hinting)
+            thickness, enable_hinting, color)
 
     textbox.pango_layout.deactivate()
 
 
 def draw_text_decoration(context, textbox, offset_y, thickness,
-                         enable_hinting):
+                         enable_hinting, color):
     """Draw text-decoration of ``textbox`` to a ``cairo.Context``."""
+    style = textbox.style['text_decoration_style']
     with stacked(context):
         if enable_hinting:
             context.set_antialias(cairo.ANTIALIAS_NONE)
-        context.set_source_rgba(*textbox.style['color'])
+        context.set_source_rgba(*color)
         context.set_line_width(thickness)
+
+        if style == "dashed":
+            context.set_dash([5 * thickness])
+        elif style == "dotted":
+            context.set_dash([thickness])
+
         context.move_to(textbox.position_x, textbox.position_y + offset_y)
         context.rel_line_to(textbox.width, 0)
         context.stroke()
+
+        if style == "double":
+            delta = 2 * thickness
+            context.move_to(textbox.position_x, textbox.position_y
+                            + offset_y + delta)
+            context.rel_line_to(textbox.width, 0)
+            context.stroke()

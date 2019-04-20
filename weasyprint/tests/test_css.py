@@ -136,7 +136,7 @@ def test_annotate_document():
     assert li_0['margin_bottom'] == (16, 'px')
     assert li_0['margin_left'] == (32, 'px')  # 4em
 
-    assert a['text_decoration'] == frozenset(['underline'])
+    assert a['text_decoration_line'] == frozenset(['underline'])
     assert a['font_weight'] == 900
     assert a['font_size'] == 24  # 300% of 8px
     assert a['padding_top'] == (1, 'px')
