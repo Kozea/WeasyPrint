@@ -252,7 +252,6 @@ def box_shadow(tokens):
     """
     box-shadow: inset? length{2,4} color?
     """
-    print(tokens)
     inset = False
     if tokens[0].type == 'ident' and tokens[0].lower_value == 'inset':
         inset = True
@@ -276,12 +275,7 @@ def box_shadow(tokens):
     if len(lengths) != 4:
         raise RuntimeError
 
-    class Foo:
-        def __init__(self, x):
-            self.value = x
-
-    r = [*lengths, Foo(inset), Foo(color)]
-    print(r)
+    r = [*lengths, inset, color]
     return r
 
 

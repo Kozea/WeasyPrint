@@ -329,6 +329,7 @@ def rounded_box_path(context, radii):
 
 
 def draw_box_shadows(context, box, shadows, inset):
+    box = box[0]
     for shadow in reversed(shadows):
         x, y, blur, spread, shadow_inset, color = shadow
         if inset != shadow_inset:
@@ -399,7 +400,7 @@ def draw_background(context, bg, enable_hinting, clip_box=True, bleed=None,
             context.set_antialias(cairo.ANTIALIAS_NONE)
 
         draw_box_shadows(
-            context, bg.layers[-1].rounded_box, bg.shadows, inset=False)
+            context, bg.layers[-1].clipped_boxes, bg.shadows, inset=False)
 
         if clip_box:
             for box in bg.layers[-1].clipped_boxes:
@@ -467,7 +468,7 @@ def draw_background(context, bg, enable_hinting, clip_box=True, bleed=None,
             draw_background_image(context, layer, bg.image_rendering)
 
         draw_box_shadows(
-            context, bg.layers[-1].rounded_box, bg.shadows, inset=True)
+            context, bg.layers[-1].clipped_boxes, bg.shadows, inset=True)
 
 
 def draw_table_backgrounds(context, page, table, enable_hinting):
@@ -1107,9 +1108,6 @@ def draw_text(context, textbox, enable_hinting):
         context.paint()
         context.restore()
 
-    if ('overline' in values or
-            'line-through' in values or
-            'underline' in values):
     if 'overline' in values:
         draw_text_decoration(
             context, textbox,
@@ -1133,10 +1131,7 @@ def draw_text_decoration(context, textbox, offset_y, thickness,
     with stacked(context):
         if enable_hinting:
             context.set_antialias(cairo.ANTIALIAS_NONE)
-<<<<<<< HEAD
         context.set_source_rgba(*textbox.style['color'])
-=======
->>>>>>> 40fea33d... Add support for text-shadow
         context.set_line_width(thickness)
         context.move_to(textbox.position_x, textbox.position_y + offset_y)
         context.rel_line_to(textbox.width, 0)

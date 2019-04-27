@@ -83,15 +83,15 @@ def layout_box_backgrounds(page, box, get_image_from_uri):
             style['background_attachment']]))]
     box.background = Background(
         color=color, image_rendering=style['image_rendering'], layers=[
-            layout_background_layer(box, page, *layer)
+            layout_background_layer(box, page, style['image_resolution'], *layer)
             for layer in zip(images, *map(cycle, [
-                style.background_size,
-                style.background_clip,
-                style.background_repeat,
-                style.background_origin,
-                style.background_position,
-                style.background_attachment]))],
-        shadows=style.box_shadow)
+                style['background_size'],
+                style['background_clip'],
+                style['background_repeat'],
+                style['background_origin'],
+                style['background_position'],
+                style['background_attachment']]))],
+        shadows=style['box_shadow'])
 
 
 def percentage(value, refer_to):
