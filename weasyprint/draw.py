@@ -375,8 +375,8 @@ def draw_box_shadows(context, box, shadows, inset):
 
         context.mask_surface(
             mask_surface,
-            mask_x,
-            mask_y)
+            x + mask_x,
+            y + mask_y)
 
         context.fill()
         # shadow_image = Image.frombuffer(
