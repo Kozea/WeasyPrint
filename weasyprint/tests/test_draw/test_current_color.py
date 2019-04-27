@@ -4,13 +4,13 @@
 
     Test the currentColor value.
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
 
-from . import G, assert_pixels
 from ..testing_utils import assert_no_logs
+from . import G, assert_pixels
 
 
 @assert_no_logs

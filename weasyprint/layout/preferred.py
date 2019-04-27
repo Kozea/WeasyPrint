@@ -8,7 +8,7 @@
     Terms used (max-content width, min-content width) are defined in David
     Baron's unofficial draft (http://dbaron.org/css/intrinsic/).
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
@@ -470,7 +470,10 @@ def table_and_columns_preferred_widths(context, box, outer=True):
                     other_columns_contributions_sum = sum(
                         other_columns_contributions)
                     if other_columns_contributions_sum == 0:
-                        ratio = 1 / len(other_columns_contributions)
+                        if other_columns_contributions:
+                            ratio = 1 / len(other_columns_contributions)
+                        else:
+                            ratio = 1
                     else:
                         ratio = (
                             max_content_widths[i] /
@@ -700,11 +703,14 @@ def trailing_whitespace_size(context, box):
     if box.style['font_size'] == 0 or len(stripped_text) == len(box.text):
         return 0
     if stripped_text:
-        old_box, _, _ = split_text_box(context, box, None, 0)
+        resume = 0
+        while resume is not None:
+            old_resume = resume
+            old_box, resume, _ = split_text_box(context, box, None, resume)
         assert old_box
         stripped_box = box.copy_with_text(stripped_text)
         stripped_box, resume, _ = split_text_box(
-            context, stripped_box, None, 0)
+            context, stripped_box, None, old_resume)
         assert stripped_box is not None
         assert resume is None
         return old_box.width - stripped_box.width

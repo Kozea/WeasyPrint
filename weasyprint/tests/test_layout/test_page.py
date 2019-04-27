@@ -4,7 +4,7 @@
 
     Tests for pages layout.
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
@@ -324,7 +324,7 @@ def test_page_breaks_complex_5():
     html, = page_1.children
     body, = html.children
     div, = body.children
-    assert div.height == 30
+    assert div.height == 100
     html, = page_2.children
     body, = html.children
     div, img_4 = body.children
@@ -357,17 +357,18 @@ def test_page_breaks_complex_6():
     html, = page_1.children
     body, = html.children
     div, = body.children
-    assert div.height == 30
+    assert div.height == 100
     html, = page_2.children
     body, = html.children
     div, = body.children
     section, = div.children
     img_2, = section.children
     assert img_2.height == 30
-    # TODO: currently this is 60: we do not decrease the used height of
-    # blocks with 'height: auto' when we remove children from them for
-    # some page-break-*: avoid.
-    # assert div.height == 30
+    # TODO: currently this is 60: we do not increase the used height of blocks
+    # to make them fill the blank space at the end of the age when we remove
+    # children from them for some break-*: avoid.
+    # See TODOs in blocks.block_container_layout
+    # assert div.height == 100
     html, = page_3.children
     body, = html.children
     div, img_4, img_5, = body.children
@@ -425,6 +426,75 @@ def test_page_breaks_complex_8():
     assert div_4.position_y == 20
     assert div_3.height == 20
     assert div_4.height == 20
+
+
+@assert_no_logs
+@pytest.mark.parametrize('break_after, margin_break, margin_top', (
+    ('page', 'auto', 5),
+    ('auto', 'auto', 0),
+    ('page', 'keep', 5),
+    ('auto', 'keep', 5),
+    ('page', 'discard', 0),
+    ('auto', 'discard', 0),
+))
+def test_margin_break(break_after, margin_break, margin_top):
+    page_1, page_2 = render_pages('''
+      <style>
+        @page { size: 70px; margin: 0 }
+        div { height: 63px; margin: 5px 0 8px;
+              break-after: %s; margin-break: %s }
+      </style>
+      <section>
+        <div></div>
+      </section>
+      <section>
+        <div></div>
+      </section>
+    ''' % (break_after, margin_break))
+    html, = page_1.children
+    body, = html.children
+    section, = body.children
+    div, = section.children
+    assert div.margin_top == 5
+
+    html, = page_2.children
+    body, = html.children
+    section, = body.children
+    div, = section.children
+    assert div.margin_top == margin_top
+
+
+@pytest.mark.xfail
+@assert_no_logs
+def test_margin_break_clearance():
+    page_1, page_2 = render_pages('''
+      <style>
+        @page { size: 70px; margin: 0 }
+        div { height: 63px; margin: 5px 0 8px; break-after: page }
+      </style>
+      <section>
+        <div></div>
+      </section>
+      <section>
+        <div style="border-top: 1px solid black">
+          <div></div>
+        </div>
+      </section>
+    ''')
+    html, = page_1.children
+    body, = html.children
+    section, = body.children
+    div, = section.children
+    assert div.margin_top == 5
+
+    html, = page_2.children
+    body, = html.children
+    section, = body.children
+    div_1, = section.children
+    assert div_1.margin_top == 0
+    div_2, = div_1.children
+    assert div_2.margin_top == 5
+    assert div_2.content_box_y() == 5
 
 
 @assert_no_logs

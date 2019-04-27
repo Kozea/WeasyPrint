@@ -4,7 +4,7 @@
 
     Page breaking and layout for block-level and block-container boxes.
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
@@ -40,6 +40,16 @@ def block_level_layout(context, box, max_position_y, skip_stack,
             box.margin_top = 0
         if box.margin_bottom == 'auto':
             box.margin_bottom = 0
+
+        if (context.current_page > 1 and page_is_empty):
+            # TODO: we should take care of cases when this box doesn't have
+            # collapsing margins with the first child of the page, see
+            # test_margin_break_clearance.
+            if box.style['margin_break'] == 'discard':
+                box.margin_top = 0
+            elif box.style['margin_break'] == 'auto':
+                if not context.forced_break:
+                    box.margin_top = 0
 
         collapsed_margin = collapse_margin(
             adjoining_margins + [box.margin_top])
@@ -143,6 +153,7 @@ def block_replaced_width(box, containing_block, device_size):
 
 def block_replaced_box_layout(box, containing_block, device_size):
     """Lay out the block :class:`boxes.ReplacedBox` ``box``."""
+    box = box.copy()
     if box.style['width'] == 'auto' and box.style['height'] == 'auto':
         computed_margins = box.margin_left, box.margin_right
         block_replaced_width.without_min_max(
@@ -266,12 +277,17 @@ def block_container_layout(context, box, max_position_y, skip_stack,
         context.create_block_formatting_context()
 
     is_start = skip_stack is None
-    if not is_start:
+    if box.style['box_decoration_break'] == 'slice' and not is_start:
         # Remove top margin, border and padding:
         box._remove_decoration(start=True, end=False)
 
     if adjoining_margins is None:
         adjoining_margins = []
+
+    if box.style['box_decoration_break'] == 'clone':
+        max_position_y -= (
+            box.padding_bottom + box.border_bottom_width +
+            box.margin_bottom)
 
     adjoining_margins.append(box.margin_top)
     this_box_adjoining_margins = adjoining_margins
@@ -331,7 +347,6 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                     new_child.index = index
                     new_children.append(new_child)
                 else:
-
                     for previous_child in reversed(new_children):
                         if previous_child.is_in_normal_flow():
                             last_in_flow_child = previous_child
@@ -339,6 +354,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                     page_break = block_level_page_break(
                         last_in_flow_child, child)
                     if new_children and page_break in ('avoid', 'avoid-page'):
+                        # TODO: fill the blank space at the bottom of the page
                         result = find_earlier_page_break(
                             new_children, absolute_boxes, fixed_boxes)
                         if result:
@@ -363,10 +379,19 @@ def block_container_layout(context, box, max_position_y, skip_stack,
             for line, resume_at in lines_iterator:
                 line.resume_at = resume_at
                 new_position_y = line.position_y + line.height
+
+                # Add bottom padding and border to the bottom position of the
+                # box if needed
+                if resume_at is None or (
+                        box.style['box_decoration_break'] == 'clone'):
+                    offset_y = box.border_bottom_width + box.padding_bottom
+                else:
+                    offset_y = 0
+
                 # Allow overflow if the first line of the page is higher
                 # than the page itself so that we put *something* on this
                 # page and can advance in the context.
-                if new_position_y > max_position_y and (
+                if new_position_y + offset_y > max_position_y and (
                         new_children or not page_is_empty):
                     over_orphans = len(new_children) - box.style['orphans']
                     if over_orphans < 0 and not page_is_empty:
@@ -401,6 +426,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                 # See http://dev.w3.org/csswg/css3-page/#allowed-pg-brk
                 # "When an unforced page break occurs here, both the adjoining
                 #  ‘margin-top’ and ‘margin-bottom’ are set to zero."
+                # See https://github.com/Kozea/WeasyPrint/issues/115
                 elif page_is_empty and new_position_y > max_position_y:
                     # Remove the top border when a page is empty and the box is
                     # too high to be drawn in one page
@@ -427,11 +453,6 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                 page_name = block_level_page_name(last_in_flow_child, child)
                 if page_name or page_break in (
                         'page', 'left', 'right', 'recto', 'verso'):
-                    if page_break == 'page':
-                        page_break = 'any'
-                    elif page_break not in ('left', 'right', 'recto', 'verso'):
-                        assert page_name
-                        page_break = 'any'
                     page_name = child.page_values()[0]
                     next_page = {'break': page_break, 'page': page_name}
                     resume_at = (index, None)
@@ -535,6 +556,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
             if new_child is None:
                 # Nothing fits in the remaining space of this page: break
                 if page_break in ('avoid', 'avoid-page'):
+                    # TODO: fill the blank space at the bottom of the page
                     result = find_earlier_page_break(
                         new_children, absolute_boxes, fixed_boxes)
                     if result:
@@ -632,10 +654,22 @@ def block_container_layout(context, box, max_position_y, skip_stack,
     if not isinstance(new_box, boxes.BlockBox):
         context.finish_block_formatting_context(new_box)
 
-    # After finish_block_formatting_context which may increment new_box.height
-    new_box.height = max(
-        min(new_box.height, new_box.max_height),
-        new_box.min_height)
+    if resume_at is None:
+        # After finish_block_formatting_context which may increment
+        # new_box.height
+        new_box.height = max(
+            min(new_box.height, new_box.max_height),
+            new_box.min_height)
+    else:
+        # Make the box fill the blank space at the bottom of the page
+        # https://www.w3.org/TR/css-break-3/#box-splitting
+        new_box.height = (
+            max_position_y - new_box.position_y -
+            (new_box.margin_height() - new_box.height))
+        if box.style['box_decoration_break'] == 'clone':
+            new_box.height += (
+                box.padding_bottom + box.border_bottom_width +
+                box.margin_bottom)
 
     if next_page['page'] is None:
         next_page['page'] = new_box.page_values()[1]

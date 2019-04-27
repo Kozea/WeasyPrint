@@ -5,7 +5,7 @@
     Convert *specified* property values (the result of the cascade and
     inhertance) into *computed* values (that are inherited).
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
@@ -17,9 +17,10 @@ from tinycss2.color3 import parse_color
 from .. import text
 from ..logger import LOGGER
 from ..urls import get_link_attribute
-from .properties import INITIAL_VALUES, Dimension
+from .properties import INHERITED, INITIAL_VALUES, Dimension
 from .utils import (
-    ANGLE_TO_RADIANS, LENGTH_UNITS, LENGTHS_TO_PIXELS, safe_urljoin)
+    ANGLE_TO_RADIANS, LENGTH_UNITS, LENGTHS_TO_PIXELS, check_var_function,
+    safe_urljoin)
 
 ZERO_PIXELS = Dimension(0, 'px')
 
@@ -139,6 +140,33 @@ COMPUTING_ORDER = _computing_order()
 COMPUTER_FUNCTIONS = {}
 
 
+def _resolve_var(computed, variable_name, default):
+    known_variable_names = [variable_name]
+
+    computed_value = computed.get(variable_name)
+    if computed_value and len(computed_value) == 1:
+        value = computed_value[0]
+        if value.type == 'ident' and value.value == 'initial':
+            return default
+
+    computed_value = computed.get(variable_name, default)
+    while (computed_value and
+            isinstance(computed_value, tuple)
+            and len(computed_value) == 1):
+        var_function = check_var_function(computed_value[0])
+        if var_function:
+            new_variable_name, new_default = var_function[1]
+            if new_variable_name in known_variable_names:
+                computed_value = default
+                break
+            known_variable_names.append(new_variable_name)
+            computed_value = computed.get(new_variable_name, new_default)
+            default = new_default
+        else:
+            break
+    return computed_value
+
+
 def register_computer(name):
     """Decorator registering a property ``name`` for a function."""
     name = name.replace('-', '_')
@@ -167,6 +195,7 @@ def compute(element, pseudo_type, specified, computed, parent_style,
     :param target_collector: A target collector used to get computed targets.
 
     """
+    from .validation.properties import PROPERTIES
 
     def computer():
         """Dummy object that holds attributes."""
@@ -187,6 +216,10 @@ def compute(element, pseudo_type, specified, computed, parent_style,
 
     getter = COMPUTER_FUNCTIONS.get
 
+    for name in specified:
+        if name.startswith('__'):
+            computed[name] = specified[name]
+
     for name in COMPUTING_ORDER:
         if name in computed:
             # Already computed
@@ -194,6 +227,33 @@ def compute(element, pseudo_type, specified, computed, parent_style,
 
         value = specified[name]
         function = getter(name)
+
+        if value and isinstance(value, tuple) and value[0] == 'var()':
+            variable_name, default = value[1]
+            computed_value = _resolve_var(computed, variable_name, default)
+            if computed_value is None:
+                new_value = None
+            else:
+                new_value = PROPERTIES[name.replace('_', '-')](computed_value)
+
+            # See https://drafts.csswg.org/css-variables/#invalid-variables
+            if new_value is None:
+                try:
+                    computed_value = ''.join(
+                        token.serialize() for token in computed_value)
+                except BaseException:
+                    pass
+                LOGGER.warning(
+                    'Unsupported computed value `%s` set in variable `%s` '
+                    'for property `%s`.', computed_value,
+                    variable_name.replace('_', '-'), name.replace('_', '-'))
+                if name in INHERITED and parent_style:
+                    value = parent_style[name]
+                else:
+                    value = INITIAL_VALUES[name]
+            else:
+                value = new_value
+
         if function is not None:
             value = function(computer, name, value)
         # else: same as specified
@@ -702,8 +762,7 @@ def strut_layout(style, context=None):
         if key in context.strut_layouts:
             return context.strut_layouts[key]
 
-    layout = text.Layout(
-        context=context, font_size=style['font_size'], style=style)
+    layout = text.Layout(context, style['font_size'], style)
     line, _ = layout.get_first_line()
     _, _, _, _, text_height, baseline = text.first_line_metrics(
         line, '', layout, resume_at=None, space_collapse=False, style=style)

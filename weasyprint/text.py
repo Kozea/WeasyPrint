@@ -4,7 +4,7 @@
 
     Interface with Pango to decide where to do line breaks and to draw text.
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
@@ -118,7 +118,18 @@ ffi.cdef('''
 
     typedef struct {
         guint is_line_break: 1;
-        /* ... */
+        guint is_mandatory_break : 1;
+        guint is_char_break : 1;
+        guint is_white : 1;
+        guint is_cursor_position : 1;
+        guint is_word_start : 1;
+        guint is_word_end : 1;
+        guint is_sentence_boundary : 1;
+        guint is_sentence_start : 1;
+        guint is_sentence_end : 1;
+        guint backspace_deletes_character : 1;
+        guint is_expandable_space : 1;
+        guint is_word_boundary : 1;
     } PangoLogAttr;
 
     int pango_version (void);
@@ -139,13 +150,15 @@ ffi.cdef('''
         PangoLayout *layout, const PangoFontDescription *desc);
     void pango_layout_set_wrap (
         PangoLayout *layout, PangoWrapMode wrap);
+    void pango_layout_set_single_paragraph_mode (
+        PangoLayout *layout, gboolean setting);
+    int pango_layout_get_baseline (PangoLayout *layout);
 
     PangoLayoutIter * pango_layout_get_iter (PangoLayout *layout);
     void pango_layout_iter_free (PangoLayoutIter *iter);
     gboolean pango_layout_iter_next_line (PangoLayoutIter *iter);
     PangoLayoutLine * pango_layout_iter_get_line_readonly (
         PangoLayoutIter *iter);
-    int pango_layout_iter_get_baseline (PangoLayoutIter *iter);
     int pango_layout_iter_get_index (PangoLayoutIter *iter);
 
     PangoFontDescription * pango_font_description_new (void);
@@ -591,39 +604,44 @@ def first_line_metrics(first_line, text, layout, resume_at, space_collapse,
         first_line_text = utf8_slice(text, slice(length))
         # Remove trailing spaces if spaces collapse
         if space_collapse:
-            first_line_text = first_line_text.rstrip(u' ')
+            first_line_text = first_line_text.rstrip(' ')
         # Remove soft hyphens
-        layout.set_text(first_line_text.replace(u'\u00ad', u''))
+        layout.set_text(first_line_text.replace('\u00ad', ''))
         first_line, _ = layout.get_first_line()
         length = first_line.length if first_line is not None else 0
         soft_hyphens = 0
-        if u'\u00ad' in first_line_text:
-            if first_line_text[0] == u'\u00ad':
-                length += 2  # len(u'\u00ad'.encode('utf8'))
-            for i in range(len(layout.text_bytes.decode('utf8'))):
+        if '\u00ad' in first_line_text:
+            if first_line_text[0] == '\u00ad':
+                length += 2  # len('\u00ad'.encode('utf8'))
+            for i in range(len(layout.text)):
                 while i + soft_hyphens + 1 < len(first_line_text):
-                    if first_line_text[i + soft_hyphens + 1] == u'\u00ad':
+                    if first_line_text[i + soft_hyphens + 1] == '\u00ad':
                         soft_hyphens += 1
                     else:
                         break
-        length += soft_hyphens * 2  # len(u'\u00ad'.encode('utf8'))
+        length += soft_hyphens * 2  # len('\u00ad'.encode('utf8'))
     width, height = get_size(first_line, style)
-    baseline = units_to_double(pango.pango_layout_iter_get_baseline(ffi.gc(
-        pango.pango_layout_get_iter(layout.layout),
-        pango.pango_layout_iter_free)))
+    baseline = units_to_double(pango.pango_layout_get_baseline(layout.layout))
+    layout.deactivate()
     return layout, length, resume_at, width, height, baseline
 
 
 class Layout(object):
     """Object holding PangoLayout-related cdata pointers."""
-    def __init__(self, context, font_size, style):
+    def __init__(self, context, font_size, style, justification_spacing=0):
+        self.justification_spacing = justification_spacing
+        self.setup(context, font_size, style)
+
+    def setup(self, context, font_size, style):
         from .fonts import ZERO_FONTSIZE_CRASHES_CAIRO
+
+        self.context = context
+        self.style = style
 
         # Cairo crashes with font-size: 0 when using Win32 API
         # See https://github.com/Kozea/WeasyPrint/pull/599
         if font_size == 0 and ZERO_FONTSIZE_CRASHES_CAIRO:
             font_size = 1
-        self.context = context
         hinting = context.enable_hinting if context else False
         self.layout = ffi.gc(
             pangocairo.pango_cairo_create_layout(ffi.cast(
@@ -663,23 +681,87 @@ class Layout(object):
             self.font, units_from_double(font_size))
         pango.pango_layout_set_font_description(self.layout, self.font)
 
+        features = get_font_features(
+            style['font_kerning'], style['font_variant_ligatures'],
+            style['font_variant_position'], style['font_variant_caps'],
+            style['font_variant_numeric'], style['font_variant_alternates'],
+            style['font_variant_east_asian'], style['font_feature_settings'])
+        if features and context:
+            features = ','.join(
+                ('%s %i' % (key, value)) for key, value in features.items())
+
+            # TODO: attributes should be freed.
+            # In the meantime, keep a cache to avoid leaking too many of them.
+            attr = context.font_features.get(features)
+            if attr is None:
+                try:
+                    attr = pango.pango_attr_font_features_new(
+                        features.encode('ascii'))
+                except AttributeError:
+                    LOGGER.error(
+                        'OpenType features are not available '
+                        'with Pango < 1.38')
+                else:
+                    context.font_features[features] = attr
+            if attr is not None:
+                attr_list = pango.pango_attr_list_new()
+                pango.pango_attr_list_insert(attr_list, attr)
+                pango.pango_layout_set_attributes(self.layout, attr_list)
+
+        # Tabs width
+        if style['tab_size'] != 8:  # Default Pango value is 8
+            self.set_tabs()
+
     def get_first_line(self):
-        layout_iter = pango.pango_layout_get_iter(self.layout)
+        layout_iter = ffi.gc(
+            pango.pango_layout_get_iter(self.layout),
+            pango.pango_layout_iter_free)
         first_line = pango.pango_layout_iter_get_line_readonly(layout_iter)
         if pango.pango_layout_iter_next_line(layout_iter):
-            index = pango.pango_layout_iter_get_index(layout_iter)
+            second_line = pango.pango_layout_iter_get_line_readonly(
+                layout_iter)
+            index = second_line.start_index
         else:
             index = None
-        pango.pango_layout_iter_free(layout_iter)
         return first_line, index
 
-    def set_text(self, text):
+    def set_text(self, text, justify=False):
         # Keep only the first two lines, we don't need the other ones
         text, bytestring = unicode_to_char_p(
             '\n'.join(text.split('\n', 3)[:2]))
-        self.text = text
-        self.text_bytes = bytestring
+        self.text = bytestring.decode('utf-8')
         pango.pango_layout_set_text(self.layout, text, -1)
+
+        word_spacing = self.style['word_spacing']
+        if justify:
+            # Justification is needed when drawing text but is useless during
+            # layout. Ignore it before layout is reactivated before the drawing
+            # step.
+            word_spacing += self.justification_spacing
+
+        letter_spacing = self.style['letter_spacing']
+        if letter_spacing == 'normal':
+            letter_spacing = 0
+
+        if text and (word_spacing != 0 or letter_spacing != 0):
+            letter_spacing = units_from_double(letter_spacing)
+            space_spacing = units_from_double(word_spacing) + letter_spacing
+            attr_list = pango.pango_attr_list_new()
+
+            def add_attr(start, end, spacing):
+                # TODO: attributes should be freed
+                attr = pango.pango_attr_letter_spacing_new(spacing)
+                attr.start_index, attr.end_index = start, end
+                pango.pango_attr_list_insert(attr_list, attr)
+
+            add_attr(0, len(bytestring) + 1, letter_spacing)
+            position = bytestring.find(b' ')
+            while position != -1:
+                add_attr(position, position + 1, space_spacing)
+                position = bytestring.find(b' ', position + 1)
+
+            pango.pango_layout_set_attributes(self.layout, attr_list)
+            pango.pango_attr_list_unref(attr_list)
 
     def get_font_metrics(self):
         context = pango.pango_layout_get_context(self.layout)
@@ -688,23 +770,35 @@ class Layout(object):
     def set_wrap(self, wrap_mode):
         pango.pango_layout_set_wrap(self.layout, wrap_mode)
 
-    def set_tabs(self, style):
-        if isinstance(style['tab_size'], int):
+    def set_tabs(self):
+        if isinstance(self.style['tab_size'], int):
+            style = self.style.copy()
+            style['tab_size'] = 8
             layout = Layout(
-                context=self.context, font_size=style['font_size'],
-                style=style)
-            layout.set_text(' ' * style['tab_size'])
+                self.context, style['font_size'], style,
+                self.justification_spacing)
+            layout.set_text(' ' * self.style['tab_size'])
             line, _ = layout.get_first_line()
             width, _ = get_size(line, style)
             width = int(round(width))
         else:
-            width = int(style['tab_size'].value)
+            width = int(self.style['tab_size'].value)
         # TODO: 0 is not handled correctly by Pango
         array = ffi.gc(
             pango.pango_tab_array_new_with_positions(
                 1, True, pango.PANGO_TAB_LEFT, width or 1),
             pango.pango_tab_array_free)
         pango.pango_layout_set_tabs(self.layout, array)
+
+    def deactivate(self):
+        del self.layout
+        del self.font
+        del self.language
+        del self.style
+
+    def reactivate(self, style):
+        self.setup(self.context, style['font_size'], style)
+        self.set_text(self.text, justify=True)
 
 
 class FontMetrics(object):
@@ -842,8 +936,7 @@ def create_layout(text, style, context, max_width, justification_spacing):
     if not text_wrap:
         max_width = None
 
-    layout = Layout(context, style['font_size'], style)
-    layout.set_text(text)
+    layout = Layout(context, style['font_size'], style, justification_spacing)
 
     # Make sure that max_width * Pango.SCALE == max_width * 1024 fits in a
     # signed integer. Treat bigger values same as None: unconstrained width.
@@ -851,63 +944,7 @@ def create_layout(text, style, context, max_width, justification_spacing):
         pango.pango_layout_set_width(
             layout.layout, units_from_double(max_width))
 
-    text_bytes = layout.text_bytes
-
-    # Word and letter spacings
-    word_spacing = style['word_spacing'] + justification_spacing
-    letter_spacing = style['letter_spacing']
-    if letter_spacing == 'normal':
-        letter_spacing = 0
-    if text and (word_spacing != 0 or letter_spacing != 0):
-        letter_spacing = units_from_double(letter_spacing)
-        space_spacing = units_from_double(word_spacing) + letter_spacing
-        attr_list = pango.pango_attr_list_new()
-
-        def add_attr(start, end, spacing):
-            # TODO: attributes should be freed
-            attr = pango.pango_attr_letter_spacing_new(spacing)
-            attr.start_index, attr.end_index = start, end
-            pango.pango_attr_list_insert(attr_list, attr)
-
-        add_attr(0, len(text_bytes) + 1, letter_spacing)
-        position = text_bytes.find(b' ')
-        while position != -1:
-            add_attr(position, position + 1, space_spacing)
-            position = text_bytes.find(b' ', position + 1)
-
-        pango.pango_layout_set_attributes(layout.layout, attr_list)
-        pango.pango_attr_list_unref(attr_list)
-
-    features = get_font_features(
-        style['font_kerning'], style['font_variant_ligatures'],
-        style['font_variant_position'], style['font_variant_caps'],
-        style['font_variant_numeric'], style['font_variant_alternates'],
-        style['font_variant_east_asian'], style['font_feature_settings'])
-    if features:
-        features = ','.join(
-            ('%s %i' % (key, value)) for key, value in features.items())
-
-        # TODO: attributes should be freed.
-        # In the meantime, keep a cache to avoid leaking too many of them.
-        attr = context.font_features.get(features)
-        if attr is None:
-            try:
-                attr = pango.pango_attr_font_features_new(
-                    features.encode('ascii'))
-            except AttributeError:
-                LOGGER.error(
-                    'OpenType features are not available with Pango < 1.38')
-            else:
-                context.font_features[features] = attr
-        if attr is not None:
-            attr_list = pango.pango_attr_list_new()
-            pango.pango_attr_list_insert(attr_list, attr)
-            pango.pango_layout_set_attributes(layout.layout, attr_list)
-
-    # Tabs width
-    if style['tab_size'] != 8:  # Default Pango value is 8
-        layout.set_tabs(style)
-
+    layout.set_text(text)
     return layout
 
 
@@ -984,7 +1021,7 @@ def split_first_line(text, style, context, max_width, justification_spacing,
         first_line_text = utf8_slice(text, slice(index))
         second_line_text = utf8_slice(text, slice(index, None))
     else:
-        # The first word is longer than the line, try to hyphenize it
+        # The first word is longer than the line, try to hyphenate it
         first_line_text = ''
         second_line_text = text
 
@@ -1008,97 +1045,127 @@ def split_first_line(text, style, context, max_width, justification_spacing,
             else:
                 # Second line is none
                 resume_at = first_line.length + 1
+                if resume_at >= len(text.encode('utf-8')):
+                    resume_at = None
     elif first_line_text:
         # We found something on the first line but we did not find a word on
         # the next line, no need to hyphenate, we can keep the current layout
         return first_line_metrics(
             first_line, text, layout, resume_at, space_collapse, style)
 
-    # Step #4: Try to hyphenize
+    # Step #4: Try to hyphenate
     hyphens = style['hyphens']
     lang = style['lang'] and pyphen.language_fallback(style['lang'])
     total, left, right = style['hyphenate_limit_chars']
     hyphenated = False
-    soft_hyphen = u'\u00ad'
+    soft_hyphen = '\u00ad'
 
-    # Automatic hyphenation possible and next word is long enough
-    if hyphens != 'none' and len(next_word) >= total:
-        first_line_width, _ = get_size(first_line, style)
-        space = max_width - first_line_width
-        if style['hyphenate_limit_zone'].unit == '%':
-            limit_zone = max_width * style['hyphenate_limit_zone'].value / 100.
+    try_hyphenate = False
+    if hyphens != 'none':
+        next_word_boundaries = get_next_word_boundaries(second_line_text, lang)
+        if next_word_boundaries:
+            # We have a word to hyphenate
+            start_word, stop_word = next_word_boundaries
+            next_word = second_line_text[start_word:stop_word]
+            if stop_word - start_word >= total:
+                # This word is long enough
+                first_line_width, _ = get_size(first_line, style)
+                space = max_width - first_line_width
+                if style['hyphenate_limit_zone'].unit == '%':
+                    limit_zone = (
+                        max_width * style['hyphenate_limit_zone'].value / 100.)
+                else:
+                    limit_zone = style['hyphenate_limit_zone'].value
+                if space > limit_zone or space < 0:
+                    # Available space is worth the try, or the line is even too
+                    # long to fit: try to hyphenate
+                    try_hyphenate = True
+
+    if try_hyphenate:
+        # Automatic hyphenation possible and next word is long enough
+        auto_hyphenation = hyphens == 'auto' and lang
+        manual_hyphenation = False
+        if auto_hyphenation:
+            if soft_hyphen in first_line_text or soft_hyphen in next_word:
+                # Automatic hyphenation opportunities within a word must be
+                # ignored if the word contains a conditional hyphen, in favor
+                # of the conditional hyphen(s).
+                # See https://drafts.csswg.org/css-text-3/#valdef-hyphens-auto
+                manual_hyphenation = True
         else:
-            limit_zone = style['hyphenate_limit_zone'].value
+            manual_hyphenation = hyphens == 'manual'
 
-        if space > limit_zone or space < 0:
-            # Manual hyphenation: check that the line ends with a soft hyphen
-            # and add the missing hyphen
-            if hyphens == 'manual':
-                if first_line_text.endswith(soft_hyphen):
-                    # The first line has been split on a soft hyphen
-                    if u' ' in first_line_text:
-                        first_line_text, next_word = (
-                            first_line_text.rsplit(u' ', 1))
-                        next_word = u' ' + next_word
-                        layout.set_text(first_line_text)
-                        first_line, index = layout.get_first_line()
-                        resume_at = len(
-                            (first_line_text + u' ').encode('utf8'))
-                    else:
-                        first_line_text, next_word = u'', first_line_text
-                soft_hyphen_indexes = [
-                    match.start() for match in
-                    re.finditer(soft_hyphen, next_word)]
-                soft_hyphen_indexes.reverse()
-                dictionary_iterations = [
-                    next_word[:i + 1] for i in soft_hyphen_indexes]
-            elif hyphens == 'auto' and lang:
-                # The next word does not fit, try hyphenation
-                dictionary_key = (lang, left, right, total)
-                dictionary = context.dictionaries.get(dictionary_key)
-                if dictionary is None:
-                    dictionary = pyphen.Pyphen(
-                        lang=lang, left=left, right=right)
-                    context.dictionaries[dictionary_key] = dictionary
-                dictionary_iterations = [
-                    start for start, end in dictionary.iterate(next_word)]
-            else:
-                dictionary_iterations = []
-
-            if dictionary_iterations:
-                for first_word_part in dictionary_iterations:
-                    new_first_line_text = first_line_text + first_word_part
-                    hyphenated_first_line_text = (
-                        new_first_line_text + style['hyphenate_character'])
-                    new_layout = create_layout(
-                        hyphenated_first_line_text, style, context, max_width,
-                        justification_spacing)
-                    new_first_line, new_index = new_layout.get_first_line()
-                    new_first_line_width, _ = get_size(new_first_line, style)
-                    new_space = max_width - new_first_line_width
-                    if new_index is None and (
-                            new_space >= 0 or
-                            first_word_part == dictionary_iterations[-1]):
-                        hyphenated = True
-                        layout = new_layout
-                        first_line = new_first_line
-                        index = new_index
-                        resume_at = len(new_first_line_text.encode('utf8'))
-                        if text[len(new_first_line_text)] == soft_hyphen:
-                            resume_at += len(soft_hyphen.encode('utf8'))
-                        break
-
-                if not hyphenated and not first_line_text:
-                    # Recreate the layout with no max_width to be sure that
-                    # we don't break inside the hyphenate-character string
-                    hyphenated = True
-                    layout.set_text(hyphenated_first_line_text)
-                    pango.pango_layout_set_width(
-                        layout.layout, units_from_double(-1))
+        if manual_hyphenation:
+            # Manual hyphenation: check that the line ends with a soft
+            # hyphen and add the missing hyphen
+            if first_line_text.endswith(soft_hyphen):
+                # The first line has been split on a soft hyphen
+                if ' ' in first_line_text:
+                    first_line_text, next_word = (
+                        first_line_text.rsplit(' ', 1))
+                    next_word = ' ' + next_word
+                    layout.set_text(first_line_text)
                     first_line, index = layout.get_first_line()
+                    resume_at = len((first_line_text + ' ').encode('utf8'))
+                else:
+                    first_line_text, next_word = '', first_line_text
+            soft_hyphen_indexes = [
+                match.start() for match in re.finditer(soft_hyphen, next_word)]
+            soft_hyphen_indexes.reverse()
+            dictionary_iterations = [
+                next_word[:i + 1] for i in soft_hyphen_indexes]
+        elif auto_hyphenation:
+            dictionary_key = (lang, left, right, total)
+            dictionary = context.dictionaries.get(dictionary_key)
+            if dictionary is None:
+                dictionary = pyphen.Pyphen(lang=lang, left=left, right=right)
+                context.dictionaries[dictionary_key] = dictionary
+            dictionary_iterations = [
+                start for start, end in dictionary.iterate(next_word)]
+        else:
+            dictionary_iterations = []
+
+        if dictionary_iterations:
+            for first_word_part in dictionary_iterations:
+                new_first_line_text = (
+                    first_line_text +
+                    second_line_text[:start_word] +
+                    first_word_part)
+                hyphenated_first_line_text = (
+                    new_first_line_text + style['hyphenate_character'])
+                new_layout = create_layout(
+                    hyphenated_first_line_text, style, context, max_width,
+                    justification_spacing)
+                new_first_line, new_index = new_layout.get_first_line()
+                new_first_line_width, _ = get_size(new_first_line, style)
+                new_space = max_width - new_first_line_width
+                if new_index is None and (
+                        new_space >= 0 or
+                        first_word_part == dictionary_iterations[-1]):
+                    hyphenated = True
+                    layout = new_layout
+                    first_line = new_first_line
+                    index = new_index
                     resume_at = len(new_first_line_text.encode('utf8'))
-                    if text[len(first_line_text)] == soft_hyphen:
+                    if text[len(new_first_line_text)] == soft_hyphen:
+                        # Recreate the layout with no max_width to be sure that
+                        # we don't break before the soft hyphen
+                        pango.pango_layout_set_width(
+                            layout.layout, units_from_double(-1))
                         resume_at += len(soft_hyphen.encode('utf8'))
+                    break
+
+            if not hyphenated and not first_line_text:
+                # Recreate the layout with no max_width to be sure that
+                # we don't break before or inside the hyphenate character
+                hyphenated = True
+                layout.set_text(hyphenated_first_line_text)
+                pango.pango_layout_set_width(
+                    layout.layout, units_from_double(-1))
+                first_line, index = layout.get_first_line()
+                resume_at = len(new_first_line_text.encode('utf8'))
+                if text[len(first_line_text)] == soft_hyphen:
+                    resume_at += len(soft_hyphen.encode('utf8'))
 
     if not hyphenated and first_line_text.endswith(soft_hyphen):
         # Recreate the layout with no max_width to be sure that
@@ -1142,30 +1209,24 @@ def split_first_line(text, style, context, max_width, justification_spacing,
         layout.set_text(first_line_text)
         first_line, index = layout.get_first_line()
         resume_at = index or first_line.length
+        if resume_at >= len(text.encode('utf-8')):
+            resume_at = None
 
-    if resume_at is not None and resume_at >= len(text.encode('utf-8')):
-        resume_at = None
     return first_line_metrics(
         first_line, text, layout, resume_at, space_collapse, style, hyphenated,
         style['hyphenate_character'])
 
 
-def show_first_line(context, pango_layout, hinting):
-    """Draw the given ``line`` to the Cairo ``context``."""
+def show_first_line(context, textbox):
+    """Draw the given ``textbox`` line to the cairo ``context``."""
+    pango.pango_layout_set_single_paragraph_mode(
+        textbox.pango_layout.layout, True)
+    first_line, _ = textbox.pango_layout.get_first_line()
     context = ffi.cast('cairo_t *', context._pointer)
-    if hinting:
-        pangocairo.pango_cairo_update_layout(context, pango_layout.layout)
-    # Set an infinite width as we don't want to break lines when drawing, the
-    # lines have already been split and the size may differ for example because
-    # of hinting.
-    pango.pango_layout_set_width(pango_layout.layout, -1)
-    pangocairo.pango_cairo_show_layout_line(
-        context, pango_layout.get_first_line()[0])
+    pangocairo.pango_cairo_show_layout_line(context, first_line)
 
 
-def can_break_text(text, lang):
-    if not text or len(text) < 2:
-        return False
+def get_log_attrs(text, lang):
     if lang:
         lang_p, lang = unicode_to_char_p(lang)
     else:
@@ -1181,4 +1242,27 @@ def can_break_text(text, lang):
     log_attrs = ffi.new('PangoLogAttr[]', length)
     pango.pango_get_log_attrs(
         text_p, len(bytestring), -1, language, log_attrs, length)
+    return bytestring, log_attrs
+
+
+def can_break_text(text, lang):
+    if not text or len(text) < 2:
+        return None
+    bytestring, log_attrs = get_log_attrs(text, lang)
+    length = len(bytestring) + 1
     return any(attr.is_line_break for attr in log_attrs[1:length - 1])
+
+
+def get_next_word_boundaries(text, lang):
+    if not text or len(text) < 2:
+        return None
+    bytestring, log_attrs = get_log_attrs(text, lang)
+    for i, attr in enumerate(log_attrs):
+        if attr.is_word_end:
+            word_end = i
+            break
+        if attr.is_word_boundary:
+            word_start = i
+    else:
+        return None
+    return word_start, word_end

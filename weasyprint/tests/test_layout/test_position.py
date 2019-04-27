@@ -4,7 +4,7 @@
 
     Tests for position property.
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
@@ -328,7 +328,6 @@ def test_fixed_positioning_regression_1():
         @page { size: 200px 100px; margin: 0 }
         article { break-after: page }
         .fixed { position: fixed; top: 10px; width: 20px }
-        ul {  }
       </style>
       <ul class="fixed" style="right: 0"><li>a</li></ul>
       <img class="fixed" style="right: 20px" src="pattern.png" />
@@ -353,3 +352,38 @@ def test_fixed_positioning_regression_1():
     assert (div.position_x, div.position_y) == (140, 10)
     assert (article.position_x, article.position_y) == (0, 0)
     assert 160 < ul.children[0].outside_list_marker.position_x < 170
+
+
+@assert_no_logs
+def test_fixed_positioning_regression_2():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/728
+    page_1, page_2 = parse('''
+      <style>
+        @page { size: 100px 100px }
+        section { break-after: page }
+        .fixed { position: fixed; top: 10px; left: 15px; width: 20px }
+      </style>
+      <div class="fixed">
+        <article class="fixed" style="top: 20px">
+          <header class="fixed" style="left: 5px"></header>
+        </article>
+      </div>
+      <section></section>
+      <pre></pre>
+    ''')
+    html, = page_1.children
+    body, = html.children
+    div, section = body.children
+    assert (div.position_x, div.position_y) == (15, 10)
+    article, = div.children
+    assert (article.position_x, article.position_y) == (15, 20)
+    header, = article.children
+    assert (header.position_x, header.position_y) == (5, 10)
+
+    html, = page_2.children
+    div, body, = html.children
+    assert (div.position_x, div.position_y) == (15, 10)
+    article, = div.children
+    assert (article.position_x, article.position_y) == (15, 20)
+    header, = article.children
+    assert (header.position_x, header.position_y) == (5, 10)

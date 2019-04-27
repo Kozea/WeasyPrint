@@ -4,7 +4,7 @@
 
     Test the CSS parsing, cascade, inherited and computed values.
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
@@ -80,7 +80,7 @@ def test_expand_shorthands():
 def test_annotate_document():
     document = FakeHTML(resource_filename('doc1.html'))
     document._ua_stylesheets = lambda: [CSS(resource_filename('mini_ua.css'))]
-    style_for, _, _ = get_all_computed_styles(
+    style_for = get_all_computed_styles(
         document, user_stylesheets=[CSS(resource_filename('user.css'))])
 
     # Element objects behave a lists of their children
@@ -168,7 +168,7 @@ def test_annotate_document():
 @assert_no_logs
 def test_page():
     document = FakeHTML(resource_filename('doc1.html'))
-    style_for, cascaded_styles, computed_styles = get_all_computed_styles(
+    style_for = get_all_computed_styles(
         document, user_stylesheets=[CSS(string='''
           html { color: red }
           @page { margin: 10px }
@@ -181,81 +181,108 @@ def test_page():
           }
         ''')])
 
-    # Force the generation of the style for all possible page types and
-    # pseudo-types, as it's generally only done during the rendering for needed
-    # page types.
-    standard_page_type = PageType(
-        side=None, blank=False, first=False, name=None)
-    set_page_type_computed_styles(
-        standard_page_type, cascaded_styles, computed_styles, document)
-
-    style = style_for(
-        PageType(side='left', first=True, blank=False, name=None))
+    page_type = PageType(
+        side='left', first=True, blank=False, index=0, name='')
+    set_page_type_computed_styles(page_type, document, style_for)
+    style = style_for(page_type)
     assert style['margin_top'] == (5, 'px')
     assert style['margin_left'] == (10, 'px')
     assert style['margin_bottom'] == (10, 'px')
     assert style['color'] == (1, 0, 0, 1)  # red, inherited from html
 
-    style = style_for(
-        PageType(side='right', first=True, blank=False, name=None))
+    page_type = PageType(
+        side='right', first=True, blank=False, index=0, name='')
+    set_page_type_computed_styles(page_type, document, style_for)
+    style = style_for(page_type)
     assert style['margin_top'] == (5, 'px')
     assert style['margin_left'] == (10, 'px')
     assert style['margin_bottom'] == (16, 'px')
     assert style['color'] == (0, 0, 1, 1)  # blue
 
-    style = style_for(
-        PageType(side='left', first=False, blank=False, name=None))
+    page_type = PageType(
+        side='left', first=False, blank=False, index=1, name='')
+    set_page_type_computed_styles(page_type, document, style_for)
+    style = style_for(page_type)
     assert style['margin_top'] == (10, 'px')
     assert style['margin_left'] == (10, 'px')
     assert style['margin_bottom'] == (10, 'px')
     assert style['color'] == (1, 0, 0, 1)  # red, inherited from html
 
-    style = style_for(
-        PageType(side='right', first=False, blank=False, name=None))
+    page_type = PageType(
+        side='right', first=False, blank=False, index=1, name='')
+    set_page_type_computed_styles(page_type, document, style_for)
+    style = style_for(page_type)
     assert style['margin_top'] == (10, 'px')
     assert style['margin_left'] == (10, 'px')
     assert style['margin_bottom'] == (16, 'px')
     assert style['color'] == (0, 0, 1, 1)  # blue
 
-    style = style_for(
-        PageType(side='left', first=True, blank=False, name=None),
-        '@top-left')
+    page_type = PageType(
+        side='left', first=True, blank=False, index=0, name='')
+    set_page_type_computed_styles(page_type, document, style_for)
+    style = style_for(page_type, '@top-left')
     assert style is None
 
-    style = style_for(
-        PageType(side='right', first=True, blank=False, name=None),
-        '@top-left')
+    page_type = PageType(
+        side='right', first=True, blank=False, index=0, name='')
+    set_page_type_computed_styles(page_type, document, style_for)
+    style = style_for(page_type, '@top-left')
     assert style['font_size'] == 20  # inherited from @page
     assert style['width'] == (200, 'px')
 
-    style = style_for(
-        PageType(side='right', first=True, blank=False, name=None),
-        '@top-right')
+    page_type = PageType(
+        side='right', first=True, blank=False, index=0, name='')
+    set_page_type_computed_styles(page_type, document, style_for)
+    style = style_for(page_type, '@top-right')
     assert style['font_size'] == 10
 
 
 @assert_no_logs
 @pytest.mark.parametrize('style, selectors', (
     ('@page {}', [{
-        'side': None, 'blank': False, 'first': False, 'name': None,
-        'specificity': [0, 0, 0]}]),
+        'side': None, 'blank': None, 'first': None, 'name': None,
+        'index': None, 'specificity': [0, 0, 0]}]),
     ('@page :left {}', [{
-        'side': 'left', 'blank': False, 'first': False, 'name': None,
-        'specificity': [0, 0, 1]}]),
+        'side': 'left', 'blank': None, 'first': None, 'name': None,
+        'index': None, 'specificity': [0, 0, 1]}]),
     ('@page:first:left {}', [{
-        'side': 'left', 'blank': False, 'first': True, 'name': None,
-        'specificity': [0, 1, 1]}]),
+        'side': 'left', 'blank': None, 'first': True, 'name': None,
+        'index': None, 'specificity': [0, 1, 1]}]),
     ('@page pagename {}', [{
-        'side': None, 'blank': False, 'first': False, 'name': 'pagename',
-        'specificity': [1, 0, 0]}]),
+        'side': None, 'blank': None, 'first': None, 'name': 'pagename',
+        'index': None, 'specificity': [1, 0, 0]}]),
     ('@page pagename:first:right:blank {}', [{
         'side': 'right', 'blank': True, 'first': True, 'name': 'pagename',
-        'specificity': [1, 2, 1]}]),
+        'index': None, 'specificity': [1, 2, 1]}]),
     ('@page pagename, :first {}', [
-        {'side': None, 'blank': False, 'first': False, 'name': 'pagename',
-         'specificity': [1, 0, 0]},
-        {'side': None, 'blank': False, 'first': True, 'name': None,
-         'specificity': [0, 1, 0]}]),
+        {'side': None, 'blank': None, 'first': None, 'name': 'pagename',
+         'index': None, 'specificity': [1, 0, 0]},
+        {'side': None, 'blank': None, 'first': True, 'name': None,
+         'index': None, 'specificity': [0, 1, 0]}]),
+    ('@page :first:first {}', [{
+        'side': None, 'blank': None, 'first': True, 'name': None,
+        'index': None, 'specificity': [0, 2, 0]}]),
+    ('@page :left:left {}', [{
+        'side': 'left', 'blank': None, 'first': None, 'name': None,
+        'index': None, 'specificity': [0, 0, 2]}]),
+    ('@page :nth(2) {}', [{
+        'side': None, 'blank': None, 'first': None, 'name': None,
+        'index': (0, 2, None), 'specificity': [0, 1, 0]}]),
+    ('@page :nth(2n + 4) {}', [{
+        'side': None, 'blank': None, 'first': None, 'name': None,
+        'index': (2, 4, None), 'specificity': [0, 1, 0]}]),
+    ('@page :nth(3n) {}', [{
+        'side': None, 'blank': None, 'first': None, 'name': None,
+        'index': (3, 0, None), 'specificity': [0, 1, 0]}]),
+    ('@page :nth( n+2 ) {}', [{
+        'side': None, 'blank': None, 'first': None, 'name': None,
+        'index': (1, 2, None), 'specificity': [0, 1, 0]}]),
+    ('@page :nth(even) {}', [{
+        'side': None, 'blank': None, 'first': None, 'name': None,
+        'index': (2, 0, None), 'specificity': [0, 1, 0]}]),
+    ('@page pagename:nth(2) {}', [{
+        'side': None, 'blank': None, 'first': None, 'name': 'pagename',
+        'index': (0, 2, None), 'specificity': [1, 1, 0]}]),
     ('@page page page {}', None),
     ('@page :left page {}', None),
     ('@page :left, {}', None),
@@ -263,7 +290,6 @@ def test_page():
     ('@page :left, test, {}', None),
     ('@page :wrong {}', None),
     ('@page :left:wrong {}', None),
-    ('@page :first:first {}', None),
     ('@page :left:right {}', None),
 ))
 def test_page_selectors(style, selectors):

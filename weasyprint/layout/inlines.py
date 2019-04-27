@@ -4,7 +4,7 @@
 
     Line breaking and layout for inline-level boxes.
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
@@ -482,6 +482,7 @@ def atomic_box(context, box, position_x, skip_stack, containing_block,
                device_size, absolute_boxes, fixed_boxes):
     """Compute the width and the height of the atomic ``box``."""
     if isinstance(box, boxes.ReplacedBox):
+        box = box.copy()
         if getattr(box, 'is_list_marker', False):
             image_marker_layout(box)
         else:
@@ -852,10 +853,9 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
 
                             # We have to check whether the child we're breaking
                             # is the one broken by the initial skip stack.
-                            broken_child = bool(
-                                initial_skip_stack and
-                                initial_skip_stack[0] == child_index and
-                                initial_skip_stack[1])
+                            broken_child = same_broken_child(
+                                initial_skip_stack,
+                                (child_index, child_resume_at))
                             if broken_child:
                                 # As this child has already been broken
                                 # following the original skip stack, we have to
@@ -908,14 +908,25 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
         [box_child for index, box_child in children],
         is_start=is_start, is_end=is_end)
     if isinstance(box, boxes.LineBox):
-        # Line boxes already have a position_x which may not be the same
-        # as content_box_left when text-indent is non-zero.
-        # This is important for justified text.
-        new_box.width = position_x - new_box.position_x
+        # We must reset line box width according to its new children
+        in_flow_children = [
+            box_child for box_child in new_box.children
+            if box_child.is_in_normal_flow()]
+        if in_flow_children:
+            new_box.width = (
+                in_flow_children[-1].position_x +
+                in_flow_children[-1].margin_width() -
+                new_box.position_x)
+        else:
+            new_box.width = 0
     else:
         new_box.position_x = initial_position_x
-        if (is_start and box.style['direction'] == 'ltr') or (
-                is_end and box.style['direction'] == 'rtl'):
+        if box.style['box_decoration_break'] == 'clone':
+            translation_needed = True
+        else:
+            translation_needed = (
+                is_start if box.style['direction'] == 'ltr' else is_end)
+        if translation_needed:
             for child in new_box.children:
                 child.translate(dx=left_spacing)
         new_box.width = position_x - content_box_left
@@ -970,7 +981,7 @@ def split_text_box(context, box, available_width, skip):
     # No need to encode what’s after resume_at (if set) or length (if
     # resume_at is not set). One code point is one or more byte, so
     # UTF-8 indexes are always bigger or equal to Unicode indexes.
-    new_text = layout.text_bytes.decode('utf8')
+    new_text = layout.text
     encoded = text.encode('utf8')
     if resume_at is not None:
         between = encoded[length:resume_at].decode('utf8')
@@ -1188,10 +1199,10 @@ def text_align(context, line, available_width, last):
             justify_line(context, line, offset)
         return 0
     if align == 'center':
-        offset /= 2.
+        return offset / 2
     else:
         assert align == 'right'
-    return offset
+        return offset
 
 
 def justify_line(context, line, extra_width):
@@ -1219,14 +1230,13 @@ def add_word_spacing(context, box, justification_spacing, x_advance):
         box.position_x += x_advance
         nb_spaces = count_spaces(box)
         if nb_spaces > 0:
-            layout, _, resume_at, width, _, _ = split_first_line(
+            layout, _, resume_at, _, _, _ = split_first_line(
                 box.text, box.style, context, float('inf'),
                 box.justification_spacing)
             assert resume_at is None
-            # XXX new_box.width - box.width is always 0???
-            # x_advance +=  new_box.width - box.width
-            x_advance += justification_spacing * nb_spaces
-            box.width = width
+            extra_space = justification_spacing * nb_spaces
+            x_advance += extra_space
+            box.width += extra_space
             box.pango_layout = layout
     elif isinstance(box, (boxes.LineBox, boxes.InlineBox)):
         box.position_x += x_advance
@@ -1273,4 +1283,15 @@ def can_break_inside(box):
             return any(can_break_inside(child) for child in box.children)
         else:
             return False
+    return False
+
+
+def same_broken_child(skip_stack_1, skip_stack_2):
+    """Check that the skip stacks design the same text box."""
+    while isinstance(skip_stack_1, tuple) and isinstance(skip_stack_2, tuple):
+        if skip_stack_1[1] is None and skip_stack_2[1] is None:
+            return True
+        if skip_stack_1[0] != skip_stack_2[0]:
+            return False
+        skip_stack_1, skip_stack_2 = skip_stack_1[1], skip_stack_2[1]
     return False

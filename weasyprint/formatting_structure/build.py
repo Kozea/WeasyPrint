@@ -8,7 +8,7 @@
     This includes creating anonymous boxes and processing whitespace
     as necessary.
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
@@ -19,10 +19,10 @@ import unicodedata
 
 import tinycss2.color3
 
-from . import boxes, counters
 from .. import html
 from ..css import properties
 from ..logger import LOGGER
+from . import boxes, counters
 
 # Maps values of the ``display`` CSS property to box types.
 BOX_TYPE_FROM_DISPLAY = {

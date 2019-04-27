@@ -4,7 +4,7 @@
 
     Interface with external libraries managing fonts installed on the system.
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
@@ -30,7 +30,7 @@ ZERO_FONTSIZE_CRASHES_CAIRO = False
 
 
 class FontConfiguration:
-    """Font configuration"""
+    """Font configuration."""
 
     def __init__(self):
         """Create a font configuration before rendering a document."""
@@ -239,8 +239,22 @@ else:
         #     fontdir.encode('mbcs'))
 
     class FontConfiguration(FontConfiguration):
+        """A FreeType font configuration.
+
+        .. versionadded:: 0.32
+
+        Keep a list of fonts, including fonts installed on the system, fonts
+        installed for the current user, and fonts referenced by cascading
+        stylesheets.
+
+        When created, an instance of this class gathers available fonts. It can
+        then be given to :class:`weasyprint.HTML` methods or to
+        :class:`weasyprint.CSS` to find fonts in ``@font-face`` rules.
+
+        """
+
         def __init__(self):
-            """Create a FT2 font configuration.
+            """Create a FreeType font configuration.
 
             See Behdad's blog:
             https://mces.blogspot.fr/2015/05/
@@ -307,7 +321,7 @@ else:
                             config, pattern, result)
                         # prevent RuntimeError, see issue #677
                         if matching_pattern == ffi.NULL:
-                            LOGGER.warning(
+                            LOGGER.debug(
                                 'Failed to get matching local font for "%s"',
                                 font_name.decode('utf-8'))
                             continue
@@ -330,7 +344,7 @@ else:
                                 FILESYSTEM_ENCODING)
                             url = pathlib.Path(path).as_uri()
                         else:
-                            LOGGER.warning(
+                            LOGGER.debug(
                                 'Failed to load local font "%s"',
                                 font_name.decode('utf-8'))
                             continue
@@ -345,7 +359,7 @@ else:
                             with open(url, 'rb') as fd:
                                 font = fd.read()
                     except Exception as exc:
-                        LOGGER.error(
+                        LOGGER.debug(
                             'Failed to load font at "%s" (%s)', url, exc)
                         continue
                     font_features = {
@@ -417,7 +431,7 @@ else:
                         # Though it seems to work without...
                         return filename
                     else:
-                        LOGGER.error('Failed to load font at "%s"', url)
+                        LOGGER.debug('Failed to load font at "%s"', url)
             LOGGER.warning(
                 'Font-face "%s" cannot be loaded',
                 rule_descriptors['font_family'])

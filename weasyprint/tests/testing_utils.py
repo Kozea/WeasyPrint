@@ -4,7 +4,7 @@
 
     Helpers for tests.
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
@@ -25,7 +25,7 @@ from ..urls import path2url
 
 # Lists of fonts with many variants (including condensed)
 if sys.platform.startswith('win'):
-    SANS_FONTS = 'Arial Nova, Arial, sans'
+    SANS_FONTS = 'DejaVu Sans, Arial Nova, Arial, sans'
     MONO_FONTS = 'Courier New, Courier, monospace'
 elif sys.platform.startswith('darwin'):
     # Pango on macOS doesn't handle multiple fonts
@@ -70,16 +70,21 @@ def capture_logs():
     messages = []
 
     def emit(record):
+        if record.name == 'weasyprint.progress':
+            return
         message = '%s: %s' % (record.levelname.upper(), record.getMessage())
         messages.append(message)
 
     previous_handlers = logger.handlers
+    previous_level = logger.level
     logger.handlers = []
     logger.addHandler(CallbackHandler(emit))
+    logger.setLevel(logging.DEBUG)
     try:
         yield messages
     finally:
         logger.handlers = previous_handlers
+        logger.level = previous_level
 
 
 def assert_no_logs(function):

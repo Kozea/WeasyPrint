@@ -4,7 +4,7 @@
 
     Various data about known properties.
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
@@ -97,7 +97,7 @@ INITIAL_VALUES = {
     # CSS3 Color: http://www.w3.org/TR/css3-color/#transparency
     'opacity': 1,
 
-    # Multi-column Layout (CR): https://www.w3.org/TR/css3-multicol/
+    # Multi-column Layout (WD): https://www.w3.org/TR/css-multicol-1/
     'column_width': 'auto',
     'column_count': 'auto',
     'column_gap': Dimension(1, 'em'),
@@ -107,7 +107,7 @@ INITIAL_VALUES = {
     'column_fill': 'balance',
     'column_span': 'none',
 
-    # Fonts 3 (CR): https://www.w3.org/TR/css-fonts-3/
+    # Fonts 3 (REC): https://www.w3.org/TR/css-fonts-3/
     'font_family': ('serif',),  # depends on user agent
     'font_feature_settings': 'normal',
     'font_kerning': 'auto',
@@ -124,10 +124,12 @@ INITIAL_VALUES = {
     'font_variant_position': 'normal',
     'font_weight': 400,
 
-    # Fragmentation 3 (CR): https://www.w3.org/TR/css-break-3/
+    # Fragmentation 3/4 (CR/WD): https://www.w3.org/TR/css-break-4/
+    'box_decoration_break': 'slice',
     'break_after': 'auto',
     'break_before': 'auto',
     'break_inside': 'auto',
+    'margin_break': 'auto',
     'orphans': 2,
     'widows': 2,
 
@@ -142,14 +144,14 @@ INITIAL_VALUES = {
     'image_resolution': 1,  # dppx
     'image_rendering': 'auto',
 
-    # Paged Media 3 (WD): https://www.w3.org/TR/css3-page/
+    # Paged Media 3 (WD): https://www.w3.org/TR/css-page-3/
     'size': None,  # set to A4 in computed_values
     'page': 'auto',
     'bleed_left': 'auto',
     'bleed_right': 'auto',
     'bleed_top': 'auto',
     'bleed_bottom': 'auto',
-    'marks': 'none',
+    'marks': (),  # computed value for 'none'
 
     # Text 3/4 (WD/WD): https://www.w3.org/TR/css-text-4/
     'hyphenate_character': '‐',  # computed value chosen by the user agent
@@ -164,11 +166,11 @@ INITIAL_VALUES = {
     'white_space': 'normal',
     'word_spacing': 0,  # computed value for 'normal'
 
-    # Transforms 1 (WD): https://www.w3.org/TR/css-transforms-1/
+    # Transforms 1 (CR): https://www.w3.org/TR/css-transforms-1/
     'transform_origin': (Dimension(50, '%'), Dimension(50, '%')),
     'transform': (),  # computed value for 'none'
 
-    # User Interface 3 (CR): https://www.w3.org/TR/css-ui-3/
+    # User Interface 3 (REC): https://www.w3.org/TR/css-ui-3/
     'box_sizing': 'content-box',
     'outline_color': 'currentColor',  # invert is not supported
     'outline_style': 'none',

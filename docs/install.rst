@@ -3,14 +3,14 @@ Installing
 
 WeasyPrint |version| depends on:
 
-* CPython_ ≥ 3.4.0
+* CPython_ ≥ 3.5.0
 * cairo_ ≥ 1.15.4 [#]_
 * Pango_ ≥ 1.38.0 [#]_
-* setuptools_ ≥ 30.3.0
+* setuptools_ ≥ 30.3.0 [#]_
 * CFFI_ ≥ 0.6
 * html5lib_ ≥ 0.999999999
 * cairocffi_ ≥ 0.9.0
-* tinycss2_ ≥ 0.5
+* tinycss2_ ≥ 1.0.0
 * cssselect2_ ≥ 0.1
 * CairoSVG_ ≥ 1.0.20
 * Pyphen_ ≥ 0.8
@@ -86,6 +86,10 @@ WeasyPrint! Otherwise, please copy the full error message and
 .. [#] pango ≥ 1.29.3 is required, but 1.38.0 is needed to handle `@font-face`
        CSS rules.
 
+.. [#] setuptools ≥ 30.3.0 is required to install WeasyPrint from wheel, but
+       39.2.0 is required to build the package or install from
+       source. setuptools < 40.8.0 will not include the LICENSE file.
+
 .. [#] Without it, PNG and SVG are the only supported image formats.
        JPEG, GIF and others are not available.
 
@@ -156,7 +160,22 @@ For Alpine Linux 3.6 or newer:
 
 .. code-block:: sh
 
-    apk --update --upgrade add gcc musl-dev jpeg-dev zlib-dev libffi-dev cairo-dev pango-dev gdk-pixbuf
+    apk --update --upgrade add gcc musl-dev jpeg-dev zlib-dev libffi-dev cairo-dev pango-dev gdk-pixbuf-dev
+
+.. note::
+
+    Some Alpine images do not resolv the library path via ctypes.utils.find_library. So if you get
+    ``OSError: dlopen() failed to load a library: cairo / cairo-2 / cairo-gobject-2``
+    then change find_library and open the library directly:
+    ``/usr/local/lib/python3.7/site-packages/cairocffi/__init__.py``
+
+    .. code-block:: python
+
+        try:
+            lib = ffi.dlopen(name)
+            if lib:
+        ...
+        cairo = dlopen(ffi, 'libcairo.so.2')
 
 
 .. _macos:
@@ -173,6 +192,14 @@ official installation method relies on Homebrew:
 
 Don't forget to use the `pip3` command to install WeasyPrint, as `pip` may be
 using the version of Python installed with macOS.
+
+If you get the `Fontconfig error: Cannot load default config file` message,
+then try reinstalling fontconfig with the `universal` option:
+
+.. code-block:: sh
+
+    brew uninstall fontconfig
+    brew install fontconfig --universal
 
 You can also try with Macports, but please notice that this solution is not
 tested and thus not recommended (**also known as "you're on your own and may
@@ -193,7 +220,7 @@ Dear Windows user, please follow these steps carefully.
 Really carefully. Don’t cheat.
 
 Besides a proper Python installation and a few Python packages, WeasyPrint
-needs the Pango, Cairo and GDK-PixBuf libraries. They are required for the
+needs the Pango, cairo and GDK-PixBuf libraries. They are required for the
 graphical stuff: Text and image rendering.  These libraries aren't Python
 packages. They are part of `GTK+ <https://en.wikipedia.org/wiki/GTK+>`_
 (formerly known as GIMP Toolkit), and must be installed separately.
@@ -393,7 +420,7 @@ Open a fresh *Command Prompt* and execute
     python -m weasyprint http://weasyprint.org weasyprint.pdf
 
 If you get an error like ``OSError: dlopen() failed to load a library: cairo /
-cairo-2`` it’s probably because Cairo (or another GTK+ library mentioned in the
+cairo-2`` it’s probably because cairo (or another GTK+ library mentioned in the
 error message) is not properly available in the folders listed in your ``PATH``
 environment variable.
 
@@ -422,7 +449,7 @@ Depending on the GTK installation route you took, the proper folder name is
 something along the lines of:
 
 * ``C:\msys2\mingw32\bin``
-* ``C:\msys2\mingw34\bin``
+* ``C:\msys2\mingw64\bin``
 * ``C:\Program Files\GTK3-Runtime Win64\bin``
 
 Determine the correct folder and execute the following commands, replace
@@ -440,7 +467,7 @@ Call WeasyPrint again:
 
 .. code-block:: console
 
-    python -m weasyprint http://weasyprint.org weasyprint.pdf.
+    python -m weasyprint http://weasyprint.org weasyprint.pdf
 
 If the error is gone you should either fix your ``PATH`` permanently (via
 *Advanced System Settings*) or execute the above ``SET PATH`` command by

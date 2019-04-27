@@ -36,13 +36,13 @@ or document margins via command-line flags. This is best accomplished
 with the CSS ``@page`` at-rule. Consider the following example:
 
 .. code-block:: css
-  
+
   @page {
     size: Letter; /* Change from the default size of A4 */
     margin: 2.5cm; /* Set margin on each page */
   }
 
-There is much more which can be achieved with the ``@page`` at-rule, 
+There is much more which can be achieved with the ``@page`` at-rule,
 such as page numbers, headers, etc. Read more about the page_ at-rule,
 and find an example here_.
 
@@ -81,7 +81,7 @@ The Python version of the above example goes like this:
 Instantiating HTML and CSS objects
 ..................................
 
-If you have a file name, an absolute URL or a readable file-like object,
+If you have a file name, an absolute URL or a readable :term:`file object`,
 you can just pass it to :class:`HTML` or :class:`CSS` to create an instance.
 Alternatively, use a named argument so that no guessing is involved:
 
@@ -141,7 +141,7 @@ Once you have a :class:`HTML` object, call its :meth:`~HTML.write_pdf` or
 PDF or PNG file.
 
 Without arguments, these methods return a byte string in memory. If you
-pass a file name or a writable file-like object, they will write there
+pass a file name or a writable :term:`file object`, they will write there
 directly instead. (**Warning**: with a filename, these methods will
 overwrite existing files silently.)
 
@@ -162,7 +162,7 @@ on any type of cairo surface.
 
 .. [#] Pages in the same document do not always have the same size.
 
-See the :ref:`python-api` for details. A few random example:
+See the :ref:`python-api` for details. A few random examples:
 
 .. code-block:: python
 
@@ -241,18 +241,36 @@ to the default fetcher:
             graph_data = map(float, url[6:].split(','))
             return dict(string=generate_graph(graph_data),
                         mime_type='image/png')
-        else:
-            return weasyprint.default_url_fetcher(url)
+        return weasyprint.default_url_fetcher(url)
 
     source = '<img src="graph:42,10.3,87">'
     HTML(string=source, url_fetcher=my_fetcher).write_pdf('out.pdf')
 
-Flask-WeasyPrint_ makes use of a custom URL fetcher to integrate WeasyPrint
-with a Flask_ application and short-cut the network for resources that are
-within the same application.
+Flask-WeasyPrint_ for Flask_ and Django-Weasyprint_ for Django_ both make
+use of a custom URL fetcher to integrate WeasyPrint and use the filesystem
+instead of a network call for static and media files.
+
+A custom fetcher should be returning a :obj:`dict` with
+
+* One of ``string`` (a :obj:`bytestring <bytes>`) or ``file_obj`` (a
+  :term:`file object`).
+* Optionally: ``mime_type``, a MIME type extracted e.g. from a *Content-Type*
+  header. If not provided, the type is guessed from the file extension in the
+  URL.
+* Optionally: ``encoding``, a character encoding extracted e.g. from a
+  *charset* parameter in a *Content-Type* header
+* Optionally: ``redirected_url``, the actual URL of the resource if there were
+  e.g. HTTP redirects.
+* Optionally: ``filename``, the filename of the resource. Usually derived from
+  the *filename* parameter in a *Content-Disposition* header
+
+If a ``file_obj`` is given, the resource will be closed automatically by
+the function internally used by WeasyPrint to retreive data.
 
 .. _Flask-WeasyPrint: http://packages.python.org/Flask-WeasyPrint/
 .. _Flask: http://flask.pocoo.org/
+.. _Django-WeasyPrint: https://pypi.org/project/django-weasyprint/
+.. _Django: https://www.djangoproject.com/
 
 
 Logging
@@ -272,23 +290,10 @@ by configuring the ``weasyprint`` logger object:
     logger = logging.getLogger('weasyprint')
     logger.addHandler(logging.FileHandler('/path/to/weasyprint.log'))
 
-The ``INFO`` level is used to report the rendering progress. It is useful to
-get feedback when WeasyPrint is launched in a terminal (using the ``--verbose``
-option), or to give this feedback to end users when used as a library. To catch
-these logs, you can for example use a filter:
-
-.. code-block:: python
-
-    import logging
-
-    class LoggerFilter(logging.Filter):
-        def filter(self, record):
-            if record.level == logging.INFO:
-                print(record.getMessage())
-                return False
-
-    logger = logging.getLogger('weasyprint')
-    logger.addFilter(LoggerFilter())
+The ``weasyprint.progress`` logger is used to report the rendering progress. It
+is useful to get feedback when WeasyPrint is launched in a terminal (using the
+``--verbose`` or ``--debug`` option), or to give this feedback to end users
+when used as a library.
 
 See the documentation of the :mod:`logging` module for details.
 
@@ -457,9 +462,9 @@ Leaks can include (but are not restricted to):
 - network configuration (IPv4 and IPv6 support, IP addressing, firewall
   configuration, using ``http://`` URIs and tracking time used to render
   documents),
-- hardware and software used for graphical rendering (as Cairo renderings
+- hardware and software used for graphical rendering (as cairo renderings
   can change with CPU and GPU features),
-- Python, Cairo, Pango and other libraries versions (implementation details
+- Python, cairo, Pango and other libraries versions (implementation details
   lead to different renderings).
 
 SVG images

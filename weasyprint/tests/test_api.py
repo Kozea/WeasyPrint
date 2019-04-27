@@ -4,7 +4,7 @@
 
     Test the public API.
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
@@ -628,8 +628,8 @@ def test_low_level_api():
         <style>
           img { display: block; bookmark-label: attr(alt); bookmark-level: 1 }
         </style>
-        <img src="file://%s" alt="Chocolate" />
-    ''' % resource_filename('pattern.png'),
+        <img src="%s" alt="Chocolate" />
+    ''' % path2url(resource_filename('pattern.png')),
      [[(1, 'Chocolate', (0, 0))]], [('Chocolate', (0, 0, 0), [])], False),
     ('''
         <h1 style="transform-origin: 0 0;

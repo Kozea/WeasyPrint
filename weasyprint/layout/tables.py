@@ -4,7 +4,7 @@
 
     Layout for tables and internal table boxes.
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
@@ -62,6 +62,7 @@ def table_layout(context, table, max_position_y, skip_stack,
     def group_layout(group, position_y, max_position_y,
                      page_is_empty, skip_stack):
         resume_at = None
+        original_page_is_empty = page_is_empty
         resolve_percentages(group, containing_block=table)
         group.position_x = rows_x
         group.position_y = position_y
@@ -215,7 +216,7 @@ def table_layout(context, table, max_position_y, skip_stack,
 
         # Do not keep the row group if we made a page break
         # before any of its rows or with 'avoid'
-        if resume_at and (
+        if resume_at and not original_page_is_empty and (
                 group.style['break_inside'] in ('avoid', 'avoid-page') or
                 not new_group_children):
             return None, None
@@ -573,6 +574,11 @@ def auto_table_layout(context, box, containing_block):
             min_content_specified_guess[i] = column_min_content_widths[i]
 
     if assignable_width <= sum(max_content_guess):
+        # Default values shouldn't be used, but we never know.
+        # See https://github.com/Kozea/WeasyPrint/issues/770
+        lower_guess = guesses[0]
+        upper_guess = guesses[-1]
+
         # We have to work around floating point rounding errors here.
         # The 1e-9 value comes from PEP 485.
         for guess in guesses:
@@ -586,9 +592,10 @@ def auto_table_layout(context, box, containing_block):
             else:
                 break
         if upper_guess == lower_guess:
+            # TODO: Uncomment the assert when bugs #770 and #628 are closed
             # Equivalent to "assert assignable_width == sum(upper_guess)"
-            assert abs(assignable_width - sum(upper_guess)) <= (
-                assignable_width * 1e-9)
+            # assert abs(assignable_width - sum(upper_guess)) <= (
+            #     assignable_width * 1e-9)
             table.column_widths = upper_guess
         else:
             added_widths = [
@@ -650,6 +657,8 @@ def find_in_flow_baseline(box, last=False, baseline_types=(boxes.LineBox,)):
     Return the absolute Y position for the first (or last) in-flow baseline
     if any, or None.
     """
+    # TODO: synthetize baseline when needed
+    # See https://www.w3.org/TR/css-align-3/#synthesize-baseline
     if isinstance(box, baseline_types):
         return box.position_y + box.baseline
     if isinstance(box, boxes.ParentBox) and not isinstance(

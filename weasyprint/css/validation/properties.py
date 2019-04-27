@@ -5,7 +5,7 @@
     Validate properties.
     See http://www.w3.org/TR/CSS21/propidx.html and various CSS3 modules.
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
@@ -13,14 +13,15 @@
 from tinycss2.color3 import parse_color
 from tinycss2.ast import DimensionToken
 
-from .. import computed_values
 from ...formatting_structure import counters
+from .. import computed_values
 from ..properties import KNOWN_PROPERTIES, Dimension
 from ..utils import (
-    InvalidValues, comma_separated_list, get_angle, get_content_list,
-    get_content_list_token, get_image, get_keyword, get_length, get_resolution,
-    get_single_keyword, get_url, parse_2d_position, parse_background_position,
-    parse_function, single_keyword, single_token)
+    InvalidValues, check_var_function, comma_separated_list, get_angle,
+    get_content_list, get_content_list_token, get_custom_ident, get_image,
+    get_keyword, get_length, get_resolution, get_single_keyword, get_url,
+    parse_2d_position, parse_background_position, parse_function,
+    single_keyword, single_token)
 
 PREFIX = '-weasy-'
 PROPRIETARY = set()
@@ -81,6 +82,10 @@ def property(property_name=None, proprietary=False, unstable=False,
 
 def validate_non_shorthand(base_url, name, tokens, required=False):
     """Default validator for non-shorthand properties."""
+    if name.startswith('--'):
+        # TODO: validate content
+        return ((name, tokens),)
+
     if not required and name not in KNOWN_PROPERTIES:
         hyphens_name = name.replace('_', '-')
         if hyphens_name in KNOWN_PROPERTIES:
@@ -90,6 +95,11 @@ def validate_non_shorthand(base_url, name, tokens, required=False):
 
     if not required and name not in PROPERTIES:
         raise InvalidValues('property not supported yet')
+
+    for token in tokens:
+        var_function = check_var_function(token)
+        if var_function:
+            return ((name, var_function),)
 
     keyword = get_single_keyword(tokens)
     if keyword in ('initial', 'inherit'):
@@ -118,7 +128,7 @@ def background_attachment(keyword):
 @property('border-right-color')
 @property('border-bottom-color')
 @property('border-left-color')
-@property('column-rule-color')
+@property('column-rule-color', unstable=True)
 @single_token
 def other_colors(token):
     return parse_color(token)
@@ -180,7 +190,7 @@ def list_style_image(token, base_url):
                 return 'url', parsed_url[1][1]
 
 
-@property(unstable=True)
+@property()
 def transform_origin(tokens):
     # TODO: parse (and ignore) a third value for Z.
     return parse_2d_position(tokens)
@@ -310,7 +320,7 @@ def border_corner_radius(tokens):
 @property('border-right-style')
 @property('border-left-style')
 @property('border-bottom-style')
-@property('column-rule-style')
+@property('column-rule-style', unstable=True)
 @single_keyword
 def border_style(keyword):
     """``border-*-style`` properties validation."""
@@ -336,6 +346,20 @@ def break_inside(keyword):
     return keyword in ('auto', 'avoid', 'avoid-page', 'avoid-column')
 
 
+@property()
+@single_keyword
+def box_decoration_break(keyword):
+    """``box-decoration-break`` property validation."""
+    return keyword in ('slice', 'clone')
+
+
+@property(unstable=True)
+@single_keyword
+def margin_break(keyword):
+    """``margin-break`` property validation."""
+    return keyword in ('auto', 'keep', 'discard')
+
+
 @property(unstable=True)
 @single_token
 def page(token):
@@ -344,10 +368,10 @@ def page(token):
         return 'auto' if token.lower_value == 'auto' else token.value
 
 
-@property("bleed-left")
-@property("bleed-right")
-@property("bleed-top")
-@property("bleed-bottom")
+@property('bleed-left', unstable=True)
+@property('bleed-right', unstable=True)
+@property('bleed-top', unstable=True)
+@property('bleed-bottom', unstable=True)
 @single_token
 def bleed(token):
     """``bleed`` property validation."""
@@ -358,19 +382,19 @@ def bleed(token):
         return get_length(token)
 
 
-@property()
+@property(unstable=True)
 def marks(tokens):
     """``marks`` property validation."""
     if len(tokens) == 2:
-        keywords = [get_keyword(token) for token in tokens]
+        keywords = tuple(get_keyword(token) for token in tokens)
         if 'crop' in keywords and 'cross' in keywords:
             return keywords
     elif len(tokens) == 1:
         keyword = get_keyword(tokens[0])
         if keyword in ('crop', 'cross'):
-            return [keyword]
+            return (keyword,)
         elif keyword == 'none':
-            return 'none'
+            return ()
 
 
 @property('outline-style')
@@ -385,7 +409,7 @@ def outline_style(keyword):
 @property('border-right-width')
 @property('border-left-width')
 @property('border-bottom-width')
-@property('column-rule-width')
+@property('column-rule-width', unstable=True)
 @property('outline-width')
 @single_token
 def border_width(token):
@@ -398,7 +422,7 @@ def border_width(token):
         return keyword
 
 
-@property()
+@property(unstable=True)
 @single_token
 def column_width(token):
     """``column-width`` property validation."""
@@ -410,7 +434,7 @@ def column_width(token):
         return keyword
 
 
-@property()
+@property(unstable=True)
 @single_keyword
 def column_span(keyword):
     """``column-span`` property validation."""
@@ -561,7 +585,7 @@ def width_height(token):
         return 'auto'
 
 
-@property()
+@property(unstable=True)
 @single_token
 def column_gap(token):
     """Validation for the ``column-gap`` property."""
@@ -573,7 +597,7 @@ def column_gap(token):
         return keyword
 
 
-@property()
+@property(unstable=True)
 @single_keyword
 def column_fill(keyword):
     """``column-fill`` property validation."""
@@ -935,7 +959,7 @@ def orphans_widows(token):
             return value
 
 
-@property()
+@property(unstable=True)
 @single_token
 def column_count(token):
     """Validation for the ``column-count`` property."""
@@ -1334,18 +1358,18 @@ def string_set(tokens, base_url):
     """Validation for ``string-set``."""
     # Spec asks for strings after custom keywords, but we allow content-lists
     if len(tokens) >= 2:
-        var_name = get_keyword(tokens[0])
+        var_name = get_custom_ident(tokens[0])
         if var_name is None:
             return
         parsed_tokens = tuple(
             get_content_list_token(token, base_url) for token in tokens[1:])
         if None not in parsed_tokens:
             return (var_name, parsed_tokens)
-    elif tokens and tokens[0].value == 'none':
+    elif tokens and get_keyword(tokens[0]) == 'none':
         return 'none'
 
 
-@property(unstable=True)
+@property()
 def transform(tokens):
     if get_single_keyword(tokens) == 'none':
         return ()

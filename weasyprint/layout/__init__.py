@@ -13,18 +13,18 @@
 
     See http://www.w3.org/TR/CSS21/cascade.html#used-value
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
 
 from collections import defaultdict
 
-from .absolute import absolute_box_layout
-from .pages import make_all_pages, make_margin_boxes
-from .backgrounds import layout_backgrounds
 from ..formatting_structure import boxes
-from ..logger import LOGGER
+from ..logger import PROGRESS_LOGGER
+from .absolute import absolute_box_layout, absolute_layout
+from .backgrounds import layout_backgrounds
+from .pages import make_all_pages, make_margin_boxes
 
 
 def initialize_page_maker(context, root_box):
@@ -85,23 +85,28 @@ def layout_fixed_boxes(context, pages, containing_page):
         for box in page.fixed_boxes:
             # As replaced boxes are never copied during layout, ensure that we
             # have different boxes (with a possibly different layout) for
-            # each pages
+            # each pages.
             if isinstance(box, boxes.ReplacedBox):
                 box = box.copy()
-            # Use an empty list as last argument because the fixed boxes in the
-            # fixed box has already been added to page.fixed_boxes, we don't
-            # want to get them again
-            yield absolute_box_layout(context, box, containing_page, [])
+            # Absolute boxes in fixed boxes are rendered as fixed boxes'
+            # children, even when they are fixed themselves.
+            absolute_boxes = []
+            yield absolute_box_layout(
+                context, box, containing_page, absolute_boxes)
+            while absolute_boxes:
+                new_absolute_boxes = []
+                for box in absolute_boxes:
+                    absolute_layout(
+                        context, box, containing_page, new_absolute_boxes)
+                absolute_boxes = new_absolute_boxes
 
 
 def layout_document(enable_hinting, style_for, get_image_from_uri, root_box,
-                    font_config, html, cascaded_styles, computed_styles,
-                    target_collector, max_loops=8):
+                    font_config, html, target_collector, max_loops=8):
     """Lay out the whole document.
 
     This includes line breaks, page breaks, absolute size and position for all
-    boxes.
-    Page based counters might require multiple passes
+    boxes. Page based counters might require multiple passes.
 
     :param root_box: root of the box tree (formatting structure of the html)
                      the pages' boxes are created from that tree, i.e. this
@@ -112,24 +117,23 @@ def layout_document(enable_hinting, style_for, get_image_from_uri, root_box,
     context = LayoutContext(
         enable_hinting, style_for, get_image_from_uri, font_config,
         target_collector)
-    # initialize context.page_maker
     initialize_page_maker(context, root_box)
     pages = []
     actual_total_pages = 0
 
     for loop in range(max_loops):
         if loop > 0:
-            LOGGER.info('Step 5 - Creating layout - Repagination #%i' % loop)
+            PROGRESS_LOGGER.info(
+                'Step 5 - Creating layout - Repagination #%i' % loop)
 
         initial_total_pages = actual_total_pages
-        pages = list(make_all_pages(
-            context, root_box, html, cascaded_styles, computed_styles, pages))
+        pages = list(make_all_pages(context, root_box, html, pages, style_for))
         actual_total_pages = len(pages)
 
         # Check whether another round is required
         reloop_content = False
         reloop_pages = False
-        for idx, page_data in enumerate(context.page_maker):
+        for page_data in context.page_maker:
             # Update pages
             _, _, _, page_state, remake_state = page_data
             page_counter_values = page_state[1]
@@ -197,6 +201,7 @@ class LayoutContext(object):
         self.excluded_shapes = None  # Not initialized yet
         self.string_set = defaultdict(lambda: defaultdict(lambda: list()))
         self.current_page = None
+        self.forced_break = False
 
         # Cache
         self.strut_layouts = {}

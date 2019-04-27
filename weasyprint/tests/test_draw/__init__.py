@@ -4,7 +4,7 @@
 
     Test the final, drawn results and compare PNG images pixel per pixel.
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
@@ -15,7 +15,6 @@ import sys
 import cairocffi as cairo
 
 from ..testing_utils import FakeHTML, resource_filename
-
 
 # RGBA to native-endian ARGB
 as_pixel = (

@@ -4,7 +4,7 @@
 
     Validate properties, expanders and descriptors.
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
@@ -12,20 +12,18 @@
 
 from tinycss2 import serialize
 
+from ... import LOGGER
+from ..utils import InvalidValues, remove_whitespace
 from .expanders import EXPANDERS
 from .properties import PREFIX, PROPRIETARY, UNSTABLE, validate_non_shorthand
-from ..utils import InvalidValues, remove_whitespace
-from ... import LOGGER
-
 
 # Not applicable to the print media
 NOT_PRINT_MEDIA = {
-    # Aural media:
+    # Aural media
     'azimuth',
     'cue',
     'cue-after',
     'cue-before',
-    'cursor',
     'elevation',
     'pause',
     'pause-after',
@@ -42,6 +40,23 @@ NOT_PRINT_MEDIA = {
     'stress',
     'voice-family',
     'volume',
+    # Interactive
+    'cursor',
+    # Animations and transitions
+    'animation',
+    'animation-delay',
+    'animation-direction',
+    'animation-duration',
+    'animation-fill-mode',
+    'animation-iteration-count',
+    'animation-name',
+    'animation-play-state',
+    'animation-timing-function',
+    'transition',
+    'transition-delay',
+    'transition-duration',
+    'transition-property',
+    'transition-timing-function',
 }
 
 
@@ -63,7 +78,9 @@ def preprocess_declarations(base_url, declarations):
         if declaration.type != 'declaration':
             continue
 
-        name = declaration.lower_name
+        name = declaration.name
+        if not name.startswith('--'):
+            name = declaration.lower_name
 
         def validation_error(level, reason):
             getattr(LOGGER, level)(
@@ -73,7 +90,7 @@ def preprocess_declarations(base_url, declarations):
 
         if name in NOT_PRINT_MEDIA:
             validation_error(
-                'warning', 'the property does not apply for the print media')
+                'debug', 'the property does not apply for the print media')
             continue
 
         if name.startswith(PREFIX):
@@ -98,6 +115,10 @@ def preprocess_declarations(base_url, declarations):
                     declaration.source_line, declaration.source_column,
                     unprefixed_name)
                 continue
+
+        if name.startswith('-') and not name.startswith('--'):
+            validation_error('debug', 'prefixed selectors are ignored')
+            continue
 
         expander_ = EXPANDERS.get(name, validate_non_shorthand)
         tokens = remove_whitespace(declaration.value)

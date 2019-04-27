@@ -4,7 +4,7 @@
 
     Test that the "before layout" box tree is correctly constructed.
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
@@ -52,7 +52,7 @@ def serialize(box_list):
 
 def _parse_base(html_content, base_url=BASE_URL):
     document = FakeHTML(string=html_content, base_url=base_url)
-    style_for, _, _ = get_all_computed_styles(document)
+    style_for = get_all_computed_styles(document)
     get_image_from_uri = functools.partial(
         images.get_image_from_uri, {}, document.url_fetcher)
     target_collector = TargetCollector()
@@ -385,30 +385,38 @@ def test_whitespace():
 
 @assert_no_logs
 @pytest.mark.parametrize('page_type, top, right, bottom, left', (
-    (PageType(side='left', first=True, blank=False, name=None), 20, 3, 3, 10),
-    (PageType(side='right', first=True, blank=False, name=None), 20, 10, 3, 3),
-    (PageType(side='left', first=False, blank=False, name=None), 10, 3, 3, 10),
-    (PageType(side='right', first=False, blank=False, name=None),
+    (PageType(side='left', first=True, index=0, blank=None, name=None),
+     20, 3, 3, 10),
+    (PageType(side='right', first=True, index=0, blank=None, name=None),
+     20, 10, 3, 3),
+    (PageType(side='left', first=None, index=1, blank=None, name=None),
+     10, 3, 3, 10),
+    (PageType(side='right', first=None, index=1, blank=None, name=None),
      10, 10, 3, 3),
+    (PageType(side='right', first=None, index=1, blank=None, name='name'),
+     5, 10, 3, 15),
+    (PageType(side='right', first=None, index=2, blank=None, name='name'),
+     5, 10, 1, 15),
+    (PageType(side='right', first=None, index=8, blank=None, name='name'),
+     5, 10, 2, 15),
 ))
 def test_page_style(page_type, top, right, bottom, left):
     document = FakeHTML(string='''
       <style>
         @page { margin: 3px }
+        @page name { margin-left: 15px; margin-top: 5px }
+        @page :nth(3) { margin-bottom: 1px }
+        @page :nth(5n+4) { margin-bottom: 2px }
         @page :first { margin-top: 20px }
         @page :right { margin-right: 10px; margin-top: 10px }
         @page :left { margin-left: 10px; margin-top: 10px }
       </style>
     ''')
-    style_for, cascaded_styles, computed_styles = get_all_computed_styles(
-        document)
+    style_for = get_all_computed_styles(document)
 
-    # Force the generation of the style for all possible page types as it's
-    # generally only done during the rendering for needed page types.
-    standard_page_type = PageType(
-        side=None, blank=False, first=False, name=None)
-    set_page_type_computed_styles(
-        standard_page_type, cascaded_styles, computed_styles, document)
+    # Force the generation of the style for this page type as it's generally
+    # only done during the rendering.
+    set_page_type_computed_styles(page_type, document, style_for)
 
     style = style_for(page_type)
     assert style['margin_top'] == (top, 'px')
@@ -1066,6 +1074,25 @@ def test_counters_6():
 
 
 @assert_no_logs
+def test_counters_7():
+    # Test that counters are case-sensitive
+    # See https://github.com/Kozea/WeasyPrint/pull/827
+    assert_tree(parse_all('''
+      <style>
+        p { counter-increment: p 2 }
+        p:before { content: counter(p) '.' counter(P); }
+      </style>
+      <p></p>
+      <p style="counter-increment: P 3"></p>
+      <p></p>'''), [
+        ('p', 'Block', [
+            ('p', 'Line', [
+                ('p::before', 'Inline', [
+                    ('p::before', 'Text', counter)])])])
+        for counter in '2.0 2.3 4.3'.split()])
+
+
+@assert_no_logs
 def test_counter_styles_1():
     assert_tree(parse_all('''
       <style>
@@ -1477,7 +1504,7 @@ def test_margin_box_string_set_7():
     # Test regression: https://github.com/Kozea/WeasyPrint/issues/722
     page_1, = render_pages('''
       <style>
-        img { string-set: left  attr(alt) }
+        img { string-set: left attr(alt) }
         img + img { string-set: right attr(alt) }
         @page { @top-left  { content: '[' string(left)  ']' }
                 @top-right { content: '{' string(right) '}' } }
@@ -1495,15 +1522,16 @@ def test_margin_box_string_set_7():
     assert right_text_box.text == '{Cake}'
 
 
+@assert_no_logs
 def test_margin_box_string_set_8():
     # Test regression: https://github.com/Kozea/WeasyPrint/issues/726
     page_1, page_2, page_3 = render_pages('''
       <style>
         @page { @top-left  { content: '[' string(left) ']' } }
         p { page-break-before: always }
-        .initial { -weasy-string-set: left 'initial' }
-        .empty   { -weasy-string-set: left ''        }
-        .space   { -weasy-string-set: left ' '       }
+        .initial { string-set: left 'initial' }
+        .empty   { string-set: left ''        }
+        .space   { string-set: left ' '       }
       </style>
 
       <p class="initial">Initial</p>
@@ -1524,6 +1552,31 @@ def test_margin_box_string_set_8():
     left_line_box, = top_left.children
     left_text_box, = left_line_box.children
     assert left_text_box.text == '[ ]'
+
+
+@assert_no_logs
+def test_margin_box_string_set_9():
+    # Test that named strings are case-sensitive
+    # See https://github.com/Kozea/WeasyPrint/pull/827
+    page_1, = render_pages('''
+      <style>
+        @page {
+          @top-center {
+            content: string(text_header, first)
+                     ' ' string(TEXT_header, first)
+          }
+        }
+        p { string-set: text_header content() }
+        div { string-set: TEXT_header content() }
+      </style>
+      <p>first assignment</p>
+      <div>second assignment</div>
+    ''')
+
+    html, top_center = page_1.children
+    line_box, = top_center.children
+    text_box, = line_box.children
+    assert text_box.text == 'first assignment second assignment'
 
 
 @assert_no_logs

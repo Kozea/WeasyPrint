@@ -5,7 +5,7 @@
     Utils for CSS properties.
     See http://www.w3.org/TR/CSS21/propidx.html and various CSS3 modules.
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
@@ -172,13 +172,23 @@ def comma_separated_list(function):
 
 
 def get_keyword(token):
-    """If ``value`` is a keyword, return its name.
+    """If ``token`` is a keyword, return its lowercase name.
 
     Otherwise return ``None``.
 
     """
     if token.type == 'ident':
         return token.lower_value
+
+
+def get_custom_ident(token):
+    """If ``token`` is a keyword, return its name.
+
+    Otherwise return ``None``.
+
+    """
+    if token.type == 'ident':
+        return token.value
 
 
 def get_single_keyword(tokens):
@@ -244,7 +254,7 @@ def parse_2d_position(tokens):
     if length_1 and keyword_2 in ('top', 'center', 'bottom'):
         return length_1, BACKGROUND_POSITION_PERCENTAGES[keyword_2]
     elif length_2 and keyword_1 in ('left', 'center', 'right'):
-            return BACKGROUND_POSITION_PERCENTAGES[keyword_1], length_2
+        return BACKGROUND_POSITION_PERCENTAGES[keyword_1], length_2
     elif (keyword_1 in ('left', 'center', 'right') and
           keyword_2 in ('top', 'center', 'bottom')):
         return (BACKGROUND_POSITION_PERCENTAGES[keyword_1],
@@ -367,7 +377,7 @@ def parse_function(function_token):
     space-separated arguments. Return ``None`` otherwise.
 
     """
-    if not function_token.type == 'function':
+    if not getattr(function_token, 'type', None) == 'function':
         return
 
     content = list(remove_whitespace(function_token.arguments))
@@ -387,6 +397,8 @@ def parse_function(function_token):
                 if argument_function is None:
                     return
             arguments.append(token)
+    if last_is_comma:
+        return
     return function_token.lower_name, arguments
 
 
@@ -432,7 +444,7 @@ def check_counter_function(token, allowed_type=None):
         ident = args.pop(0)
         if ident.type != 'ident':
             return
-        arguments.append(ident.lower_value)
+        arguments.append(ident.value)
 
         if name == 'counters':
             string = args.pop(0)
@@ -487,6 +499,21 @@ def check_string_function(token):
             ident = 'first'
 
         return ('string()', (custom_ident, ident))
+
+
+def check_var_function(token):
+    function = parse_function(token)
+    if function is None:
+        return
+    name, args = function
+    if name == 'var' and args:
+        ident = args.pop(0)
+        if ident.type != 'ident' or not ident.value.startswith('--'):
+            return
+
+        # TODO: we should check authorized tokens
+        # https://drafts.csswg.org/css-syntax-3/#typedef-declaration-value
+        return ('var()', (ident.value.replace('-', '_'), args or None))
 
 
 def get_string(token):
@@ -626,7 +653,7 @@ def get_target(token, base_url):
         ident = args.pop(0)
         if ident.type != 'ident':
             return
-        values.append(ident.lower_value)
+        values.append(ident.value)
 
         if name == 'target-counters':
             string = get_string(args.pop(0))

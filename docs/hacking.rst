@@ -81,7 +81,7 @@ CSS
 As with HTML, CSS stylesheets are parsed in the :class:`weasyprint.CSS` class
 with an external library, tinycss2_.
 
-After the In addition to the actual parsing, the :mod:`weasyprint.css` and
+In addition to the actual parsing, the :mod:`weasyprint.css` and
 :mod:`weasyprint.css.validation` modules do some pre-processing:
 
 * Unknown and unsupported declarations are ignored with warnings.
@@ -90,7 +90,7 @@ After the In addition to the actual parsing, the :mod:`weasyprint.css` and
 * Shorthand properties are expanded. For example, ``margin`` becomes
   ``margin-top``, ``margin-right``, ``margin-bottom`` and ``margin-left``.
 * Hyphens in property names are replaced by underscores (``margin-top`` becomes
-  ``margin_top``). This transformation is safe since none for the know (not
+  ``margin_top``). This transformation is safe since none of the known (not
   ignored) properties have an underscore character.
 * Selectors are pre-compiled with cssselect2_.
 
@@ -212,7 +212,7 @@ The final result of the layout is a list of :class:`PageBox` objects.
 Stacking & Drawing
 ..................
 
-In step 6, the boxes are reorder by the :mod:`weasyprint.stacking` module
+In step 6, the boxes are reordered by the :mod:`weasyprint.stacking` module
 to observe `stacking rules`_ such as the ``z-index`` property.
 The result is a tree of *stacking contexts*.
 

@@ -4,17 +4,16 @@
 
     Layout for pages and CSS3 margin boxes.
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
+    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
 
 """
 
 import copy
 
-from ..css import (
-    PageType, computed_from_cascaded, matching_page_types, set_computed_styles)
+from ..css import PageType, computed_from_cascaded
 from ..formatting_structure import boxes, build
-from ..logger import LOGGER
+from ..logger import PROGRESS_LOGGER
 from .absolute import absolute_layout
 from .blocks import block_container_layout, block_level_layout
 from .min_max import handle_min_max_height, handle_min_max_width
@@ -545,6 +544,7 @@ def make_page(context, root_box, page_type, resume_at, page_number,
     # See http://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
     assert isinstance(root_box, (boxes.BlockBox, boxes.FlexContainerBox))
     context.create_block_formatting_context()
+    context.current_page = page_number
     page_is_empty = True
     adjoining_margins = []
     positioned_boxes = []  # Mixed absolute and fixed
@@ -619,7 +619,17 @@ def make_page(context, root_box, page_type, resume_at, page_number,
                 cached_lookups.append(counter_lookup_id)
                 counter_lookup.page_maker_index = page_number - 1
 
-            # Step 1: local counters
+            # Step 1: page based back-references
+            # Marked as pending by target_collector.cache_target_page_counters
+            if counter_lookup.pending:
+                if (page_counter_values !=
+                        counter_lookup.cached_page_counter_values):
+                    counter_lookup.cached_page_counter_values = copy.deepcopy(
+                        page_counter_values)
+                counter_lookup.pending = False
+                call_parse_again = True
+
+            # Step 2: local counters
             # If the box mixed-in page counters changed, update the content
             # and cache the new values.
             missing_counters = counter_lookup.missing_counters
@@ -635,14 +645,17 @@ def make_page(context, root_box, page_type, resume_at, page_number,
                             counter_name, None)
                         if counter_value is not None:
                             call_parse_again = True
+                            # no need to loop them all
+                            break
 
-            # Step 2: targeted counters
+            # Step 3: targeted counters
             target_missing = counter_lookup.missing_target_counters
             for anchor_name, missed_counters in target_missing.items():
                 if 'pages' not in missed_counters:
                     continue
                 # Adjust 'pages_wanted'
-                item = target_collector.items.get(anchor_name, None)
+                item = target_collector.target_lookup_items.get(
+                    anchor_name, None)
                 page_maker_index = item.page_maker_index
                 if page_maker_index >= 0 and anchor_name in cached_anchors:
                     page_maker[page_maker_index][-1]['pages_wanted'] = True
@@ -659,35 +672,29 @@ def make_page(context, root_box, page_type, resume_at, page_number,
     return page, resume_at, next_page
 
 
-def set_page_type_computed_styles(page_type, cascaded_styles, computed_styles,
-                                  html):
+def set_page_type_computed_styles(page_type, html, style_for):
     """Set style for page types and pseudo-types matching ``page_type``."""
-    for matching_page_type in matching_page_types(page_type):
-        # No style for matching page type, loop
-        if computed_styles.get((matching_page_type, None), None):
-            continue
+    style_for.add_page_declarations(page_type)
 
-        # Apply style for page
-        set_computed_styles(
-            cascaded_styles, computed_styles, matching_page_type,
-            # @page inherits from the root element:
-            # http://lists.w3.org/Archives/Public/www-style/2012Jan/1164.html
-            root=html.etree_element, parent=html.etree_element,
-            base_url=html.base_url)
+    # Apply style for page
+    style_for.set_computed_styles(
+        page_type,
+        # @page inherits from the root element:
+        # http://lists.w3.org/Archives/Public/www-style/2012Jan/1164.html
+        root=html.etree_element, parent=html.etree_element,
+        base_url=html.base_url)
 
-        # Apply style for page pseudo-elements (margin boxes)
-        for element, pseudo_type in cascaded_styles:
-            if pseudo_type and element == matching_page_type:
-                set_computed_styles(
-                    cascaded_styles, computed_styles, element,
-                    pseudo_type=pseudo_type,
-                    # The pseudo-element inherits from the element.
-                    root=html.etree_element, parent=element,
-                    base_url=html.base_url)
+    # Apply style for page pseudo-elements (margin boxes)
+    for element, pseudo_type in style_for.get_cascaded_styles():
+        if pseudo_type and element == page_type:
+            style_for.set_computed_styles(
+                element, pseudo_type=pseudo_type,
+                # The pseudo-element inherits from the element.
+                root=html.etree_element, parent=element,
+                base_url=html.base_url)
 
 
-def remake_page(index, context, root_box, html, cascaded_styles,
-                computed_styles):
+def remake_page(index, context, root_box, html, style_for):
     """Return one laid out page without margin boxes.
 
     Start with the initial values from ``context.page_maker[index]``.
@@ -709,15 +716,18 @@ def remake_page(index, context, root_box, html, cascaded_styles,
     page_state = copy.deepcopy(initial_page_state)
     next_page_name = initial_next_page['page']
     first = index == 0
+    # TODO: handle recto/verso and add test
     blank = ((initial_next_page['break'] == 'left' and right_page) or
              (initial_next_page['break'] == 'right' and not right_page))
     if blank:
-        next_page_name = None
+        next_page_name = ''
     side = 'right' if right_page else 'left'
-    page_type = PageType(
-        side, blank, first, name=(next_page_name or None))
-    set_page_type_computed_styles(
-        page_type, cascaded_styles, computed_styles, html)
+    page_type = PageType(side, blank, first, index, name=next_page_name)
+    set_page_type_computed_styles(page_type, html, style_for)
+
+    context.forced_break = (
+        initial_next_page['break'] != 'any' or initial_next_page['page'])
+    context.margin_clearance = False
 
     # make_page wants a page_number of index + 1
     page_number = index + 1
@@ -752,21 +762,21 @@ def remake_page(index, context, root_box, html, cascaded_styles,
             'anchors': [],
             'content_lookups': [],
         }
+        # Setting content_changed to True ensures remake.
+        # If resume_at is None (last page) it must be False to prevent endless
+        # loops and list index out of range (see #794).
+        remake_state['content_changed'] = resume_at is not None
         # page_state is already a deepcopy
         item = resume_at, next_page, right_page, page_state, remake_state
         if index + 1 >= len(page_maker):
-            # content_changed must be False otherwise: enldess loop
             page_maker.append(item)
         else:
-            # content_changed must be True otherwise: no remake
-            remake_state['content_changed'] = True
             page_maker[index + 1] = item
 
     return page, resume_at
 
 
-def make_all_pages(context, root_box, html, cascaded_styles, computed_styles,
-                   pages):
+def make_all_pages(context, root_box, html, pages, style_for):
     """Return a list of laid out pages without margin boxes.
 
     Re-make pages only if necessary.
@@ -778,17 +788,17 @@ def make_all_pages(context, root_box, html, cascaded_styles, computed_styles,
         if (len(pages) == 0 or
                 remake_state['content_changed'] or
                 remake_state['pages_wanted']):
-            LOGGER.info('Step 5 - Creating layout - Page %i', i + 1)
+            PROGRESS_LOGGER.info('Step 5 - Creating layout - Page %i', i + 1)
             # Reset remake_state
             remake_state['content_changed'] = False
             remake_state['pages_wanted'] = False
             remake_state['anchors'] = []
             remake_state['content_lookups'] = []
             page, resume_at = remake_page(
-                i, context, root_box, html, cascaded_styles, computed_styles)
+                i, context, root_box, html, style_for)
             yield page
         else:
-            LOGGER.info(
+            PROGRESS_LOGGER.info(
                 'Step 5 - Creating layout - Page %i (up-to-date)', i + 1)
             resume_at = context.page_maker[i + 1][0]
             yield pages[i]

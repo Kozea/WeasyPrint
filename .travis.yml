@@ -1,5 +1,6 @@
 language: python
 sudo: false
+env: PYTHON=python
 
 git:
   submodules: false
@@ -7,14 +8,20 @@ git:
 matrix:
   include:
     - os: linux
-      python: 3.4
-    - os: linux
       python: 3.5
     - os: linux
       python: 3.6
+    - dist: xenial
+      python: 3.7
     - os: osx
       language: generic
-      env: PYTHON_VERSION=3
+      env: PYTHON=python3
+    - os: windows
+      # Windows doesn't support python or even generic language
+      language: cpp
+      env: PYTHON=/c/Python37/python
+  allow_failures:
+    - os: windows
 
 addons:
   apt:
@@ -22,6 +29,14 @@ addons:
     - ttf-dejavu
 
 before_install:
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then export "PATH=$PATH;C:\msys64\mingw64\bin"; fi
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then choco install -y python dejavufonts; fi
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then wget "http://repo.msys2.org/distrib/x86_64/msys2-base-x86_64-20180531.tar.xz"; fi
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then 7z e msys2-base-x86_64-20180531.tar.xz; fi
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then 7z x -y msys2-base-x86_64-20180531.tar -oc:\\; fi
+  # We need powershell because Travis' bash and MSYS2's bash rely on conflicting libraries
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then powershell "C:\msys64\usr\bin\bash -lc 'pacman -S mingw-w64-x86_64-gtk3 --noconfirm'"; fi
+
   # Pango 1.38+ is needed to make @font-face work, remove these two lines when it's available on Travis
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then mkdir -p ~/.fonts; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then wget "https://github.com/Kozea/Ahem/blob/master/Ahem.ttf?raw=true" -O ~/.fonts/Ahem.ttf; fi
@@ -33,10 +48,11 @@ before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew cask install font-dejavu-sans; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install cairo pango gdk-pixbuf libffi; fi
 
-install:
-  # Needed because of https://github.com/pypa/setuptools/pull/1089
-  # Can be removed as soon as setuptools-36.2.0 is not the default version anymore on Travis with Python 3.4
-  - pip$PYTHON_VERSION install --upgrade setuptools
+  # As setup.py doesn't use pip, setuptools is not updated before installing dependencies
+  - $PYTHON -m pip install --upgrade pip setuptools
+
+  # Upgrade cffi to avoid errors while installing cairocffi
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then $PYTHON -m pip install --upgrade cffi; fi
 
 script:
-  - python$PYTHON_VERSION setup.py test
+  - $PYTHON setup.py test
