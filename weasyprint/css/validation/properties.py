@@ -263,17 +263,17 @@ def box_shadow(tokens):
     box-shadow: inset? length{2,4} color?
     """
     inset = False
-    if tokens[0].type == 'ident' and tokens[0].lower_value == 'inset':
-        inset = True
-
+    color = 'black'
     lengths = []
     for token in tokens:
-        if token.type == 'dimension':
+        if token.type == 'ident' and tokens[0].lower_value == 'inset':
+            inset = True
+        elif token.type == 'dimension':
             lengths.append(token)
-
-    color = parse_color(tokens[-1])
-    if color is None:
-        color = 'black'
+        else:
+            tmp_color = parse_color(token)
+            if tmp_color is not None:
+                color = tmp_color
 
     if len(lengths) == 2:
         # Default blur-radius is 0
