@@ -245,6 +245,28 @@ def box(keyword):
     return keyword in ('border-box', 'padding-box', 'content-box')
 
 
+@property('box-shadow')
+def box_shadow(tokens):
+    """
+    box-shadow: inset? length{2,4} color?
+    """
+    inset = False
+    if tokens[0].type == 'ident' and tokens[0].lower_value == 'inset':
+        inset = True
+
+    lengths = []
+    for token in tokens:
+        if token.type == 'number':
+            lengths.append(token)
+
+    color = parse_color(tokens[-1])
+    if color is None:
+        color = 'black'
+
+    return inset, lengths, color
+
+
+
 @property()
 def border_spacing(tokens):
     """Validator for the `border-spacing` property."""
