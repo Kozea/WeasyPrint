@@ -361,7 +361,6 @@ def draw_box_shadows(context, box, shadows, inset):
 
         mask_context.rectangle(bx - mask_x, by - mask_y, bw, bh)
         mask_context.fill()
-        print(mask_data)
 
         blur.blur_array(mask_data)
 
