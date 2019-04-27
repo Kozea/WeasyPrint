@@ -361,6 +361,7 @@ def draw_box_shadows(context, box, shadows, inset):
 
         mask_context.rectangle(bx - mask_x, by - mask_y, bw, bh)
         mask_context.fill()
+        print(mask_data)
 
         blur.blur_array(mask_data)
 
@@ -368,6 +369,7 @@ def draw_box_shadows(context, box, shadows, inset):
             context.set_source_rgb(*color)
         elif len(color) == 4:
             context.set_source_rgba(*color)
+
         context.mask_surface(
             mask_surface,
             x + mask_x,
@@ -378,8 +380,6 @@ def draw_box_shadows(context, box, shadows, inset):
         context.translate(
             bx if inset else x + bx - offset,
             by if inset else y + by - offset)
-        context.set_source_surface(mask_surface)
-        context.paint()
         context.restore()
 
 
