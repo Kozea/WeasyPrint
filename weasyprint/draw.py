@@ -344,7 +344,6 @@ def draw_box_shadows(context, box, shadows, inset):
         if size[0] < 1 or size[1] < 1:
             continue
 
-        print(spread_radius, blur_radius)
         blur = AlphaBoxBlur.from_radiuses(
             (bx, by, bw, bh),
             (spread_radius, spread_radius), 
@@ -365,13 +364,16 @@ def draw_box_shadows(context, box, shadows, inset):
 
         blur.blur_array(mask_data)
 
+        if len(color) == 3:
+            context.set_source_rgb(*color)
+        elif len(color) == 4:
+            context.set_source_rgba(*color)
         context.mask_surface(
             mask_surface,
             x + mask_x,
             y + mask_y)
 
         context.fill()
-
         context.save()
         context.translate(
             bx if inset else x + bx - offset,
