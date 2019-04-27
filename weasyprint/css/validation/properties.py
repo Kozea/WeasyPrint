@@ -263,7 +263,7 @@ def box_shadow(tokens):
     if color is None:
         color = 'black'
 
-    return inset, lengths, color
+    return lengths
 
 
 
