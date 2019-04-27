@@ -11,6 +11,7 @@
 """
 
 from tinycss2.color3 import parse_color
+from tinycss2.ast import DimensionToken
 
 from .. import computed_values
 from ...formatting_structure import counters
@@ -246,24 +247,42 @@ def box(keyword):
 
 
 @property('box-shadow')
+@comma_separated_list
 def box_shadow(tokens):
     """
     box-shadow: inset? length{2,4} color?
     """
+    print(tokens)
     inset = False
     if tokens[0].type == 'ident' and tokens[0].lower_value == 'inset':
         inset = True
 
     lengths = []
     for token in tokens:
-        if token.type == 'number':
+        if token.type == 'dimension':
             lengths.append(token)
 
     color = parse_color(tokens[-1])
     if color is None:
         color = 'black'
 
-    return lengths
+    if len(lengths) == 2:
+        # Default blur-radius is 0
+        lengths.append(lengths[0])
+    if len(lengths) == 3:
+        # Default spread-radius is 0
+        lengths.append(lengths[0])
+
+    if len(lengths) != 4:
+        raise RuntimeError
+
+    class Foo:
+        def __init__(self, x):
+            self.value = x
+
+    r = [*lengths, Foo(inset), Foo(color)]
+    print(r)
+    return r
 
 
 
