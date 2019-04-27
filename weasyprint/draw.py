@@ -343,30 +343,49 @@ def draw_box_shadows(context, box, shadows, inset):
         size = int(round(bw + 2 * offset)), int(round(bh + 2 * offset))
         if size[0] < 1 or size[1] < 1:
             continue
-        shadow_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, *size)
-        shadow_context = cairo.Context(shadow_surface)
 
+        # shadow_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, *size)
+        # shadow_context = cairo.Context(shadow_surface)
+
+        print(spread_radius, blur_radius)
         blur = AlphaBoxBlur.from_radiuses(
-            (bx, by, bw, bh), 
+            (bx, by, bw, bh),
             (spread_radius, spread_radius), 
             (blur_radius, blur_radius)
         )
-
         # blurred_text_rect inflated to leave space for spread and blur.
         mask_x, mask_y, mask_width, mask_height = blur.get_rect()
 
-        mask_data = array.array('B', b'\x00' * blur.get_surface_allocation_size())
+        mask_data = array('B', b'\x00' * blur.get_surface_allocation_size())
 
-        mask_surface = cairocffi.ImageSurface(
-            cairocffi.FORMAT_A8,  # Single channel, one byte per pixel.
+        mask_surface = cairo.ImageSurface(
+            cairo.FORMAT_A8,  # Single channel, one byte per pixel.
             mask_width, mask_height, mask_data, blur.get_stride())
-        mask_context = cairocffi.Context(mask_surface)
-        mask_context.move_to(-mask_x, -mask_y)  # Left of the text’s baseline
-        mask_context.select_font_face(font_family)
-        mask_context.set_font_size(font_size)
-        mask_context.show_text(blurred_text)
+        mask_context = cairo.Context(mask_surface)
+        # if len(color) == 3:
+        #     mask_context.set_source_rgb(*color)
+        # elif len(color) == 4:
+        #     mask_context.set_source_rgba(*color)
+
+        mask_context.rectangle(bx - mask_x, by - mask_y, bw, bh)
+        mask_context.fill()
+        # mask_context.paint()
 
         blur.blur_array(mask_data)
+
+        context.mask_surface(
+            mask_surface,
+            mask_x,
+            mask_y)
+
+        context.fill()
+        # shadow_image = Image.frombuffer(
+        #     'RGBA', size, shadow_surface.get_data(), 'raw', 'BGRA', 0, 1)
+        # shadow_image = shadow_image.filter(ImageFilter.GaussianBlur(blur_radius))
+        # data = array(str('B'), shadow_image.tobytes('raw', 'BGRA'))
+        # shadow_surface = cairo.ImageSurface.create_for_data(
+        #     data, cairo.FORMAT_ARGB32, *size)
+
         # if inset:
         #     rounded_box_path(shadow_context, (0, 0) + box[2:])
         #     shadow_context.set_source_rgba(*color)
@@ -404,7 +423,7 @@ def draw_box_shadows(context, box, shadows, inset):
         context.translate(
             bx if inset else x + bx - offset,
             by if inset else y + by - offset)
-        context.set_source_surface(shadow_surface)
+        context.set_source_surface(mask_surface)
         context.paint()
         context.restore()
 
