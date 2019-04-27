@@ -16,6 +16,8 @@ import operator
 import cairocffi as cairo
 from array import array
 from PIL import Image, ImageFilter
+from azureblur import AlphaBoxBlur
+
 
 from .formatting_structure import boxes
 from .images import SVGImage
@@ -331,48 +333,72 @@ def rounded_box_path(context, radii):
 def draw_box_shadows(context, box, shadows, inset):
     box = box[0]
     for shadow in reversed(shadows):
-        x, y, blur, spread, shadow_inset, color = shadow
+        x, y, blur_radius, spread_radius, shadow_inset, color = shadow
+        blur_radius = int(blur_radius)
+        spread_radius = int(spread_radius)
         if inset != shadow_inset:
             continue
-        offset = 0 if inset else blur + spread
+        offset = 0 if inset else blur_radius + spread_radius
         bx, by, bw, bh = box[:4]
         size = int(round(bw + 2 * offset)), int(round(bh + 2 * offset))
         if size[0] < 1 or size[1] < 1:
             continue
         shadow_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, *size)
         shadow_context = cairo.Context(shadow_surface)
-        if inset:
-            rounded_box_path(shadow_context, (0, 0) + box[2:])
-            shadow_context.set_source_rgba(*color)
-            shadow_context.fill()
-            shadow_context.translate(x + spread, y + spread)
-            shadow_context.scale(
-                (bw - 2 * spread) / bw, (bh - 2 * spread) / bh)
-            rounded_box_path(shadow_context, (0, 0) + box[2:])
-            shadow_context.set_source_rgb(0, 0, 0)
-            shadow_context.set_operator(cairo.OPERATOR_DEST_OUT)
-        else:
-            shadow_context.translate(blur, blur)
-            shadow_context.scale(
-                (bw + 2 * spread) / bw, (bh + 2 * spread) / bh)
-            rounded_box_path(shadow_context, (0, 0) + box[2:])
-            shadow_context.set_source_rgba(*color)
 
-        shadow_context.fill()
-        shadow_image = Image.frombuffer(
-            'RGBA', size, shadow_surface.get_data(), 'raw', 'BGRA', 0, 1)
-        shadow_image = shadow_image.filter(ImageFilter.GaussianBlur(blur))
-        data = array(str('B'), shadow_image.tobytes('raw', 'BGRA'))
-        shadow_surface = cairo.ImageSurface.create_for_data(
-            data, cairo.FORMAT_ARGB32, *size)
+        blur = AlphaBoxBlur.from_radiuses(
+            (bx, by, bw, bh), 
+            (spread_radius, spread_radius), 
+            (blur_radius, blur_radius)
+        )
 
-        if not inset:
-            shadow_context = cairo.Context(shadow_surface)
-            rounded_box_path(
-                shadow_context, (offset - x, offset - y) + box[2:])
-            shadow_context.set_source_rgb(0, 0, 0)
-            shadow_context.set_operator(cairo.OPERATOR_DEST_OUT)
-            shadow_context.fill()
+        # blurred_text_rect inflated to leave space for spread and blur.
+        mask_x, mask_y, mask_width, mask_height = blur.get_rect()
+
+        mask_data = array.array('B', b'\x00' * blur.get_surface_allocation_size())
+
+        mask_surface = cairocffi.ImageSurface(
+            cairocffi.FORMAT_A8,  # Single channel, one byte per pixel.
+            mask_width, mask_height, mask_data, blur.get_stride())
+        mask_context = cairocffi.Context(mask_surface)
+        mask_context.move_to(-mask_x, -mask_y)  # Left of the text’s baseline
+        mask_context.select_font_face(font_family)
+        mask_context.set_font_size(font_size)
+        mask_context.show_text(blurred_text)
+
+        blur.blur_array(mask_data)
+        # if inset:
+        #     rounded_box_path(shadow_context, (0, 0) + box[2:])
+        #     shadow_context.set_source_rgba(*color)
+        #     shadow_context.fill()
+        #     shadow_context.translate(x + spread, y + spread)
+        #     shadow_context.scale(
+        #         (bw - 2 * spread) / bw, (bh - 2 * spread) / bh)
+        #     rounded_box_path(shadow_context, (0, 0) + box[2:])
+        #     shadow_context.set_source_rgb(0, 0, 0)
+        #     shadow_context.set_operator(cairo.OPERATOR_DEST_OUT)
+        # else:
+        #     shadow_context.translate(blur_radius, blur_radius)
+        #     shadow_context.scale(
+        #         (bw + 2 * spread) / bw, (bh + 2 * spread) / bh)
+        #     rounded_box_path(shadow_context, (0, 0) + box[2:])
+        #     shadow_context.set_source_rgba(*color)
+
+        # shadow_context.fill()
+        # shadow_image = Image.frombuffer(
+        #     'RGBA', size, shadow_surface.get_data(), 'raw', 'BGRA', 0, 1)
+        # shadow_image = shadow_image.filter(ImageFilter.GaussianBlur(blur_radius))
+        # data = array(str('B'), shadow_image.tobytes('raw', 'BGRA'))
+        # shadow_surface = cairo.ImageSurface.create_for_data(
+        #     data, cairo.FORMAT_ARGB32, *size)
+
+        # if not inset:
+        #     shadow_context = cairo.Context(shadow_surface)
+        #     rounded_box_path(
+        #         shadow_context, (offset - x, offset - y) + box[2:])
+        #     shadow_context.set_source_rgb(0, 0, 0)
+        #     shadow_context.set_operator(cairo.OPERATOR_DEST_OUT)
+        #     shadow_context.fill()
 
         context.save()
         context.translate(
