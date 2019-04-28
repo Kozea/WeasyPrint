@@ -9,7 +9,6 @@
     :license: BSD, see LICENSE for details.
 
 """
-
 from tinycss2.color3 import parse_color
 from tinycss2.ast import DimensionToken
 
@@ -259,7 +258,7 @@ def box(keyword):
 @property('box-shadow')
 @comma_separated_list
 def box_shadow(tokens):
-    """
+    """Validation for the ``box-shadow`` property. The ``inset`` keyword is not supported yet.
     box-shadow: inset? length{2,4} color?
     """
     inset = False
@@ -267,6 +266,9 @@ def box_shadow(tokens):
     lengths = []
     for token in tokens:
         if token.type == 'ident' and token.lower_value == 'inset':
+            raise InvalidValues(
+                "Inset shadows are not supported yet"
+            )
             inset = True
         elif token.type == 'dimension':
             lengths.append(token)
