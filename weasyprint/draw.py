@@ -334,22 +334,18 @@ def draw_box_shadows(context, box, shadows, inset):
     box = box[0]
     for shadow in reversed(shadows):
         x, y, blur_radius, spread_radius, shadow_inset, color = shadow
-        blur_radius = int(blur_radius)
-        spread_radius = int(spread_radius)
         if inset != shadow_inset:
             continue
-        offset = 0 if inset else blur_radius + spread_radius
+        blur_radius = int(blur_radius)
+        spread_radius = int(spread_radius)
+        offset = blur_radius + spread_radius
         bx, by, bw, bh = box[:4]
-        size = int(round(bw + 2 * offset)), int(round(bh + 2 * offset))
-        if size[0] < 1 or size[1] < 1:
-            continue
 
         blur = AlphaBoxBlur.from_radiuses(
             (bx, by, bw, bh),
             (spread_radius, spread_radius), 
             (blur_radius, blur_radius)
         )
-        # blurred_text_rect inflated to leave space for spread and blur.
         mask_x, mask_y, mask_width, mask_height = blur.get_rect()
 
         mask_data = array('B', b'\x00' * blur.get_surface_allocation_size())
@@ -377,8 +373,8 @@ def draw_box_shadows(context, box, shadows, inset):
         context.fill()
         context.save()
         context.translate(
-            bx if inset else x + bx - offset,
-            by if inset else y + by - offset)
+            x + bx - offset,
+            y + by - offset)
         context.restore()
 
 
