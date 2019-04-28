@@ -266,7 +266,7 @@ def box_shadow(tokens):
     color = 'black'
     lengths = []
     for token in tokens:
-        if token.type == 'ident' and tokens[0].lower_value == 'inset':
+        if token.type == 'ident' and token.lower_value == 'inset':
             inset = True
         elif token.type == 'dimension':
             lengths.append(token)
