@@ -982,7 +982,7 @@ def draw_replacedbox(context, box):
             context, box.width, box.height, box.style['image_rendering'])
 
 
-def draw_inline_level(context, page, box, enable_hinting):
+def draw_inline_level(context, page, box, enable_hinting, offset_x=0):
     if isinstance(box, StackingContext):
         stacking_context = box
         assert isinstance(
@@ -993,19 +993,26 @@ def draw_inline_level(context, page, box, enable_hinting):
         draw_border(context, box, enable_hinting)
         if isinstance(box, (boxes.InlineBox, boxes.LineBox)):
             for child in box.children:
-                if isinstance(child, boxes.TextBox):
-                    draw_text(context, child, enable_hinting)
+                if not isinstance(child, StackingContext):
+                    child_offset_x = (offset_x + child.position_x
+                                      - box.position_x)
                 else:
-                    draw_inline_level(context, page, child, enable_hinting)
+                    child_offset_x = offset_x
+                if isinstance(child, boxes.TextBox):
+                    draw_text(context, child, enable_hinting,
+                              offset_x=child_offset_x)
+                else:
+                    draw_inline_level(context, page, child, enable_hinting,
+                                      offset_x=child_offset_x)
         elif isinstance(box, boxes.InlineReplacedBox):
             draw_replacedbox(context, box)
         else:
             assert isinstance(box, boxes.TextBox)
             # Should only happen for list markers
-            draw_text(context, box, enable_hinting)
+            draw_text(context, box, enable_hinting, offset_x=offset_x)
 
 
-def draw_text(context, textbox, enable_hinting):
+def draw_text(context, textbox, enable_hinting, offset_x=0):
     """Draw ``textbox`` to a ``cairo.Context`` from ``PangoCairo.Context``."""
     # Pango crashes with font-size: 0
     assert textbox.style['font_size']
@@ -1036,23 +1043,26 @@ def draw_text(context, textbox, enable_hinting):
     if 'overline' in values:
         draw_text_decoration(
             context, textbox,
+            offset_x,
             textbox.baseline - metrics.ascent + thickness / 2,
             thickness, enable_hinting, color)
     if 'underline' in values:
         draw_text_decoration(
             context, textbox,
+            offset_x,
             textbox.baseline - metrics.underline_position + thickness / 2,
             thickness, enable_hinting, color)
     if 'line-through' in values:
         draw_text_decoration(
             context, textbox,
+            offset_x,
             textbox.baseline - metrics.strikethrough_position,
             thickness, enable_hinting, color)
 
     textbox.pango_layout.deactivate()
 
 
-def draw_text_decoration(context, textbox, offset_y, thickness,
+def draw_text_decoration(context, textbox, offset_x, offset_y, thickness,
                          enable_hinting, color):
     """Draw text-decoration of ``textbox`` to a ``cairo.Context``."""
     style = textbox.style['text_decoration_style']
@@ -1062,10 +1072,10 @@ def draw_text_decoration(context, textbox, offset_y, thickness,
         context.set_source_rgba(*color)
         context.set_line_width(thickness)
 
-        if style == 'dashed':
-            context.set_dash([5 * thickness])
-        elif style == 'dotted':
-            context.set_dash([thickness])
+        if style == "dashed":
+            context.set_dash([5 * thickness], offset=offset_x)
+        elif style == "dotted":
+            context.set_dash([thickness], offset=offset_x)
 
         context.move_to(textbox.position_x, textbox.position_y + offset_y)
         context.rel_line_to(textbox.width, 0)
