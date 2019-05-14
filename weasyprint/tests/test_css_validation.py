@@ -146,7 +146,6 @@ def test_decoration_line(rule, result):
     ('text-decoration-style: double', {'text_decoration_style': 'double'}),
     ('text-decoration-style: dotted', {'text_decoration_style': 'dotted'}),
     ('text-decoration-style: dashed', {'text_decoration_style': 'dashed'}),
-    ('text-decoration-style: wavy', {'text_decoration_style': 'wavy'}),
 ))
 def test_decoration_style(rule, result):
     assert expand_to_dict(rule) == result
