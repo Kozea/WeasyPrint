@@ -624,3 +624,15 @@ The other properties (``text-underline-position``, ``text-emphasis-*``,
 
 .. _CSS Text Decoration Module Level 3:
    https://www.w3.org/TR/css-text-decor-3/
+
+
+CSS Flexible Box Layout Module Level 1
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The `CSS Flexible Box Layout Module Level 1`_ "describes a CSS box model
+optimized for user interface design", also known as "flexbox".
+
+This module works for simple use cases but is not deeply tested.
+
+All the ``flex-*``, ``align-*``, ``justify-*`` and ``order`` properties are
+supported. The ``flex`` and ``flex-flow`` shorthands are supported too.
