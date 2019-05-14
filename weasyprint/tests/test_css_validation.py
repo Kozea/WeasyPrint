@@ -132,10 +132,9 @@ def test_spacing_invalid(rule):
 @assert_no_logs
 @pytest.mark.parametrize('rule, result', (
     ('text-decoration-line: none', {'text_decoration_line': 'none'}),
-    ('text-decoration-line: overline', {
-        'text_decoration_line': frozenset(['overline'])}),
+    ('text-decoration-line: overline', {'text_decoration_line': {'overline'}}),
     ('text-decoration-line: overline blink line-through', {
-        'text_decoration_line': frozenset(['line-through', 'overline'])}),
+        'text_decoration_line': {'blink', 'line-through', 'overline'}}),
 ))
 def test_decoration_line(rule, result):
     assert expand_to_dict(rule) == result
@@ -163,10 +162,9 @@ TEXT_DECORATION_DEFAULT = {
 @assert_no_logs
 @pytest.mark.parametrize('rule, result', (
     ('text-decoration: none', {'text_decoration_line': 'none'}),
-    ('text-decoration: overline', {
-        'text_decoration_line': frozenset(['overline'])}),
+    ('text-decoration: overline', {'text_decoration_line': {'overline'}}),
     ('text-decoration: overline blink line-through', {
-        'text_decoration_line': frozenset(['line-through', 'overline'])}),
+        'text_decoration_line': {'blink', 'line-through', 'overline'}}),
     ('text-decoration: red', {'text_decoration_color': (1, 0, 0, 1)}),
 ))
 def test_decoration(rule, result):

@@ -354,8 +354,8 @@ def expand_text_decoration(base_url, name, tokens):
 
     for token in tokens:
         keyword = get_keyword(token)
-        if keyword in ('none', 'underline', 'overline', 'line-through',
-                       'blink'):
+        if keyword in (
+                'none', 'underline', 'overline', 'line-through', 'blink'):
             text_decoration_line.add(keyword)
         elif keyword in ('solid', 'double', 'dotted', 'dashed', 'wavy'):
             if text_decoration_style is not None:
@@ -377,8 +377,6 @@ def expand_text_decoration(base_url, name, tokens):
         text_decoration_line = 'none'
     elif not(text_decoration_line):
         text_decoration_line = 'none'
-    else:
-        text_decoration_line = frozenset(text_decoration_line - set(['blink']))
 
     yield 'text_decoration_line', text_decoration_line
     yield 'text_decoration_color', text_decoration_color or 'currentColor'

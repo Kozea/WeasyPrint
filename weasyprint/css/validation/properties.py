@@ -980,17 +980,12 @@ def text_align(keyword):
 @property()
 def text_decoration_line(tokens):
     """``text-decoration-line`` property validation."""
-    keywords = [get_keyword(v) for v in tokens]
-    if keywords == ['none']:
+    keywords = {get_keyword(token) for token in tokens}
+    if keywords == {'none'}:
         return 'none'
-    if all(keyword in ('underline', 'overline', 'line-through', 'blink')
-            for keyword in keywords):
-        unique = set(keywords)
-        if len(unique) == len(keywords):
-            # No duplicate
-            # blink is accepted but ignored
-            # "Conforming user agents may simply not blink the text."
-            return frozenset(unique - set(['blink']))
+    allowed_values = {'underline', 'overline', 'line-through', 'blink'}
+    if len(tokens) == len(keywords) and keywords.issubset(allowed_values):
+        return keywords
 
 
 @property()
