@@ -345,6 +345,46 @@ def expand_background(base_url, name, tokens):
     yield 'background-color', color
 
 
+@expander('text-decoration')
+def expand_text_decoration(base_url, name, tokens):
+
+    text_decoration_line = set()
+    text_decoration_color = None
+    text_decoration_style = None
+
+    for token in tokens:
+        keyword = get_keyword(token)
+        if keyword in ('none', 'underline', 'overline', 'line-through',
+                       'blink'):
+            text_decoration_line.add(keyword)
+        elif keyword in ('solid', 'double', 'dotted', 'dashed', 'wavy'):
+            if text_decoration_style is not None:
+                raise InvalidValues
+            else:
+                text_decoration_style = keyword
+        else:
+            color = parse_color(token)
+            if color is None:
+                raise InvalidValues
+            elif text_decoration_color is not None:
+                raise InvalidValues
+            else:
+                text_decoration_color = color
+
+    if 'none' in text_decoration_line:
+        if len(text_decoration_line) != 1:
+            raise InvalidValues
+        text_decoration_line = 'none'
+    elif not(text_decoration_line):
+        text_decoration_line = 'none'
+    else:
+        text_decoration_line = frozenset(text_decoration_line - set(['blink']))
+
+    yield 'text_decoration_line', text_decoration_line
+    yield 'text_decoration_color', text_decoration_color or 'currentColor'
+    yield 'text_decoration_style', text_decoration_style or 'solid'
+
+
 @expander('page-break-after')
 @expander('page-break-before')
 def expand_page_break_before_after(base_url, name, tokens):
