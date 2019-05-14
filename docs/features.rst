@@ -605,3 +605,22 @@ The custom properties and the ``var()`` notation are supported.
 
 .. _CSS Custom Properties for Cascading Variables Module Level 1:
    https://www.w3.org/TR/css-variables/
+
+
+CSS Text Decoration Module Level 3
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The `CSS Text Decoration Module Level 3`_ "contains the features of CSS
+relating to text decoration, such as underlines, text shadows, and emphasis
+marks."
+
+The ``text-decoration-line``, ``text-decoration-style`` and
+``text-decoration-color`` properties are supported, except from the ``wavy``
+value of ``text-decoration-style``. The ``text-decoration`` shorthand is also
+supported.
+
+The other properties (``text-underline-position``, ``text-emphasis-*``,
+``text-shadow``) are not supported.
+
+.. _CSS Text Decoration Module Level 3:
+   https://www.w3.org/TR/css-text-decor-3/

@@ -53,9 +53,6 @@ INITIAL_VALUES = {
     'position': 'static',
     'right': 'auto',
     'table_layout': 'auto',
-    'text_decoration_line': 'none',
-    'text_decoration_color': 'currentColor',
-    'text_decoration_style': 'solid',
     'top': 'auto',
     'unicode_bidi': 'normal',
     'vertical_align': 'baseline',
@@ -188,6 +185,11 @@ INITIAL_VALUES = {
     'min_height': 'auto',
     'min_width': 'auto',
     'order': 0,
+
+    # Text Decoration Module 3 (CR): https://www.w3.org/TR/css-text-decor-3/
+    'text_decoration_line': 'none',
+    'text_decoration_color': 'currentColor',
+    'text_decoration_style': 'solid',
 
     # Proprietary
     'anchor': None,  # computed value of 'none'
