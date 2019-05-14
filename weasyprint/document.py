@@ -162,10 +162,13 @@ def _w3c_date_to_iso(string, attr_name):
         int(groups['second'] or 0))
     if groups['hour']:
         assert groups['minute']
-        assert groups['tz_hour'].startswith(('+', '-'))
-        assert groups['tz_minute']
-        iso_date += '%+03i:%02i' % (
-            int(groups['tz_hour']), int(groups['tz_minute']))
+        if groups['tz_hour']:
+            assert groups['tz_hour'].startswith(('+', '-'))
+            assert groups['tz_minute']
+            iso_date += '%+03i:%02i' % (
+                int(groups['tz_hour']), int(groups['tz_minute']))
+        else:
+            iso_date += '+00:00'
     return iso_date
 
 

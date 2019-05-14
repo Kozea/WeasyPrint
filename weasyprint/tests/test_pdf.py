@@ -532,7 +532,7 @@ def test_document_info():
       <meta name=keywords content="html ,\tcss,
                                    pdf,css">
       <meta name=description content="Blah… ">
-      <meta name=dcterms.created content=2011-04>
+      <meta name=dcterms.created content=2011-04-21T23:00:00Z>
       <meta name=dcterms.modified content=2013-07-21T23:46+01:00>
     ''').write_pdf(target=fileobj)
     info = pdf.PDFFile(fileobj).info
@@ -543,7 +543,7 @@ def test_document_info():
     assert info.get_value('Keywords', '(.*)') == b'(html, css, pdf)'
     assert info.get_value('Subject', '(.*)') == (
         b'<FEFF0042006C0061006820260020>')
-    assert info.get_value('CreationDate', '(.*)') == b'(20110401000000)'
+    assert info.get_value('CreationDate', '(.*)') == b"(20110421230000+00'00)"
     assert info.get_value('ModDate', '(.*)') == b"(20130721234600+01'00)"
 
 
