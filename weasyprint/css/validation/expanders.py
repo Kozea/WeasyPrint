@@ -375,7 +375,7 @@ def expand_text_decoration(base_url, name, tokens):
         if len(text_decoration_line) != 1:
             raise InvalidValues
         text_decoration_line = 'none'
-    elif not(text_decoration_line):
+    elif not text_decoration_line:
         text_decoration_line = 'none'
 
     yield 'text_decoration_line', text_decoration_line

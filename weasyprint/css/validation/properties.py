@@ -955,7 +955,7 @@ def position(keyword):
 def quotes(tokens):
     """``quotes`` property validation."""
     if (tokens and len(tokens) % 2 == 0 and
-            all(v.type == 'string' for v in tokens)):
+            all(token.type == 'string' for token in tokens)):
         strings = tuple(token.value for token in tokens)
         # Separate open and close quotes.
         # eg.  ('«', '»', '“', '”')  -> (('«', '“'), ('»', '”'))
@@ -1142,7 +1142,7 @@ def size(tokens):
         elif len(lengths) == 2:
             return tuple(lengths)
 
-    keywords = [get_keyword(v) for v in tokens]
+    keywords = [get_keyword(token) for token in tokens]
     if len(keywords) == 1:
         keyword = keywords[0]
         if keyword in computed_values.PAGE_SIZES:

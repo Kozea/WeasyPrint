@@ -1028,6 +1028,7 @@ def draw_text(context, textbox, enable_hinting):
     color = textbox.style['text_decoration_color']
     if color == 'currentColor':
         color = textbox.style['color']
+
     if ('overline' in values or
             'line-through' in values or
             'underline' in values):
@@ -1061,18 +1062,18 @@ def draw_text_decoration(context, textbox, offset_y, thickness,
         context.set_source_rgba(*color)
         context.set_line_width(thickness)
 
-        if style == "dashed":
+        if style == 'dashed':
             context.set_dash([5 * thickness])
-        elif style == "dotted":
+        elif style == 'dotted':
             context.set_dash([thickness])
 
         context.move_to(textbox.position_x, textbox.position_y + offset_y)
         context.rel_line_to(textbox.width, 0)
-        context.stroke()
 
-        if style == "double":
+        if style == 'double':
             delta = 2 * thickness
-            context.move_to(textbox.position_x, textbox.position_y
-                            + offset_y + delta)
+            context.move_to(
+                textbox.position_x, textbox.position_y + offset_y + delta)
             context.rel_line_to(textbox.width, 0)
-            context.stroke()
+
+        context.stroke()
