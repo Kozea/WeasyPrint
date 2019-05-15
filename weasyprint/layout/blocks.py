@@ -272,6 +272,10 @@ def block_container_layout(context, box, max_position_y, skip_stack,
     # if box.style['overflow'] != 'visible':
     #     ...
 
+    # We have to work around floating point rounding errors here.
+    # The 1e-9 value comes from PEP 485.
+    allowed_max_position_y = max_position_y * (1 + 1e-9)
+
     # See http://www.w3.org/TR/CSS21/visuren.html#block-formatting
     if not isinstance(box, boxes.BlockBox):
         context.create_block_formatting_context()
@@ -343,7 +347,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                 # New page if overflow
                 if (page_is_empty and not new_children) or not (
                         new_child.position_y + new_child.height >
-                        max_position_y):
+                        allowed_max_position_y):
                     new_child.index = index
                     new_children.append(new_child)
                 else:
@@ -388,14 +392,10 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                 else:
                     offset_y = 0
 
-                # We have to work around floating point rounding errors here.
-                # The 1e-9 value comes from PEP 485.
-                new_position_y *= (1 - 1e-9)
-
                 # Allow overflow if the first line of the page is higher
                 # than the page itself so that we put *something* on this
                 # page and can advance in the context.
-                if new_position_y + offset_y > max_position_y and (
+                if new_position_y + offset_y > allowed_max_position_y and (
                         new_children or not page_is_empty):
                     over_orphans = len(new_children) - box.style['orphans']
                     if over_orphans < 0 and not page_is_empty:
@@ -431,7 +431,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                 # "When an unforced page break occurs here, both the adjoining
                 #  ‘margin-top’ and ‘margin-bottom’ are set to zero."
                 # See https://github.com/Kozea/WeasyPrint/issues/115
-                elif page_is_empty and new_position_y > max_position_y:
+                elif page_is_empty and new_position_y > allowed_max_position_y:
                     # Remove the top border when a page is empty and the box is
                     # too high to be drawn in one page
                     new_position_y -= box.margin_top
@@ -544,7 +544,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                     new_position_y = (
                         new_child.border_box_y() + new_child.border_height())
 
-                    if (new_position_y > max_position_y and
+                    if (new_position_y > allowed_max_position_y and
                             not page_is_empty_with_no_children):
                         # The child overflows the page area, put it on the
                         # next page. (But don’t delay whole blocks if eg.
