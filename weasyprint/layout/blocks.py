@@ -388,6 +388,10 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                 else:
                     offset_y = 0
 
+                # We have to work around floating point rounding errors here.
+                # The 1e-9 value comes from PEP 485.
+                new_position_y *= (1 - 1e-9)
+
                 # Allow overflow if the first line of the page is higher
                 # than the page itself so that we put *something* on this
                 # page and can advance in the context.
