@@ -792,26 +792,33 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
     elif len(flex_lines) > 1:
         extra_cross_size = getattr(box, cross) - sum(
             line.cross_size for line in flex_lines)
-        direction = 'dy' if cross == 'height' else 'dx'
+        direction = 'position_y' if cross == 'height' else 'position_x'
         if extra_cross_size > 0:
             cross_translate = 0
             for line in flex_lines:
                 for i, child in line:
                     if child.is_flex_item:
-                        child.translate(**{direction: cross_translate})
+                        current_value = getattr(child, direction)
+                        current_value += cross_translate
+                        setattr(child, direction, current_value)
                         if box.style['align_content'] == 'flex-end':
-                            child.translate(**{direction: extra_cross_size})
+                            setattr(
+                                child, direction,
+                                current_value + extra_cross_size)
                         elif box.style['align_content'] == 'center':
-                            child.translate(
-                                **{direction: extra_cross_size / 2})
+                            setattr(
+                                child, direction,
+                                current_value + extra_cross_size / 2)
                         elif box.style['align_content'] == 'space-around':
-                            child.translate(**{
-                                direction: extra_cross_size /
-                                len(flex_lines) / 2})
+                            setattr(
+                                child, direction,
+                                current_value + extra_cross_size /
+                                len(flex_lines) / 2)
                         elif box.style['align_content'] == 'space-evenly':
-                            child.translate(**{
-                                direction: extra_cross_size /
-                                (len(flex_lines) + 1)})
+                            setattr(
+                                child, direction,
+                                current_value + extra_cross_size /
+                                (len(flex_lines) + 1))
                 if box.style['align_content'] == 'space-between':
                     cross_translate += extra_cross_size / (len(flex_lines) - 1)
                 elif box.style['align_content'] == 'space-around':

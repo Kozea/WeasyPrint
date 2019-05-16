@@ -370,3 +370,48 @@ def test_flex_no_baseline():
       <div class="references" style="display: flex; align-items: baseline;">
         <div></div>
       </div>''')
+
+
+@assert_no_logs
+@pytest.mark.parametrize('align, height, y1, y2', (
+    ('flex-start', 50, 0, 10),
+    ('flex-end', 50, 30, 40),
+    ('space-around', 60, 10, 40),
+    ('space-between', 50, 0, 40),
+    ('space-evenly', 50, 10, 30),
+))
+def test_flex_align_content(align, height, y1, y2):
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/811
+    page, = render_pages('''
+      <style>
+        @font-face { src: url(AHEM____.TTF); font-family: ahem }
+        article {
+          align-content: %s;
+          display: flex;
+          flex-wrap: wrap;
+          font-family: ahem;
+          font-size: 10px;
+          height: %ipx;
+          line-height: 1;
+        }
+        section {
+          width: 100%%;
+        }
+      </style>
+      <article>
+        <section><span>Lorem</span></section>
+        <section><span>Lorem</span></section>
+      </article>
+    ''' % (align, height))
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    section1, section2 = article.children
+    line1, = section1.children
+    line2, = section2.children
+    span1, = line1.children
+    span2, = line2.children
+    assert section1.position_x == span1.position_x == 0
+    assert section1.position_y == span1.position_y == y1
+    assert section2.position_x == span2.position_x == 0
+    assert section2.position_y == span2.position_y == y2
