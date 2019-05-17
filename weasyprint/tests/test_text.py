@@ -249,6 +249,21 @@ def test_text_align_justify():
 
 
 @assert_no_logs
+def test_text_align_not_enough_space():
+    page, = render_pages('''
+      <style>
+        p { text-align: center; width: 0 }
+        span { display: inline-block }
+      </style>
+      <p><span>aaaaaaaaaaaaaaaaaaaaaaaaaa</span></p>''')
+    html, = page.children
+    body, = html.children
+    paragraph, = body.children
+    span, = paragraph.children
+    assert span.position_x == 0
+
+
+@assert_no_logs
 def test_text_align_justify_no_space():
     # single-word line (zero spaces)
     page, = render_pages('''

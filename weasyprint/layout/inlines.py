@@ -1185,6 +1185,12 @@ def text_align(context, line, available_width, last):
     the `text-align` property.
 
     """
+    # "When the total width of the inline-level boxes on a line is less than
+    # the width of the line box containing them, their horizontal distribution
+    # within the line box is determined by the 'text-align' property."
+    if line.width >= available_width:
+        return 0
+
     align = line.style['text_align']
     space_collapse = line.style['white_space'] in (
         'normal', 'nowrap', 'pre-line')
