@@ -2033,3 +2033,45 @@ def test_table_page_breaks_complex():
         [['Header'], ['Row 4']],
         [['Row 5']]
     ]
+
+
+@assert_no_logs
+@pytest.mark.parametrize('vertical_align, table_position_y', (
+    ('top', 8),
+    ('bottom', 8),
+    ('baseline', 10),
+))
+def test_inline_table_baseline(vertical_align, table_position_y):
+    # Check that inline table's baseline is its first row's baseline.
+    #
+    # Div text's baseline is at 18px from the top (10px because of the
+    # line-height, 8px as it's Ahem's baseline position).
+    #
+    # When a row has vertical-align: baseline cells, its baseline is its cell's
+    # baseline. The position of the table is thus 10px above the text's
+    # baseline.
+    #
+    # When a row has another value for vertical-align, the baseline is the
+    # bottom of the row. The first cell's text is aligned with the div's text,
+    # and the top of the table is thus 8px above the baseline.
+    page, = render_pages('''
+      <style>@font-face { src: url(AHEM____.TTF); font-family: ahem }</style>
+      <div style="font-family: ahem; font-size: 10px; line-height: 30px">
+        abc
+        <table style="display: inline-table; border-collapse: collapse;
+                      line-height: 10px">
+          <tr><td style="vertical-align: %s">a</td></tr>
+          <tr><td>a</td></tr>
+        </table>
+        abc
+      </div>
+    ''' % vertical_align)
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    line, = div.children
+    text1, table_wrapper, text2 = line.children
+    table, = table_wrapper.children
+    assert text1.position_y == text2.position_y == 0
+    assert table.height == 10 * 2
+    assert table.position_y == table_position_y

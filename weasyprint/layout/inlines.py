@@ -540,7 +540,14 @@ def inline_block_baseline(box):
     http://www.w3.org/TR/CSS21/visudet.html#propdef-vertical-align
 
     """
-    if box.style['overflow'] == 'visible':
+    if box.is_table_wrapper:
+        # Inline table's baseline is its first row's baseline
+        for child in box.children:
+            if isinstance(child, boxes.TableBox):
+                if child.children and child.children[0].children:
+                    first_row = child.children[0].children[0]
+                    return first_row.baseline
+    elif box.style['overflow'] == 'visible':
         result = find_in_flow_baseline(box, last=True)
         if result:
             return result
