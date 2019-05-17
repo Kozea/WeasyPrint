@@ -128,8 +128,9 @@ def _round_meta(pages):
                                     round(width, 6), round(height, 6)))
             links[i] = link
         bookmarks = page.bookmarks
-        for i, (level, label, (pos_x, pos_y)) in enumerate(bookmarks):
-            bookmarks[i] = level, label, (round(pos_x, 6), round(pos_y, 6))
+        for i, (level, label, (pos_x, pos_y), state) in enumerate(bookmarks):
+            bookmarks[i] = (level, label,
+                            (round(pos_x, 6), round(pos_y, 6)), state)
 
 
 @assert_no_logs
@@ -515,8 +516,9 @@ def test_low_level_api():
         <h2>d</h2>
         <h1>e</h1>
     ''', [
-        [(1, 'a', (0, 0)), (4, 'b', (0, 10))],
-        [(3, 'c', (3, 2)), (2, 'd', (0, 10)), (1, 'e', (0, 20))],
+        [(1, 'a', (0, 0), "open"), (4, 'b', (0, 10), "open")],
+        [(3, 'c', (3, 2), "open"), (2, 'd', (0, 10), "open"),
+         (1, 'e', (0, 20), "open")],
     ], [
         ('a', (0, 0, 0), [
             ('b', (0, 0, 10), []),
@@ -542,18 +544,18 @@ def test_low_level_api():
         <h2>Title 11</h2>
     ''', [
         [
-            (1, 'Title 1', (0, 0)),
-            (1, 'Title 2', (0, 100)),
-            (2, 'Title 3', (20, 200)),
-            (2, 'Title 4', (0, 300)),
-            (3, 'Title 5', (0, 400))
+            (1, 'Title 1', (0, 0), "open"),
+            (1, 'Title 2', (0, 100), "open"),
+            (2, 'Title 3', (20, 200), "open"),
+            (2, 'Title 4', (0, 300), "open"),
+            (3, 'Title 5', (0, 400), "open")
         ], [
-            (2, 'Title 6', (0, 100)),
-            (1, 'Title 7', (0, 200)),
-            (2, 'Title 8', (0, 300)),
-            (3, 'Title 9', (0, 400)),
-            (1, 'Title 10', (0, 500)),
-            (2, 'Title 11', (0, 600))
+            (2, 'Title 6', (0, 100), "open"),
+            (1, 'Title 7', (0, 200), "open"),
+            (2, 'Title 8', (0, 300), "open"),
+            (3, 'Title 9', (0, 400), "open"),
+            (1, 'Title 10', (0, 500), "open"),
+            (2, 'Title 11', (0, 600), "open")
         ],
     ], [
         ('Title 1', (0, 0, 0), []),
@@ -576,11 +578,11 @@ def test_low_level_api():
         <h3>D</h3> <p>depth 2</p>
         <h4>E</h4> <p>depth 3</p>
     ''', [[
-        (2, 'A', (0, 0)),
-        (4, 'B', (0, 20)),
-        (2, 'C', (0, 40)),
-        (3, 'D', (0, 60)),
-        (4, 'E', (0, 80)),
+        (2, 'A', (0, 0), "open"),
+        (4, 'B', (0, 20), "open"),
+        (2, 'C', (0, 40), "open"),
+        (3, 'D', (0, 60), "open"),
+        (4, 'E', (0, 80), "open"),
     ]], [
         ('A', (0, 0, 0), [
             ('B', (0, 0, 20), [])]),
@@ -600,15 +602,15 @@ def test_low_level_api():
         <h4>H</h4> <p>h4 depth 3</p>
         <h1>I</h1> <p>h1 depth 1</p>
     ''', [[
-        (2, 'A', (0, 0)),
-        (4, 'B', (0, 20)),
-        (3, 'C', (0, 40)),
-        (5, 'D', (0, 60)),
-        (1, 'E', (0, 70)),
-        (2, 'F', (0, 90)),
-        (2, 'G', (0, 110)),
-        (4, 'H', (0, 130)),
-        (1, 'I', (0, 150)),
+        (2, 'A', (0, 0), "open"),
+        (4, 'B', (0, 20), "open"),
+        (3, 'C', (0, 40), "open"),
+        (5, 'D', (0, 60), "open"),
+        (1, 'E', (0, 70), "open"),
+        (2, 'F', (0, 90), "open"),
+        (2, 'G', (0, 110), "open"),
+        (4, 'H', (0, 130), "open"),
+        (1, 'I', (0, 150), "open"),
     ]], [
         ('A', (0, 0, 0), [
             ('B', (0, 0, 20), []),
@@ -620,25 +622,26 @@ def test_low_level_api():
                 ('H', (0, 0, 130), [])])]),
         ('I', (0, 0, 150), []),
     ], False),
-    ('<h1>é', [[(1, 'é', (0, 0))]], [('é', (0, 0, 0), [])], False),
+    ('<h1>é', [[(1, 'é', (0, 0), "open")]], [('é', (0, 0, 0), [])], False),
     ('''
         <h1 style="transform: translateX(50px)">!
-    ''', [[(1, '!', (50, 0))]], [('!', (0, 50, 0), [])], False),
+    ''', [[(1, '!', (50, 0), "open")]], [('!', (0, 50, 0), [])], False),
     ('''
         <style>
           img { display: block; bookmark-label: attr(alt); bookmark-level: 1 }
         </style>
         <img src="%s" alt="Chocolate" />
     ''' % path2url(resource_filename('pattern.png')),
-     [[(1, 'Chocolate', (0, 0))]], [('Chocolate', (0, 0, 0), [])], False),
+     [[(1, 'Chocolate', (0, 0), "open")]],
+     [('Chocolate', (0, 0, 0), [])], False),
     ('''
         <h1 style="transform-origin: 0 0;
                    transform: rotate(90deg) translateX(50px)">!
-    ''', [[(1, '!', (0, 50))]], [('!', (0, 0, 50), [])], True),
+    ''', [[(1, '!', (0, 50), "open")]], [('!', (0, 0, 50), [])], True),
     ('''
         <body style="transform-origin: 0 0; transform: rotate(90deg)">
         <h1 style="transform: translateX(50px)">!
-    ''', [[(1, '!', (0, 50))]], [('!', (0, 0, 50), [])], True),
+    ''', [[(1, '!', (0, 50), "open")]], [('!', (0, 0, 50), [])], True),
 ))
 @assert_no_logs
 def test_assert_bookmarks(html, expected_by_page, expected_tree, round):

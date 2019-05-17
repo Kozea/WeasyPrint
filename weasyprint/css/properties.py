@@ -131,6 +131,7 @@ INITIAL_VALUES = {
     # Generated Content 3 (WD): https://www.w3.org/TR/css-content-3/
     'bookmark_label': (('content', 'text'),),
     'bookmark_level': 'none',
+    'bookmark_state': 'open',
     'content': 'normal',
     'quotes': list('“”‘’'),  # chosen by the user agent
     'string_set': 'none',

@@ -87,7 +87,7 @@ def test_bookmarks_1():
     pdf_file = pdf.PDFFile(fileobj)
     outlines = pdf_file.catalog.get_indirect_dict('Outlines', pdf_file)
     assert outlines.get_type() == 'Outlines'
-    assert outlines.get_value('Count', '(.*)') == b'-2'
+    assert outlines.get_value('Count', '(.*)') == b'-5'
     o1 = outlines.get_indirect_dict('First', pdf_file)
     assert o1.get_value('Title', '(.*)') == b'(a)'
     o11 = o1.get_indirect_dict('First', pdf_file)
@@ -157,32 +157,32 @@ def test_bookmarks_4():
     pdf_file = pdf.PDFFile(fileobj)
     outlines = pdf_file.catalog.get_indirect_dict('Outlines', pdf_file)
     assert outlines.get_type() == 'Outlines'
-    assert outlines.get_value('Count', '(.*)') == b'-4'
+    assert outlines.get_value('Count', '(.*)') == b'-11'
     o1 = outlines.get_indirect_dict('First', pdf_file)
     assert o1.get_value('Title', '(.*)') == b'(Title 1)'
     o2 = o1.get_indirect_dict('Next', pdf_file)
     assert o2.get_value('Title', '(.*)') == b'(Title 2)'
-    assert o2.get_value('Count', '(.*)') == b'-3'
+    assert o2.get_value('Count', '(.*)') == b'4'
     o3 = o2.get_indirect_dict('First', pdf_file)
     assert o3.get_value('Title', '(.*)') == b'(Title 3)'
     o4 = o3.get_indirect_dict('Next', pdf_file)
     assert o4.get_value('Title', '(.*)') == b'(Title 4)'
-    assert o4.get_value('Count', '(.*)') == b'-1'
+    assert o4.get_value('Count', '(.*)') == b'1'
     o5 = o4.get_indirect_dict('First', pdf_file)
     assert o5.get_value('Title', '(.*)') == b'(Title 5)'
     o6 = o4.get_indirect_dict('Next', pdf_file)
     assert o6.get_value('Title', '(.*)') == b'(Title 6)'
     o7 = o2.get_indirect_dict('Next', pdf_file)
     assert o7.get_value('Title', '(.*)') == b'(Title 7)'
-    assert o7.get_value('Count', '(.*)') == b'-1'
+    assert o7.get_value('Count', '(.*)') == b'2'
     o8 = o7.get_indirect_dict('First', pdf_file)
     assert o8.get_value('Title', '(.*)') == b'(Title 8)'
-    assert o8.get_value('Count', '(.*)') == b'-1'
+    assert o8.get_value('Count', '(.*)') == b'1'
     o9 = o8.get_indirect_dict('First', pdf_file)
     assert o9.get_value('Title', '(.*)') == b'(Title 9)'
     o10 = o7.get_indirect_dict('Next', pdf_file)
     assert o10.get_value('Title', '(.*)') == b'(Title 10)'
-    assert o10.get_value('Count', '(.*)') == b'-1'
+    assert o10.get_value('Count', '(.*)') == b'1'
     o11 = o10.get_indirect_dict('First', pdf_file)
     assert o11.get_value('Title', '(.*)') == b'(Title 11)'
 
@@ -206,7 +206,7 @@ def test_bookmarks_5():
     pdf_file = pdf.PDFFile(fileobj)
     outlines = pdf_file.catalog.get_indirect_dict('Outlines', pdf_file)
     assert outlines.get_type() == 'Outlines'
-    assert outlines.get_value('Count', '(.*)') == b'-2'
+    assert outlines.get_value('Count', '(.*)') == b'-5'
     o1 = outlines.get_indirect_dict('First', pdf_file)
     assert o1.get_value('Title', '(.*)') == b'(1)'
     o2 = o1.get_indirect_dict('First', pdf_file)
@@ -246,7 +246,7 @@ def test_bookmarks_6():
     pdf_file = pdf.PDFFile(fileobj)
     outlines = pdf_file.catalog.get_indirect_dict('Outlines', pdf_file)
     assert outlines.get_type() == 'Outlines'
-    assert outlines.get_value('Count', '(.*)') == b'-3'
+    assert outlines.get_value('Count', '(.*)') == b'-9'
     o1 = outlines.get_indirect_dict('First', pdf_file)
     assert o1.get_value('Title', '(.*)') == b'(1)'
     o2 = o1.get_indirect_dict('First', pdf_file)
