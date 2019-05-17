@@ -156,8 +156,6 @@ def table_layout(context, table, max_position_y, skip_stack,
                     extra = row.baseline - cell.baseline
                     if cell.baseline != row.baseline and extra:
                         add_top_padding(cell, extra)
-            else:
-                row.baseline = None
 
             # row height
             for cell in row.children:
@@ -176,6 +174,9 @@ def table_layout(context, table, max_position_y, skip_stack,
             else:
                 row_bottom_y = row.position_y
                 row.height = 0
+
+            if not baseline_cells:
+                row.baseline = row_bottom_y
 
             # Add extra padding to make the cells the same height as the row
             # and honor vertical-align
