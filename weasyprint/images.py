@@ -156,8 +156,8 @@ class SVGImage(object):
                 cairosvg.parser.Tree(
                     bytestring=self._svg_data, url=self._base_url,
                     url_fetcher=self._cairosvg_url_fetcher),
-                output=None, dpi=96, parent_width=concrete_width,
-                parent_height=concrete_height)
+                output=None, dpi=96, output_width=concrete_width,
+                output_height=concrete_height)
             if svg.width and svg.height:
                 context.scale(
                     concrete_width / svg.width, concrete_height / svg.height)
