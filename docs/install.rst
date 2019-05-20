@@ -12,7 +12,7 @@ WeasyPrint |version| depends on:
 * cairocffi_ ≥ 0.9.0
 * tinycss2_ ≥ 1.0.0
 * cssselect2_ ≥ 0.1
-* CairoSVG_ ≥ 2.2.0
+* CairoSVG_ ≥ 2.4.0
 * Pyphen_ ≥ 0.8
 * GDK-PixBuf_ ≥ 2.25.0 [#]_
 
