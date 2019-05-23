@@ -1322,12 +1322,10 @@ def bookmark_level(token):
 
 
 @property(unstable=True)
-@single_token
-def bookmark_state(token):
+@single_keyword
+def bookmark_state(keyword):
     """Validation for ``bookmark-state``."""
-    state = get_keyword(token)
-    if state == "open" or state == "closed":
-        return state
+    return keyword in ('open', 'closed')
 
 
 @property(unstable=True, wants_base_url=True)

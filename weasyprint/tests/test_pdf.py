@@ -94,8 +94,8 @@ def test_bookmarks_1():
     assert o11.get_value('Title', '(.*)') == b'(b)'
     o12 = o11.get_indirect_dict('Next', pdf_file)
     assert o12.get_value('Title', '(.*)') == b'(c)'
-    o12 = o12.get_indirect_dict('Next', pdf_file)
-    assert o12.get_value('Title', '(.*)') == b'(d)'
+    o13 = o12.get_indirect_dict('Next', pdf_file)
+    assert o13.get_value('Title', '(.*)') == b'(d)'
     o2 = o1.get_indirect_dict('Next', pdf_file)
     assert o2.get_value('Title', '(.*)') == b'(e)'
 
@@ -291,6 +291,47 @@ def test_bookmarks_7():
     assert (
         float(o1.get_value('Dest', '\\[(.+?)\\]').strip().split()[-2]) ==
         round(y * 1.5))
+
+
+@assert_no_logs
+@requires('cairo', (1, 15, 4))
+def test_bookmarks_8():
+    fileobj = io.BytesIO()
+    FakeHTML(string='''
+      <h1>a</h1>
+      <h2>b</h2>
+      <h3>c</h3>
+      <h2 style="bookmark-state: closed">d</h2>
+      <h3>e</h3>
+      <h4>f</h4>
+      <h1>g</h1>
+    ''').write_pdf(target=fileobj)
+    # a
+    # |_ b
+    # |  |_ c
+    # |_ d (closed)
+    # |  |_ e
+    # |     |_ f
+    # g
+    pdf_file = pdf.PDFFile(fileobj)
+    outlines = pdf_file.catalog.get_indirect_dict('Outlines', pdf_file)
+    assert outlines.get_type() == 'Outlines'
+    # d is closed, the number of displayed outlines is len(a, b, c, d, g) == 5
+    assert outlines.get_value('Count', '(.*)') == b'-5'
+    o1 = outlines.get_indirect_dict('First', pdf_file)
+    assert o1.get_value('Title', '(.*)') == b'(a)'
+    o11 = o1.get_indirect_dict('First', pdf_file)
+    assert o11.get_value('Title', '(.*)') == b'(b)'
+    o111 = o11.get_indirect_dict('First', pdf_file)
+    assert o111.get_value('Title', '(.*)') == b'(c)'
+    o12 = o11.get_indirect_dict('Next', pdf_file)
+    assert o12.get_value('Title', '(.*)') == b'(d)'
+    o121 = o12.get_indirect_dict('First', pdf_file)
+    assert o121.get_value('Title', '(.*)') == b'(e)'
+    o1211 = o121.get_indirect_dict('First', pdf_file)
+    assert o1211.get_value('Title', '(.*)') == b'(f)'
+    o2 = o1.get_indirect_dict('Next', pdf_file)
+    assert o2.get_value('Title', '(.*)') == b'(g)'
 
 
 @assert_no_logs

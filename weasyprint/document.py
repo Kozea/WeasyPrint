@@ -7,6 +7,7 @@
 
 """
 
+import collections
 import functools
 import io
 import math
@@ -137,8 +138,8 @@ def _gather_links_and_bookmarks(box, bookmarks, links, anchors, matrix):
         if matrix and (has_bookmark or has_anchor):
             pos_x, pos_y = matrix.transform_point(pos_x, pos_y)
         if has_bookmark:
-            bookmarks.append((bookmark_level, bookmark_label,
-                              (pos_x, pos_y), state))
+            bookmarks.append(
+                (bookmark_level, bookmark_label, (pos_x, pos_y), state))
         if has_anchor:
             anchors[anchor_name] = pos_x, pos_y
 
@@ -330,42 +331,8 @@ class DocumentMetadata(object):
         self.attachments = attachments or []
 
 
-class BookmarkSubtree:
-
-    def __init__(self, label, destination, children, state):
-        self.label = label
-        self.destination = destination
-        self.children = children
-        self.state = state
-
-    # Pass as a tuple for compatibility:
-    def __len__(self):
-        return 3
-
-    def _tuple(self):
-        return (self.label, self.destination, self.children)
-
-    def __iter__(self):
-        return iter(self._tuple())
-
-    def __repr__(self):
-        return repr(self._tuple())
-
-    def __str__(self):
-        return str(self._tuple())
-
-    def __getitem__(self, i):
-        return self._tuple()[i]
-
-    def __eq__(self, other):
-        if isinstance(other, BookmarkSubtree):
-            other = (other.label, other.destination,
-                     other.children, other.state)
-        if len(other) == 3:
-            return self._tuple() == other
-        else:
-            return (self.label, self.destination,
-                    self.children, self.state) == other
+BookmarkSubtree = collections.namedtuple(
+    'BookmarkSubtree', ('label', 'destination', 'children', 'state'))
 
 
 class Document(object):
@@ -547,9 +514,8 @@ class Document(object):
                 assert depth >= 1
 
                 children = []
-                subtree = BookmarkSubtree(label,
-                                          (page_number, point_x, point_y),
-                                          children, state)
+                subtree = BookmarkSubtree(
+                    label, (page_number, point_x, point_y), children, state)
                 last_by_depth[depth - 1].append(subtree)
                 del last_by_depth[depth:]
                 last_by_depth.append(children)
@@ -692,7 +658,7 @@ class Document(object):
 
                 outline = surface.add_outline(
                     levels.pop(), title, link_attribs,
-                    cairo.PDF_OUTLINE_FLAG_OPEN if state == "open" else 0)
+                    cairo.PDF_OUTLINE_FLAG_OPEN if state == 'open' else 0)
                 levels.extend([outline] * len(children))
                 bookmarks = children + bookmarks
 

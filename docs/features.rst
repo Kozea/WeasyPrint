@@ -361,8 +361,8 @@ comes to tables of contents (see `an example
 .. _bookmarks:
 
 You can also control `PDF bookmarks`_ with WeasyPrint. Using the experimental_
-``bookmark-level`` and ``bookmark-level`` properties, you can add bookmarks
-that will be available in your PDF reader.
+``bookmark-level``, ``bookmark-level`` and ``bookmark-state`` properties, you
+can add bookmarks that will be available in your PDF reader.
 
 Bookmarks have already been added in the WeasyPrint's `user agent stylesheet`_,
 so your generated documents will automatically have bookmarks on headers (from
@@ -376,8 +376,7 @@ and do not wish to include it in the bookmarks, add this in your stylesheet:
 The other features of this module are **not** implemented:
 
 - quotes (``content: *-quote``);
-- leaders (``content: leader()``);
-- bookmark states (``bookmark-state``).
+- leaders (``content: leader()``).
 
 .. _CSS Generated Content Module Level 3: http://www.w3.org/TR/css-content-3/
 .. _Quotes: https://www.w3.org/TR/css-content-3/#quotes
