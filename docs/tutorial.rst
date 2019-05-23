@@ -198,10 +198,11 @@ See the :ref:`python-api` for details. A few random examples:
     #         2. CSS 2.1 addressing model (page 7)
     #       4. CSS design principles (page 8)
     def print_outline(bookmarks, indent=0):
-        for i, (label, (page, _, _), children) in enumerate(bookmarks, 1):
+        for i, bookmark in enumerate(bookmarks, 1):
+            page = bookmark.destination[0]
             print('%s%d. %s (page %d)' % (
-                ' ' * indent, i, label.lstrip('0123456789. '), page))
-            print_outline(children, indent + 2)
+                ' ' * indent, i, bookmark.label.lstrip('0123456789. '), page))
+            print_outline(bookmark.children, indent + 2)
     print_outline(document.make_bookmark_tree())
 
 .. code-block:: python

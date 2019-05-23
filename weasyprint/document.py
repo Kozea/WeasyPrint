@@ -108,6 +108,7 @@ def _gather_links_and_bookmarks(box, bookmarks, links, anchors, matrix):
         bookmark_level = None
     else:
         bookmark_level = box.style['bookmark_level']
+    state = box.style['bookmark_state']
     link = box.style['link']
     anchor_name = box.style['anchor']
     has_bookmark = bookmark_label and bookmark_level
@@ -136,7 +137,8 @@ def _gather_links_and_bookmarks(box, bookmarks, links, anchors, matrix):
         if matrix and (has_bookmark or has_anchor):
             pos_x, pos_y = matrix.transform_point(pos_x, pos_y)
         if has_bookmark:
-            bookmarks.append((bookmark_level, bookmark_label, (pos_x, pos_y)))
+            bookmarks.append((bookmark_level, bookmark_label,
+                              (pos_x, pos_y), state))
         if has_anchor:
             anchors[anchor_name] = pos_x, pos_y
 
@@ -328,6 +330,44 @@ class DocumentMetadata(object):
         self.attachments = attachments or []
 
 
+class BookmarkSubtree:
+
+    def __init__(self, label, destination, children, state):
+        self.label = label
+        self.destination = destination
+        self.children = children
+        self.state = state
+
+    # Pass as a tuple for compatibility:
+    def __len__(self):
+        return 3
+
+    def _tuple(self):
+        return (self.label, self.destination, self.children)
+
+    def __iter__(self):
+        return iter(self._tuple())
+
+    def __repr__(self):
+        return repr(self._tuple())
+
+    def __str__(self):
+        return str(self._tuple())
+
+    def __getitem__(self, i):
+        return self._tuple()[i]
+
+    def __eq__(self, other):
+        if isinstance(other, BookmarkSubtree):
+            other = (other.label, other.destination,
+                     other.children, other.state)
+        if len(other) == 3:
+            return self._tuple() == other
+        else:
+            return (self.label, self.destination,
+                    self.children, self.state) == other
+
+
 class Document(object):
     """A rendered document ready to be painted on a cairo surface.
 
@@ -487,7 +527,7 @@ class Document(object):
         last_by_depth = [root]
         previous_level = 0
         for page_number, page in enumerate(self.pages):
-            for level, label, (point_x, point_y) in page.bookmarks:
+            for level, label, (point_x, point_y), state in page.bookmarks:
                 if level > previous_level:
                     # Example: if the previous bookmark is a <h2>, the next
                     # depth "should" be for <h3>. If now we get a <h6> we’re
@@ -507,7 +547,9 @@ class Document(object):
                 assert depth >= 1
 
                 children = []
-                subtree = label, (page_number, point_x, point_y), children
+                subtree = BookmarkSubtree(label,
+                                          (page_number, point_x, point_y),
+                                          children, state)
                 last_by_depth[depth - 1].append(subtree)
                 del last_by_depth[depth:]
                 last_by_depth.append(children)
@@ -635,7 +677,11 @@ class Document(object):
             bookmarks = self.make_bookmark_tree()
             levels = [cairo.PDF_OUTLINE_ROOT] * len(bookmarks)
             while bookmarks:
-                title, destination, children = bookmarks.pop(0)
+                bookmark = bookmarks.pop(0)
+                title = bookmark.label
+                destination = bookmark.destination
+                children = bookmark.children
+                state = bookmark.state
                 page, x, y = destination
 
                 # We round floats to avoid locale problems, see
@@ -645,7 +691,8 @@ class Document(object):
                     int(round(y * scale)))
 
                 outline = surface.add_outline(
-                    levels.pop(), title, link_attribs, 0)
+                    levels.pop(), title, link_attribs,
+                    cairo.PDF_OUTLINE_FLAG_OPEN if state == "open" else 0)
                 levels.extend([outline] * len(children))
                 bookmarks = children + bookmarks
 

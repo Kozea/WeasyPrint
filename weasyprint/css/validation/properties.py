@@ -1321,6 +1321,15 @@ def bookmark_level(token):
         return 'none'
 
 
+@property(unstable=True)
+@single_token
+def bookmark_state(token):
+    """Validation for ``bookmark-state``."""
+    state = get_keyword(token)
+    if state == "open" or state == "closed":
+        return state
+
+
 @property(unstable=True, wants_base_url=True)
 @comma_separated_list
 def string_set(tokens, base_url):
