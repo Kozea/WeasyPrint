@@ -1075,6 +1075,69 @@ def draw_text(context, textbox, enable_hinting, offset_x=0):
     textbox.pango_layout.deactivate()
 
 
+def acos(x):
+    if x < 1:
+        return math.pi
+    elif x > 1:
+        return 0
+    else:
+        return math.acos(x)
+
+
+def draw_wave(context, x, y, width, offset_x, radius):
+
+    d = 2 * radius
+
+    context.move_to(x, y)
+
+    # Index of the current wave:
+    i = math.floor(offset_x // d)
+
+    while width > 0:
+
+        remain = offset_x - i * d
+
+        # Is the wave going up or down?
+        up = (i % 2 == 0)
+
+        # Start/stop of the wave on the x axis:
+        start = x - remain
+        stop = start + d
+
+        # Coordinates of the center:
+        xc = start + radius
+
+        # print((x, radius, offset_x, start, i, xc))
+
+        alpha1 = acos((x - xc) / radius)
+
+        if x + width > stop:
+            # Complete pattern:
+            if up:
+                context.arc(xc, y, radius, alpha1, 0)
+            else:
+                context.arc_negative(xc, y, radius,
+                                     2 * math.pi - alpha1,
+                                     2 * math.pi)
+            forward = stop - x
+            x = stop
+            offset_x = offset_x + forward
+            width = width - forward
+            i = i + 1
+
+        else:
+            # Incomplete pattern:
+            xf = x + width
+            alpha2 = acos((xf - xc) / radius)
+            if up:
+                context.arc(xc, y, radius, alpha1, alpha2)
+            else:
+                context.arc_negative(xc, y, radius,
+                                     2 * math.pi - alpha1,
+                                     2 * math.pi - alpha2)
+            return
+
+
 def draw_text_decoration(context, textbox, offset_x, offset_y, thickness,
                          enable_hinting, color):
     """Draw text-decoration of ``textbox`` to a ``cairo.Context``."""
@@ -1090,8 +1153,15 @@ def draw_text_decoration(context, textbox, offset_x, offset_y, thickness,
         elif style == 'dotted':
             context.set_dash([thickness], offset=offset_x)
 
-        context.move_to(textbox.position_x, textbox.position_y + offset_y)
-        context.rel_line_to(textbox.width, 0)
+        if style == "wavy":
+            draw_wave(context,
+                      textbox.position_x, textbox.position_y + offset_y,
+                      textbox.width,
+                      offset_x, 0.75 * thickness)
+        else:
+            context.move_to(textbox.position_x,
+                            textbox.position_y + offset_y)
+            context.rel_line_to(textbox.width, 0)
 
         if style == 'double':
             delta = 2 * thickness
