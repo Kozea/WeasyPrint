@@ -23,7 +23,7 @@ def list_marker_layout(context, box):
     # outside markers need specific layout.
     # TODO: implement outside markers in terms of absolute positioning,
     # see CSS3 lists.
-    marker = getattr(box, 'outside_list_marker', None)
+    marker = box.outside_list_marker
     if marker:
         # Make a copy to ensure unique markers when the marker's layout has
         # already been done.

@@ -1242,6 +1242,13 @@ def inline_in_block(box):
 
     new_line_children = []
     new_children = []
+
+    print(children, box.outside_list_marker)
+    if box.outside_list_marker:
+        line_box = boxes.LineBox.anonymous_from(box, new_line_children)
+        anonymous = boxes.BlockBox.anonymous_from(box, [line_box])
+        new_children.append(anonymous)
+
     for child_box in children:
         assert not isinstance(child_box, boxes.LineBox)
         if new_line_children and child_box.is_absolutely_positioned():

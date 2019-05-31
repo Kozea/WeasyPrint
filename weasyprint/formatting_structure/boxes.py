@@ -79,9 +79,12 @@ class Box(object):
     is_flex_item = False
     is_for_root_element = False
     is_column = False
+
+    # Other properties
     transformation_matrix = None
     bookmark_label = None
     string_set = None
+    outside_list_marker = None
 
     # Default, overriden on some subclasses
     def all_children(self):
@@ -399,9 +402,8 @@ class BlockBox(BlockContainerBox, BlockLevelBox):
     """
     # TODO: remove this when outside list marker are absolute children
     def all_children(self):
-        marker = getattr(self, 'outside_list_marker', None)
-        return (itertools.chain(self.children, [marker])
-                if marker else self.children)
+        return (itertools.chain(self.children, [self.outside_list_marker])
+                if self.outside_list_marker else self.children)
 
 
 class LineBox(ParentBox):
