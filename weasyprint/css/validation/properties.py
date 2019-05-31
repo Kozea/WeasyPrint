@@ -812,6 +812,15 @@ def font_weight(token):
             return token.int_value
 
 
+@property()
+@single_keyword
+def object_fit(keyword):
+    # TODO: Figure out what the spec means by "'scale-down' flag".
+    #   As of this writing, neither Firefox nor chrome support
+    #   anything other than a single keyword as is done here.
+    return keyword in ('fill', 'contain', 'cover', 'none', 'scale-down')
+
+
 @property(unstable=True)
 @single_token
 def image_resolution(token):

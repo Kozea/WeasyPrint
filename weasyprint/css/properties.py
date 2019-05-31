@@ -139,6 +139,8 @@ INITIAL_VALUES = {
     # Images 3/4 (CR/WD): https://www.w3.org/TR/css4-images/
     'image_resolution': 1,  # dppx
     'image_rendering': 'auto',
+    # https://drafts.csswg.org/css-images-3/
+    'object_fit': 'fill',
 
     # Paged Media 3 (WD): https://www.w3.org/TR/css-page-3/
     'size': None,  # set to A4 in computed_values
