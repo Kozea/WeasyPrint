@@ -10,6 +10,7 @@
 from collections import namedtuple
 from itertools import cycle
 
+from .. import calc
 from ..formatting_structure import boxes
 from . import replaced
 from .percentages import resolve_radii_percentages
@@ -81,17 +82,6 @@ def layout_box_backgrounds(page, box, get_image_from_uri):
             style['background_attachment']]))]
     box.background = Background(
         color=color, image_rendering=style['image_rendering'], layers=layers)
-
-
-def percentage(value, refer_to):
-    """Return the evaluated percentage value, or the value unchanged."""
-    if value == 'auto':
-        return value
-    elif value.unit == 'px':
-        return value.value
-    else:
-        assert value.unit == '%'
-        return refer_to * value.value / 100
 
 
 def layout_background_layer(box, page, resolution, image, size, clip, repeat,
@@ -177,15 +167,15 @@ def layout_background_layer(box, page, resolution, image, size, clip, repeat,
             resolution, box.style['font_size'])
         image_width, image_height = replaced.default_image_sizing(
             iwidth, iheight, image.intrinsic_ratio,
-            percentage(size_width, positioning_width),
-            percentage(size_height, positioning_height),
+            calc.percentage(size_width, positioning_width),
+            calc.percentage(size_height, positioning_height),
             positioning_width, positioning_height)
 
     origin_x, position_x, origin_y, position_y = position
     ref_x = positioning_width - image_width
     ref_y = positioning_height - image_height
-    position_x = percentage(position_x, ref_x)
-    position_y = percentage(position_y, ref_y)
+    position_x = calc.percentage(position_x, ref_x)
+    position_y = calc.percentage(position_y, ref_y)
     if origin_x == 'right':
         position_x = ref_x - position_x
     if origin_y == 'bottom':

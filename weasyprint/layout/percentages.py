@@ -9,24 +9,8 @@
 
 """
 
+from .. import calc
 from ..formatting_structure import boxes
-
-
-def _percentage(value, refer_to):
-    """Get the value corresponding to the value/percentage and the reference
-
-    ``refer_to`` is the length for 100%. If ``refer_to`` is not a number, it
-    just replaces percentages.
-
-    """
-    if value == 'auto':
-        result = value
-    elif value.unit == 'px':
-        result = value.value
-    else:
-        assert value.unit == '%'
-        result = value.value * refer_to / 100.
-    return result
 
 
 def resolve_one_percentage(box, property_name, refer_to,
@@ -40,7 +24,7 @@ def resolve_one_percentage(box, property_name, refer_to,
     # box.style has computed values
     value = box.style[property_name]
     # box attributes are used values
-    percentage = _percentage(value, refer_to)
+    percentage = calc.percentage(value, refer_to)
     setattr(box, property_name, percentage)
     if property_name in ('min_width', 'min_height') and percentage == 'auto':
         if (main_flex_direction is None or
@@ -146,6 +130,6 @@ def resolve_radii_percentages(box):
     for corner in corners:
         property_name = 'border_%s_radius' % corner
         rx, ry = box.style[property_name]
-        rx = _percentage(rx, box.border_width())
-        ry = _percentage(ry, box.border_height())
+        rx = calc.percentage(rx, box.border_width())
+        ry = calc.percentage(ry, box.border_height())
         setattr(box, property_name, (rx, ry))

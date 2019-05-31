@@ -17,6 +17,7 @@ import cairocffi
 import cairosvg.parser
 import cairosvg.surface
 
+from . import calc
 from .logger import LOGGER
 from .urls import URLFetchingError, fetch
 
@@ -68,16 +69,23 @@ class RasterImage(object):
                 self._intrinsic_height / image_resolution)
 
     def draw(self, context, concrete_width, concrete_height, image_rendering):
-        if concrete_width > 0 and concrete_height > 0 and \
-                self._intrinsic_width > 0 and self._intrinsic_height > 0:
-            # Use the real intrinsic size here,
-            # not affected by 'image-resolution'.
-            context.scale(concrete_width / self._intrinsic_width,
-                          concrete_height / self._intrinsic_height)
-            context.set_source_surface(self.image_surface)
-            context.get_source().set_filter(
-                IMAGE_RENDERING_TO_FILTER[image_rendering])
-            context.paint()
+        has_size = (
+            concrete_width > 0
+            and concrete_height > 0
+            and self._intrinsic_width > 0
+            and self._intrinsic_height > 0
+        )
+        if not has_size:
+            return
+
+        # Use the real intrinsic size here,
+        # not affected by 'image-resolution'.
+        context.scale(concrete_width / self._intrinsic_width,
+                      concrete_height / self._intrinsic_height)
+        context.set_source_surface(self.image_surface)
+        context.get_source().set_filter(
+            IMAGE_RENDERING_TO_FILTER[image_rendering])
+        context.paint()
 
 
 class ScaledSVGSurface(cairosvg.surface.SVGSurface):
@@ -226,17 +234,6 @@ def get_image_from_uri(cache, url_fetcher, url, forced_mime_type=None):
     return image
 
 
-def percentage(value, refer_to):
-    """Return the evaluated percentage value, or the value unchanged."""
-    if value is None:
-        return value
-    elif value.unit == 'px':
-        return value.value
-    else:
-        assert value.unit == '%'
-        return refer_to * value.value / 100
-
-
 def process_color_stops(gradient_line_size, positions):
     """
     Gradient line size: distance between the starting point and ending point.
@@ -248,7 +245,7 @@ def process_color_stops(gradient_line_size, positions):
     Return processed color stops, as a list of floats in px.
 
     """
-    positions = [percentage(position, gradient_line_size)
+    positions = [calc.percentage(position, gradient_line_size)
                  for position in positions]
     # First and last default to 100%
     if positions[0] is None:
@@ -437,8 +434,8 @@ class RadialGradient(Gradient):
         if len(self.colors) == 1:
             return 1, 'solid', self.colors[0], [], []
         origin_x, center_x, origin_y, center_y = self.center
-        center_x = percentage(center_x, width)
-        center_y = percentage(center_y, height)
+        center_x = calc.percentage(center_x, width)
+        center_y = calc.percentage(center_y, height)
         if origin_x == 'right':
             center_x = width - center_x
         if origin_y == 'bottom':
@@ -505,7 +502,9 @@ class RadialGradient(Gradient):
     def _resolve_size(self, width, height, center_x, center_y):
         if self.size_type == 'explicit':
             size_x, size_y = self.size
-            return percentage(size_x, width), percentage(size_y, height)
+            size_x = calc.percentage(size_x, width)
+            size_y = calc.percentage(size_y, height)
+            return size_x, size_y
         left = abs(center_x)
         right = abs(width - center_x)
         top = abs(center_y)
