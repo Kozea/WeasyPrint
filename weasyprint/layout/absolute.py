@@ -8,7 +8,6 @@
 """
 
 from ..formatting_structure import boxes
-from .markers import list_marker_layout
 from .min_max import handle_min_max_width
 from .percentages import resolve_percentages, resolve_position_percentages
 from .preferred import shrink_to_fit
@@ -214,8 +213,6 @@ def absolute_block(context, box, containing_block, fixed_boxes):
         absolute_boxes=absolute_boxes, fixed_boxes=fixed_boxes,
         adjoining_margins=None)
 
-    list_marker_layout(context, new_box)
-
     for child_placeholder in absolute_boxes:
         absolute_layout(context, child_placeholder, new_box, fixed_boxes)
 
@@ -256,8 +253,6 @@ def absolute_flex(context, box, containing_block_sizes, fixed_boxes,
         containing_block=containing_block, device_size=None,
         page_is_empty=False, absolute_boxes=absolute_boxes,
         fixed_boxes=fixed_boxes)
-
-    list_marker_layout(context, new_box)
 
     for child_placeholder in absolute_boxes:
         absolute_layout(context, child_placeholder, new_box, fixed_boxes)

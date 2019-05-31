@@ -14,7 +14,6 @@ from math import log10
 
 from ..css.properties import Dimension
 from ..formatting_structure import boxes
-from .markers import list_marker_layout
 from .percentages import resolve_one_percentage, resolve_percentages
 from .preferred import max_content_width, min_content_width
 from .tables import find_in_flow_baseline
@@ -842,7 +841,6 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                     if resume_at and resume_at[0]:
                         resume_at = (resume_at[0] + i - 1, None)
                 else:
-                    list_marker_layout(context, new_child)
                     box.children.append(new_child)
                     if child_resume_at is not None:
                         if original_skip_stack:

@@ -10,7 +10,6 @@
 """
 
 from ..formatting_structure import boxes
-from .markers import list_marker_layout
 from .min_max import handle_min_max_width
 from .percentages import resolve_percentages, resolve_position_percentages
 from .preferred import shrink_to_fit
@@ -72,7 +71,6 @@ def float_layout(context, box, containing_block, device_size, absolute_boxes,
             skip_stack=None, device_size=device_size, page_is_empty=False,
             absolute_boxes=absolute_boxes, fixed_boxes=fixed_boxes,
             adjoining_margins=None)
-        list_marker_layout(context, box)
         context.finish_block_formatting_context(box)
     elif isinstance(box, boxes.FlexContainerBox):
         box, _, _, _, _ = flex_layout(

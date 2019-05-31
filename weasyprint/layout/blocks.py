@@ -140,7 +140,6 @@ def block_box_layout(context, box, max_position_y, skip_stack,
             context, new_box, containing_block, outer=False)
         new_box.translate(
             position_x - new_box.position_x, position_y - new_box.position_y)
-    list_marker_layout(context, new_box)
     return new_box, resume_at, next_page, adjoining_margins, collapsing_through
 
 
@@ -677,6 +676,8 @@ def block_container_layout(context, box, max_position_y, skip_stack,
 
     if next_page['page'] is None:
         next_page['page'] = new_box.page_values()[1]
+
+    list_marker_layout(context, new_box)
 
     return new_box, resume_at, next_page, adjoining_margins, collapsing_through
 
