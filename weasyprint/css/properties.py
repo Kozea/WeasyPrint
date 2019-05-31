@@ -141,6 +141,8 @@ INITIAL_VALUES = {
     'image_rendering': 'auto',
     # https://drafts.csswg.org/css-images-3/
     'object_fit': 'fill',
+    'object_position': (('left', Dimension(50, '%'),
+                         'top', Dimension(50, '%')),),
 
     # Paged Media 3 (WD): https://www.w3.org/TR/css-page-3/
     'size': None,  # set to A4 in computed_values
