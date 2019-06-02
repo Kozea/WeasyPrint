@@ -266,10 +266,11 @@ def parse_2d_position(tokens):
                 BACKGROUND_POSITION_PERCENTAGES[keyword_1])
 
 
-def parse_background_position(tokens):
-    """Parse background position.
+def parse_position(tokens):
+    """Parse background-position and object-position.
 
     See http://dev.w3.org/csswg/css3-background/#the-background-position
+    https://drafts.csswg.org/css-images-3/#propdef-object-position
 
     """
     result = parse_2d_position(tokens)
@@ -324,7 +325,7 @@ def parse_radial_gradient_parameters(arguments):
         token = stack.pop()
         keyword = get_keyword(token)
         if keyword == 'at':
-            position = parse_background_position(stack[::-1])
+            position = parse_position(stack[::-1])
             if position is None:
                 return
             break

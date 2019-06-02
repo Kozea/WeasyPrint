@@ -17,6 +17,7 @@ import cairocffi as cairo
 
 from .formatting_structure import boxes
 from .images import SVGImage
+from .layout import replaced
 from .layout.backgrounds import BackgroundLayer
 from .stacking import StackingContext
 from .text import show_first_line
@@ -973,12 +974,14 @@ def draw_replacedbox(context, box):
     if box.style['visibility'] != 'visible' or not box.width or not box.height:
         return
 
+    draw_width, draw_height, draw_x, draw_y = replaced.replacedbox_layout(box)
+
     with stacked(context):
         rounded_box_path(context, box.rounded_content_box())
         context.clip()
-        context.translate(box.content_box_x(), box.content_box_y())
+        context.translate(draw_x, draw_y)
         box.replacement.draw(
-            context, box.width, box.height, box.style['image_rendering'])
+            context, draw_width, draw_height, box.style['image_rendering'])
 
 
 def draw_inline_level(context, page, box, enable_hinting):

@@ -273,7 +273,7 @@ def background_image(computer, name, values):
                 length(computer, name, pos) if pos is not None else None
                 for pos in value.stop_positions)
         if type_ == 'radial-gradient':
-            value.center, = background_position(
+            value.center, = compute_position(
                 computer, name, (value.center,))
             if value.size_type == 'explicit':
                 value.size = length_or_percentage_tuple(
@@ -282,7 +282,8 @@ def background_image(computer, name, values):
 
 
 @register_computer('background-position')
-def background_position(computer, name, values):
+@register_computer('object-position')
+def compute_position(computer, name, values):
     """Compute lengths in background-position."""
     return tuple(
         (origin_x, length(computer, name, pos_x),
