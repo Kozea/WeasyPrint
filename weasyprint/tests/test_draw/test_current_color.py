@@ -10,12 +10,17 @@
 """
 
 from ..testing_utils import assert_no_logs
-from . import G, assert_pixels
+from . import assert_pixels
+
+GREEN_2x2 = '''
+GG
+GG
+'''
 
 
 @assert_no_logs
 def test_current_color_1():
-    assert_pixels('background_current_color', 2, 2, [G + G, G + G], '''
+    assert_pixels('background_current_color', 2, 2, GREEN_2x2, '''
       <style>
         @page { size: 2px }
         html, body { height: 100%; margin: 0 }
@@ -27,7 +32,7 @@ def test_current_color_1():
 
 @assert_no_logs
 def test_current_color_2():
-    assert_pixels('border_current_color', 2, 2, [G + G, G + G], '''
+    assert_pixels('border_current_color', 2, 2, GREEN_2x2, '''
       <style>
         @page { size: 2px }
         html { color: red; border-color: currentColor }
@@ -39,7 +44,7 @@ def test_current_color_2():
 
 @assert_no_logs
 def test_current_color_3():
-    assert_pixels('outline_current_color', 2, 2, [G + G, G + G], '''
+    assert_pixels('outline_current_color', 2, 2, GREEN_2x2, '''
       <style>
         @page { size: 2px }
         html { color: red; outline-color: currentColor }
@@ -51,7 +56,7 @@ def test_current_color_3():
 
 @assert_no_logs
 def test_current_color_4():
-    assert_pixels('border_collapse_current_color', 2, 2, [G + G, G + G], '''
+    assert_pixels('border_collapse_current_color', 2, 2, GREEN_2x2, '''
       <style>
         @page { size: 2px }
         html { color: red; border-color: currentColor; }

@@ -25,7 +25,7 @@ import pytest
 
 from .. import CSS, HTML, __main__, default_url_fetcher
 from ..urls import path2url
-from .test_draw import B, _, assert_pixels_equal, image_to_pixels, r
+from .test_draw import assert_pixels_equal, image_to_pixels, parse_pixels
 from .testing_utils import (
     FakeHTML, assert_no_logs, capture_logs, http_server, resource_filename)
 
@@ -173,65 +173,65 @@ def test_css_parsing():
 
 def check_png_pattern(png_bytes, x2=False, blank=False, rotated=False):
     if blank:
-        expected_pixels = [
-            _ + _ + _ + _ + _ + _ + _ + _,
-            _ + _ + _ + _ + _ + _ + _ + _,
-            _ + _ + _ + _ + _ + _ + _ + _,
-            _ + _ + _ + _ + _ + _ + _ + _,
-            _ + _ + _ + _ + _ + _ + _ + _,
-            _ + _ + _ + _ + _ + _ + _ + _,
-            _ + _ + _ + _ + _ + _ + _ + _,
-            _ + _ + _ + _ + _ + _ + _ + _,
-        ]
+        expected_pixels = '''
+            ________
+            ________
+            ________
+            ________
+            ________
+            ________
+            ________
+            ________
+        '''
         size = 8
     elif x2:
-        expected_pixels = [
-            _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _,
-            _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _,
-            _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _,
-            _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _,
-            _ + _ + _ + _ + r + r + B + B + B + B + B + B + _ + _ + _ + _,
-            _ + _ + _ + _ + r + r + B + B + B + B + B + B + _ + _ + _ + _,
-            _ + _ + _ + _ + B + B + B + B + B + B + B + B + _ + _ + _ + _,
-            _ + _ + _ + _ + B + B + B + B + B + B + B + B + _ + _ + _ + _,
-            _ + _ + _ + _ + B + B + B + B + B + B + B + B + _ + _ + _ + _,
-            _ + _ + _ + _ + B + B + B + B + B + B + B + B + _ + _ + _ + _,
-            _ + _ + _ + _ + B + B + B + B + B + B + B + B + _ + _ + _ + _,
-            _ + _ + _ + _ + B + B + B + B + B + B + B + B + _ + _ + _ + _,
-            _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _,
-            _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _,
-            _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _,
-            _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _,
-        ]
+        expected_pixels = '''
+            ________________
+            ________________
+            ________________
+            ________________
+            ____rrBBBBBB____
+            ____rrBBBBBB____
+            ____BBBBBBBB____
+            ____BBBBBBBB____
+            ____BBBBBBBB____
+            ____BBBBBBBB____
+            ____BBBBBBBB____
+            ____BBBBBBBB____
+            ________________
+            ________________
+            ________________
+            ________________
+        '''
         size = 16
     elif rotated:
-        expected_pixels = [
-            _ + _ + _ + _ + _ + _ + _ + _,
-            _ + _ + _ + _ + _ + _ + _ + _,
-            _ + _ + B + B + B + B + _ + _,
-            _ + _ + B + B + B + B + _ + _,
-            _ + _ + B + B + B + B + _ + _,
-            _ + _ + r + B + B + B + _ + _,
-            _ + _ + _ + _ + _ + _ + _ + _,
-            _ + _ + _ + _ + _ + _ + _ + _,
-        ]
+        expected_pixels = '''
+            ________
+            ________
+            __BBBB__
+            __BBBB__
+            __BBBB__
+            __rBBB__
+            ________
+            ________
+        '''
         size = 8
     else:
-        expected_pixels = [
-            _ + _ + _ + _ + _ + _ + _ + _,
-            _ + _ + _ + _ + _ + _ + _ + _,
-            _ + _ + r + B + B + B + _ + _,
-            _ + _ + B + B + B + B + _ + _,
-            _ + _ + B + B + B + B + _ + _,
-            _ + _ + B + B + B + B + _ + _,
-            _ + _ + _ + _ + _ + _ + _ + _,
-            _ + _ + _ + _ + _ + _ + _ + _,
-        ]
+        expected_pixels = '''
+            ________
+            ________
+            __rBBB__
+            __BBBB__
+            __BBBB__
+            __BBBB__
+            ________
+            ________
+        '''
         size = 8
     surface = cairo.ImageSurface.create_from_png(io.BytesIO(png_bytes))
     assert_pixels_equal('api_png', size, size,
                         image_to_pixels(surface, size, size),
-                        b''.join(expected_pixels))
+                        b"".join(parse_pixels(expected_pixels)))
 
 
 @assert_no_logs

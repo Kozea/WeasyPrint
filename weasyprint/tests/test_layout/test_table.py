@@ -12,7 +12,7 @@
 import pytest
 
 from ..test_boxes import render_pages
-from ..test_draw import B, _, assert_pixels, r
+from ..test_draw import assert_pixels
 from ..testing_utils import assert_no_logs, capture_logs, requires
 
 
@@ -1771,18 +1771,18 @@ def test_table_row_height_2():
 @assert_no_logs
 @requires('cairo', (1, 12, 0))
 def test_table_vertical_align():
-    assert_pixels('table_vertical_align', 28, 10, [
-        r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r,  # noqa
-        r+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+r,  # noqa
-        r+B+r+B+B+_+B+B+_+B+B+_+B+B+_+B+B+r+r+B+B+r+r+B+B+_+B+r,  # noqa
-        r+B+r+B+B+_+B+B+_+B+B+r+B+B+r+B+B+r+r+B+B+r+r+B+B+r+B+r,  # noqa
-        r+B+_+B+B+r+B+B+_+B+B+r+B+B+r+B+B+r+r+B+B+r+r+B+B+r+B+r,  # noqa
-        r+B+_+B+B+r+B+B+_+B+B+_+B+B+_+B+B+r+r+B+B+r+r+B+B+_+B+r,  # noqa
-        r+B+_+B+B+_+B+B+r+B+B+_+B+B+_+B+B+_+_+B+B+_+_+B+B+_+B+r,  # noqa
-        r+B+_+B+B+_+B+B+r+B+B+_+B+B+_+B+B+_+_+B+B+_+_+B+B+_+B+r,  # noqa
-        r+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+B+r,  # noqa
-        r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r+r,  # noqa
-    ], '''
+    assert_pixels('table_vertical_align', 28, 10, '''
+        rrrrrrrrrrrrrrrrrrrrrrrrrrrr
+        rBBBBBBBBBBBBBBBBBBBBBBBBBBr
+        rBrBB_BB_BB_BB_BBrrBBrrBB_Br
+        rBrBB_BB_BBrBBrBBrrBBrrBBrBr
+        rB_BBrBB_BBrBBrBBrrBBrrBBrBr
+        rB_BBrBB_BB_BB_BBrrBBrrBB_Br
+        rB_BB_BBrBB_BB_BB__BB__BB_Br
+        rB_BB_BBrBB_BB_BB__BB__BB_Br
+        rBBBBBBBBBBBBBBBBBBBBBBBBBBr
+        rrrrrrrrrrrrrrrrrrrrrrrrrrrr
+    ''', '''
       <style>
         @font-face { src: url(AHEM____.TTF); font-family: ahem }
         @page { size: 28px 10px }

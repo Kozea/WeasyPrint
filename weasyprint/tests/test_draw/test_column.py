@@ -10,17 +10,17 @@
 """
 
 from ..testing_utils import assert_no_logs, requires
-from . import _, a, assert_pixels, r
+from . import assert_pixels
 
 
 @assert_no_logs
 @requires('cairo', (1, 14, 0))
 def test_column_rule_1():
-    assert_pixels('solid', 5, 3, [
-        a + _ + r + _ + a,
-        a + _ + r + _ + a,
-        _ + _ + _ + _ + _,
-    ], '''
+    assert_pixels('solid', 5, 3, '''
+        a_r_a
+        a_r_a
+        _____
+    ''', '''
       <style>
         img { display: inline-block; width: 1px; height: 1px }
         div { columns: 2; column-rule-style: solid;
@@ -40,11 +40,11 @@ def test_column_rule_1():
 @assert_no_logs
 @requires('cairo', (1, 14, 0))
 def test_column_rule_2():
-    assert_pixels('dotted', 5, 3, [
-        a + _ + r + _ + a,
-        a + _ + _ + _ + a,
-        a + _ + r + _ + a,
-    ], '''
+    assert_pixels('dotted', 5, 3, '''
+        a_r_a
+        a___a
+        a_r_a
+    ''', '''
       <style>
         img { display: inline-block; width: 1px; height: 1px }
         div { columns: 2; column-rule-style: dotted;
