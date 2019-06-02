@@ -974,12 +974,12 @@ def draw_replacedbox(context, box):
     if box.style['visibility'] != 'visible' or not box.width or not box.height:
         return
 
-    draw_width, draw_height, draw_pos_x, draw_pos_y = replaced.replacedbox_layout(box)
+    draw_width, draw_height, draw_x, draw_y = replaced.replacedbox_layout(box)
 
     with stacked(context):
         rounded_box_path(context, box.rounded_content_box())
         context.clip()
-        context.translate(draw_pos_x, draw_pos_y)
+        context.translate(draw_x, draw_y)
         box.replacement.draw(
             context, draw_width, draw_height, box.style['image_rendering'])
 
