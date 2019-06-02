@@ -10,6 +10,8 @@
 
 """
 
+from .. import calc
+
 
 def image_marker_layout(box):
     """Layout the :class:`boxes.ImageMarkerBox` ``box``.
@@ -97,3 +99,46 @@ def _constraint_image_sizing(
         return constraint_height * intrinsic_ratio, constraint_height
     else:
         return constraint_width, constraint_width / intrinsic_ratio
+
+
+def replacedbox_layout(box):
+    # TODO: respect box-sizing ?
+    object_fit = box.style['object_fit']
+    position = box.style['object_position']
+
+    image = box.replacement
+    iwidth, iheight = image.get_intrinsic_size(
+        box.style['image_resolution'], box.style['font_size'])
+
+    if object_fit == 'fill':
+        draw_width, draw_height = box.width, box.height
+    else:
+        if object_fit == 'contain' or object_fit == 'scale-down':
+            draw_width, draw_height = contain_constraint_image_sizing(
+                box.width, box.height, box.replacement.intrinsic_ratio)
+        elif object_fit == 'cover':
+            draw_width, draw_height = cover_constraint_image_sizing(
+                box.width, box.height, box.replacement.intrinsic_ratio)
+        else:
+            assert object_fit == 'none', object_fit
+            draw_width, draw_height = iwidth, iheight
+
+        if object_fit == 'scale-down':
+            draw_width = min(draw_width, iwidth)
+            draw_height = min(draw_height, iheight)
+
+    origin_x, position_x, origin_y, position_y = position[0]
+    ref_x = box.width - draw_width
+    ref_y = box.height - draw_height
+
+    position_x = calc.percentage(position_x, ref_x)
+    position_y = calc.percentage(position_y, ref_y)
+    if origin_x == 'right':
+        position_x = ref_x - position_x
+    if origin_y == 'bottom':
+        position_y = ref_y - position_y
+
+    position_x += box.content_box_x()
+    position_y += box.content_box_y()
+
+    return draw_width, draw_height, position_x, position_y

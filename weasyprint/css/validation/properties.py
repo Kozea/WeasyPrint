@@ -19,8 +19,8 @@ from ..utils import (
     InvalidValues, check_var_function, comma_separated_list, get_angle,
     get_content_list, get_content_list_token, get_custom_ident, get_image,
     get_keyword, get_length, get_resolution, get_single_keyword, get_url,
-    parse_2d_position, parse_background_position, parse_function,
-    single_keyword, single_token)
+    parse_2d_position, parse_function, parse_position, single_keyword,
+    single_token)
 
 PREFIX = '-weasy-'
 PROPRIETARY = set()
@@ -200,7 +200,14 @@ def transform_origin(tokens):
 @comma_separated_list
 def background_position(tokens):
     """``background-position`` property validation."""
-    return parse_background_position(tokens)
+    return parse_position(tokens)
+
+
+@property()
+@comma_separated_list
+def object_position(tokens):
+    """``object-position`` property validation."""
+    return parse_position(tokens)
 
 
 @property()
@@ -810,6 +817,15 @@ def font_weight(token):
     if token.type == 'number' and token.int_value is not None:
         if token.int_value in (100, 200, 300, 400, 500, 600, 700, 800, 900):
             return token.int_value
+
+
+@property()
+@single_keyword
+def object_fit(keyword):
+    # TODO: Figure out what the spec means by "'scale-down' flag".
+    #   As of this writing, neither Firefox nor chrome support
+    #   anything other than a single keyword as is done here.
+    return keyword in ('fill', 'contain', 'cover', 'none', 'scale-down')
 
 
 @property(unstable=True)
