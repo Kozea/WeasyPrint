@@ -10,7 +10,7 @@
 """
 
 from ..testing_utils import assert_no_logs, requires
-from . import B, R, assert_pixels, html_to_pixels
+from . import PIXELS_BY_CHAR, assert_pixels, html_to_pixels
 
 
 @assert_no_logs
@@ -165,6 +165,7 @@ def test_radial_gradients_2():
 def test_radial_gradients_3():
     for thin, gradient in ((False, 'red 20%, blue 80%'),
                            (True, 'red 50%, blue 50%')):
+        B, R = PIXELS_BY_CHAR['B'], PIXELS_BY_CHAR['R']
         _, pixels = html_to_pixels(
             'radial_gradient_' + gradient, 10, 16,
             '<style>@page { size: 10px 16px; background: radial-gradient(%s)'
@@ -173,6 +174,7 @@ def test_radial_gradients_3():
         def pixel(x, y):
             i = (x + 10 * y) * 4
             return pixels[i:i + 4]
+
         assert pixel(0, 0) == B
         assert pixel(9, 0) == B
         assert pixel(0, 15) == B
