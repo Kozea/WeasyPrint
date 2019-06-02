@@ -969,41 +969,12 @@ def draw_collapsed_borders(context, table, enable_hinting):
                 styled_color(style, color, side))
 
 
-def replacedbox_layout(box):
-    # TODO: respect box-sizing ?
-    object_fit = box.style['object_fit']
-
-    if object_fit == 'fill':
-        draw_width, draw_height = box.width, box.height
-    else:
-        image = box.replacement
-        intrinsic_width, intrinsic_height = image.get_intrinsic_size(
-            box.style['image_resolution'], box.style['font_size'])
-
-        if object_fit == 'contain' or object_fit == 'scale-down':
-            draw_width, draw_height = replaced.contain_constraint_image_sizing(
-                box.width, box.height, box.replacement.intrinsic_ratio)
-        elif object_fit == 'cover':
-            draw_width, draw_height = replaced.cover_constraint_image_sizing(
-                box.width, box.height, box.replacement.intrinsic_ratio)
-        else:
-            assert object_fit == 'none', object_fit
-            draw_width, draw_height = intrinsic_width, intrinsic_height
-
-        if object_fit == 'scale-down':
-            draw_width = min(draw_width, intrinsic_width)
-            draw_height = min(draw_height, intrinsic_height)
-
-    box_x, box_y = box.content_box_x(), box.content_box_y()
-    return draw_width, draw_height, box_x, box_y
-
-
 def draw_replacedbox(context, box):
     """Draw the given :class:`boxes.ReplacedBox` to a ``cairo.context``."""
     if box.style['visibility'] != 'visible' or not box.width or not box.height:
         return
 
-    draw_width, draw_height, draw_pos_x, draw_pos_y = replacedbox_layout(box)
+    draw_width, draw_height, draw_pos_x, draw_pos_y = replaced.replacedbox_layout(box)
 
     with stacked(context):
         rounded_box_path(context, box.rounded_content_box())
