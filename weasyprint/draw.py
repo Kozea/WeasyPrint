@@ -426,7 +426,6 @@ def draw_table_backgrounds(context, page, table, enable_hinting):
 
 
 def draw_background_image(context, layer, image_rendering):
-    # Background image
     if layer.image is None:
         return
 
@@ -439,20 +438,29 @@ def draw_background_image(context, layer, image_rendering):
     image_width, image_height = layer.size
 
     if repeat_x == 'no-repeat':
-        repeat_width = painting_width * 2
+        # We want at least the whole image_width drawn on sub_surface, but we
+        # want to be sure it will not be repeated on the painting_width.
+        repeat_width = max(image_width, painting_width)
     elif repeat_x in ('repeat', 'round'):
+        # We repeat the image each image_width.
         repeat_width = image_width
     else:
         assert repeat_x == 'space'
         n_repeats = math.floor(positioning_width / image_width)
         if n_repeats >= 2:
+            # The repeat width is the whole positioning width with one image
+            # removed, divided by (the number of repeated images - 1). This
+            # way, we get the width of one image + one space. We ignore
+            # background-position for this dimension.
             repeat_width = (positioning_width - image_width) / (n_repeats - 1)
-            position_x = 0  # Ignore background-position for this dimension
+            position_x = 0
         else:
+            # We don't repeat the image.
             repeat_width = image_width
 
+    # Comments above apply here too.
     if repeat_y == 'no-repeat':
-        repeat_height = painting_height * 2
+        repeat_height = max(image_height, painting_height)
     elif repeat_y in ('repeat', 'round'):
         repeat_height = image_height
     else:
@@ -461,7 +469,7 @@ def draw_background_image(context, layer, image_rendering):
         if n_repeats >= 2:
             repeat_height = (
                 positioning_height - image_height) / (n_repeats - 1)
-            position_y = 0  # Ignore background-position for this dimension
+            position_y = 0
         else:
             repeat_height = image_height
 
@@ -471,7 +479,11 @@ def draw_background_image(context, layer, image_rendering):
     sub_context.clip()
     layer.image.draw(sub_context, image_width, image_height, image_rendering)
     pattern = cairo.SurfacePattern(sub_surface)
-    pattern.set_extend(cairo.EXTEND_REPEAT)
+
+    if repeat_x == repeat_y == 'no-repeat':
+        pattern.set_extend(cairo.EXTEND_NONE)
+    else:
+        pattern.set_extend(cairo.EXTEND_REPEAT)
 
     with stacked(context):
         if not layer.unbounded:
