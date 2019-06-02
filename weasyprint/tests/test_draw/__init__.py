@@ -26,19 +26,56 @@ _ = as_pixel(b'\xff\xff\xff\xff')  # white
 R = as_pixel(b'\xff\x00\x00\xff')  # red
 B = as_pixel(b'\x00\x00\xff\xff')  # blue
 G = as_pixel(b'\x00\xff\x00\xff')  # lime green
-V = as_pixel(b'\xBF\x00\x40\xff')  # Average of 1*B and 3*r.
-S = as_pixel(b'\xff\x3f\x3f\xff')  # r above r above #fff
+V = as_pixel(b'\xBF\x00\x40\xff')  # Average of 1*B and 3*R.
+S = as_pixel(b'\xff\x3f\x3f\xff')  # R above R above #fff
 r = as_pixel(b'\xff\x00\x00\xff')  # red
 g = as_pixel(b'\x00\x80\x00\xff')  # half green
 b = as_pixel(b'\x00\x00\x80\xff')  # half blue
-v = as_pixel(b'\x80\x00\x80\xff')  # Average of B and r.
+v = as_pixel(b'\x80\x00\x80\xff')  # Average of B and R.
 a = as_pixel(b'\x00\x00\xfe\xff')  # JPG is lossy...
-p = as_pixel(b'\xc0\x00\x3f\xff')  # r above r above B above #fff.
+p = as_pixel(b'\xc0\x00\x3f\xff')  # R above R above B above #fff.
+
+# NOTE: "r" is not half red on purpose. In the pixel strings it has
+# better contrast with "B" than does "R". eg. "rBBBrrBrB" vs "RBBBRRBRB".
+
+PIXELS_BY_CHAR = {
+    "_": _,
+    "R": R,
+    "B": B,
+    "G": G,
+    "V": V,
+    "S": S,
+    "r": r,
+    "g": g,
+    "b": b,
+    "v": v,
+    "a": a,
+    "p": p,
+}
+
+
+def parse_pixels(pixels, pix_overrides=None):
+    if pix_overrides is None:
+        pix_by_char = PIXELS_BY_CHAR
+    else:
+        pix_by_char = PIXELS_BY_CHAR.copy()
+        pix_by_char.update(pix_overrides)
+
+    pixel_lines = []
+    for line in pixels.splitlines():
+        line = line.split("#")[0].strip()
+        if not line:
+            continue
+        line_pixels = b"".join(pix_by_char[char] for char in line)
+        pixel_lines.append(line_pixels)
+    return pixel_lines
 
 
 def assert_pixels(name, expected_width, expected_height, expected_pixels,
                   html):
     """Helper testing the size of the image and the pixels values."""
+    if isinstance(expected_pixels, str):
+        expected_pixels = parse_pixels(expected_pixels)
     assert len(expected_pixels) == expected_height
     assert len(expected_pixels[0]) == expected_width * 4
     expected_raw = b''.join(expected_pixels)

@@ -13,7 +13,7 @@ import itertools
 
 from ... import HTML
 from ..testing_utils import assert_no_logs
-from . import B, G, R, _, assert_different_renderings, assert_pixels, b, g
+from . import PIXELS_BY_CHAR, assert_different_renderings, assert_pixels
 
 
 @assert_no_logs
@@ -41,17 +41,17 @@ def test_borders(margin='10px', prop='border'):
     height = 110
     margin = 10
     border = 10
-    solid_pixels = [[_] * width for y in range(height)]
+    solid_pixels = [[PIXELS_BY_CHAR['_']] * width for y in range(height)]
     for x in range(margin, width - margin):
         for y in itertools.chain(
                 range(margin, margin + border),
                 range(height - margin - border, height - margin)):
-            solid_pixels[y][x] = B
+            solid_pixels[y][x] = PIXELS_BY_CHAR['B']
     for y in range(margin, height - margin):
         for x in itertools.chain(
                 range(margin, margin + border),
                 range(width - margin - border, width - margin)):
-            solid_pixels[y][x] = B
+            solid_pixels[y][x] = PIXELS_BY_CHAR['B']
     solid_pixels = [b''.join(line) for line in solid_pixels]
     assert_pixels(
         prop + '_solid', 140, 110, solid_pixels,
@@ -97,23 +97,23 @@ def test_small_borders_2():
 
 @assert_no_logs
 def test_margin_boxes():
-    assert_pixels('margin_boxes', 15, 15, [
-        _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _,
-        _ + G + G + G + _ + _ + _ + _ + _ + _ + B + B + B + B + _,
-        _ + G + G + G + _ + _ + _ + _ + _ + _ + B + B + B + B + _,
-        _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _,
-        _ + _ + _ + _ + _ + R + R + R + R + _ + _ + _ + _ + _ + _,
-        _ + _ + _ + _ + _ + R + R + R + R + _ + _ + _ + _ + _ + _,
-        _ + _ + _ + _ + _ + R + R + R + R + _ + _ + _ + _ + _ + _,
-        _ + _ + _ + _ + _ + R + R + R + R + _ + _ + _ + _ + _ + _,
-        _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _,
-        _ + b + b + b + _ + _ + _ + _ + _ + _ + g + g + g + g + _,
-        _ + b + b + b + _ + _ + _ + _ + _ + _ + g + g + g + g + _,
-        _ + b + b + b + _ + _ + _ + _ + _ + _ + g + g + g + g + _,
-        _ + b + b + b + _ + _ + _ + _ + _ + _ + g + g + g + g + _,
-        _ + b + b + b + _ + _ + _ + _ + _ + _ + g + g + g + g + _,
-        _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _ + _,
-    ], '''
+    assert_pixels('margin_boxes', 15, 15, '''
+        _______________
+        _GGG______BBBB_
+        _GGG______BBBB_
+        _______________
+        _____RRRR______
+        _____RRRR______
+        _____RRRR______
+        _____RRRR______
+        _______________
+        _bbb______gggg_
+        _bbb______gggg_
+        _bbb______gggg_
+        _bbb______gggg_
+        _bbb______gggg_
+        _______________
+    ''', '''
       <style>
         html { height: 100% }
         body { background: #f00; height: 100% }
