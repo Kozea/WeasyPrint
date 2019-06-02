@@ -10,10 +10,9 @@
 from collections import namedtuple
 from itertools import cycle
 
-from .. import calc
 from ..formatting_structure import boxes
 from . import replaced
-from .percentages import resolve_radii_percentages
+from .percentages import percentage, resolve_radii_percentages
 
 Background = namedtuple('Background', 'color, layers, image_rendering')
 BackgroundLayer = namedtuple(
@@ -167,15 +166,15 @@ def layout_background_layer(box, page, resolution, image, size, clip, repeat,
             resolution, box.style['font_size'])
         image_width, image_height = replaced.default_image_sizing(
             iwidth, iheight, image.intrinsic_ratio,
-            calc.percentage(size_width, positioning_width),
-            calc.percentage(size_height, positioning_height),
+            percentage(size_width, positioning_width),
+            percentage(size_height, positioning_height),
             positioning_width, positioning_height)
 
     origin_x, position_x, origin_y, position_y = position
     ref_x = positioning_width - image_width
     ref_y = positioning_height - image_height
-    position_x = calc.percentage(position_x, ref_x)
-    position_y = calc.percentage(position_y, ref_y)
+    position_x = percentage(position_x, ref_x)
+    position_y = percentage(position_y, ref_y)
     if origin_x == 'right':
         position_x = ref_x - position_x
     if origin_y == 'bottom':

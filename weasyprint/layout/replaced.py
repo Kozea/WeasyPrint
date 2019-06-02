@@ -10,7 +10,7 @@
 
 """
 
-from .. import calc
+from .percentages import percentage
 
 
 def image_marker_layout(box):
@@ -131,8 +131,8 @@ def replacedbox_layout(box):
     ref_x = box.width - draw_width
     ref_y = box.height - draw_height
 
-    position_x = calc.percentage(position_x, ref_x)
-    position_y = calc.percentage(position_y, ref_y)
+    position_x = percentage(position_x, ref_x)
+    position_y = percentage(position_y, ref_y)
     if origin_x == 'right':
         position_x = ref_x - position_x
     if origin_y == 'bottom':

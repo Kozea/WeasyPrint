@@ -17,7 +17,6 @@ from urllib.parse import unquote, urljoin
 from tinycss2.color3 import parse_color
 
 from ..formatting_structure import counters
-from ..images import LinearGradient, RadialGradient
 from ..urls import iri_to_uri, url_is_absolute
 from .properties import Dimension
 
@@ -562,6 +561,8 @@ def get_resolution(token):
 
 def get_image(token, base_url):
     """Parse an <image> token."""
+    from ..images import LinearGradient, RadialGradient
+
     if token.type != 'function':
         parsed_url = get_url(token, base_url)
         if parsed_url:

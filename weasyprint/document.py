@@ -16,7 +16,7 @@ import warnings
 
 import cairocffi as cairo
 
-from . import CSS, calc
+from . import CSS
 from .css import get_all_computed_styles
 from .css.targets import TargetCollector
 from .draw import draw_page, stacked
@@ -26,6 +26,7 @@ from .formatting_structure.build import build_formatting_structure
 from .html import W3C_DATE_RE
 from .images import get_image_from_uri as original_get_image_from_uri
 from .layout import layout_document
+from .layout.percentages import percentage
 from .logger import LOGGER, PROGRESS_LOGGER
 from .pdf import write_pdf_metadata
 
@@ -52,8 +53,8 @@ def _get_matrix(box):
         border_width = box.border_width()
         border_height = box.border_height()
         origin_x, origin_y = box.style['transform_origin']
-        offset_x = calc.percentage(origin_x, border_width)
-        offset_y = calc.percentage(origin_y, border_height)
+        offset_x = percentage(origin_x, border_width)
+        offset_y = percentage(origin_y, border_height)
         origin_x = box.border_box_x() + offset_x
         origin_y = box.border_box_y() + offset_y
 
@@ -67,8 +68,8 @@ def _get_matrix(box):
             elif name == 'translate':
                 translate_x, translate_y = args
                 matrix.translate(
-                    calc.percentage(translate_x, border_width),
-                    calc.percentage(translate_y, border_height),
+                    percentage(translate_x, border_width),
+                    percentage(translate_y, border_height),
                 )
             else:
                 if name == 'skewx':

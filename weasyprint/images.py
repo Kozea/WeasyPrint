@@ -17,7 +17,7 @@ import cairocffi
 import cairosvg.parser
 import cairosvg.surface
 
-from . import calc
+from .layout.percentages import percentage
 from .logger import LOGGER
 from .urls import URLFetchingError, fetch
 
@@ -245,8 +245,8 @@ def process_color_stops(gradient_line_size, positions):
     Return processed color stops, as a list of floats in px.
 
     """
-    positions = [calc.percentage(position, gradient_line_size)
-                 for position in positions]
+    positions = [
+        percentage(position, gradient_line_size) for position in positions]
     # First and last default to 100%
     if positions[0] is None:
         positions[0] = 0
@@ -434,8 +434,8 @@ class RadialGradient(Gradient):
         if len(self.colors) == 1:
             return 1, 'solid', self.colors[0], [], []
         origin_x, center_x, origin_y, center_y = self.center
-        center_x = calc.percentage(center_x, width)
-        center_y = calc.percentage(center_y, height)
+        center_x = percentage(center_x, width)
+        center_y = percentage(center_y, height)
         if origin_x == 'right':
             center_x = width - center_x
         if origin_y == 'bottom':
@@ -502,8 +502,8 @@ class RadialGradient(Gradient):
     def _resolve_size(self, width, height, center_x, center_y):
         if self.size_type == 'explicit':
             size_x, size_y = self.size
-            size_x = calc.percentage(size_x, width)
-            size_y = calc.percentage(size_y, height)
+            size_x = percentage(size_x, width)
+            size_y = percentage(size_y, height)
             return size_x, size_y
         left = abs(center_x)
         right = abs(width - center_x)
