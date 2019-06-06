@@ -84,6 +84,38 @@ def test_column_gap(value, width):
 
 
 @assert_no_logs
+def test_column_span():
+    page, = render_pages('''
+      <style>
+        @font-face { src: url(AHEM____.TTF); font-family: ahem }
+        body { margin: 0; font-family: "ahem" }
+        div {columns: 2; width: 10em}
+        section {column-span: all; margin: 1em 0}
+      </style>
+
+      <div>
+        abc <!--def-->
+        <section>test</section>
+        <section>test</section>
+        ghi jkl
+      </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+#    column1, column2, section1, section2, column3, column4 = div.children
+    column1, section1, section2, column3, column4 = div.children
+    assert (column1.position_x, column1.position_y) == (0, 0)
+#    assert (column2.position_x, column2.position_y) == (5 * 16, 0)
+    assert (section1.content_box_x(), section1.content_box_y()) == (0, 32)
+    assert (section2.content_box_x(), section2.content_box_y()) == (0, 64)
+    assert (column3.position_x, column3.position_y) == (0, 96)
+    assert (column4.position_x, column4.position_y) == (5 * 16, 96)
+
+    assert column1.height == 16
+
+
+@assert_no_logs
 def test_columns_multipage():
     page1, page2 = render_pages('''
       <style>
