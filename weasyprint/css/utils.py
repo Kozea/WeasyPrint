@@ -743,3 +743,7 @@ def get_content_list_token(token, base_url):
         elif arg.type == 'string':
             string = arg.value
         return ('leader()', ('string', string))
+    elif name == 'element':
+        if len(args) != 1 or args[0].type != 'ident':
+            return
+        return ('element()', args[0])

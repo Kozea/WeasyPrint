@@ -497,7 +497,10 @@ def _content_list(computer, values):
         elif value[0] == 'attr()':
             assert value[1][1] == 'string'
             computed_value = compute_attr_function(computer, value)
-        elif value[0] in ('counter()', 'counters()', 'content()', 'string()'):
+        elif value[0] in (
+                'counter()', 'counters()', 'content()', 'element()',
+                'string()',
+        ):
             # Other values need layout context, their computed value cannot be
             # better than their specified value yet.
             # See build.compute_content_list.

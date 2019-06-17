@@ -205,6 +205,9 @@ class LayoutContext(object):
         self.tables = {}
         self.dictionaries = {}
 
+        # TODO: this is probably the wrong place to put this
+        self.running_elements = {}
+
     def create_block_formatting_context(self):
         self.excluded_shapes = []
         self._excluded_shapes_lists.append(self.excluded_shapes)

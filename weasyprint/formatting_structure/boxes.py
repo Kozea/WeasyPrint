@@ -59,7 +59,7 @@
 import itertools
 
 from ..css import computed_from_cascaded
-from ..css.properties import Dimension
+from ..css.properties import Dimension, Running
 
 
 class Box(object):
@@ -274,9 +274,17 @@ class Box(object):
         """Return whether this box is in the absolute positioning scheme."""
         return self.style['position'] in ('absolute', 'fixed')
 
+    def is_running(self):
+        """Return whether this box is a running element.
+        (https://www.w3.org/TR/css-gcpm-3/#running-elements)"""
+        return isinstance(self.style['position'], Running)
+
     def is_in_normal_flow(self):
         """Return whether this box is in normal flow."""
-        return not (self.is_floated() or self.is_absolutely_positioned())
+        return not (
+            self.is_floated() or self.is_absolutely_positioned() or
+            self.is_running()
+        )
 
     # Start and end page values for named pages
 
@@ -332,6 +340,14 @@ class ParentBox(Box):
         if self.style['box_decoration_break'] == 'slice':
             new_box._remove_decoration(not is_start, not is_end)
         return new_box
+
+    def __deepcopy__(self):
+        result = self.copy()
+        result.children = tuple([
+            getattr(child, '__deepcopy__', child.copy)()
+            for child in self.children
+        ])
+        return result
 
     def descendants(self):
         """A flat generator for a box, its children and descendants."""
@@ -704,3 +720,32 @@ class InlineFlexBox(FlexContainerBox, InlineLevelBox):
     It behaves as inline on the outside and as a flex container on the inside.
 
     """
+
+
+class RunningPlaceholder(BlockBox):
+    """A box to anchor a running element within the document flow"""
+    def __init__(self, identifier, style):
+        self.position_x = 0
+        self.position_y = 0
+        self.width = 0
+        self.height = 0
+        self.padding_left = 0
+        self.padding_right = 0
+        self.padding_top = 0
+        self.padding_bottom = 0
+        self.margin_left = 0
+        self.margin_right = 0
+        self.margin_top = 0
+        self.margin_bottom = 0
+        self.border_left_width = 0
+        self.border_right_width = 0
+        self.border_top_width = 0
+        self.border_bottom_width = 0
+        self.identifier = identifier
+        super(RunningPlaceholder, self).__init__(
+            None, dict(style, display='block', content=[('running', None)]),
+            children=[],
+        )
+
+    def translate(self, dx=0, dy=0, ignore_floats=False):
+        pass
