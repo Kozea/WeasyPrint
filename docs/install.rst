@@ -184,22 +184,32 @@ macOS
 -----
 
 WeasyPrint is automatically installed and tested on virtual macOS machines. The
-official installation method relies on Homebrew:
+official installation method relies on Homebrew. Install Homebrew if you haven't already:
+
+.. code-block:: sh
+
+    /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+
+Install Python, cairo, Pango and GDK-PixBuf using Homebrew:
 
 .. code-block:: sh
 
     brew install python3 cairo pango gdk-pixbuf libffi
 
 Don't forget to use the `pip3` command to install WeasyPrint, as `pip` may be
-using the version of Python installed with macOS.
+using the version of Python installed with macOS:
+
+.. code-block:: sh
+
+    pip3 install WeasyPrint
 
 If you get the `Fontconfig error: Cannot load default config file` message,
-then try reinstalling fontconfig with the `universal` option:
+then try reinstalling fontconfig:
 
 .. code-block:: sh
 
     brew uninstall fontconfig
-    brew install fontconfig --universal
+    brew install fontconfig
 
 You can also try with Macports, but please notice that this solution is not
 tested and thus not recommended (**also known as "you're on your own and may
