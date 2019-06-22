@@ -8,6 +8,7 @@ Documentation contents
 
     install
     tutorial
+    tips-tricks
     api
     features
     hacking
