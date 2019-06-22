@@ -1007,17 +1007,19 @@ def draw_inline_level(context, page, box, enable_hinting, offset_x=0):
         draw_border(context, box, enable_hinting)
         if isinstance(box, (boxes.InlineBox, boxes.LineBox)):
             for child in box.children:
-                if not isinstance(child, StackingContext):
-                    child_offset_x = (offset_x + child.position_x
-                                      - box.position_x)
-                else:
+                if isinstance(child, StackingContext):
                     child_offset_x = offset_x
-                if isinstance(child, boxes.TextBox):
-                    draw_text(context, child, enable_hinting,
-                              offset_x=child_offset_x)
                 else:
-                    draw_inline_level(context, page, child, enable_hinting,
-                                      offset_x=child_offset_x)
+                    child_offset_x = (
+                        offset_x + child.position_x - box.position_x)
+                if isinstance(child, boxes.TextBox):
+                    draw_text(
+                        context, child, enable_hinting,
+                        offset_x=child_offset_x)
+                else:
+                    draw_inline_level(
+                        context, page, child, enable_hinting,
+                        offset_x=child_offset_x)
         elif isinstance(box, boxes.InlineReplacedBox):
             draw_replacedbox(context, box)
         else:
@@ -1056,20 +1058,17 @@ def draw_text(context, textbox, enable_hinting, offset_x=0):
         metrics = textbox.pango_layout.get_font_metrics()
     if 'overline' in values:
         draw_text_decoration(
-            context, textbox,
-            offset_x,
+            context, textbox, offset_x,
             textbox.baseline - metrics.ascent + thickness / 2,
             thickness, enable_hinting, color)
     if 'underline' in values:
         draw_text_decoration(
-            context, textbox,
-            offset_x,
+            context, textbox, offset_x,
             textbox.baseline - metrics.underline_position + thickness / 2,
             thickness, enable_hinting, color)
     if 'line-through' in values:
         draw_text_decoration(
-            context, textbox,
-            offset_x,
+            context, textbox, offset_x,
             textbox.baseline - metrics.strikethrough_position,
             thickness, enable_hinting, color)
 
@@ -1086,9 +1085,9 @@ def draw_text_decoration(context, textbox, offset_x, offset_y, thickness,
         context.set_source_rgba(*color)
         context.set_line_width(thickness)
 
-        if style == "dashed":
+        if style == 'dashed':
             context.set_dash([5 * thickness], offset=offset_x)
-        elif style == "dotted":
+        elif style == 'dotted':
             context.set_dash([thickness], offset=offset_x)
 
         context.move_to(textbox.position_x, textbox.position_y + offset_y)
