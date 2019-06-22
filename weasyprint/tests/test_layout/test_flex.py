@@ -415,3 +415,17 @@ def test_flex_align_content(align, height, y1, y2):
     assert section1.position_y == span1.position_y == y1
     assert section2.position_x == span2.position_x == 0
     assert section2.position_y == span2.position_y == y2
+
+
+@assert_no_logs
+def test_flex_item_percentage():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/885
+    page, = render_pages('''
+      <div style="display: flex; font-size: 15px; line-height: 1">
+        <div style="height: 100%">a</div>
+      </div>''')
+    html, = page.children
+    body, = html.children
+    flex, = body.children
+    flex_item, = flex.children
+    assert flex_item.height == 15
