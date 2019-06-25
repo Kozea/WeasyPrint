@@ -10,8 +10,8 @@
 """
 
 import contextlib
-import math
 import operator
+from math import ceil, floor, hypot, pi, sqrt, tan
 
 import cairocffi as cairo
 
@@ -322,7 +322,7 @@ def rounded_box_path(context, radii):
             context.scale(min(rx / ry, 1), min(ry / rx, 1))
         context.arc(
             (-1 if w else 1) * radius, (-1 if h else 1) * radius, radius,
-            (2 + i) * math.pi / 2, (3 + i) * math.pi / 2)
+            (2 + i) * pi / 2, (3 + i) * pi / 2)
         context.restore()
 
 
@@ -446,7 +446,7 @@ def draw_background_image(context, layer, image_rendering):
         repeat_width = image_width
     else:
         assert repeat_x == 'space'
-        n_repeats = math.floor(positioning_width / image_width)
+        n_repeats = floor(positioning_width / image_width)
         if n_repeats >= 2:
             # The repeat width is the whole positioning width with one image
             # removed, divided by (the number of repeated images - 1). This
@@ -465,7 +465,7 @@ def draw_background_image(context, layer, image_rendering):
         repeat_height = image_height
     else:
         assert repeat_y == 'space'
-        n_repeats = math.floor(positioning_height / image_height)
+        n_repeats = floor(positioning_height / image_height)
         if n_repeats >= 2:
             repeat_height = (
                 positioning_height - image_height) / (n_repeats - 1)
@@ -599,8 +599,8 @@ def clip_border_segment(context, enable_hinting, style, width, side,
     if enable_hinting and style != 'dotted' and (
             # Borders smaller than 1 device unit would disappear
             # without anti-aliasing.
-            math.hypot(*context.user_to_device(width, 0)) >= 1 and
-            math.hypot(*context.user_to_device(0, width)) >= 1):
+            hypot(*context.user_to_device(width, 0)) >= 1 and
+            hypot(*context.user_to_device(0, width)) >= 1):
         # Avoid an artifact in the corner joining two solid borders
         # of the same color.
         context.set_antialias(cairo.ANTIALIAS_NONE)
@@ -637,8 +637,8 @@ def clip_border_segment(context, enable_hinting, style, width, side,
 
         """
         x = (a - b) / (a + b)
-        return math.pi / 8 * (a + b) * (
-            1 + 3 * x ** 2 / (10 + math.sqrt(4 - 3 * x ** 2)))
+        return pi / 8 * (a + b) * (
+            1 + 3 * x ** 2 / (10 + sqrt(4 - 3 * x ** 2)))
 
     if side == 'top':
         (px1, py1), rounded1 = transition_point(tlh, tlv, bl, bt)
@@ -703,9 +703,9 @@ def clip_border_segment(context, enable_hinting, style, width, side,
             else:
                 # 2x - 1/2 dashes
                 dash = length / (dash_length + dash_length % 2 - 0.5)
-            dashes1 = int(math.ceil((chl1 - dash / 2) / dash))
-            dashes2 = int(math.ceil((chl2 - dash / 2) / dash))
-            line = int(math.floor(line_length / dash))
+            dashes1 = int(ceil((chl1 - dash / 2) / dash))
+            dashes2 = int(ceil((chl2 - dash / 2) / dash))
+            line = int(floor(line_length / dash))
 
             def draw_dots(dashes, line, way, x, y, px, py, chl):
                 if not dashes:
@@ -714,36 +714,36 @@ def clip_border_segment(context, enable_hinting, style, width, side,
                     i += 0.5  # half dash
                     angle1 = (
                         ((2 * angle - way) + i * way * dash / chl) /
-                        4 * math.pi)
+                        4 * pi)
                     angle2 = (min if way > 0 else max)(
                         ((2 * angle - way) + (i + 1) * way * dash / chl) /
-                        4 * math.pi,
-                        angle * math.pi / 2)
+                        4 * pi,
+                        angle * pi / 2)
                     if side in ('top', 'bottom'):
                         context.move_to(x + px, main_offset + py)
                         context.line_to(
-                            x + px - way * px * 1 / math.tan(angle2),
+                            x + px - way * px * 1 / tan(angle2),
                             main_offset)
                         context.line_to(
-                            x + px - way * px * 1 / math.tan(angle1),
+                            x + px - way * px * 1 / tan(angle1),
                             main_offset)
                     elif side in ('left', 'right'):
                         context.move_to(main_offset + px, y + py)
                         context.line_to(
                             main_offset,
-                            y + py + way * py * math.tan(angle2))
+                            y + py + way * py * tan(angle2))
                         context.line_to(
                             main_offset,
-                            y + py + way * py * math.tan(angle1))
-                    if angle2 == angle * math.pi / 2:
+                            y + py + way * py * tan(angle1))
+                    if angle2 == angle * pi / 2:
                         offset = (angle1 - angle2) / ((
                             ((2 * angle - way) + (i + 1) * way * dash / chl) /
-                            4 * math.pi) - angle1)
+                            4 * pi) - angle1)
                         line += 1
                         break
                 else:
                     offset = 1 - (
-                        (angle * math.pi / 2 - angle2) / (angle2 - angle1))
+                        (angle * pi / 2 - angle2) / (angle2 - angle1))
                 return line, offset
 
             line, offset = draw_dots(
@@ -1075,67 +1075,28 @@ def draw_text(context, textbox, enable_hinting, offset_x=0):
     textbox.pango_layout.deactivate()
 
 
-def acos(x):
-    if x < 1:
-        return math.pi
-    elif x > 1:
-        return 0
-    else:
-        return math.acos(x)
-
-
 def draw_wave(context, x, y, width, offset_x, radius):
-
-    d = 2 * radius
-
-    context.move_to(x, y)
-
-    # Index of the current wave:
-    i = math.floor(offset_x // d)
+    context.new_path()
+    diameter = 2 * radius
+    wave_index = offset_x // diameter
+    remain = offset_x - wave_index * diameter
 
     while width > 0:
+        up = (wave_index % 2 == 0)
+        center_x = x - remain + radius
+        alpha1 = (1 + remain / diameter) * pi
+        alpha2 = (1 + min(1, width / diameter)) * pi
 
-        remain = offset_x - i * d
-
-        # Is the wave going up or down?
-        up = (i % 2 == 0)
-
-        # Start/stop of the wave on the x axis:
-        start = x - remain
-        stop = start + d
-
-        # Coordinates of the center:
-        xc = start + radius
-
-        # print((x, radius, offset_x, start, i, xc))
-
-        alpha1 = acos((x - xc) / radius)
-
-        if x + width > stop:
-            # Complete pattern:
-            if up:
-                context.arc(xc, y, radius, alpha1, 0)
-            else:
-                context.arc_negative(xc, y, radius,
-                                     2 * math.pi - alpha1,
-                                     2 * math.pi)
-            forward = stop - x
-            x = stop
-            offset_x = offset_x + forward
-            width = width - forward
-            i = i + 1
-
+        if up:
+            context.arc(center_x, y, radius, alpha1, alpha2)
         else:
-            # Incomplete pattern:
-            xf = x + width
-            alpha2 = acos((xf - xc) / radius)
-            if up:
-                context.arc(xc, y, radius, alpha1, alpha2)
-            else:
-                context.arc_negative(xc, y, radius,
-                                     2 * math.pi - alpha1,
-                                     2 * math.pi - alpha2)
-            return
+            context.arc_negative(
+                center_x, y, radius, -alpha1, -alpha2)
+
+        x += diameter - remain
+        width -= diameter - remain
+        remain = 0
+        wave_index += 1
 
 
 def draw_text_decoration(context, textbox, offset_x, offset_y, thickness,
@@ -1153,14 +1114,13 @@ def draw_text_decoration(context, textbox, offset_x, offset_y, thickness,
         elif style == 'dotted':
             context.set_dash([thickness], offset=offset_x)
 
-        if style == "wavy":
-            draw_wave(context,
-                      textbox.position_x, textbox.position_y + offset_y,
-                      textbox.width,
-                      offset_x, 0.75 * thickness)
+        if style == 'wavy':
+            draw_wave(
+                context,
+                textbox.position_x, textbox.position_y + offset_y,
+                textbox.width, offset_x, 0.75 * thickness)
         else:
-            context.move_to(textbox.position_x,
-                            textbox.position_y + offset_y)
+            context.move_to(textbox.position_x, textbox.position_y + offset_y)
             context.rel_line_to(textbox.width, 0)
 
         if style == 'double':
