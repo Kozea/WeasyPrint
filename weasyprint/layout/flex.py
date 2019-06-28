@@ -122,7 +122,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
             main_flex_direction = axis
         else:
             main_flex_direction = None
-        resolve_percentages(child, (0, 0), main_flex_direction)
+        resolve_percentages(child, containing_block, main_flex_direction)
         child.position_x = parent_box.content_box_x()
         child.position_y = parent_box.content_box_y()
         if child.min_width == 'auto':

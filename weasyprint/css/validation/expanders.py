@@ -357,7 +357,7 @@ def expand_text_decoration(base_url, name, tokens):
         if keyword in (
                 'none', 'underline', 'overline', 'line-through', 'blink'):
             text_decoration_line.add(keyword)
-        elif keyword in ('solid', 'double', 'dotted', 'dashed'):
+        elif keyword in ('solid', 'double', 'dotted', 'dashed', 'wavy'):
             if text_decoration_style is not None:
                 raise InvalidValues
             else:

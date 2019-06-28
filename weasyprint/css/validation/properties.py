@@ -1007,7 +1007,7 @@ def text_decoration_line(tokens):
 @single_keyword
 def text_decoration_style(keyword):
     """``text-decoration-style`` property validation."""
-    if keyword in ('solid', 'double', 'dotted', 'dashed'):
+    if keyword in ('solid', 'double', 'dotted', 'dashed', 'wavy'):
         return keyword
 
 
