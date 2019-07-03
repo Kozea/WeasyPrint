@@ -1222,6 +1222,27 @@ def show_first_line(context, textbox):
     pango.pango_layout_set_single_paragraph_mode(
         textbox.pango_layout.layout, True)
     first_line, _ = textbox.pango_layout.get_first_line()
+
+    text_overflow = False
+    if text_overflow:
+        first_line_width, _ = get_size(first_line, textbox.style)
+        max_width = context.clip_extents()[2] - textbox.position_x
+        space = max_width - first_line_width
+        if space < 0:
+            first_line_text = textbox.text
+            while len(first_line_text) > 1:
+                first_line_text = first_line_text[:-1]
+                textbox.pango_layout.set_text(first_line_text + '…')
+                first_line, index = textbox.pango_layout.get_first_line()
+                first_line_width, _ = get_size(first_line, textbox.style)
+                space = max_width - first_line_width
+                if space >= 0:
+                    print(repr(first_line_text))
+                    text = first_line_text + '…'
+                    break
+            else:
+                textbox.pango_layout.set_text(text)
+
     context = ffi.cast('cairo_t *', context._pointer)
     pangocairo.pango_cairo_show_layout_line(context, first_line)
 

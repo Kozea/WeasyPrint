@@ -45,7 +45,6 @@ INITIAL_VALUES = {
     'margin_left': Dimension(0, 'px'),
     'max_height': Dimension(float('inf'), 'px'),  # parsed value for 'none'
     'max_width': Dimension(float('inf'), 'px'),
-    'overflow': 'visible',
     'padding_top': Dimension(0, 'px'),
     'padding_right': Dimension(0, 'px'),
     'padding_bottom': Dimension(0, 'px'),
@@ -195,6 +194,10 @@ INITIAL_VALUES = {
     'text_decoration_line': 'none',
     'text_decoration_color': 'currentColor',
     'text_decoration_style': 'solid',
+
+    # Overflow Module 3 (WD): https://www.w3.org/TR/css-overflow-3/
+    'overflow': 'visible',
+    'text_overflow': 'clip',
 
     # Proprietary
     'anchor': None,  # computed value of 'none'
