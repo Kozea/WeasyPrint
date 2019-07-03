@@ -96,6 +96,13 @@ ffi.cdef('''
         PANGO_TAB_LEFT
     } PangoTabAlign;
 
+    typedef enum {
+        PANGO_ELLIPSIZE_NONE,
+        PANGO_ELLIPSIZE_START,
+        PANGO_ELLIPSIZE_MIDDLE,
+        PANGO_ELLIPSIZE_END
+    } PangoEllipsizeMode;
+
     typedef struct {
         const PangoAttrClass *klass;
         guint start_index;
@@ -218,6 +225,9 @@ ffi.cdef('''
         PangoRectangle *ink_rect, PangoRectangle *logical_rect);
 
     PangoContext * pango_layout_get_context (PangoLayout *layout);
+    void pango_layout_set_ellipsize (
+        PangoLayout *layout,
+        PangoEllipsizeMode ellipsize);
 
     void pango_get_log_attrs (
         const char *text, int length, int level, PangoLanguage *language,
@@ -1221,28 +1231,16 @@ def show_first_line(context, textbox):
     """Draw the given ``textbox`` line to the cairo ``context``."""
     pango.pango_layout_set_single_paragraph_mode(
         textbox.pango_layout.layout, True)
-    first_line, _ = textbox.pango_layout.get_first_line()
 
     text_overflow = False
     if text_overflow:
-        first_line_width, _ = get_size(first_line, textbox.style)
         max_width = context.clip_extents()[2] - textbox.position_x
-        space = max_width - first_line_width
-        if space < 0:
-            first_line_text = textbox.text
-            while len(first_line_text) > 1:
-                first_line_text = first_line_text[:-1]
-                textbox.pango_layout.set_text(first_line_text + '…')
-                first_line, index = textbox.pango_layout.get_first_line()
-                first_line_width, _ = get_size(first_line, textbox.style)
-                space = max_width - first_line_width
-                if space >= 0:
-                    print(repr(first_line_text))
-                    text = first_line_text + '…'
-                    break
-            else:
-                textbox.pango_layout.set_text(text)
+        pango.pango_layout_set_width(
+            textbox.pango_layout.layout, units_from_double(max_width))
+        pango.pango_layout_set_ellipsize(
+            textbox.pango_layout.layout, pango.PANGO_ELLIPSIZE_END)
 
+    first_line, _ = textbox.pango_layout.get_first_line()
     context = ffi.cast('cairo_t *', context._pointer)
     pangocairo.pango_cairo_show_layout_line(context, first_line)
 
