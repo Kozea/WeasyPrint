@@ -64,28 +64,6 @@
   </footer>
 </div>
 
-<script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
-<script type="text/javascript" src="/jquery.smoothState.min.js"></script>
-<script type="text/javascript">
-;(function ($) {
-  $('#main').smoothState({
-      onBefore: function($currentTarget, $container) {
-        $('html, body').animate({ 'scrollTop': 0 });
-      },
-      onStart: {
-          duration: 1000,
-          render: function($container) {
-              $container.addClass('onStart');
-              $container.removeClass('onAfter');
-          }
-      },
-      onAfter: function ($container, $newContent) {
-          $container.addClass('onAfter');
-          $container.removeClass('onStart');
-      }
-  }).data('smoothState');
-})(jQuery);
-</script>
 <script type="text/javascript">
   window.onload = function () {
     var samples = document.querySelectorAll("li[data-sample]");

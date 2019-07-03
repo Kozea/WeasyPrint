@@ -1,13 +1,4 @@
-// page transition
-#main.onStart
-  main section:nth-of-type(1)
-    &::before
-      height: 100vh
-
-  nav ul li, aside, main > * > *, footer
-    opacity: 0
-
-#main, #main.onAfter
+#main
   main section:nth-of-type(1)
     &::before
       height: 100%
@@ -25,11 +16,11 @@
 
   > aside
     &:nth-of-type(1) a
-      animation: typing 2000ms steps(35, end) 500ms both, cursor 2000ms step-end infinite 3000ms
+      animation: typing 2s steps(35, end) .5s both, cursor 2s step-end infinite 3s
 
   @media screen and (min-width: 830px + 1px)
     ul li
       @for $i from 1 through 6
         &:nth-of-type(#{$i})
-          animation-delay: $i * 75ms + .25s
-          transition-delay: $i * 75ms + .25s
+          animation-delay: $i * 50ms + 100ms
+          transition-delay: $i * 50ms + 100ms

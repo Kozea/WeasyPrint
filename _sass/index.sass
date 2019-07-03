@@ -328,25 +328,28 @@ main.index
 
 
 // home introduction
-#main:not(.onAfter):not(.onStart)
+#main
   &::before, &::after
-    animation: vertical-page-border-fade-in 1.5s ease both 2s
+    animation: vertical-page-border-fade-in 1.5s ease both 1.25s
+
+  main
+    &::before, &::after
+      animation: horizontal-page-border-fade-in 1s ease both 0.25s
 
   nav.index
-    ul
-      li
-        animation: color-fade-to-light .5s ease both
+    ul li
+      animation: color-fade-to-light .5s ease both
 
-        @for $i from 1 through 6
-          &:nth-of-type(#{$i})
-            animation-delay: $i * 75ms + 2.5s
+      @for $i from 1 through 6
+        &:nth-of-type(#{$i})
+          animation-delay: $i * 50ms + 100ms
 
   > aside.index
     &:nth-of-type(1)
-      animation: color-fade-to-action .5s ease both 4.5s
+      animation: color-fade-to-action .5s ease both 2.5s
 
       a
-        animation-delay: 4.5s, 6.5s
+        animation-delay: 2.5s, 4.5s
 
     &:nth-of-type(2)
       animation: color-fade-to-light .5s ease both 2.5s
@@ -354,35 +357,31 @@ main.index
       progress
         animation: opacity-fade-in .75s ease both 2.5s
 
-  main
-    &::before, &::after
-      animation: horizontal-page-border-fade-in 1s ease both 1s
-
   main.index
     section:nth-of-type(1)
-      animation: header-height-fade-in .5s ease-in both 3s
+      animation: header-height-fade-in .5s ease-in both 0.25s
 
       h2
-        animation: color-fade-to-light .5s ease both 3s
+        animation: color-fade-to-light .5s ease both 1s
 
         &::before
           animation: opacity-fade-in .75s ease both .25s
 
       p
-        animation: color-fade-to-light .5s ease both 3s
+        animation: color-fade-to-light .5s ease both 1s
 
         strong
-          animation: color-fade-to-action .5s ease both 3s
+          animation: color-fade-to-action .5s ease both 1s
 
       ul, dt
-        animation: opacity-fade-in .5s ease both 3.2s
+        animation: opacity-fade-in .5s ease both 1.2s
 
       dl
-        animation: start-list-fade-in 1s ease both 3s
+        animation: start-list-fade-in 1s ease both 1s
 
       label
-        animation-delay: 4.5s
+        animation-delay: 1.5s
 
         &:nth-of-type(1)
           &::before, &::after
-            animation-delay: 5s
+            animation-delay: 2s
