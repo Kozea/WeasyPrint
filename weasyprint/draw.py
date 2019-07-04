@@ -996,7 +996,8 @@ def draw_replacedbox(context, box):
             context, draw_width, draw_height, box.style['image_rendering'])
 
 
-def draw_inline_level(context, page, box, enable_hinting, offset_x=0):
+def draw_inline_level(context, page, box, enable_hinting, offset_x=0,
+                      text_overflow='clip'):
     if isinstance(box, StackingContext):
         stacking_context = box
         assert isinstance(
@@ -1006,6 +1007,8 @@ def draw_inline_level(context, page, box, enable_hinting, offset_x=0):
         draw_background(context, box.background, enable_hinting)
         draw_border(context, box, enable_hinting)
         if isinstance(box, (boxes.InlineBox, boxes.LineBox)):
+            if isinstance(box, boxes.LineBox):
+                text_overflow = box.text_overflow
             for child in box.children:
                 if isinstance(child, StackingContext):
                     child_offset_x = offset_x
@@ -1015,20 +1018,21 @@ def draw_inline_level(context, page, box, enable_hinting, offset_x=0):
                 if isinstance(child, boxes.TextBox):
                     draw_text(
                         context, child, enable_hinting,
-                        offset_x=child_offset_x)
+                        child_offset_x, text_overflow)
                 else:
                     draw_inline_level(
-                        context, page, child, enable_hinting,
-                        offset_x=child_offset_x)
+                        context, page, child, enable_hinting, child_offset_x,
+                        text_overflow)
         elif isinstance(box, boxes.InlineReplacedBox):
             draw_replacedbox(context, box)
         else:
             assert isinstance(box, boxes.TextBox)
             # Should only happen for list markers
-            draw_text(context, box, enable_hinting, offset_x=offset_x)
+            draw_text(context, box, enable_hinting, offset_x, text_overflow)
 
 
-def draw_text(context, textbox, enable_hinting, offset_x=0):
+def draw_text(context, textbox, enable_hinting, offset_x=0,
+              text_overflow='clip'):
     """Draw ``textbox`` to a ``cairo.Context`` from ``PangoCairo.Context``."""
     # Pango crashes with font-size: 0
     assert textbox.style['font_size']
@@ -1040,7 +1044,7 @@ def draw_text(context, textbox, enable_hinting, offset_x=0):
     context.set_source_rgba(*textbox.style['color'])
 
     textbox.pango_layout.reactivate(textbox.style)
-    show_first_line(context, textbox)
+    show_first_line(context, textbox, text_overflow)
 
     values = textbox.style['text_decoration_line']
 

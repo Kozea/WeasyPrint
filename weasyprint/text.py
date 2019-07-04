@@ -1227,13 +1227,12 @@ def split_first_line(text, style, context, max_width, justification_spacing,
         style['hyphenate_character'])
 
 
-def show_first_line(context, textbox):
+def show_first_line(context, textbox, text_overflow):
     """Draw the given ``textbox`` line to the cairo ``context``."""
     pango.pango_layout_set_single_paragraph_mode(
         textbox.pango_layout.layout, True)
 
-    text_overflow = False
-    if text_overflow:
+    if text_overflow == 'ellipsis':
         max_width = context.clip_extents()[2] - textbox.position_x
         pango.pango_layout_set_width(
             textbox.pango_layout.layout, units_from_double(max_width))
