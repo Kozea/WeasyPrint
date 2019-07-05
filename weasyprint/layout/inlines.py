@@ -14,7 +14,7 @@ import unicodedata
 from ..css import computed_from_cascaded
 from ..css.computed_values import ex_ratio, strut_layout
 from ..formatting_structure import boxes
-from ..text import can_break_text, split_first_line
+from ..text import can_break_text, create_layout, split_first_line
 from .absolute import AbsolutePlaceholder, absolute_layout
 from .flex import flex_layout
 from .float import avoid_collisions, float_layout
@@ -1250,10 +1250,9 @@ def add_word_spacing(context, box, justification_spacing, x_advance):
         box.position_x += x_advance
         nb_spaces = count_spaces(box)
         if nb_spaces > 0:
-            layout, _, resume_at, _, _, _ = split_first_line(
+            layout = create_layout(
                 box.text, box.style, context, float('inf'),
                 box.justification_spacing)
-            assert resume_at is None
             extra_space = justification_spacing * nb_spaces
             x_advance += extra_space
             box.width += extra_space
