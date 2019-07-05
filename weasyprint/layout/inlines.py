@@ -76,13 +76,19 @@ def get_next_linebox(context, linebox, position_y, skip_stack,
 
     skip_stack = first_letter_to_box(linebox, skip_stack, first_letter_style)
 
-    linebox.width = inline_min_content_width(
-        context, linebox, skip_stack=skip_stack, first_line=True)
-
-    linebox.height, _ = strut_layout(linebox.style, context)
     linebox.position_y = position_y
+
+    if context.excluded_shapes:
+        # Width and height must be calculated to avoid floats
+        linebox.width = inline_min_content_width(
+            context, linebox, skip_stack=skip_stack, first_line=True)
+        linebox.height, _ = strut_layout(linebox.style, context)
+    else:
+        # No float, width and height will be set by the lines
+        linebox.width = linebox.height = 0
     position_x, position_y, available_width = avoid_collisions(
         context, linebox, containing_block, outer=False)
+
     candidate_height = linebox.height
 
     excluded_shapes = context.excluded_shapes[:]
@@ -103,6 +109,7 @@ def get_next_linebox(context, linebox, position_y, skip_stack,
              context, linebox, position_x, max_x, skip_stack, containing_block,
              device_size, line_absolutes, line_fixed, line_placeholders,
              waiting_floats, line_children=[])
+        linebox.width, linebox.height = line.width, line.height
 
         if is_phantom_linebox(line) and not preserved_line_break:
             line.height = 0
