@@ -652,18 +652,18 @@ class Layout(object):
         # See https://github.com/Kozea/WeasyPrint/pull/599
         if font_size == 0 and ZERO_FONTSIZE_CRASHES_CAIRO:
             font_size = 1
+
         hinting = context.enable_hinting if context else False
         self.layout = ffi.gc(
             pangocairo.pango_cairo_create_layout(ffi.cast(
                 'cairo_t *', CAIRO_DUMMY_CONTEXT[hinting]._pointer)),
             gobject.g_object_unref)
+
         pango_context = pango.pango_layout_get_context(self.layout)
         if context and context.font_config.font_map:
             pango.pango_context_set_font_map(
                 pango_context, context.font_config.font_map)
-        self.font = ffi.gc(
-            pango.pango_font_description_new(),
-            pango.pango_font_description_free)
+
         if style['font_language_override'] != 'normal':
             lang_p, lang = unicode_to_char_p(LST_TO_ISO.get(
                 style['font_language_override'].lower(),
@@ -679,6 +679,9 @@ class Layout(object):
 
         assert not isinstance(style['font_family'], str), (
             'font_family should be a list')
+        self.font = ffi.gc(
+            pango.pango_font_description_new(),
+            pango.pango_font_description_free)
         family_p, family = unicode_to_char_p(','.join(style['font_family']))
         pango.pango_font_description_set_family(self.font, family_p)
         pango.pango_font_description_set_style(
