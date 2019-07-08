@@ -602,8 +602,10 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
         # border-*-style is none, so border-width computes to zero.
         # Other than that, properties that would need computing are
         # border-*-color, but they do not apply.
-        for side in ('top', 'bottom', 'left', 'right'):
-            computed['border_%s_width' % side] = 0
+        computed['border_top_width'] = 0
+        computed['border_bottom_width'] = 0
+        computed['border_left_width'] = 0
+        computed['border_right_width'] = 0
         computed['outline_width'] = 0
         return computed
 
