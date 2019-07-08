@@ -614,10 +614,10 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
     if parent_style:
         for name in parent_style:
             if name.startswith('__'):
-                specified[name] = parent_style[name]
+                computed[name] = specified[name] = parent_style[name]
     for name in cascaded:
         if name.startswith('__'):
-            specified[name] = cascaded[name][0]
+            computed[name] = specified[name] = cascaded[name][0]
 
     for name, initial in INITIAL_VALUES.items():
         if name in cascaded:
