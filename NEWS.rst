@@ -3,6 +3,66 @@
 ======
 
 
+Version 48
+----------
+
+Released on 2019-07-08.
+
+Dependencies:
+
+* CairoSVG 2.4.0+ is now needed
+
+New features:
+
+* `#891 <https://github.com/Kozea/WeasyPrint/pull/891>`_:
+  Handle ``text-overflow``
+* `#878 <https://github.com/Kozea/WeasyPrint/pull/878>`_:
+  Handle ``column-span``
+* `#855 <https://github.com/Kozea/WeasyPrint/pull/855>`_:
+  Handle all the ``text-decoration`` features
+* `#238 <https://github.com/Kozea/WeasyPrint/issues/238>`_:
+  Don't repeat background images when it's not needed
+* `#875 <https://github.com/Kozea/WeasyPrint/issues/875>`_:
+  Handle ``object-fit`` and ``object-position``
+* `#870 <https://github.com/Kozea/WeasyPrint/issues/870>`_:
+  Handle ``bookmark-state``
+
+Bug fixes:
+
+* `#686 <https://github.com/Kozea/WeasyPrint/issues/686>`_:
+  Fix column balance when children are not inline
+* `#885 <https://github.com/Kozea/WeasyPrint/issues/885>`_:
+  Actually use the content box to resolve flex items percentages
+* `#867 <https://github.com/Kozea/WeasyPrint/issues/867>`_:
+  Fix rendering of KaTeX output, including (1) set row baseline of tables when
+  no cells are baseline-aligned, (2) set baseline for inline tables, (3) don't
+  align lines larger than their parents, (4) force CairoSVG to respect image
+  size defined by CSS.
+* `#873 <https://github.com/Kozea/WeasyPrint/issues/873>`_:
+  Set a minimum height for empty list elements with outside marker
+* `#811 <https://github.com/Kozea/WeasyPrint/issues/811>`_:
+  Don't use translations to align flex items
+* `#851 <https://github.com/Kozea/WeasyPrint/issues/851>`_,
+  `#860 <https://github.com/Kozea/WeasyPrint/issues/860>`_:
+  Don't cut pages when content overflows a very little bit
+* `#862 <https://github.com/Kozea/WeasyPrint/issues/862>`_:
+  Don't crash when using UTC dates in metadata
+
+Documentation:
+
+* `#854 <https://github.com/Kozea/WeasyPrint/issues/854>`_:
+  Add a "Tips & Tricks" section
+
+Contributors:
+
+- Gabriel Corona
+- Guillaume Ayoub
+- Manuel Barkhau
+- Nathan de Maestri
+- grewn0uille
+- theopeek
+
+
 Version 47
 ----------
 

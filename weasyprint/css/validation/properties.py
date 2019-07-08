@@ -411,8 +411,7 @@ def column_width(token):
 @single_keyword
 def column_span(keyword):
     """``column-span`` property validation."""
-    # TODO: uncomment this when it is supported
-    # return keyword in ('all', 'none')
+    return keyword in ('all', 'none')
 
 
 @property()

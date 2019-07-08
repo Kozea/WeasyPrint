@@ -558,7 +558,7 @@ are supported.
 The ``break-before``, ``break-after`` and ``break-inside`` properties are
 **not** supported.
 
-The ``column-span`` property is **not** supported.
+The ``column-span`` property is supported for direct children of columns.
 
 The ``column-fill`` property is supported, with a column balancing algorithm
 that should be efficient with simple cases.
