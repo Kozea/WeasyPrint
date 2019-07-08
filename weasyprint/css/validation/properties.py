@@ -961,6 +961,13 @@ def overflow(keyword):
 
 @property()
 @single_keyword
+def text_overflow(keyword):
+    """Validation for the ``text-overflow`` property."""
+    return keyword in ('clip', 'ellipsis')
+
+
+@property()
+@single_keyword
 def position(keyword):
     """``position`` property validation."""
     return keyword in ('static', 'relative', 'absolute', 'fixed')

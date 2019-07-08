@@ -416,6 +416,14 @@ class LineBox(ParentBox):
     be split into multiple line boxes, one for each actual line.
 
     """
+    text_overflow = 'clip'
+
+    @classmethod
+    def anonymous_from(cls, parent, *args, **kwargs):
+        box = super().anonymous_from(parent, *args, **kwargs)
+        if parent.style['overflow'] != 'visible':
+            box.text_overflow = parent.style['text_overflow']
+        return box
 
 
 class InlineLevelBox(Box):

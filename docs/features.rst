@@ -500,14 +500,13 @@ The `CSS Basic User Interface Module Level 3`_ also known as CSS3 UI is a
 candidate recommendation describing "CSS properties which enable authors to
 style user interface related properties and values."
 
-Only one new property defined in this document is implemented in WeasyPrint:
-the ``box-sizing`` property.
+Two new properties defined in this document are implemented in WeasyPrint:
+the ``box-sizing`` and ``text-overflow`` properties.
 
 Some of the properties do not apply for WeasyPrint: ``cursor``, ``resize``,
 ``caret-color``, ``nav-(up|right|down|left)``.
 
-The other properties are **not** implemented: ``outline-offset`` and
-``text-overflow``.
+The  ``outline-offset`` property is **not** implemented.
 
 .. _CSS Basic User Interface Module Level 3: http://www.w3.org/TR/css-ui-3/
 
