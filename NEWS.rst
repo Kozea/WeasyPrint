@@ -6,7 +6,11 @@
 Version 48
 ----------
 
-Not released yet.
+Released on 2019-07-08.
+
+Dependencies:
+
+* CairoSVG 2.4.0+ is now needed
 
 New features:
 
@@ -30,7 +34,10 @@ Bug fixes:
 * `#885 <https://github.com/Kozea/WeasyPrint/issues/885>`_:
   Actually use the content box to resolve flex items percentages
 * `#867 <https://github.com/Kozea/WeasyPrint/issues/867>`_:
-  Fix rendering of KaTeX output, with a lot of small fixes
+  Fix rendering of KaTeX output, including (1) set row baseline of tables when
+  no cells are baseline-aligned, (2) set baseline for inline tables, (3) don't
+  align lines larger than their parents, (4) force CairoSVG to respect image
+  size defined by CSS.
 * `#873 <https://github.com/Kozea/WeasyPrint/issues/873>`_:
   Set a minimum height for empty list elements with outside marker
 * `#811 <https://github.com/Kozea/WeasyPrint/issues/811>`_:
@@ -45,6 +52,15 @@ Documentation:
 
 * `#854 <https://github.com/Kozea/WeasyPrint/issues/854>`_:
   Add a "Tips & Tricks" section
+
+Contributors:
+
+- Gabriel Corona
+- Guillaume Ayoub
+- Manuel Barkhau
+- Nathan de Maestri
+- grewn0uille
+- theopeek
 
 
 Version 47
