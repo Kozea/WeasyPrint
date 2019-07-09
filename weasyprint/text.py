@@ -620,14 +620,12 @@ def first_line_metrics(first_line, text, layout, resume_at, space_collapse,
             first_line_text = first_line_text.rstrip(' ')
 
         # Remove soft hyphens
-        has_soft_hyphens = '\u00ad' in first_line_text
-        if has_soft_hyphens:
-            layout.set_text(first_line_text.replace('\u00ad', ''))
+        layout.set_text(first_line_text.replace('\u00ad', ''))
 
         first_line, _ = layout.get_first_line()
         length = first_line.length if first_line is not None else 0
 
-        if has_soft_hyphens:
+        if '\u00ad' in first_line_text:
             soft_hyphens = 0
             if first_line_text[0] == '\u00ad':
                 length += 2  # len('\u00ad'.encode('utf8'))
