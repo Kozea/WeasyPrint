@@ -2,8 +2,29 @@
 # Sass for WeasyPrint
 ---
 
-@import url('https://fonts.googleapis.com/css?family=Rosario:400,400i,700')
-@import url('https://fontlibrary.org/face/mononoki')
+@font-face
+  font-family: 'Rosario'
+  font-style: italic
+  font-weight: 400
+  src: local('Rosario Italic'), local('Rosario-Italic'), url(/css/fonts/rosario-italic.otf)
+
+@font-face
+  font-family: 'Rosario'
+  font-style: normal
+  font-weight: 400
+  src: local('Rosario'), local('Rosario-Regular'), url(/css/fonts/rosario-regular.otf)
+
+@font-face
+  font-family: 'Rosario'
+  font-style: normal
+  font-weight: 700
+  src: local('Rosario Bold'), local('Rosario-Bold'), url(/css/fonts/rosario-bold.otf)
+
+@font-face
+  font-family: 'Mononoki'
+  font-style: normal
+  font-weight: 400
+  src: local('Mononoki'), local('Mononoki-Regular'), url(/css/fonts/mononoki-regular.ttf)
 
 // variables
 $action: #1ee494
