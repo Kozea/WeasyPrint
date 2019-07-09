@@ -423,7 +423,7 @@ class Document(object):
         Combine multiple documents into one PDF file,
         using metadata from the first::
 
-            all_pages = [p for p in doc.pages for doc in documents]
+            all_pages = [p for doc in documents for p in doc.pages]
             documents[0].copy(all_pages).write_pdf('combined.pdf')
 
         """
