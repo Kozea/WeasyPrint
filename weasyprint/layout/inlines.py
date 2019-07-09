@@ -703,8 +703,7 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
             continue
         elif child.is_floated():
             child.position_x = position_x
-            float_width = shrink_to_fit(
-                context, child, containing_block.width)
+            float_width = shrink_to_fit(context, child, containing_block.width)
 
             # To retrieve the real available space for floats, we must remove
             # the trailing whitespaces from the line
