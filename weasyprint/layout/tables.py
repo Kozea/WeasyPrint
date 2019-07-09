@@ -77,7 +77,8 @@ def table_layout(context, table, max_position_y, skip_stack,
         else:
             skip, skip_stack = skip_stack
             assert not skip_stack  # No breaks inside rows for now
-        for index_row, row in group.enumerate_skip(skip):
+        for i, row in enumerate(group.children[skip:]):
+            index_row = i + skip
             resolve_percentages(row, containing_block=table)
             row.position_x = rows_x
             row.position_y = position_y
@@ -251,7 +252,8 @@ def table_layout(context, table, max_position_y, skip_stack,
             skip, skip_stack = skip_stack
         new_table_children = []
         resume_at = None
-        for index_group, group in table.enumerate_skip(skip):
+        for i, group in enumerate(table.children[skip:]):
+            index_group = i + skip
             if group.is_header or group.is_footer:
                 continue
             new_group, resume_at = group_layout(

@@ -324,7 +324,8 @@ def block_container_layout(context, box, max_position_y, skip_stack,
     else:
         skip, skip_stack = skip_stack
         first_letter_style = None
-    for index, child in box.enumerate_skip(skip):
+    for i, child in enumerate(box.children[skip:]):
+        index = i + skip
         child.position_x = position_x
         # XXX does not count margins in adjoining_margins:
         child.position_y = position_y

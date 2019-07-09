@@ -1407,7 +1407,8 @@ def _inner_block_in_inline(box, skip_stack=None):
     else:
         skip, skip_stack = skip_stack
 
-    for index, child in box.enumerate_skip(skip):
+    for i, child in enumerate(box.children[skip:]):
+        index = i + skip
         if isinstance(child, boxes.BlockLevelBox) and \
                 child.is_in_normal_flow():
             assert skip_stack is None  # Should not skip here

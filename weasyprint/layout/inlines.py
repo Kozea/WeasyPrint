@@ -688,8 +688,8 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
     else:
         skip, skip_stack = skip_stack
 
-    box_children = list(box.enumerate_skip(skip))
-    for i, (index, child) in enumerate(box_children):
+    for i, child in enumerate(box.children[skip:]):
+        index = i + skip
         child.position_y = box.position_y
         if child.is_absolutely_positioned():
             child.position_x = position_x
@@ -749,7 +749,7 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
             float_resume_at = index + 1
             continue
 
-        last_child = (i == len(box_children) - 1)
+        last_child = (index == len(box.children) - 1)
         available_width = max_x
         child_waiting_floats = []
         new_child, resume_at, preserved, first, last, new_float_widths = (

@@ -296,15 +296,6 @@ class ParentBox(Box):
     def all_children(self):
         return self.children
 
-    def enumerate_skip(self, skip_num=0):
-        """Yield ``(child, child_index)`` tuples for each child.
-
-        ``skip_num`` children are skipped before iterating over them.
-
-        """
-        for index in range(skip_num, len(self.children)):
-            yield index, self.children[index]
-
     def _reset_spacing(self, side):
         """Set to 0 the margin, padding and border of ``side``."""
         self.style['margin_%s' % side] = Dimension(0, 'px')
