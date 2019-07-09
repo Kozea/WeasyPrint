@@ -804,10 +804,7 @@ class Layout(object):
         pango.pango_layout_set_tabs(self.layout, array)
 
     def deactivate(self):
-        del self.layout
-        del self.font
-        del self.language
-        del self.style
+        del self.layout, self.font, self.language, self.style
 
     def reactivate(self, style):
         self.setup(self.context, style['font_size'], style)
