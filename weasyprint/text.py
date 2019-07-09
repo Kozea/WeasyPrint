@@ -608,19 +608,27 @@ def first_line_metrics(first_line, text, layout, resume_at, space_collapse,
         length -= len(hyphenation_character.encode('utf8'))
     elif resume_at:
         # Set an infinite width as we don't want to break lines when drawing,
-        # the lines have already been split and the size may differ.
+        # the lines have already been split and the size may differ. Rendering
+        # is also much faster when no width is set.
         pango.pango_layout_set_width(layout.layout, -1)
+
         # Create layout with final text
         first_line_text = utf8_slice(text, slice(length))
+
         # Remove trailing spaces if spaces collapse
         if space_collapse:
             first_line_text = first_line_text.rstrip(' ')
+
         # Remove soft hyphens
-        layout.set_text(first_line_text.replace('\u00ad', ''))
+        has_soft_hyphens = '\u00ad' in first_line_text
+        if has_soft_hyphens:
+            layout.set_text(first_line_text.replace('\u00ad', ''))
+
         first_line, _ = layout.get_first_line()
         length = first_line.length if first_line is not None else 0
-        soft_hyphens = 0
-        if '\u00ad' in first_line_text:
+
+        if has_soft_hyphens:
+            soft_hyphens = 0
             if first_line_text[0] == '\u00ad':
                 length += 2  # len('\u00ad'.encode('utf8'))
             for i in range(len(layout.text)):
@@ -629,7 +637,8 @@ def first_line_metrics(first_line, text, layout, resume_at, space_collapse,
                         soft_hyphens += 1
                     else:
                         break
-        length += soft_hyphens * 2  # len('\u00ad'.encode('utf8'))
+            length += soft_hyphens * 2  # len('\u00ad'.encode('utf8'))
+
     width, height = get_size(first_line, style)
     baseline = units_to_double(pango.pango_layout_get_baseline(layout.layout))
     layout.deactivate()
