@@ -107,12 +107,11 @@ class Box(object):
     def copy(self):
         """Return shallow copy of the box."""
         cls = type(self)
-        # Create a new instance without calling __init__: initializing
-        # styles may be kinda expensive, no need to do it again.
+        # Create a new instance without calling __init__: parameters are
+        # different depending on the class.
         new_box = cls.__new__(cls)
         # Copy attributes
         new_box.__dict__.update(self.__dict__)
-        new_box.style = self.style
         return new_box
 
     def translate(self, dx=0, dy=0, ignore_floats=False):
