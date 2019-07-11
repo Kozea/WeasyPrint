@@ -161,8 +161,8 @@ def test_annotate_document():
     assert after['border_top_width'] == 42
     assert after['border_bottom_width'] == 3
 
-    # TODO much more tests here: test that origin and selector precedence
-    # and inheritance are correct, ...
+    # TODO: much more tests here: test that origin and selector precedence
+    # and inheritance are correct…
 
 
 @assert_no_logs

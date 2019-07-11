@@ -263,7 +263,6 @@ def draw_stacking_context(context, stacking_context, enable_hinting):
                 else:
                     for child in block.children:
                         if isinstance(child, boxes.LineBox):
-                            # TODO: draw inline tables
                             draw_inline_level(
                                 context, stacking_context.page, child,
                                 enable_hinting)

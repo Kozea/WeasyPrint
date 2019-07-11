@@ -1136,7 +1136,6 @@ def inline_box_verticality(box, top_bottom_subtrees, baseline_y):
             one_ex = box.style['font_size'] * ex_ratio(box.style)
             top = baseline_y - (one_ex + child.margin_height()) / 2.
             child_baseline_y = top + child.baseline
-        # TODO: actually implement vertical-align: top and bottom
         elif vertical_align == 'text-top':
             # align top with the top of the parent’s content area
             top = (baseline_y - box.baseline + box.margin_top +
@@ -1148,6 +1147,7 @@ def inline_box_verticality(box, top_bottom_subtrees, baseline_y):
                       box.border_top_width + box.padding_top + box.height)
             child_baseline_y = bottom - child.margin_height() + child.baseline
         elif vertical_align in ('top', 'bottom'):
+            # TODO: actually implement vertical-align: top and bottom
             # Later, we will assume for this subtree that its baseline
             # is at y=0.
             child_baseline_y = 0

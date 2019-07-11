@@ -585,7 +585,6 @@ def test_tables_5():
 
 @assert_no_logs
 def test_tables_6():
-    # TODO: re-enable this once we support inline-table
     # Rule 3.2
     assert_tree(parse_all('<span><x-tr></x-tr></span>'), [
         ('body', 'Line', [

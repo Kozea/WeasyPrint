@@ -803,7 +803,7 @@ class Layout(object):
             width = int(round(width))
         else:
             width = int(self.style['tab_size'].value)
-        # TODO: 0 is not handled correctly by Pango
+        # 0 is not handled correctly by Pango
         array = ffi.gc(
             pango.pango_tab_array_new_with_positions(
                 1, True, pango.PANGO_TAB_LEFT, width or 1),

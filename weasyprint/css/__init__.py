@@ -763,7 +763,7 @@ def parse_page_selectors(rule):
 
                     types['index'] = (*nth_values, group)
                     # TODO: specificity is not specified yet
-                    # https://github.com/w3c/csswg-drafts/issues/3791
+                    # https://github.com/w3c/csswg-drafts/issues/3524
                     types['specificity'][1] += 1
                     continue
 
