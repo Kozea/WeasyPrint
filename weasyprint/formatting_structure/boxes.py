@@ -432,12 +432,16 @@ class InlineLevelBox(Box):
     """
     def _remove_decoration(self, start, end):
         if start or end:
+            old_style = self.style
             self.style = self.style.copy()
         ltr = self.style['direction'] == 'ltr'
         if start:
             self._reset_spacing('left' if ltr else 'right')
         if end:
             self._reset_spacing('right' if ltr else 'left')
+        if (start or end) and old_style == self.style:
+            # Don't copy style if there's no need to, save some memory
+            self.style = old_style
 
 
 class InlineBox(InlineLevelBox, ParentBox):
