@@ -591,8 +591,9 @@ class Document(object):
         """
         # 0.75 = 72 PDF point (cairo units) per inch / 96 CSS pixel per inch
         scale = zoom * 0.75
-        # Use an in-memory buffer. We will need to seek for metadata
-        # TODO: avoid this if target can seek? Benchmark first.
+        # Use an in-memory buffer, as we will need to seek for
+        # metadata. Directly using the target when possible doesn't
+        # significantly save time and memory use.
         file_obj = io.BytesIO()
         # (1, 1) is overridden by .set_size() below.
         surface = cairo.PDFSurface(file_obj, 1, 1)
