@@ -316,11 +316,15 @@ class ParentBox(Box):
 
     def _remove_decoration(self, start, end):
         if start or end:
+            old_style = self.style
             self.style = self.style.copy()
         if start:
             self._reset_spacing('top')
         if end:
             self._reset_spacing('bottom')
+        if (start or end) and old_style == self.style:
+            # Don't copy style if there's no need to, save some memory
+            self.style = old_style
 
     def copy_with_children(self, new_children, is_start=True, is_end=True):
         """Create a new equivalent box with given ``new_children``."""
