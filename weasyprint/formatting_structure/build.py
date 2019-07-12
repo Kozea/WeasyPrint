@@ -46,11 +46,11 @@ BOX_TYPE_FROM_DISPLAY = {
 
 
 def build_formatting_structure(element_tree, style_for, get_image_from_uri,
-                               base_url, target_collector):
+                               base_url, target_collector, counter_style):
     """Build a formatting structure (box tree) from an element tree."""
     box_list = element_to_box(
         element_tree, style_for, get_image_from_uri, base_url,
-        target_collector)
+        target_collector, counter_style)
     if box_list:
         box, = box_list
     else:
@@ -87,7 +87,7 @@ def make_box(element_tag, style, content, get_image_from_uri):
 
 
 def element_to_box(element, style_for, get_image_from_uri, base_url,
-                   target_collector, state=None):
+                   target_collector, counter_style, state=None):
     """Convert an element and its children into a box with children.
 
     Return a list of boxes. Most of the time the list will have one item but
@@ -140,7 +140,7 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
     children = []
     if display == 'list-item':
         children.extend(add_box_marker(
-            box, counter_values, get_image_from_uri))
+            box, counter_values, get_image_from_uri, counter_style))
 
     # If this element’s direct children create new scopes, the counter
     # names will be in this new list
@@ -584,7 +584,7 @@ def update_counters(state, style):
         values[-1] += value
 
 
-def add_box_marker(box, counter_values, get_image_from_uri):
+def add_box_marker(box, counter_values, get_image_from_uri, counter_style):
     """Add a list marker to boxes for elements with ``display: list-item``,
     and yield children to add a the start of the box.
 
@@ -603,7 +603,7 @@ def add_box_marker(box, counter_values, get_image_from_uri):
             return
         counter_value = counter_values.get('list-item', [0])[-1]
         # TODO: rtl numbered list has the dot on the left
-        marker_text = counters.format_list_marker(counter_value, type_)
+        marker_text = counter_style[type_](counter_value)
         marker_box = boxes.TextBox.anonymous_from(box, marker_text)
     else:
         marker_box = boxes.InlineReplacedBox.anonymous_from(box, image)

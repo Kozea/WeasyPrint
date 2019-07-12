@@ -354,12 +354,13 @@ class Document(object):
             font_config = FontConfiguration()
         target_collector = TargetCollector()
         page_rules = []
+        counter_style = {}
         user_stylesheets = []
         for css in stylesheets or []:
             if not hasattr(css, 'matcher'):
                 css = CSS(
                     guess=css, media_type=html.media_type,
-                    font_config=font_config)
+                    font_config=font_config, counter_style=counter_style)
             user_stylesheets.append(css)
         style_for = get_all_computed_styles(
             html, user_stylesheets, presentational_hints, font_config,
@@ -369,7 +370,7 @@ class Document(object):
         PROGRESS_LOGGER.info('Step 4 - Creating formatting structure')
         root_box = build_formatting_structure(
             html.etree_element, style_for, get_image_from_uri,
-            html.base_url, target_collector)
+            html.base_url, target_collector, counter_style)
         page_boxes = layout_document(
             enable_hinting, style_for, get_image_from_uri, root_box,
             font_config, html, target_collector)

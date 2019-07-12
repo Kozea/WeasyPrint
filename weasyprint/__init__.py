@@ -311,7 +311,7 @@ class CSS(object):
                  string=None, encoding=None, base_url=None,
                  url_fetcher=default_url_fetcher, _check_mime_type=False,
                  media_type='print', font_config=None, matcher=None,
-                 page_rules=None):
+                 page_rules=None, counter_style=None):
         PROGRESS_LOGGER.info(
             'Step 2 - Fetching and parsing CSS - %s',
             filename or url or getattr(file_obj, 'name', 'CSS string'))
@@ -336,7 +336,7 @@ class CSS(object):
         self.fonts = []
         preprocess_stylesheet(
             media_type, base_url, stylesheet, url_fetcher, self.matcher,
-            self.page_rules, self.fonts, font_config)
+            self.page_rules, self.fonts, font_config, counter_style)
 
 
 class Attachment(object):

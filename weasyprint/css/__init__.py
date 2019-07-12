@@ -779,7 +779,7 @@ def parse_page_selectors(rule):
 
 def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                           url_fetcher, matcher, page_rules, fonts,
-                          font_config, ignore_imports=False):
+                          font_config, counter_style, ignore_imports=False):
     """Do the work that can be done early on stylesheet, before they are
     in a document.
 
@@ -925,6 +925,19 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                         rule_descriptors, url_fetcher)
                     if font_filename:
                         fonts.append(font_filename)
+
+        elif rule.type == 'at-rule' and rule.lower_at_keyword == 'counter-style':
+            # TODO: Parse @counter_style descriptors
+
+            # This is a default parameter, to parse more rules you will need
+            # to add more keys that are the counter_style name
+            # (possibly rule.prelude?) and the values to be functions returning
+            # the appropriate value for the list element. 
+            counter_style['disc'] = lambda value: '•'
+
+            print(rule.content)
+            print(dir(rule.content))
+
 
 
 def get_all_computed_styles(html, user_stylesheets=None,
