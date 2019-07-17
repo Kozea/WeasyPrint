@@ -303,9 +303,9 @@ def test_page_selectors(style, selectors):
     ('::lipsum { margin: 2cm', ['WARNING: Invalid or unsupported selector']),
     ('foo { margin-color: red', ['WARNING: Ignored', 'unknown property']),
     ('foo { margin-top: red', ['WARNING: Ignored', 'invalid value']),
-    ('@import "relative-uri.css',
+    ('@import "relative-uri.css"',
      ['ERROR: Relative URI reference without a base URI']),
-    ('@import "invalid-protocol://absolute-URL',
+    ('@import "invalid-protocol://absolute-URL"',
      ['ERROR: Failed to load stylesheet at']),
 ))
 def test_warnings(source, messages):
