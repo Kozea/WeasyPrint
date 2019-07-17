@@ -16,10 +16,10 @@ from ...formatting_structure import counters
 from .. import computed_values
 from ..properties import KNOWN_PROPERTIES, Dimension
 from ..utils import (
-    InvalidValues, check_var_function, comma_separated_list, get_angle,
-    get_content_list, get_content_list_token, get_custom_ident, get_image,
-    get_keyword, get_length, get_resolution, get_single_keyword, get_url,
-    parse_2d_position, parse_function, parse_position, single_keyword,
+    LENGTHS_TO_PIXELS, InvalidValues, check_var_function, comma_separated_list,
+    get_angle, get_content_list, get_content_list_token, get_custom_ident,
+    get_image, get_keyword, get_length, get_resolution, get_single_keyword,
+    get_url, parse_2d_position, parse_function, parse_position, single_keyword,
     single_token)
 
 PREFIX = '-weasy-'
@@ -317,6 +317,15 @@ def break_before_after(keyword):
 def break_inside(keyword):
     """``break-inside`` property validation."""
     return keyword in ('auto', 'avoid', 'avoid-page', 'avoid-column')
+
+
+@property(proprietary=True)
+@single_token
+def break_inside_threshold(token):
+    """``break-inside-threshold`` property validation."""
+    length = get_length(token, negative=False, percentage=False)
+    if length:
+        return length.value * LENGTHS_TO_PIXELS[length.unit]
 
 
 @property()

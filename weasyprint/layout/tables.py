@@ -217,7 +217,10 @@ def table_layout(context, table, max_position_y, skip_stack,
 
         # Do not keep the row group if we made a page break
         # before any of its rows or with 'avoid'
+        # or when it exceeds a proprietary threshold in height
         if resume_at and not original_page_is_empty and (
+                (position_y - group.position_y) <
+                group.style['break_inside_threshold']) and (
                 group.style['break_inside'] in ('avoid', 'avoid-page') or
                 not new_group_children):
             return None, None
