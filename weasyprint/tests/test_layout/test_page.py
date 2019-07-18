@@ -498,6 +498,29 @@ def test_margin_break_clearance():
 
 
 @assert_no_logs
+@pytest.mark.parametrize('direction, page_break, pages_number', (
+    ('ltr', 'recto', 3),
+    ('ltr', 'verso', 2),
+    ('rtl', 'recto', 3),
+    ('rtl', 'verso', 2),
+    ('ltr', 'right', 3),
+    ('ltr', 'left', 2),
+    ('rtl', 'right', 2),
+    ('rtl', 'left', 3),
+))
+def test_recto_verso_break(direction, page_break, pages_number):
+    pages = render_pages('''
+      <style>
+        html { direction: %s }
+        p { break-before: %s }
+      </style>
+      abc
+      <p>def</p>
+    ''' % (direction, page_break))
+    assert len(pages) == pages_number
+
+
+@assert_no_logs
 def test_page_names_1():
     pages = render_pages('''
       <style>
