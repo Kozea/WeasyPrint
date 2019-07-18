@@ -353,7 +353,6 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                     page_break = block_level_page_break(
                         last_in_flow_child, child)
                     if new_children and page_break in ('avoid', 'avoid-page'):
-                        # TODO: fill the blank space at the bottom of the page
                         result = find_earlier_page_break(
                             new_children, absolute_boxes, fixed_boxes)
                         if result:
