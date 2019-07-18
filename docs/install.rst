@@ -488,3 +488,10 @@ to open a `new issue <https://github.com/Kozea/WeasyPrint/issues/new>`_. You
 can also find extra help in this `bug report
 <https://github.com/Kozea/WeasyPrint/issues/589>`_. If you cheated, then, you
 know: Kittens already died.
+
+
+Other Options for Installation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+There is a .NET wrapper for WeasyPrint available `here
+<https://github.com/balbarak/WeasyPrint-netcore>`_. 
