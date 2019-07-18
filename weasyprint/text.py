@@ -1214,16 +1214,6 @@ def split_first_line(text, style, context, max_width, justification_spacing,
         pango.pango_layout_set_width(
             layout.layout, units_from_double(max_width))
         layout.set_wrap(PANGO_WRAP_MODE['WRAP_CHAR'])
-        _, temp_index = layout.get_first_line()
-        temp_index = temp_index or len(text.encode('utf-8'))
-        # TODO: WRAP_CHAR is said to "wrap lines at character boundaries", but
-        # it doesn't. Looks like it tries to split at word boundaries and then
-        # at character boundaries if there's no enough space for a full word,
-        # just as WRAP_WORD_CHAR does. That's why we have to split this text
-        # twice. Find why. It may be related to the problem described in the
-        # link given in step #3.
-        first_line_text = utf8_slice(text, slice(temp_index))
-        layout.set_text(first_line_text)
         first_line, index = layout.get_first_line()
         resume_at = index or first_line.length
         if resume_at >= len(text.encode('utf-8')):
