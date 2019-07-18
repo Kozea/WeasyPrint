@@ -1716,3 +1716,16 @@ def test_border_collapse_5():
         [None, black_3, black_3],
         [black_3, black_3, black_3],
     ]
+
+
+@assert_no_logs
+@pytest.mark.parametrize('html', (
+    '<html style="display: none">',
+    '<html style="display: none">abc',
+    '<html style="display: none"><p>abc',
+    '<body style="display: none"><p>abc',
+))
+def test_display_none_root(html):
+    box = parse_all(html)
+    assert box.style['display'] == 'block'
+    assert not box.children
