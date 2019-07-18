@@ -53,7 +53,6 @@ def test_unicode():
             )
             fd.write(html_content.encode('utf8'))
 
-        # TODO: change this back to actually read from a file
         document = FakeHTML(html, encoding='utf8')
         lines = document_to_pixels(document, 'unicode', 200, 50)
         assert_pixels_equal('unicode', 200, 50, lines, expected_lines)
