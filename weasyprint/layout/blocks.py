@@ -461,7 +461,6 @@ def block_container_layout(context, box, max_position_y, skip_stack,
             new_containing_block = box
 
             if not new_containing_block.is_table_wrapper:
-                # TODO: there's no collapsing margins inside tables, right?
                 resolve_percentages(child, new_containing_block)
                 if (child.is_in_normal_flow() and
                         last_in_flow_child is None and
@@ -493,7 +492,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                         adjoining_margins = []
                         position_y = box.content_box_y()
 
-            if adjoining_margins and isinstance(child, boxes.TableBox):
+            if adjoining_margins and box.is_table_wrapper:
                 collapsed_margin = collapse_margin(adjoining_margins)
                 child.position_y += collapsed_margin
                 position_y += collapsed_margin
@@ -625,8 +624,11 @@ def block_container_layout(context, box, max_position_y, skip_stack,
             # not adjoining. (position_y is not used afterwards.)
             adjoining_margins = []
 
-    if box.border_bottom_width or box.padding_bottom or (
-            establishes_formatting_context(box) or box.is_for_root_element):
+    if (box.border_bottom_width or
+            box.padding_bottom or
+            establishes_formatting_context(box) or
+            box.is_for_root_element or
+            box.is_table_wrapper):
         position_y += collapse_margin(adjoining_margins)
         adjoining_margins = []
 
