@@ -473,7 +473,7 @@ track { display: none; }
 tt { font-family: monospace; }
 u { text-decoration: underline; }
 
-ul { display: block; list-style-type: disc; margin-bottom: 1em; margin-top: 1em; padding-left: 40px; unicode-bidi: isolate; }
+ul { display: block; list-style-type: foo; margin-bottom: 1em; margin-top: 1em; padding-left: 40px; unicode-bidi: isolate; }
 
 *[dir=ltr] ul { padding-left: 40px; padding-right: 0; }
 *[dir=rtl] ul { padding-left: 0; padding-right: 40px; }
@@ -537,10 +537,16 @@ xmp { display: block; font-family: monospace; margin-bottom: 1em; margin-top: 1e
     @bottom-right-corner { text-align: left;   vertical-align:  middle }
 }
 
-@counter-style disc {
+@counter-style foo {
     system: cyclic;
-    symbol: "\2022";
+    symbols: "\2022";
     suffix: " ";
 }
 
-ul { list-style-type: disc; }
+@counter-style disc {
+    system: cyclic;
+    symbols: "\2022";
+    suffix: " ";
+}
+
+ul { list-style-type: foo; }

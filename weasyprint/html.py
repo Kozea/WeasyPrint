@@ -28,7 +28,7 @@ from .urls import get_url_attribute
 level = LOGGER.level
 LOGGER.setLevel(logging.ERROR)
 
-HTML5_UA_STYLESHEET = CSS(filename=(ROOT / 'css' / 'html5_ua.css'))
+HTML5_UA_STYLESHEET = CSS(filename=(ROOT / 'css' / 'html5_ua.css'), counter_style={})
 HTML5_PH_STYLESHEET = CSS(filename=(ROOT / 'css' / 'html5_ph.css'))
 
 LOGGER.setLevel(level)
