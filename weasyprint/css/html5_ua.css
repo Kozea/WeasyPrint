@@ -543,4 +543,4 @@ xmp { display: block; font-family: monospace; margin-bottom: 1em; margin-top: 1e
     suffix: " ";
 }
 
-ul { list-style: disc; }
+ul { list-style-type: disc; }
