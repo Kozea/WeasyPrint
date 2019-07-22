@@ -66,7 +66,7 @@ def build_formatting_structure(element_tree, style_for, get_image_from_uri,
             return style
         box, = element_to_box(
             element_tree, root_style_for, get_image_from_uri, base_url,
-            target_collector)
+            target_collector, counter_style)
 
     target_collector.check_pending_targets()
 
@@ -166,7 +166,7 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
     for child_element in element:
         children.extend(element_to_box(
             child_element, style_for, get_image_from_uri, base_url,
-            target_collector, state))
+            target_collector, counter_style, state))
         text = child_element.tail
         if text:
             text_box = boxes.TextBox.anonymous_from(box, text)
