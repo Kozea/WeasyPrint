@@ -211,7 +211,7 @@ def get_child_text(element):
 
 
 def find_stylesheets(wrapper_element, device_media_type, url_fetcher, base_url,
-                     font_config, page_rules):
+                     font_config, page_rules, counter_style):
     """Yield the stylesheets in ``element_tree``.
 
     The output order is the same as the source order.
@@ -238,7 +238,8 @@ def find_stylesheets(wrapper_element, device_media_type, url_fetcher, base_url,
             css = CSS(
                 string=content, base_url=base_url,
                 url_fetcher=url_fetcher, media_type=device_media_type,
-                font_config=font_config, page_rules=page_rules)
+                font_config=font_config, counter_style=counter_style,
+                page_rules=page_rules)
             yield css
         elif element.tag == 'link' and element.get('href'):
             if not element_has_link_type(element, 'stylesheet') or \
@@ -250,7 +251,8 @@ def find_stylesheets(wrapper_element, device_media_type, url_fetcher, base_url,
                     yield CSS(
                         url=href, url_fetcher=url_fetcher,
                         _check_mime_type=True, media_type=device_media_type,
-                        font_config=font_config, page_rules=page_rules)
+                        font_config=font_config, counter_style=counter_style,
+                        page_rules=page_rules)
                 except URLFetchingError as exc:
                     LOGGER.error(
                         'Failed to load stylesheet at %s : %s', href, exc)
@@ -956,7 +958,7 @@ def get_all_computed_styles(html, user_stylesheets=None,
             sheets.append((sheet, 'author', (0, 0, 0)))
     for sheet in find_stylesheets(
             html.wrapper_element, html.media_type, html.url_fetcher,
-            html.base_url, font_config, page_rules):
+            html.base_url, font_config, page_rules, counter_style):
         sheets.append((sheet, 'author', None))
     for sheet in (user_stylesheets or []):
         sheets.append((sheet, 'user', None))
