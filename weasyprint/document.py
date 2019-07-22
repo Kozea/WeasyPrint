@@ -364,7 +364,7 @@ class Document(object):
             user_stylesheets.append(css)
         style_for = get_all_computed_styles(
             html, user_stylesheets, presentational_hints, font_config,
-            page_rules, target_collector)
+            page_rules, target_collector, counter_style)
         get_image_from_uri = functools.partial(
             original_get_image_from_uri, {}, html.url_fetcher)
         PROGRESS_LOGGER.info('Step 4 - Creating formatting structure')
