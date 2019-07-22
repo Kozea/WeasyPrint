@@ -716,9 +716,16 @@ def remake_page(index, context, root_box, html, style_for):
     page_state = copy.deepcopy(initial_page_state)
     next_page_name = initial_next_page['page']
     first = index == 0
-    # TODO: handle recto/verso and add test
-    blank = ((initial_next_page['break'] == 'left' and right_page) or
-             (initial_next_page['break'] == 'right' and not right_page))
+    if initial_next_page['break'] in ('left', 'right'):
+        next_page_side = initial_next_page['break']
+    elif initial_next_page['break'] in ('recto', 'verso'):
+        direction_ltr = root_box.style['direction'] == 'ltr'
+        break_verso = initial_next_page['break'] == 'verso'
+        next_page_side = 'right' if direction_ltr ^ break_verso else 'left'
+    else:
+        next_page_side = None
+    blank = ((next_page_side == 'left' and right_page) or
+             (next_page_side == 'right' and not right_page))
     if blank:
         next_page_name = ''
     side = 'right' if right_page else 'left'
