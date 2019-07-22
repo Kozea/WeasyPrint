@@ -932,17 +932,13 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
             # This is a default parameter, to parse more rules you will need
             # to add more keys that are the counter_style name
             # (possibly rule.prelude?) and the values to be functions returning
-            # the appropriate value for the list element. 
+            # the appropriate value for the list element.
             counter_style['disc'] = lambda value: '•'
-
-            print(rule.content)
-            print(dir(rule.content))
-
-
+            counter_style['foo'] = lambda value: 'bar'
 
 def get_all_computed_styles(html, user_stylesheets=None,
                             presentational_hints=False, font_config=None,
-                            page_rules=None, target_collector=None):
+                            page_rules=None, target_collector=None, counter_style=None):
     """Compute all the computed styles of all elements in ``html`` document.
 
     Do everything from finding author stylesheets to parsing and applying them.
