@@ -603,6 +603,8 @@ def add_box_marker(box, counter_values, get_image_from_uri, counter_style):
             return
         counter_value = counter_values.get('list-item', [0])[-1]
         # TODO: rtl numbered list has the dot on the left
+        print('counter_style:', counter_style)
+        print('counter_style type_ value:', type_)
         marker_text = counter_style[type_](counter_value)
         marker_box = boxes.TextBox.anonymous_from(box, marker_text)
     else:
