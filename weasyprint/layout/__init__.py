@@ -101,8 +101,7 @@ def layout_fixed_boxes(context, pages, containing_page):
                 absolute_boxes = new_absolute_boxes
 
 
-def layout_document(enable_hinting, style_for, get_image_from_uri, root_box,
-                    font_config, html, target_collector, max_loops=8):
+def layout_document(html, root_box, context, max_loops=8):
     """Lay out the whole document.
 
     This includes line breaks, page breaks, absolute size and position for all
@@ -114,9 +113,6 @@ def layout_document(enable_hinting, style_for, get_image_from_uri, root_box,
     :returns: a list of laid out Page objects.
 
     """
-    context = LayoutContext(
-        enable_hinting, style_for, get_image_from_uri, font_config,
-        target_collector)
     initialize_page_maker(context, root_box)
     pages = []
     actual_total_pages = 0
@@ -127,7 +123,7 @@ def layout_document(enable_hinting, style_for, get_image_from_uri, root_box,
                 'Step 5 - Creating layout - Repagination #%i' % loop)
 
         initial_total_pages = actual_total_pages
-        pages = list(make_all_pages(context, root_box, html, pages, style_for))
+        pages = list(make_all_pages(context, root_box, html, pages))
         actual_total_pages = len(pages)
 
         # Check whether another round is required
@@ -185,7 +181,7 @@ def layout_document(enable_hinting, style_for, get_image_from_uri, root_box,
         state = context.page_maker[context.current_page][3]
         page.children = (root,) + tuple(
             make_margin_boxes(context, page, state))
-        layout_backgrounds(page, get_image_from_uri)
+        layout_backgrounds(page, context.get_image_from_uri)
         yield page
 
 
