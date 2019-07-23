@@ -694,7 +694,7 @@ def set_page_type_computed_styles(page_type, html, style_for):
                 base_url=html.base_url)
 
 
-def remake_page(index, context, root_box, html, style_for):
+def remake_page(index, context, root_box, html):
     """Return one laid out page without margin boxes.
 
     Start with the initial values from ``context.page_maker[index]``.
@@ -723,7 +723,7 @@ def remake_page(index, context, root_box, html, style_for):
         next_page_name = ''
     side = 'right' if right_page else 'left'
     page_type = PageType(side, blank, first, index, name=next_page_name)
-    set_page_type_computed_styles(page_type, html, style_for)
+    set_page_type_computed_styles(page_type, html, context.style_for)
 
     context.forced_break = (
         initial_next_page['break'] != 'any' or initial_next_page['page'])
@@ -776,7 +776,7 @@ def remake_page(index, context, root_box, html, style_for):
     return page, resume_at
 
 
-def make_all_pages(context, root_box, html, pages, style_for):
+def make_all_pages(context, root_box, html, pages):
     """Return a list of laid out pages without margin boxes.
 
     Re-make pages only if necessary.
@@ -795,7 +795,8 @@ def make_all_pages(context, root_box, html, pages, style_for):
             remake_state['anchors'] = []
             remake_state['content_lookups'] = []
             page, resume_at = remake_page(
-                i, context, root_box, html, style_for)
+                i, context, root_box, html
+            )
             yield page
         else:
             PROGRESS_LOGGER.info(
