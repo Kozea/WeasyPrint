@@ -801,9 +801,7 @@ def make_all_pages(context, root_box, html, pages):
             remake_state['pages_wanted'] = False
             remake_state['anchors'] = []
             remake_state['content_lookups'] = []
-            page, resume_at = remake_page(
-                i, context, root_box, html
-            )
+            page, resume_at = remake_page(i, context, root_box, html)
             yield page
         else:
             PROGRESS_LOGGER.info(

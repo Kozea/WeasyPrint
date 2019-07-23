@@ -351,8 +351,7 @@ class Document(object):
 
     @classmethod
     def _build_layout_context(cls, html, stylesheets, enable_hinting,
-                       presentational_hints=False,
-                       font_config=None):
+                              presentational_hints=False, font_config=None):
         if font_config is None:
             font_config = FontConfiguration()
         target_collector = TargetCollector()
@@ -371,8 +370,8 @@ class Document(object):
             original_get_image_from_uri, {}, html.url_fetcher)
         PROGRESS_LOGGER.info('Step 4 - Creating formatting structure')
         context = LayoutContext(
-            enable_hinting, style_for, get_image_from_uri, font_config, target_collector
-        )
+            enable_hinting, style_for, get_image_from_uri, font_config,
+            target_collector)
         return context
 
     @classmethod
@@ -382,14 +381,12 @@ class Document(object):
             font_config = FontConfiguration()
 
         context = cls._build_layout_context(
-            html, stylesheets, enable_hinting, presentational_hints, font_config
-        )
+            html, stylesheets, enable_hinting, presentational_hints,
+            font_config)
 
         root_box = build_formatting_structure(
-            html.etree_element,
-            context.style_for, context.get_image_from_uri,
-            html.base_url, context.target_collector
-        )
+            html.etree_element, context.style_for, context.get_image_from_uri,
+            html.base_url, context.target_collector)
 
         page_boxes = layout_document(html, root_box, context)
         rendering = cls(
