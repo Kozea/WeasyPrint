@@ -11,6 +11,12 @@
 
 import pytest
 
+from weasyprint.layout.preferred import min_content_width
+from weasyprint.tests.testing_utils import FakeHTML
+
+from weasyprint import Document
+from weasyprint.css import get_all_computed_styles
+
 from ..test_boxes import render_pages
 from ..test_draw import assert_pixels
 from ..testing_utils import assert_no_logs, capture_logs, requires
@@ -1508,6 +1514,73 @@ def test_layout_table_auto_50():
         assert td.width == 44  # (15 * font_size - 4 * sp) / 5
     td_21, = row_2.children
     assert td_21.width == 240  # 15 * font_size
+
+
+def fake_html_context(source, stylesheets=None, enable_hinting=False,
+                      presentational_hints=False, font_config=None):
+
+    return Document._build_layout_context(
+        FakeHTML(string=source),
+        stylesheets,
+        enable_hinting,
+        presentational_hints,
+        font_config,
+    )
+
+
+@assert_no_logs
+def test_layout_table_auto_51():
+    # Test regression:
+    # https://github.com/Kozea/WeasyPrint/issues/906
+    html_content = '''
+      <style>
+        @font-face { src: url(AHEM____.TTF); font-family: ahem }
+        * { font-family: ahem }
+      </style>
+      <table style="width: 1400px; font-family: ahem">
+        <tr>
+          <td style="width: 40px;">
+            aa aa aa aa aa aa aa aa aa aa aa
+          </td>
+          <td style="width: 40px; white-space: nowrap">
+            aa aa aa aa aa aa aa aa aa aa aa 
+          </td>
+          <td>
+            This will take the rest of the width
+          </td>
+        </tr>
+      </table>
+    '''
+
+    page, = render_pages(html_content)
+    # This test is confirming that if you specify white-space:  nowrap, then the table will actually
+    # not use wrapping to determine the minimum width of the column
+
+    # the following (through the pattern matching) also assert that there's only one page, one element in the body, etc
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_40px, td_nowrap, td_no_width = row.children
+
+    # confirm that we calculate minimum widths properly
+    context = fake_html_context(html_content)
+    # TODO figure out the source of this exact value, this is a bit tricky
+    assert min_content_width(context, td_40px,) == 19.609375
+    # len(This is not 20px (nowrap)) * font_size
+    # TODO figure out what's going on in these values too
+    assert min_content_width(context, td_nowrap) == 266.5625
+
+    # confirm that the resulting widths are also correct
+    assert table.width == 1400
+    # TODO this came out to 2 * font size instead of width?
+    # TODO I feel like this is a mistaken result
+    assert td_40px.width == 32
+    assert td_nowrap.width == 512
+    # This following line fails but definitely shouldn't
+    assert table.width - (td_40px.width + td_nowrap.width) == td_no_width.width
 
 
 @assert_no_logs

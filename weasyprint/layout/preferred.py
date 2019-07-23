@@ -89,10 +89,11 @@ def max_content_width(context, box, outer=True):
             'max-content width for %s not handled yet' % type(box).__name__)
 
 
-def _block_content_width(context, box, function, outer):
+def _block_content_width(context, box, function, outer,):
     """Helper to create ``block_*_content_width.``"""
     width = box.style['width']
-    if width == 'auto' or width.unit == '%':
+    is_table_cell = isinstance(box, boxes.TableCellBox)
+    if (width == 'auto' or width.unit == '%') or (outer and is_table_cell):
         # "percentages on the following properties are treated instead as
         # though they were the following: width: auto"
         # http://dbaron.org/css/intrinsic/#outer-intrinsic
@@ -434,7 +435,6 @@ def table_and_columns_preferred_widths(context, box, outer=True):
                         _percentage_contribution(cell))
                 else:
                     colspan_cells.append(cell)
-
     # Intermediate content widths for span > 1 is wrong in the 4.1 section, as
     # explained in its third issue. Min- and max-content widths are handled by
     # the excess width distribution method, and percentages do not distribute

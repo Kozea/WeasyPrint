@@ -599,13 +599,30 @@ def auto_table_layout(context, box, containing_block):
             #     assignable_width * 1e-9)
             table.column_widths = upper_guess
         else:
-            added_widths = [
-                upper_guess[i] - lower_guess[i] for i in range(len(grid))]
-            available_ratio = (
-                (assignable_width - sum(lower_guess)) / sum(added_widths))
-            table.column_widths = [
-                lower_guess[i] + added_widths[i] * available_ratio
-                for i in range(len(grid))]
+            non_constrained_column_count = len([c for c in constrainedness if c])
+
+            if non_constrained_column_count > 0:
+                # we have at least one column that can absorb
+                # the remaining width. Let's put the stuff in there
+                result_widths = lower_guess[:]
+                remaining_width = available_width - sum(lower_guess)
+
+                per_width_addition = remaining_width / non_constrained_column_count
+
+                for i, constrained in enumerate(constrainedness):
+                    if constrained:
+                        continue
+                    result_widths[i] += per_width_addition
+                table.column_widths = result_widths
+            else:
+                added_widths = [
+                    upper_guess[i] - lower_guess[i] for i in range(len(grid))
+                ]
+                available_ratio = (assignable_width - sum(lower_guess)) / sum(added_widths)
+                table.column_widths = [
+                    lower_guess[i] + added_widths[i] * available_ratio
+                    for i in range(len(grid))
+                ]
     else:
         table.column_widths = max_content_guess
         excess_width = assignable_width - sum(max_content_guess)
