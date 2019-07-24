@@ -383,6 +383,35 @@ def test_layout_table_auto_4():
 
 
 @assert_no_logs
+def test_layout_table_auto_5():
+    page, = render_pages('''
+      <style>
+        @font-face { src: url(AHEM____.TTF); font-family: ahem }
+        * { font-family: ahem }
+      </style>
+      <table style="width: 1000px; font-family: ahem">
+        <tr>
+          <td style="width: 40px">aa aa aa aa</td>
+          <td style="width: 40px">aaaaaaaaaaa</td>
+          <td>This will take the rest of the width</td>
+        </tr>
+      </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, td_2, td_3 = row.children
+
+    assert table.width == 1000
+    assert td_1.width == 40
+    assert td_2.width == 11 * 16
+    assert td_3.width == 1000 - 40 - 11 * 16
+
+
+@assert_no_logs
 def test_layout_table_auto_6():
     page, = render_pages('''
       <style>
