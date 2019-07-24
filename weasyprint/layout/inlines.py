@@ -337,10 +337,12 @@ def first_letter_to_box(box, skip_stack, first_letter_style):
 
 
 @handle_min_max_width
-def replaced_box_width(box):
+def replaced_box_width(box, containing_block):
     """
     Compute and set the used width for replaced boxes (inline- or block-level)
     """
+    from .blocks import block_level_width
+
     intrinsic_width, intrinsic_height = box.replacement.get_intrinsic_size(
         box.style['image_resolution'], box.style['font_size'])
 
@@ -356,15 +358,7 @@ def replaced_box_width(box):
                 box.width = intrinsic_height * box.replacement.intrinsic_ratio
             else:
                 # Point #3
-                # " It is suggested that, if the containing block's width does
-                #   not itself depend on the replaced element's width, then the
-                #   used value of 'width' is calculated from the constraint
-                #   equation used for block-level, non-replaced elements in
-                #   normal flow. "
-                # Whaaaaat? Let's not do this and use a value that may work
-                # well at least with inline blocks.
-                box.width = (
-                    box.style['font_size'] * box.replacement.intrinsic_ratio)
+                block_level_width(box, containing_block)
 
     if box.width == 'auto':
         if box.replacement.intrinsic_ratio is not None:
@@ -407,21 +401,21 @@ def replaced_box_height(box):
         box.height = 150
 
 
-def inline_replaced_box_layout(box):
+def inline_replaced_box_layout(box, containing_block):
     """Lay out an inline :class:`boxes.ReplacedBox` ``box``."""
     for side in ['top', 'right', 'bottom', 'left']:
         if getattr(box, 'margin_' + side) == 'auto':
             setattr(box, 'margin_' + side, 0)
-    inline_replaced_box_width_height(box)
+    inline_replaced_box_width_height(box, containing_block)
 
 
-def inline_replaced_box_width_height(box):
+def inline_replaced_box_width_height(box, containing_block):
     if box.style['width'] == 'auto' and box.style['height'] == 'auto':
-        replaced_box_width.without_min_max(box)
+        replaced_box_width.without_min_max(box, containing_block)
         replaced_box_height.without_min_max(box)
         min_max_auto_replaced(box)
     else:
-        replaced_box_width(box)
+        replaced_box_width(box, containing_block)
         replaced_box_height(box)
 
 
@@ -491,7 +485,7 @@ def atomic_box(context, box, position_x, skip_stack, containing_block,
         if getattr(box, 'is_list_marker', False):
             image_marker_layout(box)
         else:
-            inline_replaced_box_layout(box)
+            inline_replaced_box_layout(box, containing_block)
         box.baseline = box.margin_height()
     elif isinstance(box, boxes.InlineBlockBox):
         if box.is_table_wrapper:

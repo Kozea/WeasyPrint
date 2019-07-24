@@ -142,7 +142,7 @@ def block_box_layout(context, box, max_position_y, skip_stack,
 @handle_min_max_width
 def block_replaced_width(box, containing_block):
     # http://www.w3.org/TR/CSS21/visudet.html#block-replaced-width
-    replaced_box_width.without_min_max(box)
+    replaced_box_width.without_min_max(box, containing_block)
     block_level_width.without_min_max(box, containing_block)
 
 

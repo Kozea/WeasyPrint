@@ -56,7 +56,7 @@ def float_layout(context, box, containing_block, absolute_boxes, fixed_boxes):
         box.position_y += clearance
 
     if isinstance(box, boxes.BlockReplacedBox):
-        inline_replaced_box_width_height(box)
+        inline_replaced_box_width_height(box, containing_block)
     elif box.width == 'auto':
         float_width(box, context, containing_block)
 

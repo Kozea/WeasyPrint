@@ -307,7 +307,7 @@ def absolute_box_layout(context, box, containing_block, fixed_boxes):
 def absolute_replaced(context, box, containing_block):
     # avoid a circular import
     from .inlines import inline_replaced_box_width_height
-    inline_replaced_box_width_height(box)
+    inline_replaced_box_width_height(box, containing_block)
 
     cb_x, cb_y, cb_width, cb_height = containing_block
     ltr = box.style['direction'] == 'ltr'
