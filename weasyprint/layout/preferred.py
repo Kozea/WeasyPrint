@@ -42,12 +42,13 @@ def min_content_width(context, box, outer=True):
     This is the width by breaking at every line-break opportunity.
 
     """
-    if isinstance(box, (
+    if box.is_table_wrapper:
+        return table_and_columns_preferred_widths(context, box, outer)[0]
+    elif isinstance(box, boxes.TableCellBox):
+        return table_cell_min_content_width(context, box, outer)
+    elif isinstance(box, (
             boxes.BlockContainerBox, boxes.TableColumnBox, boxes.FlexBox)):
-        if box.is_table_wrapper:
-            return table_and_columns_preferred_widths(context, box, outer)[0]
-        else:
-            return block_min_content_width(context, box, outer)
+        return block_min_content_width(context, box, outer)
     elif isinstance(box, boxes.TableColumnGroupBox):
         return column_group_content_width(context, box)
     elif isinstance(box, (boxes.InlineBox, boxes.LineBox)):
@@ -69,12 +70,13 @@ def max_content_width(context, box, outer=True):
     This is the width by only breaking at forced line breaks.
 
     """
-    if isinstance(box, (
+    if box.is_table_wrapper:
+        return table_and_columns_preferred_widths(context, box, outer)[1]
+    elif isinstance(box, boxes.TableCellBox):
+        return table_cell_max_content_width(context, box, outer)
+    elif isinstance(box, (
             boxes.BlockContainerBox, boxes.TableColumnBox, boxes.FlexBox)):
-        if box.is_table_wrapper:
-            return table_and_columns_preferred_widths(context, box, outer)[1]
-        else:
-            return block_max_content_width(context, box, outer)
+        return block_max_content_width(context, box, outer)
     elif isinstance(box, boxes.TableColumnGroupBox):
         return column_group_content_width(context, box)
     elif isinstance(box, (boxes.InlineBox, boxes.LineBox)):
@@ -206,7 +208,7 @@ def inline_max_content_width(context, box, outer=True, is_line_start=False):
 
 
 def column_group_content_width(context, box):
-    """Return the *-content width for an ``TableColumnGroupBox``."""
+    """Return the *-content width for a ``TableColumnGroupBox``."""
     width = box.style['width']
     if width == 'auto' or width.unit == '%':
         width = 0
@@ -215,6 +217,31 @@ def column_group_content_width(context, box):
         width = width.value
 
     return adjust(box, False, width)
+
+
+def table_cell_min_content_width(context, box, outer):
+    """Return the min-content width for a ``TableCellBox``."""
+    children_widths = [
+        min_content_width(context, child, outer=True)
+        for child in box.children
+        if not child.is_absolutely_positioned()]
+    children_min_width = margin_width(
+        box, max(children_widths) if children_widths else 0)
+
+    width = box.style['width']
+    if width != 'auto' and width.unit == 'px':
+        cell_min_width = adjust(box, outer, width.value)
+    else:
+        cell_min_width = 0
+
+    return max(children_min_width, cell_min_width)
+
+
+def table_cell_max_content_width(context, box, outer):
+    """Return the max-content width for a ``TableCellBox``."""
+    return max(
+        table_cell_min_content_width(context, box, outer),
+        block_max_content_width(context, box, outer))
 
 
 def inline_line_widths(context, box, outer, is_line_start, minimum,
