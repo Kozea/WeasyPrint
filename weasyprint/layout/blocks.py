@@ -17,7 +17,6 @@ from .float import avoid_collisions, float_layout, get_clearance
 from .inlines import (
     iter_line_boxes, min_max_auto_replaced, replaced_box_height,
     replaced_box_width)
-from .markers import list_marker_layout
 from .min_max import handle_min_max_width
 from .percentages import resolve_percentages, resolve_position_percentages
 from .tables import table_layout, table_wrapper_width
@@ -671,24 +670,6 @@ def block_container_layout(context, box, max_position_y, skip_stack,
 
     if next_page['page'] is None:
         next_page['page'] = new_box.page_values()[1]
-
-    list_marker_layout(context, new_box)
-    if new_box.outside_list_marker:
-        # See https://www.w3.org/TR/css-lists-3/#list-style-position-outside
-        #
-        # "The size or contents of the marker box may affect the height of the
-        #  principal block box and/or the height of its first line box, and in
-        #  some cases may cause the creation of a new line box; this
-        #  interaction is also not defined."
-        #
-        # We decide here to set the list item box heigth to be at least the
-        # height of the marker. Adding an empty line would theoretically be a
-        # cleaner solution, but formatting the formatting structure is tricky
-        # and we don't need another workaround there.
-        collapsing_through = False
-        adjoining_margins = []
-        new_box.height = max(
-            new_box.height, new_box.outside_list_marker.height)
 
     return new_box, resume_at, next_page, adjoining_margins, collapsing_through
 

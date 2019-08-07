@@ -34,7 +34,8 @@ from .validation import preprocess_declarations
 from .validation.descriptors import preprocess_descriptors
 
 # Reject anything not in here:
-PSEUDO_ELEMENTS = (None, 'before', 'after', 'first-line', 'first-letter')
+PSEUDO_ELEMENTS = (
+    None, 'before', 'after', 'marker', 'first-line', 'first-letter')
 
 
 PageType = namedtuple('PageType', ['side', 'blank', 'first', 'index', 'name'])

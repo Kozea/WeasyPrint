@@ -939,30 +939,38 @@ def test_counters_2():
         ('ol', 'Block', [
             ('li', 'Block', [
                 ('li', 'Line', [
-                    ('li::marker', 'Text', '1.')])]),
+                    ('li::marker', 'Inline', [
+                        ('li::marker', 'Text', '1. ')])])]),
             ('li', 'Block', [
                 ('li', 'Line', [
-                    ('li::marker', 'Text', '2.')])]),
+                    ('li::marker', 'Inline', [
+                        ('li::marker', 'Text', '2. ')])])]),
             ('li', 'Block', [
                 ('li', 'Line', [
-                    ('li::marker', 'Text', '3.')])]),
+                    ('li::marker', 'Inline', [
+                        ('li::marker', 'Text', '3. ')])])]),
             ('li', 'Block', [
                 ('li', 'Block', [
                     ('li', 'Line', [
-                        ('li::marker', 'Text', '4.')])]),
+                        ('li::marker', 'Inline', [
+                            ('li::marker', 'Text', '4. ')])])]),
                 ('ol', 'Block', [
                     ('li', 'Block', [
                         ('li', 'Line', [
-                            ('li::marker', 'Text', '1.')])]),
+                            ('li::marker', 'Inline', [
+                                ('li::marker', 'Text', '1. ')])])]),
                     ('li', 'Block', [
                         ('li', 'Line', [
-                            ('li::marker', 'Text', '1.')])]),
+                            ('li::marker', 'Inline', [
+                                ('li::marker', 'Text', '1. ')])])]),
                     ('li', 'Block', [
                         ('li', 'Line', [
-                            ('li::marker', 'Text', '2.')])])])]),
+                            ('li::marker', 'Inline', [
+                                ('li::marker', 'Text', '2. ')])])])])]),
             ('li', 'Block', [
                 ('li', 'Line', [
-                    ('li::marker', 'Text', '5.')])])])])
+                    ('li::marker', 'Inline', [
+                        ('li::marker', 'Text', '5. ')])])])])])
 
 
 @assert_no_logs
@@ -980,16 +988,20 @@ def test_counters_3():
         ('div', 'Block', [
             ('p', 'Block', [
                 ('p', 'Line', [
-                    ('p::marker', 'Text', '1.')])]),
+                    ('p::marker', 'Inline', [
+                        ('p::marker', 'Text', '1. ')])])]),
             ('p', 'Block', [
                 ('p', 'Line', [
-                    ('p::marker', 'Text', '2.')])]),
+                    ('p::marker', 'Inline', [
+                        ('p::marker', 'Text', '2. ')])])]),
             ('p', 'Block', [
                 ('p', 'Line', [
-                    ('p::marker', 'Text', '-55.')])])]),
+                    ('p::marker', 'Inline', [
+                        ('p::marker', 'Text', '-55. ')])])])]),
         ('p', 'Block', [
             ('p', 'Line', [
-                ('p::marker', 'Text', '1.')])])])
+                ('p::marker', 'Inline', [
+                    ('p::marker', 'Text', '1. ')])])])])
 
 
 @assert_no_logs
@@ -1069,7 +1081,8 @@ def test_counters_6():
                 display: list-item; list-style: inside decimal">'''), [
         ('p', 'Block', [
             ('p', 'Line', [
-                ('p::marker', 'Text', '0.')])])])
+                ('p::marker', 'Inline', [
+                    ('p::marker', 'Text', '0. ')])])])])
 
 
 @assert_no_logs
@@ -1089,6 +1102,23 @@ def test_counters_7():
                 ('p::before', 'Inline', [
                     ('p::before', 'Text', counter)])])])
         for counter in '2.0 2.3 4.3'.split()])
+
+
+@assert_no_logs
+def test_counters_8():
+    assert_tree(parse_all('''
+      <style>
+        p:before { content: 'a'; display: list-item }
+      </style>
+      <p></p>
+      <p></p>'''), 2 * [
+        ('p', 'Block', [
+          ('p::marker', 'Block', [
+            ('p::marker', 'Line', [
+              ('p::marker', 'Text', '• ')])]),
+          ('p::before', 'Block', [
+            ('p::before', 'Line', [
+              ('p::before', 'Text', 'a')])])])])
 
 
 @assert_no_logs

@@ -84,7 +84,6 @@ class Box(object):
     transformation_matrix = None
     bookmark_label = None
     string_set = None
-    outside_list_marker = None
 
     # Default, overriden on some subclasses
     def all_children(self):
@@ -330,8 +329,6 @@ class ParentBox(Box):
         """Create a new equivalent box with given ``new_children``."""
         new_box = self.copy()
         new_box.children = tuple(new_children)
-        if not is_start:
-            new_box.outside_list_marker = None
         if self.style['box_decoration_break'] == 'slice':
             new_box._remove_decoration(not is_start, not is_end)
         return new_box
@@ -394,10 +391,6 @@ class BlockBox(BlockContainerBox, BlockLevelBox):
     generates a block box.
 
     """
-    # TODO: remove this when outside list marker are absolute children
-    def all_children(self):
-        return (itertools.chain(self.children, [self.outside_list_marker])
-                if self.outside_list_marker else self.children)
 
 
 class LineBox(ParentBox):

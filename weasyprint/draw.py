@@ -253,11 +253,6 @@ def draw_stacking_context(context, stacking_context, enable_hinting):
 
             # Point 7
             for block in [box] + stacking_context.blocks_and_cells:
-                if block.outside_list_marker:
-                    draw_inline_level(
-                        context, stacking_context.page,
-                        block.outside_list_marker, enable_hinting)
-
                 if isinstance(block, boxes.ReplacedBox):
                     draw_replacedbox(context, block)
                 else:

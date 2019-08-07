@@ -13,22 +13,6 @@
 from .percentages import percentage
 
 
-def image_marker_layout(box):
-    """Layout the :class:`boxes.ImageMarkerBox` ``box``.
-
-    :class:`boxes.ImageMarkerBox` objects are :class:`boxes.ReplacedBox`
-    objects, but their used size is computed differently.
-
-    """
-    image = box.replacement
-    one_em = box.style['font_size']
-    iwidth, iheight = image.get_intrinsic_size(
-        box.style['image_resolution'], one_em)
-    box.width, box.height = default_image_sizing(
-        iwidth, iheight, image.intrinsic_ratio, box.width, box.height,
-        default_width=one_em, default_height=one_em)
-
-
 def default_image_sizing(intrinsic_width, intrinsic_height, intrinsic_ratio,
                          specified_width, specified_height,
                          default_width, default_height):

@@ -32,3 +32,5 @@ h3 { bookmark-level: 3; bookmark-label: content(text); }
 h4 { bookmark-level: 4; bookmark-label: content(text); }
 h5 { bookmark-level: 5; bookmark-label: content(text); }
 h6 { bookmark-level: 6; bookmark-label: content(text); }
+
+::marker { unicode-bidi: isolate; font-variant-numeric: tabular-nums; }

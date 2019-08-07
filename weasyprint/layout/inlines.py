@@ -22,7 +22,6 @@ from .min_max import handle_min_max_height, handle_min_max_width
 from .percentages import resolve_one_percentage, resolve_percentages
 from .preferred import (
     inline_min_content_width, shrink_to_fit, trailing_whitespace_size)
-from .replaced import image_marker_layout
 from .tables import find_in_flow_baseline, table_wrapper_width
 
 
@@ -482,10 +481,7 @@ def atomic_box(context, box, position_x, skip_stack, containing_block,
     """Compute the width and the height of the atomic ``box``."""
     if isinstance(box, boxes.ReplacedBox):
         box = box.copy()
-        if getattr(box, 'is_list_marker', False):
-            image_marker_layout(box)
-        else:
-            inline_replaced_box_layout(box, containing_block)
+        inline_replaced_box_layout(box, containing_block)
         box.baseline = box.margin_height()
     elif isinstance(box, boxes.InlineBlockBox):
         if box.is_table_wrapper:
