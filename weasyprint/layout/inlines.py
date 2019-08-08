@@ -1085,9 +1085,10 @@ def aligned_subtree_verticality(box, top_bottom_subtrees, baseline_y):
     # Account for the line box itself:
     top = baseline_y - box.baseline
     bottom = top + box.margin_height()
-    if min_y is None or top < min_y:
+    # Ignore differences smaller than 0.5 to work around Pango roundings
+    if min_y is None or min_y - top > 0.5:
         min_y = top
-    if max_y is None or bottom > max_y:
+    if max_y is None or bottom - max_y > 0.5:
         max_y = bottom
 
     return max_y, min_y
@@ -1155,17 +1156,18 @@ def inline_box_verticality(box, top_bottom_subtrees, baseline_y):
             top_bottom_subtrees.append(child)
             continue
 
+        # Ignore differences smaller than 0.5 to work around Pango roundings
         bottom = top + child.margin_height()
-        if min_y is None or top < min_y:
+        if min_y is None or min_y - top > 0.5:
             min_y = top
-        if max_y is None or bottom > max_y:
+        if max_y is None or bottom - max_y > 0.5:
             max_y = bottom
         if isinstance(child, boxes.InlineBox):
             children_max_y, children_min_y = inline_box_verticality(
                 child, top_bottom_subtrees, child_baseline_y)
-            if children_min_y is not None and children_min_y < min_y:
+            if children_min_y is not None and min_y - children_min_y > 0.5:
                 min_y = children_min_y
-            if children_max_y is not None and children_max_y > max_y:
+            if children_max_y is not None and children_max_y - max_y > 0.5:
                 max_y = children_max_y
     return max_y, min_y
 
