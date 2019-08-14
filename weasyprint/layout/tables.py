@@ -336,7 +336,7 @@ def table_layout(context, table, max_position_y, skip_stack,
                 return (header, new_table_children, footer,
                         end_position_y, resume_at)
             else:
-                # We could not fit any content, drop the footer
+                # We could not fit any content, drop the header
                 header = None
 
         if footer and not header:
