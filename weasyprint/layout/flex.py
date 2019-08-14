@@ -431,8 +431,8 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
             else:
                 child.height = (
                     child.target_main_size -
-                    child.padding_left - child.padding_right -
-                    child.border_left_width - child.border_right_width)
+                    child.padding_top - child.padding_bottom -
+                    child.border_top_width - child.border_top_width)
                 if child.margin_left != 'auto':
                     child.height -= child.margin_left
                 if child.margin_right != 'auto':
