@@ -300,13 +300,22 @@ def table_layout(context, table, max_position_y, skip_stack,
         else:
             footer = None
 
+        # Don't remove headers and footers if breaks are avoided in line groups
+        skip = skip_stack[0] if skip_stack else 0
+        avoid_breaks = False
+        for group in table.children[skip:]:
+            if not group.is_header and not group.is_footer:
+                avoid_breaks = (
+                    group.style['break_inside'] in ('avoid', 'avoid-page'))
+                break
+
         if header and footer:
             # Try with both the header and footer
             new_table_children, resume_at, end_position_y = body_groups_layout(
                 skip_stack,
                 position_y=position_y + header_height,
                 max_position_y=max_position_y - footer_height,
-                page_is_empty=False)
+                page_is_empty=avoid_breaks)
             if new_table_children or not page_is_empty:
                 footer.translate(dy=end_position_y - footer.position_y)
                 end_position_y += footer_height
@@ -322,7 +331,7 @@ def table_layout(context, table, max_position_y, skip_stack,
                 skip_stack,
                 position_y=position_y + header_height,
                 max_position_y=max_position_y,
-                page_is_empty=False)
+                page_is_empty=avoid_breaks)
             if new_table_children or not page_is_empty:
                 return (header, new_table_children, footer,
                         end_position_y, resume_at)
@@ -336,7 +345,7 @@ def table_layout(context, table, max_position_y, skip_stack,
                 skip_stack,
                 position_y=position_y,
                 max_position_y=max_position_y - footer_height,
-                page_is_empty=False)
+                page_is_empty=avoid_breaks)
             if new_table_children or not page_is_empty:
                 footer.translate(dy=end_position_y - footer.position_y)
                 end_position_y += footer_height
