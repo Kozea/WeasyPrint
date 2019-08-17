@@ -361,7 +361,7 @@ comes to tables of contents (see `an example
 .. _bookmarks:
 
 You can also control `PDF bookmarks`_ with WeasyPrint. Using the experimental_
-``bookmark-level``, ``bookmark-level`` and ``bookmark-state`` properties, you
+``bookmark-level``, ``bookmark-label`` and ``bookmark-state`` properties, you
 can add bookmarks that will be available in your PDF reader.
 
 Bookmarks have already been added in the WeasyPrint's `user agent stylesheet`_,

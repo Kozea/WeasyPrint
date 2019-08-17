@@ -307,11 +307,11 @@ def get_html_metadata(wrapper_element, base_url):
         elif element.tag == 'link' and element_has_link_type(
                 element, 'attachment'):
             url = get_url_attribute(element, 'href', base_url)
-            title = element.get('title', None)
+            attachment_title = element.get('title', None)
             if url is None:
                 LOGGER.error('Missing href in <link rel="attachment">')
             else:
-                attachments.append((url, title))
+                attachments.append((url, attachment_title))
     return dict(title=title, description=description, generator=generator,
                 keywords=keywords, authors=authors,
                 created=created, modified=modified,

@@ -437,7 +437,7 @@ environment variable.
 Since you didn't cheat and followed the instructions the up-to-date and
 complete set of GTK libraries **must** be present and the error is an error.
 
-Lets find out. Enter the following command:
+Let's find out. Enter the following command:
 
 .. code-block:: console
 
@@ -471,7 +471,7 @@ Determine the correct folder and execute the following commands, replace
     SET PATH=%PROPER_GTK_FOLDER%;%PATH%
 
 This puts the appropriate GTK at the beginning of your ``PATH`` and
-it's files are the first found when WeasyPrint requires them.
+its files are the first found when WeasyPrint requires them.
 
 Call WeasyPrint again:
 
