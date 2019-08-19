@@ -68,11 +68,14 @@ class StyleFor:
         for specificity, attributes in find_style_attributes(
                 html.etree_element, presentational_hints, html.base_url):
             element, declarations, base_url = attributes
+            style = cascaded_styles.setdefault((element, None), {})
             for name, values, importance in preprocess_declarations(
                     base_url, declarations):
                 precedence = declaration_precedence('author', importance)
                 weight = (precedence, specificity)
-                add_declaration(cascaded_styles, name, values, weight, element)
+                old_weight = style.get(name, (None, None))[1]
+                if old_weight is None or old_weight <= weight:
+                    style[name] = values, weight
 
         # First, add declarations and set computed styles for "real" elements
         # *in tree order*. Tree order is important so that parents have
@@ -85,12 +88,14 @@ class StyleFor:
                 for selector in sheet.matcher.match(element):
                     specificity, order, pseudo_type, declarations = selector
                     specificity = sheet_specificity or specificity
+                    style = cascaded_styles.setdefault(
+                        (element.etree_element, pseudo_type), {})
                     for name, values, importance in declarations:
                         precedence = declaration_precedence(origin, importance)
                         weight = (precedence, specificity)
-                        add_declaration(
-                            cascaded_styles, name, values, weight,
-                            element.etree_element, pseudo_type)
+                        old_weight = style.get(name, (None, None))[1]
+                        if old_weight is None or old_weight <= weight:
+                            style[name] = values, weight
             parent = element.parent.etree_element if element.parent else None
             self.set_computed_styles(
                 element.etree_element, root=html.etree_element, parent=parent,
@@ -166,13 +171,15 @@ class StyleFor:
                     specificity, pseudo_type, selector_page_type = selector
                     if self._page_type_match(selector_page_type, page_type):
                         specificity = sheet_specificity or specificity
+                        style = self._cascaded_styles.setdefault(
+                            (page_type, pseudo_type), {})
                         for name, values, importance in declarations:
                             precedence = declaration_precedence(
                                 origin, importance)
                             weight = (precedence, specificity)
-                            add_declaration(
-                                self._cascaded_styles, name, values, weight,
-                                page_type, pseudo_type)
+                            old_weight = style.get(name, (None, None))[1]
+                            if old_weight is None or old_weight <= weight:
+                                style[name] = values, weight
 
     def get_cascaded_styles(self):
         return self._cascaded_styles
@@ -572,19 +579,6 @@ def declaration_precedence(origin, importance):
     else:
         assert origin == 'user'  # and importance
         return 5
-
-
-def add_declaration(cascaded_styles, prop_name, prop_values, weight, element,
-                    pseudo_type=None):
-    """Set the value for a property on a given element.
-
-    The value is only set if there is no value of greater weight defined yet.
-
-    """
-    style = cascaded_styles.setdefault((element, pseudo_type), {})
-    _values, previous_weight = style.get(prop_name, (None, None))
-    if previous_weight is None or previous_weight <= weight:
-        style[prop_name] = prop_values, weight
 
 
 def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
