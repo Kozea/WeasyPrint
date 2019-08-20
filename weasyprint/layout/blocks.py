@@ -731,20 +731,6 @@ def establishes_formatting_context(box):
     )
 
 
-def combine_break_values(values):
-    result = 'auto'
-    for value in values:
-        if value in ('left', 'right', 'recto', 'verso') or (value, result) in (
-                ('page', 'auto'),
-                ('page', 'avoid'),
-                ('avoid', 'auto'),
-                ('page', 'avoid-page'),
-                ('avoid-page', 'auto')):
-            result = value
-
-    return result
-
-
 def block_level_page_break(sibling_before, sibling_after):
     """Return the value of ``page-break-before`` or ``page-break-after``
     that "wins" for boxes that meet at the margin between two sibling boxes.
@@ -780,7 +766,17 @@ def block_level_page_break(sibling_before, sibling_after):
             break
         box = box.children[0]
 
-    return combine_break_values(values)
+    result = 'auto'
+    for value in values:
+        if value in ('left', 'right', 'recto', 'verso') or (value, result) in (
+                ('page', 'auto'),
+                ('page', 'avoid'),
+                ('avoid', 'auto'),
+                ('page', 'avoid-page'),
+                ('avoid-page', 'auto')):
+            result = value
+
+    return result
 
 
 def block_level_page_name(sibling_before, sibling_after):

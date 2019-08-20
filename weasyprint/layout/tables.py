@@ -20,7 +20,7 @@ def table_layout(context, table, max_position_y, skip_stack,
                  fixed_boxes):
     """Layout for a table box."""
     # Avoid a circular import
-    from .blocks import block_container_layout, combine_break_values
+    from .blocks import block_container_layout, block_level_page_break
 
     column_widths = table.column_widths
 
@@ -62,7 +62,7 @@ def table_layout(context, table, max_position_y, skip_stack,
     def group_layout(group, position_y, max_position_y,
                      page_is_empty, skip_stack):
         resume_at = None
-        next_page = {'break': None, 'page': None}
+        next_page = {'break': 'any', 'page': None}
         original_page_is_empty = page_is_empty
         resolve_percentages(group, containing_block=table)
         group.position_x = rows_x
@@ -80,6 +80,15 @@ def table_layout(context, table, max_position_y, skip_stack,
             assert not skip_stack  # No breaks inside rows for now
         for i, row in enumerate(group.children[skip:]):
             index_row = i + skip
+
+            if i > 0:
+                page_break = block_level_page_break(
+                    new_group_children[-1], row)
+                if page_break in ('page', 'recto', 'verso', 'left', 'right'):
+                    next_page['break'] = page_break
+                    resume_at = (index_row, None)
+                    break
+
             resolve_percentages(row, containing_block=table)
             row.position_x = rows_x
             row.position_y = position_y
@@ -217,14 +226,6 @@ def table_layout(context, table, max_position_y, skip_stack,
             new_group_children.append(row)
             page_is_empty = False
 
-            if row.style['break_after'] in (
-                    'page', 'recto', 'verso', 'left', 'right'):
-                if index_row < len(group.children) - 1:
-                    resume_at = (index_row + 1, None)
-                    break
-                else:
-                    next_page['break'] = row.style['break_after']
-
         # Do not keep the row group if we made a page break
         # before any of its rows or with 'avoid'
         if resume_at and not original_page_is_empty and (
@@ -264,6 +265,15 @@ def table_layout(context, table, max_position_y, skip_stack,
         next_page = {'break': 'any', 'page': None}
         for i, group in enumerate(table.children[skip:]):
             index_group = i + skip
+
+            if i > 0:
+                page_break = block_level_page_break(
+                    new_table_children[-1], group)
+                if page_break in ('page', 'recto', 'verso', 'left', 'right'):
+                    next_page['break'] = page_break
+                    resume_at = (index_group, None)
+                    break
+
             if group.is_header or group.is_footer:
                 continue
             new_group, resume_at, next_page = group_layout(
@@ -278,16 +288,8 @@ def table_layout(context, table, max_position_y, skip_stack,
             position_y += new_group.height + border_spacing_y
             page_is_empty = False
 
-            next_page['break'] = combine_break_values(
-                (next_page['break'], group.style['break_after']))
-
-            if resume_at or next_page['break'] in (
-                    'page', 'recto', 'verso', 'left', 'right'):
-                if resume_at is None:
-                    if index_group < len(table.children) - 1:
-                        resume_at = (index_group + 1, None)
-                else:
-                    resume_at = (index_group, resume_at)
+            if resume_at:
+                resume_at = (index_group, resume_at)
                 break
 
         return new_table_children, resume_at, next_page, position_y
@@ -439,10 +441,6 @@ def table_layout(context, table, max_position_y, skip_stack,
         group.position_y = initial_position_y
         group.width = last.position_x + last.width - first.position_x
         group.height = columns_height
-
-    next_page['break'] = combine_break_values(
-        (next_page['break'], table.style['break_after']))
-    next_page['page'] = table.style['page']
 
     if resume_at and not page_is_empty and (
             table.style['break_inside'] in ('avoid', 'avoid-page') or
