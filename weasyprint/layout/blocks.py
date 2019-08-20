@@ -731,6 +731,20 @@ def establishes_formatting_context(box):
     )
 
 
+def combine_break_values(values):
+    result = 'auto'
+    for value in values:
+        if value in ('left', 'right', 'recto', 'verso') or (value, result) in (
+                ('page', 'auto'),
+                ('page', 'avoid'),
+                ('avoid', 'auto'),
+                ('page', 'avoid-page'),
+                ('avoid-page', 'auto')):
+            result = value
+
+    return result
+
+
 def block_level_page_break(sibling_before, sibling_after):
     """Return the value of ``page-break-before`` or ``page-break-after``
     that "wins" for boxes that meet at the margin between two sibling boxes.
@@ -747,8 +761,12 @@ def block_level_page_break(sibling_before, sibling_after):
 
     """
     values = []
+    # https://drafts.csswg.org/css-break-3/#possible-breaks
+    block_parallel_box_types = (
+        boxes.BlockLevelBox, boxes.TableRowGroupBox, boxes.TableRowBox)
+
     box = sibling_before
-    while isinstance(box, boxes.BlockLevelBox):
+    while isinstance(box, block_parallel_box_types):
         values.append(box.style['break_after'])
         if not (isinstance(box, boxes.ParentBox) and box.children):
             break
@@ -756,23 +774,13 @@ def block_level_page_break(sibling_before, sibling_after):
     values.reverse()  # Have them in tree order
 
     box = sibling_after
-    while isinstance(box, boxes.BlockLevelBox):
+    while isinstance(box, block_parallel_box_types):
         values.append(box.style['break_before'])
         if not (isinstance(box, boxes.ParentBox) and box.children):
             break
         box = box.children[0]
 
-    result = 'auto'
-    for value in values:
-        if value in ('left', 'right', 'recto', 'verso') or (value, result) in (
-                ('page', 'auto'),
-                ('page', 'avoid'),
-                ('avoid', 'auto'),
-                ('page', 'avoid-page'),
-                ('avoid-page', 'auto')):
-            result = value
-
-    return result
+    return combine_break_values(values)
 
 
 def block_level_page_name(sibling_before, sibling_after):
