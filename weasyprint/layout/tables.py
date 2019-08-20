@@ -81,7 +81,7 @@ def table_layout(context, table, max_position_y, skip_stack,
         for i, row in enumerate(group.children[skip:]):
             index_row = i + skip
 
-            if i > 0:
+            if new_group_children:
                 page_break = block_level_page_break(
                     new_group_children[-1], row)
                 if page_break in ('page', 'recto', 'verso', 'left', 'right'):
@@ -266,7 +266,7 @@ def table_layout(context, table, max_position_y, skip_stack,
         for i, group in enumerate(table.children[skip:]):
             index_group = i + skip
 
-            if i > 0:
+            if new_table_children:
                 page_break = block_level_page_break(
                     new_table_children[-1], group)
                 if page_break in ('page', 'recto', 'verso', 'left', 'right'):
