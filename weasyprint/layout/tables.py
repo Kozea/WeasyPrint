@@ -266,6 +266,9 @@ def table_layout(context, table, max_position_y, skip_stack,
         for i, group in enumerate(table.children[skip:]):
             index_group = i + skip
 
+            if group.is_header or group.is_footer:
+                continue
+
             if new_table_children:
                 page_break = block_level_page_break(
                     new_table_children[-1], group)
@@ -274,8 +277,6 @@ def table_layout(context, table, max_position_y, skip_stack,
                     resume_at = (index_group, None)
                     break
 
-            if group.is_header or group.is_footer:
-                continue
             new_group, resume_at, next_page = group_layout(
                 group, position_y, max_position_y, page_is_empty, skip_stack)
             skip_stack = None
