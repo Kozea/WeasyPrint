@@ -219,7 +219,22 @@ def table_layout(context, table, max_position_y, skip_stack,
             # Break if this row overflows the page, unless there is no
             # other content on the page.
             if next_position_y > max_position_y and not page_is_empty:
-                resume_at = (index_row, None)
+                index = len(new_group_children)
+                while index:
+                    page_break = block_level_page_break(
+                        new_group_children[index - 1], row)
+                    if page_break == 'avoid':
+                        index -= 1
+                        row = new_group_children[index]
+                    else:
+                        resume_at = (index, None)
+                        new_group_children = new_group_children[:index]
+                        break
+                else:
+                    if original_page_is_empty:
+                        resume_at = (index_row, None)
+                    else:
+                        return None, None, next_page
                 break
 
             position_y = next_position_y

@@ -2226,6 +2226,129 @@ def test_table_page_break_before():
 
 
 @assert_no_logs
+@pytest.mark.parametrize('html, rows', (
+    ('''
+      <style>
+        @page { size: 100px }
+        table { table-layout: fixed; width: 100% }
+        tr { height: 26px }
+      </style>
+      <table>
+        <tbody>
+          <tr><td>row 0</td></tr>
+          <tr><td>row 1</td></tr>
+          <tr style="break-before: avoid"><td>row 2</td></tr>
+          <tr style="break-before: avoid"><td>row 3</td></tr>
+        </tbody>
+      </table>
+    ''',
+     [1, 3]),
+    ('''
+      <style>
+        @page { size: 100px }
+        table { table-layout: fixed; width: 100% }
+        tr { height: 26px }
+      </style>
+      <table>
+        <tbody>
+          <tr><td>row 0</td></tr>
+          <tr style="break-after: avoid"><td>row 1</td></tr>
+          <tr><td>row 2</td></tr>
+          <tr style="break-before: avoid"><td>row 3</td></tr>
+        </tbody>
+      </table>
+     ''',
+     [1, 3]),
+    ('''
+      <style>
+        @page { size: 100px }
+        table { table-layout: fixed; width: 100% }
+        tr { height: 26px }
+      </style>
+      <table>
+        <tbody>
+          <tr><td>row 0</td></tr>
+          <tr><td>row 1</td></tr>
+          <tr style="break-after: avoid"><td>row 2</td></tr>
+          <tr><td>row 3</td></tr>
+        </tbody>
+      </table>
+     ''',
+     [2, 2]),
+    ('''
+      <style>
+        @page { size: 100px }
+        table { table-layout: fixed; width: 100% }
+        tr { height: 26px }
+      </style>
+      <table>
+        <tbody>
+          <tr style="break-before: avoid"><td>row 0</td></tr>
+          <tr style="break-before: avoid"><td>row 1</td></tr>
+          <tr style="break-before: avoid"><td>row 2</td></tr>
+          <tr style="break-before: avoid"><td>row 3</td></tr>
+        </tbody>
+      </table>
+     ''',
+     [3, 1]),
+    ('''
+      <style>
+        @page { size: 100px }
+        table { table-layout: fixed; width: 100% }
+        tr { height: 26px }
+      </style>
+      <table>
+        <tbody>
+          <tr style="break-after: avoid"><td>row 0</td></tr>
+          <tr style="break-after: avoid"><td>row 1</td></tr>
+          <tr style="break-after: avoid"><td>row 2</td></tr>
+          <tr style="break-after: avoid"><td>row 3</td></tr>
+        </tbody>
+      </table>
+     ''',
+     [3, 1]),
+    ('''
+      <style>
+        @page { size: 100px }
+        table { table-layout: fixed; width: 100% }
+        tr { height: 26px }
+        p { height: 26px }
+      </style>
+      <p>wow p</p>
+      <table>
+        <tbody>
+          <tr style="break-after: avoid"><td>row 0</td></tr>
+          <tr style="break-after: avoid"><td>row 1</td></tr>
+          <tr style="break-after: avoid"><td>row 2</td></tr>
+          <tr style="break-after: avoid"><td>row 3</td></tr>
+        </tbody>
+      </table>
+     ''',
+     [1, 3, 1])
+))
+def test_table_page_break_avoid(html, rows):
+    pages = render_pages(html)
+    assert len(pages) == len(rows)
+    rows_per_page = []
+    for page in pages:
+        html, = page.children
+        body, = html.children
+        if body.children[0].element_tag == 'p':
+            rows_per_page.append(len(body.children))
+            continue
+        else:
+            table_wrapper, = body.children
+        table, = table_wrapper.children
+        rows_in_this_page = 0
+        for group in table.children:
+            for row in group.children:
+                rows_in_this_page += 1
+        rows_per_page.append(rows_in_this_page)
+
+    assert rows_per_page == rows
+
+
+@assert_no_logs
 @pytest.mark.parametrize('vertical_align, table_position_y', (
     ('top', 8),
     ('bottom', 8),
