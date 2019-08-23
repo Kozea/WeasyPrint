@@ -18,9 +18,9 @@ from ..testing_utils import assert_no_logs
 @assert_no_logs
 @pytest.mark.parametrize('inside', ('inside', '',))
 @pytest.mark.parametrize('style, character', (
-    ('circle', '◦'),
-    ('disc', '•'),
-    ('square', '▪'),
+    ('circle', '◦ '),
+    ('disc', '• '),
+    ('square', '▪ '),
 ))
 def test_lists_style(inside, style, character):
     page, = parse('''
@@ -35,18 +35,20 @@ def test_lists_style(inside, style, character):
     html, = page.children
     body, = html.children
     unordered_list, = body.children
-    list_item, = unordered_list.children
     if inside:
+        list_item, = unordered_list.children
         line, = list_item.children
         marker, content = line.children
+        marker_text, = marker.children
     else:
-        marker = list_item.outside_list_marker
-        assert marker.position_x == (
-            list_item.padding_box_x() - marker.width - marker.margin_right)
+        marker, list_item = unordered_list.children
+        assert marker.position_x == list_item.position_x
         assert marker.position_y == list_item.position_y
         line, = list_item.children
         content, = line.children
-    assert marker.text == character
+        marker_line, = marker.children
+        marker_text, = marker_line.children
+    assert marker_text.text == character
     assert content.text == 'abc'
 
 
@@ -66,5 +68,5 @@ def test_lists_empty_item():
     html, = page.children
     body, = html.children
     unordered_list, = body.children
-    li1, li2, li3 = unordered_list.children
+    _1, li1, _2, li2, _3, li3 = unordered_list.children
     assert li1.position_y != li2.position_y != li3.position_y

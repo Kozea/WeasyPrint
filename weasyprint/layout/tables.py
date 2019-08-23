@@ -15,9 +15,8 @@ from .percentages import resolve_one_percentage, resolve_percentages
 from .preferred import max_content_width, table_and_columns_preferred_widths
 
 
-def table_layout(context, table, max_position_y, skip_stack,
-                 containing_block, device_size, page_is_empty, absolute_boxes,
-                 fixed_boxes):
+def table_layout(context, table, max_position_y, skip_stack, containing_block,
+                 page_is_empty, absolute_boxes, fixed_boxes):
     """Layout for a table box."""
     # Avoid a circular import
     from .blocks import block_container_layout, block_level_page_break
@@ -133,7 +132,6 @@ def table_layout(context, table, max_position_y, skip_stack,
                     context, cell,
                     max_position_y=float('inf'),
                     skip_stack=None,
-                    device_size=device_size,
                     page_is_empty=True,
                     absolute_boxes=absolute_boxes,
                     fixed_boxes=fixed_boxes)
@@ -278,6 +276,7 @@ def table_layout(context, table, max_position_y, skip_stack,
         new_table_children = []
         resume_at = None
         next_page = {'break': 'any', 'page': None}
+
         for i, group in enumerate(table.children[skip:]):
             index_group = i + skip
 

@@ -428,7 +428,7 @@ else:
                         # too as explained in Behdad's blog entry.
                         # TODO: What about pango_fc_font_map_config_changed()
                         # as suggested in Behdad's blog entry?
-                        # Though it seems to work without...
+                        # Though it seems to work without…
                         return filename
                     else:
                         LOGGER.debug('Failed to load font at "%s"', url)
