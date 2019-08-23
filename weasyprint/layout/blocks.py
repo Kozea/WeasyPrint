@@ -800,7 +800,9 @@ def find_earlier_page_break(children, absolute_boxes, fixed_boxes):
             previous_in_flow = child
         if child.is_in_normal_flow() and (
                 child.style['break_inside'] not in ('avoid', 'avoid-page')):
-            if isinstance(child, boxes.BlockBox):
+            breakable_box_types = (
+                boxes.BlockBox, boxes.TableBox, boxes.TableRowGroupBox)
+            if isinstance(child, breakable_box_types):
                 result = find_earlier_page_break(
                     child.children, absolute_boxes, fixed_boxes)
                 if result:
@@ -811,8 +813,6 @@ def find_earlier_page_break(children, absolute_boxes, fixed_boxes):
                     resume_at = (new_child.index, resume_at)
                     index += 1  # Remove placeholders after child
                     break
-            elif isinstance(child, boxes.TableBox):
-                pass  # TODO: find an earlier break between table rows.
     else:
         return None
 

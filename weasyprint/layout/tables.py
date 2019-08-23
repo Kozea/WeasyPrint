@@ -19,7 +19,9 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
                  page_is_empty, absolute_boxes, fixed_boxes):
     """Layout for a table box."""
     # Avoid a circular import
-    from .blocks import block_container_layout, block_level_page_break
+    from .blocks import (
+        block_container_layout, block_level_page_break,
+        find_earlier_page_break)
 
     column_widths = table.column_widths
 
@@ -79,6 +81,7 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
             assert not skip_stack  # No breaks inside rows for now
         for i, row in enumerate(group.children[skip:]):
             index_row = i + skip
+            row.index = index_row
 
             if new_group_children:
                 page_break = block_level_page_break(
@@ -217,22 +220,22 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
             # Break if this row overflows the page, unless there is no
             # other content on the page.
             if next_position_y > max_position_y and not page_is_empty:
-                index = len(new_group_children)
-                while index:
-                    page_break = block_level_page_break(
-                        new_group_children[index - 1], row)
+                if new_group_children:
+                    previous_row = new_group_children[-1]
+                    page_break = block_level_page_break(previous_row, row)
                     if page_break == 'avoid':
-                        index -= 1
-                        row = new_group_children[index]
+                        earlier_page_break = find_earlier_page_break(
+                            new_group_children, absolute_boxes, fixed_boxes)
+                        if earlier_page_break:
+                            new_group_children, resume_at = earlier_page_break
+                            break
                     else:
-                        resume_at = (index, None)
-                        new_group_children = new_group_children[:index]
-                        break
-                else:
-                    if original_page_is_empty:
                         resume_at = (index_row, None)
-                    else:
-                        return None, None, next_page
+                        break
+                if original_page_is_empty:
+                    resume_at = (index_row, None)
+                else:
+                    return None, None, next_page
                 break
 
             position_y = next_position_y
@@ -279,6 +282,7 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
 
         for i, group in enumerate(table.children[skip:]):
             index_group = i + skip
+            group.index = index_group
 
             if group.is_header or group.is_footer:
                 continue
@@ -296,7 +300,18 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
             skip_stack = None
 
             if new_group is None:
-                resume_at = (index_group, None)
+                if new_table_children:
+                    previous_group = new_table_children[-1]
+                    page_break = block_level_page_break(previous_group, group)
+                    if page_break == 'avoid':
+                        earlier_page_break = find_earlier_page_break(
+                            new_table_children, absolute_boxes, fixed_boxes)
+                        if earlier_page_break is not None:
+                            new_table_children, resume_at = earlier_page_break
+                            break
+                    resume_at = (index_group, None)
+                else:
+                    return None, None, next_page, position_y
                 break
 
             new_table_children.append(new_group)
@@ -415,6 +430,15 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
 
     header, new_table_children, footer, position_y, resume_at, next_page = \
         all_groups_layout()
+
+    if new_table_children is None:
+        assert resume_at is None
+        table = None
+        adjoining_margins = []
+        collapsing_through = False
+        return (
+            table, resume_at, next_page, adjoining_margins, collapsing_through)
+
     table = table.copy_with_children(
         ([header] if header is not None else []) +
         new_table_children +
@@ -458,8 +482,7 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
         group.height = columns_height
 
     if resume_at and not page_is_empty and (
-            table.style['break_inside'] in ('avoid', 'avoid-page') or
-            not new_table_children):
+            table.style['break_inside'] in ('avoid', 'avoid-page')):
         table = None
         resume_at = None
     adjoining_margins = []
