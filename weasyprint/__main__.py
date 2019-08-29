@@ -179,7 +179,7 @@ def main(argv=None, stdout=None, stdin=None):
     if args.attachment:
         if format_ == 'pdf':
             kwargs['attachments'] = args.attachment
-        else:            
+        else:
             parser.error('--attachment only applies for the PDF format.')
 
     if args.grid_debug:

@@ -17,8 +17,6 @@ import warnings
 import cairocffi as cairo
 from weasyprint.layout import LayoutContext
 
-from pprint import pprint
-
 from . import CSS
 from .css import get_all_computed_styles
 from .css.targets import TargetCollector
