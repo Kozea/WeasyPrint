@@ -14,6 +14,7 @@ import re
 import cairocffi as cairo
 import cffi
 import pyphen
+from tinycss2.ast import IdentToken
 
 from .logger import LOGGER
 
@@ -631,7 +632,12 @@ def first_line_metrics(first_line, text, layout, resume_at, space_collapse,
                         break
         length += soft_hyphens * 2  # len('\u00ad'.encode('utf8'))
     width, height = get_size(first_line, style)
-    baseline = units_to_double(pango.pango_layout_get_baseline(layout.layout))
+    override = style.get( "__override_font_metrics", (None,) )[0]
+    if isinstance(override, IdentToken) and override.value == "on":
+        height = style["font_size"]
+        baseline = height
+    else:
+        baseline = units_to_double(pango.pango_layout_get_baseline(layout.layout))
     layout.deactivate()
     return layout, length, resume_at, width, height, baseline
 
