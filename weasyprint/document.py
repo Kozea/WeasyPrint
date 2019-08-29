@@ -17,6 +17,8 @@ import warnings
 import cairocffi as cairo
 from weasyprint.layout import LayoutContext
 
+from pprint import pprint
+
 from . import CSS
 from .css import get_all_computed_styles
 from .css.targets import TargetCollector
@@ -375,8 +377,46 @@ class Document(object):
         return context
 
     @classmethod
+    def _write_grid_debug_output(cls, page_boxes, grid_debug):
+        
+        def extract_lines(children):
+            for child in children:
+                if isinstance(child, boxes.LineBox):
+                    yield child;
+                if hasattr(child, "children"):
+                    for line in extract_lines( child.children ):
+                        yield line;
+        
+        def extract_text( children ):
+            accumulated_text = "";
+            for child in children:
+                if hasattr(child, "pango_layout"):
+                    if hasattr( child.pango_layout, "text" ):
+                        accumulated_text += child.pango_layout.text + " ";
+                if hasattr( child, "children" ):
+                    for text in extract_text( child.children ):
+                        accumulated_text += text + " ";
+            return accumulated_text;
+
+        with open( grid_debug, "wt", encoding="utf-8" ) as f:
+
+            for ( pageno, page ) in enumerate( page_boxes ):
+                for ( lineno, line ) in enumerate( extract_lines( page.children ) ):
+                    text = extract_text( line.children );
+                    print(
+                        "{:3d}|{:3d}|{:3.3f}|{:3.3f}|{:s}"\
+                           .format(
+                                pageno,
+                                lineno,
+                                line.position_y,
+                                line.height,
+                                text ),
+                        file=f );
+
+    @classmethod
     def _render(cls, html, stylesheets, enable_hinting,
-                presentational_hints=False, font_config=None):
+                presentational_hints=False, font_config=None,
+                grid_debug=None):
         if font_config is None:
             font_config = FontConfiguration()
 
@@ -389,6 +429,10 @@ class Document(object):
             html.base_url, context.target_collector)
 
         page_boxes = layout_document(html, root_box, context)
+
+        if grid_debug is not None:
+            cls._write_grid_debug_output( page_boxes, grid_debug );
+        
         rendering = cls(
             [Page(page_box, enable_hinting) for page_box in page_boxes],
             DocumentMetadata(**html._get_metadata()),

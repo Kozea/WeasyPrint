@@ -135,7 +135,7 @@ class HTML(object):
         return get_html_metadata(self.wrapper_element, self.base_url)
 
     def render(self, stylesheets=None, enable_hinting=False,
-               presentational_hints=False, font_config=None):
+               presentational_hints=False, font_config=None, grid_debug=None):
         """Lay out and paginate the document, but do not (yet) export it
         to PDF or PNG.
 
@@ -165,11 +165,11 @@ class HTML(object):
         """
         return Document._render(
             self, stylesheets, enable_hinting, presentational_hints,
-            font_config)
+            font_config, grid_debug)
 
     def write_pdf(self, target=None, stylesheets=None, zoom=1,
                   attachments=None, presentational_hints=False,
-                  font_config=None):
+                  font_config=None, grid_debug=None):
         """Render the document to a PDF file.
 
         This is a shortcut for calling :meth:`render`, then
@@ -208,7 +208,8 @@ class HTML(object):
         return self.render(
             stylesheets, enable_hinting=False,
             presentational_hints=presentational_hints,
-            font_config=font_config).write_pdf(
+            font_config=font_config,
+            grid_debug=grid_debug).write_pdf(
                 target, zoom, attachments)
 
     def write_image_surface(self, stylesheets=None, resolution=96,
@@ -250,7 +251,8 @@ class HTML(object):
         return surface
 
     def write_png(self, target=None, stylesheets=None, resolution=96,
-                  presentational_hints=False, font_config=None):
+                  presentational_hints=False, font_config=None,
+                  grid_debug=None):
         """Paint the pages vertically to a single PNG image.
 
         There is no decoration around pages other than those specified in CSS
@@ -287,7 +289,8 @@ class HTML(object):
         png_bytes, _width, _height = (
             self.render(stylesheets, enable_hinting=True,
                         presentational_hints=presentational_hints,
-                        font_config=font_config)
+                        font_config=font_config,
+                        grid_debug=grid_debug)
             .write_png(target, resolution))
         return png_bytes
 

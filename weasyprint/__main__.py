@@ -58,6 +58,10 @@ def main(argv=None, stdout=None, stdin=None):
         Set the base for relative URLs in the HTML input.
         Defaults to the input’s own URL, or the current directory for stdin.
 
+    .. option:: --grid-debug <file>
+
+        Filename for writing output useful when debugging a document's grid.
+
     .. option:: -a <file>, --attachment <file>
 
         Adds an attachment to the document.  The attachment is
@@ -112,6 +116,9 @@ def main(argv=None, stdout=None, stdin=None):
     parser.add_argument('-a', '--attachment', action='append',
                         help='URL or filename of a file '
                              'to attach to the PDF document')
+    parser.add_argument('--grid-debug',
+                        help="Filename for writing output useful when "
+                             "debugging a document's grid.")
     parser.add_argument('-p', '--presentational-hints', action='store_true',
                         help='Follow HTML presentational hints.')
     parser.add_argument('-v', '--verbose', action='store_true',
@@ -172,8 +179,11 @@ def main(argv=None, stdout=None, stdin=None):
     if args.attachment:
         if format_ == 'pdf':
             kwargs['attachments'] = args.attachment
-        else:
+        else:            
             parser.error('--attachment only applies for the PDF format.')
+
+    if args.grid_debug:
+        kwargs['grid_debug'] = args.grid_debug        
 
     # Default to logging to stderr.
     if args.debug:
