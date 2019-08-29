@@ -382,27 +382,27 @@ class Document(object):
         def extract_lines(children):
             for child in children:
                 if isinstance(child, boxes.LineBox):
-                    yield child;
+                    yield child
                 if hasattr(child, "children"):
                     for line in extract_lines( child.children ):
-                        yield line;
+                        yield line
         
         def extract_text( children ):
-            accumulated_text = "";
+            accumulated_text = ""
             for child in children:
                 if hasattr(child, "pango_layout"):
                     if hasattr( child.pango_layout, "text" ):
-                        accumulated_text += child.pango_layout.text + " ";
+                        accumulated_text += child.pango_layout.text + " "
                 if hasattr( child, "children" ):
                     for text in extract_text( child.children ):
-                        accumulated_text += text + " ";
-            return accumulated_text;
+                        accumulated_text += text + " "
+            return accumulated_text
 
         with open( grid_debug, "wt", encoding="utf-8" ) as f:
 
             for ( pageno, page ) in enumerate( page_boxes ):
                 for ( lineno, line ) in enumerate( extract_lines( page.children ) ):
-                    text = extract_text( line.children );
+                    text = extract_text( line.children )
                     print(
                         "{:3d}|{:3d}|{:3.3f}|{:3.3f}|{:s}"\
                            .format(
@@ -411,7 +411,7 @@ class Document(object):
                                 line.position_y,
                                 line.height,
                                 text ),
-                        file=f );
+                        file=f )
 
     @classmethod
     def _render(cls, html, stylesheets, enable_hinting,
@@ -431,7 +431,8 @@ class Document(object):
         page_boxes = layout_document(html, root_box, context)
 
         if grid_debug is not None:
-            cls._write_grid_debug_output( page_boxes, grid_debug );
+            page_boxes = list(page_boxes)
+            cls._write_grid_debug_output(page_boxes, grid_debug)
         
         rendering = cls(
             [Page(page_box, enable_hinting) for page_box in page_boxes],
