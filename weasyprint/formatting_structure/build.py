@@ -423,7 +423,7 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
             else:
                 # string() is currently only valid in @page context
                 # See https://github.com/Kozea/WeasyPrint/issues/723
-                LOGGER.warn(
+                LOGGER.warning(
                     '"string(%s)" is only allowed in page margins' %
                     (' '.join(value)))
         elif type_ == 'target-counter()':
