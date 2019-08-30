@@ -2324,7 +2324,107 @@ def test_table_page_break_before():
         </tbody>
       </table>
      ''',
-     [1, 3, 1])
+     [1, 3, 1]),
+    ('''
+      <style>
+        @page { size: 100px }
+        table { table-layout: fixed; width: 100% }
+        tr { height: 30px }
+      </style>
+      <table>
+        <tbody style="break-after: avoid">
+          <tr><td>row 0</td></tr>
+          <tr><td>row 1</td></tr>
+          <tr><td>row 2</td></tr>
+        </tbody>
+        <tbody>
+          <tr><td>row 0</td></tr>
+          <tr><td>row 1</td></tr>
+          <tr><td>row 2</td></tr>
+        </tbody>
+      </table>
+     ''',
+     [2, 3, 1]),
+    ('''
+      <style>
+        @page { size: 100px }
+        table { table-layout: fixed; width: 100% }
+        tr { height: 30px }
+      </style>
+      <table>
+        <tbody>
+          <tr><td>row 0</td></tr>
+          <tr><td>row 1</td></tr>
+          <tr><td>row 2</td></tr>
+        </tbody>
+        <tbody style="break-before: avoid">
+          <tr><td>row 0</td></tr>
+          <tr><td>row 1</td></tr>
+          <tr><td>row 2</td></tr>
+        </tbody>
+      </table>
+     ''',
+     [2, 3, 1]),
+    ('''
+      <style>
+        @page { size: 100px }
+        table { table-layout: fixed; width: 100% }
+        tr { height: 30px }
+      </style>
+      <table>
+        <tbody>
+          <tr><td>row 0</td></tr>
+          <tr><td>row 1</td></tr>
+          <tr><td>row 2</td></tr>
+        </tbody>
+        <tbody>
+          <tr style="break-before: avoid"><td>row 0</td></tr>
+          <tr><td>row 1</td></tr>
+          <tr><td>row 2</td></tr>
+        </tbody>
+      </table>
+     ''',
+     [2, 3, 1]),
+    ('''
+      <style>
+        @page { size: 100px }
+        table { table-layout: fixed; width: 100% }
+        tr { height: 30px }
+      </style>
+      <table>
+        <tbody>
+          <tr><td>row 0</td></tr>
+          <tr><td>row 1</td></tr>
+          <tr style="break-after: avoid"><td>row 2</td></tr>
+        </tbody>
+        <tbody>
+          <tr><td>row 0</td></tr>
+          <tr><td>row 1</td></tr>
+          <tr><td>row 2</td></tr>
+        </tbody>
+      </table>
+     ''',
+     [2, 3, 1]),
+    ('''
+      <style>
+        @page { size: 100px }
+        table { table-layout: fixed; width: 100% }
+        tr { height: 30px }
+      </style>
+      <table>
+        <tbody style="break-after: avoid">
+          <tr><td>row 0</td></tr>
+          <tr><td>row 1</td></tr>
+          <tr style="break-after: page"><td>row 2</td></tr>
+        </tbody>
+        <tbody>
+          <tr><td>row 0</td></tr>
+          <tr><td>row 1</td></tr>
+          <tr><td>row 2</td></tr>
+        </tbody>
+      </table>
+     ''',
+     [3, 3]),
 ))
 def test_table_page_break_avoid(html, rows):
     pages = render_pages(html)
