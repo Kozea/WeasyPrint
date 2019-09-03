@@ -109,13 +109,13 @@ def test_linear_gradients_6():
 @requires('cairo', (1, 14, 0))
 def test_linear_gradients_7():
     assert_pixels('linear_gradient', 9, 5, '''
-        vvvvvvvvv
-        vvvvvvvvv
-        vvvvvvvvv
-        vvvvvvvvv
-        vvvvvvvvv
+        hhhhhhhhh
+        hhhhhhhhh
+        hhhhhhhhh
+        hhhhhhhhh
+        hhhhhhhhh
     ''', '''<style>@page { size: 9px 5px; background: repeating-linear-gradient(
-      to right, blue 3px, blue 3px, red 3px, red 3px
+      to right, black 3px, black 3px, #800080 3px, #800080 3px
     )''')
 
 
