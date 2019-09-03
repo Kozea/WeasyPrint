@@ -303,6 +303,26 @@ def test_images_16():
 
 
 @assert_no_logs
+def test_images_17():
+    page, = parse('''
+        <div style="width: 300px; height: 300px">
+        <img src="
+            data:image/svg+xml,
+            <svg viewBox='0 0 20 10'></svg>
+        ">''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    line, = div.children
+    img, = line.children
+    assert div.width == 300
+    assert div.height == 300
+    assert img.element_tag == 'img'
+    assert img.width == 300
+    assert img.height == 150
+
+
+@assert_no_logs
 def test_linear_gradient():
     red = (1, 0, 0, 1)
     lime = (0, 1, 0, 1)

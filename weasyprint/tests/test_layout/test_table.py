@@ -2104,3 +2104,61 @@ def test_inline_table_baseline(vertical_align, table_position_y):
     assert text1.position_y == text2.position_y == 0
     assert table.height == 10 * 2
     assert table.position_y == table_position_y
+
+
+@assert_no_logs
+def test_table_caption_margin_top():
+    page, = render_pages('''
+      <style>
+        table { margin: 20px; }
+        caption, h1, h2 { margin: 20px; height: 10px }
+        td { height: 10px }
+      </style>
+      <h1></h1>
+      <table>
+        <caption></caption>
+        <tr>
+          <td></td>
+        </tr>
+      </table>
+      <h2></h2>
+    ''')
+    html, = page.children
+    body, = html.children
+    h1, wrapper, h2 = body.children
+    caption, table = wrapper.children
+    tbody, = table.children
+    assert (h1.content_box_x(), h1.content_box_y()) == (20, 20)
+    assert (wrapper.content_box_x(), wrapper.content_box_y()) == (20, 50)
+    assert (caption.content_box_x(), caption.content_box_y()) == (40, 70)
+    assert (tbody.content_box_x(), tbody.content_box_y()) == (20, 100)
+    assert (h2.content_box_x(), h2.content_box_y()) == (20, 130)
+
+
+@assert_no_logs
+def test_table_caption_margin_bottom():
+    page, = render_pages('''
+      <style>
+        table { margin: 20px; }
+        caption, h1, h2 { margin: 20px; height: 10px; caption-side: bottom }
+        td { height: 10px }
+      </style>
+      <h1></h1>
+      <table>
+        <caption></caption>
+        <tr>
+          <td></td>
+        </tr>
+      </table>
+      <h2></h2>
+    ''')
+    html, = page.children
+    body, = html.children
+    h1, wrapper, h2 = body.children
+    table, caption = wrapper.children
+    tbody, = table.children
+    assert (h1.content_box_x(), h1.content_box_y()) == (20, 20)
+    assert (wrapper.content_box_x(), wrapper.content_box_y()) == (20, 50)
+    assert (tbody.content_box_x(), tbody.content_box_y()) == (20, 50)
+    assert (caption.content_box_x(), caption.content_box_y()) == (40, 80)
+    assert (h2.content_box_x(), h2.content_box_y()) == (20, 130)

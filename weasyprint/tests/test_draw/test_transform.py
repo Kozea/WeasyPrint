@@ -218,7 +218,7 @@ def test_2d_transform_10():
       <style>
         @page { size: 10px; margin: 2px; background: #fff; }
         div { transform: scale(2, 2);
-              transform-origin: 1px 1px;
+              transform-origin: 1px 1px 1px;
               image-rendering: pixelated;
               font-size: 0 }
       </style>
@@ -266,7 +266,7 @@ def test_2d_transform_12():
       <style>
         @page { size: 10px; margin: 2px; background: #fff; }
         div { transform: scaleY(2);
-              transform-origin: 1px 1px;
+              transform-origin: 1px 1px 0;
               image-rendering: pixelated;
               font-size: 0 }
       </style>

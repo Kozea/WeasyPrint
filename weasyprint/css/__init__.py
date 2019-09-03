@@ -34,7 +34,8 @@ from .validation import preprocess_declarations
 from .validation.descriptors import preprocess_descriptors
 
 # Reject anything not in here:
-PSEUDO_ELEMENTS = (None, 'before', 'after', 'first-line', 'first-letter')
+PSEUDO_ELEMENTS = (
+    None, 'before', 'after', 'marker', 'first-line', 'first-letter')
 
 
 PageType = namedtuple('PageType', ['side', 'blank', 'first', 'index', 'name'])
@@ -67,11 +68,14 @@ class StyleFor:
         for specificity, attributes in find_style_attributes(
                 html.etree_element, presentational_hints, html.base_url):
             element, declarations, base_url = attributes
+            style = cascaded_styles.setdefault((element, None), {})
             for name, values, importance in preprocess_declarations(
                     base_url, declarations):
                 precedence = declaration_precedence('author', importance)
                 weight = (precedence, specificity)
-                add_declaration(cascaded_styles, name, values, weight, element)
+                old_weight = style.get(name, (None, None))[1]
+                if old_weight is None or old_weight <= weight:
+                    style[name] = values, weight
 
         # First, add declarations and set computed styles for "real" elements
         # *in tree order*. Tree order is important so that parents have
@@ -84,12 +88,14 @@ class StyleFor:
                 for selector in sheet.matcher.match(element):
                     specificity, order, pseudo_type, declarations = selector
                     specificity = sheet_specificity or specificity
+                    style = cascaded_styles.setdefault(
+                        (element.etree_element, pseudo_type), {})
                     for name, values, importance in declarations:
                         precedence = declaration_precedence(origin, importance)
                         weight = (precedence, specificity)
-                        add_declaration(
-                            cascaded_styles, name, values, weight,
-                            element.etree_element, pseudo_type)
+                        old_weight = style.get(name, (None, None))[1]
+                        if old_weight is None or old_weight <= weight:
+                            style[name] = values, weight
             parent = element.parent.etree_element if element.parent else None
             self.set_computed_styles(
                 element.etree_element, root=html.etree_element, parent=parent,
@@ -165,13 +171,15 @@ class StyleFor:
                     specificity, pseudo_type, selector_page_type = selector
                     if self._page_type_match(selector_page_type, page_type):
                         specificity = sheet_specificity or specificity
+                        style = self._cascaded_styles.setdefault(
+                            (page_type, pseudo_type), {})
                         for name, values, importance in declarations:
                             precedence = declaration_precedence(
                                 origin, importance)
                             weight = (precedence, specificity)
-                            add_declaration(
-                                self._cascaded_styles, name, values, weight,
-                                page_type, pseudo_type)
+                            old_weight = style.get(name, (None, None))[1]
+                            if old_weight is None or old_weight <= weight:
+                                style[name] = values, weight
 
     def get_cascaded_styles(self):
         return self._cascaded_styles
@@ -573,19 +581,6 @@ def declaration_precedence(origin, importance):
         return 5
 
 
-def add_declaration(cascaded_styles, prop_name, prop_values, weight, element,
-                    pseudo_type=None):
-    """Set the value for a property on a given element.
-
-    The value is only set if there is no value of greater weight defined yet.
-
-    """
-    style = cascaded_styles.setdefault((element, pseudo_type), {})
-    _values, previous_weight = style.get(prop_name, (None, None))
-    if previous_weight is None or previous_weight <= weight:
-        style[prop_name] = prop_values, weight
-
-
 def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
                            root_style=None, base_url=None,
                            target_collector=None):
@@ -602,8 +597,10 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
         # border-*-style is none, so border-width computes to zero.
         # Other than that, properties that would need computing are
         # border-*-color, but they do not apply.
-        for side in ('top', 'bottom', 'left', 'right'):
-            computed['border_%s_width' % side] = 0
+        computed['border_top_width'] = 0
+        computed['border_bottom_width'] = 0
+        computed['border_left_width'] = 0
+        computed['border_right_width'] = 0
         computed['outline_width'] = 0
         return computed
 
@@ -614,10 +611,10 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
     if parent_style:
         for name in parent_style:
             if name.startswith('__'):
-                specified[name] = parent_style[name]
+                computed[name] = specified[name] = parent_style[name]
     for name in cascaded:
         if name.startswith('__'):
-            specified[name] = cascaded[name][0]
+            computed[name] = specified[name] = cascaded[name][0]
 
     for name, initial in INITIAL_VALUES.items():
         if name in cascaded:
@@ -761,7 +758,7 @@ def parse_page_selectors(rule):
 
                     types['index'] = (*nth_values, group)
                     # TODO: specificity is not specified yet
-                    # https://github.com/w3c/csswg-drafts/issues/3791
+                    # https://github.com/w3c/csswg-drafts/issues/3524
                     types['specificity'][1] += 1
                     continue
 
