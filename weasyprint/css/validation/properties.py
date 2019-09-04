@@ -31,8 +31,6 @@ UNSTABLE = set()
 # returning a value or None for invalid.
 # For properties that take a single value, that value is returned by itself
 # instead of a list.
-# TODO: fix this: Also transform values: keyword and URLs are returned as
-# strings.
 PROPERTIES = {}
 
 
@@ -192,7 +190,10 @@ def list_style_image(token, base_url):
 
 @property()
 def transform_origin(tokens):
-    # TODO: parse (and ignore) a third value for Z.
+    """``transform-origin`` property validation."""
+    if len(tokens) == 3:
+        # Ignore third parameter as 3D transforms are ignored.
+        tokens = tokens[:2]
     return parse_2d_position(tokens)
 
 

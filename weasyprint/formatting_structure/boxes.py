@@ -84,7 +84,6 @@ class Box(object):
     transformation_matrix = None
     bookmark_label = None
     string_set = None
-    outside_list_marker = None
 
     # Default, overriden on some subclasses
     def all_children(self):
@@ -107,12 +106,11 @@ class Box(object):
     def copy(self):
         """Return shallow copy of the box."""
         cls = type(self)
-        # Create a new instance without calling __init__: initializing
-        # styles may be kinda expensive, no need to do it again.
+        # Create a new instance without calling __init__: parameters are
+        # different depending on the class.
         new_box = cls.__new__(cls)
         # Copy attributes
         new_box.__dict__.update(self.__dict__)
-        new_box.style = self.style
         return new_box
 
     def translate(self, dx=0, dy=0, ignore_floats=False):
@@ -296,15 +294,6 @@ class ParentBox(Box):
     def all_children(self):
         return self.children
 
-    def enumerate_skip(self, skip_num=0):
-        """Yield ``(child, child_index)`` tuples for each child.
-
-        ``skip_num`` children are skipped before iterating over them.
-
-        """
-        for index in range(skip_num, len(self.children)):
-            yield index, self.children[index]
-
     def _reset_spacing(self, side):
         """Set to 0 the margin, padding and border of ``side``."""
         self.style['margin_%s' % side] = Dimension(0, 'px')
@@ -326,18 +315,20 @@ class ParentBox(Box):
 
     def _remove_decoration(self, start, end):
         if start or end:
+            old_style = self.style
             self.style = self.style.copy()
         if start:
             self._reset_spacing('top')
         if end:
             self._reset_spacing('bottom')
+        if (start or end) and old_style == self.style:
+            # Don't copy style if there's no need to, save some memory
+            self.style = old_style
 
     def copy_with_children(self, new_children, is_start=True, is_end=True):
         """Create a new equivalent box with given ``new_children``."""
         new_box = self.copy()
         new_box.children = tuple(new_children)
-        if not is_start:
-            new_box.outside_list_marker = None
         if self.style['box_decoration_break'] == 'slice':
             new_box._remove_decoration(not is_start, not is_end)
         return new_box
@@ -400,10 +391,6 @@ class BlockBox(BlockContainerBox, BlockLevelBox):
     generates a block box.
 
     """
-    # TODO: remove this when outside list marker are absolute children
-    def all_children(self):
-        return (itertools.chain(self.children, [self.outside_list_marker])
-                if self.outside_list_marker else self.children)
 
 
 class LineBox(ParentBox):
@@ -438,12 +425,16 @@ class InlineLevelBox(Box):
     """
     def _remove_decoration(self, start, end):
         if start or end:
+            old_style = self.style
             self.style = self.style.copy()
         ltr = self.style['direction'] == 'ltr'
         if start:
             self._reset_spacing('left' if ltr else 'right')
         if end:
             self._reset_spacing('right' if ltr else 'left')
+        if (start or end) and old_style == self.style:
+            # Don't copy style if there's no need to, save some memory
+            self.style = old_style
 
 
 class InlineBox(InlineLevelBox, ParentBox):
