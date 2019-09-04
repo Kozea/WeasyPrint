@@ -360,3 +360,23 @@ def test_columns_regression_3():
     assert div1.children[0].children[0].text == 'B1'
     assert div2.children[0].children[0].text == 'B2'
     assert div3.children[0].children[0].text == 'B3'
+
+
+@assert_no_logs
+def test_columns_regression_4():
+    # Regression test #3 for https://github.com/Kozea/WeasyPrint/issues/897
+    page, = render_pages('''
+      <div style="position:absolute">
+        <div style="column-count:2">
+          <div>a</div>
+        </div>
+      </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    assert div.position_y == 0
+    column1, = div.children
+    assert column1.position_y == 0
+    div1, = column1.children
+    assert div1.position_y == 0
