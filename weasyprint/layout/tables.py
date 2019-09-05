@@ -84,6 +84,7 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
             row.index = index_row
 
             if new_group_children:
+                # Handle forced breaks between lines
                 page_break = block_level_page_break(
                     new_group_children[-1], row)
                 if page_break in ('page', 'recto', 'verso', 'left', 'right'):
@@ -288,6 +289,7 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
                 continue
 
             if new_table_children:
+                # Handle forced breaks between line groups
                 page_break = block_level_page_break(
                     new_table_children[-1], group)
                 if page_break in ('page', 'recto', 'verso', 'left', 'right'):
@@ -299,6 +301,7 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
                 group, position_y, max_position_y, page_is_empty, skip_stack)
             skip_stack = None
 
+            # Break if this group overflows the page
             if new_group is None:
                 if new_table_children:
                     previous_group = new_table_children[-1]
@@ -432,6 +435,7 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
         all_groups_layout()
 
     if new_table_children is None:
+        # Nothing in the table could have been rendered on this page, give up
         assert resume_at is None
         table = None
         adjoining_margins = []
