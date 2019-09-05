@@ -1780,15 +1780,15 @@ def test_table_row_height_1():
 def test_table_row_height_2():
     # A cell box cannot extend beyond the last row box of a table.
     page, = render_pages('''
-        <table style="border-spacing: 0">
-            <tr style="height: 10px">
-                <td rowspan=5></td>
-                <td></td>
-            </tr>
-            <tr style="height: 10px">
-                <td></td>
-            </tr>
-        </table>
+      <table style="border-spacing: 0">
+        <tr style="height: 10px">
+          <td rowspan=5></td>
+          <td></td>
+        </tr>
+        <tr style="height: 10px">
+          <td></td>
+        </tr>
+      </table>
     ''')
     html, = page.children
     body, = html.children
