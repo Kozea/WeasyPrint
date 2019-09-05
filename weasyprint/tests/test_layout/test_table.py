@@ -1798,6 +1798,30 @@ def test_table_row_height_2():
 
 
 @assert_no_logs
+def test_table_row_height_3():
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/
+    page, = render_pages('''
+      <style>
+        @font-face { src: url(AHEM____.TTF); font-family: ahem }
+      </style>
+      <table style="border-spacing: 0; font-family: ahem; line-height: 20px">
+        <tr><td>Table</td><td rowspan="2"></td></tr>
+        <tr></tr>
+      </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    wrapper, = body.children
+    table, = wrapper.children
+    assert table.height == 20
+    row_group, = table.children
+    assert row_group.height == 20
+    row1, row2 = row_group.children
+    assert row1.height == 20
+    assert row2.height == 0
+
+
+@assert_no_logs
 @requires('cairo', (1, 12, 0))
 def test_table_vertical_align():
     assert_pixels('table_vertical_align', 28, 10, '''
