@@ -183,7 +183,12 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
                 # example when the next box can't be separated from its own
                 # next box. In this case we don't try to find the real value
                 # and let the workaround below fix this for us.
-                if next_box_size - empty_space > 0:
+                #
+                # We also want to avoid very small values that may have been
+                # introduced by rounding errors. As the workaround below at
+                # least adds 1 pixel for each loop, we can ignore lost spaces
+                # lower than 1px.
+                if next_box_size - empty_space > 1:
                     lost_space = min(lost_space, next_box_size - empty_space)
 
                 # Stop if we already rendered the whole content
