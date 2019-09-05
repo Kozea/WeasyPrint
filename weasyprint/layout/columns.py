@@ -158,6 +158,11 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
                     context, column_box, box.content_box_y() + height,
                     column_skip_stack, containing_block, page_is_empty,
                     [], [], [])
+                if new_box is None:
+                    # We didn't render anything. Give up and use the max
+                    # content height.
+                    height *= count
+                    continue
                 column_skip_stack = resume_at
 
                 # Get the empty space at the bottom of the column box
