@@ -165,16 +165,23 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
                     continue
                 column_skip_stack = resume_at
 
-                # Get the empty space at the bottom of the column box
-                empty_space = height - (
-                    new_box.children[-1].position_y - box.content_box_y() +
-                    new_box.children[-1].margin_height())
+                in_flow_children = [
+                    child for child in new_box.children
+                    if child.is_in_normal_flow()]
 
-                # Get the minimum size needed to render the next box
-                next_box, _, _, _, _ = block_box_layout(
-                    context, column_box, box.content_box_y(),
-                    column_skip_stack, containing_block, True, [], [], [])
-                next_box_size = next_box.children[0].margin_height()
+                if in_flow_children:
+                    # Get the empty space at the bottom of the column box
+                    empty_space = height - (
+                        in_flow_children[-1].position_y - box.content_box_y() +
+                        in_flow_children[-1].margin_height())
+
+                    # Get the minimum size needed to render the next box
+                    next_box, _, _, _, _ = block_box_layout(
+                        context, column_box, box.content_box_y(),
+                        column_skip_stack, containing_block, True, [], [], [])
+                    next_box_size = in_flow_children[0].margin_height()
+                else:
+                    empty_space = next_box_size = 0
 
                 # Append the size needed to render the next box in this
                 # column.
