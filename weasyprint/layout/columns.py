@@ -133,6 +133,8 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
             adjoining_margins.append(new_child.margin_bottom)
             continue
 
+        excluded_shapes = context.excluded_shapes[:]
+
         # We have a list of children that we have to balance between columns.
         column_children = column_children_or_block
 
@@ -152,6 +154,12 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
         column_skip_stack = skip_stack
         lost_space = float('inf')
         while True:
+            # Remove extra excluded shapes introduced during previous loop
+            new_excluded_shapes = (
+                len(context.excluded_shapes) - len(excluded_shapes))
+            for i in range(new_excluded_shapes):
+                context.excluded_shapes.pop()
+
             for i in range(count):
                 # Render the column
                 new_box, resume_at, next_page, _, _ = block_box_layout(
