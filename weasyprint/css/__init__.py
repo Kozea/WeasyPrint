@@ -164,6 +164,13 @@ class StyleFor:
             element, cascaded, parent_style, pseudo_type, root_style, base_url,
             target_collector)
 
+        # The style of marker is deleted when display is different from
+        # list-item.
+        if pseudo_type is None:
+            if computed_styles[element, None]['display'] != 'list-item':
+                if (element, 'marker') in cascaded_styles:
+                    del cascaded_styles[element, 'marker']
+
     def add_page_declarations(self, page_type):
         for sheet, origin, sheet_specificity in self._sheets:
             for _rule, selector_list, declarations in sheet.page_rules:
