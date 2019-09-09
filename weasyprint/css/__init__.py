@@ -167,7 +167,12 @@ class StyleFor:
         # The style of marker is deleted when display is different from
         # list-item.
         if pseudo_type is None:
-            if computed_styles[element, None]['display'] != 'list-item':
+            for pseudo in (None, 'before', 'after'):
+                pseudo_style = cascaded_styles.get((element, pseudo), {})
+                if 'display' in pseudo_style:
+                    if pseudo_style['display'][0] == 'list-item':
+                        break
+            else:
                 if (element, 'marker') in cascaded_styles:
                     del cascaded_styles[element, 'marker']
 
