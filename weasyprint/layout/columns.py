@@ -187,7 +187,8 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
                     next_box, _, _, _, _ = block_box_layout(
                         context, column_box, box.content_box_y(),
                         column_skip_stack, containing_block, True, [], [], [])
-                    next_box_size = next_box.children[0].margin_height()
+                    assert next_box.children[-1].is_in_normal_flow()
+                    next_box_size = next_box.children[-1].margin_height()
                 else:
                     empty_space = next_box_size = 0
 
