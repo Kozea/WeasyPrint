@@ -360,6 +360,9 @@ def parse_radial_gradient_parameters(arguments):
 def parse_color_stop(tokens):
     if len(tokens) == 1:
         color = parse_color(tokens[0])
+        if color == 'currentColor':
+            # TODO: return the current color instead
+            return parse_color('black'), None
         if color is not None:
             return color, None
     elif len(tokens) == 2:
