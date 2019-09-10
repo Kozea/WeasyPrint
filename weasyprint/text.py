@@ -748,14 +748,18 @@ class Layout(object):
         self.text = bytestring.decode('utf-8')
         pango.pango_layout_set_text(self.layout, text, -1)
 
-        word_spacing = self.style['word_spacing']
+        # Word spacing may not be set if we're trying to get word-spacing
+        # computed value using a layout, for example if its unit is ex.
+        word_spacing = self.style.get('word_spacing', 0)
         if justify:
             # Justification is needed when drawing text but is useless during
             # layout. Ignore it before layout is reactivated before the drawing
             # step.
             word_spacing += self.justification_spacing
 
-        letter_spacing = self.style['letter_spacing']
+        # Letter spacing may not be set if we're trying to get letter-spacing
+        # computed value using a layout, for example if its unit is ex.
+        letter_spacing = self.style.get('letter_spacing', 'normal')
         if letter_spacing == 'normal':
             letter_spacing = 0
 
