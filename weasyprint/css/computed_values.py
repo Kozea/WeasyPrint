@@ -225,7 +225,11 @@ def compute(element, pseudo_type, specified, computed, parent_style,
             if computed_value is None:
                 new_value = None
             else:
-                new_value = PROPERTIES[name.replace('_', '-')](computed_value)
+                prop = PROPERTIES[name.replace('_', '-')]
+                if prop.wants_base_url:
+                    new_value = prop(computed_value, base_url)
+                else:
+                    new_value = prop(computed_value)
 
             # See https://drafts.csswg.org/css-variables/#invalid-variables
             if new_value is None:
