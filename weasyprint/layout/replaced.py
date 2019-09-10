@@ -91,8 +91,11 @@ def replacedbox_layout(box):
     position = box.style['object_position']
 
     image = box.replacement
-    iwidth, iheight = image.get_intrinsic_size(
+    intrinsic_width, intrinsic_height = image.get_intrinsic_size(
         box.style['image_resolution'], box.style['font_size'])
+    if None in (intrinsic_width, intrinsic_height):
+        intrinsic_width, intrinsic_height = contain_constraint_image_sizing(
+            box.width, box.height, box.replacement.intrinsic_ratio)
 
     if object_fit == 'fill':
         draw_width, draw_height = box.width, box.height
@@ -105,11 +108,11 @@ def replacedbox_layout(box):
                 box.width, box.height, box.replacement.intrinsic_ratio)
         else:
             assert object_fit == 'none', object_fit
-            draw_width, draw_height = iwidth, iheight
+            draw_width, draw_height = intrinsic_width, intrinsic_height
 
         if object_fit == 'scale-down':
-            draw_width = min(draw_width, iwidth)
-            draw_height = min(draw_height, iheight)
+            draw_width = min(draw_width, intrinsic_width)
+            draw_height = min(draw_height, intrinsic_height)
 
     origin_x, position_x, origin_y, position_y = position[0]
     ref_x = box.width - draw_width
