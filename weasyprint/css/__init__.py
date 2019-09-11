@@ -117,6 +117,10 @@ class StyleFor:
                     root=html.etree_element, parent=element,
                     base_url=html.base_url, target_collector=target_collector)
 
+        # Clear the cascaded styles, we don't need them anymore. Keep the
+        # dictionary, it is used later for page margins.
+        self._cascaded_styles.clear()
+
     def __call__(self, element, pseudo_type=None):
         style = self._computed_styles.get((element, pseudo_type))
 
