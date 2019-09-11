@@ -723,8 +723,12 @@ def block_level_page_break(sibling_before, sibling_after):
 
     """
     values = []
+    # https://drafts.csswg.org/css-break-3/#possible-breaks
+    block_parallel_box_types = (
+        boxes.BlockLevelBox, boxes.TableRowGroupBox, boxes.TableRowBox)
+
     box = sibling_before
-    while isinstance(box, boxes.BlockLevelBox):
+    while isinstance(box, block_parallel_box_types):
         values.append(box.style['break_after'])
         if not (isinstance(box, boxes.ParentBox) and box.children):
             break
@@ -732,7 +736,7 @@ def block_level_page_break(sibling_before, sibling_after):
     values.reverse()  # Have them in tree order
 
     box = sibling_after
-    while isinstance(box, boxes.BlockLevelBox):
+    while isinstance(box, block_parallel_box_types):
         values.append(box.style['break_before'])
         if not (isinstance(box, boxes.ParentBox) and box.children):
             break
@@ -796,7 +800,9 @@ def find_earlier_page_break(children, absolute_boxes, fixed_boxes):
             previous_in_flow = child
         if child.is_in_normal_flow() and (
                 child.style['break_inside'] not in ('avoid', 'avoid-page')):
-            if isinstance(child, boxes.BlockBox):
+            breakable_box_types = (
+                boxes.BlockBox, boxes.TableBox, boxes.TableRowGroupBox)
+            if isinstance(child, breakable_box_types):
                 result = find_earlier_page_break(
                     child.children, absolute_boxes, fixed_boxes)
                 if result:
@@ -807,8 +813,6 @@ def find_earlier_page_break(children, absolute_boxes, fixed_boxes):
                     resume_at = (new_child.index, resume_at)
                     index += 1  # Remove placeholders after child
                     break
-            elif isinstance(child, boxes.TableBox):
-                pass  # TODO: find an earlier break between table rows.
     else:
         return None
 

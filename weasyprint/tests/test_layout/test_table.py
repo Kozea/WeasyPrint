@@ -2089,6 +2089,390 @@ def test_table_page_breaks_complex():
 
 
 @assert_no_logs
+def test_table_page_break_after():
+    page1, page2, page3, page4, page5, page6 = render_pages('''
+      <style>
+        @page { size: 1000px }
+        h1 { height: 30px}
+        td { height: 40px }
+        table { table-layout: fixed; width: 100% }
+      </style>
+      <h1>Dummy title</h1>
+      <table>
+
+        <tbody>
+          <tr><td>row 1</td></tr>
+          <tr><td>row 2</td></tr>
+          <tr><td>row 3</td></tr>
+        </tbody>
+        <tbody>
+          <tr style="break-after: page"><td>row 1</td></tr>
+          <tr><td>row 2</td></tr>
+          <tr><td>row 3</td></tr>
+        </tbody>
+        <tbody>
+          <tr><td>row 1</td></tr>
+          <tr><td>row 2</td></tr>
+          <tr style="break-after: page"><td>row 3</td></tr>
+        </tbody>
+        <tbody style="break-after: right">
+          <tr><td>row 1</td></tr>
+          <tr><td>row 2</td></tr>
+          <tr><td>row 3</td></tr>
+        </tbody>
+        <tbody style="break-after: page">
+          <tr><td>row 1</td></tr>
+          <tr><td>row 2</td></tr>
+          <tr><td>row 3</td></tr>
+        </tbody>
+
+      </table>
+      <p>bla bla</p>
+     ''')
+    html, = page1.children
+    body, = html.children
+    h1, table_wrapper = body.children
+    table, = table_wrapper.children
+    table_group1, table_group2 = table.children
+    assert len(table_group1.children) == 3
+    assert len(table_group2.children) == 1
+
+    html, = page2.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    table_group1, table_group2 = table.children
+    assert len(table_group1.children) == 2
+    assert len(table_group2.children) == 3
+
+    html, = page3.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    table_group, = table.children
+    assert len(table_group.children) == 3
+
+    html, = page4.children
+    assert not html.children
+
+    html, = page5.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    table_group, = table.children
+    assert len(table_group.children) == 3
+
+    html, = page6.children
+    body, = html.children
+    p, = body.children
+    assert p.element_tag == 'p'
+
+
+@assert_no_logs
+def test_table_page_break_before():
+    page1, page2, page3, page4, page5, page6 = render_pages('''
+      <style>
+        @page { size: 1000px }
+        h1 { height: 30px}
+        td { height: 40px }
+        table { table-layout: fixed; width: 100% }
+      </style>
+      <h1>Dummy title</h1>
+      <table>
+
+        <tbody>
+          <tr style="break-before: page"><td>row 1</td></tr>
+          <tr><td>row 2</td></tr>
+          <tr><td>row 3</td></tr>
+        </tbody>
+        <tbody>
+          <tr><td>row 1</td></tr>
+          <tr style="break-before: page"><td>row 2</td></tr>
+          <tr><td>row 3</td></tr>
+        </tbody>
+        <tbody>
+          <tr style="break-before: page"><td>row 1</td></tr>
+          <tr><td>row 2</td></tr>
+          <tr><td>row 3</td></tr>
+        </tbody>
+        <tbody>
+          <tr><td>row 1</td></tr>
+          <tr><td>row 2</td></tr>
+          <tr><td>row 3</td></tr>
+        </tbody>
+        <tbody style="break-before: left">
+          <tr><td>row 1</td></tr>
+          <tr><td>row 2</td></tr>
+          <tr><td>row 3</td></tr>
+        </tbody>
+
+      </table>
+      <p>bla bla</p>
+     ''')
+    html, = page1.children
+    body, = html.children
+    h1, = body.children
+    assert h1.element_tag == 'h1'
+
+    html, = page2.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    table_group1, table_group2 = table.children
+    assert len(table_group1.children) == 3
+    assert len(table_group2.children) == 1
+
+    html, = page3.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    table_group, = table.children
+    assert len(table_group.children) == 2
+
+    html, = page4.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    table_group1, table_group2 = table.children
+    assert len(table_group1.children) == 3
+    assert len(table_group2.children) == 3
+
+    html, = page5.children
+    assert not html.children
+
+    html, = page6.children
+    body, = html.children
+    table_wrapper, p = body.children
+    table, = table_wrapper.children
+    table_group, = table.children
+    assert len(table_group.children) == 3
+    assert p.element_tag == 'p'
+
+
+@assert_no_logs
+@pytest.mark.parametrize('html, rows', (
+    ('''
+      <style>
+        @page { size: 100px }
+        table { table-layout: fixed; width: 100% }
+        tr { height: 26px }
+      </style>
+      <table>
+        <tbody>
+          <tr><td>row 0</td></tr>
+          <tr><td>row 1</td></tr>
+          <tr style="break-before: avoid"><td>row 2</td></tr>
+          <tr style="break-before: avoid"><td>row 3</td></tr>
+        </tbody>
+      </table>
+    ''',
+     [1, 3]),
+    ('''
+      <style>
+        @page { size: 100px }
+        table { table-layout: fixed; width: 100% }
+        tr { height: 26px }
+      </style>
+      <table>
+        <tbody>
+          <tr><td>row 0</td></tr>
+          <tr style="break-after: avoid"><td>row 1</td></tr>
+          <tr><td>row 2</td></tr>
+          <tr style="break-before: avoid"><td>row 3</td></tr>
+        </tbody>
+      </table>
+     ''',
+     [1, 3]),
+    ('''
+      <style>
+        @page { size: 100px }
+        table { table-layout: fixed; width: 100% }
+        tr { height: 26px }
+      </style>
+      <table>
+        <tbody>
+          <tr><td>row 0</td></tr>
+          <tr><td>row 1</td></tr>
+          <tr style="break-after: avoid"><td>row 2</td></tr>
+          <tr><td>row 3</td></tr>
+        </tbody>
+      </table>
+     ''',
+     [2, 2]),
+    ('''
+      <style>
+        @page { size: 100px }
+        table { table-layout: fixed; width: 100% }
+        tr { height: 26px }
+      </style>
+      <table>
+        <tbody>
+          <tr style="break-before: avoid"><td>row 0</td></tr>
+          <tr style="break-before: avoid"><td>row 1</td></tr>
+          <tr style="break-before: avoid"><td>row 2</td></tr>
+          <tr style="break-before: avoid"><td>row 3</td></tr>
+        </tbody>
+      </table>
+     ''',
+     [3, 1]),
+    ('''
+      <style>
+        @page { size: 100px }
+        table { table-layout: fixed; width: 100% }
+        tr { height: 26px }
+      </style>
+      <table>
+        <tbody>
+          <tr style="break-after: avoid"><td>row 0</td></tr>
+          <tr style="break-after: avoid"><td>row 1</td></tr>
+          <tr style="break-after: avoid"><td>row 2</td></tr>
+          <tr style="break-after: avoid"><td>row 3</td></tr>
+        </tbody>
+      </table>
+     ''',
+     [3, 1]),
+    ('''
+      <style>
+        @page { size: 100px }
+        table { table-layout: fixed; width: 100% }
+        tr { height: 26px }
+        p { height: 26px }
+      </style>
+      <p>wow p</p>
+      <table>
+        <tbody>
+          <tr style="break-after: avoid"><td>row 0</td></tr>
+          <tr style="break-after: avoid"><td>row 1</td></tr>
+          <tr style="break-after: avoid"><td>row 2</td></tr>
+          <tr style="break-after: avoid"><td>row 3</td></tr>
+        </tbody>
+      </table>
+     ''',
+     [1, 3, 1]),
+    ('''
+      <style>
+        @page { size: 100px }
+        table { table-layout: fixed; width: 100% }
+        tr { height: 30px }
+      </style>
+      <table>
+        <tbody style="break-after: avoid">
+          <tr><td>row 0</td></tr>
+          <tr><td>row 1</td></tr>
+          <tr><td>row 2</td></tr>
+        </tbody>
+        <tbody>
+          <tr><td>row 0</td></tr>
+          <tr><td>row 1</td></tr>
+          <tr><td>row 2</td></tr>
+        </tbody>
+      </table>
+     ''',
+     [2, 3, 1]),
+    ('''
+      <style>
+        @page { size: 100px }
+        table { table-layout: fixed; width: 100% }
+        tr { height: 30px }
+      </style>
+      <table>
+        <tbody>
+          <tr><td>row 0</td></tr>
+          <tr><td>row 1</td></tr>
+          <tr><td>row 2</td></tr>
+        </tbody>
+        <tbody style="break-before: avoid">
+          <tr><td>row 0</td></tr>
+          <tr><td>row 1</td></tr>
+          <tr><td>row 2</td></tr>
+        </tbody>
+      </table>
+     ''',
+     [2, 3, 1]),
+    ('''
+      <style>
+        @page { size: 100px }
+        table { table-layout: fixed; width: 100% }
+        tr { height: 30px }
+      </style>
+      <table>
+        <tbody>
+          <tr><td>row 0</td></tr>
+          <tr><td>row 1</td></tr>
+          <tr><td>row 2</td></tr>
+        </tbody>
+        <tbody>
+          <tr style="break-before: avoid"><td>row 0</td></tr>
+          <tr><td>row 1</td></tr>
+          <tr><td>row 2</td></tr>
+        </tbody>
+      </table>
+     ''',
+     [2, 3, 1]),
+    ('''
+      <style>
+        @page { size: 100px }
+        table { table-layout: fixed; width: 100% }
+        tr { height: 30px }
+      </style>
+      <table>
+        <tbody>
+          <tr><td>row 0</td></tr>
+          <tr><td>row 1</td></tr>
+          <tr style="break-after: avoid"><td>row 2</td></tr>
+        </tbody>
+        <tbody>
+          <tr><td>row 0</td></tr>
+          <tr><td>row 1</td></tr>
+          <tr><td>row 2</td></tr>
+        </tbody>
+      </table>
+     ''',
+     [2, 3, 1]),
+    ('''
+      <style>
+        @page { size: 100px }
+        table { table-layout: fixed; width: 100% }
+        tr { height: 30px }
+      </style>
+      <table>
+        <tbody style="break-after: avoid">
+          <tr><td>row 0</td></tr>
+          <tr><td>row 1</td></tr>
+          <tr style="break-after: page"><td>row 2</td></tr>
+        </tbody>
+        <tbody>
+          <tr><td>row 0</td></tr>
+          <tr><td>row 1</td></tr>
+          <tr><td>row 2</td></tr>
+        </tbody>
+      </table>
+     ''',
+     [3, 3]),
+))
+def test_table_page_break_avoid(html, rows):
+    pages = render_pages(html)
+    assert len(pages) == len(rows)
+    rows_per_page = []
+    for page in pages:
+        html, = page.children
+        body, = html.children
+        if body.children[0].element_tag == 'p':
+            rows_per_page.append(len(body.children))
+            continue
+        else:
+            table_wrapper, = body.children
+        table, = table_wrapper.children
+        rows_in_this_page = 0
+        for group in table.children:
+            for row in group.children:
+                rows_in_this_page += 1
+        rows_per_page.append(rows_in_this_page)
+
+    assert rows_per_page == rows
+
+
+@assert_no_logs
 @pytest.mark.parametrize('vertical_align, table_position_y', (
     ('top', 8),
     ('bottom', 8),
