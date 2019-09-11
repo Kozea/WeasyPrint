@@ -117,6 +117,10 @@ class StyleFor:
                     root=html.etree_element, parent=element,
                     base_url=html.base_url, target_collector=target_collector)
 
+        # Clear the cascaded styles, we don't need them anymore. Keep the
+        # dictionary, it is used later for page margins.
+        self._cascaded_styles.clear()
+
     def __call__(self, element, pseudo_type=None):
         style = self._computed_styles.get((element, pseudo_type))
 
@@ -163,6 +167,18 @@ class StyleFor:
         computed_styles[element, pseudo_type] = computed_from_cascaded(
             element, cascaded, parent_style, pseudo_type, root_style, base_url,
             target_collector)
+
+        # The style of marker is deleted when display is different from
+        # list-item.
+        if pseudo_type is None:
+            for pseudo in (None, 'before', 'after'):
+                pseudo_style = cascaded_styles.get((element, pseudo), {})
+                if 'display' in pseudo_style:
+                    if pseudo_style['display'][0] == 'list-item':
+                        break
+            else:
+                if (element, 'marker') in cascaded_styles:
+                    del cascaded_styles[element, 'marker']
 
     def add_page_declarations(self, page_type):
         for sheet, origin, sheet_specificity in self._sheets:

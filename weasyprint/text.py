@@ -728,10 +728,6 @@ class Layout(object):
                 pango.pango_attr_list_insert(attr_list, attr)
                 pango.pango_layout_set_attributes(self.layout, attr_list)
 
-        # Tabs width
-        if style['tab_size'] != 8:  # Default Pango value is 8
-            self.set_tabs()
-
     def get_first_line(self):
         layout_iter = ffi.gc(
             pango.pango_layout_get_iter(self.layout),
@@ -752,14 +748,18 @@ class Layout(object):
         self.text = bytestring.decode('utf-8')
         pango.pango_layout_set_text(self.layout, text, -1)
 
-        word_spacing = self.style['word_spacing']
+        # Word spacing may not be set if we're trying to get word-spacing
+        # computed value using a layout, for example if its unit is ex.
+        word_spacing = self.style.get('word_spacing', 0)
         if justify:
             # Justification is needed when drawing text but is useless during
             # layout. Ignore it before layout is reactivated before the drawing
             # step.
             word_spacing += self.justification_spacing
 
-        letter_spacing = self.style['letter_spacing']
+        # Letter spacing may not be set if we're trying to get letter-spacing
+        # computed value using a layout, for example if its unit is ex.
+        letter_spacing = self.style.get('letter_spacing', 'normal')
         if letter_spacing == 'normal':
             letter_spacing = 0
 
@@ -783,6 +783,10 @@ class Layout(object):
             pango.pango_layout_set_attributes(self.layout, attr_list)
             pango.pango_attr_list_unref(attr_list)
 
+        # Tabs width
+        if b'\t' in bytestring:
+            self.set_tabs()
+
     def get_font_metrics(self):
         context = pango.pango_layout_get_context(self.layout)
         return FontMetrics(context, self.font, self.language)
@@ -792,14 +796,12 @@ class Layout(object):
 
     def set_tabs(self):
         if isinstance(self.style['tab_size'], int):
-            style = self.style.copy()
-            style['tab_size'] = 8
             layout = Layout(
-                self.context, style['font_size'], style,
+                self.context, self.style['font_size'], self.style,
                 self.justification_spacing)
             layout.set_text(' ' * self.style['tab_size'])
             line, _ = layout.get_first_line()
-            width, _ = get_size(line, style)
+            width, _ = get_size(line, self.style)
             width = int(round(width))
         else:
             width = int(self.style['tab_size'].value)

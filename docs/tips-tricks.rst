@@ -257,3 +257,72 @@ Show me the code!
     pdf_file.finish()
     pdf = pdf_file.fileobj.getvalue()
     open('/tmp/weasyprint.pdf', 'wb').write(pdf)
+
+
+Display forms
+-------------
+
+Why this snippet?
+.................
+
+Contrary to many browsers, WeasyPrint doesn't render form inputs using a custom
+toolkit. As there's no dedicated stylesheet for them, they're often not
+rendered at all.
+
+Forms could also be rendered in generated PDF files, but it's not supported yet
+(see issue `#61 <https://github.com/Kozea/WeasyPrint/issues/61>`_).
+
+The easiest way to render inputs is to use a dedicated stylesheet.
+
+How to use this snippet?
+........................
+
+Adapt and include the sample into your document stylesheets.
+
+Show me the code!
+.................
+
+.. code-block:: python
+
+    input, textarea {
+      background: #eee;
+      border: 0.01em solid;
+      display: block;
+      margin: 0.2em 0;
+    }
+
+    [disabled] {
+      opacity: 0.3;
+    }
+
+    input[type=text] {
+      height: 1.2em;
+      width: 20em;
+    }
+
+    input[type=text]::before {
+      content: attr(value);
+      padding: 0.2em;
+    }
+
+    input[type=radio], input[type=checkbox] {
+      box-sizing: border-box;
+      background-clip: content-box;
+      height: 1em;
+      padding: 0.1em;
+      width: 1em;
+    }
+
+    input[checked] {
+      background-color: red;
+    }
+
+    input[type=radio] {
+      border-radius: 100%;
+    }
+
+    textarea {
+      font-family: monospace;
+      padding: 0.5em;
+      width: 20em;
+    }

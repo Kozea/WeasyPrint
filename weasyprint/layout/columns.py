@@ -35,6 +35,7 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
         absolute_boxes = []
 
     box = box.copy_with_children(box.children)
+    box.position_y += collapse_margin(adjoining_margins) - box.margin_top
 
     height = box.style['height']
     if height != 'auto' and height.unit != '%':
@@ -133,6 +134,8 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
             adjoining_margins.append(new_child.margin_bottom)
             continue
 
+        excluded_shapes = context.excluded_shapes[:]
+
         # We have a list of children that we have to balance between columns.
         column_children = column_children_or_block
 
@@ -152,24 +155,45 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
         column_skip_stack = skip_stack
         lost_space = float('inf')
         while True:
+            # Remove extra excluded shapes introduced during previous loop
+            new_excluded_shapes = (
+                len(context.excluded_shapes) - len(excluded_shapes))
+            for i in range(new_excluded_shapes):
+                context.excluded_shapes.pop()
+
             for i in range(count):
                 # Render the column
                 new_box, resume_at, next_page, _, _ = block_box_layout(
                     context, column_box, box.content_box_y() + height,
                     column_skip_stack, containing_block, page_is_empty,
                     [], [], [])
+                if new_box is None:
+                    # We didn't render anything. Give up and use the max
+                    # content height.
+                    height *= count
+                    continue
                 column_skip_stack = resume_at
 
-                # Get the empty space at the bottom of the column box
-                empty_space = height - (
-                    new_box.children[-1].position_y - box.content_box_y() +
-                    new_box.children[-1].margin_height())
+                in_flow_children = [
+                    child for child in new_box.children
+                    if child.is_in_normal_flow()]
 
-                # Get the minimum size needed to render the next box
-                next_box, _, _, _, _ = block_box_layout(
-                    context, column_box, box.content_box_y(),
-                    column_skip_stack, containing_block, True, [], [], [])
-                next_box_size = next_box.children[0].margin_height()
+                if in_flow_children:
+                    # Get the empty space at the bottom of the column box
+                    empty_space = height - (
+                        in_flow_children[-1].position_y - box.content_box_y() +
+                        in_flow_children[-1].margin_height())
+
+                    # Get the minimum size needed to render the next box
+                    next_box, _, _, _, _ = block_box_layout(
+                        context, column_box, box.content_box_y(),
+                        column_skip_stack, containing_block, True, [], [], [])
+                    for child in next_box.children:
+                        if child.is_in_normal_flow():
+                            next_box_size = child.margin_height()
+                            break
+                else:
+                    empty_space = next_box_size = 0
 
                 # Append the size needed to render the next box in this
                 # column.
@@ -178,7 +202,12 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
                 # example when the next box can't be separated from its own
                 # next box. In this case we don't try to find the real value
                 # and let the workaround below fix this for us.
-                if next_box_size - empty_space > 0:
+                #
+                # We also want to avoid very small values that may have been
+                # introduced by rounding errors. As the workaround below at
+                # least adds 1 pixel for each loop, we can ignore lost spaces
+                # lower than 1px.
+                if next_box_size - empty_space > 1:
                     lost_space = min(lost_space, next_box_size - empty_space)
 
                 # Stop if we already rendered the whole content

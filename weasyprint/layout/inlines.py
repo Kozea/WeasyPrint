@@ -265,6 +265,11 @@ def remove_last_whitespace(context, box):
 def first_letter_to_box(box, skip_stack, first_letter_style):
     """Create a box for the ::first-letter selector."""
     if first_letter_style and box.children:
+        # Some properties must be ignored in first-letter boxes.
+        # https://drafts.csswg.org/selectors-3/#application-in-css
+        # At least, position is ignored to avoid layout troubles.
+        first_letter_style['position'] = 'static'
+
         first_letter = ''
         child = box.children[0]
         if isinstance(child, boxes.TextBox):
