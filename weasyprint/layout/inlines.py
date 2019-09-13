@@ -1294,12 +1294,17 @@ def can_break_inside(box):
     return False
 
 
-def same_broken_child(skip_stack_1, skip_stack_2):
+def same_broken_child(original_skip_stack, relative_skip_stack):
     """Check that the skip stacks design the same text box."""
-    while isinstance(skip_stack_1, tuple) and isinstance(skip_stack_2, tuple):
-        if skip_stack_1[1] is None and skip_stack_2[1] is None:
+    while (isinstance(original_skip_stack, tuple) and
+            isinstance(relative_skip_stack, tuple)):
+        if original_skip_stack[1] is None and relative_skip_stack[1] is None:
+            # The last levels of the two skip_stack are the same
             return True
-        if skip_stack_1[0] != skip_stack_2[0]:
+        if relative_skip_stack[0] != 0:
+            # If at the current level the skip_stack is not 0, it means that
+            # it is not the first child that has been cut
             return False
-        skip_stack_1, skip_stack_2 = skip_stack_1[1], skip_stack_2[1]
+        original_skip_stack = original_skip_stack[1]
+        relative_skip_stack = relative_skip_stack[1]
     return False
