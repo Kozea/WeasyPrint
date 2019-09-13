@@ -93,14 +93,16 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
     children = box.children
     parent_box = box.copy_with_children(children)
     resolve_percentages(parent_box, containing_block)
+    # TODO: removing auto margins is OK for this step, but margins should be
+    # calculated later.
     if parent_box.margin_top == 'auto':
-        box.margin_top = 0
+        box.margin_top = parent_box.margin_top = 0
     if parent_box.margin_bottom == 'auto':
-        box.margin_bottom = 0
+        box.margin_bottom = parent_box.margin_bottom = 0
     if parent_box.margin_left == 'auto':
-        box.margin_left = 0
+        box.margin_left = parent_box.margin_left = 0
     if parent_box.margin_right == 'auto':
-        box.margin_right = 0
+        box.margin_right = parent_box.margin_right = 0
     if isinstance(parent_box, boxes.FlexBox):
         blocks.block_level_width(parent_box, containing_block)
     else:
