@@ -853,36 +853,28 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
                             else:
                                 children += [(child_index, child_new_child)]
 
-                            # We have to check whether the child we're breaking
-                            # is the one broken by the initial skip stack.
-                            broken_child = same_broken_child(
-                                initial_skip_stack,
-                                (child_index, child_resume_at))
-                            if broken_child:
-                                # As this child has already been broken
-                                # following the original skip stack, we have to
-                                # add the original skip stack to the partial
-                                # skip stack we get after the new rendering.
+                            # As this child has already been broken
+                            # following the original skip stack, we have to
+                            # add the original skip stack to the partial
+                            # skip stack we get after the new rendering.
 
-                                # We have to do:
-                                # child_resume_at += initial_skip_stack[1]
-                                # but adding skip stacks is a bit complicated
-                                current_skip_stack = initial_skip_stack[1]
-                                current_resume_at = child_resume_at
-                                stack = []
-                                while current_skip_stack and current_resume_at:
-                                    skip_stack, current_skip_stack = (
-                                        current_skip_stack)
-                                    resume_at, current_resume_at = (
-                                        current_resume_at)
-                                    stack.append(skip_stack + resume_at)
-                                child_resume_at = (
-                                    current_skip_stack or current_resume_at)
-                                while stack:
-                                    child_resume_at = (
-                                        stack.pop(), child_resume_at)
-
-                            resume_at = (child_index, child_resume_at)
+                            # We have to do:
+                            # resume_at + initial_skip_stack
+                            # but adding skip stacks is a bit complicated
+                            current_skip_stack = initial_skip_stack
+                            current_resume_at = (child_index, child_resume_at)
+                            stack = []
+                            while current_skip_stack and current_resume_at:
+                                skip, current_skip_stack = (
+                                    current_skip_stack)
+                                resume, current_resume_at = (
+                                    current_resume_at)
+                                stack.append(skip + resume)
+                                if resume != 0:
+                                    break
+                            resume_at = current_resume_at
+                            while stack:
+                                resume_at = (stack.pop(), resume_at)
                             break
                     if break_found:
                         break
@@ -1291,20 +1283,4 @@ def can_break_inside(box):
             return any(can_break_inside(child) for child in box.children)
         else:
             return False
-    return False
-
-
-def same_broken_child(original_skip_stack, relative_skip_stack):
-    """Check that the skip stacks design the same text box."""
-    while (isinstance(original_skip_stack, tuple) and
-            isinstance(relative_skip_stack, tuple)):
-        if original_skip_stack[1] is None and relative_skip_stack[1] is None:
-            # The last levels of the two skip_stack are the same
-            return True
-        if relative_skip_stack[0] != 0:
-            # If at the current level the skip_stack is not 0, it means that
-            # it is not the first child that has been cut
-            return False
-        original_skip_stack = original_skip_stack[1]
-        relative_skip_stack = relative_skip_stack[1]
     return False
