@@ -108,7 +108,10 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
             context, parent_box)
     original_skip_stack = skip_stack
     if skip_stack is not None:
-        children = children[skip_stack[0]:]
+        if box.style['flex_direction'].endswith('-reverse'):
+            children = children[:skip_stack[0] + 1]
+        else:
+            children = children[skip_stack[0]:]
         skip_stack = skip_stack[1]
     else:
         skip_stack = None
