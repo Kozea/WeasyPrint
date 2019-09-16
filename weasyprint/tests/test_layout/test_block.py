@@ -705,3 +705,15 @@ def test_box_decoration_break_slice_bottom_padding():
     assert article.height == 20
     div, = article.children
     assert div.position_y == 0
+
+
+@assert_no_logs
+def test_overflow_auto():
+    page, = parse('''
+      <article style="overflow: auto">
+        <div style="float: left; height: 50px; margin: 10px">bla bla bla</div>
+          toto toto''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    assert article.height == 50 + 10 + 10
