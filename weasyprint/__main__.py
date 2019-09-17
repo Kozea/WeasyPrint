@@ -11,9 +11,29 @@
 
 import argparse
 import logging
+import os
 import sys
 
+import cairosvg
+
 from . import HTML, LOGGER, VERSION
+from .text import cairo, pango
+
+
+class PrintInfo(argparse.Action):
+    def __call__(*_, **__):
+        uname = os.uname()
+        print('System:', uname.sysname)
+        print('Machine:', uname.machine)
+        print('Version:', uname.version)
+        print('Release:', uname.release)
+        print()
+        print('WeasyPrint version:', VERSION)
+        print('Python version:', sys.version.split()[0])
+        print('Cairo version:', cairo.cairo_version())
+        print('Pango version:', pango.pango_version())
+        print('CairoSVG version:', cairosvg.__version__)
+        sys.exit()
 
 
 def main(argv=None, stdout=None, stdin=None):
@@ -92,6 +112,8 @@ def main(argv=None, stdout=None, stdin=None):
     parser.add_argument('--version', action='version',
                         version='WeasyPrint version %s' % VERSION,
                         help="Print WeasyPrint's version number and exit.")
+    parser.add_argument('-i', '--info', action=PrintInfo, nargs=0,
+                        help='Print system information and exit.')
     parser.add_argument('-e', '--encoding',
                         help='Character encoding of the input')
     parser.add_argument('-f', '--format', choices=['pdf', 'png'],

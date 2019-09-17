@@ -15,6 +15,7 @@ import shutil
 import warnings
 
 import cairocffi as cairo
+from weasyprint.layout import LayoutContext
 
 from . import CSS
 from .css import get_all_computed_styles
@@ -347,9 +348,10 @@ class Document(object):
     <weasyprint.fonts.FontConfiguration>`.
 
     """
+
     @classmethod
-    def _render(cls, html, stylesheets, enable_hinting,
-                presentational_hints=False, font_config=None):
+    def _build_layout_context(cls, html, stylesheets, enable_hinting,
+                              presentational_hints=False, font_config=None):
         if font_config is None:
             font_config = FontConfiguration()
         target_collector = TargetCollector()
@@ -368,12 +370,34 @@ class Document(object):
         get_image_from_uri = functools.partial(
             original_get_image_from_uri, {}, html.url_fetcher)
         PROGRESS_LOGGER.info('Step 4 - Creating formatting structure')
+        context = LayoutContext(
+            enable_hinting, style_for, get_image_from_uri, font_config,
+            target_collector)
+        return context
+
+    @classmethod
+    def _render(cls, html, stylesheets, enable_hinting,
+                presentational_hints=False, font_config=None):
+        if font_config is None:
+            font_config = FontConfiguration()
+
+        context = cls._build_layout_context(
+            html, stylesheets, enable_hinting, presentational_hints,
+            font_config)
+
         root_box = build_formatting_structure(
+<<<<<<< HEAD
             html.etree_element, style_for, get_image_from_uri,
             html.base_url, target_collector, counter_style)
         page_boxes = layout_document(
             enable_hinting, style_for, get_image_from_uri, root_box,
             font_config, html, target_collector)
+=======
+            html.etree_element, context.style_for, context.get_image_from_uri,
+            html.base_url, context.target_collector)
+
+        page_boxes = layout_document(html, root_box, context)
+>>>>>>> 8e267c90dfefe068b331c8196d4a0d6482e1d39f
         rendering = cls(
             [Page(page_box, enable_hinting) for page_box in page_boxes],
             DocumentMetadata(**html._get_metadata()),
@@ -592,8 +616,9 @@ class Document(object):
         """
         # 0.75 = 72 PDF point (cairo units) per inch / 96 CSS pixel per inch
         scale = zoom * 0.75
-        # Use an in-memory buffer. We will need to seek for metadata
-        # TODO: avoid this if target can seek? Benchmark first.
+        # Use an in-memory buffer, as we will need to seek for
+        # metadata. Directly using the target when possible doesn't
+        # significantly save time and memory use.
         file_obj = io.BytesIO()
         # (1, 1) is overridden by .set_size() below.
         surface = cairo.PDFSurface(file_obj, 1, 1)

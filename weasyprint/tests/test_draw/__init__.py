@@ -27,12 +27,13 @@ PIXELS_BY_CHAR = dict(
     R=as_pixel(b'\xff\x00\x00\xff'),  # red
     B=as_pixel(b'\x00\x00\xff\xff'),  # blue
     G=as_pixel(b'\x00\xff\x00\xff'),  # lime green
-    V=as_pixel(b'\xBF\x00\x40\xff'),  # Average of 1*B and 3*R.
+    V=as_pixel(b'\xBF\x00\x40\xff'),  # average of 1*B and 3*R.
     S=as_pixel(b'\xff\x3f\x3f\xff'),  # R above R above #fff
     r=as_pixel(b'\xff\x00\x00\xff'),  # red
     g=as_pixel(b'\x00\x80\x00\xff'),  # half green
     b=as_pixel(b'\x00\x00\x80\xff'),  # half blue
-    v=as_pixel(b'\x80\x00\x80\xff'),  # Average of B and R.
+    v=as_pixel(b'\x80\x00\x80\xff'),  # average of B and R.
+    h=as_pixel(b'\x40\x00\x40\xff'),  # half average of B and R.
     a=as_pixel(b'\x00\x00\xfe\xff'),  # JPG is lossy...
     p=as_pixel(b'\xc0\x00\x3f\xff'),  # R above R above B above #fff.
 )

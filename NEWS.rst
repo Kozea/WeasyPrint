@@ -3,6 +3,93 @@
 ======
 
 
+Version 49
+----------
+
+Released on 2019-09-11.
+
+Performance:
+
+* Speed and memory use have been largely improved.
+
+New features:
+
+* `#700 <https://github.com/Kozea/WeasyPrint/issues/700>`_:
+  Handle ``::marker`` pseudo-selector
+* `135dc06c <https://github.com/Kozea/WeasyPrint/commit/135dc06c>`_:
+  Handle ``recto`` and ``verso`` parameters for page breaks
+* `#907 <https://github.com/Kozea/WeasyPrint/pull/907>`_:
+  Provide a clean way to build layout contexts
+
+Bug fixes:
+
+* `#937 <https://github.com/Kozea/WeasyPrint/issues/937>`_:
+  Fix rendering of tables with empty lines and rowspans
+* `#897 <https://github.com/Kozea/WeasyPrint/issues/897>`_:
+  Don't crash when small columns are wrapped in absolute blocks
+* `#913 <https://github.com/Kozea/WeasyPrint/issues/913>`_:
+  Fix a test about gradient colors
+* `#924 <https://github.com/Kozea/WeasyPrint/pull/924>`_:
+  Fix title for document with attachments
+* `#917 <https://github.com/Kozea/WeasyPrint/issues/917>`_:
+  Fix tests with Pango 1.44
+* `#919 <https://github.com/Kozea/WeasyPrint/issues/919>`_:
+  Fix padding and margin management for column flex boxes
+* `#901 <https://github.com/Kozea/WeasyPrint/issues/901>`_:
+  Fix width of replaced boxes with no intrinsic width
+* `#906 <https://github.com/Kozea/WeasyPrint/issues/906>`_:
+  Don't respect table cell width when content doesn't fit
+* `#927 <https://github.com/Kozea/WeasyPrint/pull/927>`_:
+  Don't use deprecated ``logger.warn`` anymore
+* `a8662794 <https://github.com/Kozea/WeasyPrint/commit/a8662794>`_:
+  Fix margin collapsing between caption and table wrapper
+* `87d9e84f <https://github.com/Kozea/WeasyPrint/commit/87d9e84f>`_:
+  Avoid infinite loops when rendering columns
+* `789b80e6 <https://github.com/Kozea/WeasyPrint/commit/789b80e6>`_:
+  Only use in flow children to set columns height
+* `615e298a <https://github.com/Kozea/WeasyPrint/commit/615e298a>`_:
+  Don't include floating elements each time we try to render a column
+* `48d8632e <https://github.com/Kozea/WeasyPrint/commit/48d8632e>`_:
+  Avoid not in flow children to compute column height
+* `e7c452ce <https://github.com/Kozea/WeasyPrint/commit/e7c452ce>`_:
+  Fix collapsing margins for columns
+* `fb0887cf <https://github.com/Kozea/WeasyPrint/commit/fb0887cf>`_:
+  Fix crash when using currentColor in gradients
+* `f66df067 <https://github.com/Kozea/WeasyPrint/commit/f66df067>`_:
+  Don't crash when using ex units in word-spacing in letter-spacing
+* `c790ff20 <https://github.com/Kozea/WeasyPrint/commit/c790ff20>`_:
+  Don't crash when properties needing base URL use var functions
+* `d63eac31 <https://github.com/Kozea/WeasyPrint/commit/d63eac31>`_:
+  Don't crash with object-fit: non images with no intrinsic size
+
+Documentation:
+
+* `#900 <https://github.com/Kozea/WeasyPrint/issues/900>`_:
+  Add documentation about semantic versioning
+* `#692 <https://github.com/Kozea/WeasyPrint/issues/692>`_:
+  Add a snippet about PDF magnification
+* `#899 <https://github.com/Kozea/WeasyPrint/pull/899>`_:
+  Add .NET wrapper link
+* `#893 <https://github.com/Kozea/WeasyPrint/pull/893>`_:
+  Fixed wrong nested list comprehension example
+* `#902 <https://github.com/Kozea/WeasyPrint/pull/902>`_:
+  Add ``state`` to the ``make_bookmark_tree`` documentation
+* `#921 <https://github.com/Kozea/WeasyPrint/pull/921>`_:
+  Fix typos in the documentation
+* `#328 <https://github.com/Kozea/WeasyPrint/issues/328>`_:
+  Add CSS sample for forms
+
+Contributors:
+
+- grewn0uille
+- Guillaume Ayoub
+- Raphael Gaschignard
+- Stani
+- Szmen
+- Thomas Dexter
+- Tontyna
+
+
 Version 48
 ----------
 

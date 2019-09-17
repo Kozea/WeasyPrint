@@ -572,7 +572,6 @@ def test_font():
     assert expand_to_dict(
         'font: small-caps condensed normal 700 large serif'
     ) == {
-        # 'font_style': 'normal',  XXX shouldn’t this be here?
         'font_stretch': 'condensed',
         'font_variant_caps': 'small-caps',
         'font_weight': 700,
@@ -587,6 +586,10 @@ def test_font():
     assert_invalid('font: 12px')
     assert_invalid('font: 12px/foo serif')
     assert_invalid('font: 12px "Invalid" family')
+    assert_invalid('font: normal normal normal normal normal large serif')
+    assert_invalid('font: normal small-caps italic 700 condensed large serif')
+    assert_invalid('font: small-caps italic 700 normal condensed large serif')
+    assert_invalid('font: small-caps italic 700 condensed normal large serif')
 
 
 @assert_no_logs

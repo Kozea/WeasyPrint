@@ -13,22 +13,6 @@
 from .percentages import percentage
 
 
-def image_marker_layout(box):
-    """Layout the :class:`boxes.ImageMarkerBox` ``box``.
-
-    :class:`boxes.ImageMarkerBox` objects are :class:`boxes.ReplacedBox`
-    objects, but their used size is computed differently.
-
-    """
-    image = box.replacement
-    one_em = box.style['font_size']
-    iwidth, iheight = image.get_intrinsic_size(
-        box.style['image_resolution'], one_em)
-    box.width, box.height = default_image_sizing(
-        iwidth, iheight, image.intrinsic_ratio, box.width, box.height,
-        default_width=one_em, default_height=one_em)
-
-
 def default_image_sizing(intrinsic_width, intrinsic_height, intrinsic_ratio,
                          specified_width, specified_height,
                          default_width, default_height):
@@ -107,8 +91,11 @@ def replacedbox_layout(box):
     position = box.style['object_position']
 
     image = box.replacement
-    iwidth, iheight = image.get_intrinsic_size(
+    intrinsic_width, intrinsic_height = image.get_intrinsic_size(
         box.style['image_resolution'], box.style['font_size'])
+    if None in (intrinsic_width, intrinsic_height):
+        intrinsic_width, intrinsic_height = contain_constraint_image_sizing(
+            box.width, box.height, box.replacement.intrinsic_ratio)
 
     if object_fit == 'fill':
         draw_width, draw_height = box.width, box.height
@@ -121,11 +108,11 @@ def replacedbox_layout(box):
                 box.width, box.height, box.replacement.intrinsic_ratio)
         else:
             assert object_fit == 'none', object_fit
-            draw_width, draw_height = iwidth, iheight
+            draw_width, draw_height = intrinsic_width, intrinsic_height
 
         if object_fit == 'scale-down':
-            draw_width = min(draw_width, iwidth)
-            draw_height = min(draw_height, iheight)
+            draw_width = min(draw_width, intrinsic_width)
+            draw_height = min(draw_height, intrinsic_height)
 
     origin_x, position_x, origin_y, position_y = position[0]
     ref_x = box.width - draw_width

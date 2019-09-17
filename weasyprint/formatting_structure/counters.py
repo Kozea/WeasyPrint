@@ -21,7 +21,7 @@ __all__ = ['format', 'format_list_marker']
 INITIAL_VALUES = dict(
     negative=('-', ''),
     prefix='',
-    suffix='.',
+    suffix='. ',
     range=(float('-inf'), float('inf')),
     fallback='decimal',
     # type and symbols ommited here.
@@ -227,13 +227,13 @@ register_style(
     'disc',
     type='repeating',
     symbols=['•'],  # U+2022, BULLET
-    suffix='',
+    suffix=' ',
 )
 register_style(
     'circle',
     type='repeating',
     symbols=['◦'],  # U+25E6 WHITE BULLET
-    suffix='',
+    suffix=' ',
 )
 register_style(
     'square',
@@ -241,7 +241,7 @@ register_style(
     # CSS Lists 3 suggests U+25FE BLACK MEDIUM SMALL SQUARE
     # But I think this one looks better.
     symbols=['▪'],  # U+25AA BLACK SMALL SQUARE
-    suffix='',
+    suffix=' ',
 )
 register_style(
     'lower-latin',

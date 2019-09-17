@@ -456,14 +456,13 @@ def expand_font(name, tokens):
 
     # Make `tokens` a stack
     tokens = list(reversed(tokens))
-    # Values for font-style font-variant and font-weight can come in any
-    # order and are all optional.
-    while tokens:
+    # Values for font-style, font-variant-caps, font-weight and font-stretch
+    # can come in any order and are all optional.
+    for _ in range(4):
         token = tokens.pop()
         if get_keyword(token) == 'normal':
             # Just ignore 'normal' keywords. Unspecified properties will get
-            # their initial token, which is 'normal' for all three here.
-            # TODO: fail if there is too many 'normal' values?
+            # their initial token, which is 'normal' for all four here.
             continue
 
         if font_style([token]) is not None:
@@ -475,9 +474,14 @@ def expand_font(name, tokens):
         elif font_stretch([token]) is not None:
             suffix = '-stretch'
         else:
-            # We’re done with these three, continue with font-size
+            # We’re done with these four, continue with font-size
             break
         yield suffix, [token]
+
+        if not tokens:
+            raise InvalidValues
+    else:
+        token = tokens.pop()
 
     # Then font-size is mandatory
     # Latest `token` from the loop.

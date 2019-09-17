@@ -362,6 +362,27 @@ def test_breaking_linebox_regression_9():
 
 
 @assert_no_logs
+def test_breaking_linebox_regression_10():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/923
+    page, = parse(
+        '<style>@font-face {src: url(AHEM____.TTF); font-family: ahem}</style>'
+        '<p style="width:195px; font-family: ahem">'
+        '  <span>'
+        '    <span>xxxxxx YYY yyyyyy yyy</span>'
+        '    ZZZZZZ zzzzz'
+        '  </span> )x '
+        '</p>')
+    html, = page.children
+    body, = html.children
+    p, = body.children
+    line1, line2, line3, line4 = p.children
+    assert line1.children[0].children[0].children[0].text == 'xxxxxx YYY'
+    assert line2.children[0].children[0].children[0].text == 'yyyyyy yyy'
+    assert line3.children[0].children[0].text == 'ZZZZZZ zzzzz'
+    assert line4.children[0].text == ')x'
+
+
+@assert_no_logs
 def test_linebox_text():
     page, = parse('''
       <style>

@@ -608,19 +608,25 @@ def first_line_metrics(first_line, text, layout, resume_at, space_collapse,
         length -= len(hyphenation_character.encode('utf8'))
     elif resume_at:
         # Set an infinite width as we don't want to break lines when drawing,
-        # the lines have already been split and the size may differ.
+        # the lines have already been split and the size may differ. Rendering
+        # is also much faster when no width is set.
         pango.pango_layout_set_width(layout.layout, -1)
+
         # Create layout with final text
         first_line_text = utf8_slice(text, slice(length))
+
         # Remove trailing spaces if spaces collapse
         if space_collapse:
             first_line_text = first_line_text.rstrip(' ')
+
         # Remove soft hyphens
         layout.set_text(first_line_text.replace('\u00ad', ''))
+
         first_line, _ = layout.get_first_line()
         length = first_line.length if first_line is not None else 0
-        soft_hyphens = 0
+
         if '\u00ad' in first_line_text:
+            soft_hyphens = 0
             if first_line_text[0] == '\u00ad':
                 length += 2  # len('\u00ad'.encode('utf8'))
             for i in range(len(layout.text)):
@@ -629,7 +635,8 @@ def first_line_metrics(first_line, text, layout, resume_at, space_collapse,
                         soft_hyphens += 1
                     else:
                         break
-        length += soft_hyphens * 2  # len('\u00ad'.encode('utf8'))
+            length += soft_hyphens * 2  # len('\u00ad'.encode('utf8'))
+
     width, height = get_size(first_line, style)
     baseline = units_to_double(pango.pango_layout_get_baseline(layout.layout))
     layout.deactivate()
@@ -652,18 +659,18 @@ class Layout(object):
         # See https://github.com/Kozea/WeasyPrint/pull/599
         if font_size == 0 and ZERO_FONTSIZE_CRASHES_CAIRO:
             font_size = 1
+
         hinting = context.enable_hinting if context else False
         self.layout = ffi.gc(
             pangocairo.pango_cairo_create_layout(ffi.cast(
                 'cairo_t *', CAIRO_DUMMY_CONTEXT[hinting]._pointer)),
             gobject.g_object_unref)
+
         pango_context = pango.pango_layout_get_context(self.layout)
         if context and context.font_config.font_map:
             pango.pango_context_set_font_map(
                 pango_context, context.font_config.font_map)
-        self.font = ffi.gc(
-            pango.pango_font_description_new(),
-            pango.pango_font_description_free)
+
         if style['font_language_override'] != 'normal':
             lang_p, lang = unicode_to_char_p(LST_TO_ISO.get(
                 style['font_language_override'].lower(),
@@ -679,6 +686,9 @@ class Layout(object):
 
         assert not isinstance(style['font_family'], str), (
             'font_family should be a list')
+        self.font = ffi.gc(
+            pango.pango_font_description_new(),
+            pango.pango_font_description_free)
         family_p, family = unicode_to_char_p(','.join(style['font_family']))
         pango.pango_font_description_set_family(self.font, family_p)
         pango.pango_font_description_set_style(
@@ -718,10 +728,6 @@ class Layout(object):
                 pango.pango_attr_list_insert(attr_list, attr)
                 pango.pango_layout_set_attributes(self.layout, attr_list)
 
-        # Tabs width
-        if style['tab_size'] != 8:  # Default Pango value is 8
-            self.set_tabs()
-
     def get_first_line(self):
         layout_iter = ffi.gc(
             pango.pango_layout_get_iter(self.layout),
@@ -742,14 +748,18 @@ class Layout(object):
         self.text = bytestring.decode('utf-8')
         pango.pango_layout_set_text(self.layout, text, -1)
 
-        word_spacing = self.style['word_spacing']
+        # Word spacing may not be set if we're trying to get word-spacing
+        # computed value using a layout, for example if its unit is ex.
+        word_spacing = self.style.get('word_spacing', 0)
         if justify:
             # Justification is needed when drawing text but is useless during
             # layout. Ignore it before layout is reactivated before the drawing
             # step.
             word_spacing += self.justification_spacing
 
-        letter_spacing = self.style['letter_spacing']
+        # Letter spacing may not be set if we're trying to get letter-spacing
+        # computed value using a layout, for example if its unit is ex.
+        letter_spacing = self.style.get('letter_spacing', 'normal')
         if letter_spacing == 'normal':
             letter_spacing = 0
 
@@ -773,6 +783,10 @@ class Layout(object):
             pango.pango_layout_set_attributes(self.layout, attr_list)
             pango.pango_attr_list_unref(attr_list)
 
+        # Tabs width
+        if b'\t' in bytestring:
+            self.set_tabs()
+
     def get_font_metrics(self):
         context = pango.pango_layout_get_context(self.layout)
         return FontMetrics(context, self.font, self.language)
@@ -782,18 +796,16 @@ class Layout(object):
 
     def set_tabs(self):
         if isinstance(self.style['tab_size'], int):
-            style = self.style.copy()
-            style['tab_size'] = 8
             layout = Layout(
-                self.context, style['font_size'], style,
+                self.context, self.style['font_size'], self.style,
                 self.justification_spacing)
             layout.set_text(' ' * self.style['tab_size'])
             line, _ = layout.get_first_line()
-            width, _ = get_size(line, style)
+            width, _ = get_size(line, self.style)
             width = int(round(width))
         else:
             width = int(self.style['tab_size'].value)
-        # TODO: 0 is not handled correctly by Pango
+        # 0 is not handled correctly by Pango
         array = ffi.gc(
             pango.pango_tab_array_new_with_positions(
                 1, True, pango.PANGO_TAB_LEFT, width or 1),
@@ -801,10 +813,7 @@ class Layout(object):
         pango.pango_layout_set_tabs(self.layout, array)
 
     def deactivate(self):
-        del self.layout
-        del self.font
-        del self.language
-        del self.style
+        del self.layout, self.font, self.language, self.style
 
     def reactivate(self, style):
         self.setup(self.context, style['font_size'], style)
@@ -1207,16 +1216,6 @@ def split_first_line(text, style, context, max_width, justification_spacing,
         pango.pango_layout_set_width(
             layout.layout, units_from_double(max_width))
         layout.set_wrap(PANGO_WRAP_MODE['WRAP_CHAR'])
-        _, temp_index = layout.get_first_line()
-        temp_index = temp_index or len(text.encode('utf-8'))
-        # TODO: WRAP_CHAR is said to "wrap lines at character boundaries", but
-        # it doesn't. Looks like it tries to split at word boundaries and then
-        # at character boundaries if there's no enough space for a full word,
-        # just as WRAP_WORD_CHAR does. That's why we have to split this text
-        # twice. Find why. It may be related to the problem described in the
-        # link given in step #3.
-        first_line_text = utf8_slice(text, slice(temp_index))
-        layout.set_text(first_line_text)
         first_line, index = layout.get_first_line()
         resume_at = index or first_line.length
         if resume_at >= len(text.encode('utf-8')):

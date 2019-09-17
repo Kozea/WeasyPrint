@@ -339,19 +339,21 @@ def test_fixed_positioning_regression_1():
     html, = page_1.children
     body, = html.children
     ul, img, div, article = body.children
+    marker = ul.children[0]
     assert (ul.position_x, ul.position_y) == (80, 10)
     assert (img.position_x, img.position_y) == (60, 10)
     assert (div.position_x, div.position_y) == (40, 10)
     assert (article.position_x, article.position_y) == (0, 0)
-    assert 60 < ul.children[0].outside_list_marker.position_x < 70
+    assert marker.position_x == ul.position_x
 
     html, = page_2.children
     ul, img, div, body = html.children
+    marker = ul.children[0]
     assert (ul.position_x, ul.position_y) == (180, 10)
     assert (img.position_x, img.position_y) == (160, 10)
     assert (div.position_x, div.position_y) == (140, 10)
     assert (article.position_x, article.position_y) == (0, 0)
-    assert 160 < ul.children[0].outside_list_marker.position_x < 170
+    assert marker.position_x == ul.position_x
 
 
 @assert_no_logs
