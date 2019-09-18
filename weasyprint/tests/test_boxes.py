@@ -1113,12 +1113,13 @@ def test_counters_8():
       <p></p>
       <p></p>'''), 2 * [
         ('p', 'Block', [
-          ('p::marker', 'Block', [
-            ('p::marker', 'Line', [
-              ('p::marker', 'Text', '• ')])]),
           ('p::before', 'Block', [
-            ('p::before', 'Line', [
-              ('p::before', 'Text', 'a')])])])])
+            ('p::marker', 'Block', [
+              ('p::marker', 'Line', [
+                ('p::marker', 'Text', '• ')])]),
+            ('p::before', 'Block', [
+                ('p::before', 'Line', [
+                    ('p::before', 'Text', 'a')])])])])])
 
 
 @assert_no_logs

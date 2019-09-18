@@ -35,16 +35,16 @@ def test_lists_style(inside, style, character):
     html, = page.children
     body, = html.children
     unordered_list, = body.children
+    list_item, = unordered_list.children
     if inside:
-        list_item, = unordered_list.children
         line, = list_item.children
         marker, content = line.children
         marker_text, = marker.children
     else:
-        marker, list_item = unordered_list.children
+        marker, line_container, = list_item.children
         assert marker.position_x == list_item.position_x
         assert marker.position_y == list_item.position_y
-        line, = list_item.children
+        line, = line_container.children
         content, = line.children
         marker_line, = marker.children
         marker_text, = marker_line.children
@@ -68,5 +68,5 @@ def test_lists_empty_item():
     html, = page.children
     body, = html.children
     unordered_list, = body.children
-    _1, li1, _2, li2, _3, li3 = unordered_list.children
+    li1, li2, li3 = unordered_list.children
     assert li1.position_y != li2.position_y != li3.position_y

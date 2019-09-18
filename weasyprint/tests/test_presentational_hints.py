@@ -129,8 +129,8 @@ def test_ph_lists():
     html, = page._page_box.children
     body, = html.children
     ol, ul = body.children
-    _1, oli1, _2, oli2, _3, oli3, _4, oli4, _5, oli5 = ol.children
-    _1, uli1, _2, uli2, _3, uli3 = ul.children
+    oli1, oli2, oli3, oli4, oli5 = ol.children
+    uli1, uli2, uli3 = ul.children
     assert oli1.style['list_style_type'] == 'upper-alpha'
     assert oli2.style['list_style_type'] == 'decimal'
     assert oli3.style['list_style_type'] == 'lower-alpha'

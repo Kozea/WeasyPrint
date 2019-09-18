@@ -136,7 +136,6 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
 
     update_counters(state, style)
 
-    outside_markers = []
     children = []
 
     # If this element’s direct children create new scopes, the counter
@@ -146,15 +145,12 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
     box.first_letter_style = style_for(element, 'first-letter')
     box.first_line_style = style_for(element, 'first-line')
 
+    marker_boxes = []
     if style['display'] == 'list-item':
-        marker_boxes = marker_to_box(
+        marker_boxes = list(marker_to_box(
             element, state, style, style_for, get_image_from_uri,
-            target_collector)
-        if marker_boxes:
-            if style['list_style_position'] == 'outside':
-                outside_markers.extend(marker_boxes)
-            else:
-                children.extend(marker_boxes)
+            target_collector))
+        children.extend(marker_boxes)
 
     children.extend(before_after_to_box(
         element, 'before', state, style_for, get_image_from_uri,
@@ -162,7 +158,7 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
 
     # collect anchor's counter_values, maybe it's a target.
     # to get the spec-conform counter_values we must do it here,
-    # after the ::before is parsed and befor the ::after is
+    # after the ::before is parsed and before the ::after is
     if style['anchor']:
         target_collector.store_target(style['anchor'], counter_values, box)
 
@@ -195,7 +191,7 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
     # calculate string-set and bookmark-label
     set_content_lists(element, box, style, counter_values, target_collector)
 
-    if outside_markers and not box.children:
+    if marker_boxes and len(box.children) == 1:
         # See https://www.w3.org/TR/css-lists-3/#list-style-position-outside
         #
         # "The size or contents of the marker box may affect the height of the
@@ -207,11 +203,11 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
         # height. Adding text boxes is not the best idea, but it's not a good
         # moment to add an empty line box, and the specification lets us do
         # almost what we want, so…
-        box.children = [boxes.TextBox.anonymous_from(box, '​')]
+        if style['list_style_position'] == 'outside':
+            box.children.append(boxes.TextBox.anonymous_from(box, '​'))
 
     # Specific handling for the element. (eg. replaced element)
-    return outside_markers + html.handle_element(
-        element, box, get_image_from_uri, base_url)
+    return html.handle_element(element, box, get_image_from_uri, base_url)
 
 
 def before_after_to_box(element, pseudo_type, state, style_for,
@@ -238,23 +234,18 @@ def before_after_to_box(element, pseudo_type, state, style_for,
 
     children = []
 
-    outside_markers = []
     if display == 'list-item':
-        marker_boxes = marker_to_box(
+        marker_boxes = list(marker_to_box(
             element, state, style, style_for, get_image_from_uri,
-            target_collector)
-        if marker_boxes:
-            if style['list_style_position'] == 'outside':
-                outside_markers.extend(marker_boxes)
-            else:
-                children.extend(marker_boxes)
+            target_collector))
+        children.extend(marker_boxes)
 
     children.extend(content_to_boxes(
         style, box, quote_depth, counter_values, get_image_from_uri,
         target_collector))
 
     box.children = children
-    return outside_markers + [box]
+    return [box]
 
 
 def marker_to_box(element, state, parent_style, style_for, get_image_from_uri,
@@ -1517,6 +1508,7 @@ def box_text(box):
             child.text for child in box.descendants()
             if not child.element_tag.endswith('::before') and
             not child.element_tag.endswith('::after') and
+            not child.element_tag.endswith('::marker') and
             isinstance(child, boxes.TextBox))
     else:
         return ''
