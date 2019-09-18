@@ -569,6 +569,15 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                         # else:
                         # ignore this 'avoid' and break anyway.
 
+                if all(child.is_absolutely_positioned()
+                       for child in new_children):
+                    # This box has only rendered absolute children, keep them
+                    # for the next page. This is for example useful for list
+                    # markers.
+                    remove_placeholders(
+                        new_children, absolute_boxes, fixed_boxes)
+                    new_children = []
+
                 if new_children:
                     resume_at = (index, None)
                     break
