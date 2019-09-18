@@ -647,6 +647,11 @@ def block_container_layout(context, box, max_position_y, skip_stack,
     # http://www.w3.org/TR/CSS21/visudet.html#normal-block
     # TODO: See float.float_layout
     if new_box.height == 'auto':
+        if context.excluded_shapes and new_box.style['overflow'] != 'visible':
+            max_float_position_y = max(
+                float_box.position_y + float_box.margin_height()
+                for float_box in context.excluded_shapes)
+            position_y = max(max_float_position_y, position_y)
         new_box.height = position_y - new_box.content_box_y()
 
     if new_box.style['position'] == 'relative':
