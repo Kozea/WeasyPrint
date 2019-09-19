@@ -3,6 +3,37 @@
 ======
 
 
+Version 50
+----------
+
+Released on 2019-09-19.
+
+New features:
+
+* `#209 <https://github.com/Kozea/WeasyPrint/issues/209>`_:
+  Make ``break-*`` properties work inside tables
+* `#661 <https://github.com/Kozea/WeasyPrint/issues/661>`_:
+  Make blocks with ``overflow: auto`` grow to include floating children
+
+Bug fixes:
+
+* `#945 <https://github.com/Kozea/WeasyPrint/issues/945>`_:
+  Don't break pages between a list item and its marker
+* `#727 <https://github.com/Kozea/WeasyPrint/issues/727>`_:
+  Avoid tables lost between pages
+* `#831 <https://github.com/Kozea/WeasyPrint/issues/831>`_:
+  Ignore auto margins on flex containers
+* `#923 <https://github.com/Kozea/WeasyPrint/issues/923>`_:
+  Fix a couple of crashes when splitting a line twice
+* `#896 <https://github.com/Kozea/WeasyPrint/issues/896>`_:
+  Fix skip stack order when using a reverse flex direction
+
+Contributors:
+
+- grewn0uille
+- Guillaume Ayoub
+
+
 Version 49
 ----------
 
