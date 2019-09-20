@@ -9,6 +9,8 @@
 
 """
 
+from math import isclose
+
 import pytest
 import tinycss2
 
@@ -83,7 +85,7 @@ def test_annotate_document():
     style_for = get_all_computed_styles(
         document, user_stylesheets=[CSS(resource_filename('user.css'))])
 
-    # Element objects behave a lists of their children
+    # Element objects behave as lists of their children
     _head, body = document.etree_element
     h1, p, ul, div = body
     li_0, _li_1 = ul
@@ -451,3 +453,38 @@ def test_units(value, width):
     body, = html.children
     p, = body.children
     assert p.margin_left == width
+
+
+@assert_no_logs
+@pytest.mark.parametrize('parent_css, parent_size, child_css, child_size', (
+    ('10px', 10, '10px', 10),
+    ('x-small', 12, 'xx-large', 32),
+    ('x-large', 24, '2em', 48),
+    ('1em', 16, '1em', 16),
+    ('1em', 16, 'larger', 6 / 5 * 16),
+    ('medium', 16, 'larger', 6 / 5 * 16),
+    ('x-large', 24, 'larger', 32),
+    ('xx-large', 32, 'larger', 1.2 * 32),
+    ('1px', 1, 'larger', 3 / 5 * 16),
+    ('28px', 28, 'larger', 32),
+    ('100px', 100, 'larger', 120),
+    ('xx-small', 3 / 5 * 16, 'larger', 12),
+    ('1em', 16, 'smaller', 8 / 9 * 16),
+    ('medium', 16, 'smaller', 8 / 9 * 16),
+    ('x-large', 24, 'smaller', 6 / 5 * 16),
+    ('xx-large', 32, 'smaller', 24),
+    ('xx-small', 3 / 5 * 16, 'smaller', 0.8 * 3 / 5 * 16),
+    ('1px', 1, 'smaller', 0.8),
+    ('28px', 28, 'smaller', 24),
+    ('100px', 100, 'smaller', 32),
+))
+def test_font_size(parent_css, parent_size, child_css, child_size):
+    document = FakeHTML(string='<p>a<span>b')
+    style_for = get_all_computed_styles(document, user_stylesheets=[CSS(
+        string='p{font-size:%s}span{font-size:%s}' % (parent_css, child_css))])
+
+    _head, body = document.etree_element
+    p, = body
+    span, = p
+    assert isclose(style_for(p)['font_size'], parent_size)
+    assert isclose(style_for(span)['font_size'], child_size)

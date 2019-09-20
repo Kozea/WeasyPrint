@@ -784,9 +784,8 @@ def font_size(token):
         return length
     font_size_keyword = get_keyword(token)
     if font_size_keyword in ('smaller', 'larger'):
-        raise InvalidValues('value not supported yet')
+        return font_size_keyword
     if font_size_keyword in computed_values.FONT_SIZE_KEYWORDS:
-        # or keyword in ('smaller', 'larger')
         return font_size_keyword
 
 

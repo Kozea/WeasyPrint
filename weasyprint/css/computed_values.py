@@ -10,6 +10,7 @@
 
 """
 
+from collections import OrderedDict
 from urllib.parse import unquote
 
 from tinycss2.color3 import parse_color
@@ -28,8 +29,7 @@ ZERO_PIXELS = Dimension(0, 'px')
 # Value in pixels of font-size for <absolute-size> keywords: 12pt (16px) for
 # medium, and scaling factors given in CSS3 for others:
 # http://www.w3.org/TR/css3-fonts/#font-size-prop
-# TODO: this will need to be ordered to implement 'smaller' and 'larger'
-FONT_SIZE_KEYWORDS = dict(
+FONT_SIZE_KEYWORDS = OrderedDict(
     # medium is 16px, others are a ratio of medium
     (name, INITIAL_VALUES['font_size'] * a / b)
     for name, a, b in (
@@ -592,14 +592,29 @@ def font_size(computer, name, value):
     """Compute the ``font-size`` property."""
     if value in FONT_SIZE_KEYWORDS:
         return FONT_SIZE_KEYWORDS[value]
-    # TODO: support 'larger' and 'smaller'
 
+    keyword_values = list(FONT_SIZE_KEYWORDS.values())
     parent_font_size = computer['parent_style']['font_size']
+
+    if value == 'larger':
+        if parent_font_size >= keyword_values[-1]:
+            return parent_font_size * 1.2
+        for i, keyword_value in enumerate(keyword_values):
+            if keyword_value > parent_font_size:
+                return keyword_values[i]
+    elif value == 'smaller':
+        if parent_font_size <= keyword_values[0]:
+            return parent_font_size * 0.8
+        for i, keyword_value in enumerate(keyword_values[::-1]):
+            if keyword_value < parent_font_size:
+                return keyword_values[-i - 1]
+
     if value.unit == '%':
         return value.value * parent_font_size / 100.
     else:
-        return length(computer, name, value, pixels_only=True,
-                      font_size=parent_font_size)
+        return length(
+            computer, name, value, pixels_only=True,
+            font_size=parent_font_size)
 
 
 @register_computer('font-weight')
