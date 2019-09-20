@@ -597,17 +597,17 @@ def font_size(computer, name, value):
     parent_font_size = computer['parent_style']['font_size']
 
     if value == 'larger':
-        if parent_font_size >= keyword_values[-1]:
-            return parent_font_size * 1.2
         for i, keyword_value in enumerate(keyword_values):
             if keyword_value > parent_font_size:
                 return keyword_values[i]
+        else:
+            return parent_font_size * 1.2
     elif value == 'smaller':
-        if parent_font_size <= keyword_values[0]:
-            return parent_font_size * 0.8
         for i, keyword_value in enumerate(keyword_values[::-1]):
             if keyword_value < parent_font_size:
                 return keyword_values[-i - 1]
+        else:
+            return parent_font_size * 0.8
 
     if value.unit == '%':
         return value.value * parent_font_size / 100.
