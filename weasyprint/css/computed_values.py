@@ -608,8 +608,7 @@ def font_size(computer, name, value):
                 return keyword_values[-i - 1]
         else:
             return parent_font_size * 0.8
-
-    if value.unit == '%':
+    elif value.unit == '%':
         return value.value * parent_font_size / 100.
     else:
         return length(
