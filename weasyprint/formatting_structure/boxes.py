@@ -321,7 +321,7 @@ class ParentBox(Box):
             self._reset_spacing('top')
         if end:
             self._reset_spacing('bottom')
-        if (start or end) and old_style == self.style:
+        if (start or end) and old_style != self.style:
             # Don't copy style if there's no need to, save some memory
             self.style = old_style
 
