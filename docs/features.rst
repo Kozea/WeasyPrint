@@ -313,7 +313,6 @@ according to their position in the document:
 
 The other features of GCPM are **not** implemented:
 
-- running elements (``running()`` and ``element()``);
 - footnotes (``float: footnote``, ``footnote-display``, ``footnote`` counter,
   ``::footnote-call``, ``::footnote-marker``, ``@footnote`` rule,
   ``footnote-policy``);
