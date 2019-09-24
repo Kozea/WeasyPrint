@@ -259,13 +259,6 @@ def block_container_layout(context, box, max_position_y, skip_stack,
     # block_container_layout, there's probably a better solution.
     assert isinstance(box, (boxes.BlockContainerBox, boxes.FlexBox))
 
-    # TODO: this should make a difference, but that is currently neglected.
-    # See http://www.w3.org/TR/CSS21/visudet.html#normal-block
-    #     http://www.w3.org/TR/CSS21/visudet.html#root-height
-
-    # if box.style['overflow'] != 'visible':
-    #     ...
-
     # We have to work around floating point rounding errors here.
     # The 1e-9 value comes from PEP 485.
     allowed_max_position_y = max_position_y * (1 + 1e-9)
