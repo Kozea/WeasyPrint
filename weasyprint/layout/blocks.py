@@ -275,9 +275,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
         context.create_block_formatting_context()
 
     is_start = skip_stack is None
-    if box.style['box_decoration_break'] == 'slice' and not is_start:
-        # Remove top margin, border and padding:
-        box._remove_decoration(start=True, end=False)
+    box._remove_decoration(start=not is_start, end=False)
 
     if adjoining_margins is None:
         adjoining_margins = []
@@ -640,8 +638,8 @@ def block_container_layout(context, box, max_position_y, skip_stack,
         position_y += collapse_margin(adjoining_margins)
         adjoining_margins = []
 
-    new_box = box.copy_with_children(
-        new_children, is_start=is_start, is_end=resume_at is None)
+    new_box = box.copy_with_children(new_children)
+    new_box._remove_decoration(start=not is_start, end=resume_at is not None)
 
     # TODO: See corner cases in
     # http://www.w3.org/TR/CSS21/visudet.html#normal-block

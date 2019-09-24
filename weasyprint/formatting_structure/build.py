@@ -1467,13 +1467,11 @@ def _inner_block_in_inline(box, skip_stack=None):
             new_children.append(new_child)
         if block_level_box is not None:
             resume_at = (index, resume_at)
-            box = box.copy_with_children(
-                new_children, is_start=is_start, is_end=False)
+            box = box.copy_with_children(new_children)
             break
     else:
         if changed or skip:
-            box = box.copy_with_children(
-                new_children, is_start=is_start, is_end=True)
+            box = box.copy_with_children(new_children)
 
     return box, block_level_box, resume_at
 

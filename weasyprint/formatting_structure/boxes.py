@@ -302,12 +302,14 @@ class ParentBox(Box):
         setattr(self, 'border_%s_width' % side, 0)
 
     def _remove_decoration(self, start, end):
+        if self.style['box_decoration_break'] == 'clone':
+            return
         if start:
             self._reset_spacing('top')
         if end:
             self._reset_spacing('bottom')
 
-    def copy_with_children(self, new_children, is_start=True, is_end=True):
+    def copy_with_children(self, new_children):
         """Create a new equivalent box with given ``new_children``."""
         new_box = self.copy()
         new_box.children = tuple(new_children)
@@ -315,8 +317,6 @@ class ParentBox(Box):
         # Clear and reset removed decorations as we don't want to keep the
         # previous data, for example when a box is split between two pages.
         self.remove_decoration_sides = set()
-        if self.style['box_decoration_break'] == 'slice':
-            new_box._remove_decoration(not is_start, not is_end)
 
         return new_box
 
@@ -411,6 +411,8 @@ class InlineLevelBox(Box):
 
     """
     def _remove_decoration(self, start, end):
+        if self.style['box_decoration_break'] == 'clone':
+            return
         ltr = self.style['direction'] == 'ltr'
         if start:
             self._reset_spacing('left' if ltr else 'right')
