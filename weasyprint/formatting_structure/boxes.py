@@ -59,7 +59,6 @@
 import itertools
 
 from ..css import computed_from_cascaded
-from ..css.properties import Dimension
 
 
 class Box(object):
@@ -92,6 +91,7 @@ class Box(object):
     def __init__(self, element_tag, style):
         self.element_tag = element_tag
         self.style = style
+        self.remove_decoration_sides = set()
 
     def __repr__(self):
         return '<%s %s>' % (type(self).__name__, self.element_tag)
@@ -296,16 +296,7 @@ class ParentBox(Box):
 
     def _reset_spacing(self, side):
         """Set to 0 the margin, padding and border of ``side``."""
-        if side in ('top', 'bottom'):
-            self.style['border_%s_left_radius' % side] = (
-                Dimension(0, 'px'), Dimension(0, 'px'))
-            self.style['border_%s_right_radius' % side] = (
-                Dimension(0, 'px'), Dimension(0, 'px'))
-        else:
-            self.style['border_bottom_%s_radius' % side] = (
-                Dimension(0, 'px'), Dimension(0, 'px'))
-            self.style['border_top_%s_radius' % side] = (
-                Dimension(0, 'px'), Dimension(0, 'px'))
+        self.remove_decoration_sides.add(side)
         setattr(self, 'margin_%s' % side, 0)
         setattr(self, 'padding_%s' % side, 0)
         setattr(self, 'border_%s_width' % side, 0)
@@ -320,8 +311,13 @@ class ParentBox(Box):
         """Create a new equivalent box with given ``new_children``."""
         new_box = self.copy()
         new_box.children = tuple(new_children)
+
+        # Clear and reset removed decorations as we don't want to keep the
+        # previous data, for example when a box is split between two pages.
+        self.remove_decoration_sides = set()
         if self.style['box_decoration_break'] == 'slice':
             new_box._remove_decoration(not is_start, not is_end)
+
         return new_box
 
     def descendants(self):
