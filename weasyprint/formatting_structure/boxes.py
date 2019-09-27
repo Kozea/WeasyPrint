@@ -113,6 +113,10 @@ class Box(object):
         new_box.__dict__.update(self.__dict__)
         return new_box
 
+    def deepcopy(self):
+        """Return a copy of the box with recursive copies of its children."""
+        return self.copy()
+
     def translate(self, dx=0, dy=0, ignore_floats=False):
         """Change the box’s position.
 
@@ -341,12 +345,9 @@ class ParentBox(Box):
             new_box._remove_decoration(not is_start, not is_end)
         return new_box
 
-    def __deepcopy__(self):
+    def deepcopy(self):
         result = self.copy()
-        result.children = tuple([
-            getattr(child, '__deepcopy__', child.copy)()
-            for child in self.children
-        ])
+        result.children = tuple(child.deepcopy() for child in self.children)
         return result
 
     def descendants(self):

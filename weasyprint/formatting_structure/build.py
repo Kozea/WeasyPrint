@@ -501,7 +501,7 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
                 if i not in context.running_elements[value.value]:
                     continue
                 running_box = context.running_elements[value.value][i]
-                new_box = running_box.__deepcopy__()
+                new_box = running_box.deepcopy()
                 break
             new_box.style['position'] = 'static'
             for child in new_box.descendants():
