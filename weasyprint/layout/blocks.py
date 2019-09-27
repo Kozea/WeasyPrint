@@ -354,12 +354,12 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                     break
             elif child.is_running():
                 placeholder = boxes.RunningPlaceholder(
-                    child.style['position'].element, child.style,
+                    child.style['position'][1], child.style,
                 )
                 placeholder.index = index
                 new_children.append(placeholder)
                 context.running_elements.setdefault(
-                    child.style['position'].element, {}
+                    child.style['position'][1], {}
                 )[placeholder] = child
             continue
 

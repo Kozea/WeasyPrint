@@ -14,7 +14,7 @@ from tinycss2.color3 import parse_color
 
 from ...formatting_structure import counters
 from .. import computed_values
-from ..properties import KNOWN_PROPERTIES, Dimension, Running
+from ..properties import KNOWN_PROPERTIES, Dimension
 from ..utils import (
     InvalidValues, check_var_function, comma_separated_list, get_angle,
     get_content_list, get_content_list_token, get_custom_ident, get_image,
@@ -970,11 +970,9 @@ def text_overflow(keyword):
 @single_token
 def position(token):
     """``position`` property validation."""
-    if (
-            token.type == 'function' and token.name == 'running' and
-            len(token.arguments) == 1 and token.arguments[0].type == 'ident'
-    ):
-        return Running(token.arguments[0].value)
+    if token.type == 'function' and token.name == 'running':
+        if len(token.arguments) == 1 and token.arguments[0].type == 'ident':
+            return ('running()', token.arguments[0].value)
     keyword = get_single_keyword([token])
     if keyword in ('static', 'relative', 'absolute', 'fixed'):
         return keyword

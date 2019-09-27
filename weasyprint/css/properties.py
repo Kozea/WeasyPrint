@@ -14,7 +14,6 @@ import collections
 from tinycss2.color3 import parse_color
 
 Dimension = collections.namedtuple('Dimension', ['value', 'unit'])
-Running = collections.namedtuple('Running', ['element'])
 
 
 # See http://www.w3.org/TR/CSS21/propidx.html

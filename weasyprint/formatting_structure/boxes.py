@@ -59,7 +59,7 @@
 import itertools
 
 from ..css import computed_from_cascaded
-from ..css.properties import Dimension, Running
+from ..css.properties import Dimension
 
 
 class Box(object):
@@ -279,16 +279,14 @@ class Box(object):
         return self.style['position'] in ('absolute', 'fixed')
 
     def is_running(self):
-        """Return whether this box is a running element.
-        (https://www.w3.org/TR/css-gcpm-3/#running-elements)"""
-        return isinstance(self.style['position'], Running)
+        """Return whether this box is a running element."""
+        return self.style['position'][0] == 'running()'
 
     def is_in_normal_flow(self):
         """Return whether this box is in normal flow."""
         return not (
             self.is_floated() or self.is_absolutely_positioned() or
-            self.is_running()
-        )
+            self.is_running())
 
     # Start and end page values for named pages
 
