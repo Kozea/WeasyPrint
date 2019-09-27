@@ -303,13 +303,15 @@ The `CSS Generated Content for Paged Media Module`_ (GCPM) is a working draft
 defining "new properties and values, so that authors may bring new techniques
 (running headers and footers, footnotes, page selection) to paged media".
 
-`Page selectors`_ are also supported by WeasyPrint. You can select pages
-according to their position in the document:
+`Page selectors`_ are supported by WeasyPrint. You can select pages according
+to their position in the document:
 
 .. code-block:: css
 
     @page :nth(3) { background: red } /* Third page */
     @page :nth(2n+1) { background: green } /* Odd pages */
+
+You can also use `running elements`_ to put HTML boxes into the page margins.
 
 The other features of GCPM are **not** implemented:
 
@@ -320,6 +322,7 @@ The other features of GCPM are **not** implemented:
 
 .. _CSS Generated Content for Paged Media Module: http://www.w3.org/TR/css-gcpm-3/
 .. _Page selectors: https://www.w3.org/TR/css-gcpm-3/#document-page-selectors
+.. _running elements: https://www.w3.org/TR/css-gcpm-3/#running-elements
 
 
 CSS Generated Content Module Level 3
