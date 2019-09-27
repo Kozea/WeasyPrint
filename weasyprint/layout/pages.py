@@ -665,9 +665,6 @@ def make_page(context, root_box, page_type, resume_at, page_number,
             if call_parse_again:
                 remake_state['content_changed'] = True
                 counter_lookup.parse_again(page_counter_values)
-        if isinstance(child, boxes.RunningPlaceholder):
-            elements = context.running_elements[child.identifier]
-            elements[page.page_type.index] = elements[child]
 
     if page_type.blank:
         resume_at = previous_resume_at

@@ -196,6 +196,7 @@ class LayoutContext(object):
         self._excluded_shapes_lists = []
         self.excluded_shapes = None  # Not initialized yet
         self.string_set = defaultdict(lambda: defaultdict(lambda: list()))
+        self.running_elements = {}
         self.current_page = None
         self.forced_break = False
 
@@ -204,9 +205,6 @@ class LayoutContext(object):
         self.font_features = {}
         self.tables = {}
         self.dictionaries = {}
-
-        # TODO: this is probably the wrong place to put this
-        self.running_elements = {}
 
     def create_block_formatting_context(self):
         self.excluded_shapes = []

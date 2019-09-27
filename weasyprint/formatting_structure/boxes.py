@@ -719,32 +719,3 @@ class InlineFlexBox(FlexContainerBox, InlineLevelBox):
     It behaves as inline on the outside and as a flex container on the inside.
 
     """
-
-
-class RunningPlaceholder(BlockBox):
-    """A box to anchor a running element within the document flow"""
-    def __init__(self, identifier, style):
-        self.position_x = 0
-        self.position_y = 0
-        self.width = 0
-        self.height = 0
-        self.padding_left = 0
-        self.padding_right = 0
-        self.padding_top = 0
-        self.padding_bottom = 0
-        self.margin_left = 0
-        self.margin_right = 0
-        self.margin_top = 0
-        self.margin_bottom = 0
-        self.border_left_width = 0
-        self.border_right_width = 0
-        self.border_top_width = 0
-        self.border_bottom_width = 0
-        self.identifier = identifier
-        super(RunningPlaceholder, self).__init__(
-            None, dict(style, display='block', content=[('running', None)]),
-            children=[],
-        )
-
-    def translate(self, dx=0, dy=0, ignore_floats=False):
-        pass
