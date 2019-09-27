@@ -492,6 +492,26 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
                 texts.append(quotes[min(quote_depth[0], len(quotes) - 1)])
             if is_open:
                 quote_depth[0] += 1
+        elif type_ == 'element()':
+            if value.value not in context.running_elements:
+                # TODO: emit warning
+                continue
+            new_box = None
+            for i in range(context.current_page - 1, -1, -1):
+                if i not in context.running_elements[value.value]:
+                    continue
+                running_box = context.running_elements[value.value][i]
+                new_box = running_box.__deepcopy__()
+                break
+            new_box.style['position'] = 'static'
+            for child in new_box.descendants():
+                if child.style['content'] in ('normal', 'none'):
+                    continue
+                child.children = content_to_boxes(
+                    child.style, child, quote_depth, counter_values,
+                    get_image_from_uri, target_collector, context=context,
+                    page=page)
+            boxlist.append(new_box)
     text = ''.join(texts)
     if text:
         boxlist.append(boxes.TextBox.anonymous_from(parent_box, text))
@@ -1247,7 +1267,7 @@ def inline_in_block(box):
         ]
 
     """
-    if not isinstance(box, boxes.ParentBox):
+    if not isinstance(box, boxes.ParentBox) or box.is_running():
         return box
 
     box_children = list(box.children)
@@ -1382,7 +1402,7 @@ def block_in_inline(box):
         ]
 
     """
-    if not isinstance(box, boxes.ParentBox):
+    if not isinstance(box, boxes.ParentBox) or box.is_running():
         return box
 
     new_children = []

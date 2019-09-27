@@ -1214,3 +1214,62 @@ def test_margin_boxes_vertical_align():
     assert line_1.position_y == 3
     assert line_2.position_y == 43
     assert line_3.position_y == 83
+
+
+@assert_no_logs
+def test_margin_boxes_element():
+    pages = render_pages('''
+        <html>
+            <head>
+                <style type="text/css">
+                    .footer {
+                        position: running(footer);
+                    }
+                    @page {
+                        @bottom-center {
+                            content: element(footer);
+                        }
+                    }
+                    h1 {
+                        margin-bottom: 15cm;
+                    }
+                    .page:before {
+                        content: counter(page);
+                    }
+                    .pages:after {
+                        content: counter(pages);
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="footer">
+                    <span class="page" /> of <span class="pages" />
+                </div>
+                <h1>test1</h1>
+                <h1>test2</h1>
+                <h1>test3</h1>
+                <h1>test4</h1>
+                <h1>test5</h1>
+                <h1>test6</h1>
+                <div class="footer">
+                    Last page will be a static footer
+                </div>
+            </body>
+        </html>
+    ''')
+    # first footer
+    footer1_text = ''.join(
+        getattr(node, 'text', '')
+        for node in pages[0].children[1].descendants())
+    assert footer1_text == '1 of 3'
+
+    # second footer
+    footer2_text = ''.join(
+        getattr(node, 'text', '')
+        for node in pages[1].children[1].descendants())
+    assert footer2_text == '2 of 3'
+    # last footer
+    footer3_text = ''.join(
+        getattr(node, 'text', '')
+        for node in pages[2].children[1].descendants())
+    assert footer3_text == 'Last page will be a static footer'
