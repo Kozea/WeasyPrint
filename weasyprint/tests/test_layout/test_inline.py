@@ -387,7 +387,7 @@ def test_breaking_linebox_regression_11():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/953
     page, = parse(
         '<style>@font-face {src: url(AHEM____.TTF); font-family: ahem}</style>'
-        '<p style="width:10.5ch; font-family: ahem">'
+        '<p style="width:10em; font-family: ahem">'
         '  line 1<br><span>123 567 90</span>x'
         '</p>')
     html, = page.children
@@ -405,7 +405,7 @@ def test_breaking_linebox_regression_12():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/953
     page, = parse(
         '<style>@font-face {src: url(AHEM____.TTF); font-family: ahem}</style>'
-        '<p style="width:10.5ch; font-family: ahem">'
+        '<p style="width:10em; font-family: ahem">'
         '  <br><span>123 567 90</span>x'
         '</p>')
     html, = page.children
@@ -425,7 +425,7 @@ def test_breaking_linebox_regression_13():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/953
     page, = parse(
         '<style>@font-face {src: url(AHEM____.TTF); font-family: ahem}</style>'
-        '<p style="width:10.5ch; font-family: ahem">'
+        '<p style="width:10em; font-family: ahem">'
         '  123 567 90 <span>123 567 90</span>x'
         '</p>')
     html, = page.children
