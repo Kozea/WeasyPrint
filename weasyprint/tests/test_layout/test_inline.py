@@ -405,7 +405,7 @@ def test_breaking_linebox_regression_12():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/953
     page, = parse(
         '<style>@font-face {src: url(AHEM____.TTF); font-family: ahem}</style>'
-        '<p style="width:10em; font-family: ahem">'
+        '<p style="width:10em; font-family: ahem; line-height: 1">'
         '  <br><span>123 567 90</span>x'
         '</p>')
     html, = page.children
@@ -414,7 +414,7 @@ def test_breaking_linebox_regression_12():
     line1, line2, line3 = p.children
     print(line1.children)
     assert line1.position_y == 0
-    assert line2.position_y == 17
+    assert line2.position_y == 16
     assert line2.children[0].children[0].text == '123 567'
     assert line3.children[0].children[0].text == '90'
     assert line3.children[1].text == 'x'
