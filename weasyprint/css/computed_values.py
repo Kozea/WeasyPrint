@@ -20,8 +20,8 @@ from ..logger import LOGGER
 from ..urls import get_link_attribute
 from .properties import INHERITED, INITIAL_VALUES, Dimension
 from .utils import (
-    ANGLE_TO_RADIANS, LENGTH_UNITS, LENGTHS_TO_PIXELS, check_var_function,
-    safe_urljoin)
+    ANGLE_TO_RADIANS, LENGTH_UNITS, LENGTHS_TO_PIXELS, InvalidValues,
+    check_var_function, safe_urljoin)
 
 ZERO_PIXELS = Dimension(0, 'px')
 
@@ -226,10 +226,14 @@ def compute(element, pseudo_type, specified, computed, parent_style,
                 new_value = None
             else:
                 prop = PROPERTIES[name.replace('_', '-')]
-                if prop.wants_base_url:
-                    new_value = prop(computed_value, base_url)
-                else:
-                    new_value = prop(computed_value)
+                # catch InvalidValues, e.g. for transform
+                try:
+                    if prop.wants_base_url:
+                        new_value = prop(computed_value, base_url)
+                    else:
+                        new_value = prop(computed_value)
+                except InvalidValues:
+                    new_value = None
 
             # See https://drafts.csswg.org/css-variables/#invalid-variables
             if new_value is None:
