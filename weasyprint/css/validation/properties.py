@@ -1369,7 +1369,7 @@ def string_set(tokens, base_url):
         if None not in parsed_tokens:
             return (var_name, parsed_tokens)
     elif tokens and get_keyword(tokens[0]) == 'none':
-        return 'none'
+        return 'none', ()
 
 
 @property()
