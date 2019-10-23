@@ -9,6 +9,7 @@
 
 """
 
+from ..css.properties import KNOWN_PROPERTIES
 from .test_boxes import render_pages as parse
 
 
@@ -95,3 +96,15 @@ def test_variable_initial():
     body, = html.children
     paragraph, = body.children
     assert paragraph.width == 10
+
+
+def test_variable_fallback():
+    parse('''
+      <style>
+        div {
+          --var: improperValue;
+          %s
+        }
+      </style>
+      <div></div>
+    ''' % ''.join(name + ': var(--var);\n' for name in KNOWN_PROPERTIES))
