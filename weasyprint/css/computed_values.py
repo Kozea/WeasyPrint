@@ -301,7 +301,9 @@ def length_or_percentage_tuple(computer, name, values):
 @register_computer('clip')
 def length_tuple(computer, name, values):
     """Compute the properties with a list of lengths."""
-    return tuple(length(computer, name, value, pixels_only=True)
+    # be aware of parent_style/initial values being plain numbers
+    return tuple(value if isinstance(value, (int, float)) else
+                 length(computer, name, value, pixels_only=True)
                  for value in values)
 
 
