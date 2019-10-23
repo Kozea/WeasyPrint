@@ -9,6 +9,7 @@
 
 """
 
+from ..css.properties import KNOWN_PROPERTIES
 from .test_boxes import render_pages as parse
 
 
@@ -97,14 +98,13 @@ def test_variable_initial():
     assert paragraph.width == 10
 
 
-def test_variable_regression_1():
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/974
-    page, = parse('''
+def test_variable_fallback():
+    parse('''
       <style>
         div {
-          --value: invalidValue;
-          border-spacing: var(--value);
+          --var: improperValue;
+          %s
         }
       </style>
-      <div>crash</div>
-    ''')
+      <div></div>
+    ''' % ''.join(name + ': var(--var);\n' for name in KNOWN_PROPERTIES))
