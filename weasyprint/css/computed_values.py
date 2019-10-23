@@ -615,6 +615,9 @@ def font_size(computer, name, value):
                 return keyword_values[-i - 1]
         else:
             return parent_font_size * 0.8
+    elif isinstance(value, int):
+        # Due to improper var() the unit-less parent value can get here
+        return value
     elif value.unit == '%':
         return value.value * parent_font_size / 100.
     else:
