@@ -252,6 +252,9 @@ def compute(element, pseudo_type, specified, computed, parent_style,
                     value = INITIAL_VALUES[name]
             else:
                 value = new_value
+            # no value, no fallback, no need for a function call
+            if value is None:
+                function = None
 
         if function is not None:
             value = function(computer, name, value)
