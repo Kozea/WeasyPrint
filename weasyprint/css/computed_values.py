@@ -545,14 +545,21 @@ def bookmark_label(computer, name, values):
 def string_set(computer, name, values):
     """Compute the ``string-set`` property."""
     # Spec asks for strings after custom keywords, but we allow content-lists
-    return tuple(
-        (string_set[0], _content_list(computer, string_set[1]))
-        for string_set in values)
+    # The initial value of 'none' can get here by improper var()
+    if values == 'none':
+        return ()
+    else:
+        return tuple(
+            (string_set[0], _content_list(computer, string_set[1]))
+            for string_set in values)
 
 
 @register_computer('content')
 def content(computer, name, values):
     """Compute the ``content`` property."""
+    # take care for INITIAL_VALUES['content']
+    if values == 'normal':
+        return 'inhibit' if computer['pseudo_type'] else 'contents'
     if len(values) == 1:
         value, = values
         if value == 'normal':
