@@ -737,6 +737,10 @@ def word_spacing(computer, name, value):
     """Compute the ``word-spacing`` property."""
     if value == 'normal':
         return 0
+    elif isinstance(value, int):
+        # The initial value can get here, but length() would fail as
+        # it does not have a 'unit' attribute.
+        return value
     else:
         return length(computer, name, value, pixels_only=True)
 
