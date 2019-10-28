@@ -24,13 +24,12 @@ from .draw import draw_page, stacked
 from .fonts import FontConfiguration
 from .formatting_structure import boxes
 from .formatting_structure.build import build_formatting_structure
-from .forms import write_pdf_form_fields
 from .html import W3C_DATE_RE
 from .images import get_image_from_uri as original_get_image_from_uri
 from .layout import layout_document
 from .layout.percentages import percentage
 from .logger import LOGGER, PROGRESS_LOGGER
-from .pdf import write_pdf_metadata
+from .pdf import write_pdf_metadata, write_pdf_form
 
 if cairo.cairo_version() < 11504:
     warnings.warn(
@@ -685,7 +684,7 @@ class Document(object):
         surface.finish()
 
         # Insert form fields in PDF
-        write_pdf_form_fields(file_obj)
+        write_pdf_form(file_obj)
 
         # Add extra PDF metadata: attachments, embedded files
         attachment_links = [
