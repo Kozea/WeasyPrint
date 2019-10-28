@@ -53,6 +53,7 @@ from .urls import (  # noqa isort:skip
 from .logger import LOGGER, PROGRESS_LOGGER  # noqa isort:skip
 # Some imports are at the end of the file (after the CSS class)
 # to work around circular imports.
+from . import forms
 
 
 class HTML(object):
@@ -118,6 +119,9 @@ class HTML(object):
                     transport_encoding=protocol_encoding,
                     namespaceHTMLElements=False)
             assert result
+
+        forms.augment_markup(result)
+
         self.base_url = find_base_url(result, base_url)
         self.url_fetcher = url_fetcher
         self.media_type = media_type
