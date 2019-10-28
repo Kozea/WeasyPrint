@@ -302,6 +302,21 @@ class PDFFile(object):
         fileobj.seek(0, os.SEEK_END)
         return fileobj.tell(), fileobj.write
 
+    def _find_root_id(self):
+        fileobj = self.fileobj
+        pos = fileobj.tell()
+        fileobj.seek(self.startxref)
+
+        for line in fileobj:
+            match = re.match(rb"^\s*/Root\s+(?P<root_id>\d+)\s+\d+\s+R\s*$", line)
+            if match:
+                root_id = match.group('root_id')
+                break
+
+        fileobj.seek(pos)
+
+        return int(str(root_id, 'ascii'))
+
 
 def _write_compressed_file_object(pdf, file):
     """Write a compressed file like object as ``/EmbeddedFile``.
@@ -601,15 +616,24 @@ def write_pdf_form(fileobj):
 
     pdf = PDFFile(fileobj)
 
-    # write objects
+    field_ids = []
+    # Write objects
     for name, wfield in wfields.items():
         # pdf.write_new_object(b"<< ... >>")
         pdf_obj = wfield.to_pdf_obj()
-        pdf.write_new_object(pdf_obj)
+        field_ids.append(pdf.write_new_object(pdf_obj))
 
-    # write form
+    # Write form
+    acroform_obj = forms.make_acroform(field_ids)
+    acroform_id = pdf.write_new_object(acroform_obj)
 
-    # add anot references to page objects
+    # Attach form to root
+    root_id = pdf._find_root_id()
+    root_obj = pdf.read_object(root_id)
+    root = PDFDictionary(root_id, root_obj)
+    pdf.extend_dict(root, bytes("   /AcroForm {} 0 R".format(acroform_id), 'ascii'))
+
+    # Add anot references to page objects
 
     pdf.finish()
     pass

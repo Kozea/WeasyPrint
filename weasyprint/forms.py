@@ -19,6 +19,22 @@ WFID_REGEX = re.compile(
     rb"(?P<y>\d+) \d+\]"
 )
 
+ACROFORM = """
+<<
+    /DA (/Times 10 Tf 0 g)
+    /DR <<
+      /Font <<
+        /Times <<
+          /BaseFont /Times-Roman
+          /Subtype /Type1
+          /Type /Font
+        >>
+      >>
+    >>
+    /Fields [{fields}]
+>>
+"""
+
 FIELDS = {
     'wf-text': """
 <<
@@ -32,7 +48,6 @@ FIELDS = {
     /Type /Annot
     /V ()
 >>
-endobj
 """
 }
 
@@ -137,3 +152,10 @@ def collect_wfields(pdf: bytes) -> bytes:
         setattr(wfield, corner, (x, y))
 
     return wfields
+
+
+def make_acroform(field_ids):
+    return bytes(
+        ACROFORM.format(fields=" ".join("{} 0 R".format(x) for x in field_ids)),
+        'ascii'
+    )
