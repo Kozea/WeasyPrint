@@ -2,6 +2,6 @@
 2. [X] Attach form stylesheet (find where)
 *Create PDF*
 3. [x] Collect field positions
-4. [ ] Build field objects
-5. [ ] Build Acroform object (wrap everything by default in an acroform?)
+4. [x] Build field objects
+5. [x] Build Acroform object (wrap everything by default in an acroform?)
 6. [ ] Update xref table and trailer
