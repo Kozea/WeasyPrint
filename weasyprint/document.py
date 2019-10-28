@@ -24,6 +24,7 @@ from .draw import draw_page, stacked
 from .fonts import FontConfiguration
 from .formatting_structure import boxes
 from .formatting_structure.build import build_formatting_structure
+from .forms import write_pdf_form_fields
 from .html import W3C_DATE_RE
 from .images import get_image_from_uri as original_get_image_from_uri
 from .layout import layout_document
@@ -682,6 +683,9 @@ class Document(object):
                 bookmarks = children + bookmarks
 
         surface.finish()
+
+        # Insert form fields in PDF
+        write_pdf_form_fields(file_obj)
 
         # Add extra PDF metadata: attachments, embedded files
         attachment_links = [
