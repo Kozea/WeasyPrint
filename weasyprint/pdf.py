@@ -644,7 +644,7 @@ def write_pdf_form(fileobj):
         page = PDFDictionary(page_id, page_obj)
         pdf.extend_dict(
             page,
-            bytes("   /Annots [{}]".format(" ".join(map(str, wfields))), 'ascii')
+            bytes("   /Annots [{} 0 R]".format(" ".join(map(str, wfields))), 'ascii')
         )
 
     pdf.finish()
