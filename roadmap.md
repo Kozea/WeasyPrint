@@ -1,5 +1,5 @@
 1. [x] Augment markup (HTML parser -> BS first, then directly with wp's classes)
-2. [ ] Attach form stylesheet (find where)
+2. [X] Attach form stylesheet (find where)
 *Create PDF*
 3. [ ] Collect field positions
 4. [ ] Build field objects
