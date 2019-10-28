@@ -11,6 +11,7 @@ WF_CLASSES = [
 
 WFID_REGEX = re.compile(
     rb"\(WF-"
+    rb"(?P<class>(?:\w|-)+)-"
     rb"(?P<wfid>\w+)-"
     rb"(?P<corner>topleft|bottomright)\) \["
     rb"(?P<page>\d+) \d+ R \/XYZ "
@@ -18,18 +19,42 @@ WFID_REGEX = re.compile(
     rb"(?P<y>\d+) \d+\]"
 )
 
+ACROFORM_TX = """
+{id} 0 obj
+<<
+    /BS <<
+        /S /S
+        /W 1
+    >>
+    /FT /Tx
+    /Rect [{rect}]
+    /Subtype /Widget
+    /Type /Annot
+    /V ()
+>>
+endobj
+"""
+
 
 class WFid:
-    __slots__ = ['name', 'topleft', 'bottomright', 'page']
+    __slots__ = ['name', 'topleft', 'bottomright', 'html_class', 'page']
 
-    def __init__(self, *, name=None, topleft=None, bottomright=None, page=None):
+    def __init__(self, *, name=None, topleft=None, bottomright=None, html_class=None, page=None):
         self.name = name
         self.topleft = topleft
         self.bottomright = bottomright
+        self.html_class = html_class
         self.page = page
 
     def __repr__(self):
-        return "WFid({name}, ({topleft}, {bottomright}), page object: {page})".format(
+        return (
+            "WFid("
+            "{name}, "
+            "<{html_class} />, "
+            "({topleft}, {bottomright}), "
+            "page object: {page}"
+            ")"
+        ).format(
             **{key: getattr(self, key) for key in self.__slots__}
         )
 
@@ -44,6 +69,8 @@ def augment_markup(html: ET.Element) -> None:
         for field in fields:
             augment_tag(field)
 
+    pass
+
 
 def augment_tag(tag):
     wfid = tag.attrib['wfid']
@@ -51,7 +78,7 @@ def augment_tag(tag):
         'div',
         {
             'class': 'wf-top-left',
-            'id': 'WF-{}-topleft'.format(wfid)
+            'id': 'WF-{}-{}-topleft'.format(tag.attrib['class'], wfid)
         }
     )
     tag.append(top_left)
@@ -59,7 +86,7 @@ def augment_tag(tag):
         'div',
         {
             'class': 'wf-bottom-right',
-            'id': 'WF-{}-bottomright'.format(wfid)
+            'id': 'WF-{}-{}-bottomright'.format(tag.attrib['class'], wfid)
         }
     )
     tag.append(bottom_right)
@@ -93,8 +120,9 @@ def collect_wfids(pdf: bytes) -> bytes:
         x = int(match.group('x'))
         y = int(match.group('y'))
         page = int(str(match.group('page'), 'ascii'))
+        html_class = str(match.group('class'), 'ascii')
 
-        wfid = wfids.setdefault(name, WFid(name=name, page=page))
+        wfid = wfids.setdefault(name, WFid(name=name, html_class=html_class, page=page))
         setattr(wfid, corner, (x, y))
 
     return wfids
