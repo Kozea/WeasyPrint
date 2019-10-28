@@ -53,7 +53,7 @@ FIELDS = {
 
 
 class WField:
-    __slots__ = ['name', 'topleft', 'bottomright', 'html_class', 'page']
+    __slots__ = ['name', 'topleft', 'bottomright', 'html_class', 'page', 'pdf_obj_id']
 
     def __init__(self, *, name=None, topleft=None, bottomright=None, html_class=None, page=None):
         self.name = name
@@ -61,6 +61,7 @@ class WField:
         self.bottomright = bottomright
         self.html_class = html_class
         self.page = page
+        self.pdf_obj_id = None
 
     def __repr__(self):
         return (
@@ -113,26 +114,6 @@ def augment_tag(tag):
         }
     )
     tag.append(bottom_right)
-
-
-def write_pdf_form_fields(fileobj):
-    pos = fileobj.tell()
-
-    # Collect wfids
-    fileobj.seek(0)
-    content = fileobj.read()
-    collect_wfields(content)
-
-    # pdf = PDFFile(fileobj)
-
-    # for field in fields:
-    #     pdf.write_new_object(field)
-    # pdf.write_new_object(form)
-    # pdf.extend_dict(dictionary, new_content) # add acroform
-
-    fileobj.seek(pos)
-
-    # return pdf
 
 
 def collect_wfields(pdf: bytes) -> bytes:
