@@ -19,8 +19,8 @@ WFID_REGEX = re.compile(
     rb"(?P<y>\d+) \d+\]"
 )
 
-ACROFORM_TX = """
-{id} 0 obj
+FIELDS = {
+    'wf-text': """
 <<
     /BS <<
         /S /S
@@ -34,6 +34,7 @@ ACROFORM_TX = """
 >>
 endobj
 """
+}
 
 
 class WField:
@@ -59,7 +60,11 @@ class WField:
         )
 
     def to_pdf_obj(self):
-        return b""
+        template = FIELDS[self.html_class]
+        result = template.format(
+            rect="{} {} {} {}".format(*self.topleft, *self.bottomright)
+        )
+        return bytes(result, 'ascii')
 
 
 def augment_markup(html: ET.Element) -> None:

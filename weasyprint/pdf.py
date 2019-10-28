@@ -39,6 +39,7 @@ from urllib.parse import unquote, urlsplit
 import cairocffi as cairo
 
 from . import Attachment
+from . import forms
 from .logger import LOGGER
 from .urls import URLFetchingError
 
@@ -592,16 +593,23 @@ def write_pdf_metadata(fileobj, scale, url_fetcher, attachments,
     pdf.finish()
 
 
-def write_pdf_form(fileobj, wfields):
+def write_pdf_form(fileobj):
+    pos = fileobj.tell()
+    fileobj.seek(0)
+    wfields = forms.collect_wfields(fileobj.read())
+    fileobj.seek(pos)
+
     pdf = PDFFile(fileobj)
 
     # write objects
-    for wfield in wfields:
+    for name, wfield in wfields.items():
         # pdf.write_new_object(b"<< ... >>")
-        pdf.write_new_object(wfield.to_pdf_obj())
+        pdf_obj = wfield.to_pdf_obj()
+        pdf.write_new_object(pdf_obj)
 
     # write form
 
     # add anot references to page objects
 
+    pdf.finish()
     pass
