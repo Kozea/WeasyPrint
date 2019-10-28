@@ -36,7 +36,7 @@ endobj
 """
 
 
-class WFid:
+class WField:
     __slots__ = ['name', 'topleft', 'bottomright', 'html_class', 'page']
 
     def __init__(self, *, name=None, topleft=None, bottomright=None, html_class=None, page=None):
@@ -57,6 +57,9 @@ class WFid:
         ).format(
             **{key: getattr(self, key) for key in self.__slots__}
         )
+
+    def to_pdf_obj(self):
+        return b""
 
 
 def augment_markup(html: ET.Element) -> None:
@@ -98,7 +101,7 @@ def write_pdf_form_fields(fileobj):
     # Collect wfids
     fileobj.seek(0)
     content = fileobj.read()
-    collect_wfids(content)
+    collect_wfields(content)
 
     # pdf = PDFFile(fileobj)
 
@@ -112,8 +115,8 @@ def write_pdf_form_fields(fileobj):
     # return pdf
 
 
-def collect_wfids(pdf: bytes) -> bytes:
-    wfids = {}
+def collect_wfields(pdf: bytes) -> bytes:
+    wfields = {}
     for match in WFID_REGEX.finditer(pdf):
         name = match.group('wfid')
         corner = str(match.group('corner'), 'ascii')
@@ -122,7 +125,10 @@ def collect_wfids(pdf: bytes) -> bytes:
         page = int(str(match.group('page'), 'ascii'))
         html_class = str(match.group('class'), 'ascii')
 
-        wfid = wfids.setdefault(name, WFid(name=name, html_class=html_class, page=page))
-        setattr(wfid, corner, (x, y))
+        wfield = wfields.setdefault(
+            name,
+            WField(name=name, html_class=html_class, page=page)
+        )
+        setattr(wfield, corner, (x, y))
 
-    return wfids
+    return wfields

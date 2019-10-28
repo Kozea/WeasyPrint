@@ -259,6 +259,7 @@ class PDFFile(object):
         This makes `fileobj` a valid (updated) PDF file.
 
         """
+        # import nose.tools as nt; nt.set_trace()
         new_startxref, write = self._start_writing()
         self.finished = True
         write(b'xref\n')
@@ -589,3 +590,18 @@ def write_pdf_metadata(fileobj, scale, url_fetcher, attachments,
                     '{0} 0 R'.format(n) for n in annotations)))
 
     pdf.finish()
+
+
+def write_pdf_form(fileobj, wfields):
+    pdf = PDFFile(fileobj)
+
+    # write objects
+    for wfield in wfields:
+        # pdf.write_new_object(b"<< ... >>")
+        pdf.write_new_object(wfield.to_pdf_obj())
+
+    # write form
+
+    # add anot references to page objects
+
+    pass
