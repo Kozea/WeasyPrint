@@ -621,7 +621,8 @@ def write_pdf_form(fileobj):
     for name, wfield in wfields.items():
         # pdf.write_new_object(b"<< ... >>")
         pdf_obj = wfield.to_pdf_obj()
-        field_ids.append(pdf.write_new_object(pdf_obj))
+        wfield.pdf_obj_id = pdf.write_new_object(pdf_obj)
+        field_ids.append(wfield.pdf_obj_id)
 
     # Write form
     acroform_obj = forms.make_acroform(field_ids)
@@ -633,7 +634,18 @@ def write_pdf_form(fileobj):
     root = PDFDictionary(root_id, root_obj)
     pdf.extend_dict(root, bytes("   /AcroForm {} 0 R".format(acroform_id), 'ascii'))
 
-    # Add anot references to page objects
+    # Add annot references to page objects
+    annots_by_page = {}
+    for name, wfield in wfields.items():
+        annots_by_page.setdefault(wfield.page, []).append(wfield.pdf_obj_id)
+
+    for page_id, wfields in annots_by_page.items():
+        page_obj = pdf.read_object(page_id)
+        page = PDFDictionary(page_id, page_obj)
+        pdf.extend_dict(
+            page,
+            bytes("   /Annots [{}]".format(" ".join(map(str, wfields))), 'ascii')
+        )
 
     pdf.finish()
     pass
