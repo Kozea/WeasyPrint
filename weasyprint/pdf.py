@@ -619,7 +619,6 @@ def write_pdf_form(fileobj):
     field_ids = []
     # Write objects
     for name, wfield in wfields.items():
-        # pdf.write_new_object(b"<< ... >>")
         pdf_obj = wfield.to_pdf_obj()
         wfield.pdf_obj_id = pdf.write_new_object(pdf_obj)
         field_ids.append(wfield.pdf_obj_id)
@@ -639,12 +638,15 @@ def write_pdf_form(fileobj):
     for name, wfield in wfields.items():
         annots_by_page.setdefault(wfield.page, []).append(wfield.pdf_obj_id)
 
-    for page_id, wfields in annots_by_page.items():
+    for page_id, wfield_ids in annots_by_page.items():
         page_obj = pdf.read_object(page_id)
         page = PDFDictionary(page_id, page_obj)
+        # This is a shorthand to write '/Annots [10 0 R 11 0 R 12 0 R]'
         pdf.extend_dict(
             page,
-            bytes("   /Annots [{} 0 R]".format(" ".join(map(str, wfields))), 'ascii')
+            bytes("   /Annots [{}]".format(
+                " ".join(map("{} 0 R".format, wfield_ids))), 'ascii'
+            )
         )
 
     pdf.finish()
