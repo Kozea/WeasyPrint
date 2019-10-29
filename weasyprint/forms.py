@@ -1,13 +1,8 @@
 import collections
 import re
 from xml.etree import ElementTree as ET
-#
-# from .pdf import PDFFile
-#
-#
-WF_CLASSES = [
-    'wf-text',
-]
+
+
 
 WFID_REGEX = re.compile(
     rb"\(WF-"
@@ -35,13 +30,27 @@ ACROFORM = """
 >>
 """
 
-FIELDS = {
+WF_CLASSES = {
     'wf-text': """
 <<
     /BS <<
         /S /S
         /W 1
     >>
+    /FT /Tx
+    /Rect [{rect}]
+    /Subtype /Widget
+    /Type /Annot
+    /V ()
+>>
+""",
+    'wf-textarea': """
+<<
+    /BS <<
+        /S /S
+        /W 1
+    >>
+    /Ff 4096
     /FT /Tx
     /Rect [{rect}]
     /Subtype /Widget
@@ -76,7 +85,7 @@ class WField:
         )
 
     def to_pdf_obj(self):
-        template = FIELDS[self.html_class]
+        template = WF_CLASSES[self.html_class]
         result = template.format(
             rect="{} {} {} {}".format(*self.topleft, *self.bottomright)
         )
