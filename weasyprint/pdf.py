@@ -650,4 +650,3 @@ def write_pdf_form(fileobj):
         )
 
     pdf.finish()
-    pass
