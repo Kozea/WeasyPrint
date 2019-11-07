@@ -11,15 +11,17 @@ matrix:
       python: 3.5
     - os: linux
       python: 3.6
-    - dist: xenial
+    - os: linux
       python: 3.7
+    - dist: bionic
+      python: 3.8
     - os: osx
       language: generic
       env: PYTHON=python3
     - os: windows
       # Windows doesn't support python or even generic language
       language: cpp
-      env: PYTHON=/c/Python37/python
+      env: PYTHON=/c/Python38/python
   allow_failures:
     - os: windows
 
@@ -41,10 +43,7 @@ before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then mkdir -p ~/.fonts; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then wget "https://github.com/Kozea/Ahem/blob/master/Ahem.ttf?raw=true" -O ~/.fonts/Ahem.ttf; fi
 
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew tap caskroom/fonts; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew pin numpy gdal postgis; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew upgrade python; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew tap homebrew/cask-fonts; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew cask install font-dejavu-sans; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install cairo pango gdk-pixbuf libffi; fi
 
