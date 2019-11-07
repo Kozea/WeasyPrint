@@ -1,6 +1,6 @@
 language: python
 sudo: false
-env: PYTHON=python3
+env: PYTHON=python
 
 git:
   submodules: false
@@ -17,7 +17,9 @@ matrix:
       python: 3.8
     - os: osx
       language: generic
-      env: HOMEBREW_NO_AUTO_UPDATE=1
+      env:
+        - HOMEBREW_NO_AUTO_UPDATE=1
+        - PYTHON=python3
     - os: windows
       # Windows doesn't support python or even generic language
       language: cpp
