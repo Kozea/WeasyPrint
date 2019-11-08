@@ -111,7 +111,7 @@ def make_replaced_box(element, box, image):
     else:
         # TODO: support images with 'display: table-cell'?
         type_ = boxes.InlineReplacedBox
-    new_box = type_(element.tag, box.style, image)
+    new_box = type_(element.tag, box.style, element, image)
     # TODO: check other attributes that need to be copied
     # TODO: find another solution
     new_box.string_set = box.string_set

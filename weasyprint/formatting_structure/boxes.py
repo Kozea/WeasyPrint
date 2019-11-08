@@ -89,8 +89,9 @@ class Box(object):
     def all_children(self):
         return ()
 
-    def __init__(self, element_tag, style):
+    def __init__(self, element_tag, style, element):
         self.element_tag = element_tag
+        self.element = element
         self.style = style
 
     def __repr__(self):
@@ -101,7 +102,7 @@ class Box(object):
         """Return an anonymous box that inherits from ``parent``."""
         style = computed_from_cascaded(
             cascaded={}, parent_style=parent.style, element=None)
-        return cls(parent.element_tag, style, *args, **kwargs)
+        return cls(parent.element_tag, style, parent.element, *args, **kwargs)
 
     def copy(self):
         """Return shallow copy of the box."""
@@ -297,8 +298,8 @@ class Box(object):
 
 class ParentBox(Box):
     """A box that has children."""
-    def __init__(self, element_tag, style, children):
-        super(ParentBox, self).__init__(element_tag, style)
+    def __init__(self, element_tag, style, element, children):
+        super(ParentBox, self).__init__(element_tag, style, element)
         self.children = tuple(children)
 
     def all_children(self):
@@ -482,9 +483,9 @@ class TextBox(InlineLevelBox):
     ascii_to_wide = dict((i, chr(i + 0xfee0)) for i in range(0x21, 0x7f))
     ascii_to_wide.update({0x20: '\u3000', 0x2D: '\u2212'})
 
-    def __init__(self, element_tag, style, text):
+    def __init__(self, element_tag, style, element, text):
         assert text
-        super(TextBox, self).__init__(element_tag, style)
+        super(TextBox, self).__init__(element_tag, style, element)
         text_transform = style['text_transform']
         if text_transform != 'none':
             text = {
@@ -532,8 +533,8 @@ class ReplacedBox(Box):
     and is opaque from CSS’s point of view.
 
     """
-    def __init__(self, element_tag, style, replacement):
-        super(ReplacedBox, self).__init__(element_tag, style)
+    def __init__(self, element_tag, style, element, replacement):
+        super(ReplacedBox, self).__init__(element_tag, style, element)
         self.replacement = replacement
 
 
@@ -683,7 +684,7 @@ class PageBox(ParentBox):
         self.page_type = page_type
         # Page boxes are not linked to any element.
         super(PageBox, self).__init__(
-            element_tag=None, style=style, children=[])
+            element_tag=None, style=style, element=None, children=[])
 
     def __repr__(self):
         return '<%s %s>' % (type(self).__name__, self.page_type)
@@ -695,7 +696,7 @@ class MarginBox(BlockContainerBox):
         self.at_keyword = at_keyword
         # Margin boxes are not linked to any element.
         super(MarginBox, self).__init__(
-            element_tag=None, style=style, children=[])
+            element_tag=None, style=style, element=None, children=[])
 
     def __repr__(self):
         return '<%s %s>' % (type(self).__name__, self.at_keyword)
