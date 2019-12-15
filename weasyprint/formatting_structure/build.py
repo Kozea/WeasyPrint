@@ -80,9 +80,10 @@ def build_formatting_structure(element_tree, style_for, get_image_from_uri,
     return box
 
 
-def make_box(element_tag, style, content):
-    return BOX_TYPE_FROM_DISPLAY[style['display']](
-        element_tag, style, content)
+def make_box(element_tag, style, content, element):
+    box = BOX_TYPE_FROM_DISPLAY[style['display']](
+        element_tag, style, element, content)
+    return box
 
 
 def element_to_box(element, style_for, get_image_from_uri, base_url,
@@ -122,7 +123,7 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
     if display == 'none':
         return []
 
-    box = make_box(element.tag, style, [])
+    box = make_box(element.tag, style, [], element)
 
     if state is None:
         # use a list to have a shared mutable object
@@ -227,7 +228,7 @@ def before_after_to_box(element, pseudo_type, state, style_for,
     if 'none' in (display, content) or content in ('normal', 'inhibit'):
         return []
 
-    box = make_box('%s::%s' % (element.tag, pseudo_type), style, [])
+    box = make_box('%s::%s' % (element.tag, pseudo_type), style, [], element)
 
     quote_depth, counter_values, _counter_scopes = state
     update_counters(state, style)
@@ -264,7 +265,7 @@ def marker_to_box(element, state, parent_style, style_for, get_image_from_uri,
     # `content` where 'normal' computes as 'inhibit' for pseudo elements.
     quote_depth, counter_values, _counter_scopes = state
 
-    box = make_box('%s::marker' % element.tag, style, children)
+    box = make_box('%s::marker' % element.tag, style, children, element)
 
     if style['display'] == 'none':
         return
@@ -492,6 +493,26 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
                 texts.append(quotes[min(quote_depth[0], len(quotes) - 1)])
             if is_open:
                 quote_depth[0] += 1
+        elif type_ == 'element()':
+            if value.value not in context.running_elements:
+                # TODO: emit warning
+                continue
+            new_box = None
+            for i in range(context.current_page - 1, -1, -1):
+                if i not in context.running_elements[value.value]:
+                    continue
+                running_box = context.running_elements[value.value][i]
+                new_box = running_box.deepcopy()
+                break
+            new_box.style['position'] = 'static'
+            for child in new_box.descendants():
+                if child.style['content'] in ('normal', 'none'):
+                    continue
+                child.children = content_to_boxes(
+                    child.style, child, quote_depth, counter_values,
+                    get_image_from_uri, target_collector, context=context,
+                    page=page)
+            boxlist.append(new_box)
     text = ''.join(texts)
     if text:
         boxlist.append(boxes.TextBox.anonymous_from(parent_box, text))
@@ -1247,7 +1268,7 @@ def inline_in_block(box):
         ]
 
     """
-    if not isinstance(box, boxes.ParentBox):
+    if not isinstance(box, boxes.ParentBox) or box.is_running():
         return box
 
     box_children = list(box.children)
@@ -1382,7 +1403,7 @@ def block_in_inline(box):
         ]
 
     """
-    if not isinstance(box, boxes.ParentBox):
+    if not isinstance(box, boxes.ParentBox) or box.is_running():
         return box
 
     new_children = []

@@ -858,11 +858,27 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
                             # add the original skip stack to the partial
                             # skip stack we get after the new rendering.
 
-                            # We have to do:
-                            # resume_at + initial_skip_stack
-                            # but adding skip stacks is a bit complicated
-                            current_skip_stack = initial_skip_stack
-                            current_resume_at = (child_index, child_resume_at)
+                            # Combining skip stacks is a bit complicated
+                            # We have to:
+                            # - set `child_index` as the first number
+                            # - append the new stack if it's an absolute one
+                            # - otherwise append the combined stacks
+                            #   (resume_at + initial_skip_stack)
+
+                            # extract the initial index
+                            if initial_skip_stack is None:
+                                current_skip_stack = None
+                                initial_index = 0
+                            else:
+                                initial_index, current_skip_stack = (
+                                    initial_skip_stack)
+                            # child_resume_at is an absolute skip stack
+                            if child_index > initial_index:
+                                resume_at = (child_index, child_resume_at)
+                                break
+
+                            # combine the stacks
+                            current_resume_at = child_resume_at
                             stack = []
                             while current_skip_stack and current_resume_at:
                                 skip, current_skip_stack = (
@@ -875,6 +891,8 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
                             resume_at = current_resume_at
                             while stack:
                                 resume_at = (stack.pop(), resume_at)
+                            # insert the child index
+                            resume_at = (child_index, resume_at)
                             break
                     if break_found:
                         break

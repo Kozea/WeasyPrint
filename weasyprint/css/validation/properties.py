@@ -967,10 +967,15 @@ def text_overflow(keyword):
 
 
 @property()
-@single_keyword
-def position(keyword):
+@single_token
+def position(token):
     """``position`` property validation."""
-    return keyword in ('static', 'relative', 'absolute', 'fixed')
+    if token.type == 'function' and token.name == 'running':
+        if len(token.arguments) == 1 and token.arguments[0].type == 'ident':
+            return ('running()', token.arguments[0].value)
+    keyword = get_single_keyword([token])
+    if keyword in ('static', 'relative', 'absolute', 'fixed'):
+        return keyword
 
 
 @property()
@@ -1364,7 +1369,7 @@ def string_set(tokens, base_url):
         if None not in parsed_tokens:
             return (var_name, parsed_tokens)
     elif tokens and get_keyword(tokens[0]) == 'none':
-        return 'none'
+        return 'none', ()
 
 
 @property()

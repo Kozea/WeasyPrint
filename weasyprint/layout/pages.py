@@ -345,10 +345,11 @@ def make_margin_boxes(context, page, state):
                 box.style, box, quote_depth, counter_values,
                 context.get_image_from_uri, context.target_collector, context,
                 page)
-            # content_to_boxes() only produces inline-level boxes, no need to
-            # run other post-processors from build.build_formatting_structure()
-            box = build.inline_in_block(box)
             build.process_whitespace(box)
+            box = build.anonymous_table_boxes(box)
+            box = build.flex_boxes(box)
+            box = build.inline_in_block(box)
+            box = build.block_in_inline(box)
         resolve_percentages(box, containing_block)
         if not box.is_generated:
             box.width = box.height = 0

@@ -383,6 +383,59 @@ def test_breaking_linebox_regression_10():
 
 
 @assert_no_logs
+def test_breaking_linebox_regression_11():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/953
+    page, = parse(
+        '<style>@font-face {src: url(AHEM____.TTF); font-family: ahem}</style>'
+        '<p style="width:10em; font-family: ahem">'
+        '  line 1<br><span>123 567 90</span>x'
+        '</p>')
+    html, = page.children
+    body, = html.children
+    p, = body.children
+    line1, line2, line3 = p.children
+    assert line1.children[0].text == 'line 1'
+    assert line2.children[0].children[0].text == '123 567'
+    assert line3.children[0].children[0].text == '90'
+    assert line3.children[1].text == 'x'
+
+
+@assert_no_logs
+def test_breaking_linebox_regression_12():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/953
+    page, = parse(
+        '<style>@font-face {src: url(AHEM____.TTF); font-family: ahem}</style>'
+        '<p style="width:10em; font-family: ahem">'
+        '  <br><span>123 567 90</span>x'
+        '</p>')
+    html, = page.children
+    body, = html.children
+    p, = body.children
+    line1, line2, line3 = p.children
+    assert line2.children[0].children[0].text == '123 567'
+    assert line3.children[0].children[0].text == '90'
+    assert line3.children[1].text == 'x'
+
+
+@assert_no_logs
+def test_breaking_linebox_regression_13():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/953
+    page, = parse(
+        '<style>@font-face {src: url(AHEM____.TTF); font-family: ahem}</style>'
+        '<p style="width:10em; font-family: ahem">'
+        '  123 567 90 <span>123 567 90</span>x'
+        '</p>')
+    html, = page.children
+    body, = html.children
+    p, = body.children
+    line1, line2, line3 = p.children
+    assert line1.children[0].text == '123 567 90'
+    assert line2.children[0].children[0].text == '123 567'
+    assert line3.children[0].children[0].text == '90'
+    assert line3.children[1].text == 'x'
+
+
+@assert_no_logs
 def test_linebox_text():
     page, = parse('''
       <style>

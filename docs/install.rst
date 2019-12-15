@@ -13,7 +13,7 @@ WeasyPrint |version| depends on:
 * tinycss2_ ≥ 1.0.0
 * cssselect2_ ≥ 0.1
 * CairoSVG_ ≥ 2.4.0
-* Pyphen_ ≥ 0.8
+* Pyphen_ ≥ 0.9.1
 * GDK-PixBuf_ ≥ 2.25.0 [#]_
 
 .. _CPython: http://www.python.org/
@@ -113,11 +113,18 @@ If your favorite system is not listed here but you know the package names,
 Debian / Ubuntu
 ~~~~~~~~~~~~~~~
 
-Debian 9.0 Stretch or newer, Ubuntu 16.04 Xenial or newer:
+WeasyPrint is `packaged for Debian 11 or newer
+<https://packages.debian.org/search?searchon=names&keywords=weasyprint>`_.
+
+You can install it with pip on Debian 10 Buster or newer, or on Ubuntu 18.04
+Bionic Beaver or newer, after installing the following packages:
 
 .. code-block:: sh
 
     sudo apt-get install build-essential python3-dev python3-pip python3-setuptools python3-wheel python3-cffi libcairo2 libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf2.0-0 libffi-dev shared-mime-info
+
+WeasyPrint may work under previous releases of Debian or Ubuntu, but they often
+provide an old version of Cairo that may limit WeasyPrint's features [1]_.
 
 Fedora
 ~~~~~~

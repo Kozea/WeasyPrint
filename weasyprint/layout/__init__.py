@@ -196,6 +196,7 @@ class LayoutContext(object):
         self._excluded_shapes_lists = []
         self.excluded_shapes = None  # Not initialized yet
         self.string_set = defaultdict(lambda: defaultdict(lambda: list()))
+        self.running_elements = {}
         self.current_page = None
         self.forced_break = False
 

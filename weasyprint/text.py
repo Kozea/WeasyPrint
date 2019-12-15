@@ -147,6 +147,7 @@ ffi.cdef('''
     void g_type_init (void);
 
     void pango_layout_set_width (PangoLayout *layout, int width);
+    PangoAttrList * pango_layout_get_attributes(PangoLayout *layout);
     void pango_layout_set_attributes (
         PangoLayout *layout, PangoAttrList *attrs);
     void pango_layout_set_text (
@@ -766,7 +767,10 @@ class Layout(object):
         if text and (word_spacing != 0 or letter_spacing != 0):
             letter_spacing = units_from_double(letter_spacing)
             space_spacing = units_from_double(word_spacing) + letter_spacing
-            attr_list = pango.pango_attr_list_new()
+            attr_list = pango.pango_layout_get_attributes(self.layout)
+            if not attr_list:
+                # TODO: list should be freed
+                attr_list = pango.pango_attr_list_new()
 
             def add_attr(start, end, spacing):
                 # TODO: attributes should be freed
@@ -781,7 +785,6 @@ class Layout(object):
                 position = bytestring.find(b' ', position + 1)
 
             pango.pango_layout_set_attributes(self.layout, attr_list)
-            pango.pango_attr_list_unref(attr_list)
 
         # Tabs width
         if b'\t' in bytestring:
