@@ -769,6 +769,7 @@ class Layout(object):
             space_spacing = units_from_double(word_spacing) + letter_spacing
             attr_list = pango.pango_layout_get_attributes(self.layout)
             if not attr_list:
+                # TODO: list should be freed
                 attr_list = pango.pango_attr_list_new()
 
             def add_attr(start, end, spacing):
@@ -784,9 +785,6 @@ class Layout(object):
                 position = bytestring.find(b' ', position + 1)
 
             pango.pango_layout_set_attributes(self.layout, attr_list)
-            # TODO: Check if we should free this, is it done automatically?
-            # Otherwise maybe __del__ should be used
-            # pango.pango_attr_list_unref(attr_list)
 
         # Tabs width
         if b'\t' in bytestring:
