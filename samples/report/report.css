@@ -282,7 +282,7 @@ html {
         font-weight: 400;
         width: 30%; }
       html body article#typography section#ligatures dl dd {
-        flex: 1 100%;
+        flex: 1 70%;
         margin: 0;
         padding: 0; }
     html body article#typography section#ligatures .none {
@@ -300,7 +300,7 @@ html {
         font-weight: 400;
         width: 30%; }
       html body article#typography section#numbers dl dd {
-        flex: 1 100%;
+        flex: 1 70%;
         margin: 0;
         padding: 0; }
     html body article#typography section#numbers #fractions {
