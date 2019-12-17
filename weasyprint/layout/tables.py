@@ -387,10 +387,11 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
                     position_y=position_y + header_height,
                     max_position_y=max_position_y,
                     page_is_empty=avoid_breaks))
-            if new_table_children or not page_is_empty:
-                return (header, new_table_children, footer,
-                        end_position_y, resume_at, next_page)
-            elif page_is_empty and not new_table_children:
+            table_children_row = [child for child in table.children
+                                  if not child.is_header and
+                                  not child.is_footer]
+            if (new_table_children or not page_is_empty or
+                    not new_table_children and not table_children_row):
                 return (header, new_table_children, footer,
                         end_position_y, resume_at, next_page)
             else:
