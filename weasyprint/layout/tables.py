@@ -390,6 +390,9 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
             if new_table_children or not page_is_empty:
                 return (header, new_table_children, footer,
                         end_position_y, resume_at, next_page)
+            elif page_is_empty and not new_table_children:
+                return (header, new_table_children, footer,
+                        end_position_y, resume_at, next_page)
             else:
                 # We could not fit any content, drop the header
                 header = None
