@@ -95,3 +95,16 @@ def test_variable_initial():
     body, = html.children
     paragraph, = body.children
     assert paragraph.width == 10
+
+
+def test_variable_regression_1():
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/974
+    page, = parse('''
+      <style>
+        div {
+          --value: invalidValue;
+          border-spacing: var(--value);
+        }
+      </style>
+      <div>crash</div>
+    ''')
