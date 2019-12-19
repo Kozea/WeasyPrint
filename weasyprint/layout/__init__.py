@@ -230,8 +230,8 @@ class LayoutContext(object):
         We'll have something like this that represents all assignments on a
         given page:
 
-        {1: [u'First Header'], 3: [u'Second Header'],
-         4: [u'Third Header', u'3.5th Header']}
+        {1: ['First Header'], 3: ['Second Header'],
+         4: ['Third Header', '3.5th Header']}
 
         Value depends on current page.
         http://dev.w3.org/csswg/css-gcpm/#funcdef-string
