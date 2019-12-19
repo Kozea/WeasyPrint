@@ -494,14 +494,15 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
             if is_open:
                 quote_depth[0] += 1
         elif type_ == 'element()':
-            if value.value not in context.running_elements:
+            name, position = value
+            if name not in context.running_elements:
                 # TODO: emit warning
                 continue
             new_box = None
             for i in range(context.current_page - 1, -1, -1):
-                if i not in context.running_elements[value.value]:
+                if i not in context.running_elements[name]:
                     continue
-                running_box = context.running_elements[value.value][i]
+                running_box = context.running_elements[name][i]
                 new_box = running_box.deepcopy()
                 break
             new_box.style['position'] = 'static'
