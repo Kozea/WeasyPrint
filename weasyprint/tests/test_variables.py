@@ -9,6 +9,8 @@
 
 """
 
+import pytest
+
 from ..css.properties import KNOWN_PROPERTIES
 from .test_boxes import render_pages as parse
 
@@ -98,13 +100,14 @@ def test_variable_initial():
     assert paragraph.width == 10
 
 
-def test_variable_fallback():
+@pytest.mark.parametrize('prop', KNOWN_PROPERTIES)
+def test_variable_fallback(prop):
     parse('''
       <style>
         div {
           --var: improperValue;
-          %s
+          %s: var(--var);
         }
       </style>
       <div></div>
-    ''' % ''.join(name + ': var(--var);\n' for name in KNOWN_PROPERTIES))
+    ''' % prop)
