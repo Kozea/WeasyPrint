@@ -1381,7 +1381,7 @@ def transform(tokens):
         for token in tokens:
             function = parse_function(token)
             if not function:
-                raise InvalidValues
+                return
             name, args = function
 
             if len(args) == 1:
@@ -1402,7 +1402,7 @@ def transform(tokens):
                 elif name == 'scale' and args[0].type == 'number':
                     transforms.append(('scale', (args[0].value,) * 2))
                 else:
-                    raise InvalidValues
+                    return
             elif len(args) == 2:
                 if name == 'scale' and all(a.type == 'number' for a in args):
                     transforms.append((name, tuple(arg.value for arg in args)))
@@ -1412,10 +1412,10 @@ def transform(tokens):
                     if name == 'translate' and all(lengths):
                         transforms.append((name, lengths))
                     else:
-                        raise InvalidValues
+                        return
             elif len(args) == 6 and name == 'matrix' and all(
                     a.type == 'number' for a in args):
                 transforms.append((name, tuple(arg.value for arg in args)))
             else:
-                raise InvalidValues
+                return
         return tuple(transforms)
