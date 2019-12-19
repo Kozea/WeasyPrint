@@ -1374,6 +1374,7 @@ def string_set(tokens, base_url):
 
 @property()
 def transform(tokens):
+    """Validation for ``transform``."""
     if get_single_keyword(tokens) == 'none':
         return ()
     else:
