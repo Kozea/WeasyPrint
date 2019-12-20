@@ -332,10 +332,23 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
         if not child.is_header and not child.is_footer]
 
     def all_groups_layout():
+        # If the page is not empty, we try to render the header and the footer
+        # on it. If the table does not fit on the page, we try to render it on
+        # the next page.
+
+        # If the page is empty and the header and footer are too big, there
+        # are not rendered. If no row can be rendered because of the header and
+        # the footer, the header and/or the footer are not rendered.
+
+        if page_is_empty:
+            header_footer_max_position_y = max_position_y
+        else:
+            header_footer_max_position_y = float('inf')
+
         if table.children and table.children[0].is_header:
             header = table.children[0]
             header, resume_at, next_page = group_layout(
-                header, position_y, max_position_y,
+                header, position_y, header_footer_max_position_y,
                 skip_stack=None, page_is_empty=False)
             if header and not resume_at:
                 header_height = header.height + border_spacing_y
@@ -347,7 +360,7 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
         if table.children and table.children[-1].is_footer:
             footer = table.children[-1]
             footer, resume_at, next_page = group_layout(
-                footer, position_y, max_position_y,
+                footer, position_y, header_footer_max_position_y,
                 skip_stack=None, page_is_empty=False)
             if footer and not resume_at:
                 footer_height = footer.height + border_spacing_y

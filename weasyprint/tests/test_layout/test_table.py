@@ -2575,11 +2575,17 @@ def test_table_caption_margin_bottom():
 @assert_no_logs
 @pytest.mark.parametrize('rows_expected, thead, tfoot, content', (
     ([[], ['Header', 'Footer']], 45, 45, '<p>content</p>'),
+    ([[], ['Header', 'Footer']], 85, 5, '<p>content</p>'),
     ([['Header', 'Footer']], 30, 30, '<p>content</p>'),
-    ([['Header']], 30, 110, '<p>content</p>'),
+    ([[], ['Header']], 30, 110, '<p>content</p>'),
     ([[], ['Header', 'Footer']], 30, 60, '<p>content</p>'),
-    ([['Footer']], 110, 30, '<p>content</p>'),
-    ([[]], 110, 110, '<p>content</p>'),
+    ([[], ['Footer']], 110, 30, '<p>content</p>'),
+
+    # We try to render the header and footer on the same page, but it does not
+    # fit. So we try to render the header or the footer on the next one, but
+    # nothing fit either.
+    ([[], []], 110, 110, '<p>content</p>'),
+
     ([['Header', 'Footer']], 30, 30, ''),
     ([['Header']], 30, 110, ''),
     ([['Header', 'Footer']], 30, 60, ''),
