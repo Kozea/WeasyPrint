@@ -2570,3 +2570,57 @@ def test_table_caption_margin_bottom():
     assert (tbody.content_box_x(), tbody.content_box_y()) == (20, 50)
     assert (caption.content_box_x(), caption.content_box_y()) == (40, 80)
     assert (h2.content_box_x(), h2.content_box_y()) == (20, 130)
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rows_expected, thead, tfoot, content', (
+    ([[], ['Header', 'Footer']], 45, 45, '<p>content</p>'),
+    ([[], ['Header', 'Footer']], 85, 5, '<p>content</p>'),
+    ([['Header', 'Footer']], 30, 30, '<p>content</p>'),
+    ([[], ['Header']], 30, 110, '<p>content</p>'),
+    ([[], ['Header', 'Footer']], 30, 60, '<p>content</p>'),
+    ([[], ['Footer']], 110, 30, '<p>content</p>'),
+
+    # We try to render the header and footer on the same page, but it does not
+    # fit. So we try to render the header or the footer on the next one, but
+    # nothing fit either.
+    ([[], []], 110, 110, '<p>content</p>'),
+
+    ([['Header', 'Footer']], 30, 30, ''),
+    ([['Header']], 30, 110, ''),
+    ([['Header', 'Footer']], 30, 60, ''),
+    ([['Footer']], 110, 30, ''),
+    ([[]], 110, 110, ''),
+))
+def test_table_empty_body(rows_expected, thead, tfoot, content):
+    html = '''
+      <style>
+        @page { size: 100px }
+        p { height: 20px }
+        thead th { height: %spx }
+        tfoot th { height: %spx }
+      </style>
+      %s
+      <table>
+        <thead><tr><th>Header</th></tr></thead>
+        <tfoot><tr><th>Footer</th></tr></tfoot>
+      </table>
+    ''' % (thead, tfoot, content)
+    pages = render_pages(html)
+    assert len(pages) == len(rows_expected)
+    for i, page in enumerate(pages):
+        rows = []
+        html, = page.children
+        body, = html.children
+        table_wrapper = body.children[-1]
+        if not table_wrapper.is_table_wrapper:
+            assert rows == rows_expected[i]
+            continue
+        table, = table_wrapper.children
+        for group in table.children:
+            for row in group.children:
+                cell, = row.children
+                line, = cell.children
+                text, = line.children
+                rows.append(text.text)
+        assert rows == rows_expected[i]
