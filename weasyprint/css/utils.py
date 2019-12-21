@@ -483,7 +483,6 @@ def check_content_function(token):
 
 def check_string_or_element_function(string_or_element, token):
     function = parse_function(token)
-    print(token)
     if function is None:
         return
     name, args = function
