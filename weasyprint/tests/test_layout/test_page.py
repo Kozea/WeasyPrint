@@ -1317,3 +1317,32 @@ def test_running_elements(argument, texts):
             assert textbox.text == text
         else:
             assert not text
+
+
+@assert_no_logs
+def test_running_elements_display():
+    page, = render_pages('''
+      <style>
+        @page {
+          margin: 50px;
+          size: 200px;
+          @bottom-left { content: element(inline) }
+          @bottom-center { content: element(block) }
+          @bottom-right { content: element(table) }
+        }
+        table { position: running(table) }
+        div { position: running(block) }
+        span { position: running(inline) }
+      </style>
+      text
+      <table><tr><td>table</td></tr></table>
+      <div>block</div>
+      <span>inline</span>
+    ''')
+    html, left, center, right = page.children
+    assert ''.join(
+        getattr(node, 'text', '') for node in left.descendants()) == 'inline'
+    assert ''.join(
+        getattr(node, 'text', '') for node in center.descendants()) == 'block'
+    assert ''.join(
+        getattr(node, 'text', '') for node in right.descendants()) == 'table'
