@@ -738,6 +738,11 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
                         old_child.translate(dx=dx)
             float_resume_at = index + 1
             continue
+        elif child.is_running():
+            context.running_elements.setdefault(
+                child.style['position'][1], {}
+            )[context.current_page - 1] = child
+            continue
 
         last_child = (index == len(box.children) - 1)
         available_width = max_x

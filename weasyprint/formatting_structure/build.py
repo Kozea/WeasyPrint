@@ -743,7 +743,7 @@ def anonymous_table_boxes(box):
     See http://www.w3.org/TR/CSS21/tables.html#anonymous-boxes
 
     """
-    if not isinstance(box, boxes.ParentBox):
+    if not isinstance(box, boxes.ParentBox) or box.is_running():
         return box
 
     # Do recursion.
@@ -1136,7 +1136,7 @@ def flex_boxes(box):
     See http://www.w3.org/TR/css-flexbox-1/#flex-items
 
     """
-    if not isinstance(box, boxes.ParentBox):
+    if not isinstance(box, boxes.ParentBox) or box.is_running():
         return box
 
     # Do recursion.
@@ -1220,7 +1220,7 @@ def process_whitespace(box, following_collapsible_space=False):
         box.text = text
         return following_collapsible_space
 
-    if isinstance(box, boxes.ParentBox):
+    if isinstance(box, boxes.ParentBox) and not box.is_running():
         for child in box.children:
             if isinstance(child, (boxes.TextBox, boxes.InlineBox)):
                 following_collapsible_space = process_whitespace(
