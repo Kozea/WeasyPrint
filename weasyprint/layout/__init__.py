@@ -276,6 +276,8 @@ class LayoutContext(object):
                     break
             elif keyword == 'last':
                 return last_string
+            elif keyword == 'first-except':
+                return
         # Search backwards through previous pages
         for previous_page in range(self.current_page - 1, 0, -1):
             if previous_page in store[name]:
