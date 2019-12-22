@@ -739,9 +739,9 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
             float_resume_at = index + 1
             continue
         elif child.is_running():
-            context.running_elements.setdefault(
-                child.style['position'][1], {}
-            )[context.current_page - 1] = child
+            running_name = child.style['position'][1]
+            page = context.current_page
+            context.running_elements[running_name][page].append(child)
             continue
 
         last_child = (index == len(box.children) - 1)

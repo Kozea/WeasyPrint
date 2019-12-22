@@ -196,7 +196,8 @@ class LayoutContext(object):
         self._excluded_shapes_lists = []
         self.excluded_shapes = None  # Not initialized yet
         self.string_set = defaultdict(lambda: defaultdict(lambda: list()))
-        self.running_elements = {}
+        self.running_elements = defaultdict(
+            lambda: defaultdict(lambda: list()))
         self.current_page = None
         self.forced_break = False
 
@@ -225,7 +226,17 @@ class LayoutContext(object):
             self.excluded_shapes = None
 
     def get_string_set_for(self, page, name, keyword='first'):
-        """Resolve value of string function (as set by string set).
+        """Resolve value of string function."""
+        return self.get_string_or_element_for(
+            self.string_set, page, name, keyword)
+
+    def get_running_element_for(self, page, name, keyword='first'):
+        """Resolve value of element function."""
+        return self.get_string_or_element_for(
+            self.running_elements, page, name, keyword)
+
+    def get_string_or_element_for(self, store, page, name, keyword):
+        """Resolve value of string or element function.
 
         We'll have something like this that represents all assignments on a
         given page:
@@ -236,17 +247,19 @@ class LayoutContext(object):
         Value depends on current page.
         http://dev.w3.org/csswg/css-gcpm/#funcdef-string
 
-        :param name: the name of the named string.
-        :param keyword: indicates which value of the named string to use.
-                        Default is the first assignment on the current page
-                        else the most recent assignment (entry value)
-        :returns: text
+        :param store: dictionary where the resolved value is stored.
+        :param page: current page.
+        :param name: name of the named string or running element.
+        :param keyword: indicates which value of the named string or running
+                        element to use. Default is the first assignment on the
+                        current page else the most recent assignment.
+        :returns: text for string set, box for running element
 
         """
-        if self.current_page in self.string_set[name]:
+        if self.current_page in store[name]:
             # A value was assigned on this page
-            first_string = self.string_set[name][self.current_page][0]
-            last_string = self.string_set[name][self.current_page][-1]
+            first_string = store[name][self.current_page][0]
+            last_string = store[name][self.current_page][-1]
             if keyword == 'first':
                 return first_string
             elif keyword == 'start':
@@ -265,6 +278,5 @@ class LayoutContext(object):
                 return last_string
         # Search backwards through previous pages
         for previous_page in range(self.current_page - 1, 0, -1):
-            if previous_page in self.string_set[name]:
-                return self.string_set[name][previous_page][-1]
-        return ''
+            if previous_page in store[name]:
+                return store[name][previous_page][-1]
