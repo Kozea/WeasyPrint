@@ -496,7 +496,9 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
         elif type_ == 'element()':
             name, position = value
             if name not in context.running_elements:
-                # TODO: emit warning
+                LOGGER.warning(
+                    '"element(%s)" refers to an unknown running element' %
+                    name)
                 continue
             new_box = None
             for i in range(context.current_page - 1, -1, -1):
