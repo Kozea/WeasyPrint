@@ -72,10 +72,10 @@ class PDFFormatter(string.Formatter):
             return '({0})'.format(pdf_escape(
                 ('\ufeff' + value).encode('utf-16-be').decode('latin1')))
         else:
-            return super(PDFFormatter, self).convert_field(value, conversion)
+            return super().convert_field(value, conversion)
 
     def vformat(self, format_string, args, kwargs):
-        result = super(PDFFormatter, self).vformat(format_string, args, kwargs)
+        result = super().vformat(format_string, args, kwargs)
         return result.encode('latin1')
 
 
