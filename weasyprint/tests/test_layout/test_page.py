@@ -1219,57 +1219,130 @@ def test_margin_boxes_vertical_align():
 @assert_no_logs
 def test_margin_boxes_element():
     pages = render_pages('''
-        <html>
-            <head>
-                <style type="text/css">
-                    .footer {
-                        position: running(footer);
-                    }
-                    @page {
-                        @bottom-center {
-                            content: element(footer);
-                        }
-                    }
-                    h1 {
-                        margin-bottom: 15cm;
-                    }
-                    .page:before {
-                        content: counter(page);
-                    }
-                    .pages:after {
-                        content: counter(pages);
-                    }
-                </style>
-            </head>
-            <body>
-                <div class="footer">
-                    <span class="page" /> of <span class="pages" />
-                </div>
-                <h1>test1</h1>
-                <h1>test2</h1>
-                <h1>test3</h1>
-                <h1>test4</h1>
-                <h1>test5</h1>
-                <h1>test6</h1>
-                <div class="footer">
-                    Last page will be a static footer
-                </div>
-            </body>
-        </html>
+      <style>
+        footer {
+          position: running(footer);
+        }
+        @page {
+          margin: 50px;
+          size: 200px;
+          @bottom-center {
+            content: element(footer);
+          }
+        }
+        h1 {
+          height: 40px;
+        }
+        .pages:before {
+          content: counter(page);
+        }
+        .pages:after {
+          content: counter(pages);
+        }
+      </style>
+      <footer class="pages"> of </footer>
+      <h1>test1</h1>
+      <h1>test2</h1>
+      <h1>test3</h1>
+      <h1>test4</h1>
+      <h1>test5</h1>
+      <h1>test6</h1>
+      <footer>Static</footer>
     ''')
-    # first footer
     footer1_text = ''.join(
         getattr(node, 'text', '')
         for node in pages[0].children[1].descendants())
     assert footer1_text == '1 of 3'
 
-    # second footer
     footer2_text = ''.join(
         getattr(node, 'text', '')
         for node in pages[1].children[1].descendants())
     assert footer2_text == '2 of 3'
-    # last footer
+
     footer3_text = ''.join(
         getattr(node, 'text', '')
         for node in pages[2].children[1].descendants())
-    assert footer3_text == 'Last page will be a static footer'
+    assert footer3_text == 'Static'
+
+
+@assert_no_logs
+@pytest.mark.parametrize('argument, texts', (
+    # TODO: start doesn’t work because running elements are removed from the
+    # original tree, and the current implentation in
+    # layout.get_running_element_for uses the tree to know if it’s at the
+    # beginning of the page
+
+    # ('start', ('', '2-first', '2-last', '3-last', '5')),
+
+    ('first', ('', '2-first', '3-first', '3-last', '5')),
+    ('last', ('', '2-last', '3-last', '3-last', '5')),
+    ('first-except', ('', '', '', '3-last', '')),
+))
+def test_running_elements(argument, texts):
+    pages = render_pages('''
+      <style>
+        @page {
+          margin: 50px;
+          size: 200px;
+          @bottom-center { content: element(title %s) }
+        }
+        article { break-after: page }
+        h1 { position: running(title) }
+      </style>
+      <article>
+        <div>1</div>
+      </article>
+      <article>
+        <h1>2-first</h1>
+        <h1>2-last</h1>
+      </article>
+      <article>
+        <p>3</p>
+        <h1>3-first</h1>
+        <h1>3-last</h1>
+      </article>
+      <article>
+      </article>
+      <article>
+        <h1>5</h1>
+      </article>
+    ''' % argument)
+    assert len(pages) == 5
+    for page, text in zip(pages, texts):
+        html, margin = page.children
+        if margin.children:
+            h1, = margin.children
+            line, = h1.children
+            textbox, = line.children
+            assert textbox.text == text
+        else:
+            assert not text
+
+
+@assert_no_logs
+def test_running_elements_display():
+    page, = render_pages('''
+      <style>
+        @page {
+          margin: 50px;
+          size: 200px;
+          @bottom-left { content: element(inline) }
+          @bottom-center { content: element(block) }
+          @bottom-right { content: element(table) }
+        }
+        table { position: running(table) }
+        div { position: running(block) }
+        span { position: running(inline) }
+      </style>
+      text
+      <table><tr><td>table</td></tr></table>
+      <div>block</div>
+      <span>inline</span>
+    ''')
+    html, left, center, right = page.children
+    assert ''.join(
+        getattr(node, 'text', '') for node in left.descendants()) == 'inline'
+    assert ''.join(
+        getattr(node, 'text', '') for node in center.descendants()) == 'block'
+    assert ''.join(
+        getattr(node, 'text', '') for node in right.descendants()) == 'table'
