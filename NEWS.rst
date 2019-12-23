@@ -3,6 +3,55 @@
 ======
 
 
+Version 51
+----------
+
+Released on 2019-12-23.
+
+Dependencies:
+
+* Pyphen 0.9.1+ is now needed
+
+New features:
+
+* `#882 <https://github.com/Kozea/WeasyPrint/pull/882>`_:
+  Add support of ``element()`` and ``running()``
+* `#972 <https://github.com/Kozea/WeasyPrint/pull/972>`_:
+  Add HTML element to Box class
+* `7a4d6f8 <https://github.com/Kozea/WeasyPrint/commit/7a4d6f8>`_:
+  Support ``larger`` and ``smaller`` values for ``font-size``
+
+Bug fixes:
+
+* `#960 <https://github.com/Kozea/WeasyPrint/pull/960>`_:
+  Fix how fonts used for macOS tests are installed
+* `#956 <https://github.com/Kozea/WeasyPrint/pull/956>`_:
+  Fix various crashes due to line breaking bugs
+* `#983 <https://github.com/Kozea/WeasyPrint/issues/983>`_:
+  Fix typo in variable name
+* `#975 <https://github.com/Kozea/WeasyPrint/pull/975>`_:
+  Don’t crash when ``string-set`` is set to ``none``
+* `#998 <https://github.com/Kozea/WeasyPrint/pull/998>`_:
+  Keep font attributes when text lines are modified
+* `#1005 <https://github.com/Kozea/WeasyPrint/issues/1005>`_:
+  Don’t let presentational hints add decorations on tables with no borders
+* `#974 <https://github.com/Kozea/WeasyPrint/pull/974>`_:
+  Don’t crash on improper ``var()`` values
+* `#1012 <https://github.com/Kozea/WeasyPrint/pull/1012>`_:
+  Fix rendering of header and footer for empty tables
+* `#1013 <https://github.com/Kozea/WeasyPrint/issues/1013>`_:
+  Avoid quadratic time relative to tree depth when setting page names
+
+Contributors:
+
+- Lucie Anglade
+- Guillaume Ayoub
+- Guillermo Bonvehí
+- Holger Brunn
+- Felix Schwarz
+- Tontyna
+
+
 Version 50
 ----------
 
@@ -30,7 +79,7 @@ Bug fixes:
 
 Contributors:
 
-- grewn0uille
+- Lucie Anglade
 - Guillaume Ayoub
 
 
@@ -112,7 +161,7 @@ Documentation:
 
 Contributors:
 
-- grewn0uille
+- Lucie Anglade
 - Guillaume Ayoub
 - Raphael Gaschignard
 - Stani
@@ -177,7 +226,7 @@ Contributors:
 - Guillaume Ayoub
 - Manuel Barkhau
 - Nathan de Maestri
-- grewn0uille
+- Lucie Anglade
 - theopeek
 
 
