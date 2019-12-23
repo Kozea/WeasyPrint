@@ -250,7 +250,7 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
             return None, None, next_page
 
         group = group.copy_with_children(new_group_children)
-        group._remove_decoration(
+        group.remove_decoration(
             start=not is_group_start, end=resume_at is not None)
 
         # Set missing baselines in a second loop because of rowspan
@@ -459,7 +459,7 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
         ([header] if header is not None else []) +
         new_table_children +
         ([footer] if footer is not None else []))
-    table._remove_decoration(
+    table.remove_decoration(
         start=skip_stack is not None, end=resume_at is not None)
     if table.style['border_collapse'] == 'collapse':
         table.skipped_rows = skipped_rows

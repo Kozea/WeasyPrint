@@ -268,7 +268,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
         context.create_block_formatting_context()
 
     is_start = skip_stack is None
-    box._remove_decoration(start=not is_start, end=False)
+    box.remove_decoration(start=not is_start, end=False)
 
     if adjoining_margins is None:
         adjoining_margins = []
@@ -636,7 +636,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
         adjoining_margins = []
 
     new_box = box.copy_with_children(new_children)
-    new_box._remove_decoration(start=not is_start, end=resume_at is not None)
+    new_box.remove_decoration(start=not is_start, end=resume_at is not None)
 
     # TODO: See corner cases in
     # http://www.w3.org/TR/CSS21/visudet.html#normal-block

@@ -923,7 +923,7 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
     is_end = resume_at is None
     new_box = box.copy_with_children(
         [box_child for index, box_child in children])
-    new_box._remove_decoration(start=not is_start, end=not is_end)
+    new_box.remove_decoration(start=not is_start, end=not is_end)
     if isinstance(box, boxes.LineBox):
         # We must reset line box width according to its new children
         in_flow_children = [

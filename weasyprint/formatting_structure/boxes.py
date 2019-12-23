@@ -312,7 +312,7 @@ class ParentBox(Box):
         setattr(self, 'padding_%s' % side, 0)
         setattr(self, 'border_%s_width' % side, 0)
 
-    def _remove_decoration(self, start, end):
+    def remove_decoration(self, start, end):
         if self.style['box_decoration_break'] == 'clone':
             return
         if start:
@@ -431,7 +431,7 @@ class InlineLevelBox(Box):
     ``inline-block`` generates an inline-level box.
 
     """
-    def _remove_decoration(self, start, end):
+    def remove_decoration(self, start, end):
         if self.style['box_decoration_break'] == 'clone':
             return
         ltr = self.style['direction'] == 'ltr'
