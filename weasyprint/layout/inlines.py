@@ -278,7 +278,7 @@ def first_letter_to_box(box, skip_stack, first_letter_style):
             if child.element_tag.endswith('::first-letter'):
                 letter_box = boxes.InlineBox(
                     '%s::first-letter' % box.element_tag, letter_style,
-                    [child])
+                    box.element, [child])
                 box.children = (
                     (letter_box,) + tuple(box.children[1:]))
             elif child.text:
@@ -305,24 +305,24 @@ def first_letter_to_box(box, skip_stack, first_letter_style):
                     if first_letter_style['float'] == 'none':
                         letter_box = boxes.InlineBox(
                             '%s::first-letter' % box.element_tag,
-                            first_letter_style, [])
+                            first_letter_style, box.element, [])
                         text_box = boxes.TextBox(
                             '%s::first-letter' % box.element_tag, letter_style,
-                            first_letter)
+                            box.element, first_letter)
                         letter_box.children = (text_box,)
                         box.children = (letter_box,) + tuple(box.children)
                     else:
                         letter_box = boxes.BlockBox(
                             '%s::first-letter' % box.element_tag,
-                            first_letter_style, [])
+                            first_letter_style, box.element, [])
                         letter_box.first_letter_style = None
                         line_box = boxes.LineBox(
                             '%s::first-letter' % box.element_tag, letter_style,
-                            [])
+                            box.element, [])
                         letter_box.children = (line_box,)
                         text_box = boxes.TextBox(
                             '%s::first-letter' % box.element_tag, letter_style,
-                            first_letter)
+                            box.element, first_letter)
                         line_box.children = (text_box,)
                         box.children = (letter_box,) + tuple(box.children)
                     if skip_stack and child_skip_stack:
