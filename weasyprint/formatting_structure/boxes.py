@@ -299,7 +299,7 @@ class Box(object):
 class ParentBox(Box):
     """A box that has children."""
     def __init__(self, element_tag, style, element, children):
-        super(ParentBox, self).__init__(element_tag, style, element)
+        super().__init__(element_tag, style, element)
         self.children = tuple(children)
 
     def all_children(self):
@@ -356,11 +356,16 @@ class ParentBox(Box):
                 raise ValueError('Table wrapper without a table')
 
     def page_values(self):
-        start_value, end_value = super(ParentBox, self).page_values()
+        start_value, end_value = super().page_values()
         if self.children:
-            start_box, end_box = self.children[0], self.children[-1]
-            start_value = start_box.page_values()[0] or start_value
-            end_value = end_box.page_values()[1] or end_value
+            if len(self.children) == 1:
+                page_values = self.children[0].page_values()
+                start_value = page_values[0] or start_value
+                end_value = page_values[1] or end_value
+            else:
+                start_box, end_box = self.children[0], self.children[-1]
+                start_value = start_box.page_values()[0] or start_value
+                end_value = end_box.page_values()[1] or end_value
         return start_value, end_value
 
 
@@ -468,7 +473,7 @@ class TextBox(InlineLevelBox):
 
     def __init__(self, element_tag, style, element, text):
         assert text
-        super(TextBox, self).__init__(element_tag, style, element)
+        super().__init__(element_tag, style, element)
         text_transform = style['text_transform']
         if text_transform != 'none':
             text = {
@@ -517,7 +522,7 @@ class ReplacedBox(Box):
 
     """
     def __init__(self, element_tag, style, element, replacement):
-        super(ReplacedBox, self).__init__(element_tag, style, element)
+        super().__init__(element_tag, style, element)
         self.replacement = replacement
 
 
@@ -554,7 +559,7 @@ class TableBox(BlockLevelBox, ParentBox):
             return
         self.column_positions = [
             position + dx for position in self.column_positions]
-        return super(TableBox, self).translate(dx, dy, ignore_floats)
+        return super().translate(dx, dy, ignore_floats)
 
     def page_values(self):
         return (self.style['page'], self.style['page'])
@@ -666,7 +671,7 @@ class PageBox(ParentBox):
     def __init__(self, page_type, style):
         self.page_type = page_type
         # Page boxes are not linked to any element.
-        super(PageBox, self).__init__(
+        super().__init__(
             element_tag=None, style=style, element=None, children=[])
 
     def __repr__(self):
@@ -678,7 +683,7 @@ class MarginBox(BlockContainerBox):
     def __init__(self, at_keyword, style):
         self.at_keyword = at_keyword
         # Margin boxes are not linked to any element.
-        super(MarginBox, self).__init__(
+        super().__init__(
             element_tag=None, style=style, element=None, children=[])
 
     def __repr__(self):

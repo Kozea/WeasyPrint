@@ -18,7 +18,8 @@ from tinycss2.color3 import parse_color
 from .. import text
 from ..logger import LOGGER
 from ..urls import get_link_attribute
-from .properties import INHERITED, INITIAL_VALUES, Dimension
+from .properties import (
+    INHERITED, INITIAL_NOT_COMPUTED, INITIAL_VALUES, Dimension)
 from .utils import (
     ANGLE_TO_RADIANS, LENGTH_UNITS, LENGTHS_TO_PIXELS, check_var_function,
     safe_urljoin)
@@ -218,6 +219,7 @@ def compute(element, pseudo_type, specified, computed, parent_style,
 
         value = specified[name]
         function = getter(name)
+        already_computed_value = False
 
         if value and isinstance(value, tuple) and value[0] == 'var()':
             variable_name, default = value[1]
@@ -243,13 +245,15 @@ def compute(element, pseudo_type, specified, computed, parent_style,
                     'for property `%s`.', computed_value,
                     variable_name.replace('_', '-'), name.replace('_', '-'))
                 if name in INHERITED and parent_style:
+                    already_computed_value = True
                     value = parent_style[name]
                 else:
+                    already_computed_value = name not in INITIAL_NOT_COMPUTED
                     value = INITIAL_VALUES[name]
             else:
                 value = new_value
 
-        if function is not None:
+        if function is not None and not already_computed_value:
             value = function(computer, name, value)
         # else: same as specified
 

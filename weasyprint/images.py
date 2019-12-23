@@ -95,7 +95,7 @@ class ScaledSVGSurface(cairosvg.surface.SVGSurface):
     """
     @property
     def device_units_per_user_units(self):
-        scale = super(ScaledSVGSurface, self).device_units_per_user_units
+        scale = super().device_units_per_user_units
         return scale / 0.75
 
 

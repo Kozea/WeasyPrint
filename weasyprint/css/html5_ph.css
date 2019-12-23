@@ -76,7 +76,7 @@ table[rules=cols], table[rules=all] {
   border-style: hidden;
   border-collapse: collapse;
 }
-table[border] { border-style: outset; } /* only if border is not equivalent to zero */
+table[border]:not([border="0"]) { border-style: outset; }
 table[frame=void] { border-style: hidden; }
 table[frame=above] { border-style: outset hidden hidden hidden; }
 table[frame=below] { border-style: hidden hidden outset hidden; }
@@ -86,11 +86,10 @@ table[frame=rhs] { border-style: hidden outset hidden hidden; }
 table[frame=vsides] { border-style: hidden outset; }
 table[frame=box], table[frame=border] { border-style: outset; }
 
-table[border] > tr > td, table[border] > tr > th,
-table[border] > thead > tr > td, table[border] > thead > tr > th,
-table[border] > tbody > tr > td, table[border] > tbody > tr > th,
-table[border] > tfoot > tr > td, table[border] > tfoot > tr > th {
-  /* only if border is not equivalent to zero */
+table[border]:not([border="0"]) > tr > td, table[border]:not([border="0"]) > tr > th,
+table[border]:not([border="0"]) > thead > tr > td, table[border]:not([border="0"]) > thead > tr > th,
+table[border]:not([border="0"]) > tbody > tr > td, table[border]:not([border="0"]) > tbody > tr > th,
+table[border]:not([border="0"]) > tfoot > tr > td, table[border]:not([border="0"]) > tfoot > tr > th {
   border-width: 1px;
   border-style: inset;
 }

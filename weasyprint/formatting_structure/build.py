@@ -410,14 +410,14 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
                 counters.format(counter_value, counter_style)
                 for counter_value in counter_values.get(counter_name, [0])))
         elif type_ == 'string()':
-            if in_page_context:
-                texts.append(context.get_string_set_for(page, *value))
-            else:
+            if not in_page_context:
                 # string() is currently only valid in @page context
                 # See https://github.com/Kozea/WeasyPrint/issues/723
                 LOGGER.warning(
                     '"string(%s)" is only allowed in page margins' %
                     (' '.join(value)))
+                continue
+            texts.append(context.get_string_set_for(page, *value) or '')
         elif type_ == 'target-counter()':
             anchor_token, counter_name, counter_style = value
             lookup_target = target_collector.lookup_target(
@@ -494,16 +494,15 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
             if is_open:
                 quote_depth[0] += 1
         elif type_ == 'element()':
-            if value.value not in context.running_elements:
-                # TODO: emit warning
+            if not in_page_context:
+                LOGGER.warning(
+                    '"element(%s)" is only allowed in page margins' %
+                    (' '.join(value)))
                 continue
-            new_box = None
-            for i in range(context.current_page - 1, -1, -1):
-                if i not in context.running_elements[value.value]:
-                    continue
-                running_box = context.running_elements[value.value][i]
-                new_box = running_box.deepcopy()
-                break
+            new_box = context.get_running_element_for(page, *value)
+            if new_box is None:
+                continue
+            new_box = new_box.deepcopy()
             new_box.style['position'] = 'static'
             for child in new_box.descendants():
                 if child.style['content'] in ('normal', 'none'):
@@ -740,7 +739,7 @@ def anonymous_table_boxes(box):
     See http://www.w3.org/TR/CSS21/tables.html#anonymous-boxes
 
     """
-    if not isinstance(box, boxes.ParentBox):
+    if not isinstance(box, boxes.ParentBox) or box.is_running():
         return box
 
     # Do recursion.
@@ -1133,7 +1132,7 @@ def flex_boxes(box):
     See http://www.w3.org/TR/css-flexbox-1/#flex-items
 
     """
-    if not isinstance(box, boxes.ParentBox):
+    if not isinstance(box, boxes.ParentBox) or box.is_running():
         return box
 
     # Do recursion.
@@ -1217,7 +1216,7 @@ def process_whitespace(box, following_collapsible_space=False):
         box.text = text
         return following_collapsible_space
 
-    if isinstance(box, boxes.ParentBox):
+    if isinstance(box, boxes.ParentBox) and not box.is_running():
         for child in box.children:
             if isinstance(child, (boxes.TextBox, boxes.InlineBox)):
                 following_collapsible_space = process_whitespace(

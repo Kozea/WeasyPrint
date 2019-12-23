@@ -311,7 +311,8 @@ to their position in the document:
     @page :nth(3) { background: red } /* Third page */
     @page :nth(2n+1) { background: green } /* Odd pages */
 
-You can also use `running elements`_ to put HTML boxes into the page margins.
+You can also use `running elements`_ to put HTML boxes into the page margins
+(but the ``start`` parameter of ``element()`` is not supported).
 
 The other features of GCPM are **not** implemented:
 

@@ -481,12 +481,12 @@ def check_content_function(token):
                 return ('content()', ident.lower_value)
 
 
-def check_string_function(token):
+def check_string_or_element_function(string_or_element, token):
     function = parse_function(token)
     if function is None:
         return
     name, args = function
-    if name == 'string' and len(args) in (1, 2):
+    if name == string_or_element and len(args) in (1, 2):
         custom_ident = args.pop(0)
         if custom_ident.type != 'ident':
             return
@@ -501,7 +501,7 @@ def check_string_function(token):
         else:
             ident = 'first'
 
-        return ('string()', (custom_ident, ident))
+        return ('%s()' % string_or_element, (custom_ident, ident))
 
 
 def check_var_function(token):
@@ -531,7 +531,7 @@ def get_string(token):
         elif token.name == 'content':
             return check_content_function(token)
         elif token.name == 'string':
-            return check_string_function(token)
+            return check_string_or_element_function('string', token)
 
 
 def get_length(token, negative=True, percentage=False):
@@ -744,6 +744,4 @@ def get_content_list_token(token, base_url):
             string = arg.value
         return ('leader()', ('string', string))
     elif name == 'element':
-        if len(args) != 1 or args[0].type != 'ident':
-            return
-        return ('element()', args[0])
+        return check_string_or_element_function('element', token)

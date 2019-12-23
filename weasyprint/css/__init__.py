@@ -377,7 +377,6 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
                     yield specificity, check_style_attribute(
                         element, 'font-size:%s' % font_sizes[size])
         elif element.tag == 'table':
-            # TODO: we should support cellpadding
             if element.get('cellspacing'):
                 yield specificity, check_style_attribute(
                     element,
