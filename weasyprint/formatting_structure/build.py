@@ -190,7 +190,8 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
 
     box.children = children
     # calculate string-set and bookmark-label
-    set_content_lists(element, box, style, counter_values, target_collector)
+    set_content_lists(
+        element, box, style, counter_values, target_collector, counter_style)
 
     if marker_boxes and len(box.children) == 1:
         # See https://www.w3.org/TR/css-lists-3/#list-style-position-outside
@@ -243,7 +244,7 @@ def before_after_to_box(element, pseudo_type, state, style_for,
 
     children.extend(content_to_boxes(
         style, box, quote_depth, counter_values, get_image_from_uri,
-        target_collector))
+        target_collector, counter_style))
 
     box.children = children
     return [box]
@@ -275,7 +276,7 @@ def marker_to_box(element, state, parent_style, style_for, get_image_from_uri,
     if style['content'] not in ('normal', 'inhibit'):
         children.extend(content_to_boxes(
             style, box, quote_depth, counter_values, get_image_from_uri,
-            target_collector))
+            target_collector, counter_style))
 
     else:
         if image_type == 'url':
@@ -337,7 +338,7 @@ def _collect_missing_target_counter(counter_name, lookup_counter_values,
 
 
 def compute_content_list(content_list, parent_box, counter_values, css_token,
-                         parse_again, target_collector,
+                         parse_again, target_collector, counter_style,
                          get_image_from_uri=None, quote_depth=None,
                          quote_style=None, context=None, page=None,
                          element=None):
@@ -402,14 +403,18 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
                 _collect_missing_counter(
                     counter_name, counter_values, missing_counters)
             counter_value = counter_values.get(counter_name, [0])[-1]
-            texts.append(counters.format(counter_value, counter_style))
+            if counter_style not in context.counter_style:
+                counter_style = 'decimal'
+            texts.append(context.counter_style[counter_style](counter_value))
         elif type_ == 'counters()':
             counter_name, separator, counter_style = value
             if need_collect_missing:
                 _collect_missing_counter(
                     counter_name, counter_values, missing_counters)
+            if counter_style not in context.counter_style:
+                counter_style = 'decimal'
             texts.append(separator.join(
-                counters.format(counter_value, counter_style)
+                context.counter_style[counter_style](counter_value)
                 for counter_value in counter_values.get(counter_name, [0])))
         elif type_ == 'string()':
             if not in_page_context:
@@ -437,7 +442,10 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
                     lookup_target.cached_page_counter_values.copy())
                 local_counters.update(target_values)
                 counter_value = local_counters.get(counter_name, [0])[-1]
-                texts.append(counters.format(counter_value, counter_style))
+                if counter_style not in context.counter_style:
+                    counter_style = 'decimal'
+                texts.append(
+                    context.counter_style[counter_style](counter_value))
             else:
                 texts = []
                 break
@@ -460,8 +468,10 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
                 local_counters = (
                     lookup_target.cached_page_counter_values.copy())
                 local_counters.update(target_values)
+                if counter_style not in context.counter_style:
+                    counter_style = 'decimal'
                 texts.append(separator_string.join(
-                    counters.format(counter_value, counter_style)
+                    context.counter_style[counter_style](counter_value)
                     for counter_value in local_counters.get(
                         counter_name, [0])))
             else:
@@ -511,8 +521,8 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
                     continue
                 child.children = content_to_boxes(
                     child.style, child, quote_depth, counter_values,
-                    get_image_from_uri, target_collector, context=context,
-                    page=page)
+                    get_image_from_uri, target_collector, counter_style,
+                    context=context, page=page)
             boxlist.append(new_box)
     text = ''.join(texts)
     if text:
@@ -526,8 +536,8 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
 
 
 def content_to_boxes(style, parent_box, quote_depth, counter_values,
-                     get_image_from_uri, target_collector, context=None,
-                     page=None):
+                     get_image_from_uri, target_collector, counter_style,
+                     context=None, page=None):
     """Take the value of a ``content`` property and return boxes."""
     def parse_again(mixin_pagebased_counters=None):
         """Closure to parse the ``parent_boxes`` children all again."""
@@ -543,7 +553,7 @@ def content_to_boxes(style, parent_box, quote_depth, counter_values,
         local_children = []
         local_children.extend(content_to_boxes(
             style, parent_box, orig_quote_depth, local_counters,
-            get_image_from_uri, target_collector))
+            get_image_from_uri, target_collector, counter_style))
 
         # TODO: do we need to add markers here?
         # TODO: redo the formatting structure of the parent instead of hacking
@@ -562,13 +572,13 @@ def content_to_boxes(style, parent_box, quote_depth, counter_values,
     css_token = 'content'
     box_list = compute_content_list(
         style['content'], parent_box, counter_values, css_token, parse_again,
-        target_collector, get_image_from_uri, quote_depth, style['quotes'],
-        context, page)
+        target_collector, counter_style, get_image_from_uri, quote_depth,
+        style['quotes'], context, page)
     return box_list or []
 
 
 def compute_string_set(element, box, string_name, content_list,
-                       counter_values, target_collector):
+                       counter_values, target_collector, counter_style):
     """Parse the content-list value of ``string_name`` for ``string-set``."""
     def parse_again(mixin_pagebased_counters=None):
         """Closure to parse the string-set string value all again."""
@@ -583,12 +593,12 @@ def compute_string_set(element, box, string_name, content_list,
 
         compute_string_set(
             element, box, string_name, content_list, local_counters,
-            target_collector)
+            target_collector, counter_style)
 
     css_token = 'string-set::%s' % string_name
     box_list = compute_content_list(
         content_list, box, counter_values, css_token, parse_again,
-        target_collector, element=element)
+        target_collector, counter_style, element=element)
     if box_list is not None:
         string = ''.join(
             box.text for box in box_list if isinstance(box, boxes.TextBox))
@@ -602,7 +612,7 @@ def compute_string_set(element, box, string_name, content_list,
 
 
 def compute_bookmark_label(element, box, content_list, counter_values,
-                           target_collector):
+                           target_collector, counter_style):
     """Parses the content-list value for ``bookmark-label``."""
     def parse_again(mixin_pagebased_counters={}):
         """Closure to parse the bookmark-label all again."""
@@ -615,12 +625,13 @@ def compute_bookmark_label(element, box, content_list, counter_values,
         local_counters = mixin_pagebased_counters.copy()
         local_counters.update(box.cached_counter_values)
         compute_bookmark_label(
-            element, box, content_list, local_counters, target_collector)
+            element, box, content_list, local_counters, target_collector,
+            counter_style)
 
     css_token = 'bookmark-label'
     box_list = compute_content_list(
         content_list, box, counter_values, css_token, parse_again,
-        target_collector, element=element)
+        target_collector, counter_style, element=element)
 
     if box_list is None:
         box.bookmark_label = ''
@@ -629,7 +640,8 @@ def compute_bookmark_label(element, box, content_list, counter_values,
             box.text for box in box_list if isinstance(box, boxes.TextBox))
 
 
-def set_content_lists(element, box, style, counter_values, target_collector):
+def set_content_lists(element, box, style, counter_values, target_collector,
+                      counter_style):
     """Set the content-lists values.
 
     These content-lists are used in GCPM properties like ``string-set`` and
@@ -641,13 +653,13 @@ def set_content_lists(element, box, style, counter_values, target_collector):
         for i, (string_name, string_values) in enumerate(style['string_set']):
             compute_string_set(
                 element, box, string_name, string_values, counter_values,
-                target_collector)
+                target_collector, counter_style)
     if style['bookmark_label'] == 'none':
         box.bookmark_label = ''
     else:
         compute_bookmark_label(
             element, box, style['bookmark_label'], counter_values,
-            target_collector)
+            target_collector, counter_style)
 
 
 def update_counters(state, style):

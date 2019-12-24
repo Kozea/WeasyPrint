@@ -343,8 +343,8 @@ def make_margin_boxes(context, page, state):
             build.update_counters(margin_state, box.style)
             box.children = build.content_to_boxes(
                 box.style, box, quote_depth, counter_values,
-                context.get_image_from_uri, context.target_collector, context,
-                page)
+                context.get_image_from_uri, context.target_collector,
+                context.counter_style, context, page)
             build.process_whitespace(box)
             box = build.anonymous_table_boxes(box)
             box = build.flex_boxes(box)

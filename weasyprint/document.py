@@ -374,7 +374,7 @@ class Document(object):
         PROGRESS_LOGGER.info('Step 4 - Creating formatting structure')
         context = LayoutContext(
             enable_hinting, style_for, get_image_from_uri, font_config,
-            target_collector)
+            counter_style, target_collector)
         return context
 
     @classmethod
