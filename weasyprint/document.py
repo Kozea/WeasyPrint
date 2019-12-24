@@ -19,6 +19,7 @@ from weasyprint.layout import LayoutContext
 
 from . import CSS
 from .css import get_all_computed_styles
+from .css.counters import CounterStyle
 from .css.targets import TargetCollector
 from .draw import draw_page, stacked
 from .fonts import FontConfiguration
@@ -356,7 +357,7 @@ class Document(object):
         if font_config is None:
             font_config = FontConfiguration()
         if counter_style is None:
-            counter_style = {}
+            counter_style = CounterStyle()
         target_collector = TargetCollector()
         page_rules = []
         user_stylesheets = []
@@ -385,7 +386,7 @@ class Document(object):
             font_config = FontConfiguration()
 
         if counter_style is None:
-            counter_style = {}
+            counter_style = CounterStyle()
 
         context = cls._build_layout_context(
             html, stylesheets, enable_hinting, presentational_hints,

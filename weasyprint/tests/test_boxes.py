@@ -15,6 +15,7 @@ import pytest
 
 from .. import images
 from ..css import PageType, get_all_computed_styles
+from ..css.counters import CounterStyle
 from ..css.targets import TargetCollector
 from ..formatting_structure import boxes, build
 from ..layout.pages import set_page_type_computed_styles
@@ -52,7 +53,7 @@ def serialize(box_list):
 
 def _parse_base(html_content, base_url=BASE_URL):
     document = FakeHTML(string=html_content, base_url=base_url)
-    counter_style = {}
+    counter_style = CounterStyle()
     style_for = get_all_computed_styles(document, counter_style=counter_style)
     get_image_from_uri = functools.partial(
         images.get_image_from_uri, {}, document.url_fetcher)

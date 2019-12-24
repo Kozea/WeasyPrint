@@ -290,9 +290,7 @@ def marker_to_box(element, state, parent_style, style_for, get_image_from_uri,
             counter_value = counter_values.get('list-item', [0])[-1]
             counter_type = style['list_style_type']
             # TODO: rtl numbered list has the dot on the left
-            if counter_type not in counter_style:
-                counter_type = 'decimal'
-            marker_text = counter_style[counter_type](counter_value)
+            marker_text = counter_style.render(counter_type, counter_value)
             box = boxes.TextBox.anonymous_from(box, marker_text)
             box.style['white_space'] = 'pre-wrap'
             children.append(box)
@@ -398,23 +396,20 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
             added_text = added_text.strip()
             texts.append(added_text)
         elif type_ == 'counter()':
-            counter_name, counter_style = value
+            counter_name, counter_type = value
             if need_collect_missing:
                 _collect_missing_counter(
                     counter_name, counter_values, missing_counters)
             counter_value = counter_values.get(counter_name, [0])[-1]
-            if counter_style not in context.counter_style:
-                counter_style = 'decimal'
-            texts.append(context.counter_style[counter_style](counter_value))
+            texts.append(context.counter_style.format(
+                counter_type, counter_value))
         elif type_ == 'counters()':
-            counter_name, separator, counter_style = value
+            counter_name, separator, counter_type = value
             if need_collect_missing:
                 _collect_missing_counter(
                     counter_name, counter_values, missing_counters)
-            if counter_style not in context.counter_style:
-                counter_style = 'decimal'
             texts.append(separator.join(
-                context.counter_style[counter_style](counter_value)
+                context.counter_style.format(counter_type, counter_value)
                 for counter_value in counter_values.get(counter_name, [0])))
         elif type_ == 'string()':
             if not in_page_context:
@@ -426,7 +421,7 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
                 continue
             texts.append(context.get_string_set_for(page, *value) or '')
         elif type_ == 'target-counter()':
-            anchor_token, counter_name, counter_style = value
+            anchor_token, counter_name, counter_type = value
             lookup_target = target_collector.lookup_target(
                 anchor_token, parent_box, css_token, parse_again)
             if lookup_target.state == 'up-to-date':
@@ -442,15 +437,13 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
                     lookup_target.cached_page_counter_values.copy())
                 local_counters.update(target_values)
                 counter_value = local_counters.get(counter_name, [0])[-1]
-                if counter_style not in context.counter_style:
-                    counter_style = 'decimal'
-                texts.append(
-                    context.counter_style[counter_style](counter_value))
+                texts.append(context.counter_style.format(
+                    counter_type, counter_value))
             else:
                 texts = []
                 break
         elif type_ == 'target-counters()':
-            anchor_token, counter_name, separator, counter_style = value
+            anchor_token, counter_name, separator, counter_type = value
             lookup_target = target_collector.lookup_target(
                 anchor_token, parent_box, css_token, parse_again)
             if lookup_target.state == 'up-to-date':
@@ -468,10 +461,8 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
                 local_counters = (
                     lookup_target.cached_page_counter_values.copy())
                 local_counters.update(target_values)
-                if counter_style not in context.counter_style:
-                    counter_style = 'decimal'
                 texts.append(separator_string.join(
-                    context.counter_style[counter_style](counter_value)
+                    context.counter_style.format(counter_type, counter_value)
                     for counter_value in local_counters.get(
                         counter_name, [0])))
             else:

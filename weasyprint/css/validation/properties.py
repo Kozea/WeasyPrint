@@ -871,7 +871,8 @@ def list_style_position(keyword):
 def list_style_type(token):
     """``list-style-type`` property validation."""
     # TODO: add symbols()
-    return token.type == 'ident'
+    if token.type == 'ident':
+        return token.value
 
 
 @property('min-width')

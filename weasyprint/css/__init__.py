@@ -27,7 +27,7 @@ import tinycss2.nth
 from .. import CSS
 from ..logger import LOGGER, PROGRESS_LOGGER
 from ..urls import URLFetchingError, get_url_attribute, url_join
-from . import computed_values, media_queries
+from . import computed_values, counters, media_queries
 from .properties import INHERITED, INITIAL_NOT_COMPUTED, INITIAL_VALUES
 from .utils import remove_whitespace
 from .validation import preprocess_declarations
@@ -947,25 +947,26 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
             # TODO: validate
             ignore_imports = True
             content = tinycss2.parse_declaration_list(rule.content)
-            system = None
-            symbols = ()
+            name = remove_whitespace(rule.prelude)[0].value
+            counter_style[name] = counter = {
+                'system': 'symbolic',
+                'negative': '-',
+                'prefix': '',
+                'suffix': '. ',
+                'range': 'auto',
+                'pad': (0, ''),
+                'fallback': 'decimal',
+                'symbols': None,
+                'additive-symbols': None,
+            }
             for declaration in remove_whitespace(content):
-                if declaration.name == 'system':
-                    system = remove_whitespace(declaration.value)[0].value
-                elif declaration.name == 'symbols':
-                    symbols = tuple(
+                if declaration.name == 'symbols':
+                    counter[declaration.name] = tuple(
                         token.value for token in
                         remove_whitespace(declaration.value))
-
-            if system:  # == 'cyclic'
-                def wrap(symbols):
-                    def cycle(value):
-                        return symbols[value % len(symbols)]
-                    return cycle
-                function = wrap(symbols)
-
-            name = remove_whitespace(rule.prelude)[0].value
-            counter_style[name] = function
+                else:
+                    counter[declaration.name] = (
+                        remove_whitespace(declaration.value)[0].value)
 
 
 def get_all_computed_styles(html, user_stylesheets=None,
@@ -983,7 +984,7 @@ def get_all_computed_styles(html, user_stylesheets=None,
     # List stylesheets. Order here is not important ('origin' is).
     sheets = []
     if counter_style is None:
-        counter_style = {}
+        counter_style = counters.CounterStyle()
     for style in html._ua_counter_style():
         for key, value in style.items():
             counter_style[key] = value
