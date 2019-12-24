@@ -16,7 +16,6 @@ from urllib.parse import unquote, urljoin
 
 from tinycss2.color3 import parse_color
 
-from ..formatting_structure import counters
 from ..urls import iri_to_uri, url_is_absolute
 from .properties import Dimension
 
@@ -457,8 +456,6 @@ def check_counter_function(token, allowed_type=None):
 
         if args:
             counter_style = get_keyword(args.pop(0))
-            if counter_style not in ['none'] + list(counters.STYLES):
-                return
             arguments.append(counter_style)
         else:
             arguments.append('decimal')
@@ -668,8 +665,6 @@ def get_target(token, base_url):
 
         if args:
             counter_style = get_keyword(args.pop(0))
-            if counter_style not in counters.STYLES:
-                return
         else:
             counter_style = 'decimal'
         values.append(counter_style)

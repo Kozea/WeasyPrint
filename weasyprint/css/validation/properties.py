@@ -12,7 +12,6 @@
 
 from tinycss2.color3 import parse_color
 
-from ...formatting_structure import counters
 from .. import computed_values
 from ..properties import KNOWN_PROPERTIES, Dimension
 from ..utils import (
@@ -868,10 +867,11 @@ def list_style_position(keyword):
 
 
 @property()
-@single_keyword
-def list_style_type(keyword):
+@single_token
+def list_style_type(token):
     """``list-style-type`` property validation."""
-    return keyword == 'none' or keyword in counters.STYLES
+    # TODO: add symbols()
+    return token.type == 'ident'
 
 
 @property('min-width')

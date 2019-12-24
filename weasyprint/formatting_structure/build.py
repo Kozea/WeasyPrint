@@ -22,7 +22,7 @@ import tinycss2.color3
 from .. import html
 from ..css import computed_values, properties
 from ..logger import LOGGER
-from . import boxes, counters
+from . import boxes
 
 # Maps values of the ``display`` CSS property to box types.
 BOX_TYPE_FROM_DISPLAY = {
@@ -46,11 +46,11 @@ BOX_TYPE_FROM_DISPLAY = {
 
 
 def build_formatting_structure(element_tree, style_for, get_image_from_uri,
-                               base_url, target_collector):
+                               base_url, target_collector, counter_style):
     """Build a formatting structure (box tree) from an element tree."""
     box_list = element_to_box(
         element_tree, style_for, get_image_from_uri, base_url,
-        target_collector)
+        target_collector, counter_style)
     if box_list:
         box, = box_list
     else:
@@ -65,7 +65,7 @@ def build_formatting_structure(element_tree, style_for, get_image_from_uri,
             return style
         box, = element_to_box(
             element_tree, root_style_for, get_image_from_uri, base_url,
-            target_collector)
+            target_collector, counter_style)
 
     target_collector.check_pending_targets()
 
@@ -87,7 +87,7 @@ def make_box(element_tag, style, content, element):
 
 
 def element_to_box(element, style_for, get_image_from_uri, base_url,
-                   target_collector, state=None):
+                   target_collector, counter_style, state=None):
     """Convert an element and its children into a box with children.
 
     Return a list of boxes. Most of the time the list will have one item but
@@ -150,12 +150,12 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
     if style['display'] == 'list-item':
         marker_boxes = list(marker_to_box(
             element, state, style, style_for, get_image_from_uri,
-            target_collector))
+            target_collector, counter_style))
         children.extend(marker_boxes)
 
     children.extend(before_after_to_box(
         element, 'before', state, style_for, get_image_from_uri,
-        target_collector))
+        target_collector, counter_style))
 
     # collect anchor's counter_values, maybe it's a target.
     # to get the spec-conform counter_values we must do it here,
@@ -170,7 +170,7 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
     for child_element in element:
         children.extend(element_to_box(
             child_element, style_for, get_image_from_uri, base_url,
-            target_collector, state))
+            target_collector, counter_style, state))
         text = child_element.tail
         if text:
             text_box = boxes.TextBox.anonymous_from(box, text)
@@ -180,7 +180,7 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
                 children.append(text_box)
     children.extend(before_after_to_box(
         element, 'after', state, style_for, get_image_from_uri,
-        target_collector))
+        target_collector, counter_style))
 
     # Scopes created by this element’s children stop here.
     for name in counter_scopes.pop():
@@ -212,7 +212,7 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
 
 
 def before_after_to_box(element, pseudo_type, state, style_for,
-                        get_image_from_uri, target_collector):
+                        get_image_from_uri, target_collector, counter_style):
     """Return the boxes for ::before or ::after pseudo-element."""
     style = style_for(element, pseudo_type)
     if pseudo_type and style is None:
@@ -238,7 +238,7 @@ def before_after_to_box(element, pseudo_type, state, style_for,
     if display == 'list-item':
         marker_boxes = list(marker_to_box(
             element, state, style, style_for, get_image_from_uri,
-            target_collector))
+            target_collector, counter_style))
         children.extend(marker_boxes)
 
     children.extend(content_to_boxes(
@@ -250,7 +250,7 @@ def before_after_to_box(element, pseudo_type, state, style_for,
 
 
 def marker_to_box(element, state, parent_style, style_for, get_image_from_uri,
-                  target_collector):
+                  target_collector, counter_style):
     """Yield the box for ::marker pseudo-element if there is one.
 
     https://drafts.csswg.org/css-lists-3/#marker-pseudo
@@ -287,9 +287,11 @@ def marker_to_box(element, state, parent_style, style_for, get_image_from_uri,
 
         if not children and style['list_style_type'] != 'none':
             counter_value = counter_values.get('list-item', [0])[-1]
+            counter_type = style['list_style_type']
             # TODO: rtl numbered list has the dot on the left
-            marker_text = counters.format_list_marker(
-                counter_value, style['list_style_type'])
+            if counter_type not in counter_style:
+                counter_type = 'decimal'
+            marker_text = counter_style[counter_type](counter_value)
             box = boxes.TextBox.anonymous_from(box, marker_text)
             box.style['white_space'] = 'pre-wrap'
             children.append(box)

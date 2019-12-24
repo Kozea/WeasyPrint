@@ -537,3 +537,8 @@ xmp { display: block; font-family: monospace; margin-bottom: 1em; margin-top: 1e
     @bottom-right        { text-align: right;  vertical-align:  middle }
     @bottom-right-corner { text-align: left;   vertical-align:  middle }
 }
+
+@counter-style decimal {
+  system: numeric;
+  symbols: '0' '1' '2' '3' '4' '5' '6' '7' '8' '9';
+}

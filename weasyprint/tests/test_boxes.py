@@ -52,13 +52,14 @@ def serialize(box_list):
 
 def _parse_base(html_content, base_url=BASE_URL):
     document = FakeHTML(string=html_content, base_url=base_url)
-    style_for = get_all_computed_styles(document)
+    counter_style = {}
+    style_for = get_all_computed_styles(document, counter_style=counter_style)
     get_image_from_uri = functools.partial(
         images.get_image_from_uri, {}, document.url_fetcher)
     target_collector = TargetCollector()
     return (
         document.etree_element, style_for, get_image_from_uri, base_url,
-        target_collector)
+        target_collector, counter_style)
 
 
 def parse(html_content):
