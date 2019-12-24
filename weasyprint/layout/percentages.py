@@ -144,7 +144,12 @@ def resolve_radii_percentages(box):
     corners = ('top_left', 'top_right', 'bottom_right', 'bottom_left')
     for corner in corners:
         property_name = 'border_%s_radius' % corner
-        rx, ry = box.style[property_name]
-        rx = percentage(rx, box.border_width())
-        ry = percentage(ry, box.border_height())
-        setattr(box, property_name, (rx, ry))
+        for side in corner.split('_'):
+            if side in box.remove_decoration_sides:
+                setattr(box, property_name, (0, 0))
+                break
+        else:
+            rx, ry = box.style[property_name]
+            rx = percentage(rx, box.border_width())
+            ry = percentage(ry, box.border_height())
+            setattr(box, property_name, (rx, ry))

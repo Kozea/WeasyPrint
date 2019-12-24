@@ -717,3 +717,30 @@ def test_overflow_auto():
     body, = html.children
     article, = body.children
     assert article.height == 50 + 10 + 10
+
+
+@assert_no_logs
+def test_box_margin_top_repagination():
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/943
+    page_1, page_2 = parse('''
+      <style>
+        @page { size: 50px }
+        :root { line-height: 1; font-size: 10px }
+        a::before { content: target-counter(attr(href), page) }
+        div { margin: 20px 0 0; background: yellow }
+      </style>
+      <p><a href="#title"></a></p>
+      <div>1<br/>1<br/>2<br/>2</div>
+      <h1 id="title">title</h1>
+    ''')
+    html, = page_1.children
+    body, = html.children
+    p, div = body.children
+    assert div.margin_top == 20
+    assert div.padding_box_y() == 10 + 20
+
+    html, = page_2.children
+    body, = html.children
+    div, h1 = body.children
+    assert div.margin_top == 0
+    assert div.padding_box_y() == 0

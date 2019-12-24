@@ -59,7 +59,6 @@
 import itertools
 
 from ..css import computed_from_cascaded
-from ..css.properties import Dimension
 
 
 class Box(object):
@@ -93,6 +92,7 @@ class Box(object):
         self.element_tag = element_tag
         self.element = element
         self.style = style
+        self.remove_decoration_sides = set()
 
     def __repr__(self):
         return '<%s %s>' % (type(self).__name__, self.element_tag)
@@ -307,41 +307,28 @@ class ParentBox(Box):
 
     def _reset_spacing(self, side):
         """Set to 0 the margin, padding and border of ``side``."""
-        self.style['margin_%s' % side] = Dimension(0, 'px')
-        self.style['padding_%s' % side] = Dimension(0, 'px')
-        self.style['border_%s_width' % side] = 0
-        if side in ('top', 'bottom'):
-            self.style['border_%s_left_radius' % side] = (
-                Dimension(0, 'px'), Dimension(0, 'px'))
-            self.style['border_%s_right_radius' % side] = (
-                Dimension(0, 'px'), Dimension(0, 'px'))
-        else:
-            self.style['border_bottom_%s_radius' % side] = (
-                Dimension(0, 'px'), Dimension(0, 'px'))
-            self.style['border_top_%s_radius' % side] = (
-                Dimension(0, 'px'), Dimension(0, 'px'))
+        self.remove_decoration_sides.add(side)
         setattr(self, 'margin_%s' % side, 0)
         setattr(self, 'padding_%s' % side, 0)
         setattr(self, 'border_%s_width' % side, 0)
 
-    def _remove_decoration(self, start, end):
-        if start or end:
-            old_style = self.style
-            self.style = self.style.copy()
+    def remove_decoration(self, start, end):
+        if self.style['box_decoration_break'] == 'clone':
+            return
         if start:
             self._reset_spacing('top')
         if end:
             self._reset_spacing('bottom')
-        if (start or end) and old_style == self.style:
-            # Don't copy style if there's no need to, save some memory
-            self.style = old_style
 
-    def copy_with_children(self, new_children, is_start=True, is_end=True):
+    def copy_with_children(self, new_children):
         """Create a new equivalent box with given ``new_children``."""
         new_box = self.copy()
         new_box.children = tuple(new_children)
-        if self.style['box_decoration_break'] == 'slice':
-            new_box._remove_decoration(not is_start, not is_end)
+
+        # Clear and reset removed decorations as we don't want to keep the
+        # previous data, for example when a box is split between two pages.
+        self.remove_decoration_sides = set()
+
         return new_box
 
     def deepcopy(self):
@@ -444,18 +431,14 @@ class InlineLevelBox(Box):
     ``inline-block`` generates an inline-level box.
 
     """
-    def _remove_decoration(self, start, end):
-        if start or end:
-            old_style = self.style
-            self.style = self.style.copy()
+    def remove_decoration(self, start, end):
+        if self.style['box_decoration_break'] == 'clone':
+            return
         ltr = self.style['direction'] == 'ltr'
         if start:
             self._reset_spacing('left' if ltr else 'right')
         if end:
             self._reset_spacing('right' if ltr else 'left')
-        if (start or end) and old_style == self.style:
-            # Don't copy style if there's no need to, save some memory
-            self.style = old_style
 
 
 class InlineBox(InlineLevelBox, ParentBox):
