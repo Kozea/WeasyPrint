@@ -950,7 +950,7 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
             name = remove_whitespace(rule.prelude)[0].value
             counter_style[name] = counter = {
                 'system': 'symbolic',
-                'negative': '-',
+                'negative': ('-', ''),
                 'prefix': '',
                 'suffix': '. ',
                 'range': 'auto',
@@ -960,10 +960,18 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                 'additive-symbols': None,
             }
             for declaration in remove_whitespace(content):
-                if declaration.name == 'symbols':
+                if declaration.name in ('symbols', 'negative'):
                     counter[declaration.name] = tuple(
                         token.value for token in
                         remove_whitespace(declaration.value))
+                elif declaration.name == 'additive-symbols':
+                    declarations = remove_whitespace(declaration.value)
+                    symbols = []
+                    for i in range(round(len(declarations) / 3)):
+                        symbols.append((
+                            int(declarations[i*3].value),
+                            declarations[i*3+1].value))
+                    counter[declaration.name] = tuple(symbols)
                 else:
                     counter[declaration.name] = (
                         remove_whitespace(declaration.value)[0].value)
