@@ -150,7 +150,7 @@ class CounterStyle(dict):
         pad_difference = counter['pad'][0] - len(initial)
         if is_negative and use_negative:
             pad_difference -= len(negative_prefix) + len(negative_suffix)
-        if pad_difference > 1:
+        if pad_difference > 0:
             initial = pad_difference * symbol(counter['pad'][1]) + initial
 
         # Step 5
