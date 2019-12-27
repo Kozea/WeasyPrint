@@ -173,3 +173,6 @@ class CounterStyle(dict):
             return prefix + value + suffix
 
         # TODO: print warning, return something else?
+
+    def copy(self):
+        return CounterStyle(self)
