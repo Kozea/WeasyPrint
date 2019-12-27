@@ -13,8 +13,9 @@ import tinycss2
 
 from ...logger import LOGGER
 from ..utils import (
-    InvalidValues, comma_separated_list, get_keyword, get_single_keyword,
-    get_url, remove_whitespace, single_keyword, get_custom_ident, single_token)
+    InvalidValues, comma_separated_list, get_custom_ident, get_keyword,
+    get_single_keyword, get_url, remove_whitespace, single_keyword,
+    single_token)
 from . import properties
 
 DESCRIPTORS = {
