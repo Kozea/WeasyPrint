@@ -44,12 +44,19 @@ class CounterStyle(dict):
     See https://www.w3.org/TR/css-counter-styles-3/
 
     """
-    def render_value(self, counter_type, counter_value):
+    def render_value(self, counter_type, counter_value, previous_types=None):
         """Generate the counter representation.
 
         See https://www.w3.org/TR/css-counter-styles-3/#generate-a-counter
 
         """
+        # Avoid circular fallbacks
+        if previous_types is None:
+            previous_types = []
+        elif counter_type in previous_types:
+            return self.render_value('decimal', counter_value)
+        previous_types.append(counter_type)
+
         # Step 1
         if counter_type not in self:
             if 'decimal' in self:
@@ -75,7 +82,8 @@ class CounterStyle(dict):
             if min_range <= counter_value <= max_range:
                 break
         else:
-            return self.render_value(counter['fallback'], counter_value)
+            return self.render_value(
+                counter['fallback'], counter_value, previous_types)
 
         # Step 3
         initial = None
@@ -98,7 +106,8 @@ class CounterStyle(dict):
             if 0 <= index < len(counter['symbols']):
                 initial = symbol(counter['symbols'][index])
             else:
-                return self.render_value(counter['fallback'], counter_value)
+                return self.render_value(
+                    counter['fallback'], counter_value, previous_types)
 
         elif system == 'symbolic':
             index = counter_value % len(counter['symbols'])
@@ -142,7 +151,8 @@ class CounterStyle(dict):
                         initial = ''.join(parts)
                         break
             if initial is None:
-                return self.render_value(counter['fallback'], counter_value)
+                return self.render_value(
+                    counter['fallback'], counter_value, previous_types)
 
         assert initial is not None
 
