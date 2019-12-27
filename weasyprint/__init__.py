@@ -164,8 +164,8 @@ class HTML(object):
             followed.
         :type font_config: :class:`~fonts.FontConfiguration`
         :param font_config: A font configuration handling ``@font-face`` rules.
-        :type counter_style: dict
-        :param counter_style: A dictionary storing counter-style rules.
+        :type counter_style: :class:`~css.counters.CounterStyle`
+        :param counter_style: A dictionary storing ``@counter-style`` rules.
         :returns: A :class:`~document.Document` object.
 
         """
@@ -205,8 +205,8 @@ class HTML(object):
             followed.
         :type font_config: :class:`~fonts.FontConfiguration`
         :param font_config: A font configuration handling ``@font-face`` rules.
-        :type counter_style: dict
-        :param counter_style: A dictionary storing counter-style rules.
+        :type counter_style: :class:`~css.counters.CounterStyle`
+        :param counter_style: A dictionary storing ``@counter-style`` rules.
         :returns:
             The PDF as :obj:`bytes` if ``target`` is not provided or
             :obj:`None`, otherwise :obj:`None` (the PDF is written to
@@ -248,8 +248,8 @@ class HTML(object):
             followed.
         :type font_config: :class:`~fonts.FontConfiguration`
         :param font_config: A font configuration handling ``@font-face`` rules.
-        :type counter_style: dict
-        :param counter_style: A dictionary storing counter-style rules.
+        :type counter_style: :class:`~css.counters.CounterStyle`
+        :param counter_style: A dictionary storing ``@counter-style`` rules.
         :returns: A cairo :class:`ImageSurface <cairocffi.ImageSurface>`.
 
         """
@@ -290,8 +290,8 @@ class HTML(object):
             followed.
         :type font_config: :class:`~fonts.FontConfiguration`
         :param font_config: A font configuration handling ``@font-face`` rules.
-        :type counter_style: dict
-        :param counter_style: A dictionary storing counter-style rules.
+        :type counter_style: :class:`~css.counters.CounterStyle`
+        :param counter_style: A dictionary storing ``@counter-style`` rules.
         :returns:
             The image as :obj:`bytes` if ``target`` is not provided or
             :obj:`None`, otherwise :obj:`None` (the image is written to

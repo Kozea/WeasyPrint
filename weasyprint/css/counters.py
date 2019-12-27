@@ -39,9 +39,14 @@ def parse_counter_style_name(tokens, counter_style):
 
 
 class CounterStyle(dict):
-    """Dictionary storing counter styles defined by @counter-style rules.
+    """Counter styles dictionary.
 
-    See https://www.w3.org/TR/css-counter-styles-3/
+    .. versionadded:: 0.52
+
+    Keep a list of counter styles defined by @counter-style rules, indexed by
+    their names.
+
+    See https://www.w3.org/TR/css-counter-styles-3/.
 
     """
     def render_value(self, counter_type, counter_value, previous_types=None):
