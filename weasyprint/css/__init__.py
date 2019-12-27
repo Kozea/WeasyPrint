@@ -560,14 +560,14 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
                             'border-width:%spx;border-style:solid' %
                             element.get('border'))
         elif element.tag == 'ol':
-            # From https://www.w3.org/TR/css-lists-3/
+            # From https://www.w3.org/TR/css-lists-3/#ua-stylesheet
             if element.get('start'):
                 yield specificity, check_style_attribute(
                     element,
                     'counter-reset:list-item %s;'
                     'counter-increment:list-item -1' % element.get('start'))
-        elif element.tag == 'ul':
-            # From https://www.w3.org/TR/css-lists-3/
+        elif element.tag in 'li':
+            # From https://www.w3.org/TR/css-lists-3/#ua-stylesheet
             if element.get('value'):
                 yield specificity, check_style_attribute(
                     element,
