@@ -871,7 +871,7 @@ def list_style_position(keyword):
 def list_style_type(token):
     """``list-style-type`` property validation."""
     # TODO: add symbols()
-    if token.type == 'ident':
+    if token.type == 'ident' and token.value != 'none':
         return token.value
 
 
