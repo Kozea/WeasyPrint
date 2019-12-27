@@ -186,14 +186,14 @@ def expand_list_style(name, tokens, base_url):
             none_token = token
             continue
 
-        if list_style_type([token]) is not None:
-            suffix = '-type'
-            type_specified = True
-        elif list_style_position([token]) is not None:
-            suffix = '-position'
-        elif list_style_image([token], base_url) is not None:
+        if list_style_image([token], base_url) is not None:
             suffix = '-image'
             image_specified = True
+        elif list_style_position([token]) is not None:
+            suffix = '-position'
+        elif list_style_type([token]) is not None:
+            suffix = '-type'
+            type_specified = True
         else:
             raise InvalidValues
         yield suffix, [token]

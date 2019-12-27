@@ -10,14 +10,14 @@
 """
 
 
-from .test_boxes import assert_tree, render_pages as parse
-from .testing_utils import assert_no_logs
 from .. import HTML
+from .test_boxes import assert_tree, parse_all
+from .testing_utils import assert_no_logs
 
 
 @assert_no_logs
 def test_counters_1():
-    assert_tree(parse('''
+    assert_tree(parse_all('''
       <style>
         p { counter-increment: p 2 }
         p:before { content: counter(p); }
@@ -45,7 +45,7 @@ def test_counters_1():
 
 @assert_no_logs
 def test_counters_2():
-    assert_tree(parse('''
+    assert_tree(parse_all('''
       <ol style="list-style-position: inside">
         <li></li>
         <li></li>
@@ -96,7 +96,7 @@ def test_counters_2():
 
 @assert_no_logs
 def test_counters_3():
-    assert_tree(parse('''
+    assert_tree(parse_all('''
       <style>
         p { display: list-item; list-style: inside decimal }
       </style>
@@ -127,7 +127,7 @@ def test_counters_3():
 
 @assert_no_logs
 def test_counters_4():
-    assert_tree(parse('''
+    assert_tree(parse_all('''
       <style>
         section:before { counter-reset: h; content: '' }
         h1:before { counter-increment: h; content: counters(h, '.') }
@@ -173,7 +173,7 @@ def test_counters_4():
 
 @assert_no_logs
 def test_counters_5():
-    assert_tree(parse('''
+    assert_tree(parse_all('''
       <style>
         p:before { content: counter(c) }
       </style>
@@ -197,7 +197,7 @@ def test_counters_5():
 @assert_no_logs
 def test_counters_6():
     # counter-increment may interfere with display: list-item
-    assert_tree(parse('''
+    assert_tree(parse_all('''
       <p style="counter-increment: c;
                 display: list-item; list-style: inside decimal">'''), [
         ('p', 'Block', [
@@ -210,7 +210,7 @@ def test_counters_6():
 def test_counters_7():
     # Test that counters are case-sensitive
     # See https://github.com/Kozea/WeasyPrint/pull/827
-    assert_tree(parse('''
+    assert_tree(parse_all('''
       <style>
         p { counter-increment: p 2 }
         p:before { content: counter(p) '.' counter(P); }
@@ -227,7 +227,7 @@ def test_counters_7():
 
 @assert_no_logs
 def test_counters_8():
-    assert_tree(parse('''
+    assert_tree(parse_all('''
       <style>
         p:before { content: 'a'; display: list-item }
       </style>
@@ -245,7 +245,7 @@ def test_counters_8():
 
 @assert_no_logs
 def test_counter_styles_1():
-    assert_tree(parse('''
+    assert_tree(parse_all('''
       <style>
         body { counter-reset: p -12 }
         p { counter-increment: p }
@@ -265,12 +265,12 @@ def test_counter_styles_1():
             ('p', 'Line', [
                 ('p::before', 'Inline', [
                     ('p::before', 'Text', counter)])])])
-        for counter in '--  •  ◦  ▪  -7'.split()])
+        for counter in '--  •  ◦  ◾  -7'.split()])
 
 
 @assert_no_logs
 def test_counter_styles_2():
-    assert_tree(parse('''
+    assert_tree(parse_all('''
       <style>
         p { counter-increment: p }
         p::before { content: counter(p, decimal-leading-zero); }
@@ -298,7 +298,7 @@ def test_counter_styles_2():
             ('p', 'Line', [
                 ('p::before', 'Inline', [
                     ('p::before', 'Text', counter)])])])
-        for counter in '''-1986 -1985  -11 -10 -09 -08  -01 00 01 02  09 10 11
+        for counter in '''-1986 -1985  -11 -10 -9 -8  -1 00 01 02  09 10 11
                             99 100 101  4135 4136'''.split()])
 
 
