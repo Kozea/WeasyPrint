@@ -15,7 +15,7 @@ from ...logger import LOGGER
 from ..utils import (
     InvalidValues, comma_separated_list, get_custom_ident, get_keyword,
     get_single_keyword, get_url, remove_whitespace, single_keyword,
-    single_token)
+    single_token, split_on_comma)
 from . import properties
 
 DESCRIPTORS = {
@@ -337,7 +337,14 @@ def symbols(tokens, base_url):
 
 
 @descriptor('counter-style', wants_base_url=True)
-@comma_separated_list
 def additive_symbols(tokens, base_url):
     """``additive-symbols`` descriptor validation."""
-    return pad(tokens, base_url)
+    results = []
+    for part in split_on_comma(tokens):
+        result = pad(remove_whitespace(part), base_url)
+        if result is None:
+            return
+        if results and results[-1][0] <= result[0]:
+            return
+        results.append(result)
+    return tuple(results)
