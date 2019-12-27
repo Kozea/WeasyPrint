@@ -927,7 +927,8 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
         elif rule.type == 'at-rule' and rule.lower_at_keyword == 'font-face':
             ignore_imports = True
             content = tinycss2.parse_declaration_list(rule.content)
-            rule_descriptors = dict(preprocess_descriptors(base_url, content))
+            rule_descriptors = dict(
+                preprocess_descriptors('font-face', base_url, content))
             for key in ('src', 'font_family'):
                 if key not in rule_descriptors:
                     LOGGER.warning(
@@ -944,37 +945,67 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
 
         elif (rule.type == 'at-rule' and
                 rule.lower_at_keyword == 'counter-style'):
-            # TODO: validate
+            name = counters.parse_counter_style_name(
+                rule.prelude, counter_style)
+            if name is None:
+                LOGGER.warning(
+                    'Invalid counter style name "%s", the whole '
+                    '@counter-style rule was ignored at %s:%s.',
+                    tinycss2.serialize(rule.prelude), rule.source_line,
+                    rule.source_column)
+                continue
+
             ignore_imports = True
             content = tinycss2.parse_declaration_list(rule.content)
-            name = remove_whitespace(rule.prelude)[0].value
-            counter_style[name] = counter = {
-                'system': 'symbolic',
-                'negative': ('-', ''),
-                'prefix': '',
-                'suffix': '. ',
+            counter = {
+                'system': (None, 'symbolic', None),
+                'negative': (('string', '-'), ('string', '')),
+                'prefix': ('string', ''),
+                'suffix': ('string', '. '),
                 'range': 'auto',
                 'pad': (0, ''),
                 'fallback': 'decimal',
-                'symbols': None,
-                'additive-symbols': None,
+                'symbols': (),
+                'additive_symbols': (),
             }
-            for declaration in remove_whitespace(content):
-                if declaration.name in ('symbols', 'negative'):
-                    counter[declaration.name] = tuple(
-                        token.value for token in
-                        remove_whitespace(declaration.value))
-                elif declaration.name == 'additive-symbols':
-                    declarations = remove_whitespace(declaration.value)
-                    symbols = []
-                    for i in range(round(len(declarations) / 3)):
-                        symbols.append((
-                            int(declarations[i*3].value),
-                            declarations[i*3+1].value))
-                    counter[declaration.name] = tuple(symbols)
-                else:
-                    counter[declaration.name] = (
-                        remove_whitespace(declaration.value)[0].value)
+            rule_descriptors = dict(
+                preprocess_descriptors('counter-style', base_url, content))
+
+            system = rule_descriptors.pop('system', None)
+            if system:
+                counter['system'] = system
+
+            if counter['system'][0] is None:
+                counter['system'] = counter['system'][1:]
+            elif counter['system'][0] == 'extends':
+                if counter['system'][1] not in counter_style:
+                    # TODO: display warning
+                    continue
+                counter = counter_style[counter['system'][1]].copy()
+            else:
+                # TODO: display warning
+                continue
+
+            for descriptor_name, descriptor_value in rule_descriptors.items():
+                counter[descriptor_name] = descriptor_value
+
+            if counter['system'][0] in ('cyclic', 'fixed', 'symbolic'):
+                if len(counter['symbols']) < 1:
+                    # TODO: display warning
+                    continue
+            elif counter['system'][0] in ('alphabetic', 'numeric'):
+                if len(counter['symbols']) < 2:
+                    # TODO: display warning
+                    continue
+            elif counter['system'][0] == 'additive':
+                if len(counter['additive_symbols']) < 2:
+                    # TODO: display warning
+                    continue
+
+            # TODO: add additional validations (order in additive-symbols,
+            # descriptors required by specific system, etc.)
+
+            counter_style[name] = counter
 
 
 def get_all_computed_styles(html, user_stylesheets=None,

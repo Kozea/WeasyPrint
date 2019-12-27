@@ -538,6 +538,9 @@ xmp { display: block; font-family: monospace; margin-bottom: 1em; margin-top: 1e
     @bottom-right-corner { text-align: left;   vertical-align:  middle }
 }
 
+
+/* Counters: https://www.w3.org/TR/css-counter-styles-3/#predefined-counters */
+
 @counter-style disc {
   system: cyclic;
   symbols: •;
@@ -558,11 +561,14 @@ xmp { display: block; font-family: monospace; margin-bottom: 1em; margin-top: 1e
 
 @counter-style disclosure-open {
   system: cyclic;
+  symbols: ▾;
   suffix: " ";
 }
 
 @counter-style disclosure-closed {
   system: cyclic;
+  /* TODO: handle rtl */
+  symbols: ▸;
   suffix: " ";
 }
 

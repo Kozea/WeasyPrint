@@ -2,8 +2,7 @@
     weasyprint.css.descriptors
     --------------------------
 
-    Validate descriptors used for @font-face rules.
-    See https://www.w3.org/TR/css-fonts-3/#font-resources.
+    Validate descriptors used for some at-rules.
 
     :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
     :license: BSD, see LICENSE for details.
@@ -15,10 +14,13 @@ import tinycss2
 from ...logger import LOGGER
 from ..utils import (
     InvalidValues, comma_separated_list, get_keyword, get_single_keyword,
-    get_url, remove_whitespace, single_keyword, single_token)
+    get_url, remove_whitespace, single_keyword, get_custom_ident, single_token)
 from . import properties
 
-DESCRIPTORS = {}
+DESCRIPTORS = {
+    'font-face': {},
+    'counter-style': {},
+}
 
 
 class NoneFakeToken(object):
@@ -31,7 +33,7 @@ class NormalFakeToken(object):
     lower_value = 'normal'
 
 
-def preprocess_descriptors(base_url, descriptors):
+def preprocess_descriptors(rule, base_url, descriptors):
     """Filter unsupported names and values for descriptors.
 
     Log a warning for every ignored descriptor.
@@ -45,10 +47,10 @@ def preprocess_descriptors(base_url, descriptors):
         tokens = remove_whitespace(descriptor.value)
         try:
             # Use list() to consume generators now and catch any error.
-            if descriptor.name not in DESCRIPTORS:
+            if descriptor.name not in DESCRIPTORS[rule]:
                 raise InvalidValues('descriptor not supported')
 
-            function = DESCRIPTORS[descriptor.name]
+            function = DESCRIPTORS[rule][descriptor.name]
             if function.wants_base_url:
                 value = function(tokens, base_url)
             else:
@@ -68,7 +70,7 @@ def preprocess_descriptors(base_url, descriptors):
             yield long_name.replace('-', '_'), value
 
 
-def descriptor(descriptor_name=None, wants_base_url=False):
+def descriptor(rule, descriptor_name=None, wants_base_url=False):
     """Decorator adding a function to the ``DESCRIPTORS``.
 
     The name of the descriptor covered by the decorated function is set to
@@ -86,10 +88,10 @@ def descriptor(descriptor_name=None, wants_base_url=False):
             name = function.__name__.replace('_', '-')
         else:
             name = descriptor_name
-        assert name not in DESCRIPTORS, name
+        assert name not in DESCRIPTORS[rule], name
 
         function.wants_base_url = wants_base_url
-        DESCRIPTORS[name] = function
+        DESCRIPTORS[rule][name] = function
         return function
     return decorator
 
@@ -128,7 +130,7 @@ def expand_font_variant(tokens):
                 yield '-%s' % feature, tokens
 
 
-@descriptor()
+@descriptor('font-face')
 def font_family(tokens, allow_spaces=False):
     """``font-family`` descriptor validation."""
     allowed_types = ['ident']
@@ -141,11 +143,11 @@ def font_family(tokens, allow_spaces=False):
             token.value for token in tokens if token.type == 'ident')
 
 
-@descriptor(wants_base_url=True)
+@descriptor('font-face', wants_base_url=True)
 @comma_separated_list
 def src(tokens, base_url):
     """``src`` descriptor validation."""
-    if len(tokens) <= 2:
+    if len(tokens) > 2:
         tokens, token = tokens[:-1], tokens[-1]
         if token.type == 'function' and token.lower_name == 'format':
             tokens, token = tokens[:-1], tokens[-1]
@@ -156,14 +158,14 @@ def src(tokens, base_url):
             return url[1]
 
 
-@descriptor()
+@descriptor('font-face')
 @single_keyword
 def font_style(keyword):
     """``font-style`` descriptor validation."""
     return keyword in ('normal', 'italic', 'oblique')
 
 
-@descriptor()
+@descriptor('font-face')
 @single_token
 def font_weight(token):
     """``font-weight`` descriptor validation."""
@@ -175,23 +177,23 @@ def font_weight(token):
             return token.int_value
 
 
-@descriptor()
+@descriptor('font-face')
 @single_keyword
 def font_stretch(keyword):
-    """Validation for the ``font-stretch`` descriptor."""
+    """``font-stretch`` descriptor validation."""
     return keyword in (
         'ultra-condensed', 'extra-condensed', 'condensed', 'semi-condensed',
         'normal',
         'semi-expanded', 'expanded', 'extra-expanded', 'ultra-expanded')
 
 
-@descriptor('font-feature-settings')
-def font_feature_settings_descriptor(tokens):
+@descriptor('font-face')
+def font_feature_settings(tokens):
     """``font-feature-settings`` descriptor validation."""
     return properties.font_feature_settings(tokens)
 
 
-@descriptor()
+@descriptor('font-face')
 def font_variant(tokens):
     """``font-variant`` descriptor validation."""
     if len(tokens) == 1:
@@ -206,3 +208,135 @@ def font_variant(tokens):
         except InvalidValues:
             return None
     return values
+
+
+@descriptor('counter-style')
+def system(tokens):
+    """``system`` descriptor validation."""
+    if len(tokens) > 2:
+        return
+
+    keyword = get_keyword(tokens[0])
+
+    if keyword == 'extends':
+        if len(tokens) == 2:
+            second_keyword = get_keyword(tokens[1])
+            if second_keyword:
+                return (keyword, second_keyword, None)
+    elif keyword == 'fixed':
+        if len(tokens) == 1:
+            return (None, 'fixed', 1)
+        elif tokens[1].type == 'number' and tokens[1].is_integer:
+            return (None, 'fixed', tokens[1].int_value)
+    elif len(tokens) == 1 and keyword in (
+            'cyclic', 'numeric', 'alphabetic', 'symbolic', 'additive'):
+        return (None, keyword, None)
+
+
+@descriptor('counter-style', wants_base_url=True)
+def negative(tokens, base_url):
+    """``negative`` descriptor validation."""
+    if len(tokens) > 2:
+        return
+
+    values = []
+    tokens = list(tokens)
+    while tokens:
+        token = tokens.pop(0)
+        if token.type in ('string', 'ident'):
+            values.append(('string', token.value))
+            continue
+        url = get_url(token, base_url)
+        if url is not None and url[0] == 'url':
+            values.append(('url', url[1]))
+
+    if len(values) == 1:
+        values.append(('string', ''))
+
+    return values
+
+
+@descriptor('counter-style', 'prefix', wants_base_url=True)
+@descriptor('counter-style', 'suffix', wants_base_url=True)
+def prefix_suffix(tokens, base_url):
+    """``prefix`` and ``suffix`` descriptors validation."""
+    if len(tokens) != 1:
+        return
+
+    token, = tokens
+    if token.type in ('string', 'ident'):
+        return ('string', token.value)
+    url = get_url(token, base_url)
+    if url is not None and url[0] == 'url':
+        return ('url', url[1])
+
+
+@descriptor('counter-style')
+@comma_separated_list
+def range(tokens):
+    """``range`` descriptor validation."""
+    if len(tokens) == 1:
+        keyword = get_single_keyword(tokens)
+        if keyword == 'auto':
+            return 'auto'
+    elif len(tokens) == 2:
+        values = []
+        for i, token in enumerate(tokens):
+            if token.type == 'ident' and token.value == 'infinite':
+                values.append(float('inf') if i else -float('inf'))
+            elif token.type == 'number' and token.is_integer:
+                values.append(token.int_value)
+        if len(values) == 2 and values[0] <= values[1]:
+            return tuple(values)
+
+
+@descriptor('counter-style', wants_base_url=True)
+def pad(tokens, base_url):
+    """``pad`` descriptor validation."""
+    if len(tokens) == 2:
+        values = [None, None]
+        for token in tokens:
+            if token.type == 'number':
+                if token.is_integer and token.value >= 0 and values[0] is None:
+                    values[0] = token.int_value
+            elif token.type in ('string', 'ident'):
+                values[1] = ('string', token.value)
+            elif token.type == 'function':
+                url = get_url(token, base_url)
+                if url is not None and url[0] == 'url':
+                    values[1] = ('url', url[1])
+
+        if None not in values:
+            return tuple(values)
+
+
+@descriptor('counter-style')
+@single_token
+def fallback(token):
+    """``fallback`` descriptor validation."""
+    ident = get_custom_ident(token)
+    if ident != 'none':
+        return ident
+
+
+@descriptor('counter-style', wants_base_url=True)
+def symbols(tokens, base_url):
+    """``symbols`` descriptor validation."""
+    values = []
+    for token in tokens:
+        if token.type in ('string', 'ident'):
+            values.append(('string', token.value))
+            continue
+        url = get_url(token, base_url)
+        if url is not None and url[0] == 'url':
+            values.append(('url', url[1]))
+            continue
+        return
+    return tuple(values)
+
+
+@descriptor('counter-style', wants_base_url=True)
+@comma_separated_list
+def additive_symbols(tokens, base_url):
+    """``additive-symbols`` descriptor validation."""
+    return pad(tokens, base_url)
