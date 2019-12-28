@@ -22,7 +22,3 @@
   background: #1ee494;
   color: #14213d;
 }
-
-.version::before {
-  content: 'Version ';
-}
