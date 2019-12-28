@@ -9,3 +9,20 @@
     position: static;
   }
 }
+
+.wy-side-nav-search, .wy-nav-side {
+  background-color: #14213d;
+}
+
+.wy-side-nav-search input[type=text] {
+  border-radius: 0;
+}
+
+.wy-menu-vertical a:hover {
+  background: #1ee494;
+  color: #14213d;
+}
+
+.version::before {
+  content: 'Version ';
+}
