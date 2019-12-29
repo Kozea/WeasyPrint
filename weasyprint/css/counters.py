@@ -38,6 +38,20 @@ def parse_counter_style_name(tokens, counter_style):
                 return token.value
 
 
+def counter_from_symbols(arguments):
+    return {
+        'system': (arguments[0], 1 if arguments[0] == 'fixed' else None),
+        'negative': (('string', '-'), ('string', '')),
+        'prefix': ('string', ''),
+        'suffix': ('string', '. '),
+        'range': 'auto',
+        'pad': (0, ''),
+        'fallback': 'decimal',
+        'symbols': tuple(('string', argument) for argument in arguments[1:]),
+        'additive_symbols': (),
+    }
+
+
 class CounterStyle(dict):
     """Counter styles dictionary.
 
@@ -55,23 +69,25 @@ class CounterStyle(dict):
         See https://www.w3.org/TR/css-counter-styles-3/#generate-a-counter
 
         """
+        if counter_type[0] == 'symbols()':
+            counter = counter_from_symbols(counter_type[1])
+        else:
+            # Step 1
+            if counter_type not in self:
+                if 'decimal' in self:
+                    return self.render_value('decimal', counter_value)
+                else:
+                    # Could happen if the UA stylesheet is not used
+                    return ''
+            counter = self[counter_type]
+        system, fixed_number = counter['system']
+
         # Avoid circular fallbacks
         if previous_types is None:
             previous_types = []
         elif counter_type in previous_types:
             return self.render_value('decimal', counter_value)
         previous_types.append(counter_type)
-
-        # Step 1
-        if counter_type not in self:
-            if 'decimal' in self:
-                return self.render_value('decimal', counter_value)
-            else:
-                # Could happen if the UA stylesheet is not used
-                return ''
-
-        counter = self[counter_type]
-        system, fixed_number = counter['system']
 
         # Step 2
         if counter['range'] == 'auto':
@@ -179,11 +195,15 @@ class CounterStyle(dict):
 
     def render_marker(self, counter_type, counter_value):
         """Generate the content of a ::marker pseudo-element."""
-        if counter_type not in self:
-            return self.render_marker('decimal', counter_value)
+        if counter_type[0] == 'symbols()':
+            counter = counter_from_symbols(counter_type[1])
+        else:
+            counter = self[counter_type]
+            if counter_type not in self:
+                return self.render_marker('decimal', counter_value)
 
-        prefix = symbol(self[counter_type]['prefix'])
-        suffix = symbol(self[counter_type]['suffix'])
+        prefix = symbol(counter['prefix'])
+        suffix = symbol(counter['suffix'])
 
         value = self.render_value(counter_type, counter_value)
         if value is not None:

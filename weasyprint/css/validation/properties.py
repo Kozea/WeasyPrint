@@ -18,8 +18,8 @@ from ..utils import (
     InvalidValues, check_var_function, comma_separated_list, get_angle,
     get_content_list, get_content_list_token, get_custom_ident, get_image,
     get_keyword, get_length, get_resolution, get_single_keyword, get_url,
-    parse_2d_position, parse_function, parse_position, single_keyword,
-    single_token)
+    parse_2d_position, parse_function, parse_position, remove_whitespace,
+    single_keyword, single_token)
 
 PREFIX = '-weasy-'
 PROPRIETARY = set()
@@ -870,9 +870,31 @@ def list_style_position(keyword):
 @single_token
 def list_style_type(token):
     """``list-style-type`` property validation."""
-    # TODO: add symbols()
     if token.type == 'ident':
         return token.value
+    elif token.type == 'function' and token.name == 'symbols':
+        function_arguments = remove_whitespace(token.arguments)
+        if len(function_arguments) >= 1:
+            arguments = []
+            if function_arguments[0].type == 'ident':
+                if function_arguments[0].value in (
+                        'cyclic', 'numeric', 'alphabetic', 'symbolic',
+                        'fixed'):
+                    index = 1
+                    arguments.append(function_arguments[0].value)
+                else:
+                    return
+            else:
+                arguments.append('symbolic')
+                index = 0
+            for i in range(index, len(function_arguments)):
+                if function_arguments[i].type != 'string':
+                    return
+                arguments.append(function_arguments[i].value)
+            if arguments[0] in ('alphabetic', 'numeric'):
+                if len(arguments) < 3:
+                    return
+            return ('symbols()', tuple(arguments))
 
 
 @property('min-width')
