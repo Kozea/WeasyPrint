@@ -115,8 +115,10 @@ class CounterStyle(dict):
                     counter['fallback'], counter_value, previous_types)
 
         elif system == 'symbolic':
-            index = counter_value % len(counter['symbols'])
-            initial = symbol(counter['symbols'][index])
+            length = len(counter['symbols'])
+            index = (counter_value - 1) % length
+            repeat = (counter_value - 1) // length + 1
+            initial = symbol(counter['symbols'][index]) * repeat
 
         elif system == 'alphabetic':
             length = len(counter['symbols'])
