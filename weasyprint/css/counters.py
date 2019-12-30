@@ -12,6 +12,7 @@
 
 """
 
+from copy import deepcopy
 
 from .utils import remove_whitespace
 
@@ -38,29 +39,6 @@ def parse_counter_style_name(tokens, counter_style):
                 return token.value
 
 
-def anonymous_counter(counter):
-    counter_type, arguments = counter
-    if counter_type == 'string':
-        system = ('cyclic', None)
-        symbols = (('string', arguments),)
-        suffix = ('string', '')
-    else:
-        system = (arguments[0], 1 if arguments[0] == 'fixed' else None)
-        symbols = tuple(('string', argument) for argument in arguments[1:])
-        suffix = ('string', '. ')
-    return {
-        'system': system,
-        'negative': (('string', '-'), ('string', '')),
-        'prefix': ('string', ''),
-        'suffix': suffix,
-        'range': 'auto',
-        'pad': (0, ''),
-        'fallback': 'decimal',
-        'symbols': symbols,
-        'additive_symbols': (),
-    }
-
-
 class CounterStyle(dict):
     """Counter styles dictionary.
 
@@ -72,34 +50,112 @@ class CounterStyle(dict):
     See https://www.w3.org/TR/css-counter-styles-3/.
 
     """
-    def render_value(self, counter_type, counter_value, previous_types=None):
+    def resolve_counter(self, counter_name, previous_types=None):
+        if counter_name[0] in ('symbols()', 'string'):
+            counter_type, arguments = counter_name
+            if counter_type == 'string':
+                system = (None, 'cyclic', None)
+                symbols = (('string', arguments),)
+                suffix = ('string', '')
+            else:
+                system = (
+                    None, arguments[0], 1 if arguments[0] == 'fixed' else None)
+                symbols = tuple(
+                    ('string', argument) for argument in arguments[1:])
+                suffix = ('string', '. ')
+            return {
+                'system': system,
+                'negative': (('string', '-'), ('string', '')),
+                'prefix': ('string', ''),
+                'suffix': suffix,
+                'range': 'auto',
+                'pad': (0, ''),
+                'fallback': 'decimal',
+                'symbols': symbols,
+                'additive_symbols': (),
+            }
+        elif counter_name in self:
+            # Avoid circular fallbacks
+            if previous_types is None:
+                previous_types = []
+            elif counter_name in previous_types:
+                return
+            previous_types.append(counter_name)
+
+            counter = self[counter_name].copy()
+            if counter['system']:
+                extends, system, _ = counter['system']
+            else:
+                extends, system = None, 'symbolic'
+
+            # Handle extends
+            while extends:
+                if system in self:
+                    extended_counter = self[system]
+                    counter['system'] = extended_counter['system']
+                    previous_types.append(system)
+                    if counter['system']:
+                        extends, system, _ = counter['system']
+                    else:
+                        extends, system = None, 'symbolic'
+                    if extends and system in previous_types:
+                        extends, system = 'extends', 'decimal'
+                        continue
+                    for name, value in extended_counter.items():
+                        if counter[name] is None and value is not None:
+                            counter[name] = value
+                else:
+                    return counter
+
+            return counter
+
+    def render_value(self, counter_value, counter_name=None, counter=None,
+                     previous_types=None):
         """Generate the counter representation.
 
         See https://www.w3.org/TR/css-counter-styles-3/#generate-a-counter
 
         """
-        if counter_type[0] in ('symbols()', 'string'):
-            counter = anonymous_counter(counter_type)
+        counter = counter or self.resolve_counter(counter_name, previous_types)
+        if counter is None:
+            if 'decimal' in self:
+                return self.render_value(counter_value, 'decimal')
+            else:
+                # Could happen if the UA stylesheet is not used
+                return ''
+
+        if counter['system']:
+            extends, system, fixed_number = counter['system']
         else:
-            # Step 1
-            if counter_type not in self:
-                if 'decimal' in self:
-                    return self.render_value('decimal', counter_value)
-                else:
-                    # Could happen if the UA stylesheet is not used
-                    return ''
-            counter = self[counter_type]
-        system, fixed_number = counter['system']
+            extends, system, fixed_number = None, 'symbolic', None
 
         # Avoid circular fallbacks
         if previous_types is None:
             previous_types = []
-        elif counter_type in previous_types:
-            return self.render_value('decimal', counter_value)
-        previous_types.append(counter_type)
+        elif system in previous_types:
+            return self.render_value(counter_value, 'decimal')
+        previous_types.append(counter_name)
+
+        # Handle extends
+        while extends:
+            if system in self:
+                extended_counter = self[system]
+                counter['system'] = extended_counter['system']
+                if counter['system']:
+                    extends, system, fixed_number = counter['system']
+                else:
+                    extends, system, fixed_number = None, 'symbolic', None
+                if system in previous_types:
+                    return self.render_value(counter_value, 'decimal')
+                previous_types.append(system)
+                for name, value in extended_counter.items():
+                    if counter[name] is None and value is not None:
+                        counter[name] = value
+            else:
+                return self.render_value(counter_value, 'decimal')
 
         # Step 2
-        if counter['range'] == 'auto':
+        if counter['range'] in ('auto', None):
             min_range, max_range = -float('inf'), float('inf')
             if system in ('alphabetic', 'symbolic'):
                 min_range = 1
@@ -113,40 +169,58 @@ class CounterStyle(dict):
                 break
         else:
             return self.render_value(
-                counter['fallback'], counter_value, previous_types)
+                counter_value, counter['fallback'] or 'decimal',
+                previous_types=previous_types)
 
         # Step 3
         initial = None
         is_negative = counter_value < 0
         if is_negative:
             negative_prefix, negative_suffix = (
-                symbol(character) for character in counter['negative'])
+                symbol(character) for character
+                in counter['negative'] or (('string', '-'), ('string', '')))
             use_negative = (
                 system in
                 ('symbolic', 'alphabetic', 'numeric', 'additive'))
             if use_negative:
                 counter_value = abs(counter_value)
 
+        # TODO: instead of using the decimal fallback when we have the wrong
+        # number of symbols, we should discard the whole counter. The problem
+        # only happens when extending from another style, it is easily refused
+        # during validation otherwise.
+
         if system == 'cyclic':
-            index = (counter_value - 1) % len(counter['symbols'])
+            length = len(counter['symbols'])
+            if length < 1:
+                return self.render_value(counter_value, 'decimal')
+            index = (counter_value - 1) % length
             initial = symbol(counter['symbols'][index])
 
         elif system == 'fixed':
+            length = len(counter['symbols'])
+            if length < 1:
+                return self.render_value(counter_value, 'decimal')
             index = counter_value - fixed_number
-            if 0 <= index < len(counter['symbols']):
+            if 0 <= index < length:
                 initial = symbol(counter['symbols'][index])
             else:
                 return self.render_value(
-                    counter['fallback'], counter_value, previous_types)
+                    counter_value, counter['fallback'],
+                    previous_types=previous_types)
 
         elif system == 'symbolic':
             length = len(counter['symbols'])
+            if length < 1:
+                return self.render_value(counter_value, 'decimal')
             index = (counter_value - 1) % length
             repeat = (counter_value - 1) // length + 1
             initial = symbol(counter['symbols'][index]) * repeat
 
         elif system == 'alphabetic':
             length = len(counter['symbols'])
+            if length < 2:
+                return self.render_value(counter_value, 'decimal')
             reversed_parts = []
             while counter_value != 0:
                 counter_value -= 1
@@ -161,6 +235,8 @@ class CounterStyle(dict):
             else:
                 reversed_parts = []
                 length = len(counter['symbols'])
+                if length < 2:
+                    return self.render_value(counter_value, 'decimal')
                 counter_value = abs(counter_value)
                 while counter_value != 0:
                     reversed_parts.append(symbol(
@@ -175,6 +251,8 @@ class CounterStyle(dict):
                         initial = symbol(symbol_string)
             else:
                 parts = []
+                if len(counter['additive_symbols']) < 1:
+                    return self.render_value(counter_value, 'decimal')
                 for weight, symbol_string in counter['additive_symbols']:
                     repetitions = counter_value // weight
                     parts.extend([symbol(symbol_string)] * repetitions)
@@ -184,16 +262,18 @@ class CounterStyle(dict):
                         break
             if initial is None:
                 return self.render_value(
-                    counter['fallback'], counter_value, previous_types)
+                    counter_value, counter['fallback'] or 'decimal',
+                    previous_types=previous_types)
 
         assert initial is not None
 
         # Step 4
-        pad_difference = counter['pad'][0] - len(initial)
+        pad = counter['pad'] or (0, '')
+        pad_difference = pad[0] - len(initial)
         if is_negative and use_negative:
             pad_difference -= len(negative_prefix) + len(negative_suffix)
         if pad_difference > 0:
-            initial = pad_difference * symbol(counter['pad'][1]) + initial
+            initial = pad_difference * symbol(pad[1]) + initial
 
         # Step 5
         if is_negative and use_negative:
@@ -202,24 +282,24 @@ class CounterStyle(dict):
         # Step 6
         return initial
 
-    def render_marker(self, counter_type, counter_value):
+    def render_marker(self, counter_name, counter_value):
         """Generate the content of a ::marker pseudo-element."""
-        if counter_type[0] in ('symbols()', 'string'):
-            counter = anonymous_counter(counter_type)
-        else:
-            if counter_type in self:
-                counter = self[counter_type]
-            else:
+        counter = self.resolve_counter(counter_name)
+        if counter is None:
+            if 'decimal' in self:
                 return self.render_marker('decimal', counter_value)
+            else:
+                # Could happen if the UA stylesheet is not used
+                return ''
 
-        prefix = symbol(counter['prefix'])
-        suffix = symbol(counter['suffix'])
+        prefix = symbol(counter['prefix'] or ('string', ''))
+        suffix = symbol(counter['suffix'] or ('string', '. '))
 
-        value = self.render_value(counter_type, counter_value)
+        value = self.render_value(counter_value, counter_name=counter_name)
         if value is not None:
             return prefix + value + suffix
 
         # TODO: print warning, return something else?
 
     def copy(self):
-        return CounterStyle(self)
+        return CounterStyle(deepcopy(self))

@@ -958,52 +958,42 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
             ignore_imports = True
             content = tinycss2.parse_declaration_list(rule.content)
             counter = {
-                'system': (None, 'symbolic', None),
-                'negative': (('string', '-'), ('string', '')),
-                'prefix': ('string', ''),
-                'suffix': ('string', '. '),
-                'range': 'auto',
-                'pad': (0, ''),
-                'fallback': 'decimal',
-                'symbols': (),
-                'additive_symbols': (),
+                'system': None,
+                'negative': None,
+                'prefix': None,
+                'suffix': None,
+                'range': None,
+                'pad': None,
+                'fallback': None,
+                'symbols': None,
+                'additive_symbols': None,
             }
             rule_descriptors = dict(
                 preprocess_descriptors('counter-style', base_url, content))
 
-            system = rule_descriptors.pop('system', None)
-            if system:
-                counter['system'] = system
-
-            if counter['system'][0] is None:
-                counter['system'] = counter['system'][1:]
-            elif counter['system'][0] == 'extends':
-                if counter['system'][1] not in counter_style:
-                    # TODO: display warning
-                    continue
-                counter = counter_style[counter['system'][1]].copy()
-            else:
-                # TODO: display warning
-                continue
-
             for descriptor_name, descriptor_value in rule_descriptors.items():
                 counter[descriptor_name] = descriptor_value
 
-            if counter['system'][0] in ('cyclic', 'fixed', 'symbolic'):
-                if len(counter['symbols']) < 1:
-                    # TODO: display warning
-                    continue
-            elif counter['system'][0] in ('alphabetic', 'numeric'):
-                if len(counter['symbols']) < 2:
-                    # TODO: display warning
-                    continue
-            elif counter['system'][0] == 'additive':
-                if len(counter['additive_symbols']) < 2:
-                    # TODO: display warning
-                    continue
+            if counter['system'] is None:
+                system = (None, 'symbolic', None)
+            else:
+                system = counter['system']
 
-            # TODO: add additional validations (order in additive-symbols,
-            # descriptors required by specific system, etc.)
+            if system[0] is None:
+                if system[0] in ('cyclic', 'fixed', 'symbolic'):
+                    if len(counter['symbols'] or []) < 1:
+                        # TODO: display warning
+                        continue
+                elif counter['system'][0] in ('alphabetic', 'numeric'):
+                    if len(counter['symbols'] or []) < 2:
+                        # TODO: display warning
+                        continue
+                elif counter['system'][0] == 'additive':
+                    if len(counter['additive_symbols'] or []) < 2:
+                        # TODO: display warning
+                        continue
+
+            # TODO: add additional validations (order in additive-symbols…)
 
             counter_style[name] = counter
 

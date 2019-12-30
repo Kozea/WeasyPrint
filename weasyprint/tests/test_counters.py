@@ -306,7 +306,7 @@ def test_counter_styles_2():
 @assert_no_logs
 def test_counter_styles_3():
     render = HTML(string='')._ua_counter_style()[0].render_value
-    assert [render('decimal-leading-zero', value) for value in [
+    assert [render(value, 'decimal-leading-zero') for value in [
         -1986, -1985,
         -11, -10, -9, -8,
         -1, 0, 1, 2,
@@ -322,7 +322,7 @@ def test_counter_styles_3():
 @assert_no_logs
 def test_counter_styles_4():
     render = HTML(string='')._ua_counter_style()[0].render_value
-    assert [render('lower-roman', value) for value in [
+    assert [render(value, 'lower-roman') for value in [
         -1986, -1985,
         -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
         49, 50,
@@ -339,7 +339,7 @@ def test_counter_styles_4():
 @assert_no_logs
 def test_counter_styles_5():
     render = HTML(string='')._ua_counter_style()[0].render_value
-    assert [render('upper-roman', value) for value in [
+    assert [render(value, 'upper-roman') for value in [
          -1986, -1985,
          -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
          49, 50,
@@ -356,7 +356,7 @@ def test_counter_styles_5():
 @assert_no_logs
 def test_counter_styles_6():
     render = HTML(string='')._ua_counter_style()[0].render_value
-    assert [render('lower-alpha', value) for value in [
+    assert [render(value, 'lower-alpha') for value in [
         -1986, -1985,
         -1, 0, 1, 2, 3, 4,
         25, 26, 27, 28, 29,
@@ -369,7 +369,7 @@ def test_counter_styles_6():
 @assert_no_logs
 def test_counter_styles_7():
     render = HTML(string='')._ua_counter_style()[0].render_value
-    assert [render('upper-alpha', value) for value in [
+    assert [render(value, 'upper-alpha') for value in [
         -1986, -1985,
         -1, 0, 1, 2, 3, 4,
         25, 26, 27, 28, 29,
@@ -382,7 +382,7 @@ def test_counter_styles_7():
 @assert_no_logs
 def test_counter_styles_8():
     render = HTML(string='')._ua_counter_style()[0].render_value
-    assert [render('lower-latin', value) for value in [
+    assert [render(value, 'lower-latin') for value in [
         -1986, -1985,
         -1, 0, 1, 2, 3, 4,
         25, 26, 27, 28, 29,
@@ -395,7 +395,7 @@ def test_counter_styles_8():
 @assert_no_logs
 def test_counter_styles_9():
     render = HTML(string='')._ua_counter_style()[0].render_value
-    assert [render('upper-latin', value) for value in [
+    assert [render(value, 'upper-latin') for value in [
         -1986, -1985,
         -1, 0, 1, 2, 3, 4,
         25, 26, 27, 28, 29,
@@ -408,7 +408,7 @@ def test_counter_styles_9():
 @assert_no_logs
 def test_counter_styles_10():
     render = HTML(string='')._ua_counter_style()[0].render_value
-    assert [render('georgian', value) for value in [
+    assert [render(value, 'georgian') for value in [
         -1986, -1985,
         -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
         20, 30, 40, 50, 60, 70, 80, 90, 100,
@@ -428,7 +428,7 @@ def test_counter_styles_10():
 @assert_no_logs
 def test_counter_styles_11():
     render = HTML(string='')._ua_counter_style()[0].render_value
-    assert [render('armenian', value) for value in [
+    assert [render(value, 'armenian') for value in [
         -1986, -1985,
         -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
         20, 30, 40, 50, 60, 70, 80, 90, 100,
@@ -501,3 +501,61 @@ def test_list_style_types(style_type, values):
     assert li_2.children[0].children[0].children[0].text == values[1]
     assert li_3.children[0].children[0].children[0].text == values[2]
     assert li_4.children[0].children[0].children[0].text == values[3]
+
+
+def test_counter_multiple_extends():
+    # Inspired by W3C failing test system-extends-invalid
+    page, = render_pages('''
+      <style>
+        @counter-style a {
+          system: extends b;
+          prefix: a;
+        }
+        @counter-style b {
+          system: extends c;
+          suffix: b;
+        }
+        @counter-style c {
+          system: extends b;
+          pad: 2 c;
+        }
+        @counter-style d {
+          system: extends d;
+          prefix: d;
+        }
+        @counter-style e {
+          system: extends unknown;
+          prefix: e;
+        }
+        @counter-style f {
+          system: extends decimal;
+          symbols: a;
+        }
+        @counter-style g {
+          system: extends decimal;
+          additive-symbols: 1 a;
+        }
+      </style>
+      <ol>
+        <li style="list-style-type: a"></li>
+        <li style="list-style-type: b"></li>
+        <li style="list-style-type: c"></li>
+        <li style="list-style-type: d"></li>
+        <li style="list-style-type: e"></li>
+        <li style="list-style-type: f"></li>
+        <li style="list-style-type: g"></li>
+        <li style="list-style-type: h"></li>
+      </ol>
+    ''')
+    html, = page.children
+    body, = html.children
+    ol, = body.children
+    li_1, li_2, li_3, li_4, li_5, li_6, li_7, li_8 = ol.children
+    assert li_1.children[0].children[0].children[0].text == 'a1b'
+    assert li_2.children[0].children[0].children[0].text == '2b'
+    assert li_3.children[0].children[0].children[0].text == 'c3. '
+    assert li_4.children[0].children[0].children[0].text == 'd4. '
+    assert li_5.children[0].children[0].children[0].text == 'e5. '
+    assert li_6.children[0].children[0].children[0].text == '6. '
+    assert li_7.children[0].children[0].children[0].text == '7. '
+    assert li_8.children[0].children[0].children[0].text == '8. '

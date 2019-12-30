@@ -404,7 +404,7 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
             if counter_type != 'none':
                 counter_value = counter_values.get(counter_name, [0])[-1]
                 texts.append(counter_style.render_value(
-                    counter_type, counter_value))
+                    counter_value, counter_type))
         elif type_ == 'counters()':
             counter_name, separator, counter_type = value
             if need_collect_missing:
@@ -412,7 +412,7 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
                     counter_name, counter_values, missing_counters)
             if counter_type != 'none':
                 texts.append(separator.join(
-                    counter_style.render_value(counter_type, counter_value)
+                    counter_style.render_value(counter_value, counter_type)
                     for counter_value
                     in counter_values.get(counter_name, [0])))
         elif type_ == 'string()':
@@ -443,7 +443,7 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
                 if counter_type != 'none':
                     counter_value = local_counters.get(counter_name, [0])[-1]
                     texts.append(counter_style.render_value(
-                        counter_type, counter_value))
+                        counter_value, counter_type))
             else:
                 texts = []
                 break
@@ -468,7 +468,7 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
                 local_counters.update(target_values)
                 if counter_type != 'none':
                     texts.append(separator_string.join(
-                        counter_style.render_value(counter_type, counter_value)
+                        counter_style.render_value(counter_value, counter_type)
                         for counter_value
                         in local_counters.get(counter_name, [0])))
             else:
