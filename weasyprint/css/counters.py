@@ -207,8 +207,9 @@ class CounterStyle(dict):
         if counter_type[0] in ('symbols()', 'string'):
             counter = anonymous_counter(counter_type)
         else:
-            counter = self[counter_type]
-            if counter_type not in self:
+            if counter_type in self:
+                counter = self[counter_type]
+            else:
                 return self.render_marker('decimal', counter_value)
 
         prefix = symbol(counter['prefix'])
