@@ -984,11 +984,11 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                     if len(counter['symbols'] or []) < 1:
                         # TODO: display warning
                         continue
-                elif counter['system'][0] in ('alphabetic', 'numeric'):
+                elif system[0] in ('alphabetic', 'numeric'):
                     if len(counter['symbols'] or []) < 2:
                         # TODO: display warning
                         continue
-                elif counter['system'][0] == 'additive':
+                elif system[0] == 'additive':
                     if len(counter['additive_symbols'] or []) < 2:
                         # TODO: display warning
                         continue

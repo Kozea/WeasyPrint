@@ -57,12 +57,12 @@ class CounterStyle(dict):
                 system = (None, 'cyclic', None)
                 symbols = (('string', arguments),)
                 suffix = ('string', '')
-            else:
+            elif counter_type == 'symbols()':
                 system = (
                     None, arguments[0], 1 if arguments[0] == 'fixed' else None)
                 symbols = tuple(
                     ('string', argument) for argument in arguments[1:])
-                suffix = ('string', '. ')
+                suffix = ('string', ' ')
             return {
                 'system': system,
                 'negative': (('string', '-'), ('string', '')),
@@ -116,6 +116,7 @@ class CounterStyle(dict):
         See https://www.w3.org/TR/css-counter-styles-3/#generate-a-counter
 
         """
+        assert counter or counter_name
         counter = counter or self.resolve_counter(counter_name, previous_types)
         if counter is None:
             if 'decimal' in self:
@@ -206,7 +207,7 @@ class CounterStyle(dict):
                 initial = symbol(counter['symbols'][index])
             else:
                 return self.render_value(
-                    counter_value, counter['fallback'],
+                    counter_value, counter['fallback'] or 'decimal',
                     previous_types=previous_types)
 
         elif system == 'symbolic':

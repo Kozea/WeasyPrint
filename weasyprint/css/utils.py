@@ -436,6 +436,8 @@ def check_attr_function(token, allowed_type=None):
 
 
 def check_counter_function(token, allowed_type=None):
+    from .validation.properties import list_style_type
+
     function = parse_function(token)
     if function is None:
         return
@@ -455,7 +457,9 @@ def check_counter_function(token, allowed_type=None):
             arguments.append(string.value)
 
         if args:
-            counter_style = get_keyword(args.pop(0))
+            counter_style = list_style_type((args.pop(0),))
+            if counter_style is None:
+                return
             arguments.append(counter_style)
         else:
             arguments.append('decimal')
