@@ -873,13 +873,13 @@ def list_style_type(token):
     if token.type == 'ident':
         return token.value
     elif token.type == 'function' and token.name == 'symbols':
+        allowed_types = (
+            'cyclic', 'numeric', 'alphabetic', 'symbolic', 'fixed')
         function_arguments = remove_whitespace(token.arguments)
         if len(function_arguments) >= 1:
             arguments = []
             if function_arguments[0].type == 'ident':
-                if function_arguments[0].value in (
-                        'cyclic', 'numeric', 'alphabetic', 'symbolic',
-                        'fixed'):
+                if function_arguments[0].value in allowed_types:
                     index = 1
                     arguments.append(function_arguments[0].value)
                 else:
@@ -887,6 +887,8 @@ def list_style_type(token):
             else:
                 arguments.append('symbolic')
                 index = 0
+            if len(function_arguments) < index + 1:
+                return
             for i in range(index, len(function_arguments)):
                 if function_arguments[i].type != 'string':
                     return

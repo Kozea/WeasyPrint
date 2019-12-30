@@ -9,9 +9,10 @@
 
 """
 
+import pytest
 
 from .. import HTML
-from .test_boxes import assert_tree, parse_all
+from .test_boxes import assert_tree, parse_all, render_pages
 from .testing_utils import assert_no_logs
 
 
@@ -442,3 +443,34 @@ def test_counter_styles_11():
         Ս Վ Տ Ր Ց Ւ Փ Ք
         ՔՋՂԹ 10000 10001
     '''.split()
+
+
+@assert_no_logs
+@pytest.mark.parametrize('arguments, values', (
+    ('cyclic "a" "b" "c"', ('a. ', 'b. ', 'c. ', 'a. ')),
+    ('symbolic "a" "b"', ('a. ', 'b. ', 'aa. ', 'bb. ')),
+    ('"a" "b"', ('a. ', 'b. ', 'aa. ', 'bb. ')),
+    ('alphabetic "a" "b"', ('a. ', 'b. ', 'aa. ', 'ab. ')),
+    ('fixed "a" "b"', ('a. ', 'b. ', '3. ', '4. ')),
+    ('numeric "0" "1" "2"', ('1. ', '2. ', '10. ', '11. ')),
+))
+def test_counter_symbols(arguments, values):
+    page, = render_pages('''
+      <style>
+        ol { list-style-type: symbols(%s) }
+      </style>
+      <ol>
+        <li>abc</li>
+        <li>abc</li>
+        <li>abc</li>
+        <li>abc</li>
+      </ol>
+    ''' % arguments)
+    html, = page.children
+    body, = html.children
+    ol, = body.children
+    li_1, li_2, li_3, li_4 = ol.children
+    assert li_1.children[0].children[0].children[0].text == values[0]
+    assert li_2.children[0].children[0].children[0].text == values[1]
+    assert li_3.children[0].children[0].children[0].text == values[2]
+    assert li_4.children[0].children[0].children[0].text == values[3]
