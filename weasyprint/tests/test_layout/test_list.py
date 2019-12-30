@@ -55,13 +55,26 @@ def test_lists_style(inside, style, character):
 def test_lists_empty_item():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/873
     page, = parse('''
-      <style>
-        body { margin: 0 }
-        ul { margin-left: 50px; list-style: %s %s }
-      </style>
       <ul>
         <li>a</li>
         <li></li>
+        <li>a</li>
+      </ul>
+    ''')
+    html, = page.children
+    body, = html.children
+    unordered_list, = body.children
+    li1, li2, li3 = unordered_list.children
+    assert li1.position_y != li2.position_y != li3.position_y
+
+
+@pytest.mark.xfail
+def test_lists_whitespace_item():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/873
+    page, = parse('''
+      <ul>
+        <li>a</li>
+        <li> </li>
         <li>a</li>
       </ul>
     ''')
