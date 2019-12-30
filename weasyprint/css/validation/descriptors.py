@@ -254,7 +254,8 @@ def negative(tokens, base_url):
     if len(values) == 1:
         values.append(('string', ''))
 
-    return values
+    if len(values) == 2:
+        return values
 
 
 @descriptor('counter-style', 'prefix', wants_base_url=True)
