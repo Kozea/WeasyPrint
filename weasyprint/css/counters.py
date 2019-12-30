@@ -297,10 +297,8 @@ class CounterStyle(dict):
         suffix = symbol(counter['suffix'] or ('string', '. '))
 
         value = self.render_value(counter_value, counter_name=counter_name)
-        if value is not None:
-            return prefix + value + suffix
-
-        # TODO: print warning, return something else?
+        assert value is not None
+        return prefix + value + suffix
 
     def copy(self):
         return CounterStyle(deepcopy(self))

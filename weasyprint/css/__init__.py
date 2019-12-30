@@ -980,20 +980,30 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                 system = counter['system']
 
             if system[0] is None:
-                if system[0] in ('cyclic', 'fixed', 'symbolic'):
+                if system[1] in ('cyclic', 'fixed', 'symbolic'):
                     if len(counter['symbols'] or []) < 1:
-                        # TODO: display warning
+                        LOGGER.warning(
+                            'In counter style "%s" at %s:%s, '
+                            'counter style "%s" needs at least one symbol',
+                            name, rule.source_line, rule.source_column,
+                            system[1])
                         continue
-                elif system[0] in ('alphabetic', 'numeric'):
+                elif system[1] in ('alphabetic', 'numeric'):
                     if len(counter['symbols'] or []) < 2:
-                        # TODO: display warning
+                        LOGGER.warning(
+                            'In counter style "%s" at %s:%s, '
+                            'counter style "%s" needs at least two symbols',
+                            name, rule.source_line, rule.source_column,
+                            system[1])
                         continue
-                elif system[0] == 'additive':
+                elif system[1] == 'additive':
                     if len(counter['additive_symbols'] or []) < 2:
-                        # TODO: display warning
+                        LOGGER.warning(
+                            'In counter style "%s" at %s:%s, '
+                            'counter style "additive" '
+                            'needs at least two additive symbols',
+                            name, rule.source_line, rule.source_column)
                         continue
-
-            # TODO: add additional validations (order in additive-symbols…)
 
             counter_style[name] = counter
 

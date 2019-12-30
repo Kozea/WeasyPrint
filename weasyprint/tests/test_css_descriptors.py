@@ -9,6 +9,7 @@
 
 """
 
+import pytest
 import tinycss2
 
 from ..css import preprocess_stylesheet
@@ -194,3 +195,20 @@ def test_font_face_bad_7():
         'WARNING: Ignored `font-family: good, bad` at 1:14, invalid value.',
         'WARNING: Ignored `src: really bad ` at 1:38, invalid value.',
         "WARNING: Missing src descriptor in '@font-face' rule at 1:1"]
+
+
+@pytest.mark.parametrize('rule', (
+    '@counter-style test {system: alphabetic; symbols: a}',
+    '@counter-style test {system: cyclic}',
+    '@counter-style test {system: additive; additive-symbols: a 1}',
+    '@counter-style test {system: additive; additive-symbols: 10 x, 1 i, 5 v}',
+))
+def test_counter_style_invalid(rule):
+    stylesheet = tinycss2.parse_stylesheet(rule)
+    with capture_logs() as logs:
+        descriptors = []
+        preprocess_stylesheet(
+            'print', 'http://wp.org/foo/', stylesheet, None, None, None,
+            descriptors, None, {})
+        assert not descriptors
+    assert len(logs) >= 1
