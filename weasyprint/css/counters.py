@@ -38,16 +38,25 @@ def parse_counter_style_name(tokens, counter_style):
                 return token.value
 
 
-def counter_from_symbols(arguments):
+def anonymous_counter(counter):
+    counter_type, arguments = counter
+    if counter_type == 'string':
+        system = ('cyclic', None)
+        symbols = (('string', arguments),)
+        suffix = ('string', '')
+    else:
+        system = (arguments[0], 1 if arguments[0] == 'fixed' else None)
+        symbols = tuple(('string', argument) for argument in arguments[1:])
+        suffix = ('string', '. ')
     return {
-        'system': (arguments[0], 1 if arguments[0] == 'fixed' else None),
+        'system': system,
         'negative': (('string', '-'), ('string', '')),
         'prefix': ('string', ''),
-        'suffix': ('string', '. '),
+        'suffix': suffix,
         'range': 'auto',
         'pad': (0, ''),
         'fallback': 'decimal',
-        'symbols': tuple(('string', argument) for argument in arguments[1:]),
+        'symbols': symbols,
         'additive_symbols': (),
     }
 
@@ -69,8 +78,8 @@ class CounterStyle(dict):
         See https://www.w3.org/TR/css-counter-styles-3/#generate-a-counter
 
         """
-        if counter_type[0] == 'symbols()':
-            counter = counter_from_symbols(counter_type[1])
+        if counter_type[0] in ('symbols()', 'string'):
+            counter = anonymous_counter(counter_type)
         else:
             # Step 1
             if counter_type not in self:
@@ -195,8 +204,8 @@ class CounterStyle(dict):
 
     def render_marker(self, counter_type, counter_value):
         """Generate the content of a ::marker pseudo-element."""
-        if counter_type[0] == 'symbols()':
-            counter = counter_from_symbols(counter_type[1])
+        if counter_type[0] in ('symbols()', 'string'):
+            counter = anonymous_counter(counter_type)
         else:
             counter = self[counter_type]
             if counter_type not in self:

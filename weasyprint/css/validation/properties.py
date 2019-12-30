@@ -872,6 +872,8 @@ def list_style_type(token):
     """``list-style-type`` property validation."""
     if token.type == 'ident':
         return token.value
+    elif token.type == 'string':
+        return ('string', token.value)
     elif token.type == 'function' and token.name == 'symbols':
         allowed_types = (
             'cyclic', 'numeric', 'alphabetic', 'symbolic', 'fixed')

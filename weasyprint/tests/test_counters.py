@@ -474,3 +474,30 @@ def test_counter_symbols(arguments, values):
     assert li_2.children[0].children[0].children[0].text == values[1]
     assert li_3.children[0].children[0].children[0].text == values[2]
     assert li_4.children[0].children[0].children[0].text == values[3]
+
+
+@assert_no_logs
+@pytest.mark.parametrize('style_type, values', (
+    ('decimal', ('1. ', '2. ', '3. ', '4. ')),
+    ('"/"', ('/', '/', '/', '/')),
+))
+def test_list_style_types(style_type, values):
+    page, = render_pages('''
+      <style>
+        ol { list-style-type: %s }
+      </style>
+      <ol>
+        <li>abc</li>
+        <li>abc</li>
+        <li>abc</li>
+        <li>abc</li>
+      </ol>
+    ''' % style_type)
+    html, = page.children
+    body, = html.children
+    ol, = body.children
+    li_1, li_2, li_3, li_4 = ol.children
+    assert li_1.children[0].children[0].children[0].text == values[0]
+    assert li_2.children[0].children[0].children[0].text == values[1]
+    assert li_3.children[0].children[0].children[0].text == values[2]
+    assert li_4.children[0].children[0].children[0].text == values[3]
