@@ -51,6 +51,8 @@ __all__ = ['HTML', 'CSS', 'Attachment', 'Document', 'Page',
 from .urls import (  # noqa isort:skip
     fetch, default_url_fetcher, path2url, ensure_url, url_is_absolute)
 from .logger import LOGGER, PROGRESS_LOGGER  # noqa isort:skip
+# Some imports are at the end of the file (after the CSS class)
+# to work around circular imports.
 
 
 class HTML(object):
