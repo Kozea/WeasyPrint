@@ -300,21 +300,6 @@ class PDFFile(object):
         fileobj.seek(0, os.SEEK_END)
         return fileobj.tell(), fileobj.write
 
-    def _find_root_id(self):
-        fileobj = self.fileobj
-        pos = fileobj.tell()
-        fileobj.seek(self.startxref)
-
-        for line in fileobj:
-            match = re.match(
-                rb'^\s*/Root\s+(?P<root_id>\d+)\s+\d+\s+R\s*$', line)
-            if match:
-                root_id = match.group('root_id')
-                break
-
-        fileobj.seek(pos)
-        return int(root_id.decode('ascii'))
-
 
 def _write_compressed_file_object(pdf, file):
     """Write a compressed file like object as ``/EmbeddedFile``.
@@ -500,6 +485,7 @@ def write_pdf_metadata(fileobj, scale, url_fetcher, attachments,
     - embedded files
     - trim box
     - bleed box
+    - forms
 
     """
     pdf = PDFFile(fileobj)
@@ -530,6 +516,7 @@ def write_pdf_metadata(fileobj, scale, url_fetcher, attachments,
                 annot_files[target] = _write_pdf_attachment(
                     pdf, (target, None), url_fetcher)
 
+    field_ids = []
     for pdf_page, document_page, page_links in zip(
             pdf.pages, pages, attachment_links):
 
@@ -603,48 +590,24 @@ def write_pdf_metadata(fileobj, scale, url_fetcher, attachments,
                 '/Annots [{0}]', ' '.join(
                     '{0} 0 R'.format(n) for n in annotations)))
 
-    pdf.finish()
+        # Add form fields
 
+        for input_type, (x, y, width, height) in document_page.form_fields:
+            matrix = cairo.Matrix(
+                xx=scale, yy=-scale, y0=document_page.height * scale)
+            x, y = matrix.transform_point(x, y)
+            width, height = matrix.transform_distance(width, height)
+            pdf_obj = forms.field_pdf(input_type, x, y, width, height)
+            pdf_obj_id = pdf.write_new_object(pdf_format(pdf_obj))
+            field_ids.append(pdf_obj_id)
+            pdf.extend_dict(pdf_page, pdf_format(
+                '/Annots [{0}]',
+                ' '.join(map('{} 0 R'.format, field_ids))))
 
-def write_pdf_form(fileobj):
-    pos = fileobj.tell()
-    fileobj.seek(0)
-    wfields = forms.collect_wfields(fileobj.read())
-    fileobj.seek(pos)
-
-    if not wfields:
-        return
-
-    pdf = PDFFile(fileobj)
-
-    field_ids = []
-    # Write objects
-    for name, wfield in wfields.items():
-        pdf_obj = wfield.to_pdf_obj()
-        wfield.pdf_obj_id = pdf.write_new_object(pdf_obj)
-        field_ids.append(wfield.pdf_obj_id)
-
-    # Write form
-    acroform_obj = forms.make_acroform(field_ids)
-    acroform_id = pdf.write_new_object(acroform_obj)
-
-    # Attach form to root
-    root_id = pdf._find_root_id()
-    root_obj = pdf.read_object(root_id)
-    root = PDFDictionary(root_id, root_obj)
-    pdf.extend_dict(
-        root, '   /AcroForm {} 0 R'.format(acroform_id).encode('ascii'))
-
-    # Add annot references to page objects
-    annots_by_page = {}
-    for name, wfield in wfields.items():
-        annots_by_page.setdefault(wfield.page, []).append(wfield.pdf_obj_id)
-
-    for page_id, wfield_ids in annots_by_page.items():
-        page_obj = pdf.read_object(page_id)
-        page = PDFDictionary(page_id, page_obj)
-        # This is a shorthand to write '/Annots [10 0 R 11 0 R 12 0 R]'
-        pdf.extend_dict(page, '   /Annots [{}]'.format(
-            ' '.join(map('{} 0 R'.format, wfield_ids))).encode('ascii'))
+    if field_ids:
+        acroform_obj = forms.make_acroform(field_ids)
+        acroform_id = pdf.write_new_object(pdf_format(acroform_obj))
+        pdf.extend_dict(
+            pdf.catalog, pdf_format('/AcroForm {0} 0 R', acroform_id))
 
     pdf.finish()

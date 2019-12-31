@@ -51,7 +51,6 @@ __all__ = ['HTML', 'CSS', 'Attachment', 'Document', 'Page',
 from .urls import (  # noqa isort:skip
     fetch, default_url_fetcher, path2url, ensure_url, url_is_absolute)
 from .logger import LOGGER, PROGRESS_LOGGER  # noqa isort:skip
-from . import forms  # noqa isort:skip
 
 
 class HTML(object):
@@ -117,8 +116,6 @@ class HTML(object):
                     transport_encoding=protocol_encoding,
                     namespaceHTMLElements=False)
             assert result
-
-        forms.augment_markup(result)
 
         self.base_url = find_base_url(result, base_url)
         self.url_fetcher = url_fetcher

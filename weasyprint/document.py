@@ -29,7 +29,7 @@ from .images import get_image_from_uri as original_get_image_from_uri
 from .layout import layout_document
 from .layout.percentages import percentage
 from .logger import LOGGER, PROGRESS_LOGGER
-from .pdf import write_pdf_form, write_pdf_metadata
+from .pdf import write_pdf_metadata
 
 if cairo.cairo_version() < 11504:
     warnings.warn(
@@ -102,7 +102,8 @@ def rectangle_aabb(matrix, pos_x, pos_y, width, height):
     return box_x1, box_y1, box_x2 - box_x1, box_y2 - box_y1
 
 
-def _gather_links_and_bookmarks(box, bookmarks, links, anchors, matrix):
+def _gather_links_and_bookmarks(box, bookmarks, links, anchors, fields,
+                                matrix):
     transform = _get_matrix(box)
     if transform:
         matrix = transform * matrix if matrix else transform
@@ -120,9 +121,12 @@ def _gather_links_and_bookmarks(box, bookmarks, links, anchors, matrix):
     has_link = link and not isinstance(box, boxes.TextBox)
     # In case of duplicate IDs, only the first is an anchor.
     has_anchor = anchor_name and anchor_name not in anchors
+    has_field = (
+        box.element is not None and
+        box.element.tag in ('input', 'textarea'))
     is_attachment = hasattr(box, 'is_attachment') and box.is_attachment
 
-    if has_bookmark or has_link or has_anchor:
+    if has_bookmark or has_link or has_anchor or has_field:
         pos_x, pos_y, width, height = box.hit_area()
         if has_link:
             token_type, link = link
@@ -145,9 +149,16 @@ def _gather_links_and_bookmarks(box, bookmarks, links, anchors, matrix):
                 (bookmark_level, bookmark_label, (pos_x, pos_y), state))
         if has_anchor:
             anchors[anchor_name] = pos_x, pos_y
+        if has_field:
+            if box.element.tag == 'input':
+                field_type = box.element.attrib.get('type', 'text')
+            else:
+                field_type = 'textarea'
+            fields.append((field_type, (pos_x, pos_y, width, height)))
 
     for child in box.all_children():
-        _gather_links_and_bookmarks(child, bookmarks, links, anchors, matrix)
+        _gather_links_and_bookmarks(
+            child, bookmarks, links, anchors, fields, matrix)
 
 
 def _w3c_date_to_iso(string, attr_name):
@@ -226,8 +237,11 @@ class Page(object):
         #: ``(x, y)`` point in CSS pixels from the top-left of the page.
         self.anchors = {}
 
+        self.form_fields = []
+
         _gather_links_and_bookmarks(
-            page_box, self.bookmarks, self.links, self.anchors, matrix=None)
+            page_box, self.bookmarks, self.links, self.anchors,
+            self.form_fields, matrix=None)
         self._page_box = page_box
         self._enable_hinting = enable_hinting
 
@@ -684,7 +698,6 @@ class Document(object):
         surface.finish()
 
         # Add extra PDF metadata: attachments, embedded files, forms
-        write_pdf_form(file_obj)
         attachment_links = [
             [link for link in page_links if link[0] == 'attachment']
             for page_links, page_anchors in paged_links_and_anchors]
@@ -697,7 +710,8 @@ class Document(object):
             self.metadata.attachments or
             attachments or
             any(attachment_links) or
-            any(any(page.bleed.values()) for page in self.pages))
+            any(any(page.bleed.values()) for page in self.pages) or
+            any(page.form_fields for page in self.pages))
         if condition:
             write_pdf_metadata(
                 file_obj, scale, self.url_fetcher,
