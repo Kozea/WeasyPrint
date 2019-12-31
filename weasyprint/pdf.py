@@ -39,6 +39,7 @@ from urllib.parse import unquote, urlsplit
 import cairocffi as cairo
 
 from . import Attachment
+from . import forms
 from .logger import LOGGER
 from .urls import URLFetchingError
 
@@ -259,6 +260,7 @@ class PDFFile(object):
         This makes `fileobj` a valid (updated) PDF file.
 
         """
+        # import nose.tools as nt; nt.set_trace()
         new_startxref, write = self._start_writing()
         self.finished = True
         write(b'xref\n')
@@ -299,6 +301,21 @@ class PDFFile(object):
         fileobj = self.fileobj
         fileobj.seek(0, os.SEEK_END)
         return fileobj.tell(), fileobj.write
+
+    def _find_root_id(self):
+        fileobj = self.fileobj
+        pos = fileobj.tell()
+        fileobj.seek(self.startxref)
+
+        for line in fileobj:
+            match = re.match(rb"^\s*/Root\s+(?P<root_id>\d+)\s+\d+\s+R\s*$", line)
+            if match:
+                root_id = match.group('root_id')
+                break
+
+        fileobj.seek(pos)
+
+        return int(str(root_id, 'ascii'))
 
 
 def _write_compressed_file_object(pdf, file):
@@ -587,5 +604,49 @@ def write_pdf_metadata(fileobj, scale, url_fetcher, attachments,
             pdf.extend_dict(pdf_page, pdf_format(
                 '/Annots [{0}]', ' '.join(
                     '{0} 0 R'.format(n) for n in annotations)))
+
+    pdf.finish()
+
+
+def write_pdf_form(fileobj):
+    pos = fileobj.tell()
+    fileobj.seek(0)
+    wfields = forms.collect_wfields(fileobj.read())
+    fileobj.seek(pos)
+
+    pdf = PDFFile(fileobj)
+
+    field_ids = []
+    # Write objects
+    for name, wfield in wfields.items():
+        pdf_obj = wfield.to_pdf_obj()
+        wfield.pdf_obj_id = pdf.write_new_object(pdf_obj)
+        field_ids.append(wfield.pdf_obj_id)
+
+    # Write form
+    acroform_obj = forms.make_acroform(field_ids)
+    acroform_id = pdf.write_new_object(acroform_obj)
+
+    # Attach form to root
+    root_id = pdf._find_root_id()
+    root_obj = pdf.read_object(root_id)
+    root = PDFDictionary(root_id, root_obj)
+    pdf.extend_dict(root, bytes("   /AcroForm {} 0 R".format(acroform_id), 'ascii'))
+
+    # Add annot references to page objects
+    annots_by_page = {}
+    for name, wfield in wfields.items():
+        annots_by_page.setdefault(wfield.page, []).append(wfield.pdf_obj_id)
+
+    for page_id, wfield_ids in annots_by_page.items():
+        page_obj = pdf.read_object(page_id)
+        page = PDFDictionary(page_id, page_obj)
+        # This is a shorthand to write '/Annots [10 0 R 11 0 R 12 0 R]'
+        pdf.extend_dict(
+            page,
+            bytes("   /Annots [{}]".format(
+                " ".join(map("{} 0 R".format, wfield_ids))), 'ascii'
+            )
+        )
 
     pdf.finish()
