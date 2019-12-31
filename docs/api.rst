@@ -64,3 +64,6 @@ Python API
 
 .. module:: weasyprint.fonts
 .. autoclass:: FontConfiguration()
+
+.. module:: weasyprint.css.counters
+.. autoclass:: CounterStyle()

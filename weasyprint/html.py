@@ -20,6 +20,7 @@ from urllib.parse import urljoin
 
 from . import CSS, ROOT
 from .css import get_child_text
+from .css.counters import CounterStyle
 from .formatting_structure import boxes
 from .logger import LOGGER
 from .urls import get_url_attribute
@@ -28,7 +29,10 @@ from .urls import get_url_attribute
 level = LOGGER.level
 LOGGER.setLevel(logging.ERROR)
 
-HTML5_UA_STYLESHEET = CSS(filename=(ROOT / 'css' / 'html5_ua.css'))
+HTML5_UA_COUNTER_STYLE = CounterStyle()
+HTML5_UA_STYLESHEET = CSS(
+    filename=(ROOT / 'css' / 'html5_ua.css'),
+    counter_style=HTML5_UA_COUNTER_STYLE)
 HTML5_PH_STYLESHEET = CSS(filename=(ROOT / 'css' / 'html5_ph.css'))
 
 LOGGER.setLevel(level)

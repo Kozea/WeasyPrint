@@ -359,6 +359,11 @@ def test_expand_borders_invalid():
         'list_style_image': ('none', None),
         'list_style_type': 'none',
     }),
+    ('list-style: inside special none', {
+        'list_style_position': 'inside',
+        'list_style_image': ('none', None),
+        'list_style_type': 'special',
+    }),
 ))
 def test_expand_list_style(rule, result):
     assert expand_to_dict(rule) == result
@@ -374,7 +379,6 @@ def test_expand_list_style_warning():
 @assert_no_logs
 @pytest.mark.parametrize('rule', (
     'list-style: none inside none none',
-    'list-style: red',
 ))
 def test_expand_list_style_invalid(rule):
     assert_invalid(rule)
@@ -918,3 +922,18 @@ def test_radial_gradient():
 def test_flex(rule, result):
     """Test the ``flex`` property."""
     assert expand_to_dict(rule) == result
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', (
+    'list-style-type: symbols()',
+    'list-style-type: symbols(cyclic)',
+    'list-style-type: symbols(symbolic)',
+    'list-style-type: symbols(fixed)',
+    'list-style-type: symbols(alphabetic "a")',
+    'list-style-type: symbols(numeric "1")',
+    'list-style-type: symbols(test "a" "b")',
+    'list-style-type: symbols(fixed symbolic "a" "b")',
+))
+def test_function_symbols(rule):
+    assert_invalid(rule)

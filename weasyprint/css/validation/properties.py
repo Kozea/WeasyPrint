@@ -12,15 +12,14 @@
 
 from tinycss2.color3 import parse_color
 
-from ...formatting_structure import counters
 from .. import computed_values
 from ..properties import KNOWN_PROPERTIES, Dimension
 from ..utils import (
     InvalidValues, check_var_function, comma_separated_list, get_angle,
     get_content_list, get_content_list_token, get_custom_ident, get_image,
     get_keyword, get_length, get_resolution, get_single_keyword, get_url,
-    parse_2d_position, parse_function, parse_position, single_keyword,
-    single_token)
+    parse_2d_position, parse_function, parse_position, remove_whitespace,
+    single_keyword, single_token)
 
 PREFIX = '-weasy-'
 PROPRIETARY = set()
@@ -868,10 +867,38 @@ def list_style_position(keyword):
 
 
 @property()
-@single_keyword
-def list_style_type(keyword):
+@single_token
+def list_style_type(token):
     """``list-style-type`` property validation."""
-    return keyword == 'none' or keyword in counters.STYLES
+    if token.type == 'ident':
+        return token.value
+    elif token.type == 'string':
+        return ('string', token.value)
+    elif token.type == 'function' and token.name == 'symbols':
+        allowed_types = (
+            'cyclic', 'numeric', 'alphabetic', 'symbolic', 'fixed')
+        function_arguments = remove_whitespace(token.arguments)
+        if len(function_arguments) >= 1:
+            arguments = []
+            if function_arguments[0].type == 'ident':
+                if function_arguments[0].value in allowed_types:
+                    index = 1
+                    arguments.append(function_arguments[0].value)
+                else:
+                    return
+            else:
+                arguments.append('symbolic')
+                index = 0
+            if len(function_arguments) < index + 1:
+                return
+            for i in range(index, len(function_arguments)):
+                if function_arguments[i].type != 'string':
+                    return
+                arguments.append(function_arguments[i].value)
+            if arguments[0] in ('alphabetic', 'numeric'):
+                if len(arguments) < 3:
+                    return
+            return ('symbols()', tuple(arguments))
 
 
 @property('min-width')
