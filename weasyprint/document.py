@@ -29,7 +29,7 @@ from .images import get_image_from_uri as original_get_image_from_uri
 from .layout import layout_document
 from .layout.percentages import percentage
 from .logger import LOGGER, PROGRESS_LOGGER
-from .pdf import write_pdf_metadata, write_pdf_form
+from .pdf import write_pdf_form, write_pdf_metadata
 
 if cairo.cairo_version() < 11504:
     warnings.warn(
@@ -683,10 +683,8 @@ class Document(object):
 
         surface.finish()
 
-        # Insert form fields in PDF
+        # Add extra PDF metadata: attachments, embedded files, forms
         write_pdf_form(file_obj)
-
-        # Add extra PDF metadata: attachments, embedded files
         attachment_links = [
             [link for link in page_links if link[0] == 'attachment']
             for page_links, page_anchors in paged_links_and_anchors]

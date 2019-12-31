@@ -51,9 +51,7 @@ __all__ = ['HTML', 'CSS', 'Attachment', 'Document', 'Page',
 from .urls import (  # noqa isort:skip
     fetch, default_url_fetcher, path2url, ensure_url, url_is_absolute)
 from .logger import LOGGER, PROGRESS_LOGGER  # noqa isort:skip
-# Some imports are at the end of the file (after the CSS class)
-# to work around circular imports.
-from . import forms
+from . import forms  # noqa isort:skip
 
 
 class HTML(object):
@@ -450,5 +448,6 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
 # Work around circular imports.
 from .css import preprocess_stylesheet  # noqa isort:skip
 from .html import (  # noqa isort:skip
-    HTML5_UA_STYLESHEET, HTML5_PH_STYLESHEET, HTML5_WF_STYLESHEET, find_base_url, get_html_metadata)
+    HTML5_UA_STYLESHEET, HTML5_PH_STYLESHEET, HTML5_WF_STYLESHEET,
+    find_base_url, get_html_metadata)
 from .document import Document, Page  # noqa isort:skip

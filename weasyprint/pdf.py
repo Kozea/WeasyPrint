@@ -38,8 +38,7 @@ from urllib.parse import unquote, urlsplit
 
 import cairocffi as cairo
 
-from . import Attachment
-from . import forms
+from . import Attachment, forms
 from .logger import LOGGER
 from .urls import URLFetchingError
 
@@ -260,7 +259,6 @@ class PDFFile(object):
         This makes `fileobj` a valid (updated) PDF file.
 
         """
-        # import nose.tools as nt; nt.set_trace()
         new_startxref, write = self._start_writing()
         self.finished = True
         write(b'xref\n')
@@ -308,14 +306,14 @@ class PDFFile(object):
         fileobj.seek(self.startxref)
 
         for line in fileobj:
-            match = re.match(rb"^\s*/Root\s+(?P<root_id>\d+)\s+\d+\s+R\s*$", line)
+            match = re.match(
+                rb'^\s*/Root\s+(?P<root_id>\d+)\s+\d+\s+R\s*$', line)
             if match:
                 root_id = match.group('root_id')
                 break
 
         fileobj.seek(pos)
-
-        return int(str(root_id, 'ascii'))
+        return int(root_id.decode('ascii'))
 
 
 def _write_compressed_file_object(pdf, file):
@@ -614,6 +612,9 @@ def write_pdf_form(fileobj):
     wfields = forms.collect_wfields(fileobj.read())
     fileobj.seek(pos)
 
+    if not wfields:
+        return
+
     pdf = PDFFile(fileobj)
 
     field_ids = []
@@ -631,7 +632,8 @@ def write_pdf_form(fileobj):
     root_id = pdf._find_root_id()
     root_obj = pdf.read_object(root_id)
     root = PDFDictionary(root_id, root_obj)
-    pdf.extend_dict(root, bytes("   /AcroForm {} 0 R".format(acroform_id), 'ascii'))
+    pdf.extend_dict(
+        root, '   /AcroForm {} 0 R'.format(acroform_id).encode('ascii'))
 
     # Add annot references to page objects
     annots_by_page = {}
@@ -642,11 +644,7 @@ def write_pdf_form(fileobj):
         page_obj = pdf.read_object(page_id)
         page = PDFDictionary(page_id, page_obj)
         # This is a shorthand to write '/Annots [10 0 R 11 0 R 12 0 R]'
-        pdf.extend_dict(
-            page,
-            bytes("   /Annots [{}]".format(
-                " ".join(map("{} 0 R".format, wfield_ids))), 'ascii'
-            )
-        )
+        pdf.extend_dict(page, '   /Annots [{}]'.format(
+            ' '.join(map('{} 0 R'.format, wfield_ids))).encode('ascii'))
 
     pdf.finish()
