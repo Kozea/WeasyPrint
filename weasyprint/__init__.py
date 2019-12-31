@@ -127,6 +127,9 @@ class HTML(object):
     def _ua_stylesheets(self):
         return [HTML5_UA_STYLESHEET]
 
+    def _ua_counter_style(self):
+        return [HTML5_UA_COUNTER_STYLE.copy()]
+
     def _ph_stylesheets(self):
         return [HTML5_PH_STYLESHEET]
 
@@ -137,7 +140,8 @@ class HTML(object):
         return get_html_metadata(self.wrapper_element, self.base_url)
 
     def render(self, stylesheets=None, enable_hinting=False,
-               presentational_hints=False, font_config=None):
+               presentational_hints=False, font_config=None,
+               counter_style=None):
         """Lay out and paginate the document, but do not (yet) export it
         to PDF or PNG.
 
@@ -162,6 +166,8 @@ class HTML(object):
             followed.
         :type font_config: :class:`~fonts.FontConfiguration`
         :param font_config: A font configuration handling ``@font-face`` rules.
+        :type counter_style: :class:`~css.counters.CounterStyle`
+        :param counter_style: A dictionary storing ``@counter-style`` rules.
         :returns: A :class:`~document.Document` object.
 
         """
@@ -171,11 +177,11 @@ class HTML(object):
 
         return Document._render(
             self, stylesheets, enable_hinting, presentational_hints,
-            font_config)
+            font_config, counter_style)
 
     def write_pdf(self, target=None, stylesheets=None, zoom=1,
                   attachments=None, presentational_hints=False,
-                  font_config=None):
+                  font_config=None, counter_style=None):
         """Render the document to a PDF file.
 
         This is a shortcut for calling :meth:`render`, then
@@ -205,6 +211,8 @@ class HTML(object):
             followed.
         :type font_config: :class:`~fonts.FontConfiguration`
         :param font_config: A font configuration handling ``@font-face`` rules.
+        :type counter_style: :class:`~css.counters.CounterStyle`
+        :param counter_style: A dictionary storing ``@counter-style`` rules.
         :returns:
             The PDF as :obj:`bytes` if ``target`` is not provided or
             :obj:`None`, otherwise :obj:`None` (the PDF is written to
@@ -214,11 +222,12 @@ class HTML(object):
         return self.render(
             stylesheets, enable_hinting=False,
             presentational_hints=presentational_hints,
-            font_config=font_config).write_pdf(
+            font_config=font_config, counter_style=counter_style).write_pdf(
                 target, zoom, attachments)
 
     def write_image_surface(self, stylesheets=None, resolution=96,
-                            presentational_hints=False, font_config=None):
+                            presentational_hints=False, font_config=None,
+                            counter_style=None):
         """Render pages vertically on a cairo image surface.
 
         .. versionadded:: 0.17
@@ -245,6 +254,8 @@ class HTML(object):
             followed.
         :type font_config: :class:`~fonts.FontConfiguration`
         :param font_config: A font configuration handling ``@font-face`` rules.
+        :type counter_style: :class:`~css.counters.CounterStyle`
+        :param counter_style: A dictionary storing ``@counter-style`` rules.
         :returns: A cairo :class:`ImageSurface <cairocffi.ImageSurface>`.
 
         """
@@ -256,7 +267,8 @@ class HTML(object):
         return surface
 
     def write_png(self, target=None, stylesheets=None, resolution=96,
-                  presentational_hints=False, font_config=None):
+                  presentational_hints=False, font_config=None,
+                  counter_style=None):
         """Paint the pages vertically to a single PNG image.
 
         There is no decoration around pages other than those specified in CSS
@@ -284,6 +296,8 @@ class HTML(object):
             followed.
         :type font_config: :class:`~fonts.FontConfiguration`
         :param font_config: A font configuration handling ``@font-face`` rules.
+        :type counter_style: :class:`~css.counters.CounterStyle`
+        :param counter_style: A dictionary storing ``@counter-style`` rules.
         :returns:
             The image as :obj:`bytes` if ``target`` is not provided or
             :obj:`None`, otherwise :obj:`None` (the image is written to
@@ -291,9 +305,10 @@ class HTML(object):
 
         """
         png_bytes, _width, _height = (
-            self.render(stylesheets, enable_hinting=True,
-                        presentational_hints=presentational_hints,
-                        font_config=font_config)
+            self.render(
+                stylesheets, enable_hinting=True,
+                presentational_hints=presentational_hints,
+                font_config=font_config, counter_style=counter_style)
             .write_png(target, resolution))
         return png_bytes
 
@@ -316,8 +331,8 @@ class CSS(object):
     def __init__(self, guess=None, filename=None, url=None, file_obj=None,
                  string=None, encoding=None, base_url=None,
                  url_fetcher=default_url_fetcher, _check_mime_type=False,
-                 media_type='print', font_config=None, matcher=None,
-                 page_rules=None):
+                 media_type='print', font_config=None, counter_style=None,
+                 matcher=None, page_rules=None):
         PROGRESS_LOGGER.info(
             'Step 2 - Fetching and parsing CSS - %s',
             filename or url or getattr(file_obj, 'name', 'CSS string'))
@@ -341,7 +356,7 @@ class CSS(object):
         self.fonts = []
         preprocess_stylesheet(
             media_type, base_url, stylesheet, url_fetcher, self.matcher,
-            self.page_rules, self.fonts, font_config)
+            self.page_rules, self.fonts, font_config, counter_style)
 
 
 class Attachment(object):
@@ -445,6 +460,6 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
 # Work around circular imports.
 from .css import preprocess_stylesheet  # noqa isort:skip
 from .html import (  # noqa isort:skip
-    HTML5_UA_STYLESHEET, HTML5_PH_STYLESHEET, HTML5_WF_STYLESHEET,
-    find_base_url, get_html_metadata)
+    HTML5_UA_COUNTER_STYLE, HTML5_UA_STYLESHEET, HTML5_PH_STYLESHEET,
+    HTML5_WF_STYLESHEET, find_base_url, get_html_metadata)
 from .document import Document, Page  # noqa isort:skip

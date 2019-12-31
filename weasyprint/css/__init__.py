@@ -27,7 +27,7 @@ import tinycss2.nth
 from .. import CSS
 from ..logger import LOGGER, PROGRESS_LOGGER
 from ..urls import URLFetchingError, get_url_attribute, url_join
-from . import computed_values, media_queries
+from . import computed_values, counters, media_queries
 from .properties import INHERITED, INITIAL_NOT_COMPUTED, INITIAL_VALUES
 from .utils import remove_whitespace
 from .validation import preprocess_declarations
@@ -235,7 +235,7 @@ def get_child_text(element):
 
 
 def find_stylesheets(wrapper_element, device_media_type, url_fetcher, base_url,
-                     font_config, page_rules):
+                     font_config, counter_style, page_rules):
     """Yield the stylesheets in ``element_tree``.
 
     The output order is the same as the source order.
@@ -262,7 +262,8 @@ def find_stylesheets(wrapper_element, device_media_type, url_fetcher, base_url,
             css = CSS(
                 string=content, base_url=base_url,
                 url_fetcher=url_fetcher, media_type=device_media_type,
-                font_config=font_config, page_rules=page_rules)
+                font_config=font_config, counter_style=counter_style,
+                page_rules=page_rules)
             yield css
         elif element.tag == 'link' and element.get('href'):
             if not element_has_link_type(element, 'stylesheet') or \
@@ -274,7 +275,8 @@ def find_stylesheets(wrapper_element, device_media_type, url_fetcher, base_url,
                     yield CSS(
                         url=href, url_fetcher=url_fetcher,
                         _check_mime_type=True, media_type=device_media_type,
-                        font_config=font_config, page_rules=page_rules)
+                        font_config=font_config, counter_style=counter_style,
+                        page_rules=page_rules)
                 except URLFetchingError as exc:
                     LOGGER.error(
                         'Failed to load stylesheet at %s : %s', href, exc)
@@ -558,14 +560,14 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
                             'border-width:%spx;border-style:solid' %
                             element.get('border'))
         elif element.tag == 'ol':
-            # From https://www.w3.org/TR/css-lists-3/
+            # From https://www.w3.org/TR/css-lists-3/#ua-stylesheet
             if element.get('start'):
                 yield specificity, check_style_attribute(
                     element,
                     'counter-reset:list-item %s;'
                     'counter-increment:list-item -1' % element.get('start'))
-        elif element.tag == 'ul':
-            # From https://www.w3.org/TR/css-lists-3/
+        elif element.tag == 'li':
+            # From https://www.w3.org/TR/css-lists-3/#ua-stylesheet
             if element.get('value'):
                 yield specificity, check_style_attribute(
                     element,
@@ -791,7 +793,7 @@ def parse_page_selectors(rule):
 
 def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                           url_fetcher, matcher, page_rules, fonts,
-                          font_config, ignore_imports=False):
+                          font_config, counter_style, ignore_imports=False):
     """Do the work that can be done early on stylesheet, before they are
     in a document.
 
@@ -862,7 +864,8 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                     CSS(
                         url=url, url_fetcher=url_fetcher,
                         media_type=device_media_type, font_config=font_config,
-                        matcher=matcher, page_rules=page_rules)
+                        counter_style=counter_style, matcher=matcher,
+                        page_rules=page_rules)
                 except URLFetchingError as exc:
                     LOGGER.error(
                         'Failed to load stylesheet at %s : %s', url, exc)
@@ -882,7 +885,8 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
             content_rules = tinycss2.parse_rule_list(rule.content)
             preprocess_stylesheet(
                 device_media_type, base_url, content_rules, url_fetcher,
-                matcher, page_rules, fonts, font_config, ignore_imports=True)
+                matcher, page_rules, fonts, font_config, counter_style,
+                ignore_imports=True)
 
         elif rule.type == 'at-rule' and rule.lower_at_keyword == 'page':
             data = parse_page_selectors(rule)
@@ -923,7 +927,8 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
         elif rule.type == 'at-rule' and rule.lower_at_keyword == 'font-face':
             ignore_imports = True
             content = tinycss2.parse_declaration_list(rule.content)
-            rule_descriptors = dict(preprocess_descriptors(base_url, content))
+            rule_descriptors = dict(
+                preprocess_descriptors('font-face', base_url, content))
             for key in ('src', 'font_family'):
                 if key not in rule_descriptors:
                     LOGGER.warning(
@@ -938,10 +943,75 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                     if font_filename:
                         fonts.append(font_filename)
 
+        elif (rule.type == 'at-rule' and
+                rule.lower_at_keyword == 'counter-style'):
+            name = counters.parse_counter_style_name(
+                rule.prelude, counter_style)
+            if name is None:
+                LOGGER.warning(
+                    'Invalid counter style name "%s", the whole '
+                    '@counter-style rule was ignored at %s:%s.',
+                    tinycss2.serialize(rule.prelude), rule.source_line,
+                    rule.source_column)
+                continue
+
+            ignore_imports = True
+            content = tinycss2.parse_declaration_list(rule.content)
+            counter = {
+                'system': None,
+                'negative': None,
+                'prefix': None,
+                'suffix': None,
+                'range': None,
+                'pad': None,
+                'fallback': None,
+                'symbols': None,
+                'additive_symbols': None,
+            }
+            rule_descriptors = dict(
+                preprocess_descriptors('counter-style', base_url, content))
+
+            for descriptor_name, descriptor_value in rule_descriptors.items():
+                counter[descriptor_name] = descriptor_value
+
+            if counter['system'] is None:
+                system = (None, 'symbolic', None)
+            else:
+                system = counter['system']
+
+            if system[0] is None:
+                if system[1] in ('cyclic', 'fixed', 'symbolic'):
+                    if len(counter['symbols'] or []) < 1:
+                        LOGGER.warning(
+                            'In counter style "%s" at %s:%s, '
+                            'counter style "%s" needs at least one symbol',
+                            name, rule.source_line, rule.source_column,
+                            system[1])
+                        continue
+                elif system[1] in ('alphabetic', 'numeric'):
+                    if len(counter['symbols'] or []) < 2:
+                        LOGGER.warning(
+                            'In counter style "%s" at %s:%s, '
+                            'counter style "%s" needs at least two symbols',
+                            name, rule.source_line, rule.source_column,
+                            system[1])
+                        continue
+                elif system[1] == 'additive':
+                    if len(counter['additive_symbols'] or []) < 2:
+                        LOGGER.warning(
+                            'In counter style "%s" at %s:%s, '
+                            'counter style "additive" '
+                            'needs at least two additive symbols',
+                            name, rule.source_line, rule.source_column)
+                        continue
+
+            counter_style[name] = counter
+
 
 def get_all_computed_styles(html, user_stylesheets=None,
                             presentational_hints=False, font_config=None,
-                            page_rules=None, target_collector=None):
+                            counter_style=None, page_rules=None,
+                            target_collector=None):
     """Compute all the computed styles of all elements in ``html`` document.
 
     Do everything from finding author stylesheets to parsing and applying them.
@@ -952,6 +1022,11 @@ def get_all_computed_styles(html, user_stylesheets=None,
     """
     # List stylesheets. Order here is not important ('origin' is).
     sheets = []
+    if counter_style is None:
+        counter_style = counters.CounterStyle()
+    for style in html._ua_counter_style():
+        for key, value in style.items():
+            counter_style[key] = value
     for sheet in (html._ua_stylesheets() or []):
         sheets.append((sheet, 'user agent', None))
     if presentational_hints:
@@ -959,7 +1034,7 @@ def get_all_computed_styles(html, user_stylesheets=None,
             sheets.append((sheet, 'author', (0, 0, 0)))
     for sheet in find_stylesheets(
             html.wrapper_element, html.media_type, html.url_fetcher,
-            html.base_url, font_config, page_rules):
+            html.base_url, font_config, counter_style, page_rules):
         sheets.append((sheet, 'author', None))
     for sheet in (user_stylesheets or []):
         sheets.append((sheet, 'user', None))

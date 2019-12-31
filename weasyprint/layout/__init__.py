@@ -187,11 +187,12 @@ def layout_document(html, root_box, context, max_loops=8):
 
 class LayoutContext(object):
     def __init__(self, enable_hinting, style_for, get_image_from_uri,
-                 font_config, target_collector):
+                 font_config, counter_style, target_collector):
         self.enable_hinting = enable_hinting
         self.style_for = style_for
         self.get_image_from_uri = get_image_from_uri
         self.font_config = font_config
+        self.counter_style = counter_style
         self.target_collector = target_collector
         self._excluded_shapes_lists = []
         self.excluded_shapes = None  # Not initialized yet

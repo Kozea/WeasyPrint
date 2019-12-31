@@ -19,6 +19,7 @@ from weasyprint.layout import LayoutContext
 
 from . import CSS
 from .css import get_all_computed_styles
+from .css.counters import CounterStyle
 from .css.targets import TargetCollector
 from .draw import draw_page, stacked
 from .fonts import FontConfiguration
@@ -365,9 +366,12 @@ class Document(object):
 
     @classmethod
     def _build_layout_context(cls, html, stylesheets, enable_hinting,
-                              presentational_hints=False, font_config=None):
+                              presentational_hints=False, font_config=None,
+                              counter_style=None):
         if font_config is None:
             font_config = FontConfiguration()
+        if counter_style is None:
+            counter_style = CounterStyle()
         target_collector = TargetCollector()
         page_rules = []
         user_stylesheets = []
@@ -375,32 +379,36 @@ class Document(object):
             if not hasattr(css, 'matcher'):
                 css = CSS(
                     guess=css, media_type=html.media_type,
-                    font_config=font_config)
+                    font_config=font_config, counter_style=counter_style)
             user_stylesheets.append(css)
         style_for = get_all_computed_styles(
             html, user_stylesheets, presentational_hints, font_config,
-            page_rules, target_collector)
+            counter_style, page_rules, target_collector)
         get_image_from_uri = functools.partial(
             original_get_image_from_uri, {}, html.url_fetcher)
         PROGRESS_LOGGER.info('Step 4 - Creating formatting structure')
         context = LayoutContext(
             enable_hinting, style_for, get_image_from_uri, font_config,
-            target_collector)
+            counter_style, target_collector)
         return context
 
     @classmethod
     def _render(cls, html, stylesheets, enable_hinting,
-                presentational_hints=False, font_config=None):
+                presentational_hints=False, font_config=None,
+                counter_style=None):
         if font_config is None:
             font_config = FontConfiguration()
 
+        if counter_style is None:
+            counter_style = CounterStyle()
+
         context = cls._build_layout_context(
             html, stylesheets, enable_hinting, presentational_hints,
-            font_config)
+            font_config, counter_style)
 
         root_box = build_formatting_structure(
             html.etree_element, context.style_for, context.get_image_from_uri,
-            html.base_url, context.target_collector)
+            html.base_url, context.target_collector, counter_style)
 
         page_boxes = layout_document(html, root_box, context)
         rendering = cls(
