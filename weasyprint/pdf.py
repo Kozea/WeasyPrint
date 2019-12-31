@@ -597,17 +597,15 @@ def write_pdf_metadata(fileobj, scale, url_fetcher, attachments,
                 xx=scale, yy=-scale, y0=document_page.height * scale)
             x, y = matrix.transform_point(x, y)
             width, height = matrix.transform_distance(width, height)
-            pdf_obj = forms.field_pdf(input_type, x, y, width, height)
-            pdf_obj_id = pdf.write_new_object(pdf_format(pdf_obj))
-            field_ids.append(pdf_obj_id)
+            field = forms.render_field(input_type, x, y, width, height)
+            field_id = pdf.write_new_object(pdf_format(field))
+            field_ids.append(field_id)
             pdf.extend_dict(pdf_page, pdf_format(
-                '/Annots [{0}]',
-                ' '.join(map('{} 0 R'.format, field_ids))))
+                '/Annots [{0}]', ' '.join(map('{} 0 R'.format, field_ids))))
 
     if field_ids:
-        acroform_obj = forms.make_acroform(field_ids)
-        acroform_id = pdf.write_new_object(pdf_format(acroform_obj))
-        pdf.extend_dict(
-            pdf.catalog, pdf_format('/AcroForm {0} 0 R', acroform_id))
+        form = forms.render_form(field_ids)
+        form_id = pdf.write_new_object(pdf_format(form))
+        pdf.extend_dict(pdf.catalog, pdf_format('/AcroForm {0} 0 R', form_id))
 
     pdf.finish()

@@ -238,6 +238,10 @@ class Page(object):
         #: ``(x, y)`` point in CSS pixels from the top-left of the page.
         self.anchors = {}
 
+        #: The :obj:`list` of ``(form_field_type, rectangle)`` :obj:`tuples
+        #: <tuple>`. A ``rectangle`` is ``(x, y, width, height)``, in CSS
+        #: pixels from the top-left of the page. ``form_field_type`` is one of
+        #: the form field types defined in the :mod:`weasyprint.forms` module.
         self.form_fields = []
 
         _gather_links_and_bookmarks(
@@ -705,7 +709,7 @@ class Document(object):
 
         surface.finish()
 
-        # Add extra PDF metadata: attachments, embedded files, forms
+        # Add extra PDF metadata: attachments, embedded files, form fields
         attachment_links = [
             [link for link in page_links if link[0] == 'attachment']
             for page_links, page_anchors in paged_links_and_anchors]

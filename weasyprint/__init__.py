@@ -116,7 +116,6 @@ class HTML(object):
                     transport_encoding=protocol_encoding,
                     namespaceHTMLElements=False)
             assert result
-
         self.base_url = find_base_url(result, base_url)
         self.url_fetcher = url_fetcher
         self.media_type = media_type
@@ -168,9 +167,6 @@ class HTML(object):
         :returns: A :class:`~document.Document` object.
 
         """
-        if stylesheets is None:
-            stylesheets = []
-
         return Document._render(
             self, stylesheets, enable_hinting, presentational_hints,
             font_config, counter_style)

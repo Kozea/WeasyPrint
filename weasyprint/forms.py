@@ -25,7 +25,7 @@ ACROFORM = '''
 >>
 '''
 
-WF_CLASSES = {
+FIELD_TYPES = {
     'text': '''
 <<
     /BS <<
@@ -56,9 +56,11 @@ WF_CLASSES = {
 }
 
 
-def field_pdf(input_type, x, y, width, height):
-    return WF_CLASSES[input_type].format(x, y, x + width, y + height)
+def render_field(input_type, x, y, width, height):
+    """Render PDF form field."""
+    return FIELD_TYPES[input_type].format(x, y, x + width, y + height)
 
 
-def make_acroform(field_ids):
+def render_form(field_ids):
+    """Render PDF form."""
     return ACROFORM.format(' '.join('{} 0 R'.format(x) for x in field_ids))
