@@ -133,9 +133,6 @@ class HTML(object):
     def _ph_stylesheets(self):
         return [HTML5_PH_STYLESHEET]
 
-    def _wf_stylesheets(self):
-        return [HTML5_WF_STYLESHEET]
-
     def _get_metadata(self):
         return get_html_metadata(self.wrapper_element, self.base_url)
 
@@ -173,7 +170,6 @@ class HTML(object):
         """
         if stylesheets is None:
             stylesheets = []
-        stylesheets.extend(self._wf_stylesheets())
 
         return Document._render(
             self, stylesheets, enable_hinting, presentational_hints,
@@ -461,5 +457,5 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
 from .css import preprocess_stylesheet  # noqa isort:skip
 from .html import (  # noqa isort:skip
     HTML5_UA_COUNTER_STYLE, HTML5_UA_STYLESHEET, HTML5_PH_STYLESHEET,
-    HTML5_WF_STYLESHEET, find_base_url, get_html_metadata)
+    find_base_url, get_html_metadata)
 from .document import Document, Page  # noqa isort:skip
