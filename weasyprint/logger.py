@@ -23,7 +23,7 @@
 import logging
 
 LOGGER = logging.getLogger('weasyprint')
-if not LOGGER.handlers:
+if not LOGGER.handlers:  # pragma: no cover
     LOGGER.setLevel(logging.WARNING)
     LOGGER.addHandler(logging.NullHandler())
 

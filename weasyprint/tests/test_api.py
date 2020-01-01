@@ -418,7 +418,7 @@ def test_unicode_filenames(tmpdir):
     png_bytes = FakeHTML(string=html).write_png()
     check_png_pattern(png_bytes)
     unicode_filename = 'Unicödé'
-    if sys.platform.startswith('darwin'):
+    if sys.platform.startswith('darwin'):  # pragma: no cover
         unicode_filename = unicodedata.normalize('NFD', unicode_filename)
 
     tmpdir.chdir()

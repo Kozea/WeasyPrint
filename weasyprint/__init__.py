@@ -21,12 +21,12 @@ import cssselect2
 import html5lib
 import tinycss2
 
-if sys.version_info.major < 3:
+if sys.version_info.major < 3:  # pragma: no cover
     raise RuntimeError(
         'WeasyPrint does not support Python 2.x anymore. '
         'Please use Python 3 or install an older version of WeasyPrint.')
 
-if hasattr(sys, 'frozen'):
+if hasattr(sys, 'frozen'):  # pragma: no cover
     if hasattr(sys, '_MEIPASS'):
         # Frozen with PyInstaller
         # See https://github.com/Kozea/WeasyPrint/pull/540

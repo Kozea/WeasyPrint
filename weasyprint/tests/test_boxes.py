@@ -118,7 +118,7 @@ def _sanity_checks(box):
         return
 
     acceptable_types_lists = None  # raises when iterated
-    for class_ in type(box).mro():
+    for class_ in type(box).mro():  # pragma: no cover
         if class_ in PROPER_CHILDREN:
             acceptable_types_lists = PROPER_CHILDREN[class_]
             break

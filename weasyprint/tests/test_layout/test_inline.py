@@ -641,11 +641,11 @@ def test_font_stretch():
     ('<body>hyphénation', 1),  # Default: no hyphenation
     ('<body lang=fr>hyphénation', 1),  # lang only: no hyphenation
     ('<body style="hyphens: auto">hyphénation', 1),  # hyphens only: no hyph.
-    ('<body style="hyphens: auto" lang=fr>hyphénation', 2),  # both: hyph.
+    ('<body style="hyphens: auto" lang=fr>hyphénation', 4),  # both: hyph.
     ('<body>hyp&shy;hénation', 2),  # Hyphenation with soft hyphens
     ('<body style="hyphens: none">hyp&shy;hénation', 1),  # … unless disabled
 ))
-def line_count(source, lines_count):
+def test_line_count(source, lines_count):
     page, = parse(
         '<html style="width: 5em; font-family: ahem">' +
         '<style>@font-face {src:url(AHEM____.TTF); font-family:ahem}</style>' +

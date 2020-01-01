@@ -24,15 +24,15 @@ from ..logger import LOGGER
 from ..urls import path2url
 
 # Lists of fonts with many variants (including condensed)
-if sys.platform.startswith('win'):
+if sys.platform.startswith('win'):  # pragma: no cover
     SANS_FONTS = 'DejaVu Sans, Arial Nova, Arial, sans'
     MONO_FONTS = 'Courier New, Courier, monospace'
-elif sys.platform.startswith('darwin'):
+elif sys.platform.startswith('darwin'):  # pragma: no cover
     # Pango on macOS doesn't handle multiple fonts
     # See https://github.com/Kozea/WeasyPrint/issues/158
     SANS_FONTS = 'DejaVu Sans'
     MONO_FONTS = 'Courier New'
-else:
+else:  # pragma: no cover
     SANS_FONTS = 'DejaVu Sans, sans'
     MONO_FONTS = 'DejaVu Sans Mono, monospace'
 
