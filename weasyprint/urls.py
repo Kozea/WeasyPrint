@@ -11,7 +11,6 @@
 
 import codecs
 import contextlib
-import email
 import gzip
 import io
 import os.path
