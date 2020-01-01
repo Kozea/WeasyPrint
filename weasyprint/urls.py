@@ -55,12 +55,6 @@ class StreamingGzipFile(GzipFile):
     seek = tell = None
 
 
-def parse_email(data):
-    if isinstance(data, bytes):
-        data = data.decode('utf8')
-    return email.message_from_string(data)
-
-
 def iri_to_uri(url):
     """Turn an IRI that can contain any Unicode character into an ASCII-only
     URI that conforms to RFC 3986.
