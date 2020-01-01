@@ -64,7 +64,8 @@ the rendering of a document in WeasyPrint goes like this:
 5. These boxes are *laid-out* with fixed dimensions and position onto pages.
 6. For each page, the boxes are re-ordered to observe stacking rules, and are
    drawn on a PDF page.
-7. Cairo’s PDF is modified to add metadata such as bookmarks and hyperlinks.
+7. Cairo’s PDF is modified to add metadata such as attachments, embedded files,
+   and PDF trim and bleed boxes.
 
 
 HTML
