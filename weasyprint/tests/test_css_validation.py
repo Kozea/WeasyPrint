@@ -13,7 +13,7 @@ import tinycss2
 
 from ..css import preprocess_declarations
 from ..css.computed_values import ZERO_PIXELS
-from ..css.properties import INITIAL_VALUES, Dimension
+from ..css.properties import INITIAL_VALUES
 from ..images import LinearGradient, RadialGradient
 from .testing_utils import assert_no_logs, capture_logs
 
@@ -552,6 +552,61 @@ def test_expand_background_position():
 
 
 @assert_no_logs
+@pytest.mark.parametrize('rule, result', (
+    ('border-radius: 1px', {
+        'border_top_left_radius': ((1, 'px'), (1, 'px')),
+        'border_top_right_radius': ((1, 'px'), (1, 'px')),
+        'border_bottom_right_radius': ((1, 'px'), (1, 'px')),
+        'border_bottom_left_radius': ((1, 'px'), (1, 'px')),
+    }),
+    ('border-radius: 1px 2em', {
+        'border_top_left_radius': ((1, 'px'), (1, 'px')),
+        'border_top_right_radius': ((2, 'em'), (2, 'em')),
+        'border_bottom_right_radius': ((1, 'px'), (1, 'px')),
+        'border_bottom_left_radius': ((2, 'em'), (2, 'em')),
+    }),
+    ('border-radius: 1px / 2em', {
+        'border_top_left_radius': ((1, 'px'), (2, 'em')),
+        'border_top_right_radius': ((1, 'px'), (2, 'em')),
+        'border_bottom_right_radius': ((1, 'px'), (2, 'em')),
+        'border_bottom_left_radius': ((1, 'px'), (2, 'em')),
+    }),
+    ('border-radius: 1px 3px / 2em 4%', {
+        'border_top_left_radius': ((1, 'px'), (2, 'em')),
+        'border_top_right_radius': ((3, 'px'), (4, '%')),
+        'border_bottom_right_radius': ((1, 'px'), (2, 'em')),
+        'border_bottom_left_radius': ((3, 'px'), (4, '%')),
+    }),
+    ('border-radius: 1px 2em 3%', {
+        'border_top_left_radius': ((1, 'px'), (1, 'px')),
+        'border_top_right_radius': ((2, 'em'), (2, 'em')),
+        'border_bottom_right_radius': ((3, '%'), (3, '%')),
+        'border_bottom_left_radius': ((2, 'em'), (2, 'em')),
+    }),
+    ('border-radius: 1px 2em 3% 4rem', {
+        'border_top_left_radius': ((1, 'px'), (1, 'px')),
+        'border_top_right_radius': ((2, 'em'), (2, 'em')),
+        'border_bottom_right_radius': ((3, '%'), (3, '%')),
+        'border_bottom_left_radius': ((4, 'rem'), (4, 'rem')),
+    }),
+))
+def test_expand_border_radius(rule, result):
+    assert expand_to_dict(rule) == result
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, reason', (
+    ('border-radius: 1px 1px 1px 1px 1px', '1 to 4 token'),
+    ('border-radius: 1px 1px 1px 1px 1px / 1px', '1 to 4 token'),
+    ('border-radius: 1px / 1px / 1px', 'only one "/"'),
+    ('border-radius: 1px, 1px', 'invalid'),
+    ('border-radius: 1px /', 'value after "/"'),
+))
+def test_expand_border_radius_invalid(rule, reason):
+    assert_invalid(rule, reason)
+
+
+@assert_no_logs
 def test_font():
     """Test the ``font`` property."""
     assert expand_to_dict('font: 12px My Fancy Font, serif') == {
@@ -903,7 +958,7 @@ def test_radial_gradient():
     ('flex: 2 2 1px', {
         'flex_grow': 2,
         'flex_shrink': 2,
-        'flex_basis': Dimension(1, 'px'),
+        'flex_basis': (1, 'px'),
     }),
     ('flex: 2 2 auto', {
         'flex_grow': 2,
