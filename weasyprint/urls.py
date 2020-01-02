@@ -32,13 +32,19 @@ from .logger import LOGGER
 UNICODE_SCHEME_RE = re.compile('^([a-zA-Z][a-zA-Z0-9.+-]+):')
 BYTES_SCHEME_RE = re.compile(b'^([a-zA-Z][a-zA-Z0-9.+-]+):')
 
-# getfilesystemencoding() on Linux is sometimes stupid...
+# getfilesystemencoding() on Linux is sometimes stupid…
 FILESYSTEM_ENCODING = sys.getfilesystemencoding()
 try:
     if codecs.lookup(FILESYSTEM_ENCODING).name == 'ascii':
         FILESYSTEM_ENCODING = 'utf-8'
 except LookupError:
     FILESYSTEM_ENCODING = 'utf-8'
+
+HTTP_HEADERS = {
+    'User-Agent': VERSION_STRING,
+    'Accept': '*/*',
+    'Accept-Encoding': 'gzip, deflate',
+}
 
 
 class StreamingGzipFile(GzipFile):
@@ -55,15 +61,13 @@ class StreamingGzipFile(GzipFile):
 
 
 def iri_to_uri(url):
-    """Turn an IRI that can contain any Unicode character into an ASCII-only
-    URI that conforms to RFC 3986.
-    """
+    """Turn a Unicode IRI into an ASCII-only URI that conforms to RFC 3986."""
     if url.startswith('data:'):
         # Data URIs can be huge, but don’t need this anyway.
         return url
     # Use UTF-8 as per RFC 3987 (IRI), except for file://
-    url = url.encode(FILESYSTEM_ENCODING
-                     if url.startswith('file:') else 'utf-8')
+    url = url.encode(
+        FILESYSTEM_ENCODING if url.startswith('file:') else 'utf-8')
     # This is a full URI, not just a component. Only %-encode characters
     # that are not allowed at all in URIs. Everthing else is "safe":
     # * Reserved characters: /:?#[]@!$&'()*+,;=
@@ -75,12 +79,14 @@ def iri_to_uri(url):
 
 def path2url(path):
     """Return file URL of `path`.
-    Accepts 'str' or 'bytes', returns 'str'
+
+    Accepts 'str' or 'bytes', returns 'str'.
+
     """
     # Ensure 'str'
     if isinstance(path, bytes):
-        path = path.decode(sys.getfilesystemencoding())
-    # if a trailing path.sep is given -- keep it
+        path = path.decode(FILESYSTEM_ENCODING)
+    # If a trailing path.sep is given, keep it
     wants_trailing_slash = path.endswith(os.path.sep) or path.endswith('/')
     path = os.path.abspath(path)
     if wants_trailing_slash or os.path.isdir(path):
@@ -89,7 +95,7 @@ def path2url(path):
         path += os.path.sep
         wants_trailing_slash = True
     path = pathname2url(path)
-    # on Windows pathname2url cuts off trailing slash
+    # On Windows pathname2url cuts off trailing slash
     if wants_trailing_slash and not path.endswith('/'):
         path += '/'
     if path.startswith('///'):
@@ -101,9 +107,9 @@ def path2url(path):
 
 
 def url_is_absolute(url):
-    return bool(
-        (UNICODE_SCHEME_RE if isinstance(url, str) else BYTES_SCHEME_RE)
-        .match(url))
+    """Return whether an URL (bytes or string) is absolute."""
+    scheme = UNICODE_SCHEME_RE if isinstance(url, str) else BYTES_SCHEME_RE
+    return bool(scheme.match(url))
 
 
 def get_url_attribute(element, attr_name, base_url, allow_relative=False):
@@ -134,14 +140,17 @@ def url_join(base_url, url, allow_relative, context, context_args):
     elif allow_relative:
         return iri_to_uri(url)
     else:
-        LOGGER.error('Relative URI reference without a base URI: ' + context,
-                     *context_args)
+        LOGGER.error(
+            'Relative URI reference without a base URI: ' + context,
+            *context_args)
         return None
 
 
 def get_link_attribute(element, attr_name, base_url):
-    """Return ('external', absolute_uri) or
-    ('internal', unquoted_fragment_id) or None.
+    """Get the URL value of an element attribute.
+
+    Return ``('external', absolute_uri)``, or ``('internal',
+    unquoted_fragment_id)``, or ``None``.
 
     """
     attr_value = element.get(attr_name, '').strip()
@@ -172,12 +181,12 @@ def safe_decodebytes(data):
     """Decode base64, padding being optional.
 
     "From a theoretical point of view, the padding character is not needed,
-     since the number of missing bytes can be calculated from the number
-     of Base64 digits."
+    since the number of missing bytes can be calculated from the number
+    of Base64 digits."
 
     https://en.wikipedia.org/wiki/Base64#Padding
 
-    :param data: Base64 data as an ASCII byte string
+    :param data: Base64 data as an ASCII byte string.
     :returns: The decoded byte string.
 
     """
@@ -185,13 +194,6 @@ def safe_decodebytes(data):
     if missing_padding:
         data += b'=' * missing_padding
     return decodebytes(data)
-
-
-HTTP_HEADERS = {
-    'User-Agent': VERSION_STRING,
-    'Accept': '*/*',
-    'Accept-Encoding': 'gzip, deflate',
-}
 
 
 def default_url_fetcher(url, timeout=10, ssl_context=None):
@@ -237,13 +239,16 @@ def default_url_fetcher(url, timeout=10, ssl_context=None):
             url = url.split('?')[0]
 
         url = iri_to_uri(url)
-        response = urlopen(Request(url, headers=HTTP_HEADERS),
-                           timeout=timeout, context=ssl_context)
+        response = urlopen(
+            Request(url, headers=HTTP_HEADERS), timeout=timeout,
+            context=ssl_context)
         response_info = response.info()
-        result = dict(redirected_url=response.geturl(),
-                      mime_type=response_info.get_content_type(),
-                      encoding=response_info.get_param('charset'),
-                      filename=response_info.get_filename())
+        result = {
+            'redirected_url': response.geturl(),
+            'mime_type': response_info.get_content_type(),
+            'encoding': response_info.get_param('charset'),
+            'filename': response_info.get_filename(),
+        }
         content_encoding = response_info.get('Content-Encoding')
         if content_encoding == 'gzip':
             if StreamingGzipFile is None:

@@ -73,7 +73,7 @@ def expand_four_sides(base_url, name, tokens):
 
 @expander('border-radius')
 def border_radius(base_url, name, tokens):
-    """Validator for the `border-radius` property."""
+    """Validator for the ``border-radius`` property."""
     current = horizontal = []
     vertical = []
     for token in tokens:

@@ -100,7 +100,7 @@ def test_variable_initial():
     assert paragraph.width == 10
 
 
-@pytest.mark.parametrize('prop', KNOWN_PROPERTIES)
+@pytest.mark.parametrize('prop', sorted(KNOWN_PROPERTIES))
 def test_variable_fallback(prop):
     parse('''
       <style>
