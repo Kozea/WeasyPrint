@@ -148,13 +148,6 @@ def test_decoration_style(rule, result):
     assert expand_to_dict(rule) == result
 
 
-TEXT_DECORATION_DEFAULT = {
-    'text_decoration_line': 'none',
-    'text_decoration_color': 'currentColor',
-    'text_decoration_style': 'solid',
-}
-
-
 @assert_no_logs
 @pytest.mark.parametrize('rule, result', (
     ('text-decoration: none', {'text_decoration_line': 'none'}),
@@ -164,8 +157,22 @@ TEXT_DECORATION_DEFAULT = {
     ('text-decoration: red', {'text_decoration_color': (1, 0, 0, 1)}),
 ))
 def test_decoration(rule, result):
-    real_result = {**TEXT_DECORATION_DEFAULT, **result}
+    default = {
+        key: value for key, value in INITIAL_VALUES.items()
+        if key.startswith('text_decoration_')}
+    real_result = {**default, **result}
     assert expand_to_dict(rule) == real_result
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', (
+    'text-decoration: solid solid',
+    'text-decoration: red red',
+    'text-decoration: 1px',
+    'text-decoration: underline none',
+))
+def test_decoration_invalid(rule):
+    assert_invalid(rule)
 
 
 @assert_no_logs
@@ -376,6 +383,7 @@ def test_expand_list_style_warning():
 @assert_no_logs
 @pytest.mark.parametrize('rule', (
     'list-style: none inside none none',
+    'list-style: 1px',
 ))
 def test_expand_list_style_invalid(rule):
     assert_invalid(rule)
@@ -407,6 +415,12 @@ def test_expand_background():
         'repeat no-repeat fixed',
         background_repeat=[('repeat', 'no-repeat')],
         background_attachment=['fixed'])
+    assert_background(
+        'inherit', background_repeat='inherit',
+        background_attachment='inherit', background_image='inherit',
+        background_position='inherit', background_size='inherit',
+        background_clip='inherit', background_origin='inherit',
+        background_color='inherit')
     assert_background(
         'top',
         background_position=[('left', (50, '%'), 'top', (0, '%'))])
@@ -479,6 +493,10 @@ def test_expand_background():
         background_origin=['border-box'],
         background_clip=['content-box'])
     assert_background(
+        'border-box red',
+        background_color=(1, 0, 0, 1),
+        background_origin=['border-box'])
+    assert_background(
         'url(bar) center, no-repeat',
         background_color=(0, 0, 0, 0),
         background_image=[('url', 'http://weasyprint.org/foo/bar'),
@@ -486,12 +504,19 @@ def test_expand_background():
         background_position=[('left', (50, '%'), 'top', (50, '%')),
                              ('left', (0, '%'), 'top', (0, '%'))],
         background_repeat=[('repeat', 'repeat'), ('no-repeat', 'no-repeat')])
-    assert_invalid('background: 10px lipsum')
-    assert_invalid('background-position: 10px lipsum')
-    assert_invalid('background: content-box red content-box')
-    assert_invalid('background-image: inexistent-gradient(blue, green)')
     # Color must be in the last layer:
     assert_invalid('background: red, url(foo)')
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', (
+    'background: 10px lipsum',
+    'background-position: 10px lipsum',
+    'background: content-box red content-box',
+    'background-image: inexistent-gradient(blue, green)',
+))
+def test_expand_background_invalid(rule):
+    assert_invalid(rule)
 
 
 @assert_no_logs
@@ -646,6 +671,9 @@ def test_font():
     assert_invalid('font: normal small-caps italic 700 condensed large serif')
     assert_invalid('font: small-caps italic 700 normal condensed large serif')
     assert_invalid('font: small-caps italic 700 condensed normal large serif')
+    assert_invalid('font: normal normal normal normal')
+    assert_invalid('font: normal normal normal italic')
+    assert_invalid('font: caption', 'System fonts')
 
 
 @assert_no_logs
@@ -970,10 +998,58 @@ def test_radial_gradient():
         'flex_shrink': 1,
         'flex_basis': 'auto',
     }),
+    ('flex: 0 auto', {
+        'flex_grow': 0,
+        'flex_shrink': 1,
+        'flex_basis': 'auto',
+    }),
 ))
 def test_flex(rule, result):
-    """Test the ``flex`` property."""
     assert expand_to_dict(rule) == result
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', (
+    'flex: auto 0 0 0',
+    'flex: 1px 2px',
+    'flex: auto auto',
+    'flex: auto 1 auto',
+))
+def test_flex_invalid(rule):
+    assert_invalid(rule)
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, result', (
+    ('flex-flow: column', {
+        'flex_direction': 'column',
+    }),
+    ('flex-flow: wrap', {
+        'flex_wrap': 'wrap',
+    }),
+    ('flex-flow: wrap column', {
+        'flex_direction': 'column',
+        'flex_wrap': 'wrap',
+    }),
+    ('flex-flow: row wrap', {
+        'flex_direction': 'row',
+        'flex_wrap': 'wrap',
+    }),
+))
+def test_flex_flow(rule, result):
+    assert expand_to_dict(rule) == result
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', (
+    'flex-flow: 1px',
+    'flex-flow: wrap 1px',
+    'flex-flow: row row',
+    'flex-flow: wrap nowrap',
+    'flex-flow: column wrap nowrap row',
+))
+def test_flex_flow_invalid(rule):
+    assert_invalid(rule)
 
 
 @assert_no_logs
@@ -989,3 +1065,56 @@ def test_flex(rule, result):
 ))
 def test_function_symbols(rule):
     assert_invalid(rule)
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, result', (
+    ('page-break-after: left', {'break_after': 'left'}),
+    ('page-break-before: always', {'break_before': 'page'}),
+))
+def test_page_break(rule, result):
+    assert expand_to_dict(rule) == result
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', (
+    'page-break-after: top',
+    'page-break-before: 1px',
+))
+def test_page_break_invalid(rule):
+    assert_invalid(rule)
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, result', (
+    ('page-break-inside: avoid', {'break_inside': 'avoid'}),
+))
+def test_page_break_inside(rule, result):
+    assert expand_to_dict(rule) == result
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', (
+    'page-break-inside: top',
+))
+def test_page_break_inside_invalid(rule):
+    assert_invalid(rule)
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, result', (
+    ('columns: 1em', {'column_width': (1, 'em'), 'column_count': 'auto'}),
+    ('columns: auto', {'column_width': 'auto', 'column_count': 'auto'}),
+    ('columns: auto auto', {'column_width': 'auto', 'column_count': 'auto'}),
+))
+def test_columns(rule, result):
+    assert expand_to_dict(rule) == result
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, reason', (
+    ('columns: 1px 2px', 'invalid'),
+    ('columns: auto auto auto', 'multiple'),
+))
+def test_columns_invalid(rule, reason):
+    assert_invalid(rule, reason)

@@ -25,6 +25,11 @@ from .properties import (
 EXPANDERS = {}
 
 
+class AutoFakeToken:
+    type = 'ident'
+    lower_value = 'auto'
+
+
 def expander(property_name):
     """Decorator adding a function to the ``EXPANDERS``."""
     def expander_decorator(function):
@@ -318,8 +323,8 @@ def expand_background(base_url, name, tokens):
                 if add('clip', box.single_value(next_token)):
                     tokens.pop()
                 else:
-                    # The same keyword sets both:
-                    assert add('clip', box.single_value(token))
+                    # The same keyword sets both
+                    add('clip', box.single_value(token))
                 continue
             raise InvalidValues
 
@@ -344,7 +349,7 @@ def expand_background(base_url, name, tokens):
 
 @expander('text-decoration')
 def expand_text_decoration(base_url, name, tokens):
-
+    """Expand the ``text-decoration`` shorthand property."""
     text_decoration_line = set()
     text_decoration_color = None
     text_decoration_style = None
@@ -394,6 +399,8 @@ def expand_page_break_before_after(base_url, name, tokens):
         yield new_name, keyword
     elif keyword == 'always':
         yield new_name, 'page'
+    else:
+        raise InvalidValues
 
 
 @expander('page-break-inside')
@@ -406,6 +413,8 @@ def expand_page_break_inside(base_url, name, tokens):
     keyword = get_single_keyword(tokens)
     if keyword in ('auto', 'avoid'):
         yield 'break-inside', keyword
+    else:
+        raise InvalidValues
 
 
 @expander('columns')
@@ -423,6 +432,9 @@ def expand_columns(name, tokens):
         else:
             raise InvalidValues
         yield name, [token]
+    if len(tokens) == 1:
+        name = 'column-width' if name == 'column-count' else 'column-count'
+        yield name, [AutoFakeToken()]
 
 
 @expander('font-variant')
@@ -478,6 +490,8 @@ def expand_font(name, tokens):
         if not tokens:
             raise InvalidValues
     else:
+        if not tokens:
+            raise InvalidValues
         token = tokens.pop()
 
     # Then font-size is mandatory
