@@ -24,12 +24,12 @@ DESCRIPTORS = {
 }
 
 
-class NoneFakeToken(object):
+class NoneFakeToken:
     type = 'ident'
     lower_value = 'none'
 
 
-class NormalFakeToken(object):
+class NormalFakeToken:
     type = 'ident'
     lower_value = 'normal'
 

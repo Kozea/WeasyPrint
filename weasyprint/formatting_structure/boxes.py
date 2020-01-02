@@ -61,7 +61,7 @@ import itertools
 from ..css import computed_from_cascaded
 
 
-class Box(object):
+class Box:
     """Abstract base class for all boxes."""
     # Definitions for the rules generating anonymous table boxes
     # http://www.w3.org/TR/CSS21/tables.html#anonymous-boxes

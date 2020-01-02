@@ -179,7 +179,7 @@ def _w3c_date_to_iso(string, attr_name):
     return iso_date
 
 
-class Page(object):
+class Page:
     """Represents a single rendered page.
 
     .. versionadded:: 0.15
@@ -280,7 +280,7 @@ class Page(object):
             draw_page(self._page_box, cairo_context, self._enable_hinting)
 
 
-class DocumentMetadata(object):
+class DocumentMetadata:
     """Meta-information belonging to a whole :class:`Document`.
 
     .. versionadded:: 0.20
@@ -339,7 +339,7 @@ BookmarkSubtree = collections.namedtuple(
     'BookmarkSubtree', ('label', 'destination', 'children', 'state'))
 
 
-class Document(object):
+class Document:
     """A rendered document ready to be painted on a cairo surface.
 
     Typically obtained from :meth:`HTML.render() <weasyprint.HTML.render>`, but

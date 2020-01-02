@@ -99,7 +99,7 @@ class InvalidValues(ValueError):
     """Invalid or unsupported values for a known CSS property."""
 
 
-class CenterKeywordFakeToken(object):
+class CenterKeywordFakeToken:
     type = 'ident'
     lower_value = 'center'
     unit = None

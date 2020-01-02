@@ -185,7 +185,7 @@ def layout_document(html, root_box, context, max_loops=8):
         yield page
 
 
-class LayoutContext(object):
+class LayoutContext:
     def __init__(self, enable_hinting, style_for, get_image_from_uri,
                  font_config, counter_style, target_collector):
         self.enable_hinting = enable_hinting

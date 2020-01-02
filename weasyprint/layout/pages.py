@@ -21,7 +21,7 @@ from .percentages import resolve_percentages
 from .preferred import max_content_width, min_content_width
 
 
-class OrientedBox(object):
+class OrientedBox:
     @property
     def sugar(self):
         return self.padding_plus_border + self.margin_a + self.margin_b

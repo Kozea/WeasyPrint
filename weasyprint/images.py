@@ -54,7 +54,7 @@ class ImageLoadingError(ValueError):
         return cls('%s: %s' % (name, value) if value else name)
 
 
-class RasterImage(object):
+class RasterImage:
     def __init__(self, image_surface):
         self.image_surface = image_surface
         self._intrinsic_width = image_surface.get_width()
@@ -99,7 +99,7 @@ class ScaledSVGSurface(cairosvg.surface.SVGSurface):
         return scale / 0.75
 
 
-class FakeSurface(object):
+class FakeSurface:
     """Fake CairoSVG surface used to get SVG attributes."""
     context_height = 0
     context_width = 0
@@ -107,7 +107,7 @@ class FakeSurface(object):
     dpi = 96
 
 
-class SVGImage(object):
+class SVGImage:
     def __init__(self, svg_data, base_url, url_fetcher):
         # Don’t pass data URIs to CairoSVG.
         # They are useless for relative URIs anyway.
@@ -321,7 +321,7 @@ PATTERN_TYPES = dict(
     solid=cairocffi.SolidPattern)
 
 
-class Gradient(object):
+class Gradient:
     def __init__(self, color_stops, repeating):
         assert color_stops
         #: List of (r, g, b, a), list of Dimension

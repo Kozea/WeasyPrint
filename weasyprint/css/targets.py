@@ -18,7 +18,7 @@ import copy
 from ..logger import LOGGER
 
 
-class TargetLookupItem(object):
+class TargetLookupItem:
     """Item controlling pending targets and page based target counters.
 
     Collected in the TargetCollector's ``items``.
@@ -43,7 +43,7 @@ class TargetLookupItem(object):
         self.cached_page_counter_values = {}
 
 
-class CounterLookupItem(object):
+class CounterLookupItem:
     """Item controlling page based counters.
 
     Collected in the TargetCollector's ``counter_lookup_items``.
@@ -67,7 +67,7 @@ class CounterLookupItem(object):
         self.cached_page_counter_values = {}
 
 
-class TargetCollector(object):
+class TargetCollector:
     """Collector of HTML targets used by CSS content with ``target-*``."""
 
     def __init__(self):

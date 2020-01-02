@@ -82,7 +82,7 @@ class PDFFormatter(string.Formatter):
 pdf_format = PDFFormatter().format
 
 
-class PDFDictionary(object):
+class PDFDictionary:
     def __init__(self, object_number, byte_string):
         self.object_number = object_number
         self.byte_string = byte_string
@@ -139,7 +139,7 @@ class PDFDictionary(object):
         return [class_(n, read(n)) for n in map(int, parts)]
 
 
-class PDFFile(object):
+class PDFFile:
     trailer_re = re.compile(
         b'\ntrailer\n(.+)\nstartxref\n(\\d+)\n%%EOF\n$', re.DOTALL)
 

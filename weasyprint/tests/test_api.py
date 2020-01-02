@@ -93,7 +93,7 @@ def _run(args, stdin=b''):
     return stdout.getvalue()
 
 
-class _fake_file(object):
+class _fake_file:
     def __init__(self):
         self.chunks = []
 

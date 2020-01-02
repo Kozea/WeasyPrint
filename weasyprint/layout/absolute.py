@@ -14,7 +14,7 @@ from .preferred import shrink_to_fit
 from .tables import table_wrapper_width
 
 
-class AbsolutePlaceholder(object):
+class AbsolutePlaceholder:
     """Left where an absolutely-positioned box was taken out of the flow."""
     def __init__(self, box):
         assert not isinstance(box, AbsolutePlaceholder)

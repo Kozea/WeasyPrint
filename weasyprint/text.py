@@ -644,7 +644,7 @@ def first_line_metrics(first_line, text, layout, resume_at, space_collapse,
     return layout, length, resume_at, width, height, baseline
 
 
-class Layout(object):
+class Layout:
     """Object holding PangoLayout-related cdata pointers."""
     def __init__(self, context, font_size, style, justification_spacing=0):
         self.justification_spacing = justification_spacing
@@ -823,7 +823,7 @@ class Layout(object):
         self.set_text(self.text, justify=True)
 
 
-class FontMetrics(object):
+class FontMetrics:
     def __init__(self, context, font, language):
         self.metrics = ffi.gc(
             pango.pango_context_get_metrics(context, font, language),

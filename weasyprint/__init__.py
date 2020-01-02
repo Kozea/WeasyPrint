@@ -55,7 +55,7 @@ from .logger import LOGGER, PROGRESS_LOGGER  # noqa isort:skip
 # to work around circular imports.
 
 
-class HTML(object):
+class HTML:
     """Represents an HTML document parsed by html5lib.
 
     You can just create an instance with a positional argument:
@@ -307,7 +307,7 @@ class HTML(object):
         return png_bytes
 
 
-class CSS(object):
+class CSS:
     """Represents a CSS stylesheet parsed by tinycss2.
 
     An instance is created in the same way as :class:`HTML`, with the same
@@ -353,7 +353,7 @@ class CSS(object):
             self.page_rules, self.fonts, font_config, counter_style)
 
 
-class Attachment(object):
+class Attachment:
     """Represents a file attachment for a PDF document.
 
     .. versionadded:: 0.22
