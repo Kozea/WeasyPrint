@@ -4,9 +4,6 @@
 
     Test how text is drawn.
 
-    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
-    :license: BSD, see LICENSE for details.
-
 """
 
 from . import assert_pixels

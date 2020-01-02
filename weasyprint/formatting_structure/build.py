@@ -8,9 +8,6 @@
     This includes creating anonymous boxes and processing whitespace
     as necessary.
 
-    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
-    :license: BSD, see LICENSE for details.
-
 """
 
 import copy

@@ -4,9 +4,6 @@
 
     Test how tables are drawn.
 
-    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
-    :license: BSD, see LICENSE for details.
-
 """
 
 from ...html import HTML_HANDLERS

@@ -4,9 +4,6 @@
 
     Interface with Pango to decide where to do line breaks and to draw text.
 
-    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
-    :license: BSD, see LICENSE for details.
-
 """
 
 import re

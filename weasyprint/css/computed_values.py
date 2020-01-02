@@ -5,9 +5,6 @@
     Convert *specified* property values (the result of the cascade and
     inhertance) into *computed* values (that are inherited).
 
-    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
-    :license: BSD, see LICENSE for details.
-
 """
 
 from collections import OrderedDict

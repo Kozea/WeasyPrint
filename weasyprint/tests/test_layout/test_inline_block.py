@@ -4,9 +4,6 @@
 
     Tests for inline blocks layout.
 
-    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
-    :license: BSD, see LICENSE for details.
-
 """
 
 from ..test_boxes import render_pages as parse

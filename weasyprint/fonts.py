@@ -4,9 +4,6 @@
 
     Interface with external libraries managing fonts installed on the system.
 
-    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
-    :license: BSD, see LICENSE for details.
-
 """
 
 import os

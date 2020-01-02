@@ -7,9 +7,6 @@
     These are defined in CSS Counter Styles Level 3:
     https://www.w3.org/TR/css-counter-styles-3/#counter-style-system
 
-    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
-    :license: BSD, see LICENSE for details.
-
 """
 
 from copy import deepcopy

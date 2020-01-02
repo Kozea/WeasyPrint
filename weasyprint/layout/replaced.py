@@ -5,9 +5,6 @@
     Layout for images and other replaced elements.
     http://dev.w3.org/csswg/css-images-3/#sizing
 
-    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
-    :license: BSD, see LICENSE for details.
-
 """
 
 from .percentages import percentage

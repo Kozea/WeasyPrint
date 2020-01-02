@@ -4,9 +4,6 @@
 
     Test the CSS cross references using target-*() functions.
 
-    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
-    :license: BSD, see LICENSE for details.
-
 """
 
 from .testing_utils import FakeHTML, assert_no_logs

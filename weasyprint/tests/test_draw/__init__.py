@@ -4,9 +4,6 @@
 
     Test the final, drawn results and compare PNG images pixel per pixel.
 
-    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
-    :license: BSD, see LICENSE for details.
-
 """
 
 import os

@@ -13,9 +13,6 @@
 
     See http://www.w3.org/TR/CSS21/cascade.html#used-value
 
-    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
-    :license: BSD, see LICENSE for details.
-
 """
 
 from collections import defaultdict

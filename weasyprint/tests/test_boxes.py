@@ -4,9 +4,6 @@
 
     Test that the "before layout" box tree is correctly constructed.
 
-    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
-    :license: BSD, see LICENSE for details.
-
 """
 
 import functools

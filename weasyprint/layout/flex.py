@@ -4,9 +4,6 @@
 
     Layout for flex containers and flex-items.
 
-    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
-    :license: BSD, see LICENSE for details.
-
 """
 
 import sys

@@ -4,9 +4,6 @@
 
     Test how before and after pseudo elements are drawn.
 
-    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
-    :license: BSD, see LICENSE for details.
-
 """
 
 from ..testing_utils import assert_no_logs

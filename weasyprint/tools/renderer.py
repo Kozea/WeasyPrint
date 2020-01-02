@@ -5,9 +5,6 @@
     A simple web application allowing to type HTML and instantly visualize the
     result rendered by WeasyPrint.
 
-    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
-    :license: BSD, see LICENSE for details.
-
 """
 
 from base64 import b64encode

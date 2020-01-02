@@ -4,9 +4,6 @@
 
     Take an "after layout" box tree and draw it onto a cairo context.
 
-    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
-    :license: BSD, see LICENSE for details.
-
 """
 
 import contextlib

@@ -6,9 +6,6 @@
 
     https://www.w3.org/TR/mediaqueries-4/
 
-    :copyright: Copyright 2011-2018 Simon Sapin and contributors, see AUTHORS.
-    :license: BSD, see LICENSE for details.
-
 """
 
 import tinycss2

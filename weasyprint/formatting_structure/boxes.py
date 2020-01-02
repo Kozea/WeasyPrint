@@ -51,9 +51,6 @@
 
     See respective docstrings for details.
 
-    :copyright: Copyright 2011-2019 Simon Sapin and contributors, see AUTHORS.
-    :license: BSD, see LICENSE for details.
-
 """
 
 import itertools
