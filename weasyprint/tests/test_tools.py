@@ -71,9 +71,10 @@ def test_navigator(tmpdir):
     assert status == '200 OK'
     assert headers['Content-Type'] == 'application/pdf'
     assert body.startswith(b'%PDF')
-    if cairo.cairo_version() >= 11504:
-        assert b'/URI (http://weasyprint.org)' in body
-        assert b'/Title (Lorem ipsum)' in body
+    if cairo.cairo_version() < 11504:  # pragma: no cover
+        return
+    assert b'/URI (http://weasyprint.org)' in body
+    assert b'/Title (Lorem ipsum)' in body
 
 
 @assert_no_logs
