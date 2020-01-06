@@ -272,6 +272,7 @@ def test_box_sizing(size):
         div { %s; margin: 100px; padding: 10px; border: 1px solid }
       </style>
       <div></div>
+
       <div style="box-sizing: content-box"></div>
       <div style="box-sizing: padding-box"></div>
       <div style="box-sizing: border-box"></div>
@@ -309,6 +310,39 @@ def test_box_sizing(size):
     assert div_4.border_width() == 1000
     assert div_4.border_height() == 1000
     assert div_4.margin_height() == 1200
+
+
+@assert_no_logs
+@pytest.mark.parametrize('size', (
+    ('width: 0; height: 0'),
+    ('max-width: 0; max-height: 0'),
+    ('min-width: 0; min-height: 0; width: 0; height: 0'),
+))
+def test_box_sizing_zero(size):
+    # http://www.w3.org/TR/css3-ui/#box-sizing
+    page, = parse('''
+      <style>
+        @page { size: 100000px }
+        body { width: 10000px; margin: 0 }
+        div { %s; margin: 100px; padding: 10px; border: 1px solid }
+      </style>
+      <div></div>
+
+      <div style="box-sizing: content-box"></div>
+      <div style="box-sizing: padding-box"></div>
+      <div style="box-sizing: border-box"></div>
+    ''' % size)
+    html, = page.children
+    body, = html.children
+    for div in body.children:
+        assert div.width == 0
+        assert div.height == 0
+        assert div.padding_width() == 20
+        assert div.padding_height() == 20
+        assert div.border_width() == 22
+        assert div.border_height() == 22
+        assert div.margin_height() == 222
+        # margin_width() is the width of the containing block
 
 
 COLLAPSING = (
