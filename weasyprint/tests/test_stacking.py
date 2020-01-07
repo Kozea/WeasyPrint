@@ -2,13 +2,31 @@
     weasyprint.tests.stacking
     -------------------------
 
+    Test CSS stacking contexts.
+
 """
 
 import pytest
 
 from ..stacking import StackingContext
 from .test_boxes import render_pages, serialize
+from .test_draw import assert_pixels
 from .testing_utils import assert_no_logs
+
+z_index_source = '''
+  <style>
+    @page { size: 10px }
+    body { background: white }
+    div, div * { width: 10px; height: 10px; position: absolute }
+    article { background: red; z-index: %s }
+    section { background: blue; z-index: %s }
+    nav { background: lime; z-index: %s }
+  </style>
+  <div>
+    <article></article>
+    <section></section>
+    <nav></nav>
+  </div>'''
 
 
 def serialize_stacking(context):
@@ -53,3 +71,18 @@ def test_image_contexts():
     # ... but in a sub-context:
     assert serialize(c.box for c in context.zero_z_contexts) == [
         ('img', 'InlineReplaced', '<replaced>')]
+
+
+@assert_no_logs
+@pytest.mark.parametrize('z_indexes, color', (
+    ((3, 2, 1), 'R'),
+    ((1, 2, 3), 'G'),
+    ((1, 2, -3), 'B'),
+    ((1, 2, 'auto'), 'B'),
+    ((-1, 'auto', -2), 'B'),
+))
+def test_z_index(z_indexes, color):
+    print(z_index_source % z_indexes)
+    assert_pixels(
+        'z_index_%s_%s_%s' % z_indexes, 10, 10, '\n'.join([color * 10] * 10),
+        z_index_source % z_indexes)
