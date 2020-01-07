@@ -500,6 +500,68 @@ def test_list_style_types(style_type, values):
     assert li_4.children[0].children[0].children[0].text == values[3]
 
 
+def test_counter_set():
+    page, = render_pages('''
+      <style>
+        body { counter-reset: h2 0 h3 4; font-size: 1px }
+        article { counter-reset: h2 2 }
+        h1 { counter-increment: h1 }
+        h1::before { content: counter(h1) }
+        h2 { counter-increment: h2; counter-set: h3 3 }
+        h2::before { content: counter(h2) }
+        h3 { counter-increment: h3 }
+        h3::before { content: counter(h3) }
+      </style>
+      <article>
+        <h1></h1>
+      </article>
+      <article>
+        <h2></h2>
+        <h3></h3>
+      </article>
+      <article>
+        <h3></h3>
+      </article>
+      <article>
+        <h2></h2>
+      </article>
+      <article>
+        <h3></h3>
+        <h3></h3>
+      </article>
+      <article>
+        <h1></h1>
+        <h2></h2>
+        <h3></h3>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    art_1, art_2, art_3, art_4, art_5, art_6 = body.children
+
+    h1, = art_1.children
+    assert h1.children[0].children[0].children[0].text == '1'
+
+    h2, h3, = art_2.children
+    assert h2.children[0].children[0].children[0].text == '3'
+    assert h3.children[0].children[0].children[0].text == '4'
+
+    h3, = art_3.children
+    assert h3.children[0].children[0].children[0].text == '5'
+
+    h2, = art_4.children
+    assert h2.children[0].children[0].children[0].text == '3'
+
+    h3_1, h3_2 = art_5.children
+    assert h3_1.children[0].children[0].children[0].text == '4'
+    assert h3_2.children[0].children[0].children[0].text == '5'
+
+    h1, h2, h3 = art_6.children
+    assert h1.children[0].children[0].children[0].text == '1'
+    assert h2.children[0].children[0].children[0].text == '3'
+    assert h3.children[0].children[0].children[0].text == '4'
+
+
 def test_counter_multiple_extends():
     # Inspired by W3C failing test system-extends-invalid
     page, = render_pages('''

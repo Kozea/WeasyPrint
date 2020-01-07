@@ -281,8 +281,7 @@ def _standardize_page_based_counters(style, pseudo_type):
 
     """
     page_counter_touched = False
-    # XXX 'counter-set` not yet supported
-    for propname in ('counter_reset', 'counter_increment'):
+    for propname in ('counter_set', 'counter_reset', 'counter_increment'):
         if style[propname] == 'auto':
             style[propname] = ()
             continue

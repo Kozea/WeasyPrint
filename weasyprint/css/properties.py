@@ -20,12 +20,6 @@ INITIAL_VALUES = {
     'clear': 'none',
     'clip': (),  # computed value for 'auto'
     'color': parse_color('black'),  # chosen by the user agent
-    # Means 'none', but allow `display: list-item` to increment the
-    # list-item counter. If we ever have a way for authors to query
-    # computed values (JavaScript?), this value should serialize to 'none'.
-    'counter_increment': 'auto',
-    'counter_reset': (),  # parsed value for 'none'
-    # 'counter_set': (),  # parsed value for 'none'
     'direction': 'ltr',
     'display': 'inline',
     'empty_cells': 'show',
@@ -33,9 +27,6 @@ INITIAL_VALUES = {
     'height': 'auto',
     'left': 'auto',
     'line_height': 'normal',
-    'list_style_image': ('none', None),
-    'list_style_position': 'outside',
-    'list_style_type': 'disc',
     'margin_top': Dimension(0, 'px'),
     'margin_right': Dimension(0, 'px'),
     'margin_bottom': Dimension(0, 'px'),
@@ -196,6 +187,17 @@ INITIAL_VALUES = {
     'overflow': 'visible',
     'text_overflow': 'clip',
 
+    # Lists Module 3 (WD): https://drafts.csswg.org/css-lists-3/
+    # Means 'none', but allow `display: list-item` to increment the
+    # list-item counter. If we ever have a way for authors to query
+    # computed values (JavaScript?), this value should serialize to 'none'.
+    'counter_increment': 'auto',
+    'counter_reset': (),  # parsed value for 'none'
+    'counter_set': (),  # parsed value for 'none'
+    'list_style_image': ('none', None),
+    'list_style_position': 'outside',
+    'list_style_type': 'disc',
+
     # Proprietary
     'anchor': None,  # computed value of 'none'
     'link': None,  # computed value of 'none'
@@ -294,6 +296,7 @@ TABLE_WRAPPER_BOX_PROPERTIES = {
     'clear',
     'counter_increment',
     'counter_reset',
+    'counter_set',
     'float',
     'left',
     'margin_top',

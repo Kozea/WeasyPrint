@@ -74,7 +74,7 @@ def test_function_invalid(rule):
     ('counter-increment: foo bar 2 baz', {
         'counter_increment': (('foo', 1), ('bar', 2), ('baz', 1))}),
     ('counter-reset: foo', {'counter_reset': (('foo', 0),)}),
-    ('counter-reset: FoO', {'counter_reset': (('FoO', 0),)}),
+    ('counter-set: FoO', {'counter_set': (('FoO', 0),)}),
     ('counter-increment: foo bAr 2 Bar', {
         'counter_increment': (('foo', 1), ('bAr', 2), ('Bar', 1))}),
     ('counter-reset: none', {'counter_reset': ()}),
