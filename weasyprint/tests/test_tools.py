@@ -10,24 +10,25 @@ import io
 from urllib.parse import urlencode
 
 import cairocffi as cairo
+import pytest
 
 from ..tools import navigator, renderer
-from ..urls import path2url
+from ..urls import URLFetchingError, path2url
 from .testing_utils import assert_no_logs
 
 
-def wsgi_client(module, path_info, qs_args=None, method='GET'):
+def wsgi_client(module, path_info, query_string_args=None, method='GET'):
     start_response_calls = []
 
     def start_response(status, headers):
         start_response_calls.append((status, headers))
     environ = {'REQUEST_METHOD': method, 'PATH_INFO': path_info}
-    qs = urlencode(qs_args or {})
+    query_string = urlencode(query_string_args or {})
     if method == 'POST':
-        environ['wsgi.input'] = io.BytesIO(qs.encode('utf-8'))
-        environ['CONTENT_LENGTH'] = len(qs.encode('utf-8'))
+        environ['wsgi.input'] = io.BytesIO(query_string.encode('utf-8'))
+        environ['CONTENT_LENGTH'] = len(query_string.encode('utf-8'))
     else:
-        environ['QUERY_STRING'] = qs
+        environ['QUERY_STRING'] = query_string
     response = b''.join(module.app(environ, start_response))
     assert len(start_response_calls) == 1
     status, headers = start_response_calls[0]
@@ -75,6 +76,17 @@ def test_navigator(tmpdir):
         return
     assert b'/URI (http://weasyprint.org)' in body
     assert b'/Title (Lorem ipsum)' in body
+
+    status, headers, body = wsgi_client(navigator, '/pdf/' + url)
+    assert status == '200 OK'
+    assert headers['Content-Type'] == 'application/pdf'
+    assert body.startswith(b'%PDF')
+
+    with pytest.raises(URLFetchingError):
+        wsgi_client(navigator, '/pdf/' + 'test.example')
+
+    with pytest.raises(URLFetchingError):
+        wsgi_client(navigator, '/pdf/' + 'test.example', {'test': 'test'})
 
 
 @assert_no_logs

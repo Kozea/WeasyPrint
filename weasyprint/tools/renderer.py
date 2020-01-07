@@ -97,12 +97,12 @@ def app(environ, start_response):
     return make_response(b'<h1>Not Found</h1>', status='404 Not Found')
 
 
-def run(port=5000):
+def run(port=5000):  # pragma: no cover
     host = '127.0.0.1'
     server = make_server(host, port, app)
     print('Listening on http://%s:%s/ ...' % (host, port))
     server.serve_forever()
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     run()
