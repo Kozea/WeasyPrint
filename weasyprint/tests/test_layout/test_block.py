@@ -704,7 +704,7 @@ def test_box_decoration_break_clone_bottom_padding():
 
 @pytest.mark.xfail
 @assert_no_logs
-def test_box_decoration_break_slice_bottom_padding():
+def test_box_decoration_break_slice_bottom_padding():  # pragma: no cover
     # Last div fits in first, but not article's padding. As it is impossible to
     # break between a parent and its last child, put last child on next page.
     # TODO: at the end of block_container_layout, we should check that the box

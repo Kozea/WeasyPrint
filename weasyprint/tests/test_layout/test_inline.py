@@ -339,7 +339,7 @@ def test_breaking_linebox_regression_8():
 
 @pytest.mark.xfail
 @assert_no_logs
-def test_breaking_linebox_regression_9():
+def test_breaking_linebox_regression_9():  # pragma: no cover
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/783
     # TODO: inlines.can_break_inside return False for span but we can break
     # before the <b> tag. can_break_inside should be fixed.

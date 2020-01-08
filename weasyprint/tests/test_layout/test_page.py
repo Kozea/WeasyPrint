@@ -463,7 +463,7 @@ def test_margin_break(break_after, margin_break, margin_top):
 
 @pytest.mark.xfail
 @assert_no_logs
-def test_margin_break_clearance():
+def test_margin_break_clearance():  # pragma: no cover
     page_1, page_2 = render_pages('''
       <style>
         @page { size: 70px; margin: 0 }
