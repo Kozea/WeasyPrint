@@ -54,6 +54,7 @@ def _test_resource(class_, basename, check, **kwargs):
     relative_path = Path(relative_filename)
     check(class_(relative_filename, **kwargs))
     check(class_(relative_path, **kwargs))
+    kwargs.pop('base_url', None)
     check(class_(string=content, base_url=relative_filename, **kwargs))
     encoding = kwargs.get('encoding') or 'utf8'
     check(class_(string=content.decode(encoding),  # unicode
@@ -141,6 +142,7 @@ def test_html_parsing():
     filename = os.path.join('resources', 'doc1.html')
     with open(filename, encoding='utf-8') as fd:
         string = fd.read()
+    _test_resource(FakeHTML, 'doc1.html', _check_doc1, base_url=filename)
     _check_doc1(FakeHTML(string=string, base_url=filename))
     _check_doc1(FakeHTML(string=string), has_base_url=False)
     string_with_meta = string.replace(
@@ -821,10 +823,15 @@ def test_url_fetcher():
 
     def fetcher(url):
         if url == 'weasyprint-custom:foo/%C3%A9_%e9_pattern':
-            return dict(string=pattern_png, mime_type='image/png')
+            return {'string': pattern_png, 'mime_type': 'image/png'}
         elif url == 'weasyprint-custom:foo/bar.css':
-            return dict(string='body { background: url(é_%e9_pattern)',
-                        mime_type='text/css')
+            return {
+                'string': 'body { background: url(é_%e9_pattern)',
+                'mime_type': 'text/css'}
+        elif url == 'weasyprint-custom:foo/bar.no':
+            return {
+                'string': 'body { background: red }',
+                'mime_type': 'text/no'}
         else:
             return default_url_fetcher(url)
 
@@ -847,12 +854,20 @@ def test_url_fetcher():
          'url(weasyprint-custom:foo/é_%e9_pattern)">')
     test('<link rel=stylesheet href="weasyprint-custom:foo/bar.css"><body>')
     test('<style>@import "weasyprint-custom:foo/bar.css";</style><body>')
+    test('<link rel=stylesheet href="weasyprint-custom:foo/bar.css"><body>')
 
     with capture_logs() as logs:
         test('<body><img src="custom:foo/bar">', blank=True)
     assert len(logs) == 1
     assert logs[0].startswith(
         'ERROR: Failed to load image at "custom:foo/bar"')
+
+    with capture_logs() as logs:
+        test(
+            '<link rel=stylesheet href="weasyprint-custom:foo/bar.css">'
+            '<link rel=stylesheet href="weasyprint-custom:foo/bar.no"><body>')
+    assert len(logs) == 1
+    assert logs[0].startswith('ERROR: Unsupported stylesheet type text/no')
 
     def fetcher_2(url):
         assert url == 'weasyprint-custom:%C3%A9_%e9.css'

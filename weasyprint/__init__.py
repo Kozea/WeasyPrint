@@ -439,14 +439,9 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
             if name and not name.startswith('<'):
                 base_url = ensure_url(name)
         yield 'file_obj', file_obj, base_url, None
-    elif string is not None:
-        yield 'string', string, base_url, None
     else:
-        sources = dict(locals())
-        sources_names = ', '.join(
-            name for name in ('guess', 'filename', 'url', 'file_obj', 'string')
-            if sources[name] is not None) or 'nothing'
-        raise TypeError('Expected exactly one source, got ' + sources_names)
+        assert string is not None
+        yield 'string', string, base_url, None
 
 # Work around circular imports.
 from .css import preprocess_stylesheet  # noqa isort:skip
