@@ -116,8 +116,8 @@ Debian / Ubuntu
 WeasyPrint is `packaged for Debian 11 or newer
 <https://packages.debian.org/search?searchon=names&keywords=weasyprint>`_.
 
-You can install it with pip on Debian 10 Buster or newer, or on Ubuntu 18.04
-Bionic Beaver or newer, after installing the following packages:
+You can install it with pip on Debian 10 Buster or latest versions, or on Ubuntu 18.04
+Bionic Beaver or lastest versions, after installing the following packages:
 
 .. code-block:: sh
 
@@ -245,8 +245,8 @@ packages. They are part of `GTK+ <https://en.wikipedia.org/wiki/GTK+>`_
 The following installation instructions for the GTK+ libraries don't work on
 Windows XP. That means: Windows Vista or later is required.
 
-Of course you can decide to install ancient WeasyPrint versions with an
-erstwhile Python, combine it with outdated GTK+ libraries on any Windows
+Of course you can decide to install older WeasyPrint versions with an
+older Python versions, combine it with outdated GTK+ libraries on any Windows
 version you like, but if you decide to do that **you’re on your own, don’t even
 try to report an issue, kittens will die because of you.**
 
@@ -290,21 +290,20 @@ There's one thing you **must** observe:
 - If your Python is 32 bit you must use the 32 bit versions of those libraries.
 - If your Python is 64 bit you must use the 64 bit versions of those libraries.
 
-If you mismatch the bitness, the warning about kittens dying applies.
+If you install incompatible software architectures, the warning about kittens dying applies.
 
-In case you forgot which Python you installed, ask Python (in the console
-window):
+In case you forgot which Python architecture you installed, you can find out by runing the 
+following command in command prompt:
 
 .. code-block:: console
 
     python --version --version
 
-Having installed Python 64 bit you can either use the :ref:`GTK+ 64 Bit
+If your python architecture is 64 bit you can either use the :ref:`GTK+ 64 Bit
 Installer <gtk64installer>` or install the 64-bit :ref:`GTK+ via MSYS2
 <msys2_gtk>`.
 
-On Windows 32 bit or if you decided to install Python 32 bit on your Windows 64
-bit machine you'll have to install the 32-bit :ref:`GTK+ via MSYS2
+If your python architecture is 32 bit you'll have to install the 32-bit :ref:`GTK+ via MSYS2
 <msys2_gtk>`.
 
 .. note::
@@ -419,7 +418,7 @@ and provided by Tom Schoonjans.
 .. note::
 
     Checking the option doesn't insert the GTK-path at the beginning of your
-    system ``PATH``, but rather **appends** it. If there is alread another
+    system ``PATH``, but rather **appends** it. If there is already another
     (outdated) GTK on your ``PATH`` this will lead to unpleasant problems.
 
 In any case: When executing WeasyPrint the GTK libraries must be on its ``PATH``.
