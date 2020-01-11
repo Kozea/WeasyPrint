@@ -8,7 +8,7 @@
 
 import argparse
 import logging
-import os
+import platform
 import sys
 
 import cairosvg
@@ -19,8 +19,8 @@ from .text import cairo, pango
 
 class PrintInfo(argparse.Action):
     def __call__(*_, **__):
-        uname = os.uname()
-        print('System:', uname.sysname)
+        uname = platform.uname()
+        print('System:', uname.system)
         print('Machine:', uname.machine)
         print('Version:', uname.version)
         print('Release:', uname.release)
@@ -160,10 +160,7 @@ def main(argv=None, stdout=None, stdin=None):
         format_ = args.format.lower()
 
     if args.input == '-':
-        if stdin is None:
-            stdin = sys.stdin
-        # stdin.buffer on Py3, stdin on Py2
-        source = getattr(stdin, 'buffer', stdin)
+        source = stdin or sys.stdin.buffer
         if args.base_url is None:
             args.base_url = '.'  # current directory
         elif args.base_url == '':
@@ -172,10 +169,7 @@ def main(argv=None, stdout=None, stdin=None):
         source = args.input
 
     if args.output == '-':
-        if stdout is None:
-            stdout = sys.stdout
-        # stdout.buffer on Py3, stdout on Py2
-        output = getattr(stdout, 'buffer', stdout)
+        output = stdout or sys.stdout.buffer
     else:
         output = args.output
 

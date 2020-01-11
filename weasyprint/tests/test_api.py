@@ -313,8 +313,9 @@ def test_command_line_render(tmpdir):
     # pdf_bytes = html_obj.write_pdf()
     png_bytes = html_obj.write_png()
     x2_png_bytes = html_obj.write_png(resolution=192)
-    rotated_png_bytes = FakeHTML(string=combined, base_url='dummy.html',
-                                 media_type='screen').write_png()
+    rotated_png_bytes = FakeHTML(
+        string=combined, base_url='dummy.html',
+        media_type='screen').write_png()
     empty_png_bytes = FakeHTML(
         string=b'<style>' + css + b'</style>').write_png()
     check_png_pattern(png_bytes)
@@ -347,11 +348,11 @@ def test_command_line_render(tmpdir):
     _run(path2url(tmpdir.join('combined.html').strpath) + ' out5.png')
     assert tmpdir.join('out5.png').read_binary() == png_bytes
 
-    _run('linked.html out6.png')  # test relative URLs
+    _run('linked.html --debug out6.png')  # test relative URLs
     assert tmpdir.join('out6.png').read_binary() == png_bytes
 
-    _run('combined.html out7 -f png')
-    _run('combined.html out8 --format pdf')
+    _run('combined.html --verbose out7 -f png')
+    _run('combined.html --quiet out8 --format pdf')
     assert tmpdir.join('out7').read_binary() == png_bytes
     # assert tmpdir.join('out8').read_binary(), pdf_bytes
 
@@ -379,6 +380,8 @@ def test_command_line_render(tmpdir):
 
     stdout = _run('-f pdf combined.html -')
     assert stdout.count(b'attachment') == 0
+    stdout = _run('-f pdf combined.html -')
+    assert stdout.count(b'attachment') == 0
     stdout = _run('-f pdf -a pattern.png combined.html -')
     assert stdout.count(b'attachment') == 1
     stdout = _run('-f pdf -a style.css -a pattern.png combined.html -')
@@ -398,8 +401,30 @@ def test_command_line_render(tmpdir):
     assert logs[0].startswith('ERROR: Failed to load image')
     assert stdout == empty_png_bytes
 
+    with capture_logs() as logs:
+        stdout = _run('--format png --base-url= - -', stdin=combined)
+    assert len(logs) == 1
+    assert logs[0].startswith(
+        'ERROR: Relative URI reference without a base URI')
+    assert stdout == empty_png_bytes
+
     stdout = _run('--format png --base-url .. - -', stdin=combined)
     assert stdout == png_bytes
+
+    with pytest.raises(SystemExit):
+        _run('--info')
+
+    with pytest.raises(SystemExit):
+        _run('--version')
+
+    with pytest.raises(SystemExit):
+        _run('combined.html combined.jpg')
+
+    with pytest.raises(SystemExit):
+        _run('combined.html combined.pdf --resolution 100')
+
+    with pytest.raises(SystemExit):
+        _run('combined.html combined.png -a pattern.png')
 
 
 @assert_no_logs
