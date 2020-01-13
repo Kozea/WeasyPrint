@@ -154,7 +154,6 @@ def get_link_attribute(element, attr_name, base_url):
     uri = get_url_attribute(element, attr_name, base_url, allow_relative=True)
     if uri:
         if base_url:
-            breakpoint()
             parsed = urlsplit(uri)
             # Compare with fragments removed
             if parsed[:-1] == urlsplit(base_url)[:-1]:
