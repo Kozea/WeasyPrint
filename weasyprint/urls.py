@@ -8,14 +8,11 @@
 
 import codecs
 import contextlib
-import gzip
-import io
 import os.path
 import re
 import sys
 import traceback
 import zlib
-from base64 import decodebytes
 from gzip import GzipFile
 from urllib.parse import quote, unquote, urljoin, urlsplit
 from urllib.request import Request, pathname2url, urlopen
@@ -31,10 +28,10 @@ BYTES_SCHEME_RE = re.compile(b'^([a-zA-Z][a-zA-Z0-9.+-]+):')
 
 # getfilesystemencoding() on Linux is sometimes stupid…
 FILESYSTEM_ENCODING = sys.getfilesystemencoding()
-try:
+try:  # pragma: no cover
     if codecs.lookup(FILESYSTEM_ENCODING).name == 'ascii':
         FILESYSTEM_ENCODING = 'utf-8'
-except LookupError:
+except LookupError:  # pragma: no cover
     FILESYSTEM_ENCODING = 'utf-8'
 
 HTTP_HEADERS = {
@@ -157,6 +154,7 @@ def get_link_attribute(element, attr_name, base_url):
     uri = get_url_attribute(element, attr_name, base_url, allow_relative=True)
     if uri:
         if base_url:
+            breakpoint()
             parsed = urlsplit(uri)
             # Compare with fragments removed
             if parsed[:-1] == urlsplit(base_url)[:-1]:
@@ -172,25 +170,6 @@ def ensure_url(string):
 
     """
     return string if url_is_absolute(string) else path2url(string)
-
-
-def safe_decodebytes(data):
-    """Decode base64, padding being optional.
-
-    "From a theoretical point of view, the padding character is not needed,
-    since the number of missing bytes can be calculated from the number
-    of Base64 digits."
-
-    https://en.wikipedia.org/wiki/Base64#Padding
-
-    :param data: Base64 data as an ASCII byte string.
-    :returns: The decoded byte string.
-
-    """
-    missing_padding = 4 - len(data) % 4
-    if missing_padding:
-        data += b'=' * missing_padding
-    return decodebytes(data)
 
 
 def default_url_fetcher(url, timeout=10, ssl_context=None):
@@ -248,12 +227,7 @@ def default_url_fetcher(url, timeout=10, ssl_context=None):
         }
         content_encoding = response_info.get('Content-Encoding')
         if content_encoding == 'gzip':
-            if StreamingGzipFile is None:
-                result['string'] = gzip.GzipFile(
-                    fileobj=io.BytesIO(response.read())).read()
-                response.close()
-            else:
-                result['file_obj'] = StreamingGzipFile(fileobj=response)
+            result['file_obj'] = StreamingGzipFile(fileobj=response)
         elif content_encoding == 'deflate':
             data = response.read()
             try:
@@ -264,7 +238,7 @@ def default_url_fetcher(url, timeout=10, ssl_context=None):
         else:
             result['file_obj'] = response
         return result
-    else:
+    else:  # pragma: no cover
         raise ValueError('Not an absolute URI: %r' % url)
 
 
@@ -287,10 +261,11 @@ def fetch(url_fetcher, url):
         finally:
             try:
                 result['file_obj'].close()
-            except Exception:
+            except Exception:  # pragma: no cover
                 # May already be closed or something.
                 # This is just cleanup anyway: log but make it non-fatal.
-                LOGGER.warning('Error when closing stream for %s:\n%s',
-                               url, traceback.format_exc())
+                LOGGER.warning(
+                    'Error when closing stream for %s:\n%s',
+                    url, traceback.format_exc())
     else:
         yield result

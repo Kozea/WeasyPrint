@@ -40,6 +40,7 @@ def _test_resource(class_, basename, check, **kwargs):
     check(class_(filename=absolute_path, **kwargs))
     check(class_(url, **kwargs))
     check(class_(guess=url, **kwargs))
+    url = path2url(absolute_filename.encode('utf-8'))
     check(class_(url=url, **kwargs))
     with open(absolute_filename, 'rb') as fd:
         check(class_(fd, **kwargs))
@@ -896,9 +897,10 @@ def test_url_fetcher():
 
     def fetcher_2(url):
         assert url == 'weasyprint-custom:%C3%A9_%e9.css'
-        return dict(string='', mime_type='text/css')
-    FakeHTML(string='<link rel=stylesheet href="weasyprint-custom:'
-                    'é_%e9.css"><body>', url_fetcher=fetcher_2).render()
+        return {'string': '', 'mime_type': 'text/css'}
+    FakeHTML(
+        string='<link rel=stylesheet href="weasyprint-custom:é_%e9.css"><body',
+        url_fetcher=fetcher_2).render()
 
 
 @assert_no_logs
