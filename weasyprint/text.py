@@ -202,6 +202,8 @@ ffi.cdef('''
     void pango_attr_list_unref (PangoAttrList *list);
     void pango_attr_list_insert (
         PangoAttrList *list, PangoAttribute *attr);
+    void pango_attr_list_change (
+        PangoAttrList *list, PangoAttribute *attr);
     PangoAttribute * pango_attr_font_features_new (const gchar *features);
     PangoAttribute * pango_attr_letter_spacing_new (int letter_spacing);
     void pango_attribute_destroy (PangoAttribute *attr);
@@ -773,7 +775,7 @@ class Layout:
                 # TODO: attributes should be freed
                 attr = pango.pango_attr_letter_spacing_new(spacing)
                 attr.start_index, attr.end_index = start, end
-                pango.pango_attr_list_insert(attr_list, attr)
+                pango.pango_attr_list_change(attr_list, attr)
 
             add_attr(0, len(bytestring) + 1, letter_spacing)
             position = bytestring.find(b' ')
