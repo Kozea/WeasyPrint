@@ -34,7 +34,7 @@ if hasattr(sys, 'frozen'):  # pragma: no cover
     else:
         # Frozen with something else (py2exe, etc.)
         # See https://github.com/Kozea/WeasyPrint/pull/269
-        ROOT = os.path.dirname(sys.executable)
+        ROOT = Path(os.path.dirname(sys.executable))
 else:
     ROOT = Path(os.path.dirname(__file__))
 
