@@ -638,3 +638,5 @@ This module works for simple use cases but is not deeply tested.
 
 All the ``flex-*``, ``align-*``, ``justify-*`` and ``order`` properties are
 supported. The ``flex`` and ``flex-flow`` shorthands are supported too.
+
+.. _CSS Flexible Box Layout Module Level 1: https://www.w3.org/TR/css-flexbox-1/
