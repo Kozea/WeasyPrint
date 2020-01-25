@@ -230,8 +230,8 @@ def set_canvas_background(page):
         page.canvas_background = chosen_box.background._replace(
             # TODO: shouldn’t background-clip be considered here?
             layers=[
-                l._replace(painting_area=painting_area)
-                for l in chosen_box.background.layers])
+                layer._replace(painting_area=painting_area)
+                for layer in chosen_box.background.layers])
         chosen_box.background = None
     else:
         page.canvas_background = None
