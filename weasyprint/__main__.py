@@ -11,7 +11,6 @@
 
 import argparse
 import logging
-import os
 import sys
 
 import cairosvg
@@ -22,8 +21,9 @@ from .text import cairo, pango
 
 class PrintInfo(argparse.Action):
     def __call__(*_, **__):
-        uname = os.uname()
-        print('System:', uname.sysname)
+        import platform
+        uname = platform.uname()
+        print('System:', uname.system)
         print('Machine:', uname.machine)
         print('Version:', uname.version)
         print('Release:', uname.release)
