@@ -499,6 +499,12 @@ def counter_reset(tokens):
     return counter(tokens, default_integer=0)
 
 
+@property()
+def counter_set(tokens):
+    """``counter-set`` property validation."""
+    return counter(tokens, default_integer=0)
+
+
 def counter(tokens, default_integer):
     """``counter-increment`` and ``counter-reset`` properties validation."""
     if get_single_keyword(tokens) == 'none':
