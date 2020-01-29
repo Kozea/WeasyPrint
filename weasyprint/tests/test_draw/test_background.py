@@ -48,6 +48,32 @@ def test_canvas_background(name, expected_width, expected_height,
     assert_pixels(name, expected_width, expected_height, expected_pixels, html)
 
 
+def test_canvas_background_size():
+    expected_pixels = '''
+        __________
+        __________
+        __RRRRRR__
+        __RGGGGR__
+        __RRRRRR__
+        __BBBBBB__
+        __BBBBBB__
+        __BBBBBB__
+        __________
+        __________
+    '''
+    html = '''
+      <style>
+         @page { size: 10px; margin: 2px; background: white }
+         /* html’s background propagates to the whole canvas */
+         html { background: linear-gradient(
+           red 0, red 50%, blue 50%, blue 100%); }
+         /* html has a background, so body’s does not propagate */
+         body { margin: 1px; background: lime; height: 1px }
+      </style>
+      <body>'''
+    assert_pixels('background-size', 10, 10, expected_pixels, html)
+
+
 @assert_no_logs
 @pytest.mark.parametrize('name, css, pixels', (
     ('repeat', 'url(pattern.png)', '''

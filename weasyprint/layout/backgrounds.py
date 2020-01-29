@@ -43,17 +43,21 @@ def box_rectangle(box, which_rectangle):
         )
 
 
-def layout_box_backgrounds(page, box, get_image_from_uri):
+def layout_box_backgrounds(page, box, get_image_from_uri, layout_children=True,
+                           style=None):
     """Fetch and position background images."""
     from ..draw import get_color
 
     # Resolve percentages in border-radius properties
     resolve_radii_percentages(box)
 
-    for child in box.all_children():
-        layout_box_backgrounds(page, child, get_image_from_uri)
+    if layout_children:
+        for child in box.all_children():
+            layout_box_backgrounds(page, child, get_image_from_uri)
 
-    style = box.style
+    if style is None:
+        style = box.style
+
     if style['visibility'] == 'hidden':
         box.background = None
         if page != box:  # Pages need a background for bleed box
@@ -136,7 +140,7 @@ def layout_background_layer(box, page, resolution, image, size, clip, repeat,
 
     if image is None or 0 in image.get_intrinsic_size(1, 1):
         return BackgroundLayer(
-            image=None, unbounded=(box is page), painting_area=painting_area,
+            image=None, unbounded=False, painting_area=painting_area,
             size='unused', position='unused', repeat='unused',
             positioning_area='unused', clipped_boxes=clipped_boxes)
 
@@ -199,14 +203,14 @@ def layout_background_layer(box, page, resolution, image, size, clip, repeat,
         size=(image_width, image_height),
         position=(position_x, position_y),
         repeat=repeat,
-        unbounded=(box is page),
+        unbounded=False,
         painting_area=painting_area,
         positioning_area=positioning_area,
         clipped_boxes=clipped_boxes)
 
 
-def set_canvas_background(page):
-    """Set a ``canvas_background`` attribute on the PageBox,
+def set_canvas_background(page, get_image_from_uri):
+    """Set a ``background`` attribute on the PageBox,
     with style for the canvas background, taken from the root elememt
     or a <body> child of the root element.
 
@@ -224,11 +228,16 @@ def set_canvas_background(page):
 
     if chosen_box.background:
         painting_area = box_rectangle(page, 'padding-box')
-        page.canvas_background = chosen_box.background._replace(
+        original_background = page.background
+        layout_box_backgrounds(
+            page, page, get_image_from_uri, layout_children=False,
+            style=chosen_box.style)
+        page.canvas_background = page.background._replace(
             # TODO: shouldn’t background-clip be considered here?
             layers=[
-                l._replace(painting_area=painting_area)
-                for l in chosen_box.background.layers])
+                layer._replace(painting_area=painting_area)
+                for layer in page.background.layers])
+        page.background = original_background
         chosen_box.background = None
     else:
         page.canvas_background = None
@@ -236,4 +245,4 @@ def set_canvas_background(page):
 
 def layout_backgrounds(page, get_image_from_uri):
     layout_box_backgrounds(page, page, get_image_from_uri)
-    set_canvas_background(page)
+    set_canvas_background(page, get_image_from_uri)
