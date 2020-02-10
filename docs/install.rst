@@ -116,8 +116,8 @@ Debian / Ubuntu
 WeasyPrint is `packaged for Debian 11 or newer
 <https://packages.debian.org/search?searchon=names&keywords=weasyprint>`_.
 
-You can install it with pip on Debian 10 Buster or latest versions, or on Ubuntu 18.04
-Bionic Beaver or lastest versions, after installing the following packages:
+You can install it with pip on Debian 10 Buster or newer, or on Ubuntu 18.04
+Bionic Beaver or newer, after installing the following packages:
 
 .. code-block:: sh
 
@@ -245,10 +245,10 @@ packages. They are part of `GTK+ <https://en.wikipedia.org/wiki/GTK+>`_
 The following installation instructions for the GTK+ libraries don't work on
 Windows XP. That means: Windows Vista or later is required.
 
-Of course you can decide to install older WeasyPrint versions with an
-older Python versions, combine it with outdated GTK+ libraries on any Windows
-version you like, but if you decide to do that **you’re on your own, don’t even
-try to report an issue, kittens will die because of you.**
+Of course you can decide to install ancient WeasyPrint versions with an
+erstwhile Python versions, combine it with outdated GTK+ libraries on any
+Windows version you like, but if you decide to do that **you’re on your own,
+don’t even try to report an issue, kittens will die because of you.**
 
 Step 1 - Install Python
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -290,10 +290,10 @@ There's one thing you **must** observe:
 - If your Python is 32 bit you must use the 32 bit versions of those libraries.
 - If your Python is 64 bit you must use the 64 bit versions of those libraries.
 
-If you install incompatible software architectures, the warning about kittens dying applies.
+If you mismatch the bitness, the warning about kittens dying applies.
 
-In case you forgot which Python architecture you installed, you can find out by runing the 
-following command in command prompt:
+In case you forgot which Python architecture you installed, you can find out by
+running the following command in command prompt:
 
 .. code-block:: console
 
