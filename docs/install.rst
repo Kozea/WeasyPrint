@@ -130,8 +130,8 @@ Fedora
 ~~~~~~
 
 WeasyPrint is `packaged for Fedora
-<https://apps.fedoraproject.org/packages/weasyprint>`_, but you can install it
-with pip after installing the following packages:
+<http://rpms.remirepo.net/rpmphp/zoom.php?rpm=weasyprint>`_, but you can
+install it with pip after installing the following packages:
 
 .. code-block:: sh
 
