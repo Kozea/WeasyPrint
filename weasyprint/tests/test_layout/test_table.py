@@ -1540,6 +1540,33 @@ def test_layout_table_auto_50():
 
 
 @assert_no_logs
+def test_explicit_width_table_percent_rtl():
+    page, = render_pages('''
+      <table style="width:100%;direction:rtl">
+        <tr>
+          <th>الاسم</th>
+          <th>العائلة</th>
+          <th>العمر</th>
+        </tr>
+        <tr>
+          <td>محمد يوسف</td>
+          <td>النجدي</td>
+          <td>29</td>
+        </tr>
+      </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    line, = body.children
+    table_wrapper, = line.children
+    table, = table_wrapper.children
+    row_group_1, row_group_2, = table.children
+    th_1, th_2, th_3, = row_group_1.children
+    td_1, td_2, td_3, = row_group_2.children
+    assert False
+
+
+@assert_no_logs
 def test_table_column_width_1():
     source = '''
       <style>
