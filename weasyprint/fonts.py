@@ -163,26 +163,28 @@ else:
 
         The default fontconfig configuration file may be missing (particularly
         on Windows or macOS, where installation of fontconfig isn't as
-        standardized as on Liniux), resulting in "Fontconfig error: Cannot load
+        standardized as on Linux), resulting in "Fontconfig error: Cannot load
         default config file".
 
         Fontconfig tries to retrieve the system fonts as fallback, which may or
         may not work, especially on macOS, where fonts can be installed at
-        various loactions.
-        On Windows (at least since fontconfig 2.13) the fallback seems to work.
+        various loactions. On Windows (at least since fontconfig 2.13) the
+        fallback seems to work.
 
-        No default config && system fonts fallback fails == No fonts.
-        Config file exists, but doesn't provide fonts == No fonts.
-        No fonts == expect ugly output.
+        If there’s no default configuration and the system fonts fallback
+        fails, or if the configuration file exists but doesn’t provide fonts,
+        output will be ugly.
 
-        If you happen to have no fonts and an html without a valid @font-face
-        all letters turn into rectangles.
-        If you happen to have an html with at least one valid @font-face
-        all text is styled with that font.
+        If you happen to have no fonts and an HTML document without a valid
+        @font-face, all letters turn into rectangles.
+
+        If you happen to have an HTML document with at least one valid
+        @font-face, all text is styled with that font.
 
         On Windows and macOS we can cause Pango to use native font rendering
         instead of rendering fonts with FreeType. But then we must do without
         @font-face. Expect other missing features and ugly output.
+
         """
 
         # On Linux we can do nothing but give warnings.
@@ -197,17 +199,16 @@ else:
         # fallback stragegy seems to work since fontconfig >= 2.13
         fonts = fontconfig.FcConfigGetFonts(
             font_config, fontconfig.FcSetSystem)
-        # Of course, with nfont == 1 the user wont be happy, too...
+        # Of course, with nfont == 1 the user wont be happy, too…
         if fonts.nfont > 0:
             return True
 
-        # whats the reason for zero fonts?
+        # Find the reason why we have no fonts
         config_files = fontconfig.FcConfigGetConfigFiles(font_config)
         config_file = fontconfig.FcStrListNext(config_files)
         if config_file == ffi.NULL:
-            # no config file, no system fonts found
-            # on Windows and macOS it might help to fall back to native font
-            # rendering
+            # No config file, no system fonts found. On Windows and macOS it
+            # might help to fall back to native font rendering.
             if has_native_mode:
                 if warn:
                     warnings.warn(
@@ -221,7 +222,7 @@ else:
                         'Expect ugly output.')
                 return True
         else:
-            # useless config file or indeed no fonts
+            # Useless config file, or indeed no fonts.
             if warn:
                 warnings.warn(
                     'FontConfig: No fonts configured. '
