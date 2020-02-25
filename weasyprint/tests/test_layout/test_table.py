@@ -1540,9 +1540,14 @@ def test_layout_table_auto_50():
 
 
 @assert_no_logs
-def test_explicit_width_table_percent_rtl():
+@pytest.mark.parametrize('size, width', (
+    ('auto', 163),
+    ('242px', 242),
+    ('100%', 793),
+))
+def test_explicit_width_table_percent_rtl(size, width):
     page, = render_pages('''
-      <table style="width:100%;direction:rtl">
+      <table style="width: %s; direction:rtl">
         <tr>
           <th>الاسم</th>
           <th>العائلة</th>
@@ -1554,16 +1559,15 @@ def test_explicit_width_table_percent_rtl():
           <td>29</td>
         </tr>
       </table>
-    ''')
+    ''' % size)
     html, = page.children
     body, = html.children
-    line, = body.children
-    table_wrapper, = line.children
-    table, = table_wrapper.children
-    row_group_1, row_group_2, = table.children
-    th_1, th_2, th_3, = row_group_1.children
-    td_1, td_2, td_3, = row_group_2.children
-    assert False
+    wrapper, = body.children
+    table, = wrapper.children
+    row_group, = table.children
+
+    assert table.position_x == 0
+    assert int(table.width) == width
 
 
 @assert_no_logs
