@@ -1540,6 +1540,36 @@ def test_layout_table_auto_50():
 
 
 @assert_no_logs
+@pytest.mark.parametrize('size, width', (
+    ('242px', 242),
+    ('100%', 793),
+))
+def test_explicit_width_table_percent_rtl(size, width):
+    page, = render_pages('''
+      <table style="width: %s; direction:rtl">
+        <tr>
+          <th>الاسم</th>
+          <th>العائلة</th>
+          <th>العمر</th>
+        </tr>
+        <tr>
+          <td>محمد يوسف</td>
+          <td>النجدي</td>
+          <td>29</td>
+        </tr>
+      </table>
+    ''' % size)
+    html, = page.children
+    body, = html.children
+    wrapper, = body.children
+    table, = wrapper.children
+    row_group, = table.children
+
+    assert table.position_x == 0
+    assert int(table.width) == width
+
+
+@assert_no_logs
 def test_table_column_width_1():
     source = '''
       <style>
