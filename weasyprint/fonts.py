@@ -333,8 +333,6 @@ else:
                         if font_name.lower() in (
                                 family.lower(), postscript.lower()):
                             filename = ffi.new('FcChar8 **')
-                            matching_pattern = fontconfig.FcFontMatch(
-                                config, pattern, result)
                             fontconfig.FcPatternGetString(
                                 matching_pattern, b'file', 0, filename)
                             path = ffi.string(filename[0]).decode(
