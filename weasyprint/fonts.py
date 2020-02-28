@@ -417,9 +417,9 @@ else:
                     os.close(fd)
                     self._filenames.append(conf_filename)
                     fontconfig.FcConfigParseAndLoad(
-                        config, conf_filename.encode('ascii'), True)
+                        config, conf_filename.encode('mbcs'), True)
                     font_added = fontconfig.FcConfigAppFontAddFile(
-                        config, filename.encode('ascii'))
+                        config, filename.encode('mbcs'))
                     if font_added:
                         # TODO: We should mask local fonts with the same name
                         # too as explained in Behdad's blog entry.
