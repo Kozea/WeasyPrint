@@ -531,3 +531,108 @@ def test_tables_11():
       </style>
       <table style="table-layout: fixed; border-collapse: collapse">
         <tr><td></td><td></td></tr>''')
+
+
+@assert_no_logs
+@requires('cairo', (1, 12, 0))
+def test_tables_12():
+    assert_pixels('table_collapsed_borders', 28, 28, to_pix('''
+        ____________________________
+        _________BBBBBBBBBBBBBBBBBB_
+        _________BBBBBBBBBBBBBBBBBB_
+        _________BB____r____r____BB_
+        _________BB____r____r____BB_
+        _________BB____r____r____BB_
+        _________BB____r____r____BB_
+        _________BBrrrrr____rrrrrBB_
+        _________BB_________r____BB_
+        _________BB_________r____BB_
+        _________BB_________r____BB_
+        _________BB_________r____BB_
+        _________BBrrrrrrrrrrrrrrBB_
+        _________BB____r____r____BB_
+        _________BB____r____r____BB_
+        _________BB____r____r____BB_
+        _________BB____r____r____BB_
+        _________BBBBBBBBBBBBBBBBBB_
+        _________BBBBBBBBBBBBBBBBBB_
+        ____________________________
+        ____________________________
+        ____________________________
+        ____________________________
+        ____________________________
+        ____________________________
+        ____________________________
+        ____________________________
+        ____________________________
+    '''), tables_source % {'extra_css': '''
+      x-table { border: 2px solid #00f; table-layout: fixed;
+                border-collapse: collapse; direction: rtl }
+      x-td { border-color: #ff7f7f }
+    '''})
+
+
+@assert_no_logs
+@requires('cairo', (1, 12, 0))
+def test_tables_13():
+    assert_pixels('table_collapsed_borders_paged', 28, 52, to_pix('''
+        ____________________________
+        _gggggggggggggggggggggggggg_
+        _g________________________g_
+        _g_____BBBBBBBBBBBBBBBBBB_g_
+        _g_____BBBBBBBBBBBBBBBBBB_g_
+        _g_____BBBBBBBBBBBBBBBBBB_g_
+        _g_____BBBBBBBBBBBBBBBBBB_g_
+        _g_____BBBBBBBBBBBBBBBBBB_g_
+        _g_____BBBBBBBBBBBBBBBBBB_g_
+        _g_____BBBBBBBBBBBBBBBBBB_g_
+        _g_____BBBBBBBBBBBBBBBBBB_g_
+        _g_____BB____r____r____BB_g_
+        _g_____BB____r____r____BB_g_
+        _g_____BB____r____r____BB_g_
+        _g_____BB____r____r____BB_g_
+        _g_____BBrrrrr____rrrrrBB_g_
+        _g_____BB_________r____BB_g_
+        _g_____BB_________r____BB_g_
+        _g_____BB_________r____BB_g_
+        _g_____BB_________r____BB_g_
+        _g_____BBrrrrrrrrrrrrrrBB_g_
+        _g________________________g_
+        _g________________________g_
+        _g________________________g_
+        _gggggggggggggggggggggggggg_
+        ____________________________
+        ____________________________
+        _gggggggggggggggggggggggggg_
+        _g_____BBrrrrrrrrrrrrrrBB_g_
+        _g_____BB____r____r____BB_g_
+        _g_____BB____r____r____BB_g_
+        _g_____BB____r____r____BB_g_
+        _g_____BB____r____r____BB_g_
+        _g_____BBBBBBBBBBBBBBBBBB_g_
+        _g_____BBBBBBBBBBBBBBBBBB_g_
+        _g_____BBBBBBBBBBBBBBBBBB_g_
+        _g_____BBBBBBBBBBBBBBBBBB_g_
+        _g_____BBBBBBBBBBBBBBBBBB_g_
+        _g_____BBBBBBBBBBBBBBBBBB_g_
+        _g_____BBBBBBBBBBBBBBBBBB_g_
+        _g_____BBBBBBBBBBBBBBBBBB_g_
+        _g________________________g_
+        _g________________________g_
+        _g________________________g_
+        _g________________________g_
+        _g________________________g_
+        _g________________________g_
+        _g________________________g_
+        _g________________________g_
+        _g________________________g_
+        _gggggggggggggggggggggggggg_
+        ____________________________
+    '''), tables_source % {'extra_css': '''
+      x-table { border: solid #00f; border-width: 8px 2px;
+                table-layout: fixed; border-collapse: collapse;
+                direction: rtl }
+      x-td { border-color: #ff7f7f }
+      @page { size: 28px 26px; margin: 1px;
+              border: 1px solid rgba(0, 255, 0, 0.5); }
+    '''})
