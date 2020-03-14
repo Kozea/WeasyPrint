@@ -865,7 +865,10 @@ def draw_collapsed_borders(context, table, enable_hinting):
     grid_width = len(column_widths)
     assert grid_width == len(column_positions)
     # Add the end of the last column, but make a copy from the table attr.
-    column_positions += [column_positions[-1] + column_widths[-1]]
+    if table.style['direction'] == 'ltr':
+        column_positions.append(column_positions[-1] + column_widths[-1])
+    else:
+        column_positions.insert(0, column_positions[0] + column_widths[0])
     # Add the end of the last row. No copy here, we own this list
     row_positions.append(row_positions[-1] + row_heights[-1])
     vertical_borders, horizontal_borders = table.collapsed_border_grid
@@ -934,7 +937,6 @@ def draw_collapsed_borders(context, table, enable_hinting):
         if width == 0 or color.alpha == 0:
             return
         pos_y = row_positions[y]
-        # TODO: change signs for rtl when we support rtl tables?
         pos_x1 = column_positions[x] - half_max_width(vertical_borders, [
             (y - 1, x), (y, x)])
         pos_x2 = column_positions[x + 1] + half_max_width(vertical_borders, [
