@@ -188,7 +188,10 @@ def avoid_collisions(context, box, containing_block, outer=True):
                 # No solution, we must put the box here
         break
 
-    position_x = max_left_bound
+    if containing_block.style['direction'] == 'ltr':
+        position_x = max_left_bound
+    else:
+        position_x = max_right_bound - box_width
     available_width = max_right_bound - max_left_bound
 
     if not outer:
