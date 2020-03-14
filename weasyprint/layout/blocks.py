@@ -164,7 +164,13 @@ def block_replaced_box_layout(box, containing_block):
 def block_level_width(box, containing_block):
     """Set the ``box`` width."""
     # 'cb' stands for 'containing block'
-    cb_width = containing_block.width
+    if isinstance(containing_block, boxes.Box):
+        cb_width = containing_block.width
+        direction = containing_block.style['direction']
+    else:
+        cb_width = containing_block[0]
+        # TODO: what is the real text direction?
+        direction = 'ltr'
 
     # http://www.w3.org/TR/CSS21/visudet.html#blockwidth
 
@@ -196,7 +202,7 @@ def block_level_width(box, containing_block):
                 margin_r = box.margin_right = 0
     if width != 'auto' and margin_l != 'auto' and margin_r != 'auto':
         # The equation is over-constrained.
-        if containing_block.style['direction'] == 'rtl' and not box.is_column:
+        if direction == 'rtl' and not box.is_column:
             box.position_x += (
                 cb_width - paddings_plus_borders - width - margin_r - margin_l)
         # Do nothing in ltr.

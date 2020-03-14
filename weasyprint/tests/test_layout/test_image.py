@@ -320,6 +320,16 @@ def test_images_17():
 
 
 @assert_no_logs
+def test_images_18():
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1050
+    page, = parse('''
+        <img style="position: absolute" src="
+            data:image/svg+xml,
+            <svg viewBox='0 0 20 10'></svg>
+        ">''')
+
+
+@assert_no_logs
 def test_linear_gradient():
     red = (1, 0, 0, 1)
     lime = (0, 1, 0, 1)
