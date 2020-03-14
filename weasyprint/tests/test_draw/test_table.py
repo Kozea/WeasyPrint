@@ -566,8 +566,9 @@ def test_tables_12():
         ____________________________
         ____________________________
     '''), tables_source % {'extra_css': '''
+      body { direction: rtl }
       x-table { border: 2px solid #00f; table-layout: fixed;
-                border-collapse: collapse; direction: rtl }
+                border-collapse: collapse }
       x-td { border-color: #ff7f7f }
     '''})
 
@@ -629,9 +630,9 @@ def test_tables_13():
         _gggggggggggggggggggggggggg_
         ____________________________
     '''), tables_source % {'extra_css': '''
+      body { direction: rtl }
       x-table { border: solid #00f; border-width: 8px 2px;
-                table-layout: fixed; border-collapse: collapse;
-                direction: rtl }
+                table-layout: fixed; border-collapse: collapse }
       x-td { border-color: #ff7f7f }
       @page { size: 28px 26px; margin: 1px;
               border: 1px solid rgba(0, 255, 0, 0.5); }
