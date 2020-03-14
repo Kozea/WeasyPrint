@@ -937,10 +937,15 @@ def draw_collapsed_borders(context, table, enable_hinting):
         if width == 0 or color.alpha == 0:
             return
         pos_y = row_positions[y]
-        pos_x1 = column_positions[x] - half_max_width(vertical_borders, [
-            (y - 1, x), (y, x)])
-        pos_x2 = column_positions[x + 1] + half_max_width(vertical_borders, [
-            (y - 1, x + 1), (y, x + 1)])
+        shift_before = half_max_width(vertical_borders, [(y - 1, x), (y, x)])
+        shift_after = half_max_width(
+            vertical_borders, [(y - 1, x + 1), (y, x + 1)])
+        if table.style['direction'] == 'ltr':
+            pos_x1 = column_positions[x] - shift_before
+            pos_x2 = column_positions[x + 1] + shift_after
+        else:
+            pos_x1 = column_positions[x + 1] - shift_after
+            pos_x2 = column_positions[x] + shift_before
         segments.append((
             score, style, width, color, 'top',
             (pos_x1, pos_y - width / 2, pos_x2 - pos_x1, 0)))
