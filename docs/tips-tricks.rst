@@ -16,7 +16,7 @@ Why this snippet?
 
 Objective: Render a header and a footer of arbitrary complexity on every page of a PDF file.
 
-Currently, Weasyprint allow to include simple information in the margin of each page (see the report in the library `examples <https://weasyprint.org/samples/>`_). This is possible thanks to CSS3 at-rules (syntax presentation `here <https://www.quackit.com/css/at-rules/css_top-center_at-rule.cfm>`_). At-rules provide the ability to include characters in the margin of paged media. They are used to add things like page numbers or titles on the page.
+Currently, Weasyprint allow to include simple information in the margin of each page (see the report in the library `examples <https://weasyprint.org/samples/>`_). This is possible thanks to CSS3 at-rules (syntax presentation `here <https://www.qhmit.com/css/at-rules/>`_). At-rules provide the ability to include characters in the margin of paged media. They are used to add things like page numbers or titles on the page.
 
 Yet elements of arbitrary complexity can't be introduced in the margin. The :ref:`class <code>` in this snippet provides a solution to include any header and/or a complex footer, however complex they are.
 
