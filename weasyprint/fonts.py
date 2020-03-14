@@ -418,9 +418,10 @@ else:
                     os.close(fd)
                     self._filenames.append(conf_filename)
                     fontconfig.FcConfigParseAndLoad(
-                        config, conf_filename.encode('ascii'), True)
+                        config, fd.name.encode(FILESYSTEM_ENCODING),
+                        True)
                     font_added = fontconfig.FcConfigAppFontAddFile(
-                        config, filename.encode('ascii'))
+                        config, font_filename.encode(FILESYSTEM_ENCODING))
                     if font_added:
                         # TODO: We should mask local fonts with the same name
                         # too as explained in Behdad's blog entry.
