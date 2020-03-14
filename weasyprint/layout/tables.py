@@ -29,17 +29,22 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
         border_spacing_y = 0
 
     column_positions = table.column_positions = []
-    position_x = table.content_box_x()
-    rows_x = position_x + border_spacing_x
-    for width in column_widths:
-        position_x += border_spacing_x
-        column_positions.append(position_x)
-        position_x += width
-    rows_width = position_x - rows_x
-
-    # This should fix the rtl direction for table
-    if table.style['direction'] == 'rtl':
-        column_positions.reverse()
+    if table.style['direction'] == 'ltr':
+        position_x = table.content_box_x()
+        rows_x = position_x + border_spacing_x
+        for width in column_widths:
+            position_x += border_spacing_x
+            column_positions.append(position_x)
+            position_x += width
+        rows_width = position_x - rows_x
+    else:
+        position_x = table.content_box_x() + table.width
+        rows_x = position_x - border_spacing_x
+        for width in column_widths:
+            position_x -= border_spacing_x
+            position_x -= width
+            column_positions.append(position_x)
+        rows_width = rows_x - position_x
 
     if table.style['border_collapse'] == 'collapse':
         if skip_stack:
