@@ -371,10 +371,12 @@ else:
                             **font_features).items():
                         features_string += '<string>%s %s</string>' % (
                             key, value)
-                    fd, filename = tempfile.mkstemp(dir=self._tempdir)
-                    os.write(fd, font)
-                    os.close(fd)
-                    self._filenames.append(filename)
+                    fd = tempfile.NamedTemporaryFile(
+                        'wb', dir=self._tempdir, delete=False)
+                    font_filename = fd.name
+                    fd.write(font)
+                    fd.close()
+                    self._filenames.append(font_filename)
                     xml = '''<?xml version="1.0"?>
                     <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
                     <fontconfig>
@@ -403,7 +405,7 @@ else:
                               mode="assign_replace">%s</edit>
                       </match>
                     </fontconfig>''' % (
-                        filename,
+                        font_filename,
                         rule_descriptors['font_family'],
                         FONTCONFIG_STYLE_CONSTANTS[
                             rule_descriptors.get('font_style', 'normal')],
@@ -411,12 +413,12 @@ else:
                             rule_descriptors.get('font_weight', 'normal')],
                         FONTCONFIG_STRETCH_CONSTANTS[
                             rule_descriptors.get('font_stretch', 'normal')],
-                        filename, features_string)
-                    fd, conf_filename = tempfile.mkstemp(dir=self._tempdir)
-                    # TODO: is this encoding OK?
-                    os.write(fd, xml.encode('utf-8'))
-                    os.close(fd)
-                    self._filenames.append(conf_filename)
+                        font_filename, features_string)
+                    fd = tempfile.NamedTemporaryFile(
+                        'w', dir=self._tempdir, delete=False)
+                    fd.write(xml)
+                    fd.close()
+                    self._filenames.append(fd.name)
                     fontconfig.FcConfigParseAndLoad(
                         config, fd.name.encode(FILESYSTEM_ENCODING),
                         True)
@@ -428,7 +430,7 @@ else:
                         # TODO: What about pango_fc_font_map_config_changed()
                         # as suggested in Behdad's blog entry?
                         # Though it seems to work without…
-                        return filename
+                        return font_filename
                     else:
                         LOGGER.debug('Failed to load font at "%s"', url)
             LOGGER.warning(
