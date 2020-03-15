@@ -113,13 +113,12 @@ def get_next_linebox(context, linebox, position_y, skip_stack,
 
         new_position_x, _, new_available_width = avoid_collisions(
             context, linebox, containing_block, outer=False)
-        # TODO: handle rtl
-        new_available_width -= float_width['right']
-        alignment_available_width = (
-            new_available_width + new_position_x - linebox.position_x)
         offset_x = text_align(
-            context, line, alignment_available_width,
+            context, line, new_available_width,
             last=(resume_at is None or preserved_line_break))
+        if containing_block.style['direction'] == 'rtl':
+            offset_x *= -1
+            offset_x -= line.width
 
         bottom, top = line_box_verticality(line)
         assert top is not None
@@ -1201,14 +1200,14 @@ def text_align(context, line, available_width, last):
     align = line.style['text_align']
     space_collapse = line.style['white_space'] in (
         'normal', 'nowrap', 'pre-line')
-    if align in ('-weasy-start', '-weasy-end'):
-        if (align == '-weasy-start') ^ (line.style['direction'] == 'rtl'):
-            align = 'left'
+    if align in ('left', 'right'):
+        if (align == 'left') ^ (line.style['direction'] == 'rtl'):
+            align = 'start'
         else:
-            align = 'right'
+            align = 'end'
     if align == 'justify' and last:
-        align = 'right' if line.style['direction'] == 'rtl' else 'left'
-    if align == 'left':
+        align = 'start'
+    if align == 'start':
         return 0
     offset = available_width - line.width
     if align == 'justify':
@@ -1221,7 +1220,7 @@ def text_align(context, line, available_width, last):
     if align == 'center':
         return offset / 2
     else:
-        assert align == 'right'
+        assert align == 'end'
         return offset
 
 

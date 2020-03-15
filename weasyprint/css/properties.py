@@ -147,7 +147,7 @@ INITIAL_VALUES = {
     'hyphens': 'manual',
     'letter_spacing': 'normal',
     'tab_size': 8,
-    'text_align': '-weasy-start',
+    'text_align': 'start',
     'text_indent': Dimension(0, 'px'),
     'text_transform': 'none',
     'white_space': 'normal',
