@@ -88,8 +88,9 @@ def get_next_linebox(context, linebox, position_y, skip_stack,
     excluded_shapes = context.excluded_shapes[:]
 
     while 1:
-        linebox.position_x = position_x
-        linebox.position_y = position_y
+        original_position_x = linebox.position_x = position_x
+        original_position_y = linebox.position_y = position_y
+        original_width = linebox.width
         max_x = position_x + available_width
         position_x += linebox.text_indent
 
@@ -144,8 +145,13 @@ def get_next_linebox(context, linebox, position_y, skip_stack,
         context.excluded_shapes = excluded_shapes
         position_x, position_y, available_width = avoid_collisions(
             context, line, containing_block, outer=False)
-        if (position_x, position_y) == (
-                linebox.position_x, linebox.position_y):
+        if containing_block.style['direction'] == 'ltr':
+            condition = (position_x, position_y) == (
+                original_position_x, original_position_y)
+        else:
+            condition = (position_x + line.width, position_y) == (
+                original_position_x + original_width, original_position_y)
+        if condition:
             context.excluded_shapes = new_excluded_shapes
             break
 
