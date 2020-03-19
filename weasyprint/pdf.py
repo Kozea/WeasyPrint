@@ -250,14 +250,14 @@ class PDFFile:
             self._write_object(object_number, byte_string))
         return object_number
 
-    def finish(self):
+    def finish(self, finished=True):
         """Write cross-ref table and trailer for new and overwritten objects.
 
         This makes `fileobj` a valid (updated) PDF file.
 
         """
         new_startxref, write = self._start_writing()
-        self.finished = True
+        self.finished = finished
         write(b'xref\n')
 
         # Don’t bother sorting or finding contiguous numbers,
@@ -283,6 +283,9 @@ class PDFFile:
             info=self.info.object_number,
             prev=self.startxref,
             startxref=new_startxref))
+        # We might want to write more than one trailer,
+        # ie. when applying a Digital Signature
+        self.startxref = new_startxref
 
     def _write_object(self, object_number, byte_string):
         offset, write = self._start_writing()
@@ -296,7 +299,6 @@ class PDFFile:
         fileobj = self.fileobj
         fileobj.seek(0, os.SEEK_END)
         return fileobj.tell(), fileobj.write
-
 
 def _write_compressed_file_object(pdf, file):
     """Write a compressed file like object as ``/EmbeddedFile``.
@@ -474,7 +476,7 @@ def _write_pdf_attachment(pdf, attachment, url_fetcher):
 
 
 def write_pdf_metadata(fileobj, scale, url_fetcher, attachments,
-                       attachment_links, pages):
+                       attachment_links, pages, signer):
     """Add PDF metadata that are not handled by cairo.
 
     Includes:
@@ -585,4 +587,14 @@ def write_pdf_metadata(fileobj, scale, url_fetcher, attachments,
                 '/Annots [{0}]', ' '.join(
                     '{0} 0 R'.format(n) for n in annotations)))
 
-    pdf.finish()
+    if hasattr(signer, 'write_signature_placeholder'):
+        # Add placeholder for the digital signature
+        # This is later overwritten after all content has been written
+        # and a checksum can be calculated
+        signer.write_signature_placeholder(pdf)
+ 
+    pdf.finish(finished=signer == None)
+
+    if hasattr(signer, 'write_signature'):
+        # This overwrites the signature placeholer
+        signer.write_signature(pdf)
