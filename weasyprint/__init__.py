@@ -114,7 +114,6 @@ class HTML:
                     source, override_encoding=encoding,
                     transport_encoding=protocol_encoding,
                     namespaceHTMLElements=False)
-            assert (result is not None) and len(result)
         self.base_url = find_base_url(result, base_url)
         self.url_fetcher = url_fetcher
         self.media_type = media_type
