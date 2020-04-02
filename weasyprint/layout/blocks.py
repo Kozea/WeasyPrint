@@ -800,6 +800,11 @@ def find_earlier_page_break(children, absolute_boxes, fixed_boxes):
 
     previous_in_flow = None
     for index, child in reversed_enumerate(children):
+        if isinstance(child, boxes.TableRowGroupBox) and (
+                child.is_header or child.is_footer):
+            # We don’t want to break pages before table headers or footers.
+            continue
+
         if child.is_in_normal_flow():
             if previous_in_flow is not None and (
                     block_level_page_break(child, previous_in_flow) not in
@@ -810,6 +815,7 @@ def find_earlier_page_break(children, absolute_boxes, fixed_boxes):
                 resume_at = (children[index].index, None)
                 break
             previous_in_flow = child
+
         if child.is_in_normal_flow() and (
                 child.style['break_inside'] not in ('avoid', 'avoid-page')):
             breakable_box_types = (

@@ -278,11 +278,13 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
         next_page = {'break': 'any', 'page': None}
 
         for i, group in enumerate(table.children[skip:]):
-            index_group = i + skip
-            group.index = index_group
-
             if group.is_header or group.is_footer:
                 continue
+
+            # Index is useless for headers and footers, as we never want to
+            # break pages after the header or before the footer.
+            index_group = i + skip
+            group.index = index_group
 
             if new_table_children:
                 page_break = block_level_page_break(

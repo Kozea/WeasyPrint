@@ -2032,7 +2032,7 @@ def test_table_page_breaks(html, rows, positions):
 
 
 @assert_no_logs
-def test_table_page_breaks_complex():
+def test_table_page_breaks_complex_1():
     pages = render_pages('''
       <style>
         @page { size: 100px }
@@ -2082,6 +2082,66 @@ def test_table_page_breaks_complex():
         [['Header'], ['Row 2', 'Row 3'], ['Footer']],
         [['Header'], ['Row 4']],
         [['Row 5']]
+    ]
+
+
+@assert_no_logs
+def test_table_page_breaks_complex_2():
+    pages = render_pages('''
+      <style>
+        @page { size: 250px }
+        td { height: 40px }
+        table { table-layout: fixed; width: 100%; break-before: avoid }
+      </style>
+      <table>
+        <thead>
+          <tr><td>head 1</td></tr>
+        </thead>
+        <tbody>
+          <tr><td>row 1 1</td></tr>
+          <tr><td>row 1 2</td></tr>
+          <tr><td>row 1 3</td></tr>
+        </tbody>
+        <tfoot>
+          <tr><td>foot 1</td></tr>
+        </tfoot>
+      </table>
+      <table>
+        <thead>
+          <tr><td>head 2</td></tr>
+        </thead>
+        <tbody>
+          <tr><td>row 2 1</td></tr>
+          <tr><td>row 2 2</td></tr>
+          <tr><td>row 2 3</td></tr>
+        </tbody>
+        <tfoot>
+          <tr><td>foot 2</td></tr>
+        </tfoot>
+      </table>
+     ''')
+    rows_per_page = []
+    for i, page in enumerate(pages):
+        groups = []
+        html, = page.children
+        body, = html.children
+        for table_wrapper in body.children:
+            table, = table_wrapper.children
+            for group in table.children:
+                assert group.children, 'found an empty table group'
+                rows = []
+                for row in group.children:
+                    cell, = row.children
+                    line, = cell.children
+                    text, = line.children
+                    rows.append(text.text)
+                groups.append(rows)
+        rows_per_page.append(groups)
+    assert rows_per_page == [
+        [['head 1'], ['row 1 1'], ['row 1 2'], ['foot 1']],
+        [['head 1'], ['row 1 3'], ['foot 1'],
+         ['head 2'], ['row 2 1'], ['foot 2']],
+        [['head 2'], ['row 2 2'], ['row 2 3'], ['foot 2']],
     ]
 
 
