@@ -448,6 +448,7 @@ Let's find out. Enter the following command:
 .. code-block:: console
 
     WHERE libcairo-2.dll
+    WHERE zlib1.dll
 
 This should respond with
 *path\\to\\recently\\installed\\gtk\\binaries\\libcairo-2.dll*, for example:
@@ -455,6 +456,7 @@ This should respond with
 .. code-block:: console
 
     C:\msys2\mingw64\bin\libcairo-2.dll
+    C:\Program Files\GTK3-Runtime Win64\bin\zlib1.dll
 
 If your system answers with *nothing found* or returns a filename not related
 to your recently-installed-gtk or lists more than one location and the first
