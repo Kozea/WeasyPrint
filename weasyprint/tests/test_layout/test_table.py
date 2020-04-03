@@ -2138,10 +2138,10 @@ def test_table_page_breaks_complex_2():
                 groups.append(rows)
         rows_per_page.append(groups)
     assert rows_per_page == [
-        [['head 1'], ['row 1 1'], ['row 1 2'], ['foot 1']],
+        [['head 1'], ['row 1 1', 'row 1 2'], ['foot 1']],
         [['head 1'], ['row 1 3'], ['foot 1'],
          ['head 2'], ['row 2 1'], ['foot 2']],
-        [['head 2'], ['row 2 2'], ['row 2 3'], ['foot 2']],
+        [['head 2'], ['row 2 2', 'row 2 3'], ['foot 2']],
     ]
 
 
