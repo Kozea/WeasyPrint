@@ -2143,6 +2143,7 @@ def test_table_page_breaks_complex_2():
          ['head 2'], ['row 2 1'], ['foot 2']],
         [['head 2'], ['row 2 2', 'row 2 3'], ['foot 2']],
     ]
+    # TODO: test positions, the place of footer on the first page is wrong
 
 
 @assert_no_logs

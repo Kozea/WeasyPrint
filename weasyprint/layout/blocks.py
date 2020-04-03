@@ -827,6 +827,14 @@ def find_earlier_page_break(children, absolute_boxes, fixed_boxes):
                     new_grand_children, resume_at = result
                     new_child = child.copy_with_children(new_grand_children)
                     new_children = list(children[:index]) + [new_child]
+
+                    # Re-add footer at the end of split table
+                    # TODO: fix table height and footer position
+                    if isinstance(child, boxes.TableRowGroupBox):
+                        for next_child in children[index:]:
+                            if next_child.is_footer:
+                                new_children.append(next_child)
+
                     # Index in the original parent
                     resume_at = (new_child.index, resume_at)
                     index += 1  # Remove placeholders after child
@@ -834,6 +842,7 @@ def find_earlier_page_break(children, absolute_boxes, fixed_boxes):
     else:
         return None
 
+    # TODO: don’t remove absolute and fixed placeholders found in table footers
     remove_placeholders(children[index:], absolute_boxes, fixed_boxes)
     return new_children, resume_at
 
