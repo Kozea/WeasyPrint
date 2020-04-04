@@ -1,0 +1,34 @@
+name: WeasyPrint's tests
+on: [push]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: [3.5, 3.6, 3.7, 3.8, pypy3]
+    shell: bash
+    steps:
+      - run: |
+          if [ matrix.os == 'ubuntu-latest' ]; then
+            apt-get update -y && apt-get install ttf-dejavu -y
+            mkdir -p ~/.fonts
+            wget "https://github.com/Kozea/Ahem/blob/master/Ahem.ttf?raw=true" -O ~/.fonts/Ahem.ttf
+          elif [ matrix.os == 'macos-latest' ]; then
+            brew tap homebrew/cask-fonts
+            brew cask install font-dejavu-sans
+            brew install cairo pango gdk-pixbuf libffi
+          elif [ matrix.os == 'windows-latest' ]; then
+            export "PATH=$PATH;C:\msys64\mingw64\bin"
+            choco install -y python dejavufonts
+            wget "http://repo.msys2.org/distrib/x86_64/msys2-base-x86_64-20180531.tar.xz"
+            7z e msys2-base-x86_64-20180531.tar.xz
+            7z x -y msys2-base-x86_64-20180531.tar -oc:\\
+            powershell "C:\msys64\usr\bin\bash -lc 'pacman -S mingw-w64-x86_64-gtk3 --noconfirm'"
+          fi
+          python -m pip install --upgrade pip setuptools
+          if [ matrix.os == 'windows-latest' ]; then
+            python m pip install --upgrade cffi
+          fi
+          python setup.py test
