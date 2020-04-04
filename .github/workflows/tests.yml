@@ -10,25 +10,25 @@ jobs:
         python-version: [3.5, 3.6, 3.7, 3.8, pypy3]
     steps:
       if: runner.os == 'Linux'
-        run: |
-          apt-get update -y && apt-get install ttf-dejavu -y
-          mkdir -p ~/.fonts
-          wget "https://github.com/Kozea/Ahem/blob/master/Ahem.ttf?raw=true" -O ~/.fonts/Ahem.ttf
+      run: |
+        apt-get update -y && apt-get install ttf-dejavu -y
+        mkdir -p ~/.fonts
+        wget "https://github.com/Kozea/Ahem/blob/master/Ahem.ttf?raw=true" -O ~/.fonts/Ahem.ttf
       if: runner.os == 'macOS' ]
-        run: |
-          brew tap homebrew/cask-fonts
-          brew cask install font-dejavu-sans
-          brew install cairo pango gdk-pixbuf libffi
+      run: |
+        brew tap homebrew/cask-fonts
+        brew cask install font-dejavu-sans
+        brew install cairo pango gdk-pixbuf libffi
       if: runner.os == 'Windows'
-        run: |
-          export "PATH=$PATH;C:\msys64\mingw64\bin"
-          choco install -y python dejavufonts
-          wget "http://repo.msys2.org/distrib/x86_64/msys2-base-x86_64-20180531.tar.xz"
-          7z e msys2-base-x86_64-20180531.tar.xz
-          7z x -y msys2-base-x86_64-20180531.tar -oc:\\
-          powershell "C:\msys64\usr\bin\bash -lc 'pacman -S mingw-w64-x86_64-gtk3 --noconfirm'"
-      python -m pip install --upgrade pip setuptools
+      run: |
+        export "PATH=$PATH;C:\msys64\mingw64\bin"
+        choco install -y python dejavufonts
+        wget "http://repo.msys2.org/distrib/x86_64/msys2-base-x86_64-20180531.tar.xz"
+        7z e msys2-base-x86_64-20180531.tar.xz
+        7z x -y msys2-base-x86_64-20180531.tar -oc:\\
+        powershell "C:\msys64\usr\bin\bash -lc 'pacman -S mingw-w64-x86_64-gtk3 --noconfirm'"
+      run: python -m pip install --upgrade pip setuptools
       if: matrix.os == 'windows-latest'
-        run: python m pip install --upgrade cffi
+      run: python m pip install --upgrade cffi
       run: python setup.py test
       shell: bash
