@@ -8,7 +8,6 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: [3.5, 3.6, 3.7, 3.8, pypy3]
-    shell: bash
     steps:
       - run: |
           if [ matrix.os == 'ubuntu-latest' ]; then
