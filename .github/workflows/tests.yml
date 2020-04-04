@@ -11,15 +11,15 @@ jobs:
     steps:
       - shell: bash
       - run: |
-          if [ matrix.os == 'ubuntu-latest' ]; then
+          if [ runner.os == 'Linux' ]; then
             apt-get update -y && apt-get install ttf-dejavu -y
             mkdir -p ~/.fonts
             wget "https://github.com/Kozea/Ahem/blob/master/Ahem.ttf?raw=true" -O ~/.fonts/Ahem.ttf
-          elif [ matrix.os == 'macos-latest' ]; then
+          elif [ runner.os == 'macOS' ]; then
             brew tap homebrew/cask-fonts
             brew cask install font-dejavu-sans
             brew install cairo pango gdk-pixbuf libffi
-          elif [ matrix.os == 'windows-latest' ]; then
+          elif [ runner.os == 'Windows' ]; then
             export "PATH=$PATH;C:\msys64\mingw64\bin"
             choco install -y python dejavufonts
             wget "http://repo.msys2.org/distrib/x86_64/msys2-base-x86_64-20180531.tar.xz"
