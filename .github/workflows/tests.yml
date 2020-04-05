@@ -18,7 +18,7 @@ jobs:
           apt-get update -y && apt-get install ttf-dejavu -y
           mkdir -p ~/.fonts
           wget "https://github.com/Kozea/Ahem/blob/master/Ahem.ttf?raw=true" -O ~/.fonts/Ahem.ttf
-      - if: runner.os == 'macOS' ]
+      - if: runner.os == 'macOS'
         run: |
           brew tap homebrew/cask-fonts
           brew cask install font-dejavu-sans
