@@ -13,17 +13,17 @@ jobs:
       - uses: actions/setup-python@v1
         with:
           python-version: ${{ matrix.python-version }}
-      - if: runner.os == 'Linux'
+      - if: matrix.os == 'ubuntu'
         run: |
           apt-get update -y && apt-get install ttf-dejavu -y
           mkdir -p ~/.fonts
           wget "https://github.com/Kozea/Ahem/blob/master/Ahem.ttf?raw=true" -O ~/.fonts/Ahem.ttf
-      - if: runner.os == 'macOS'
+      - if: matrix.os == 'macos-latest'
         run: |
           brew tap homebrew/cask-fonts
           brew cask install font-dejavu-sans
           brew install cairo pango gdk-pixbuf libffi
-      - if: runner.os == 'Windows'
+      - if: matrix.os == 'windows-latest'
         run: |
           export "PATH=$PATH;C:\msys64\mingw64\bin"
           choco install -y python dejavufonts
