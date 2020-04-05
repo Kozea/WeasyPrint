@@ -27,7 +27,8 @@ jobs:
         run: |
           choco install -y --no-progress msys2 dejavufonts
           powershell "C:\tools\msys64\usr\bin\bash -lc 'pacman -S mingw-w64-x86_64-gtk3 --noconfirm'"
-          echo "::set-env name=PATH::PATH:C:\tools\msys64\mingw64\bin"
+          $env:PATH += ";C:\tools\msys64\mingw64\bin"
+          echo "::set-env name=PATH::$env:PATH"
       - run: python -m pip install --upgrade pip setuptools
       - if: matrix.os == 'windows-latest'
         run: python -m pip install --upgrade cffi
