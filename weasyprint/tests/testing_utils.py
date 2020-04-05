@@ -22,7 +22,7 @@ from ..urls import path2url
 
 # Lists of fonts with many variants (including condensed)
 if sys.platform.startswith('win'):  # pragma: no cover
-    SANS_FONTS = 'Arial Nova, Arial, sans'
+    SANS_FONTS = 'DejaVu Sans, Arial Nova, Arial, sans'
     MONO_FONTS = 'Courier New, Courier, monospace'
 else:  # pragma: no cover
     SANS_FONTS = 'DejaVu Sans, sans'
