@@ -33,7 +33,7 @@ addons:
 
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then export "PATH=$PATH;C:\msys64\mingw64\bin"; fi
-  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then choco install -y python dejavufonts; fi
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then choco install -y python; fi
   - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then wget "http://repo.msys2.org/distrib/x86_64/msys2-base-x86_64-20180531.tar.xz"; fi
   - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then 7z e msys2-base-x86_64-20180531.tar.xz; fi
   - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then 7z x -y msys2-base-x86_64-20180531.tar -oc:\\; fi
