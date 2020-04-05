@@ -24,7 +24,7 @@ jobs:
           brew install cairo pango gdk-pixbuf libffi
       - if: matrix.os == 'windows-latest'
         run: |
-          choco install -y --no-progress msys2 dejavufonts
+          choco install -y --no-progress dejavufonts msys2
           powershell "C:\tools\msys64\usr\bin\bash -lc 'pacman -S mingw-w64-x86_64-gtk3 --noconfirm'"
           $env:PATH += ";C:\tools\msys64\mingw64\bin"
           echo "::set-env name=PATH::$env:PATH"
