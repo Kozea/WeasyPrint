@@ -26,6 +26,7 @@ jobs:
           brew install cairo pango gdk-pixbuf libffi
       - if: matrix.os == 'windows-latest'
         run: |
+          export "PATH=$PATH;C:\msys64\mingw64\bin"
           choco install -y python dejavufonts
           wget "http://repo.msys2.org/distrib/x86_64/msys2-base-x86_64-20180531.tar.xz"
           7z e msys2-base-x86_64-20180531.tar.xz
