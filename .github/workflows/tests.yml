@@ -23,7 +23,6 @@ jobs:
           brew cask install font-dejavu-sans
           brew install cairo pango gdk-pixbuf libffi
       - if: matrix.os == 'windows-latest'
-        shell: bash
         run: |
           choco install -y --no-progress msys2 dejavufonts
           powershell "C:\tools\msys64\usr\bin\bash -lc 'pacman -S mingw-w64-x86_64-gtk3 --noconfirm'"
