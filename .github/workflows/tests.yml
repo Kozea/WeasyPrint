@@ -20,9 +20,9 @@ jobs:
           wget "https://github.com/Kozea/Ahem/blob/master/Ahem.ttf?raw=true" -O ~/.fonts/Ahem.ttf
       - if: matrix.os == 'macos-latest'
         run: |
-          sudo brew tap homebrew/cask-fonts
-          sudo brew cask install font-dejavu-sans
-          sudo brew install cairo pango gdk-pixbuf libffi
+          brew tap homebrew/cask-fonts
+          brew cask install font-dejavu-sans
+          brew install cairo pango gdk-pixbuf libffi
       - if: matrix.os == 'windows-latest'
         run: |
           export "PATH=$PATH;C:\msys64\mingw64\bin"
