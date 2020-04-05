@@ -15,7 +15,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - if: matrix.os == 'ubuntu-latest'
         run: |
-          sudo apt-get update -y && apt-get install ttf-dejavu -y
+          sudo apt-get update -y && sudo apt-get install ttf-dejavu -y
           mkdir -p ~/.fonts
           wget "https://github.com/Kozea/Ahem/blob/master/Ahem.ttf?raw=true" -O ~/.fonts/Ahem.ttf
       - if: matrix.os == 'macos-latest'
