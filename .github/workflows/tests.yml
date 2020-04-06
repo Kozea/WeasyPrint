@@ -25,8 +25,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt-get update -y && sudo apt-get install ttf-dejavu -y
+        run: sudo apt-get update -y && sudo apt-get install ttf-dejavu -y
       - if: matrix.os == 'macos-latest'
         run: |
           brew tap homebrew/cask-fonts
@@ -36,14 +35,11 @@ jobs:
         run: |
           choco install -y --no-progress msys2
           powershell "C:\tools\msys64\usr\bin\bash -lc 'pacman -S mingw-w64-x86_64-ttf-dejavu mingw-w64-x86_64-gtk3 --noconfirm'"
+          xcopy "C:\tools\msys64\mingw64\share\fonts\TTF" "C:\Users\runneradmin\.fonts" /e /i
+          fc-cache "C:\Users\runneradmin\.fonts"
           $env:PATH += ";C:\tools\msys64\mingw64\bin"
           echo "::set-env name=PATH::$env:PATH"
       - run: python -m pip install --upgrade pip setuptools
       - if: matrix.os == 'windows-latest'
-        run: |
-          python -m pip install --upgrade cffi
-          xcopy "C:\tools\msys64\mingw64\share\fonts\TTF" "C:\Users\runneradmin\.fonts" /e /i
-          fc-cache --verbose -f "C:\Users\runneradmin\.fonts"
-          fc-match -s "DejaVu"
-          fc-conflist
+        run: python -m pip install --upgrade cffi
       - run: python setup.py test
