@@ -448,6 +448,23 @@ def test_text_indent(indent):
     assert text_3.position_x == 10  # No indent
 
 
+@assert_no_logs
+def test_text_indent_inline():
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1000
+    page, = render_pages('''
+        <style>
+            @font-face { src: url(AHEM____.TTF); font-family: ahem }
+            p { display: inline-block; text-indent: 1em; font-family: ahem }
+        </style>
+        <p><span>text
+    ''')
+    html, = page.children
+    body, = html.children
+    paragraph, = body.children
+    line, = paragraph.children
+    assert line.width == (4 + 1) * 16
+
+
 @pytest.mark.parametrize('indent', ('12px', '6%'))
 @assert_no_logs
 def test_text_indent_multipage(indent):

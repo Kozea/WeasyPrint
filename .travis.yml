@@ -1,11 +1,10 @@
 language: python
-sudo: false
 env: PYTHON=python
 
 git:
   submodules: false
 
-matrix:
+jobs:
   include:
     - os: linux
       python: 3.5

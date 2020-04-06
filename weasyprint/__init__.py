@@ -27,7 +27,7 @@ if hasattr(sys, 'frozen'):  # pragma: no cover
     if hasattr(sys, '_MEIPASS'):
         # Frozen with PyInstaller
         # See https://github.com/Kozea/WeasyPrint/pull/540
-        ROOT = Path(sys._MEIPASS)
+        ROOT = Path(sys._MEIPASS) / 'weasyprint'
     else:
         # Frozen with something else (py2exe, etc.)
         # See https://github.com/Kozea/WeasyPrint/pull/269
@@ -114,7 +114,6 @@ class HTML:
                     source, override_encoding=encoding,
                     transport_encoding=protocol_encoding,
                     namespaceHTMLElements=False)
-            assert result
         self.base_url = find_base_url(result, base_url)
         self.url_fetcher = url_fetcher
         self.media_type = media_type

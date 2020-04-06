@@ -180,7 +180,7 @@ def test_flex_row_wrap_reverse():
     assert (
         div_2.position_y ==
         div_3.position_y ==
-        article.position_y + div_2.height)
+        article.position_y + div_1.height)
     assert div_1.position_x == div_2.position_x == article.position_x
     assert div_2.position_x < div_3.position_x
 
@@ -206,7 +206,7 @@ def test_flex_column_wrap_reverse():
     assert (
         div_2.position_x ==
         div_3.position_x ==
-        article.position_x + div_2.width)
+        article.position_x + div_1.width)
     assert div_1.position_y == div_2.position_y == article.position_y
     assert div_2.position_y < div_3.position_y
 

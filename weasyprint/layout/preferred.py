@@ -243,12 +243,16 @@ def table_cell_max_content_width(context, box, outer):
 
 def inline_line_widths(context, box, outer, is_line_start, minimum,
                        skip_stack=None, first_line=False):
-    if box.style['text_indent'].unit == '%':
-        # TODO: this is wrong, text-indent percentages should be resolved
-        # before calling this function.
-        text_indent = 0
+    if isinstance(box, boxes.LineBox):
+        if box.style['text_indent'].unit == '%':
+            # TODO: this is wrong, text-indent percentages should be resolved
+            # before calling this function.
+            text_indent = 0
+        else:
+            text_indent = box.style['text_indent'].value
     else:
-        text_indent = box.style['text_indent'].value
+        text_indent = 0
+
     current_line = 0
     if skip_stack is None:
         skip = 0
