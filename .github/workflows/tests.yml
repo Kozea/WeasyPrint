@@ -42,7 +42,7 @@ jobs:
       - if: matrix.os == 'windows-latest'
         run: |
           python -m pip install --upgrade cffi
-          xcopy "C:\ProgramData\chocolatey\lib\dejavufonts" "%userprofile%\.fonts" /e /i
+          xcopy "C:\tools\msys64\mingw64\share\fonts\TTF" "%userprofile%\.fonts" /e /i
           fc-cache --verbose -f "%userprofile%\.fonts"
           fc-match -s "DejaVu"
           fc-conflist
