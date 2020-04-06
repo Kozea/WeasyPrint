@@ -29,6 +29,7 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
         border_spacing_y = 0
 
     column_positions = table.column_positions = []
+    rows_left_x = table.content_box_x() + border_spacing_x
     if table.style['direction'] == 'ltr':
         position_x = table.content_box_x()
         rows_x = position_x + border_spacing_x
@@ -71,7 +72,7 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
         next_page = {'break': 'any', 'page': None}
         original_page_is_empty = page_is_empty
         resolve_percentages(group, containing_block=table)
-        group.position_x = rows_x
+        group.position_x = rows_left_x
         group.position_y = position_y
         group.width = rows_width
         new_group_children = []
@@ -97,7 +98,7 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
                     break
 
             resolve_percentages(row, containing_block=table)
-            row.position_x = rows_x
+            row.position_x = rows_left_x
             row.position_y = position_y
             row.width = rows_width
             # Place cells at the top of the row and layout their content
@@ -120,7 +121,11 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
                                    len(ignored_cells), ignored_cells)
                     break
                 resolve_percentages(cell, containing_block=table)
-                cell.position_x = column_positions[cell.grid_x]
+                if table.style['direction'] == 'ltr':
+                    cell.position_x = column_positions[cell.grid_x]
+                else:
+                    cell.position_x = column_positions[
+                        cell.grid_x + cell.colspan - 1]
                 cell.position_y = row.position_y
                 cell.margin_top = 0
                 cell.margin_left = 0

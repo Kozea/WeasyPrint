@@ -283,6 +283,45 @@ def test_tables_5():
 
 @assert_no_logs
 @requires('cairo', (1, 12, 0))
+def test_tables_5_rtl():
+    assert_pixels('table_row_backgrounds', 28, 28, to_pix('''
+        ____________________________
+        _BBBBBBBBBBBBBBBBBBBBBBBBBB_
+        _B________________________B_
+        _B________________________B_
+        _B__bbbbbb_bbbbbb_bbbbbb__B_
+        _B__bbbbbb_bbbbbb_bbbbbb__B_
+        _B__bbbbbb_bbbbbb_bbbbbb__B_
+        _B__bbbbbb_bbbbbb_bbbbbb__B_
+        _B__bbbbbb_bbbbbb_bbbbbb__B_
+        _B__bbbbbb_bbbbbb_bbbbbb__B_
+        _B_________bbbbbb_________B_
+        _B__bbbbbb_ppppppbbbbbbb__B_
+        _B__bbbbbb_ppppppbbbbbbb__B_
+        _B__bbbbbb_ppppppbbbbbbb__B_
+        _B__bbbbbb_ppppppbbbbbbb__B_
+        _B__bbbbbb_ppppppbbbbbbb__B_
+        _B__bbbbbb_ppppppbbbbbbb__B_
+        _B________________________B_
+        _B_________rrrrrr_rrrrrr__B_
+        _B_________rrrrrr_rrrrrr__B_
+        _B_________rrrrrr_rrrrrr__B_
+        _B_________rrrrrr_rrrrrr__B_
+        _B_________rrrrrr_rrrrrr__B_
+        _B_________rrrrrr_rrrrrr__B_
+        _B________________________B_
+        _B________________________B_
+        _BBBBBBBBBBBBBBBBBBBBBBBBBB_
+        ____________________________
+    '''), tables_source % {'extra_css': '''
+      x-table { border-color: #00f; table-layout: fixed; direction: rtl }
+      x-tbody { background: rgba(0, 0, 255, 1) }
+      x-tr { background: rgba(255, 0, 0, 0.5) }
+    '''})
+
+
+@assert_no_logs
+@requires('cairo', (1, 12, 0))
 def test_tables_6():
     assert_pixels('table_column_backgrounds', 28, 28, to_pix('''
         ____________________________
