@@ -25,16 +25,16 @@ jobs:
       - uses: actions/setup-python@v1
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install DejaVu
+      - name: Install DejaVu (Ubuntu)
         if: matrix.os == 'ubuntu-latest'
         run: sudo apt-get update -y && sudo apt-get install ttf-dejavu -y
-      - name: Install DejaVu, cairo, pango, gdk-pixbuf and libffi
+      - name: Install DejaVu, cairo, pango, gdk-pixbuf and libffi (MacOS)
         if: matrix.os == 'macos-latest'
         run: |
           brew tap homebrew/cask-fonts
           brew cask install font-dejavu-sans
           brew install cairo pango gdk-pixbuf libffi
-      - name: Install msys2 and DejaVu
+      - name: Install msys2 and DejaVu (Windows)
         if: matrix.os == 'windows-latest'
         run: |
           choco install -y --no-progress msys2
@@ -44,7 +44,7 @@ jobs:
           echo "::set-env name=PATH::$env:PATH"
       - name: Upgrade pip and setuptools
         run: python -m pip install --upgrade pip setuptools
-      - name: Upgrade cffi
+      - name: Upgrade cffi (Windows)
         if: matrix.os == 'windows-latest'
         run: python -m pip install --upgrade cffi
       - name: Launch tests
