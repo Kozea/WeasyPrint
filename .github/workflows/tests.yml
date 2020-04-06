@@ -3,6 +3,7 @@ on: [push]
 
 jobs:
   tests:
+    name: ${{ matrix.os }} - ${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -24,21 +25,27 @@ jobs:
       - uses: actions/setup-python@v1
         with:
           python-version: ${{ matrix.python-version }}
-      - if: matrix.os == 'ubuntu-latest'
+      - name: Install DejaVu
+        if: matrix.os == 'ubuntu-latest'
         run: sudo apt-get update -y && sudo apt-get install ttf-dejavu -y
-      - if: matrix.os == 'macos-latest'
+      - name: Install DejaVu, cairo, pango, gdk-pixbuf and libffi
+        if: matrix.os == 'macos-latest'
         run: |
           brew tap homebrew/cask-fonts
           brew cask install font-dejavu-sans
           brew install cairo pango gdk-pixbuf libffi
-      - if: matrix.os == 'windows-latest'
+      - name: Install msys2 and DejaVu
+        if: matrix.os == 'windows-latest'
         run: |
           choco install -y --no-progress msys2
           powershell "C:\tools\msys64\usr\bin\bash -lc 'pacman -S mingw-w64-x86_64-ttf-dejavu mingw-w64-x86_64-gtk3 --noconfirm'"
           xcopy "C:\tools\msys64\mingw64\share\fonts\TTF" "C:\Users\runneradmin\.fonts" /e /i
           $env:PATH += ";C:\tools\msys64\mingw64\bin"
           echo "::set-env name=PATH::$env:PATH"
-      - run: python -m pip install --upgrade pip setuptools
-      - if: matrix.os == 'windows-latest'
+      - name: Upgrade pip and setuptools
+        run: python -m pip install --upgrade pip setuptools
+      - name: Upgrade cffi
+        if: matrix.os == 'windows-latest'
         run: python -m pip install --upgrade cffi
-      - run: python setup.py test
+      - name: Launch tests
+        run: python setup.py test
