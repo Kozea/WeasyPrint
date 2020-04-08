@@ -8,6 +8,8 @@
     direction: rtl on body or on table.
 """
 
+import pytest
+
 from ...html import HTML_HANDLERS
 from ..testing_utils import assert_no_logs, requires
 from . import as_pixel, assert_pixels, parse_pixels
@@ -982,4 +984,69 @@ def test_tables_13():
       x-td { border-color: #ff7f7f }
       @page { size: 28px 26px; margin: 1px;
               border: 1px solid rgba(0, 255, 0, 0.5); }
+    '''})
+
+
+@pytest.mark.xfail
+@assert_no_logs
+@requires('cairo', (1, 12, 0))
+def test_tables_14():
+    assert_pixels('table_background_column_paged', 28, 52, to_pix('''
+        ____________________________
+        _RRR_RRR_RRR________________
+        _RRR_RRR_RRR________________
+        _RRR_RRR_RRR________________
+        _RRR_RRR_RRR________________
+        _RRR_RRR_RRR________________
+        _RRR_RRR_RRR________________
+        _RRR_RRR_RRR________________
+        _RRR_RRR_RRR________________
+        _RRR_RRR_RRR________________
+        _RRR_RRR_RRR________________
+        _____RRR____________________
+        _RRRRRRR_RRR________________
+        _RRRRRRR_RRR________________
+        _RRRRRRR_RRR________________
+        _RRRRRRR_RRR________________
+        _RRRRRRR_RRR________________
+        _RRRRRRR_RRR________________
+        _RRRRRRR_RRR________________
+        _RRRRRRR_RRR________________
+        _RRRRRRR_RRR________________
+        _RRRRRRR_RRR________________
+        ____________________________
+        ____________________________
+        ____________________________
+        ____________________________
+        ____________________________
+        _RRR_RRR____________________
+        _RRR_RRR____________________
+        _RRR_RRR____________________
+        _RRR_RRR____________________
+        _RRR_RRR____________________
+        _RRR_RRR____________________
+        _RRR_RRR____________________
+        _RRR_RRR____________________
+        _RRR_RRR____________________
+        _RRR_RRR____________________
+        ____________________________
+        ____________________________
+        ____________________________
+        ____________________________
+        ____________________________
+        ____________________________
+        ____________________________
+        ____________________________
+        ____________________________
+        ____________________________
+        ____________________________
+        ____________________________
+        ____________________________
+        ____________________________
+        ____________________________
+    '''), tables_source % {'extra_css': '''
+      @page { size: 28px 26px }
+      x-table { margin: 0; padding: 0; border: 0 }
+      x-col { background: red }
+      x-td { padding: 0; width: 1px; height: 8px }
     '''})
