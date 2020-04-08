@@ -105,7 +105,7 @@ def test_tables_1():
 @assert_no_logs
 @requires('cairo', (1, 12, 0))
 def test_tables_1_rtl():
-    assert_pixels('table_borders', 28, 28, to_pix('''
+    assert_pixels('table_borders_rtl', 28, 28, to_pix('''
         ____________________________
         _BBBBBBBBBBBBBBBBBBBBBBBBBB_
         _B________________________B_
@@ -183,7 +183,7 @@ def test_tables_2():
 @assert_no_logs
 @requires('cairo', (1, 12, 0))
 def test_tables_2_rtl():
-    assert_pixels('table_collapsed_borders', 28, 28, to_pix('''
+    assert_pixels('table_collapsed_borders_rtl', 28, 28, to_pix('''
         ____________________________
         _________BBBBBBBBBBBBBBBBBB_
         _________BBBBBBBBBBBBBBBBBB_
@@ -288,7 +288,7 @@ def test_tables_3():
 @assert_no_logs
 @requires('cairo', (1, 12, 0))
 def test_tables_3_rtl():
-    assert_pixels('table_collapsed_borders_paged', 28, 52, to_pix('''
+    assert_pixels('table_collapsed_borders_paged_rtl', 28, 52, to_pix('''
         ____________________________
         _gggggggggggggggggggggggggg_
         _g________________________g_
@@ -392,7 +392,7 @@ def test_tables_4():
 @assert_no_logs
 @requires('cairo', (1, 12, 0))
 def test_tables_4_rtl():
-    assert_pixels('table_td_backgrounds', 28, 28, to_pix('''
+    assert_pixels('table_td_backgrounds_rtl', 28, 28, to_pix('''
         ____________________________
         _BBBBBBBBBBBBBBBBBBBBBBBBBB_
         _B________________________B_
@@ -470,7 +470,7 @@ def test_tables_5():
 @assert_no_logs
 @requires('cairo', (1, 12, 0))
 def test_tables_5_rtl():
-    assert_pixels('table_row_backgrounds', 28, 28, to_pix('''
+    assert_pixels('table_row_backgrounds_rtl', 28, 28, to_pix('''
         ____________________________
         _BBBBBBBBBBBBBBBBBBBBBBBBBB_
         _B________________________B_
@@ -549,7 +549,7 @@ def test_tables_6():
 @assert_no_logs
 @requires('cairo', (1, 12, 0))
 def test_tables_6_rtl():
-    assert_pixels('table_column_backgrounds', 28, 28, to_pix('''
+    assert_pixels('table_column_backgrounds_rtl', 28, 28, to_pix('''
         ____________________________
         _BBBBBBBBBBBBBBBBBBBBBBBBBB_
         _B________________________B_
@@ -628,7 +628,7 @@ def test_tables_7():
 @assert_no_logs
 @requires('cairo', (1, 12, 0))
 def test_tables_7_rtl():
-    assert_pixels('table_borders_and_row_backgrounds', 28, 28, to_pix('''
+    assert_pixels('table_borders_and_row_backgrounds_rtl', 28, 28, to_pix('''
         ____________________________
         _BBBBBBBBBBBBBBBBBBBBBBBBBB_
         _B________________________B_
@@ -707,7 +707,7 @@ def test_tables_8():
 @assert_no_logs
 @requires('cairo', (1, 12, 0))
 def test_tables_8_rtl():
-    assert_pixels('table_borders_and_column_backgrounds', 28, 28, to_pix('''
+    assert_pixels('table_borders_and_column_backgrounds_rtl', 28, 28, to_pix('''
         ____________________________
         _BBBBBBBBBBBBBBBBBBBBBBBBBB_
         _B________________________B_
@@ -854,7 +854,7 @@ def test_tables_10():
 @assert_no_logs
 @requires('cairo', (1, 12, 0))
 def test_tables_11():
-    # Segression test for inline table with collapsed border and alignment
+    # Regression test for inline table with collapsed border and alignment
     # rendering borders incorrectly
     # https://github.com/Kozea/WeasyPrint/issues/82
     assert_pixels('inline_text_align', 20, 10, '''
@@ -879,8 +879,6 @@ def test_tables_11():
         <tr><td></td><td></td></tr>''')
 
 
-# I think it should be saved to delete this text
-# Duplicated
 @assert_no_logs
 @requires('cairo', (1, 12, 0))
 def test_tables_12():
@@ -921,8 +919,6 @@ def test_tables_12():
     '''})
 
 
-# I think it should be saved to delete this text
-# Duplicated
 @assert_no_logs
 @requires('cairo', (1, 12, 0))
 def test_tables_13():
