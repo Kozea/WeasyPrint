@@ -300,6 +300,7 @@ class PDFFile:
         fileobj.seek(0, os.SEEK_END)
         return fileobj.tell(), fileobj.write
 
+
 def _write_compressed_file_object(pdf, file):
     """Write a compressed file like object as ``/EmbeddedFile``.
 
@@ -476,7 +477,7 @@ def _write_pdf_attachment(pdf, attachment, url_fetcher):
 
 
 def write_pdf_metadata(fileobj, scale, url_fetcher, attachments,
-                       attachment_links, pages, signer):
+                       attachment_links, pages, finisher):
     """Add PDF metadata that are not handled by cairo.
 
     Includes:
@@ -587,14 +588,4 @@ def write_pdf_metadata(fileobj, scale, url_fetcher, attachments,
                 '/Annots [{0}]', ' '.join(
                     '{0} 0 R'.format(n) for n in annotations)))
 
-    if hasattr(signer, 'write_signature_placeholder'):
-        # Add placeholder for the digital signature
-        # This is later overwritten after all content has been written
-        # and a checksum can be calculated
-        signer.write_signature_placeholder(pdf)
- 
-    pdf.finish(finished=signer == None)
-
-    if hasattr(signer, 'write_signature'):
-        # This overwrites the signature placeholer
-        signer.write_signature(pdf)
+    pdf.finish() if finisher is None else finisher(pdf)

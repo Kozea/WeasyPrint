@@ -584,7 +584,7 @@ class Document:
             context.tag_begin(cairo.TAG_DEST, attributes)
             context.tag_end(cairo.TAG_DEST)
 
-    def write_pdf(self, target=None, zoom=1, attachments=None, signer=None):
+    def write_pdf(self, target=None, zoom=1, attachments=None, finisher=None):
         """Paint the pages in a PDF file, with meta-data.
 
         PDF files written directly by cairo do not have meta-data such as
@@ -604,8 +604,10 @@ class Document:
         :param attachments: A list of additional file attachments for the
             generated PDF document or :obj:`None`. The list's elements are
             :class:`Attachment` objects, filenames, URLs or file-like objects.
-        :param signer: An instance of weasysign.Signer that applies a 
-            digital signature to the pdf.
+        :param finisher: A finisher function that accepts a PDFFile instance as
+            its only parameter can be passed to perform post-processing on the 
+            PDF right before the trailer is written. The function is then 
+            responsible for calling the instances finish() function.
         :returns:
             The PDF as :obj:`bytes` if ``target`` is not provided or
             :obj:`None`, otherwise :obj:`None` (the PDF is written to
@@ -698,19 +700,19 @@ class Document:
         # - attachments in metadata
         # - attachments as function parameters
         # - attachments as PDF links
-        # - signer to provide digital signature
+        # - finisher function to perform post-processing
         # - bleed boxes
         condition = (
             self.metadata.attachments or
             attachments or
             any(attachment_links) or
-            signer or
+            finisher or
             any(any(page.bleed.values()) for page in self.pages))
         if condition:
             write_pdf_metadata(
                 file_obj, scale, self.url_fetcher,
                 self.metadata.attachments + (attachments or []),
-                attachment_links, self.pages, signer)
+                attachment_links, self.pages, finisher)
 
         if target is None:
             return file_obj.getvalue()
