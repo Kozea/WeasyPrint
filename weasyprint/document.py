@@ -605,8 +605,8 @@ class Document:
             generated PDF document or :obj:`None`. The list's elements are
             :class:`Attachment` objects, filenames, URLs or file-like objects.
         :param finisher: A finisher function that accepts a PDFFile instance as
-            its only parameter can be passed to perform post-processing on the 
-            PDF right before the trailer is written. The function is then 
+            its only parameter can be passed to perform post-processing on the
+            PDF right before the trailer is written. The function is then
             responsible for calling the instances finish() function.
         :returns:
             The PDF as :obj:`bytes` if ``target`` is not provided or
