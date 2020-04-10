@@ -109,5 +109,5 @@ if __name__ == '__main__':  # pragma: no cover
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--port', '-p', type=int, default=5000,
-        help='renderer web sever port')
+        help='renderer web server port')
     run(parser.parse_args().port)
