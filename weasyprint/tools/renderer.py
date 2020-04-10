@@ -8,8 +8,6 @@
 """
 
 import argparse
-import sys
-
 from base64 import b64encode
 from io import BytesIO
 from urllib.parse import parse_qs
@@ -68,20 +66,6 @@ textarea.oninput = function () {
 '''
 
 
-def check_cli_parameters():
-    port = 5000
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--port", "-p", help="set parameter (int) to serve renderer on specific port")
-    args = parser.parse_args()
-    if not args.port:
-       pass
-    elif not args.port.isdigit():
-       sys.exit("Port specification must be an integer.")
-    else:
-       port = int(args.port)
-    return port
-
-
 def app(environ, start_response):
     def make_response(body, status='200 OK', headers=(),
                       content_type='text/html; charset=UTF-8'):
@@ -114,8 +98,7 @@ def app(environ, start_response):
     return make_response(b'<h1>Not Found</h1>', status='404 Not Found')
 
 
-def run():  # pragma: no cover
-    port = check_cli_parameters()
+def run(port=5000):  # pragma: no cover
     host = '127.0.0.1'
     server = make_server(host, port, app)
     print('Listening on http://%s:%s/ ...' % (host, port))
@@ -123,4 +106,8 @@ def run():  # pragma: no cover
 
 
 if __name__ == '__main__':  # pragma: no cover
-    run()
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--port', '-p', type=int, default=5000,
+        help='renderer web sever port')
+    run(parser.parse_args().port)
