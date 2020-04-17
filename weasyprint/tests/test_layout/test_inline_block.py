@@ -107,20 +107,3 @@ def test_inline_block_sizes():
     div_8, _, div_9 = line_4.children
     assert div_8.width == 185
     assert div_9.width == 10
-
-
-@assert_no_logs
-def test_inline_block_sizes_hinting():
-    # Previously, the hinting for in shrink-to-fit did not match that
-    # of the layout, which often resulted in a line break just before
-    # the last word.
-    page, = parse('''
-        <p style="display: inline-block">Lorem ipsum dolor sit amet …</p>''')
-    html, = page.children
-    body, = html.children
-    outer_line, = body.children
-    paragraph, = outer_line.children
-    inner_lines = paragraph.children
-    assert len(inner_lines) == 1
-    text_box, = inner_lines[0].children
-    assert text_box.text == 'Lorem ipsum dolor sit amet …'

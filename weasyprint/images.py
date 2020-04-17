@@ -23,10 +23,6 @@ try:
 except OSError:
     pixbuf = None
 
-assert cairosvg.surface.cairo is cairocffi, (
-    'CairoSVG is using pycairo instead of cairocffi. '
-    'Make sure it is not imported before WeasyPrint.')
-
 
 # Map values of the image-rendering property to cairo FILTER values:
 # Values are normalized to lower case.

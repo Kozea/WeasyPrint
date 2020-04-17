@@ -12,9 +12,10 @@ import platform
 import sys
 
 import cairosvg
+import pydyf
 
 from . import HTML, LOGGER, VERSION
-from .text import cairo, pango
+from .text import pango
 
 
 class PrintInfo(argparse.Action):
@@ -27,7 +28,7 @@ class PrintInfo(argparse.Action):
         print()
         print('WeasyPrint version:', VERSION)
         print('Python version:', sys.version.split()[0])
-        print('Cairo version:', cairo.cairo_version())
+        print('Pydyf version:', pydyf.__version__)
         print('Pango version:', pango.pango_version())
         print('CairoSVG version:', cairosvg.__version__)
         sys.exit()

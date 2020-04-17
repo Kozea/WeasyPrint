@@ -133,9 +133,8 @@ class HTML:
     def _get_metadata(self):
         return get_html_metadata(self.wrapper_element, self.base_url)
 
-    def render(self, stylesheets=None, enable_hinting=False,
-               presentational_hints=False, font_config=None,
-               counter_style=None):
+    def render(self, stylesheets=None, presentational_hints=False,
+               font_config=None, counter_style=None):
         """Lay out and paginate the document, but do not (yet) export it
         to PDF or PNG.
 
@@ -150,11 +149,6 @@ class HTML:
             An optional list of user stylesheets. List elements are
             :class:`CSS` objects, filenames, URLs, or file
             objects. (See :ref:`stylesheet-origins`.)
-        :type enable_hinting: bool
-        :param enable_hinting:
-            Whether text, borders and background should be *hinted* to fall
-            at device pixel boundaries. Should be enabled for pixel-based
-            output (like PNG) but not for vector-based output (like PDF).
         :type presentational_hints: bool
         :param presentational_hints: Whether HTML presentational hints are
             followed.
@@ -166,8 +160,8 @@ class HTML:
 
         """
         return Document._render(
-            self, stylesheets, enable_hinting, presentational_hints,
-            font_config, counter_style)
+            self, stylesheets, presentational_hints, font_config,
+            counter_style)
 
     def write_pdf(self, target=None, stylesheets=None, zoom=1,
                   attachments=None, presentational_hints=False,
@@ -210,8 +204,7 @@ class HTML:
 
         """
         return self.render(
-            stylesheets, enable_hinting=False,
-            presentational_hints=presentational_hints,
+            stylesheets, presentational_hints=presentational_hints,
             font_config=font_config, counter_style=counter_style).write_pdf(
                 target, zoom, attachments)
 
@@ -250,9 +243,9 @@ class HTML:
 
         """
         surface, _width, _height = (
-            self.render(stylesheets, enable_hinting=True,
-                        presentational_hints=presentational_hints,
-                        font_config=font_config)
+            self.render(
+                stylesheets, presentational_hints=presentational_hints,
+                font_config=font_config)
             .write_image_surface(resolution))
         return surface
 
@@ -296,8 +289,7 @@ class HTML:
         """
         png_bytes, _width, _height = (
             self.render(
-                stylesheets, enable_hinting=True,
-                presentational_hints=presentational_hints,
+                stylesheets, presentational_hints=presentational_hints,
                 font_config=font_config, counter_style=counter_style)
             .write_png(target, resolution))
         return png_bytes

@@ -475,7 +475,7 @@ def test_low_level_api():
     # assert html.render([css]).write_pdf() == pdf_bytes
 
     png_bytes = html.write_png(stylesheets=[css])
-    document = html.render([css], enable_hinting=True)
+    document = html.render([css])
     page, = document.pages
     assert page.width == 8
     assert page.height == 8
@@ -499,14 +499,14 @@ def test_low_level_api():
     surface.write_to_png(file_obj)
     check_png_pattern(file_obj.getvalue(), rotated=True)
 
-    document = html.render([css], enable_hinting=True)
+    document = html.render([css])
     page, = document.pages
     assert (page.width, page.height) == (8, 8)
     png_bytes, width, height = document.write_png(resolution=192)
     assert (width, height) == (16, 16)
     check_png_pattern(png_bytes, x2=True)
 
-    document = html.render([css], enable_hinting=True)
+    document = html.render([css])
     page, = document.pages
     assert (page.width, page.height) == (8, 8)
     # A resolution that is not multiple of 96:

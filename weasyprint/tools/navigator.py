@@ -19,7 +19,7 @@ STYLESHEET = CSS(string='''
 
 
 def get_pages(html):
-    document = html.render(enable_hinting=True, stylesheets=[STYLESHEET])
+    document = html.render(stylesheets=[STYLESHEET])
     for page in document.pages:
         png_bytes, width, height = document.copy([page]).write_png()
         data_url = 'data:image/png;base64,' + (

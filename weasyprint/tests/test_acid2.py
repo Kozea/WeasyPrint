@@ -16,7 +16,7 @@ from .testing_utils import (
 @requires('cairo', (1, 12, 0))
 def test_acid2():
     def render(filename):
-        return HTML(resource_filename(filename)).render(enable_hinting=True)
+        return HTML(resource_filename(filename)).render()
 
     with capture_logs():
         # This is a copy of http://www.webstandards.org/files/acid2/test.html

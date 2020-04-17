@@ -225,7 +225,7 @@ the layout or stacking instead.
 The code lives in the :mod:`weasyprint.draw` module.
 
 .. _stacking rules: http://www.w3.org/TR/CSS21/zindex.html
-.. _cairo: http://cairographics.org/pycairo/
+.. _cairo: http://cairographics.org/
 
 
 Metadata

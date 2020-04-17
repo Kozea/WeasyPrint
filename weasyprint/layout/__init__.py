@@ -183,9 +183,8 @@ def layout_document(html, root_box, context, max_loops=8):
 
 
 class LayoutContext:
-    def __init__(self, enable_hinting, style_for, get_image_from_uri,
-                 font_config, counter_style, target_collector):
-        self.enable_hinting = enable_hinting
+    def __init__(self, style_for, get_image_from_uri, font_config,
+                 counter_style, target_collector):
         self.style_for = style_for
         self.get_image_from_uri = get_image_from_uri
         self.font_config = font_config

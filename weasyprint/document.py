@@ -9,12 +9,12 @@ import functools
 import io
 import math
 import shutil
-import warnings
 
 import cairocffi as cairo
+import pydyf
 from weasyprint.layout import LayoutContext
 
-from . import CSS
+from . import CSS, __version__
 from .css import get_all_computed_styles
 from .css.counters import CounterStyle
 from .css.targets import TargetCollector
@@ -29,13 +29,17 @@ from .layout.percentages import percentage
 from .logger import LOGGER, PROGRESS_LOGGER
 from .pdf import write_pdf_metadata
 
-if cairo.cairo_version() < 11504:
-    warnings.warn(
-        'There are known rendering problems and missing features with '
-        'cairo < 1.15.4. WeasyPrint may work with older versions, but please '
-        'read the note about the needed cairo version on the "Install" page '
-        'of the documentation before reporting bugs. '
-        'http://weasyprint.readthedocs.io/en/latest/install.html')
+
+class Context(pydyf.Stream):
+    def __init__(self, alpha_states, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._alpha_states = alpha_states
+
+    def set_alpha(self, alpha, stroke=False):
+        if alpha not in self._alpha_states:
+            self._alpha_states[alpha] = pydyf.Dictionary(
+                {'CA' if stroke else 'ca': alpha})
+        self.set_state(alpha)
 
 
 def _get_matrix(box):
@@ -148,8 +152,8 @@ def _gather_links_and_bookmarks(box, bookmarks, links, anchors, matrix):
         _gather_links_and_bookmarks(child, bookmarks, links, anchors, matrix)
 
 
-def _w3c_date_to_iso(string, attr_name):
-    """Tranform W3C date to ISO-8601 format."""
+def _w3c_date_to_pdf(string, attr_name):
+    """Tranform W3C date to PDF format."""
     if string is None:
         return None
     match = W3C_DATE_RE.match(string)
@@ -157,23 +161,24 @@ def _w3c_date_to_iso(string, attr_name):
         LOGGER.warning('Invalid %s date: %r', attr_name, string)
         return None
     groups = match.groupdict()
-    iso_date = '%04i-%02i-%02iT%02i:%02i:%02i' % (
-        int(groups['year']),
-        int(groups['month'] or 1),
-        int(groups['day'] or 1),
-        int(groups['hour'] or 0),
-        int(groups['minute'] or 0),
-        int(groups['second'] or 0))
+    pdf_date = ''
+    found = False
+    for key in ('second', 'minute', 'hour', 'day', 'month', 'year'):
+        if groups[key]:
+            found = True
+            pdf_date = groups[key] + pdf_date
+        elif found:
+            pdf_date = '%02i' % (key in ('day', 'month')) + pdf_date
     if groups['hour']:
         assert groups['minute']
         if groups['tz_hour']:
             assert groups['tz_hour'].startswith(('+', '-'))
             assert groups['tz_minute']
-            iso_date += '%+03i:%02i' % (
+            pdf_date += "%+03i'%02i" % (
                 int(groups['tz_hour']), int(groups['tz_minute']))
         else:
-            iso_date += '+00:00'
-    return iso_date
+            pdf_date += 'Z'
+    return pdf_date
 
 
 class Page:
@@ -185,7 +190,7 @@ class Page:
     instantiated directly.
 
     """
-    def __init__(self, page_box, enable_hinting=False):
+    def __init__(self, page_box):
         #: The page width, including margins, in CSS pixels.
         self.width = page_box.margin_width()
 
@@ -227,14 +232,13 @@ class Page:
         _gather_links_and_bookmarks(
             page_box, self.bookmarks, self.links, self.anchors, matrix=None)
         self._page_box = page_box
-        self._enable_hinting = enable_hinting
 
-    def paint(self, cairo_context, left_x=0, top_y=0, scale=1, clip=False):
+    def paint(self, context, left_x=0, top_y=0, scale=1, clip=False):
         """Paint the page in cairo, on any type of surface.
 
-        :type cairo_context: :class:`cairocffi.Context`
-        :param cairo_context:
-            Any cairo context object.
+        :type context: :class:`Context`
+        :param context:
+            A context object.
         :type left_x: float
         :param left_x:
             X coordinate of the left of the page, in cairo user units.
@@ -250,31 +254,15 @@ class Page:
             not provided, content can overflow.
 
         """
-        with stacked(cairo_context):
-            if self._enable_hinting:
-                left_x, top_y = cairo_context.user_to_device(left_x, top_y)
-                # Hint in device space
-                left_x = int(left_x)
-                top_y = int(top_y)
-                left_x, top_y = cairo_context.device_to_user(left_x, top_y)
-            # Make (0, 0) the top-left corner:
-            cairo_context.translate(left_x, top_y)
-            # Make user units CSS pixels:
-            cairo_context.scale(scale, scale)
+        with stacked(context):
+            # Make (0, 0) the top-left corner, and make user units CSS pixels:
+            context.transform(scale, 0, 0, scale, left_x, top_y)
             if clip:
                 width = self.width
                 height = self.height
-                if self._enable_hinting:
-                    width, height = (
-                        cairo_context.user_to_device_distance(width, height))
-                    # Hint in device space
-                    width = int(math.ceil(width))
-                    height = int(math.ceil(height))
-                    width, height = (
-                        cairo_context.device_to_user_distance(width, height))
-                cairo_context.rectangle(0, 0, width, height)
-                cairo_context.clip()
-            draw_page(self._page_box, cairo_context, self._enable_hinting)
+                context.rectangle(0, 0, width, height)
+                context.clip()
+            draw_page(self._page_box, context)
 
 
 class DocumentMetadata:
@@ -348,7 +336,7 @@ class Document:
     """
 
     @classmethod
-    def _build_layout_context(cls, html, stylesheets, enable_hinting,
+    def _build_layout_context(cls, html, stylesheets,
                               presentational_hints=False, font_config=None,
                               counter_style=None):
         if font_config is None:
@@ -371,12 +359,12 @@ class Document:
             original_get_image_from_uri, {}, html.url_fetcher)
         PROGRESS_LOGGER.info('Step 4 - Creating formatting structure')
         context = LayoutContext(
-            enable_hinting, style_for, get_image_from_uri, font_config,
-            counter_style, target_collector)
+            style_for, get_image_from_uri, font_config, counter_style,
+            target_collector)
         return context
 
     @classmethod
-    def _render(cls, html, stylesheets, enable_hinting,
+    def _render(cls, html, stylesheets,
                 presentational_hints=False, font_config=None,
                 counter_style=None):
         if font_config is None:
@@ -386,8 +374,8 @@ class Document:
             counter_style = CounterStyle()
 
         context = cls._build_layout_context(
-            html, stylesheets, enable_hinting, presentational_hints,
-            font_config, counter_style)
+            html, stylesheets, presentational_hints, font_config,
+            counter_style)
 
         root_box = build_formatting_structure(
             html.etree_element, context.style_for, context.get_image_from_uri,
@@ -395,7 +383,7 @@ class Document:
 
         page_boxes = layout_document(html, root_box, context)
         rendering = cls(
-            [Page(page_box, enable_hinting) for page_box in page_boxes],
+            [Page(page_box) for page_box in page_boxes],
             DocumentMetadata(**html._get_metadata()),
             html.url_fetcher, font_config)
         return rendering
@@ -415,6 +403,8 @@ class Document:
         # rendering is destroyed. This is needed as font_config.__del__ removes
         # fonts that may be used when rendering
         self._font_config = font_config
+        # PDF alpha states
+        self._alpha_states = {}
 
     def copy(self, pages='all'):
         """Take a subset of the pages.
@@ -619,10 +609,7 @@ class Document:
         # Use an in-memory buffer, as we will need to seek for
         # metadata. Directly using the target when possible doesn't
         # significantly save time and memory use.
-        file_obj = io.BytesIO()
-        # (1, 1) is overridden by .set_size() below.
-        surface = cairo.PDFSurface(file_obj, 1, 1)
-        context = cairo.Context(surface)
+        document = pydyf.PDF()
 
         PROGRESS_LOGGER.info('Step 6 - Drawing')
 
@@ -630,67 +617,86 @@ class Document:
         for page, links_and_anchors in zip(
                 self.pages, paged_links_and_anchors):
             links, anchors = links_and_anchors
-            surface.set_size(
-                math.floor(scale * (
-                    page.width + page.bleed['left'] + page.bleed['right'])),
-                math.floor(scale * (
-                    page.height + page.bleed['top'] + page.bleed['bottom'])))
-            with stacked(context):
-                context.translate(
-                    page.bleed['left'] * scale, page.bleed['top'] * scale)
-                page.paint(context, scale=scale)
-                self.add_hyperlinks(links, anchors, context, scale)
-                surface.show_page()
+            # TODO: handle this
+            # with stacked(context):
+            #     context.translate(
+            #         page.bleed['left'] * scale, page.bleed['top'] * scale)
+            #     page.paint(context, scale=scale)
+            #     self.add_hyperlinks(links, anchors, context, scale)
+            #     surface.show_page()
+
+            page_width = math.floor(scale * (
+                page.width + page.bleed['left'] + page.bleed['right']))
+            page_height = math.floor(scale * (
+                page.height + page.bleed['top'] + page.bleed['bottom']))
+
+            stream = Context(self._alpha_states)
+            # Draw from the top-left corner
+            stream.transform(1, 0, 0, -1, 0, page_height)
+            page.paint(stream, scale=scale)
+            document.add_object(stream)
+
+            resources = pydyf.Dictionary({
+                'ProcSet': pydyf.Array(['/PDF', '/Text']),
+                'ExtGState': pydyf.Dictionary(self._alpha_states),
+            })
+            document.add_object(resources)
+
+            document.add_page(pydyf.Dictionary({
+                'Type': '/Page',
+                'Parent': document.pages.reference,
+                'MediaBox': pydyf.Array([0, 0, page_width, page_height]),
+                'Contents': stream.reference,
+                'Resources': resources.reference,
+            }))
 
         PROGRESS_LOGGER.info('Step 7 - Adding PDF metadata')
 
-        # TODO: overwrite producer when possible in cairo
-        if cairo.cairo_version() >= 11504:
-            # Set document information
-            for attr, key in (
-                    ('title', cairo.PDF_METADATA_TITLE),
-                    ('description', cairo.PDF_METADATA_SUBJECT),
-                    ('generator', cairo.PDF_METADATA_CREATOR)):
-                value = getattr(self.metadata, attr)
-                if value is not None:
-                    surface.set_metadata(key, value)
-            for attr, key in (
-                    ('authors', cairo.PDF_METADATA_AUTHOR),
-                    ('keywords', cairo.PDF_METADATA_KEYWORDS)):
-                value = getattr(self.metadata, attr)
-                if value is not None:
-                    surface.set_metadata(key, ', '.join(value))
-            for attr, key in (
-                    ('created', cairo.PDF_METADATA_CREATE_DATE),
-                    ('modified', cairo.PDF_METADATA_MOD_DATE)):
-                value = getattr(self.metadata, attr)
-                if value is not None:
-                    surface.set_metadata(key, _w3c_date_to_iso(value, attr))
+        # Set document information
+        if self.metadata.title:
+            document.info['Title'] = pydyf.String(self.metadata.title)
+        if self.metadata.authors:
+            document.info['Author'] = pydyf.String(
+                ', '.join(self.metadata.authors))
+        if self.metadata.description:
+            document.info['Subject'] = pydyf.String(self.metadata.description)
+        if self.metadata.keywords:
+            document.info['Keywords'] = pydyf.String(
+                ', '.join(self.metadata.keywords))
+        if self.metadata.generator:
+            document.info['Creator'] = pydyf.String(self.metadata.generator)
+        document.info['Producer'] = pydyf.String(f'WeasyPrint {__version__}')
+        if self.metadata.created:
+            document.info['CreationDate'] = pydyf.String(
+                _w3c_date_to_pdf(self.metadata.created, 'created'))
+        if self.metadata.modified:
+            document.info['ModDate'] = pydyf.String(
+                _w3c_date_to_pdf(self.metadata.modified, 'modified'))
 
-            # Set bookmarks
-            bookmarks = self.make_bookmark_tree()
-            levels = [cairo.PDF_OUTLINE_ROOT] * len(bookmarks)
-            while bookmarks:
-                bookmark = bookmarks.pop(0)
-                title = bookmark.label
-                destination = bookmark.destination
-                children = bookmark.children
-                state = bookmark.state
-                page, x, y = destination
+        # # Set bookmarks
+        # bookmarks = self.make_bookmark_tree()
+        # levels = [cairo.PDF_OUTLINE_ROOT] * len(bookmarks)
+        # while bookmarks:
+        #     bookmark = bookmarks.pop(0)
+        #     title = bookmark.label
+        #     destination = bookmark.destination
+        #     children = bookmark.children
+        #     state = bookmark.state
+        #     page, x, y = destination
 
-                # We round floats to avoid locale problems, see
-                # https://github.com/Kozea/WeasyPrint/issues/742
-                link_attribs = 'page={} pos=[{} {}]'.format(
-                    page + 1, int(round(x * scale)),
-                    int(round(y * scale)))
+        #     # We round floats to avoid locale problems, see
+        #     # https://github.com/Kozea/WeasyPrint/issues/742
+        #     link_attribs = 'page={} pos=[{} {}]'.format(
+        #         page + 1, int(round(x * scale)),
+        #         int(round(y * scale)))
 
-                outline = surface.add_outline(
-                    levels.pop(), title, link_attribs,
-                    cairo.PDF_OUTLINE_FLAG_OPEN if state == 'open' else 0)
-                levels.extend([outline] * len(children))
-                bookmarks = children + bookmarks
+        #     outline = surface.add_outline(
+        #         levels.pop(), title, link_attribs,
+        #         cairo.PDF_OUTLINE_FLAG_OPEN if state == 'open' else 0)
+        #     levels.extend([outline] * len(children))
+        #     bookmarks = children + bookmarks
 
-        surface.finish()
+        # surface.finish()
 
         # Add extra PDF metadata: attachments, embedded files
         attachment_links = [
@@ -702,17 +708,21 @@ class Document:
         # - attachments as PDF links
         # - finisher function to perform post-processing
         # - bleed boxes
-        condition = (
-            self.metadata.attachments or
-            attachments or
-            any(attachment_links) or
-            finisher or
-            any(any(page.bleed.values()) for page in self.pages))
-        if condition:
-            write_pdf_metadata(
-                file_obj, scale, self.url_fetcher,
-                self.metadata.attachments + (attachments or []),
-                attachment_links, self.pages, finisher)
+        # TODO: handle this with pydyf
+        # condition = (
+        #     self.metadata.attachments or
+        #     attachments or
+        #     any(attachment_links) or
+        #     finisher or
+        #     any(any(page.bleed.values()) for page in self.pages))
+        # if condition:
+        #     write_pdf_metadata(
+        #         file_obj, scale, self.url_fetcher,
+        #         self.metadata.attachments + (attachments or []),
+        #         attachment_links, self.pages, finisher)
+
+        file_obj = io.BytesIO()
+        document.write(file_obj)
 
         if target is None:
             return file_obj.getvalue()
@@ -745,11 +755,6 @@ class Document:
         """
         dppx = resolution / 96
 
-        # This duplicates the hinting logic in Page.paint. There is a
-        # dependency cycle otherwise:
-        #   this → hinting logic → context → surface → this
-        # But since we do no transform here, cairo_context.user_to_device and
-        # friends are identity functions.
         widths = [int(math.ceil(p.width * dppx)) for p in self.pages]
         heights = [int(math.ceil(p.height * dppx)) for p in self.pages]
 

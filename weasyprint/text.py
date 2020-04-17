@@ -14,9 +14,7 @@ import pyphen
 
 from .logger import LOGGER
 
-CAIRO_DUMMY_CONTEXT = {
-    True: cairo.Context(cairo.ImageSurface(cairo.FORMAT_ARGB32, 1, 1)),
-    False: cairo.Context(cairo.PDFSurface(None, 1, 1))}
+CAIRO_DUMMY_CONTEXT = cairo.Context(cairo.PDFSurface(None, 1, 1))
 
 
 ffi = cffi.FFI()
@@ -660,10 +658,9 @@ class Layout:
         if font_size == 0 and ZERO_FONTSIZE_CRASHES_CAIRO:
             font_size = 1
 
-        hinting = context.enable_hinting if context else False
         self.layout = ffi.gc(
             pangocairo.pango_cairo_create_layout(ffi.cast(
-                'cairo_t *', CAIRO_DUMMY_CONTEXT[hinting]._pointer)),
+                'cairo_t *', CAIRO_DUMMY_CONTEXT._pointer)),
             gobject.g_object_unref)
 
         pango_context = pango.pango_layout_get_context(self.layout)
@@ -947,7 +944,6 @@ def create_layout(text, style, context, max_width, justification_spacing):
 
     :param text: Unicode
     :param style: a style dict of computed values
-    :param hinting: whether to enable text hinting or not
     :param max_width:
         The maximum available width in the same unit as ``style['font_size']``,
         or ``None`` for unlimited width.
@@ -1241,8 +1237,8 @@ def show_first_line(context, textbox, text_overflow):
             textbox.pango_layout.layout, pango.PANGO_ELLIPSIZE_END)
 
     first_line, _ = textbox.pango_layout.get_first_line()
-    context = ffi.cast('cairo_t *', context._pointer)
-    pangocairo.pango_cairo_show_layout_line(context, first_line)
+    # context = ffi.cast('cairo_t *', context._pointer)
+    # pangocairo.pango_cairo_show_layout_line(context, first_line)
 
 
 def get_log_attrs(text, lang):

@@ -76,9 +76,9 @@ def parse_all(html_content, base_url=BASE_URL):
 
 def render_pages(html_content):
     """Lay out a document and return a list of PageBox objects."""
-    return [p._page_box for p in FakeHTML(
-            string=html_content, base_url=BASE_URL
-            ).render(enable_hinting=True).pages]
+    return [
+        page._page_box for page in
+        FakeHTML(string=html_content, base_url=BASE_URL).render().pages]
 
 
 def assert_tree(box, expected):
