@@ -75,17 +75,21 @@ def create_bookmarks(bookmarks, document, parent=None):
         destination = bookmark.destination
         children = bookmark.children
         state = bookmark.state
-        page_number, x, y = destination
+        page, x, y = destination
 
         destination = pydyf.Array((
-            document.objects[document.pages['Kids'][page_number * 3]].reference,
+            document.objects[document.pages['Kids'][page * 3]].reference,
             '/XYZ', x, y, 0))
         outline = pydyf.Dictionary({
             'Title': pydyf.String(title), 'Dest': destination})
         document.add_object(outline)
         children_outlines, children_count = create_bookmarks(
             children, document, parent=outline)
-        outline['Count'] = 1 + children_count
+        outline['Count'] = children_count
+        if state == 'closed':
+            outline['Count'] *= -1
+        else:
+            count += children_count
         if outlines:
             outline['Prev'] = outlines[-1].reference
             outlines[-1]['Next'] = outline.reference
@@ -94,7 +98,6 @@ def create_bookmarks(bookmarks, document, parent=None):
             outline['Last'] = children_outlines[-1].reference
         if parent is not None:
             outline['Parent'] = parent.reference
-        count += children_count
         outlines.append(outline)
     return outlines, count
 
@@ -733,8 +736,6 @@ class Document:
             document.outlines['Count'] = count
             document.outlines['First'] = outlines[0].reference
             document.outlines['Last'] = outlines[-1].reference
-
-        # surface.finish()
 
         # Add extra PDF metadata: attachments, embedded files
         attachment_links = [
