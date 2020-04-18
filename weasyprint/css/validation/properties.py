@@ -1418,8 +1418,12 @@ def transform(tokens):
             if len(args) == 1:
                 angle = get_angle(args[0])
                 length = get_length(args[0], percentage=True)
-                if name in ('rotate', 'skewx', 'skewy') and angle:
+                if name == 'rotate' and angle is not None:
                     transforms.append((name, angle))
+                elif name == 'skewx' and angle is not None:
+                    transforms.append(('skew', (angle, 0)))
+                elif name == 'skewy' and angle is not None:
+                    transforms.append(('skew', (0, angle)))
                 elif name in ('translatex', 'translate') and length:
                     transforms.append((
                         'translate', (length, computed_values.ZERO_PIXELS)))
@@ -1437,13 +1441,21 @@ def transform(tokens):
             elif len(args) == 2:
                 if name == 'scale' and all(a.type == 'number' for a in args):
                     transforms.append((name, tuple(arg.value for arg in args)))
-                else:
+                elif name == 'translate':
                     lengths = tuple(
                         get_length(token, percentage=True) for token in args)
-                    if name == 'translate' and all(lengths):
+                    if all(lengths):
                         transforms.append((name, lengths))
                     else:
                         return
+                elif name == 'skew':
+                    angles = tuple(get_angle(token) for token in args)
+                    if all(angle is not None for angle in angles):
+                        transforms.append((name, angles))
+                    else:
+                        return
+                else:
+                    return
             elif len(args) == 6 and name == 'matrix' and all(
                     a.type == 'number' for a in args):
                 transforms.append((name, tuple(arg.value for arg in args)))

@@ -42,10 +42,67 @@ class Context(pydyf.Stream):
         self.set_state(alpha)
 
 
+class Matrix(list):
+    def __init__(self, a=1, b=0, c=0, d=1, e=0, f=0, matrix=None):
+        if matrix is None:
+            matrix = [[a, b, 0], [c, d, 0], [e, f, 1]]
+        super().__init__(matrix)
+
+    def __matmul__(self, other):
+        assert len(self[0]) == len(other) == len(other[0]) == 3
+        m = len(self)
+        return Matrix(matrix=[
+            [sum(self[i][k] * other[k][j] for k in range(3)) for j in range(3)]
+            for i in range(m)])
+
+    @property
+    def determinant(self):
+        assert len(self) == len(self[0]) == 3
+        return (
+            self[0][0] * (self[1][1] * self[2][2] - self[1][2] * self[2][1]) -
+            self[1][0] * (self[0][1] * self[2][2] - self[0][2] * self[2][1]) +
+            self[2][0] * (self[0][1] * self[1][2] - self[0][2] * self[1][1]))
+
+    def transform_point(self, x, y):
+        return (Matrix(matrix=[[x, y, 1]]) @ self)[0][:2]
+
+
+def create_bookmarks(bookmarks, document, parent=None):
+    count = len(bookmarks)
+    outlines = []
+    for bookmark in bookmarks:
+        title = bookmark.label
+        destination = bookmark.destination
+        children = bookmark.children
+        state = bookmark.state
+        page_number, x, y = destination
+
+        destination = pydyf.Array((
+            document.objects[document.pages['Kids'][page_number * 3]].reference,
+            '/XYZ', x, y, 0))
+        outline = pydyf.Dictionary({
+            'Title': pydyf.String(title), 'Dest': destination})
+        document.add_object(outline)
+        children_outlines, children_count = create_bookmarks(
+            children, document, parent=outline)
+        outline['Count'] = 1 + children_count
+        if outlines:
+            outline['Prev'] = outlines[-1].reference
+            outlines[-1]['Next'] = outline.reference
+        if children_outlines:
+            outline['First'] = children_outlines[0].reference
+            outline['Last'] = children_outlines[-1].reference
+        if parent is not None:
+            outline['Parent'] = parent.reference
+        count += children_count
+        outlines.append(outline)
+    return outlines, count
+
+
 def _get_matrix(box):
     """Return the matrix for the CSS transforms on this box.
 
-    :returns: a :class:`cairocffi.Matrix` object or :obj:`None`.
+    :returns: a :class:`Matrix` object or :obj:`None`.
 
     """
     # "Transforms apply to block-level and atomic inline-level elements,
@@ -61,30 +118,26 @@ def _get_matrix(box):
         origin_x = box.border_box_x() + offset_x
         origin_y = box.border_box_y() + offset_y
 
-        matrix = cairo.Matrix()
-        matrix.translate(origin_x, origin_y)
+        matrix = Matrix(e=origin_x, f=origin_y)
         for name, args in box.style['transform']:
+            a, b, c, d, e, f = 1, 0, 0, 1, 0, 0
             if name == 'scale':
-                matrix.scale(*args)
+                a, d = args
             elif name == 'rotate':
-                matrix.rotate(args)
+                a = d = math.cos(args)
+                b = math.sin(args)
+                c = -b
             elif name == 'translate':
-                translate_x, translate_y = args
-                matrix.translate(
-                    percentage(translate_x, border_width),
-                    percentage(translate_y, border_height),
-                )
+                e = percentage(args[0], border_width)
+                f = percentage(args[1], border_height)
+            elif name == 'skew':
+                b, c = math.tan(args[1]), math.tan(args[0])
             else:
-                if name == 'skewx':
-                    args = (1, 0, math.tan(args), 1, 0, 0)
-                elif name == 'skewy':
-                    args = (1, math.tan(args), 0, 1, 0, 0)
-                else:
-                    assert name == 'matrix'
-                matrix = cairo.Matrix(*args) * matrix
-        matrix.translate(-origin_x, -origin_y)
-        box.transformation_matrix = matrix
-        return matrix
+                assert name == 'matrix'
+                a, b, c, d, e, f = args
+            matrix = Matrix(a, b, c, d, e, f) @ matrix
+        box.transformation_matrix = Matrix(e=-origin_x, f=-origin_y) @ matrix
+        return box.transformation_matrix
 
 
 def rectangle_aabb(matrix, pos_x, pos_y, width, height):
@@ -107,7 +160,7 @@ def rectangle_aabb(matrix, pos_x, pos_y, width, height):
 def _gather_links_and_bookmarks(box, bookmarks, links, anchors, matrix):
     transform = _get_matrix(box)
     if transform:
-        matrix = transform * matrix if matrix else transform
+        matrix = transform @ matrix if matrix else transform
 
     bookmark_label = box.bookmark_label
     if box.style['bookmark_level'] == 'none':
@@ -234,20 +287,20 @@ class Page:
         self._page_box = page_box
 
     def paint(self, context, left_x=0, top_y=0, scale=1, clip=False):
-        """Paint the page in cairo, on any type of surface.
+        """Paint the page into the PDF file.
 
         :type context: :class:`Context`
         :param context:
             A context object.
         :type left_x: float
         :param left_x:
-            X coordinate of the left of the page, in cairo user units.
+            X coordinate of the left of the page, in PDF points.
         :type top_y: float
         :param top_y:
-            Y coordinate of the top of the page, in cairo user units.
+            Y coordinate of the top of the page, in PDF points.
         :type scale: float
         :param scale:
-            Zoom scale in cairo user units per CSS pixel.
+            Zoom scale.
         :type clip: bool
         :param clip:
             Whether to clip/cut content outside the page. If false or
@@ -506,7 +559,9 @@ class Document:
         skipped_levels = []
         last_by_depth = [root]
         previous_level = 0
+
         for page_number, page in enumerate(self.pages):
+            matrix = Matrix(0.75, 0, 0, -0.75, 0, page.height * 0.75)
             for level, label, (point_x, point_y), state in page.bookmarks:
                 if level > previous_level:
                     # Example: if the previous bookmark is a <h2>, the next
@@ -527,6 +582,7 @@ class Document:
                 assert depth >= 1
 
                 children = []
+                point_x, point_y = matrix.transform_point(point_x, point_y)
                 subtree = BookmarkSubtree(
                     label, (page_number, point_x, point_y), children, state)
                 last_by_depth[depth - 1].append(subtree)
@@ -604,15 +660,12 @@ class Document:
             ``target``).
 
         """
-        # 0.75 = 72 PDF point (cairo units) per inch / 96 CSS pixel per inch
+        # 0.75 = 72 PDF point per inch / 96 CSS pixel per inch
         scale = zoom * 0.75
-        # Use an in-memory buffer, as we will need to seek for
-        # metadata. Directly using the target when possible doesn't
-        # significantly save time and memory use.
-        document = pydyf.PDF()
 
         PROGRESS_LOGGER.info('Step 6 - Drawing')
 
+        document = pydyf.PDF()
         paged_links_and_anchors = list(self.resolve_links())
         for page, links_and_anchors in zip(
                 self.pages, paged_links_and_anchors):
@@ -673,28 +726,13 @@ class Document:
             document.info['ModDate'] = pydyf.String(
                 _w3c_date_to_pdf(self.metadata.modified, 'modified'))
 
-        # # Set bookmarks
-        # bookmarks = self.make_bookmark_tree()
-        # levels = [cairo.PDF_OUTLINE_ROOT] * len(bookmarks)
-        # while bookmarks:
-        #     bookmark = bookmarks.pop(0)
-        #     title = bookmark.label
-        #     destination = bookmark.destination
-        #     children = bookmark.children
-        #     state = bookmark.state
-        #     page, x, y = destination
-
-        #     # We round floats to avoid locale problems, see
-        #     # https://github.com/Kozea/WeasyPrint/issues/742
-        #     link_attribs = 'page={} pos=[{} {}]'.format(
-        #         page + 1, int(round(x * scale)),
-        #         int(round(y * scale)))
-
-        #     outline = surface.add_outline(
-        #         levels.pop(), title, link_attribs,
-        #         cairo.PDF_OUTLINE_FLAG_OPEN if state == 'open' else 0)
-        #     levels.extend([outline] * len(children))
-        #     bookmarks = children + bookmarks
+        # Set bookmarks
+        bookmarks = self.make_bookmark_tree()
+        if bookmarks:
+            outlines, count = create_bookmarks(bookmarks, document)
+            document.outlines['Count'] = count
+            document.outlines['First'] = outlines[0].reference
+            document.outlines['Last'] = outlines[-1].reference
 
         # surface.finish()
 
