@@ -192,9 +192,10 @@ def _gather_links_and_bookmarks(box, bookmarks, links, anchors, matrix):
             if matrix:
                 link = (
                     link_type, target, rectangle_aabb(
-                        matrix, pos_x, pos_y, width, height))
+                        matrix, pos_x, pos_y, pos_x + width, pos_y + height))
             else:
-                link = (link_type, target, (pos_x, pos_y, width, height))
+                link = (link_type, target, (
+                    pos_x, pos_y, pos_x + width, pos_y + height))
             links.append(link)
         if matrix and (has_bookmark or has_anchor):
             pos_x, pos_y = matrix.transform_point(pos_x, pos_y)
@@ -542,7 +543,7 @@ class Document:
                     page_links.append(link)
             yield page_links, paged_anchors.pop(0)
 
-    def make_bookmark_tree(self):
+    def make_bookmark_tree(self, scale):
         """Make a tree of all bookmarks in the document.
 
         .. versionadded:: 0.15
@@ -564,7 +565,7 @@ class Document:
         previous_level = 0
 
         for page_number, page in enumerate(self.pages):
-            matrix = Matrix(0.75, 0, 0, -0.75, 0, page.height * 0.75)
+            matrix = Matrix(scale, 0, 0, -scale, 0, page.height * scale)
             for level, label, (point_x, point_y), state in page.bookmarks:
                 if level > previous_level:
                     # Example: if the previous bookmark is a <h2>, the next
@@ -593,45 +594,41 @@ class Document:
                 last_by_depth.append(children)
         return root
 
-    def add_hyperlinks(self, links, anchors, context, scale):
+    def add_hyperlinks(self, links, anchors, matrix):
         """Include hyperlinks in current PDF page.
 
         .. versionadded:: 43
 
 
         """
-        if cairo.cairo_version() < 11504:
-            return
-
-        # We round floats to avoid locale problems, see
-        # https://github.com/Kozea/WeasyPrint/issues/742
-
-        # TODO: Instead of using rects, we could use the drawing rectangles
-        # defined by cairo when drawing targets. This would give a feeling
-        # similiar to what browsers do with links that span multiple lines.
+        annots = []
         for link in links:
             link_type, link_target, rectangle = link
-            if link_type == 'external':
-                attributes = "rect=[{} {} {} {}] uri='{}'".format(*(
-                    [int(round(i * scale)) for i in rectangle] +
-                    [link_target.replace("'", '%27')]))
-            elif link_type == 'internal':
-                attributes = "rect=[{} {} {} {}] dest='{}'".format(*(
-                    [int(round(i * scale)) for i in rectangle] +
-                    [link_target.replace("'", '%27')]))
-            elif link_type == 'attachment':
-                # Attachments are handled in write_pdf_metadata
-                continue
-            context.tag_begin(cairo.TAG_LINK, attributes)
-            context.tag_end(cairo.TAG_LINK)
+            x1, y1 = matrix.transform_point(*rectangle[:2])
+            x2, y2 = matrix.transform_point(*rectangle[2:])
+            if link_type in ('internal', 'external'):
+                annot = pydyf.Dictionary({
+                    'Type': '/Annot',
+                    'Subtype': '/Link',
+                    'Rect': pydyf.Array([x1, y1, x2, y2]),
+                    'BS': pydyf.Dictionary({'W': 0}),
+                })
+                if link_type == 'internal':
+                    annot['Dest'] = pydyf.String(link_target)
+                else:
+                    annot['A'] = pydyf.Dictionary({
+                        'Type': '/Action',
+                        'S': '/URI',
+                        'URI': pydyf.String(link_target),
+                    })
+                annots.append(annot)
 
+        names = {}
         for anchor in anchors:
             anchor_name, x, y = anchor
-            attributes = "name='{}' x={} y={}".format(
-                anchor_name.replace("'", '%27'), int(round(x * scale)),
-                int(round(y * scale)))
-            context.tag_begin(cairo.TAG_DEST, attributes)
-            context.tag_end(cairo.TAG_DEST)
+            names[anchor_name] = matrix.transform_point(x, y)
+
+        return annots, names
 
     def write_pdf(self, target=None, zoom=1, attachments=None, finisher=None):
         """Paint the pages in a PDF file, with meta-data.
@@ -670,16 +667,15 @@ class Document:
 
         document = pydyf.PDF()
         paged_links_and_anchors = list(self.resolve_links())
+        pdf_names = []
         for page, links_and_anchors in zip(
                 self.pages, paged_links_and_anchors):
             links, anchors = links_and_anchors
-            # TODO: handle this
+
+            # TODO: handle bleed translation
             # with stacked(context):
             #     context.translate(
             #         page.bleed['left'] * scale, page.bleed['top'] * scale)
-            #     page.paint(context, scale=scale)
-            #     self.add_hyperlinks(links, anchors, context, scale)
-            #     surface.show_page()
 
             page_width = math.floor(scale * (
                 page.width + page.bleed['left'] + page.bleed['right']))
@@ -692,19 +688,34 @@ class Document:
             page.paint(stream, scale=scale)
             document.add_object(stream)
 
+            matrix = Matrix(scale, 0, 0, -scale, 0, page.height * scale)
+            annots, names = self.add_hyperlinks(links, anchors, matrix)
+            for annot in annots:
+                document.add_object(annot)
+
             resources = pydyf.Dictionary({
                 'ProcSet': pydyf.Array(['/PDF', '/Text']),
                 'ExtGState': pydyf.Dictionary(self._alpha_states),
             })
             document.add_object(resources)
 
-            document.add_page(pydyf.Dictionary({
+            pdf_page = pydyf.Dictionary({
                 'Type': '/Page',
                 'Parent': document.pages.reference,
                 'MediaBox': pydyf.Array([0, 0, page_width, page_height]),
                 'Contents': stream.reference,
                 'Resources': resources.reference,
-            }))
+                'Annots': pydyf.Array([annot.reference for annot in annots]),
+            })
+            document.add_page(pdf_page)
+
+            for name, (x, y) in names.items():
+                pdf_names.append(pydyf.String(name))
+                pdf_names.append(
+                    pydyf.Array([pdf_page.reference, '/XYZ', x, y, 0]))
+
+        document.catalog['Names'] = pydyf.Dictionary({
+            'Dests': pydyf.Dictionary({'Names': pydyf.Array(pdf_names)})})
 
         PROGRESS_LOGGER.info('Step 7 - Adding PDF metadata')
 
@@ -730,12 +741,14 @@ class Document:
                 _w3c_date_to_pdf(self.metadata.modified, 'modified'))
 
         # Set bookmarks
-        bookmarks = self.make_bookmark_tree()
+        bookmarks = self.make_bookmark_tree(scale)
         if bookmarks:
             outlines, count = create_bookmarks(bookmarks, document)
-            document.outlines['Count'] = count
-            document.outlines['First'] = outlines[0].reference
-            document.outlines['Last'] = outlines[-1].reference
+            document.catalog['Outlines'] = pydyf.Dictionary({
+                'Count': count,
+                'First': outlines[0].reference,
+                'Last': outlines[-1].reference,
+            })
 
         # Add extra PDF metadata: attachments, embedded files
         attachment_links = [
