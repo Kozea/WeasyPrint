@@ -643,20 +643,19 @@ def clip_border_segment(context, style, width, side, border_box,
         line_length = bbw - px1 + px2
         length = bbw
         context.move_to(bbx + bbw, main_offset)
-        context.rel_line_to(-bbw, 0)
-        context.rel_line_to(px1, py1)
-        context.rel_line_to(-px1 + bbw + px2, -py1 + py2)
+        context.line_to(bbx, main_offset)
+        context.line_to(bbx + px1, main_offset + py1)
+        context.line_to(bbx + bbw + px2, main_offset + py2)
     elif side in ('left', 'right'):
         a1, b1 = -way * px1 - width / 2, py1 - bt / 2
         a2, b2 = -way * px2 - width / 2, -py2 - bb / 2
         line_length = bbh - py1 + py2
         length = bbh
         context.move_to(main_offset, bby + bbh)
-        context.rel_line_to(0, -bbh)
-        context.rel_line_to(px1, py1)
-        context.rel_line_to(-px1 + px2, -py1 + bbh + py2)
+        context.line_to(main_offset, bby)
+        context.line_to(main_offset + px1, bby + py1)
+        context.line_to(main_offset + px2, bby + bbh + py2)
 
-    # context.set_fill_rule(cairo.FILL_RULE_EVEN_ODD)
     if style in ('dotted', 'dashed'):
         dash = width if style == 'dotted' else 3 * width
         if rounded1 or rounded2:
@@ -735,7 +734,8 @@ def clip_border_segment(context, style, width, side, border_box,
                     context.rectangle(x1, y1, x2 - x1, y2 - y1)
         else:
             # 2x + 1 dashes
-            context.clip()
+            context.clip(even_odd=True)
+            context.end()
             dash = length / (
                 round(length / dash) - (round(length / dash) + 1) % 2) or 1
             for i in range(0, int(round(length / dash)), 2):
@@ -751,7 +751,8 @@ def clip_border_segment(context, style, width, side, border_box,
                 elif side == 'left':
                     context.rectangle(
                         bbx, bby + i * dash, width, dash)
-    context.clip()
+    context.clip(even_odd=True)
+    context.end()
 
 
 def draw_rounded_border(context, box, style, color):
