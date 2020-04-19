@@ -370,6 +370,46 @@ def rectangle_aabb(matrix, pos_x, pos_y, width, height):
     return box_x1, box_y1, box_x2 - box_x1, box_y2 - box_y1
 
 
+def resolve_links(pages):
+    """Resolve internal hyperlinks.
+
+    Links to a missing anchor are removed with a warning.
+
+    If multiple anchors have the same name, the first one is used.
+
+    :returns:
+        A generator yielding lists (one per page) like :attr:`Page.links`,
+        except that ``target`` for internal hyperlinks is
+        ``(page_number, x, y)`` instead of an anchor name.
+        The page number is a 0-based index into the :attr:`pages` list,
+        and ``x, y`` are in CSS pixels from the top-left of the page.
+
+    """
+    anchors = set()
+    paged_anchors = []
+    for i, page in enumerate(pages):
+        paged_anchors.append([])
+        for anchor_name, (point_x, point_y) in page.anchors.items():
+            if anchor_name not in anchors:
+                paged_anchors[-1].append((anchor_name, point_x, point_y))
+                anchors.add(anchor_name)
+    for page in pages:
+        page_links = []
+        for link in page.links:
+            link_type, anchor_name, rectangle = link
+            if link_type == 'internal':
+                if anchor_name not in anchors:
+                    LOGGER.error(
+                        'No anchor #%s for internal URI reference',
+                        anchor_name)
+                else:
+                    page_links.append((link_type, anchor_name, rectangle))
+            else:
+                # External link
+                page_links.append(link)
+        yield page_links, paged_anchors.pop(0)
+
+
 class Matrix(list):
     def __init__(self, a=1, b=0, c=0, d=1, e=0, f=0, matrix=None):
         if matrix is None:
@@ -733,47 +773,6 @@ class Document:
         return type(self)(
             pages, self.metadata, self.url_fetcher, self._font_config)
 
-    def resolve_links(self):
-        """Resolve internal hyperlinks.
-
-        .. versionadded:: 0.15
-
-        Links to a missing anchor are removed with a warning.
-
-        If multiple anchors have the same name, the first one is used.
-
-        :returns:
-            A generator yielding lists (one per page) like :attr:`Page.links`,
-            except that ``target`` for internal hyperlinks is
-            ``(page_number, x, y)`` instead of an anchor name.
-            The page number is a 0-based index into the :attr:`pages` list,
-            and ``x, y`` are in CSS pixels from the top-left of the page.
-
-        """
-        anchors = set()
-        paged_anchors = []
-        for i, page in enumerate(self.pages):
-            paged_anchors.append([])
-            for anchor_name, (point_x, point_y) in page.anchors.items():
-                if anchor_name not in anchors:
-                    paged_anchors[-1].append((anchor_name, point_x, point_y))
-                    anchors.add(anchor_name)
-        for page in self.pages:
-            page_links = []
-            for link in page.links:
-                link_type, anchor_name, rectangle = link
-                if link_type == 'internal':
-                    if anchor_name not in anchors:
-                        LOGGER.error(
-                            'No anchor #%s for internal URI reference',
-                            anchor_name)
-                    else:
-                        page_links.append((link_type, anchor_name, rectangle))
-                else:
-                    # External link
-                    page_links.append(link)
-            yield page_links, paged_anchors.pop(0)
-
     def write_pdf(self, target=None, zoom=1, attachments=None, finisher=None):
         """Paint the pages in a PDF file, with meta-data.
 
@@ -817,7 +816,7 @@ class Document:
         pdf.catalog['Names'] = pydyf.Dictionary(
             {'Dests': pydyf.Dictionary({'Names': pdf_names})})
 
-        paged_links_and_anchors = list(self.resolve_links())
+        paged_links_and_anchors = list(resolve_links(self.pages))
         for page, links_and_anchors in zip(
                 self.pages, paged_links_and_anchors):
             links, anchors = links_and_anchors
