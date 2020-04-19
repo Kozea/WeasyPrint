@@ -466,15 +466,16 @@ def draw_background_image(context, layer, image_rendering):
 
     with stacked(context):
         if not layer.unbounded:
-            context.rectangle(painting_x, painting_y,
-                              painting_width, painting_height)
+            context.rectangle(
+                painting_x, painting_y, painting_width, painting_height)
             context.clip()
         # else: unrestricted, whole page box
 
-        context.translate(positioning_x + position_x,
-                          positioning_y + position_y)
-        context.set_source(pattern)
-        context.paint()
+        context.transform(
+            0, 0, 0, 0, positioning_x + position_x, positioning_y + position_y)
+        # TODO: handle this
+        # context.set_source(pattern)
+        # context.paint()
 
 
 def xy_offset(x, y, offset_x, offset_y, offset):

@@ -10,7 +10,6 @@ import io
 import math
 import shutil
 
-import cairocffi as cairo
 import pydyf
 from weasyprint.layout import LayoutContext
 
@@ -672,15 +671,12 @@ class Document:
                 self.pages, paged_links_and_anchors):
             links, anchors = links_and_anchors
 
-            # TODO: handle bleed translation
-            # with stacked(context):
-            #     context.translate(
-            #         page.bleed['left'] * scale, page.bleed['top'] * scale)
-
-            page_width = math.floor(scale * (
-                page.width + page.bleed['left'] + page.bleed['right']))
-            page_height = math.floor(scale * (
-                page.height + page.bleed['top'] + page.bleed['bottom']))
+            page_width = scale * (
+                page.width + page.bleed['left'] + page.bleed['right'])
+            page_height = scale * (
+                page.height + page.bleed['top'] + page.bleed['bottom'])
+            left = -scale * page.bleed['left']
+            top = -scale * page.bleed['top']
 
             stream = Context(self._alpha_states)
             # Draw from the top-left corner
@@ -702,7 +698,8 @@ class Document:
             pdf_page = pydyf.Dictionary({
                 'Type': '/Page',
                 'Parent': document.pages.reference,
-                'MediaBox': pydyf.Array([0, 0, page_width, page_height]),
+                'MediaBox': pydyf.Array(
+                    [left, top, left + page_width, top + page_height]),
                 'Contents': stream.reference,
                 'Resources': resources.reference,
                 'Annots': pydyf.Array([annot.reference for annot in annots]),
@@ -772,6 +769,30 @@ class Document:
         #         file_obj, scale, self.url_fetcher,
         #         self.metadata.attachments + (attachments or []),
         #         attachment_links, self.pages, finisher)
+
+        for i, document_page in enumerate(self.pages):
+            pdf_page = document.objects[document.pages['Kids'][i * 3]]
+            left, top, right, bottom = pdf_page['MediaBox']
+            bleed = {
+                key: value * 0.75
+                for key, value in document_page.bleed.items()}
+
+            trim_left = left + bleed['left']
+            trim_top = top + bleed['top']
+            trim_right = right - bleed['right']
+            trim_bottom = bottom - bleed['bottom']
+
+            # Arbitrarly set PDF BleedBox between CSS bleed box (MediaBox) and
+            # CSS page box (TrimBox) at most 10 points from the TrimBox.
+            bleed_left = trim_left - min(10, bleed['left'])
+            bleed_top = trim_top - min(10, bleed['top'])
+            bleed_right = trim_right + min(10, bleed['right'])
+            bleed_bottom = trim_bottom + min(10, bleed['bottom'])
+
+            pdf_page['TrimBox'] = pydyf.Array([
+                trim_left, trim_top, trim_right, trim_bottom])
+            pdf_page['BleedBox'] = pydyf.Array([
+                bleed_left, bleed_top, bleed_right, bleed_bottom])
 
         file_obj = io.BytesIO()
         document.write(file_obj)
