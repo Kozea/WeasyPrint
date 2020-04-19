@@ -6,14 +6,18 @@
 
 import collections
 import functools
+import hashlib
 import io
 import math
 import shutil
+import zlib
+from os.path import basename
+from urllib.parse import unquote, urlsplit
 
 import pydyf
 from weasyprint.layout import LayoutContext
 
-from . import CSS, __version__
+from . import Attachment, CSS, __version__
 from .css import get_all_computed_styles
 from .css.counters import CounterStyle
 from .css.targets import TargetCollector
@@ -26,186 +30,7 @@ from .images import get_image_from_uri as original_get_image_from_uri
 from .layout import layout_document
 from .layout.percentages import percentage
 from .logger import LOGGER, PROGRESS_LOGGER
-from .pdf import write_pdf_metadata
-
-
-class Context(pydyf.Stream):
-    def __init__(self, alpha_states, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._alpha_states = alpha_states
-
-    def set_alpha(self, alpha, stroke=False):
-        if alpha not in self._alpha_states:
-            self._alpha_states[alpha] = pydyf.Dictionary(
-                {'CA' if stroke else 'ca': alpha})
-        self.set_state(alpha)
-
-
-class Matrix(list):
-    def __init__(self, a=1, b=0, c=0, d=1, e=0, f=0, matrix=None):
-        if matrix is None:
-            matrix = [[a, b, 0], [c, d, 0], [e, f, 1]]
-        super().__init__(matrix)
-
-    def __matmul__(self, other):
-        assert len(self[0]) == len(other) == len(other[0]) == 3
-        m = len(self)
-        return Matrix(matrix=[
-            [sum(self[i][k] * other[k][j] for k in range(3)) for j in range(3)]
-            for i in range(m)])
-
-    @property
-    def determinant(self):
-        assert len(self) == len(self[0]) == 3
-        return (
-            self[0][0] * (self[1][1] * self[2][2] - self[1][2] * self[2][1]) -
-            self[1][0] * (self[0][1] * self[2][2] - self[0][2] * self[2][1]) +
-            self[2][0] * (self[0][1] * self[1][2] - self[0][2] * self[1][1]))
-
-    def transform_point(self, x, y):
-        return (Matrix(matrix=[[x, y, 1]]) @ self)[0][:2]
-
-
-def create_bookmarks(bookmarks, document, parent=None):
-    count = len(bookmarks)
-    outlines = []
-    for bookmark in bookmarks:
-        title = bookmark.label
-        destination = bookmark.destination
-        children = bookmark.children
-        state = bookmark.state
-        page, x, y = destination
-
-        destination = pydyf.Array((
-            document.objects[document.pages['Kids'][page * 3]].reference,
-            '/XYZ', x, y, 0))
-        outline = pydyf.Dictionary({
-            'Title': pydyf.String(title), 'Dest': destination})
-        document.add_object(outline)
-        children_outlines, children_count = create_bookmarks(
-            children, document, parent=outline)
-        outline['Count'] = children_count
-        if state == 'closed':
-            outline['Count'] *= -1
-        else:
-            count += children_count
-        if outlines:
-            outline['Prev'] = outlines[-1].reference
-            outlines[-1]['Next'] = outline.reference
-        if children_outlines:
-            outline['First'] = children_outlines[0].reference
-            outline['Last'] = children_outlines[-1].reference
-        if parent is not None:
-            outline['Parent'] = parent.reference
-        outlines.append(outline)
-    return outlines, count
-
-
-def _get_matrix(box):
-    """Return the matrix for the CSS transforms on this box.
-
-    :returns: a :class:`Matrix` object or :obj:`None`.
-
-    """
-    # "Transforms apply to block-level and atomic inline-level elements,
-    #  but do not apply to elements which may be split into
-    #  multiple inline-level boxes."
-    # http://www.w3.org/TR/css3-2d-transforms/#introduction
-    if box.style['transform'] and not isinstance(box, boxes.InlineBox):
-        border_width = box.border_width()
-        border_height = box.border_height()
-        origin_x, origin_y = box.style['transform_origin']
-        offset_x = percentage(origin_x, border_width)
-        offset_y = percentage(origin_y, border_height)
-        origin_x = box.border_box_x() + offset_x
-        origin_y = box.border_box_y() + offset_y
-
-        matrix = Matrix(e=origin_x, f=origin_y)
-        for name, args in box.style['transform']:
-            a, b, c, d, e, f = 1, 0, 0, 1, 0, 0
-            if name == 'scale':
-                a, d = args
-            elif name == 'rotate':
-                a = d = math.cos(args)
-                b = math.sin(args)
-                c = -b
-            elif name == 'translate':
-                e = percentage(args[0], border_width)
-                f = percentage(args[1], border_height)
-            elif name == 'skew':
-                b, c = math.tan(args[1]), math.tan(args[0])
-            else:
-                assert name == 'matrix'
-                a, b, c, d, e, f = args
-            matrix = Matrix(a, b, c, d, e, f) @ matrix
-        box.transformation_matrix = Matrix(e=-origin_x, f=-origin_y) @ matrix
-        return box.transformation_matrix
-
-
-def rectangle_aabb(matrix, pos_x, pos_y, width, height):
-    """Apply a transformation matrix to an axis-aligned rectangle
-    and return its axis-aligned bounding box as ``(x, y, width, height)``
-
-    """
-    transform_point = matrix.transform_point
-    x1, y1 = transform_point(pos_x, pos_y)
-    x2, y2 = transform_point(pos_x + width, pos_y)
-    x3, y3 = transform_point(pos_x, pos_y + height)
-    x4, y4 = transform_point(pos_x + width, pos_y + height)
-    box_x1 = min(x1, x2, x3, x4)
-    box_y1 = min(y1, y2, y3, y4)
-    box_x2 = max(x1, x2, x3, x4)
-    box_y2 = max(y1, y2, y3, y4)
-    return box_x1, box_y1, box_x2 - box_x1, box_y2 - box_y1
-
-
-def _gather_links_and_bookmarks(box, bookmarks, links, anchors, matrix):
-    transform = _get_matrix(box)
-    if transform:
-        matrix = transform @ matrix if matrix else transform
-
-    bookmark_label = box.bookmark_label
-    if box.style['bookmark_level'] == 'none':
-        bookmark_level = None
-    else:
-        bookmark_level = box.style['bookmark_level']
-    state = box.style['bookmark_state']
-    link = box.style['link']
-    anchor_name = box.style['anchor']
-    has_bookmark = bookmark_label and bookmark_level
-    # 'link' is inherited but redundant on text boxes
-    has_link = link and not isinstance(box, boxes.TextBox)
-    # In case of duplicate IDs, only the first is an anchor.
-    has_anchor = anchor_name and anchor_name not in anchors
-    is_attachment = hasattr(box, 'is_attachment') and box.is_attachment
-
-    if has_bookmark or has_link or has_anchor:
-        pos_x, pos_y, width, height = box.hit_area()
-        if has_link:
-            token_type, link = link
-            assert token_type == 'url'
-            link_type, target = link
-            assert isinstance(target, str)
-            if link_type == 'external' and is_attachment:
-                link_type = 'attachment'
-            if matrix:
-                link = (
-                    link_type, target, rectangle_aabb(
-                        matrix, pos_x, pos_y, pos_x + width, pos_y + height))
-            else:
-                link = (link_type, target, (
-                    pos_x, pos_y, pos_x + width, pos_y + height))
-            links.append(link)
-        if matrix and (has_bookmark or has_anchor):
-            pos_x, pos_y = matrix.transform_point(pos_x, pos_y)
-        if has_bookmark:
-            bookmarks.append(
-                (bookmark_level, bookmark_label, (pos_x, pos_y), state))
-        if has_anchor:
-            anchors[anchor_name] = pos_x, pos_y
-
-    for child in box.all_children():
-        _gather_links_and_bookmarks(child, bookmarks, links, anchors, matrix)
+from .urls import URLFetchingError
 
 
 def _w3c_date_to_pdf(string, attr_name):
@@ -235,6 +60,339 @@ def _w3c_date_to_pdf(string, attr_name):
         else:
             pdf_date += 'Z'
     return pdf_date
+
+
+class Context(pydyf.Stream):
+    """PDF stream object with context storing alpha states."""
+    def __init__(self, alpha_states, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._alpha_states = alpha_states
+
+    def set_alpha(self, alpha, stroke=False):
+        if alpha not in self._alpha_states:
+            self._alpha_states[alpha] = pydyf.Dictionary(
+                {'CA' if stroke else 'ca': alpha})
+        self.set_state(alpha)
+
+
+BookmarkSubtree = collections.namedtuple(
+    'BookmarkSubtree', ('label', 'destination', 'children', 'state'))
+
+
+def _write_compressed_file_object(pdf, file):
+    """Write a compressed file like object as ``/EmbeddedFile``.
+
+    Compressing is done with deflate. In fact, this method writes multiple PDF
+    objects to include length, compressed length and MD5 checksum.
+
+    :return:
+        the object number of the compressed file stream object
+
+    """
+
+    object_number = pdf.next_object_number()
+    # Make sure we stay in sync with our object numbers
+    expected_next_object_number = object_number + 4
+
+    length_number = object_number + 1
+    md5_number = object_number + 2
+    uncompressed_length_number = object_number + 3
+
+    offset, write = pdf._start_writing()
+    write(pdf_format('{0} 0 obj\n', object_number))
+    write(pdf_format(
+        '<< /Type /EmbeddedFile /Length {0} 0 R /Filter '
+        '/FlateDecode /Params << /CheckSum {1} 0 R /Size {2} 0 R >> >>\n',
+        length_number, md5_number, uncompressed_length_number))
+    write(b'stream\n')
+
+    uncompressed_length = 0
+    compressed_length = 0
+
+    md5 = hashlib.md5()
+    compress = zlib.compressobj()
+    for data in iter(lambda: file.read(4096), b''):
+        uncompressed_length += len(data)
+
+        md5.update(data)
+
+        compressed = compress.compress(data)
+        compressed_length += len(compressed)
+
+        write(compressed)
+
+    compressed = compress.flush(zlib.Z_FINISH)
+    compressed_length += len(compressed)
+    write(compressed)
+
+    write(b'\nendstream\n')
+    write(b'endobj\n')
+
+    pdf.new_objects_offsets.append(offset)
+
+    pdf.write_new_object(pdf_format("{0}", compressed_length))
+    pdf.write_new_object(pdf_format("<{0}>", md5.hexdigest()))
+    pdf.write_new_object(pdf_format("{0}", uncompressed_length))
+
+    assert pdf.next_object_number() == expected_next_object_number
+
+    return object_number
+
+
+def _write_pdf_embedded_files(pdf, attachments, url_fetcher):
+    """Write attachments as embedded files (document attachments).
+
+    :return:
+        the object number of the name dictionary or :obj:`None`
+
+    """
+    file_spec_ids = []
+    for attachment in attachments:
+        file_spec_id = _write_pdf_attachment(pdf, attachment, url_fetcher)
+        if file_spec_id is not None:
+            file_spec_ids.append(file_spec_id)
+
+    # We might have failed to write any attachment at all
+    if len(file_spec_ids) == 0:
+        return None
+
+    content = [b'<< /Names [']
+    for fs in file_spec_ids:
+        content.append(pdf_format('\n(attachment{0}) {0} 0 R ', fs))
+    content.append(b'\n] >>')
+    return pdf.write_new_object(b''.join(content))
+
+
+def _write_pdf_attachment(pdf, attachment, url_fetcher):
+    """Write an attachment to the PDF stream.
+
+    :return:
+        the object number of the ``/Filespec`` object or :obj:`None` if the
+        attachment couldn't be read.
+
+    """
+    url = ''
+    try:
+        # Attachments from document links like <link> or <a> can only be URLs.
+        # They're passed in as tuples
+        if isinstance(attachment, tuple):
+            url, description = attachment
+            attachment = Attachment(
+                url=url, url_fetcher=url_fetcher, description=description)
+        elif not isinstance(attachment, Attachment):
+            attachment = Attachment(guess=attachment, url_fetcher=url_fetcher)
+
+        with attachment.source as (source_type, source, url, _):
+            if isinstance(source, bytes):
+                source = io.BytesIO(source)
+            file_stream_id = _write_compressed_file_object(pdf, source)
+    except URLFetchingError as exc:
+        LOGGER.error('Failed to load attachment: %s', exc)
+        return None
+
+    # TODO: Use the result object from a URL fetch operation to provide more
+    # details on the possible filename.
+    filename = basename(unquote(urlsplit(url).path)) or 'attachment.bin'
+
+    return pdf.write_new_object(pdf_format(
+        '<< /Type /Filespec /F () /UF {0!P} /EF << /F {1} 0 R >> '
+        '/Desc {2!P}\n>>',
+        filename,
+        file_stream_id,
+        attachment.description or ''))
+
+
+def write_pdf_metadata(fileobj, scale, url_fetcher, attachments,
+                       attachment_links, pages, finisher):
+    """Add PDF metadata that are not handled by cairo.
+
+    Includes:
+    - attachments
+    - embedded files
+    - trim box
+    - bleed box
+
+    """
+    pdf = None
+
+    # Add embedded files
+
+    embedded_files_id = _write_pdf_embedded_files(
+        pdf, attachments, url_fetcher)
+    if embedded_files_id is not None:
+        params = b''
+        if embedded_files_id is not None:
+            params += pdf_format(
+                ' /Names << /EmbeddedFiles {0} 0 R >>', embedded_files_id)
+        pdf.extend_dict(pdf.catalog, params)
+
+    # Add attachments
+
+    # A single link can be split in multiple regions. We don't want to embed
+    # a file multiple times of course, so keep a reference to every embedded
+    # URL and reuse the object number.
+    # TODO: If we add support for descriptions this won't always be correct,
+    # because two links might have the same href, but different titles.
+    annot_files = {}
+    for page_links in attachment_links:
+        for link_type, target, rectangle in page_links:
+            if link_type == 'attachment' and target not in annot_files:
+                # TODO: use the title attribute as description
+                annot_files[target] = _write_pdf_attachment(
+                    pdf, (target, None), url_fetcher)
+
+    for pdf_page, document_page, page_links in zip(
+            pdf.pages, pages, attachment_links):
+
+        # DONE: Add bleed box
+        # Add links to attachments
+
+        # TODO: splitting a link into multiple independent rectangular
+        # annotations works well for pure links, but rather mediocre for other
+        # annotations and fails completely for transformed (CSS) or complex
+        # link shapes (area). It would be better to use /AP for all links and
+        # coalesce link shapes that originate from the same HTML link. This
+        # would give a feeling similiar to what browsers do with links that
+        # span multiple lines.
+        annotations = []
+        for link_type, target, rectangle in page_links:
+            if link_type == 'attachment' and annot_files[target] is not None:
+                matrix = cairo.Matrix(
+                    xx=scale, yy=-scale, y0=document_page.height * scale)
+                rect_x, rect_y, width, height = rectangle
+                rect_x, rect_y = matrix.transform_point(rect_x, rect_y)
+                width, height = matrix.transform_distance(width, height)
+                # x, y, w, h => x0, y0, x1, y1
+                rectangle = rect_x, rect_y, rect_x + width, rect_y + height
+                content = [pdf_format(
+                    '<< /Type /Annot '
+                    '/Rect [{0:f} {1:f} {2:f} {3:f}] /Border [0 0 0]\n',
+                    *rectangle)]
+                link_ap = pdf.write_new_object(pdf_format(
+                    '<< /Type /XObject /Subtype /Form '
+                    '/BBox [{0:f} {1:f} {2:f} {3:f}] /Length 0 >>\n'
+                    'stream\n'
+                    'endstream',
+                    *rectangle))
+                content.append(b'/Subtype /FileAttachment ')
+                # evince needs /T or fails on an internal assertion. PDF
+                # doesn't require it.
+                content.append(pdf_format(
+                    '/T () /FS {0} 0 R /AP << /N {1} 0 R >>',
+                    annot_files[target], link_ap))
+                content.append(b'>>')
+                annotations.append(pdf.write_new_object(b''.join(content)))
+
+        if annotations:
+            pdf.extend_dict(pdf_page, pdf_format(
+                '/Annots [{0}]', ' '.join(
+                    '{0} 0 R'.format(n) for n in annotations)))
+
+    pdf.finish() if finisher is None else finisher(pdf)
+
+
+def create_bookmarks(bookmarks, pdf, parent=None):
+    count = len(bookmarks)
+    outlines = []
+    for title, (page, x, y), children, state in bookmarks:
+        destination = pydyf.Array((
+            pdf.objects[pdf.pages['Kids'][page * 3]].reference,
+            '/XYZ', x, y, 0))
+        outline = pydyf.Dictionary({
+            'Title': pydyf.String(title), 'Dest': destination})
+        pdf.add_object(outline)
+        children_outlines, children_count = create_bookmarks(
+            children, pdf, parent=outline)
+        outline['Count'] = children_count
+        if state == 'closed':
+            outline['Count'] *= -1
+        else:
+            count += children_count
+        if outlines:
+            outline['Prev'] = outlines[-1].reference
+            outlines[-1]['Next'] = outline.reference
+        if children_outlines:
+            outline['First'] = children_outlines[0].reference
+            outline['Last'] = children_outlines[-1].reference
+        if parent is not None:
+            outline['Parent'] = parent.reference
+        outlines.append(outline)
+    return outlines, count
+
+
+def add_hyperlinks(links, anchors, matrix, pdf, page, names):
+    """Include hyperlinks in current PDF page."""
+    page['Annots'] = pydyf.Array()
+    for link in links:
+        link_type, link_target, rectangle = link
+        x1, y1 = matrix.transform_point(*rectangle[:2])
+        x2, y2 = matrix.transform_point(*rectangle[2:])
+        if link_type in ('internal', 'external'):
+            annot = pydyf.Dictionary({
+                'Type': '/Annot',
+                'Subtype': '/Link',
+                'Rect': pydyf.Array([x1, y1, x2, y2]),
+                'BS': pydyf.Dictionary({'W': 0}),
+            })
+            if link_type == 'internal':
+                annot['Dest'] = pydyf.String(link_target)
+            else:
+                annot['A'] = pydyf.Dictionary({
+                    'Type': '/Action',
+                    'S': '/URI',
+                    'URI': pydyf.String(link_target),
+                })
+            pdf.add_object(annot)
+            page['Annots'].append(annot.reference)
+
+    for anchor in anchors:
+        anchor_name, x, y = anchor
+        x, y = matrix.transform_point(x, y)
+        names.append(pydyf.String(anchor_name))
+        names.append(pydyf.Array([page.reference, '/XYZ', x, y, 0]))
+
+
+def rectangle_aabb(matrix, pos_x, pos_y, width, height):
+    """Apply a transformation matrix to an axis-aligned rectangle.
+
+    Return its axis-aligned bounding box as ``(x, y, width, height)``.
+
+    """
+    transform_point = matrix.transform_point
+    x1, y1 = transform_point(pos_x, pos_y)
+    x2, y2 = transform_point(pos_x + width, pos_y)
+    x3, y3 = transform_point(pos_x, pos_y + height)
+    x4, y4 = transform_point(pos_x + width, pos_y + height)
+    box_x1 = min(x1, x2, x3, x4)
+    box_y1 = min(y1, y2, y3, y4)
+    box_x2 = max(x1, x2, x3, x4)
+    box_y2 = max(y1, y2, y3, y4)
+    return box_x1, box_y1, box_x2 - box_x1, box_y2 - box_y1
+
+
+class Matrix(list):
+    def __init__(self, a=1, b=0, c=0, d=1, e=0, f=0, matrix=None):
+        if matrix is None:
+            matrix = [[a, b, 0], [c, d, 0], [e, f, 1]]
+        super().__init__(matrix)
+
+    def __matmul__(self, other):
+        assert len(self[0]) == len(other) == len(other[0]) == 3
+        m = len(self)
+        return Matrix(matrix=[
+            [sum(self[i][k] * other[k][j] for k in range(3)) for j in range(3)]
+            for i in range(m)])
+
+    @property
+    def determinant(self):
+        assert len(self) == len(self[0]) == 3
+        return (
+            self[0][0] * (self[1][1] * self[2][2] - self[1][2] * self[2][1]) -
+            self[1][0] * (self[0][1] * self[2][2] - self[0][2] * self[2][1]) +
+            self[2][0] * (self[0][1] * self[1][2] - self[0][2] * self[1][1]))
+
+    def transform_point(self, x, y):
+        return (Matrix(matrix=[[x, y, 1]]) @ self)[0][:2]
 
 
 class Page:
@@ -285,14 +443,95 @@ class Page:
         #: ``(x, y)`` point in CSS pixels from the top-left of the page.
         self.anchors = {}
 
-        _gather_links_and_bookmarks(
-            page_box, self.bookmarks, self.links, self.anchors, matrix=None)
+        self._gather_links_and_bookmarks(page_box)
         self._page_box = page_box
+
+    def _gather_links_and_bookmarks(self, box, matrix=None):
+        # Get box transformation matrix.
+        # "Transforms apply to block-level and atomic inline-level elements,
+        #  but do not apply to elements which may be split into
+        #  multiple inline-level boxes."
+        # http://www.w3.org/TR/css3-2d-transforms/#introduction
+        if box.style['transform'] and not isinstance(box, boxes.InlineBox):
+            border_width = box.border_width()
+            border_height = box.border_height()
+            origin_x, origin_y = box.style['transform_origin']
+            offset_x = percentage(origin_x, border_width)
+            offset_y = percentage(origin_y, border_height)
+            origin_x = box.border_box_x() + offset_x
+            origin_y = box.border_box_y() + offset_y
+
+            matrix = Matrix(e=origin_x, f=origin_y)
+            for name, args in box.style['transform']:
+                a, b, c, d, e, f = 1, 0, 0, 1, 0, 0
+                if name == 'scale':
+                    a, d = args
+                elif name == 'rotate':
+                    a = d = math.cos(args)
+                    b = math.sin(args)
+                    c = -b
+                elif name == 'translate':
+                    e = percentage(args[0], border_width)
+                    f = percentage(args[1], border_height)
+                elif name == 'skew':
+                    b, c = math.tan(args[1]), math.tan(args[0])
+                else:
+                    assert name == 'matrix'
+                    a, b, c, d, e, f = args
+                matrix = Matrix(a, b, c, d, e, f) @ matrix
+            box.transformation_matrix = (
+                Matrix(e=-origin_x, f=-origin_y) @ matrix)
+            if matrix:
+                matrix = box.transformation_matrix @ matrix
+            else:
+                matrix = box.transformation_matrix
+
+        bookmark_label = box.bookmark_label
+        if box.style['bookmark_level'] == 'none':
+            bookmark_level = None
+        else:
+            bookmark_level = box.style['bookmark_level']
+        state = box.style['bookmark_state']
+        link = box.style['link']
+        anchor_name = box.style['anchor']
+        has_bookmark = bookmark_label and bookmark_level
+        # 'link' is inherited but redundant on text boxes
+        has_link = link and not isinstance(box, boxes.TextBox)
+        # In case of duplicate IDs, only the first is an anchor.
+        has_anchor = anchor_name and anchor_name not in self.anchors
+        is_attachment = hasattr(box, 'is_attachment') and box.is_attachment
+
+        if has_bookmark or has_link or has_anchor:
+            pos_x, pos_y, width, height = box.hit_area()
+            if has_link:
+                token_type, link = link
+                assert token_type == 'url'
+                link_type, target = link
+                assert isinstance(target, str)
+                if link_type == 'external' and is_attachment:
+                    link_type = 'attachment'
+                if matrix:
+                    link = (link_type, target, rectangle_aabb(
+                        matrix, pos_x, pos_y, pos_x + width, pos_y + height))
+                else:
+                    link = (link_type, target, (
+                        pos_x, pos_y, pos_x + width, pos_y + height))
+                self.links.append(link)
+            if matrix and (has_bookmark or has_anchor):
+                pos_x, pos_y = matrix.transform_point(pos_x, pos_y)
+            if has_bookmark:
+                self.bookmarks.append(
+                    (bookmark_level, bookmark_label, (pos_x, pos_y), state))
+            if has_anchor:
+                self.anchors[anchor_name] = pos_x, pos_y
+
+        for child in box.all_children():
+            self._gather_links_and_bookmarks(child)
 
     def paint(self, context, left_x=0, top_y=0, scale=1, clip=False):
         """Paint the page into the PDF file.
 
-        :type context: :class:`Context`
+        :type context: :class:`pdf.Context`
         :param context:
             A context object.
         :type left_x: float
@@ -376,10 +615,6 @@ class DocumentMetadata:
         self.attachments = attachments or []
 
 
-BookmarkSubtree = collections.namedtuple(
-    'BookmarkSubtree', ('label', 'destination', 'children', 'state'))
-
-
 class Document:
     """A rendered document ready to be painted on a cairo surface.
 
@@ -420,9 +655,8 @@ class Document:
         return context
 
     @classmethod
-    def _render(cls, html, stylesheets,
-                presentational_hints=False, font_config=None,
-                counter_style=None):
+    def _render(cls, html, stylesheets, presentational_hints=False,
+                font_config=None, counter_style=None):
         if font_config is None:
             font_config = FontConfiguration()
 
@@ -459,8 +693,6 @@ class Document:
         # rendering is destroyed. This is needed as font_config.__del__ removes
         # fonts that may be used when rendering
         self._font_config = font_config
-        # PDF alpha states
-        self._alpha_states = {}
 
     def copy(self, pages='all'):
         """Take a subset of the pages.
@@ -542,18 +774,126 @@ class Document:
                     page_links.append(link)
             yield page_links, paged_anchors.pop(0)
 
-    def make_bookmark_tree(self, scale):
-        """Make a tree of all bookmarks in the document.
+    def write_pdf(self, target=None, zoom=1, attachments=None, finisher=None):
+        """Paint the pages in a PDF file, with meta-data.
 
-        .. versionadded:: 0.15
+        PDF files written directly by cairo do not have meta-data such as
+        bookmarks/outlines and hyperlinks.
 
-        :return: A list of bookmark subtrees.
-            A subtree is ``(label, target, children, state)``. ``label`` is
-            a string, ``target`` is ``(page_number, x, y)`` like in
-            :meth:`resolve_links`, and ``children`` is a
-            list of child subtrees.
+        :type target: str, pathlib.Path or file object
+        :param target:
+            A filename where the PDF file is generated, a file object, or
+            :obj:`None`.
+        :type zoom: float
+        :param zoom:
+            The zoom factor in PDF units per CSS units.  **Warning**:
+            All CSS units are affected, including physical units like
+            ``cm`` and named sizes like ``A4``.  For values other than
+            1, the physical CSS units will thus be "wrong".
+        :type attachments: list
+        :param attachments: A list of additional file attachments for the
+            generated PDF document or :obj:`None`. The list's elements are
+            :class:`Attachment` objects, filenames, URLs or file-like objects.
+        :param finisher: A finisher function, that accepts the document and a
+            ``pydyf.PDF`` object as parameters, can be passed to perform
+            post-processing on the PDF right before the trailer is written.
+        :returns:
+            The PDF as :obj:`bytes` if ``target`` is not provided or
+            :obj:`None`, otherwise :obj:`None` (the PDF is written to
+            ``target``).
 
         """
+        # 0.75 = 72 PDF point per inch / 96 CSS pixel per inch
+        scale = zoom * 0.75
+
+        PROGRESS_LOGGER.info('Step 6 - Creating PDF')
+
+        pdf = pydyf.PDF()
+        alpha_states = pydyf.Dictionary()
+        pdf.add_object(alpha_states)
+        resources = pydyf.Dictionary({'ExtGState': alpha_states.reference})
+        pdf.add_object(resources)
+        pdf_names = pydyf.Array()
+        pdf.catalog['Names'] = pydyf.Dictionary(
+            {'Dests': pydyf.Dictionary({'Names': pdf_names})})
+
+        paged_links_and_anchors = list(self.resolve_links())
+        for page, links_and_anchors in zip(
+                self.pages, paged_links_and_anchors):
+            links, anchors = links_and_anchors
+
+            page_width = scale * (
+                page.width + page.bleed['left'] + page.bleed['right'])
+            page_height = scale * (
+                page.height + page.bleed['top'] + page.bleed['bottom'])
+            left = -scale * page.bleed['left']
+            top = -scale * page.bleed['top']
+            right = left + page_width
+            bottom = top + page_height
+
+            stream = Context(alpha_states)
+            # Draw from the top-left corner
+            stream.transform(1, 0, 0, -1, 0, page.height * scale)
+            page.paint(stream, scale=scale)
+            pdf.add_object(stream)
+
+            pdf_page = pydyf.Dictionary({
+                'Type': '/Page',
+                'Parent': pdf.pages.reference,
+                'MediaBox': pydyf.Array([left, top, right, bottom]),
+                'Contents': stream.reference,
+                'Resources': resources.reference,
+            })
+            pdf.add_page(pdf_page)
+
+            matrix = Matrix(scale, 0, 0, -scale, 0, page.height * scale)
+            add_hyperlinks(links, anchors, matrix, pdf, pdf_page, pdf_names)
+
+            bleed = {key: value * 0.75 for key, value in page.bleed.items()}
+
+            trim_left = left + bleed['left']
+            trim_top = top + bleed['top']
+            trim_right = right - bleed['right']
+            trim_bottom = bottom - bleed['bottom']
+
+            # Arbitrarly set PDF BleedBox between CSS bleed box (MediaBox) and
+            # CSS page box (TrimBox) at most 10 points from the TrimBox.
+            bleed_left = trim_left - min(10, bleed['left'])
+            bleed_top = trim_top - min(10, bleed['top'])
+            bleed_right = trim_right + min(10, bleed['right'])
+            bleed_bottom = trim_bottom + min(10, bleed['bottom'])
+
+            pdf_page['TrimBox'] = pydyf.Array([
+                trim_left, trim_top, trim_right, trim_bottom])
+            pdf_page['BleedBox'] = pydyf.Array([
+                bleed_left, bleed_top, bleed_right, bleed_bottom])
+
+        PROGRESS_LOGGER.info('Step 7 - Adding PDF metadata')
+
+        # Set PDF information
+
+        if self.metadata.title:
+            pdf.info['Title'] = pydyf.String(self.metadata.title)
+        if self.metadata.authors:
+            pdf.info['Author'] = pydyf.String(
+                ', '.join(self.metadata.authors))
+        if self.metadata.description:
+            pdf.info['Subject'] = pydyf.String(self.metadata.description)
+        if self.metadata.keywords:
+            pdf.info['Keywords'] = pydyf.String(
+                ', '.join(self.metadata.keywords))
+        if self.metadata.generator:
+            pdf.info['Creator'] = pydyf.String(self.metadata.generator)
+        pdf.info['Producer'] = pydyf.String(f'WeasyPrint {__version__}')
+        if self.metadata.created:
+            pdf.info['CreationDate'] = pydyf.String(
+                _w3c_date_to_pdf(self.metadata.created, 'created'))
+        if self.metadata.modified:
+            pdf.info['ModDate'] = pydyf.String(
+                _w3c_date_to_pdf(self.metadata.modified, 'modified'))
+
+        # Set bookmarks
+
         root = []
         # At one point in the document, for each "output" depth, how much
         # to add to get the source level (CSS values of bookmark-level).
@@ -591,165 +931,19 @@ class Document:
                 last_by_depth[depth - 1].append(subtree)
                 del last_by_depth[depth:]
                 last_by_depth.append(children)
-        return root
 
-    def add_hyperlinks(self, links, anchors, matrix):
-        """Include hyperlinks in current PDF page.
+        outlines, count = create_bookmarks(root, pdf)
+        pdf.catalog['Outlines'] = pydyf.Dictionary({
+            'Count': count,
+            'First': outlines[0].reference,
+            'Last': outlines[-1].reference,
+        })
 
-        .. versionadded:: 43
+        # Add attachments and embedded files
 
-
-        """
-        annots = []
-        for link in links:
-            link_type, link_target, rectangle = link
-            x1, y1 = matrix.transform_point(*rectangle[:2])
-            x2, y2 = matrix.transform_point(*rectangle[2:])
-            if link_type in ('internal', 'external'):
-                annot = pydyf.Dictionary({
-                    'Type': '/Annot',
-                    'Subtype': '/Link',
-                    'Rect': pydyf.Array([x1, y1, x2, y2]),
-                    'BS': pydyf.Dictionary({'W': 0}),
-                })
-                if link_type == 'internal':
-                    annot['Dest'] = pydyf.String(link_target)
-                else:
-                    annot['A'] = pydyf.Dictionary({
-                        'Type': '/Action',
-                        'S': '/URI',
-                        'URI': pydyf.String(link_target),
-                    })
-                annots.append(annot)
-
-        names = {}
-        for anchor in anchors:
-            anchor_name, x, y = anchor
-            names[anchor_name] = matrix.transform_point(x, y)
-
-        return annots, names
-
-    def write_pdf(self, target=None, zoom=1, attachments=None, finisher=None):
-        """Paint the pages in a PDF file, with meta-data.
-
-        PDF files written directly by cairo do not have meta-data such as
-        bookmarks/outlines and hyperlinks.
-
-        :type target: str, pathlib.Path or file object
-        :param target:
-            A filename where the PDF file is generated, a file object, or
-            :obj:`None`.
-        :type zoom: float
-        :param zoom:
-            The zoom factor in PDF units per CSS units.  **Warning**:
-            All CSS units are affected, including physical units like
-            ``cm`` and named sizes like ``A4``.  For values other than
-            1, the physical CSS units will thus be "wrong".
-        :type attachments: list
-        :param attachments: A list of additional file attachments for the
-            generated PDF document or :obj:`None`. The list's elements are
-            :class:`Attachment` objects, filenames, URLs or file-like objects.
-        :param finisher: A finisher function, that accepts the document and a
-            ``pydyf.PDF`` object as parameters, can be passed to perform
-            post-processing on the PDF right before the trailer is written.
-        :returns:
-            The PDF as :obj:`bytes` if ``target`` is not provided or
-            :obj:`None`, otherwise :obj:`None` (the PDF is written to
-            ``target``).
-
-        """
-        # 0.75 = 72 PDF point per inch / 96 CSS pixel per inch
-        scale = zoom * 0.75
-
-        PROGRESS_LOGGER.info('Step 6 - Drawing')
-
-        document = pydyf.PDF()
-        paged_links_and_anchors = list(self.resolve_links())
-        pdf_names = []
-        for page, links_and_anchors in zip(
-                self.pages, paged_links_and_anchors):
-            links, anchors = links_and_anchors
-
-            page_width = scale * (
-                page.width + page.bleed['left'] + page.bleed['right'])
-            page_height = scale * (
-                page.height + page.bleed['top'] + page.bleed['bottom'])
-            left = -scale * page.bleed['left']
-            top = -scale * page.bleed['top']
-
-            stream = Context(self._alpha_states)
-            # Draw from the top-left corner
-            stream.transform(1, 0, 0, -1, 0, page.height * scale)
-            page.paint(stream, scale=scale)
-            document.add_object(stream)
-
-            matrix = Matrix(scale, 0, 0, -scale, 0, page.height * scale)
-            annots, names = self.add_hyperlinks(links, anchors, matrix)
-            for annot in annots:
-                document.add_object(annot)
-
-            resources = pydyf.Dictionary({
-                'ProcSet': pydyf.Array(['/PDF', '/Text']),
-                'ExtGState': pydyf.Dictionary(self._alpha_states),
-            })
-            document.add_object(resources)
-
-            pdf_page = pydyf.Dictionary({
-                'Type': '/Page',
-                'Parent': document.pages.reference,
-                'MediaBox': pydyf.Array(
-                    [left, top, left + page_width, top + page_height]),
-                'Contents': stream.reference,
-                'Resources': resources.reference,
-                'Annots': pydyf.Array([annot.reference for annot in annots]),
-            })
-            document.add_page(pdf_page)
-
-            for name, (x, y) in names.items():
-                pdf_names.append(pydyf.String(name))
-                pdf_names.append(
-                    pydyf.Array([pdf_page.reference, '/XYZ', x, y, 0]))
-
-        document.catalog['Names'] = pydyf.Dictionary({
-            'Dests': pydyf.Dictionary({'Names': pydyf.Array(pdf_names)})})
-
-        PROGRESS_LOGGER.info('Step 7 - Adding PDF metadata')
-
-        # Set document information
-        if self.metadata.title:
-            document.info['Title'] = pydyf.String(self.metadata.title)
-        if self.metadata.authors:
-            document.info['Author'] = pydyf.String(
-                ', '.join(self.metadata.authors))
-        if self.metadata.description:
-            document.info['Subject'] = pydyf.String(self.metadata.description)
-        if self.metadata.keywords:
-            document.info['Keywords'] = pydyf.String(
-                ', '.join(self.metadata.keywords))
-        if self.metadata.generator:
-            document.info['Creator'] = pydyf.String(self.metadata.generator)
-        document.info['Producer'] = pydyf.String(f'WeasyPrint {__version__}')
-        if self.metadata.created:
-            document.info['CreationDate'] = pydyf.String(
-                _w3c_date_to_pdf(self.metadata.created, 'created'))
-        if self.metadata.modified:
-            document.info['ModDate'] = pydyf.String(
-                _w3c_date_to_pdf(self.metadata.modified, 'modified'))
-
-        # Set bookmarks
-        bookmarks = self.make_bookmark_tree(scale)
-        if bookmarks:
-            outlines, count = create_bookmarks(bookmarks, document)
-            document.catalog['Outlines'] = pydyf.Dictionary({
-                'Count': count,
-                'First': outlines[0].reference,
-                'Last': outlines[-1].reference,
-            })
-
-        # Add extra PDF metadata: attachments, embedded files
-        attachment_links = [
-            [link for link in page_links if link[0] == 'attachment']
-            for page_links, page_anchors in paged_links_and_anchors]
+        # attachment_links = [
+        #     [link for link in page_links if link[0] == 'attachment']
+        #     for page_links, page_anchors in paged_links_and_anchors]
         # Write extra PDF metadata only when there is a least one from:
         # - attachments in metadata
         # - attachments as function parameters
@@ -769,36 +963,11 @@ class Document:
         #         self.metadata.attachments + (attachments or []),
         #         attachment_links, self.pages, finisher)
 
-        # Add bleed box
-        for i, document_page in enumerate(self.pages):
-            pdf_page = document.objects[document.pages['Kids'][i * 3]]
-            left, top, right, bottom = pdf_page['MediaBox']
-            bleed = {
-                key: value * 0.75
-                for key, value in document_page.bleed.items()}
-
-            trim_left = left + bleed['left']
-            trim_top = top + bleed['top']
-            trim_right = right - bleed['right']
-            trim_bottom = bottom - bleed['bottom']
-
-            # Arbitrarly set PDF BleedBox between CSS bleed box (MediaBox) and
-            # CSS page box (TrimBox) at most 10 points from the TrimBox.
-            bleed_left = trim_left - min(10, bleed['left'])
-            bleed_top = trim_top - min(10, bleed['top'])
-            bleed_right = trim_right + min(10, bleed['right'])
-            bleed_bottom = trim_bottom + min(10, bleed['bottom'])
-
-            pdf_page['TrimBox'] = pydyf.Array([
-                trim_left, trim_top, trim_right, trim_bottom])
-            pdf_page['BleedBox'] = pydyf.Array([
-                bleed_left, bleed_top, bleed_right, bleed_bottom])
-
         if finisher:
-            finisher(self, document)
+            finisher(self, pdf)
 
         file_obj = io.BytesIO()
-        document.write(file_obj)
+        pdf.write(file_obj)
 
         if target is None:
             return file_obj.getvalue()
