@@ -786,43 +786,6 @@ class Document:
                 with open(target, 'wb') as fd:
                     shutil.copyfileobj(file_obj, fd)
 
-    def write_image_surface(self, resolution=96):
-        """Render pages on a cairo image surface.
-
-        .. versionadded:: 0.17
-
-        There is no decoration around pages other than those specified in CSS
-        with ``@page`` rules. The final image is as wide as the widest page.
-        Each page is below the previous one, centered horizontally.
-
-        :type resolution: float
-        :param resolution:
-            The output resolution in PNG pixels per CSS inch. At 96 dpi
-            (the default), PNG pixels match the CSS ``px`` unit.
-        :returns:
-            A ``(surface, png_width, png_height)`` tuple. ``surface`` is a
-            cairo :class:`ImageSurface <cairocffi.ImageSurface>`. ``png_width``
-            and ``png_height`` are the size of the final image, in PNG pixels.
-
-        """
-        dppx = resolution / 96
-
-        widths = [int(math.ceil(p.width * dppx)) for p in self.pages]
-        heights = [int(math.ceil(p.height * dppx)) for p in self.pages]
-
-        max_width = max(widths)
-        sum_heights = sum(heights)
-        surface = cairo.ImageSurface(
-            cairo.FORMAT_ARGB32, max_width, sum_heights)
-        context = cairo.Context(surface)
-        pos_y = 0
-        PROGRESS_LOGGER.info('Step 6 - Drawing')
-        for page, width, height in zip(self.pages, widths, heights):
-            pos_x = (max_width - width) / 2
-            page.paint(context, pos_x, pos_y, scale=dppx, clip=True)
-            pos_y += height
-        return surface, max_width, sum_heights
-
     def write_png(self, target=None, resolution=96):
         """Paint the pages vertically to a single PNG image.
 
@@ -843,12 +806,5 @@ class Document:
             ``png_height`` are the size of the final image, in PNG pixels.
 
         """
-        surface, max_width, sum_heights = self.write_image_surface(resolution)
-        if target is None:
-            target = io.BytesIO()
-            surface.write_to_png(target)
-            png_bytes = target.getvalue()
-        else:
-            surface.write_to_png(target)
-            png_bytes = None
-        return png_bytes, max_width, sum_heights
+        # TODO: write this
+        raise NotImplementedError

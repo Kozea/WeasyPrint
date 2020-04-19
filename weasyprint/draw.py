@@ -306,7 +306,7 @@ def rounded_box_path(context, radii):
 
 
 def draw_background(context, bg, clip_box=True, bleed=None, marks=()):
-    """Draw the background color and image to a ``cairo.Context``.
+    """Draw the background color and image to a ``document.Context``.
 
     If ``clip_box`` is set to ``False``, the background is not clipped to the
     border box of the background, but only to the painting area.
@@ -495,7 +495,7 @@ def styled_color(style, color, side):
 
 
 def draw_border(context, box):
-    """Draw the box border to a ``cairo.Context``."""
+    """Draw the box border to a ``document.Context``."""
     # We need a plan to draw beautiful borders, and that's difficult, no need
     # to lie. Let's try to find the cases that we can handle in a smart way.
 
@@ -756,18 +756,17 @@ def clip_border_segment(context, style, width, side, border_box,
 
 
 def draw_rounded_border(context, box, style, color):
-    # context.set_fill_rule(cairo.FILL_RULE_EVEN_ODD)
     rounded_box_path(context, box.rounded_padding_box())
     if style in ('ridge', 'groove'):
         rounded_box_path(context, box.rounded_box_ratio(1 / 2))
         context.set_color_rgb(*color[0][:3])
         context.set_alpha(color[0].alpha)
-        context.fill()
+        context.fill(even_odd=True)
         rounded_box_path(context, box.rounded_box_ratio(1 / 2))
         rounded_box_path(context, box.rounded_border_box())
         context.set_color_rgb(*color[1][:3])
         context.set_alpha(color[1].alpha)
-        context.fill()
+        context.fill(even_odd=True)
         return
     if style == 'double':
         rounded_box_path(context, box.rounded_box_ratio(1 / 3))
@@ -779,7 +778,6 @@ def draw_rounded_border(context, box, style, color):
 
 
 def draw_rect_border(context, box, widths, style, color):
-    # context.set_fill_rule(cairo.FILL_RULE_EVEN_ODD)
     bbx, bby, bbw, bbh = box
     bt, br, bb, bl = widths
     context.rectangle(*box)
@@ -789,7 +787,7 @@ def draw_rect_border(context, box, widths, style, color):
             bbw - (bl + br) / 2, bbh - (bt + bb) / 2)
         context.set_color_rgb(*color[0][:3])
         context.set_alpha(color[0].alpha)
-        context.fill()
+        context.fill(even_odd=True)
         context.rectangle(
             bbx + bl / 2, bby + bt / 2,
             bbw - (bl + br) / 2, bbh - (bt + bb) / 2)
@@ -797,7 +795,7 @@ def draw_rect_border(context, box, widths, style, color):
             bbx + bl, bby + bt, bbw - bl - br, bbh - bt - bb)
         context.set_color_rgb(*color[1][:3])
         context.set_alpha(color[1].alpha)
-        context.fill()
+        context.fill(even_odd=True)
         return
     if style == 'double':
         context.rectangle(
@@ -809,7 +807,7 @@ def draw_rect_border(context, box, widths, style, color):
     context.rectangle(bbx + bl, bby + bt, bbw - bl - br, bbh - bt - bb)
     context.set_color_rgb(*color[:3])
     context.set_alpha(color.alpha)
-    context.fill()
+    context.fill(even_odd=True)
 
 
 def draw_outlines(context, box):
@@ -962,7 +960,7 @@ def draw_collapsed_borders(context, table):
 
 
 def draw_replacedbox(context, box):
-    """Draw the given :class:`boxes.ReplacedBox` to a ``cairo.context``."""
+    """Draw the given :class:`boxes.ReplacedBox` to a ``document.Context``."""
     if box.style['visibility'] != 'visible' or not box.width or not box.height:
         return
 
@@ -1076,7 +1074,7 @@ def draw_wave(context, x, y, width, offset_x, radius):
 
 def draw_text_decoration(context, textbox, offset_x, offset_y, thickness,
                          color):
-    """Draw text-decoration of ``textbox`` to a ``cairo.Context``."""
+    """Draw text-decoration of ``textbox`` to a ``document.Context``."""
     style = textbox.style['text_decoration_style']
     with stacked(context):
         context.set_color_rgb(*color[:3], stroke=True)
