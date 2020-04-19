@@ -649,10 +649,9 @@ class Document:
         :param attachments: A list of additional file attachments for the
             generated PDF document or :obj:`None`. The list's elements are
             :class:`Attachment` objects, filenames, URLs or file-like objects.
-        :param finisher: A finisher function that accepts a PDFFile instance as
-            its only parameter can be passed to perform post-processing on the
-            PDF right before the trailer is written. The function is then
-            responsible for calling the instances finish() function.
+        :param finisher: A finisher function, that accepts the document and a
+            ``pydyf.PDF`` object as parameters, can be passed to perform
+            post-processing on the PDF right before the trailer is written.
         :returns:
             The PDF as :obj:`bytes` if ``target`` is not provided or
             :obj:`None`, otherwise :obj:`None` (the PDF is written to
@@ -770,6 +769,7 @@ class Document:
         #         self.metadata.attachments + (attachments or []),
         #         attachment_links, self.pages, finisher)
 
+        # Add bleed box
         for i, document_page in enumerate(self.pages):
             pdf_page = document.objects[document.pages['Kids'][i * 3]]
             left, top, right, bottom = pdf_page['MediaBox']
@@ -793,6 +793,9 @@ class Document:
                 trim_left, trim_top, trim_right, trim_bottom])
             pdf_page['BleedBox'] = pydyf.Array([
                 bleed_left, bleed_top, bleed_right, bleed_bottom])
+
+        if finisher:
+            finisher(self, document)
 
         file_obj = io.BytesIO()
         document.write(file_obj)
