@@ -679,7 +679,7 @@ class Document:
 
             stream = Context(self._alpha_states)
             # Draw from the top-left corner
-            stream.transform(1, 0, 0, -1, 0, page_height)
+            stream.transform(1, 0, 0, -1, 0, page.height * scale)
             page.paint(stream, scale=scale)
             document.add_object(stream)
 
