@@ -79,216 +79,85 @@ BookmarkSubtree = collections.namedtuple(
     'BookmarkSubtree', ('label', 'destination', 'children', 'state'))
 
 
-def _write_compressed_file_object(pdf, file):
-    """Write a compressed file like object as ``/EmbeddedFile``.
-
-    Compressing is done with deflate. In fact, this method writes multiple PDF
-    objects to include length, compressed length and MD5 checksum.
-
-    :return:
-        the object number of the compressed file stream object
-
-    """
-
-    object_number = pdf.next_object_number()
-    # Make sure we stay in sync with our object numbers
-    expected_next_object_number = object_number + 4
-
-    length_number = object_number + 1
-    md5_number = object_number + 2
-    uncompressed_length_number = object_number + 3
-
-    offset, write = pdf._start_writing()
-    write(pdf_format('{0} 0 obj\n', object_number))
-    write(pdf_format(
-        '<< /Type /EmbeddedFile /Length {0} 0 R /Filter '
-        '/FlateDecode /Params << /CheckSum {1} 0 R /Size {2} 0 R >> >>\n',
-        length_number, md5_number, uncompressed_length_number))
-    write(b'stream\n')
-
-    uncompressed_length = 0
-    compressed_length = 0
-
-    md5 = hashlib.md5()
-    compress = zlib.compressobj()
-    for data in iter(lambda: file.read(4096), b''):
-        uncompressed_length += len(data)
-
-        md5.update(data)
-
-        compressed = compress.compress(data)
-        compressed_length += len(compressed)
-
-        write(compressed)
-
-    compressed = compress.flush(zlib.Z_FINISH)
-    compressed_length += len(compressed)
-    write(compressed)
-
-    write(b'\nendstream\n')
-    write(b'endobj\n')
-
-    pdf.new_objects_offsets.append(offset)
-
-    pdf.write_new_object(pdf_format("{0}", compressed_length))
-    pdf.write_new_object(pdf_format("<{0}>", md5.hexdigest()))
-    pdf.write_new_object(pdf_format("{0}", uncompressed_length))
-
-    assert pdf.next_object_number() == expected_next_object_number
-
-    return object_number
-
-
 def _write_pdf_embedded_files(pdf, attachments, url_fetcher):
-    """Write attachments as embedded files (document attachments).
-
-    :return:
-        the object number of the name dictionary or :obj:`None`
-
-    """
-    file_spec_ids = []
+    """Write attachments as embedded files (document attachments)."""
+    pdf_attachments = []
     for attachment in attachments:
-        file_spec_id = _write_pdf_attachment(pdf, attachment, url_fetcher)
-        if file_spec_id is not None:
-            file_spec_ids.append(file_spec_id)
+        pdf_attachment = _write_pdf_attachment(pdf, attachment, url_fetcher)
+        if pdf_attachment is not None:
+            pdf_attachments.append(pdf_attachment)
 
-    # We might have failed to write any attachment at all
-    if len(file_spec_ids) == 0:
-        return None
+    if not pdf_attachments:
+        return
 
-    content = [b'<< /Names [']
-    for fs in file_spec_ids:
-        content.append(pdf_format('\n(attachment{0}) {0} 0 R ', fs))
-    content.append(b'\n] >>')
-    return pdf.write_new_object(b''.join(content))
+    content = pydyf.Dictionary({'Names': pydyf.Array()})
+    for i, pdf_attachment in enumerate(pdf_attachments):
+        content['Names'].append(pydyf.String(f'attachment{i}'))
+        content['Names'].append(pdf_attachment.reference)
+    pdf.add_object(content)
+    pdf.catalog['Names']['EmbeddedFiles'] = content.reference
 
 
 def _write_pdf_attachment(pdf, attachment, url_fetcher):
     """Write an attachment to the PDF stream.
 
     :return:
-        the object number of the ``/Filespec`` object or :obj:`None` if the
-        attachment couldn't be read.
+        the attachment PDF dictionary.
 
     """
+    # Attachments from document links like <link> or <a> can only be URLs.
+    # They're passed in as tuples
     url = ''
-    try:
-        # Attachments from document links like <link> or <a> can only be URLs.
-        # They're passed in as tuples
-        if isinstance(attachment, tuple):
-            url, description = attachment
-            attachment = Attachment(
-                url=url, url_fetcher=url_fetcher, description=description)
-        elif not isinstance(attachment, Attachment):
-            attachment = Attachment(guess=attachment, url_fetcher=url_fetcher)
+    if isinstance(attachment, tuple):
+        url, description = attachment
+        attachment = Attachment(
+            url=url, url_fetcher=url_fetcher, description=description)
+    elif not isinstance(attachment, Attachment):
+        attachment = Attachment(guess=attachment, url_fetcher=url_fetcher)
 
+    try:
         with attachment.source as (source_type, source, url, _):
             if isinstance(source, bytes):
                 source = io.BytesIO(source)
-            file_stream_id = _write_compressed_file_object(pdf, source)
-    except URLFetchingError as exc:
-        LOGGER.error('Failed to load attachment: %s', exc)
-        return None
+            uncompressed_length = 0
+            stream = b''
+            md5 = hashlib.md5()
+            compress = zlib.compressobj()
+            for data in iter(lambda: source.read(4096), b''):
+                uncompressed_length += len(data)
+                md5.update(data)
+                compressed = compress.compress(data)
+                stream += compressed
+            compressed = compress.flush(zlib.Z_FINISH)
+            stream += compressed
+            file_extra = pydyf.Dictionary({
+                'Type': '/EmbeddedFile',
+                'Filter': '/FlateDecode',
+                'Params': pydyf.Dictionary({
+                    'CheckSum': f'<{md5.hexdigest()}>',
+                    'Size': uncompressed_length,
+                })
+            })
+            file_stream = pydyf.Stream([stream], file_extra)
+            pdf.add_object(file_stream)
+
+    except URLFetchingError as exception:
+        LOGGER.error('Failed to load attachment: %s', exception)
+        return
 
     # TODO: Use the result object from a URL fetch operation to provide more
     # details on the possible filename.
     filename = basename(unquote(urlsplit(url).path)) or 'attachment.bin'
 
-    return pdf.write_new_object(pdf_format(
-        '<< /Type /Filespec /F () /UF {0!P} /EF << /F {1} 0 R >> '
-        '/Desc {2!P}\n>>',
-        filename,
-        file_stream_id,
-        attachment.description or ''))
-
-
-def write_pdf_metadata(fileobj, scale, url_fetcher, attachments,
-                       attachment_links, pages, finisher):
-    """Add PDF metadata that are not handled by cairo.
-
-    Includes:
-    - attachments
-    - embedded files
-    - trim box
-    - bleed box
-
-    """
-    pdf = None
-
-    # Add embedded files
-
-    embedded_files_id = _write_pdf_embedded_files(
-        pdf, attachments, url_fetcher)
-    if embedded_files_id is not None:
-        params = b''
-        if embedded_files_id is not None:
-            params += pdf_format(
-                ' /Names << /EmbeddedFiles {0} 0 R >>', embedded_files_id)
-        pdf.extend_dict(pdf.catalog, params)
-
-    # Add attachments
-
-    # A single link can be split in multiple regions. We don't want to embed
-    # a file multiple times of course, so keep a reference to every embedded
-    # URL and reuse the object number.
-    # TODO: If we add support for descriptions this won't always be correct,
-    # because two links might have the same href, but different titles.
-    annot_files = {}
-    for page_links in attachment_links:
-        for link_type, target, rectangle in page_links:
-            if link_type == 'attachment' and target not in annot_files:
-                # TODO: use the title attribute as description
-                annot_files[target] = _write_pdf_attachment(
-                    pdf, (target, None), url_fetcher)
-
-    for pdf_page, document_page, page_links in zip(
-            pdf.pages, pages, attachment_links):
-
-        # DONE: Add bleed box
-        # Add links to attachments
-
-        # TODO: splitting a link into multiple independent rectangular
-        # annotations works well for pure links, but rather mediocre for other
-        # annotations and fails completely for transformed (CSS) or complex
-        # link shapes (area). It would be better to use /AP for all links and
-        # coalesce link shapes that originate from the same HTML link. This
-        # would give a feeling similiar to what browsers do with links that
-        # span multiple lines.
-        annotations = []
-        for link_type, target, rectangle in page_links:
-            if link_type == 'attachment' and annot_files[target] is not None:
-                matrix = cairo.Matrix(
-                    xx=scale, yy=-scale, y0=document_page.height * scale)
-                rect_x, rect_y, width, height = rectangle
-                rect_x, rect_y = matrix.transform_point(rect_x, rect_y)
-                width, height = matrix.transform_distance(width, height)
-                # x, y, w, h => x0, y0, x1, y1
-                rectangle = rect_x, rect_y, rect_x + width, rect_y + height
-                content = [pdf_format(
-                    '<< /Type /Annot '
-                    '/Rect [{0:f} {1:f} {2:f} {3:f}] /Border [0 0 0]\n',
-                    *rectangle)]
-                link_ap = pdf.write_new_object(pdf_format(
-                    '<< /Type /XObject /Subtype /Form '
-                    '/BBox [{0:f} {1:f} {2:f} {3:f}] /Length 0 >>\n'
-                    'stream\n'
-                    'endstream',
-                    *rectangle))
-                content.append(b'/Subtype /FileAttachment ')
-                # evince needs /T or fails on an internal assertion. PDF
-                # doesn't require it.
-                content.append(pdf_format(
-                    '/T () /FS {0} 0 R /AP << /N {1} 0 R >>',
-                    annot_files[target], link_ap))
-                content.append(b'>>')
-                annotations.append(pdf.write_new_object(b''.join(content)))
-
-        if annotations:
-            pdf.extend_dict(pdf_page, pdf_format(
-                '/Annots [{0}]', ' '.join(
-                    '{0} 0 R'.format(n) for n in annotations)))
-
-    pdf.finish() if finisher is None else finisher(pdf)
+    attachment = pydyf.Dictionary({
+        'Type': '/Filespec',
+        'F': pydyf.String(),
+        'UF': pydyf.String(filename),
+        'EF': pydyf.Dictionary({'F': file_stream.reference}),
+        'Desc': pydyf.String(attachment.description or ''),
+    })
+    pdf.add_object(attachment)
+    return attachment
 
 
 def create_bookmarks(bookmarks, pdf, parent=None):
@@ -817,8 +686,26 @@ class Document:
             {'Dests': pydyf.Dictionary({'Names': pdf_names})})
 
         paged_links_and_anchors = list(resolve_links(self.pages))
-        for page, links_and_anchors in zip(
-                self.pages, paged_links_and_anchors):
+        attachment_links = [
+            [link for link in page_links if link[0] == 'attachment']
+            for page_links, page_anchors in paged_links_and_anchors]
+
+        # A single link can be split in multiple regions. We don't want to
+        # embed a file multiple times of course, so keep a reference to every
+        # embedded URL and reuse the object number.
+        # TODO: If we add support for descriptions this won't always be
+        # correct, because two links might have the same href, but different
+        # titles.
+        annot_files = {}
+        for page_links in attachment_links:
+            for link_type, annot_target, rectangle in page_links:
+                if link_type == 'attachment' and target not in annot_files:
+                    # TODO: use the title attribute as description
+                    annot_files[annot_target] = _write_pdf_attachment(
+                        pdf, (annot_target, None), self.url_fetcher)
+
+        for page, links_and_anchors, page_links in zip(
+                self.pages, paged_links_and_anchors, attachment_links):
             links, anchors = links_and_anchors
 
             page_width = scale * (
@@ -842,6 +729,7 @@ class Document:
                 'MediaBox': pydyf.Array([left, top, right, bottom]),
                 'Contents': stream.reference,
                 'Resources': resources.reference,
+                'Annots': pydyf.Array(),
             })
             pdf.add_page(pdf_page)
 
@@ -866,6 +754,35 @@ class Document:
                 trim_left, trim_top, trim_right, trim_bottom])
             pdf_page['BleedBox'] = pydyf.Array([
                 bleed_left, bleed_top, bleed_right, bleed_bottom])
+
+            # TODO: splitting a link into multiple independent rectangular
+            # annotations works well for pure links, but rather mediocre for
+            # other annotations and fails completely for transformed (CSS) or
+            # complex link shapes (area). It would be better to use /AP for all
+            # links and coalesce link shapes that originate from the same HTML
+            # link. This would give a feeling similiar to what browsers do with
+            # links that span multiple lines.
+            for link_type, annot_target, rectangle in page_links:
+                annot_file = annot_files[annot_target]
+                if link_type == 'attachment' and annot_file is not None:
+                    rectangle = (
+                        *matrix.transform_point(*rectangle[:2]),
+                        *matrix.transform_point(*rectangle[2:]))
+                    annot = pydyf.Dictionary({
+                        'Type': '/Annot',
+                        'Rect': pydyf.Array(rectangle),
+                        'Subtype': '/FileAttachment',
+                        'T': pydyf.String(),
+                        'FS': annot_file.reference,
+                        'AP': pydyf.Dictionary({'N': pydyf.Stream([], {
+                            'Type': '/XObject',
+                            'Subtype': '/Form',
+                            'BBox': pydyf.Array(rectangle),
+                            'Length': 0,
+                        })})
+                    })
+                    pdf.add_object(annot)
+                    pdf_page['Annots'].append(annot.reference)
 
         PROGRESS_LOGGER.info('Step 7 - Adding PDF metadata')
 
@@ -940,9 +857,6 @@ class Document:
 
         # Add attachments and embedded files
 
-        # attachment_links = [
-        #     [link for link in page_links if link[0] == 'attachment']
-        #     for page_links, page_anchors in paged_links_and_anchors]
         # Write extra PDF metadata only when there is a least one from:
         # - attachments in metadata
         # - attachments as function parameters
@@ -961,6 +875,11 @@ class Document:
         #         file_obj, scale, self.url_fetcher,
         #         self.metadata.attachments + (attachments or []),
         #         attachment_links, self.pages, finisher)
+
+        # Add embedded files
+
+        attachments = self.metadata.attachments + (attachments or [])
+        _write_pdf_embedded_files(pdf, attachments, self.url_fetcher)
 
         if finisher:
             finisher(self, pdf)
