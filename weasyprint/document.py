@@ -685,27 +685,44 @@ class Document:
         pdf.catalog['Names'] = pydyf.Dictionary(
             {'Dests': pydyf.Dictionary({'Names': pdf_names})})
 
+        # Links and anchors
         paged_links_and_anchors = list(resolve_links(self.pages))
         attachment_links = [
             [link for link in page_links if link[0] == 'attachment']
             for page_links, page_anchors in paged_links_and_anchors]
 
+        # Annotations
+        annot_files = {}
         # A single link can be split in multiple regions. We don't want to
         # embed a file multiple times of course, so keep a reference to every
         # embedded URL and reuse the object number.
-        # TODO: If we add support for descriptions this won't always be
-        # correct, because two links might have the same href, but different
-        # titles.
-        annot_files = {}
         for page_links in attachment_links:
             for link_type, annot_target, rectangle in page_links:
                 if link_type == 'attachment' and target not in annot_files:
-                    # TODO: use the title attribute as description
+                    # TODO: Use the title attribute as description. The comment
+                    # above about multiple regions won't always be correct,
+                    # because two links might have the same href, but different
+                    # titles.
                     annot_files[annot_target] = _write_pdf_attachment(
                         pdf, (annot_target, None), self.url_fetcher)
 
-        for page, links_and_anchors, page_links in zip(
-                self.pages, paged_links_and_anchors, attachment_links):
+        # Bookmarks
+        root = []
+        # At one point in the document, for each "output" depth, how much
+        # to add to get the source level (CSS values of bookmark-level).
+        # E.g. with <h1> then <h3>, level_shifts == [0, 1]
+        # 1 means that <h3> has depth 3 - 1 = 2 in the output.
+        skipped_levels = []
+        last_by_depth = [root]
+        previous_level = 0
+
+        for page_number, (page, links_and_anchors, page_links) in enumerate(
+                zip(self.pages, paged_links_and_anchors, attachment_links)):
+            # Draw from the top-left corner
+            matrix = Matrix(scale, 0, 0, -scale, 0, page.height * scale)
+
+            # Links and anchors
+
             links, anchors = links_and_anchors
 
             page_width = scale * (
@@ -718,7 +735,6 @@ class Document:
             bottom = top + page_height
 
             stream = Context(alpha_states)
-            # Draw from the top-left corner
             stream.transform(1, 0, 0, -1, 0, page.height * scale)
             page.paint(stream, scale=scale)
             pdf.add_object(stream)
@@ -733,8 +749,9 @@ class Document:
             })
             pdf.add_page(pdf_page)
 
-            matrix = Matrix(scale, 0, 0, -scale, 0, page.height * scale)
             add_hyperlinks(links, anchors, matrix, pdf, pdf_page, pdf_names)
+
+            # Bleed
 
             bleed = {key: value * 0.75 for key, value in page.bleed.items()}
 
@@ -754,6 +771,8 @@ class Document:
                 trim_left, trim_top, trim_right, trim_bottom])
             pdf_page['BleedBox'] = pydyf.Array([
                 bleed_left, bleed_top, bleed_right, bleed_bottom])
+
+            # Annotations
 
             # TODO: splitting a link into multiple independent rectangular
             # annotations works well for pure links, but rather mediocre for
@@ -784,43 +803,8 @@ class Document:
                     pdf.add_object(annot)
                     pdf_page['Annots'].append(annot.reference)
 
-        PROGRESS_LOGGER.info('Step 7 - Adding PDF metadata')
+            # Bookmarks
 
-        # Set PDF information
-
-        if self.metadata.title:
-            pdf.info['Title'] = pydyf.String(self.metadata.title)
-        if self.metadata.authors:
-            pdf.info['Author'] = pydyf.String(
-                ', '.join(self.metadata.authors))
-        if self.metadata.description:
-            pdf.info['Subject'] = pydyf.String(self.metadata.description)
-        if self.metadata.keywords:
-            pdf.info['Keywords'] = pydyf.String(
-                ', '.join(self.metadata.keywords))
-        if self.metadata.generator:
-            pdf.info['Creator'] = pydyf.String(self.metadata.generator)
-        pdf.info['Producer'] = pydyf.String(f'WeasyPrint {__version__}')
-        if self.metadata.created:
-            pdf.info['CreationDate'] = pydyf.String(
-                _w3c_date_to_pdf(self.metadata.created, 'created'))
-        if self.metadata.modified:
-            pdf.info['ModDate'] = pydyf.String(
-                _w3c_date_to_pdf(self.metadata.modified, 'modified'))
-
-        # Set bookmarks
-
-        root = []
-        # At one point in the document, for each "output" depth, how much
-        # to add to get the source level (CSS values of bookmark-level).
-        # E.g. with <h1> then <h3>, level_shifts == [0, 1]
-        # 1 means that <h3> has depth 3 - 1 = 2 in the output.
-        skipped_levels = []
-        last_by_depth = [root]
-        previous_level = 0
-
-        for page_number, page in enumerate(self.pages):
-            matrix = Matrix(scale, 0, 0, -scale, 0, page.height * scale)
             for level, label, (point_x, point_y), state in page.bookmarks:
                 if level > previous_level:
                     # Example: if the previous bookmark is a <h2>, the next
@@ -854,6 +838,30 @@ class Document:
             'First': outlines[0].reference,
             'Last': outlines[-1].reference,
         })
+
+        PROGRESS_LOGGER.info('Step 7 - Adding PDF metadata')
+
+        # Set PDF information
+
+        if self.metadata.title:
+            pdf.info['Title'] = pydyf.String(self.metadata.title)
+        if self.metadata.authors:
+            pdf.info['Author'] = pydyf.String(
+                ', '.join(self.metadata.authors))
+        if self.metadata.description:
+            pdf.info['Subject'] = pydyf.String(self.metadata.description)
+        if self.metadata.keywords:
+            pdf.info['Keywords'] = pydyf.String(
+                ', '.join(self.metadata.keywords))
+        if self.metadata.generator:
+            pdf.info['Creator'] = pydyf.String(self.metadata.generator)
+        pdf.info['Producer'] = pydyf.String(f'WeasyPrint {__version__}')
+        if self.metadata.created:
+            pdf.info['CreationDate'] = pydyf.String(
+                _w3c_date_to_pdf(self.metadata.created, 'created'))
+        if self.metadata.modified:
+            pdf.info['ModDate'] = pydyf.String(
+                _w3c_date_to_pdf(self.metadata.modified, 'modified'))
 
         # Add attachments and embedded files
 
