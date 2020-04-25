@@ -19,6 +19,15 @@ CAIRO_DUMMY_CONTEXT = cairo.Context(cairo.PDFSurface(None, 1, 1))
 
 ffi = cffi.FFI()
 ffi.cdef('''
+    // HarfBuzz
+
+    typedef ... hb_font_t;
+    typedef ... hb_face_t;
+    typedef ... hb_blob_t;
+    hb_face_t * hb_font_get_face (hb_font_t *font);
+    hb_blob_t * hb_face_reference_blob (hb_face_t *face);
+    const char * hb_blob_get_data (hb_blob_t *blob, unsigned int *length);
+
     // Cairo
 
     typedef enum {
@@ -48,6 +57,9 @@ ffi.cdef('''
     typedef ... PangoLayoutIter;
     typedef ... PangoAttrList;
     typedef ... PangoAttrClass;
+    typedef ... PangoFont;
+    typedef guint PangoGlyph;
+    typedef guint PangoGlyphUnit;
 
     typedef enum {
         PANGO_STYLE_NORMAL,
@@ -98,6 +110,11 @@ ffi.cdef('''
         PANGO_ELLIPSIZE_END
     } PangoEllipsizeMode;
 
+    typedef struct GSList {
+       gpointer data;
+       struct GSList *next;
+    } GSList;
+
     typedef struct {
         const PangoAttrClass *klass;
         guint start_index;
@@ -108,6 +125,7 @@ ffi.cdef('''
         PangoLayout *layout;
         gint         start_index;
         gint         length;
+        GSList      *runs;
         /* ... */
     } PangoLayoutLine;
 
@@ -134,6 +152,48 @@ ffi.cdef('''
         guint is_word_boundary : 1;
     } PangoLogAttr;
 
+    typedef struct {
+        void *shape_engine;
+        void *lang_engine;
+        PangoFont *font;
+        guint level;
+        guint gravity;
+        guint flags;
+        guint script;
+        PangoLanguage *language;
+        GSList *extra_attrs;
+    } PangoAnalysis;
+
+    typedef struct {
+        gint offset;
+        gint length;
+        gint num_chars;
+        PangoAnalysis analysis;
+    } PangoItem;
+
+    typedef struct {
+        PangoGlyphUnit width;
+        PangoGlyphUnit x_offset;
+        PangoGlyphUnit y_offset;
+    } PangoGlyphGeometry;
+
+    typedef struct {
+        PangoGlyph         glyph;
+        PangoGlyphGeometry geometry;
+        /* ... */
+    } PangoGlyphInfo;
+
+    typedef struct {
+        gint num_glyphs;
+        PangoGlyphInfo *glyphs;
+        gint *log_clusters;
+    } PangoGlyphString;
+
+    typedef struct {
+        PangoItem        *item;
+        PangoGlyphString *glyphs;
+    } PangoGlyphItem;
+
     int pango_version (void);
 
     double pango_units_to_double (int i);
@@ -141,6 +201,7 @@ ffi.cdef('''
     void g_object_unref (gpointer object);
     void g_type_init (void);
 
+    PangoLayout * pango_layout_new (PangoContext *context);
     void pango_layout_set_width (PangoLayout *layout, int width);
     PangoAttrList * pango_layout_get_attributes(PangoLayout *layout);
     void pango_layout_set_attributes (
@@ -156,6 +217,8 @@ ffi.cdef('''
     void pango_layout_set_single_paragraph_mode (
         PangoLayout *layout, gboolean setting);
     int pango_layout_get_baseline (PangoLayout *layout);
+
+    hb_font_t * pango_font_get_hb_font (PangoFont *font);
 
     PangoLayoutIter * pango_layout_get_iter (PangoLayout *layout);
     void pango_layout_iter_free (PangoLayoutIter *iter);
@@ -259,6 +322,8 @@ pango = dlopen(ffi, 'pango-1.0', 'libpango-1.0-0', 'libpango-1.0.so',
                'libpango-1.0.dylib')
 pangocairo = dlopen(ffi, 'pangocairo-1.0', 'libpangocairo-1.0-0',
                     'libpangocairo-1.0.so', 'libpangocairo-1.0.dylib')
+harfbuzz = dlopen(ffi, 'harfbuzz', 'libharfbuzz',
+                  'libharfbuzz.so', 'libharfbuzz.dylib')
 
 gobject.g_type_init()
 
@@ -1229,6 +1294,20 @@ def show_first_line(context, textbox, text_overflow):
             textbox.pango_layout.layout, pango.PANGO_ELLIPSIZE_END)
 
     first_line, _ = textbox.pango_layout.get_first_line()
+
+    length = ffi.new('unsigned int *')
+    run = first_line.runs[0]
+    while True:
+        glyph_item = ffi.cast('PangoGlyphItem *', run.data)
+        hb_font = pango.pango_font_get_hb_font(glyph_item.item.analysis.font)
+        data = harfbuzz.hb_blob_get_data(harfbuzz.hb_face_reference_blob(
+            harfbuzz.hb_font_get_face(hb_font)), length)
+        font = ffi.unpack(data, int(length[0]))
+        if run.next == ffi.NULL:
+            break
+        else:
+            run = run.next
+    ffi.release(length)
     # context = ffi.cast('cairo_t *', context._pointer)
     # pangocairo.pango_cairo_show_layout_line(context, first_line)
 
