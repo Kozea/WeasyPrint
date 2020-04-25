@@ -177,6 +177,8 @@ ffi.cdef('''
     void pango_font_description_set_absolute_size (
         PangoFontDescription *desc, double size);
 
+    PangoContext * pango_font_map_create_context (PangoFontMap *fontmap);
+
     PangoFontMetrics * pango_context_get_metrics (
         PangoContext *context, const PangoFontDescription *desc,
         PangoLanguage *language);
@@ -648,25 +650,15 @@ class Layout:
         self.setup(context, font_size, style)
 
     def setup(self, context, font_size, style):
-        from .fonts import ZERO_FONTSIZE_CRASHES_CAIRO
-
         self.context = context
         self.style = style
 
-        # Cairo crashes with font-size: 0 when using Win32 API
-        # See https://github.com/Kozea/WeasyPrint/pull/599
-        if font_size == 0 and ZERO_FONTSIZE_CRASHES_CAIRO:
-            font_size = 1
-
-        self.layout = ffi.gc(
-            pangocairo.pango_cairo_create_layout(ffi.cast(
-                'cairo_t *', CAIRO_DUMMY_CONTEXT._pointer)),
+        pango_context = ffi.gc(
+            pango.pango_font_map_create_context(context.font_config.font_map),
             gobject.g_object_unref)
-
-        pango_context = pango.pango_layout_get_context(self.layout)
-        if context and context.font_config.font_map:
-            pango.pango_context_set_font_map(
-                pango_context, context.font_config.font_map)
+        self.layout = ffi.gc(
+            pango.pango_layout_new(pango_context),
+            gobject.g_object_unref)
 
         if style['font_language_override'] != 'normal':
             lang_p, lang = unicode_to_char_p(LST_TO_ISO.get(
