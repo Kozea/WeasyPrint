@@ -67,6 +67,7 @@ class Context(pydyf.Stream):
     def __init__(self, alpha_states, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._alpha_states = alpha_states
+        self._fonts = {}
 
     def set_alpha(self, alpha, stroke=False):
         if alpha not in self._alpha_states:
@@ -74,28 +75,14 @@ class Context(pydyf.Stream):
                 {'CA' if stroke else 'ca': alpha})
         self.set_state(alpha)
 
+    def add_font(self, font):
+        font_hash = hash(font)
+        if font_hash not in self._fonts:
+            self._fonts[font_hash] = font
+
 
 BookmarkSubtree = collections.namedtuple(
     'BookmarkSubtree', ('label', 'destination', 'children', 'state'))
-
-
-def _write_pdf_embedded_files(pdf, attachments, url_fetcher):
-    """Write attachments as embedded files (document attachments)."""
-    pdf_attachments = []
-    for attachment in attachments:
-        pdf_attachment = _write_pdf_attachment(pdf, attachment, url_fetcher)
-        if pdf_attachment is not None:
-            pdf_attachments.append(pdf_attachment)
-
-    if not pdf_attachments:
-        return
-
-    content = pydyf.Dictionary({'Names': pydyf.Array()})
-    for i, pdf_attachment in enumerate(pdf_attachments):
-        content['Names'].append(pydyf.String(f'attachment{i}'))
-        content['Names'].append(pdf_attachment.reference)
-    pdf.add_object(content)
-    pdf.catalog['Names']['EmbeddedFiles'] = content.reference
 
 
 def _write_pdf_attachment(pdf, attachment, url_fetcher):
@@ -722,7 +709,6 @@ class Document:
             matrix = Matrix(scale, 0, 0, -scale, 0, page.height * scale)
 
             # Links and anchors
-
             links, anchors = links_and_anchors
 
             page_width = scale * (
@@ -752,7 +738,6 @@ class Document:
             add_hyperlinks(links, anchors, matrix, pdf, pdf_page, pdf_names)
 
             # Bleed
-
             bleed = {key: value * 0.75 for key, value in page.bleed.items()}
 
             trim_left = left + bleed['left']
@@ -773,7 +758,6 @@ class Document:
                 bleed_left, bleed_top, bleed_right, bleed_bottom])
 
             # Annotations
-
             # TODO: splitting a link into multiple independent rectangular
             # annotations works well for pure links, but rather mediocre for
             # other annotations and fails completely for transformed (CSS) or
@@ -804,7 +788,6 @@ class Document:
                     pdf_page['Annots'].append(annot.reference)
 
             # Bookmarks
-
             for level, label, (point_x, point_y), state in page.bookmarks:
                 if level > previous_level:
                     # Example: if the previous bookmark is a <h2>, the next
@@ -842,8 +825,7 @@ class Document:
 
         PROGRESS_LOGGER.info('Step 7 - Adding PDF metadata')
 
-        # Set PDF information
-
+        # PDF information
         if self.metadata.title:
             pdf.info['Title'] = pydyf.String(self.metadata.title)
         if self.metadata.authors:
@@ -864,31 +846,57 @@ class Document:
             pdf.info['ModDate'] = pydyf.String(
                 _w3c_date_to_pdf(self.metadata.modified, 'modified'))
 
-        # Add attachments and embedded files
-
-        # Write extra PDF metadata only when there is a least one from:
-        # - attachments in metadata
-        # - attachments as function parameters
-        # - attachments as PDF links
-        # - finisher function to perform post-processing
-        # - bleed boxes
-        # TODO: handle this with pydyf
-        # condition = (
-        #     self.metadata.attachments or
-        #     attachments or
-        #     any(attachment_links) or
-        #     finisher or
-        #     any(any(page.bleed.values()) for page in self.pages))
-        # if condition:
-        #     write_pdf_metadata(
-        #         file_obj, scale, self.url_fetcher,
-        #         self.metadata.attachments + (attachments or []),
-        #         attachment_links, self.pages, finisher)
-
-        # Add embedded files
-
+        # Embedded files
         attachments = self.metadata.attachments + (attachments or [])
-        _write_pdf_embedded_files(pdf, attachments, self.url_fetcher)
+        pdf_attachments = []
+        for attachment in attachments:
+            pdf_attachment = _write_pdf_attachment(
+                pdf, attachment, self.url_fetcher)
+            if pdf_attachment is not None:
+                pdf_attachments.append(pdf_attachment)
+        if pdf_attachments:
+            content = pydyf.Dictionary({'Names': pydyf.Array()})
+            for i, pdf_attachment in enumerate(pdf_attachments):
+                content['Names'].append(pydyf.String(f'attachment{i}'))
+                content['Names'].append(pdf_attachment.reference)
+            pdf.add_object(content)
+            pdf.catalog['Names']['EmbeddedFiles'] = content.reference
+
+        # Embeded fonts
+        resources['Font'] = pydyf.Dictionary()
+        for font_hash, font in stream._fonts.items():
+            compressed = zlib.compressobj().compress(font)
+            font_extra = pydyf.Dictionary({
+                'Filter': '/FlateDecode',
+                'Length1': len(font),
+            })
+            font_stream = pydyf.Stream([compressed], font_extra)
+            pdf.add_object(font_stream)
+
+            font_dictionary = pydyf.Dictionary({
+                'Type': '/Font',
+                'Subtype': '/TrueType',
+                'BaseFont': '/AAAAAA+Liberation',
+                'FirstChar': 32,
+                'LastChar': 99,
+                'Encoding': '/WinAnsiEncoding',
+                'Widths': pydyf.Array((99 - 32 + 1) * [0]),
+                'FontDescriptor': pydyf.Dictionary({
+                    'FontName': pydyf.String('Liberation'),
+                    'FontFamily': '/AAAAAA+Liberation',
+                    'Flags': 32,
+                    'FontBBox': pydyf.Array([-543, -303, 1278, 981]),
+                    'ItalicAngle': 0,
+                    'Ascent': 891,
+                    'Descent': -216,
+                    'CapHeight': 981,
+                    'StemV': 80,
+                    'StemH': 80,
+                    'FontFile': font_stream.reference,
+                    })
+            })
+            pdf.add_object(font_dictionary)
+            resources['Font'][str(font_hash)] = font_dictionary.reference
 
         if finisher:
             finisher(self, pdf)

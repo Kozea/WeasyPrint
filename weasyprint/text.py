@@ -1303,6 +1303,7 @@ def show_first_line(context, textbox, text_overflow):
         data = harfbuzz.hb_blob_get_data(harfbuzz.hb_face_reference_blob(
             harfbuzz.hb_font_get_face(hb_font)), length)
         font = ffi.unpack(data, int(length[0]))
+        context.add_font(font)
         if run.next == ffi.NULL:
             break
         else:
