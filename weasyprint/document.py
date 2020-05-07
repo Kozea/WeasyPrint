@@ -88,7 +88,7 @@ class Font:
         self.stemv = 80
         self.stemh = 80
         self.glyphs = {glyph_string.glyphs[x].glyph for x in range(num_glyphs)}
-        self.font_size = 3 / 4 * pango.pango_units_to_double(
+        self.font_size = pango.pango_units_to_double(
             pango.pango_font_description_get_size(font_description))
 
     def add_glyphs(self, glyph_item):
