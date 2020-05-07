@@ -106,6 +106,7 @@ class Context(pydyf.Stream):
         font_hash = hash(font)
         if font_hash not in self._fonts:
             self._fonts[font_hash] = Font(font, pango_font, glyph_item, ffi)
+        return font_hash
 
 
 BookmarkSubtree = collections.namedtuple(
@@ -907,7 +908,7 @@ class Document:
                 'FirstChar': 32,
                 'LastChar': 99,
                 'Encoding': '/WinAnsiEncoding',
-                'Widths': pydyf.Array((99 - 32 + 1) * [0]),
+                'Widths': pydyf.Array((99 - 32 + 1) * [1000]),
                 'FontDescriptor': pydyf.Dictionary({
                     'FontName': pydyf.String('Liberation'),
                     'FontFamily': '/AAAAAA+Liberation',

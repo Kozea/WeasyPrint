@@ -1319,14 +1319,18 @@ def show_first_line(context, textbox, text_overflow):
         data = harfbuzz.hb_blob_get_data(harfbuzz.hb_face_reference_blob(
             harfbuzz.hb_font_get_face(hb_font)), length)
         font = ffi.unpack(data, int(length[0]))
-        context.add_font(font, pango_font, glyph_item, ffi)
+        font_hash = context.add_font(font, pango_font, glyph_item, ffi)
         if run.next == ffi.NULL:
             break
         else:
             run = run.next
     ffi.release(length)
-    # context = ffi.cast('cairo_t *', context._pointer)
-    # pangocairo.pango_cairo_show_layout_line(context, first_line)
+
+    context.stream.append('BT')
+    context.stream.append('12 0 0 -12 62.25 72.945312 Tm')
+    context.stream.append(f'/{font_hash} 1 Tf')
+    context.stream.append(f'[({textbox.text})]TJ')
+    context.stream.append('ET')
 
 
 def get_log_attrs(text, lang):
