@@ -64,7 +64,7 @@ def _w3c_date_to_pdf(string, attr_name):
 
 
 class Font:
-    def __init__(self, font, pango_font, glyph_item):
+    def __init__(self, file_content, pango_font, glyph_item):
         pango_metrics = pango.pango_font_get_metrics(pango_font, ffi.NULL)
         font_description = pango.pango_font_describe(pango_font)
         font_family = ffi.string(pango.pango_font_description_get_family(
@@ -72,13 +72,13 @@ class Font:
         glyph_string = glyph_item.glyphs
         num_glyphs = glyph_string.num_glyphs
 
-        self.font = font
+        self.file_content = file_content
         self.pango_font = pango_font
         self.glyph_item = glyph_item
         # When the font will be a font subset, the font name will have to be
         # like '/XXXXXX+font_family'
-        self.font_name = b'/' + font_family.replace(b' ', b'')
-        self.font_family = font_family
+        self.name = b'/' + font_family.replace(b' ', b'')
+        self.family = font_family
         self.flags = 4
         self.font_bbox = None
         self.italic_angle = 0
@@ -88,7 +88,7 @@ class Font:
         self.stemv = 80
         self.stemh = 80
         self.glyphs = {glyph_string.glyphs[x].glyph for x in range(num_glyphs)}
-        self.font_size = pango.pango_units_to_double(
+        self.size = pango.pango_units_to_double(
             pango.pango_font_description_get_size(font_description))
 
     def add_glyphs(self, glyph_item):
@@ -97,7 +97,7 @@ class Font:
         self.glyphs += {
             glyph_string.glyphs[x].glyph for x in range(num_glyphs)}
 
-    def compute_font_bbox(self):
+    def compute_glyphs_values(self):
         font_bbox = [0, 0, 0, 0]
         ink_rect = ffi.new('PangoRectangle *')
 
@@ -117,7 +117,7 @@ class Font:
                 font_bbox[3] = y2
 
         ffi.release(ink_rect)
-        self.font_bbox = [value / self.font_size for value in font_bbox]
+        self.bbox = [value / self.size for value in font_bbox]
         self.cap_height = font_bbox[1]
 
 
@@ -927,29 +927,28 @@ class Document:
         # Embeded fonts
         resources['Font'] = pydyf.Dictionary()
         for font_hash, font in stream._fonts.items():
-            compressed = zlib.compressobj().compress(font.font)
+            compressed = zlib.compressobj().compress(font.file_content)
             font_extra = pydyf.Dictionary({
                 'Filter': '/FlateDecode',
-                'Length1': len(font.font),
+                'Length1': len(font.file_content),
             })
             font_stream = pydyf.Stream([compressed], font_extra)
             pdf.add_object(font_stream)
 
-            font.compute_font_bbox()
-
+            font.compute_glyphs_values()
             font_dictionary = pydyf.Dictionary({
                 'Type': '/Font',
                 'Subtype': '/TrueType',
-                'BaseFont': font.font_family,
+                'BaseFont': font.family,
                 'FirstChar': 32,
                 'LastChar': 99,
                 'Encoding': '/WinAnsiEncoding',
                 'Widths': pydyf.Array((99 - 32 + 1) * [1000]),
                 'FontDescriptor': pydyf.Dictionary({
-                    'FontName': pydyf.String(font.font_name),
-                    'FontFamily': font.font_family,
+                    'FontName': pydyf.String(font.name),
+                    'FontFamily': font.family,
                     'Flags': 32,
-                    'FontBBox': pydyf.Array(font.font_bbox),
+                    'FontBBox': pydyf.Array(font.bbox),
                     'ItalicAngle': font.italic_angle,
                     'Ascent': font.ascent,
                     'Descent': font.descent,
