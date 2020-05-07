@@ -94,13 +94,13 @@ class Font():
         self.glyphs += (
             glyph_string.glyphs[x].glyph for x in range(num_glyphs))
 
-    def compute_font_bbox(self, pango_font):
+    def compute_font_bbox(self):
         font_bbox = None
         ink_rect = ffi.new('PangoRectangle *')
 
         for glyph in self.glyphs:
             pango.pango_font_get_glyph_extents(
-                pango_font, glyph, ink_rect, ffi.NULL)
+                self.pango_font, glyph, ink_rect, ffi.NULL)
             if font_bbox is None:
                 font_bbox = [
                     ink_rect.x, ink_rect.y, ink_rect.width, ink_rect.height]
