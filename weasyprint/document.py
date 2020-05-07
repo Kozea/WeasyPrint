@@ -78,7 +78,7 @@ class Font():
         # like '/XXXXXX+font_family'
         self.font_name = b'/' + font_family.replace(b' ', b'')
         self.font_family = font_family
-        self.flags = None
+        self.flags = 4
         self.font_bbox = None
         self.italic_angle = 0
         self.ascent = pango.pango_font_metrics_get_ascent(pango_metrics)
