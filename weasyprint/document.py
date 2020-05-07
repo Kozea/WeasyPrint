@@ -77,7 +77,7 @@ class Font:
         self.glyph_item = glyph_item
         # When the font will be a font subset, the font name will have to be
         # like '/XXXXXX+font_family'
-        self.name = b'/' + font_family.replace(b' ', b'')
+        self.name = b'/AAAAAA+' + font_family.replace(b' ', b'')
         self.family = font_family
         self.flags = 4
         self.font_bbox = None
@@ -939,14 +939,14 @@ class Document:
             font_dictionary = pydyf.Dictionary({
                 'Type': '/Font',
                 'Subtype': '/TrueType',
-                'BaseFont': font.family,
+                'BaseFont': font.name,
                 'FirstChar': 32,
                 'LastChar': 99,
                 'Encoding': '/WinAnsiEncoding',
                 'Widths': pydyf.Array((99 - 32 + 1) * [1000]),
                 'FontDescriptor': pydyf.Dictionary({
-                    'FontName': pydyf.String(font.name),
-                    'FontFamily': font.family,
+                    'FontName': font.name,
+                    'FontFamily': pydyf.String(font.family),
                     'Flags': 32,
                     'FontBBox': pydyf.Array(font.bbox),
                     'ItalicAngle': font.italic_angle,
