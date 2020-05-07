@@ -63,7 +63,7 @@ def _w3c_date_to_pdf(string, attr_name):
     return pdf_date
 
 
-class Font():
+class Font:
     def __init__(self, font, pango_font, glyph_item):
         pango_metrics = pango.pango_font_get_metrics(pango_font, ffi.NULL)
         font_family = ffi.string(pango.pango_font_description_get_family(
