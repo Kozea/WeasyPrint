@@ -178,9 +178,13 @@ ffi.cdef('''
     } PangoGlyphGeometry;
 
     typedef struct {
+        guint is_cluster_start : 1;
+    } PangoGlyphVisAttr;
+
+    typedef struct {
         PangoGlyph         glyph;
         PangoGlyphGeometry geometry;
-        /* ... */
+        PangoGlyphVisAttr  attr;
     } PangoGlyphInfo;
 
     typedef struct {
