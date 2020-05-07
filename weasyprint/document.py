@@ -66,13 +66,18 @@ def _w3c_date_to_pdf(string, attr_name):
 class Font():
     def __init__(self, font, pango_font, glyph_item, ffi):
         pango_metrics = pango.pango_font_get_metrics(pango_font, ffi.NULL)
+        font_family = ffi.string(pango.pango_font_description_get_family(
+            pango.pango_font_describe(pango_font)))
+        glyph_string = glyph_item.glyphs
+        num_glyphs = glyph_string.num_glyphs
 
         self.font = font
         self.pango_font = pango_font
         self.glyph_item = glyph_item
-        self.font_name = None
-        self.font_family = ffi.string(pango.pango_font_description_get_family(
-            pango.pango_font_describe(pango_font)))
+        # When the font will be a font subset, the font name will have to be
+        # like '/XXXXXX+font_family'
+        self.font_name = b'/' + font_family.replace(b' ', b'')
+        self.font_family = font_family
         self.flags = None
         self.font_bbox = None
         self.italic_angle = 0
@@ -81,7 +86,7 @@ class Font():
         self.cap_height = None
         self.stemv = 80
         self.stemh = 80
-        self.glyphs = {}
+        self.glyphs = {glyph_string.glyphs[x].glyph for x in range(num_glyphs)}
 
 
 class Context(pydyf.Stream):
