@@ -243,6 +243,7 @@ ffi.cdef('''
         PangoFontDescription *desc, PangoWeight weight);
     void pango_font_description_set_absolute_size (
         PangoFontDescription *desc, double size);
+    int pango_font_description_get_size (PangoFontDescription *desc);
 
     PangoFontDescription * pango_font_describe (PangoFont *font);
     const char * pango_font_description_get_family (

@@ -66,8 +66,9 @@ def _w3c_date_to_pdf(string, attr_name):
 class Font:
     def __init__(self, font, pango_font, glyph_item):
         pango_metrics = pango.pango_font_get_metrics(pango_font, ffi.NULL)
+        font_description = pango.pango_font_describe(pango_font)
         font_family = ffi.string(pango.pango_font_description_get_family(
-            pango.pango_font_describe(pango_font)))
+            font_description))
         glyph_string = glyph_item.glyphs
         num_glyphs = glyph_string.num_glyphs
 
@@ -87,6 +88,8 @@ class Font:
         self.stemv = 80
         self.stemh = 80
         self.glyphs = {glyph_string.glyphs[x].glyph for x in range(num_glyphs)}
+        self.font_size = 3 / 4 * pango.pango_units_to_double(
+            pango.pango_font_description_get_size(font_description))
 
     def add_glyphs(self, glyph_item):
         glyph_string = glyph_item.glyphs
@@ -95,27 +98,27 @@ class Font:
             glyph_string.glyphs[x].glyph for x in range(num_glyphs)}
 
     def compute_font_bbox(self):
-        font_bbox = None
+        font_bbox = [0, 0, 0, 0]
         ink_rect = ffi.new('PangoRectangle *')
 
         for glyph in self.glyphs:
             pango.pango_font_get_glyph_extents(
                 self.pango_font, glyph, ink_rect, ffi.NULL)
-            if font_bbox is None:
-                font_bbox = [
-                    ink_rect.x, ink_rect.y, ink_rect.width, ink_rect.height]
-            if ink_rect.x > font_bbox[0]:
-                font_bbox[0] = ink_rect.x
-            if ink_rect.y > font_bbox[1]:
-                font_bbox[1] = ink_rect.y
-            if ink_rect.width > font_bbox[2]:
-                font_bbox[2] = ink_rect.width
-            if ink_rect.height > font_bbox[3]:
-                font_bbox[3] = ink_rect.height
+            x1, y1, x2, y2 = (
+                ink_rect.x, -ink_rect.y - ink_rect.height,
+                ink_rect.x + ink_rect.width, -ink_rect.y)
+            if x1 < font_bbox[0]:
+                font_bbox[0] = x1
+            if y1 < font_bbox[1]:
+                font_bbox[1] = y1
+            if x2 > font_bbox[2]:
+                font_bbox[2] = x2
+            if y2 > font_bbox[3]:
+                font_bbox[3] = y2
 
         ffi.release(ink_rect)
-        self.font_bbox = font_bbox if font_bbox else []
-        self.cap_height = font_bbox[1] if font_bbox else 0
+        self.font_bbox = [value / self.font_size for value in font_bbox]
+        self.cap_height = font_bbox[1]
 
 
 class Context(pydyf.Stream):
