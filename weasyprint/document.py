@@ -113,6 +113,7 @@ class Font():
             if ink_rect.height > font_bbox[3]:
                 font_bbox[3] = ink_rect.height
 
+        ffi.release(ink_rect)
         self.font_bbox = font_bbox if font_bbox else []
         self.cap_height = font_bbox[1] if font_bbox else 0
 
