@@ -14,7 +14,6 @@ import zlib
 from os.path import basename
 from urllib.parse import unquote, urlsplit
 
-import cffi
 import pydyf
 from weasyprint.layout import LayoutContext
 
@@ -31,7 +30,7 @@ from .images import get_image_from_uri as original_get_image_from_uri
 from .layout import layout_document
 from .layout.percentages import percentage
 from .logger import LOGGER, PROGRESS_LOGGER
-from .text import dlopen
+from .text import pango
 from .urls import URLFetchingError
 
 
@@ -66,11 +65,6 @@ def _w3c_date_to_pdf(string, attr_name):
 
 class Font():
     def __init__(self, font, pango_font, glyph_item, ffi):
-        ffi_font = cffi.FFI()
-        ffi_font.include(ffi)
-
-        pango = dlopen(ffi, 'pango-1.0', 'libpango-1.0-0', 'libpango-1.0.so',
-                       'libpango-1.0.dylib')
         pango_metrics = pango.pango_font_get_metrics(pango_font, ffi.NULL)
 
         self.font = font
