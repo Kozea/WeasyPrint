@@ -86,13 +86,13 @@ class Font:
         self.cap_height = None
         self.stemv = 80
         self.stemh = 80
-        self.glyphs = (glyph_string.glyphs[x].glyph for x in range(num_glyphs))
+        self.glyphs = {glyph_string.glyphs[x].glyph for x in range(num_glyphs)}
 
     def add_glyphs(self, glyph_item):
         glyph_string = glyph_item.glyphs
         num_glyphs = glyph_string.num_glyphs
-        self.glyphs += (
-            glyph_string.glyphs[x].glyph for x in range(num_glyphs))
+        self.glyphs += {
+            glyph_string.glyphs[x].glyph for x in range(num_glyphs)}
 
     def compute_font_bbox(self):
         font_bbox = None
@@ -932,25 +932,27 @@ class Document:
             font_stream = pydyf.Stream([compressed], font_extra)
             pdf.add_object(font_stream)
 
+            font.compute_font_bbox()
+
             font_dictionary = pydyf.Dictionary({
                 'Type': '/Font',
                 'Subtype': '/TrueType',
-                'BaseFont': '/AAAAAA+Liberation',
+                'BaseFont': font.font_family,
                 'FirstChar': 32,
                 'LastChar': 99,
                 'Encoding': '/WinAnsiEncoding',
                 'Widths': pydyf.Array((99 - 32 + 1) * [1000]),
                 'FontDescriptor': pydyf.Dictionary({
-                    'FontName': pydyf.String('Liberation'),
-                    'FontFamily': '/AAAAAA+Liberation',
+                    'FontName': pydyf.String(font.font_name),
+                    'FontFamily': font.font_family,
                     'Flags': 32,
-                    'FontBBox': pydyf.Array([-543, -303, 1278, 981]),
-                    'ItalicAngle': 0,
-                    'Ascent': 891,
-                    'Descent': -216,
-                    'CapHeight': 981,
-                    'StemV': 80,
-                    'StemH': 80,
+                    'FontBBox': pydyf.Array(font.font_bbox),
+                    'ItalicAngle': font.italic_angle,
+                    'Ascent': font.ascent,
+                    'Descent': font.descent,
+                    'CapHeight': font.cap_height,
+                    'StemV': font.stemv,
+                    'StemH': font.stemh,
                     'FontFile': font_stream.reference,
                     })
             })
