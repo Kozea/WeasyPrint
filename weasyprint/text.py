@@ -1307,36 +1307,20 @@ def show_first_line(context, textbox, text_overflow):
     first_line, _ = textbox.pango_layout.get_first_line()
 
     length = ffi.new('unsigned int *')
-    ink_rect = ffi.new('PangoRectangle *')
-    logical_rect = ffi.new('PangoRectangle *')
     run = first_line.runs[0]
     while True:
         glyph_item = ffi.cast('PangoGlyphItem *', run.data)
         pango_font = glyph_item.item.analysis.font
-        font_family = ffi.string(pango.pango_font_description_get_family(
-            pango.pango_font_describe(pango_font)))
-        pango_metrics = pango.pango_font_get_metrics(pango_font, ffi.NULL)
-        ascent = pango.pango_font_metrics_get_ascent(pango_metrics)
-        descent = pango.pango_font_metrics_get_descent(pango_metrics)
-        glyph = glyph_item.glyphs[0].glyphs[0].glyph
-        pango.pango_font_get_glyph_extents(
-            pango_font, glyph, ink_rect, logical_rect)
-        print(font_family, ascent, descent, ink_rect[0])
         hb_font = pango.pango_font_get_hb_font(pango_font)
         data = harfbuzz.hb_blob_get_data(harfbuzz.hb_face_reference_blob(
             harfbuzz.hb_font_get_face(hb_font)), length)
         font = ffi.unpack(data, int(length[0]))
-        context.add_font(font)
-#        context.add_font(
-#            font, font_name, font_family, flags, font_bbox, 0, ascent, descent,
-#            cap_height, 80, 80)
+        context.add_font(font, pango_font, glyph_item, ffi)
         if run.next == ffi.NULL:
             break
         else:
             run = run.next
     ffi.release(length)
-    ffi.release(ink_rect)
-    ffi.release(logical_rect)
     # context = ffi.cast('cairo_t *', context._pointer)
     # pangocairo.pango_cairo_show_layout_line(context, first_line)
 

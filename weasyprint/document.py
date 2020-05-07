@@ -14,6 +14,7 @@ import zlib
 from os.path import basename
 from urllib.parse import unquote, urlsplit
 
+import cffi
 import pydyf
 from weasyprint.layout import LayoutContext
 
@@ -30,6 +31,7 @@ from .images import get_image_from_uri as original_get_image_from_uri
 from .layout import layout_document
 from .layout.percentages import percentage
 from .logger import LOGGER, PROGRESS_LOGGER
+from .text import dlopen
 from .urls import URLFetchingError
 
 
@@ -62,6 +64,32 @@ def _w3c_date_to_pdf(string, attr_name):
     return pdf_date
 
 
+class Font():
+    def __init__(self, font, pango_font, glyph_item, ffi):
+        ffi_font = cffi.FFI()
+        ffi_font.include(ffi)
+
+        pango = dlopen(ffi, 'pango-1.0', 'libpango-1.0-0', 'libpango-1.0.so',
+                       'libpango-1.0.dylib')
+        pango_metrics = pango.pango_font_get_metrics(pango_font, ffi.NULL)
+
+        self.font = font
+        self.pango_font = pango_font
+        self.glyph_item = glyph_item
+        self.font_name = None
+        self.font_family = ffi.string(pango.pango_font_description_get_family(
+            pango.pango_font_describe(pango_font)))
+        self.flags = None
+        self.font_bbox = None
+        self.italic_angle = 0
+        self.ascent = pango.pango_font_metrics_get_ascent(pango_metrics)
+        self.descent = pango.pango_font_metrics_get_descent(pango_metrics)
+        self.cap_height = None
+        self.stemv = 80
+        self.stemh = 80
+        self.glyphs = {}
+
+
 class Context(pydyf.Stream):
     """PDF stream object with context storing alpha states."""
     def __init__(self, alpha_states, *args, **kwargs):
@@ -75,10 +103,10 @@ class Context(pydyf.Stream):
                 {'CA' if stroke else 'ca': alpha})
         self.set_state(alpha)
 
-    def add_font(self, font):
+    def add_font(self, font, pango_font, glyph_item, ffi):
         font_hash = hash(font)
         if font_hash not in self._fonts:
-            self._fonts[font_hash] = font
+            self._fonts[font_hash] = Font(font, pango_font, glyph_item, ffi)
 
 
 BookmarkSubtree = collections.namedtuple(
@@ -865,10 +893,10 @@ class Document:
         # Embeded fonts
         resources['Font'] = pydyf.Dictionary()
         for font_hash, font in stream._fonts.items():
-            compressed = zlib.compressobj().compress(font)
+            compressed = zlib.compressobj().compress(font.font)
             font_extra = pydyf.Dictionary({
                 'Filter': '/FlateDecode',
-                'Length1': len(font),
+                'Length1': len(font.font),
             })
             font_stream = pydyf.Stream([compressed], font_extra)
             pdf.add_object(font_stream)
