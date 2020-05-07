@@ -77,7 +77,7 @@ class Font:
         self.glyph_item = glyph_item
         # When the font will be a font subset, the font name will have to be
         # like '/XXXXXX+font_family'
-        self.name = b'/AAAAAA+' + font_family.replace(b' ', b'')
+        self.name = b'/' + font_family.replace(b' ', b'')
         self.family = font_family
         self.flags = 4
         self.font_bbox = None
