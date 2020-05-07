@@ -30,7 +30,7 @@ from .images import get_image_from_uri as original_get_image_from_uri
 from .layout import layout_document
 from .layout.percentages import percentage
 from .logger import LOGGER, PROGRESS_LOGGER
-from .text import pango
+from .text import ffi, pango
 from .urls import URLFetchingError
 
 
@@ -64,7 +64,7 @@ def _w3c_date_to_pdf(string, attr_name):
 
 
 class Font():
-    def __init__(self, font, pango_font, glyph_item, ffi):
+    def __init__(self, font, pango_font, glyph_item):
         pango_metrics = pango.pango_font_get_metrics(pango_font, ffi.NULL)
         font_family = ffi.string(pango.pango_font_description_get_family(
             pango.pango_font_describe(pango_font)))
@@ -86,7 +86,35 @@ class Font():
         self.cap_height = None
         self.stemv = 80
         self.stemh = 80
-        self.glyphs = {glyph_string.glyphs[x].glyph for x in range(num_glyphs)}
+        self.glyphs = (glyph_string.glyphs[x].glyph for x in range(num_glyphs))
+
+    def add_glyphs(self, glyph_item):
+        glyph_string = glyph_item.glyphs
+        num_glyphs = glyph_string.num_glyphs
+        self.glyphs += (
+            glyph_string.glyphs[x].glyph for x in range(num_glyphs))
+
+    def compute_font_bbox(self, pango_font):
+        font_bbox = None
+        ink_rect = ffi.new('PangoRectangle *')
+
+        for glyph in self.glyphs:
+            pango.pango_font_get_glyph_extents(
+                pango_font, glyph, ink_rect, ffi.NULL)
+            if font_bbox is None:
+                font_bbox = [
+                    ink_rect.x, ink_rect.y, ink_rect.width, ink_rect.height]
+            if ink_rect.x > font_bbox[0]:
+                font_bbox[0] = ink_rect.x
+            if ink_rect.y > font_bbox[1]:
+                font_bbox[1] = ink_rect.y
+            if ink_rect.width > font_bbox[2]:
+                font_bbox[2] = ink_rect.width
+            if ink_rect.height > font_bbox[3]:
+                font_bbox[3] = ink_rect.height
+
+        self.font_bbox = font_bbox if font_bbox else []
+        self.cap_height = font_bbox[1] if font_bbox else 0
 
 
 class Context(pydyf.Stream):
@@ -102,10 +130,12 @@ class Context(pydyf.Stream):
                 {'CA' if stroke else 'ca': alpha})
         self.set_state(alpha)
 
-    def add_font(self, font, pango_font, glyph_item, ffi):
+    def add_font(self, font, pango_font, glyph_item):
         font_hash = hash(font)
         if font_hash not in self._fonts:
-            self._fonts[font_hash] = Font(font, pango_font, glyph_item, ffi)
+            self._fonts[font_hash] = Font(font, pango_font, glyph_item)
+        else:
+            self._fonts[font_hash].add_glyphs(glyph_item)
 
 
 BookmarkSubtree = collections.namedtuple(
