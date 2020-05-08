@@ -1314,23 +1314,39 @@ def show_first_line(context, textbox, text_overflow, x, y):
     first_line, _ = textbox.pango_layout.get_first_line()
 
     length = ffi.new('unsigned int *')
+    textbox_font_size = textbox.style['font_size']
     run = first_line.runs[0]
     while True:
         glyph_item = ffi.cast('PangoGlyphItem *', run.data)
         glyph_string = glyph_item.glyphs
         num_glyphs = glyph_string.num_glyphs
-        glyphs = [glyph_string.glyphs[x].glyph for x in range(num_glyphs)]
+        glyphs = [
+            (glyph_string.glyphs[x].glyph,
+             glyph_string.glyphs[x].geometry.width)
+            for x in range(num_glyphs)]
         pango_font = glyph_item.item.analysis.font
         hb_font = pango.pango_font_get_hb_font(pango_font)
         data = harfbuzz.hb_blob_get_data(harfbuzz.hb_face_reference_blob(
             harfbuzz.hb_font_get_face(hb_font)), length)
         file_content = ffi.unpack(data, int(length[0]))
         font = context.add_font(file_content, pango_font, glyph_item)
-        pdf_glyphs = ''.join(f'<{glyph:04x}>' for glyph in glyphs)
+        string = '<'
+        logical_rect = ffi.new('PangoRectangle *')
+        for glyph, width in glyphs:
+            string += f'{glyph:04x}'
+            pango.pango_font_get_glyph_extents(
+                font.pango_font, glyph, ffi.NULL, logical_rect)
+            logical_width = logical_rect.width * textbox_font_size / font.size
+            kerning = int((logical_width - width) / textbox_font_size)
+            if kerning:
+                string += f'>{kerning}<'
+        ffi.release(logical_rect)
+        string += '>'
         context.stream.append('BT')
-        context.stream.append(f'{font.size} 0 0 -{font.size} {x} {y} Tm')
+        context.stream.append(
+            f'{textbox_font_size} 0 0 -{textbox_font_size} {x} {y} Tm')
         context.stream.append(f'/{font.hash} 1 Tf')
-        context.stream.append(f'[{pdf_glyphs}]TJ')
+        context.stream.append(f'[{string}]TJ')
         context.stream.append('ET')
         if run.next == ffi.NULL:
             break
