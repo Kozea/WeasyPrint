@@ -1014,12 +1014,13 @@ def draw_text(context, textbox, offset_x=0, text_overflow='clip'):
     if textbox.style['visibility'] != 'visible':
         return
 
-    context.move_to(textbox.position_x, textbox.position_y + textbox.baseline)
+    x, y = textbox.position_x, textbox.position_y + textbox.baseline
+    context.move_to(x, y)
     context.set_color_rgb(*textbox.style['color'][:3])
     context.set_alpha(textbox.style['color'].alpha)
 
     textbox.pango_layout.reactivate(textbox.style)
-    show_first_line(context, textbox, text_overflow)
+    show_first_line(context, textbox, text_overflow, x, y)
 
     values = textbox.style['text_decoration_line']
 

@@ -245,6 +245,8 @@ ffi.cdef('''
         PangoFontDescription *desc, double size);
     int pango_font_description_get_size (PangoFontDescription *desc);
 
+    int pango_glyph_string_get_width (PangoGlyphString *glyphs);
+
     PangoFontDescription * pango_font_describe (PangoFont *font);
     const char * pango_font_description_get_family (
         const PangoFontDescription *desc);
@@ -1297,7 +1299,7 @@ def split_first_line(text, style, context, max_width, justification_spacing,
         style['hyphenate_character'])
 
 
-def show_first_line(context, textbox, text_overflow):
+def show_first_line(context, textbox, text_overflow, x, y):
     """Draw the given ``textbox`` line to the cairo ``context``."""
     pango.pango_layout_set_single_paragraph_mode(
         textbox.pango_layout.layout, True)
@@ -1322,20 +1324,21 @@ def show_first_line(context, textbox, text_overflow):
         hb_font = pango.pango_font_get_hb_font(pango_font)
         data = harfbuzz.hb_blob_get_data(harfbuzz.hb_face_reference_blob(
             harfbuzz.hb_font_get_face(hb_font)), length)
-        font = ffi.unpack(data, int(length[0]))
-        font_hash = context.add_font(font, pango_font, glyph_item)
+        file_content = ffi.unpack(data, int(length[0]))
+        font = context.add_font(file_content, pango_font, glyph_item)
+        pdf_glyphs = ''.join(f'<{glyph:04x}>' for glyph in glyphs)
+        context.stream.append('BT')
+        context.stream.append(f'{font.size} 0 0 -{font.size} {x} {y} Tm')
+        context.stream.append(f'/{font.hash} 1 Tf')
+        context.stream.append(f'[{pdf_glyphs}]TJ')
+        context.stream.append('ET')
         if run.next == ffi.NULL:
             break
         else:
+            x += pango.pango_units_to_double(
+                pango.pango_glyph_string_get_width(glyph_string))
             run = run.next
     ffi.release(length)
-
-    pdf_glyphs = ''.join(f'<{glyph:04x}>' for glyph in glyphs)
-    context.stream.append('BT')
-    context.stream.append('12 0 0 -12 62.25 72.945312 Tm')
-    context.stream.append(f'/{font_hash} 1 Tf')
-    context.stream.append(f'[{pdf_glyphs}]TJ')
-    context.stream.append('ET')
 
 
 def get_log_attrs(text, lang):

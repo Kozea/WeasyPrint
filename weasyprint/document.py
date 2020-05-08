@@ -72,6 +72,7 @@ class Font:
         glyph_string = glyph_item.glyphs
         num_glyphs = glyph_string.num_glyphs
 
+        self.hash = hash(file_content)
         self.file_content = file_content
         self.pango_font = pango_font
         self.glyph_item = glyph_item
@@ -154,7 +155,7 @@ class Context(pydyf.Stream):
             self._fonts[font_hash] = Font(font, pango_font, glyph_item)
         else:
             self._fonts[font_hash].add_glyphs(glyph_item)
-        return font_hash
+        return self._fonts[font_hash]
 
 
 BookmarkSubtree = collections.namedtuple(
