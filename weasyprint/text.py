@@ -1315,6 +1315,9 @@ def show_first_line(context, textbox, text_overflow):
     run = first_line.runs[0]
     while True:
         glyph_item = ffi.cast('PangoGlyphItem *', run.data)
+        glyph_string = glyph_item.glyphs
+        num_glyphs = glyph_string.num_glyphs
+        glyphs = [glyph_string.glyphs[x].glyph for x in range(num_glyphs)]
         pango_font = glyph_item.item.analysis.font
         hb_font = pango.pango_font_get_hb_font(pango_font)
         data = harfbuzz.hb_blob_get_data(harfbuzz.hb_face_reference_blob(
@@ -1327,10 +1330,11 @@ def show_first_line(context, textbox, text_overflow):
             run = run.next
     ffi.release(length)
 
+    pdf_glyphs = ''.join(f'<{glyph:04x}>' for glyph in glyphs)
     context.stream.append('BT')
     context.stream.append('12 0 0 -12 62.25 72.945312 Tm')
     context.stream.append(f'/{font_hash} 1 Tf')
-    context.stream.append(f'[({textbox.text})]TJ')
+    context.stream.append(f'[{pdf_glyphs}]TJ')
     context.stream.append('ET')
 
 

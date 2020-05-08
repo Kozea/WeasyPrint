@@ -97,7 +97,7 @@ class Font:
     def add_glyphs(self, glyph_item):
         glyph_string = glyph_item.glyphs
         num_glyphs = glyph_string.num_glyphs
-        self.glyphs += {
+        self.glyphs |= {
             glyph_string.glyphs[x].glyph for x in range(num_glyphs)}
 
     def compute_glyphs_values(self):
@@ -949,14 +949,16 @@ class Document:
             pdf.add_object(font_stream)
 
             font.compute_glyphs_values()
-            font_dictionary = pydyf.Dictionary({
+            subfont_dictionary = pydyf.Dictionary({
                 'Type': '/Font',
-                'Subtype': '/TrueType',
+                'Subtype': '/CIDFontType2',
                 'BaseFont': font.name,
-                'FirstChar': font.first_char,
-                'LastChar': font.last_char,
-                'Encoding': '/WinAnsiEncoding',
-                'Widths': pydyf.Array(font.widths),
+                'CIDSystemInfo': pydyf.Dictionary({
+                    'Registry': pydyf.String('Adobe'),
+                    'Ordering': pydyf.String('Identity'),
+                    'Supplement': 0,
+                }),
+                'W': pydyf.Array([font.first_char, pydyf.Array(font.widths)]),
                 'FontDescriptor': pydyf.Dictionary({
                     'FontName': font.name,
                     'FontFamily': pydyf.String(font.family),
@@ -969,7 +971,15 @@ class Document:
                     'StemV': font.stemv,
                     'StemH': font.stemh,
                     'FontFile': font_stream.reference,
-                    })
+                }),
+            })
+            pdf.add_object(subfont_dictionary)
+            font_dictionary = pydyf.Dictionary({
+                'Type': '/Font',
+                'Subtype': '/Type0',
+                'BaseFont': font.name,
+                'Encoding': '/Identity-H',
+                'DescendantFonts': pydyf.Array([subfont_dictionary.reference]),
             })
             pdf.add_object(font_dictionary)
             resources['Font'][str(font_hash)] = font_dictionary.reference
