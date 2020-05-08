@@ -90,6 +90,9 @@ class Font:
         self.glyphs = {glyph_string.glyphs[x].glyph for x in range(num_glyphs)}
         self.size = pango.pango_units_to_double(
             pango.pango_font_description_get_size(font_description))
+        self.first_char = None
+        self.last_char = None
+        self.widths = None
 
     def add_glyphs(self, glyph_item):
         glyph_string = glyph_item.glyphs
@@ -98,12 +101,17 @@ class Font:
             glyph_string.glyphs[x].glyph for x in range(num_glyphs)}
 
     def compute_glyphs_values(self):
+        first_char = min(self.glyphs)
+        last_char = max(self.glyphs)
         font_bbox = [0, 0, 0, 0]
+        widths = [0] * (last_char - first_char + 1)
         ink_rect = ffi.new('PangoRectangle *')
+        logical_rect = ffi.new('PangoRectangle *')
 
         for glyph in self.glyphs:
             pango.pango_font_get_glyph_extents(
-                self.pango_font, glyph, ink_rect, ffi.NULL)
+                self.pango_font, glyph, ink_rect, logical_rect)
+
             x1, y1, x2, y2 = (
                 ink_rect.x, -ink_rect.y - ink_rect.height,
                 ink_rect.x + ink_rect.width, -ink_rect.y)
@@ -116,9 +124,15 @@ class Font:
             if y2 > font_bbox[3]:
                 font_bbox[3] = y2
 
+            widths[first_char - glyph] = logical_rect.width
+
         ffi.release(ink_rect)
+        ffi.release(logical_rect)
         self.bbox = [value / self.size for value in font_bbox]
         self.cap_height = font_bbox[1]
+        self.first_char = first_char
+        self.last_char = last_char
+        self.widths = widths
 
 
 class Context(pydyf.Stream):
@@ -939,10 +953,10 @@ class Document:
                 'Type': '/Font',
                 'Subtype': '/TrueType',
                 'BaseFont': font.name,
-                'FirstChar': 32,
-                'LastChar': 99,
+                'FirstChar': font.first_char,
+                'LastChar': font.last_char,
                 'Encoding': '/WinAnsiEncoding',
-                'Widths': pydyf.Array((99 - 32 + 1) * [1000]),
+                'Widths': pydyf.Array(font.widths),
                 'FontDescriptor': pydyf.Dictionary({
                     'FontName': font.name,
                     'FontFamily': pydyf.String(font.family),
