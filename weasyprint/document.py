@@ -124,7 +124,7 @@ class Font:
             if y2 > font_bbox[3]:
                 font_bbox[3] = y2
 
-            widths[first_char - glyph] = logical_rect.width
+            widths[glyph - first_char] = logical_rect.width / self.size
 
         ffi.release(ink_rect)
         ffi.release(logical_rect)
