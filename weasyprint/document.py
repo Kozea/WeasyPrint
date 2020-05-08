@@ -336,10 +336,9 @@ class Matrix(list):
 
     def __matmul__(self, other):
         assert len(self[0]) == len(other) == len(other[0]) == 3
-        m = len(self)
         return Matrix(matrix=[
             [sum(self[i][k] * other[k][j] for k in range(3)) for j in range(3)]
-            for i in range(m)])
+            for i in range(len(self))])
 
     @property
     def determinant(self):
