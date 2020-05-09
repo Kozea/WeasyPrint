@@ -64,80 +64,26 @@ def _w3c_date_to_pdf(string, attr_name):
 
 
 class Font:
-    def __init__(self, file_content, pango_font, glyph_item):
+    def __init__(self, file_content, pango_font):
         pango_metrics = pango.pango_font_get_metrics(pango_font, ffi.NULL)
-        font_description = ffi.gc(
-            pango.pango_font_description_copy(
-                pango.pango_font_describe(pango_font)),
-            pango.pango_font_description_free)
-        pango.pango_font_description_set_absolute_size(
-            font_description, pango.pango_units_from_double(1))
+        font_description = pango.pango_font_describe(pango_font)
         font_family = ffi.string(pango.pango_font_description_get_family(
             font_description))
-        glyph_string = glyph_item.glyphs
-        num_glyphs = glyph_string.num_glyphs
 
         self.hash = hash(file_content)
         self.file_content = file_content
-        self.pango_font = pango_font
-        self.glyph_item = glyph_item
         # When the font will be a font subset, the font name will have to be
         # like '/XXXXXX+font_family'
         self.name = b'/' + font_family.replace(b' ', b'')
         self.family = font_family
         self.flags = 4
-        self.font_bbox = None
         self.italic_angle = 0
         self.ascent = pango.pango_font_metrics_get_ascent(pango_metrics)
         self.descent = pango.pango_font_metrics_get_descent(pango_metrics)
-        self.cap_height = None
         self.stemv = 80
         self.stemh = 80
-        self.glyphs = {glyph_string.glyphs[x].glyph for x in range(num_glyphs)}
-        self.first_char = None
-        self.last_char = None
-        self.widths = None
-
-    def add_glyphs(self, glyph_item):
-        glyph_string = glyph_item.glyphs
-        num_glyphs = glyph_string.num_glyphs
-        self.glyphs |= {
-            glyph_string.glyphs[x].glyph for x in range(num_glyphs)}
-
-    def compute_glyphs_values(self):
-        first_char = min(self.glyphs)
-        last_char = max(self.glyphs)
-        font_bbox = [0, 0, 0, 0]
-        widths = [0] * (last_char - first_char + 1)
-        ink_rect = ffi.new('PangoRectangle *')
-        logical_rect = ffi.new('PangoRectangle *')
-
-        for glyph in self.glyphs:
-            pango.pango_font_get_glyph_extents(
-                self.pango_font, glyph, ink_rect, logical_rect)
-
-            x1, y1, x2, y2 = (
-                ink_rect.x, -ink_rect.y - ink_rect.height,
-                ink_rect.x + ink_rect.width, -ink_rect.y)
-            if x1 < font_bbox[0]:
-                font_bbox[0] = x1
-            if y1 < font_bbox[1]:
-                font_bbox[1] = y1
-            if x2 > font_bbox[2]:
-                font_bbox[2] = x2
-            if y2 > font_bbox[3]:
-                font_bbox[3] = y2
-
-            widths[glyph - first_char] = (
-                pango.pango_units_to_double(logical_rect.width) * 1000)
-
-        ffi.release(ink_rect)
-        ffi.release(logical_rect)
-        self.bbox = font_bbox
-        self.cap_height = font_bbox[1]
-        self.first_char = first_char
-        self.last_char = last_char
-        self.widths = widths
+        self.bbox = [0, 0, 0, 0]
+        self.widths = {}
 
 
 class Context(pydyf.Stream):
@@ -153,12 +99,10 @@ class Context(pydyf.Stream):
                 {'CA' if stroke else 'ca': alpha})
         self.set_state(alpha)
 
-    def add_font(self, font, pango_font, glyph_item):
+    def add_font(self, font, pango_font):
         font_hash = hash(font)
         if font_hash not in self._fonts:
-            self._fonts[font_hash] = Font(font, pango_font, glyph_item)
-        else:
-            self._fonts[font_hash].add_glyphs(glyph_item)
+            self._fonts[font_hash] = Font(font, pango_font)
         return self._fonts[font_hash]
 
 
@@ -953,7 +897,10 @@ class Document:
             font_stream = pydyf.Stream([compressed], font_extra)
             pdf.add_object(font_stream)
 
-            font.compute_glyphs_values()
+            first_char, last_char = min(font.widths), max(font.widths)
+            widths = [
+                font.widths.get(i, 0)
+                for i in range(first_char, last_char + 1)]
             subfont_dictionary = pydyf.Dictionary({
                 'Type': '/Font',
                 'Subtype': '/CIDFontType2',
@@ -963,7 +910,7 @@ class Document:
                     'Ordering': pydyf.String('Identity'),
                     'Supplement': 0,
                 }),
-                'W': pydyf.Array([font.first_char, pydyf.Array(font.widths)]),
+                'W': pydyf.Array([first_char, pydyf.Array(widths)]),
                 'FontDescriptor': pydyf.Dictionary({
                     'FontName': font.name,
                     'FontFamily': pydyf.String(font.family),
@@ -972,7 +919,7 @@ class Document:
                     'ItalicAngle': font.italic_angle,
                     'Ascent': font.ascent,
                     'Descent': font.descent,
-                    'CapHeight': font.cap_height,
+                    'CapHeight': font.bbox[1],
                     'StemV': font.stemv,
                     'StemH': font.stemh,
                     'FontFile': font_stream.reference,

@@ -1331,19 +1331,39 @@ def show_first_line(context, textbox, text_overflow, x, y):
         data = harfbuzz.hb_blob_get_data(harfbuzz.hb_face_reference_blob(
             harfbuzz.hb_font_get_face(hb_font)), length)
         file_content = ffi.unpack(data, int(length[0]))
-        font = context.add_font(file_content, pango_font, glyph_item)
+        font = context.add_font(file_content, pango_font)
         string = '<'
+
+        ink_rect = ffi.new('PangoRectangle *')
         logical_rect = ffi.new('PangoRectangle *')
         for glyph, width in glyphs:
             string += f'{glyph:04x}'
-            pango.pango_font_get_glyph_extents(
-                font.pango_font, glyph, ffi.NULL, logical_rect)
-            logical_width = int(round(logical_rect.width * textbox_font_size))
+            if glyph not in font.widths:
+                pango.pango_font_get_glyph_extents(
+                    pango_font, glyph, ink_rect, logical_rect)
+                x1, y1, x2, y2 = (
+                    ink_rect.x, -ink_rect.y - ink_rect.height,
+                    ink_rect.x + ink_rect.width, -ink_rect.y)
+                if x1 < font.bbox[0]:
+                    font.bbox[0] = x1
+                if y1 < font.bbox[1]:
+                    font.bbox[1] = y1
+                if x2 > font.bbox[2]:
+                    font.bbox[2] = x2
+                if y2 > font.bbox[3]:
+                    font.bbox[3] = y2
+                font.widths[glyph] = (
+                    units_to_double(logical_rect.width * 1000) /
+                    textbox_font_size)
+            logical_width = int(round(font.widths[glyph] * textbox_font_size))
             kerning = (
-                units_to_double(logical_width - width) / textbox_font_size)
+                units_to_double(logical_width - width) /
+                (textbox_font_size * 3 / 4))
             if kerning:
                 string += f'>{kerning * 1000}<'
+        ffi.release(ink_rect)
         ffi.release(logical_rect)
+
         string += '>'
         context.stream.append('BT')
         context.stream.append(
@@ -1354,7 +1374,7 @@ def show_first_line(context, textbox, text_overflow, x, y):
         if run.next == ffi.NULL:
             break
         else:
-            x += pango.pango_units_to_double(
+            x += units_to_double(
                 pango.pango_glyph_string_get_width(glyph_string))
             run = run.next
     ffi.release(length)
