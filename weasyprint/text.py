@@ -1336,10 +1336,12 @@ def show_first_line(context, textbox, text_overflow, x, y):
             string += f'{glyph:04x}'
             pango.pango_font_get_glyph_extents(
                 font.pango_font, glyph, ffi.NULL, logical_rect)
-            logical_width = logical_rect.width * textbox_font_size / font.size
-            kerning = int((logical_width - width) / textbox_font_size)
+            logical_width = int(
+                logical_rect.width * textbox_font_size / font.size)
+            kerning = (
+                units_to_double(logical_width - width) / textbox_font_size)
             if kerning:
-                string += f'>{kerning}<'
+                string += f'>{kerning * 1000}<'
         ffi.release(logical_rect)
         string += '>'
         context.stream.append('BT')
