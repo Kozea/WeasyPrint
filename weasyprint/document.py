@@ -889,11 +889,14 @@ class Document:
         # Embeded fonts
         resources['Font'] = pydyf.Dictionary()
         for font_hash, font in stream._fonts.items():
+            font_type = 'otf' if font.file_content[:4] == b'OTTO' else 'ttf'
             compressed = zlib.compressobj().compress(font.file_content)
             font_extra = pydyf.Dictionary({
                 'Filter': '/FlateDecode',
                 'Length1': len(font.file_content),
             })
+            if font_type == 'otf':
+                font_extra['Subtype'] = '/OpenType'
             font_stream = pydyf.Stream([compressed], font_extra)
             pdf.add_object(font_stream)
 
@@ -912,6 +915,7 @@ class Document:
                 }),
                 'W': pydyf.Array([first_char, pydyf.Array(widths)]),
                 'FontDescriptor': pydyf.Dictionary({
+                    'Type': '/FontDescriptor',
                     'FontName': font.name,
                     'FontFamily': pydyf.String(font.family),
                     'Flags': 32,
@@ -922,7 +926,8 @@ class Document:
                     'CapHeight': font.bbox[1],
                     'StemV': font.stemv,
                     'StemH': font.stemh,
-                    'FontFile': font_stream.reference,
+                    ('FontFile3' if font_type == 'otf' else 'FontFile2'):
+                        font_stream.reference,
                 }),
             })
             pdf.add_object(subfont_dictionary)
