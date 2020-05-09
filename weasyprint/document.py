@@ -66,7 +66,12 @@ def _w3c_date_to_pdf(string, attr_name):
 class Font:
     def __init__(self, file_content, pango_font, glyph_item):
         pango_metrics = pango.pango_font_get_metrics(pango_font, ffi.NULL)
-        font_description = pango.pango_font_describe(pango_font)
+        font_description = ffi.gc(
+            pango.pango_font_description_copy(
+                pango.pango_font_describe(pango_font)),
+            pango.pango_font_description_free)
+        pango.pango_font_description_set_absolute_size(
+            font_description, pango.pango_units_from_double(1))
         font_family = ffi.string(pango.pango_font_description_get_family(
             font_description))
         glyph_string = glyph_item.glyphs
@@ -89,8 +94,6 @@ class Font:
         self.stemv = 80
         self.stemh = 80
         self.glyphs = {glyph_string.glyphs[x].glyph for x in range(num_glyphs)}
-        self.size = pango.pango_units_to_double(
-            pango.pango_font_description_get_size(font_description))
         self.first_char = None
         self.last_char = None
         self.widths = None
@@ -125,12 +128,12 @@ class Font:
             if y2 > font_bbox[3]:
                 font_bbox[3] = y2
 
-            widths[glyph - first_char] = pango.pango_units_to_double(
-                int(logical_rect.width / self.size)) * 1000
+            widths[glyph - first_char] = (
+                pango.pango_units_to_double(logical_rect.width) * 1000)
 
         ffi.release(ink_rect)
         ffi.release(logical_rect)
-        self.bbox = [value / self.size for value in font_bbox]
+        self.bbox = font_bbox
         self.cap_height = font_bbox[1]
         self.first_char = first_char
         self.last_char = last_char

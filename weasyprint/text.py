@@ -233,6 +233,8 @@ ffi.cdef('''
 
     PangoFontDescription * pango_font_description_new (void);
     void pango_font_description_free (PangoFontDescription *desc);
+    PangoFontDescription * pango_font_description_copy (
+        const PangoFontDescription *desc);
     void pango_font_description_set_family (
         PangoFontDescription *desc, const char *family);
     void pango_font_description_set_style (
@@ -1336,8 +1338,7 @@ def show_first_line(context, textbox, text_overflow, x, y):
             string += f'{glyph:04x}'
             pango.pango_font_get_glyph_extents(
                 font.pango_font, glyph, ffi.NULL, logical_rect)
-            logical_width = int(
-                logical_rect.width * textbox_font_size / font.size)
+            logical_width = int(round(logical_rect.width * textbox_font_size))
             kerning = (
                 units_to_double(logical_width - width) / textbox_font_size)
             if kerning:
