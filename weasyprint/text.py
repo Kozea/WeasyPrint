@@ -1360,8 +1360,8 @@ def show_first_line(context, textbox, text_overflow, x, y):
                     units_to_double(logical_rect.width * 1000) /
                     textbox_font_size)
             kerning = int(
-                font.widths[glyph] - units_to_double(width * 1000) /
-                textbox_font_size)
+                font.widths[glyph] -
+                units_to_double(width * 1000) / textbox_font_size)
             if kerning:
                 string += f'>{kerning}<'
         ffi.release(ink_rect)
