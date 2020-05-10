@@ -905,10 +905,13 @@ class Document:
             font_stream = pydyf.Stream([compressed], font_extra)
             pdf.add_object(font_stream)
 
-            first_char, last_char = min(font.widths), max(font.widths)
-            widths = [
-                font.widths.get(i, 0)
-                for i in range(first_char, last_char + 1)]
+            widths = []
+            for i in sorted(font.widths):
+                if i - 1 not in font.widths:
+                    widths.append(i)
+                    current_widths = []
+                    widths.append(current_widths)
+                current_widths.append(font.widths[i])
             subfont_dictionary = pydyf.Dictionary({
                 'Type': '/Font',
                 'Subtype': '/CIDFontType2',
@@ -918,7 +921,7 @@ class Document:
                     'Ordering': pydyf.String('Identity'),
                     'Supplement': 0,
                 }),
-                'W': pydyf.Array([first_char, pydyf.Array(widths)]),
+                'W': pydyf.Array(widths),
                 'FontDescriptor': pydyf.Dictionary({
                     'Type': '/FontDescriptor',
                     'FontName': font.name,
