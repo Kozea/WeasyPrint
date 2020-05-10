@@ -1345,22 +1345,25 @@ def show_first_line(context, textbox, text_overflow, x, y):
                     ink_rect.x, -ink_rect.y - ink_rect.height,
                     ink_rect.x + ink_rect.width, -ink_rect.y)
                 if x1 < font.bbox[0]:
-                    font.bbox[0] = x1
+                    font.bbox[0] = int(
+                        units_to_double(x1 * 1000) / textbox_font_size)
                 if y1 < font.bbox[1]:
-                    font.bbox[1] = y1
+                    font.bbox[1] = int(
+                        units_to_double(y1 * 1000) / textbox_font_size)
                 if x2 > font.bbox[2]:
-                    font.bbox[2] = x2
+                    font.bbox[2] = int(
+                        units_to_double(x2 * 1000) / textbox_font_size)
                 if y2 > font.bbox[3]:
-                    font.bbox[3] = y2
-                font.widths[glyph] = (
+                    font.bbox[3] = int(
+                        units_to_double(y2 * 1000) / textbox_font_size)
+                font.widths[glyph] = int(
                     units_to_double(logical_rect.width * 1000) /
                     textbox_font_size)
-            logical_width = int(round(font.widths[glyph] * textbox_font_size))
-            kerning = (
-                units_to_double(logical_width - width) /
-                (textbox_font_size * 3 / 4))
+            kerning = int(
+                font.widths[glyph] - units_to_double(width * 1000) /
+                textbox_font_size)
             if kerning:
-                string += f'>{kerning * 1000}<'
+                string += f'>{kerning}<'
         ffi.release(ink_rect)
         ffi.release(logical_rect)
 

@@ -69,6 +69,7 @@ class Font:
         font_description = pango.pango_font_describe(pango_font)
         font_family = ffi.string(pango.pango_font_description_get_family(
             font_description))
+        font_size = pango.pango_font_description_get_size(font_description)
 
         self.hash = hash(file_content)
         self.file_content = file_content
@@ -78,8 +79,12 @@ class Font:
         self.family = font_family
         self.flags = 4
         self.italic_angle = 0
-        self.ascent = pango.pango_font_metrics_get_ascent(pango_metrics)
-        self.descent = pango.pango_font_metrics_get_descent(pango_metrics)
+        self.ascent = int(
+            pango.pango_font_metrics_get_ascent(pango_metrics) /
+            font_size * 1000)
+        self.descent = -int(
+            pango.pango_font_metrics_get_descent(pango_metrics) /
+            font_size * 1000)
         self.stemv = 80
         self.stemh = 80
         self.bbox = [0, 0, 0, 0]
@@ -923,7 +928,7 @@ class Document:
                     'ItalicAngle': font.italic_angle,
                     'Ascent': font.ascent,
                     'Descent': font.descent,
-                    'CapHeight': font.bbox[1],
+                    'CapHeight': font.bbox[3],
                     'StemV': font.stemv,
                     'StemH': font.stemh,
                     ('FontFile3' if font_type == 'otf' else 'FontFile2'):
