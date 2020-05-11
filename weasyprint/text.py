@@ -1368,12 +1368,11 @@ def show_first_line(context, textbox, text_overflow, x, y):
         ffi.release(logical_rect)
 
         string += '>'
-        context.stream.append('BT')
-        context.stream.append(
-            f'{textbox_font_size} 0 0 -{textbox_font_size} {x} {y} Tm')
-        context.stream.append(f'/{font.hash} 1 Tf')
-        context.stream.append(f'[{string}]TJ')
-        context.stream.append('ET')
+        context.begin_text()
+        context.text_matrix(textbox_font_size, 0, 0, -textbox_font_size, x, y)
+        context.set_font_size(font.hash, 1)
+        context.show_text(string)
+        context.end_text()
         if run.next == ffi.NULL:
             break
         else:
