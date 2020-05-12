@@ -17,7 +17,7 @@ from urllib.parse import unquote, urlsplit
 import pydyf
 from weasyprint.layout import LayoutContext
 
-from . import Attachment, CSS, __version__
+from . import CSS, Attachment, __version__
 from .css import get_all_computed_styles
 from .css.counters import CounterStyle
 from .css.targets import TargetCollector

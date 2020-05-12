@@ -8,7 +8,7 @@
 
 import contextlib
 import operator
-from math import ceil, floor, hypot, pi, sqrt, tan
+from math import ceil, floor, pi, sqrt, tan
 
 import cairocffi as cairo
 
