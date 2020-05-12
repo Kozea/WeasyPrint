@@ -900,10 +900,11 @@ class Document:
             compressed += compressobj.flush()
             font_extra = pydyf.Dictionary({
                 'Filter': '/FlateDecode',
-                'Length1': len(font.file_content),
             })
             if font_type == 'otf':
                 font_extra['Subtype'] = '/OpenType'
+            else:
+                font_extra['Length1'] = len(font.file_content)
             font_stream = pydyf.Stream([compressed], font_extra)
             pdf.add_object(font_stream)
 
@@ -916,7 +917,8 @@ class Document:
                 current_widths.append(font.widths[i])
             subfont_dictionary = pydyf.Dictionary({
                 'Type': '/Font',
-                'Subtype': '/CIDFontType2',
+                'Subtype': (
+                    '/CIDFontType' + ('0' if font_type == 'otf' else '2')),
                 'BaseFont': font.name,
                 'CIDSystemInfo': pydyf.Dictionary({
                     'Registry': pydyf.String('Adobe'),
@@ -936,10 +938,12 @@ class Document:
                     'CapHeight': font.bbox[3],
                     'StemV': font.stemv,
                     'StemH': font.stemh,
-                    ('FontFile3' if font_type == 'otf' else 'FontFile2'):
+                    ('FontFile' + ('3' if font_type == 'otf' else '2')):
                         font_stream.reference,
                 }),
             })
+            if font_type == 'otf':
+                subfont_dictionary['FontDescriptor']['Subtype'] = '/OpenType'
             pdf.add_object(subfont_dictionary)
             font_dictionary = pydyf.Dictionary({
                 'Type': '/Font',
