@@ -1317,14 +1317,18 @@ def show_first_line(context, textbox, text_overflow, x, y):
 
     length = ffi.new('unsigned int *')
     textbox_font_size = textbox.style['font_size']
+    utf8_text = textbox.text.encode('utf-8')
     run = first_line.runs[0]
     while True:
         glyph_item = ffi.cast('PangoGlyphItem *', run.data)
         glyph_string = glyph_item.glyphs
         num_glyphs = glyph_string.num_glyphs
+        clusters = [glyph_string.log_clusters[x] for x in range(1, num_glyphs)]
+        clusters.append(len(utf8_text))
         glyphs = [
             (glyph_string.glyphs[x].glyph,
-             glyph_string.glyphs[x].geometry.width)
+             glyph_string.glyphs[x].geometry.width,
+             clusters[x])
             for x in range(num_glyphs)]
         pango_font = glyph_item.item.analysis.font
         hb_font = pango.pango_font_get_hb_font(pango_font)
@@ -1336,7 +1340,8 @@ def show_first_line(context, textbox, text_overflow, x, y):
 
         ink_rect = ffi.new('PangoRectangle *')
         logical_rect = ffi.new('PangoRectangle *')
-        for glyph, width in glyphs:
+        previous_utf8_position = 0
+        for glyph, width, utf8_position in glyphs:
             string += f'{glyph:04x}'
             if glyph not in font.widths:
                 pango.pango_font_get_glyph_extents(
@@ -1364,6 +1369,11 @@ def show_first_line(context, textbox, text_overflow, x, y):
                 units_to_double(width * 1000) / textbox_font_size)
             if kerning:
                 string += f'>{kerning}<'
+            if glyph not in font.cmap:
+                font.cmap[glyph] = (
+                    utf8_text[previous_utf8_position:utf8_position]
+                    .decode('utf-8'))
+            previous_utf8_position = utf8_position
         ffi.release(ink_rect)
         ffi.release(logical_rect)
 
