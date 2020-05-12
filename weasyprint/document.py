@@ -895,7 +895,9 @@ class Document:
         resources['Font'] = pydyf.Dictionary()
         for font_hash, font in stream._fonts.items():
             font_type = 'otf' if font.file_content[:4] == b'OTTO' else 'ttf'
-            compressed = zlib.compressobj().compress(font.file_content)
+            compressobj = zlib.compressobj()
+            compressed = compressobj.compress(font.file_content)
+            compressed += compressobj.flush()
             font_extra = pydyf.Dictionary({
                 'Filter': '/FlateDecode',
                 'Length1': len(font.file_content),
