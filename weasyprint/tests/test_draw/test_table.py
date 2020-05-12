@@ -12,15 +12,15 @@ import pytest
 
 from ...html import HTML_HANDLERS
 from ..testing_utils import assert_no_logs, requires
-from . import as_pixel, assert_pixels, parse_pixels
+from . import assert_pixels, parse_pixels
 
 PIX_BY_CHAR_OVERRIDES = {
     # rgba(255, 0, 0, 0.5) above #fff
-    'r': as_pixel(b'\xff\x7f\x7f\xff'),
+    'r': b'\xff\x7f\x7f\xff',
     # rgba(0, 255, 0, 0.5) above #fff
-    'g': as_pixel(b'\x7f\xff\x7f\xff'),
+    'g': b'\x7f\xff\x7f\xff',
     # r above B above #fff.
-    'b': as_pixel(b'\x80\x00\x7f\xff'),
+    'b': b'\x80\x00\x7f\xff',
 }
 
 

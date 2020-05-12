@@ -14,7 +14,7 @@ import re
 import cairocffi
 import pytest
 
-from .. import Attachment, pdf
+from .. import Attachment
 from ..urls import path2url
 from .testing_utils import (
     FakeHTML, assert_no_logs, capture_logs, requires, resource_filename)
@@ -23,6 +23,9 @@ from .testing_utils import (
 TOP = 842
 # Right of the page is 210mm ~= 595pt
 RIGHT = 595
+
+# TODO: fix tests
+pdf = None
 
 
 def assert_rect_almost_equal(rect, values):

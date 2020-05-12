@@ -12,9 +12,11 @@ import math
 import shutil
 import zlib
 from os.path import basename
+from subprocess import PIPE, Popen
 from urllib.parse import unquote, urlsplit
 
 import pydyf
+from PIL import Image
 from weasyprint.layout import LayoutContext
 
 from . import CSS, Attachment, __version__
@@ -1024,5 +1026,28 @@ class Document:
             ``png_height`` are the size of the final image, in PNG pixels.
 
         """
-        # TODO: write this
-        raise NotImplementedError
+        # TODO: use GhostScript as a library
+        # TODO: handle multiple pages
+        stdin = self.write_pdf()
+        stdout = io.BytesIO()
+        command = [
+            'gs', '-q', '-sstdout=%stderr', '-dNOPAUSE', '-dBATCH', '-dSAFER',
+            '-dFirstPage=1', '-dLastPage=1', '-dTextAlphaBits=4',
+            '-dGraphicsAlphaBits=4', '-sDEVICE=png16m', f'-r{resolution}',
+            '-sOutputFile=-', '-']
+        command = Popen(command, stdin=PIPE, stdout=PIPE)
+        command.stdin.write(stdin)
+        command.stdin.close()
+        stdout.write(command.stdout.read())
+
+        if target is not None:
+            stdout.seek(0)
+            if hasattr(target, 'write'):
+                shutil.copyfileobj(stdout, target)
+            else:
+                with open(target, 'wb') as fd:
+                    shutil.copyfileobj(stdout, fd)
+        png = stdout.getvalue()
+        # TODO: remove returned size or try to use something different from PIL
+        image = Image.open(io.BytesIO(png))
+        return png, image.width, image.height

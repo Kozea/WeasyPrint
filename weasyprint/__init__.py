@@ -208,47 +208,6 @@ class HTML:
             font_config=font_config, counter_style=counter_style).write_pdf(
                 target, zoom, attachments)
 
-    def write_image_surface(self, stylesheets=None, resolution=96,
-                            presentational_hints=False, font_config=None,
-                            counter_style=None):
-        """Render pages vertically on a cairo image surface.
-
-        .. versionadded:: 0.17
-
-        There is no decoration around pages other than those specified in CSS
-        with ``@page`` rules. The final image is as wide as the widest page.
-        Each page is below the previous one, centered horizontally.
-
-        This is a shortcut for calling :meth:`render`, then
-        :meth:`Document.write_image_surface()
-        <document.Document.write_image_surface>`.
-
-        :type stylesheets: list
-        :param stylesheets:
-            An optional list of user stylesheets.  The list's elements
-            are :class:`CSS` objects, filenames, URLs, or file-like
-            objects. (See :ref:`stylesheet-origins`.)
-        :type resolution: float
-        :param resolution:
-            The output resolution in PNG pixels per CSS inch. At 96 dpi
-            (the default), PNG pixels match the CSS ``px`` unit.
-        :type presentational_hints: bool
-        :param presentational_hints: Whether HTML presentational hints are
-            followed.
-        :type font_config: :class:`~fonts.FontConfiguration`
-        :param font_config: A font configuration handling ``@font-face`` rules.
-        :type counter_style: :class:`~css.counters.CounterStyle`
-        :param counter_style: A dictionary storing ``@counter-style`` rules.
-        :returns: A cairo :class:`ImageSurface <cairocffi.ImageSurface>`.
-
-        """
-        surface, _width, _height = (
-            self.render(
-                stylesheets, presentational_hints=presentational_hints,
-                font_config=font_config)
-            .write_image_surface(resolution))
-        return surface
-
     def write_png(self, target=None, stylesheets=None, resolution=96,
                   presentational_hints=False, font_config=None,
                   counter_style=None):

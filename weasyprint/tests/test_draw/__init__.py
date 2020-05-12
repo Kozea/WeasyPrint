@@ -6,33 +6,28 @@
 
 """
 
+import io
 import os
-import sys
 
 import cairocffi as cairo
+from PIL import Image
 
 from ..testing_utils import FakeHTML, resource_filename
 
-# RGBA to native-endian ARGB
-as_pixel = (
-    lambda x: x[:-1][::-1] + x[-1:]
-    if sys.byteorder == 'little' else
-    lambda x: x[-1:] + x[:-1])
-
 PIXELS_BY_CHAR = dict(
-    _=as_pixel(b'\xff\xff\xff\xff'),  # white
-    R=as_pixel(b'\xff\x00\x00\xff'),  # red
-    B=as_pixel(b'\x00\x00\xff\xff'),  # blue
-    G=as_pixel(b'\x00\xff\x00\xff'),  # lime green
-    V=as_pixel(b'\xBF\x00\x40\xff'),  # average of 1*B and 3*R.
-    S=as_pixel(b'\xff\x3f\x3f\xff'),  # R above R above #fff
-    r=as_pixel(b'\xff\x00\x00\xff'),  # red
-    g=as_pixel(b'\x00\x80\x00\xff'),  # half green
-    b=as_pixel(b'\x00\x00\x80\xff'),  # half blue
-    v=as_pixel(b'\x80\x00\x80\xff'),  # average of B and R.
-    h=as_pixel(b'\x40\x00\x40\xff'),  # half average of B and R.
-    a=as_pixel(b'\x00\x00\xfe\xff'),  # JPG is lossy...
-    p=as_pixel(b'\xc0\x00\x3f\xff'),  # R above R above B above #fff.
+    _=b'\xff\xff\xff\xff',  # white
+    R=b'\xff\x00\x00\xff',  # red
+    B=b'\x00\x00\xff\xff',  # blue
+    G=b'\x00\xff\x00\xff',  # lime green
+    V=b'\xBF\x00\x40\xff',  # average of 1*B and 3*R.
+    S=b'\xff\x3f\x3f\xff',  # R above R above #fff
+    r=b'\xff\x00\x00\xff',  # red
+    g=b'\x00\x80\x00\xff',  # half green
+    b=b'\x00\x00\x80\xff',  # half blue
+    v=b'\x80\x00\x80\xff',  # average of B and R.
+    h=b'\x40\x00\x40\xff',  # half average of B and R.
+    a=b'\x00\x00\xfe\xff',  # JPG is lossy...
+    p=b'\xc0\x00\x3f\xff',  # R above R above B above #fff.
 )
 
 # NOTE: "r" is not half red on purpose. In the pixel strings it has
@@ -129,15 +124,17 @@ def html_to_pixels(name, expected_width, expected_height, html):
 
 def document_to_pixels(document, name, expected_width, expected_height):
     """Render an HTML document to PNG, check its size and return pixel data."""
-    surface = document.write_image_surface()
-    return image_to_pixels(surface, expected_width, expected_height)
+    image = Image.open(io.BytesIO(document.write_png()))
+    image.putalpha(255)
+    return image_to_pixels(image, expected_width, expected_height)
 
 
-def image_to_pixels(surface, width, height):
-    assert (surface.get_width(), surface.get_height()) == (width, height)
+def image_to_pixels(image, width, height):
+    assert (image.width, image.height) == (width, height)
     # RGB24 is actually the same as ARGB32, with A unused.
-    assert surface.get_format() in (cairo.FORMAT_ARGB32, cairo.FORMAT_RGB24)
-    pixels = surface.get_data()[:]
+    pixels = []
+    for pixel in image.getdata():
+        pixels.extend(pixel)
     assert len(pixels) == width * height * 4
     return pixels
 

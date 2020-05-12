@@ -253,6 +253,7 @@ ffi.cdef('''
     const char * pango_font_description_get_family (
         const PangoFontDescription *desc);
 
+    PangoContext * pango_context_new ();
     PangoContext * pango_font_map_create_context (PangoFontMap *fontmap);
 
     PangoFontMetrics * pango_context_get_metrics (
@@ -738,8 +739,15 @@ class Layout:
         self.context = context
         self.style = style
 
+        if context is None:
+            # TODO: fix this ugly import
+            from .fonts import pangoft2
+            font_map = ffi.gc(
+                pangoft2.pango_ft2_font_map_new(), gobject.g_object_unref)
+        else:
+            font_map = context.font_config.font_map
         pango_context = ffi.gc(
-            pango.pango_font_map_create_context(context.font_config.font_map),
+            pango.pango_font_map_create_context(font_map),
             gobject.g_object_unref)
         self.layout = ffi.gc(
             pango.pango_layout_new(pango_context),
