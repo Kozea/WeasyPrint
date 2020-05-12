@@ -1319,12 +1319,15 @@ def show_first_line(context, textbox, text_overflow, x, y):
     textbox_font_size = textbox.style['font_size']
     utf8_text = textbox.text.encode('utf-8')
     run = first_line.runs[0]
+    previous_utf8_position = 0
     while True:
         glyph_item = ffi.cast('PangoGlyphItem *', run.data)
         glyph_string = glyph_item.glyphs
         num_glyphs = glyph_string.num_glyphs
-        clusters = [glyph_string.log_clusters[x] for x in range(1, num_glyphs)]
-        clusters.append(len(utf8_text))
+        clusters = [
+            glyph_item.item.offset + glyph_string.log_clusters[x]
+            for x in range(1, num_glyphs)]
+        clusters.append(glyph_item.item.offset + glyph_item.item.length)
         glyphs = [
             (glyph_string.glyphs[x].glyph,
              glyph_string.glyphs[x].geometry.width,
@@ -1340,7 +1343,6 @@ def show_first_line(context, textbox, text_overflow, x, y):
 
         ink_rect = ffi.new('PangoRectangle *')
         logical_rect = ffi.new('PangoRectangle *')
-        previous_utf8_position = 0
         for glyph, width, utf8_position in glyphs:
             string += f'{glyph:04x}'
             if glyph not in font.widths:
