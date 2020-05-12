@@ -976,13 +976,14 @@ class Document:
                 'CMapName currentdict /CMap defineresource pop',
                 'end',
                 'end'])
+            pdf.add_object(to_unicode)
             font_dictionary = pydyf.Dictionary({
                 'Type': '/Font',
                 'Subtype': '/Type0',
                 'BaseFont': font.name,
                 'Encoding': '/Identity-H',
                 'DescendantFonts': pydyf.Array([subfont_dictionary.reference]),
-                'ToUnicode': to_unicode,
+                'ToUnicode': to_unicode.reference,
             })
             pdf.add_object(font_dictionary)
             resources['Font'][str(font_hash)] = font_dictionary.reference
