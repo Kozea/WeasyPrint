@@ -846,11 +846,15 @@ class Document:
 
         outlines, count = create_bookmarks(root, pdf)
         if outlines:
-            pdf.catalog['Outlines'] = pydyf.Dictionary({
+            outlines_dictionary = pydyf.Dictionary({
                 'Count': count,
                 'First': outlines[0].reference,
                 'Last': outlines[-1].reference,
             })
+            pdf.add_object(outlines_dictionary)
+            for outline in outlines:
+                outline['Parent'] = outlines_dictionary.reference
+            pdf.catalog['Outlines'] = outlines_dictionary
 
         PROGRESS_LOGGER.info('Step 7 - Adding PDF metadata')
 
