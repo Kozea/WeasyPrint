@@ -89,6 +89,7 @@ class Font:
         self.stemh = 80
         self.bbox = [0, 0, 0, 0]
         self.widths = {}
+        self.cmap = {}
 
 
 class Context(pydyf.Stream):
@@ -949,12 +950,39 @@ class Document:
             if font_type == 'otf':
                 subfont_dictionary['FontDescriptor']['Subtype'] = '/OpenType'
             pdf.add_object(subfont_dictionary)
+            to_unicode = pydyf.Stream([
+                '/CIDInit /ProcSet findresource begin',
+                '12 dict begin',
+                'begincmap',
+                '/CIDSystemInfo',
+                '<< /Registry (Adobe)',
+                '/Ordering (UCS)',
+                '/Supplement 0',
+                '>> def',
+                '/CMapName /Adobe-Identity-UCS def',
+                '/CMapType 2 def',
+                '1 begincodespacerange',
+                '<0000> <ffff>',
+                'endcodespacerange',
+                f'{len(font.cmap)} beginbfchar'])
+            for glyph, text in font.cmap.items():
+                unicode_codepoints = ''.join(
+                    f'{letter.encode("utf-16-be").hex()}' for letter in text)
+                to_unicode.stream.append(
+                    f'<{glyph:04x}> <{unicode_codepoints}>')
+            to_unicode.stream.extend([
+                'endbfchar',
+                'endcmap',
+                'CMapName currentdict /CMap defineresource pop',
+                'end',
+                'end'])
             font_dictionary = pydyf.Dictionary({
                 'Type': '/Font',
                 'Subtype': '/Type0',
                 'BaseFont': font.name,
                 'Encoding': '/Identity-H',
                 'DescendantFonts': pydyf.Array([subfont_dictionary.reference]),
+                'ToUnicode': to_unicode,
             })
             pdf.add_object(font_dictionary)
             resources['Font'][str(font_hash)] = font_dictionary.reference
