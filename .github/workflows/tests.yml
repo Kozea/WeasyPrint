@@ -32,7 +32,7 @@ jobs:
         if: matrix.os == 'macos-latest'
         run: |
           brew tap homebrew/cask-fonts
-          brew cask install font-dejavu-sans
+          brew cask install font-dejavu
           brew install cairo pango gdk-pixbuf libffi
       - name: Install msys2 and DejaVu (Windows)
         if: matrix.os == 'windows-latest'
