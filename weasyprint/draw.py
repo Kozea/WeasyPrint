@@ -970,7 +970,7 @@ def draw_replacedbox(context, box):
     with stacked(context):
         rounded_box_path(context, box.rounded_content_box())
         context.clip()
-        context.translate(draw_x, draw_y)
+        context.transform(1, 0, 0, 1, draw_x, draw_y)
         box.replacement.draw(
             context, draw_width, draw_height, box.style['image_rendering'])
 

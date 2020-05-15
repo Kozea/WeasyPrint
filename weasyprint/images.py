@@ -73,8 +73,9 @@ class RasterImage:
 
         # Use the real intrinsic size here,
         # not affected by 'image-resolution'.
-        context.scale(concrete_width / self._intrinsic_width,
-                      concrete_height / self._intrinsic_height)
+        context.transform(
+            concrete_width / self._intrinsic_width, 0, 0,
+            concrete_height / self._intrinsic_height, 0, 0)
         context.set_source_surface(self.image_surface)
         context.get_source().set_filter(
             IMAGE_RENDERING_TO_FILTER[image_rendering])
