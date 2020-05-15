@@ -9,7 +9,6 @@
 import io
 import os
 
-import cairocffi as cairo
 from PIL import Image
 
 from ..testing_utils import FakeHTML, resource_filename
@@ -101,10 +100,12 @@ def write_png(basename, pixels, width, height):  # pragma: no cover
     if not os.path.isdir(directory):
         os.mkdir(directory)
     filename = os.path.join(directory, basename + '.png')
-    cairo.ImageSurface(
-        cairo.FORMAT_ARGB32, width, height,
-        data=bytearray(pixels), stride=width * 4
-    ).write_to_png(filename)
+    output_pixels = []
+    for i in range(int(len(pixels) / 4)):
+        output_pixels.append(tuple(pixels[4*i:4*i+4]))
+    image = Image.new('RGBA', (width, height))
+    image.putdata(tuple(output_pixels))
+    image.save(filename)
 
 
 def html_to_pixels(name, expected_width, expected_height, html):
@@ -131,7 +132,6 @@ def document_to_pixels(document, name, expected_width, expected_height):
 
 def image_to_pixels(image, width, height):
     assert (image.width, image.height) == (width, height)
-    # RGB24 is actually the same as ARGB32, with A unused.
     pixels = []
     for pixel in image.getdata():
         pixels.extend(pixel)
