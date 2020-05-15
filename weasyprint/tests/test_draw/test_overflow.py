@@ -8,7 +8,7 @@
 
 import pytest
 
-from ..testing_utils import assert_no_logs, requires
+from ..testing_utils import assert_no_logs
 from . import assert_pixels
 
 
@@ -79,7 +79,6 @@ def test_overflow_3():
 
 
 @assert_no_logs
-@requires('cairo', (1, 12, 0))
 @pytest.mark.parametrize('number, css, pixels', (
     (1, '5px, 5px, 9px, auto', '''
         ______________

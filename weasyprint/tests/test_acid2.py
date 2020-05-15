@@ -8,12 +8,10 @@
 
 from .. import HTML
 from .test_draw import assert_pixels_equal, image_to_pixels
-from .testing_utils import (
-    assert_no_logs, capture_logs, requires, resource_filename)
+from .testing_utils import assert_no_logs, capture_logs, resource_filename
 
 
 @assert_no_logs
-@requires('cairo', (1, 12, 0))
 def test_acid2():
     def render(filename):
         return HTML(resource_filename(filename)).render()

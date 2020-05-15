@@ -6,12 +6,11 @@
 
 """
 
-from ..testing_utils import assert_no_logs, requires
+from ..testing_utils import assert_no_logs
 from . import assert_pixels
 
 
 @assert_no_logs
-@requires('cairo', (1, 14, 0))
 def test_column_rule_1():
     assert_pixels('solid', 5, 3, '''
         a_r_a
@@ -35,7 +34,6 @@ def test_column_rule_1():
 
 
 @assert_no_logs
-@requires('cairo', (1, 14, 0))
 def test_column_rule_2():
     assert_pixels('dotted', 5, 3, '''
         a_r_a

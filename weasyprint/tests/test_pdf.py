@@ -17,7 +17,7 @@ import pytest
 from .. import Attachment
 from ..urls import path2url
 from .testing_utils import (
-    FakeHTML, assert_no_logs, capture_logs, requires, resource_filename)
+    FakeHTML, assert_no_logs, capture_logs, resource_filename)
 
 # Top of the page is 297mm ~= 842pt
 TOP = 842
@@ -69,7 +69,6 @@ def test_page_size_zoom(zoom):
 
 
 @assert_no_logs
-@requires('cairo', (1, 15, 4))
 def test_bookmarks_1():
     fileobj = io.BytesIO()
     FakeHTML(string='''
@@ -110,7 +109,6 @@ def test_bookmarks_2():
 
 
 @assert_no_logs
-@requires('cairo', (1, 15, 4))
 def test_bookmarks_3():
     fileobj = io.BytesIO()
     FakeHTML(string='<h1>a nbsp…</h1>').write_pdf(target=fileobj)
@@ -123,7 +121,6 @@ def test_bookmarks_3():
 
 
 @assert_no_logs
-@requires('cairo', (1, 15, 4))
 def test_bookmarks_4():
     fileobj = io.BytesIO()
     FakeHTML(string='''
@@ -188,7 +185,6 @@ def test_bookmarks_4():
 
 
 @assert_no_logs
-@requires('cairo', (1, 15, 4))
 def test_bookmarks_5():
     fileobj = io.BytesIO()
     FakeHTML(string='''
@@ -220,7 +216,6 @@ def test_bookmarks_5():
 
 
 @assert_no_logs
-@requires('cairo', (1, 15, 4))
 def test_bookmarks_6():
     fileobj = io.BytesIO()
     FakeHTML(string='''
@@ -268,7 +263,6 @@ def test_bookmarks_6():
 
 
 @assert_no_logs
-@requires('cairo', (1, 15, 4))
 def test_bookmarks_7():
     # Reference for the next test. zoom=1
     fileobj = io.BytesIO()
@@ -294,7 +288,6 @@ def test_bookmarks_7():
 
 
 @assert_no_logs
-@requires('cairo', (1, 15, 4))
 def test_bookmarks_8():
     fileobj = io.BytesIO()
     FakeHTML(string='''
@@ -344,7 +337,6 @@ def test_links_none():
 
 
 @assert_no_logs
-@requires('cairo', (1, 15, 4))
 def test_links():
     fileobj = io.BytesIO()
     FakeHTML(string='''
@@ -434,7 +426,6 @@ def test_links():
 
 
 @assert_no_logs
-@requires('cairo', (1, 15, 4))
 def test_relative_links():
     # Relative URI reference without a base URI: allowed for anchors
     fileobj = io.BytesIO()
@@ -466,7 +457,6 @@ def test_relative_links_missing_base():
 
 
 @assert_no_logs
-@requires('cairo', (1, 15, 4))
 def test_relative_links_internal():
     # Internal URI reference without a base URI: OK
     fileobj = io.BytesIO()
@@ -492,7 +482,6 @@ def test_relative_links_internal():
 
 
 @assert_no_logs
-@requires('cairo', (1, 15, 4))
 def test_relative_links_anchors():
     fileobj = io.BytesIO()
     FakeHTML(
@@ -517,7 +506,6 @@ def test_relative_links_anchors():
 
 
 @assert_no_logs
-@requires('cairo', (1, 15, 4))
 def test_missing_links():
     fileobj = io.BytesIO()
     with capture_logs() as logs:
@@ -562,7 +550,6 @@ def test_embed_jpeg():
 
 
 @assert_no_logs
-@requires('cairo', (1, 15, 4))
 def test_document_info():
     fileobj = io.BytesIO()
     FakeHTML(string='''
@@ -589,7 +576,6 @@ def test_document_info():
 
 
 @assert_no_logs
-@requires('cairo', (1, 15, 4))
 def test_embedded_files_attachments(tmpdir):
     absolute_tmp_file = tmpdir.join('some_file.txt').strpath
     adata = b'12345678'
@@ -677,7 +663,6 @@ def test_attachments_data():
 
 
 @assert_no_logs
-@requires('cairo', (1, 15, 4))
 def test_attachments_none():
     fileobj = io.BytesIO()
     FakeHTML(string='''

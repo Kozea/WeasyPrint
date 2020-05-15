@@ -126,15 +126,3 @@ def http_server(handlers):
     finally:
         server.shutdown()
         thread.join()
-
-
-def requires(library_name, expected_tuple):
-    library = getattr(text, library_name)
-    library_version = '%06i' % getattr(library, '%s_version' % library_name)()
-    library_tuple = tuple(int(i) for i in (
-        library_version[:2], library_version[2:4], library_version[4:]))
-    return pytest.mark.skipif(
-        library_tuple < expected_tuple,
-        reason='Running %s %s but this test requires %s+' % (
-            library_name, '%i.%i.%i' % library_tuple,
-            '%i.%i.%i' % expected_tuple))

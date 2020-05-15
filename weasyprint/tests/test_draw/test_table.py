@@ -11,7 +11,7 @@
 import pytest
 
 from ...html import HTML_HANDLERS
-from ..testing_utils import assert_no_logs, requires
+from ..testing_utils import assert_no_logs
 from . import assert_pixels, parse_pixels
 
 PIX_BY_CHAR_OVERRIDES = {
@@ -67,7 +67,6 @@ tables_source = '''
 
 
 @assert_no_logs
-@requires('cairo', (1, 12, 0))
 def test_tables_1():
     assert_pixels('table_borders', 28, 28, to_pix('''
         ____________________________
@@ -105,7 +104,6 @@ def test_tables_1():
 
 
 @assert_no_logs
-@requires('cairo', (1, 12, 0))
 def test_tables_1_rtl():
     assert_pixels('table_borders_rtl', 28, 28, to_pix('''
         ____________________________
@@ -144,7 +142,6 @@ def test_tables_1_rtl():
 
 
 @assert_no_logs
-@requires('cairo', (1, 12, 0))
 def test_tables_2():
     assert_pixels('table_collapsed_borders', 28, 28, to_pix('''
         ____________________________
@@ -183,7 +180,6 @@ def test_tables_2():
 
 
 @assert_no_logs
-@requires('cairo', (1, 12, 0))
 def test_tables_2_rtl():
     assert_pixels('table_collapsed_borders_rtl', 28, 28, to_pix('''
         ____________________________
@@ -223,7 +219,6 @@ def test_tables_2_rtl():
 
 
 @assert_no_logs
-@requires('cairo', (1, 12, 0))
 def test_tables_3():
     assert_pixels('table_collapsed_borders_paged', 28, 52, to_pix('''
         ____________________________
@@ -288,7 +283,6 @@ def test_tables_3():
 
 
 @assert_no_logs
-@requires('cairo', (1, 12, 0))
 def test_tables_3_rtl():
     assert_pixels('table_collapsed_borders_paged_rtl', 28, 52, to_pix('''
         ____________________________
@@ -354,7 +348,6 @@ def test_tables_3_rtl():
 
 
 @assert_no_logs
-@requires('cairo', (1, 12, 0))
 def test_tables_4():
     assert_pixels('table_td_backgrounds', 28, 28, to_pix('''
         ____________________________
@@ -392,7 +385,6 @@ def test_tables_4():
 
 
 @assert_no_logs
-@requires('cairo', (1, 12, 0))
 def test_tables_4_rtl():
     assert_pixels('table_td_backgrounds_rtl', 28, 28, to_pix('''
         ____________________________
@@ -431,7 +423,6 @@ def test_tables_4_rtl():
 
 
 @assert_no_logs
-@requires('cairo', (1, 12, 0))
 def test_tables_5():
     assert_pixels('table_row_backgrounds', 28, 28, to_pix('''
         ____________________________
@@ -470,7 +461,6 @@ def test_tables_5():
 
 
 @assert_no_logs
-@requires('cairo', (1, 12, 0))
 def test_tables_5_rtl():
     assert_pixels('table_row_backgrounds_rtl', 28, 28, to_pix('''
         ____________________________
@@ -510,7 +500,6 @@ def test_tables_5_rtl():
 
 
 @assert_no_logs
-@requires('cairo', (1, 12, 0))
 def test_tables_6():
     assert_pixels('table_column_backgrounds', 28, 28, to_pix('''
         ____________________________
@@ -549,7 +538,6 @@ def test_tables_6():
 
 
 @assert_no_logs
-@requires('cairo', (1, 12, 0))
 def test_tables_6_rtl():
     assert_pixels('table_column_backgrounds_rtl', 28, 28, to_pix('''
         ____________________________
@@ -589,7 +577,6 @@ def test_tables_6_rtl():
 
 
 @assert_no_logs
-@requires('cairo', (1, 12, 0))
 def test_tables_7():
     assert_pixels('table_borders_and_row_backgrounds', 28, 28, to_pix('''
         ____________________________
@@ -628,7 +615,6 @@ def test_tables_7():
 
 
 @assert_no_logs
-@requires('cairo', (1, 12, 0))
 def test_tables_7_rtl():
     assert_pixels('table_borders_and_row_backgrounds_rtl', 28, 28, to_pix('''
         ____________________________
@@ -668,7 +654,6 @@ def test_tables_7_rtl():
 
 
 @assert_no_logs
-@requires('cairo', (1, 12, 0))
 def test_tables_8():
     assert_pixels('table_borders_and_column_backgrounds', 28, 28, to_pix('''
         ____________________________
@@ -707,7 +692,6 @@ def test_tables_8():
 
 
 @assert_no_logs
-@requires('cairo', (1, 12, 0))
 def test_tables_8_rtl():
     assert_pixels('table_borders_and_column_backgrounds_rtl', 28, 28, to_pix('''
         ____________________________
@@ -747,7 +731,6 @@ def test_tables_8_rtl():
 
 
 @assert_no_logs
-@requires('cairo', (1, 12, 0))
 def test_tables_9():
     assert_pixels('collapsed_border_thead', 22, 36, '''
         ______________________
@@ -800,7 +783,6 @@ def test_tables_9():
 
 
 @assert_no_logs
-@requires('cairo', (1, 12, 0))
 def test_tables_10():
     assert_pixels('collapsed_border_tfoot', 22, 36, '''
         ______________________
@@ -854,7 +836,6 @@ def test_tables_10():
 
 
 @assert_no_logs
-@requires('cairo', (1, 12, 0))
 def test_tables_11():
     # Regression test for inline table with collapsed border and alignment
     # rendering borders incorrectly
@@ -882,7 +863,6 @@ def test_tables_11():
 
 
 @assert_no_logs
-@requires('cairo', (1, 12, 0))
 def test_tables_12():
     assert_pixels('table_collapsed_borders', 28, 28, to_pix('''
         ____________________________
@@ -922,7 +902,6 @@ def test_tables_12():
 
 
 @assert_no_logs
-@requires('cairo', (1, 12, 0))
 def test_tables_13():
     assert_pixels('table_collapsed_borders_paged', 28, 52, to_pix('''
         ____________________________
@@ -989,7 +968,6 @@ def test_tables_13():
 
 @pytest.mark.xfail
 @assert_no_logs
-@requires('cairo', (1, 12, 0))
 def test_tables_14():
     assert_pixels('table_background_column_paged', 28, 52, to_pix('''
         ____________________________

@@ -10,7 +10,7 @@ import pytest
 
 from ..test_boxes import render_pages
 from ..test_draw import assert_pixels
-from ..testing_utils import assert_no_logs, capture_logs, requires
+from ..testing_utils import assert_no_logs, capture_logs
 
 
 @assert_no_logs
@@ -1863,7 +1863,6 @@ def test_table_row_height_3():
 
 
 @assert_no_logs
-@requires('cairo', (1, 12, 0))
 def test_table_vertical_align():
     assert_pixels('table_vertical_align', 28, 10, '''
         rrrrrrrrrrrrrrrrrrrrrrrrrrrr

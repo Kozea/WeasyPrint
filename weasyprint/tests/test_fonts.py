@@ -7,11 +7,10 @@
 """
 
 from .test_boxes import render_pages
-from .testing_utils import assert_no_logs, requires
+from .testing_utils import assert_no_logs
 
 
 @assert_no_logs
-@requires('pango', (1, 38, 0))
 def test_font_face():
     page, = render_pages('''
       <style>
@@ -26,7 +25,6 @@ def test_font_face():
 
 
 @assert_no_logs
-@requires('pango', (1, 38, 0))
 def test_kerning_default():
     # Kerning and ligatures are on by default
     page, = render_pages('''
@@ -44,7 +42,6 @@ def test_kerning_default():
 
 
 @assert_no_logs
-@requires('pango', (1, 38, 0))
 def test_kerning_deactivate():
     # Deactivate kerning
     page, = render_pages('''
@@ -71,7 +68,6 @@ def test_kerning_deactivate():
 
 
 @assert_no_logs
-@requires('pango', (1, 38, 0))
 def test_kerning_ligature_deactivate():
     # Deactivate kerning and ligatures
     page, = render_pages('''
@@ -99,7 +95,6 @@ def test_kerning_ligature_deactivate():
 
 
 @assert_no_logs
-@requires('pango', (1, 38, 0))
 def test_font_face_descriptors():
     page, = render_pages(
         '''

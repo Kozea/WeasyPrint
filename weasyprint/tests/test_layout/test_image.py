@@ -10,7 +10,7 @@ import pytest
 
 from ...formatting_structure import boxes
 from ..test_boxes import render_pages as parse
-from ..testing_utils import assert_no_logs, capture_logs, requires
+from ..testing_utils import assert_no_logs, capture_logs
 
 
 def get_img(html):
@@ -56,7 +56,6 @@ def test_images_2():
     assert img.height == 48
 
 
-@requires('cairo', (1, 15, 12))
 @assert_no_logs
 def test_images_3():
     # Invalid images
@@ -88,7 +87,6 @@ def test_images_3():
         assert text.text == 'invalid image', url
 
 
-@requires('cairo', (1, 15, 12))
 @assert_no_logs
 def test_images_4():
     # Format sniffing

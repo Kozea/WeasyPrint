@@ -6,12 +6,11 @@
 
 """
 
-from ..testing_utils import assert_no_logs, requires
+from ..testing_utils import assert_no_logs
 from . import PIXELS_BY_CHAR, assert_pixels, html_to_pixels
 
 
 @assert_no_logs
-@requires('cairo', (1, 14, 0))
 def test_linear_gradients_1():
     assert_pixels('linear_gradient', 5, 9, '''
         _____
@@ -29,7 +28,6 @@ def test_linear_gradients_1():
 
 
 @assert_no_logs
-@requires('cairo', (1, 14, 0))
 def test_linear_gradients_2():
     assert_pixels('linear_gradient', 5, 9, '''
         _____
@@ -47,7 +45,6 @@ def test_linear_gradients_2():
 
 
 @assert_no_logs
-@requires('cairo', (1, 14, 0))
 def test_linear_gradients_3():
     assert_pixels('linear_gradient', 9, 5, '''
         ___BBrrrr
@@ -61,7 +58,6 @@ def test_linear_gradients_3():
 
 
 @assert_no_logs
-@requires('cairo', (1, 14, 0))
 def test_linear_gradients_4():
     assert_pixels('linear_gradient', 10, 5, '''
         BBBBBBrrrr
@@ -75,7 +71,6 @@ def test_linear_gradients_4():
 
 
 @assert_no_logs
-@requires('cairo', (1, 14, 0))
 def test_linear_gradients_5():
     assert_pixels('linear_gradient', 10, 5, '''
         rBrrrBrrrB
@@ -89,7 +84,6 @@ def test_linear_gradients_5():
 
 
 @assert_no_logs
-@requires('cairo', (1, 14, 0))
 def test_linear_gradients_6():
     assert_pixels('linear_gradient', 9, 5, '''
         BBBrrrrrr
@@ -103,7 +97,6 @@ def test_linear_gradients_6():
 
 
 @assert_no_logs
-@requires('cairo', (1, 14, 0))
 def test_linear_gradients_7():
     assert_pixels('linear_gradient', 9, 5, '''
         hhhhhhhhh
@@ -117,7 +110,6 @@ def test_linear_gradients_7():
 
 
 @assert_no_logs
-@requires('cairo', (1, 14, 0))
 def test_linear_gradients_8():
     assert_pixels('linear_gradient', 9, 5, '''
         VVVVVVVVV
