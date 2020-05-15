@@ -1032,9 +1032,8 @@ class Document:
         stdout = io.BytesIO()
         command = [
             'gs', '-q', '-sstdout=%stderr', '-dNOPAUSE', '-dBATCH', '-dSAFER',
-            '-dFirstPage=1', '-dLastPage=1', '-dTextAlphaBits=4',
-            '-dGraphicsAlphaBits=4', '-sDEVICE=png16m', f'-r{resolution}',
-            '-sOutputFile=-', '-']
+            '-dTextAlphaBits=4', '-dGraphicsAlphaBits=4', '-sDEVICE=png16m',
+            f'-r{resolution}', '-sOutputFile=-', '-']
         command = Popen(command, stdin=PIPE, stdout=PIPE)
         command.stdin.write(stdin)
         command.stdin.close()
@@ -1047,7 +1046,27 @@ class Document:
             else:
                 with open(target, 'wb') as fd:
                     shutil.copyfileobj(stdout, fd)
-        png = stdout.getvalue()
+        pngs = stdout.getvalue()
+
         # TODO: remove returned size or try to use something different from PIL
-        image = Image.open(io.BytesIO(png))
-        return png, image.width, image.height
+        images = []
+        magic_number = b'\x89\x50\x4e\x47\x0d\x0a\x1a\x0a'
+        for i, png in enumerate(pngs[8:].split(magic_number)):
+            images.append(Image.open(io.BytesIO(magic_number + png)))
+            open(f'/tmp/{i}.png', 'wb').write(magic_number + png)
+
+        if len(images) == 1:
+            return pngs, images[0].width, images[0].height
+
+        width = max(image.width for image in images)
+        height = sum(image.height for image in images)
+        output_image = Image.new('RGBA', (width, height))
+        top = 0
+        for image in images:
+            output_image.paste(
+                image, (int((width - image.width) / 2), top))
+            top += image.height
+        png = io.BytesIO()
+        output_image.save(png, format='png')
+        png.seek(0)
+        return png.read(), width, height
