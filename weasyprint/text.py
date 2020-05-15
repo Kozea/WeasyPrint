@@ -8,13 +8,10 @@
 
 import re
 
-import cairocffi as cairo
 import cffi
 import pyphen
 
 from .logger import LOGGER
-
-CAIRO_DUMMY_CONTEXT = cairo.Context(cairo.PDFSurface(None, 1, 1))
 
 
 ffi = cffi.FFI()
