@@ -313,13 +313,6 @@ ffi.cdef('''
     void pango_get_log_attrs (
         const char *text, int length, int level, PangoLanguage *language,
         PangoLogAttr *log_attrs, int attrs_len);
-
-
-    // PangoCairo
-
-    PangoLayout * pango_cairo_create_layout (cairo_t *cr);
-    void pango_cairo_update_layout (cairo_t *cr, PangoLayout *layout);
-    void pango_cairo_show_layout_line (cairo_t *cr, PangoLayoutLine *line);
 ''')
 
 
