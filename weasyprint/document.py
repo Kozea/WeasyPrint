@@ -46,7 +46,7 @@ def _w3c_date_to_pdf(string, attr_name):
         return None
     groups = match.groupdict()
     pdf_date = ''
-    found = False
+    found = groups['hour']
     for key in ('second', 'minute', 'hour', 'day', 'month', 'year'):
         if groups[key]:
             found = True
