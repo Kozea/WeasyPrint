@@ -214,7 +214,6 @@ def create_bookmarks(bookmarks, pdf, parent=None):
 
 def add_hyperlinks(links, anchors, matrix, pdf, page, names):
     """Include hyperlinks in current PDF page."""
-    page['Annots'] = pydyf.Array()
     for link in links:
         link_type, link_target, rectangle = link
         x1, y1 = matrix.transform_point(*rectangle[:2])
@@ -235,6 +234,8 @@ def add_hyperlinks(links, anchors, matrix, pdf, page, names):
                     'URI': pydyf.String(link_target),
                 })
             pdf.add_object(annot)
+            if 'Annots' not in page:
+                page['Annots'] = pydyf.Array()
             page['Annots'].append(annot.reference)
 
     for anchor in anchors:
@@ -764,7 +765,6 @@ class Document:
                 'MediaBox': pydyf.Array([left, top, right, bottom]),
                 'Contents': stream.reference,
                 'Resources': resources.reference,
-                'Annots': pydyf.Array(),
             })
             pdf.add_page(pdf_page)
 
@@ -818,6 +818,8 @@ class Document:
                         })})
                     })
                     pdf.add_object(annot)
+                    if 'Annots' not in pdf_page:
+                        pdf_page['Annots'] = pydyf.Array()
                     pdf_page['Annots'].append(annot.reference)
 
             # Bookmarks
@@ -898,8 +900,7 @@ class Document:
                 content['Names'].append(pdf_attachment.reference)
             pdf.add_object(content)
             if 'Names' not in pdf.catalog:
-                pdf.catalog['Names'] = pydyf.Dictionary(
-                    {'Dests': pydyf.Dictionary({'Names': pdf_names})})
+                pdf.catalog['Names'] = pydyf.Dictionary()
             pdf.catalog['Names']['EmbeddedFiles'] = content.reference
 
         # Embeded fonts
