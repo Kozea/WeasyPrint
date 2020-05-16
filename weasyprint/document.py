@@ -167,7 +167,10 @@ def _write_pdf_attachment(pdf, attachment, url_fetcher):
 
     # TODO: Use the result object from a URL fetch operation to provide more
     # details on the possible filename.
-    filename = basename(unquote(urlsplit(url).path)) or 'attachment.bin'
+    if url and urlsplit(url).path:
+        filename = basename(unquote(urlsplit(url).path))
+    else:
+        filename = 'attachment.bin'
 
     attachment = pydyf.Dictionary({
         'Type': '/Filespec',
