@@ -10,8 +10,8 @@ import hashlib
 import io
 import os
 import re
+from codecs import BOM_UTF16_BE
 
-import cairocffi
 import pytest
 
 from .. import Attachment
@@ -42,104 +42,64 @@ def assert_rect_almost_equal(rect, values):
 
 
 @assert_no_logs
-@pytest.mark.parametrize('width, height', (
-    (100, 100),
-    (200, 10),
-    (3.14, 987654321),
-))
-def test_pdf_parser(width, height):
-    fileobj = io.BytesIO()
-    surface = cairocffi.PDFSurface(fileobj, 1, 1)
-    surface.set_size(width, height)
-    surface.show_page()
-    surface.finish()
-
-    sizes = [page.get_value('MediaBox', '\\[(.+?)\\]').strip()
-             for page in pdf.PDFFile(fileobj).pages]
-    assert sizes == ['0 0 {} {}'.format(width, height).encode('ascii')]
-
-
-@assert_no_logs
 @pytest.mark.parametrize('zoom', (1, 1.5, 0.5))
 def test_page_size_zoom(zoom):
-    pdf_bytes = FakeHTML(
-        string='<style>@page{size:3in 4in').write_pdf(zoom=zoom)
+    pdf = FakeHTML(string='<style>@page{size:3in 4in').write_pdf(zoom=zoom)
     assert '/MediaBox [ 0 0 {} {} ]'.format(
-        int(216 * zoom), int(288 * zoom)).encode('ascii') in pdf_bytes
+        int(216 * zoom), int(288 * zoom)).encode('ascii') in pdf
 
 
 @assert_no_logs
 def test_bookmarks_1():
-    fileobj = io.BytesIO()
-    FakeHTML(string='''
+    pdf = FakeHTML(string='''
       <h1>a</h1>  #
       <h4>b</h4>  ####
       <h3>c</h3>  ###
       <h2>d</h2>  ##
       <h1>e</h1>  #
-    ''').write_pdf(target=fileobj)
+    ''').write_pdf()
     # a
     # |_ b
     # |_ c
     # L_ d
     # e
-    pdf_file = pdf.PDFFile(fileobj)
-    outlines = pdf_file.catalog.get_indirect_dict('Outlines', pdf_file)
-    assert outlines.get_type() == 'Outlines'
-    assert outlines.get_value('Count', '(.*)') == b'-5'
-    o1 = outlines.get_indirect_dict('First', pdf_file)
-    assert o1.get_value('Title', '(.*)') == b'(a)'
-    o11 = o1.get_indirect_dict('First', pdf_file)
-    assert o11.get_value('Title', '(.*)') == b'(b)'
-    o12 = o11.get_indirect_dict('Next', pdf_file)
-    assert o12.get_value('Title', '(.*)') == b'(c)'
-    o13 = o12.get_indirect_dict('Next', pdf_file)
-    assert o13.get_value('Title', '(.*)') == b'(d)'
-    o2 = o1.get_indirect_dict('Next', pdf_file)
-    assert o2.get_value('Title', '(.*)') == b'(e)'
+    assert re.findall(b'/Count ([0-9-]*)', pdf)[-1] == b'5'
+    assert re.findall(b'/Title \\((.*)\\)', pdf) == [
+        b'a', b'b', b'c', b'd', b'e']
 
 
 @assert_no_logs
 def test_bookmarks_2():
-    fileobj = io.BytesIO()
-    FakeHTML(string='<body>').write_pdf(target=fileobj)
-    pdf_file = pdf.PDFFile(fileobj)
-    with pytest.raises(AttributeError):
-        pdf_file.catalog.get_indirect_dict('Outlines', pdf_file)
+    pdf = FakeHTML(string='<body>').write_pdf()
+    assert b'Outlines' not in pdf
 
 
 @assert_no_logs
 def test_bookmarks_3():
-    fileobj = io.BytesIO()
-    FakeHTML(string='<h1>a nbsp…</h1>').write_pdf(target=fileobj)
-    pdf_file = pdf.PDFFile(fileobj)
-    outlines = pdf_file.catalog.get_indirect_dict('Outlines', pdf_file)
-    o1 = outlines.get_indirect_dict('First', pdf_file)
-    # <FEFF006100A0006E0062007300702026> is the PDF representation of a nbsp…
-    assert (
-        o1.get_value('Title', '(.*)') == b'<FEFF006100A0006E0062007300702026>')
+    pdf = FakeHTML(string='<h1>a nbsp…</h1>').write_pdf()
+    assert re.findall(b'/Title <(.*)>', pdf) == [
+        b'feff006100a0006e0062007300702026']
 
 
 @assert_no_logs
 def test_bookmarks_4():
-    fileobj = io.BytesIO()
-    FakeHTML(string='''
+    pdf = FakeHTML(string='''
       <style>
         * { height: 90pt; margin: 0 0 10pt 0 }
       </style>
-      <h1>Title 1</h1>
-      <h1>Title 2</h1>
-      <h2 style="position: relative; left: 20pt">Title 3</h2>
-      <h2>Title 4</h2>
-      <h3>Title 5</h3>
+      <h1>1</h1>
+      <h1>2</h1>
+      <h2 style="position: relative; left: 20pt">3</h2>
+      <h2>4</h2>
+      <h3>5</h3>
       <span style="display: block; page-break-before: always"></span>
-      <h2>Title 6</h2>
-      <h1>Title 7</h1>
-      <h2>Title 8</h2>
-      <h3>Title 9</h3>
-      <h1>Title 10</h1>
-      <h2>Title 11</h2>
-    ''').write_pdf(target=fileobj)
+      <h2>6</h2>
+      <h1>7</h1>
+      <h2>8</h2>
+      <h3>9</h3>
+      <h1>10</h1>
+      <h2>11</h2>
+    ''').write_pdf()
     # 1
     # 2
     # |_ 3
@@ -151,74 +111,42 @@ def test_bookmarks_4():
     #    L_ 9
     # 10
     # L_ 11
-    pdf_file = pdf.PDFFile(fileobj)
-    outlines = pdf_file.catalog.get_indirect_dict('Outlines', pdf_file)
-    assert outlines.get_type() == 'Outlines'
-    assert outlines.get_value('Count', '(.*)') == b'-11'
-    o1 = outlines.get_indirect_dict('First', pdf_file)
-    assert o1.get_value('Title', '(.*)') == b'(Title 1)'
-    o2 = o1.get_indirect_dict('Next', pdf_file)
-    assert o2.get_value('Title', '(.*)') == b'(Title 2)'
-    assert o2.get_value('Count', '(.*)') == b'4'
-    o3 = o2.get_indirect_dict('First', pdf_file)
-    assert o3.get_value('Title', '(.*)') == b'(Title 3)'
-    o4 = o3.get_indirect_dict('Next', pdf_file)
-    assert o4.get_value('Title', '(.*)') == b'(Title 4)'
-    assert o4.get_value('Count', '(.*)') == b'1'
-    o5 = o4.get_indirect_dict('First', pdf_file)
-    assert o5.get_value('Title', '(.*)') == b'(Title 5)'
-    o6 = o4.get_indirect_dict('Next', pdf_file)
-    assert o6.get_value('Title', '(.*)') == b'(Title 6)'
-    o7 = o2.get_indirect_dict('Next', pdf_file)
-    assert o7.get_value('Title', '(.*)') == b'(Title 7)'
-    assert o7.get_value('Count', '(.*)') == b'2'
-    o8 = o7.get_indirect_dict('First', pdf_file)
-    assert o8.get_value('Title', '(.*)') == b'(Title 8)'
-    assert o8.get_value('Count', '(.*)') == b'1'
-    o9 = o8.get_indirect_dict('First', pdf_file)
-    assert o9.get_value('Title', '(.*)') == b'(Title 9)'
-    o10 = o7.get_indirect_dict('Next', pdf_file)
-    assert o10.get_value('Title', '(.*)') == b'(Title 10)'
-    assert o10.get_value('Count', '(.*)') == b'1'
-    o11 = o10.get_indirect_dict('First', pdf_file)
-    assert o11.get_value('Title', '(.*)') == b'(Title 11)'
+    assert re.findall(b'/Title \\((.*)\\)', pdf) == [
+        str(i).encode('ascii') for i in range(1, 12)]
+    counts = re.findall(b'/Count ([0-9-]*)', pdf)
+    counts.pop(0)  # Page count
+    outlines = counts.pop()
+    assert outlines == b'11'
+    assert counts == [
+        b'0', b'4', b'0', b'1', b'0', b'0', b'2', b'1', b'0', b'1', b'0']
 
 
 @assert_no_logs
 def test_bookmarks_5():
-    fileobj = io.BytesIO()
-    FakeHTML(string='''
+    pdf = FakeHTML(string='''
       <h2>1</h2> level 1
       <h4>2</h4> level 2
       <h2>3</h2> level 1
       <h3>4</h3> level 2
       <h4>5</h4> level 3
-    ''').write_pdf(target=fileobj)
+    ''').write_pdf()
     # 1
     # L_ 2
     # 3
     # L_ 4
     #    L_ 5
-    pdf_file = pdf.PDFFile(fileobj)
-    outlines = pdf_file.catalog.get_indirect_dict('Outlines', pdf_file)
-    assert outlines.get_type() == 'Outlines'
-    assert outlines.get_value('Count', '(.*)') == b'-5'
-    o1 = outlines.get_indirect_dict('First', pdf_file)
-    assert o1.get_value('Title', '(.*)') == b'(1)'
-    o2 = o1.get_indirect_dict('First', pdf_file)
-    assert o2.get_value('Title', '(.*)') == b'(2)'
-    o3 = o1.get_indirect_dict('Next', pdf_file)
-    assert o3.get_value('Title', '(.*)') == b'(3)'
-    o4 = o3.get_indirect_dict('First', pdf_file)
-    assert o4.get_value('Title', '(.*)') == b'(4)'
-    o5 = o4.get_indirect_dict('First', pdf_file)
-    assert o5.get_value('Title', '(.*)') == b'(5)'
+    assert re.findall(b'/Title \\((.*)\\)', pdf) == [
+        str(i).encode('ascii') for i in range(1, 6)]
+    counts = re.findall(b'/Count ([0-9-]*)', pdf)
+    counts.pop(0)  # Page count
+    outlines = counts.pop()
+    assert outlines == b'5'
+    assert counts == [b'1', b'0', b'2', b'1', b'0']
 
 
 @assert_no_logs
 def test_bookmarks_6():
-    fileobj = io.BytesIO()
-    FakeHTML(string='''
+    pdf = FakeHTML(string='''
       <h2>1</h2> h2 level 1
       <h4>2</h4> h4 level 2
       <h3>3</h3> h3 level 2
@@ -228,7 +156,7 @@ def test_bookmarks_6():
       <h2>7</h2> h2 level 2
       <h4>8</h4> h4 level 3
       <h1>9</h1> h1 level 1
-    ''').write_pdf(target=fileobj)
+    ''').write_pdf()
     # 1
     # |_ 2
     # L_ 3
@@ -238,59 +166,33 @@ def test_bookmarks_6():
     # L_ 7
     #    L_ 8
     # 9
-    pdf_file = pdf.PDFFile(fileobj)
-    outlines = pdf_file.catalog.get_indirect_dict('Outlines', pdf_file)
-    assert outlines.get_type() == 'Outlines'
-    assert outlines.get_value('Count', '(.*)') == b'-9'
-    o1 = outlines.get_indirect_dict('First', pdf_file)
-    assert o1.get_value('Title', '(.*)') == b'(1)'
-    o2 = o1.get_indirect_dict('First', pdf_file)
-    assert o2.get_value('Title', '(.*)') == b'(2)'
-    o3 = o2.get_indirect_dict('Next', pdf_file)
-    assert o3.get_value('Title', '(.*)') == b'(3)'
-    o4 = o3.get_indirect_dict('First', pdf_file)
-    assert o4.get_value('Title', '(.*)') == b'(4)'
-    o5 = o1.get_indirect_dict('Next', pdf_file)
-    assert o5.get_value('Title', '(.*)') == b'(5)'
-    o6 = o5.get_indirect_dict('First', pdf_file)
-    assert o6.get_value('Title', '(.*)') == b'(6)'
-    o7 = o6.get_indirect_dict('Next', pdf_file)
-    assert o7.get_value('Title', '(.*)') == b'(7)'
-    o8 = o7.get_indirect_dict('First', pdf_file)
-    assert o8.get_value('Title', '(.*)') == b'(8)'
-    o9 = o5.get_indirect_dict('Next', pdf_file)
-    assert o9.get_value('Title', '(.*)') == b'(9)'
+    assert re.findall(b'/Title \\((.*)\\)', pdf) == [
+        str(i).encode('ascii') for i in range(1, 10)]
+    counts = re.findall(b'/Count ([0-9-]*)', pdf)
+    counts.pop(0)  # Page count
+    outlines = counts.pop()
+    assert outlines == b'9'
+    assert counts == [b'3', b'0', b'1', b'0', b'3', b'0', b'1', b'0', b'0']
 
 
 @assert_no_logs
 def test_bookmarks_7():
     # Reference for the next test. zoom=1
-    fileobj = io.BytesIO()
-    FakeHTML(string='<h2>a</h2>').write_pdf(target=fileobj)
-    pdf_file = pdf.PDFFile(fileobj)
-    outlines = pdf_file.catalog.get_indirect_dict('Outlines', pdf_file)
-    assert outlines.get_type() == 'Outlines'
-    o1 = outlines.get_indirect_dict('First', pdf_file)
-    assert o1.get_value('Title', '(.*)') == b'(a)'
-    y = float(o1.get_value('Dest', '\\[(.+?)\\]').strip().split()[-2])
+    pdf = FakeHTML(string='<h2>a</h2>').write_pdf()
 
-    fileobj = io.BytesIO()
-    FakeHTML(string='<h2>a</h2>').write_pdf(zoom=1.5, target=fileobj)
-    pdf_file = pdf.PDFFile(fileobj)
-    pdf_file = pdf.PDFFile(fileobj)
-    outlines = pdf_file.catalog.get_indirect_dict('Outlines', pdf_file)
-    assert outlines.get_type() == 'Outlines'
-    o1 = outlines.get_indirect_dict('First', pdf_file)
-    assert o1.get_value('Title', '(.*)') == b'(a)'
-    assert (
-        float(o1.get_value('Dest', '\\[(.+?)\\]').strip().split()[-2]) ==
-        round(y * 1.5))
+    assert re.findall(b'/Title \\((.*)\\)', pdf) == [b'a']
+    dest, = re.findall(b'/Dest \\[(.*)\\]', pdf)
+    y = round(float(dest.strip().split()[-2]))
+
+    pdf = FakeHTML(string='<h2>a</h2>').write_pdf(zoom=1.5)
+    assert re.findall(b'/Title \\((.*)\\)', pdf) == [b'a']
+    dest, = re.findall(b'/Dest \\[(.*)\\]', pdf)
+    assert round(float(dest.strip().split()[-2])) == 1.5 * y
 
 
 @assert_no_logs
 def test_bookmarks_8():
-    fileobj = io.BytesIO()
-    FakeHTML(string='''
+    pdf = FakeHTML(string='''
       <h1>a</h1>
       <h2>b</h2>
       <h3>c</h3>
@@ -298,7 +200,7 @@ def test_bookmarks_8():
       <h3>e</h3>
       <h4>f</h4>
       <h1>g</h1>
-    ''').write_pdf(target=fileobj)
+    ''').write_pdf()
     # a
     # |_ b
     # |  |_ c
@@ -306,34 +208,19 @@ def test_bookmarks_8():
     # |  |_ e
     # |     |_ f
     # g
-    pdf_file = pdf.PDFFile(fileobj)
-    outlines = pdf_file.catalog.get_indirect_dict('Outlines', pdf_file)
-    assert outlines.get_type() == 'Outlines'
-    # d is closed, the number of displayed outlines is len(a, b, c, d, g) == 5
-    assert outlines.get_value('Count', '(.*)') == b'-5'
-    o1 = outlines.get_indirect_dict('First', pdf_file)
-    assert o1.get_value('Title', '(.*)') == b'(a)'
-    o11 = o1.get_indirect_dict('First', pdf_file)
-    assert o11.get_value('Title', '(.*)') == b'(b)'
-    o111 = o11.get_indirect_dict('First', pdf_file)
-    assert o111.get_value('Title', '(.*)') == b'(c)'
-    o12 = o11.get_indirect_dict('Next', pdf_file)
-    assert o12.get_value('Title', '(.*)') == b'(d)'
-    o121 = o12.get_indirect_dict('First', pdf_file)
-    assert o121.get_value('Title', '(.*)') == b'(e)'
-    o1211 = o121.get_indirect_dict('First', pdf_file)
-    assert o1211.get_value('Title', '(.*)') == b'(f)'
-    o2 = o1.get_indirect_dict('Next', pdf_file)
-    assert o2.get_value('Title', '(.*)') == b'(g)'
+    assert re.findall(b'/Title \\((.*)\\)', pdf) == [
+        b'a', b'b', b'c', b'd', b'e', b'f', b'g']
+    counts = re.findall(b'/Count ([0-9-]*)', pdf)
+    counts.pop(0)  # Page count
+    outlines = counts.pop()
+    assert outlines == b'5'
+    assert counts == [b'3', b'1', b'0', b'-2', b'1', b'0', b'0']
 
 
 @assert_no_logs
 def test_links_none():
-    fileobj = io.BytesIO()
-    FakeHTML(string='<body>').write_pdf(target=fileobj)
-    pdf_file = pdf.PDFFile(fileobj)
-    with pytest.raises(AttributeError):
-        pdf_file.pages[0].get_indirect_dict_array('Annots', pdf_file)
+    pdf = FakeHTML(string='<body>').write_pdf()
+    assert b'Annots' not in pdf
 
 
 @assert_no_logs
@@ -551,8 +438,7 @@ def test_embed_jpeg():
 
 @assert_no_logs
 def test_document_info():
-    fileobj = io.BytesIO()
-    FakeHTML(string='''
+    pdf = FakeHTML(string='''
       <meta name=author content="I Me &amp; Myself">
       <title>Test document</title>
       <h1>Another title</h1>
@@ -562,17 +448,16 @@ def test_document_info():
       <meta name=description content="Blah… ">
       <meta name=dcterms.created content=2011-04-21T23:00:00Z>
       <meta name=dcterms.modified content=2013-07-21T23:46+01:00>
-    ''').write_pdf(target=fileobj)
-    info = pdf.PDFFile(fileobj).info
-    assert info.get_value('Author', '(.*)') == b'(I Me & Myself)'
-    assert info.get_value('Title', '(.*)') == b'(Test document)'
-    assert info.get_value('Creator', '(.*)') == (
-        b'<FEFF00480075006D0061006E00A00061006600740065007200A00061006C006C>')
-    assert info.get_value('Keywords', '(.*)') == b'(html, css, pdf)'
-    assert info.get_value('Subject', '(.*)') == (
-        b'<FEFF0042006C0061006820260020>')
-    assert info.get_value('CreationDate', '(.*)') == b"(20110421230000+00'00)"
-    assert info.get_value('ModDate', '(.*)') == b"(20130721234600+01'00)"
+    ''').write_pdf()
+    assert b'/Author (I Me & Myself)' in pdf
+    assert b'/Title (Test document)' in pdf
+    assert (
+        b'/Creator <feff00480075006d0061006e00a00061'
+        b'006600740065007200a00061006c006c>') in pdf
+    assert b'/Keywords (html, css, pdf)' in pdf
+    assert b'/Subject <feff0042006c0061006820260020>' in pdf
+    assert b'/CreationDate (20110421230000Z)' in pdf
+    assert b"/ModDate (20130721234600+01'00)" in pdf
 
 
 @assert_no_logs
@@ -589,8 +474,7 @@ def test_embedded_files_attachments(tmpdir):
     with open(relative_tmp_file, 'wb') as rfile:
         rfile.write(rdata)
 
-    fileobj = io.BytesIO()
-    FakeHTML(
+    pdf = FakeHTML(
         string='''
           <title>Test document</title>
           <meta charset="utf-8">
@@ -605,91 +489,71 @@ def test_embedded_files_attachments(tmpdir):
         '''.format(absolute_url, os.path.basename(relative_tmp_file)),
         base_url=tmpdir.strpath,
     ).write_pdf(
-        target=fileobj,
         attachments=[
             Attachment('data:,oob attachment', description='Hello'),
             'data:,raw URL',
             io.BytesIO(b'file like obj')
         ]
     )
-    pdf_bytes = fileobj.getvalue()
     assert (
         '<{}>'.format(hashlib.md5(b'hi there').hexdigest()).encode('ascii')
-        in pdf_bytes)
-    assert b'/F ()' in pdf_bytes
-    assert (
-        b'/UF (\xfe\xff\x00a\x00t\x00t\x00a\x00c\x00h\x00m\x00e\x00n'
-        b'\x00t\x00.\x00b\x00i\x00n)' in pdf_bytes)
-    assert (
-        b'/Desc (\xfe\xff\x00s\x00o\x00m\x00e\x00 \x00f\x00i\x00l\x00e'
-        b'\x00 \x00a\x00t\x00t\x00a\x00c\x00h\x00m\x00e\x00n\x00t\x00 '
-        b'\x00\xe4\x00\xf6\x00\xfc)' in pdf_bytes)
+        in pdf)
+    assert b'/F ()' in pdf
+    assert b'/UF (attachment.bin)' in pdf
+    name = BOM_UTF16_BE + 'some file attachment äöü'.encode('utf-16-be')
+    assert b'/Desc <' + name.hex().encode('ascii') + b'>' in pdf
 
-    assert hashlib.md5(adata).hexdigest().encode('ascii') in pdf_bytes
-    assert (
-        os.path.basename(absolute_tmp_file).encode('utf-16-be')
-        in pdf_bytes)
+    assert hashlib.md5(adata).hexdigest().encode('ascii') in pdf
+    assert os.path.basename(absolute_tmp_file).encode('ascii') in pdf
 
-    assert hashlib.md5(rdata).hexdigest().encode('ascii') in pdf_bytes
-    assert (
-        os.path.basename(relative_tmp_file).encode('utf-16-be')
-        in pdf_bytes)
+    assert hashlib.md5(rdata).hexdigest().encode('ascii') in pdf
+    name = BOM_UTF16_BE + 'some file attachment äöü'.encode('utf-16-be')
+    assert b'/Desc <' + name.hex().encode('ascii') + b'>' in pdf
 
-    assert (
-        hashlib.md5(b'oob attachment').hexdigest().encode('ascii')
-        in pdf_bytes)
-    assert b'/Desc (\xfe\xff\x00H\x00e\x00l\x00l\x00o)' in pdf_bytes
-    assert (
-        hashlib.md5(b'raw URL').hexdigest().encode('ascii')
-        in pdf_bytes)
-    assert (
-        hashlib.md5(b'file like obj').hexdigest().encode('ascii')
-        in pdf_bytes)
+    assert hashlib.md5(b'oob attachment').hexdigest().encode('ascii') in pdf
+    assert b'/Desc (Hello)' in pdf
+    assert hashlib.md5(b'raw URL').hexdigest().encode('ascii') in pdf
+    assert hashlib.md5(b'file like obj').hexdigest().encode('ascii') in pdf
 
-    assert b'/EmbeddedFiles' in pdf_bytes
-    assert b'/Outlines' in pdf_bytes
+    assert b'/EmbeddedFiles' in pdf
+    assert b'/Outlines' in pdf
 
 
 @assert_no_logs
 def test_attachments_data():
-    fileobj = io.BytesIO()
-    FakeHTML(string='''
+    pdf = FakeHTML(string='''
       <title>Test document 2</title>
       <meta charset="utf-8">
       <link rel="attachment" href="data:,some data">
-    ''').write_pdf(target=fileobj)
+    ''').write_pdf()
     md5 = '<{}>'.format(hashlib.md5(b'some data').hexdigest()).encode('ascii')
-    assert md5 in fileobj.getvalue()
+    assert md5 in pdf
 
 
 @assert_no_logs
 def test_attachments_none():
-    fileobj = io.BytesIO()
-    FakeHTML(string='''
+    pdf = FakeHTML(string='''
       <title>Test document 3</title>
       <meta charset="utf-8">
       <h1>Heading</h1>
-    ''').write_pdf(target=fileobj)
-    pdf_bytes = fileobj.getvalue()
-    assert b'Names' not in pdf_bytes
-    assert b'Outlines' in pdf_bytes
+    ''').write_pdf()
+    assert b'Names' not in pdf
+    assert b'Outlines' in pdf
 
 
 @assert_no_logs
 def test_attachments_none_empty():
-    fileobj = io.BytesIO()
-    FakeHTML(string='''
+    pdf = FakeHTML(string='''
       <title>Test document 3</title>
       <meta charset="utf-8">
-    ''').write_pdf(target=fileobj)
-    pdf_bytes = fileobj.getvalue()
-    assert b'Names' not in pdf_bytes
-    assert b'Outlines' not in pdf_bytes
+    ''').write_pdf()
+    assert b'Names' not in pdf
+    assert b'Outlines' not in pdf
 
 
 @assert_no_logs
 def test_annotations():
-    pdf_bytes = FakeHTML(string='''
+    pdf = FakeHTML(string='''
       <title>Test document</title>
       <meta charset="utf-8">
       <a
@@ -698,36 +562,28 @@ def test_annotations():
         download>A link that lets you download an attachment</a>
     ''').write_pdf()
 
-    assert hashlib.md5(b'some data').hexdigest().encode('ascii') in pdf_bytes
-    assert b'/FileAttachment' in pdf_bytes
-    assert b'/EmbeddedFiles' not in pdf_bytes
+    assert hashlib.md5(b'some data').hexdigest().encode('ascii') in pdf
+    assert b'/FileAttachment' in pdf
+    assert b'/EmbeddedFiles' not in pdf
 
 
 @pytest.mark.parametrize('style, media, bleed, trim', (
     ('bleed: 30pt; size: 10pt',
-     [0, 0, 70, 70],
-     [20.0, 20.0, 50.0, 50.0],
-     [30.0, 30.0, 40.0, 40.0]),
+     [-30, -30, 40, 40],
+     [-10, -10, 20, 20],
+     [0, 0, 10, 10]),
     ('bleed: 15pt 3pt 6pt 18pt; size: 12pt 15pt',
-     [0, 0, 33, 36],
-     [8.0, 5.0, 33.0, 36.0],
-     [18.0, 15.0, 30.0, 30.0]),
+     [-18, -15, 15, 21],
+     [-10, -10, 15, 21],
+     [0, 0, 12, 15]),
 ))
 @assert_no_logs
 def test_bleed(style, media, bleed, trim):
-    fileobj = io.BytesIO()
-    FakeHTML(string='''
+    pdf = FakeHTML(string='''
       <title>Test document</title>
       <style>@page { %s }</style>
       <body>test
-    ''' % style).write_pdf(target=fileobj)
-    pdf_bytes = fileobj.getvalue()
-    assert (
-        '/MediaBox [ {} {} {} {} ]'.format(*media).encode('ascii')
-        in pdf_bytes)
-    assert (
-        '/BleedBox [ {} {} {} {} ]'.format(*bleed).encode('ascii')
-        in pdf_bytes)
-    assert (
-        '/TrimBox [ {} {} {} {} ]'.format(*trim).encode('ascii')
-        in pdf_bytes)
+    ''' % style).write_pdf()
+    assert '/MediaBox [ {} {} {} {} ]'.format(*media).encode('ascii') in pdf
+    assert '/BleedBox [ {} {} {} {} ]'.format(*bleed).encode('ascii') in pdf
+    assert '/TrimBox [ {} {} {} {} ]'.format(*trim).encode('ascii') in pdf
