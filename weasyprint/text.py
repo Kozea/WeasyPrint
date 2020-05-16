@@ -13,7 +13,6 @@ import pyphen
 
 from .logger import LOGGER
 
-
 ffi = cffi.FFI()
 ffi.cdef('''
     // HarfBuzz
