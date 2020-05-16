@@ -857,7 +857,7 @@ class Document:
             pdf.add_object(outlines_dictionary)
             for outline in outlines:
                 outline['Parent'] = outlines_dictionary.reference
-            pdf.catalog['Outlines'] = outlines_dictionary
+            pdf.catalog['Outlines'] = outlines_dictionary.reference
 
         PROGRESS_LOGGER.info('Step 7 - Adding PDF metadata')
 
