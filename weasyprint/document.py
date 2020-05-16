@@ -701,8 +701,6 @@ class Document:
         resources = pydyf.Dictionary({'ExtGState': alpha_states.reference})
         pdf.add_object(resources)
         pdf_names = pydyf.Array()
-        pdf.catalog['Names'] = pydyf.Dictionary(
-            {'Dests': pydyf.Dictionary({'Names': pdf_names})})
 
         # Links and anchors
         paged_links_and_anchors = list(resolve_links(self.pages))
@@ -896,6 +894,9 @@ class Document:
                 content['Names'].append(pydyf.String(f'attachment{i}'))
                 content['Names'].append(pdf_attachment.reference)
             pdf.add_object(content)
+            if 'Names' not in pdf.catalog:
+                pdf.catalog['Names'] = pydyf.Dictionary(
+                    {'Dests': pydyf.Dictionary({'Names': pdf_names})})
             pdf.catalog['Names']['EmbeddedFiles'] = content.reference
 
         # Embeded fonts
