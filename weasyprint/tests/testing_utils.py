@@ -14,9 +14,7 @@ import sys
 import threading
 import wsgiref.simple_server
 
-import pytest
-
-from .. import CSS, HTML, text
+from .. import CSS, HTML
 from ..logger import LOGGER
 from ..urls import path2url
 
