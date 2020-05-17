@@ -724,12 +724,10 @@ class Document:
 
         pdf = pydyf.PDF()
         alpha_states = pydyf.Dictionary()
-        pdf.add_object(alpha_states)
         x_objects = pydyf.Dictionary()
-        pdf.add_object(x_objects)
         resources = pydyf.Dictionary({
-            'ExtGState': alpha_states.reference,
-            'XObject': x_objects.reference,
+            'ExtGState': alpha_states,
+            'XObject': x_objects,
         })
         pdf.add_object(resources)
         pdf_names = pydyf.Array()
