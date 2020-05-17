@@ -1028,6 +1028,11 @@ class Document:
             pdf.add_object(x_object)
             x_objects[key] = x_object.reference
 
+        # Anchors
+        if pdf_names:
+            pdf.catalog['Names'] = pydyf.Dictionary(
+                {'Dests': pydyf.Dictionary({'Names': pdf_names})})
+
         if finisher:
             finisher(self, pdf)
 
