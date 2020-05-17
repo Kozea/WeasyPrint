@@ -876,6 +876,7 @@ class Document:
                 del last_by_depth[depth:]
                 last_by_depth.append(children)
 
+        # Outlines
         outlines, count = create_bookmarks(root, pdf)
         if outlines:
             outlines_dictionary = pydyf.Dictionary({
