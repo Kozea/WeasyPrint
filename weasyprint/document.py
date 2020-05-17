@@ -1074,9 +1074,7 @@ class Document:
 
         """
         # TODO: use GhostScript as a library
-        # TODO: handle multiple pages
         stdin = self.write_pdf()
-        stdout = io.BytesIO()
         command = [
             'gs', '-q', '-sstdout=%stderr', '-dNOPAUSE', '-dBATCH', '-dSAFER',
             f'-dTextAlphaBits={antialiasing}',
@@ -1085,35 +1083,37 @@ class Document:
         command = Popen(command, stdin=PIPE, stdout=PIPE)
         command.stdin.write(stdin)
         command.stdin.close()
-        stdout.write(command.stdout.read())
+        pngs = command.stdout.read()
+        magic_number = b'\x89\x50\x4e\x47\x0d\x0a\x1a\x0a'
+
+        if pngs.count(magic_number) == 1:
+            if target is None:
+                return pngs
+            png = io.BytesIO(pngs)
+        else:
+            images = []
+            for i, png in enumerate(pngs[8:].split(magic_number)):
+                images.append(Image.open(io.BytesIO(magic_number + png)))
+
+            width = max(image.width for image in images)
+            height = sum(image.height for image in images)
+            output_image = Image.new('RGBA', (width, height))
+            top = 0
+            for image in images:
+                output_image.paste(
+                    image, (int((width - image.width) / 2), top))
+                top += image.height
+            png = io.BytesIO()
+            output_image.save(png, format='png')
+
+        png.seek(0)
 
         if target is not None:
-            stdout.seek(0)
             if hasattr(target, 'write'):
-                shutil.copyfileobj(stdout, target)
+                shutil.copyfileobj(png, target)
             else:
                 with open(target, 'wb') as fd:
-                    shutil.copyfileobj(stdout, fd)
-        pngs = stdout.getvalue()
+                    shutil.copyfileobj(png, fd)
+            return
 
-        # TODO: remove returned size or try to use something different from PIL
-        images = []
-        magic_number = b'\x89\x50\x4e\x47\x0d\x0a\x1a\x0a'
-        for i, png in enumerate(pngs[8:].split(magic_number)):
-            images.append(Image.open(io.BytesIO(magic_number + png)))
-
-        if len(images) == 1:
-            return pngs, images[0].width, images[0].height
-
-        width = max(image.width for image in images)
-        height = sum(image.height for image in images)
-        output_image = Image.new('RGBA', (width, height))
-        top = 0
-        for image in images:
-            output_image.paste(
-                image, (int((width - image.width) / 2), top))
-            top += image.height
-        png = io.BytesIO()
-        output_image.save(png, format='png')
-        png.seek(0)
-        return png.read(), width, height
+        return png.read()

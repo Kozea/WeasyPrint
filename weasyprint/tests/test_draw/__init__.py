@@ -60,13 +60,15 @@ def assert_same_rendering(expected_width, expected_height, documents,
     pixels_list = []
 
     for name, html in documents:
-        pixels = html_to_pixels(name, expected_width, expected_height, html)
+        pixels = html_to_pixels(
+            name, expected_width, expected_height, html)
         pixels_list.append((name, pixels))
 
     _name, reference = pixels_list[0]
     for name, pixels in pixels_list[1:]:
-        assert_pixels_equal(name, expected_width, expected_height,
-                            reference, pixels, tolerance)
+        assert_pixels_equal(
+            name, expected_width, expected_height, reference, pixels,
+            tolerance)
 
 
 def assert_different_renderings(expected_width, expected_height, documents):

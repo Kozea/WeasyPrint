@@ -6,10 +6,12 @@
 
 """
 
+import io
 from base64 import encodebytes
 from urllib.parse import parse_qs
 from wsgiref.simple_server import make_server
 
+from PIL import Image
 from weasyprint import CSS, HTML
 from weasyprint.urls import url_is_absolute
 
@@ -21,10 +23,11 @@ STYLESHEET = CSS(string='''
 def get_pages(html):
     document = html.render(stylesheets=[STYLESHEET])
     for page in document.pages:
-        png_bytes, width, height = document.copy([page]).write_png()
+        png_bytes = document.copy([page]).write_png()
+        image = Image.open(io.BytesIO(png_bytes))
         data_url = 'data:image/png;base64,' + (
             encodebytes(png_bytes).decode('ascii').replace('\n', ''))
-        yield width, height, data_url, page.links, page.anchors
+        yield image.width, image.height, data_url, page.links, page.anchors
 
 
 def render_template(url):

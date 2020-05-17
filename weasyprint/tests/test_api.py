@@ -104,11 +104,9 @@ class _fake_file:
         return b''.join(self.chunks)
 
 
-def _png_size(result):
-    png_bytes, width, height = result
-    surface = cairo.ImageSurface.create_from_png(io.BytesIO(png_bytes))
-    assert (surface.get_width(), surface.get_height()) == (width, height)
-    return width, height
+def _png_size(png_bytes):
+    image = Image.open(io.BytesIO(png_bytes))
+    return image.width, image.height
 
 
 def _round_meta(pages):
@@ -480,8 +478,8 @@ def test_low_level_api():
     page, = document.pages
     assert page.width == 8
     assert page.height == 8
-    assert document.write_png() == (png_bytes, 8, 8)
-    assert document.copy([page]).write_png() == (png_bytes, 8, 8)
+    assert document.write_png() == png_bytes
+    assert document.copy([page]).write_png() == png_bytes
 
     surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, 8, 8)
     page.paint(cairo.Context(surface))
@@ -503,8 +501,7 @@ def test_low_level_api():
     document = html.render([css])
     page, = document.pages
     assert (page.width, page.height) == (8, 8)
-    png_bytes, width, height = document.write_png(resolution=192)
-    assert (width, height) == (16, 16)
+    png_bytes = document.write_png(resolution=192)
     check_png_pattern(png_bytes, x2=True)
 
     document = html.render([css])

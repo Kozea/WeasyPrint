@@ -250,12 +250,10 @@ class HTML:
             ``target``.)
 
         """
-        png_bytes, _width, _height = (
-            self.render(
-                stylesheets, presentational_hints=presentational_hints,
-                font_config=font_config, counter_style=counter_style)
-            .write_png(target, resolution, antialiasing))
-        return png_bytes
+        return self.render(
+            stylesheets, presentational_hints=presentational_hints,
+            font_config=font_config, counter_style=counter_style).write_png(
+                target, resolution, antialiasing)
 
 
 class CSS:
