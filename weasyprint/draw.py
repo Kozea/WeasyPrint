@@ -201,7 +201,10 @@ def draw_stacking_context(context, stacking_context):
             context.clip()
 
         if box.style['opacity'] < 1:
-            context.push_group()
+            context = context.push_group([
+                box.border_box_x(), box.border_box_y(),
+                box.border_box_x() + box.border_width(),
+                box.border_box_y() + box.border_height()])
 
         if box.transformation_matrix:
             if box.transformation_matrix.determinant:
@@ -268,8 +271,12 @@ def draw_stacking_context(context, stacking_context):
         draw_outlines(context, box)
 
         if box.style['opacity'] < 1:
-            context.pop_group_to_source()
-            context.paint_with_alpha(box.style['opacity'])
+            group_id = context.id
+            context = context.pop_group()
+            context.push_state()
+            context.set_alpha(box.style['opacity'], stroke=None)
+            context.draw_x_object(group_id)
+            context.pop_state()
 
 
 def rounded_box_path(context, radii):

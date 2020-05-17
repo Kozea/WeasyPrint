@@ -96,15 +96,19 @@ class Font:
 
 class Context(pydyf.Stream):
     """PDF stream object with context storing alpha states."""
-    def __init__(self, alpha_states, *args, **kwargs):
+    def __init__(self, alpha_states, x_objects, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._alpha_states = alpha_states
+        self._x_objects = x_objects
         self._fonts = {}
 
     def set_alpha(self, alpha, stroke=False):
         if alpha not in self._alpha_states:
-            self._alpha_states[alpha] = pydyf.Dictionary(
-                {'CA' if stroke else 'ca': alpha})
+            self._alpha_states[alpha] = pydyf.Dictionary()
+            if stroke in (None, False):
+                self._alpha_states[alpha]['ca'] = alpha
+            if stroke in (None, True):
+                self._alpha_states[alpha]['CA'] = alpha
         self.set_state(alpha)
 
     def add_font(self, font, pango_font):
@@ -112,6 +116,25 @@ class Context(pydyf.Stream):
         if font_hash not in self._fonts:
             self._fonts[font_hash] = Font(font, pango_font)
         return self._fonts[font_hash]
+
+    def push_group(self, bounding_box):
+        group = Context(self._alpha_states, self._x_objects)
+        group.id = f'x{len(self._x_objects)}'
+        group._x_objects[group.id] = group
+        group.extra['Type'] = '/XObject'
+        group.extra['Subtype'] = '/Form'
+        group.extra['BBox'] = pydyf.Array(bounding_box)
+        group.extra['Group'] = pydyf.Dictionary({
+            'Type': '/Group',
+            'S': '/Transparency',
+            'I': 'true',
+            'CS': '/DeviceRGB',
+        })
+        group._parent = self
+        return group
+
+    def pop_group(self):
+        return self._parent
 
 
 BookmarkSubtree = collections.namedtuple(
@@ -702,7 +725,12 @@ class Document:
         pdf = pydyf.PDF()
         alpha_states = pydyf.Dictionary()
         pdf.add_object(alpha_states)
-        resources = pydyf.Dictionary({'ExtGState': alpha_states.reference})
+        x_objects = pydyf.Dictionary()
+        pdf.add_object(x_objects)
+        resources = pydyf.Dictionary({
+            'ExtGState': alpha_states.reference,
+            'XObject': x_objects.reference,
+        })
         pdf.add_object(resources)
         pdf_names = pydyf.Array()
 
@@ -754,7 +782,7 @@ class Document:
             right = left + page_width
             bottom = top + page_height
 
-            stream = Context(alpha_states)
+            stream = Context(alpha_states, x_objects)
             stream.transform(1, 0, 0, -1, 0, page.height * scale)
             page.paint(stream, scale=scale)
             pdf.add_object(stream)
@@ -994,6 +1022,12 @@ class Document:
             })
             pdf.add_object(font_dictionary)
             resources['Font'][str(font_hash)] = font_dictionary.reference
+
+        # XObjects
+        for key, x_object in x_objects.items():
+            # XObjects must use references
+            pdf.add_object(x_object)
+            x_objects[key] = x_object.reference
 
         if finisher:
             finisher(self, pdf)
