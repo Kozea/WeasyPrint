@@ -720,9 +720,11 @@ def first_line_metrics(first_line, text, layout, resume_at, space_collapse,
 
 class Layout:
     """Object holding PangoLayout-related cdata pointers."""
-    def __init__(self, context, font_size, style, justification_spacing=0):
+    def __init__(self, context, font_size, style, justification_spacing=0,
+                 max_width=None):
         self.justification_spacing = justification_spacing
         self.setup(context, font_size, style)
+        self.max_width = max_width
 
     def setup(self, context, font_size, style):
         self.context = context
@@ -1023,15 +1025,13 @@ def create_layout(text, style, context, max_width, justification_spacing):
         or ``None`` for unlimited width.
 
     """
-    text_wrap = style['white_space'] in ('normal', 'pre-wrap', 'pre-line')
-    if not text_wrap:
-        max_width = None
-
-    layout = Layout(context, style['font_size'], style, justification_spacing)
+    layout = Layout(
+        context, style['font_size'], style, justification_spacing, max_width)
 
     # Make sure that max_width * Pango.SCALE == max_width * 1024 fits in a
     # signed integer. Treat bigger values same as None: unconstrained width.
-    if max_width is not None and max_width < 2 ** 21:
+    text_wrap = style['white_space'] in ('normal', 'pre-wrap', 'pre-line')
+    if max_width is not None and text_wrap and max_width < 2 ** 21:
         pango.pango_layout_set_width(
             layout.layout, units_from_double(max_width))
 
@@ -1060,6 +1060,7 @@ def split_first_line(text, style, context, max_width, justification_spacing,
     text_wrap = style['white_space'] in ('normal', 'pre-wrap', 'pre-line')
     space_collapse = style['white_space'] in ('normal', 'nowrap', 'pre-line')
 
+    original_max_width = max_width
     if not text_wrap:
         max_width = None
 
@@ -1089,7 +1090,7 @@ def split_first_line(text, style, context, max_width, justification_spacing,
                 layout = None
     if layout is None:
         layout = create_layout(
-            text, style, context, max_width, justification_spacing)
+            text, style, context, original_max_width, justification_spacing)
         first_line, index = layout.get_first_line()
     resume_at = index
 
@@ -1304,7 +1305,8 @@ def show_first_line(context, textbox, text_overflow, x, y):
         textbox.pango_layout.layout, True)
 
     if text_overflow == 'ellipsis':
-        max_width = context.clip_extents()[2] - textbox.position_x
+        assert textbox.pango_layout.max_width is not None
+        max_width = textbox.pango_layout.max_width
         pango.pango_layout_set_width(
             textbox.pango_layout.layout, units_from_double(max_width))
         pango.pango_layout_set_ellipsize(
