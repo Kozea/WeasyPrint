@@ -451,7 +451,7 @@ class Page:
         anchor_name = box.style['anchor']
         has_bookmark = bookmark_label and bookmark_level
         # 'link' is inherited but redundant on text boxes
-        has_link = link and not isinstance(box, boxes.TextBox)
+        has_link = link and not isinstance(box, (boxes.TextBox, boxes.LineBox))
         # In case of duplicate IDs, only the first is an anchor.
         has_anchor = anchor_name and anchor_name not in self.anchors
         is_attachment = hasattr(box, 'is_attachment') and box.is_attachment
