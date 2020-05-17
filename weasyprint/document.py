@@ -1049,7 +1049,7 @@ class Document:
                 with open(target, 'wb') as fd:
                     shutil.copyfileobj(file_obj, fd)
 
-    def write_png(self, target=None, resolution=96, antialiasing=4):
+    def write_png(self, target=None, resolution=96, antialiasing=1):
         """Paint the pages vertically to a single PNG image.
 
         There is no decoration around pages other than those specified in CSS
@@ -1064,8 +1064,8 @@ class Document:
             (the default), PNG pixels match the CSS ``px`` unit.
         :type antialiasing: int
         :param antialiasing:
-            The antialiasing subsampling box size. Default is 4, can be set to
-            1 to disable antialiasing.
+            The antialiasing subsampling box size. Default is 1 (disabled), can
+            be set to 4 for optimal (but slow) antialiasing.
         :returns:
             A ``(png_bytes, png_width, png_height)`` tuple. ``png_bytes`` is a
             byte string if ``target`` is :obj:`None`, otherwise :obj:`None`
