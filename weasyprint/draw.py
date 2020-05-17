@@ -461,11 +461,12 @@ def draw_background_image(context, layer, image_rendering):
         else:
             repeat_height = image_height
 
+    return
+    # TODO: handle this
     sub_surface = cairo.PDFSurface(None, repeat_width, repeat_height)
     sub_context = cairo.Context(sub_surface)
     sub_context.rectangle(0, 0, image_width, image_height)
     sub_context.clip()
-    sub_context.end()
     layer.image.draw(sub_context, image_width, image_height, image_rendering)
     pattern = cairo.SurfacePattern(sub_surface)
 

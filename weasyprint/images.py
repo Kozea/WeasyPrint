@@ -71,6 +71,8 @@ class RasterImage:
         if not has_size:
             return
 
+        return
+        # TODO: handle this
         # Use the real intrinsic size here,
         # not affected by 'image-resolution'.
         context.transform(
