@@ -25,7 +25,7 @@ def test_unicode():
       }
       p { color: blue }
     '''
-    _doc, expected_lines = html_to_pixels('unicode_reference', 200, 50, '''
+    expected_lines = html_to_pixels('unicode_reference', 200, 50, '''
       <style>{0}</style>
       <p><img src="pattern.png"> {1}</p>
     '''.format(style, text))

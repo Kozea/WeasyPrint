@@ -47,7 +47,7 @@ def assert_pixels(name, expected_width, expected_height, expected_pixels,
     assert len(expected_pixels) == expected_height
     assert len(expected_pixels[0]) == expected_width * 4
     expected_raw = b''.join(expected_pixels)
-    _doc, pixels = html_to_pixels(name, expected_width, expected_height, html)
+    pixels = html_to_pixels(name, expected_width, expected_height, html)
     assert_pixels_equal(
         name, expected_width, expected_height, pixels, expected_raw)
 
@@ -62,8 +62,7 @@ def assert_same_rendering(expected_width, expected_height, documents,
     pixels_list = []
 
     for name, html in documents:
-        _doc, pixels = html_to_pixels(
-            name, expected_width, expected_height, html)
+        pixels = html_to_pixels(name, expected_width, expected_height, html)
         pixels_list.append((name, pixels))
 
     _name, reference = pixels_list[0]
@@ -81,8 +80,7 @@ def assert_different_renderings(expected_width, expected_height, documents):
     pixels_list = []
 
     for name, html in documents:
-        _doc, pixels = html_to_pixels(
-            name, expected_width, expected_height, html)
+        pixels = html_to_pixels(name, expected_width, expected_height, html)
         pixels_list.append((name, pixels))
 
     for i, (name_1, pixels_1) in enumerate(pixels_list):
@@ -120,7 +118,7 @@ def html_to_pixels(name, expected_width, expected_height, html):
         base_url=resource_filename('<test>'))
     pixels = document_to_pixels(
         document, name, expected_width, expected_height)
-    return document, pixels
+    return pixels
 
 
 def document_to_pixels(document, name, expected_width, expected_height):

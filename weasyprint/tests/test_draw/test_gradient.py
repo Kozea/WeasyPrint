@@ -155,7 +155,7 @@ def test_radial_gradients_3():
     for thin, gradient in ((False, 'red 20%, blue 80%'),
                            (True, 'red 50%, blue 50%')):
         B, R = PIXELS_BY_CHAR['B'], PIXELS_BY_CHAR['R']
-        _, pixels = html_to_pixels(
+        pixels = html_to_pixels(
             'radial_gradient_' + gradient, 10, 16,
             '<style>@page { size: 10px 16px; background: radial-gradient(%s)'
             % gradient)
