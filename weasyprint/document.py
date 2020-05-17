@@ -1101,7 +1101,6 @@ class Document:
         magic_number = b'\x89\x50\x4e\x47\x0d\x0a\x1a\x0a'
         for i, png in enumerate(pngs[8:].split(magic_number)):
             images.append(Image.open(io.BytesIO(magic_number + png)))
-            open(f'/tmp/{i}.png', 'wb').write(magic_number + png)
 
         if len(images) == 1:
             return pngs, images[0].width, images[0].height
