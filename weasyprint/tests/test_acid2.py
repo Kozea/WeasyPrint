@@ -6,8 +6,12 @@
 
 """
 
+import io
+
+from PIL import Image
+
 from .. import HTML
-from .test_draw import assert_pixels_equal, image_to_pixels
+from .test_draw import assert_pixels_equal
 from .testing_utils import assert_no_logs, capture_logs, resource_filename
 
 
@@ -21,14 +25,12 @@ def test_acid2():
         document = render('acid2-test.html')
         intro_page, test_page = document.pages
         # Ignore the intro page: it is not in the reference
-        test_image, width, height = document.copy(
-            [test_page]).write_image_surface()
+        test_png, width, height = document.copy([test_page]).write_png()
 
     # This is a copy of http://www.webstandards.org/files/acid2/reference.html
-    ref_image, ref_width, ref_height = render(
-        'acid2-reference.html').write_image_surface()
+    ref_png, ref_width, ref_height = render('acid2-reference.html').write_png()
 
     assert (width, height) == (ref_width, ref_height)
     assert_pixels_equal(
-        'acid2', width, height, image_to_pixels(test_image, width, height),
-        image_to_pixels(ref_image, width, height), tolerance=2)
+        'acid2', width, height, Image.open(io.BytesIO(test_png)).getdata(),
+        Image.open(io.BytesIO(ref_png)).getdata(), tolerance=2)

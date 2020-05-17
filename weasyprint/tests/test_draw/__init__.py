@@ -14,19 +14,19 @@ from PIL import Image
 from ..testing_utils import FakeHTML, resource_filename
 
 PIXELS_BY_CHAR = dict(
-    _=b'\xff\xff\xff\xff',  # white
-    R=b'\xff\x00\x00\xff',  # red
-    B=b'\x00\x00\xff\xff',  # blue
-    G=b'\x00\xff\x00\xff',  # lime green
-    V=b'\xBF\x00\x40\xff',  # average of 1*B and 3*R.
-    S=b'\xff\x3f\x3f\xff',  # R above R above #fff
-    r=b'\xff\x00\x00\xff',  # red
-    g=b'\x00\x80\x00\xff',  # half green
-    b=b'\x00\x00\x80\xff',  # half blue
-    v=b'\x80\x00\x80\xff',  # average of B and R.
-    h=b'\x40\x00\x40\xff',  # half average of B and R.
-    a=b'\x00\x00\xfe\xff',  # JPG is lossy...
-    p=b'\xc0\x00\x3f\xff',  # R above R above B above #fff.
+    _=(255, 255, 255),  # white
+    R=(255, 0, 0),  # red
+    B=(0, 0, 255),  # blue
+    G=(0, 255, 0),  # lime green
+    V=(191, 0, 64),  # average of 1*B and 3*R.
+    S=(255, 63, 63),  # R above R above #fff
+    r=(255, 0, 0),  # red
+    g=(0, 128, 0),  # half green
+    b=(0, 0, 128),  # half blue
+    v=(128, 0, 128),  # average of B and R.
+    h=(64, 0, 64),  # half average of B and R.
+    a=(0, 0, 254),  # JPG is lossy...
+    p=(192, 0, 63),  # R above R above B above #fff.
 )
 
 # NOTE: "r" is not half red on purpose. In the pixel strings it has
@@ -35,8 +35,8 @@ PIXELS_BY_CHAR = dict(
 
 def parse_pixels(pixels, pixels_overrides=None):
     chars = dict(PIXELS_BY_CHAR, **(pixels_overrides or {}))
-    lines = [line.split('#')[0].strip() for line in pixels.splitlines()]
-    return [b''.join(chars[char] for char in line) for line in lines if line]
+    lines = (line.split('#')[0].strip() for line in pixels.splitlines())
+    return tuple(chars[char] for line in lines if line for char in line)
 
 
 def assert_pixels(name, expected_width, expected_height, expected_pixels,
@@ -44,12 +44,10 @@ def assert_pixels(name, expected_width, expected_height, expected_pixels,
     """Helper testing the size of the image and the pixels values."""
     if isinstance(expected_pixels, str):
         expected_pixels = parse_pixels(expected_pixels)
-    assert len(expected_pixels) == expected_height
-    assert len(expected_pixels[0]) == expected_width * 4
-    expected_raw = b''.join(expected_pixels)
+    assert len(expected_pixels) == expected_height * expected_width
     pixels = html_to_pixels(name, expected_width, expected_height, html)
     assert_pixels_equal(
-        name, expected_width, expected_height, pixels, expected_raw)
+        name, expected_width, expected_height, pixels, expected_pixels)
 
 
 def assert_same_rendering(expected_width, expected_height, documents,
@@ -98,11 +96,8 @@ def write_png(basename, pixels, width, height):  # pragma: no cover
     if not os.path.isdir(directory):
         os.mkdir(directory)
     filename = os.path.join(directory, basename + '.png')
-    output_pixels = []
-    for i in range(int(len(pixels) / 4)):
-        output_pixels.append(tuple(pixels[4*i:4*i+4]))
-    image = Image.new('RGBA', (width, height))
-    image.putdata(tuple(output_pixels))
+    image = Image.new('RGB', (width, height))
+    image.putdata(pixels)
     image.save(filename)
 
 
@@ -123,35 +118,20 @@ def html_to_pixels(name, expected_width, expected_height, html):
 
 def document_to_pixels(document, name, expected_width, expected_height):
     """Render an HTML document to PNG, check its size and return pixel data."""
-    image = Image.open(io.BytesIO(document.write_png(antialiasing=1)))
-    image.putalpha(255)
-    return image_to_pixels(image, expected_width, expected_height)
-
-
-def image_to_pixels(image, width, height):
-    assert (image.width, image.height) == (width, height)
-    pixels = []
-    for pixel in image.getdata():
-        pixels.extend(pixel)
-    assert len(pixels) == width * height * 4
-    return pixels
+    return Image.open(io.BytesIO(document.write_png(antialiasing=1))).getdata()
 
 
 def assert_pixels_equal(name, width, height, raw, expected_raw, tolerance=0):
     """Take 2 matrices of pixels and assert that they are the same."""
     if raw != expected_raw:  # pragma: no cover
         for i, (value, expected) in enumerate(zip(raw, expected_raw)):
-            if abs(value - expected) > tolerance:
+            if any(abs(value - expected) > tolerance
+                   for value, expected in zip(value, expected)):
                 write_png(name, raw, width, height)
                 write_png(name + '.expected', expected_raw,
                           width, height)
-                pixel_n = i // 4
-                x = pixel_n // width
-                y = pixel_n % width
-                i % 4
-                pixel = tuple(list(raw[i:i + 4]))
-                expected_pixel = tuple(list(
-                    expected_raw[i:i + 4]))
+                x = i // width
+                y = i % width
                 assert 0, (
                     'Pixel (%i, %i) in %s: expected rgba%s, got rgba%s'
-                    % (x, y, name, expected_pixel, pixel))
+                    % (x, y, name, expected, value))

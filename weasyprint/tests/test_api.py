@@ -19,10 +19,11 @@ from urllib.parse import urljoin, uses_relative
 import cairocffi as cairo
 import py
 import pytest
+from PIL import Image
 
 from .. import CSS, HTML, __main__, default_url_fetcher
 from ..urls import path2url
-from .test_draw import assert_pixels_equal, image_to_pixels, parse_pixels
+from .test_draw import assert_pixels_equal, parse_pixels
 from .testing_utils import (
     FakeHTML, assert_no_logs, capture_logs, http_server, resource_filename)
 
@@ -228,10 +229,10 @@ def check_png_pattern(png_bytes, x2=False, blank=False, rotated=False):
             ________
         '''
         size = 8
-    surface = cairo.ImageSurface.create_from_png(io.BytesIO(png_bytes))
-    assert_pixels_equal('api_png', size, size,
-                        image_to_pixels(surface, size, size),
-                        b"".join(parse_pixels(expected_pixels)))
+    image = Image.open(io.BytesIO(png_bytes))
+    assert_pixels_equal(
+        'api_png', size, size, image.getdata(),
+        parse_pixels(expected_pixels))
 
 
 @assert_no_logs

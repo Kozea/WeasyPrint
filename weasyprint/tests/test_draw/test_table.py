@@ -16,11 +16,11 @@ from . import assert_pixels, parse_pixels
 
 PIX_BY_CHAR_OVERRIDES = {
     # rgba(255, 0, 0, 0.5) above #fff
-    'r': b'\xff\x7f\x7f\xff',
+    'r': (255, 127, 127),
     # rgba(0, 255, 0, 0.5) above #fff
-    'g': b'\x7f\xff\x7f\xff',
+    'g': (127, 255, 127),
     # r above B above #fff.
-    'b': b'\x80\x00\x7f\xff',
+    'b': (128, 0, 127),
 }
 
 
