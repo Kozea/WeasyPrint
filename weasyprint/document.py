@@ -735,10 +735,10 @@ class Document:
         pdf_names = pydyf.Array()
 
         # Links and anchors
-        paged_links_and_anchors = list(resolve_links(self.pages))
+        page_links_and_anchors = list(resolve_links(self.pages))
         attachment_links = [
             [link for link in page_links if link[0] == 'attachment']
-            for page_links, page_anchors in paged_links_and_anchors]
+            for page_links, page_anchors in page_links_and_anchors]
 
         # Annotations
         annot_files = {}
@@ -766,7 +766,7 @@ class Document:
         previous_level = 0
 
         for page_number, (page, links_and_anchors, page_links) in enumerate(
-                zip(self.pages, paged_links_and_anchors, attachment_links)):
+                zip(self.pages, page_links_and_anchors, attachment_links)):
             # Draw from the top-left corner
             matrix = Matrix(scale, 0, 0, -scale, 0, page.height * scale)
 
