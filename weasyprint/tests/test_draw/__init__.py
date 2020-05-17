@@ -125,7 +125,7 @@ def html_to_pixels(name, expected_width, expected_height, html):
 
 def document_to_pixels(document, name, expected_width, expected_height):
     """Render an HTML document to PNG, check its size and return pixel data."""
-    image = Image.open(io.BytesIO(document.write_png()))
+    image = Image.open(io.BytesIO(document.write_png(antialiasing=1)))
     image.putalpha(255)
     return image_to_pixels(image, expected_width, expected_height)
 
