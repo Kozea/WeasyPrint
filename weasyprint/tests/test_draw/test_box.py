@@ -73,7 +73,7 @@ def test_small_borders_1():
       </style>
       <body>'''
     for style in ['none', 'solid', 'dashed', 'dotted']:
-        HTML(string=html % style).write_image_surface()
+        HTML(string=html % style).write_pdf()
 
 
 @assert_no_logs
@@ -89,7 +89,7 @@ def test_small_borders_2():
       </style>
       <body>'''
     for style in ['none', 'solid', 'dashed', 'dotted']:
-        HTML(string=html % style).write_image_surface()
+        HTML(string=html % style).write_pdf()
 
 
 @assert_no_logs

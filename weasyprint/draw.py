@@ -768,12 +768,12 @@ def draw_rounded_border(context, box, style, color):
     if style in ('ridge', 'groove'):
         rounded_box_path(context, box.rounded_box_ratio(1 / 2))
         context.set_color_rgb(*color[0][:3])
-        context.set_alpha(color[0].alpha)
+        context.set_alpha(color[0][3])
         context.fill(even_odd=True)
         rounded_box_path(context, box.rounded_box_ratio(1 / 2))
         rounded_box_path(context, box.rounded_border_box())
         context.set_color_rgb(*color[1][:3])
-        context.set_alpha(color[1].alpha)
+        context.set_alpha(color[1][3])
         context.fill(even_odd=True)
         return
     if style == 'double':
@@ -781,7 +781,7 @@ def draw_rounded_border(context, box, style, color):
         rounded_box_path(context, box.rounded_box_ratio(2 / 3))
     rounded_box_path(context, box.rounded_border_box())
     context.set_color_rgb(*color[:3])
-    context.set_alpha(color.alpha)
+    context.set_alpha(color[3])
     context.fill(even_odd=True)
 
 
@@ -794,7 +794,7 @@ def draw_rect_border(context, box, widths, style, color):
             bbx + bl / 2, bby + bt / 2,
             bbw - (bl + br) / 2, bbh - (bt + bb) / 2)
         context.set_color_rgb(*color[0][:3])
-        context.set_alpha(color[0].alpha)
+        context.set_alpha(color[0][3])
         context.fill(even_odd=True)
         context.rectangle(
             bbx + bl / 2, bby + bt / 2,
@@ -802,7 +802,7 @@ def draw_rect_border(context, box, widths, style, color):
         context.rectangle(
             bbx + bl, bby + bt, bbw - bl - br, bbh - bt - bb)
         context.set_color_rgb(*color[1][:3])
-        context.set_alpha(color[1].alpha)
+        context.set_alpha(color[1][3])
         context.fill(even_odd=True)
         return
     if style == 'double':
@@ -814,7 +814,7 @@ def draw_rect_border(context, box, widths, style, color):
             bbw - (bl + br) * 2 / 3, bbh - (bt + bb) * 2 / 3)
     context.rectangle(bbx + bl, bby + bt, bbw - bl - br, bbh - bt - bb)
     context.set_color_rgb(*color[:3])
-    context.set_alpha(color.alpha)
+    context.set_alpha(color[3])
     context.fill(even_odd=True)
 
 
@@ -1024,7 +1024,7 @@ def draw_text(context, textbox, offset_x=0, text_overflow='clip'):
     x, y = textbox.position_x, textbox.position_y + textbox.baseline
     context.move_to(x, y)
     context.set_color_rgb(*textbox.style['color'][:3])
-    context.set_alpha(textbox.style['color'].alpha)
+    context.set_alpha(textbox.style['color'][3])
 
     textbox.pango_layout.reactivate(textbox.style)
     show_first_line(context, textbox, text_overflow, x, y)
@@ -1087,7 +1087,7 @@ def draw_text_decoration(context, textbox, offset_x, offset_y, thickness,
     style = textbox.style['text_decoration_style']
     with stacked(context):
         context.set_color_rgb(*color[:3], stroke=True)
-        context.set_alpha(color.alpha, stroke=True)
+        context.set_alpha(color[3], stroke=True)
 
         if style == 'dashed':
             context.set_dash([5 * thickness], offset_x)
