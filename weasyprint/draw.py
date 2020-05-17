@@ -1013,7 +1013,7 @@ def draw_inline_level(context, page, box, offset_x=0, text_overflow='clip'):
             draw_text(context, box, offset_x, text_overflow)
 
 
-def draw_text(context, textbox, offset_x=0, text_overflow='clip'):
+def draw_text(context, textbox, offset_x, text_overflow):
     """Draw ``textbox`` to a ``cairo.Context`` from ``PangoCairo.Context``."""
     # Pango crashes with font-size: 0
     assert textbox.style['font_size']
