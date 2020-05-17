@@ -199,6 +199,7 @@ def draw_stacking_context(context, stacking_context):
                 left - right,
                 bottom - top)
             context.clip()
+            context.end()
 
         if box.style['opacity'] < 1:
             context = context.push_group([
@@ -230,6 +231,7 @@ def draw_stacking_context(context, stacking_context):
                 # - the border must *not* be clipped
                 rounded_box_path(context, box.rounded_padding_box())
                 context.clip()
+                context.end()
 
             # Point 3
             for child_context in stacking_context.negative_z_contexts:
@@ -463,6 +465,7 @@ def draw_background_image(context, layer, image_rendering):
     sub_context = cairo.Context(sub_surface)
     sub_context.rectangle(0, 0, image_width, image_height)
     sub_context.clip()
+    sub_context.end()
     layer.image.draw(sub_context, image_width, image_height, image_rendering)
     pattern = cairo.SurfacePattern(sub_surface)
 
@@ -476,6 +479,7 @@ def draw_background_image(context, layer, image_rendering):
             context.rectangle(
                 painting_x, painting_y, painting_width, painting_height)
             context.clip()
+            context.end()
         # else: unrestricted, whole page box
 
         context.transform(
@@ -977,6 +981,7 @@ def draw_replacedbox(context, box):
     with stacked(context):
         rounded_box_path(context, box.rounded_content_box())
         context.clip()
+        context.end()
         context.transform(1, 0, 0, 1, draw_x, draw_y)
         box.replacement.draw(
             context, draw_width, draw_height, box.style['image_rendering'])
