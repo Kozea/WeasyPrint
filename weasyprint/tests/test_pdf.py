@@ -19,13 +19,9 @@ from ..urls import path2url
 from .testing_utils import (
     FakeHTML, assert_no_logs, capture_logs, resource_filename)
 
-# Top of the page is 297mm ~= 842pt
-TOP = 842
-# Right of the page is 210mm ~= 595pt
-RIGHT = 595
-
-# TODO: fix tests
-pdf = None
+# Top and right positions in points
+TOP = 297 * 72 / 25.4
+RIGHT = 210 * 72 / 25.4
 
 
 def assert_rect_almost_equal(rect, values):
@@ -225,8 +221,7 @@ def test_links_none():
 
 @assert_no_logs
 def test_links():
-    fileobj = io.BytesIO()
-    FakeHTML(string='''
+    pdf = FakeHTML(string='''
       <style>
         body { margin: 0; font-size: 10pt; line-height: 2 }
         p { display: block; height: 90pt; margin: 0 0 10pt 0 }
@@ -241,103 +236,79 @@ def test_links():
         <a style="display: block; page-break-before: always; height: 30pt"
            href="#hel%6Co"></a>a
       </p>
-    ''', base_url=resource_filename('<inline HTML>')).write_pdf(target=fileobj)
-    pdf_file = pdf.PDFFile(fileobj)
-    links = [
-        annot for page in pdf_file.pages
-        for annot in page.get_indirect_dict_array('Annots', pdf_file)]
+    ''', base_url=resource_filename('<inline HTML>')).write_pdf()
+
+    uris = re.findall(b'/URI \\((.*)\\)', pdf)
+    types = re.findall(b'/S (.*)', pdf)
+    subtypes = re.findall(b'/Subtype (.*)', pdf)
+    rects = [
+        [float(number) for number in match.split()] for match in re.findall(
+            b'/Rect \\[ ([\\d\\.]+ [\\d\\.]+ [\\d\\.]+ [\\d\\.]+) \\]', pdf)]
 
     # 30pt wide (like the image), 20pt high (like line-height)
-    assert links[0].get_value('URI', '(.*)') == b'(http://weasyprint.org)'
-    assert links[0].get_value('S', '(.*)') == b'/URI'
-    assert_rect_almost_equal(
-        links[0].get_value('Rect', '(.*)'), (0, TOP - 20, 30, TOP))
+    assert uris.pop(0) == b'http://weasyprint.org'
+    assert subtypes.pop(0) == b'/Link'
+    assert types.pop(0) == b'/URI'
+    assert rects.pop(0) == [0, TOP, 30, TOP - 20]
 
     # The image itself: 30*30pt
-    assert links[1].get_value('URI', '(.*)') == b'(http://weasyprint.org)'
-    assert links[1].get_value('S', '(.*)') == b'/URI'
-    assert_rect_almost_equal(
-        links[1].get_value('Rect', '(.*)'), (0, TOP - 30, 30, TOP))
+    assert uris.pop(0) == b'http://weasyprint.org'
+    assert subtypes.pop(0) == b'/Link'
+    assert types.pop(0) == b'/URI'
+    assert rects.pop(0) == [0, TOP, 30, TOP - 30]
 
     # 32pt wide (image + 2 * 1pt of border), 20pt high
     # TODO: replace these commented tests now that we use named destinations
-    # assert links[2].get_value('Subtype', '(.*)') == b'/Link'
-    # dest = links[2].get_value('Dest', '(.*)').strip(b'[]').split()
-    # assert dest[-4] == b'/XYZ'
-    # assert [round(float(value)) for value in dest[-3:]] == […]
-    assert_rect_almost_equal(
-        links[2].get_value('Rect', '(.*)'),
-        (10, TOP - 100 - 20, 10 + 32, TOP - 100))
+    assert subtypes.pop(0) == b'/Link'
+    assert b'/Dest (lipsum)' in pdf
+    link = re.search(
+        b'\\(lipsum\\) \\[ \\d+ 0 R /XYZ ([\\d\\.]+ [\\d\\.]+ [\\d\\.]+) ]',
+        pdf).group(1)
+    assert [float(number) for number in link.split()] == [0, TOP, 0]
+    assert rects.pop(0) == [10, TOP - 100, 10 + 32, TOP - 100 - 20]
 
     # The image itself: 32*32pt
-    # TODO: same as above
-    # assert links[3].get_value('Subtype', '(.*)') == b'/Link'
-    # dest = links[3].get_value('Dest', '(.*)').strip(b'[]').split()
-    # assert dest[-4] == b'/XYZ'
-    # assert [round(float(value)) for value in dest[-3:]] == […]
-    assert_rect_almost_equal(
-        links[3].get_value('Rect', '(.*)'),
-        (10, TOP - 100 - 32, 10 + 32, TOP - 100))
+    assert subtypes.pop(0) == b'/Link'
+    assert rects.pop(0) == [10, TOP - 100, 10 + 32, TOP - 100 - 32]
 
     # 100% wide (block), 30pt high
-    assert links[4].get_value('Subtype', '(.*)') == b'/Link'
-    dest = links[4].get_value('Dest', '(.*)').strip(b'[]').split()
-    assert dest == [b'(hello)']
-    names = (
-        pdf_file.catalog
-        .get_indirect_dict('Names', pdf_file)
-        .get_indirect_dict('Dests', pdf_file)
-        .byte_string).decode('ascii')
-    assert_rect_almost_equal(
-        re.search(
-            '\\(hello\\) \\[\\d+ \\d+ R /XYZ (\\d+ \\d+ \\d+)]', names
-        ).group(1),
-        (0, TOP - 200, 0))
-    assert_rect_almost_equal(
-        links[4].get_value('Rect', '(.*)'), (0, TOP - 30, RIGHT, TOP))
-
-    # 100% wide (block), 0pt high
-    fileobj = io.BytesIO()
-    FakeHTML(
-        string='<a href="../lipsum" style="display: block"></a>a',
-        base_url='http://weasyprint.org/foo/bar/').write_pdf(target=fileobj)
-    pdf_file = pdf.PDFFile(fileobj)
-    link, = [
-        annot for page in pdf_file.pages
-        for annot in page.get_indirect_dict_array('Annots', pdf_file)]
-    assert (
-        link.get_value('URI', '(.*)') == b'(http://weasyprint.org/foo/lipsum)')
-    assert link.get_value('S', '(.*)') == b'/URI'
-    assert_rect_almost_equal(
-        link.get_value('Rect', '(.*)'), (0, TOP, RIGHT, TOP))
+    assert subtypes.pop(0) == b'/Link'
+    assert b'/Dest (hello)' in pdf
+    link = re.search(
+        b'\\(hello\\) \\[ \\d+ 0 R /XYZ ([\\d\\.]+ [\\d\\.]+ [\\d\\.]+) ]',
+        pdf).group(1)
+    assert [float(number) for number in link.split()] == [0, TOP - 200, 0]
+    assert rects.pop(0) == [0, TOP, RIGHT, TOP - 30]
 
 
 @assert_no_logs
-def test_relative_links():
-    # Relative URI reference without a base URI: allowed for anchors
-    fileobj = io.BytesIO()
-    FakeHTML(
+def test_relative_links_no_height():
+    # 100% wide (block), 0pt high
+    pdf = FakeHTML(
         string='<a href="../lipsum" style="display: block"></a>a',
-        base_url=None).write_pdf(target=fileobj)
-    pdf_file = pdf.PDFFile(fileobj)
-    annots = pdf_file.pages[0].get_indirect_dict_array('Annots', pdf_file)[0]
-    assert annots.get_value('URI', '(.*)') == b'(../lipsum)'
-    assert annots.get_value('S', '(.*)') == b'/URI'
-    assert_rect_almost_equal(
-        annots.get_value('Rect', '(.*)'), (0, TOP, RIGHT, TOP))
+        base_url='http://weasyprint.org/foo/bar/').write_pdf()
+    assert b'/S /URI\n/URI (http://weasyprint.org/foo/lipsum)'
+    assert f'/Rect [ 0 {TOP} {RIGHT} {TOP} ]'.encode('ascii') in pdf
 
 
 @assert_no_logs
 def test_relative_links_missing_base():
+    # Relative URI reference without a base URI
+    pdf = FakeHTML(
+        string='<a href="../lipsum" style="display: block"></a>a',
+        base_url=None).write_pdf()
+    assert b'/S /URI\n/URI (../lipsum)'
+    assert f'/Rect [ 0 {TOP} {RIGHT} {TOP} ]'.encode('ascii') in pdf
+
+
+@assert_no_logs
+def test_relative_links_missing_base_link():
     # Relative URI reference without a base URI: not supported for -weasy-link
-    fileobj = io.BytesIO()
     with capture_logs() as logs:
-        FakeHTML(
+        pdf = FakeHTML(
             string='<div style="-weasy-link: url(../lipsum)">',
-            base_url=None).write_pdf(target=fileobj)
-    pdf_file = pdf.PDFFile(fileobj)
-    with pytest.raises(AttributeError):
-        pdf_file.pages[0].get_indirect_dict_array('Annots', pdf_file)
+            base_url=None).write_pdf()
+    assert b'/Annots' not in pdf
     assert len(logs) == 1
     assert 'WARNING: Ignored `-weasy-link: url("../lipsum")`' in logs[0]
     assert 'Relative URI reference without a base URI' in logs[0]
@@ -346,78 +317,55 @@ def test_relative_links_missing_base():
 @assert_no_logs
 def test_relative_links_internal():
     # Internal URI reference without a base URI: OK
-    fileobj = io.BytesIO()
-    FakeHTML(
+    pdf = FakeHTML(
         string='<a href="#lipsum" id="lipsum" style="display: block"></a>a',
-        base_url=None).write_pdf(target=fileobj)
-    pdf_file = pdf.PDFFile(fileobj)
-    annots = pdf_file.pages[0].get_indirect_dict_array('Annots', pdf_file)[0]
-    dest = annots.get_value('Dest', '(.*)')
-    assert dest == b'(lipsum)'
-    names = (
-        pdf_file.catalog
-        .get_indirect_dict('Names', pdf_file)
-        .get_indirect_dict('Dests', pdf_file)
-        .byte_string).decode('ascii')
-    assert_rect_almost_equal(
-        re.search(
-            '\\(lipsum\\) \\[\\d+ \\d+ R /XYZ (\\d+ \\d+ \\d+)]', names
-        ).group(1),
-        (0, TOP, 0))
-    assert_rect_almost_equal(
-        annots.get_value('Rect', '(.*)'), (0, TOP, RIGHT, TOP))
+        base_url=None).write_pdf()
+    assert b'/Dest (lipsum)' in pdf
+    link = re.search(
+        b'\\(lipsum\\) \\[ \\d+ 0 R /XYZ ([\\d\\.]+ [\\d\\.]+ [\\d\\.]+) ]',
+        pdf).group(1)
+    assert [float(number) for number in link.split()] == [0, TOP, 0]
+    rect = re.search(
+        b'/Rect \\[ ([\\d\\.]+ [\\d\\.]+ [\\d\\.]+ [\\d\\.]+) \\]',
+        pdf).group(1)
+    assert [float(number) for number in rect.split()] == [0, TOP, RIGHT, TOP]
 
 
 @assert_no_logs
 def test_relative_links_anchors():
-    fileobj = io.BytesIO()
-    FakeHTML(
+    pdf = FakeHTML(
         string='<div style="-weasy-link: url(#lipsum)" id="lipsum"></div>a',
-        base_url=None).write_pdf(target=fileobj)
-    pdf_file = pdf.PDFFile(fileobj)
-    annots = pdf_file.pages[0].get_indirect_dict_array('Annots', pdf_file)[0]
-    dest = annots.get_value('Dest', '(.*)')
-    assert dest == b'(lipsum)'
-    names = (
-        pdf_file.catalog
-        .get_indirect_dict('Names', pdf_file)
-        .get_indirect_dict('Dests', pdf_file)
-        .byte_string).decode('ascii')
-    assert_rect_almost_equal(
-        re.search(
-            '\\(lipsum\\) \\[\\d+ \\d+ R /XYZ (\\d+ \\d+ \\d+)]', names
-        ).group(1),
-        (0, TOP, 0))
-    assert_rect_almost_equal(
-        annots.get_value('Rect', '(.*)'), (0, TOP, RIGHT, TOP))
+        base_url=None).write_pdf()
+    assert b'/Dest (lipsum)' in pdf
+    link = re.search(
+        b'\\(lipsum\\) \\[ \\d+ 0 R /XYZ ([\\d\\.]+ [\\d\\.]+ [\\d\\.]+) ]',
+        pdf).group(1)
+    assert [float(number) for number in link.split()] == [0, TOP, 0]
+    rect = re.search(
+        b'/Rect \\[ ([\\d\\.]+ [\\d\\.]+ [\\d\\.]+ [\\d\\.]+) \\]',
+        pdf).group(1)
+    assert [float(number) for number in rect.split()] == [0, TOP, RIGHT, TOP]
 
 
 @assert_no_logs
 def test_missing_links():
-    fileobj = io.BytesIO()
     with capture_logs() as logs:
-        FakeHTML(string='''
+        pdf = FakeHTML(string='''
           <style> a { display: block; height: 15pt } </style>
           <a href="#lipsum"></a>
           <a href="#missing" id="lipsum"></a>a
-        ''', base_url=None).write_pdf(target=fileobj)
-    pdf_file = pdf.PDFFile(fileobj)
-    annots = pdf_file.pages[0].get_indirect_dict_array('Annots', pdf_file)[0]
-    dest = annots.get_value('Dest', '(.*)')
-    assert dest == b'(lipsum)'
-    names = (
-        pdf_file.catalog
-        .get_indirect_dict('Names', pdf_file)
-        .get_indirect_dict('Dests', pdf_file)
-        .byte_string).decode('ascii')
-    assert_rect_almost_equal(
-        re.search(
-            '\\(lipsum\\) \\[\\d+ \\d+ R /XYZ (\\d+ \\d+ \\d+)]', names
-        ).group(1),
-        (0, TOP - 15, 0))
-    assert_rect_almost_equal(
-        annots.get_value('Rect', '(.*)'), (0, TOP - 15, RIGHT, TOP))
+        ''', base_url=None).write_pdf()
+    assert b'/Dest (lipsum)' in pdf
     assert len(logs) == 1
+    link = re.search(
+        b'\\(lipsum\\) \\[ \\d+ 0 R /XYZ ([\\d\\.]+ [\\d\\.]+ [\\d\\.]+) ]',
+        pdf).group(1)
+    assert [float(number) for number in link.split()] == [0, TOP - 15, 0]
+    rect = re.search(
+        b'/Rect \\[ ([\\d\\.]+ [\\d\\.]+ [\\d\\.]+ [\\d\\.]+) \\]',
+        pdf).group(1)
+    assert [float(number) for number in rect.split()] == [
+        0, TOP, RIGHT, TOP - 15]
     assert 'ERROR: No anchor #missing for internal URI reference' in logs[0]
 
 
