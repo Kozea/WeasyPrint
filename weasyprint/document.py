@@ -1045,7 +1045,7 @@ class Document:
                 with open(target, 'wb') as fd:
                     shutil.copyfileobj(file_obj, fd)
 
-    def write_png(self, target=None, resolution=96):
+    def write_png(self, target=None, resolution=96, antialiasing=4):
         """Paint the pages vertically to a single PNG image.
 
         There is no decoration around pages other than those specified in CSS
@@ -1058,6 +1058,10 @@ class Document:
         :param resolution:
             The output resolution in PNG pixels per CSS inch. At 96 dpi
             (the default), PNG pixels match the CSS ``px`` unit.
+        :type antialiasing: int
+        :param antialiasing:
+            The antialiasing subsampling box size. Default is 4, can be set to
+            1 to disable antialiasing.
         :returns:
             A ``(png_bytes, png_width, png_height)`` tuple. ``png_bytes`` is a
             byte string if ``target`` is :obj:`None`, otherwise :obj:`None`
@@ -1071,7 +1075,8 @@ class Document:
         stdout = io.BytesIO()
         command = [
             'gs', '-q', '-sstdout=%stderr', '-dNOPAUSE', '-dBATCH', '-dSAFER',
-            '-dTextAlphaBits=4', '-dGraphicsAlphaBits=4', '-sDEVICE=png16m',
+            f'-dTextAlphaBits={antialiasing}',
+            f'-dGraphicsAlphaBits={antialiasing}', '-sDEVICE=png16m',
             f'-r{resolution}', '-sOutputFile=-', '-']
         command = Popen(command, stdin=PIPE, stdout=PIPE)
         command.stdin.write(stdin)

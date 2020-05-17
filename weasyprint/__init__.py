@@ -209,7 +209,7 @@ class HTML:
                 target, zoom, attachments)
 
     def write_png(self, target=None, stylesheets=None, resolution=96,
-                  presentational_hints=False, font_config=None,
+                  antialiasing=4, presentational_hints=False, font_config=None,
                   counter_style=None):
         """Paint the pages vertically to a single PNG image.
 
@@ -233,6 +233,10 @@ class HTML:
         :param resolution:
             The output resolution in PNG pixels per CSS inch. At 96 dpi
             (the default), PNG pixels match the CSS ``px`` unit.
+        :type antialiasing: int
+        :param antialiasing:
+            The antialiasing subsampling box size. Default is 4, can be set to
+            1 to disable antialiasing.
         :type presentational_hints: bool
         :param presentational_hints: Whether HTML presentational hints are
             followed.
@@ -250,7 +254,7 @@ class HTML:
             self.render(
                 stylesheets, presentational_hints=presentational_hints,
                 font_config=font_config, counter_style=counter_style)
-            .write_png(target, resolution))
+            .write_png(target, resolution, antialiasing))
         return png_bytes
 
 
