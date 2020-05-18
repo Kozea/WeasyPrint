@@ -1108,12 +1108,11 @@ class Document:
 
         png.seek(0)
 
-        if target is not None:
-            if hasattr(target, 'write'):
-                shutil.copyfileobj(png, target)
-            else:
-                with open(target, 'wb') as fd:
-                    shutil.copyfileobj(png, fd)
-            return
+        if target is None:
+            return png.read()
 
-        return png.read()
+        if hasattr(target, 'write'):
+            shutil.copyfileobj(png, target)
+        else:
+            with open(target, 'wb') as fd:
+                shutil.copyfileobj(png, fd)
