@@ -12,7 +12,7 @@ import math
 import shutil
 import zlib
 from os.path import basename
-from subprocess import PIPE, Popen
+from subprocess import run
 from urllib.parse import unquote, urlsplit
 
 import pydyf
@@ -1074,17 +1074,14 @@ class Document:
 
         """
         # TODO: don’t crash if GhostScript can’t be found
-        stdin = self.write_pdf()
         # TODO: fix that for Windows
         command = [
-            'gs', '-q', '-sstdout=%stderr', '-dNOPAUSE', '-dBATCH', '-dSAFER',
+            'gs', '-q', '-sstdout=%stderr', '-dNOPAUSE', '-dSAFER',
             f'-dTextAlphaBits={antialiasing}',
             f'-dGraphicsAlphaBits={antialiasing}', '-sDEVICE=png16m',
             f'-r{resolution}', '-sOutputFile=-', '-']
-        command = Popen(command, stdin=PIPE, stdout=PIPE)
-        command.stdin.write(stdin)
-        command.stdin.close()
-        pngs = command.stdout.read()
+        command = run(command, input=self.write_pdf(), capture_output=True)
+        pngs = command.stdout
         magic_number = b'\x89\x50\x4e\x47\x0d\x0a\x1a\x0a'
 
         # TODO: use a different way to find PNG files in stream
