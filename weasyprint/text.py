@@ -110,7 +110,9 @@ ffi.cdef('''
         PangoLayout *layout;
         gint         start_index;
         gint         length;
-        /* ... */
+        void        *runs;
+        guint        is_paragraph_start : 1;
+        guint        resolved_dir : 3;
     } PangoLayoutLine;
 
     typedef struct  {
@@ -654,6 +656,7 @@ class Layout:
 
         self.context = context
         self.style = style
+        self.first_line_direction = 0
 
         # Cairo crashes with font-size: 0 when using Win32 API
         # See https://github.com/Kozea/WeasyPrint/pull/599
@@ -739,6 +742,7 @@ class Layout:
             index = second_line.start_index
         else:
             index = None
+        self.first_line_direction = first_line.resolved_dir
         return first_line, index
 
     def set_text(self, text, justify=False):

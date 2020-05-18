@@ -246,6 +246,13 @@ def remove_last_whitespace(context, box):
         assert resume is None
         space_width = box.width - new_box.width
         box.width = new_box.width
+        if new_box.pango_layout.first_line_direction % 2:
+            # RTL line, the trailing space is at the left of the box. We have
+            # to translate the box to align the stripped text with the right
+            # edge of the box.
+            box.position_x -= space_width
+            for ancestor in ancestors:
+                ancestor.position_x -= space_width
     else:
         space_width = box.width
         box.width = 0

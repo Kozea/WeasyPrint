@@ -88,3 +88,29 @@ def test_text_overflow_ellipsis():
       <div><div style="text-overflow: clip">abcde</div></div>
       <div><div style="overflow: visible">abcde</div></div>
 ''')
+
+
+def test_text_align_rtl_trailing_whitespace():
+    # Test text alignment for rtl text with trailing space.
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1111
+    assert_pixels('text_overflow', 9, 9, '''
+        _________
+        _rrrrBBB_
+        _________
+        _rrrrBBB_
+        _________
+        _________
+        _________
+        _________
+        _________
+    ''', '''
+      <style>
+        @font-face {src: url(AHEM____.TTF); font-family: ahem}
+        @page { background: white; size: 9px }
+        body { font-family: ahem; color: blue; font-size: 1px }
+        p { background: red; line-height: 1; width: 7em; margin: 1em }
+      </style>
+      <p style="direction: rtl"> abc </p>
+      <!-- &#8207 forces Unicode RTL direction for the following chars -->
+      <p style="direction: rtl"> &#8207;abc </p>
+    ''')
