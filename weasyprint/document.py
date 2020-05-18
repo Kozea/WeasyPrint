@@ -1073,8 +1073,9 @@ class Document:
             ``png_height`` are the size of the final image, in PNG pixels.
 
         """
-        # TODO: use GhostScript as a library
+        # TODO: don’t crash if GhostScript can’t be found
         stdin = self.write_pdf()
+        # TODO: fix that for Windows
         command = [
             'gs', '-q', '-sstdout=%stderr', '-dNOPAUSE', '-dBATCH', '-dSAFER',
             f'-dTextAlphaBits={antialiasing}',
@@ -1086,6 +1087,7 @@ class Document:
         pngs = command.stdout.read()
         magic_number = b'\x89\x50\x4e\x47\x0d\x0a\x1a\x0a'
 
+        # TODO: use a different way to find PNG files in stream
         if pngs.count(magic_number) == 1:
             if target is None:
                 return pngs
