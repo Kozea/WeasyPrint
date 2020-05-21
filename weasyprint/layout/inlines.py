@@ -44,7 +44,7 @@ def iter_line_boxes(context, box, position_y, skip_stack, containing_block,
         resolve_one_percentage(box, 'text_indent', containing_block.width)
     else:
         box.text_indent = 0
-    while 1:
+    while True:
         line, resume_at = get_next_linebox(
             context, box, position_y, skip_stack, containing_block,
             absolute_boxes, fixed_boxes, first_letter_style)
@@ -87,7 +87,7 @@ def get_next_linebox(context, linebox, position_y, skip_stack,
 
     excluded_shapes = context.excluded_shapes[:]
 
-    while 1:
+    while True:
         original_position_x = linebox.position_x = position_x
         original_position_y = linebox.position_y = position_y
         original_width = linebox.width
