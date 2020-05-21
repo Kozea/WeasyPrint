@@ -99,9 +99,9 @@ def test_text_align_rtl_trailing_whitespace():
         _________
         _rrrrBBB_
         _________
+        _BBBrrrr_
         _________
-        _________
-        _________
+        _BBBrrrr_
         _________
     ''', '''
       <style>
@@ -110,7 +110,9 @@ def test_text_align_rtl_trailing_whitespace():
         body { font-family: ahem; color: blue; font-size: 1px }
         p { background: red; line-height: 1; width: 7em; margin: 1em }
       </style>
-      <p style="direction: rtl"> abc </p>
       <!-- &#8207 forces Unicode RTL direction for the following chars -->
+      <p style="direction: rtl"> abc </p>
       <p style="direction: rtl"> &#8207;abc </p>
+      <p style="direction: ltr"> abc </p>
+      <p style="direction: ltr"> &#8207;abc </p>
     ''')
