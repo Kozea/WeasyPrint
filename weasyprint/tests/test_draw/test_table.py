@@ -4,8 +4,6 @@
 
     Test how tables are drawn.
 
-    # TODO: add note on when to use
-    direction: rtl on body or on table.
 """
 
 import pytest
