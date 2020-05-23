@@ -967,7 +967,7 @@ def create_layout(text, style, context, max_width, justification_spacing):
     # signed integer. Treat bigger values same as None: unconstrained width.
     if max_width is not None and max_width < 2 ** 21:
         pango.pango_layout_set_width(
-            layout.layout, units_from_double(max_width))
+            layout.layout, units_from_double(max(0, max_width)))
 
     layout.set_text(text)
     return layout
@@ -1046,9 +1046,24 @@ def split_first_line(text, style, context, max_width, justification_spacing,
         first_line_text = utf8_slice(text, slice(index))
         second_line_text = utf8_slice(text, slice(index, None))
     else:
-        # The first word is longer than the line, try to hyphenate it
-        first_line_text = ''
-        second_line_text = text
+        # We try to know whether the line could have split earlier. We can’t
+        # rely on first_line_width, see
+        # https://github.com/Kozea/WeasyPrint/issues/1051
+        zero_width_layout = create_layout(
+            text, style, context, 0, justification_spacing)
+        zero_first_line, _ = zero_width_layout.get_first_line()
+        zero_first_line_width, _ = get_size(zero_first_line, style)
+        if zero_first_line_width < first_line_width:
+            # The line can be split earlier, it actually fits.
+            first_line_text = utf8_slice(text, slice(index))
+            if index is None:
+                second_line_text = ''
+            else:
+                second_line_text = utf8_slice(text, slice(index, None))
+        else:
+            # The line can't be split earlier, try to hyphenate the first word.
+            first_line_text = ''
+            second_line_text = text
 
     next_word = second_line_text.split(' ', 1)[0]
     if next_word:
