@@ -518,9 +518,6 @@ def _content_list(computer, values):
                         (attr,) + value[1][1:]))
             else:
                 computed_value = value
-            if computer['target_collector'] and computed_value:
-                computer['target_collector'].collect_computed_target(
-                    computed_value[1][0])
         if computed_value is None:
             LOGGER.warning('Unable to compute %s\'s value for content: %s' % (
                 computer['element'], ', '.join(str(item) for item in value)))
