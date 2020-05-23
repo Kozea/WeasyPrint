@@ -44,7 +44,7 @@ def iter_line_boxes(context, box, position_y, skip_stack, containing_block,
         resolve_one_percentage(box, 'text_indent', containing_block.width)
     else:
         box.text_indent = 0
-    while 1:
+    while True:
         line, resume_at = get_next_linebox(
             context, box, position_y, skip_stack, containing_block,
             absolute_boxes, fixed_boxes, first_letter_style)
@@ -87,7 +87,7 @@ def get_next_linebox(context, linebox, position_y, skip_stack,
 
     excluded_shapes = context.excluded_shapes[:]
 
-    while 1:
+    while True:
         original_position_x = linebox.position_x = position_x
         original_position_y = linebox.position_y = position_y
         original_width = linebox.width
@@ -246,6 +246,13 @@ def remove_last_whitespace(context, box):
         assert resume is None
         space_width = box.width - new_box.width
         box.width = new_box.width
+        if new_box.pango_layout.first_line_direction % 2:
+            # RTL line, the trailing space is at the left of the box. We have
+            # to translate the box to align the stripped text with the right
+            # edge of the box.
+            box.position_x -= space_width
+            for ancestor in ancestors:
+                ancestor.position_x -= space_width
     else:
         space_width = box.width
         box.width = 0

@@ -1075,7 +1075,7 @@ def collapse_table_borders(table, grid_width, grid_height):
     # the correct widths on each box. The actual border grid will be
     # painted separately.
     def set_transparent_border(box, side, twice_width):
-        box.style['border_%s_style' % side] = 'solid',
+        box.style['border_%s_style' % side] = 'solid'
         box.style['border_%s_width' % side] = twice_width / 2
         box.style['border_%s_color' % side] = transparent
 
@@ -1421,7 +1421,7 @@ def block_in_inline(box):
                 'Line boxes should have no '
                 'siblings at this stage, got %r.' % box.children)
             stack = None
-            while 1:
+            while True:
                 new_line, block, stack = _inner_block_in_inline(
                     child, skip_stack=stack)
                 if block is None:

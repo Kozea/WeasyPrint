@@ -188,10 +188,37 @@ def avoid_collisions(context, box, containing_block, outer=True):
                 # No solution, we must put the box here
         break
 
-    if containing_block.style['direction'] == 'ltr':
-        position_x = max_left_bound
-    else:
-        position_x = max_right_bound - box_width
+    # See https://www.w3.org/TR/CSS21/visuren.html#floats
+    # Boxes that can’t collide with floats are:
+    # - floats
+    # - line boxes
+    # - table wrappers
+    # - block-level replaced box
+    # - element establishing new formatting contexts (not handled)
+    assert (
+        (box.style['float'] in ('right', 'left')) or
+        isinstance(box, boxes.LineBox) or
+        box.is_table_wrapper or
+        isinstance(box, boxes.BlockReplacedBox))
+
+    # The x-position of the box depends on its type.
+    position_x = max_left_bound
+    if box.style['float'] == 'none':
+        if containing_block.style['direction'] == 'rtl':
+            if isinstance(box, boxes.LineBox):
+                # The position of the line is the position of the cursor, at
+                # the right bound.
+                position_x = max_right_bound
+            elif box.is_table_wrapper:
+                # The position of the right border of the table is at the right
+                # bound.
+                position_x = max_right_bound - box_width
+            else:
+                # The position of the right border of the replaced box is at
+                # the right bound.
+                assert isinstance(box, boxes.BlockReplacedBox)
+                position_x = max_right_bound - box_width
+
     available_width = max_right_bound - max_left_bound
 
     if not outer:

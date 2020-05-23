@@ -45,7 +45,7 @@ before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then wget "https://github.com/Kozea/Ahem/blob/master/Ahem.ttf?raw=true" -O ~/.fonts/Ahem.ttf; fi
 
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew tap homebrew/cask-fonts; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew cask install font-dejavu-sans; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew cask install font-dejavu; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install cairo pango gdk-pixbuf libffi; fi
 
   # As setup.py doesn't use pip, setuptools is not updated before installing dependencies

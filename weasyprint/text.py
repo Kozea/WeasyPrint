@@ -122,7 +122,8 @@ ffi.cdef('''
         gint         start_index;
         gint         length;
         GSList      *runs;
-        /* ... */
+        guint        is_paragraph_start : 1;
+        guint        resolved_dir : 3;
     } PangoLayoutLine;
 
     typedef struct  {
@@ -326,14 +327,14 @@ def dlopen(ffi, *names):
     return ffi.dlopen(names[0])  # pragma: no cover
 
 
-gobject = dlopen(ffi, 'gobject-2.0', 'libgobject-2.0-0', 'libgobject-2.0.so',
+gobject = dlopen(ffi, 'gobject-2.0', 'libgobject-2.0-0', 'libgobject-2.0.so.0',
                  'libgobject-2.0.dylib')
-pango = dlopen(ffi, 'pango-1.0', 'libpango-1.0-0', 'libpango-1.0.so',
+pango = dlopen(ffi, 'pango-1.0', 'libpango-1.0-0', 'libpango-1.0.so.0',
                'libpango-1.0.dylib')
 pangocairo = dlopen(ffi, 'pangocairo-1.0', 'libpangocairo-1.0-0',
-                    'libpangocairo-1.0.so', 'libpangocairo-1.0.dylib')
+                    'libpangocairo-1.0.so.0', 'libpangocairo-1.0.dylib')
 harfbuzz = dlopen(ffi, 'harfbuzz', 'libharfbuzz',
-                  'libharfbuzz.so', 'libharfbuzz.dylib')
+                  'libharfbuzz.so.0', 'libharfbuzz.0.dylib')
 
 gobject.g_type_init()
 
@@ -729,6 +730,7 @@ class Layout:
     def setup(self, context, font_size, style):
         self.context = context
         self.style = style
+        self.first_line_direction = 0
 
         if context is None:
             # TODO: fix this ugly import
@@ -812,6 +814,7 @@ class Layout:
             index = second_line.start_index
         else:
             index = None
+        self.first_line_direction = first_line.resolved_dir
         return first_line, index
 
     def set_text(self, text, justify=False):
