@@ -6,6 +6,7 @@
 
 """
 
+import io
 import os
 import pathlib
 import struct
@@ -13,6 +14,8 @@ import sys
 import tempfile
 import warnings
 import zlib
+
+from fontTools.ttLib import TTFont, woff2
 
 from .logger import LOGGER
 from .text import dlopen, ffi, get_font_features, gobject
@@ -128,43 +131,6 @@ FONTCONFIG_STRETCH_CONSTANTS = {
     'extra-expanded': 'extraexpanded',
     'ultra-expanded': 'ultraexpanded',
 }
-
-
-def unpack_woff(woff):
-    """Unpack font included in woff bytestring."""
-    # See https://www.w3.org/TR/WOFF/
-    # Inspired by https://github.com/hanikesn/woff2otf/
-
-    input_header_size, input_table_size = 44, 20
-    output_header_size, output_table_size = 12, 16
-
-    _, flavor, _, num_tables = struct.unpack('>IIIH', woff[:14])
-
-    entry_selector = int(num_tables ** 0.5)
-    search_range = (2 ** entry_selector) * output_table_size
-    range_shift = num_tables * output_table_size - search_range
-    output = struct.pack(
-        '>IHHHH', flavor, num_tables, search_range, entry_selector,
-        range_shift)
-
-    table_output = b''
-    for i in range(num_tables):
-        start = input_header_size + i * input_table_size
-        stop = start + input_table_size
-        tag, offset, comp_length, orig_length, orig_checksum = struct.unpack(
-            '>IIIII', woff[start:stop])
-        output_offset = (
-            output_header_size +
-            output_table_size * num_tables + len(table_output))
-        output += struct.pack(
-            '>IIII', tag, orig_checksum, output_offset, orig_length)
-
-        data = woff[offset:offset+comp_length]
-        if comp_length != orig_length:
-            data = zlib.decompress(data)
-        table_output += data + (b'\x00' * ((4 - orig_length % 4) % 4))
-
-    return output + table_output
 
 
 def _check_font_configuration(font_config):
@@ -343,8 +309,17 @@ class FontConfiguration:
                     else:
                         with open(url, 'rb') as fd:
                             font = fd.read()
-                    if font[:4] == b'wOFF':
-                        font = unpack_woff(font)
+                    if font[:3] == b'wOF':
+                        out = io.BytesIO()
+                        if font[3:4] == b'F':
+                            # woff font
+                            ttfont = TTFont(io.BytesIO(font))
+                            ttfont.flavor = ttfont.flavorData = None
+                            ttfont.save(out)
+                        elif font[3:4] == b'2':
+                            # woff2 font
+                            woff2.decompress(io.BytesIO(font), out)
+                        font = out.getvalue()
                 except Exception as exc:
                     LOGGER.debug(
                         'Failed to load font at "%s" (%s)', url, exc)
