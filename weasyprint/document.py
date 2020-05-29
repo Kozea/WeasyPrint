@@ -29,7 +29,7 @@ from .draw import draw_page, stacked
 from .fonts import FontConfiguration
 from .formatting_structure import boxes
 from .formatting_structure.build import build_formatting_structure
-from .html import W3C_DATE_RE
+from .html import W3C_DATE_RE, get_html_metadata
 from .images import get_image_from_uri as original_get_image_from_uri
 from .layout import layout_document
 from .layout.percentages import percentage
@@ -44,7 +44,7 @@ def _w3c_date_to_pdf(string, attr_name):
         return None
     match = W3C_DATE_RE.match(string)
     if match is None:
-        LOGGER.warning('Invalid %s date: %r', attr_name, string)
+        LOGGER.warning(f'Invalid {attr_name} date: {string:r}')
         return None
     groups = match.groupdict()
     pdf_date = ''
@@ -54,14 +54,15 @@ def _w3c_date_to_pdf(string, attr_name):
             found = True
             pdf_date = groups[key] + pdf_date
         elif found:
-            pdf_date = '%02i' % (key in ('day', 'month')) + pdf_date
+            pdf_date = f'{(key in ("day", "month")):02d}{pdf_date}'
     if groups['hour']:
         assert groups['minute']
         if groups['tz_hour']:
             assert groups['tz_hour'].startswith(('+', '-'))
             assert groups['tz_minute']
-            pdf_date += "%+03i'%02i" % (
-                int(groups['tz_hour']), int(groups['tz_minute']))
+            tz_hour = int(groups['tz_hour'])
+            tz_minute = int(groups['tz_minute'])
+            pdf_date += f"{tz_hour:+03d}'{tz_minute:02d}"
         else:
             pdf_date += 'Z'
     return pdf_date
@@ -77,8 +78,6 @@ class Font:
 
         self.hash = hash(file_content)
         self.file_content = file_content
-        # When the font will be a font subset, the font name will have to be
-        # like '/XXXXXX+font_family'
         self.name = b'/' + font_family.replace(b' ', b'')
         self.family = font_family
         self.flags = 4
@@ -118,6 +117,9 @@ class Context(pydyf.Stream):
         if font_hash not in self._fonts:
             self._fonts[font_hash] = Font(font, pango_font)
         return self._fonts[font_hash]
+
+    def get_fonts(self):
+        return self._fonts
 
     def push_group(self, bounding_box):
         group = Context(self._alpha_states, self._x_objects)
@@ -273,7 +275,7 @@ def add_hyperlinks(links, anchors, matrix, pdf, page, names):
 def rectangle_aabb(matrix, pos_x, pos_y, width, height):
     """Apply a transformation matrix to an axis-aligned rectangle.
 
-    Return its axis-aligned bounding box as ``(x, y, width, height)``.
+    Return its axis-aligned bounding box as ``(x1, y1, x2, y2)``.
 
     """
     transform_point = matrix.transform_point
@@ -285,7 +287,7 @@ def rectangle_aabb(matrix, pos_x, pos_y, width, height):
     box_y1 = min(y1, y2, y3, y4)
     box_x2 = max(x1, x2, x3, x4)
     box_y2 = max(y1, y2, y3, y4)
-    return box_x1, box_y1, box_x2 - box_x1, box_y2 - box_y1
+    return box_x1, box_y1, box_x2, box_y2
 
 
 def resolve_links(pages):
@@ -371,7 +373,7 @@ class Page:
         #: The page bleed widths as a :obj:`dict` with ``'top'``, ``'right'``,
         #: ``'bottom'`` and ``'left'`` as keys, and values in CSS pixels.
         self.bleed = {
-            side: page_box.style['bleed_%s' % side].value
+            side: page_box.style[f'bleed_{side}'].value
             for side in ('top', 'right', 'bottom', 'left')}
 
         #: The :obj:`list` of ``(bookmark_level, bookmark_label, target)``
@@ -469,7 +471,7 @@ class Page:
                     link_type = 'attachment'
                 if matrix:
                     link = (link_type, target, rectangle_aabb(
-                        matrix, pos_x, pos_y, pos_x + width, pos_y + height))
+                        matrix, pos_x, pos_y, width, height))
                 else:
                     link = (link_type, target, (
                         pos_x, pos_y, pos_x + width, pos_y + height))
@@ -631,7 +633,7 @@ class Document:
         page_boxes = layout_document(html, root_box, context)
         rendering = cls(
             [Page(page_box) for page_box in page_boxes],
-            DocumentMetadata(**html._get_metadata()),
+            DocumentMetadata(**get_html_metadata(html)),
             html.url_fetcher, font_config)
         return rendering
 
@@ -674,7 +676,7 @@ class Document:
         Write each page to a numbred PNG file::
 
             for i, page in enumerate(document.pages):
-                document.copy(page).write_png('page_%s.png' % i)
+                document.copy(page).write_png(f'page_{i}.png')
 
         Combine multiple documents into one PDF file,
         using metadata from the first::
@@ -934,7 +936,7 @@ class Document:
 
         # Embeded fonts
         resources['Font'] = pydyf.Dictionary()
-        for font_hash, font in stream._fonts.items():
+        for font_hash, font in stream.get_fonts().items():
             # Optimize font
             try:
                 full_font = io.BytesIO(font.file_content)
@@ -955,9 +957,7 @@ class Document:
             compressobj = zlib.compressobj()
             compressed = compressobj.compress(content)
             compressed += compressobj.flush()
-            font_extra = pydyf.Dictionary({
-                'Filter': '/FlateDecode',
-            })
+            font_extra = pydyf.Dictionary({'Filter': '/FlateDecode'})
             if font_type == 'otf':
                 font_extra['Subtype'] = '/OpenType'
             else:
@@ -974,8 +974,7 @@ class Document:
                 current_widths.append(font.widths[i])
             subfont_dictionary = pydyf.Dictionary({
                 'Type': '/Font',
-                'Subtype': (
-                    '/CIDFontType' + ('0' if font_type == 'otf' else '2')),
+                'Subtype': f'/CIDFontType{"0" if font_type == "otf" else "2"}',
                 'BaseFont': font.name,
                 'CIDSystemInfo': pydyf.Dictionary({
                     'Registry': pydyf.String('Adobe'),
@@ -995,7 +994,7 @@ class Document:
                     'CapHeight': font.bbox[3],
                     'StemV': font.stemv,
                     'StemH': font.stemh,
-                    ('FontFile' + ('3' if font_type == 'otf' else '2')):
+                    (f'FontFile{"3" if font_type == "otf" else "2"}'):
                         font_stream.reference,
                 }),
             })
@@ -1042,7 +1041,6 @@ class Document:
 
         # XObjects
         for key, x_object in x_objects.items():
-            # XObjects must use references
             pdf.add_object(x_object)
             x_objects[key] = x_object.reference
 

@@ -266,8 +266,9 @@ def find_base_url(html_document, fallback_base_url):
     return fallback_base_url
 
 
-def get_html_metadata(wrapper_element, base_url):
-    """
+def get_html_metadata(html):
+    """Get metadata dictionary out of HTML object.
+
     Relevant specs:
 
     http://www.whatwg.org/html#the-title-element
@@ -284,7 +285,7 @@ def get_html_metadata(wrapper_element, base_url):
     created = None
     modified = None
     attachments = []
-    for element in wrapper_element.query_all('title', 'meta', 'link'):
+    for element in html.wrapper_element.query_all('title', 'meta', 'link'):
         element = element.etree_element
         if element.tag == 'title' and title is None:
             title = get_child_text(element)
@@ -307,7 +308,7 @@ def get_html_metadata(wrapper_element, base_url):
                 modified = parse_w3c_date(name, content)
         elif element.tag == 'link' and element_has_link_type(
                 element, 'attachment'):
-            url = get_url_attribute(element, 'href', base_url)
+            url = get_url_attribute(element, 'href', html.base_url)
             attachment_title = element.get('title', None)
             if url is None:
                 LOGGER.error('Missing href in <link rel="attachment">')

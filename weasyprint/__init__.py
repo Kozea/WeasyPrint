@@ -130,9 +130,6 @@ class HTML:
     def _ph_stylesheets(self):
         return [HTML5_PH_STYLESHEET]
 
-    def _get_metadata(self):
-        return get_html_metadata(self.wrapper_element, self.base_url)
-
     def render(self, stylesheets=None, presentational_hints=False,
                font_config=None, counter_style=None):
         """Lay out and paginate the document, but do not (yet) export it
@@ -399,5 +396,5 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
 from .css import preprocess_stylesheet  # noqa isort:skip
 from .html import (  # noqa isort:skip
     HTML5_UA_COUNTER_STYLE, HTML5_UA_STYLESHEET, HTML5_PH_STYLESHEET,
-    find_base_url, get_html_metadata)
+    find_base_url)
 from .document import Document, Page  # noqa isort:skip
