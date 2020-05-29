@@ -307,26 +307,25 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
                     ('height', 'top'), ('height', 'bottom'),
                     ('width', 'left'), ('width', 'right')):
                 style_attribute = None
-                for prop in ('margin%s' % part, '%smargin' % position):
+                for prop in (f'margin{part}', f'{position}margin'):
                     if element.get(prop):
-                        style_attribute = 'margin-%s:%spx' % (
-                            position, element.get(prop))
+                        style_attribute = (
+                            f'margin-{position}:{element.get(prop)}px')
                         break
                 if style_attribute:
                     yield specificity, check_style_attribute(
                         element, style_attribute)
             if element.get('background'):
-                style_attribute = 'background-image:url(%s)' % (
-                    element.get('background'))
+                style_attribute = (
+                    f'background-image:url({element.get("background")})')
                 yield specificity, check_style_attribute(
                     element, style_attribute)
             if element.get('bgcolor'):
-                style_attribute = 'background-color:%s' % (
-                    element.get('bgcolor'))
+                style_attribute = f'background-color:{element.get("bgcolor")}'
                 yield specificity, check_style_attribute(
                     element, style_attribute)
             if element.get('text'):
-                style_attribute = 'color:%s' % element.get('text')
+                style_attribute = f'color:{element.get("text")}'
                 yield specificity, check_style_attribute(
                     element, style_attribute)
             # TODO: we should support link, vlink, alink
@@ -340,14 +339,14 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
                     element, 'text-align:center')
             elif align in ('center', 'left', 'right', 'justify'):
                 yield specificity, check_style_attribute(
-                    element, 'text-align:%s' % align)
+                    element, f'text-align:{align}')
         elif element.tag == 'font':
             if element.get('color'):
                 yield specificity, check_style_attribute(
-                    element, 'color:%s' % element.get('color'))
+                    element, f'color:{element.get("color")}')
             if element.get('face'):
                 yield specificity, check_style_attribute(
-                    element, 'font-family:%s' % element.get('face'))
+                    element, f'font-family:{element.get("face")}')
             if element.get('size'):
                 size = element.get('size').strip()
                 relative_plus = size.startswith('+')
@@ -374,12 +373,11 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
                         size -= 3
                     size = max(1, min(7, size))
                     yield specificity, check_style_attribute(
-                        element, 'font-size:%s' % font_sizes[size])
+                        element, f'font-size:{font_sizes[size]}')
         elif element.tag == 'table':
             if element.get('cellspacing'):
                 yield specificity, check_style_attribute(
-                    element,
-                    'border-spacing:%spx' % element.get('cellspacing'))
+                    element, f'border-spacing:{element.get("cellspacing")}px')
             if element.get('cellpadding'):
                 cellpadding = element.get('cellpadding')
                 if cellpadding.isdigit():
@@ -389,53 +387,49 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
                     if subelement.tag in ('td', 'th'):
                         yield specificity, check_style_attribute(
                             subelement,
-                            'padding-left:%s;padding-right:%s;'
-                            'padding-top:%s;padding-bottom:%s;' % (
-                                4 * (cellpadding,)))
+                            f'padding-left:{cellpadding};'
+                            f'padding-right:{cellpadding};'
+                            f'padding-top:{cellpadding};'
+                            f'padding-bottom:{cellpadding};')
             if element.get('hspace'):
                 hspace = element.get('hspace')
                 if hspace.isdigit():
                     hspace += 'px'
                 yield specificity, check_style_attribute(
-                    element,
-                    'margin-left:%s;margin-right:%s' % (hspace, hspace))
+                    element, f'margin-left:{hspace};margin-right:{hspace}')
             if element.get('vspace'):
                 vspace = element.get('vspace')
                 if vspace.isdigit():
                     vspace += 'px'
                 yield specificity, check_style_attribute(
-                    element,
-                    'margin-top:%s;margin-bottom:%s' % (vspace, vspace))
+                    element, f'margin-top:{vspace};margin-bottom:{vspace}')
             if element.get('width'):
-                style_attribute = 'width:%s' % element.get('width')
+                style_attribute = f'width:{element.get("width")}'
                 if element.get('width').isdigit():
                     style_attribute += 'px'
                 yield specificity, check_style_attribute(
                     element, style_attribute)
             if element.get('height'):
-                style_attribute = 'height:%s' % element.get('height')
+                style_attribute = f'height:{element.get("height")}'
                 if element.get('height').isdigit():
                     style_attribute += 'px'
                 yield specificity, check_style_attribute(
                     element, style_attribute)
             if element.get('background'):
-                style_attribute = 'background-image:url(%s)' % (
-                    element.get('background'))
+                style_attribute = (
+                    f'background-image:url({element.get("background")})')
                 yield specificity, check_style_attribute(
                     element, style_attribute)
             if element.get('bgcolor'):
-                style_attribute = 'background-color:%s' % (
-                    element.get('bgcolor'))
+                style_attribute = f'background-color:{element.get("bgcolor")}'
                 yield specificity, check_style_attribute(
                     element, style_attribute)
             if element.get('bordercolor'):
-                style_attribute = 'border-color:%s' % (
-                    element.get('bordercolor'))
+                style_attribute = f'border-color:{element.get("bordercolor")}'
                 yield specificity, check_style_attribute(
                     element, style_attribute)
             if element.get('border'):
-                style_attribute = 'border-width:%spx' % (
-                    element.get('border'))
+                style_attribute = f'border-width:{element.get("border")}px'
                 yield specificity, check_style_attribute(
                     element, style_attribute)
         elif element.tag in ('tr', 'td', 'th', 'thead', 'tbody', 'tfoot'):
@@ -446,27 +440,26 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
                     element, 'text-align:center')
             elif align in ('center', 'left', 'right', 'justify'):
                 yield specificity, check_style_attribute(
-                    element, 'text-align:%s' % align)
+                    element, f'text-align:{align}')
             if element.get('background'):
-                style_attribute = 'background-image:url(%s)' % (
-                    element.get('background'))
+                style_attribute = (
+                    f'background-image:url({element.get("background")})')
                 yield specificity, check_style_attribute(
                     element, style_attribute)
             if element.get('bgcolor'):
-                style_attribute = 'background-color:%s' % (
-                    element.get('bgcolor'))
+                style_attribute = f'background-color:{element.get("bgcolor")}'
                 yield specificity, check_style_attribute(
                     element, style_attribute)
             if element.tag in ('tr', 'td', 'th'):
                 if element.get('height'):
-                    style_attribute = 'height:%s' % element.get('height')
+                    style_attribute = f'height:{element.get("height")}'
                     if element.get('height').isdigit():
                         style_attribute += 'px'
                     yield specificity, check_style_attribute(
                         element, style_attribute)
                 if element.tag in ('td', 'th'):
                     if element.get('width'):
-                        style_attribute = 'width:%s' % element.get('width')
+                        style_attribute = f'width:{element.get("width")}'
                         if element.get('width').isdigit():
                             style_attribute += 'px'
                         yield specificity, check_style_attribute(
@@ -479,10 +472,10 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
                     element, 'text-align:center')
             elif align in ('center', 'left', 'right', 'justify'):
                 yield specificity, check_style_attribute(
-                    element, 'text-align:%s' % align)
+                    element, f'text-align:{align}')
         elif element.tag == 'col':
             if element.get('width'):
-                style_attribute = 'width:%s' % element.get('width')
+                style_attribute = f'width:{element.get("width")}'
                 if element.get('width').isdigit():
                     style_attribute += 'px'
                 yield specificity, check_style_attribute(
@@ -497,22 +490,22 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
             if (element.get('color'), element.get('noshade')) != (None, None):
                 if size >= 1:
                     yield specificity, check_style_attribute(
-                        element, 'border-width:%spx' % (size / 2))
+                        element, f'border-width:{size / 2}px')
             elif size == 1:
                 yield specificity, check_style_attribute(
                     element, 'border-bottom-width:0')
             elif size > 1:
                 yield specificity, check_style_attribute(
-                    element, 'height:%spx' % (size - 2))
+                    element, f'height:{size - 2}px')
             if element.get('width'):
-                style_attribute = 'width:%s' % element.get('width')
+                style_attribute = f'width:{element.get("width")}'
                 if element.get('width').isdigit():
                     style_attribute += 'px'
                 yield specificity, check_style_attribute(
                     element, style_attribute)
             if element.get('color'):
                 yield specificity, check_style_attribute(
-                    element, 'color:%s' % element.get('color'))
+                    element, f'color:{element.get("color")}')
         elif element.tag in (
                 'iframe', 'applet', 'embed', 'img', 'input', 'object'):
             if (element.tag != 'input' or
@@ -527,25 +520,23 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
                     if hspace.isdigit():
                         hspace += 'px'
                     yield specificity, check_style_attribute(
-                        element,
-                        'margin-left:%s;margin-right:%s' % (hspace, hspace))
+                        element, f'margin-left:{hspace};margin-right:{hspace}')
                 if element.get('vspace'):
                     vspace = element.get('vspace')
                     if vspace.isdigit():
                         vspace += 'px'
                     yield specificity, check_style_attribute(
-                        element,
-                        'margin-top:%s;margin-bottom:%s' % (vspace, vspace))
+                        element, f'margin-top:{vspace};margin-bottom:{vspace}')
                 # TODO: img seems to be excluded for width and height, but a
                 # lot of W3C tests rely on this attribute being applied to img
                 if element.get('width'):
-                    style_attribute = 'width:%s' % element.get('width')
+                    style_attribute = f'width:{element.get("width")}'
                     if element.get('width').isdigit():
                         style_attribute += 'px'
                     yield specificity, check_style_attribute(
                         element, style_attribute)
                 if element.get('height'):
-                    style_attribute = 'height:%s' % element.get('height')
+                    style_attribute = f'height:{element.get("height")}'
                     if element.get('height').isdigit():
                         style_attribute += 'px'
                     yield specificity, check_style_attribute(
@@ -554,22 +545,22 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
                     if element.get('border'):
                         yield specificity, check_style_attribute(
                             element,
-                            'border-width:%spx;border-style:solid' %
-                            element.get('border'))
+                            f'border-width:{element.get("border")}px;'
+                            f'border-style:solid')
         elif element.tag == 'ol':
             # From https://www.w3.org/TR/css-lists-3/#ua-stylesheet
             if element.get('start'):
                 yield specificity, check_style_attribute(
                     element,
-                    'counter-reset:list-item %s;'
-                    'counter-increment:list-item -1' % element.get('start'))
+                    f'counter-reset:list-item {element.get("start")};'
+                    'counter-increment:list-item -1')
         elif element.tag == 'li':
             # From https://www.w3.org/TR/css-lists-3/#ua-stylesheet
             if element.get('value'):
                 yield specificity, check_style_attribute(
                     element,
-                    'counter-reset:list-item %s;'
-                    'counter-increment:none' % element.get('value'))
+                    f'counter-reset:list-item {element.get("value")};'
+                    'counter-increment:none')
 
 
 def declaration_precedence(origin, importance):
@@ -831,10 +822,11 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
 
         elif rule.type == 'at-rule' and rule.lower_at_keyword == 'import':
             if ignore_imports:
-                LOGGER.warning('@import rule "%s" not at the beginning of the '
-                               'the whole rule was ignored at %s:%s.',
-                               tinycss2.serialize(rule.prelude),
-                               rule.source_line, rule.source_column)
+                LOGGER.warning(
+                    '@import rule "%s" not at the beginning of the '
+                    'the whole rule was ignored at %s:%s.',
+                    tinycss2.serialize(rule.prelude),
+                    rule.source_line, rule.source_column)
                 continue
 
             tokens = remove_whitespace(rule.prelude)
@@ -844,10 +836,11 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                 continue
             media = media_queries.parse_media_query(tokens[1:])
             if media is None:
-                LOGGER.warning('Invalid media type "%s" '
-                               'the whole @import rule was ignored at %s:%s.',
-                               tinycss2.serialize(rule.prelude),
-                               rule.source_line, rule.source_column)
+                LOGGER.warning(
+                    'Invalid media type "%s" '
+                    'the whole @import rule was ignored at %s:%s.',
+                    tinycss2.serialize(rule.prelude),
+                    rule.source_line, rule.source_column)
                 continue
             if not media_queries.evaluate_media_query(
                     media, device_media_type):
@@ -870,10 +863,11 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
         elif rule.type == 'at-rule' and rule.lower_at_keyword == 'media':
             media = media_queries.parse_media_query(rule.prelude)
             if media is None:
-                LOGGER.warning('Invalid media type "%s" '
-                               'the whole @media rule was ignored at %s:%s.',
-                               tinycss2.serialize(rule.prelude),
-                               rule.source_line, rule.source_column)
+                LOGGER.warning(
+                    'Invalid media type "%s" '
+                    'the whole @media rule was ignored at %s:%s.',
+                    tinycss2.serialize(rule.prelude),
+                    rule.source_line, rule.source_column)
                 continue
             ignore_imports = True
             if not media_queries.evaluate_media_query(
