@@ -17,7 +17,7 @@ from gzip import GzipFile
 from urllib.parse import quote, unquote, urljoin, urlsplit
 from urllib.request import Request, pathname2url, urlopen
 
-from . import VERSION_STRING
+from . import __version__
 from .logger import LOGGER
 
 # See http://stackoverflow.com/a/11687993/1162888
@@ -35,7 +35,7 @@ except LookupError:  # pragma: no cover
     FILESYSTEM_ENCODING = 'utf-8'
 
 HTTP_HEADERS = {
-    'User-Agent': VERSION_STRING,
+    'User-Agent': f'WeasyPrint {__version__}',
     'Accept': '*/*',
     'Accept-Encoding': 'gzip, deflate',
 }

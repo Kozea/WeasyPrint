@@ -18,11 +18,6 @@ import cssselect2
 import html5lib
 import tinycss2
 
-if sys.version_info.major < 3:  # pragma: no cover
-    raise RuntimeError(
-        'WeasyPrint does not support Python 2.x anymore. '
-        'Please use Python 3 or install an older version of WeasyPrint.')
-
 if hasattr(sys, 'frozen'):  # pragma: no cover
     if hasattr(sys, '_MEIPASS'):
         # Frozen with PyInstaller
@@ -37,9 +32,6 @@ else:
 
 VERSION = __version__ = (ROOT / 'VERSION').read_text().strip()
 
-# Used for 'User-Agent' in HTTP and 'Creator' in PDF
-VERSION_STRING = 'WeasyPrint %s (http://weasyprint.org/)' % VERSION
-
 __all__ = ['HTML', 'CSS', 'Attachment', 'Document', 'Page',
            'default_url_fetcher', 'VERSION']
 
@@ -53,7 +45,7 @@ from .logger import LOGGER, PROGRESS_LOGGER  # noqa isort:skip
 
 
 class HTML:
-    """Represents an HTML document parsed by html5lib.
+    """HTML document parsed by html5lib.
 
     You can just create an instance with a positional argument:
     ``doc = HTML(something)``
@@ -132,8 +124,7 @@ class HTML:
 
     def render(self, stylesheets=None, presentational_hints=False,
                font_config=None, counter_style=None):
-        """Lay out and paginate the document, but do not (yet) export it
-        to PDF or PNG.
+        """Lay out and paginate the document, but do not export it.
 
         This returns a :class:`~document.Document` object which provides
         access to individual pages and various meta-data.
@@ -254,7 +245,7 @@ class HTML:
 
 
 class CSS:
-    """Represents a CSS stylesheet parsed by tinycss2.
+    """CSS stylesheet parsed by tinycss2.
 
     An instance is created in the same way as :class:`HTML`, with the same
     arguments.
@@ -300,7 +291,7 @@ class CSS:
 
 
 class Attachment:
-    """Represents a file attachment for a PDF document.
+    """File attachment for a PDF document.
 
     .. versionadded:: 0.22
 
@@ -326,11 +317,7 @@ class Attachment:
 def _select_source(guess=None, filename=None, url=None, file_obj=None,
                    string=None, base_url=None, url_fetcher=default_url_fetcher,
                    check_css_mime_type=False):
-    """
-    Check that only one input is not None, and return it with the
-    normalized ``base_url``.
-
-    """
+    """If only one input is given, return it with normalized ``base_url``."""
     if base_url is not None:
         base_url = ensure_url(base_url)
 
@@ -339,8 +326,7 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
         param is not None]
     if len(selected_params) != 1:
         raise TypeError('Expected exactly one source, got ' + (
-            ', '.join(selected_params) or 'nothing'
-        ))
+            ', '.join(selected_params) or 'nothing'))
     elif guess is not None:
         if hasattr(guess, 'read'):
             type_ = 'file_obj'

@@ -14,7 +14,7 @@ import sys
 import cairosvg
 import pydyf
 
-from . import HTML, LOGGER, VERSION
+from . import HTML, LOGGER, __version__
 from .text import pango
 
 
@@ -26,7 +26,7 @@ class PrintInfo(argparse.Action):
         print('Version:', uname.version)
         print('Release:', uname.release)
         print()
-        print('WeasyPrint version:', VERSION)
+        print('WeasyPrint version:', __version__)
         print('Python version:', sys.version.split()[0])
         print('Pydyf version:', pydyf.__version__)
         print('Pango version:', pango.pango_version())
@@ -108,7 +108,7 @@ def main(argv=None, stdout=None, stdin=None):
     parser = argparse.ArgumentParser(
         prog='weasyprint', description='Renders web pages to PDF or PNG.')
     parser.add_argument('--version', action='version',
-                        version='WeasyPrint version %s' % VERSION,
+                        version=f'WeasyPrint version {__version__}',
                         help="Print WeasyPrint's version number and exit.")
     parser.add_argument('-i', '--info', action=PrintInfo, nargs=0,
                         help='Print system information and exit.')
