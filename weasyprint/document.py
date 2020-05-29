@@ -939,7 +939,7 @@ class Document:
             full_font = io.BytesIO(font.file_content)
             optimized_font = io.BytesIO()
             ttfont = TTFont(full_font)
-            options = subset.Options(retain_gids=True)
+            options = subset.Options(retain_gids=True, passthrough_tables=True)
             subsetter = subset.Subsetter(options)
             subsetter.populate(gids=font.cmap)
             subsetter.subset(ttfont)
