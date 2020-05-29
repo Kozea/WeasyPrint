@@ -9,11 +9,9 @@
 import io
 import os
 import pathlib
-import struct
 import sys
 import tempfile
 import warnings
-import zlib
 
 from fontTools.ttLib import TTFont, woff2
 
