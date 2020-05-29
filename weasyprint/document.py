@@ -17,7 +17,7 @@ from urllib.parse import unquote, urlsplit
 
 import pydyf
 from fontTools import subset
-from fontTools.ttLib import TTFont
+from fontTools.ttLib import TTFont, TTLibError
 from PIL import Image
 from weasyprint.layout import LayoutContext
 
@@ -936,15 +936,19 @@ class Document:
         resources['Font'] = pydyf.Dictionary()
         for font_hash, font in stream._fonts.items():
             # Optimize font
-            full_font = io.BytesIO(font.file_content)
-            optimized_font = io.BytesIO()
-            ttfont = TTFont(full_font)
-            options = subset.Options(retain_gids=True, passthrough_tables=True)
-            subsetter = subset.Subsetter(options)
-            subsetter.populate(gids=font.cmap)
-            subsetter.subset(ttfont)
-            ttfont.save(optimized_font)
-            content = optimized_font.getvalue()
+            try:
+                full_font = io.BytesIO(font.file_content)
+                optimized_font = io.BytesIO()
+                ttfont = TTFont(full_font)
+                options = subset.Options(
+                    retain_gids=True, passthrough_tables=True)
+                subsetter = subset.Subsetter(options)
+                subsetter.populate(gids=font.cmap)
+                subsetter.subset(ttfont)
+                ttfont.save(optimized_font)
+                content = optimized_font.getvalue()
+            except TTLibError:
+                content = font.file_content
 
             # Include font
             font_type = 'otf' if content[:4] == b'OTTO' else 'ttf'
