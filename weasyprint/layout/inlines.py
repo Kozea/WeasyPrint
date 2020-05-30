@@ -217,7 +217,7 @@ def skip_first_whitespace(box, skip_stack):
             result = skip_first_whitespace(box.children[index], None)
         return (index, result) if (index or result) else None
 
-    assert skip_stack is None, 'unexpected skip inside %s' % box
+    assert skip_stack is None, f'unexpected skip inside {box}'
     return None
 
 
@@ -286,7 +286,7 @@ def first_letter_to_box(box, skip_stack, first_letter_style):
                 cascaded={}, parent_style=first_letter_style, element=None)
             if child.element_tag.endswith('::first-letter'):
                 letter_box = boxes.InlineBox(
-                    '%s::first-letter' % box.element_tag, letter_style,
+                    f'{box.element_tag}::first-letter', letter_style,
                     box.element, [child])
                 box.children = (
                     (letter_box,) + tuple(box.children[1:]))
@@ -313,24 +313,24 @@ def first_letter_to_box(box, skip_stack, first_letter_style):
                     # otherwise it is similar to a floated element."
                     if first_letter_style['float'] == 'none':
                         letter_box = boxes.InlineBox(
-                            '%s::first-letter' % box.element_tag,
+                            f'{box.element_tag}::first-letter',
                             first_letter_style, box.element, [])
                         text_box = boxes.TextBox(
-                            '%s::first-letter' % box.element_tag, letter_style,
+                            f'{box.element_tag}::first-letter', letter_style,
                             box.element, first_letter)
                         letter_box.children = (text_box,)
                         box.children = (letter_box,) + tuple(box.children)
                     else:
                         letter_box = boxes.BlockBox(
-                            '%s::first-letter' % box.element_tag,
+                            f'{box.element_tag}::first-letter',
                             first_letter_style, box.element, [])
                         letter_box.first_letter_style = None
                         line_box = boxes.LineBox(
-                            '%s::first-letter' % box.element_tag, letter_style,
+                            f'{box.element_tag}::first-letter', letter_style,
                             box.element, [])
                         letter_box.children = (line_box,)
                         text_box = boxes.TextBox(
-                            '%s::first-letter' % box.element_tag, letter_style,
+                            f'{box.element_tag}::first-letter', letter_style,
                             box.element, first_letter)
                         line_box.children = (text_box,)
                         box.children = (letter_box,) + tuple(box.children)
@@ -506,7 +506,7 @@ def atomic_box(context, box, position_x, skip_stack, containing_block,
             context, box, position_x, skip_stack, containing_block,
             absolute_boxes, fixed_boxes)
     else:  # pragma: no cover
-        raise TypeError('Layout for %s not handled yet' % type(box).__name__)
+        raise TypeError(f'Layout for {type(box).__name__} not handled yet')
     return box
 
 
@@ -643,7 +643,7 @@ def split_inline_level(context, box, position_x, max_x, skip_stack,
         first_letter = '\u2e80'
         last_letter = '\u2e80'
     else:  # pragma: no cover
-        raise TypeError('Layout for %s not handled yet' % type(box).__name__)
+        raise TypeError(f'Layout for {type(box).__name__} not handled yet')
     return (
         new_box, resume_at, preserved_line_break, first_letter, last_letter,
         float_widths)
@@ -1291,9 +1291,9 @@ def is_phantom_linebox(linebox):
             if not is_phantom_linebox(child):
                 return False
             for side in ('top', 'right', 'bottom', 'left'):
-                if (getattr(child.style['margin_%s' % side], 'value', None) or
-                        child.style['border_%s_width' % side] or
-                        child.style['padding_%s' % side].value):
+                if (getattr(child.style[f'margin_{side}'], 'value', None) or
+                        child.style[f'border_{side}_width'] or
+                        child.style[f'padding_{side}'].value):
                     return False
         elif child.is_in_normal_flow():
             return False

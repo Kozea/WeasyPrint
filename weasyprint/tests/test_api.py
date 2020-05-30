@@ -291,7 +291,7 @@ def test_python_render(tmpdir):
         stylesheets=[io.BytesIO(css_string.encode('utf8'))]
     ) == rotated_png_bytes
     assert FakeHTML(
-        string='<style>%s</style>%s' % (css_string, html_string),
+        string=f'<style>{css_string}</style>{html_string}',
         base_url=base_url, media_type='screen'
     ).write_png() == rotated_png_bytes
 
@@ -870,8 +870,8 @@ def test_url_fetcher():
         check_png_pattern(html.write_png(stylesheets=[css]), blank=blank)
 
     test('<body><img src="pattern.png">')  # Test a "normal" URL
-    test('<body><img src="%s">' % Path(filename).as_uri())
-    test('<body><img src="%s?ignored">' % Path(filename).as_uri())
+    test(f'<body><img src="{Path(filename).as_uri()}">')
+    test(f'<body><img src="{Path(filename).as_uri()}?ignored">')
     test('<body><img src="weasyprint-custom:foo/é_%e9_pattern">')
     test('<body style="background: url(weasyprint-custom:foo/é_%e9_pattern)">')
     test('<body><li style="list-style: inside '

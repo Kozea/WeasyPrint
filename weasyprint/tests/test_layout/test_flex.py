@@ -388,7 +388,7 @@ def test_flex_align_content(align, height, y1, y2):
           flex-wrap: wrap;
           font-family: ahem;
           font-size: 10px;
-          height: %ipx;
+          height: %dpx;
           line-height: 1;
         }
         section {

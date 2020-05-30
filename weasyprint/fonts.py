@@ -273,7 +273,7 @@ class FontConfiguration:
                     # prevent RuntimeError, see issue #677
                     if matching_pattern == ffi.NULL:
                         LOGGER.debug(
-                            'Failed to get matching local font for "%s"',
+                            'Failed to get matching local font for %r',
                             font_name.decode('utf-8'))
                         continue
 
@@ -320,7 +320,7 @@ class FontConfiguration:
                         font = out.getvalue()
                 except Exception as exc:
                     LOGGER.debug(
-                        'Failed to load font at "%s" (%s)', url, exc)
+                        'Failed to load font at %r (%s)', url, exc)
                     continue
                 font_features = {
                     rules[0][0].replace('-', '_'): rules[0][1] for rules in
@@ -331,51 +331,47 @@ class FontConfiguration:
                 features_string = ''
                 for key, value in get_font_features(
                         **font_features).items():
-                    features_string += '<string>%s %s</string>' % (
-                        key, value)
+                    features_string += f'<string>{key} {value}</string>'
                 fd = tempfile.NamedTemporaryFile(
                     'wb', dir=self._tempdir, delete=False)
                 font_filename = fd.name
                 fd.write(font)
                 fd.close()
                 self._filenames.append(font_filename)
-                xml = '''<?xml version="1.0"?>
+                fontconfig_style = FONTCONFIG_STYLE_CONSTANTS[
+                    rule_descriptors.get('font_style', 'normal')]
+                fontconfig_weight = FONTCONFIG_WEIGHT_CONSTANTS[
+                    rule_descriptors.get('font_weight', 'normal')]
+                fontconfig_stretch = FONTCONFIG_STRETCH_CONSTANTS[
+                    rule_descriptors.get('font_stretch', 'normal')]
+                xml = f'''<?xml version="1.0"?>
                 <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
                 <fontconfig>
                   <match target="scan">
                     <test name="file" compare="eq">
-                      <string>%s</string>
+                      <string>{font_filename}</string>
                     </test>
                     <edit name="family" mode="assign_replace">
-                      <string>%s</string>
+                      <string>{rule_descriptors['font_family']}</string>
                     </edit>
                     <edit name="slant" mode="assign_replace">
-                      <const>%s</const>
+                      <const>{fontconfig_style}</const>
                     </edit>
                     <edit name="weight" mode="assign_replace">
-                      <const>%s</const>
+                      <const>{fontconfig_weight}</const>
                     </edit>
                     <edit name="width" mode="assign_replace">
-                      <const>%s</const>
+                      <const>{fontconfig_stretch}</const>
                     </edit>
                   </match>
                   <match target="font">
                     <test name="file" compare="eq">
-                      <string>%s</string>
+                      <string>{font_filename}</string>
                     </test>
                     <edit name="fontfeatures"
-                          mode="assign_replace">%s</edit>
+                          mode="assign_replace">{features_string}</edit>
                   </match>
-                </fontconfig>''' % (
-                    font_filename,
-                    rule_descriptors['font_family'],
-                    FONTCONFIG_STYLE_CONSTANTS[
-                        rule_descriptors.get('font_style', 'normal')],
-                    FONTCONFIG_WEIGHT_CONSTANTS[
-                        rule_descriptors.get('font_weight', 'normal')],
-                    FONTCONFIG_STRETCH_CONSTANTS[
-                        rule_descriptors.get('font_stretch', 'normal')],
-                    font_filename, features_string)
+                </fontconfig>'''
                 fd = tempfile.NamedTemporaryFile(
                     'w', dir=self._tempdir, delete=False)
                 fd.write(xml)
@@ -394,10 +390,9 @@ class FontConfiguration:
                     # Though it seems to work without…
                     return font_filename
                 else:
-                    LOGGER.debug('Failed to load font at "%s"', url)
+                    LOGGER.debug('Failed to load font at %r', url)
         LOGGER.warning(
-            'Font-face "%s" cannot be loaded',
-            rule_descriptors['font_family'])
+            'Font-face %r cannot be loaded', rule_descriptors['font_family'])
 
     def __del__(self):
         """Clean a font configuration for a document."""

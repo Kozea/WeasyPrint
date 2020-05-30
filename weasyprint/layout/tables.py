@@ -116,9 +116,9 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
                     # grid_x, so they are beyond too.
                     cell_index = row.children.index(cell)
                     ignored_cells = row.children[cell_index:]
-                    LOGGER.warning('This table row has more columns than '
-                                   'the table, ignored %i cells: %r',
-                                   len(ignored_cells), ignored_cells)
+                    LOGGER.warning(
+                        'This table row has more columns than the table, '
+                        f'ignored {len(ignored_cells)} cells: {ignored_cells}')
                     break
                 resolve_percentages(cell, containing_block=table)
                 if table.style['direction'] == 'ltr':

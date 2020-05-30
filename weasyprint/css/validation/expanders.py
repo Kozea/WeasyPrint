@@ -57,7 +57,7 @@ def expand_four_sides(base_url, name, tokens):
         tokens += (tokens[1],)  # left defaults to right
     elif len(tokens) != 4:
         raise InvalidValues(
-            'Expected 1 to 4 token components got %i' % len(tokens))
+            f'Expected 1 to 4 token components got {len(tokens)}')
     for suffix, token in zip(('-top', '-right', '-bottom', '-left'), tokens):
         i = name.rfind('-')
         if i == -1:
@@ -103,10 +103,10 @@ def border_radius(base_url, name, tokens):
             values.append(values[1])  # bl defaults to tr
         elif len(values) != 4:
             raise InvalidValues(
-                'Expected 1 to 4 token components got %i' % len(values))
+                f'Expected 1 to 4 token components got {len(values)}')
     corners = ('top-left', 'top-right', 'bottom-right', 'bottom-left')
     for corner, tokens in zip(corners, zip(horizontal, vertical)):
-        new_name = 'border-%s-radius' % corner
+        new_name = f'border-{corner}-radius'
         # validate_non_shorthand returns [(name, value)], we want
         # to yield (name, value)
         result, = validate_non_shorthand(
@@ -145,8 +145,8 @@ def generic_expander(*expanded_names, **kwargs):
                     assert new_name in expanded_names, new_name
                     if new_name in results:
                         raise InvalidValues(
-                            'got multiple %s values in a %s shorthand'
-                            % (new_name.strip('-'), name))
+                            f'got multiple {new_name.strip("-")} values '
+                            f'in a {name} shorthand')
                     results[new_name] = new_token
 
             for new_name in expanded_names:

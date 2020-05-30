@@ -585,11 +585,11 @@ def test_hyphenate_manual_1():
             word = 'hyphénation'[:i] + '\u00ad' + 'hyphénation'[i:]
             page, = render_pages(
                 '<html style="width: 5em; font-family: ahem">'
-                '<style>@font-face {src: url(AHEM____.TTF);'
-                '  font-family: ahem}</style>'
+                '<style>@font-face {'
+                '  src: url(AHEM____.TTF); font-family: ahem}</style>'
                 '<body style="hyphens: manual;'
-                'hyphenate-character: \'%s\'"'
-                'lang=fr>%s' % (hyphenate_character, word))
+                f'  hyphenate-character: \'{hyphenate_character}\'"'
+                f'  lang=fr>{word}')
             html, = page.children
             body, = html.children
             lines = body.children
@@ -607,11 +607,11 @@ def test_hyphenate_manual_2():
             word = 'hy phénation'[:i] + '\u00ad' + 'hy phénation'[i:]
             page, = render_pages(
                 '<html style="width: 5em; font-family: ahem">'
-                '<style>@font-face {src: url(AHEM____.TTF);'
-                '  font-family: ahem}</style>'
+                '<style>@font-face {'
+                '  src: url(AHEM____.TTF); font-family: ahem}</style>'
                 '<body style="hyphens: manual;'
-                'hyphenate-character: \'%s\'"'
-                'lang=fr>%s' % (hyphenate_character, word))
+                f'  hyphenate-character: \'{hyphenate_character}\'"'
+                f'  lang=fr>{word}')
             html, = page.children
             body, = html.children
             lines = body.children
@@ -730,12 +730,12 @@ def test_hyphenate_limit_zone_4():
     ('auto 2', 2),
 ))
 def test_hyphenate_limit_chars(css, result):
-    page, = render_pages((
+    page, = render_pages(
         '<html style="width: 1em; font-family: ahem">'
         '<style>@font-face {src: url(AHEM____.TTF); font-family: ahem}</style>'
         '<body style="hyphens: auto;'
-        'hyphenate-limit-chars: %s" lang=en>'
-        'hyphen') % css)
+        f'hyphenate-limit-chars: {css}" lang=en>'
+        'hyphen')
     html, = page.children
     body, = html.children
     lines = body.children
@@ -755,8 +755,8 @@ def test_hyphenate_limit_chars_punctuation(css):
         '<html style="width: 1em; font-family: ahem">'
         '<style>@font-face {src: url(AHEM____.TTF); font-family: ahem}</style>'
         '<body style="hyphens: auto;'
-        'hyphenate-limit-chars: %s" lang=en>'
-        '..lighten..' % css)
+        f'hyphenate-limit-chars: {css}" lang=en>'
+        '..lighten..')
     html, = page.children
     body, = html.children
     lines = body.children
@@ -797,7 +797,7 @@ def test_overflow_wrap(wrap, text, test, full_text):
 def white_space_lines(width, space):
     page, = render_pages('''
       <style>
-        body { font-size: 100px; width: %ipx }
+        body { font-size: 100px; width: %dpx }
         span { white-space: %s }
       </style>
       <body><span>This +    \n    is text''' % (width, space))

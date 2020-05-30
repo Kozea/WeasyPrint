@@ -124,8 +124,9 @@ def app(environ, start_response):
         filename = url.rstrip('/').rsplit('/', 1)[-1] or 'out'
         return make_response(
             body, content_type='application/pdf',
-            headers=[('Content-Disposition',
-                      'attachment; filename=%s.pdf' % filename)])
+            headers=[(
+                'Content-Disposition',
+                f'attachment; filename={filename}.pdf')])
 
     elif path.startswith('/view/'):
         url = normalize_url(path[6:], environ.get('QUERY_STRING'))
@@ -142,7 +143,7 @@ def app(environ, start_response):
 def run(port=5000):  # pragma: no cover
     host = '127.0.0.1'
     server = make_server(host, port, app)
-    print('Listening on http://%s:%s/ ...' % (host, port))
+    print(f'Listening on http://{host}:{port}/')
     server.serve_forever()
 
 

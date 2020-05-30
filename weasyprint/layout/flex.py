@@ -237,8 +237,8 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                 child.flex_base_size = child.style[axis].value
 
         child.hypothetical_main_size = max(
-            getattr(child, 'min_%s' % axis), min(
-                child.flex_base_size, getattr(child, 'max_%s' % axis)))
+            getattr(child, f'min_{axis}'), min(
+                child.flex_base_size, getattr(child, f'max_{axis}')))
 
         # Skip stack is only for the first child
         child_skip_stack = None
@@ -533,10 +533,10 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
 
     if len(flex_lines) == 1:
         line, = flex_lines
-        min_cross_size = getattr(box, 'min_%s' % cross)
+        min_cross_size = getattr(box, f'min_{cross}')
         if min_cross_size == 'auto':
             min_cross_size = float('-inf')
-        max_cross_size = getattr(box, 'max_%s' % cross)
+        max_cross_size = getattr(box, f'max_{cross}')
         if max_cross_size == 'auto':
             max_cross_size = float('inf')
         line.cross_size = max(

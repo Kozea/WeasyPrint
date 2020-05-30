@@ -89,7 +89,7 @@ def assert_different_renderings(expected_width, expected_height, documents):
                 write_png(name_1, pixels_1, expected_width, expected_height)
                 # Same as "assert pixels_1 != pixels_2" but the output of
                 # the assert hook would be gigantic and useless.
-                assert False, '%s and %s are the same' % (name_1, name_2)
+                assert False, f'{name_1} and {name_2} are the same'
 
 
 def write_png(basename, pixels, width, height):  # pragma: no cover
@@ -135,5 +135,5 @@ def assert_pixels_equal(name, width, height, raw, expected_raw, tolerance=0):
                 x = i // width
                 y = i % width
                 assert 0, (
-                    'Pixel (%i, %i) in %s: expected rgba%s, got rgba%s'
-                    % (x, y, name, expected, value))
+                    f'Pixel ({x}, {y}) in {name}: '
+                    f'expected rgba{expected}, got rgba{value}')

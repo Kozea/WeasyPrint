@@ -37,7 +37,7 @@ LOGGER.setLevel(level)
 
 # http://whatwg.org/C#space-character
 HTML_WHITESPACE = ' \t\n\f\r'
-HTML_SPACE_SEPARATED_TOKENS_RE = re.compile('[^%s]+' % HTML_WHITESPACE)
+HTML_SPACE_SEPARATED_TOKENS_RE = re.compile(f'[^{HTML_WHITESPACE}]+')
 
 
 def ascii_lower(string):

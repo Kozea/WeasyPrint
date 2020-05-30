@@ -88,7 +88,7 @@ def block_level_layout_switch(context, box, max_position_y, skip_stack,
             context, box, max_position_y, skip_stack, containing_block,
             page_is_empty, absolute_boxes, fixed_boxes)
     else:  # pragma: no cover
-        raise TypeError('Layout for %s not handled yet' % type(box).__name__)
+        raise TypeError(f'Layout for {type(box).__name__} not handled yet')
 
 
 def block_box_layout(context, box, max_position_y, skip_stack,

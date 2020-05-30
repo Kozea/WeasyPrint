@@ -40,7 +40,7 @@ def resolve_one_percentage(box, property_name, refer_to,
     setattr(box, property_name, percent)
     if property_name in ('min_width', 'min_height') and percent == 'auto':
         if (main_flex_direction is None or
-                property_name != ('min_%s' % main_flex_direction)):
+                property_name != (f'min_{main_flex_direction}')):
             setattr(box, property_name, 0)
 
 
@@ -140,7 +140,7 @@ def resolve_percentages(box, containing_block, main_flex_direction=None):
 def resolve_radii_percentages(box):
     corners = ('top_left', 'top_right', 'bottom_right', 'bottom_left')
     for corner in corners:
-        property_name = 'border_%s_radius' % corner
+        property_name = f'border_{corner}_radius'
         for side in corner.split('_'):
             if side in box.remove_decoration_sides:
                 setattr(box, property_name, (0, 0))

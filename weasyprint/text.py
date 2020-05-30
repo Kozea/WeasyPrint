@@ -783,7 +783,7 @@ class Layout:
             style['font_variant_east_asian'], style['font_feature_settings'])
         if features and context:
             features = ','.join(
-                ('%s %i' % (key, value)) for key, value in features.items())
+                f'{key} {value}' for key, value in features.items())
 
             # TODO: attributes should be freed.
             # In the meantime, keep a cache to avoid leaking too many of them.

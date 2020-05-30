@@ -94,7 +94,7 @@ class TargetCollector:
         """Create a TargetLookupItem for the given `anchor_name``."""
         if anchor_name and isinstance(anchor_name, str):
             if self.target_lookup_items.get(anchor_name) is not None:
-                LOGGER.warning('Anchor defined twice: %s', anchor_name)
+                LOGGER.warning('Anchor defined twice: %r', anchor_name)
             else:
                 self.target_lookup_items.setdefault(
                     anchor_name, TargetLookupItem())
@@ -118,7 +118,7 @@ class TargetCollector:
 
         if item.state == 'undefined':
             LOGGER.error(
-                'Content discarded: target points to undefined anchor "%s"',
+                'Content discarded: target points to undefined anchor %r',
                 anchor_token)
 
         return item

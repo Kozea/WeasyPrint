@@ -148,7 +148,7 @@ def safe_urljoin(base_url, url):
         return iri_to_uri(urljoin(base_url, url))
     else:
         raise InvalidValues(
-            'Relative URI reference without a base URI: %r' % url)
+            'Relative URI reference without a base URI: {url!r}')
 
 
 def comma_separated_list(function):
@@ -461,7 +461,7 @@ def check_counter_function(token, allowed_type=None):
         else:
             arguments.append('decimal')
 
-        return ('%s()' % name, tuple(arguments))
+        return (f'{name}()', tuple(arguments))
 
 
 def check_content_function(token):
@@ -499,7 +499,7 @@ def check_string_or_element_function(string_or_element, token):
         else:
             ident = 'first'
 
-        return ('%s()' % string_or_element, (custom_ident, ident))
+        return (f'{string_or_element}()', (custom_ident, ident))
 
 
 def check_var_function(token):
@@ -678,7 +678,7 @@ def get_target(token, base_url):
             content = 'content'
         values.append(content)
 
-    return ('%s()' % name, tuple(values))
+    return (f'{name}()', tuple(values))
 
 
 def get_content_list(tokens, base_url):

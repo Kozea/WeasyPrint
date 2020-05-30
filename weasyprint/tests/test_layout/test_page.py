@@ -1053,8 +1053,8 @@ def test_margin_boxes_fixed_dimension_9():
 
 def images(*widths):
     return ' '.join(
-        'url(\'data:image/svg+xml,<svg width="%i" height="10"></svg>\')'
-        % width for width in widths)
+        f'url(\'data:image/svg+xml,<svg width="{width}" height="10"></svg>\')'
+        for width in widths)
 
 
 @assert_no_logs

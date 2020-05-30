@@ -983,7 +983,7 @@ def test_margin_box_string_set_2():
     # Test each accepted value of `content()` as an arguemnt to `string-set`
     for value in ('', 'text', 'before', 'after'):
         if value in ('before', 'after'):
-            extra_style = "p:%s{content: 'pseudo'}" % value
+            extra_style = 'p:%s{content: "pseudo"}' % value
             simple_string_set_test(value, extra_style)
         else:
             simple_string_set_test(value)

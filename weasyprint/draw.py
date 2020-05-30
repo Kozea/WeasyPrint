@@ -148,7 +148,7 @@ def lighten(color):
 def draw_page(page, context):
     """Draw the given PageBox."""
     bleed = {
-        side: page.style['bleed_%s' % side].value
+        side: page.style[f'bleed_{side}'].value
         for side in ('top', 'right', 'bottom', 'left')}
     marks = page.style['marks']
     stacking_context = StackingContext.from_page(page)
@@ -543,16 +543,16 @@ def draw_border(context, box):
         draw_column_border()
         return
 
-    widths = [getattr(box, 'border_%s_width' % side) for side in SIDES]
+    widths = [getattr(box, f'border_{side}_width') for side in SIDES]
 
     # No border, return early.
     if all(width == 0 for width in widths):
         draw_column_border()
         return
 
-    colors = [get_color(box.style, 'border_%s_color' % side) for side in SIDES]
+    colors = [get_color(box.style, f'border_{side}_color') for side in SIDES]
     styles = [
-        colors[i].alpha and box.style['border_%s_style' % side]
+        colors[i].alpha and box.style[f'border_{side}_style']
         for (i, side) in enumerate(SIDES)]
 
     # The 4 sides are solid or double, and they have the same color. Oh yeah!

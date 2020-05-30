@@ -226,7 +226,7 @@ def before_after_to_box(element, pseudo_type, state, style_for,
     if 'none' in (display, content) or content in ('normal', 'inhibit'):
         return []
 
-    box = make_box('%s::%s' % (element.tag, pseudo_type), style, [], element)
+    box = make_box(f'{element.tag}::{pseudo_type}', style, [], element)
 
     quote_depth, counter_values, _counter_scopes = state
     update_counters(state, style)
@@ -263,7 +263,7 @@ def marker_to_box(element, state, parent_style, style_for, get_image_from_uri,
     # `content` where 'normal' computes as 'inhibit' for pseudo elements.
     quote_depth, counter_values, _counter_scopes = state
 
-    box = make_box('%s::marker' % element.tag, style, children, element)
+    box = make_box(f'{element.tag}::marker', style, children, element)
 
     if style['display'] == 'none':
         return
@@ -417,8 +417,8 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
                 # string() is currently only valid in @page context
                 # See https://github.com/Kozea/WeasyPrint/issues/723
                 LOGGER.warning(
-                    '"string(%s)" is only allowed in page margins' %
-                    (' '.join(value)))
+                    '"string(%s)" is only allowed in page margins',
+                    ' '.join(value))
                 continue
             texts.append(context.get_string_set_for(page, *value) or '')
         elif type_ == 'target-counter()':
@@ -502,8 +502,8 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
         elif type_ == 'element()':
             if not in_page_context:
                 LOGGER.warning(
-                    '"element(%s)" is only allowed in page margins' %
-                    (' '.join(value)))
+                    '"element(%s)" is only allowed in page margins',
+                    ' '.join(value))
                 continue
             new_box = context.get_running_element_for(page, *value)
             if new_box is None:
@@ -589,7 +589,7 @@ def compute_string_set(element, box, string_name, content_list,
             element, box, string_name, content_list, local_counters,
             target_collector, counter_style)
 
-    css_token = 'string-set::%s' % string_name
+    css_token = f'string-set::{string_name}'
     box_list = compute_content_list(
         content_list, box, counter_values, css_token, parse_again,
         target_collector, counter_style, element=element)
@@ -1005,9 +1005,9 @@ def collapse_table_borders(table, grid_width, grid_height):
     def set_one_border(border_grid, box_style, side, grid_x, grid_y):
         from ..draw import get_color
 
-        style = box_style['border_%s_style' % side]
-        width = box_style['border_%s_width' % side]
-        color = get_color(box_style, 'border_%s_color' % side)
+        style = box_style[f'border_{side}_style']
+        width = box_style[f'border_{side}_width']
+        color = get_color(box_style, f'border_{side}_color')
 
         # http://www.w3.org/TR/CSS21/tables.html#border-conflict-resolution
         score = ((1 if style == 'hidden' else 0), width, style_scores[style])
@@ -1075,9 +1075,9 @@ def collapse_table_borders(table, grid_width, grid_height):
     # the correct widths on each box. The actual border grid will be
     # painted separately.
     def set_transparent_border(box, side, twice_width):
-        box.style['border_%s_style' % side] = 'solid'
-        box.style['border_%s_width' % side] = twice_width / 2
-        box.style['border_%s_color' % side] = transparent
+        box.style[f'border_{side}_style'] = 'solid'
+        box.style[f'border_{side}_width'] = twice_width / 2
+        box.style[f'border_{side}_color'] = transparent
 
     def remove_borders(box):
         set_transparent_border(box, 'top', 0)

@@ -156,7 +156,7 @@ def test_breaking_linebox_regression_2():
       <style>
         @font-face { src: url(AHEM____.TTF); font-family: ahem }
       </style>
-      <p style="width: %i.5em; font-family: ahem">ab
+      <p style="width: %d.5em; font-family: ahem">ab
       <span style="padding-right: 1em; margin-right: 1em">c def</span>g
       hi</p>'''
     for i in range(16):

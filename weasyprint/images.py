@@ -44,7 +44,7 @@ class ImageLoadingError(ValueError):
     def from_exception(cls, exception):
         name = type(exception).__name__
         value = str(exception)
-        return cls('%s: %s' % (name, value) if value else name)
+        return cls(f'{name}: {value}' if value else name)
 
 
 class RasterImage:
@@ -167,9 +167,10 @@ class SVGImage:
                     concrete_width / svg.width, concrete_height / svg.height)
                 context.set_source_surface(svg.cairo)
                 context.paint()
-        except Exception as e:
+        except Exception as exception:
             LOGGER.error(
-                'Failed to draw an SVG image at %s : %s', self._base_url, e)
+                'Failed to draw an SVG image at %r: %s',
+                self._base_url, exception)
 
 
 def get_image_from_uri(cache, url_fetcher, url, forced_mime_type=None):
@@ -223,8 +224,8 @@ def get_image_from_uri(cache, url_fetcher, url, forced_mime_type=None):
                         if format_name == 'jpeg':
                             surface.set_mime_data('image/jpeg', string)
                         image = RasterImage(surface)
-    except (URLFetchingError, ImageLoadingError) as exc:
-        LOGGER.error('Failed to load image at "%s" (%s)', url, exc)
+    except (URLFetchingError, ImageLoadingError) as exception:
+        LOGGER.error('Failed to load image at %r: %s', url, exception)
         image = None
     cache[url] = image
     return image

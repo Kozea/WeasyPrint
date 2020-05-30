@@ -101,7 +101,7 @@ def app(environ, start_response):
 def run(port=5000):  # pragma: no cover
     host = '127.0.0.1'
     server = make_server(host, port, app)
-    print('Listening on http://%s:%s/ ...' % (host, port))
+    print(f'Listening on http://{host}:{port}/')
     server.serve_forever()
 
 

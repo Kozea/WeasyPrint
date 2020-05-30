@@ -384,8 +384,9 @@ def make_margin_boxes(context, page, state):
         else:
             suffixes = ['left', 'center', 'right']
             variable_outer, fixed_outer = containing_block
-        side_boxes = [make_box('@%s-%s' % (prefix, suffix), containing_block)
-                      for suffix in suffixes]
+        side_boxes = [
+            make_box(f'@{prefix}-{suffix}', containing_block)
+            for suffix in suffixes]
         if not any(box.is_generated for box in side_boxes):
             continue
         # We need the three boxes together for the variable dimension:
@@ -791,7 +792,7 @@ def make_all_pages(context, root_box, html, pages):
         if (len(pages) == 0 or
                 remake_state['content_changed'] or
                 remake_state['pages_wanted']):
-            PROGRESS_LOGGER.info('Step 5 - Creating layout - Page %i', i + 1)
+            PROGRESS_LOGGER.info('Step 5 - Creating layout - Page %d', i + 1)
             # Reset remake_state
             remake_state['content_changed'] = False
             remake_state['pages_wanted'] = False
@@ -801,7 +802,7 @@ def make_all_pages(context, root_box, html, pages):
             yield page
         else:
             PROGRESS_LOGGER.info(
-                'Step 5 - Creating layout - Page %i (up-to-date)', i + 1)
+                'Step 5 - Creating layout - Page %d (up-to-date)', i + 1)
             resume_at = context.page_maker[i + 1][0]
             yield pages[i]
 

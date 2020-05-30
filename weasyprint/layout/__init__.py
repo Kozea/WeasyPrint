@@ -117,7 +117,7 @@ def layout_document(html, root_box, context, max_loops=8):
     for loop in range(max_loops):
         if loop > 0:
             PROGRESS_LOGGER.info(
-                'Step 5 - Creating layout - Repagination #%i' % loop)
+                'Step 5 - Creating layout - Repagination #%d', loop)
 
         initial_total_pages = actual_total_pages
         pages = list(make_all_pages(context, root_box, html, pages))

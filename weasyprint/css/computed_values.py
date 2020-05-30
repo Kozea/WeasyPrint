@@ -238,8 +238,8 @@ def compute(element, pseudo_type, specified, computed, parent_style,
                 except BaseException:
                     pass
                 LOGGER.warning(
-                    'Unsupported computed value `%s` set in variable `%s` '
-                    'for property `%s`.', computed_value,
+                    'Unsupported computed value "%s" set in variable %r '
+                    'for property %r.', computed_value,
                     variable_name.replace('_', '-'), name.replace('_', '-'))
                 if name in INHERITED and parent_style:
                     already_computed_value = True
@@ -519,7 +519,7 @@ def _content_list(computer, values):
             else:
                 computed_value = value
         if computed_value is None:
-            LOGGER.warning('Unable to compute %s\'s value for content: %s' % (
+            LOGGER.warning('Unable to compute %r value for content: %r' % (
                 computer['element'], ', '.join(str(item) for item in value)))
         else:
             computed_values.append(computed_value)

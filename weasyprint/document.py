@@ -44,7 +44,7 @@ def _w3c_date_to_pdf(string, attr_name):
         return None
     match = W3C_DATE_RE.match(string)
     if match is None:
-        LOGGER.warning(f'Invalid {attr_name} date: {string:r}')
+        LOGGER.warning(f'Invalid {attr_name} date: {string!r}')
         return None
     groups = match.groupdict()
     pdf_date = ''

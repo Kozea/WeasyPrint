@@ -38,6 +38,6 @@ def parse_media_query(tokens):
                 media.append(part[0].lower_value)
             else:
                 LOGGER.warning(
-                    'Expected a media type, got %s', tinycss2.serialize(part))
+                    'Expected a media type, got %r', tinycss2.serialize(part))
                 return
         return media

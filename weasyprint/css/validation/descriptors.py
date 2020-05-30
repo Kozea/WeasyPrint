@@ -58,7 +58,7 @@ def preprocess_descriptors(rule, base_url, descriptors):
             result = ((descriptor.name, value),)
         except InvalidValues as exc:
             LOGGER.warning(
-                'Ignored `%s:%s` at %i:%i, %s.',
+                'Ignored "%s:%s" at %d:%d, %s.',
                 descriptor.name, tinycss2.serialize(descriptor.value),
                 descriptor.source_line, descriptor.source_column,
                 exc.args[0] if exc.args and exc.args[0] else 'invalid value')
@@ -117,7 +117,7 @@ def expand_font_variant(tokens):
                 # We don't allow 'normal', only the specific values
                 raise InvalidValues
             for feature in features:
-                function_name = 'font_variant_%s' % feature.replace('-', '_')
+                function_name = f'font_variant_{feature.replace("-", "_")}'
                 if getattr(properties, function_name)([token]):
                     features[feature].append(token)
                     break
@@ -125,7 +125,7 @@ def expand_font_variant(tokens):
                 raise InvalidValues
         for feature, tokens in features.items():
             if tokens:
-                yield '-%s' % feature, tokens
+                yield (f'-{feature}', tokens)
 
 
 @descriptor('font-face')

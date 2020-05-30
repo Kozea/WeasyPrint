@@ -21,7 +21,7 @@ def test_shrink_to_fit_floating_point_error_1(margin_left, font_size):
       <style>
         @font-face { src: url(AHEM____.TTF); font-family: ahem }
         @page { size: 100000px 100px }
-        p { float: left; margin-left: 0.%iin; font-size: 0.%iem;
+        p { float: left; margin-left: 0.%din; font-size: 0.%dem;
             font-family: "ahem" }
       </style>
       <p>this parrot is dead</p>
@@ -40,8 +40,8 @@ def test_shrink_to_fit_floating_point_error_2(font_size):
         page, = parse('''
           <style>
             @font-face { src: url(AHEM____.TTF); font-family: ahem }
-            @page { size: %i0pt %i0px }
-            p { font-size: %ipt; font-family: "ahem" }
+            @page { size: %d0pt %d0px }
+            p { font-size: %dpt; font-family: "ahem" }
           </style>
           <p>mmm <b>%s a</b></p>
         ''' % (font_size, font_size, font_size, 'i' * letters))

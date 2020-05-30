@@ -62,8 +62,7 @@ def capture_logs():
     def emit(record):
         if record.name == 'weasyprint.progress':
             return
-        message = '%s: %s' % (record.levelname.upper(), record.getMessage())
-        messages.append(message)
+        messages.append(f'{record.levelname.upper()}: {record.getMessage()}')
 
     previous_handlers = logger.handlers
     previous_level = logger.level
@@ -86,7 +85,7 @@ def assert_no_logs(function):
                 function(*args, **kwargs)
             except Exception:  # pragma: no cover
                 if logs:
-                    print('%i errors logged:' % len(logs), file=sys.stderr)
+                    print(f'{len(logs)} errors logged:', file=sys.stderr)
                     for message in logs:
                         print(message, file=sys.stderr)
                 raise
@@ -94,7 +93,7 @@ def assert_no_logs(function):
                 if logs:  # pragma: no cover
                     for message in logs:
                         print(message, file=sys.stderr)
-                    raise AssertionError('%i errors logged' % len(logs))
+                    raise AssertionError(f'{len(logs)} errors logged')
     return wrapper
 
 
@@ -120,7 +119,7 @@ def http_server(handlers):
     thread = threading.Thread(target=server.serve_forever)
     thread.start()
     try:
-        yield 'http://127.0.0.1:%s' % port
+        yield f'http://127.0.0.1:{port}'
     finally:
         server.shutdown()
         thread.join()

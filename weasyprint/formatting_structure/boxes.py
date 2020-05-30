@@ -92,7 +92,7 @@ class Box:
         self.remove_decoration_sides = set()
 
     def __repr__(self):
-        return '<%s %s>' % (type(self).__name__, self.element_tag)
+        return f'<{type(self).__name__} {self.element_tag}>'
 
     @classmethod
     def anonymous_from(cls, parent, *args, **kwargs):
@@ -305,9 +305,9 @@ class ParentBox(Box):
     def _reset_spacing(self, side):
         """Set to 0 the margin, padding and border of ``side``."""
         self.remove_decoration_sides.add(side)
-        setattr(self, 'margin_%s' % side, 0)
-        setattr(self, 'padding_%s' % side, 0)
-        setattr(self, 'border_%s_width' % side, 0)
+        setattr(self, f'margin_{side}', 0)
+        setattr(self, f'padding_{side}', 0)
+        setattr(self, f'border_{side}_width', 0)
 
     def remove_decoration(self, start, end):
         if self.style['box_decoration_break'] == 'clone':
@@ -672,7 +672,7 @@ class PageBox(ParentBox):
             element_tag=None, style=style, element=None, children=[])
 
     def __repr__(self):
-        return '<%s %s>' % (type(self).__name__, self.page_type)
+        return f'<{type(self).__name__} {self.page_type}>'
 
 
 class MarginBox(BlockContainerBox):
@@ -684,7 +684,7 @@ class MarginBox(BlockContainerBox):
             element_tag=None, style=style, element=None, children=[])
 
     def __repr__(self):
-        return '<%s %s>' % (type(self).__name__, self.at_keyword)
+        return f'<{type(self).__name__} {self.at_keyword}>'
 
 
 class FlexContainerBox(ParentBox):

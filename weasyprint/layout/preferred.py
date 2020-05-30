@@ -57,8 +57,7 @@ def min_content_width(context, box, outer=True):
         return flex_min_content_width(context, box, outer)
     else:
         raise TypeError(
-            'min-content width for %s not handled yet' %
-            type(box).__name__)
+            f'min-content width for {type(box).__name__} not handled yet')
 
 
 def max_content_width(context, box, outer=True):
@@ -85,7 +84,7 @@ def max_content_width(context, box, outer=True):
         return flex_max_content_width(context, box, outer)
     else:
         raise TypeError(
-            'max-content width for %s not handled yet' % type(box).__name__)
+            f'max-content width for {type(box).__name__} not handled yet')
 
 
 def _block_content_width(context, box, function, outer):

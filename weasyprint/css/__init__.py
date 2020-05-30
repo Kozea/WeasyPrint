@@ -276,7 +276,7 @@ def find_stylesheets(wrapper_element, device_media_type, url_fetcher, base_url,
                         page_rules=page_rules)
                 except URLFetchingError as exc:
                     LOGGER.error(
-                        'Failed to load stylesheet at %s : %s', href, exc)
+                        'Failed to load stylesheet at %s: %s', href, exc)
 
 
 def find_style_attributes(tree, presentational_hints=False, base_url=None):
@@ -804,12 +804,12 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                             if selector.pseudo_element.startswith('-'):
                                 logger_level = DEBUG
                                 raise cssselect2.SelectorError(
-                                    'ignored prefixed pseudo-element: %s'
-                                    % selector.pseudo_element)
+                                    'ignored prefixed pseudo-element: '
+                                    f'{selector.pseudo_element}')
                             else:
                                 raise cssselect2.SelectorError(
-                                    'unknown pseudo-element: %s'
-                                    % selector.pseudo_element)
+                                    'unknown pseudo-element: '
+                                    f'{selector.pseudo_element}')
                     ignore_imports = True
                 except cssselect2.SelectorError as exc:
                     LOGGER.log(
@@ -823,8 +823,8 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
         elif rule.type == 'at-rule' and rule.lower_at_keyword == 'import':
             if ignore_imports:
                 LOGGER.warning(
-                    '@import rule "%s" not at the beginning of the '
-                    'the whole rule was ignored at %s:%s.',
+                    '@import rule %r not at the beginning of the '
+                    'the whole rule was ignored at %d:%d.',
                     tinycss2.serialize(rule.prelude),
                     rule.source_line, rule.source_column)
                 continue
@@ -837,8 +837,8 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
             media = media_queries.parse_media_query(tokens[1:])
             if media is None:
                 LOGGER.warning(
-                    'Invalid media type "%s" '
-                    'the whole @import rule was ignored at %s:%s.',
+                    'Invalid media type %r '
+                    'the whole @import rule was ignored at %d:%d.',
                     tinycss2.serialize(rule.prelude),
                     rule.source_line, rule.source_column)
                 continue
@@ -847,7 +847,7 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                 continue
             url = url_join(
                 base_url, url, allow_relative=False,
-                context='@import at %s:%s',
+                context='@import at %d:%d',
                 context_args=(rule.source_line, rule.source_column))
             if url is not None:
                 try:
@@ -864,8 +864,8 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
             media = media_queries.parse_media_query(rule.prelude)
             if media is None:
                 LOGGER.warning(
-                    'Invalid media type "%s" '
-                    'the whole @media rule was ignored at %s:%s.',
+                    'Invalid media type %r '
+                    'the whole @media rule was ignored at %d:%d.',
                     tinycss2.serialize(rule.prelude),
                     rule.source_line, rule.source_column)
                 continue
@@ -884,8 +884,8 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
 
             if data is None:
                 LOGGER.warning(
-                    'Unsupported @page selector "%s", '
-                    'the whole @page rule was ignored at %s:%s.',
+                    'Unsupported @page selector %r, '
+                    'the whole @page rule was ignored at %d:%d.',
                     tinycss2.serialize(rule.prelude),
                     rule.source_line, rule.source_column)
                 continue
@@ -923,7 +923,7 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
             for key in ('src', 'font_family'):
                 if key not in rule_descriptors:
                     LOGGER.warning(
-                        "Missing %s descriptor in '@font-face' rule at %s:%s",
+                        "Missing %s descriptor in '@font-face' rule at %d:%d",
                         key.replace('_', '-'),
                         rule.source_line, rule.source_column)
                     break
@@ -940,8 +940,8 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                 rule.prelude, counter_style)
             if name is None:
                 LOGGER.warning(
-                    'Invalid counter style name "%s", the whole '
-                    '@counter-style rule was ignored at %s:%s.',
+                    'Invalid counter style name %r, the whole '
+                    '@counter-style rule was ignored at %d:%d.',
                     tinycss2.serialize(rule.prelude), rule.source_line,
                     rule.source_column)
                 continue
@@ -974,23 +974,23 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                 if system[1] in ('cyclic', 'fixed', 'symbolic'):
                     if len(counter['symbols'] or []) < 1:
                         LOGGER.warning(
-                            'In counter style "%s" at %s:%s, '
-                            'counter style "%s" needs at least one symbol',
+                            'In counter style %r at %d:%d, '
+                            'counter style %r needs at least one symbol',
                             name, rule.source_line, rule.source_column,
                             system[1])
                         continue
                 elif system[1] in ('alphabetic', 'numeric'):
                     if len(counter['symbols'] or []) < 2:
                         LOGGER.warning(
-                            'In counter style "%s" at %s:%s, '
-                            'counter style "%s" needs at least two symbols',
+                            'In counter style %r at %d:%d, '
+                            'counter style %r needs at least two symbols',
                             name, rule.source_line, rule.source_column,
                             system[1])
                         continue
                 elif system[1] == 'additive':
                     if len(counter['additive_symbols'] or []) < 2:
                         LOGGER.warning(
-                            'In counter style "%s" at %s:%s, '
+                            'In counter style %r at %d:%d, '
                             'counter style "additive" '
                             'needs at least two additive symbols',
                             name, rule.source_line, rule.source_column)

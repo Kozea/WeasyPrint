@@ -68,7 +68,7 @@ def preprocess_declarations(base_url, declarations):
     for declaration in declarations:
         if declaration.type == 'error':
             LOGGER.warning(
-                'Error: %s at %i:%i.',
+                'Error: %s at %d:%d.',
                 declaration.message,
                 declaration.source_line, declaration.source_column)
 
@@ -81,7 +81,7 @@ def preprocess_declarations(base_url, declarations):
 
         def validation_error(level, reason):
             getattr(LOGGER, level)(
-                'Ignored `%s:%s` at %i:%i, %s.',
+                'Ignored "%s:%s" at %d:%d, %s.',
                 declaration.name, serialize(declaration.value),
                 declaration.source_line, declaration.source_column, reason)
 
@@ -96,18 +96,18 @@ def preprocess_declarations(base_url, declarations):
                 name = unprefixed_name
             elif unprefixed_name in UNSTABLE:
                 LOGGER.warning(
-                    'Deprecated `%s:%s` at %i:%i, '
+                    'Deprecated "%s:%s" at %d:%d, '
                     'prefixes on unstable attributes are deprecated, '
-                    'use `%s` instead.',
+                    'use %r instead.',
                     declaration.name, serialize(declaration.value),
                     declaration.source_line, declaration.source_column,
                     unprefixed_name)
                 name = unprefixed_name
             else:
                 LOGGER.warning(
-                    'Ignored `%s:%s` at %i:%i, '
+                    'Ignored "%s:%s" at %d:%d, '
                     'prefix on this attribute is not supported, '
-                    'use `%s` instead.',
+                    'use %r instead.',
                     declaration.name, serialize(declaration.value),
                     declaration.source_line, declaration.source_column,
                     unprefixed_name)

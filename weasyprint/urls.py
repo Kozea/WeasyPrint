@@ -250,8 +250,8 @@ def fetch(url_fetcher, url):
     """Call an url_fetcher, fill in optional data, and clean up."""
     try:
         result = url_fetcher(url)
-    except Exception as exc:
-        raise URLFetchingError('%s: %s' % (type(exc).__name__, str(exc)))
+    except Exception as exception:
+        raise URLFetchingError(f'{type(exception).__name__}: {exception}')
     result.setdefault('redirected_url', url)
     result.setdefault('mime_type', None)
     if 'file_obj' in result:
