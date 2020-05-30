@@ -57,6 +57,8 @@ ffi.cdef('''
     typedef guint PangoGlyph;
     typedef guint PangoGlyphUnit;
 
+    const guint PANGO_GLYPH_EMPTY = 0x0FFFFFFF;
+
     typedef enum {
         PANGO_STYLE_NORMAL,
         PANGO_STYLE_OBLIQUE,
@@ -1399,7 +1401,7 @@ def show_first_line(context, textbox, text_overflow, x, y):
                 string += f'>{kerning}<'
 
             # Mapping between glyphs and characters
-            if glyph not in font.cmap:
+            if glyph not in font.cmap and glyph != pango.PANGO_GLYPH_EMPTY:
                 utf8_slice = slice(previous_utf8_position, utf8_position)
                 font.cmap[glyph] = utf8_text[utf8_slice].decode('utf-8')
             previous_utf8_position = utf8_position
