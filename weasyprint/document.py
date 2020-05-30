@@ -11,6 +11,7 @@ import io
 import math
 import shutil
 import zlib
+from functools import lru_cache
 from os.path import basename
 from subprocess import run
 from urllib.parse import unquote, urlsplit
@@ -69,16 +70,18 @@ def _w3c_date_to_pdf(string, attr_name):
 
 
 class Font:
-    def __init__(self, file_content, pango_font):
+    def __init__(self, file_content, pango_font, font_hash):
         pango_metrics = pango.pango_font_get_metrics(pango_font, ffi.NULL)
         font_description = pango.pango_font_describe(pango_font)
         font_family = ffi.string(pango.pango_font_description_get_family(
             font_description))
         font_size = pango.pango_font_description_get_size(font_description)
 
-        self.hash = hash(file_content)
         self.file_content = file_content
-        self.name = b'/' + font_family.replace(b' ', b'')
+        self.hash = font_hash
+        self.name = (
+            b'/' + self.hash.encode('ascii') + b'+' +
+            font_family.replace(b' ', b''))
         self.family = font_family
         self.flags = 4
         self.italic_angle = 0
@@ -97,11 +100,18 @@ class Font:
 
 class Context(pydyf.Stream):
     """PDF stream object with context storing alpha states."""
-    def __init__(self, alpha_states, x_objects, *args, **kwargs):
+    def __init__(self, document, alpha_states, x_objects, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self._document = document
         self._alpha_states = alpha_states
         self._x_objects = x_objects
-        self._fonts = {}
+
+    @staticmethod
+    @lru_cache()
+    def _subset_hash(file_content):
+        sha = hashlib.sha256()
+        sha.update(file_content)
+        return ''.join(chr(65 + letter % 26) for letter in sha.digest()[:6])
 
     def set_alpha(self, alpha, stroke=False):
         if alpha not in self._alpha_states:
@@ -113,16 +123,16 @@ class Context(pydyf.Stream):
         self.set_state(alpha)
 
     def add_font(self, font, pango_font):
-        font_hash = hash(font)
-        if font_hash not in self._fonts:
-            self._fonts[font_hash] = Font(font, pango_font)
-        return self._fonts[font_hash]
+        font_hash = self._subset_hash(font)
+        if font_hash not in self._document.fonts:
+            self._document.fonts[font_hash] = Font(font, pango_font, font_hash)
+        return self._document.fonts[font_hash]
 
     def get_fonts(self):
-        return self._fonts
+        return self._document.fonts
 
     def push_group(self, bounding_box):
-        group = Context(self._alpha_states, self._x_objects)
+        group = Context(self, self._alpha_states, self._x_objects)
         group.id = f'x{len(self._x_objects)}'
         group._x_objects[group.id] = group
         group.extra['Type'] = '/XObject'
@@ -648,6 +658,9 @@ class Document:
         #: :func:`default_url_fetcher` called to fetch external resources such
         #: as stylesheets and images.  (See :ref:`url-fetchers`.)
         self.url_fetcher = url_fetcher
+        #: A :obj:`dict` of fonts used by the document. Keys are hashes used to
+        #: identify fonts, values are :class:`Font` objects.
+        self.fonts = {}
         # Keep a reference to font_config to avoid its garbage collection until
         # rendering is destroyed. This is needed as font_config.__del__ removes
         # fonts that may be used when rendering
@@ -784,7 +797,7 @@ class Document:
             right = left + page_width
             bottom = top + page_height
 
-            stream = Context(alpha_states, x_objects)
+            stream = Context(self, alpha_states, x_objects)
             stream.transform(1, 0, 0, -1, 0, page.height * scale)
             page.paint(stream, scale=scale)
             pdf.add_object(stream)
@@ -936,7 +949,7 @@ class Document:
 
         # Embeded fonts
         resources['Font'] = pydyf.Dictionary()
-        for font_hash, font in stream.get_fonts().items():
+        for font_hash, font in self.fonts.items():
             # Optimize font
             try:
                 full_font = io.BytesIO(font.file_content)
@@ -1037,7 +1050,7 @@ class Document:
                 'ToUnicode': to_unicode.reference,
             })
             pdf.add_object(font_dictionary)
-            resources['Font'][str(font_hash)] = font_dictionary.reference
+            resources['Font'][font_hash] = font_dictionary.reference
 
         # XObjects
         for key, x_object in x_objects.items():
