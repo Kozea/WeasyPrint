@@ -38,18 +38,17 @@ def test_borders(margin='10px', prop='border'):
     height = 110
     margin = 10
     border = 10
-    solid_pixels = [[PIXELS_BY_CHAR['_']] * width for y in range(height)]
+    solid_pixels = [PIXELS_BY_CHAR['_'] for i in range(width * height)]
     for x in range(margin, width - margin):
         for y in itertools.chain(
                 range(margin, margin + border),
                 range(height - margin - border, height - margin)):
-            solid_pixels[y][x] = PIXELS_BY_CHAR['B']
+            solid_pixels[y * width + x] = PIXELS_BY_CHAR['B']
     for y in range(margin, height - margin):
         for x in itertools.chain(
                 range(margin, margin + border),
                 range(width - margin - border, width - margin)):
-            solid_pixels[y][x] = PIXELS_BY_CHAR['B']
-    solid_pixels = [b''.join(line) for line in solid_pixels]
+            solid_pixels[y * width + x] = PIXELS_BY_CHAR['B']
     assert_pixels(
         f'{prop}_solid', 140, 110, solid_pixels,
         source % (css_margin, prop, 'solid'))
