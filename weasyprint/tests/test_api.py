@@ -22,6 +22,7 @@ import pytest
 from PIL import Image
 
 from .. import CSS, HTML, __main__, default_url_fetcher
+from ..document import resolve_links
 from ..urls import path2url
 from .test_draw import assert_pixels_equal, parse_pixels
 from .testing_utils import (
@@ -110,10 +111,7 @@ def _png_size(png_bytes):
 
 
 def _round_meta(pages):
-    """Eliminate errors of floating point arithmetic for metadata.
-    (eg. 49.99999999999994 instead of 50)
-
-    """
+    """Eliminate errors of floating point arithmetic for metadata."""
     for page in pages:
         anchors = page.anchors
         for anchor_name, (pos_x, pos_y) in anchors.items():
@@ -127,8 +125,8 @@ def _round_meta(pages):
             links[i] = link
         bookmarks = page.bookmarks
         for i, (level, label, (pos_x, pos_y), state) in enumerate(bookmarks):
-            bookmarks[i] = (level, label,
-                            (round(pos_x, 6), round(pos_y, 6)), state)
+            bookmarks[i] = (
+                level, label, (round(pos_x, 6), round(pos_y, 6)), state)
 
 
 @assert_no_logs
@@ -693,7 +691,7 @@ def test_links():
             document = FakeHTML(string=html, base_url=base_url).render()
             if round:
                 _round_meta(document.pages)
-            resolved_links = list(document.resolve_links())
+            resolved_links = list(resolve_links(document.pages))
         assert len(logs) == len(warnings)
         for message, expected in zip(logs, warnings):
             assert expected in message

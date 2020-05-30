@@ -148,7 +148,7 @@ def safe_urljoin(base_url, url):
         return iri_to_uri(urljoin(base_url, url))
     else:
         raise InvalidValues(
-            'Relative URI reference without a base URI: {url!r}')
+            f'Relative URI reference without a base URI: {url!r}')
 
 
 def comma_separated_list(function):

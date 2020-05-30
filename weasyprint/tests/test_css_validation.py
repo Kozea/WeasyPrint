@@ -114,7 +114,7 @@ def test_spacing(rule, result):
 @assert_no_logs
 def test_spacing_warning():
     assert expand_to_dict(
-        'letter_spacing: normal', 'did you mean letter-spacing?') == {}
+        'letter_spacing: normal', 'you probably mean "letter-spacing"') == {}
 
 
 @assert_no_logs

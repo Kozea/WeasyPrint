@@ -58,7 +58,7 @@ def preprocess_descriptors(rule, base_url, descriptors):
             result = ((descriptor.name, value),)
         except InvalidValues as exc:
             LOGGER.warning(
-                'Ignored "%s:%s" at %d:%d, %s.',
+                'Ignored `%s:%s` at %d:%d, %s.',
                 descriptor.name, tinycss2.serialize(descriptor.value),
                 descriptor.source_line, descriptor.source_column,
                 exc.args[0] if exc.args and exc.args[0] else 'invalid value')
