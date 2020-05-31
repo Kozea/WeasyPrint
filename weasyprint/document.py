@@ -11,7 +11,6 @@ import io
 import math
 import shutil
 import zlib
-from functools import lru_cache
 from os.path import basename
 from subprocess import run
 from urllib.parse import unquote, urlsplit
@@ -70,15 +69,18 @@ def _w3c_date_to_pdf(string, attr_name):
 
 
 class Font:
-    def __init__(self, file_content, pango_font, font_hash):
+    def __init__(self, file_content, pango_font):
         pango_metrics = pango.pango_font_get_metrics(pango_font, ffi.NULL)
         font_description = pango.pango_font_describe(pango_font)
         font_family = ffi.string(pango.pango_font_description_get_family(
             font_description))
         font_size = pango.pango_font_description_get_size(font_description)
+        sha = hashlib.sha256()
+        sha.update(file_content)
 
         self.file_content = file_content
-        self.hash = font_hash
+        self.hash = ''.join(
+            chr(65 + letter % 26) for letter in sha.digest()[:6])
         self.name = (
             b'/' + self.hash.encode('ascii') + b'+' +
             font_family.replace(b' ', b''))
@@ -105,15 +107,60 @@ class Context(pydyf.Stream):
         self._document = document
         self._alpha_states = alpha_states
         self._x_objects = x_objects
+        self._current_color = self._current_color_stroke = None
+        self._current_alpha = self._current_alpha_stroke = None
+        self._current_font = self._current_font_size = None
+        self._old_font = self._old_font_size = None
 
-    @staticmethod
-    @lru_cache()
-    def _subset_hash(file_content):
-        sha = hashlib.sha256()
-        sha.update(file_content)
-        return ''.join(chr(65 + letter % 26) for letter in sha.digest()[:6])
+    def pop_state(self):
+        super().pop_state()
+        self._current_color = self._current_color_stroke = None
+        self._current_alpha = self._current_alpha_stroke = None
+        self._current_font = None
+
+    def begin_text(self):
+        if self.stream[-1] == b'ET':
+            self._current_font = self._old_font
+            self.stream.pop()
+        else:
+            super().begin_text()
+
+    def end_text(self):
+        self._old_font, self._current_font = self._current_font, None
+        super().end_text()
+
+    def set_color_rgb(self, r, g, b, stroke=False):
+        if stroke:
+            if (r, g, b) == self._current_color_stroke:
+                return
+            else:
+                self._current_color_stroke = (r, g, b)
+        else:
+            if (r, g, b) == self._current_color:
+                return
+            else:
+                self._current_color = (r, g, b)
+
+        super().set_color_rgb(r, g, b, stroke)
+
+    def set_font_size(self, font, size):
+        if (font, size) == self._current_font:
+            return
+        self._current_font = (font, size)
+        super().set_font_size(font, size)
 
     def set_alpha(self, alpha, stroke=False):
+        if stroke:
+            if alpha == self._current_alpha_stroke:
+                return
+            else:
+                self._current_alpha_stroke = alpha
+        else:
+            if alpha == self._current_alpha:
+                return
+            else:
+                self._current_alpha = alpha
+
         if alpha not in self._alpha_states:
             self._alpha_states[alpha] = pydyf.Dictionary()
             if stroke in (None, False):
@@ -122,10 +169,8 @@ class Context(pydyf.Stream):
                 self._alpha_states[alpha]['CA'] = alpha
         self.set_state(alpha)
 
-    def add_font(self, font, pango_font):
-        font_hash = self._subset_hash(font)
-        if font_hash not in self._document.fonts:
-            self._document.fonts[font_hash] = Font(font, pango_font, font_hash)
+    def add_font(self, font_hash, font_content, pango_font):
+        self._document.fonts[font_hash] = Font(font_content, pango_font)
         return self._document.fonts[font_hash]
 
     def get_fonts(self):
@@ -949,7 +994,7 @@ class Document:
 
         # Embeded fonts
         resources['Font'] = pydyf.Dictionary()
-        for font_hash, font in self.fonts.items():
+        for font in self.fonts.values():
             # Optimize font
             try:
                 full_font = io.BytesIO(font.file_content)
@@ -1015,31 +1060,31 @@ class Document:
                 subfont_dictionary['FontDescriptor']['Subtype'] = '/OpenType'
             pdf.add_object(subfont_dictionary)
             to_unicode = pydyf.Stream([
-                '/CIDInit /ProcSet findresource begin',
-                '12 dict begin',
-                'begincmap',
-                '/CIDSystemInfo',
-                '<< /Registry (Adobe)',
-                '/Ordering (UCS)',
-                '/Supplement 0',
-                '>> def',
-                '/CMapName /Adobe-Identity-UCS def',
-                '/CMapType 2 def',
-                '1 begincodespacerange',
-                '<0000> <ffff>',
-                'endcodespacerange',
-                f'{len(font.cmap)} beginbfchar'])
+                b'/CIDInit /ProcSet findresource begin',
+                b'12 dict begin',
+                b'begincmap',
+                b'/CIDSystemInfo',
+                b'<< /Registry (Adobe)',
+                b'/Ordering (UCS)',
+                b'/Supplement 0',
+                b'>> def',
+                b'/CMapName /Adobe-Identity-UCS def',
+                b'/CMapType 2 def',
+                b'1 begincodespacerange',
+                b'<0000> <ffff>',
+                b'endcodespacerange',
+                f'{len(font.cmap)} beginbfchar'.encode('ascii')])
             for glyph, text in font.cmap.items():
                 unicode_codepoints = ''.join(
                     f'{letter.encode("utf-16-be").hex()}' for letter in text)
                 to_unicode.stream.append(
-                    f'<{glyph:04x}> <{unicode_codepoints}>')
+                    f'<{glyph:04x}> <{unicode_codepoints}>'.encode('ascii'))
             to_unicode.stream.extend([
-                'endbfchar',
-                'endcmap',
-                'CMapName currentdict /CMap defineresource pop',
-                'end',
-                'end'])
+                b'endbfchar',
+                b'endcmap',
+                b'CMapName currentdict /CMap defineresource pop',
+                b'end',
+                b'end'])
             pdf.add_object(to_unicode)
             font_dictionary = pydyf.Dictionary({
                 'Type': '/Font',
@@ -1050,7 +1095,7 @@ class Document:
                 'ToUnicode': to_unicode.reference,
             })
             pdf.add_object(font_dictionary)
-            resources['Font'][font_hash] = font_dictionary.reference
+            resources['Font'][font.hash] = font_dictionary.reference
 
         # XObjects
         for key, x_object in x_objects.items():

@@ -1358,11 +1358,15 @@ def show_first_line(context, textbox, text_overflow, x, y):
         # Font content
         pango_font = glyph_item.item.analysis.font
         hb_font = pango.pango_font_get_hb_font(pango_font)
-        hb_face = harfbuzz.hb_font_get_face(hb_font)
-        hb_blob = harfbuzz.hb_face_reference_blob(hb_face)
-        hb_data = harfbuzz.hb_blob_get_data(hb_blob, length)
-        file_content = ffi.unpack(hb_data, int(length[0]))
-        font = context.add_font(file_content, pango_font)
+        font_hash = hb_face = harfbuzz.hb_font_get_face(hb_font)
+        fonts = context.get_fonts()
+        if font_hash in fonts:
+            font = fonts[font_hash]
+        else:
+            hb_blob = harfbuzz.hb_face_reference_blob(hb_face)
+            hb_data = harfbuzz.hb_blob_get_data(hb_blob, length)
+            file_content = ffi.unpack(hb_data, int(length[0]))
+            font = context.add_font(font_hash, file_content, pango_font)
 
         # Positions of the glyphs in the UTF-8 string
         utf8_positions = [offset + clusters[i] for i in range(1, num_glyphs)]
@@ -1405,14 +1409,16 @@ def show_first_line(context, textbox, text_overflow, x, y):
                 utf8_slice = slice(previous_utf8_position, utf8_position)
                 font.cmap[glyph] = utf8_text[utf8_slice].decode('utf-8')
             previous_utf8_position = utf8_position
+
+        # Close the last glyphs list, remove if empty
+        if string[-1] == '<':
+            string = string.rsplit('>', 1)[0]
         string += '>'
 
         # Draw text
-        context.begin_text()
         context.text_matrix(font_size, 0, 0, -font_size, x, y)
         context.set_font_size(font.hash, 1)
         context.show_text(string)
-        context.end_text()
 
         # Update x offset for next run
         x += units_to_double(pango.pango_glyph_string_get_width(glyph_string))

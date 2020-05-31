@@ -1000,6 +1000,7 @@ def draw_inline_level(context, page, box, offset_x=0, text_overflow='clip'):
         if isinstance(box, (boxes.InlineBox, boxes.LineBox)):
             if isinstance(box, boxes.LineBox):
                 text_overflow = box.text_overflow
+            in_text = False
             for child in box.children:
                 if isinstance(child, StackingContext):
                     child_offset_x = offset_x
@@ -1007,16 +1008,26 @@ def draw_inline_level(context, page, box, offset_x=0, text_overflow='clip'):
                     child_offset_x = (
                         offset_x + child.position_x - box.position_x)
                 if isinstance(child, boxes.TextBox):
+                    if not in_text:
+                        context.begin_text()
+                        in_text = True
                     draw_text(context, child, child_offset_x, text_overflow)
                 else:
+                    if in_text:
+                        in_text = False
+                        context.end_text()
                     draw_inline_level(
                         context, page, child, child_offset_x, text_overflow)
+            if in_text:
+                context.end_text()
         elif isinstance(box, boxes.InlineReplacedBox):
             draw_replacedbox(context, box)
         else:
             assert isinstance(box, boxes.TextBox)
             # Should only happen for list markers
+            context.begin_text()
             draw_text(context, box, offset_x, text_overflow)
+            context.end_text()
 
 
 def draw_text(context, textbox, offset_x, text_overflow):
@@ -1028,7 +1039,6 @@ def draw_text(context, textbox, offset_x, text_overflow):
         return
 
     x, y = textbox.position_x, textbox.position_y + textbox.baseline
-    context.move_to(x, y)
     context.set_color_rgb(*textbox.style['color'][:3])
     context.set_alpha(textbox.style['color'][3])
 
