@@ -104,6 +104,7 @@ class Context(pydyf.Stream):
     """PDF stream object with context storing alpha states."""
     def __init__(self, document, alpha_states, x_objects, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.compress = True
         self._document = document
         self._alpha_states = alpha_states
         self._x_objects = x_objects
@@ -1012,15 +1013,11 @@ class Document:
 
             # Include font
             font_type = 'otf' if content[:4] == b'OTTO' else 'ttf'
-            compressobj = zlib.compressobj()
-            compressed = compressobj.compress(content)
-            compressed += compressobj.flush()
-            font_extra = pydyf.Dictionary({'Filter': '/FlateDecode'})
             if font_type == 'otf':
-                font_extra['Subtype'] = '/OpenType'
+                font_extra = pydyf.Dictionary({'Subtype': '/OpenType'})
             else:
-                font_extra['Length1'] = len(content)
-            font_stream = pydyf.Stream([compressed], font_extra)
+                font_extra = pydyf.Dictionary({'Length1': len(content)})
+            font_stream = pydyf.Stream([content], font_extra, compress=True)
             pdf.add_object(font_stream)
 
             widths = pydyf.Array()
