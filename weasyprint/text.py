@@ -741,9 +741,7 @@ class Layout:
                 pangoft2.pango_ft2_font_map_new(), gobject.g_object_unref)
         else:
             font_map = context.font_config.font_map
-        pango_context = ffi.gc(
-            pango.pango_font_map_create_context(font_map),
-            gobject.g_object_unref)
+        pango_context = pango.pango_font_map_create_context(font_map)
         self.layout = ffi.gc(
             pango.pango_layout_new(pango_context),
             gobject.g_object_unref)
@@ -760,6 +758,7 @@ class Layout:
         if lang:
             self.language = pango.pango_language_from_string(lang_p)
             pango.pango_context_set_language(pango_context, self.language)
+        gobject.g_object_unref(pango_context)
 
         assert not isinstance(style['font_family'], str), (
             'font_family should be a list')
@@ -806,9 +805,7 @@ class Layout:
                 pango.pango_layout_set_attributes(self.layout, attr_list)
 
     def get_first_line(self):
-        layout_iter = ffi.gc(
-            pango.pango_layout_get_iter(self.layout),
-            pango.pango_layout_iter_free)
+        layout_iter = pango.pango_layout_get_iter(self.layout)
         first_line = pango.pango_layout_iter_get_line_readonly(layout_iter)
         if pango.pango_layout_iter_next_line(layout_iter):
             second_line = pango.pango_layout_iter_get_line_readonly(
@@ -816,6 +813,7 @@ class Layout:
             index = second_line.start_index
         else:
             index = None
+        pango.pango_layout_iter_free(layout_iter)
         self.first_line_direction = first_line.resolved_dir
         return first_line, index
 
