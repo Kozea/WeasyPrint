@@ -1346,6 +1346,9 @@ def show_first_line(context, textbox, text_overflow, x, y):
     while runs[-1].next != ffi.NULL:
         runs.append(runs[-1].next)
 
+    context.text_matrix(font_size, 0, 0, -font_size, x, y)
+    last_font = None
+    string = ''
     for run in runs:
         # Pango objects
         glyph_item = ffi.cast('PangoGlyphItem *', run.data)
@@ -1376,7 +1379,13 @@ def show_first_line(context, textbox, text_overflow, x, y):
             for i in range(num_glyphs)]
 
         # Go through the run glyphs
-        string = '<'
+        if font != last_font:
+            if string:
+                context.show_text(string)
+            string = ''
+            last_font = font
+        context.set_font_size(font.hash, 1)
+        string += '<'
         for glyph, width, utf8_position in glyphs:
             string += f'{glyph:04x}'
 
@@ -1415,13 +1424,11 @@ def show_first_line(context, textbox, text_overflow, x, y):
             string = string.rsplit('>', 1)[0]
         string += '>'
 
-        # Draw text
-        context.text_matrix(font_size, 0, 0, -font_size, x, y)
-        context.set_font_size(font.hash, 1)
-        context.show_text(string)
-
         # Update x offset for next run
         x += units_to_double(pango.pango_glyph_string_get_width(glyph_string))
+
+    # Draw text
+    context.show_text(string)
 
     ffi.release(length)
     ffi.release(ink_rect)
