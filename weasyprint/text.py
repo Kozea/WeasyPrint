@@ -1368,9 +1368,6 @@ def show_first_line(context, textbox, text_overflow, x, y):
         # Positions of the glyphs in the UTF-8 string
         utf8_positions = [offset + clusters[i] for i in range(1, num_glyphs)]
         utf8_positions.append(offset + glyph_item.item.length)
-        glyphs = [
-            (glyphs[i].glyph, glyphs[i].geometry.width, utf8_positions[i])
-            for i in range(num_glyphs)]
 
         # Go through the run glyphs
         if font != last_font:
@@ -1380,7 +1377,10 @@ def show_first_line(context, textbox, text_overflow, x, y):
             last_font = font
         context.set_font_size(font.hash, 1)
         string += '<'
-        for glyph, width, utf8_position in glyphs:
+        for i in range(num_glyphs):
+            glyph = glyphs[i].glyph
+            width = glyphs[i].geometry.width
+            utf8_position = utf8_positions[i]
             string += f'{glyph:04x}'
 
             # Ink bounding box and logical widths in font
@@ -1420,9 +1420,6 @@ def show_first_line(context, textbox, text_overflow, x, y):
         if string[-1] == '<':
             string = string.rsplit('>', 1)[0]
         string += '>'
-
-        # Update x offset for next run
-        x += units_to_double(pango.pango_glyph_string_get_width(glyph_string))
 
     # Draw text
     context.show_text(string)
