@@ -220,15 +220,10 @@ ffi.cdef('''
     void pango_layout_set_single_paragraph_mode (
         PangoLayout *layout, gboolean setting);
     int pango_layout_get_baseline (PangoLayout *layout);
+    PangoLayoutLine * pango_layout_get_line_readonly (
+        PangoLayout *layout, int line);
 
     hb_font_t * pango_font_get_hb_font (PangoFont *font);
-
-    PangoLayoutIter * pango_layout_get_iter (PangoLayout *layout);
-    void pango_layout_iter_free (PangoLayoutIter *iter);
-    gboolean pango_layout_iter_next_line (PangoLayoutIter *iter);
-    PangoLayoutLine * pango_layout_iter_get_line_readonly (
-        PangoLayoutIter *iter);
-    int pango_layout_iter_get_index (PangoLayoutIter *iter);
 
     PangoFontDescription * pango_font_description_new (void);
     void pango_font_description_free (PangoFontDescription *desc);
@@ -805,15 +800,12 @@ class Layout:
                 pango.pango_layout_set_attributes(self.layout, attr_list)
 
     def get_first_line(self):
-        layout_iter = pango.pango_layout_get_iter(self.layout)
-        first_line = pango.pango_layout_iter_get_line_readonly(layout_iter)
-        if pango.pango_layout_iter_next_line(layout_iter):
-            second_line = pango.pango_layout_iter_get_line_readonly(
-                layout_iter)
+        first_line = pango.pango_layout_get_line_readonly(self.layout, 0)
+        second_line = pango.pango_layout_get_line_readonly(self.layout, 1)
+        if second_line != ffi.NULL:
             index = second_line.start_index
         else:
             index = None
-        pango.pango_layout_iter_free(layout_iter)
         self.first_line_direction = first_line.resolved_dir
         return first_line, index
 
