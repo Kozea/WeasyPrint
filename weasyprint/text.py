@@ -655,6 +655,7 @@ def unicode_to_char_p(string):
 
     """
     bytestring = string.encode('utf8').replace(b'\x00', b'')
+    # TODO: that’s a memory leak
     return ffi.new('char[]', bytestring), bytestring
 
 
@@ -663,6 +664,7 @@ def get_size(line, style):
     pango.pango_layout_line_get_extents(line, ffi.NULL, logical_extents)
     width, height = (units_to_double(logical_extents.width),
                      units_to_double(logical_extents.height))
+    ffi.release(logical_extents)
     if style['letter_spacing'] != 'normal':
         width += style['letter_spacing']
     return width, height
@@ -671,7 +673,9 @@ def get_size(line, style):
 def get_ink_position(line):
     ink_extents = ffi.new('PangoRectangle *')
     pango.pango_layout_line_get_extents(line, ink_extents, ffi.NULL)
-    return (units_to_double(ink_extents.x), units_to_double(ink_extents.y))
+    values = (units_to_double(ink_extents.x), units_to_double(ink_extents.y))
+    ffi.release(ink_extents)
+    return values
 
 
 def first_line_metrics(first_line, text, layout, resume_at, space_collapse,
@@ -1328,10 +1332,6 @@ def show_first_line(context, textbox, text_overflow, x, y):
     utf8_text = textbox.text.encode('utf-8')
     previous_utf8_position = 0
 
-    length = ffi.new('unsigned int *')
-    ink_rect = ffi.new('PangoRectangle *')
-    logical_rect = ffi.new('PangoRectangle *')
-
     runs = [first_line.runs[0]]
     while runs[-1].next != ffi.NULL:
         runs.append(runs[-1].next)
@@ -1357,8 +1357,8 @@ def show_first_line(context, textbox, text_overflow, x, y):
             font = fonts[font_hash]
         else:
             hb_blob = harfbuzz.hb_face_reference_blob(hb_face)
-            hb_data = harfbuzz.hb_blob_get_data(hb_blob, length)
-            file_content = ffi.unpack(hb_data, int(length[0]))
+            hb_data = harfbuzz.hb_blob_get_data(hb_blob, context.length)
+            file_content = ffi.unpack(hb_data, int(context.length[0]))
             font = context.add_font(font_hash, file_content, pango_font)
 
         # Positions of the glyphs in the UTF-8 string
@@ -1382,10 +1382,12 @@ def show_first_line(context, textbox, text_overflow, x, y):
             # Ink bounding box and logical widths in font
             if glyph not in font.widths:
                 pango.pango_font_get_glyph_extents(
-                    pango_font, glyph, ink_rect, logical_rect)
+                    pango_font, glyph, context.ink_rect, context.logical_rect)
                 x1, y1, x2, y2 = (
-                    ink_rect.x, -ink_rect.y - ink_rect.height,
-                    ink_rect.x + ink_rect.width, -ink_rect.y)
+                    context.ink_rect.x,
+                    -context.ink_rect.y - context.ink_rect.height,
+                    context.ink_rect.x + context.ink_rect.width,
+                    -context.ink_rect.y)
                 if x1 < font.bbox[0]:
                     font.bbox[0] = int(units_to_double(x1 * 1000) / font_size)
                 if y1 < font.bbox[1]:
@@ -1395,7 +1397,8 @@ def show_first_line(context, textbox, text_overflow, x, y):
                 if y2 > font.bbox[3]:
                     font.bbox[3] = int(units_to_double(y2 * 1000) / font_size)
                 font.widths[glyph] = int(
-                    units_to_double(logical_rect.width * 1000) / font_size)
+                    units_to_double(context.logical_rect.width * 1000) /
+                    font_size)
 
             # Kerning
             kerning = int(
@@ -1420,10 +1423,6 @@ def show_first_line(context, textbox, text_overflow, x, y):
     # Draw text
     context.show_text(string)
 
-    ffi.release(length)
-    ffi.release(ink_rect)
-    ffi.release(logical_rect)
-
 
 def get_log_attrs(text, lang):
     if lang:
@@ -1438,6 +1437,7 @@ def get_log_attrs(text, lang):
         text = text.replace(char, '')
     text_p, bytestring = unicode_to_char_p(text)
     length = len(bytestring) + 1
+    # TODO: that’s a memory leak
     log_attrs = ffi.new('PangoLogAttr[]', length)
     pango.pango_get_log_attrs(
         text_p, len(bytestring), -1, language, log_attrs, length)
