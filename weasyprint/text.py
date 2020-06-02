@@ -816,7 +816,7 @@ class Layout:
     def set_text(self, text, justify=False):
         # Keep only the first two lines, we don't need the other ones
         text, bytestring = unicode_to_char_p(
-            '\n'.join(text.split('\n', 3)[:2]))
+            '\n'.join(text.split('\n', 2)[:2]))
         self.text = bytestring.decode('utf-8')
         pango.pango_layout_set_text(self.layout, text, -1)
 
