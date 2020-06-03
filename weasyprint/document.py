@@ -201,6 +201,23 @@ class Context(pydyf.Stream):
     def pop_group(self):
         return self._parent
 
+    def add_image(self, pillow_image):
+        extra = pydyf.Dictionary({
+            'Type': '/XObject',
+            'Subtype': '/Image',
+            'Width': pillow_image.width,
+            'Height': pillow_image.height,
+            'ColorSpace': '/DeviceRGB',
+            'BitsPerComponent': 8,
+            'Filter': '/DCTDecode',
+        })
+
+        image_file = io.BytesIO()
+        pillow_image.save(image_file, format='jpeg')
+        xobject = pydyf.Stream([image_file.getvalue()], extra=extra)
+        self._x_objects['Im1'] = xobject
+        return 'Im1'
+
 
 BookmarkSubtree = collections.namedtuple(
     'BookmarkSubtree', ('label', 'destination', 'children', 'state'))

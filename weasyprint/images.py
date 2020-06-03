@@ -13,15 +13,11 @@ from xml.etree import ElementTree
 import cairocffi
 import cairosvg.parser
 import cairosvg.surface
+from PIL import Image
 
 from .layout.percentages import percentage
 from .logger import LOGGER
 from .urls import URLFetchingError, fetch
-
-try:
-    from cairocffi import pixbuf
-except OSError:
-    pixbuf = None
 
 
 # Map values of the image-rendering property to cairo FILTER values:
@@ -48,10 +44,10 @@ class ImageLoadingError(ValueError):
 
 
 class RasterImage:
-    def __init__(self, image_surface):
-        self.image_surface = image_surface
-        self._intrinsic_width = image_surface.get_width()
-        self._intrinsic_height = image_surface.get_height()
+    def __init__(self, pillow_image):
+        self.pillow_image = pillow_image
+        self._intrinsic_width = pillow_image.width
+        self._intrinsic_height = pillow_image.height
         self.intrinsic_ratio = (
             self._intrinsic_width / self._intrinsic_height
             if self._intrinsic_height != 0 else float('inf'))
@@ -71,17 +67,16 @@ class RasterImage:
         if not has_size:
             return
 
-        return
-        # TODO: handle this
+        image_name = context.add_image(self.pillow_image)
         # Use the real intrinsic size here,
         # not affected by 'image-resolution'.
-        context.transform(
-            concrete_width / self._intrinsic_width, 0, 0,
-            concrete_height / self._intrinsic_height, 0, 0)
-        context.set_source_surface(self.image_surface)
-        context.get_source().set_filter(
-            IMAGE_RENDERING_TO_FILTER[image_rendering])
-        context.paint()
+        context.push_state()
+        context.transform(concrete_width, 0, 0, concrete_height, 0, 0)
+        context.draw_x_object(image_name)
+        # TODO: handle this
+        # context.get_source().set_filter(
+        #     IMAGE_RENDERING_TO_FILTER[image_rendering])
+        context.pop_state()
 
 
 class ScaledSVGSurface(cairosvg.surface.SVGSurface):
@@ -194,36 +189,12 @@ def get_image_from_uri(cache, url_fetcher, url, forced_mime_type=None):
             else:
                 # Try to rely on given mimetype
                 try:
-                    if mime_type == 'image/png':
-                        try:
-                            surface = cairocffi.ImageSurface.create_from_png(
-                                BytesIO(string))
-                        except Exception as exception:
-                            raise ImageLoadingError.from_exception(exception)
-                        else:
-                            image = RasterImage(surface)
-                    else:
-                        image = None
-                except ImageLoadingError:
-                    image = None
+                    pillow_image = Image.open(BytesIO(string))
+                except Exception as exception:
+                    raise ImageLoadingError.from_exception(exception)
+                else:
+                    image = RasterImage(pillow_image)
 
-                # Relying on mimetype didn't work, give the image to GDK-Pixbuf
-                if not image:
-                    if pixbuf is None:
-                        raise ImageLoadingError(
-                            'Could not load GDK-Pixbuf. PNG and SVG are '
-                            'the only image formats available.')
-                    try:
-                        image = SVGImage(string, url, url_fetcher)
-                    except BaseException:
-                        try:
-                            surface, format_name = (
-                                pixbuf.decode_to_image_surface(string))
-                        except pixbuf.ImageLoadingError as exception:
-                            raise ImageLoadingError(str(exception))
-                        if format_name == 'jpeg':
-                            surface.set_mime_data('image/jpeg', string)
-                        image = RasterImage(surface)
     except (URLFetchingError, ImageLoadingError) as exception:
         LOGGER.error('Failed to load image at %r: %s', url, exception)
         image = None
