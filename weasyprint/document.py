@@ -215,8 +215,9 @@ class Context(pydyf.Stream):
         image_file = io.BytesIO()
         pillow_image.save(image_file, format='jpeg')
         xobject = pydyf.Stream([image_file.getvalue()], extra=extra)
-        self._x_objects['Im1'] = xobject
-        return 'Im1'
+        image_name = f'Im{len(self._x_objects)}'
+        self._x_objects[image_name] = xobject
+        return image_name
 
 
 BookmarkSubtree = collections.namedtuple(
