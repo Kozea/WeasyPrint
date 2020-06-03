@@ -19,7 +19,6 @@ from .layout.percentages import percentage
 from .logger import LOGGER
 from .urls import URLFetchingError, fetch
 
-
 # Map values of the image-rendering property to cairo FILTER values:
 # Values are normalized to lower case.
 IMAGE_RENDERING_TO_FILTER = {
@@ -71,7 +70,8 @@ class RasterImage:
         # Use the real intrinsic size here,
         # not affected by 'image-resolution'.
         context.push_state()
-        context.transform(concrete_width, 0, 0, concrete_height, 0, 0)
+        context.transform(
+            concrete_width, 0, 0, -concrete_height, 0, concrete_height)
         context.draw_x_object(image_name)
         # TODO: handle this
         # context.get_source().set_filter(
