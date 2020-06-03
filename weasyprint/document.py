@@ -114,9 +114,9 @@ class Context(pydyf.Stream):
         self._old_font = self._old_font_size = None
 
         # These objects are used in text.show_first_line
-        self.length = ffi.gc(ffi.new('unsigned int *'), ffi.release)
-        self.ink_rect = ffi.gc(ffi.new('PangoRectangle *'), ffi.release)
-        self.logical_rect = ffi.gc(ffi.new('PangoRectangle *'), ffi.release)
+        self.length = ffi.new('unsigned int *')
+        self.ink_rect = ffi.new('PangoRectangle *')
+        self.logical_rect = ffi.new('PangoRectangle *')
 
     def pop_state(self):
         super().pop_state()

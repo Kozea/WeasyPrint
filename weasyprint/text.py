@@ -655,7 +655,6 @@ def unicode_to_char_p(string):
 
     """
     bytestring = string.encode('utf8').replace(b'\x00', b'')
-    # TODO: that’s a memory leak
     return ffi.new('char[]', bytestring), bytestring
 
 
@@ -1438,7 +1437,6 @@ def get_log_attrs(text, lang):
         text = text.replace(char, '')
     text_p, bytestring = unicode_to_char_p(text)
     length = len(bytestring) + 1
-    # TODO: that’s a memory leak
     log_attrs = ffi.new('PangoLogAttr[]', length)
     pango.pango_get_log_attrs(
         text_p, len(bytestring), -1, language, log_attrs, length)
