@@ -202,12 +202,23 @@ class Context(pydyf.Stream):
         return self._parent
 
     def add_image(self, pillow_image):
+        image_mode = pillow_image.mode
+        if image_mode in ('RGB', 'RGBA', 'P'):
+            color_space = '/DeviceRGB'
+        elif image_mode in ('1', 'L'):
+            color_space = '/DeviceGray'
+        elif image_mode == 'CMYK':
+            color_space = '/DeviceCMYK'
+
+        if image_mode in ('RGBA', 'P'):
+            pillow_image = pillow_image.convert('RGB')
+
         extra = pydyf.Dictionary({
             'Type': '/XObject',
             'Subtype': '/Image',
             'Width': pillow_image.width,
             'Height': pillow_image.height,
-            'ColorSpace': '/DeviceRGB',
+            'ColorSpace': color_space,
             'BitsPerComponent': 8,
             'Filter': '/DCTDecode',
         })
