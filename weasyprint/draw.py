@@ -11,6 +11,7 @@ import operator
 from math import ceil, floor, pi, sqrt, tan
 
 import cairocffi as cairo
+import pydyf
 
 from .formatting_structure import boxes
 from .images import SVGImage
@@ -346,8 +347,7 @@ def draw_background(context, bg, clip_box=True, bleed=None, marks=()):
                     context.rectangle(*painting_area)
                     context.clip()
                     context.end()
-                # TODO: how to paint the whole page?
-                context.rectangle(-10**10, -10**10, 2 * 10**10, 2 * 10**10)
+                context.rectangle(*context.page_rectangle)
                 context.set_color_rgb(*bg.color[:3])
                 context.set_alpha(bg.color.alpha)
                 context.fill()
@@ -461,33 +461,29 @@ def draw_background_image(context, layer, image_rendering):
         else:
             repeat_height = image_height
 
-    return
-    # TODO: handle this
-    sub_surface = cairo.PDFSurface(None, repeat_width, repeat_height)
-    sub_context = cairo.Context(sub_surface)
-    sub_context.rectangle(0, 0, image_width, image_height)
-    sub_context.clip()
-    layer.image.draw(sub_context, image_width, image_height, image_rendering)
-    pattern = cairo.SurfacePattern(sub_surface)
-
-    if repeat_x == repeat_y == 'no-repeat':
-        pattern.set_extend(cairo.EXTEND_NONE)
-    else:
-        pattern.set_extend(cairo.EXTEND_REPEAT)
+    pattern = context.add_pattern(
+        painting_x, painting_y, repeat_width, repeat_height)
+    child = pattern.push_group([0, 0, repeat_width, repeat_height])
 
     with stacked(context):
-        if not layer.unbounded:
+        layer.image.draw(child, image_width, image_height, image_rendering)
+        pattern.draw_x_object(child.id)
+        context.color_space('Pattern')
+        context.set_color_special(pattern.id)
+        if layer.unbounded:
+            context.rectangle(*context.page_rectangle)
+        else:
             context.rectangle(
                 painting_x, painting_y, painting_width, painting_height)
-            context.clip()
-            context.end()
-        # else: unrestricted, whole page box
-
-        context.transform(
-            0, 0, 0, 0, positioning_x + position_x, positioning_y + position_y)
         # TODO: handle this
-        # context.set_source(pattern)
-        # context.paint()
+        # context.transform(
+        #     0, 0, 0, 0,
+        #     positioning_x + position_x, positioning_y + position_y)
+        # if repeat_x == repeat_y == 'no-repeat':
+        #     pattern.set_extend(cairo.EXTEND_NONE)
+        # else:
+        #     pattern.set_extend(cairo.EXTEND_REPEAT)
+        context.fill()
 
 
 def xy_offset(x, y, offset_x, offset_y, offset):

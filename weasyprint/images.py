@@ -13,6 +13,7 @@ from xml.etree import ElementTree
 import cairocffi
 import cairosvg.parser
 import cairosvg.surface
+import pydyf
 from PIL import Image
 
 from .layout.percentages import percentage
@@ -283,12 +284,6 @@ def gradient_average_color(colors, positions):
             result_b / result_a, result_a) if result_a != 0 else (0, 0, 0, 0)
 
 
-PATTERN_TYPES = dict(
-    linear=cairocffi.LinearGradient,
-    radial=cairocffi.RadialGradient,
-    solid=cairocffi.SolidPattern)
-
-
 class Gradient:
     def __init__(self, color_stops, repeating):
         assert color_stops
@@ -305,20 +300,28 @@ class Gradient:
     intrinsic_ratio = None
 
     def draw(self, context, concrete_width, concrete_height, _image_rendering):
-        scale_y, type_, init, stop_positions, stop_colors = self.layout(
-            concrete_width, concrete_height, context.user_to_device_distance)
-        context.scale(1, scale_y)
-        pattern = PATTERN_TYPES[type_](*init)
-        for position, color in zip(stop_positions, stop_colors):
-            pattern.add_color_stop_rgba(position, *color)
-        pattern.set_extend(cairocffi.EXTEND_REPEAT if self.repeating
-                           else cairocffi.EXTEND_PAD)
-        context.set_source(pattern)
-        context.paint()
+        scale_y, type_, matrix, stop_positions, stop_colors = self.layout(
+            concrete_width, concrete_height)
 
-    def layout(self, width, height, user_to_device_distance):
+        shading = context.add_shading()
+        shading['ShadingType'] = 2 if type_ == 'linear' else 3
+        shading['ColorSpace'] = '/DeviceRGB'
+        shading['Coords'] = pydyf.Array(matrix)
+        shading['Function'] = pydyf.Dictionary({
+            'FunctionType': 2,
+            'Domain': pydyf.Array([0, 1]),
+            'C0': pydyf.Array(stop_colors[0][:3]),
+            'C1': pydyf.Array(stop_colors[1][:3]),
+            'N': 1,
+        })
+        if self.repeating:
+            shading['Extend'] = pydyf.Array([b'true', b'true'])
+
+        context.transform(1, 0, 0, scale_y, 0, 0)
+        context.shading(shading.id)
+
+    def layout(self, width, height):
         """width, height: Gradient box. Top-left is at coordinates (0, 0).
-        user_to_device_distance: a (dx, dy) -> (ddx, ddy) function
 
         Returns (scale_y, type_, init, positions, colors).
         scale_y: float, used for ellipses radial gradients. 1 otherwise.
@@ -342,7 +345,7 @@ class LinearGradient(Gradient):
         #: ('corner', keyword) or ('angle', radians)
         self.direction_type, self.direction = direction
 
-    def layout(self, width, height, user_to_device_distance):
+    def layout(self, width, height):
         if len(self.colors) == 1:
             return 1, 'solid', self.colors[0], [], []
         # (dx, dy) is the unit vector giving the direction of the gradient.
@@ -365,7 +368,7 @@ class LinearGradient(Gradient):
         distance = abs(width * dx) + abs(height * dy)
         positions = process_color_stops(distance, self.stop_positions)
         first, last, positions = normalize_stop_postions(positions)
-        device_per_user_units = math.hypot(*user_to_device_distance(dx, dy))
+        device_per_user_units = math.hypot(dx, dy)
         if (last - first) * device_per_user_units < len(positions):
             if self.repeating:
                 color = gradient_average_color(self.colors, positions)
@@ -398,7 +401,7 @@ class RadialGradient(Gradient):
         #   size: (radius_x, radius_y)
         self.size_type, self.size = size
 
-    def layout(self, width, height, user_to_device_distance):
+    def layout(self, width, height):
         if len(self.colors) == 1:
             return 1, 'solid', self.colors[0], [], []
         origin_x, center_x, origin_y, center_y = self.center
@@ -425,9 +428,8 @@ class RadialGradient(Gradient):
         positions = process_color_stops(size_x, self.stop_positions)
         gradient_line_size = positions[-1] - positions[0]
         if self.repeating and any(
-            gradient_line_size * unit < len(positions)
-            for unit in (math.hypot(*user_to_device_distance(1, 0)),
-                         math.hypot(*user_to_device_distance(0, scale_y)))):
+                gradient_line_size * unit < len(positions)
+                for unit in (math.hypot(1, 0), math.hypot(0, scale_y))):
             color = gradient_average_color(colors, positions)
             return 1, 'solid', color, [], []
 

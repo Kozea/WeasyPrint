@@ -102,12 +102,16 @@ class Font:
 
 class Context(pydyf.Stream):
     """PDF stream object with context storing alpha states."""
-    def __init__(self, document, alpha_states, x_objects, *args, **kwargs):
+    def __init__(self, document, page_rectangle, alpha_states, x_objects,
+                 patterns, shadings, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.compress = True
+        self.page_rectangle = page_rectangle
         self._document = document
         self._alpha_states = alpha_states
         self._x_objects = x_objects
+        self._patterns = patterns
+        self._shadings = shadings
         self._current_color = self._current_color_stroke = None
         self._current_alpha = self._current_alpha_stroke = None
         self._current_font = self._current_font_size = None
@@ -182,8 +186,13 @@ class Context(pydyf.Stream):
     def get_fonts(self):
         return self._document.fonts
 
+    def sub_context(self, *args, **kwargs):
+        return Context(
+            self, self.page_rectangle, self._alpha_states, self._x_objects,
+            self._patterns, self._shadings, *args, **kwargs)
+
     def push_group(self, bounding_box):
-        group = Context(self, self._alpha_states, self._x_objects)
+        group = self.sub_context()
         group.id = f'x{len(self._x_objects)}'
         group._x_objects[group.id] = group
         group.extra['Type'] = '/XObject'
@@ -229,6 +238,28 @@ class Context(pydyf.Stream):
         image_name = f'Im{len(self._x_objects)}'
         self._x_objects[image_name] = xobject
         return image_name
+
+    def add_pattern(self, x, y, width, height):
+        matrix = (1, 0, 0, -1, x, self.page_rectangle[3] - y)
+        extra = pydyf.Dictionary({
+            'PatternType': 1,
+            'BBox': pydyf.Array([0, 0, width, height]),
+            'XStep': width,
+            'YStep': height,
+            'TilingType': 1,
+            'PaintType': 1,
+            'Matrix': pydyf.Array(0.75 * i for i in matrix),
+        })
+        pattern = self.sub_context(extra=extra)
+        pattern.id = f'p{len(self._patterns)}'
+        self._patterns[pattern.id] = pattern
+        return pattern
+
+    def add_shading(self):
+        shading = pydyf.Dictionary()
+        shading.id = f's{len(self._shadings)}'
+        self._shadings[shading.id] = shading
+        return shading
 
 
 BookmarkSubtree = collections.namedtuple(
@@ -822,8 +853,12 @@ class Document:
         pdf = pydyf.PDF()
         alpha_states = pydyf.Dictionary()
         x_objects = pydyf.Dictionary()
+        patterns = pydyf.Dictionary()
+        shadings = pydyf.Dictionary()
         resources = pydyf.Dictionary({
             'ExtGState': alpha_states,
+            'Pattern': patterns,
+            'Shading': shadings,
             'XObject': x_objects,
         })
         pdf.add_object(resources)
@@ -877,7 +912,11 @@ class Document:
             right = left + page_width
             bottom = top + page_height
 
-            stream = Context(self, alpha_states, x_objects)
+            page_rectangle = (
+                left / scale, top / scale, right / scale, bottom / scale)
+            stream = Context(
+                self, page_rectangle, alpha_states, x_objects, patterns,
+                shadings)
             stream.transform(1, 0, 0, -1, 0, page.height * scale)
             page.paint(stream, scale=scale)
             pdf.add_object(stream)
@@ -1132,6 +1171,15 @@ class Document:
         for key, x_object in x_objects.items():
             pdf.add_object(x_object)
             x_objects[key] = x_object.reference
+        # Patterns
+        for key, pattern in patterns.items():
+            pdf.add_object(pattern)
+            patterns[key] = pattern.reference
+            pattern.extra['Resources'] = resources.reference
+        # Shadings
+        for key, shading in shadings.items():
+            pdf.add_object(shading)
+            shadings[key] = shading.reference
 
         # Anchors
         if pdf_names:
