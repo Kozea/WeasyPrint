@@ -201,6 +201,35 @@ class Context(pydyf.Stream):
     def pop_group(self):
         return self._parent
 
+    def add_image(self, pillow_image):
+        image_mode = pillow_image.mode
+        if image_mode in ('RGB', 'RGBA', 'P'):
+            color_space = '/DeviceRGB'
+        elif image_mode in ('1', 'L'):
+            color_space = '/DeviceGray'
+        elif image_mode == 'CMYK':
+            color_space = '/DeviceCMYK'
+
+        if image_mode in ('RGBA', 'P'):
+            pillow_image = pillow_image.convert('RGB')
+
+        extra = pydyf.Dictionary({
+            'Type': '/XObject',
+            'Subtype': '/Image',
+            'Width': pillow_image.width,
+            'Height': pillow_image.height,
+            'ColorSpace': color_space,
+            'BitsPerComponent': 8,
+            'Filter': '/DCTDecode',
+        })
+
+        image_file = io.BytesIO()
+        pillow_image.save(image_file, format='jpeg')
+        xobject = pydyf.Stream([image_file.getvalue()], extra=extra)
+        image_name = f'Im{len(self._x_objects)}'
+        self._x_objects[image_name] = xobject
+        return image_name
+
 
 BookmarkSubtree = collections.namedtuple(
     'BookmarkSubtree', ('label', 'destination', 'children', 'state'))
