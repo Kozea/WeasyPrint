@@ -301,10 +301,23 @@ class Gradient:
 
     def draw(self, context, concrete_width, concrete_height, _image_rendering):
         # TODO: handle user_to_device_distance
+        # TODO: handle alpha
         scale_y, type_, matrix, stop_positions, stop_colors = self.layout(
             concrete_width, concrete_height, lambda x, y: (x, y))
 
-        # TODO: handle alpha
+        if type_ == 'solid':
+            context.rectangle(0, 0, concrete_width, concrete_height)
+            context.set_color_rgb(*stop_colors[0][:3])
+            context.fill()
+            return
+
+        # Invisible colors at the beginning/end of the gradient don’t
+        # extend. Fix this problem by shifting the inner colors a little bit.
+        if stop_positions[0] == stop_positions[1]:
+            stop_positions[1] += 0.0001
+        if stop_positions[-2] == stop_positions[-1]:
+            stop_positions[-2] -= 0.0001
+
         shading = context.add_shading()
         shading['ShadingType'] = 2 if type_ == 'linear' else 3
         shading['ColorSpace'] = '/DeviceRGB'
@@ -321,7 +334,7 @@ class Gradient:
         else:
             shading['Function'] = pydyf.Dictionary({
                 'FunctionType': 3,
-                'Domain': pydyf.Array([0, 1]),
+                'Domain': pydyf.Array([stop_positions[0], stop_positions[-1]]),
                 'Encode': pydyf.Array((len(stop_colors) - 1) * [0, 1]),
                 'Bounds': pydyf.Array(stop_positions[1:-1]),
                 'Functions': pydyf.Array([
@@ -367,7 +380,7 @@ class LinearGradient(Gradient):
 
     def layout(self, width, height, user_to_device_distance):
         if len(self.colors) == 1:
-            return 1, 'solid', self.colors[0], [], []
+            return 1, 'solid', None, [], [self.colors[0]]
         # (dx, dy) is the unit vector giving the direction of the gradient.
         # Positive dx: right, positive dy: down.
         if self.direction_type == 'corner':
@@ -392,7 +405,7 @@ class LinearGradient(Gradient):
         if (last - first) * device_per_user_units < len(positions):
             if self.repeating:
                 color = gradient_average_color(self.colors, positions)
-                return 1, 'solid', color, [], []
+                return 1, 'solid', None, [], [color]
             else:
                 # 100 is an Arbitrary non-zero number of device units.
                 offset = 100 / device_per_user_units
@@ -423,7 +436,7 @@ class RadialGradient(Gradient):
 
     def layout(self, width, height, user_to_device_distance):
         if len(self.colors) == 1:
-            return 1, 'solid', self.colors[0], [], []
+            return 1, 'solid', None, [], [self.colors[0]]
         origin_x, center_x, origin_y, center_y = self.center
         center_x = percentage(center_x, width)
         center_y = percentage(center_y, height)
@@ -452,10 +465,10 @@ class RadialGradient(Gradient):
                     math.hypot(*user_to_device_distance(1, 0)),
                     math.hypot(*user_to_device_distance(0, scale_y)))):
             color = gradient_average_color(colors, positions)
-            return 1, 'solid', color, [], []
+            return 1, 'solid', None, [], [color]
 
         if positions[0] < 0:
-            # Cairo does not like negative radiuses,
+            # PDF does not like negative radiuses,
             # shift into the positive realm.
             if self.repeating:
                 offset = gradient_line_size * math.ceil(
@@ -480,7 +493,7 @@ class RadialGradient(Gradient):
                 else:
                     # All stops are negatives,
                     # everything is "padded" with the last color.
-                    return 1, 'solid', self.colors[-1], [], []
+                    return 1, 'solid', None, [], [self.colors[-1]]
 
         first, last, positions = normalize_stop_postions(positions)
         if last == first:

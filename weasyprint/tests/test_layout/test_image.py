@@ -342,20 +342,21 @@ def test_linear_gradient():
             400, 300, lambda dx, dy: (dx * scale_x, dy * scale_y))
         assert result[0] == 1
         assert result[1] == type_
-        assert result[2] == pytest.approx(init)
+        assert result[2] == (None if init is None else pytest.approx(init))
         assert result[3] == pytest.approx(positions)
-        assert result[4] == colors
+        for color1, color2 in zip(result[4], colors):
+            assert color1 == pytest.approx(color2)
 
-    layout('linear-gradient(blue)', 'solid', blue, [], [])
-    layout('repeating-linear-gradient(blue)', 'solid', blue, [], [])
+    layout('linear-gradient(blue)', 'solid', None, [], [blue])
+    layout('repeating-linear-gradient(blue)', 'solid', None, [], [blue])
     layout('repeating-linear-gradient(blue, lime 1.5px)',
-           'solid', (0, .5, .5, 1), [], [])
+           'solid', None, [], [(0, .5, .5, 1)])
     layout('linear-gradient(blue, lime)', init=(200, 0, 200, 300))
     layout('repeating-linear-gradient(blue, lime)', init=(200, 0, 200, 300))
     layout('repeating-linear-gradient(blue, lime 20px)',
            init=(200, 0, 200, 20))
     layout('repeating-linear-gradient(blue, lime 20px)',
-           'solid', (0, .5, .5, 1), [], [], scale=(1 / 20, 1 / 20))
+           'solid', None, [], [(0, .5, .5, 1)], scale=(1 / 20, 1 / 20))
 
     layout('linear-gradient(to bottom, blue, lime)', init=(200, 0, 200, 300))
     layout('linear-gradient(to top, blue, lime)', init=(200, 300, 200, 0))
@@ -390,7 +391,7 @@ def test_linear_gradient():
            init=(200, 0, 200, 100), colors=[blue, blue, red, lime],
            positions=[0, 0, 0, 0])
     layout('repeating-linear-gradient(blue, blue, lime, lime -7px)',
-           'solid', (0, .5, .5, 1), [], [])
+           'solid', None, [], [(0, .5, .5, 1)])
 
 
 @assert_no_logs
@@ -413,12 +414,13 @@ def test_radial_gradient():
             400, 300, lambda dx, dy: (dx * ctm_scale_x, dy * ctm_scale_y))
         assert result[0] == scale_y
         assert result[1] == type_
-        assert result[2] == pytest.approx(init)
+        assert result[2] == (None if init is None else pytest.approx(init))
         assert result[3] == pytest.approx(positions)
-        assert result[4] == colors
+        for color1, color2 in zip(result[4], colors):
+            assert color1 == pytest.approx(color2)
 
-    layout('radial-gradient(blue)', 'solid', blue, [], [])
-    layout('repeating-radial-gradient(blue)', 'solid', blue, [], [])
+    layout('radial-gradient(blue)', 'solid', None, [], [blue])
+    layout('repeating-radial-gradient(blue)', 'solid', None, [], [blue])
     layout('radial-gradient(100px, blue, lime)',
            init=(200, 150, 0, 100))
 
@@ -437,17 +439,17 @@ def test_radial_gradient():
     layout('repeating-radial-gradient(20px 40px, blue, lime)',
            init=(200, 150, 0, 20), scale_y=(40 / 20), ctm_scale=(1, 1 / 19))
     layout('repeating-radial-gradient(20px 40px, blue, lime)',
-           'solid', (0, .5, .5, 1), [], [], ctm_scale=((1 / 11), 1))
+           'solid', None, [], [(0, .5, .5, 1)], ctm_scale=((1 / 11), 1))
     layout('repeating-radial-gradient(20px 40px, blue, lime)',
-           'solid', (0, .5, .5, 1), [], [], ctm_scale=(1, (1 / 21)))
+           'solid', None, [], [(0, .5, .5, 1)], ctm_scale=(1, (1 / 21)))
     layout('repeating-radial-gradient(42px, blue -20px, lime 10px)',
            init=(200, 150, 10, 40))
     layout('repeating-radial-gradient(42px, blue -140px, lime -110px)',
            init=(200, 150, 10, 40))
     layout('radial-gradient(42px, blue -20px, lime -1px)',
-           'solid', lime, [], [])
+           'solid', None, [], [lime])
     layout('radial-gradient(42px, blue -20px, lime 0)',
-           'solid', lime, [], [])
+           'solid', None, [], [lime])
     layout('radial-gradient(42px, blue -20px, lime 20px)',
            init=(200, 150, 0, 20), colors=[(0, .5, .5, 1), lime])
 
