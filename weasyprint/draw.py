@@ -458,6 +458,11 @@ def draw_background_image(context, layer, image_rendering):
         else:
             repeat_height = image_height
 
+    if repeat_x == repeat_y == 'no-repeat':
+        # PDF patterns always repeat, use a big number to hide repetition
+        repeat_width = 2 * context.page_rectangle[2]
+        repeat_height = 2 * context.page_rectangle[3]
+
     pattern = context.add_pattern(
         position_x + positioning_x, position_y + positioning_y,
         image_width, image_height, repeat_width, repeat_height)
