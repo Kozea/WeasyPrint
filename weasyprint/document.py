@@ -244,8 +244,9 @@ class Context(pydyf.Stream):
             'Filter': '/DCTDecode',
         })
 
+        save_format = 'jpeg' if pillow_image.format == 'JPEG' else 'jpeg2000'
         image_file = io.BytesIO()
-        pillow_image.save(image_file, format='jpeg')
+        pillow_image.save(image_file, format=save_format)
         xobject = pydyf.Stream([image_file.getvalue()], extra=extra)
         image_name = f'Im{len(self._x_objects)}'
         self._x_objects[image_name] = xobject
