@@ -304,20 +304,36 @@ class Gradient:
         scale_y, type_, matrix, stop_positions, stop_colors = self.layout(
             concrete_width, concrete_height, lambda x, y: (x, y))
 
+        # TODO: handle alpha
         shading = context.add_shading()
         shading['ShadingType'] = 2 if type_ == 'linear' else 3
         shading['ColorSpace'] = '/DeviceRGB'
         shading['Coords'] = pydyf.Array(matrix)
-        shading['Function'] = pydyf.Dictionary({
-            'FunctionType': 2,
-            'Domain': pydyf.Array([0, 1]),
-            'C0': pydyf.Array(stop_colors[0][:3]),
-            'C1': pydyf.Array(stop_colors[1][:3]),
-            'N': 1,
-        })
-        if self.repeating:
-            shading['Extend'] = pydyf.Array([b'true', b'true'])
-
+        shading['Extend'] = pydyf.Array([b'true', b'true'])
+        if len(stop_colors) == 2:
+            shading['Function'] = pydyf.Dictionary({
+                'FunctionType': 2,
+                'Domain': pydyf.Array([0, 1]),
+                'C0': pydyf.Array(stop_colors[0][:3]),
+                'C1': pydyf.Array(stop_colors[1][:3]),
+                'N': 1,
+            })
+        else:
+            shading['Function'] = pydyf.Dictionary({
+                'FunctionType': 3,
+                'Domain': pydyf.Array([0, 1]),
+                'Encode': pydyf.Array((len(stop_colors) - 1) * [0, 1]),
+                'Bounds': pydyf.Array(stop_positions[1:-1]),
+                'Functions': pydyf.Array([
+                    pydyf.Dictionary({
+                        'FunctionType': 2,
+                        'Domain': pydyf.Array([0, 1]),
+                        'C0': pydyf.Array(stop_colors[i][:3]),
+                        'C1': pydyf.Array(stop_colors[i + 1][:3]),
+                        'N': 1,
+                    }) for i in range(len(stop_colors) - 1)
+                ]),
+            })
         context.transform(1, 0, 0, scale_y, 0, 0)
         context.shading(shading.id)
 
