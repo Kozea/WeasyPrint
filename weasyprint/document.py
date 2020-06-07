@@ -232,6 +232,8 @@ class Context(pydyf.Stream):
         elif image_mode == 'CMYK':
             color_space = '/DeviceCMYK'
 
+        # TODO: Handle alpha layers
+        # TODO: Handle different modes for different output formats
         if image_mode in ('RGBA', 'P'):
             pillow_image = pillow_image.convert('RGB')
 
@@ -241,14 +243,25 @@ class Context(pydyf.Stream):
             'Width': pillow_image.width,
             'Height': pillow_image.height,
             'ColorSpace': color_space,
-            'BitsPerComponent': 8,
-            'Filter': '/DCTDecode' if image_format == 'JPEG' else '/JPXDecode',
         })
 
-        save_format = 'jpeg' if image_format == 'JPEG' else 'jpeg2000'
         image_file = io.BytesIO()
-        pillow_image.save(image_file, format=save_format)
-        xobject = pydyf.Stream([image_file.getvalue()], extra=extra)
+        if image_format == 'JPEG':
+            extra['Filter'] = '/DCTDecode'
+            pillow_image.save(image_file, format='JPEG')
+            stream = [image_file.getvalue()]
+        else:
+            if pillow_image.width >= 32 and pillow_image.height >= 32:
+                # JPEG2000 files can’t be less than 32×32
+                extra['Filter'] = '/JPXDecode',
+                pillow_image.save(image_file, format='JPEG2000')
+                stream = [image_file.getvalue()]
+            else:
+                extra['BitsPerComponent'] = 8
+                stream = [bytes([
+                    i for pixel in pillow_image.getdata() for i in pixel])]
+
+        xobject = pydyf.Stream(stream, extra=extra)
         image_name = f'Im{len(self._x_objects)}'
         self._x_objects[image_name] = xobject
         return image_name
