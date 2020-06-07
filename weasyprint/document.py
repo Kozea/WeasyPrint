@@ -192,23 +192,34 @@ class Context(pydyf.Stream):
             self._patterns, self._shadings, *args, **kwargs)
 
     def push_group(self, bounding_box):
-        group = self.sub_context()
-        group.id = f'x{len(self._x_objects)}'
-        group._x_objects[group.id] = group
-        group.extra['Type'] = '/XObject'
-        group.extra['Subtype'] = '/Form'
-        group.extra['BBox'] = pydyf.Array(bounding_box)
-        group.extra['Group'] = pydyf.Dictionary({
-            'Type': '/Group',
-            'S': '/Transparency',
-            'I': 'true',
-            'CS': '/DeviceRGB',
+        x_objects = pydyf.Dictionary()
+        resources = pydyf.Dictionary({
+            'ExtGState': self._alpha_states,
+            'XObject': x_objects,
+            'Pattern': self._patterns,
+            'Shading': self._shadings,
         })
-        group._parent = self
+        extra = pydyf.Dictionary({
+            'Type': '/XObject',
+            'Subtype': '/Form',
+            'BBox': pydyf.Array(bounding_box),
+            'Resources': resources,
+            'Group': pydyf.Dictionary({
+                'Type': '/Group',
+                'S': '/Transparency',
+                'I': 'true',
+                'CS': '/DeviceRGB',
+            }),
+        })
+        group = Context(
+            self, self.page_rectangle, self._alpha_states, x_objects,
+            self._patterns, self._shadings, extra=extra)
+        group.id = f'x{len(self._x_objects)}'
+        self._x_objects[group.id] = group
         return group
 
     def pop_group(self):
-        return self._parent
+        return self._document
 
     def add_image(self, pillow_image):
         image_mode = pillow_image.mode
@@ -240,6 +251,16 @@ class Context(pydyf.Stream):
         return image_name
 
     def add_pattern(self, x, y, width, height, repeat_width, repeat_height):
+        alpha_states = pydyf.Dictionary()
+        x_objects = pydyf.Dictionary()
+        patterns = pydyf.Dictionary()
+        shadings = pydyf.Dictionary()
+        resources = pydyf.Dictionary({
+            'ExtGState': alpha_states,
+            'XObject': x_objects,
+            'Pattern': patterns,
+            'Shading': shadings,
+        })
         matrix = (1, 0, 0, -1, x, self.page_rectangle[3] - y)
         extra = pydyf.Dictionary({
             'PatternType': 1,
@@ -249,8 +270,11 @@ class Context(pydyf.Stream):
             'TilingType': 1,
             'PaintType': 1,
             'Matrix': pydyf.Array(0.75 * i for i in matrix),
+            'Resources': resources,
         })
-        pattern = self.sub_context(extra=extra)
+        pattern = Context(
+            self, self.page_rectangle, alpha_states, x_objects, patterns,
+            shadings, extra=extra)
         pattern.id = f'p{len(self._patterns)}'
         self._patterns[pattern.id] = pattern
         return pattern
@@ -758,6 +782,30 @@ class Document:
             html.url_fetcher, font_config)
         return rendering
 
+    def _use_references(self, pdf, resources):
+        # XObjects
+        for key, x_object in resources.get('XObject', {}).items():
+            pdf.add_object(x_object)
+            resources['XObject'][key] = x_object.reference
+            if 'Resources' in x_object.extra:
+                self._use_references(pdf, x_object.extra['Resources'])
+                pdf.add_object(x_object.extra['Resources'])
+                x_object.extra['Resources'] = (
+                    x_object.extra['Resources'].reference)
+        # Patterns
+        for key, pattern in resources.get('Pattern', {}).items():
+            pdf.add_object(pattern)
+            resources['Pattern'][key] = pattern.reference
+            if 'Resources' in pattern.extra:
+                self._use_references(pdf, pattern.extra['Resources'])
+                pdf.add_object(pattern.extra['Resources'])
+                pattern.extra['Resources'] = (
+                    pattern.extra['Resources'].reference)
+        # Shadings
+        for key, shading in resources.get('Shading', {}).items():
+            pdf.add_object(shading)
+            resources['XObject'][key] = shading.reference
+
     def __init__(self, pages, metadata, url_fetcher, font_config):
         #: A list of :class:`Page` objects.
         self.pages = pages
@@ -857,9 +905,9 @@ class Document:
         shadings = pydyf.Dictionary()
         resources = pydyf.Dictionary({
             'ExtGState': alpha_states,
+            'XObject': x_objects,
             'Pattern': patterns,
             'Shading': shadings,
-            'XObject': x_objects,
         })
         pdf.add_object(resources)
         pdf_names = pydyf.Array()
@@ -1167,19 +1215,7 @@ class Document:
             pdf.add_object(font_dictionary)
             resources['Font'][font.hash] = font_dictionary.reference
 
-        # XObjects
-        for key, x_object in x_objects.items():
-            pdf.add_object(x_object)
-            x_objects[key] = x_object.reference
-        # Patterns
-        for key, pattern in patterns.items():
-            pdf.add_object(pattern)
-            patterns[key] = pattern.reference
-            pattern.extra['Resources'] = resources.reference
-        # Shadings
-        for key, shading in shadings.items():
-            pdf.add_object(shading)
-            shadings[key] = shading.reference
+        self._use_references(pdf, resources)
 
         # Anchors
         if pdf_names:
