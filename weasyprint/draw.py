@@ -462,7 +462,8 @@ def draw_background_image(context, layer, image_rendering):
             repeat_height = image_height
 
     pattern = context.add_pattern(
-        painting_x, painting_y, repeat_width, repeat_height)
+        position_x + positioning_x, position_y + positioning_y,
+        image_width, image_height, repeat_width, repeat_height)
     child = pattern.push_group([0, 0, repeat_width, repeat_height])
 
     with stacked(context):
@@ -475,14 +476,6 @@ def draw_background_image(context, layer, image_rendering):
         else:
             context.rectangle(
                 painting_x, painting_y, painting_width, painting_height)
-        # TODO: handle this
-        # context.transform(
-        #     0, 0, 0, 0,
-        #     positioning_x + position_x, positioning_y + position_y)
-        # if repeat_x == repeat_y == 'no-repeat':
-        #     pattern.set_extend(cairo.EXTEND_NONE)
-        # else:
-        #     pattern.set_extend(cairo.EXTEND_REPEAT)
         context.fill()
 
 

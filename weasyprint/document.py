@@ -239,13 +239,13 @@ class Context(pydyf.Stream):
         self._x_objects[image_name] = xobject
         return image_name
 
-    def add_pattern(self, x, y, width, height):
+    def add_pattern(self, x, y, width, height, repeat_width, repeat_height):
         matrix = (1, 0, 0, -1, x, self.page_rectangle[3] - y)
         extra = pydyf.Dictionary({
             'PatternType': 1,
             'BBox': pydyf.Array([0, 0, width, height]),
-            'XStep': width,
-            'YStep': height,
+            'XStep': repeat_width,
+            'YStep': repeat_height,
             'TilingType': 1,
             'PaintType': 1,
             'Matrix': pydyf.Array(0.75 * i for i in matrix),
