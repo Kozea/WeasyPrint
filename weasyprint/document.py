@@ -246,6 +246,7 @@ class Context(pydyf.Stream):
             'Width': pillow_image.width,
             'Height': pillow_image.height,
             'ColorSpace': color_space,
+            'BitsPerComponent': 8,
         })
 
         image_file = io.BytesIO()
@@ -256,11 +257,10 @@ class Context(pydyf.Stream):
         else:
             if pillow_image.width >= 32 and pillow_image.height >= 32:
                 # JPEG2000 files can’t be less than 32×32
-                extra['Filter'] = '/JPXDecode',
+                extra['Filter'] = '/JPXDecode'
                 pillow_image.save(image_file, format='JPEG2000')
                 stream = [image_file.getvalue()]
             else:
-                extra['BitsPerComponent'] = 8
                 stream = [bytes([
                     i for pixel in pillow_image.getdata() for i in pixel])]
 
