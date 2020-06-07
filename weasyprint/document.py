@@ -188,8 +188,8 @@ class Context(pydyf.Stream):
 
     def sub_context(self, *args, **kwargs):
         return Context(
-            self, self.page_rectangle, self._alpha_states, self._x_objects,
-            self._patterns, self._shadings, *args, **kwargs)
+            self._document, self.page_rectangle, self._alpha_states,
+            self._x_objects, self._patterns, self._shadings, *args, **kwargs)
 
     def push_group(self, bounding_box):
         x_objects = pydyf.Dictionary()
@@ -212,14 +212,15 @@ class Context(pydyf.Stream):
             }),
         })
         group = Context(
-            self, self.page_rectangle, self._alpha_states, x_objects,
+            self._document, self.page_rectangle, self._alpha_states, x_objects,
             self._patterns, self._shadings, extra=extra)
         group.id = f'x{len(self._x_objects)}'
+        group._parent = self
         self._x_objects[group.id] = group
         return group
 
     def pop_group(self):
-        return self._document
+        return self._parent
 
     def add_image(self, pillow_image):
         image_mode = pillow_image.mode
@@ -273,8 +274,8 @@ class Context(pydyf.Stream):
             'Resources': resources,
         })
         pattern = Context(
-            self, self.page_rectangle, alpha_states, x_objects, patterns,
-            shadings, extra=extra)
+            self._document, self.page_rectangle, alpha_states, x_objects,
+            patterns, shadings, extra=extra)
         pattern.id = f'p{len(self._patterns)}'
         self._patterns[pattern.id] = pattern
         return pattern
