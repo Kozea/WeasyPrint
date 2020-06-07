@@ -192,12 +192,15 @@ class Context(pydyf.Stream):
             self._x_objects, self._patterns, self._shadings, *args, **kwargs)
 
     def push_group(self, bounding_box):
+        alpha_states = pydyf.Dictionary()
         x_objects = pydyf.Dictionary()
+        patterns = pydyf.Dictionary()
+        shadings = pydyf.Dictionary()
         resources = pydyf.Dictionary({
-            'ExtGState': self._alpha_states,
+            'ExtGState': alpha_states,
             'XObject': x_objects,
-            'Pattern': self._patterns,
-            'Shading': self._shadings,
+            'Pattern': patterns,
+            'Shading': shadings,
         })
         extra = pydyf.Dictionary({
             'Type': '/XObject',
@@ -212,8 +215,8 @@ class Context(pydyf.Stream):
             }),
         })
         group = Context(
-            self._document, self.page_rectangle, self._alpha_states, x_objects,
-            self._patterns, self._shadings, extra=extra)
+            self._document, self.page_rectangle, alpha_states, x_objects,
+            patterns, shadings, extra=extra)
         group.id = f'x{len(self._x_objects)}'
         group._parent = self
         self._x_objects[group.id] = group
