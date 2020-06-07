@@ -223,6 +223,7 @@ class Context(pydyf.Stream):
         return self._parent
 
     def add_image(self, pillow_image):
+        image_format = pillow_image.format
         image_mode = pillow_image.mode
         if image_mode in ('RGB', 'RGBA', 'P'):
             color_space = '/DeviceRGB'
@@ -241,10 +242,10 @@ class Context(pydyf.Stream):
             'Height': pillow_image.height,
             'ColorSpace': color_space,
             'BitsPerComponent': 8,
-            'Filter': '/DCTDecode',
+            'Filter': '/DCTDecode' if image_format == 'JPEG' else '/JPXDecode',
         })
 
-        save_format = 'jpeg' if pillow_image.format == 'JPEG' else 'jpeg2000'
+        save_format = 'jpeg' if image_format == 'JPEG' else 'jpeg2000'
         image_file = io.BytesIO()
         pillow_image.save(image_file, format=save_format)
         xobject = pydyf.Stream([image_file.getvalue()], extra=extra)
