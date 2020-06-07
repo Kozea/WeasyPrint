@@ -225,7 +225,7 @@ class Context(pydyf.Stream):
     def pop_group(self):
         return self._parent
 
-    def add_image(self, pillow_image):
+    def add_image(self, pillow_image, image_rendering):
         image_format = pillow_image.format
         image_mode = pillow_image.mode
         if image_mode in ('RGB', 'RGBA', 'P'):
@@ -247,6 +247,7 @@ class Context(pydyf.Stream):
             'Height': pillow_image.height,
             'ColorSpace': color_space,
             'BitsPerComponent': 8,
+            'Interpolate': 'true' if image_rendering == 'auto' else 'false',
         })
 
         image_file = io.BytesIO()

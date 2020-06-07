@@ -20,14 +20,6 @@ from .layout.percentages import percentage
 from .logger import LOGGER
 from .urls import URLFetchingError, fetch
 
-# Map values of the image-rendering property to cairo FILTER values:
-# Values are normalized to lower case.
-IMAGE_RENDERING_TO_FILTER = {
-    'auto': cairocffi.FILTER_BILINEAR,
-    'crisp-edges': cairocffi.FILTER_BEST,
-    'pixelated': cairocffi.FILTER_NEAREST,
-}
-
 
 class ImageLoadingError(ValueError):
     """An error occured when loading an image.
@@ -67,16 +59,13 @@ class RasterImage:
         if not has_size:
             return
 
-        image_name = context.add_image(self.pillow_image)
+        image_name = context.add_image(self.pillow_image, image_rendering)
         # Use the real intrinsic size here,
         # not affected by 'image-resolution'.
         context.push_state()
         context.transform(
             concrete_width, 0, 0, -concrete_height, 0, concrete_height)
         context.draw_x_object(image_name)
-        # TODO: handle this
-        # context.get_source().set_filter(
-        #     IMAGE_RENDERING_TO_FILTER[image_rendering])
         context.pop_state()
 
 
