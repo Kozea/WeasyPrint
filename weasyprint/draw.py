@@ -10,9 +10,6 @@ import contextlib
 import operator
 from math import ceil, floor, pi, sqrt, tan
 
-import cairocffi as cairo
-import pydyf
-
 from .formatting_structure import boxes
 from .images import SVGImage
 from .layout import replaced
