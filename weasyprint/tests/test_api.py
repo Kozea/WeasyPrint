@@ -16,7 +16,6 @@ import zlib
 from pathlib import Path
 from urllib.parse import urljoin, uses_relative
 
-import cairocffi as cairo
 import py
 import pytest
 from PIL import Image
@@ -479,23 +478,6 @@ def test_low_level_api():
     assert document.write_png() == png_bytes
     assert document.copy([page]).write_png() == png_bytes
 
-    surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, 8, 8)
-    page.paint(cairo.Context(surface))
-    file_obj = io.BytesIO()
-    surface.write_to_png(file_obj)
-    check_png_pattern(file_obj.getvalue())
-
-    surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, 8, 8)
-    context = cairo.Context(surface)
-    # Rotate at the center
-    context.translate(4, 4)
-    context.rotate(-math.pi / 2)
-    context.translate(-4, -4)
-    page.paint(context)
-    file_obj = io.BytesIO()
-    surface.write_to_png(file_obj)
-    check_png_pattern(file_obj.getvalue(), rotated=True)
-
     document = html.render([css])
     page, = document.pages
     assert (page.width, page.height) == (8, 8)
@@ -506,7 +488,7 @@ def test_low_level_api():
     page, = document.pages
     assert (page.width, page.height) == (8, 8)
     # A resolution that is not multiple of 96:
-    assert _png_size(document.write_png(resolution=145.2)) == (13, 13)
+    assert _png_size(document.write_png(resolution=145.2)) == (12, 12)
 
     document = FakeHTML(string='''
         <style>
