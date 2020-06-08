@@ -335,6 +335,7 @@ class Gradient:
                     }) for i in range(len(stop_colors) - 1)
                 ]),
             })
+        shading['Domain'] = shading['Function']['Domain']
         context.transform(1, 0, 0, scale_y, 0, 0)
         context.shading(shading.id)
 
