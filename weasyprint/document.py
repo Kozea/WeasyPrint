@@ -824,7 +824,7 @@ class Document:
         # Shadings
         for key, shading in resources.get('Shading', {}).items():
             pdf.add_object(shading)
-            resources['XObject'][key] = shading.reference
+            resources['Shading'][key] = shading.reference
 
     def __init__(self, pages, metadata, url_fetcher, font_config):
         #: A list of :class:`Page` objects.
