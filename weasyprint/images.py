@@ -10,7 +10,6 @@ import math
 from io import BytesIO
 from xml.etree import ElementTree
 
-import cairocffi
 import cairosvg.parser
 import cairosvg.surface
 import pydyf
