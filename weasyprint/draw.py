@@ -188,8 +188,9 @@ def draw_stacking_context(context, stacking_context, enable_hinting):
         # apply the viewport_overflow to the html box, see #35
         if box.element_tag == 'html' and (
                 stacking_context.page.style['overflow'] != 'visible'):
-            rounded_box_path(context,
-                    stacking_context.page.rounded_padding_box())
+            rounded_box_path(
+                context,
+                stacking_context.page.rounded_padding_box())
             context.clip()
 
         if box.is_absolutely_positioned() and box.style['clip']:
