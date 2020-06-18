@@ -140,7 +140,7 @@ def layout_document(html, root_box, context, max_loops=8):
         if not reloop_content and not reloop_pages:
             break
 
-    # Calculate string-sets and bookmark-label containing page based counters
+    # Calculate string-sets and bookmark-labels containing page based counters
     # when pagination is finished. No need to do that (maybe multiple times) in
     # make_page because they dont create boxes, only appear in MarginBoxes and
     # in the final PDF.
@@ -157,6 +157,10 @@ def layout_document(html, root_box, context, max_loops=8):
                         context.target_collector.counter_lookup_items.items()):
                     if child.missing_link == box and css_token != 'content':
                         item.parse_again(page_counter_values)
+                        # string_set is a pointer, but the bookmark_label is
+                        # just a string: copy it
+                        if css_token == 'bookmark-label':
+                            child.bookmark_label = box.bookmark_label
             # Collect the string_sets in the LayoutContext
             string_sets = child.string_set
             if string_sets and string_sets != 'none':
