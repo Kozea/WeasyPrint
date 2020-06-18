@@ -332,6 +332,22 @@ def test_bookmarks_8():
 
 
 @assert_no_logs
+@requires('cairo', (1, 15, 4))
+def test_bookmarks_9():
+    fileobj = io.BytesIO()
+    FakeHTML(string='''
+      <h1 style="bookmark-label: 'h1 on page ' counter(page)">a</h1>
+    ''').write_pdf(target=fileobj)
+    # h1 on page 1
+    pdf_file = pdf.PDFFile(fileobj)
+    outlines = pdf_file.catalog.get_indirect_dict('Outlines', pdf_file)
+    assert outlines.get_type() == 'Outlines'
+    assert outlines.get_value('Count', '(.*)') == b'-1'
+    o1 = outlines.get_indirect_dict('First', pdf_file)
+    assert o1.get_value('Title', '(.*)') == b'(h1 on page 1)'
+
+
+@assert_no_logs
 def test_links_none():
     fileobj = io.BytesIO()
     FakeHTML(string='<body>').write_pdf(target=fileobj)
