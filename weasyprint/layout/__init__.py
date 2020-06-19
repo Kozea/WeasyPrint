@@ -144,6 +144,11 @@ def layout_document(html, root_box, context, max_loops=8):
     # when pagination is finished. No need to do that (maybe multiple times) in
     # make_page because they dont create boxes, only appear in MarginBoxes and
     # in the final PDF.
+    # Prevent repetition of bookmarks (see #1145).
+
+    watch_elements = []
+    watch_elements_before = []
+    watch_elements_after = []
     for i, page in enumerate(pages):
         # We need the updated page_counter_values
         resume_at, next_page, right_page, page_state, remake_state = (
@@ -151,11 +156,28 @@ def layout_document(html, root_box, context, max_loops=8):
         page_counter_values = page_state[1]
 
         for child in page.descendants():
+            # Only one bookmark per original box
+            if child.bookmark_label:
+                if child.element_tag.endswith('::before'):
+                    checklist = watch_elements_before
+                elif child.element_tag.endswith('::after'):
+                    checklist = watch_elements_after
+                else:
+                    checklist = watch_elements
+                if child.element in checklist:
+                    child.bookmark_label = ''
+                else:
+                    checklist.append(child.element)
+
             # TODO: remove attribute or set a default value in Box class
             if hasattr(child, 'missing_link'):
                 for (box, css_token), item in (
                         context.target_collector.counter_lookup_items.items()):
                     if child.missing_link == box and css_token != 'content':
+                        if (css_token == 'bookmark-label' and
+                                not child.bookmark_label):
+                            # don't refill it!
+                            continue
                         item.parse_again(page_counter_values)
                         # string_set is a pointer, but the bookmark_label is
                         # just a string: copy it
