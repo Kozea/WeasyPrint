@@ -348,6 +348,32 @@ def test_bookmarks_9():
 
 
 @assert_no_logs
+@requires('cairo', (1, 15, 4))
+def test_bookmarks_10():
+    fileobj = io.BytesIO()
+    FakeHTML(string='''
+      <style>
+      div:before, div:after {
+         content: '';
+         bookmark-level: 1;
+         bookmark-label: 'x';
+      }
+      </style>
+      <div>a</div>
+    ''').write_pdf(target=fileobj)
+    # x
+    # x
+    pdf_file = pdf.PDFFile(fileobj)
+    outlines = pdf_file.catalog.get_indirect_dict('Outlines', pdf_file)
+    assert outlines.get_type() == 'Outlines'
+    assert outlines.get_value('Count', '(.*)') == b'-2'
+    o1 = outlines.get_indirect_dict('First', pdf_file)
+    assert o1.get_value('Title', '(.*)') == b'(x)'
+    o2 = o1.get_indirect_dict('Next', pdf_file)
+    assert o2.get_value('Title', '(.*)') == b'(x)'
+
+
+@assert_no_logs
 def test_links_none():
     fileobj = io.BytesIO()
     FakeHTML(string='<body>').write_pdf(target=fileobj)
