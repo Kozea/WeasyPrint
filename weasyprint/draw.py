@@ -186,7 +186,7 @@ def draw_stacking_context(context, stacking_context, enable_hinting):
         box = stacking_context.box
 
         # apply the viewport_overflow to the html box, see #35
-        if box.element_tag == 'html' and (
+        if box.is_for_root_element and (
                 stacking_context.page.style['overflow'] != 'visible'):
             rounded_box_path(
                 context,
