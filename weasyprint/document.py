@@ -349,7 +349,8 @@ class Document:
 
     @classmethod
     def _build_layout_context(cls, html, stylesheets, enable_hinting,
-                              presentational_hints=False, font_config=None,
+                              presentational_hints=False,
+                              optimize_images=False, font_config=None,
                               counter_style=None):
         if font_config is None:
             font_config = FontConfiguration()
@@ -368,7 +369,7 @@ class Document:
             html, user_stylesheets, presentational_hints, font_config,
             counter_style, page_rules, target_collector)
         get_image_from_uri = functools.partial(
-            original_get_image_from_uri, {}, html.url_fetcher)
+            original_get_image_from_uri, {}, html.url_fetcher, optimize_images)
         PROGRESS_LOGGER.info('Step 4 - Creating formatting structure')
         context = LayoutContext(
             enable_hinting, style_for, get_image_from_uri, font_config,
@@ -377,8 +378,8 @@ class Document:
 
     @classmethod
     def _render(cls, html, stylesheets, enable_hinting,
-                presentational_hints=False, font_config=None,
-                counter_style=None):
+                presentational_hints=False, optimize_images=False,
+                font_config=None, counter_style=None):
         if font_config is None:
             font_config = FontConfiguration()
 
@@ -387,7 +388,7 @@ class Document:
 
         context = cls._build_layout_context(
             html, stylesheets, enable_hinting, presentational_hints,
-            font_config, counter_style)
+            optimize_images, font_config, counter_style)
 
         root_box = build_formatting_structure(
             html.etree_element, context.style_for, context.get_image_from_uri,
