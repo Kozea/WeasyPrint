@@ -184,6 +184,15 @@ def draw_stacking_context(context, stacking_context, enable_hinting):
     # See http://www.w3.org/TR/CSS2/zindex.html
     with stacked(context):
         box = stacking_context.box
+
+        # apply the viewport_overflow to the html box, see #35
+        if box.is_for_root_element and (
+                stacking_context.page.style['overflow'] != 'visible'):
+            rounded_box_path(
+                context,
+                stacking_context.page.rounded_padding_box())
+            context.clip()
+
         if box.is_absolutely_positioned() and box.style['clip']:
             top, right, bottom, left = box.style['clip']
             if top == 'auto':
@@ -223,7 +232,9 @@ def draw_stacking_context(context, stacking_context, enable_hinting):
                 context, stacking_context.page, box, enable_hinting)
 
         with stacked(context):
-            if box.style['overflow'] != 'visible':
+            # dont clip the PageBox, see #35
+            if box.style['overflow'] != 'visible' and not isinstance(
+                    box, boxes.PageBox):
                 # Only clip the content and the children:
                 # - the background is already clipped
                 # - the border must *not* be clipped

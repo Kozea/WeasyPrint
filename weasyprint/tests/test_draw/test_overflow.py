@@ -79,6 +79,30 @@ def test_overflow_3():
 
 
 @assert_no_logs
+def test_overflow_4():
+    # Assert that the page margins aren't clipped by body's overflow
+    assert_pixels('border_box_overflow', 8, 8, '''
+        rr______
+        rr______
+        __BBBB__
+        __BBBB__
+        __BBBB__
+        __BBBB__
+        ________
+        ________
+    ''', '''
+      <style>
+        @page {
+          size: 8px;
+          margin: 2px;
+          background:#fff;
+          @top-left-corner { content: ''; background:#f00; } }
+        body { overflow: auto; background:#00f; }
+      </style>
+      ''')
+
+
+@assert_no_logs
 @requires('cairo', (1, 12, 0))
 @pytest.mark.parametrize('number, css, pixels', (
     (1, '5px, 5px, 9px, auto', '''
