@@ -99,6 +99,10 @@ def main(argv=None, stdout=None, stdin=None):
 
         Show debugging messages.
 
+    .. option:: -q, --quiet
+
+        Hide logging messages.
+
     .. option:: --version
 
         Show the version number. Other options and arguments are ignored.
