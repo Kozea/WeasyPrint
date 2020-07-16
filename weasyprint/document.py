@@ -12,6 +12,7 @@ import shutil
 import warnings
 
 import cairocffi as cairo
+
 from weasyprint.layout import LayoutContext
 
 from . import CSS

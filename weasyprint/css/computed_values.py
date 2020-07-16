@@ -253,12 +253,14 @@ def compute(element, pseudo_type, specified, computed, parent_style,
             for i, val in enumerate(value):
                 if not isinstance(val, tuple) or val[0] != 'var()':
                     continue
-                new_value, already_computed_value = resolve_var(val, name, computed)
+                new_value, already_computed_value = \
+                    resolve_var(val, name, computed)
                 if name == 'content':
                     new_value = new_value[0]
                 value[i] = new_value
         elif value and isinstance(value, tuple) and value[0] == 'var()':
-            new_value, already_computed_value = resolve_var(value, name, computed)
+            new_value, already_computed_value = \
+                resolve_var(value, name, computed)
             if name == 'content':
                 new_value = new_value[0]
             value = new_value
