@@ -195,6 +195,40 @@ def compute(element, pseudo_type, specified, computed, parent_style,
     """
     from .validation.properties import PROPERTIES
 
+    def resolve_var(value, name, computed):
+        if isinstance(value, tuple) and value[0] == 'var()':
+            variable_name, default = value[1]
+            computed_value = _resolve_var(computed, variable_name, default)
+            if computed_value is None:
+                new_value = None
+            else:
+                prop = PROPERTIES[name.replace('_', '-')]
+                if prop.wants_base_url:
+                    new_value = prop(computed_value, base_url)
+                else:
+                    new_value = prop(computed_value)
+                new_value = new_value[0]
+
+            # See https://drafts.csswg.org/css-variables/#invalid-variables
+            if new_value is None:
+                try:
+                    computed_value = ''.join(
+                        token.serialize() for token in computed_value)
+                except BaseException:
+                    pass
+                LOGGER.warning(
+                    'Unsupported computed value `%s` set in variable `%s` '
+                    'for property `%s`.', computed_value,
+                    variable_name.replace('_', '-'), name.replace('_', '-'))
+                if name in INHERITED and parent_style:
+                    already_computed_value = True
+                    return parent_style[name], already_computed_value
+                else:
+                    already_computed_value = name not in INITIAL_NOT_COMPUTED
+                    return INITIAL_VALUES[name], already_computed_value
+            return new_value, False
+        return value, False
+
     computer = {
         'is_root_element': parent_style is None,
         'element': element,
@@ -218,37 +252,12 @@ def compute(element, pseudo_type, specified, computed, parent_style,
         function = getter(name)
         already_computed_value = False
 
-        if value and isinstance(value, tuple) and value[0] == 'var()':
-            variable_name, default = value[1]
-            computed_value = _resolve_var(computed, variable_name, default)
-            if computed_value is None:
-                new_value = None
-            else:
-                prop = PROPERTIES[name.replace('_', '-')]
-                if prop.wants_base_url:
-                    new_value = prop(computed_value, base_url)
-                else:
-                    new_value = prop(computed_value)
-
-            # See https://drafts.csswg.org/css-variables/#invalid-variables
-            if new_value is None:
-                try:
-                    computed_value = ''.join(
-                        token.serialize() for token in computed_value)
-                except BaseException:
-                    pass
-                LOGGER.warning(
-                    'Unsupported computed value `%s` set in variable `%s` '
-                    'for property `%s`.', computed_value,
-                    variable_name.replace('_', '-'), name.replace('_', '-'))
-                if name in INHERITED and parent_style:
-                    already_computed_value = True
-                    value = parent_style[name]
-                else:
-                    already_computed_value = name not in INITIAL_NOT_COMPUTED
-                    value = INITIAL_VALUES[name]
-            else:
-                value = new_value
+        if value and isinstance(value, list):
+            for i, val in enumerate(value):
+                new_value, already_computed_value = resolve_var(val, name, computed)
+                value[i] = new_value
+        elif value:
+            value, already_computed_value = resolve_var(value, name, computed)
 
         if function is not None and not already_computed_value:
             value = function(computer, name, value)

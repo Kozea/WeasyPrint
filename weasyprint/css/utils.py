@@ -699,6 +699,11 @@ def get_content_list_token(token, base_url):
     if string is not None:
         return string
 
+    # <var>
+    var_function = check_var_function(token)
+    if var_function is not None:
+        return var_function
+
     # contents
     if get_keyword(token) == 'contents':
         return ('content', 'text')

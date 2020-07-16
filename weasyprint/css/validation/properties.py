@@ -89,10 +89,11 @@ def validate_non_shorthand(base_url, name, tokens, required=False):
     if not required and name not in PROPERTIES:
         raise InvalidValues('property not supported yet')
 
-    for token in tokens:
-        var_function = check_var_function(token)
-        if var_function:
-            return ((name, var_function),)
+    if name != 'content':
+        for token in tokens:
+            var_function = check_var_function(token)
+            if var_function:
+                return ((name, var_function),)
 
     keyword = get_single_keyword(tokens)
     if keyword in ('initial', 'inherit'):
