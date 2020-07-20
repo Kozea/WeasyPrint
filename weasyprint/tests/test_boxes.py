@@ -98,7 +98,7 @@ def assert_tree(box, expected):
     assert isinstance(box, boxes.BlockBox)
     assert box.element_tag == 'body'
 
-    assert serialize(box.children) == expected
+    assert serialize(box.children) == expected, '%s != %s' % (serialize(box.children), expected,)
 
 
 def _sanity_checks(box):

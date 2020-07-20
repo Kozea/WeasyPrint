@@ -700,9 +700,9 @@ def get_content_list_token(token, base_url):
         return string
 
     # <var>
-    var_function = check_var_function(token)
-    if var_function is not None:
-        return var_function
+    var = check_var_function(token)
+    if var is not None:
+        return var
 
     # contents
     if get_keyword(token) == 'contents':
