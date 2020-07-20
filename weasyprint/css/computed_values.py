@@ -271,7 +271,6 @@ def compute(element, pseudo_type, specified, computed, parent_style,
             if converted_to_list:
                 value, = value
 
-
         if function is not None and not already_computed_value:
             value = function(computer, name, value)
         # else: same as specified
