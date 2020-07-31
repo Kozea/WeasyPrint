@@ -123,8 +123,10 @@ class HTML:
         return [HTML5_PH_STYLESHEET]
 
     def render(self, stylesheets=None, presentational_hints=False,
-               font_config=None, counter_style=None):
-        """Lay out and paginate the document, but do not export it.
+               optimize_images=False, font_config=None, counter_style=None,
+               image_cache=None):
+        """Lay out and paginate the document, but do not (yet) export it
+        to PDF or PNG.
 
         This returns a :class:`~document.Document` object which provides
         access to individual pages and various meta-data.
@@ -140,20 +142,25 @@ class HTML:
         :type presentational_hints: bool
         :param presentational_hints: Whether HTML presentational hints are
             followed.
+        :type optimize_images: bool
+        :param optimize_images: Try to optimize the size of embedded images.
         :type font_config: :class:`~fonts.FontConfiguration`
         :param font_config: A font configuration handling ``@font-face`` rules.
         :type counter_style: :class:`~css.counters.CounterStyle`
         :param counter_style: A dictionary storing ``@counter-style`` rules.
+        :type image_cache: dict
+        :param image_cache: A dictionary used to cache images.
         :returns: A :class:`~document.Document` object.
 
         """
         return Document._render(
-            self, stylesheets, presentational_hints, font_config,
-            counter_style)
+            self, stylesheets, presentational_hints,
+            optimize_images, font_config, counter_style, image_cache)
 
     def write_pdf(self, target=None, stylesheets=None, zoom=1,
                   attachments=None, presentational_hints=False,
-                  font_config=None, counter_style=None):
+                  optimize_images=False, font_config=None, counter_style=None,
+                  image_cache=None):
         """Render the document to a PDF file.
 
         This is a shortcut for calling :meth:`render`, then
@@ -181,24 +188,30 @@ class HTML:
         :type presentational_hints: bool
         :param presentational_hints: Whether HTML presentational hints are
             followed.
+        :type optimize_images: bool
+        :param optimize_images: Try to optimize the size of embedded images.
         :type font_config: :class:`~fonts.FontConfiguration`
         :param font_config: A font configuration handling ``@font-face`` rules.
         :type counter_style: :class:`~css.counters.CounterStyle`
         :param counter_style: A dictionary storing ``@counter-style`` rules.
+        :type image_cache: dict
+        :param image_cache: A dictionary used to cache images.
         :returns:
             The PDF as :obj:`bytes` if ``target`` is not provided or
             :obj:`None`, otherwise :obj:`None` (the PDF is written to
             ``target``).
 
         """
-        return self.render(
-            stylesheets, presentational_hints=presentational_hints,
-            font_config=font_config, counter_style=counter_style).write_pdf(
-                target, zoom, attachments)
+        return (
+            self.render(
+                stylesheets, presentational_hints=presentational_hints,
+                optimize_images=optimize_images, font_config=font_config,
+                counter_style=counter_style, image_cache=image_cache)
+            .write_pdf(target, zoom, attachments))
 
     def write_png(self, target=None, stylesheets=None, resolution=96,
-                  antialiasing=1, presentational_hints=False, font_config=None,
-                  counter_style=None):
+                  presentational_hints=False, optimize_images=False,
+                  font_config=None, counter_style=None, image_cache=None):
         """Paint the pages vertically to a single PNG image.
 
         There is no decoration around pages other than those specified in CSS
@@ -228,10 +241,14 @@ class HTML:
         :type presentational_hints: bool
         :param presentational_hints: Whether HTML presentational hints are
             followed.
+        :type optimize_images: bool
+        :param optimize_images: Try to optimize the size of embedded images.
         :type font_config: :class:`~fonts.FontConfiguration`
         :param font_config: A font configuration handling ``@font-face`` rules.
         :type counter_style: :class:`~css.counters.CounterStyle`
         :param counter_style: A dictionary storing ``@counter-style`` rules.
+        :type image_cache: dict
+        :param image_cache: A dictionary used to cache images.
         :returns:
             The image as :obj:`bytes` if ``target`` is not provided or
             :obj:`None`, otherwise :obj:`None` (the image is written to
@@ -240,8 +257,9 @@ class HTML:
         """
         return self.render(
             stylesheets, presentational_hints=presentational_hints,
-            font_config=font_config, counter_style=counter_style).write_png(
-                target, resolution, antialiasing)
+            optimize_images=optimize_images, font_config=font_config,
+            counter_style=counter_style, image_cache=image_cache).write_png(
+                target, resolution)
 
 
 class CSS:

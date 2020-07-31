@@ -14,6 +14,7 @@ WeasyPrint |version| depends on:
 * cssselect2_ ≥ 0.1
 * CairoSVG_ ≥ 2.4.0
 * Pyphen_ ≥ 0.9.1
+* Pillow ≥ 4.0.0
 * GDK-PixBuf_ ≥ 2.25.0 [#]_
 
 .. _CPython: http://www.python.org/

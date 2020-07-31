@@ -225,7 +225,7 @@ class Context(pydyf.Stream):
     def pop_group(self):
         return self._parent
 
-    def add_image(self, pillow_image, image_rendering):
+    def add_image(self, pillow_image, image_rendering, optimize_image):
         image_format = pillow_image.format
         image_mode = pillow_image.mode
         if image_mode in ('RGB', 'RGBA', 'P'):
@@ -752,8 +752,9 @@ class Document:
 
     @classmethod
     def _build_layout_context(cls, html, stylesheets,
-                              presentational_hints=False, font_config=None,
-                              counter_style=None):
+                              presentational_hints=False,
+                              optimize_images=False, font_config=None,
+                              counter_style=None, image_cache=None):
         if font_config is None:
             font_config = FontConfiguration()
         if counter_style is None:
@@ -761,6 +762,7 @@ class Document:
         target_collector = TargetCollector()
         page_rules = []
         user_stylesheets = []
+        image_cache = {} if image_cache is None else image_cache
         for css in stylesheets or []:
             if not hasattr(css, 'matcher'):
                 css = CSS(
@@ -771,7 +773,8 @@ class Document:
             html, user_stylesheets, presentational_hints, font_config,
             counter_style, page_rules, target_collector)
         get_image_from_uri = functools.partial(
-            original_get_image_from_uri, {}, html.url_fetcher)
+            original_get_image_from_uri, image_cache, html.url_fetcher,
+            optimize_images)
         PROGRESS_LOGGER.info('Step 4 - Creating formatting structure')
         context = LayoutContext(
             style_for, get_image_from_uri, font_config, counter_style,
@@ -780,7 +783,8 @@ class Document:
 
     @classmethod
     def _render(cls, html, stylesheets, presentational_hints=False,
-                font_config=None, counter_style=None):
+                optimize_images=False, font_config=None, counter_style=None,
+                image_cache=None):
         if font_config is None:
             font_config = FontConfiguration()
 
@@ -788,8 +792,8 @@ class Document:
             counter_style = CounterStyle()
 
         context = cls._build_layout_context(
-            html, stylesheets, presentational_hints, font_config,
-            counter_style)
+            html, stylesheets, presentational_hints, optimize_images,
+            font_config, counter_style, image_cache)
 
         root_box = build_formatting_structure(
             html.etree_element, context.style_for, context.get_image_from_uri,

@@ -35,8 +35,9 @@ class ImageLoadingError(ValueError):
 
 
 class RasterImage:
-    def __init__(self, pillow_image):
+    def __init__(self, pillow_image, optimize_image):
         self.pillow_image = pillow_image
+        self.optimize_image = optimize_image
         self._intrinsic_width = pillow_image.width
         self._intrinsic_height = pillow_image.height
         self.intrinsic_ratio = (
@@ -58,7 +59,8 @@ class RasterImage:
         if not has_size:
             return
 
-        image_name = context.add_image(self.pillow_image, image_rendering)
+        image_name = context.add_image(
+            self.pillow_image, image_rendering, self.optimize_image)
         # Use the real intrinsic size here,
         # not affected by 'image-resolution'.
         context.push_state()
@@ -157,7 +159,8 @@ class SVGImage:
                 self._base_url, exception)
 
 
-def get_image_from_uri(cache, url_fetcher, url, forced_mime_type=None):
+def get_image_from_uri(cache, url_fetcher, optimize_images, url,
+                       forced_mime_type=None):
     """Get a cairo Pattern from an image URI."""
     missing = object()
     image = cache.get(url, missing)
@@ -182,7 +185,7 @@ def get_image_from_uri(cache, url_fetcher, url, forced_mime_type=None):
                 except Exception as exception:
                     raise ImageLoadingError.from_exception(exception)
                 else:
-                    image = RasterImage(pillow_image)
+                    image = RasterImage(pillow_image, optimize_images)
 
     except (URLFetchingError, ImageLoadingError) as exception:
         LOGGER.error('Failed to load image at %r: %s', url, exception)
