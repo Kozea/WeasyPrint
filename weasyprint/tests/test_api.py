@@ -8,7 +8,6 @@
 
 import gzip
 import io
-import math
 import os
 import sys
 import unicodedata
