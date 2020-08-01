@@ -659,8 +659,8 @@ def test_links():
         [
             ('external', 'http://weasyprint.org', (0, 0, 30, 20)),
             ('external', 'http://weasyprint.org', (0, 0, 30, 30)),
-            ('internal', 'lipsum', (10, 100, 32, 20)),
-            ('internal', 'lipsum', (10, 100, 32, 32))
+            ('internal', 'lipsum', (10, 100, 42, 120)),
+            ('internal', 'lipsum', (10, 100, 42, 132))
         ],
         [('internal', 'hello', (0, 0, 200, 30))],
     ], [
@@ -671,8 +671,8 @@ def test_links():
             [
                 ('external', 'http://weasyprint.org', (0, 0, 30, 20)),
                 ('external', 'http://weasyprint.org', (0, 0, 30, 30)),
-                ('internal', 'lipsum', (10, 100, 32, 20)),
-                ('internal', 'lipsum', (10, 100, 32, 32))
+                ('internal', 'lipsum', (10, 100, 42, 120)),
+                ('internal', 'lipsum', (10, 100, 42, 132))
             ],
             [('hello', 0, 200)],
         ),
@@ -688,9 +688,9 @@ def test_links():
             <body style="width: 200px">
             <a href="../lipsum/é_%E9" style="display: block; margin: 10px 5px">
         ''', [[('external', 'http://weasyprint.org/foo/lipsum/%C3%A9_%E9',
-                (5, 10, 190, 0))]],
+                (5, 10, 195, 10))]],
         [{}], [([('external', 'http://weasyprint.org/foo/lipsum/%C3%A9_%E9',
-                  (5, 10, 190, 0))], [])],
+                  (5, 10, 195, 10))], [])],
         base_url='http://weasyprint.org/foo/bar/')
     assert_links(
         '''
@@ -698,9 +698,9 @@ def test_links():
             <div style="display: block; margin: 10px 5px;
                         -weasy-link: url(../lipsum/é_%E9)">
         ''', [[('external', 'http://weasyprint.org/foo/lipsum/%C3%A9_%E9',
-                (5, 10, 190, 0))]],
+                (5, 10, 195, 10))]],
         [{}], [([('external', 'http://weasyprint.org/foo/lipsum/%C3%A9_%E9',
-                  (5, 10, 190, 0))], [])],
+                  (5, 10, 195, 10))], [])],
         base_url='http://weasyprint.org/foo/bar/')
 
     # Relative URI reference without a base URI: allowed for links
@@ -708,8 +708,8 @@ def test_links():
         '''
             <body style="width: 200px">
             <a href="../lipsum" style="display: block; margin: 10px 5px">
-        ''', [[('external', '../lipsum', (5, 10, 190, 0))]], [{}],
-        [([('external', '../lipsum', (5, 10, 190, 0))], [])], base_url=None)
+        ''', [[('external', '../lipsum', (5, 10, 195, 10))]], [{}],
+        [([('external', '../lipsum', (5, 10, 195, 10))], [])], base_url=None)
 
     # Relative URI reference without a base URI: not supported for -weasy-link
     assert_links(
@@ -728,11 +728,11 @@ def test_links():
             <a href="#lipsum" id="lipsum"
                 style="display: block; margin: 10px 5px"></a>
             <a href="http://weasyprint.org/" style="display: block"></a>
-        ''', [[('internal', 'lipsum', (5, 10, 190, 0)),
-               ('external', 'http://weasyprint.org/', (0, 10, 200, 0))]],
+        ''', [[('internal', 'lipsum', (5, 10, 195, 10)),
+               ('external', 'http://weasyprint.org/', (0, 10, 200, 10))]],
         [{'lipsum': (5, 10)}],
-        [([('internal', 'lipsum', (5, 10, 190, 0)),
-           ('external', 'http://weasyprint.org/', (0, 10, 200, 0))],
+        [([('internal', 'lipsum', (5, 10, 195, 10)),
+           ('external', 'http://weasyprint.org/', (0, 10, 200, 10))],
           [('lipsum', 5, 10)])],
         base_url=None)
 
@@ -742,9 +742,9 @@ def test_links():
             <div style="-weasy-link: url(#lipsum);
                         margin: 10px 5px" id="lipsum">
         ''',
-        [[('internal', 'lipsum', (5, 10, 190, 0))]],
+        [[('internal', 'lipsum', (5, 10, 195, 10))]],
         [{'lipsum': (5, 10)}],
-        [([('internal', 'lipsum', (5, 10, 190, 0))], [('lipsum', 5, 10)])],
+        [([('internal', 'lipsum', (5, 10, 195, 10))], [('lipsum', 5, 10)])],
         base_url=None)
 
     assert_links(
@@ -755,7 +755,7 @@ def test_links():
                 <a href="#missing" id="lipsum"></a>
         ''',
         [[('internal', 'lipsum', (0, 0, 200, 15)),
-          ('internal', 'missing', (0, 15, 200, 15))]],
+          ('internal', 'missing', (0, 15, 200, 30))]],
         [{'lipsum': (0, 15)}],
         [([('internal', 'lipsum', (0, 0, 200, 15))], [('lipsum', 0, 15)])],
         base_url=None,
@@ -768,9 +768,9 @@ def test_links():
             <a href="#lipsum" id="lipsum" style="display: block; height: 20px;
                 transform: rotate(90deg) scale(2)">
         ''',
-        [[('internal', 'lipsum', (30, 10, 40, 200))]],
+        [[('internal', 'lipsum', (30, 10, 70, 210))]],
         [{'lipsum': (70, 10)}],
-        [([('internal', 'lipsum', (30, 10, 40, 200))], [('lipsum', 70, 10)])],
+        [([('internal', 'lipsum', (30, 10, 70, 210))], [('lipsum', 70, 10)])],
         round=True)
 
 
