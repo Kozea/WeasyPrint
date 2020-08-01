@@ -570,7 +570,7 @@ class Page:
         self._gather_links_and_bookmarks(page_box)
         self._page_box = page_box
 
-    def _gather_links_and_bookmarks(self, box, matrix=None):
+    def _gather_links_and_bookmarks(self, box, parent_matrix=None):
         # Get box transformation matrix.
         # "Transforms apply to block-level and atomic inline-level elements,
         #  but do not apply to elements which may be split into
@@ -605,10 +605,12 @@ class Page:
                 matrix = Matrix(a, b, c, d, e, f) @ matrix
             box.transformation_matrix = (
                 Matrix(e=-origin_x, f=-origin_y) @ matrix)
-            if matrix:
-                matrix = box.transformation_matrix @ matrix
+            if parent_matrix:
+                matrix = box.transformation_matrix @ parent_matrix
             else:
                 matrix = box.transformation_matrix
+        else:
+            matrix = parent_matrix
 
         bookmark_label = box.bookmark_label
         if box.style['bookmark_level'] == 'none':
@@ -650,7 +652,7 @@ class Page:
                 self.anchors[anchor_name] = pos_x, pos_y
 
         for child in box.all_children():
-            self._gather_links_and_bookmarks(child)
+            self._gather_links_and_bookmarks(child, matrix)
 
     def paint(self, context, left_x=0, top_y=0, scale=1, clip=False):
         """Paint the page into the PDF file.
