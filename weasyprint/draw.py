@@ -189,6 +189,7 @@ def draw_stacking_context(context, stacking_context):
                 context,
                 stacking_context.page.rounded_padding_box())
             context.clip()
+            context.end()
 
         if box.is_absolutely_positioned() and box.style['clip']:
             top, right, bottom, left = box.style['clip']
