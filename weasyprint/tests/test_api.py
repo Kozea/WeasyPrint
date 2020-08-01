@@ -823,7 +823,7 @@ def test_url_fetcher():
         test('<body><img src="custom:foo/bar">', blank=True)
     assert len(logs) == 1
     assert logs[0].startswith(
-        'ERROR: Failed to load image at "custom:foo/bar"')
+        "ERROR: Failed to load image at 'custom:foo/bar'")
 
     with capture_logs() as logs:
         test(
