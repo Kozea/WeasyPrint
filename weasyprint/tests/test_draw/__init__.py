@@ -130,8 +130,7 @@ def assert_pixels_equal(name, width, height, raw, expected_raw, tolerance=0):
             if any(abs(value - expected) > tolerance
                    for value, expected in zip(value, expected)):
                 write_png(name, raw, width, height)
-                write_png(name + '.expected', expected_raw,
-                          width, height)
+                write_png(name + '.expected', expected_raw, width, height)
                 x = i // width
                 y = i % width
                 assert 0, (
