@@ -19,9 +19,10 @@ from ..urls import path2url
 from .testing_utils import (
     FakeHTML, assert_no_logs, capture_logs, resource_filename)
 
-# Top and right positions in points
-TOP = 297 * 72 / 25.4
-RIGHT = 210 * 72 / 25.4
+# Top and right positions in points, rounded to the default float precision of
+# 6 digits, a rendered by pydyf
+TOP = round(297 * 72 / 25.4, 6)
+RIGHT = round(210 * 72 / 25.4, 6)
 
 
 def assert_rect_almost_equal(rect, values):
