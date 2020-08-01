@@ -48,10 +48,7 @@ def test_overflow_2():
         ________
     ''', '''
       <style>
-        @page { size: 8px; background: #fff;
-                margin: 2px;
-                padding-bottom: 2px;
-                border-bottom: 1px transparent solid; }
+        @page { size: 8px; background: #fff; margin: 2px 2px 3px 2px }
         body { height: 1px; overflow: hidden; font-size: 0 }
       </style>
       <div><img src="pattern.png"></div>''')
