@@ -235,11 +235,10 @@ class Context(pydyf.Stream):
         elif image_mode == 'CMYK':
             color_space = '/DeviceCMYK'
 
-        # TODO: Handle alpha layers
-        # TODO: Handle different modes for different output formats
-        if image_mode in ('RGBA', 'P'):
+        if image_mode == ('1', 'P'):
             pillow_image = pillow_image.convert('RGB')
 
+        interpolate = 'true' if image_rendering == 'auto' else 'false'
         extra = pydyf.Dictionary({
             'Type': '/XObject',
             'Subtype': '/Image',
@@ -247,23 +246,39 @@ class Context(pydyf.Stream):
             'Height': pillow_image.height,
             'ColorSpace': color_space,
             'BitsPerComponent': 8,
-            'Interpolate': 'true' if image_rendering == 'auto' else 'false',
+            'Interpolate': interpolate,
         })
 
         image_file = io.BytesIO()
         if image_format == 'JPEG':
             extra['Filter'] = '/DCTDecode'
-            pillow_image.save(image_file, format='JPEG')
-            stream = [image_file.getvalue()]
+            pillow_image.save(
+                image_file, format='JPEG', optimize=optimize_image)
         else:
-            if pillow_image.width >= 32 and pillow_image.height >= 32:
-                # JPEG2000 files can’t be less than 32×32
-                extra['Filter'] = '/JPXDecode'
-                pillow_image.save(image_file, format='JPEG2000')
-                stream = [image_file.getvalue()]
-            else:
-                stream = [bytes([
-                    i for pixel in pillow_image.getdata() for i in pixel])]
+            extra['Filter'] = '/JPXDecode'
+            if image_mode == 'RGBA':
+                alpha = pillow_image.getchannel('A')
+                pillow_image = pillow_image.convert('RGB')
+                alpha_file = io.BytesIO()
+                alpha.save(
+                    alpha_file, format='JPEG2000', optimize=optimize_image,
+                    num_resolutions=1)
+                extra['SMask'] = pydyf.Stream([alpha_file.getvalue()], extra={
+                    'Filter': '/JPXDecode',
+                    'Type': '/XObject',
+                    'Subtype': '/Image',
+                    'Width': pillow_image.width,
+                    'Height': pillow_image.height,
+                    'ColorSpace': '/DeviceGray',
+                    'BitsPerComponent': 8,
+                    'Interpolate': interpolate,
+                })
+            # Set number of resolutions to 1 because of
+            # https://github.com/uclouvain/openjpeg/issues/215
+            pillow_image.save(
+                image_file, format='JPEG2000', optimize=optimize_image,
+                num_resolutions=1)
+        stream = [image_file.getvalue()]
 
         xobject = pydyf.Stream(stream, extra=extra)
         image_name = f'Im{len(self._x_objects)}'
