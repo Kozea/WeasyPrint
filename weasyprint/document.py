@@ -226,6 +226,9 @@ class Context(pydyf.Stream):
         return self._parent
 
     def add_image(self, pillow_image, image_rendering, optimize_image):
+        if 'transparency' in pillow_image.info:
+            pillow_image = pillow_image.convert('RGBA')
+
         image_format = pillow_image.format
         image_mode = pillow_image.mode
         if image_mode in ('RGB', 'RGBA', 'P'):
