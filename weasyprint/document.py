@@ -228,18 +228,15 @@ class Context(pydyf.Stream):
     def add_image(self, pillow_image, image_rendering, optimize_image):
         if 'transparency' in pillow_image.info:
             pillow_image = pillow_image.convert('RGBA')
-
-        image_format = pillow_image.format
-        image_mode = pillow_image.mode
-        if image_mode in ('RGB', 'RGBA', 'P'):
-            color_space = '/DeviceRGB'
-        elif image_mode in ('1', 'L'):
-            color_space = '/DeviceGray'
-        elif image_mode == 'CMYK':
-            color_space = '/DeviceCMYK'
-
-        if image_mode == ('1', 'P'):
+        elif pillow_image.mode in ('1', 'P'):
             pillow_image = pillow_image.convert('RGB')
+
+        if pillow_image.mode in ('RGB', 'RGBA'):
+            color_space = '/DeviceRGB'
+        elif pillow_image.mode == 'L':
+            color_space = '/DeviceGray'
+        elif pillow_image.mode == 'CMYK':
+            color_space = '/DeviceCMYK'
 
         interpolate = 'true' if image_rendering == 'auto' else 'false'
         extra = pydyf.Dictionary({
@@ -253,13 +250,13 @@ class Context(pydyf.Stream):
         })
 
         image_file = io.BytesIO()
-        if image_format == 'JPEG':
+        if pillow_image.format == 'JPEG':
             extra['Filter'] = '/DCTDecode'
             pillow_image.save(
                 image_file, format='JPEG', optimize=optimize_image)
         else:
             extra['Filter'] = '/JPXDecode'
-            if image_mode == 'RGBA':
+            if pillow_image.mode == 'RGBA':
                 alpha = pillow_image.getchannel('A')
                 pillow_image = pillow_image.convert('RGB')
                 alpha_file = io.BytesIO()
