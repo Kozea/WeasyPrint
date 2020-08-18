@@ -13,6 +13,7 @@ from .tables import table_wrapper_width
 
 class AbsolutePlaceholder:
     """Left where an absolutely-positioned box was taken out of the flow."""
+
     def __init__(self, box):
         assert not isinstance(box, AbsolutePlaceholder)
         # Work around the overloaded __setattr__
@@ -77,11 +78,11 @@ def absolute_width(box, context, containing_block):
         if margin_r == 'auto':
             box.margin_right = 0
         available_width = cb_width - (
-            padding_plus_borders_x + box.margin_left + box.margin_right)
+                padding_plus_borders_x + box.margin_left + box.margin_right)
         box.width = shrink_to_fit(context, box, available_width)
     elif left != 'auto' and right != 'auto' and width != 'auto':
         width_for_margins = cb_width - (
-            right + left + padding_plus_borders_x)
+                right + left + padding_plus_borders_x)
         if margin_l == margin_r == 'auto':
             if width + padding_plus_borders_x + right + left <= cb_width:
                 box.margin_left = box.margin_right = width_for_margins / 2
@@ -113,7 +114,7 @@ def absolute_width(box, context, containing_block):
             translate_x = left + default_translate_x
         elif left == 'auto':
             translate_x = (
-                cb_width + default_translate_x - right - spacing - width)
+                    cb_width + default_translate_x - right - spacing - width)
         elif width == 'auto':
             box.width = cb_width - right - left - spacing
             translate_x = left + default_translate_x
@@ -151,7 +152,7 @@ def absolute_height(box, context, containing_block):
             box.margin_bottom = 0
     elif top != 'auto' and bottom != 'auto' and height != 'auto':
         height_for_margins = cb_height - (
-            top + bottom + paddings_plus_borders_y)
+                top + bottom + paddings_plus_borders_y)
         if margin_t == margin_b == 'auto':
             box.margin_top = box.margin_bottom = height_for_margins / 2
         elif margin_t == 'auto':
@@ -176,7 +177,7 @@ def absolute_height(box, context, containing_block):
             translate_y = top + default_translate_y
         elif top == 'auto':
             translate_y = (
-                cb_height + default_translate_y - bottom - spacing - height)
+                    cb_height + default_translate_y - bottom - spacing - height)
         elif height == 'auto':
             box.height = cb_height - bottom - top - spacing
             translate_y = top + default_translate_y
@@ -186,7 +187,7 @@ def absolute_height(box, context, containing_block):
     return translate_box_height, translate_y
 
 
-def absolute_block(context, box, containing_block, fixed_boxes):
+def absolute_block(context, box, containing_block, containing_page, fixed_boxes):
     cb_x, cb_y, cb_width, cb_height = containing_block
 
     translate_box_width, translate_x = absolute_width(
@@ -203,13 +204,12 @@ def absolute_block(context, box, containing_block, fixed_boxes):
     # avoid a circular import
     from .blocks import block_container_layout
 
-    new_box, _, _, _, _ = block_container_layout(
-        context, box, max_position_y=float('inf'), skip_stack=None,
-        page_is_empty=False, absolute_boxes=absolute_boxes,
-        fixed_boxes=fixed_boxes, adjoining_margins=None)
+    new_box, _, _, _, _ = block_container_layout(context, box, containing_page, max_position_y=float('inf'), skip_stack=None,
+                                                 page_is_empty=False, absolute_boxes=absolute_boxes,
+                                                 fixed_boxes=fixed_boxes, adjoining_margins=None)
 
     for child_placeholder in absolute_boxes:
-        absolute_layout(context, child_placeholder, new_box, fixed_boxes)
+        absolute_layout(context, child_placeholder, new_box, None, fixed_boxes)
 
     if translate_box_width:
         translate_x -= new_box.width
@@ -248,7 +248,7 @@ def absolute_flex(context, box, containing_block_sizes, fixed_boxes,
         absolute_boxes=absolute_boxes, fixed_boxes=fixed_boxes)
 
     for child_placeholder in absolute_boxes:
-        absolute_layout(context, child_placeholder, new_box, fixed_boxes)
+        absolute_layout(context, child_placeholder, new_box, None, fixed_boxes)
 
     if translate_box_width:
         translate_x -= new_box.width
@@ -260,15 +260,15 @@ def absolute_flex(context, box, containing_block_sizes, fixed_boxes,
     return new_box
 
 
-def absolute_layout(context, placeholder, containing_block, fixed_boxes):
+def absolute_layout(context, placeholder, containing_block, containing_page, fixed_boxes):
     """Set the width of absolute positioned ``box``."""
     assert not placeholder._layout_done
     box = placeholder._box
     placeholder.set_laid_out_box(
-        absolute_box_layout(context, box, containing_block, fixed_boxes))
+        absolute_box_layout(context, box, containing_block, containing_page, fixed_boxes))
 
 
-def absolute_box_layout(context, box, containing_block, fixed_boxes):
+def absolute_box_layout(context, box, containing_block, containing_page, fixed_boxes):
     cb = containing_block
     # TODO: handle inline boxes (point 10.1.4.1)
     # http://www.w3.org/TR/CSS2/visudet.html#containing-block-details
@@ -284,13 +284,13 @@ def absolute_box_layout(context, box, containing_block, fixed_boxes):
         cb_height = cb.padding_height()
     containing_block = cb_x, cb_y, cb_width, cb_height
 
-    resolve_percentages(box, (cb_width, cb_height))
+    resolve_percentages(box, (cb_width, cb_height), containing_page)
     resolve_position_percentages(box, (cb_width, cb_height))
 
     context.create_block_formatting_context()
     # Absolute tables are wrapped into block boxes
     if isinstance(box, boxes.BlockBox):
-        new_box = absolute_block(context, box, containing_block, fixed_boxes)
+        new_box = absolute_block(context, box, containing_block, containing_page, fixed_boxes)
     elif isinstance(box, boxes.FlexContainerBox):
         new_box = absolute_flex(
             context, box, containing_block, fixed_boxes, cb)

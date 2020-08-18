@@ -21,7 +21,7 @@ def float_width(box, context, containing_block):
         box.width = shrink_to_fit(context, box, containing_block.width)
 
 
-def float_layout(context, box, containing_block, absolute_boxes, fixed_boxes):
+def float_layout(context, box, containing_block, containing_page, absolute_boxes, fixed_boxes):
     """Set the width and position of floating ``box``."""
     # Avoid circular imports
     from .blocks import block_container_layout
@@ -29,13 +29,13 @@ def float_layout(context, box, containing_block, absolute_boxes, fixed_boxes):
     from .inlines import inline_replaced_box_width_height
 
     cb_width, cb_height = (containing_block.width, containing_block.height)
-    resolve_percentages(box, (cb_width, cb_height))
+    resolve_percentages(box, (cb_width, cb_height), None)
 
     # TODO: This is only handled later in blocks.block_container_layout
     # http://www.w3.org/TR/CSS21/visudet.html#normal-block
     if cb_height == 'auto':
         cb_height = (
-            containing_block.position_y - containing_block.content_box_y())
+                containing_block.position_y - containing_block.content_box_y())
 
     resolve_position_percentages(box, (cb_width, cb_height))
 
@@ -62,11 +62,10 @@ def float_layout(context, box, containing_block, absolute_boxes, fixed_boxes):
 
     if isinstance(box, boxes.BlockContainerBox):
         context.create_block_formatting_context()
-        box, _, _, _, _ = block_container_layout(
-            context, box, max_position_y=float('inf'),
-            skip_stack=None, page_is_empty=False,
-            absolute_boxes=absolute_boxes, fixed_boxes=fixed_boxes,
-            adjoining_margins=None)
+        box, _, _, _, _ = block_container_layout(context, box, containing_page, max_position_y=float('inf'),
+                                                 skip_stack=None,
+                                                 page_is_empty=False, absolute_boxes=absolute_boxes,
+                                                 fixed_boxes=fixed_boxes, adjoining_margins=None)
         context.finish_block_formatting_context(box)
     elif isinstance(box, boxes.FlexContainerBox):
         box, _, _, _, _ = flex_layout(
@@ -144,11 +143,11 @@ def avoid_collisions(context, box, containing_block, outer=True):
             shape_margin_height = shape.margin_height()
             if ((shape_position_y < position_y <
                  shape_position_y + shape_margin_height) or
-                (shape_position_y < position_y + box_height <
-                 shape_position_y + shape_margin_height) or
-                (shape_position_y >= position_y and
-                 shape_position_y + shape_margin_height <=
-                 position_y + box_height)):
+                    (shape_position_y < position_y + box_height <
+                     shape_position_y + shape_margin_height) or
+                    (shape_position_y >= position_y and
+                     shape_position_y + shape_margin_height <=
+                     position_y + box_height)):
                 colliding_shapes.append(shape)
         left_bounds = [
             shape.position_x + shape.margin_width()
@@ -196,10 +195,10 @@ def avoid_collisions(context, box, containing_block, outer=True):
     # - block-level replaced box
     # - element establishing new formatting contexts (not handled)
     assert (
-        (box.style['float'] in ('right', 'left')) or
-        isinstance(box, boxes.LineBox) or
-        box.is_table_wrapper or
-        isinstance(box, boxes.BlockReplacedBox))
+            (box.style['float'] in ('right', 'left')) or
+            isinstance(box, boxes.LineBox) or
+            box.is_table_wrapper or
+            isinstance(box, boxes.BlockReplacedBox))
 
     # The x-position of the box depends on its type.
     position_x = max_left_bound

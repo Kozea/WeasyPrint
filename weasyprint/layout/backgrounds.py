@@ -49,7 +49,7 @@ def layout_box_backgrounds(page, box, get_image_from_uri, layout_children=True,
     from ..draw import get_color
 
     # Resolve percentages in border-radius properties
-    resolve_radii_percentages(box)
+    resolve_radii_percentages(box, page)
 
     if layout_children:
         for child in box.all_children():

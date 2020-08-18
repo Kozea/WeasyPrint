@@ -71,7 +71,7 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
         resume_at = None
         next_page = {'break': 'any', 'page': None}
         original_page_is_empty = page_is_empty
-        resolve_percentages(group, containing_block=table)
+        resolve_percentages(group, containing_block=table, containing_page=None)
         group.position_x = rows_left_x
         group.position_y = position_y
         group.width = rows_width
@@ -97,7 +97,7 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
                     resume_at = (index_row, None)
                     break
 
-            resolve_percentages(row, containing_block=table)
+            resolve_percentages(row, containing_block=table, containing_page=None)
             row.position_x = rows_left_x
             row.position_y = position_y
             row.width = rows_width
@@ -120,7 +120,7 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
                                    'the table, ignored %i cells: %r',
                                    len(ignored_cells), ignored_cells)
                     break
-                resolve_percentages(cell, containing_block=table)
+                resolve_percentages(cell, containing_block=table, containing_page=None)
                 if table.style['direction'] == 'ltr':
                     cell.position_x = column_positions[cell.grid_x]
                 else:
@@ -141,13 +141,9 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
                 # The computed height is a minimum
                 cell.computed_height = cell.height
                 cell.height = 'auto'
-                cell, _, _, _, _ = block_container_layout(
-                    context, cell,
-                    max_position_y=float('inf'),
-                    skip_stack=None,
-                    page_is_empty=True,
-                    absolute_boxes=absolute_boxes,
-                    fixed_boxes=fixed_boxes)
+                cell, _, _, _, _ = block_container_layout(context, cell, None, max_position_y=float('inf'),
+                                                          skip_stack=None, page_is_empty=True,
+                                                          absolute_boxes=absolute_boxes, fixed_boxes=fixed_boxes)
                 cell.empty = not any(
                     child.is_floated() or child.is_in_normal_flow()
                     for child in cell.children)
@@ -489,7 +485,7 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
         columns_height -= border_spacing_y
     for group in table.column_groups:
         for column in group.children:
-            resolve_percentages(column, containing_block=table)
+            resolve_percentages(column, containing_block=table, containing_page=None)
             if column.grid_x < len(column_positions):
                 column.position_x = column_positions[column.grid_x]
                 column.position_y = initial_position_y
@@ -501,7 +497,7 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
                 column.position_y = 0
                 column.width = 0
                 column.height = 0
-            resolve_percentages(group, containing_block=table)
+            resolve_percentages(group, containing_block=table, containing_page=None)
             column.get_cells = get_column_cells(table, column)
         first = group.children[0]
         last = group.children[-1]
@@ -564,7 +560,7 @@ def fixed_table_layout(box):
     # `width` on cells of the first row.
     i = 0
     for cell in first_row_cells:
-        resolve_percentages(cell, table)
+        resolve_percentages(cell, table, None)
         if cell.width != 'auto':
             width = cell.border_width()
             width -= border_spacing_x * (cell.colspan - 1)
@@ -731,7 +727,7 @@ def auto_table_layout(context, box, containing_block):
 def table_wrapper_width(context, wrapper, containing_block):
     """Find the width of each column and derive the wrapper width."""
     table = wrapper.get_wrapped_table()
-    resolve_percentages(table, containing_block)
+    resolve_percentages(table, containing_block, None)
 
     if table.style['table_layout'] == 'fixed' and table.width != 'auto':
         fixed_table_layout(wrapper)

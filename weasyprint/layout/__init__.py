@@ -88,13 +88,11 @@ def layout_fixed_boxes(context, pages, containing_page):
             # Absolute boxes in fixed boxes are rendered as fixed boxes'
             # children, even when they are fixed themselves.
             absolute_boxes = []
-            yield absolute_box_layout(
-                context, box, containing_page, absolute_boxes)
+            yield absolute_box_layout(context, box, containing_page, containing_page, absolute_boxes)
             while absolute_boxes:
                 new_absolute_boxes = []
                 for box in absolute_boxes:
-                    absolute_layout(
-                        context, box, containing_page, new_absolute_boxes)
+                    absolute_layout(context, box, containing_page, None, new_absolute_boxes)
                 absolute_boxes = new_absolute_boxes
 
 
@@ -162,7 +160,7 @@ def layout_document(html, root_box, context, max_loops=8):
             if string_sets and string_sets != 'none':
                 for string_set in string_sets:
                     string_name, text = string_set
-                    context.string_set[string_name][i+1].append(text)
+                    context.string_set[string_name][i + 1].append(text)
 
     # Add margin boxes
     for i, page in enumerate(pages):
@@ -214,8 +212,8 @@ class LayoutContext:
         if root_box.style['height'] == 'auto' and self.excluded_shapes:
             box_bottom = root_box.content_box_y() + root_box.height
             max_shape_bottom = max([
-                shape.position_y + shape.margin_height()
-                for shape in self.excluded_shapes] + [box_bottom])
+                                       shape.position_y + shape.margin_height()
+                                       for shape in self.excluded_shapes] + [box_bottom])
             root_box.height += max_shape_bottom - box_bottom
         self._excluded_shapes_lists.pop()
         if self._excluded_shapes_lists:

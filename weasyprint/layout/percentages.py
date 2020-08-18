@@ -9,7 +9,7 @@
 from ..formatting_structure import boxes
 
 
-def percentage(value, refer_to):
+def percentage(value, refer_to, page):
     """Return the percentage of the reference value, or the value unchanged.
 
     ``refer_to`` is the length for 100%. If ``refer_to`` is not a number, it
@@ -20,23 +20,27 @@ def percentage(value, refer_to):
         return value
     elif value.unit == 'px':
         return value.value
+    elif value.unit == 'vw':
+        return value.value * page.width / 100
     else:
         assert value.unit == '%'
         return refer_to * value.value / 100.
 
 
 def resolve_one_percentage(box, property_name, refer_to,
-                           main_flex_direction=None):
+                           main_flex_direction=None, page=None):
     """Set a used length value from a computed length value.
 
     ``refer_to`` is the length for 100%. If ``refer_to`` is not a number, it
     just replaces percentages.
 
     """
+    assert page is not None
+
     # box.style has computed values
     value = box.style[property_name]
     # box attributes are used values
-    percent = percentage(value, refer_to)
+    percent = percentage(value, refer_to, page)
     setattr(box, property_name, percent)
     if property_name in ('min_width', 'min_height') and percent == 'auto':
         if (main_flex_direction is None or
@@ -52,7 +56,9 @@ def resolve_position_percentages(box, containing_block):
     resolve_one_percentage(box, 'bottom', cb_height)
 
 
-def resolve_percentages(box, containing_block, main_flex_direction=None):
+def resolve_percentages(box, containing_block, containing_page, main_flex_direction=None):
+    assert containing_page is not None
+
     """Set used values as attributes of the box object."""
     if isinstance(containing_block, boxes.Box):
         # cb is short for containing block
@@ -64,17 +70,17 @@ def resolve_percentages(box, containing_block, main_flex_direction=None):
         maybe_height = cb_height
     else:
         maybe_height = cb_width
-    resolve_one_percentage(box, 'margin_left', cb_width)
-    resolve_one_percentage(box, 'margin_right', cb_width)
-    resolve_one_percentage(box, 'margin_top', maybe_height)
-    resolve_one_percentage(box, 'margin_bottom', maybe_height)
-    resolve_one_percentage(box, 'padding_left', cb_width)
-    resolve_one_percentage(box, 'padding_right', cb_width)
-    resolve_one_percentage(box, 'padding_top', maybe_height)
-    resolve_one_percentage(box, 'padding_bottom', maybe_height)
-    resolve_one_percentage(box, 'width', cb_width)
-    resolve_one_percentage(box, 'min_width', cb_width, main_flex_direction)
-    resolve_one_percentage(box, 'max_width', cb_width, main_flex_direction)
+    resolve_one_percentage(box, 'margin_left', cb_width, page=containing_page)
+    resolve_one_percentage(box, 'margin_right', cb_width, page=containing_page)
+    resolve_one_percentage(box, 'margin_top', maybe_height, page=containing_page)
+    resolve_one_percentage(box, 'margin_bottom', maybe_height, page=containing_page)
+    resolve_one_percentage(box, 'padding_left', cb_width, page=containing_page)
+    resolve_one_percentage(box, 'padding_right', cb_width, page=containing_page)
+    resolve_one_percentage(box, 'padding_top', maybe_height, page=containing_page)
+    resolve_one_percentage(box, 'padding_bottom', maybe_height, page=containing_page)
+    resolve_one_percentage(box, 'width', cb_width, page=containing_page)
+    resolve_one_percentage(box, 'min_width', cb_width, main_flex_direction, page=containing_page)
+    resolve_one_percentage(box, 'max_width', cb_width, main_flex_direction, page=containing_page)
 
     # XXX later: top, bottom, left and right on positioned elements
 
@@ -87,15 +93,15 @@ def resolve_percentages(box, containing_block, main_flex_direction=None):
         else:
             assert height.unit == 'px'
             box.height = height.value
-        resolve_one_percentage(box, 'min_height', 0, main_flex_direction)
+        resolve_one_percentage(box, 'min_height', 0, main_flex_direction, page=containing_page)
         resolve_one_percentage(
-            box, 'max_height', float('inf'), main_flex_direction)
+            box, 'max_height', float('inf'), main_flex_direction, page=containing_page)
     else:
-        resolve_one_percentage(box, 'height', cb_height)
+        resolve_one_percentage(box, 'height', cb_height, page=containing_page)
         resolve_one_percentage(
-            box, 'min_height', cb_height, main_flex_direction)
+            box, 'min_height', cb_height, main_flex_direction, page=containing_page)
         resolve_one_percentage(
-            box, 'max_height', cb_height, main_flex_direction)
+            box, 'max_height', cb_height, main_flex_direction, page=containing_page)
 
     # Used value == computed value
     for side in ['top', 'right', 'bottom', 'left']:
@@ -107,11 +113,11 @@ def resolve_percentages(box, containing_block, main_flex_direction=None):
     # for padding and border-width
     if box.style['box_sizing'] == 'border-box':
         horizontal_delta = (
-            box.padding_left + box.padding_right +
-            box.border_left_width + box.border_right_width)
+                box.padding_left + box.padding_right +
+                box.border_left_width + box.border_right_width)
         vertical_delta = (
-            box.padding_top + box.padding_bottom +
-            box.border_top_width + box.border_bottom_width)
+                box.padding_top + box.padding_bottom +
+                box.border_top_width + box.border_bottom_width)
     elif box.style['box_sizing'] == 'padding-box':
         horizontal_delta = box.padding_left + box.padding_right
         vertical_delta = box.padding_top + box.padding_bottom
@@ -137,7 +143,7 @@ def resolve_percentages(box, containing_block, main_flex_direction=None):
             box.min_height = max(0, box.min_height - vertical_delta)
 
 
-def resolve_radii_percentages(box):
+def resolve_radii_percentages(box, containing_page):
     corners = ('top_left', 'top_right', 'bottom_right', 'bottom_left')
     for corner in corners:
         property_name = 'border_%s_radius' % corner
@@ -147,6 +153,7 @@ def resolve_radii_percentages(box):
                 break
         else:
             rx, ry = box.style[property_name]
-            rx = percentage(rx, box.border_width())
-            ry = percentage(ry, box.border_height())
+
+            rx = percentage(rx, box.border_width(), containing_page)
+            ry = percentage(ry, box.border_height(), containing_page)
             setattr(box, property_name, (rx, ry))

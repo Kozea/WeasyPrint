@@ -52,8 +52,8 @@ class VerticalBox(OrientedBox):
         self.margin_a = box.margin_top
         self.margin_b = box.margin_bottom
         self.padding_plus_border = (
-            box.padding_top + box.padding_bottom +
-            box.border_top_width + box.border_bottom_width)
+                box.padding_top + box.padding_bottom +
+                box.border_top_width + box.border_bottom_width)
 
     def restore_box_attributes(self):
         box = self.box
@@ -79,8 +79,8 @@ class HorizontalBox(OrientedBox):
         self.margin_a = box.margin_left
         self.margin_b = box.margin_right
         self.padding_plus_border = (
-            box.padding_left + box.padding_right +
-            box.border_left_width + box.border_right_width)
+                box.padding_left + box.padding_right +
+                box.border_left_width + box.border_right_width)
         self._min_content_size = None
         self._max_content_size = None
 
@@ -169,7 +169,7 @@ def compute_fixed_dimension(context, box, outer, vertical, top_or_left):
     # Rule 6
     if box.margin_a == 'auto' and box.margin_b == 'auto':
         box.margin_a = box.margin_b = (
-            outer - box.padding_plus_border - box.inner) / 2
+                                              outer - box.padding_plus_border - box.inner) / 2
 
     assert 'auto' not in [box.margin_a, box.margin_b, box.inner]
 
@@ -219,7 +219,7 @@ def compute_variable_dimension(context, side_boxes, vertical, outer_sum):
                 if available > 0:
                     weight_ac = ac_max_content_size - ac_min_content_size
                     weight_b = (
-                        box_b.max_content_size - box_b.min_content_size)
+                            box_b.max_content_size - box_b.min_content_size)
                     weight_sum = weight_ac + weight_b
                     # By definition of max_content_size and min_content_size,
                     # weights can not be negative. weight_sum == 0 implies that
@@ -248,9 +248,9 @@ def compute_variable_dimension(context, side_boxes, vertical, outer_sum):
                 available = outer_sum - box_a.outer - box_c.outer
                 if available > 0:
                     weight_a = (
-                        box_a.max_content_size - box_a.min_content_size)
+                            box_a.max_content_size - box_a.min_content_size)
                     weight_c = (
-                        box_c.max_content_size - box_c.min_content_size)
+                            box_c.max_content_size - box_c.min_content_size)
                     weight_sum = weight_a + weight_c
                     # By definition of max_content_size and min_content_size,
                     # weights can not be negative. weight_sum == 0 implies that
@@ -295,7 +295,7 @@ def _standardize_page_based_counters(style, pseudo_type):
 
     if pseudo_type is None and not page_counter_touched:
         style['counter_increment'] = (
-            ('page', 1),) + style['counter_increment']
+                                         ('page', 1),) + style['counter_increment']
 
 
 def make_margin_boxes(context, page, state):
@@ -305,6 +305,7 @@ def make_margin_boxes(context, page, state):
     ``context.page_maker[context.current_page]``.
 
     """
+
     # This is a closure only to make calls shorter
     def make_box(at_keyword, containing_block):
         """Return a margin box with resolved percentages.
@@ -346,7 +347,7 @@ def make_margin_boxes(context, page, state):
             box = build.flex_boxes(box)
             box = build.inline_in_block(box)
             box = build.block_in_inline(box)
-        resolve_percentages(box, containing_block)
+        resolve_percentages(box, containing_block, page)
         if not box.is_generated:
             box.width = box.height = 0
             for side in ('top', 'right', 'bottom', 'left'):
@@ -370,13 +371,13 @@ def make_margin_boxes(context, page, state):
 
     for prefix, vertical, containing_block, position_x, position_y in [
         ('top', False, (max_box_width, margin_top),
-            margin_left, 0),
+         margin_left, 0),
         ('bottom', False, (max_box_width, margin_bottom),
-            margin_left, page_end_y),
+         margin_left, page_end_y),
         ('left', True, (margin_left, max_box_height),
-            0, margin_top),
+         0, margin_top),
         ('right', True, (margin_right, max_box_height),
-            page_end_x, margin_top),
+         page_end_x, margin_top),
     ]:
         if vertical:
             suffixes = ['top', 'middle', 'bottom']
@@ -398,10 +399,10 @@ def make_margin_boxes(context, page, state):
             box.position_y = position_y
             if vertical:
                 box.position_y += offset * (
-                    variable_outer - box.margin_height())
+                        variable_outer - box.margin_height())
             else:
                 box.position_x += offset * (
-                    variable_outer - box.margin_width())
+                        variable_outer - box.margin_width())
             compute_fixed_dimension(
                 context, box, fixed_outer, not vertical,
                 prefix in ['top', 'left'])
@@ -414,7 +415,7 @@ def make_margin_boxes(context, page, state):
         ('@top-right-corner', margin_right, margin_top, page_end_x, 0),
         ('@bottom-left-corner', margin_left, margin_bottom, 0, page_end_y),
         ('@bottom-right-corner', margin_right, margin_bottom,
-            page_end_x, page_end_y),
+         page_end_x, page_end_y),
     ]:
         box = make_box(at_keyword, (cb_width, cb_height))
         if not box.is_generated:
@@ -433,10 +434,9 @@ def make_margin_boxes(context, page, state):
 
 def margin_box_content_layout(context, page, box):
     """Layout a margin box’s content once the box has dimensions."""
-    box, resume_at, next_page, _, _ = block_container_layout(
-        context, box,
-        max_position_y=float('inf'), skip_stack=None,
-        page_is_empty=True, absolute_boxes=[], fixed_boxes=[])
+    box, resume_at, next_page, _, _ = block_container_layout(context, box, page, max_position_y=float('inf'),
+                                                             skip_stack=None, page_is_empty=True, absolute_boxes=[],
+                                                             fixed_boxes=[])
     assert resume_at is None
 
     vertical_align = box.style['vertical_align']
@@ -519,7 +519,14 @@ def make_page(context, root_box, page_type, resume_at, page_number,
 
     device_size = page.style['size']
 
-    resolve_percentages(page, device_size)
+    class EmptyBox():
+        pass
+
+    layout_root_box = EmptyBox()
+    layout_root_box.width = device_size[0]
+    layout_root_box.height = device_size[1]
+
+    resolve_percentages(page, device_size, layout_root_box)
 
     page.position_x = 0
     page.position_y = 0
@@ -544,17 +551,17 @@ def make_page(context, root_box, page_type, resume_at, page_number,
     page_is_empty = True
     adjoining_margins = []
     positioned_boxes = []  # Mixed absolute and fixed
-    root_box, resume_at, next_page, _, _ = block_level_layout(
-        context, root_box, page_content_bottom, resume_at,
-        initial_containing_block, page_is_empty, positioned_boxes,
-        positioned_boxes, adjoining_margins)
+    root_box, resume_at, next_page, _, _ = block_level_layout(context, root_box, page_content_bottom, resume_at,
+                                                              initial_containing_block, initial_containing_block,
+                                                              page_is_empty,
+                                                              positioned_boxes, positioned_boxes, adjoining_margins)
     assert root_box
 
     page.fixed_boxes = [
         placeholder._box for placeholder in positioned_boxes
         if placeholder._box.style['position'] == 'fixed']
     for absolute_box in positioned_boxes:
-        absolute_layout(context, absolute_box, page, positioned_boxes)
+        absolute_layout(context, absolute_box, page, None, positioned_boxes)
     context.finish_block_formatting_context(root_box)
 
     page.children = [root_box]
@@ -729,7 +736,7 @@ def remake_page(index, context, root_box, html):
     set_page_type_computed_styles(page_type, html, context.style_for)
 
     context.forced_break = (
-        initial_next_page['break'] != 'any' or initial_next_page['page'])
+            initial_next_page['break'] != 'any' or initial_next_page['page'])
     context.margin_clearance = False
 
     # make_page wants a page_number of index + 1
@@ -752,10 +759,10 @@ def remake_page(index, context, root_box, html):
         (next_resume_at, next_next_page, next_right_page,
          next_page_state, _) = page_maker[index + 1]
         page_maker_next_changed = (
-            next_resume_at != resume_at or
-            next_next_page != next_page or
-            next_right_page != right_page or
-            next_page_state != page_state)
+                next_resume_at != resume_at or
+                next_next_page != next_page or
+                next_right_page != right_page or
+                next_page_state != page_state)
 
     if page_maker_next_changed:
         # Reset remake_state

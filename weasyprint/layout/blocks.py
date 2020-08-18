@@ -19,9 +19,8 @@ from .percentages import resolve_percentages, resolve_position_percentages
 from .tables import table_layout, table_wrapper_width
 
 
-def block_level_layout(context, box, max_position_y, skip_stack,
-                       containing_block, page_is_empty, absolute_boxes,
-                       fixed_boxes, adjoining_margins):
+def block_level_layout(context, box, max_position_y, skip_stack, containing_block, containing_page, page_is_empty,
+                       absolute_boxes, fixed_boxes, adjoining_margins):
     """Lay out the block-level ``box``.
 
     :param max_position_y: the absolute vertical position (as in
@@ -29,8 +28,10 @@ def block_level_layout(context, box, max_position_y, skip_stack,
                            content box of the current page area.
 
     """
+    assert containing_page is not None
+
     if not isinstance(box, boxes.TableBox):
-        resolve_percentages(box, containing_block)
+        resolve_percentages(box, containing_block, containing_page)
 
         if box.margin_top == 'auto':
             box.margin_top = 0
@@ -55,23 +56,24 @@ def block_level_layout(context, box, max_position_y, skip_stack,
             box.position_y = top_border_edge - box.margin_top
             adjoining_margins = []
 
-    return block_level_layout_switch(
-        context, box, max_position_y, skip_stack, containing_block,
-        page_is_empty, absolute_boxes, fixed_boxes, adjoining_margins)
+    return block_level_layout_switch(context, box, max_position_y, skip_stack, containing_block, containing_page,
+                                     page_is_empty,
+                                     absolute_boxes, fixed_boxes, adjoining_margins)
 
 
-def block_level_layout_switch(context, box, max_position_y, skip_stack,
-                              containing_block, page_is_empty, absolute_boxes,
-                              fixed_boxes, adjoining_margins):
+def block_level_layout_switch(context, box, max_position_y, skip_stack, containing_block, containing_page,
+                              page_is_empty, absolute_boxes, fixed_boxes, adjoining_margins):
     """Call the layout function corresponding to the ``box`` type."""
+    assert containing_page is not None
+
     if isinstance(box, boxes.TableBox):
         return table_layout(
             context, box, max_position_y, skip_stack, containing_block,
             page_is_empty, absolute_boxes, fixed_boxes)
     elif isinstance(box, boxes.BlockBox):
-        return block_box_layout(
-            context, box, max_position_y, skip_stack, containing_block,
-            page_is_empty, absolute_boxes, fixed_boxes, adjoining_margins)
+        return block_box_layout(context, box, max_position_y, skip_stack, containing_block, containing_page,
+                                page_is_empty,
+                                absolute_boxes, fixed_boxes, adjoining_margins)
     elif isinstance(box, boxes.BlockReplacedBox):
         box = block_replaced_box_layout(box, containing_block)
         # Don't collide with floats
@@ -91,10 +93,11 @@ def block_level_layout_switch(context, box, max_position_y, skip_stack,
         raise TypeError('Layout for %s not handled yet' % type(box).__name__)
 
 
-def block_box_layout(context, box, max_position_y, skip_stack,
-                     containing_block, page_is_empty, absolute_boxes,
-                     fixed_boxes, adjoining_margins):
+def block_box_layout(context, box, max_position_y, skip_stack, containing_block, containing_page, page_is_empty,
+                     absolute_boxes, fixed_boxes, adjoining_margins):
     """Lay out the block ``box``."""
+    assert containing_page is not None
+
     if (box.style['column_width'] != 'auto' or
             box.style['column_count'] != 'auto'):
         result = columns_layout(
@@ -106,8 +109,8 @@ def block_box_layout(context, box, max_position_y, skip_stack,
         if resume_at is None:
             new_box = result[0]
             bottom_spacing = (
-                new_box.margin_bottom + new_box.padding_bottom +
-                new_box.border_bottom_width)
+                    new_box.margin_bottom + new_box.padding_bottom +
+                    new_box.border_bottom_width)
             if bottom_spacing:
                 max_position_y -= bottom_spacing
                 result = columns_layout(
@@ -122,9 +125,8 @@ def block_box_layout(context, box, max_position_y, skip_stack,
     block_level_width(box, containing_block)
 
     new_box, resume_at, next_page, adjoining_margins, collapsing_through = \
-        block_container_layout(
-            context, box, max_position_y, skip_stack, page_is_empty,
-            absolute_boxes, fixed_boxes, adjoining_margins)
+        block_container_layout(context, box, containing_page, max_position_y, skip_stack, page_is_empty, absolute_boxes,
+                               fixed_boxes, adjoining_margins)
     if new_box and new_box.is_table_wrapper:
         # Don't collide with floats
         # http://www.w3.org/TR/CSS21/visuren.html#floats
@@ -204,7 +206,7 @@ def block_level_width(box, containing_block):
         # The equation is over-constrained.
         if direction == 'rtl' and not box.is_column:
             box.position_x += (
-                cb_width - paddings_plus_borders - width - margin_r - margin_l)
+                    cb_width - paddings_plus_borders - width - margin_r - margin_l)
         # Do nothing in ltr.
     if width == 'auto':
         if margin_l == 'auto':
@@ -212,7 +214,7 @@ def block_level_width(box, containing_block):
         if margin_r == 'auto':
             margin_r = box.margin_right = 0
         width = box.width = cb_width - (
-            paddings_plus_borders + margin_l + margin_r)
+                paddings_plus_borders + margin_l + margin_r)
     margin_sum = cb_width - paddings_plus_borders - width
     if margin_l == 'auto' and margin_r == 'auto':
         box.margin_left = margin_sum / 2.
@@ -254,10 +256,10 @@ def relative_positioning(box, containing_block):
             relative_positioning(child, containing_block)
 
 
-def block_container_layout(context, box, max_position_y, skip_stack,
-                           page_is_empty, absolute_boxes, fixed_boxes,
-                           adjoining_margins=None):
+def block_container_layout(context, box, containing_page, max_position_y, skip_stack, page_is_empty, absolute_boxes,
+                           fixed_boxes, adjoining_margins=None):
     """Set the ``box`` height."""
+    assert containing_page is not None
     # TODO: boxes.FlexBox is allowed here because flex_layout calls
     # block_container_layout, there's probably a better solution.
     assert isinstance(box, (boxes.BlockContainerBox, boxes.FlexBox))
@@ -278,15 +280,15 @@ def block_container_layout(context, box, max_position_y, skip_stack,
 
     if box.style['box_decoration_break'] == 'clone':
         max_position_y -= (
-            box.padding_bottom + box.border_bottom_width +
-            box.margin_bottom)
+                box.padding_bottom + box.border_bottom_width +
+                box.margin_bottom)
 
     adjoining_margins.append(box.margin_top)
     this_box_adjoining_margins = adjoining_margins
 
     collapsing_with_children = not (
-        box.border_top_width or box.padding_top or box.is_flex_item or
-        establishes_formatting_context(box) or box.is_for_root_element)
+            box.border_top_width or box.padding_top or box.is_flex_item or
+            establishes_formatting_context(box) or box.is_for_root_element)
     if collapsing_with_children:
         # XXX not counting margins in adjoining_margins, if any
         # (There are not padding or borders, see above.)
@@ -330,8 +332,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                 else:
                     fixed_boxes.append(placeholder)
             elif child.is_floated():
-                new_child = float_layout(
-                    context, child, box, absolute_boxes, fixed_boxes)
+                new_child = float_layout(context, child, box, None, absolute_boxes, fixed_boxes)
                 # New page if overflow
                 if (page_is_empty and not new_children) or not (
                         new_child.position_y + new_child.height >
@@ -366,10 +367,9 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                 position_y += collapse_margin(adjoining_margins)
                 adjoining_margins = []
             new_containing_block = box
-            lines_iterator = iter_line_boxes(
-                context, child, position_y, skip_stack,
-                new_containing_block, absolute_boxes, fixed_boxes,
-                first_letter_style)
+            lines_iterator = iter_line_boxes(context, child, position_y, skip_stack, new_containing_block,
+                                             containing_page,
+                                             absolute_boxes, fixed_boxes, first_letter_style)
             is_page_break = False
             for line, resume_at in lines_iterator:
                 line.resume_at = resume_at
@@ -458,7 +458,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
             new_containing_block = box
 
             if not new_containing_block.is_table_wrapper:
-                resolve_percentages(child, new_containing_block)
+                resolve_percentages(child, new_containing_block, containing_page)
                 if (child.is_in_normal_flow() and
                         last_in_flow_child is None and
                         collapsing_with_children):
@@ -472,7 +472,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                     new_collapsed_margin = collapse_margin(
                         adjoining_margins + [child_margin_top])
                     collapsed_margin_difference = (
-                        new_collapsed_margin - old_collapsed_margin)
+                            new_collapsed_margin - old_collapsed_margin)
                     for previous_new_child in new_children:
                         previous_new_child.translate(
                             dy=collapsed_margin_difference)
@@ -502,10 +502,10 @@ def block_container_layout(context, box, max_position_y, skip_stack,
             if not getattr(child, 'first_letter_style', None):
                 child.first_letter_style = first_letter_style
             (new_child, resume_at, next_page, next_adjoining_margins,
-                collapsing_through) = block_level_layout(
-                    context, child, max_position_y, skip_stack,
-                    new_containing_block, page_is_empty_with_no_children,
-                    absolute_boxes, fixed_boxes, adjoining_margins)
+             collapsing_through) = block_level_layout(context, child, max_position_y, skip_stack,
+                                                      new_containing_block, containing_page,
+                                                      page_is_empty_with_no_children,
+                                                      absolute_boxes, fixed_boxes, adjoining_margins)
             skip_stack = None
 
             if new_child is not None:
@@ -519,8 +519,8 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                         new_child, (boxes.BlockBox, boxes.TableBox)):
                     adjoining_margins.append(new_child.margin_top)
                     offset_y = (
-                        collapse_margin(adjoining_margins) -
-                        new_child.margin_top)
+                            collapse_margin(adjoining_margins) -
+                            new_child.margin_top)
                     new_child.translate(0, offset_y)
                     adjoining_margins = []
                 # else: blocks handle that themselves.
@@ -530,7 +530,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
 
                 if not collapsing_through:
                     new_position_y = (
-                        new_child.border_box_y() + new_child.border_height())
+                            new_child.border_box_y() + new_child.border_height())
 
                     if (new_position_y > allowed_max_position_y and
                             not page_is_empty_with_no_children):
@@ -543,7 +543,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
 
                 if new_child is not None and new_child.clearance is not None:
                     position_y = (
-                        new_child.border_box_y() + new_child.border_height())
+                            new_child.border_box_y() + new_child.border_height())
 
             if new_child is None:
                 # Nothing fits in the remaining space of this page: break
@@ -603,7 +603,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
 
     if collapsing_with_children:
         box.position_y += (
-            collapse_margin(this_box_adjoining_margins) - box.margin_top)
+                collapse_margin(this_box_adjoining_margins) - box.margin_top)
 
     for previous_child in reversed(new_children):
         if previous_child.is_in_normal_flow():
@@ -616,10 +616,10 @@ def block_container_layout(context, box, max_position_y, skip_stack,
         collapsed_margin = collapse_margin(adjoining_margins)
         # top and bottom margin of this box
         if (box.height in ('auto', 0) and
-            get_clearance(context, box, collapsed_margin) is None and
-            all(v == 0 for v in [
-                box.min_height, box.border_top_width, box.padding_top,
-                box.border_bottom_width, box.padding_bottom])):
+                get_clearance(context, box, collapsed_margin) is None and
+                all(v == 0 for v in [
+                    box.min_height, box.border_top_width, box.padding_top,
+                    box.border_bottom_width, box.padding_bottom])):
             collapsing_through = True
         else:
             position_y += collapsed_margin
@@ -655,7 +655,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
     if new_box.style['position'] == 'relative':
         # New containing block, resolve the layout of the absolute descendants
         for absolute_box in absolute_boxes:
-            absolute_layout(context, absolute_box, new_box, fixed_boxes)
+            absolute_layout(context, absolute_box, new_box, None, fixed_boxes)
 
     for child in new_box.children:
         relative_positioning(child, (new_box.width, new_box.height))
@@ -673,12 +673,12 @@ def block_container_layout(context, box, max_position_y, skip_stack,
         # Make the box fill the blank space at the bottom of the page
         # https://www.w3.org/TR/css-break-3/#box-splitting
         new_box.height = (
-            max_position_y - new_box.position_y -
-            (new_box.margin_height() - new_box.height))
+                max_position_y - new_box.position_y -
+                (new_box.margin_height() - new_box.height))
         if box.style['box_decoration_break'] == 'clone':
             new_box.height += (
-                box.padding_bottom + box.border_bottom_width +
-                box.margin_bottom)
+                    box.padding_bottom + box.border_bottom_width +
+                    box.margin_bottom)
 
     if next_page['page'] is None:
         next_page['page'] = new_box.page_values()[1]
@@ -704,19 +704,19 @@ def establishes_formatting_context(box):
 
     """
     return (
-        box.is_floated()
-    ) or (
-        box.is_absolutely_positioned()
-    ) or (
-        # TODO: columns shouldn't be block boxes, this condition would then be
-        # useless when this is fixed
-        box.is_column
-    ) or (
-        isinstance(box, boxes.BlockContainerBox) and
-        not isinstance(box, boxes.BlockBox)
-    ) or (
-        isinstance(box, boxes.BlockBox) and box.style['overflow'] != 'visible'
-    )
+               box.is_floated()
+           ) or (
+               box.is_absolutely_positioned()
+           ) or (
+               # TODO: columns shouldn't be block boxes, this condition would then be
+               # useless when this is fixed
+               box.is_column
+           ) or (
+                   isinstance(box, boxes.BlockContainerBox) and
+                   not isinstance(box, boxes.BlockBox)
+           ) or (
+                   isinstance(box, boxes.BlockBox) and box.style['overflow'] != 'visible'
+           )
 
 
 def block_level_page_break(sibling_before, sibling_after):

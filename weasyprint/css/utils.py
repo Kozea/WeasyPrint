@@ -45,7 +45,7 @@ RESOLUTION_TO_DPPX = {
 }
 
 # Sets of possible length units
-LENGTH_UNITS = set(LENGTHS_TO_PIXELS) | set(['ex', 'em', 'ch', 'rem'])
+LENGTH_UNITS = set(LENGTHS_TO_PIXELS) | {'ex', 'em', 'ch', 'rem', 'vw', 'vh'}
 
 # Constants about background positions
 ZERO_PERCENT = Dimension(0, '%')
@@ -153,6 +153,7 @@ def safe_urljoin(base_url, url):
 
 def comma_separated_list(function):
     """Decorator for validators that accept a comma separated list."""
+
     @functools.wraps(function)
     def wrapper(tokens, *args):
         results = []
@@ -162,6 +163,7 @@ def comma_separated_list(function):
                 return None
             results.append(result)
         return tuple(results)
+
     wrapper.single_value = function
     return wrapper
 
@@ -200,22 +202,26 @@ def get_single_keyword(tokens):
 
 def single_keyword(function):
     """Decorator for validators that only accept a single keyword."""
+
     @functools.wraps(function)
     def keyword_validator(tokens):
         """Wrap a validator to call get_single_keyword on tokens."""
         keyword = get_single_keyword(tokens)
         if function(keyword):
             return keyword
+
     return keyword_validator
 
 
 def single_token(function):
     """Decorator for validators that only accept a single token."""
+
     @functools.wraps(function)
     def single_token_validator(tokens, *args):
         """Validate a property whose token is single."""
         if len(tokens) == 1:
             return function(tokens[0], *args)
+
     single_token_validator.__func__ = function
     return single_token_validator
 
@@ -303,10 +309,10 @@ def parse_position(tokens):
                 if keyword in ('left', 'right'):
                     return keyword, length, 'top', FIFTY_PERCENT
             elif (keyword in ('left', 'right') and
-                    other_keyword in ('top', 'bottom')):
+                  other_keyword in ('top', 'bottom')):
                 return keyword, length, other_keyword, ZERO_PERCENT
             elif (keyword in ('top', 'bottom') and
-                    other_keyword in ('left', 'right')):
+                  other_keyword in ('left', 'right')):
                 return other_keyword, ZERO_PERCENT, keyword, length
 
 

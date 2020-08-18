@@ -69,7 +69,7 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
 
     def create_column_box(children):
         column_box = box.anonymous_from(box, children=children)
-        resolve_percentages(column_box, containing_block)
+        resolve_percentages(column_box, containing_block, None)
         column_box.is_column = True
         column_box.width = width
         column_box.position_x = box.content_box_x()
@@ -118,13 +118,13 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
         if not isinstance(column_children_or_block, list):
             # We get a spanning block, we display it like other blocks.
             block = column_children_or_block
-            resolve_percentages(block, containing_block)
+            resolve_percentages(block, containing_block, None)
             block.position_x = box.content_box_x()
             block.position_y = current_position_y
-            new_child, _, _, adjoining_margins, _ = block_level_layout(
-                context, block, original_max_position_y, skip_stack,
-                containing_block, page_is_empty, absolute_boxes, fixed_boxes,
-                adjoining_margins)
+            new_child, _, _, adjoining_margins, _ = block_level_layout(context, block, original_max_position_y,
+                                                                       skip_stack, containing_block, None,
+                                                                       page_is_empty, absolute_boxes, fixed_boxes,
+                                                                       adjoining_margins)
             new_children.append(new_child)
             current_position_y = (
                 new_child.border_height() + new_child.border_box_y())
@@ -140,9 +140,8 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
         current_position_y += collapse_margin(adjoining_margins)
         adjoining_margins = []
         column_box = create_column_box(column_children)
-        new_child, _, _, _, _ = block_box_layout(
-            context, column_box, float('inf'), skip_stack, containing_block,
-            page_is_empty, [], [], [])
+        new_child, _, _, _, _ = block_box_layout(context, column_box, float('inf'), skip_stack, containing_block, None,
+                                                 page_is_empty, [], [], [])
         height = new_child.margin_height()
         if style['column_fill'] == 'balance':
             height /= count
@@ -160,10 +159,10 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
 
             for i in range(count):
                 # Render the column
-                new_box, resume_at, next_page, _, _ = block_box_layout(
-                    context, column_box, box.content_box_y() + height,
-                    column_skip_stack, containing_block, page_is_empty,
-                    [], [], [])
+                new_box, resume_at, next_page, _, _ = block_box_layout(context, column_box,
+                                                                       box.content_box_y() + height, column_skip_stack,
+                                                                       containing_block, None, page_is_empty, [], [],
+                                                                       [])
                 if new_box is None:
                     # We didn't render anything. Give up and use the max
                     # content height.
@@ -182,9 +181,8 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
                         in_flow_children[-1].margin_height())
 
                     # Get the minimum size needed to render the next box
-                    next_box, _, _, _, _ = block_box_layout(
-                        context, column_box, box.content_box_y(),
-                        column_skip_stack, containing_block, True, [], [], [])
+                    next_box, _, _, _, _ = block_box_layout(context, column_box, box.content_box_y(), column_skip_stack,
+                                                            containing_block, None, True, [], [], [])
                     for child in next_box.children:
                         if child.is_in_normal_flow():
                             next_box_size = child.margin_height()
@@ -243,10 +241,8 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
             else:
                 column_box.position_x += i * (width + style['column_gap'])
             new_child, column_skip_stack, column_next_page, _, _ = (
-                block_box_layout(
-                    context, column_box, max_position_y, skip_stack,
-                    containing_block, page_is_empty, absolute_boxes,
-                    fixed_boxes, None))
+                block_box_layout(context, column_box, max_position_y, skip_stack, containing_block, None, page_is_empty,
+                                 absolute_boxes, fixed_boxes, None))
             if new_child is None:
                 break
             next_page = column_next_page
@@ -293,6 +289,6 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
     if box.style['position'] == 'relative':
         # New containing block, resolve the layout of the absolute descendants
         for absolute_box in absolute_boxes:
-            absolute_layout(context, absolute_box, box, fixed_boxes)
+            absolute_layout(context, absolute_box, box, None, fixed_boxes)
 
     return box, skip_stack, next_page, [], False
