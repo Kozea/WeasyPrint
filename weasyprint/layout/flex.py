@@ -203,7 +203,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
             if child.style[axis] == 'max-content':
                 child.style[axis] = 'auto'
                 if axis == 'width':
-                    child.flex_base_size = max_content_width(context, child)
+                    child.flex_base_size = max_content_width(context, child, containing_page)
                 else:
                     if isinstance(child, boxes.ParentBox):
                         new_child = child.copy_with_children(child.children)

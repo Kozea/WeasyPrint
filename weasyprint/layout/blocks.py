@@ -67,9 +67,8 @@ def block_level_layout_switch(context, box, max_position_y, skip_stack, containi
     assert containing_page is not None
 
     if isinstance(box, boxes.TableBox):
-        return table_layout(
-            context, box, max_position_y, skip_stack, containing_block,
-            page_is_empty, absolute_boxes, fixed_boxes)
+        return table_layout(context, box, max_position_y, skip_stack, containing_block, containing_page, page_is_empty,
+                            absolute_boxes, fixed_boxes)
     elif isinstance(box, boxes.BlockBox):
         return block_box_layout(context, box, max_position_y, skip_stack, containing_block, containing_page,
                                 page_is_empty,
@@ -120,8 +119,7 @@ def block_box_layout(context, box, max_position_y, skip_stack, containing_block,
 
         return result
     elif box.is_table_wrapper:
-        table_wrapper_width(
-            context, box, (containing_block.width, containing_block.height))
+        table_wrapper_width(context, box, (containing_block.width, containing_block.height), containing_page)
     block_level_width(box, containing_block)
 
     new_box, resume_at, next_page, adjoining_margins, collapsing_through = \

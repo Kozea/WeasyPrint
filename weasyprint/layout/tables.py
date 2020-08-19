@@ -12,8 +12,8 @@ from .percentages import resolve_one_percentage, resolve_percentages
 from .preferred import max_content_width, table_and_columns_preferred_widths
 
 
-def table_layout(context, table, max_position_y, skip_stack, containing_block,
-                 page_is_empty, absolute_boxes, fixed_boxes):
+def table_layout(context, table, max_position_y, skip_stack, containing_block, containing_page, page_is_empty,
+                 absolute_boxes, fixed_boxes):
     """Layout for a table box."""
     # Avoid a circular import
     from .blocks import (
@@ -71,7 +71,7 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
         resume_at = None
         next_page = {'break': 'any', 'page': None}
         original_page_is_empty = page_is_empty
-        resolve_percentages(group, containing_block=table, containing_page=None)
+        resolve_percentages(group, containing_block=table, containing_page=containing_page)
         group.position_x = rows_left_x
         group.position_y = position_y
         group.width = rows_width
@@ -97,7 +97,7 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
                     resume_at = (index_row, None)
                     break
 
-            resolve_percentages(row, containing_block=table, containing_page=None)
+            resolve_percentages(row, containing_block=table, containing_page=containing_page)
             row.position_x = rows_left_x
             row.position_y = position_y
             row.width = rows_width
@@ -120,7 +120,7 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
                                    'the table, ignored %i cells: %r',
                                    len(ignored_cells), ignored_cells)
                     break
-                resolve_percentages(cell, containing_block=table, containing_page=None)
+                resolve_percentages(cell, containing_block=table, containing_page=containing_page)
                 if table.style['direction'] == 'ltr':
                     cell.position_x = column_positions[cell.grid_x]
                 else:
@@ -135,13 +135,13 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
                 # originating cells to cell.colspan, see
                 # test_layout_table_auto_49
                 cell.width = (
-                    sum(spanned_widths) +
-                    border_spacing_x * (cell.colspan - 1) -
-                    borders_plus_padding)
+                        sum(spanned_widths) +
+                        border_spacing_x * (cell.colspan - 1) -
+                        borders_plus_padding)
                 # The computed height is a minimum
                 cell.computed_height = cell.height
                 cell.height = 'auto'
-                cell, _, _, _, _ = block_container_layout(context, cell, None, max_position_y=float('inf'),
+                cell, _, _, _, _ = block_container_layout(context, cell, containing_page, max_position_y=float('inf'),
                                                           skip_stack=None, page_is_empty=True,
                                                           absolute_boxes=absolute_boxes, fixed_boxes=fixed_boxes)
                 cell.empty = not any(
@@ -214,10 +214,10 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
                     vertical_align_shift = 0
                     if cell.vertical_align == 'middle':
                         vertical_align_shift = (
-                            cell.computed_height - cell.content_height) / 2
+                                                       cell.computed_height - cell.content_height) / 2
                     elif cell.vertical_align == 'bottom':
                         vertical_align_shift = (
-                            cell.computed_height - cell.content_height)
+                                cell.computed_height - cell.content_height)
                     if vertical_align_shift > 0:
                         for child in cell.children:
                             child.translate(dy=vertical_align_shift)
@@ -383,7 +383,7 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
         for group in table.children[skip:]:
             if not group.is_header and not group.is_footer:
                 avoid_breaks = (
-                    group.style['break_inside'] in ('avoid', 'avoid-page'))
+                        group.style['break_inside'] in ('avoid', 'avoid-page'))
                 break
 
         if header and footer:
@@ -625,7 +625,7 @@ def auto_table_layout(context, box, containing_block):
      column_min_content_widths, column_max_content_widths,
      column_intrinsic_percentages, constrainedness,
      total_horizontal_border_spacing, grid) = \
-        table_and_columns_preferred_widths(context, box, outer=False)
+        table_and_columns_preferred_widths(context, box, None, outer=False)
 
     margins = 0
     if box.margin_left != 'auto':
@@ -639,7 +639,7 @@ def auto_table_layout(context, box, containing_block):
 
     if table.style['border_collapse'] == 'collapse':
         available_width -= (
-            table.border_left_width + table.border_right_width)
+                table.border_left_width + table.border_right_width)
 
     if table.width == 'auto':
         if available_width <= table_min_content_width:
@@ -702,7 +702,7 @@ def auto_table_layout(context, box, containing_block):
             added_widths = [
                 upper_guess[i] - lower_guess[i] for i in range(len(grid))]
             available_ratio = (
-                (assignable_width - sum(lower_guess)) / sum(added_widths))
+                    (assignable_width - sum(lower_guess)) / sum(added_widths))
             table.column_widths = [
                 lower_guess[i] + added_widths[i] * available_ratio
                 for i in range(len(grid))]
@@ -724,10 +724,10 @@ def auto_table_layout(context, box, containing_block):
                     table.column_widths[i] += excess_width / len(columns)
 
 
-def table_wrapper_width(context, wrapper, containing_block):
+def table_wrapper_width(context, wrapper, containing_block, containing_page):
     """Find the width of each column and derive the wrapper width."""
     table = wrapper.get_wrapped_table()
-    resolve_percentages(table, containing_block, None)
+    resolve_percentages(table, containing_block, containing_page)
 
     if table.style['table_layout'] == 'fixed' and table.width != 'auto':
         fixed_table_layout(wrapper)
@@ -788,8 +788,8 @@ def distribute_excess_width(context, grid, excess_width, column_widths,
         (i + column_slice.start, column)
         for i, column in enumerate(grid[column_slice])
         if not constrainedness[i + column_slice.start] and
-        column_intrinsic_percentages[i + column_slice.start] == 0 and
-        column_max_content_widths[i + column_slice.start] > 0]
+           column_intrinsic_percentages[i + column_slice.start] == 0 and
+           column_max_content_widths[i + column_slice.start] > 0]
     if columns:
         current_widths = [column_widths[i] for i, column in columns]
         differences = [
@@ -820,8 +820,8 @@ def distribute_excess_width(context, grid, excess_width, column_widths,
         (i + column_slice.start, column)
         for i, column in enumerate(grid[column_slice])
         if constrainedness[i + column_slice.start] and
-        column_intrinsic_percentages[i + column_slice.start] == 0 and
-        column_max_content_widths[i + column_slice.start] > 0]
+           column_intrinsic_percentages[i + column_slice.start] == 0 and
+           column_max_content_widths[i + column_slice.start] > 0]
     if columns:
         current_widths = [column_widths[i] for i, column in columns]
         differences = [
@@ -887,7 +887,7 @@ def distribute_excess_width(context, grid, excess_width, column_widths,
         if any(column) and
         column_intrinsic_percentages[i + column_slice.start] == 0 and
         not any(
-            max_content_width(context, cell)
+            max_content_width(context, cell, None)
             for cell in column if cell)]
     if columns:
         for i in columns:

@@ -199,7 +199,7 @@ def absolute_block(context, box, containing_block, containing_page, fixed_boxes)
     absolute_boxes = []
 
     if box.is_table_wrapper:
-        table_wrapper_width(context, box, (cb_width, cb_height))
+        table_wrapper_width(context, box, (cb_width, cb_height), )
 
     # avoid a circular import
     from .blocks import block_container_layout
@@ -240,7 +240,7 @@ def absolute_flex(context, box, containing_block_sizes, fixed_boxes,
     absolute_boxes = []
 
     if box.is_table_wrapper:
-        table_wrapper_width(context, box, (cb_width, cb_height))
+        table_wrapper_width(context, box, (cb_width, cb_height), )
 
     new_box, _, _, _, _ = flex_layout(
         context, box, max_position_y=float('inf'), skip_stack=None,

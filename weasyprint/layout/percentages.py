@@ -21,7 +21,7 @@ def percentage(value, refer_to, page):
     elif value.unit == 'px':
         return value.value
     elif value.unit == 'vw':
-        return value.value * page.width / 100
+        return value.value * page.style['size'][0] / 100.0
     else:
         assert value.unit == '%'
         return refer_to * value.value / 100.

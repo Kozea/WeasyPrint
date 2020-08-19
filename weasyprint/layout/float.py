@@ -58,7 +58,7 @@ def float_layout(context, box, containing_block, containing_page, absolute_boxes
         float_width(box, context, containing_block)
 
     if box.is_table_wrapper:
-        table_wrapper_width(context, box, (cb_width, cb_height))
+        table_wrapper_width(context, box, (cb_width, cb_height), )
 
     if isinstance(box, boxes.BlockContainerBox):
         context.create_block_formatting_context()

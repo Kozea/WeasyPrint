@@ -12,6 +12,7 @@
 
 import sys
 
+from .percentages import percentage
 from .. import text
 from ..formatting_structure import boxes
 from .replaced import default_image_sizing
@@ -30,7 +31,7 @@ def shrink_to_fit(context, box, available_width):
         max(
             min_content_width(context, box, outer=False),
             available_width),
-        max_content_width(context, box, outer=False))
+        max_content_width(context, box, None, outer=False))
 
 
 def min_content_width(context, box, outer=True):
@@ -40,12 +41,12 @@ def min_content_width(context, box, outer=True):
 
     """
     if box.is_table_wrapper:
-        return table_and_columns_preferred_widths(context, box, outer)[0]
+        return table_and_columns_preferred_widths(context, box, None, outer)[0]
     elif isinstance(box, boxes.TableCellBox):
         return table_cell_min_content_width(context, box, outer)
     elif isinstance(box, (
             boxes.BlockContainerBox, boxes.TableColumnBox, boxes.FlexBox)):
-        return block_min_content_width(context, box, outer)
+        return block_min_content_width(context, box, None, outer)
     elif isinstance(box, boxes.TableColumnGroupBox):
         return column_group_content_width(context, box)
     elif isinstance(box, (boxes.InlineBox, boxes.LineBox)):
@@ -61,19 +62,19 @@ def min_content_width(context, box, outer=True):
             type(box).__name__)
 
 
-def max_content_width(context, box, outer=True):
+def max_content_width(context, box, page, outer=True):
     """Return the max-content width for ``box``.
 
     This is the width by only breaking at forced line breaks.
 
     """
     if box.is_table_wrapper:
-        return table_and_columns_preferred_widths(context, box, outer)[1]
+        return table_and_columns_preferred_widths(context, box, page, outer)[1]
     elif isinstance(box, boxes.TableCellBox):
         return table_cell_max_content_width(context, box, outer)
     elif isinstance(box, (
             boxes.BlockContainerBox, boxes.TableColumnBox, boxes.FlexBox)):
-        return block_max_content_width(context, box, outer)
+        return block_max_content_width(context, box, page, outer)
     elif isinstance(box, boxes.TableColumnGroupBox):
         return column_group_content_width(context, box)
     elif isinstance(box, (boxes.InlineBox, boxes.LineBox)):
@@ -88,9 +89,12 @@ def max_content_width(context, box, outer=True):
             'max-content width for %s not handled yet' % type(box).__name__)
 
 
-def _block_content_width(context, box, function, outer):
+def _block_content_width(context, box, function, outer, page):
     """Helper to create ``block_*_content_width.``"""
     width = box.style['width']
+    if width.unit == 'vw' or width.unit == 'vh':
+        box.style['width'] = percentage(width, box, page)
+
     if width == 'auto' or width.unit == '%':
         # "percentages on the following properties are treated instead as
         # though they were the following: width: auto"
@@ -126,8 +130,8 @@ def margin_width(box, width, left=True, right=True):
     percentages = 0
 
     for value in (
-        (['margin_left', 'padding_left'] if left else []) +
-        (['margin_right', 'padding_right'] if right else [])
+            (['margin_left', 'padding_left'] if left else []) +
+            (['margin_right', 'padding_right'] if right else [])
     ):
         style_value = box.style[value]
         if style_value != 'auto':
@@ -164,15 +168,14 @@ def adjust(box, outer, width, left=True, right=True):
         return fixed
 
 
-def block_min_content_width(context, box, outer=True):
+def block_min_content_width(context, box, page, outer=True):
     """Return the min-content width for a ``BlockBox``."""
-    return _block_content_width(
-        context, box, min_content_width, outer)
+    return _block_content_width(context, box, min_content_width, outer, page)
 
 
-def block_max_content_width(context, box, outer=True):
+def block_max_content_width(context, box, page, outer=True):
     """Return the max-content width for a ``BlockBox``."""
-    return _block_content_width(context, box, max_content_width, outer)
+    return _block_content_width(context, box, max_content_width, outer, page)
 
 
 def inline_min_content_width(context, box, outer=True, skip_stack=None,
@@ -238,7 +241,7 @@ def table_cell_max_content_width(context, box, outer):
     """Return the max-content width for a ``TableCellBox``."""
     return max(
         table_cell_min_content_width(context, box, outer),
-        block_max_content_width(context, box, outer))
+        block_max_content_width(context, box, None, outer))
 
 
 def inline_line_widths(context, box, outer, is_line_start, minimum,
@@ -314,9 +317,9 @@ def inline_line_widths(context, box, outer, is_line_start, minimum,
             # "By default, there is a break opportunity
             #  both before and after any inline object."
             if minimum:
-                lines = [0, max_content_width(context, child), 0]
+                lines = [0, max_content_width(context, child, None), 0]
             else:
-                lines = [max_content_width(context, child)]
+                lines = [max_content_width(context, child, None)]
         # The first text line goes on the current line
         current_line += lines[0]
         if len(lines) > 1:
@@ -340,17 +343,17 @@ def _percentage_contribution(box):
     """
     min_width = (
         box.style['min_width'].value if box.style['min_width'] != 'auto' and
-        box.style['min_width'].unit == '%' else 0)
+                                        box.style['min_width'].unit == '%' else 0)
     max_width = (
         box.style['max_width'].value if box.style['max_width'] != 'auto' and
-        box.style['max_width'].unit == '%' else float('inf'))
+                                        box.style['max_width'].unit == '%' else float('inf'))
     width = (
         box.style['width'].value if box.style['width'] != 'auto' and
-        box.style['width'].unit == '%' else 0)
+                                    box.style['width'].unit == '%' else 0)
     return max(min_width, min(width, max_width))
 
 
-def table_and_columns_preferred_widths(context, box, outer=True):
+def table_and_columns_preferred_widths(context, box, page, outer=True):
     """Return content widths for the auto layout table and its columns.
 
     The tuple returned is
@@ -392,21 +395,19 @@ def table_and_columns_preferred_widths(context, box, outer=True):
     # Define the total horizontal border spacing
     if table.style['border_collapse'] == 'separate' and grid_width > 0:
         total_horizontal_border_spacing = (
-            table.style['border_spacing'][0] *
-            (1 + len([column for column in zipped_grid if any(column)])))
+                table.style['border_spacing'][0] *
+                (1 + len([column for column in zipped_grid if any(column)])))
     else:
         total_horizontal_border_spacing = 0
 
     if grid_width == 0 or grid_height == 0:
         table.children = []
-        min_width = block_min_content_width(context, table, outer=False)
-        max_width = block_max_content_width(context, table, outer=False)
+        min_width = block_min_content_width(context, table, page, outer=False)
+        max_width = block_max_content_width(context, table, page, outer=False)
         outer_min_width = adjust(
-            box, outer=True, width=block_min_content_width(
-                context, table, outer=True))
+            box, outer=True, width=block_min_content_width(context, table, None, outer=True))
         outer_max_width = adjust(
-            box, outer=True, width=block_max_content_width(
-                context, table, outer=True))
+            box, outer=True, width=block_max_content_width(context, table, None, outer=True))
         result = ([], [], [], [], total_horizontal_border_spacing, [])
         context.tables[table] = result = {
             False: (min_width, max_width) + result,
@@ -444,7 +445,7 @@ def table_and_columns_preferred_widths(context, box, outer=True):
                     min_content_width(context, groups[i]))
                 max_content_widths[i] = max(
                     max_content_widths[i],
-                    max_content_width(context, groups[i]))
+                    max_content_width(context, groups[i], None))
                 intrinsic_percentages[i] = max(
                     intrinsic_percentages[i],
                     _percentage_contribution(groups[i]))
@@ -456,7 +457,7 @@ def table_and_columns_preferred_widths(context, box, outer=True):
                         min_content_width(context, cell))
                     max_content_widths[i] = max(
                         max_content_widths[i],
-                        max_content_width(context, cell))
+                        max_content_width(context, cell, None))
                     intrinsic_percentages[i] = max(
                         intrinsic_percentages[i],
                         _percentage_contribution(cell))
@@ -504,8 +505,8 @@ def table_and_columns_preferred_widths(context, box, outer=True):
                             ratio = 1
                     else:
                         ratio = (
-                            max_content_widths[i] /
-                            other_columns_contributions_sum)
+                                max_content_widths[i] /
+                                other_columns_contributions_sum)
                     percentage_contribution = max(
                         percentage_contribution,
                         diff * ratio)
@@ -539,7 +540,7 @@ def table_and_columns_preferred_widths(context, box, outer=True):
     # Max- and min-content widths for span > 1
     for cell in colspan_cells:
         min_content = min_content_width(context, cell)
-        max_content = max_content_width(context, cell)
+        max_content = max_content_width(context, cell, None)
         column_slice = slice(cell.grid_x, cell.grid_x + cell.colspan)
         columns_min_content = sum(min_content_widths[column_slice])
         columns_max_content = sum(max_content_widths[column_slice])
@@ -571,7 +572,7 @@ def table_and_columns_preferred_widths(context, box, outer=True):
         max_content_widths[i] for i in range(grid_width)
         if intrinsic_percentages[i] == 0)
     large_percentage_contribution_denominator = (
-        (100 - sum(intrinsic_percentages)) / 100.)
+            (100 - sum(intrinsic_percentages)) / 100.)
     if large_percentage_contribution_denominator == 0:
         if large_percentage_contribution_numerator == 0:
             large_percentage_contribution = 0
@@ -588,15 +589,15 @@ def table_and_columns_preferred_widths(context, box, outer=True):
             large_percentage_contribution = sys.maxsize
     else:
         large_percentage_contribution = (
-            large_percentage_contribution_numerator /
-            large_percentage_contribution_denominator)
+                large_percentage_contribution_numerator /
+                large_percentage_contribution_denominator)
 
     table_min_content_width = (
-        total_horizontal_border_spacing + sum(min_content_widths))
+            total_horizontal_border_spacing + sum(min_content_widths))
     table_max_content_width = (
-        total_horizontal_border_spacing + max(
-            [sum(max_content_widths), large_percentage_contribution] +
-            small_percentage_contributions))
+            total_horizontal_border_spacing + max(
+        [sum(max_content_widths), large_percentage_contribution] +
+        small_percentage_contributions))
 
     if table.style['width'] != 'auto' and table.style['width'].unit == 'px':
         # "percentages on the following properties are treated instead as
@@ -624,8 +625,8 @@ def table_and_columns_preferred_widths(context, box, outer=True):
     context.tables[table] = result = {
         False: (table_min_content_width, table_max_content_width) + result,
         True: (
-            (table_outer_min_content_width, table_outer_max_content_width) +
-            result),
+                (table_outer_min_content_width, table_outer_max_content_width) +
+                result),
     }
     return result[outer]
 
@@ -706,7 +707,7 @@ def flex_max_content_width(context, box, outer=True):
     # TODO: use real values, see
     # https://www.w3.org/TR/css-flexbox-1/#intrinsic-sizes
     max_contents = [
-        max_content_width(context, child, outer=True)
+        max_content_width(context, child, None, outer=True)
         for child in box.children if child.is_flex_item]
     if not max_contents:
         return adjust(box, outer, 0)

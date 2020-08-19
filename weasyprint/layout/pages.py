@@ -72,7 +72,7 @@ class VerticalBox(OrientedBox):
 
 
 class HorizontalBox(OrientedBox):
-    def __init__(self, context, box):
+    def __init__(self, context, box, page):
         self.context = context
         self.box = box
         self.inner = box.width
@@ -83,6 +83,7 @@ class HorizontalBox(OrientedBox):
                 box.border_left_width + box.border_right_width)
         self._min_content_size = None
         self._max_content_size = None
+        self.page = page
 
     def restore_box_attributes(self):
         box = self.box
@@ -100,8 +101,7 @@ class HorizontalBox(OrientedBox):
     @property
     def max_content_size(self):
         if self._max_content_size is None:
-            self._max_content_size = max_content_width(
-                self.context, self.box, outer=False)
+            self._max_content_size = max_content_width(self.context, self.box, self.page, outer=False)
         return self._max_content_size
 
 
@@ -305,6 +305,7 @@ def make_margin_boxes(context, page, state):
     ``context.page_maker[context.current_page]``.
 
     """
+    print(page.width / 96. * 25.4, page.height / 96. * 25.4)
 
     # This is a closure only to make calls shorter
     def make_box(at_keyword, containing_block):
@@ -522,11 +523,11 @@ def make_page(context, root_box, page_type, resume_at, page_number,
     class EmptyBox():
         pass
 
-    layout_root_box = EmptyBox()
-    layout_root_box.width = device_size[0]
-    layout_root_box.height = device_size[1]
+    # layout_root_box = EmptyBox()
+    # layout_root_box.width = device_size[0]
+    # layout_root_box.height = device_size[1]
 
-    resolve_percentages(page, device_size, layout_root_box)
+    resolve_percentages(page, device_size, page)
 
     page.position_x = 0
     page.position_y = 0

@@ -499,9 +499,7 @@ def atomic_box(context, box, position_x, skip_stack, containing_block,
         box.baseline = box.margin_height()
     elif isinstance(box, boxes.InlineBlockBox):
         if box.is_table_wrapper:
-            table_wrapper_width(
-                context, box,
-                (containing_block.width, containing_block.height))
+            table_wrapper_width(context, box, (containing_block.width, containing_block.height), )
         box = inline_block_box_layout(context, box, position_x, skip_stack, containing_block, None, absolute_boxes,
                                       fixed_boxes)
     else:  # pragma: no cover
@@ -613,7 +611,7 @@ def split_inline_level(context, box, position_x, max_x, skip_stack, containing_b
             box.margin_right = 0
         (new_box, resume_at, preserved_line_break, first_letter,
          last_letter, float_widths) = split_inline_box(context, box, position_x, max_x, skip_stack, containing_block,
-                                                       None, absolute_boxes, fixed_boxes, line_placeholders,
+                                                       containing_page, absolute_boxes, fixed_boxes, line_placeholders,
                                                        waiting_floats, line_children)
     elif isinstance(box, boxes.AtomicInlineLevelBox):
         new_box = atomic_box(
