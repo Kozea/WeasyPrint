@@ -625,7 +625,7 @@ def auto_table_layout(context, box, containing_block):
      column_min_content_widths, column_max_content_widths,
      column_intrinsic_percentages, constrainedness,
      total_horizontal_border_spacing, grid) = \
-        table_and_columns_preferred_widths(context, box, None, outer=False)
+        table_and_columns_preferred_widths(context, box, outer=False)
 
     margins = 0
     if box.margin_left != 'auto':
@@ -887,7 +887,7 @@ def distribute_excess_width(context, grid, excess_width, column_widths,
         if any(column) and
         column_intrinsic_percentages[i + column_slice.start] == 0 and
         not any(
-            max_content_width(context, cell, None)
+            max_content_width(context, cell)
             for cell in column if cell)]
     if columns:
         for i in columns:

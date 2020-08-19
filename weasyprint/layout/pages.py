@@ -72,7 +72,7 @@ class VerticalBox(OrientedBox):
 
 
 class HorizontalBox(OrientedBox):
-    def __init__(self, context, box, page):
+    def __init__(self, context, box):
         self.context = context
         self.box = box
         self.inner = box.width
@@ -83,7 +83,6 @@ class HorizontalBox(OrientedBox):
                 box.border_left_width + box.border_right_width)
         self._min_content_size = None
         self._max_content_size = None
-        self.page = page
 
     def restore_box_attributes(self):
         box = self.box
@@ -101,7 +100,7 @@ class HorizontalBox(OrientedBox):
     @property
     def max_content_size(self):
         if self._max_content_size is None:
-            self._max_content_size = max_content_width(self.context, self.box, self.page, outer=False)
+            self._max_content_size = max_content_width(self.context, self.box, outer=False)
         return self._max_content_size
 
 
