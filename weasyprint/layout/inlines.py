@@ -490,8 +490,7 @@ def min_max_auto_replaced(box):
         box.height = min_height
 
 
-def atomic_box(context, box, position_x, skip_stack, containing_block,
-               absolute_boxes, fixed_boxes):
+def atomic_box(context, box, position_x, skip_stack, containing_block, containing_page, absolute_boxes, fixed_boxes):
     """Compute the width and the height of the atomic ``box``."""
     if isinstance(box, boxes.ReplacedBox):
         box = box.copy()
@@ -499,8 +498,9 @@ def atomic_box(context, box, position_x, skip_stack, containing_block,
         box.baseline = box.margin_height()
     elif isinstance(box, boxes.InlineBlockBox):
         if box.is_table_wrapper:
-            table_wrapper_width(context, box, (containing_block.width, containing_block.height), )
-        box = inline_block_box_layout(context, box, position_x, skip_stack, containing_block, None, absolute_boxes,
+            table_wrapper_width(context, box, (containing_block.width, containing_block.height), containing_page)
+        box = inline_block_box_layout(context, box, position_x, skip_stack, containing_block, containing_page,
+                                      absolute_boxes,
                                       fixed_boxes)
     else:  # pragma: no cover
         raise TypeError('Layout for %s not handled yet' % type(box).__name__)
@@ -512,7 +512,7 @@ def inline_block_box_layout(context, box, position_x, skip_stack, containing_blo
     # Avoid a circular import
     from .blocks import block_container_layout
 
-    resolve_percentages(box, containing_block, None)
+    resolve_percentages(box, containing_block, containing_page)
 
     # http://www.w3.org/TR/CSS21/visudet.html#inlineblock-width
     if box.margin_left == 'auto':
@@ -614,9 +614,8 @@ def split_inline_level(context, box, position_x, max_x, skip_stack, containing_b
                                                        containing_page, absolute_boxes, fixed_boxes, line_placeholders,
                                                        waiting_floats, line_children)
     elif isinstance(box, boxes.AtomicInlineLevelBox):
-        new_box = atomic_box(
-            context, box, position_x, skip_stack, containing_block,
-            absolute_boxes, fixed_boxes)
+        new_box = atomic_box(context, box, position_x, skip_stack, containing_block, containing_page, absolute_boxes,
+                             fixed_boxes)
         new_box.position_x = position_x
         resume_at = None
         preserved_line_break = False
@@ -630,9 +629,9 @@ def split_inline_level(context, box, position_x, max_x, skip_stack, containing_b
         for side in ['top', 'right', 'bottom', 'left']:
             if getattr(box, 'margin_' + side) == 'auto':
                 setattr(box, 'margin_' + side, 0)
-        new_box, resume_at, _, _, _ = flex_layout(
-            context, box, float('inf'), skip_stack, containing_block,
-            False, absolute_boxes, fixed_boxes)
+        new_box, resume_at, _, _, _ = flex_layout(context, box, float('inf'), skip_stack, containing_block,
+                                                  containing_page, False,
+                                                  absolute_boxes, fixed_boxes)
         preserved_line_break = False
         first_letter = '\u2e80'
         last_letter = '\u2e80'
@@ -711,7 +710,7 @@ def split_inline_box(context, box, position_x, max_x, skip_stack, containing_blo
                 # added here, and not in iter_line_boxes
                 waiting_floats.append(child)
             else:
-                child = float_layout(context, child, containing_block, None, absolute_boxes, fixed_boxes)
+                child = float_layout(context, child, containing_block, containing_page, absolute_boxes, fixed_boxes)
                 waiting_children.append((index, child))
 
                 # Translate previous line children
@@ -957,7 +956,7 @@ def split_inline_box(context, box, position_x, max_x, skip_stack, containing_blo
 
     if new_box.style['position'] == 'relative':
         for absolute_box in absolute_boxes:
-            absolute_layout(context, absolute_box, new_box, None, fixed_boxes)
+            absolute_layout(context, absolute_box, new_box, containing_page, fixed_boxes)
 
     if resume_at is not None:
         if resume_at[0] < float_resume_at:

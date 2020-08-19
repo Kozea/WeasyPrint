@@ -85,9 +85,8 @@ def block_level_layout_switch(context, box, max_position_y, skip_stack, containi
         collapsing_through = False
         return box, resume_at, next_page, adjoining_margins, collapsing_through
     elif isinstance(box, boxes.FlexBox):
-        return flex_layout(
-            context, box, max_position_y, skip_stack, containing_block,
-            page_is_empty, absolute_boxes, fixed_boxes)
+        return flex_layout(context, box, max_position_y, skip_stack, containing_block, containing_page, page_is_empty,
+                           absolute_boxes, fixed_boxes)
     else:  # pragma: no cover
         raise TypeError('Layout for %s not handled yet' % type(box).__name__)
 
@@ -99,9 +98,9 @@ def block_box_layout(context, box, max_position_y, skip_stack, containing_block,
 
     if (box.style['column_width'] != 'auto' or
             box.style['column_count'] != 'auto'):
-        result = columns_layout(
-            context, box, max_position_y, skip_stack, containing_block,
-            page_is_empty, absolute_boxes, fixed_boxes, adjoining_margins)
+        result = columns_layout(context, box, max_position_y, skip_stack,
+                                containing_block, containing_page, page_is_empty, absolute_boxes, fixed_boxes,
+                                adjoining_margins)
 
         resume_at = result[1]
         # TODO: this condition and the whole relayout are probably wrong
@@ -112,10 +111,8 @@ def block_box_layout(context, box, max_position_y, skip_stack, containing_block,
                     new_box.border_bottom_width)
             if bottom_spacing:
                 max_position_y -= bottom_spacing
-                result = columns_layout(
-                    context, box, max_position_y, skip_stack,
-                    containing_block, page_is_empty, absolute_boxes,
-                    fixed_boxes, adjoining_margins)
+                result = columns_layout(context, box, max_position_y, skip_stack,
+                                        containing_block, page_is_empty, absolute_boxes, fixed_boxes, adjoining_margins)
 
         return result
     elif box.is_table_wrapper:
@@ -223,10 +220,10 @@ def block_level_width(box, containing_block):
         box.margin_right = margin_sum - margin_l
 
 
-def relative_positioning(box, containing_block):
+def relative_positioning(box, containing_block, containing_page):
     """Translate the ``box`` if it is relatively positioned."""
     if box.style['position'] == 'relative':
-        resolve_position_percentages(box, containing_block)
+        resolve_position_percentages(box, containing_block, containing_page)
 
         if box.left != 'auto' and box.right != 'auto':
             if box.style['direction'] == 'ltr':
@@ -251,7 +248,7 @@ def relative_positioning(box, containing_block):
 
     if isinstance(box, (boxes.InlineBox, boxes.LineBox)):
         for child in box.children:
-            relative_positioning(child, containing_block)
+            relative_positioning(child, containing_block, containing_page)
 
 
 def block_container_layout(context, box, containing_page, max_position_y, skip_stack, page_is_empty, absolute_boxes,
@@ -330,7 +327,7 @@ def block_container_layout(context, box, containing_page, max_position_y, skip_s
                 else:
                     fixed_boxes.append(placeholder)
             elif child.is_floated():
-                new_child = float_layout(context, child, box, None, absolute_boxes, fixed_boxes)
+                new_child = float_layout(context, child, box, containing_page, absolute_boxes, fixed_boxes)
                 # New page if overflow
                 if (page_is_empty and not new_children) or not (
                         new_child.position_y + new_child.height >
@@ -653,10 +650,10 @@ def block_container_layout(context, box, containing_page, max_position_y, skip_s
     if new_box.style['position'] == 'relative':
         # New containing block, resolve the layout of the absolute descendants
         for absolute_box in absolute_boxes:
-            absolute_layout(context, absolute_box, new_box, None, fixed_boxes)
+            absolute_layout(context, absolute_box, new_box, containing_page, fixed_boxes)
 
     for child in new_box.children:
-        relative_positioning(child, (new_box.width, new_box.height))
+        relative_positioning(child, (new_box.width, new_box.height), containing_page)
 
     if not isinstance(new_box, boxes.BlockBox):
         context.finish_block_formatting_context(new_box)

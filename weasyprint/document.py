@@ -52,8 +52,8 @@ def _get_matrix(box):
         border_width = box.border_width()
         border_height = box.border_height()
         origin_x, origin_y = box.style['transform_origin']
-        offset_x = percentage(origin_x, border_width)
-        offset_y = percentage(origin_y, border_height)
+        offset_x = percentage(origin_x, border_width, None)
+        offset_y = percentage(origin_y, border_height, None)
         origin_x = box.border_box_x() + offset_x
         origin_y = box.border_box_y() + offset_y
 
@@ -67,8 +67,8 @@ def _get_matrix(box):
             elif name == 'translate':
                 translate_x, translate_y = args
                 matrix.translate(
-                    percentage(translate_x, border_width),
-                    percentage(translate_y, border_height),
+                    percentage(translate_x, border_width, None),
+                    percentage(translate_y, border_height, None),
                 )
             else:
                 if name == 'skewx':
@@ -185,6 +185,7 @@ class Page:
     instantiated directly.
 
     """
+
     def __init__(self, page_box, enable_hinting=False):
         #: The page width, including margins, in CSS pixels.
         self.width = page_box.margin_width()
@@ -285,6 +286,7 @@ class DocumentMetadata:
     New attributes may be added in future versions of WeasyPrint.
 
     """
+
     def __init__(self, title=None, authors=None, description=None,
                  keywords=None, generator=None, created=None, modified=None,
                  attachments=None):
@@ -567,12 +569,12 @@ class Document:
             link_type, link_target, rectangle = link
             if link_type == 'external':
                 attributes = "rect=[{} {} {} {}] uri='{}'".format(*(
-                    [int(round(i * scale)) for i in rectangle] +
-                    [link_target.replace("'", '%27')]))
+                        [int(round(i * scale)) for i in rectangle] +
+                        [link_target.replace("'", '%27')]))
             elif link_type == 'internal':
                 attributes = "rect=[{} {} {} {}] dest='{}'".format(*(
-                    [int(round(i * scale)) for i in rectangle] +
-                    [link_target.replace("'", '%27')]))
+                        [int(round(i * scale)) for i in rectangle] +
+                        [link_target.replace("'", '%27')]))
             elif link_type == 'attachment':
                 # Attachments are handled in write_pdf_metadata
                 continue
@@ -635,9 +637,9 @@ class Document:
             links, anchors = links_and_anchors
             surface.set_size(
                 math.floor(scale * (
-                    page.width + page.bleed['left'] + page.bleed['right'])),
+                        page.width + page.bleed['left'] + page.bleed['right'])),
                 math.floor(scale * (
-                    page.height + page.bleed['top'] + page.bleed['bottom'])))
+                        page.height + page.bleed['top'] + page.bleed['bottom'])))
             with stacked(context):
                 context.translate(
                     page.bleed['left'] * scale, page.bleed['top'] * scale)
@@ -706,11 +708,11 @@ class Document:
         # - finisher function to perform post-processing
         # - bleed boxes
         condition = (
-            self.metadata.attachments or
-            attachments or
-            any(attachment_links) or
-            finisher or
-            any(any(page.bleed.values()) for page in self.pages))
+                self.metadata.attachments or
+                attachments or
+                any(attachment_links) or
+                finisher or
+                any(any(page.bleed.values()) for page in self.pages))
         if condition:
             write_pdf_metadata(
                 file_obj, scale, self.url_fetcher,

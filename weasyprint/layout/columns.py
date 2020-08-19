@@ -12,9 +12,8 @@ from .absolute import absolute_layout
 from .percentages import resolve_percentages
 
 
-def columns_layout(context, box, max_position_y, skip_stack, containing_block,
-                   page_is_empty, absolute_boxes, fixed_boxes,
-                   adjoining_margins):
+def columns_layout(context, box, max_position_y, skip_stack, containing_block, containing_page, page_is_empty,
+                   absolute_boxes, fixed_boxes, adjoining_margins):
     """Lay out a multi-column ``box``."""
     # Avoid circular imports
     from .blocks import (
@@ -52,24 +51,24 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
         width = max(
             0, available_width - (count - 1) * style['column_gap']) / count
     elif (style['column_width'] != 'auto' and
-            style['column_count'] == 'auto'):
+          style['column_count'] == 'auto'):
         count = max(1, int(floor(
             (available_width + style['column_gap']) /
             (style['column_width'] + style['column_gap']))))
         width = (
-            (available_width + style['column_gap']) / count -
-            style['column_gap'])
+                (available_width + style['column_gap']) / count -
+                style['column_gap'])
     else:
         count = min(style['column_count'], int(floor(
             (available_width + style['column_gap']) /
             (style['column_width'] + style['column_gap']))))
         width = (
-            (available_width + style['column_gap']) / count -
-            style['column_gap'])
+                (available_width + style['column_gap']) / count -
+                style['column_gap'])
 
     def create_column_box(children):
         column_box = box.anonymous_from(box, children=children)
-        resolve_percentages(column_box, containing_block, None)
+        resolve_percentages(column_box, containing_block, containing_page)
         column_box.is_column = True
         column_box.width = width
         column_box.position_x = box.content_box_x()
@@ -127,7 +126,7 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
                                                                        adjoining_margins)
             new_children.append(new_child)
             current_position_y = (
-                new_child.border_height() + new_child.border_box_y())
+                    new_child.border_height() + new_child.border_box_y())
             adjoining_margins.append(new_child.margin_bottom)
             continue
 
@@ -140,7 +139,8 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
         current_position_y += collapse_margin(adjoining_margins)
         adjoining_margins = []
         column_box = create_column_box(column_children)
-        new_child, _, _, _, _ = block_box_layout(context, column_box, float('inf'), skip_stack, containing_block, None,
+        new_child, _, _, _, _ = block_box_layout(context, column_box, float('inf'), skip_stack, containing_block,
+                                                 containing_page,
                                                  page_is_empty, [], [], [])
         height = new_child.margin_height()
         if style['column_fill'] == 'balance':
@@ -153,7 +153,7 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
         while True:
             # Remove extra excluded shapes introduced during previous loop
             new_excluded_shapes = (
-                len(context.excluded_shapes) - len(excluded_shapes))
+                    len(context.excluded_shapes) - len(excluded_shapes))
             for i in range(new_excluded_shapes):
                 context.excluded_shapes.pop()
 
@@ -161,7 +161,8 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
                 # Render the column
                 new_box, resume_at, next_page, _, _ = block_box_layout(context, column_box,
                                                                        box.content_box_y() + height, column_skip_stack,
-                                                                       containing_block, None, page_is_empty, [], [],
+                                                                       containing_block, containing_page, page_is_empty,
+                                                                       [], [],
                                                                        [])
                 if new_box is None:
                     # We didn't render anything. Give up and use the max
@@ -177,12 +178,12 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
                 if in_flow_children:
                     # Get the empty space at the bottom of the column box
                     empty_space = height - (
-                        in_flow_children[-1].position_y - box.content_box_y() +
-                        in_flow_children[-1].margin_height())
+                            in_flow_children[-1].position_y - box.content_box_y() +
+                            in_flow_children[-1].margin_height())
 
                     # Get the minimum size needed to render the next box
                     next_box, _, _, _, _ = block_box_layout(context, column_box, box.content_box_y(), column_skip_stack,
-                                                            containing_block, None, True, [], [], [])
+                                                            containing_block, containing_page, True, [], [], [])
                     for child in next_box.children:
                         if child.is_in_normal_flow():
                             next_box_size = child.margin_height()
@@ -237,11 +238,11 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
             column_box.position_y = current_position_y
             if style['direction'] == 'rtl':
                 column_box.position_x += (
-                    box.width - (i + 1) * width - i * style['column_gap'])
+                        box.width - (i + 1) * width - i * style['column_gap'])
             else:
                 column_box.position_x += i * (width + style['column_gap'])
             new_child, column_skip_stack, column_next_page, _, _ = (
-                block_box_layout(context, column_box, max_position_y, skip_stack, containing_block, None, page_is_empty,
+                block_box_layout(context, column_box, max_position_y, skip_stack, containing_block, containing_page, page_is_empty,
                                  absolute_boxes, fixed_boxes, None))
             if new_child is None:
                 break

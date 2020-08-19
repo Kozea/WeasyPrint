@@ -167,15 +167,15 @@ def layout_background_layer(box, page, resolution, image, size, clip, repeat,
             resolution, box.style['font_size'])
         image_width, image_height = replaced.default_image_sizing(
             iwidth, iheight, image.intrinsic_ratio,
-            percentage(size_width, positioning_width),
-            percentage(size_height, positioning_height),
+            percentage(size_width, positioning_width, None),
+            percentage(size_height, positioning_height, None),
             positioning_width, positioning_height)
 
     origin_x, position_x, origin_y, position_y = position
     ref_x = positioning_width - image_width
     ref_y = positioning_height - image_height
-    position_x = percentage(position_x, ref_x)
-    position_y = percentage(position_y, ref_y)
+    position_x = percentage(position_x, ref_x, None)
+    position_y = percentage(position_y, ref_y, None)
     if origin_x == 'right':
         position_x = ref_x - position_x
     if origin_y == 'bottom':

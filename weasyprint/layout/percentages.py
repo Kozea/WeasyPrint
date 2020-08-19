@@ -20,7 +20,7 @@ def percentage(value, refer_to, page):
         return value
     elif value.unit == 'px':
         return value.value
-    elif value.unit == 'vw':
+    elif value.unit == 'vw' and page is not None:
         return value.value * page.style['size'][0] / 100.0
     else:
         assert value.unit == '%'
@@ -48,12 +48,12 @@ def resolve_one_percentage(box, property_name, refer_to,
             setattr(box, property_name, 0)
 
 
-def resolve_position_percentages(box, containing_block):
+def resolve_position_percentages(box, containing_block, containing_page):
     cb_width, cb_height = containing_block
-    resolve_one_percentage(box, 'left', cb_width)
-    resolve_one_percentage(box, 'right', cb_width)
-    resolve_one_percentage(box, 'top', cb_height)
-    resolve_one_percentage(box, 'bottom', cb_height)
+    resolve_one_percentage(box, 'left', cb_width, page=containing_page)
+    resolve_one_percentage(box, 'right', cb_width, page=containing_page)
+    resolve_one_percentage(box, 'top', cb_height, page=containing_page)
+    resolve_one_percentage(box, 'bottom', cb_height, page=containing_page)
 
 
 def resolve_percentages(box, containing_block, containing_page, main_flex_direction=None):

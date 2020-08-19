@@ -304,7 +304,6 @@ def make_margin_boxes(context, page, state):
     ``context.page_maker[context.current_page]``.
 
     """
-    print(page.width / 96. * 25.4, page.height / 96. * 25.4)
 
     # This is a closure only to make calls shorter
     def make_box(at_keyword, containing_block):
@@ -561,7 +560,7 @@ def make_page(context, root_box, page_type, resume_at, page_number,
         placeholder._box for placeholder in positioned_boxes
         if placeholder._box.style['position'] == 'fixed']
     for absolute_box in positioned_boxes:
-        absolute_layout(context, absolute_box, page, None, positioned_boxes)
+        absolute_layout(context, absolute_box, page, initial_containing_block, positioned_boxes)
     context.finish_block_formatting_context(root_box)
 
     page.children = [root_box]

@@ -31,7 +31,7 @@ def shrink_to_fit(context, box, available_width):
         max(
             min_content_width(context, box, outer=False),
             available_width),
-        max_content_width(context, box, None, outer=False))
+        max_content_width(context, box, outer=False))
 
 
 def min_content_width(context, box, outer=True):
@@ -41,12 +41,12 @@ def min_content_width(context, box, outer=True):
 
     """
     if box.is_table_wrapper:
-        return table_and_columns_preferred_widths(context, box, None, outer)[0]
+        return table_and_columns_preferred_widths(context, box, outer)[0]
     elif isinstance(box, boxes.TableCellBox):
         return table_cell_min_content_width(context, box, outer)
     elif isinstance(box, (
             boxes.BlockContainerBox, boxes.TableColumnBox, boxes.FlexBox)):
-        return block_min_content_width(context, box, None, outer)
+        return block_min_content_width(context, box,  outer)
     elif isinstance(box, boxes.TableColumnGroupBox):
         return column_group_content_width(context, box)
     elif isinstance(box, (boxes.InlineBox, boxes.LineBox)):
@@ -314,9 +314,9 @@ def inline_line_widths(context, box, outer, is_line_start, minimum,
             # "By default, there is a break opportunity
             #  both before and after any inline object."
             if minimum:
-                lines = [0, max_content_width(context, child, None), 0]
+                lines = [0, max_content_width(context, child), 0]
             else:
-                lines = [max_content_width(context, child, None)]
+                lines = [max_content_width(context, child)]
         # The first text line goes on the current line
         current_line += lines[0]
         if len(lines) > 1:

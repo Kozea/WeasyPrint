@@ -485,7 +485,7 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block, c
         columns_height -= border_spacing_y
     for group in table.column_groups:
         for column in group.children:
-            resolve_percentages(column, containing_block=table, containing_page=None)
+            resolve_percentages(column, containing_block=table, containing_page=containing_page)
             if column.grid_x < len(column_positions):
                 column.position_x = column_positions[column.grid_x]
                 column.position_y = initial_position_y
@@ -497,7 +497,7 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block, c
                 column.position_y = 0
                 column.width = 0
                 column.height = 0
-            resolve_percentages(group, containing_block=table, containing_page=None)
+            resolve_percentages(group, containing_block=table, containing_page=containing_page)
             column.get_cells = get_column_cells(table, column)
         first = group.children[0]
         last = group.children[-1]
@@ -523,7 +523,7 @@ def add_top_padding(box, extra_padding):
         child.translate(dy=extra_padding)
 
 
-def fixed_table_layout(box):
+def fixed_table_layout(box, containing_page):
     """Run the fixed table layout and return a list of column widths
 
     http://www.w3.org/TR/CSS21/tables.html#fixed-table-layout
@@ -548,7 +548,7 @@ def fixed_table_layout(box):
 
     # `width` on column boxes
     for i, column in enumerate(all_columns):
-        resolve_one_percentage(column, 'width', table.width)
+        resolve_one_percentage(column, 'width', table.width, containing_page)
         if column.width != 'auto':
             column_widths[i] = column.width
 
@@ -560,7 +560,7 @@ def fixed_table_layout(box):
     # `width` on cells of the first row.
     i = 0
     for cell in first_row_cells:
-        resolve_percentages(cell, table, None)
+        resolve_percentages(cell, table, containing_page)
         if cell.width != 'auto':
             width = cell.border_width()
             width -= border_spacing_x * (cell.colspan - 1)
@@ -730,7 +730,7 @@ def table_wrapper_width(context, wrapper, containing_block, containing_page):
     resolve_percentages(table, containing_block, containing_page)
 
     if table.style['table_layout'] == 'fixed' and table.width != 'auto':
-        fixed_table_layout(wrapper)
+        fixed_table_layout(wrapper, containing_page)
     else:
         auto_table_layout(context, wrapper, containing_block)
 

@@ -29,7 +29,7 @@ def float_layout(context, box, containing_block, containing_page, absolute_boxes
     from .inlines import inline_replaced_box_width_height
 
     cb_width, cb_height = (containing_block.width, containing_block.height)
-    resolve_percentages(box, (cb_width, cb_height), None)
+    resolve_percentages(box, (cb_width, cb_height), containing_page)
 
     # TODO: This is only handled later in blocks.block_container_layout
     # http://www.w3.org/TR/CSS21/visudet.html#normal-block
@@ -37,7 +37,7 @@ def float_layout(context, box, containing_block, containing_page, absolute_boxes
         cb_height = (
                 containing_block.position_y - containing_block.content_box_y())
 
-    resolve_position_percentages(box, (cb_width, cb_height))
+    resolve_position_percentages(box, (cb_width, cb_height), containing_page)
 
     if box.margin_left == 'auto':
         box.margin_left = 0
@@ -58,7 +58,7 @@ def float_layout(context, box, containing_block, containing_page, absolute_boxes
         float_width(box, context, containing_block)
 
     if box.is_table_wrapper:
-        table_wrapper_width(context, box, (cb_width, cb_height), )
+        table_wrapper_width(context, box, (cb_width, cb_height), containing_page)
 
     if isinstance(box, boxes.BlockContainerBox):
         context.create_block_formatting_context()
@@ -68,11 +68,9 @@ def float_layout(context, box, containing_block, containing_page, absolute_boxes
                                                  fixed_boxes=fixed_boxes, adjoining_margins=None)
         context.finish_block_formatting_context(box)
     elif isinstance(box, boxes.FlexContainerBox):
-        box, _, _, _, _ = flex_layout(
-            context, box, max_position_y=float('inf'),
-            skip_stack=None, containing_block=containing_block,
-            page_is_empty=False, absolute_boxes=absolute_boxes,
-            fixed_boxes=fixed_boxes)
+        box, _, _, _, _ = flex_layout(context, box, max_position_y=float('inf'), skip_stack=None,
+                                      containing_block=containing_block, containing_page=containing_page, page_is_empty=False,
+                                      absolute_boxes=absolute_boxes, fixed_boxes=fixed_boxes)
     else:
         assert isinstance(box, boxes.BlockReplacedBox)
 

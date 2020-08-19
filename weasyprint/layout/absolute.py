@@ -204,12 +204,13 @@ def absolute_block(context, box, containing_block, containing_page, fixed_boxes)
     # avoid a circular import
     from .blocks import block_container_layout
 
-    new_box, _, _, _, _ = block_container_layout(context, box, containing_page, max_position_y=float('inf'), skip_stack=None,
+    new_box, _, _, _, _ = block_container_layout(context, box, containing_page, max_position_y=float('inf'),
+                                                 skip_stack=None,
                                                  page_is_empty=False, absolute_boxes=absolute_boxes,
                                                  fixed_boxes=fixed_boxes, adjoining_margins=None)
 
     for child_placeholder in absolute_boxes:
-        absolute_layout(context, child_placeholder, new_box, None, fixed_boxes)
+        absolute_layout(context, child_placeholder, new_box, containing_page, fixed_boxes)
 
     if translate_box_width:
         translate_x -= new_box.width
@@ -242,10 +243,9 @@ def absolute_flex(context, box, containing_block_sizes, fixed_boxes,
     if box.is_table_wrapper:
         table_wrapper_width(context, box, (cb_width, cb_height), )
 
-    new_box, _, _, _, _ = flex_layout(
-        context, box, max_position_y=float('inf'), skip_stack=None,
-        containing_block=containing_block, page_is_empty=False,
-        absolute_boxes=absolute_boxes, fixed_boxes=fixed_boxes)
+    new_box, _, _, _, _ = flex_layout(context, box, max_position_y=float('inf'), skip_stack=None,
+                                      containing_block=containing_block, containing_page=containing_page, page_is_empty=False,
+                                      absolute_boxes=absolute_boxes, fixed_boxes=fixed_boxes)
 
     for child_placeholder in absolute_boxes:
         absolute_layout(context, child_placeholder, new_box, None, fixed_boxes)
@@ -285,7 +285,7 @@ def absolute_box_layout(context, box, containing_block, containing_page, fixed_b
     containing_block = cb_x, cb_y, cb_width, cb_height
 
     resolve_percentages(box, (cb_width, cb_height), containing_page)
-    resolve_position_percentages(box, (cb_width, cb_height))
+    resolve_position_percentages(box, (cb_width, cb_height), containing_page)
 
     context.create_block_formatting_context()
     # Absolute tables are wrapped into block boxes

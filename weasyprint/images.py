@@ -28,7 +28,6 @@ assert cairosvg.surface.cairo is cairocffi, (
     'CairoSVG is using pycairo instead of cairocffi. '
     'Make sure it is not imported before WeasyPrint.')
 
-
 # Map values of the image-rendering property to cairo FILTER values:
 # Values are normalized to lower case.
 IMAGE_RENDERING_TO_FILTER = {
@@ -68,10 +67,10 @@ class RasterImage:
 
     def draw(self, context, concrete_width, concrete_height, image_rendering):
         has_size = (
-            concrete_width > 0
-            and concrete_height > 0
-            and self._intrinsic_width > 0
-            and self._intrinsic_height > 0
+                concrete_width > 0
+                and concrete_height > 0
+                and self._intrinsic_width > 0
+                and self._intrinsic_height > 0
         )
         if not has_size:
             return
@@ -91,6 +90,7 @@ class ScaledSVGSurface(cairosvg.surface.SVGSurface):
     Have the cairo Surface object have intrinsic dimension
     in pixels instead of points.
     """
+
     @property
     def device_units_per_user_units(self):
         scale = super().device_units_per_user_units
@@ -148,10 +148,10 @@ class SVGImage:
                     self.intrinsic_ratio = viewbox[2] / viewbox[3]
                     if self._width:
                         self._intrinsic_height = (
-                            self._width / self.intrinsic_ratio)
+                                self._width / self.intrinsic_ratio)
                     elif self._height:
                         self._intrinsic_width = (
-                            self._height * self.intrinsic_ratio)
+                                self._height * self.intrinsic_ratio)
         elif self._width and self._height:
             self.intrinsic_ratio = self._width / self._height
         return self._intrinsic_width, self._intrinsic_height
@@ -257,7 +257,7 @@ def process_color_stops(gradient_line_size, positions):
 
     """
     positions = [
-        percentage(position, gradient_line_size) for position in positions]
+        percentage(position, gradient_line_size, None) for position in positions]
     # First and last default to 100%
     if positions[0] is None:
         positions[0] = 0
@@ -445,8 +445,8 @@ class RadialGradient(Gradient):
         if len(self.colors) == 1:
             return 1, 'solid', self.colors[0], [], []
         origin_x, center_x, origin_y, center_y = self.center
-        center_x = percentage(center_x, width)
-        center_y = percentage(center_y, height)
+        center_x = percentage(center_x, width, None)
+        center_y = percentage(center_y, height, None)
         if origin_x == 'right':
             center_x = width - center_x
         if origin_y == 'bottom':
@@ -468,9 +468,9 @@ class RadialGradient(Gradient):
         positions = process_color_stops(size_x, self.stop_positions)
         gradient_line_size = positions[-1] - positions[0]
         if self.repeating and any(
-            gradient_line_size * unit < len(positions)
-            for unit in (math.hypot(*user_to_device_distance(1, 0)),
-                         math.hypot(*user_to_device_distance(0, scale_y)))):
+                gradient_line_size * unit < len(positions)
+                for unit in (math.hypot(*user_to_device_distance(1, 0)),
+                             math.hypot(*user_to_device_distance(0, scale_y)))):
             color = gradient_average_color(colors, positions)
             return 1, 'solid', color, [], []
 
@@ -513,8 +513,8 @@ class RadialGradient(Gradient):
     def _resolve_size(self, width, height, center_x, center_y):
         if self.size_type == 'explicit':
             size_x, size_y = self.size
-            size_x = percentage(size_x, width)
-            size_y = percentage(size_y, height)
+            size_x = percentage(size_x, width, None)
+            size_y = percentage(size_y, height, None)
             return size_x, size_y
         left = abs(center_x)
         right = abs(width - center_x)

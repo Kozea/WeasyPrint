@@ -92,7 +92,7 @@ def layout_fixed_boxes(context, pages, containing_page):
             while absolute_boxes:
                 new_absolute_boxes = []
                 for box in absolute_boxes:
-                    absolute_layout(context, box, containing_page, None, new_absolute_boxes)
+                    absolute_layout(context, box, containing_page, containing_page, new_absolute_boxes)
                 absolute_boxes = new_absolute_boxes
 
 
