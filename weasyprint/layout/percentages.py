@@ -22,6 +22,8 @@ def percentage(value, refer_to, page):
         return value.value
     elif value.unit == 'vw' and page is not None:
         return value.value * page.style['size'][0] / 100.0
+    elif value.unit == 'vh' and page is not None:
+        return value.value * page.style['size'][1] / 100.0
     else:
         assert value.unit == '%'
         return refer_to * value.value / 100.

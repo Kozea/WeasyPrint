@@ -2,7 +2,7 @@ from weasyprint import HTML
 from weasyprint.tests.testing_utils import assert_no_logs
 
 
-def test_rem_units():
+def test_vw_vh_units():
     t = """
     <div>
     <div style="width:50vw; background-color: black; color: white">test</div>
@@ -27,4 +27,4 @@ def test_rem_units():
     </table>
     </div>"""
 
-    HTML(string=t).write_pdf('test.pdf')
+    HTML(string=t)
