@@ -212,8 +212,8 @@ class LayoutContext:
         if root_box.style['height'] == 'auto' and self.excluded_shapes:
             box_bottom = root_box.content_box_y() + root_box.height
             max_shape_bottom = max([
-                                       shape.position_y + shape.margin_height()
-                                       for shape in self.excluded_shapes] + [box_bottom])
+                shape.position_y + shape.margin_height()
+                for shape in self.excluded_shapes] + [box_bottom])
             root_box.height += max_shape_bottom - box_bottom
         self._excluded_shapes_lists.pop()
         if self._excluded_shapes_lists:

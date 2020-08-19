@@ -185,7 +185,6 @@ class Page:
     instantiated directly.
 
     """
-
     def __init__(self, page_box, enable_hinting=False):
         #: The page width, including margins, in CSS pixels.
         self.width = page_box.margin_width()
@@ -286,7 +285,6 @@ class DocumentMetadata:
     New attributes may be added in future versions of WeasyPrint.
 
     """
-
     def __init__(self, title=None, authors=None, description=None,
                  keywords=None, generator=None, created=None, modified=None,
                  attachments=None):

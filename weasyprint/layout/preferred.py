@@ -127,8 +127,8 @@ def margin_width(box, width, left=True, right=True):
     percentages = 0
 
     for value in (
-            (['margin_left', 'padding_left'] if left else []) +
-            (['margin_right', 'padding_right'] if right else [])
+        (['margin_left', 'padding_left'] if left else []) +
+        (['margin_right', 'padding_right'] if right else [])
     ):
         style_value = box.style[value]
         if style_value != 'auto':
@@ -340,13 +340,13 @@ def _percentage_contribution(box):
     """
     min_width = (
         box.style['min_width'].value if box.style['min_width'] != 'auto' and
-                                        box.style['min_width'].unit == '%' else 0)
+        box.style['min_width'].unit == '%' else 0)
     max_width = (
         box.style['max_width'].value if box.style['max_width'] != 'auto' and
-                                        box.style['max_width'].unit == '%' else float('inf'))
+        box.style['max_width'].unit == '%' else float('inf'))
     width = (
         box.style['width'].value if box.style['width'] != 'auto' and
-                                    box.style['width'].unit == '%' else 0)
+        box.style['width'].unit == '%' else 0)
     return max(min_width, min(width, max_width))
 
 

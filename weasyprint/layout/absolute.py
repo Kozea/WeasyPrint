@@ -13,7 +13,6 @@ from .tables import table_wrapper_width
 
 class AbsolutePlaceholder:
     """Left where an absolutely-positioned box was taken out of the flow."""
-
     def __init__(self, box):
         assert not isinstance(box, AbsolutePlaceholder)
         # Work around the overloaded __setattr__
@@ -78,11 +77,11 @@ def absolute_width(box, context, containing_block):
         if margin_r == 'auto':
             box.margin_right = 0
         available_width = cb_width - (
-                padding_plus_borders_x + box.margin_left + box.margin_right)
+            padding_plus_borders_x + box.margin_left + box.margin_right)
         box.width = shrink_to_fit(context, box, available_width)
     elif left != 'auto' and right != 'auto' and width != 'auto':
         width_for_margins = cb_width - (
-                right + left + padding_plus_borders_x)
+            right + left + padding_plus_borders_x)
         if margin_l == margin_r == 'auto':
             if width + padding_plus_borders_x + right + left <= cb_width:
                 box.margin_left = box.margin_right = width_for_margins / 2
@@ -114,7 +113,7 @@ def absolute_width(box, context, containing_block):
             translate_x = left + default_translate_x
         elif left == 'auto':
             translate_x = (
-                    cb_width + default_translate_x - right - spacing - width)
+                cb_width + default_translate_x - right - spacing - width)
         elif width == 'auto':
             box.width = cb_width - right - left - spacing
             translate_x = left + default_translate_x
@@ -152,7 +151,7 @@ def absolute_height(box, context, containing_block):
             box.margin_bottom = 0
     elif top != 'auto' and bottom != 'auto' and height != 'auto':
         height_for_margins = cb_height - (
-                top + bottom + paddings_plus_borders_y)
+            top + bottom + paddings_plus_borders_y)
         if margin_t == margin_b == 'auto':
             box.margin_top = box.margin_bottom = height_for_margins / 2
         elif margin_t == 'auto':
@@ -177,7 +176,7 @@ def absolute_height(box, context, containing_block):
             translate_y = top + default_translate_y
         elif top == 'auto':
             translate_y = (
-                    cb_height + default_translate_y - bottom - spacing - height)
+                cb_height + default_translate_y - bottom - spacing - height)
         elif height == 'auto':
             box.height = cb_height - bottom - top - spacing
             translate_y = top + default_translate_y

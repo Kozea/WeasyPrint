@@ -193,10 +193,10 @@ def avoid_collisions(context, box, containing_block, outer=True):
     # - block-level replaced box
     # - element establishing new formatting contexts (not handled)
     assert (
-            (box.style['float'] in ('right', 'left')) or
-            isinstance(box, boxes.LineBox) or
-            box.is_table_wrapper or
-            isinstance(box, boxes.BlockReplacedBox))
+        (box.style['float'] in ('right', 'left')) or
+        isinstance(box, boxes.LineBox) or
+        box.is_table_wrapper or
+        isinstance(box, boxes.BlockReplacedBox))
 
     # The x-position of the box depends on its type.
     position_x = max_left_bound

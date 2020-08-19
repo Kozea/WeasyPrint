@@ -168,7 +168,7 @@ def compute_fixed_dimension(context, box, outer, vertical, top_or_left):
     # Rule 6
     if box.margin_a == 'auto' and box.margin_b == 'auto':
         box.margin_a = box.margin_b = (
-                                              outer - box.padding_plus_border - box.inner) / 2
+            outer - box.padding_plus_border - box.inner) / 2
 
     assert 'auto' not in [box.margin_a, box.margin_b, box.inner]
 
@@ -304,7 +304,6 @@ def make_margin_boxes(context, page, state):
     ``context.page_maker[context.current_page]``.
 
     """
-
     # This is a closure only to make calls shorter
     def make_box(at_keyword, containing_block):
         """Return a margin box with resolved percentages.
@@ -735,7 +734,7 @@ def remake_page(index, context, root_box, html):
     set_page_type_computed_styles(page_type, html, context.style_for)
 
     context.forced_break = (
-            initial_next_page['break'] != 'any' or initial_next_page['page'])
+        initial_next_page['break'] != 'any' or initial_next_page['page'])
     context.margin_clearance = False
 
     # make_page wants a page_number of index + 1

@@ -317,9 +317,9 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block, cont
                 child.flex_factor = child.style['flex_shrink']
             if (child.flex_factor == 0 or
                     (flex_factor_type == 'grow' and
-                     child.flex_base_size > child.hypothetical_main_size) or
+                        child.flex_base_size > child.hypothetical_main_size) or
                     (flex_factor_type == 'shrink' and
-                     child.flex_base_size < child.hypothetical_main_size)):
+                        child.flex_base_size < child.hypothetical_main_size)):
                 child.target_main_size = child.hypothetical_main_size
                 child.frozen = True
             else:
@@ -384,21 +384,21 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block, cont
                     if not child.frozen:
                         if flex_factor_type == 'grow':
                             ratio = (
-                                    child.style['flex_grow'] /
-                                    flex_grow_factors_sum)
+                                child.style['flex_grow'] /
+                                flex_grow_factors_sum)
                             child.target_main_size = (
-                                    child.flex_base_size +
-                                    remaining_free_space * ratio)
+                                child.flex_base_size +
+                                remaining_free_space * ratio)
                         elif flex_factor_type == 'shrink':
                             if scaled_flex_shrink_factors_sum == 0:
                                 child.target_main_size = child.flex_base_size
                             else:
                                 ratio = (
-                                        child.scaled_flex_shrink_factor /
-                                        scaled_flex_shrink_factors_sum)
+                                    child.scaled_flex_shrink_factor /
+                                    scaled_flex_shrink_factors_sum)
                                 child.target_main_size = (
-                                        child.flex_base_size +
-                                        remaining_free_space * ratio)
+                                    child.flex_base_size +
+                                    remaining_free_space * ratio)
 
             # Step 6 - 9.7.4.d
             # TODO: First part of this step is useless until 3.E is correct
@@ -575,16 +575,16 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block, cont
                         cross_size = line.cross_size
                         if cross == 'height':
                             cross_size -= (
-                                    child.margin_top + child.margin_bottom +
-                                    child.padding_top + child.padding_bottom +
-                                    child.border_top_width +
-                                    child.border_bottom_width)
+                                child.margin_top + child.margin_bottom +
+                                child.padding_top + child.padding_bottom +
+                                child.border_top_width +
+                                child.border_bottom_width)
                         else:
                             cross_size -= (
-                                    child.margin_left + child.margin_right +
-                                    child.padding_left + child.padding_right +
-                                    child.border_left_width +
-                                    child.border_right_width)
+                                child.margin_left + child.margin_right +
+                                child.padding_left + child.padding_right +
+                                child.border_left_width +
+                                child.border_right_width)
                         setattr(child, cross, cross_size)
                         # TODO: redo layout?
             # else: Cross size has been set by step 7
@@ -753,7 +753,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block, cont
                 elif align_self == 'baseline':
                     if cross == 'height':
                         child.position_y += (
-                                line.lower_baseline - child.baseline)
+                            line.lower_baseline - child.baseline)
                     else:
                         # Handle vertical text
                         pass
@@ -766,14 +766,14 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block, cont
                         if child.style['box_sizing'] == 'content-box':
                             if cross == 'height':
                                 margins += (
-                                        child.border_top_width +
-                                        child.border_bottom_width +
-                                        child.padding_top + child.padding_bottom)
+                                    child.border_top_width +
+                                    child.border_bottom_width +
+                                    child.padding_top + child.padding_bottom)
                             else:
                                 margins += (
-                                        child.border_left_width +
-                                        child.border_right_width +
-                                        child.padding_left + child.padding_right)
+                                    child.border_left_width +
+                                    child.border_right_width +
+                                    child.padding_left + child.padding_right)
                         # TODO: don't set style width, find a way to avoid
                         # width re-calculation after Step 16
                         child.style[cross] = Dimension(
@@ -872,8 +872,8 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block, cont
             box.baseline = flex_lines[0].lower_baseline if flex_lines else 0
         else:
             box.baseline = ((
-                                find_in_flow_baseline(box.children[0])
-                                if box.children else 0) or 0)
+                find_in_flow_baseline(box.children[0])
+                if box.children else 0) or 0)
 
     context.finish_block_formatting_context(box)
 

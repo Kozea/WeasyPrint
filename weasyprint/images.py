@@ -90,7 +90,6 @@ class ScaledSVGSurface(cairosvg.surface.SVGSurface):
     Have the cairo Surface object have intrinsic dimension
     in pixels instead of points.
     """
-
     @property
     def device_units_per_user_units(self):
         scale = super().device_units_per_user_units

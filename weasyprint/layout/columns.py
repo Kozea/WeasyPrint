@@ -153,7 +153,7 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block, c
         while True:
             # Remove extra excluded shapes introduced during previous loop
             new_excluded_shapes = (
-                    len(context.excluded_shapes) - len(excluded_shapes))
+                len(context.excluded_shapes) - len(excluded_shapes))
             for i in range(new_excluded_shapes):
                 context.excluded_shapes.pop()
 

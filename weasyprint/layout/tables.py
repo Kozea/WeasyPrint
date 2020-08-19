@@ -135,9 +135,9 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block, c
                 # originating cells to cell.colspan, see
                 # test_layout_table_auto_49
                 cell.width = (
-                        sum(spanned_widths) +
-                        border_spacing_x * (cell.colspan - 1) -
-                        borders_plus_padding)
+                    sum(spanned_widths) +
+                    border_spacing_x * (cell.colspan - 1) -
+                    borders_plus_padding)
                 # The computed height is a minimum
                 cell.computed_height = cell.height
                 cell.height = 'auto'
@@ -214,10 +214,10 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block, c
                     vertical_align_shift = 0
                     if cell.vertical_align == 'middle':
                         vertical_align_shift = (
-                                                       cell.computed_height - cell.content_height) / 2
+                            cell.computed_height - cell.content_height) / 2
                     elif cell.vertical_align == 'bottom':
                         vertical_align_shift = (
-                                cell.computed_height - cell.content_height)
+                            cell.computed_height - cell.content_height)
                     if vertical_align_shift > 0:
                         for child in cell.children:
                             child.translate(dy=vertical_align_shift)
@@ -383,7 +383,7 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block, c
         for group in table.children[skip:]:
             if not group.is_header and not group.is_footer:
                 avoid_breaks = (
-                        group.style['break_inside'] in ('avoid', 'avoid-page'))
+                    group.style['break_inside'] in ('avoid', 'avoid-page'))
                 break
 
         if header and footer:
@@ -788,8 +788,8 @@ def distribute_excess_width(context, grid, excess_width, column_widths,
         (i + column_slice.start, column)
         for i, column in enumerate(grid[column_slice])
         if not constrainedness[i + column_slice.start] and
-           column_intrinsic_percentages[i + column_slice.start] == 0 and
-           column_max_content_widths[i + column_slice.start] > 0]
+        column_intrinsic_percentages[i + column_slice.start] == 0 and
+        column_max_content_widths[i + column_slice.start] > 0]
     if columns:
         current_widths = [column_widths[i] for i, column in columns]
         differences = [
@@ -820,8 +820,8 @@ def distribute_excess_width(context, grid, excess_width, column_widths,
         (i + column_slice.start, column)
         for i, column in enumerate(grid[column_slice])
         if constrainedness[i + column_slice.start] and
-           column_intrinsic_percentages[i + column_slice.start] == 0 and
-           column_max_content_widths[i + column_slice.start] > 0]
+        column_intrinsic_percentages[i + column_slice.start] == 0 and
+        column_max_content_widths[i + column_slice.start] > 0]
     if columns:
         current_widths = [column_widths[i] for i, column in columns]
         differences = [

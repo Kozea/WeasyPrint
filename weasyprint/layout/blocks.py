@@ -201,7 +201,7 @@ def block_level_width(box, containing_block):
         # The equation is over-constrained.
         if direction == 'rtl' and not box.is_column:
             box.position_x += (
-                    cb_width - paddings_plus_borders - width - margin_r - margin_l)
+                cb_width - paddings_plus_borders - width - margin_r - margin_l)
         # Do nothing in ltr.
     if width == 'auto':
         if margin_l == 'auto':
@@ -467,7 +467,7 @@ def block_container_layout(context, box, containing_page, max_position_y, skip_s
                     new_collapsed_margin = collapse_margin(
                         adjoining_margins + [child_margin_top])
                     collapsed_margin_difference = (
-                            new_collapsed_margin - old_collapsed_margin)
+                        new_collapsed_margin - old_collapsed_margin)
                     for previous_new_child in new_children:
                         previous_new_child.translate(
                             dy=collapsed_margin_difference)
@@ -699,19 +699,19 @@ def establishes_formatting_context(box):
 
     """
     return (
-               box.is_floated()
-           ) or (
-               box.is_absolutely_positioned()
-           ) or (
-               # TODO: columns shouldn't be block boxes, this condition would then be
-               # useless when this is fixed
-               box.is_column
-           ) or (
-                   isinstance(box, boxes.BlockContainerBox) and
-                   not isinstance(box, boxes.BlockBox)
-           ) or (
-                   isinstance(box, boxes.BlockBox) and box.style['overflow'] != 'visible'
-           )
+        box.is_floated()
+    ) or (
+        box.is_absolutely_positioned()
+    ) or (
+        # TODO: columns shouldn't be block boxes, this condition would then be
+        # useless when this is fixed
+        box.is_column
+    ) or (
+        isinstance(box, boxes.BlockContainerBox) and
+        not isinstance(box, boxes.BlockBox)
+    ) or (
+        isinstance(box, boxes.BlockBox) and box.style['overflow'] != 'visible'
+    )
 
 
 def block_level_page_break(sibling_before, sibling_after):

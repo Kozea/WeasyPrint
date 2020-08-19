@@ -1032,8 +1032,8 @@ def split_text_box(context, box, available_width, skip):
             # \r is already handled by process_whitespace
             line_breaks = ('\n', '\t', '\f', '\u0085', '\u2028', '\u2029')
             assert between in line_breaks, (
-                    'Got %r between two lines. '
-                    'Expected nothing or a preserved line break' % (between,))
+                'Got %r between two lines. '
+                'Expected nothing or a preserved line break' % (between,))
         resume_at += skip
 
     return box, resume_at, preserved_line_break
