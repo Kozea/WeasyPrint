@@ -465,10 +465,12 @@ th { border-color: gray; display: table-cell; font-weight: bold; padding: 1px; u
 th[hidden] { display: table-cell; unicode-bidi: isolate; visibility: collapse; }
 thead { border-color: inherit; display: table-header-group; unicode-bidi: isolate; vertical-align: middle; }
 thead[hidden] { display: table-header-group; unicode-bidi: isolate; visibility: collapse; }
-title { display: none; }
 table > tr { vertical-align: middle; }
 tr { border-color: inherit; display: table-row; unicode-bidi: isolate; vertical-align: inherit; }
 tr[hidden] { display: table-row; unicode-bidi: isolate; visibility: collapse; }
+
+template { display: none; }
+title { display: none; }
 track { display: none; }
 tt { font-family: monospace; }
 u { text-decoration: underline; }

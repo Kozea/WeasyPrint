@@ -13,6 +13,7 @@ from xml.etree import ElementTree
 import cairocffi
 import cairosvg.parser
 import cairosvg.surface
+from PIL import Image
 
 from .layout.percentages import percentage
 from .logger import LOGGER
@@ -173,7 +174,8 @@ class SVGImage:
                 'Failed to draw an SVG image at %s : %s', self._base_url, e)
 
 
-def get_image_from_uri(cache, url_fetcher, url, forced_mime_type=None):
+def get_image_from_uri(cache, url_fetcher, optimize_images, url,
+                       forced_mime_type=None):
     """Get a cairo Pattern from an image URI."""
     missing = object()
     image = cache.get(url, missing)
@@ -195,6 +197,7 @@ def get_image_from_uri(cache, url_fetcher, url, forced_mime_type=None):
                 # Try to rely on given mimetype
                 try:
                     if mime_type == 'image/png':
+                        # Cairo already optimizes PNG images, no PIL needed
                         try:
                             surface = cairocffi.ImageSurface.create_from_png(
                                 BytesIO(string))
@@ -216,6 +219,17 @@ def get_image_from_uri(cache, url_fetcher, url, forced_mime_type=None):
                     try:
                         image = SVGImage(string, url, url_fetcher)
                     except BaseException:
+                        if optimize_images:
+                            try:
+                                image = Image.open(BytesIO(string))
+                                output = BytesIO()
+                                image.save(
+                                    output, format=image.format, optimize=True)
+                            except BaseException:
+                                # Optimization did not work, keep the original
+                                pass
+                            else:
+                                string = output.getvalue()
                         try:
                             surface, format_name = (
                                 pixbuf.decode_to_image_surface(string))

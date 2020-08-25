@@ -349,8 +349,9 @@ class Document:
 
     @classmethod
     def _build_layout_context(cls, html, stylesheets, enable_hinting,
-                              presentational_hints=False, font_config=None,
-                              counter_style=None):
+                              presentational_hints=False,
+                              optimize_images=False, font_config=None,
+                              counter_style=None, image_cache=None):
         if font_config is None:
             font_config = FontConfiguration()
         if counter_style is None:
@@ -358,6 +359,7 @@ class Document:
         target_collector = TargetCollector()
         page_rules = []
         user_stylesheets = []
+        image_cache = {} if image_cache is None else image_cache
         for css in stylesheets or []:
             if not hasattr(css, 'matcher'):
                 css = CSS(
@@ -368,7 +370,8 @@ class Document:
             html, user_stylesheets, presentational_hints, font_config,
             counter_style, page_rules, target_collector)
         get_image_from_uri = functools.partial(
-            original_get_image_from_uri, {}, html.url_fetcher)
+            original_get_image_from_uri, image_cache, html.url_fetcher,
+            optimize_images)
         PROGRESS_LOGGER.info('Step 4 - Creating formatting structure')
         context = LayoutContext(
             enable_hinting, style_for, get_image_from_uri, font_config,
@@ -377,8 +380,8 @@ class Document:
 
     @classmethod
     def _render(cls, html, stylesheets, enable_hinting,
-                presentational_hints=False, font_config=None,
-                counter_style=None):
+                presentational_hints=False, optimize_images=False,
+                font_config=None, counter_style=None, image_cache=None):
         if font_config is None:
             font_config = FontConfiguration()
 
@@ -387,7 +390,7 @@ class Document:
 
         context = cls._build_layout_context(
             html, stylesheets, enable_hinting, presentational_hints,
-            font_config, counter_style)
+            optimize_images, font_config, counter_style, image_cache)
 
         root_box = build_formatting_structure(
             html.etree_element, context.style_for, context.get_image_from_uri,
@@ -584,7 +587,7 @@ class Document:
             context.tag_begin(cairo.TAG_DEST, attributes)
             context.tag_end(cairo.TAG_DEST)
 
-    def write_pdf(self, target=None, zoom=1, attachments=None):
+    def write_pdf(self, target=None, zoom=1, attachments=None, finisher=None):
         """Paint the pages in a PDF file, with meta-data.
 
         PDF files written directly by cairo do not have meta-data such as
@@ -604,6 +607,10 @@ class Document:
         :param attachments: A list of additional file attachments for the
             generated PDF document or :obj:`None`. The list's elements are
             :class:`Attachment` objects, filenames, URLs or file-like objects.
+        :param finisher: A finisher function that accepts a PDFFile instance as
+            its only parameter can be passed to perform post-processing on the
+            PDF right before the trailer is written. The function is then
+            responsible for calling the instances finish() function.
         :returns:
             The PDF as :obj:`bytes` if ``target`` is not provided or
             :obj:`None`, otherwise :obj:`None` (the PDF is written to
@@ -696,17 +703,19 @@ class Document:
         # - attachments in metadata
         # - attachments as function parameters
         # - attachments as PDF links
+        # - finisher function to perform post-processing
         # - bleed boxes
         condition = (
             self.metadata.attachments or
             attachments or
             any(attachment_links) or
+            finisher or
             any(any(page.bleed.values()) for page in self.pages))
         if condition:
             write_pdf_metadata(
                 file_obj, scale, self.url_fetcher,
                 self.metadata.attachments + (attachments or []),
-                attachment_links, self.pages)
+                attachment_links, self.pages, finisher)
 
         if target is None:
             return file_obj.getvalue()

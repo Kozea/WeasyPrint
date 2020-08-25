@@ -87,6 +87,10 @@ def main(argv=None, stdout=None, stdin=None):
         <https://www.w3.org/TR/html/rendering.html\
         #the-css-user-agent-style-sheet-and-presentational-hints>`_.
 
+    .. option:: -o, --optimize-images
+
+        Try to optimize the size of embedded images.
+
     .. option:: -v, --verbose
 
         Show warnings and information messages.
@@ -94,6 +98,10 @@ def main(argv=None, stdout=None, stdin=None):
     .. option:: -d, --debug
 
         Show debugging messages.
+
+    .. option:: -q, --quiet
+
+        Hide logging messages.
 
     .. option:: --version
 
@@ -133,6 +141,8 @@ def main(argv=None, stdout=None, stdin=None):
                              'to attach to the PDF document')
     parser.add_argument('-p', '--presentational-hints', action='store_true',
                         help='Follow HTML presentational hints.')
+    parser.add_argument('-o', '--optimize-images', action='store_true',
+                        help='Try to optimize the size of embedded images.')
     parser.add_argument('-v', '--verbose', action='store_true',
                         help='Show warnings and information messages.')
     parser.add_argument('-d', '--debug', action='store_true',
@@ -175,7 +185,8 @@ def main(argv=None, stdout=None, stdin=None):
 
     kwargs = {
         'stylesheets': args.stylesheet,
-        'presentational_hints': args.presentational_hints}
+        'presentational_hints': args.presentational_hints,
+        'optimize_images': args.optimize_images}
     if args.resolution:
         if format_ == 'png':
             kwargs['resolution'] = args.resolution

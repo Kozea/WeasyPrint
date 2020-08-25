@@ -48,10 +48,7 @@ def test_overflow_2():
         ________
     ''', '''
       <style>
-        @page { size: 8px; background: #fff;
-                margin: 2px;
-                padding-bottom: 2px;
-                border-bottom: 1px transparent solid; }
+        @page { size: 8px; background: #fff; margin: 2px 2px 3px 2px }
         body { height: 1px; overflow: hidden; font-size: 0 }
       </style>
       <div><img src="pattern.png"></div>''')
@@ -76,6 +73,30 @@ def test_overflow_3():
               border: 1px solid blue; }
       </style>
       <div></div>''')
+
+
+@assert_no_logs
+def test_overflow_4():
+    # Assert that the page margins aren't clipped by body's overflow
+    assert_pixels('border_box_overflow', 8, 8, '''
+        rr______
+        rr______
+        __BBBB__
+        __BBBB__
+        __BBBB__
+        __BBBB__
+        ________
+        ________
+    ''', '''
+      <style>
+        @page {
+          size: 8px;
+          margin: 2px;
+          background:#fff;
+          @top-left-corner { content: ''; background:#f00; } }
+        body { overflow: auto; background:#00f; }
+      </style>
+      ''')
 
 
 @assert_no_logs

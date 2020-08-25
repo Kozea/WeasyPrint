@@ -121,12 +121,12 @@ def layout_background_layer(box, page, resolution, image, size, clip, repeat,
         cells = box.get_cells()
         if cells:
             clipped_boxes = [cell.rounded_border_box() for cell in cells]
+            min_x = min(cell.border_box_x() for cell in cells)
             max_x = max(
                 cell.border_box_x() + cell.border_width()
                 for cell in cells)
             painting_area = [
-                box.border_box_x(), box.border_box_y(),
-                max_x - box.border_box_x(),
+                min_x, box.border_box_y(), max_x - min_x,
                 box.border_box_y() + box.border_height()]
     else:
         painting_area = box_rectangle(box, clip)

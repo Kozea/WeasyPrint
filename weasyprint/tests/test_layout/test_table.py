@@ -1537,6 +1537,50 @@ def test_layout_table_auto_50():
 
 
 @assert_no_logs
+@pytest.mark.parametrize(
+    'body_width, table_width, check_width, positions, widths', (
+        ('500px', '230px', 220, [170, 5], [45, 155]),
+        ('530px', '100%', 520, [395, 5], [120, 380]),
+    )
+)
+def test_explicit_width_table_percent_rtl(body_width, table_width, check_width,
+                                          positions, widths):
+    page, = render_pages('''
+      <style>
+        body { width: %s }
+        table { width: %s; table-layout: fixed; direction: rtl;
+                border-collapse: collapse; font-size: 1px }
+        td, th { border: 10px solid }
+      </style>
+      <table style="">
+        <col style="width: 25%%"></col>
+        <col></col>
+        <tr>
+          <th>الاسم</th>
+          <th>العائلة</th>
+        </tr>
+        <tr>
+          <td>محمد يوسف</td>
+          <td>29</td>
+        </tr>
+      </table>
+    ''' % (body_width, table_width))
+    html, = page.children
+    body, = html.children
+    wrapper, = body.children
+    table, = wrapper.children
+    row_group, = table.children
+    row_1, row_2 = row_group.children
+
+    assert table.position_x == 0
+    assert table.width == check_width
+    assert [child.position_x for child in row_1.children] == positions
+    assert [child.position_x for child in row_2.children] == positions
+    assert [child.width for child in row_1.children] == widths
+    assert [child.width for child in row_2.children] == widths
+
+
+@assert_no_logs
 def test_table_column_width_1():
     source = '''
       <style>

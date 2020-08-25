@@ -1031,7 +1031,7 @@ def table_layout(keyword):
 @single_keyword
 def text_align(keyword):
     """``text-align`` property validation."""
-    return keyword in ('left', 'right', 'center', 'justify')
+    return keyword in ('left', 'right', 'center', 'justify', 'start', 'end')
 
 
 @property()

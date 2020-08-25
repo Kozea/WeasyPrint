@@ -242,7 +242,7 @@ to the default fetcher:
             graph_data = map(float, url[6:].split(','))
             return dict(string=generate_graph(graph_data),
                         mime_type='image/png')
-        return weasyprint.default_url_fetcher(url)
+        return default_url_fetcher(url)
 
     source = '<img src="graph:42,10.3,87">'
     HTML(string=source, url_fetcher=my_fetcher).write_pdf('out.pdf')

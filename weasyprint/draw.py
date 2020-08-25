@@ -184,6 +184,15 @@ def draw_stacking_context(context, stacking_context, enable_hinting):
     # See http://www.w3.org/TR/CSS2/zindex.html
     with stacked(context):
         box = stacking_context.box
+
+        # apply the viewport_overflow to the html box, see #35
+        if box.is_for_root_element and (
+                stacking_context.page.style['overflow'] != 'visible'):
+            rounded_box_path(
+                context,
+                stacking_context.page.rounded_padding_box())
+            context.clip()
+
         if box.is_absolutely_positioned() and box.style['clip']:
             top, right, bottom, left = box.style['clip']
             if top == 'auto':
@@ -223,7 +232,9 @@ def draw_stacking_context(context, stacking_context, enable_hinting):
                 context, stacking_context.page, box, enable_hinting)
 
         with stacked(context):
-            if box.style['overflow'] != 'visible':
+            # dont clip the PageBox, see #35
+            if box.style['overflow'] != 'visible' and not isinstance(
+                    box, boxes.PageBox):
                 # Only clip the content and the children:
                 # - the background is already clipped
                 # - the border must *not* be clipped
@@ -865,7 +876,10 @@ def draw_collapsed_borders(context, table, enable_hinting):
     grid_width = len(column_widths)
     assert grid_width == len(column_positions)
     # Add the end of the last column, but make a copy from the table attr.
-    column_positions += [column_positions[-1] + column_widths[-1]]
+    if table.style['direction'] == 'ltr':
+        column_positions.append(column_positions[-1] + column_widths[-1])
+    else:
+        column_positions.insert(0, column_positions[0] + column_widths[0])
     # Add the end of the last row. No copy here, we own this list
     row_positions.append(row_positions[-1] + row_heights[-1])
     vertical_borders, horizontal_borders = table.collapsed_border_grid
@@ -934,11 +948,15 @@ def draw_collapsed_borders(context, table, enable_hinting):
         if width == 0 or color.alpha == 0:
             return
         pos_y = row_positions[y]
-        # TODO: change signs for rtl when we support rtl tables?
-        pos_x1 = column_positions[x] - half_max_width(vertical_borders, [
-            (y - 1, x), (y, x)])
-        pos_x2 = column_positions[x + 1] + half_max_width(vertical_borders, [
-            (y - 1, x + 1), (y, x + 1)])
+        shift_before = half_max_width(vertical_borders, [(y - 1, x), (y, x)])
+        shift_after = half_max_width(
+            vertical_borders, [(y - 1, x + 1), (y, x + 1)])
+        if table.style['direction'] == 'ltr':
+            pos_x1 = column_positions[x] - shift_before
+            pos_x2 = column_positions[x + 1] + shift_after
+        else:
+            pos_x1 = column_positions[x + 1] - shift_after
+            pos_x2 = column_positions[x] + shift_before
         segments.append((
             score, style, width, color, 'top',
             (pos_x1, pos_y - width / 2, pos_x2 - pos_x1, 0)))

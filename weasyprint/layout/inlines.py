@@ -44,7 +44,7 @@ def iter_line_boxes(context, box, position_y, skip_stack, containing_block,
         resolve_one_percentage(box, 'text_indent', containing_block.width)
     else:
         box.text_indent = 0
-    while 1:
+    while True:
         line, resume_at = get_next_linebox(
             context, box, position_y, skip_stack, containing_block,
             absolute_boxes, fixed_boxes, first_letter_style)
@@ -87,9 +87,10 @@ def get_next_linebox(context, linebox, position_y, skip_stack,
 
     excluded_shapes = context.excluded_shapes[:]
 
-    while 1:
-        linebox.position_x = position_x
-        linebox.position_y = position_y
+    while True:
+        original_position_x = linebox.position_x = position_x
+        original_position_y = linebox.position_y = position_y
+        original_width = linebox.width
         max_x = position_x + available_width
         position_x += linebox.text_indent
 
@@ -113,13 +114,12 @@ def get_next_linebox(context, linebox, position_y, skip_stack,
 
         new_position_x, _, new_available_width = avoid_collisions(
             context, linebox, containing_block, outer=False)
-        # TODO: handle rtl
-        new_available_width -= float_width['right']
-        alignment_available_width = (
-            new_available_width + new_position_x - linebox.position_x)
         offset_x = text_align(
-            context, line, alignment_available_width,
+            context, line, new_available_width,
             last=(resume_at is None or preserved_line_break))
+        if containing_block.style['direction'] == 'rtl':
+            offset_x *= -1
+            offset_x -= line.width
 
         bottom, top = line_box_verticality(line)
         assert top is not None
@@ -145,8 +145,13 @@ def get_next_linebox(context, linebox, position_y, skip_stack,
         context.excluded_shapes = excluded_shapes
         position_x, position_y, available_width = avoid_collisions(
             context, line, containing_block, outer=False)
-        if (position_x, position_y) == (
-                linebox.position_x, linebox.position_y):
+        if containing_block.style['direction'] == 'ltr':
+            condition = (position_x, position_y) == (
+                original_position_x, original_position_y)
+        else:
+            condition = (position_x + line.width, position_y) == (
+                original_position_x + original_width, original_position_y)
+        if condition:
             context.excluded_shapes = new_excluded_shapes
             break
 
@@ -241,6 +246,13 @@ def remove_last_whitespace(context, box):
         assert resume is None
         space_width = box.width - new_box.width
         box.width = new_box.width
+        if new_box.pango_layout.first_line_direction % 2:
+            # RTL line, the trailing space is at the left of the box. We have
+            # to translate the box to align the stripped text with the right
+            # edge of the box.
+            box.position_x -= space_width
+            for ancestor in ancestors:
+                ancestor.position_x -= space_width
     else:
         space_width = box.width
         box.width = 0
@@ -1201,14 +1213,14 @@ def text_align(context, line, available_width, last):
     align = line.style['text_align']
     space_collapse = line.style['white_space'] in (
         'normal', 'nowrap', 'pre-line')
-    if align in ('-weasy-start', '-weasy-end'):
-        if (align == '-weasy-start') ^ (line.style['direction'] == 'rtl'):
-            align = 'left'
+    if align in ('left', 'right'):
+        if (align == 'left') ^ (line.style['direction'] == 'rtl'):
+            align = 'start'
         else:
-            align = 'right'
+            align = 'end'
     if align == 'justify' and last:
-        align = 'right' if line.style['direction'] == 'rtl' else 'left'
-    if align == 'left':
+        align = 'start'
+    if align == 'start':
         return 0
     offset = available_width - line.width
     if align == 'justify':
@@ -1221,7 +1233,7 @@ def text_align(context, line, available_width, last):
     if align == 'center':
         return offset / 2
     else:
-        assert align == 'right'
+        assert align == 'end'
         return offset
 
 

@@ -7,6 +7,7 @@
 
 """
 
+import argparse
 from base64 import b64encode
 from io import BytesIO
 from urllib.parse import parse_qs
@@ -105,4 +106,8 @@ def run(port=5000):  # pragma: no cover
 
 
 if __name__ == '__main__':  # pragma: no cover
-    run()
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--port', '-p', type=int, default=5000,
+        help='renderer web server port')
+    run(parser.parse_args().port)

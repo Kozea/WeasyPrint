@@ -110,7 +110,9 @@ ffi.cdef('''
         PangoLayout *layout;
         gint         start_index;
         gint         length;
-        /* ... */
+        void        *runs;
+        guint        is_paragraph_start : 1;
+        guint        resolved_dir : 3;
     } PangoLayoutLine;
 
     typedef struct  {
@@ -253,12 +255,12 @@ def dlopen(ffi, *names):
     return ffi.dlopen(names[0])  # pragma: no cover
 
 
-gobject = dlopen(ffi, 'gobject-2.0', 'libgobject-2.0-0', 'libgobject-2.0.so',
+gobject = dlopen(ffi, 'gobject-2.0', 'libgobject-2.0-0', 'libgobject-2.0.so.0',
                  'libgobject-2.0.dylib')
-pango = dlopen(ffi, 'pango-1.0', 'libpango-1.0-0', 'libpango-1.0.so',
+pango = dlopen(ffi, 'pango-1.0', 'libpango-1.0-0', 'libpango-1.0.so.0',
                'libpango-1.0.dylib')
 pangocairo = dlopen(ffi, 'pangocairo-1.0', 'libpangocairo-1.0-0',
-                    'libpangocairo-1.0.so', 'libpangocairo-1.0.dylib')
+                    'libpangocairo-1.0.so.0', 'libpangocairo-1.0.dylib')
 
 gobject.g_type_init()
 
@@ -654,6 +656,7 @@ class Layout:
 
         self.context = context
         self.style = style
+        self.first_line_direction = 0
 
         # Cairo crashes with font-size: 0 when using Win32 API
         # See https://github.com/Kozea/WeasyPrint/pull/599
@@ -739,6 +742,7 @@ class Layout:
             index = second_line.start_index
         else:
             index = None
+        self.first_line_direction = first_line.resolved_dir
         return first_line, index
 
     def set_text(self, text, justify=False):
@@ -963,7 +967,7 @@ def create_layout(text, style, context, max_width, justification_spacing):
     # signed integer. Treat bigger values same as None: unconstrained width.
     if max_width is not None and max_width < 2 ** 21:
         pango.pango_layout_set_width(
-            layout.layout, units_from_double(max_width))
+            layout.layout, units_from_double(max(0, max_width)))
 
     layout.set_text(text)
     return layout
@@ -1042,9 +1046,24 @@ def split_first_line(text, style, context, max_width, justification_spacing,
         first_line_text = utf8_slice(text, slice(index))
         second_line_text = utf8_slice(text, slice(index, None))
     else:
-        # The first word is longer than the line, try to hyphenate it
-        first_line_text = ''
-        second_line_text = text
+        # We try to know whether the line could have split earlier. We can’t
+        # rely on first_line_width, see
+        # https://github.com/Kozea/WeasyPrint/issues/1051
+        zero_width_layout = create_layout(
+            text, style, context, 0, justification_spacing)
+        zero_first_line, _ = zero_width_layout.get_first_line()
+        zero_first_line_width, _ = get_size(zero_first_line, style)
+        if zero_first_line_width < first_line_width:
+            # The line can be split earlier, it actually fits.
+            first_line_text = utf8_slice(text, slice(index))
+            if index is None:
+                second_line_text = ''
+            else:
+                second_line_text = utf8_slice(text, slice(index, None))
+        else:
+            # The line can't be split earlier, try to hyphenate the first word.
+            first_line_text = ''
+            second_line_text = text
 
     next_word = second_line_text.split(' ', 1)[0]
     if next_word:
