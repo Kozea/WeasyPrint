@@ -426,3 +426,13 @@ def test_flex_item_percentage():
     flex, = body.children
     flex_item, = flex.children
     assert flex_item.height == 15
+
+
+@assert_no_logs
+def test_flex_undefined_percentage_height_multiple_lines():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/1204
+    page, = render_pages('''
+      <div style="display: flex; flex-wrap: wrap; height: 100%">
+        <div style="width: 100%">a</div>
+        <div style="width: 100%">b</div>
+      </div>''')

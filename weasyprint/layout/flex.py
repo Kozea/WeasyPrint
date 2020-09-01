@@ -784,7 +784,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
         position_cross += line.cross_size
 
     # Step 15
-    if box.style[cross] == 'auto':
+    if getattr(box, cross) == 'auto':
         # TODO: handle min-max
         setattr(box, cross, sum(line.cross_size for line in flex_lines))
 
