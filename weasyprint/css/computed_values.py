@@ -265,8 +265,8 @@ def compute(element, pseudo_type, specified, computed, parent_style,
                 value = [value]
 
             for i, v in enumerate(value):
-                value[i], already_computed_value = \
-                    compute_variable(v, name, computed, base_url, parent_style)
+                value[i], already_computed_value = compute_variable(
+                    v, name, computed, base_url, parent_style)
 
             if converted_to_list:
                 value, = value
