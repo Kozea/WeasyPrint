@@ -11,6 +11,8 @@ import pytest
 from ..css.properties import KNOWN_PROPERTIES
 from .test_boxes import render_pages as parse
 
+SIDES = ('top', 'right', 'bottom', 'left')
+
 
 def test_variable_simple():
     page, = parse('''
@@ -81,6 +83,23 @@ def test_variable_chain():
     body, = html.children
     paragraph, = body.children
     assert paragraph.width == 10
+
+
+def test_variable_partial_1():
+    page, = parse('''
+      <style>
+        html { --var: 10px }
+        div { margin: 0 0 0 var(--var) }
+      </style>
+      <div></div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    assert div.margin_top == 0
+    assert div.margin_right == 0
+    assert div.margin_bottom == 0
+    assert div.margin_left == 10
 
 
 def test_variable_initial():

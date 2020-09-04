@@ -245,14 +245,18 @@ def test_counters_8():
 def test_counter_styles_1():
     assert_tree(parse_all('''
       <style>
-        body { counter-reset: p -12 }
+        body { --var: 'Counter'; counter-reset: p -12 }
         p { counter-increment: p }
         p:nth-child(1):before { content: '-' counter(p, none) '-'; }
         p:nth-child(2):before { content: counter(p, disc); }
         p:nth-child(3):before { content: counter(p, circle); }
         p:nth-child(4):before { content: counter(p, square); }
         p:nth-child(5):before { content: counter(p); }
+        p:nth-child(6):before { content: var(--var) ':' counter(p); }
+        p:nth-child(7):before { content: counter(p) ':' var(--var); }
       </style>
+      <p></p>
+      <p></p>
       <p></p>
       <p></p>
       <p></p>
@@ -263,7 +267,7 @@ def test_counter_styles_1():
             ('p', 'Line', [
                 ('p::before', 'Inline', [
                     ('p::before', 'Text', counter)])])])
-        for counter in '--  •  ◦  ◾  -7'.split()])
+        for counter in '--  •  ◦  ◾  -7 Counter:-6 -5:Counter'.split()])
 
 
 @assert_no_logs
