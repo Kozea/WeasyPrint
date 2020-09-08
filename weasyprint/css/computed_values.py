@@ -176,6 +176,46 @@ def register_computer(name):
     return decorator
 
 
+def compute_variable(value, name, computed, base_url, parent_style):
+    from .validation.properties import PROPERTIES
+    already_computed_value = False
+
+    if value and isinstance(value, tuple) and value[0] == 'var()':
+        variable_name, default = value[1]
+        computed_value = _resolve_var(computed, variable_name, default)
+        if computed_value is None:
+            new_value = None
+        else:
+            prop = PROPERTIES[name.replace('_', '-')]
+            if prop.wants_base_url:
+                new_value = prop(computed_value, base_url)
+            else:
+                new_value = prop(computed_value)
+
+        # See https://drafts.csswg.org/css-variables/#invalid-variables
+        if new_value is None:
+            try:
+                computed_value = ''.join(
+                    token.serialize() for token in computed_value)
+            except BaseException:
+                pass
+            LOGGER.warning(
+                'Unsupported computed value `%s` set in variable `%s` '
+                'for property `%s`.', computed_value,
+                variable_name.replace('_', '-'), name.replace('_', '-'))
+            if name in INHERITED and parent_style:
+                already_computed_value = True
+                value = parent_style[name]
+            else:
+                already_computed_value = name not in INITIAL_NOT_COMPUTED
+                value = INITIAL_VALUES[name]
+        elif isinstance(new_value, list):
+            value, = new_value
+        else:
+            value = new_value
+    return value, already_computed_value
+
+
 def compute(element, pseudo_type, specified, computed, parent_style,
             root_style, base_url, target_collector):
     """Create a dict of computed values.
@@ -193,7 +233,6 @@ def compute(element, pseudo_type, specified, computed, parent_style,
     :param target_collector: A target collector used to get computed targets.
 
     """
-    from .validation.properties import PROPERTIES
 
     computer = {
         'is_root_element': parent_style is None,
@@ -218,37 +257,19 @@ def compute(element, pseudo_type, specified, computed, parent_style,
         function = getter(name)
         already_computed_value = False
 
-        if value and isinstance(value, tuple) and value[0] == 'var()':
-            variable_name, default = value[1]
-            computed_value = _resolve_var(computed, variable_name, default)
-            if computed_value is None:
-                new_value = None
-            else:
-                prop = PROPERTIES[name.replace('_', '-')]
-                if prop.wants_base_url:
-                    new_value = prop(computed_value, base_url)
-                else:
-                    new_value = prop(computed_value)
+        if value:
+            converted_to_list = False
 
-            # See https://drafts.csswg.org/css-variables/#invalid-variables
-            if new_value is None:
-                try:
-                    computed_value = ''.join(
-                        token.serialize() for token in computed_value)
-                except BaseException:
-                    pass
-                LOGGER.warning(
-                    'Unsupported computed value `%s` set in variable `%s` '
-                    'for property `%s`.', computed_value,
-                    variable_name.replace('_', '-'), name.replace('_', '-'))
-                if name in INHERITED and parent_style:
-                    already_computed_value = True
-                    value = parent_style[name]
-                else:
-                    already_computed_value = name not in INITIAL_NOT_COMPUTED
-                    value = INITIAL_VALUES[name]
-            else:
-                value = new_value
+            if not isinstance(value, list):
+                converted_to_list = True
+                value = [value]
+
+            for i, v in enumerate(value):
+                value[i], already_computed_value = compute_variable(
+                    v, name, computed, base_url, parent_style)
+
+            if converted_to_list:
+                value, = value
 
         if function is not None and not already_computed_value:
             value = function(computer, name, value)

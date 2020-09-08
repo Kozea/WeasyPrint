@@ -13,6 +13,8 @@ import warnings
 
 import cairocffi as cairo
 
+from weasyprint.layout import LayoutContext
+
 from . import CSS
 from .css import get_all_computed_styles
 from .css.counters import CounterStyle
@@ -23,7 +25,7 @@ from .formatting_structure import boxes
 from .formatting_structure.build import build_formatting_structure
 from .html import W3C_DATE_RE
 from .images import get_image_from_uri as original_get_image_from_uri
-from .layout import LayoutContext, layout_document
+from .layout import layout_document
 from .layout.percentages import percentage
 from .logger import LOGGER, PROGRESS_LOGGER
 from .pdf import write_pdf_metadata
