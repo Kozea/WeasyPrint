@@ -124,7 +124,8 @@ def _round_meta(pages):
             link_type, target, (pos_x, pos_y, width, height), dl_name = link
             link = (
                 link_type, target, (round(pos_x, 6), round(pos_y, 6),
-                                    round(width, 6), round(height, 6)),dl_name)
+                                    round(width, 6), round(height, 6)),
+                dl_name)
             links[i] = link
         bookmarks = page.bookmarks
         for i, (level, label, (pos_x, pos_y), state) in enumerate(bookmarks):
