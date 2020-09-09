@@ -120,6 +120,9 @@ def _gather_links_and_bookmarks(box, bookmarks, links, anchors, matrix):
     # In case of duplicate IDs, only the first is an anchor.
     has_anchor = anchor_name and anchor_name not in anchors
     is_attachment = hasattr(box, 'is_attachment') and box.is_attachment
+    download_name = (
+        box.attachment_download
+        if hasattr(box, 'attachment_download') else None)
 
     if has_bookmark or has_link or has_anchor:
         pos_x, pos_y, width, height = box.hit_area()
@@ -133,9 +136,11 @@ def _gather_links_and_bookmarks(box, bookmarks, links, anchors, matrix):
             if matrix:
                 link = (
                     link_type, target, rectangle_aabb(
-                        matrix, pos_x, pos_y, width, height))
+                        matrix, pos_x, pos_y, width, height), download_name)
             else:
-                link = (link_type, target, (pos_x, pos_y, width, height))
+                link = (
+                    link_type, target, (pos_x, pos_y, width, height),
+                    download_name)
             links.append(link)
         if matrix and (has_bookmark or has_anchor):
             pos_x, pos_y = matrix.transform_point(pos_x, pos_y)
@@ -487,14 +492,15 @@ class Document:
         for page in self.pages:
             page_links = []
             for link in page.links:
-                link_type, anchor_name, rectangle = link
+                link_type, anchor_name, rectangle, _ = link
                 if link_type == 'internal':
                     if anchor_name not in anchors:
                         LOGGER.error(
                             'No anchor #%s for internal URI reference',
                             anchor_name)
                     else:
-                        page_links.append((link_type, anchor_name, rectangle))
+                        page_links.append(
+                            (link_type, anchor_name, rectangle, None))
                 else:
                     # External link
                     page_links.append(link)
@@ -565,7 +571,7 @@ class Document:
         # defined by cairo when drawing targets. This would give a feeling
         # similiar to what browsers do with links that span multiple lines.
         for link in links:
-            link_type, link_target, rectangle = link
+            link_type, link_target, rectangle, _ = link
             if link_type == 'external':
                 attributes = "rect=[{} {} {} {}] uri='{}'".format(*(
                     [int(round(i * scale)) for i in rectangle] +
