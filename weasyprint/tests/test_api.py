@@ -121,11 +121,12 @@ def _round_meta(pages):
             anchors[anchor_name] = round(pos_x, 6), round(pos_y, 6)
         links = page.links
         for i, link in enumerate(links):
-            link_type, target, (pos_x, pos_y, width, height), dl_name = link
+            link_type, target, (pos_x, pos_y, width, height), download_name = (
+                link)
             link = (
                 link_type, target, (round(pos_x, 6), round(pos_y, 6),
                                     round(width, 6), round(height, 6)),
-                dl_name)
+                download_name)
             links[i] = link
         bookmarks = page.bookmarks
         for i, (level, label, (pos_x, pos_y), state) in enumerate(bookmarks):
@@ -756,6 +757,7 @@ def test_links():
         [{}], [([('external', 'http://weasyprint.org/foo/lipsum/%C3%A9_%E9',
                   (5, 10, 190, 0), None)], [])],
         base_url='http://weasyprint.org/foo/bar/')
+
     assert_links(
         '''
             <body style="width: 200px">
@@ -840,6 +842,18 @@ def test_links():
         [([('internal', 'lipsum', (30, 10, 40, 200), None)],
           [('lipsum', 70, 10)])],
         round=True)
+
+    # Download for attachment
+    assert_links(
+        '''
+            <body style="width: 200px">
+            <a rel=attachment href="pattern.png" download="wow.png"
+                style="display: block; margin: 10px 5px">
+        ''', [[('attachment', 'pattern.png',
+                (5, 10, 190, 0), 'wow.png')]],
+        [{}], [([('attachment', 'pattern.png',
+                  (5, 10, 190, 0), 'wow.png')], [])],
+        base_url=None)
 
 
 # Make relative URL references work with our custom URL scheme.
