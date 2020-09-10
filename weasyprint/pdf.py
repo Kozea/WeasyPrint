@@ -361,7 +361,7 @@ def _write_compressed_file_object(pdf, file):
     return object_number
 
 
-def _get_filename_from_result(url, result):
+def _get_filename_from_url(url):
     """Derive a filename from a fetched resource.
 
     This is either the filename returned by the URL fetcher, the last URL path
@@ -371,12 +371,6 @@ def _get_filename_from_result(url, result):
 
     filename = None
 
-    # A given filename will always take precedence
-    if result:
-        filename = result.get('filename')
-        if filename:
-            return filename
-
     # The URL path likely contains a filename, which is a good second guess
     if url:
         split = urlsplit(url)
@@ -385,32 +379,7 @@ def _get_filename_from_result(url, result):
             if filename == '':
                 filename = None
 
-    if filename is None:
-        # The URL lacks a path altogether. Use a synthetic name.
-
-        # Using guess_extension is a great idea, but sadly the extension is
-        # probably random, depending on the alignment of the stars, which car
-        # you're driving and which software has been installed on your machine.
-        #
-        # Unfortuneatly this isn't even imdepodent on one machine, because the
-        # extension can depend on PYTHONHASHSEED if mimetypes has multiple
-        # extensions to offer
-        extension = None
-        if result:
-            mime_type = result.get('mime_type')
-            if mime_type == 'text/plain':
-                # text/plain has a phletora of extensions - all garbage
-                extension = '.txt'
-            else:
-                extension = mimetypes.guess_extension(mime_type) or '.bin'
-        else:
-            extension = '.bin'
-
-        filename = 'attachment' + extension
-    else:
-        filename = unquote(filename)
-
-    return filename
+    return 'attachment.bin' if filename is None else unquote(filename)
 
 
 def _write_pdf_embedded_files(pdf, attachments, url_fetcher):
@@ -466,9 +435,7 @@ def _write_pdf_attachment(pdf, attachment, url_fetcher, download_name=None):
 
     # TODO: Use the result object from a URL fetch operation to provide more
     # details on the possible filename
-    filename = (
-        download_name
-        if download_name else _get_filename_from_result(url, None))
+    filename = download_name or _get_filename_from_url(url)
 
     return pdf.write_new_object(pdf_format(
         '<< /Type /Filespec /F () /UF {0!P} /EF << /F {1} 0 R >> '

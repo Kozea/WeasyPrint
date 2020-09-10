@@ -119,10 +119,8 @@ def _gather_links_and_bookmarks(box, bookmarks, links, anchors, matrix):
     has_link = link and not isinstance(box, boxes.TextBox)
     # In case of duplicate IDs, only the first is an anchor.
     has_anchor = anchor_name and anchor_name not in anchors
-    is_attachment = hasattr(box, 'is_attachment') and box.is_attachment
-    download_name = (
-        box.attachment_download
-        if hasattr(box, 'attachment_download') else None)
+    is_attachment = getattr(box, 'is_attachment', box.is_attachment)
+    download_name = getattr(box, 'attachment_download', None)
 
     if has_bookmark or has_link or has_anchor:
         pos_x, pos_y, width, height = box.hit_area()
