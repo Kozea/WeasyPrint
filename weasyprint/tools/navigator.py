@@ -65,7 +65,7 @@ def render_template(url):
         for width, height, data_url, links, anchors in get_pages(html):
             write('<section style="width: {0}px; height: {1}px">\n'
                   '  <img src="{2}">\n'.format(width, height, data_url))
-            for link_type, target, (pos_x, pos_y, width, height) in links:
+            for link_type, target, (pos_x, pos_y, width, height), _ in links:
                 href = ('#' + target if link_type == 'internal'
                         else '/view/' + target)
                 write('  <a style="left: {0}px; top: {1}px; '
