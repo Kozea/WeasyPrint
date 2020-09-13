@@ -10,6 +10,7 @@ import io
 import math
 import shutil
 import warnings
+from urllib.parse import quote
 
 import cairocffi as cairo
 
@@ -575,9 +576,11 @@ class Document:
                     [int(round(i * scale)) for i in rectangle] +
                     [link_target.replace("'", '%27')]))
             elif link_type == 'internal':
+                # Use urllib.parse.quote to make link ids the same with
+                # TAG_DEST and TAG_LINK with Cairo
                 attributes = "rect=[{} {} {} {}] dest='{}'".format(*(
                     [int(round(i * scale)) for i in rectangle] +
-                    [link_target.replace("'", '%27')]))
+                    [quote(link_target)]))
             elif link_type == 'attachment':
                 # Attachments are handled in write_pdf_metadata
                 continue
@@ -586,8 +589,10 @@ class Document:
 
         for anchor in anchors:
             anchor_name, x, y = anchor
+            # Use urllib.parse.quote to make link ids the same with TAG_DEST
+            # and TAG_LINK with Cairo
             attributes = "name='{}' x={} y={}".format(
-                anchor_name.replace("'", '%27'), int(round(x * scale)),
+                quote(anchor_name), int(round(x * scale)),
                 int(round(y * scale)))
             context.tag_begin(cairo.TAG_DEST, attributes)
             context.tag_end(cairo.TAG_DEST)
