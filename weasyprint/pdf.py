@@ -201,10 +201,13 @@ class PDFFile:
         assert int(line[:-7]) == object_number  # len(b' 0 obj\n') == 7
         object_lines = []
         for line in fileobj:
-            if line == b'>>\n':
-                assert next(fileobj) == b'endobj\n'
+            if line == b'endobj\n':
                 # No newline, we’ll add it when writing.
-                object_lines.append(b'>>')
+                if object_lines[-1].endswith(b'>>\n'):
+                    # Some objects have ">>" on the same line as their content
+                    object_lines[-1] = object_lines[-1][:-1]
+                else:
+                    object_lines.append(b'>>')
                 return b''.join(object_lines)
             object_lines.append(line)
 
@@ -462,11 +465,18 @@ def write_pdf_metadata(fileobj, scale, url_fetcher, attachments,
     embedded_files_id = _write_pdf_embedded_files(
         pdf, attachments, url_fetcher)
     if embedded_files_id is not None:
-        params = b''
-        if embedded_files_id is not None:
-            params += pdf_format(' /Names << /EmbeddedFiles {0} 0 R >>',
-                                 embedded_files_id)
-        pdf.extend_dict(pdf.catalog, params)
+        # The Catalog dictionary is extended when it hasn’t a Names entry,
+        # else it’s the Names dictionary which is extended as the Catalog
+        # dictionary shall have only one Name entry
+        try:
+            names_dict = pdf.catalog.get_indirect_dict('Names', pdf)
+        except AttributeError:
+            params = pdf_format(
+                ' /Names << /EmbeddedFiles {0} 0 R >>', embedded_files_id)
+            pdf.extend_dict(pdf.catalog, params)
+        else:
+            params = pdf_format('  /EmbeddedFiles {0} 0 R', embedded_files_id)
+            pdf.extend_dict(names_dict, params)
 
     # Add attachments
 
