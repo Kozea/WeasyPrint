@@ -17,7 +17,7 @@ from ..testing_utils import assert_no_logs
 @pytest.mark.parametrize('style, character', (
     ('circle', '◦ '),
     ('disc', '• '),
-    ('square', '◾ '),
+    ('square', '▪ '),
 ))
 def test_lists_style(inside, style, character):
     page, = parse('''

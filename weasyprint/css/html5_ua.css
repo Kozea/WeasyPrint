@@ -557,7 +557,7 @@ xmp { display: block; font-family: monospace; margin-bottom: 1em; margin-top: 1e
 
 @counter-style square {
   system: cyclic;
-  symbols: ◾;
+  symbols: ▪;
   suffix: " ";
 }
 

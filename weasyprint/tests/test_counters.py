@@ -267,7 +267,7 @@ def test_counter_styles_1():
             ('p', 'Line', [
                 ('p::before', 'Inline', [
                     ('p::before', 'Text', counter)])])])
-        for counter in '--  •  ◦  ◾  -7 Counter:-6 -5:Counter'.split()])
+        for counter in '--  •  ◦  ▪  -7 Counter:-6 -5:Counter'.split()])
 
 
 @assert_no_logs
