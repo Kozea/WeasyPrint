@@ -244,6 +244,15 @@ def before_after_to_box(element, pseudo_type, state, style_for,
         target_collector, counter_style))
 
     box.children = children
+
+    # calculate the bookmark-label
+    if style['bookmark_label'] == 'none':
+        box.bookmark_label = ''
+    else:
+        _quote_depth, counter_values, _counter_scopes = state
+        compute_bookmark_label(
+            element, box, style['bookmark_label'], counter_values,
+            target_collector, counter_style)
     return [box]
 
 

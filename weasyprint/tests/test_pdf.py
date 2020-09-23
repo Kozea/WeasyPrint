@@ -332,6 +332,76 @@ def test_bookmarks_8():
 
 
 @assert_no_logs
+@requires('cairo', (1, 15, 4))
+def test_bookmarks_9():
+    fileobj = io.BytesIO()
+    FakeHTML(string='''
+      <h1 style="bookmark-label: 'h1 on page ' counter(page)">a</h1>
+    ''').write_pdf(target=fileobj)
+    # h1 on page 1
+    pdf_file = pdf.PDFFile(fileobj)
+    outlines = pdf_file.catalog.get_indirect_dict('Outlines', pdf_file)
+    assert outlines.get_type() == 'Outlines'
+    assert outlines.get_value('Count', '(.*)') == b'-1'
+    o1 = outlines.get_indirect_dict('First', pdf_file)
+    assert o1.get_value('Title', '(.*)') == b'(h1 on page 1)'
+
+
+@assert_no_logs
+@requires('cairo', (1, 15, 4))
+def test_bookmarks_10():
+    fileobj = io.BytesIO()
+    FakeHTML(string='''
+      <style>
+      div:before, div:after {
+         content: '';
+         bookmark-level: 1;
+         bookmark-label: 'x';
+      }
+      </style>
+      <div>a</div>
+    ''').write_pdf(target=fileobj)
+    # x
+    # x
+    pdf_file = pdf.PDFFile(fileobj)
+    outlines = pdf_file.catalog.get_indirect_dict('Outlines', pdf_file)
+    assert outlines.get_type() == 'Outlines'
+    assert outlines.get_value('Count', '(.*)') == b'-2'
+    o1 = outlines.get_indirect_dict('First', pdf_file)
+    assert o1.get_value('Title', '(.*)') == b'(x)'
+    o2 = o1.get_indirect_dict('Next', pdf_file)
+    assert o2.get_value('Title', '(.*)') == b'(x)'
+
+
+@assert_no_logs
+@requires('cairo', (1, 15, 4))
+def test_bookmarks_11():
+    fileobj = io.BytesIO()
+    FakeHTML(string='''
+      <div style="display:inline; white-space:pre;
+       bookmark-level:1; bookmark-label:'a'">
+      a
+      a
+      a
+      </div>
+      <div style="bookmark-level:1; bookmark-label:'b'">
+        <div>b</div>
+        <div style="break-before:always">c</div>
+      </div>
+    ''').write_pdf(target=fileobj)
+    # a
+    # b
+    pdf_file = pdf.PDFFile(fileobj)
+    outlines = pdf_file.catalog.get_indirect_dict('Outlines', pdf_file)
+    assert outlines.get_type() == 'Outlines'
+    assert outlines.get_value('Count', '(.*)') == b'-2'
+    o1 = outlines.get_indirect_dict('First', pdf_file)
+    assert o1.get_value('Title', '(.*)') == b'(a)'
+    o2 = o1.get_indirect_dict('Next', pdf_file)
+    assert o2.get_value('Title', '(.*)') == b'(b)'
+
+
+@assert_no_logs
 def test_links_none():
     fileobj = io.BytesIO()
     FakeHTML(string='<body>').write_pdf(target=fileobj)
