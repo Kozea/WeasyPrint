@@ -22,4 +22,7 @@ pagination, and meant to be easy to hack on.
 * Documentation: https://weasyprint.readthedocs.io/
 * Source code and issue tracker: https://github.com/Kozea/WeasyPrint
 * Tests: https://travis-ci.org/Kozea/WeasyPrint
-* Support: https://www.patreon.com/kozea
+
+WeasyPrint has been created and developed by Kozea (https://kozea.fr/).
+Professional support, maintenance and community management is provided by
+CourtBouillon (https://www.courtbouillon.org/).
