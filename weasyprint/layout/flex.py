@@ -593,7 +593,6 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
             # else: Cross size has been set by step 7
 
     # Step 12
-    # TODO: handle rtl
     original_position_axis = (
         box.content_box_x() if axis == 'width'
         else box.content_box_y())
