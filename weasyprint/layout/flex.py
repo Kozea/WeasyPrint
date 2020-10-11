@@ -651,32 +651,32 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
 
         if (box.style['direction'] == 'rtl' and
                 box.style['flex_direction'].startswith('row')):
-                if justify_content == 'flex-end':
-                    position_axis -= free_space
-                elif justify_content == 'center':
-                    position_axis -= free_space / 2
-                elif justify_content == 'space-around':
-                    position_axis -= free_space / len(line) / 2
+            if justify_content == 'flex-end':
+                position_axis -= free_space
+            elif justify_content == 'center':
+                position_axis -= free_space / 2
+            elif justify_content == 'space-around':
+                position_axis -= free_space / len(line) / 2
+            elif justify_content == 'space-evenly':
+                position_axis -= free_space / (len(line) - 1)
+
+            for i, child in line:
+                if axis == 'width':
+                    child.position_x = position_axis
+                    if justify_content == 'stretch':
+                        child.width -= free_space / len(line)
+                else:
+                    child.position_y = position_axis
+                position_axis -= (
+                    child.margin_width() if axis == 'width'
+                    else child.margin_height())
+                if justify_content == 'space-around':
+                    position_axis -= free_space / len(line)
+                elif justify_content == 'space-between':
+                    if len(line) > 1:
+                        position_axis -= free_space / (len(line) + 1)
                 elif justify_content == 'space-evenly':
                     position_axis -= free_space / (len(line) - 1)
-
-                for i, child in line:
-                    if axis == 'width':
-                        child.position_x = position_axis
-                        if justify_content == 'stretch':
-                            child.width -= free_space / len(line)
-                    else:
-                        child.position_y = position_axis
-                    position_axis -= (
-                        child.margin_width() if axis == 'width'
-                        else child.margin_height())
-                    if justify_content == 'space-around':
-                        position_axis -= free_space / len(line)
-                    elif justify_content == 'space-between':
-                        if len(line) > 1:
-                            position_axis -= free_space / (len(line) + 1)
-                    elif justify_content == 'space-evenly':
-                        position_axis -= free_space / (len(line) - 1)
         else:
             if justify_content == 'flex-end':
                 position_axis += free_space
