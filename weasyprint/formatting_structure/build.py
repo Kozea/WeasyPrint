@@ -145,6 +145,15 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
 
     marker_boxes = []
     if style['display'] == 'list-item':
+        # This should handle rtl direction
+        if style['direction'] == 'rtl':
+            translate_x = properties.Dimension(-5, '%')
+            translate_y = computed_values.ZERO_PIXELS
+            box.style['transform'] = (
+                    ('translate', (translate_x, translate_y)),
+                )
+            box.style['padding_right'] = properties.Dimension(10, 'px')
+
         marker_boxes = list(marker_to_box(
             element, state, style, style_for, get_image_from_uri,
             target_collector, counter_style))
@@ -295,9 +304,8 @@ def marker_to_box(element, state, parent_style, style_for, get_image_from_uri,
         if not children and style['list_style_type'] != 'none':
             counter_value = counter_values.get('list-item', [0])[-1]
             counter_type = style['list_style_type']
-            # TODO: rtl numbered list has the dot on the left
             marker_text = counter_style.render_marker(
-                counter_type, counter_value)
+                counter_type, counter_value, parent_style['direction'])
             box = boxes.TextBox.anonymous_from(box, marker_text)
             box.style['white_space'] = 'pre-wrap'
             children.append(box)
@@ -311,9 +319,11 @@ def marker_to_box(element, state, parent_style, style_for, get_image_from_uri,
         # See https://drafts.csswg.org/css-pseudo-4/#marker-pseudo
         marker_box.style['position'] = 'absolute'
         if parent_style['direction'] == 'ltr':
+            marker_box.style['left'] = 'auto'
             translate_x = properties.Dimension(-100, '%')
         else:
-            translate_x = properties.Dimension(100, '%')
+            marker_box.style['right'] = properties.Dimension(0, 'px')
+            translate_x = properties.Dimension(20, '%')
         translate_y = computed_values.ZERO_PIXELS
         marker_box.style['transform'] = (
             ('translate', (translate_x, translate_y)),)
