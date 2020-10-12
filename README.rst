@@ -1,7 +1,3 @@
-==========
-WeasyPrint
-==========
-
 **The Awesome Document Factory**
 
 WeasyPrint is a smart solution helping web developers to create PDF
@@ -16,12 +12,15 @@ It is based on various libraries but *not* on a full rendering engine like
 WebKit or Gecko. The CSS layout engine is written in Python, designed for
 pagination, and meant to be easy to hack on.
 
-* Free software: BSD licensed
-* Python 3.6+
-* Website: https://weasyprint.org/
-* Documentation: https://weasyprint.readthedocs.io/
-* Source code and issue tracker: https://github.com/Kozea/WeasyPrint
-* Tests: https://travis-ci.org/Kozea/WeasyPrint
+* Free software: BSD license
+* For Python 3.6+, tested on CPython and PyPy
+* Documentation: https://weasyprint.readthedocs.io
+* Examples: https://weasyprint.org/samples/
+* Changelog: https://github.com/Kozea/WeasyPrint/releases
+* Code, issues, tests: https://github.com/Kozea/WeasyPrint
+* Code of conduct: https://www.courtbouillon.org/code-of-conduct
+* Professional support: https://www.courtbouillon.org
+* Donation: https://opencollective.com/courtbouillon
 
 WeasyPrint has been created and developed by Kozea (https://kozea.fr/).
 Professional support, maintenance and community management is provided by
