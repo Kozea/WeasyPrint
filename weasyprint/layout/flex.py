@@ -495,7 +495,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
             not_collected_items = []
             for i, child in line:
                 align_self = child.style['align_self']
-                if (axis == 'width' and
+                if (box.style['flex_direction'].startswith('row') and
                         align_self == 'baseline' and
                         child.margin_top != 'auto' and
                         child.margin_bottom != 'auto'):
