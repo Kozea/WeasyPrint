@@ -593,7 +593,6 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
             # else: Cross size has been set by step 7
 
     # Step 12
-    # TODO: handle rtl
     original_position_axis = (
         box.content_box_x() if axis == 'width'
         else box.content_box_y())
@@ -650,6 +649,9 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                         child.margin_bottom = free_space
             free_space = 0
 
+        if box.style['direction'] == 'rtl' and axis == 'width':
+            free_space *= -1
+
         if justify_content == 'flex-end':
             position_axis += free_space
         elif justify_content == 'center':
@@ -666,9 +668,12 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                     child.width += free_space / len(line)
             else:
                 child.position_y = position_axis
-            position_axis += (
+            margin_axis = (
                 child.margin_width() if axis == 'width'
                 else child.margin_height())
+            if box.style['direction'] == 'rtl' and axis == 'width':
+                margin_axis *= -1
+            position_axis += margin_axis
             if justify_content == 'space-around':
                 position_axis += free_space / len(line)
             elif justify_content == 'space-between':
@@ -784,7 +789,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
         position_cross += line.cross_size
 
     # Step 15
-    if box.style[cross] == 'auto':
+    if getattr(box, cross) == 'auto':
         # TODO: handle min-max
         setattr(box, cross, sum(line.cross_size for line in flex_lines))
 

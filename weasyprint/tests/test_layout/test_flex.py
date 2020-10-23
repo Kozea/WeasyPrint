@@ -38,6 +38,33 @@ def test_flex_direction_row():
 
 
 @assert_no_logs
+def test_flex_direction_row_rtl():
+    page, = render_pages('''
+      <article style="display: flex; direction: rtl">
+        <div>A</div>
+        <div>B</div>
+        <div>C</div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div_1, div_2, div_3 = article.children
+    assert div_1.children[0].children[0].text == 'A'
+    assert div_2.children[0].children[0].text == 'B'
+    assert div_3.children[0].children[0].text == 'C'
+    assert (
+        div_1.position_y ==
+        div_2.position_y ==
+        div_3.position_y ==
+        article.position_y)
+    assert (
+        div_1.position_x + div_1.width ==
+        article.position_x + article.width)
+    assert div_1.position_x > div_2.position_x > div_3.position_x
+
+
+@assert_no_logs
 def test_flex_direction_row_reverse():
     page, = render_pages('''
       <article style="display: flex; flex-direction: row-reverse">
@@ -62,6 +89,32 @@ def test_flex_direction_row_reverse():
         div_3.position_x + div_3.width ==
         article.position_x + article.width)
     assert div_1.position_x < div_2.position_x < div_3.position_x
+
+
+@assert_no_logs
+def test_flex_direction_row_reverse_rtl():
+    page, = render_pages('''
+      <article style="display: flex; flex-direction: row-reverse;
+      direction: rtl">
+        <div>A</div>
+        <div>B</div>
+        <div>C</div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div_1, div_2, div_3 = article.children
+    assert div_1.children[0].children[0].text == 'C'
+    assert div_2.children[0].children[0].text == 'B'
+    assert div_3.children[0].children[0].text == 'A'
+    assert (
+        div_1.position_y ==
+        div_2.position_y ==
+        div_3.position_y ==
+        article.position_y)
+    assert div_3.position_x == article.position_x
+    assert div_1.position_x > div_2.position_x > div_3.position_x
 
 
 @assert_no_logs
@@ -90,9 +143,63 @@ def test_flex_direction_column():
 
 
 @assert_no_logs
+def test_flex_direction_column_rtl():
+    page, = render_pages('''
+      <article style="display: flex; flex-direction: column;
+      direction: rtl">
+        <div>A</div>
+        <div>B</div>
+        <div>C</div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div_1, div_2, div_3 = article.children
+    assert div_1.children[0].children[0].text == 'A'
+    assert div_2.children[0].children[0].text == 'B'
+    assert div_3.children[0].children[0].text == 'C'
+    assert (
+        div_1.position_x ==
+        div_2.position_x ==
+        div_3.position_x ==
+        article.position_x)
+    assert div_1.position_y == article.position_y
+    assert div_1.position_y < div_2.position_y < div_3.position_y
+
+
+@assert_no_logs
 def test_flex_direction_column_reverse():
     page, = render_pages('''
       <article style="display: flex; flex-direction: column-reverse">
+        <div>A</div>
+        <div>B</div>
+        <div>C</div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div_1, div_2, div_3 = article.children
+    assert div_1.children[0].children[0].text == 'C'
+    assert div_2.children[0].children[0].text == 'B'
+    assert div_3.children[0].children[0].text == 'A'
+    assert (
+        div_1.position_x ==
+        div_2.position_x ==
+        div_3.position_x ==
+        article.position_x)
+    assert (
+        div_3.position_y + div_3.height ==
+        article.position_y + article.height)
+    assert div_1.position_y < div_2.position_y < div_3.position_y
+
+
+@assert_no_logs
+def test_flex_direction_column_reverse_rtl():
+    page, = render_pages('''
+      <article style="display: flex; flex-direction: column-reverse;
+      direction: rtl">
         <div>A</div>
         <div>B</div>
         <div>C</div>
@@ -426,3 +533,13 @@ def test_flex_item_percentage():
     flex, = body.children
     flex_item, = flex.children
     assert flex_item.height == 15
+
+
+@assert_no_logs
+def test_flex_undefined_percentage_height_multiple_lines():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/1204
+    page, = render_pages('''
+      <div style="display: flex; flex-wrap: wrap; height: 100%">
+        <div style="width: 100%">a</div>
+        <div style="width: 100%">b</div>
+      </div>''')

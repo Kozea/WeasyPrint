@@ -717,7 +717,7 @@ def flex_max_content_width(context, box, outer=True):
 
 def trailing_whitespace_size(context, box):
     """Return the size of the trailing whitespace of ``box``."""
-    from .inlines import split_text_box, split_first_line
+    from .inlines import split_first_line, split_text_box
 
     while isinstance(box, (boxes.InlineBox, boxes.LineBox)):
         if not box.children:

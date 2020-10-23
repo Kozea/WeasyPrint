@@ -19,7 +19,6 @@ import pydyf
 from fontTools import subset
 from fontTools.ttLib import TTFont, TTLibError
 from PIL import Image
-from weasyprint.layout import LayoutContext
 
 from . import CSS, Attachment, __version__
 from .css import get_all_computed_styles
@@ -31,7 +30,7 @@ from .formatting_structure import boxes
 from .formatting_structure.build import build_formatting_structure
 from .html import W3C_DATE_RE, get_html_metadata
 from .images import get_image_from_uri as original_get_image_from_uri
-from .layout import layout_document
+from .layout import LayoutContext, layout_document
 from .layout.percentages import percentage
 from .logger import LOGGER, PROGRESS_LOGGER
 from .text import ffi, pango
@@ -237,6 +236,9 @@ class Context(pydyf.Stream):
             color_space = '/DeviceGray'
         elif pillow_image.mode == 'CMYK':
             color_space = '/DeviceCMYK'
+        else:
+            LOGGER.warning('Unknown image mode: %s', pillow_image.mode)
+            color_space = '/DeviceRGB'
 
         interpolate = 'true' if image_rendering == 'auto' else 'false'
         extra = pydyf.Dictionary({

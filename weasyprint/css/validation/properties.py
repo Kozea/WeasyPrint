@@ -21,6 +21,7 @@ from ..utils import (
 PREFIX = '-weasy-'
 PROPRIETARY = set()
 UNSTABLE = set()
+MULTIVAL_PROPERTIES = set()
 
 # Yes/no validators for non-shorthand properties
 # Maps property names to functions taking a property name and a value list,
@@ -33,7 +34,7 @@ PROPERTIES = {}
 # Validators
 
 def property(property_name=None, proprietary=False, unstable=False,
-             wants_base_url=False):
+             multiple_values=False, wants_base_url=False):
     """Decorator adding a function to the ``PROPERTIES``.
 
     The name of the property covered by the decorated function is set to
@@ -69,6 +70,8 @@ def property(property_name=None, proprietary=False, unstable=False,
             PROPRIETARY.add(name)
         if unstable:
             UNSTABLE.add(name)
+        if multiple_values:
+            MULTIVAL_PROPERTIES.add(name)
         return function
     return decorator
 
@@ -89,10 +92,11 @@ def validate_non_shorthand(base_url, name, tokens, required=False):
     if not required and name not in PROPERTIES:
         raise InvalidValues('property not supported yet')
 
-    for token in tokens:
-        var_function = check_var_function(token)
-        if var_function:
-            return ((name, var_function),)
+    if name not in MULTIVAL_PROPERTIES:
+        for token in tokens:
+            var_function = check_var_function(token)
+            if var_function:
+                return ((name, var_function),)
 
     keyword = get_single_keyword(tokens)
     if keyword in ('initial', 'inherit'):
@@ -454,7 +458,7 @@ def clip(token):
         return ()
 
 
-@property(wants_base_url=True)
+@property(multiple_values=True, wants_base_url=True)
 def content(tokens, base_url):
     """``content`` property validation."""
     # See https://www.w3.org/TR/css-content-3/#content-property

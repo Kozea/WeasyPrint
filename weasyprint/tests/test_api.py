@@ -116,10 +116,12 @@ def _round_meta(pages):
             anchors[anchor_name] = round(pos_x, 6), round(pos_y, 6)
         links = page.links
         for i, link in enumerate(links):
-            link_type, target, (pos_x, pos_y, width, height) = link
+            link_type, target, (pos_x, pos_y, width, height), download_name = (
+                link)
             link = (
                 link_type, target, (round(pos_x, 6), round(pos_y, 6),
-                                    round(width, 6), round(height, 6)))
+                                    round(width, 6), round(height, 6)),
+                download_name)
             links[i] = link
         bookmarks = page.bookmarks
         for i, (level, label, (pos_x, pos_y), state) in enumerate(bookmarks):
@@ -657,28 +659,28 @@ def test_links():
         </p>
     ''', [
         [
-            ('external', 'http://weasyprint.org', (0, 0, 30, 20)),
-            ('external', 'http://weasyprint.org', (0, 0, 30, 30)),
-            ('internal', 'lipsum', (10, 100, 42, 120)),
-            ('internal', 'lipsum', (10, 100, 42, 132))
+            ('external', 'http://weasyprint.org', (0, 0, 30, 20), None),
+            ('external', 'http://weasyprint.org', (0, 0, 30, 30), None),
+            ('internal', 'lipsum', (10, 100, 42, 120), None),
+            ('internal', 'lipsum', (10, 100, 42, 132), None)
         ],
-        [('internal', 'hello', (0, 0, 200, 30))],
+        [('internal', 'hello', (0, 0, 200, 30), None)],
     ], [
         {'hello': (0, 200)},
         {'lipsum': (0, 0)}
     ], [
         (
             [
-                ('external', 'http://weasyprint.org', (0, 0, 30, 20)),
-                ('external', 'http://weasyprint.org', (0, 0, 30, 30)),
-                ('internal', 'lipsum', (10, 100, 42, 120)),
-                ('internal', 'lipsum', (10, 100, 42, 132))
+                ('external', 'http://weasyprint.org', (0, 0, 30, 20), None),
+                ('external', 'http://weasyprint.org', (0, 0, 30, 30), None),
+                ('internal', 'lipsum', (10, 100, 42, 120), None),
+                ('internal', 'lipsum', (10, 100, 42, 132), None)
             ],
             [('hello', 0, 200)],
         ),
         (
             [
-                ('internal', 'hello', (0, 0, 200, 30))
+                ('internal', 'hello', (0, 0, 200, 30), None)
             ],
             [('lipsum', 0, 0)]),
     ])
@@ -688,19 +690,20 @@ def test_links():
             <body style="width: 200px">
             <a href="../lipsum/é_%E9" style="display: block; margin: 10px 5px">
         ''', [[('external', 'http://weasyprint.org/foo/lipsum/%C3%A9_%E9',
-                (5, 10, 195, 10))]],
+                (5, 10, 195, 10), None)]],
         [{}], [([('external', 'http://weasyprint.org/foo/lipsum/%C3%A9_%E9',
-                  (5, 10, 195, 10))], [])],
+                  (5, 10, 195, 10), None)], [])],
         base_url='http://weasyprint.org/foo/bar/')
+
     assert_links(
         '''
             <body style="width: 200px">
             <div style="display: block; margin: 10px 5px;
                         -weasy-link: url(../lipsum/é_%E9)">
         ''', [[('external', 'http://weasyprint.org/foo/lipsum/%C3%A9_%E9',
-                (5, 10, 195, 10))]],
+                (5, 10, 195, 10), None)]],
         [{}], [([('external', 'http://weasyprint.org/foo/lipsum/%C3%A9_%E9',
-                  (5, 10, 195, 10))], [])],
+                  (5, 10, 195, 10), None)], [])],
         base_url='http://weasyprint.org/foo/bar/')
 
     # Relative URI reference without a base URI: allowed for links
@@ -708,8 +711,9 @@ def test_links():
         '''
             <body style="width: 200px">
             <a href="../lipsum" style="display: block; margin: 10px 5px">
-        ''', [[('external', '../lipsum', (5, 10, 195, 10))]], [{}],
-        [([('external', '../lipsum', (5, 10, 195, 10))], [])], base_url=None)
+        ''', [[('external', '../lipsum', (5, 10, 195, 10), None)]], [{}],
+        [([('external', '../lipsum', (5, 10, 195, 10), None)], [])],
+        base_url=None)
 
     # Relative URI reference without a base URI: not supported for -weasy-link
     assert_links(
@@ -728,11 +732,12 @@ def test_links():
             <a href="#lipsum" id="lipsum"
                 style="display: block; margin: 10px 5px"></a>
             <a href="http://weasyprint.org/" style="display: block"></a>
-        ''', [[('internal', 'lipsum', (5, 10, 195, 10)),
-               ('external', 'http://weasyprint.org/', (0, 10, 200, 10))]],
+        ''', [[
+            ('internal', 'lipsum', (5, 10, 195, 10), None),
+            ('external', 'http://weasyprint.org/', (0, 10, 200, 10), None)]],
         [{'lipsum': (5, 10)}],
-        [([('internal', 'lipsum', (5, 10, 195, 10)),
-           ('external', 'http://weasyprint.org/', (0, 10, 200, 10))],
+        [([('internal', 'lipsum', (5, 10, 195, 10), None),
+           ('external', 'http://weasyprint.org/', (0, 10, 200, 10), None)],
           [('lipsum', 5, 10)])],
         base_url=None)
 
@@ -742,9 +747,10 @@ def test_links():
             <div style="-weasy-link: url(#lipsum);
                         margin: 10px 5px" id="lipsum">
         ''',
-        [[('internal', 'lipsum', (5, 10, 195, 10))]],
+        [[('internal', 'lipsum', (5, 10, 195, 10), None)]],
         [{'lipsum': (5, 10)}],
-        [([('internal', 'lipsum', (5, 10, 195, 10))], [('lipsum', 5, 10)])],
+        [([('internal', 'lipsum', (5, 10, 195, 10), None)],
+          [('lipsum', 5, 10)])],
         base_url=None)
 
     assert_links(
@@ -754,10 +760,11 @@ def test_links():
                 <a href="#lipsum"></a>
                 <a href="#missing" id="lipsum"></a>
         ''',
-        [[('internal', 'lipsum', (0, 0, 200, 15)),
-          ('internal', 'missing', (0, 15, 200, 30))]],
+        [[('internal', 'lipsum', (0, 0, 200, 15), None),
+          ('internal', 'missing', (0, 15, 200, 30), None)]],
         [{'lipsum': (0, 15)}],
-        [([('internal', 'lipsum', (0, 0, 200, 15))], [('lipsum', 0, 15)])],
+        [([('internal', 'lipsum', (0, 0, 200, 15), None)],
+          [('lipsum', 0, 15)])],
         base_url=None,
         warnings=[
             'ERROR: No anchor #missing for internal URI reference'])
@@ -768,10 +775,23 @@ def test_links():
             <a href="#lipsum" id="lipsum" style="display: block; height: 20px;
                 transform: rotate(90deg) scale(2)">
         ''',
-        [[('internal', 'lipsum', (30, 10, 70, 210))]],
+        [[('internal', 'lipsum', (30, 10, 70, 210), None)]],
         [{'lipsum': (70, 10)}],
-        [([('internal', 'lipsum', (30, 10, 70, 210))], [('lipsum', 70, 10)])],
+        [([('internal', 'lipsum', (30, 10, 70, 210), None)],
+          [('lipsum', 70, 10)])],
         round=True)
+
+    # Download for attachment
+    assert_links(
+        '''
+            <body style="width: 200px">
+            <a rel=attachment href="pattern.png" download="wow.png"
+                style="display: block; margin: 10px 5px">
+        ''', [[('attachment', 'pattern.png',
+                (5, 10, 190, 0), 'wow.png')]],
+        [{}], [([('attachment', 'pattern.png',
+                  (5, 10, 190, 0), 'wow.png')], [])],
+        base_url=None)
 
 
 # Make relative URL references work with our custom URL scheme.

@@ -215,6 +215,59 @@ def test_bookmarks_8():
 
 
 @assert_no_logs
+def test_bookmarks_9():
+    pdf = FakeHTML(string='''
+      <h1 style="bookmark-label: 'h1 on page ' counter(page)">a</h1>
+    ''').write_pdf()
+    counts = re.findall(b'/Count ([0-9-]*)', pdf)
+    outlines = counts.pop()
+    assert outlines == b'1'
+    assert re.findall(b'/Title \\((.*)\\)', pdf) == [b'h1 on page 1']
+
+
+@assert_no_logs
+def test_bookmarks_10():
+    pdf = FakeHTML(string='''
+      <style>
+      div:before, div:after {
+         content: '';
+         bookmark-level: 1;
+         bookmark-label: 'x';
+      }
+      </style>
+      <div>a</div>
+    ''').write_pdf()
+    # x
+    # x
+    counts = re.findall(b'/Count ([0-9-]*)', pdf)
+    outlines = counts.pop()
+    assert outlines == b'2'
+    assert re.findall(b'/Title \\((.*)\\)', pdf) == [b'x', b'x']
+
+
+@assert_no_logs
+def test_bookmarks_11():
+    pdf = FakeHTML(string='''
+      <div style="display:inline; white-space:pre;
+       bookmark-level:1; bookmark-label:'a'">
+      a
+      a
+      a
+      </div>
+      <div style="bookmark-level:1; bookmark-label:'b'">
+        <div>b</div>
+        <div style="break-before:always">c</div>
+      </div>
+    ''').write_pdf()
+    # a
+    # b
+    counts = re.findall(b'/Count ([0-9-]*)', pdf)
+    outlines = counts.pop()
+    assert outlines == b'2'
+    assert re.findall(b'/Title \\((.*)\\)', pdf) == [b'a', b'b']
+
+
+@assert_no_logs
 def test_links_none():
     pdf = FakeHTML(string='<body>').write_pdf()
     assert b'Annots' not in pdf
