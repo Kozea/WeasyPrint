@@ -424,7 +424,7 @@ def create_bookmarks(bookmarks, pdf, parent=None):
 def add_hyperlinks(links, anchors, matrix, pdf, page, names):
     """Include hyperlinks in current PDF page."""
     for link in links:
-        link_type, link_target, rectangle = link
+        link_type, link_target, rectangle, _ = link
         x1, y1 = matrix.transform_point(*rectangle[:2])
         x2, y2 = matrix.transform_point(*rectangle[2:])
         if link_type in ('internal', 'external'):
@@ -498,14 +498,15 @@ def resolve_links(pages):
     for page in pages:
         page_links = []
         for link in page.links:
-            link_type, anchor_name, rectangle = link
+            link_type, anchor_name, rectangle, _ = link
             if link_type == 'internal':
                 if anchor_name not in anchors:
                     LOGGER.error(
                         'No anchor #%s for internal URI reference',
                         anchor_name)
                 else:
-                    page_links.append((link_type, anchor_name, rectangle))
+                    page_links.append(
+                        (link_type, anchor_name, rectangle, None))
             else:
                 # External link
                 page_links.append(link)
@@ -642,7 +643,8 @@ class Page:
         has_link = link and not isinstance(box, (boxes.TextBox, boxes.LineBox))
         # In case of duplicate IDs, only the first is an anchor.
         has_anchor = anchor_name and anchor_name not in self.anchors
-        is_attachment = hasattr(box, 'is_attachment') and box.is_attachment
+        is_attachment = getattr(box, 'is_attachment', False)
+        download_name = getattr(box, 'attachment_download', None)
 
         if has_bookmark or has_link or has_anchor:
             pos_x, pos_y, width, height = box.hit_area()
@@ -654,11 +656,15 @@ class Page:
                 if link_type == 'external' and is_attachment:
                     link_type = 'attachment'
                 if matrix:
-                    link = (link_type, target, rectangle_aabb(
-                        matrix, pos_x, pos_y, width, height))
+                    link = (
+                        link_type, target,
+                        rectangle_aabb(matrix, pos_x, pos_y, width, height),
+                        download_name)
                 else:
-                    link = (link_type, target, (
-                        pos_x, pos_y, pos_x + width, pos_y + height))
+                    link = (
+                        link_type, target,
+                        (pos_x, pos_y, pos_x + width, pos_y + height),
+                        download_name)
                 self.links.append(link)
             if matrix and (has_bookmark or has_anchor):
                 pos_x, pos_y = matrix.transform_point(pos_x, pos_y)
@@ -967,7 +973,7 @@ class Document:
         # embed a file multiple times of course, so keep a reference to every
         # embedded URL and reuse the object number.
         for page_links in attachment_links:
-            for link_type, annot_target, rectangle in page_links:
+            for link_type, annot_target, rectangle, _ in page_links:
                 if link_type == 'attachment' and target not in annot_files:
                     # TODO: Use the title attribute as description. The comment
                     # above about multiple regions won't always be correct,
@@ -1051,7 +1057,7 @@ class Document:
             # links and coalesce link shapes that originate from the same HTML
             # link. This would give a feeling similiar to what browsers do with
             # links that span multiple lines.
-            for link_type, annot_target, rectangle in page_links:
+            for link_type, annot_target, rectangle, _ in page_links:
                 annot_file = annot_files[annot_target]
                 if link_type == 'attachment' and annot_file is not None:
                     rectangle = (

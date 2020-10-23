@@ -116,11 +116,12 @@ def _round_meta(pages):
             anchors[anchor_name] = round(pos_x, 6), round(pos_y, 6)
         links = page.links
         for i, link in enumerate(links):
-            link_type, target, (pos_x, pos_y, width, height), download_name = (
-                link)
+            link_type, target, rectangle, download_name = link
+            pos_x, pos_y, width, height = rectangle
             link = (
-                link_type, target, (round(pos_x, 6), round(pos_y, 6),
-                                    round(width, 6), round(height, 6)),
+                link_type, target,
+                (round(pos_x, 6), round(pos_y, 6),
+                 round(width, 6), round(height, 6)),
                 download_name)
             links[i] = link
         bookmarks = page.bookmarks
@@ -788,9 +789,9 @@ def test_links():
             <a rel=attachment href="pattern.png" download="wow.png"
                 style="display: block; margin: 10px 5px">
         ''', [[('attachment', 'pattern.png',
-                (5, 10, 190, 0), 'wow.png')]],
+                (5, 10, 195, 10), 'wow.png')]],
         [{}], [([('attachment', 'pattern.png',
-                  (5, 10, 190, 0), 'wow.png')], [])],
+                  (5, 10, 195, 10), 'wow.png')], [])],
         base_url=None)
 
 
