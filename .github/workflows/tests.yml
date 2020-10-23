@@ -9,7 +9,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: [3.6, 3.7, 3.8, pypy3]
+        python-version: [3.6, 3.7, 3.8, 3.9, pypy3]
         exclude:
           # Pillow wheel missing for this configuration
           - os: macos-latest
@@ -25,12 +25,12 @@ jobs:
       - name: Install DejaVu (Ubuntu)
         if: matrix.os == 'ubuntu-latest'
         run: sudo apt-get update -y && sudo apt-get install ttf-dejavu -y
-      - name: Install DejaVu, cairo, pango, gdk-pixbuf and libffi (MacOS)
+      - name: Install DejaVu, pango, and libffi (MacOS)
         if: matrix.os == 'macos-latest'
         run: |
           brew tap homebrew/cask-fonts
           brew cask install font-dejavu
-          brew install cairo pango gdk-pixbuf libffi
+          brew install pango libffi
       - name: Install msys2 and DejaVu (Windows)
         if: matrix.os == 'windows-latest'
         run: |
