@@ -7,7 +7,7 @@
 """
 
 from ..testing_utils import assert_no_logs
-from . import PIXELS_BY_CHAR, assert_pixels, html_to_pixels
+from . import assert_pixels
 
 
 @assert_no_logs
