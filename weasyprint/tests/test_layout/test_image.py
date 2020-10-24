@@ -334,12 +334,10 @@ def test_linear_gradient():
     blue = (0, 0, 1, 1)
 
     def layout(gradient_css, type_='linear', init=(),
-               positions=[0, 1], colors=[blue, lime], scale=(1, 1)):
+               positions=[0, 1], colors=[blue, lime]):
         page, = parse('<style>@page { background: ' + gradient_css)
         layer, = page.background.layers
-        scale_x, scale_y = scale
-        result = layer.image.layout(
-            400, 300, lambda dx, dy: (dx * scale_x, dy * scale_y))
+        result = layer.image.layout(400, 300)
         assert result[0] == 1
         assert result[1] == type_
         assert result[2] == (None if init is None else pytest.approx(init))
@@ -355,8 +353,6 @@ def test_linear_gradient():
     layout('repeating-linear-gradient(blue, lime)', init=(200, 0, 200, 300))
     layout('repeating-linear-gradient(blue, lime 20px)',
            init=(200, 0, 200, 20))
-    layout('repeating-linear-gradient(blue, lime 20px)',
-           'solid', None, [], [(0, .5, .5, 1)], scale=(1 / 20, 1 / 20))
 
     layout('linear-gradient(to bottom, blue, lime)', init=(200, 0, 200, 300))
     layout('linear-gradient(to top, blue, lime)', init=(200, 300, 200, 0))
@@ -401,17 +397,14 @@ def test_radial_gradient():
     blue = (0, 0, 1, 1)
 
     def layout(gradient_css, type_='radial', init=(),
-               positions=[0, 1], colors=[blue, lime], scale_y=1,
-               ctm_scale=(1, 1)):
+               positions=[0, 1], colors=[blue, lime], scale_y=1):
         if type_ == 'radial':
             center_x, center_y, radius0, radius1 = init
             init = (center_x, center_y / scale_y, radius0,
                     center_x, center_y / scale_y, radius1)
         page, = parse('<style>@page { background: ' + gradient_css)
         layer, = page.background.layers
-        ctm_scale_x, ctm_scale_y = ctm_scale
-        result = layer.image.layout(
-            400, 300, lambda dx, dy: (dx * ctm_scale_x, dy * ctm_scale_y))
+        result = layer.image.layout(400, 300)
         assert result[0] == scale_y
         assert result[1] == type_
         assert result[2] == (None if init is None else pytest.approx(init))
@@ -434,14 +427,6 @@ def test_radial_gradient():
            init=(200, 150, 0, 1e-7), scale_y=1e14)
     layout('repeating-radial-gradient(20px 40px, blue, lime)',
            init=(200, 150, 0, 20), scale_y=(40 / 20))
-    layout('repeating-radial-gradient(20px 40px, blue, lime)',
-           init=(200, 150, 0, 20), scale_y=(40 / 20), ctm_scale=(1 / 9, 1))
-    layout('repeating-radial-gradient(20px 40px, blue, lime)',
-           init=(200, 150, 0, 20), scale_y=(40 / 20), ctm_scale=(1, 1 / 19))
-    layout('repeating-radial-gradient(20px 40px, blue, lime)',
-           'solid', None, [], [(0, .5, .5, 1)], ctm_scale=((1 / 11), 1))
-    layout('repeating-radial-gradient(20px 40px, blue, lime)',
-           'solid', None, [], [(0, .5, .5, 1)], ctm_scale=(1, (1 / 21)))
     layout('repeating-radial-gradient(42px, blue -20px, lime 10px)',
            init=(200, 150, 10, 40))
     layout('repeating-radial-gradient(42px, blue -140px, lime -110px)',

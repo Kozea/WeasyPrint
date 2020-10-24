@@ -491,7 +491,7 @@ class RadialGradient(Gradient):
                         intermediate_color = gradient_average_color(
                             [neg_color, neg_color, color, color],
                             [neg_position, 0, 0, position])
-                        colors = [intermediate_color] + colors[i:]
+                        colors = (intermediate_color,) + colors[i:]
                         positions = [0] + positions[i:]
                         break
                 else:
