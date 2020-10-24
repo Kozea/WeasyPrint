@@ -112,16 +112,66 @@ def test_linear_gradients_7():
 @assert_no_logs
 def test_linear_gradients_8():
     assert_pixels('linear_gradient_8', 9, 5, '''
-        VVVVVVVVV
-        VVVVVVVVV
-        VVVVVVVVV
-        VVVVVVVVV
-        VVVVVVVVV
-    ''', '''
-      <style>
-        @page { size: 9px 5px; background: repeating-linear-gradient(
-                  to right, blue 50%, blue 60%, red 60%, red 90%);
-        background-size: 1px 1px''')
+        BBBBBBBBB
+        BBBBBBBBB
+        BBBBBBBBB
+        BBBBBBBBB
+        BBBBBBBBB
+    ''', '''<style>@page { size: 9px 5px; background: repeating-linear-gradient(
+      to right, blue 3px
+    )''')
+
+
+@assert_no_logs
+def test_linear_gradients_9():
+    assert_pixels('linear_gradient_9', 9, 5, '''
+        BBBBBBBBB
+        BBBBBBBBB
+        BBBBBBBBB
+        BBBBBBBBB
+        BBBBBBBBB
+    ''', '''<style>@page { size: 9px 5px; background: repeating-linear-gradient(
+      45deg, blue 3px
+    )''')
+
+
+@assert_no_logs
+def test_linear_gradients_10():
+    assert_pixels('linear_gradient_10', 9, 5, '''
+        BBBBBBBBB
+        BBBBBBBBB
+        BBBBBBBBB
+        BBBBBBBBB
+        BBBBBBBBB
+    ''', '''<style>@page { size: 9px 5px; background: linear-gradient(
+      45deg, blue 3px, red 3px, red 3px, blue 3px
+    )''')
+
+
+@assert_no_logs
+def test_linear_gradients_11():
+    assert_pixels('linear_gradient_11', 9, 5, '''
+        BBBrBBBBB
+        BBBrBBBBB
+        BBBrBBBBB
+        BBBrBBBBB
+        BBBrBBBBB
+    ''', '''<style>@page { size: 9px 5px; background: linear-gradient(
+      to right, blue 3px, red 3px, red 4px, blue 4px
+    )''')
+
+
+@assert_no_logs
+def test_linear_gradients_12():
+    assert_pixels('linear_gradient_12', 9, 5, '''
+        BBBBBBBBB
+        BBBBBBBBB
+        BBBBBBBBB
+        BBBBBBBBB
+        BBBBBBBBB
+    ''', '''<style>@page { size: 9px 5px; background: repeating-linear-gradient(
+      to right, red 3px, blue 3px, blue 4px, red 4px
+    )''')
 
 
 @assert_no_logs

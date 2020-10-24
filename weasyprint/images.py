@@ -194,26 +194,30 @@ def get_image_from_uri(cache, url_fetcher, optimize_images, url,
     return image
 
 
-def process_color_stops(gradient_line_size, positions):
-    """
-    Gradient line size: distance between the starting point and ending point.
-    Positions: list of None, or Dimension in px or %.
-               0 is the starting point, 1 the ending point.
+def process_color_stops(vector_length, positions):
+    """Give color stops positions on the gradient vector.
 
-    http://dev.w3.org/csswg/css-images-3/#color-stop-syntax
+    ``vector_length`` is the distance between the starting point and ending
+    point of the vector gradient.
+
+    ``positions`` is a list of ``None``, or ``Dimension`` in px or %. 0 is the
+    starting point, 1 the ending point.
+
+    See http://dev.w3.org/csswg/css-images-3/#color-stop-syntax.
 
     Return processed color stops, as a list of floats in px.
 
     """
-    positions = [
-        percentage(position, gradient_line_size) for position in positions]
+    # Resolve percentages
+    positions = [percentage(position, vector_length) for position in positions]
+
     # First and last default to 100%
     if positions[0] is None:
         positions[0] = 0
     if positions[-1] is None:
-        positions[-1] = gradient_line_size
+        positions[-1] = vector_length
 
-    # Make sure positions are increasing.
+    # Make sure positions are increasing
     previous_pos = positions[0]
     for i, position in enumerate(positions):
         if position is not None:
@@ -231,24 +235,32 @@ def process_color_stops(gradient_line_size, positions):
             for j in range(previous_i + 1, i):
                 positions[j] = base + j * increment
             previous_i = i
+
     return positions
 
 
-def normalize_stop_postions(positions):
-    """Normalize to [0..1]."""
-    first = positions[0]
-    last = positions[-1]
+def normalize_stop_positions(positions):
+    """Normalize stop positions between 0 and 1.
+
+    Return ``(first, last, positions)``.
+
+    first: original position of the first position.
+    last: original position of the last position.
+    positions: list of positions between 0 and 1.
+
+    """
+    first, last = positions[0], positions[-1]
     total_length = last - first
-    if total_length != 0:
-        positions = [(pos - first) / total_length for pos in positions]
+    if total_length == 0:
+        positions = [0] * len(positions)
     else:
-        positions = [0 for _ in positions]
+        positions = [(pos - first) / total_length for pos in positions]
     return first, last, positions
 
 
 def gradient_average_color(colors, positions):
     """
-    http://dev.w3.org/csswg/css-images-3/#find-the-average-color-of-a-gradient
+    http://dev.w3.org/csswg/css-images-3/#gradient-average-color
     """
     nb_stops = len(positions)
     assert nb_stops > 1
@@ -279,8 +291,8 @@ class Gradient:
     def __init__(self, color_stops, repeating):
         assert color_stops
         #: List of (r, g, b, a), list of Dimension
-        self.colors = [color for color, position in color_stops]
-        self.stop_positions = [position for color, position in color_stops]
+        self.colors = tuple(color for color, position in color_stops)
+        self.stop_positions = tuple(position for _, position in color_stops)
         #: bool
         self.repeating = repeating
 
@@ -291,74 +303,64 @@ class Gradient:
     intrinsic_ratio = None
 
     def draw(self, context, concrete_width, concrete_height, _image_rendering):
-        # TODO: handle user_to_device_distance
-        # TODO: handle alpha
-        scale_y, type_, matrix, stop_positions, stop_colors = self.layout(
-            concrete_width, concrete_height, lambda x, y: (x, y))
+        # TODO: handle alpha and color spaces
+        scale_y, type_, points, positions, colors = self.layout(
+            concrete_width, concrete_height)
 
         if type_ == 'solid':
             context.rectangle(0, 0, concrete_width, concrete_height)
-            context.set_color_rgb(*stop_colors[0][:3])
+            context.set_color_rgb(*colors[0][:3])
             context.fill()
             return
 
-        # Invisible colors at the beginning/end of the gradient don’t
-        # extend. Fix this problem by shifting the inner colors a little bit.
-        if stop_positions[0] == stop_positions[1]:
-            stop_positions[1] += 0.0001
-        if stop_positions[-2] == stop_positions[-1]:
-            stop_positions[-2] -= 0.0001
-
         shading = context.add_shading()
+
+        if self.repeating:
+            # TODO: handle repeating gradients
+            pass
+        else:
+            shading['Extend'] = pydyf.Array([b'true', b'true'])
+
         shading['ShadingType'] = 2 if type_ == 'linear' else 3
         shading['ColorSpace'] = '/DeviceRGB'
-        shading['Coords'] = pydyf.Array(matrix)
-        shading['Extend'] = pydyf.Array([b'true', b'true'])
-        if len(stop_colors) == 2:
-            shading['Function'] = pydyf.Dictionary({
-                'FunctionType': 2,
-                'Domain': pydyf.Array([0, 1]),
-                'C0': pydyf.Array(stop_colors[0][:3]),
-                'C1': pydyf.Array(stop_colors[1][:3]),
-                'N': 1,
-            })
-        else:
-            shading['Function'] = pydyf.Dictionary({
-                'FunctionType': 3,
-                'Domain': pydyf.Array([stop_positions[0], stop_positions[-1]]),
-                'Encode': pydyf.Array((len(stop_colors) - 1) * [0, 1]),
-                'Bounds': pydyf.Array(stop_positions[1:-1]),
-                'Functions': pydyf.Array([
-                    pydyf.Dictionary({
-                        'FunctionType': 2,
-                        'Domain': pydyf.Array([0, 1]),
-                        'C0': pydyf.Array(stop_colors[i][:3]),
-                        'C1': pydyf.Array(stop_colors[i + 1][:3]),
-                        'N': 1,
-                    }) for i in range(len(stop_colors) - 1)
-                ]),
-            })
-        shading['Domain'] = shading['Function']['Domain']
-        context.transform(1, 0, 0, scale_y, 0, 0)
+        shading['Coords'] = pydyf.Array(points)
+        shading['Matrix'] = pydyf.Array([1, 0, 0, scale_y, 0, 0])
+        shading['Function'] = pydyf.Dictionary({
+            'FunctionType': 3,
+            'Domain': pydyf.Array([positions[0], positions[-1]]),  # [0, 1]
+            'Encode': pydyf.Array((len(colors) - 1) * [0, 1]),
+            'Bounds': pydyf.Array(positions[1:-1]),
+            'Functions': pydyf.Array([
+                pydyf.Dictionary({
+                    'FunctionType': 2,
+                    'Domain': pydyf.Array([0, 1]),
+                    'C0': pydyf.Array(colors[i][:3]),
+                    'C1': pydyf.Array(colors[i + 1][:3]),
+                    'N': 1,
+                }) for i in range(len(colors) - 1)
+            ]),
+        })
         context.shading(shading.id)
 
-    def layout(self, width, height, user_to_device_distance):
+    def layout(self, width, height):
         """Get layout information about the gradient.
 
         width, height: Gradient box. Top-left is at coordinates (0, 0).
-        user_to_device_distance: a (dx, dy) -> (ddx, ddy) function.
 
-        Returns (scale_y, type_, init, positions, colors).
-        scale_y: float, used for ellipses radial gradients. 1 otherwise.
-        positions: list of floats in [0..1].
-                   0 at the starting point, 1 at the ending point.
-        colors: list of (r, g, b, a)
-        type_ is either:
-            'solid': init is (r, g, b, a). positions and colors are empty.
-            'linear': init is (x0, y0, x1, y1)
+        Returns (scale_y, type_, points, positions, colors).
+
+        scale_y: vertical scale of the gradient. float, used for ellipses
+                 radial gradients. 1 otherwise.
+        type_: gradient type.
+        points: coordinates of useful points, depending on type_:
+            'solid': None.
+            'linear': (x0, y0, x1, y1)
                       coordinates of the starting and ending points.
-            'radial': init is (cx0, cy0, radius0, cx1, cy1, radius1)
+            'radial': (cx0, cy0, radius0, cx1, cy1, radius1)
                       coordinates of the starting end ending circles
+        positions: positions of the color stops. list of floats in between 0
+                   and 1 (0 at the starting point, 1 at the ending point).
+        colors: list of (r, g, b, a).
 
         """
         raise NotImplementedError
@@ -367,49 +369,60 @@ class Gradient:
 class LinearGradient(Gradient):
     def __init__(self, color_stops, direction, repeating):
         Gradient.__init__(self, color_stops, repeating)
-        #: ('corner', keyword) or ('angle', radians)
+        # ('corner', keyword) or ('angle', radians)
         self.direction_type, self.direction = direction
 
-    def layout(self, width, height, user_to_device_distance):
+    def layout(self, width, height):
+        # Only one color, render the gradient as a solid color
         if len(self.colors) == 1:
             return 1, 'solid', None, [], [self.colors[0]]
-        # (dx, dy) is the unit vector giving the direction of the gradient.
+
+        # Define the (dx, dy) unit vector giving the direction of the gradient.
         # Positive dx: right, positive dy: down.
         if self.direction_type == 'corner':
-            factor_x, factor_y = {
-                'top_left': (-1, -1), 'top_right': (1, -1),
-                'bottom_left': (-1, 1), 'bottom_right': (1, 1)}[self.direction]
+            y, x = self.direction.split('_')
+            factor_x = -1 if x == 'top' else 1
+            factor_y = -1 if y == 'left' else 1
             diagonal = math.hypot(width, height)
             # Note the direction swap: dx based on height, dy based on width
             # The gradient line is perpendicular to a diagonal.
             dx = factor_x * height / diagonal
             dy = factor_y * width / diagonal
         else:
+            assert self.direction_type == 'angle'
             angle = self.direction  # 0 upwards, then clockwise
             dx = math.sin(angle)
             dy = -math.cos(angle)
-        # Distance between center and ending point,
-        # ie. half of between the starting point and ending point:
-        distance = abs(width * dx) + abs(height * dy)
-        positions = process_color_stops(distance, self.stop_positions)
-        first, last, positions = normalize_stop_postions(positions)
-        device_per_user_units = math.hypot(*user_to_device_distance(dx, dy))
-        if (last - first) * device_per_user_units < len(positions):
-            if self.repeating:
-                color = gradient_average_color(self.colors, positions)
-                return 1, 'solid', None, [], [color]
-            else:
-                # 100 is an Arbitrary non-zero number of device units.
-                offset = 100 / device_per_user_units
-                if first != last:
-                    factor = (offset + last - first) / (last - first)
-                    positions = [pos / factor for pos in positions]
-                last += offset
-        start_x = (width - dx * distance) / 2
-        start_y = (height - dy * distance) / 2
-        points = (start_x + dx * first, start_y + dy * first,
-                  start_x + dx * last, start_y + dy * last)
-        return 1, 'linear', points, positions, self.colors
+
+        # Normalize colors positions
+        colors = list(self.colors)
+        vector_length = abs(width * dx) + abs(height * dy)
+        positions = process_color_stops(vector_length, self.stop_positions)
+        if not self.repeating:
+            # Add explicit colors at boundaries if needed, because PDF doesn’t
+            # extend color stops that are not displayed
+            if positions[0] == positions[1]:
+                positions.insert(0, positions[0] - 1)
+                colors.insert(0, colors[0])
+            if positions[-2] == positions[-1]:
+                positions.append(positions[-1] + 1)
+                colors.append(colors[-1])
+        first, last, positions = normalize_stop_positions(positions)
+
+        # Render as a solid color if the first and last positions are the same
+        # See https://drafts.csswg.org/css-images-3/#repeating-gradients
+        if first == last and self.repeating:
+            color = gradient_average_color(colors, positions)
+            return 1, 'solid', None, [], [color]
+
+        # Define the coordinates of the starting and ending points
+        start_x = (width - dx * vector_length) / 2
+        start_y = (height - dy * vector_length) / 2
+        points = (
+            start_x + dx * first, start_y + dy * first,
+            start_x + dx * last, start_y + dy * last)
+
+        return 1, 'linear', points, positions, colors
 
 
 class RadialGradient(Gradient):
@@ -426,7 +439,7 @@ class RadialGradient(Gradient):
         #   size: (radius_x, radius_y)
         self.size_type, self.size = size
 
-    def layout(self, width, height, user_to_device_distance):
+    def layout(self, width, height):
         if len(self.colors) == 1:
             return 1, 'solid', None, [], [self.colors[0]]
         origin_x, center_x, origin_y, center_y = self.center
@@ -454,8 +467,7 @@ class RadialGradient(Gradient):
         gradient_line_size = positions[-1] - positions[0]
         if self.repeating and any(
                 gradient_line_size * unit < len(positions) for unit in (
-                    math.hypot(*user_to_device_distance(1, 0)),
-                    math.hypot(*user_to_device_distance(0, scale_y)))):
+                    math.hypot(1, 0), math.hypot(0, scale_y))):
             color = gradient_average_color(colors, positions)
             return 1, 'solid', None, [], [color]
 
@@ -487,7 +499,7 @@ class RadialGradient(Gradient):
                     # everything is "padded" with the last color.
                     return 1, 'solid', None, [], [self.colors[-1]]
 
-        first, last, positions = normalize_stop_postions(positions)
+        first, last, positions = normalize_stop_positions(positions)
         if last == first:
             last += 100  # Arbitrary non-zero
 
