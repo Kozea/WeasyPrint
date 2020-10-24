@@ -347,8 +347,6 @@ def test_linear_gradient():
 
     layout('linear-gradient(blue)', 'solid', None, [], [blue])
     layout('repeating-linear-gradient(blue)', 'solid', None, [], [blue])
-    layout('repeating-linear-gradient(blue, lime 1.5px)',
-           'solid', None, [], [(0, .5, .5, 1)])
     layout('linear-gradient(blue, lime)', init=(200, 0, 200, 300))
     layout('repeating-linear-gradient(blue, lime)', init=(200, 0, 200, 300))
     layout('repeating-linear-gradient(blue, lime 20px)',
@@ -384,8 +382,8 @@ def test_linear_gradient():
            init=(200, -100, 200, 150), colors=[blue, blue, red, lime],
            positions=[0, .4, .4, 1])
     layout('linear-gradient(blue, blue, red, lime -7px)',
-           init=(200, 0, 200, 100), colors=[blue, blue, red, lime],
-           positions=[0, 0, 0, 0])
+           init=(200, -1, 200, 1), colors=[blue, blue, blue, red, lime, lime],
+           positions=[0, 0.5, 0.5, 0.5, 0.5, 1])
     layout('repeating-linear-gradient(blue, blue, lime, lime -7px)',
            'solid', None, [], [(0, .5, .5, 1)])
 

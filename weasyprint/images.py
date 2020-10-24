@@ -381,8 +381,8 @@ class LinearGradient(Gradient):
         # Positive dx: right, positive dy: down.
         if self.direction_type == 'corner':
             y, x = self.direction.split('_')
-            factor_x = -1 if x == 'top' else 1
-            factor_y = -1 if y == 'left' else 1
+            factor_x = -1 if x == 'left' else 1
+            factor_y = -1 if y == 'top' else 1
             diagonal = math.hypot(width, height)
             # Note the direction swap: dx based on height, dy based on width
             # The gradient line is perpendicular to a diagonal.
@@ -470,9 +470,34 @@ class RadialGradient(Gradient):
             if positions[-2] == positions[-1]:
                 positions.append(positions[-1] + 1)
                 colors.append(colors[-1])
-        if positions[0] < 0 and not self.repeating:
-            # All stops are negatives, paint everything is with the last color
-            return 1, 'solid', None, [], [self.colors[-1]]
+        if positions[0] < 0:
+            # PDF doesn’t like negative radiuses, shift into the positive realm
+            if self.repeating:
+                # Add vector lengths to first position until positive
+                vector_length = positions[-1] - positions[0]
+                offset = vector_length * (1 + (-positions[0] // vector_length))
+                positions = [position + offset for position in positions]
+            else:
+                # Only keep colors with position >= 0, interpolate if needed
+                if positions[-1] <= 0:
+                    # All stops are negative, fill with the last color
+                    return 1, 'solid', None, [], [self.colors[-1]]
+                for i, position in enumerate(positions):
+                    if position == 0:
+                        # Keep colors and positions from this rank
+                        colors, positions = colors[i:], positions[i:]
+                        break
+                    if position > 0:
+                        # Interpolate with previous rank to get color at 0
+                        color = colors[i]
+                        previous_color = colors[i - 1]
+                        previous_position = positions[i - 1]
+                        intermediate_color = gradient_average_color(
+                            [previous_color, previous_color, color, color],
+                            [previous_position, 0, 0, position])
+                        colors = [intermediate_color] + colors[i:]
+                        positions = [0] + positions[i:]
+                        break
         first, last, positions = normalize_stop_positions(positions)
 
         # Render as a solid color if the first and last positions are the same
