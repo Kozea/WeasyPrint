@@ -202,26 +202,45 @@ def test_radial_gradients_2():
 
 @assert_no_logs
 def test_radial_gradients_3():
-    for thin, gradient in ((False, 'red 20%, blue 80%'),
-                           (True, 'red 50%, blue 50%')):
-        B, R = PIXELS_BY_CHAR['B'], PIXELS_BY_CHAR['R']
-        pixels = list(html_to_pixels(
-            'radial_gradient_' + gradient, 10, 16,
-            '<style>@page { size: 10px 16px; background: radial-gradient(%s)'
-            % gradient))
+    assert_pixels('radial_gradient_3', 10, 16, '''
+        BzzzzzzzzB
+        zzzzzzzzzz
+        zzzzzzzzzz
+        zzzzzzzzzz
+        zzzzzzzzzz
+        zzzzzzzzzz
+        zzzzzzzzzz
+        zzzzRRzzzz
+        zzzzRRzzzz
+        zzzzzzzzzz
+        zzzzzzzzzz
+        zzzzzzzzzz
+        zzzzzzzzzz
+        zzzzzzzzzz
+        zzzzzzzzzz
+        BzzzzzzzzB
+    ''', '''<style>@page { size: 10px 16px; background:
+      radial-gradient(red 20%, blue 80%)''')
 
-        def pixel(x, y):
-            return pixels[x + 10 * y]
 
-        assert pixel(0, 0) == B
-        assert pixel(9, 0) == B
-        assert pixel(0, 15) == B
-        assert pixel(9, 15) == B
-        assert pixel(4, 7) == R
-        assert pixel(4, 8) == R
-        assert pixel(5, 7) == R
-        assert pixel(5, 8) == R
-        assert (pixel(3, 5) not in (B, R)) ^ thin
-        assert (pixel(3, 9) not in (B, R)) ^ thin
-        assert (pixel(7, 5) not in (B, R)) ^ thin
-        assert (pixel(7, 9) not in (B, R)) ^ thin
+@assert_no_logs
+def test_radial_gradients_4():
+    assert_pixels('radial_gradient_4', 10, 16, '''
+        BzzzzzzzzB
+        zzzzzzzzzz
+        zzzzzzzzzz
+        zzzzzzzzzz
+        zzzzzzzzzz
+        zzzzzzzzzz
+        zzzzzzzzzz
+        zzzzRRzzzz
+        zzzzRRzzzz
+        zzzzzzzzzz
+        zzzzzzzzzz
+        zzzzzzzzzz
+        zzzzzzzzzz
+        zzzzzzzzzz
+        zzzzzzzzzz
+        BzzzzzzzzB
+    ''', '''<style>@page { size: 10px 16px; background:
+      radial-gradient(red 50%, blue 50%)''')

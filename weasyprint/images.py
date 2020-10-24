@@ -324,7 +324,6 @@ class Gradient:
         shading['ShadingType'] = 2 if type_ == 'linear' else 3
         shading['ColorSpace'] = '/DeviceRGB'
         shading['Coords'] = pydyf.Array(points)
-        shading['Matrix'] = pydyf.Array([1, 0, 0, scale_y, 0, 0])
         shading['Function'] = pydyf.Dictionary({
             'FunctionType': 3,
             'Domain': pydyf.Array([positions[0], positions[-1]]),  # [0, 1]
@@ -340,6 +339,7 @@ class Gradient:
                 }) for i in range(len(colors) - 1)
             ]),
         })
+        context.transform(1, 0, 0, scale_y, 0, 0)
         context.shading(shading.id)
 
     def layout(self, width, height):
@@ -440,8 +440,11 @@ class RadialGradient(Gradient):
         self.size_type, self.size = size
 
     def layout(self, width, height):
+        # Only one color, render the gradient as a solid color
         if len(self.colors) == 1:
             return 1, 'solid', None, [], [self.colors[0]]
+
+        # Define the center of the gradient
         origin_x, center_x, origin_y, center_y = self.center
         center_x = percentage(center_x, width)
         center_y = percentage(center_y, height)
@@ -450,62 +453,39 @@ class RadialGradient(Gradient):
         if origin_y == 'bottom':
             center_y = height - center_y
 
+        # Resolve sizes and vertical scale
         size_x, size_y = self._resolve_size(width, height, center_x, center_y)
-        # http://dev.w3.org/csswg/css-images-3/#degenerate-radials
-        if size_x == size_y == 0:
-            size_x = size_y = 1e-7
-        elif size_x == 0:
-            size_x = 1e-7
-            size_y = 1e7
-        elif size_y == 0:
-            size_x = 1e7
-            size_y = 1e-7
         scale_y = size_y / size_x
 
-        colors = self.colors
+        # Normalize colors positions
+        colors = list(self.colors)
         positions = process_color_stops(size_x, self.stop_positions)
-        gradient_line_size = positions[-1] - positions[0]
-        if self.repeating and any(
-                gradient_line_size * unit < len(positions) for unit in (
-                    math.hypot(1, 0), math.hypot(0, scale_y))):
+        if not self.repeating:
+            # Add explicit colors at boundaries if needed, because PDF doesn’t
+            # extend color stops that are not displayed
+            if positions[0] > 0 and positions[0] == positions[1]:
+                positions.insert(0, 0)
+                colors.insert(0, colors[0])
+            if positions[-2] == positions[-1]:
+                positions.append(positions[-1] + 1)
+                colors.append(colors[-1])
+        if positions[0] < 0 and not self.repeating:
+            # All stops are negatives, paint everything is with the last color
+            return 1, 'solid', None, [], [self.colors[-1]]
+        first, last, positions = normalize_stop_positions(positions)
+
+        # Render as a solid color if the first and last positions are the same
+        # See https://drafts.csswg.org/css-images-3/#repeating-gradients
+        if first == last and self.repeating:
             color = gradient_average_color(colors, positions)
             return 1, 'solid', None, [], [color]
 
-        if positions[0] < 0:
-            # PDF does not like negative radiuses,
-            # shift into the positive realm.
-            if self.repeating:
-                offset = gradient_line_size * math.ceil(
-                    -positions[0] / gradient_line_size)
-                positions = [p + offset for p in positions]
-            else:
-                for i, position in enumerate(positions):
-                    if position > 0:
-                        # `i` is the first positive stop.
-                        # Interpolate with the previous to get the color at 0.
-                        assert i > 0
-                        color = colors[i]
-                        neg_color = colors[i - 1]
-                        neg_position = positions[i - 1]
-                        assert neg_position < 0
-                        intermediate_color = gradient_average_color(
-                            [neg_color, neg_color, color, color],
-                            [neg_position, 0, 0, position])
-                        colors = (intermediate_color,) + colors[i:]
-                        positions = [0] + positions[i:]
-                        break
-                else:
-                    # All stops are negatives,
-                    # everything is "padded" with the last color.
-                    return 1, 'solid', None, [], [self.colors[-1]]
+        # Define the coordinates of the gradient circles
+        points = (
+            center_x, center_y / scale_y, first,
+            center_x, center_y / scale_y, last)
 
-        first, last, positions = normalize_stop_positions(positions)
-        if last == first:
-            last += 100  # Arbitrary non-zero
-
-        circles = (center_x, center_y / scale_y, first,
-                   center_x, center_y / scale_y, last)
-        return scale_y, 'radial', circles, positions, colors
+        return scale_y, 'radial', points, positions, colors
 
     def _resolve_size(self, width, height, center_x, center_y):
         if self.size_type == 'explicit':
@@ -534,3 +514,16 @@ class RadialGradient(Gradient):
             (left, top), (left, bottom), (right, top), (right, bottom),
             key=lambda a: math.hypot(*a))
         return corner_x * math.sqrt(2), corner_y * math.sqrt(2)
+
+    def _handle_degenerate(self, size_x, size_y):
+        # Handle degenerate radial gradients
+        # See https://drafts.csswg.org/css-images-3/#degenerate-radials
+        if size_x == size_y == 0:
+            size_x = size_y = 1e-7
+        elif size_x == 0:
+            size_x = 1e-7
+            size_y = 1e7
+        elif size_y == 0:
+            size_x = 1e7
+            size_y = 1e-7
+        return size_x, size_y
