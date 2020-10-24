@@ -454,7 +454,8 @@ class RadialGradient(Gradient):
             center_y = height - center_y
 
         # Resolve sizes and vertical scale
-        size_x, size_y = self._resolve_size(width, height, center_x, center_y)
+        size_x, size_y = self._handle_degenerate(
+            *self._resolve_size(width, height, center_x, center_y))
         scale_y = size_y / size_x
 
         # Normalize colors positions
