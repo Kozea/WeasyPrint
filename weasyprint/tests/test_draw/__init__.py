@@ -27,6 +27,7 @@ PIXELS_BY_CHAR = dict(
     h=(64, 0, 64),  # half average of B and R.
     a=(0, 0, 254),  # JPG is lossy...
     p=(192, 0, 63),  # R above R above B above #fff.
+    z=None,
 )
 
 # NOTE: "r" is not half red on purpose. In the pixel strings it has
@@ -127,9 +128,13 @@ def assert_pixels_equal(name, width, height, raw, expected_raw, tolerance=0):
     """Take 2 matrices of pixels and assert that they are the same."""
     if raw != expected_raw:  # pragma: no cover
         for i, (value, expected) in enumerate(zip(raw, expected_raw)):
+            if expected is None:
+                continue
             if any(abs(value - expected) > tolerance
                    for value, expected in zip(value, expected)):
                 write_png(name, raw, width, height)
+                expected_raw = [
+                    pixel or (255, 255, 255) for pixel in expected_raw]
                 write_png(name + '.expected', expected_raw, width, height)
                 x = i // width
                 y = i % width
