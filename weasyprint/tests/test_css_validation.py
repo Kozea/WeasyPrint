@@ -795,7 +795,7 @@ def test_linear_gradient():
     blue = (0, 0, 1, 1)
     pi = math.pi
 
-    def gradient(css, direction, colors=[blue], stop_positions=[None]):
+    def gradient(css, direction, colors=(blue,), stop_positions=(None,)):
         for repeating, prefix in ((False, ''), (True, 'repeating-')):
             expanded = expand_to_dict(
                 'background-image: %slinear-gradient(%s)' % (prefix, css))
@@ -808,8 +808,8 @@ def test_linear_gradient():
                 image.direction == direction[1]
             else:
                 assert image.direction == pytest.approx(direction[1])
-            assert image.colors == colors
-            assert image.stop_positions == stop_positions
+            assert image.colors == tuple(colors)
+            assert image.stop_positions == tuple(stop_positions)
 
     def invalid(css):
         assert_invalid('background-image: linear-gradient(%s)' % css)
@@ -885,7 +885,7 @@ def test_radial_gradient():
 
     def gradient(css, shape='ellipse', size=('keyword', 'farthest-corner'),
                  center=('left', (50, '%'), 'top', (50, '%')),
-                 colors=[blue], stop_positions=[None]):
+                 colors=(blue,), stop_positions=(None,)):
         for repeating, prefix in ((False, ''), (True, 'repeating-')):
             expanded = expand_to_dict(
                 'background-image: %sradial-gradient(%s)' % (prefix, css))
@@ -897,8 +897,8 @@ def test_radial_gradient():
             assert image.size_type == size[0]
             assert image.size == size[1]
             assert image.center == center
-            assert image.colors == colors
-            assert image.stop_positions == stop_positions
+            assert image.colors == tuple(colors)
+            assert image.stop_positions == tuple(stop_positions)
 
     def invalid(css):
         assert_invalid('background-image: radial-gradient(%s)' % css)
