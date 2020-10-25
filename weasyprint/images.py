@@ -424,9 +424,13 @@ class LinearGradient(Gradient):
                 positions[i + 1] - positions[i]
                 for i in range(len(positions) - 1)]
 
-            # Add colors after last step
+            # Create cycles used to add colors
             next_steps = cycle([0] + position_steps)
             next_colors = cycle(colors)
+            previous_steps = cycle([0] + position_steps[::-1])
+            previous_colors = cycle(colors[::-1])
+
+            # Add colors after last step
             while last < vector_length:
                 step = next(next_steps)
                 colors.append(next(next_colors))
@@ -434,8 +438,6 @@ class LinearGradient(Gradient):
                 last += step * stop_length
 
             # Add colors before last step
-            previous_steps = cycle([0] + position_steps[::-1])
-            previous_colors = cycle(colors[::-1])
             while first > 0:
                 step = next(previous_steps)
                 colors.insert(0, next(previous_colors))
