@@ -349,8 +349,8 @@ def test_linear_gradient():
     layout('repeating-linear-gradient(blue)', 'solid', None, [], [blue])
     layout('linear-gradient(blue, lime)', init=(200, 0, 200, 300))
     layout('repeating-linear-gradient(blue, lime)', init=(200, 0, 200, 300))
-    layout('repeating-linear-gradient(blue, lime 20px)',
-           init=(200, 0, 200, 20))
+    layout('repeating-linear-gradient(blue, lime 100px)',
+           positions=[0, 1, 1, 2, 2, 3], init=(200, 0, 200, 300))
 
     layout('linear-gradient(to bottom, blue, lime)', init=(200, 0, 200, 300))
     layout('linear-gradient(to top, blue, lime)', init=(200, 300, 200, 0))
@@ -423,12 +423,12 @@ def test_radial_gradient():
            init=(200, 150, 0, 1e7), scale_y=1e-14)
     layout('radial-gradient(0 1px, blue, lime)',
            init=(200, 150, 0, 1e-7), scale_y=1e14)
-    layout('repeating-radial-gradient(20px 40px, blue, lime)',
-           init=(200, 150, 0, 20), scale_y=(40 / 20))
-    layout('repeating-radial-gradient(42px, blue -20px, lime 10px)',
-           init=(200, 150, 10, 40))
-    layout('repeating-radial-gradient(42px, blue -140px, lime -110px)',
-           init=(200, 150, 10, 40))
+    layout('repeating-radial-gradient(100px 200px, blue, lime)',
+           positions=[0, 1, 1, 2, 2, 3], init=(200, 150, 0, 300),
+           scale_y=(200 / 100))
+    layout('repeating-radial-gradient(42px, blue -100px, lime 100px)',
+           positions=[-0.5, 0, 0, 1], init=(200, 150, 0, 300),
+           colors=[(0, 0.5, 0.5, 1), lime, blue, lime])
     layout('radial-gradient(42px, blue -20px, lime -1px)',
            'solid', None, [], [lime])
     layout('radial-gradient(42px, blue -20px, lime 0)',
