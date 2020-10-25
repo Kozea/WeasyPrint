@@ -391,6 +391,10 @@ class LinearGradient(Gradient):
             dx = math.sin(angle)
             dy = -math.cos(angle)
 
+        # Round dx and dy to avoid floating points errors caused by
+        # trigonometry and angle units conversions
+        dx, dy = round(dx, 9), round(dy, 9)
+
         # Normalize colors positions
         colors = list(self.colors)
         vector_length = abs(width * dx) + abs(height * dy)
@@ -421,7 +425,7 @@ class LinearGradient(Gradient):
                 for i in range(len(positions) - 1)]
 
             # Add colors after last step
-            next_steps = cycle(position_steps)
+            next_steps = cycle([0] + position_steps)
             next_colors = cycle(colors)
             while last < vector_length:
                 step = next(next_steps)
@@ -430,10 +434,10 @@ class LinearGradient(Gradient):
                 last += step * stop_length
 
             # Add colors before last step
-            previous_steps = cycle(position_steps[::-1])
+            previous_steps = cycle([0] + position_steps[::-1])
             previous_colors = cycle(colors[::-1])
             while first > 0:
-                step = 1 - next(previous_steps)
+                step = next(previous_steps)
                 colors.insert(0, next(previous_colors))
                 positions.insert(0, positions[0] - step)
                 first -= step * stop_length
