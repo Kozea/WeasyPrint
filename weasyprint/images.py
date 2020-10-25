@@ -314,19 +314,13 @@ class Gradient:
             return
 
         shading = context.add_shading()
-
-        if self.repeating:
-            # TODO: handle repeating gradients
-            pass
-        else:
-            shading['Extend'] = pydyf.Array([b'true', b'true'])
-
         shading['ShadingType'] = 2 if type_ == 'linear' else 3
         shading['ColorSpace'] = '/DeviceRGB'
+        shading['Domain'] = pydyf.Array([positions[0], positions[-1]])
         shading['Coords'] = pydyf.Array(points)
         shading['Function'] = pydyf.Dictionary({
             'FunctionType': 3,
-            'Domain': pydyf.Array([positions[0], positions[-1]]),  # [0, 1]
+            'Domain': pydyf.Array([positions[0], positions[-1]]),
             'Encode': pydyf.Array((len(colors) - 1) * [0, 1]),
             'Bounds': pydyf.Array(positions[1:-1]),
             'Functions': pydyf.Array([
@@ -339,6 +333,8 @@ class Gradient:
                 }) for i in range(len(colors) - 1)
             ]),
         })
+        if not self.repeating:
+            shading['Extend'] = pydyf.Array([b'true', b'true'])
         context.transform(1, 0, 0, scale_y, 0, 0)
         context.shading(shading.id)
 
@@ -492,6 +488,7 @@ class RadialGradient(Gradient):
                         color = colors[i]
                         previous_color = colors[i - 1]
                         previous_position = positions[i - 1]
+                        assert previous_position < 0
                         intermediate_color = gradient_average_color(
                             [previous_color, previous_color, color, color],
                             [previous_position, 0, 0, position])
@@ -511,7 +508,94 @@ class RadialGradient(Gradient):
             center_x, center_y / scale_y, first,
             center_x, center_y / scale_y, last)
 
+        if self.repeating:
+            points, positions, colors = self._repeat(
+                width, height, scale_y, points, positions, colors)
+
         return scale_y, 'radial', points, positions, colors
+
+    def _repeat(self, width, height, scale_y, points, positions, colors):
+        # Keep original lists and values, they’re useful
+        original_colors = colors.copy()
+        original_positions = positions.copy()
+        gradient_length = points[5] - points[2]
+
+        # Get the maximum distance between the center and the corners, to find
+        # how many times we have to repeat the colors outside
+        max_distance = max(
+            math.hypot(width - points[0], height / scale_y - points[1]),
+            math.hypot(width - points[0], -points[1] * scale_y),
+            math.hypot(-points[0], height / scale_y - points[1]),
+            math.hypot(-points[0], -points[1] * scale_y))
+        repeat_after = math.ceil((max_distance - points[5]) / gradient_length)
+        if repeat_after > 0:
+            # Repeat colors and extrapolate positions
+            repeat = 1 + repeat_after
+            colors *= repeat
+            positions = [
+                i + position for i in range(repeat) for position in positions]
+            points = points[:5] + (points[5] + gradient_length * repeat_after,)
+
+        if points[2] == 0:
+            # Inner circle has 0 radius, no need to repeat inside, return
+            return points, positions, colors
+
+        # Find how many times we have to repeat the colors inside
+        repeat_before = points[2] / gradient_length
+
+        # Set the inner circle size to 0
+        points = points[:2] + (0,) + points[3:]
+
+        # Find how many times the whole gradient can be repeated
+        full_repeat = int(repeat_before)
+        if full_repeat:
+            # Repeat colors and extrapolate positions
+            colors += original_colors * full_repeat
+            positions = [
+                i - full_repeat + position for i in range(full_repeat)
+                for position in original_positions] + positions
+
+        # Find the ratio of gradient that must be added to reach the center
+        partial_repeat = repeat_before - full_repeat
+        if partial_repeat == 0:
+            # No partial repeat, return
+            return points, positions, colors
+
+        # Iterate through positions in reverse order, from the outer
+        # circle to the original inner circle, to find positions from
+        # the inner circle (including full repeats) to the center
+        assert (original_positions[0], original_positions[-1]) == (0, 1)
+        assert 0 < partial_repeat < 1
+        reverse = original_positions[::-1]
+        ratio = 1 - partial_repeat
+        for i, position in enumerate(reverse, start=1):
+            if position == ratio:
+                # The center is a color of the gradient, truncate original
+                # colors and positions and prepend them
+                colors = original_colors[-i:] + colors
+                new_positions = [
+                    position - full_repeat - 1
+                    for position in original_positions[-i:]]
+                positions = new_positions + positions
+                return points, positions, colors
+            if position < ratio:
+                # The center is between two colors of the gradient,
+                # define the center color as the average of these two
+                # gradient colors
+                color = original_colors[-i]
+                next_color = original_colors[-(i - 1)]
+                next_position = original_positions[-(i - 1)]
+                average_colors = [color, color, next_color, next_color]
+                average_positions = [position, ratio, ratio, next_position]
+                zero_color = gradient_average_color(
+                    average_colors, average_positions)
+                colors = [zero_color] + original_colors[-(i - 1):] + colors
+                new_positions = [
+                    position - 1 - full_repeat for position
+                    in original_positions[-(i - 1):]]
+                positions = (
+                    [ratio - 1 - full_repeat] + new_positions + positions)
+                return points, positions, colors
 
     def _resolve_size(self, width, height, center_x, center_y):
         """Resolve circle size of the radial gradient."""
