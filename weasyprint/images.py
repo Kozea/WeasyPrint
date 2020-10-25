@@ -8,6 +8,7 @@
 
 import math
 from io import BytesIO
+from itertools import cycle
 from xml.etree import ElementTree
 
 import cairosvg.parser
@@ -405,11 +406,37 @@ class LinearGradient(Gradient):
                 colors.append(colors[-1])
         first, last, positions = normalize_stop_positions(positions)
 
-        # Render as a solid color if the first and last positions are the same
-        # See https://drafts.csswg.org/css-images-3/#repeating-gradients
-        if first == last and self.repeating:
-            color = gradient_average_color(colors, positions)
-            return 1, 'solid', None, [], [color]
+        if self.repeating:
+            # Render as a solid color if the first and last positions are equal
+            # See https://drafts.csswg.org/css-images-3/#repeating-gradients
+            if first == last:
+                color = gradient_average_color(colors, positions)
+                return 1, 'solid', None, [], [color]
+
+            # Define defined gradient length and steps between positions
+            stop_length = last - first
+            assert stop_length > 0
+            position_steps = [
+                positions[i + 1] - positions[i]
+                for i in range(len(positions) - 1)]
+
+            # Add colors after last step
+            next_steps = cycle(position_steps)
+            next_colors = cycle(colors)
+            while last < vector_length:
+                step = next(next_steps)
+                colors.append(next(next_colors))
+                positions.append(positions[-1] + step)
+                last += step * stop_length
+
+            # Add colors before last step
+            previous_steps = cycle(position_steps[::-1])
+            previous_colors = cycle(colors[::-1])
+            while first > 0:
+                step = 1 - next(previous_steps)
+                colors.insert(0, next(previous_colors))
+                positions.insert(0, positions[0] - step)
+                first -= step * stop_length
 
         # Define the coordinates of the starting and ending points
         start_x = (width - dx * vector_length) / 2
