@@ -430,7 +430,7 @@ class RadialGradient(Gradient):
         Gradient.__init__(self, color_stops, repeating)
         # Center of the ending shape. (origin_x, pos_x, origin_y, pos_y)
         self.center = center
-        #: Type of ending shape: 'circle' or 'ellipse'
+        # Type of ending shape: 'circle' or 'ellipse'
         self.shape = shape
         # size_type: 'keyword'
         #   size: 'closest-corner', 'farthest-corner',
@@ -514,6 +514,7 @@ class RadialGradient(Gradient):
         return scale_y, 'radial', points, positions, colors
 
     def _resolve_size(self, width, height, center_x, center_y):
+        """Resolve circle size of the radial gradient."""
         if self.size_type == 'explicit':
             size_x, size_y = self.size
             size_x = percentage(size_x, width)
@@ -542,8 +543,11 @@ class RadialGradient(Gradient):
         return corner_x * math.sqrt(2), corner_y * math.sqrt(2)
 
     def _handle_degenerate(self, size_x, size_y):
-        # Handle degenerate radial gradients
-        # See https://drafts.csswg.org/css-images-3/#degenerate-radials
+        """Handle degenerate radial gradients.
+
+        See https://drafts.csswg.org/css-images-3/#degenerate-radials
+
+        """
         if size_x == size_y == 0:
             size_x = size_y = 1e-7
         elif size_x == 0:
