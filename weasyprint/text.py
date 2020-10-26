@@ -1041,9 +1041,9 @@ def split_first_line(text, style, context, max_width, justification_spacing,
     # Step #3: Try to put the first word of the second line on the first line
     # https://mail.gnome.org/archives/gtk-i18n-list/2013-September/msg00006
     # is a good thread related to this problem.
-    if first_line_width <= max_width:
+    first_line_text = utf8_slice(text, slice(index))
+    if first_line_width <= max_width or ' ' in first_line_text.strip():
         # The first line may have been cut too early by Pango
-        first_line_text = utf8_slice(text, slice(index))
         second_line_text = utf8_slice(text, slice(index, None))
     else:
         # We try to know whether the line could have split earlier. We can’t
@@ -1055,7 +1055,6 @@ def split_first_line(text, style, context, max_width, justification_spacing,
         zero_first_line_width, _ = get_size(zero_first_line, style)
         if zero_first_line_width < first_line_width:
             # The line can be split earlier, it actually fits.
-            first_line_text = utf8_slice(text, slice(index))
             if index is None:
                 second_line_text = ''
             else:
