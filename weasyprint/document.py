@@ -12,13 +12,11 @@ import math
 import shutil
 import zlib
 from os.path import basename
-from subprocess import run
 from urllib.parse import unquote, urlsplit
 
 import pydyf
 from fontTools import subset
 from fontTools.ttLib import TTFont, TTLibError
-from PIL import Image
 
 from . import CSS, Attachment, __version__
 from .css import get_all_computed_styles
@@ -894,11 +892,6 @@ class Document:
             document.copy(document.pages[::2]).write_pdf('odd_pages.pdf')
             document.copy(document.pages[1::2]).write_pdf('even_pages.pdf')
 
-        Write each page to a numbred PNG file::
-
-            for i, page in enumerate(document.pages):
-                document.copy(page).write_png(f'page_{i}.png')
-
         Combine multiple documents into one PDF file,
         using metadata from the first::
 
@@ -1286,70 +1279,3 @@ class Document:
             else:
                 with open(target, 'wb') as fd:
                     shutil.copyfileobj(file_obj, fd)
-
-    def write_png(self, target=None, resolution=96, antialiasing=1):
-        """Paint the pages vertically to a single PNG image.
-
-        There is no decoration around pages other than those specified in CSS
-        with ``@page`` rules. The final image is as wide as the widest page.
-        Each page is below the previous one, centered horizontally.
-
-        :param target:
-            A filename, file-like object, or :obj:`None`.
-        :type resolution: float
-        :param resolution:
-            The output resolution in PNG pixels per CSS inch. At 96 dpi
-            (the default), PNG pixels match the CSS ``px`` unit.
-        :type antialiasing: int
-        :param antialiasing:
-            The antialiasing subsampling box size. Default is 1 (disabled), can
-            be set to 4 for optimal (but slow) antialiasing.
-        :returns:
-            A ``(png_bytes, png_width, png_height)`` tuple. ``png_bytes`` is a
-            byte string if ``target`` is :obj:`None`, otherwise :obj:`None`
-            (the image is written to ``target``).  ``png_width`` and
-            ``png_height`` are the size of the final image, in PNG pixels.
-
-        """
-        # TODO: don’t crash if GhostScript can’t be found
-        # TODO: fix that for Windows
-        command = [
-            'gs', '-q', '-sstdout=%stderr', '-dNOPAUSE', '-dSAFER',
-            f'-dTextAlphaBits={antialiasing}',
-            f'-dGraphicsAlphaBits={antialiasing}', '-sDEVICE=png16m',
-            f'-r{resolution}', '-sOutputFile=-', '-']
-        command = run(command, input=self.write_pdf(), capture_output=True)
-        pngs = command.stdout
-        magic_number = b'\x89\x50\x4e\x47\x0d\x0a\x1a\x0a'
-
-        # TODO: use a different way to find PNG files in stream
-        if pngs.count(magic_number) == 1:
-            if target is None:
-                return pngs
-            png = io.BytesIO(pngs)
-        else:
-            images = []
-            for i, png in enumerate(pngs[8:].split(magic_number)):
-                images.append(Image.open(io.BytesIO(magic_number + png)))
-
-            width = max(image.width for image in images)
-            height = sum(image.height for image in images)
-            output_image = Image.new('RGBA', (width, height))
-            top = 0
-            for image in images:
-                output_image.paste(
-                    image, (int((width - image.width) / 2), top))
-                top += image.height
-            png = io.BytesIO()
-            output_image.save(png, format='png')
-
-        png.seek(0)
-
-        if target is None:
-            return png.read()
-
-        if hasattr(target, 'write'):
-            shutil.copyfileobj(png, target)
-        else:
-            with open(target, 'wb') as fd:
-                shutil.copyfileobj(png, fd)

@@ -209,58 +209,6 @@ class HTML:
                 counter_style=counter_style, image_cache=image_cache)
             .write_pdf(target, zoom, attachments))
 
-    def write_png(self, target=None, stylesheets=None, resolution=96,
-                  presentational_hints=False, optimize_images=False,
-                  font_config=None, counter_style=None, image_cache=None):
-        """Paint the pages vertically to a single PNG image.
-
-        There is no decoration around pages other than those specified in CSS
-        with ``@page`` rules. The final image is as wide as the widest page.
-        Each page is below the previous one, centered horizontally.
-
-        This is a shortcut for calling :meth:`render`, then
-        :meth:`Document.write_png() <document.Document.write_png>`.
-
-        :type target: str, pathlib.Path or file object
-        :param target:
-            A filename where the PNG file is generated, a file object, or
-            :obj:`None`.
-        :type stylesheets: list
-        :param stylesheets:
-            An optional list of user stylesheets. The list's elements
-            are :class:`CSS` objects, filenames, URLs, or file-like
-            objects. (See :ref:`stylesheet-origins`.)
-        :type resolution: float
-        :param resolution:
-            The output resolution in PNG pixels per CSS inch. At 96 dpi
-            (the default), PNG pixels match the CSS ``px`` unit.
-        :type antialiasing: int
-        :param antialiasing:
-            The antialiasing subsampling box size. Default is 1 (disabled), can
-            be set to 4 for optimal (but slow) antialiasing.
-        :type presentational_hints: bool
-        :param presentational_hints: Whether HTML presentational hints are
-            followed.
-        :type optimize_images: bool
-        :param optimize_images: Try to optimize the size of embedded images.
-        :type font_config: :class:`~fonts.FontConfiguration`
-        :param font_config: A font configuration handling ``@font-face`` rules.
-        :type counter_style: :class:`~css.counters.CounterStyle`
-        :param counter_style: A dictionary storing ``@counter-style`` rules.
-        :type image_cache: dict
-        :param image_cache: A dictionary used to cache images.
-        :returns:
-            The image as :obj:`bytes` if ``target`` is not provided or
-            :obj:`None`, otherwise :obj:`None` (the image is written to
-            ``target``.)
-
-        """
-        return self.render(
-            stylesheets, presentational_hints=presentational_hints,
-            optimize_images=optimize_images, font_config=font_config,
-            counter_style=counter_style, image_cache=image_cache).write_png(
-                target, resolution)
-
 
 class CSS:
     """CSS stylesheet parsed by tinycss2.
@@ -273,8 +221,8 @@ class CSS:
     used for different ``CSS`` objects applied to the same document.
 
     ``CSS`` objects have no public attributes or methods. They are only meant
-    to be used in the :meth:`~HTML.write_pdf`, :meth:`~HTML.write_png` and
-    :meth:`~HTML.render` methods of :class:`HTML` objects.
+    to be used in the :meth:`~HTML.write_pdf` and :meth:`~HTML.render` methods
+    of :class:`HTML` objects.
 
     """
     def __init__(self, guess=None, filename=None, url=None, file_obj=None,

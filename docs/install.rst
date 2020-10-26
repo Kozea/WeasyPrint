@@ -57,20 +57,6 @@ Now let’s try it:
 You should see warnings about unsupported CSS 3 stuff; this is expected.
 In the PDF you should see the WeasyPrint logo on the first page.
 
-You can also play with :ref:`navigator` or :ref:`renderer`. Start it with
-
-.. code-block:: sh
-
-    python -m weasyprint.tools.navigator
-
-or
-
-.. code-block:: sh
-
-    python -m weasyprint.tools.renderer
-
-and open your browser at http://127.0.0.1:5000/.
-
 If everything goes well, you’re ready to :doc:`start using </tutorial>`
 WeasyPrint! Otherwise, please copy the full error message and
 `report the problem <https://github.com/Kozea/WeasyPrint/issues/>`_.

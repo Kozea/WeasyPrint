@@ -136,9 +136,8 @@ If you have ``@font-face`` rules in your CSS, you have to create a
 Rendering to a single file
 ..........................
 
-Once you have a :class:`HTML` object, call its :meth:`~HTML.write_pdf` or
-:meth:`~HTML.write_png` method to get the rendered document in a single
-PDF or PNG file.
+Once you have a :class:`HTML` object, call its :meth:`~HTML.write_pdf` method
+to get the rendered document in a single PDF or PNG file.
 
 Without arguments, these methods return a byte string in memory. If you
 pass a file name or a writable :term:`file object`, they will write there
@@ -151,14 +150,13 @@ Individual pages, meta-data, other output formats, …
 
 .. currentmodule:: weasyprint.document
 
-If you want more than a single PDF, the :meth:`~weasyprint.HTML.render`
-method gives you a :class:`Document` object with access to individual
-:class:`Page` objects. Thus you can get the number of pages, their size\ [#]_,
-the details of hyperlinks and bookmarks, etc.
-Documents also have :meth:`~Document.write_pdf` and :meth:`~Document.write_png`
-methods, and you can get a subset of the pages with :meth:`~Document.copy()`.
-Finally, for ultimate control, :meth:`~Page.paint` individual pages anywhere
-on any type of cairo surface.
+If you want more than a single PDF, the :meth:`~weasyprint.HTML.render` method
+gives you a :class:`Document` object with access to individual :class:`Page`
+objects. Thus you can get the number of pages, their size\ [#]_, the details of
+hyperlinks and bookmarks, etc.  Documents also have a
+:meth:`~Document.write_pdf` method, and you can get a subset of the pages with
+:meth:`~Document.copy()`.  Finally, for ultimate control, :meth:`~Page.paint`
+individual pages anywhere on any type of cairo surface.
 
 .. [#] Pages in the same document do not always have the same size.
 
@@ -171,20 +169,6 @@ See the :ref:`python-api` for details. A few random examples:
     #   [::2] is a slice of even list indexes but odd-numbered pages.
     document.copy(document.pages[::2]).write_pdf('odd_pages.pdf')
     document.copy(document.pages[1::2]).write_pdf('even_pages.pdf')
-
-.. code-block:: python
-
-    # Write one PNG image per page:
-    for i, page in enumerate(document.pages):
-        document.copy([page]).write_png('page_%s.png' % i)
-
-.. code-block:: python
-
-    # Some previous versions of WeasyPrint had a method like this:
-    def get_png_pages(document):
-        """Yield (png_bytes, width, height) tuples."""
-        for page in document.pages:
-            yield document.copy([page]).write_png()
 
 .. code-block:: python
 
@@ -297,51 +281,6 @@ is useful to get feedback when WeasyPrint is launched in a terminal (using the
 when used as a library.
 
 See the documentation of the :mod:`logging` module for details.
-
-
-WeasyPrint Tools
-----------------
-
-WeasyPrint provides two very limited tools, helping users to play with
-WeasyPrint, test it, and understand how to use it as a library.
-
-These tools are just "toys" and are not intended to be significantly improved
-in the future.
-
-.. _navigator:
-
-WeasyPrint Navigator
-....................
-
-*WeasyPrint Navigator* is a web browser running in your web browser. Start it
-with:
-
-.. code-block:: sh
-
-    python -m weasyprint.tools.navigator
-
-… and open your browser at http://127.0.0.1:5000/.
-
-.. image:: weasyprint-navigator.png
-
-It does not support cookies, forms, or many other things that you would
-expect from a “real” browser. It only shows the PNG output from WeasyPrint
-with overlaid clickable hyperlinks. It is mostly useful for playing and testing.
-
-.. _renderer:
-
-WeasyPrint Renderer
-...................
-
-*WeasyPrint Renderer* is a web app providing on the same web page a textarea
-where you can type an HTML/CSS document, and this document rendered by
-WeasyPrint as a PNG image. Start it with:
-
-.. code-block:: sh
-
-    python -m weasyprint.tools.renderer
-
-… and open your browser at http://127.0.0.1:5000/.
 
 
 .. _security:
