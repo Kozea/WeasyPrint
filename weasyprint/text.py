@@ -1275,7 +1275,7 @@ def get_log_attrs(text, lang):
     for char in ('\u202a', '\u202b', '\u202c', '\u202d', '\u202e'):
         text = text.replace(char, '')
     text_p, bytestring = unicode_to_char_p(text)
-    length = len(bytestring) + 1
+    length = len(text) + 1
     log_attrs = ffi.new('PangoLogAttr[]', length)
     pango.pango_get_log_attrs(
         text_p, len(bytestring), -1, language, log_attrs, length)
@@ -1286,7 +1286,7 @@ def can_break_text(text, lang):
     if not text or len(text) < 2:
         return None
     bytestring, log_attrs = get_log_attrs(text, lang)
-    length = len(bytestring) + 1
+    length = len(text) + 1
     return any(attr.is_line_break for attr in log_attrs[1:length - 1])
 
 
