@@ -1110,29 +1110,20 @@ def split_first_line(text, style, context, max_width, justification_spacing,
     # Step #3: Try to put the first word of the second line on the first line
     # https://mail.gnome.org/archives/gtk-i18n-list/2013-September/msg00006
     # is a good thread related to this problem.
-    if first_line_width <= max_width:
-        # The first line may have been cut too early by Pango
-        first_line_text = utf8_slice(text, slice(index))
+    first_line_text = utf8_slice(text, slice(index))
+    # We can’t rely on first_line_width, see
+    # https://github.com/Kozea/WeasyPrint/issues/1051
+    first_line_fits = (
+        first_line_width <= max_width or
+        ' ' in first_line_text.strip() or
+        can_break_text(first_line_text.strip(), style['lang']))
+    if first_line_fits:
+        # The first line fits but may have been cut too early by Pango
         second_line_text = utf8_slice(text, slice(index, None))
     else:
-        # We try to know whether the line could have split earlier. We can’t
-        # rely on first_line_width, see
-        # https://github.com/Kozea/WeasyPrint/issues/1051
-        zero_width_layout = create_layout(
-            text, style, context, 0, justification_spacing)
-        zero_first_line, _ = zero_width_layout.get_first_line()
-        zero_first_line_width, _ = get_size(zero_first_line, style)
-        if zero_first_line_width < first_line_width:
-            # The line can be split earlier, it actually fits.
-            first_line_text = utf8_slice(text, slice(index))
-            if index is None:
-                second_line_text = ''
-            else:
-                second_line_text = utf8_slice(text, slice(index, None))
-        else:
-            # The line can't be split earlier, try to hyphenate the first word.
-            first_line_text = ''
-            second_line_text = text
+        # The line can't be split earlier, try to hyphenate the first word.
+        first_line_text = ''
+        second_line_text = text
 
     next_word = second_line_text.split(' ', 1)[0]
     if next_word:
@@ -1436,7 +1427,7 @@ def get_log_attrs(text, lang):
     for char in ('\u202a', '\u202b', '\u202c', '\u202d', '\u202e'):
         text = text.replace(char, '')
     text_p, bytestring = unicode_to_char_p(text)
-    length = len(bytestring) + 1
+    length = len(text) + 1
     log_attrs = ffi.new('PangoLogAttr[]', length)
     pango.pango_get_log_attrs(
         text_p, len(bytestring), -1, language, log_attrs, length)
@@ -1447,7 +1438,7 @@ def can_break_text(text, lang):
     if not text or len(text) < 2:
         return None
     bytestring, log_attrs = get_log_attrs(text, lang)
-    length = len(bytestring) + 1
+    length = len(text) + 1
     return any(attr.is_line_break for attr in log_attrs[1:length - 1])
 
 
