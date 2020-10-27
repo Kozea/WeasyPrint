@@ -86,7 +86,8 @@ fonts thanks to the ``fc-list`` command, and know which font is matched by a
 given pattern thanks to ``fc-match``. Copying a font file into the
 ``~/.local/share/fonts`` or ``~/.fonts`` directory is generally enough to
 install a new font. WeasyPrint should support `any font format handled by
-FreeType <https://en.wikipedia.org/wiki/FreeType#File_formats>`_.
+FreeType <https://en.wikipedia.org/wiki/FreeType#File_formats>`_, except from
+WOFF and WOFF2 formats.
 
 On Windows and macOS, **Pango >= 1.38** is required to use fontconfig and
 FreeType like it does on Linux. Both, ``fc-list`` and ``fc-match`` probably

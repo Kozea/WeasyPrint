@@ -354,6 +354,9 @@ else:
                         else:
                             with open(url, 'rb') as fd:
                                 font = fd.read()
+                        if len(font) > 3 and font[:3] == b'wOF':
+                            raise ValueError(
+                                'WOFF and WOFF2 fonts are not supported')
                     except Exception as exc:
                         LOGGER.debug(
                             'Failed to load font at "%s" (%s)', url, exc)
