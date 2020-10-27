@@ -20,6 +20,7 @@ from .properties import (
 from .utils import (
     ANGLE_TO_RADIANS, LENGTH_UNITS, LENGTHS_TO_PIXELS, check_var_function,
     safe_urljoin)
+from .validation.properties import PROPERTIES
 
 ZERO_PIXELS = Dimension(0, 'px')
 
@@ -177,7 +178,6 @@ def register_computer(name):
 
 
 def compute_variable(value, name, computed, base_url, parent_style):
-    from .validation.properties import PROPERTIES
     already_computed_value = False
 
     if value and isinstance(value, tuple) and value[0] == 'var()':
