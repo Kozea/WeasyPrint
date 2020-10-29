@@ -14,7 +14,7 @@ WeasyPrint |version| depends on:
 * cssselect2_ ≥ 0.1
 * CairoSVG_ ≥ 2.4.0
 * Pyphen_ ≥ 0.9.1
-* Pillow ≥ 4.0.0
+* Pillow_ ≥ 4.0.0
 * GDK-PixBuf_ ≥ 2.25.0 [#]_
 
 .. _CPython: http://www.python.org/
@@ -28,6 +28,7 @@ WeasyPrint |version| depends on:
 .. _cssselect2: https://doc.courtbouillon.org/cssselect2/
 .. _CairoSVG: http://cairosvg.org/
 .. _Pyphen: http://pyphen.org/
+.. _Pillow: https://python-pillow.org/
 .. _GDK-PixBuf: https://live.gnome.org/GdkPixbuf
 
 
