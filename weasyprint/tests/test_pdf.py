@@ -528,7 +528,7 @@ def test_relative_links_missing_base():
     with pytest.raises(AttributeError):
         pdf_file.pages[0].get_indirect_dict_array('Annots', pdf_file)
     assert len(logs) == 1
-    assert 'WARNING: Ignored `-weasy-link: url("../lipsum")`' in logs[0]
+    assert 'WARNING: Ignored `-weasy-link: url(../lipsum)`' in logs[0]
     assert 'Relative URI reference without a base URI' in logs[0]
 
 

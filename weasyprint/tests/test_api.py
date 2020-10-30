@@ -785,7 +785,7 @@ def test_links():
             <div style="-weasy-link: url(../lipsum);
                         display: block; margin: 10px 5px">
         ''', [[]], [{}], [([], [])], base_url=None, warnings=[
-            'WARNING: Ignored `-weasy-link: url("../lipsum")` at 1:1, '
+            'WARNING: Ignored `-weasy-link: url(../lipsum)` at 1:1, '
             'Relative URI reference without a base URI'])
 
     # Internal or absolute URI reference without a base URI: OK
