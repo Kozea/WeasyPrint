@@ -364,7 +364,7 @@ def test_relative_links_missing_base_link():
             base_url=None).write_pdf()
     assert b'/Annots' not in pdf
     assert len(logs) == 1
-    assert 'WARNING: Ignored `-weasy-link: url("../lipsum")`' in logs[0]
+    assert 'WARNING: Ignored `-weasy-link: url(../lipsum)`' in logs[0]
     assert 'Relative URI reference without a base URI' in logs[0]
 
 
