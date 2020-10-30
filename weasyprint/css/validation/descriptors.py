@@ -300,10 +300,9 @@ def pad(tokens, base_url):
                     values[0] = token.int_value
             elif token.type in ('string', 'ident'):
                 values[1] = ('string', token.value)
-            elif token.type == 'function':
-                url = get_url(token, base_url)
-                if url is not None and url[0] == 'url':
-                    values[1] = ('url', url[1])
+            url = get_url(token, base_url)
+            if url is not None and url[0] == 'url':
+                values[1] = ('url', url[1])
 
         if None not in values:
             return tuple(values)

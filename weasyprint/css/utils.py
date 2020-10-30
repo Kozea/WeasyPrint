@@ -564,12 +564,12 @@ def get_image(token, base_url):
     """Parse an <image> token."""
     from ..images import LinearGradient, RadialGradient
 
+    parsed_url = get_url(token, base_url)
+    if parsed_url:
+        assert parsed_url[0] == 'url'
+        if parsed_url[1][0] == 'external':
+            return 'url', parsed_url[1][1]
     if token.type != 'function':
-        parsed_url = get_url(token, base_url)
-        if parsed_url:
-            assert parsed_url[0] == 'url'
-            if parsed_url[1][0] == 'external':
-                return 'url', parsed_url[1][1]
         return
     arguments = split_on_comma(remove_whitespace(token.arguments))
     name = token.lower_name
@@ -594,16 +594,24 @@ def get_image(token, base_url):
                 shape, size, position, 'repeating' in name)
 
 
+def _get_url_tuple(string, base_url):
+    if string.startswith('#'):
+        return ('url', ('internal', unquote(string[1:])))
+    else:
+        return ('url', ('external', safe_urljoin(base_url, string)))
+
+
 def get_url(token, base_url):
     """Parse an <url> token."""
     if token.type == 'url':
-        if token.value.startswith('#'):
-            return ('url', ('internal', unquote(token.value[1:])))
-        else:
-            return ('url', ('external', safe_urljoin(base_url, token.value)))
+        return _get_url_tuple(token.value, base_url)
     elif token.type == 'function':
         if token.name == 'attr':
             return check_attr_function(token, 'url')
+        elif token.name == 'url' and len(token.arguments) in (1, 2):
+            # Ignore url modifiers
+            # See https://drafts.csswg.org/css-values-3/#urls
+            return _get_url_tuple(token.arguments[0].value, base_url)
 
 
 def get_quote(token):
