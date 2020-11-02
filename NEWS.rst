@@ -3,6 +3,30 @@
 ======
 
 
+Version 52.1
+------------
+
+Released on 2020-11-02.
+
+Bug fixes:
+
+* `238e214 <https://github.com/Kozea/WeasyPrint/commit/238e214>`_:
+  Fix URL handling with tinycss2
+
+Contributors:
+
+* Guillaume Ayoub
+
+Backers and sponsors:
+
+* SimonSoft
+* Simon Sapin
+* Nathalie Gutton
+* Andreas Zettl
+* Florian Demmer
+* Moritz Mahringer
+
+
 Version 52
 ----------
 
@@ -112,7 +136,7 @@ Backers and sponsors:
 * Simon Sapin
 * Lisa Warshaw
 * Nathalie Gutton
-* Andreas Zetti
+* Andreas Zettl
 * Florian Demmer
 * Moritz Mahringer
 
