@@ -481,6 +481,65 @@ and CSS documents.
 Note that WeasyPrint gives CairoSVG its URL fetcher.
 
 
+Server Side Requests & Self-Signed SSL Certificates
+..........
+
+If your server is requesting data from itself, you may encounter a self-signed
+certificate error, even if you have a valid certificate.
+
+You need to add yourself as a Certificate Authority, so that your self-signed
+SSL certificates can be requested.
+
+
+.. code-block:: bash
+
+    # if you have not yet created a certificate
+    sudo openssl req -x509 \
+        -sha256 \
+        -nodes \
+        -newkey rsa:4096 \
+        -days 365 \
+        -keyout localhost.key \
+        -out localhost.crt
+
+    # follow the prompts about your certificate and the domain name
+
+    openssl x509 -text -noout -in localhost.crt
+
+
+Add your new self-signed SSL certificate to your nginx.conf, below the line:
+
+`server_name 123.123.123.123;`
+
+.. code-block:: bash
+
+    ...
+    ssl_certificate /etc/ssl/certs/localhost.crt;
+    ssl_certificate_key /etc/ssl/private/localhost.key;
+    ...
+
+The SSL certificate will be valid when accessing your website from the internet.
+However, images will not render when requesting files from the same server.
+
+You will need to add your new self-signed certificates as trusted:
+
+.. code-block:: bash
+
+    sudo cp /etc/ssl/certs/localhost.crt /usr/local/share/ca-certificates/localhost.crt
+    sudo cp /etc/ssl/private/localhost.key /usr/local/share/ca-certificates/localhost.key
+
+    # update the certificate authority trusted certificates
+    sudo update-ca-certificates
+
+    # export your newly updated Certificate Authority Bundle file
+    # if using django, it will use the newly signed certificate authority as valid
+    # images will load properly
+    sudo tee -a /etc/environment <<< 'export REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt'
+
+    # reboot optional
+    reboot
+
+
 Errors
 ------
 
