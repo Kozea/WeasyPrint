@@ -145,7 +145,7 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
                     context, cell,
                     max_position_y=float('inf'),
                     skip_stack=None,
-                    page_is_empty=True,
+                    page_is_empty=False,
                     absolute_boxes=absolute_boxes,
                     fixed_boxes=fixed_boxes)
                 cell.empty = not any(

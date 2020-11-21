@@ -2726,3 +2726,19 @@ def test_table_empty_body(rows_expected, thead, tfoot, content):
                 text, = line.children
                 rows.append(text.text)
         assert rows == rows_expected[i]
+
+
+def test_table_break_children_margin():
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1254
+    html = '''
+      <style>
+        @page { size: 100px }
+        p { height: 20px; margin-top: 50px }
+      </style>
+      <table>
+        <tr><td><p>Page1</p></td></tr>
+        <tr><td><p>Page2</p></td></tr>
+        <tr><td><p>Page3</p></td></tr>
+      </table>
+    '''
+    assert len(render_pages(html)) == 3
