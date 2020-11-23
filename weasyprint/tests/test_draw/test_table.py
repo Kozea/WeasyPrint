@@ -1030,3 +1030,59 @@ def test_tables_14():
       x-col { background: red }
       x-td { padding: 0; width: 1px; height: 8px }
     '''})
+
+
+@assert_no_logs
+@requires('cairo', (1, 12, 0))
+def test_tables_15():
+    # Regression test for colspan in last body line with footer
+    # https://github.com/Kozea/WeasyPrint/issues/1250
+    assert_pixels('colspan_last_row', 22, 36, '''
+        ______________________
+        __RRRRRRRRRRRRRRRRRR__
+        __R_____R____R_____R__
+        __R_____R____R_____R__
+        __R_____R____R_____R__
+        __RRRRRRRRRRRRRRRRRR__
+        __R_____R____R_____R__
+        __R_____R____R_____R__
+        _BBBBBBBBBBBBBBBBBBBB_
+        _BBBBBBBBBBBBBBBBBBBB_
+        _BBB____R____R____BBB_
+        _BBB____R____R____BBB_
+        _BBB____R____R____BBB_
+        _BBBBBBBBBBBBBBBBBBBB_
+        _BBBBBBBBBBBBBBBBBBBB_
+        ______________________
+        ______________________
+        ______________________
+        ______________________
+        __RRRRRRRRRRRRRRRRRR__
+        __R________________R__
+        __R________________R__
+        __R________________R__
+        _BBBBBBBBBBBBBBBBBBBB_
+        _BBBBBBBBBBBBBBBBBBBB_
+        _BBB____R____R____BBB_
+        _BBB____R____R____BBB_
+        _BBB____R____R____BBB_
+        _BBBBBBBBBBBBBBBBBBBB_
+        _BBBBBBBBBBBBBBBBBBBB_
+        ______________________
+        ______________________
+        ______________________
+        ______________________
+        ______________________
+        ______________________
+    ''', '''
+      <style>
+        @page { size: 22px 18px; margin: 1px; background: #fff }
+        td { border: 1px red solid; width: 4px; height: 3px; }
+      </style>
+      <table style="table-layout: fixed; margin-left: 1px;
+                    border-collapse: collapse">
+        <tr><td></td><td></td><td></td></tr>
+        <tr><td></td><td></td><td></td></tr>
+        <tr><td colspan="3"></td></tr>
+        <tfoot style="border: blue solid; border-width: 2px 3px;
+            "><td></td><td></td><td></td></tfoot>''')

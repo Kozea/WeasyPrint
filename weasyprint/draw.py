@@ -882,21 +882,19 @@ def draw_collapsed_borders(context, table):
         body_rows_offset = skipped_rows - header_rows
     else:
         body_rows_offset = 0
-    if header_rows == 0:
-        header_rows = -1
-    if footer_rows:
-        first_footer_row = grid_height - footer_rows - 1
-    else:
-        first_footer_row = grid_height + 1
     original_grid_height = len(vertical_borders)
     footer_rows_offset = original_grid_height - grid_height
 
     def row_number(y, horizontal):
-        if y < (header_rows + int(horizontal)):
+        # Examples in comments for 2 headers rows, 5 body rows, 3 footer rows
+        if header_rows and y < header_rows + int(horizontal):
+            # Row in header: y < 2 for vertical, y < 3 for horizontal
             return y
-        elif y >= (first_footer_row + int(horizontal)):
+        elif footer_rows and y >= grid_height - footer_rows - int(horizontal):
+            # Row in footer: y >= 7 for vertical, y >= 6 for horizontal
             return y + footer_rows_offset
         else:
+            # Row in body: 2 >= y > 7 for vertical, 3 >= y > 6 for horizontal
             return y + body_rows_offset
 
     segments = []
