@@ -1033,7 +1033,6 @@ def test_tables_14():
 
 
 @assert_no_logs
-@requires('cairo', (1, 12, 0))
 def test_tables_15():
     # Regression test for colspan in last body line with footer
     # https://github.com/Kozea/WeasyPrint/issues/1250
