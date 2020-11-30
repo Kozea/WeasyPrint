@@ -313,9 +313,28 @@ class Gradient:
             red, green, blue, alpha = colors[0]
             context.set_color_rgb(red, green, blue)
             if alpha != 1:
-                context.set_alpha(alpha, stroke=None)
+                context.set_alpha(alpha, stroke=False)
             context.fill()
             return
+
+        alphas = [color[3] for color in colors]
+        alpha_couples = [
+            (alphas[i], alphas[i + 1])
+            for i in range(len(alphas) - 1)]
+        color_couples = [
+            [colors[i][:3], colors[i + 1][:3], 1]
+            for i in range(len(colors) - 1)]
+
+        # Premultiply colors
+        for i, alpha in enumerate(alphas):
+            if alpha == 0:
+                if i > 0:
+                    color_couples[i - 1][1] = color_couples[i - 1][0]
+                if i < len(colors) - 1:
+                    color_couples[i][0] = color_couples[i][1]
+        for i, (a0, a1) in enumerate(alpha_couples):
+            if 0 not in (a0, a1) and (a0, a1) != (1, 1):
+                color_couples[i][2] = a0 / a1
 
         shading = context.add_shading()
         shading['ShadingType'] = 2 if type_ == 'linear' else 3
@@ -331,17 +350,16 @@ class Gradient:
                 pydyf.Dictionary({
                     'FunctionType': 2,
                     'Domain': pydyf.Array([0, 1]),
-                    'C0': pydyf.Array(colors[i][:3]),
-                    'C1': pydyf.Array(colors[i + 1][:3]),
-                    'N': 1,
-                }) for i in range(len(colors) - 1)
+                    'C0': pydyf.Array(c0),
+                    'C1': pydyf.Array(c1),
+                    'N': n,
+                }) for c0, c1, n in color_couples
             ]),
         })
         if not self.repeating:
             shading['Extend'] = pydyf.Array([b'true', b'true'])
         context.transform(1, 0, 0, scale_y, 0, 0)
 
-        alphas = [color[3] for color in colors]
         if any(alpha != 1 for alpha in alphas):
             alpha_stream = context.add_transparency_group(
                 [0, 0, concrete_width, concrete_height])
@@ -374,10 +392,10 @@ class Gradient:
                     pydyf.Dictionary({
                         'FunctionType': 2,
                         'Domain': pydyf.Array([0, 1]),
-                        'C0': pydyf.Array([alphas[i]]),
-                        'C1': pydyf.Array([alphas[i + 1]]),
+                        'C0': pydyf.Array([c0]),
+                        'C1': pydyf.Array([c1]),
                         'N': 1,
-                    }) for i in range(len(alphas) - 1)
+                    }) for c0, c1 in alpha_couples
                 ]),
             })
             if not self.repeating:
