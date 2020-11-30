@@ -175,6 +175,24 @@ def test_linear_gradients_12():
 
 
 @assert_no_logs
+def test_linear_gradients_13():
+    assert_pixels('linear_gradient_13', 5, 9, '''
+        _____
+        _____
+        _____
+        SSSSS
+        SSSSS
+        RRRRR
+        RRRRR
+        RRRRR
+        RRRRR
+    ''', '''<style>@page { size: 5px 9px; background: linear-gradient(
+      white, white 3px, rgba(255, 0, 0, 0.751) 0, rgba(255, 0, 0, 0.751) 5px,
+      red 0, red
+    )''')
+
+
+@assert_no_logs
 def test_radial_gradients_1():
     assert_pixels('radial_gradient_1', 6, 6, '''
         BBBBBB
@@ -244,3 +262,26 @@ def test_radial_gradients_4():
         BzzzzzzzzB
     ''', '''<style>@page { size: 10px 16px; background:
       radial-gradient(red 50%, blue 50%)''')
+
+
+@assert_no_logs
+def test_radial_gradients_5():
+    assert_pixels('radial_gradient_5', 10, 16, '''
+        SzzzzzzzzS
+        zzzzzzzzzz
+        zzzzzzzzzz
+        zzzzzzzzzz
+        zzzzzzzzzz
+        zzzzzzzzzz
+        zzzzzzzzzz
+        zzzzRRzzzz
+        zzzzRRzzzz
+        zzzzzzzzzz
+        zzzzzzzzzz
+        zzzzzzzzzz
+        zzzzzzzzzz
+        zzzzzzzzzz
+        zzzzzzzzzz
+        SzzzzzzzzS
+    ''', '''<style>@page { size: 10px 16px; background:
+      radial-gradient(red 50%, rgba(255, 0, 0, 0.751) 50%)''')

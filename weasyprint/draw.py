@@ -210,7 +210,8 @@ def draw_stacking_context(context, stacking_context):
             context.end()
 
         if box.style['opacity'] < 1:
-            context = context.push_group([
+            original_context = context
+            context = context.add_transparency_group([
                 box.border_box_x(), box.border_box_y(),
                 box.border_box_x() + box.border_width(),
                 box.border_box_y() + box.border_height()])
@@ -284,7 +285,7 @@ def draw_stacking_context(context, stacking_context):
 
         if box.style['opacity'] < 1:
             group_id = context.id
-            context = context.pop_group()
+            context = original_context
             context.push_state()
             context.set_alpha(box.style['opacity'], stroke=None)
             context.draw_x_object(group_id)
@@ -478,7 +479,7 @@ def draw_background_image(context, layer, image_rendering):
     pattern = context.add_pattern(
         position_x + positioning_x, position_y + positioning_y,
         image_width, image_height, repeat_width, repeat_height)
-    child = pattern.push_group([0, 0, repeat_width, repeat_height])
+    child = pattern.add_transparency_group([0, 0, repeat_width, repeat_height])
 
     with stacked(context):
         layer.image.draw(child, image_width, image_height, image_rendering)

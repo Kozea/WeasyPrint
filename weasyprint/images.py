@@ -304,13 +304,16 @@ class Gradient:
     intrinsic_ratio = None
 
     def draw(self, context, concrete_width, concrete_height, _image_rendering):
-        # TODO: handle alpha and color spaces
+        # TODO: handle color spaces
         scale_y, type_, points, positions, colors = self.layout(
             concrete_width, concrete_height)
 
         if type_ == 'solid':
             context.rectangle(0, 0, concrete_width, concrete_height)
-            context.set_color_rgb(*colors[0][:3])
+            red, green, blue, alpha = colors[0]
+            context.set_color_rgb(red, green, blue)
+            if alpha != 1:
+                context.set_alpha(alpha, stroke=None)
             context.fill()
             return
 
@@ -337,6 +340,51 @@ class Gradient:
         if not self.repeating:
             shading['Extend'] = pydyf.Array([b'true', b'true'])
         context.transform(1, 0, 0, scale_y, 0, 0)
+
+        alphas = [color[3] for color in colors]
+        if any(alpha != 1 for alpha in alphas):
+            alpha_stream = context.add_transparency_group(
+                [0, 0, concrete_width, concrete_height])
+            alpha_state = pydyf.Dictionary({
+                'Type': '/ExtGState',
+                'SMask': pydyf.Dictionary({
+                    'Type': '/Mask',
+                    'S': '/Luminosity',
+                    'G': alpha_stream,
+                }),
+                'ca': 1,
+                'AIS': 'false',
+            })
+            alpha_state_id = f'as{len(context._alpha_states)}'
+            context._alpha_states[alpha_state_id] = alpha_state
+            context.set_state(alpha_state_id)
+
+            alpha_shading = alpha_stream.add_shading()
+            alpha_shading['ShadingType'] = 2 if type_ == 'linear' else 3
+            alpha_shading['ColorSpace'] = '/DeviceGray'
+            alpha_shading['Domain'] = pydyf.Array(
+                [positions[0], positions[-1]])
+            alpha_shading['Coords'] = pydyf.Array(points)
+            alpha_shading['Function'] = pydyf.Dictionary({
+                'FunctionType': 3,
+                'Domain': pydyf.Array([positions[0], positions[-1]]),
+                'Encode': pydyf.Array((len(colors) - 1) * [0, 1]),
+                'Bounds': pydyf.Array(positions[1:-1]),
+                'Functions': pydyf.Array([
+                    pydyf.Dictionary({
+                        'FunctionType': 2,
+                        'Domain': pydyf.Array([0, 1]),
+                        'C0': pydyf.Array([alphas[i]]),
+                        'C1': pydyf.Array([alphas[i + 1]]),
+                        'N': 1,
+                    }) for i in range(len(alphas) - 1)
+                ]),
+            })
+            if not self.repeating:
+                alpha_shading['Extend'] = pydyf.Array([b'true', b'true'])
+            alpha_stream.transform(1, 0, 0, scale_y, 0, 0)
+            alpha_stream.stream = [f'/{alpha_shading.id} sh']
+
         context.shading(shading.id)
 
     def layout(self, width, height):
