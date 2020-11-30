@@ -1086,7 +1086,6 @@ def draw_wave(context, x, y, width, offset_x, radius):
     context.clip()
     context.end()
 
-    print(x, offset_x, radius)
     x -= offset_x
     context.move_to(x, y)
 
