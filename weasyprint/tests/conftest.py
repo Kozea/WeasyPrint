@@ -11,7 +11,7 @@
 
 import io
 import shutil
-from subprocess import run
+from subprocess import PIPE, run
 
 import pytest
 from PIL import Image
@@ -28,7 +28,7 @@ def document_write_png(self, target=None, resolution=96, antialiasing=1):
         f'-dTextAlphaBits={antialiasing}',
         f'-dGraphicsAlphaBits={antialiasing}', '-sDEVICE=png16m',
         f'-r{resolution}', '-sOutputFile=-', '-']
-    command = run(command, input=self.write_pdf(), capture_output=True)
+    command = run(command, input=self.write_pdf(), stdout=PIPE)
     pngs = command.stdout
     magic_number = b'\x89\x50\x4e\x47\x0d\x0a\x1a\x0a'
 
