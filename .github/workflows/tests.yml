@@ -24,7 +24,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install DejaVu (Ubuntu)
         if: matrix.os == 'ubuntu-latest'
-        run: sudo apt-get update -y && sudo apt-get install ttf-dejavu -y
+        run: sudo apt-get update -y && sudo apt-get install fonts-dejavu -y
       - name: Install DejaVu, pango, libffi and ghostscript (MacOS)
         if: matrix.os == 'macos-latest'
         run: |
