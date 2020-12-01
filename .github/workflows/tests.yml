@@ -25,12 +25,12 @@ jobs:
       - name: Install DejaVu (Ubuntu)
         if: matrix.os == 'ubuntu-latest'
         run: sudo apt-get update -y && sudo apt-get install ttf-dejavu -y
-      - name: Install DejaVu, pango, and libffi (MacOS)
+      - name: Install DejaVu, pango, libffi and ghostscript (MacOS)
         if: matrix.os == 'macos-latest'
         run: |
           brew tap homebrew/cask-fonts
           brew cask install font-dejavu
-          brew install pango libffi
+          brew install pango libffi ghostscript
       - name: Install msys2 and DejaVu (Windows)
         if: matrix.os == 'windows-latest'
         run: |
