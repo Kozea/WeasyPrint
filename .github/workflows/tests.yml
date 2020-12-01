@@ -37,8 +37,7 @@ jobs:
           choco install -y --no-progress msys2
           powershell "C:\tools\msys64\usr\bin\bash -lc 'pacman -S mingw-w64-x86_64-ttf-dejavu mingw-w64-x86_64-pango --noconfirm'"
           xcopy "C:\tools\msys64\mingw64\share\fonts\TTF" "C:\Users\runneradmin\.fonts" /e /i
-          $env:PATH += ";C:\tools\msys64\mingw64\bin"
-          echo "C:\tools\msys64\mingw64\bin" >> $GITHUB_PATH
+          echo "C:\tools\msys64\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH
       - name: Upgrade pip and setuptools
         run: python -m pip install --upgrade pip setuptools
       - name: Install pydyf
