@@ -10,6 +10,7 @@
 """
 
 import io
+import os
 import shutil
 from subprocess import PIPE, run
 
@@ -24,7 +25,8 @@ def document_write_png(self, target=None, resolution=96, antialiasing=1):
     # TODO: don’t crash if GhostScript can’t be found
     # TODO: fix that for Windows
     command = [
-        'gs', '-q', '-sstdout=%stderr', '-dNOPAUSE', '-dSAFER',
+        'gs', '-q', '-dNOPAUSE', '-dSAFER',
+        '-sstdout=%%stderr' if os.name == 'nt' else '-sstdout=%stderr',
         f'-dTextAlphaBits={antialiasing}',
         f'-dGraphicsAlphaBits={antialiasing}', '-sDEVICE=png16m',
         f'-r{resolution}', '-sOutputFile=-', '-']
