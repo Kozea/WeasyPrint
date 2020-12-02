@@ -330,7 +330,7 @@ pango = dlopen(ffi, 'pango-1.0', 'libpango-1.0-0', 'libpango-1.0.so.0',
                'libpango-1.0.dylib')
 pangocairo = dlopen(ffi, 'pangocairo-1.0', 'libpangocairo-1.0-0',
                     'libpangocairo-1.0.so.0', 'libpangocairo-1.0.dylib')
-harfbuzz = dlopen(ffi, 'harfbuzz', 'libharfbuzz',
+harfbuzz = dlopen(ffi, 'harfbuzz-0.0', 'libharfbuzz-0', 'libharfbuzz.so.0',
                   'libharfbuzz.so.0', 'libharfbuzz.0.dylib')
 
 gobject.g_type_init()
