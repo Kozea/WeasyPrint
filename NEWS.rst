@@ -3,6 +3,43 @@
 ======
 
 
+Version 52.2
+------------
+
+Released on 2020-12-06.
+
+Bug fixes:
+
+* `238e214 <https://github.com/Kozea/WeasyPrint/commit/238e214>`_:
+  Fix URL handling with tinycss2
+* `#1248 <https://github.com/Kozea/WeasyPrint/issues/1248>`_:
+  Include missing test data
+* `#1254 <https://github.com/Kozea/WeasyPrint/issues/1254>`_:
+  Top margins removed from children when tables are displayed on multiple pages
+* `#1250 <https://github.com/Kozea/WeasyPrint/issues/1250>`_:
+  Correctly draw borders on the last line of split tables
+* `a6f9c80 <https://github.com/Kozea/WeasyPrint/commit/a6f9c80>`_:
+  Add a nice gif to please gdk-pixbuf 2.42.0
+
+Contributors:
+
+* Guillaume Ayoub
+* Lucie Anglade
+* Felix Schwarz
+
+Backers and sponsors:
+
+* PDF Blocks
+* SimonSoft
+* Menutech
+* Simon Sapin
+* Nathalie Gutton
+* Andreas Zetti
+* Tom Pohl
+* Florian Demmer
+* Moritz Mahringer
+
+
 Version 52.1
 ------------
 
