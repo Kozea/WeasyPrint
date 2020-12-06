@@ -25,17 +25,18 @@ MAGIC_NUMBER = b'\x89\x50\x4e\x47\x0d\x0a\x1a\x0a'
 
 def document_write_png(self, target=None, resolution=96, antialiasing=1):
     stderr = '%%stderr' if os.name == 'nt' else '%stderr'
+    pdf = self.write_pdf()
     command = [
         'gs', '-q', '-dNOPAUSE', '-dSAFER', f'-sstdout={stderr}',
         f'-dTextAlphaBits={antialiasing}',
         f'-dGraphicsAlphaBits={antialiasing}', '-sDEVICE=png16m',
         f'-r{resolution}', '-sOutputFile=-', '-']
-    result = run(command, input=self.write_pdf(), stdout=PIPE)
+    result = run(command, input=pdf, stdout=PIPE)
     pngs = result.stdout
 
     # TODO: use a different way to find PNG files in stream
     magic_numbers = pngs.count(MAGIC_NUMBER)
-    assert magic_numbers >= 1, result
+    assert magic_numbers >= 1, (result, result.stderr, pdf, ' '.join(command))
     if magic_numbers == 1:
         if target is None:
             return pngs
