@@ -30,11 +30,12 @@ def document_write_png(self, target=None, resolution=96, antialiasing=1):
         f'-dTextAlphaBits={antialiasing}',
         f'-dGraphicsAlphaBits={antialiasing}', '-sDEVICE=png16m',
         f'-r{resolution}', '-sOutputFile=-', '-']
-    pngs = run(command, input=self.write_pdf(), stdout=PIPE).stdout
+    result = run(command, input=self.write_pdf(), stdout=PIPE)
+    pngs = result.stdout
 
     # TODO: use a different way to find PNG files in stream
     magic_numbers = pngs.count(MAGIC_NUMBER)
-    assert magic_numbers >= 1
+    assert magic_numbers >= 1, result
     if magic_numbers == 1:
         if target is None:
             return pngs
