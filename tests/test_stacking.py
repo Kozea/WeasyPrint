@@ -7,8 +7,8 @@
 """
 
 import pytest
+from weasyprint.stacking import StackingContext
 
-from ..stacking import StackingContext
 from .test_boxes import render_pages, serialize
 from .test_draw import assert_pixels
 from .testing_utils import assert_no_logs

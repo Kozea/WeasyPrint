@@ -8,7 +8,8 @@
 
 import itertools
 
-from ... import HTML
+from weasyprint import HTML
+
 from ..testing_utils import assert_no_logs
 from . import PIXELS_BY_CHAR, assert_different_renderings, assert_pixels
 

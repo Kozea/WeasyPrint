@@ -10,11 +10,11 @@ import math
 
 import pytest
 import tinycss2
+from weasyprint.css import preprocess_declarations
+from weasyprint.css.computed_values import ZERO_PIXELS
+from weasyprint.css.properties import INITIAL_VALUES
+from weasyprint.images import LinearGradient, RadialGradient
 
-from ..css import preprocess_declarations
-from ..css.computed_values import ZERO_PIXELS
-from ..css.properties import INITIAL_VALUES
-from ..images import LinearGradient, RadialGradient
 from .testing_utils import assert_no_logs, capture_logs
 
 

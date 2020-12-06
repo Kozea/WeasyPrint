@@ -7,8 +7,8 @@
 """
 
 import pytest
+from weasyprint.html import HTML_HANDLERS
 
-from ...html import HTML_HANDLERS
 from ..testing_utils import assert_no_logs
 from . import assert_pixels, parse_pixels
 

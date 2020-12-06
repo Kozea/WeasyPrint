@@ -6,7 +6,8 @@
 
 """
 
-from .. import CSS, HTML
+from weasyprint import CSS, HTML
+
 from .testing_utils import BASE_URL, assert_no_logs
 
 PH_TESTING_CSS = CSS(string='''

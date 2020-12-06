@@ -8,9 +8,9 @@
 
 import pytest
 import tinycss2
+from weasyprint.css import preprocess_stylesheet
+from weasyprint.css.validation.descriptors import preprocess_descriptors
 
-from ..css import preprocess_stylesheet
-from ..css.validation.descriptors import preprocess_descriptors
 from .testing_utils import assert_no_logs, capture_logs
 
 

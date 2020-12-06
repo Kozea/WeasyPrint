@@ -16,9 +16,8 @@ from subprocess import PIPE, run
 
 import pytest
 from PIL import Image
-
-from .. import HTML
-from ..document import Document
+from weasyprint import HTML
+from weasyprint.document import Document
 
 MAGIC_NUMBER = b'\x89\x50\x4e\x47\x0d\x0a\x1a\x0a'
 

@@ -7,8 +7,8 @@
 """
 
 import pytest
+from weasyprint.formatting_structure import boxes
 
-from ...formatting_structure import boxes
 from ..test_boxes import render_pages as parse
 from ..testing_utils import assert_no_logs
 

@@ -14,9 +14,9 @@ import sys
 import threading
 import wsgiref.simple_server
 
-from .. import CSS, HTML
-from ..logger import LOGGER
-from ..urls import path2url
+from weasyprint import CSS, HTML
+from weasyprint.logger import LOGGER
+from weasyprint.urls import path2url
 
 # Lists of fonts with many variants (including condensed)
 if sys.platform.startswith('win'):  # pragma: no cover
@@ -27,7 +27,7 @@ else:  # pragma: no cover
     MONO_FONTS = 'DejaVu Sans Mono, monospace'
 
 TEST_UA_STYLESHEET = CSS(filename=os.path.join(
-    os.path.dirname(__file__), '..', 'css', 'tests_ua.css'
+    os.path.dirname(__file__), '..', 'weasyprint', 'css', 'tests_ua.css'
 ))
 
 

@@ -7,9 +7,9 @@
 """
 
 import pytest
+from weasyprint.css.properties import INITIAL_VALUES
+from weasyprint.text import split_first_line
 
-from ..css.properties import INITIAL_VALUES
-from ..text import split_first_line
 from .test_boxes import render_pages
 from .testing_utils import MONO_FONTS, SANS_FONTS, assert_no_logs
 

@@ -7,8 +7,8 @@
 """
 
 import pytest
+from weasyprint import HTML
 
-from .. import HTML
 from .test_boxes import assert_tree, parse_all, render_pages
 from .testing_utils import assert_no_logs
 

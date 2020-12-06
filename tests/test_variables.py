@@ -7,8 +7,8 @@
 """
 
 import pytest
+from weasyprint.css.properties import KNOWN_PROPERTIES
 
-from ..css.properties import KNOWN_PROPERTIES
 from .test_boxes import render_pages as parse
 
 SIDES = ('top', 'right', 'bottom', 'left')

@@ -13,9 +13,9 @@ import re
 from codecs import BOM_UTF16_BE
 
 import pytest
+from weasyprint import Attachment
+from weasyprint.urls import path2url
 
-from .. import Attachment
-from ..urls import path2url
 from .testing_utils import (
     FakeHTML, assert_no_logs, capture_logs, resource_filename)
 

@@ -9,13 +9,13 @@
 import functools
 
 import pytest
+from weasyprint import images
+from weasyprint.css import PageType, get_all_computed_styles
+from weasyprint.css.counters import CounterStyle
+from weasyprint.css.targets import TargetCollector
+from weasyprint.formatting_structure import boxes, build
+from weasyprint.layout.pages import set_page_type_computed_styles
 
-from .. import images
-from ..css import PageType, get_all_computed_styles
-from ..css.counters import CounterStyle
-from ..css.targets import TargetCollector
-from ..formatting_structure import boxes, build
-from ..layout.pages import set_page_type_computed_styles
 from .testing_utils import BASE_URL, FakeHTML, assert_no_logs, capture_logs
 
 PROPER_CHILDREN = dict((key, tuple(map(tuple, value))) for key, value in {
