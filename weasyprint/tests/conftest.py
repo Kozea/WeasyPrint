@@ -20,37 +20,34 @@ from PIL import Image
 from .. import HTML
 from ..document import Document
 
+MAGIC_NUMBER = b'\x89\x50\x4e\x47\x0d\x0a\x1a\x0a'
+
 
 def document_write_png(self, target=None, resolution=96, antialiasing=1):
-    # TODO: don’t crash if GhostScript can’t be found
-    # TODO: fix that for Windows
+    stderr = '%%stderr' if os.name == 'nt' else '%stderr'
     command = [
-        'gs', '-q', '-dNOPAUSE', '-dSAFER',
-        '-sstdout=%%stderr' if os.name == 'nt' else '-sstdout=%stderr',
+        'gs', '-q', '-dNOPAUSE', '-dSAFER', f'-sstdout={stderr}',
         f'-dTextAlphaBits={antialiasing}',
         f'-dGraphicsAlphaBits={antialiasing}', '-sDEVICE=png16m',
         f'-r{resolution}', '-sOutputFile=-', '-']
-    command = run(command, input=self.write_pdf(), stdout=PIPE)
-    pngs = command.stdout
-    magic_number = b'\x89\x50\x4e\x47\x0d\x0a\x1a\x0a'
+    pngs = run(command, input=self.write_pdf(), stdout=PIPE).stdout
 
     # TODO: use a different way to find PNG files in stream
-    if pngs.count(magic_number) == 1:
+    if pngs.count(MAGIC_NUMBER) == 1:
         if target is None:
             return pngs
         png = io.BytesIO(pngs)
     else:
         images = []
-        for i, png in enumerate(pngs[8:].split(magic_number)):
-            images.append(Image.open(io.BytesIO(magic_number + png)))
+        for i, png in enumerate(pngs[8:].split(MAGIC_NUMBER)):
+            images.append(Image.open(io.BytesIO(MAGIC_NUMBER + png)))
 
         width = max(image.width for image in images)
         height = sum(image.height for image in images)
         output_image = Image.new('RGBA', (width, height))
         top = 0
         for image in images:
-            output_image.paste(
-                image, (int((width - image.width) / 2), top))
+            output_image.paste(image, (int((width - image.width) / 2), top))
             top += image.height
         png = io.BytesIO()
         output_image.save(png, format='png')
