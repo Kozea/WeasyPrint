@@ -3,6 +3,144 @@
 ======
 
 
+Version 52.1
+------------
+
+Released on 2020-11-02.
+
+Bug fixes:
+
+* `238e214 <https://github.com/Kozea/WeasyPrint/commit/238e214>`_:
+  Fix URL handling with tinycss2
+
+Contributors:
+
+* Guillaume Ayoub
+
+Backers and sponsors:
+
+* SimonSoft
+* Simon Sapin
+* Nathalie Gutton
+* Andreas Zettl
+* Florian Demmer
+* Moritz Mahringer
+
+
+Version 52
+----------
+
+Released on 2020-10-29.
+
+Dependencies:
+
+* Python 3.6+ is now needed, Python 3.5 is not supported anymore
+* WeasyPrint now depends on Pillow
+
+New features:
+
+* `#1019 <https://github.com/Kozea/WeasyPrint/issues/1019>`_:
+  Implement ``counter-set``
+* `#1080 <https://github.com/Kozea/WeasyPrint/issues/1080>`_:
+  Don’t display ``template`` tags
+* `#1210 <https://github.com/Kozea/WeasyPrint/pull/1210>`_:
+  Use ``download`` attribute in ``a`` tags for attachment's filename
+* `#1206 <https://github.com/Kozea/WeasyPrint/issues/1206>`_:
+  Handle strings in ``list-style-type``
+* `#1165 <https://github.com/Kozea/WeasyPrint/pull/1165>`_:
+  Add support for concatenating ``var()`` functions in ``content`` declarations
+* `c56b96b <https://github.com/Kozea/WeasyPrint/commit/c56b96b>`_:
+  Add an option to optimize embedded images size, with financial support from
+  Hashbang
+* `#969 <https://github.com/Kozea/WeasyPrint/issues/969>`_:
+  Add an image cache that can be shared between documents, with financial
+  support from Hashbang
+
+Bug fixes:
+
+* `#1141 <https://github.com/Kozea/WeasyPrint/pull/1141>`_:
+  Don’t clip page margins on account of ``body`` overflow
+* `#1000 <https://github.com/Kozea/WeasyPrint/issues/1000>`_:
+  Don’t apply ``text-indent`` twice on inline blocks
+* `#1051 <https://github.com/Kozea/WeasyPrint/issues/1051>`_:
+  Avoid random line breaks
+* `#1120 <https://github.com/Kozea/WeasyPrint/pull/1120>`_:
+  Gather target counters in page margins
+* `#1110 <https://github.com/Kozea/WeasyPrint/issues/1110>`_:
+  Handle most cases for boxes avoiding floats in rtl containers, with financial
+  support from Innovative Software
+* `#1111 <https://github.com/Kozea/WeasyPrint/issues/1111>`_:
+  Fix horizontal position of last rtl line, with financial support from
+  Innovative Software
+* `#1114 <https://github.com/Kozea/WeasyPrint/issues/1114>`_:
+  Fix bug with transparent borders in tables
+* `#1146 <https://github.com/Kozea/WeasyPrint/pull/1146>`_:
+  Don’t gather bookmarks twice for blocks that are displayed on two pages
+* `#1237 <https://github.com/Kozea/WeasyPrint/issues/1237>`_:
+  Use fallback fonts on unsupported WOFF2 and WOFF fonts
+* `#1025 <https://github.com/Kozea/WeasyPrint/issues/1025>`_:
+  Don’t insert the same layout attributes multiple times
+* `#1027 <https://github.com/Kozea/WeasyPrint/issues/1027>`_:
+  Don’t try to break tables after the header or before the footer
+* `#1050 <https://github.com/Kozea/WeasyPrint/issues/1050>`_:
+  Don’t crash on absolute SVG files with no intrinsic size
+* `#1204 <https://github.com/Kozea/WeasyPrint/issues/1204>`_:
+  Fix a crash with a flexbox corner case
+* `#1030 <https://github.com/Kozea/WeasyPrint/pull/1030>`_:
+  Fix frozen builds
+* `#1089 <https://github.com/Kozea/WeasyPrint/pull/1089>`_:
+  Fix Pyinstaller builds
+* `#1216 <https://github.com/Kozea/WeasyPrint/pull/1213>`_:
+  Fix embedded files
+* `#1225 <https://github.com/Kozea/WeasyPrint/pull/1225>`_:
+  Initial support of RTL direction in flexbox layout
+
+Documentation:
+
+* `#1149 <https://github.com/Kozea/WeasyPrint/issues/1149>`_:
+  Add the ``--quiet`` CLI option in the documentation
+* `#1061 <https://github.com/Kozea/WeasyPrint/pull/1061>`_:
+  Update install instructions on Windows
+
+Tests:
+
+* `#1209 <https://github.com/Kozea/WeasyPrint/pull/1209>`_:
+  Use GitHub Actions instead of Travis
+
+Contributors:
+
+* Guillaume Ayoub
+* Lucie Anglade
+* Tontyna
+* Mohammed Y. Alnajdi
+* Mike Voets
+* Bjarni Þórisson
+* Balázs Dukai
+* Bart Broere
+* Endalkachew
+* Felix Schwarz
+* Julien Sanchez
+* Konstantin Alekseev
+* Nicolas Hart
+* Nikolaus Schlemm
+* Thomas J. Lampoltshammer
+* mPyth
+* nempoBu4
+* saddy001
+
+Backers and sponsors:
+
+* Hashbang
+* Innovative Software
+* Screenbreak
+* Simon Sapin
+* Lisa Warshaw
+* Nathalie Gutton
+* Andreas Zettl
+* Florian Demmer
+* Moritz Mahringer
+
+
 Version 51
 ----------
 
