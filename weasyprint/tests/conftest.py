@@ -36,7 +36,13 @@ def document_write_png(self, target=None, resolution=96, antialiasing=1):
 
     # TODO: use a different way to find PNG files in stream
     magic_numbers = pngs.count(MAGIC_NUMBER)
-    assert magic_numbers >= 1, (result, result.stderr, pdf, ' '.join(command))
+    if magic_numbers < 1:
+        print(result)
+        print(result.stderr)
+        print(pdf)
+        print(' '.join(command))
+        print(run(['gs', '-version']))
+        assert False
     if magic_numbers == 1:
         if target is None:
             return pngs
