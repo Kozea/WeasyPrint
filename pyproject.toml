@@ -11,6 +11,7 @@ maintainer = 'CourtBouillon'
 maintainer-email = 'contact@courtbouillon.org'
 home-page = 'https://www.courtbouillon.org/weasyprint'
 requires = [
+  'pydyf >=0.0.1',
   'cffi >=0.6',
   'html5lib >=0.999999999',
   'tinycss2 >=1.0.0',
