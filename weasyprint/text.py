@@ -269,6 +269,9 @@ ffi.cdef('''
     int pango_font_metrics_get_strikethrough_position (
         PangoFontMetrics *metrics);
 
+    void pango_context_set_round_glyph_positions (
+        PangoContext *context, gboolean round_positions);
+
     PangoFontMetrics * pango_font_get_metrics (
         PangoFont *font, PangoLanguage *language);
 
@@ -740,6 +743,7 @@ class Layout:
         else:
             font_map = context.font_config.font_map
         pango_context = pango.pango_font_map_create_context(font_map)
+        pango.pango_context_set_round_glyph_positions(pango_context, False)
         self.layout = ffi.gc(
             pango.pango_layout_new(pango_context),
             gobject.g_object_unref)
