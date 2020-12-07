@@ -9,10 +9,7 @@
 import math
 from io import BytesIO
 from itertools import cycle
-from xml.etree import ElementTree
 
-import cairosvg.parser
-import cairosvg.surface
 import pydyf
 from PIL import Image
 
@@ -71,95 +68,6 @@ class RasterImage:
         context.pop_state()
 
 
-class ScaledSVGSurface(cairosvg.surface.SVGSurface):
-    """
-    Have the cairo Surface object have intrinsic dimension
-    in pixels instead of points.
-    """
-    @property
-    def device_units_per_user_units(self):
-        scale = super().device_units_per_user_units
-        return scale / 0.75
-
-
-class FakeSurface:
-    """Fake CairoSVG surface used to get SVG attributes."""
-    context_height = 0
-    context_width = 0
-    font_size = 12
-    dpi = 96
-
-
-class SVGImage:
-    def __init__(self, svg_data, base_url, url_fetcher):
-        # Don’t pass data URIs to CairoSVG.
-        # They are useless for relative URIs anyway.
-        self._base_url = (
-            base_url if not base_url.lower().startswith('data:') else None)
-        self._svg_data = svg_data
-        self._url_fetcher = url_fetcher
-
-        try:
-            self._tree = ElementTree.fromstring(self._svg_data)
-        except Exception as e:
-            raise ImageLoadingError.from_exception(e)
-
-    def _cairosvg_url_fetcher(self, src, mimetype):
-        data = self._url_fetcher(src)
-        if 'string' in data:
-            return data['string']
-        return data['file_obj'].read()
-
-    def get_intrinsic_size(self, _image_resolution, font_size):
-        # Vector images may be affected by the font size.
-        fake_surface = FakeSurface()
-        fake_surface.font_size = font_size
-        # Percentages don't provide an intrinsic size, we transform percentages
-        # into 0 using a (0, 0) context size:
-        # http://www.w3.org/TR/SVG/coords.html#IntrinsicSizing
-        self._width = cairosvg.surface.size(
-            fake_surface, self._tree.get('width'))
-        self._height = cairosvg.surface.size(
-            fake_surface, self._tree.get('height'))
-        _, _, viewbox = cairosvg.surface.node_format(fake_surface, self._tree)
-        self._intrinsic_width = self._width or None
-        self._intrinsic_height = self._height or None
-        self.intrinsic_ratio = None
-        if viewbox:
-            if self._width and self._height:
-                self.intrinsic_ratio = self._width / self._height
-            else:
-                if viewbox[2] and viewbox[3]:
-                    self.intrinsic_ratio = viewbox[2] / viewbox[3]
-                    if self._width:
-                        self._intrinsic_height = (
-                            self._width / self.intrinsic_ratio)
-                    elif self._height:
-                        self._intrinsic_width = (
-                            self._height * self.intrinsic_ratio)
-        elif self._width and self._height:
-            self.intrinsic_ratio = self._width / self._height
-        return self._intrinsic_width, self._intrinsic_height
-
-    def draw(self, context, concrete_width, concrete_height, _image_rendering):
-        try:
-            svg = ScaledSVGSurface(
-                cairosvg.parser.Tree(
-                    bytestring=self._svg_data, url=self._base_url,
-                    url_fetcher=self._cairosvg_url_fetcher),
-                output=None, dpi=96, output_width=concrete_width,
-                output_height=concrete_height)
-            if svg.width and svg.height:
-                context.scale(
-                    concrete_width / svg.width, concrete_height / svg.height)
-                context.set_source_surface(svg.cairo)
-                context.paint()
-        except Exception as exception:
-            LOGGER.error(
-                'Failed to draw an SVG image at %r: %s',
-                self._base_url, exception)
-
-
 def get_image_from_uri(cache, url_fetcher, optimize_images, url,
                        forced_mime_type=None):
     """Get a cairo Pattern from an image URI."""
@@ -176,9 +84,7 @@ def get_image_from_uri(cache, url_fetcher, optimize_images, url,
                 string = result['file_obj'].read()
             mime_type = forced_mime_type or result['mime_type']
             if mime_type == 'image/svg+xml':
-                # No fallback for XML-based mimetypes as defined by MIME
-                # Sniffing Standard, see https://mimesniff.spec.whatwg.org/
-                image = SVGImage(string, url, url_fetcher)
+                raise ValueError('SVG images are not supported yet')
             else:
                 # Try to rely on given mimetype
                 try:

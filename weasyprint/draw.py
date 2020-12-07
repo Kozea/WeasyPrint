@@ -11,7 +11,6 @@ import operator
 from math import ceil, floor, pi, sqrt, tan
 
 from .formatting_structure import boxes
-from .images import SVGImage
 from .layout import replaced
 from .layout.backgrounds import BackgroundLayer
 from .stacking import StackingContext
@@ -362,7 +361,8 @@ def draw_background(context, bg, clip_box=True, bleed=None, marks=()):
                 context.set_alpha(bg.color.alpha)
                 context.fill()
 
-        if bleed and marks:
+        if False and bleed and marks:
+            # TODO: fix this when SVG images are supported again
             x, y, width, height = bg.layers[-1].painting_area
             x -= bleed['left']
             y -= bleed['top']
@@ -379,16 +379,17 @@ def draw_background(context, bg, clip_box=True, bleed=None, marks=()):
             if 'cross' in marks:
                 svg += CROSS
             svg += '</svg>'
-            half_bleed = {key: value * 0.5 for key, value in bleed.items()}
-            image = SVGImage(svg.format(
-                height=height, width=width,
-                bleed_left=bleed['left'], bleed_right=bleed['right'],
-                bleed_top=bleed['top'], bleed_bottom=bleed['bottom'],
-                half_bleed_left=half_bleed['left'],
-                half_bleed_right=half_bleed['right'],
-                half_bleed_top=half_bleed['top'],
-                half_bleed_bottom=half_bleed['bottom'],
-            ), '', None)
+            # half_bleed = {key: value * 0.5 for key, value in bleed.items()}
+            # image = SVGImage(svg.format(
+            #     height=height, width=width,
+            #     bleed_left=bleed['left'], bleed_right=bleed['right'],
+            #     bleed_top=bleed['top'], bleed_bottom=bleed['bottom'],
+            #     half_bleed_left=half_bleed['left'],
+            #     half_bleed_right=half_bleed['right'],
+            #     half_bleed_top=half_bleed['top'],
+            #     half_bleed_bottom=half_bleed['bottom'],
+            # ), '', None)
+            image = None
             # Painting area is the PDF media box
             size = (width, height)
             position = (x, y)

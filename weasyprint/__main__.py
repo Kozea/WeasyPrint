@@ -11,7 +11,6 @@ import logging
 import platform
 import sys
 
-import cairosvg
 import pydyf
 
 from . import HTML, LOGGER, __version__
@@ -30,7 +29,6 @@ class PrintInfo(argparse.Action):
         print('Python version:', sys.version.split()[0])
         print('Pydyf version:', pydyf.__version__)
         print('Pango version:', pango.pango_version())
-        print('CairoSVG version:', cairosvg.__version__)
         sys.exit()
 
 
