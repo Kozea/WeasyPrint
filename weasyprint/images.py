@@ -84,7 +84,7 @@ def get_image_from_uri(cache, url_fetcher, optimize_images, url,
                 string = result['file_obj'].read()
             mime_type = forced_mime_type or result['mime_type']
             if mime_type == 'image/svg+xml':
-                raise ValueError('SVG images are not supported yet')
+                raise ImageLoadingError('SVG images are not supported yet')
             else:
                 # Try to rely on given mimetype
                 try:
