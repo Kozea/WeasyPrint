@@ -5,7 +5,7 @@ p {
 
 @media print {
     ul {
-        /* 1ex == 0.8em for ahem. */
+        /* 1ex == 0.8em for weasyprint.otf. */
         margin: 2em 2.5ex;
     }
 }

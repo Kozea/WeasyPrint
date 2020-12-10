@@ -60,9 +60,10 @@ def test_float_inline():
         _______________
     ''', '''
       <style>
-        @font-face {src: url(AHEM____.TTF); font-family: ahem}
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page { size: 15px 5px; background: white }
-        body { font-family: ahem; font-size: 2px; line-height: 1; color: lime }
+        body { font-family: weasyprint; font-size: 2px; line-height: 1;
+               color: lime }
       </style>
       <div>
         <img style="float: left" src="pattern.png">
@@ -82,9 +83,10 @@ def test_float_inline_rtl():
         _______________
     ''', '''
       <style>
-        @font-face {src: url(AHEM____.TTF); font-family: ahem}
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page { size: 15px 5px; background: white }
-        body { font-family: ahem; font-size: 2px; line-height: 1; color: lime }
+        body { font-family: weasyprint; font-size: 2px; line-height: 1;
+               color: lime }
       </style>
       <div style="direction: rtl">
         <img style="float: left" src="pattern.png">
@@ -104,9 +106,10 @@ def test_float_inline_block():
         _______________
     ''', '''
       <style>
-        @font-face {src: url(AHEM____.TTF); font-family: ahem}
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page { size: 15px 5px; background: white }
-        body { font-family: ahem; font-size: 2px; line-height: 1; color: lime }
+        body { font-family: weasyprint; font-size: 2px; line-height: 1;
+               color: lime }
       </style>
       <div>
         <img style="float: left" src="pattern.png">
@@ -126,9 +129,10 @@ def test_float_inline_block_rtl():
         _______________
     ''', '''
       <style>
-        @font-face {src: url(AHEM____.TTF); font-family: ahem}
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page { size: 15px 5px; background: white }
-        body { font-family: ahem; font-size: 2px; line-height: 1; color: lime }
+        body { font-family: weasyprint; font-size: 2px; line-height: 1;
+               color: lime }
       </style>
       <div style="direction: rtl">
         <img style="float: left" src="pattern.png">
@@ -148,9 +152,10 @@ def test_float_table():
         _______________
     ''', '''
       <style>
-        @font-face {src: url(AHEM____.TTF); font-family: ahem}
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page { size: 15px 5px; background: white }
-        body { font-family: ahem; font-size: 2px; line-height: 1; color: lime }
+        body { font-family: weasyprint; font-size: 2px; line-height: 1;
+               color: lime }
       </style>
       <div>
         <img style="float: left" src="pattern.png">
@@ -170,9 +175,10 @@ def test_float_table_rtl():
         _______________
     ''', '''
       <style>
-        @font-face {src: url(AHEM____.TTF); font-family: ahem}
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page { size: 15px 5px; background: white }
-        body { font-family: ahem; font-size: 2px; line-height: 1; color: lime }
+        body { font-family: weasyprint; font-size: 2px; line-height: 1;
+               color: lime }
       </style>
       <div style="direction: rtl">
         <img style="float: left" src="pattern.png">
@@ -192,10 +198,11 @@ def test_float_inline_table():
         _______________
     ''', '''
       <style>
-        @font-face {src: url(AHEM____.TTF); font-family: ahem}
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page { size: 15px 5px; background: white }
         table { display: inline-table }
-        body { font-family: ahem; font-size: 2px; line-height: 1; color: lime }
+        body { font-family: weasyprint; font-size: 2px; line-height: 1;
+               color: lime }
       </style>
       <div>
         <img style="float: left" src="pattern.png">
@@ -215,10 +222,11 @@ def test_float_inline_table_rtl():
         _______________
     ''', '''
       <style>
-        @font-face {src: url(AHEM____.TTF); font-family: ahem}
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page { size: 15px 5px; background: white }
         table { display: inline-table }
-        body { font-family: ahem; font-size: 2px; line-height: 1; color: lime }
+        body { font-family: weasyprint; font-size: 2px; line-height: 1;
+               color: lime }
       </style>
       <div style="direction: rtl">
         <img style="float: left" src="pattern.png">

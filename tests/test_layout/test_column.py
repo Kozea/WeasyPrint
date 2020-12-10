@@ -24,9 +24,9 @@ from ..testing_utils import assert_no_logs
 def test_columns(css):
     page, = render_pages('''
       <style>
-        @font-face { src: url(AHEM____.TTF); font-family: ahem }
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         div { %s; column-gap: 0 }
-        body { margin: 0; font-family: "ahem" }
+        body { margin: 0; font-family: weasyprint }
         @page { margin: 0; size: 400px 1000px }
       </style>
       <div>
@@ -56,9 +56,9 @@ def test_columns(css):
 def test_column_gap(value, width):
     page, = render_pages('''
       <style>
-        @font-face { src: url(AHEM____.TTF); font-family: ahem }
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         div { columns: 3; column-gap: %s }
-        body { margin: 0; font-family: "ahem" }
+        body { margin: 0; font-family: weasyprint }
         @page { margin: 0; size: 300px 1000px }
       </style>
       <div>
@@ -84,8 +84,8 @@ def test_column_gap(value, width):
 def test_column_span():
     page, = render_pages('''
       <style>
-        @font-face { src: url(AHEM____.TTF); font-family: ahem }
-        body { margin: 0; font-family: "ahem"; line-height: 1 }
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        body { margin: 0; font-family: weasyprint; line-height: 1 }
         div { columns: 2; width: 10em; column-gap: 0 }
         section { column-span: all; margin: 1em 0 }
       </style>
@@ -115,9 +115,9 @@ def test_column_span():
 def test_columns_multipage():
     page1, page2 = render_pages('''
       <style>
-        @font-face { src: url(AHEM____.TTF); font-family: ahem }
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         div { columns: 2; column-gap: 1px }
-        body { margin: 0; font-family: "ahem";
+        body { margin: 0; font-family: weasyprint;
                font-size: 1px; line-height: 1px }
         @page { margin: 0; size: 3px 2px }
       </style>
@@ -151,9 +151,9 @@ def test_columns_multipage():
 def test_columns_not_enough_content():
     page, = render_pages('''
       <style>
-        @font-face { src: url(AHEM____.TTF); font-family: ahem }
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         div { columns: 5; column-gap: 0 }
-        body { margin: 0; font-family: "ahem" }
+        body { margin: 0; font-family: weasyprint }
         @page { margin: 0; size: 5px; font-size: 1px }
       </style>
       <div>a b c</div>
@@ -173,9 +173,9 @@ def test_columns_not_enough_content():
 def test_columns_empty():
     page, = render_pages('''
       <style>
-        @font-face { src: url(AHEM____.TTF); font-family: ahem }
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         div { columns: 3 }
-        body { margin: 0; font-family: "ahem" }
+        body { margin: 0; font-family: weasyprint }
         @page { margin: 0; size: 3px; font-size: 1px }
       </style>
       <div></div>
@@ -195,9 +195,9 @@ def test_columns_fixed_height(prop):
     # TODO: we should test when the height is too small
     page, = render_pages('''
       <style>
-        @font-face { src: url(AHEM____.TTF); font-family: ahem }
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         div { columns: 4; column-gap: 0; %s: 10px }
-        body { margin: 0; font-family: "ahem"; line-height: 1px }
+        body { margin: 0; font-family: weasyprint; line-height: 1px }
         @page { margin: 0; size: 4px 50px; font-size: 1px }
       </style>
       <div>a b c</div>
@@ -218,11 +218,11 @@ def test_columns_fixed_height(prop):
 def test_columns_relative():
     page, = render_pages('''
       <style>
-        @font-face { src: url(AHEM____.TTF); font-family: ahem }
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         article { position: absolute; top: 3px }
         div { columns: 4; column-gap: 0; position: relative;
               top: 1px; left: 2px }
-        body { margin: 0; font-family: "ahem"; line-height: 1px }
+        body { margin: 0; font-family: weasyprint; line-height: 1px }
         @page { margin: 0; size: 4px 50px; font-size: 1px }
       </style>
       <div>a b c d<article>e</article></div>

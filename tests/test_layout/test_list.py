@@ -86,9 +86,9 @@ def test_lists_page_break():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/945
     page1, page2 = parse('''
       <style>
-        @font-face { src: url(AHEM____.TTF); font-family: ahem }
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 300px 100px }
-        ul { font-size: 30px; font-family: ahem; margin: 0 }
+        ul { font-size: 30px; font-family: weasyprint; margin: 0 }
       </style>
       <ul>
         <li>a</li>

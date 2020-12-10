@@ -383,10 +383,10 @@ def test_layout_table_auto_4():
 def test_layout_table_auto_5():
     page, = render_pages('''
       <style>
-        @font-face { src: url(AHEM____.TTF); font-family: ahem }
-        * { font-family: ahem }
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        * { font-family: weasyprint }
       </style>
-      <table style="width: 1000px; font-family: ahem">
+      <table style="width: 1000px; font-family: weasyprint">
         <tr>
           <td style="width: 40px">aa aa aa aa</td>
           <td style="width: 40px">aaaaaaaaaaa</td>
@@ -1243,9 +1243,11 @@ def test_layout_table_auto_40():
     # Test regression: https://github.com/Kozea/WeasyPrint/issues/368
     # Check that white-space is used for the shrink-to-fit algorithm
     page, = render_pages('''
-      <style>@font-face { src: url(AHEM____.TTF); font-family: ahem }</style>
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+      </style>
       <table style="width: 0">
-        <td style="font-family: ahem; white-space: nowrap">a a</td>
+        <td style="font-family: weasyprint; white-space: nowrap">a a</td>
       </table>
     ''')
     html, = page.children
@@ -1447,8 +1449,10 @@ def test_layout_table_auto_47():
     # Test regression:
     # https://github.com/Kozea/WeasyPrint/issues/666
     page, = render_pages('''
-      <style>@font-face { src: url(AHEM____.TTF); font-family: ahem }</style>
-      <table style="font-family: ahem">
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+      </style>
+      <table style="font-family: weasyprint">
         <tr>
           <td colspan=5>aaa</td>
         </tr>
@@ -1469,8 +1473,10 @@ def test_layout_table_auto_48():
     # Related to:
     # https://github.com/Kozea/WeasyPrint/issues/685
     page, = render_pages('''
-      <style>@font-face { src: url(AHEM____.TTF); font-family: ahem }</style>
-      <table style="font-family: ahem; border-spacing: 100px;
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+      </style>
+      <table style="font-family: weasyprint; border-spacing: 100px;
                     border-collapse: collapse">
         <tr>
           <td colspan=5>aaa</td>
@@ -1494,8 +1500,10 @@ def test_layout_table_auto_49():
     # https://github.com/Kozea/WeasyPrint/issues/685
     # See TODO in table_layout.group_layout
     page, = render_pages('''
-      <style>@font-face { src: url(AHEM____.TTF); font-family: ahem }</style>
-      <table style="font-family: ahem; border-spacing: 100px">
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+      </style>
+      <table style="font-family: weasyprint; border-spacing: 100px">
         <tr>
           <td colspan=5>aaa</td>
         </tr>
@@ -1516,8 +1524,10 @@ def test_layout_table_auto_50():
     # Test regression:
     # https://github.com/Kozea/WeasyPrint/issues/685
     page, = render_pages('''
-      <style>@font-face { src: url(AHEM____.TTF); font-family: ahem }</style>
-      <table style="font-family: ahem; border-spacing: 5px">
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+      </style>
+      <table style="font-family: weasyprint; border-spacing: 5px">
        <tr><td>a</td><td>a</td><td>a</td><td>a</td><td>a</td></tr>
        <tr>
          <td colspan='5'>aaa aaa aaa aaa</td>
@@ -1843,9 +1853,10 @@ def test_table_row_height_3():
     # Test regression: https://github.com/Kozea/WeasyPrint/issues/
     page, = render_pages('''
       <style>
-        @font-face { src: url(AHEM____.TTF); font-family: ahem }
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
       </style>
-      <table style="border-spacing: 0; font-family: ahem; line-height: 20px">
+      <table style="border-spacing: 0; font-family: weasyprint;
+                    line-height: 20px">
         <tr><td>Table</td><td rowspan="2"></td></tr>
         <tr></tr>
       </table>
@@ -1877,7 +1888,7 @@ def test_table_vertical_align():
         rrrrrrrrrrrrrrrrrrrrrrrrrrrr
     ''', '''
       <style>
-        @font-face { src: url(AHEM____.TTF); font-family: ahem }
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 28px 10px }
         html { background: #fff; font-size: 1px; color: red }
         body { margin: 0; width: 28px; height: 10px }
@@ -1886,7 +1897,7 @@ def test_table_vertical_align():
           padding: 0 !important;
           border: 1px solid blue;
           line-height: 1em;
-          font-family: ahem;
+          font-family: weasyprint;
         }
       </style>
       <table style="border: 1px solid red; border-spacing: 0">
@@ -2583,7 +2594,7 @@ def test_inline_table_baseline(vertical_align, table_position_y):
     # Check that inline table's baseline is its first row's baseline.
     #
     # Div text's baseline is at 18px from the top (10px because of the
-    # line-height, 8px as it's Ahem's baseline position).
+    # line-height, 8px as it's weasyprint.otf's baseline position).
     #
     # When a row has vertical-align: baseline cells, its baseline is its cell's
     # baseline. The position of the table is thus 10px above the text's
@@ -2593,8 +2604,10 @@ def test_inline_table_baseline(vertical_align, table_position_y):
     # bottom of the row. The first cell's text is aligned with the div's text,
     # and the top of the table is thus 8px above the baseline.
     page, = render_pages('''
-      <style>@font-face { src: url(AHEM____.TTF); font-family: ahem }</style>
-      <div style="font-family: ahem; font-size: 10px; line-height: 30px">
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+      </style>
+      <div style="font-family: weasyprint; font-size: 10px; line-height: 30px">
         abc
         <table style="display: inline-table; border-collapse: collapse;
                       line-height: 10px">
@@ -2612,7 +2625,7 @@ def test_inline_table_baseline(vertical_align, table_position_y):
     table, = table_wrapper.children
     assert text1.position_y == text2.position_y == 0
     assert table.height == 10 * 2
-    assert table.position_y == table_position_y
+    assert abs(table.position_y - table_position_y) < 0.1
 
 
 @assert_no_logs

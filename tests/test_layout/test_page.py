@@ -807,10 +807,10 @@ def test_page_and_linebox_breaking():
     # Empty <span/> tests a corner case in skip_first_whitespace()
     pages = render_pages('''
       <style>
-        @font-face { src: url(AHEM____.TTF); font-family: ahem }
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 100px; margin: 2px; border: 1px solid }
         body { margin: 0 }
-        div { font-family: ahem; font-size: 20px }
+        div { font-family: weasyprint; font-size: 20px }
       </style>
       <div><span/>1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15</div>
     ''')

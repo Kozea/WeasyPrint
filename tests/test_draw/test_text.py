@@ -20,14 +20,14 @@ def test_text_overflow_clip():
         _________
     ''', '''
       <style>
-        @font-face {src: url(AHEM____.TTF); font-family: ahem}
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
           size: 9px 7px;
           background: white;
         }
         body {
           color: red;
-          font-family: ahem;
+          font-family: weasyprint;
           font-size: 2px;
         }
         div {
@@ -61,14 +61,14 @@ def test_text_overflow_ellipsis():
         _________
     ''', '''
       <style>
-        @font-face {src: url(AHEM____.TTF); font-family: ahem}
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
           background: white;
           size: 9px 16px;
         }
         body {
           color: red;
-          font-family: ahem;
+          font-family: weasyprint;
           font-size: 2px;
         }
         div {
@@ -105,9 +105,9 @@ def test_text_align_rtl_trailing_whitespace():
         _________
     ''', '''
       <style>
-        @font-face {src: url(AHEM____.TTF); font-family: ahem}
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page { background: white; size: 9px }
-        body { font-family: ahem; color: blue; font-size: 1px }
+        body { font-family: weasyprint; color: blue; font-size: 1px }
         p { background: red; line-height: 1; width: 7em; margin: 1em }
       </style>
       <!-- &#8207 forces Unicode RTL direction for the following chars -->

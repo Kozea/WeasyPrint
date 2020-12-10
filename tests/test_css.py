@@ -443,8 +443,11 @@ def test_named_pages():
 ))
 def test_units(value, width):
     document = FakeHTML(base_url=BASE_URL, string='''
-      <style>@font-face { src: url(AHEM____.TTF); font-family: ahem }</style>
-      <body style="font: 10px ahem"><p style="margin-left: %s"></p>''' % value)
+      <style>@font-face {
+        src: url(weasyprint.otf); font-family: weasyprint
+      }</style>
+      <body style="font: 10px weasyprint">
+      <p style="margin-left: %s"></p>''' % value)
     page, = document.render().pages
     html, = page._page_box.children
     body, = html.children

@@ -324,8 +324,8 @@ def test_text_align_justify_no_break_between_children():
     # Test regression: https://github.com/Kozea/WeasyPrint/issues/637
     page, = render_pages('''
       <style>
-        @font-face {src: url(AHEM____.TTF); font-family: ahem}
-        p { text-align: justify; font-family: ahem; width: 7em }
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        p { text-align: justify; font-family: weasyprint; width: 7em }
       </style>
       <p>
         <span>a</span>
@@ -453,8 +453,9 @@ def test_text_indent_inline():
     # Test regression: https://github.com/Kozea/WeasyPrint/issues/1000
     page, = render_pages('''
         <style>
-            @font-face { src: url(AHEM____.TTF); font-family: ahem }
-            p { display: inline-block; text-indent: 1em; font-family: ahem }
+            @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+            p { display: inline-block; text-indent: 1em;
+                font-family: weasyprint }
         </style>
         <p><span>text
     ''')
@@ -497,8 +498,10 @@ def test_text_indent_multipage(indent):
 @assert_no_logs
 def test_hyphenate_character_1():
     page, = render_pages(
-        '<html style="width: 5em; font-family: ahem">'
-        '<style>@font-face {src: url(AHEM____.TTF); font-family: ahem}</style>'
+        '<html style="width: 5em; font-family: weasyprint">'
+        '<style>'
+        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
+        '</style>'
         '<body style="hyphens: auto;'
         'hyphenate-character: \'!\'" lang=fr>'
         'hyphénation')
@@ -514,8 +517,10 @@ def test_hyphenate_character_1():
 @assert_no_logs
 def test_hyphenate_character_2():
     page, = render_pages(
-        '<html style="width: 5em; font-family: ahem">'
-        '<style>@font-face {src: url(AHEM____.TTF); font-family: ahem}</style>'
+        '<html style="width: 5em; font-family: weasyprint">'
+        '<style>'
+        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
+        '</style>'
         '<body style="hyphens: auto;'
         'hyphenate-character: \'à\'" lang=fr>'
         'hyphénation')
@@ -531,8 +536,10 @@ def test_hyphenate_character_2():
 @assert_no_logs
 def test_hyphenate_character_3():
     page, = render_pages(
-        '<html style="width: 5em; font-family: ahem">'
-        '<style>@font-face {src: url(AHEM____.TTF); font-family: ahem}</style>'
+        '<html style="width: 5em; font-family: weasyprint">'
+        '<style>'
+        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
+        '</style>'
         '<body style="hyphens: auto;'
         'hyphenate-character: \'ù ù\'" lang=fr>'
         'hyphénation')
@@ -548,8 +555,10 @@ def test_hyphenate_character_3():
 @assert_no_logs
 def test_hyphenate_character_4():
     page, = render_pages(
-        '<html style="width: 5em; font-family: ahem">'
-        '<style>@font-face {src: url(AHEM____.TTF); font-family: ahem}</style>'
+        '<html style="width: 5em; font-family: weasyprint">'
+        '<style>'
+        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
+        '</style>'
         '<body style="hyphens: auto;'
         'hyphenate-character: \'\'" lang=fr>'
         'hyphénation')
@@ -564,8 +573,10 @@ def test_hyphenate_character_4():
 @assert_no_logs
 def test_hyphenate_character_5():
     page, = render_pages(
-        '<html style="width: 5em; font-family: ahem">'
-        '<style>@font-face {src: url(AHEM____.TTF); font-family: ahem}</style>'
+        '<html style="width: 5em; font-family: weasyprint">'
+        '<style>'
+        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
+        '</style>'
         '<body style="hyphens: auto;'
         'hyphenate-character: \'———\'" lang=fr>'
         'hyphénation')
@@ -584,9 +595,9 @@ def test_hyphenate_manual_1():
         for hyphenate_character in ('!', 'ù ù'):
             word = 'hyphénation'[:i] + '\u00ad' + 'hyphénation'[i:]
             page, = render_pages(
-                '<html style="width: 5em; font-family: ahem">'
+                '<html style="width: 5em; font-family: weasyprint">'
                 '<style>@font-face {'
-                '  src: url(AHEM____.TTF); font-family: ahem}</style>'
+                '  src: url(weasyprint.otf); font-family: weasyprint}</style>'
                 '<body style="hyphens: manual;'
                 f'  hyphenate-character: \'{hyphenate_character}\'"'
                 f'  lang=fr>{word}')
@@ -606,9 +617,9 @@ def test_hyphenate_manual_2():
         for hyphenate_character in ('!', 'ù ù'):
             word = 'hy phénation'[:i] + '\u00ad' + 'hy phénation'[i:]
             page, = render_pages(
-                '<html style="width: 5em; font-family: ahem">'
+                '<html style="width: 5em; font-family: weasyprint">'
                 '<style>@font-face {'
-                '  src: url(AHEM____.TTF); font-family: ahem}</style>'
+                '  src: url(weasyprint.otf); font-family: weasyprint}</style>'
                 '<body style="hyphens: manual;'
                 f'  hyphenate-character: \'{hyphenate_character}\'"'
                 f'  lang=fr>{word}')
@@ -648,8 +659,10 @@ def test_hyphenate_manual_3():
 @assert_no_logs
 def test_hyphenate_limit_zone_1():
     page, = render_pages(
-        '<html style="width: 12em; font-family: ahem">'
-        '<style>@font-face {src: url(AHEM____.TTF); font-family: ahem}</style>'
+        '<html style="width: 12em; font-family: weasyprint">'
+        '<style>'
+        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
+        '</style>'
         '<body style="hyphens: auto;'
         'hyphenate-limit-zone: 0" lang=fr>'
         'mmmmm hyphénation')
@@ -665,8 +678,10 @@ def test_hyphenate_limit_zone_1():
 @assert_no_logs
 def test_hyphenate_limit_zone_2():
     page, = render_pages(
-        '<html style="width: 12em; font-family: ahem">'
-        '<style>@font-face {src: url(AHEM____.TTF); font-family: ahem}</style>'
+        '<html style="width: 12em; font-family: weasyprint">'
+        '<style>'
+        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
+        '</style>'
         '<body style="hyphens: auto;'
         'hyphenate-limit-zone: 9em" lang=fr>'
         'mmmmm hyphénation')
@@ -682,8 +697,10 @@ def test_hyphenate_limit_zone_2():
 @assert_no_logs
 def test_hyphenate_limit_zone_3():
     page, = render_pages(
-        '<html style="width: 12em; font-family: ahem">'
-        '<style>@font-face {src: url(AHEM____.TTF); font-family: ahem}</style>'
+        '<html style="width: 12em; font-family: weasyprint">'
+        '<style>'
+        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
+        '</style>'
         '<body style="hyphens: auto;'
         'hyphenate-limit-zone: 5%" lang=fr>'
         'mmmmm hyphénation')
@@ -699,8 +716,10 @@ def test_hyphenate_limit_zone_3():
 @assert_no_logs
 def test_hyphenate_limit_zone_4():
     page, = render_pages(
-        '<html style="width: 12em; font-family: ahem">'
-        '<style>@font-face {src: url(AHEM____.TTF); font-family: ahem}</style>'
+        '<html style="width: 12em; font-family: weasyprint">'
+        '<style>'
+        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
+        '</style>'
         '<body style="hyphens: auto;'
         'hyphenate-limit-zone: 95%" lang=fr>'
         'mmmmm hyphénation')
@@ -731,8 +750,10 @@ def test_hyphenate_limit_zone_4():
 ))
 def test_hyphenate_limit_chars(css, result):
     page, = render_pages(
-        '<html style="width: 1em; font-family: ahem">'
-        '<style>@font-face {src: url(AHEM____.TTF); font-family: ahem}</style>'
+        '<html style="width: 1em; font-family: weasyprint">'
+        '<style>'
+        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
+        '</style>'
         '<body style="hyphens: auto;'
         f'hyphenate-limit-chars: {css}" lang=en>'
         'hyphen')
@@ -752,8 +773,10 @@ def test_hyphenate_limit_chars(css, result):
 def test_hyphenate_limit_chars_punctuation(css):
     # See https://github.com/Kozea/WeasyPrint/issues/109
     page, = render_pages(
-        '<html style="width: 1em; font-family: ahem">'
-        '<style>@font-face {src: url(AHEM____.TTF); font-family: ahem}</style>'
+        '<html style="width: 1em; font-family: weasyprint">'
+        '<style>'
+        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
+        '</style>'
         '<body style="hyphens: auto;'
         f'hyphenate-limit-chars: {css}" lang=en>'
         '..lighten..')
@@ -775,8 +798,8 @@ def test_hyphenate_limit_chars_punctuation(css):
 def test_overflow_wrap(wrap, text, test, full_text):
     page, = render_pages('''
       <style>
-        @font-face {src: url(AHEM____.TTF); font-family: ahem}
-        body {width: 80px; overflow: hidden; font-family: ahem; }
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        body {width: 80px; overflow: hidden; font-family: weasyprint; }
         span {overflow-wrap: %s; white-space: normal; }
       </style>
       <body style="hyphens: auto;" lang="en">
@@ -976,8 +999,8 @@ def test_white_space_12():
 def test_tab_size(value, width):
     page, = render_pages('''
       <style>
-        @font-face {src: url(AHEM____.TTF); font-family: ahem}
-        pre { tab-size: %s; font-family: ahem }
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        pre { tab-size: %s; font-family: weasyprint }
       </style>
       <pre>a&#9;a</pre>
     ''' % value)

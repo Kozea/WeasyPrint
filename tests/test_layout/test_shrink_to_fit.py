@@ -19,10 +19,10 @@ def test_shrink_to_fit_floating_point_error_1(margin_left, font_size):
     # See bugs #325 and #288, see commit fac5ee9.
     page, = parse('''
       <style>
-        @font-face { src: url(AHEM____.TTF); font-family: ahem }
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 100000px 100px }
         p { float: left; margin-left: 0.%din; font-size: 0.%dem;
-            font-family: "ahem" }
+            font-family: weasyprint }
       </style>
       <p>this parrot is dead</p>
     ''' % (margin_left, font_size))
@@ -39,9 +39,9 @@ def test_shrink_to_fit_floating_point_error_2(font_size):
     while True:
         page, = parse('''
           <style>
-            @font-face { src: url(AHEM____.TTF); font-family: ahem }
+            @font-face { src: url(weasyprint.otf); font-family: weasyprint }
             @page { size: %d0pt %d0px }
-            p { font-size: %dpt; font-family: "ahem" }
+            p { font-size: %dpt; font-family: weasyprint }
           </style>
           <p>mmm <b>%s a</b></p>
         ''' % (font_size, font_size, font_size, 'i' * letters))

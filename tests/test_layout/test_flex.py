@@ -488,12 +488,12 @@ def test_flex_align_content(align, height, y1, y2):
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/811
     page, = render_pages('''
       <style>
-        @font-face { src: url(AHEM____.TTF); font-family: ahem }
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         article {
           align-content: %s;
           display: flex;
           flex-wrap: wrap;
-          font-family: ahem;
+          font-family: weasyprint;
           font-size: 10px;
           height: %dpx;
           line-height: 1;

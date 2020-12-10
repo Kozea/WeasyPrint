@@ -121,7 +121,8 @@ def test_floats_5():
     # c414-flt-wrap-000 with text ... more or less
     page, = render_pages('''
       <style>
-        body { width: 100px; font: 60px ahem; }
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        body { width: 100px; font: 60px weasyprint; }
         p { float: left; height: 100px }
         img { width: 60px; vertical-align: top }
       </style>
@@ -432,9 +433,9 @@ def test_preferred_widths_1():
     def get_float_width(body_width):
         page, = render_pages('''
           <style>
-            @font-face { src: url(AHEM____.TTF); font-family: ahem }
+            @font-face { src: url(weasyprint.otf); font-family: weasyprint }
           </style>
-          <body style="width: %spx; font-family: ahem">
+          <body style="width: %spx; font-family: weasyprint">
           <p style="white-space: pre-line; float: left">
             Lorem ipsum dolor sit amet,
               consectetur elit
@@ -484,8 +485,8 @@ def test_preferred_widths_3():
 def test_preferred_widths_4():
     page, = render_pages(
         '<style>'
-        '  @font-face { src: url(AHEM____.TTF); font-family: ahem }'
-        '  p { font: 20px ahem }'
+        '  @font-face { src: url(weasyprint.otf); font-family: weasyprint }'
+        '  p { font: 20px weasyprint }'
         '</style>'
         '<p style="float: left">XX<br>XX<br>X</p>')
     html, = page.children
@@ -499,8 +500,8 @@ def test_preferred_widths_5():
     # The space is the start of the line is collapsed.
     page, = render_pages(
         '<style>'
-        '  @font-face { src: url(AHEM____.TTF); font-family: ahem }'
-        '  p { font: 20px ahem }'
+        '  @font-face { src: url(weasyprint.otf); font-family: weasyprint }'
+        '  p { font: 20px weasyprint }'
         '</style>'
         '<p style="float: left">XX<br> XX<br>X</p>')
     html, = page.children
@@ -513,9 +514,9 @@ def test_preferred_widths_5():
 def test_float_in_inline():
     page, = render_pages('''
       <style>
-        @font-face { src: url(AHEM____.TTF); font-family: ahem }
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         body {
-          font-family: ahem;
+          font-family: weasyprint;
           font-size: 20px;
         }
         p {
@@ -558,9 +559,9 @@ def test_float_in_inline():
 def test_float_next_line():
     page, = render_pages('''
       <style>
-        @font-face { src: url(AHEM____.TTF); font-family: ahem }
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         body {
-          font-family: ahem;
+          font-family: weasyprint;
           font-size: 20px;
         }
         p {
@@ -591,9 +592,9 @@ def test_float_next_line():
 def test_float_text_indent_1():
     page, = render_pages('''
       <style>
-        @font-face { src: url(AHEM____.TTF); font-family: ahem }
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         body {
-          font-family: ahem;
+          font-family: weasyprint;
           font-size: 20px;
         }
         p {
@@ -626,9 +627,9 @@ def test_float_text_indent_1():
 def test_float_text_indent_2():
     page, = render_pages('''
       <style>
-        @font-face { src: url(AHEM____.TTF); font-family: ahem }
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         body {
-          font-family: ahem;
+          font-family: weasyprint;
           font-size: 20px;
         }
         p {
@@ -668,9 +669,9 @@ def test_float_text_indent_2():
 def test_float_text_indent_3():
     page, = render_pages('''
       <style>
-        @font-face { src: url(AHEM____.TTF); font-family: ahem }
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         body {
-          font-family: ahem;
+          font-family: weasyprint;
           font-size: 20px;
         }
         p {
@@ -716,9 +717,9 @@ def test_float_text_indent_3():
 def test_float_fail():
     page, = render_pages('''
       <style>
-        @font-face { src: url(AHEM____.TTF); font-family: ahem }
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         body {
-          font-family: ahem;
+          font-family: weasyprint;
           font-size: 20px;
         }
         p {

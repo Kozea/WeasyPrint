@@ -76,12 +76,14 @@ def test_ph_flow():
 @assert_no_logs
 def test_ph_phrasing():
     document = HTML(string='''
-      <style>@font-face { src: url(AHEM____.TTF); font-family: ahem }</style>
+      <style>@font-face {
+        src: url(weasyprint.otf); font-family: weasyprint
+      }</style>
       <br clear=left>
       <br clear=right />
       <br clear=both />
       <br clear=all />
-      <font color=red face=ahem size=7></font>
+      <font color=red face=weasyprint size=7></font>
       <Font size=4></Font>
       <font size=+5 ></font>
       <font size=-5 ></font>
@@ -101,7 +103,7 @@ def test_ph_phrasing():
     assert br3.style['clear'] == 'both'
     assert br4.style['clear'] == 'both'
     assert font1.style['color'] == (1, 0, 0, 1)
-    assert font1.style['font_family'] == ('ahem',)
+    assert font1.style['font_family'] == ('weasyprint',)
     assert font1.style['font_size'] == 1.5 * 2 * 16
     assert font2.style['font_size'] == 6 / 5 * 16
     assert font3.style['font_size'] == 1.5 * 2 * 16

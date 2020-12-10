@@ -154,9 +154,9 @@ def test_breaking_linebox_regression_1():
 def test_breaking_linebox_regression_2():
     html_sample = '''
       <style>
-        @font-face { src: url(AHEM____.TTF); font-family: ahem }
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
       </style>
-      <p style="width: %d.5em; font-family: ahem">ab
+      <p style="width: %d.5em; font-family: weasyprint">ab
       <span style="padding-right: 1em; margin-right: 1em">c def</span>g
       hi</p>'''
     for i in range(16):
@@ -235,8 +235,10 @@ def test_breaking_linebox_regression_2():
 def test_breaking_linebox_regression_3():
     # Regression test #1 for https://github.com/Kozea/WeasyPrint/issues/560
     page, = parse(
-        '<style>@font-face {src: url(AHEM____.TTF); font-family: ahem}</style>'
-        '<div style="width: 5.5em; font-family: ahem">'
+        '<style>'
+        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
+        '</style>'
+        '<div style="width: 5.5em; font-family: weasyprint">'
         'aaaa aaaa a [<span>aaa</span>]')
     html, = page.children
     body, = html.children
@@ -254,8 +256,10 @@ def test_breaking_linebox_regression_3():
 def test_breaking_linebox_regression_4():
     # Regression test #2 for https://github.com/Kozea/WeasyPrint/issues/560
     page, = parse(
-        '<style>@font-face {src: url(AHEM____.TTF); font-family: ahem}</style>'
-        '<div style="width: 5.5em; font-family: ahem">'
+        '<style>'
+        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
+        '</style>'
+        '<div style="width: 5.5em; font-family: weasyprint">'
         'aaaa a <span>b c</span>d')
     html, = page.children
     body, = html.children
@@ -272,8 +276,10 @@ def test_breaking_linebox_regression_4():
 def test_breaking_linebox_regression_5():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/580
     page, = parse(
-        '<style>@font-face {src: url(AHEM____.TTF); font-family: ahem}</style>'
-        '<div style="width: 5.5em; font-family: ahem">'
+        '<style>'
+        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
+        '</style>'
+        '<div style="width: 5.5em; font-family: weasyprint">'
         '<span>aaaa aaaa a a a</span><span>bc</span>')
     html, = page.children
     body, = html.children
@@ -290,8 +296,10 @@ def test_breaking_linebox_regression_5():
 def test_breaking_linebox_regression_6():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/586
     page, = parse(
-        '<style>@font-face {src: url(AHEM____.TTF); font-family: ahem}</style>'
-        '<div style="width: 5.5em; font-family: ahem">'
+        '<style>'
+        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
+        '</style>'
+        '<div style="width: 5.5em; font-family: weasyprint">'
         'a a <span style="white-space: nowrap">/ccc</span>')
     html, = page.children
     body, = html.children
@@ -305,8 +313,10 @@ def test_breaking_linebox_regression_6():
 def test_breaking_linebox_regression_7():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/660
     page, = parse(
-        '<style>@font-face {src: url(AHEM____.TTF); font-family: ahem}</style>'
-        '<div style="width: 3.5em; font-family: ahem">'
+        '<style>'
+        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
+        '</style>'
+        '<div style="width: 3.5em; font-family: weasyprint">'
         '<span><span>abc d e</span></span><span>f')
     html, = page.children
     body, = html.children
@@ -322,8 +332,10 @@ def test_breaking_linebox_regression_7():
 def test_breaking_linebox_regression_8():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/783
     page, = parse(
-        '<style>@font-face {src: url(AHEM____.TTF); font-family: ahem}</style>'
-        '<p style="font-family: ahem"><span>\n'
+        '<style>'
+        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
+        '</style>'
+        '<p style="font-family: weasyprint"><span>\n'
         'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n'
         'bbbbbbbbbbb\n'
         '<b>cccc</b></span>ddd</p>')
@@ -344,8 +356,10 @@ def test_breaking_linebox_regression_9():  # pragma: no cover
     # TODO: inlines.can_break_inside return False for span but we can break
     # before the <b> tag. can_break_inside should be fixed.
     page, = parse(
-        '<style>@font-face {src: url(AHEM____.TTF); font-family: ahem}</style>'
-        '<p style="font-family: ahem"><span>\n'
+        '<style>'
+        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
+        '</style>'
+        '<p style="font-family: weasyprint"><span>\n'
         'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbb\n'
         '<b>cccc</b></span>ddd</p>')
     html, = page.children
@@ -362,8 +376,10 @@ def test_breaking_linebox_regression_9():  # pragma: no cover
 def test_breaking_linebox_regression_10():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/923
     page, = parse(
-        '<style>@font-face {src: url(AHEM____.TTF); font-family: ahem}</style>'
-        '<p style="width:195px; font-family: ahem">'
+        '<style>'
+        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
+        '</style>'
+        '<p style="width:195px; font-family: weasyprint">'
         '  <span>'
         '    <span>xxxxxx YYY yyyyyy yyy</span>'
         '    ZZZZZZ zzzzz'
@@ -383,8 +399,10 @@ def test_breaking_linebox_regression_10():
 def test_breaking_linebox_regression_11():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/953
     page, = parse(
-        '<style>@font-face {src: url(AHEM____.TTF); font-family: ahem}</style>'
-        '<p style="width:10em; font-family: ahem">'
+        '<style>'
+        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
+        '</style>'
+        '<p style="width:10em; font-family: weasyprint">'
         '  line 1<br><span>123 567 90</span>x'
         '</p>')
     html, = page.children
@@ -401,8 +419,10 @@ def test_breaking_linebox_regression_11():
 def test_breaking_linebox_regression_12():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/953
     page, = parse(
-        '<style>@font-face {src: url(AHEM____.TTF); font-family: ahem}</style>'
-        '<p style="width:10em; font-family: ahem">'
+        '<style>'
+        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
+        '</style>'
+        '<p style="width:10em; font-family: weasyprint">'
         '  <br><span>123 567 90</span>x'
         '</p>')
     html, = page.children
@@ -418,8 +438,10 @@ def test_breaking_linebox_regression_12():
 def test_breaking_linebox_regression_13():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/953
     page, = parse(
-        '<style>@font-face {src: url(AHEM____.TTF); font-family: ahem}</style>'
-        '<p style="width:10em; font-family: ahem">'
+        '<style>'
+        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
+        '</style>'
+        '<p style="width:10em; font-family: weasyprint">'
         '  123 567 90 <span>123 567 90</span>x'
         '</p>')
     html, = page.children
@@ -644,9 +666,10 @@ def test_font_stretch():
 ))
 def test_line_count(source, lines_count):
     page, = parse(
-        '<html style="width: 5em; font-family: ahem">' +
-        '<style>@font-face {src:url(AHEM____.TTF); font-family:ahem}</style>' +
-        source)
+        '<html style="width: 5em; font-family: weasyprint">'
+        '<style>@font-face {'
+        '  src:url(weasyprint.otf); font-family :weasyprint'
+        '}</style>' + source)
     html, = page.children
     body, = html.children
     lines = body.children
@@ -750,10 +773,13 @@ def test_vertical_align_4():
 def test_vertical_align_5():
     # Same as previously, but with percentages
     page, = parse(
-        '<style>@font-face {src: url(AHEM____.TTF); font-family: ahem}</style>'
-        '<span style="line-height: 12px; font-size: 12px; font-family: ahem">'
+        '<style>'
+        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
+        '</style>'
+        '<span style="line-height: 12px; font-size: 12px;'
+        '             font-family: weasyprint">'
         '<img src="pattern.png" style="width: 40px; vertical-align: middle">'
-        '<img src="pattern.png" style="width: 60px"></span>''')
+        '<img src="pattern.png" style="width: 60px"></span>')
     html, = page.children
     body, = html.children
     line, = body.children
@@ -762,7 +788,7 @@ def test_vertical_align_5():
     assert img_1.height == 40
     assert img_2.height == 60
     # middle of the image (position_y + 20) is at half the ex-height above
-    # the baseline of the parent. The ex-height of Ahem is something like 0.8em
+    # the baseline of the parent. The ex-height of weasyprint.otf is 0.8em
     # TODO: ex unit doesn't work with @font-face fonts, see computed_values.py
     # assert img_1.position_y == 35.2  # 60 - 0.5 * 0.8 * font-size - 40/2
     assert img_2.position_y == 0
@@ -972,9 +998,9 @@ def test_box_decoration_break_inline_slice():
     # http://www.w3.org/TR/css3-background/#the-box-decoration-break
     page_1, = parse('''
       <style>
-        @font-face { src: url(AHEM____.TTF); font-family: ahem }
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 100px }
-        span { font-family: ahem; box-decoration-break: slice;
+        span { font-family: weasyprint; box-decoration-break: slice;
                padding: 5px; border: 1px solid black }
       </style>
       <span>a<br/>b<br/>c</span>''')
@@ -1003,9 +1029,10 @@ def test_box_decoration_break_inline_clone():
     # http://www.w3.org/TR/css3-background/#the-box-decoration-break
     page_1, = parse('''
       <style>
-        @font-face { src: url(AHEM____.TTF); font-family: ahem }
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 100px }
-        span { font-family: ahem; box-decoration-break: clone;
+        span { font-size: 12pt; font-family: weasyprint;
+               box-decoration-break: clone;
                padding: 5px; border: 1px solid black }
       </style>
       <span>a<br/>b<br/>c</span>''')
