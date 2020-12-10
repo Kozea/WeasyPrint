@@ -76,7 +76,7 @@ def _check_doc1(html, has_base_url=True):
     if has_base_url:
         url = urljoin(html.base_url, 'pattern.png')
         assert url.startswith('file:')
-        assert url.endswith('weasyprint/tests/resources/pattern.png')
+        assert url.endswith('tests/resources/pattern.png')
     else:
         assert html.base_url is None
 
@@ -162,8 +162,7 @@ def test_css_parsing():
         assert h1_rule[4][1][0] == 'background_image'
         assert h1_rule[4][1][1][0][0] == 'url'
         assert h1_rule[4][1][1][0][1].startswith('file:')
-        assert h1_rule[4][1][1][0][1].endswith(
-            'weasyprint/tests/resources/pattern.png')
+        assert h1_rule[4][1][1][0][1].endswith('tests/resources/pattern.png')
 
     _test_resource(CSS, 'utf8-test.css', check_css)
     _test_resource(CSS, 'latin1-test.css', check_css, encoding='latin1')
