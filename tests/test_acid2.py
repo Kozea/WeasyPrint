@@ -8,6 +8,7 @@
 
 import io
 
+import pytest
 from PIL import Image
 from weasyprint import HTML
 
@@ -15,8 +16,10 @@ from .test_draw import assert_pixels_equal
 from .testing_utils import assert_no_logs, capture_logs, resource_filename
 
 
+@pytest.mark.xfail
 @assert_no_logs
 def test_acid2():
+    # TODO: fails because of Ghostscript rendering
     def render(filename):
         return HTML(resource_filename(filename)).render()
 

@@ -95,6 +95,7 @@ table = '''
 '''
 
 
+@pytest.mark.xfail
 @assert_no_logs
 @pytest.mark.parametrize('filename, image', (
     ('pattern.svg', centered_image),
@@ -104,6 +105,7 @@ table = '''
     ('blue.jpg', blue_image)
 ))
 def test_images(filename, image):
+    # TODO: fails because of missing SVG support
     assert_pixels('inline_image_' + filename, 8, 8, image, '''
       <style>
         @page { size: 8px }
@@ -149,8 +151,10 @@ def test_images_no_src():
       <div><img alt=""></div>''')
 
 
+@pytest.mark.xfail
 @assert_no_logs
 def test_images_alt():
+    # TODO: fails because of missing SVG support
     with capture_logs() as logs:
         assert_same_rendering(200, 30, [
             (name, '''

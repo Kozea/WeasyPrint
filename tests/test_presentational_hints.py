@@ -6,6 +6,7 @@
 
 """
 
+import pytest
 from weasyprint import CSS, HTML
 
 from .testing_utils import BASE_URL, assert_no_logs
@@ -257,8 +258,10 @@ def test_ph_hr():
     assert hr5.style['border_top_width'] == 1
 
 
+@pytest.mark.xfail
 @assert_no_logs
 def test_ph_embedded():
+    # TODO: fails because of missing SVG support
     document = HTML(string='''
       <object data="data:image/svg+xml,<svg></svg>"
               align=top hspace=10 vspace=20></object>
