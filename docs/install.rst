@@ -4,35 +4,27 @@ Installing
 WeasyPrint |version| depends on:
 
 * CPython_ ≥ 3.6.0
-* cairo_ ≥ 1.15.4 [#]_
-* Pango_ ≥ 1.38.0 [#]_
-* setuptools_ ≥ 30.3.0 [#]_
+* Pango_ ≥ 1.44.0
 * CFFI_ ≥ 0.6
 * html5lib_ ≥ 0.999999999
-* cairocffi_ ≥ 0.9.0
+* pydyf_ ≥ 0.0.1
 * tinycss2_ ≥ 1.0.0
 * cssselect2_ ≥ 0.1
-* CairoSVG_ ≥ 2.4.0
 * Pyphen_ ≥ 0.9.1
 * Pillow_ ≥ 4.0.0
-* GDK-PixBuf_ ≥ 2.25.0 [#]_
 
 .. _CPython: http://www.python.org/
-.. _cairo: http://cairographics.org/
 .. _Pango: http://www.pango.org/
-.. _setuptools: https://pypi.org/project/setuptools/
 .. _CFFI: https://cffi.readthedocs.io/
 .. _html5lib: https://html5lib.readthedocs.io/
-.. _cairocffi: https://cairocffi.readthedocs.io/
+.. _pydyf: https://doc.courtbouillon.org/pydyf/
 .. _tinycss2: https://doc.courtbouillon.org/tinycss2/
 .. _cssselect2: https://doc.courtbouillon.org/cssselect2/
-.. _CairoSVG: http://cairosvg.org/
 .. _Pyphen: http://pyphen.org/
 .. _Pillow: https://python-pillow.org/
-.. _GDK-PixBuf: https://live.gnome.org/GdkPixbuf
 
 
-Python, cairo, Pango and GDK-PixBuf need to be installed separately. See
+Python and Pango need to be installed separately. See
 platform-specific instructions for :ref:`Linux <linux>`, :ref:`macOS <macos>`
 and :ref:`Windows <windows>` below.
 
@@ -62,38 +54,17 @@ If everything goes well, you’re ready to :doc:`start using </tutorial>`
 WeasyPrint! Otherwise, please copy the full error message and
 `report the problem <https://github.com/Kozea/WeasyPrint/issues/>`_.
 
-.. [#] cairo ≥ 1.15.4 is best but older versions may work too. The test suite
-       passes on cairo 1.14, and passes with some tests marked as “expected
-       failures” on 1.10 and 1.12 due to behavior changes or bugs in cairo. If
-       you get incomplete SVG renderings, please read `#339
-       <https://github.com/Kozea/WeasyPrint/issues/339>`_. If you get invalid
-       PDF files, please read `#565
-       <https://github.com/Kozea/WeasyPrint/issues/565>`_. Some PDF metadata
-       including PDF information, hyperlinks and bookmarks require 1.15.4.
-
-.. [#] pango ≥ 1.29.3 is required, but 1.38.0 is needed to handle `@font-face`
-       CSS rules.
-
-.. [#] setuptools ≥ 30.3.0 is required to install WeasyPrint from wheel, but
-       39.2.0 is required to build the package or install from
-       source. setuptools < 40.8.0 will not include the LICENSE file.
-
-.. [#] Without it, PNG and SVG are the only supported image formats.
-       JPEG, GIF and others are not available.
-
 
 .. _linux:
 
 Linux
 -----
 
-Pango, GdkPixbuf, and cairo can not be installed
-with pip and need to be installed from your platform’s packages.
-CFFI can, but you’d still need their own dependencies.
-This section lists system packages for CFFI when available,
-the dependencies otherwise.
-CFFI needs *libffi* with development files. On Debian, the package is called
-``libffi-dev``.
+Pango can not be installed with pip and need to be installed from your
+platform’s packages. CFFI can, but you’d still need their own dependencies.
+This section lists system packages for CFFI when available, the dependencies
+otherwise. CFFI needs *libffi* with development files. On Debian, the package
+is called ``libffi-dev``.
 
 If your favorite system is not listed here but you know the package names,
 `tell us <http://weasyprint.org/about/>`_ so we can add it here.
@@ -104,15 +75,12 @@ Debian / Ubuntu
 WeasyPrint is `packaged for Debian 11 or newer
 <https://packages.debian.org/search?searchon=names&keywords=weasyprint>`_.
 
-You can install it with pip on Debian 10 Buster or newer, or on Ubuntu 18.04
-Bionic Beaver or newer, after installing the following packages:
+You can install it with pip on Debian 11 Bullseye or newer, or on Ubuntu 20.04
+Focal Fossa or newer, after installing the following packages:
 
 .. code-block:: sh
 
-    sudo apt-get install build-essential python3-dev python3-pip python3-setuptools python3-wheel python3-cffi libcairo2 libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf2.0-0 libffi-dev shared-mime-info
-
-WeasyPrint may work under previous releases of Debian or Ubuntu, but they often
-provide an old version of Cairo that may limit WeasyPrint's features [1]_.
+    sudo apt-get install python3-pip python3-cffi libpango-1.0-0
 
 Fedora
 ~~~~~~
@@ -123,7 +91,7 @@ install it with pip after installing the following packages:
 
 .. code-block:: sh
 
-    sudo yum install redhat-rpm-config python-devel python-pip python-setuptools python-wheel python-cffi libffi-devel cairo pango gdk-pixbuf2
+    sudo yum install python-pip python-cffi pango
 
 Archlinux
 ~~~~~~~~~
@@ -134,7 +102,7 @@ it with pip after installing the following packages:
 
 .. code-block:: sh
 
-    sudo pacman -S python-pip python-setuptools python-wheel cairo pango gdk-pixbuf2 libffi pkg-config
+    sudo pacman -S python-pip python-cffi pango
 
 Gentoo
 ~~~~~~
@@ -145,32 +113,17 @@ install it with pip after installing the following packages:
 
 .. code-block:: sh
 
-    emerge pip setuptools wheel cairo pango gdk-pixbuf cffi
+    emerge pip python-cffi pango
 
 
 Alpine
 ~~~~~~
 
-For Alpine Linux 3.6 or newer:
+For Alpine Linux 3.11 or newer:
 
 .. code-block:: sh
 
-    apk --update --upgrade add gcc musl-dev jpeg-dev zlib-dev libffi-dev cairo-dev pango-dev gdk-pixbuf-dev
-
-.. note::
-
-    Some Alpine images do not resolv the library path via ctypes.utils.find_library. So if you get
-    ``OSError: dlopen() failed to load a library: cairo / cairo-2 / cairo-gobject-2``
-    then change find_library and open the library directly:
-    ``/usr/local/lib/python3.7/site-packages/cairocffi/__init__.py``
-
-    .. code-block:: python
-
-        try:
-            lib = ffi.dlopen(name)
-            if lib:
-        ...
-        cairo = dlopen(ffi, 'libcairo.so.2')
+    apk --update --upgrade add gcc musl-dev jpeg-dev zlib-dev libffi-dev pango-dev
 
 
 .. _macos:
@@ -185,18 +138,11 @@ official installation method relies on Homebrew. Install Homebrew if you haven't
 
     /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 
-Install Python, cairo, Pango and GDK-PixBuf using Homebrew:
+Install Python, Pango and libffi using Homebrew:
 
 .. code-block:: sh
 
-    brew install python3 cairo pango gdk-pixbuf libffi
-
-Don't forget to use the `pip3` command to install WeasyPrint, as `pip` may be
-using the version of Python installed with macOS:
-
-.. code-block:: sh
-
-    pip3 install WeasyPrint
+    brew install python pango libffi
 
 If you get the `Fontconfig error: Cannot load default config file` message,
 then try reinstalling fontconfig:
@@ -212,7 +158,7 @@ end up crying blood with sad dolphins for eternity"**):
 
 .. code-block:: sh
 
-    sudo port install py-pip cairo pango gdk-pixbuf2 libffi
+    sudo port install py-pip pango libffi
 
 
 .. _windows:
@@ -225,9 +171,8 @@ Dear Windows user, please follow these steps carefully.
 Really carefully. Don’t cheat.
 
 Besides a proper Python installation and a few Python packages, WeasyPrint
-needs the Pango, cairo and GDK-PixBuf libraries. They are required for the
-graphical stuff: Text and image rendering.  These libraries aren't Python
-packages. They are part of `GTK+ <https://en.wikipedia.org/wiki/GTK+>`_
+needs the Pango library. It is required for text rendering.  This library isn't
+a Python package. It is part of `GTK+ <https://en.wikipedia.org/wiki/GTK+>`_
 (formerly known as GIMP Toolkit), and must be installed separately.
 
 The following installation instructions for the GTK+ libraries don't work on
@@ -423,10 +368,10 @@ Open a fresh *Command Prompt* and execute
 
     python -m weasyprint http://weasyprint.org weasyprint.pdf
 
-If you get an error like ``OSError: dlopen() failed to load a library: cairo /
-cairo-2`` it’s probably because cairo (or another GTK+ library mentioned in the
-error message) is not properly available in the folders listed in your ``PATH``
-environment variable.
+If you get an error like ``OSError: dlopen() failed to load a library`` it’s
+probably because pango (or another GTK+ library mentioned in the error message)
+is not properly available in the folders listed in your ``PATH`` environment
+variable.
 
 Since you didn't cheat and followed the instructions the up-to-date and
 complete set of GTK libraries **must** be present and the error is an error.
@@ -435,15 +380,15 @@ Let's find out. Enter the following command:
 
 .. code-block:: console
 
-    WHERE libcairo-2.dll
+    WHERE libpango-1.0-0.dll
     WHERE zlib1.dll
 
 This should respond with
-*path\\to\\recently\\installed\\gtk\\binaries\\libcairo-2.dll*, for example:
+*path\\to\\recently\\installed\\gtk\\binaries\\libpango-1.0-0.dll*, for example:
 
 .. code-block:: console
 
-    C:\msys2\mingw64\bin\libcairo-2.dll
+    C:\msys2\mingw64\bin\libpango-1.0-0.dll
     C:\Program Files\GTK3-Runtime Win64\bin\zlib1.dll
 
 If your system answers with *nothing found* or returns a filename not related
@@ -454,7 +399,6 @@ then we have caught the culprit.
 Depending on the GTK installation route you took, the proper folder name is
 something along the lines of:
 
-* ``C:\msys2\mingw32\bin``
 * ``C:\msys2\mingw64\bin``
 * ``C:\Program Files\GTK3-Runtime Win64\bin``
 
@@ -490,4 +434,4 @@ Other Options for Installation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 There is a .NET wrapper for WeasyPrint available `here
-<https://github.com/balbarak/WeasyPrint-netcore>`_. 
+<https://github.com/balbarak/WeasyPrint-netcore>`_.

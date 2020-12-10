@@ -64,8 +64,8 @@ the rendering of a document in WeasyPrint goes like this:
 5. These boxes are *laid-out* with fixed dimensions and position onto pages.
 6. For each page, the boxes are re-ordered to observe stacking rules, and are
    drawn on a PDF page.
-7. Cairo’s PDF is modified to add metadata such as attachments, embedded files,
-   and PDF trim and bleed boxes.
+7. Metadata such as attachments, embedded files, and PDF trim and bleed boxes
+   are added to the PDF.
 
 
 HTML
@@ -217,7 +217,7 @@ In step 6, the boxes are reordered by the :mod:`weasyprint.stacking` module
 to observe `stacking rules`_ such as the ``z-index`` property.
 The result is a tree of *stacking contexts*.
 
-Next, each laid-out page is *drawn* onto a cairo_ surface. Since each box has
+Next, each laid-out page is *drawn* onto a PDF page. Since each box has
 absolute coordinates on the page from the layout step, the logic here should be
 minimal. If you find yourself adding a lot of logic here, maybe it should go in
 the layout or stacking instead.
@@ -225,12 +225,11 @@ the layout or stacking instead.
 The code lives in the :mod:`weasyprint.draw` module.
 
 .. _stacking rules: http://www.w3.org/TR/CSS21/zindex.html
-.. _cairo: http://cairographics.org/
 
 
 Metadata
 ........
 
 Finally (step 7), the :mod:`weasyprint.pdf` module parses (if needed) the PDF
-file produced by cairo and adds metadata that cannot be added by cairo:
-attachments, embedded files, trim box and bleed box.
+file produced and adds metadata: attachments, embedded files, trim box and
+bleed box.

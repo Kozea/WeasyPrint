@@ -29,7 +29,7 @@ def assert_rect_almost_equal(rect, values):
     """Test that PDF rect string equals given values.
 
     We avoid rounding errors by allowing a delta of 1, as both WeasyPrint and
-    cairo round coordinates in unpredictable ways.
+    pydyf round coordinates in unpredictable ways.
 
     """
     if isinstance(rect, bytes):

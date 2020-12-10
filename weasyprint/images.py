@@ -70,7 +70,7 @@ class RasterImage:
 
 def get_image_from_uri(cache, url_fetcher, optimize_images, url,
                        forced_mime_type=None):
-    """Get a cairo Pattern from an image URI."""
+    """Get an Image instance from an image URI."""
     missing = object()
     image = cache.get(url, missing)
     if image is not missing:

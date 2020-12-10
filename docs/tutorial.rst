@@ -156,7 +156,7 @@ objects. Thus you can get the number of pages, their size\ [#]_, the details of
 hyperlinks and bookmarks, etc.  Documents also have a
 :meth:`~Document.write_pdf` method, and you can get a subset of the pages with
 :meth:`~Document.copy()`.  Finally, for ultimate control, :meth:`~Page.paint`
-individual pages anywhere on any type of cairo surface.
+individual pages anywhere on any pydyf stream.
 
 .. [#] Pages in the same document do not always have the same size.
 
@@ -188,18 +188,6 @@ See the :ref:`python-api` for details. A few random examples:
                 ' ' * indent, i, bookmark.label.lstrip('0123456789. '), page))
             print_outline(bookmark.children, indent + 2)
     print_outline(document.make_bookmark_tree())
-
-.. code-block:: python
-
-    # PostScript on standard output:
-    surface = cairo.PSSurface(sys.stdout, 1, 1)
-    context = cairo.Context(surface)
-    for page in document.pages:
-        # 0.75 = 72 PostScript point per inch / 96 CSS pixel per inch
-        surface.set_size(page.width * 0.75, page.height * 0.75)
-        page.paint(context, scale=0.75)
-        surface.show_page()
-    surface.finish()
 
 
 .. _url-fetchers:
@@ -402,22 +390,19 @@ Leaks can include (but are not restricted to):
 - network configuration (IPv4 and IPv6 support, IP addressing, firewall
   configuration, using ``http://`` URIs and tracking time used to render
   documents),
-- hardware and software used for graphical rendering (as cairo renderings
-  can change with CPU and GPU features),
-- Python, cairo, Pango and other libraries versions (implementation details
+- Python, Pango and other libraries versions (implementation details
   lead to different renderings).
 
 SVG images
 ..........
 
-WeasyPrint relies on `CairoSVG <http://cairosvg.org/>`_ to render SVG
-files. CairoSVG more or less suffers from the same problems as the ones listed
-here for WeasyPrint.
+Rendering SVG images more or less suffers from the same problems as the ones
+listed here for WeasyPrint.
 
 Security advices apply for untrusted SVG files as they apply for untrusted HTML
 and CSS documents.
 
-Note that WeasyPrint gives CairoSVG its URL fetcher.
+Note that WeasyPrint’s URL fetcher is used to render SVG files.
 
 
 Errors

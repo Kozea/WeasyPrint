@@ -24,17 +24,6 @@ ffi.cdef('''
     hb_blob_t * hb_face_reference_blob (hb_face_t *face);
     const char * hb_blob_get_data (hb_blob_t *blob, unsigned int *length);
 
-    // Cairo
-
-    typedef enum {
-        CAIRO_FONT_TYPE_TOY,
-        CAIRO_FONT_TYPE_FT,
-        CAIRO_FONT_TYPE_WIN32,
-        CAIRO_FONT_TYPE_QUARTZ,
-        CAIRO_FONT_TYPE_USER
-    } cairo_font_type_t;
-
-
     // Pango
 
     typedef unsigned int guint;
@@ -42,7 +31,6 @@ ffi.cdef('''
     typedef char gchar;
     typedef gint gboolean;
     typedef void* gpointer;
-    typedef ... cairo_t;
     typedef ... PangoLayout;
     typedef ... PangoContext;
     typedef ... PangoFontMap;
@@ -331,8 +319,6 @@ gobject = dlopen(ffi, 'gobject-2.0', 'libgobject-2.0-0', 'libgobject-2.0.so.0',
                  'libgobject-2.0.dylib')
 pango = dlopen(ffi, 'pango-1.0', 'libpango-1.0-0', 'libpango-1.0.so.0',
                'libpango-1.0.dylib')
-pangocairo = dlopen(ffi, 'pangocairo-1.0', 'libpangocairo-1.0-0',
-                    'libpangocairo-1.0.so.0', 'libpangocairo-1.0.dylib')
 harfbuzz = dlopen(ffi, 'harfbuzz-0.0', 'libharfbuzz-0', 'libharfbuzz.so.0',
                   'libharfbuzz.so.0', 'libharfbuzz.0.dylib')
 
@@ -1312,7 +1298,7 @@ def split_first_line(text, style, context, max_width, justification_spacing,
 
 
 def show_first_line(context, textbox, text_overflow, x, y):
-    """Draw the given ``textbox`` line to the cairo ``context``."""
+    """Draw the given ``textbox`` line to the document ``context``."""
     pango.pango_layout_set_single_paragraph_mode(
         textbox.pango_layout.layout, True)
 

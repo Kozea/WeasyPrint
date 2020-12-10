@@ -2,7 +2,7 @@
     weasyprint.draw
     ---------------
 
-    Take an "after layout" box tree and draw it onto a cairo context.
+    Take an "after layout" box tree and draw it onto a pydyf stream.
 
 """
 
@@ -1034,7 +1034,7 @@ def draw_inline_level(context, page, box, offset_x=0, text_overflow='clip'):
 
 
 def draw_text(context, textbox, offset_x, text_overflow):
-    """Draw ``textbox`` to a ``cairo.Context`` from ``PangoCairo.Context``."""
+    """Draw a textbox to a pydyf stream."""
     # Pango crashes with font-size: 0
     assert textbox.style['font_size']
 

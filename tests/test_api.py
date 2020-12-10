@@ -891,13 +891,13 @@ def test_html_meta():
             <meta name=dcterms.created content=2011-04>
             <meta name=dcterms.created content=2011-05>
             <meta name=dcterms.modified content=2013>
-            <meta name=keywords content="Python; cairo">
+            <meta name=keywords content="Python; pydyf">
             <meta name=description content="Blah… ">
         ''',
         authors=['I Me & Myself', 'Smith, John'],
         title='Test document',
         generator='Human after all',
-        keywords=['html', 'css', 'pdf', 'Python; cairo'],
+        keywords=['html', 'css', 'pdf', 'Python; pydyf'],
         description="Blah… ",
         created='2011-04',
         modified='2013')

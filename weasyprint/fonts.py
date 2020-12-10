@@ -19,11 +19,6 @@ from .logger import LOGGER
 from .text import dlopen, ffi, get_font_features, gobject
 from .urls import FILESYSTEM_ENCODING, fetch
 
-# No need to try…catch:
-# If there's no fontconfig library, cairocffi already crashed the script
-# with OSError: dlopen() failed to load a library: cairo / cairo-2.
-# So let's hope we find the same file as cairo already did ;).
-# Same applies to pangoft2.
 fontconfig = dlopen(
     ffi, 'fontconfig', 'libfontconfig', 'libfontconfig-1.dll',
     'libfontconfig.so.1', 'libfontconfig-1.dylib')

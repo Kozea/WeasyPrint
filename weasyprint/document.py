@@ -754,7 +754,7 @@ class DocumentMetadata:
 
 
 class Document:
-    """A rendered document ready to be painted on a cairo surface.
+    """A rendered document ready to be painted in a pydyf stream.
 
     Typically obtained from :meth:`HTML.render() <weasyprint.HTML.render>`, but
     can also be instantiated directly with a list of :class:`pages <Page>`, a
@@ -903,10 +903,7 @@ class Document:
             pages, self.metadata, self.url_fetcher, self._font_config)
 
     def write_pdf(self, target=None, zoom=1, attachments=None, finisher=None):
-        """Paint the pages in a PDF file, with meta-data.
-
-        PDF files written directly by cairo do not have meta-data such as
-        bookmarks/outlines and hyperlinks.
+        """Paint the pages in a PDF file, with metadata.
 
         :type target: str, pathlib.Path or file object
         :param target:
