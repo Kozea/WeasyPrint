@@ -105,5 +105,5 @@ def test_inline_block_sizes():
     assert grandchild.width == 10
 
     div_8, _, div_9 = line_4.children
-    assert div_8.width == 185
+    assert div_8.width == 150
     assert div_9.width == 10
