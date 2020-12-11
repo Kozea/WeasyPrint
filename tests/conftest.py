@@ -10,7 +10,6 @@
 """
 
 import io
-import os
 import shutil
 from subprocess import PIPE, run
 
@@ -23,25 +22,15 @@ MAGIC_NUMBER = b'\x89\x50\x4e\x47\x0d\x0a\x1a\x0a'
 
 
 def document_write_png(self, target=None, resolution=96, antialiasing=1):
-    stderr = '%%stderr' if os.name == 'nt' else '%stderr'
     pdf = self.write_pdf()
     command = [
-        'gs', '-q', '-dNOPAUSE', '-dSAFER', f'-sstdout={stderr}',
-        f'-dTextAlphaBits={antialiasing}',
+        'gs', '-q', '-dNOPAUSE', '-dSAFER', f'-dTextAlphaBits={antialiasing}',
         f'-dGraphicsAlphaBits={antialiasing}', '-sDEVICE=png16m',
         f'-r{resolution}', '-sOutputFile=-', '-']
-    result = run(command, input=pdf, stdout=PIPE, stderr=PIPE)
-    pngs = result.stdout
+    pngs = run(command, input=pdf, stdout=PIPE).stdout
 
     # TODO: use a different way to find PNG files in stream
     magic_numbers = pngs.count(MAGIC_NUMBER)
-    if magic_numbers < 1:
-        print(result)
-        print(result.stderr)
-        print(pdf)
-        print(' '.join(command))
-        print(run(['gs', '-version']))
-        assert False
     if magic_numbers == 1:
         if target is None:
             return pngs
