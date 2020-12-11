@@ -30,7 +30,7 @@ def document_write_png(self, target=None, resolution=96, antialiasing=1):
         f'-dTextAlphaBits={antialiasing}',
         f'-dGraphicsAlphaBits={antialiasing}', '-sDEVICE=png16m',
         f'-r{resolution}', '-sOutputFile=-', '-']
-    result = run(command, input=pdf, stdout=PIPE)
+    result = run(command, input=pdf, stdout=PIPE, stderr=PIPE)
     pngs = result.stdout
 
     # TODO: use a different way to find PNG files in stream
