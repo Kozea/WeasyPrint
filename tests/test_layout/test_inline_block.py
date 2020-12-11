@@ -38,7 +38,7 @@ def test_inline_block_sizes():
           <div style="width: 10px; height: 10px"></div>
         </div>
       </div>
-      <div style="min-width: 185px">foo</div>
+      <div style="min-width: 150px">foo</div>
       <div style="max-width: 10px
         ">Supercalifragilisticexpialidocious</div>''')
     html, = page.children
