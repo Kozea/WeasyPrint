@@ -29,6 +29,10 @@ def document_write_png(self, target=None, resolution=96, antialiasing=1):
         f'-r{resolution}', '-sOutputFile=-', '-']
     pngs = run(command, input=pdf, stdout=PIPE).stdout
 
+    assert pngs.startswith(MAGIC_NUMBER), (
+        'GhostScript error: '
+        f'{pngs.split(MAGIC_NUMBER)[0].decode("ascii").strip()}')
+
     # TODO: use a different way to find PNG files in stream
     magic_numbers = pngs.count(MAGIC_NUMBER)
     if magic_numbers == 1:
