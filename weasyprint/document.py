@@ -102,7 +102,7 @@ class Context(pydyf.Stream):
     def __init__(self, document, page_rectangle, alpha_states, x_objects,
                  patterns, shadings, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.compress = False
+        self.compress = True
         self.page_rectangle = page_rectangle
         self._document = document
         self._alpha_states = alpha_states
@@ -1173,7 +1173,7 @@ class Document:
                 font_extra = pydyf.Dictionary({'Subtype': '/OpenType'})
             else:
                 font_extra = pydyf.Dictionary({'Length1': len(content)})
-            font_stream = pydyf.Stream([content], font_extra, compress=False)
+            font_stream = pydyf.Stream([content], font_extra, compress=True)
             pdf.add_object(font_stream)
 
             widths = pydyf.Array()
