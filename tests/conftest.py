@@ -24,7 +24,7 @@ MAGIC_NUMBER = b'\x89\x50\x4e\x47\x0d\x0a\x1a\x0a'
 
 def document_write_png(self, target=None, resolution=96, antialiasing=1):
     pdf = self.write_pdf()
-    gs = 'gswin32c' if os.name == 'nt' else 'gs'
+    gs = 'gsc' if os.name == 'nt' else 'gs'
     command = [
         gs, '-q', '-dNOPAUSE', '-dSAFER', f'-dTextAlphaBits={antialiasing}',
         f'-dGraphicsAlphaBits={antialiasing}', '-sDEVICE=png16m',
