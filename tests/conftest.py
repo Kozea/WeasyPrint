@@ -27,7 +27,8 @@ def document_write_png(self, target=None, resolution=96, antialiasing=1):
         'gs', '-q', '-dNOPAUSE', '-dSAFER', f'-dTextAlphaBits={antialiasing}',
         f'-dGraphicsAlphaBits={antialiasing}', '-sDEVICE=png16m',
         f'-r{resolution}', '-sOutputFile=-', '-']
-    pngs = run(command, input=pdf, stdout=PIPE).stdout
+    result = run(command, input=pdf, stdout=PIPE, stderr=PIPE)
+    pngs = result.stdout
 
     assert pngs.startswith(MAGIC_NUMBER), (
         'GhostScript error: '
@@ -42,6 +43,7 @@ def document_write_png(self, target=None, resolution=96, antialiasing=1):
     else:
         images = []
         for i, png in enumerate(pngs[8:].split(MAGIC_NUMBER)):
+            print(result.stderr, pngs, png)
             images.append(Image.open(io.BytesIO(MAGIC_NUMBER + png)))
 
         width = max(image.width for image in images)
