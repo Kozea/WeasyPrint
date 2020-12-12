@@ -10,8 +10,10 @@
 """
 
 import io
+import os
 import shutil
 from subprocess import PIPE, run
+from tempfile import NamedTemporaryFile
 
 import pytest
 from PIL import Image
@@ -25,8 +27,11 @@ def document_write_png(self, target=None, resolution=96, antialiasing=1):
     command = [
         'gs', '-q', '-dNOPAUSE', '-dSAFER', f'-dTextAlphaBits={antialiasing}',
         f'-dGraphicsAlphaBits={antialiasing}', '-sDEVICE=png16m',
-        f'-r{resolution}', '-sOutputFile=-', '-_']
-    pngs = run(command, input=self.write_pdf(), stdout=PIPE).stdout
+        f'-r{resolution}', '-sOutputFile=-']
+    with NamedTemporaryFile(delete=False) as pdf:
+        pdf.write(self.write_pdf())
+    pngs = run(command + [pdf.name], stdout=PIPE).stdout
+    os.remove(pdf.name)
 
     assert pngs.startswith(MAGIC_NUMBER), (
         'GhostScript error: '
