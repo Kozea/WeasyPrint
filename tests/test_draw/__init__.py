@@ -68,7 +68,7 @@ def assert_same_rendering(expected_width, expected_height, documents,
     _name, reference = pixels_list[0]
     for name, pixels in pixels_list[1:]:
         assert_pixels_equal(
-            name, expected_width, expected_height, reference, pixels,
+            name, expected_width, expected_height, pixels, reference,
             tolerance)
 
 
