@@ -25,7 +25,7 @@ def document_write_png(self, target=None, resolution=96, antialiasing=1):
     command = [
         'gs', '-q', '-dNOPAUSE', '-dSAFER', f'-dTextAlphaBits={antialiasing}',
         f'-dGraphicsAlphaBits={antialiasing}', '-sDEVICE=png16m',
-        f'-r{resolution}', '-sOutputFile=-', '-']
+        f'-r{resolution}', '-sOutputFile=-', '-_']
     pngs = run(command, input=self.write_pdf(), stdout=PIPE).stdout
 
     assert pngs.startswith(MAGIC_NUMBER), (
