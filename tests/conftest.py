@@ -10,7 +10,6 @@
 """
 
 import io
-import os
 import shutil
 from subprocess import PIPE, run
 
@@ -23,14 +22,11 @@ MAGIC_NUMBER = b'\x89\x50\x4e\x47\x0d\x0a\x1a\x0a'
 
 
 def document_write_png(self, target=None, resolution=96, antialiasing=1):
-    pdf = self.write_pdf()
-    gs = 'gsc' if os.name == 'nt' else 'gs'
     command = [
-        gs, '-q', '-dNOPAUSE', '-dSAFER', f'-dTextAlphaBits={antialiasing}',
+        'gs', '-q', '-dNOPAUSE', '-dSAFER', f'-dTextAlphaBits={antialiasing}',
         f'-dGraphicsAlphaBits={antialiasing}', '-sDEVICE=png16m',
         f'-r{resolution}', '-sOutputFile=-', '-']
-    result = run(command, input=pdf, stdout=PIPE)
-    pngs = result.stdout
+    pngs = run(command, input=self.write_pdf(), stdout=PIPE).stdout
 
     assert pngs.startswith(MAGIC_NUMBER), (
         'GhostScript error: '
