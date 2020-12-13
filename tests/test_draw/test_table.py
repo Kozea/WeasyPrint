@@ -728,40 +728,38 @@ def test_tables_8_rtl():
     '''})
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_tables_9():
-    # TODO: there’s a vertical 0.5px shift on the second page
     assert_pixels('collapsed_border_thead', 22, 36, '''
         ______________________
         _BBBBBBBBBBBBBBBBBBBB_
         _BBBBBBBBBBBBBBBBBBBB_
-        _BBB____R____R____BBB_
+        _BBBBBBBBBBBBBBBBBBBB_
         _BBB____R____R____BBB_
         _BBB____R____R____BBB_
         _BBBBBBBBBBBBBBBBBBBB_
         _BBBBBBBBBBBBBBBBBBBB_
-        __R_____R____R_____R__
+        _BBBBBBBBBBBBBBBBBBBB_
         __R_____R____R_____R__
         __R_____R____R_____R__
         __RRRRRRRRRRRRRRRRRR__
-        __R_____R____R_____R__
         __R_____R____R_____R__
         __R_____R____R_____R__
         __RRRRRRRRRRRRRRRRRR__
         ______________________
         ______________________
+        ______________________
+        _BBBBBBBBBBBBBBBBBBBB_
         _BBBBBBBBBBBBBBBBBBBB_
         _BBBBBBBBBBBBBBBBBBBB_
         _BBB____R____R____BBB_
         _BBB____R____R____BBB_
-        _BBB____R____R____BBB_
         _BBBBBBBBBBBBBBBBBBBB_
         _BBBBBBBBBBBBBBBBBBBB_
-        __R_____R____R_____R__
-        __R_____R____R_____R__
+        _BBBBBBBBBBBBBBBBBBBB_
         __R_____R____R_____R__
         __RRRRRRRRRRRRRRRRRR__
+        ______________________
         ______________________
         ______________________
         ______________________
@@ -772,51 +770,49 @@ def test_tables_9():
     ''', '''
       <style>
         @page { size: 22px 18px; margin: 1px; background: #fff }
-        td { border: 1px red solid; width: 4px; height: 3px; }
+        td { border: 1px red solid; width: 4px; height: 2px; }
       </style>
       <table style="table-layout: fixed; border-collapse: collapse">
-        <thead style="border: blue solid; border-width: 2px 3px;
+        <thead style="border: blue solid; border-width: 3px;
             "><td></td><td></td><td></td></thead>
         <tr><td></td><td></td><td></td></tr>
         <tr><td></td><td></td><td></td></tr>
         <tr><td></td><td></td><td></td></tr>''')
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_tables_10():
-    # TODO: there’s a vertical 0.5px shift on the second page
     assert_pixels('collapsed_border_tfoot', 22, 36, '''
         ______________________
         __RRRRRRRRRRRRRRRRRR__
         __R_____R____R_____R__
         __R_____R____R_____R__
+        __RRRRRRRRRRRRRRRRRR__
         __R_____R____R_____R__
+        _BBBBBBBBBBBBBBBBBBBB_
+        _BBBBBBBBBBBBBBBBBBBB_
+        _BBBBBBBBBBBBBBBBBBBB_
+        _BBB____R____R____BBB_
+        _BBB____R____R____BBB_
+        _BBBBBBBBBBBBBBBBBBBB_
+        _BBBBBBBBBBBBBBBBBBBB_
+        _BBBBBBBBBBBBBBBBBBBB_
+        ______________________
+        ______________________
+        ______________________
+        ______________________
         __RRRRRRRRRRRRRRRRRR__
         __R_____R____R_____R__
         __R_____R____R_____R__
         _BBBBBBBBBBBBBBBBBBBB_
         _BBBBBBBBBBBBBBBBBBBB_
+        _BBBBBBBBBBBBBBBBBBBB_
         _BBB____R____R____BBB_
         _BBB____R____R____BBB_
-        _BBB____R____R____BBB_
+        _BBBBBBBBBBBBBBBBBBBB_
         _BBBBBBBBBBBBBBBBBBBB_
         _BBBBBBBBBBBBBBBBBBBB_
         ______________________
-        ______________________
-        ______________________
-        ______________________
-        __RRRRRRRRRRRRRRRRRR__
-        __R_____R____R_____R__
-        __R_____R____R_____R__
-        __R_____R____R_____R__
-        _BBBBBBBBBBBBBBBBBBBB_
-        _BBBBBBBBBBBBBBBBBBBB_
-        _BBB____R____R____BBB_
-        _BBB____R____R____BBB_
-        _BBB____R____R____BBB_
-        _BBBBBBBBBBBBBBBBBBBB_
-        _BBBBBBBBBBBBBBBBBBBB_
         ______________________
         ______________________
         ______________________
@@ -825,15 +821,15 @@ def test_tables_10():
         ______________________
     ''', '''
       <style>
-        @page { size: 22px 18px; margin: 1px; background: #fff }
-        td { border: 1px red solid; width: 4px; height: 3px; }
+        @page { size: 22px 17px; margin: 1px; background: #fff }
+        td { border: 1px red solid; width: 4px; height: 2px; }
       </style>
       <table style="table-layout: fixed; margin-left: 1px;
                     border-collapse: collapse">
         <tr><td></td><td></td><td></td></tr>
         <tr><td></td><td></td><td></td></tr>
         <tr><td></td><td></td><td></td></tr>
-        <tfoot style="border: blue solid; border-width: 2px 3px;
+        <tfoot style="border: blue solid; border-width: 3px;
             "><td></td><td></td><td></td></tfoot>''')
 
 
