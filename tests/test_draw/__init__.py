@@ -45,7 +45,9 @@ def assert_pixels(name, expected_width, expected_height, expected_pixels,
     """Helper testing the size of the image and the pixels values."""
     if isinstance(expected_pixels, str):
         expected_pixels = parse_pixels(expected_pixels)
-    assert len(expected_pixels) == expected_height * expected_width
+    assert len(expected_pixels) == expected_height * expected_width, (
+        f'Expected {len(expected_pixels)} pixels, '
+        f'got {expected_height * expected_width}')
     pixels = html_to_pixels(name, expected_width, expected_height, html)
     assert_pixels_equal(
         name, expected_width, expected_height, pixels, expected_pixels)
