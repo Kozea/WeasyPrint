@@ -24,13 +24,14 @@ MAGIC_NUMBER = b'\x89\x50\x4e\x47\x0d\x0a\x1a\x0a'
 
 
 def document_write_png(self, target=None, resolution=96, antialiasing=1):
-    command = [
-        'gs', '-q', '-dNOPAUSE', '-dSAFER', f'-dTextAlphaBits={antialiasing}',
-        f'-dGraphicsAlphaBits={antialiasing}', '-sDEVICE=png16m',
-        f'-r{resolution}', '-sOutputFile=-']
+    # Use temporary files because gs on Windows doesn’t accept binary on stdin
     with NamedTemporaryFile(delete=False) as pdf:
         pdf.write(self.write_pdf())
-    pngs = run(command + [pdf.name], stdout=PIPE).stdout
+    command = [
+        'gs', '-q', '-dNOPAUSE', f'-dTextAlphaBits={antialiasing}',
+        f'-dGraphicsAlphaBits={antialiasing}', '-sDEVICE=png16m',
+        f'-r{resolution}', '-sOutputFile=-', pdf.name]
+    pngs = run(command, stdout=PIPE).stdout
     os.remove(pdf.name)
 
     assert pngs.startswith(MAGIC_NUMBER), (
