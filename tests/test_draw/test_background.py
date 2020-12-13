@@ -502,10 +502,8 @@ def test_background_image(name, css, pixels):
       <p>&nbsp;''' % css)
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_background_image_zero_size_background():
-    # TODO: fails because of broken PDF according to GhostScript
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/217
     assert_pixels('zero_size_background', 10, 10, '''
         __________

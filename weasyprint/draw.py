@@ -425,7 +425,7 @@ def draw_table_backgrounds(context, page, table):
 
 
 def draw_background_image(context, layer, image_rendering):
-    if layer.image is None:
+    if layer.image is None or 0 in layer.size:
         return
 
     painting_x, painting_y, painting_width, painting_height = (
