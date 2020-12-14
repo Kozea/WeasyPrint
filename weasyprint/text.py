@@ -315,12 +315,13 @@ def dlopen(ffi, *names):
     return ffi.dlopen(names[0])  # pragma: no cover
 
 
-gobject = dlopen(ffi, 'gobject-2.0-0','gobject-2.0', 'libgobject-2.0-0', 'libgobject-2.0.so.0',
-                 'libgobject-2.0.dylib')
-pango = dlopen(ffi, 'pango-1.0-0', 'pango-1.0', 'libpango-1.0-0', 'libpango-1.0.so.0',
-               'libpango-1.0.dylib')
-harfbuzz = dlopen(ffi, 'harfbuzz', 'harfbuzz-0.0', 'libharfbuzz-0', 'libharfbuzz.so.0',
-                  'libharfbuzz.so.0', 'libharfbuzz.0.dylib')
+gobject = dlopen(ffi, 'gobject-2.0-0', 'gobject-2.0', 'libgobject-2.0-0',
+                 'libgobject-2.0.so.0', 'libgobject-2.0.dylib')
+pango = dlopen(ffi, 'pango-1.0-0', 'pango-1.0', 'libpango-1.0-0',
+               'libpango-1.0.so.0', 'libpango-1.0.dylib')
+harfbuzz = dlopen(
+    ffi, 'harfbuzz', 'harfbuzz-0.0', 'libharfbuzz-0',
+    'libharfbuzz.so.0', 'libharfbuzz.so.0', 'libharfbuzz.0.dylib')
 
 gobject.g_type_init()
 
