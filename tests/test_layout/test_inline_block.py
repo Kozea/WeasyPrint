@@ -107,3 +107,20 @@ def test_inline_block_sizes():
     div_8, _, div_9 = line_4.children
     assert div_8.width == 150
     assert div_9.width == 10
+
+
+@assert_no_logs
+def test_inline_block_with_margin():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/1235
+    page_1, = parse('''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        @page { size: 100px }
+        span { font-family: weasyprint; display: inline-block; margin: 0 30px }
+      </style>
+      <span>a b c d e f g h i j k l</span>''')
+    html, = page_1.children
+    body, = html.children
+    line_1, = body.children
+    span, = line_1.children
+    assert span.width == 40  # 100 - 2 * 30

@@ -564,8 +564,12 @@ def inline_block_baseline(box):
 
 @handle_min_max_width
 def inline_block_width(box, context, containing_block):
+    available_content_width = containing_block.width - (
+        box.margin_left + box.margin_right +
+        box.border_left_width + box.border_right_width +
+        box.padding_left + box.padding_right)
     if box.width == 'auto':
-        box.width = shrink_to_fit(context, box, containing_block.width)
+        box.width = shrink_to_fit(context, box, available_content_width)
 
 
 def split_inline_level(context, box, position_x, max_x, skip_stack,
