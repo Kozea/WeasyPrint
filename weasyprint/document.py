@@ -1159,6 +1159,24 @@ class Document:
                     current_widths = pydyf.Array()
                     widths.append(current_widths)
                 current_widths.append(font.widths[i])
+            font_descriptor = pydyf.Dictionary({
+                'Type': '/FontDescriptor',
+                'FontName': font.name,
+                'FontFamily': pydyf.String(font.family),
+                'Flags': 32,
+                'FontBBox': pydyf.Array(font.bbox),
+                'ItalicAngle': font.italic_angle,
+                'Ascent': font.ascent,
+                'Descent': font.descent,
+                'CapHeight': font.bbox[3],
+                'StemV': font.stemv,
+                'StemH': font.stemh,
+                (f'FontFile{"3" if font_type == "otf" else "2"}'):
+                    font_stream.reference,
+            })
+            if font_type == 'otf':
+                font_descriptor['Subtype'] = '/OpenType'
+            pdf.add_object(font_descriptor)
             subfont_dictionary = pydyf.Dictionary({
                 'Type': '/Font',
                 'Subtype': f'/CIDFontType{"0" if font_type == "otf" else "2"}',
@@ -1169,24 +1187,8 @@ class Document:
                     'Supplement': 0,
                 }),
                 'W': widths,
-                'FontDescriptor': pydyf.Dictionary({
-                    'Type': '/FontDescriptor',
-                    'FontName': font.name,
-                    'FontFamily': pydyf.String(font.family),
-                    'Flags': 32,
-                    'FontBBox': pydyf.Array(font.bbox),
-                    'ItalicAngle': font.italic_angle,
-                    'Ascent': font.ascent,
-                    'Descent': font.descent,
-                    'CapHeight': font.bbox[3],
-                    'StemV': font.stemv,
-                    'StemH': font.stemh,
-                    (f'FontFile{"3" if font_type == "otf" else "2"}'):
-                        font_stream.reference,
-                }),
+                'FontDescriptor': font_descriptor.reference,
             })
-            if font_type == 'otf':
-                subfont_dictionary['FontDescriptor']['Subtype'] = '/OpenType'
             pdf.add_object(subfont_dictionary)
             to_unicode = pydyf.Stream([
                 b'/CIDInit /ProcSet findresource begin',
