@@ -184,21 +184,11 @@ class Context(pydyf.Stream):
         return self._document.fonts
 
     def add_transparency_group(self, bounding_box):
-        alpha_states = pydyf.Dictionary()
-        x_objects = pydyf.Dictionary()
-        patterns = pydyf.Dictionary()
-        shadings = pydyf.Dictionary()
-        resources = pydyf.Dictionary({
-            'ExtGState': alpha_states,
-            'XObject': x_objects,
-            'Pattern': patterns,
-            'Shading': shadings,
-        })
         extra = pydyf.Dictionary({
             'Type': '/XObject',
             'Subtype': '/Form',
             'BBox': pydyf.Array(bounding_box),
-            'Resources': resources,
+            'Resources': None,  # Will be set by _use_references
             'Group': pydyf.Dictionary({
                 'Type': '/Group',
                 'S': '/Transparency',
@@ -207,8 +197,8 @@ class Context(pydyf.Stream):
             }),
         })
         group = Context(
-            self._document, self.page_rectangle, alpha_states, x_objects,
-            patterns, shadings, extra=extra)
+            self._document, self.page_rectangle, self._alpha_states,
+            self._x_objects, self._patterns, self._shadings, extra=extra)
         group.id = f'x{len(self._x_objects)}'
         self._x_objects[group.id] = group
         return group
@@ -277,16 +267,6 @@ class Context(pydyf.Stream):
         return image_name
 
     def add_pattern(self, x, y, width, height, repeat_width, repeat_height):
-        alpha_states = pydyf.Dictionary()
-        x_objects = pydyf.Dictionary()
-        patterns = pydyf.Dictionary()
-        shadings = pydyf.Dictionary()
-        resources = pydyf.Dictionary({
-            'ExtGState': alpha_states,
-            'XObject': x_objects,
-            'Pattern': patterns,
-            'Shading': shadings,
-        })
         matrix = (1, 0, 0, -1, x, self.page_rectangle[3] - y)
         extra = pydyf.Dictionary({
             'PatternType': 1,
@@ -296,11 +276,11 @@ class Context(pydyf.Stream):
             'TilingType': 1,
             'PaintType': 1,
             'Matrix': pydyf.Array(0.75 * i for i in matrix),
-            'Resources': resources,
+            'Resources': None,
         })
         pattern = Context(
-            self._document, self.page_rectangle, alpha_states, x_objects,
-            patterns, shadings, extra=extra)
+            self._document, self.page_rectangle, self._alpha_states,
+            self._x_objects, self._patterns, self._shadings, extra=extra)
         pattern.id = f'p{len(self._patterns)}'
         self._patterns[pattern.id] = pattern
         return pattern
@@ -826,19 +806,15 @@ class Document:
             pdf.add_object(x_object)
             resources['XObject'][key] = x_object.reference
             if 'Resources' in x_object.extra:
-                self._use_references(pdf, x_object.extra['Resources'])
-                pdf.add_object(x_object.extra['Resources'])
-                x_object.extra['Resources'] = (
-                    x_object.extra['Resources'].reference)
+                x_object.extra['Resources'] = resources.reference
+
         # Patterns
         for key, pattern in resources.get('Pattern', {}).items():
             pdf.add_object(pattern)
             resources['Pattern'][key] = pattern.reference
             if 'Resources' in pattern.extra:
-                self._use_references(pdf, pattern.extra['Resources'])
-                pdf.add_object(pattern.extra['Resources'])
-                pattern.extra['Resources'] = (
-                    pattern.extra['Resources'].reference)
+                pattern.extra['Resources'] = resources.reference
+
         # Shadings
         for key, shading in resources.get('Shading', {}).items():
             pdf.add_object(shading)
