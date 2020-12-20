@@ -193,6 +193,7 @@ class Context(pydyf.Stream):
             'XObject': x_objects,
             'Pattern': patterns,
             'Shading': shadings,
+            'Font': None,  # Will be set by _use_references
         })
         extra = pydyf.Dictionary({
             'Type': '/XObject',
@@ -286,6 +287,7 @@ class Context(pydyf.Stream):
             'XObject': x_objects,
             'Pattern': patterns,
             'Shading': shadings,
+            'Font': None,  # Will be set by _use_references
         })
         matrix = (1, 0, 0, -1, x, self.page_rectangle[3] - y)
         extra = pydyf.Dictionary({
@@ -827,6 +829,8 @@ class Document:
             resources['XObject'][key] = x_object.reference
             if 'Resources' in x_object.extra:
                 self._use_references(pdf, x_object.extra['Resources'])
+                if 'Font' in x_object.extra['Resources']:
+                    x_object.extra['Resources']['Font'] = resources['Font']
                 pdf.add_object(x_object.extra['Resources'])
                 x_object.extra['Resources'] = (
                     x_object.extra['Resources'].reference)
@@ -836,6 +840,8 @@ class Document:
             resources['Pattern'][key] = pattern.reference
             if 'Resources' in pattern.extra:
                 self._use_references(pdf, pattern.extra['Resources'])
+                if 'Font' in pattern.extra['Resources']:
+                    pattern.extra['Resources']['Font'] = resources['Font']
                 pdf.add_object(pattern.extra['Resources'])
                 pattern.extra['Resources'] = (
                     pattern.extra['Resources'].reference)
@@ -1150,7 +1156,7 @@ class Document:
             pdf.catalog['Names']['EmbeddedFiles'] = content.reference
 
         # Embeded fonts
-        resources['Font'] = pydyf.Dictionary()
+        fonts = pydyf.Dictionary()
         for font in self.fonts.values():
             # Optimize font
             try:
@@ -1250,8 +1256,10 @@ class Document:
                 'ToUnicode': to_unicode.reference,
             })
             pdf.add_object(font_dictionary)
-            resources['Font'][font.hash] = font_dictionary.reference
+            fonts[font.hash] = font_dictionary.reference
 
+        pdf.add_object(fonts)
+        resources['Font'] = fonts.reference
         self._use_references(pdf, resources)
 
         # Anchors
