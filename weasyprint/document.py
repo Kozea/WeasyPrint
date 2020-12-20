@@ -827,9 +827,13 @@ class Document:
         for key, x_object in resources.get('XObject', {}).items():
             pdf.add_object(x_object)
             resources['XObject'][key] = x_object.reference
+            if 'SMask' in x_object.extra:
+                pdf.add_object(x_object.extra['SMask'])
+                x_object.extra['SMask'] = x_object.extra['SMask'].reference
             if 'Resources' in x_object.extra:
                 self._use_references(pdf, x_object.extra['Resources'])
                 if 'Font' in x_object.extra['Resources']:
+                    x_object.extra['Resources']['Font'] = resources['Font']
                     x_object.extra['Resources']['Font'] = resources['Font']
                 pdf.add_object(x_object.extra['Resources'])
                 x_object.extra['Resources'] = (
