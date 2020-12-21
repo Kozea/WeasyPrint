@@ -832,24 +832,25 @@ class Document:
                 pdf.add_object(x_object.extra['SMask'])
                 x_object.extra['SMask'] = x_object.extra['SMask'].reference
             if 'Resources' in x_object.extra:
-                self._use_references(pdf, x_object.extra['Resources'])
                 if 'Font' in x_object.extra['Resources']:
                     x_object.extra['Resources']['Font'] = resources['Font']
-                    x_object.extra['Resources']['Font'] = resources['Font']
+                self._use_references(pdf, x_object.extra['Resources'])
                 pdf.add_object(x_object.extra['Resources'])
                 x_object.extra['Resources'] = (
                     x_object.extra['Resources'].reference)
+
         # Patterns
         for key, pattern in resources.get('Pattern', {}).items():
             pdf.add_object(pattern)
             resources['Pattern'][key] = pattern.reference
             if 'Resources' in pattern.extra:
-                self._use_references(pdf, pattern.extra['Resources'])
                 if 'Font' in pattern.extra['Resources']:
                     pattern.extra['Resources']['Font'] = resources['Font']
+                self._use_references(pdf, pattern.extra['Resources'])
                 pdf.add_object(pattern.extra['Resources'])
                 pattern.extra['Resources'] = (
                     pattern.extra['Resources'].reference)
+
         # Shadings
         for key, shading in resources.get('Shading', {}).items():
             pdf.add_object(shading)
