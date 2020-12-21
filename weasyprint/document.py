@@ -291,6 +291,7 @@ class Context(pydyf.Stream):
         })
         matrix = (1, 0, 0, -1, x, self.page_rectangle[3] - y)
         extra = pydyf.Dictionary({
+            'Type': '/Pattern',
             'PatternType': 1,
             'BBox': pydyf.Array([0, 0, width, height]),
             'XStep': repeat_width,
