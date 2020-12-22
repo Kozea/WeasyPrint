@@ -20,11 +20,11 @@ from .text import dlopen, ffi, get_font_features, gobject
 from .urls import FILESYSTEM_ENCODING, fetch
 
 fontconfig = dlopen(
-    ffi, 'fontconfig', 'libfontconfig', 'libfontconfig-1.dll',
+    ffi, 'fontconfig-1', 'fontconfig', 'libfontconfig', 'libfontconfig-1.dll',
     'libfontconfig.so.1', 'libfontconfig-1.dylib')
 pangoft2 = dlopen(
-    ffi, 'pangoft2-1.0', 'libpangoft2-1.0-0', 'libpangoft2-1.0.so',
-    'libpangoft2-1.0.dylib')
+    ffi, 'pangoft2-1.0-0', 'pangoft2-1.0', 'libpangoft2-1.0-0',
+    'libpangoft2-1.0.so', 'libpangoft2-1.0.dylib')
 
 ffi.cdef('''
     // FontConfig
