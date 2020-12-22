@@ -361,7 +361,7 @@ def test_columns_regression_3():
 
 @assert_no_logs
 def test_columns_regression_4():
-    # Regression test #3 for https://github.com/Kozea/WeasyPrint/issues/897
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/897
     page, = render_pages('''
       <div style="position:absolute">
         <div style="column-count:2">
@@ -377,3 +377,24 @@ def test_columns_regression_4():
     assert column1.position_y == 0
     div1, = column1.children
     assert div1.position_y == 0
+
+
+@assert_no_logs
+def test_columns_regression_5():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/1191
+    render_pages('''
+      <style>
+        @page {width: 100px; height: 100px}
+      </style>
+      <div style="height: 1px"></div>
+      <div style="columns: 2">
+        <div style="break-after: avoid">
+          <div style="height: 50px"></div>
+        </div>
+        <div style="break-after: avoid">
+          <div style="height: 50px"></div>
+          <p>a</p>
+        </div>
+      </div>
+      <div style="height: 50px"></div>
+    ''')

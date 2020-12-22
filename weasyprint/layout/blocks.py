@@ -804,6 +804,9 @@ def find_earlier_page_break(children, absolute_boxes, fixed_boxes):
                 child.is_header or child.is_footer):
             # We don’t want to break pages before table headers or footers.
             continue
+        elif child.is_column:
+            # We don’t want to break pages between columns.
+            continue
 
         if child.is_in_normal_flow():
             if previous_in_flow is not None and (
