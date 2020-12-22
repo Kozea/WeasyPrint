@@ -28,10 +28,11 @@ jobs:
       - name: Install DejaVu, Pango, libffi and Ghostscript (MacOS)
         if: matrix.os == 'macos-latest'
         run: |
+          rm /usr/local/bin/2to3
           brew update
           brew tap homebrew/cask-fonts
           brew install --cask font-dejavu
-          brew install --force pango libffi ghostscript
+          brew install pango libffi ghostscript
       - name: Install DejaVu, Pango and Ghostscript (Windows)
         if: matrix.os == 'windows-latest'
         run: |
