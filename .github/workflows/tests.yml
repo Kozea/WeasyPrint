@@ -31,7 +31,7 @@ jobs:
           brew update
           brew tap homebrew/cask-fonts
           brew install --cask font-dejavu
-          brew install pango libffi ghostscript
+          brew install --force pango libffi ghostscript
       - name: Install DejaVu, Pango and Ghostscript (Windows)
         if: matrix.os == 'windows-latest'
         run: |
