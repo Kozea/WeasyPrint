@@ -698,7 +698,7 @@ def collapse_margin(adjoining_margins):
 
 
 def establishes_formatting_context(box):
-    """Return wether a box establishes a block formatting context.
+    """Return whether a box establishes a block formatting context.
 
     See http://www.w3.org/TR/CSS2/visuren.html#block-formatting
 
