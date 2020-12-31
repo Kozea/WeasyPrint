@@ -4,8 +4,9 @@
 
     Configuration for WeasyPrint tests.
 
-    This module adds a PNG export based on GhostScript. As GhostScript is
-    released under AGPL, the whole testing suite is released under AGPL.
+    This module adds a PNG export based on Ghostscript.
+
+    Note that Ghostscript is released under AGPL.
 
 """
 
@@ -35,7 +36,7 @@ def document_write_png(self, target=None, resolution=96, antialiasing=1):
     os.remove(pdf.name)
 
     assert pngs.startswith(MAGIC_NUMBER), (
-        'GhostScript error: '
+        'Ghostscript error: '
         f'{pngs.split(MAGIC_NUMBER)[0].decode("ascii").strip()}')
 
     # TODO: use a different way to find PNG files in stream
