@@ -11,6 +11,7 @@ from io import BytesIO
 from itertools import cycle
 
 import pydyf
+import pydyfsvg
 from PIL import Image
 
 from .layout.percentages import percentage
@@ -68,6 +69,57 @@ class RasterImage:
         context.pop_state()
 
 
+class SVGImage:
+    def __init__(self, pydyf_svg, base_url, url_fetcher):
+        self._svg = pydyf_svg
+        self._base_url = base_url
+        self._url_fetcher = url_fetcher
+
+    def get_intrinsic_size(self, _image_resolution, font_size):
+        self._intrinsic_width, self._intrinsic_height = (
+            self._svg.get_size(font_size))
+        viewbox = self._svg.get_viewbox(font_size)
+
+        if viewbox:
+            if self._intrinsic_width and self._intrinsic_height:
+                self.intrinsic_ratio = (
+                    self._intrinsic_width / self._intrinsic_height)
+            else:
+                if viewbox[2] and viewbox[3]:
+                    self.intrinsic_ratio = viewbox[2] / viewbox[3]
+                    if self._intrinsic_width:
+                        self._intrinsic_height = (
+                            self._intrinsic_width / self.intrinsic_ratio)
+                    elif self._intrinsic_height:
+                        self._intrinsic_width = (
+                            self._intrinsic_height * self.intrinsic_ratio)
+        elif self._intrinsic_width and self._intrinsic_height:
+            self.intrinsic_ratio = (
+                self._intrinsic_width / self._intrinsic_height)
+
+        return self._intrinsic_width, self._intrinsic_height
+
+    def draw(self, context, concrete_width, concrete_height, _image_rendering):
+        has_size = (
+            concrete_width > 0
+            and concrete_height > 0
+            and self._intrinsic_width > 0
+            and self._intrinsic_height > 0
+        )
+        if not has_size:
+            return
+
+        # Use the real intrinsic size here,
+        # not affected by 'image-resolution'.
+        context.push_state()
+        context.transform(
+            concrete_width, 0, 0, -concrete_height, 0, concrete_height)
+        self._svg.draw(
+            context, concrete_width, concrete_height, self._base_url,
+            self._url_fetcher)
+        context.pop_state()
+
+
 def get_image_from_uri(cache, url_fetcher, optimize_images, url,
                        forced_mime_type=None):
     """Get an Image instance from an image URI."""
@@ -84,7 +136,7 @@ def get_image_from_uri(cache, url_fetcher, optimize_images, url,
                 string = result['file_obj'].read()
             mime_type = forced_mime_type or result['mime_type']
             if mime_type == 'image/svg+xml':
-                raise ImageLoadingError('SVG images are not supported yet')
+                image = SVGImage(pydyfsvg.SVG(string), url, url_fetcher)
             else:
                 # Try to rely on given mimetype
                 try:
