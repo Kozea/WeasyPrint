@@ -60,7 +60,7 @@ Donation = 'https://opencollective.com/courtbouillon'
 exclude = ['.*', 'tests/results']
 
 [tool.pytest.ini_options]
-addopts = '--isort --flake8 --cov'
+addopts = '--isort --flake8 --cov --no-cov-on-fail'
 
 [tool.coverage.run]
 branch = true
