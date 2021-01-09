@@ -80,6 +80,7 @@ class Box:
     transformation_matrix = None
     bookmark_label = None
     string_set = None
+    leader_string = None
 
     # Default, overriden on some subclasses
     def all_children(self):

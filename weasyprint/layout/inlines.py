@@ -49,6 +49,7 @@ def iter_line_boxes(context, box, position_y, skip_stack, containing_block,
             context, box, position_y, skip_stack, containing_block,
             absolute_boxes, fixed_boxes, first_letter_style)
         if line:
+            handle_leaders(context, line, containing_block)
             position_y = line.position_y + line.height
         if line is None:
             return
@@ -58,6 +59,47 @@ def iter_line_boxes(context, box, position_y, skip_stack, containing_block,
         skip_stack = resume_at
         box.text_indent = 0
         first_letter_style = None
+
+
+def handle_leaders(context, line, containing_block):
+    after_leader = False
+    children = []
+    for child in tuple(line.descendants()):
+        if child.leader_string:
+            after_leader = True
+            available_width = containing_block.width - line.width
+            line.width = containing_block.width
+            child.width = available_width
+
+            text_box = boxes.TextBox.anonymous_from(child, child.leader_string)
+            resolve_percentages(text_box, containing_block)
+            text_box, _, _ = split_text_box(
+                context, text_box, float('inf'), None)
+
+            number_of_leaders = int(line.width // text_box.width)
+            for i in range(number_of_leaders):
+                text_box = boxes.TextBox.anonymous_from(
+                    child, child.leader_string)
+                resolve_percentages(text_box, containing_block)
+                text_box, _, _ = split_text_box(
+                    context, text_box, float('inf'), None)
+                text_box.position_x = (
+                    line.position_x + line.width - ((i + 1) * text_box.width))
+                text_box.position_y = child.position_y
+
+                if text_box.position_x < child.position_x:
+                    # Don’t add leaders behind the text on the left
+                    continue
+                elif (text_box.position_x + text_box.width >
+                        child.position_x + available_width):
+                    # Don’t add leaders behind the text on the right
+                    continue
+                children.append(text_box)
+
+            child.children = tuple(children)
+            continue
+        if after_leader:
+            child.position_x += available_width
 
 
 def get_next_linebox(context, linebox, position_y, skip_stack,

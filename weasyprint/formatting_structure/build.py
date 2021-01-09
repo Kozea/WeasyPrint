@@ -527,6 +527,10 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
                     get_image_from_uri, target_collector, counter_style,
                     context=context, page=page)
             boxlist.append(new_box)
+        elif type_ == 'leader()':
+            leader_box = boxes.InlineBox.anonymous_from(parent_box, [])
+            leader_box.leader_string = value[1]
+            boxlist.append(leader_box)
     text = ''.join(texts)
     if text:
         boxlist.append(boxes.TextBox.anonymous_from(parent_box, text))
