@@ -61,48 +61,63 @@ def iter_line_boxes(context, box, position_y, skip_stack, containing_block,
         first_letter_style = None
 
 
+def leader_index(box):
+    """Get the index of the first leader box in ``box``."""
+    for i, child in enumerate(box.children):
+        if child.leader_string:
+            return (i, None), child
+        if isinstance(child, boxes.ParentBox):
+            child_leader_index, child_leader = leader_index(child)
+            if child_leader_index is not None:
+                return (i, child_leader_index), child_leader
+    return None, None
+
+
 def handle_leaders(context, line, containing_block):
-    after_leader = False
-    for child in tuple(line.descendants()):
-        if child.leader_string and not after_leader:
-            after_leader = True
-            available_width = containing_block.width - line.width
-            line.width = containing_block.width
-            child.width = available_width
+    """Find a leader box in ``line`` and handle its text and its position."""
+    index, leader_box = leader_index(line)
+    if index is not None:
+        available_width = containing_block.width - line.width
+        line.width = containing_block.width
+        leader_box.width = available_width
 
-            text_box = boxes.TextBox.anonymous_from(child, child.leader_string)
-            resolve_percentages(text_box, containing_block)
-            text_box, _, _ = split_text_box(
-                context, text_box, float('inf'), None)
+        # Build a text box that will be put multiple times in the leader box
+        text_box = boxes.TextBox.anonymous_from(
+            leader_box, leader_box.leader_string)
+        resolve_percentages(text_box, containing_block)
+        text_box, _, _ = split_text_box(context, text_box, float('inf'), None)
+        text_box.position_y = leader_box.position_y
 
-            # Abort if the leader has no width
-            if text_box.width <= 0:
-                return
+        # Abort if the leader text has no width
+        if text_box.width <= 0:
+            return
 
-            number_of_leaders = int(line.width // text_box.width)
-            position_x = line.position_x + line.width
-            children = []
-            for i in range(number_of_leaders):
-                position_x -= text_box.width
-                if position_x < child.position_x:
-                    # Don’t add leaders behind the text on the left
-                    continue
-                elif (position_x + text_box.width >
-                        child.position_x + available_width):
-                    # Don’t add leaders behind the text on the right
-                    continue
+        # Add text boxes into the leader box
+        number_of_leaders = int(line.width // text_box.width)
+        position_x = line.position_x + line.width
+        children = []
+        for i in range(number_of_leaders):
+            position_x -= text_box.width
+            if position_x < leader_box.position_x:
+                # Don’t add leaders behind the text on the left
+                continue
+            elif (position_x + text_box.width >
+                    leader_box.position_x + available_width):
+                # Don’t add leaders behind the text on the right
+                continue
+            text_box = text_box.copy()
+            text_box.position_x = position_x
+            children.append(text_box)
+        leader_box.children = tuple(children)
 
-                text_box = text_box.copy()
-                text_box.position_x = position_x
-                text_box.position_y = child.position_y
-                children.append(text_box)
-
-            child.children = tuple(children)
-            continue
-
-        # Translate the inline children after the leaders
-        if after_leader:
-            child.position_x += available_width
+    # Widen leader parent boxes and translate following boxes
+    box = line
+    while index is not None:
+        for child in box.children[index[0] + 1:]:
+            child.translate(dx=available_width)
+        box = box.children[index[0]]
+        box.width += available_width
+        index = index[1]
 
 
 def get_next_linebox(context, linebox, position_y, skip_stack,
