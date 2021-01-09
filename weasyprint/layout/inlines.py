@@ -77,7 +77,12 @@ def handle_leaders(context, line, containing_block):
     """Find a leader box in ``line`` and handle its text and its position."""
     index, leader_box = leader_index(line)
     if index is not None:
-        available_width = containing_block.width - line.width
+        available_width = containing_block.width - sum(
+            child.width for child in line.children
+            if child.is_in_normal_flow())
+        for shape in context.excluded_shapes:
+            if shape.position_y + shape.height > line.position_y:
+                available_width -= shape.width
         line.width = containing_block.width
         leader_box.width = available_width
 
@@ -114,7 +119,8 @@ def handle_leaders(context, line, containing_block):
     box = line
     while index is not None:
         for child in box.children[index[0] + 1:]:
-            child.translate(dx=available_width)
+            if child.is_in_normal_flow():
+                child.translate(dx=available_width)
         box = box.children[index[0]]
         box.width += available_width
         index = index[1]
