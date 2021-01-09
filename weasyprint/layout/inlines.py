@@ -63,9 +63,8 @@ def iter_line_boxes(context, box, position_y, skip_stack, containing_block,
 
 def handle_leaders(context, line, containing_block):
     after_leader = False
-    children = []
     for child in tuple(line.descendants()):
-        if child.leader_string:
+        if child.leader_string and not after_leader:
             after_leader = True
             available_width = containing_block.width - line.width
             line.width = containing_block.width
@@ -76,28 +75,32 @@ def handle_leaders(context, line, containing_block):
             text_box, _, _ = split_text_box(
                 context, text_box, float('inf'), None)
 
-            number_of_leaders = int(line.width // text_box.width)
-            for i in range(number_of_leaders):
-                text_box = boxes.TextBox.anonymous_from(
-                    child, child.leader_string)
-                resolve_percentages(text_box, containing_block)
-                text_box, _, _ = split_text_box(
-                    context, text_box, float('inf'), None)
-                text_box.position_x = (
-                    line.position_x + line.width - ((i + 1) * text_box.width))
-                text_box.position_y = child.position_y
+            # Abort if the leader has no width
+            if text_box.width <= 0:
+                return
 
-                if text_box.position_x < child.position_x:
+            number_of_leaders = int(line.width // text_box.width)
+            position_x = line.position_x + line.width
+            children = []
+            for i in range(number_of_leaders):
+                position_x -= text_box.width
+                if position_x < child.position_x:
                     # Don’t add leaders behind the text on the left
                     continue
-                elif (text_box.position_x + text_box.width >
+                elif (position_x + text_box.width >
                         child.position_x + available_width):
                     # Don’t add leaders behind the text on the right
                     continue
+
+                text_box = text_box.copy()
+                text_box.position_x = position_x
+                text_box.position_y = child.position_y
                 children.append(text_box)
 
             child.children = tuple(children)
             continue
+
+        # Translate the inline children after the leaders
         if after_leader:
             child.position_x += available_width
 
