@@ -272,6 +272,24 @@ def test_absolute_positioning_7():
 
 
 @assert_no_logs
+def test_absolute_positioning_8():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/1264
+    page, = parse('''
+      <style>@page{ width: 50px; height: 50px }</style>
+      <body style="font-size: 0">
+        <div style="position: absolute; margin: auto;
+                    left: 0; right: 10px;
+                    top: 0; bottom: 10px;
+                    width: 10px; height: 20px">
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    assert (div.content_box_x(), div.content_box_y()) == (15, 10)
+    assert (div.width, div.height) == (10, 20)
+
+
+@assert_no_logs
 def test_absolute_images():
     page, = parse('''
       <style>

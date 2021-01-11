@@ -81,7 +81,7 @@ def absolute_width(box, context, containing_block):
         box.width = shrink_to_fit(context, box, available_width)
     elif left != 'auto' and right != 'auto' and width != 'auto':
         width_for_margins = cb_width - (
-            right + left + padding_plus_borders_x)
+            right + left + width + padding_plus_borders_x)
         if margin_l == margin_r == 'auto':
             if width + padding_plus_borders_x + right + left <= cb_width:
                 box.margin_left = box.margin_right = width_for_margins / 2
@@ -151,7 +151,7 @@ def absolute_height(box, context, containing_block):
             box.margin_bottom = 0
     elif top != 'auto' and bottom != 'auto' and height != 'auto':
         height_for_margins = cb_height - (
-            top + bottom + paddings_plus_borders_y)
+            top + bottom + height + paddings_plus_borders_y)
         if margin_t == margin_b == 'auto':
             box.margin_top = box.margin_bottom = height_for_margins / 2
         elif margin_t == 'auto':
