@@ -371,7 +371,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                 new_containing_block, absolute_boxes, fixed_boxes,
                 first_letter_style)
             is_page_break = False
-            for line, resume_at in lines_iterator:
+            for i, (line, resume_at) in enumerate(lines_iterator):
                 line.resume_at = resume_at
                 new_position_y = line.position_y + line.height
 
@@ -431,6 +431,12 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                 new_children.append(line)
                 position_y = new_position_y
                 skip_stack = resume_at
+
+                # Break box if we reached max-lines
+                if box.style['max_lines'] != 'none':
+                    if i >= box.style['max_lines'] - 1:
+                        break
+
             if new_children:
                 resume_at = (index, new_children[-1].resume_at)
             if is_page_break:

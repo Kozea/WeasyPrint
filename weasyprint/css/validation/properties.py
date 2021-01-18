@@ -334,6 +334,17 @@ def continue_(keyword):
 
 
 @property(unstable=True)
+@single_token
+def max_lines(token):
+    if token.type == 'number' and token.int_value is not None:
+        if token.int_value >= 1:
+            return token.int_value
+    keyword = get_keyword(token)
+    if keyword == 'none':
+        return keyword
+
+
+@property(unstable=True)
 @single_keyword
 def margin_break(keyword):
     """``margin-break`` property validation."""
