@@ -64,7 +64,7 @@ def iter_line_boxes(context, box, position_y, skip_stack, containing_block,
 def leader_index(box):
     """Get the index of the first leader box in ``box``."""
     for i, child in enumerate(box.children):
-        if child.leader_string:
+        if child.is_leader:
             return (i, None), child
         if isinstance(child, boxes.ParentBox):
             child_leader_index, child_leader = leader_index(child)
@@ -77,25 +77,25 @@ def handle_leaders(context, line, containing_block):
     """Find a leader box in ``line`` and handle its text and its position."""
     index, leader_box = leader_index(line)
     if index is not None:
-        available_width = containing_block.width - sum(
-            child.width for child in line.children
-            if child.is_in_normal_flow())
-        for shape in context.excluded_shapes:
-            if shape.position_y + shape.height > line.position_y:
-                available_width -= shape.width
-        line.width = containing_block.width
-        leader_box.width = available_width
-
-        # Build a text box that will be put multiple times in the leader box
-        text_box = boxes.TextBox.anonymous_from(
-            leader_box, leader_box.leader_string)
-        resolve_percentages(text_box, containing_block)
-        text_box, _, _ = split_text_box(context, text_box, float('inf'), None)
-        text_box.position_y = leader_box.position_y
+        text_box, = leader_box.children
 
         # Abort if the leader text has no width
         if text_box.width <= 0:
             return
+
+        # Extra width is the additional width taken by the leader box
+        extra_width = containing_block.width - sum(
+            child.width for child in line.children
+            if child.is_in_normal_flow())
+
+        # Take care of excluded shapes
+        for shape in context.excluded_shapes:
+            if shape.position_y + shape.height > line.position_y:
+                extra_width -= shape.width
+
+        # Available width is the width available for the leader box
+        leader_box.width = available_width = extra_width + text_box.width
+        line.width = containing_block.width
 
         # Add text boxes into the leader box
         number_of_leaders = int(line.width // text_box.width)
@@ -120,9 +120,9 @@ def handle_leaders(context, line, containing_block):
     while index is not None:
         for child in box.children[index[0] + 1:]:
             if child.is_in_normal_flow():
-                child.translate(dx=available_width)
+                child.translate(dx=extra_width)
         box = box.children[index[0]]
-        box.width += available_width
+        box.width += extra_width
         index = index[1]
 
 
