@@ -185,6 +185,7 @@ INITIAL_VALUES = {
 
     # Overflow Module 3 (WD): https://www.w3.org/TR/css-overflow-3/
     'continue': 'auto',
+    'max_lines': 'none',
     'overflow': 'visible',
     'text_overflow': 'clip',
 
