@@ -326,6 +326,13 @@ def box_decoration_break(keyword):
     return keyword in ('slice', 'clone')
 
 
+@property('continue', unstable=True)
+@single_keyword
+def continue_(keyword):
+    """``continue`` property validation."""
+    return keyword in ('auto', 'discard')
+
+
 @property(unstable=True)
 @single_keyword
 def margin_break(keyword):

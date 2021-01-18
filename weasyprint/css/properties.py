@@ -184,6 +184,7 @@ INITIAL_VALUES = {
     'text_decoration_style': 'solid',
 
     # Overflow Module 3 (WD): https://www.w3.org/TR/css-overflow-3/
+    'continue': 'auto',
     'overflow': 'visible',
     'text_overflow': 'clip',
 

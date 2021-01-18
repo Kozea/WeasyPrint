@@ -595,6 +595,9 @@ def block_container_layout(context, box, max_position_y, skip_stack,
     else:
         resume_at = None
 
+    if box.style['continue'] == 'discard':
+        resume_at = None
+
     if (resume_at is not None and
             box.style['break_inside'] in ('avoid', 'avoid-page') and
             not page_is_empty):
