@@ -863,6 +863,8 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
         if can_break is None:
             if None in (last_letter, first):
                 can_break = False
+            elif first in (True, False):
+                can_break = first
             else:
                 can_break = can_break_text(
                     last_letter + first, child.style['lang'])
@@ -1045,6 +1047,10 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
     if resume_at is not None:
         if resume_at[0] < float_resume_at:
             resume_at = (float_resume_at, None)
+
+    if box.is_leader:
+        first_letter = True
+        last_letter = False
 
     return (
         new_box, resume_at, preserved_line_break, first_letter, last_letter,
