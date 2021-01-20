@@ -120,17 +120,11 @@ def main(argv=None, stdout=None, stdin=None):
                         help='Print system information and exit.')
     parser.add_argument('-e', '--encoding',
                         help='Character encoding of the input')
-    parser.add_argument('-f', '--format', choices=['pdf', 'png'],
-                        help='Output format. Can be omitted if `output` '
-                             'ends with a .pdf or .png extension.')
     parser.add_argument('-s', '--stylesheet', action='append',
                         help='URL or filename for a user CSS stylesheet. '
                              'May be given multiple times.')
     parser.add_argument('-m', '--media-type', default='print',
                         help='Media type to use for @media, defaults to print')
-    parser.add_argument('-r', '--resolution', type=float,
-                        help='PNG only: the resolution in pixel per CSS inch. '
-                             'Defaults to 96, one PNG pixel per CSS pixel.')
     parser.add_argument('-u', '--base-url',
                         help='Base for relative URLs in the HTML input. '
                              "Defaults to the input's own filename or URL "
@@ -155,19 +149,6 @@ def main(argv=None, stdout=None, stdin=None):
 
     args = parser.parse_args(argv)
 
-    if args.format is None:
-        output_lower = args.output.lower()
-        if output_lower.endswith('.pdf'):
-            format_ = 'pdf'
-        elif output_lower.endswith('.png'):
-            format_ = 'png'
-        else:
-            parser.error(
-                'Either specify a format with -f or choose an '
-                'output filename that ends in .pdf or .png')
-    else:
-        format_ = args.format.lower()
-
     if args.input == '-':
         source = stdin or sys.stdin.buffer
         if args.base_url is None:
@@ -185,18 +166,8 @@ def main(argv=None, stdout=None, stdin=None):
     kwargs = {
         'stylesheets': args.stylesheet,
         'presentational_hints': args.presentational_hints,
-        'optimize_images': args.optimize_images}
-    if args.resolution:
-        if format_ == 'png':
-            kwargs['resolution'] = args.resolution
-        else:
-            parser.error('--resolution only applies for the PNG format.')
-
-    if args.attachment:
-        if format_ == 'pdf':
-            kwargs['attachments'] = args.attachment
-        else:
-            parser.error('--attachment only applies for the PDF format.')
+        'optimize_images': args.optimize_images,
+        'attachments': args.attachment}
 
     # Default to logging to stderr.
     if args.debug:
@@ -210,7 +181,7 @@ def main(argv=None, stdout=None, stdin=None):
 
     html = HTML(source, base_url=args.base_url, encoding=args.encoding,
                 media_type=args.media_type)
-    getattr(html, 'write_' + format_)(output, **kwargs)
+    html.write_pdf(output, **kwargs)
 
 
 if __name__ == '__main__':  # pragma: no cover
