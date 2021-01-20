@@ -903,7 +903,7 @@ class FontMetrics:
     def __getattr__(self, key):
         if key in dir(self):
             return units_to_double(
-                getattr(pango, 'pango_font_metrics_get_' + key)(self.metrics))
+                getattr(pango, f'pango_font_metrics_get_{key}')(self.metrics))
 
 
 def get_font_features(

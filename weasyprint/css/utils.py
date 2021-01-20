@@ -376,7 +376,7 @@ def parse_function(function_token):
     space-separated arguments. Return ``None`` otherwise.
 
     """
-    if not getattr(function_token, 'type', None) == 'function':
+    if function_token.type != 'function':
         return
 
     content = list(remove_whitespace(function_token.arguments))

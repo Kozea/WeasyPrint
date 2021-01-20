@@ -75,11 +75,13 @@ class Box:
     is_flex_item = False
     is_for_root_element = False
     is_column = False
+    is_attachment = False
 
     # Other properties
     transformation_matrix = None
     bookmark_label = None
     string_set = None
+    download_name = None
 
     # Default, overriden on some subclasses
     def all_children(self):

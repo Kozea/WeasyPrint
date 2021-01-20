@@ -635,8 +635,6 @@ class Page:
         has_link = link and not isinstance(box, (boxes.TextBox, boxes.LineBox))
         # In case of duplicate IDs, only the first is an anchor.
         has_anchor = anchor_name and anchor_name not in self.anchors
-        is_attachment = getattr(box, 'is_attachment', False)
-        download_name = getattr(box, 'attachment_download', None)
 
         if has_bookmark or has_link or has_anchor:
             pos_x, pos_y, width, height = box.hit_area()
@@ -645,18 +643,18 @@ class Page:
                 assert token_type == 'url'
                 link_type, target = link
                 assert isinstance(target, str)
-                if link_type == 'external' and is_attachment:
+                if link_type == 'external' and box.is_attachment:
                     link_type = 'attachment'
                 if matrix:
                     link = (
                         link_type, target,
                         rectangle_aabb(matrix, pos_x, pos_y, width, height),
-                        download_name)
+                        box.download_name)
                 else:
                     link = (
                         link_type, target,
                         (pos_x, pos_y, pos_x + width, pos_y + height),
-                        download_name)
+                        box.download_name)
                 self.links.append(link)
             if matrix and (has_bookmark or has_anchor):
                 pos_x, pos_y = matrix.transform_point(pos_x, pos_y)
