@@ -52,7 +52,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
         else:
             main_space = max_position_y - box.position_y
             if containing_block.height != 'auto':
-                if hasattr(containing_block.height, 'unit'):
+                if isinstance(containing_block.height, Dimension):
                     assert containing_block.height.unit == 'px'
                     main_space = min(main_space, containing_block.height.value)
                 else:
@@ -69,7 +69,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
         if cross == 'height':
             main_space = max_position_y - box.content_box_y()
             if containing_block.height != 'auto':
-                if hasattr(containing_block.height, 'unit'):
+                if isinstance(containing_block.height, Dimension):
                     assert containing_block.height.unit == 'px'
                     main_space = min(main_space, containing_block.height.value)
                 else:

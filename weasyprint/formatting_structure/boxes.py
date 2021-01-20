@@ -337,7 +337,7 @@ class ParentBox(Box):
         """A flat generator for a box, its children and descendants."""
         yield self
         for child in self.children:
-            if hasattr(child, 'descendants'):
+            if isinstance(child, ParentBox):
                 for grand_child in child.descendants():
                     yield grand_child
             else:
