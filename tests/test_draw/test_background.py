@@ -15,7 +15,7 @@ from . import assert_pixels
 @assert_no_logs
 @pytest.mark.parametrize(
     'name, expected_width, expected_height, expected_pixels, html', (
-        ('all_blue', 10, 10, (10 * (10 * 'B' + "\n")), '''
+        ('all_blue', 10, 10, (10 * (10 * 'B' + '\n')), '''
            <style>
              @page { size: 10px }
              /* body’s background propagates to the whole canvas */
@@ -490,7 +490,7 @@ def test_background_image(name, css, pixels):
     #    BBBB
     #    BBBB
 
-    assert_pixels('background_' + name, 14, 16, pixels, '''
+    assert_pixels(f'background_{name}', 14, 16, pixels, '''
       <style>
         @page { size: 14px 16px }
         html { background: #fff }
@@ -531,7 +531,7 @@ def test_background_image_zero_size_background():
 def test_background_origin():
     """Test the background-origin property."""
     def test_value(value, pixels, css=None):
-        assert_pixels('background_origin_' + value, 12, 12, pixels, '''
+        assert_pixels(f'background_origin_{value}', 12, 12, pixels, '''
             <style>
                 @page { size: 12px }
                 html { background: #fff }
@@ -843,7 +843,7 @@ def test_background_repeat_round_4():
     '''),
 ))
 def test_background_clip(value, pixels):
-    assert_pixels('background_clip_' + value, 8, 8, pixels, '''
+    assert_pixels(f'background_clip_{value}', 8, 8, pixels, '''
       <style>
         @page { size: 8px }
         html { background: #fff }

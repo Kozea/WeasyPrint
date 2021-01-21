@@ -127,12 +127,12 @@ class StyleFor:
                         style['border_collapse'] == 'collapse'):
                     # Padding do not apply
                     for side in ['top', 'bottom', 'left', 'right']:
-                        style['padding_' + side] = computed_values.ZERO_PIXELS
+                        style[f'padding_{side}'] = computed_values.ZERO_PIXELS
                 if (style['display'].startswith('table-') and
                         style['display'] != 'table-caption'):
                     # Margins do not apply
                     for side in ['top', 'bottom', 'left', 'right']:
-                        style['margin_' + side] = computed_values.ZERO_PIXELS
+                        style[f'margin_{side}'] = computed_values.ZERO_PIXELS
 
         return style
 
@@ -910,7 +910,7 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                         tinycss2.parse_declaration_list(margin_rule.content)))
                     if declarations:
                         selector_list = [(
-                            specificity, '@' + margin_rule.lower_at_keyword,
+                            specificity, f'@{margin_rule.lower_at_keyword}',
                             page_type)]
                         page_rules.append(
                             (margin_rule, selector_list, declarations))

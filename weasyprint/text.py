@@ -1194,7 +1194,7 @@ def split_first_line(text, style, context, max_width, justification_spacing,
                 if ' ' in first_line_text:
                     first_line_text, next_word = (
                         first_line_text.rsplit(' ', 1))
-                    next_word = ' ' + next_word
+                    next_word = f' {next_word}'
                     layout.set_text(first_line_text)
                     first_line, index = layout.get_first_line()
                     resume_at = len((first_line_text + ' ').encode('utf8'))

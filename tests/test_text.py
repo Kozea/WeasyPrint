@@ -410,7 +410,7 @@ def test_letter_spacing_1():
         '<style>'
         '  strong {'
         '    letter-spacing: 11px;'
-        '    max-width: ' + str(strong_3.width * 1.5) + 'px'
+        f'    max-width: {strong_3.width * 1.5}px'
         '}'
         '  span { display: inline-block }'
         '</style>'

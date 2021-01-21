@@ -518,7 +518,7 @@ def counter(tokens, default_integer):
             return  # expected a keyword here
         counter_name = token.value
         if counter_name in ('none', 'initial', 'inherit'):
-            raise InvalidValues('Invalid counter name: ' + counter_name)
+            raise InvalidValues(f'Invalid counter name: {counter_name}')
         token = next(tokens, None)
         if token is not None and (
                 token.type == 'number' and token.int_value is not None):

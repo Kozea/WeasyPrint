@@ -273,7 +273,7 @@ def expand_background(base_url, name, tokens):
         def add(name, value):
             if value is None:
                 return False
-            name = 'background_' + name
+            name = f'background_{name}'
             if name in results:
                 raise InvalidValues
             results[name] = value
