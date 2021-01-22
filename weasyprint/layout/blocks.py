@@ -435,8 +435,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                 # Break box if we reached max-lines
                 if box.style['max_lines'] != 'none':
                     if i >= box.style['max_lines'] - 1:
-                        if box.style['block_ellipsis'] != 'none':
-                            line.text_overflow = 'ellipsis'
+                        line.block_ellipsis = box.style['block_ellipsis']
                         break
 
             if new_children:
@@ -649,6 +648,11 @@ def block_container_layout(context, box, max_position_y, skip_stack,
             box.is_table_wrapper):
         position_y += collapse_margin(adjoining_margins)
         adjoining_margins = []
+
+    if box_is_fragmented and new_children:
+        last_child = new_children[-1]
+        if isinstance(last_child, boxes.LineBox):
+            last_child.block_ellipsis = box.style['block_ellipsis']
 
     new_box = box.copy_with_children(new_children)
     new_box.remove_decoration(start=not is_start, end=box_is_fragmented)

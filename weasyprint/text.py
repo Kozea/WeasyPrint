@@ -1238,7 +1238,7 @@ def split_first_line(text, style, context, max_width, justification_spacing,
         style['hyphenate_character'])
 
 
-def show_first_line(context, textbox, text_overflow):
+def show_first_line(context, textbox, text_overflow, block_ellipsis):
     """Draw the given ``textbox`` line to the cairo ``context``."""
     pango.pango_layout_set_single_paragraph_mode(
         textbox.pango_layout.layout, True)
@@ -1250,7 +1250,35 @@ def show_first_line(context, textbox, text_overflow):
         pango.pango_layout_set_ellipsize(
             textbox.pango_layout.layout, pango.PANGO_ELLIPSIZE_END)
 
-    first_line, _ = textbox.pango_layout.get_first_line()
+    if text_overflow == 'ellipsis' or block_ellipsis != 'none':
+        max_width = context.clip_extents()[2] - textbox.position_x
+        pango.pango_layout_set_width(
+            textbox.pango_layout.layout, units_from_double(max_width))
+        if text_overflow == 'ellipsis':
+            pango.pango_layout_set_ellipsize(
+                textbox.pango_layout.layout, pango.PANGO_ELLIPSIZE_END)
+        else:
+            if block_ellipsis == 'auto':
+                ellipsis = '…'
+            else:
+                assert block_ellipsis[0] == 'string'
+                ellipsis = block_ellipsis[1]
+            textbox.pango_layout.set_text(textbox.pango_layout.text + ellipsis)
+
+    first_line, second_line = textbox.pango_layout.get_first_line()
+
+    if block_ellipsis != 'none':
+        while second_line:
+            last_word_end = get_last_word_end(
+                textbox.pango_layout.text[:-len(ellipsis)],
+                textbox.style['lang'])
+            if last_word_end is None:
+                break
+            new_text = utf8_slice(
+                textbox.pango_layout.text, slice(0, last_word_end))
+            textbox.pango_layout.set_text(new_text + ellipsis)
+            first_line, second_line = textbox.pango_layout.get_first_line()
+
     context = ffi.cast('cairo_t *', context._pointer)
     pangocairo.pango_cairo_show_layout_line(context, first_line)
 
@@ -1295,3 +1323,12 @@ def get_next_word_boundaries(text, lang):
     else:
         return None
     return word_start, word_end
+
+
+def get_last_word_end(text, lang):
+    if not text or len(text) < 2:
+        return None
+    bytestring, log_attrs = get_log_attrs(text, lang)
+    for i, attr in enumerate(list(log_attrs)[::-1]):
+        if i and attr.is_word_end:
+            return len(bytestring) - i

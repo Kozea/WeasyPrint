@@ -1004,7 +1004,7 @@ def draw_replacedbox(context, box):
 
 
 def draw_inline_level(context, page, box, enable_hinting, offset_x=0,
-                      text_overflow='clip'):
+                      text_overflow='clip', block_ellipsis='none'):
     if isinstance(box, StackingContext):
         stacking_context = box
         assert isinstance(
@@ -1016,7 +1016,12 @@ def draw_inline_level(context, page, box, enable_hinting, offset_x=0,
         if isinstance(box, (boxes.InlineBox, boxes.LineBox)):
             if isinstance(box, boxes.LineBox):
                 text_overflow = box.text_overflow
-            for child in box.children:
+                block_ellipsis = box.block_ellipsis
+            ellipsis = 'none'
+            for i, child in enumerate(box.children):
+                if i == len(box.children) - 1:
+                    # Last child
+                    ellipsis = block_ellipsis
                 if isinstance(child, StackingContext):
                     child_offset_x = offset_x
                 else:
@@ -1025,11 +1030,11 @@ def draw_inline_level(context, page, box, enable_hinting, offset_x=0,
                 if isinstance(child, boxes.TextBox):
                     draw_text(
                         context, child, enable_hinting,
-                        child_offset_x, text_overflow)
+                        child_offset_x, text_overflow, ellipsis)
                 else:
                     draw_inline_level(
                         context, page, child, enable_hinting, child_offset_x,
-                        text_overflow)
+                        text_overflow, ellipsis)
         elif isinstance(box, boxes.InlineReplacedBox):
             draw_replacedbox(context, box)
         else:
@@ -1039,7 +1044,7 @@ def draw_inline_level(context, page, box, enable_hinting, offset_x=0,
 
 
 def draw_text(context, textbox, enable_hinting, offset_x=0,
-              text_overflow='clip'):
+              text_overflow='clip', block_ellipsis='none'):
     """Draw ``textbox`` to a ``cairo.Context`` from ``PangoCairo.Context``."""
     # Pango crashes with font-size: 0
     assert textbox.style['font_size']
@@ -1051,7 +1056,7 @@ def draw_text(context, textbox, enable_hinting, offset_x=0,
     context.set_source_rgba(*textbox.style['color'])
 
     textbox.pango_layout.reactivate(textbox.style)
-    show_first_line(context, textbox, text_overflow)
+    show_first_line(context, textbox, text_overflow, block_ellipsis)
 
     values = textbox.style['text_decoration_line']
 
