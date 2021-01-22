@@ -619,13 +619,15 @@ def expand_line_clamp(base_url, name, tokens):
             yield 'max_lines', 'none'
             yield 'continue', 'auto'
             yield 'block-ellipsis', 'none'
-        elif tokens[0].type == 'integer':
-            yield 'max_lines', tokens[0].value
+        elif tokens[0].type == 'number' and tokens[0].int_value is not None:
+            yield 'max_lines', tokens[0].int_value
             yield 'continue', 'discard'
             yield 'block-ellipsis', 'auto'
     elif len(tokens) == 2:
-        ellipsis = block_ellipsis([tokens[1]])
-        if tokens[0].type == 'integer' and ellipsis is not None:
-            yield 'max_lines', tokens[0].value
-            yield 'continue', 'discard'
-            yield 'block-ellipsis', ellipsis
+        if tokens[0].type == 'number':
+            max_lines = tokens[0].int_value
+            ellipsis = block_ellipsis([tokens[1]])
+            if max_lines and ellipsis is not None:
+                yield 'max_lines', tokens[0].value
+                yield 'continue', 'discard'
+                yield 'block-ellipsis', ellipsis

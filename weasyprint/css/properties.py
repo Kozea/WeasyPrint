@@ -184,7 +184,7 @@ INITIAL_VALUES = {
     'text_decoration_style': 'solid',
 
     # Overflow Module 3 (WD): https://www.w3.org/TR/css-overflow-3/
-    'block-ellipsis': 'none',
+    'block_ellipsis': 'none',
     'continue': 'auto',
     'max_lines': 'none',
     'overflow': 'visible',
@@ -221,7 +221,7 @@ KNOWN_PROPERTIES = set(name.replace('_', '-') for name in INITIAL_VALUES)
 # link: click events normally bubble up to link ancestors
 #   See http://lists.w3.org/Archives/Public/www-style/2012Jun/0315.html
 INHERITED = {
-    'block-ellipsis',
+    'block_ellipsis',
     'border_collapse',
     'border_spacing',
     'caption_side',
