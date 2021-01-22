@@ -326,6 +326,18 @@ def box_decoration_break(keyword):
     return keyword in ('slice', 'clone')
 
 
+@property()
+@single_token
+def block_ellipsis(token):
+    """``box-ellipsis`` property validation."""
+    if token.type == 'string':
+        return ('string', token.value)
+    else:
+        keyword = get_keyword(token)
+        if keyword in ('none', 'auto'):
+            return keyword
+
+
 @property('continue', unstable=True)
 @single_keyword
 def continue_(keyword):
