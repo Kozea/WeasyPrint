@@ -601,10 +601,11 @@ def block_container_layout(context, box, max_position_y, skip_stack,
     else:
         resume_at = None
 
+    box_is_fragmented = resume_at is not None
     if box.style['continue'] == 'discard':
         resume_at = None
 
-    if (resume_at is not None and
+    if (box_is_fragmented and
             box.style['break_inside'] in ('avoid', 'avoid-page') and
             not page_is_empty):
         return (
@@ -648,7 +649,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
         adjoining_margins = []
 
     new_box = box.copy_with_children(new_children)
-    new_box.remove_decoration(start=not is_start, end=resume_at is not None)
+    new_box.remove_decoration(start=not is_start, end=box_is_fragmented)
 
     # TODO: See corner cases in
     # http://www.w3.org/TR/CSS21/visudet.html#normal-block
@@ -672,13 +673,13 @@ def block_container_layout(context, box, max_position_y, skip_stack,
     if not isinstance(new_box, boxes.BlockBox):
         context.finish_block_formatting_context(new_box)
 
-    if resume_at is None:
+    if not box_is_fragmented:
         # After finish_block_formatting_context which may increment
         # new_box.height
         new_box.height = max(
             min(new_box.height, new_box.max_height),
             new_box.min_height)
-    else:
+    elif max_position_y < float('inf'):
         # Make the box fill the blank space at the bottom of the page
         # https://www.w3.org/TR/css-break-3/#box-splitting
         new_box.height = (
