@@ -991,7 +991,8 @@ def draw_replacedbox(context, box):
             context, draw_width, draw_height, box.style['image_rendering'])
 
 
-def draw_inline_level(context, page, box, offset_x=0, text_overflow='clip'):
+def draw_inline_level(context, page, box, offset_x=0, text_overflow='clip',
+                      block_ellipsis='none'):
     if isinstance(box, StackingContext):
         stacking_context = box
         assert isinstance(
@@ -1003,8 +1004,13 @@ def draw_inline_level(context, page, box, offset_x=0, text_overflow='clip'):
         if isinstance(box, (boxes.InlineBox, boxes.LineBox)):
             if isinstance(box, boxes.LineBox):
                 text_overflow = box.text_overflow
+                block_ellipsis = box.block_ellipsis
             in_text = False
-            for child in box.children:
+            ellipsis = 'none'
+            for i, child in enumerate(box.children):
+                if i == len(box.children) - 1:
+                    # Last child
+                    ellipsis = block_ellipsis
                 if isinstance(child, StackingContext):
                     child_offset_x = offset_x
                 else:
@@ -1014,13 +1020,16 @@ def draw_inline_level(context, page, box, offset_x=0, text_overflow='clip'):
                     if not in_text:
                         context.begin_text()
                         in_text = True
-                    draw_text(context, child, child_offset_x, text_overflow)
+                    draw_text(
+                        context, child, child_offset_x, text_overflow,
+                        ellipsis)
                 else:
                     if in_text:
                         in_text = False
                         context.end_text()
                     draw_inline_level(
-                        context, page, child, child_offset_x, text_overflow)
+                        context, page, child, child_offset_x, text_overflow,
+                        ellipsis)
             if in_text:
                 context.end_text()
         elif isinstance(box, boxes.InlineReplacedBox):
@@ -1033,7 +1042,7 @@ def draw_inline_level(context, page, box, offset_x=0, text_overflow='clip'):
             context.end_text()
 
 
-def draw_text(context, textbox, offset_x, text_overflow):
+def draw_text(context, textbox, offset_x, text_overflow, block_ellipsis):
     """Draw a textbox to a pydyf stream."""
     # Pango crashes with font-size: 0
     assert textbox.style['font_size']
@@ -1046,7 +1055,7 @@ def draw_text(context, textbox, offset_x, text_overflow):
     context.set_alpha(textbox.style['color'][3])
 
     textbox.pango_layout.reactivate(textbox.style)
-    show_first_line(context, textbox, text_overflow, x, y)
+    show_first_line(context, textbox, text_overflow, block_ellipsis, x, y)
 
     values = textbox.style['text_decoration_line']
 

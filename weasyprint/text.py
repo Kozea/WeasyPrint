@@ -1298,20 +1298,40 @@ def split_first_line(text, style, context, max_width, justification_spacing,
         style['hyphenate_character'])
 
 
-def show_first_line(context, textbox, text_overflow, x, y):
+def show_first_line(context, textbox, text_overflow, block_ellipsis, x, y):
     """Draw the given ``textbox`` line to the document ``context``."""
     pango.pango_layout_set_single_paragraph_mode(
         textbox.pango_layout.layout, True)
 
-    if text_overflow == 'ellipsis':
+    if text_overflow == 'ellipsis' or block_ellipsis != 'none':
         assert textbox.pango_layout.max_width is not None
         max_width = textbox.pango_layout.max_width
         pango.pango_layout_set_width(
             textbox.pango_layout.layout, units_from_double(max_width))
-        pango.pango_layout_set_ellipsize(
-            textbox.pango_layout.layout, pango.PANGO_ELLIPSIZE_END)
+        if text_overflow == 'ellipsis':
+            pango.pango_layout_set_ellipsize(
+                textbox.pango_layout.layout, pango.PANGO_ELLIPSIZE_END)
+        else:
+            if block_ellipsis == 'auto':
+                ellipsis = '…'
+            else:
+                assert block_ellipsis[0] == 'string'
+                ellipsis = block_ellipsis[1]
+            textbox.pango_layout.set_text(textbox.pango_layout.text + ellipsis)
 
-    first_line, _ = textbox.pango_layout.get_first_line()
+    first_line, second_line = textbox.pango_layout.get_first_line()
+
+    if block_ellipsis != 'none':
+        while second_line:
+            last_word_end = get_last_word_end(
+                textbox.pango_layout.text[:-len(ellipsis)],
+                textbox.style['lang'])
+            if last_word_end is None:
+                break
+            new_text = utf8_slice(
+                textbox.pango_layout.text, slice(0, last_word_end))
+            textbox.pango_layout.set_text(new_text + ellipsis)
+            first_line, second_line = textbox.pango_layout.get_first_line()
 
     font_size = textbox.style['font_size']
     utf8_text = textbox.text.encode('utf-8')
@@ -1393,8 +1413,8 @@ def show_first_line(context, textbox, text_overflow, x, y):
 
             # Mapping between glyphs and characters
             if glyph not in font.cmap and glyph != pango.PANGO_GLYPH_EMPTY:
-                utf8_slice = slice(previous_utf8_position, utf8_position)
-                font.cmap[glyph] = utf8_text[utf8_slice].decode('utf-8')
+                slice_ = slice(previous_utf8_position, utf8_position)
+                font.cmap[glyph] = utf8_text[slice_].decode('utf-8')
             previous_utf8_position = utf8_position
 
         # Close the last glyphs list, remove if empty
@@ -1446,3 +1466,12 @@ def get_next_word_boundaries(text, lang):
     else:
         return None
     return word_start, word_end
+
+
+def get_last_word_end(text, lang):
+    if not text or len(text) < 2:
+        return None
+    bytestring, log_attrs = get_log_attrs(text, lang)
+    for i, attr in enumerate(list(log_attrs)[::-1]):
+        if i and attr.is_word_end:
+            return len(bytestring) - i
