@@ -435,6 +435,8 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                 # Break box if we reached max-lines
                 if box.style['max_lines'] != 'none':
                     if i >= box.style['max_lines'] - 1:
+                        if box.style['block_ellipsis'] != 'none':
+                            line.text_overflow = 'ellipsis'
                         break
 
             if new_children:
