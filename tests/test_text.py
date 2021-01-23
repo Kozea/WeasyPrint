@@ -1050,3 +1050,26 @@ def test_text_floating_pre_line():
       <div style="float: left; white-space: pre-line">This is
       oh this end </div>
     ''')
+
+
+@assert_no_logs
+@pytest.mark.parametrize(
+    'leader, content', (
+        ('dotted', '.'),
+        ('solid', '_'),
+        ('space', ' '),
+        ('" .-"', ' .-'),
+    )
+)
+def test_leader_content(leader, content):
+    page, = render_pages('''
+      <style>div::after { content: leader(%s) }</style>
+      <div></div>
+    ''' % leader)
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    line, = div.children
+    after, = line.children
+    inline, = after.children
+    assert inline.children[0].text == content
