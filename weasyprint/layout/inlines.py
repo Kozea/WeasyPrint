@@ -1001,22 +1001,33 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
         children.extend(waiting_children)
         resume_at = None
 
+    # Reorder inline blocks when direction is rtl
+    if box.style['direction'] == 'rtl' and len(children) > 1:
+        in_flow_children = [
+            box_child for _, box_child in children
+            if box_child.is_in_normal_flow()]
+        position_x = in_flow_children[0].position_x
+        for child in in_flow_children[::-1]:
+            child.translate(
+                dx=(position_x - child.position_x), ignore_floats=True)
+            position_x += child.margin_width()
+
     is_end = resume_at is None
     new_box = box.copy_with_children(
         [box_child for index, box_child in children])
     new_box.remove_decoration(start=not is_start, end=not is_end)
     if isinstance(box, boxes.LineBox):
         # We must reset line box width according to its new children
-        in_flow_children = [
-            box_child for box_child in new_box.children
-            if box_child.is_in_normal_flow()]
-        if in_flow_children:
-            new_box.width = (
-                in_flow_children[-1].position_x +
-                in_flow_children[-1].margin_width() -
-                new_box.position_x)
-        else:
-            new_box.width = 0
+        new_box.width = 0
+        children = new_box.children
+        if new_box.style['direction'] == 'ltr':
+            children = children[::-1]
+        for child in children:
+            if child.is_in_normal_flow():
+                new_box.width = (
+                    child.position_x + child.margin_width() -
+                    new_box.position_x)
+                break
     else:
         new_box.position_x = initial_position_x
         if box.style['box_decoration_break'] == 'clone':
