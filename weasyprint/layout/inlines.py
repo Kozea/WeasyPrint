@@ -115,12 +115,18 @@ def handle_leaders(context, line, containing_block):
             children.append(text_box)
         leader_box.children = tuple(children)
 
+        if line.style['direction'] == 'rtl':
+            leader_box.translate(dx=-extra_width)
+
     # Widen leader parent boxes and translate following boxes
     box = line
     while index is not None:
         for child in box.children[index[0] + 1:]:
             if child.is_in_normal_flow():
-                child.translate(dx=extra_width)
+                if line.style['direction'] == 'ltr':
+                    child.translate(dx=extra_width)
+                else:
+                    child.translate(dx=-extra_width)
         box = box.children[index[0]]
         box.width += extra_width
         index = index[1]
