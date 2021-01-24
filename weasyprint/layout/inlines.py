@@ -290,7 +290,8 @@ def skip_first_whitespace(box, skip_stack):
 def remove_last_whitespace(context, box):
     """Remove in place space characters at the end of a line.
 
-    This also reduces the width of the inline parents of the modified text.
+    This also reduces the width and position of the inline parents of the
+    modified text.
 
     """
     ancestors = []
@@ -312,10 +313,11 @@ def remove_last_whitespace(context, box):
         assert resume is None
         space_width = box.width - new_box.width
         box.width = new_box.width
+
+        # RTL line, the trailing space is at the left of the box. We have to
+        # translate the box to align the stripped text with the right edge of
+        # the box.
         if new_box.pango_layout.first_line_direction % 2:
-            # RTL line, the trailing space is at the left of the box. We have
-            # to translate the box to align the stripped text with the right
-            # edge of the box.
             box.position_x -= space_width
             for ancestor in ancestors:
                 ancestor.position_x -= space_width
@@ -323,6 +325,13 @@ def remove_last_whitespace(context, box):
         space_width = box.width
         box.width = 0
         box.text = ''
+
+        # RTL line, the textbox with a trailing space is now empty at the left
+        # of the line. We have to translate the line to align it with the right
+        # edge of the box.
+        line = ancestors[0]
+        if line.style['direction'] == 'rtl':
+            line.translate(dx=-space_width, ignore_floats=True)
 
     for ancestor in ancestors:
         ancestor.width -= space_width
