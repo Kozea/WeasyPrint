@@ -254,3 +254,89 @@ def test_leader_bad_alignment():
       <div>aaa</div>
     '''
     assert_pixels('leader-in-inline', 16, 4, expected_pixels, html)
+
+
+@assert_no_logs
+def test_leader_simple_rtl():
+    expected_pixels = '''
+        BB__BBBBBBBB__RR
+        BB__BBBBBBBB__RR
+        BBBB__BBBB__RRRR
+        BBBB__BBBB__RRRR
+        BBBBBB__BBBB__RR
+        BBBBBB__BBBB__RR
+    '''
+    html = '''
+      <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page {
+          background: white;
+          size: 16px 6px;
+        }
+        body {
+          color: red;
+          counter-reset: count;
+          direction: rtl;
+          font-family: weasyprint;
+          font-size: 2px;
+          line-height: 1;
+        }
+        div::after {
+          color: blue;
+          /* RTL Mark used in second space */
+          content: ' ' leader(dotted) '‏ ' counter(count, lower-roman);
+          counter-increment: count;
+        }
+      </style>
+      <div>a</div>
+      <div>bb</div>
+      <div>c</div>
+    '''
+    assert_pixels('leader-simple-rtl', 16, 6, expected_pixels, html)
+
+
+@assert_no_logs
+def test_leader_too_long_rtl():
+    expected_pixels = '''
+        ______RRRRRRRRRR
+        ______RRRRRRRRRR
+        BB__BBBBBBBBBBBB
+        BB__BBBBBBBBBBBB
+        __RR__RR__RR__RR
+        __RR__RR__RR__RR
+        ______RR__RR__RR
+        ______RR__RR__RR
+        BBBB__BBBBBBBBBB
+        BBBB__BBBBBBBBBB
+        __RR__RR__RR__RR
+        __RR__RR__RR__RR
+        BBBBBB__BBBB__RR
+        BBBBBB__BBBB__RR
+    '''
+    html = '''
+      <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page {
+          background: white;
+          size: 16px 14px;
+        }
+        body {
+          color: red;
+          counter-reset: count;
+          direction: rtl;
+          font-family: weasyprint;
+          font-size: 2px;
+          line-height: 1;
+        }
+        div::after {
+          color: blue;
+          /* RTL Mark used in second space */
+          content: ' ' leader(dotted) '‏ ' counter(count, lower-roman);
+          counter-increment: count;
+        }
+      </style>
+      <div>aaaaa</div>
+      <div>a a a a a a a</div>
+      <div>a a a a a</div>
+    '''
+    assert_pixels('leader-too-long-rtl', 16, 14, expected_pixels, html)
