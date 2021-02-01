@@ -234,6 +234,7 @@ ffi.cdef('''
     PangoFontDescription * pango_font_describe (PangoFont *font);
     const char * pango_font_description_get_family (
         const PangoFontDescription *desc);
+    int pango_font_description_hash (const PangoFontDescription *desc);
 
     PangoContext * pango_context_new ();
     PangoContext * pango_font_map_create_context (PangoFontMap *fontmap);
@@ -1335,8 +1336,10 @@ def show_first_line(context, textbox, text_overflow, x, y):
 
         # Font content
         pango_font = glyph_item.item.analysis.font
+        pango_font_description = pango.pango_font_describe(pango_font)
+        font_hash = pango.pango_font_description_hash(pango_font_description)
         hb_font = pango.pango_font_get_hb_font(pango_font)
-        font_hash = hb_face = harfbuzz.hb_font_get_face(hb_font)
+        hb_face = harfbuzz.hb_font_get_face(hb_font)
         fonts = context.get_fonts()
         if font_hash in fonts:
             font = fonts[font_hash]
