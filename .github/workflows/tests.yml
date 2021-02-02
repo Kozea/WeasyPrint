@@ -22,9 +22,9 @@ jobs:
       - uses: actions/setup-python@v1
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install DejaVu (Ubuntu)
+      - name: Install DejaVu and Ghostscript (Ubuntu)
         if: matrix.os == 'ubuntu-20.04'
-        run: sudo apt-get update -y && sudo apt-get install fonts-dejavu -y
+        run: sudo apt-get update -y && sudo apt-get install fonts-dejavu ghostscript -y
       - name: Install DejaVu, Pango, libffi and Ghostscript (MacOS)
         if: matrix.os == 'macos-latest'
         run: |
