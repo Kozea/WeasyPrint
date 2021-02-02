@@ -1183,13 +1183,13 @@ class Document:
                 fonts_by_file_hash[font.file_hash] = [font]
         font_references_by_file_hash = {}
         for file_hash, fonts in fonts_by_file_hash.items():
+            # Optimize font
             cmap = {}
             for font in fonts:
                 cmap = {**cmap, **font.cmap}
-            # Optimize font
+            full_font = io.BytesIO(fonts[0].file_content)
+            optimized_font = io.BytesIO()
             try:
-                full_font = io.BytesIO(fonts[0].file_content)
-                optimized_font = io.BytesIO()
                 ttfont = TTFont(full_font)
                 options = subset.Options(
                     retain_gids=True, passthrough_tables=True)
@@ -1199,7 +1199,7 @@ class Document:
                 ttfont.save(optimized_font)
                 content = optimized_font.getvalue()
             except TTLibError:
-                content = font.file_content
+                content = fonts[0].file_content
 
             # Include font
             font_type = 'otf' if content[:4] == b'OTTO' else 'ttf'
