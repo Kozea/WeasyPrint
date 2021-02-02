@@ -68,26 +68,24 @@ def _w3c_date_to_pdf(string, attr_name):
 class Font:
     def __init__(self, file_content, pango_font):
         pango_metrics = pango.pango_font_get_metrics(pango_font, ffi.NULL)
-        font_description = pango.pango_font_describe(pango_font)
-        font_family = ffi.string(pango.pango_font_description_get_family(
-            font_description))
-        font_size = pango.pango_font_description_get_size(font_description)
-        font_description = ffi.string(
-            pango.pango_font_description_to_string(
-                pango.pango_font_describe(pango_font)))
+        self._font_description = pango.pango_font_describe(pango_font)
+        self.family = ffi.string(pango.pango_font_description_get_family(
+            self._font_description))
+        font_size = pango.pango_font_description_get_size(
+            self._font_description)
+        description_string = ffi.string(
+            pango.pango_font_description_to_string(self._font_description))
         sha = hashlib.sha256()
-        sha.update(font_description)
+        sha.update(description_string)
 
         self.file_content = file_content
         self.file_hash = hash(file_content)
         self.hash = ''.join(
             chr(65 + letter % 26) for letter in sha.digest()[:6])
-        self.family = font_family
         self.name = (
             b'/' + self.hash.encode('ascii') + b'+' +
             self.family.replace(b' ', b''))
-        self.flags = 4
-        self.italic_angle = 0
+        self.italic_angle = 0  # TODO: this should be different
         self.ascent = int(
             pango.pango_font_metrics_get_ascent(pango_metrics) /
             font_size * 1000)
@@ -99,6 +97,18 @@ class Font:
         self.bbox = [0, 0, 0, 0]
         self.widths = {}
         self.cmap = {}
+
+    @property
+    def flags(self):
+        flags = 2 ** 3  # Symbolic, custom character set
+        if pango.pango_font_description_get_style(self._font_description):
+            flags += 2 ** 7  # Italic
+        if b'Serif' in self.family.split():
+            flags += 2 ** 2  # Serif
+        widths = self.widths.values()
+        if len(widths) > 1 and len(set(widths)) == 1:
+            flags += 2 ** 1  # FixedPitch
+        return flags
 
 
 class Context(pydyf.Stream):
@@ -1213,7 +1223,7 @@ class Document:
                 'Type': '/FontDescriptor',
                 'FontName': font.name,
                 'FontFamily': pydyf.String(font.family),
-                'Flags': 32,
+                'Flags': font.flags,
                 'FontBBox': pydyf.Array(font.bbox),
                 'ItalicAngle': font.italic_angle,
                 'Ascent': font.ascent,

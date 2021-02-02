@@ -221,6 +221,8 @@ ffi.cdef('''
         PangoFontDescription *desc, const char *family);
     void pango_font_description_set_style (
         PangoFontDescription *desc, PangoStyle style);
+    PangoStyle pango_font_description_get_style (
+        const PangoFontDescription *desc);
     void pango_font_description_set_stretch (
         PangoFontDescription *desc, PangoStretch stretch);
     void pango_font_description_set_weight (
