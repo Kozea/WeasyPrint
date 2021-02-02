@@ -230,6 +230,8 @@ ffi.cdef('''
     int pango_font_description_get_size (PangoFontDescription *desc);
 
     int pango_glyph_string_get_width (PangoGlyphString *glyphs);
+    char * pango_font_description_to_string (
+        const PangoFontDescription *desc);
 
     PangoFontDescription * pango_font_describe (PangoFont *font);
     const char * pango_font_description_get_family (
@@ -1336,19 +1338,18 @@ def show_first_line(context, textbox, text_overflow, x, y):
 
         # Font content
         pango_font = glyph_item.item.analysis.font
-        hb_font = pango.pango_font_get_hb_font(pango_font)
-        hb_face = harfbuzz.hb_font_get_face(hb_font)
-        hb_blob = harfbuzz.hb_face_reference_blob(hb_face)
-        hb_data = harfbuzz.hb_blob_get_data(hb_blob, context.length)
-        file_content = ffi.unpack(hb_data, int(context.length[0]))
-        # TODO: using face content hash as dict key is too long, but it’s hard
-        # to find another reliable hash…
-        # See https://github.com/Kozea/WeasyPrint/issues/551
-        font_hash = hash(file_content)
+        pango_desc = pango.pango_font_describe(pango_font)
+        font_hash = ffi.string(
+            pango.pango_font_description_to_string(pango_desc))
         fonts = context.get_fonts()
         if font_hash in fonts:
             font = fonts[font_hash]
         else:
+            hb_font = pango.pango_font_get_hb_font(pango_font)
+            hb_face = harfbuzz.hb_font_get_face(hb_font)
+            hb_blob = harfbuzz.hb_face_reference_blob(hb_face)
+            hb_data = harfbuzz.hb_blob_get_data(hb_blob, context.length)
+            file_content = ffi.unpack(hb_data, int(context.length[0]))
             font = context.add_font(font_hash, file_content, pango_font)
 
         # Positions of the glyphs in the UTF-8 string

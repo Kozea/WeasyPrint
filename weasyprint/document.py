@@ -72,16 +72,20 @@ class Font:
         font_family = ffi.string(pango.pango_font_description_get_family(
             font_description))
         font_size = pango.pango_font_description_get_size(font_description)
+        font_description = ffi.string(
+            pango.pango_font_description_to_string(
+                pango.pango_font_describe(pango_font)))
         sha = hashlib.sha256()
-        sha.update(file_content)
+        sha.update(font_description)
 
         self.file_content = file_content
+        self.file_hash = hash(file_content)
         self.hash = ''.join(
             chr(65 + letter % 26) for letter in sha.digest()[:6])
+        self.family = font_family
         self.name = (
             b'/' + self.hash.encode('ascii') + b'+' +
-            font_family.replace(b' ', b''))
-        self.family = font_family
+            self.family.replace(b' ', b''))
         self.flags = 4
         self.italic_angle = 0
         self.ascent = int(
@@ -1160,17 +1164,27 @@ class Document:
             pdf.catalog['Names']['EmbeddedFiles'] = content.reference
 
         # Embeded fonts
-        fonts = pydyf.Dictionary()
+        pdf_fonts = pydyf.Dictionary()
+        fonts_by_file_hash = {}
         for font in self.fonts.values():
+            if font.file_hash in fonts_by_file_hash:
+                fonts_by_file_hash[font.file_hash].append(font)
+            else:
+                fonts_by_file_hash[font.file_hash] = [font]
+        font_references_by_file_hash = {}
+        for file_hash, fonts in fonts_by_file_hash.items():
+            cmap = {}
+            for font in fonts:
+                cmap = {**cmap, **font.cmap}
             # Optimize font
             try:
-                full_font = io.BytesIO(font.file_content)
+                full_font = io.BytesIO(fonts[0].file_content)
                 optimized_font = io.BytesIO()
                 ttfont = TTFont(full_font)
                 options = subset.Options(
                     retain_gids=True, passthrough_tables=True)
                 subsetter = subset.Subsetter(options)
-                subsetter.populate(gids=font.cmap)
+                subsetter.populate(gids=cmap)
                 subsetter.subset(ttfont)
                 ttfont.save(optimized_font)
                 content = optimized_font.getvalue()
@@ -1185,7 +1199,9 @@ class Document:
                 font_extra = pydyf.Dictionary({'Length1': len(content)})
             font_stream = pydyf.Stream([content], font_extra, compress=True)
             pdf.add_object(font_stream)
+            font_references_by_file_hash[file_hash] = font_stream.reference
 
+        for font in self.fonts.values():
             widths = pydyf.Array()
             for i in sorted(font.widths):
                 if i - 1 not in font.widths:
@@ -1206,7 +1222,7 @@ class Document:
                 'StemV': font.stemv,
                 'StemH': font.stemh,
                 (f'FontFile{"3" if font_type == "otf" else "2"}'):
-                    font_stream.reference,
+                    font_references_by_file_hash[font.file_hash],
             })
             if font_type == 'otf':
                 font_descriptor['Subtype'] = '/OpenType'
@@ -1260,10 +1276,10 @@ class Document:
                 'ToUnicode': to_unicode.reference,
             })
             pdf.add_object(font_dictionary)
-            fonts[font.hash] = font_dictionary.reference
+            pdf_fonts[font.hash] = font_dictionary.reference
 
-        pdf.add_object(fonts)
-        resources['Font'] = fonts.reference
+        pdf.add_object(pdf_fonts)
+        resources['Font'] = pdf_fonts.reference
         self._use_references(pdf, resources)
 
         # Anchors
