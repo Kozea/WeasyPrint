@@ -848,7 +848,7 @@ class Layout:
                 attr.start_index, attr.end_index = start, end
                 pango.pango_attr_list_change(attr_list, attr)
 
-            add_attr(0, len(bytestring) + 1, letter_spacing)
+            add_attr(0, len(bytestring), letter_spacing)
             position = bytestring.find(b' ')
             while position != -1:
                 add_attr(position, position + 1, space_spacing)
@@ -1370,6 +1370,10 @@ def show_first_line(context, textbox, text_overflow, x, y):
             glyph = glyphs[i].glyph
             width = glyphs[i].geometry.width
             utf8_position = utf8_positions[i]
+
+            offset = glyphs[i].geometry.x_offset / font_size
+            if offset:
+                string += f'>{-offset}<'
             string += f'{glyph:04x}'
 
             # Ink bounding box and logical widths in font
@@ -1393,9 +1397,11 @@ def show_first_line(context, textbox, text_overflow, x, y):
                     units_to_double(context.logical_rect.width * 1000) /
                     font_size)
 
-            # Kerning
+            # Kerning, word spacing, letter spacing
             kerning = int(
-                font.widths[glyph] - units_to_double(width * 1000) / font_size)
+                font.widths[glyph] -
+                units_to_double(width * 1000) / font_size +
+                offset)
             if kerning:
                 string += f'>{kerning}<'
 
@@ -1407,8 +1413,9 @@ def show_first_line(context, textbox, text_overflow, x, y):
 
         # Close the last glyphs list, remove if empty
         if string[-1] == '<':
-            string = string.rsplit('>', 1)[0]
-        string += '>'
+            string = string[:-1]
+        else:
+            string += '>'
 
     # Draw text
     context.show_text(string)

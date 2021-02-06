@@ -116,3 +116,115 @@ def test_text_align_rtl_trailing_whitespace():
       <p style="direction: ltr"> abc </p>
       <p style="direction: ltr"> &#8207;abc </p>
     ''')
+
+
+def test_text_align_right():
+    assert_pixels('text_align_right', 9, 6, '''
+        _________
+        __RR__RR_
+        __RR__RR_
+        ______RR_
+        ______RR_
+        _________
+    ''', '''
+      <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page {
+          size: 9px 6px;
+          background: white;
+        }
+        body {
+          color: red;
+          font-family: weasyprint;
+          font-size: 2px;
+        }
+        div {
+          line-height: 1;
+          margin: 1px;
+          text-align: right;
+        }
+      </style>
+      <div>a c e</div>''')
+
+
+def test_text_align_justify():
+    assert_pixels('text_align_justify', 9, 6, '''
+        _________
+        _RR___RR_
+        _RR___RR_
+        _RR______
+        _RR______
+        _________
+    ''', '''
+      <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page {
+          size: 9px 6px;
+          background: white;
+        }
+        body {
+          color: red;
+          font-family: weasyprint;
+          font-size: 2px;
+        }
+        div {
+          line-height: 1;
+          margin: 1px;
+          text-align: justify;
+        }
+      </style>
+      <div>a c e</div>''')
+
+
+def test_text_word_spacing():
+    assert_pixels('text_word_spacing', 19, 4, '''
+        ___________________
+        _RR____RR____RR____
+        _RR____RR____RR____
+        ___________________
+    ''', '''
+      <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page {
+          size: 19px 4px;
+          background: white;
+        }
+        body {
+          color: red;
+          font-family: weasyprint;
+          font-size: 2px;
+        }
+        div {
+          line-height: 1;
+          margin: 1px;
+          word-spacing: 1em;
+        }
+      </style>
+      <div>a c e</div>''')
+
+
+def test_text_letter_spacing():
+    assert_pixels('text_letter_spacing', 19, 4, '''
+        ___________________
+        _RR____RR____RR____
+        _RR____RR____RR____
+        ___________________
+    ''', '''
+      <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page {
+          size: 19px 4px;
+          background: white;
+        }
+        body {
+          color: red;
+          font-family: weasyprint;
+          font-size: 2px;
+        }
+        div {
+          line-height: 1;
+          margin: 1px;
+          letter-spacing: 2em;
+        }
+      </style>
+      <div>ace</div>''')
