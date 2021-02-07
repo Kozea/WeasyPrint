@@ -196,10 +196,10 @@ URL fetchers
 ............
 
 WeasyPrint goes through a *URL fetcher* to fetch external resources such as
-images or CSS stylesheets. The default fetcher can natively open file and
-HTTP URLs, but the HTTP client does not support advanced features like cookies
-or authentication. This can be worked-around by passing a custom
-``url_fetcher`` callable to the :class:`HTML` or :class:`CSS` classes.
+images or CSS stylesheets. The default fetcher can natively open file and HTTP
+URLs, but the HTTP client does not support advanced features like cookies or
+authentication. This can be worked-around by passing a custom ``url_fetcher``
+callable to the :class:`weasyprint.HTML` or :class:`weasyprint.CSS` classes.
 It must have the same signature as :func:`~weasyprint.default_url_fetcher`.
 
 Custom fetchers can choose to handle some URLs and defer others

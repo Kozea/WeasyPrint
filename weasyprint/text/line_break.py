@@ -1,675 +1,37 @@
 """
-    weasyprint.text
-    ---------------
+    weasyprint.text.line_break
+    --------------------------
 
-    Interface with Pango to decide where to do line breaks and to draw text.
+    Decide where to break text lines.
 
 """
 
 import re
 
-import cffi
 import pyphen
 
-from .logger import LOGGER
-
-ffi = cffi.FFI()
-ffi.cdef('''
-    // HarfBuzz
-
-    typedef ... hb_font_t;
-    typedef ... hb_face_t;
-    typedef ... hb_blob_t;
-    hb_face_t * hb_font_get_face (hb_font_t *font);
-    hb_blob_t * hb_face_reference_blob (hb_face_t *face);
-    const char * hb_blob_get_data (hb_blob_t *blob, unsigned int *length);
-
-    // Pango
-
-    typedef unsigned int guint;
-    typedef int gint;
-    typedef char gchar;
-    typedef gint gboolean;
-    typedef void* gpointer;
-    typedef ... PangoLayout;
-    typedef ... PangoContext;
-    typedef ... PangoFontMap;
-    typedef ... PangoFontMetrics;
-    typedef ... PangoLanguage;
-    typedef ... PangoTabArray;
-    typedef ... PangoFontDescription;
-    typedef ... PangoLayoutIter;
-    typedef ... PangoAttrList;
-    typedef ... PangoAttrClass;
-    typedef ... PangoFont;
-    typedef guint PangoGlyph;
-    typedef guint PangoGlyphUnit;
-
-    const guint PANGO_GLYPH_EMPTY = 0x0FFFFFFF;
-
-    typedef enum {
-        PANGO_STYLE_NORMAL,
-        PANGO_STYLE_OBLIQUE,
-        PANGO_STYLE_ITALIC
-    } PangoStyle;
-
-    typedef enum {
-        PANGO_WEIGHT_THIN = 100,
-        PANGO_WEIGHT_ULTRALIGHT = 200,
-        PANGO_WEIGHT_LIGHT = 300,
-        PANGO_WEIGHT_BOOK = 380,
-        PANGO_WEIGHT_NORMAL = 400,
-        PANGO_WEIGHT_MEDIUM = 500,
-        PANGO_WEIGHT_SEMIBOLD = 600,
-        PANGO_WEIGHT_BOLD = 700,
-        PANGO_WEIGHT_ULTRABOLD = 800,
-        PANGO_WEIGHT_HEAVY = 900,
-        PANGO_WEIGHT_ULTRAHEAVY = 1000
-    } PangoWeight;
-
-    typedef enum {
-        PANGO_STRETCH_ULTRA_CONDENSED,
-        PANGO_STRETCH_EXTRA_CONDENSED,
-        PANGO_STRETCH_CONDENSED,
-        PANGO_STRETCH_SEMI_CONDENSED,
-        PANGO_STRETCH_NORMAL,
-        PANGO_STRETCH_SEMI_EXPANDED,
-        PANGO_STRETCH_EXPANDED,
-        PANGO_STRETCH_EXTRA_EXPANDED,
-        PANGO_STRETCH_ULTRA_EXPANDED
-    } PangoStretch;
-
-    typedef enum {
-        PANGO_WRAP_WORD,
-        PANGO_WRAP_CHAR,
-        PANGO_WRAP_WORD_CHAR
-    } PangoWrapMode;
-
-    typedef enum {
-        PANGO_TAB_LEFT
-    } PangoTabAlign;
-
-    typedef enum {
-        PANGO_ELLIPSIZE_NONE,
-        PANGO_ELLIPSIZE_START,
-        PANGO_ELLIPSIZE_MIDDLE,
-        PANGO_ELLIPSIZE_END
-    } PangoEllipsizeMode;
-
-    typedef struct GSList {
-       gpointer data;
-       struct GSList *next;
-    } GSList;
-
-    typedef struct {
-        const PangoAttrClass *klass;
-        guint start_index;
-        guint end_index;
-    } PangoAttribute;
-
-    typedef struct {
-        PangoLayout *layout;
-        gint         start_index;
-        gint         length;
-        GSList      *runs;
-        guint        is_paragraph_start : 1;
-        guint        resolved_dir : 3;
-    } PangoLayoutLine;
-
-    typedef struct  {
-        int x;
-        int y;
-        int width;
-        int height;
-    } PangoRectangle;
-
-    typedef struct {
-        guint is_line_break: 1;
-        guint is_mandatory_break : 1;
-        guint is_char_break : 1;
-        guint is_white : 1;
-        guint is_cursor_position : 1;
-        guint is_word_start : 1;
-        guint is_word_end : 1;
-        guint is_sentence_boundary : 1;
-        guint is_sentence_start : 1;
-        guint is_sentence_end : 1;
-        guint backspace_deletes_character : 1;
-        guint is_expandable_space : 1;
-        guint is_word_boundary : 1;
-    } PangoLogAttr;
-
-    typedef struct {
-        void *shape_engine;
-        void *lang_engine;
-        PangoFont *font;
-        guint level;
-        guint gravity;
-        guint flags;
-        guint script;
-        PangoLanguage *language;
-        GSList *extra_attrs;
-    } PangoAnalysis;
-
-    typedef struct {
-        gint offset;
-        gint length;
-        gint num_chars;
-        PangoAnalysis analysis;
-    } PangoItem;
-
-    typedef struct {
-        PangoGlyphUnit width;
-        PangoGlyphUnit x_offset;
-        PangoGlyphUnit y_offset;
-    } PangoGlyphGeometry;
-
-    typedef struct {
-        guint is_cluster_start : 1;
-    } PangoGlyphVisAttr;
-
-    typedef struct {
-        PangoGlyph         glyph;
-        PangoGlyphGeometry geometry;
-        PangoGlyphVisAttr  attr;
-    } PangoGlyphInfo;
-
-    typedef struct {
-        gint num_glyphs;
-        PangoGlyphInfo *glyphs;
-        gint *log_clusters;
-    } PangoGlyphString;
-
-    typedef struct {
-        PangoItem        *item;
-        PangoGlyphString *glyphs;
-    } PangoGlyphItem;
-
-    int pango_version (void);
-
-    double pango_units_to_double (int i);
-    int pango_units_from_double (double d);
-    void g_object_unref (gpointer object);
-    void g_type_init (void);
-
-    PangoLayout * pango_layout_new (PangoContext *context);
-    void pango_layout_set_width (PangoLayout *layout, int width);
-    PangoAttrList * pango_layout_get_attributes(PangoLayout *layout);
-    void pango_layout_set_attributes (
-        PangoLayout *layout, PangoAttrList *attrs);
-    void pango_layout_set_text (
-        PangoLayout *layout, const char *text, int length);
-    void pango_layout_set_tabs (
-        PangoLayout *layout, PangoTabArray *tabs);
-    void pango_layout_set_font_description (
-        PangoLayout *layout, const PangoFontDescription *desc);
-    void pango_layout_set_wrap (
-        PangoLayout *layout, PangoWrapMode wrap);
-    void pango_layout_set_single_paragraph_mode (
-        PangoLayout *layout, gboolean setting);
-    int pango_layout_get_baseline (PangoLayout *layout);
-    PangoLayoutLine * pango_layout_get_line_readonly (
-        PangoLayout *layout, int line);
-
-    hb_font_t * pango_font_get_hb_font (PangoFont *font);
-
-    PangoFontDescription * pango_font_description_new (void);
-    void pango_font_description_free (PangoFontDescription *desc);
-    PangoFontDescription * pango_font_description_copy (
-        const PangoFontDescription *desc);
-    void pango_font_description_set_family (
-        PangoFontDescription *desc, const char *family);
-    void pango_font_description_set_style (
-        PangoFontDescription *desc, PangoStyle style);
-    PangoStyle pango_font_description_get_style (
-        const PangoFontDescription *desc);
-    void pango_font_description_set_stretch (
-        PangoFontDescription *desc, PangoStretch stretch);
-    void pango_font_description_set_weight (
-        PangoFontDescription *desc, PangoWeight weight);
-    void pango_font_description_set_absolute_size (
-        PangoFontDescription *desc, double size);
-    int pango_font_description_get_size (PangoFontDescription *desc);
-
-    int pango_glyph_string_get_width (PangoGlyphString *glyphs);
-    char * pango_font_description_to_string (
-        const PangoFontDescription *desc);
-
-    PangoFontDescription * pango_font_describe (PangoFont *font);
-    const char * pango_font_description_get_family (
-        const PangoFontDescription *desc);
-    int pango_font_description_hash (const PangoFontDescription *desc);
-
-    PangoContext * pango_context_new ();
-    PangoContext * pango_font_map_create_context (PangoFontMap *fontmap);
-
-    PangoFontMetrics * pango_context_get_metrics (
-        PangoContext *context, const PangoFontDescription *desc,
-        PangoLanguage *language);
-    void pango_font_metrics_unref (PangoFontMetrics *metrics);
-    int pango_font_metrics_get_ascent (PangoFontMetrics *metrics);
-    int pango_font_metrics_get_descent (PangoFontMetrics *metrics);
-    int pango_font_metrics_get_approximate_char_width (
-        PangoFontMetrics *metrics);
-    int pango_font_metrics_get_approximate_digit_width (
-        PangoFontMetrics *metrics);
-    int pango_font_metrics_get_underline_thickness (
-        PangoFontMetrics *metrics);
-    int pango_font_metrics_get_underline_position (
-        PangoFontMetrics *metrics);
-    int pango_font_metrics_get_strikethrough_thickness (
-        PangoFontMetrics *metrics);
-    int pango_font_metrics_get_strikethrough_position (
-        PangoFontMetrics *metrics);
-
-    void pango_context_set_round_glyph_positions (
-        PangoContext *context, gboolean round_positions);
-
-    PangoFontMetrics * pango_font_get_metrics (
-        PangoFont *font, PangoLanguage *language);
-
-    void pango_font_get_glyph_extents (
-        PangoFont *font, PangoGlyph glyph, PangoRectangle *ink_rect,
-        PangoRectangle *logical_rect);
-
-    PangoAttrList * pango_attr_list_new (void);
-    void pango_attr_list_unref (PangoAttrList *list);
-    void pango_attr_list_insert (
-        PangoAttrList *list, PangoAttribute *attr);
-    void pango_attr_list_change (
-        PangoAttrList *list, PangoAttribute *attr);
-    PangoAttribute * pango_attr_font_features_new (const gchar *features);
-    PangoAttribute * pango_attr_letter_spacing_new (int letter_spacing);
-    void pango_attribute_destroy (PangoAttribute *attr);
-
-    PangoTabArray * pango_tab_array_new_with_positions (
-        gint size, gboolean positions_in_pixels, PangoTabAlign first_alignment,
-        gint first_position, ...);
-    void pango_tab_array_free (PangoTabArray *tab_array);
-
-    PangoLanguage * pango_language_from_string (const char *language);
-    PangoLanguage * pango_language_get_default (void);
-    void pango_context_set_language (
-        PangoContext *context, PangoLanguage *language);
-    void pango_context_set_font_map (
-        PangoContext *context, PangoFontMap *font_map);
-
-    void pango_layout_line_get_extents (
-        PangoLayoutLine *line,
-        PangoRectangle *ink_rect, PangoRectangle *logical_rect);
-
-    PangoContext * pango_layout_get_context (PangoLayout *layout);
-    void pango_layout_set_ellipsize (
-        PangoLayout *layout,
-        PangoEllipsizeMode ellipsize);
-
-    void pango_get_log_attrs (
-        const char *text, int length, int level, PangoLanguage *language,
-        PangoLogAttr *log_attrs, int attrs_len);
-''')
+from ..logger import LOGGER
+from .constants import LST_TO_ISO, PANGO_STRETCH, PANGO_STYLE, PANGO_WRAP_MODE
+from .ffi import (
+    ffi, gobject, pango, pangoft2, unicode_to_char_p, units_from_double,
+    units_to_double)
+from .fonts import font_features
 
 
-def dlopen(ffi, *names):
-    """Try various names for the same library, for different platforms."""
-    for name in names:
-        try:
-            return ffi.dlopen(name)
-        except OSError:
-            pass
-    # Re-raise the exception.
-    return ffi.dlopen(names[0])  # pragma: no cover
+def line_size(line, style):
+    """Get logical width and height of the given ``line``.
 
-
-gobject = dlopen(ffi, 'gobject-2.0-0', 'gobject-2.0', 'libgobject-2.0-0',
-                 'libgobject-2.0.so.0', 'libgobject-2.0.dylib')
-pango = dlopen(ffi, 'pango-1.0-0', 'pango-1.0', 'libpango-1.0-0',
-               'libpango-1.0.so.0', 'libpango-1.0.dylib')
-harfbuzz = dlopen(
-    ffi, 'harfbuzz', 'harfbuzz-0.0', 'libharfbuzz-0',
-    'libharfbuzz.so.0', 'libharfbuzz.so.0', 'libharfbuzz.0.dylib')
-
-gobject.g_type_init()
-
-units_to_double = pango.pango_units_to_double
-units_from_double = pango.pango_units_from_double
-
-
-PANGO_STYLE = {
-    'normal': pango.PANGO_STYLE_NORMAL,
-    'oblique': pango.PANGO_STYLE_OBLIQUE,
-    'italic': pango.PANGO_STYLE_ITALIC,
-}
-
-PANGO_STRETCH = {
-    'ultra-condensed': pango.PANGO_STRETCH_ULTRA_CONDENSED,
-    'extra-condensed': pango.PANGO_STRETCH_EXTRA_CONDENSED,
-    'condensed': pango.PANGO_STRETCH_CONDENSED,
-    'semi-condensed': pango.PANGO_STRETCH_SEMI_CONDENSED,
-    'normal': pango.PANGO_STRETCH_NORMAL,
-    'semi-expanded': pango.PANGO_STRETCH_SEMI_EXPANDED,
-    'expanded': pango.PANGO_STRETCH_EXPANDED,
-    'extra-expanded': pango.PANGO_STRETCH_EXTRA_EXPANDED,
-    'ultra-expanded': pango.PANGO_STRETCH_ULTRA_EXPANDED,
-}
-
-PANGO_WRAP_MODE = {
-    'WRAP_WORD': pango.PANGO_WRAP_WORD,
-    'WRAP_CHAR': pango.PANGO_WRAP_CHAR,
-    'WRAP_WORD_CHAR': pango.PANGO_WRAP_WORD_CHAR
-}
-
-# From http://www.microsoft.com/typography/otspec/languagetags.htm
-LST_TO_ISO = {
-    'aba': 'abq',
-    'afk': 'afr',
-    'afr': 'aar',
-    'agw': 'ahg',
-    'als': 'gsw',
-    'alt': 'atv',
-    'ari': 'aiw',
-    'ark': 'mhv',
-    'ath': 'apk',
-    'avr': 'ava',
-    'bad': 'bfq',
-    'bad0': 'bad',
-    'bag': 'bfy',
-    'bal': 'krc',
-    'bau': 'bci',
-    'bch': 'bcq',
-    'bgr': 'bul',
-    'bil': 'byn',
-    'bkf': 'bla',
-    'bli': 'bal',
-    'bln': 'bjt',
-    'blt': 'bft',
-    'bmb': 'bam',
-    'bri': 'bra',
-    'brm': 'mya',
-    'bsh': 'bak',
-    'bti': 'btb',
-    'chg': 'sgw',
-    'chh': 'hne',
-    'chi': 'nya',
-    'chk': 'ckt',
-    'chk0': 'chk',
-    'chu': 'chv',
-    'chy': 'chy',
-    'cmr': 'swb',
-    'crr': 'crx',
-    'crt': 'crh',
-    'csl': 'chu',
-    'csy': 'ces',
-    'dcr': 'cwd',
-    'dgr': 'doi',
-    'djr': 'dje',
-    'djr0': 'djr',
-    'dng': 'ada',
-    'dnk': 'din',
-    'dri': 'prs',
-    'dun': 'dng',
-    'dzn': 'dzo',
-    'ebi': 'igb',
-    'ecr': 'crj',
-    'edo': 'bin',
-    'erz': 'myv',
-    'esp': 'spa',
-    'eti': 'est',
-    'euq': 'eus',
-    'evk': 'evn',
-    'evn': 'eve',
-    'fan': 'acf',
-    'fan0': 'fan',
-    'far': 'fas',
-    'fji': 'fij',
-    'fle': 'vls',
-    'fne': 'enf',
-    'fos': 'fao',
-    'fri': 'fry',
-    'frl': 'fur',
-    'frp': 'frp',
-    'fta': 'fuf',
-    'gad': 'gaa',
-    'gae': 'gla',
-    'gal': 'glg',
-    'gaw': 'gbm',
-    'gil': 'niv',
-    'gil0': 'gil',
-    'gmz': 'guk',
-    'grn': 'kal',
-    'gro': 'grt',
-    'gua': 'grn',
-    'hai': 'hat',
-    'hal': 'flm',
-    'har': 'hoj',
-    'hbn': 'amf',
-    'hma': 'mrj',
-    'hnd': 'hno',
-    'ho': 'hoc',
-    'hri': 'har',
-    'hye0': 'hye',
-    'ijo': 'ijc',
-    'ing': 'inh',
-    'inu': 'iku',
-    'iri': 'gle',
-    'irt': 'gle',
-    'ism': 'smn',
-    'iwr': 'heb',
-    'jan': 'jpn',
-    'jii': 'yid',
-    'jud': 'lad',
-    'jul': 'dyu',
-    'kab': 'kbd',
-    'kab0': 'kab',
-    'kac': 'kfr',
-    'kal': 'kln',
-    'kar': 'krc',
-    'keb': 'ktb',
-    'kge': 'kat',
-    'kha': 'kjh',
-    'khk': 'kca',
-    'khs': 'kca',
-    'khv': 'kca',
-    'kis': 'kqs',
-    'kkn': 'kex',
-    'klm': 'xal',
-    'kmb': 'kam',
-    'kmn': 'kfy',
-    'kmo': 'kmw',
-    'kms': 'kxc',
-    'knr': 'kau',
-    'kod': 'kfa',
-    'koh': 'okm',
-    'kon': 'ktu',
-    'kon0': 'kon',
-    'kop': 'koi',
-    'koz': 'kpv',
-    'kpl': 'kpe',
-    'krk': 'kaa',
-    'krm': 'kdr',
-    'krn': 'kar',
-    'krt': 'kqy',
-    'ksh': 'kas',
-    'ksh0': 'ksh',
-    'ksi': 'kha',
-    'ksm': 'sjd',
-    'kui': 'kxu',
-    'kul': 'kfx',
-    'kuu': 'kru',
-    'kuy': 'kdt',
-    'kyk': 'kpy',
-    'lad': 'lld',
-    'lah': 'bfu',
-    'lak': 'lbe',
-    'lam': 'lmn',
-    'laz': 'lzz',
-    'lcr': 'crm',
-    'ldk': 'lbj',
-    'lma': 'mhr',
-    'lmb': 'lif',
-    'lmw': 'ngl',
-    'lsb': 'dsb',
-    'lsm': 'smj',
-    'lth': 'lit',
-    'luh': 'luy',
-    'lvi': 'lav',
-    'maj': 'mpe',
-    'mak': 'vmw',
-    'man': 'mns',
-    'map': 'arn',
-    'maw': 'mwr',
-    'mbn': 'kmb',
-    'mch': 'mnc',
-    'mcr': 'crm',
-    'mde': 'men',
-    'men': 'mym',
-    'miz': 'lus',
-    'mkr': 'mak',
-    'mle': 'mdy',
-    'mln': 'mlq',
-    'mlr': 'mal',
-    'mly': 'msa',
-    'mnd': 'mnk',
-    'mng': 'mon',
-    'mnk': 'man',
-    'mnx': 'glv',
-    'mok': 'mdf',
-    'mon': 'mnw',
-    'mth': 'mai',
-    'mts': 'mlt',
-    'mun': 'unr',
-    'nan': 'gld',
-    'nas': 'nsk',
-    'ncr': 'csw',
-    'ndg': 'ndo',
-    'nhc': 'csw',
-    'nis': 'dap',
-    'nkl': 'nyn',
-    'nko': 'nqo',
-    'nor': 'nob',
-    'nsm': 'sme',
-    'nta': 'nod',
-    'nto': 'epo',
-    'nyn': 'nno',
-    'ocr': 'ojs',
-    'ojb': 'oji',
-    'oro': 'orm',
-    'paa': 'sam',
-    'pal': 'pli',
-    'pap': 'plp',
-    'pap0': 'pap',
-    'pas': 'pus',
-    'pgr': 'ell',
-    'pil': 'fil',
-    'plg': 'pce',
-    'plk': 'pol',
-    'ptg': 'por',
-    'qin': 'bgr',
-    'rbu': 'bxr',
-    'rcr': 'atj',
-    'rms': 'roh',
-    'rom': 'ron',
-    'roy': 'rom',
-    'rsy': 'rue',
-    'rua': 'kin',
-    'sad': 'sck',
-    'say': 'chp',
-    'sek': 'xan',
-    'sel': 'sel',
-    'sgo': 'sag',
-    'sgs': 'sgs',
-    'sib': 'sjo',
-    'sig': 'xst',
-    'sks': 'sms',
-    'sky': 'slk',
-    'sla': 'scs',
-    'sml': 'som',
-    'sna': 'seh',
-    'sna0': 'sna',
-    'snh': 'sin',
-    'sog': 'gru',
-    'srb': 'srp',
-    'ssl': 'xsl',
-    'ssm': 'sma',
-    'sur': 'suq',
-    'sve': 'swe',
-    'swa': 'aii',
-    'swk': 'swa',
-    'swz': 'ssw',
-    'sxt': 'ngo',
-    'taj': 'tgk',
-    'tcr': 'cwd',
-    'tgn': 'ton',
-    'tgr': 'tig',
-    'tgy': 'tir',
-    'tht': 'tah',
-    'tib': 'bod',
-    'tkm': 'tuk',
-    'tmn': 'tem',
-    'tna': 'tsn',
-    'tne': 'enh',
-    'tng': 'toi',
-    'tod': 'xal',
-    'tod0': 'tod',
-    'trk': 'tur',
-    'tsg': 'tso',
-    'tua': 'tru',
-    'tul': 'tcy',
-    'tuv': 'tyv',
-    'twi': 'aka',
-    'usb': 'hsb',
-    'uyg': 'uig',
-    'vit': 'vie',
-    'vro': 'vro',
-    'wa': 'wbm',
-    'wag': 'wbr',
-    'wcr': 'crk',
-    'wel': 'cym',
-    'wlf': 'wol',
-    'xbd': 'khb',
-    'xhs': 'xho',
-    'yak': 'sah',
-    'yba': 'yor',
-    'ycr': 'cre',
-    'yim': 'iii',
-    'zhh': 'zho',
-    'zhp': 'zho',
-    'zhs': 'zho',
-    'zht': 'zho',
-    'znd': 'zne',
-}
-
-
-def utf8_slice(string, slice_):
-    return string.encode('utf-8')[slice_].decode('utf-8')
-
-
-def unicode_to_char_p(string):
-    """Return ``(pointer, bytestring)``.
-
-    The byte string must live at least as long as the pointer is used.
+    ``style`` is used to add letter spacing (if needed).
 
     """
-    bytestring = string.encode('utf8').replace(b'\x00', b'')
-    return ffi.new('char[]', bytestring), bytestring
-
-
-def get_size(line, style):
     logical_extents = ffi.new('PangoRectangle *')
     pango.pango_layout_line_get_extents(line, ffi.NULL, logical_extents)
-    width, height = (units_to_double(logical_extents.width),
-                     units_to_double(logical_extents.height))
+    width = units_to_double(logical_extents.width)
+    height = units_to_double(logical_extents.height)
     ffi.release(logical_extents)
     if style['letter_spacing'] != 'normal':
         width += style['letter_spacing']
     return width, height
-
-
-def get_ink_position(line):
-    ink_extents = ffi.new('PangoRectangle *')
-    pango.pango_layout_line_get_extents(line, ink_extents, ffi.NULL)
-    values = (units_to_double(ink_extents.x), units_to_double(ink_extents.y))
-    ffi.release(ink_extents)
-    return values
 
 
 def first_line_metrics(first_line, text, layout, resume_at, space_collapse,
@@ -684,7 +46,7 @@ def first_line_metrics(first_line, text, layout, resume_at, space_collapse,
         pango.pango_layout_set_width(layout.layout, -1)
 
         # Create layout with final text
-        first_line_text = utf8_slice(text, slice(length))
+        first_line_text = text.encode('utf-8')[:length].decode('utf-8')
 
         # Remove trailing spaces if spaces collapse
         if space_collapse:
@@ -708,7 +70,7 @@ def first_line_metrics(first_line, text, layout, resume_at, space_collapse,
                         break
             length += soft_hyphens * 2  # len('\u00ad'.encode('utf8'))
 
-    width, height = get_size(first_line, style)
+    width, height = line_size(first_line, style)
     baseline = units_to_double(pango.pango_layout_get_baseline(layout.layout))
     layout.deactivate()
     return layout, length, resume_at, width, height, baseline
@@ -728,8 +90,6 @@ class Layout:
         self.first_line_direction = 0
 
         if context is None:
-            # TODO: fix this ugly import
-            from .fonts import pangoft2
             font_map = ffi.gc(
                 pangoft2.pango_ft2_font_map_new(), gobject.g_object_unref)
         else:
@@ -771,7 +131,7 @@ class Layout:
             self.font, units_from_double(font_size))
         pango.pango_layout_set_font_description(self.layout, self.font)
 
-        features = get_font_features(
+        features = font_features(
             style['font_kerning'], style['font_variant_ligatures'],
             style['font_variant_position'], style['font_variant_caps'],
             style['font_variant_numeric'], style['font_variant_alternates'],
@@ -860,13 +220,6 @@ class Layout:
         if b'\t' in bytestring:
             self.set_tabs()
 
-    def get_font_metrics(self):
-        context = pango.pango_layout_get_context(self.layout)
-        return FontMetrics(context, self.font, self.language)
-
-    def set_wrap(self, wrap_mode):
-        pango.pango_layout_set_wrap(self.layout, wrap_mode)
-
     def set_tabs(self):
         if isinstance(self.style['tab_size'], int):
             layout = Layout(
@@ -874,7 +227,7 @@ class Layout:
                 self.justification_spacing)
             layout.set_text(' ' * self.style['tab_size'])
             line, _ = layout.get_first_line()
-            width, _ = get_size(line, self.style)
+            width, _ = line_size(line, self.style)
             width = int(round(width))
         else:
             width = int(self.style['tab_size'].value)
@@ -891,126 +244,6 @@ class Layout:
     def reactivate(self, style):
         self.setup(self.context, style['font_size'], style)
         self.set_text(self.text, justify=True)
-
-
-class FontMetrics:
-    def __init__(self, context, font, language):
-        self.metrics = ffi.gc(
-            pango.pango_context_get_metrics(context, font, language),
-            pango.pango_font_metrics_unref)
-
-    def __dir__(self):
-        return ['ascent', 'descent',
-                'approximate_char_width', 'approximate_digit_width',
-                'underline_thickness', 'underline_position',
-                'strikethrough_thickness', 'strikethrough_position']
-
-    def __getattr__(self, key):
-        if key in dir(self):
-            return units_to_double(
-                getattr(pango, f'pango_font_metrics_get_{key}')(self.metrics))
-
-
-def get_font_features(
-        font_kerning='normal', font_variant_ligatures='normal',
-        font_variant_position='normal', font_variant_caps='normal',
-        font_variant_numeric='normal', font_variant_alternates='normal',
-        font_variant_east_asian='normal', font_feature_settings='normal'):
-    """Get the font features from the different properties in style.
-
-    See https://www.w3.org/TR/css-fonts-3/#feature-precedence
-
-    """
-    features = {}
-    ligature_keys = {
-        'common-ligatures': ['liga', 'clig'],
-        'historical-ligatures': ['hlig'],
-        'discretionary-ligatures': ['dlig'],
-        'contextual': ['calt']}
-    caps_keys = {
-        'small-caps': ['smcp'],
-        'all-small-caps': ['c2sc', 'smcp'],
-        'petite-caps': ['pcap'],
-        'all-petite-caps': ['c2pc', 'pcap'],
-        'unicase': ['unic'],
-        'titling-caps': ['titl']}
-    numeric_keys = {
-        'lining-nums': 'lnum',
-        'oldstyle-nums': 'onum',
-        'proportional-nums': 'pnum',
-        'tabular-nums': 'tnum',
-        'diagonal-fractions': 'frac',
-        'stacked-fractions': 'afrc',
-        'ordinal': 'ordn',
-        'slashed-zero': 'zero'}
-    east_asian_keys = {
-        'jis78': 'jp78',
-        'jis83': 'jp83',
-        'jis90': 'jp90',
-        'jis04': 'jp04',
-        'simplified': 'smpl',
-        'traditional': 'trad',
-        'full-width': 'fwid',
-        'proportional-width': 'pwid',
-        'ruby': 'ruby'}
-
-    # Step 1: getting the default, we rely on Pango for this
-    # Step 2: @font-face font-variant, done in fonts.add_font_face
-    # Step 3: @font-face font-feature-settings, done in fonts.add_font_face
-
-    # Step 4: font-variant and OpenType features
-
-    if font_kerning != 'auto':
-        features['kern'] = int(font_kerning == 'normal')
-
-    if font_variant_ligatures == 'none':
-        for keys in ligature_keys.values():
-            for key in keys:
-                features[key] = 0
-    elif font_variant_ligatures != 'normal':
-        for ligature_type in font_variant_ligatures:
-            value = 1
-            if ligature_type.startswith('no-'):
-                value = 0
-                ligature_type = ligature_type[3:]
-            for key in ligature_keys[ligature_type]:
-                features[key] = value
-
-    if font_variant_position == 'sub':
-        # TODO: the specification asks for additional checks
-        # https://www.w3.org/TR/css-fonts-3/#font-variant-position-prop
-        features['subs'] = 1
-    elif font_variant_position == 'super':
-        features['sups'] = 1
-
-    if font_variant_caps != 'normal':
-        # TODO: the specification asks for additional checks
-        # https://www.w3.org/TR/css-fonts-3/#font-variant-caps-prop
-        for key in caps_keys[font_variant_caps]:
-            features[key] = 1
-
-    if font_variant_numeric != 'normal':
-        for key in font_variant_numeric:
-            features[numeric_keys[key]] = 1
-
-    if font_variant_alternates != 'normal':
-        # TODO: support other values
-        # See https://www.w3.org/TR/css-fonts-3/#font-variant-caps-prop
-        if font_variant_alternates == 'historical-forms':
-            features['hist'] = 1
-
-    if font_variant_east_asian != 'normal':
-        for key in font_variant_east_asian:
-            features[east_asian_keys[key]] = 1
-
-    # Step 5: incompatible non-OpenType features, already handled by Pango
-
-    # Step 6: font-feature-settings
-
-    if font_feature_settings != 'normal':
-        features.update(dict(font_feature_settings))
-
-    return features
 
 
 def create_layout(text, style, context, max_width, justification_spacing):
@@ -1097,7 +330,7 @@ def split_first_line(text, style, context, max_width, justification_spacing,
         # The first line can take all the place needed
         return first_line_metrics(
             first_line, text, layout, resume_at, space_collapse, style)
-    first_line_width, _ = get_size(first_line, style)
+    first_line_width, _ = line_size(first_line, style)
     if index is None and first_line_width <= max_width:
         # The first line fits in the available width
         return first_line_metrics(
@@ -1106,7 +339,7 @@ def split_first_line(text, style, context, max_width, justification_spacing,
     # Step #3: Try to put the first word of the second line on the first line
     # https://mail.gnome.org/archives/gtk-i18n-list/2013-September/msg00006
     # is a good thread related to this problem.
-    first_line_text = utf8_slice(text, slice(index))
+    first_line_text = text.encode('utf-8')[:index].decode('utf-8')
     # We can’t rely on first_line_width, see
     # https://github.com/Kozea/WeasyPrint/issues/1051
     first_line_fits = (
@@ -1115,7 +348,7 @@ def split_first_line(text, style, context, max_width, justification_spacing,
         can_break_text(first_line_text.strip(), style['lang']))
     if first_line_fits:
         # The first line fits but may have been cut too early by Pango
-        second_line_text = utf8_slice(text, slice(index, None))
+        second_line_text = text.encode('utf-8')[index:].decode('utf-8')
     else:
         # The line can't be split earlier, try to hyphenate the first word.
         first_line_text = ''
@@ -1129,7 +362,7 @@ def split_first_line(text, style, context, max_width, justification_spacing,
             new_first_line_text = first_line_text + next_word
             layout.set_text(new_first_line_text)
             first_line, index = layout.get_first_line()
-            first_line_width, _ = get_size(first_line, style)
+            first_line_width, _ = line_size(first_line, style)
             if index is None and first_line_text:
                 # The next word fits in the first line, keep the layout
                 resume_at = len(new_first_line_text.encode('utf-8')) + 1
@@ -1165,7 +398,7 @@ def split_first_line(text, style, context, max_width, justification_spacing,
             next_word = second_line_text[start_word:stop_word]
             if stop_word - start_word >= total:
                 # This word is long enough
-                first_line_width, _ = get_size(first_line, style)
+                first_line_width, _ = line_size(first_line, style)
                 space = max_width - first_line_width
                 if style['hyphenate_limit_zone'].unit == '%':
                     limit_zone = (
@@ -1233,7 +466,7 @@ def split_first_line(text, style, context, max_width, justification_spacing,
                     hyphenated_first_line_text, style, context, max_width,
                     justification_spacing)
                 new_first_line, new_index = new_layout.get_first_line()
-                new_first_line_width, _ = get_size(new_first_line, style)
+                new_first_line_width, _ = line_size(new_first_line, style)
                 new_space = max_width - new_first_line_width
                 if new_index is None and (
                         new_space >= 0 or
@@ -1277,7 +510,7 @@ def split_first_line(text, style, context, max_width, justification_spacing,
 
     # Step 5: Try to break word if it's too long for the line
     overflow_wrap = style['overflow_wrap']
-    first_line_width, _ = get_size(first_line, style)
+    first_line_width, _ = line_size(first_line, style)
     space = max_width - first_line_width
     # If we can break words and the first line is too long
     if not minimum and overflow_wrap == 'break-word' and space < 0:
@@ -1292,7 +525,8 @@ def split_first_line(text, style, context, max_width, justification_spacing,
         layout.set_text(text)
         pango.pango_layout_set_width(
             layout.layout, units_from_double(max_width))
-        layout.set_wrap(PANGO_WRAP_MODE['WRAP_CHAR'])
+        pango.pango_layout_set_wrap(
+            layout.layout, PANGO_WRAP_MODE['WRAP_CHAR'])
         first_line, index = layout.get_first_line()
         resume_at = index or first_line.length
         if resume_at >= len(text.encode('utf-8')):

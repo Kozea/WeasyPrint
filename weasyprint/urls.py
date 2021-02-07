@@ -175,7 +175,7 @@ def default_url_fetcher(url, timeout=10, ssl_context=None):
     """Fetch an external resource such as an image or stylesheet.
 
     Another callable with the same signature can be given as the
-    :obj:`url_fetcher` argument to :class:`HTML` or :class:`CSS`.
+    ``url_fetcher`` argument to :class:`HTML` or :class:`CSS`.
     (See :ref:`url-fetchers`.)
 
     :type url: str

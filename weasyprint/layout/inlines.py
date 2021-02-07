@@ -11,7 +11,7 @@ import unicodedata
 from ..css import computed_from_cascaded
 from ..css.computed_values import ex_ratio, strut_layout
 from ..formatting_structure import boxes
-from ..text import can_break_text, create_layout, split_first_line
+from ..text.line_break import can_break_text, create_layout, split_first_line
 from .absolute import AbsolutePlaceholder, absolute_layout
 from .flex import flex_layout
 from .float import avoid_collisions, float_layout

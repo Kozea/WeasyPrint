@@ -14,7 +14,7 @@ import sys
 import pydyf
 
 from . import HTML, LOGGER, __version__
-from .text import pango
+from .text.ffi import pango
 
 
 class PrintInfo(argparse.Action):

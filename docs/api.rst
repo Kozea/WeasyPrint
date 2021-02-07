@@ -62,7 +62,7 @@ Python API
 .. autoclass:: Page()
     :members:
 
-.. module:: weasyprint.fonts
+.. module:: weasyprint.text.fonts
 .. autoclass:: FontConfiguration()
 
 .. module:: weasyprint.css.counters

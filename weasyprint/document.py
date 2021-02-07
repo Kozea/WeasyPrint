@@ -23,7 +23,6 @@ from .css import get_all_computed_styles
 from .css.counters import CounterStyle
 from .css.targets import TargetCollector
 from .draw import draw_page, stacked
-from .fonts import FontConfiguration
 from .formatting_structure import boxes
 from .formatting_structure.build import build_formatting_structure
 from .html import W3C_DATE_RE, get_html_metadata
@@ -31,7 +30,8 @@ from .images import get_image_from_uri as original_get_image_from_uri
 from .layout import LayoutContext, layout_document
 from .layout.percentages import percentage
 from .logger import LOGGER, PROGRESS_LOGGER
-from .text import ffi, pango
+from .text.ffi import ffi, pango
+from .text.fonts import FontConfiguration
 from .urls import URLFetchingError
 
 
@@ -684,7 +684,7 @@ class Page:
     def paint(self, context, left_x=0, top_y=0, scale=1, clip=False):
         """Paint the page into the PDF file.
 
-        :type context: :class:`pdf.Context`
+        :type context: ``Context``
         :param context:
             A context object.
         :type left_x: float
@@ -775,7 +775,7 @@ class Document:
     can also be instantiated directly with a list of :class:`pages <Page>`, a
     set of :class:`metadata <DocumentMetadata>`, a :func:`url_fetcher
     <weasyprint.default_url_fetcher>` function, and a :class:`font_config
-    <weasyprint.fonts.FontConfiguration>`.
+    <weasyprint.text.fonts.FontConfiguration>`.
 
     """
 
@@ -881,11 +881,11 @@ class Document:
         #: but to the whole document.
         self.metadata = metadata
         #: A function or other callable with the same signature as
-        #: :func:`default_url_fetcher` called to fetch external resources such
-        #: as stylesheets and images.  (See :ref:`url-fetchers`.)
+        #: :func:`weasyprint.default_url_fetcher` called to fetch external
+        #: resources such as stylesheets and images. (See :ref:`url-fetchers`.)
         self.url_fetcher = url_fetcher
         #: A :obj:`dict` of fonts used by the document. Keys are hashes used to
-        #: identify fonts, values are :class:`Font` objects.
+        #: identify fonts, values are ``Font`` objects.
         self.fonts = {}
         # Keep a reference to font_config to avoid its garbage collection until
         # rendering is destroyed. This is needed as font_config.__del__ removes
@@ -929,7 +929,7 @@ class Document:
     def write_pdf(self, target=None, zoom=1, attachments=None, finisher=None):
         """Paint the pages in a PDF file, with metadata.
 
-        :type target: str, pathlib.Path or file object
+        :type target: str, pathlib.Path or :term:`file object`
         :param target:
             A filename where the PDF file is generated, a file object, or
             :obj:`None`.
@@ -942,7 +942,7 @@ class Document:
         :type attachments: list
         :param attachments: A list of additional file attachments for the
             generated PDF document or :obj:`None`. The list's elements are
-            :class:`Attachment` objects, filenames, URLs or file-like objects.
+            ``Attachment`` objects, filenames, URLs or file-like objects.
         :param finisher: A finisher function, that accepts the document and a
             ``pydyf.PDF`` object as parameters, can be passed to perform
             post-processing on the PDF right before the trailer is written.

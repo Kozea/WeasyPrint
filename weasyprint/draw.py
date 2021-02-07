@@ -14,7 +14,8 @@ from .formatting_structure import boxes
 from .layout import replaced
 from .layout.backgrounds import BackgroundLayer
 from .stacking import StackingContext
-from .text import ffi, harfbuzz, pango, units_from_double, units_to_double
+from .text.ffi import ffi, harfbuzz, pango, units_from_double, units_to_double
+from .text.fonts import FontMetrics
 
 SIDES = ('top', 'right', 'bottom', 'left')
 CROP = '''
@@ -1057,7 +1058,9 @@ def draw_text(context, textbox, offset_x, text_overflow):
     if ('overline' in values or
             'line-through' in values or
             'underline' in values):
-        metrics = textbox.pango_layout.get_font_metrics()
+        metrics = FontMetrics(
+            pango.pango_layout_get_context(textbox.layout),
+            textbox.font, textbox.language)
     if 'overline' in values:
         draw_text_decoration(
             context, textbox, offset_x,
