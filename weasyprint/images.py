@@ -77,8 +77,8 @@ class SVGImage:
 
     def get_intrinsic_size(self, _image_resolution, font_size):
         self._intrinsic_width, self._intrinsic_height = (
-            self._svg.get_size(font_size))
-        viewbox = self._svg.get_viewbox(font_size)
+            self._svg.get_intrinsic_size(font_size))
+        viewbox = self._svg.get_viewbox()
 
         if viewbox:
             if self._intrinsic_width and self._intrinsic_height:
@@ -112,8 +112,6 @@ class SVGImage:
         # Use the real intrinsic size here,
         # not affected by 'image-resolution'.
         context.push_state()
-        context.transform(
-            concrete_width, 0, 0, -concrete_height, 0, concrete_height)
         self._svg.draw(
             context, concrete_width, concrete_height, self._base_url,
             self._url_fetcher)
