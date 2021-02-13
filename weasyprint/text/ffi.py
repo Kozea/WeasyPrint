@@ -38,7 +38,7 @@ ffi.cdef('''
     typedef ... PangoAttrClass;
     typedef ... PangoFont;
     typedef guint PangoGlyph;
-    typedef guint PangoGlyphUnit;
+    typedef gint PangoGlyphUnit;
 
     const guint PANGO_GLYPH_EMPTY = 0x0FFFFFFF;
 
