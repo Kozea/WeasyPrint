@@ -116,3 +116,70 @@ def test_text_align_rtl_trailing_whitespace():
       <p style="direction: ltr"> abc </p>
       <p style="direction: ltr"> &#8207;abc </p>
     ''')
+
+
+def test_max_lines_ellipsis():
+    assert_pixels('max_lines_ellipsis', 10, 10, '''
+        BBBBBBBB__
+        BBBBBBBB__
+        BBBBBBBBBB
+        BBBBBBBBBB
+        __________
+        __________
+        __________
+        __________
+        __________
+        __________
+    ''', '''
+      <style>
+        @page {size: 10px 10px;}
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        p {
+          block-ellipsis: auto;
+          color: blue;
+          font-family: weasyprint;
+          font-size: 2px;
+          max-lines: 2;
+        }
+      </style>
+      <p>
+        abcd efgh ijkl
+      </p>
+    ''')
+
+
+def test_line_clamp():
+    assert_pixels('line_clamp', 10, 10, '''
+        BBBBBBBB__
+        BBBBBBBB__
+        BBBBBBBB__
+        BBBBBBBB__
+        BBBBBBBBBB
+        BBBBBBBBBB
+        __________
+        __________
+        __________
+        __________
+    ''', '''
+      <style>
+        @page {size: 10px 10px;}
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        p {
+          color: blue;
+          font-family: weasyprint;
+          font-size: 2px;
+          line-clamp: 3 "(…)";
+        }
+      </style>
+
+      <p>
+        aaaa
+        bbbb
+        cccc
+        dddd
+        eeee
+        ffff
+        gggg
+        hhhh
+      </p>
+    ''')
