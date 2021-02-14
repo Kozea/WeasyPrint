@@ -6,6 +6,8 @@
 
 """
 
+import pytest
+
 from . import assert_pixels
 
 
@@ -148,6 +150,52 @@ def test_max_lines_ellipsis():
     ''')
 
 
+@pytest.mark.xfail
+def test_max_lines_nested():
+    assert_pixels('max_lines_nested', 10, 10, '''
+        BBBBBBBBBB
+        BBBBBBBBBB
+        BBBBBBBBBB
+        BBBBBBBBBB
+        rrrrrrrrrr
+        rrrrrrrrrr
+        rrrrrrrrrr
+        rrrrrrrrrr
+        BBBBBBBBBB
+        BBBBBBBBBB
+    ''', '''
+      <style>
+        @page {size: 10px 10px;}
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        div {
+          continue: discard;
+          font-family: weasyprint;
+          font-size: 2px;
+        }
+        #a {
+          color: blue;
+          max-lines: 5;
+        }
+        #b {
+          color: red
+          max-lines: 2;
+        }
+      </style>
+      <div id=a>
+        aaaaa
+        aaaaa
+        <div id=b>
+          bbbbb
+          bbbbb
+          bbbbb
+          bbbbb
+        </div>
+        aaaaa
+        aaaaa
+      </div>
+    ''')
+
+
 def test_line_clamp():
     assert_pixels('line_clamp', 10, 10, '''
         BBBB__BB__
@@ -182,4 +230,40 @@ def test_line_clamp():
         gggg
         hhhh
       </p>
+    ''')
+
+
+@pytest.mark.xfail
+def test_ellipsis_nested():
+    assert_pixels('ellipsis_nested', 10, 10, '''
+        BBBBBB____
+        BBBBBB____
+        BBBBBB____
+        BBBBBB____
+        BBBBBB____
+        BBBBBB____
+        BBBBBB____
+        BBBBBB____
+        BBBBBBBB__
+        BBBBBBBB__
+    ''', '''
+      <style>
+        @page {size: 10px 10px;}
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        div {
+          block-ellipsis: auto;
+          color: blue;
+          continue: discard;
+          font-family: weasyprint;
+          font-size: 2px;
+        }
+      </style>
+      <div>
+        <p>aaa</p>
+        <p>aaa</p>
+        <p>aaa</p>
+        <p>aaa</p>
+        <p>aaa</p>
+        <p>aaa</p>
+      </div>
     ''')
