@@ -152,7 +152,7 @@ def test_max_lines_ellipsis():
 
 @pytest.mark.xfail
 def test_max_lines_nested():
-    assert_pixels('max_lines_nested', 10, 10, '''
+    assert_pixels('max_lines_nested', 10, 12, '''
         BBBBBBBBBB
         BBBBBBBBBB
         BBBBBBBBBB
@@ -163,9 +163,11 @@ def test_max_lines_nested():
         rrrrrrrrrr
         BBBBBBBBBB
         BBBBBBBBBB
+        __________
+        __________
     ''', '''
       <style>
-        @page {size: 10px 10px;}
+        @page {size: 10px 12px;}
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         div {
           continue: discard;
