@@ -150,10 +150,10 @@ def test_max_lines_ellipsis():
 
 def test_line_clamp():
     assert_pixels('line_clamp', 10, 10, '''
-        BBBBBBBB__
-        BBBBBBBB__
-        BBBBBBBB__
-        BBBBBBBB__
+        BBBB__BB__
+        BBBB__BB__
+        BBBB__BB__
+        BBBB__BB__
         BBBBBBBBBB
         BBBBBBBBBB
         __________
@@ -173,9 +173,9 @@ def test_line_clamp():
       </style>
 
       <p>
-        aaaa
-        bbbb
-        cccc
+        aa a
+        bb b
+        cc c
         dddd
         eeee
         ffff
