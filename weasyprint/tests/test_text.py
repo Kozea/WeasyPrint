@@ -1029,6 +1029,7 @@ def test_text_floating_pre_line():
     ''')
 
 
+@pytest.mark.xfail
 @assert_no_logs
 def test_max_lines():
     page, = render_pages('''
@@ -1047,12 +1048,15 @@ def test_max_lines():
     ''')
     html, = page.children
     body, = html.children
-    p, = body.children
-    line1, line2 = p.children
+    p1, p2 = body.children
+    line1, line2 = p1.children
+    line3, = p2.children
     text1, = line1.children
     text2, = line2.children
+    text3, = line3.children
     assert text1.text == 'abcd'
     assert text2.text == 'efgh'
+    assert text3.text == 'ijkl'
 
 
 @assert_no_logs
