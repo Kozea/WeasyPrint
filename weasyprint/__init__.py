@@ -30,10 +30,11 @@ if hasattr(sys, 'frozen'):  # pragma: no cover
 else:
     ROOT = Path(os.path.dirname(__file__))
 
-VERSION = __version__ = (ROOT / 'VERSION').read_text().strip()
+VERSION = __version__ = '53.0'
 
-__all__ = ['HTML', 'CSS', 'Attachment', 'Document', 'Page',
-           'default_url_fetcher', 'VERSION']
+__all__ = [
+    'HTML', 'CSS', 'Attachment', 'Document', 'Page', 'default_url_fetcher',
+    'VERSION', '__version__']
 
 
 # Import after setting the version, as the version is used in other modules
