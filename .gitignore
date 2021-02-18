@@ -1,22 +1,9 @@
-# Python Bytecode
 *.pyc
-
-# Building and Distributing
-/*.egg-info
-/.eggs
+.cache
+/.coverage
 /build
 /dist
 /docs/_build
-
-# Various Tools
-/.coverage
-/coverage.xml
-/htmlcov
-/env
-/venv
-/.vagrant
-/.cache
-
-# Tests
-/.pytest_cache
+/pytest_cache
 /tests/test_draw/results
+/venv

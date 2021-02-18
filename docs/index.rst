@@ -1,15 +1,23 @@
+WeasyPrint
+==========
+
+.. currentmodule:: weasyprint
+
 .. include:: ../README.rst
 
-Documentation contents
-----------------------
+.. toctree::
+   :caption: Documentation
+   :maxdepth: 3
+
+   first_steps
+   common_use_cases
+   api_reference
+   going_further
 
 .. toctree::
-    :maxdepth: 2
+   :caption: Extra Information
+   :maxdepth: 3
 
-    install
-    tutorial
-    tips-tricks
-    api
-    features
-    hacking
-    changelog
+   changelog
+   contribute
+   support
