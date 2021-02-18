@@ -15,7 +15,6 @@ from .layout import replaced
 from .layout.backgrounds import BackgroundLayer
 from .stacking import StackingContext
 from .text.ffi import ffi, harfbuzz, pango, units_from_double, units_to_double
-from .text.fonts import FontMetrics
 
 SIDES = ('top', 'right', 'bottom', 'left')
 CROP = '''
@@ -1051,31 +1050,25 @@ def draw_text(context, textbox, offset_x, text_overflow):
 
     # Draw text decoration
     values = textbox.style['text_decoration_line']
-    thickness = textbox.style['font_size'] / 18  # Like other browsers do
     color = textbox.style['text_decoration_color']
     if color == 'currentColor':
         color = textbox.style['color']
-    if ('overline' in values or
-            'line-through' in values or
-            'underline' in values):
-        metrics = FontMetrics(
-            pango.pango_layout_get_context(textbox.layout),
-            textbox.font, textbox.language)
     if 'overline' in values:
-        draw_text_decoration(
-            context, textbox, offset_x,
-            textbox.baseline - metrics.ascent + thickness / 2,
-            thickness, color)
+        thickness = textbox.pango_layout.underline_thickness
+        offset_y = (
+            textbox.baseline - textbox.pango_layout.ascent + thickness / 2)
     if 'underline' in values:
-        draw_text_decoration(
-            context, textbox, offset_x,
-            textbox.baseline - metrics.underline_position + thickness / 2,
-            thickness, color)
+        thickness = textbox.pango_layout.underline_thickness
+        offset_y = (
+            textbox.baseline - textbox.pango_layout.underline_position +
+            thickness / 2)
     if 'line-through' in values:
+        thickness = textbox.pango_layout.strikethrough_thickness
+        offset_y = (
+            textbox.baseline - textbox.pango_layout.strikethrough_position)
+    if values != 'none':
         draw_text_decoration(
-            context, textbox, offset_x,
-            textbox.baseline - metrics.strikethrough_position,
-            thickness, color)
+            context, textbox, offset_x, offset_y, thickness, color)
 
     textbox.pango_layout.deactivate()
 

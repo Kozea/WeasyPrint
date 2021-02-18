@@ -244,10 +244,6 @@ ffi.cdef('''
     void pango_font_metrics_unref (PangoFontMetrics *metrics);
     int pango_font_metrics_get_ascent (PangoFontMetrics *metrics);
     int pango_font_metrics_get_descent (PangoFontMetrics *metrics);
-    int pango_font_metrics_get_approximate_char_width (
-        PangoFontMetrics *metrics);
-    int pango_font_metrics_get_approximate_digit_width (
-        PangoFontMetrics *metrics);
     int pango_font_metrics_get_underline_thickness (
         PangoFontMetrics *metrics);
     int pango_font_metrics_get_underline_position (

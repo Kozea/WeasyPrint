@@ -20,7 +20,7 @@ from ..urls import FILESYSTEM_ENCODING, fetch
 from .constants import (
     CAPS_KEYS, EAST_ASIAN_KEYS, FONTCONFIG_STRETCH, FONTCONFIG_STYLE,
     FONTCONFIG_WEIGHT, LIGATURE_KEYS, NUMERIC_KEYS)
-from .ffi import ffi, fontconfig, gobject, pango, pangoft2, units_to_double
+from .ffi import ffi, fontconfig, gobject, pangoft2
 
 
 def _check_font_configuration(font_config):
@@ -296,24 +296,6 @@ class FontConfiguration:
                 os.remove(filename)
             except OSError:
                 continue
-
-
-class FontMetrics:
-    def __init__(self, context, font, language):
-        self.metrics = ffi.gc(
-            pango.pango_context_get_metrics(context, font, language),
-            pango.pango_font_metrics_unref)
-
-    def __dir__(self):
-        return ['ascent', 'descent',
-                'approximate_char_width', 'approximate_digit_width',
-                'underline_thickness', 'underline_position',
-                'strikethrough_thickness', 'strikethrough_position']
-
-    def __getattr__(self, key):
-        if key in dir(self):
-            return units_to_double(
-                getattr(pango, f'pango_font_metrics_get_{key}')(self.metrics))
 
 
 def font_features(font_kerning='normal', font_variant_ligatures='normal',

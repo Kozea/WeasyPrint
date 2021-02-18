@@ -228,3 +228,84 @@ def test_text_letter_spacing():
         }
       </style>
       <div>ace</div>''')
+
+
+def test_text_underline():
+    assert_pixels('text_underline', 13, 7, '''
+        _____________
+        _zzzzzzzzzzz_
+        _zRRRRRRRRRz_
+        _zRRRRRRRRRz_
+        _zBBBBBBBBBz_
+        _zzzzzzzzzzz_
+        _____________
+    ''', '''
+      <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page {
+          size: 13px 7px;
+          background: white;
+          margin: 2px;
+        }
+        body {
+          color: red;
+          font-family: weasyprint;
+          font-size: 3px;
+          text-decoration: underline blue;
+        }
+      </style>
+      <div>abc</div>''')
+
+
+def test_text_overline():
+    assert_pixels('text_overline', 13, 7, '''
+        _____________
+        _zBBBBBBBBBz_
+        _zRRRRRRRRRz_
+        _zRRRRRRRRRz_
+        _zRRRRRRRRRz_
+        _zzzzzzzzzzz_
+        _____________
+    ''', '''
+      <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page {
+          size: 13px 7px;
+          background: white;
+          margin: 2px;
+        }
+        body {
+          color: red;
+          font-family: weasyprint;
+          font-size: 3px;
+          text-decoration: overline blue;
+        }
+      </style>
+      <div>abc</div>''')
+
+
+def test_text_line_through():
+    assert_pixels('text_line_through', 13, 7, '''
+        _____________
+        _zzzzzzzzzzz_
+        _zRRRRRRRRRz_
+        _zBBBBBBBBBz_
+        _zRRRRRRRRRz_
+        _zzzzzzzzzzz_
+        _____________
+    ''', '''
+      <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page {
+          size: 13px 7px;
+          background: white;
+          margin: 2px;
+        }
+        body {
+          color: red;
+          font-family: weasyprint;
+          font-size: 3px;
+          text-decoration: line-through blue;
+        }
+      </style>
+      <div>abc</div>''')

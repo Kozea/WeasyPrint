@@ -94,7 +94,9 @@ class Layout:
                 pangoft2.pango_ft2_font_map_new(), gobject.g_object_unref)
         else:
             font_map = context.font_config.font_map
-        pango_context = pango.pango_font_map_create_context(font_map)
+        pango_context = ffi.gc(
+            pango.pango_font_map_create_context(font_map),
+            gobject.g_object_unref)
         pango.pango_context_set_round_glyph_positions(pango_context, False)
         self.layout = ffi.gc(
             pango.pango_layout_new(pango_context),
@@ -112,7 +114,6 @@ class Layout:
         if lang:
             self.language = pango.pango_language_from_string(lang_p)
             pango.pango_context_set_language(pango_context, self.language)
-        gobject.g_object_unref(pango_context)
 
         assert not isinstance(style['font_family'], str), (
             'font_family should be a list')
@@ -130,6 +131,27 @@ class Layout:
         pango.pango_font_description_set_absolute_size(
             self.font, units_from_double(font_size))
         pango.pango_layout_set_font_description(self.layout, self.font)
+
+        text_decoration = style['text_decoration_line']
+        if text_decoration != 'none':
+            metrics = ffi.gc(
+                pango.pango_context_get_metrics(
+                    pango_context, self.font, self.language),
+                pango.pango_font_metrics_unref)
+            self.ascent = units_to_double(
+                pango.pango_font_metrics_get_ascent(metrics))
+            self.underline_position = units_to_double(
+                pango.pango_font_metrics_get_underline_position(metrics))
+            self.strikethrough_position = units_to_double(
+                pango.pango_font_metrics_get_strikethrough_position(metrics))
+            self.underline_thickness = units_to_double(
+                pango.pango_font_metrics_get_underline_thickness(metrics))
+            self.strikethrough_thickness = units_to_double(
+                pango.pango_font_metrics_get_strikethrough_thickness(metrics))
+        else:
+            self.ascent = None
+            self.underline_position = None
+            self.strikethrough_position = None
 
         features = font_features(
             style['font_kerning'], style['font_variant_ligatures'],
