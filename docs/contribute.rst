@@ -34,6 +34,9 @@ You can report bugs and feature requests on `GitHub`_. If you want to add or
 fix some code, please fork the repository and create a pull request, we’ll be
 happy to review your work.
 
+You can find more information about the code architecture in the :ref:`Dive
+into the Source` section.
+
 .. _GitHub: https://github.com/Kozea/WeasyPrint
 
 

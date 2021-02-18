@@ -41,8 +41,8 @@ class CounterStyle(dict):
 
     .. versionadded:: 0.52
 
-    Keep a list of counter styles defined by @counter-style rules, indexed by
-    their names.
+    Keep a list of counter styles defined by ``@counter-style`` rules, indexed
+    by their names.
 
     See https://www.w3.org/TR/css-counter-styles-3/.
 

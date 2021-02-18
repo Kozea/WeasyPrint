@@ -58,12 +58,10 @@ class HTML:
     :type filename: str or pathlib.Path
     :param filename: A filename, relative to the current directory, or
         absolute.
-    :type url: str
-    :param url: An absolute, fully qualified URL.
+    :param str url: An absolute, fully qualified URL.
     :type file_obj: :term:`file object`
     :param file_obj: Any object with a ``read`` method.
-    :type string: str
-    :param string: A string of HTML source.
+    :param str string: A string of HTML source.
 
     Specifying multiple inputs is an error:
     ``HTML(filename="foo.html", url="localhost://bar.html")``
@@ -71,10 +69,8 @@ class HTML:
 
     You can also pass optional named arguments:
 
-    :type encoding: str
-    :param encoding: Force the source character encoding.
-    :type base_url: str
-    :param base_url: The base used to resolve relative URLs
+    :param str encoding: Force the source character encoding.
+    :param str base_url: The base used to resolve relative URLs
         (e.g. in ``<img src="../foo.png">``). If not provided, try to use
         the input filename, URL, or ``name`` attribute of :term:`file objects
         <file object>`.
@@ -82,9 +78,8 @@ class HTML:
     :param url_fetcher: A function or other callable
         with the same signature as :func:`default_url_fetcher` called to
         fetch external resources such as stylesheets and images.
-        (See :ref:`url-fetchers`.)
-    :type media_type: str
-    :param media_type: The media type to use for ``@media``.
+        (See :ref:`URL Fetchers`.)
+    :param str media_type: The media type to use for ``@media``.
         Defaults to ``'print'``. **Note:** In some cases like
         ``HTML(string=foo)`` relative URLs will be invalid if ``base_url``
         is not provided.
@@ -129,29 +124,26 @@ class HTML:
         """Lay out and paginate the document, but do not (yet) export it
         to PDF or PNG.
 
-        This returns a :class:`~document.Document` object which provides
+        This returns a :class:`document.Document` object which provides
         access to individual pages and various meta-data.
         See :meth:`write_pdf` to get a PDF directly.
 
         .. versionadded:: 0.15
 
-        :type stylesheets: list
-        :param stylesheets:
+        :param list stylesheets:
             An optional list of user stylesheets. List elements are
             :class:`CSS` objects, filenames, URLs, or file
-            objects. (See :ref:`stylesheet-origins`.)
-        :type presentational_hints: bool
-        :param presentational_hints: Whether HTML presentational hints are
-            followed.
-        :type optimize_images: bool
-        :param optimize_images: Try to optimize the size of embedded images.
-        :type font_config: :class:`~text.fonts.FontConfiguration`
+            objects. (See :ref:`Stylesheet Origins`.)
+        :param bool presentational_hints:
+            Whether HTML presentational hints are followed.
+        :param bool optimize_images:
+            Try to optimize the size of embedded images.
+        :type font_config: :class:`text.fonts.FontConfiguration`
         :param font_config: A font configuration handling ``@font-face`` rules.
-        :type counter_style: :class:`~css.counters.CounterStyle`
+        :type counter_style: :class:`css.counters.CounterStyle`
         :param counter_style: A dictionary storing ``@counter-style`` rules.
-        :type image_cache: dict
-        :param image_cache: A dictionary used to cache images.
-        :returns: A :class:`~document.Document` object.
+        :param dict image_cache: A dictionary used to cache images.
+        :returns: A :class:`document.Document` object.
 
         """
         return Document._render(
@@ -167,36 +159,32 @@ class HTML:
         This is a shortcut for calling :meth:`render`, then
         :meth:`Document.write_pdf() <document.Document.write_pdf>`.
 
-        :type target: str, pathlib.Path or :term:`file object`
+        :type target:
+            :class:`str`, :class:`pathlib.Path` or :term:`file object`
         :param target:
             A filename where the PDF file is generated, a file object, or
             :obj:`None`.
-        :type stylesheets: list
-        :param stylesheets:
+        :param list stylesheets:
             An optional list of user stylesheets. The list's elements
             are :class:`CSS` objects, filenames, URLs, or file-like
-            objects. (See :ref:`stylesheet-origins`.)
-        :type zoom: float
-        :param zoom:
+            objects. (See :ref:`Stylesheet Origins`.)
+        :param float zoom:
             The zoom factor in PDF units per CSS units.  **Warning**:
             All CSS units are affected, including physical units like
             ``cm`` and named sizes like ``A4``.  For values other than
             1, the physical CSS units will thus be "wrong".
-        :type attachments: list
-        :param attachments: A list of additional file attachments for the
+        :param list attachments: A list of additional file attachments for the
             generated PDF document or :obj:`None`. The list's elements are
             :class:`Attachment` objects, filenames, URLs or file-like objects.
-        :type presentational_hints: bool
-        :param presentational_hints: Whether HTML presentational hints are
+        :param bool presentational_hints: Whether HTML presentational hints are
             followed.
-        :type optimize_images: bool
-        :param optimize_images: Try to optimize the size of embedded images.
-        :type font_config: :class:`~text.fonts.FontConfiguration`
+        :param bool optimize_images:
+            Try to optimize the size of embedded images.
+        :type font_config: :class:`text.fonts.FontConfiguration`
         :param font_config: A font configuration handling ``@font-face`` rules.
-        :type counter_style: :class:`~css.counters.CounterStyle`
+        :type counter_style: :class:`css.counters.CounterStyle`
         :param counter_style: A dictionary storing ``@counter-style`` rules.
-        :type image_cache: dict
-        :param image_cache: A dictionary used to cache images.
+        :param dict image_cache: A dictionary used to cache images.
         :returns:
             The PDF as :obj:`bytes` if ``target`` is not provided or
             :obj:`None`, otherwise :obj:`None` (the PDF is written to
@@ -222,7 +210,7 @@ class CSS:
     must be used for different ``CSS`` objects applied to the same document.
 
     ``CSS`` objects have no public attributes or methods. They are only meant
-    to be used in the :meth:`~HTML.write_pdf` and :meth:`~HTML.render` methods
+    to be used in the :meth:`HTML.write_pdf` and :meth:`HTML.render` methods
     of :class:`HTML` objects.
 
     """

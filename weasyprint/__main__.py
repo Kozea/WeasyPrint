@@ -57,7 +57,7 @@ def main(argv=None, stdout=None, stdin=None):
     .. option:: -s <filename_or_URL>, --stylesheet <filename_or_URL>
 
         Filename or URL of a user cascading stylesheet (see
-        :ref:`stylesheet-origins`) to add to the document
+        :ref:`Stylesheet Origins`) to add to the document
         (e.g. ``-s print.css``). Multiple stylesheets are allowed.
 
     .. option:: -m <type>, --media-type <type>

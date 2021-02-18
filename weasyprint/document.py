@@ -687,17 +687,13 @@ class Page:
         :type context: ``Context``
         :param context:
             A context object.
-        :type left_x: float
-        :param left_x:
+        :param float left_x:
             X coordinate of the left of the page, in PDF points.
-        :type top_y: float
-        :param top_y:
+        :param float top_y:
             Y coordinate of the top of the page, in PDF points.
-        :type scale: float
-        :param scale:
+        :param float scale:
             Zoom scale.
-        :type clip: bool
-        :param clip:
+        :param bool clip:
             Whether to clip/cut content outside the page. If false or
             not provided, content can overflow.
 
@@ -882,7 +878,7 @@ class Document:
         self.metadata = metadata
         #: A function or other callable with the same signature as
         #: :func:`weasyprint.default_url_fetcher` called to fetch external
-        #: resources such as stylesheets and images. (See :ref:`url-fetchers`.)
+        #: resources such as stylesheets and images. (See :ref:`URL Fetchers`.)
         self.url_fetcher = url_fetcher
         #: A :obj:`dict` of fonts used by the document. Keys are hashes used to
         #: identify fonts, values are ``Font`` objects.
@@ -929,22 +925,21 @@ class Document:
     def write_pdf(self, target=None, zoom=1, attachments=None, finisher=None):
         """Paint the pages in a PDF file, with metadata.
 
-        :type target: str, pathlib.Path or :term:`file object`
+        :type target:
+            :class:`str`, :class:`pathlib.Path` or :term:`file object`
         :param target:
             A filename where the PDF file is generated, a file object, or
             :obj:`None`.
-        :type zoom: float
-        :param zoom:
+        :param float zoom:
             The zoom factor in PDF units per CSS units.  **Warning**:
             All CSS units are affected, including physical units like
             ``cm`` and named sizes like ``A4``.  For values other than
             1, the physical CSS units will thus be "wrong".
-        :type attachments: list
-        :param attachments: A list of additional file attachments for the
+        :param list attachments: A list of additional file attachments for the
             generated PDF document or :obj:`None`. The list's elements are
             ``Attachment`` objects, filenames, URLs or file-like objects.
         :param finisher: A finisher function, that accepts the document and a
-            ``pydyf.PDF`` object as parameters, can be passed to perform
+            :class:`pydyf.PDF` object as parameters, can be passed to perform
             post-processing on the PDF right before the trailer is written.
         :returns:
             The PDF as :obj:`bytes` if ``target`` is not provided or

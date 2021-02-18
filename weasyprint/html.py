@@ -49,7 +49,7 @@ def ascii_lower(string):
     This is used for `ASCII case-insensitive
     <http://whatwg.org/C#ascii-case-insensitive>`_ matching.
 
-    This is different from the :meth:`~py:str.lower` method of Unicode strings
+    This is different from the :meth:`str.lower` method of Unicode strings
     which also affect non-ASCII characters,
     sometimes mapping them into the ASCII range:
 
