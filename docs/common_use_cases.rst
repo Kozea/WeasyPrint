@@ -8,10 +8,16 @@ Include in Web Applications
 Using WeasyPrint in web applications sometimes requires attention on some
 details.
 
+Security Problems
+.................
+
 First of all, rendering untrusted HTML and CSS files can lead to :ref:`security
 problems <Security>`. Please be sure to carefully follow the different proposed
 solutions if you allow your users to modify the source of the rendered
 documents in any way.
+
+Rights Management
+.................
 
 Another problem is rights management: you often need to render templates that
 can only be accessed by authenticated users, and WeasyPrint installed on the
@@ -24,6 +30,56 @@ can read these extensions and probably find an equivalent workaround.
 .. _Flask: http://flask.pocoo.org/
 .. _Django-WeasyPrint: https://github.com/fdemmer/django-weasyprint
 .. _Django: https://www.djangoproject.com/
+
+Server Side Requests & Self-Signed SSL Certificates
+...................................................
+
+If your server is requesting data from itself, you may encounter a self-signed
+certificate error, even if you have a valid certificate.
+
+You need to add yourself as a Certificate Authority, so that your self-signed
+SSL certificates can be requested.
+
+.. code-block:: bash
+
+   # If you have not yet created a certificate.
+   sudo openssl req -x509 \
+       -sha256 \
+       -nodes \
+       -newkey rsa:4096 \
+       -days 365 \
+       -keyout localhost.key \
+       -out localhost.crt
+
+   # Follow the prompts about your certificate and the domain name.
+   openssl x509 -text -noout -in localhost.crt
+
+Add your new self-signed SSL certificate to your nginx.conf, below the line
+``server_name 123.123.123.123;``:
+
+.. code-block:: bash
+
+   ssl_certificate /etc/ssl/certs/localhost.crt;
+   ssl_certificate_key /etc/ssl/private/localhost.key;
+
+The SSL certificate will be valid when accessing your website from the
+internet. However, images will not render when requesting files from the same
+server.
+
+You will need to add your new self-signed certificates as trusted:
+
+.. code-block:: bash
+
+   sudo cp /etc/ssl/certs/localhost.crt /usr/local/share/ca-certificates/localhost.crt
+   sudo cp /etc/ssl/private/localhost.key /usr/local/share/ca-certificates/localhost.key
+
+   # Update the certificate authority trusted certificates.
+   sudo update-ca-certificates
+
+   # Export your newly updated Certificate Authority Bundle file.
+   # If using Django, it will use the newly signed certificate authority as
+   # valid and images will load properly.
+   sudo tee -a /etc/environment <<< 'export REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt'
 
 
 Adjust Document Dimensions
