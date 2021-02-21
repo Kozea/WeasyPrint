@@ -11,11 +11,11 @@ from io import BytesIO
 from itertools import cycle
 
 import pydyf
-import pydyfsvg
 from PIL import Image
 
 from .layout.percentages import percentage
 from .logger import LOGGER
+from .svg import SVG
 from .urls import URLFetchingError, fetch
 
 
@@ -134,7 +134,7 @@ def get_image_from_uri(cache, url_fetcher, optimize_images, url,
                 string = result['file_obj'].read()
             mime_type = forced_mime_type or result['mime_type']
             if mime_type == 'image/svg+xml':
-                image = SVGImage(pydyfsvg.SVG(string), url, url_fetcher)
+                image = SVGImage(SVG(string), url, url_fetcher)
             else:
                 # Try to rely on given mimetype
                 try:
