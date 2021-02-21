@@ -899,6 +899,8 @@ def test_url_fetcher():
          'url(weasyprint-custom:foo/é_%e9_pattern)">')
     test('<link rel=stylesheet href="weasyprint-custom:foo/bar.css"><body>')
     test('<style>@import "weasyprint-custom:foo/bar.css";</style><body>')
+    test('<style>@import url(weasyprint-custom:foo/bar.css);</style><body>')
+    test('<style>@import url("weasyprint-custom:foo/bar.css");</style><body>')
     test('<link rel=stylesheet href="weasyprint-custom:foo/bar.css"><body>')
 
     with capture_logs() as logs:
