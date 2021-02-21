@@ -839,9 +839,12 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
 
             tokens = remove_whitespace(rule.prelude)
             url = None
-            if tokens and len(tokens) == 1:
+            if tokens:
                 if tokens[0].type == 'string':
-                    url = tokens[0].value
+                    url = url_join(
+                        base_url, tokens[0].value, allow_relative=False,
+                        context='@import at %s:%s',
+                        context_args=(rule.source_line, rule.source_column))
                 else:
                     url_tuple = get_url(tokens[0], base_url)
                     if url_tuple and url_tuple[1][0] == 'external':
@@ -858,10 +861,6 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
             if not media_queries.evaluate_media_query(
                     media, device_media_type):
                 continue
-            url = url_join(
-                base_url, url, allow_relative=False,
-                context='@import at %s:%s',
-                context_args=(rule.source_line, rule.source_column))
             if url is not None:
                 try:
                     CSS(
