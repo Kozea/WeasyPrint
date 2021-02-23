@@ -1050,3 +1050,59 @@ def test_text_floating_pre_line():
       <div style="float: left; white-space: pre-line">This is
       oh this end </div>
     ''')
+
+
+@pytest.mark.xfail
+@assert_no_logs
+def test_max_lines():
+    page, = render_pages('''
+      <style>
+        @page {size: 10px 10px;}
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        p {
+          font-family: weasyprint;
+          font-size: 2px;
+          max-lines: 2;
+        }
+      </style>
+      <p>
+        abcd efgh ijkl
+      </p>
+    ''')
+    html, = page.children
+    body, = html.children
+    p1, p2 = body.children
+    line1, line2 = p1.children
+    line3, = p2.children
+    text1, = line1.children
+    text2, = line2.children
+    text3, = line3.children
+    assert text1.text == 'abcd'
+    assert text2.text == 'efgh'
+    assert text3.text == 'ijkl'
+
+
+@assert_no_logs
+def test_continue():
+    page, = render_pages('''
+      <style>
+        @page {size: 10px 4px;}
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        div {
+          continue: discard;
+          font-family: weasyprint;
+          font-size: 2px;
+        }
+      </style>
+      <div>
+        abcd efgh ijkl
+      </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    p, = body.children
+    line1, line2 = p.children
+    text1, = line1.children
+    text2, = line2.children
+    assert text1.text == 'abcd'
+    assert text2.text == 'efgh'
