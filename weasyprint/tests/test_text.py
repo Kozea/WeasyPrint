@@ -1069,6 +1069,7 @@ def test_continue():
           continue: discard;
           font-family: weasyprint;
           font-size: 2px;
+          line-height: 1;
         }
       </style>
       <div>

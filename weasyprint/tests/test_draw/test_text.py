@@ -134,13 +134,14 @@ def test_max_lines_ellipsis():
         __________
     ''', '''
       <style>
-        @page {size: 10px 10px;}
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page {size: 10px 10px; background: white}
+        @font-face {src: url(AHEM____.TTF); font-family: ahem}
         p {
           block-ellipsis: auto;
           color: blue;
-          font-family: weasyprint;
+          font-family: ahem;
           font-size: 2px;
+          line-height: 1;
           max-lines: 2;
         }
       </style>
@@ -167,12 +168,13 @@ def test_max_lines_nested():
         __________
     ''', '''
       <style>
-        @page {size: 10px 12px;}
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page {size: 10px 12px; background: white}
+        @font-face {src: url(AHEM____.TTF); font-family: ahem}
         div {
           continue: discard;
-          font-family: weasyprint;
+          font-family: ahem;
           font-size: 2px;
+          line-height: 1;
         }
         #a {
           color: blue;
@@ -212,13 +214,14 @@ def test_line_clamp():
         __________
     ''', '''
       <style>
-        @page {size: 10px 10px;}
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page {size: 10px 10px; background: white}
+        @font-face {src: url(AHEM____.TTF); font-family: ahem}
         p {
           color: blue;
-          font-family: weasyprint;
+          font-family: ahem;
           font-size: 2px;
           line-clamp: 3 "(…)";
+          line-height: 1;
         }
       </style>
 
@@ -250,14 +253,15 @@ def test_ellipsis_nested():
         BBBBBBBB__
     ''', '''
       <style>
-        @page {size: 10px 10px;}
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page {size: 10px 10px; background: white}
+        @font-face {src: url(AHEM____.TTF); font-family: ahem}
         div {
           block-ellipsis: auto;
           color: blue;
           continue: discard;
-          font-family: weasyprint;
+          font-family: ahem;
           font-size: 2px;
+          line-height: 1;
         }
       </style>
       <div>
