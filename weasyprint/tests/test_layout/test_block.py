@@ -775,3 +775,30 @@ def test_box_margin_top_repagination():
     div, h1 = body.children
     assert div.margin_top == 0
     assert div.padding_box_y() == 0
+
+
+@assert_no_logs
+def test_continue_discard():
+    page_1, = parse('''
+      <style>
+        @page { size: 80px; margin: 0 }
+        div { display: inline-block; width: 100%; height: 25px }
+        article { continue: discard; border: 1px solid; line-height: 1 }
+      </style>
+      <article>
+        <div>a</div>
+        <div>b</div>
+        <div>c</div>
+        <div>d</div>
+        <div>e</div>
+        <div>f</div>
+      </article>''')
+    html, = page_1.children
+    body, = html.children
+    article, = body.children
+    assert article.height == 3 * 25
+    div_1, div_2, div_3 = article.children
+    assert div_1.position_y == 1
+    assert div_2.position_y == 1 + 25
+    assert div_3.position_y == 1 + 25 * 2
+    assert article.border_bottom_width == 1

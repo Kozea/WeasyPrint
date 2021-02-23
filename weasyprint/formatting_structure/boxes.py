@@ -310,7 +310,8 @@ class ParentBox(Box):
         setattr(self, 'border_%s_width' % side, 0)
 
     def remove_decoration(self, start, end):
-        if self.style['box_decoration_break'] == 'clone':
+        if (self.style['box_decoration_break'] == 'clone' or
+                self.style['continue'] == 'discard'):
             return
         if start:
             self._reset_spacing('top')
