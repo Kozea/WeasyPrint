@@ -276,7 +276,10 @@ def block_container_layout(context, box, max_position_y, skip_stack,
     if adjoining_margins is None:
         adjoining_margins = []
 
-    if box.style['box_decoration_break'] == 'clone':
+    repeat_box_decoration = (
+        box.style['box_decoration_break'] == 'clone' or
+        box.style['continue'] == 'discard')
+    if repeat_box_decoration:
         max_position_y -= (
             box.padding_bottom + box.border_bottom_width +
             box.margin_bottom)
@@ -377,8 +380,11 @@ def block_container_layout(context, box, max_position_y, skip_stack,
 
                 # Add bottom padding and border to the bottom position of the
                 # box if needed
-                if resume_at is None or (
-                        box.style['box_decoration_break'] == 'clone'):
+                repeat_box_decoration = (
+                    resume_at is None or
+                    box.style['box_decoration_break'] == 'clone' or
+                    box.style['continue'] == 'discard')
+                if repeat_box_decoration:
                     offset_y = box.border_bottom_width + box.padding_bottom
                 else:
                     offset_y = 0
@@ -688,9 +694,10 @@ def block_container_layout(context, box, max_position_y, skip_stack,
     elif max_position_y < float('inf'):
         # Make the box fill the blank space at the bottom of the page
         # https://www.w3.org/TR/css-break-3/#box-splitting
-        new_box.height = (
-            max_position_y - new_box.position_y -
-            (new_box.margin_height() - new_box.height))
+        if box.style['continue'] != 'discard':
+            new_box.height = (
+                max_position_y - new_box.position_y -
+                (new_box.margin_height() - new_box.height))
         if box.style['box_decoration_break'] == 'clone':
             new_box.height += (
                 box.padding_bottom + box.border_bottom_width +
