@@ -13,5 +13,3 @@ Documentation contents
     features
     hacking
     changelog
-
-.. include:: ../AUTHORS

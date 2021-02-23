@@ -8,7 +8,7 @@
 
 import pytest
 from weasyprint.css.properties import INITIAL_VALUES
-from weasyprint.text import split_first_line
+from weasyprint.text.line_break import split_first_line
 
 from .test_boxes import render_pages
 from .testing_utils import MONO_FONTS, SANS_FONTS, assert_no_logs
@@ -410,7 +410,7 @@ def test_letter_spacing_1():
         '<style>'
         '  strong {'
         '    letter-spacing: 11px;'
-        '    max-width: ' + str(strong_3.width * 1.5) + 'px'
+        f'    max-width: {strong_3.width * 1.5}px'
         '}'
         '  span { display: inline-block }'
         '</style>'

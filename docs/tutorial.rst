@@ -196,10 +196,10 @@ URL fetchers
 ............
 
 WeasyPrint goes through a *URL fetcher* to fetch external resources such as
-images or CSS stylesheets. The default fetcher can natively open file and
-HTTP URLs, but the HTTP client does not support advanced features like cookies
-or authentication. This can be worked-around by passing a custom
-``url_fetcher`` callable to the :class:`HTML` or :class:`CSS` classes.
+images or CSS stylesheets. The default fetcher can natively open file and HTTP
+URLs, but the HTTP client does not support advanced features like cookies or
+authentication. This can be worked-around by passing a custom ``url_fetcher``
+callable to the :class:`weasyprint.HTML` or :class:`weasyprint.CSS` classes.
 It must have the same signature as :func:`~weasyprint.default_url_fetcher`.
 
 Custom fetchers can choose to handle some URLs and defer others
@@ -322,7 +322,7 @@ resources. This timeout has no effect with other protocols, including access to
 If you use WeasyPrint on a server with HTML or CSS samples coming from
 untrusted users, or need to reach network resources, you should:
 
-- use a custom `URL fetcher <url-fetchers>`_,
+- use a custom :ref:`URL fetcher <url-fetchers>`,
 - follow solutions listed in :ref:`long-renderings`.
 
 Infinite loops
@@ -373,7 +373,7 @@ If you use WeasyPrint on a server with HTML or CSS samples coming from
 untrusted users, you should:
 
 - restrict your process access to trusted files using sandboxing solutions,
-- use a custom `URL fetcher <url-fetchers>`_ that doesn't allow ``file://``
+- use a custom :ref:`URL fetcher <url-fetchers>` that doesn't allow ``file://``
   URLs or filters access depending on given paths.
 - follow solutions listed in :ref:`long-renderings`.
 

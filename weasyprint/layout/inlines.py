@@ -11,7 +11,7 @@ import unicodedata
 from ..css import computed_from_cascaded
 from ..css.computed_values import ex_ratio, strut_layout
 from ..formatting_structure import boxes
-from ..text import can_break_text, create_layout, split_first_line
+from ..text.line_break import can_break_text, create_layout, split_first_line
 from .absolute import AbsolutePlaceholder, absolute_layout
 from .flex import flex_layout
 from .float import avoid_collisions, float_layout
@@ -417,8 +417,8 @@ def replaced_box_height(box):
 def inline_replaced_box_layout(box, containing_block):
     """Lay out an inline :class:`boxes.ReplacedBox` ``box``."""
     for side in ['top', 'right', 'bottom', 'left']:
-        if getattr(box, 'margin_' + side) == 'auto':
-            setattr(box, 'margin_' + side, 0)
+        if getattr(box, f'margin_{side}') == 'auto':
+            setattr(box, f'margin_{side}', 0)
     inline_replaced_box_width_height(box, containing_block)
 
 
@@ -638,8 +638,8 @@ def split_inline_level(context, box, position_x, max_x, skip_stack,
         box.position_x = position_x
         box.position_y = 0
         for side in ['top', 'right', 'bottom', 'left']:
-            if getattr(box, 'margin_' + side) == 'auto':
-                setattr(box, 'margin_' + side, 0)
+            if getattr(box, f'margin_{side}') == 'auto':
+                setattr(box, f'margin_{side}', 0)
         new_box, resume_at, _, _, _ = flex_layout(
             context, box, float('inf'), skip_stack, containing_block,
             False, absolute_boxes, fixed_boxes)

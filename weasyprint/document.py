@@ -23,7 +23,6 @@ from .css import get_all_computed_styles
 from .css.counters import CounterStyle
 from .css.targets import TargetCollector
 from .draw import draw_page, stacked
-from .fonts import FontConfiguration
 from .formatting_structure import boxes
 from .formatting_structure.build import build_formatting_structure
 from .html import W3C_DATE_RE, get_html_metadata
@@ -31,7 +30,8 @@ from .images import get_image_from_uri as original_get_image_from_uri
 from .layout import LayoutContext, layout_document
 from .layout.percentages import percentage
 from .logger import LOGGER, PROGRESS_LOGGER
-from .text import ffi, pango
+from .text.ffi import ffi, pango
+from .text.fonts import FontConfiguration
 from .urls import URLFetchingError
 
 
@@ -68,22 +68,24 @@ def _w3c_date_to_pdf(string, attr_name):
 class Font:
     def __init__(self, file_content, pango_font):
         pango_metrics = pango.pango_font_get_metrics(pango_font, ffi.NULL)
-        font_description = pango.pango_font_describe(pango_font)
-        font_family = ffi.string(pango.pango_font_description_get_family(
-            font_description))
-        font_size = pango.pango_font_description_get_size(font_description)
+        self._font_description = pango.pango_font_describe(pango_font)
+        self.family = ffi.string(pango.pango_font_description_get_family(
+            self._font_description))
+        font_size = pango.pango_font_description_get_size(
+            self._font_description)
+        description_string = ffi.string(
+            pango.pango_font_description_to_string(self._font_description))
         sha = hashlib.sha256()
-        sha.update(file_content)
+        sha.update(description_string)
 
         self.file_content = file_content
+        self.file_hash = hash(file_content)
         self.hash = ''.join(
             chr(65 + letter % 26) for letter in sha.digest()[:6])
         self.name = (
             b'/' + self.hash.encode('ascii') + b'+' +
-            font_family.replace(b' ', b''))
-        self.family = font_family
-        self.flags = 4
-        self.italic_angle = 0
+            self.family.replace(b' ', b''))
+        self.italic_angle = 0  # TODO: this should be different
         self.ascent = int(
             pango.pango_font_metrics_get_ascent(pango_metrics) /
             font_size * 1000)
@@ -95,6 +97,18 @@ class Font:
         self.bbox = [0, 0, 0, 0]
         self.widths = {}
         self.cmap = {}
+
+    @property
+    def flags(self):
+        flags = 2 ** 3  # Symbolic, custom character set
+        if pango.pango_font_description_get_style(self._font_description):
+            flags += 2 ** 7  # Italic
+        if b'Serif' in self.family.split():
+            flags += 2 ** 2  # Serif
+        widths = self.widths.values()
+        if len(widths) > 1 and len(set(widths)) == 1:
+            flags += 2 ** 1  # FixedPitch
+        return flags
 
 
 class Context(pydyf.Stream):
@@ -635,8 +649,6 @@ class Page:
         has_link = link and not isinstance(box, (boxes.TextBox, boxes.LineBox))
         # In case of duplicate IDs, only the first is an anchor.
         has_anchor = anchor_name and anchor_name not in self.anchors
-        is_attachment = getattr(box, 'is_attachment', False)
-        download_name = getattr(box, 'attachment_download', None)
 
         if has_bookmark or has_link or has_anchor:
             pos_x, pos_y, width, height = box.hit_area()
@@ -645,18 +657,18 @@ class Page:
                 assert token_type == 'url'
                 link_type, target = link
                 assert isinstance(target, str)
-                if link_type == 'external' and is_attachment:
+                if link_type == 'external' and box.is_attachment:
                     link_type = 'attachment'
                 if matrix:
                     link = (
                         link_type, target,
                         rectangle_aabb(matrix, pos_x, pos_y, width, height),
-                        download_name)
+                        box.download_name)
                 else:
                     link = (
                         link_type, target,
                         (pos_x, pos_y, pos_x + width, pos_y + height),
-                        download_name)
+                        box.download_name)
                 self.links.append(link)
             if matrix and (has_bookmark or has_anchor):
                 pos_x, pos_y = matrix.transform_point(pos_x, pos_y)
@@ -672,7 +684,7 @@ class Page:
     def paint(self, context, left_x=0, top_y=0, scale=1, clip=False):
         """Paint the page into the PDF file.
 
-        :type context: :class:`pdf.Context`
+        :type context: ``Context``
         :param context:
             A context object.
         :type left_x: float
@@ -763,7 +775,7 @@ class Document:
     can also be instantiated directly with a list of :class:`pages <Page>`, a
     set of :class:`metadata <DocumentMetadata>`, a :func:`url_fetcher
     <weasyprint.default_url_fetcher>` function, and a :class:`font_config
-    <weasyprint.fonts.FontConfiguration>`.
+    <weasyprint.text.fonts.FontConfiguration>`.
 
     """
 
@@ -869,11 +881,11 @@ class Document:
         #: but to the whole document.
         self.metadata = metadata
         #: A function or other callable with the same signature as
-        #: :func:`default_url_fetcher` called to fetch external resources such
-        #: as stylesheets and images.  (See :ref:`url-fetchers`.)
+        #: :func:`weasyprint.default_url_fetcher` called to fetch external
+        #: resources such as stylesheets and images. (See :ref:`url-fetchers`.)
         self.url_fetcher = url_fetcher
         #: A :obj:`dict` of fonts used by the document. Keys are hashes used to
-        #: identify fonts, values are :class:`Font` objects.
+        #: identify fonts, values are ``Font`` objects.
         self.fonts = {}
         # Keep a reference to font_config to avoid its garbage collection until
         # rendering is destroyed. This is needed as font_config.__del__ removes
@@ -917,7 +929,7 @@ class Document:
     def write_pdf(self, target=None, zoom=1, attachments=None, finisher=None):
         """Paint the pages in a PDF file, with metadata.
 
-        :type target: str, pathlib.Path or file object
+        :type target: str, pathlib.Path or :term:`file object`
         :param target:
             A filename where the PDF file is generated, a file object, or
             :obj:`None`.
@@ -930,7 +942,7 @@ class Document:
         :type attachments: list
         :param attachments: A list of additional file attachments for the
             generated PDF document or :obj:`None`. The list's elements are
-            :class:`Attachment` objects, filenames, URLs or file-like objects.
+            ``Attachment`` objects, filenames, URLs or file-like objects.
         :param finisher: A finisher function, that accepts the document and a
             ``pydyf.PDF`` object as parameters, can be passed to perform
             post-processing on the PDF right before the trailer is written.
@@ -1162,22 +1174,32 @@ class Document:
             pdf.catalog['Names']['EmbeddedFiles'] = content.reference
 
         # Embeded fonts
-        fonts = pydyf.Dictionary()
+        pdf_fonts = pydyf.Dictionary()
+        fonts_by_file_hash = {}
         for font in self.fonts.values():
+            if font.file_hash in fonts_by_file_hash:
+                fonts_by_file_hash[font.file_hash].append(font)
+            else:
+                fonts_by_file_hash[font.file_hash] = [font]
+        font_references_by_file_hash = {}
+        for file_hash, fonts in fonts_by_file_hash.items():
             # Optimize font
+            cmap = {}
+            for font in fonts:
+                cmap = {**cmap, **font.cmap}
+            full_font = io.BytesIO(fonts[0].file_content)
+            optimized_font = io.BytesIO()
             try:
-                full_font = io.BytesIO(font.file_content)
-                optimized_font = io.BytesIO()
                 ttfont = TTFont(full_font)
                 options = subset.Options(
                     retain_gids=True, passthrough_tables=True)
                 subsetter = subset.Subsetter(options)
-                subsetter.populate(gids=font.cmap)
+                subsetter.populate(gids=cmap)
                 subsetter.subset(ttfont)
                 ttfont.save(optimized_font)
                 content = optimized_font.getvalue()
             except TTLibError:
-                content = font.file_content
+                content = fonts[0].file_content
 
             # Include font
             font_type = 'otf' if content[:4] == b'OTTO' else 'ttf'
@@ -1187,7 +1209,9 @@ class Document:
                 font_extra = pydyf.Dictionary({'Length1': len(content)})
             font_stream = pydyf.Stream([content], font_extra, compress=True)
             pdf.add_object(font_stream)
+            font_references_by_file_hash[file_hash] = font_stream.reference
 
+        for font in self.fonts.values():
             widths = pydyf.Array()
             for i in sorted(font.widths):
                 if i - 1 not in font.widths:
@@ -1199,7 +1223,7 @@ class Document:
                 'Type': '/FontDescriptor',
                 'FontName': font.name,
                 'FontFamily': pydyf.String(font.family),
-                'Flags': 32,
+                'Flags': font.flags,
                 'FontBBox': pydyf.Array(font.bbox),
                 'ItalicAngle': font.italic_angle,
                 'Ascent': font.ascent,
@@ -1208,7 +1232,7 @@ class Document:
                 'StemV': font.stemv,
                 'StemH': font.stemh,
                 (f'FontFile{"3" if font_type == "otf" else "2"}'):
-                    font_stream.reference,
+                    font_references_by_file_hash[font.file_hash],
             })
             if font_type == 'otf':
                 font_descriptor['Subtype'] = '/OpenType'
@@ -1262,10 +1286,10 @@ class Document:
                 'ToUnicode': to_unicode.reference,
             })
             pdf.add_object(font_dictionary)
-            fonts[font.hash] = font_dictionary.reference
+            pdf_fonts[font.hash] = font_dictionary.reference
 
-        pdf.add_object(fonts)
-        resources['Font'] = fonts.reference
+        pdf.add_object(pdf_fonts)
+        resources['Font'] = pdf_fonts.reference
         self._use_references(pdf, resources)
 
         # Anchors

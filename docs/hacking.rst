@@ -82,8 +82,7 @@ CSS
 As with HTML, CSS stylesheets are parsed in the :class:`weasyprint.CSS` class
 with an external library, tinycss2_.
 
-In addition to the actual parsing, the :mod:`weasyprint.css` and
-:mod:`weasyprint.css.validation` modules do some pre-processing:
+In addition to the actual parsing, the ``css`` module does some pre-processing:
 
 * Unknown and unsupported declarations are ignored with warnings.
   Remaining property values are parsed in a property-specific way
@@ -102,32 +101,32 @@ In addition to the actual parsing, the :mod:`weasyprint.css` and
 The cascade
 ...........
 
-After that and still in the :mod:`weasyprint.css` package, the cascade_
-(that’s the C in CSS!) applies the stylesheets to the element tree.
-Selectors associate property declarations to elements. In case of conflicting
-declarations (different values for the same property on the same element),
-the one with the highest *weight* wins. Weights are based on the stylesheet’s
-:ref:`origin <stylesheet-origins>`, ``!important`` markers, selector
-specificity and source order. Missing values are filled in through
-*inheritance* (from the parent element) or the property’s *initial value*,
-so that every element has a *specified value* for every property.
+After that and still in the ``css`` module, the cascade_ (that’s the C in CSS!)
+applies the stylesheets to the element tree.  Selectors associate property
+declarations to elements. In case of conflicting declarations (different values
+for the same property on the same element), the one with the highest *weight*
+wins. Weights are based on the stylesheet’s :ref:`origin <stylesheet-origins>`,
+``!important`` markers, selector specificity and source order. Missing values
+are filled in through *inheritance* (from the parent element) or the property’s
+*initial value*, so that every element has a *specified value* for every
+property.
 
 .. _cascade: http://www.w3.org/TR/CSS21/cascade.html
 
 These *specified values* are turned into *computed values* in the
-``weasyprint.css.computed_values`` module. Keywords and lengths in various
-units are converted to pixels, etc. At this point the value for some
-properties can be represented by a single number or string, but some require
-more complex objects. For example, a :class:`Dimension` object can be either
-an absolute length or a percentage.
+``css.computed_values`` module. Keywords and lengths in various units are
+converted to pixels, etc. At this point the value for some properties can be
+represented by a single number or string, but some require more complex
+objects. For example, a ``Dimension`` object can be either an absolute length
+or a percentage.
 
-The final result of the :func:`~weasyprint.css.get_all_computed_styles`
-function is a big dict where keys are ``(element, pseudo_element_type)``
-tuples, and keys are style dict objects. Elements are ElementTree elements,
-while the type of pseudo-element is a string for eg. ``::first-line``
-selectors, or :obj:`None` for “normal” elements. Style dict objects are dicts
-mapping property names to the computed values. (The return value is not the
-dict itself, but a convenience :func:`style_for` function for accessing it.)
+The final result of the ``get_all_computed_styles`` function is a big dict
+where keys are ``(element, pseudo_element_type)`` tuples, and keys are style
+dict objects. Elements are ElementTree elements, while the type of
+pseudo-element is a string for eg. ``::first-line`` selectors, or :obj:`None`
+for “normal” elements. Style dict objects are dicts mapping property names to
+the computed values. (The return value is not the dict itself, but a
+convenience ``style_for`` function for accessing it.)
 
 
 Formatting structure
@@ -142,28 +141,27 @@ generate more than one box or none.
 .. _visual formatting model: http://www.w3.org/TR/CSS21/visuren.html
 
 Boxes are of a lot of different kinds. For example you should not confuse
-*block-level boxes* and *block containers*, though *block boxes* are both.
-The :mod:`weasyprint.formatting_structure.boxes` module has a whole hierarchy
-of classes to represent all these boxes. We won’t go into the details here,
-see the module and class docstrings.
+*block-level boxes* and *block containers*, though *block boxes* are both. The
+``formatting_structure.boxes`` module has a whole hierarchy of classes to
+represent all these boxes. We won’t go into the details here, see the module
+and class docstrings.
 
-The :mod:`weasyprint.formatting_structure.build` module takes an ElementTree
-tree with associated computed styles, and builds a formatting structure. It
-generates the right boxes for each element and ensures they conform to the
-models rules (eg. an inline box can not contain a block). Each box has a
-:attr:`.style` attribute containing the style dict of computed values.
+The ``formatting_structure.build`` module takes an ElementTree tree with
+associated computed styles, and builds a formatting structure. It generates the
+right boxes for each element and ensures they conform to the models rules
+(eg. an inline box can not contain a block). Each box has a ``style`` attribute
+containing the style dict of computed values.
 
 The main logic is based on the ``display`` property, but it can be overridden
-for some elements by adding a handler in the ``weasyprint.html`` module.
-This is how ``<img>`` and ``<td colspan=3>`` are currently implemented,
-for example.
+for some elements by adding a handler in the ``html`` module. This is how
+``<img>`` and ``<td colspan=3>`` are currently implemented, for example.
 
 This module is rather short as most of HTML is defined in CSS rather than
 in Python, in the `user agent stylesheet`_.
 
-The :func:`~weasyprint.formatting_structure.build.build_formatting_structure`
-function returns the box for the root element (and, through its
-:attr:`children` attribute, the whole tree).
+The ``formatting_structure.build.build_formatting_structure`` function returns
+the box for the root element (and, through its ``children`` attribute, the
+whole tree).
 
 .. _user agent stylesheet: https://github.com/Kozea/WeasyPrint/blob/master/weasyprint/css/html5_ua.css
 
@@ -187,21 +185,19 @@ padding and content areas:
 .. image:: _static/box_model.png
     :align: center
 
-While :obj:`box.style` contains computed values, the `used values`_ are set
-as attributes of the :class:`Box` object itself during the layout. This
-include resolving percentages and especially ``auto`` values into absolute,
-pixel lengths. Once the layout done, each box has used values for
-margins, border width, padding of each four sides, as well as the
-:attr:`width` and :attr:`height` of the content area. They also have
-:attr:`position_x` and :attr:`position_y`, the absolute coordinates of the
-top-left corner of the margin box (**not** the content box) from the top-left
-corner of the page.\ [#]_
+While ``box.style`` contains computed values, the `used values`_ are set as
+attributes of the ``Box`` object itself during the layout. This include
+resolving percentages and especially ``auto`` values into absolute, pixel
+lengths. Once the layout done, each box has used values for margins, border
+width, padding of each four sides, as well as the ``width`` and ``height`` of
+the content area. They also have ``position_x`` and ``position_y``, the
+absolute coordinates of the top-left corner of the margin box (**not** the
+content box) from the top-left corner of the page. [#]_
 
-Boxes also have helpers methods such as :meth:`content_box_y` and
-:meth:`margin_width` that give other metrics that can be useful in various
-parts of the code.
+Boxes also have helpers methods such as ``content_box_y`` and ``margin_width``
+that give other metrics that can be useful in various parts of the code.
 
-The final result of the layout is a list of :class:`PageBox` objects.
+The final result of the layout is a list of ``PageBox`` objects.
 
 .. [#] These are the coordinates *if* no `CSS transform`_ applies.
        Transforms change the actual location of boxes, but they are applied
@@ -213,16 +209,16 @@ The final result of the layout is a list of :class:`PageBox` objects.
 Stacking & Drawing
 ..................
 
-In step 6, the boxes are reordered by the :mod:`weasyprint.stacking` module
-to observe `stacking rules`_ such as the ``z-index`` property.
-The result is a tree of *stacking contexts*.
+In step 6, the boxes are reordered by the ``stacking`` module to observe
+`stacking rules`_ such as the ``z-index`` property.  The result is a tree of
+*stacking contexts*.
 
 Next, each laid-out page is *drawn* onto a PDF page. Since each box has
 absolute coordinates on the page from the layout step, the logic here should be
 minimal. If you find yourself adding a lot of logic here, maybe it should go in
 the layout or stacking instead.
 
-The code lives in the :mod:`weasyprint.draw` module.
+The code lives in the ``draw`` module.
 
 .. _stacking rules: http://www.w3.org/TR/CSS21/zindex.html
 
@@ -230,6 +226,5 @@ The code lives in the :mod:`weasyprint.draw` module.
 Metadata
 ........
 
-Finally (step 7), the :mod:`weasyprint.pdf` module parses (if needed) the PDF
-file produced and adds metadata: attachments, embedded files, trim box and
-bleed box.
+Finally (step 7), the ``pdf`` module parses (if needed) the PDF file produced
+and adds metadata: attachments, embedded files, trim box and bleed box.

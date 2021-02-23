@@ -30,10 +30,11 @@ if hasattr(sys, 'frozen'):  # pragma: no cover
 else:
     ROOT = Path(os.path.dirname(__file__))
 
-VERSION = __version__ = (ROOT / 'VERSION').read_text().strip()
+VERSION = __version__ = '53.0'
 
-__all__ = ['HTML', 'CSS', 'Attachment', 'Document', 'Page',
-           'default_url_fetcher', 'VERSION']
+__all__ = [
+    'HTML', 'CSS', 'Attachment', 'Document', 'Page', 'default_url_fetcher',
+    'VERSION', '__version__']
 
 
 # Import after setting the version, as the version is used in other modules
@@ -77,7 +78,7 @@ class HTML:
         (e.g. in ``<img src="../foo.png">``). If not provided, try to use
         the input filename, URL, or ``name`` attribute of :term:`file objects
         <file object>`.
-    :type url_fetcher: function
+    :type url_fetcher: :term:`function`
     :param url_fetcher: A function or other callable
         with the same signature as :func:`default_url_fetcher` called to
         fetch external resources such as stylesheets and images.
@@ -144,7 +145,7 @@ class HTML:
             followed.
         :type optimize_images: bool
         :param optimize_images: Try to optimize the size of embedded images.
-        :type font_config: :class:`~fonts.FontConfiguration`
+        :type font_config: :class:`~text.fonts.FontConfiguration`
         :param font_config: A font configuration handling ``@font-face`` rules.
         :type counter_style: :class:`~css.counters.CounterStyle`
         :param counter_style: A dictionary storing ``@counter-style`` rules.
@@ -166,7 +167,7 @@ class HTML:
         This is a shortcut for calling :meth:`render`, then
         :meth:`Document.write_pdf() <document.Document.write_pdf>`.
 
-        :type target: str, pathlib.Path or file object
+        :type target: str, pathlib.Path or :term:`file object`
         :param target:
             A filename where the PDF file is generated, a file object, or
             :obj:`None`.
@@ -190,7 +191,7 @@ class HTML:
             followed.
         :type optimize_images: bool
         :param optimize_images: Try to optimize the size of embedded images.
-        :type font_config: :class:`~fonts.FontConfiguration`
+        :type font_config: :class:`~text.fonts.FontConfiguration`
         :param font_config: A font configuration handling ``@font-face`` rules.
         :type counter_style: :class:`~css.counters.CounterStyle`
         :param counter_style: A dictionary storing ``@counter-style`` rules.
@@ -217,8 +218,8 @@ class CSS:
     arguments.
 
     An additional argument called ``font_config`` must be provided to handle
-    ``@font-config`` rules. The same ``fonts.FontConfiguration`` object must be
-    used for different ``CSS`` objects applied to the same document.
+    ``@font-config`` rules. The same ``text.fonts.FontConfiguration`` object
+    must be used for different ``CSS`` objects applied to the same document.
 
     ``CSS`` objects have no public attributes or methods. They are only meant
     to be used in the :meth:`~HTML.write_pdf` and :meth:`~HTML.render` methods

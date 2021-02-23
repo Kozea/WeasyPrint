@@ -12,8 +12,8 @@
 
 import sys
 
-from .. import text
 from ..formatting_structure import boxes
+from ..text.line_break import split_first_line
 from .replaced import default_image_sizing
 
 
@@ -294,7 +294,7 @@ def inline_line_widths(context, box, outer, is_line_start, minimum,
                 while new_resume_at is not None:
                     resume_at += new_resume_at
                     _, _, new_resume_at, width, _, _ = (
-                        text.split_first_line(
+                        split_first_line(
                             child_text[resume_at:], child.style, context,
                             max_width, child.justification_spacing,
                             minimum=True))

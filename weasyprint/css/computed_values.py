@@ -12,8 +12,9 @@ from urllib.parse import unquote
 
 from tinycss2.color3 import parse_color
 
-from .. import text
 from ..logger import LOGGER
+from ..text.ffi import ffi, pango, units_to_double
+from ..text.line_break import Layout, first_line_metrics, line_size
 from ..urls import get_link_attribute
 from .properties import (
     INHERITED, INITIAL_NOT_COMPUTED, INITIAL_VALUES, Dimension)
@@ -378,12 +379,12 @@ def length(computer, name, value, font_size=None, pixels_only=False):
         elif unit == 'ch':
             # TODO: cache
             # TODO: use context to use @font-face fonts
-            layout = text.Layout(
+            layout = Layout(
                 context=None, font_size=font_size,
                 style=computer['computed'])
             layout.set_text('0')
             line, _ = layout.get_first_line()
-            logical_width, _ = text.get_size(line, computer['computed'])
+            logical_width, _ = line_size(line, computer['computed'])
             result = value.value * logical_width
         elif unit == 'em':
             result = value.value * font_size
@@ -772,10 +773,10 @@ def strut_layout(style, context=None):
         if key in context.strut_layouts:
             return context.strut_layouts[key]
 
-    layout = text.Layout(context, style['font_size'], style)
+    layout = Layout(context, style['font_size'], style)
     layout.set_text(' ')
     line, _ = layout.get_first_line()
-    _, _, _, _, text_height, baseline = text.first_line_metrics(
+    _, _, _, _, text_height, baseline = first_line_metrics(
         line, '', layout, resume_at=None, space_collapse=False, style=style)
     if style['line_height'] == 'normal':
         result = text_height, baseline
@@ -795,10 +796,15 @@ def ex_ratio(style):
     """Return the ratio 1ex/font_size, according to given style."""
     font_size = 1000  # big value
     # TODO: use context to use @font-face fonts
-    layout = text.Layout(context=None, font_size=font_size, style=style)
+    layout = Layout(context=None, font_size=font_size, style=style)
     layout.set_text('x')
     line, _ = layout.get_first_line()
-    _, ink_height_above_baseline = text.get_ink_position(line)
+
+    ink_extents = ffi.new('PangoRectangle *')
+    pango.pango_layout_line_get_extents(line, ink_extents, ffi.NULL)
+    height_above_baseline = units_to_double(ink_extents.y)
+    ffi.release(ink_extents)
+
     # Zero means some kind of failure, fallback is 0.5.
     # We round to try keeping exact values that were altered by Pango.
-    return round(-ink_height_above_baseline / font_size, 5) or 0.5
+    return round(-height_above_baseline / font_size, 5) or 0.5

@@ -95,9 +95,9 @@ def path2url(path):
     if path.startswith('///'):
         # On Windows pathname2url(r'C:\foo') is apparently '///C:/foo'
         # That enough slashes already.
-        return 'file:' + path
+        return f'file:{path}'
     else:
-        return 'file://' + path
+        return f'file://{path}'
 
 
 def url_is_absolute(url):
@@ -135,7 +135,7 @@ def url_join(base_url, url, allow_relative, context, context_args):
         return iri_to_uri(url)
     else:
         LOGGER.error(
-            'Relative URI reference without a base URI: ' + context,
+            f'Relative URI reference without a base URI: {context}',
             *context_args)
         return None
 
@@ -175,7 +175,7 @@ def default_url_fetcher(url, timeout=10, ssl_context=None):
     """Fetch an external resource such as an image or stylesheet.
 
     Another callable with the same signature can be given as the
-    :obj:`url_fetcher` argument to :class:`HTML` or :class:`CSS`.
+    ``url_fetcher`` argument to :class:`HTML` or :class:`CSS`.
     (See :ref:`url-fetchers`.)
 
     :type url: str

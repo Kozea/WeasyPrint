@@ -548,7 +548,7 @@ def counter(tokens, default_integer):
             return  # expected a keyword here
         counter_name = token.value
         if counter_name in ('none', 'initial', 'inherit'):
-            raise InvalidValues('Invalid counter name: ' + counter_name)
+            raise InvalidValues(f'Invalid counter name: {counter_name}')
         token = next(tokens, None)
         if token is not None and (
                 token.type == 'number' and token.int_value is not None):
@@ -1267,10 +1267,9 @@ def anchor(token):
     function = parse_function(token)
     if function:
         name, args = function
-        prototype = (name, [a.type for a in args])
-        args = [getattr(a, 'value', a) for a in args]
+        prototype = (name, [arg.type for arg in args])
         if prototype == ('attr', ['ident']):
-            return ('attr()', args[0])
+            return ('attr()', args[0].value)
 
 
 @property(proprietary=True, wants_base_url=True)
@@ -1285,10 +1284,9 @@ def link(token, base_url):
     function = parse_function(token)
     if function:
         name, args = function
-        prototype = (name, [a.type for a in args])
-        args = [getattr(a, 'value', a) for a in args]
+        prototype = (name, [arg.type for arg in args])
         if prototype == ('attr', ['ident']):
-            return ('attr()', args[0])
+            return ('attr()', args[0].value)
 
 
 @property()
@@ -1382,10 +1380,9 @@ def lang(token):
     function = parse_function(token)
     if function:
         name, args = function
-        prototype = (name, [a.type for a in args])
-        args = [getattr(a, 'value', a) for a in args]
+        prototype = (name, [arg.type for arg in args])
         if prototype == ('attr', ['ident']):
-            return ('attr()', args[0])
+            return ('attr()', args[0].value)
     elif token.type == 'string':
         return ('string', token.value)
 
