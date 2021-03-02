@@ -1,0 +1,33 @@
+name: Build Wheels
+on:
+  push:
+  pull_request:
+    branches: [master]
+
+jobs:
+  tests:
+    name: Build On ${{ matrix.arch }}
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x64,x86]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v1
+        with:
+          python-version: 3.8
+          architecture: ${{ matrix.arch }}
+      - name: Install Requirements
+        run: |
+          pip install -r packaging/requirements.txt
+      - name: Build
+        shell: pwsh
+        run: |
+          python packaging/build_wheel.py $PWD\wheelhouse
+      
+      - name: Store artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          path: wheelhouse/*
+          name: wheels
