@@ -5,7 +5,14 @@
     Imports of dynamic libraries used for text layout.
 
 """
-
+try:
+    # this is applicable only when run from Windows wheels
+    # where these would be defined in root module
+    from .. import gobject_dll,pango_dll,harfbuzz_dll
+    from .. import fontconfig_dll,pangoft2_dll
+    from_wheel = True
+except ImportError:
+    from_wheel = False
 import cffi
 
 ffi = cffi.FFI()
@@ -374,22 +381,28 @@ def _dlopen(ffi, *names):
     # Re-raise the exception.
     return ffi.dlopen(names[0])  # pragma: no cover
 
-
-gobject = _dlopen(
-    ffi, 'gobject-2.0-0', 'gobject-2.0', 'libgobject-2.0-0',
-    'libgobject-2.0.so.0', 'libgobject-2.0.dylib')
-pango = _dlopen(
-    ffi, 'pango-1.0-0', 'pango-1.0', 'libpango-1.0-0', 'libpango-1.0.so.0',
-    'libpango-1.0.dylib')
-harfbuzz = _dlopen(
-    ffi, 'harfbuzz', 'harfbuzz-0.0', 'libharfbuzz-0',
-    'libharfbuzz.so.0', 'libharfbuzz.so.0', 'libharfbuzz.0.dylib')
-fontconfig = _dlopen(
-    ffi, 'fontconfig-1', 'fontconfig', 'libfontconfig', 'libfontconfig-1.dll',
-    'libfontconfig.so.1', 'libfontconfig-1.dylib')
-pangoft2 = _dlopen(
-    ffi, 'pangoft2-1.0-0', 'pangoft2-1.0', 'libpangoft2-1.0-0',
-    'libpangoft2-1.0.so.0', 'libpangoft2-1.0.dylib')
+if from_wheel: # pragma: no cover
+    gobject = ffi.dlopen(gobject_dll)
+    pango = ffi.dlopen(pango_dll)
+    harfbuzz = ffi.dlopen(harfbuzz_dll)
+    fontconfig = ffi.dlopen(fontconfig_dll)
+    pangoft2 = ffi.dlopen(pangoft2_dll)
+else:
+    gobject = _dlopen(
+        ffi, 'gobject-2.0-0', 'gobject-2.0', 'libgobject-2.0-0',
+        'libgobject-2.0.so.0', 'libgobject-2.0.dylib')
+    pango = _dlopen(
+        ffi, 'pango-1.0-0', 'pango-1.0', 'libpango-1.0-0', 'libpango-1.0.so.0',
+        'libpango-1.0.dylib')
+    harfbuzz = _dlopen(
+        ffi, 'harfbuzz', 'harfbuzz-0.0', 'libharfbuzz-0',
+        'libharfbuzz.so.0', 'libharfbuzz.so.0', 'libharfbuzz.0.dylib')
+    fontconfig = _dlopen(
+        ffi, 'fontconfig-1', 'fontconfig', 'libfontconfig', 'libfontconfig-1.dll',
+        'libfontconfig.so.1', 'libfontconfig-1.dylib')
+    pangoft2 = _dlopen(
+        ffi, 'pangoft2-1.0-0', 'pangoft2-1.0', 'libpangoft2-1.0-0',
+        'libpangoft2-1.0.so.0', 'libpangoft2-1.0.dylib')
 
 gobject.g_type_init()
 

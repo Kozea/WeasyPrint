@@ -36,6 +36,8 @@ __all__ = [
     'HTML', 'CSS', 'Attachment', 'Document', 'Page', 'default_url_fetcher',
     'VERSION', '__version__']
 
+# import _distributor_init first
+from ._distributor_init import * # noqa isort:skip
 
 # Import after setting the version, as the version is used in other modules
 from .urls import (  # noqa isort:skip
