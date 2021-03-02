@@ -26,7 +26,7 @@ from ..logger import LOGGER, PROGRESS_LOGGER
 from ..urls import URLFetchingError, get_url_attribute, url_join
 from . import computed_values, counters, media_queries
 from .properties import INHERITED, INITIAL_NOT_COMPUTED, INITIAL_VALUES
-from .utils import remove_whitespace
+from .utils import get_url, remove_whitespace
 from .validation import preprocess_declarations
 from .validation.descriptors import preprocess_descriptors
 
@@ -830,9 +830,18 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                 continue
 
             tokens = remove_whitespace(rule.prelude)
-            if tokens and tokens[0].type in ('url', 'string'):
-                url = tokens[0].value
-            else:
+            url = None
+            if tokens:
+                if tokens[0].type == 'string':
+                    url = url_join(
+                        base_url, tokens[0].value, allow_relative=False,
+                        context='@import at %s:%s',
+                        context_args=(rule.source_line, rule.source_column))
+                else:
+                    url_tuple = get_url(tokens[0], base_url)
+                    if url_tuple and url_tuple[1][0] == 'external':
+                        url = url_tuple[1][1]
+            if url is None:
                 continue
             media = media_queries.parse_media_query(tokens[1:])
             if media is None:
@@ -845,10 +854,6 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
             if not media_queries.evaluate_media_query(
                     media, device_media_type):
                 continue
-            url = url_join(
-                base_url, url, allow_relative=False,
-                context='@import at %d:%d',
-                context_args=(rule.source_line, rule.source_column))
             if url is not None:
                 try:
                     CSS(
