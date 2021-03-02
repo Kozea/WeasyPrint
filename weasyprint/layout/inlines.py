@@ -535,7 +535,7 @@ def inline_block_box_layout(context, box, position_x, skip_stack,
     box, _, _, _, _ = block_container_layout(
         context, box, max_position_y=float('inf'), skip_stack=skip_stack,
         page_is_empty=True, absolute_boxes=absolute_boxes,
-        fixed_boxes=fixed_boxes)
+        fixed_boxes=fixed_boxes, adjoining_margins=None, discard=False)
     box.baseline = inline_block_baseline(box)
     return box
 

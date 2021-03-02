@@ -436,7 +436,8 @@ def margin_box_content_layout(context, page, box):
     box, resume_at, next_page, _, _ = block_container_layout(
         context, box,
         max_position_y=float('inf'), skip_stack=None,
-        page_is_empty=True, absolute_boxes=[], fixed_boxes=[])
+        page_is_empty=True, absolute_boxes=[], fixed_boxes=[],
+        adjoining_margins=None, discard=False)
     assert resume_at is None
 
     vertical_align = box.style['vertical_align']
@@ -547,7 +548,7 @@ def make_page(context, root_box, page_type, resume_at, page_number,
     root_box, resume_at, next_page, _, _ = block_level_layout(
         context, root_box, page_content_bottom, resume_at,
         initial_containing_block, page_is_empty, positioned_boxes,
-        positioned_boxes, adjoining_margins)
+        positioned_boxes, adjoining_margins, discard=False)
     assert root_box
 
     page.fixed_boxes = [

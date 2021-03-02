@@ -802,3 +802,35 @@ def test_continue_discard():
     assert div_2.position_y == 1 + 25
     assert div_3.position_y == 1 + 25 * 2
     assert article.border_bottom_width == 1
+
+
+@assert_no_logs
+def test_continue_discard_children():
+    page_1, = parse('''
+      <style>
+        @page { size: 80px; margin: 0 }
+        div { display: inline-block; width: 100%; height: 25px }
+        section { border: 1px solid }
+        article { continue: discard; border: 1px solid; line-height: 1 }
+      </style>
+      <article>
+        <section>
+          <div>a</div>
+          <div>b</div>
+          <div>c</div>
+          <div>d</div>
+          <div>e</div>
+          <div>f</div>
+        </section>
+      </article>''')
+    html, = page_1.children
+    body, = html.children
+    article, = body.children
+    assert article.height == 2 + 3 * 25
+    section, = article.children
+    assert section.height == 3 * 25
+    div_1, div_2, div_3 = section.children
+    assert div_1.position_y == 2
+    assert div_2.position_y == 2 + 25
+    assert div_3.position_y == 2 + 25 * 2
+    assert article.border_bottom_width == 1
