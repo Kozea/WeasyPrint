@@ -12,6 +12,13 @@ jobs:
       fail-fast: false
       matrix:
         arch: [x64,x86]
+        include:
+          - arch: x64
+            platform_id: x86_64
+            mingw: mingw64
+          - arch: x86
+            platform_id: i686
+            mingw: mingw32
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v1
@@ -23,10 +30,10 @@ jobs:
           pip install -r packaging/requirements.txt
       - name: Install DejaVu, Pango and Ghostscript (Windows)
         run: |
-          C:\msys64\usr\bin\bash -lc 'pacman -S mingw-w64-x86_64-ttf-dejavu mingw-w64-x86_64-pango mingw-w64-x86_64-ghostscript --noconfirm'
-          xcopy "C:\msys64\mingw64\share\fonts\TTF" "C:\Users\runneradmin\.fonts" /e /i
-          echo "C:\msys64\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH
-          rm C:\msys64\mingw64\bin\python.exe
+          C:\msys64\usr\bin\bash -lc 'pacman -S mingw-w64-${{matrix.platform_id}}-ttf-dejavu mingw-w64-${{matrix.platform_id}}-pango mingw-w64-${{matrix.platform_id}}-ghostscript --noconfirm'
+          xcopy "C:\msys64\${{matrix.mingw}}\share\fonts\TTF" "C:\Users\runneradmin\.fonts" /e /i
+          echo "C:\msys64\${{matrix.mingw}}\bin" | Out-File -FilePath $env:GITHUB_PATH
+          rm C:\msys64\${{matrix.mingw}}\bin\python.exe
       - name: Build
         shell: pwsh
         run: |
