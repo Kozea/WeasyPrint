@@ -15,6 +15,7 @@ from .layout import replaced
 from .layout.backgrounds import BackgroundLayer
 from .stacking import StackingContext
 from .text.ffi import ffi, harfbuzz, pango, units_from_double, units_to_double
+from .text.line_break import get_last_word_end
 
 SIDES = ('top', 'right', 'bottom', 'left')
 CROP = '''
@@ -991,7 +992,8 @@ def draw_replacedbox(context, box):
             context, draw_width, draw_height, box.style['image_rendering'])
 
 
-def draw_inline_level(context, page, box, offset_x=0, text_overflow='clip'):
+def draw_inline_level(context, page, box, offset_x=0, text_overflow='clip',
+                      block_ellipsis='none'):
     if isinstance(box, StackingContext):
         stacking_context = box
         assert isinstance(
@@ -1003,8 +1005,13 @@ def draw_inline_level(context, page, box, offset_x=0, text_overflow='clip'):
         if isinstance(box, (boxes.InlineBox, boxes.LineBox)):
             if isinstance(box, boxes.LineBox):
                 text_overflow = box.text_overflow
+                block_ellipsis = box.block_ellipsis
             in_text = False
-            for child in box.children:
+            ellipsis = 'none'
+            for i, child in enumerate(box.children):
+                if i == len(box.children) - 1:
+                    # Last child
+                    ellipsis = block_ellipsis
                 if isinstance(child, StackingContext):
                     child_offset_x = offset_x
                 else:
@@ -1014,13 +1021,16 @@ def draw_inline_level(context, page, box, offset_x=0, text_overflow='clip'):
                     if not in_text:
                         context.begin_text()
                         in_text = True
-                    draw_text(context, child, child_offset_x, text_overflow)
+                    draw_text(
+                        context, child, child_offset_x, text_overflow,
+                        ellipsis)
                 else:
                     if in_text:
                         in_text = False
                         context.end_text()
                     draw_inline_level(
-                        context, page, child, child_offset_x, text_overflow)
+                        context, page, child, child_offset_x, text_overflow,
+                        ellipsis)
             if in_text:
                 context.end_text()
         elif isinstance(box, boxes.InlineReplacedBox):
@@ -1033,7 +1043,7 @@ def draw_inline_level(context, page, box, offset_x=0, text_overflow='clip'):
             context.end_text()
 
 
-def draw_text(context, textbox, offset_x, text_overflow):
+def draw_text(context, textbox, offset_x, text_overflow, block_ellipsis):
     """Draw a textbox to a pydyf stream."""
     # Pango crashes with font-size: 0
     assert textbox.style['font_size']
@@ -1046,7 +1056,7 @@ def draw_text(context, textbox, offset_x, text_overflow):
     context.set_alpha(textbox.style['color'][3])
 
     textbox.pango_layout.reactivate(textbox.style)
-    draw_first_line(context, textbox, text_overflow, x, y)
+    draw_first_line(context, textbox, text_overflow, block_ellipsis, x, y)
 
     # Draw text decoration
     values = textbox.style['text_decoration_line']
@@ -1073,20 +1083,40 @@ def draw_text(context, textbox, offset_x, text_overflow):
     textbox.pango_layout.deactivate()
 
 
-def draw_first_line(context, textbox, text_overflow, x, y):
+def draw_first_line(context, textbox, text_overflow, block_ellipsis, x, y):
     """Draw the given ``textbox`` line to the document ``context``."""
     pango.pango_layout_set_single_paragraph_mode(
         textbox.pango_layout.layout, True)
 
-    if text_overflow == 'ellipsis':
+    if text_overflow == 'ellipsis' or block_ellipsis != 'none':
         assert textbox.pango_layout.max_width is not None
         max_width = textbox.pango_layout.max_width
         pango.pango_layout_set_width(
             textbox.pango_layout.layout, units_from_double(max_width))
-        pango.pango_layout_set_ellipsize(
-            textbox.pango_layout.layout, pango.PANGO_ELLIPSIZE_END)
+        if text_overflow == 'ellipsis':
+            pango.pango_layout_set_ellipsize(
+                textbox.pango_layout.layout, pango.PANGO_ELLIPSIZE_END)
+        else:
+            if block_ellipsis == 'auto':
+                ellipsis = '…'
+            else:
+                assert block_ellipsis[0] == 'string'
+                ellipsis = block_ellipsis[1]
+            textbox.pango_layout.set_text(textbox.pango_layout.text + ellipsis)
 
-    first_line, _ = textbox.pango_layout.get_first_line()
+    first_line, second_line = textbox.pango_layout.get_first_line()
+
+    if block_ellipsis != 'none':
+        while second_line:
+            last_word_end = get_last_word_end(
+                textbox.pango_layout.text[:-len(ellipsis)],
+                textbox.style['lang'])
+            if last_word_end is None:
+                break
+            text = textbox.pango_layout.text
+            new_text = text.encode('utf-8')[:last_word_end].decode('utf-8')
+            textbox.pango_layout.set_text(new_text + ellipsis)
+            first_line, second_line = textbox.pango_layout.get_first_line()
 
     font_size = textbox.style['font_size']
     utf8_text = textbox.text.encode('utf-8')

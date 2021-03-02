@@ -411,6 +411,7 @@ class LineBox(ParentBox):
 
     """
     text_overflow = 'clip'
+    block_ellipsis = 'none'
 
     @classmethod
     def anonymous_from(cls, parent, *args, **kwargs):
