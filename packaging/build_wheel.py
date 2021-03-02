@@ -16,6 +16,7 @@
 """
 import logging
 import re
+import argparse
 import shutil
 import struct
 import subprocess
@@ -50,7 +51,7 @@ def get_wheel_tag() -> typing.Tuple[str, str, str]:
     :return: The wheels tag
     :rtype: typing.Tuple[str, str, str]
     """
-    plat_name = get_platform(None).replace('-','_')
+    plat_name = get_platform(None).replace("-", "_")
     # python3 no abi, platform
     return ("py3", "none", plat_name)
 
@@ -247,6 +248,10 @@ def patch_wheel(
             with open(module_path / "_distributor_init.py", "w") as f1:
                 f1.write(f.read())
 
+        # now copy LICENSE.bin to libs folder
+        license_file = Path(__file__).parent / "LICENSE.bin"
+        shutil.copy(license_file, libs_folder)
+
         # Now that things are in place it should be fine to repack
         # the wheel. But we should make in windows only that to
         # either 32 bit or 64 bit. For that, we should edit
@@ -283,25 +288,33 @@ def patch_wheel(
         logger.info("Packing Wheel...")
         wheelpack(str(unpack_location), str(final_wheel_dir), None)
     final_wheel_loc = [i for i in Path(final_wheel_dir).glob("*.whl")][0]
-    logger.info("Wheels Ready at %s",final_wheel_loc)
+    logger.info("Wheels Ready at %s", final_wheel_loc)
     return final_wheel_loc
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Build Wheels for Weasyprint.",
+    )
+    parser.add_argument(
+        "dest_dir",
+        type=str,
+        help="the directory where to create the repaired wheel",
+    )
+    args = parser.parse_args()
+
     logging.basicConfig(level=logging.INFO, format="%(message)s")
 
     working_dir = Path(tempfile.mkdtemp())
     orig_wheels_dir = working_dir / "orig_wheels"
     bin_dir = working_dir / "bin"
-    final_wheels = working_dir / "wheelhouse"
+    final_wheels = args.dest_dir
 
     arch = get_arch()
     logger.info("Found Python to be %s bit", arch)
-    if not working_dir.exists():
-        download_binaries(arch, working_dir)
+    download_binaries(arch, working_dir)
     logger.info("Building Normal Wheels")
     orig_wheel = build_normal_wheel(orig_wheels_dir)
 
     logger.info("Patching Wheels")
-    patch_wheel(orig_wheel,bin_dir,final_wheels)
-
+    patch_wheel(orig_wheel, bin_dir, final_wheels)
