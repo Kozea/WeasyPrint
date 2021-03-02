@@ -599,3 +599,12 @@ def get_next_word_boundaries(text, lang):
     else:
         return None
     return word_start, word_end
+
+
+def get_last_word_end(text, lang):
+    if not text or len(text) < 2:
+        return None
+    bytestring, log_attrs = get_log_attrs(text, lang)
+    for i, attr in enumerate(list(log_attrs)[::-1]):
+        if i and attr.is_word_end:
+            return len(bytestring) - i

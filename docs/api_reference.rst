@@ -565,22 +565,35 @@ The ``image-orientation`` property is **not** supported.
 .. _Image Values and Replaced Content Module Level 3: http://www.w3.org/TR/css3-images/
 .. _Image Values and Replaced Content Module Level 4: http://www.w3.org/TR/css4-images/
 
-CSS Basic User Interface Module Level 3
-+++++++++++++++++++++++++++++++++++++++
+CSS Box Sizing Module Level 3
++++++++++++++++++++++++++++++
 
-The `CSS Basic User Interface Module Level 3`_ also known as CSS3 UI is a
-candidate recommendation describing "CSS properties which enable authors to
-style user interface related properties and values."
+The `CSS Box Sizing Module Level 3`_ is a candidate recommendation extending
+"the CSS sizing properties with keywords that represent content-based
+'intrinsic' sizes and context-based 'extrinsic' sizes."
 
-Two new properties defined in this document are implemented in WeasyPrint:
-the ``box-sizing`` and ``text-overflow`` properties.
+The new property defined in this document is implemented in WeasyPrint:
+``box-sizing``.
 
-Some of the properties do not apply for WeasyPrint: ``cursor``, ``resize``,
-``caret-color``, ``nav-(up|right|down|left)``.
+The ``min-content``, ``max-content`` and ``fit-content()`` sizing values are
+**not** supported.
 
-The  ``outline-offset`` property is **not** implemented.
+.. _CSS Box Sizing Module Level 3: https://www.w3.org/TR/css-sizing-3/
 
-.. _CSS Basic User Interface Module Level 3: http://www.w3.org/TR/css-ui-3/
+CSS Overflow Module Level 3
++++++++++++++++++++++++++++
+
+The `CSS Overflow Module Level 3`_ is a working draft containing "the features
+of CSS relating to scrollable overflow handling in visual media."
+
+The ``overflow`` property is supported, as defined in CSS2. ``overflow-x``,
+``overflow-y``, ``overflow-clip-margin``, ``overflow-inline`` and
+``overflow-block`` are **not** supported.
+
+The ``text-overflow``, ``block-ellipsis``, ``line-clamp``, ``max-lines`` and
+``continue`` properties are supported.
+
+.. _CSS Overflow Module Level 3: https://www.w3.org/TR/2020/WD-css-overflow-3-20200603/
 
 CSS Values and Units Module Level 3
 +++++++++++++++++++++++++++++++++++

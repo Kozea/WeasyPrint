@@ -326,6 +326,36 @@ def box_decoration_break(keyword):
     return keyword in ('slice', 'clone')
 
 
+@property()
+@single_token
+def block_ellipsis(token):
+    """``box-ellipsis`` property validation."""
+    if token.type == 'string':
+        return ('string', token.value)
+    else:
+        keyword = get_keyword(token)
+        if keyword in ('none', 'auto'):
+            return keyword
+
+
+@property('continue', unstable=True)
+@single_keyword
+def continue_(keyword):
+    """``continue`` property validation."""
+    return keyword in ('auto', 'discard')
+
+
+@property(unstable=True)
+@single_token
+def max_lines(token):
+    if token.type == 'number' and token.int_value is not None:
+        if token.int_value >= 1:
+            return token.int_value
+    keyword = get_keyword(token)
+    if keyword == 'none':
+        return keyword
+
+
 @property(unstable=True)
 @single_keyword
 def margin_break(keyword):
