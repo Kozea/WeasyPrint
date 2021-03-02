@@ -21,7 +21,7 @@ from .tables import table_layout, table_wrapper_width
 
 def block_level_layout(context, box, max_position_y, skip_stack,
                        containing_block, page_is_empty, absolute_boxes,
-                       fixed_boxes, adjoining_margins):
+                       fixed_boxes, adjoining_margins, discard):
     """Lay out the block-level ``box``.
 
     :param max_position_y: the absolute vertical position (as in
@@ -57,12 +57,12 @@ def block_level_layout(context, box, max_position_y, skip_stack,
 
     return block_level_layout_switch(
         context, box, max_position_y, skip_stack, containing_block,
-        page_is_empty, absolute_boxes, fixed_boxes, adjoining_margins)
+        page_is_empty, absolute_boxes, fixed_boxes, adjoining_margins, discard)
 
 
 def block_level_layout_switch(context, box, max_position_y, skip_stack,
                               containing_block, page_is_empty, absolute_boxes,
-                              fixed_boxes, adjoining_margins):
+                              fixed_boxes, adjoining_margins, discard):
     """Call the layout function corresponding to the ``box`` type."""
     if isinstance(box, boxes.TableBox):
         return table_layout(
@@ -71,7 +71,8 @@ def block_level_layout_switch(context, box, max_position_y, skip_stack,
     elif isinstance(box, boxes.BlockBox):
         return block_box_layout(
             context, box, max_position_y, skip_stack, containing_block,
-            page_is_empty, absolute_boxes, fixed_boxes, adjoining_margins)
+            page_is_empty, absolute_boxes, fixed_boxes, adjoining_margins,
+            discard)
     elif isinstance(box, boxes.BlockReplacedBox):
         box = block_replaced_box_layout(box, containing_block)
         # Don't collide with floats
@@ -93,7 +94,7 @@ def block_level_layout_switch(context, box, max_position_y, skip_stack,
 
 def block_box_layout(context, box, max_position_y, skip_stack,
                      containing_block, page_is_empty, absolute_boxes,
-                     fixed_boxes, adjoining_margins):
+                     fixed_boxes, adjoining_margins, discard):
     """Lay out the block ``box``."""
     if (box.style['column_width'] != 'auto' or
             box.style['column_count'] != 'auto'):
@@ -124,7 +125,7 @@ def block_box_layout(context, box, max_position_y, skip_stack,
     new_box, resume_at, next_page, adjoining_margins, collapsing_through = \
         block_container_layout(
             context, box, max_position_y, skip_stack, page_is_empty,
-            absolute_boxes, fixed_boxes, adjoining_margins)
+            absolute_boxes, fixed_boxes, adjoining_margins, discard)
     if new_box and new_box.is_table_wrapper:
         # Don't collide with floats
         # http://www.w3.org/TR/CSS21/visuren.html#floats
@@ -256,7 +257,7 @@ def relative_positioning(box, containing_block):
 
 def block_container_layout(context, box, max_position_y, skip_stack,
                            page_is_empty, absolute_boxes, fixed_boxes,
-                           adjoining_margins=None):
+                           adjoining_margins, discard):
     """Set the ``box`` height."""
     # TODO: boxes.FlexBox is allowed here because flex_layout calls
     # block_container_layout, there's probably a better solution.
@@ -273,13 +274,14 @@ def block_container_layout(context, box, max_position_y, skip_stack,
     is_start = skip_stack is None
     box.remove_decoration(start=not is_start, end=False)
 
+    discard |= box.style['continue'] == 'discard'
+    draw_bottom_decoration = (
+        discard or box.style['box_decoration_break'] == 'clone')
+
     if adjoining_margins is None:
         adjoining_margins = []
 
-    repeat_box_decoration = (
-        box.style['box_decoration_break'] == 'clone' or
-        box.style['continue'] == 'discard')
-    if repeat_box_decoration:
+    if draw_bottom_decoration:
         max_position_y -= (
             box.padding_bottom + box.border_bottom_width +
             box.margin_bottom)
@@ -380,11 +382,8 @@ def block_container_layout(context, box, max_position_y, skip_stack,
 
                 # Add bottom padding and border to the bottom position of the
                 # box if needed
-                repeat_box_decoration = (
-                    resume_at is None or
-                    box.style['box_decoration_break'] == 'clone' or
-                    box.style['continue'] == 'discard')
-                if repeat_box_decoration:
+                draw_bottom_decoration |= resume_at is None
+                if draw_bottom_decoration:
                     offset_y = box.border_bottom_width + box.padding_bottom
                 else:
                     offset_y = 0
@@ -518,7 +517,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                 collapsing_through) = block_level_layout(
                     context, child, max_position_y, skip_stack,
                     new_containing_block, page_is_empty_with_no_children,
-                    absolute_boxes, fixed_boxes, adjoining_margins)
+                    absolute_boxes, fixed_boxes, adjoining_margins, discard)
             skip_stack = None
 
             if new_child is not None:
@@ -655,13 +654,15 @@ def block_container_layout(context, box, max_position_y, skip_stack,
         position_y += collapse_margin(adjoining_margins)
         adjoining_margins = []
 
+    # Add block ellipsis
     if box_is_fragmented and new_children:
         last_child = new_children[-1]
         if isinstance(last_child, boxes.LineBox):
             last_child.block_ellipsis = box.style['block_ellipsis']
 
     new_box = box.copy_with_children(new_children)
-    new_box.remove_decoration(start=not is_start, end=box_is_fragmented)
+    new_box.remove_decoration(
+        start=not is_start, end=box_is_fragmented and not discard)
 
     # TODO: See corner cases in
     # http://www.w3.org/TR/CSS21/visudet.html#normal-block
@@ -685,7 +686,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
     if not isinstance(new_box, boxes.BlockBox):
         context.finish_block_formatting_context(new_box)
 
-    if not box_is_fragmented:
+    if discard or not box_is_fragmented:
         # After finish_block_formatting_context which may increment
         # new_box.height
         new_box.height = max(
@@ -694,11 +695,10 @@ def block_container_layout(context, box, max_position_y, skip_stack,
     elif max_position_y < float('inf'):
         # Make the box fill the blank space at the bottom of the page
         # https://www.w3.org/TR/css-break-3/#box-splitting
-        if box.style['continue'] != 'discard':
-            new_box.height = (
-                max_position_y - new_box.position_y -
-                (new_box.margin_height() - new_box.height))
-        if box.style['box_decoration_break'] == 'clone':
+        new_box.height = (
+            max_position_y - new_box.position_y -
+            (new_box.margin_height() - new_box.height))
+        if draw_bottom_decoration:
             new_box.height += (
                 box.padding_bottom + box.border_bottom_width +
                 box.margin_bottom)
