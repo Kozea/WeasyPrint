@@ -2,6 +2,43 @@ Changelog
 =========
 
 
+Version 52.3
+------------
+
+Released on 2021-03-02.
+
+Bug fixes:
+
+* `#1299 <https://github.com/Kozea/WeasyPrint/issues/1299>`_:
+  Fix imports with url() and quotes
+
+New features:
+
+* `#1300 <https://github.com/Kozea/WeasyPrint/pull/1300>`_:
+  Add support of line-clamp, with financial support from
+  expert Germany
+
+Contributors:
+
+* Guillaume Ayoub
+* Lucie Anglade
+
+Backers and sponsors:
+
+* PDF Blocks
+* SimonSoft
+* Menutech
+* Simon Sapin
+* Manuel Barkhau
+* Andreas Zettl
+* Nathalie Gutton
+* Tom Pohl
+* Moritz Mahringer
+* Florian Demmer
+* KontextWork
+* Michele Mostarda
+
+
 Version 52.2
 ------------
 
