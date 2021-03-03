@@ -20,6 +20,8 @@ os.environ["PATH"] = (
     f"{os.environ['PATH']}"
 )
 
+# fontconfig configuration
+os.environ["FONTCONFIG_PATH"] = str((LIBS_ROOT / "fonts").absolute())
 
 gobject_dll = str(Path(LIBS_ROOT, "CORE_MANIM_gobject-2.0-0.dll").absolute())
 pango_dll = str(Path(LIBS_ROOT, "CORE_MANIM_pango-1.0-0.dll").absolute())

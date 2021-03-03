@@ -264,6 +264,33 @@ def patch_wheel(
         license_file = Path(__file__).parent / "LICENSE.bin"
         shutil.copy(license_file, libs_folder)
 
+        # Now copy the fontconfig specific files to `.libs/fonts`
+        # It exists in two different places
+        # one in `etc/fonts` and other in `share/fontconfig`
+        # First, the things in `share/fontconfig/conf.avail` should be
+        # copied to `etc/fonts/conf.avail and then copy the things in `etc/fonts`
+        # to `.libs/fonts`
+        ROOT_BIN_INSTALL_DIR = bin_dir.parent
+        shutil.copytree(
+            ROOT_BIN_INSTALL_DIR / "share/fontconfig/conf.avail",
+            ROOT_BIN_INSTALL_DIR / "etc/fonts/conf.avail",
+        )
+        shutil.copytree(
+            ROOT_BIN_INSTALL_DIR / "etc/fonts",
+            libs_folder / "fonts"
+        )
+        # now patch fonts.conf in `.libs/fonts` which will
+        # contain WINDOWSFONTDIR and needs to replaced with
+        # <dir>WINDOWSFONTDIR</dir>. See 
+        # https://gitlab.freedesktop.org/fontconfig/fontconfig/-/issues/276
+        # remove this in future
+        fonts_conf_location = libs_folder / "fonts" / "fonts.conf"
+        with open(fonts_conf_location) as f:
+            c = f.read()
+        c = c.replace("WINDOWSFONTDIR","<dir>WINDOWSFONTDIR</dir>")
+        with open(fonts_conf_location,'w') as f:
+            f.write(c)
+
         # Now that things are in place it should be fine to repack
         # the wheel. But we should make in windows only that to
         # either 32 bit or 64 bit. For that, we should edit

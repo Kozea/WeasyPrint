@@ -38,7 +38,15 @@ jobs:
         shell: pwsh
         run: |
           python packaging/build_wheel.py $PWD\wheelhouse
-      
+          # remove msys2 from path
+          echo "" | Out-File -FilePath $env:GITHUB_PATH
+      - name: Test Wheels
+        shell: pwsh
+        run: |
+          python -m venv _test
+          _test\Scripts\activate.ps1
+          pip install wheelhouse/*
+          weasyprint https://weasyprint.org/ -o b.pdf
       - name: Store artifacts
         uses: actions/upload-artifact@v2
         with:
