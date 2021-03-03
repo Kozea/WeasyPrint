@@ -45,7 +45,8 @@ jobs:
         run: |
           python -m venv _test
           _test\Scripts\activate.ps1
-          pip install wheelhouse/*
+          $wheel = (Get-Item wheelhouse\*.whl)[0].name
+          pip install wheelhouse\$wheel
           weasyprint https://weasyprint.org/ -o b.pdf
       - name: Store artifacts
         uses: actions/upload-artifact@v2
