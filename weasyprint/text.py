@@ -1256,7 +1256,17 @@ def show_first_line(context, textbox, text_overflow, block_ellipsis):
             else:
                 assert block_ellipsis[0] == 'string'
                 ellipsis = block_ellipsis[1]
-            textbox.pango_layout.set_text(textbox.pango_layout.text + ellipsis)
+
+            # Remove last word if hyphenated
+            new_text = textbox.pango_layout.text
+            if new_text.endswith(textbox.style['hyphenate_character']):
+                last_word_end = get_last_word_end(
+                    new_text[:-len(textbox.style['hyphenate_character'])],
+                    textbox.style['lang'])
+                if last_word_end:
+                    new_text = new_text[:last_word_end]
+
+            textbox.pango_layout.set_text(new_text + ellipsis)
 
     first_line, second_line = textbox.pango_layout.get_first_line()
 
