@@ -1113,8 +1113,7 @@ def draw_first_line(context, textbox, text_overflow, block_ellipsis, x, y):
                 textbox.style['lang'])
             if last_word_end is None:
                 break
-            text = textbox.pango_layout.text
-            new_text = text.encode('utf-8')[:last_word_end].decode('utf-8')
+            new_text = textbox.pango_layout.text[:last_word_end]
             textbox.pango_layout.set_text(new_text + ellipsis)
             first_line, second_line = textbox.pango_layout.get_first_line()
 

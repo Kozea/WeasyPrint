@@ -607,4 +607,4 @@ def get_last_word_end(text, lang):
     bytestring, log_attrs = get_log_attrs(text, lang)
     for i, attr in enumerate(list(log_attrs)[::-1]):
         if i and attr.is_word_end:
-            return len(bytestring) - i
+            return len(text) - i
