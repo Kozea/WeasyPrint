@@ -1243,13 +1243,6 @@ def show_first_line(context, textbox, text_overflow, block_ellipsis):
     pango.pango_layout_set_single_paragraph_mode(
         textbox.pango_layout.layout, True)
 
-    if text_overflow == 'ellipsis':
-        max_width = context.clip_extents()[2] - textbox.position_x
-        pango.pango_layout_set_width(
-            textbox.pango_layout.layout, units_from_double(max_width))
-        pango.pango_layout_set_ellipsize(
-            textbox.pango_layout.layout, pango.PANGO_ELLIPSIZE_END)
-
     if text_overflow == 'ellipsis' or block_ellipsis != 'none':
         max_width = context.clip_extents()[2] - textbox.position_x
         pango.pango_layout_set_width(
