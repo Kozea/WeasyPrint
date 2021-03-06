@@ -1267,8 +1267,7 @@ def show_first_line(context, textbox, text_overflow, block_ellipsis):
                 textbox.style['lang'])
             if last_word_end is None:
                 break
-            new_text = utf8_slice(
-                textbox.pango_layout.text, slice(0, last_word_end))
+            new_text = textbox.pango_layout.text[:last_word_end]
             textbox.pango_layout.set_text(new_text + ellipsis)
             first_line, second_line = textbox.pango_layout.get_first_line()
 
@@ -1324,4 +1323,4 @@ def get_last_word_end(text, lang):
     bytestring, log_attrs = get_log_attrs(text, lang)
     for i, attr in enumerate(list(log_attrs)[::-1]):
         if i and attr.is_word_end:
-            return len(bytestring) - i
+            return len(text) - i
