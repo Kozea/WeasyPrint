@@ -1118,7 +1118,7 @@ def draw_first_line(context, textbox, text_overflow, block_ellipsis, x, y):
             first_line, second_line = textbox.pango_layout.get_first_line()
 
     font_size = textbox.style['font_size']
-    utf8_text = textbox.text.encode('utf-8')
+    utf8_text = textbox.pango_layout.text.encode('utf-8')
     previous_utf8_position = 0
 
     runs = [first_line.runs[0]]
