@@ -6,10 +6,12 @@
 
 """
 
+import re
+from math import cos, radians, sin, tan
 from xml.etree import ElementTree
 
 from .colors import color
-from .shapes import circle, ellipse, rect
+from .shapes import circle, ellipse, line, polyline, polygon, rect
 from .svg import svg
 from .utils import normalize, size
 
@@ -17,14 +19,81 @@ from .utils import normalize, size
 TAGS = {
     'circle': circle,
     'ellipse': ellipse,
+    'line': line,
+    'polyline': polyline,
+    'polygon': polygon,
     'rect': rect,
     'svg': svg,
 }
 
+NOT_INHERITED_ATTRIBUTES = frozenset((
+    'clip',
+    'clip-path',
+    'filter',
+    'height',
+    'id',
+    'mask',
+    'opacity',
+    'overflow',
+    'rotate',
+    'stop-color',
+    'stop-opacity',
+    'style',
+    'transform',
+    'transform-origin',
+    'viewBox',
+    'width',
+    'x',
+    'y',
+    'dx',
+    'dy',
+    '{http://www.w3.org/1999/xlink}href',
+    'href',
+))
+
+COLOR_ATTRIBUTES = frozenset((
+    'fill',
+    'flood-color',
+    'lighting-color',
+    'stop-color',
+    'stroke',
+))
+
+
+class Node:
+    def __init__(self, etree_node):
+        self._etree_node = etree_node
+
+        self.attrib = etree_node.attrib
+        self.get = etree_node.get
+        self.set = etree_node.set
+        self.tag = etree_node.tag
+        self.update = etree_node.attrib.update
+
+        self.vertices = []
+
+    def inherit(self, child):
+        child = Node(child)
+        child.update([
+            (key, value) for key, value in self.attrib.items()
+            if key not in NOT_INHERITED_ATTRIBUTES])
+        for key in COLOR_ATTRIBUTES:
+            if child.get(key) == 'currentColor':
+                child.set(key, child.get('color', 'black'))
+        for key, value in child.attrib.items():
+            if value == 'inherit':
+                child.set(key, parent.get(key))
+        return child
+
+    def __iter__(self):
+        for child in self._etree_node:
+            yield self.inherit(child)
+
 
 class SVG:
-    def __init__(self, bytestring_svg):
-        self.tree = ElementTree.fromstring(bytestring_svg)
+    def __init__(self, bytestring_svg, url):
+        self.tree = Node(ElementTree.fromstring(bytestring_svg))
+        self.url = url
 
     def get_intrinsic_size(self, font_size):
         intrinsic_width = self.tree.get('width', '100%')
@@ -67,6 +136,7 @@ class SVG:
         x = size(node.get('x', 0), font_size, self.concrete_width)
         y = size(node.get('y', 0), font_size, self.concrete_height)
         self.stream.transform(1, 0, 0, 1, x, y)
+        self.transform(node.get('transform'), font_size)
 
         local_name = node.tag.split('}', 1)[1]
 
@@ -137,3 +207,55 @@ class SVG:
             self.stream.stroke()
         elif fill:
             self.stream.fill(even_odd)
+
+    def transform(self, transform_string, font_size):
+        from ..document import Matrix
+
+        if not transform_string:
+            return
+
+        transformations = re.findall(
+            r'(\w+) ?\( ?(.*?) ?\)', normalize(transform_string))
+        matrix = Matrix()
+
+        for transformation_type, transformation in transformations:
+            values = [
+                size(value, font_size, self.normalized_diagonal)
+                for value in transformation.split(' ')]
+            if transformation_type == 'matrix':
+                matrix = Matrix(*values) @ matrix
+            elif transformation_type == 'rotate':
+                matrix = Matrix(
+                    cos(radians(float(values[0]))),
+                    sin(radians(float(values[0]))),
+                    -sin(radians(float(values[0]))),
+                    cos(radians(float(values[0])))) @ matrix
+            elif transformation_type.startswith('skew'):
+                if len(values) == 1:
+                    values.append(0)
+                if transformation_type in ('skewX', 'skew'):
+                    matrix = Matrix(
+                        c=tan(radians(float(values.pop(0))))) @ matrix
+                if transformation_type in ('skewY', 'skew'):
+                    matrix = Matrix(
+                        b=tan(radians(float(values.pop(0))))) @ matrix
+            elif transformation_type.startswith('translate'):
+                if len(values) == 1:
+                    values.append(0)
+                if transformation_type in ('translateX', 'translate'):
+                    matrix = Matrix(e=values.pop(0)) @ matrix
+                if transformation_type in ('translateY', 'translate'):
+                    matrix = Matrix(f=values.pop(0)) @ matrix
+            elif transformation_type.startswith('scale'):
+                if len(values) == 1:
+                    values.append(values[0])
+                if transformation_type in ('scaleX', 'scale'):
+                    matrix = Matrix(a=values.pop(0)) @ matrix
+                if transformation_type in ('scaleY', 'scale'):
+                    matrix = Matrix(d=values.pop(0)) @ matrix
+
+        if matrix.determinant:
+            self.stream.transform(
+                matrix[0][0], matrix[0][1],
+                matrix[1][0], matrix[1][1],
+                matrix[2][0], matrix[2][1])

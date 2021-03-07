@@ -112,9 +112,13 @@ class SVGImage:
         # Use the real intrinsic size here,
         # not affected by 'image-resolution'.
         context.push_state()
-        self._svg.draw(
-            context, concrete_width, concrete_height, self._base_url,
-            self._url_fetcher)
+        try:
+            self._svg.draw(
+                context, concrete_width, concrete_height, self._base_url,
+                self._url_fetcher)
+        except Exception as exception:
+            LOGGER.error(
+                'Failed to draw image at %r: %s', self._svg.url, exception)
         context.pop_state()
 
 
@@ -134,7 +138,10 @@ def get_image_from_uri(cache, url_fetcher, optimize_images, url,
                 string = result['file_obj'].read()
             mime_type = forced_mime_type or result['mime_type']
             if mime_type == 'image/svg+xml':
-                image = SVGImage(SVG(string), url, url_fetcher)
+                try:
+                    image = SVGImage(SVG(string, url), url, url_fetcher)
+                except Exception as exception:
+                    raise ImageLoadingError.from_exception(exception)
             else:
                 # Try to rely on given mimetype
                 try:

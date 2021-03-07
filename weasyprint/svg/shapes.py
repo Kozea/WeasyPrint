@@ -6,9 +6,9 @@
 
 """
 
-from math import pi
+from math import atan2, pi
 
-from .utils import size
+from .utils import normalize, point, size
 
 
 def circle(svg, node, font_size):
@@ -50,8 +50,8 @@ def ellipse(svg, node, font_size):
 
 
 def rect(svg, node, font_size):
-    width = size(node.get('width', 0), font_size, svg.concrete_width)
-    height = size(node.get('height', 0), font_size, svg.concrete_height)
+    width = size(node.get('width'), font_size, svg.concrete_width)
+    height = size(node.get('height'), font_size, svg.concrete_height)
     if width <= 0 or height <= 0:
         return
 
@@ -90,3 +90,36 @@ def rect(svg, node, font_size):
     svg.stream.line_to(0, ry)
     svg.stream.curve_to(0, ry - c2, rx - c1, 0, rx, 0)
     svg.stream.close()
+
+
+def line(svg, node, font_size):
+    x1, x2 = tuple(
+        size(node.get(position), font_size, svg.concrete_width)
+        for position in ('x1', 'x2'))
+    y1, y2 = tuple(
+        size(node.get(position), font_size, svg.concrete_height)
+        for position in ('y1', 'y2'))
+    svg.stream.move_to(x1, y1)
+    svg.stream.line_to(x2, y2)
+    angle = atan2(y2 - y1, x2 - x1)
+    node.vertices = [(x1, y1), (pi - angle, angle), (x2, y2)]
+
+
+def polygon(svg, node, font_size):
+    polyline(svg, node, font_size)
+    svg.stream.close()
+
+
+def polyline(svg, node, font_size):
+    points = normalize(node.get('points'))
+    if points:
+        x, y, points = point(svg, points, font_size)
+        svg.stream.move_to(x, y)
+        node.vertices = [(x, y)]
+        while points:
+            x_old, y_old = x, y
+            x, y, points = point(svg, points, font_size)
+            angle = atan2(x - x_old, y - y_old)
+            node.vertices.append((pi - angle, angle))
+            svg.stream.line_to(x, y)
+            node.vertices.append((x, y))

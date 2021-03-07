@@ -20,8 +20,7 @@ UNITS = {
 
 
 def normalize(string):
-    """Normalize a string corresponding to an array of various values."""
-    string = string.replace('E', 'e')
+    string = (string or '').replace('E', 'e')
     string = re.sub('(?<!e)-', ' -', string)
     string = re.sub('[ \n\r\t,]+', ' ', string)
     string = re.sub(r'(\.[0-9-]+)(?=\.)', r'\1 ', string)
@@ -57,3 +56,13 @@ def size(string, font_size=None, percentage_reference=None):
 
     # Unknown size
     return 0
+
+
+def point(svg, string, font_size):
+    match = re.match('(.*?) (.*?)(?: |$)', string)
+    x, y = match.group(1, 2)
+    string = string[match.end():]
+    return (
+        size(x, font_size, svg.concrete_width),
+        size(y, font_size, svg.concrete_height),
+        string)
