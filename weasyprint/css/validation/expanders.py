@@ -16,11 +16,12 @@ from ..utils import (
 from .descriptors import expand_font_variant
 from .properties import (
     background_attachment, background_image, background_position,
-    background_repeat, background_size, border_style, border_width, box,
-    column_count, column_width, flex_basis, flex_direction, flex_grow_shrink,
-    flex_wrap, font_family, font_size, font_stretch, font_style, font_weight,
-    line_height, list_style_image, list_style_position, list_style_type,
-    other_colors, overflow_wrap, validate_non_shorthand)
+    background_repeat, background_size, block_ellipsis, border_style,
+    border_width, box, column_count, column_width, flex_basis, flex_direction,
+    flex_grow_shrink, flex_wrap, font_family, font_size, font_stretch,
+    font_style, font_weight, line_height, list_style_image,
+    list_style_position, list_style_type, other_colors, overflow_wrap,
+    validate_non_shorthand)
 
 EXPANDERS = {}
 
@@ -273,7 +274,7 @@ def expand_background(base_url, name, tokens):
         def add(name, value):
             if value is None:
                 return False
-            name = 'background_' + name
+            name = f'background_{name}'
             if name in results:
                 raise InvalidValues
             results[name] = value
@@ -607,3 +608,26 @@ def expand_flex_flow(base_url, name, tokens):
                 raise InvalidValues
     else:
         raise InvalidValues
+
+
+@expander('line-clamp')
+def expand_line_clamp(base_url, name, tokens):
+    """Expand the ``line-clamp`` property."""
+    if len(tokens) == 1:
+        keyword = get_single_keyword(tokens)
+        if keyword == 'none':
+            yield 'max_lines', 'none'
+            yield 'continue', 'auto'
+            yield 'block-ellipsis', 'none'
+        elif tokens[0].type == 'number' and tokens[0].int_value is not None:
+            yield 'max_lines', tokens[0].int_value
+            yield 'continue', 'discard'
+            yield 'block-ellipsis', 'auto'
+    elif len(tokens) == 2:
+        if tokens[0].type == 'number':
+            max_lines = tokens[0].int_value
+            ellipsis = block_ellipsis([tokens[1]])
+            if max_lines and ellipsis is not None:
+                yield 'max_lines', tokens[0].value
+                yield 'continue', 'discard'
+                yield 'block-ellipsis', ellipsis

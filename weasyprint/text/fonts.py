@@ -1,6 +1,6 @@
 """
-    weasyprint.fonts
-    ----------------
+    weasyprint.text.fonts
+    ---------------------
 
     Interface with external libraries managing fonts installed on the system.
 
@@ -15,115 +15,12 @@ import warnings
 
 from fontTools.ttLib import TTFont, woff2
 
-from .logger import LOGGER
-from .text import dlopen, ffi, get_font_features, gobject
-from .urls import FILESYSTEM_ENCODING, fetch
-
-fontconfig = dlopen(
-    ffi, 'fontconfig-1', 'fontconfig', 'libfontconfig', 'libfontconfig-1.dll',
-    'libfontconfig.so.1', 'libfontconfig-1.dylib')
-pangoft2 = dlopen(
-    ffi, 'pangoft2-1.0-0', 'pangoft2-1.0', 'libpangoft2-1.0-0',
-    'libpangoft2-1.0.so', 'libpangoft2-1.0.dylib')
-
-ffi.cdef('''
-    // FontConfig
-
-    typedef int FcBool;
-    typedef struct _FcConfig FcConfig;
-    typedef struct _FcPattern FcPattern;
-    typedef struct _FcStrList FcStrList;
-    typedef unsigned char FcChar8;
-
-    typedef enum {
-        FcResultMatch, FcResultNoMatch, FcResultTypeMismatch, FcResultNoId,
-        FcResultOutOfMemory
-    } FcResult;
-
-    typedef enum {
-        FcMatchPattern, FcMatchFont, FcMatchScan
-    } FcMatchKind;
-
-
-    typedef struct _FcFontSet {
-        int nfont;
-        int sfont;
-        FcPattern **fonts;
-    } FcFontSet;
-
-    typedef enum _FcSetName {
-        FcSetSystem = 0,
-        FcSetApplication = 1
-    } FcSetName;
-
-    FcConfig * FcInitLoadConfigAndFonts (void);
-    void FcConfigDestroy (FcConfig *config);
-    FcBool FcConfigAppFontAddFile (
-        FcConfig *config, const FcChar8 *file);
-    FcConfig * FcConfigGetCurrent (void);
-    FcBool FcConfigSetCurrent (FcConfig *config);
-    FcBool FcConfigParseAndLoad (
-        FcConfig *config, const FcChar8 *file, FcBool complain);
-
-    FcFontSet * FcConfigGetFonts(FcConfig *config, FcSetName set);
-    FcStrList * FcConfigGetConfigFiles(FcConfig *config);
-    FcChar8 * FcStrListNext(FcStrList *list);
-
-    void FcDefaultSubstitute (FcPattern *pattern);
-    FcBool FcConfigSubstitute (
-        FcConfig *config, FcPattern *p, FcMatchKind kind);
-
-    FcPattern * FcPatternCreate (void);
-    FcPattern * FcPatternDestroy (FcPattern *p);
-    FcBool FcPatternAddString (
-        FcPattern *p, const char *object, const FcChar8 *s);
-    FcResult FcPatternGetString (
-        FcPattern *p, const char *object, int n, FcChar8 **s);
-    FcPattern * FcFontMatch (
-        FcConfig *config, FcPattern *p, FcResult *result);
-
-
-    // PangoFT2
-
-    typedef ... PangoFcFontMap;
-
-    PangoFontMap * pango_ft2_font_map_new (void);
-    void pango_fc_font_map_set_config (
-        PangoFcFontMap *fcfontmap, FcConfig *fcconfig);
-
-''')
-
-FONTCONFIG_WEIGHT_CONSTANTS = {
-    'normal': 'normal',
-    'bold': 'bold',
-    100: 'thin',
-    200: 'extralight',
-    300: 'light',
-    400: 'normal',
-    500: 'medium',
-    600: 'demibold',
-    700: 'bold',
-    800: 'extrabold',
-    900: 'black',
-}
-
-FONTCONFIG_STYLE_CONSTANTS = {
-    'normal': 'roman',
-    'italic': 'italic',
-    'oblique': 'oblique',
-}
-
-FONTCONFIG_STRETCH_CONSTANTS = {
-    'normal': 'normal',
-    'ultra-condensed': 'ultracondensed',
-    'extra-condensed': 'extracondensed',
-    'condensed': 'condensed',
-    'semi-condensed': 'semicondensed',
-    'semi-expanded': 'semiexpanded',
-    'expanded': 'expanded',
-    'extra-expanded': 'extraexpanded',
-    'ultra-expanded': 'ultraexpanded',
-}
+from ..logger import LOGGER
+from ..urls import FILESYSTEM_ENCODING, fetch
+from .constants import (
+    CAPS_KEYS, EAST_ASIAN_KEYS, FONTCONFIG_STRETCH, FONTCONFIG_STYLE,
+    FONTCONFIG_WEIGHT, LIGATURE_KEYS, NUMERIC_KEYS)
+from .ffi import ffi, fontconfig, gobject, pangoft2
 
 
 def _check_font_configuration(font_config):
@@ -317,15 +214,14 @@ class FontConfiguration:
                     LOGGER.debug(
                         'Failed to load font at %r (%s)', url, exc)
                     continue
-                font_features = {
+                features = {
                     rules[0][0].replace('-', '_'): rules[0][1] for rules in
                     rule_descriptors.get('font_variant', [])}
                 if 'font_feature_settings' in rule_descriptors:
-                    font_features['font_feature_settings'] = (
+                    features['font_feature_settings'] = (
                         rule_descriptors['font_feature_settings'])
                 features_string = ''
-                for key, value in get_font_features(
-                        **font_features).items():
+                for key, value in font_features(**features).items():
                     features_string += f'<string>{key} {value}</string>'
                 fd = tempfile.NamedTemporaryFile(
                     'wb', dir=self._tempdir, delete=False)
@@ -333,11 +229,11 @@ class FontConfiguration:
                 fd.write(font)
                 fd.close()
                 self._filenames.append(font_filename)
-                fontconfig_style = FONTCONFIG_STYLE_CONSTANTS[
+                fontconfig_style = FONTCONFIG_STYLE[
                     rule_descriptors.get('font_style', 'normal')]
-                fontconfig_weight = FONTCONFIG_WEIGHT_CONSTANTS[
+                fontconfig_weight = FONTCONFIG_WEIGHT[
                     rule_descriptors.get('font_weight', 'normal')]
-                fontconfig_stretch = FONTCONFIG_STRETCH_CONSTANTS[
+                fontconfig_stretch = FONTCONFIG_STRETCH[
                     rule_descriptors.get('font_stretch', 'normal')]
                 xml = f'''<?xml version="1.0"?>
                 <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
@@ -400,3 +296,75 @@ class FontConfiguration:
                 os.remove(filename)
             except OSError:
                 continue
+
+
+def font_features(font_kerning='normal', font_variant_ligatures='normal',
+                  font_variant_position='normal', font_variant_caps='normal',
+                  font_variant_numeric='normal',
+                  font_variant_alternates='normal',
+                  font_variant_east_asian='normal',
+                  font_feature_settings='normal'):
+    """Get the font features from the different properties in style.
+
+    See https://www.w3.org/TR/css-fonts-3/#feature-precedence
+
+    """
+    features = {}
+
+    # Step 1: getting the default, we rely on Pango for this
+    # Step 2: @font-face font-variant, done in fonts.add_font_face
+    # Step 3: @font-face font-feature-settings, done in fonts.add_font_face
+
+    # Step 4: font-variant and OpenType features
+
+    if font_kerning != 'auto':
+        features['kern'] = int(font_kerning == 'normal')
+
+    if font_variant_ligatures == 'none':
+        for keys in LIGATURE_KEYS.values():
+            for key in keys:
+                features[key] = 0
+    elif font_variant_ligatures != 'normal':
+        for ligature_type in font_variant_ligatures:
+            value = 1
+            if ligature_type.startswith('no-'):
+                value = 0
+                ligature_type = ligature_type[3:]
+            for key in LIGATURE_KEYS[ligature_type]:
+                features[key] = value
+
+    if font_variant_position == 'sub':
+        # TODO: the specification asks for additional checks
+        # https://www.w3.org/TR/css-fonts-3/#font-variant-position-prop
+        features['subs'] = 1
+    elif font_variant_position == 'super':
+        features['sups'] = 1
+
+    if font_variant_caps != 'normal':
+        # TODO: the specification asks for additional checks
+        # https://www.w3.org/TR/css-fonts-3/#font-variant-caps-prop
+        for key in CAPS_KEYS[font_variant_caps]:
+            features[key] = 1
+
+    if font_variant_numeric != 'normal':
+        for key in font_variant_numeric:
+            features[NUMERIC_KEYS[key]] = 1
+
+    if font_variant_alternates != 'normal':
+        # TODO: support other values
+        # See https://www.w3.org/TR/css-fonts-3/#font-variant-caps-prop
+        if font_variant_alternates == 'historical-forms':
+            features['hist'] = 1
+
+    if font_variant_east_asian != 'normal':
+        for key in font_variant_east_asian:
+            features[EAST_ASIAN_KEYS[key]] = 1
+
+    # Step 5: incompatible non-OpenType features, already handled by Pango
+
+    # Step 6: font-feature-settings
+
+    if font_feature_settings != 'normal':
+        features.update(dict(font_feature_settings))
+
+    return features

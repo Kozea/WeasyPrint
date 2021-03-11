@@ -391,7 +391,7 @@ def test_expand_list_style_invalid(rule):
 
 def assert_background(css, **expected):
     """Helper checking the background properties."""
-    expanded = expand_to_dict('background: ' + css)
+    expanded = expand_to_dict(f'background: {css}')
     assert expanded.pop('background_color') == expected.pop(
         'background_color', INITIAL_VALUES['background_color'])
     nb_layers = len(expanded['background_image'])
@@ -524,7 +524,7 @@ def test_expand_background_position():
     """Test the ``background-position`` property."""
     def position(css, *expected):
         [(name, [value])] = expand_to_dict(
-            'background-position:' + css).items()
+            f'background-position: {css}').items()
         assert name == 'background_position'
         assert value == expected
     for css_x, val_x in [

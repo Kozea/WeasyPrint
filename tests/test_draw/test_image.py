@@ -106,7 +106,7 @@ table = '''
 ))
 def test_images(filename, image):
     # TODO: fails because of missing SVG support
-    assert_pixels('inline_image_' + filename, 8, 8, image, '''
+    assert_pixels(f'inline_image_{filename}', 8, 8, image, '''
       <style>
         @page { size: 8px }
         body { margin: 2px 0 0 2px; background: #fff; font-size: 0 }

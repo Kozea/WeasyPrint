@@ -14,7 +14,8 @@ from .formatting_structure import boxes
 from .layout import replaced
 from .layout.backgrounds import BackgroundLayer
 from .stacking import StackingContext
-from .text import show_first_line
+from .text.ffi import ffi, harfbuzz, pango, units_from_double, units_to_double
+from .text.line_break import get_last_word_end
 
 SIDES = ('top', 'right', 'bottom', 'left')
 CROP = '''
@@ -991,7 +992,8 @@ def draw_replacedbox(context, box):
             context, draw_width, draw_height, box.style['image_rendering'])
 
 
-def draw_inline_level(context, page, box, offset_x=0, text_overflow='clip'):
+def draw_inline_level(context, page, box, offset_x=0, text_overflow='clip',
+                      block_ellipsis='none'):
     if isinstance(box, StackingContext):
         stacking_context = box
         assert isinstance(
@@ -1003,8 +1005,13 @@ def draw_inline_level(context, page, box, offset_x=0, text_overflow='clip'):
         if isinstance(box, (boxes.InlineBox, boxes.LineBox)):
             if isinstance(box, boxes.LineBox):
                 text_overflow = box.text_overflow
+                block_ellipsis = box.block_ellipsis
             in_text = False
-            for child in box.children:
+            ellipsis = 'none'
+            for i, child in enumerate(box.children):
+                if i == len(box.children) - 1:
+                    # Last child
+                    ellipsis = block_ellipsis
                 if isinstance(child, StackingContext):
                     child_offset_x = offset_x
                 else:
@@ -1014,13 +1021,16 @@ def draw_inline_level(context, page, box, offset_x=0, text_overflow='clip'):
                     if not in_text:
                         context.begin_text()
                         in_text = True
-                    draw_text(context, child, child_offset_x, text_overflow)
+                    draw_text(
+                        context, child, child_offset_x, text_overflow,
+                        ellipsis)
                 else:
                     if in_text:
                         in_text = False
                         context.end_text()
                     draw_inline_level(
-                        context, page, child, child_offset_x, text_overflow)
+                        context, page, child, child_offset_x, text_overflow,
+                        ellipsis)
             if in_text:
                 context.end_text()
         elif isinstance(box, boxes.InlineReplacedBox):
@@ -1033,7 +1043,7 @@ def draw_inline_level(context, page, box, offset_x=0, text_overflow='clip'):
             context.end_text()
 
 
-def draw_text(context, textbox, offset_x, text_overflow):
+def draw_text(context, textbox, offset_x, text_overflow, block_ellipsis):
     """Draw a textbox to a pydyf stream."""
     # Pango crashes with font-size: 0
     assert textbox.style['font_size']
@@ -1046,37 +1056,178 @@ def draw_text(context, textbox, offset_x, text_overflow):
     context.set_alpha(textbox.style['color'][3])
 
     textbox.pango_layout.reactivate(textbox.style)
-    show_first_line(context, textbox, text_overflow, x, y)
+    draw_first_line(context, textbox, text_overflow, block_ellipsis, x, y)
 
+    # Draw text decoration
     values = textbox.style['text_decoration_line']
-
-    thickness = textbox.style['font_size'] / 18  # Like other browsers do
-
     color = textbox.style['text_decoration_color']
     if color == 'currentColor':
         color = textbox.style['color']
-
-    if ('overline' in values or
-            'line-through' in values or
-            'underline' in values):
-        metrics = textbox.pango_layout.get_font_metrics()
     if 'overline' in values:
-        draw_text_decoration(
-            context, textbox, offset_x,
-            textbox.baseline - metrics.ascent + thickness / 2,
-            thickness, color)
+        thickness = textbox.pango_layout.underline_thickness
+        offset_y = (
+            textbox.baseline - textbox.pango_layout.ascent + thickness / 2)
     if 'underline' in values:
-        draw_text_decoration(
-            context, textbox, offset_x,
-            textbox.baseline - metrics.underline_position + thickness / 2,
-            thickness, color)
+        thickness = textbox.pango_layout.underline_thickness
+        offset_y = (
+            textbox.baseline - textbox.pango_layout.underline_position +
+            thickness / 2)
     if 'line-through' in values:
+        thickness = textbox.pango_layout.strikethrough_thickness
+        offset_y = (
+            textbox.baseline - textbox.pango_layout.strikethrough_position)
+    if values != 'none':
         draw_text_decoration(
-            context, textbox, offset_x,
-            textbox.baseline - metrics.strikethrough_position,
-            thickness, color)
+            context, textbox, offset_x, offset_y, thickness, color)
 
     textbox.pango_layout.deactivate()
+
+
+def draw_first_line(context, textbox, text_overflow, block_ellipsis, x, y):
+    """Draw the given ``textbox`` line to the document ``context``."""
+    pango.pango_layout_set_single_paragraph_mode(
+        textbox.pango_layout.layout, True)
+
+    if text_overflow == 'ellipsis' or block_ellipsis != 'none':
+        assert textbox.pango_layout.max_width is not None
+        max_width = textbox.pango_layout.max_width
+        pango.pango_layout_set_width(
+            textbox.pango_layout.layout, units_from_double(max_width))
+        if text_overflow == 'ellipsis':
+            pango.pango_layout_set_ellipsize(
+                textbox.pango_layout.layout, pango.PANGO_ELLIPSIZE_END)
+        else:
+            if block_ellipsis == 'auto':
+                ellipsis = '…'
+            else:
+                assert block_ellipsis[0] == 'string'
+                ellipsis = block_ellipsis[1]
+
+            # Remove last word if hyphenated
+            new_text = textbox.pango_layout.text
+            if new_text.endswith(textbox.style['hyphenate_character']):
+                last_word_end = get_last_word_end(
+                    new_text[:-len(textbox.style['hyphenate_character'])],
+                    textbox.style['lang'])
+                if last_word_end:
+                    new_text = new_text[:last_word_end]
+
+            textbox.pango_layout.set_text(new_text + ellipsis)
+
+    first_line, second_line = textbox.pango_layout.get_first_line()
+
+    if block_ellipsis != 'none':
+        while second_line:
+            last_word_end = get_last_word_end(
+                textbox.pango_layout.text[:-len(ellipsis)],
+                textbox.style['lang'])
+            if last_word_end is None:
+                break
+            new_text = textbox.pango_layout.text[:last_word_end]
+            textbox.pango_layout.set_text(new_text + ellipsis)
+            first_line, second_line = textbox.pango_layout.get_first_line()
+
+    font_size = textbox.style['font_size']
+    utf8_text = textbox.pango_layout.text.encode('utf-8')
+    previous_utf8_position = 0
+
+    runs = [first_line.runs[0]]
+    while runs[-1].next != ffi.NULL:
+        runs.append(runs[-1].next)
+
+    context.text_matrix(font_size, 0, 0, -font_size, x, y)
+    last_font = None
+    string = ''
+    for run in runs:
+        # Pango objects
+        glyph_item = ffi.cast('PangoGlyphItem *', run.data)
+        glyph_string = glyph_item.glyphs
+        glyphs = glyph_string.glyphs
+        num_glyphs = glyph_string.num_glyphs
+        offset = glyph_item.item.offset
+        clusters = glyph_string.log_clusters
+
+        # Font content
+        pango_font = glyph_item.item.analysis.font
+        pango_desc = pango.pango_font_describe(pango_font)
+        font_hash = ffi.string(
+            pango.pango_font_description_to_string(pango_desc))
+        fonts = context.get_fonts()
+        if font_hash in fonts:
+            font = fonts[font_hash]
+        else:
+            hb_font = pango.pango_font_get_hb_font(pango_font)
+            hb_face = harfbuzz.hb_font_get_face(hb_font)
+            hb_blob = harfbuzz.hb_face_reference_blob(hb_face)
+            hb_data = harfbuzz.hb_blob_get_data(hb_blob, context.length)
+            file_content = ffi.unpack(hb_data, int(context.length[0]))
+            font = context.add_font(font_hash, file_content, pango_font)
+
+        # Positions of the glyphs in the UTF-8 string
+        utf8_positions = [offset + clusters[i] for i in range(1, num_glyphs)]
+        utf8_positions.append(offset + glyph_item.item.length)
+
+        # Go through the run glyphs
+        if font != last_font:
+            if string:
+                context.show_text(string)
+            string = ''
+            last_font = font
+        context.set_font_size(font.hash, 1)
+        string += '<'
+        for i in range(num_glyphs):
+            glyph = glyphs[i].glyph
+            width = glyphs[i].geometry.width
+            utf8_position = utf8_positions[i]
+
+            offset = glyphs[i].geometry.x_offset / font_size
+            if offset:
+                string += f'>{-offset}<'
+            string += f'{glyph:04x}'
+
+            # Ink bounding box and logical widths in font
+            if glyph not in font.widths:
+                pango.pango_font_get_glyph_extents(
+                    pango_font, glyph, context.ink_rect, context.logical_rect)
+                x1, y1, x2, y2 = (
+                    context.ink_rect.x,
+                    -context.ink_rect.y - context.ink_rect.height,
+                    context.ink_rect.x + context.ink_rect.width,
+                    -context.ink_rect.y)
+                if x1 < font.bbox[0]:
+                    font.bbox[0] = int(units_to_double(x1 * 1000) / font_size)
+                if y1 < font.bbox[1]:
+                    font.bbox[1] = int(units_to_double(y1 * 1000) / font_size)
+                if x2 > font.bbox[2]:
+                    font.bbox[2] = int(units_to_double(x2 * 1000) / font_size)
+                if y2 > font.bbox[3]:
+                    font.bbox[3] = int(units_to_double(y2 * 1000) / font_size)
+                font.widths[glyph] = int(
+                    units_to_double(context.logical_rect.width * 1000) /
+                    font_size)
+
+            # Kerning, word spacing, letter spacing
+            kerning = int(
+                font.widths[glyph] -
+                units_to_double(width * 1000) / font_size +
+                offset)
+            if kerning:
+                string += f'>{kerning}<'
+
+            # Mapping between glyphs and characters
+            if glyph not in font.cmap and glyph != pango.PANGO_GLYPH_EMPTY:
+                utf8_slice = slice(previous_utf8_position, utf8_position)
+                font.cmap[glyph] = utf8_text[utf8_slice].decode('utf-8')
+            previous_utf8_position = utf8_position
+
+        # Close the last glyphs list, remove if empty
+        if string[-1] == '<':
+            string = string[:-1]
+        else:
+            string += '>'
+
+    # Draw text
+    context.show_text(string)
 
 
 def draw_wave(context, x, y, width, offset_x, radius):

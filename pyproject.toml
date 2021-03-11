@@ -13,12 +13,16 @@ home-page = 'https://www.courtbouillon.org/weasyprint'
 requires = [
   'pydyf >=0.0.1',
   'cffi >=0.6',
-  'html5lib >=0.999999999',
+  'html5lib >=1.0.1',
   'tinycss2 >=1.0.0',
   'cssselect2 >=0.1',
   'Pyphen >=0.9.1',
-  'fonttools[woff] >=4.0',
   'Pillow >=4.0.0',
+  # We could use fonttools[woff], but see
+  # https://github.com/fonttools/fonttools/issues/2188
+  'fonttools >=4.0.0',
+  'brotli >=1.0.1; platform_python_implementation == "CPython"',
+  'brotlicffi >=0.8.0; platform_python_implementation != "CPython"',
 ]
 requires-python = '>=3.6'
 keywords = 'html css pdf converter'

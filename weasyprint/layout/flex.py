@@ -52,7 +52,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
         else:
             main_space = max_position_y - box.position_y
             if containing_block.height != 'auto':
-                if hasattr(containing_block.height, 'unit'):
+                if isinstance(containing_block.height, Dimension):
                     assert containing_block.height.unit == 'px'
                     main_space = min(main_space, containing_block.height.value)
                 else:
@@ -69,7 +69,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
         if cross == 'height':
             main_space = max_position_y - box.content_box_y()
             if containing_block.height != 'auto':
-                if hasattr(containing_block.height, 'unit'):
+                if isinstance(containing_block.height, Dimension):
                     assert containing_block.height.unit == 'px'
                     main_space = min(main_space, containing_block.height.value)
                 else:
@@ -154,7 +154,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
             new_child.style['max_height'] = Dimension(float('inf'), 'px')
             new_child = blocks.block_level_layout(
                 context, new_child, float('inf'), child_skip_stack,
-                parent_box, page_is_empty, [], [], [])[0]
+                parent_box, page_is_empty, [], [], [], False)[0]
             content_size = new_child.height
             child.min_height = min(specified_size, content_size)
 
@@ -214,7 +214,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                     new_child = blocks.block_level_layout(
                         context, new_child, float('inf'), child_skip_stack,
                         parent_box, page_is_empty, absolute_boxes, fixed_boxes,
-                        adjoining_margins=[])[0]
+                        adjoining_margins=[], discard=False)[0]
                     child.flex_base_size = new_child.margin_height()
             elif child.style[axis] == 'min-content':
                 child.style[axis] = 'auto'
@@ -229,7 +229,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                     new_child = blocks.block_level_layout(
                         context, new_child, float('inf'), child_skip_stack,
                         parent_box, page_is_empty, absolute_boxes, fixed_boxes,
-                        adjoining_margins=[])[0]
+                        adjoining_margins=[], discard=False)[0]
                     child.flex_base_size = new_child.margin_height()
             else:
                 assert child.style[axis].unit == 'px'
@@ -463,7 +463,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                 blocks.block_level_layout_switch(
                     context, child_copy, float('inf'), child_skip_stack,
                     parent_box, page_is_empty, absolute_boxes, fixed_boxes,
-                    adjoining_margins=[]))
+                    adjoining_margins=[], discard=False))
 
             child._baseline = find_in_flow_baseline(new_child) or 0
             if cross == 'height':
@@ -842,7 +842,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                 new_child, child_resume_at = blocks.block_level_layout_switch(
                     context, child, max_position_y, child_skip_stack, box,
                     page_is_empty, absolute_boxes, fixed_boxes,
-                    adjoining_margins=[])[:2]
+                    adjoining_margins=[], discard=False)[:2]
                 if new_child is None:
                     if resume_at and resume_at[0]:
                         resume_at = (resume_at[0] + i - 1, None)

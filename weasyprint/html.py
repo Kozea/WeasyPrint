@@ -49,7 +49,7 @@ def ascii_lower(string):
     This is used for `ASCII case-insensitive
     <http://whatwg.org/C#ascii-case-insensitive>`_ matching.
 
-    This is different from the :meth:`~py:str.lower` method of Unicode strings
+    This is different from the :meth:`str.lower` method of Unicode strings
     which also affect non-ASCII characters,
     sometimes mapping them into the ASCII range:
 
@@ -249,7 +249,7 @@ def handle_td(element, box, _get_image_from_uri, _base_url):
 def handle_a(element, box, _get_image_from_uri, base_url):
     """Handle the ``rel`` attribute."""
     box.is_attachment = element_has_link_type(element, 'attachment')
-    box.attachment_download = element.get('download')
+    box.download_name = element.get('download')
     return [box]
 
 

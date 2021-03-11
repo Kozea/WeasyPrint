@@ -49,7 +49,7 @@ from . import assert_pixels
      ''')
 ))
 def test_list_style_image(position, pixels):
-    assert_pixels('list_style_image_' + position, 12, 10, pixels, '''
+    assert_pixels(f'list_style_image_{position}', 12, 10, pixels, '''
       <style>
         @page { size: 12px 10px }
         body { margin: 0; background: white; font-family: %s }

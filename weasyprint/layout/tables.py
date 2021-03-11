@@ -142,12 +142,11 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
                 cell.computed_height = cell.height
                 cell.height = 'auto'
                 cell, _, _, _, _ = block_container_layout(
-                    context, cell,
-                    max_position_y=float('inf'),
-                    skip_stack=None,
-                    page_is_empty=False,
+                    context, cell, max_position_y=float('inf'),
+                    skip_stack=None, page_is_empty=False,
                     absolute_boxes=absolute_boxes,
-                    fixed_boxes=fixed_boxes)
+                    fixed_boxes=fixed_boxes, adjoining_margins=None,
+                    discard=False)
                 cell.empty = not any(
                     child.is_floated() or child.is_in_normal_flow()
                     for child in cell.children)

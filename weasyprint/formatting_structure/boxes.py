@@ -76,11 +76,13 @@ class Box:
     is_for_root_element = False
     is_column = False
     is_leader = False
+    is_attachment = False
 
     # Other properties
     transformation_matrix = None
     bookmark_label = None
     string_set = None
+    download_name = None
 
     # Default, overriden on some subclasses
     def all_children(self):
@@ -338,7 +340,7 @@ class ParentBox(Box):
         """A flat generator for a box, its children and descendants."""
         yield self
         for child in self.children:
-            if hasattr(child, 'descendants'):
+            if isinstance(child, ParentBox):
                 for grand_child in child.descendants():
                     yield grand_child
             else:
@@ -410,6 +412,7 @@ class LineBox(ParentBox):
 
     """
     text_overflow = 'clip'
+    block_ellipsis = 'none'
 
     @classmethod
     def anonymous_from(cls, parent, *args, **kwargs):

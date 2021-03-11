@@ -206,7 +206,7 @@ def absolute_block(context, box, containing_block, fixed_boxes):
     new_box, _, _, _, _ = block_container_layout(
         context, box, max_position_y=float('inf'), skip_stack=None,
         page_is_empty=False, absolute_boxes=absolute_boxes,
-        fixed_boxes=fixed_boxes, adjoining_margins=None)
+        fixed_boxes=fixed_boxes, adjoining_margins=None, discard=False)
 
     for child_placeholder in absolute_boxes:
         absolute_layout(context, child_placeholder, new_box, fixed_boxes)
