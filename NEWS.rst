@@ -3,6 +3,41 @@
 ======
 
 
+Version 52.4
+------------
+
+Released on 2021-03-11.
+
+Bug fixes:
+
+* `#1304 <https://github.com/Kozea/WeasyPrint/issues/1304>`_:
+  Don’t try to draw SVG files with no size
+* `ece5f066 <https://github.com/Kozea/WeasyPrint/commit/ece5f066>`_:
+  Avoid crash on last word detection
+* `4ee42e48 <https://github.com/Kozea/WeasyPrint/commit/4ee42e48>`_:
+  Remove last word before ellipses when hyphenated
+
+Contributors:
+
+* Guillaume Ayoub
+
+Backers and sponsors:
+
+* PDF Blocks
+* SimonSoft
+* Menutech
+* Simon Sapin
+* Manuel Barkhau
+* Andreas Zettl
+* Nathalie Gutton
+* Tom Pohl
+* René Fritz
+* Moritz Mahringer
+* Florian Demmer
+* KontextWork
+* Michele Mostarda
+
+
 Version 52.3
 ------------
 
