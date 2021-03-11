@@ -49,6 +49,7 @@ def iter_line_boxes(context, box, position_y, skip_stack, containing_block,
             context, box, position_y, skip_stack, containing_block,
             absolute_boxes, fixed_boxes, first_letter_style)
         if line:
+            handle_leaders(context, line, containing_block)
             position_y = line.position_y + line.height
         if line is None:
             return
@@ -58,6 +59,77 @@ def iter_line_boxes(context, box, position_y, skip_stack, containing_block,
         skip_stack = resume_at
         box.text_indent = 0
         first_letter_style = None
+
+
+def leader_index(box):
+    """Get the index of the first leader box in ``box``."""
+    for i, child in enumerate(box.children):
+        if child.is_leader:
+            return (i, None), child
+        if isinstance(child, boxes.ParentBox):
+            child_leader_index, child_leader = leader_index(child)
+            if child_leader_index is not None:
+                return (i, child_leader_index), child_leader
+    return None, None
+
+
+def handle_leaders(context, line, containing_block):
+    """Find a leader box in ``line`` and handle its text and its position."""
+    index, leader_box = leader_index(line)
+    if index is not None:
+        text_box, = leader_box.children
+
+        # Abort if the leader text has no width
+        if text_box.width <= 0:
+            return
+
+        # Extra width is the additional width taken by the leader box
+        extra_width = containing_block.width - sum(
+            child.width for child in line.children
+            if child.is_in_normal_flow())
+
+        # Take care of excluded shapes
+        for shape in context.excluded_shapes:
+            if shape.position_y + shape.height > line.position_y:
+                extra_width -= shape.width
+
+        # Available width is the width available for the leader box
+        leader_box.width = available_width = extra_width + text_box.width
+        line.width = containing_block.width
+
+        # Add text boxes into the leader box
+        number_of_leaders = int(line.width // text_box.width)
+        position_x = line.position_x + line.width
+        children = []
+        for i in range(number_of_leaders):
+            position_x -= text_box.width
+            if position_x < leader_box.position_x:
+                # Don’t add leaders behind the text on the left
+                continue
+            elif (position_x + text_box.width >
+                    leader_box.position_x + available_width):
+                # Don’t add leaders behind the text on the right
+                continue
+            text_box = text_box.copy()
+            text_box.position_x = position_x
+            children.append(text_box)
+        leader_box.children = tuple(children)
+
+        if line.style['direction'] == 'rtl':
+            leader_box.translate(dx=-extra_width)
+
+    # Widen leader parent boxes and translate following boxes
+    box = line
+    while index is not None:
+        for child in box.children[index[0] + 1:]:
+            if child.is_in_normal_flow():
+                if line.style['direction'] == 'ltr':
+                    child.translate(dx=extra_width)
+                else:
+                    child.translate(dx=-extra_width)
+        box = box.children[index[0]]
+        box.width += extra_width
+        index = index[1]
 
 
 def get_next_linebox(context, linebox, position_y, skip_stack,
@@ -224,7 +296,8 @@ def skip_first_whitespace(box, skip_stack):
 def remove_last_whitespace(context, box):
     """Remove in place space characters at the end of a line.
 
-    This also reduces the width of the inline parents of the modified text.
+    This also reduces the width and position of the inline parents of the
+    modified text.
 
     """
     ancestors = []
@@ -246,10 +319,11 @@ def remove_last_whitespace(context, box):
         assert resume is None
         space_width = box.width - new_box.width
         box.width = new_box.width
+
+        # RTL line, the trailing space is at the left of the box. We have to
+        # translate the box to align the stripped text with the right edge of
+        # the box.
         if new_box.pango_layout.first_line_direction % 2:
-            # RTL line, the trailing space is at the left of the box. We have
-            # to translate the box to align the stripped text with the right
-            # edge of the box.
             box.position_x -= space_width
             for ancestor in ancestors:
                 ancestor.position_x -= space_width
@@ -257,6 +331,13 @@ def remove_last_whitespace(context, box):
         space_width = box.width
         box.width = 0
         box.text = ''
+
+        # RTL line, the textbox with a trailing space is now empty at the left
+        # of the line. We have to translate the line to align it with the right
+        # edge of the box.
+        line = ancestors[0]
+        if line.style['direction'] == 'rtl':
+            line.translate(dx=-space_width, ignore_floats=True)
 
     for ancestor in ancestors:
         ancestor.width -= space_width
@@ -797,6 +878,8 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
         if can_break is None:
             if None in (last_letter, first):
                 can_break = False
+            elif first in (True, False):
+                can_break = first
             else:
                 can_break = can_break_text(
                     last_letter + first, child.style['lang'])
@@ -933,22 +1016,33 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
         children.extend(waiting_children)
         resume_at = None
 
+    # Reorder inline blocks when direction is rtl
+    if box.style['direction'] == 'rtl' and len(children) > 1:
+        in_flow_children = [
+            box_child for _, box_child in children
+            if box_child.is_in_normal_flow()]
+        position_x = in_flow_children[0].position_x
+        for child in in_flow_children[::-1]:
+            child.translate(
+                dx=(position_x - child.position_x), ignore_floats=True)
+            position_x += child.margin_width()
+
     is_end = resume_at is None
     new_box = box.copy_with_children(
         [box_child for index, box_child in children])
     new_box.remove_decoration(start=not is_start, end=not is_end)
     if isinstance(box, boxes.LineBox):
         # We must reset line box width according to its new children
-        in_flow_children = [
-            box_child for box_child in new_box.children
-            if box_child.is_in_normal_flow()]
-        if in_flow_children:
-            new_box.width = (
-                in_flow_children[-1].position_x +
-                in_flow_children[-1].margin_width() -
-                new_box.position_x)
-        else:
-            new_box.width = 0
+        new_box.width = 0
+        children = new_box.children
+        if new_box.style['direction'] == 'ltr':
+            children = children[::-1]
+        for child in children:
+            if child.is_in_normal_flow():
+                new_box.width = (
+                    child.position_x + child.margin_width() -
+                    new_box.position_x)
+                break
     else:
         new_box.position_x = initial_position_x
         if box.style['box_decoration_break'] == 'clone':
@@ -979,6 +1073,10 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
     if resume_at is not None:
         if resume_at[0] < float_resume_at:
             resume_at = (float_resume_at, None)
+
+    if box.is_leader:
+        first_letter = True
+        last_letter = False
 
     return (
         new_box, resume_at, preserved_line_break, first_letter, last_letter,

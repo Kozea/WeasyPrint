@@ -361,8 +361,18 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
     # instead. We currently miss at least style_for, counters and quotes
     # context in computer. Some work will still need to be done here though,
     # like box creation for URIs.
-    boxlist = []
-    texts = []
+
+    content_boxes = []
+    has_text = set()  # Use a set because variable is modified in add_text
+
+    def add_text(text):
+        has_text.add(True)
+        if text:
+            if content_boxes and isinstance(content_boxes[-1], boxes.TextBox):
+                content_boxes[-1].text += text
+            else:
+                content_boxes.append(
+                    boxes.TextBox.anonymous_from(parent_box, text))
 
     missing_counters = []
     missing_target_counters = {}
@@ -381,7 +391,7 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
 
     for type_, value in content_list:
         if type_ == 'string':
-            texts.append(value)
+            add_text(value)
         elif type_ == 'url' and get_image_from_uri is not None:
             origin, uri = value
             if origin != 'external':
@@ -389,19 +399,13 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
                 continue
             image = get_image_from_uri(uri)
             if image is not None:
-                text = ''.join(texts)
-                if text:
-                    boxlist.append(
-                        boxes.TextBox.anonymous_from(parent_box, text))
-                texts = []
-                boxlist.append(
+                content_boxes.append(
                     boxes.InlineReplacedBox.anonymous_from(parent_box, image))
         elif type_ == 'content()':
             added_text = TEXT_CONTENT_EXTRACTORS[value](parent_box)
             # Simulate the step of white space processing
             # (normally done during the layout)
-            added_text = added_text.strip()
-            texts.append(added_text)
+            add_text(added_text.strip())
         elif type_ == 'counter()':
             counter_name, counter_type = value
             if need_collect_missing:
@@ -409,15 +413,15 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
                     counter_name, counter_values, missing_counters)
             if counter_type != 'none':
                 counter_value = counter_values.get(counter_name, [0])[-1]
-                texts.append(counter_style.render_value(
-                    counter_value, counter_type))
+                add_text(
+                    counter_style.render_value(counter_value, counter_type))
         elif type_ == 'counters()':
             counter_name, separator, counter_type = value
             if need_collect_missing:
                 _collect_missing_counter(
                     counter_name, counter_values, missing_counters)
             if counter_type != 'none':
-                texts.append(separator.join(
+                add_text(separator.join(
                     counter_style.render_value(counter_value, counter_type)
                     for counter_value
                     in counter_values.get(counter_name, [0])))
@@ -429,7 +433,7 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
                     '"string(%s)" is only allowed in page margins',
                     ' '.join(value))
                 continue
-            texts.append(context.get_string_set_for(page, *value) or '')
+            add_text(context.get_string_set_for(page, *value))
         elif type_ == 'target-counter()':
             anchor_token, counter_name, counter_type = value
             lookup_target = target_collector.lookup_target(
@@ -448,10 +452,9 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
                 local_counters.update(target_values)
                 if counter_type != 'none':
                     counter_value = local_counters.get(counter_name, [0])[-1]
-                    texts.append(counter_style.render_value(
+                    add_text(counter_style.render_value(
                         counter_value, counter_type))
             else:
-                texts = []
                 break
         elif type_ == 'target-counters()':
             anchor_token, counter_name, separator, counter_type = value
@@ -473,12 +476,11 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
                     lookup_target.cached_page_counter_values.copy())
                 local_counters.update(target_values)
                 if counter_type != 'none':
-                    texts.append(separator_string.join(
+                    add_text(separator_string.join(
                         counter_style.render_value(counter_value, counter_type)
                         for counter_value
                         in local_counters.get(counter_name, [0])))
             else:
-                texts = []
                 break
         elif type_ == 'target-text()':
             anchor_token, text_style = value
@@ -491,9 +493,8 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
                 text = TEXT_CONTENT_EXTRACTORS[text_style](target_box)
                 # Simulate the step of white space processing
                 # (normally done during the layout)
-                texts.append(text.strip())
+                add_text(text.strip())
             else:
-                texts = []
                 break
         elif (type_ == 'quote' and
                 quote_depth is not None and
@@ -505,7 +506,7 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
             if insert:
                 open_quotes, close_quotes = quote_style
                 quotes = open_quotes if is_open else close_quotes
-                texts.append(quotes[min(quote_depth[0], len(quotes) - 1)])
+                add_text(quotes[min(quote_depth[0], len(quotes) - 1)])
             if is_open:
                 quote_depth[0] += 1
         elif type_ == 'element()':
@@ -526,16 +527,24 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
                     child.style, child, quote_depth, counter_values,
                     get_image_from_uri, target_collector, counter_style,
                     context=context, page=page)
-            boxlist.append(new_box)
-    text = ''.join(texts)
-    if text:
-        boxlist.append(boxes.TextBox.anonymous_from(parent_box, text))
+            content_boxes.append(new_box)
+        elif type_ == 'leader()':
+            text_box = boxes.TextBox.anonymous_from(parent_box, value[1])
+            leader_box = boxes.InlineBox.anonymous_from(
+                parent_box, (text_box,))
+            # Avoid breaks inside the leader box
+            leader_box.style['white_space'] = 'pre'
+            # Prevent whitespaces from being removed from the text box
+            text_box.style['white_space'] = 'pre'
+            leader_box.is_leader = True
+            content_boxes.append(leader_box)
+
+    if has_text or content_boxes:
         # Only add CounterLookupItem if the content_list actually produced text
         target_collector.collect_missing_counters(
             parent_box, css_token, parse_again, missing_counters,
             missing_target_counters)
-
-    return boxlist if (texts or boxlist) else None
+        return content_boxes
 
 
 def content_to_boxes(style, parent_box, quote_depth, counter_values,
