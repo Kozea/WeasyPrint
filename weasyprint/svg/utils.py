@@ -6,10 +6,8 @@
 
 """
 
-from math import cos, sin
-
 import re
-
+from math import cos, sin
 
 UNITS = {
     'mm': 1 / 25.4,

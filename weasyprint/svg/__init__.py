@@ -12,10 +12,9 @@ from xml.etree import ElementTree
 
 from .colors import color
 from .path import path
-from .shapes import circle, ellipse, line, polyline, polygon, rect
+from .shapes import circle, ellipse, line, polygon, polyline, rect
 from .svg import svg
 from .utils import normalize, size
-
 
 TAGS = {
     # 'a': None,
@@ -107,7 +106,7 @@ class Node:
                 child.set(key, child.get('color', 'black'))
         for key, value in child.attrib.items():
             if value == 'inherit':
-                child.set(key, parent.get(key))
+                child.set(key, self.get(key))
         return child
 
     def __iter__(self):
