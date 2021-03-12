@@ -80,33 +80,24 @@ class SVGImage:
             self._svg.get_intrinsic_size(font_size))
         viewbox = self._svg.get_viewbox()
 
-        if viewbox:
-            if self._intrinsic_width and self._intrinsic_height:
-                self.intrinsic_ratio = (
-                    self._intrinsic_width / self._intrinsic_height)
-            else:
-                if viewbox[2] and viewbox[3]:
-                    self.intrinsic_ratio = viewbox[2] / viewbox[3]
-                    if self._intrinsic_width:
-                        self._intrinsic_height = (
-                            self._intrinsic_width / self.intrinsic_ratio)
-                    elif self._intrinsic_height:
-                        self._intrinsic_width = (
-                            self._intrinsic_height * self.intrinsic_ratio)
-        elif self._intrinsic_width and self._intrinsic_height:
+        if self._intrinsic_width and self._intrinsic_height:
             self.intrinsic_ratio = (
                 self._intrinsic_width / self._intrinsic_height)
+        elif viewbox and viewbox[2] and viewbox[3]:
+            self.intrinsic_ratio = viewbox[2] / viewbox[3]
+            if self._intrinsic_width:
+                self._intrinsic_height = (
+                    self._intrinsic_width / self.intrinsic_ratio)
+            elif self._intrinsic_height:
+                self._intrinsic_width = (
+                    self._intrinsic_height * self.intrinsic_ratio)
+        else:
+            self.intrinsic_ratio = None
 
         return self._intrinsic_width, self._intrinsic_height
 
     def draw(self, context, concrete_width, concrete_height, _image_rendering):
-        has_size = (
-            concrete_width > 0
-            and concrete_height > 0
-            and self._intrinsic_width > 0
-            and self._intrinsic_height > 0
-        )
-        if not has_size:
+        if not concrete_width or not concrete_height:
             return
 
         # Use the real intrinsic size here,
