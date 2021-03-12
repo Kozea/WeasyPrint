@@ -74,6 +74,16 @@ COLOR_ATTRIBUTES = frozenset((
     'stroke',
 ))
 
+DEF_TYPES = frozenset((
+    'marker',
+    'gradient',
+    'pattern',
+    'path',
+    'mask',
+    'filter',
+    'image',
+))
+
 
 class Node:
     def __init__(self, etree_node):
@@ -110,6 +120,14 @@ class SVG:
         self.tree = Node(ElementTree.fromstring(bytestring_svg))
         self.url = url
 
+        self.filters = {}
+        self.gradients = {}
+        self.images = {}
+        self.markers = {}
+        self.masks = {}
+        self.patterns = {}
+        self.paths = {}
+
     def get_intrinsic_size(self, font_size):
         intrinsic_width = self.tree.get('width', '100%')
         intrinsic_height = self.tree.get('height', '100%')
@@ -141,9 +159,13 @@ class SVG:
         self.base_url = base_url
         self.url_fetcher = url_fetcher
 
+        self.parse_all_defs(self.tree)
         self.draw_node(self.tree, size('12pt'))
 
     def draw_node(self, node, font_size):
+        if node.tag == 'defs':
+            return
+
         font_size = size(node.get('font-size', '1em'), font_size, font_size)
 
         self.stream.push_state()
@@ -274,3 +296,13 @@ class SVG:
                 matrix[0][0], matrix[0][1],
                 matrix[1][0], matrix[1][1],
                 matrix[2][0], matrix[2][1])
+
+    def parse_all_defs(self, node):
+        self.parse_def(node)
+        for child in node:
+            self.parse_all_defs(child)
+
+    def parse_def(self, node):
+        for def_type in DEF_TYPES:
+            if def_type in node.tag.lower() and 'id' in node.attrib:
+                getattr(self, f'{def_type}s')[node.attrib['id']] = node
