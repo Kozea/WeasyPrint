@@ -103,13 +103,9 @@ class SVGImage:
         # Use the real intrinsic size here,
         # not affected by 'image-resolution'.
         context.push_state()
-        try:
-            self._svg.draw(
-                context, concrete_width, concrete_height, self._base_url,
-                self._url_fetcher)
-        except Exception as exception:
-            LOGGER.error(
-                'Failed to draw image at %r: %s', self._svg.url, exception)
+        self._svg.draw(
+            context, concrete_width, concrete_height, self._base_url,
+            self._url_fetcher)
         context.pop_state()
 
 
@@ -128,17 +124,31 @@ def get_image_from_uri(cache, url_fetcher, optimize_images, url,
             else:
                 string = result['file_obj'].read()
             mime_type = forced_mime_type or result['mime_type']
+
+            image = None
+            svg_exceptions = []
+            # Try to rely on given mimetype for SVG
             if mime_type == 'image/svg+xml':
                 try:
                     image = SVGImage(SVG(string, url), url, url_fetcher)
-                except Exception as exception:
-                    raise ImageLoadingError.from_exception(exception)
-            else:
-                # Try to rely on given mimetype
+                except Exception as svg_exception:
+                    svg_exceptions.append(svg_exception)
+            # Try pillow for raster images, or for failing SVG
+            if image is None:
                 try:
                     pillow_image = Image.open(BytesIO(string))
-                except Exception as exception:
-                    raise ImageLoadingError.from_exception(exception)
+                except Exception as raster_exception:
+                    if mime_type == 'image/svg+xml':
+                        # Tried SVGImage then Pillow for a SVG, abort
+                        raise ImageLoadingError.from_exception(
+                            svg_exceptions[0])
+                    try:
+                        # Last chance, try SVG
+                        image = SVGImage(SVG(string, url), url, url_fetcher)
+                    except Exception:
+                        # Tried Pillow then SVGImage for a raster, abort
+                        raise ImageLoadingError.from_exception(
+                            raster_exception)
                 else:
                     image = RasterImage(pillow_image, optimize_images)
 

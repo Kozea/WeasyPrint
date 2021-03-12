@@ -174,7 +174,10 @@ class SVG:
         self.stream.transform(1, 0, 0, 1, x, y)
         self.transform(node.get('transform'), font_size)
 
-        local_name = node.tag.split('}', 1)[1]
+        if '}' in node.tag:
+            local_name = node.tag.split('}', 1)[1]
+        else:
+            local_name = node.tag
 
         if local_name in TAGS:
             TAGS[local_name](self, node, font_size)
