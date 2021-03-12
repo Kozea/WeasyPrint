@@ -6,6 +6,8 @@
 
 """
 
+from math import cos, sin
+
 import re
 
 
@@ -66,3 +68,15 @@ def point(svg, string, font_size):
         size(x, font_size, svg.concrete_width),
         size(y, font_size, svg.concrete_height),
         string)
+
+
+def rotate(x, y, angle):
+    return x * cos(angle) - y * sin(angle), y * cos(angle) + x * sin(angle)
+
+
+def quadratic_points(x1, y1, x2, y2, x3, y3):
+    xq1 = x2 * 2 / 3 + x1 / 3
+    yq1 = y2 * 2 / 3 + y1 / 3
+    xq2 = x2 * 2 / 3 + x3 / 3
+    yq2 = y2 * 2 / 3 + y3 / 3
+    return xq1, yq1, xq2, yq2, x3, y3

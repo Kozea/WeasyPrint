@@ -11,19 +11,34 @@ from math import cos, radians, sin, tan
 from xml.etree import ElementTree
 
 from .colors import color
+from .path import path
 from .shapes import circle, ellipse, line, polyline, polygon, rect
 from .svg import svg
 from .utils import normalize, size
 
 
 TAGS = {
+    # 'a': None,
     'circle': circle,
+    # 'clipPath': None,
     'ellipse': ellipse,
+    # 'filter': None,
+    # 'image': None,
     'line': line,
+    # 'linearGradient': None,
+    # 'marker': None,
+    # 'mask': None,
+    'path': path,
+    # 'pattern': None,
     'polyline': polyline,
     'polygon': polygon,
+    # 'radialGradient': None,
     'rect': rect,
     'svg': svg,
+    # 'text': None,
+    # 'textPath': None,
+    # 'tspan': None,
+    # 'use': None,
 }
 
 NOT_INHERITED_ATTRIBUTES = frozenset((
