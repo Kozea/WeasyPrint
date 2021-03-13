@@ -731,11 +731,12 @@ def get_content_list_token(token, base_url):
     if target is not None:
         return target
 
-    # <leader>
     function = parse_function(token)
     if function is None:
         return
     name, args = function
+
+    # <leader()>
     if name == 'leader':
         if len(args) != 1:
             return
@@ -752,5 +753,7 @@ def get_content_list_token(token, base_url):
         elif arg.type == 'string':
             string = arg.value
         return ('leader()', ('string', string))
+
+    # <element()>
     elif name == 'element':
         return check_string_or_element_function('element', token)

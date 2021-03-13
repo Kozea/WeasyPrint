@@ -75,6 +75,7 @@ class Box:
     is_flex_item = False
     is_for_root_element = False
     is_column = False
+    is_leader = False
     is_attachment = False
 
     # Other properties
