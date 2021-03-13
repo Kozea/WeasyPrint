@@ -115,6 +115,7 @@ else:
         void pango_fc_font_map_set_config (
             PangoFcFontMap *fcfontmap, FcConfig *fcconfig);
         void pango_fc_font_map_shutdown (PangoFcFontMap *fcfontmap);
+        void pango_fc_font_map_config_changed (PangoFcFontMap *fcfontmap);
 
 
         // PangoCairo
@@ -428,9 +429,8 @@ else:
                     if font_added:
                         # TODO: We should mask local fonts with the same name
                         # too as explained in Behdad's blog entry.
-                        # TODO: What about pango_fc_font_map_config_changed()
-                        # as suggested in Behdad's blog entry?
-                        # Though it seems to work without…
+                        pangoft2.pango_fc_font_map_config_changed(
+                            ffi.cast('PangoFcFontMap *', self.font_map))
                         return font_filename
                     else:
                         LOGGER.debug('Failed to load font at "%s"', url)
