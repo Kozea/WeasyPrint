@@ -30,7 +30,7 @@ if hasattr(sys, 'frozen'):  # pragma: no cover
 else:
     ROOT = Path(os.path.dirname(__file__))
 
-VERSION = __version__ = '53.0'
+VERSION = __version__ = '53.0a'
 
 __all__ = [
     'HTML', 'CSS', 'Attachment', 'Document', 'Page', 'default_url_fetcher',
