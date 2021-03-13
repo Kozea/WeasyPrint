@@ -361,6 +361,7 @@ ffi.cdef('''
     PangoFontMap * pango_ft2_font_map_new (void);
     void pango_fc_font_map_set_config (
         PangoFcFontMap *fcfontmap, FcConfig *fcconfig);
+    void pango_fc_font_map_config_changed (PangoFcFontMap *fcfontmap);
 ''')
 
 
