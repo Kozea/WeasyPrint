@@ -186,7 +186,6 @@ COLORS = {
     'windowframe': (0.8, 0.8, 0.8, 1),
     'windowtext': (0, 0, 0, 1),
 
-    'none': (0, 0, 0, 0),
     'transparent': (0, 0, 0, 0),
 }
 

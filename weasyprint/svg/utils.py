@@ -8,6 +8,7 @@
 
 import re
 from math import cos, sin
+from urllib.parse import urlparse
 
 UNITS = {
     'mm': 1 / 25.4,
@@ -78,3 +79,90 @@ def quadratic_points(x1, y1, x2, y2, x3, y3):
     xq2 = x2 * 2 / 3 + x3 / 3
     yq2 = y2 * 2 / 3 + y3 / 3
     return xq1, yq1, xq2, yq2, x3, y3
+
+
+def preserve_ratio(svg, node, font_size, width=None, height=None):
+    if node.tag == 'marker':
+        width = width or size(
+            node.get('markerWidth', '3'), font_size, svg.concrete_width)
+        height = height or size(
+            node.get('markerHeight', '3'), font_size, svg.concrete_height)
+        viewbox = node.get_viewbox()
+        viewbox_width, viewbox_height = viewbox[2:]
+    elif node.tag in ('svg', 'image', 'g'):
+        node_width, node_height = node.get_intrinsic_size(font_size)
+        width = width or node_width
+        height = height or node_height
+        viewbox_width, viewbox_height = node.image_width, node.image_height
+    else:
+        return
+
+    translate_x = 0
+    translate_y = 0
+    scale_x = width / viewbox_width if viewbox_width > 0 else 1
+    scale_y = height / viewbox_height if viewbox_height > 0 else 1
+
+    aspect_ratio = node.get('preserveAspectRatio', 'xMidYMid').split()
+    align = aspect_ratio[0]
+    if align == 'none':
+        x_position = 'min'
+        y_position = 'min'
+    else:
+        meet_or_slice = aspect_ratio[1] if len(aspect_ratio) > 1 else None
+        if meet_or_slice == 'slice':
+            scale_value = max(scale_x, scale_y)
+        else:
+            scale_value = min(scale_x, scale_y)
+        scale_x = scale_y = scale_value
+        x_position = align[1:4].lower()
+        y_position = align[5:].lower()
+
+    if node.tag == 'marker':
+        translate_x = -size(svg, node.get('refX', '0'), 'x')
+        translate_y = -size(svg, node.get('refY', '0'), 'y')
+    else:
+        translate_x = 0
+        if x_position == 'mid':
+            translate_x = (width / scale_x - viewbox_width) / 2
+        elif x_position == 'max':
+            translate_x = width / scale_x - viewbox_width
+
+        translate_y = 0
+        if y_position == 'mid':
+            translate_y += (height / scale_y - viewbox_height) / 2
+        elif y_position == 'max':
+            translate_y += height / scale_y - viewbox_height
+
+    return scale_x, scale_y, translate_x, translate_y
+
+
+def clip_marker_box(svg, node, font_size, scale_x, scale_y):
+    width = size(node.get('markerWidth', '3'), font_size, svg.concrete_width)
+    height = size(
+        node.get('markerHeight', '3'), font_size, svg.concrete_height)
+    viewbox = node.get_viewbox()
+    viewbox_width, viewbox_height = viewbox[2:]
+
+    align = node.get('preserveAspectRatio', 'xMidYMid').split(' ')[0]
+    x_position = 'min' if align == 'none' else align[1:4].lower()
+    y_position = 'min' if align == 'none' else align[5:].lower()
+
+    clip_x = viewbox[0]
+    if x_position == 'mid':
+        clip_x += (viewbox_width - width / scale_x) / 2.
+    elif x_position == 'max':
+        clip_x += viewbox_width - width / scale_x
+
+    clip_y = viewbox[1]
+    if y_position == 'mid':
+        clip_y += (viewbox_height - height / scale_y) / 2.
+    elif y_position == 'max':
+        clip_y += viewbox_height - height / scale_y
+
+    return clip_x, clip_y, width / scale_x, height / scale_y
+
+
+def parse_url(url):
+    if url and url.startswith('url(') and url.endswith(')'):
+        url = url[4:-1]
+    return urlparse(url or '')

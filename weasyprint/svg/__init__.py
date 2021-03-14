@@ -7,14 +7,17 @@
 """
 
 import re
-from math import cos, radians, sin, tan
+from math import cos, pi, radians, sin, tan
 from xml.etree import ElementTree
 
+from .bounding_box import (
+    BOUNDING_BOX_METHODS, is_non_empty_bounding_box, is_valid_bounding_box)
 from .colors import color
+from .defs import marker
 from .path import path
 from .shapes import circle, ellipse, line, polygon, polyline, rect
 from .svg import svg
-from .utils import normalize, size
+from .utils import clip_marker_box, normalize, parse_url, preserve_ratio, size
 
 TAGS = {
     # 'a': None,
@@ -25,7 +28,7 @@ TAGS = {
     # 'image': None,
     'line': line,
     # 'linearGradient': None,
-    # 'marker': None,
+    'marker': marker,
     # 'mask': None,
     'path': path,
     # 'pattern': None,
@@ -91,16 +94,21 @@ class Node:
         self.attrib = etree_node.attrib
         self.get = etree_node.get
         self.set = etree_node.set
-        self.tag = etree_node.tag
+        if '}' in etree_node.tag:
+            self.tag = etree_node.tag.split('}', 1)[1]
+        else:
+            self.tag = etree_node.tag
         self.update = etree_node.attrib.update
 
         self.vertices = []
+        self.bounding_box = None
 
     def inherit(self, child):
         child = Node(child)
         child.update([
             (key, value) for key, value in self.attrib.items()
-            if key not in NOT_INHERITED_ATTRIBUTES])
+            if key not in NOT_INHERITED_ATTRIBUTES and
+            key not in child.attrib])
         for key in COLOR_ATTRIBUTES:
             if child.get(key) == 'currentColor':
                 child.set(key, child.get('color', 'black'))
@@ -112,6 +120,27 @@ class Node:
     def __iter__(self):
         for child in self._etree_node:
             yield self.inherit(child)
+
+    def get_intrinsic_size(self, font_size):
+        intrinsic_width = self.get('width', '100%')
+        intrinsic_height = self.get('height', '100%')
+
+        if '%' in intrinsic_width:
+            intrinsic_width = None
+        else:
+            intrinsic_width = size(intrinsic_width, font_size)
+        if '%' in intrinsic_height:
+            intrinsic_height = None
+        else:
+            intrinsic_height = size(intrinsic_height, font_size)
+
+        return intrinsic_width, intrinsic_height
+
+    def get_viewbox(self):
+        viewbox = self.get('viewBox')
+        if viewbox:
+            return tuple(
+                float(number) for number in normalize(viewbox).split())
 
 
 class SVG:
@@ -128,25 +157,10 @@ class SVG:
         self.paths = {}
 
     def get_intrinsic_size(self, font_size):
-        intrinsic_width = self.tree.get('width', '100%')
-        intrinsic_height = self.tree.get('height', '100%')
-
-        if '%' in intrinsic_width:
-            intrinsic_width = None
-        else:
-            intrinsic_width = size(intrinsic_width, font_size)
-        if '%' in intrinsic_height:
-            intrinsic_height = None
-        else:
-            intrinsic_height = size(intrinsic_height, font_size)
-
-        return intrinsic_width, intrinsic_height
+        return self.tree.get_intrinsic_size(font_size)
 
     def get_viewbox(self):
-        viewbox = self.tree.get('viewBox')
-        if viewbox:
-            return tuple(
-                float(number) for number in normalize(viewbox).split())
+        return self.tree.get_viewbox()
 
     def draw(self, stream, concrete_width, concrete_height, base_url,
              url_fetcher):
@@ -174,41 +188,143 @@ class SVG:
         self.stream.transform(1, 0, 0, 1, x, y)
         self.transform(node.get('transform'), font_size)
 
-        if '}' in node.tag:
-            local_name = node.tag.split('}', 1)[1]
-        else:
-            local_name = node.tag
-
-        if local_name in TAGS:
-            TAGS[local_name](self, node, font_size)
+        if node.tag in TAGS:
+            TAGS[node.tag](self, node, font_size)
 
         for child in node:
             self.draw_node(child, font_size)
 
         self.fill_stroke(node, font_size)
 
+        self.draw_markers(node, font_size)
+
         self.stream.pop_state()
+
+    def draw_markers(self, node, font_size):
+        if not node.vertices:
+            return
+
+        markers = {}
+        common_marker = parse_url(node.get('marker')).fragment
+        for position in ('start', 'mid', 'end'):
+            attribute = 'marker-{}'.format(position)
+            if attribute in node.attrib:
+                markers[position] = parse_url(node.attrib[attribute]).fragment
+            else:
+                markers[position] = common_marker
+
+        angle1, angle2 = None, None
+        position = 'start'
+
+        while node.vertices:
+            # Calculate position and angle
+            point = node.vertices.pop(0)
+            angles = node.vertices.pop(0) if node.vertices else None
+            if angles:
+                if position == 'start':
+                    angle = pi - angles[0]
+                else:
+                    angle = (angle2 + pi - angles[0]) / 2
+                angle1, angle2 = angles
+            else:
+                angle = angle2
+                position = 'end'
+
+            # Draw marker (if a marker exists for 'position')
+            marker = markers[position]
+            if marker:
+                marker_node = self.markers.get(marker)
+
+                # Calculate scale based on current stroke (if requested)
+                if marker_node.get('markerUnits') == 'userSpaceOnUse':
+                    scale = 1
+                else:
+                    scale = size(
+                        node.get('stroke-width', '1'),
+                        font_size, self.normalized_diagonal)
+
+                # Calculate position, (additional) scale and clipping based on
+                # marker properties
+                if 'viewBox' in node.attrib:
+                    scale_x, scale_y, translate_x, translate_y = (
+                        preserve_ratio(svg, marker_node, font_size))
+                    clip_box = clip_marker_box(
+                        svg, marker_node, font_size, scale_x, scale_y)
+                else:
+                    # Calculate sizes
+                    marker_width = size(
+                        marker_node.get('markerWidth', '3'), font_size,
+                        self.concrete_width)
+                    marker_height = size(
+                        marker_node.get('markerHeight', '3'), font_size,
+                        self.concrete_height)
+                    bounding_box = self.calculate_bounding_box(
+                        marker_node, font_size)
+
+                    # Calculate position and scale (preserve aspect ratio)
+                    translate_x = -size(
+                        marker_node.get('refX', '0'), font_size,
+                        self.concrete_width)
+                    translate_y = -size(
+                        marker_node.get('refY', '0'), font_size,
+                        self.concrete_height)
+                    if is_valid_bounding_box(bounding_box):
+                        scale_x = scale_y = min(
+                            marker_width / bounding_box[2],
+                            marker_height / bounding_box[3])
+                    else:
+                        scale_x = scale_y = 1
+
+                    # No clipping since viewbox is not present
+                    clip_box = None
+
+                # Override angle (if requested)
+                node_angle = marker_node.get('orient', '0')
+                if node_angle not in ('auto', 'auto-start-reverse'):
+                    angle = radians(float(node_angle))
+                elif node_angle == 'auto-start-reverse':
+                    if position == 'start':
+                        angle += radians(180)
+
+                # Draw marker path
+                # See http://www.w3.org/TR/SVG/painting.html#MarkerAlgorithm
+                for child in marker_node:
+                    self.stream.push_state()
+                    self.stream.transform(
+                        scale * scale_x * cos(angle),
+                        scale * scale_x * sin(angle),
+                        -scale * scale_y * sin(angle),
+                        scale * scale_y * cos(angle),
+                        *point)
+                    self.stream.transform(
+                        1, 0, 0, 1, translate_x, translate_y)
+
+                    # Add clipping (if present and requested)
+                    overflow = marker_node.get('overflow', 'hidden')
+                    if clip_box and overflow in ('hidden', 'scroll'):
+                        self.stream.push_state()
+                        self.stream.rectangle(*clip_box)
+                        self.stream.pop_state()
+                        self.stream.clip()
+
+                    self.draw_node(child, font_size)
+                    self.stream.pop_state()
+
+            position = 'mid' if angles else 'start'
 
     def fill_stroke(self, node, font_size):
         fill = node.get('fill', 'black')
         fill_rule = node.get('fill-rule')
-
         if fill == 'none':
             fill = None
-        if fill and fill != 'none':
-            fill_color = color(fill)[0:-1]
+        if fill:
+            fill_color = color(fill)[:3]
             self.stream.set_color_rgb(*fill_color)
 
         stroke = node.get('stroke')
         stroke_width = node.get('stroke-width', '1px')
-        dash_array = tuple(
-            float(value) for value in
-            normalize(node.get('stroke-dasharray', '')).split())
-        offset = size(node.get('stroke-dashoffset', 0))
-        line_cap = node.get('stroke-linecap', 'butt')
-        line_join = node.get('stroke-linejoin', 'miter')
-        miter_limit = float(node.get('stroke-miterlimit', 4))
-
+        if stroke == 'none':
+            stroke = None
         if stroke:
             stroke_color = color(stroke)[:3]
             self.stream.set_color_rgb(*stroke_color, stroke=True)
@@ -216,6 +332,14 @@ class SVG:
             line_width = size(stroke_width, font_size)
             if line_width > 0:
                 self.stream.set_line_width(line_width)
+
+        dash_array = tuple(
+            float(value) for value in
+            normalize(node.get('stroke-dasharray', '')).split())
+        offset = size(node.get('stroke-dashoffset', 0))
+        line_cap = node.get('stroke-linecap', 'butt')
+        line_join = node.get('stroke-linejoin', 'miter')
+        miter_limit = float(node.get('stroke-miterlimit', 4))
         if dash_array:
             if (not all(value == 0 for value in dash_array) and
                     not any(value < 0 for value in dash_array)):
@@ -308,3 +432,11 @@ class SVG:
         for def_type in DEF_TYPES:
             if def_type in node.tag.lower() and 'id' in node.attrib:
                 getattr(self, f'{def_type}s')[node.attrib['id']] = node
+
+    def calculate_bounding_box(self, node, font_size):
+        if node.bounding_box is None and node.tag in BOUNDING_BOX_METHODS:
+            bounding_box = BOUNDING_BOX_METHODS[node.tag](
+                self, node, font_size)
+            if is_non_empty_bounding_box(bounding_box):
+                node.bounding_box = bounding_box
+        return node.bounding_box
