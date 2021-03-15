@@ -13,7 +13,7 @@ from xml.etree import ElementTree
 from .bounding_box import (
     BOUNDING_BOX_METHODS, is_non_empty_bounding_box, is_valid_bounding_box)
 from .colors import color
-from .defs import marker
+from .defs import marker, use
 from .path import path
 from .shapes import circle, ellipse, line, polygon, polyline, rect
 from .svg import svg
@@ -40,7 +40,7 @@ TAGS = {
     # 'text': None,
     # 'textPath': None,
     # 'tspan': None,
-    # 'use': None,
+    'use': use,
 }
 
 NOT_INHERITED_ATTRIBUTES = frozenset((
@@ -142,6 +142,17 @@ class Node:
             return tuple(
                 float(number) for number in normalize(viewbox).split())
 
+    def get_href(self):
+        return self.get('{http://www.w3.org/1999/xlink}href', self.get('href'))
+
+    def get_child(self, id_):
+        for child in self:
+            if child.get('id') == id_:
+                return child
+            grandchild = child.get_child(id_)
+            if grandchild:
+                return grandchild
+
 
 class SVG:
     def __init__(self, bytestring_svg, url):
@@ -155,6 +166,8 @@ class SVG:
         self.masks = {}
         self.patterns = {}
         self.paths = {}
+
+        self.parse_all_defs(self.tree)
 
     def get_intrinsic_size(self, font_size):
         return self.tree.get_intrinsic_size(font_size)
@@ -172,7 +185,6 @@ class SVG:
         self.base_url = base_url
         self.url_fetcher = url_fetcher
 
-        self.parse_all_defs(self.tree)
         self.draw_node(self.tree, size('12pt'))
 
     def draw_node(self, node, font_size):
