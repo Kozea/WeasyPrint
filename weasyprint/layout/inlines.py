@@ -94,7 +94,7 @@ def handle_leaders(context, line, containing_block):
                 extra_width -= shape.width
 
         # Available width is the width available for the leader box
-        leader_box.width = available_width = extra_width + text_box.width
+        available_width = extra_width + text_box.width
         line.width = containing_block.width
 
         # Add text boxes into the leader box
