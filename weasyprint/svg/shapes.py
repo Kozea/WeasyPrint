@@ -8,16 +8,15 @@
 
 from math import atan2, pi
 
-from .utils import normalize, point, size
+from .utils import normalize, point
 
 
 def circle(svg, node, font_size):
-    r = size(node.get('r'), font_size, svg.normalized_diagonal)
+    r = svg.length(node.get('r'), font_size)
     if not r:
         return
     ratio = r / (pi ** .5)
-    cx = size(node.get('cx'), font_size, svg.concrete_width)
-    cy = size(node.get('cy'), font_size, svg.concrete_height)
+    cx, cy = svg.point(node.get('cx'), node.get('cy'), font_size)
 
     svg.stream.move_to(cx + r, cy)
     svg.stream.curve_to(cx + r, cy + ratio, cx + ratio, cy + r, cx, cy + r)
@@ -28,14 +27,12 @@ def circle(svg, node, font_size):
 
 
 def ellipse(svg, node, font_size):
-    rx = size(node.get('rx'), font_size, svg.concrete_width)
-    ry = size(node.get('ry'), font_size, svg.concrete_height)
+    rx, ry = svg.point(node.get('rx'), node.get('ry'), font_size)
     if not rx or not ry:
         return
     ratio_x = rx / (pi ** .5)
     ratio_y = ry / (pi ** .5)
-    cx = size(node.get('cx'), font_size, svg.concrete_width)
-    cy = size(node.get('cy'), font_size, svg.concrete_height)
+    cx, cy = svg.point(node.get('cx'), node.get('cy'), font_size)
 
     svg.stream.move_to(cx + rx, cy)
     svg.stream.curve_to(
@@ -50,8 +47,7 @@ def ellipse(svg, node, font_size):
 
 
 def rect(svg, node, font_size):
-    width = size(node.get('width'), font_size, svg.concrete_width)
-    height = size(node.get('height'), font_size, svg.concrete_height)
+    width, height = svg.point(node.get('width'), node.get('height'), font_size)
     if width <= 0 or height <= 0:
         return
 
@@ -61,8 +57,7 @@ def rect(svg, node, font_size):
         ry = rx
     elif ry and rx is None:
         rx = ry
-    rx = size(rx, font_size, svg.concrete_width)
-    ry = size(ry, font_size, svg.concrete_height)
+    rx, ry = svg.point(rx, ry, font_size)
 
     if rx == 0 or ry == 0:
         svg.stream.rectangle(0, 0, width, height)
@@ -93,12 +88,8 @@ def rect(svg, node, font_size):
 
 
 def line(svg, node, font_size):
-    x1, x2 = tuple(
-        size(node.get(position), font_size, svg.concrete_width)
-        for position in ('x1', 'x2'))
-    y1, y2 = tuple(
-        size(node.get(position), font_size, svg.concrete_height)
-        for position in ('y1', 'y2'))
+    x1, y1 = svg.point(node.get('x1'), node.get('y1'), font_size)
+    x2, y2 = svg.point(node.get('x2'), node.get('y2'), font_size)
     svg.stream.move_to(x1, y1)
     svg.stream.line_to(x2, y2)
     angle = atan2(y2 - y1, x2 - x1)

@@ -63,10 +63,7 @@ def point(svg, string, font_size):
     match = re.match('(.*?) (.*?)(?: |$)', string)
     x, y = match.group(1, 2)
     string = string[match.end():]
-    return (
-        size(x, font_size, svg.concrete_width),
-        size(y, font_size, svg.concrete_height),
-        string)
+    return (*svg.point(x, y, font_size), string)
 
 
 def rotate(x, y, angle):
@@ -83,10 +80,10 @@ def quadratic_points(x1, y1, x2, y2, x3, y3):
 
 def preserve_ratio(svg, node, font_size, width=None, height=None):
     if node.tag == 'marker':
-        width = width or size(
-            node.get('markerWidth', '3'), font_size, svg.concrete_width)
-        height = height or size(
-            node.get('markerHeight', '3'), font_size, svg.concrete_height)
+        node_width, node_height = svg.point(
+            node.get('markerWidth', 3), node.get('markerHeight', 3), font_size)
+        width = width or node_width
+        height = height or node_height
         viewbox = node.get_viewbox()
         viewbox_width, viewbox_height = viewbox[2:]
     elif node.tag in ('svg', 'image', 'g'):
@@ -137,9 +134,8 @@ def preserve_ratio(svg, node, font_size, width=None, height=None):
 
 
 def clip_marker_box(svg, node, font_size, scale_x, scale_y):
-    width = size(node.get('markerWidth', '3'), font_size, svg.concrete_width)
-    height = size(
-        node.get('markerHeight', '3'), font_size, svg.concrete_height)
+    width, height = svg.point(
+        node.get('markerWidth', 3), node.get('markerHeight', 3), font_size)
     viewbox = node.get_viewbox()
     viewbox_width, viewbox_height = viewbox[2:]
 

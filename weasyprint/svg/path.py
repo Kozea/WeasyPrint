@@ -8,7 +8,7 @@
 
 from math import atan2, cos, pi, radians, sin, tan
 
-from .utils import normalize, point, quadratic_points, rotate, size
+from .utils import normalize, point, quadratic_points, rotate
 
 PATH_LETTERS = 'achlmqstvzACHLMQSTVZ'
 
@@ -182,7 +182,7 @@ def path(svg, node, font_size):
             # Horizontal line
             x, string = (string + ' ').split(' ', 1)
             old_x, old_y = current_point
-            x = size(x, font_size, svg.concrete_width)
+            x, _ = svg.point(x, 0, font_size)
             if letter == 'h':
                 x += old_x
             angle = 0 if x > old_x else pi
@@ -267,7 +267,7 @@ def path(svg, node, font_size):
             # Vertical line
             y, string = (string + ' ').split(' ', 1)
             old_x, old_y = current_point
-            y = size(y, font_size, svg.concrete_height)
+            _, y = svg.point(0, y, font_size)
             if letter == 'v':
                 y += old_y
             angle = pi / 2 if y > old_y else -pi / 2

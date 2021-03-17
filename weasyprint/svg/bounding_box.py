@@ -1,39 +1,33 @@
 from math import acos, atan, cos, fmod, isinf, pi, radians, sin, sqrt, tan
 
 from .path import PATH_LETTERS
-from .utils import normalize, point, size
+from .utils import normalize, point
 
 EMPTY_BOUNDING_BOX = float('inf'), float('inf'), 0, 0
 
 
 def bounding_box_rect(svg, node, font_size):
-    x = size(node.get('x'), font_size, svg.concrete_width)
-    y = size(node.get('y'), font_size, svg.concrete_height)
-    width = size(node.get('width'), font_size, svg.concrete_width)
-    height = size(node.get('height'), font_size, svg.concrete_height)
+    x, y = svg.point(node.get('x'), node.get('y'), font_size)
+    width, height = svg.point(
+        node.get('width'), node.get('height'), font_size)
     return x, y, width, height
 
 
 def bounding_box_circle(svg, node, font_size):
-    cx = size(node.get('cx'), font_size, svg.concrete_width)
-    cy = size(node.get('cy'), font_size, svg.concrete_height)
-    r = size(node.get('r'), font_size, svg.normalized_diagonal)
+    cx, cy = svg.point(node.get('cx'), node.get('cy'), font_size)
+    r = svg.length(node.get('r'), font_size)
     return cx - r, cy - r, 2 * r, 2 * r
 
 
 def bounding_box_ellipse(svg, node, font_size):
-    rx = size(node.get('rx'), font_size, svg.concrete_width)
-    ry = size(node.get('ry'), font_size, svg.concrete_height)
-    cx = size(node.get('cx'), font_size, svg.concrete_width)
-    cy = size(node.get('cy'), font_size, svg.concrete_height)
+    rx, ry = svg.point(node.get('rx'), node.get('ry'), font_size)
+    cx, cy = svg.point(node.get('cx'), node.get('cy'), font_size)
     return cx - rx, cy - ry, 2 * rx, 2 * ry
 
 
 def bounding_box_line(svg, node, font_size):
-    x1 = size(node.get('x1'), font_size, svg.concrete_width)
-    x2 = size(node.get('x2'), font_size, svg.concrete_width)
-    y1 = size(node.get('y1'), font_size, svg.concrete_height)
-    y2 = size(node.get('y2'), font_size, svg.concrete_height)
+    x1, y1 = svg.point(node.get('x1'), node.get('y1'), font_size)
+    x2, y2 = svg.point(node.get('x2'), node.get('y2'), font_size)
     x, y = min(x1, x2), min(y1, y2)
     width, height = max(x1, x2) - x, max(y1, y2) - y
     return x, y, width, height
@@ -125,7 +119,7 @@ def bounding_box_path(svg, node, font_size):
         elif letter in 'hH':
             # Horizontal line
             x, path_data = (path_data + ' ').split(' ', 1)
-            x = size(svg, x, 'x')
+            x, _ = svg.point(x, 0, font_size)
 
             # Relative coordinate, convert to absolute
             if letter == 'h':
@@ -171,7 +165,7 @@ def bounding_box_path(svg, node, font_size):
         elif letter in 'vV':
             # Vertical line
             y, path_data = (path_data + ' ').split(' ', 1)
-            y = size(svg, y, 'y')
+            _, y = svg.point(0, y, font_size)
 
             # Relative coordinate, convert to absolute
             if letter == 'v':

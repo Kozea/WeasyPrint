@@ -175,6 +175,14 @@ class SVG:
     def get_viewbox(self):
         return self.tree.get_viewbox()
 
+    def point(self, x, y, font_size):
+        return (
+            size(x, font_size, self.concrete_width),
+            size(y, font_size, self.concrete_height))
+
+    def length(self, length, font_size):
+        return size(length, font_size, self.normalized_diagonal)
+
     def draw(self, stream, concrete_width, concrete_height, base_url,
              url_fetcher):
         self.stream = stream
@@ -195,8 +203,7 @@ class SVG:
 
         self.stream.push_state()
 
-        x = size(node.get('x', 0), font_size, self.concrete_width)
-        y = size(node.get('y', 0), font_size, self.concrete_height)
+        x, y = self.point(node.get('x'), node.get('y'), font_size)
         self.stream.transform(1, 0, 0, 1, x, y)
         self.transform(node.get('transform'), font_size)
 
@@ -251,9 +258,7 @@ class SVG:
                 if marker_node.get('markerUnits') == 'userSpaceOnUse':
                     scale = 1
                 else:
-                    scale = size(
-                        node.get('stroke-width', '1'),
-                        font_size, self.normalized_diagonal)
+                    scale = self.length(node.get('stroke-width', 1), font_size)
 
                 # Calculate position, (additional) scale and clipping based on
                 # marker properties
@@ -264,22 +269,18 @@ class SVG:
                         svg, marker_node, font_size, scale_x, scale_y)
                 else:
                     # Calculate sizes
-                    marker_width = size(
-                        marker_node.get('markerWidth', '3'), font_size,
-                        self.concrete_width)
-                    marker_height = size(
-                        marker_node.get('markerHeight', '3'), font_size,
-                        self.concrete_height)
+                    marker_width, marker_height = self.point(
+                        marker_node.get('markerWidth', 3),
+                        marker_node.get('markerHeight', 3),
+                        font_size)
                     bounding_box = self.calculate_bounding_box(
                         marker_node, font_size)
 
                     # Calculate position and scale (preserve aspect ratio)
-                    translate_x = -size(
-                        marker_node.get('refX', '0'), font_size,
-                        self.concrete_width)
-                    translate_y = -size(
-                        marker_node.get('refY', '0'), font_size,
-                        self.concrete_height)
+                    translate_x, translate_y = self.point(
+                        marker_node.get('refX', '0'),
+                        marker_node.get('refY', '0'),
+                        font_size)
                     if is_valid_bounding_box(bounding_box):
                         scale_x = scale_y = min(
                             marker_width / bounding_box[2],
@@ -309,7 +310,7 @@ class SVG:
                         scale * scale_y * cos(angle),
                         *point)
                     self.stream.transform(
-                        1, 0, 0, 1, translate_x, translate_y)
+                        1, 0, 0, 1, -translate_x, -translate_y)
 
                     # Add clipping (if present and requested)
                     overflow = marker_node.get('overflow', 'hidden')
@@ -341,14 +342,14 @@ class SVG:
             stroke_color = color(stroke)[:3]
             self.stream.set_color_rgb(*stroke_color, stroke=True)
         if stroke_width:
-            line_width = size(stroke_width, font_size)
+            line_width = self.length(stroke_width, font_size)
             if line_width > 0:
                 self.stream.set_line_width(line_width)
 
         dash_array = tuple(
             float(value) for value in
-            normalize(node.get('stroke-dasharray', '')).split())
-        offset = size(node.get('stroke-dashoffset', 0))
+            normalize(node.get('stroke-dasharray')).split())
+        offset = self.length(node.get('stroke-dashoffset'), font_size)
         line_cap = node.get('stroke-linecap', 'butt')
         line_join = node.get('stroke-linejoin', 'miter')
         miter_limit = float(node.get('stroke-miterlimit', 4))
@@ -395,7 +396,7 @@ class SVG:
 
         for transformation_type, transformation in transformations:
             values = [
-                size(value, font_size, self.normalized_diagonal)
+                self.length(value, font_size)
                 for value in transformation.split(' ')]
             if transformation_type == 'matrix':
                 matrix = Matrix(*values) @ matrix

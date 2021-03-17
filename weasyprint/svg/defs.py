@@ -1,4 +1,4 @@
-from .utils import parse_url, size
+from .utils import parse_url
 
 
 def marker(svg, node, font_size):
@@ -10,9 +10,7 @@ def use(svg, node, font_size):
 
     svg.stream.push_state()
     svg.stream.transform(
-        1, 0, 0, 1,
-        size(node.get('x'), font_size, svg.concrete_width),
-        size(node.get('y'), font_size, svg.concrete_height))
+        1, 0, 0, 1, *svg.point(node.get('x'), node.get('y'), font_size))
 
     for attribute in ('x', 'y', 'viewBox', 'mask'):
         if attribute in node.attrib:
