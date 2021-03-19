@@ -480,7 +480,7 @@ def draw_background_image(context, layer, image_rendering):
 
     pattern = context.add_pattern(
         position_x + positioning_x, position_y + positioning_y,
-        image_width, image_height, repeat_width, repeat_height)
+        image_width, image_height, repeat_width, repeat_height, context.ctm)
     child = pattern.add_transparency_group([0, 0, repeat_width, repeat_height])
 
     with stacked(context):

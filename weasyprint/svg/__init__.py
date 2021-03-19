@@ -13,11 +13,12 @@ from xml.etree import ElementTree
 from .bounding_box import (
     BOUNDING_BOX_METHODS, is_non_empty_bounding_box, is_valid_bounding_box)
 from .colors import color
-from .defs import marker, use
+from .defs import draw_gradient_or_pattern, linear_gradient, marker, use
 from .path import path
 from .shapes import circle, ellipse, line, polygon, polyline, rect
 from .svg import svg
-from .utils import clip_marker_box, normalize, parse_url, preserve_ratio, size
+from .utils import (
+    clip_marker_box, normalize, paint, parse_url, preserve_ratio, size)
 
 TAGS = {
     # 'a': None,
@@ -27,7 +28,7 @@ TAGS = {
     # 'filter': None,
     # 'image': None,
     'line': line,
-    # 'linearGradient': None,
+    'linearGradient': linear_gradient,
     'marker': marker,
     # 'mask': None,
     'path': path,
@@ -326,21 +327,22 @@ class SVG:
             position = 'mid' if angles else 'start'
 
     def fill_stroke(self, node, font_size):
-        fill = node.get('fill', 'black')
-        fill_rule = node.get('fill-rule')
-        if fill == 'none':
-            fill = None
-        if fill:
-            fill_color = color(fill)[:3]
+        fill_source, fill_color = paint(node.get('fill', 'black'))
+        fill_drawn = draw_gradient_or_pattern(
+            self, node, fill_source, font_size, stroke=False)
+        if fill_color and not fill_drawn:
+            fill_color = color(fill_color)[:3]
             self.stream.set_color_rgb(*fill_color)
+        fill = fill_color or fill_drawn
 
-        stroke = node.get('stroke')
-        stroke_width = node.get('stroke-width', '1px')
-        if stroke == 'none':
-            stroke = None
-        if stroke:
-            stroke_color = color(stroke)[:3]
+        stroke_source, stroke_color = paint(node.get('stroke'))
+        stroke_drawn = draw_gradient_or_pattern(
+            self, node, stroke_source, font_size, stroke=True)
+        if stroke_color and not stroke_drawn:
+            stroke_color = color(stroke_color)[:3]
             self.stream.set_color_rgb(*stroke_color, stroke=True)
+        stroke = stroke_color or stroke_drawn
+        stroke_width = node.get('stroke-width', '1px')
         if stroke_width:
             line_width = self.length(stroke_width, font_size)
             if line_width > 0:
@@ -376,7 +378,7 @@ class SVG:
         self.stream.set_line_join(line_join)
         self.stream.set_miter_limit(miter_limit)
 
-        even_odd = fill_rule == 'evenodd'
+        even_odd = node.get('fill-rule') == 'evenodd'
         if fill and stroke:
             self.stream.fill_and_stroke(even_odd)
         elif stroke:

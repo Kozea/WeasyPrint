@@ -127,17 +127,32 @@ class Context(pydyf.Stream):
         self._current_alpha = self._current_alpha_stroke = None
         self._current_font = self._current_font_size = None
         self._old_font = self._old_font_size = None
+        self._ctm_stack = [Matrix()]
 
         # These objects are used in text.show_first_line
         self.length = ffi.new('unsigned int *')
         self.ink_rect = ffi.new('PangoRectangle *')
         self.logical_rect = ffi.new('PangoRectangle *')
 
+    @property
+    def ctm(self):
+        return self._ctm_stack[-1]
+
+    def push_state(self):
+        super().push_state()
+        self._ctm_stack.append(self.ctm)
+
     def pop_state(self):
         super().pop_state()
         self._current_color = self._current_color_stroke = None
         self._current_alpha = self._current_alpha_stroke = None
         self._current_font = None
+        self._ctm_stack.pop()
+        assert self._ctm_stack
+
+    def transform(self, a=1, b=0, c=0, d=1, e=0, f=0):
+        super().transform(a, b, c, d, e, f)
+        self._ctm_stack[-1] = Matrix(a, b, c, d, e, f) @ self.ctm
 
     def begin_text(self):
         if self.stream[-1] == b'ET':
@@ -291,7 +306,8 @@ class Context(pydyf.Stream):
         self._x_objects[image_name] = xobject
         return image_name
 
-    def add_pattern(self, x, y, width, height, repeat_width, repeat_height):
+    def add_pattern(self, x, y, width, height, repeat_width, repeat_height,
+                    matrix):
         alpha_states = pydyf.Dictionary()
         x_objects = pydyf.Dictionary()
         patterns = pydyf.Dictionary()
@@ -303,7 +319,7 @@ class Context(pydyf.Stream):
             'Shading': shadings,
             'Font': None,  # Will be set by _use_references
         })
-        matrix = (1, 0, 0, -1, x, self.page_rectangle[3] - y)
+        matrix = Matrix(1, 0, 0, 1, x, y) @ matrix
         extra = pydyf.Dictionary({
             'Type': '/Pattern',
             'PatternType': 1,
@@ -312,7 +328,7 @@ class Context(pydyf.Stream):
             'YStep': repeat_height,
             'TilingType': 1,
             'PaintType': 1,
-            'Matrix': pydyf.Array(0.75 * i for i in matrix),
+            'Matrix': pydyf.Array(matrix.values),
             'Resources': resources,
         })
         pattern = Context(
@@ -541,6 +557,11 @@ class Matrix(list):
 
     def transform_point(self, x, y):
         return (Matrix(matrix=[[x, y, 1]]) @ self)[0][:2]
+
+    @property
+    def values(self):
+        (a, b), (c, d), (e, f) = [column[:2] for column in self]
+        return a, b, c, d, e, f
 
 
 class Page:

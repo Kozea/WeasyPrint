@@ -255,10 +255,11 @@ def gradient_average_color(colors, positions):
 class Gradient:
     def __init__(self, color_stops, repeating):
         assert color_stops
-        #: List of (r, g, b, a), list of Dimension
-        self.colors = tuple(color for color, position in color_stops)
+        # List of (r, g, b, a)
+        self.colors = tuple(color for color, _ in color_stops)
+        # List of Dimensions
         self.stop_positions = tuple(position for _, position in color_stops)
-        #: bool
+        # Boolean
         self.repeating = repeating
 
     def get_intrinsic_size(self, _image_resolution, _font_size):

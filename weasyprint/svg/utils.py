@@ -162,3 +162,19 @@ def parse_url(url):
     if url and url.startswith('url(') and url.endswith(')'):
         url = url[4:-1]
     return urlparse(url or '')
+
+
+def paint(value):
+    if not value or value == 'none':
+        return None, None
+
+    value = value.strip()
+    match = re.compile(r'(url\(.+\)) *(.*)').search(value)
+    if match:
+        source = parse_url(match.group(1)).fragment
+        color = match.group(2) or None
+    else:
+        source = None
+        color = value or None
+
+    return source, color
