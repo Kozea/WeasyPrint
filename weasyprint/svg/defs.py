@@ -1,5 +1,5 @@
 from itertools import cycle
-from math import hypot
+from math import ceil, hypot
 
 import pydyf
 
@@ -8,6 +8,10 @@ from .utils import parse_url, size
 
 
 def linear_gradient(svg, node, font_size):
+    svg.parse_def(node)
+
+
+def radial_gradient(svg, node, font_size):
     svg.parse_def(node)
 
 
@@ -62,21 +66,6 @@ def draw_gradient_or_pattern(svg, node, name, font_size, stroke):
 
 
 def draw_gradient(svg, node, gradient, font_size, stroke):
-    from ..images import gradient_average_color, normalize_stop_positions
-
-    bounding_box = svg.calculate_bounding_box(node, font_size)
-    if not bounding_box:
-        return False
-    _, _, width, height = bounding_box
-
-    x1, y1 = (
-        size(gradient.get('x1', 0), font_size, width),
-        size(gradient.get('y1', 0), font_size, height))
-    x2, y2 = (
-        size(gradient.get('x2', '100%'), font_size, width),
-        size(gradient.get('y2', 0), font_size, height))
-    vector_length = hypot(x2 - x1, y2 - y1)
-
     positions = []
     colors = []
     for child in gradient:
@@ -92,6 +81,17 @@ def draw_gradient(svg, node, gradient, font_size, stroke):
             svg.stream.set_alpha(alpha, stroke=stroke)
         return True
 
+    bounding_box = svg.calculate_bounding_box(node, font_size)
+    if not bounding_box:
+        return False
+    if gradient.get('gradientUnits') == 'userSpaceOnUse':
+        x, y, _, _ = bounding_box
+        width, height = svg.concrete_width, svg.concrete_height
+        pattern_matrix = svg.stream.ctm
+    else:
+        x, y, width, height = bounding_box
+        pattern_matrix = svg.stream.ctm
+
     spread = gradient.get('spreadMethod', 'pad')
     if spread not in ('repeat', 'reflect'):
         # Add explicit colors at boundaries if needed, because PDF doesn’t
@@ -103,54 +103,39 @@ def draw_gradient(svg, node, gradient, font_size, stroke):
             positions.append(positions[-1] + 1)
             colors.append(colors[-1])
 
-    first, last, positions = normalize_stop_positions(positions)
-    if spread in ('repeat', 'reflect'):
-        # Render as a solid color if the first and last positions are equal
-        # See https://drafts.csswg.org/css-images-3/#repeating-gradients
-        if first == last:
-            average_color = gradient_average_color(colors, positions)
-            return 1, 'solid', None, [], [average_color]
-
-        # Define defined gradient length and steps between positions
-        stop_length = last - first
-        assert stop_length > 0
-        position_steps = [
-            positions[i + 1] - positions[i]
-            for i in range(len(positions) - 1)]
-
-        # Create cycles used to add colors
-        if spread == 'repeat':
-            next_steps = cycle([0] + position_steps)
-            next_colors = cycle(colors)
-            previous_steps = cycle([0] + position_steps[::-1])
-            previous_colors = cycle(colors[::-1])
-        else:
-            assert spread == 'reflect'
-            next_steps = cycle(
-                [0] + position_steps[::-1] + [0] + position_steps)
-            next_colors = cycle(colors[::-1] + colors)
-            previous_steps = cycle(
-                [0] + position_steps + [0] + position_steps[::-1])
-            previous_colors = cycle(colors + colors[::-1])
-
-        # Add colors after last step
-        while last < vector_length:
-            step = next(next_steps)
-            colors.append(next(next_colors))
-            positions.append(positions[-1] + step)
-            last += step * stop_length
-
-        # Add colors before last step
-        while first > 0:
-            step = next(previous_steps)
-            colors.insert(0, next(previous_colors))
-            positions.insert(0, positions[0] - step)
-            first -= step * stop_length
-
-    # Define the coordinates of the starting and ending points
-    x1, x2 = x1 + (x2 - x1) * first, x1 + (x2 - x1) * last
-    y1, y2 = y1 + (y2 - y1) * first, y1 + (y2 - y1) * last
-    points = (x1, y1, x2, y2)
+    if gradient.tag == 'linearGradient':
+        shading_type = 2
+        x1, y1 = (
+            size(gradient.get('x1', 0), font_size, width),
+            size(gradient.get('y1', 0), font_size, height))
+        x2, y2 = (
+            size(gradient.get('x2', '100%'), font_size, width),
+            size(gradient.get('y2', 0), font_size, height))
+        if gradient.get('gradientUnits') == 'userSpaceOnUse':
+            x1 -= x
+            y1 -= y
+            x2 -= x
+            y2 -= y
+        positions, colors, coords = spread_linear_gradient(
+            spread, positions, colors, x1, y1, x2, y2)
+    else:
+        assert gradient.tag == 'radialGradient'
+        shading_type = 3
+        cx, cy = (
+            size(gradient.get('cx', '50%'), font_size, width),
+            size(gradient.get('cy', '50%'), font_size, height))
+        r = size(gradient.get('r', '50%'), font_size, hypot(width, height))
+        fx, fy = (
+            size(gradient.get('fx', cx), font_size, width),
+            size(gradient.get('fy', cy), font_size, height))
+        fr = size(gradient.get('fr', 0), font_size, hypot(width, height))
+        if gradient.get('gradientUnits') == 'userSpaceOnUse':
+            cx -= x
+            cy -= y
+            fx -= x
+            fy -= y
+        positions, colors, coords = spread_radial_gradient(
+            spread, positions, colors, fx, fy, fr, cx, cy, r, width, height)
 
     alphas = [color[3] for color in colors]
     alpha_couples = [
@@ -172,14 +157,14 @@ def draw_gradient(svg, node, gradient, font_size, stroke):
             color_couples[i][2] = a0 / a1
 
     pattern = svg.stream.add_pattern(
-        0, 0, width, height, width, height, svg.stream.ctm)
+        0, 0, width, height, width, height, pattern_matrix)
     child = pattern.add_transparency_group([0, 0, width, height])
 
     shading = child.add_shading()
-    shading['ShadingType'] = 2
+    shading['ShadingType'] = shading_type
     shading['ColorSpace'] = '/DeviceRGB'
     shading['Domain'] = pydyf.Array([positions[0], positions[-1]])
-    shading['Coords'] = pydyf.Array(points)
+    shading['Coords'] = pydyf.Array(coords)
     shading['Function'] = pydyf.Dictionary({
         'FunctionType': 3,
         'Domain': pydyf.Array([positions[0], positions[-1]]),
@@ -216,11 +201,11 @@ def draw_gradient(svg, node, gradient, font_size, stroke):
         child.set_state(alpha_state_id)
 
         alpha_shading = alpha_stream.add_shading()
-        alpha_shading['ShadingType'] = 2
+        alpha_shading['ShadingType'] = shading_type
         alpha_shading['ColorSpace'] = '/DeviceGray'
         alpha_shading['Domain'] = pydyf.Array(
             [positions[0], positions[-1]])
-        alpha_shading['Coords'] = pydyf.Array(points)
+        alpha_shading['Coords'] = pydyf.Array(coords)
         alpha_shading['Function'] = pydyf.Dictionary({
             'FunctionType': 3,
             'Domain': pydyf.Array([positions[0], positions[-1]]),
@@ -236,7 +221,7 @@ def draw_gradient(svg, node, gradient, font_size, stroke):
                 }) for c0, c1 in alpha_couples
             ]),
         })
-        if spread == 'pad':
+        if spread not in ('repeat', 'reflect'):
             alpha_shading['Extend'] = pydyf.Array([b'true', b'true'])
         alpha_stream.stream = [f'/{alpha_shading.id} sh']
 
@@ -246,3 +231,163 @@ def draw_gradient(svg, node, gradient, font_size, stroke):
     svg.stream.color_space('Pattern', stroke=stroke)
     svg.stream.set_color_special(pattern.id, stroke=stroke)
     return True
+
+
+def spread_linear_gradient(spread, positions, colors, x1, y1, x2, y2):
+    from ..images import gradient_average_color, normalize_stop_positions
+
+    first, last, positions = normalize_stop_positions(positions)
+    if spread in ('repeat', 'reflect'):
+        # Render as a solid color if the first and last positions are equal
+        # See https://drafts.csswg.org/css-images-3/#repeating-gradients
+        if first == last:
+            average_color = gradient_average_color(colors, positions)
+            return 1, 'solid', None, [], [average_color]
+
+        # Define defined gradient length and steps between positions
+        stop_length = last - first
+        assert stop_length > 0
+        position_steps = [
+            positions[i + 1] - positions[i]
+            for i in range(len(positions) - 1)]
+
+        # Create cycles used to add colors
+        if spread == 'repeat':
+            next_steps = cycle([0] + position_steps)
+            next_colors = cycle(colors)
+            previous_steps = cycle([0] + position_steps[::-1])
+            previous_colors = cycle(colors[::-1])
+        else:
+            assert spread == 'reflect'
+            next_steps = cycle(
+                [0] + position_steps[::-1] + [0] + position_steps)
+            next_colors = cycle(colors[::-1] + colors)
+            previous_steps = cycle(
+                [0] + position_steps + [0] + position_steps[::-1])
+            previous_colors = cycle(colors + colors[::-1])
+
+        # Add colors after last step
+        while last < hypot(x2 - x1, y2 - y1):
+            step = next(next_steps)
+            colors.append(next(next_colors))
+            positions.append(positions[-1] + step)
+            last += step * stop_length
+
+        # Add colors before last step
+        while first > 0:
+            step = next(previous_steps)
+            colors.insert(0, next(previous_colors))
+            positions.insert(0, positions[0] - step)
+            first -= step * stop_length
+
+    x1, x2 = x1 + (x2 - x1) * first, x1 + (x2 - x1) * last
+    y1, y2 = y1 + (y2 - y1) * first, y1 + (y2 - y1) * last
+    coords = (x1, y1, x2, y2)
+    return positions, colors, coords
+
+
+def spread_radial_gradient(spread, positions, colors, fx, fy, fr, cx, cy, r,
+                           width, height):
+    from ..images import gradient_average_color, normalize_stop_positions
+
+    first, last, positions = normalize_stop_positions(positions)
+    fr, r = fr + (r - fr) * first, fr + (r - fr) * last
+
+    if spread in ('repeat', 'reflect'):
+        # Keep original lists and values, they’re useful
+        original_colors = colors.copy()
+        original_positions = positions.copy()
+        gradient_length = r - fr
+
+        # Get the maximum distance between the center and the corners, to find
+        # how many times we have to repeat the colors outside
+        max_distance = max(
+            hypot(width - fx, height - fy),
+            hypot(width - fx, -fy),
+            hypot(-fx, height - fy),
+            hypot(-fx, -fy))
+        repeat_after = ceil((max_distance - r) / gradient_length)
+        if repeat_after > 0:
+            # Repeat colors and extrapolate positions
+            repeat = 1 + repeat_after
+            if spread == 'repeat':
+                colors *= repeat
+            else:
+                assert spread == 'reflect'
+                colors = []
+                for i in range(repeat):
+                    colors += original_colors[::1 if i % 2 else -1]
+            positions = [
+                i + position for i in range(repeat) for position in positions]
+            r += gradient_length * repeat_after
+
+        if fr == 0:
+            # Inner circle has 0 radius, no need to repeat inside, return
+            coords = (fx, fy, fr, cx, cy, r)
+            return positions, colors, coords
+
+        # Find how many times we have to repeat the colors inside
+        repeat_before = fr / gradient_length
+
+        # Set the inner circle size to 0
+        fr = 0
+
+        # Find how many times the whole gradient can be repeated
+        full_repeat = int(repeat_before)
+        if full_repeat:
+            # Repeat colors and extrapolate positions
+            if spread == 'repeat':
+                colors += original_colors * full_repeat
+            else:
+                assert spread == 'reflect'
+                for i in range(full_repeat):
+                    colors += original_colors[::1 if i % 2 else -1]
+            positions = [
+                i - full_repeat + position for i in range(full_repeat)
+                for position in original_positions] + positions
+
+        # Find the ratio of gradient that must be added to reach the center
+        partial_repeat = repeat_before - full_repeat
+        if partial_repeat == 0:
+            # No partial repeat, return
+            coords = (fx, fy, fr, cx, cy, r)
+            return positions, colors, coords
+
+        # Iterate through positions in reverse order, from the outer
+        # circle to the original inner circle, to find positions from
+        # the inner circle (including full repeats) to the center
+        assert (original_positions[0], original_positions[-1]) == (0, 1)
+        assert 0 < partial_repeat < 1
+        reverse = original_positions[::-1]
+        ratio = 1 - partial_repeat
+        for i, position in enumerate(reverse, start=1):
+            if position == ratio:
+                # The center is a color of the gradient, truncate original
+                # colors and positions and prepend them
+                colors = original_colors[-i:] + colors
+                new_positions = [
+                    position - full_repeat - 1
+                    for position in original_positions[-i:]]
+                positions = new_positions + positions
+                coords = (fx, fy, fr, cx, cy, r)
+                return positions, colors, coords
+            if position < ratio:
+                # The center is between two colors of the gradient,
+                # define the center color as the average of these two
+                # gradient colors
+                color = original_colors[-i]
+                next_color = original_colors[-(i - 1)]
+                next_position = original_positions[-(i - 1)]
+                average_colors = [color, color, next_color, next_color]
+                average_positions = [position, ratio, ratio, next_position]
+                zero_color = gradient_average_color(
+                    average_colors, average_positions)
+                colors = [zero_color] + original_colors[-(i - 1):] + colors
+                new_positions = [
+                    position - 1 - full_repeat for position
+                    in original_positions[-(i - 1):]]
+                positions = (
+                    [ratio - 1 - full_repeat] + new_positions + positions)
+
+    coords = (fx, fy, fr, cx, cy, r)
+    return positions, colors, coords

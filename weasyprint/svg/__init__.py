@@ -13,7 +13,8 @@ from xml.etree import ElementTree
 from .bounding_box import (
     BOUNDING_BOX_METHODS, is_non_empty_bounding_box, is_valid_bounding_box)
 from .colors import color
-from .defs import draw_gradient_or_pattern, linear_gradient, marker, use
+from .defs import (
+    draw_gradient_or_pattern, linear_gradient, marker, radial_gradient, use)
 from .path import path
 from .shapes import circle, ellipse, line, polygon, polyline, rect
 from .svg import svg
@@ -35,7 +36,7 @@ TAGS = {
     # 'pattern': None,
     'polyline': polyline,
     'polygon': polygon,
-    # 'radialGradient': None,
+    'radialGradient': radial_gradient,
     'rect': rect,
     'svg': svg,
     # 'text': None,
