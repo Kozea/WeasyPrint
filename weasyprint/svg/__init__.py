@@ -7,7 +7,7 @@
 """
 
 import re
-from math import cos, pi, radians, sin, tan
+from math import cos, hypot, pi, radians, sin, sqrt, tan
 from xml.etree import ElementTree
 
 from .bounding_box import (
@@ -191,7 +191,7 @@ class SVG:
         self.concrete_width = concrete_width
         self.concrete_height = concrete_height
         self.normalized_diagonal = (
-            ((concrete_width ** 2 + concrete_height ** 2) ** 0.5) / (2 ** 0.5))
+            hypot(concrete_width, concrete_height) / sqrt(2))
         self.base_url = base_url
         self.url_fetcher = url_fetcher
 
@@ -265,8 +265,14 @@ class SVG:
                 # Calculate position, (additional) scale and clipping based on
                 # marker properties
                 if 'viewBox' in node.attrib:
+                    marker_width, marker_height = svg.point(
+                        marker_node.get('markerWidth', 3),
+                        marker_node.get('markerHeight', 3),
+                        font_size)
                     scale_x, scale_y, translate_x, translate_y = (
-                        preserve_ratio(svg, marker_node, font_size))
+                        preserve_ratio(
+                            svg, marker_node, font_size,
+                            marker_width, marker_height))
                     clip_box = clip_marker_box(
                         svg, marker_node, font_size, scale_x, scale_y)
                 else:

@@ -100,8 +100,7 @@ class SVGImage:
         if not concrete_width or not concrete_height:
             return
 
-        # Use the real intrinsic size here,
-        # not affected by 'image-resolution'.
+        # Use the real intrinsic size here, not affected by 'image-resolution'.
         context.push_state()
         self._svg.draw(
             context, concrete_width, concrete_height, self._base_url,

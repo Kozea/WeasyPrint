@@ -78,26 +78,17 @@ def quadratic_points(x1, y1, x2, y2, x3, y3):
     return xq1, yq1, xq2, yq2, x3, y3
 
 
-def preserve_ratio(svg, node, font_size, width=None, height=None):
-    if node.tag == 'marker':
-        node_width, node_height = svg.point(
-            node.get('markerWidth', 3), node.get('markerHeight', 3), font_size)
-        width = width or node_width
-        height = height or node_height
-        viewbox = node.get_viewbox()
+def preserve_ratio(svg, node, font_size, width, height):
+    viewbox = node.get_viewbox()
+    if viewbox:
         viewbox_width, viewbox_height = viewbox[2:]
-    elif node.tag in ('svg', 'image', 'g'):
-        node_width, node_height = node.get_intrinsic_size(font_size)
-        width = width or node_width
-        height = height or node_height
-        viewbox_width, viewbox_height = node.image_width, node.image_height
     else:
         return
 
     translate_x = 0
     translate_y = 0
-    scale_x = width / viewbox_width if viewbox_width > 0 else 1
-    scale_y = height / viewbox_height if viewbox_height > 0 else 1
+    scale_x = width / viewbox_width if viewbox_width else 1
+    scale_y = height / viewbox_height if viewbox_height else 1
 
     aspect_ratio = node.get('preserveAspectRatio', 'xMidYMid').split()
     align = aspect_ratio[0]
