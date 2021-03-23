@@ -83,7 +83,7 @@ def preserve_ratio(svg, node, font_size, width, height):
     if viewbox:
         viewbox_width, viewbox_height = viewbox[2:]
     else:
-        return
+        return 1, 1, 0, 0
 
     translate_x = 0
     translate_y = 0
