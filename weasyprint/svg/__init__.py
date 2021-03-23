@@ -18,6 +18,7 @@ from .colors import color
 from .css import parse_declarations, parse_stylesheets
 from .defs import (
     draw_gradient_or_pattern, linear_gradient, marker, radial_gradient, use)
+from .image import image
 from .path import path
 from .shapes import circle, ellipse, line, polygon, polyline, rect
 from .svg import svg
@@ -30,7 +31,7 @@ TAGS = {
     # 'clipPath': None,
     'ellipse': ellipse,
     # 'filter': None,
-    # 'image': None,
+    'image': image,
     'line': line,
     'linearGradient': linear_gradient,
     'marker': marker,
