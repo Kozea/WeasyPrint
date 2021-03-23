@@ -10,9 +10,12 @@ import re
 from math import cos, hypot, pi, radians, sin, sqrt, tan
 from xml.etree import ElementTree
 
+from cssselect2 import ElementWrapper
+
 from .bounding_box import (
     BOUNDING_BOX_METHODS, is_non_empty_bounding_box, is_valid_bounding_box)
 from .colors import color
+from .css import parse_declarations, parse_stylesheets
 from .defs import (
     draw_gradient_or_pattern, linear_gradient, marker, radial_gradient, use)
 from .path import path
@@ -90,8 +93,10 @@ DEF_TYPES = frozenset((
 
 
 class Node:
-    def __init__(self, etree_node):
-        self._etree_node = etree_node
+    def __init__(self, wrapper, style):
+        self._wrapper = wrapper
+        self._etree_node = etree_node = wrapper.etree_element
+        self._style = style
 
         self.attrib = etree_node.attrib
         self.get = etree_node.get
@@ -105,23 +110,44 @@ class Node:
         self.vertices = []
         self.bounding_box = None
 
-    def inherit(self, child):
-        child = Node(child)
+    def inherit(self, wrapper):
+        child = Node(wrapper, self._style)
+
         child.update([
             (key, value) for key, value in self.attrib.items()
             if key not in NOT_INHERITED_ATTRIBUTES and
             key not in child.attrib])
+
+        style_attr = child.get('style')
+        if style_attr:
+            normal_attr, important_attr = parse_declarations(style_attr)
+        else:
+            normal_attr = []
+            important_attr = []
+        normal_matcher, important_matcher = self._style
+        normal = [
+            rule[-1] for rule in normal_matcher.match(wrapper)]
+        important = [
+            rule[-1] for rule in important_matcher.match(wrapper)]
+        for declaration_lists in (
+                normal, [normal_attr], important, [important_attr]):
+            for declarations in declaration_lists:
+                for name, value in declarations:
+                    self.attrib[name] = value.strip()
+
         for key in COLOR_ATTRIBUTES:
             if child.get(key) == 'currentColor':
                 child.set(key, child.get('color', 'black'))
+
         for key, value in child.attrib.items():
             if value == 'inherit':
                 child.set(key, self.get(key))
+
         return child
 
     def __iter__(self):
-        for child in self._etree_node:
-            yield self.inherit(child)
+        for wrapper in self._wrapper:
+            yield self.inherit(wrapper)
 
     def get_intrinsic_size(self, font_size):
         intrinsic_width = self.get('width', '100%')
@@ -158,7 +184,10 @@ class Node:
 
 class SVG:
     def __init__(self, bytestring_svg, url):
-        self.tree = Node(ElementTree.fromstring(bytestring_svg))
+        tree = ElementTree.fromstring(bytestring_svg)
+        wrapper = ElementWrapper.from_xml_root(tree)
+        style = parse_stylesheets(wrapper, url)
+        self.tree = Node(wrapper, style)
         self.url = url
 
         self.filters = {}
