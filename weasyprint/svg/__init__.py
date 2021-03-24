@@ -17,7 +17,8 @@ from .bounding_box import (
 from .colors import color
 from .css import parse_declarations, parse_stylesheets
 from .defs import (
-    draw_gradient_or_pattern, linear_gradient, marker, radial_gradient, use)
+    draw_gradient_or_pattern, linear_gradient, marker, pattern,
+    radial_gradient, use)
 from .image import image
 from .path import path
 from .shapes import circle, ellipse, line, polygon, polyline, rect
@@ -37,7 +38,7 @@ TAGS = {
     'marker': marker,
     # 'mask': None,
     'path': path,
-    # 'pattern': None,
+    'pattern': pattern,
     'polyline': polyline,
     'polygon': polygon,
     'radialGradient': radial_gradient,
@@ -102,14 +103,17 @@ class Node:
         self.attrib = etree_node.attrib
         self.get = etree_node.get
         self.set = etree_node.set
-        if '}' in etree_node.tag:
-            self.tag = etree_node.tag.split('}', 1)[1]
-        else:
-            self.tag = etree_node.tag
         self.update = etree_node.attrib.update
 
         self.vertices = []
         self.bounding_box = None
+
+    @property
+    def tag(self):
+        if '}' in self._etree_node.tag:
+            return self._etree_node.tag.split('}', 1)[1]
+        else:
+            return self._etree_node.tag
 
     def inherit(self, wrapper):
         child = Node(wrapper, self._style)
@@ -492,3 +496,17 @@ class SVG:
             if is_non_empty_bounding_box(bounding_box):
                 node.bounding_box = bounding_box
         return node.bounding_box
+
+
+class Pattern(SVG):
+    def __init__(self, tree, url):
+        self.tree = tree
+        self.url = url
+
+        self.filters = {}
+        self.gradients = {}
+        self.images = {}
+        self.markers = {}
+        self.masks = {}
+        self.patterns = {}
+        self.paths = {}

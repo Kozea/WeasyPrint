@@ -19,6 +19,10 @@ def marker(svg, node, font_size):
     svg.parse_def(node)
 
 
+def pattern(svg, node, font_size):
+    svg.parse_def(node)
+
+
 def use(svg, node, font_size):
     from . import SVG
 
@@ -61,8 +65,7 @@ def draw_gradient_or_pattern(svg, node, name, font_size, stroke):
     if name in svg.gradients:
         return draw_gradient(svg, node, svg.gradients[name], font_size, stroke)
     elif name in svg.patterns:
-        # return draw_pattern(svg, node, name)
-        return False
+        return draw_pattern(svg, node, svg.patterns[name], font_size, stroke)
 
 
 def draw_gradient(svg, node, gradient, font_size, stroke):
@@ -391,3 +394,57 @@ def spread_radial_gradient(spread, positions, colors, fx, fy, fr, cx, cy, r,
 
     coords = (fx, fy, fr, cx, cy, r)
     return positions, colors, coords
+
+
+def draw_pattern(svg, node, pattern, font_size, stroke):
+    from . import Pattern
+
+    pattern._etree_node.tag = 'svg'
+    svg.transform(pattern.get('patternTransform'), font_size)
+
+    if pattern.get('viewBox'):
+        if not all(svg.point(
+                pattern.get('width', 1), pattern.get('height', 1),
+                font_size)):
+            return False
+    else:
+        if not all(svg.point(
+                pattern.get('width', 0), pattern.get('height', 0),
+                font_size)):
+            return False
+
+    _, _, width, height = svg.calculate_bounding_box(node, font_size)
+    if pattern.get('patternUnits') == 'userSpaceOnUse':
+        x = size(pattern.get('x'), font_size, 1)
+        y = size(pattern.get('y'), font_size, 1)
+        pattern_width = size(pattern.get('width', 0), font_size, 1)
+        pattern_height = size(pattern.get('height', 0), font_size, 1)
+    else:
+        x = size(pattern.get('x'), font_size, 1) * width
+        y = size(pattern.get('y'), font_size, 1) * height
+        pattern_width = (
+            size(pattern.pop('width', '1'), font_size, 1) * width)
+        pattern_height = (
+            size(pattern.pop('height', '1'), font_size, 1) * height)
+        if 'viewBox' not in pattern:
+            pattern.attrib['width'] = pattern_width
+            pattern.attrib['height'] = pattern_height
+            if pattern.get('patternContentUnits') == 'objectBoundingBox':
+                pattern.attrib['transform'] = f'scale({width}, {height})'
+
+    # Fail if pattern has an invalid size
+    if pattern_width == 0 or pattern_height == 0:
+        return False
+
+    stream_pattern = svg.stream.add_pattern(
+        x, y, pattern_width, pattern_height, pattern_width, pattern_height,
+        svg.stream.ctm)
+    context = stream_pattern.add_transparency_group(
+        [0, 0, pattern_width, pattern_height])
+    Pattern(pattern, svg.url).draw(
+        context, pattern_width, pattern_height, svg.base_url,
+        svg.url_fetcher)
+    stream_pattern.draw_x_object(context.id)
+    svg.stream.color_space('Pattern', stroke=stroke)
+    svg.stream.set_color_special(stream_pattern.id, stroke=stroke)
+    return True
