@@ -14,6 +14,7 @@
 import logging
 import re
 from urllib.parse import urljoin
+from xml.etree.ElementTree import tostring
 
 from . import CSS, ROOT
 from .css import get_child_text
@@ -251,6 +252,22 @@ def handle_a(element, box, _get_image_from_uri, base_url):
     box.is_attachment = element_has_link_type(element, 'attachment')
     box.download_name = element.get('download')
     return [box]
+
+
+@handler('{http://www.w3.org/2000/svg}svg')
+def handle_svg(element, box, get_image_from_uri, base_url):
+    """Handle ``<svg>`` elements, return either an image or the fallback
+    content.
+
+    """
+    if '{http://www.w3.org/2000/xmlns/}xmlns' in element.attrib:
+        # Remove default namespace to avoid xmlns being used as prefix
+        del element.attrib['{http://www.w3.org/2000/xmlns/}xmlns']
+    uri = b'data:image/svg+xml,' + tostring(element, 'utf-8')
+    image = get_image_from_uri(uri.decode('utf-8'), 'image/svg+xml')
+    if image is not None:
+        return [make_replaced_box(element, box, image)]
+    return []
 
 
 def find_base_url(html_document, fallback_base_url):
