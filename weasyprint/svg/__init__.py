@@ -239,6 +239,12 @@ class SVG:
 
         self.stream.push_state()
 
+        opacity = float(node.get('opacity', 1))
+        if 0 <= opacity < 1:
+            original_stream = self.stream
+            self.stream = self.stream.add_transparency_group([
+                0, 0, self.concrete_width, self.concrete_height])
+
         x, y = self.point(node.get('x'), node.get('y'), font_size)
         self.stream.transform(1, 0, 0, 1, x, y)
         self.transform(node.get('transform'), font_size)
@@ -252,6 +258,12 @@ class SVG:
         self.fill_stroke(node, font_size)
 
         self.draw_markers(node, font_size)
+
+        if 0 <= opacity < 1:
+            group_id = self.stream.id
+            self.stream = original_stream
+            self.stream.set_alpha(opacity, stroke=None)
+            self.stream.draw_x_object(group_id)
 
         self.stream.pop_state()
 
