@@ -121,8 +121,7 @@ class HTML:
     def render(self, stylesheets=None, presentational_hints=False,
                optimize_images=False, font_config=None, counter_style=None,
                image_cache=None):
-        """Lay out and paginate the document, but do not (yet) export it
-        to PDF or PNG.
+        """Lay out and paginate the document, but do not (yet) export it.
 
         This returns a :class:`document.Document` object which provides
         access to individual pages and various meta-data.
