@@ -106,20 +106,20 @@ def preserve_ratio(svg, node, font_size, width, height):
         y_position = align[5:].lower()
 
     if node.tag == 'marker':
-        translate_x = -size(svg, node.get('refX', '0'), 'x')
-        translate_y = -size(svg, node.get('refY', '0'), 'y')
+        translate_x, translate_y = svg.point(
+            node.get('refX'), node.get('refY', '0'), font_size)
     else:
         translate_x = 0
         if x_position == 'mid':
-            translate_x = (width / scale_x - viewbox_width) / 2
+            translate_x = (width - viewbox_width * scale_x) / 2
         elif x_position == 'max':
-            translate_x = width / scale_x - viewbox_width
+            translate_x = width - viewbox_width * scale_x
 
         translate_y = 0
         if y_position == 'mid':
-            translate_y += (height / scale_y - viewbox_height) / 2
+            translate_y += (height - viewbox_height * scale_y) / 2
         elif y_position == 'max':
-            translate_y += height / scale_y - viewbox_height
+            translate_y += height - viewbox_height * scale_y
 
     return scale_x, scale_y, translate_x, translate_y
 
