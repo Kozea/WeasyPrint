@@ -193,7 +193,7 @@ def test_size(rule, result):
 
 @pytest.mark.parametrize('rule', (
     'size: A3 landscape A3',
-    'size: A9',
+    'size: A12',
     'size: foo',
     'size: foo bar',
     'size: 20%',
