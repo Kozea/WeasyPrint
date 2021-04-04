@@ -80,196 +80,55 @@ FONT_WEIGHT_RELATIVE = dict(
 
 # http://www.w3.org/TR/css3-page/#size
 # name=(width in pixels, height in pixels)
-PAGE_SIZES = dict(
-    a10=(
-        Dimension(26, 'mm'),
-        Dimension(37, 'mm'),
-    ),
-    a9=(
-        Dimension(37, 'mm'),
-        Dimension(52, 'mm'),
-    ),
-    a8=(
-        Dimension(52, 'mm'),
-        Dimension(74, 'mm'),
-    ),
-    a7=(
-        Dimension(74, 'mm'),
-        Dimension(105, 'mm'),
-    ),
-    a6=(
-        Dimension(105, 'mm'),
-        Dimension(148, 'mm'),
-    ),
-    a5=(
-        Dimension(148, 'mm'),
-        Dimension(210, 'mm'),
-    ),
-    a4=(
-        Dimension(210, 'mm'),
-        Dimension(297, 'mm'),
-    ),
-    a3=(
-        Dimension(297, 'mm'),
-        Dimension(420, 'mm'),
-    ),
-    a2=(
-        Dimension(420, 'mm'),
-        Dimension(594, 'mm'),
-    ),
-    a1=(
-        Dimension(594, 'mm'),
-        Dimension(841, 'mm'),
-    ),
-    a0=(
-        Dimension(841, 'mm'),
-        Dimension(1189, 'mm'),
-    ),
-    b10=(
-        Dimension(31, 'mm'),
-        Dimension(44, 'mm'),
-    ),
-    b9=(
-        Dimension(44, 'mm'),
-        Dimension(62, 'mm'),
-    ),
-    b8=(
-        Dimension(62, 'mm'),
-        Dimension(88, 'mm'),
-    ),
-    b7=(
-        Dimension(88, 'mm'),
-        Dimension(125, 'mm'),
-    ),
-    b6=(
-        Dimension(125, 'mm'),
-        Dimension(176, 'mm'),
-    ),
-    b5=(
-        Dimension(176, 'mm'),
-        Dimension(250, 'mm'),
-    ),
-    b4=(
-        Dimension(250, 'mm'),
-        Dimension(353, 'mm'),
-    ),
-    b3=(
-        Dimension(353, 'mm'),
-        Dimension(500, 'mm'),
-    ),
-    b2=(
-        Dimension(500, 'mm'),
-        Dimension(707, 'mm'),
-    ),
-    b1=(
-        Dimension(707, 'mm'),
-        Dimension(1000, 'mm'),
-    ),
-    b0=(
-        Dimension(1000, 'mm'),
-        Dimension(1414, 'mm'),
-    ),
-    c10=(
-        Dimension(28, 'mm'),
-        Dimension(40, 'mm'),
-    ),
-    c9=(
-        Dimension(40, 'mm'),
-        Dimension(57, 'mm'),
-    ),
-    c8=(
-        Dimension(57, 'mm'),
-        Dimension(81, 'mm'),
-    ),
-    c7=(
-        Dimension(81, 'mm'),
-        Dimension(114, 'mm'),
-    ),
-    c6=(
-        Dimension(114, 'mm'),
-        Dimension(162, 'mm'),
-    ),
-    c5=(
-        Dimension(162, 'mm'),
-        Dimension(229, 'mm'),
-    ),
-    c4=(
-        Dimension(229, 'mm'),
-        Dimension(324, 'mm'),
-    ),
-    c3=(
-        Dimension(324, 'mm'),
-        Dimension(458, 'mm'),
-    ),
-    c2=(
-        Dimension(458, 'mm'),
-        Dimension(648, 'mm'),
-    ),
-    c1=(
-        Dimension(648, 'mm'),
-        Dimension(917, 'mm'),
-    ),
-    c0=(
-        Dimension(917, 'mm'),
-        Dimension(1297, 'mm'),
-    ),
-    jis-b10=(
-        Dimension(32, 'mm'),
-        Dimension(45, 'mm'),
-    ),
-    jis-b9=(
-        Dimension(45, 'mm'),
-        Dimension(64, 'mm'),
-    ),
-    jis-b8=(
-        Dimension(64, 'mm'),
-        Dimension(91, 'mm'),
-    ),
-    jis-b7=(
-        Dimension(91, 'mm'),
-        Dimension(128, 'mm'),
-    ),
-    jis-b6=(
-        Dimension(128, 'mm'),
-        Dimension(182, 'mm'),
-    ),
-    jis-b5=(
-        Dimension(182, 'mm'),
-        Dimension(257, 'mm'),
-    ),
-    jis-b4=(
-        Dimension(257, 'mm'),
-        Dimension(364, 'mm'),
-    ),
-    jis-b3=(
-        Dimension(364, 'mm'),
-        Dimension(515, 'mm'),
-    ),
-    jis-b2=(
-        Dimension(515, 'mm'),
-        Dimension(728, 'mm'),
-    ),
-    jis-b1=(
-        Dimension(728, 'mm'),
-        Dimension(1030, 'mm'),
-    ),
-    jis-b0=(
-        Dimension(1030, 'mm'),
-        Dimension(1456, 'mm'),
-    ),
-    letter=(
-        Dimension(8.5, 'in'),
-        Dimension(11, 'in'),
-    ),
-    legal=(
-        Dimension(8.5, 'in'),
-        Dimension(14, 'in'),
-    ),
-    ledger=(
-        Dimension(11, 'in'),
-        Dimension(17, 'in'),
-    ),
-)
+PAGE_SIZES = {
+    'a10': (Dimension(26, 'mm'), Dimension(37, 'mm'),),
+    'a9': (Dimension(37, 'mm'), Dimension(52, 'mm')),
+    'a8': (Dimension(52, 'mm'), Dimension(74, 'mm')),
+    'a7': (Dimension(74, 'mm'), Dimension(105, 'mm')),
+    'a6': (Dimension(105, 'mm'), Dimension(148, 'mm')),
+    'a5': (Dimension(148, 'mm'), Dimension(210, 'mm')),
+    'a4': (Dimension(210, 'mm'), Dimension(297, 'mm')),
+    'a3': (Dimension(297, 'mm'), Dimension(420, 'mm')),
+    'a2': (Dimension(420, 'mm'), Dimension(594, 'mm')),
+    'a1': (Dimension(594, 'mm'), Dimension(841, 'mm')),
+    'a0': (Dimension(841, 'mm'), Dimension(1189, 'mm')),
+    'b10': (Dimension(31, 'mm'), Dimension(44, 'mm')),
+    'b9': (Dimension(44, 'mm'), Dimension(62, 'mm')),
+    'b8': (Dimension(62, 'mm'), Dimension(88, 'mm')),
+    'b7': (Dimension(88, 'mm'), Dimension(125, 'mm')),
+    'b6': (Dimension(125, 'mm'), Dimension(176, 'mm')),
+    'b5': (Dimension(176, 'mm'), Dimension(250, 'mm')),
+    'b4': (Dimension(250, 'mm'), Dimension(353, 'mm')),
+    'b3': (Dimension(353, 'mm'), Dimension(500, 'mm')),
+    'b2': (Dimension(500, 'mm'), Dimension(707, 'mm')),
+    'b1': (Dimension(707, 'mm'), Dimension(1000, 'mm')),
+    'b0': (Dimension(1000, 'mm'), Dimension(1414, 'mm')),
+    'c10': (Dimension(28, 'mm'), Dimension(40, 'mm')),
+    'c9': (Dimension(40, 'mm'), Dimension(57, 'mm')),
+    'c8': (Dimension(57, 'mm'), Dimension(81, 'mm')),
+    'c7': (Dimension(81, 'mm'), Dimension(114, 'mm')),
+    'c6': (Dimension(114, 'mm'), Dimension(162, 'mm')),
+    'c5': (Dimension(162, 'mm'), Dimension(229, 'mm')),
+    'c4': (Dimension(229, 'mm'), Dimension(324, 'mm')),
+    'c3': (Dimension(324, 'mm'), Dimension(458, 'mm')),
+    'c2': (Dimension(458, 'mm'), Dimension(648, 'mm')),
+    'c1': (Dimension(648, 'mm'), Dimension(917, 'mm')),
+    'c0': (Dimension(917, 'mm'), Dimension(1297, 'mm')),
+    'jis-b10': (Dimension(32, 'mm'), Dimension(45, 'mm')),
+    'jis-b9': (Dimension(45, 'mm'), Dimension(64, 'mm')),
+    'jis-b8': (Dimension(64, 'mm'), Dimension(91, 'mm')),
+    'jis-b7': (Dimension(91, 'mm'), Dimension(128, 'mm')),
+    'jis-b6': (Dimension(128, 'mm'), Dimension(182, 'mm')),
+    'jis-b5': (Dimension(182, 'mm'), Dimension(257, 'mm')),
+    'jis-b4': (Dimension(257, 'mm'), Dimension(364, 'mm')),
+    'jis-b3': (Dimension(364, 'mm'), Dimension(515, 'mm')),
+    'jis-b2': (Dimension(515, 'mm'), Dimension(728, 'mm')),
+    'jis-b1': (Dimension(728, 'mm'), Dimension(1030, 'mm')),
+    'jis-b0': (Dimension(1030, 'mm'), Dimension(1456, 'mm')),
+    'letter': (Dimension(8.5, 'in'), Dimension(11, 'in')),
+    'legal': (Dimension(8.5, 'in'), Dimension(14, 'in')),
+    'ledger': (Dimension(11, 'in'), Dimension(17, 'in')),
+}
 # In "portrait" orientation.
 for w, h in PAGE_SIZES.values():
     assert w.value < h.value
