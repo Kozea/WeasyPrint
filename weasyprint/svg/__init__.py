@@ -17,8 +17,8 @@ from .bounding_box import (
 from .colors import color
 from .css import parse_declarations, parse_stylesheets
 from .defs import (
-    draw_gradient_or_pattern, linear_gradient, marker, pattern,
-    radial_gradient, use)
+    apply_filters, draw_gradient_or_pattern, filter_, linear_gradient, marker,
+    pattern, radial_gradient, use)
 from .image import image
 from .path import path
 from .shapes import circle, ellipse, line, polygon, polyline, rect
@@ -31,7 +31,7 @@ TAGS = {
     'circle': circle,
     # 'clipPath': None,
     'ellipse': ellipse,
-    # 'filter': None,
+    'filter': filter_,
     'image': image,
     'line': line,
     'linearGradient': linear_gradient,
@@ -239,11 +239,18 @@ class SVG:
 
         self.stream.push_state()
 
+        filter_ = self.filters.get(parse_url(node.get('filter')).fragment)
+        if filter_:
+            apply_filters(self, node, filter_, font_size)
+
         opacity = float(node.get('opacity', 1))
         if 0 <= opacity < 1:
             original_stream = self.stream
+            bounding_box = self.calculate_bounding_box(node, font_size)
             self.stream = self.stream.add_transparency_group([
-                0, 0, self.concrete_width, self.concrete_height])
+                bounding_box[0], bounding_box[1],
+                bounding_box[0] + bounding_box[2],
+                bounding_box[1] + bounding_box[3]])
 
         x, y = self.point(node.get('x'), node.get('y'), font_size)
         self.stream.transform(1, 0, 0, 1, x, y)

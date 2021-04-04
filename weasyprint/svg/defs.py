@@ -23,6 +23,10 @@ def pattern(svg, node, font_size):
     svg.parse_def(node)
 
 
+def filter_(svg, node, font_size):
+    svg.parse_def(node)
+
+
 def use(svg, node, font_size):
     from . import SVG
 
@@ -448,3 +452,27 @@ def draw_pattern(svg, node, pattern, font_size, stroke):
     svg.stream.color_space('Pattern', stroke=stroke)
     svg.stream.set_color_special(stream_pattern.id, stroke=stroke)
     return True
+
+
+def apply_filters(svg, node, filter_, font_size):
+    for child in filter_:
+        if child.tag == 'feOffset':
+            if filter_.get('primitiveUnits') == 'objectBoundingBox':
+                _, _, width, height = svg.calculate_bounding_box(
+                    node, font_size)
+                dx = size(child.get('dx', 0), font_size, 1) * width
+                dy = size(child.get('dy', 0), font_size, 1) * height
+            else:
+                dx, dy = svg.point(
+                    child.get('dx', 0), child.get('dy', 0), font_size)
+            svg.stream.transform(1, 0, 0, 1, dx, dy)
+        elif child.tag == 'feBlend':
+            mode = child.get('mode', 'normal')
+            mode = mode.replace('-', ' ').title().replace(' ', '')
+            blend_mode = pydyf.Dictionary({
+                'Type': '/ExtGState',
+                'BM': f'/{mode}',
+            })
+            blend_mode_id = f'bm{len(svg.stream._alpha_states)}'
+            svg.stream._alpha_states[blend_mode_id] = blend_mode
+            svg.stream.set_state(blend_mode_id)
