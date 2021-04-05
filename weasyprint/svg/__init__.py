@@ -17,8 +17,7 @@ from .bounding_box import (
 from .colors import color
 from .css import parse_declarations, parse_stylesheets
 from .defs import (
-    apply_filters, draw_gradient_or_pattern, filter_, linear_gradient, marker,
-    pattern, radial_gradient, use)
+    apply_filters, draw_gradient_or_pattern, paint_mask, parse_def, use)
 from .image import image
 from .path import path
 from .shapes import circle, ellipse, line, polygon, polyline, rect
@@ -31,17 +30,17 @@ TAGS = {
     'circle': circle,
     # 'clipPath': None,
     'ellipse': ellipse,
-    'filter': filter_,
+    'filter': parse_def,
     'image': image,
     'line': line,
-    'linearGradient': linear_gradient,
-    'marker': marker,
-    # 'mask': None,
+    'linearGradient': parse_def,
+    'marker': parse_def,
+    'mask': parse_def,
     'path': path,
-    'pattern': pattern,
+    'pattern': parse_def,
     'polyline': polyline,
     'polygon': polygon,
-    'radialGradient': radial_gradient,
+    'radialGradient': parse_def,
     'rect': rect,
     'svg': svg,
     # 'text': None,
@@ -259,8 +258,13 @@ class SVG:
         if node.tag in TAGS:
             TAGS[node.tag](self, node, font_size)
 
-        for child in node:
-            self.draw_node(child, font_size)
+        if node.tag not in DEF_TYPES:
+            for child in node:
+                self.draw_node(child, font_size)
+
+        mask = self.masks.get(parse_url(node.get('mask')).fragment)
+        if mask:
+            paint_mask(self, node, mask, opacity)
 
         self.fill_stroke(node, font_size)
 
@@ -402,11 +406,10 @@ class SVG:
             stroke_color = color(stroke_color)[:3]
             self.stream.set_color_rgb(*stroke_color, stroke=True)
         stroke = stroke_color or stroke_drawn
-        stroke_width = node.get('stroke-width', '1px')
+        stroke_width = self.length(
+            node.get('stroke-width', '1px'), font_size)
         if stroke_width:
-            line_width = self.length(stroke_width, font_size)
-            if line_width > 0:
-                self.stream.set_line_width(line_width)
+            self.stream.set_line_width(stroke_width)
 
         dash_array = tuple(
             float(value) for value in

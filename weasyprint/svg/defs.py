@@ -7,23 +7,7 @@ from .colors import color
 from .utils import parse_url, size
 
 
-def linear_gradient(svg, node, font_size):
-    svg.parse_def(node)
-
-
-def radial_gradient(svg, node, font_size):
-    svg.parse_def(node)
-
-
-def marker(svg, node, font_size):
-    svg.parse_def(node)
-
-
-def pattern(svg, node, font_size):
-    svg.parse_def(node)
-
-
-def filter_(svg, node, font_size):
+def parse_def(svg, node, font_size):
     svg.parse_def(node)
 
 
@@ -79,9 +63,15 @@ def draw_gradient(svg, node, gradient, font_size, stroke):
         positions.append(max(
             positions[-1] if positions else 0,
             size(child.get('offset'), font_size, 1)))
-        colors.append(color(child.get('stop-color', 'black')))
+        opacity = float(child.get('stop-opacity', 1))
+        stop_color = color(child.get('stop-color', 'black'))
+        if opacity < 1:
+            stop_color = tuple(stop_color[:3] + (stop_color[3] * opacity,))
+        colors.append(stop_color)
 
-    if len(colors) == 1:
+    if not colors:
+        return False
+    elif len(colors) == 1:
         red, green, blue, alpha = colors[0]
         svg.stream.set_color_rgb(red, green, blue)
         if alpha != 1:
@@ -91,13 +81,24 @@ def draw_gradient(svg, node, gradient, font_size, stroke):
     bounding_box = svg.calculate_bounding_box(node, font_size)
     if not bounding_box:
         return False
+    x, y = bounding_box[0], bounding_box[1]
     if gradient.get('gradientUnits') == 'userSpaceOnUse':
-        x, y, _, _ = bounding_box
-        width, height = svg.concrete_width, svg.concrete_height
-        pattern_matrix = svg.stream.ctm
+        viewbox = svg.get_viewbox()
+        if viewbox:
+            width, height = viewbox[2], viewbox[3]
+        else:
+            width, height = svg.concrete_width, svg.concrete_height
     else:
-        x, y, width, height = bounding_box
-        pattern_matrix = svg.stream.ctm
+        width, height = bounding_box[2], bounding_box[3]
+
+    if stroke:
+        stroke_width = svg.length(node.get('stroke-width', '1px'), font_size)
+        x -= stroke_width / 2
+        y -= stroke_width / 2
+        width += stroke_width
+        height += stroke_width
+    else:
+        stroke_width = 0
 
     spread = gradient.get('spreadMethod', 'pad')
     if spread not in ('repeat', 'reflect'):
@@ -113,34 +114,44 @@ def draw_gradient(svg, node, gradient, font_size, stroke):
     if gradient.tag == 'linearGradient':
         shading_type = 2
         x1, y1 = (
-            size(gradient.get('x1', 0), font_size, width),
-            size(gradient.get('y1', 0), font_size, height))
+            size(gradient.get('x1', 0), font_size, 1),
+            size(gradient.get('y1', 0), font_size, 1))
         x2, y2 = (
-            size(gradient.get('x2', '100%'), font_size, width),
-            size(gradient.get('y2', 0), font_size, height))
-        if gradient.get('gradientUnits') == 'userSpaceOnUse':
-            x1 -= x
-            y1 -= y
-            x2 -= x
-            y2 -= y
+            size(gradient.get('x2', '100%'), font_size, 1),
+            size(gradient.get('y2', 0), font_size, 1))
+        if gradient.get('gradientUnits') != 'userSpaceOnUse':
+            x1 *= width
+            y1 *= height
+            x2 *= width
+            y2 *= height
+        x1 -= x
+        y1 -= y
+        x2 -= x
+        y2 -= y
         positions, colors, coords = spread_linear_gradient(
             spread, positions, colors, x1, y1, x2, y2)
     else:
         assert gradient.tag == 'radialGradient'
         shading_type = 3
         cx, cy = (
-            size(gradient.get('cx', '50%'), font_size, width),
-            size(gradient.get('cy', '50%'), font_size, height))
-        r = size(gradient.get('r', '50%'), font_size, hypot(width, height))
+            size(gradient.get('cx', '50%'), font_size, 1),
+            size(gradient.get('cy', '50%'), font_size, 1))
+        r = size(gradient.get('r', '50%'), font_size, 1)
         fx, fy = (
             size(gradient.get('fx', cx), font_size, width),
             size(gradient.get('fy', cy), font_size, height))
-        fr = size(gradient.get('fr', 0), font_size, hypot(width, height))
-        if gradient.get('gradientUnits') == 'userSpaceOnUse':
-            cx -= x
-            cy -= y
-            fx -= x
-            fy -= y
+        fr = size(gradient.get('fr', 0), font_size, 1)
+        if gradient.get('gradientUnits') != 'userSpaceOnUse':
+            cx *= width
+            cy *= height
+            r *= hypot(width, height)
+            fx *= width
+            fy *= height
+            fr *= hypot(width, height)
+        cx -= x
+        cy -= y
+        fx -= x
+        fy -= y
         positions, colors, coords = spread_radial_gradient(
             spread, positions, colors, fx, fy, fr, cx, cy, r, width, height)
 
@@ -164,7 +175,8 @@ def draw_gradient(svg, node, gradient, font_size, stroke):
             color_couples[i][2] = a0 / a1
 
     pattern = svg.stream.add_pattern(
-        0, 0, width, height, width, height, pattern_matrix)
+        -stroke_width, -stroke_width, width, height, width, height,
+        svg.stream.ctm)
     child = pattern.add_transparency_group([0, 0, width, height])
 
     shading = child.add_shading()
@@ -427,9 +439,9 @@ def draw_pattern(svg, node, pattern, font_size, stroke):
         x = size(pattern.get('x'), font_size, 1) * width
         y = size(pattern.get('y'), font_size, 1) * height
         pattern_width = (
-            size(pattern.pop('width', '1'), font_size, 1) * width)
+            size(pattern.attrib.pop('width', '1'), font_size, 1) * width)
         pattern_height = (
-            size(pattern.pop('height', '1'), font_size, 1) * height)
+            size(pattern.attrib.pop('height', '1'), font_size, 1) * height)
         if 'viewBox' not in pattern:
             pattern.attrib['width'] = pattern_width
             pattern.attrib['height'] = pattern_height
@@ -476,3 +488,48 @@ def apply_filters(svg, node, filter_, font_size):
             blend_mode_id = f'bm{len(svg.stream._alpha_states)}'
             svg.stream._alpha_states[blend_mode_id] = blend_mode
             svg.stream.set_state(blend_mode_id)
+
+
+def paint_mask(svg, node, mask, font_size):
+    mask._etree_node.tag = 'g'
+
+    if mask.get('maskUnits') == 'userSpaceOnUse':
+        width_ref, height_ref = svg.concrete_width, svg.concrete_height
+    else:
+        x = size(svg, node.get('x'), 'x')
+        y = size(svg, node.get('y'), 'y')
+        width = width_ref = size(svg, node.get('width'), svg.concrete_width)
+        height = height_ref = size(
+            svg, node.get('height'), svg.concrete_height)
+
+    mask.attrib['x'] = size(mask.get('x', '-10%'), font_size, width_ref)
+    mask.attrib['y'] = size(mask.get('y', '-10%'), font_size, height_ref)
+    mask.attrib['height'] = size(
+        mask.get('height', '120%'), font_size, height_ref)
+    mask.attrib['width'] = size(
+        mask.get('width', '120%'), font_size, width_ref)
+
+    if mask.get('maskUnits') == 'userSpaceOnUse':
+        x, y = mask.get('x'), mask.get('y')
+        width, height = mask.get('width'), mask.get('height')
+        mask.attrib['viewBox'] = f'{x} {y} {width} {height}'
+
+    alpha_stream = svg.stream.add_transparency_group([x, y, width, height])
+    alpha_state = pydyf.Dictionary({
+        'Type': '/ExtGState',
+        'SMask': pydyf.Dictionary({
+            'Type': '/Mask',
+            'S': '/Luminance',
+            'G': alpha_stream,
+        }),
+        'ca': 1,
+        'AIS': 'false',
+    })
+    alpha_state_id = f'as{len(svg.stream._alpha_states)}'
+    svg.stream._alpha_states[alpha_state_id] = alpha_state
+    svg.stream.set_state(alpha_state_id)
+
+    svg_stream = svg.stream
+    svg.stream = alpha_stream
+    svg.draw_node(mask, font_size)
+    svg.stream = svg_stream
