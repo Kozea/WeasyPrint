@@ -119,15 +119,16 @@ def draw_gradient(svg, node, gradient, font_size, stroke):
         x2, y2 = (
             size(gradient.get('x2', '100%'), font_size, 1),
             size(gradient.get('y2', 0), font_size, 1))
-        if gradient.get('gradientUnits') != 'userSpaceOnUse':
+        if gradient.get('gradientUnits') == 'userSpaceOnUse':
+            x1 -= x
+            y1 -= y
+            x2 -= x
+            y2 -= y
+        else:
             x1 *= width
             y1 *= height
             x2 *= width
             y2 *= height
-        x1 -= x
-        y1 -= y
-        x2 -= x
-        y2 -= y
         positions, colors, coords = spread_linear_gradient(
             spread, positions, colors, x1, y1, x2, y2)
     else:
@@ -141,17 +142,18 @@ def draw_gradient(svg, node, gradient, font_size, stroke):
             size(gradient.get('fx', cx), font_size, width),
             size(gradient.get('fy', cy), font_size, height))
         fr = size(gradient.get('fr', 0), font_size, 1)
-        if gradient.get('gradientUnits') != 'userSpaceOnUse':
+        if gradient.get('gradientUnits') == 'userSpaceOnUse':
+            cx -= x
+            cy -= y
+            fx -= x
+            fy -= y
+        else:
             cx *= width
             cy *= height
             r *= hypot(width, height)
             fx *= width
             fy *= height
             fr *= hypot(width, height)
-        cx -= x
-        cy -= y
-        fx -= x
-        fy -= y
         positions, colors, coords = spread_radial_gradient(
             spread, positions, colors, fx, fy, fr, cx, cy, r, width, height)
 
