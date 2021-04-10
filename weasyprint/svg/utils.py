@@ -169,3 +169,27 @@ def paint(value):
         color = value or None
 
     return source, color
+
+
+def flatten(node):
+    flattened_text = [node.text or '']
+    for child in list(node):
+        flattened_text.append(flatten(child))
+        flattened_text.append(child.tail or '')
+        node.remove(child)
+    return ''.join(flattened_text)
+
+
+def rotations(node):
+    if 'rotate' in node.attrib:
+        original_rotate = [
+            float(i) for i in
+            normalize(node.attrib['rotate']).strip().split(' ')]
+        return original_rotate
+    return []
+
+
+def pop_rotation(node, original_rotate, rotate):
+    node.attrib['rotate'] = ' '.join(
+        str(rotate.pop(0) if rotate else original_rotate[-1])
+        for i in range(len(node.text)))

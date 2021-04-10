@@ -22,11 +22,13 @@ from .image import image
 from .path import path
 from .shapes import circle, ellipse, line, polygon, polyline, rect
 from .svg import svg
+from .text import text
 from .utils import (
-    clip_marker_box, normalize, paint, parse_url, preserve_ratio, size)
+    clip_marker_box, flatten, normalize, paint, parse_url, pop_rotation,
+    preserve_ratio, rotations, size)
 
 TAGS = {
-    # 'a': None,
+    'a': text,
     'circle': circle,
     # 'clipPath': None,
     'ellipse': ellipse,
@@ -43,9 +45,9 @@ TAGS = {
     'radialGradient': parse_def,
     'rect': rect,
     'svg': svg,
-    # 'text': None,
+    'text': text,
     # 'textPath': None,
-    # 'tspan': None,
+    'tspan': text,
     'use': use,
 }
 
@@ -93,6 +95,17 @@ DEF_TYPES = frozenset((
 ))
 
 
+def handle_white_spaces(string, preserve):
+    if not string:
+        return ''
+    if preserve:
+        return re.sub('[\n\r\t]', ' ', string)
+    else:
+        string = re.sub('[\n\r]', '', string)
+        string = re.sub('\t', ' ', string)
+        return re.sub(' +', ' ', string)
+
+
 class Node:
     def __init__(self, wrapper, style):
         self._wrapper = wrapper
@@ -113,6 +126,14 @@ class Node:
             return self._etree_node.tag.split('}', 1)[1]
         else:
             return self._etree_node.tag
+
+    @property
+    def text(self):
+        return self._etree_node.text
+
+    @property
+    def tail(self):
+        return self._etree_node.tail
 
     def inherit(self, wrapper):
         child = Node(wrapper, self._style)
@@ -146,6 +167,10 @@ class Node:
         for key, value in child.attrib.items():
             if value == 'inherit':
                 child.set(key, self.get(key))
+
+        if child.tag in ('text', 'textPath', 'a'):
+            child._wrapper.etree_children, _ = child.text_children(
+                wrapper, trailing_space=True, text_root=True)
 
         return child
 
@@ -185,6 +210,61 @@ class Node:
             if grandchild:
                 return grandchild
 
+    def text_children(self, element, trailing_space, text_root=False):
+        children = []
+        space = '{http://www.w3.org/XML/1998/namespace}space'
+        preserve = self.get(space) == 'preserve'
+        self._etree_node.text = handle_white_spaces(
+            element.etree_element.text, preserve)
+        if trailing_space and not preserve:
+            self._etree_node.text = self.text.lstrip(' ')
+        original_rotate = rotations(self)
+        rotate = list(original_rotate)
+        if original_rotate:
+            pop_rotation(self, original_rotate, rotate)
+        if self.text:
+            trailing_space = self.text.endswith(' ')
+        for child_element in element.iter_children():
+            child = child_element.etree_element
+            if child.tag in ('{http://www.w3.org/2000/svg}tref', 'tref'):
+                child_node = Node(child_element, self._style)
+                child_node._etree_node.tag = 'tspan'
+                # Retrieve the referenced node and get its flattened text
+                # and remove the node children.
+                child = child_node._etree_node
+                child._etree_node.text = flatten(child)
+                child_element = ElementWrapper.from_xml_root(child)
+            else:
+                child_node = Node(child_element, self._style)
+            child_preserve = child_node.get(space) == 'preserve'
+            child_node._etree_node.text = handle_white_spaces(
+                child.text, child_preserve)
+            child_node.children, trailing_space = child_node.text_children(
+                child_element, trailing_space)
+            trailing_space = child_node.text.endswith(' ')
+            if original_rotate and 'rotate' not in child_node:
+                pop_rotation(child_node, original_rotate, rotate)
+            children.append(child_node)
+            if child.tail:
+                anonymous_etree = ElementTree.Element(
+                    '{http://www.w3.org/2000/svg}tspan')
+                anonymous = Node(
+                    ElementWrapper.from_xml_root(anonymous_etree), self._style)
+                anonymous._etree_node.text = handle_white_spaces(
+                    child.tail, preserve)
+                if original_rotate:
+                    pop_rotation(anonymous, original_rotate, rotate)
+                if trailing_space and not preserve:
+                    anonymous.text = anonymous.text.lstrip(' ')
+                if anonymous.text:
+                    trailing_space = anonymous.text.endswith(' ')
+                children.append(anonymous)
+
+        if text_root and not children and not preserve:
+            self._etree_node.text = self.text.rstrip(' ')
+
+        return children, trailing_space
+
 
 class SVG:
     def __init__(self, bytestring_svg, url):
@@ -201,6 +281,9 @@ class SVG:
         self.masks = {}
         self.patterns = {}
         self.paths = {}
+
+        self.cursor_position = [0, 0]
+        self.cursor_d_position = [0, 0]
 
         self.parse_all_defs(self.tree)
 
