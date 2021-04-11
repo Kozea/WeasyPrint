@@ -93,13 +93,8 @@ def text(svg, node, font_size):
         if letter_spacing and node.text:
             x_align -= (len(node.text) - 1) * letter_spacing
 
-    # TODO: This is a hack. The rest of the baseline alignment tags of the SVG
-    # 1.1 spec (section 10.9.2) are not supported. We only try to align things
-    # that look like Western horizontal fonts.
-    # Finally, we add a "display-anchor" attribute for aligning the specific
-    # text rather than the font baseline.
-    # Nonetheless, there are times when one needs to align text vertically, and
-    # this will at least make that possible.
+    # TODO: This is a hack. Other baseline alignment tags are not supported.
+    # See https://www.w3.org/TR/SVG2/text.html#TextPropertiesSVG
 
     # TODO: use real values
     ascent, descent = 100, 20

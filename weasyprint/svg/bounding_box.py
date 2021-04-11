@@ -48,7 +48,7 @@ def bounding_box_path(svg, node, font_size):
 
     # Normalize path data for correct parsing
     for letter in PATH_LETTERS:
-        path_data = path_data.replace(letter, ' {} '.format(letter))
+        path_data = path_data.replace(letter, f' {letter} ')
     path_data = normalize(path_data)
 
     bounding_box = EMPTY_BOUNDING_BOX
@@ -323,6 +323,7 @@ def is_non_empty_bounding_box(bounding_box):
     return is_valid_bounding_box(bounding_box) and 0 not in bounding_box[2:]
 
 
+# TODO: text, tspan, textPath, use
 BOUNDING_BOX_METHODS = {
     'rect': bounding_box_rect,
     'circle': bounding_box_circle,
@@ -331,10 +332,6 @@ BOUNDING_BOX_METHODS = {
     'polyline': bounding_box_polyline,
     'polygon': bounding_box_polyline,
     'path': bounding_box_path,
-    # 'text': bounding_box_text,
-    # 'tspan': bounding_box_text,
-    # 'textPath': bounding_box_text,
     'g': bounding_box_group,
-    # 'use': bounding_box_use,
     'marker': bounding_box_group,
 }

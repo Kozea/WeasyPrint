@@ -498,11 +498,9 @@ def paint_mask(svg, node, mask, font_size):
     if mask.get('maskUnits') == 'userSpaceOnUse':
         width_ref, height_ref = svg.concrete_width, svg.concrete_height
     else:
-        x = size(svg, node.get('x'), 'x')
-        y = size(svg, node.get('y'), 'y')
-        width = width_ref = size(svg, node.get('width'), svg.concrete_width)
-        height = height_ref = size(
-            svg, node.get('height'), svg.concrete_height)
+        x, y = svg.point(node.get('x'), node.get('y'), font_size)
+        width, height = width_ref, height_ref = svg.point(
+            node.get('width'), node.get('height'), font_size)
 
     mask.attrib['x'] = size(mask.get('x', '-10%'), font_size, width_ref)
     mask.attrib['y'] = size(mask.get('y', '-10%'), font_size, height_ref)

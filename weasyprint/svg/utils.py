@@ -7,7 +7,6 @@
 """
 
 import re
-from math import cos, sin
 from urllib.parse import urlparse
 
 UNITS = {
@@ -66,18 +65,6 @@ def point(svg, string, font_size):
     return (*svg.point(x, y, font_size), string)
 
 
-def rotate(x, y, angle):
-    return x * cos(angle) - y * sin(angle), y * cos(angle) + x * sin(angle)
-
-
-def quadratic_points(x1, y1, x2, y2, x3, y3):
-    xq1 = x2 * 2 / 3 + x1 / 3
-    yq1 = y2 * 2 / 3 + y1 / 3
-    xq2 = x2 * 2 / 3 + x3 / 3
-    yq2 = y2 * 2 / 3 + y3 / 3
-    return xq1, yq1, xq2, yq2, x3, y3
-
-
 def preserve_ratio(svg, node, font_size, width, height):
     viewbox = node.get_viewbox()
     if viewbox:
@@ -124,72 +111,7 @@ def preserve_ratio(svg, node, font_size, width, height):
     return scale_x, scale_y, translate_x, translate_y
 
 
-def clip_marker_box(svg, node, font_size, scale_x, scale_y):
-    width, height = svg.point(
-        node.get('markerWidth', 3), node.get('markerHeight', 3), font_size)
-    viewbox = node.get_viewbox()
-    viewbox_width, viewbox_height = viewbox[2:]
-
-    align = node.get('preserveAspectRatio', 'xMidYMid').split(' ')[0]
-    x_position = 'min' if align == 'none' else align[1:4].lower()
-    y_position = 'min' if align == 'none' else align[5:].lower()
-
-    clip_x = viewbox[0]
-    if x_position == 'mid':
-        clip_x += (viewbox_width - width / scale_x) / 2.
-    elif x_position == 'max':
-        clip_x += viewbox_width - width / scale_x
-
-    clip_y = viewbox[1]
-    if y_position == 'mid':
-        clip_y += (viewbox_height - height / scale_y) / 2.
-    elif y_position == 'max':
-        clip_y += viewbox_height - height / scale_y
-
-    return clip_x, clip_y, width / scale_x, height / scale_y
-
-
 def parse_url(url):
     if url and url.startswith('url(') and url.endswith(')'):
         url = url[4:-1]
     return urlparse(url or '')
-
-
-def paint(value):
-    if not value or value == 'none':
-        return None, None
-
-    value = value.strip()
-    match = re.compile(r'(url\(.+\)) *(.*)').search(value)
-    if match:
-        source = parse_url(match.group(1)).fragment
-        color = match.group(2) or None
-    else:
-        source = None
-        color = value or None
-
-    return source, color
-
-
-def flatten(node):
-    flattened_text = [node.text or '']
-    for child in list(node):
-        flattened_text.append(flatten(child))
-        flattened_text.append(child.tail or '')
-        node.remove(child)
-    return ''.join(flattened_text)
-
-
-def rotations(node):
-    if 'rotate' in node.attrib:
-        original_rotate = [
-            float(i) for i in
-            normalize(node.attrib['rotate']).strip().split(' ')]
-        return original_rotate
-    return []
-
-
-def pop_rotation(node, original_rotate, rotate):
-    node.attrib['rotate'] = ' '.join(
-        str(rotate.pop(0) if rotate else original_rotate[-1])
-        for i in range(len(node.text)))

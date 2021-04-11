@@ -99,7 +99,7 @@ def resolve_percentages(box, containing_block, main_flex_direction=None):
 
     # Used value == computed value
     for side in ['top', 'right', 'bottom', 'left']:
-        prop = 'border_{0}_width'.format(side)
+        prop = f'border_{side}_width'
         setattr(box, prop, box.style[prop])
 
     # Shrink *content* widths and heights according to box-sizing

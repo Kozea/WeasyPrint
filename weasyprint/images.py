@@ -96,7 +96,7 @@ class SVGImage:
 
         return self._intrinsic_width, self._intrinsic_height
 
-    def draw(self, context, concrete_width, concrete_height, _image_rendering):
+    def draw(self, context, concrete_width, concrete_height, image_rendering):
         if not concrete_width or not concrete_height:
             return
 

@@ -194,14 +194,14 @@ RGBA = re.compile(r'rgba\((.+?)\)')
 RGB = re.compile(r'rgb\((.+?)\)')
 HEX_RRGGBB = re.compile('#[0-9a-f]{6}')
 HEX_RGB = re.compile('#[0-9a-f]{3}')
+HEX_RRGGBBAA = re.compile('#[0-9a-f]{8}')
+HEX_RGBA = re.compile('#[0-9a-f]{4}')
 
 
 def color(string, opacity=1):
-    """Replace ``string`` representing a color by a RGBA tuple.
-    See http://www.w3.org/TR/SVG/types.html#DataTypeColor
-    """
+    """Replace ``string`` representing a color by a RGBA tuple."""
     if not string:
-        return (0, 0, 0, 0)
+        return (0, 0, 0, 1)
 
     string = string.strip().lower()
 
@@ -236,5 +236,19 @@ def color(string, opacity=1):
             int(value, 16) / 15 for value in (
                 string[1], string[2], string[3]))
         return plain_color + (opacity,)
+
+    match = HEX_RRGGBBAA.search(string)
+    if match:
+        plain_color = tuple(
+            int(value, 16) / 255 for value in (
+                string[1:3], string[3:5], string[5:7]))
+        return plain_color + (opacity * int(string[7:], 16) / 255,)
+
+    match = HEX_RGBA.search(string)
+    if match:
+        plain_color = tuple(
+            int(value, 16) / 15 for value in (
+                string[1], string[2], string[3]))
+        return plain_color + (opacity * int(string[4], 16) / 15,)
 
     return (0, 0, 0, 1)

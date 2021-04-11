@@ -4,21 +4,6 @@ import tinycss2
 from .utils import parse_url
 
 
-def find_stylesheets(tree):
-    # TODO: support contentStyleType on <svg>
-    default_type = 'text/css'
-    for element in tree.etree_element.iter():
-        # http://www.w3.org/TR/SVG/styling.html#StyleElement
-        if (element.tag == '{http://www.w3.org/2000/svg}style' and
-                element.get('type', default_type) == 'text/css' and
-                element.text):
-            # TODO: pass href for relative URLs
-            # TODO: support media types
-            # TODO: what if <style> has children elements?
-            yield tinycss2.parse_stylesheet(
-                element.text, skip_comments=True, skip_whitespace=True)
-
-
 def find_stylesheets_rules(tree, stylesheet_rules, url):
     for rule in stylesheet_rules:
         if rule.type == 'at-rule':
@@ -61,7 +46,21 @@ def parse_declarations(input):
 def parse_stylesheets(tree, url):
     normal_matcher = cssselect2.Matcher()
     important_matcher = cssselect2.Matcher()
-    for stylesheet in find_stylesheets(tree):
+
+    # TODO: support contentStyleType on <svg>
+    stylesheets = []
+    for element in tree.etree_element.iter():
+        # http://www.w3.org/TR/SVG/styling.html#StyleElement
+        if (element.tag == '{http://www.w3.org/2000/svg}style' and
+                element.get('type', 'text/css') == 'text/css' and
+                element.text):
+            # TODO: pass href for relative URLs
+            # TODO: support media types
+            # TODO: what if <style> has children elements?
+            stylesheets.append(tinycss2.parse_stylesheet(
+                element.text, skip_comments=True, skip_whitespace=True))
+
+    for stylesheet in stylesheets:
         for rule in find_stylesheets_rules(tree, stylesheet, url):
             normal_declarations, important_declarations = parse_declarations(
                 rule.content)
@@ -74,4 +73,5 @@ def parse_stylesheets(tree, url):
                     if important_declarations:
                         important_matcher.add_selector(
                             selector, important_declarations)
+
     return normal_matcher, important_matcher

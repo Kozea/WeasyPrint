@@ -8,9 +8,13 @@
 
 from math import atan2, cos, pi, radians, sin, tan
 
-from .utils import normalize, point, quadratic_points, rotate
+from .utils import normalize, point
 
 PATH_LETTERS = 'achlmqstvzACHLMQSTVZ'
+
+
+def _rotate(x, y, angle):
+    return x * cos(angle) - y * sin(angle), y * cos(angle) + x * sin(angle)
 
 
 def path(svg, node, font_size):
@@ -21,7 +25,7 @@ def path(svg, node, font_size):
     node.vertices = []
 
     for letter in PATH_LETTERS:
-        string = string.replace(letter, ' {} '.format(letter))
+        string = string.replace(letter, f' {letter} ')
 
     last_letter = None
     string = normalize(string)
@@ -80,14 +84,14 @@ def path(svg, node, font_size):
                     # As we replace the current operation by l, we must be sure
                     # that the next letter is set to the real current letter (a
                     # or A) in case it’s omitted
-                    next_letter = '{} '.format(letter)
+                    next_letter = f'{letter} '
                 else:
                     next_letter = ''
-                string = 'L {} {} {}{}'.format(x3, y3, next_letter, string)
+                string = f'L {x3} {y3} {next_letter}{string}'
                 continue
 
             # Cancel the rotation of the second point
-            xe, ye = rotate(x3 - x1, y3 - y1, -rotation)
+            xe, ye = _rotate(x3 - x1, y3 - y1, -rotation)
             y_scale = ry / rx
             ye /= y_scale
 
@@ -110,8 +114,8 @@ def path(svg, node, font_size):
                 yc = -yc
 
             # Put the second point and the center back to their positions
-            xe, ye = rotate(xe, ye, angle)
-            xc, yc = rotate(xc, yc, angle)
+            xe, ye = _rotate(xe, ye, angle)
+            xc, yc = _rotate(xc, yc, angle)
 
             # Find the drawing angles
             angle1 = atan2(-yc, -xc)
@@ -213,19 +217,28 @@ def path(svg, node, font_size):
             svg.stream.move_to(x, y)
             current_point = x, y
 
-        elif letter in 'qQ':
+        elif letter in 'qQtT':
             # Quadratic curve
             x1, y1 = current_point
-            x2, y2, string = point(svg, string, font_size)
+            if letter in 'qQ':
+                x2, y2, string = point(svg, string, font_size)
+            else:
+                if last_letter not in 'QqTt':
+                    x2, y2, x3, y3 = x, y, x, y
+                x2 = x1 + x3 - x2
+                y2 = y1 + y3 - y2
             x3, y3, string = point(svg, string, font_size)
             if letter == 'q':
                 x2 += x1
-                x3 += x1
                 y2 += y1
+            if letter in 'qt':
+                x3 += x1
                 y3 += y1
-            xq1, yq1, xq2, yq2, xq3, yq3 = quadratic_points(
-                x1, y1, x2, y2, x3, y3)
-            svg.stream.curve_to(xq1, yq1, xq2, yq2, xq3, yq3)
+            xq1 = x2 * 2 / 3 + x1 / 3
+            yq1 = y2 * 2 / 3 + y1 / 3
+            xq2 = x2 * 2 / 3 + x3 / 3
+            yq2 = y2 * 2 / 3 + y3 / 3
+            svg.stream.curve_to(xq1, yq1, xq2, yq2, x3, y3)
             node.vertices.append((0, 0))
             current_point = x3, y3
 
@@ -244,23 +257,6 @@ def path(svg, node, font_size):
             node.vertices.append((
                 atan2(y1 - y2, x1 - x2), atan2(y3 - y2, x3 - x2)))
             svg.stream.curve_to(x1, y1, x2, y2, x3, y3)
-            current_point = x3, y3
-
-        elif letter in 'tT':
-            # Quadratic curve end
-            x1, y1 = current_point
-            if last_letter not in 'QqTt':
-                x2, y2, x3, y3 = x, y, x, y
-            x2 = x1 + x3 - x2
-            y2 = y1 + y3 - y2
-            x3, y3, string = point(svg, string, font_size)
-            if letter == 't':
-                x3 += x1
-                y3 += y1
-            xq1, yq1, xq2, yq2, xq3, yq3 = quadratic_points(
-                x1, y1, x2, y2, x3, y3)
-            node.vertices.append((0, 0))
-            svg.stream.curve_to(xq1, yq1, xq2, yq2, xq3, yq3)
             current_point = x3, y3
 
         elif letter in 'vV':
