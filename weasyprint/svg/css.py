@@ -1,3 +1,11 @@
+"""
+    weasyprint.svg.css
+    ------------------
+
+    Apply CSS to SVG documents.
+
+"""
+
 import cssselect2
 import tinycss2
 
@@ -5,6 +13,7 @@ from .utils import parse_url
 
 
 def find_stylesheets_rules(tree, stylesheet_rules, url):
+    """Find rules among stylesheet rules and imports."""
     for rule in stylesheet_rules:
         if rule.type == 'at-rule':
             if rule.lower_at_keyword == 'import' and rule.content is None:
@@ -20,13 +29,14 @@ def find_stylesheets_rules(tree, stylesheet_rules, url):
                     yield rule
             # TODO: support media types
             # if rule.lower_at_keyword == 'media':
-        if rule.type == 'qualified-rule':
+        elif rule.type == 'qualified-rule':
             yield rule
         # TODO: warn on error
         # if rule.type == 'error':
 
 
 def parse_declarations(input):
+    """Parse declarations in a given rule content."""
     normal_declarations = []
     important_declarations = []
     for declaration in tinycss2.parse_declaration_list(input):
@@ -44,9 +54,11 @@ def parse_declarations(input):
 
 
 def parse_stylesheets(tree, url):
+    """Find stylesheets and return rule matchers in given tree."""
     normal_matcher = cssselect2.Matcher()
     important_matcher = cssselect2.Matcher()
 
+    # Find stylesheets
     # TODO: support contentStyleType on <svg>
     stylesheets = []
     for element in tree.etree_element.iter():
@@ -60,6 +72,7 @@ def parse_stylesheets(tree, url):
             stylesheets.append(tinycss2.parse_stylesheet(
                 element.text, skip_comments=True, skip_whitespace=True))
 
+    # Parse rules and fill matchers
     for stylesheet in stylesheets:
         for rule in find_stylesheets_rules(tree, stylesheet, url):
             normal_declarations, important_declarations = parse_declarations(
