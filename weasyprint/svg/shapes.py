@@ -2,20 +2,21 @@
     weasyprint.svg.shapes
     ---------------------
 
-    Render simple shapes.
+    Draw simple shapes.
 
 """
 
-from math import atan2, pi
+from math import atan2, pi, sqrt
 
 from .utils import normalize, point
 
 
 def circle(svg, node, font_size):
+    """Draw circle tag."""
     r = svg.length(node.get('r'), font_size)
     if not r:
         return
-    ratio = r / (pi ** .5)
+    ratio = r / sqrt(pi)
     cx, cy = svg.point(node.get('cx'), node.get('cy'), font_size)
 
     svg.stream.move_to(cx + r, cy)
@@ -27,11 +28,12 @@ def circle(svg, node, font_size):
 
 
 def ellipse(svg, node, font_size):
+    """Draw ellipse tag."""
     rx, ry = svg.point(node.get('rx'), node.get('ry'), font_size)
     if not rx or not ry:
         return
-    ratio_x = rx / (pi ** .5)
-    ratio_y = ry / (pi ** .5)
+    ratio_x = rx / sqrt(pi)
+    ratio_y = ry / sqrt(pi)
     cx, cy = svg.point(node.get('cx'), node.get('cy'), font_size)
 
     svg.stream.move_to(cx + rx, cy)
@@ -47,6 +49,7 @@ def ellipse(svg, node, font_size):
 
 
 def rect(svg, node, font_size):
+    """Draw rect tag."""
     width, height = svg.point(node.get('width'), node.get('height'), font_size)
     if width <= 0 or height <= 0:
         return
@@ -88,6 +91,7 @@ def rect(svg, node, font_size):
 
 
 def line(svg, node, font_size):
+    """Draw line tag."""
     x1, y1 = svg.point(node.get('x1'), node.get('y1'), font_size)
     x2, y2 = svg.point(node.get('x2'), node.get('y2'), font_size)
     svg.stream.move_to(x1, y1)
@@ -97,11 +101,13 @@ def line(svg, node, font_size):
 
 
 def polygon(svg, node, font_size):
+    """Draw polygon tag."""
     polyline(svg, node, font_size)
     svg.stream.close()
 
 
 def polyline(svg, node, font_size):
+    """Draw polyline tag."""
     points = normalize(node.get('points'))
     if points:
         x, y, points = point(svg, points, font_size)
