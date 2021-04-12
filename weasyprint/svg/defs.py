@@ -7,10 +7,6 @@ from .colors import color
 from .utils import parse_url, size
 
 
-def parse_def(svg, node, font_size):
-    svg.parse_def(node)
-
-
 def use(svg, node, font_size):
     from . import SVG
 

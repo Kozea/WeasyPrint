@@ -16,8 +16,7 @@ from .bounding_box import (
     BOUNDING_BOX_METHODS, is_non_empty_bounding_box, is_valid_bounding_box)
 from .colors import color
 from .css import parse_declarations, parse_stylesheets
-from .defs import (
-    apply_filters, draw_gradient_or_pattern, paint_mask, parse_def, use)
+from .defs import apply_filters, draw_gradient_or_pattern, paint_mask, use
 from .image import image, svg
 from .path import path
 from .shapes import circle, ellipse, line, polygon, polyline, rect
@@ -29,17 +28,11 @@ TAGS = {
     'a': text,
     'circle': circle,
     'ellipse': ellipse,
-    'filter': parse_def,
     'image': image,
     'line': line,
-    'linearGradient': parse_def,
-    'marker': parse_def,
-    'mask': parse_def,
     'path': path,
-    'pattern': parse_def,
     'polyline': polyline,
     'polygon': polygon,
-    'radialGradient': parse_def,
     'rect': rect,
     'svg': svg,
     'text': text,
@@ -93,95 +86,93 @@ DEF_TYPES = frozenset((
 
 
 class Node:
+    """An SVG document node."""
+
     def __init__(self, wrapper, style):
         self._wrapper = wrapper
-        self._etree_node = etree_node = wrapper.etree_element
+        self._etree_node = wrapper.etree_element
         self._style = style
 
-        self.attrib = etree_node.attrib
-        self.get = etree_node.get
+        self.attrib = wrapper.etree_element.attrib
+        self.get = wrapper.etree_element.get
 
         self.vertices = []
         self.bounding_box = None
 
     @property
     def tag(self):
+        """XML tag name with no namespace."""
         return self._etree_node.tag.split('}', 1)[-1]
 
     @property
     def text(self):
+        """XML node text."""
         return self._etree_node.text
 
     @property
     def tail(self):
+        """Text after the XML node."""
         return self._etree_node.tail
 
-    def inherit(self, wrapper):
-        child = Node(wrapper, self._style)
-
-        for key, value in self.attrib.items():
-            if key not in NOT_INHERITED_ATTRIBUTES:
-                if key not in child.attrib:
-                    child.attrib[key] = value
-
-        style_attr = child.get('style')
-        if style_attr:
-            normal_attr, important_attr = parse_declarations(style_attr)
-        else:
-            normal_attr, important_attr = [], []
-        normal_matcher, important_matcher = self._style
-        normal = [rule[-1] for rule in normal_matcher.match(wrapper)]
-        important = [rule[-1] for rule in important_matcher.match(wrapper)]
-        declarations_lists = normal, [normal_attr], important, [important_attr]
-        for declarations_list in declarations_lists:
-            for declarations in declarations_list:
-                for name, value in declarations:
-                    self.attrib[name] = value.strip()
-
-        for key in COLOR_ATTRIBUTES:
-            if child.get(key) == 'currentColor':
-                child.attrib[key] = child.get('color', 'black')
-
-        for key, value in child.attrib.items():
-            if value == 'inherit':
-                child.attrib[key] = self.get(key)
-
-        if child.tag in ('text', 'textPath', 'a'):
-            child._wrapper.etree_children, _ = child.text_children(
-                wrapper, trailing_space=True, text_root=True)
-
-        return child
-
     def __iter__(self):
+        """Yield node children, handling cascade."""
         for wrapper in self._wrapper:
-            yield self.inherit(wrapper)
+            child = Node(wrapper, self._style)
 
-    def get_intrinsic_size(self, font_size):
-        intrinsic_width = self.get('width', '100%')
-        if '%' in intrinsic_width:
-            intrinsic_width = None
-        else:
-            intrinsic_width = size(intrinsic_width, font_size)
+            # Cascade
+            for key, value in self.attrib.items():
+                if key not in NOT_INHERITED_ATTRIBUTES:
+                    if key not in child.attrib:
+                        child.attrib[key] = value
 
-        intrinsic_height = self.get('height', '100%')
-        if '%' in intrinsic_height:
-            intrinsic_height = None
-        else:
-            intrinsic_height = size(intrinsic_height, font_size)
+            # Apply style attribute
+            style_attr = child.get('style')
+            if style_attr:
+                normal_attr, important_attr = parse_declarations(style_attr)
+            else:
+                normal_attr, important_attr = [], []
+            normal_matcher, important_matcher = self._style
+            normal = [rule[-1] for rule in normal_matcher.match(wrapper)]
+            important = [rule[-1] for rule in important_matcher.match(wrapper)]
+            declarations_lists = (
+                normal, [normal_attr], important, [important_attr])
+            for declarations_list in declarations_lists:
+                for declarations in declarations_list:
+                    for name, value in declarations:
+                        self.attrib[name] = value.strip()
 
-        return intrinsic_width, intrinsic_height
+            # Replace 'currentColor' value
+            for key in COLOR_ATTRIBUTES:
+                if child.get(key) == 'currentColor':
+                    child.attrib[key] = child.get('color', 'black')
+
+            # Handle 'inherit' values
+            for key, value in child.attrib.items():
+                if value == 'inherit':
+                    child.attrib[key] = self.get(key)
+
+            # Fix text in text tags
+            if child.tag in ('text', 'textPath', 'a'):
+                child._wrapper.etree_children, _ = child.text_children(
+                    wrapper, trailing_space=True, text_root=True)
+
+            yield child
 
     def get_viewbox(self):
+        """Get node viewBox as a tuple of floats."""
         viewbox = self.get('viewBox')
         if viewbox:
             return tuple(
                 float(number) for number in normalize(viewbox).split())
 
     def get_href(self):
+        """Get the href attribute, with or without a namespace."""
         return self.get('{http://www.w3.org/1999/xlink}href', self.get('href'))
 
     @staticmethod
-    def handle_white_spaces(string, preserve):
+    def process_whitespace(string, preserve):
+        """Replace newlines by spaces, and merge spaces if not preserved."""
+        # TODO: should be merged with build.process_whitespace
         if not string:
             return ''
         if preserve:
@@ -192,6 +183,7 @@ class Node:
             return re.sub(' +', ' ', string)
 
     def get_child(self, id_):
+        """Get a child with given id in the whole child tree."""
         for child in self:
             if child.get('id') == id_:
                 return child
@@ -200,10 +192,11 @@ class Node:
                 return grandchild
 
     def text_children(self, element, trailing_space, text_root=False):
+        """Handle text node by fixing whitespaces and flattening tails."""
         children = []
         space = '{http://www.w3.org/XML/1998/namespace}space'
         preserve = self.get(space) == 'preserve'
-        self._etree_node.text = self.handle_white_spaces(
+        self._etree_node.text = self.process_whitespace(
             element.etree_element.text, preserve)
         if trailing_space and not preserve:
             self._etree_node.text = self.text.lstrip(' ')
@@ -229,7 +222,7 @@ class Node:
             else:
                 child_node = Node(child_element, self._style)
             child_preserve = child_node.get(space) == 'preserve'
-            child_node._etree_node.text = self.handle_white_spaces(
+            child_node._etree_node.text = self.process_whitespace(
                 child.text, child_preserve)
             child_node.children, trailing_space = child_node.text_children(
                 child_element, trailing_space)
@@ -242,7 +235,7 @@ class Node:
                     '{http://www.w3.org/2000/svg}tspan')
                 anonymous = Node(
                     ElementWrapper.from_xml_root(anonymous_etree), self._style)
-                anonymous._etree_node.text = self.handle_white_spaces(
+                anonymous._etree_node.text = self.process_whitespace(
                     child.tail, preserve)
                 if original_rotate:
                     anonymous.pop_rotation(original_rotate, rotate)
@@ -258,6 +251,7 @@ class Node:
         return children, trailing_space
 
     def flatten(self):
+        """Flatten text in node and in its children."""
         flattened_text = [self.text or '']
         for child in list(self):
             flattened_text.append(child.flatten())
@@ -266,12 +260,15 @@ class Node:
         return ''.join(flattened_text)
 
     def pop_rotation(self, original_rotate, rotate):
+        """Merge nested letter rotations."""
         self.attrib['rotate'] = ' '.join(
             str(rotate.pop(0) if rotate else original_rotate[-1])
             for i in range(len(self.text)))
 
 
 class SVG:
+    """An SVG document."""
+
     def __init__(self, bytestring_svg, url):
         tree = ElementTree.fromstring(bytestring_svg)
         wrapper = ElementWrapper.from_xml_root(tree)
@@ -290,40 +287,41 @@ class SVG:
         self.cursor_position = [0, 0]
         self.cursor_d_position = [0, 0]
 
-        self.parse_all_defs(self.tree)
+        self.parse_defs(self.tree)
 
     def get_intrinsic_size(self, font_size):
-        return self.tree.get_intrinsic_size(font_size)
+        """Get intrinsic size of the image."""
+        intrinsic_width = self.tree.get('width', '100%')
+        if '%' in intrinsic_width:
+            intrinsic_width = None
+        else:
+            intrinsic_width = size(intrinsic_width, font_size)
+
+        intrinsic_height = self.tree.get('height', '100%')
+        if '%' in intrinsic_height:
+            intrinsic_height = None
+        else:
+            intrinsic_height = size(intrinsic_height, font_size)
+
+        return intrinsic_width, intrinsic_height
 
     def get_viewbox(self):
+        """Get document viewBox as a tuple of floats."""
         return self.tree.get_viewbox()
 
     def point(self, x, y, font_size):
+        """Compute size of an x/y or width/height couple."""
         return (
             size(x, font_size, self.concrete_width),
             size(y, font_size, self.concrete_height))
 
     def length(self, length, font_size):
+        """Compute size of an arbirtary attribute."""
         return size(length, font_size, self.normalized_diagonal)
-
-    @staticmethod
-    def paint(value):
-        if not value or value == 'none':
-            return None, None
-
-        value = value.strip()
-        match = re.compile(r'(url\(.+\)) *(.*)').search(value)
-        if match:
-            source = parse_url(match.group(1)).fragment
-            color = match.group(2) or None
-        else:
-            source = None
-            color = value or None
-
-        return source, color
 
     def draw(self, stream, concrete_width, concrete_height, base_url,
              url_fetcher):
+        """Draw image on a stream."""
         self.stream = stream
         self.concrete_width = concrete_width
         self.concrete_height = concrete_height
@@ -335,6 +333,7 @@ class SVG:
         self.draw_node(self.tree, size('12pt'))
 
     def draw_node(self, node, font_size):
+        """Draw a node."""
         if node.tag == 'defs':
             return
 
@@ -383,6 +382,7 @@ class SVG:
         self.stream.pop_state()
 
     def draw_markers(self, node, font_size):
+        """Draw markers defined in a node."""
         if not node.vertices:
             return
 
@@ -508,7 +508,27 @@ class SVG:
 
             position = 'mid' if angles else 'start'
 
+    @staticmethod
+    def paint(value):
+        """Paint fill or stroke attribute with a color or a URL."""
+        if not value or value == 'none':
+            return None, None
+
+        value = value.strip()
+        match = re.compile(r'(url\(.+\)) *(.*)').search(value)
+        if match:
+            source = parse_url(match.group(1)).fragment
+            color = match.group(2) or None
+        else:
+            source = None
+            color = value or None
+
+        return source, color
+
     def fill_stroke(self, node, font_size):
+        """Paint fill and stroke for a node."""
+
+        # Get fill data
         fill_source, fill_color = self.paint(node.get('fill', 'black'))
         fill_drawn = draw_gradient_or_pattern(
             self, node, fill_source, font_size, stroke=False)
@@ -517,6 +537,7 @@ class SVG:
             self.stream.set_color_rgb(*fill_color)
         fill = fill_color or fill_drawn
 
+        # Get stroke data
         stroke_source, stroke_color = self.paint(node.get('stroke'))
         stroke_drawn = draw_gradient_or_pattern(
             self, node, stroke_source, font_size, stroke=True)
@@ -528,18 +549,22 @@ class SVG:
         if stroke_width:
             self.stream.set_line_width(stroke_width)
 
+        # Apply dash array
         dash_array = tuple(
             float(value) for value in
             normalize(node.get('stroke-dasharray')).split())
-        offset = self.length(node.get('stroke-dashoffset'), font_size)
-        if dash_array:
-            if not all(value == 0 for value in dash_array):
-                if not any(value < 0 for value in dash_array):
-                    if offset < 0:
-                        sum_dashes = sum(float(value) for value in dash_array)
-                        offset = sum_dashes - abs(offset) % sum_dashes
-                    self.stream.set_dash(dash_array, offset)
+        dash_condition = (
+            dash_array and
+            not all(value == 0 for value in dash_array) and
+            not any(value < 0 for value in dash_array))
+        if dash_condition:
+            offset = self.length(node.get('stroke-dashoffset'), font_size)
+            if offset < 0:
+                sum_dashes = sum(float(value) for value in dash_array)
+                offset = sum_dashes - abs(offset) % sum_dashes
+            self.stream.set_dash(dash_array, offset)
 
+        # Apply line cap
         line_cap = node.get('stroke-linecap', 'butt')
         if line_cap == 'round':
             line_cap = 1
@@ -549,6 +574,7 @@ class SVG:
             line_cap = 0
         self.stream.set_line_cap(line_cap)
 
+        # Apply line join
         line_join = node.get('stroke-linejoin', 'miter')
         if line_join == 'round':
             line_join = 1
@@ -558,11 +584,13 @@ class SVG:
             line_join = 0
         self.stream.set_line_join(line_join)
 
+        # Apply miter limit
         miter_limit = float(node.get('stroke-miterlimit', 4))
         if miter_limit < 0:
             miter_limit = 4
         self.stream.set_miter_limit(miter_limit)
 
+        # Fill and stroke
         even_odd = node.get('fill-rule') == 'evenodd'
         if fill and stroke:
             self.stream.fill_and_stroke(even_odd)
@@ -572,6 +600,7 @@ class SVG:
             self.stream.fill(even_odd)
 
     def transform(self, transform_string, font_size):
+        """Apply a transformation string to the node."""
         # TODO: merge with Page._gather_links_and_bookmarks and
         # css.validation.properties.transform
         from ..document import Matrix
@@ -625,17 +654,16 @@ class SVG:
                 matrix[1][0], matrix[1][1],
                 matrix[2][0], matrix[2][1])
 
-    def parse_all_defs(self, node):
-        self.parse_def(node)
-        for child in node:
-            self.parse_all_defs(child)
-
-    def parse_def(self, node):
+    def parse_defs(self, node):
+        """Parse defs included in a tree."""
         for def_type in DEF_TYPES:
             if def_type in node.tag.lower() and 'id' in node.attrib:
                 getattr(self, f'{def_type}s')[node.attrib['id']] = node
+        for child in node:
+            self.parse_defs(child)
 
     def calculate_bounding_box(self, node, font_size):
+        """Calculate the bounding box of a node."""
         if node.bounding_box is None and node.tag in BOUNDING_BOX_METHODS:
             bounding_box = BOUNDING_BOX_METHODS[node.tag](
                 self, node, font_size)
@@ -645,6 +673,7 @@ class SVG:
 
 
 class Pattern(SVG):
+    """SVG node applied as a pattern."""
     def __init__(self, tree, url):
         self.tree = tree
         self.url = url
