@@ -1,4 +1,12 @@
-from math import acos, atan, cos, fmod, isinf, pi, radians, sin, sqrt, tan
+"""
+    weasyprint.svg.bounding_box
+    ---------------------------
+
+    Calculate bounding boxes of SVG tags.
+
+"""
+
+from math import atan, atan2, cos, isinf, pi, radians, sin, sqrt, tan
 
 from .path import PATH_LETTERS
 from .utils import normalize, point
@@ -7,6 +15,7 @@ EMPTY_BOUNDING_BOX = float('inf'), float('inf'), 0, 0
 
 
 def bounding_box_rect(svg, node, font_size):
+    """Bounding box for rect node."""
     x, y = svg.point(node.get('x'), node.get('y'), font_size)
     width, height = svg.point(
         node.get('width'), node.get('height'), font_size)
@@ -14,18 +23,21 @@ def bounding_box_rect(svg, node, font_size):
 
 
 def bounding_box_circle(svg, node, font_size):
+    """Bounding box for circle node."""
     cx, cy = svg.point(node.get('cx'), node.get('cy'), font_size)
     r = svg.length(node.get('r'), font_size)
     return cx - r, cy - r, 2 * r, 2 * r
 
 
 def bounding_box_ellipse(svg, node, font_size):
+    """Bounding box for ellipse node."""
     rx, ry = svg.point(node.get('rx'), node.get('ry'), font_size)
     cx, cy = svg.point(node.get('cx'), node.get('cy'), font_size)
     return cx - rx, cy - ry, 2 * rx, 2 * ry
 
 
 def bounding_box_line(svg, node, font_size):
+    """Bounding box for line node."""
     x1, y1 = svg.point(node.get('x1'), node.get('y1'), font_size)
     x2, y2 = svg.point(node.get('x2'), node.get('y2'), font_size)
     x, y = min(x1, x2), min(y1, y2)
@@ -34,6 +46,7 @@ def bounding_box_line(svg, node, font_size):
 
 
 def bounding_box_polyline(svg, node, font_size):
+    """Bounding box for polyline node."""
     bounding_box = EMPTY_BOUNDING_BOX
     points = []
     normalized_points = normalize(node.get('points', ''))
@@ -44,6 +57,7 @@ def bounding_box_polyline(svg, node, font_size):
 
 
 def bounding_box_path(svg, node, font_size):
+    """Bounding box for path node."""
     path_data = node.get('d', '')
 
     # Normalize path data for correct parsing
@@ -85,7 +99,7 @@ def bounding_box_path(svg, node, font_size):
                 y += previous_y
 
             # Extend bounding box with start and end coordinates
-            arc_bounding_box = bounding_box_elliptical_arc(
+            arc_bounding_box = _bounding_box_elliptical_arc(
                 previous_x, previous_y, rx, ry, rotation, large, sweep, x, y)
             x1, y1, width, height = arc_bounding_box
             x2 = x1 + width
@@ -182,18 +196,27 @@ def bounding_box_path(svg, node, font_size):
 
 
 def bounding_box_text(svg, node, font_size):
+    """Bounding box for text node."""
     return node.get('text_bounding_box')
 
 
-def angle(bx, by):
-    return fmod(
-        2 * pi + (1 if by > 0 else -1) * acos(bx / sqrt(bx * bx + by * by)),
-        2 * pi)
+def bounding_box_g(svg, node, font_size):
+    """Bounding box for g node."""
+    bounding_box = EMPTY_BOUNDING_BOX
+    for child in node:
+        child_bounding_box = svg.calculate_bounding_box(child, font_size)
+        if is_valid_bounding_box(child_bounding_box):
+            minx, miny, width, height = child_bounding_box
+            maxx, maxy = minx + width, miny + height
+            bounding_box = extend_bounding_box(
+                bounding_box, ((minx, miny), (maxx, maxy)))
+    return bounding_box
 
 
-def bounding_box_elliptical_arc(x1, y1, rx, ry, phi, large, sweep, x, y):
+def _bounding_box_elliptical_arc(x1, y1, rx, ry, phi, large, sweep, x, y):
+    """Bounding box of an elliptical arc in path node."""
     rx, ry = abs(rx), abs(ry)
-    if rx == 0 or ry == 0:
+    if 0 in (rx, ry):
         return min(x, x1), min(y, y1), abs(x - x1), abs(y - y1)
 
     x1prime = cos(phi) * (x1 - x) / 2 + sin(phi) * (y1 - y) / 2
@@ -222,22 +245,22 @@ def bounding_box_elliptical_arc(x1, y1, rx, ry, phi, large, sweep, x, y):
 
     if phi == 0 or phi == pi:
         minx = cx - rx
-        tminx = angle(-rx, 0)
+        tminx = atan2(0, -rx)
         maxx = cx + rx
-        tmaxx = angle(rx, 0)
+        tmaxx = atan2(0, rx)
         miny = cy - ry
-        tminy = angle(0, -ry)
+        tminy = atan2(-ry, 0)
         maxy = cy + ry
-        tmaxy = angle(0, ry)
+        tmaxy = atan2(ry, 0)
     elif phi == pi / 2 or phi == 3 * pi / 2:
         minx = cx - ry
-        tminx = angle(-ry, 0)
+        tminx = atan2(0, -ry)
         maxx = cx + ry
-        tmaxx = angle(ry, 0)
+        tmaxx = atan2(0, ry)
         miny = cy - rx
-        tminy = angle(0, -rx)
+        tminy = atan2(-rx, 0)
         maxy = cy + rx
-        tmaxy = angle(0, rx)
+        tmaxy = atan2(rx, 0)
     else:
         tminx = -atan(ry * tan(phi) / rx)
         tmaxx = pi - atan(ry * tan(phi) / rx)
@@ -247,9 +270,9 @@ def bounding_box_elliptical_arc(x1, y1, rx, ry, phi, large, sweep, x, y):
             minx, maxx = maxx, minx
             tminx, tmaxx = tmaxx, tminx
         tmp_y = cy + rx * cos(tminx) * sin(phi) + ry * sin(tminx) * cos(phi)
-        tminx = angle(minx - cx, tmp_y - cy)
+        tminx = atan2(minx - cx, tmp_y - cy)
         tmp_y = cy + rx * cos(tmaxx) * sin(phi) + ry * sin(tmaxx) * cos(phi)
-        tmaxx = angle(maxx - cx, tmp_y - cy)
+        tmaxx = atan2(maxx - cx, tmp_y - cy)
 
         tminy = atan(ry / (tan(phi) * rx))
         tmaxy = atan(ry / (tan(phi) * rx)) + pi
@@ -259,12 +282,12 @@ def bounding_box_elliptical_arc(x1, y1, rx, ry, phi, large, sweep, x, y):
             miny, maxy = maxy, miny
             tminy, tmaxy = tmaxy, tminy
         tmp_x = cx + rx * cos(tminy) * cos(phi) - ry * sin(tminy) * sin(phi)
-        tminy = angle(tmp_x - cx, miny - cy)
+        tminy = atan2(tmp_x - cx, miny - cy)
         tmp_x = cx + rx * cos(tmaxy) * cos(phi) - ry * sin(tmaxy) * sin(phi)
-        tmaxy = angle(tmp_x - cx, maxy - cy)
+        tmaxy = atan2(maxy - cy, tmp_x - cx)
 
-    angle1 = angle(x1 - cx, y1 - cy)
-    angle2 = angle(x - cx, y - cy)
+    angle1 = atan2(y1 - cy, x1 - cx)
+    angle2 = atan2(y - cy, x - cx)
 
     if not sweep:
         angle1, angle2 = angle2, angle1
@@ -290,15 +313,8 @@ def bounding_box_elliptical_arc(x1, y1, rx, ry, phi, large, sweep, x, y):
     return minx, miny, maxx - minx, maxy - miny
 
 
-def bounding_box_group(svg, node, font_size):
-    bounding_box = EMPTY_BOUNDING_BOX
-    for child in node:
-        bounding_box = combine_bounding_box(
-            bounding_box, svg.calculate_bounding_box(child, font_size))
-    return bounding_box
-
-
 def extend_bounding_box(bounding_box, points):
+    """Extend a bounding box to include given points."""
     minx, miny, width, height = bounding_box
     maxx, maxy = (
         float('-inf') if isinf(minx) else minx + width,
@@ -310,21 +326,9 @@ def extend_bounding_box(bounding_box, points):
     return minx, miny, maxx - minx, maxy - miny
 
 
-def combine_bounding_box(bounding_box, another_bounding_box):
-    if is_valid_bounding_box(another_bounding_box):
-        minx, miny, width, height = another_bounding_box
-        maxx, maxy = minx + width, miny + height
-        bounding_box = extend_bounding_box(
-            bounding_box, ((minx, miny), (maxx, maxy)))
-    return bounding_box
-
-
 def is_valid_bounding_box(bounding_box):
+    """Check that a bounding box doesn’t have infinite boundaries."""
     return bounding_box and not isinf(bounding_box[0] + bounding_box[1])
-
-
-def is_non_empty_bounding_box(bounding_box):
-    return is_valid_bounding_box(bounding_box) and 0 not in bounding_box[2:]
 
 
 BOUNDING_BOX_METHODS = {
@@ -335,8 +339,8 @@ BOUNDING_BOX_METHODS = {
     'polyline': bounding_box_polyline,
     'polygon': bounding_box_polyline,
     'path': bounding_box_path,
-    'g': bounding_box_group,
-    'marker': bounding_box_group,
+    'g': bounding_box_g,
+    'marker': bounding_box_g,
     'text': bounding_box_text,
     'tspan': bounding_box_text,
     'textPath': bounding_box_text,

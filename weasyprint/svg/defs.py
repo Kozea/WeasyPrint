@@ -3,6 +3,7 @@ from math import ceil, hypot
 
 import pydyf
 
+from .bounding_box import is_valid_bounding_box
 from .colors import color
 from .utils import parse_url, size
 
@@ -75,7 +76,7 @@ def draw_gradient(svg, node, gradient, font_size, stroke):
         return True
 
     bounding_box = svg.calculate_bounding_box(node, font_size)
-    if not bounding_box:
+    if not is_valid_bounding_box(bounding_box):
         return False
     x, y = bounding_box[0], bounding_box[1]
     if gradient.get('gradientUnits') == 'userSpaceOnUse':
@@ -427,7 +428,11 @@ def draw_pattern(svg, node, pattern, font_size, stroke):
                 font_size)):
             return False
 
-    _, _, width, height = svg.calculate_bounding_box(node, font_size)
+    bounding_box = svg.calculate_bounding_box(node, font_size)
+    if not is_valid_bounding_box(bounding_box):
+        return False
+
+    _, _, width, height = bounding_box
     if pattern.get('patternUnits') == 'userSpaceOnUse':
         x = size(pattern.get('x'), font_size, 1)
         y = size(pattern.get('y'), font_size, 1)
@@ -468,10 +473,13 @@ def apply_filters(svg, node, filter_, font_size):
     for child in filter_:
         if child.tag == 'feOffset':
             if filter_.get('primitiveUnits') == 'objectBoundingBox':
-                _, _, width, height = svg.calculate_bounding_box(
-                    node, font_size)
-                dx = size(child.get('dx', 0), font_size, 1) * width
-                dy = size(child.get('dy', 0), font_size, 1) * height
+                bounding_box = svg.calculate_bounding_box(node, font_size)
+                if is_valid_bounding_box(bounding_box):
+                    _, _, width, height = bounding_box
+                    dx = size(child.get('dx', 0), font_size, 1) * width
+                    dy = size(child.get('dy', 0), font_size, 1) * height
+                else:
+                    dx = dy = 0
             else:
                 dx, dy = svg.point(
                     child.get('dx', 0), child.get('dy', 0), font_size)

@@ -12,8 +12,7 @@ from xml.etree import ElementTree
 
 from cssselect2 import ElementWrapper
 
-from .bounding_box import (
-    BOUNDING_BOX_METHODS, is_non_empty_bounding_box, is_valid_bounding_box)
+from .bounding_box import BOUNDING_BOX_METHODS, is_valid_bounding_box
 from .colors import color
 from .css import parse_declarations, parse_stylesheets
 from .defs import apply_filters, draw_gradient_or_pattern, paint_mask, use
@@ -353,10 +352,13 @@ class SVG:
         if 0 <= opacity < 1:
             original_stream = self.stream
             bounding_box = self.calculate_bounding_box(node, font_size)
-            self.stream = self.stream.add_transparency_group([
-                bounding_box[0], bounding_box[1],
-                bounding_box[0] + bounding_box[2],
-                bounding_box[1] + bounding_box[3]])
+            if is_valid_bounding_box(bounding_box):
+                self.stream = self.stream.add_transparency_group([
+                    bounding_box[0], bounding_box[1],
+                    bounding_box[0] + bounding_box[2],
+                    bounding_box[1] + bounding_box[3]])
+            else:
+                opacity = 1
 
         # Apply transformations
         x, y = self.point(node.get('x'), node.get('y'), font_size)
@@ -431,99 +433,98 @@ class SVG:
 
             # Draw marker
             marker = markers[position]
-            if marker:
-                marker_node = self.markers.get(marker)
+            if not marker:
+                position = 'mid' if angles else 'start'
+                continue
 
-                # Calculate position, scale and clipping
-                if 'viewBox' in node.attrib:
-                    marker_width, marker_height = svg.point(
-                        marker_node.get('markerWidth', 3),
-                        marker_node.get('markerHeight', 3),
-                        font_size)
-                    scale_x, scale_y, translate_x, translate_y = (
-                        preserve_ratio(
-                            svg, marker_node, font_size,
-                            marker_width, marker_height))
+            marker_node = self.markers.get(marker)
 
-                    clip_x, clip_y, viewbox_width, viewbox_height = (
-                        marker_node.get_viewbox())
+            # Calculate position, scale and clipping
+            if 'viewBox' in node.attrib:
+                marker_width, marker_height = svg.point(
+                    marker_node.get('markerWidth', 3),
+                    marker_node.get('markerHeight', 3),
+                    font_size)
+                scale_x, scale_y, translate_x, translate_y = preserve_ratio(
+                    svg, marker_node, font_size, marker_width, marker_height)
 
-                    align = marker_node.get(
-                        'preserveAspectRatio', 'xMidYMid').split(' ')[0]
-                    if align == 'none':
-                        x_position = y_position = 'min'
-                    else:
-                        x_position = align[1:4].lower()
-                        y_position = align[5:].lower()
+                clip_x, clip_y, viewbox_width, viewbox_height = (
+                    marker_node.get_viewbox())
 
-                    if x_position == 'mid':
-                        clip_x += (viewbox_width - marker_width / scale_x) / 2
-                    elif x_position == 'max':
-                        clip_x += viewbox_width - marker_width / scale_x
-
-                    if y_position == 'mid':
-                        clip_y += (
-                            viewbox_height - marker_height / scale_y) / 2
-                    elif y_position == 'max':
-                        clip_y += viewbox_height - marker_height / scale_y
-
-                    clip_box = (
-                        clip_x, clip_y,
-                        marker_width / scale_x, marker_height / scale_y)
+                align = marker_node.get(
+                    'preserveAspectRatio', 'xMidYMid').split(' ')[0]
+                if align == 'none':
+                    x_position = y_position = 'min'
                 else:
-                    marker_width, marker_height = self.point(
-                        marker_node.get('markerWidth', 3),
-                        marker_node.get('markerHeight', 3),
-                        font_size)
-                    bounding_box = self.calculate_bounding_box(
-                        marker_node, font_size)
-                    if is_valid_bounding_box(bounding_box):
-                        scale_x = scale_y = min(
-                            marker_width / bounding_box[2],
-                            marker_height / bounding_box[3])
-                    else:
-                        scale_x = scale_y = 1
-                    translate_x, translate_y = self.point(
-                        marker_node.get('refX'), marker_node.get('refY'),
-                        font_size)
-                    clip_box = None
+                    x_position = align[1:4].lower()
+                    y_position = align[5:].lower()
 
-                # Scale
-                if marker_node.get('markerUnits') != 'userSpaceOnUse':
-                    scale = self.length(node.get('stroke-width', 1), font_size)
-                    scale_x *= scale
-                    scale_y *= scale
+                if x_position == 'mid':
+                    clip_x += (viewbox_width - marker_width / scale_x) / 2
+                elif x_position == 'max':
+                    clip_x += viewbox_width - marker_width / scale_x
 
-                # Override angle
-                node_angle = marker_node.get('orient', 0)
-                if node_angle not in ('auto', 'auto-start-reverse'):
-                    angle = radians(float(node_angle))
-                elif node_angle == 'auto-start-reverse':
-                    if position == 'start':
-                        angle += radians(180)
+                if y_position == 'mid':
+                    clip_y += (
+                        viewbox_height - marker_height / scale_y) / 2
+                elif y_position == 'max':
+                    clip_y += viewbox_height - marker_height / scale_y
 
-                # Draw marker path
-                for child in marker_node:
+                clip_box = (
+                    clip_x, clip_y,
+                    marker_width / scale_x, marker_height / scale_y)
+            else:
+                marker_width, marker_height = self.point(
+                    marker_node.get('markerWidth', 3),
+                    marker_node.get('markerHeight', 3),
+                    font_size)
+                bounding_box = self.calculate_bounding_box(
+                    marker_node, font_size)
+                if is_valid_bounding_box(bounding_box):
+                    scale_x = scale_y = min(
+                        marker_width / bounding_box[2],
+                        marker_height / bounding_box[3])
+                else:
+                    scale_x = scale_y = 1
+                translate_x, translate_y = self.point(
+                    marker_node.get('refX'), marker_node.get('refY'),
+                    font_size)
+                clip_box = None
+
+            # Scale
+            if marker_node.get('markerUnits') != 'userSpaceOnUse':
+                scale = self.length(node.get('stroke-width', 1), font_size)
+                scale_x *= scale
+                scale_y *= scale
+
+            # Override angle
+            node_angle = marker_node.get('orient', 0)
+            if node_angle not in ('auto', 'auto-start-reverse'):
+                angle = radians(float(node_angle))
+            elif node_angle == 'auto-start-reverse' and position == 'start':
+                angle += radians(180)
+
+            # Draw marker path
+            for child in marker_node:
+                self.stream.push_state()
+
+                self.stream.transform(
+                    scale_x * cos(angle), scale_x * sin(angle),
+                    -scale_y * sin(angle), scale_y * cos(angle),
+                    *point)
+                self.stream.transform(1, 0, 0, 1, -translate_x, -translate_y)
+
+                overflow = marker_node.get('overflow', 'hidden')
+                if clip_box and overflow in ('hidden', 'scroll'):
                     self.stream.push_state()
-
-                    self.stream.transform(
-                        scale_x * cos(angle), scale_x * sin(angle),
-                        -scale_y * sin(angle), scale_y * cos(angle),
-                        *point)
-                    self.stream.transform(
-                        1, 0, 0, 1, -translate_x, -translate_y)
-
-                    overflow = marker_node.get('overflow', 'hidden')
-                    if clip_box and overflow in ('hidden', 'scroll'):
-                        self.stream.push_state()
-                        self.stream.rectangle(*clip_box)
-                        self.stream.pop_state()
-                        self.stream.clip()
-
-                    self.draw_node(child, font_size)
+                    self.stream.rectangle(*clip_box)
                     self.stream.pop_state()
+                    self.stream.clip()
 
-            position = 'mid' if angles else 'start'
+                self.draw_node(child, font_size)
+                self.stream.pop_state()
+
+        position = 'mid' if angles else 'start'
 
     @staticmethod
     def paint(value):
@@ -682,10 +683,9 @@ class SVG:
     def calculate_bounding_box(self, node, font_size):
         """Calculate the bounding box of a node."""
         if node.bounding_box is None and node.tag in BOUNDING_BOX_METHODS:
-            bounding_box = BOUNDING_BOX_METHODS[node.tag](
-                self, node, font_size)
-            if is_non_empty_bounding_box(bounding_box):
-                node.bounding_box = bounding_box
+            box = BOUNDING_BOX_METHODS[node.tag](self, node, font_size)
+            if is_valid_bounding_box(box) and 0 not in box[2:]:
+                node.bounding_box = box
         return node.bounding_box
 
 
