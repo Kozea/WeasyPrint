@@ -46,6 +46,7 @@ home-page = 'https://www.courtbouillon.org/weasyprint'
 documentation = 'https://doc.courtbouillon.org/weasyprint/'
 code = 'https://github.com/Kozea/WeasyPrint'
 issues = 'https://github.com/Kozea/WeasyPrint/issues'
+changelog = 'https://github.com/Kozea/WeasyPrint/releases'
 donation = 'https://opencollective.com/courtbouillon'
 
 [project.optional-dependencies]
