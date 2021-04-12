@@ -181,6 +181,10 @@ def bounding_box_path(svg, node, font_size):
     return bounding_box
 
 
+def bounding_box_text(svg, node, font_size):
+    return node.get('text_bounding_box')
+
+
 def angle(bx, by):
     return fmod(
         2 * pi + (1 if by > 0 else -1) * acos(bx / sqrt(bx * bx + by * by)),
@@ -323,7 +327,6 @@ def is_non_empty_bounding_box(bounding_box):
     return is_valid_bounding_box(bounding_box) and 0 not in bounding_box[2:]
 
 
-# TODO: text, tspan, textPath, use
 BOUNDING_BOX_METHODS = {
     'rect': bounding_box_rect,
     'circle': bounding_box_circle,
@@ -334,4 +337,7 @@ BOUNDING_BOX_METHODS = {
     'path': bounding_box_path,
     'g': bounding_box_group,
     'marker': bounding_box_group,
+    'text': bounding_box_text,
+    'tspan': bounding_box_text,
+    'textPath': bounding_box_text,
 }
