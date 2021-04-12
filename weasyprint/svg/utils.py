@@ -11,17 +11,9 @@ from urllib.parse import urlparse
 
 from tinycss2.color3 import parse_color
 
-UNITS = {
-    'mm': 1 / 25.4,
-    'cm': 1 / 2.54,
-    'in': 1,
-    'pt': 1 / 72,
-    'pc': 1 / 6,
-    'px': None,
-}
-
 
 def normalize(string):
+    """Give a canonical version of a given value string."""
     string = (string or '').replace('E', 'e')
     string = re.sub('(?<!e)-', ' -', string)
     string = re.sub('[ \n\r\t,]+', ' ', string)
@@ -30,6 +22,9 @@ def normalize(string):
 
 
 def size(string, font_size=None, percentage_reference=None):
+    """Compute size from string, resolving units and percentages."""
+    from ..css.utils import LENGTHS_TO_PIXELS
+
     if not string:
         return 0
 
@@ -51,16 +46,16 @@ def size(string, font_size=None, percentage_reference=None):
         assert font_size is not None
         return font_size * float(string[:-2]) / 2
 
-    for unit, coefficient in UNITS.items():
+    for unit, coefficient in LENGTHS_TO_PIXELS.items():
         if string.endswith(unit):
-            number = float(string[:-len(unit)])
-            return number * (96 * coefficient if coefficient else 1)
+            return float(string[:-len(unit)]) * coefficient
 
     # Unknown size
     return 0
 
 
 def point(svg, string, font_size):
+    """Pop first two size values from a string."""
     match = re.match('(.*?) (.*?)(?: |$)', string)
     x, y = match.group(1, 2)
     string = string[match.end():]
@@ -68,6 +63,7 @@ def point(svg, string, font_size):
 
 
 def preserve_ratio(svg, node, font_size, width, height):
+    """Compute scale and translation needed to preserve ratio."""
     viewbox = node.get_viewbox()
     if viewbox:
         viewbox_width, viewbox_height = viewbox[2:]
@@ -114,17 +110,12 @@ def preserve_ratio(svg, node, font_size, width, height):
 
 
 def parse_url(url):
+    """Parse a URL, possibly in a "url(…)" string."""
     if url and url.startswith('url(') and url.endswith(')'):
         url = url[4:-1]
     return urlparse(url or '')
 
 
-def color(string, opacity=1):
-    if not string:
-        return (0, 0, 0, 1)
-    color = parse_color(string)
-    if color is None:
-        return (0, 0, 0, 1)
-    else:
-        r, g, b, a = color
-        return r, g, b, a * opacity
+def color(string):
+    """Safely parse a color string and return a RGBA tuple."""
+    return parse_color(string or '') or (0, 0, 0, 1)
