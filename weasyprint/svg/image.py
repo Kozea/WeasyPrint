@@ -1,15 +1,25 @@
+"""
+    weasyprint.svg.image
+    --------------------
+
+    Draw image and svg tags.
+
+"""
+
 from urllib.parse import urljoin
 
 from .utils import preserve_ratio
 
 
 def svg(svg, node, font_size):
+    """Draw svg tags."""
     scale_x, scale_y, translate_x, translate_y = preserve_ratio(
         svg, node, font_size, svg.concrete_width, svg.concrete_height)
     svg.stream.transform(scale_x, 0, 0, scale_y, translate_x, translate_y)
 
 
 def image(svg, node, font_size):
+    """Draw image tags."""
     from ..images import get_image_from_uri
 
     base_url = node.get('{http://www.w3.org/XML/1998/namespace}base')
