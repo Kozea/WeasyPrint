@@ -6,6 +6,8 @@
 
 """
 
+from urllib.parse import urljoin
+
 import cssselect2
 import tinycss2
 
@@ -21,12 +23,11 @@ def find_stylesheets_rules(tree, stylesheet_rules, url):
                 url_token = tinycss2.parse_one_component_value(rule.prelude)
                 if url_token.type not in ('string', 'url'):
                     continue
-                css_url = parse_url(url_token.value, url)
+                css_url = parse_url(urljoin(url, url_token.value))
                 stylesheet = tinycss2.parse_stylesheet(
                     tree.fetch_url(css_url, 'text/css').decode('utf-8'))
-                for rule in find_stylesheets_rules(
-                        tree, stylesheet, css_url.geturl()):
-                    yield rule
+                url = css_url.geturl()
+                yield from find_stylesheets_rules(tree, stylesheet, url)
             # TODO: support media types
             # if rule.lower_at_keyword == 'media':
         elif rule.type == 'qualified-rule':
