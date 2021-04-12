@@ -2,7 +2,7 @@
     weasyprint.svg.path
     -------------------
 
-    Render paths.
+    Draw paths.
 
 """
 
@@ -14,25 +14,24 @@ PATH_LETTERS = 'achlmqstvzACHLMQSTVZ'
 
 
 def _rotate(x, y, angle):
+    """Rotate (x, y) point of given angle around (0, 0)."""
     return x * cos(angle) - y * sin(angle), y * cos(angle) + x * sin(angle)
 
 
 def path(svg, node, font_size):
+    """Draw path node."""
     from ..document import Matrix
 
     string = node.get('d', '')
 
-    node.vertices = []
-
     for letter in PATH_LETTERS:
         string = string.replace(letter, f' {letter} ')
-
-    last_letter = None
     string = normalize(string)
 
     # TODO: get current point
     current_point = 0, 0
-    svg.stream.move_to(0, 0)
+    svg.stream.move_to(*current_point)
+    last_letter = None
 
     while string:
         string = string.strip()
