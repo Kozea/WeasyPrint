@@ -1,3 +1,11 @@
+"""
+    weasyprint.svg.defs
+    -------------------
+
+    Parse and draw definitions: gradients, patterns, masks, uses…
+
+"""
+
 from itertools import cycle
 from math import ceil, hypot
 
@@ -8,6 +16,7 @@ from .utils import color, parse_url, size
 
 
 def use(svg, node, font_size):
+    """Draw use tags."""
     from . import SVG
 
     svg.stream.push_state()
@@ -46,6 +55,7 @@ def use(svg, node, font_size):
 
 
 def draw_gradient_or_pattern(svg, node, name, font_size, stroke):
+    """Draw given gradient or pattern."""
     if name in svg.gradients:
         return draw_gradient(svg, node, svg.gradients[name], font_size, stroke)
     elif name in svg.patterns:
@@ -53,6 +63,8 @@ def draw_gradient_or_pattern(svg, node, name, font_size, stroke):
 
 
 def draw_gradient(svg, node, gradient, font_size, stroke):
+    """Draw given gradient node."""
+    # TODO: merge with Gradient.draw
     positions = []
     colors = []
     for child in gradient:
@@ -251,6 +263,8 @@ def draw_gradient(svg, node, gradient, font_size, stroke):
 
 
 def spread_linear_gradient(spread, positions, colors, x1, y1, x2, y2):
+    """Repeat linear gradient."""
+    # TODO: merge with LinearGradient.layout
     from ..images import gradient_average_color, normalize_stop_positions
 
     first, last, positions = normalize_stop_positions(positions)
@@ -305,6 +319,8 @@ def spread_linear_gradient(spread, positions, colors, x1, y1, x2, y2):
 
 def spread_radial_gradient(spread, positions, colors, fx, fy, fr, cx, cy, r,
                            width, height):
+    """Repeat radial gradient."""
+    # TODO: merge with RadialGradient._repeat
     from ..images import gradient_average_color, normalize_stop_positions
 
     first, last, positions = normalize_stop_positions(positions)
@@ -411,21 +427,17 @@ def spread_radial_gradient(spread, positions, colors, fx, fy, fr, cx, cy, r,
 
 
 def draw_pattern(svg, node, pattern, font_size, stroke):
+    """Draw given gradient node."""
     from . import Pattern
 
     pattern._etree_node.tag = 'svg'
     svg.transform(pattern.get('patternTransform'), font_size)
 
-    if pattern.get('viewBox'):
-        if not all(svg.point(
-                pattern.get('width', 1), pattern.get('height', 1),
-                font_size)):
-            return False
-    else:
-        if not all(svg.point(
-                pattern.get('width', 0), pattern.get('height', 0),
-                font_size)):
-            return False
+    reference = 1 if pattern.get('viewBox') else 0
+    width = pattern.get('width', reference)
+    height = pattern.get('height', reference)
+    if not all(svg.point(width, height, font_size)):
+        return False
 
     bounding_box = svg.calculate_bounding_box(node, font_size)
     if not is_valid_bounding_box(bounding_box):
@@ -468,10 +480,11 @@ def draw_pattern(svg, node, pattern, font_size, stroke):
     return True
 
 
-def apply_filters(svg, node, filter_, font_size):
-    for child in filter_:
+def apply_filters(svg, node, filter_node, font_size):
+    """Apply filters defined in given filter node."""
+    for child in filter_node:
         if child.tag == 'feOffset':
-            if filter_.get('primitiveUnits') == 'objectBoundingBox':
+            if filter_node.get('primitiveUnits') == 'objectBoundingBox':
                 bounding_box = svg.calculate_bounding_box(node, font_size)
                 if is_valid_bounding_box(bounding_box):
                     _, _, width, height = bounding_box
@@ -496,6 +509,7 @@ def apply_filters(svg, node, filter_, font_size):
 
 
 def paint_mask(svg, node, mask, font_size):
+    """Apply given mask node."""
     mask._etree_node.tag = 'g'
 
     if mask.get('maskUnits') == 'userSpaceOnUse':
