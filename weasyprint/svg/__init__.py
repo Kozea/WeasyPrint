@@ -286,6 +286,7 @@ class SVG:
 
         self.cursor_position = [0, 0]
         self.cursor_d_position = [0, 0]
+        self.text_path_width = 0
 
         self.parse_defs(self.tree)
 
@@ -378,6 +379,11 @@ class SVG:
             self.stream = original_stream
             self.stream.set_alpha(opacity, stroke=None)
             self.stream.draw_x_object(group_id)
+
+        if node.tag == 'text':
+            self.cursor_position = [0, 0]
+            self.cursor_d_position = [0, 0]
+            self.text_path_width = 0
 
         self.stream.pop_state()
 
