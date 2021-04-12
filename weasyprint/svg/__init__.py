@@ -338,14 +338,17 @@ class SVG:
         if node.tag == 'defs':
             return
 
+        # Update font size
         font_size = size(node.get('font-size', '1em'), font_size, font_size)
 
         self.stream.push_state()
 
+        # Apply filters
         filter_ = self.filters.get(parse_url(node.get('filter')).fragment)
         if filter_:
             apply_filters(self, node, filter_, font_size)
 
+        # Create substream for opacity
         opacity = float(node.get('opacity', 1))
         if 0 <= opacity < 1:
             original_stream = self.stream
@@ -355,31 +358,39 @@ class SVG:
                 bounding_box[0] + bounding_box[2],
                 bounding_box[1] + bounding_box[3]])
 
+        # Apply transformations
         x, y = self.point(node.get('x'), node.get('y'), font_size)
         self.stream.transform(1, 0, 0, 1, x, y)
         self.transform(node.get('transform'), font_size)
 
+        # Draw node
         if node.tag in TAGS:
             TAGS[node.tag](self, node, font_size)
 
+        # Draw node children
         if node.tag not in DEF_TYPES:
             for child in node:
                 self.draw_node(child, font_size)
 
+        # Apply mask
         mask = self.masks.get(parse_url(node.get('mask')).fragment)
         if mask:
             paint_mask(self, node, mask, opacity)
 
+        # Fill and stroke
         self.fill_stroke(node, font_size)
 
+        # Draw markers
         self.draw_markers(node, font_size)
 
+        # Apply opacity stream and restore original stream
         if 0 <= opacity < 1:
             group_id = self.stream.id
             self.stream = original_stream
             self.stream.set_alpha(opacity, stroke=None)
             self.stream.draw_x_object(group_id)
 
+        # Clean text tag
         if node.tag == 'text':
             self.cursor_position = [0, 0]
             self.cursor_d_position = [0, 0]
