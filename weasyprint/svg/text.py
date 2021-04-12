@@ -1,8 +1,7 @@
 from math import atan2, cos, radians, sin
 
 from .bounding_box import EMPTY_BOUNDING_BOX, extend_bounding_box
-from .colors import color
-from .utils import normalize, parse_url, size
+from .utils import color, normalize, parse_url, size
 
 
 def path_length(stream):

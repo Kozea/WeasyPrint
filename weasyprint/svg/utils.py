@@ -9,6 +9,8 @@
 import re
 from urllib.parse import urlparse
 
+from tinycss2.color3 import parse_color
+
 UNITS = {
     'mm': 1 / 25.4,
     'cm': 1 / 2.54,
@@ -115,3 +117,14 @@ def parse_url(url):
     if url and url.startswith('url(') and url.endswith(')'):
         url = url[4:-1]
     return urlparse(url or '')
+
+
+def color(string, opacity=1):
+    if not string:
+        return (0, 0, 0, 1)
+    color = parse_color(string)
+    if color is None:
+        return (0, 0, 0, 1)
+    else:
+        r, g, b, a = color
+        return r, g, b, a * opacity

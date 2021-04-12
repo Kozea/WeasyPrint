@@ -4,8 +4,7 @@ from math import ceil, hypot
 import pydyf
 
 from .bounding_box import is_valid_bounding_box
-from .colors import color
-from .utils import parse_url, size
+from .utils import color, parse_url, size
 
 
 def use(svg, node, font_size):
