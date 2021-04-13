@@ -125,3 +125,27 @@ def test_rect_round_zero():
         <rect width="9" height="9" fill="red" rx="0" ry="4" />
       </svg>
     ''')
+
+
+@assert_no_logs
+def test_line():
+    assert_pixels('line', 9, 9, '''
+        _________
+        _________
+        _________
+        _________
+        RRRRRR___
+        RRRRRR___
+        _________
+        _________
+        _________
+    ''', '''
+      <style>
+        @page { size: 9px }
+        svg { display: block }
+      </style>
+      <svg width="9px" height="9px" xmlns="http://www.w3.org/2000/svg">
+        <line x1="0" y1="5" x2="6" y2="5"
+          stroke="red" stroke-width="2"/>
+      </svg>
+    ''')
