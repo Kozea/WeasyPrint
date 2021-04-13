@@ -197,3 +197,51 @@ def test_polyline_fill():
           stroke="red" stroke-width="2" fill="blue"/>
       </svg>
     ''')
+
+
+@assert_no_logs
+def test_polygon():
+    assert_pixels('polygon', 9, 9, '''
+        _________
+        RRRRRR___
+        RRRRRR___
+        RR__RR___
+        RR__RR___
+        RRRRRR___
+        RRRRRR___
+        _________
+        _________
+    ''', '''
+      <style>
+        @page { size: 9px }
+        svg { display: block }
+      </style>
+      <svg width="9px" height="9px" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="1,6, 1,2, 5,2, 5,6"
+          stroke="red" stroke-width="2" fill="none"/>
+      </svg>
+    ''')
+
+
+@assert_no_logs
+def test_polygon_fill():
+    assert_pixels('polygon_fill', 9, 9, '''
+        _________
+        RRRRRR___
+        RRRRRR___
+        RRBBRR___
+        RRBBRR___
+        RRRRRR___
+        RRRRRR___
+        _________
+        _________
+    ''', '''
+      <style>
+        @page { size: 9px }
+        svg { display: block }
+      </style>
+      <svg width="9px" height="9px" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="1,6, 1,2, 5,2, 5,6"
+          stroke="red" stroke-width="2" fill="blue"/>
+      </svg>
+    ''')
