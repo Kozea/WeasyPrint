@@ -149,3 +149,51 @@ def test_line():
           stroke="red" stroke-width="2"/>
       </svg>
     ''')
+
+
+@assert_no_logs
+def test_polyline():
+    assert_pixels('polyline', 9, 9, '''
+        _________
+        RRRRRR___
+        RRRRRR___
+        RR__RR___
+        RR__RR___
+        RR__RR___
+        _________
+        _________
+        _________
+    ''', '''
+      <style>
+        @page { size: 9px }
+        svg { display: block }
+      </style>
+      <svg width="9px" height="9px" xmlns="http://www.w3.org/2000/svg">
+        <polyline points="1,6, 1,2, 5,2, 5,6"
+          stroke="red" stroke-width="2" fill="none"/>
+      </svg>
+    ''')
+
+
+@assert_no_logs
+def test_polyline_fill():
+    assert_pixels('polyline_fill', 9, 9, '''
+        _________
+        RRRRRR___
+        RRRRRR___
+        RRBBRR___
+        RRBBRR___
+        RRBBRR___
+        _________
+        _________
+        _________
+    ''', '''
+      <style>
+        @page { size: 9px }
+        svg { display: block }
+      </style>
+      <svg width="9px" height="9px" xmlns="http://www.w3.org/2000/svg">
+        <polyline points="1,6, 1,2, 5,2, 5,6"
+          stroke="red" stroke-width="2" fill="blue"/>
+      </svg>
+    ''')
