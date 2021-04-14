@@ -70,10 +70,11 @@ class RasterImage:
 
 
 class SVGImage:
-    def __init__(self, pydyf_svg, base_url, url_fetcher):
+    def __init__(self, pydyf_svg, base_url, url_fetcher, context):
         self._svg = pydyf_svg
         self._base_url = base_url
         self._url_fetcher = url_fetcher
+        self._context = context
 
     def get_intrinsic_size(self, _image_resolution, font_size):
         self._intrinsic_width, self._intrinsic_height = (
@@ -104,12 +105,12 @@ class SVGImage:
         context.push_state()
         self._svg.draw(
             context, concrete_width, concrete_height, self._base_url,
-            self._url_fetcher)
+            self._url_fetcher, self._context)
         context.pop_state()
 
 
 def get_image_from_uri(cache, url_fetcher, optimize_images, url,
-                       forced_mime_type=None):
+                       forced_mime_type=None, context=None):
     """Get an Image instance from an image URI."""
     missing = object()
     image = cache.get(url, missing)
@@ -129,7 +130,8 @@ def get_image_from_uri(cache, url_fetcher, optimize_images, url,
             # Try to rely on given mimetype for SVG
             if mime_type == 'image/svg+xml':
                 try:
-                    image = SVGImage(SVG(string, url), url, url_fetcher)
+                    image = SVGImage(
+                        SVG(string, url), url, url_fetcher, context)
                 except Exception as svg_exception:
                     svg_exceptions.append(svg_exception)
             # Try pillow for raster images, or for failing SVG
@@ -143,7 +145,8 @@ def get_image_from_uri(cache, url_fetcher, optimize_images, url,
                             svg_exceptions[0])
                     try:
                         # Last chance, try SVG
-                        image = SVGImage(SVG(string, url), url, url_fetcher)
+                        image = SVGImage(
+                            SVG(string, url), url, url_fetcher, context)
                     except Exception:
                         # Tried Pillow then SVGImage for a raster, abort
                         raise ImageLoadingError.from_exception(
