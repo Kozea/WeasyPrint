@@ -473,7 +473,7 @@ def draw_pattern(svg, node, pattern, font_size, stroke):
         [0, 0, pattern_width, pattern_height])
     Pattern(pattern, svg.url).draw(
         context, pattern_width, pattern_height, svg.base_url,
-        svg.url_fetcher)
+        svg.url_fetcher, svg.context)
     stream_pattern.draw_x_object(context.id)
     svg.stream.color_space('Pattern', stroke=stroke)
     svg.stream.set_color_special(stream_pattern.id, stroke=stroke)
