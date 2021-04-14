@@ -1295,7 +1295,7 @@ def get_log_attrs(text, lang):
         language = pango.pango_language_from_string(lang_p)
     # TODO: this should be removed when bidi is supported
     for char in ('\u202a', '\u202b', '\u202c', '\u202d', '\u202e'):
-        text = text.replace(char, '')
+        text = text.replace(char, '\u200B')
     text_p, bytestring = unicode_to_char_p(text)
     length = len(text) + 1
     log_attrs = ffi.new('PangoLogAttr[]', length)
