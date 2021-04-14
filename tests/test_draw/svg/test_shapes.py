@@ -245,3 +245,53 @@ def test_polygon_fill():
           stroke="red" stroke-width="2" fill="blue"/>
       </svg>
     ''')
+
+
+@assert_no_logs
+def test_circle_stroke():
+    assert_pixels('circle_stroke', 10, 10, '''
+        __________
+        __RRRRRR__
+        _RRRRRRRR_
+        _RRRRRRRR_
+        _RRR__RRR_
+        _RRR__RRR_
+        _RRRRRRRR_
+        _RRRRRRRR_
+        __RRRRRR__
+        __________
+    ''', '''
+      <style>
+        @page { size: 10px }
+        svg { display: block }
+      </style>
+      <svg width="10px" height="10px" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="5" cy="5" r="3"
+          stroke="red" stroke-width="2" fill="none"/>
+      </svg>
+    ''')
+
+
+@assert_no_logs
+def test_circle_fill():
+    assert_pixels('circle_fill', 10, 10, '''
+        __________
+        __RRRRRR__
+        _RRRRRRRR_
+        _RRRRRRRR_
+        _RRRBBRRR_
+        _RRRBBRRR_
+        _RRRRRRRR_
+        _RRRRRRRR_
+        __RRRRRR__
+        __________
+    ''', '''
+      <style>
+        @page { size: 10px }
+        svg { display: block }
+      </style>
+      <svg width="10px" height="10px" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="5" cy="5" r="3"
+          stroke="red" stroke-width="2" fill="blue"/>
+      </svg>
+    ''')
