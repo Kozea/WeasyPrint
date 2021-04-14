@@ -55,7 +55,7 @@ def text(svg, node, font_size):
             style['font_weight'] = 400
 
     layout, length, resume_at, width, height, baseline = split_first_line(
-        node.text, style, None, float('inf'), 0)
+        node.text, style, svg.context, float('inf'), 0)
     # TODO: get real values
     x_bearing, y_bearing = 0, 0
 
@@ -156,6 +156,8 @@ def text(svg, node, font_size):
         svg.cursor_position = (x + dx, y + dy)
         return
 
+    svg.stream.begin_text()
+
     # Draw letters
     for i, ((x, y, dx, dy, r), letter) in enumerate(letters_positions):
         if x:
@@ -165,7 +167,7 @@ def text(svg, node, font_size):
         svg.cursor_d_position[0] += dx or 0
         svg.cursor_d_position[1] += dy or 0
         layout, _, _, width, height, _ = split_first_line(
-            letter, style, None, float('inf'), 0)
+            letter, style, svg.context, float('inf'), 0)
         if text_path:
             start = svg.text_path_width + svg.cursor_d_position[0]
             start_point = point_following_path(svg.stream, start)
@@ -225,3 +227,5 @@ def text(svg, node, font_size):
         svg.stream.pop_state()
         if not text_path:
             svg.cursor_position = cursor_position
+
+    svg.stream.end_text()

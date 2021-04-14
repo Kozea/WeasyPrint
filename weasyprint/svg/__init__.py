@@ -319,7 +319,7 @@ class SVG:
         return size(length, font_size, self.normalized_diagonal)
 
     def draw(self, stream, concrete_width, concrete_height, base_url,
-             url_fetcher):
+             url_fetcher, context):
         """Draw image on a stream."""
         self.stream = stream
         self.concrete_width = concrete_width
@@ -328,6 +328,7 @@ class SVG:
             hypot(concrete_width, concrete_height) / sqrt(2))
         self.base_url = base_url
         self.url_fetcher = url_fetcher
+        self.context = context
 
         self.draw_node(self.tree, size('12pt'))
 

@@ -16,6 +16,7 @@
 """
 
 from collections import defaultdict
+from functools import partial
 
 from ..formatting_structure import boxes
 from ..logger import PROGRESS_LOGGER
@@ -212,7 +213,7 @@ class LayoutContext:
     def __init__(self, style_for, get_image_from_uri, font_config,
                  counter_style, target_collector):
         self.style_for = style_for
-        self.get_image_from_uri = get_image_from_uri
+        self.get_image_from_uri = partial(get_image_from_uri, context=self)
         self.font_config = font_config
         self.counter_style = counter_style
         self.target_collector = target_collector
