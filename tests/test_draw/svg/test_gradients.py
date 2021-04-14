@@ -248,12 +248,12 @@ def test_radial_gradient():
     assert_pixels('radial_gradient', 10, 10, '''
         rrrrrrrrrr
         rrrrrrrrrr
-        rrrrrrrrrr
         rrrrBBrrrr
         rrrBBBBrrr
+        rrBBBBBBrr
+        rrBBBBBBrr
         rrrBBBBrrr
         rrrrBBrrrr
-        rrrrrrrrrr
         rrrrrrrrrr
         rrrrrrrrrr
     ''', '''
