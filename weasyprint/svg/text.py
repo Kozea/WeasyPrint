@@ -156,6 +156,8 @@ def text(svg, node, font_size):
         svg.cursor_position = (x + dx, y + dy)
         return
 
+    svg.stream.begin_text()
+
     # Draw letters
     for i, ((x, y, dx, dy, r), letter) in enumerate(letters_positions):
         if x:
@@ -225,3 +227,5 @@ def text(svg, node, font_size):
         svg.stream.pop_state()
         if not text_path:
             svg.cursor_position = cursor_position
+
+    svg.stream.end_text()
