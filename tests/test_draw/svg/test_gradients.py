@@ -174,6 +174,7 @@ def test_linear_gradient_transform():
     ''')
 
 
+@pytest.mark.xfail
 @assert_no_logs
 def test_linear_gradient_repeat():
     assert_pixels('linear_gradient_repeat', 10, 8, '''
@@ -207,6 +208,7 @@ def test_linear_gradient_repeat():
     ''')
 
 
+@pytest.mark.xfail
 @assert_no_logs
 def test_linear_gradient_reflect():
     assert_pixels('linear_gradient_reflect', 10, 8, '''
