@@ -240,3 +240,35 @@ def test_linear_gradient_reflect():
         <rect x="0" y="0" width="10" height="8" fill="url(#grad)" />
       </svg>
     ''')
+
+
+@pytest.mark.xfail
+@assert_no_logs
+def test_radial_gradient():
+    assert_pixels('radial_gradient', 10, 10, '''
+        rrrrrrrrrr
+        rrrrrrrrrr
+        rrrrrrrrrr
+        rrrrBBrrrr
+        rrrBBBBrrr
+        rrrBBBBrrr
+        rrrrBBrrrr
+        rrrrrrrrrr
+        rrrrrrrrrr
+        rrrrrrrrrr
+    ''', '''
+      <style>
+        @page { size: 10px }
+        svg { display: block }
+      </style>
+      <svg width="10px" height="10px" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="grad" cx="0.5" cy="0.5" r="0.5" fx="0.5" fy="0.5" fr="0.2"
+            gradientUnits="objectBoundingBox">
+            <stop stop-color="blue" offset="20%"></stop>
+            <stop stop-color="red" offset="20%"></stop>
+          </radialGradient>
+        </defs>
+        <rect x="0" y="0" width="10" height="10" fill="url(#grad)" />
+      </svg>
+    ''')
