@@ -62,7 +62,7 @@ def test_pattern_2():
         <defs>
           <pattern id="pat" x="0" y="0" width="50%" height="50%"
             patternUnits="objectBoundingBox"
-            patternContentUnits="userSpaceUseOn">
+            patternContentUnits="userSpaceOnUse">
             <rect x="0" y="0" width="2" height="2" fill="blue" />
             <rect x="0" y="2" width="2" height="2" fill="red" />
             <rect x="2" y="0" width="2" height="2" fill="red" />
@@ -94,7 +94,7 @@ def test_pattern_3():
         <defs>
           <pattern id="pat" x="0" y="0" width="4" height="4"
             patternUnits="userSpaceUseOn"
-            patternContentUnits="userSpaceUseOn">
+            patternContentUnits="userSpaceOnUse">
             <rect x="0" y="0" width="2" height="2" fill="blue" />
             <rect x="0" y="2" width="2" height="2" fill="red" />
             <rect x="2" y="0" width="2" height="2" fill="red" />
@@ -125,7 +125,7 @@ def test_pattern_4():
       <svg width="8px" height="8px" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <pattern id="pat" x="0" y="0" width="4" height="4"
-            patternUnits="userSpaceUseOn"
+            patternUnits="userSpaceOnUse"
             patternContentUnits="objectBoundingBox">
             <rect x="0" y="0" width="50%" height="50%" fill="blue" />
             <rect x="0" y="50%" width="50%" height="50%" fill="red" />
