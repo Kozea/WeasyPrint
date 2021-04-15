@@ -113,7 +113,11 @@ def draw_gradient(svg, node, gradient, font_size, stroke):
         # Add explicit colors at boundaries if needed, because PDF doesn’t
         # extend color stops that are not displayed
         if positions[0] == positions[1]:
-            positions.insert(0, positions[0] - 1)
+            if gradient.tag == 'radialGradient':
+                # Avoid negative radius for radial gradients
+                positions.insert(0, 0)
+            else:
+                positions.insert(0, positions[0] - 1)
             colors.insert(0, colors[0])
         if positions[-2] == positions[-1]:
             positions.append(positions[-1] + 1)
