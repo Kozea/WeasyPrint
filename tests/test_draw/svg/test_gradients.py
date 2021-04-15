@@ -263,10 +263,183 @@ def test_radial_gradient():
       </style>
       <svg width="10px" height="10px" xmlns="http://www.w3.org/2000/svg">
         <defs>
-          <radialGradient id="grad" cx="0.5" cy="0.5" r="0.5" fx="0.5" fy="0.5" fr="0.2"
+          <radialGradient id="grad" cx="0.5" cy="0.5" r="0.5"
+            fx="0.5" fy="0.5" fr="0.2"
             gradientUnits="objectBoundingBox">
             <stop stop-color="blue" offset="20%"></stop>
             <stop stop-color="red" offset="20%"></stop>
+          </radialGradient>
+        </defs>
+        <rect x="0" y="0" width="10" height="10" fill="url(#grad)" />
+      </svg>
+    ''')
+
+
+@pytest.mark.xfail
+@assert_no_logs
+def test_radial_gradient_userspace():
+    assert_pixels('radial_gradient_userspace', 10, 10, '''
+        rrrrrrrrrr
+        rrrrrrrrrr
+        rrrrBBrrrr
+        rrrBBBBrrr
+        rrBBBBBBrr
+        rrBBBBBBrr
+        rrrBBBBrrr
+        rrrrBBrrrr
+        rrrrrrrrrr
+        rrrrrrrrrr
+    ''', '''
+      <style>
+        @page { size: 10px }
+        svg { display: block }
+      </style>
+      <svg width="10px" height="10px" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="grad" cx="5" cy="5" r="5" fx="5" fy="5" fr="2"
+            gradientUnits="userSpaceOnUse">
+            <stop stop-color="blue" offset="20%"></stop>
+            <stop stop-color="red" offset="20%"></stop>
+          </radialGradient>
+        </defs>
+        <rect x="0" y="0" width="10" height="10" fill="url(#grad)" />
+      </svg>
+    ''')
+
+
+@pytest.mark.xfail
+@assert_no_logs
+def test_radial_gradient_multicolor():
+    assert_pixels('radial_gradient_multicolor', 10, 10, '''
+        rrrrrrrrrr
+        rrrGGGGrrr
+        rrGGBBGGrr
+        rGGBBBBGGr
+        rGBBBBBBGr
+        rGBBBBBBGr
+        rGGBBBBGGr
+        rrGGBBGGrr
+        rrrGGGGrrr
+        rrrrrrrrrr
+    ''', '''
+      <style>
+        @page { size: 10px }
+        svg { display: block }
+      </style>
+      <svg width="10px" height="10px" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="grad" cx="0.5" cy="0.5" r="0.5"
+            fx="0.5" fy="0.5" fr="0.2"
+            gradientUnits="objectBoundingBox">
+            <stop stop-color="blue" offset="33%"></stop>
+            <stop stop-color="lime" offset="33%"></stop>
+            <stop stop-color="lime" offset="66%"></stop>
+            <stop stop-color="red" offset="66%"></stop>
+          </radialGradient>
+        </defs>
+        <rect x="0" y="0" width="10" height="10" fill="url(#grad)" />
+      </svg>
+    ''')
+
+
+@pytest.mark.xfail
+@assert_no_logs
+def test_radial_gradient_multicolor_userspace():
+    assert_pixels('radial_gradient_multicolor_userspace', 10, 10, '''
+        rrrrrrrrrr
+        rrrGGGGrrr
+        rrGGBBGGrr
+        rGGBBBBGGr
+        rGBBBBBBGr
+        rGBBBBBBGr
+        rGGBBBBGGr
+        rrGGBBGGrr
+        rrrGGGGrrr
+        rrrrrrrrrr
+    ''', '''
+      <style>
+        @page { size: 10px }
+        svg { display: block }
+      </style>
+      <svg width="10px" height="10px" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="grad" cx="5" cy="5" r="5"
+            fx="5" fy="5" fr="2"
+            gradientUnits="objectBoundingBox">
+            <stop stop-color="blue" offset="33%"></stop>
+            <stop stop-color="lime" offset="33%"></stop>
+            <stop stop-color="lime" offset="66%"></stop>
+            <stop stop-color="red" offset="66%"></stop>
+          </radialGradient>
+        </defs>
+        <rect x="0" y="0" width="10" height="10" fill="url(#grad)" />
+      </svg>
+    ''')
+
+
+@pytest.mark.xfail
+@assert_no_logs
+def test_radial_repeat():
+    assert_pixels('radial_gradient_repeat', 10, 10, '''
+        GBrrrrrrBG
+        BrrGGGGrrB
+        rrGGBBGGrr
+        rGGBBBBGGr
+        rGBBBBBBGr
+        rGBBBBBBGr
+        rGGBBBBGGr
+        rrGGBBGGrr
+        BrrGGGGrrB
+        GBrrrrrrBG
+    ''', '''
+      <style>
+        @page { size: 10px }
+        svg { display: block }
+      </style>
+      <svg width="10px" height="10px" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="grad" cx="0.5" cy="0.5" r="0.5"
+            fx="0.5" fy="0.5" fr="0.2"
+            gradientUnits="objectBoundingBox" spreadMethod="repeat">
+            <stop stop-color="blue" offset="33%"></stop>
+            <stop stop-color="lime" offset="33%"></stop>
+            <stop stop-color="lime" offset="66%"></stop>
+            <stop stop-color="red" offset="66%"></stop>
+          </radialGradient>
+        </defs>
+        <rect x="0" y="0" width="10" height="10" fill="url(#grad)" />
+      </svg>
+    ''')
+
+
+@pytest.mark.xfail
+@assert_no_logs
+def test_radial_reflect():
+    assert_pixels('radial_gradient_reflect', 10, 10, '''
+        BGrrrrrrGB
+        GrrGGGGrrG
+        rrGGBBGGrr
+        rGGBBBBGGr
+        rGBBBBBBGr
+        rGBBBBBBGr
+        rGGBBBBGGr
+        rrGGBBGGrr
+        GrrGGGGrrG
+        BGrrrrrrGB
+    ''', '''
+      <style>
+        @page { size: 10px }
+        svg { display: block }
+      </style>
+      <svg width="10px" height="10px" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="grad" cx="0.5" cy="0.5" r="0.5"
+            fx="0.5" fy="0.5" fr="0.2"
+            gradientUnits="objectBoundingBox" spreadMethod="reflect">
+            <stop stop-color="blue" offset="33%"></stop>
+            <stop stop-color="lime" offset="33%"></stop>
+            <stop stop-color="lime" offset="66%"></stop>
+            <stop stop-color="red" offset="66%"></stop>
           </radialGradient>
         </defs>
         <rect x="0" y="0" width="10" height="10" fill="url(#grad)" />
