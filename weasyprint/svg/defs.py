@@ -12,7 +12,7 @@ from math import ceil, hypot
 import pydyf
 
 from .bounding_box import is_valid_bounding_box
-from .utils import color, parse_url, size
+from .utils import color, parse_url, size, transform
 
 
 def use(svg, node, font_size):
@@ -172,6 +172,12 @@ def draw_gradient(svg, node, gradient, font_size, stroke):
         matrix = Matrix(d=width / height) @ matrix
         positions, colors, coords = spread_radial_gradient(
             spread, positions, colors, fx, fy, fr, cx, cy, r, width, height)
+
+    if 'gradientTransform' in gradient.attrib:
+        transform_matrix = transform(
+            gradient.get('gradientTransform'), font_size,
+            svg.normalized_diagonal)
+        matrix = transform_matrix @ matrix
 
     alphas = [color[3] for color in colors]
     alpha_couples = [

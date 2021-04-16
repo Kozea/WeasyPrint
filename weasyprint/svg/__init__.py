@@ -7,7 +7,7 @@
 """
 
 import re
-from math import cos, hypot, pi, radians, sin, sqrt, tan
+from math import cos, hypot, pi, radians, sin, sqrt
 from xml.etree import ElementTree
 
 from cssselect2 import ElementWrapper
@@ -19,7 +19,7 @@ from .image import image, svg
 from .path import path
 from .shapes import circle, ellipse, line, polygon, polyline, rect
 from .text import text
-from .utils import color, normalize, parse_url, preserve_ratio, size
+from .utils import color, normalize, parse_url, preserve_ratio, size, transform
 
 # TODO: clipPath
 TAGS = {
@@ -619,53 +619,10 @@ class SVG:
 
     def transform(self, transform_string, font_size):
         """Apply a transformation string to the node."""
-        # TODO: merge with Page._gather_links_and_bookmarks and
-        # css.validation.properties.transform
-        from ..document import Matrix
-
         if not transform_string:
             return
 
-        transformations = re.findall(
-            r'(\w+) ?\( ?(.*?) ?\)', normalize(transform_string))
-        matrix = Matrix()
-
-        for transformation_type, transformation in transformations:
-            values = [
-                self.length(value, font_size)
-                for value in transformation.split(' ')]
-            if transformation_type == 'matrix':
-                matrix = Matrix(*values) @ matrix
-            elif transformation_type == 'rotate':
-                matrix = Matrix(
-                    cos(radians(float(values[0]))),
-                    sin(radians(float(values[0]))),
-                    -sin(radians(float(values[0]))),
-                    cos(radians(float(values[0])))) @ matrix
-            elif transformation_type.startswith('skew'):
-                if len(values) == 1:
-                    values.append(0)
-                if transformation_type in ('skewX', 'skew'):
-                    matrix = Matrix(
-                        c=tan(radians(float(values.pop(0))))) @ matrix
-                if transformation_type in ('skewY', 'skew'):
-                    matrix = Matrix(
-                        b=tan(radians(float(values.pop(0))))) @ matrix
-            elif transformation_type.startswith('translate'):
-                if len(values) == 1:
-                    values.append(0)
-                if transformation_type in ('translateX', 'translate'):
-                    matrix = Matrix(e=values.pop(0)) @ matrix
-                if transformation_type in ('translateY', 'translate'):
-                    matrix = Matrix(f=values.pop(0)) @ matrix
-            elif transformation_type.startswith('scale'):
-                if len(values) == 1:
-                    values.append(values[0])
-                if transformation_type in ('scaleX', 'scale'):
-                    matrix = Matrix(a=values.pop(0)) @ matrix
-                if transformation_type in ('scaleY', 'scale'):
-                    matrix = Matrix(d=values.pop(0)) @ matrix
-
+        matrix = transform(transform_string)
         if matrix.determinant:
             self.stream.transform(
                 matrix[0][0], matrix[0][1],

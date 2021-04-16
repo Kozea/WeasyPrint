@@ -7,6 +7,7 @@
 """
 
 import re
+from math import cos, radians, sin, tan
 from urllib.parse import urlparse
 
 from tinycss2.color3 import parse_color
@@ -119,3 +120,52 @@ def parse_url(url):
 def color(string):
     """Safely parse a color string and return a RGBA tuple."""
     return parse_color(string or '') or (0, 0, 0, 1)
+
+
+def transform(transform_string, font_size, normalized_diagonal):
+    """Get a matrix corresponding to the transform string."""
+    # TODO: merge with Page._gather_links_and_bookmarks and
+    # css.validation.properties.transform
+    from ..document import Matrix
+
+    transformations = re.findall(
+        r'(\w+) ?\( ?(.*?) ?\)', normalize(transform_string))
+    matrix = Matrix()
+
+    for transformation_type, transformation in transformations:
+        values = [
+            size(value, font_size, normalized_diagonal)
+            for value in transformation.split(' ')]
+        if transformation_type == 'matrix':
+            matrix = Matrix(*values) @ matrix
+        elif transformation_type == 'rotate':
+            matrix = Matrix(
+                cos(radians(float(values[0]))),
+                sin(radians(float(values[0]))),
+                -sin(radians(float(values[0]))),
+                cos(radians(float(values[0])))) @ matrix
+        elif transformation_type.startswith('skew'):
+            if len(values) == 1:
+                values.append(0)
+            if transformation_type in ('skewX', 'skew'):
+                matrix = Matrix(
+                    c=tan(radians(float(values.pop(0))))) @ matrix
+            if transformation_type in ('skewY', 'skew'):
+                matrix = Matrix(
+                    b=tan(radians(float(values.pop(0))))) @ matrix
+        elif transformation_type.startswith('translate'):
+            if len(values) == 1:
+                values.append(0)
+            if transformation_type in ('translateX', 'translate'):
+                matrix = Matrix(e=values.pop(0)) @ matrix
+            if transformation_type in ('translateY', 'translate'):
+                matrix = Matrix(f=values.pop(0)) @ matrix
+        elif transformation_type.startswith('scale'):
+            if len(values) == 1:
+                values.append(values[0])
+            if transformation_type in ('scaleX', 'scale'):
+                matrix = Matrix(a=values.pop(0)) @ matrix
+            if transformation_type in ('scaleY', 'scale'):
+                matrix = Matrix(d=values.pop(0)) @ matrix
+
+    return matrix
