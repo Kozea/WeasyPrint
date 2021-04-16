@@ -242,7 +242,6 @@ def test_linear_gradient_reflect():
     ''')
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_radial_gradient():
     assert_pixels('radial_gradient', 10, 10, '''
@@ -266,8 +265,8 @@ def test_radial_gradient():
           <radialGradient id="grad" cx="0.5" cy="0.5" r="0.5"
             fx="0.5" fy="0.5" fr="0.2"
             gradientUnits="objectBoundingBox">
-            <stop stop-color="blue" offset="20%"></stop>
-            <stop stop-color="red" offset="20%"></stop>
+            <stop stop-color="blue" offset="25%"></stop>
+            <stop stop-color="red" offset="25%"></stop>
           </radialGradient>
         </defs>
         <rect x="0" y="0" width="10" height="10" fill="url(#grad)" />
@@ -275,7 +274,6 @@ def test_radial_gradient():
     ''')
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_radial_gradient_userspace():
     assert_pixels('radial_gradient_userspace', 10, 10, '''
@@ -298,8 +296,8 @@ def test_radial_gradient_userspace():
         <defs>
           <radialGradient id="grad" cx="5" cy="5" r="5" fx="5" fy="5" fr="2"
             gradientUnits="userSpaceOnUse">
-            <stop stop-color="blue" offset="20%"></stop>
-            <stop stop-color="red" offset="20%"></stop>
+            <stop stop-color="blue" offset="25%"></stop>
+            <stop stop-color="red" offset="25%"></stop>
           </radialGradient>
         </defs>
         <rect x="0" y="0" width="10" height="10" fill="url(#grad)" />
@@ -307,7 +305,6 @@ def test_radial_gradient_userspace():
     ''')
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_radial_gradient_multicolor():
     assert_pixels('radial_gradient_multicolor', 10, 10, '''
@@ -379,7 +376,7 @@ def test_radial_gradient_multicolor_userspace():
 
 @pytest.mark.xfail
 @assert_no_logs
-def test_radial_repeat():
+def test_radial_gradient_repeat():
     assert_pixels('radial_gradient_repeat', 10, 10, '''
         GBrrrrrrBG
         BrrGGGGrrB
@@ -414,7 +411,7 @@ def test_radial_repeat():
 
 @pytest.mark.xfail
 @assert_no_logs
-def test_radial_reflect():
+def test_radial_gradient_reflect():
     assert_pixels('radial_gradient_reflect', 10, 10, '''
         BGrrrrrrGB
         GrrGGGGrrG

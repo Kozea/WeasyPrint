@@ -65,6 +65,8 @@ def draw_gradient_or_pattern(svg, node, name, font_size, stroke):
 def draw_gradient(svg, node, gradient, font_size, stroke):
     """Draw given gradient node."""
     # TODO: merge with Gradient.draw
+    from ..document import Matrix
+
     positions = []
     colors = []
     for child in gradient:
@@ -90,6 +92,7 @@ def draw_gradient(svg, node, gradient, font_size, stroke):
     if not is_valid_bounding_box(bounding_box):
         return False
     x, y = bounding_box[0], bounding_box[1]
+    matrix = svg.stream.ctm
     if gradient.get('gradientUnits') == 'userSpaceOnUse':
         viewbox = svg.get_viewbox()
         if viewbox:
@@ -161,11 +164,12 @@ def draw_gradient(svg, node, gradient, font_size, stroke):
             fy -= y
         else:
             cx *= width
-            cy *= height
-            r *= hypot(width, height)
+            cy *= width
+            r *= width
             fx *= width
-            fy *= height
-            fr *= hypot(width, height)
+            fy *= width
+            fr *= width
+        matrix = Matrix(d=width / height) @ matrix
         positions, colors, coords = spread_radial_gradient(
             spread, positions, colors, fx, fy, fr, cx, cy, r, width, height)
 
@@ -189,8 +193,7 @@ def draw_gradient(svg, node, gradient, font_size, stroke):
             color_couples[i][2] = a0 / a1
 
     pattern = svg.stream.add_pattern(
-        -stroke_width, -stroke_width, width, height, width, height,
-        svg.stream.ctm)
+        -stroke_width, -stroke_width, width, height, width, height, matrix)
     child = pattern.add_transparency_group([0, 0, width, height])
 
     shading = child.add_shading()
