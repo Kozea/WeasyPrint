@@ -3,6 +3,42 @@
 ======
 
 
+Version 52.5
+------------
+
+Released on 2021-04-17.
+
+Bug fixes:
+
+* `#1336 <https://github.com/Kozea/WeasyPrint/issues/1336>`_:
+  Fix text breaking exception
+* `#1318 <https://github.com/Kozea/WeasyPrint/issues/1318>`_:
+  Fix @font-face rules with Pango 1.48.3+
+
+Contributors:
+
+* Guillaume Ayoub
+
+Backers and sponsors:
+
+* SimonSoft
+* PDF Blocks
+* Menutech
+* Manuel Barkhau
+* Simon Sapin
+* Nathalie Gutton
+* Andreas Zettl
+* René Fritz
+* Tom Pohl
+* KontextWork
+* Moritz Mahringer
+* Florian Demmer
+* Maykin Media
+* Yanal-Yvez Fargialla
+* Des images et des mots
+* Yevhenii Hyzyla
+
+
 Version 52.4
 ------------
 
