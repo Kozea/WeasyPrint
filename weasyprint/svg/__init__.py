@@ -622,7 +622,8 @@ class SVG:
         if not transform_string:
             return
 
-        matrix = transform(transform_string)
+        matrix = transform(
+            transform_string, font_size, self.normalized_diagonal)
         if matrix.determinant:
             self.stream.transform(
                 matrix[0][0], matrix[0][1],
