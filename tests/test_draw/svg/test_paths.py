@@ -151,3 +151,90 @@ def test_path_Zz_fill():
           stroke="red" stroke-width="2" fill="lime"/>
       </svg>
     ''')
+
+
+@assert_no_logs
+def test_path_Cc():
+    assert_pixels('path_Cc', 10, 10, '''
+        __________
+        __________
+        __________
+        __________
+        __BBB_____
+        __BBB_____
+        __________
+        __RRR_____
+        __RRR_____
+        __________
+    ''', '''
+      <style>
+        @page { size: 10px }
+        svg { display: block }
+      </style>
+      <svg width="10px" height="10px" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 2 5 C 2 5 3 5 5 5"
+          stroke="blue" stroke-width="2" fill="none"/>
+        <path d="M 2 8 c 0 0 1 0 3 0"
+          stroke="red" stroke-width="2" fill="none"/>
+      </svg>
+    ''')
+
+
+@assert_no_logs
+def test_path_Ss():
+    assert_pixels('path_Ss', 10, 10, '''
+        __________
+        __________
+        __________
+        __________
+        __BBB_____
+        __BBB_____
+        __________
+        __RRR_____
+        __RRR_____
+        __________
+    ''', '''
+      <style>
+        @page { size: 10px }
+        svg { display: block }
+      </style>
+      <svg width="10px" height="10px" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 2 5 S 2 5 3 5 5 5"
+          stroke="blue" stroke-width="2" fill="none"/>
+        <path d="M 2 8 s 0 0 1 0 3 0"
+          stroke="red" stroke-width="2" fill="none"/>
+      </svg>
+    ''')
+
+
+@assert_no_logs
+def test_path_CcSs():
+    assert_pixels('path_CcSs', 10, 12, '''
+        __BBBBBB__
+        __BBBBBBB_
+        _____BBBB_
+        __RRRRRR__
+        __RRRRRRR_
+        _____RRRR_
+        __GGGGGG__
+        __GGGGGGG_
+        _____GGGG_
+        __BBBBBB__
+        __BBBBBBB_
+        _____BBBB_
+    ''', '''
+      <style>
+        @page { size: 10px 12px }
+        svg { display: block }
+      </style>
+      <svg width="10px" height="12px" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 2 1 C 2 1 3 1 5 1 S 8 3 8 1"
+          stroke="blue" stroke-width="2" fill="none"/>
+        <path d="M 2 4 C 2 4 3 4 5 4 s 3 2 1 0"
+          stroke="red" stroke-width="2" fill="none"/>
+        <path d="M 2 7 c 0 0 1 0 3 0 S 8 9 8 7"
+          stroke="lime" stroke-width="2" fill="none"/>
+        <path d="M 2 10 c 0 0 1 0 3 0 s 3 2 1 0"
+          stroke="blue" stroke-width="2" fill="none"/>
+      </svg>
+    ''')
