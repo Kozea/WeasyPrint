@@ -4,6 +4,7 @@ build-backend = 'flit_core.buildapi'
 
 [project]
 name = 'weasyprint'
+description = 'The Awesome Document Factory'
 keywords = ['html', 'css', 'pdf', 'converter']
 authors = [{name = 'Simon Sapin', email = 'simon.sapin@exyr.org'}]
 maintainers = [{name = 'CourtBouillon', email = 'contact@courtbouillon.org'}]
@@ -39,15 +40,15 @@ classifiers = [
   'Topic :: Multimedia :: Graphics :: Graphics Conversion',
   'Topic :: Printing',
 ]
-dynamic = ['version', 'description']
+dynamic = ['version']
 
 [project.urls]
-home-page = 'https://www.courtbouillon.org/weasyprint'
-documentation = 'https://doc.courtbouillon.org/weasyprint/'
-code = 'https://github.com/Kozea/WeasyPrint'
-issues = 'https://github.com/Kozea/WeasyPrint/issues'
-changelog = 'https://github.com/Kozea/WeasyPrint/releases'
-donation = 'https://opencollective.com/courtbouillon'
+Homepage = 'https://www.courtbouillon.org/weasyprint'
+Documentation = 'https://doc.courtbouillon.org/weasyprint/'
+Code = 'https://github.com/Kozea/WeasyPrint'
+Issues = 'https://github.com/Kozea/WeasyPrint/issues'
+Changelog = 'https://github.com/Kozea/WeasyPrint/releases'
+Donation = 'https://opencollective.com/courtbouillon'
 
 [project.optional-dependencies]
 doc = ['sphinx', 'sphinx_rtd_theme']
