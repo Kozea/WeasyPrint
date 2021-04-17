@@ -138,8 +138,8 @@ def assert_pixels_equal(name, width, height, raw, expected_raw, tolerance=0):
                 expected_raw = [
                     pixel or (255, 255, 255) for pixel in expected_raw]
                 write_png(name + '.expected', expected_raw, width, height)
-                x = i // width
-                y = i % width
+                x = i % width
+                y = i // width
                 assert 0, (
                     f'Pixel ({x}, {y}) in {name}: '
                     f'expected rgba{expected}, got rgba{value}')
