@@ -68,18 +68,18 @@ def text(svg, node, font_size):
 
     # Get rotations and translations
     x, y, dx, dy, rotate = [], [], [], [], [0]
-    if 'x' in node:
+    if 'x' in node.attrib:
         x = [size(i, font_size, svg.concrete_width)
-             for i in normalize(node['x']).strip().split(' ')]
-    if 'y' in node:
+             for i in normalize(node.attrib['x']).strip().split(' ')]
+    if 'y' in node.attrib:
         y = [size(i, font_size, svg.concrete_height)
-             for i in normalize(node['y']).strip().split(' ')]
-    if 'dx' in node:
+             for i in normalize(node.attrib['y']).strip().split(' ')]
+    if 'dx' in node.attrib:
         dx = [size(i, font_size, svg.concrete_width)
-              for i in normalize(node['dx']).strip().split(' ')]
-    if 'dy' in node:
+              for i in normalize(node.attrib['dx']).strip().split(' ')]
+    if 'dy' in node.attrib:
         dy = [size(i, font_size, svg.concrete_height)
-              for i in normalize(node['dy']).strip().split(' ')]
+              for i in normalize(node.attrib['dy']).strip().split(' ')]
     if 'rotate' in node:
         rotate = [radians(float(i)) if i else 0
                   for i in normalize(node['rotate']).strip().split(' ')]
@@ -191,7 +191,6 @@ def text(svg, node, font_size):
             svg.stream.transform(
                 cos(angle), sin(angle), -sin(angle), cos(angle), 0, 0)
             svg.stream.transform(1, 0, 0, 1, 0, svg.cursor_d_position[1])
-            svg.stream.move_to(0, 0)
             bounding_box = extend_bounding_box(
                 bounding_box, ((end_point[0], width),))
         else:
@@ -200,9 +199,6 @@ def text(svg, node, font_size):
             y = svg.cursor_position[1] if y is None else y
             if i:
                 x += letter_spacing
-            svg.stream.move_to(
-                x + svg.cursor_d_position[0] + x_align,
-                y + svg.cursor_d_position[1] + y_align)
             cursor_position = x + width, y
             angle = last_r if r is None else r
             svg.stream.transform(
@@ -223,7 +219,8 @@ def text(svg, node, font_size):
         svg.stream.set_color_rgb(red, green, blue)
         svg.stream.set_alpha(alpha)
         draw_first_line(
-            svg.stream, TextBox(layout, style), 'none', 'none', x, y)
+            svg.stream, TextBox(layout, style), 'none', 'none',
+            x + svg.cursor_d_position[0], y + svg.cursor_d_position[1])
         svg.stream.pop_state()
         if not text_path:
             svg.cursor_position = cursor_position
