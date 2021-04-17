@@ -238,3 +238,115 @@ def test_path_CcSs():
           stroke="blue" stroke-width="2" fill="none"/>
       </svg>
     ''')
+
+
+@assert_no_logs
+def test_path_Qq():
+    assert_pixels('path_Qq', 10, 10, '''
+        __________
+        __________
+        __________
+        __________
+        __BBBB____
+        __BBBB____
+        __________
+        __RRRR____
+        __RRRR____
+        __________
+    ''', '''
+      <style>
+        @page { size: 10px }
+        svg { display: block }
+      </style>
+      <svg width="10px" height="10px" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 2 5 Q 4 5 6 5"
+          stroke="blue" stroke-width="2" fill="none"/>
+        <path d="M 2 8 q 2 0 4 0"
+          stroke="red" stroke-width="2" fill="none"/>
+      </svg>
+    ''')
+
+
+@assert_no_logs
+def test_path_Tt():
+    assert_pixels('path_Tt', 10, 10, '''
+        __________
+        __________
+        __________
+        __________
+        __BBBB____
+        __BBBB____
+        __________
+        __RRRR____
+        __RRRR____
+        __________
+    ''', '''
+      <style>
+        @page { size: 10px }
+        svg { display: block }
+      </style>
+      <svg width="10px" height="10px" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 2 5 T 6 5"
+          stroke="blue" stroke-width="2" fill="none"/>
+        <path d="M 2 8 t 4 0"
+          stroke="red" stroke-width="2" fill="none"/>
+      </svg>
+    ''')
+
+
+@assert_no_logs
+def test_path_QqTt():
+    assert_pixels('path_QqTt', 12, 12, '''
+        _BBBB_______
+        BBBBBBB_____
+        BBBBBBBB__BB
+        BB__BBBBBBBB
+        _____BBBBBBB
+        _______BBBB_
+        _RRRR_______
+        RRRRRRR_____
+        RRRRRRRR__RR
+        RR__RRRRRRRR
+        _____RRRRRRR
+        _______RRRR_
+    ''', '''
+      <style>
+        @page { size: 12px }
+        svg { display: block }
+      </style>
+      <svg width="12px" height="12px" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 0 3 Q 3 0 6 3 T 12 3"
+          stroke="blue" stroke-width="2" fill="none"/>
+        <path d="M 0 9 Q 3 6 6 9 t 6 0"
+          stroke="red" stroke-width="2" fill="none"/>
+      </svg>
+    ''')
+
+
+@assert_no_logs
+def test_path_QqTt2():
+    assert_pixels('path_QqTt2', 12, 12, '''
+        _BBBB_______
+        BBBBBBB_____
+        BBBBBBBB__BB
+        BB__BBBBBBBB
+        _____BBBBBBB
+        _______BBBB_
+        _RRRR_______
+        RRRRRRR_____
+        RRRRRRRR__RR
+        RR__RRRRRRRR
+        _____RRRRRRR
+        _______RRRR_
+    ''', '''
+      <style>
+        @page { size: 12px }
+        svg { display: block }
+      </style>
+      <svg width="12px" height="12px" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 0 3 q 3 -3 6 0 T 12 3"
+          stroke="blue" stroke-width="2" fill="none"/>
+        <path d="M 0 9 q 3 -3 6 0 t 6 0"
+          stroke="red" stroke-width="2" fill="none"/>
+      </svg>
+    ''')
