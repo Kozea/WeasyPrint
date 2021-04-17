@@ -11,68 +11,15 @@ import operator
 from math import ceil, floor, pi, sqrt, tan
 
 from .formatting_structure import boxes
+from .images import SVGImage
 from .layout import replaced
 from .layout.backgrounds import BackgroundLayer
 from .stacking import StackingContext
+from .svg import SVG
 from .text.ffi import ffi, harfbuzz, pango, units_from_double, units_to_double
 from .text.line_break import get_last_word_end
 
 SIDES = ('top', 'right', 'bottom', 'left')
-CROP = '''
-  <!-- horizontal top left -->
-  <path d="M0,{bleed_top} h{half_bleed_left}" />
-  <!-- horizontal top right -->
-  <path d="M0,{bleed_top} h{half_bleed_right}"
-        transform="translate({width},0) scale(-1,1)" />
-  <!-- horizontal bottom right -->
-  <path d="M0,{bleed_bottom} h{half_bleed_right}"
-        transform="translate({width},{height}) scale(-1,-1)" />
-  <!-- horizontal bottom left -->
-  <path d="M0,{bleed_bottom} h{half_bleed_left}"
-        transform="translate(0,{height}) scale(1,-1)" />
-  <!-- vertical top left -->
-  <path d="M{bleed_left},0 v{half_bleed_top}" />
-  <!-- vertical bottom right -->
-  <path d="M{bleed_right},0 v{half_bleed_bottom}"
-        transform="translate({width},{height}) scale(-1,-1)" />
-  <!-- vertical bottom left -->
-  <path d="M{bleed_left},0 v{half_bleed_bottom}"
-        transform="translate(0,{height}) scale(1,-1)" />
-  <!-- vertical top right -->
-  <path d="M{bleed_right},0 v{half_bleed_top}"
-        transform="translate({width},0) scale(-1,1)" />
-'''
-CROSS = '''
-  <!-- top -->
-  <circle r="{half_bleed_top}"
-          transform="scale(0.5)
-                     translate({width},{half_bleed_top}) scale(0.5)" />
-  <path d="M-{half_bleed_top},{half_bleed_top} h{bleed_top}
-           M0,0 v{bleed_top}"
-        transform="scale(0.5) translate({width},0)" />
-  <!-- bottom -->
-  <circle r="{half_bleed_bottom}"
-          transform="translate(0,{height}) scale(0.5)
-                     translate({width},-{half_bleed_bottom}) scale(0.5)" />
-  <path d="M-{half_bleed_bottom},-{half_bleed_bottom} h{bleed_bottom}
-           M0,0 v-{bleed_bottom}"
-        transform="translate(0,{height}) scale(0.5) translate({width},0)" />
-  <!-- left -->
-  <circle r="{half_bleed_left}"
-          transform="scale(0.5)
-                     translate({half_bleed_left},{height}) scale(0.5)" />
-  <path d="M{half_bleed_left},-{half_bleed_left} v{bleed_left}
-           M0,0 h{bleed_left}"
-        transform="scale(0.5) translate(0,{height})" />
-  <!-- right -->
-  <circle r="{half_bleed_right}"
-          transform="translate({width},0) scale(0.5)
-                     translate(-{half_bleed_right},{height}) scale(0.5)" />
-  <path d="M-{half_bleed_right},-{half_bleed_right} v{bleed_right}
-           M0,0 h-{bleed_right}"
-        transform="translate({width},0)
-                   scale(0.5) translate(0,{height})" />
-'''
 
 
 @contextlib.contextmanager
@@ -362,35 +309,63 @@ def draw_background(context, bg, clip_box=True, bleed=None, marks=()):
                 context.set_alpha(bg.color.alpha)
                 context.fill()
 
-        if False and bleed and marks:
-            # TODO: fix this when SVG images are supported again
+        if bleed and marks:
             x, y, width, height = bg.layers[-1].painting_area
             x -= bleed['left']
             y -= bleed['top']
             width += bleed['left'] + bleed['right']
             height += bleed['top'] + bleed['bottom']
-            svg = '''
+            half_bleed = {key: value * 0.5 for key, value in bleed.items()}
+            svg = f'''
               <svg height="{height}" width="{width}"
                    fill="transparent" stroke="black" stroke-width="1"
                    xmlns="http://www.w3.org/2000/svg"
                    xmlns:xlink="http://www.w3.org/1999/xlink">
             '''
             if 'crop' in marks:
-                svg += CROP
+                svg += f'''
+                  <path d="M0,{bleed['top']} h{half_bleed['left']}" />
+                  <path d="M0,{bleed['top']} h{half_bleed['right']}"
+                        transform="translate({width},0) scale(-1,1)" />
+                  <path d="M0,{bleed['bottom']} h{half_bleed['right']}"
+                        transform="translate({width},{height}) scale(-1,-1)" />
+                  <path d="M0,{bleed['bottom']} h{half_bleed['left']}"
+                        transform="translate(0,{height}) scale(1,-1)" />
+                  <path d="M{bleed['left']},0 v{half_bleed['top']}" />
+                  <path d="M{bleed['right']},0 v{half_bleed['bottom']}"
+                        transform="translate({width},{height}) scale(-1,-1)" />
+                  <path d="M{bleed['left']},0 v{half_bleed['bottom']}"
+                        transform="translate(0,{height}) scale(1,-1)" />
+                  <path d="M{bleed['right']},0 v{half_bleed['top']}"
+                        transform="translate({width},0) scale(-1,1)" />
+                '''
             if 'cross' in marks:
-                svg += CROSS
+                svg += f'''
+                  <circle r="{half_bleed['top']}" transform="scale(0.5)
+                     translate({width},{half_bleed['top']}) scale(0.5)" />
+                  <path transform="scale(0.5) translate({width},0)" d="
+                    M-{half_bleed['top']},{half_bleed['top']} h{bleed['top']}
+                    M0,0 v{bleed['top']}" />
+                  <circle r="{half_bleed['bottom']}" transform="
+                    translate(0,{height}) scale(0.5)
+                    translate({width},-{half_bleed['bottom']}) scale(0.5)" />
+                  <path d="M-{half_bleed['bottom']},-{half_bleed['bottom']}
+                    h{bleed['bottom']} M0,0 v-{bleed['bottom']}" transform="
+                    translate(0,{height}) scale(0.5) translate({width},0)" />
+                  <circle r="{half_bleed['left']}" transform="scale(0.5)
+                    translate({half_bleed['left']},{height}) scale(0.5)" />
+                  <path d="M{half_bleed['left']},-{half_bleed['left']}
+                    v{bleed['left']} M0,0 h{bleed['left']}"
+                    transform="scale(0.5) translate(0,{height})" />
+                  <circle r="{half_bleed['right']}" transform="
+                    translate({width},0) scale(0.5)
+                    translate(-{half_bleed['right']},{height}) scale(0.5)" />
+                  <path d="M-{half_bleed['right']},-{half_bleed['right']}
+                    v{bleed['right']} M0,0 h-{bleed['right']}" transform="
+                    translate({width},0) scale(0.5) translate(0,{height})" />
+                '''
             svg += '</svg>'
-            # half_bleed = {key: value * 0.5 for key, value in bleed.items()}
-            # image = SVGImage(svg.format(
-            #     height=height, width=width,
-            #     bleed_left=bleed['left'], bleed_right=bleed['right'],
-            #     bleed_top=bleed['top'], bleed_bottom=bleed['bottom'],
-            #     half_bleed_left=half_bleed['left'],
-            #     half_bleed_right=half_bleed['right'],
-            #     half_bleed_top=half_bleed['top'],
-            #     half_bleed_bottom=half_bleed['bottom'],
-            # ), '', None)
-            image = None
+            image = SVGImage(SVG(svg, None), None, None, context)
             # Painting area is the PDF media box
             size = (width, height)
             position = (x, y)
@@ -489,7 +464,8 @@ def draw_background_image(context, layer, image_rendering):
         context.color_space('Pattern')
         context.set_color_special(pattern.id)
         if layer.unbounded:
-            context.rectangle(*context.page_rectangle)
+            x1, y1, x2, y2 = context.page_rectangle
+            context.rectangle(x1, y1, x2 - x1, y2 - y1)
         else:
             context.rectangle(
                 painting_x, painting_y, painting_width, painting_height)
