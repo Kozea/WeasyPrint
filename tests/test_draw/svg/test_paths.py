@@ -199,9 +199,9 @@ def test_path_Ss():
         svg { display: block }
       </style>
       <svg width="10px" height="10px" xmlns="http://www.w3.org/2000/svg">
-        <path d="M 2 5 S 2 5 3 5 5 5"
+        <path d="M 2 5 S 3 5 5 5"
           stroke="blue" stroke-width="2" fill="none"/>
-        <path d="M 2 8 s 0 0 1 0 3 0"
+        <path d="M 2 8 s 1 0 3 0"
           stroke="red" stroke-width="2" fill="none"/>
       </svg>
     ''')
