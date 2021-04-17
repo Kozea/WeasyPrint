@@ -6,23 +6,10 @@
 
 """
 
-from math import atan2, cos, radians, sin
+from math import cos, radians, sin
 
 from .bounding_box import EMPTY_BOUNDING_BOX, extend_bounding_box
-from .utils import color, normalize, parse_url, size
-
-
-def path_length(stream):
-    """Calculate path length."""
-    # TODO: write this
-    total_length = 0
-    return total_length
-
-
-def point_following_path(stream, distance):
-    """Calculate position on a path at given distance of the origin."""
-    # TODO: write this
-    return 0, 0
+from .utils import color, normalize, size
 
 
 class TextBox:
@@ -58,13 +45,6 @@ def text(svg, node, font_size):
         node.text, style, svg.context, float('inf'), 0)
     # TODO: get real values
     x_bearing, y_bearing = 0, 0
-
-    # Get text path
-    text_path_href = parse_url(node.get_href())
-    if text_path_href.fragment:
-        text_path = svg.paths.get(text_path_href.fragment)
-    else:
-        text_path = None
 
     # Get rotations and translations
     x, y, dx, dy, rotate = [], [], [], [], [0]
@@ -134,18 +114,6 @@ def text(svg, node, font_size):
 
     # Set bounding box
     bounding_box = EMPTY_BOUNDING_BOX
-    if text_path:
-        svg.stream.new_path()
-        svg.stroke_and_fill = False
-        svg.draw(text_path)
-        svg.stroke_and_fill = True
-        length = path_length(svg.stream) + x_bearing
-        svg.stream.new_path()
-        start_offset = size(svg, node.get('startOffset', 0), length)
-        if node.tag == 'textPath':
-            svg.text_path_width += start_offset
-        svg.text_path_width += x_align
-        bounding_box = extend_bounding_box(bounding_box, ((start_offset, 0),))
 
     # Return early when there’s no text
     if not node.text:
@@ -168,51 +136,25 @@ def text(svg, node, font_size):
         svg.cursor_d_position[1] += dy or 0
         layout, _, _, width, height, _ = split_first_line(
             letter, style, svg.context, float('inf'), 0)
-        if text_path:
-            start = svg.text_path_width + svg.cursor_d_position[0]
-            start_point = point_following_path(svg.stream, start)
-            middle = start + width / 2
-            middle_point = point_following_path(svg.stream, middle)
-            end = start + width
-            end_point = point_following_path(svg.stream, end)
-            if i:
-                width += letter_spacing
-            svg.text_path_width += width
-            if not all((start_point, middle_point, end_point)):
-                continue
-            if not 0 <= middle <= length:
-                continue
-            svg.stream.push_state()
-            svg.stream.transform(
-                1, 0, 0, 1, start_point[0], start_point[1])
-            angle = atan2(
-                end_point[1] - start_point[1],
-                end_point[0] - start_point[0])
-            svg.stream.transform(
-                cos(angle), sin(angle), -sin(angle), cos(angle), 0, 0)
-            svg.stream.transform(1, 0, 0, 1, 0, svg.cursor_d_position[1])
-            bounding_box = extend_bounding_box(
-                bounding_box, ((end_point[0], width),))
-        else:
-            svg.stream.push_state()
-            x = svg.cursor_position[0] if x is None else x
-            y = svg.cursor_position[1] if y is None else y
-            if i:
-                x += letter_spacing
-            cursor_position = x + width, y
-            angle = last_r if r is None else r
-            svg.stream.transform(
-                cos(angle), sin(angle), -sin(angle), cos(angle), 0, 0)
-            points = (
-                (cursor_position[0] + x_align +
-                 svg.cursor_d_position[0],
-                 cursor_position[1] + y_align +
-                 svg.cursor_d_position[1]),
-                (cursor_position[0] + x_align + width +
-                 svg.cursor_d_position[0],
-                 cursor_position[1] + y_align + height +
-                 svg.cursor_d_position[1]))
-            bounding_box = extend_bounding_box(bounding_box, points)
+        svg.stream.push_state()
+        x = svg.cursor_position[0] if x is None else x
+        y = svg.cursor_position[1] if y is None else y
+        if i:
+            x += letter_spacing
+        cursor_position = x + width, y
+        angle = last_r if r is None else r
+        svg.stream.transform(
+            cos(angle), sin(angle), -sin(angle), cos(angle), 0, 0)
+        points = (
+            (cursor_position[0] + x_align +
+             svg.cursor_d_position[0],
+             cursor_position[1] + y_align +
+             svg.cursor_d_position[1]),
+            (cursor_position[0] + x_align + width +
+             svg.cursor_d_position[0],
+             cursor_position[1] + y_align + height +
+             svg.cursor_d_position[1]))
+        bounding_box = extend_bounding_box(bounding_box, points)
 
         layout.reactivate(style)
         red, green, blue, alpha = color(node.get('fill', 'black'))
@@ -222,7 +164,6 @@ def text(svg, node, font_size):
             svg.stream, TextBox(layout, style), 'none', 'none',
             x + svg.cursor_d_position[0], y + svg.cursor_d_position[1])
         svg.stream.pop_state()
-        if not text_path:
-            svg.cursor_position = cursor_position
+        svg.cursor_position = cursor_position
 
     svg.stream.end_text()
