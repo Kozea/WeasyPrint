@@ -124,3 +124,30 @@ def test_path_Zz():
           stroke="red" stroke-width="2" fill="none"/>
       </svg>
     ''')
+
+
+@assert_no_logs
+def test_path_Zz_fill():
+    assert_pixels('path_Zz_fill', 10, 10, '''
+        BBBBBBB___
+        BBBBBBB___
+        BBGGGBB___
+        BBGGGBB___
+        BBBBBBB___
+        BBBBBBB___
+        ____RRRRRR
+        ____RRRRRR
+        ____RRGGRR
+        ____RRRRRR
+    ''', '''
+      <style>
+        @page { size: 10px }
+        svg { display: block }
+      </style>
+      <svg width="10px" height="10px" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 1 1 H 6 V 5 H 1 Z"
+          stroke="blue" stroke-width="2" fill="lime"/>
+        <path d="M 9 10 V 7 H 5 V 10 z"
+          stroke="red" stroke-width="2" fill="lime"/>
+      </svg>
+    ''')
