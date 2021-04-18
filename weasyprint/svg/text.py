@@ -141,6 +141,9 @@ def text(svg, node, font_size):
         y = svg.cursor_position[1] if y is None else y
         if i:
             x += letter_spacing
+        svg.stream.move_to(
+            x + svg.cursor_d_position[0] + x_align,
+            y + svg.cursor_d_position[1] + y_align)
         cursor_position = x + width, y
         angle = last_r if r is None else r
         svg.stream.transform(
