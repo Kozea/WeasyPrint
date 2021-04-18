@@ -51,7 +51,7 @@ def bounding_box_polyline(svg, node, font_size):
     points = []
     normalized_points = normalize(node.get('points', ''))
     while normalized_points:
-        x, y, normalized_points = point(svg, normalized_points)
+        x, y, normalized_points = point(svg, normalized_points, font_size)
         points.append((x, y))
     return extend_bounding_box(bounding_box, points)
 
@@ -76,7 +76,7 @@ def bounding_box_path(svg, node, font_size):
 
         if letter in 'aA':
             # Elliptical arc curve
-            rx, ry, path_data = point(None, path_data)
+            rx, ry, path_data = point(svg, path_data, font_size)
             rotation, path_data = path_data.split(' ', 1)
             rotation = radians(float(rotation))
 
@@ -91,7 +91,7 @@ def bounding_box_path(svg, node, font_size):
 
             large, sweep = bool(int(large)), bool(int(sweep))
 
-            x, y, path_data = point(None, path_data)
+            x, y, path_data = point(svg, path_data, font_size)
 
             # Relative coordinate, convert to absolute
             if letter == 'a':
@@ -111,9 +111,9 @@ def bounding_box_path(svg, node, font_size):
 
         elif letter in 'cC':
             # Curve
-            x1, y1, path_data = point(None, path_data)
-            x2, y2, path_data = point(None, path_data)
-            x, y, path_data = point(None, path_data)
+            x1, y1, path_data = point(svg, path_data, font_size)
+            x2, y2, path_data = point(svg, path_data, font_size)
+            x, y, path_data = point(svg, path_data, font_size)
 
             # Relative coordinates, convert to absolute
             if letter == 'c':

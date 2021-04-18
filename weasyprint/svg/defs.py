@@ -92,7 +92,8 @@ def draw_gradient(svg, node, gradient, font_size, stroke):
     if not is_valid_bounding_box(bounding_box):
         return False
     x, y = bounding_box[0], bounding_box[1]
-    matrix = svg.stream.ctm
+    node_x, node_y = svg.point(node.get('x'), node.get('y'), font_size)
+    matrix = Matrix(e=x - node_x, f=y - node_y) @ svg.stream.ctm
     if gradient.get('gradientUnits') == 'userSpaceOnUse':
         viewbox = svg.get_viewbox()
         if viewbox:
