@@ -111,7 +111,7 @@ class Font:
         return flags
 
 
-class Context(pydyf.Stream):
+class Stream(pydyf.Stream):
     """PDF stream object with context storing alpha states."""
     def __init__(self, document, page_rectangle, alpha_states, x_objects,
                  patterns, shadings, *args, **kwargs):
@@ -236,7 +236,7 @@ class Context(pydyf.Stream):
                 'CS': '/DeviceRGB',
             }),
         })
-        group = Context(
+        group = Stream(
             self._document, self.page_rectangle, alpha_states, x_objects,
             patterns, shadings, extra=extra)
         group.id = f'x{len(self._x_objects)}'
@@ -331,7 +331,7 @@ class Context(pydyf.Stream):
             'Matrix': pydyf.Array(matrix.values),
             'Resources': resources,
         })
-        pattern = Context(
+        pattern = Stream(
             self._document, self.page_rectangle, alpha_states, x_objects,
             patterns, shadings, extra=extra)
         pattern.id = f'p{len(self._patterns)}'
@@ -1037,7 +1037,7 @@ class Document:
 
             page_rectangle = (
                 left / scale, top / scale, right / scale, bottom / scale)
-            stream = Context(
+            stream = Stream(
                 self, page_rectangle, alpha_states, x_objects, patterns,
                 shadings)
             stream.transform(1, 0, 0, -1, 0, page.height * scale)

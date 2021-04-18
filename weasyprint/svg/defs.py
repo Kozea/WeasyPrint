@@ -483,12 +483,12 @@ def draw_pattern(svg, node, pattern, font_size, stroke):
     stream_pattern = svg.stream.add_pattern(
         x, y, pattern_width, pattern_height, pattern_width, pattern_height,
         svg.stream.ctm)
-    context = stream_pattern.add_transparency_group(
+    group = stream_pattern.add_transparency_group(
         [0, 0, pattern_width, pattern_height])
     Pattern(pattern, svg.url).draw(
-        context, pattern_width, pattern_height, svg.base_url,
+        group, pattern_width, pattern_height, svg.base_url,
         svg.url_fetcher, svg.context)
-    stream_pattern.draw_x_object(context.id)
+    stream_pattern.draw_x_object(group.id)
     svg.stream.color_space('Pattern', stroke=stroke)
     svg.stream.set_color_special(stream_pattern.id, stroke=stroke)
     return True
