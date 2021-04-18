@@ -98,8 +98,7 @@ def draw_stacking_context(stream, stacking_context):
         if box.is_for_root_element and (
                 stacking_context.page.style['overflow'] != 'visible'):
             rounded_box_path(
-                stream,
-                stacking_context.page.rounded_padding_box())
+                stream, stacking_context.page.rounded_padding_box())
             stream.clip()
             stream.end()
 
@@ -114,10 +113,8 @@ def draw_stacking_context(stream, stacking_context):
             if left == 'auto':
                 left = box.border_width()
             stream.rectangle(
-                box.border_box_x() + right,
-                box.border_box_y() + top,
-                left - right,
-                bottom - top)
+                box.border_box_x() + right, box.border_box_y() + top,
+                left - right, bottom - top)
             stream.clip()
             stream.end()
 
@@ -142,8 +139,7 @@ def draw_stacking_context(stream, stacking_context):
                             boxes.InlineBlockBox, boxes.TableCellBox,
                             boxes.FlexContainerBox)):
             # The canvas background was removed by set_canvas_background
-            draw_box_background_and_border(
-                stream, stacking_context.page, box)
+            draw_box_background_and_border(stream, stacking_context.page, box)
 
         with stacked(stream):
             # dont clip the PageBox, see #35
@@ -171,8 +167,7 @@ def draw_stacking_context(stream, stacking_context):
 
             # Point 6
             if isinstance(box, boxes.InlineBox):
-                draw_inline_level(
-                    stream, stacking_context.page, box)
+                draw_inline_level(stream, stacking_context.page, box)
 
             # Point 7
             for block in [box] + stacking_context.blocks_and_cells:
@@ -649,19 +644,15 @@ def clip_border_segment(stream, style, width, side, border_box,
                     if side in ('top', 'bottom'):
                         stream.move_to(x + px, main_offset + py)
                         stream.line_to(
-                            x + px - way * px * 1 / tan(angle2),
-                            main_offset)
+                            x + px - way * px * 1 / tan(angle2), main_offset)
                         stream.line_to(
-                            x + px - way * px * 1 / tan(angle1),
-                            main_offset)
+                            x + px - way * px * 1 / tan(angle1), main_offset)
                     elif side in ('left', 'right'):
                         stream.move_to(main_offset + px, y + py)
                         stream.line_to(
-                            main_offset,
-                            y + py + way * py * tan(angle2))
+                            main_offset, y + py + way * py * tan(angle2))
                         stream.line_to(
-                            main_offset,
-                            y + py + way * py * tan(angle1))
+                            main_offset, y + py + way * py * tan(angle1))
                     if angle2 == angle * pi / 2:
                         offset = (angle1 - angle2) / ((
                             ((2 * angle - way) + (i + 1) * way * dash / chl) /
@@ -700,8 +691,7 @@ def clip_border_segment(stream, style, width, side, border_box,
                 round(length / dash) - (round(length / dash) + 1) % 2) or 1
             for i in range(0, int(round(length / dash)), 2):
                 if side == 'top':
-                    stream.rectangle(
-                        bbx + i * dash, bby, dash, width)
+                    stream.rectangle(bbx + i * dash, bby, dash, width)
                 elif side == 'right':
                     stream.rectangle(
                         bbx + bbw - width, bby + i * dash, width, dash)
@@ -709,8 +699,7 @@ def clip_border_segment(stream, style, width, side, border_box,
                     stream.rectangle(
                         bbx + i * dash, bby + bbh - width, dash, width)
                 elif side == 'left':
-                    stream.rectangle(
-                        bbx, bby + i * dash, width, dash)
+                    stream.rectangle(bbx, bby + i * dash, width, dash)
     stream.clip(even_odd=True)
     stream.end()
 
@@ -751,8 +740,7 @@ def draw_rect_border(stream, box, widths, style, color):
         stream.rectangle(
             bbx + bl / 2, bby + bt / 2,
             bbw - (bl + br) / 2, bbh - (bt + bb) / 2)
-        stream.rectangle(
-            bbx + bl, bby + bt, bbw - bl - br, bbh - bt - bb)
+        stream.rectangle(bbx + bl, bby + bt, bbw - bl - br, bbh - bt - bb)
         stream.set_color_rgb(*color[1][:3])
         stream.set_alpha(color[1][3])
         stream.fill(even_odd=True)
@@ -793,14 +781,16 @@ def draw_outlines(stream, box):
 
 def draw_collapsed_borders(stream, table):
     """Draw borders of table cells when they collapse."""
-    row_heights = [row.height for row_group in table.children
-                   for row in row_group.children]
+    row_heights = [
+        row.height for row_group in table.children
+        for row in row_group.children]
     column_widths = table.column_widths
     if not (row_heights and column_widths):
         # One of the list is empty: don’t bother with empty tables
         return
-    row_positions = [row.position_y for row_group in table.children
-                     for row in row_group.children]
+    row_positions = [
+        row.position_y for row_group in table.children
+        for row in row_group.children]
     column_positions = list(table.column_positions)
     grid_height = len(row_heights)
     grid_width = len(column_widths)
@@ -910,8 +900,7 @@ def draw_collapsed_borders(stream, table):
         else:
             widths = (0, 0, 0, width)
         with stacked(stream):
-            clip_border_segment(
-                stream, style, width, side, border_box, widths)
+            clip_border_segment(stream, style, width, side, border_box, widths)
             draw_rect_border(
                 stream, border_box, widths, style,
                 styled_color(style, color, side))
@@ -963,8 +952,7 @@ def draw_inline_level(stream, page, box, offset_x=0, text_overflow='clip',
                         stream.begin_text()
                         in_text = True
                     draw_text(
-                        stream, child, child_offset_x, text_overflow,
-                        ellipsis)
+                        stream, child, child_offset_x, text_overflow, ellipsis)
                 else:
                     if in_text:
                         in_text = False
