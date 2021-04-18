@@ -8,6 +8,7 @@
 
 import contextlib
 import operator
+from colorsys import hsv_to_rgb, rgb_to_hsv
 from math import ceil, floor, pi, sqrt, tan
 
 from .formatting_structure import boxes
@@ -32,42 +33,6 @@ def stacked(stream):
         stream.pop_state()
 
 
-def hsv2rgb(hue, saturation, value):
-    """Transform a HSV color to a RGB color."""
-    c = value * saturation
-    x = c * (1 - abs((hue / 60) % 2 - 1))
-    m = value - c
-    if 0 <= hue < 60:
-        return c + m, x + m, m
-    elif 60 <= hue < 120:
-        return x + m, c + m, m
-    elif 120 <= hue < 180:
-        return m, c + m, x + m
-    elif 180 <= hue < 240:
-        return m, x + m, c + m
-    elif 240 <= hue < 300:
-        return x + m, m, c + m
-    elif 300 <= hue < 360:
-        return c + m, m, x + m
-
-
-def rgb2hsv(red, green, blue):
-    """Transform a RGB color to a HSV color."""
-    cmax = max(red, green, blue)
-    cmin = min(red, green, blue)
-    delta = cmax - cmin
-    if delta == 0:
-        hue = 0
-    elif cmax == red:
-        hue = 60 * ((green - blue) / delta % 6)
-    elif cmax == green:
-        hue = 60 * ((blue - red) / delta + 2)
-    elif cmax == blue:
-        hue = 60 * ((red - green) / delta + 4)
-    saturation = 0 if delta == 0 else delta / cmax
-    return hue, saturation, cmax
-
-
 def get_color(style, key):
     value = style[key]
     return value if value != 'currentColor' else style['color']
@@ -75,19 +40,19 @@ def get_color(style, key):
 
 def darken(color):
     """Return a darker color."""
-    hue, saturation, value = rgb2hsv(color.red, color.green, color.blue)
+    hue, saturation, value = rgb_to_hsv(color.red, color.green, color.blue)
     value /= 1.5
     saturation /= 1.25
-    return hsv2rgb(hue, saturation, value) + (color.alpha,)
+    return hsv_to_rgb(hue, saturation, value) + (color.alpha,)
 
 
 def lighten(color):
     """Return a lighter color."""
-    hue, saturation, value = rgb2hsv(color.red, color.green, color.blue)
+    hue, saturation, value = rgb_to_hsv(color.red, color.green, color.blue)
     value = 1 - (1 - value) / 1.5
     if saturation:
         saturation = 1 - (1 - saturation) / 1.25
-    return hsv2rgb(hue, saturation, value) + (color.alpha,)
+    return hsv_to_rgb(hue, saturation, value) + (color.alpha,)
 
 
 def draw_page(page, stream):
