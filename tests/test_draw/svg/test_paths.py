@@ -6,8 +6,6 @@
 
 """
 
-import pytest
-
 from ...testing_utils import assert_no_logs
 from .. import assert_pixels
 
@@ -520,7 +518,6 @@ def test_path_Aa6():
     ''')
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_path_Aa7():
     assert_pixels('path_Aa7', 12, 12, '''

@@ -6,7 +6,7 @@
 
 """
 
-from math import atan2, cos, pi, radians, sin, tan
+from math import atan2, cos, isclose, pi, radians, sin, tan
 
 from .utils import normalize, point
 
@@ -127,7 +127,12 @@ def path(svg, node, font_size):
             node.vertices.append((-angle1, -angle2))
 
             # Fix angles to follow large arc flag
-            if large == (abs(angle2 - angle1) < (pi + 0.001)):
+            if isclose(abs(angle2 - angle1), pi):
+                if sweep and (angle2 < angle1):
+                    angle1 -= 2 * pi
+                elif not sweep and (angle2 > angle1):
+                    angle2 -= 2 * pi
+            elif large == (abs(angle2 - angle1) < pi):
                 if angle1 > angle2:
                     angle1 -= 2 * pi
                 else:
