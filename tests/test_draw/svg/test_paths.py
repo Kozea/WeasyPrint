@@ -6,6 +6,8 @@
 
 """
 
+import pytest
+
 from ...testing_utils import assert_no_logs
 from .. import assert_pixels
 
@@ -348,5 +350,199 @@ def test_path_QqTt2():
           stroke="blue" stroke-width="2" fill="none"/>
         <path d="M 0 9 q 3 -3 6 0 t 6 0"
           stroke="red" stroke-width="2" fill="none"/>
+      </svg>
+    ''')
+
+
+@assert_no_logs
+def test_path_Aa():
+    assert_pixels('path_Aa', 12, 12, '''
+        __BBBB______
+        _BBBBB______
+        BBBBBB______
+        BBBB________
+        BBB_________
+        BBB____RRRR_
+        ______RRRRR_
+        _____RRRRRR_
+        _____RRRR___
+        _____RRR____
+        _____RRR____
+        ____________
+    ''', '''
+      <style>
+        @page { size: 12px }
+        svg { display: block }
+      </style>
+      <svg width="12px" height="12px" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 1 6 A 5 5 0 0 1 6 1"
+          stroke="blue" stroke-width="2" fill="none"/>
+        <path d="M 6 11 a 5 5 0 0 1 5 -5"
+          stroke="red" stroke-width="2" fill="none"/>
+      </svg>
+    ''')
+
+
+@assert_no_logs
+def test_path_Aa2():
+    assert_pixels('path_Aa2', 12, 12, '''
+        ______GGGG__
+        ______GGGGG_
+        ______GGGGGG
+        ________GGGG
+        _________GGG
+        _________GGG
+        GGG______GGG
+        GGG______GGG
+        GGGG____GGGG
+        GGGGGGGGGGGG
+        _GGGGGGGGGG_
+        __GGGGGGGG__
+    ''', '''
+      <style>
+        @page { size: 12px }
+        svg { display: block }
+      </style>
+      <svg width="12px" height="12px" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 1 6 A 5 5 0 1 0 6 1"
+          stroke="lime" stroke-width="2" fill="none"/>
+      </svg>
+    ''')
+
+
+@assert_no_logs
+def test_path_Aa3():
+    assert_pixels('path_Aa3', 12, 12, '''
+        ______GGGG__
+        ______GGGGG_
+        ______GGGGGG
+        ________GGGG
+        _________GGG
+        _________GGG
+        GGG______GGG
+        GGG______GGG
+        GGGG____GGGG
+        GGGGGGGGGGGG
+        _GGGGGGGGGG_
+        __GGGGGGGG__
+    ''', '''
+      <style>
+        @page { size: 12px }
+        svg { display: block }
+      </style>
+      <svg width="12px" height="12px" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 1 6 a 5 5 0 1 0 5 -5"
+          stroke="lime" stroke-width="2" fill="none"/>
+      </svg>
+    ''')
+
+
+@assert_no_logs
+def test_path_Aa4():
+    assert_pixels('path_Aa4', 12, 12, '''
+        ____________
+        ____BBB_____
+        ____BBB_____
+        ___BBBB_____
+        _BBBBBB_____
+        _BBBBB______
+        _BBBB____RRR
+        _________RRR
+        ________RRRR
+        ______RRRRRR
+        ______RRRRR_
+        ______RRRR__
+    ''', '''
+      <style>
+        @page { size: 12px }
+        svg { display: block }
+      </style>
+      <svg width="12px" height="12px" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 1 6 A 5 5 0 0 0 6 1"
+          stroke="blue" stroke-width="2" fill="none"/>
+        <path d="M 6 11 a 5 5 0 0 0 5 -5"
+          stroke="red" stroke-width="2" fill="none"/>
+      </svg>
+    ''')
+
+
+@assert_no_logs
+def test_path_Aa5():
+    assert_pixels('path_Aa5', 12, 12, '''
+        __BBBBBBBB__
+        _BBBBBBBBBB_
+        BBBBBBBBBBBB
+        BBBB____BBBB
+        BBB______BBB
+        BBB______BBB
+        BBB_________
+        BBB_________
+        BBBB________
+        BBBBBB______
+        _BBBBB______
+        __BBBB______
+    ''', '''
+      <style>
+        @page { size: 12px }
+        svg { display: block }
+      </style>
+      <svg width="12px" height="12px" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 6 11 A 5 5 0 1 1 11 6"
+          stroke="blue" stroke-width="2" fill="none"/>
+      </svg>
+    ''')
+
+
+@assert_no_logs
+def test_path_Aa6():
+    assert_pixels('path_Aa6', 12, 12, '''
+        __BBBBBBBB__
+        _BBBBBBBBBB_
+        BBBBBBBBBBBB
+        BBBB____BBBB
+        BBB______BBB
+        BBB______BBB
+        BBB_________
+        BBB_________
+        BBBB________
+        BBBBBB______
+        _BBBBB______
+        __BBBB______
+    ''', '''
+      <style>
+        @page { size: 12px }
+        svg { display: block }
+      </style>
+      <svg width="12px" height="12px" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 6 11 a 5 5 0 1 1 5 -5"
+          stroke="blue" stroke-width="2" fill="none"/>
+      </svg>
+    ''')
+
+
+@pytest.mark.xfail
+@assert_no_logs
+def test_path_Aa7():
+    assert_pixels('path_Aa7', 12, 12, '''
+        ____________
+        ____________
+        ____________
+        ____________
+        ____________
+        ____________
+        GGG______GGG
+        GGG______GGG
+        GGGG____GGGG
+        GGGGGGGGGGGG
+        _GGGGGGGGGG_
+        __GGGGGGGG__
+    ''', '''
+      <style>
+        @page { size: 12px }
+        svg { display: block }
+      </style>
+      <svg width="12px" height="12px" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 1 6 A 5 5 0 0 0 11 6"
+          stroke="lime" stroke-width="2" fill="none"/>
       </svg>
     ''')
