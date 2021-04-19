@@ -22,7 +22,7 @@ from weasyprint import CSS, HTML, __main__, default_url_fetcher
 from weasyprint.document import resolve_links
 from weasyprint.urls import path2url
 
-from .test_draw import assert_pixels_equal, parse_pixels
+from .draw import assert_pixels_equal, parse_pixels
 from .testing_utils import (
     FakeHTML, assert_no_logs, capture_logs, http_server, resource_filename)
 

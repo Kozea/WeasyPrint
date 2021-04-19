@@ -6,13 +6,12 @@
 
 """
 
-from ..test_boxes import render_pages as parse
-from ..testing_utils import assert_no_logs
+from ..testing_utils import assert_no_logs, render_pages
 
 
 @assert_no_logs
 def test_inline_block_sizes():
-    page, = parse('''
+    page, = render_pages('''
       <style>
         @page { margin: 0; size: 200px 2000px }
         body { margin: 0 }
@@ -112,7 +111,7 @@ def test_inline_block_sizes():
 @assert_no_logs
 def test_inline_block_with_margin():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/1235
-    page_1, = parse('''
+    page_1, = render_pages('''
       <style>
         @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 100px }

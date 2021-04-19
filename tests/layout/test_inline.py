@@ -9,13 +9,12 @@
 import pytest
 from weasyprint.formatting_structure import boxes
 
-from ..test_boxes import render_pages as parse
-from ..testing_utils import SANS_FONTS, assert_no_logs
+from ..testing_utils import SANS_FONTS, assert_no_logs, render_pages
 
 
 @assert_no_logs
 def test_empty_linebox():
-    page, = parse('<p> </p>')
+    page, = render_pages('<p> </p>')
     html, = page.children
     body, = html.children
     paragraph, = body.children
@@ -27,13 +26,13 @@ def test_empty_linebox():
 @assert_no_logs
 def test_empty_linebox_removed_space():
     # Whitespace removed at the beginning of the line => empty line => no line
-    page, = parse('''
+    page, = render_pages('''
       <style>
         p { width: 1px }
       </style>
       <p><br>  </p>
     ''')
-    page, = parse('<p> </p>')
+    page, = render_pages('<p> </p>')
     html, = page.children
     body, = html.children
     paragraph, = body.children
@@ -43,7 +42,7 @@ def test_empty_linebox_removed_space():
 
 @assert_no_logs
 def test_breaking_linebox():
-    page, = parse('''
+    page, = render_pages('''
       <style>
       p { font-size: 13px;
           width: 300px;
@@ -77,7 +76,7 @@ def test_breaking_linebox():
 
 @assert_no_logs
 def test_position_x_ltr():
-    page, = parse('''
+    page, = render_pages('''
       <style>
         span {
           padding: 0 10px 0 15px;
@@ -105,7 +104,7 @@ def test_position_x_ltr():
 
 @assert_no_logs
 def test_position_x_rtl():
-    page, = parse('''
+    page, = render_pages('''
       <style>
         body {
           direction: rtl;
@@ -138,7 +137,7 @@ def test_position_x_rtl():
 @assert_no_logs
 def test_breaking_linebox_regression_1():
     # See http://unicode.org/reports/tr14/
-    page, = parse('<pre>a\nb\rc\r\nd\u2029e</pre>')
+    page, = render_pages('<pre>a\nb\rc\r\nd\u2029e</pre>')
     html, = page.children
     body, = html.children
     pre, = body.children
@@ -160,7 +159,7 @@ def test_breaking_linebox_regression_2():
       <span style="padding-right: 1em; margin-right: 1em">c def</span>g
       hi</p>'''
     for i in range(16):
-        page, = parse(html_sample % i)
+        page, = render_pages(html_sample % i)
         html, = page.children
         body, = html.children
         p, = body.children
@@ -234,7 +233,7 @@ def test_breaking_linebox_regression_2():
 @assert_no_logs
 def test_breaking_linebox_regression_3():
     # Regression test #1 for https://github.com/Kozea/WeasyPrint/issues/560
-    page, = parse(
+    page, = render_pages(
         '<style>'
         '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
         '</style>'
@@ -255,7 +254,7 @@ def test_breaking_linebox_regression_3():
 @assert_no_logs
 def test_breaking_linebox_regression_4():
     # Regression test #2 for https://github.com/Kozea/WeasyPrint/issues/560
-    page, = parse(
+    page, = render_pages(
         '<style>'
         '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
         '</style>'
@@ -275,7 +274,7 @@ def test_breaking_linebox_regression_4():
 @assert_no_logs
 def test_breaking_linebox_regression_5():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/580
-    page, = parse(
+    page, = render_pages(
         '<style>'
         '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
         '</style>'
@@ -295,7 +294,7 @@ def test_breaking_linebox_regression_5():
 @assert_no_logs
 def test_breaking_linebox_regression_6():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/586
-    page, = parse(
+    page, = render_pages(
         '<style>'
         '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
         '</style>'
@@ -312,7 +311,7 @@ def test_breaking_linebox_regression_6():
 @assert_no_logs
 def test_breaking_linebox_regression_7():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/660
-    page, = parse(
+    page, = render_pages(
         '<style>'
         '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
         '</style>'
@@ -331,7 +330,7 @@ def test_breaking_linebox_regression_7():
 @assert_no_logs
 def test_breaking_linebox_regression_8():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/783
-    page, = parse(
+    page, = render_pages(
         '<style>'
         '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
         '</style>'
@@ -351,11 +350,11 @@ def test_breaking_linebox_regression_8():
 
 @pytest.mark.xfail
 @assert_no_logs
-def test_breaking_linebox_regression_9():  # pragma: no cover
+def test_breaking_linebox_regression_9():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/783
     # TODO: inlines.can_break_inside return False for span but we can break
     # before the <b> tag. can_break_inside should be fixed.
-    page, = parse(
+    page, = render_pages(
         '<style>'
         '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
         '</style>'
@@ -375,7 +374,7 @@ def test_breaking_linebox_regression_9():  # pragma: no cover
 @assert_no_logs
 def test_breaking_linebox_regression_10():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/923
-    page, = parse(
+    page, = render_pages(
         '<style>'
         '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
         '</style>'
@@ -398,7 +397,7 @@ def test_breaking_linebox_regression_10():
 @assert_no_logs
 def test_breaking_linebox_regression_11():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/953
-    page, = parse(
+    page, = render_pages(
         '<style>'
         '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
         '</style>'
@@ -418,7 +417,7 @@ def test_breaking_linebox_regression_11():
 @assert_no_logs
 def test_breaking_linebox_regression_12():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/953
-    page, = parse(
+    page, = render_pages(
         '<style>'
         '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
         '</style>'
@@ -437,7 +436,7 @@ def test_breaking_linebox_regression_12():
 @assert_no_logs
 def test_breaking_linebox_regression_13():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/953
-    page, = parse(
+    page, = render_pages(
         '<style>'
         '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
         '</style>'
@@ -456,7 +455,7 @@ def test_breaking_linebox_regression_13():
 
 @assert_no_logs
 def test_linebox_text():
-    page, = parse('''
+    page, = render_pages('''
       <style>
         p { width: 165px; font-family:%(fonts)s;}
       </style>
@@ -484,7 +483,7 @@ def test_linebox_positions():
                 line-height: 20px }
           </style>
           <p>this is test for <strong>Weasyprint</strong></p>'''
-        page, = parse(page % {'fonts': SANS_FONTS, 'width': width})
+        page, = render_pages(page % {'fonts': SANS_FONTS, 'width': width})
         html, = page.children
         body, = html.children
         paragraph, = body.children
@@ -509,7 +508,7 @@ def test_linebox_positions():
 def test_forced_line_breaks_pre():
     # These lines should be small enough to fit on the default A4 page
     # with the default 12pt font-size.
-    page, = parse('''
+    page, = render_pages('''
       <style> pre { line-height: 42px }</style>
       <pre>Lorem ipsum dolor sit amet,
           consectetur adipiscing elit.
@@ -531,7 +530,7 @@ def test_forced_line_breaks_pre():
 
 @assert_no_logs
 def test_forced_line_breaks_paragraph():
-    page, = parse('''
+    page, = render_pages('''
       <style> p { line-height: 42px }</style>
       <p>Lorem ipsum dolor sit amet,<br>
         consectetur adipiscing elit.<br><br><br>
@@ -555,7 +554,7 @@ def test_inlinebox_splitting():
     # The text is strange to test some corner cases
     # See https://github.com/Kozea/WeasyPrint/issues/389
     for width in [10000, 100, 10, 0]:
-        page, = parse('''
+        page, = render_pages('''
           <style>p { font-family:%(fonts)s; width: %(width)spx; }</style>
           <p><strong>WeasyPrint is a frée softwäre ./ visual rendèring enginè
                      for HTML !!! and CSS.</strong></p>
@@ -581,7 +580,7 @@ def test_inlinebox_splitting():
 @assert_no_logs
 def test_whitespace_processing():
     for source in ['a', '  a  ', ' \n  \ta', ' a\t ']:
-        page, = parse('<p><em>%s</em></p>' % source)
+        page, = render_pages('<p><em>%s</em></p>' % source)
         html, = page.children
         body, = html.children
         p, = body.children
@@ -590,7 +589,7 @@ def test_whitespace_processing():
         text, = em.children
         assert text.text == 'a', 'source was %r' % (source,)
 
-        page, = parse(
+        page, = render_pages(
             '<p style="white-space: pre-line">\n\n<em>%s</em></pre>' %
             source.replace('\n', ' '))
         html, = page.children
@@ -604,7 +603,7 @@ def test_whitespace_processing():
 
 @assert_no_logs
 def test_inline_replaced_auto_margins():
-    page, = parse('''
+    page, = render_pages('''
       <style>
         @page { size: 200px }
         img { display: inline; margin: auto; width: 50px }
@@ -622,7 +621,7 @@ def test_inline_replaced_auto_margins():
 
 @assert_no_logs
 def test_empty_inline_auto_margins():
-    page, = parse('''
+    page, = render_pages('''
       <style>
         @page { size: 200px }
         span { margin: auto }
@@ -640,7 +639,7 @@ def test_empty_inline_auto_margins():
 
 @assert_no_logs
 def test_font_stretch():
-    page, = parse('''
+    page, = render_pages('''
       <style>
         p { float: left; font-family: %s }
       </style>
@@ -665,7 +664,7 @@ def test_font_stretch():
     ('<body style="hyphens: none">hyp&shy;hénation', 1),  # … unless disabled
 ))
 def test_line_count(source, lines_count):
-    page, = parse(
+    page, = render_pages(
         '<html style="width: 5em; font-family: weasyprint">'
         '<style>@font-face {'
         '  src:url(weasyprint.otf); font-family :weasyprint'
@@ -683,7 +682,7 @@ def test_vertical_align_1():
     # 40px |     |       | 60px
     #      |     |       |
     #      +-----+-------+      <- baseline
-    page, = parse('''
+    page, = render_pages('''
       <span>
         <img src="pattern.png" style="width: 40px"
         ><img src="pattern.png" style="width: 60px"
@@ -710,7 +709,7 @@ def test_vertical_align_2():
     # 40px |     |       |
     #      |     +-------+      <- baseline
     #      +-----+  15px
-    page, = parse('''
+    page, = render_pages('''
       <span>
         <img src="pattern.png" style="width: 40px; vertical-align: -15px"
         ><img src="pattern.png" style="width: 60px"></span>''')
@@ -730,7 +729,7 @@ def test_vertical_align_2():
 @assert_no_logs
 def test_vertical_align_3():
     # Same as previously, but with percentages
-    page, = parse('''
+    page, = render_pages('''
       <span style="line-height: 10px">
         <img src="pattern.png" style="width: 40px; vertical-align: -150%"
         ><img src="pattern.png" style="width: 60px"></span>''')
@@ -750,7 +749,7 @@ def test_vertical_align_3():
 @assert_no_logs
 def test_vertical_align_4():
     # Same again, but have the vertical-align on an inline box.
-    page, = parse('''
+    page, = render_pages('''
       <span style="line-height: 10px">
         <span style="line-height: 10px; vertical-align: -15px">
           <img src="pattern.png" style="width: 40px"></span>
@@ -772,7 +771,7 @@ def test_vertical_align_4():
 @assert_no_logs
 def test_vertical_align_5():
     # Same as previously, but with percentages
-    page, = parse(
+    page, = render_pages(
         '<style>'
         '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
         '</style>'
@@ -800,7 +799,7 @@ def test_vertical_align_5():
 def test_vertical_align_6():
     # sup and sub currently mean +/- 0.5 em
     # With the initial 16px font-size, that’s 8px.
-    page, = parse('''
+    page, = render_pages('''
       <span style="line-height: 10px">
         <img src="pattern.png" style="width: 60px"
         ><img src="pattern.png" style="width: 40px; vertical-align: super"
@@ -823,7 +822,7 @@ def test_vertical_align_6():
 
 @assert_no_logs
 def test_vertical_align_7():
-    page, = parse('''
+    page, = render_pages('''
       <body style="line-height: 10px">
         <span>
           <img src="pattern.png" style="vertical-align: text-top"
@@ -847,7 +846,7 @@ def test_vertical_align_8():
     # This case used to cause an exception:
     # The second span has no children but should count for line heights
     # since it has padding.
-    page, = parse('''<span style="line-height: 1.5">
+    page, = render_pages('''<span style="line-height: 1.5">
       <span style="padding: 1px"></span></span>''')
     html, = page.children
     body, = html.children
@@ -865,7 +864,7 @@ def test_vertical_align_8():
 
 @assert_no_logs
 def test_vertical_align_9():
-    page, = parse('''
+    page, = render_pages('''
       <span>
         <img src="pattern.png" style="width: 40px; vertical-align: -15px"
         ><img src="pattern.png" style="width: 60px"
@@ -912,7 +911,7 @@ def test_vertical_align_10():
     # The first two images bring the top of the line box 30px above
     # the baseline and 10px below.
     # Each of the inner span
-    page, = parse('''
+    page, = render_pages('''
       <span style="font-size: 0">
         <img src="pattern.png" style="vertical-align: 26px">
         <img src="pattern.png" style="vertical-align: -10px">
@@ -945,7 +944,7 @@ def test_vertical_align_10():
 
 @assert_no_logs
 def test_vertical_align_11():
-    page, = parse('''
+    page, = render_pages('''
       <span style="font-size: 0">
         <img src="pattern.png" style="vertical-align: bottom">
         <img src="pattern.png" style="vertical-align: top; height: 100px">
@@ -963,7 +962,7 @@ def test_vertical_align_11():
 @assert_no_logs
 def test_vertical_align_12():
     # Reference for the next test
-    page, = parse('''
+    page, = render_pages('''
       <span style="font-size: 0; vertical-align: top">
         <img src="pattern.png">
       </span>
@@ -979,7 +978,7 @@ def test_vertical_align_12():
 @assert_no_logs
 def test_vertical_align_13():
     # Should be the same as above
-    page, = parse('''
+    page, = render_pages('''
       <span style="font-size: 0; vertical-align: top; display: inline-block">
         <img src="pattern.png">
       </span>''')
@@ -996,7 +995,7 @@ def test_vertical_align_13():
 @assert_no_logs
 def test_box_decoration_break_inline_slice():
     # http://www.w3.org/TR/css3-background/#the-box-decoration-break
-    page_1, = parse('''
+    page_1, = render_pages('''
       <style>
         @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 100px }
@@ -1027,7 +1026,7 @@ def test_box_decoration_break_inline_slice():
 @assert_no_logs
 def test_box_decoration_break_inline_clone():
     # http://www.w3.org/TR/css3-background/#the-box-decoration-break
-    page_1, = parse('''
+    page_1, = render_pages('''
       <style>
         @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 100px }

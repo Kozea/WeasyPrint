@@ -9,8 +9,7 @@
 import pytest
 from weasyprint.formatting_structure import boxes
 
-from ..test_boxes import render_pages
-from ..testing_utils import assert_no_logs
+from ..testing_utils import assert_no_logs, render_pages
 
 
 @assert_no_logs
@@ -463,7 +462,7 @@ def test_margin_break(break_after, margin_break, margin_top):
 
 @pytest.mark.xfail
 @assert_no_logs
-def test_margin_break_clearance():  # pragma: no cover
+def test_margin_break_clearance():
     page_1, page_2 = render_pages('''
       <style>
         @page { size: 70px; margin: 0 }

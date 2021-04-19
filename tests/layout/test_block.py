@@ -9,13 +9,12 @@
 import pytest
 from weasyprint.formatting_structure import boxes
 
-from ..test_boxes import render_pages as parse
-from ..testing_utils import assert_no_logs
+from ..testing_utils import assert_no_logs, render_pages
 
 
 @assert_no_logs
 def test_block_widths():
-    page, = parse('''
+    page, = render_pages('''
       <style>
         @page { margin: 0; size: 120px 2000px }
         body { margin: 0 }
@@ -138,7 +137,7 @@ def test_block_widths():
 
 @assert_no_logs
 def test_block_heights_p():
-    page, = parse('''
+    page, = render_pages('''
       <style>
         @page { margin: 0; size: 100px 20000px }
         html, body { margin: 0 }
@@ -168,7 +167,7 @@ def test_block_heights_p():
 
 @assert_no_logs
 def test_block_heights_img():
-    page, = parse('''
+    page, = render_pages('''
       <style>
         body { height: 200px; font-size: 0 }
       </style>
@@ -196,7 +195,7 @@ def test_block_heights_img():
 @assert_no_logs
 def test_block_heights_img_no_body_height():
     # Same but with no height on body: percentage *-height is ignored
-    page, = parse('''
+    page, = render_pages('''
       <style>
         body { font-size: 0 }
       </style>
@@ -223,7 +222,7 @@ def test_block_heights_img_no_body_height():
 
 @assert_no_logs
 def test_block_percentage_heights_no_html_height():
-    page, = parse('''
+    page, = render_pages('''
       <style>
         html, body { margin: 0 }
         body { height: 50% }
@@ -240,7 +239,7 @@ def test_block_percentage_heights_no_html_height():
 
 @assert_no_logs
 def test_block_percentage_heights():
-    page, = parse('''
+    page, = render_pages('''
       <style>
         html, body { margin: 0 }
         html { height: 300px }
@@ -265,7 +264,7 @@ def test_block_percentage_heights():
 ))
 def test_box_sizing(size):
     # http://www.w3.org/TR/css3-ui/#box-sizing
-    page, = parse('''
+    page, = render_pages('''
       <style>
         @page { size: 100000px }
         body { width: 10000px; margin: 0 }
@@ -320,7 +319,7 @@ def test_box_sizing(size):
 ))
 def test_box_sizing_zero(size):
     # http://www.w3.org/TR/css3-ui/#box-sizing
-    page, = parse('''
+    page, = render_pages('''
       <style>
         @page { size: 100000px }
         body { width: 10000px; margin: 0 }
@@ -366,7 +365,7 @@ NOT_COLLAPSING = (
 @pytest.mark.parametrize('margin_1, margin_2, result', COLLAPSING)
 def test_vertical_space_1(margin_1, margin_2, result):
     # Siblings
-    page, = parse('''
+    page, = render_pages('''
       <style>
         p { font: 20px/1 serif } /* block height == 20px */
         #p1 { margin-bottom: %s }
@@ -386,7 +385,7 @@ def test_vertical_space_1(margin_1, margin_2, result):
 @pytest.mark.parametrize('margin_1, margin_2, result', COLLAPSING)
 def test_vertical_space_2(margin_1, margin_2, result):
     # Not siblings, first is nested
-    page, = parse('''
+    page, = render_pages('''
       <style>
         p { font: 20px/1 serif } /* block height == 20px */
         #p1 { margin-bottom: %s }
@@ -409,7 +408,7 @@ def test_vertical_space_2(margin_1, margin_2, result):
 @pytest.mark.parametrize('margin_1, margin_2, result', COLLAPSING)
 def test_vertical_space_3(margin_1, margin_2, result):
     # Not siblings, second is nested
-    page, = parse('''
+    page, = render_pages('''
       <style>
         p { font: 20px/1 serif } /* block height == 20px */
         #p1 { margin-bottom: %s }
@@ -432,7 +431,7 @@ def test_vertical_space_3(margin_1, margin_2, result):
 @pytest.mark.parametrize('margin_1, margin_2, result', COLLAPSING)
 def test_vertical_space_4(margin_1, margin_2, result):
     # Not siblings, second is doubly nested
-    page, = parse('''
+    page, = render_pages('''
       <style>
         p { font: 20px/1 serif } /* block height == 20px */
         #p1 { margin-bottom: %s }
@@ -458,7 +457,7 @@ def test_vertical_space_4(margin_1, margin_2, result):
 @pytest.mark.parametrize('margin_1, margin_2, result', COLLAPSING)
 def test_vertical_space_5(margin_1, margin_2, result):
     # Collapsing with children
-    page, = parse('''
+    page, = render_pages('''
       <style>
         p { font: 20px/1 serif } /* block height == 20px */
         #div1 { margin-top: %s }
@@ -487,7 +486,7 @@ def test_vertical_space_5(margin_1, margin_2, result):
 @pytest.mark.parametrize('margin_1, margin_2, result', NOT_COLLAPSING)
 def test_vertical_space_6(margin_1, margin_2, result):
     # Block formatting context: Not collapsing with children
-    page, = parse('''
+    page, = render_pages('''
       <style>
         p { font: 20px/1 serif } /* block height == 20px */
         #div1 { margin-top: %s; overflow: hidden }
@@ -513,7 +512,7 @@ def test_vertical_space_6(margin_1, margin_2, result):
 @pytest.mark.parametrize('margin_1, margin_2, result', COLLAPSING)
 def test_vertical_space_7(margin_1, margin_2, result):
     # Collapsing through an empty div
-    page, = parse('''
+    page, = render_pages('''
       <style>
         p { font: 20px/1 serif } /* block height == 20px */
         #p1 { margin-bottom: %s }
@@ -535,7 +534,7 @@ def test_vertical_space_7(margin_1, margin_2, result):
 @pytest.mark.parametrize('margin_1, margin_2, result', NOT_COLLAPSING)
 def test_vertical_space_8(margin_1, margin_2, result):
     # The root element does not collapse
-    page, = parse('''
+    page, = render_pages('''
       <style>
         html { margin-top: %s }
         body { margin-top: %s }
@@ -553,7 +552,7 @@ def test_vertical_space_8(margin_1, margin_2, result):
 @pytest.mark.parametrize('margin_1, margin_2, result', COLLAPSING)
 def test_vertical_space_9(margin_1, margin_2, result):
     # <body> DOES collapse
-    page, = parse('''
+    page, = render_pages('''
       <style>
         body { margin-top: %s }
         div { margin-top: %s }
@@ -573,7 +572,7 @@ def test_vertical_space_9(margin_1, margin_2, result):
 @assert_no_logs
 def test_box_decoration_break_block_slice():
     # http://www.w3.org/TR/css3-background/#the-box-decoration-break
-    page_1, page_2 = parse('''
+    page_1, page_2 = render_pages('''
       <style>
         @page { size: 100px }
         p { padding: 2px; border: 3px solid; margin: 5px }
@@ -622,7 +621,7 @@ def test_box_decoration_break_block_slice():
 @assert_no_logs
 def test_box_decoration_break_block_clone():
     # http://www.w3.org/TR/css3-background/#the-box-decoration-break
-    page_1, page_2 = parse('''
+    page_1, page_2 = render_pages('''
       <style>
         @page { size: 100px }
         p { padding: 2px; border: 3px solid; margin: 5px;
@@ -675,7 +674,7 @@ def test_box_decoration_break_block_clone():
 
 @assert_no_logs
 def test_box_decoration_break_clone_bottom_padding():
-    page_1, page_2 = parse('''
+    page_1, page_2 = render_pages('''
       <style>
         @page { size: 80px; margin: 0 }
         div { height: 20px }
@@ -711,7 +710,7 @@ def test_box_decoration_break_slice_bottom_padding():  # pragma: no cover
     # with its bottom border/padding doesn't cross the bottom line. If it does,
     # we should re-render the box with a max_position_y including the bottom
     # border/padding.
-    page_1, page_2 = parse('''
+    page_1, page_2 = render_pages('''
       <style>
         @page { size: 80px; margin: 0 }
         div { height: 20px }
@@ -740,7 +739,7 @@ def test_box_decoration_break_slice_bottom_padding():  # pragma: no cover
 
 @assert_no_logs
 def test_overflow_auto():
-    page, = parse('''
+    page, = render_pages('''
       <article style="overflow: auto">
         <div style="float: left; height: 50px; margin: 10px">bla bla bla</div>
           toto toto''')
@@ -753,7 +752,7 @@ def test_overflow_auto():
 @assert_no_logs
 def test_box_margin_top_repagination():
     # Test regression: https://github.com/Kozea/WeasyPrint/issues/943
-    page_1, page_2 = parse('''
+    page_1, page_2 = render_pages('''
       <style>
         @page { size: 50px }
         :root { line-height: 1; font-size: 10px }
@@ -779,7 +778,7 @@ def test_box_margin_top_repagination():
 
 @assert_no_logs
 def test_continue_discard():
-    page_1, = parse('''
+    page_1, = render_pages('''
       <style>
         @page { size: 80px; margin: 0 }
         div { display: inline-block; width: 100%; height: 25px }
@@ -806,7 +805,7 @@ def test_continue_discard():
 
 @assert_no_logs
 def test_continue_discard_children():
-    page_1, = parse('''
+    page_1, = render_pages('''
       <style>
         @page { size: 80px; margin: 0 }
         div { display: inline-block; width: 100%; height: 25px }

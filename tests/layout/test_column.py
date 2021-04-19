@@ -8,8 +8,7 @@
 
 import pytest
 
-from ..test_boxes import render_pages
-from ..testing_utils import assert_no_logs
+from ..testing_utils import assert_no_logs, render_pages
 
 
 @assert_no_logs

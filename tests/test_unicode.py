@@ -12,7 +12,7 @@ import tempfile
 
 from weasyprint.urls import ensure_url
 
-from .test_draw import assert_pixels_equal, document_to_pixels, html_to_pixels
+from .draw import assert_pixels_equal, document_to_pixels, html_to_pixels
 from .testing_utils import FakeHTML, assert_no_logs, resource_filename
 
 

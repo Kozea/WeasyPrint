@@ -9,8 +9,7 @@
 import pytest
 from weasyprint import HTML
 
-from .test_boxes import assert_tree, parse_all, render_pages
-from .testing_utils import assert_no_logs
+from .testing_utils import assert_no_logs, assert_tree, parse_all, render_pages
 
 
 @assert_no_logs

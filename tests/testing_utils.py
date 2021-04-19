@@ -14,7 +14,11 @@ import sys
 import threading
 import wsgiref.simple_server
 
-from weasyprint import CSS, HTML
+from weasyprint import CSS, HTML, images
+from weasyprint.css import get_all_computed_styles
+from weasyprint.css.counters import CounterStyle
+from weasyprint.css.targets import TargetCollector
+from weasyprint.formatting_structure import boxes, build
 from weasyprint.logger import LOGGER
 from weasyprint.urls import path2url
 
@@ -29,6 +33,22 @@ else:  # pragma: no cover
 TEST_UA_STYLESHEET = CSS(filename=os.path.join(
     os.path.dirname(__file__), '..', 'weasyprint', 'css', 'tests_ua.css'
 ))
+
+PROPER_CHILDREN = dict((key, tuple(map(tuple, value))) for key, value in {
+    # Children can be of *any* type in *one* of the lists.
+    boxes.BlockContainerBox: [[boxes.BlockLevelBox], [boxes.LineBox]],
+    boxes.LineBox: [[boxes.InlineLevelBox]],
+    boxes.InlineBox: [[boxes.InlineLevelBox]],
+    boxes.TableBox: [[boxes.TableCaptionBox,
+                      boxes.TableColumnGroupBox, boxes.TableColumnBox,
+                      boxes.TableRowGroupBox, boxes.TableRowBox]],
+    boxes.InlineTableBox: [[boxes.TableCaptionBox,
+                            boxes.TableColumnGroupBox, boxes.TableColumnBox,
+                            boxes.TableRowGroupBox, boxes.TableRowBox]],
+    boxes.TableColumnGroupBox: [[boxes.TableColumnBox]],
+    boxes.TableRowGroupBox: [[boxes.TableRowBox]],
+    boxes.TableRowBox: [[boxes.TableCellBox]],
+}.items())
 
 
 class FakeHTML(HTML):
@@ -123,3 +143,99 @@ def http_server(handlers):
     finally:
         server.shutdown()
         thread.join()
+
+
+def serialize(box_list):
+    """Transform a box list into a structure easier to compare for testing."""
+    return [(
+        box.element_tag,
+        type(box).__name__[:-3],
+        # All concrete boxes are either text, replaced, column or parent.
+        (box.text if isinstance(box, boxes.TextBox)
+            else '<replaced>' if isinstance(box, boxes.ReplacedBox)
+            else serialize(
+                getattr(box, 'column_groups', ()) + tuple(box.children))))
+            for box in box_list]
+
+
+def _parse_base(html_content, base_url=BASE_URL):
+    document = FakeHTML(string=html_content, base_url=base_url)
+    counter_style = CounterStyle()
+    style_for = get_all_computed_styles(document, counter_style=counter_style)
+    get_image_from_uri = functools.partial(
+        images.get_image_from_uri, {}, document.url_fetcher, False)
+    target_collector = TargetCollector()
+    return (
+        document.etree_element, style_for, get_image_from_uri, base_url,
+        target_collector, counter_style)
+
+
+def parse(html_content):
+    """Parse some HTML, apply stylesheets and transform to boxes."""
+    box, = build.element_to_box(*_parse_base(html_content))
+    return box
+
+
+def parse_all(html_content, base_url=BASE_URL):
+    """Like parse() but also run all corrections on boxes."""
+    box = build.build_formatting_structure(*_parse_base(
+        html_content, base_url))
+    _sanity_checks(box)
+    return box
+
+
+def render_pages(html_content):
+    """Lay out a document and return a list of PageBox objects."""
+    return [
+        page._page_box for page in
+        FakeHTML(string=html_content, base_url=BASE_URL).render().pages]
+
+
+def assert_tree(box, expected):
+    """Check the box tree equality.
+
+    The obtained result is prettified in the message in case of failure.
+
+    box: a Box object, starting with <html> and <body> blocks.
+    expected: a list of serialized <body> children as returned by to_lists().
+
+    """
+    assert box.element_tag == 'html'
+    assert isinstance(box, boxes.BlockBox)
+    assert len(box.children) == 1
+
+    box = box.children[0]
+    assert isinstance(box, boxes.BlockBox)
+    assert box.element_tag == 'body'
+
+    assert serialize(box.children) == expected
+
+
+def _sanity_checks(box):
+    """Check that the rules regarding boxes are met.
+
+    This is not required and only helps debugging.
+
+    - A block container can contain either only block-level boxes or
+      only line boxes;
+    - Line boxes and inline boxes can only contain inline-level boxes.
+
+    """
+    if not isinstance(box, boxes.ParentBox):
+        return
+
+    acceptable_types_lists = None  # raises when iterated
+    for class_ in type(box).mro():  # pragma: no cover
+        if class_ in PROPER_CHILDREN:
+            acceptable_types_lists = PROPER_CHILDREN[class_]
+            break
+
+    assert any(
+        all(isinstance(child, acceptable_types) or
+            not child.is_in_normal_flow()
+            for child in box.children)
+        for acceptable_types in acceptable_types_lists
+    ), (box, box.children)
+
+    for child in box.children:
+        _sanity_checks(child)

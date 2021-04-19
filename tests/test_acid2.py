@@ -12,7 +12,7 @@ import pytest
 from PIL import Image
 from weasyprint import HTML
 
-from .test_draw import assert_pixels_equal
+from .draw import assert_pixels_equal
 from .testing_utils import assert_no_logs, capture_logs, resource_filename
 
 
