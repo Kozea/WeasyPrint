@@ -1031,7 +1031,6 @@ def test_tables_14():
 @pytest.mark.xfail
 @assert_no_logs
 def test_tables_15():
-    # TODO: there’s a vertical 0.5px shift on the second page
     # Regression test for colspan in last body line with footer
     # https://github.com/Kozea/WeasyPrint/issues/1250
     assert_pixels('colspan_last_row', 22, 36, '''
