@@ -618,6 +618,8 @@ class SVG:
             self.stream.stroke()
         elif fill:
             self.stream.fill(even_odd)
+        else:
+            self.stream.end()
 
     def transform(self, transform_string, font_size):
         """Apply a transformation string to the node."""
