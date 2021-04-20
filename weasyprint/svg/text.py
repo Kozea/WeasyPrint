@@ -164,9 +164,7 @@ def text(svg, node, font_size):
         bounding_box = extend_bounding_box(bounding_box, points)
 
         layout.reactivate(style)
-        red, green, blue, alpha = color(node.get('fill', 'black'))
-        svg.stream.set_color_rgb(red, green, blue)
-        svg.stream.set_alpha(alpha)
+        svg.fill_stroke(node, font_size, text=True)
         draw_first_line(
             svg.stream, TextBox(layout, style), 'none', 'none',
             x + svg.cursor_d_position[0], y + svg.cursor_d_position[1])

@@ -543,8 +543,10 @@ class SVG:
 
         return source, color
 
-    def fill_stroke(self, node, font_size):
+    def fill_stroke(self, node, font_size, text=False):
         """Paint fill and stroke for a node."""
+        if node.tag in ('text', 'textPath', 'a') and not text:
+            return
 
         # Get fill data
         fill_source, fill_color = self.paint(node.get('fill', 'black'))
@@ -612,14 +614,25 @@ class SVG:
 
         # Fill and stroke
         even_odd = node.get('fill-rule') == 'evenodd'
-        if fill and stroke:
-            self.stream.fill_and_stroke(even_odd)
-        elif stroke:
-            self.stream.stroke()
-        elif fill:
-            self.stream.fill(even_odd)
+        if text:
+            if stroke and fill:
+                text_rendering = 2
+            elif stroke:
+                text_rendering = 1
+            elif fill:
+                text_rendering = 0
+            else:
+                text_rendering = 3
+            self.stream.set_text_rendering(text_rendering)
         else:
-            self.stream.end()
+            if fill and stroke:
+                self.stream.fill_and_stroke(even_odd)
+            elif stroke:
+                self.stream.stroke()
+            elif fill:
+                self.stream.fill(even_odd)
+            else:
+                self.stream.end()
 
     def transform(self, transform_string, font_size):
         """Apply a transformation string to the node."""
