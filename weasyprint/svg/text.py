@@ -64,9 +64,9 @@ def text(svg, node, font_size):
     if 'dy' in node.attrib:
         dy = [size(i, font_size, svg.concrete_height)
               for i in normalize(node.attrib['dy']).strip().split(' ')]
-    if 'rotate' in node:
+    if 'rotate' in node.attrib:
         rotate = [radians(float(i)) if i else 0
-                  for i in normalize(node['rotate']).strip().split(' ')]
+                  for i in normalize(node.attrib['rotate']).strip().split(' ')]
     last_r = rotate[-1]
     letters_positions = [
         ([pl.pop(0) if pl else None for pl in (x, y, dx, dy, rotate)], char)
@@ -145,13 +145,16 @@ def text(svg, node, font_size):
         y = svg.cursor_position[1] if y is None else y
         if i:
             x += letter_spacing
-        svg.stream.move_to(
-            x + svg.cursor_d_position[0] + x_align,
-            y + svg.cursor_d_position[1] + y_align)
+        x_position = x + svg.cursor_d_position[0] + x_align
+        y_position = y + svg.cursor_d_position[1] + y_align
+        svg.stream.move_to(x_position, y_position)
         cursor_position = x + width, y
         angle = last_r if r is None else r
-        svg.stream.transform(
-            cos(angle), sin(angle), -sin(angle), cos(angle), 0, 0)
+        if angle:
+            svg.stream.transform(1, 0, 0, 1, x_position, y_position)
+            svg.stream.transform(
+                cos(angle), sin(angle), -sin(angle), cos(angle), 0, 0)
+            svg.stream.transform(1, 0, 0, 1, -x_position, -y_position)
         points = (
             (cursor_position[0] + x_align +
              svg.cursor_d_position[0],
