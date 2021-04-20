@@ -238,7 +238,7 @@ class Node:
                 if original_rotate:
                     anonymous.pop_rotation(original_rotate, rotate)
                 if trailing_space and not preserve:
-                    anonymous.text = anonymous.text.lstrip(' ')
+                    anonymous._etree_node.text = anonymous.text.lstrip(' ')
                 if anonymous.text:
                     trailing_space = anonymous.text.endswith(' ')
                 children.append(anonymous)
