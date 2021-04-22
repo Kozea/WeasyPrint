@@ -10,8 +10,11 @@ Released on 2021-04-22.
 **This version is experimental, don't use it in production. If you find bugs,
 please report them!**
 
-This version uses its own PDF generator instead of Cairo. Rendering may be
-different for text, gradients, SVG images…
+Dependencies:
+
+* This version uses its own PDF generator instead of Cairo. Rendering may be
+  different for text, gradients, SVG images…
+* Packaging is now done with Flit.
 
 New features:
 
