@@ -22,7 +22,7 @@ from weasyprint import CSS, HTML, __main__, default_url_fetcher
 from weasyprint.document import resolve_links
 from weasyprint.urls import path2url
 
-from .test_draw import assert_pixels_equal, parse_pixels
+from .draw import assert_pixels_equal, parse_pixels
 from .testing_utils import (
     FakeHTML, assert_no_logs, capture_logs, http_server, resource_filename)
 
@@ -251,21 +251,20 @@ def test_python_render(tmpdir):
     assert png_bytes.startswith(b'\211PNG\r\n\032\n')
     assert pdf_bytes.startswith(b'%PDF')
     check_png_pattern(png_bytes)
-    # TODO: check PDF content? How?
 
     png_file = _fake_file()
     html.write_png(png_file, stylesheets=[css])
     assert png_file.getvalue() == png_bytes
     pdf_file = _fake_file()
     html.write_pdf(pdf_file, stylesheets=[css])
-    # assert pdf_file.read_binary() == pdf_bytes
+    assert pdf_bytes.startswith(b'%PDF')
 
     png_file = tmpdir.join('1.png')
     pdf_file = tmpdir.join('1.pdf')
     html.write_png(png_file.strpath, stylesheets=[css])
     html.write_pdf(pdf_file.strpath, stylesheets=[css])
     assert png_file.read_binary() == png_bytes
-    # assert pdf_file.read_binary() == pdf_bytes
+    assert pdf_bytes.startswith(b'%PDF')
 
     png_file = tmpdir.join('2.png')
     pdf_file = tmpdir.join('2.pdf')
@@ -274,7 +273,7 @@ def test_python_render(tmpdir):
     with open(pdf_file.strpath, 'wb') as pdf_fd:
         html.write_pdf(pdf_fd, stylesheets=[css])
     assert png_file.read_binary() == png_bytes
-    # assert pdf_file.read_binary() == pdf_bytes
+    assert pdf_bytes.startswith(b'%PDF')
 
     x2_png_bytes = html.write_png(stylesheets=[css], resolution=192)
     check_png_pattern(x2_png_bytes, x2=True)
@@ -442,8 +441,6 @@ def test_low_level_api():
     ''')
     pdf_bytes = html.write_pdf(stylesheets=[css])
     assert pdf_bytes.startswith(b'%PDF')
-    # TODO: check PDF content? How?
-    # assert html.render([css]).write_pdf() == pdf_bytes
 
     png_bytes = html.write_png(stylesheets=[css])
     document = html.render([css])

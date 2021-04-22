@@ -9,8 +9,7 @@
 import pytest
 from weasyprint.formatting_structure import boxes
 
-from ..test_boxes import render_pages
-from ..testing_utils import assert_no_logs
+from ..testing_utils import assert_no_logs, render_pages
 
 
 @assert_no_logs
@@ -463,7 +462,7 @@ def test_margin_break(break_after, margin_break, margin_top):
 
 @pytest.mark.xfail
 @assert_no_logs
-def test_margin_break_clearance():  # pragma: no cover
+def test_margin_break_clearance():
     page_1, page_2 = render_pages('''
       <style>
         @page { size: 70px; margin: 0 }
@@ -1057,7 +1056,6 @@ def images(*widths):
         for width in widths)
 
 
-@pytest.mark.xfail
 @assert_no_logs
 @pytest.mark.parametrize('css, widths', (
     ('''@top-left { content: %s }
@@ -1146,7 +1144,6 @@ def images(*widths):
      [275, 325]),  # 250 + (100 * 1 / 4), 250 + (100 * 3 / 4)
 ))
 def test_page_style(css, widths):
-    # TODO: fails because of missing SVG support
     expected_at_keywords = [
         at_keyword for at_keyword in [
             '@top-left', '@top-center', '@top-right']

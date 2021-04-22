@@ -8,117 +8,29 @@
 
 import contextlib
 import operator
+from colorsys import hsv_to_rgb, rgb_to_hsv
 from math import ceil, floor, pi, sqrt, tan
 
 from .formatting_structure import boxes
+from .images import SVGImage
 from .layout import replaced
 from .layout.backgrounds import BackgroundLayer
 from .stacking import StackingContext
+from .svg import SVG
 from .text.ffi import ffi, harfbuzz, pango, units_from_double, units_to_double
 from .text.line_break import get_last_word_end
 
 SIDES = ('top', 'right', 'bottom', 'left')
-CROP = '''
-  <!-- horizontal top left -->
-  <path d="M0,{bleed_top} h{half_bleed_left}" />
-  <!-- horizontal top right -->
-  <path d="M0,{bleed_top} h{half_bleed_right}"
-        transform="translate({width},0) scale(-1,1)" />
-  <!-- horizontal bottom right -->
-  <path d="M0,{bleed_bottom} h{half_bleed_right}"
-        transform="translate({width},{height}) scale(-1,-1)" />
-  <!-- horizontal bottom left -->
-  <path d="M0,{bleed_bottom} h{half_bleed_left}"
-        transform="translate(0,{height}) scale(1,-1)" />
-  <!-- vertical top left -->
-  <path d="M{bleed_left},0 v{half_bleed_top}" />
-  <!-- vertical bottom right -->
-  <path d="M{bleed_right},0 v{half_bleed_bottom}"
-        transform="translate({width},{height}) scale(-1,-1)" />
-  <!-- vertical bottom left -->
-  <path d="M{bleed_left},0 v{half_bleed_bottom}"
-        transform="translate(0,{height}) scale(1,-1)" />
-  <!-- vertical top right -->
-  <path d="M{bleed_right},0 v{half_bleed_top}"
-        transform="translate({width},0) scale(-1,1)" />
-'''
-CROSS = '''
-  <!-- top -->
-  <circle r="{half_bleed_top}"
-          transform="scale(0.5)
-                     translate({width},{half_bleed_top}) scale(0.5)" />
-  <path d="M-{half_bleed_top},{half_bleed_top} h{bleed_top}
-           M0,0 v{bleed_top}"
-        transform="scale(0.5) translate({width},0)" />
-  <!-- bottom -->
-  <circle r="{half_bleed_bottom}"
-          transform="translate(0,{height}) scale(0.5)
-                     translate({width},-{half_bleed_bottom}) scale(0.5)" />
-  <path d="M-{half_bleed_bottom},-{half_bleed_bottom} h{bleed_bottom}
-           M0,0 v-{bleed_bottom}"
-        transform="translate(0,{height}) scale(0.5) translate({width},0)" />
-  <!-- left -->
-  <circle r="{half_bleed_left}"
-          transform="scale(0.5)
-                     translate({half_bleed_left},{height}) scale(0.5)" />
-  <path d="M{half_bleed_left},-{half_bleed_left} v{bleed_left}
-           M0,0 h{bleed_left}"
-        transform="scale(0.5) translate(0,{height})" />
-  <!-- right -->
-  <circle r="{half_bleed_right}"
-          transform="translate({width},0) scale(0.5)
-                     translate(-{half_bleed_right},{height}) scale(0.5)" />
-  <path d="M-{half_bleed_right},-{half_bleed_right} v{bleed_right}
-           M0,0 h-{bleed_right}"
-        transform="translate({width},0)
-                   scale(0.5) translate(0,{height})" />
-'''
 
 
 @contextlib.contextmanager
-def stacked(context):
-    """Save and restore the context when used with the ``with`` keyword."""
-    context.push_state()
+def stacked(stream):
+    """Save and restore stream context when used with the ``with`` keyword."""
+    stream.push_state()
     try:
         yield
     finally:
-        context.pop_state()
-
-
-def hsv2rgb(hue, saturation, value):
-    """Transform a HSV color to a RGB color."""
-    c = value * saturation
-    x = c * (1 - abs((hue / 60) % 2 - 1))
-    m = value - c
-    if 0 <= hue < 60:
-        return c + m, x + m, m
-    elif 60 <= hue < 120:
-        return x + m, c + m, m
-    elif 120 <= hue < 180:
-        return m, c + m, x + m
-    elif 180 <= hue < 240:
-        return m, x + m, c + m
-    elif 240 <= hue < 300:
-        return x + m, m, c + m
-    elif 300 <= hue < 360:
-        return c + m, m, x + m
-
-
-def rgb2hsv(red, green, blue):
-    """Transform a RGB color to a HSV color."""
-    cmax = max(red, green, blue)
-    cmin = min(red, green, blue)
-    delta = cmax - cmin
-    if delta == 0:
-        hue = 0
-    elif cmax == red:
-        hue = 60 * ((green - blue) / delta % 6)
-    elif cmax == green:
-        hue = 60 * ((blue - red) / delta + 2)
-    elif cmax == blue:
-        hue = 60 * ((red - green) / delta + 4)
-    saturation = 0 if delta == 0 else delta / cmax
-    return hue, saturation, cmax
+        stream.pop_state()
 
 
 def get_color(style, key):
@@ -128,22 +40,22 @@ def get_color(style, key):
 
 def darken(color):
     """Return a darker color."""
-    hue, saturation, value = rgb2hsv(color.red, color.green, color.blue)
+    hue, saturation, value = rgb_to_hsv(color.red, color.green, color.blue)
     value /= 1.5
     saturation /= 1.25
-    return hsv2rgb(hue, saturation, value) + (color.alpha,)
+    return hsv_to_rgb(hue, saturation, value) + (color.alpha,)
 
 
 def lighten(color):
     """Return a lighter color."""
-    hue, saturation, value = rgb2hsv(color.red, color.green, color.blue)
+    hue, saturation, value = rgb_to_hsv(color.red, color.green, color.blue)
     value = 1 - (1 - value) / 1.5
     if saturation:
         saturation = 1 - (1 - saturation) / 1.25
-    return hsv2rgb(hue, saturation, value) + (color.alpha,)
+    return hsv_to_rgb(hue, saturation, value) + (color.alpha,)
 
 
-def draw_page(page, context):
+def draw_page(page, stream):
     """Draw the given PageBox."""
     bleed = {
         side: page.style[f'bleed_{side}'].value
@@ -151,45 +63,44 @@ def draw_page(page, context):
     marks = page.style['marks']
     stacking_context = StackingContext.from_page(page)
     draw_background(
-        context, stacking_context.box.background, clip_box=False, bleed=bleed,
+        stream, stacking_context.box.background, clip_box=False, bleed=bleed,
         marks=marks)
-    draw_background(context, page.canvas_background, clip_box=False)
-    draw_border(context, page)
-    draw_stacking_context(context, stacking_context)
+    draw_background(stream, page.canvas_background, clip_box=False)
+    draw_border(stream, page)
+    draw_stacking_context(stream, stacking_context)
 
 
-def draw_box_background_and_border(context, page, box):
-    draw_background(context, box.background)
+def draw_box_background_and_border(stream, page, box):
+    draw_background(stream, box.background)
     if isinstance(box, boxes.TableBox):
-        draw_table_backgrounds(context, page, box)
+        draw_table_backgrounds(stream, page, box)
         if box.style['border_collapse'] == 'separate':
-            draw_border(context, box)
+            draw_border(stream, box)
             for row_group in box.children:
                 for row in row_group.children:
                     for cell in row.children:
                         if (cell.style['empty_cells'] == 'show' or
                                 not cell.empty):
-                            draw_border(context, cell)
+                            draw_border(stream, cell)
         else:
-            draw_collapsed_borders(context, box)
+            draw_collapsed_borders(stream, box)
     else:
-        draw_border(context, box)
+        draw_border(stream, box)
 
 
-def draw_stacking_context(context, stacking_context):
-    """Draw a ``stacking_context`` on ``context``."""
+def draw_stacking_context(stream, stacking_context):
+    """Draw a ``stacking_context`` on ``stream``."""
     # See http://www.w3.org/TR/CSS2/zindex.html
-    with stacked(context):
+    with stacked(stream):
         box = stacking_context.box
 
         # apply the viewport_overflow to the html box, see #35
         if box.is_for_root_element and (
                 stacking_context.page.style['overflow'] != 'visible'):
             rounded_box_path(
-                context,
-                stacking_context.page.rounded_padding_box())
-            context.clip()
-            context.end()
+                stream, stacking_context.page.rounded_padding_box())
+            stream.clip()
+            stream.end()
 
         if box.is_absolutely_positioned() and box.style['clip']:
             top, right, bottom, left = box.style['clip']
@@ -201,17 +112,15 @@ def draw_stacking_context(context, stacking_context):
                 bottom = box.border_height()
             if left == 'auto':
                 left = box.border_width()
-            context.rectangle(
-                box.border_box_x() + right,
-                box.border_box_y() + top,
-                left - right,
-                bottom - top)
-            context.clip()
-            context.end()
+            stream.rectangle(
+                box.border_box_x() + right, box.border_box_y() + top,
+                left - right, bottom - top)
+            stream.clip()
+            stream.end()
 
         if box.style['opacity'] < 1:
-            original_context = context
-            context = context.add_transparency_group([
+            original_stream = stream
+            stream = stream.add_transparency_group([
                 box.border_box_x(), box.border_box_y(),
                 box.border_box_x() + box.border_width(),
                 box.border_box_y() + box.border_height()])
@@ -219,7 +128,7 @@ def draw_stacking_context(context, stacking_context):
         if box.transformation_matrix:
             if box.transformation_matrix.determinant:
                 ((a, b, _), (c, d, _), (e, f, _)) = box.transformation_matrix
-                context.transform(a, b, c, d, e, f)
+                stream.transform(a, b, c, d, e, f)
             else:
                 return
 
@@ -230,69 +139,67 @@ def draw_stacking_context(context, stacking_context):
                             boxes.InlineBlockBox, boxes.TableCellBox,
                             boxes.FlexContainerBox)):
             # The canvas background was removed by set_canvas_background
-            draw_box_background_and_border(
-                context, stacking_context.page, box)
+            draw_box_background_and_border(stream, stacking_context.page, box)
 
-        with stacked(context):
+        with stacked(stream):
             # dont clip the PageBox, see #35
             if box.style['overflow'] != 'visible' and not isinstance(
                     box, boxes.PageBox):
                 # Only clip the content and the children:
                 # - the background is already clipped
                 # - the border must *not* be clipped
-                rounded_box_path(context, box.rounded_padding_box())
-                context.clip()
-                context.end()
+                rounded_box_path(stream, box.rounded_padding_box())
+                stream.clip()
+                stream.end()
 
             # Point 3
             for child_context in stacking_context.negative_z_contexts:
-                draw_stacking_context(context, child_context)
+                draw_stacking_context(stream, child_context)
 
             # Point 4
             for block in stacking_context.block_level_boxes:
                 draw_box_background_and_border(
-                    context, stacking_context.page, block)
+                    stream, stacking_context.page, block)
 
             # Point 5
             for child_context in stacking_context.float_contexts:
-                draw_stacking_context(context, child_context)
+                draw_stacking_context(stream, child_context)
 
             # Point 6
             if isinstance(box, boxes.InlineBox):
-                draw_inline_level(
-                    context, stacking_context.page, box)
+                draw_inline_level(stream, stacking_context.page, box)
 
             # Point 7
             for block in [box] + stacking_context.blocks_and_cells:
                 if isinstance(block, boxes.ReplacedBox):
-                    draw_replacedbox(context, block)
+                    draw_replacedbox(stream, block)
                 else:
                     for child in block.children:
                         if isinstance(child, boxes.LineBox):
                             draw_inline_level(
-                                context, stacking_context.page, child)
+                                stream, stacking_context.page, child)
 
             # Point 8
             for child_context in stacking_context.zero_z_contexts:
-                draw_stacking_context(context, child_context)
+                draw_stacking_context(stream, child_context)
 
             # Point 9
             for child_context in stacking_context.positive_z_contexts:
-                draw_stacking_context(context, child_context)
+                draw_stacking_context(stream, child_context)
 
         # Point 10
-        draw_outlines(context, box)
+        draw_outlines(stream, box)
 
         if box.style['opacity'] < 1:
-            group_id = context.id
-            context = original_context
-            context.push_state()
-            context.set_alpha(box.style['opacity'], stroke=None)
-            context.draw_x_object(group_id)
-            context.pop_state()
+            group_id = stream.id
+            stream = original_stream
+            stream.push_state()
+            stream.set_alpha(box.style['opacity'], stroke=None)
+            stream.draw_x_object(group_id)
+            stream.pop_state()
 
 
-def rounded_box_path(context, radii):
+def rounded_box_path(stream, radii):
     """Draw the path of the border radius box.
 
     ``widths`` is a tuple of the inner widths (top, right, bottom, left) from
@@ -304,29 +211,29 @@ def rounded_box_path(context, radii):
 
     if all(0 in corner for corner in (tl, tr, br, bl)):
         # No radius, draw a rectangle
-        context.rectangle(x, y, w, h)
+        stream.rectangle(x, y, w, h)
         return
 
     r = 0.45
 
-    context.move_to(x + tl[0], y)
-    context.line_to(x + w - tr[0], y)
-    context.curve_to(
+    stream.move_to(x + tl[0], y)
+    stream.line_to(x + w - tr[0], y)
+    stream.curve_to(
         x + w - tr[0] * r, y, x + w, y + tr[1] * r, x + w, y + tr[1])
-    context.line_to(x + w, y + h - br[1])
-    context.curve_to(
+    stream.line_to(x + w, y + h - br[1])
+    stream.curve_to(
         x + w, y + h - br[1] * r, x + w - br[0] * r, y + h, x + w - br[0],
         y + h)
-    context.line_to(x + bl[0], y + h)
-    context.curve_to(
+    stream.line_to(x + bl[0], y + h)
+    stream.curve_to(
         x + bl[0] * r, y + h, x, y + h - bl[1] * r, x, y + h - bl[1])
-    context.line_to(x, y + tl[1])
-    context.curve_to(
+    stream.line_to(x, y + tl[1])
+    stream.curve_to(
         x, y + tl[1] * r, x + tl[0] * r, y, x + tl[0], y)
 
 
-def draw_background(context, bg, clip_box=True, bleed=None, marks=()):
-    """Draw the background color and image to a ``document.Context``.
+def draw_background(stream, bg, clip_box=True, bleed=None, marks=()):
+    """Draw the background color and image to a ``document.Stream``.
 
     If ``clip_box`` is set to ``False``, the background is not clipped to the
     border box of the background, but only to the painting area.
@@ -335,16 +242,16 @@ def draw_background(context, bg, clip_box=True, bleed=None, marks=()):
     if bg is None:
         return
 
-    with stacked(context):
+    with stacked(stream):
         if clip_box:
             for box in bg.layers[-1].clipped_boxes:
-                rounded_box_path(context, box)
-            context.clip()
-            context.end()
+                rounded_box_path(stream, box)
+            stream.clip()
+            stream.end()
 
         # Background color
         if bg.color.alpha > 0:
-            with stacked(context):
+            with stacked(stream):
                 painting_area = bg.layers[-1].painting_area
                 if painting_area:
                     if bleed:
@@ -354,43 +261,71 @@ def draw_background(context, bg, clip_box=True, bleed=None, marks=()):
                             x - bleed['left'], y - bleed['top'],
                             width + bleed['left'] + bleed['right'],
                             height + bleed['top'] + bleed['bottom'])
-                    context.rectangle(*painting_area)
-                    context.clip()
-                    context.end()
-                context.rectangle(*context.page_rectangle)
-                context.set_color_rgb(*bg.color[:3])
-                context.set_alpha(bg.color.alpha)
-                context.fill()
+                    stream.rectangle(*painting_area)
+                    stream.clip()
+                    stream.end()
+                stream.rectangle(*stream.page_rectangle)
+                stream.set_color_rgb(*bg.color[:3])
+                stream.set_alpha(bg.color.alpha)
+                stream.fill()
 
-        if False and bleed and marks:
-            # TODO: fix this when SVG images are supported again
+        if bleed and marks:
             x, y, width, height = bg.layers[-1].painting_area
             x -= bleed['left']
             y -= bleed['top']
             width += bleed['left'] + bleed['right']
             height += bleed['top'] + bleed['bottom']
-            svg = '''
+            half_bleed = {key: value * 0.5 for key, value in bleed.items()}
+            svg = f'''
               <svg height="{height}" width="{width}"
                    fill="transparent" stroke="black" stroke-width="1"
                    xmlns="http://www.w3.org/2000/svg"
                    xmlns:xlink="http://www.w3.org/1999/xlink">
             '''
             if 'crop' in marks:
-                svg += CROP
+                svg += f'''
+                  <path d="M0,{bleed['top']} h{half_bleed['left']}" />
+                  <path d="M0,{bleed['top']} h{half_bleed['right']}"
+                        transform="translate({width},0) scale(-1,1)" />
+                  <path d="M0,{bleed['bottom']} h{half_bleed['right']}"
+                        transform="translate({width},{height}) scale(-1,-1)" />
+                  <path d="M0,{bleed['bottom']} h{half_bleed['left']}"
+                        transform="translate(0,{height}) scale(1,-1)" />
+                  <path d="M{bleed['left']},0 v{half_bleed['top']}" />
+                  <path d="M{bleed['right']},0 v{half_bleed['bottom']}"
+                        transform="translate({width},{height}) scale(-1,-1)" />
+                  <path d="M{bleed['left']},0 v{half_bleed['bottom']}"
+                        transform="translate(0,{height}) scale(1,-1)" />
+                  <path d="M{bleed['right']},0 v{half_bleed['top']}"
+                        transform="translate({width},0) scale(-1,1)" />
+                '''
             if 'cross' in marks:
-                svg += CROSS
+                svg += f'''
+                  <circle r="{half_bleed['top']}" transform="scale(0.5)
+                     translate({width},{half_bleed['top']}) scale(0.5)" />
+                  <path transform="scale(0.5) translate({width},0)" d="
+                    M-{half_bleed['top']},{half_bleed['top']} h{bleed['top']}
+                    M0,0 v{bleed['top']}" />
+                  <circle r="{half_bleed['bottom']}" transform="
+                    translate(0,{height}) scale(0.5)
+                    translate({width},-{half_bleed['bottom']}) scale(0.5)" />
+                  <path d="M-{half_bleed['bottom']},-{half_bleed['bottom']}
+                    h{bleed['bottom']} M0,0 v-{bleed['bottom']}" transform="
+                    translate(0,{height}) scale(0.5) translate({width},0)" />
+                  <circle r="{half_bleed['left']}" transform="scale(0.5)
+                    translate({half_bleed['left']},{height}) scale(0.5)" />
+                  <path d="M{half_bleed['left']},-{half_bleed['left']}
+                    v{bleed['left']} M0,0 h{bleed['left']}"
+                    transform="scale(0.5) translate(0,{height})" />
+                  <circle r="{half_bleed['right']}" transform="
+                    translate({width},0) scale(0.5)
+                    translate(-{half_bleed['right']},{height}) scale(0.5)" />
+                  <path d="M-{half_bleed['right']},-{half_bleed['right']}
+                    v{bleed['right']} M0,0 h-{bleed['right']}" transform="
+                    translate({width},0) scale(0.5) translate(0,{height})" />
+                '''
             svg += '</svg>'
-            # half_bleed = {key: value * 0.5 for key, value in bleed.items()}
-            # image = SVGImage(svg.format(
-            #     height=height, width=width,
-            #     bleed_left=bleed['left'], bleed_right=bleed['right'],
-            #     bleed_top=bleed['top'], bleed_bottom=bleed['bottom'],
-            #     half_bleed_left=half_bleed['left'],
-            #     half_bleed_right=half_bleed['right'],
-            #     half_bleed_top=half_bleed['top'],
-            #     half_bleed_bottom=half_bleed['bottom'],
-            # ), '', None)
-            image = None
+            image = SVGImage(SVG(svg, None), None, None, stream)
             # Painting area is the PDF media box
             size = (width, height)
             position = (x, y)
@@ -405,27 +340,27 @@ def draw_background(context, bg, clip_box=True, bleed=None, marks=()):
             bg.layers.insert(0, layer)
         # Paint in reversed order: first layer is "closest" to the viewer.
         for layer in reversed(bg.layers):
-            draw_background_image(context, layer, bg.image_rendering)
+            draw_background_image(stream, layer, bg.image_rendering)
 
 
-def draw_table_backgrounds(context, page, table):
+def draw_table_backgrounds(stream, page, table):
     """Draw the background color and image of the table children."""
     for column_group in table.column_groups:
-        draw_background(context, column_group.background)
+        draw_background(stream, column_group.background)
         for column in column_group.children:
-            draw_background(context, column.background)
+            draw_background(stream, column.background)
     for row_group in table.children:
-        draw_background(context, row_group.background)
+        draw_background(stream, row_group.background)
         for row in row_group.children:
-            draw_background(context, row.background)
+            draw_background(stream, row.background)
             for cell in row.children:
                 if (table.style['border_collapse'] == 'collapse' or
                         cell.style['empty_cells'] == 'show' or
                         not cell.empty):
-                    draw_background(context, cell.background)
+                    draw_background(stream, cell.background)
 
 
-def draw_background_image(context, layer, image_rendering):
+def draw_background_image(stream, layer, image_rendering):
     if layer.image is None or 0 in layer.size:
         return
 
@@ -475,25 +410,26 @@ def draw_background_image(context, layer, image_rendering):
 
     if repeat_x == repeat_y == 'no-repeat':
         # PDF patterns always repeat, use a big number to hide repetition
-        repeat_width = 2 * context.page_rectangle[2]
-        repeat_height = 2 * context.page_rectangle[3]
+        repeat_width = 2 * stream.page_rectangle[2]
+        repeat_height = 2 * stream.page_rectangle[3]
 
-    pattern = context.add_pattern(
+    pattern = stream.add_pattern(
         position_x + positioning_x, position_y + positioning_y,
-        image_width, image_height, repeat_width, repeat_height)
+        image_width, image_height, repeat_width, repeat_height, stream.ctm)
     child = pattern.add_transparency_group([0, 0, repeat_width, repeat_height])
 
-    with stacked(context):
+    with stacked(stream):
         layer.image.draw(child, image_width, image_height, image_rendering)
         pattern.draw_x_object(child.id)
-        context.color_space('Pattern')
-        context.set_color_special(pattern.id)
+        stream.color_space('Pattern')
+        stream.set_color_special(pattern.id)
         if layer.unbounded:
-            context.rectangle(*context.page_rectangle)
+            x1, y1, x2, y2 = stream.page_rectangle
+            stream.rectangle(x1, y1, x2 - x1, y2 - y1)
         else:
-            context.rectangle(
+            stream.rectangle(
                 painting_x, painting_y, painting_width, painting_height)
-        context.fill()
+        stream.fill()
 
 
 def xy_offset(x, y, offset_x, offset_y, offset):
@@ -513,8 +449,8 @@ def styled_color(style, color, side):
     return color
 
 
-def draw_border(context, box):
-    """Draw the box border to a ``document.Context``."""
+def draw_border(stream, box):
+    """Draw the box border to a ``document.Stream``."""
     # We need a plan to draw beautiful borders, and that's difficult, no need
     # to lie. Let's try to find the cases that we can handle in a smart way.
 
@@ -527,7 +463,7 @@ def draw_border(context, box):
         if columns and box.style['column_rule_width']:
             border_widths = (0, 0, 0, box.style['column_rule_width'])
             for child in box.children[1:]:
-                with stacked(context):
+                with stacked(stream):
                     position_x = (child.position_x - (
                         box.style['column_rule_width'] +
                         box.style['column_gap']) / 2)
@@ -535,11 +471,11 @@ def draw_border(context, box):
                         position_x, child.position_y,
                         box.style['column_rule_width'], box.height)
                     clip_border_segment(
-                        context, box.style['column_rule_style'],
+                        stream, box.style['column_rule_style'],
                         box.style['column_rule_width'], 'left', border_box,
                         border_widths)
                     draw_rect_border(
-                        context, border_box, border_widths,
+                        stream, border_box, border_widths,
                         box.style['column_rule_style'], styled_color(
                             box.style['column_rule_style'],
                             get_color(box.style, 'column_rule_color'), 'left'))
@@ -565,7 +501,7 @@ def draw_border(context, box):
     # We can draw them so easily!
     if set(styles) in (set(('solid',)), set(('double',))) and (
             len(set(colors)) == 1):
-        draw_rounded_border(context, box, styles[0], colors[0])
+        draw_rounded_border(stream, box, styles[0], colors[0])
         draw_column_border()
         return
 
@@ -574,17 +510,17 @@ def draw_border(context, box):
     for side, width, color, style in zip(SIDES, widths, colors, styles):
         if width == 0 or not color:
             continue
-        with stacked(context):
+        with stacked(stream):
             clip_border_segment(
-                context, style, width, side, box.rounded_border_box()[:4],
+                stream, style, width, side, box.rounded_border_box()[:4],
                 widths, box.rounded_border_box()[4:])
             draw_rounded_border(
-                context, box, style, styled_color(style, color, side))
+                stream, box, style, styled_color(style, color, side))
 
     draw_column_border()
 
 
-def clip_border_segment(context, style, width, side, border_box,
+def clip_border_segment(stream, style, width, side, border_box,
                         border_widths=None, radii=None):
     """Clip one segment of box border.
 
@@ -661,19 +597,19 @@ def clip_border_segment(context, style, width, side, border_box,
         a2, b2 = -px2 - br / 2, way * py2 - width / 2
         line_length = bbw - px1 + px2
         length = bbw
-        context.move_to(bbx + bbw, main_offset)
-        context.line_to(bbx, main_offset)
-        context.line_to(bbx + px1, main_offset + py1)
-        context.line_to(bbx + bbw + px2, main_offset + py2)
+        stream.move_to(bbx + bbw, main_offset)
+        stream.line_to(bbx, main_offset)
+        stream.line_to(bbx + px1, main_offset + py1)
+        stream.line_to(bbx + bbw + px2, main_offset + py2)
     elif side in ('left', 'right'):
         a1, b1 = -way * px1 - width / 2, py1 - bt / 2
         a2, b2 = -way * px2 - width / 2, -py2 - bb / 2
         line_length = bbh - py1 + py2
         length = bbh
-        context.move_to(main_offset, bby + bbh)
-        context.line_to(main_offset, bby)
-        context.line_to(main_offset + px1, bby + py1)
-        context.line_to(main_offset + px2, bby + bbh + py2)
+        stream.move_to(main_offset, bby + bbh)
+        stream.line_to(main_offset, bby)
+        stream.line_to(main_offset + px1, bby + py1)
+        stream.line_to(main_offset + px2, bby + bbh + py2)
 
     if style in ('dotted', 'dashed'):
         dash = width if style == 'dotted' else 3 * width
@@ -706,21 +642,17 @@ def clip_border_segment(context, style, width, side, border_box,
                         4 * pi,
                         angle * pi / 2)
                     if side in ('top', 'bottom'):
-                        context.move_to(x + px, main_offset + py)
-                        context.line_to(
-                            x + px - way * px * 1 / tan(angle2),
-                            main_offset)
-                        context.line_to(
-                            x + px - way * px * 1 / tan(angle1),
-                            main_offset)
+                        stream.move_to(x + px, main_offset + py)
+                        stream.line_to(
+                            x + px - way * px * 1 / tan(angle2), main_offset)
+                        stream.line_to(
+                            x + px - way * px * 1 / tan(angle1), main_offset)
                     elif side in ('left', 'right'):
-                        context.move_to(main_offset + px, y + py)
-                        context.line_to(
-                            main_offset,
-                            y + py + way * py * tan(angle2))
-                        context.line_to(
-                            main_offset,
-                            y + py + way * py * tan(angle1))
+                        stream.move_to(main_offset + px, y + py)
+                        stream.line_to(
+                            main_offset, y + py + way * py * tan(angle2))
+                        stream.line_to(
+                            main_offset, y + py + way * py * tan(angle1))
                     if angle2 == angle * pi / 2:
                         offset = (angle1 - angle2) / ((
                             ((2 * angle - way) + (i + 1) * way * dash / chl) /
@@ -750,86 +682,83 @@ def clip_border_segment(context, style, width, side, border_box,
                         y2 = min(bby + py1 + (i + 1) * dash, bby + bbh + py2)
                         x1 = main_offset - (width if way > 0 else 0)
                         x2 = x1 + width
-                    context.rectangle(x1, y1, x2 - x1, y2 - y1)
+                    stream.rectangle(x1, y1, x2 - x1, y2 - y1)
         else:
             # 2x + 1 dashes
-            context.clip(even_odd=True)
-            context.end()
+            stream.clip(even_odd=True)
+            stream.end()
             dash = length / (
                 round(length / dash) - (round(length / dash) + 1) % 2) or 1
             for i in range(0, int(round(length / dash)), 2):
                 if side == 'top':
-                    context.rectangle(
-                        bbx + i * dash, bby, dash, width)
+                    stream.rectangle(bbx + i * dash, bby, dash, width)
                 elif side == 'right':
-                    context.rectangle(
+                    stream.rectangle(
                         bbx + bbw - width, bby + i * dash, width, dash)
                 elif side == 'bottom':
-                    context.rectangle(
+                    stream.rectangle(
                         bbx + i * dash, bby + bbh - width, dash, width)
                 elif side == 'left':
-                    context.rectangle(
-                        bbx, bby + i * dash, width, dash)
-    context.clip(even_odd=True)
-    context.end()
+                    stream.rectangle(bbx, bby + i * dash, width, dash)
+    stream.clip(even_odd=True)
+    stream.end()
 
 
-def draw_rounded_border(context, box, style, color):
-    rounded_box_path(context, box.rounded_padding_box())
+def draw_rounded_border(stream, box, style, color):
+    rounded_box_path(stream, box.rounded_padding_box())
     if style in ('ridge', 'groove'):
-        rounded_box_path(context, box.rounded_box_ratio(1 / 2))
-        context.set_color_rgb(*color[0][:3])
-        context.set_alpha(color[0][3])
-        context.fill(even_odd=True)
-        rounded_box_path(context, box.rounded_box_ratio(1 / 2))
-        rounded_box_path(context, box.rounded_border_box())
-        context.set_color_rgb(*color[1][:3])
-        context.set_alpha(color[1][3])
-        context.fill(even_odd=True)
+        rounded_box_path(stream, box.rounded_box_ratio(1 / 2))
+        stream.set_color_rgb(*color[0][:3])
+        stream.set_alpha(color[0][3])
+        stream.fill(even_odd=True)
+        rounded_box_path(stream, box.rounded_box_ratio(1 / 2))
+        rounded_box_path(stream, box.rounded_border_box())
+        stream.set_color_rgb(*color[1][:3])
+        stream.set_alpha(color[1][3])
+        stream.fill(even_odd=True)
         return
     if style == 'double':
-        rounded_box_path(context, box.rounded_box_ratio(1 / 3))
-        rounded_box_path(context, box.rounded_box_ratio(2 / 3))
-    rounded_box_path(context, box.rounded_border_box())
-    context.set_color_rgb(*color[:3])
-    context.set_alpha(color[3])
-    context.fill(even_odd=True)
+        rounded_box_path(stream, box.rounded_box_ratio(1 / 3))
+        rounded_box_path(stream, box.rounded_box_ratio(2 / 3))
+    rounded_box_path(stream, box.rounded_border_box())
+    stream.set_color_rgb(*color[:3])
+    stream.set_alpha(color[3])
+    stream.fill(even_odd=True)
 
 
-def draw_rect_border(context, box, widths, style, color):
+def draw_rect_border(stream, box, widths, style, color):
     bbx, bby, bbw, bbh = box
     bt, br, bb, bl = widths
-    context.rectangle(*box)
+    stream.rectangle(*box)
     if style in ('ridge', 'groove'):
-        context.rectangle(
+        stream.rectangle(
             bbx + bl / 2, bby + bt / 2,
             bbw - (bl + br) / 2, bbh - (bt + bb) / 2)
-        context.set_color_rgb(*color[0][:3])
-        context.set_alpha(color[0][3])
-        context.fill(even_odd=True)
-        context.rectangle(
+        stream.set_color_rgb(*color[0][:3])
+        stream.set_alpha(color[0][3])
+        stream.fill(even_odd=True)
+        stream.rectangle(
             bbx + bl / 2, bby + bt / 2,
             bbw - (bl + br) / 2, bbh - (bt + bb) / 2)
-        context.rectangle(
-            bbx + bl, bby + bt, bbw - bl - br, bbh - bt - bb)
-        context.set_color_rgb(*color[1][:3])
-        context.set_alpha(color[1][3])
-        context.fill(even_odd=True)
+        stream.rectangle(bbx + bl, bby + bt, bbw - bl - br, bbh - bt - bb)
+        stream.set_color_rgb(*color[1][:3])
+        stream.set_alpha(color[1][3])
+        stream.fill(even_odd=True)
         return
     if style == 'double':
-        context.rectangle(
+        stream.rectangle(
             bbx + bl / 3, bby + bt / 3,
             bbw - (bl + br) / 3, bbh - (bt + bb) / 3)
-        context.rectangle(
+        stream.rectangle(
             bbx + bl * 2 / 3, bby + bt * 2 / 3,
             bbw - (bl + br) * 2 / 3, bbh - (bt + bb) * 2 / 3)
-    context.rectangle(bbx + bl, bby + bt, bbw - bl - br, bbh - bt - bb)
-    context.set_color_rgb(*color[:3])
-    context.set_alpha(color[3])
-    context.fill(even_odd=True)
+    stream.rectangle(bbx + bl, bby + bt, bbw - bl - br, bbh - bt - bb)
+    stream.set_color_rgb(*color[:3])
+    stream.set_alpha(color[3])
+    stream.fill(even_odd=True)
 
 
-def draw_outlines(context, box):
+def draw_outlines(stream, box):
     width = box.style['outline_width']
     color = get_color(box.style, 'outline_color')
     style = box.style['outline_style']
@@ -838,28 +767,30 @@ def draw_outlines(context, box):
             box.border_box_x() - width, box.border_box_y() - width,
             box.border_width() + 2 * width, box.border_height() + 2 * width)
         for side in SIDES:
-            with stacked(context):
-                clip_border_segment(context, style, width, side, outline_box)
+            with stacked(stream):
+                clip_border_segment(stream, style, width, side, outline_box)
                 draw_rect_border(
-                    context, outline_box, 4 * (width,), style,
+                    stream, outline_box, 4 * (width,), style,
                     styled_color(style, color, side))
 
     if isinstance(box, boxes.ParentBox):
         for child in box.children:
             if isinstance(child, boxes.Box):
-                draw_outlines(context, child)
+                draw_outlines(stream, child)
 
 
-def draw_collapsed_borders(context, table):
+def draw_collapsed_borders(stream, table):
     """Draw borders of table cells when they collapse."""
-    row_heights = [row.height for row_group in table.children
-                   for row in row_group.children]
+    row_heights = [
+        row.height for row_group in table.children
+        for row in row_group.children]
     column_widths = table.column_widths
     if not (row_heights and column_widths):
         # One of the list is empty: don’t bother with empty tables
         return
-    row_positions = [row.position_y for row_group in table.children
-                     for row in row_group.children]
+    row_positions = [
+        row.position_y for row_group in table.children
+        for row in row_group.children]
     column_positions = list(table.column_positions)
     grid_height = len(row_heights)
     grid_width = len(column_widths)
@@ -968,40 +899,39 @@ def draw_collapsed_borders(context, table):
             widths = (width, 0, 0, 0)
         else:
             widths = (0, 0, 0, width)
-        with stacked(context):
-            clip_border_segment(
-                context, style, width, side, border_box, widths)
+        with stacked(stream):
+            clip_border_segment(stream, style, width, side, border_box, widths)
             draw_rect_border(
-                context, border_box, widths, style,
+                stream, border_box, widths, style,
                 styled_color(style, color, side))
 
 
-def draw_replacedbox(context, box):
-    """Draw the given :class:`boxes.ReplacedBox` to a ``document.Context``."""
+def draw_replacedbox(stream, box):
+    """Draw the given :class:`boxes.ReplacedBox` to a ``document.Stream``."""
     if box.style['visibility'] != 'visible' or not box.width or not box.height:
         return
 
     draw_width, draw_height, draw_x, draw_y = replaced.replacedbox_layout(box)
 
-    with stacked(context):
-        rounded_box_path(context, box.rounded_content_box())
-        context.clip()
-        context.end()
-        context.transform(1, 0, 0, 1, draw_x, draw_y)
+    with stacked(stream):
+        rounded_box_path(stream, box.rounded_content_box())
+        stream.clip()
+        stream.end()
+        stream.transform(1, 0, 0, 1, draw_x, draw_y)
         box.replacement.draw(
-            context, draw_width, draw_height, box.style['image_rendering'])
+            stream, draw_width, draw_height, box.style['image_rendering'])
 
 
-def draw_inline_level(context, page, box, offset_x=0, text_overflow='clip',
+def draw_inline_level(stream, page, box, offset_x=0, text_overflow='clip',
                       block_ellipsis='none'):
     if isinstance(box, StackingContext):
         stacking_context = box
         assert isinstance(
             stacking_context.box, (boxes.InlineBlockBox, boxes.InlineFlexBox))
-        draw_stacking_context(context, stacking_context)
+        draw_stacking_context(stream, stacking_context)
     else:
-        draw_background(context, box.background)
-        draw_border(context, box)
+        draw_background(stream, box.background)
+        draw_border(stream, box)
         if isinstance(box, (boxes.InlineBox, boxes.LineBox)):
             if isinstance(box, boxes.LineBox):
                 text_overflow = box.text_overflow
@@ -1019,31 +949,30 @@ def draw_inline_level(context, page, box, offset_x=0, text_overflow='clip',
                         offset_x + child.position_x - box.position_x)
                 if isinstance(child, boxes.TextBox):
                     if not in_text:
-                        context.begin_text()
+                        stream.begin_text()
                         in_text = True
                     draw_text(
-                        context, child, child_offset_x, text_overflow,
-                        ellipsis)
+                        stream, child, child_offset_x, text_overflow, ellipsis)
                 else:
                     if in_text:
                         in_text = False
-                        context.end_text()
+                        stream.end_text()
                     draw_inline_level(
-                        context, page, child, child_offset_x, text_overflow,
+                        stream, page, child, child_offset_x, text_overflow,
                         ellipsis)
             if in_text:
-                context.end_text()
+                stream.end_text()
         elif isinstance(box, boxes.InlineReplacedBox):
-            draw_replacedbox(context, box)
+            draw_replacedbox(stream, box)
         else:
             assert isinstance(box, boxes.TextBox)
             # Should only happen for list markers
-            context.begin_text()
-            draw_text(context, box, offset_x, text_overflow)
-            context.end_text()
+            stream.begin_text()
+            draw_text(stream, box, offset_x, text_overflow)
+            stream.end_text()
 
 
-def draw_text(context, textbox, offset_x, text_overflow, block_ellipsis):
+def draw_text(stream, textbox, offset_x, text_overflow, block_ellipsis):
     """Draw a textbox to a pydyf stream."""
     # Pango crashes with font-size: 0
     assert textbox.style['font_size']
@@ -1052,11 +981,11 @@ def draw_text(context, textbox, offset_x, text_overflow, block_ellipsis):
         return
 
     x, y = textbox.position_x, textbox.position_y + textbox.baseline
-    context.set_color_rgb(*textbox.style['color'][:3])
-    context.set_alpha(textbox.style['color'][3])
+    stream.set_color_rgb(*textbox.style['color'][:3])
+    stream.set_alpha(textbox.style['color'][3])
 
     textbox.pango_layout.reactivate(textbox.style)
-    draw_first_line(context, textbox, text_overflow, block_ellipsis, x, y)
+    draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y)
 
     # Draw text decoration
     values = textbox.style['text_decoration_line']
@@ -1078,13 +1007,13 @@ def draw_text(context, textbox, offset_x, text_overflow, block_ellipsis):
             textbox.baseline - textbox.pango_layout.strikethrough_position)
     if values != 'none':
         draw_text_decoration(
-            context, textbox, offset_x, offset_y, thickness, color)
+            stream, textbox, offset_x, offset_y, thickness, color)
 
     textbox.pango_layout.deactivate()
 
 
-def draw_first_line(context, textbox, text_overflow, block_ellipsis, x, y):
-    """Draw the given ``textbox`` line to the document ``context``."""
+def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y):
+    """Draw the given ``textbox`` line to the document ``stream``."""
     pango.pango_layout_set_single_paragraph_mode(
         textbox.pango_layout.layout, True)
 
@@ -1135,7 +1064,7 @@ def draw_first_line(context, textbox, text_overflow, block_ellipsis, x, y):
     while runs[-1].next != ffi.NULL:
         runs.append(runs[-1].next)
 
-    context.text_matrix(font_size, 0, 0, -font_size, x, y)
+    stream.text_matrix(font_size, 0, 0, -font_size, x, y)
     last_font = None
     string = ''
     for run in runs:
@@ -1152,16 +1081,16 @@ def draw_first_line(context, textbox, text_overflow, block_ellipsis, x, y):
         pango_desc = pango.pango_font_describe(pango_font)
         font_hash = ffi.string(
             pango.pango_font_description_to_string(pango_desc))
-        fonts = context.get_fonts()
+        fonts = stream.get_fonts()
         if font_hash in fonts:
             font = fonts[font_hash]
         else:
             hb_font = pango.pango_font_get_hb_font(pango_font)
             hb_face = harfbuzz.hb_font_get_face(hb_font)
             hb_blob = harfbuzz.hb_face_reference_blob(hb_face)
-            hb_data = harfbuzz.hb_blob_get_data(hb_blob, context.length)
-            file_content = ffi.unpack(hb_data, int(context.length[0]))
-            font = context.add_font(font_hash, file_content, pango_font)
+            hb_data = harfbuzz.hb_blob_get_data(hb_blob, stream.length)
+            file_content = ffi.unpack(hb_data, int(stream.length[0]))
+            font = stream.add_font(font_hash, file_content, pango_font)
 
         # Positions of the glyphs in the UTF-8 string
         utf8_positions = [offset + clusters[i] for i in range(1, num_glyphs)]
@@ -1170,10 +1099,10 @@ def draw_first_line(context, textbox, text_overflow, block_ellipsis, x, y):
         # Go through the run glyphs
         if font != last_font:
             if string:
-                context.show_text(string)
+                stream.show_text(string)
             string = ''
             last_font = font
-        context.set_font_size(font.hash, 1)
+        stream.set_font_size(font.hash, 1)
         string += '<'
         for i in range(num_glyphs):
             glyph = glyphs[i].glyph
@@ -1188,12 +1117,12 @@ def draw_first_line(context, textbox, text_overflow, block_ellipsis, x, y):
             # Ink bounding box and logical widths in font
             if glyph not in font.widths:
                 pango.pango_font_get_glyph_extents(
-                    pango_font, glyph, context.ink_rect, context.logical_rect)
+                    pango_font, glyph, stream.ink_rect, stream.logical_rect)
                 x1, y1, x2, y2 = (
-                    context.ink_rect.x,
-                    -context.ink_rect.y - context.ink_rect.height,
-                    context.ink_rect.x + context.ink_rect.width,
-                    -context.ink_rect.y)
+                    stream.ink_rect.x,
+                    -stream.ink_rect.y - stream.ink_rect.height,
+                    stream.ink_rect.x + stream.ink_rect.width,
+                    -stream.ink_rect.y)
                 if x1 < font.bbox[0]:
                     font.bbox[0] = int(units_to_double(x1 * 1000) / font_size)
                 if y1 < font.bbox[1]:
@@ -1203,7 +1132,7 @@ def draw_first_line(context, textbox, text_overflow, block_ellipsis, x, y):
                 if y2 > font.bbox[3]:
                     font.bbox[3] = int(units_to_double(y2 * 1000) / font_size)
                 font.widths[glyph] = int(
-                    units_to_double(context.logical_rect.width * 1000) /
+                    units_to_double(stream.logical_rect.width * 1000) /
                     font_size)
 
             # Kerning, word spacing, letter spacing
@@ -1227,22 +1156,22 @@ def draw_first_line(context, textbox, text_overflow, block_ellipsis, x, y):
             string += '>'
 
     # Draw text
-    context.show_text(string)
+    stream.show_text(string)
 
 
-def draw_wave(context, x, y, width, offset_x, radius):
+def draw_wave(stream, x, y, width, offset_x, radius):
     up = 1
     max_x = x + width
 
-    context.rectangle(x, y - 2 * radius, width, 4 * radius)
-    context.clip()
-    context.end()
+    stream.rectangle(x, y - 2 * radius, width, 4 * radius)
+    stream.clip()
+    stream.end()
 
     x -= offset_x
-    context.move_to(x, y)
+    stream.move_to(x, y)
 
     while x < max_x:
-        context.curve_to(
+        stream.curve_to(
             x + radius / 2, y + up * radius,
             x + 3 * radius / 2, y + up * radius,
             x + 2 * radius, y)
@@ -1250,39 +1179,39 @@ def draw_wave(context, x, y, width, offset_x, radius):
         up *= -1
 
 
-def draw_text_decoration(context, textbox, offset_x, offset_y, thickness,
+def draw_text_decoration(stream, textbox, offset_x, offset_y, thickness,
                          color):
-    """Draw text-decoration of ``textbox`` to a ``document.Context``."""
+    """Draw text-decoration of ``textbox`` to a ``document.Stream``."""
     style = textbox.style['text_decoration_style']
-    with stacked(context):
-        context.set_color_rgb(*color[:3], stroke=True)
-        context.set_alpha(color[3], stroke=True)
+    with stacked(stream):
+        stream.set_color_rgb(*color[:3], stroke=True)
+        stream.set_alpha(color[3], stroke=True)
 
         if style == 'dashed':
-            context.set_dash([5 * thickness], offset_x)
+            stream.set_dash([5 * thickness], offset_x)
         elif style == 'dotted':
-            context.set_dash([thickness], offset_x)
+            stream.set_dash([thickness], offset_x)
 
         if style == 'wavy':
             thickness *= 0.75
             draw_wave(
-                context,
+                stream,
                 textbox.position_x, textbox.position_y + offset_y,
                 textbox.width, offset_x, thickness)
         else:
-            context.move_to(textbox.position_x, textbox.position_y + offset_y)
-            context.line_to(
+            stream.move_to(textbox.position_x, textbox.position_y + offset_y)
+            stream.line_to(
                 textbox.position_x + textbox.width,
                 textbox.position_y + offset_y)
 
-        context.set_line_width(thickness)
+        stream.set_line_width(thickness)
 
         if style == 'double':
             delta = 2 * thickness
-            context.move_to(
+            stream.move_to(
                 textbox.position_x, textbox.position_y + offset_y + delta)
-            context.line_to(
+            stream.line_to(
                 textbox.position_x + textbox.width,
                 textbox.position_y + offset_y + delta)
 
-        context.stroke()
+        stream.stroke()

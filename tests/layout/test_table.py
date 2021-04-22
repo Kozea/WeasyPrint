@@ -8,9 +8,8 @@
 
 import pytest
 
-from ..test_boxes import render_pages
-from ..test_draw import assert_pixels
-from ..testing_utils import assert_no_logs, capture_logs
+from ..draw import assert_pixels
+from ..testing_utils import assert_no_logs, capture_logs, render_pages
 
 
 @assert_no_logs

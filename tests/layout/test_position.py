@@ -6,13 +6,12 @@
 
 """
 
-from ..test_boxes import render_pages as parse
-from ..testing_utils import assert_no_logs
+from ..testing_utils import assert_no_logs, render_pages
 
 
 @assert_no_logs
 def test_relative_positioning_1():
-    page, = parse('''
+    page, = render_pages('''
       <style>
         p { height: 20px }
       </style>
@@ -45,7 +44,7 @@ def test_relative_positioning_1():
 
 @assert_no_logs
 def test_relative_positioning_2():
-    page, = parse('''
+    page, = render_pages('''
       <style>
         img { width: 20px }
         body { font-size: 0 } /* Remove spaces */
@@ -86,7 +85,7 @@ def test_relative_positioning_2():
 
 @assert_no_logs
 def test_absolute_positioning_1():
-    page, = parse('''
+    page, = render_pages('''
       <div style="margin: 3px">
         <div style="height: 20px; width: 20px; position: absolute"></div>
         <div style="height: 20px; width: 20px; position: absolute;
@@ -111,7 +110,7 @@ def test_absolute_positioning_1():
 
 @assert_no_logs
 def test_absolute_positioning_2():
-    page, = parse('''
+    page, = render_pages('''
       <div style="position: relative; width: 20px">
         <div style="height: 20px; width: 20px; position: absolute"></div>
         <div style="height: 20px; width: 20px"></div>
@@ -128,7 +127,7 @@ def test_absolute_positioning_2():
 
 @assert_no_logs
 def test_absolute_positioning_3():
-    page, = parse('''
+    page, = render_pages('''
       <body style="font-size: 0">
         <img src=pattern.png>
         <span style="position: relative">
@@ -150,7 +149,7 @@ def test_absolute_positioning_3():
 
 @assert_no_logs
 def test_absolute_positioning_4():
-    page, = parse('''
+    page, = render_pages('''
       <style> img { width: 5px; height: 20px} </style>
       <body style="font-size: 0">
         <img src=pattern.png>
@@ -168,7 +167,7 @@ def test_absolute_positioning_4():
 
 @assert_no_logs
 def test_absolute_positioning_5():
-    page, = parse('''
+    page, = render_pages('''
       <style> img { width: 5px; height: 20px} </style>
       <body style="font-size: 0">
         <img src=pattern.png>
@@ -186,7 +185,7 @@ def test_absolute_positioning_5():
 
 @assert_no_logs
 def test_absolute_positioning_6():
-    page, = parse('''
+    page, = render_pages('''
       <div style="position: relative; width: 20px; height: 60px;
                   border: 10px solid; padding-top: 6px; top: 5px; left: 1px">
         <div style="height: 20px; width: 20px; position: absolute;
@@ -210,7 +209,7 @@ def test_absolute_positioning_6():
 
 @assert_no_logs
 def test_absolute_positioning_7():
-    page, = parse('''
+    page, = render_pages('''
       <style>
         @page { size: 1000px 2000px }
         html { font-size: 0 }
@@ -274,7 +273,7 @@ def test_absolute_positioning_7():
 @assert_no_logs
 def test_absolute_positioning_8():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/1264
-    page, = parse('''
+    page, = render_pages('''
       <style>@page{ width: 50px; height: 50px }</style>
       <body style="font-size: 0">
         <div style="position: absolute; margin: auto;
@@ -291,7 +290,7 @@ def test_absolute_positioning_8():
 
 @assert_no_logs
 def test_absolute_images():
-    page, = parse('''
+    page, = render_pages('''
       <style>
         img { display: block; position: absolute }
       </style>
@@ -317,7 +316,7 @@ def test_absolute_images():
 @assert_no_logs
 def test_fixed_positioning():
     # TODO:test page-break-before: left/right
-    page_1, page_2, page_3 = parse('''
+    page_1, page_2, page_3 = render_pages('''
       a
       <div style="page-break-before: always; page-break-after: always">
         <p style="position: fixed">b</p>
@@ -337,7 +336,7 @@ def test_fixed_positioning():
 @assert_no_logs
 def test_fixed_positioning_regression_1():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/641
-    page_1, page_2 = parse('''
+    page_1, page_2 = render_pages('''
       <style>
         @page:first { size: 100px 200px }
         @page { size: 200px 100px; margin: 0 }
@@ -374,7 +373,7 @@ def test_fixed_positioning_regression_1():
 @assert_no_logs
 def test_fixed_positioning_regression_2():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/728
-    page_1, page_2 = parse('''
+    page_1, page_2 = render_pages('''
       <style>
         @page { size: 100px 100px }
         section { break-after: page }

@@ -5,5 +5,5 @@
 /dist
 /docs/_build
 /pytest_cache
-/tests/test_draw/results
+/tests/draw/results
 /venv

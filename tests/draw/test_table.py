@@ -1031,7 +1031,6 @@ def test_tables_14():
 @pytest.mark.xfail
 @assert_no_logs
 def test_tables_15():
-    # TODO: there’s a vertical 0.5px shift on the second page
     # Regression test for colspan in last body line with footer
     # https://github.com/Kozea/WeasyPrint/issues/1250
     assert_pixels('colspan_last_row', 22, 36, '''
@@ -1045,13 +1044,13 @@ def test_tables_15():
         __R_____R____R_____R__
         _BBBBBBBBBBBBBBBBBBBB_
         _BBBBBBBBBBBBBBBBBBBB_
+        _BBBBBBBBBBBBBBBBBBBB_
         _BBB____R____R____BBB_
         _BBB____R____R____BBB_
         _BBB____R____R____BBB_
         _BBBBBBBBBBBBBBBBBBBB_
         _BBBBBBBBBBBBBBBBBBBB_
-        ______________________
-        ______________________
+        _BBBBBBBBBBBBBBBBBBBB_
         ______________________
         ______________________
         __RRRRRRRRRRRRRRRRRR__
@@ -1060,13 +1059,13 @@ def test_tables_15():
         __R________________R__
         _BBBBBBBBBBBBBBBBBBBB_
         _BBBBBBBBBBBBBBBBBBBB_
+        _BBBBBBBBBBBBBBBBBBBB_
         _BBB____R____R____BBB_
         _BBB____R____R____BBB_
         _BBB____R____R____BBB_
         _BBBBBBBBBBBBBBBBBBBB_
         _BBBBBBBBBBBBBBBBBBBB_
-        ______________________
-        ______________________
+        _BBBBBBBBBBBBBBBBBBBB_
         ______________________
         ______________________
         ______________________
@@ -1081,5 +1080,5 @@ def test_tables_15():
         <tr><td></td><td></td><td></td></tr>
         <tr><td></td><td></td><td></td></tr>
         <tr><td colspan="3"></td></tr>
-        <tfoot style="border: blue solid; border-width: 2px 3px;
+        <tfoot style="border: blue solid; border-width: 3px;
             "><td></td><td></td><td></td></tfoot>''')

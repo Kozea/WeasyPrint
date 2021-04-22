@@ -9,9 +9,8 @@
 import pytest
 from weasyprint.stacking import StackingContext
 
-from .test_boxes import render_pages, serialize
-from .test_draw import assert_pixels
-from .testing_utils import assert_no_logs
+from .draw import assert_pixels
+from .testing_utils import assert_no_logs, render_pages, serialize
 
 z_index_source = '''
   <style>

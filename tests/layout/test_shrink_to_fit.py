@@ -8,8 +8,7 @@
 
 import pytest
 
-from ..test_boxes import render_pages as parse
-from ..testing_utils import assert_no_logs
+from ..testing_utils import assert_no_logs, render_pages
 
 
 @assert_no_logs
@@ -17,7 +16,7 @@ from ..testing_utils import assert_no_logs
 @pytest.mark.parametrize('font_size', range(1, 10))
 def test_shrink_to_fit_floating_point_error_1(margin_left, font_size):
     # See bugs #325 and #288, see commit fac5ee9.
-    page, = parse('''
+    page, = render_pages('''
       <style>
         @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 100000px 100px }
@@ -37,7 +36,7 @@ def test_shrink_to_fit_floating_point_error_1(margin_left, font_size):
 def test_shrink_to_fit_floating_point_error_2(font_size):
     letters = 1
     while True:
-        page, = parse('''
+        page, = render_pages('''
           <style>
             @font-face { src: url(weasyprint.otf); font-family: weasyprint }
             @page { size: %d0pt %d0px }

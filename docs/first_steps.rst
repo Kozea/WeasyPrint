@@ -293,7 +293,7 @@ If you have ``@font-face`` rules in your CSS, you have to create a
 .. code-block:: python
 
     from weasyprint import HTML, CSS
-    from weasyprint.fonts import FontConfiguration
+    from weasyprint.text.fonts import FontConfiguration
 
     font_config = FontConfiguration()
     html = HTML(string='<h1>The title</h1>')

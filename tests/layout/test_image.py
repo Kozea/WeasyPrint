@@ -9,12 +9,11 @@
 import pytest
 from weasyprint.formatting_structure import boxes
 
-from ..test_boxes import render_pages as parse
-from ..testing_utils import assert_no_logs, capture_logs
+from ..testing_utils import assert_no_logs, capture_logs, render_pages
 
 
 def get_img(html):
-    page, = parse(html)
+    page, = render_pages(html)
     html, = page.children
     body, = html.children
     line, = body.children
@@ -22,18 +21,12 @@ def get_img(html):
     return body, img
 
 
-@pytest.mark.xfail
-@assert_no_logs
-def test_images_1():
-    # TODO: fails because of missing SVG support
-    # Try a few image formats
-    for html in [
-        '<img src="%s">' % url for url in [
-            'pattern.png', 'pattern.gif', 'blue.jpg', 'pattern.svg',
-            "data:image/svg+xml,<svg width='4' height='4'></svg>",
-            "DatA:image/svg+xml,<svg width='4px' height='4px'></svg>",
-        ]
-    ] + [
+@pytest.mark.parametrize('html', [
+    '<img src="%s">' % url for url in (
+        'pattern.png', 'pattern.gif', 'blue.jpg', 'pattern.svg',
+        "data:image/svg+xml,<svg width='4' height='4'></svg>",
+        "DatA:image/svg+xml,<svg width='4px' height='4px'></svg>",
+    )] + [
         '<embed src=pattern.png>',
         '<embed src=pattern.svg>',
         '<embed src=really-a-png.svg type=image/png>',
@@ -43,16 +36,17 @@ def test_images_1():
         '<object data=pattern.svg>',
         '<object data=really-a-png.svg type=image/png>',
         '<object data=really-a-svg.png type=image/svg+xml>',
-    ]:
-        body, img = get_img(html)
-        assert img.width == 4
-        assert img.height == 4
+    ]
+)
+@assert_no_logs
+def test_images_1(html):
+    body, img = get_img(html)
+    assert img.width == 4
+    assert img.height == 4
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_images_2():
-    # TODO: fails because of missing SVG support
     # With physical units
     url = "data:image/svg+xml,<svg width='2.54cm' height='0.5in'></svg>"
     body, img = get_img('<img src="%s">' % url)
@@ -60,66 +54,62 @@ def test_images_2():
     assert img.height == 48
 
 
+@pytest.mark.parametrize('url', (
+    'nonexistent.png',
+    'unknownprotocol://weasyprint.org/foo.png',
+    'data:image/unknowntype,Not an image',
+    # Invalid protocol
+    'datå:image/svg+xml,<svg width="4" height="4"></svg>',
+    # zero-byte images
+    'data:image/png,',
+    'data:image/jpeg,',
+    'data:image/svg+xml,',
+    # Incorrect format
+    'data:image/png,Not a PNG',
+    'data:image/jpeg,Not a JPEG',
+    'data:image/svg+xml,<svg>invalid xml',
+))
 @assert_no_logs
-def test_images_3():
+def test_images_3(url):
     # Invalid images
-    for url in [
-        'nonexistent.png',
-        'unknownprotocol://weasyprint.org/foo.png',
-        'data:image/unknowntype,Not an image',
-        # Invalid protocol
-        'datå:image/svg+xml,<svg width="4" height="4"></svg>',
-        # zero-byte images
-        'data:image/png,',
-        'data:image/jpeg,',
-        'data:image/svg+xml,',
-        # Incorrect format
-        'data:image/png,Not a PNG',
-        'data:image/jpeg,Not a JPEG',
-        'data:image/svg+xml,<svg>invalid xml',
-        # Explicit SVG, no sniffing
-        'data:image/svg+xml;base64,'
-        'R0lGODlhAQABAIABAP///wAAACwAAAAAAQABAAACAkQBADs=',
-        'really-a-png.svg',
-    ]:
-        with capture_logs() as logs:
-            body, img = get_img("<img src='%s' alt='invalid image'>" % url)
-        assert len(logs) == 1
-        assert 'ERROR: Failed to load image' in logs[0]
-        assert isinstance(img, boxes.InlineBox)  # not a replaced box
-        text, = img.children
-        assert text.text == 'invalid image', url
+    with capture_logs() as logs:
+        body, img = get_img("<img src='%s' alt='invalid image'>" % url)
+    assert len(logs) == 1
+    assert 'ERROR: Failed to load image' in logs[0]
+    assert isinstance(img, boxes.InlineBox)  # not a replaced box
+    text, = img.children
+    assert text.text == 'invalid image', url
 
 
-@pytest.mark.xfail
+@pytest.mark.parametrize('url', (
+    # GIF with JPEG mimetype
+    'data:image/jpeg;base64,'
+    'R0lGODlhAQABAIABAP///wAAACwAAAAAAQABAAACAkQBADs=',
+    # GIF with PNG mimetype
+    'data:image/png;base64,'
+    'R0lGODlhAQABAIABAP///wAAACwAAAAAAQABAAACAkQBADs=',
+    # PNG with JPEG mimetype
+    'data:image/jpeg;base64,'
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC'
+    '0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+    # SVG with PNG mimetype
+    'data:image/png,<svg width="1" height="1"></svg>',
+    'really-a-svg.png',
+    # PNG with SVG
+    'data:image/svg+xml;base64,'
+    'R0lGODlhAQABAIABAP///wAAACwAAAAAAQABAAACAkQBADs=',
+    'really-a-png.svg',
+))
 @assert_no_logs
-def test_images_4():
-    # TODO: fails because of missing SVG support
-    # Format sniffing
-    for url in [
-        # GIF with JPEG mimetype
-        'data:image/jpeg;base64,'
-        'R0lGODlhAQABAIABAP///wAAACwAAAAAAQABAAACAkQBADs=',
-        # GIF with PNG mimetype
-        'data:image/png;base64,'
-        'R0lGODlhAQABAIABAP///wAAACwAAAAAAQABAAACAkQBADs=',
-        # PNG with JPEG mimetype
-        'data:image/jpeg;base64,'
-        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC'
-        '0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
-        # SVG with PNG mimetype
-        'data:image/png,<svg width="1" height="1"></svg>',
-        'really-a-svg.png',
-    ]:
-        with capture_logs() as logs:
-            body, img = get_img("<img src='%s'>" % url)
-        assert len(logs) == 0
+def test_images_4(url):
+    # Sniffing, no logs
+    body, img = get_img("<img src='%s'>" % url)
 
 
 @assert_no_logs
 def test_images_5():
     with capture_logs() as logs:
-        parse('<img src=nonexistent.png><img src=nonexistent.png>')
+        render_pages('<img src=nonexistent.png><img src=nonexistent.png>')
     # Failures are cached too: only one error
     assert len(logs) == 1
     assert 'ERROR: Failed to load image' in logs[0]
@@ -177,7 +167,7 @@ def test_images_10():
 @assert_no_logs
 def test_images_11():
     # display: table-cell is ignored. XXX Should it?
-    page, = parse('''<body style="font-size: 0">
+    page, = render_pages('''<body style="font-size: 0">
         <img src="pattern.png" style="width: 40px">
         <img src="pattern.png" style="width: 60px; display: table-cell">
     ''')
@@ -197,7 +187,7 @@ def test_images_11():
 @assert_no_logs
 def test_images_12():
     # Block-level image:
-    page, = parse('''
+    page, = render_pages('''
         <style>
             @page { size: 100px }
             img { width: 40px; margin: 10px auto; display: block }
@@ -219,7 +209,7 @@ def test_images_12():
 
 @assert_no_logs
 def test_images_13():
-    page, = parse('''
+    page, = render_pages('''
         <style>
             @page { size: 100px }
             img { min-width: 40%; margin: 10px auto; display: block }
@@ -241,7 +231,7 @@ def test_images_13():
 
 @assert_no_logs
 def test_images_14():
-    page, = parse('''
+    page, = render_pages('''
         <style>
             @page { size: 100px }
             img { min-width: 40px; margin: 10px auto; display: block }
@@ -263,7 +253,7 @@ def test_images_14():
 
 @assert_no_logs
 def test_images_15():
-    page, = parse('''
+    page, = render_pages('''
         <style>
             @page { size: 100px }
             img { min-height: 30px; max-width: 2px;
@@ -284,11 +274,9 @@ def test_images_15():
     assert img.content_box_y() == 10
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_images_16():
-    # TODO: fails because of missing SVG support
-    page, = parse('''
+    page, = render_pages('''
         <body style="float: left">
         <img style="height: 200px; margin: 10px; display: block" src="
             data:image/svg+xml,
@@ -305,11 +293,9 @@ def test_images_16():
     assert img.height == 200
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_images_17():
-    # TODO: fails because of missing SVG support
-    page, = parse('''
+    page, = render_pages('''
         <div style="width: 300px; height: 300px">
         <img src="
             data:image/svg+xml,
@@ -327,12 +313,10 @@ def test_images_17():
     assert img.height == 150
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_images_18():
-    # TODO: fails because of missing SVG support
     # Test regression: https://github.com/Kozea/WeasyPrint/issues/1050
-    page, = parse('''
+    page, = render_pages('''
         <img style="position: absolute" src="
             data:image/svg+xml,
             <svg viewBox='0 0 20 10'></svg>
@@ -347,7 +331,7 @@ def test_linear_gradient():
 
     def layout(gradient_css, type_='linear', init=(),
                positions=[0, 1], colors=[blue, lime]):
-        page, = parse('<style>@page { background: ' + gradient_css)
+        page, = render_pages('<style>@page { background: ' + gradient_css)
         layer, = page.background.layers
         result = layer.image.layout(400, 300)
         assert result[0] == 1
@@ -412,7 +396,7 @@ def test_radial_gradient():
             center_x, center_y, radius0, radius1 = init
             init = (center_x, center_y / scale_y, radius0,
                     center_x, center_y / scale_y, radius1)
-        page, = parse('<style>@page { background: ' + gradient_css)
+        page, = render_pages('<style>@page { background: ' + gradient_css)
         layer, = page.background.layers
         result = layer.image.layout(400, 300)
         assert result[0] == scale_y

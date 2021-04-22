@@ -8,8 +8,7 @@
 
 import pytest
 
-from ..test_boxes import render_pages as parse
-from ..testing_utils import assert_no_logs
+from ..testing_utils import assert_no_logs, render_pages
 
 
 @assert_no_logs
@@ -20,7 +19,7 @@ from ..testing_utils import assert_no_logs
     ('square', '▪ '),
 ))
 def test_lists_style(inside, style, character):
-    page, = parse('''
+    page, = render_pages('''
       <style>
         body { margin: 0 }
         ul { margin-left: 50px; list-style: %s %s }
@@ -51,7 +50,7 @@ def test_lists_style(inside, style, character):
 
 def test_lists_empty_item():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/873
-    page, = parse('''
+    page, = render_pages('''
       <ul>
         <li>a</li>
         <li></li>
@@ -68,7 +67,7 @@ def test_lists_empty_item():
 @pytest.mark.xfail
 def test_lists_whitespace_item():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/873
-    page, = parse('''
+    page, = render_pages('''
       <ul>
         <li>a</li>
         <li> </li>
@@ -84,7 +83,7 @@ def test_lists_whitespace_item():
 
 def test_lists_page_break():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/945
-    page1, page2 = parse('''
+    page1, page2 = render_pages('''
       <style>
         @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 300px 100px }

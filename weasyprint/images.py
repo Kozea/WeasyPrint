@@ -15,6 +15,7 @@ from PIL import Image
 
 from .layout.percentages import percentage
 from .logger import LOGGER
+from .svg import SVG
 from .urls import URLFetchingError, fetch
 
 
@@ -68,8 +69,48 @@ class RasterImage:
         context.pop_state()
 
 
+class SVGImage:
+    def __init__(self, pydyf_svg, base_url, url_fetcher, context):
+        self._svg = pydyf_svg
+        self._base_url = base_url
+        self._url_fetcher = url_fetcher
+        self._context = context
+
+    def get_intrinsic_size(self, _image_resolution, font_size):
+        self._intrinsic_width, self._intrinsic_height = (
+            self._svg.get_intrinsic_size(font_size))
+        viewbox = self._svg.get_viewbox()
+
+        if self._intrinsic_width and self._intrinsic_height:
+            self.intrinsic_ratio = (
+                self._intrinsic_width / self._intrinsic_height)
+        elif viewbox and viewbox[2] and viewbox[3]:
+            self.intrinsic_ratio = viewbox[2] / viewbox[3]
+            if self._intrinsic_width:
+                self._intrinsic_height = (
+                    self._intrinsic_width / self.intrinsic_ratio)
+            elif self._intrinsic_height:
+                self._intrinsic_width = (
+                    self._intrinsic_height * self.intrinsic_ratio)
+        else:
+            self.intrinsic_ratio = None
+
+        return self._intrinsic_width, self._intrinsic_height
+
+    def draw(self, context, concrete_width, concrete_height, image_rendering):
+        if not concrete_width or not concrete_height:
+            return
+
+        # Use the real intrinsic size here, not affected by 'image-resolution'.
+        context.push_state()
+        self._svg.draw(
+            context, concrete_width, concrete_height, self._base_url,
+            self._url_fetcher, self._context)
+        context.pop_state()
+
+
 def get_image_from_uri(cache, url_fetcher, optimize_images, url,
-                       forced_mime_type=None):
+                       forced_mime_type=None, context=None):
     """Get an Image instance from an image URI."""
     missing = object()
     image = cache.get(url, missing)
@@ -83,14 +124,33 @@ def get_image_from_uri(cache, url_fetcher, optimize_images, url,
             else:
                 string = result['file_obj'].read()
             mime_type = forced_mime_type or result['mime_type']
+
+            image = None
+            svg_exceptions = []
+            # Try to rely on given mimetype for SVG
             if mime_type == 'image/svg+xml':
-                raise ImageLoadingError('SVG images are not supported yet')
-            else:
-                # Try to rely on given mimetype
+                try:
+                    image = SVGImage(
+                        SVG(string, url), url, url_fetcher, context)
+                except Exception as svg_exception:
+                    svg_exceptions.append(svg_exception)
+            # Try pillow for raster images, or for failing SVG
+            if image is None:
                 try:
                     pillow_image = Image.open(BytesIO(string))
-                except Exception as exception:
-                    raise ImageLoadingError.from_exception(exception)
+                except Exception as raster_exception:
+                    if mime_type == 'image/svg+xml':
+                        # Tried SVGImage then Pillow for a SVG, abort
+                        raise ImageLoadingError.from_exception(
+                            svg_exceptions[0])
+                    try:
+                        # Last chance, try SVG
+                        image = SVGImage(
+                            SVG(string, url), url, url_fetcher, context)
+                    except Exception:
+                        # Tried Pillow then SVGImage for a raster, abort
+                        raise ImageLoadingError.from_exception(
+                            raster_exception)
                 else:
                     image = RasterImage(pillow_image, optimize_images)
 
@@ -197,10 +257,11 @@ def gradient_average_color(colors, positions):
 class Gradient:
     def __init__(self, color_stops, repeating):
         assert color_stops
-        #: List of (r, g, b, a), list of Dimension
-        self.colors = tuple(color for color, position in color_stops)
+        # List of (r, g, b, a)
+        self.colors = tuple(color for color, _ in color_stops)
+        # List of Dimensions
         self.stop_positions = tuple(position for _, position in color_stops)
-        #: bool
+        # Boolean
         self.repeating = repeating
 
     def get_intrinsic_size(self, _image_resolution, _font_size):

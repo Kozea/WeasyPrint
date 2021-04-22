@@ -112,7 +112,7 @@ def main(argv=None, stdout=None, stdin=None):
 
     """
     parser = argparse.ArgumentParser(
-        prog='weasyprint', description='Renders web pages to PDF or PNG.')
+        prog='weasyprint', description='Renders web pages to PDF.')
     parser.add_argument('--version', action='version',
                         version=f'WeasyPrint version {__version__}',
                         help="Print WeasyPrint's version number and exit.")

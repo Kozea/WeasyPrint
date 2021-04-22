@@ -312,7 +312,6 @@ def test_links():
     assert rects.pop(0) == [0, TOP, 30, TOP - 30]
 
     # 32pt wide (image + 2 * 1pt of border), 20pt high
-    # TODO: replace these commented tests now that we use named destinations
     assert subtypes.pop(0) == b'/Link'
     assert b'/Dest (lipsum)' in pdf
     link = re.search(

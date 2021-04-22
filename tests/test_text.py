@@ -10,8 +10,7 @@ import pytest
 from weasyprint.css.properties import INITIAL_VALUES
 from weasyprint.text.line_break import split_first_line
 
-from .test_boxes import render_pages
-from .testing_utils import MONO_FONTS, SANS_FONTS, assert_no_logs
+from .testing_utils import MONO_FONTS, SANS_FONTS, assert_no_logs, render_pages
 
 
 def make_text(text, width=None, **style):
