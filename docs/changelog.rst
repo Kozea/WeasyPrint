@@ -2,6 +2,72 @@ Changelog
 =========
 
 
+Version 53.0b1
+--------------
+
+Released on 2021-04-22.
+
+**This version is experimental, don't use it in production. If you find bugs,
+please report them!**
+
+This version uses its own PDF generator instead of Cairo. Rendering may be
+different for text, gradients, SVG images…
+
+New features:
+
+* `#1328 <https://github.com/Kozea/WeasyPrint/pull/1328>`_:
+  Add ISO and JIS paper sizes
+* `#1309 <https://github.com/Kozea/WeasyPrint/pull/1309>`_:
+  Leader support, with financial support from Simonsoft
+
+Bug fixes:
+
+* `#504 <https://github.com/Kozea/WeasyPrint/issues/504>`_:
+  Fix rendering bugs with PDF gradients
+* `#606 <https://github.com/Kozea/WeasyPrint/issues/606>`_:
+  Fix rounding errors on PDF dimensions
+* `#1264 <https://github.com/Kozea/WeasyPrint/issues/1264>`_:
+  Include witdh/height when calculating auto margins of absolute boxes
+* `#1191 <https://github.com/Kozea/WeasyPrint/issues/1191>`_:
+  Don’t try to get an earlier page break between columns
+* `#1235 <https://github.com/Kozea/WeasyPrint/issues/1235>`_:
+  Include padding, border, padding when calculating inline-block width
+* `#1199 <https://github.com/Kozea/WeasyPrint/issues/1199>`_:
+  Fix kerning issues with small fonts
+
+Documentation:
+
+* `#1298 <https://github.com/Kozea/WeasyPrint/pull/1298>`_:
+  Rewrite documentation
+
+Contributors:
+
+* Guillaume Ayoub
+* Lucie Anglade
+* Felix Schwarz
+* Syrus Dark
+* Christoph Päper
+
+Backers and sponsors:
+
+* Simonsoft
+* PDF Blocks
+* Menutech
+* Manuel Barkhau
+* Simon Sapin
+* Nathalie Gutton
+* Andreas Zettl
+* René Fritz
+* Tom Pohl
+* KontextWork
+* Moritz Mahringer
+* Florian Demmer
+* Maykin Media
+* Yanal-Yvez Fargialla
+* Des images et des mots
+* Yevhenii Hyzyla
+
+
 Version 52.5
 ------------
 
@@ -20,7 +86,7 @@ Contributors:
 
 Backers and sponsors:
 
-* SimonSoft
+* Simonsoft
 * PDF Blocks
 * Menutech
 * Manuel Barkhau
@@ -59,7 +125,7 @@ Contributors:
 Backers and sponsors:
 
 * PDF Blocks
-* SimonSoft
+* Simonsoft
 * Menutech
 * Simon Sapin
 * Manuel Barkhau
@@ -97,7 +163,7 @@ Contributors:
 Backers and sponsors:
 
 * PDF Blocks
-* SimonSoft
+* Simonsoft
 * Menutech
 * Simon Sapin
 * Manuel Barkhau
@@ -137,7 +203,7 @@ Contributors:
 Backers and sponsors:
 
 * PDF Blocks
-* SimonSoft
+* Simonsoft
 * Menutech
 * Simon Sapin
 * Nathalie Gutton
@@ -163,7 +229,7 @@ Contributors:
 
 Backers and sponsors:
 
-* SimonSoft
+* Simonsoft
 * Simon Sapin
 * Nathalie Gutton
 * Andreas Zettl
