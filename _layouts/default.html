@@ -25,7 +25,7 @@
 
   <aside class="{{ page.id }}">
     {% assign releases = site.github.releases | where:"draft",false | sort:"created_at" | reverse %}
-    <a href="https://github.com/Kozea/{{ site.title }}/blob/52.x/NEWS.rst">{{ site.title }} {{ releases[0].tag_name }} (Latest version)</a>
+    <a href="https://github.com/Kozea/{{ site.title }}/blob/master/docs/changelog.rst">{{ site.title }} {{ releases[0].tag_name }} (Latest version)</a>
   </aside>
 
   <aside class="{{ page.id }}">
