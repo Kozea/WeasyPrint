@@ -24,7 +24,7 @@ def test_text_fill():
         svg { display: block }
       </style>
       <svg width="20px" height="2px" xmlns="http://www.w3.org/2000/svg">
-        <text x="0" y="1" font-family="weasyprint" font-size="2" fill="blue">
+        <text x="0" y="1.5" font-family="weasyprint" font-size="2" fill="blue">
           ABC DEF
         </text>
       </svg>
@@ -34,11 +34,11 @@ def test_text_fill():
 @pytest.mark.xfail
 @assert_no_logs
 def test_text_stroke():
-    assert_pixels('text_fill', 20, 4, '''
-        BBBBBBBBBBBB________
-        BBBBBBBBBBBB________
-        BBBBBBBBBBBB________
-        BBBBBBBBBBBB________
+    assert_pixels('text_stroke', 20, 4, '''
+        _BBBBBBBBBBBB_______
+        _BBBBBBBBBBBB_______
+        _BBBBBBBBBBBB_______
+        _BBBBBBBBBBBB_______
     ''', '''
       <style>
         @font-face { src: url(weasyprint.otf); font-family: weasyprint }
@@ -46,8 +46,8 @@ def test_text_stroke():
         svg { display: block }
       </style>
       <svg width="20px" height="4px" xmlns="http://www.w3.org/2000/svg">
-        <text x="0" y="2" font-family="weasyprint" font-size="2"
-              fill="transparent" stroke="black" stroke-width="2">
+        <text x="2" y="2.5" font-family="weasyprint" font-size="2"
+              fill="transparent" stroke="blue" stroke-width="2">
           A B C
         </text>
       </svg>
@@ -66,7 +66,7 @@ def test_text_x():
         svg { display: block }
       </style>
       <svg width="20px" height="2px" xmlns="http://www.w3.org/2000/svg">
-        <text x="0 4 7" y="1" font-family="weasyprint" font-size="2"
+        <text x="0 4 7" y="1.5" font-family="weasyprint" font-size="2"
               fill="blue">
           ABCD
         </text>
@@ -142,7 +142,7 @@ def test_text_dx():
         svg { display: block }
       </style>
       <svg width="20px" height="2px" xmlns="http://www.w3.org/2000/svg">
-        <text dx="0 2 1" y="1" font-family="weasyprint" font-size="2"
+        <text dx="0 2 1" y="1.5" font-family="weasyprint" font-size="2"
               fill="blue">
           ABCD
         </text>
