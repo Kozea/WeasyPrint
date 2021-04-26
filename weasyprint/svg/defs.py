@@ -521,8 +521,6 @@ def draw_pattern(svg, node, pattern, font_size, stroke):
     stream_pattern = svg.stream.add_pattern(
         -pattern_x, -pattern_y, pattern_width, pattern_height,
         pattern_width, pattern_height, matrix)
-    child = stream_pattern.add_transparency_group(
-        [0, 0, pattern_width, pattern_height])
 
     group = stream_pattern.add_transparency_group(
         [0, 0, pattern_width, pattern_height])
