@@ -181,12 +181,6 @@ def draw_gradient(svg, node, gradient, font_size, stroke):
         positions, colors, coords = spread_radial_gradient(
             spread, positions, colors, fx, fy, fr, cx, cy, r, width, height)
 
-    if 'gradientTransform' in gradient.attrib:
-        transform_matrix = transform(
-            gradient.get('gradientTransform'), font_size,
-            svg.normalized_diagonal)
-        matrix = transform_matrix @ matrix
-
     alphas = [color[3] for color in colors]
     alpha_couples = [
         (alphas[i], alphas[i + 1])
@@ -205,6 +199,12 @@ def draw_gradient(svg, node, gradient, font_size, stroke):
     for i, (a0, a1) in enumerate(alpha_couples):
         if 0 not in (a0, a1) and (a0, a1) != (1, 1):
             color_couples[i][2] = a0 / a1
+
+    if 'gradientTransform' in gradient.attrib:
+        transform_matrix = transform(
+            gradient.get('gradientTransform'), font_size,
+            svg.normalized_diagonal)
+        matrix = transform_matrix @ matrix
 
     a, b, c, d, e, f = matrix.values
     width /= a
@@ -466,11 +466,14 @@ def draw_pattern(svg, node, pattern, font_size, stroke):
     x, y = bounding_box[0], bounding_box[1]
     node_x, node_y = svg.point(node.get('x'), node.get('y'), font_size)
     matrix = Matrix()
-    if 'patternTransform' in pattern.attrib:
-        transform_matrix = transform(
-            pattern.get('patternTransform'), font_size,
-            svg.normalized_diagonal)
-        matrix = transform_matrix @ matrix
+    if pattern.get('patternUnits') == 'userSpaceOnUse':
+        viewbox = svg.get_viewbox()
+        if viewbox:
+            width, height = viewbox[2], viewbox[3]
+        else:
+            width, height = svg.concrete_width, svg.concrete_height
+    else:
+        width, height = bounding_box[2], bounding_box[3]
 
     if stroke:
         stroke_width = svg.length(node.get('stroke-width', '1px'), font_size)
@@ -481,17 +484,6 @@ def draw_pattern(svg, node, pattern, font_size, stroke):
     else:
         stroke_width = 0
 
-    reference = 1 if pattern.get('viewBox') else 0
-    width = pattern.get('width', reference)
-    height = pattern.get('height', reference)
-    if not all(svg.point(width, height, font_size)):
-        return False
-
-    bounding_box = svg.calculate_bounding_box(node, font_size)
-    if not is_valid_bounding_box(bounding_box):
-        return False
-
-    _, _, width, height = bounding_box
     if pattern.get('patternUnits') == 'userSpaceOnUse':
         x = size(pattern.get('x'), font_size, 1)
         y = size(pattern.get('y'), font_size, 1)
@@ -513,6 +505,12 @@ def draw_pattern(svg, node, pattern, font_size, stroke):
     # Fail if pattern has an invalid size
     if pattern_width == 0 or pattern_height == 0:
         return False
+
+    if 'patternTransform' in pattern.attrib:
+        transform_matrix = transform(
+            pattern.get('patternTransform'), font_size,
+            svg.normalized_diagonal)
+        matrix = transform_matrix @ matrix
 
     a, b, c, d, e, f = matrix.values
     width /= a
