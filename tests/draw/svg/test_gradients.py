@@ -140,7 +140,6 @@ def test_linear_gradient_multicolor_userspace():
     ''')
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_linear_gradient_transform():
     assert_pixels('linear_gradient_transform', 10, 8, '''
@@ -193,7 +192,7 @@ def test_linear_gradient_repeat():
       </style>
       <svg width="10px" height="8px" xmlns="http://www.w3.org/2000/svg">
         <defs>
-          <linearGradient id="grad" x1="0" y1="0" x2="0" y2="0.5"
+          <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1"
             gradientUnits="objectBoundingBox" spreadMethod="repeat">
             <stop stop-color="blue" offset="25%"></stop>
             <stop stop-color="red" offset="25%"></stop>
@@ -339,7 +338,6 @@ def test_radial_gradient_multicolor():
     ''')
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_radial_gradient_multicolor_userspace():
     assert_pixels('radial_gradient_multicolor_userspace', 10, 10, '''
@@ -362,7 +360,7 @@ def test_radial_gradient_multicolor_userspace():
         <defs>
           <radialGradient id="grad" cx="5" cy="5" r="5"
             fx="5" fy="5" fr="2"
-            gradientUnits="objectBoundingBox">
+            gradientUnits="userSpaceOnUse">
             <stop stop-color="blue" offset="33%"></stop>
             <stop stop-color="lime" offset="33%"></stop>
             <stop stop-color="lime" offset="66%"></stop>

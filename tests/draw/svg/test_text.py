@@ -6,8 +6,6 @@
 
 """
 
-import pytest
-
 from ...testing_utils import assert_no_logs
 from .. import assert_pixels
 
@@ -31,7 +29,6 @@ def test_text_fill():
     ''')
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_text_stroke():
     assert_pixels('text_stroke', 20, 4, '''

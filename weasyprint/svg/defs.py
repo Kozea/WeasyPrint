@@ -93,7 +93,7 @@ def draw_gradient(svg, node, gradient, font_size, stroke):
         return False
     x, y = bounding_box[0], bounding_box[1]
     node_x, node_y = svg.point(node.get('x'), node.get('y'), font_size)
-    matrix = Matrix(e=x - node_x, f=y - node_y) @ svg.stream.ctm
+    matrix = Matrix()
     if gradient.get('gradientUnits') == 'userSpaceOnUse':
         viewbox = svg.get_viewbox()
         if viewbox:
@@ -141,10 +141,14 @@ def draw_gradient(svg, node, gradient, font_size, stroke):
             x2 -= x
             y2 -= y
         else:
-            x1 *= width
-            y1 *= height
-            x2 *= width
-            y2 *= height
+            length = min(width, height)
+            x1 *= length
+            y1 *= length
+            x2 *= length
+            y2 *= length
+            a = (width / height) if height < width else 1
+            d = (height / width) if height > width else 1
+            matrix = Matrix(a=a, d=d) @ matrix
         positions, colors, coords = spread_linear_gradient(
             spread, positions, colors, x1, y1, x2, y2)
     else:
@@ -164,13 +168,16 @@ def draw_gradient(svg, node, gradient, font_size, stroke):
             fx -= x
             fy -= y
         else:
-            cx *= width
-            cy *= width
-            r *= width
-            fx *= width
-            fy *= width
-            fr *= width
-        matrix = Matrix(d=width / height) @ matrix
+            length = min(width, height)
+            cx *= length
+            cy *= length
+            r *= length
+            fx *= length
+            fy *= length
+            fr *= length
+            a = (width / height) if height < width else 1
+            d = (height / width) if height > width else 1
+            matrix = Matrix(a=a, d=d) @ matrix
         positions, colors, coords = spread_radial_gradient(
             spread, positions, colors, fx, fy, fr, cx, cy, r, width, height)
 
@@ -199,8 +206,14 @@ def draw_gradient(svg, node, gradient, font_size, stroke):
         if 0 not in (a0, a1) and (a0, a1) != (1, 1):
             color_couples[i][2] = a0 / a1
 
+    a, b, c, d, e, f = matrix.values
+    width /= a
+    height /= d
+    pattern_x = e / a + stroke_width
+    pattern_y = f / d + stroke_width
+    matrix = Matrix(e=x - node_x, f=y - node_y) @ matrix @ svg.stream.ctm
     pattern = svg.stream.add_pattern(
-        -stroke_width, -stroke_width, width, height, width, height, matrix)
+        -pattern_x, -pattern_y, width, height, width, height, matrix)
     child = pattern.add_transparency_group([0, 0, width, height])
 
     shading = child.add_shading()
@@ -442,10 +455,31 @@ def spread_radial_gradient(spread, positions, colors, fx, fy, fr, cx, cy, r,
 
 def draw_pattern(svg, node, pattern, font_size, stroke):
     """Draw given gradient node."""
+    from ..document import Matrix
     from . import Pattern
 
     pattern._etree_node.tag = 'svg'
-    svg.transform(pattern.get('patternTransform'), font_size)
+
+    bounding_box = svg.calculate_bounding_box(node, font_size)
+    if not is_valid_bounding_box(bounding_box):
+        return False
+    x, y = bounding_box[0], bounding_box[1]
+    node_x, node_y = svg.point(node.get('x'), node.get('y'), font_size)
+    matrix = Matrix()
+    if 'patternTransform' in pattern.attrib:
+        transform_matrix = transform(
+            pattern.get('patternTransform'), font_size,
+            svg.normalized_diagonal)
+        matrix = transform_matrix @ matrix
+
+    if stroke:
+        stroke_width = svg.length(node.get('stroke-width', '1px'), font_size)
+        x -= stroke_width / 2
+        y -= stroke_width / 2
+        width += stroke_width
+        height += stroke_width
+    else:
+        stroke_width = 0
 
     reference = 1 if pattern.get('viewBox') else 0
     width = pattern.get('width', reference)
@@ -480,9 +514,18 @@ def draw_pattern(svg, node, pattern, font_size, stroke):
     if pattern_width == 0 or pattern_height == 0:
         return False
 
+    a, b, c, d, e, f = matrix.values
+    width /= a
+    height /= d
+    pattern_x = e / a + stroke_width
+    pattern_y = f / d + stroke_width
+    matrix = Matrix(e=x - node_x, f=y - node_y) @ matrix @ svg.stream.ctm
     stream_pattern = svg.stream.add_pattern(
-        x, y, pattern_width, pattern_height, pattern_width, pattern_height,
-        svg.stream.ctm)
+        -pattern_x, -pattern_y, pattern_width, pattern_height,
+        pattern_width, pattern_height, matrix)
+    child = stream_pattern.add_transparency_group(
+        [0, 0, pattern_width, pattern_height])
+
     group = stream_pattern.add_transparency_group(
         [0, 0, pattern_width, pattern_height])
     Pattern(pattern, svg.url).draw(
