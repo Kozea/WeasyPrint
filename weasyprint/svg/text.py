@@ -9,7 +9,7 @@
 from math import cos, radians, sin
 
 from .bounding_box import EMPTY_BOUNDING_BOX, extend_bounding_box
-from .utils import color, normalize, size
+from .utils import normalize, size
 
 
 class TextBox:
