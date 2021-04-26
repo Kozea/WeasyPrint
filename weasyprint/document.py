@@ -100,14 +100,14 @@ class Font:
 
     @property
     def flags(self):
-        flags = 2 ** 3  # Symbolic, custom character set
+        flags = 2 ** (3 - 1)  # Symbolic, custom character set
         if pango.pango_font_description_get_style(self._font_description):
-            flags += 2 ** 7  # Italic
+            flags += 2 ** (7 - 1)  # Italic
         if b'Serif' in self.family.split():
-            flags += 2 ** 2  # Serif
+            flags += 2 ** (2 - 1)  # Serif
         widths = self.widths.values()
         if len(widths) > 1 and len(set(widths)) == 1:
-            flags += 2 ** 1  # FixedPitch
+            flags += 2 ** (1 - 1)  # FixedPitch
         return flags
 
 
