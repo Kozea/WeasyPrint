@@ -11,9 +11,8 @@
 
 """
 
-import logging
-import pkgutil
 import re
+from pkgutil import get_data
 from urllib.parse import urljoin
 from xml.etree.ElementTree import tostring
 
@@ -24,19 +23,16 @@ from .formatting_structure import boxes
 from .logger import LOGGER
 from .urls import get_url_attribute
 
-# XXX temporarily disable logging for user-agent stylesheet
-level = LOGGER.level
-LOGGER.setLevel(logging.ERROR)
-
 HTML5_UA_COUNTER_STYLE = CounterStyle()
-HTML5_UA_STYLESHEET = CSS(
-    string=pkgutil.get_data('weasyprint', 'css/html5_ua.css').decode('utf-8'),
-    counter_style=HTML5_UA_COUNTER_STYLE)
-HTML5_PH_STYLESHEET = CSS(
-    string=pkgutil.get_data('weasyprint', 'css/html5_ph.css').decode('utf-8'))
-
-LOGGER.setLevel(level)
-
+HTML5_UA = get_data('weasyprint', 'css/html5_ua.css')
+HTML5_PH = get_data('weasyprint', 'css/html5_ph.css')
+if HTML5_UA is None:
+    LOGGER.warning('User agent stylesheet could not be loaded')
+    HTML5_UA_STYLESHEET = HTML5_PH_STYLESHEET = CSS(string='')
+else:
+    HTML5_UA_STYLESHEET = CSS(
+        string=HTML5_UA.decode('utf-8'), counter_style=HTML5_UA_COUNTER_STYLE)
+    HTML5_PH_STYLESHEET = CSS(string=HTML5_PH.decode('utf-8'))
 
 # http://whatwg.org/C#space-character
 HTML_WHITESPACE = ' \t\n\f\r'
