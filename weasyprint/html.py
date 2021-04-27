@@ -12,11 +12,12 @@
 """
 
 import logging
+import pkgutil
 import re
 from urllib.parse import urljoin
 from xml.etree.ElementTree import tostring
 
-from . import CSS, ROOT
+from . import CSS
 from .css import get_child_text
 from .css.counters import CounterStyle
 from .formatting_structure import boxes
@@ -29,9 +30,10 @@ LOGGER.setLevel(logging.ERROR)
 
 HTML5_UA_COUNTER_STYLE = CounterStyle()
 HTML5_UA_STYLESHEET = CSS(
-    filename=(ROOT / 'css' / 'html5_ua.css'),
+    string=pkgutil.get_data('weasyprint', 'css/html5_ua.css').decode('utf-8'),
     counter_style=HTML5_UA_COUNTER_STYLE)
-HTML5_PH_STYLESHEET = CSS(filename=(ROOT / 'css' / 'html5_ph.css'))
+HTML5_PH_STYLESHEET = CSS(
+    string=pkgutil.get_data('weasyprint', 'css/html5_ph.css').decode('utf-8'))
 
 LOGGER.setLevel(level)
 
