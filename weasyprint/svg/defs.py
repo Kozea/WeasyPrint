@@ -20,8 +20,6 @@ def use(svg, node, font_size):
     from . import SVG
 
     svg.stream.push_state()
-    svg.stream.transform(
-        1, 0, 0, 1, *svg.point(node.get('x'), node.get('y'), font_size))
 
     for attribute in ('x', 'y', 'viewBox', 'mask'):
         if attribute in node.attrib:
