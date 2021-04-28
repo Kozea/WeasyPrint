@@ -10,6 +10,7 @@ import argparse
 import logging
 import platform
 import sys
+import warnings
 
 import pydyf
 
@@ -147,6 +148,12 @@ def main(argv=None, stdout=None, stdin=None):
                         help='Show debugging messages.')
     parser.add_argument('-q', '--quiet', action='store_true',
                         help='Hide logging messages.')
+    parser.add_argument('-o', '--optimize-images', action='store_true',
+                        help='Deprecated, use "-O images" instead.')
+    parser.add_argument('-f', '--format', choices=('pdf',),
+                        help='Deprecated.')
+    parser.add_argument('-r', '--resolution', type=float,
+                        help='Deprecated.')
     parser.add_argument(
         'input', help='URL or filename of the HTML input, or - for stdin')
     parser.add_argument(
@@ -176,6 +183,15 @@ def main(argv=None, stdout=None, stdin=None):
             optimize_size |= {'images', 'fonts'}
         else:
             optimize_size.add(arg)
+
+    if args.optimize_images:
+        optimize_size.add('images')
+
+    if any((args.optimize_images, args.format, args.resolution)):
+        warnings.warn(
+            '--optimize-images, --format and --resolution options are '
+            'deprecated and will be removed in future versions.',
+            FutureWarning)
 
     kwargs = {
         'stylesheets': args.stylesheet,
