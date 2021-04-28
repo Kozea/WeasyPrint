@@ -12,12 +12,12 @@ what various web browsers use.
 *[id] { -weasy-anchor: attr(id); }
 a[name] { -weasy-anchor: attr(name); }
 
-*[dir] { unicode-bidi: embed; }
+*[dir] { /* unicode-bidi: embed; */ }
 *[hidden] { display: none; }
 *[dir=ltr] { direction: ltr; }
 *[dir=rtl] { direction: rtl; }
-:dir(ltr) { direction: ltr; }
-:dir(rtl) { direction: rtl; }
+/* :dir(ltr) { direction: ltr; } */
+/* :dir(rtl) { direction: rtl; } */
 :root { quotes: '\201c' '\201d' '\2018' '\2019'; }
 *[lang] { -weasy-lang: attr(lang); }
 [lang|=af] { quotes: '\201c' '\201d' '\2018' '\201d'; }
@@ -196,37 +196,37 @@ a:link[rel~=help] { cursor: help; }
 a:visited[rel~=help] { cursor: help; }
 abbr[title] { text-decoration: dotted underline; }
 acronym[title] { text-decoration: dotted underline; }
-address { display: block; font-style: italic; unicode-bidi: isolate; }
+address { display: block; font-style: italic; /* unicode-bidi: isolate; */ }
 area { display: none; }
 area:link[rel~=help] { cursor: help; }
 area:visited[rel~=help] { cursor: help; }
-article { display: block; unicode-bidi: isolate; }
-aside { display: block; unicode-bidi: isolate; }
+article { display: block; /* unicode-bidi: isolate; */ }
+aside { display: block; /* unicode-bidi: isolate; */ }
 b { font-weight: bold; }
 base { display: none; }
 basefont { display: none; }
-bdi { unicode-bidi: isolate; }
-bdi[dir] { unicode-bidi: isolate; }
-bdo { unicode-bidi: bidi-override; }
-bdo[dir] { unicode-bidi: bidi-override; }
+bdi { /* unicode-bidi: isolate; */ }
+bdi[dir] { /* unicode-bidi: isolate; */ }
+bdo { /* unicode-bidi: bidi-override; */ }
+bdo[dir] { /* unicode-bidi: bidi-override; */ }
 big { font-size: larger; }
 blink { text-decoration: blink; }
-blockquote { display: block; margin: 1em 40px; unicode-bidi: isolate; }
+blockquote { display: block; margin: 1em 40px; /* unicode-bidi: isolate; */ }
 body { display: block; margin: 8px; }
 br::before { content: '\A'; white-space: pre-line; }
 button { display: inline-block; text-align: center; text-indent: 0; }
-caption { display: table-caption; unicode-bidi: isolate; }
-center { display: block; text-align: center; unicode-bidi: isolate; }
+caption { display: table-caption; /* unicode-bidi: isolate; */ }
+center { display: block; text-align: center; /* unicode-bidi: isolate; */ }
 cite { font-style: italic; }
 code { font-family: monospace; }
-col { display: table-column; unicode-bidi: isolate; }
-col[hidden] { display: table-column; unicode-bidi: isolate; visibility: collapse; }
-colgroup { display: table-column-group; unicode-bidi: isolate; }
-colgroup[hidden] { display: table-column-group; unicode-bidi: isolate; visibility: collapse; }
+col { display: table-column; /* unicode-bidi: isolate; */ }
+col[hidden] { display: table-column; /* unicode-bidi: isolate; */ visibility: collapse; }
+colgroup { display: table-column-group; /* unicode-bidi: isolate; */ }
+colgroup[hidden] { display: table-column-group; /* unicode-bidi: isolate; */ visibility: collapse; }
 command { display: none; }
 datalist { display: none; }
 
-dd { display: block; margin-left: 40px; unicode-bidi: isolate; }
+dd { display: block; margin-left: 40px; /* unicode-bidi: isolate; */ }
 
 *[dir=ltr] dd { margin-left: 0; margin-right: 40px; }
 *[dir=rtl] dd { margin-left: 40px; margin-right: 0; }
@@ -237,11 +237,11 @@ dd { display: block; margin-left: 40px; unicode-bidi: isolate; }
 dd[dir=ltr][dir][dir] { margin-left: 0; margin-right: 40px; }
 dd[dir=rtl][dir][dir] { margin-left: 40px; margin-right: 0; }
 
-details { display: block; unicode-bidi: isolate; }
+details { display: block; /* unicode-bidi: isolate; */ }
 del { text-decoration: line-through; }
 dfn { font-style: italic; }
 
-dir { display: block; list-style-type: disc; margin-bottom: 1em; margin-top: 1em; padding-left: 40px; unicode-bidi: isolate; }
+dir { display: block; list-style-type: disc; margin-bottom: 1em; margin-top: 1em; padding-left: 40px; /* unicode-bidi: isolate; */ }
 
 *[dir=rtl] dir { padding-left: 0; padding-right: 40px; }
 *[dir=ltr] dir { padding-left: 40px; padding-right: 0; }
@@ -258,9 +258,9 @@ menu dir { list-style-type: circle; margin-bottom: 0; margin-top: 0; }
 ol dir { list-style-type: circle; margin-bottom: 0; margin-top: 0; }
 ul dir { list-style-type: circle; margin-bottom: 0; margin-top: 0; }
 
-div { display: block; unicode-bidi: isolate; }
+div { display: block; /* unicode-bidi: isolate; */ }
 
-dl { display: block; margin-bottom: 1em; margin-top: 1em; unicode-bidi: isolate; }
+dl { display: block; margin-bottom: 1em; margin-top: 1em; /* unicode-bidi: isolate; */ }
 
 dir dl { list-style-type: circle; margin-bottom: 0; margin-top: 0; }
 dl dl { margin-bottom: 0; margin-top: 0; }
@@ -288,40 +288,40 @@ ul ul dl { list-style-type: square; }
 ol, ul { counter-reset: list-item }
 
 
-dt { display: block; unicode-bidi: isolate; }
+dt { display: block; /* unicode-bidi: isolate; */ }
 em { font-style: italic; }
 fieldset { display: block; border-style: groove; border-width: 2px; margin-left: 2px; margin-right: 2px; padding: .35em .625em .75em .625em; }
-figcaption { display: block; unicode-bidi: isolate; }
-figure { display: block; margin: 1em 40px; unicode-bidi: isolate; }
-footer { display: block; unicode-bidi: isolate; }
-form { display: block; unicode-bidi: isolate; }
+figcaption { display: block; /* unicode-bidi: isolate; */ }
+figure { display: block; margin: 1em 40px; /* unicode-bidi: isolate; */ }
+footer { display: block; /* unicode-bidi: isolate; */ }
+form { display: block; /* unicode-bidi: isolate; */ }
 frame { display: block; }
 frameset { display: block; }
 
-h1 { display: block; font-size: 2em; font-weight: bold; hyphens: manual; margin-bottom: .67em; margin-top: .67em; page-break-after: avoid; page-break-inside: avoid; unicode-bidi: isolate; bookmark-level: 1; bookmark-label: content(text); }
+h1 { display: block; font-size: 2em; font-weight: bold; hyphens: manual; margin-bottom: .67em; margin-top: .67em; page-break-after: avoid; page-break-inside: avoid; /* unicode-bidi: isolate; */ bookmark-level: 1; bookmark-label: content(text); }
 section h1 { font-size: 1.50em; margin-bottom: .83em; margin-top: .83em; }
 section section h1 { font-size: 1.17em; margin-bottom: 1.00em; margin-top: 1.00em; }
 section section section h1 { font-size: 1.00em; margin-bottom: 1.33em; margin-top: 1.33em; }
 section section section section h1 { font-size: .83em; margin-bottom: 1.67em; margin-top: 1.67em; }
 section section section section section h1 { font-size: .67em; margin-bottom: 2.33em; margin-top: 2.33em; }
-h2 { display: block; font-size: 1.50em; font-weight: bold; hyphens: manual; margin-bottom: .83em; margin-top: .83em; page-break-after: avoid; page-break-inside: avoid; unicode-bidi: isolate; bookmark-level: 2; bookmark-label: content(text); }
-h3 { display: block; font-size: 1.17em; font-weight: bold; hyphens: manual; margin-bottom: 1.00em; margin-top: 1.00em; page-break-after: avoid; page-break-inside: avoid; unicode-bidi: isolate; bookmark-level: 3; bookmark-label: content(text); }
-h4 { display: block; font-size: 1.00em; font-weight: bold; hyphens: manual; margin-bottom: 1.33em; margin-top: 1.33em; page-break-after: avoid; page-break-inside: avoid; unicode-bidi: isolate; bookmark-level: 4; bookmark-label: content(text); }
-h5 { display: block; font-size: .83em; font-weight: bold; hyphens: manual; margin-bottom: 1.67em; margin-top: 1.67em; page-break-after: avoid; unicode-bidi: isolate; bookmark-level: 5; bookmark-label: content(text); }
-h6 { display: block; font-size: .67em; font-weight: bold; hyphens: manual; margin-bottom: 2.33em; margin-top: 2.33em; page-break-after: avoid; unicode-bidi: isolate; bookmark-level: 6; bookmark-label: content(text); }
+h2 { display: block; font-size: 1.50em; font-weight: bold; hyphens: manual; margin-bottom: .83em; margin-top: .83em; page-break-after: avoid; page-break-inside: avoid; /* unicode-bidi: isolate; */ bookmark-level: 2; bookmark-label: content(text); }
+h3 { display: block; font-size: 1.17em; font-weight: bold; hyphens: manual; margin-bottom: 1.00em; margin-top: 1.00em; page-break-after: avoid; page-break-inside: avoid; /* unicode-bidi: isolate; */ bookmark-level: 3; bookmark-label: content(text); }
+h4 { display: block; font-size: 1.00em; font-weight: bold; hyphens: manual; margin-bottom: 1.33em; margin-top: 1.33em; page-break-after: avoid; page-break-inside: avoid; /* unicode-bidi: isolate; */ bookmark-level: 4; bookmark-label: content(text); }
+h5 { display: block; font-size: .83em; font-weight: bold; hyphens: manual; margin-bottom: 1.67em; margin-top: 1.67em; page-break-after: avoid; /* unicode-bidi: isolate; */ bookmark-level: 5; bookmark-label: content(text); }
+h6 { display: block; font-size: .67em; font-weight: bold; hyphens: manual; margin-bottom: 2.33em; margin-top: 2.33em; page-break-after: avoid; /* unicode-bidi: isolate; */ bookmark-level: 6; bookmark-label: content(text); }
 
 head { display: none; }
-header { display: block; unicode-bidi: isolate; }
-hgroup { display: block; unicode-bidi: isolate; }
+header { display: block; /* unicode-bidi: isolate; */ }
+hgroup { display: block; /* unicode-bidi: isolate; */ }
 
-hr { border-style: inset; border-width: 1px; color: gray; display: block; margin-bottom: .5em; margin-left: auto; margin-right: auto; margin-top: .5em; unicode-bidi: isolate; }
+hr { border-style: inset; border-width: 1px; color: gray; display: block; margin-bottom: .5em; margin-left: auto; margin-right: auto; margin-top: .5em; /* unicode-bidi: isolate; */ }
 html { display: block; }
 i { font-style: italic; }
-*[dir=auto] { unicode-bidi: isolate; }
-bdo[dir=auto] { unicode-bidi: bidi-override isolate; }
+*[dir=auto] { /* unicode-bidi: isolate; */ }
+bdo[dir=auto] { /* unicode-bidi: bidi-override isolate; }
 input[type=hidden] { display: none; }
 menu[type=context] { display: none; }
-pre[dir=auto] { unicode-bidi: plaintext; }
+pre[dir=auto] { /* unicode-bidi: plaintext; */ }
 table[frame=above] { border-color: black; }
 table[frame=below] { border-color: black; }
 table[frame=border] { border-color: black; }
@@ -336,21 +336,21 @@ table[rules=cols] { border-color: black; }
 table[rules=groups] { border-color: black; }
 table[rules=none] { border-color: black; }
 table[rules=rows] { border-color: black; }
-textarea[dir=auto] { unicode-bidi: plaintext; }
+textarea[dir=auto] { /* unicode-bidi: plaintext; */ }
 iframe { border: 2px inset; }
 iframe[seamless] { border: none; }
 input { display: inline-block; text-indent: 0; }
 ins { text-decoration: underline; }
 kbd { font-family: monospace; }
 keygen { display: inline-block; text-indent: 0; }
-legend { display: block; unicode-bidi: isolate; }
-li { display: list-item; unicode-bidi: isolate; }
+legend { display: block; /* unicode-bidi: isolate; */ }
+li { display: list-item; /* unicode-bidi: isolate; */ }
 link { display: none; }
-listing { display: block; font-family: monospace; margin-bottom: 1em; margin-top: 1em; unicode-bidi: isolate; white-space: pre; }
+listing { display: block; font-family: monospace; margin-bottom: 1em; margin-top: 1em; /* unicode-bidi: isolate; */ white-space: pre; }
 mark { background: yellow; color: black; }
-main { display: block; unicode-bidi: isolate; }
+main { display: block; /* unicode-bidi: isolate; */ }
 
-menu { display: block; list-style-type: disc; margin-bottom: 1em; margin-top: 1em; padding-left: 40px; unicode-bidi: isolate; }
+menu { display: block; list-style-type: disc; margin-bottom: 1em; margin-top: 1em; padding-left: 40px; /* unicode-bidi: isolate; */ }
 
 *[dir=rtl] menu { padding-left: 0; padding-right: 40px; }
 *[dir=ltr] menu { padding-left: 40px; padding-right: 0; }
@@ -385,7 +385,7 @@ ul menu { list-style-type: circle; margin-bottom: 0; margin-top: 0; }
 ul ol menu { list-style-type: square; }
 ul ul menu { list-style-type: square; }
 meta { display: none; }
-nav { display: block; unicode-bidi: isolate; }
+nav { display: block; /* unicode-bidi: isolate; */ }
 nobr { white-space: nowrap; }
 noembed { display: none; }
 
@@ -396,7 +396,7 @@ noembed { display: none; }
 noframes { display: block; }
 
 ol { page-break-before: avoid; }
-ol { display: block; list-style-type: decimal; margin-bottom: 1em; margin-top: 1em; padding-left: 40px; unicode-bidi: isolate; }
+ol { display: block; list-style-type: decimal; margin-bottom: 1em; margin-top: 1em; padding-left: 40px; /* unicode-bidi: isolate; */ }
 
 *[dir=ltr] ol { padding-left: 0; padding-right: 40px; }
 *[dir=rtl] ol { padding-left: 40px; padding-right: 0; }
@@ -415,21 +415,21 @@ ul ol { margin-bottom: 0; margin-top: 0; }
 
 optgroup { text-indent: 0; }
 option { text-indent: 0; display: none; } /* Don't display the tag, it's replaced content in dynamic browsers */
-output { unicode-bidi: isolate; }
-output[dir] { unicode-bidi: isolate; }
-p { display: block; margin-bottom: 1em; margin-top: 1em; unicode-bidi: isolate; }
+output { /* unicode-bidi: isolate; */ }
+output[dir] { /* unicode-bidi: isolate; */ }
+p { display: block; margin-bottom: 1em; margin-top: 1em; /* unicode-bidi: isolate; */ }
 param { display: none; }
-plaintext { display: block; font-family: monospace; margin-bottom: 1em; margin-top: 1em; unicode-bidi: isolate; white-space: pre; }
-pre { display: block; font-family: monospace; margin-bottom: 1em; margin-top: 1em; unicode-bidi: isolate; white-space: pre; }
+plaintext { display: block; font-family: monospace; margin-bottom: 1em; margin-top: 1em; /* unicode-bidi: isolate; */ white-space: pre; }
+pre { display: block; font-family: monospace; margin-bottom: 1em; margin-top: 1em; /* unicode-bidi: isolate; */ white-space: pre; }
 q::after { content: close-quote; }
 q::before { content: open-quote; }
 rp { display: none; }
-rt { display: ruby-text; }
-ruby { display: ruby; }
+/* rt { display: ruby-text; } */
+/* ruby { display: ruby; } */
 s { text-decoration: line-through; }
 samp { font-family: monospace; }
 script { display: none; }
-section { display: block; unicode-bidi: isolate; }
+section { display: block; /* unicode-bidi: isolate; */ }
 select { text-indent: 0; }
 small { font-size: smaller; }
 source { display: none; }
@@ -437,10 +437,10 @@ strike { text-decoration: line-through; }
 strong { font-weight: bolder; }
 style { display: none; }
 sub { font-size: smaller; line-height: normal; vertical-align: sub; }
-summary { display: block; unicode-bidi: isolate; }
+summary { display: block; /* unicode-bidi: isolate; */ }
 sup { font-size: smaller; line-height: normal; vertical-align: super; }
 
-table { border-collapse: separate; border-color: gray; border-spacing: 2px; display: table; text-indent: 0; unicode-bidi: isolate; }
+table { border-collapse: separate; border-color: gray; border-spacing: 2px; display: table; text-indent: 0; /* unicode-bidi: isolate; */ }
 
 /* The html5 spec doesn't mention the following, though the CSS 2.1 spec does
  * hint at its use, and a couple of UAs do have this.  I haven't looked into
@@ -448,26 +448,26 @@ table { border-collapse: separate; border-color: gray; border-spacing: 2px; disp
  */
 table { box-sizing: border-box; }
 
-tbody { border-color: inherit; display: table-row-group; unicode-bidi: isolate; vertical-align: middle; }
-tbody[hidden] { display: table-row-group; unicode-bidi: isolate; visibility: collapse; }
+tbody { border-color: inherit; display: table-row-group; /* unicode-bidi: isolate; */ vertical-align: middle; }
+tbody[hidden] { display: table-row-group; /* unicode-bidi: isolate; */ visibility: collapse; }
 
-td { border-color: gray; display: table-cell; padding: 1px; unicode-bidi: isolate; vertical-align: inherit; }
-td[hidden] { display: table-cell; unicode-bidi: isolate; visibility: collapse; }
+td { border-color: gray; display: table-cell; padding: 1px; /* unicode-bidi: isolate; */ vertical-align: inherit; }
+td[hidden] { display: table-cell; /* unicode-bidi: isolate; */ visibility: collapse; }
 
 textarea { display: inline-block; text-indent: 0; white-space: pre-wrap; }
 
-tfoot { border-color: inherit; display: table-footer-group; unicode-bidi: isolate; vertical-align: middle; }
-tfoot[hidden] { display: table-footer-group; unicode-bidi: isolate; visibility: collapse; }
+tfoot { border-color: inherit; display: table-footer-group; /* unicode-bidi: isolate; */ vertical-align: middle; }
+tfoot[hidden] { display: table-footer-group; /* unicode-bidi: isolate; */ visibility: collapse; }
 
 table[rules=none] > tr > td, table[rules=none] > tr > th, table[rules=groups] > tr > td, table[rules=groups] > tr > th, table[rules=rows] > tr > td, table[rules=rows] > tr > th, table[rules=cols] > tr > td, table[rules=cols] > tr > th, table[rules=all] > tr > td, table[rules=all] > tr > th, table[rules=none] > thead > tr > td, table[rules=none] > thead > tr > th, table[rules=groups] > thead > tr > td, table[rules=groups] > thead > tr > th, table[rules=rows] > thead > tr > td, table[rules=rows] > thead > tr > th, table[rules=cols] > thead > tr > td, table[rules=cols] > thead > tr > th, table[rules=all] > thead > tr > td, table[rules=all] > thead > tr > th, table[rules=none] > tbody > tr > td, table[rules=none] > tbody > tr > th, table[rules=groups] > tbody > tr > td, table[rules=groups] > tbody > tr > th, table[rules=rows] > tbody > tr > td, table[rules=rows] > tbody > tr > th, table[rules=cols] > tbody > tr > td, table[rules=cols] > tbody > tr > th, table[rules=all] > tbody > tr > td, table[rules=all] > tbody > tr > th, table[rules=none] > tfoot > tr > td, table[rules=none] > tfoot > tr > th, table[rules=groups] > tfoot > tr > td, table[rules=groups] > tfoot > tr > th, table[rules=rows] > tfoot > tr > td, table[rules=rows] > tfoot > tr > th, table[rules=cols] > tfoot > tr > td, table[rules=cols] > tfoot > tr > th, table[rules=all] > tfoot > tr > td, table[rules=all] > tfoot > tr > th { border-color: black; }
-th { border-color: gray; display: table-cell; font-weight: bold; padding: 1px; unicode-bidi: isolate; vertical-align: inherit; }
+th { border-color: gray; display: table-cell; font-weight: bold; padding: 1px; /* unicode-bidi: isolate; */ vertical-align: inherit; }
 
-th[hidden] { display: table-cell; unicode-bidi: isolate; visibility: collapse; }
-thead { border-color: inherit; display: table-header-group; unicode-bidi: isolate; vertical-align: middle; }
-thead[hidden] { display: table-header-group; unicode-bidi: isolate; visibility: collapse; }
+th[hidden] { display: table-cell; /* unicode-bidi: isolate; */ visibility: collapse; }
+thead { border-color: inherit; display: table-header-group; /* unicode-bidi: isolate; */ vertical-align: middle; }
+thead[hidden] { display: table-header-group; /* unicode-bidi: isolate; */ visibility: collapse; }
 table > tr { vertical-align: middle; }
-tr { border-color: inherit; display: table-row; unicode-bidi: isolate; vertical-align: inherit; }
-tr[hidden] { display: table-row; unicode-bidi: isolate; visibility: collapse; }
+tr { border-color: inherit; display: table-row; /* unicode-bidi: isolate; */ vertical-align: inherit; }
+tr[hidden] { display: table-row; /* unicode-bidi: isolate; */ visibility: collapse; }
 
 template { display: none; }
 title { display: none; }
@@ -475,8 +475,8 @@ track { display: none; }
 tt { font-family: monospace; }
 u { text-decoration: underline; }
 
-::marker { unicode-bidi: isolate; font-variant-numeric: tabular-nums; }
-ul { display: block; list-style-type: disc; margin-bottom: 1em; margin-top: 1em; padding-left: 40px; unicode-bidi: isolate; }
+::marker { /* unicode-bidi: isolate; */ font-variant-numeric: tabular-nums; }
+ul { display: block; list-style-type: disc; margin-bottom: 1em; margin-top: 1em; padding-left: 40px; /* unicode-bidi: isolate; */ }
 
 *[dir=ltr] ul { padding-left: 40px; padding-right: 0; }
 *[dir=rtl] ul { padding-left: 0; padding-right: 40px; }
@@ -517,7 +517,7 @@ ul ul ul { list-style-type: square; }
 
 var { font-style: italic; }
 video { object-fit: contain; }
-xmp { display: block; font-family: monospace; margin-bottom: 1em; margin-top: 1em; unicode-bidi: isolate; white-space: pre; }
+xmp { display: block; font-family: monospace; margin-bottom: 1em; margin-top: 1em; /* unicode-bidi: isolate; */ white-space: pre; }
 
 @page {
     /* `size: auto` (the initial) is A4 portrait */

@@ -18,7 +18,7 @@ br[clear=left] { clear: left; }
 br[clear=right] { clear: right; }
 br[clear=all], br[clear=both] { clear: both; }
 
-ol[type=1], li[type=1] { list-style-type: decimal; }
+ol[type="1"], li[type="1"] { list-style-type: decimal; }
 ol[type=a], li[type=a] { list-style-type: lower-alpha; }
 ol[type=A], li[type=A] { list-style-type: upper-alpha; }
 ol[type=i], li[type=i] { list-style-type: lower-roman; }
@@ -151,7 +151,7 @@ hr[align=right] { margin-left: auto; margin-right: 0; }
 hr[align=center] { margin-left: auto; margin-right: auto; }
 hr[color], hr[noshade] { border-style: solid; }
 
-iframe[frameborder=0], iframe[frameborder=no] { border: none; }
+iframe[frameborder="0"], iframe[frameborder=no] { border: none; }
 
 applet[align=left], embed[align=left], iframe[align=left],
 img[align=left], input[type=image][align=left], object[align=left] {
