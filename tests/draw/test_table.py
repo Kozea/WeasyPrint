@@ -1028,7 +1028,6 @@ def test_tables_14():
     '''})
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_tables_15():
     # Regression test for colspan in last body line with footer
