@@ -34,9 +34,9 @@ class ImageLoadingError(ValueError):
 
 
 class RasterImage:
-    def __init__(self, pillow_image, optimize_image):
+    def __init__(self, pillow_image, optimize_size):
         self.pillow_image = pillow_image
-        self.optimize_image = optimize_image
+        self.optimize_size = optimize_size
         self._intrinsic_width = pillow_image.width
         self._intrinsic_height = pillow_image.height
         self.intrinsic_ratio = (
@@ -59,7 +59,7 @@ class RasterImage:
             return
 
         image_name = context.add_image(
-            self.pillow_image, image_rendering, self.optimize_image)
+            self.pillow_image, image_rendering, self.optimize_size)
         # Use the real intrinsic size here,
         # not affected by 'image-resolution'.
         context.push_state()
@@ -109,7 +109,7 @@ class SVGImage:
         context.pop_state()
 
 
-def get_image_from_uri(cache, url_fetcher, optimize_images, url,
+def get_image_from_uri(cache, url_fetcher, optimize_size, url,
                        forced_mime_type=None, context=None):
     """Get an Image instance from an image URI."""
     missing = object()
@@ -152,7 +152,7 @@ def get_image_from_uri(cache, url_fetcher, optimize_images, url,
                         raise ImageLoadingError.from_exception(
                             raster_exception)
                 else:
-                    image = RasterImage(pillow_image, optimize_images)
+                    image = RasterImage(pillow_image, optimize_size)
 
     except (URLFetchingError, ImageLoadingError) as exception:
         LOGGER.error('Failed to load image at %r: %s', url, exception)

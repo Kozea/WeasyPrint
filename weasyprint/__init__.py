@@ -105,7 +105,7 @@ class HTML:
         return [HTML5_PH_STYLESHEET]
 
     def render(self, stylesheets=None, presentational_hints=False,
-               optimize_images=False, font_config=None, counter_style=None,
+               optimize_size=('fonts',), font_config=None, counter_style=None,
                image_cache=None):
         """Lay out and paginate the document, but do not (yet) export it.
 
@@ -121,8 +121,8 @@ class HTML:
             objects. (See :ref:`Stylesheet Origins`.)
         :param bool presentational_hints:
             Whether HTML presentational hints are followed.
-        :param bool optimize_images:
-            Try to optimize the size of embedded images.
+        :param tuple optimize_size:
+            Optimize size of generated PDF. Can contain "images" and "fonts".
         :type font_config: :class:`text.fonts.FontConfiguration`
         :param font_config: A font configuration handling ``@font-face`` rules.
         :type counter_style: :class:`css.counters.CounterStyle`
@@ -133,12 +133,12 @@ class HTML:
         """
         return Document._render(
             self, stylesheets, presentational_hints,
-            optimize_images, font_config, counter_style, image_cache)
+            optimize_size, font_config, counter_style, image_cache)
 
     def write_pdf(self, target=None, stylesheets=None, zoom=1,
                   attachments=None, presentational_hints=False,
-                  optimize_images=False, font_config=None, counter_style=None,
-                  image_cache=None):
+                  optimize_size=('fonts',), font_config=None,
+                  counter_style=None, image_cache=None):
         """Render the document to a PDF file.
 
         This is a shortcut for calling :meth:`render`, then
@@ -163,8 +163,8 @@ class HTML:
             :class:`Attachment` objects, filenames, URLs or file-like objects.
         :param bool presentational_hints: Whether HTML presentational hints are
             followed.
-        :param bool optimize_images:
-            Try to optimize the size of embedded images.
+        :param tuple optimize_size:
+            Optimize size of generated PDF. Can contain "images" and "fonts".
         :type font_config: :class:`text.fonts.FontConfiguration`
         :param font_config: A font configuration handling ``@font-face`` rules.
         :type counter_style: :class:`css.counters.CounterStyle`
@@ -179,7 +179,7 @@ class HTML:
         return (
             self.render(
                 stylesheets, presentational_hints=presentational_hints,
-                optimize_images=optimize_images, font_config=font_config,
+                optimize_size=optimize_size, font_config=font_config,
                 counter_style=counter_style, image_cache=image_cache)
             .write_pdf(target, zoom, attachments))
 

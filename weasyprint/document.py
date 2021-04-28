@@ -243,7 +243,7 @@ class Stream(pydyf.Stream):
         self._x_objects[group.id] = group
         return group
 
-    def add_image(self, pillow_image, image_rendering, optimize_image):
+    def add_image(self, pillow_image, image_rendering, optimize_size):
         if 'transparency' in pillow_image.info:
             pillow_image = pillow_image.convert('RGBA')
         elif pillow_image.mode in ('1', 'P'):
@@ -270,11 +270,11 @@ class Stream(pydyf.Stream):
             'Interpolate': interpolate,
         })
 
+        optimize = 'images' in optimize_size
         image_file = io.BytesIO()
         if pillow_image.format == 'JPEG':
             extra['Filter'] = '/DCTDecode'
-            pillow_image.save(
-                image_file, format='JPEG', optimize=optimize_image)
+            pillow_image.save(image_file, format='JPEG', optimize=optimize)
         else:
             extra['Filter'] = '/JPXDecode'
             if pillow_image.mode == 'RGBA':
@@ -282,7 +282,7 @@ class Stream(pydyf.Stream):
                 pillow_image = pillow_image.convert('RGB')
                 alpha_file = io.BytesIO()
                 alpha.save(
-                    alpha_file, format='JPEG2000', optimize=optimize_image,
+                    alpha_file, format='JPEG2000', optimize=optimize,
                     num_resolutions=1)
                 extra['SMask'] = pydyf.Stream([alpha_file.getvalue()], extra={
                     'Filter': '/JPXDecode',
@@ -297,7 +297,7 @@ class Stream(pydyf.Stream):
             # Set number of resolutions to 1 because of
             # https://github.com/uclouvain/openjpeg/issues/215
             pillow_image.save(
-                image_file, format='JPEG2000', optimize=optimize_image,
+                image_file, format='JPEG2000', optimize=optimize,
                 num_resolutions=1)
         stream = [image_file.getvalue()]
 
@@ -799,7 +799,7 @@ class Document:
     @classmethod
     def _build_layout_context(cls, html, stylesheets,
                               presentational_hints=False,
-                              optimize_images=False, font_config=None,
+                              optimize_size=('fonts',), font_config=None,
                               counter_style=None, image_cache=None):
         if font_config is None:
             font_config = FontConfiguration()
@@ -820,7 +820,7 @@ class Document:
             counter_style, page_rules, target_collector)
         get_image_from_uri = functools.partial(
             original_get_image_from_uri, image_cache, html.url_fetcher,
-            optimize_images)
+            optimize_size)
         PROGRESS_LOGGER.info('Step 4 - Creating formatting structure')
         context = LayoutContext(
             style_for, get_image_from_uri, font_config, counter_style,
@@ -829,7 +829,7 @@ class Document:
 
     @classmethod
     def _render(cls, html, stylesheets, presentational_hints=False,
-                optimize_images=False, font_config=None, counter_style=None,
+                optimize_size=('fonts',), font_config=None, counter_style=None,
                 image_cache=None):
         if font_config is None:
             font_config = FontConfiguration()
@@ -838,7 +838,7 @@ class Document:
             counter_style = CounterStyle()
 
         context = cls._build_layout_context(
-            html, stylesheets, presentational_hints, optimize_images,
+            html, stylesheets, presentational_hints, optimize_size,
             font_config, counter_style, image_cache)
 
         root_box = build_formatting_structure(
@@ -849,7 +849,7 @@ class Document:
         rendering = cls(
             [Page(page_box) for page_box in page_boxes],
             DocumentMetadata(**get_html_metadata(html)),
-            html.url_fetcher, font_config)
+            html.url_fetcher, font_config, optimize_size)
         return rendering
 
     def _use_references(self, pdf, resources):
@@ -890,7 +890,8 @@ class Document:
             if 'SMask' in alpha and 'G' in alpha['SMask']:
                 alpha['SMask']['G'] = alpha['SMask']['G'].reference
 
-    def __init__(self, pages, metadata, url_fetcher, font_config):
+    def __init__(self, pages, metadata, url_fetcher, font_config,
+                 optimize_size):
         #: A list of :class:`Page` objects.
         self.pages = pages
         #: A :class:`DocumentMetadata` object.
@@ -908,6 +909,8 @@ class Document:
         # rendering is destroyed. This is needed as font_config.__del__ removes
         # fonts that may be used when rendering
         self._font_config = font_config
+        # Optimize size of generated PDF. Can contain "images" and "fonts".
+        self.optimize_size = optimize_size
 
     def copy(self, pages='all'):
         """Take a subset of the pages.
@@ -941,7 +944,8 @@ class Document:
         elif not isinstance(pages, list):
             pages = list(pages)
         return type(self)(
-            pages, self.metadata, self.url_fetcher, self._font_config)
+            pages, self.metadata, self.url_fetcher, self._font_config,
+            self.optimize_size)
 
     def write_pdf(self, target=None, zoom=1, attachments=None, finisher=None):
         """Paint the pages in a PDF file, with metadata.
@@ -1199,22 +1203,25 @@ class Document:
                 fonts_by_file_hash[font.file_hash] = [font]
         font_references_by_file_hash = {}
         for file_hash, fonts in fonts_by_file_hash.items():
-            # Optimize font
-            cmap = {}
-            for font in fonts:
-                cmap = {**cmap, **font.cmap}
-            full_font = io.BytesIO(fonts[0].file_content)
-            optimized_font = io.BytesIO()
-            try:
-                ttfont = TTFont(full_font)
-                options = subset.Options(
-                    retain_gids=True, passthrough_tables=True)
-                subsetter = subset.Subsetter(options)
-                subsetter.populate(gids=cmap)
-                subsetter.subset(ttfont)
-                ttfont.save(optimized_font)
-                content = optimized_font.getvalue()
-            except TTLibError:
+            if 'fonts' in self.optimize_size:
+                # Optimize font
+                cmap = {}
+                for font in fonts:
+                    cmap = {**cmap, **font.cmap}
+                full_font = io.BytesIO(fonts[0].file_content)
+                optimized_font = io.BytesIO()
+                try:
+                    ttfont = TTFont(full_font)
+                    options = subset.Options(
+                        retain_gids=True, passthrough_tables=True)
+                    subsetter = subset.Subsetter(options)
+                    subsetter.populate(gids=cmap)
+                    subsetter.subset(ttfont)
+                    ttfont.save(optimized_font)
+                    content = optimized_font.getvalue()
+                except TTLibError:
+                    content = fonts[0].file_content
+            else:
                 content = fonts[0].file_content
 
             # Include font

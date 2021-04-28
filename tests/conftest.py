@@ -74,11 +74,11 @@ def document_write_png(self, target=None, resolution=96, antialiasing=1,
 
 
 def html_write_png(self, target=None, stylesheets=None, resolution=96,
-                   presentational_hints=False, optimize_images=False,
+                   presentational_hints=False, optimize_size=('fonts',),
                    font_config=None, counter_style=None, image_cache=None):
     return self.render(
         stylesheets, presentational_hints=presentational_hints,
-        optimize_images=optimize_images, font_config=font_config,
+        optimize_size=optimize_size, font_config=font_config,
         counter_style=counter_style, image_cache=image_cache).write_png(
             target, resolution)
 

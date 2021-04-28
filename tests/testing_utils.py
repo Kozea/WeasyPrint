@@ -163,7 +163,7 @@ def _parse_base(html_content, base_url=BASE_URL):
     counter_style = CounterStyle()
     style_for = get_all_computed_styles(document, counter_style=counter_style)
     get_image_from_uri = functools.partial(
-        images.get_image_from_uri, {}, document.url_fetcher, False)
+        images.get_image_from_uri, {}, document.url_fetcher, ())
     target_collector = TargetCollector()
     return (
         document.etree_element, style_for, get_image_from_uri, base_url,

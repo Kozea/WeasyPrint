@@ -77,7 +77,7 @@ def main(argv=None, stdout=None, stdin=None):
     .. option:: -a <file>, --attachment <file>
 
         Adds an attachment to the document.  The attachment is
-        included in the PDF output.  This option can be used multiple
+        included in the PDF output. This option can be used multiple
         times.
 
     .. option:: -p, --presentational-hints
@@ -86,9 +86,12 @@ def main(argv=None, stdout=None, stdin=None):
         <https://www.w3.org/TR/html/rendering.html\
         #the-css-user-agent-style-sheet-and-presentational-hints>`_.
 
-    .. option:: -o, --optimize-images
+    .. option:: -O <type>, --optimize-size <type>
 
-        Try to optimize the size of embedded images.
+        Optimize the size of generated documents. Supported types are
+        ``images``, ``fonts``, ``all`` and ``none``. This option can be used
+        multiple times, ``all`` adds all allowed values, ``none`` removes all
+        previously set values.
 
     .. option:: -v, --verbose
 
@@ -134,8 +137,10 @@ def main(argv=None, stdout=None, stdin=None):
                              'to attach to the PDF document')
     parser.add_argument('-p', '--presentational-hints', action='store_true',
                         help='Follow HTML presentational hints.')
-    parser.add_argument('-o', '--optimize-images', action='store_true',
-                        help='Try to optimize the size of embedded images.')
+    parser.add_argument('-O', '--optimize-size', action='append',
+                        help='Optimize output size for specified features.',
+                        choices=('images', 'fonts', 'all', 'none'),
+                        default=['fonts'])
     parser.add_argument('-v', '--verbose', action='store_true',
                         help='Show warnings and information messages.')
     parser.add_argument('-d', '--debug', action='store_true',
@@ -163,10 +168,19 @@ def main(argv=None, stdout=None, stdin=None):
     else:
         output = args.output
 
+    optimize_size = set()
+    for arg in args.optimize_size:
+        if arg == 'none':
+            optimize_size.clear()
+        elif arg == 'all':
+            optimize_size |= {'images', 'fonts'}
+        else:
+            optimize_size.add(arg)
+
     kwargs = {
         'stylesheets': args.stylesheet,
         'presentational_hints': args.presentational_hints,
-        'optimize_images': args.optimize_images,
+        'optimize_size': tuple(optimize_size),
         'attachments': args.attachment}
 
     # Default to logging to stderr.
