@@ -258,6 +258,7 @@ def handle_svg(element, box, get_image_from_uri, base_url):
     content.
 
     """
+    # TODO: handle href base for inline svg tags
     if '{http://www.w3.org/2000/xmlns/}xmlns' in element.attrib:
         # Remove default namespace to avoid xmlns being used as prefix
         del element.attrib['{http://www.w3.org/2000/xmlns/}xmlns']
