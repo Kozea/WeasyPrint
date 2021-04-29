@@ -574,7 +574,7 @@ class SVG:
 
         # Apply dash array
         dash_array = tuple(
-            float(value) for value in
+            -1 if value == 'none' else float(value) for value in
             normalize(node.get('stroke-dasharray')).split())
         dash_condition = (
             dash_array and
