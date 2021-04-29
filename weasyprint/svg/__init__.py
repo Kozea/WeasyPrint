@@ -353,12 +353,13 @@ class SVG:
             original_stream = self.stream
             bounding_box = self.calculate_bounding_box(node, font_size)
             if is_valid_bounding_box(bounding_box):
-                self.stream = self.stream.add_transparency_group([
+                coords = (
                     bounding_box[0], bounding_box[1],
                     bounding_box[0] + bounding_box[2],
-                    bounding_box[1] + bounding_box[3]])
+                    bounding_box[1] + bounding_box[3])
             else:
-                opacity = 1
+                coords = (0, 0, self.concrete_width, self.concrete_height)
+            self.stream = self.stream.add_transparency_group(coords)
 
         # Apply transformations
         x, y = self.point(node.get('x'), node.get('y'), font_size)
