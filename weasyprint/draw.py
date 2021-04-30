@@ -16,7 +16,6 @@ from .images import SVGImage
 from .layout import replaced
 from .layout.backgrounds import BackgroundLayer
 from .stacking import StackingContext
-from .svg import SVG
 from .text.ffi import ffi, harfbuzz, pango, units_from_double, units_to_double
 from .text.line_break import get_last_word_end
 
@@ -325,7 +324,7 @@ def draw_background(stream, bg, clip_box=True, bleed=None, marks=()):
                     translate({width},0) scale(0.5) translate(0,{height})" />
                 '''
             svg += '</svg>'
-            image = SVGImage(SVG(svg, None), None, None, stream)
+            image = SVGImage(svg, None, None, stream)
             # Painting area is the PDF media box
             size = (width, height)
             position = (x, y)

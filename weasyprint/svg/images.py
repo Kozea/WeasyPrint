@@ -27,7 +27,7 @@ def image(svg, node, font_size):
     """Draw image tags."""
     base_url = node.get('{http://www.w3.org/XML/1998/namespace}base')
     url = urljoin(base_url or svg.url, node.get_href())
-    image = svg.context.get_image_from_uri(url, forced_mime_type='image/*')
+    image = svg.context.get_image_from_uri(url=url, forced_mime_type='image/*')
     if image is None:
         return
     width, height = svg.point(node.get('width'), node.get('height'), font_size)

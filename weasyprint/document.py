@@ -819,8 +819,8 @@ class Document:
             html, user_stylesheets, presentational_hints, font_config,
             counter_style, page_rules, target_collector)
         get_image_from_uri = functools.partial(
-            original_get_image_from_uri, image_cache, html.url_fetcher,
-            optimize_size)
+            original_get_image_from_uri, cache=image_cache,
+            url_fetcher=html.url_fetcher, optimize_size=optimize_size)
         PROGRESS_LOGGER.info('Step 4 - Creating formatting structure')
         context = LayoutContext(
             style_for, get_image_from_uri, font_config, counter_style,

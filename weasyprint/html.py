@@ -20,6 +20,7 @@ from . import CSS
 from .css import get_child_text
 from .css.counters import CounterStyle
 from .formatting_structure import boxes
+from .images import SVGImage
 from .logger import LOGGER
 from .urls import get_url_attribute
 
@@ -129,7 +130,7 @@ def handle_img(element, box, get_image_from_uri, base_url):
     src = get_url_attribute(element, 'src', base_url)
     alt = element.get('alt')
     if src:
-        image = get_image_from_uri(src)
+        image = get_image_from_uri(url=src)
         if image is not None:
             return [make_replaced_box(element, box, image)]
         else:
@@ -163,7 +164,7 @@ def handle_embed(element, box, get_image_from_uri, base_url):
     src = get_url_attribute(element, 'src', base_url)
     type_ = element.get('type', '').strip()
     if src:
-        image = get_image_from_uri(src, type_)
+        image = get_image_from_uri(url=src, forced_mime_type=type_)
         if image is not None:
             return [make_replaced_box(element, box, image)]
     # No fallback.
@@ -181,7 +182,7 @@ def handle_object(element, box, get_image_from_uri, base_url):
     data = get_url_attribute(element, 'data', base_url)
     type_ = element.get('type', '').strip()
     if data:
-        image = get_image_from_uri(data, type_)
+        image = get_image_from_uri(url=data, forced_mime_type=type_)
         if image is not None:
             return [make_replaced_box(element, box, image)]
     # The element’s children are the fallback.
@@ -262,11 +263,16 @@ def handle_svg(element, box, get_image_from_uri, base_url):
     if '{http://www.w3.org/2000/xmlns/}xmlns' in element.attrib:
         # Remove default namespace to avoid xmlns being used as prefix
         del element.attrib['{http://www.w3.org/2000/xmlns/}xmlns']
-    uri = b'data:image/svg+xml,' + tostring(element, 'utf-8')
-    image = get_image_from_uri(uri.decode('utf-8'), 'image/svg+xml')
-    if image is not None:
+    url_fetcher = get_image_from_uri.keywords['url_fetcher']
+    context = get_image_from_uri.keywords['context']
+    try:
+        string = tostring(element, 'utf-8')
+        image = SVGImage(string, base_url, url_fetcher, context)
+    except Exception as exception:
+        LOGGER.error('Failed to load inline SVG: %s', exception)
+        return []
+    else:
         return [make_replaced_box(element, box, image)]
-    return []
 
 
 def find_base_url(html_document, fallback_base_url):

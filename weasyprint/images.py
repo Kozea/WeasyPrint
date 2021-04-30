@@ -70,8 +70,8 @@ class RasterImage:
 
 
 class SVGImage:
-    def __init__(self, pydyf_svg, base_url, url_fetcher, context):
-        self._svg = pydyf_svg
+    def __init__(self, string, base_url, url_fetcher, context):
+        self._svg = SVG(string, base_url)
         self._base_url = base_url
         self._url_fetcher = url_fetcher
         self._context = context
@@ -130,8 +130,7 @@ def get_image_from_uri(cache, url_fetcher, optimize_size, url,
             # Try to rely on given mimetype for SVG
             if mime_type == 'image/svg+xml':
                 try:
-                    image = SVGImage(
-                        SVG(string, url), url, url_fetcher, context)
+                    image = SVGImage(string, url, url_fetcher, context)
                 except Exception as svg_exception:
                     svg_exceptions.append(svg_exception)
             # Try pillow for raster images, or for failing SVG
@@ -145,8 +144,7 @@ def get_image_from_uri(cache, url_fetcher, optimize_size, url,
                             svg_exceptions[0])
                     try:
                         # Last chance, try SVG
-                        image = SVGImage(
-                            SVG(string, url), url, url_fetcher, context)
+                        image = SVGImage(string, url, url_fetcher, context)
                     except Exception:
                         # Tried Pillow then SVGImage for a raster, abort
                         raise ImageLoadingError.from_exception(

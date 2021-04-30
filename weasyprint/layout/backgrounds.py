@@ -63,7 +63,7 @@ def layout_box_backgrounds(page, box, get_image_from_uri, layout_children=True,
         if page != box:  # Pages need a background for bleed box
             return
 
-    images = [get_image_from_uri(value) if type_ == 'url' else value
+    images = [get_image_from_uri(url=value) if type_ == 'url' else value
               for type_, value in style['background_image']]
     color = get_color(style, 'background_color')
     if color.alpha == 0 and not any(images):
