@@ -586,78 +586,179 @@ def declaration_precedence(origin, importance):
         return 5
 
 
+class Style:
+    def __setitem__(self, key, value):
+        self.cache[key] = value
+
+    def get(self, key, fallback=None):
+        try:
+            return self.__getitem__(key)
+        except KeyError:
+            return fallback
+
+    def __iter__(self):
+        yield from self.cache
+
+
+class AnonymousStyle(Style):
+    def __init__(self, parent_style):
+        # border-*-style is none, so border-width computes to zero.
+        # Other than that, properties that would need computing are
+        # border-*-color, but they do not apply.
+        self.cache = {
+            'border_top_width': 0,
+            'border_bottom_width': 0,
+            'border_left_width': 0,
+            'border_right_width': 0,
+            'outline_width': 0,
+        }
+        self.parent_style = parent_style
+        if parent_style:
+            for key in parent_style:
+                if key.startswith('__'):
+                    self.cache[key] = parent_style[key]
+        self['anchor']
+
+    def copy(self):
+        copy = AnonymousStyle(self.parent_style)
+        copy.cache = self.cache.copy()
+        return copy
+
+    def __getitem__(self, key):
+        if key not in self.cache:
+            if key in INHERITED or key.startswith('__'):
+                self.cache[key] = self.parent_style[key]
+            elif key == 'page':
+                # page is not inherited but taken from the ancestor if 'auto'
+                self.cache[key] = self.parent_style[key]
+            else:
+                self.cache[key] = INITIAL_VALUES[key]
+        return self.cache[key]
+
+
+class ComputedStyle(Style):
+    def __init__(self, parent_style, cascaded, element, pseudo_type,
+                 root_style, base_url, target_collector):
+        self.cache = {}
+        self.specified = {}
+        self.parent_style = parent_style
+        self.cascaded = cascaded
+        self.computer = {
+            'is_root_element': parent_style is None,
+            'element': element,
+            'pseudo_type': pseudo_type,
+            'specified': self.specified,
+            'computed': self,
+            'parent_style': parent_style or INITIAL_VALUES,
+            'root_style': root_style,
+            'base_url': base_url,
+            'target_collector': target_collector,
+        }
+        if parent_style:
+            for key in parent_style:
+                if key.startswith('__'):
+                    self.cache[key] = parent_style[key]
+        for key in cascaded:
+            if key.startswith('__'):
+                self.cache[key] = cascaded[key][0]
+        self['anchor']
+
+    def copy(self):
+        copy = ComputedStyle(
+            self.parent_style, self.cascaded, self.computer['element'],
+            self.computer['pseudo_type'], self.computer['root_style'],
+            self.computer['base_url'], self.computer['target_collector'])
+        copy.cache = self.cache.copy()
+        return copy
+
+    def __getitem__(self, key):
+        if key not in self.cache:
+            if key.startswith('__'):
+                raise KeyError()
+
+            initial = INITIAL_VALUES[key]
+
+            if key == 'float':
+                self['position']
+            elif key == 'display':
+                self['float']
+
+            if key in self.cascaded:
+                value = keyword = self.cascaded[key][0]
+            else:
+                if key in INHERITED:
+                    keyword = 'inherit'
+                else:
+                    keyword = 'initial'
+
+            if keyword == 'inherit' and self.parent_style is None:
+                # On the root element, 'inherit' from initial values
+                keyword = 'initial'
+
+            if keyword == 'initial':
+                value = initial
+                if key not in INITIAL_NOT_COMPUTED:
+                    # The value is the same as when computed
+                    self.cache[key] = value
+            elif keyword == 'inherit':
+                # Values in parent_style are already computed.
+                self.cache[key] = value = self.parent_style[key]
+
+            if key == 'page' and value == 'auto':
+                # The page property does not inherit. However, if the page
+                # value on an element is auto, then its used value is the value
+                # specified on its nearest ancestor with a non-auto value. When
+                # specified on the root element, the used value for auto is the
+                # empty string.
+                self.cache['page'] = value = (
+                    '' if self.parent_style is None
+                    else self.parent_style['page'])
+            elif key == 'display':
+                self.cache['_weasy_specified_display'] = value
+
+            self.specified[key] = value
+
+        if key not in self.cache:
+            getter = computed_values.COMPUTER_FUNCTIONS.get
+            value = self.specified[key]
+            function = getter(key)
+            already_computed_value = False
+
+            if value:
+                converted_to_list = False
+
+                if not isinstance(value, list):
+                    converted_to_list = True
+                    value = [value]
+
+                for i, v in enumerate(value):
+                    value[i], already_computed_value = (
+                        computed_values.compute_variable(
+                            v, key, self, self.computer['base_url'],
+                            self.parent_style))
+
+                if converted_to_list:
+                    value, = value
+
+            if function is not None and not already_computed_value:
+                value = function(self.computer, key, value)
+            # else: same as specified
+
+            self.cache[key] = value
+
+        return self.cache[key]
+
+
 def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
                            root_style=None, base_url=None,
                            target_collector=None):
     """Get a dict of computed style mixed from parent and cascaded styles."""
     if not cascaded and parent_style is not None:
-        # Fast path for anonymous boxes:
-        # no cascaded style, only implicitly initial or inherited values.
-        computed = dict(INITIAL_VALUES)
-        for name in parent_style:
-            if name in INHERITED or name.startswith('__'):
-                computed[name] = parent_style[name]
-        # page is not inherited but taken from the ancestor if 'auto'
-        computed['page'] = parent_style['page']
-        # border-*-style is none, so border-width computes to zero.
-        # Other than that, properties that would need computing are
-        # border-*-color, but they do not apply.
-        computed['border_top_width'] = 0
-        computed['border_bottom_width'] = 0
-        computed['border_left_width'] = 0
-        computed['border_right_width'] = 0
-        computed['outline_width'] = 0
-        return computed
+        return AnonymousStyle(parent_style)
 
-    # Handle inheritance and initial values
-    specified = {}
-    computed = {}
-
-    if parent_style:
-        for name in parent_style:
-            if name.startswith('__'):
-                computed[name] = specified[name] = parent_style[name]
-    for name in cascaded:
-        if name.startswith('__'):
-            computed[name] = specified[name] = cascaded[name][0]
-
-    for name, initial in INITIAL_VALUES.items():
-        if name in cascaded:
-            value, _precedence = cascaded[name]
-            keyword = value
-        else:
-            if name in INHERITED:
-                keyword = 'inherit'
-            else:
-                keyword = 'initial'
-
-        if keyword == 'inherit' and parent_style is None:
-            # On the root element, 'inherit' from initial values
-            keyword = 'initial'
-
-        if keyword == 'initial':
-            value = initial
-            if name not in INITIAL_NOT_COMPUTED:
-                # The value is the same as when computed
-                computed[name] = value
-        elif keyword == 'inherit':
-            value = parent_style[name]
-            # Values in parent_style are already computed.
-            computed[name] = value
-
-        specified[name] = value
-
-    if specified['page'] == 'auto':
-        # The page property does not inherit. However, if the page value on
-        # an element is auto, then its used value is the value specified on
-        # its nearest ancestor with a non-auto value. When specified on the
-        # root element, the used value for auto is the empty string.
-        computed['page'] = specified['page'] = (
-            '' if parent_style is None else parent_style['page'])
-
-    return computed_values.compute(
-        element, pseudo_type, specified, computed, parent_style, root_style,
-        base_url, target_collector)
+    return ComputedStyle(
+        parent_style, cascaded, element, pseudo_type, root_style, base_url,
+        target_collector)
 
 
 def parse_page_selectors(rule):
