@@ -205,9 +205,6 @@ INITIAL_VALUES = {
     'anchor': None,  # computed value of 'none'
     'link': None,  # computed value of 'none'
     'lang': None,  # computed value of 'none'
-
-    # Internal, to implement the "static position" for absolute boxes.
-    '_weasy_specified_display': 'inline',
 }
 
 

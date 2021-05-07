@@ -625,7 +625,6 @@ def anchor(computer, name, values):
     if values != 'none':
         _, key = values
         anchor_name = computer['element'].get(key) or None
-        computer['target_collector'].collect_anchor(anchor_name)
         return anchor_name
 
 

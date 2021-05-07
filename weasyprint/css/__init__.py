@@ -596,8 +596,11 @@ class Style:
         except KeyError:
             return fallback
 
-    def __iter__(self):
-        yield from self.cache
+    @property
+    def variables(self):
+        for key, value in self.cache.items():
+            if key.startswith('__'):
+                yield key, value
 
 
 class AnonymousStyle(Style):
@@ -605,7 +608,7 @@ class AnonymousStyle(Style):
         # border-*-style is none, so border-width computes to zero.
         # Other than that, properties that would need computing are
         # border-*-color, but they do not apply.
-        self.cache = {
+        self.cache = self.specified = {
             'border_top_width': 0,
             'border_bottom_width': 0,
             'border_left_width': 0,
@@ -614,14 +617,12 @@ class AnonymousStyle(Style):
         }
         self.parent_style = parent_style
         if parent_style:
-            for key in parent_style:
-                if key.startswith('__'):
-                    self.cache[key] = parent_style[key]
-        self['anchor']
+            for key, value in parent_style.variables:
+                self.cache[key] = value
 
     def copy(self):
         copy = AnonymousStyle(self.parent_style)
-        copy.cache = self.cache.copy()
+        copy.cache = copy.specified = self.cache.copy()
         return copy
 
     def __getitem__(self, key):
@@ -638,7 +639,7 @@ class AnonymousStyle(Style):
 
 class ComputedStyle(Style):
     def __init__(self, parent_style, cascaded, element, pseudo_type,
-                 root_style, base_url, target_collector):
+                 root_style, base_url):
         self.cache = {}
         self.specified = {}
         self.parent_style = parent_style
@@ -652,44 +653,38 @@ class ComputedStyle(Style):
             'parent_style': parent_style or INITIAL_VALUES,
             'root_style': root_style,
             'base_url': base_url,
-            'target_collector': target_collector,
         }
         if parent_style:
-            for key in parent_style:
-                if key.startswith('__'):
-                    self.cache[key] = parent_style[key]
+            for key, value in parent_style.variables:
+                self.cache[key] = value
         for key in cascaded:
             if key.startswith('__'):
                 self.cache[key] = cascaded[key][0]
-        self['anchor']
 
     def copy(self):
         copy = ComputedStyle(
             self.parent_style, self.cascaded, self.computer['element'],
             self.computer['pseudo_type'], self.computer['root_style'],
-            self.computer['base_url'], self.computer['target_collector'])
+            self.computer['base_url'])
         copy.cache = self.cache.copy()
+        copy.specified = self.specified.copy()
         return copy
 
     def __getitem__(self, key):
         if key not in self.cache:
-            if key.startswith('__'):
-                raise KeyError()
-
             initial = INITIAL_VALUES[key]
 
             if key == 'float':
+                # Set specified value for position, needed for computed value
                 self['position']
             elif key == 'display':
+                # Set specified value for float, needed for computed value
                 self['float']
 
             if key in self.cascaded:
                 value = keyword = self.cascaded[key][0]
             else:
-                if key in INHERITED:
-                    keyword = 'inherit'
-                else:
-                    keyword = 'initial'
+                keyword = 'inherit' if key in INHERITED else 'initial'
 
             if keyword == 'inherit' and self.parent_style is None:
                 # On the root element, 'inherit' from initial values
@@ -713,8 +708,6 @@ class ComputedStyle(Style):
                 self.cache['page'] = value = (
                     '' if self.parent_style is None
                     else self.parent_style['page'])
-            elif key == 'display':
-                self.cache['_weasy_specified_display'] = value
 
             self.specified[key] = value
 
@@ -756,9 +749,11 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
     if not cascaded and parent_style is not None:
         return AnonymousStyle(parent_style)
 
-    return ComputedStyle(
-        parent_style, cascaded, element, pseudo_type, root_style, base_url,
-        target_collector)
+    style = ComputedStyle(
+        parent_style, cascaded, element, pseudo_type, root_style, base_url)
+    if target_collector:
+        target_collector.collect_anchor(style['anchor'])
+    return style
 
 
 def parse_page_selectors(rule):
