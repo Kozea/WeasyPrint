@@ -535,8 +535,8 @@ def display(style, name, value):
     """
     float_ = style.specified['float']
     position = style.specified['position']
-    if position in ('absolute', 'fixed') or (
-            float_ != 'none' or style.is_root_element):
+    if position in ('absolute', 'fixed') or float_ != 'none' or (
+            style.is_root_element):
         if value == 'inline-table':
             return'table'
         elif value in ('inline', 'table-row-group', 'table-column',
@@ -567,7 +567,10 @@ def font_size(style, name, value):
         return FONT_SIZE_KEYWORDS[value]
 
     keyword_values = list(FONT_SIZE_KEYWORDS.values())
-    parent_font_size = (style.parent_style or INITIAL_VALUES)['font_size']
+    if style.parent_style is None:
+        parent_font_size = INITIAL_VALUES['font_size']
+    else:
+        parent_font_size = style.parent_style['font_size']
 
     if value == 'larger':
         for i, keyword_value in enumerate(keyword_values):
@@ -597,7 +600,10 @@ def font_weight(style, name, value):
     elif value == 'bold':
         return 700
     elif value in ('bolder', 'lighter'):
-        parent_value = (style.parent_style or INITIAL_VALUES)['font_weight']
+        if style.parent_style is None:
+            parent_value = INITIAL_VALUES['font_weight']
+        else:
+            parent_value = style.parent_style['font_weight']
         return FONT_WEIGHT_RELATIVE[value][parent_value]
     else:
         return value

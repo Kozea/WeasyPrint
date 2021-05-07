@@ -54,7 +54,7 @@ def build_formatting_structure(element_tree, style_for, get_image_from_uri,
         # No root element
         def root_style_for(element, pseudo_type=None):
             style = style_for(element, pseudo_type)
-            if style:
+            if style is not None:
                 if element == element_tree:
                     style['display'] = 'block'
                 else:

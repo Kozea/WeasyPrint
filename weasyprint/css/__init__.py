@@ -586,21 +586,12 @@ def declaration_precedence(origin, importance):
         return 5
 
 
-class Style:
-    def __setitem__(self, key, value):
-        self.cache[key] = value
-
-    def get(self, key, fallback=None):
-        try:
-            return self.__getitem__(key)
-        except KeyError:
-            return fallback
-
+class Style(dict):
     @property
     def variables(self):
-        for key, value in self.cache.items():
-            if key.startswith('__'):
-                yield key, value
+        return {
+            key: value for (key, value) in self.items()
+            if key.startswith('__')}
 
 
 class AnonymousStyle(Style):
@@ -608,39 +599,38 @@ class AnonymousStyle(Style):
         # border-*-style is none, so border-width computes to zero.
         # Other than that, properties that would need computing are
         # border-*-color, but they do not apply.
-        self.cache = self.specified = {
+        self.update({
             'border_top_width': 0,
             'border_bottom_width': 0,
             'border_left_width': 0,
             'border_right_width': 0,
             'outline_width': 0,
-        }
+        })
         self.parent_style = parent_style
+        self.specified = self
         if parent_style:
-            for key, value in parent_style.variables:
-                self.cache[key] = value
+            self.update(parent_style.variables)
 
     def copy(self):
         copy = AnonymousStyle(self.parent_style)
-        copy.cache = copy.specified = self.cache.copy()
+        copy.update(self)
         return copy
 
     def __getitem__(self, key):
-        if key not in self.cache:
+        if key not in self:
             if key in INHERITED or key.startswith('__'):
-                self.cache[key] = self.parent_style[key]
+                self[key] = self.parent_style[key]
             elif key == 'page':
                 # page is not inherited but taken from the ancestor if 'auto'
-                self.cache[key] = self.parent_style[key]
+                self[key] = self.parent_style[key]
             else:
-                self.cache[key] = INITIAL_VALUES[key]
-        return self.cache[key]
+                self[key] = INITIAL_VALUES[key]
+        return super().__getitem__(key)
 
 
 class ComputedStyle(Style):
     def __init__(self, parent_style, cascaded, element, pseudo_type,
                  root_style, base_url):
-        self.cache = {}
         self.specified = {}
         self.parent_style = parent_style
         self.cascaded = cascaded
@@ -650,23 +640,22 @@ class ComputedStyle(Style):
         self.root_style = root_style
         self.base_url = base_url
         if parent_style:
-            for key, value in parent_style.variables:
-                self.cache[key] = value
-        for key in cascaded:
-            if key.startswith('__'):
-                self.cache[key] = cascaded[key][0]
+            self.update(parent_style.variables)
+        self.update({
+            key: value[0] for (key, value) in cascaded.items()
+            if key.startswith('__')})
 
     def copy(self):
         copy = ComputedStyle(
             self.parent_style, self.cascaded, self.element, self.pseudo_type,
             self.root_style, self.base_url)
-        copy.cache = self.cache.copy()
+        copy.update(self)
         copy.specified = self.specified.copy()
         return copy
 
     def __getitem__(self, key):
-        if key in self.cache:
-            return self.cache[key]
+        if key in self:
+            return super().__getitem__(key)
 
         initial = INITIAL_VALUES[key]
 
@@ -690,10 +679,10 @@ class ComputedStyle(Style):
             value = initial
             if key not in INITIAL_NOT_COMPUTED:
                 # The value is the same as when computed
-                self.cache[key] = value
+                self[key] = value
         elif keyword == 'inherit':
             # Values in parent_style are already computed.
-            self.cache[key] = value = self.parent_style[key]
+            self[key] = value = self.parent_style[key]
 
         if key == 'page' and value == 'auto':
             # The page property does not inherit. However, if the page
@@ -701,15 +690,14 @@ class ComputedStyle(Style):
             # specified on its nearest ancestor with a non-auto value. When
             # specified on the root element, the used value for auto is the
             # empty string.
-            self.cache['page'] = value = (
-                '' if self.parent_style is None
-                else self.parent_style['page'])
+            self['page'] = value = (
+                '' if self.parent_style is None else self.parent_style['page'])
 
         if key in ('position', 'float', 'display'):
             self.specified[key] = value
 
-        if key in self.cache:
-            return self.cache[key]
+        if key in self:
+            return super().__getitem__(key)
 
         getter = computed_values.COMPUTER_FUNCTIONS.get
         function = getter(key)
@@ -734,8 +722,8 @@ class ComputedStyle(Style):
             value = function(self, key, value)
         # else: same as specified
 
-        self.cache[key] = value
-        return self.cache[key]
+        self[key] = value
+        return value
 
 
 def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
