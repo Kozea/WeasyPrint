@@ -743,8 +743,16 @@ def strut_layout(style, context=None):
 
 def ex_ratio(style):
     """Return the ratio 1ex/font_size, according to given style."""
-    font_size = 1000  # big value
     # TODO: use context to use @font-face fonts
+
+    # Avoid recursion for letter-spacing and word-spacing properties
+    style = style.copy()
+    style['letter_spacing'] = 'normal'
+    style['word_spacing'] = 0
+
+    # Random big value
+    font_size = 1000
+
     layout = Layout(context=None, font_size=font_size, style=style)
     layout.set_text('x')
     line, _ = layout.get_first_line()

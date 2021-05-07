@@ -424,6 +424,13 @@ def test_letter_spacing_1():
     assert line1.children[0].width == strong_2.width
 
 
+@pytest.mark.parametrize('spacing', ('word-spacing', 'letter-spacing'))
+@assert_no_logs
+def test_spacing_ex(spacing):
+    # Test regression on ex units in spacing properties
+    render_pages(f'<div style="{spacing}: 2ex">abc def')
+
+
 @pytest.mark.parametrize('indent', ('12px', '6%'))
 @assert_no_logs
 def test_text_indent(indent):
