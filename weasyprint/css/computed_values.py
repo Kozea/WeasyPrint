@@ -43,7 +43,7 @@ FONT_SIZE_KEYWORDS = OrderedDict(
     )
 )
 
-# These are unspecified, other than 'thin' <='medium' <= 'thick'.
+# These are unspecified, other than 'thin' <= 'medium' <= 'thick'.
 # Values are in pixels.
 BORDER_WIDTH_KEYWORDS = {
     'thin': 1,
@@ -233,50 +233,50 @@ def compute_variable(value, name, computed, base_url, parent_style):
 
 
 @register_computer('background-image')
-def background_image(computer, name, values):
+def background_image(style, name, values):
     """Compute lenghts in gradient background-image."""
     for type_, value in values:
         if type_ in ('linear-gradient', 'radial-gradient'):
             value.stop_positions = tuple(
-                length(computer, name, pos) if pos is not None else None
+                length(style, name, pos) if pos is not None else None
                 for pos in value.stop_positions)
         if type_ == 'radial-gradient':
             value.center, = compute_position(
-                computer, name, (value.center,))
+                style, name, (value.center,))
             if value.size_type == 'explicit':
                 value.size = length_or_percentage_tuple(
-                    computer, name, value.size)
+                    style, name, value.size)
     return values
 
 
 @register_computer('background-position')
 @register_computer('object-position')
-def compute_position(computer, name, values):
+def compute_position(style, name, values):
     """Compute lengths in background-position."""
     return tuple(
-        (origin_x, length(computer, name, pos_x),
-         origin_y, length(computer, name, pos_y))
+        (origin_x, length(style, name, pos_x),
+         origin_y, length(style, name, pos_y))
         for origin_x, pos_x, origin_y, pos_y in values)
 
 
 @register_computer('transform-origin')
-def length_or_percentage_tuple(computer, name, values):
+def length_or_percentage_tuple(style, name, values):
     """Compute the lists of lengths that can be percentages."""
-    return tuple(length(computer, name, value) for value in values)
+    return tuple(length(style, name, value) for value in values)
 
 
 @register_computer('border-spacing')
 @register_computer('size')
 @register_computer('clip')
-def length_tuple(computer, name, values):
+def length_tuple(style, name, values):
     """Compute the properties with a list of lengths."""
-    return tuple(length(computer, name, value, pixels_only=True)
+    return tuple(length(style, name, value, pixels_only=True)
                  for value in values)
 
 
 @register_computer('break-after')
 @register_computer('break-before')
-def break_before_after(computer, name, value):
+def break_before_after(style, name, value):
     """Compute the ``break-before`` and ``break-after`` properties."""
     # 'always' is defined as an alias to 'page' in multi-column
     # https://www.w3.org/TR/css3-multicol/#column-breaks
@@ -307,7 +307,7 @@ def break_before_after(computer, name, value):
 @register_computer('text-indent')
 @register_computer('hyphenate-limit-zone')
 @register_computer('flex-basis')
-def length(computer, name, value, font_size=None, pixels_only=False):
+def length(style, name, value, font_size=None, pixels_only=False):
     """Compute a length ``value``."""
     if value in ('auto', 'content'):
         return value
@@ -322,24 +322,24 @@ def length(computer, name, value, font_size=None, pixels_only=False):
         result = value.value * LENGTHS_TO_PIXELS[unit]
     elif unit in ('em', 'ex', 'ch', 'rem'):
         if font_size is None:
-            font_size = computer['computed']['font_size']
+            font_size = style['font_size']
         if unit == 'ex':
             # TODO: cache
-            result = value.value * font_size * ex_ratio(computer['computed'])
+            result = value.value * font_size * ex_ratio(style)
         elif unit == 'ch':
             # TODO: cache
             # TODO: use context to use @font-face fonts
             layout = Layout(
                 context=None, font_size=font_size,
-                style=computer['computed'])
+                style=style)
             layout.set_text('0')
             line, _ = layout.get_first_line()
-            logical_width, _ = line_size(line, computer['computed'])
+            logical_width, _ = line_size(line, style)
             result = value.value * logical_width
         elif unit == 'em':
             result = value.value * font_size
         elif unit == 'rem':
-            result = value.value * computer['root_style']['font_size']
+            result = value.value * style.root_style['font_size']
     else:
         # A percentage or 'auto': no conversion needed.
         return value
@@ -351,30 +351,30 @@ def length(computer, name, value, font_size=None, pixels_only=False):
 @register_computer('bleed-right')
 @register_computer('bleed-top')
 @register_computer('bleed-bottom')
-def bleed(computer, name, value):
+def bleed(style, name, value):
     if value == 'auto':
-        if 'crop' in computer['computed']['marks']:
+        if 'crop' in style['marks']:
             return Dimension(8, 'px')  # 6pt
         else:
             return Dimension(0, 'px')
     else:
-        return length(computer, name, value)
+        return length(style, name, value)
 
 
 @register_computer('letter-spacing')
-def pixel_length(computer, name, value):
+def pixel_length(style, name, value):
     if value == 'normal':
         return value
     else:
-        return length(computer, name, value, pixels_only=True)
+        return length(style, name, value, pixels_only=True)
 
 
 @register_computer('background-size')
-def background_size(computer, name, values):
+def background_size(style, name, values):
     """Compute the ``background-size`` properties."""
     return tuple(
         value if value in ('contain', 'cover') else
-        length_or_percentage_tuple(computer, name, value)
+        length_or_percentage_tuple(style, name, value)
         for value in values)
 
 
@@ -384,9 +384,9 @@ def background_size(computer, name, values):
 @register_computer('border-bottom-width')
 @register_computer('column-rule-width')
 @register_computer('outline-width')
-def border_width(computer, name, value):
+def border_width(style, name, value):
     """Compute the ``border-*-width`` properties."""
-    style = computer['computed'][name.replace('width', 'style')]
+    style = style[name.replace('width', 'style')]
     if style in ('none', 'hidden'):
         return 0
 
@@ -398,42 +398,42 @@ def border_width(computer, name, value):
         # it does not have a 'unit' attribute.
         return value
 
-    return length(computer, name, value, pixels_only=True)
+    return length(style, name, value, pixels_only=True)
 
 
 @register_computer('column-width')
-def column_width(computer, name, value):
+def column_width(style, name, value):
     """Compute the ``column-width`` property."""
-    return length(computer, name, value, pixels_only=True)
+    return length(style, name, value, pixels_only=True)
 
 
 @register_computer('border-top-left-radius')
 @register_computer('border-top-right-radius')
 @register_computer('border-bottom-left-radius')
 @register_computer('border-bottom-right-radius')
-def border_radius(computer, name, values):
+def border_radius(style, name, values):
     """Compute the ``border-*-radius`` properties."""
-    return tuple(length(computer, name, value) for value in values)
+    return tuple(length(style, name, value) for value in values)
 
 
 @register_computer('column-gap')
-def column_gap(computer, name, value):
+def column_gap(style, name, value):
     """Compute the ``column-gap`` property."""
     if value == 'normal':
         value = Dimension(1, 'em')
-    return length(computer, name, value, pixels_only=True)
+    return length(style, name, value, pixels_only=True)
 
 
-def compute_attr_function(computer, values):
+def compute_attr_function(style, values):
     # TODO: use real token parsing instead of casting with Python types
     func_name, value = values
     assert func_name == 'attr()'
     attr_name, type_or_unit, fallback = value
-    # computer['element'] sometimes is None
-    # computer['element'] sometimes is a 'PageType' object without .get()
+    # style.element sometimes is None
+    # style.element sometimes is a 'PageType' object without .get()
     # so wrapt the .get() into try and return None instead of crashing
     try:
-        attr_value = computer['element'].get(attr_name, fallback)
+        attr_value = style.element.get(attr_name, fallback)
         if type_or_unit == 'string':
             pass  # Keep the string
         elif type_or_unit == 'url':
@@ -441,7 +441,7 @@ def compute_attr_function(computer, values):
                 attr_value = ('internal', unquote(attr_value[1:]))
             else:
                 attr_value = (
-                    'external', safe_urljoin(computer['base_url'], attr_value))
+                    'external', safe_urljoin(style.base_url, attr_value))
         elif type_or_unit == 'color':
             attr_value = parse_color(attr_value.strip())
         elif type_or_unit == 'integer':
@@ -462,14 +462,14 @@ def compute_attr_function(computer, values):
     return (type_or_unit, attr_value)
 
 
-def _content_list(computer, values):
+def _content_list(style, values):
     computed_values = []
     for value in values:
         if value[0] in ('string', 'content', 'url', 'quote', 'leader()'):
             computed_value = value
         elif value[0] == 'attr()':
             assert value[1][1] == 'string'
-            computed_value = compute_attr_function(computer, value)
+            computed_value = compute_attr_function(style, value)
         elif value[0] in (
                 'counter()', 'counters()', 'content()', 'element()',
                 'string()',
@@ -482,7 +482,7 @@ def _content_list(computer, values):
                 'target-counter()', 'target-counters()', 'target-text()'):
             anchor_token = value[1][0]
             if anchor_token[0] == 'attr()':
-                attr = compute_attr_function(computer, anchor_token)
+                attr = compute_attr_function(style, anchor_token)
                 if attr is None:
                     computed_value = None
                 else:
@@ -492,7 +492,7 @@ def _content_list(computer, values):
                 computed_value = value
         if computed_value is None:
             LOGGER.warning('Unable to compute %r value for content: %r' % (
-                computer['element'], ', '.join(str(item) for item in value)))
+                style.element, ', '.join(str(item) for item in value)))
         else:
             computed_values.append(computed_value)
 
@@ -500,43 +500,43 @@ def _content_list(computer, values):
 
 
 @register_computer('bookmark-label')
-def bookmark_label(computer, name, values):
+def bookmark_label(style, name, values):
     """Compute the ``bookmark-label`` property."""
-    return _content_list(computer, values)
+    return _content_list(style, values)
 
 
 @register_computer('string-set')
-def string_set(computer, name, values):
+def string_set(style, name, values):
     """Compute the ``string-set`` property."""
     # Spec asks for strings after custom keywords, but we allow content-lists
     return tuple(
-        (string_set[0], _content_list(computer, string_set[1]))
+        (string_set[0], _content_list(style, string_set[1]))
         for string_set in values)
 
 
 @register_computer('content')
-def content(computer, name, values):
+def content(style, name, values):
     """Compute the ``content`` property."""
     if len(values) == 1:
         value, = values
         if value == 'normal':
-            return 'inhibit' if computer['pseudo_type'] else 'contents'
+            return 'inhibit' if style.pseudo_type else 'contents'
         elif value == 'none':
             return 'inhibit'
-    return _content_list(computer, values)
+    return _content_list(style, values)
 
 
 @register_computer('display')
-def display(computer, name, value):
+def display(style, name, value):
     """Compute the ``display`` property.
 
     See http://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
 
     """
-    float_ = computer['specified']['float']
-    position = computer['specified']['position']
-    if position in ('absolute', 'fixed') or float_ != 'none' or \
-            computer['is_root_element']:
+    float_ = style.specified['float']
+    position = style.specified['position']
+    if position in ('absolute', 'fixed') or (
+            float_ != 'none' or style.is_root_element):
         if value == 'inline-table':
             return'table'
         elif value in ('inline', 'table-row-group', 'table-column',
@@ -548,26 +548,26 @@ def display(computer, name, value):
 
 
 @register_computer('float')
-def compute_float(computer, name, value):
+def compute_float(style, name, value):
     """Compute the ``float`` property.
 
     See http://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
 
     """
-    if computer['specified']['position'] in ('absolute', 'fixed'):
+    if style.specified['position'] in ('absolute', 'fixed'):
         return 'none'
     else:
         return value
 
 
 @register_computer('font-size')
-def font_size(computer, name, value):
+def font_size(style, name, value):
     """Compute the ``font-size`` property."""
     if value in FONT_SIZE_KEYWORDS:
         return FONT_SIZE_KEYWORDS[value]
 
     keyword_values = list(FONT_SIZE_KEYWORDS.values())
-    parent_font_size = computer['parent_style']['font_size']
+    parent_font_size = (style.parent_style or INITIAL_VALUES)['font_size']
 
     if value == 'larger':
         for i, keyword_value in enumerate(keyword_values):
@@ -585,26 +585,26 @@ def font_size(computer, name, value):
         return value.value * parent_font_size / 100.
     else:
         return length(
-            computer, name, value, pixels_only=True,
+            style, name, value, pixels_only=True,
             font_size=parent_font_size)
 
 
 @register_computer('font-weight')
-def font_weight(computer, name, value):
+def font_weight(style, name, value):
     """Compute the ``font-weight`` property."""
     if value == 'normal':
         return 400
     elif value == 'bold':
         return 700
     elif value in ('bolder', 'lighter'):
-        parent_value = computer['parent_style']['font_weight']
+        parent_value = (style.parent_style or INITIAL_VALUES)['font_weight']
         return FONT_WEIGHT_RELATIVE[value][parent_value]
     else:
         return value
 
 
 @register_computer('line-height')
-def line_height(computer, name, value):
+def line_height(style, name, value):
     """Compute the ``line-height`` property."""
     if value == 'normal':
         return value
@@ -612,71 +612,70 @@ def line_height(computer, name, value):
         return ('NUMBER', value.value)
     elif value.unit == '%':
         factor = value.value / 100.
-        font_size_value = computer['computed']['font_size']
+        font_size_value = style['font_size']
         pixels = factor * font_size_value
     else:
-        pixels = length(computer, name, value, pixels_only=True)
+        pixels = length(style, name, value, pixels_only=True)
     return ('PIXELS', pixels)
 
 
 @register_computer('anchor')
-def anchor(computer, name, values):
+def anchor(style, name, values):
     """Compute the ``anchor`` property."""
     if values != 'none':
         _, key = values
-        anchor_name = computer['element'].get(key) or None
+        anchor_name = style.element.get(key) or None
         return anchor_name
 
 
 @register_computer('link')
-def link(computer, name, values):
+def link(style, name, values):
     """Compute the ``link`` property."""
     if values == 'none':
         return None
     else:
         type_, value = values
         if type_ == 'attr()':
-            return get_link_attribute(
-                computer['element'], value, computer['base_url'])
+            return get_link_attribute(style.element, value, style.base_url)
         else:
             return values
 
 
 @register_computer('lang')
-def lang(computer, name, values):
+def lang(style, name, values):
     """Compute the ``lang`` property."""
     if values == 'none':
         return None
     else:
         type_, key = values
         if type_ == 'attr()':
-            return computer['element'].get(key) or None
+            return style.element.get(key) or None
         elif type_ == 'string':
             return key
 
 
 @register_computer('tab-size')
-def tab_size(computer, name, value):
+def tab_size(style, name, value):
     """Compute the ``tab-size`` property."""
     if isinstance(value, int):
         return value
     else:
-        return length(computer, name, value)
+        return length(style, name, value)
 
 
 @register_computer('transform')
-def transform(computer, name, value):
+def transform(style, name, value):
     """Compute the ``transform`` property."""
     result = []
     for function, args in value:
         if function == 'translate':
-            args = length_or_percentage_tuple(computer, name, args)
+            args = length_or_percentage_tuple(style, name, args)
         result.append((function, args))
     return tuple(result)
 
 
 @register_computer('vertical-align')
-def vertical_align(computer, name, value):
+def vertical_align(style, name, value):
     """Compute the ``vertical-align`` property."""
     # Use +/- half an em for super and sub, same as Pango.
     # (See the SUPERSUB_RISE constant in pango-markup.c)
@@ -684,23 +683,23 @@ def vertical_align(computer, name, value):
                  'top', 'bottom'):
         return value
     elif value == 'super':
-        return computer['computed']['font_size'] * 0.5
+        return style['font_size'] * 0.5
     elif value == 'sub':
-        return computer['computed']['font_size'] * -0.5
+        return style['font_size'] * -0.5
     elif value.unit == '%':
-        height, _ = strut_layout(computer['computed'])
-        return height * value.value / 100.
+        height, _ = strut_layout(style)
+        return height * value.value / 100
     else:
-        return length(computer, name, value, pixels_only=True)
+        return length(style, name, value, pixels_only=True)
 
 
 @register_computer('word-spacing')
-def word_spacing(computer, name, value):
+def word_spacing(style, name, value):
     """Compute the ``word-spacing`` property."""
     if value == 'normal':
         return 0
     else:
-        return length(computer, name, value, pixels_only=True)
+        return length(style, name, value, pixels_only=True)
 
 
 def strut_layout(style, context=None):

@@ -644,16 +644,11 @@ class ComputedStyle(Style):
         self.specified = {}
         self.parent_style = parent_style
         self.cascaded = cascaded
-        self.computer = {
-            'is_root_element': parent_style is None,
-            'element': element,
-            'pseudo_type': pseudo_type,
-            'specified': self.specified,
-            'computed': self,
-            'parent_style': parent_style or INITIAL_VALUES,
-            'root_style': root_style,
-            'base_url': base_url,
-        }
+        self.is_root_element = parent_style is None
+        self.element = element
+        self.pseudo_type = pseudo_type
+        self.root_style = root_style
+        self.base_url = base_url
         if parent_style:
             for key, value in parent_style.variables:
                 self.cache[key] = value
@@ -663,82 +658,83 @@ class ComputedStyle(Style):
 
     def copy(self):
         copy = ComputedStyle(
-            self.parent_style, self.cascaded, self.computer['element'],
-            self.computer['pseudo_type'], self.computer['root_style'],
-            self.computer['base_url'])
+            self.parent_style, self.cascaded, self.element, self.pseudo_type,
+            self.root_style, self.base_url)
         copy.cache = self.cache.copy()
         copy.specified = self.specified.copy()
         return copy
 
     def __getitem__(self, key):
-        if key not in self.cache:
-            initial = INITIAL_VALUES[key]
+        if key in self.cache:
+            return self.cache[key]
 
-            if key == 'float':
-                # Set specified value for position, needed for computed value
-                self['position']
-            elif key == 'display':
-                # Set specified value for float, needed for computed value
-                self['float']
+        initial = INITIAL_VALUES[key]
 
-            if key in self.cascaded:
-                value = keyword = self.cascaded[key][0]
-            else:
-                keyword = 'inherit' if key in INHERITED else 'initial'
+        if key == 'float':
+            # Set specified value for position, needed for computed value
+            self['position']
+        elif key == 'display':
+            # Set specified value for float, needed for computed value
+            self['float']
 
-            if keyword == 'inherit' and self.parent_style is None:
-                # On the root element, 'inherit' from initial values
-                keyword = 'initial'
+        if key in self.cascaded:
+            value = keyword = self.cascaded[key][0]
+        else:
+            keyword = 'inherit' if key in INHERITED else 'initial'
 
-            if keyword == 'initial':
-                value = initial
-                if key not in INITIAL_NOT_COMPUTED:
-                    # The value is the same as when computed
-                    self.cache[key] = value
-            elif keyword == 'inherit':
-                # Values in parent_style are already computed.
-                self.cache[key] = value = self.parent_style[key]
+        if keyword == 'inherit' and self.parent_style is None:
+            # On the root element, 'inherit' from initial values
+            keyword = 'initial'
 
-            if key == 'page' and value == 'auto':
-                # The page property does not inherit. However, if the page
-                # value on an element is auto, then its used value is the value
-                # specified on its nearest ancestor with a non-auto value. When
-                # specified on the root element, the used value for auto is the
-                # empty string.
-                self.cache['page'] = value = (
-                    '' if self.parent_style is None
-                    else self.parent_style['page'])
+        if keyword == 'initial':
+            value = initial
+            if key not in INITIAL_NOT_COMPUTED:
+                # The value is the same as when computed
+                self.cache[key] = value
+        elif keyword == 'inherit':
+            # Values in parent_style are already computed.
+            self.cache[key] = value = self.parent_style[key]
 
+        if key == 'page' and value == 'auto':
+            # The page property does not inherit. However, if the page
+            # value on an element is auto, then its used value is the value
+            # specified on its nearest ancestor with a non-auto value. When
+            # specified on the root element, the used value for auto is the
+            # empty string.
+            self.cache['page'] = value = (
+                '' if self.parent_style is None
+                else self.parent_style['page'])
+
+        if key in ('position', 'float', 'display'):
             self.specified[key] = value
 
-        if key not in self.cache:
-            getter = computed_values.COMPUTER_FUNCTIONS.get
-            value = self.specified[key]
-            function = getter(key)
-            already_computed_value = False
+        if key in self.cache:
+            return self.cache[key]
 
-            if value:
-                converted_to_list = False
+        getter = computed_values.COMPUTER_FUNCTIONS.get
+        function = getter(key)
+        already_computed_value = False
 
-                if not isinstance(value, list):
-                    converted_to_list = True
-                    value = [value]
+        if value:
+            converted_to_list = False
 
-                for i, v in enumerate(value):
-                    value[i], already_computed_value = (
-                        computed_values.compute_variable(
-                            v, key, self, self.computer['base_url'],
-                            self.parent_style))
+            if not isinstance(value, list):
+                converted_to_list = True
+                value = [value]
 
-                if converted_to_list:
-                    value, = value
+            for i, v in enumerate(value):
+                value[i], already_computed_value = (
+                    computed_values.compute_variable(
+                        v, key, self, self.base_url, self.parent_style))
 
-            if function is not None and not already_computed_value:
-                value = function(self.computer, key, value)
-            # else: same as specified
+            if converted_to_list:
+                value, = value
 
-            self.cache[key] = value
+        if function is not None and not already_computed_value:
+            value = function(self, key, value)
+        # else: same as specified
 
+        self.cache[key] = value
         return self.cache[key]
 
 
