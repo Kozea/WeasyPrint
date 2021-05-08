@@ -616,16 +616,15 @@ class AnonymousStyle(Style):
         copy.update(self)
         return copy
 
-    def __getitem__(self, key):
-        if key not in self:
-            if key in INHERITED or key.startswith('__'):
-                self[key] = self.parent_style[key]
-            elif key == 'page':
-                # page is not inherited but taken from the ancestor if 'auto'
-                self[key] = self.parent_style[key]
-            else:
-                self[key] = INITIAL_VALUES[key]
-        return super().__getitem__(key)
+    def __missing__(self, key):
+        if key in INHERITED or key.startswith('__'):
+            self[key] = self.parent_style[key]
+        elif key == 'page':
+            # page is not inherited but taken from the ancestor if 'auto'
+            self[key] = self.parent_style[key]
+        else:
+            self[key] = INITIAL_VALUES[key]
+        return self[key]
 
 
 class ComputedStyle(Style):
@@ -653,12 +652,7 @@ class ComputedStyle(Style):
         copy.specified = self.specified.copy()
         return copy
 
-    def __getitem__(self, key):
-        if key in self:
-            return super().__getitem__(key)
-
-        initial = INITIAL_VALUES[key]
-
+    def __missing__(self, key):
         if key == 'float':
             # Set specified value for position, needed for computed value
             self['position']
@@ -676,7 +670,7 @@ class ComputedStyle(Style):
             keyword = 'initial'
 
         if keyword == 'initial':
-            value = initial
+            value = INITIAL_VALUES[key]
             if key not in INITIAL_NOT_COMPUTED:
                 # The value is the same as when computed
                 self[key] = value
@@ -697,7 +691,7 @@ class ComputedStyle(Style):
             self.specified[key] = value
 
         if key in self:
-            return super().__getitem__(key)
+            return self[key]
 
         getter = computed_values.COMPUTER_FUNCTIONS.get
         function = getter(key)
