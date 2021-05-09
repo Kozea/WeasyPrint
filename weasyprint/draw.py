@@ -1066,6 +1066,7 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y):
     stream.text_matrix(font_size, 0, 0, -font_size, x, y)
     last_font = None
     string = ''
+    fonts = stream.get_fonts()
     for run in runs:
         # Pango objects
         glyph_item = ffi.cast('PangoGlyphItem *', run.data)
@@ -1077,15 +1078,12 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y):
 
         # Font content
         pango_font = glyph_item.item.analysis.font
-        pango_desc = pango.pango_font_describe(pango_font)
-        font_hash = ffi.string(
-            pango.pango_font_description_to_string(pango_desc))
-        fonts = stream.get_fonts()
+        hb_font = pango.pango_font_get_hb_font(pango_font)
+        hb_face = harfbuzz.hb_font_get_face(hb_font)
+        font_hash = hash(hb_face)
         if font_hash in fonts:
             font = fonts[font_hash]
         else:
-            hb_font = pango.pango_font_get_hb_font(pango_font)
-            hb_face = harfbuzz.hb_font_get_face(hb_font)
             hb_blob = harfbuzz.hb_face_reference_blob(hb_face)
             hb_data = harfbuzz.hb_blob_get_data(hb_blob, stream.length)
             file_content = ffi.unpack(hb_data, int(stream.length[0]))
