@@ -144,7 +144,6 @@ class FontConfiguration:
                 continue
             if font_type in ('external', 'local'):
                 config = self._fontconfig_config
-                fetch_as_url = True
                 if font_type == 'local':
                     font_name = url.encode('utf-8')
                     pattern = ffi.gc(
@@ -190,15 +189,11 @@ class FontConfiguration:
                             font_name.decode('utf-8'))
                         continue
                 try:
-                    if fetch_as_url:
-                        with fetch(url_fetcher, url) as result:
-                            if 'string' in result:
-                                font = result['string']
-                            else:
-                                font = result['file_obj'].read()
-                    else:
-                        with open(url, 'rb') as fd:
-                            font = fd.read()
+                    with fetch(url_fetcher, url) as result:
+                        if 'string' in result:
+                            font = result['string']
+                        else:
+                            font = result['file_obj'].read()
                     if font[:3] == b'wOF':
                         out = io.BytesIO()
                         if font[3:4] == b'F':
