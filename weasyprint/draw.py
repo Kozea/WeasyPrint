@@ -1104,13 +1104,14 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y):
         stream.set_font_size(font.hash, 1)
         string += '<'
         for i in range(num_glyphs):
-            glyph = glyphs[i].glyph
-            width = glyphs[i].geometry.width
+            glyph_info = glyphs[i]
+            width = glyph_info.geometry.width
             utf8_position = utf8_positions[i]
 
-            offset = glyphs[i].geometry.x_offset / font_size
+            offset = glyph_info.geometry.x_offset / font_size
             if offset:
                 string += f'>{-offset}<'
+            glyph = glyph_info.glyph
             string += f'{glyph:04x}'
 
             # Ink bounding box and logical widths in font
