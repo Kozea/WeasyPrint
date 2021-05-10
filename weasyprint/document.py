@@ -1220,6 +1220,7 @@ class Document:
                     ttfont.save(optimized_font)
                     content = optimized_font.getvalue()
                 except TTLibError:
+                    LOGGER.warning('Unable to optimize font')
                     content = fonts[0].file_content
             else:
                 content = fonts[0].file_content
