@@ -335,6 +335,18 @@ def test_links():
 
 
 @assert_no_logs
+def test_sorted_links():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/1352
+    pdf = FakeHTML(string='''
+      <p id="zzz">zzz</p>
+      <p id="aaa">aaa</p>
+      <a href="#zzz">z</a>
+      <a href="#aaa">a</a>
+    ''', base_url=resource_filename('<inline HTML>')).write_pdf()
+    assert b'(zzz) [' in pdf.split(b'(aaa) [')[-1]
+
+
+@assert_no_logs
 def test_relative_links_no_height():
     # 100% wide (block), 0pt high
     pdf = FakeHTML(

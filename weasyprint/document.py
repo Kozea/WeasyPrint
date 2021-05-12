@@ -469,7 +469,8 @@ def add_hyperlinks(links, anchors, matrix, pdf, page, names):
                 page['Annots'] = pydyf.Array()
             page['Annots'].append(annot.reference)
 
-    for anchor in anchors:
+    # Anchors are name trees that have to be sorted
+    for anchor in sorted(anchors):
         anchor_name, x, y = anchor
         x, y = matrix.transform_point(x, y)
         names.append(pydyf.String(anchor_name))
