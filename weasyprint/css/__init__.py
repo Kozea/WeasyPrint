@@ -595,6 +595,7 @@ class Style(dict):
 
 
 class AnonymousStyle(Style):
+    """Computed style used for anonymous boxes."""
     def __init__(self, parent_style):
         # border-*-style is none, so border-width computes to zero.
         # Other than that, properties that would need computing are
@@ -628,6 +629,7 @@ class AnonymousStyle(Style):
 
 
 class ComputedStyle(Style):
+    """Computed style used for non-anonymous boxes."""
     def __init__(self, parent_style, cascaded, element, pseudo_type,
                  root_style, base_url):
         self.specified = {}
