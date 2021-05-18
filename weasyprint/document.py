@@ -1244,6 +1244,7 @@ class Document:
                     current_widths = pydyf.Array()
                     widths.append(current_widths)
                 current_widths.append(font.widths[i])
+            font_type = 'otf' if font.file_content[:4] == b'OTTO' else 'ttf'
             font_descriptor = pydyf.Dictionary({
                 'Type': '/FontDescriptor',
                 'FontName': font.name,
