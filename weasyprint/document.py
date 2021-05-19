@@ -1323,7 +1323,6 @@ class Document:
             for anchor in sorted(pdf_names):
                 name_array.append(pydyf.String(anchor[0]))
                 name_array.append(anchor[1])
-            pprint.pp(name_array)
             pdf.catalog['Names'] = pydyf.Dictionary(
                 {'Dests': pydyf.Dictionary({'Names': name_array})})
 
