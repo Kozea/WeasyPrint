@@ -366,12 +366,16 @@ class SVG:
         self.stream.transform(1, 0, 0, 1, x, y)
         self.transform(node.get('transform'), font_size)
 
+        # Manage display and visibility
+        display = node.get('display', 'inline') != 'none'
+        visible = display and (node.get('visibility', 'visible') != 'hidden')
+
         # Draw node
-        if node.tag in TAGS:
+        if visible and node.tag in TAGS:
             TAGS[node.tag](self, node, font_size)
 
         # Draw node children
-        if node.tag not in DEF_TYPES:
+        if display and node.tag not in DEF_TYPES:
             for child in node:
                 self.draw_node(child, font_size)
 
