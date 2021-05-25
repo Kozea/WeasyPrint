@@ -2,6 +2,32 @@ Changelog
 =========
 
 
+Version 53.0
+------------
+
+Not released yet.
+
+This version also includes the changes from unstable b1 and b2 versions listed
+below.
+
+Dependencies:
+
+* Pango 1.44.0+ is now needed.
+* pydyf 0.0.3+ is now needed.
+* FontTools 4.0.0+ is now needed.
+* html5lib 1.0.1+ is now needed.
+
+API changes:
+
+* ``FontConfiguration`` is now in the ``weasyprint.text.fonts`` module.
+
+
+Version 53.0b2
+--------------
+
+Not released yet.
+
+
 Version 53.0b1
 --------------
 
