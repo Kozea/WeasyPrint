@@ -20,6 +20,11 @@ Dependencies:
 API changes:
 
 * ``FontConfiguration`` is now in the ``weasyprint.text.fonts`` module.
+* ``--format`` and ``--resolution`` options have been deprecated, PDF is the
+  only output format supported.
+* ``--optimize-images`` option has been deprecated and replaced by
+  ``--optimize-size``, allowing ``images``, ``fonts``, ``all`` and ``none``
+  values.
 
 
 Version 53.0b2
