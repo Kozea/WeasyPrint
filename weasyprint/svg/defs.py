@@ -17,7 +17,7 @@ from .utils import color, parse_url, size, transform
 
 def use(svg, node, font_size):
     """Draw use tags."""
-    from . import SVG
+    from . import NOT_INHERITED_ATTRIBUTES, SVG
 
     svg.stream.push_state()
 
@@ -47,6 +47,12 @@ def use(svg, node, font_size):
         if 'width' in node.attrib and 'height' in node.attrib:
             tree.attrib['width'] = node['width']
             tree.attrib['height'] = node['height']
+
+    # Cascade
+    for key, value in node.attrib.items():
+        if key not in NOT_INHERITED_ATTRIBUTES:
+            if key not in tree.attrib:
+                tree.attrib[key] = value
 
     svg.draw_node(tree, font_size)
     svg.stream.pop_state()
