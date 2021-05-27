@@ -137,7 +137,7 @@ class Node:
             for declarations_list in declarations_lists:
                 for declarations in declarations_list:
                     for name, value in declarations:
-                        self.attrib[name] = value.strip()
+                        child.attrib[name] = value.strip()
 
             # Replace 'currentColor' value
             for key in COLOR_ATTRIBUTES:
