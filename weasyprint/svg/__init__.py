@@ -12,7 +12,7 @@ from xml.etree import ElementTree
 
 from cssselect2 import ElementWrapper
 
-from .bounding_box import BOUNDING_BOX_METHODS, is_valid_bounding_box
+from .bounding_box import bounding_box, is_valid_bounding_box
 from .css import parse_declarations, parse_stylesheets
 from .defs import apply_filters, draw_gradient_or_pattern, paint_mask, use
 from .images import image, svg
@@ -351,12 +351,9 @@ class SVG:
         opacity = float(node.get('opacity', 1))
         if 0 <= opacity < 1:
             original_stream = self.stream
-            bounding_box = self.calculate_bounding_box(node, font_size)
-            if is_valid_bounding_box(bounding_box):
-                coords = (
-                    bounding_box[0], bounding_box[1],
-                    bounding_box[0] + bounding_box[2],
-                    bounding_box[1] + bounding_box[3])
+            box = self.calculate_bounding_box(node, font_size)
+            if is_valid_bounding_box(box):
+                coords = (box[0], box[1], box[0] + box[2], box[1] + box[3])
             else:
                 coords = (0, 0, self.concrete_width, self.concrete_height)
             self.stream = self.stream.add_transparency_group(coords)
@@ -483,12 +480,10 @@ class SVG:
                     marker_node.get('markerWidth', 3),
                     marker_node.get('markerHeight', 3),
                     font_size)
-                bounding_box = self.calculate_bounding_box(
-                    marker_node, font_size)
-                if is_valid_bounding_box(bounding_box):
+                box = self.calculate_bounding_box(marker_node, font_size)
+                if is_valid_bounding_box(box):
                     scale_x = scale_y = min(
-                        marker_width / bounding_box[2],
-                        marker_height / bounding_box[3])
+                        marker_width / box[2], marker_height / box[3])
                 else:
                     scale_x = scale_y = 1
                 translate_x, translate_y = self.point(
@@ -662,8 +657,8 @@ class SVG:
 
     def calculate_bounding_box(self, node, font_size):
         """Calculate the bounding box of a node."""
-        if node.bounding_box is None and node.tag in BOUNDING_BOX_METHODS:
-            box = BOUNDING_BOX_METHODS[node.tag](self, node, font_size)
+        if node.bounding_box is None:
+            box = bounding_box(self, node, font_size)
             if is_valid_bounding_box(box) and 0 not in box[2:]:
                 node.bounding_box = box
         return node.bounding_box

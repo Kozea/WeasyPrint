@@ -14,6 +14,19 @@ from .utils import normalize, point
 EMPTY_BOUNDING_BOX = float('inf'), float('inf'), 0, 0
 
 
+def bounding_box(svg, node, font_size):
+    """Bounding box for any node."""
+    if node.tag not in BOUNDING_BOX_METHODS:
+        return EMPTY_BOUNDING_BOX
+    box = BOUNDING_BOX_METHODS[node.tag](svg, node, font_size)
+    if any(svg.get_paint(node.get('stroke'))):
+        stroke_width = svg.length(node.get('stroke-width', '1px'), font_size)
+        box = (
+            box[0] - stroke_width / 2, box[1] - stroke_width / 2,
+            box[2] + stroke_width, box[3] + stroke_width)
+    return box
+
+
 def bounding_box_rect(svg, node, font_size):
     """Bounding box for rect node."""
     x, y = svg.point(node.get('x'), node.get('y'), font_size)

@@ -107,15 +107,6 @@ def draw_gradient(svg, node, gradient, font_size, stroke):
     else:
         width, height = bounding_box[2], bounding_box[3]
 
-    if stroke:
-        stroke_width = svg.length(node.get('stroke-width', '1px'), font_size)
-        x -= stroke_width / 2
-        y -= stroke_width / 2
-        width += stroke_width
-        height += stroke_width
-    else:
-        stroke_width = 0
-
     spread = gradient.get('spreadMethod', 'pad')
     if spread not in ('repeat', 'reflect'):
         # Add explicit colors at boundaries if needed, because PDF doesn’t
@@ -209,6 +200,11 @@ def draw_gradient(svg, node, gradient, font_size, stroke):
             gradient.get('gradientTransform'), font_size,
             svg.normalized_diagonal)
         matrix = transform_matrix @ matrix
+
+    if stroke:
+        stroke_width = svg.length(node.get('stroke-width', '1px'), font_size)
+    else:
+        stroke_width = 0
 
     a, b, c, d, e, f = matrix.values
     width /= a
@@ -479,15 +475,6 @@ def draw_pattern(svg, node, pattern, font_size, stroke):
     else:
         width, height = bounding_box[2], bounding_box[3]
 
-    if stroke:
-        stroke_width = svg.length(node.get('stroke-width', '1px'), font_size)
-        x -= stroke_width / 2
-        y -= stroke_width / 2
-        width += stroke_width
-        height += stroke_width
-    else:
-        stroke_width = 0
-
     if pattern.get('patternUnits') == 'userSpaceOnUse':
         x = size(pattern.get('x'), font_size, 1)
         y = size(pattern.get('y'), font_size, 1)
@@ -515,6 +502,11 @@ def draw_pattern(svg, node, pattern, font_size, stroke):
             pattern.get('patternTransform'), font_size,
             svg.normalized_diagonal)
         matrix = transform_matrix @ matrix
+
+    if stroke:
+        stroke_width = svg.length(node.get('stroke-width', '1px'), font_size)
+    else:
+        stroke_width = 0
 
     a, b, c, d, e, f = matrix.values
     width /= a
