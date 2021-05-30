@@ -469,12 +469,10 @@ def add_hyperlinks(links, anchors, matrix, pdf, page, names):
                 page['Annots'] = pydyf.Array()
             page['Annots'].append(annot.reference)
 
-    # Anchors are name trees that have to be sorted
-    for anchor in sorted(anchors):
+    for anchor in anchors:
         anchor_name, x, y = anchor
         x, y = matrix.transform_point(x, y)
-        names.append(pydyf.String(anchor_name))
-        names.append(pydyf.Array([page.reference, '/XYZ', x, y, 0]))
+        names.append([anchor_name, pydyf.Array([page.reference, '/XYZ', x, y, 0])])
 
 
 def rectangle_aabb(matrix, pos_x, pos_y, width, height):
@@ -990,7 +988,7 @@ class Document:
             'Shading': shadings,
         })
         pdf.add_object(resources)
-        pdf_names = pydyf.Array()
+        pdf_names = []
 
         # Links and anchors
         page_links_and_anchors = list(resolve_links(self.pages))
@@ -1320,8 +1318,13 @@ class Document:
 
         # Anchors
         if pdf_names:
+            # Anchors are name trees that have to be sorted
+            name_array = pydyf.Array()
+            for anchor in sorted(pdf_names):
+                name_array.append(pydyf.String(anchor[0]))
+                name_array.append(anchor[1])
             pdf.catalog['Names'] = pydyf.Dictionary(
-                {'Dests': pydyf.Dictionary({'Names': pdf_names})})
+                {'Dests': pydyf.Dictionary({'Names': name_array})})
 
         if finisher:
             finisher(self, pdf)
