@@ -472,7 +472,8 @@ def add_hyperlinks(links, anchors, matrix, pdf, page, names):
     for anchor in anchors:
         anchor_name, x, y = anchor
         x, y = matrix.transform_point(x, y)
-        names.append([anchor_name, pydyf.Array([page.reference, '/XYZ', x, y, 0])])
+        names.append([
+            anchor_name, pydyf.Array([page.reference, '/XYZ', x, y, 0])])
 
 
 def rectangle_aabb(matrix, pos_x, pos_y, width, height):
