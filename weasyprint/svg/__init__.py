@@ -532,8 +532,8 @@ class SVG:
         position = 'mid' if angles else 'start'
 
     @staticmethod
-    def paint(value):
-        """Paint fill or stroke attribute with a color or a URL."""
+    def get_paint(value):
+        """Get paint fill or stroke attribute with a color or a URL."""
         if not value or value == 'none':
             return None, None
 
@@ -554,7 +554,7 @@ class SVG:
             return
 
         # Get fill data
-        fill_source, fill_color = self.paint(node.get('fill', 'black'))
+        fill_source, fill_color = self.get_paint(node.get('fill', 'black'))
         fill_drawn = draw_gradient_or_pattern(
             self, node, fill_source, font_size, stroke=False)
         if fill_color and not fill_drawn:
@@ -564,7 +564,7 @@ class SVG:
         fill = fill_color or fill_drawn
 
         # Get stroke data
-        stroke_source, stroke_color = self.paint(node.get('stroke'))
+        stroke_source, stroke_color = self.get_paint(node.get('stroke'))
         stroke_drawn = draw_gradient_or_pattern(
             self, node, stroke_source, font_size, stroke=True)
         if stroke_color and not stroke_drawn:
