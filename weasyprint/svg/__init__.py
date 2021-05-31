@@ -359,9 +359,9 @@ class SVG:
             self.stream = self.stream.add_transparency_group(coords)
 
         # Apply transformations
+        self.transform(node.get('transform'), font_size)
         x, y = self.point(node.get('x'), node.get('y'), font_size)
         self.stream.transform(1, 0, 0, 1, x, y)
-        self.transform(node.get('transform'), font_size)
 
         # Manage display and visibility
         display = node.get('display', 'inline') != 'none'
