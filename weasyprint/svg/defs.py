@@ -27,7 +27,7 @@ def use(svg, node, font_size):
 
     parsed_url = parse_url(node.get_href())
     if parsed_url.fragment and not parsed_url.path:
-        tree = svg.tree.get_child(parsed_url.fragment)
+        tree = svg.tree.get_child(parsed_url.fragment).copy()
     else:
         url = parsed_url.geturl()
         try:
@@ -39,7 +39,6 @@ def use(svg, node, font_size):
         else:
             use_svg.get_intrinsic_size(font_size)
             tree = use_svg.tree
-    tree = tree.copy()
 
     if tree.tag in ('svg', 'symbol'):
         # Explicitely specified
