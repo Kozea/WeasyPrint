@@ -39,6 +39,7 @@ def use(svg, node, font_size):
         else:
             use_svg.get_intrinsic_size(font_size)
             tree = use_svg.tree
+    tree = tree.copy()
 
     if tree.tag in ('svg', 'symbol'):
         # Explicitely specified

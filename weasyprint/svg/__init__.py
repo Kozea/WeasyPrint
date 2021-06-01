@@ -92,10 +92,21 @@ class Node:
         self._style = style
 
         self.attrib = wrapper.etree_element.attrib
-        self.get = wrapper.etree_element.get
 
         self.vertices = []
         self.bounding_box = None
+
+    def copy(self):
+        """Create a deep copy of the node."""
+        copy = Node(self._wrapper, self._style)
+        copy.attrib = self.attrib.copy()
+        copy.vertices = self.vertices.copy()
+        copy.bounding_box = None
+        return copy
+
+    def get(self, key, default=None):
+        """Get attribute."""
+        return self.attrib.get(key, default)
 
     @property
     def tag(self):
