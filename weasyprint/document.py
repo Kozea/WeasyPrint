@@ -113,13 +113,13 @@ class Font:
 
 class Stream(pydyf.Stream):
     """PDF stream object with context storing alpha states."""
-    def __init__(self, document, page_rectangle, alpha_states, x_objects,
-                 patterns, shadings, *args, **kwargs):
+    def __init__(self, document, page_rectangle, states, x_objects, patterns,
+                 shadings, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.compress = True
         self.page_rectangle = page_rectangle
         self._document = document
-        self._alpha_states = alpha_states
+        self._states = states
         self._x_objects = x_objects
         self._patterns = patterns
         self._shadings = shadings
@@ -185,25 +185,30 @@ class Stream(pydyf.Stream):
         self._current_font = (font, size)
         super().set_font_size(font, size)
 
-    def set_alpha(self, alpha, stroke=False):
-        if stroke:
-            if alpha == self._current_alpha_stroke:
-                return
-            else:
-                self._current_alpha_stroke = alpha
-        else:
-            if alpha == self._current_alpha:
-                return
-            else:
-                self._current_alpha = alpha
+    def set_state(self, state):
+        key = f's{len(self._states)}'
+        self._states[key] = state
+        super().set_state(key)
 
-        if alpha not in self._alpha_states:
-            self._alpha_states[alpha] = pydyf.Dictionary()
-            if stroke in (None, False):
-                self._alpha_states[alpha]['ca'] = alpha
-            if stroke in (None, True):
-                self._alpha_states[alpha]['CA'] = alpha
-        self.set_state(alpha)
+    def set_alpha(self, alpha, stroke=False, fill=None):
+        if fill is None:
+            fill = not stroke
+
+        if stroke:
+            key = f'A{alpha}'
+            if key != self._current_alpha_stroke:
+                self._current_alpha_stroke = key
+                if key not in self._states:
+                    self._states[key] = pydyf.Dictionary({'CA': alpha})
+                super().set_state(key)
+
+        if fill:
+            key = f'a{alpha}'
+            if key != self._current_alpha:
+                self._current_alpha = key
+                if key not in self._states:
+                    self._states[key] = pydyf.Dictionary({'ca': alpha})
+                super().set_state(key)
 
     def add_font(self, font_hash, font_content, pango_font):
         self._document.fonts[font_hash] = Font(font_content, pango_font)
@@ -212,13 +217,13 @@ class Stream(pydyf.Stream):
     def get_fonts(self):
         return self._document.fonts
 
-    def add_transparency_group(self, bounding_box):
-        alpha_states = pydyf.Dictionary()
+    def add_group(self, bounding_box):
+        states = pydyf.Dictionary()
         x_objects = pydyf.Dictionary()
         patterns = pydyf.Dictionary()
         shadings = pydyf.Dictionary()
         resources = pydyf.Dictionary({
-            'ExtGState': alpha_states,
+            'ExtGState': states,
             'XObject': x_objects,
             'Pattern': patterns,
             'Shading': shadings,
@@ -237,7 +242,7 @@ class Stream(pydyf.Stream):
             }),
         })
         group = Stream(
-            self._document, self.page_rectangle, alpha_states, x_objects,
+            self._document, self.page_rectangle, states, x_objects,
             patterns, shadings, extra=extra)
         group.id = f'x{len(self._x_objects)}'
         self._x_objects[group.id] = group
@@ -302,18 +307,18 @@ class Stream(pydyf.Stream):
         stream = [image_file.getvalue()]
 
         xobject = pydyf.Stream(stream, extra=extra)
-        image_name = f'Im{len(self._x_objects)}'
+        image_name = f'i{len(self._x_objects)}'
         self._x_objects[image_name] = xobject
         return image_name
 
     def add_pattern(self, x, y, width, height, repeat_width, repeat_height,
                     matrix):
-        alpha_states = pydyf.Dictionary()
+        states = pydyf.Dictionary()
         x_objects = pydyf.Dictionary()
         patterns = pydyf.Dictionary()
         shadings = pydyf.Dictionary()
         resources = pydyf.Dictionary({
-            'ExtGState': alpha_states,
+            'ExtGState': states,
             'XObject': x_objects,
             'Pattern': patterns,
             'Shading': shadings,
@@ -332,8 +337,8 @@ class Stream(pydyf.Stream):
             'Resources': resources,
         })
         pattern = Stream(
-            self._document, self.page_rectangle, alpha_states, x_objects,
-            patterns, shadings, extra=extra)
+            self._document, self.page_rectangle, states, x_objects, patterns,
+            shadings, extra=extra)
         pattern.id = f'p{len(self._patterns)}'
         self._patterns[pattern.id] = pattern
         return pattern
@@ -978,12 +983,12 @@ class Document:
         PROGRESS_LOGGER.info('Step 6 - Creating PDF')
 
         pdf = pydyf.PDF()
-        alpha_states = pydyf.Dictionary()
+        states = pydyf.Dictionary()
         x_objects = pydyf.Dictionary()
         patterns = pydyf.Dictionary()
         shadings = pydyf.Dictionary()
         resources = pydyf.Dictionary({
-            'ExtGState': alpha_states,
+            'ExtGState': states,
             'XObject': x_objects,
             'Pattern': patterns,
             'Shading': shadings,
@@ -1042,8 +1047,7 @@ class Document:
             page_rectangle = (
                 left / scale, top / scale, right / scale, bottom / scale)
             stream = Stream(
-                self, page_rectangle, alpha_states, x_objects, patterns,
-                shadings)
+                self, page_rectangle, states, x_objects, patterns, shadings)
             stream.transform(1, 0, 0, -1, 0, page.height * scale)
             page.paint(stream, scale=scale)
             pdf.add_object(stream)

@@ -119,7 +119,7 @@ def draw_stacking_context(stream, stacking_context):
 
         if box.style['opacity'] < 1:
             original_stream = stream
-            stream = stream.add_transparency_group([
+            stream = stream.add_group([
                 box.border_box_x(), box.border_box_y(),
                 box.border_box_x() + box.border_width(),
                 box.border_box_y() + box.border_height()])
@@ -193,7 +193,7 @@ def draw_stacking_context(stream, stacking_context):
             group_id = stream.id
             stream = original_stream
             stream.push_state()
-            stream.set_alpha(box.style['opacity'], stroke=None)
+            stream.set_alpha(box.style['opacity'], stroke=True, fill=True)
             stream.draw_x_object(group_id)
             stream.pop_state()
 
@@ -415,11 +415,11 @@ def draw_background_image(stream, layer, image_rendering):
     pattern = stream.add_pattern(
         position_x + positioning_x, position_y + positioning_y,
         image_width, image_height, repeat_width, repeat_height, stream.ctm)
-    child = pattern.add_transparency_group([0, 0, repeat_width, repeat_height])
+    group = pattern.add_group([0, 0, repeat_width, repeat_height])
 
     with stacked(stream):
-        layer.image.draw(child, image_width, image_height, image_rendering)
-        pattern.draw_x_object(child.id)
+        layer.image.draw(group, image_width, image_height, image_rendering)
+        pattern.draw_x_object(group.id)
         stream.color_space('Pattern')
         stream.set_color_special(pattern.id)
         if layer.unbounded:

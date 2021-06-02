@@ -326,7 +326,7 @@ class Gradient:
         context.transform(1, 0, 0, scale_y, 0, 0)
 
         if any(alpha != 1 for alpha in alphas):
-            alpha_stream = context.add_transparency_group(
+            alpha_stream = context.add_group(
                 [0, 0, concrete_width, concrete_height])
             alpha_state = pydyf.Dictionary({
                 'Type': '/ExtGState',
@@ -338,9 +338,7 @@ class Gradient:
                 'ca': 1,
                 'AIS': 'false',
             })
-            alpha_state_id = f'as{len(context._alpha_states)}'
-            context._alpha_states[alpha_state_id] = alpha_state
-            context.set_state(alpha_state_id)
+            context.set_state(alpha_state)
 
             alpha_shading = alpha_stream.add_shading()
             alpha_shading['ShadingType'] = 2 if type_ == 'linear' else 3

@@ -105,7 +105,7 @@ def test_bounding_box_line():
     assert_pixels('bounding_box_line', 5, 5, '''
         BB___
         BBB__
-        _BBR_
+        _BRR_
         __RRR
         ___RR
     ''', '''
@@ -117,8 +117,8 @@ def test_bounding_box_line():
         <defs>
           <linearGradient id="grad" x1="0" y1="0" x2="1" y2="1"
             gradientUnits="objectBoundingBox">
-            <stop stop-color="blue" offset="60%"></stop>
-            <stop stop-color="red" offset="60%"></stop>
+            <stop stop-color="blue" offset="50%"></stop>
+            <stop stop-color="red" offset="50%"></stop>
           </linearGradient>
         </defs>
         <line x1="0" y1="0" x2="5" y2="5"

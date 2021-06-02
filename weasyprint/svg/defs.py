@@ -58,15 +58,17 @@ def use(svg, node, font_size):
     svg.stream.pop_state()
 
 
-def draw_gradient_or_pattern(svg, node, name, font_size, stroke):
+def draw_gradient_or_pattern(svg, node, name, font_size, opacity, stroke):
     """Draw given gradient or pattern."""
     if name in svg.gradients:
-        return draw_gradient(svg, node, svg.gradients[name], font_size, stroke)
+        return draw_gradient(
+            svg, node, svg.gradients[name], font_size, opacity, stroke)
     elif name in svg.patterns:
-        return draw_pattern(svg, node, svg.patterns[name], font_size, stroke)
+        return draw_pattern(
+            svg, node, svg.patterns[name], font_size, opacity, stroke)
 
 
-def draw_gradient(svg, node, gradient, font_size, stroke):
+def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
     """Draw given gradient node."""
     # TODO: merge with Gradient.draw
     from ..document import Matrix
@@ -77,10 +79,11 @@ def draw_gradient(svg, node, gradient, font_size, stroke):
         positions.append(max(
             positions[-1] if positions else 0,
             size(child.get('offset'), font_size, 1)))
-        opacity = float(child.get('stop-opacity', 1))
+        stop_opacity = float(child.get('stop-opacity', 1)) * opacity
         stop_color = color(child.get('stop-color', 'black'))
-        if opacity < 1:
-            stop_color = tuple(stop_color[:3] + (stop_color[3] * opacity,))
+        if stop_opacity < 1:
+            stop_color = tuple(
+                stop_color[:3] + (stop_color[3] * stop_opacity,))
         colors.append(stop_color)
 
     if not colors:
@@ -92,7 +95,7 @@ def draw_gradient(svg, node, gradient, font_size, stroke):
             svg.stream.set_alpha(alpha, stroke=stroke)
         return True
 
-    bounding_box = svg.calculate_bounding_box(node, font_size)
+    bounding_box = svg.calculate_bounding_box(node, font_size, stroke)
     if not is_valid_bounding_box(bounding_box):
         return False
     x, y = bounding_box[0], bounding_box[1]
@@ -201,22 +204,17 @@ def draw_gradient(svg, node, gradient, font_size, stroke):
             svg.normalized_diagonal)
         matrix = transform_matrix @ matrix
 
-    if stroke:
-        stroke_width = svg.length(node.get('stroke-width', '1px'), font_size)
-    else:
-        stroke_width = 0
-
     a, b, c, d, e, f = matrix.values
     width /= a
     height /= d
-    pattern_x = e / a + stroke_width
-    pattern_y = f / d + stroke_width
+    pattern_x = e / a
+    pattern_y = f / d
     matrix = Matrix(e=x - node_x, f=y - node_y) @ matrix @ svg.stream.ctm
     pattern = svg.stream.add_pattern(
         -pattern_x, -pattern_y, width, height, width, height, matrix)
-    child = pattern.add_transparency_group([0, 0, width, height])
+    group = pattern.add_group([0, 0, width, height])
 
-    shading = child.add_shading()
+    shading = group.add_shading()
     shading['ShadingType'] = shading_type
     shading['ColorSpace'] = '/DeviceRGB'
     shading['Domain'] = pydyf.Array([positions[0], positions[-1]])
@@ -240,9 +238,9 @@ def draw_gradient(svg, node, gradient, font_size, stroke):
         shading['Extend'] = pydyf.Array([b'true', b'true'])
 
     if any(alpha != 1 for alpha in alphas):
-        alpha_stream = child.add_transparency_group(
+        alpha_stream = group.add_group(
             [0, 0, svg.concrete_width, svg.concrete_height])
-        alpha_state = pydyf.Dictionary({
+        state = pydyf.Dictionary({
             'Type': '/ExtGState',
             'SMask': pydyf.Dictionary({
                 'Type': '/Mask',
@@ -252,9 +250,7 @@ def draw_gradient(svg, node, gradient, font_size, stroke):
             'ca': 1,
             'AIS': 'false',
         })
-        alpha_state_id = f'as{len(child._alpha_states)}'
-        child._alpha_states[alpha_state_id] = alpha_state
-        child.set_state(alpha_state_id)
+        group.set_state(state)
 
         alpha_shading = alpha_stream.add_shading()
         alpha_shading['ShadingType'] = shading_type
@@ -281,9 +277,8 @@ def draw_gradient(svg, node, gradient, font_size, stroke):
             alpha_shading['Extend'] = pydyf.Array([b'true', b'true'])
         alpha_stream.stream = [f'/{alpha_shading.id} sh']
 
-    child.shading(shading.id)
-
-    pattern.draw_x_object(child.id)
+    group.shading(shading.id)
+    pattern.draw_x_object(group.id)
     svg.stream.color_space('Pattern', stroke=stroke)
     svg.stream.set_color_special(pattern.id, stroke=stroke)
     return True
@@ -453,14 +448,14 @@ def spread_radial_gradient(spread, positions, colors, fx, fy, fr, cx, cy, r,
     return positions, colors, coords
 
 
-def draw_pattern(svg, node, pattern, font_size, stroke):
+def draw_pattern(svg, node, pattern, font_size, opacity, stroke):
     """Draw given gradient node."""
     from ..document import Matrix
     from . import Pattern
 
     pattern._etree_node.tag = 'svg'
 
-    bounding_box = svg.calculate_bounding_box(node, font_size)
+    bounding_box = svg.calculate_bounding_box(node, font_size, stroke)
     if not is_valid_bounding_box(bounding_box):
         return False
     x, y = bounding_box[0], bounding_box[1]
@@ -503,23 +498,18 @@ def draw_pattern(svg, node, pattern, font_size, stroke):
             svg.normalized_diagonal)
         matrix = transform_matrix @ matrix
 
-    if stroke:
-        stroke_width = svg.length(node.get('stroke-width', '1px'), font_size)
-    else:
-        stroke_width = 0
-
     a, b, c, d, e, f = matrix.values
     width /= a
     height /= d
-    pattern_x = e / a + stroke_width
-    pattern_y = f / d + stroke_width
+    pattern_x = e / a
+    pattern_y = f / d
     matrix = Matrix(e=x - node_x, f=y - node_y) @ matrix @ svg.stream.ctm
     stream_pattern = svg.stream.add_pattern(
         -pattern_x, -pattern_y, pattern_width, pattern_height,
         pattern_width, pattern_height, matrix)
+    stream_pattern.set_alpha(opacity)
 
-    group = stream_pattern.add_transparency_group(
-        [0, 0, pattern_width, pattern_height])
+    group = stream_pattern.add_group([0, 0, pattern_width, pattern_height])
     Pattern(pattern, svg.url).draw(
         group, pattern_width, pattern_height, svg.base_url,
         svg.url_fetcher, svg.context)
@@ -552,9 +542,7 @@ def apply_filters(svg, node, filter_node, font_size):
                 'Type': '/ExtGState',
                 'BM': f'/{mode}',
             })
-            blend_mode_id = f'bm{len(svg.stream._alpha_states)}'
-            svg.stream._alpha_states[blend_mode_id] = blend_mode
-            svg.stream.set_state(blend_mode_id)
+            svg.stream.set_group(blend_mode)
 
 
 def paint_mask(svg, node, mask, font_size):
@@ -580,8 +568,8 @@ def paint_mask(svg, node, mask, font_size):
         width, height = mask.get('width'), mask.get('height')
         mask.attrib['viewBox'] = f'{x} {y} {width} {height}'
 
-    alpha_stream = svg.stream.add_transparency_group([x, y, width, height])
-    alpha_state = pydyf.Dictionary({
+    alpha_stream = svg.stream.add_group([x, y, width, height])
+    state = pydyf.Dictionary({
         'Type': '/ExtGState',
         'SMask': pydyf.Dictionary({
             'Type': '/Mask',
@@ -591,9 +579,7 @@ def paint_mask(svg, node, mask, font_size):
         'ca': 1,
         'AIS': 'false',
     })
-    alpha_state_id = f'as{len(svg.stream._alpha_states)}'
-    svg.stream._alpha_states[alpha_state_id] = alpha_state
-    svg.stream.set_state(alpha_state_id)
+    svg.stream.set_state(state)
 
     svg_stream = svg.stream
     svg.stream = alpha_stream

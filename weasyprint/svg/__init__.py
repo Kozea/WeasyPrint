@@ -363,7 +363,7 @@ class SVG:
                 coords = (box[0], box[1], box[0] + box[2], box[1] + box[3])
             else:
                 coords = (0, 0, self.concrete_width, self.concrete_height)
-            self.stream = self.stream.add_transparency_group(coords)
+            self.stream = self.stream.add_group(coords)
 
         # Apply transformations
         self.transform(node.get('transform'), font_size)
@@ -398,7 +398,7 @@ class SVG:
         if 0 <= opacity < 1:
             group_id = self.stream.id
             self.stream = original_stream
-            self.stream.set_alpha(opacity, stroke=None)
+            self.stream.set_alpha(opacity, stroke=True, fill=True)
             self.stream.draw_x_object(group_id)
 
         # Clean text tag
@@ -557,22 +557,24 @@ class SVG:
 
         # Get fill data
         fill_source, fill_color = self.get_paint(node.get('fill', 'black'))
+        fill_opacity = float(node.get('fill-opacity', 1))
         fill_drawn = draw_gradient_or_pattern(
-            self, node, fill_source, font_size, stroke=False)
+            self, node, fill_source, font_size, fill_opacity, stroke=False)
         if fill_color and not fill_drawn:
             red, green, blue, alpha = color(fill_color)
             self.stream.set_color_rgb(red, green, blue)
-            self.stream.set_alpha(alpha)
+            self.stream.set_alpha(alpha * fill_opacity)
         fill = fill_color or fill_drawn
 
         # Get stroke data
         stroke_source, stroke_color = self.get_paint(node.get('stroke'))
+        stroke_opacity = float(node.get('stroke-opacity', 1))
         stroke_drawn = draw_gradient_or_pattern(
-            self, node, stroke_source, font_size, stroke=True)
+            self, node, stroke_source, font_size, stroke_opacity, stroke=True)
         if stroke_color and not stroke_drawn:
             red, green, blue, alpha = color(stroke_color)
             self.stream.set_color_rgb(red, green, blue, stroke=True)
-            self.stream.set_alpha(alpha, stroke=True)
+            self.stream.set_alpha(alpha * stroke_opacity, stroke=True)
         stroke = stroke_color or stroke_drawn
         stroke_width = self.length(node.get('stroke-width', '1px'), font_size)
         if stroke_width:
@@ -662,11 +664,13 @@ class SVG:
         for child in node:
             self.parse_defs(child)
 
-    def calculate_bounding_box(self, node, font_size):
+    def calculate_bounding_box(self, node, font_size, stroke=True):
         """Calculate the bounding box of a node."""
-        if node.bounding_box is None:
-            box = bounding_box(self, node, font_size)
+        if stroke or node.bounding_box is None:
+            box = bounding_box(self, node, font_size, stroke)
             if is_valid_bounding_box(box) and 0 not in box[2:]:
+                if stroke:
+                    return box
                 node.bounding_box = box
         return node.bounding_box
 
