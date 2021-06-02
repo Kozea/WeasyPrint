@@ -561,8 +561,9 @@ class SVG:
             self, node, fill_source, font_size, stroke=False)
         if fill_color and not fill_drawn:
             red, green, blue, alpha = color(fill_color)
+            alpha = node.get('fill-opacity', alpha)
             self.stream.set_color_rgb(red, green, blue)
-            self.stream.set_alpha(node.get('fill-opacity', alpha))
+            self.stream.set_alpha(alpha)
         fill = fill_color or fill_drawn
 
         # Get stroke data
@@ -571,8 +572,9 @@ class SVG:
             self, node, stroke_source, font_size, stroke=True)
         if stroke_color and not stroke_drawn:
             red, green, blue, alpha = color(stroke_color)
+            alpha = node.get('stroke-opacity', alpha)
             self.stream.set_color_rgb(red, green, blue, stroke=True)
-            self.stream.set_alpha(node.get('stroke-opacity', alpha), stroke=True)
+            self.stream.set_alpha(alpha, stroke=True)
         stroke = stroke_color or stroke_drawn
         stroke_width = self.length(node.get('stroke-width', '1px'), font_size)
         if stroke_width:
