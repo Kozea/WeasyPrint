@@ -386,8 +386,8 @@ def background_size(style, name, values):
 @register_computer('outline-width')
 def border_width(style, name, value):
     """Compute the ``border-*-width`` properties."""
-    style = style[name.replace('width', 'style')]
-    if style in ('none', 'hidden'):
+    border_style = style[name.replace('width', 'style')]
+    if border_style in ('none', 'hidden'):
         return 0
 
     if value in BORDER_WIDTH_KEYWORDS:

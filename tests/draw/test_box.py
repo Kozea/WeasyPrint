@@ -93,6 +93,13 @@ def test_small_borders_2():
 
 
 @assert_no_logs
+def test_em_borders():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/1378
+    html = '<body style="border: 1em solid">'
+    HTML(string=html).write_pdf()
+
+
+@assert_no_logs
 def test_margin_boxes():
     assert_pixels('margin_boxes', 15, 15, '''
         _______________
