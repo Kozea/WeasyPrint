@@ -8,6 +8,7 @@
 
 import itertools
 
+import pytest
 from weasyprint import HTML
 
 from ..testing_utils import assert_no_logs
@@ -61,7 +62,8 @@ def test_outlines():
 
 
 @assert_no_logs
-def test_small_borders_1():
+@pytest.mark.parametrize('border_style', ('none', 'solid', 'dashed', 'dotted'))
+def test_small_borders_1(border_style):
     # Regression test for ZeroDivisionError on dashed or dotted borders
     # smaller than a dash/dot.
     # https://github.com/Kozea/WeasyPrint/issues/49
@@ -71,13 +73,13 @@ def test_small_borders_1():
         html { background: #fff }
         body { margin: 5px; height: 0; border: 10px %s blue }
       </style>
-      <body>'''
-    for style in ['none', 'solid', 'dashed', 'dotted']:
-        HTML(string=html % style).write_pdf()
+      <body>''' % border_style
+    HTML(string=html).write_pdf()
 
 
 @assert_no_logs
-def test_small_borders_2():
+@pytest.mark.parametrize('border_style', ('none', 'solid', 'dashed', 'dotted'))
+def test_small_borders_2(border_style):
     # Regression test for ZeroDivisionError on dashed or dotted borders
     # smaller than a dash/dot.
     # https://github.com/Kozea/WeasyPrint/issues/146
@@ -87,9 +89,8 @@ def test_small_borders_2():
         html { background: #fff }
         body { height: 0; width: 0; border-width: 1px 0; border-style: %s }
       </style>
-      <body>'''
-    for style in ['none', 'solid', 'dashed', 'dotted']:
-        HTML(string=html % style).write_pdf()
+      <body>''' % border_style
+    HTML(string=html).write_pdf()
 
 
 @assert_no_logs
