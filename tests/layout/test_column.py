@@ -214,6 +214,32 @@ def test_columns_fixed_height(prop):
 
 
 @assert_no_logs
+def test_columns_padding():
+    page, = render_pages('''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        div { columns: 4; column-gap: 0; padding: 1px }
+        body { margin: 0; font-family: weasyprint; line-height: 1px }
+        @page { margin: 0; size: 6px 50px; font-size: 1px }
+      </style>
+      <div>a b c</div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    assert div.width == 4
+    assert div.height == 1
+    assert div.padding_width() == 6
+    assert div.padding_height() == 3
+    columns = div.children
+    assert len(columns) == 3
+    assert [column.width for column in columns] == [1, 1, 1]
+    assert [column.height for column in columns] == [1, 1, 1]
+    assert [column.position_x for column in columns] == [1, 2, 3]
+    assert [column.position_y for column in columns] == [1, 1, 1]
+
+
+@assert_no_logs
 def test_columns_relative():
     page, = render_pages('''
       <style>

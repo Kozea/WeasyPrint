@@ -277,11 +277,12 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
     # Set the height of box and the columns
     box.children = new_children
     current_position_y += collapse_margin(adjoining_margins)
+    height = current_position_y - box.content_box_y()
     if box.height == 'auto':
-        box.height = current_position_y - box.position_y
+        box.height = height
         height_difference = 0
     else:
-        height_difference = box.height - (current_position_y - box.position_y)
+        height_difference = box.height - height
     if box.min_height != 'auto' and box.min_height > box.height:
         height_difference += box.min_height - box.height
         box.height = box.min_height
