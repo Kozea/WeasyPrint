@@ -27,7 +27,9 @@ def text(svg, node, font_size):
 
     # TODO: use real computed values
     style = INITIAL_VALUES.copy()
-    style['font_family'] = node.get('font-family', 'sans-serif').split(',')
+    style['font_family'] = [
+        font.strip('"\'') for font in
+        node.get('font-family', 'sans-serif').split(',')]
     style['font_style'] = node.get('font-style', 'normal')
     style['font_weight'] = node.get('font-weight', 400)
     style['font_size'] = font_size
