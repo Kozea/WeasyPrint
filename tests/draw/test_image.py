@@ -22,6 +22,21 @@ centered_image = '''
     ________
 '''
 
+resized_image = '''
+    ____________
+    ____________
+    __rrBBBBBB__
+    __rrBBBBBB__
+    __BBBBBBBB__
+    __BBBBBBBB__
+    __BBBBBBBB__
+    __BBBBBBBB__
+    __BBBBBBBB__
+    __BBBBBBBB__
+    ____________
+    ____________
+'''
+
 blue_image = '''
     ________
     ________
@@ -107,6 +122,23 @@ def test_images(filename, image):
       <style>
         @page { size: 8px }
         body { margin: 2px 0 0 2px; background: #fff; font-size: 0 }
+      </style>
+      <div><img src="%s"></div>''' % filename)
+
+
+@assert_no_logs
+@pytest.mark.parametrize('filename', (
+    'pattern.svg',
+    'pattern.png',
+    'pattern.palette.png',
+    'pattern.gif',
+))
+def test_resized_images(filename):
+    assert_pixels(f'resized_image_{filename}', 12, 12, resized_image, '''
+      <style>
+        @page { size: 12px }
+        body { margin: 2px 0 0 2px; background: #fff; font-size: 0 }
+        img { display: block; width: 8px; image-rendering: pixelated }
       </style>
       <div><img src="%s"></div>''' % filename)
 

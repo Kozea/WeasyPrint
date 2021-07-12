@@ -31,6 +31,6 @@ def image(svg, node, font_size):
     if image is None:
         return
     width, height = svg.point(node.get('width'), node.get('height'), font_size)
-    width = width or image._intrinsic_width
-    height = height or image._intrinsic_height
+    width = width or image.intrinsic_width
+    height = height or image.intrinsic_height
     image.draw(svg.stream, width, height, image_rendering='auto')

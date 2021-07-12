@@ -911,14 +911,20 @@ def draw_replacedbox(stream, box):
         return
 
     draw_width, draw_height, draw_x, draw_y = replaced.replacedbox_layout(box)
+    if draw_width <= 0 or draw_height <= 0:
+        return
 
     with stacked(stream):
         rounded_box_path(stream, box.rounded_content_box())
         stream.clip()
         stream.end()
-        stream.transform(1, 0, 0, 1, draw_x, draw_y)
+        stream.transform(e=draw_x, f=draw_y)
+        stream.push_state()
+        # TODO: Use the real intrinsic size here, not affected by
+        # 'image-resolution'?
         box.replacement.draw(
             stream, draw_width, draw_height, box.style['image_rendering'])
+        stream.pop_state()
 
 
 def draw_inline_level(stream, page, box, offset_x=0, text_overflow='clip',

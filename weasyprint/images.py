@@ -37,36 +37,26 @@ class RasterImage:
     def __init__(self, pillow_image, optimize_size):
         self.pillow_image = pillow_image
         self.optimize_size = optimize_size
-        self._intrinsic_width = pillow_image.width
-        self._intrinsic_height = pillow_image.height
+        self.intrinsic_width = pillow_image.width
+        self.intrinsic_height = pillow_image.height
         self.intrinsic_ratio = (
-            self._intrinsic_width / self._intrinsic_height
-            if self._intrinsic_height != 0 else float('inf'))
+            self.intrinsic_width / self.intrinsic_height
+            if self.intrinsic_height != 0 else float('inf'))
 
     def get_intrinsic_size(self, image_resolution, _font_size):
         # Raster images are affected by the 'image-resolution' property.
-        return (self._intrinsic_width / image_resolution,
-                self._intrinsic_height / image_resolution)
+        return (self.intrinsic_width / image_resolution,
+                self.intrinsic_height / image_resolution)
 
     def draw(self, context, concrete_width, concrete_height, image_rendering):
-        has_size = (
-            concrete_width > 0
-            and concrete_height > 0
-            and self._intrinsic_width > 0
-            and self._intrinsic_height > 0
-        )
-        if not has_size:
+        if self.intrinsic_width <= 0 or self.intrinsic_height <= 0:
             return
 
         image_name = context.add_image(
             self.pillow_image, image_rendering, self.optimize_size)
-        # Use the real intrinsic size here,
-        # not affected by 'image-resolution'.
-        context.push_state()
         context.transform(
             concrete_width, 0, 0, -concrete_height, 0, concrete_height)
         context.draw_x_object(image_name)
-        context.pop_state()
 
 
 class SVGImage:
@@ -77,36 +67,33 @@ class SVGImage:
         self._context = context
 
     def get_intrinsic_size(self, _image_resolution, font_size):
-        self._intrinsic_width, self._intrinsic_height = (
+        self.intrinsic_width, self.intrinsic_height = (
             self._svg.get_intrinsic_size(font_size))
         viewbox = self._svg.get_viewbox()
 
-        if self._intrinsic_width and self._intrinsic_height:
+        if self.intrinsic_width and self.intrinsic_height:
             self.intrinsic_ratio = (
-                self._intrinsic_width / self._intrinsic_height)
+                self.intrinsic_width / self.intrinsic_height)
         elif viewbox and viewbox[2] and viewbox[3]:
             self.intrinsic_ratio = viewbox[2] / viewbox[3]
-            if self._intrinsic_width:
-                self._intrinsic_height = (
-                    self._intrinsic_width / self.intrinsic_ratio)
-            elif self._intrinsic_height:
-                self._intrinsic_width = (
-                    self._intrinsic_height * self.intrinsic_ratio)
+            if self.intrinsic_width:
+                self.intrinsic_height = (
+                    self.intrinsic_width / self.intrinsic_ratio)
+            elif self.intrinsic_height:
+                self.intrinsic_width = (
+                    self.intrinsic_height * self.intrinsic_ratio)
         else:
             self.intrinsic_ratio = None
 
-        return self._intrinsic_width, self._intrinsic_height
+        return self.intrinsic_width, self.intrinsic_height
 
     def draw(self, context, concrete_width, concrete_height, image_rendering):
-        if not concrete_width or not concrete_height:
-            return
-
-        # Use the real intrinsic size here, not affected by 'image-resolution'.
-        context.push_state()
+        scale_x = concrete_width / (self.intrinsic_width or concrete_width)
+        scale_y = concrete_height / (self.intrinsic_height or concrete_height)
+        context.transform(a=scale_x, d=scale_y)
         self._svg.draw(
             context, concrete_width, concrete_height, self._base_url,
             self._url_fetcher, self._context)
-        context.pop_state()
 
 
 def get_image_from_uri(cache, url_fetcher, optimize_size, url,
