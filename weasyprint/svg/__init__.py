@@ -677,9 +677,10 @@ class SVG:
 
 class Pattern(SVG):
     """SVG node applied as a pattern."""
-    def __init__(self, tree, url):
+    def __init__(self, tree, svg):
+        self.svg = svg
         self.tree = tree
-        self.url = url
+        self.url = svg.url
 
         self.filters = {}
         self.gradients = {}
@@ -688,3 +689,10 @@ class Pattern(SVG):
         self.masks = {}
         self.patterns = {}
         self.paths = {}
+
+    def draw_node(self, node, font_size):
+        # Store the original tree in self.tree when calling draw(), so that we
+        # can reach defs outside the pattern
+        if node == self.tree:
+            self.tree = self.svg.tree
+        super().draw_node(node, font_size)

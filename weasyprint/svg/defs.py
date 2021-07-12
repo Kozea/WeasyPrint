@@ -510,7 +510,7 @@ def draw_pattern(svg, node, pattern, font_size, opacity, stroke):
     stream_pattern.set_alpha(opacity)
 
     group = stream_pattern.add_group([0, 0, pattern_width, pattern_height])
-    Pattern(pattern, svg.url).draw(
+    Pattern(pattern, svg).draw(
         group, pattern_width, pattern_height, svg.base_url,
         svg.url_fetcher, svg.context)
     stream_pattern.draw_x_object(group.id)
