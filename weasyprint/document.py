@@ -248,6 +248,19 @@ class Stream(pydyf.Stream):
         self._x_objects[group.id] = group
         return group
 
+    def _save_jpeg2000(self, pillow_image, optimize):
+        image_file = io.BytesIO()
+        try:
+            pillow_image.save(image_file, format='JPEG2000', optimize=optimize)
+        except OSError:
+            # Set number of resolutions to 1 because of
+            # https://github.com/uclouvain/openjpeg/issues/215
+            image_file.seek(0)
+            pillow_image.save(
+                image_file, format='JPEG2000', optimize=optimize,
+                num_resolutions=1)
+        return image_file
+
     def add_image(self, pillow_image, image_rendering, optimize_size):
         if 'transparency' in pillow_image.info:
             pillow_image = pillow_image.convert('RGBA')
@@ -256,7 +269,7 @@ class Stream(pydyf.Stream):
 
         if pillow_image.mode in ('RGB', 'RGBA'):
             color_space = '/DeviceRGB'
-        elif pillow_image.mode == 'L':
+        elif pillow_image.mode in ('L', 'LA'):
             color_space = '/DeviceGray'
         elif pillow_image.mode == 'CMYK':
             color_space = '/DeviceCMYK'
@@ -276,19 +289,16 @@ class Stream(pydyf.Stream):
         })
 
         optimize = 'images' in optimize_size
-        image_file = io.BytesIO()
         if pillow_image.format == 'JPEG':
             extra['Filter'] = '/DCTDecode'
+            image_file = io.BytesIO()
             pillow_image.save(image_file, format='JPEG', optimize=optimize)
         else:
             extra['Filter'] = '/JPXDecode'
-            if pillow_image.mode == 'RGBA':
+            if pillow_image.mode in ('RGBA', 'LA'):
                 alpha = pillow_image.getchannel('A')
-                pillow_image = pillow_image.convert('RGB')
-                alpha_file = io.BytesIO()
-                alpha.save(
-                    alpha_file, format='JPEG2000', optimize=optimize,
-                    num_resolutions=1)
+                pillow_image = pillow_image.convert(pillow_image.mode[:-1])
+                alpha_file = self._save_jpeg2000(alpha, optimize)
                 extra['SMask'] = pydyf.Stream([alpha_file.getvalue()], extra={
                     'Filter': '/JPXDecode',
                     'Type': '/XObject',
@@ -299,11 +309,7 @@ class Stream(pydyf.Stream):
                     'BitsPerComponent': 8,
                     'Interpolate': interpolate,
                 })
-            # Set number of resolutions to 1 because of
-            # https://github.com/uclouvain/openjpeg/issues/215
-            pillow_image.save(
-                image_file, format='JPEG2000', optimize=optimize,
-                num_resolutions=1)
+            image_file = self._save_jpeg2000(pillow_image, optimize)
         stream = [image_file.getvalue()]
 
         xobject = pydyf.Stream(stream, extra=extra)
