@@ -137,6 +137,8 @@ def get_image_from_uri(cache, url_fetcher, optimize_size, url,
                         raise ImageLoadingError.from_exception(
                             raster_exception)
                 else:
+                    # Store image id to enable cache in Sream.add_image
+                    pillow_image.id = len(cache)
                     image = RasterImage(pillow_image, optimize_size)
 
     except (URLFetchingError, ImageLoadingError) as exception:

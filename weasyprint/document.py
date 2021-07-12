@@ -262,7 +262,7 @@ class Stream(pydyf.Stream):
         return image_file
 
     def add_image(self, pillow_image, image_rendering, optimize_size):
-        image_name = f'i{id(pillow_image)}'
+        image_name = f'i{pillow_image.id}'
         if image_name in self._x_objects:
             # Reuse image already stored in stream
             return image_name
