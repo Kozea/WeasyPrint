@@ -262,6 +262,11 @@ class Stream(pydyf.Stream):
         return image_file
 
     def add_image(self, pillow_image, image_rendering, optimize_size):
+        image_name = f'i{id(pillow_image)}'
+        if image_name in self._x_objects:
+            # Reuse image already stored in stream
+            return image_name
+
         if 'transparency' in pillow_image.info:
             pillow_image = pillow_image.convert('RGBA')
         elif pillow_image.mode in ('1', 'P'):
@@ -313,7 +318,6 @@ class Stream(pydyf.Stream):
         stream = [image_file.getvalue()]
 
         xobject = pydyf.Stream(stream, extra=extra)
-        image_name = f'i{len(self._x_objects)}'
         self._x_objects[image_name] = xobject
         return image_name
 
