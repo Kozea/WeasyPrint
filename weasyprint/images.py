@@ -48,15 +48,15 @@ class RasterImage:
         return (self.intrinsic_width / image_resolution,
                 self.intrinsic_height / image_resolution)
 
-    def draw(self, context, concrete_width, concrete_height, image_rendering):
+    def draw(self, stream, concrete_width, concrete_height, image_rendering):
         if self.intrinsic_width <= 0 or self.intrinsic_height <= 0:
             return
 
-        image_name = context.add_image(
+        image_name = stream.add_image(
             self.pillow_image, image_rendering, self.optimize_size)
-        context.transform(
+        stream.transform(
             concrete_width, 0, 0, -concrete_height, 0, concrete_height)
-        context.draw_x_object(image_name)
+        stream.draw_x_object(image_name)
 
 
 class SVGImage:
@@ -87,12 +87,12 @@ class SVGImage:
 
         return self.intrinsic_width, self.intrinsic_height
 
-    def draw(self, context, concrete_width, concrete_height, image_rendering):
+    def draw(self, stream, concrete_width, concrete_height, image_rendering):
         scale_x = concrete_width / (self.intrinsic_width or concrete_width)
         scale_y = concrete_height / (self.intrinsic_height or concrete_height)
-        context.transform(a=scale_x, d=scale_y)
+        stream.transform(a=scale_x, d=scale_y)
         self._svg.draw(
-            context, concrete_width, concrete_height, self._base_url,
+            stream, concrete_width, concrete_height, self._base_url,
             self._url_fetcher, self._context)
 
 
