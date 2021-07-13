@@ -1227,13 +1227,14 @@ class Document:
                 try:
                     ttfont = TTFont(full_font)
                     options = subset.Options(
-                        retain_gids=True, passthrough_tables=True)
+                        retain_gids=True, passthrough_tables=True,
+                        ignore_missing_glyphs=True, notdef_glyph=True)
                     subsetter = subset.Subsetter(options)
                     subsetter.populate(gids=cmap)
                     subsetter.subset(ttfont)
                     ttfont.save(optimized_font)
                     content = optimized_font.getvalue()
-                except (TTLibError, subset.Subsetter.SubsettingError):
+                except TTLibError:
                     LOGGER.warning('Unable to optimize font')
                     content = fonts[0].file_content
             else:
