@@ -150,3 +150,12 @@ def test_margin_boxes():
         }
       </style>
       <body>''')
+
+
+@assert_no_logs
+def test_display_inline_block_twice():
+    # Regression test for inline blocks displayed twice.
+    # https://github.com/Kozea/WeasyPrint/issues/880
+    html = '<div style="background: red; display: inline-block">'
+    document = HTML(string=html).render()
+    assert document.write_pdf() == document.write_pdf()
