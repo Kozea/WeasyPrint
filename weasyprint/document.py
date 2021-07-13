@@ -1233,7 +1233,7 @@ class Document:
                     subsetter.subset(ttfont)
                     ttfont.save(optimized_font)
                     content = optimized_font.getvalue()
-                except TTLibError:
+                except (TTLibError, subset.Subsetter.SubsettingError):
                     LOGGER.warning('Unable to optimize font')
                     content = fonts[0].file_content
             else:
