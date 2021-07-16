@@ -158,8 +158,10 @@ class Node:
 
             # Fix text in text tags
             if child.tag in ('text', 'textPath', 'a'):
-                child._wrapper.etree_children, _ = child.text_children(
+                children, _ = child.text_children(
                     wrapper, trailing_space=True, text_root=True)
+                child._wrapper.etree_children = [
+                    child._etree_node for child in children]
 
             yield child
 
