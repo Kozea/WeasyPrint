@@ -37,6 +37,21 @@ resized_image = '''
     ____________
 '''
 
+small_resized_image = '''
+    ____________
+    ____________
+    __rBBB______
+    __BBBB______
+    __BBBB______
+    __BBBB______
+    ____________
+    ____________
+    ____________
+    ____________
+    ____________
+    ____________
+'''
+
 blue_image = '''
     ________
     ________
@@ -141,6 +156,64 @@ def test_resized_images(filename):
         img { display: block; width: 8px; image-rendering: pixelated }
       </style>
       <div><img src="%s"></div>''' % filename)
+
+
+@assert_no_logs
+@pytest.mark.parametrize('viewbox, width, height', (
+    (None, None, None),
+    (None, 4, None),
+    (None, None, 4),
+    (None, 4, 4),
+    ('0 0 4 4', 4, None),
+    ('0 0 4 4', None, 4),
+    ('0 0 4 4', 4, 4),
+    ('0 0 4 4', 4, 4),
+))
+def test_svg_sizing(viewbox, width, height):
+    assert_pixels(
+        f'svg_sizing_{viewbox}_{width}_{height}', 8, 8,
+        centered_image, '''
+      <style>
+        @page { size: 8px }
+        body { margin: 2px 0 0 2px; background: #fff; font-size: 0 }
+        svg { display: block }
+      </style>
+      <svg %s %s %s>
+        <rect width="4px" height="4px" fill="#00f" />
+        <rect width="1px" height="1px" fill="#f00" />
+      </svg>''' % (
+          f'width="{width}"' if width else '',
+          f'height="{height}px"' if height else '',
+          f'viewbox="{viewbox}"' if viewbox else ''))
+
+
+@assert_no_logs
+@pytest.mark.parametrize('viewbox, width, height, image', (
+    (None, None, None, small_resized_image),
+    (None, 8, None, small_resized_image),
+    (None, None, 8, small_resized_image),
+    (None, 8, 8, small_resized_image),
+    ('0 0 4 4', None, None, resized_image),
+    ('0 0 4 4', 8, None, resized_image),
+    ('0 0 4 4', None, 8, resized_image),
+    ('0 0 4 4', 8, 8, resized_image),
+    ('0 0 4 4', 800, 800, resized_image),
+))
+def test_svg_resizing(viewbox, width, height, image):
+    assert_pixels(
+        f'svg_resizing_{viewbox}_{width}_{height}', 12, 12, image, '''
+      <style>
+        @page { size: 12px }
+        body { margin: 2px 0 0 2px; background: #fff; font-size: 0 }
+        svg { display: block; width: 8px }
+      </style>
+      <svg %s %s %s>
+        <rect width="4" height="4" fill="#00f" />
+        <rect width="1" height="1" fill="#f00" />
+      </svg>''' % (
+          f'width="{width}"' if width else '',
+          f'height="{height}px"' if height else '',
+          f'viewbox="{viewbox}"' if viewbox else ''))
 
 
 @assert_no_logs

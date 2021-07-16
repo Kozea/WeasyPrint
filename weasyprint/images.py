@@ -88,9 +88,6 @@ class SVGImage:
         return self.intrinsic_width, self.intrinsic_height
 
     def draw(self, stream, concrete_width, concrete_height, image_rendering):
-        scale_x = concrete_width / (self.intrinsic_width or concrete_width)
-        scale_y = concrete_height / (self.intrinsic_height or concrete_height)
-        stream.transform(a=scale_x, d=scale_y)
         self._svg.draw(
             stream, concrete_width, concrete_height, self._base_url,
             self._url_fetcher, self._context)
