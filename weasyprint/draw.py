@@ -126,8 +126,7 @@ def draw_stacking_context(stream, stacking_context):
 
         if box.transformation_matrix:
             if box.transformation_matrix.determinant:
-                ((a, b, _), (c, d, _), (e, f, _)) = box.transformation_matrix
-                stream.transform(a, b, c, d, e, f)
+                stream.transform(*box.transformation_matrix.values)
             else:
                 return
 

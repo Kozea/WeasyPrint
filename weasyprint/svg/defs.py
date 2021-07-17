@@ -534,7 +534,7 @@ def apply_filters(svg, node, filter_node, font_size):
             else:
                 dx, dy = svg.point(
                     child.get('dx', 0), child.get('dy', 0), font_size)
-            svg.stream.transform(1, 0, 0, 1, dx, dy)
+            svg.stream.transform(e=dx, f=dy)
         elif child.tag == 'feBlend':
             mode = child.get('mode', 'normal')
             mode = mode.replace('-', ' ').title().replace(' ', '')

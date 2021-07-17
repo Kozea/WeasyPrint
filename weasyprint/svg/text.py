@@ -153,10 +153,10 @@ def text(svg, node, font_size):
         cursor_position = x + width, y
         angle = last_r if r is None else r
         if angle:
-            svg.stream.transform(1, 0, 0, 1, x_position, y_position)
+            svg.stream.transform(e=x_position, f=y_position)
             svg.stream.transform(
-                cos(angle), sin(angle), -sin(angle), cos(angle), 0, 0)
-            svg.stream.transform(1, 0, 0, 1, -x_position, -y_position)
+                a=cos(angle), b=sin(angle), c=-sin(angle), d=cos(angle))
+            svg.stream.transform(e=-x_position, f=-y_position)
         points = (
             (cursor_position[0] + x_align +
              svg.cursor_d_position[0],

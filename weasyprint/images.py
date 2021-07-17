@@ -309,7 +309,7 @@ class Gradient:
         })
         if not self.repeating:
             shading['Extend'] = pydyf.Array([b'true', b'true'])
-        context.transform(1, 0, 0, scale_y, 0, 0)
+        context.transform(d=scale_y)
 
         if any(alpha != 1 for alpha in alphas):
             alpha_stream = context.add_group(
@@ -349,7 +349,7 @@ class Gradient:
             })
             if not self.repeating:
                 alpha_shading['Extend'] = pydyf.Array([b'true', b'true'])
-            alpha_stream.transform(1, 0, 0, scale_y, 0, 0)
+            alpha_stream.transform(d=scale_y)
             alpha_stream.stream = [f'/{alpha_shading.id} sh']
 
         context.shading(shading.id)

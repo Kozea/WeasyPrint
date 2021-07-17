@@ -736,7 +736,7 @@ class Page:
         """
         with stacked(context):
             # Make (0, 0) the top-left corner, and make user units CSS pixels:
-            context.transform(scale, 0, 0, scale, left_x, top_y)
+            context.transform(a=scale, d=scale, e=left_x, f=top_y)
             if clip:
                 width = self.width
                 height = self.height
@@ -1058,7 +1058,7 @@ class Document:
                 left / scale, top / scale, right / scale, bottom / scale)
             stream = Stream(
                 self, page_rectangle, states, x_objects, patterns, shadings)
-            stream.transform(1, 0, 0, -1, 0, page.height * scale)
+            stream.transform(d=-1, f=(page.height * scale))
             page.paint(stream, scale=scale)
             pdf.add_object(stream)
 

@@ -370,7 +370,7 @@ class SVG:
         # Apply transformations
         self.transform(node.get('transform'), font_size)
         x, y = self.point(node.get('x'), node.get('y'), font_size)
-        self.stream.transform(1, 0, 0, 1, x, y)
+        self.stream.transform(e=x, f=y)
 
         # Manage display and visibility
         display = node.get('display', 'inline') != 'none'
@@ -521,7 +521,7 @@ class SVG:
                     scale_x * cos(angle), scale_x * sin(angle),
                     -scale_y * sin(angle), scale_y * cos(angle),
                     *point)
-                self.stream.transform(1, 0, 0, 1, -translate_x, -translate_y)
+                self.stream.transform(e=-translate_x, f=-translate_y)
 
                 overflow = marker_node.get('overflow', 'hidden')
                 if clip_box and overflow in ('hidden', 'scroll'):
