@@ -254,18 +254,18 @@ class Gradient:
 
     intrinsic_ratio = None
 
-    def draw(self, context, concrete_width, concrete_height, _image_rendering):
+    def draw(self, stream, concrete_width, concrete_height, _image_rendering):
         # TODO: handle color spaces
         scale_y, type_, points, positions, colors = self.layout(
             concrete_width, concrete_height)
 
         if type_ == 'solid':
-            context.rectangle(0, 0, concrete_width, concrete_height)
+            stream.rectangle(0, 0, concrete_width, concrete_height)
             red, green, blue, alpha = colors[0]
-            context.set_color_rgb(red, green, blue)
+            stream.set_color_rgb(red, green, blue)
             if alpha != 1:
-                context.set_alpha(alpha, stroke=False)
-            context.fill()
+                stream.set_alpha(alpha, stroke=False)
+            stream.fill()
             return
 
         alphas = [color[3] for color in colors]
@@ -287,7 +287,7 @@ class Gradient:
             if 0 not in (a0, a1) and (a0, a1) != (1, 1):
                 color_couples[i][2] = a0 / a1
 
-        shading = context.add_shading()
+        shading = stream.add_shading()
         shading['ShadingType'] = 2 if type_ == 'linear' else 3
         shading['ColorSpace'] = '/DeviceRGB'
         shading['Domain'] = pydyf.Array([positions[0], positions[-1]])
@@ -309,10 +309,10 @@ class Gradient:
         })
         if not self.repeating:
             shading['Extend'] = pydyf.Array([b'true', b'true'])
-        context.transform(d=scale_y)
+        stream.transform(d=scale_y)
 
         if any(alpha != 1 for alpha in alphas):
-            alpha_stream = context.add_group(
+            alpha_stream = stream.add_group(
                 [0, 0, concrete_width, concrete_height])
             alpha_state = pydyf.Dictionary({
                 'Type': '/ExtGState',
@@ -324,7 +324,7 @@ class Gradient:
                 'ca': 1,
                 'AIS': 'false',
             })
-            context.set_state(alpha_state)
+            stream.set_state(alpha_state)
 
             alpha_shading = alpha_stream.add_shading()
             alpha_shading['ShadingType'] = 2 if type_ == 'linear' else 3
@@ -352,7 +352,7 @@ class Gradient:
             alpha_stream.transform(d=scale_y)
             alpha_stream.stream = [f'/{alpha_shading.id} sh']
 
-        context.shading(shading.id)
+        stream.shading(shading.id)
 
     def layout(self, width, height):
         """Get layout information about the gradient.

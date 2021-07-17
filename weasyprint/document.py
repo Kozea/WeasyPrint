@@ -717,12 +717,12 @@ class Page:
         for child in box.all_children():
             self._gather_links_and_bookmarks(child, matrix)
 
-    def paint(self, context, left_x=0, top_y=0, scale=1, clip=False):
+    def paint(self, stream, left_x=0, top_y=0, scale=1, clip=False):
         """Paint the page into the PDF file.
 
-        :type context: ``Context``
-        :param context:
-            A context object.
+        :type stream: ``document.Stream``
+        :param stream:
+            A document stream.
         :param float left_x:
             X coordinate of the left of the page, in PDF points.
         :param float top_y:
@@ -734,15 +734,15 @@ class Page:
             not provided, content can overflow.
 
         """
-        with stacked(context):
+        with stacked(stream):
             # Make (0, 0) the top-left corner, and make user units CSS pixels:
-            context.transform(a=scale, d=scale, e=left_x, f=top_y)
+            stream.transform(a=scale, d=scale, e=left_x, f=top_y)
             if clip:
                 width = self.width
                 height = self.height
-                context.rectangle(0, 0, width, height)
-                context.clip()
-            draw_page(self._page_box, context)
+                stream.rectangle(0, 0, width, height)
+                stream.clip()
+            draw_page(self._page_box, stream)
 
 
 class DocumentMetadata:
