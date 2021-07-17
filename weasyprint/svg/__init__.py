@@ -653,10 +653,7 @@ class SVG:
         matrix = transform(
             transform_string, font_size, self.normalized_diagonal)
         if matrix.determinant:
-            self.stream.transform(
-                matrix[0][0], matrix[0][1],
-                matrix[1][0], matrix[1][1],
-                matrix[2][0], matrix[2][1])
+            self.stream.transform(*matrix.values)
 
     def parse_defs(self, node):
         """Parse defs included in a tree."""
