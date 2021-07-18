@@ -201,3 +201,69 @@ def test_text_dx_dy():
         </text>
       </svg>
     ''')
+
+
+@assert_no_logs
+def test_text_anchor_start():
+    assert_pixels('text_anchor_start', 20, 4, '''
+        __BBBBBB____________
+        __BBBBBB____________
+        ____BBBBBB__________
+        ____BBBBBB__________
+    ''', '''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        @page { size: 20px 4px }
+        svg { display: block }
+      </style>
+      <svg width="20px" height="4px" xmlns="http://www.w3.org/2000/svg">
+        <text x="2" y="1.5" font-family="weasyprint" font-size="2"
+              fill="blue">
+          ABC
+        </text>
+        <text x="4" y="3.5" font-family="weasyprint" font-size="2"
+              fill="blue" text-anchor="start">
+          ABC
+        </text>
+      </svg>
+    ''')
+
+
+@assert_no_logs
+def test_text_anchor_middle():
+    assert_pixels('text_anchor_middle', 20, 2, '''
+        _______BBBBBB_______
+        _______BBBBBB_______
+    ''', '''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        @page { size: 20px 2px }
+        svg { display: block }
+      </style>
+      <svg width="20px" height="2px" xmlns="http://www.w3.org/2000/svg">
+        <text x="10" y="1.5" font-family="weasyprint" font-size="2"
+              fill="blue" text-anchor="middle">
+          ABC
+        </text>
+      </svg>
+    ''')
+
+
+@assert_no_logs
+def test_text_anchor_end():
+    assert_pixels('text_anchor_end', 20, 2, '''
+        ____________BBBBBB__
+        ____________BBBBBB__
+    ''', '''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        @page { size: 20px 2px }
+        svg { display: block }
+      </style>
+      <svg width="20px" height="2px" xmlns="http://www.w3.org/2000/svg">
+        <text x="18" y="1.5" font-family="weasyprint" font-size="2"
+              fill="blue" text-anchor="end">
+          ABC
+        </text>
+      </svg>
+    ''')

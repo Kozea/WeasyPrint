@@ -166,7 +166,7 @@ def text(svg, node, font_size):
         svg.fill_stroke(node, font_size, text=True)
         draw_first_line(
             svg.stream, TextBox(layout, style), 'none', 'none',
-            x + svg.cursor_d_position[0], y + svg.cursor_d_position[1])
+            x_position, y_position)
         svg.stream.pop_state()
         svg.cursor_position = cursor_position
 
