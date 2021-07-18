@@ -102,20 +102,14 @@ def text(svg, node, font_size):
         y_align = -y_bearing
     elif display_anchor == 'bottom':
         y_align = -height - y_bearing
-    elif (alignment_baseline == 'central' or
-          alignment_baseline == 'middle'):
+    elif alignment_baseline in ('central', 'middle'):
         # TODO: This is wrong, we use font top-to-bottom
         y_align = (ascent + descent) / 2 - descent
-    elif (alignment_baseline == 'text-before-edge' or
-          alignment_baseline == 'before_edge' or
-          alignment_baseline == 'top' or
-          alignment_baseline == 'hanging' or
-          alignment_baseline == 'text-top'):
+    elif alignment_baseline in (
+            'text-before-edge', 'before_edge', 'top', 'hanging', 'text-top'):
         y_align = ascent
-    elif (alignment_baseline == 'text-after-edge' or
-          alignment_baseline == 'after_edge' or
-          alignment_baseline == 'bottom' or
-          alignment_baseline == 'text-bottom'):
+    elif alignment_baseline in (
+            'text-after-edge', 'after_edge', 'bottom', 'text-bottom'):
         y_align = -descent
 
     # Set bounding box
