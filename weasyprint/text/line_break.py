@@ -97,12 +97,7 @@ class Layout:
         pango_context = ffi.gc(
             pango.pango_font_map_create_context(font_map),
             gobject.g_object_unref)
-        try:
-            pango.pango_context_set_round_glyph_positions(pango_context, False)
-        except AttributeError:
-            # TODO: remove this when Cairo 1.44+ is in Debian 11 is released.
-            # See https://github.com/Kozea/WeasyPrint/issues/1384.
-            pass
+        pango.pango_context_set_round_glyph_positions(pango_context, False)
         self.layout = ffi.gc(
             pango.pango_layout_new(pango_context),
             gobject.g_object_unref)
