@@ -563,6 +563,27 @@ class Matrix(list):
             for i in range(len(self))])
 
     @property
+    def invert(self):
+        d = self.determinant
+        return Matrix(matrix=[
+            [
+                (self[1][1] * self[2][2] - self[1][2] * self[2][1]) / d,
+                (self[0][1] * self[2][2] - self[0][2] * self[2][1]) / -d,
+                (self[0][1] * self[1][2] - self[0][2] * self[1][1]) / d,
+            ],
+            [
+                (self[1][0] * self[2][2] - self[1][2] * self[2][0]) / -d,
+                (self[0][0] * self[2][2] - self[0][2] * self[2][0]) / d,
+                (self[0][0] * self[1][2] - self[0][2] * self[1][0]) / -d,
+            ],
+            [
+                (self[1][0] * self[2][1] - self[1][1] * self[2][0]) / d,
+                (self[0][0] * self[2][1] - self[0][1] * self[2][0]) / -d,
+                (self[0][0] * self[1][1] - self[0][1] * self[1][0]) / d,
+            ],
+        ])
+
+    @property
     def determinant(self):
         assert len(self) == len(self[0]) == 3
         return (
