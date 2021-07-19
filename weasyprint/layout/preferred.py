@@ -117,6 +117,17 @@ def min_max(box, width):
         max_width = float('inf')
     else:
         max_width = max_width.value
+
+    if isinstance(box, boxes.ReplacedBox):
+        ratio = box.replacement.intrinsic_ratio
+        if ratio is not None:
+            min_height = box.style['min_height']
+            if min_height != 'auto' and min_height.unit != '%':
+                min_width = max(min_width, min_height.value * ratio)
+            max_height = box.style['max_height']
+            if max_height != 'auto' and max_height.unit != '%':
+                max_width = min(max_width, max_height.value * ratio)
+
     return max(min_width, min(width, max_width))
 
 

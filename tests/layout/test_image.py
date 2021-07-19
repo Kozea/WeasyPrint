@@ -501,3 +501,34 @@ def test_radial_gradient():
            init=(450, 100, 0, 450 * 2 ** 0.5), scale_y=(200 / 450))
     layout('radial-gradient(farthest-corner at 40px 210px, blue, lime)',
            init=(40, 210, 0, 360 * 2 ** 0.5), scale_y=(210 / 360))
+
+
+@pytest.mark.parametrize('props, div_width', (
+    ({}, 4),
+    ({'min-width': '10px'}, 10),
+    ({'max-width': '1px'}, 1),
+    ({'width': '10px'}, 10),
+    ({'width': '1px'}, 1),
+    ({'min-height': '10px'}, 10),
+    ({'max-height': '1px'}, 1),
+    ({'height': '10px'}, 10),
+    ({'height': '1px'}, 1),
+    ({'min-width': '10px', 'min-height': '1px'}, 10),
+    ({'min-width': '1px', 'min-height': '10px'}, 10),
+    ({'max-width': '10px', 'max-height': '1px'}, 1),
+    ({'max-width': '1px', 'max-height': '10px'}, 1),
+))
+def test_image_min_max_width(props, div_width):
+    default = {
+        'min-width': 'auto', 'max-width': 'none', 'width': 'auto',
+        'min-height': 'auto', 'max-height': 'none', 'height': 'auto'}
+    page, = render_pages('''
+      <div style="display: inline-block">
+        <img src="pattern.png" style="display: block; %s">
+      </div>''' % ';'.join(
+          f'{key}: {props.get(key, value)}' for key, value in default.items()))
+    html, = page.children
+    body, = html.children
+    line, = body.children
+    div, = line.children
+    assert div.width == div_width
