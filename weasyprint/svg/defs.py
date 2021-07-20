@@ -19,22 +19,22 @@ def use(svg, node, font_size):
     """Draw use tags."""
     from . import NOT_INHERITED_ATTRIBUTES, SVG
 
-    svg.stream.push_state()
-
     for attribute in ('x', 'y', 'viewBox', 'mask'):
         if attribute in node.attrib:
             del node.attrib[attribute]
 
     parsed_url = parse_url(node.get_href())
     if parsed_url.fragment and not parsed_url.path:
-        tree = svg.tree.get_child(parsed_url.fragment).copy()
+        try:
+            tree = svg.tree.get_child(parsed_url.fragment).copy()
+        except AttributeError:
+            return
     else:
         url = parsed_url.geturl()
         try:
             bytestring_svg = svg.url_fetcher(url)
             use_svg = SVG(bytestring_svg, url)
         except TypeError:
-            svg.stream.restore()
             return
         else:
             use_svg.get_intrinsic_size(font_size)
@@ -54,6 +54,7 @@ def use(svg, node, font_size):
             if key not in tree.attrib:
                 tree.attrib[key] = value
 
+    svg.stream.push_state()
     svg.draw_node(tree, font_size)
     svg.stream.pop_state()
 
