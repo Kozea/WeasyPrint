@@ -46,8 +46,8 @@ def test_image_svg_viewbox():
         svg { display: block }
       </style>
       <svg viewBox="0 0 4 4" xmlns="http://www.w3.org/2000/svg">
-        <svg x="1" y="1" width="2" height="2" viewBox="0 0 10 10">
-          <rect x="5" y="5" width="5" height="5" fill="blue" />
+        <svg x="1" y="1" width="2" height="2" viewBox="10 10 10 10">
+          <rect x="15" y="15" width="5" height="5" fill="blue" />
         </svg>
       </svg>
     ''')

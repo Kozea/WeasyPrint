@@ -71,8 +71,6 @@ def preserve_ratio(svg, node, font_size, width, height):
     else:
         return 1, 1, 0, 0
 
-    translate_x = 0
-    translate_y = 0
     scale_x = width / viewbox_width if viewbox_width else 1
     scale_y = height / viewbox_height if viewbox_height else 1
 
@@ -106,6 +104,9 @@ def preserve_ratio(svg, node, font_size, width, height):
             translate_y += (height - viewbox_height * scale_y) / 2
         elif y_position == 'max':
             translate_y += height - viewbox_height * scale_y
+
+    translate_x -= viewbox[0] * scale_x
+    translate_y -= viewbox[1] * scale_y
 
     return scale_x, scale_y, translate_x, translate_y
 
