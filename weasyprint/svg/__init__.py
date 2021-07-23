@@ -605,6 +605,8 @@ class SVG:
         stroke_width = self.length(node.get('stroke-width', '1px'), font_size)
         if stroke_width:
             self.stream.set_line_width(stroke_width)
+        else:
+            stroke = None
 
         # Apply dash array
         dash_array = tuple(
