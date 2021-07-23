@@ -419,5 +419,3 @@ def test_rect_stroke_zero():
               stroke-width="0" stroke="red" fill="none" />
       </svg>
     ''')
-
-
