@@ -940,7 +940,6 @@ def draw_inline_level(stream, page, box, offset_x=0, text_overflow='clip',
             if isinstance(box, boxes.LineBox):
                 text_overflow = box.text_overflow
                 block_ellipsis = box.block_ellipsis
-            in_text = False
             ellipsis = 'none'
             for i, child in enumerate(box.children):
                 if i == len(box.children) - 1:
@@ -952,28 +951,18 @@ def draw_inline_level(stream, page, box, offset_x=0, text_overflow='clip',
                     child_offset_x = (
                         offset_x + child.position_x - box.position_x)
                 if isinstance(child, boxes.TextBox):
-                    if not in_text:
-                        stream.begin_text()
-                        in_text = True
                     draw_text(
                         stream, child, child_offset_x, text_overflow, ellipsis)
                 else:
-                    if in_text:
-                        in_text = False
-                        stream.end_text()
                     draw_inline_level(
                         stream, page, child, child_offset_x, text_overflow,
                         ellipsis)
-            if in_text:
-                stream.end_text()
         elif isinstance(box, boxes.InlineReplacedBox):
             draw_replacedbox(stream, box)
         else:
             assert isinstance(box, boxes.TextBox)
             # Should only happen for list markers
-            stream.begin_text()
             draw_text(stream, box, offset_x, text_overflow)
-            stream.end_text()
 
 
 def draw_text(stream, textbox, offset_x, text_overflow, block_ellipsis):
@@ -989,7 +978,9 @@ def draw_text(stream, textbox, offset_x, text_overflow, block_ellipsis):
     stream.set_alpha(textbox.style['color'][3])
 
     textbox.pango_layout.reactivate(textbox.style)
+    stream.begin_text()
     draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y)
+    stream.end_text()
 
     # Draw text decoration
     values = textbox.style['text_decoration_line']
