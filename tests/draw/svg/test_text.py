@@ -267,3 +267,22 @@ def test_text_anchor_end():
         </text>
       </svg>
     ''')
+
+
+@assert_no_logs
+def test_text_tspan():
+    assert_pixels('text_tspan', 20, 2, '''
+        BBBBBB__BBBBBB______
+        BBBBBB__BBBBBB______
+    ''', '''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        @page { size: 20px 2px }
+        svg { display: block }
+      </style>
+      <svg width="20px" height="2px" xmlns="http://www.w3.org/2000/svg">
+        <text x="10" y="10" font-family="weasyprint" font-size="2" fill="blue">
+          <tspan x="0" y="1.5">ABC DEF</tspan>
+        </text>
+      </svg>
+    ''')

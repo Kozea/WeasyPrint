@@ -54,6 +54,8 @@ def rect(svg, node, font_size):
     if width <= 0 or height <= 0:
         return
 
+    x, y = svg.point(node.get('x'), node.get('y'), font_size)
+
     rx = node.get('rx')
     ry = node.get('ry')
     if rx and ry is None:
@@ -63,7 +65,7 @@ def rect(svg, node, font_size):
     rx, ry = svg.point(rx, ry, font_size)
 
     if rx == 0 or ry == 0:
-        svg.stream.rectangle(0, 0, width, height)
+        svg.stream.rectangle(x, y, width, height)
         return
 
     if rx > width / 2:
@@ -76,17 +78,19 @@ def rect(svg, node, font_size):
     ARC_TO_BEZIER = 4 * (2 ** .5 - 1) / 3
     c1, c2 = ARC_TO_BEZIER * rx, ARC_TO_BEZIER * ry
 
-    svg.stream.move_to(rx, 0)
-    svg.stream.line_to(width - rx, 0)
-    svg.stream.curve_to(width - rx + c1, 0, width, c2, width, ry)
-    svg.stream.line_to(width, height - ry)
+    svg.stream.move_to(x + rx, y)
+    svg.stream.line_to(x + width - rx, y)
     svg.stream.curve_to(
-        width, height - ry + c2, width + c1 - rx, height,
-        width - rx, height)
-    svg.stream.line_to(rx, height)
-    svg.stream.curve_to(rx - c1, height, 0, height - c2, 0, height - ry)
-    svg.stream.line_to(0, ry)
-    svg.stream.curve_to(0, ry - c2, rx - c1, 0, rx, 0)
+        x + width - rx + c1, y, x + width, y + c2, x + width, y + ry)
+    svg.stream.line_to(x + width, y + height - ry)
+    svg.stream.curve_to(
+        x + width, y + height - ry + c2, x + width + c1 - rx, y + height,
+        x + width - rx, y + height)
+    svg.stream.line_to(x + rx, y + height)
+    svg.stream.curve_to(
+        x + rx - c1, y + height, x, y + height - c2, x, y + height - ry)
+    svg.stream.line_to(x, y + ry)
+    svg.stream.curve_to(x, y + ry - c2, x + rx - c1, y, x + rx, y)
     svg.stream.close()
 
 

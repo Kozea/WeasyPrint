@@ -345,3 +345,53 @@ def test_ellipse_fill():
           stroke="red" stroke-width="2" fill="blue"/>
       </svg>
     ''')
+
+
+@assert_no_logs
+def test_rect_in_g():
+    assert_pixels('rect_in_g', 9, 9, '''
+        RRRRR____
+        RRRRR____
+        RRRRR____
+        RRRRR____
+        RRRRR____
+        _________
+        _________
+        _________
+        _________
+    ''', '''
+      <style>
+        @page { size: 9px }
+        svg { display: block }
+      </style>
+      <svg width="9px" height="9px" xmlns="http://www.w3.org/2000/svg">
+        <g x="5" y="5">
+          <rect width="5" height="5" fill="red" />
+        </g>
+      </svg>
+    ''')
+
+
+@assert_no_logs
+def test_rect_x_y_in_g():
+    assert_pixels('rect_x_y_in_g', 9, 9, '''
+        _________
+        _________
+        __RRRRR__
+        __RRRRR__
+        __RRRRR__
+        __RRRRR__
+        __RRRRR__
+        _________
+        _________
+    ''', '''
+      <style>
+        @page { size: 9px }
+        svg { display: block }
+      </style>
+      <svg width="9px" height="9px" xmlns="http://www.w3.org/2000/svg">
+        <g x="5" y="5">
+          <rect x="2" y="2" width="5" height="5" fill="red" />
+        </g>
+      </svg>
+    ''')

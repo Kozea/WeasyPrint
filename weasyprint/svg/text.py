@@ -53,13 +53,9 @@ def text(svg, node, font_size):
     if 'x' in node.attrib:
         x = [size(i, font_size, svg.concrete_width)
              for i in normalize(node.attrib['x']).strip().split(' ')]
-        if len(x) == 1:
-            x = []
     if 'y' in node.attrib:
         y = [size(i, font_size, svg.concrete_height)
              for i in normalize(node.attrib['y']).strip().split(' ')]
-        if len(y) == 1:
-            y = []
     if 'dx' in node.attrib:
         dx = [size(i, font_size, svg.concrete_width)
               for i in normalize(node.attrib['dx']).strip().split(' ')]

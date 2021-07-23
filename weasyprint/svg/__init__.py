@@ -394,10 +394,6 @@ class SVG:
             if new_ctm.determinant:
                 self.stream.transform(*(old_ctm @ new_ctm.invert).values)
 
-        # Apply x/y transformations
-        x, y = self.point(node.get('x'), node.get('y'), font_size)
-        self.stream.transform(e=x, f=y)
-
         # Manage display and visibility
         display = node.get('display', 'inline') != 'none'
         visible = display and (node.get('visibility', 'visible') != 'hidden')
