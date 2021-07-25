@@ -140,6 +140,7 @@ def test_linear_gradient_multicolor_userspace():
     ''')
 
 
+@pytest.mark.xfail
 @assert_no_logs
 def test_linear_gradient_transform():
     assert_pixels('linear_gradient_transform', 10, 8, '''
@@ -173,26 +174,33 @@ def test_linear_gradient_transform():
     ''')
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_linear_gradient_repeat():
-    assert_pixels('linear_gradient_repeat', 10, 8, '''
+    assert_pixels('linear_gradient_repeat', 10, 16, '''
+        BBBBBBBBBB
         BBBBBBBBBB
         RRRRRRRRRR
+        RRRRRRRRRR
+        GGGGGGGGGG
         GGGGGGGGGG
         vvvvvvvvvv
+        vvvvvvvvvv
+        BBBBBBBBBB
         BBBBBBBBBB
         RRRRRRRRRR
+        RRRRRRRRRR
         GGGGGGGGGG
+        GGGGGGGGGG
+        vvvvvvvvvv
         vvvvvvvvvv
     ''', '''
       <style>
-        @page { size: 10px 8px }
+        @page { size: 10px 16px }
         svg { display: block }
       </style>
-      <svg width="10px" height="8px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="10px" height="16px" xmlns="http://www.w3.org/2000/svg">
         <defs>
-          <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1"
+          <linearGradient id="grad" x1="0" y1="0" x2="0" y2="0.5"
             gradientUnits="objectBoundingBox" spreadMethod="repeat">
             <stop stop-color="blue" offset="25%"></stop>
             <stop stop-color="red" offset="25%"></stop>
@@ -202,29 +210,78 @@ def test_linear_gradient_repeat():
             <stop stop-color="rgb(128,0,128)" offset="75%"></stop>
           </linearGradient>
         </defs>
-        <rect x="0" y="0" width="10" height="8" fill="url(#grad)" />
+        <rect x="0" y="0" width="10" height="16" fill="url(#grad)" />
       </svg>
     ''')
 
 
 @pytest.mark.xfail
 @assert_no_logs
-def test_linear_gradient_reflect():
-    assert_pixels('linear_gradient_reflect', 10, 8, '''
+def test_linear_gradient_repeat_long():
+    assert_pixels('linear_gradient_repeat_long', 10, 16, '''
         BBBBBBBBBB
         RRRRRRRRRR
         GGGGGGGGGG
         vvvvvvvvvv
+        BBBBBBBBBB
+        RRRRRRRRRR
+        GGGGGGGGGG
+        vvvvvvvvvv
+        BBBBBBBBBB
+        RRRRRRRRRR
+        GGGGGGGGGG
+        vvvvvvvvvv
+        BBBBBBBBBB
+        RRRRRRRRRR
+        GGGGGGGGGG
+        vvvvvvvvvv
+    ''', '''
+      <style>
+        @page { size: 10px 16px }
+        svg { display: block }
+      </style>
+      <svg width="10px" height="16px" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="grad" x1="0" y1="0" x2="0" y2="0.25"
+            gradientUnits="objectBoundingBox" spreadMethod="repeat">
+            <stop stop-color="blue" offset="25%"></stop>
+            <stop stop-color="red" offset="25%"></stop>
+            <stop stop-color="red" offset="50%"></stop>
+            <stop stop-color="lime" offset="50%"></stop>
+            <stop stop-color="lime" offset="75%"></stop>
+            <stop stop-color="rgb(128,0,128)" offset="75%"></stop>
+          </linearGradient>
+        </defs>
+        <rect x="0" y="0" width="10" height="16" fill="url(#grad)" />
+      </svg>
+    ''')
+
+
+@assert_no_logs
+def test_linear_gradient_reflect():
+    assert_pixels('linear_gradient_reflect', 10, 16, '''
+        BBBBBBBBBB
+        BBBBBBBBBB
+        RRRRRRRRRR
+        RRRRRRRRRR
+        GGGGGGGGGG
+        GGGGGGGGGG
+        vvvvvvvvvv
+        vvvvvvvvvv
+        vvvvvvvvvv
         vvvvvvvvvv
         GGGGGGGGGG
+        GGGGGGGGGG
         RRRRRRRRRR
+        RRRRRRRRRR
+        BBBBBBBBBB
         BBBBBBBBBB
     ''', '''
       <style>
-        @page { size: 10px 8px }
+        @page { size: 10px 16px }
         svg { display: block }
       </style>
-      <svg width="10px" height="8px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="10px" height="16px" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="grad" x1="0" y1="0" x2="0" y2="0.5"
             gradientUnits="objectBoundingBox" spreadMethod="reflect">
@@ -236,7 +293,7 @@ def test_linear_gradient_reflect():
             <stop stop-color="rgb(128,0,128)" offset="75%"></stop>
           </linearGradient>
         </defs>
-        <rect x="0" y="0" width="10" height="8" fill="url(#grad)" />
+        <rect x="0" y="0" width="10" height="16" fill="url(#grad)" />
       </svg>
     ''')
 

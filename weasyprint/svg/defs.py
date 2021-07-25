@@ -100,7 +100,6 @@ def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
     if not is_valid_bounding_box(bounding_box):
         return False
     x, y = bounding_box[0], bounding_box[1]
-    node_x, node_y = svg.point(node.get('x'), node.get('y'), font_size)
     matrix = Matrix()
     if gradient.get('gradientUnits') == 'userSpaceOnUse':
         viewbox = svg.get_viewbox()
@@ -112,7 +111,14 @@ def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
         width, height = bounding_box[2], bounding_box[3]
 
     spread = gradient.get('spreadMethod', 'pad')
-    if spread not in ('repeat', 'reflect'):
+    if spread in ('repeat', 'reflect'):
+        if positions[0] > 0:
+            positions.insert(0, 0)
+            colors.insert(0, colors[0])
+        if positions[-1] < 1:
+            positions.append(1)
+            colors.append(colors[-1])
+    else:
         # Add explicit colors at boundaries if needed, because PDF doesn’t
         # extend color stops that are not displayed
         if positions[0] == positions[1]:
@@ -205,14 +211,9 @@ def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
             svg.normalized_diagonal)
         matrix = transform_matrix @ matrix
 
-    a, b, c, d, e, f = matrix.values
-    width /= a
-    height /= d
-    pattern_x = e / a
-    pattern_y = f / d
-    matrix = Matrix(e=x - node_x, f=y - node_y) @ matrix @ svg.stream.ctm
+    matrix = matrix @ svg.stream.ctm
     pattern = svg.stream.add_pattern(
-        -pattern_x, -pattern_y, width, height, width, height, matrix)
+        x, y, width, height, width, height, matrix)
     group = pattern.add_group([0, 0, width, height])
 
     shading = group.add_shading()
@@ -460,7 +461,6 @@ def draw_pattern(svg, node, pattern, font_size, opacity, stroke):
     if not is_valid_bounding_box(bounding_box):
         return False
     x, y = bounding_box[0], bounding_box[1]
-    node_x, node_y = svg.point(node.get('x'), node.get('y'), font_size)
     matrix = Matrix()
     if pattern.get('patternUnits') == 'userSpaceOnUse':
         viewbox = svg.get_viewbox()
@@ -499,14 +499,9 @@ def draw_pattern(svg, node, pattern, font_size, opacity, stroke):
             svg.normalized_diagonal)
         matrix = transform_matrix @ matrix
 
-    a, b, c, d, e, f = matrix.values
-    width /= a
-    height /= d
-    pattern_x = e / a
-    pattern_y = f / d
-    matrix = Matrix(e=x - node_x, f=y - node_y) @ matrix @ svg.stream.ctm
+    matrix = matrix @ svg.stream.ctm
     stream_pattern = svg.stream.add_pattern(
-        -pattern_x, -pattern_y, pattern_width, pattern_height,
+        x, y, pattern_width, pattern_height,
         pattern_width, pattern_height, matrix)
     stream_pattern.set_alpha(opacity)
 
@@ -553,8 +548,7 @@ def paint_mask(svg, node, mask, font_size):
     if mask.get('maskUnits') == 'userSpaceOnUse':
         width_ref, height_ref = svg.concrete_width, svg.concrete_height
     else:
-        x, y = svg.point(node.get('x'), node.get('y'), font_size)
-        width, height = width_ref, height_ref = svg.point(
+        width_ref, height_ref = svg.point(
             node.get('width'), node.get('height'), font_size)
 
     mask.attrib['x'] = size(mask.get('x', '-10%'), font_size, width_ref)
@@ -568,6 +562,9 @@ def paint_mask(svg, node, mask, font_size):
         x, y = mask.get('x'), mask.get('y')
         width, height = mask.get('width'), mask.get('height')
         mask.attrib['viewBox'] = f'{x} {y} {width} {height}'
+    else:
+        x, y = 0, 0
+        width, height = width_ref, height_ref
 
     alpha_stream = svg.stream.add_group([x, y, width, height])
     state = pydyf.Dictionary({
