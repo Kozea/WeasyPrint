@@ -198,7 +198,7 @@ def test_linear_gradient_repeat():
         @page { size: 10px 16px }
         svg { display: block }
       </style>
-      <svg width="10px" height="16px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="11px" height="16px" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="grad" x1="0" y1="0" x2="0" y2="0.5"
             gradientUnits="objectBoundingBox" spreadMethod="repeat">
@@ -210,7 +210,7 @@ def test_linear_gradient_repeat():
             <stop stop-color="rgb(128,0,128)" offset="75%"></stop>
           </linearGradient>
         </defs>
-        <rect x="0" y="0" width="10" height="16" fill="url(#grad)" />
+        <rect x="0" y="0" width="11" height="16" fill="url(#grad)" />
       </svg>
     ''')
 
@@ -240,7 +240,7 @@ def test_linear_gradient_repeat_long():
         @page { size: 10px 16px }
         svg { display: block }
       </style>
-      <svg width="10px" height="16px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="11px" height="16px" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="grad" x1="0" y1="0" x2="0" y2="0.25"
             gradientUnits="objectBoundingBox" spreadMethod="repeat">
@@ -252,7 +252,7 @@ def test_linear_gradient_repeat_long():
             <stop stop-color="rgb(128,0,128)" offset="75%"></stop>
           </linearGradient>
         </defs>
-        <rect x="0" y="0" width="10" height="16" fill="url(#grad)" />
+        <rect x="0" y="0" width="11" height="16" fill="url(#grad)" />
       </svg>
     ''')
 
@@ -281,7 +281,7 @@ def test_linear_gradient_reflect():
         @page { size: 10px 16px }
         svg { display: block }
       </style>
-      <svg width="10px" height="16px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="11px" height="16px" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="grad" x1="0" y1="0" x2="0" y2="0.5"
             gradientUnits="objectBoundingBox" spreadMethod="reflect">
@@ -293,7 +293,7 @@ def test_linear_gradient_reflect():
             <stop stop-color="rgb(128,0,128)" offset="75%"></stop>
           </linearGradient>
         </defs>
-        <rect x="0" y="0" width="10" height="16" fill="url(#grad)" />
+        <rect x="0" y="0" width="11" height="16" fill="url(#grad)" />
       </svg>
     ''')
 
