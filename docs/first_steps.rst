@@ -55,8 +55,8 @@ system. You can verify this by launching::
   python3 --version
   pango-view --version
 
-When everything is OK, you can install WeasyPrint in a `virtual environment`_
-using `pip`_::
+When everything is OK, you can install WeasyPrint directly on your system or
+in a `virtual environment`_ using `pip`_::
 
   python3 -m venv venv
   source venv/bin/activate
@@ -65,6 +65,107 @@ using `pip`_::
 
 .. _virtual environment: https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/
 .. _pip: https://pip.pypa.io/
+
+Alpine 3.11
++++++++++++
+To install WeasyPrint without a virtualenv, you need the following packages::
+
+  apk add py3-pip py3-cffi py3-brotli gcc musl-dev python3-dev pango zlib-dev jpeg-dev openjpeg-dev
+
+To install WeasyPrint inside a virtualenv using wheels (if possible), you need
+the following packages::
+
+  apk add py3-pip gcc musl-dev python3-dev pango zlib-dev jpeg-dev openjpeg-dev g++ libffi-dev
+
+To install WeasyPrint inside a virtualenv without using wheels, you need the
+following packages::
+
+  apk add py3-pip gcc musl-dev python3-dev pango zlib-dev jpeg-dev openjpeg-dev g++ libffi-dev
+
+
+Alpine ≥ 3.12
++++++++++++++
+To install WeasyPrint without a virtualenv, you need the following packages::
+
+  apk add py3-pip py3-pillow py3-cffi py3-brotli gcc musl-dev python3-dev pango
+
+To install WeasyPrint inside a virtualenv using wheels (if possible), you need
+the following packages::
+
+  apk add py3-pip gcc musl-dev python3-dev pango zlib-dev jpeg-dev openjpeg-dev g++ libffi-dev
+
+To install WeasyPrint inside a virtualenv without using wheels, you need the
+following packages::
+
+  apk add py3-pip gcc musl-dev python3-dev pango zlib-dev jpeg-dev openjpeg-dev g++ libffi-dev
+
+
+Archlinux
++++++++++
+To install WeasyPrint without a virtualenv, you need the following packages::
+
+  pacman -S python-pip pango python-cffi python-pillow python-brotli python-zopfli
+
+To install WeasyPrint inside a virtualenv using wheels (if possible), you need
+the following packages::
+
+  pacman -S python-pip pango
+
+To install WeasyPrint inside a virtualenv without using wheels, you need the
+following packages::
+
+  pacman -S python-pip pango gcc libjpeg-turbo openjpeg2
+
+
+Debian 11
++++++++++
+To install WeasyPrint without a virtualenv, you need the following packages::
+
+  apt install python3-pip python3-cffi python3-brotli libpango-1.0-0 libpangoft2-1.0-0
+
+To install WeasyPrint inside a virtualenv using wheels (if possible), you need
+the following packages::
+
+  apt install python3-pip libpango-1.0-0 libpangoft2-1.0-0
+
+To install WeasyPrint inside a virtualenv without using wheels, you need the
+following packages::
+
+  apt install python3-pip libpango-1.0-0 libpangoft2-1.0-0 libjpeg-dev libopenjp2-7-dev libffi-dev
+
+
+Fedora 34
++++++++++
+To install WeasyPrint without a virtualenv, you need the following packages::
+
+  yum install python-pip python-pillow python-cffi python3-brotli pango
+
+To install WeasyPrint inside a virtualenv using wheels (if possible), you need
+the following packages::
+
+  yum install python-pip pango
+
+To install WeasyPrint inside a virtualenv without using wheels, you need the
+following packages::
+
+  yum install python-pip pango gcc python3-devel gcc-c++ zlib-devel libjpeg-devel openjpeg2-devel libffi-devel
+
+
+Ubuntu 20
++++++++++
+To install WeasyPrint without a virtualenv, you need the following packages::
+
+  apt install python3-pip python3-cffi python3-brotli libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0
+
+To install WeasyPrint inside a virtualenv using wheels (if possible), you need
+the following packages::
+
+  apt install python3-pip libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0
+
+To install WeasyPrint inside a virtualenv without using wheels, you need the
+following packages::
+
+  apt install python3-pip libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0 libffi-dev libjpeg-dev libopenjp2-7-dev
 
 
 macOS
