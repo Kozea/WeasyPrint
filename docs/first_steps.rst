@@ -66,22 +66,6 @@ in a `virtual environment`_ using `pip`_::
 .. _virtual environment: https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/
 .. _pip: https://pip.pypa.io/
 
-Alpine 3.11
-+++++++++++
-To install WeasyPrint without a virtualenv, you need the following packages::
-
-  apk add py3-pip py3-cffi py3-brotli gcc musl-dev python3-dev pango zlib-dev jpeg-dev openjpeg-dev
-
-To install WeasyPrint inside a virtualenv using wheels (if possible), you need
-the following packages::
-
-  apk add py3-pip gcc musl-dev python3-dev pango zlib-dev jpeg-dev openjpeg-dev g++ libffi-dev
-
-To install WeasyPrint inside a virtualenv without using wheels, you need the
-following packages::
-
-  apk add py3-pip gcc musl-dev python3-dev pango zlib-dev jpeg-dev openjpeg-dev g++ libffi-dev
-
 
 Alpine ≥ 3.12
 +++++++++++++
