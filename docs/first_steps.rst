@@ -55,6 +55,9 @@ system. You can verify this by launching::
   python3 --version
   pango-view --version
 
+If your distribution provide a too old version of Pango, you can use version
+52.5 of WeasyPrint which does not need Pango recent features.
+
 When everything is OK, you can install WeasyPrint directly on your system or
 in a `virtual environment`_ using `pip`_::
 
