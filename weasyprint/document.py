@@ -66,7 +66,7 @@ def _w3c_date_to_pdf(string, attr_name):
 
 
 class Font:
-    def __init__(self, file_content, pango_font):
+    def __init__(self, file_content, pango_font, index):
         pango_metrics = pango.pango_font_get_metrics(pango_font, ffi.NULL)
         self._font_description = pango.pango_font_describe(pango_font)
         self.family = ffi.string(pango.pango_font_description_get_family(
@@ -79,7 +79,8 @@ class Font:
         sha.update(description_string)
 
         self.file_content = file_content
-        self.file_hash = hash(file_content)
+        self.index = index
+        self.file_hash = hash(file_content + bytes(index))
         self.hash = ''.join(
             chr(65 + letter % 26) for letter in sha.digest()[:6])
         self.name = (
@@ -210,8 +211,8 @@ class Stream(pydyf.Stream):
                     self._states[key] = pydyf.Dictionary({'ca': alpha})
                 super().set_state(key)
 
-    def add_font(self, font_hash, font_content, pango_font):
-        self._document.fonts[font_hash] = Font(font_content, pango_font)
+    def add_font(self, font_hash, font_content, pango_font, index):
+        self._document.fonts[font_hash] = Font(font_content, pango_font, index)
         return self._document.fonts[font_hash]
 
     def get_fonts(self):
@@ -1246,7 +1247,7 @@ class Document:
                 full_font = io.BytesIO(fonts[0].file_content)
                 optimized_font = io.BytesIO()
                 try:
-                    ttfont = TTFont(full_font)
+                    ttfont = TTFont(full_font, fontNumber=fonts[0].index)
                     options = subset.Options(
                         retain_gids=True, passthrough_tables=True,
                         ignore_missing_glyphs=True, notdef_glyph=True)

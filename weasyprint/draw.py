@@ -1083,7 +1083,8 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y):
             hb_blob = harfbuzz.hb_face_reference_blob(hb_face)
             hb_data = harfbuzz.hb_blob_get_data(hb_blob, stream.length)
             file_content = ffi.unpack(hb_data, int(stream.length[0]))
-            font = stream.add_font(font_hash, file_content, pango_font)
+            index = harfbuzz.hb_face_get_index(hb_face)
+            font = stream.add_font(font_hash, file_content, pango_font, index)
 
         # Positions of the glyphs in the UTF-8 string
         utf8_positions = [offset + clusters[i] for i in range(1, num_glyphs)]

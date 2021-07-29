@@ -17,6 +17,7 @@ ffi.cdef('''
     typedef ... hb_blob_t;
     hb_face_t * hb_font_get_face (hb_font_t *font);
     hb_blob_t * hb_face_reference_blob (hb_face_t *face);
+    unsigned int hb_face_get_index (const hb_face_t *face);
     const char * hb_blob_get_data (hb_blob_t *blob, unsigned int *length);
 
     // Pango
