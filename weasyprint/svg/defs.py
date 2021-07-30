@@ -538,7 +538,7 @@ def apply_filters(svg, node, filter_node, font_size):
                 'Type': '/ExtGState',
                 'BM': f'/{mode}',
             })
-            svg.stream.set_group(blend_mode)
+            svg.stream.set_state(blend_mode)
 
 
 def paint_mask(svg, node, mask, font_size):
