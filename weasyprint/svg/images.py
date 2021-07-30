@@ -37,18 +37,33 @@ def image(svg, node, font_size):
     image = svg.context.get_image_from_uri(url=url, forced_mime_type='image/*')
     if image is None:
         return
+
     width, height = svg.point(node.get('width'), node.get('height'), font_size)
-    width = width or image.intrinsic_width
-    height = height or image.intrinsic_height
+    intrinsic_width, intrinsic_height = image.get_intrinsic_size(1, font_size)
+    intrinsic_ratio = image.intrinsic_ratio
+    if intrinsic_width is None and intrinsic_height is None:
+        if intrinsic_ratio is None or (not width and not height):
+            intrinsic_width, intrinsic_height = 300, 150
+        elif not width:
+            intrinsic_width, intrinsic_height = (
+                intrinsic_ratio * height, height)
+        else:
+            intrinsic_width, intrinsic_height = width, width / intrinsic_ratio
+    elif intrinsic_width is None:
+        intrinsic_width = intrinsic_ratio * intrinsic_height
+    elif intrinsic_height is None:
+        intrinsic_height = intrinsic_width / intrinsic_ratio
+    width = width or intrinsic_width
+    height = height or intrinsic_height
+
     scale_x, scale_y, translate_x, translate_y = preserve_ratio(
         svg, node, font_size, width, height,
-        (0, 0, image.intrinsic_width, image.intrinsic_height))
+        (0, 0, intrinsic_width, intrinsic_height))
     svg.stream.rectangle(0, 0, width, height)
     svg.stream.clip()
     svg.stream.end()
     svg.stream.push_state()
     svg.stream.transform(a=scale_x, d=scale_y, e=translate_x, f=translate_y)
     image.draw(
-        svg.stream, image.intrinsic_width, image.intrinsic_height,
-        image_rendering='auto')
+        svg.stream, intrinsic_width, intrinsic_height, image_rendering='auto')
     svg.stream.pop_state()
