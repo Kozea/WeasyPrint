@@ -22,6 +22,9 @@ def svg(svg, node, font_size):
             node.get('width'), node.get('height'), font_size)
     scale_x, scale_y, translate_x, translate_y = preserve_ratio(
         svg, node, font_size, width, height)
+    svg.stream.rectangle(0, 0, width, height)
+    svg.stream.clip()
+    svg.stream.end()
     svg.stream.transform(a=scale_x, d=scale_y, e=translate_x, f=translate_y)
 
 
