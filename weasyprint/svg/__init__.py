@@ -20,7 +20,8 @@ from .images import image, svg
 from .path import path
 from .shapes import circle, ellipse, line, polygon, polyline, rect
 from .text import text
-from .utils import color, normalize, parse_url, preserve_ratio, size, transform
+from .utils import (
+    PointError, color, normalize, parse_url, preserve_ratio, size, transform)
 
 TAGS = {
     'a': text,
@@ -400,7 +401,10 @@ class SVG:
 
         # Draw node
         if visible and node.tag in TAGS:
-            TAGS[node.tag](self, node, font_size)
+            try:
+                TAGS[node.tag](self, node, font_size)
+            except PointError:
+                pass
 
         # Draw node children
         if display and node.tag not in DEF_TYPES:

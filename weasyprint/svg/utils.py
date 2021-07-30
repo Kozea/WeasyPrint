@@ -13,6 +13,10 @@ from urllib.parse import urlparse
 from tinycss2.color3 import parse_color
 
 
+class PointError(Exception):
+    """Exception raised when parsing a point fails."""
+
+
 def normalize(string):
     """Give a canonical version of a given value string."""
     string = (string or '').replace('E', 'e')
@@ -58,9 +62,12 @@ def size(string, font_size=None, percentage_reference=None):
 def point(svg, string, font_size):
     """Pop first two size values from a string."""
     match = re.match('(.*?) (.*?)(?: |$)', string)
-    x, y = match.group(1, 2)
-    string = string[match.end():]
-    return (*svg.point(x, y, font_size), string)
+    if match:
+        x, y = match.group(1, 2)
+        string = string[match.end():]
+        return (*svg.point(x, y, font_size), string)
+    else:
+        raise PointError
 
 
 def preserve_ratio(svg, node, font_size, width, height):
