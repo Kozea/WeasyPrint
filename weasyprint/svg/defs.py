@@ -45,8 +45,8 @@ def use(svg, node, font_size):
         # http://www.w3.org/TR/SVG11/struct.html#UseElement
         tree._etree_node.tag = 'svg'
         if 'width' in node.attrib and 'height' in node.attrib:
-            tree.attrib['width'] = node['width']
-            tree.attrib['height'] = node['height']
+            tree.attrib['width'] = node.attrib['width']
+            tree.attrib['height'] = node.attrib['height']
 
     # Cascade
     for key, value in node.attrib.items():
