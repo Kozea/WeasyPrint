@@ -103,7 +103,7 @@ def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
     if not is_valid_bounding_box(bounding_box):
         return False
     x, y = bounding_box[0], bounding_box[1]
-    matrix = Matrix()
+    matrix = Matrix(e=x, f=y)
     if gradient.get('gradientUnits') == 'userSpaceOnUse':
         viewbox = svg.get_viewbox()
         if viewbox:
@@ -216,7 +216,7 @@ def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
 
     matrix = matrix @ svg.stream.ctm
     pattern = svg.stream.add_pattern(
-        x, y, width, height, width, height, matrix)
+        0, 0, width, height, width, height, matrix)
     group = pattern.add_group([0, 0, width, height])
 
     shading = group.add_shading()
