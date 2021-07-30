@@ -359,6 +359,8 @@ def draw_table_backgrounds(stream, page, table):
 
 
 def draw_background_image(stream, layer, image_rendering):
+    from .document import Matrix
+
     if layer.image is None or 0 in layer.size:
         return
 
@@ -411,9 +413,10 @@ def draw_background_image(stream, layer, image_rendering):
         repeat_width = 2 * stream.page_rectangle[2]
         repeat_height = 2 * stream.page_rectangle[3]
 
+    matrix = Matrix(e=position_x + positioning_x, f=position_y + positioning_y)
+    matrix @= stream.ctm
     pattern = stream.add_pattern(
-        position_x + positioning_x, position_y + positioning_y,
-        image_width, image_height, repeat_width, repeat_height, stream.ctm)
+        image_width, image_height, repeat_width, repeat_height, matrix)
     group = pattern.add_group([0, 0, repeat_width, repeat_height])
 
     with stacked(stream):

@@ -215,8 +215,7 @@ def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
         matrix = transform_matrix @ matrix
 
     matrix = matrix @ svg.stream.ctm
-    pattern = svg.stream.add_pattern(
-        0, 0, width, height, width, height, matrix)
+    pattern = svg.stream.add_pattern(width, height, width, height, matrix)
     group = pattern.add_group([0, 0, width, height])
 
     shading = group.add_shading()
@@ -464,7 +463,7 @@ def draw_pattern(svg, node, pattern, font_size, opacity, stroke):
     if not is_valid_bounding_box(bounding_box):
         return False
     x, y = bounding_box[0], bounding_box[1]
-    matrix = Matrix()
+    matrix = Matrix(e=x, f=y)
     if pattern.get('patternUnits') == 'userSpaceOnUse':
         viewbox = svg.get_viewbox()
         if viewbox:
@@ -504,8 +503,7 @@ def draw_pattern(svg, node, pattern, font_size, opacity, stroke):
 
     matrix = matrix @ svg.stream.ctm
     stream_pattern = svg.stream.add_pattern(
-        x, y, pattern_width, pattern_height,
-        pattern_width, pattern_height, matrix)
+        pattern_width, pattern_height, pattern_width, pattern_height, matrix)
     stream_pattern.set_alpha(opacity)
 
     group = stream_pattern.add_group([0, 0, pattern_width, pattern_height])
