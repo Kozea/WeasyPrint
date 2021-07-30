@@ -19,6 +19,8 @@ def use(svg, node, font_size):
     """Draw use tags."""
     from . import NOT_INHERITED_ATTRIBUTES, SVG
 
+    x, y = svg.point(node.get('x'), node.get('y'), font_size)
+
     for attribute in ('x', 'y', 'viewBox', 'mask'):
         if attribute in node.attrib:
             del node.attrib[attribute]
@@ -55,6 +57,7 @@ def use(svg, node, font_size):
                 tree.attrib[key] = value
 
     svg.stream.push_state()
+    svg.stream.transform(e=x, f=y)
     svg.draw_node(tree, font_size)
     svg.stream.pop_state()
 
