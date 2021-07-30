@@ -40,4 +40,15 @@ def image(svg, node, font_size):
     width, height = svg.point(node.get('width'), node.get('height'), font_size)
     width = width or image.intrinsic_width
     height = height or image.intrinsic_height
-    image.draw(svg.stream, width, height, image_rendering='auto')
+    scale_x, scale_y, translate_x, translate_y = preserve_ratio(
+        svg, node, font_size, width, height,
+        (0, 0, image.intrinsic_width, image.intrinsic_height))
+    svg.stream.rectangle(0, 0, width, height)
+    svg.stream.clip()
+    svg.stream.end()
+    svg.stream.push_state()
+    svg.stream.transform(a=scale_x, d=scale_y, e=translate_x, f=translate_y)
+    image.draw(
+        svg.stream, image.intrinsic_width, image.intrinsic_height,
+        image_rendering='auto')
+    svg.stream.pop_state()

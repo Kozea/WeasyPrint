@@ -70,9 +70,9 @@ def point(svg, string, font_size):
         raise PointError
 
 
-def preserve_ratio(svg, node, font_size, width, height):
+def preserve_ratio(svg, node, font_size, width, height, viewbox=None):
     """Compute scale and translation needed to preserve ratio."""
-    viewbox = node.get_viewbox()
+    viewbox = viewbox or node.get_viewbox()
     if viewbox:
         viewbox_width, viewbox_height = viewbox[2:]
     else:
