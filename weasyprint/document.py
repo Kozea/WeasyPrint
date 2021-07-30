@@ -270,7 +270,7 @@ class Stream(pydyf.Stream):
 
         if 'transparency' in pillow_image.info:
             pillow_image = pillow_image.convert('RGBA')
-        elif pillow_image.mode in ('1', 'P'):
+        elif pillow_image.mode in ('1', 'P', 'I'):
             pillow_image = pillow_image.convert('RGB')
 
         if pillow_image.mode in ('RGB', 'RGBA'):
