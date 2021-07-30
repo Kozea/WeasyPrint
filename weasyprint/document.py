@@ -156,7 +156,7 @@ class Stream(pydyf.Stream):
         self._ctm_stack[-1] = Matrix(a, b, c, d, e, f) @ self.ctm
 
     def begin_text(self):
-        if self.stream[-1] == b'ET':
+        if self.stream and self.stream[-1] == b'ET':
             self._current_font = self._old_font
             self.stream.pop()
         else:
