@@ -26,6 +26,82 @@ API changes:
   ``--optimize-size``, allowing ``images``, ``fonts``, ``all`` and ``none``
   values.
 
+Performance:
+
+* Improve image management
+
+New features:
+
+* `#1374 <https://github.com/Kozea/WeasyPrint/issues/1374>`_:
+  Support basic "clipPath" in SVG
+
+Bug fixes:
+
+* `#1369 <https://github.com/Kozea/WeasyPrint/issues/1369>`_:
+  Render use path in SVG
+* `#1370 <https://github.com/Kozea/WeasyPrint/issues/1370>`_:
+  Fix fill color on use path in SVG
+* `#1371 <https://github.com/Kozea/WeasyPrint/issues/1371>`_:
+  Handle stroke-opacity and fill-opacity
+* `#1378 <https://github.com/Kozea/WeasyPrint/issues/1378>`_:
+  Fix crash with borders whose widths are in em
+* `#1394 <https://github.com/Kozea/WeasyPrint/issues/1394>`_:
+  Fix crash on draw_pattern
+* `#880 <https://github.com/Kozea/WeasyPrint/issues/880>`_:
+  Handle stacking contexts put in contexts by previous generations
+* `#1386 <https://github.com/Kozea/WeasyPrint/issues/1386>`_:
+  Catch font subsetting errors
+* `#1403 <https://github.com/Kozea/WeasyPrint/issues/1403>`_:
+  Fix how x and y attributes are handled in SVG
+* `#1399 <https://github.com/Kozea/WeasyPrint/issues/1399>`_,
+  `#1401 <https://github.com/Kozea/WeasyPrint/pull/1401>`_:
+  Don’t crash when use tags reference non-existing element
+* `#1393 <https://github.com/Kozea/WeasyPrint/issues/1393>`_:
+  Handle font collections
+* `#1408 <https://github.com/Kozea/WeasyPrint/issues/1408>`_:
+  Handle x and y attributes in use tags
+
+Documentation:
+
+* `#1391 <https://github.com/Kozea/WeasyPrint/issues/1391>`_,
+  `#1405 <https://github.com/Kozea/WeasyPrint/pull/1405>`_:
+  Add documentation for installation
+
+Contributors:
+
+* Guillaume Ayoub
+* Lucie Anglade
+* Pelle Bo Regener
+* aschmitz
+* John Jackson
+* Felix Schwarz
+* Syrus Dark
+* Christoph Päper
+
+Backers and sponsors:
+
+* OpenEdition
+* Grip Angebotssoftware
+* Simonsoft
+* PDF Blocks
+* Menutech
+* Manuel Barkhau
+* print-css.rocks
+* Simon Sapin
+* KontextWork
+* René Fritz
+* Maykin Media
+* Nathalie Gutton
+* Andreas Zettl
+* Tom Pohl
+* NCC Group
+* Moritz Mahringer
+* Florian Demmer
+* Des images et des mots
+* Mohammed Y. Alnajdi
+* Yanal-Yvez Fargialla
+* Yevhenii Hyzyla
+
 
 Version 53.0b2
 --------------
