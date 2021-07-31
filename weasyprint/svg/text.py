@@ -51,16 +51,16 @@ def text(svg, node, font_size):
     # Get rotations and translations
     x, y, dx, dy, rotate = [], [], [], [], [0]
     if 'x' in node.attrib:
-        x = [size(i, font_size, svg.concrete_width)
+        x = [size(i, font_size, svg.inner_width)
              for i in normalize(node.attrib['x']).strip().split(' ')]
     if 'y' in node.attrib:
-        y = [size(i, font_size, svg.concrete_height)
+        y = [size(i, font_size, svg.inner_height)
              for i in normalize(node.attrib['y']).strip().split(' ')]
     if 'dx' in node.attrib:
-        dx = [size(i, font_size, svg.concrete_width)
+        dx = [size(i, font_size, svg.inner_width)
               for i in normalize(node.attrib['dx']).strip().split(' ')]
     if 'dy' in node.attrib:
-        dy = [size(i, font_size, svg.concrete_height)
+        dy = [size(i, font_size, svg.inner_height)
               for i in normalize(node.attrib['dy']).strip().split(' ')]
     if 'rotate' in node.attrib:
         rotate = [radians(float(i)) if i else 0

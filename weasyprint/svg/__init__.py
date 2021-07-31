@@ -323,21 +323,32 @@ class SVG:
     def point(self, x, y, font_size):
         """Compute size of an x/y or width/height couple."""
         return (
-            size(x, font_size, self.concrete_width),
-            size(y, font_size, self.concrete_height))
+            size(x, font_size, self.inner_width),
+            size(y, font_size, self.inner_height))
 
     def length(self, length, font_size):
         """Compute size of an arbirtary attribute."""
-        return size(length, font_size, self.normalized_diagonal)
+        return size(length, font_size, self.inner_diagonal)
 
     def draw(self, stream, concrete_width, concrete_height, base_url,
              url_fetcher, context):
         """Draw image on a stream."""
         self.stream = stream
+
         self.concrete_width = concrete_width
         self.concrete_height = concrete_height
         self.normalized_diagonal = (
             hypot(concrete_width, concrete_height) / sqrt(2))
+
+        viewbox = self.get_viewbox()
+        if viewbox:
+            self.inner_width, self.inner_height = viewbox[2], viewbox[3]
+        else:
+            self.inner_width = self.concrete_width
+            self.inner_height = self.concrete_height
+        self.inner_diagonal = (
+            hypot(self.inner_width, self.inner_height) / sqrt(2))
+
         self.base_url = base_url
         self.url_fetcher = url_fetcher
         self.context = context
@@ -680,8 +691,7 @@ class SVG:
         if not transform_string:
             return
 
-        matrix = transform(
-            transform_string, font_size, self.normalized_diagonal)
+        matrix = transform(transform_string, font_size, self.inner_diagonal)
         if matrix.determinant:
             self.stream.transform(*matrix.values)
 

@@ -105,11 +105,7 @@ def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
     x, y = bounding_box[0], bounding_box[1]
     matrix = Matrix(e=x, f=y)
     if gradient.get('gradientUnits') == 'userSpaceOnUse':
-        viewbox = svg.get_viewbox()
-        if viewbox:
-            width, height = viewbox[2], viewbox[3]
-        else:
-            width, height = svg.concrete_width, svg.concrete_height
+        width, height = svg.inner_width, svg.inner_height
     else:
         width, height = bounding_box[2], bounding_box[3]
 
@@ -465,11 +461,7 @@ def draw_pattern(svg, node, pattern, font_size, opacity, stroke):
     x, y = bounding_box[0], bounding_box[1]
     matrix = Matrix(e=x, f=y)
     if pattern.get('patternUnits') == 'userSpaceOnUse':
-        viewbox = svg.get_viewbox()
-        if viewbox:
-            width, height = viewbox[2], viewbox[3]
-        else:
-            width, height = svg.concrete_width, svg.concrete_height
+        width, height = svg.inner_width, svg.inner_height
     else:
         width, height = bounding_box[2], bounding_box[3]
 
@@ -497,8 +489,7 @@ def draw_pattern(svg, node, pattern, font_size, opacity, stroke):
 
     if 'patternTransform' in pattern.attrib:
         transform_matrix = transform(
-            pattern.get('patternTransform'), font_size,
-            svg.normalized_diagonal)
+            pattern.get('patternTransform'), font_size, svg.inner_diagonal)
         matrix = transform_matrix @ matrix
 
     matrix = matrix @ svg.stream.ctm
@@ -547,7 +538,7 @@ def paint_mask(svg, node, mask, font_size):
     mask._etree_node.tag = 'g'
 
     if mask.get('maskUnits') == 'userSpaceOnUse':
-        width_ref, height_ref = svg.concrete_width, svg.concrete_height
+        width_ref, height_ref = svg.inner_width, svg.inner_height
     else:
         width_ref, height_ref = svg.point(
             node.get('width'), node.get('height'), font_size)
