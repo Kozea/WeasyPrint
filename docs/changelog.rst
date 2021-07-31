@@ -5,7 +5,7 @@ Changelog
 Version 53.0
 ------------
 
-Not released yet.
+Released on 2021-07-31.
 
 This version also includes the changes from unstable b1 and b2 versions listed
 below.
