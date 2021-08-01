@@ -340,3 +340,42 @@ def test_leader_too_long_rtl():
       <div>a a a a a</div>
     '''
     assert_pixels('leader-too-long-rtl', 16, 14, expected_pixels, html)
+
+
+@assert_no_logs
+def test_leader_float_leader():
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1409
+    # Leaders in floats are not displayed at all in many cases with the current
+    # implementation, and this case is not really specified. So…
+    expected_pixels = '''
+        RR____________BB
+        RR____________BB
+        RRRR__________BB
+        RRRR__________BB
+        RR____________BB
+        RR____________BB
+    '''
+    html = '''
+      <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page {
+          background: white;
+          size: 16px 6px;
+        }
+        body {
+          color: red;
+          font-family: weasyprint;
+          font-size: 2px;
+          line-height: 1;
+        }
+        div::after {
+          color: blue;
+          content: leader(' . ') 'a';
+          float: right;
+        }
+      </style>
+      <div>a</div>
+      <div>bb</div>
+      <div>c</div>
+    '''
+    assert_pixels('leader-float-leader', 16, 6, expected_pixels, html)

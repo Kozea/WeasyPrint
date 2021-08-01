@@ -76,7 +76,8 @@ def leader_index(box):
 def handle_leaders(context, line, containing_block):
     """Find a leader box in ``line`` and handle its text and its position."""
     index, leader_box = leader_index(line)
-    if index is not None:
+    extra_width = 0
+    if index is not None and leader_box.children:
         text_box, = leader_box.children
 
         # Abort if the leader text has no width
