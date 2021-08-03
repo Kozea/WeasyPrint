@@ -433,35 +433,33 @@ def first_letter_to_box(box, skip_stack, first_letter_style):
 
 @handle_min_max_width
 def replaced_box_width(box, containing_block):
-    """
-    Compute and set the used width for replaced boxes (inline- or block-level)
-    """
+    """Set the used width for replaced boxes (inline- or block-level)."""
     from .blocks import block_level_width
 
-    intrinsic_width, intrinsic_height = box.replacement.get_intrinsic_size(
+    width, height, ratio = box.replacement.get_intrinsic_size(
         box.style['image_resolution'], box.style['font_size'])
 
     # This algorithm simply follows the different points of the specification:
     # http://www.w3.org/TR/CSS21/visudet.html#inline-replaced-width
     if box.height == 'auto' and box.width == 'auto':
-        if intrinsic_width is not None:
+        if width is not None:
             # Point #1
-            box.width = intrinsic_width
-        elif box.replacement.intrinsic_ratio is not None:
-            if intrinsic_height is not None:
+            box.width = width
+        elif ratio is not None:
+            if height is not None:
                 # Point #2 first part
-                box.width = intrinsic_height * box.replacement.intrinsic_ratio
+                box.width = height * ratio
             else:
                 # Point #3
                 block_level_width(box, containing_block)
 
     if box.width == 'auto':
-        if box.replacement.intrinsic_ratio is not None:
+        if ratio is not None:
             # Point #2 second part
-            box.width = box.height * box.replacement.intrinsic_ratio
-        elif intrinsic_width is not None:
+            box.width = box.height * ratio
+        elif width is not None:
             # Point #4
-            box.width = intrinsic_width
+            box.width = width
         else:
             # Point #5
             # It's pretty useless to rely on device size to set width.
@@ -474,23 +472,21 @@ def replaced_box_height(box):
     Compute and set the used height for replaced boxes (inline- or block-level)
     """
     # http://www.w3.org/TR/CSS21/visudet.html#inline-replaced-height
-    intrinsic_width, intrinsic_height = box.replacement.get_intrinsic_size(
+    width, height, ratio = box.replacement.get_intrinsic_size(
         box.style['image_resolution'], box.style['font_size'])
-    intrinsic_ratio = box.replacement.intrinsic_ratio
 
     # Test 'auto' on the computed width, not the used width
     if box.height == 'auto' and box.width == 'auto':
-        box.height = intrinsic_height
-    elif box.height == 'auto' and intrinsic_ratio:
-        box.height = box.width / intrinsic_ratio
+        box.height = height
+    elif box.height == 'auto' and ratio:
+        box.height = box.width / ratio
 
-    if (box.height == 'auto' and box.width == 'auto' and
-            intrinsic_height is not None):
-        box.height = intrinsic_height
-    elif intrinsic_ratio is not None and box.height == 'auto':
-        box.height = box.width / intrinsic_ratio
-    elif box.height == 'auto' and intrinsic_height is not None:
-        box.height = intrinsic_height
+    if box.height == 'auto' and box.width == 'auto' and height is not None:
+        box.height = height
+    elif ratio is not None and box.height == 'auto':
+        box.height = box.width / ratio
+    elif box.height == 'auto' and height is not None:
+        box.height = height
     elif box.height == 'auto':
         # It's pretty useless to rely on device size to set width.
         box.height = 150

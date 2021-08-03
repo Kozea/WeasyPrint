@@ -35,25 +35,26 @@ class ImageLoadingError(ValueError):
 
 class RasterImage:
     def __init__(self, pillow_image, optimize_size):
-        self.pillow_image = pillow_image
-        self.optimize_size = optimize_size
-        self.intrinsic_width = pillow_image.width
-        self.intrinsic_height = pillow_image.height
-        self.intrinsic_ratio = (
-            self.intrinsic_width / self.intrinsic_height
-            if self.intrinsic_height != 0 else float('inf'))
+        self._pillow_image = pillow_image
+        self._optimize_size = optimize_size
+        self._intrinsic_width = pillow_image.width
+        self._intrinsic_height = pillow_image.height
+        self._intrinsic_ratio = (
+            self._intrinsic_width / self._intrinsic_height
+            if self._intrinsic_height != 0 else float('inf'))
 
-    def get_intrinsic_size(self, image_resolution, _font_size):
-        # Raster images are affected by the 'image-resolution' property.
-        return (self.intrinsic_width / image_resolution,
-                self.intrinsic_height / image_resolution)
+    def get_intrinsic_size(self, image_resolution, font_size):
+        return (
+            self._intrinsic_width / image_resolution,
+            self._intrinsic_height / image_resolution,
+            self._intrinsic_ratio)
 
     def draw(self, stream, concrete_width, concrete_height, image_rendering):
-        if self.intrinsic_width <= 0 or self.intrinsic_height <= 0:
+        if self._intrinsic_width <= 0 or self._intrinsic_height <= 0:
             return
 
         image_name = stream.add_image(
-            self.pillow_image, image_rendering, self.optimize_size)
+            self._pillow_image, image_rendering, self._optimize_size)
         stream.transform(
             concrete_width, 0, 0, -concrete_height, 0, concrete_height)
         stream.draw_x_object(image_name)
@@ -66,26 +67,21 @@ class SVGImage:
         self._url_fetcher = url_fetcher
         self._context = context
 
-    def get_intrinsic_size(self, _image_resolution, font_size):
-        self.intrinsic_width, self.intrinsic_height = (
-            self._svg.get_intrinsic_size(font_size))
-        viewbox = self._svg.get_viewbox()
-
-        if self.intrinsic_width and self.intrinsic_height:
-            self.intrinsic_ratio = (
-                self.intrinsic_width / self.intrinsic_height)
-        elif viewbox and viewbox[2] and viewbox[3]:
-            self.intrinsic_ratio = viewbox[2] / viewbox[3]
-            if self.intrinsic_width:
-                self.intrinsic_height = (
-                    self.intrinsic_width / self.intrinsic_ratio)
-            elif self.intrinsic_height:
-                self.intrinsic_width = (
-                    self.intrinsic_height * self.intrinsic_ratio)
-        else:
-            self.intrinsic_ratio = None
-
-        return self.intrinsic_width, self.intrinsic_height
+    def get_intrinsic_size(self, image_resolution, font_size):
+        width, height = self._svg.get_intrinsic_size(font_size)
+        if None in (width, height):
+            viewbox = self._svg.get_viewbox()
+            if viewbox and viewbox[2] and viewbox[3]:
+                ratio = viewbox[2] / viewbox[3]
+                if width:
+                    height = width / ratio
+                elif height:
+                    width = height * ratio
+            else:
+                ratio = None
+        elif width and height:
+            ratio = width / height
+        return width, height, ratio
 
     def draw(self, stream, concrete_width, concrete_height, image_rendering):
         self._svg.draw(
@@ -248,11 +244,8 @@ class Gradient:
         # Boolean
         self.repeating = repeating
 
-    def get_intrinsic_size(self, _image_resolution, _font_size):
-        # Gradients are not affected by image resolution, parent or font size.
-        return None, None
-
-    intrinsic_ratio = None
+    def get_intrinsic_size(self, image_resolution, font_size):
+        return None, None, None
 
     def draw(self, stream, concrete_width, concrete_height, _image_rendering):
         # TODO: handle color spaces

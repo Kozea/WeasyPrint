@@ -138,7 +138,10 @@ def layout_background_layer(box, page, resolution, image, size, clip, repeat,
             assert clip == 'content-box', clip
             clipped_boxes = [box.rounded_content_box()]
 
-    if image is None or 0 in image.get_intrinsic_size(1, 1):
+    if image is not None:
+        intrinsic_width, intrinsic_height, ratio = image.get_intrinsic_size(
+            resolution, box.style['font_size'])
+    if image is None or 0 in (intrinsic_width, intrinsic_height):
         return BackgroundLayer(
             image=None, unbounded=False, painting_area=painting_area,
             size='unused', position='unused', repeat='unused',
@@ -157,16 +160,14 @@ def layout_background_layer(box, page, resolution, image, size, clip, repeat,
 
     if size == 'cover':
         image_width, image_height = replaced.cover_constraint_image_sizing(
-            positioning_width, positioning_height, image.intrinsic_ratio)
+            positioning_width, positioning_height, ratio)
     elif size == 'contain':
         image_width, image_height = replaced.contain_constraint_image_sizing(
-            positioning_width, positioning_height, image.intrinsic_ratio)
+            positioning_width, positioning_height, ratio)
     else:
         size_width, size_height = size
-        iwidth, iheight = image.get_intrinsic_size(
-            resolution, box.style['font_size'])
         image_width, image_height = replaced.default_image_sizing(
-            iwidth, iheight, image.intrinsic_ratio,
+            intrinsic_width, intrinsic_height, ratio,
             percentage(size_width, positioning_width),
             percentage(size_height, positioning_height),
             positioning_width, positioning_height)

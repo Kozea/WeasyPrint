@@ -523,8 +523,9 @@ def test_image_min_max_width(props, div_width):
         'min-width': 'auto', 'max-width': 'none', 'width': 'auto',
         'min-height': 'auto', 'max-height': 'none', 'height': 'auto'}
     page, = render_pages('''
+      <style> img { display: block; %s } </style>
       <div style="display: inline-block">
-        <img src="pattern.png" style="display: block; %s">
+        <img src="pattern.png"><img src="pattern.svg">
       </div>''' % ';'.join(
           f'{key}: {props.get(key, value)}' for key, value in default.items()))
     html, = page.children

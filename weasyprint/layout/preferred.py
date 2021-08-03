@@ -119,7 +119,8 @@ def min_max(box, width):
         max_width = max_width.value
 
     if isinstance(box, boxes.ReplacedBox):
-        ratio = box.replacement.intrinsic_ratio
+        _, _, ratio = box.replacement.get_intrinsic_size(
+            1, box.style['font_size'])
         if ratio is not None:
             min_height = box.style['min_height']
             if min_height != 'auto' and min_height.unit != '%':
@@ -656,11 +657,12 @@ def replaced_min_content_width(box, outer=True):
             width = 0
         else:
             image = box.replacement
-            iwidth, iheight = image.get_intrinsic_size(
-                box.style['image_resolution'], box.style['font_size'])
+            intrinsic_width, intrinsic_height, intrinsic_ratio = (
+                image.get_intrinsic_size(
+                    box.style['image_resolution'], box.style['font_size']))
             width, _ = default_image_sizing(
-                iwidth, iheight, image.intrinsic_ratio, 'auto', height,
-                default_width=300, default_height=150)
+                intrinsic_width, intrinsic_height, intrinsic_ratio, 'auto',
+                height, default_width=300, default_height=150)
     elif box.style['width'].unit == '%':
         # See https://drafts.csswg.org/css-sizing/#intrinsic-contribution
         width = 0
@@ -681,10 +683,11 @@ def replaced_max_content_width(box, outer=True):
             assert height.unit == 'px'
             height = height.value
         image = box.replacement
-        iwidth, iheight = image.get_intrinsic_size(
-            box.style['image_resolution'], box.style['font_size'])
+        intrinsic_width, intrinsic_height, intrinsic_ratio = (
+            image.get_intrinsic_size(
+                box.style['image_resolution'], box.style['font_size']))
         width, _ = default_image_sizing(
-            iwidth, iheight, image.intrinsic_ratio, 'auto', height,
+            intrinsic_width, intrinsic_height, intrinsic_ratio, 'auto', height,
             default_width=300, default_height=150)
     elif box.style['width'].unit == '%':
         # See https://drafts.csswg.org/css-sizing/#intrinsic-contribution

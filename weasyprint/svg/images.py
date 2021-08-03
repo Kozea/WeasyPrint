@@ -39,8 +39,8 @@ def image(svg, node, font_size):
         return
 
     width, height = svg.point(node.get('width'), node.get('height'), font_size)
-    intrinsic_width, intrinsic_height = image.get_intrinsic_size(1, font_size)
-    intrinsic_ratio = image.intrinsic_ratio
+    intrinsic_width, intrinsic_height, intrinsic_ratio = (
+        image.get_intrinsic_size(1, font_size))
     if intrinsic_width is None and intrinsic_height is None:
         if intrinsic_ratio is None or (not width and not height):
             intrinsic_width, intrinsic_height = 300, 150
