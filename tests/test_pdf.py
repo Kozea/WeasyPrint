@@ -450,6 +450,19 @@ def test_embed_jpeg():
 
 
 @assert_no_logs
+def test_embed_image_once():
+    # Image repeated multiple times, embedded once
+    assert FakeHTML(
+        base_url=resource_filename('dummy.html'),
+        string='''
+          <img src="blue.jpg">
+          <div style="background: url(blue.jpg)"></div>
+          <img src="blue.jpg">
+          <div style="background: url(blue.jpg) no-repeat"></div>
+        ''').write_pdf().count(b'/Filter /DCTDecode') == 1
+
+
+@assert_no_logs
 def test_document_info():
     pdf = FakeHTML(string='''
       <meta name=author content="I Me &amp; Myself">

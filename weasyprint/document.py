@@ -115,7 +115,7 @@ class Font:
 class Stream(pydyf.Stream):
     """PDF stream object with context storing alpha states."""
     def __init__(self, document, page_rectangle, states, x_objects, patterns,
-                 shadings, *args, **kwargs):
+                 shadings, images, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.compress = True
         self.page_rectangle = page_rectangle
@@ -124,6 +124,7 @@ class Stream(pydyf.Stream):
         self._x_objects = x_objects
         self._patterns = patterns
         self._shadings = shadings
+        self._images = images
         self._current_color = self._current_color_stroke = None
         self._current_alpha = self._current_alpha_stroke = None
         self._current_font = self._current_font_size = None
@@ -244,7 +245,7 @@ class Stream(pydyf.Stream):
         })
         group = Stream(
             self._document, self.page_rectangle, states, x_objects,
-            patterns, shadings, extra=extra)
+            patterns, shadings, self._images, extra=extra)
         group.id = f'x{len(self._x_objects)}'
         self._x_objects[group.id] = group
         return group
@@ -264,8 +265,9 @@ class Stream(pydyf.Stream):
 
     def add_image(self, pillow_image, image_rendering, optimize_size):
         image_name = f'i{pillow_image.id}'
-        if image_name in self._x_objects:
-            # Reuse image already stored in stream
+        self._x_objects[image_name] = None  # Set by write_pdf
+        if image_name in self._images:
+            # Reuse image already stored in document
             return image_name
 
         if 'transparency' in pillow_image.info:
@@ -319,7 +321,7 @@ class Stream(pydyf.Stream):
         stream = [image_file.getvalue()]
 
         xobject = pydyf.Stream(stream, extra=extra)
-        self._x_objects[image_name] = xobject
+        self._images[image_name] = xobject
         return image_name
 
     def add_pattern(self, width, height, repeat_width, repeat_height, matrix):
@@ -347,7 +349,7 @@ class Stream(pydyf.Stream):
         })
         pattern = Stream(
             self._document, self.page_rectangle, states, x_objects, patterns,
-            shadings, extra=extra)
+            shadings, self._images, extra=extra)
         pattern.id = f'p{len(self._patterns)}'
         self._patterns[pattern.id] = pattern
         return pattern
@@ -887,33 +889,43 @@ class Document:
             html.url_fetcher, font_config, optimize_size)
         return rendering
 
-    def _use_references(self, pdf, resources):
+    def _reference_resources(self, pdf, resources, images, fonts):
+        if 'Font' in resources:
+            assert resources['Font'] is None
+            resources['Font'] = fonts
+        self._use_references(pdf, resources, images)
+        pdf.add_object(resources)
+        return resources.reference
+
+    def _use_references(self, pdf, resources, images):
         # XObjects
         for key, x_object in resources.get('XObject', {}).items():
+            # Images
+            if x_object is None:
+                resources['XObject'][key] = images[key].reference
+                continue
+
             pdf.add_object(x_object)
             resources['XObject'][key] = x_object.reference
+
+            # Masks
             if 'SMask' in x_object.extra:
                 pdf.add_object(x_object.extra['SMask'])
                 x_object.extra['SMask'] = x_object.extra['SMask'].reference
+
+            # Resources
             if 'Resources' in x_object.extra:
-                if 'Font' in x_object.extra['Resources']:
-                    x_object.extra['Resources']['Font'] = resources['Font']
-                self._use_references(pdf, x_object.extra['Resources'])
-                pdf.add_object(x_object.extra['Resources'])
-                x_object.extra['Resources'] = (
-                    x_object.extra['Resources'].reference)
+                x_object.extra['Resources'] = self._reference_resources(
+                    pdf, x_object.extra['Resources'], images,
+                    resources['Font'])
 
         # Patterns
         for key, pattern in resources.get('Pattern', {}).items():
             pdf.add_object(pattern)
             resources['Pattern'][key] = pattern.reference
             if 'Resources' in pattern.extra:
-                if 'Font' in pattern.extra['Resources']:
-                    pattern.extra['Resources']['Font'] = resources['Font']
-                self._use_references(pdf, pattern.extra['Resources'])
-                pdf.add_object(pattern.extra['Resources'])
-                pattern.extra['Resources'] = (
-                    pattern.extra['Resources'].reference)
+                pattern.extra['Resources'] = self._reference_resources(
+                    pdf, pattern.extra['Resources'], images, resources['Font'])
 
         # Shadings
         for key, shading in resources.get('Shading', {}).items():
@@ -1017,6 +1029,7 @@ class Document:
         x_objects = pydyf.Dictionary()
         patterns = pydyf.Dictionary()
         shadings = pydyf.Dictionary()
+        images = {}
         resources = pydyf.Dictionary({
             'ExtGState': states,
             'XObject': x_objects,
@@ -1077,7 +1090,8 @@ class Document:
             page_rectangle = (
                 left / scale, top / scale, right / scale, bottom / scale)
             stream = Stream(
-                self, page_rectangle, states, x_objects, patterns, shadings)
+                self, page_rectangle, states, x_objects, patterns, shadings,
+                images)
             stream.transform(d=-1, f=(page.height * scale))
             page.paint(stream, scale=scale)
             pdf.add_object(stream)
@@ -1350,7 +1364,9 @@ class Document:
 
         pdf.add_object(pdf_fonts)
         resources['Font'] = pdf_fonts.reference
-        self._use_references(pdf, resources)
+        for image in images.values():
+            pdf.add_object(image)
+        self._use_references(pdf, resources, images)
 
         # Anchors
         if pdf_names:
