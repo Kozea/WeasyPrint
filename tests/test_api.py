@@ -303,6 +303,7 @@ def test_command_line_render(tmpdir):
     html = b'<body><img src=pattern.png>'
     combined = b'<style>' + css + b'</style>' + html
     linked = b'<link rel=stylesheet href=style.css>' + html
+    not_optimized = b'<body>a<img src="not-optimized.jpg">'
 
     py.path.local(resource_filename('')).chdir()
     # Reference
@@ -313,14 +314,16 @@ def test_command_line_render(tmpdir):
         media_type='screen').write_pdf()
 
     tmpdir.chdir()
-    with open(resource_filename('pattern.png'), 'rb') as pattern_fd:
-        pattern_bytes = pattern_fd.read()
-    tmpdir.join('pattern.png').write_binary(pattern_bytes)
+    for name in ('pattern.png', 'not-optimized.jpg'):
+        with open(resource_filename(name), 'rb') as pattern_fd:
+            pattern_bytes = pattern_fd.read()
+        tmpdir.join(name).write_binary(pattern_bytes)
     tmpdir.join('no_css.html').write_binary(html)
     tmpdir.join('combined.html').write_binary(combined)
     tmpdir.join('combined-UTF-16BE.html').write_binary(
         combined.decode('ascii').encode('UTF-16BE'))
     tmpdir.join('linked.html').write_binary(linked)
+    tmpdir.join('not_optimized.html').write_binary(not_optimized)
     tmpdir.join('style.css').write_binary(css)
 
     _run('combined.html out2.pdf')
@@ -363,6 +366,32 @@ def test_command_line_render(tmpdir):
     assert tmpdir.join('out12.pdf').read_binary() == rotated_pdf_bytes
     assert tmpdir.join('out13.pdf').read_binary() == rotated_pdf_bytes
     assert tmpdir.join('out14.pdf').read_binary() == rotated_pdf_bytes
+
+    _run('not_optimized.html out15.pdf')
+    _run('not_optimized.html out16.pdf -O images')
+    _run('not_optimized.html out17.pdf -O fonts')
+    _run('not_optimized.html out18.pdf -O fonts -O images')
+    _run('not_optimized.html out19.pdf -O all')
+    _run('not_optimized.html out20.pdf -O none')
+    _run('not_optimized.html out21.pdf -O none -O all')
+    _run('not_optimized.html out22.pdf -O all -O none')
+    for i in range(15, 23):
+        print(i, len(tmpdir.join(f'out{i}.pdf').read_binary()))
+    assert (
+        len(tmpdir.join('out15.pdf').read_binary()) ==
+        len(tmpdir.join('out17.pdf').read_binary()))
+    assert (
+        len(tmpdir.join('out16.pdf').read_binary()) ==
+        len(tmpdir.join('out18.pdf').read_binary()) ==
+        len(tmpdir.join('out19.pdf').read_binary()) ==
+        len(tmpdir.join('out21.pdf').read_binary()))
+    assert (
+        len(tmpdir.join('out20.pdf').read_binary()) ==
+        len(tmpdir.join('out22.pdf').read_binary()))
+    assert (
+        len(tmpdir.join('out16.pdf').read_binary()) <
+        len(tmpdir.join('out15.pdf').read_binary()) <
+        len(tmpdir.join('out20.pdf').read_binary()))
 
     stdout = _run('combined.html -')
     assert stdout.count(b'attachment') == 0
