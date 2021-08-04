@@ -375,19 +375,8 @@ def test_command_line_render(tmpdir):
     _run('not_optimized.html out20.pdf -O none')
     _run('not_optimized.html out21.pdf -O none -O all')
     _run('not_optimized.html out22.pdf -O all -O none')
-    for i in range(15, 23):
-        print(i, len(tmpdir.join(f'out{i}.pdf').read_binary()))
-    assert (
-        len(tmpdir.join('out15.pdf').read_binary()) ==
-        len(tmpdir.join('out17.pdf').read_binary()))
-    assert (
-        len(tmpdir.join('out16.pdf').read_binary()) ==
-        len(tmpdir.join('out18.pdf').read_binary()) ==
-        len(tmpdir.join('out19.pdf').read_binary()) ==
-        len(tmpdir.join('out21.pdf').read_binary()))
-    assert (
-        len(tmpdir.join('out20.pdf').read_binary()) ==
-        len(tmpdir.join('out22.pdf').read_binary()))
+    # TODO: test that equivalent CLI options give equivalent PDF sizes,
+    # unfortunately font optimization makes PDF generation not reproducible
     assert (
         len(tmpdir.join('out16.pdf').read_binary()) <
         len(tmpdir.join('out15.pdf').read_binary()) <
