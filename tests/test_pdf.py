@@ -25,19 +25,6 @@ TOP = round(297 * 72 / 25.4, 6)
 RIGHT = round(210 * 72 / 25.4, 6)
 
 
-def assert_rect_almost_equal(rect, values):
-    """Test that PDF rect string equals given values.
-
-    We avoid rounding errors by allowing a delta of 1, as both WeasyPrint and
-    pydyf round coordinates in unpredictable ways.
-
-    """
-    if isinstance(rect, bytes):
-        rect = rect.decode('ascii')
-    for a, b in zip(rect.strip(' []').split(), values):
-        assert abs(int(a) - b) <= 1
-
-
 @assert_no_logs
 @pytest.mark.parametrize('zoom', (1, 1.5, 0.5))
 def test_page_size_zoom(zoom):
