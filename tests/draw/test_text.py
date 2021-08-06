@@ -235,6 +235,75 @@ def test_line_clamp():
     ''')
 
 
+def test_line_clamp_none():
+    assert_pixels('line_clamp_none', 10, 10, '''
+        BBBB__BB__
+        BBBB__BB__
+        BBBB__BB__
+        BBBB__BB__
+        BBBB__BB__
+        BBBB__BB__
+        __________
+        __________
+        __________
+        __________
+    ''', '''
+      <style>
+        @page {size: 10px 10px;}
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        p {
+          color: blue;
+          font-family: weasyprint;
+          font-size: 2px;
+          max-lines: 1;
+          continue: discard;
+          block-ellipsis: "…";
+          line-clamp: none;
+        }
+      </style>
+
+      <p>
+        aa a
+        bb b
+        cc c
+      </p>
+    ''')
+
+
+def test_line_clamp_number():
+    assert_pixels('line_clamp_number', 10, 10, '''
+        BBBB__BB__
+        BBBB__BB__
+        BBBB__BB__
+        BBBB__BB__
+        BBBB__BBBB
+        BBBB__BBBB
+        __________
+        __________
+        __________
+        __________
+    ''', '''
+      <style>
+        @page {size: 10px 10px;}
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        p {
+          color: blue;
+          font-family: weasyprint;
+          font-size: 2px;
+          line-clamp: 3;
+        }
+      </style>
+
+      <p>
+        aa a
+        bb b
+        cc c
+        dddd
+        eeee
+      </p>
+    ''')
+
+
 @pytest.mark.xfail
 def test_ellipsis_nested():
     assert_pixels('ellipsis_nested', 10, 10, '''

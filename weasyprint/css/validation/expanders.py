@@ -623,6 +623,8 @@ def expand_line_clamp(base_url, name, tokens):
             yield 'max_lines', tokens[0].int_value
             yield 'continue', 'discard'
             yield 'block-ellipsis', 'auto'
+        else:
+            raise InvalidValues
     elif len(tokens) == 2:
         if tokens[0].type == 'number':
             max_lines = tokens[0].int_value
@@ -631,3 +633,9 @@ def expand_line_clamp(base_url, name, tokens):
                 yield 'max_lines', tokens[0].value
                 yield 'continue', 'discard'
                 yield 'block-ellipsis', ellipsis
+            else:
+                raise InvalidValues
+        else:
+            raise InvalidValues
+    else:
+        raise InvalidValues

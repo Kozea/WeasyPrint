@@ -1118,3 +1118,28 @@ def test_columns(rule, result):
 ))
 def test_columns_invalid(rule, reason):
     assert_invalid(rule, reason)
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, result', (
+    ('line-clamp: none', {
+        'max_lines': 'none', 'continue': 'auto', 'block_ellipsis': 'none'}),
+    ('line-clamp: 2', {
+        'max_lines': 2, 'continue': 'discard', 'block_ellipsis': 'auto'}),
+    ('line-clamp: 3 "…"', {
+        'max_lines': 3, 'continue': 'discard',
+        'block_ellipsis': ('string', '…')}),
+))
+def test_line_clamp(rule, result):
+    assert expand_to_dict(rule) == result
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, reason', (
+    ('line-clamp: none none none', 'invalid'),
+    ('line-clamp: 1px', 'invalid'),
+    ('line-clamp: 0 "…"', 'invalid'),
+    ('line-clamp: 1px 2px', 'invalid'),
+))
+def test_line_clamp_invalid(rule, reason):
+    assert_invalid(rule, reason)
