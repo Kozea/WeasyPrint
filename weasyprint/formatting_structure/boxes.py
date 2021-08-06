@@ -348,12 +348,12 @@ class ParentBox(Box):
 
     def get_wrapped_table(self):
         """Get the table wrapped by the box."""
-        if self.is_table_wrapper:
-            for child in self.children:
-                if isinstance(child, TableBox):
-                    return child
-            else:  # pragma: no cover
-                raise ValueError('Table wrapper without a table')
+        assert self.is_table_wrapper
+        for child in self.children:
+            if isinstance(child, TableBox):
+                return child
+        else:  # pragma: no cover
+            raise ValueError('Table wrapper without a table')
 
     def page_values(self):
         start_value, end_value = super().page_values()
@@ -556,8 +556,6 @@ class TableBox(BlockLevelBox, ParentBox):
         return itertools.chain(self.children, self.column_groups)
 
     def translate(self, dx=0, dy=0, ignore_floats=False):
-        if dx == 0 and dy == 0:
-            return
         self.column_positions = [
             position + dx for position in self.column_positions]
         return super().translate(dx, dy, ignore_floats)
@@ -640,10 +638,9 @@ class TableColumnBox(ParentBox):
     def get_cells(self):
         """Return cells that originate in the column.
 
-        May be overriden on instances.
+        Is set on instances.
 
         """
-        return []
 
 
 class TableCellBox(BlockContainerBox):

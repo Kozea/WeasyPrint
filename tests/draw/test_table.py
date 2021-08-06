@@ -1081,3 +1081,30 @@ def test_tables_15():
         <tr><td colspan="3"></td></tr>
         <tfoot style="border: blue solid; border-width: 3px;
             "><td></td><td></td><td></td></tfoot>''')
+
+
+@assert_no_logs
+def test_tables_16():
+    assert_pixels('table_absolute', 20, 10, '''
+      ____________________
+      _RRRRRRRRRRR________
+      _R____R____R________
+      _R____R____R________
+      _R____R_RRRRRRRRRRR_
+      _RRRRRRRRRRR_R____R_
+      ________R____R____R_
+      ________R____R____R_
+      ________RRRRRRRRRRR_
+      ____________________
+    ''', '''
+      <style>
+        @page { size: 20px 10px; margin: 1px; background: #fff }
+        body { text-align: right; font-size: 0 }
+        table { position: absolute; width: 11px;
+                table-layout: fixed; border-collapse: collapse }
+        td { border: 1px red solid; width: 4px; height: 3px }
+      </style>
+      <table style="top: 0; left: 0">
+        <tr><td></td><td></td></tr>
+      <table style="bottom: 0; right: 0">
+        <tr><td></td><td></td></tr>''')
