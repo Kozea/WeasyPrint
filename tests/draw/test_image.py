@@ -123,6 +123,17 @@ table = '''
     ________
 '''
 
+cover_image = '''
+    ________
+    ________
+    __BB____
+    __BB____
+    __BB____
+    __BB____
+    ________
+    ________
+'''
+
 
 @assert_no_logs
 @pytest.mark.parametrize('filename, image', (
@@ -424,6 +435,7 @@ def test_images_shared_pattern():
     ''')
 
 
+@assert_no_logs
 def test_image_resolution():
     assert_same_rendering(20, 20, [
         ('image_resolution_ref', '''
@@ -449,3 +461,59 @@ def test_image_resolution():
                         background: url(pattern.png) no-repeat"></div>
         '''),
     ])
+
+
+@assert_no_logs
+def test_image_cover():
+    assert_pixels('image_cover', 8, 8, cover_image, '''
+      <style>
+        @page { size: 8px }
+        body { margin: 2px 0 0 2px; background: #fff; font-size: 0 }
+        img { object-fit: cover; height: 4px; width: 2px }
+      </style>
+      <img src="pattern.png">''')
+
+
+@assert_no_logs
+def test_image_contain():
+    assert_pixels('image_contain', 8, 8, centered_image, '''
+      <style>
+        @page { size: 8px }
+        body { margin: 1px 0 0 2px; background: #fff; font-size: 0 }
+        img { object-fit: contain; height: 6px; width: 4px }
+      </style>
+      <img src="pattern.png">''')
+
+
+@assert_no_logs
+def test_image_none():
+    assert_pixels('image_none', 8, 8, centered_image, '''
+      <style>
+        @page { size: 8px }
+        body { margin: 1px 0 0 1px; background: #fff; font-size: 0 }
+        img { object-fit: none; height: 6px; width: 6px }
+      </style>
+      <img src="pattern.png">''')
+
+
+@assert_no_logs
+def test_image_scale_down():
+    assert_pixels('image_scale_down', 8, 8, centered_image, '''
+      <style>
+        @page { size: 8px }
+        body { margin: 1px 0 0 1px; background: #fff; font-size: 0 }
+        img { object-fit: scale-down; height: 6px; width: 6px }
+      </style>
+      <img src="pattern.png">''')
+
+
+@assert_no_logs
+def test_image_position():
+    assert_pixels('image_position', 8, 8, centered_image, '''
+      <style>
+        @page { size: 8px }
+        body { margin: 1px 0 0 1px; background: #fff; font-size: 0 }
+        img { object-fit: none; height: 6px; width: 6px;
+              object-position: bottom 50% right 50% }
+      </style>
+      <img src="pattern.png">''')
