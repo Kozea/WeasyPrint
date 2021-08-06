@@ -3,6 +3,7 @@
     -------------------------
 
     Test the CSS parsing, cascade, inherited and computed values.
+
 """
 
 from math import isclose
@@ -488,3 +489,18 @@ def test_font_size(parent_css, parent_size, child_css, child_size):
     span, = p
     assert isclose(style_for(p)['font_size'], parent_size)
     assert isclose(style_for(span)['font_size'], child_size)
+
+
+@pytest.mark.parametrize('media, width, warning', (
+    ('@media screen { @page { size: 10px } }', 20, False),
+    ('@media print { @page { size: 10px } }', 10, False),
+    ('@media ("unknown content") { @page { size: 10px } }', 20, True),
+))
+def test_media_queries(media, width, warning):
+    document = FakeHTML(string='<p>a<span>b')
+    with capture_logs() as logs:
+        page, = document.render(
+            stylesheets=[CSS(string='@page{size:20px}%s' % media)]).pages
+    html, = page._page_box.children
+    assert html.width == width
+    assert (logs if warning else not logs)
