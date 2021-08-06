@@ -400,12 +400,29 @@ def test_relative_links_anchors():
 
 
 @assert_no_logs
+def test_relative_links_different_base():
+    pdf = FakeHTML(
+        string='<a href="/test/lipsum"></a>a',
+        base_url='http://weasyprint.org/foo/bar/').write_pdf()
+    assert b'http://weasyprint.org/test/lipsum' in pdf
+
+
+@assert_no_logs
+def test_relative_links_same_base():
+    pdf = FakeHTML(
+        string='<a id="test" href="/foo/bar/#test"></a>a',
+        base_url='http://weasyprint.org/foo/bar/').write_pdf()
+    assert b'/Dest (test)' in pdf
+
+
+@assert_no_logs
 def test_missing_links():
     with capture_logs() as logs:
         pdf = FakeHTML(string='''
           <style> a { display: block; height: 15pt } </style>
           <a href="#lipsum"></a>
-          <a href="#missing" id="lipsum"></a>a
+          <a href="#missing" id="lipsum"></a>
+          <a href=""></a>a
         ''', base_url=None).write_pdf()
     assert b'/Dest (lipsum)' in pdf
     assert len(logs) == 1

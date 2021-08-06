@@ -91,11 +91,11 @@ def path2url(path):
     path = pathname2url(path)
     # On Windows pathname2url cuts off trailing slash
     if wants_trailing_slash and not path.endswith('/'):
-        path += '/'
+        path += '/'  # pragma: no cover
     if path.startswith('///'):
         # On Windows pathname2url(r'C:\foo') is apparently '///C:/foo'
         # That enough slashes already.
-        return f'file:{path}'
+        return f'file:{path}'  # pragma: no cover
     else:
         return f'file://{path}'
 
