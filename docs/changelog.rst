@@ -25,6 +25,7 @@ API changes:
 * ``--optimize-images`` option has been deprecated and replaced by
   ``--optimize-size``, allowing ``images``, ``fonts``, ``all`` and ``none``
   values.
+* ``weasyprint.tools`` have been removed.
 
 Performance:
 
