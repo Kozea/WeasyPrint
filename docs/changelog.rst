@@ -26,6 +26,8 @@ API changes:
   ``--optimize-size``, allowing ``images``, ``fonts``, ``all`` and ``none``
   values.
 * ``weasyprint.tools`` have been removed.
+* ``Document.resolve_links``, ``Document.make_bookmark_tree`` and
+  ``Document.add_hyperlinks`` have been removed.
 
 Performance:
 
