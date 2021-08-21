@@ -38,11 +38,11 @@ def initialize_page_maker(context, root_box):
 
     # TODO: take care of text direction and writing mode
     # https://www.w3.org/TR/css3-page/#progression
-    if page_break in 'right':
+    if page_break == 'right':
         right_page = True
     elif page_break == 'left':
         right_page = False
-    elif page_break in 'recto':
+    elif page_break == 'recto':
         right_page = root_box.style['direction'] == 'ltr'
     elif page_break == 'verso':
         right_page = root_box.style['direction'] == 'rtl'
