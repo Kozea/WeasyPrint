@@ -2,6 +2,52 @@ Changelog
 =========
 
 
+Version 53.1
+------------
+
+Released on 2021-08-22.
+
+Bug fixes:
+
+* `#1409 <https://github.com/Kozea/WeasyPrint/issues/1409>`_:
+  Don’t crash when leaders are in floats
+* `#1414 <https://github.com/Kozea/WeasyPrint/issues/1414>`_:
+  Embed images once
+* `#1417 <https://github.com/Kozea/WeasyPrint/issues/1417>`_:
+  Fix crash with SVG intrinsic ratio
+
+Documentation:
+
+* `#1420 <https://github.com/Kozea/WeasyPrint/issues/1420>`_:
+  Remove ``make_bookmark_tree`` from documentation
+* `#1422 <https://github.com/Kozea/WeasyPrint/issues/1422>`_:
+  Include ``weasyprint.tools`` removal in documentation
+
+Contributors:
+
+* Guillaume Ayoub
+
+Backers and sponsors:
+
+* Grip Angebotssoftware
+* PDF Blocks
+* SimonSoft
+* Menutech
+* Manuel Barkhau
+* Simon Sapin
+* KontextWork
+* René Fritz
+* Maykin Media
+* NCC Group
+* Des images et des mots
+* Andreas Zettl
+* Nathalie Gutton
+* Tom Pohl
+* Moritz Mahringer
+* Florian Demmer
+* Yanal-Yvez Fargialla
+
+
 Version 53.0
 ------------
 
