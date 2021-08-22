@@ -265,7 +265,7 @@ def skip_first_whitespace(box, skip_stack):
         index = 0
         next_skip_stack = None
     else:
-        index, next_skip_stack = skip_stack
+        (index, next_skip_stack), = skip_stack.items()
 
     if isinstance(box, boxes.TextBox):
         assert next_skip_stack is None
@@ -277,7 +277,7 @@ def skip_first_whitespace(box, skip_stack):
         if white_space in ('normal', 'nowrap', 'pre-line'):
             while index < length and box.text[index] == ' ':
                 index += 1
-        return (index, None) if index else None
+        return {index: None} if index else None
 
     if isinstance(box, (boxes.LineBox, boxes.InlineBox)):
         if index == 0 and not box.children:
@@ -288,7 +288,7 @@ def skip_first_whitespace(box, skip_stack):
             if index >= len(box.children):
                 return 'continue'
             result = skip_first_whitespace(box.children[index], None)
-        return (index, result) if (index or result) else None
+        return {index: result} if (index or result) else None
 
     assert skip_stack is None, f'unexpected skip inside {box}'
     return None
@@ -375,9 +375,9 @@ def first_letter_to_box(box, skip_stack, first_letter_style):
             elif child.text:
                 character_found = False
                 if skip_stack:
-                    child_skip_stack = skip_stack[1]
+                    child_skip_stack, = skip_stack.values()
                     if child_skip_stack:
-                        index = child_skip_stack[0]
+                        index, = child_skip_stack
                         child.text = child.text[index:]
                         skip_stack = None
                 while child.text:
@@ -417,17 +417,21 @@ def first_letter_to_box(box, skip_stack, first_letter_style):
                         line_box.children = (text_box,)
                         box.children = (letter_box,) + tuple(box.children)
                     if skip_stack and child_skip_stack:
-                        skip_stack = (skip_stack[0], (
-                            child_skip_stack[0] + 1, child_skip_stack[1]))
+                        index, = skip_stack
+                        (child_index, grandchild_skip_stack), = (
+                            child_skip_stack.items())
+                        skip_stack = {
+                            index: {child_index + 1: grandchild_skip_stack}}
         elif isinstance(child, boxes.ParentBox):
             if skip_stack:
-                child_skip_stack = skip_stack[1]
+                child_skip_stack, = skip_stack.values()
             else:
                 child_skip_stack = None
             child_skip_stack = first_letter_to_box(
                 child, child_skip_stack, first_letter_style)
             if skip_stack:
-                skip_stack = (skip_stack[0], child_skip_stack)
+                index, = skip_stack
+                skip_stack = {index: child_skip_stack}
     return skip_stack
 
 
@@ -672,7 +676,7 @@ def split_inline_level(context, box, position_x, max_x, skip_stack,
         if skip_stack is None:
             skip = 0
         else:
-            skip, skip_stack = skip_stack
+            (skip, skip_stack), = skip_stack.items()
             skip = skip or 0
             assert skip_stack is None
 
@@ -682,7 +686,7 @@ def split_inline_level(context, box, position_x, max_x, skip_stack,
         if skip is None:
             resume_at = None
         else:
-            resume_at = (skip, None)
+            resume_at = {skip: None}
         if box.text:
             first_letter = box.text[0]
             if skip is None:
@@ -759,7 +763,7 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
     preserved_line_break = False
     first_letter = last_letter = None
     float_widths = {'left': 0, 'right': 0}
-    float_resume_at = 0
+    float_resume_index = 0
 
     if box.style['position'] == 'relative':
         absolute_boxes = []
@@ -767,7 +771,7 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
     if is_start:
         skip = 0
     else:
-        skip, skip_stack = skip_stack
+        (skip, skip_stack), = skip_stack.items()
 
     for i, child in enumerate(box.children[skip:]):
         index = i + skip
@@ -827,7 +831,7 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
                         (child.style['float'] == 'right' and
                             box.style['direction'] == 'rtl')):
                         old_child.translate(dx=dx)
-            float_resume_at = index + 1
+            float_resume_index = index + 1
             continue
         elif child.is_running():
             running_name = child.style['position'][1]
@@ -940,7 +944,7 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
                             break_found = child_resume_at is not None
                             if child_resume_at is None:
                                 # PangoLayout decided not to break the child
-                                child_resume_at = (0, None)
+                                child_resume_at = {0: None}
                             # TODO: use this when Pango is always 1.40.13+:
                             # break_found = True
 
@@ -968,36 +972,36 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
                                 current_skip_stack = None
                                 initial_index = 0
                             else:
-                                initial_index, current_skip_stack = (
-                                    initial_skip_stack)
+                                (initial_index, current_skip_stack), = (
+                                    initial_skip_stack.items())
                             # child_resume_at is an absolute skip stack
                             if child_index > initial_index:
-                                resume_at = (child_index, child_resume_at)
+                                resume_at = {child_index: child_resume_at}
                                 break
 
                             # combine the stacks
                             current_resume_at = child_resume_at
                             stack = []
                             while current_skip_stack and current_resume_at:
-                                skip, current_skip_stack = (
-                                    current_skip_stack)
-                                resume, current_resume_at = (
-                                    current_resume_at)
+                                (skip, current_skip_stack), = (
+                                    current_skip_stack.items())
+                                (resume, current_resume_at), = (
+                                    current_resume_at.items())
                                 stack.append(skip + resume)
                                 if resume != 0:
                                     break
                             resume_at = current_resume_at
                             while stack:
-                                resume_at = (stack.pop(), resume_at)
+                                resume_at = {stack.pop(): resume_at}
                             # insert the child index
-                            resume_at = (child_index, resume_at)
+                            resume_at = {child_index: resume_at}
                             break
                     if break_found:
                         break
                 if children:
                     # Too wide, can't break waiting children and the inline is
                     # non-empty: put child entirely on the next line.
-                    resume_at = (children[-1][0] + 1, None)
+                    resume_at = {children[-1][0] + 1: None}
                     child_waiting_floats = []
                     break
 
@@ -1007,7 +1011,7 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
         waiting_floats.extend(child_waiting_floats)
         if resume_at is not None:
             children.extend(waiting_children)
-            resume_at = (index, resume_at)
+            resume_at = {index: resume_at}
             break
     else:
         children.extend(waiting_children)
@@ -1068,8 +1072,9 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
             absolute_layout(context, absolute_box, new_box, fixed_boxes)
 
     if resume_at is not None:
-        if resume_at[0] < float_resume_at:
-            resume_at = (float_resume_at, None)
+        index = tuple(resume_at)[0]
+        if index < float_resume_index:
+            resume_at = {float_resume_index: None}
 
     if box.is_leader:
         first_letter = True
@@ -1097,9 +1102,9 @@ def split_text_box(context, box, available_width, skip):
     text = box.text[skip:]
     if font_size == 0 or not text:
         return None, None, False
-    layout, length, resume_at, width, height, baseline = split_first_line(
+    layout, length, resume_index, width, height, baseline = split_first_line(
         text, box.style, context, available_width, box.justification_spacing)
-    assert resume_at != 0
+    assert resume_index != 0
 
     # Convert ``length`` and ``resume_at`` from UTF-8 indexes in text
     # to Unicode indexes.
@@ -1108,9 +1113,9 @@ def split_text_box(context, box, available_width, skip):
     # UTF-8 indexes are always bigger or equal to Unicode indexes.
     new_text = layout.text
     encoded = text.encode('utf8')
-    if resume_at is not None:
-        between = encoded[length:resume_at].decode('utf8')
-        resume_at = len(encoded[:resume_at].decode('utf8'))
+    if resume_index is not None:
+        between = encoded[length:resume_index].decode('utf8')
+        resume_index = len(encoded[:resume_index].decode('utf8'))
     length = len(encoded[:length].decode('utf8'))
 
     if length > 0:
@@ -1136,10 +1141,11 @@ def split_text_box(context, box, available_width, skip):
     else:
         box = None
 
-    if resume_at is None:
+    if resume_index is None:
         preserved_line_break = False
     else:
-        preserved_line_break = (length != resume_at) and between.strip(' ')
+        preserved_line_break = (
+            (length != resume_index) and between.strip(' '))
         if preserved_line_break:
             # See http://unicode.org/reports/tr14/
             # \r is already handled by process_whitespace
@@ -1147,9 +1153,9 @@ def split_text_box(context, box, available_width, skip):
             assert between in line_breaks, (
                 'Got %r between two lines. '
                 'Expected nothing or a preserved line break' % (between,))
-        resume_at += skip
+        resume_index += skip
 
-    return box, resume_at, preserved_line_break
+    return box, resume_index, preserved_line_break
 
 
 def line_box_verticality(box):

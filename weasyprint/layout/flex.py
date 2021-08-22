@@ -261,7 +261,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                     child.padding_top + child.padding_bottom)
                 if getattr(box, axis) == 'auto' and (
                         child_height + box.height > available_main_space):
-                    resume_at = (i, None)
+                    resume_at = {i: None}
                     children = children[:i + 1]
                     break
                 box.height += child_height
@@ -844,8 +844,10 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                     page_is_empty, absolute_boxes, fixed_boxes,
                     adjoining_margins=[], discard=False)[:2]
                 if new_child is None:
-                    if resume_at and resume_at[0]:
-                        resume_at = (resume_at[0] + i - 1, None)
+                    if resume_at:
+                        index, = resume_at
+                        if index:
+                            resume_at = (index + i - 1, None)
                 else:
                     box.children.append(new_child)
                     if child_resume_at is not None:
@@ -854,8 +856,8 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                         else:
                             first_level_skip = 0
                         if resume_at:
-                            first_level_skip += resume_at[0]
-                        resume_at = (first_level_skip + i, child_resume_at)
+                            first_level_skip += tuple(resume_at)[0]
+                        resume_at = {first_level_skip + i: child_resume_at}
                 if resume_at:
                     break
 

@@ -101,7 +101,6 @@ def block_box_layout(context, box, max_position_y, skip_stack,
         result = columns_layout(
             context, box, max_position_y, skip_stack, containing_block,
             page_is_empty, absolute_boxes, fixed_boxes, adjoining_margins)
-
         resume_at = result[1]
         # TODO: this condition and the whole relayout are probably wrong
         if resume_at is None:
@@ -115,17 +114,16 @@ def block_box_layout(context, box, max_position_y, skip_stack,
                     context, box, max_position_y, skip_stack,
                     containing_block, page_is_empty, absolute_boxes,
                     fixed_boxes, adjoining_margins)
-
         return result
     elif box.is_table_wrapper:
         table_wrapper_width(
             context, box, (containing_block.width, containing_block.height))
     block_level_width(box, containing_block)
 
-    new_box, resume_at, next_page, adjoining_margins, collapsing_through = \
-        block_container_layout(
-            context, box, max_position_y, skip_stack, page_is_empty,
-            absolute_boxes, fixed_boxes, adjoining_margins, discard)
+    result = block_container_layout(
+        context, box, max_position_y, skip_stack, page_is_empty,
+        absolute_boxes, fixed_boxes, adjoining_margins, discard)
+    new_box = result[0]
     if new_box and new_box.is_table_wrapper:
         # Don't collide with floats
         # http://www.w3.org/TR/CSS21/visuren.html#floats
@@ -133,7 +131,7 @@ def block_box_layout(context, box, max_position_y, skip_stack,
             context, new_box, containing_block, outer=False)
         new_box.translate(
             position_x - new_box.position_x, position_y - new_box.position_y)
-    return new_box, resume_at, next_page, adjoining_margins, collapsing_through
+    return result
 
 
 @handle_min_max_width
@@ -316,10 +314,9 @@ def block_container_layout(context, box, max_position_y, skip_stack,
         skip = 0
         first_letter_style = getattr(box, 'first_letter_style', None)
     else:
-        skip, skip_stack = skip_stack
+        (skip, skip_stack), = skip_stack.items()
         first_letter_style = None
-    for i, child in enumerate(box.children[skip:]):
-        index = i + skip
+    for index, child in enumerate(box.children[skip:], start=(skip or 0)):
         child.position_x = position_x
         # XXX does not count margins in adjoining_margins:
         child.position_y = position_y
@@ -356,7 +353,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                         if result:
                             new_children, resume_at = result
                             break
-                    resume_at = (index, None)
+                    resume_at = {index: None}
                     break
             elif child.is_running():
                 running_name = child.style['position'][1]
@@ -419,7 +416,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                         # Remove lines to keep them for the next page
                         del new_children[-needed:]
                     # Page break here, resume before this line
-                    resume_at = (index, skip_stack)
+                    resume_at = {index: skip_stack}
                     is_page_break = True
                     break
                 # TODO: this is incomplete.
@@ -444,7 +441,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                         break
 
             if new_children:
-                resume_at = (index, new_children[-1].resume_at)
+                resume_at = {index: new_children[-1].resume_at}
             if is_page_break:
                 break
         else:
@@ -462,7 +459,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                         'page', 'left', 'right', 'recto', 'verso'):
                     page_name = child.page_values()[0]
                     next_page = {'break': page_break, 'page': page_name}
-                    resume_at = (index, None)
+                    resume_at = {index: None}
                     break
             else:
                 page_break = 'auto'
@@ -589,7 +586,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                     new_children = []
 
                 if new_children:
-                    resume_at = (index, None)
+                    resume_at = {index: None}
                     break
                 else:
                     # This was the first child of this box, cancel the box
@@ -602,7 +599,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
             # TODO: back-track somehow when all lines fit but not borders
             new_children.append(new_child)
             if resume_at is not None:
-                resume_at = (index, resume_at)
+                resume_at = {index: resume_at}
                 break
     else:
         resume_at = None
@@ -817,7 +814,7 @@ def find_earlier_page_break(children, absolute_boxes, fixed_boxes):
         if index < orphans:
             return None
         new_children = children[:index]
-        resume_at = (0, new_children[-1].resume_at)
+        resume_at = {0: new_children[-1].resume_at}
         remove_placeholders(children[index:], absolute_boxes, fixed_boxes)
         return new_children, resume_at
 
@@ -838,7 +835,7 @@ def find_earlier_page_break(children, absolute_boxes, fixed_boxes):
                 index += 1  # break after child
                 new_children = children[:index]
                 # Get the index in the original parent
-                resume_at = (children[index].index, None)
+                resume_at = {children[index].index: None}
                 break
             previous_in_flow = child
 
@@ -862,7 +859,7 @@ def find_earlier_page_break(children, absolute_boxes, fixed_boxes):
                                 new_children.append(next_child)
 
                     # Index in the original parent
-                    resume_at = (new_child.index, resume_at)
+                    resume_at = {new_child.index: resume_at}
                     index += 1  # Remove placeholders after child
                     break
     else:

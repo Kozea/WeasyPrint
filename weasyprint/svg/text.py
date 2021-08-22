@@ -43,7 +43,7 @@ def text(svg, node, font_size):
         except ValueError:
             style['font_weight'] = 400
 
-    layout, length, resume_at, width, height, baseline = split_first_line(
+    layout, _, _, width, height, _ = split_first_line(
         node.text, style, svg.context, float('inf'), 0)
     # TODO: get real values
     x_bearing, y_bearing = 0, 0

@@ -1489,12 +1489,12 @@ def _inner_block_in_inline(box, skip_stack=None):
     if is_start:
         skip = 0
     else:
-        skip, skip_stack = skip_stack
+        (skip, skip_stack), = skip_stack.items()
 
     for i, child in enumerate(box.children[skip:]):
         index = i + skip
-        if isinstance(child, boxes.BlockLevelBox) and \
-                child.is_in_normal_flow():
+        if (isinstance(child, boxes.BlockLevelBox) and
+                child.is_in_normal_flow()):
             assert skip_stack is None  # Should not skip here
             block_level_box = child
             index += 1  # Resume *after* the block
@@ -1511,7 +1511,7 @@ def _inner_block_in_inline(box, skip_stack=None):
                 changed = True
             new_children.append(new_child)
         if block_level_box is not None:
-            resume_at = (index, resume_at)
+            resume_at = {index: resume_at}
             box = box.copy_with_children(new_children)
             break
     else:

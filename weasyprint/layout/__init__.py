@@ -152,8 +152,7 @@ def layout_document(html, root_box, context, max_loops=8):
     watch_elements_after = []
     for i, page in enumerate(pages):
         # We need the updated page_counter_values
-        resume_at, next_page, right_page, page_state, remake_state = (
-            context.page_maker[i + 1])
+        _, _, _, page_state, _ = context.page_maker[i + 1]
         page_counter_values = page_state[1]
 
         for child in page.descendants():

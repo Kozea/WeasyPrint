@@ -28,10 +28,10 @@ def test_line_content():
     for width, remaining in [(100, 'text for test'),
                              (45, 'is a text for test')]:
         text = 'This is a text for test'
-        _, length, resume_at, _, _, _ = make_text(
+        _, length, resume_index, _, _, _ = make_text(
             text, width, font_family=SANS_FONTS.split(','), font_size=19)
-        assert text[resume_at:] == remaining
-        assert length + 1 == resume_at  # +1 is for the removed trailing space
+        assert text[resume_index:] == remaining
+        assert length + 1 == resume_index  # +1 for the removed trailing space
 
 
 @assert_no_logs
@@ -46,16 +46,16 @@ def test_line_breaking():
     string = 'Thïs is a text for test'
 
     # These two tests do not really rely on installed fonts
-    _, _, resume_at, _, _, _ = make_text(string, 90, font_size=1)
-    assert resume_at is None
+    _, _, resume_index, _, _, _ = make_text(string, 90, font_size=1)
+    assert resume_index is None
 
-    _, _, resume_at, _, _, _ = make_text(string, 90, font_size=100)
-    assert string.encode('utf-8')[resume_at:].decode('utf-8') == (
+    _, _, resume_index, _, _, _ = make_text(string, 90, font_size=100)
+    assert string.encode('utf-8')[resume_index:].decode('utf-8') == (
         'is a text for test')
 
-    _, _, resume_at, _, _, _ = make_text(
+    _, _, resume_index, _, _, _ = make_text(
         string, 100, font_family=SANS_FONTS.split(','), font_size=19)
-    assert string.encode('utf-8')[resume_at:].decode('utf-8') == (
+    assert string.encode('utf-8')[resume_index:].decode('utf-8') == (
         'text for test')
 
 
@@ -64,11 +64,11 @@ def test_line_breaking_rtl():
     string = 'لوريم ايبسوم دولا'
 
     # These two tests do not really rely on installed fonts
-    _, _, resume_at, _, _, _ = make_text(string, 90, font_size=1)
-    assert resume_at is None
+    _, _, resume_index, _, _, _ = make_text(string, 90, font_size=1)
+    assert resume_index is None
 
-    _, _, resume_at, _, _, _ = make_text(string, 90, font_size=100)
-    assert string.encode('utf-8')[resume_at:].decode('utf-8') == (
+    _, _, resume_index, _, _, _ = make_text(string, 90, font_size=100)
+    assert string.encode('utf-8')[resume_index:].decode('utf-8') == (
         'ايبسوم دولا')
 
 

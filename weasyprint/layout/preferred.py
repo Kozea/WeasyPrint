@@ -268,7 +268,7 @@ def inline_line_widths(context, box, outer, is_line_start, minimum,
     if skip_stack is None:
         skip = 0
     else:
-        skip, skip_stack = skip_stack
+        (skip, skip_stack), = skip_stack.items()
     for child in box.children[skip:]:
         if child.is_absolutely_positioned():
             continue  # Skip
@@ -292,7 +292,7 @@ def inline_line_widths(context, box, outer, is_line_start, minimum,
             if skip_stack is None:
                 skip = 0
             else:
-                skip, skip_stack = skip_stack
+                (skip, skip_stack), = skip_stack.items()
                 assert skip_stack is None
             child_text = child.text[(skip or 0):]
             if is_line_start and space_collapse:
@@ -302,18 +302,18 @@ def inline_line_widths(context, box, outer, is_line_start, minimum,
             else:
                 max_width = 0 if minimum else None
                 lines = []
-                resume_at = new_resume_at = 0
-                while new_resume_at is not None:
-                    resume_at += new_resume_at
-                    _, _, new_resume_at, width, _, _ = (
+                resume_index = new_resume_index = 0
+                while new_resume_index is not None:
+                    resume_index += new_resume_index
+                    _, _, new_resume_index, width, _, _ = (
                         split_first_line(
-                            child_text[resume_at:], child.style, context,
+                            child_text[resume_index:], child.style, context,
                             max_width, child.justification_spacing,
                             minimum=True))
                     lines.append(width)
                     if first_line:
                         break
-                if first_line and new_resume_at:
+                if first_line and new_resume_index:
                     current_line += lines[0]
                     break
         else:
