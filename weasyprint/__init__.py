@@ -136,7 +136,7 @@ class HTML:
             optimize_size, font_config, counter_style, image_cache)
 
     def write_pdf(self, target=None, stylesheets=None, zoom=1,
-                  attachments=None, presentational_hints=False,
+                  attachments=None, finisher=None, presentational_hints=False,
                   optimize_size=('fonts',), font_config=None,
                   counter_style=None, image_cache=None):
         """Render the document to a PDF file.
@@ -161,6 +161,9 @@ class HTML:
         :param list attachments: A list of additional file attachments for the
             generated PDF document or :obj:`None`. The list's elements are
             :class:`Attachment` objects, filenames, URLs or file-like objects.
+        :param finisher: A finisher function, that accepts the document and a
+            :class:`pydyf.PDF` object as parameters, can be passed to perform
+            post-processing on the PDF right before the trailer is written.
         :param bool presentational_hints: Whether HTML presentational hints are
             followed.
         :param tuple optimize_size:
@@ -181,7 +184,7 @@ class HTML:
                 stylesheets, presentational_hints=presentational_hints,
                 optimize_size=optimize_size, font_config=font_config,
                 counter_style=counter_style, image_cache=image_cache)
-            .write_pdf(target, zoom, attachments))
+            .write_pdf(target, zoom, attachments, finisher))
 
 
 class CSS:
