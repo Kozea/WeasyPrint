@@ -1009,7 +1009,8 @@ class Document:
             1, the physical CSS units will thus be "wrong".
         :param list attachments: A list of additional file attachments for the
             generated PDF document or :obj:`None`. The list's elements are
-            ``Attachment`` objects, filenames, URLs or file-like objects.
+            :class:`weasyprint.Attachment` objects, filenames, URLs or
+            file-like objects.
         :param finisher: A finisher function, that accepts the document and a
             :class:`pydyf.PDF` object as parameters, can be passed to perform
             post-processing on the PDF right before the trailer is written.
