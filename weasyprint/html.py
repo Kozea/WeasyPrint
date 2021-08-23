@@ -107,11 +107,9 @@ def make_replaced_box(element, box, image):
     element should be.
 
     """
-    if box.style['display'] in ('block', 'list-item', 'table'):
-        type_ = boxes.BlockReplacedBox
-    else:
-        # TODO: support images with 'display: table-cell'?
-        type_ = boxes.InlineReplacedBox
+    type_ = (
+        boxes.BlockReplacedBox if 'block' in box.style['display']
+        else boxes.InlineReplacedBox)
     new_box = type_(element.tag, box.style, element, image)
     # TODO: check other attributes that need to be copied
     # TODO: find another solution

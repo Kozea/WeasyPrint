@@ -232,7 +232,7 @@ def get_next_linebox(context, linebox, position_y, skip_stack,
     fixed_boxes.extend(line_fixed)
 
     for placeholder in line_placeholders:
-        if placeholder.style.specified['display'].startswith('inline'):
+        if 'inline' in placeholder.style.specified['display']:
             # Inline-level static position:
             placeholder.translate(0, position_y - placeholder.position_y)
         else:

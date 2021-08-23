@@ -407,8 +407,8 @@ class SVG:
                 self.stream.transform(*(old_ctm @ new_ctm.invert).values)
 
         # Manage display and visibility
-        display = node.get('display', 'inline') != 'none'
-        visible = display and (node.get('visibility', 'visible') != 'hidden')
+        display = node.get('display') != 'none'
+        visible = display and (node.get('visibility') != 'hidden')
 
         # Draw node
         if visible and node.tag in TAGS:

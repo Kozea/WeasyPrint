@@ -23,22 +23,26 @@ from . import boxes
 
 # Maps values of the ``display`` CSS property to box types.
 BOX_TYPE_FROM_DISPLAY = {
-    'block': boxes.BlockBox,
-    'list-item': boxes.BlockBox,
-    'inline': boxes.InlineBox,
-    'inline-block': boxes.InlineBlockBox,
-    'table': boxes.TableBox,
-    'inline-table': boxes.InlineTableBox,
-    'table-row': boxes.TableRowBox,
-    'table-row-group': boxes.TableRowGroupBox,
-    'table-header-group': boxes.TableRowGroupBox,
-    'table-footer-group': boxes.TableRowGroupBox,
-    'table-column': boxes.TableColumnBox,
-    'table-column-group': boxes.TableColumnGroupBox,
-    'table-cell': boxes.TableCellBox,
-    'table-caption': boxes.TableCaptionBox,
-    'flex': boxes.FlexBox,
-    'inline-flex': boxes.InlineFlexBox,
+    ('block', 'flow'): boxes.BlockBox,
+    ('inline', 'flow'): boxes.InlineBox,
+
+    ('block', 'flow-root'): boxes.BlockBox,
+    ('inline', 'flow-root'): boxes.InlineBlockBox,
+
+    ('block', 'table'): boxes.TableBox,
+    ('inline', 'table'): boxes.InlineTableBox,
+
+    ('block', 'flex'): boxes.FlexBox,
+    ('inline', 'flex'): boxes.InlineFlexBox,
+
+    ('table-row',): boxes.TableRowBox,
+    ('table-row-group',): boxes.TableRowGroupBox,
+    ('table-header-group',): boxes.TableRowGroupBox,
+    ('table-footer-group',): boxes.TableRowGroupBox,
+    ('table-column',): boxes.TableColumnBox,
+    ('table-column-group',): boxes.TableColumnGroupBox,
+    ('table-cell',): boxes.TableCellBox,
+    ('table-caption',): boxes.TableCaptionBox,
 }
 
 
@@ -56,9 +60,9 @@ def build_formatting_structure(element_tree, style_for, get_image_from_uri,
             style = style_for(element, pseudo_type)
             if style is not None:
                 if element == element_tree:
-                    style['display'] = 'block'
+                    style['display'] = ('block', 'flow')
                 else:
-                    style['display'] = 'none'
+                    style['display'] = ('none',)
             return style
         box, = element_to_box(
             element_tree, root_style_for, get_image_from_uri, base_url,
@@ -78,7 +82,7 @@ def build_formatting_structure(element_tree, style_for, get_image_from_uri,
 
 
 def make_box(element_tag, style, content, element):
-    box = BOX_TYPE_FROM_DISPLAY[style['display']](
+    box = BOX_TYPE_FROM_DISPLAY[style['display'][:2]](
         element_tag, style, element, content)
     return box
 
@@ -117,7 +121,7 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
     # TODO: should be the used value. When does the used value for `display`
     # differ from the computer value?
     display = style['display']
-    if display == 'none':
+    if display == ('none',):
         return []
 
     box = make_box(element.tag, style, [], element)
@@ -144,7 +148,7 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
     box.first_line_style = style_for(element, 'first-line')
 
     marker_boxes = []
-    if style['display'] == 'list-item':
+    if 'list-item' in style['display']:
         marker_boxes = list(marker_to_box(
             element, state, style, style_for, get_image_from_uri,
             target_collector, counter_style))
@@ -222,10 +226,11 @@ def before_after_to_box(element, pseudo_type, state, style_for,
     # `display` differ from the computer value? It's at least wrong for
     # `content` where 'normal' computes as 'inhibit' for pseudo elements.
     display = style['display']
-    content = style['content']
-    if 'none' in (display, content) or content in ('normal', 'inhibit'):
+    if display == ('none',):
         return []
-
+    content = style['content']
+    if content in ('normal', 'inhibit', 'none'):
+        return []
     box = make_box(f'{element.tag}::{pseudo_type}', style, [], element)
 
     quote_depth, counter_values, _counter_scopes = state
@@ -233,7 +238,7 @@ def before_after_to_box(element, pseudo_type, state, style_for,
 
     children = []
 
-    if display == 'list-item':
+    if 'list-item' in display:
         marker_boxes = list(marker_to_box(
             element, state, style, style_for, get_image_from_uri,
             target_collector, counter_style))
@@ -274,7 +279,7 @@ def marker_to_box(element, state, parent_style, style_for, get_image_from_uri,
 
     box = make_box(f'{element.tag}::marker', style, children, element)
 
-    if style['display'] == 'none':
+    if style['display'] == ('none',):
         return
 
     image_type, image = style['list_style_image']
@@ -700,7 +705,7 @@ def update_counters(state, style):
         # there was no counter-increment declaration for this element.
         # (Or the winning value was 'initial'.)
         # http://dev.w3.org/csswg/css3-lists/#declaring-a-list-item
-        if style['display'] == 'list-item':
+        if 'list-item' in style['display']:
             counter_increment = [('list-item', 1)]
         else:
             counter_increment = []
@@ -917,10 +922,10 @@ def wrap_table(box, children):
     footer = None
     for group in row_groups:
         display = group.style['display']
-        if display == 'table-header-group' and header is None:
+        if display == ('table-header-group',) and header is None:
             group.is_header = True
             header = group
-        elif display == 'table-footer-group' and footer is None:
+        elif display == ('table-footer-group',) and footer is None:
             group.is_footer = True
             footer = group
         else:

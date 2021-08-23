@@ -537,13 +537,15 @@ def display(style, name, value):
     position = style.specified['position']
     if position in ('absolute', 'fixed') or float_ != 'none' or (
             style.is_root_element):
-        if value == 'inline-table':
-            return'table'
-        elif value in ('inline', 'table-row-group', 'table-column',
-                       'table-column-group', 'table-header-group',
-                       'table-footer-group', 'table-row', 'table-cell',
-                       'table-caption', 'inline-block'):
-            return 'block'
+        if value == ('inline-table',):
+            return ('block', 'table')
+        elif len(value) == 1 and value[0].startswith('table-'):
+            return ('block', 'flow')
+        elif value[0] == 'inline':
+            if 'list-item' in value:
+                return ('block', 'flow', 'list-item')
+            else:
+                return ('block', 'flow')
     return value
 
 

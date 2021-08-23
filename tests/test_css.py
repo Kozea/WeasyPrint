@@ -22,15 +22,6 @@ from .testing_utils import (
 
 
 @assert_no_logs
-def test_style_dict():
-    style = {'margin_left': 12, 'display': 'block'}
-    assert style['display'] == 'block'
-    assert style['margin_left'] == 12
-    with pytest.raises(KeyError):
-        style['position']
-
-
-@assert_no_logs
 def test_find_stylesheets():
     html = FakeHTML(resource_filename('doc1.html'))
 

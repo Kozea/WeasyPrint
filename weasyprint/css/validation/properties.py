@@ -620,15 +620,49 @@ def direction(keyword):
 
 
 @property()
-@single_keyword
-def display(keyword):
+def display(tokens):
     """``display`` property validation."""
-    return keyword in (
-        'inline', 'block', 'inline-block', 'list-item', 'none',
-        'table', 'inline-table', 'table-caption',
-        'table-row-group', 'table-header-group', 'table-footer-group',
-        'table-row', 'table-column-group', 'table-column', 'table-cell',
-        'flex', 'inline-flex')
+    for token in tokens:
+        if token.type != 'ident':
+            return
+
+    if len(tokens) == 1:
+        value = tokens[0].value
+        if value in (
+                'none', 'table-caption', 'table-row-group', 'table-cell',
+                'table-header-group', 'table-footer-group', 'table-row',
+                'table-column-group', 'table-column'):
+            return (value,)
+        elif value in ('inline-table', 'inline-flex', 'inline-grid'):
+            return tuple(value.split('-'))
+        elif value == 'inline-block':
+            return ('inline', 'flow-root')
+
+    outside = inside = list_item = None
+    for token in tokens:
+        value = token.value
+        if value in ('block', 'inline'):
+            if outside:
+                return
+            outside = value
+        elif value in ('flow', 'flow-root', 'table', 'flex', 'grid'):
+            if inside:
+                return
+            inside = value
+        elif value == 'list-item':
+            if list_item:
+                return
+            list_item = value
+        else:
+            return
+
+    outside = outside or 'block'
+    inside = inside or 'flow'
+    if list_item:
+        if inside in ('flow', 'flow-root'):
+            return (outside, inside, list_item)
+    else:
+        return (outside, inside)
 
 
 @property('float')

@@ -21,7 +21,7 @@ INITIAL_VALUES = {
     'clip': (),  # computed value for 'auto'
     'color': parse_color('black'),  # chosen by the user agent
     'direction': 'ltr',
-    'display': 'inline',
+    'display': ('inline', 'flow'),
     'empty_cells': 'show',
     'float': 'none',
     'height': 'auto',

@@ -265,8 +265,10 @@ def block_container_layout(context, box, max_position_y, skip_stack,
     # The 1e-9 value comes from PEP 485.
     allowed_max_position_y = max_position_y * (1 + 1e-9)
 
-    # See http://www.w3.org/TR/CSS21/visuren.html#block-formatting
     if not isinstance(box, boxes.BlockBox):
+        # See http://www.w3.org/TR/CSS21/visuren.html#block-formatting
+        context.create_block_formatting_context()
+    elif 'flow-root' in box.style['display']:
         context.create_block_formatting_context()
 
     is_start = skip_stack is None

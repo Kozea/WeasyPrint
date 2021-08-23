@@ -1215,5 +1215,5 @@ def test_border_collapse_5():
 ))
 def test_display_none_root(html):
     box = parse_all(html)
-    assert box.style['display'] == 'block'
+    assert box.style['display'] == ('block', 'flow')
     assert not box.children
