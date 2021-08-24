@@ -1105,7 +1105,8 @@ def text_align(keyword):
 @single_keyword
 def text_align_last(keyword):
     """``text-align-last`` property validation."""
-    return keyword in ('auto', 'left', 'right', 'center', 'justify', 'start', 'end')
+    return keyword in (
+        'auto', 'left', 'right', 'center', 'justify', 'start', 'end')
 
 
 @property()
