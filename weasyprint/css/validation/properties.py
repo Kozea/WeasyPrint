@@ -1102,6 +1102,13 @@ def text_align(keyword):
 
 
 @property()
+@single_keyword
+def text_align_last(keyword):
+    """``text-align-last`` property validation."""
+    return keyword in ('auto', 'left', 'right', 'center', 'justify', 'start', 'end')
+
+
+@property()
 def text_decoration_line(tokens):
     """``text-decoration-line`` property validation."""
     keywords = {get_keyword(token) for token in tokens}
