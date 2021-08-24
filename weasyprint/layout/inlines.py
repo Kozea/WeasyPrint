@@ -1315,13 +1315,10 @@ def text_align(context, line, available_width, last):
     if line.width >= available_width:
         return 0
 
-    align = line.style['text_align']
+    align = line.style['text_align_all']
     if last:
         align_last = line.style['text_align_last']
-        if align_last != 'auto':
-            align = align_last
-        elif align == 'justify':
-            align = 'start'
+        align = align if align_last == 'auto' else align_last
     space_collapse = line.style['white_space'] in (
         'normal', 'nowrap', 'pre-line')
     if align in ('left', 'right'):

@@ -245,6 +245,86 @@ def test_text_align_justify():
 
 
 @assert_no_logs
+def test_text_align_justify_all():
+    page, = render_pages('''
+      <style>
+        @page { size: 300px 1000px }
+        body { text-align: justify-all }
+      </style>
+      <p><img src="pattern.png" style="width: 40px">
+        <strong>
+          <img src="pattern.png" style="width: 60px">
+          <img src="pattern.png" style="width: 10px">
+          <img src="pattern.png" style="width: 100px"
+        ></strong><img src="pattern.png" style="width: 200px">
+        <img src="pattern.png" style="width: 10px">''')
+    html, = page.children
+    body, = html.children
+    paragraph, = body.children
+    line_1, line_2 = paragraph.children
+    image_1, space_1, strong = line_1.children
+    image_2, space_2, image_3, space_3, image_4 = strong.children
+    image_5, space_4, image_6 = line_2.children
+    assert space_1.text == ' '
+    assert space_2.text == ' '
+    assert space_3.text == ' '
+    assert space_4.text == ' '
+
+    assert image_1.position_x == 0
+    assert space_1.position_x == 40
+    assert strong.position_x == 70
+    assert image_2.position_x == 70
+    assert space_2.position_x == 130
+    assert image_3.position_x == 160
+    assert space_3.position_x == 170
+    assert image_4.position_x == 200
+    assert strong.width == 230
+
+    assert image_5.position_x == 0
+    assert space_4.position_x == 200
+    assert image_6.position_x == 290
+
+
+@assert_no_logs
+def test_text_align_all_last():
+    page, = render_pages('''
+      <style>
+        @page { size: 300px 1000px }
+        body { text-align-all: justify; text-align-last: right }
+      </style>
+      <p><img src="pattern.png" style="width: 40px">
+        <strong>
+          <img src="pattern.png" style="width: 60px">
+          <img src="pattern.png" style="width: 10px">
+          <img src="pattern.png" style="width: 100px"
+        ></strong><img src="pattern.png" style="width: 200px"
+        ><img src="pattern.png" style="width: 10px">''')
+    html, = page.children
+    body, = html.children
+    paragraph, = body.children
+    line_1, line_2 = paragraph.children
+    image_1, space_1, strong = line_1.children
+    image_2, space_2, image_3, space_3, image_4 = strong.children
+    image_5, image_6 = line_2.children
+    assert space_1.text == ' '
+    assert space_2.text == ' '
+    assert space_3.text == ' '
+
+    assert image_1.position_x == 0
+    assert space_1.position_x == 40
+    assert strong.position_x == 70
+    assert image_2.position_x == 70
+    assert space_2.position_x == 130
+    assert image_3.position_x == 160
+    assert space_3.position_x == 170
+    assert image_4.position_x == 200
+    assert strong.width == 230
+
+    assert image_5.position_x == 90
+    assert image_6.position_x == 290
+
+
+@assert_no_logs
 def test_text_align_not_enough_space():
     page, = render_pages('''
       <style>

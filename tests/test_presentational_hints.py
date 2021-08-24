@@ -64,12 +64,12 @@ def test_ph_flow():
     body, = html.children
     pre, center, div1, div2, div3, div4, div5 = body.children
     assert pre.style['white_space'] == 'pre-wrap'
-    assert center.style['text_align'] == 'center'
-    assert div1.style['text_align'] == 'center'
-    assert div2.style['text_align'] == 'center'
-    assert div3.style['text_align'] == 'left'
-    assert div4.style['text_align'] == 'right'
-    assert div5.style['text_align'] == 'justify'
+    assert center.style['text_align_all'] == 'center'
+    assert div1.style['text_align_all'] == 'center'
+    assert div2.style['text_align_all'] == 'center'
+    assert div3.style['text_align_all'] == 'left'
+    assert div4.style['text_align_all'] == 'right'
+    assert div5.style['text_align_all'] == 'justify'
 
 
 @assert_no_logs
@@ -222,11 +222,11 @@ def test_ph_tables():
     assert td.style['border_top_width'] == 1
     assert td.style['border_top_style'] == 'inset'
     h1, p = td.children
-    assert h1.style['text_align'] == 'right'
-    assert p.style['text_align'] == 'center'
+    assert h1.style['text_align_all'] == 'right'
+    assert p.style['text_align_all'] == 'center'
     foot, = foot_group.children
     tr, = foot.children
-    assert tr.style['text_align'] == 'justify'
+    assert tr.style['text_align_all'] == 'justify'
 
 
 @assert_no_logs
