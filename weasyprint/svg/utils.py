@@ -147,11 +147,15 @@ def transform(transform_string, font_size, normalized_diagonal):
         if transformation_type == 'matrix':
             matrix = Matrix(*values) @ matrix
         elif transformation_type == 'rotate':
+            if len(values) == 3:
+                matrix = Matrix(e=values[1], f=values[2]) @ matrix
             matrix = Matrix(
                 cos(radians(float(values[0]))),
                 sin(radians(float(values[0]))),
                 -sin(radians(float(values[0]))),
                 cos(radians(float(values[0])))) @ matrix
+            if len(values) == 3:
+                matrix = Matrix(e=-values[1], f=-values[2]) @ matrix
         elif transformation_type.startswith('skew'):
             if len(values) == 1:
                 values.append(0)
