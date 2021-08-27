@@ -994,6 +994,64 @@ class Document:
             pages, self.metadata, self.url_fetcher, self._font_config,
             self.optimize_size)
 
+    def make_bookmark_tree(self):
+        """Make a tree of all bookmarks in the document.
+
+        .. versionadded:: 0.15
+
+        :return: A list of bookmark subtrees.
+            A subtree is ``(label, target, children, state)``. ``label`` is
+            a string, ``target`` is ``(page_number, x, y)`` like in
+            :meth:`resolve_links`, and ``children`` is a
+            list of child subtrees.
+
+        """
+        root = []
+        # At one point in the document, for each "output" depth, how much
+        # to add to get the source level (CSS values of bookmark-level).
+        # E.g. with <h1> then <h3>, level_shifts == [0, 1]
+        # 1 means that <h3> has depth 3 - 1 = 2 in the output.
+        skipped_levels = []
+        last_by_depth = [root]
+        previous_level = 0
+        matrix = Matrix()
+        for page_number, page in enumerate(self.pages):
+            previous_level = self._make_page_bookmark_tree(
+                page, skipped_levels, last_by_depth, previous_level,
+                page_number, matrix)
+        return root
+
+    def _make_page_bookmark_tree(self, page, skipped_levels, last_by_depth,
+                                 previous_level, page_number, matrix):
+        """Make a tree of all bookmarks in a given page."""
+        for level, label, (point_x, point_y), state in page.bookmarks:
+            if level > previous_level:
+                # Example: if the previous bookmark is a <h2>, the next
+                # depth "should" be for <h3>. If now we get a <h6> we’re
+                # skipping two levels: append 6 - 3 - 1 = 2
+                skipped_levels.append(level - previous_level - 1)
+            else:
+                temp = level
+                while temp < previous_level:
+                    temp += 1 + skipped_levels.pop()
+                if temp > previous_level:
+                    # We remove too many "skips", add some back:
+                    skipped_levels.append(temp - previous_level - 1)
+
+            previous_level = level
+            depth = level - sum(skipped_levels)
+            assert depth == len(skipped_levels)
+            assert depth >= 1
+
+            children = []
+            point_x, point_y = matrix.transform_point(point_x, point_y)
+            subtree = BookmarkSubtree(
+                label, (page_number, point_x, point_y), children, state)
+            last_by_depth[depth - 1].append(subtree)
+            del last_by_depth[depth:]
+            last_by_depth.append(children)
+        return previous_level
+
     def write_pdf(self, target=None, zoom=1, attachments=None, finisher=None):
         """Paint the pages in a PDF file, with metadata.
 
@@ -1161,32 +1219,9 @@ class Document:
                     pdf_page['Annots'].append(annot.reference)
 
             # Bookmarks
-            for level, label, (point_x, point_y), state in page.bookmarks:
-                if level > previous_level:
-                    # Example: if the previous bookmark is a <h2>, the next
-                    # depth "should" be for <h3>. If now we get a <h6> we’re
-                    # skipping two levels: append 6 - 3 - 1 = 2
-                    skipped_levels.append(level - previous_level - 1)
-                else:
-                    temp = level
-                    while temp < previous_level:
-                        temp += 1 + skipped_levels.pop()
-                    if temp > previous_level:
-                        # We remove too many "skips", add some back:
-                        skipped_levels.append(temp - previous_level - 1)
-
-                previous_level = level
-                depth = level - sum(skipped_levels)
-                assert depth == len(skipped_levels)
-                assert depth >= 1
-
-                children = []
-                point_x, point_y = matrix.transform_point(point_x, point_y)
-                subtree = BookmarkSubtree(
-                    label, (page_number, point_x, point_y), children, state)
-                last_by_depth[depth - 1].append(subtree)
-                del last_by_depth[depth:]
-                last_by_depth.append(children)
+            previous_level = self._make_page_bookmark_tree(
+                page, skipped_levels, last_by_depth, previous_level,
+                page_number, matrix)
 
         # Outlines
         outlines, count = create_bookmarks(root, pdf)

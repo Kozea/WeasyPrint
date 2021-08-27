@@ -501,7 +501,7 @@ def test_low_level_api():
     assert _png_size(document.copy([page_2]).write_png()) == (6, 4)
 
 
-@pytest.mark.parametrize('html, expected_by_page, round_', (
+@pytest.mark.parametrize('html, expected_by_page, expected_tree, round', (
     ('''
         <style>* { height: 10px }</style>
         <h1>a</h1>
@@ -513,6 +513,12 @@ def test_low_level_api():
         [(1, 'a', (0, 0), 'open'), (4, 'b', (0, 10), 'open')],
         [(3, 'c', (3, 2), 'open'), (2, 'd', (0, 10), 'open'),
          (1, 'e', (0, 20), 'open')],
+    ], [
+        ('a', (0, 0, 0), [
+            ('b', (0, 0, 10), [], 'open'),
+            ('c', (1, 3, 2), [], 'open'),
+            ('d', (1, 0, 10), [], 'open')], 'open'),
+        ('e', (1, 0, 20), [], 'open'),
     ], False),
     ('''
         <style>
@@ -545,6 +551,18 @@ def test_low_level_api():
             (1, 'Title 10', (0, 500), 'open'),
             (2, 'Title 11', (0, 600), 'open')
         ],
+    ], [
+        ('Title 1', (0, 0, 0), [], 'open'),
+        ('Title 2', (0, 0, 100), [
+            ('Title 3', (0, 20, 200), [], 'open'),
+            ('Title 4', (0, 0, 300), [
+                ('Title 5', (0, 0, 400), [], 'open')], 'open'),
+            ('Title 6', (1, 0, 100), [], 'open')], 'open'),
+        ('Title 7', (1, 0, 200), [
+            ('Title 8', (1, 0, 300), [
+                ('Title 9', (1, 0, 400), [], 'open')], 'open')], 'open'),
+        ('Title 10', (1, 0, 500), [
+            ('Title 11', (1, 0, 600), [], 'open')], 'open'),
     ], False),
     ('''
         <style>* { height: 10px }</style>
@@ -559,7 +577,13 @@ def test_low_level_api():
         (2, 'C', (0, 40), 'open'),
         (3, 'D', (0, 60), 'open'),
         (4, 'E', (0, 80), 'open'),
-    ]], False),
+    ]], [
+        ('A', (0, 0, 0), [
+            ('B', (0, 0, 20), [], 'open')], 'open'),
+        ('C', (0, 0, 40), [
+            ('D', (0, 0, 60), [
+                ('E', (0, 0, 80), [], 'open')], 'open')], 'open'),
+    ], False),
     ('''
         <style>* { height: 10px; font-size: 0 }</style>
         <h2>A</h2> <p>h2 depth 1</p>
@@ -581,14 +605,28 @@ def test_low_level_api():
         (2, 'G', (0, 110), 'open'),
         (4, 'H', (0, 130), 'open'),
         (1, 'I', (0, 150), 'open'),
-    ]], False),
+    ]], [
+        ('A', (0, 0, 0), [
+            ('B', (0, 0, 20), [], 'open'),
+            ('C', (0, 0, 40), [
+                ('D', (0, 0, 60), [], 'open')], 'open')], 'open'),
+        ('E', (0, 0, 70), [
+            ('F', (0, 0, 90), [], 'open'),
+            ('G', (0, 0, 110), [
+                ('H', (0, 0, 130), [], 'open')], 'open')], 'open'),
+        ('I', (0, 0, 150), [], 'open'),
+    ], False),
     ('<h1>é', [
         [(1, 'é', (0, 0), 'open')]
+    ], [
+        ('é', (0, 0, 0), [], 'open')
     ], False),
     ('''
         <h1 style="transform: translateX(50px)">!
     ''', [
         [(1, '!', (50, 0), 'open')]
+    ], [
+        ('!', (0, 50, 0), [], 'open')
     ], False),
     ('''
         <style>
@@ -596,22 +634,24 @@ def test_low_level_api():
         </style>
         <img src="%s" alt="Chocolate" />
     ''' % path2url(resource_filename('pattern.png')),
-     [[(1, 'Chocolate', (0, 0), 'open')]], False),
+     [[(1, 'Chocolate', (0, 0), 'open')]],
+     [('Chocolate', (0, 0, 0), [], 'open')], False),
     ('''
         <h1 style="transform-origin: 0 0;
                    transform: rotate(90deg) translateX(50px)">!
-    ''', [[(1, '!', (0, 50), 'open')]], True),
+    ''', [[(1, '!', (0, 50), 'open')]], [('!', (0, 0, 50), [], 'open')], True),
     ('''
         <body style="transform-origin: 0 0; transform: rotate(90deg)">
         <h1 style="transform: translateX(50px)">!
-    ''', [[(1, '!', (0, 50), 'open')]], True),
+    ''', [[(1, '!', (0, 50), 'open')]], [('!', (0, 0, 50), [], 'open')], True),
 ))
 @assert_no_logs
-def test_assert_bookmarks(html, expected_by_page, round_):
+def test_assert_bookmarks(html, expected_by_page, expected_tree, round):
     document = FakeHTML(string=html).render()
-    if round_:
+    if round:
         _round_meta(document.pages)
     assert [page.bookmarks for page in document.pages] == expected_by_page
+    assert document.make_bookmark_tree() == expected_tree
 
 
 @assert_no_logs
