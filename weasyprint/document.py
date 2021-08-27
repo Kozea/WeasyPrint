@@ -902,10 +902,9 @@ class Document:
         for key, x_object in resources.get('XObject', {}).items():
             # Images
             if x_object is None:
-                resources['XObject'][key] = images[key].reference
-                continue
-
-            pdf.add_object(x_object)
+                x_object = images[key]
+            else:
+                pdf.add_object(x_object)
             resources['XObject'][key] = x_object.reference
 
             # Masks
