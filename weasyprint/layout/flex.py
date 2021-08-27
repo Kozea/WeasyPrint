@@ -107,11 +107,12 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
             context, parent_box)
     original_skip_stack = skip_stack
     if skip_stack is not None:
+        (skip, skip_stack), = skip_stack.items()
         if box.style['flex_direction'].endswith('-reverse'):
-            children = children[:skip_stack[0] + 1]
+            children = children[:skip + 1]
         else:
-            children = children[skip_stack[0]:]
-        skip_stack = skip_stack[1]
+            children = children[skip:]
+        skip_stack = skip_stack
     else:
         skip_stack = None
     child_skip_stack = skip_stack
@@ -847,16 +848,17 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                     if resume_at:
                         index, = resume_at
                         if index:
-                            resume_at = (index + i - 1, None)
+                            resume_at = {index + i - 1: None}
                 else:
                     box.children.append(new_child)
                     if child_resume_at is not None:
                         if original_skip_stack:
-                            first_level_skip = original_skip_stack[0]
+                            first_level_skip, = original_skip_stack
                         else:
                             first_level_skip = 0
                         if resume_at:
-                            first_level_skip += tuple(resume_at)[0]
+                            index, = resume_at
+                            first_level_skip += index
                         resume_at = {first_level_skip + i: child_resume_at}
                 if resume_at:
                     break
