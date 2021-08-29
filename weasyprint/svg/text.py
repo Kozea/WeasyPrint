@@ -22,7 +22,7 @@ class TextBox:
 def text(svg, node, font_size):
     """Draw text node."""
     from ..css.properties import INITIAL_VALUES
-    from ..draw import draw_first_line
+    from ..draw import draw_emojis, draw_first_line
     from ..text.line_break import split_first_line
 
     # TODO: use real computed values
@@ -121,6 +121,7 @@ def text(svg, node, font_size):
         return
 
     svg.stream.begin_text()
+    emojis = []
 
     # Draw letters
     for i, ((x, y, dx, dy, r), letter) in enumerate(letters_positions):
@@ -160,10 +161,13 @@ def text(svg, node, font_size):
 
         layout.reactivate(style)
         svg.fill_stroke(node, font_size, text=True)
-        draw_first_line(
+        emojis.append(draw_first_line(
             svg.stream, TextBox(layout, style), 'none', 'none',
-            x_position, y_position)
+            x_position, y_position))
         svg.stream.pop_state()
         svg.cursor_position = cursor_position
 
     svg.stream.end_text()
+
+    for emojis in emojis:
+        draw_emojis(svg.stream, emojis)
