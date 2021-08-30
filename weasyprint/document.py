@@ -66,8 +66,10 @@ def _w3c_date_to_pdf(string, attr_name):
 
 
 class Font:
-    def __init__(self, file_content, pango_font, index, png, svg):
+    def __init__(self, file_content, pango_font, index):
         pango_metrics = pango.pango_font_get_metrics(pango_font, ffi.NULL)
+        hb_font = pango.pango_font_get_hb_font(pango_font)
+        hb_face = harfbuzz.hb_font_get_face(hb_font)
         self._font_description = pango.pango_font_describe(pango_font)
         self.family = ffi.string(pango.pango_font_description_get_family(
             self._font_description))
@@ -93,13 +95,14 @@ class Font:
         self.descent = -int(
             pango.pango_font_metrics_get_descent(pango_metrics) /
             font_size * 1000)
+        self.upem = harfbuzz.hb_face_get_upem(hb_face)
+        self.png = harfbuzz.hb_ot_color_has_png(hb_face)
+        self.svg = harfbuzz.hb_ot_color_has_svg(hb_face)
         self.stemv = 80
         self.stemh = 80
         self.bbox = [0, 0, 0, 0]
         self.widths = {}
         self.cmap = {}
-        self.png = png
-        self.svg = svg
 
     @property
     def flags(self):
@@ -215,12 +218,7 @@ class Stream(pydyf.Stream):
                 super().set_state(key)
 
     def add_font(self, font_hash, font_content, pango_font, index):
-        hb_font = pango.pango_font_get_hb_font(pango_font)
-        hb_face = harfbuzz.hb_font_get_face(hb_font)
-        png = harfbuzz.hb_ot_color_has_png(hb_face)
-        svg = harfbuzz.hb_ot_color_has_svg(hb_face)
-        self._document.fonts[font_hash] = Font(
-            font_content, pango_font, index, png, svg)
+        self._document.fonts[font_hash] = Font(font_content, pango_font, index)
         return self._document.fonts[font_hash]
 
     def get_fonts(self):
@@ -1314,10 +1312,9 @@ class Document:
                     content = optimized_font.getvalue()
                 except TTLibError:
                     LOGGER.warning('Unable to optimize font')
-                    content = fonts[0].file_content
 
-            if fonts[0].png:
-                # Add empty glyphs instead of PNG emojis
+            if fonts[0].png or fonts[0].svg:
+                # Add empty glyphs instead of PNG or SVG emojis
                 full_font = io.BytesIO(content)
                 try:
                     ttfont = TTFont(full_font, fontNumber=fonts[0].index)
@@ -1328,9 +1325,13 @@ class Document:
                         ttfont['glyf'].glyphs = {
                             name: ttFont.getTableModule('glyf').Glyph()
                             for name in ttfont['glyf'].glyphOrder}
-                        output_font = io.BytesIO()
-                        ttfont.save(output_font)
-                        content = output_font.getvalue()
+                    else:
+                        for glyph in ttfont['glyf'].glyphs:
+                            ttfont['glyf'][glyph] = (
+                                ttFont.getTableModule('glyf').Glyph())
+                    output_font = io.BytesIO()
+                    ttfont.save(output_font)
+                    content = output_font.getvalue()
                 except TTLibError:
                     LOGGER.warning('Unable to save emoji font')
 

@@ -121,7 +121,7 @@ def text(svg, node, font_size):
         return
 
     svg.stream.begin_text()
-    emojis = []
+    emoji_lines = []
 
     # Draw letters
     for i, ((x, y, dx, dy, r), letter) in enumerate(letters_positions):
@@ -161,13 +161,14 @@ def text(svg, node, font_size):
 
         layout.reactivate(style)
         svg.fill_stroke(node, font_size, text=True)
-        emojis.append(draw_first_line(
+        emojis = draw_first_line(
             svg.stream, TextBox(layout, style), 'none', 'none',
-            x_position, y_position))
+            x_position, y_position)
+        emoji_lines.append((font_size, x, y, emojis))
         svg.stream.pop_state()
         svg.cursor_position = cursor_position
 
     svg.stream.end_text()
 
-    for emojis in emojis:
-        draw_emojis(svg.stream, emojis)
+    for font_size, x, y, emojis in emoji_lines:
+        draw_emojis(svg.stream, font_size, x, y, emojis)
