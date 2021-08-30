@@ -1329,6 +1329,9 @@ class Document:
                         for glyph in ttfont['glyf'].glyphs:
                             ttfont['glyf'][glyph] = (
                                 ttFont.getTableModule('glyf').Glyph())
+                    for table_name in ('CBDT', 'CBLC', 'SVG '):
+                        if table_name in ttfont:
+                            del ttfont[table_name]
                     output_font = io.BytesIO()
                     ttfont.save(output_font)
                     content = output_font.getvalue()
