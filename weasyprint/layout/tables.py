@@ -84,6 +84,7 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
             skip = 0
         else:
             (skip, skip_stack), = skip_stack.items()
+            # TODO: handle multiple skip stacks (actually handle skip stack)
             assert not skip_stack  # No breaks inside rows for now
         for i, row in enumerate(group.children[skip:]):
             index_row = i + skip
