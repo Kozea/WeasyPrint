@@ -714,7 +714,7 @@ def get_content_list_token(token, base_url):
 
     # contents
     if get_keyword(token) == 'contents':
-        return ('content', 'text')
+        return ('content()', 'text')
 
     # <uri>
     url = get_url(token, base_url)
