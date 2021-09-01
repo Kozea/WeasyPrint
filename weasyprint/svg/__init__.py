@@ -572,7 +572,7 @@ class SVG:
                 self.draw_node(child, font_size, fill_stroke)
                 self.stream.pop_state()
 
-        position = 'mid' if angles else 'start'
+            position = 'mid' if angles else 'start'
 
     @staticmethod
     def get_paint(value):
