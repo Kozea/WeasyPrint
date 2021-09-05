@@ -290,8 +290,8 @@ def block_container_layout(context, box, max_position_y, skip_stack,
         box.border_top_width or box.padding_top or box.is_flex_item or
         establishes_formatting_context(box) or box.is_for_root_element)
     if collapsing_with_children:
-        # XXX not counting margins in adjoining_margins, if any
-        # (There are not padding or borders, see above.)
+        # Not counting margins in adjoining_margins, if any
+        # (there are not padding or borders, see above)
         position_y = box.position_y
     else:
         box.position_y += collapse_margin(adjoining_margins) - box.margin_top
@@ -318,8 +318,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
         first_letter_style = None
     for index, child in enumerate(box.children[skip:], start=(skip or 0)):
         child.position_x = position_x
-        # XXX does not count margins in adjoining_margins:
-        child.position_y = position_y
+        child.position_y = position_y  # doesn’t count adjoining_margins
 
         if not child.is_in_normal_flow():
             child.position_y += collapse_margin(adjoining_margins)
@@ -625,9 +624,9 @@ def block_container_layout(context, box, max_position_y, skip_stack,
             position_y += collapsed_margin
             adjoining_margins = []
     else:
-        # bottom margin of the last child and bottom margin of this box ...
+        # Bottom margin of the last child and bottom margin of this box
         if box.height != 'auto':
-            # not adjoining. (position_y is not used afterwards.)
+            # Not adjoining (position_y is not used afterwards)
             adjoining_margins = []
 
     if (box.border_bottom_width or
@@ -694,10 +693,8 @@ def block_container_layout(context, box, max_position_y, skip_stack,
 
 
 def collapse_margin(adjoining_margins):
-    """Return the amount of collapsed margin for a list of adjoining margins.
-    """
-    # Add 0 to make sure that neither max() or min() get an empty list
-    margins = [0]
+    """Get the amount of collapsed margin for a list of adjoining margins."""
+    margins = [0]  # add 0 to make sure that max/min don’t get an empty list
     margins.extend(adjoining_margins)
     positives = (m for m in margins if m >= 0)
     negatives = (m for m in margins if m <= 0)
@@ -729,8 +726,10 @@ def establishes_formatting_context(box):
 
 
 def block_level_page_break(sibling_before, sibling_after):
-    """Return the value of ``page-break-before`` or ``page-break-after``
-    that "wins" for boxes that meet at the margin between two sibling boxes.
+    """Get the correct page break value between siblings.
+
+    Return the value of ``page-break-before`` or ``page-break-after`` that
+    "wins" for boxes that meet at the margin between two sibling boxes.
 
     For boxes before the margin, the 'page-break-after' value is considered;
     for boxes after the margin the 'page-break-before' value is considered.
@@ -785,8 +784,10 @@ def block_level_page_name(sibling_before, sibling_after):
 
 
 def find_earlier_page_break(children, absolute_boxes, fixed_boxes):
-    """Because of a `page-break-before: avoid` or a `page-break-after: avoid`
-    we need to find an earlier page break opportunity inside `children`.
+    """Find the last possible page break in ``children``.
+
+    Because of a `page-break-before: avoid` or a `page-break-after: avoid` we
+    need to find an earlier page break opportunity inside `children`.
 
     Absolute or fixed placeholders removed from children should also be
     removed from `absolute_boxes` or `fixed_boxes`.
