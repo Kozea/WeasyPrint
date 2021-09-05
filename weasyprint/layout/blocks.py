@@ -253,6 +253,47 @@ def relative_positioning(box, containing_block):
             relative_positioning(child, containing_block)
 
 
+def _out_of_flow_layout(context, box, index, child, new_children,
+                        page_is_empty, absolute_boxes, fixed_boxes,
+                        adjoining_margins, max_position_y):
+    stop = False
+    resume_at = None
+
+    child.position_y += collapse_margin(adjoining_margins)
+    if child.is_absolutely_positioned():
+        placeholder = AbsolutePlaceholder(child)
+        placeholder.index = index
+        new_children.append(placeholder)
+        if child.style['position'] == 'absolute':
+            absolute_boxes.append(placeholder)
+        else:
+            fixed_boxes.append(placeholder)
+    elif child.is_floated():
+        new_child = float_layout(
+            context, child, box, absolute_boxes, fixed_boxes)
+        # New page if overflow
+        if (page_is_empty and not new_children) or not (
+                new_child.position_y + new_child.height > max_position_y):
+            new_child.index = index
+            new_children.append(new_child)
+        else:
+            last_in_flow_child = find_last_in_flow_child(new_children)
+            page_break = block_level_page_break(last_in_flow_child, child)
+            resume_at = {index: None}
+            if new_children and page_break in ('avoid', 'avoid-page'):
+                result = find_earlier_page_break(
+                    new_children, absolute_boxes, fixed_boxes)
+                if result:
+                    new_children, resume_at = result
+            stop = True
+    elif child.is_running():
+        running_name = child.style['position'][1]
+        page = context.current_page
+        context.running_elements[running_name][page].append(child)
+
+    return stop, resume_at
+
+
 def block_container_layout(context, box, max_position_y, skip_stack,
                            page_is_empty, absolute_boxes, fixed_boxes,
                            adjoining_margins, discard):
@@ -321,43 +362,14 @@ def block_container_layout(context, box, max_position_y, skip_stack,
         child.position_y = position_y  # doesn’t count adjoining_margins
 
         if not child.is_in_normal_flow():
-            child.position_y += collapse_margin(adjoining_margins)
-            if child.is_absolutely_positioned():
-                placeholder = AbsolutePlaceholder(child)
-                placeholder.index = index
-                new_children.append(placeholder)
-                if child.style['position'] == 'absolute':
-                    absolute_boxes.append(placeholder)
-                else:
-                    fixed_boxes.append(placeholder)
-            elif child.is_floated():
-                new_child = float_layout(
-                    context, child, box, absolute_boxes, fixed_boxes)
-                # New page if overflow
-                if (page_is_empty and not new_children) or not (
-                        new_child.position_y + new_child.height >
-                        allowed_max_position_y):
-                    new_child.index = index
-                    new_children.append(new_child)
-                else:
-                    last_in_flow_child = find_last_in_flow_child(new_children)
-                    page_break = block_level_page_break(
-                        last_in_flow_child, child)
-                    if new_children and page_break in ('avoid', 'avoid-page'):
-                        result = find_earlier_page_break(
-                            new_children, absolute_boxes, fixed_boxes)
-                        if result:
-                            new_children, resume_at = result
-                            break
-                    resume_at = {index: None}
-                    break
-            elif child.is_running():
-                running_name = child.style['position'][1]
-                page = context.current_page
-                context.running_elements[running_name][page].append(child)
-            continue
+            stop, resume_at = _out_of_flow_layout(
+                context, box, index, child, new_children, page_is_empty,
+                absolute_boxes, fixed_boxes, adjoining_margins,
+                allowed_max_position_y)
+            if stop:
+                break
 
-        if isinstance(child, boxes.LineBox):
+        elif isinstance(child, boxes.LineBox):
             assert len(box.children) == 1, (
                 'line box with siblings before layout')
             if adjoining_margins:
@@ -440,6 +452,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                 resume_at = {index: new_children[-1].resume_at}
             if is_page_break:
                 break
+
         else:
             last_in_flow_child = find_last_in_flow_child(new_children)
             if last_in_flow_child is not None:
