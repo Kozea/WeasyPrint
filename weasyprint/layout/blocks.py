@@ -351,6 +351,7 @@ def _linebox_layout(context, box, index, child, new_children, page_is_empty,
             resume_at = {index: skip_stack}
             stop = True
             break
+
         # TODO: this is incomplete.
         # See http://dev.w3.org/csswg/css3-page/#allowed-pg-brk
         # "When an unforced page break occurs here, both the adjoining
@@ -362,6 +363,7 @@ def _linebox_layout(context, box, index, child, new_children, page_is_empty,
             new_position_y -= box.margin_top
             line.translate(0, -box.margin_top)
             box.margin_top = 0
+
         new_children.append(line)
         position_y = new_position_y
         skip_stack = resume_at
@@ -420,10 +422,8 @@ def _in_flow_layout(context, box, index, child, new_children, page_is_empty,
             collapsed_margin_difference = (
                 new_collapsed_margin - old_collapsed_margin)
             for previous_new_child in new_children:
-                previous_new_child.translate(
-                    dy=collapsed_margin_difference)
-            clearance = get_clearance(
-                context, child, new_collapsed_margin)
+                previous_new_child.translate(dy=collapsed_margin_difference)
+            clearance = get_clearance(context, child, new_collapsed_margin)
             if clearance is not None:
                 for previous_new_child in new_children:
                     previous_new_child.translate(
@@ -448,10 +448,10 @@ def _in_flow_layout(context, box, index, child, new_children, page_is_empty,
     if not getattr(child, 'first_letter_style', None):
         child.first_letter_style = first_letter_style
     (new_child, resume_at, next_page, next_adjoining_margins,
-        collapsing_through) = block_level_layout(
-            context, child, max_position_y, skip_stack,
-            new_containing_block, page_is_empty_with_no_children,
-            absolute_boxes, fixed_boxes, adjoining_margins, discard)
+     collapsing_through) = block_level_layout(
+         context, child, max_position_y, skip_stack, new_containing_block,
+         page_is_empty_with_no_children, absolute_boxes, fixed_boxes,
+         adjoining_margins, discard)
     skip_stack = None
 
     if new_child is not None:
@@ -461,12 +461,10 @@ def _in_flow_layout(context, box, index, child, new_children, page_is_empty,
 
         # We need to do this after the child layout to have the
         # used value for margin_top (eg. it might be a percentage.)
-        if not isinstance(
-                new_child, (boxes.BlockBox, boxes.TableBox)):
+        if not isinstance(new_child, (boxes.BlockBox, boxes.TableBox)):
             adjoining_margins.append(new_child.margin_top)
             offset_y = (
-                collapse_margin(adjoining_margins) -
-                new_child.margin_top)
+                collapse_margin(adjoining_margins) - new_child.margin_top)
             new_child.translate(0, offset_y)
             adjoining_margins = []
         # else: blocks handle that themselves.
@@ -488,8 +486,7 @@ def _in_flow_layout(context, box, index, child, new_children, page_is_empty,
                 position_y = new_position_y
 
         if new_child is not None and new_child.clearance is not None:
-            position_y = (
-                new_child.border_box_y() + new_child.border_height())
+            position_y = new_child.border_box_y() + new_child.border_height()
 
     if new_child is None:
         # Nothing fits in the remaining space of this page: break
@@ -570,8 +567,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
 
     if draw_bottom_decoration:
         max_position_y -= (
-            box.padding_bottom + box.border_bottom_width +
-            box.margin_bottom)
+            box.padding_bottom + box.border_bottom_width + box.margin_bottom)
 
     adjoining_margins.append(box.margin_top)
     this_box_adjoining_margins = adjoining_margins
@@ -611,12 +607,11 @@ def block_container_layout(context, box, max_position_y, skip_stack,
         child.position_y = position_y  # doesn’t count adjoining_margins
 
         if not child.is_in_normal_flow():
+            abort = False
             stop, resume_at = _out_of_flow_layout(
                 context, box, index, child, new_children, page_is_empty,
                 absolute_boxes, fixed_boxes, adjoining_margins,
                 allowed_max_position_y)
-            if stop:
-                break
 
         elif isinstance(child, boxes.LineBox):
             abort, stop, resume_at, position_y = _linebox_layout(
@@ -626,11 +621,6 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                 first_letter_style, draw_bottom_decoration)
             draw_bottom_decoration |= resume_at is None
             adjoining_margins = []
-            if abort:
-                page = child.page_values()[0]
-                return None, None, {'break': 'any', 'page': page}, [], False
-            elif stop:
-                break
 
         else:
             (abort, stop, resume_at, position_y, adjoining_margins,
@@ -641,11 +631,12 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                  skip_stack, first_letter_style, draw_bottom_decoration,
                  collapsing_with_children, discard, next_page)
             skip_stack = None
-            if abort:
-                page = child.page_values()[0]
-                return None, None, {'break': 'any', 'page': page}, [], False
-            elif stop:
-                break
+
+        if abort:
+            page = child.page_values()[0]
+            return None, None, {'break': 'any', 'page': page}, [], False
+        elif stop:
+            break
 
     else:
         resume_at = None
@@ -668,10 +659,10 @@ def block_container_layout(context, box, max_position_y, skip_stack,
     collapsing_through = False
     if last_in_flow_child is None:
         collapsed_margin = collapse_margin(adjoining_margins)
-        # top and bottom margin of this box
+        # Top and bottom margins of this box
         if (box.height in ('auto', 0) and
             get_clearance(context, box, collapsed_margin) is None and
-            all(v == 0 for v in [
+            all(value == 0 for value in [
                 box.min_height, box.border_top_width, box.padding_top,
                 box.border_bottom_width, box.padding_bottom])):
             collapsing_through = True
@@ -728,8 +719,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
         # After finish_block_formatting_context which may increment
         # new_box.height
         new_box.height = max(
-            min(new_box.height, new_box.max_height),
-            new_box.min_height)
+            min(new_box.height, new_box.max_height), new_box.min_height)
     elif max_position_y < float('inf'):
         # Make the box fill the blank space at the bottom of the page
         # https://www.w3.org/TR/css-break-3/#box-splitting
@@ -847,7 +837,7 @@ def find_earlier_page_break(children, absolute_boxes, fixed_boxes):
     Absolute or fixed placeholders removed from children should also be
     removed from `absolute_boxes` or `fixed_boxes`.
 
-    Return (new_children, resume_at)
+    Return (new_children, resume_at).
 
     """
     if children and isinstance(children[0], boxes.LineBox):
@@ -928,8 +918,10 @@ def reversed_enumerate(seq):
 
 
 def remove_placeholders(box_list, absolute_boxes, fixed_boxes):
-    """For boxes that have been removed in find_earlier_page_break(),
-    also remove the matching placeholders in absolute_boxes and fixed_boxes.
+    """Remove placeholders from absolute and fixed lists.
+
+    For boxes that have been removed in find_earlier_page_break(), remove the
+    matching placeholders in absolute_boxes and fixed_boxes.
 
     """
     for box in box_list:
