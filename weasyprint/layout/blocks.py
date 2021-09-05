@@ -378,6 +378,171 @@ def _linebox_layout(context, box, index, child, new_children, page_is_empty,
     return abort, stop, resume_at, position_y
 
 
+def _in_flow_layout(context, box, index, child, new_children, page_is_empty,
+                    absolute_boxes, fixed_boxes, adjoining_margins,
+                    allowed_max_position_y, max_position_y, position_y,
+                    skip_stack, first_letter_style, draw_bottom_decoration,
+                    collapsing_with_children, discard, next_page):
+    abort = stop = False
+
+    last_in_flow_child = find_last_in_flow_child(new_children)
+    if last_in_flow_child is not None:
+        # Between in-flow siblings
+        page_break = block_level_page_break(last_in_flow_child, child)
+        page_name = block_level_page_name(last_in_flow_child, child)
+        if page_name or page_break in (
+                'page', 'left', 'right', 'recto', 'verso'):
+            page_name = child.page_values()[0]
+            next_page = {'break': page_break, 'page': page_name}
+            resume_at = {index: None}
+            stop = True
+            return (
+                abort, stop, resume_at, position_y, adjoining_margins,
+                next_page, new_children)
+    else:
+        page_break = 'auto'
+
+    new_containing_block = box
+
+    if not new_containing_block.is_table_wrapper:
+        resolve_percentages(child, new_containing_block)
+        if (child.is_in_normal_flow() and last_in_flow_child is None and
+                collapsing_with_children):
+            # TODO: add the adjoining descendants' margin top to
+            # [child.margin_top]
+            old_collapsed_margin = collapse_margin(adjoining_margins)
+            if child.margin_top == 'auto':
+                child_margin_top = 0
+            else:
+                child_margin_top = child.margin_top
+            new_collapsed_margin = collapse_margin(
+                adjoining_margins + [child_margin_top])
+            collapsed_margin_difference = (
+                new_collapsed_margin - old_collapsed_margin)
+            for previous_new_child in new_children:
+                previous_new_child.translate(
+                    dy=collapsed_margin_difference)
+            clearance = get_clearance(
+                context, child, new_collapsed_margin)
+            if clearance is not None:
+                for previous_new_child in new_children:
+                    previous_new_child.translate(
+                        dy=-collapsed_margin_difference)
+
+                collapsed_margin = collapse_margin(adjoining_margins)
+                box.position_y += collapsed_margin - box.margin_top
+                # Count box.margin_top as we emptied adjoining_margins
+                adjoining_margins = []
+                position_y = box.content_box_y()
+
+    if adjoining_margins and box.is_table_wrapper:
+        collapsed_margin = collapse_margin(adjoining_margins)
+        child.position_y += collapsed_margin
+        position_y += collapsed_margin
+        adjoining_margins = []
+
+    page_is_empty_with_no_children = page_is_empty and not any(
+        child for child in new_children
+        if not isinstance(child, AbsolutePlaceholder))
+
+    if not getattr(child, 'first_letter_style', None):
+        child.first_letter_style = first_letter_style
+    (new_child, resume_at, next_page, next_adjoining_margins,
+        collapsing_through) = block_level_layout(
+            context, child, max_position_y, skip_stack,
+            new_containing_block, page_is_empty_with_no_children,
+            absolute_boxes, fixed_boxes, adjoining_margins, discard)
+    skip_stack = None
+
+    if new_child is not None:
+        # index in its non-laid-out parent, not in future new parent
+        # May be used in find_earlier_page_break()
+        new_child.index = index
+
+        # We need to do this after the child layout to have the
+        # used value for margin_top (eg. it might be a percentage.)
+        if not isinstance(
+                new_child, (boxes.BlockBox, boxes.TableBox)):
+            adjoining_margins.append(new_child.margin_top)
+            offset_y = (
+                collapse_margin(adjoining_margins) -
+                new_child.margin_top)
+            new_child.translate(0, offset_y)
+            adjoining_margins = []
+        # else: blocks handle that themselves.
+
+        adjoining_margins = next_adjoining_margins
+        adjoining_margins.append(new_child.margin_bottom)
+
+        if not collapsing_through:
+            new_position_y = (
+                new_child.border_box_y() + new_child.border_height())
+
+            if (new_position_y > allowed_max_position_y and
+                    not page_is_empty_with_no_children):
+                # The child overflows the page area, put it on the
+                # next page. (But don’t delay whole blocks if eg.
+                # only the bottom border overflows.)
+                new_child = None
+            else:
+                position_y = new_position_y
+
+        if new_child is not None and new_child.clearance is not None:
+            position_y = (
+                new_child.border_box_y() + new_child.border_height())
+
+    if new_child is None:
+        # Nothing fits in the remaining space of this page: break
+        if page_break in ('avoid', 'avoid-page'):
+            # TODO: fill the blank space at the bottom of the page
+            result = find_earlier_page_break(
+                new_children, absolute_boxes, fixed_boxes)
+            if result:
+                new_children, resume_at = result
+                stop = True
+                return (
+                    abort, stop, resume_at, position_y, adjoining_margins,
+                    next_page, new_children)
+            else:
+                # We did not find any page break opportunity
+                if not page_is_empty:
+                    # The page has content *before* this block:
+                    # cancel the block and try to find a break
+                    # in the parent.
+                    abort = True
+                    return (
+                        abort, stop, resume_at, position_y, adjoining_margins,
+                        next_page, new_children)
+                # else:
+                # ignore this 'avoid' and break anyway.
+
+        if all(child.is_absolutely_positioned() for child in new_children):
+            # This box has only rendered absolute children, keep them
+            # for the next page. This is for example useful for list
+            # markers.
+            remove_placeholders(new_children, absolute_boxes, fixed_boxes)
+            new_children = []
+
+        if new_children:
+            resume_at = {index: None}
+            stop = True
+        else:
+            # This was the first child of this box, cancel the box completly
+            abort = True
+        return (
+            abort, stop, resume_at, position_y, adjoining_margins, next_page,
+            new_children)
+
+    new_children.append(new_child)
+    if resume_at is not None:
+        resume_at = {index: resume_at}
+        stop = True
+
+    return (
+        abort, stop, resume_at, position_y, adjoining_margins, next_page,
+        new_children)
+
+
 def block_container_layout(context, box, max_position_y, skip_stack,
                            page_is_empty, absolute_boxes, fixed_boxes,
                            adjoining_margins, discard):
@@ -468,157 +633,20 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                 break
 
         else:
-            last_in_flow_child = find_last_in_flow_child(new_children)
-            if last_in_flow_child is not None:
-                # Between in-flow siblings
-                page_break = block_level_page_break(last_in_flow_child, child)
-                page_name = block_level_page_name(last_in_flow_child, child)
-                if page_name or page_break in (
-                        'page', 'left', 'right', 'recto', 'verso'):
-                    page_name = child.page_values()[0]
-                    next_page = {'break': page_break, 'page': page_name}
-                    resume_at = {index: None}
-                    break
-            else:
-                page_break = 'auto'
-
-            new_containing_block = box
-
-            if not new_containing_block.is_table_wrapper:
-                resolve_percentages(child, new_containing_block)
-                if (child.is_in_normal_flow() and
-                        last_in_flow_child is None and
-                        collapsing_with_children):
-                    # TODO: add the adjoining descendants' margin top to
-                    # [child.margin_top]
-                    old_collapsed_margin = collapse_margin(adjoining_margins)
-                    if child.margin_top == 'auto':
-                        child_margin_top = 0
-                    else:
-                        child_margin_top = child.margin_top
-                    new_collapsed_margin = collapse_margin(
-                        adjoining_margins + [child_margin_top])
-                    collapsed_margin_difference = (
-                        new_collapsed_margin - old_collapsed_margin)
-                    for previous_new_child in new_children:
-                        previous_new_child.translate(
-                            dy=collapsed_margin_difference)
-                    clearance = get_clearance(
-                        context, child, new_collapsed_margin)
-                    if clearance is not None:
-                        for previous_new_child in new_children:
-                            previous_new_child.translate(
-                                dy=-collapsed_margin_difference)
-
-                        collapsed_margin = collapse_margin(adjoining_margins)
-                        box.position_y += collapsed_margin - box.margin_top
-                        # Count box.margin_top as we emptied adjoining_margins
-                        adjoining_margins = []
-                        position_y = box.content_box_y()
-
-            if adjoining_margins and box.is_table_wrapper:
-                collapsed_margin = collapse_margin(adjoining_margins)
-                child.position_y += collapsed_margin
-                position_y += collapsed_margin
-                adjoining_margins = []
-
-            page_is_empty_with_no_children = page_is_empty and not any(
-                child for child in new_children
-                if not isinstance(child, AbsolutePlaceholder))
-
-            if not getattr(child, 'first_letter_style', None):
-                child.first_letter_style = first_letter_style
-            (new_child, resume_at, next_page, next_adjoining_margins,
-                collapsing_through) = block_level_layout(
-                    context, child, max_position_y, skip_stack,
-                    new_containing_block, page_is_empty_with_no_children,
-                    absolute_boxes, fixed_boxes, adjoining_margins, discard)
+            (abort, stop, resume_at, position_y, adjoining_margins,
+             next_page, new_children) = _in_flow_layout(
+                 context, box, index, child, new_children, page_is_empty,
+                 absolute_boxes, fixed_boxes, adjoining_margins,
+                 allowed_max_position_y, max_position_y, position_y,
+                 skip_stack, first_letter_style, draw_bottom_decoration,
+                 collapsing_with_children, discard, next_page)
             skip_stack = None
-
-            if new_child is not None:
-                # index in its non-laid-out parent, not in future new parent
-                # May be used in find_earlier_page_break()
-                new_child.index = index
-
-                # We need to do this after the child layout to have the
-                # used value for margin_top (eg. it might be a percentage.)
-                if not isinstance(
-                        new_child, (boxes.BlockBox, boxes.TableBox)):
-                    adjoining_margins.append(new_child.margin_top)
-                    offset_y = (
-                        collapse_margin(adjoining_margins) -
-                        new_child.margin_top)
-                    new_child.translate(0, offset_y)
-                    adjoining_margins = []
-                # else: blocks handle that themselves.
-
-                adjoining_margins = next_adjoining_margins
-                adjoining_margins.append(new_child.margin_bottom)
-
-                if not collapsing_through:
-                    new_position_y = (
-                        new_child.border_box_y() + new_child.border_height())
-
-                    if (new_position_y > allowed_max_position_y and
-                            not page_is_empty_with_no_children):
-                        # The child overflows the page area, put it on the
-                        # next page. (But don’t delay whole blocks if eg.
-                        # only the bottom border overflows.)
-                        new_child = None
-                    else:
-                        position_y = new_position_y
-
-                if new_child is not None and new_child.clearance is not None:
-                    position_y = (
-                        new_child.border_box_y() + new_child.border_height())
-
-            if new_child is None:
-                # Nothing fits in the remaining space of this page: break
-                if page_break in ('avoid', 'avoid-page'):
-                    # TODO: fill the blank space at the bottom of the page
-                    result = find_earlier_page_break(
-                        new_children, absolute_boxes, fixed_boxes)
-                    if result:
-                        new_children, resume_at = result
-                        break
-                    else:
-                        # We did not find any page break opportunity
-                        if not page_is_empty:
-                            # The page has content *before* this block:
-                            # cancel the block and try to find a break
-                            # in the parent.
-                            page = child.page_values()[0]
-                            return (
-                                None, None, {'break': 'any', 'page': page}, [],
-                                False)
-                        # else:
-                        # ignore this 'avoid' and break anyway.
-
-                if all(child.is_absolutely_positioned()
-                       for child in new_children):
-                    # This box has only rendered absolute children, keep them
-                    # for the next page. This is for example useful for list
-                    # markers.
-                    remove_placeholders(
-                        new_children, absolute_boxes, fixed_boxes)
-                    new_children = []
-
-                if new_children:
-                    resume_at = {index: None}
-                    break
-                else:
-                    # This was the first child of this box, cancel the box
-                    # completly
-                    page = child.page_values()[0]
-                    return (
-                        None, None, {'break': 'any', 'page': page}, [], False)
-
-            # Bottom borders may overflow here
-            # TODO: back-track somehow when all lines fit but not borders
-            new_children.append(new_child)
-            if resume_at is not None:
-                resume_at = {index: resume_at}
+            if abort:
+                page = child.page_values()[0]
+                return None, None, {'break': 'any', 'page': page}, [], False
+            elif stop:
                 break
+
     else:
         resume_at = None
 
