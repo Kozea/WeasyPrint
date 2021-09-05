@@ -294,6 +294,90 @@ def _out_of_flow_layout(context, box, index, child, new_children,
     return stop, resume_at
 
 
+def _linebox_layout(context, box, index, child, new_children, page_is_empty,
+                    absolute_boxes, fixed_boxes, adjoining_margins,
+                    max_position_y, position_y, skip_stack, first_letter_style,
+                    draw_bottom_decoration):
+    abort = stop = False
+    resume_at = None
+
+    assert len(box.children) == 1, 'line box with siblings before layout'
+
+    if adjoining_margins:
+        position_y += collapse_margin(adjoining_margins)
+    new_containing_block = box
+    lines_iterator = iter_line_boxes(
+        context, child, position_y, skip_stack, new_containing_block,
+        absolute_boxes, fixed_boxes, first_letter_style)
+    for i, (line, resume_at) in enumerate(lines_iterator):
+        line.resume_at = resume_at
+        new_position_y = line.position_y + line.height
+
+        # Add bottom padding and border to the bottom position of the
+        # box if needed
+        draw_bottom_decoration |= resume_at is None
+        if draw_bottom_decoration:
+            offset_y = box.border_bottom_width + box.padding_bottom
+        else:
+            offset_y = 0
+
+        # Allow overflow if the first line of the page is higher
+        # than the page itself so that we put *something* on this
+        # page and can advance in the context.
+        if new_position_y + offset_y > max_position_y and (
+                new_children or not page_is_empty):
+            over_orphans = len(new_children) - box.style['orphans']
+            if over_orphans < 0 and not page_is_empty:
+                # Reached the bottom of the page before we had
+                # enough lines for orphans, cancel the whole box.
+                abort = True
+                break
+            # How many lines we need on the next page to satisfy widows
+            # -1 for the current line.
+            needed = box.style['widows'] - 1
+            if needed:
+                for _ in lines_iterator:
+                    needed -= 1
+                    if needed == 0:
+                        break
+            if needed > over_orphans and not page_is_empty:
+                # Total number of lines < orphans + widows
+                abort = True
+                break
+            if needed and needed <= over_orphans:
+                # Remove lines to keep them for the next page
+                del new_children[-needed:]
+            # Page break here, resume before this line
+            resume_at = {index: skip_stack}
+            stop = True
+            break
+        # TODO: this is incomplete.
+        # See http://dev.w3.org/csswg/css3-page/#allowed-pg-brk
+        # "When an unforced page break occurs here, both the adjoining
+        #  ‘margin-top’ and ‘margin-bottom’ are set to zero."
+        # See https://github.com/Kozea/WeasyPrint/issues/115
+        elif page_is_empty and new_position_y > max_position_y:
+            # Remove the top border when a page is empty and the box is
+            # too high to be drawn in one page
+            new_position_y -= box.margin_top
+            line.translate(0, -box.margin_top)
+            box.margin_top = 0
+        new_children.append(line)
+        position_y = new_position_y
+        skip_stack = resume_at
+
+        # Break box if we reached max-lines
+        if box.style['max_lines'] != 'none':
+            if i >= box.style['max_lines'] - 1:
+                line.block_ellipsis = box.style['block_ellipsis']
+                break
+
+    if new_children:
+        resume_at = {index: new_children[-1].resume_at}
+
+    return abort, stop, resume_at, position_y
+
+
 def block_container_layout(context, box, max_position_y, skip_stack,
                            page_is_empty, absolute_boxes, fixed_boxes,
                            adjoining_margins, discard):
@@ -370,87 +454,17 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                 break
 
         elif isinstance(child, boxes.LineBox):
-            assert len(box.children) == 1, (
-                'line box with siblings before layout')
-            if adjoining_margins:
-                position_y += collapse_margin(adjoining_margins)
-                adjoining_margins = []
-            new_containing_block = box
-            lines_iterator = iter_line_boxes(
-                context, child, position_y, skip_stack,
-                new_containing_block, absolute_boxes, fixed_boxes,
-                first_letter_style)
-            is_page_break = False
-            for i, (line, resume_at) in enumerate(lines_iterator):
-                line.resume_at = resume_at
-                new_position_y = line.position_y + line.height
-
-                # Add bottom padding and border to the bottom position of the
-                # box if needed
-                draw_bottom_decoration |= resume_at is None
-                if draw_bottom_decoration:
-                    offset_y = box.border_bottom_width + box.padding_bottom
-                else:
-                    offset_y = 0
-
-                # Allow overflow if the first line of the page is higher
-                # than the page itself so that we put *something* on this
-                # page and can advance in the context.
-                if new_position_y + offset_y > allowed_max_position_y and (
-                        new_children or not page_is_empty):
-                    over_orphans = len(new_children) - box.style['orphans']
-                    if over_orphans < 0 and not page_is_empty:
-                        # Reached the bottom of the page before we had
-                        # enough lines for orphans, cancel the whole box.
-                        page = child.page_values()[0]
-                        return (
-                            None, None, {'break': 'any', 'page': page}, [],
-                            False)
-                    # How many lines we need on the next page to satisfy widows
-                    # -1 for the current line.
-                    needed = box.style['widows'] - 1
-                    if needed:
-                        for _ in lines_iterator:
-                            needed -= 1
-                            if needed == 0:
-                                break
-                    if needed > over_orphans and not page_is_empty:
-                        # Total number of lines < orphans + widows
-                        page = child.page_values()[0]
-                        return (
-                            None, None, {'break': 'any', 'page': page}, [],
-                            False)
-                    if needed and needed <= over_orphans:
-                        # Remove lines to keep them for the next page
-                        del new_children[-needed:]
-                    # Page break here, resume before this line
-                    resume_at = {index: skip_stack}
-                    is_page_break = True
-                    break
-                # TODO: this is incomplete.
-                # See http://dev.w3.org/csswg/css3-page/#allowed-pg-brk
-                # "When an unforced page break occurs here, both the adjoining
-                #  ‘margin-top’ and ‘margin-bottom’ are set to zero."
-                # See https://github.com/Kozea/WeasyPrint/issues/115
-                elif page_is_empty and new_position_y > allowed_max_position_y:
-                    # Remove the top border when a page is empty and the box is
-                    # too high to be drawn in one page
-                    new_position_y -= box.margin_top
-                    line.translate(0, -box.margin_top)
-                    box.margin_top = 0
-                new_children.append(line)
-                position_y = new_position_y
-                skip_stack = resume_at
-
-                # Break box if we reached max-lines
-                if box.style['max_lines'] != 'none':
-                    if i >= box.style['max_lines'] - 1:
-                        line.block_ellipsis = box.style['block_ellipsis']
-                        break
-
-            if new_children:
-                resume_at = {index: new_children[-1].resume_at}
-            if is_page_break:
+            abort, stop, resume_at, position_y = _linebox_layout(
+                context, box, index, child, new_children, page_is_empty,
+                absolute_boxes, fixed_boxes, adjoining_margins,
+                allowed_max_position_y, position_y, skip_stack,
+                first_letter_style, draw_bottom_decoration)
+            draw_bottom_decoration |= resume_at is None
+            adjoining_margins = []
+            if abort:
+                page = child.page_values()[0]
+                return None, None, {'break': 'any', 'page': page}, [], False
+            elif stop:
                 break
 
         else:
