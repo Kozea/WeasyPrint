@@ -265,10 +265,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
     # The 1e-9 value comes from PEP 485.
     allowed_max_position_y = max_position_y * (1 + 1e-9)
 
-    if not isinstance(box, boxes.BlockBox):
-        # See http://www.w3.org/TR/CSS21/visuren.html#block-formatting
-        context.create_block_formatting_context()
-    elif 'flow-root' in box.style['display']:
+    if establishes_formatting_context(box):
         context.create_block_formatting_context()
 
     is_start = skip_stack is None
@@ -683,7 +680,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
     for child in new_box.children:
         relative_positioning(child, (new_box.width, new_box.height))
 
-    if not isinstance(new_box, boxes.BlockBox):
+    if establishes_formatting_context(new_box):
         context.finish_block_formatting_context(new_box)
 
     if discard or not box_is_fragmented:
@@ -739,6 +736,8 @@ def establishes_formatting_context(box):
         not isinstance(box, boxes.BlockBox)
     ) or (
         isinstance(box, boxes.BlockBox) and box.style['overflow'] != 'visible'
+    ) or (
+        'flow-root' in box.style['display']
     )
 
 
