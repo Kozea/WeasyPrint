@@ -341,10 +341,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                     new_child.index = index
                     new_children.append(new_child)
                 else:
-                    for previous_child in reversed(new_children):
-                        if previous_child.is_in_normal_flow():
-                            last_in_flow_child = previous_child
-                            break
+                    last_in_flow_child = find_last_in_flow_child(new_children)
                     page_break = block_level_page_break(
                         last_in_flow_child, child)
                     if new_children and page_break in ('avoid', 'avoid-page'):
@@ -445,12 +442,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
             if is_page_break:
                 break
         else:
-            for previous_child in reversed(new_children):
-                if previous_child.is_in_normal_flow():
-                    last_in_flow_child = previous_child
-                    break
-            else:
-                last_in_flow_child = None
+            last_in_flow_child = find_last_in_flow_child(new_children)
             if last_in_flow_child is not None:
                 # Between in-flow siblings
                 page_break = block_level_page_break(last_in_flow_child, child)
@@ -618,12 +610,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
         box.position_y += (
             collapse_margin(this_box_adjoining_margins) - box.margin_top)
 
-    for previous_child in reversed(new_children):
-        if previous_child.is_in_normal_flow():
-            last_in_flow_child = previous_child
-            break
-    else:
-        last_in_flow_child = None
+    last_in_flow_child = find_last_in_flow_child(new_children)
     collapsing_through = False
     if last_in_flow_child is None:
         collapsed_margin = collapse_margin(adjoining_margins)
@@ -870,6 +857,13 @@ def find_earlier_page_break(children, absolute_boxes, fixed_boxes):
     # TODO: don’t remove absolute and fixed placeholders found in table footers
     remove_placeholders(children[index:], absolute_boxes, fixed_boxes)
     return new_children, resume_at
+
+
+def find_last_in_flow_child(children):
+    """Find and return the last in-flow child of given ``children``."""
+    for child in reversed(children):
+        if child.is_in_normal_flow():
+            return child
 
 
 def reversed_enumerate(seq):
