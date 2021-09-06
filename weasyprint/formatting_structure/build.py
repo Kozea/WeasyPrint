@@ -374,6 +374,7 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
         has_text.add(True)
         if text:
             if content_boxes and isinstance(content_boxes[-1], boxes.TextBox):
+                content_boxes[-1].original_text += text
                 content_boxes[-1].text += text
             else:
                 content_boxes.append(
@@ -649,12 +650,8 @@ def compute_bookmark_label(element, box, content_list, counter_values,
     box_list = compute_content_list(
         content_list, box, counter_values, css_token, parse_again,
         target_collector, counter_style, element=element)
-
-    if box_list is None:
-        box.bookmark_label = ''
-    else:
-        box.bookmark_label = ''.join(
-            box.text for box in box_list if isinstance(box, boxes.TextBox))
+    if box_list:
+        box.bookmark_label = ''.join(box_text(box) for box in box_list)
 
 
 def set_content_lists(element, box, style, counter_values, target_collector,
@@ -1550,10 +1547,10 @@ def set_viewport_overflow(root_box):
 
 def box_text(box):
     if isinstance(box, boxes.TextBox):
-        return box.text
+        return box.original_text
     elif isinstance(box, boxes.ParentBox):
         return ''.join(
-            child.text for child in box.descendants()
+            child.original_text for child in box.descendants()
             if not child.element_tag.endswith('::before') and
             not child.element_tag.endswith('::after') and
             not child.element_tag.endswith('::marker') and

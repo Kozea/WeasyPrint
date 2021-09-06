@@ -475,6 +475,7 @@ class TextBox(InlineLevelBox):
     def __init__(self, element_tag, style, element, text):
         assert text
         super().__init__(element_tag, style, element)
+        self.original_text = text
         text_transform = style['text_transform']
         if text_transform != 'none':
             text = {

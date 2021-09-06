@@ -267,6 +267,19 @@ def test_bookmarks_12():
 
 
 @assert_no_logs
+def test_bookmarks_13():
+    pdf = FakeHTML(string='''
+      <div style="bookmark-level:1; bookmark-label:contents;
+                  text-transform:uppercase">a</div>
+    ''').write_pdf()
+    # a
+    counts = re.findall(b'/Count ([0-9-]*)', pdf)
+    outlines = counts.pop()
+    assert outlines == b'1'
+    assert re.findall(b'/Title \\((.*)\\)', pdf) == [b'a']
+
+
+@assert_no_logs
 def test_links_none():
     pdf = FakeHTML(string='<body>').write_pdf()
     assert b'Annots' not in pdf
