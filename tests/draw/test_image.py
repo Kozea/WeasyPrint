@@ -280,6 +280,17 @@ def test_images_alt():
 
 
 @assert_no_logs
+def test_images_repeat_transparent():
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1440
+    assert_pixels('image_repeat_transparent', 1, 3, '_\n_\n_', '''
+      <style>
+        @page { size: 1px }
+        div { height: 100px; width: 100px; background: url(logo_small.png) }
+      </style>
+      <div></div><div></div><div></div>''')
+
+
+@assert_no_logs
 def test_images_no_width():
     assert_pixels('image_0x1', 8, 8, no_image, '''
       <style>
