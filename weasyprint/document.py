@@ -902,8 +902,11 @@ class Document:
         for key, x_object in resources.get('XObject', {}).items():
             # Images
             if x_object is None:
-                resources['XObject'][key] = images[key].reference
-                continue  # function already called when images are added
+                x_object = images[key]
+                if x_object.number is not None:
+                    # Image already added to PDF
+                    resources['XObject'][key] = x_object.reference
+                    continue
 
             pdf.add_object(x_object)
             resources['XObject'][key] = x_object.reference
@@ -1400,9 +1403,6 @@ class Document:
 
         pdf.add_object(pdf_fonts)
         resources['Font'] = pdf_fonts.reference
-        for image in images.values():
-            pdf.add_object(image)
-            self._use_references(pdf, image.extra, images)
         self._use_references(pdf, resources, images)
 
         # Anchors
