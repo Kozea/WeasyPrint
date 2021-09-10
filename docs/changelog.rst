@@ -2,6 +2,47 @@ Changelog
 =========
 
 
+Version 53.3
+------------
+
+Released on 2021-09-10.
+
+Bug fixes:
+
+* `#1431 <https://github.com/Kozea/WeasyPrint/issues/1431>`_,
+  `#1440 <https://github.com/Kozea/WeasyPrint/issues/1440>`_:
+  Fix crashes and malformed PDF files
+* `#1430 <https://github.com/Kozea/WeasyPrint/issues/1430>`_:
+  Handle cx and cy in SVG rotations
+* `#1436 <https://github.com/Kozea/WeasyPrint/pull/1436>`_:
+  Fix marker-start being drawn on mid vertices
+
+Contributors:
+
+* Guillaume Ayoub
+* Rian McGuire
+* Lucie Anglade
+
+Backers and sponsors:
+
+* Grip Angebotssoftware
+* SimonSoft
+* Menutech
+* Manuel Barkhau
+* Simon Sapin
+* KontextWork
+* René Fritz
+* Maykin Media
+* NCC Group
+* Des images et des mots
+* Andreas Zettl
+* Nathalie Gutton
+* Tom Pohl
+* Moritz Mahringer
+* Florian Demmer
+* Yanal-Yvez Fargialla
+
+
 Version 53.2
 ------------
 
