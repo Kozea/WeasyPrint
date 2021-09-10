@@ -120,9 +120,9 @@ Some tips may help you to get better results.
 - Tables are known to be slow, especially when they are rendered on multiple
   pages. When possible, using a common block layout instead gives much faster
   layouts.
-- Encoding detection can be really slow when HTML lines are really long.
-  Providing an explicit encoding or removing the ``chardet`` module fixes the
-  problem (see `#29`_).
+- Optimizing images and fonts can reduce the PDF size, but increase the
+  rendering time. Moreover, caching images gives the possibility to read and
+  optimize images only once, and thus to save time when the same image is used
+  multiple times. See :ref:`Image Cache and Optimization`.
 
 .. _WeasyPerf: https://kozea.github.io/WeasyPerf/
-.. _#29: https://github.com/chardet/chardet/issues/29

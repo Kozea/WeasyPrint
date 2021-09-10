@@ -507,6 +507,41 @@ the function internally used by WeasyPrint to retreive data.
 .. _Django-WeasyPrint: https://github.com/fdemmer/django-weasyprint
 .. _Django: https://www.djangoproject.com/
 
+Image Cache and Optimization
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+WeasyPrint provides two options to deal with images: ``optimize_size`` and
+``image_cache``.
+
+``optimize_size`` can enable size optimization for images, but also for fonts.
+When enabled, the generated PDF will include smaller images and fonts, but the
+rendering time may be slightly increased.
+
+.. code-block:: python
+
+    # No size optimization, faster, but generated PDF is larger
+    HTML('http://example.org/').write_pdf(
+        'example.pdf', optimize_size=())
+
+    # Full size optimization, slower, but generated PDF is smaller
+    HTML('http://example.org/').write_pdf(
+        'example.pdf', optimize_size=('fonts', 'images'))
+
+``image_cache`` gives the possibility to use a cache for images, avoiding to
+download, parse and optimize them each time they are used.
+
+By default, the cache is used document by document, but you can share it
+between documents if needed. This feature can save a lot of network and CPU
+time when you render a lot of documents that use the same images.
+
+.. code-block:: python
+
+    cache = {}
+    for i in range(10):
+        HTML(f'http://example.org/?id={i}').write_pdf(
+            f'example-{i}.pdf', image_cache=cache)
+
+
 Logging
 ~~~~~~~
 
