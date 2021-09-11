@@ -294,6 +294,8 @@ class SVG:
         self.patterns = {}
         self.paths = {}
 
+        self.use_cache = {}
+
         self.cursor_position = [0, 0]
         self.cursor_d_position = [0, 0]
         self.text_path_width = 0
