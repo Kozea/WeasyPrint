@@ -120,7 +120,9 @@ def make_replaced_box(element, box, image):
 
 @handler('img')
 def handle_img(element, box, get_image_from_uri, base_url):
-    """Handle ``<img>`` elements, return either an image or the alt-text.
+    """Handle ``<img>`` elements.
+
+    Return either an image or the alt-text.
 
     See: http://www.w3.org/TR/html5/embedded-content-1.html#the-img-element
 
@@ -253,8 +255,9 @@ def handle_a(element, box, _get_image_from_uri, base_url):
 
 @handler('{http://www.w3.org/2000/svg}svg')
 def handle_svg(element, box, get_image_from_uri, base_url):
-    """Handle ``<svg>`` elements, return either an image or the fallback
-    content.
+    """Handle ``<svg>`` elements.
+
+    Return either an image or the fallback content.
 
     """
     # TODO: handle href base for inline svg tags
