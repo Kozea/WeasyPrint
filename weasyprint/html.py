@@ -14,7 +14,6 @@
 import re
 from pkgutil import get_data
 from urllib.parse import urljoin
-from xml.etree.ElementTree import tostring
 
 from . import CSS
 from .css import get_child_text
@@ -261,14 +260,10 @@ def handle_svg(element, box, get_image_from_uri, base_url):
 
     """
     # TODO: handle href base for inline svg tags
-    if '{http://www.w3.org/2000/xmlns/}xmlns' in element.attrib:
-        # Remove default namespace to avoid xmlns being used as prefix
-        del element.attrib['{http://www.w3.org/2000/xmlns/}xmlns']
     url_fetcher = get_image_from_uri.keywords['url_fetcher']
     context = get_image_from_uri.keywords['context']
     try:
-        string = tostring(element, 'utf-8')
-        image = SVGImage(string, base_url, url_fetcher, context)
+        image = SVGImage(element, base_url, url_fetcher, context)
     except Exception as exception:
         LOGGER.error('Failed to load inline SVG: %s', exception)
         return []

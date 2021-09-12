@@ -10,6 +10,7 @@ import contextlib
 import operator
 from colorsys import hsv_to_rgb, rgb_to_hsv
 from math import ceil, floor, pi, sqrt, tan
+from xml.etree import ElementTree
 
 from .formatting_structure import boxes
 from .images import SVGImage
@@ -277,8 +278,7 @@ def draw_background(stream, bg, clip_box=True, bleed=None, marks=()):
             svg = f'''
               <svg height="{height}" width="{width}"
                    fill="transparent" stroke="black" stroke-width="1"
-                   xmlns="http://www.w3.org/2000/svg"
-                   xmlns:xlink="http://www.w3.org/1999/xlink">
+                   xmlns="http://www.w3.org/2000/svg">
             '''
             if 'crop' in marks:
                 svg += f'''
@@ -323,7 +323,8 @@ def draw_background(stream, bg, clip_box=True, bleed=None, marks=()):
                     translate({width},0) scale(0.5) translate(0,{height})" />
                 '''
             svg += '</svg>'
-            image = SVGImage(svg, None, None, stream)
+            tree = ElementTree.fromstring(svg)
+            image = SVGImage(tree, None, None, stream)
             # Painting area is the PDF media box
             size = (width, height)
             position = (x, y)
