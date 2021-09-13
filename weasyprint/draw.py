@@ -9,11 +9,14 @@
 import contextlib
 import operator
 from colorsys import hsv_to_rgb, rgb_to_hsv
+from io import BytesIO
 from math import ceil, floor, pi, sqrt, tan
 from xml.etree import ElementTree
 
+from PIL import Image
+
 from .formatting_structure import boxes
-from .images import SVGImage
+from .images import RasterImage, SVGImage
 from .layout import replaced
 from .layout.backgrounds import BackgroundLayer
 from .stacking import StackingContext
@@ -983,8 +986,11 @@ def draw_text(stream, textbox, offset_x, text_overflow, block_ellipsis):
 
     textbox.pango_layout.reactivate(textbox.style)
     stream.begin_text()
-    draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y)
+    emojis = draw_first_line(
+        stream, textbox, text_overflow, block_ellipsis, x, y)
     stream.end_text()
+
+    draw_emojis(stream, textbox.style['font_size'], x, y, emojis)
 
     # Draw text decoration
     values = textbox.style['text_decoration_line']
@@ -1009,6 +1015,15 @@ def draw_text(stream, textbox, offset_x, text_overflow, block_ellipsis):
             stream, textbox, offset_x, offset_y, thickness, color)
 
     textbox.pango_layout.deactivate()
+
+
+def draw_emojis(stream, font_size, x, y, emojis):
+    for emoji in emojis:
+        for image, font, a, d, e, f in emojis:
+            stream.push_state()
+            stream.transform(a=a, d=d, e=x + e * font_size, f=y + f)
+            image.draw(stream, font_size, font_size, None)
+            stream.pop_state()
 
 
 def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y):
@@ -1067,6 +1082,8 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y):
     last_font = None
     string = ''
     fonts = stream.get_fonts()
+    x_advance = 0
+    emojis = []
     for run in runs:
         # Pango objects
         glyph_item = ffi.cast('PangoGlyphItem *', run.data)
@@ -1084,7 +1101,9 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y):
         if font_hash in fonts:
             font = fonts[font_hash]
         else:
-            hb_blob = harfbuzz.hb_face_reference_blob(hb_face)
+            hb_blob = ffi.gc(
+                harfbuzz.hb_face_reference_blob(hb_face),
+                harfbuzz.hb_blob_destroy)
             hb_data = harfbuzz.hb_blob_get_data(hb_blob, stream.length)
             file_content = ffi.unpack(hb_data, int(stream.length[0]))
             index = harfbuzz.hb_face_get_index(hb_face)
@@ -1148,6 +1167,39 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y):
                 font.cmap[glyph] = utf8_text[utf8_slice].decode('utf-8')
             previous_utf8_position = utf8_position
 
+            if font.svg:
+                hb_blob = ffi.gc(
+                    harfbuzz.hb_ot_color_glyph_reference_svg(hb_face, glyph),
+                    harfbuzz.hb_blob_destroy)
+                hb_data = harfbuzz.hb_blob_get_data(hb_blob, stream.length)
+                if hb_data != ffi.NULL:
+                    svg_data = ffi.unpack(hb_data, int(stream.length[0]))
+                    image = SVGImage(svg_data, None, None, stream)
+                    a = d = font.widths[glyph] / 1000 / font.upem * font_size
+                    emojis.append([image, font, a, d, x_advance, 0])
+            elif font.png:
+                hb_blob = ffi.gc(
+                    harfbuzz.hb_ot_color_glyph_reference_png(hb_font, glyph),
+                    harfbuzz.hb_blob_destroy)
+                hb_data = harfbuzz.hb_blob_get_data(hb_blob, stream.length)
+                if hb_data != ffi.NULL:
+                    png_data = ffi.unpack(hb_data, int(stream.length[0]))
+                    pillow_image = Image.open(BytesIO(png_data))
+                    image_id = f'{font.hash}{glyph}'
+                    image = RasterImage(
+                        pillow_image, image_id, optimize_size=())
+                    d = font.widths[glyph] / 1000
+                    a = pillow_image.width / pillow_image.height * d
+                    pango.pango_font_get_glyph_extents(
+                        pango_font, glyph, stream.ink_rect,
+                        stream.logical_rect)
+                    f = units_to_double(
+                        (-stream.logical_rect.y - stream.logical_rect.height))
+                    f = f / font_size - font_size
+                    emojis.append([image, font, a, d, x_advance, f])
+
+            x_advance += (font.widths[glyph] + offset) / 1000
+
         # Close the last glyphs list, remove if empty
         if string[-1] == '<':
             string = string[:-1]
@@ -1156,6 +1208,8 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y):
 
     # Draw text
     stream.show_text(string)
+
+    return emojis
 
 
 def draw_wave(stream, x, y, width, offset_x, radius):

@@ -35,7 +35,8 @@ class ImageLoadingError(ValueError):
 
 
 class RasterImage:
-    def __init__(self, pillow_image, optimize_size):
+    def __init__(self, pillow_image, image_id, optimize_size):
+        pillow_image.id = image_id
         self._pillow_image = pillow_image
         self._optimize_size = optimize_size
         self._intrinsic_width = pillow_image.width
@@ -134,8 +135,8 @@ def get_image_from_uri(cache, url_fetcher, optimize_size, url,
                             raster_exception)
                 else:
                     # Store image id to enable cache in Stream.add_image
-                    pillow_image.id = len(cache)
-                    image = RasterImage(pillow_image, optimize_size)
+                    image_id = len(cache)
+                    image = RasterImage(pillow_image, image_id, optimize_size)
 
     except (URLFetchingError, ImageLoadingError) as exception:
         LOGGER.error('Failed to load image at %r: %s', url, exception)
