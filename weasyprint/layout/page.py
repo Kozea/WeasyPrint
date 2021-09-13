@@ -12,9 +12,9 @@ from ..css import PageType, computed_from_cascaded
 from ..formatting_structure import boxes, build
 from ..logger import PROGRESS_LOGGER
 from .absolute import absolute_layout
-from .blocks import block_container_layout, block_level_layout
+from .block import block_container_layout, block_level_layout
 from .min_max import handle_min_max_height, handle_min_max_width
-from .percentages import resolve_percentages
+from .percent import resolve_percentages
 from .preferred import max_content_width, min_content_width
 
 

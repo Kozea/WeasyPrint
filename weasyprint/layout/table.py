@@ -8,15 +8,14 @@
 
 from ..formatting_structure import boxes
 from ..logger import LOGGER
-from .percentages import resolve_one_percentage, resolve_percentages
+from .percent import resolve_one_percentage, resolve_percentages
 from .preferred import max_content_width, table_and_columns_preferred_widths
 
 
 def table_layout(context, table, max_position_y, skip_stack, containing_block,
                  page_is_empty, absolute_boxes, fixed_boxes):
     """Layout for a table box."""
-    # Avoid a circular import
-    from .blocks import (
+    from .block import (
         block_container_layout, block_level_page_break,
         find_earlier_page_break)
 
@@ -526,7 +525,10 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
 
 
 def add_top_padding(box, extra_padding):
-    """Increase the top padding of a box. This also translates the children.
+    """Increase the top padding of a box.
+
+    This also translates the children.
+
     """
     box.padding_top += extra_padding
     for child in box.children:
@@ -534,7 +536,7 @@ def add_top_padding(box, extra_padding):
 
 
 def fixed_table_layout(box):
-    """Run the fixed table layout and return a list of column widths
+    """Run the fixed table layout and return a list of column widths.
 
     http://www.w3.org/TR/CSS21/tables.html#fixed-table-layout
 
@@ -748,8 +750,7 @@ def table_wrapper_width(context, wrapper, containing_block):
 
 
 def cell_baseline(cell):
-    """
-    Return the y position of a cell’s baseline from the top of its border box.
+    """Return the y position of a cell baseline from the top of its border box.
 
     See http://www.w3.org/TR/CSS21/tables.html#height-layout
 
@@ -764,9 +765,10 @@ def cell_baseline(cell):
 
 
 def find_in_flow_baseline(box, last=False, baseline_types=(boxes.LineBox,)):
-    """
-    Return the absolute Y position for the first (or last) in-flow baseline
-    if any, or None.
+    """Return the absolute y position for the first (or last) in-flow baseline.
+
+    If there’s no in-flow baseline, return None.
+
     """
     # TODO: synthetize baseline when needed
     # See https://www.w3.org/TR/css-align-3/#synthesize-baseline

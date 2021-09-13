@@ -374,8 +374,7 @@ def table_and_columns_preferred_widths(context, box, outer=True):
     http://dbaron.org/css/intrinsic/
 
     """
-    # Avoid a circular import
-    from .tables import distribute_excess_width
+    from .table import distribute_excess_width
 
     table = box.get_wrapped_table()
     result = context.tables.get(table)
@@ -732,7 +731,7 @@ def flex_max_content_width(context, box, outer=True):
 
 def trailing_whitespace_size(context, box):
     """Return the size of the trailing whitespace of ``box``."""
-    from .inlines import split_first_line, split_text_box
+    from .inline import split_first_line, split_text_box
 
     while isinstance(box, (boxes.InlineBox, boxes.LineBox)):
         if not box.children:

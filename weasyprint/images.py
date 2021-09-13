@@ -14,7 +14,7 @@ from xml.etree import ElementTree
 import pydyf
 from PIL import Image
 
-from .layout.percentages import percentage
+from .layout.percent import percentage
 from .logger import LOGGER
 from .svg import SVG
 from .urls import URLFetchingError, fetch

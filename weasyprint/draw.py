@@ -15,7 +15,7 @@ from xml.etree import ElementTree
 from .formatting_structure import boxes
 from .images import SVGImage
 from .layout import replaced
-from .layout.backgrounds import BackgroundLayer
+from .layout.background import BackgroundLayer
 from .stacking import StackingContext
 from .text.ffi import ffi, harfbuzz, pango, units_from_double, units_to_double
 from .text.line_break import get_last_word_end

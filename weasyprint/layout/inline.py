@@ -16,10 +16,10 @@ from .absolute import AbsolutePlaceholder, absolute_layout
 from .flex import flex_layout
 from .float import avoid_collisions, float_layout
 from .min_max import handle_min_max_height, handle_min_max_width
-from .percentages import resolve_one_percentage, resolve_percentages
+from .percent import resolve_one_percentage, resolve_percentages
 from .preferred import (
     inline_min_content_width, shrink_to_fit, trailing_whitespace_size)
-from .tables import find_in_flow_baseline, table_wrapper_width
+from .table import find_in_flow_baseline, table_wrapper_width
 
 
 def iter_line_boxes(context, box, position_y, skip_stack, containing_block,
@@ -440,7 +440,7 @@ def first_letter_to_box(box, skip_stack, first_letter_style):
 @handle_min_max_width
 def replaced_box_width(box, containing_block):
     """Set the used width for replaced boxes (inline- or block-level)."""
-    from .blocks import block_level_width
+    from .block import block_level_width
 
     width, height, ratio = box.replacement.get_intrinsic_size(
         box.style['image_resolution'], box.style['font_size'])
@@ -596,8 +596,7 @@ def atomic_box(context, box, position_x, skip_stack, containing_block,
 
 def inline_block_box_layout(context, box, position_x, skip_stack,
                             containing_block, absolute_boxes, fixed_boxes):
-    # Avoid a circular import
-    from .blocks import block_container_layout
+    from .block import block_container_layout
 
     resolve_percentages(box, containing_block)
 
@@ -625,9 +624,9 @@ def inline_block_box_layout(context, box, position_x, skip_stack,
 
 
 def inline_block_baseline(box):
-    """
-    Return the y position of the baseline for an inline block
-    from the top of its margin box.
+    """Return the y position of the baseline for an inline block.
+
+    Position is taken from the top of its margin box.
 
     http://www.w3.org/TR/CSS21/visudet.html#propdef-vertical-align
 

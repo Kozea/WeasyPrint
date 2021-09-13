@@ -7,7 +7,7 @@
 
 """
 
-from .percentages import percentage
+from .percent import percentage
 
 
 def default_image_sizing(intrinsic_width, intrinsic_height, intrinsic_ratio,

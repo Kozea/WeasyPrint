@@ -11,9 +11,9 @@ from math import log10
 
 from ..css.properties import Dimension
 from ..formatting_structure import boxes
-from .percentages import resolve_one_percentage, resolve_percentages
+from .percent import resolve_one_percentage, resolve_percentages
 from .preferred import max_content_width, min_content_width
-from .tables import find_in_flow_baseline
+from .table import find_in_flow_baseline
 
 
 class FlexLine(list):
@@ -22,8 +22,7 @@ class FlexLine(list):
 
 def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                 page_is_empty, absolute_boxes, fixed_boxes):
-    # Avoid a circular import
-    from . import blocks, preferred
+    from . import block, preferred
 
     context.create_block_formatting_context()
     resume_at = None
@@ -101,7 +100,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
     if parent_box.margin_right == 'auto':
         box.margin_right = parent_box.margin_right = 0
     if isinstance(parent_box, boxes.FlexBox):
-        blocks.block_level_width(parent_box, containing_block)
+        block.block_level_width(parent_box, containing_block)
     else:
         parent_box.width = preferred.flex_max_content_width(
             context, parent_box)
@@ -154,7 +153,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
             new_child.style['height'] = 'auto'
             new_child.style['min_height'] = Dimension(0, 'px')
             new_child.style['max_height'] = Dimension(float('inf'), 'px')
-            new_child = blocks.block_level_layout(
+            new_child = block.block_level_layout(
                 context, new_child, float('inf'), child_skip_stack,
                 parent_box, page_is_empty, [], [], [], False)[0]
             content_size = new_child.height
@@ -213,7 +212,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                     else:
                         new_child = child.copy()
                     new_child.width = float('inf')
-                    new_child = blocks.block_level_layout(
+                    new_child = block.block_level_layout(
                         context, new_child, float('inf'), child_skip_stack,
                         parent_box, page_is_empty, absolute_boxes, fixed_boxes,
                         adjoining_margins=[], discard=False)[0]
@@ -228,7 +227,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                     else:
                         new_child = child.copy()
                     new_child.width = 0
-                    new_child = blocks.block_level_layout(
+                    new_child = block.block_level_layout(
                         context, new_child, float('inf'), child_skip_stack,
                         parent_box, page_is_empty, absolute_boxes, fixed_boxes,
                         adjoining_margins=[], discard=False)[0]
@@ -248,7 +247,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
     # Step 4
     # TODO: the whole step has to be fixed
     if axis == 'width':
-        blocks.block_level_width(box, containing_block)
+        block.block_level_width(box, containing_block)
     else:
         if box.style['height'] != 'auto':
             box.height = box.style['height'].value
@@ -460,9 +459,9 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                 child_copy = child.copy_with_children(child.children)
             else:
                 child_copy = child.copy()
-            blocks.block_level_width(child_copy, parent_box)
+            block.block_level_width(child_copy, parent_box)
             new_child, _, _, adjoining_margins, _ = (
-                blocks.block_level_layout_switch(
+                block.block_level_layout_switch(
                     context, child_copy, float('inf'), child_skip_stack,
                     parent_box, page_is_empty, absolute_boxes, fixed_boxes,
                     adjoining_margins=[], discard=False))
@@ -473,8 +472,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                 # As flex items margins never collapse (with other flex items
                 # or with the flex container), we can add the adjoining margins
                 # to the child bottom margin.
-                child.margin_bottom += blocks.collapse_margin(
-                    adjoining_margins)
+                child.margin_bottom += block.collapse_margin(adjoining_margins)
             else:
                 child.width = min_content_width(context, child, outer=False)
 
@@ -841,7 +839,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
     for line in flex_lines:
         for i, child in line:
             if child.is_flex_item:
-                new_child, child_resume_at = blocks.block_level_layout_switch(
+                new_child, child_resume_at = block.block_level_layout_switch(
                     context, child, max_position_y, child_skip_stack, box,
                     page_is_empty, absolute_boxes, fixed_boxes,
                     adjoining_margins=[], discard=False)[:2]

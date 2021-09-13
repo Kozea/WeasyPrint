@@ -9,7 +9,7 @@ from itertools import cycle
 
 from ..formatting_structure import boxes
 from . import replaced
-from .percentages import percentage, resolve_radii_percentages
+from .percent import percentage, resolve_radii_percentages
 
 Background = namedtuple('Background', 'color, layers, image_rendering')
 BackgroundLayer = namedtuple(

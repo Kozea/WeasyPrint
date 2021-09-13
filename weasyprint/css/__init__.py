@@ -238,7 +238,7 @@ def find_stylesheets(wrapper_element, device_media_type, url_fetcher, base_url,
     The output order is the same as the source order.
 
     """
-    from ..html import element_has_link_type  # Work around circular imports.
+    from ..html import element_has_link_type
 
     for wrapper in wrapper_element.query_all('style', 'link'):
         element = wrapper.etree_element

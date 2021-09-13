@@ -21,8 +21,8 @@ from functools import partial
 from ..formatting_structure import boxes
 from ..logger import PROGRESS_LOGGER
 from .absolute import absolute_box_layout, absolute_layout
-from .backgrounds import layout_backgrounds
-from .pages import make_all_pages, make_margin_boxes
+from .background import layout_backgrounds
+from .page import make_all_pages, make_margin_boxes
 
 
 def initialize_page_maker(context, root_box):

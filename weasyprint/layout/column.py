@@ -9,15 +9,14 @@
 from math import floor
 
 from .absolute import absolute_layout
-from .percentages import resolve_percentages
+from .percent import resolve_percentages
 
 
 def columns_layout(context, box, max_position_y, skip_stack, containing_block,
                    page_is_empty, absolute_boxes, fixed_boxes,
                    adjoining_margins):
     """Lay out a multi-column ``box``."""
-    # Avoid circular imports
-    from .blocks import (
+    from .block import (
         block_box_layout, block_level_layout, block_level_width,
         collapse_margin)
 

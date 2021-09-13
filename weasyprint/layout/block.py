@@ -8,15 +8,15 @@
 
 from ..formatting_structure import boxes
 from .absolute import AbsolutePlaceholder, absolute_layout
-from .columns import columns_layout
+from .column import columns_layout
 from .flex import flex_layout
 from .float import avoid_collisions, float_layout, get_clearance
-from .inlines import (
+from .inline import (
     iter_line_boxes, min_max_auto_replaced, replaced_box_height,
     replaced_box_width)
 from .min_max import handle_min_max_width
-from .percentages import resolve_percentages, resolve_position_percentages
-from .tables import table_layout, table_wrapper_width
+from .percent import resolve_percentages, resolve_position_percentages
+from .table import table_layout, table_wrapper_width
 
 
 def block_level_layout(context, box, max_position_y, skip_stack,

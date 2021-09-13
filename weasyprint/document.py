@@ -28,7 +28,7 @@ from .formatting_structure.build import build_formatting_structure
 from .html import W3C_DATE_RE, get_html_metadata
 from .images import get_image_from_uri as original_get_image_from_uri
 from .layout import LayoutContext, layout_document
-from .layout.percentages import percentage
+from .layout.percent import percentage
 from .logger import LOGGER, PROGRESS_LOGGER
 from .text.ffi import ffi, pango
 from .text.fonts import FontConfiguration

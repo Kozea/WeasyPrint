@@ -14,7 +14,7 @@ from weasyprint import CSS, css, default_url_fetcher
 from weasyprint.css import (
     PageType, get_all_computed_styles, parse_page_selectors)
 from weasyprint.css.computed_values import strut_layout
-from weasyprint.layout.pages import set_page_type_computed_styles
+from weasyprint.layout.page import set_page_type_computed_styles
 from weasyprint.urls import path2url
 
 from .testing_utils import (

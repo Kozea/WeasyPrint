@@ -71,7 +71,7 @@ def build_formatting_structure(element_tree, style_for, get_image_from_uri,
     target_collector.check_pending_targets()
 
     box.is_for_root_element = True
-    # If this is changed, maybe update weasy.layout.pages.make_margin_boxes()
+    # If this is changed, maybe update weasy.layout.page.make_margin_boxes()
     process_whitespace(box)
     box = anonymous_table_boxes(box)
     box = flex_boxes(box)

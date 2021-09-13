@@ -6,9 +6,9 @@
 
 from ..formatting_structure import boxes
 from .min_max import handle_min_max_width
-from .percentages import resolve_percentages, resolve_position_percentages
+from .percent import resolve_percentages, resolve_position_percentages
 from .preferred import shrink_to_fit
-from .tables import table_wrapper_width
+from .table import table_wrapper_width
 
 
 class AbsolutePlaceholder:
@@ -187,6 +187,8 @@ def absolute_height(box, context, containing_block):
 
 
 def absolute_block(context, box, containing_block, fixed_boxes):
+    from .block import block_container_layout
+
     cb_x, cb_y, cb_width, cb_height = containing_block
 
     translate_box_width, translate_x = absolute_width(
@@ -199,9 +201,6 @@ def absolute_block(context, box, containing_block, fixed_boxes):
 
     if box.is_table_wrapper:
         table_wrapper_width(context, box, (cb_width, cb_height))
-
-    # avoid a circular import
-    from .blocks import block_container_layout
 
     new_box, _, _, _, _ = block_container_layout(
         context, box, max_position_y=float('inf'), skip_stack=None,
@@ -223,7 +222,6 @@ def absolute_block(context, box, containing_block, fixed_boxes):
 
 def absolute_flex(context, box, containing_block_sizes, fixed_boxes,
                   containing_block):
-    # Avoid a circular import
     from .flex import flex_layout
 
     # TODO: this function is really close to absolute_block, we should have
@@ -302,8 +300,8 @@ def absolute_box_layout(context, box, containing_block, fixed_boxes):
 
 
 def absolute_replaced(context, box, containing_block):
-    # avoid a circular import
-    from .inlines import inline_replaced_box_width_height
+    from .inline import inline_replaced_box_width_height
+
     inline_replaced_box_width_height(box, containing_block)
 
     cb_x, cb_y, cb_width, cb_height = containing_block

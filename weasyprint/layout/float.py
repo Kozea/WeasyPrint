@@ -8,9 +8,9 @@
 
 from ..formatting_structure import boxes
 from .min_max import handle_min_max_width
-from .percentages import resolve_percentages, resolve_position_percentages
+from .percent import resolve_percentages, resolve_position_percentages
 from .preferred import shrink_to_fit
-from .tables import table_wrapper_width
+from .table import table_wrapper_width
 
 
 @handle_min_max_width
@@ -23,10 +23,9 @@ def float_width(box, context, containing_block):
 
 def float_layout(context, box, containing_block, absolute_boxes, fixed_boxes):
     """Set the width and position of floating ``box``."""
-    # Avoid circular imports
-    from .blocks import block_container_layout
+    from .block import block_container_layout
     from .flex import flex_layout
-    from .inlines import inline_replaced_box_width_height
+    from .inline import inline_replaced_box_width_height
 
     cb_width, cb_height = (containing_block.width, containing_block.height)
     resolve_percentages(box, (cb_width, cb_height))
