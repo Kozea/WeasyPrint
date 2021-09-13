@@ -15,10 +15,20 @@ ffi.cdef('''
     typedef ... hb_font_t;
     typedef ... hb_face_t;
     typedef ... hb_blob_t;
+    typedef uint32_t hb_codepoint_t;
     hb_face_t * hb_font_get_face (hb_font_t *font);
     hb_blob_t * hb_face_reference_blob (hb_face_t *face);
     unsigned int hb_face_get_index (const hb_face_t *face);
+    unsigned int hb_face_get_upem (const hb_face_t *face);
     const char * hb_blob_get_data (hb_blob_t *blob, unsigned int *length);
+    bool hb_ot_color_has_png (hb_face_t *face);
+    hb_blob_t * hb_ot_color_glyph_reference_png (
+        hb_font_t *font, hb_codepoint_t glyph);
+    bool hb_ot_color_has_svg (hb_face_t *face);
+    hb_blob_t * hb_ot_color_glyph_reference_svg (
+        hb_face_t *face, hb_codepoint_t glyph);
+    void hb_blob_destroy (hb_blob_t *blob);
+
 
     // Pango
 

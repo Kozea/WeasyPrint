@@ -16,7 +16,7 @@ from urllib.parse import unquote, urlsplit
 
 import pydyf
 from fontTools import subset
-from fontTools.ttLib import TTFont, TTLibError
+from fontTools.ttLib import TTFont, TTLibError, ttFont
 
 from . import CSS, Attachment, __version__
 from .css import get_all_computed_styles
@@ -30,7 +30,7 @@ from .images import get_image_from_uri as original_get_image_from_uri
 from .layout import LayoutContext, layout_document
 from .layout.percent import percentage
 from .logger import LOGGER, PROGRESS_LOGGER
-from .text.ffi import ffi, pango
+from .text.ffi import ffi, harfbuzz, pango
 from .text.fonts import FontConfiguration
 from .urls import URLFetchingError
 
@@ -68,6 +68,8 @@ def _w3c_date_to_pdf(string, attr_name):
 class Font:
     def __init__(self, file_content, pango_font, index):
         pango_metrics = pango.pango_font_get_metrics(pango_font, ffi.NULL)
+        hb_font = pango.pango_font_get_hb_font(pango_font)
+        hb_face = harfbuzz.hb_font_get_face(hb_font)
         self._font_description = pango.pango_font_describe(pango_font)
         self.family = ffi.string(pango.pango_font_description_get_family(
             self._font_description))
@@ -93,6 +95,9 @@ class Font:
         self.descent = -int(
             pango.pango_font_metrics_get_descent(pango_metrics) /
             font_size * 1000)
+        self.upem = harfbuzz.hb_face_get_upem(hb_face)
+        self.png = harfbuzz.hb_ot_color_has_png(hb_face)
+        self.svg = harfbuzz.hb_ot_color_has_svg(hb_face)
         self.stemv = 80
         self.stemh = 80
         self.bbox = [0, 0, 0, 0]
@@ -1290,12 +1295,14 @@ class Document:
                 fonts_by_file_hash[font.file_hash] = [font]
         font_references_by_file_hash = {}
         for file_hash, fonts in fonts_by_file_hash.items():
+            content = fonts[0].file_content
+
             if 'fonts' in self.optimize_size:
                 # Optimize font
                 cmap = {}
                 for font in fonts:
                     cmap = {**cmap, **font.cmap}
-                full_font = io.BytesIO(fonts[0].file_content)
+                full_font = io.BytesIO(content)
                 optimized_font = io.BytesIO()
                 try:
                     ttfont = TTFont(full_font, fontNumber=fonts[0].index)
@@ -1309,9 +1316,31 @@ class Document:
                     content = optimized_font.getvalue()
                 except TTLibError:
                     LOGGER.warning('Unable to optimize font')
-                    content = fonts[0].file_content
-            else:
-                content = fonts[0].file_content
+
+            if fonts[0].png or fonts[0].svg:
+                # Add empty glyphs instead of PNG or SVG emojis
+                full_font = io.BytesIO(content)
+                try:
+                    ttfont = TTFont(full_font, fontNumber=fonts[0].index)
+                    if 'loca' not in ttfont or 'glyf' not in ttfont:
+                        ttfont['loca'] = ttFont.getTableClass('loca')()
+                        ttfont['glyf'] = ttFont.getTableClass('glyf')()
+                        ttfont['glyf'].glyphOrder = ttfont.getGlyphOrder()
+                        ttfont['glyf'].glyphs = {
+                            name: ttFont.getTableModule('glyf').Glyph()
+                            for name in ttfont['glyf'].glyphOrder}
+                    else:
+                        for glyph in ttfont['glyf'].glyphs:
+                            ttfont['glyf'][glyph] = (
+                                ttFont.getTableModule('glyf').Glyph())
+                    for table_name in ('CBDT', 'CBLC', 'SVG '):
+                        if table_name in ttfont:
+                            del ttfont[table_name]
+                    output_font = io.BytesIO()
+                    ttfont.save(output_font)
+                    content = output_font.getvalue()
+                except TTLibError:
+                    LOGGER.warning('Unable to save emoji font')
 
             # Include font
             font_type = 'otf' if content[:4] == b'OTTO' else 'ttf'
