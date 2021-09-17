@@ -6,6 +6,8 @@
 
 """
 
+from itertools import chain
+
 from ..formatting_structure import boxes
 from .absolute import AbsolutePlaceholder, absolute_layout
 from .column import columns_layout
@@ -255,7 +257,7 @@ def relative_positioning(box, containing_block):
 
 def _out_of_flow_layout(context, box, index, child, new_children,
                         page_is_empty, absolute_boxes, fixed_boxes,
-                        adjoining_margins, max_position_y):
+                        adjoining_margins, max_position_y, skip_stack):
     stop = False
     resume_at = None
 
@@ -269,14 +271,18 @@ def _out_of_flow_layout(context, box, index, child, new_children,
         else:
             fixed_boxes.append(placeholder)
     elif child.is_floated():
-        new_child = float_layout(
-            context, child, box, absolute_boxes, fixed_boxes)
-        # New page if overflow
+        new_child, float_resume_at = float_layout(
+            context, child, box, absolute_boxes, fixed_boxes, max_position_y,
+            skip_stack)
         if (page_is_empty and not new_children) or not (
                 new_child.position_y + new_child.height > max_position_y):
+            # Float fits or empty page, put the float on this page
             new_child.index = index
             new_children.append(new_child)
+            if float_resume_at is not None:
+                resume_at = {index: float_resume_at}
         else:
+            # Overflow, put the float on a new page
             last_in_flow_child = find_last_in_flow_child(new_children)
             page_break = block_level_page_break(last_in_flow_child, child)
             resume_at = {index: None}
@@ -308,7 +314,7 @@ def _linebox_layout(context, box, index, child, new_children, page_is_empty,
     new_containing_block = box
     lines_iterator = iter_line_boxes(
         context, child, position_y, skip_stack, new_containing_block,
-        absolute_boxes, fixed_boxes, first_letter_style)
+        absolute_boxes, fixed_boxes, first_letter_style, max_position_y)
     for i, (line, resume_at) in enumerate(lines_iterator):
         line.resume_at = resume_at
         new_position_y = line.position_y + line.height
@@ -593,37 +599,45 @@ def block_container_layout(context, box, max_position_y, skip_stack,
     new_children = []
     next_page = {'break': 'any', 'page': None}
 
-    last_in_flow_child = None
-
+    resume_at = {}
     if is_start:
-        skip = 0
+        skip_stack = {0: None}
         first_letter_style = getattr(box, 'first_letter_style', None)
     else:
-        # TODO: handle multiple skip stacks
-        (skip, skip_stack), = skip_stack.items()
         first_letter_style = None
-    for index, child in enumerate(box.children[skip:], start=(skip or 0)):
+
+    next_skip = tuple(skip_stack.keys())[-1] + 1
+    if box.children:
+        children = chain(
+            ((skip, box.children[skip], skip_stack)
+             for skip, skip_stack in skip_stack.items()),
+            ((skip, child, None) for skip, child
+             in enumerate(box.children[next_skip:], start=next_skip)))
+    else:
+        children = ()
+
+    for index, child, skip_stack in children:
         child.position_x = position_x
         child.position_y = position_y  # doesn’t count adjoining_margins
 
         if not child.is_in_normal_flow():
             abort = False
-            stop, resume_at = _out_of_flow_layout(
+            stop, child_resume_at = _out_of_flow_layout(
                 context, box, index, child, new_children, page_is_empty,
                 absolute_boxes, fixed_boxes, adjoining_margins,
-                allowed_max_position_y)
+                allowed_max_position_y, skip_stack)
 
         elif isinstance(child, boxes.LineBox):
-            abort, stop, resume_at, position_y = _linebox_layout(
+            abort, stop, child_resume_at, position_y = _linebox_layout(
                 context, box, index, child, new_children, page_is_empty,
                 absolute_boxes, fixed_boxes, adjoining_margins,
                 allowed_max_position_y, position_y, skip_stack,
                 first_letter_style, draw_bottom_decoration)
-            draw_bottom_decoration |= resume_at is None
+            draw_bottom_decoration |= child_resume_at is None
             adjoining_margins = []
 
         else:
-            (abort, stop, resume_at, position_y, adjoining_margins,
+            (abort, stop, child_resume_at, position_y, adjoining_margins,
              next_page, new_children) = _in_flow_layout(
                  context, box, index, child, new_children, page_is_empty,
                  absolute_boxes, fixed_boxes, adjoining_margins,
@@ -631,6 +645,10 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                  skip_stack, first_letter_style, draw_bottom_decoration,
                  collapsing_with_children, discard, next_page)
             skip_stack = None
+
+        if child_resume_at:
+            for key, value in child_resume_at.items():
+                resume_at[key] = value
 
         if abort:
             page = child.page_values()[0]
