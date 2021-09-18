@@ -1149,7 +1149,8 @@ class Document:
             bottom = top + page_height
 
             page_rectangle = (
-                left / scale, top / scale, right / scale, bottom / scale)
+                left / scale, top / scale,
+                (right - left) / scale, (bottom - top) / scale)
             stream = Stream(
                 self, page_rectangle, states, x_objects, patterns, shadings,
                 images)
