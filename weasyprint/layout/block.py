@@ -13,24 +13,17 @@ from .absolute import AbsolutePlaceholder, absolute_layout
 from .column import columns_layout
 from .flex import flex_layout
 from .float import avoid_collisions, float_layout, get_clearance
-from .inline import (
-    iter_line_boxes, min_max_auto_replaced, replaced_box_height,
-    replaced_box_width)
+from .inline import iter_line_boxes
 from .min_max import handle_min_max_width
 from .percent import resolve_percentages, resolve_position_percentages
+from .replaced import block_replaced_box_layout
 from .table import table_layout, table_wrapper_width
 
 
 def block_level_layout(context, box, max_position_y, skip_stack,
                        containing_block, page_is_empty, absolute_boxes,
                        fixed_boxes, adjoining_margins, discard):
-    """Lay out the block-level ``box``.
-
-    :param max_position_y: the absolute vertical position (as in
-                           ``some_box.position_y``) of the bottom of the
-                           content box of the current page area.
-
-    """
+    """Lay out the block-level ``box``."""
     if not isinstance(box, boxes.TableBox):
         resolve_percentages(box, containing_block)
 
@@ -76,16 +69,7 @@ def block_level_layout_switch(context, box, max_position_y, skip_stack,
             page_is_empty, absolute_boxes, fixed_boxes, adjoining_margins,
             discard)
     elif isinstance(box, boxes.BlockReplacedBox):
-        box = block_replaced_box_layout(box, containing_block)
-        # Don't collide with floats
-        # http://www.w3.org/TR/CSS21/visuren.html#floats
-        box.position_x, box.position_y, _ = avoid_collisions(
-            context, box, containing_block, outer=False)
-        resume_at = None
-        next_page = {'break': 'any', 'page': None}
-        adjoining_margins = []
-        collapsing_through = False
-        return box, resume_at, next_page, adjoining_margins, collapsing_through
+        return block_replaced_box_layout(context, box, containing_block)
     elif isinstance(box, boxes.FlexBox):
         return flex_layout(
             context, box, max_position_y, skip_stack, containing_block,
@@ -134,31 +118,6 @@ def block_box_layout(context, box, max_position_y, skip_stack,
         new_box.translate(
             position_x - new_box.position_x, position_y - new_box.position_y)
     return result
-
-
-@handle_min_max_width
-def block_replaced_width(box, containing_block):
-    # http://www.w3.org/TR/CSS21/visudet.html#block-replaced-width
-    replaced_box_width.without_min_max(box, containing_block)
-    block_level_width.without_min_max(box, containing_block)
-
-
-def block_replaced_box_layout(box, containing_block):
-    """Lay out the block :class:`boxes.ReplacedBox` ``box``."""
-    box = box.copy()
-    if box.style['width'] == 'auto' and box.style['height'] == 'auto':
-        computed_margins = box.margin_left, box.margin_right
-        block_replaced_width.without_min_max(
-            box, containing_block)
-        replaced_box_height.without_min_max(box)
-        min_max_auto_replaced(box)
-        box.margin_left, box.margin_right = computed_margins
-        block_level_width.without_min_max(box, containing_block)
-    else:
-        block_replaced_width(box, containing_block)
-        replaced_box_height(box)
-
-    return box
 
 
 @handle_min_max_width

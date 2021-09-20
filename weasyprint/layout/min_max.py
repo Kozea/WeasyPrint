@@ -8,9 +8,7 @@ import functools
 
 
 def handle_min_max_width(function):
-    """Decorate a function that sets the used width of a box to handle
-    {min,max}-width.
-    """
+    """Decorate a function setting used width, handling {min,max}-width."""
     @functools.wraps(function)
     def wrapper(box, *args):
         computed_margins = box.margin_left, box.margin_right
@@ -29,9 +27,7 @@ def handle_min_max_width(function):
 
 
 def handle_min_max_height(function):
-    """Decorate a function that sets the used height of a box to handle
-    {min,max}-height.
-    """
+    """Decorate a function setting used height, handling {min,max}-height."""
     @functools.wraps(function)
     def wrapper(box, *args):
         computed_margins = box.margin_top, box.margin_bottom

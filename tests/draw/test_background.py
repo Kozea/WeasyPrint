@@ -998,3 +998,19 @@ def test_background_size(name, expected_width, expected_height,
                          expected_pixels, html):
     assert_pixels(
         name, expected_width, expected_height, expected_pixels, html)
+
+
+@assert_no_logs
+def test_bleed_background_size():
+    expected_pixels = '''
+        RRRR
+        RRRR
+        RRRR
+        RRRR
+    '''
+    html = '''
+      <style>
+         @page { size: 2px; background: red; bleed: 1px }
+      </style>
+      <body>'''
+    assert_pixels('bleed_background_size', 4, 4, expected_pixels, html)
