@@ -589,7 +589,7 @@ def _out_of_flow_layout(context, box, containing_block, index, child,
 def _break_waiting_children(context, box, max_x, initial_skip_stack,
                             absolute_boxes, fixed_boxes, line_placeholders,
                             waiting_floats, line_children, children,
-                            waiting_children, resume_at):
+                            waiting_children):
     if waiting_children:
         # Too wide, try to cut inside waiting children, starting from the end.
         # TODO: we should take care of children added into absolute_boxes,
@@ -781,7 +781,7 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
                 previous_resume_at = _break_waiting_children(
                     context, box, max_x, initial_skip_stack, absolute_boxes,
                     fixed_boxes, line_placeholders, waiting_floats,
-                    line_children, children, waiting_children, resume_at)
+                    line_children, children, waiting_children)
                 if previous_resume_at:
                     resume_at = previous_resume_at
                     break
