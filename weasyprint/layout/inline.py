@@ -520,6 +520,72 @@ def split_inline_level(context, box, position_x, max_x, skip_stack,
         float_widths)
 
 
+def _out_of_flow_layout(context, box, containing_block, index, child,
+                        children, line_children, waiting_children,
+                        waiting_floats, absolute_boxes, fixed_boxes,
+                        line_placeholders, float_widths, max_position_x,
+                        position_x):
+    if child.is_absolutely_positioned():
+        child.position_x = position_x
+        placeholder = AbsolutePlaceholder(child)
+        line_placeholders.append(placeholder)
+        waiting_children.append((index, placeholder))
+        if child.style['position'] == 'absolute':
+            absolute_boxes.append(placeholder)
+        else:
+            fixed_boxes.append(placeholder)
+
+    elif child.is_floated():
+        child.position_x = position_x
+        float_width = shrink_to_fit(context, child, containing_block.width)
+
+        # To retrieve the real available space for floats, we must remove
+        # the trailing whitespaces from the line
+        non_floating_children = [
+            child_ for _, child_ in (children + waiting_children)
+            if not child_.is_floated()]
+        if non_floating_children:
+            float_width -= trailing_whitespace_size(
+                context, non_floating_children[-1])
+
+        if float_width > max_position_x - position_x or waiting_floats:
+            # TODO: the absolute and fixed boxes in the floats must be
+            # added here, and not in iter_line_boxes
+            waiting_floats.append(child)
+        else:
+            child = float_layout(
+                context, child, containing_block, absolute_boxes, fixed_boxes)
+            waiting_children.append((index, child))
+
+            # Translate previous line children
+            dx = max(child.margin_width(), 0)
+            float_widths[child.style['float']] += dx
+            if child.style['float'] == 'left':
+                if isinstance(box, boxes.LineBox):
+                    # The parent is the line, update the current position
+                    # for the next child. When the parent is not the line
+                    # (it is an inline block), the current position of the
+                    # line is updated by the box itself (see next
+                    # split_inline_level call).
+                    position_x += dx
+            elif child.style['float'] == 'right':
+                # Update the maximum x position for the next children
+                max_position_x -= dx
+            for _, old_child in line_children:
+                if not old_child.is_in_normal_flow():
+                    continue
+                if ((child.style['float'] == 'left' and
+                        box.style['direction'] == 'ltr') or
+                    (child.style['float'] == 'right' and
+                        box.style['direction'] == 'rtl')):
+                    old_child.translate(dx=dx)
+
+    elif child.is_running():
+        running_name = child.style['position'][1]
+        page = context.current_page
+        context.running_elements[running_name][page].append(child)
+
+
 def split_inline_box(context, box, position_x, max_x, skip_stack,
                      containing_block, absolute_boxes, fixed_boxes,
                      line_placeholders, waiting_floats, line_children):
@@ -562,67 +628,15 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
     for i, child in enumerate(box.children[skip:]):
         index = i + skip
         child.position_y = box.position_y
-        if child.is_absolutely_positioned():
-            child.position_x = position_x
-            placeholder = AbsolutePlaceholder(child)
-            line_placeholders.append(placeholder)
-            waiting_children.append((index, placeholder))
-            if child.style['position'] == 'absolute':
-                absolute_boxes.append(placeholder)
-            else:
-                fixed_boxes.append(placeholder)
-            continue
-        elif child.is_floated():
-            child.position_x = position_x
-            float_width = shrink_to_fit(context, child, containing_block.width)
 
-            # To retrieve the real available space for floats, we must remove
-            # the trailing whitespaces from the line
-            non_floating_children = [
-                child_ for _, child_ in (children + waiting_children)
-                if not child_.is_floated()]
-            if non_floating_children:
-                float_width -= trailing_whitespace_size(
-                    context, non_floating_children[-1])
-
-            if float_width > max_x - position_x or waiting_floats:
-                # TODO: the absolute and fixed boxes in the floats must be
-                # added here, and not in iter_line_boxes
-                waiting_floats.append(child)
-            else:
-                child = float_layout(
-                    context, child, containing_block, absolute_boxes,
-                    fixed_boxes)
-                waiting_children.append((index, child))
-
-                # Translate previous line children
-                dx = max(child.margin_width(), 0)
-                float_widths[child.style['float']] += dx
-                if child.style['float'] == 'left':
-                    if isinstance(box, boxes.LineBox):
-                        # The parent is the line, update the current position
-                        # for the next child. When the parent is not the line
-                        # (it is an inline block), the current position of the
-                        # line is updated by the box itself (see next
-                        # split_inline_level call).
-                        position_x += dx
-                elif child.style['float'] == 'right':
-                    # Update the maximum x position for the next children
-                    max_x -= dx
-                for _, old_child in line_children:
-                    if not old_child.is_in_normal_flow():
-                        continue
-                    if ((child.style['float'] == 'left' and
-                            box.style['direction'] == 'ltr') or
-                        (child.style['float'] == 'right' and
-                            box.style['direction'] == 'rtl')):
-                        old_child.translate(dx=dx)
-            float_resume_index = index + 1
-            continue
-        elif child.is_running():
-            running_name = child.style['position'][1]
-            page = context.current_page
-            context.running_elements[running_name][page].append(child)
+        if not child.is_in_normal_flow():
+            _out_of_flow_layout(
+                context, box, containing_block, index, child,
+                children, line_children, waiting_children,
+                waiting_floats, absolute_boxes, fixed_boxes,
+                line_placeholders, float_widths, max_x, position_x)
+            if child.is_floated():
+                float_resume_index = index + 1
             continue
 
         last_child = (index == len(box.children) - 1)
