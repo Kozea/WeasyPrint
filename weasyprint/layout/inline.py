@@ -729,6 +729,7 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
                             # decrease the actual size by 1 and render the
                             # waiting child again with this constraint. We may
                             # find a better way.
+                            break_found = True
                             max_x = child.position_x + child.margin_width() - 1
                             child_new_child, child_resume_at, _, _, _, _ = (
                                 split_inline_level(
@@ -736,17 +737,6 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
                                     None, box, absolute_boxes, fixed_boxes,
                                     line_placeholders, waiting_floats,
                                     line_children))
-
-                            # As PangoLayout and PangoLogAttr don't always
-                            # agree, we have to rely on the actual split to
-                            # know whether the child was broken.
-                            # https://github.com/Kozea/WeasyPrint/issues/614
-                            break_found = child_resume_at is not None
-                            if child_resume_at is None:
-                                # PangoLayout decided not to break the child
-                                child_resume_at = {0: None}
-                            # TODO: use this when Pango is always 1.40.13+:
-                            # break_found = True
 
                             children = children + waiting_children_copy
                             if child_new_child is None:
