@@ -8,6 +8,7 @@ from ..formatting_structure import boxes
 from .min_max import handle_min_max_width
 from .percent import resolve_percentages, resolve_position_percentages
 from .preferred import shrink_to_fit
+from .replaced import inline_replaced_box_width_height
 from .table import table_wrapper_width
 
 
@@ -300,8 +301,6 @@ def absolute_box_layout(context, box, containing_block, fixed_boxes):
 
 
 def absolute_replaced(context, box, containing_block):
-    from .inline import inline_replaced_box_width_height
-
     inline_replaced_box_width_height(box, containing_block)
 
     cb_x, cb_y, cb_width, cb_height = containing_block

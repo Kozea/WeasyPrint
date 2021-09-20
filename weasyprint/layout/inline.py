@@ -15,10 +15,12 @@ from ..text.line_break import can_break_text, create_layout, split_first_line
 from .absolute import AbsolutePlaceholder, absolute_layout
 from .flex import flex_layout
 from .float import avoid_collisions, float_layout
-from .min_max import handle_min_max_height, handle_min_max_width
+from .leader import handle_leader
+from .min_max import handle_min_max_width
 from .percent import resolve_one_percentage, resolve_percentages
 from .preferred import (
     inline_min_content_width, shrink_to_fit, trailing_whitespace_size)
+from .replaced import inline_replaced_box_layout
 from .table import find_in_flow_baseline, table_wrapper_width
 
 
@@ -28,14 +30,6 @@ def iter_line_boxes(context, box, position_y, skip_stack, containing_block,
 
     ``line`` is a laid-out LineBox with as much content as possible that
     fits in the available width.
-
-    :param box: a non-laid-out :class:`LineBox`
-    :param position_y: vertical top position of the line box on the page
-    :param skip_stack: ``None`` to start at the beginning of ``linebox``,
-                       or a ``resume_at`` value to continue just after an
-                       already laid-out line.
-    :param containing_block: Containing block of the line box:
-                             a :class:`BlockContainerBox`
 
     """
     resolve_percentages(box, containing_block)
@@ -49,7 +43,7 @@ def iter_line_boxes(context, box, position_y, skip_stack, containing_block,
             context, box, position_y, skip_stack, containing_block,
             absolute_boxes, fixed_boxes, first_letter_style)
         if line:
-            handle_leaders(context, line, containing_block)
+            handle_leader(context, line, containing_block)
             position_y = line.position_y + line.height
         if line is None:
             return
@@ -59,78 +53,6 @@ def iter_line_boxes(context, box, position_y, skip_stack, containing_block,
         skip_stack = resume_at
         box.text_indent = 0
         first_letter_style = None
-
-
-def leader_index(box):
-    """Get the index of the first leader box in ``box``."""
-    for i, child in enumerate(box.children):
-        if child.is_leader:
-            return (i, None), child
-        if isinstance(child, boxes.ParentBox):
-            child_leader_index, child_leader = leader_index(child)
-            if child_leader_index is not None:
-                return (i, child_leader_index), child_leader
-    return None, None
-
-
-def handle_leaders(context, line, containing_block):
-    """Find a leader box in ``line`` and handle its text and its position."""
-    index, leader_box = leader_index(line)
-    extra_width = 0
-    if index is not None and leader_box.children:
-        text_box, = leader_box.children
-
-        # Abort if the leader text has no width
-        if text_box.width <= 0:
-            return
-
-        # Extra width is the additional width taken by the leader box
-        extra_width = containing_block.width - sum(
-            child.width for child in line.children
-            if child.is_in_normal_flow())
-
-        # Take care of excluded shapes
-        for shape in context.excluded_shapes:
-            if shape.position_y + shape.height > line.position_y:
-                extra_width -= shape.width
-
-        # Available width is the width available for the leader box
-        available_width = extra_width + text_box.width
-        line.width = containing_block.width
-
-        # Add text boxes into the leader box
-        number_of_leaders = int(line.width // text_box.width)
-        position_x = line.position_x + line.width
-        children = []
-        for i in range(number_of_leaders):
-            position_x -= text_box.width
-            if position_x < leader_box.position_x:
-                # Don’t add leaders behind the text on the left
-                continue
-            elif (position_x + text_box.width >
-                    leader_box.position_x + available_width):
-                # Don’t add leaders behind the text on the right
-                continue
-            text_box = text_box.copy()
-            text_box.position_x = position_x
-            children.append(text_box)
-        leader_box.children = tuple(children)
-
-        if line.style['direction'] == 'rtl':
-            leader_box.translate(dx=-extra_width)
-
-    # Widen leader parent boxes and translate following boxes
-    box = line
-    while index is not None:
-        for child in box.children[index[0] + 1:]:
-            if child.is_in_normal_flow():
-                if line.style['direction'] == 'ltr':
-                    child.translate(dx=extra_width)
-                else:
-                    child.translate(dx=-extra_width)
-        box = box.children[index[0]]
-        box.width += extra_width
-        index = index[1]
 
 
 def get_next_linebox(context, linebox, position_y, skip_stack,
@@ -158,7 +80,7 @@ def get_next_linebox(context, linebox, position_y, skip_stack,
 
     candidate_height = linebox.height
 
-    excluded_shapes = context.excluded_shapes[:]
+    excluded_shapes = context.excluded_shapes.copy()
 
     while True:
         original_position_x = linebox.position_x = position_x
@@ -256,10 +178,10 @@ def get_next_linebox(context, linebox, position_y, skip_stack,
 
 
 def skip_first_whitespace(box, skip_stack):
-    """Return the ``skip_stack`` to start just after the remove spaces
-    at the beginning of the line.
+    """Return ``skip_stack`` to start just after removable leading spaces.
 
     See http://www.w3.org/TR/CSS21/text.html#white-space-model
+
     """
     if skip_stack is None:
         index = 0
@@ -437,143 +359,6 @@ def first_letter_to_box(box, skip_stack, first_letter_style):
     return skip_stack
 
 
-@handle_min_max_width
-def replaced_box_width(box, containing_block):
-    """Set the used width for replaced boxes (inline- or block-level)."""
-    from .block import block_level_width
-
-    width, height, ratio = box.replacement.get_intrinsic_size(
-        box.style['image_resolution'], box.style['font_size'])
-
-    # This algorithm simply follows the different points of the specification:
-    # http://www.w3.org/TR/CSS21/visudet.html#inline-replaced-width
-    if box.height == 'auto' and box.width == 'auto':
-        if width is not None:
-            # Point #1
-            box.width = width
-        elif ratio is not None:
-            if height is not None:
-                # Point #2 first part
-                box.width = height * ratio
-            else:
-                # Point #3
-                block_level_width(box, containing_block)
-
-    if box.width == 'auto':
-        if ratio is not None:
-            # Point #2 second part
-            box.width = box.height * ratio
-        elif width is not None:
-            # Point #4
-            box.width = width
-        else:
-            # Point #5
-            # It's pretty useless to rely on device size to set width.
-            box.width = 300
-
-
-@handle_min_max_height
-def replaced_box_height(box):
-    """
-    Compute and set the used height for replaced boxes (inline- or block-level)
-    """
-    # http://www.w3.org/TR/CSS21/visudet.html#inline-replaced-height
-    width, height, ratio = box.replacement.get_intrinsic_size(
-        box.style['image_resolution'], box.style['font_size'])
-
-    # Test 'auto' on the computed width, not the used width
-    if box.height == 'auto' and box.width == 'auto':
-        box.height = height
-    elif box.height == 'auto' and ratio:
-        box.height = box.width / ratio
-
-    if box.height == 'auto' and box.width == 'auto' and height is not None:
-        box.height = height
-    elif ratio is not None and box.height == 'auto':
-        box.height = box.width / ratio
-    elif box.height == 'auto' and height is not None:
-        box.height = height
-    elif box.height == 'auto':
-        # It's pretty useless to rely on device size to set width.
-        box.height = 150
-
-
-def inline_replaced_box_layout(box, containing_block):
-    """Lay out an inline :class:`boxes.ReplacedBox` ``box``."""
-    for side in ['top', 'right', 'bottom', 'left']:
-        if getattr(box, f'margin_{side}') == 'auto':
-            setattr(box, f'margin_{side}', 0)
-    inline_replaced_box_width_height(box, containing_block)
-
-
-def inline_replaced_box_width_height(box, containing_block):
-    if box.style['width'] == 'auto' and box.style['height'] == 'auto':
-        replaced_box_width.without_min_max(box, containing_block)
-        replaced_box_height.without_min_max(box)
-        min_max_auto_replaced(box)
-    else:
-        replaced_box_width(box, containing_block)
-        replaced_box_height(box)
-
-
-def min_max_auto_replaced(box):
-    """Resolve {min,max}-{width,height} constraints on replaced elements
-    that have 'auto' width and heights.
-    """
-    width = box.width
-    height = box.height
-    min_width = box.min_width
-    min_height = box.min_height
-    max_width = max(min_width, box.max_width)
-    max_height = max(min_height, box.max_height)
-
-    # (violation_width, violation_height)
-    violations = (
-        'min' if width < min_width else 'max' if width > max_width else '',
-        'min' if height < min_height else 'max' if height > max_height else '')
-
-    # Work around divisions by zero. These are pathological cases anyway.
-    # TODO: is there a cleaner way?
-    if width == 0:
-        width = 1e-6
-    if height == 0:
-        height = 1e-6
-
-    # ('', ''): nothing to do
-    if violations == ('max', ''):
-        box.width = max_width
-        box.height = max(max_width * height / width, min_height)
-    elif violations == ('min', ''):
-        box.width = min_width
-        box.height = min(min_width * height / width, max_height)
-    elif violations == ('', 'max'):
-        box.width = max(max_height * width / height, min_width)
-        box.height = max_height
-    elif violations == ('', 'min'):
-        box.width = min(min_height * width / height, max_width)
-        box.height = min_height
-    elif violations == ('max', 'max'):
-        if max_width / width <= max_height / height:
-            box.width = max_width
-            box.height = max(min_height, max_width * height / width)
-        else:
-            box.width = max(min_width, max_height * width / height)
-            box.height = max_height
-    elif violations == ('min', 'min'):
-        if min_width / width <= min_height / height:
-            box.width = min(max_width, min_height * width / height)
-            box.height = min_height
-        else:
-            box.width = min_width
-            box.height = min(max_height, min_width * height / width)
-    elif violations == ('min', 'max'):
-        box.width = min_width
-        box.height = max_height
-    elif violations == ('max', 'min'):
-        box.width = max_width
-        box.height = min_height
-
-
 def atomic_box(context, box, position_x, skip_stack, containing_block,
                absolute_boxes, fixed_boxes):
     """Compute the width and the height of the atomic ``box``."""
@@ -583,9 +368,8 @@ def atomic_box(context, box, position_x, skip_stack, containing_block,
         box.baseline = box.margin_height()
     elif isinstance(box, boxes.InlineBlockBox):
         if box.is_table_wrapper:
-            table_wrapper_width(
-                context, box,
-                (containing_block.width, containing_block.height))
+            containing_size = (containing_block.width, containing_block.height)
+            table_wrapper_width(context, box, containing_size)
         box = inline_block_box_layout(
             context, box, position_x, skip_stack, containing_block,
             absolute_boxes, fixed_boxes)
@@ -1061,13 +845,13 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
 
     line_height, new_box.baseline = strut_layout(box.style, context)
     new_box.height = box.style['font_size']
-    half_leading = (line_height - new_box.height) / 2.
+    half_leading = (line_height - new_box.height) / 2
     # Set margins to the half leading but also compensate for borders and
     # paddings. We want margin_height() == line_height
-    new_box.margin_top = (half_leading - new_box.border_top_width -
-                          new_box.padding_top)
-    new_box.margin_bottom = (half_leading - new_box.border_bottom_width -
-                             new_box.padding_bottom)
+    new_box.margin_top = (
+        half_leading - new_box.border_top_width - new_box.padding_top)
+    new_box.margin_bottom = (
+        half_leading - new_box.border_bottom_width - new_box.padding_bottom)
 
     if new_box.style['position'] == 'relative':
         for absolute_box in absolute_boxes:
@@ -1090,7 +874,7 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
 def split_text_box(context, box, available_width, skip):
     """Keep as much text as possible from a TextBox in a limited width.
 
-    Try not to overflow but always have some text in ``new_box``
+    Try not to overflow but always have some text in ``new_box``.
 
     Return ``(new_box, skip, preserved_line_break)``. ``skip`` is the number of
     UTF-8 bytes to skip form the start of the TextBox for the next line, or
@@ -1133,7 +917,7 @@ def split_text_box(context, box, available_width, skip):
         #  of the line box."
         # Set margins so that margin_height() == line_height
         line_height, _ = strut_layout(box.style, context)
-        half_leading = (line_height - height) / 2.
+        half_leading = (line_height - height) / 2
         box.margin_top = half_leading
         box.margin_bottom = half_leading
         # form the top of the content box
@@ -1161,8 +945,7 @@ def split_text_box(context, box, available_width, skip):
 
 
 def line_box_verticality(box):
-    """Handle ``vertical-align`` within an :class:`LineBox` (or of a
-    non-align sub-tree).
+    """Handle ``vertical-align`` within a :class:`LineBox`.
 
     Place all boxes vertically assuming that the baseline of ``box``
     is at `y = 0`.
@@ -1180,9 +963,7 @@ def line_box_verticality(box):
         for sub_max_y, sub_min_y in [
             (None, None) if subtree.is_floated()
             else aligned_subtree_verticality(
-                subtree, top_bottom_subtrees, baseline_y=0)
-        ]
-    ]
+                subtree, top_bottom_subtrees, baseline_y=0)]]
 
     if subtrees_with_min_max:
         sub_positions = [
@@ -1307,10 +1088,8 @@ def inline_box_verticality(box, top_bottom_subtrees, baseline_y):
 
 
 def text_align(context, line, available_width, last):
-    """Return how much the line should be moved horizontally according to
-    the `text-align` property.
+    """Return the line horizontal offset according to ``text-align``."""
 
-    """
     # "When the total width of the inline-level boxes on a line is less than
     # the width of the line box containing them, their horizontal distribution
     # within the line box is determined by the 'text-align' property."
@@ -1346,7 +1125,7 @@ def text_align(context, line, available_width, last):
 
 
 def justify_line(context, line, extra_width):
-    # TODO: We should use a better alorithm here, see
+    # TODO: We should use a better algorithm here, see
     # https://www.w3.org/TR/css-text-3/#justify-algos
     nb_spaces = count_spaces(line)
     if nb_spaces == 0:
@@ -1393,7 +1172,7 @@ def add_word_spacing(context, box, justification_spacing, x_advance):
 
 
 def is_phantom_linebox(linebox):
-    """http://www.w3.org/TR/CSS21/visuren.html#phantom-line-box"""
+    # See http://www.w3.org/TR/CSS21/visuren.html#phantom-line-box
     for child in linebox.children:
         if isinstance(child, boxes.InlineBox):
             if not is_phantom_linebox(child):
@@ -1413,14 +1192,8 @@ def can_break_inside(box):
     text_wrap = box.style['white_space'] in ('normal', 'pre-wrap', 'pre-line')
     if isinstance(box, boxes.AtomicInlineLevelBox):
         return False
-    elif isinstance(box, boxes.TextBox):
-        if text_wrap:
-            return can_break_text(box.text, box.style['lang'])
-        else:
-            return False
-    elif isinstance(box, boxes.ParentBox):
-        if text_wrap:
-            return any(can_break_inside(child) for child in box.children)
-        else:
-            return False
+    elif text_wrap and isinstance(box, boxes.TextBox):
+        return can_break_text(box.text, box.style['lang'])
+    elif text_wrap and isinstance(box, boxes.ParentBox):
+        return any(can_break_inside(child) for child in box.children)
     return False
