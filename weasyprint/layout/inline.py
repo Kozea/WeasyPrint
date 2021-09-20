@@ -586,6 +586,77 @@ def _out_of_flow_layout(context, box, containing_block, index, child,
         context.running_elements[running_name][page].append(child)
 
 
+def _break_waiting_children(context, box, max_x, initial_skip_stack,
+                            absolute_boxes, fixed_boxes, line_placeholders,
+                            waiting_floats, line_children, children,
+                            waiting_children, resume_at):
+    if waiting_children:
+        # Too wide, try to cut inside waiting children, starting from the end.
+        # TODO: we should take care of children added into absolute_boxes,
+        # fixed_boxes and other lists.
+        waiting_children_copy = waiting_children.copy()
+        while waiting_children_copy:
+            child_index, child = waiting_children_copy.pop()
+            if child.is_in_normal_flow() and can_break_inside(child):
+                # Break the waiting child at its last possible breaking point.
+                # TODO: The dirty solution chosen here is to decrease the
+                # actual size by 1 and render the waiting child again with this
+                # constraint. We may find a better way.
+                max_x = child.position_x + child.margin_width() - 1
+                new_child, child_resume_at, _, _, _, _ = split_inline_level(
+                    context, child, child.position_x, max_x, None, box,
+                    absolute_boxes, fixed_boxes, line_placeholders,
+                    waiting_floats, line_children)
+
+                children.extend(waiting_children_copy)
+                if new_child is None:
+                    # May be None where we have an empty TextBox.
+                    assert isinstance(child, boxes.TextBox)
+                else:
+                    children.append((child_index, new_child))
+
+                # As this child has already been broken following the original
+                # skip stack, we have to add the original skip stack to the
+                # partial skip stack we get after the new rendering.
+
+                # Combining skip stacks is a bit complicated. We have to:
+                # - set `child_index` as the first number
+                # - append the new stack if it's an absolute one
+                # - otherwise append the combined stacks
+                #   (resume_at + initial_skip_stack)
+
+                # extract the initial index
+                if initial_skip_stack is None:
+                    current_skip_stack = None
+                    initial_index = 0
+                else:
+                    (initial_index, current_skip_stack), = (
+                        initial_skip_stack.items())
+                # child_resume_at is an absolute skip stack
+                if child_index > initial_index:
+                    return {child_index: child_resume_at}
+
+                # combine the stacks
+                current_resume_at = child_resume_at
+                stack = []
+                while current_skip_stack and current_resume_at:
+                    (skip, current_skip_stack), = current_skip_stack.items()
+                    (resume, current_resume_at), = current_resume_at.items()
+                    stack.append(skip + resume)
+                    if resume != 0:
+                        break
+                resume_at = current_resume_at
+                while stack:
+                    resume_at = {stack.pop(): resume_at}
+                # insert the child index
+                return {child_index: resume_at}
+
+    if children:
+        # Too wide, can't break waiting children and the inline is
+        # non-empty: put child entirely on the next line.
+        return {children[-1][0] + 1: None}
+
+
 def split_inline_box(context, box, position_x, max_x, skip_stack,
                      containing_block, absolute_boxes, fixed_boxes,
                      line_placeholders, waiting_floats, line_children):
@@ -603,10 +674,10 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
     initial_position_x = position_x
     initial_skip_stack = skip_stack
     assert isinstance(box, (boxes.LineBox, boxes.InlineBox))
-    left_spacing = (box.padding_left + box.margin_left +
-                    box.border_left_width)
-    right_spacing = (box.padding_right + box.margin_right +
-                     box.border_right_width)
+    left_spacing = (
+        box.padding_left + box.margin_left + box.border_left_width)
+    right_spacing = (
+        box.padding_right + box.margin_right + box.border_right_width)
     content_box_left = position_x
 
     children = []
@@ -631,15 +702,15 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
 
         if not child.is_in_normal_flow():
             _out_of_flow_layout(
-                context, box, containing_block, index, child,
-                children, line_children, waiting_children,
-                waiting_floats, absolute_boxes, fixed_boxes,
-                line_placeholders, float_widths, max_x, position_x)
+                context, box, containing_block, index, child, children,
+                line_children, waiting_children, waiting_floats,
+                absolute_boxes, fixed_boxes, line_placeholders, float_widths,
+                max_x, position_x)
             if child.is_floated():
                 float_resume_index = index + 1
             continue
 
-        last_child = (index == len(box.children) - 1)
+        is_last_child = (index == len(box.children) - 1)
         available_width = max_x
         child_waiting_floats = []
         new_child, resume_at, preserved, first, last, new_float_widths = (
@@ -647,23 +718,21 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
                 context, child, position_x, available_width, skip_stack,
                 containing_block, absolute_boxes, fixed_boxes,
                 line_placeholders, child_waiting_floats, line_children))
-        if last_child and right_spacing and resume_at is None:
+        if box.style['direction'] == 'rtl':
+            end_spacing = left_spacing
+            max_x -= new_float_widths['left']
+        else:
+            end_spacing = right_spacing
+            max_x -= new_float_widths['right']
+        if is_last_child and end_spacing and resume_at is None:
             # TODO: we should take care of children added into absolute_boxes,
             # fixed_boxes and other lists.
-            if box.style['direction'] == 'rtl':
-                available_width -= left_spacing
-            else:
-                available_width -= right_spacing
+            available_width -= end_spacing
             new_child, resume_at, preserved, first, last, new_float_widths = (
                 split_inline_level(
                     context, child, position_x, available_width, skip_stack,
                     containing_block, absolute_boxes, fixed_boxes,
                     line_placeholders, child_waiting_floats, line_children))
-
-        if box.style['direction'] == 'rtl':
-            max_x -= new_float_widths['left']
-        else:
-            max_x -= new_float_widths['right']
 
         skip_stack = None
         if preserved:
@@ -706,93 +775,15 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
             trailing_whitespace = (
                 isinstance(new_child, boxes.TextBox) and
                 not new_child.text.strip())
-
-            margin_width = new_child.margin_width()
-            new_position_x = new_child.position_x + margin_width
+            new_position_x = new_child.position_x + new_child.margin_width()
 
             if new_position_x > max_x and not trailing_whitespace:
-                if waiting_children:
-                    # Too wide, let's try to cut inside waiting children,
-                    # starting from the end.
-                    # TODO: we should take care of children added into
-                    # absolute_boxes, fixed_boxes and other lists.
-                    waiting_children_copy = waiting_children[:]
-                    break_found = False
-                    while waiting_children_copy:
-                        child_index, child = waiting_children_copy.pop()
-                        # TODO: should we also accept relative children?
-                        if (child.is_in_normal_flow() and
-                                can_break_inside(child)):
-                            # We break the waiting child at its last possible
-                            # breaking point.
-                            # TODO: The dirty solution chosen here is to
-                            # decrease the actual size by 1 and render the
-                            # waiting child again with this constraint. We may
-                            # find a better way.
-                            break_found = True
-                            max_x = child.position_x + child.margin_width() - 1
-                            child_new_child, child_resume_at, _, _, _, _ = (
-                                split_inline_level(
-                                    context, child, child.position_x, max_x,
-                                    None, box, absolute_boxes, fixed_boxes,
-                                    line_placeholders, waiting_floats,
-                                    line_children))
-
-                            children = children + waiting_children_copy
-                            if child_new_child is None:
-                                # May be None where we have an empty TextBox.
-                                assert isinstance(child, boxes.TextBox)
-                            else:
-                                children += [(child_index, child_new_child)]
-
-                            # As this child has already been broken
-                            # following the original skip stack, we have to
-                            # add the original skip stack to the partial
-                            # skip stack we get after the new rendering.
-
-                            # Combining skip stacks is a bit complicated
-                            # We have to:
-                            # - set `child_index` as the first number
-                            # - append the new stack if it's an absolute one
-                            # - otherwise append the combined stacks
-                            #   (resume_at + initial_skip_stack)
-
-                            # extract the initial index
-                            if initial_skip_stack is None:
-                                current_skip_stack = None
-                                initial_index = 0
-                            else:
-                                (initial_index, current_skip_stack), = (
-                                    initial_skip_stack.items())
-                            # child_resume_at is an absolute skip stack
-                            if child_index > initial_index:
-                                resume_at = {child_index: child_resume_at}
-                                break
-
-                            # combine the stacks
-                            current_resume_at = child_resume_at
-                            stack = []
-                            while current_skip_stack and current_resume_at:
-                                (skip, current_skip_stack), = (
-                                    current_skip_stack.items())
-                                (resume, current_resume_at), = (
-                                    current_resume_at.items())
-                                stack.append(skip + resume)
-                                if resume != 0:
-                                    break
-                            resume_at = current_resume_at
-                            while stack:
-                                resume_at = {stack.pop(): resume_at}
-                            # insert the child index
-                            resume_at = {child_index: resume_at}
-                            break
-                    if break_found:
-                        break
-                if children:
-                    # Too wide, can't break waiting children and the inline is
-                    # non-empty: put child entirely on the next line.
-                    resume_at = {children[-1][0] + 1: None}
-                    child_waiting_floats = []
+                previous_resume_at = _break_waiting_children(
+                    context, box, max_x, initial_skip_stack, absolute_boxes,
+                    fixed_boxes, line_placeholders, waiting_floats,
+                    line_children, children, waiting_children, resume_at)
+                if previous_resume_at:
+                    resume_at = previous_resume_at
                     break
 
             position_x = new_position_x
