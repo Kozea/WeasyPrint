@@ -375,7 +375,6 @@ def test_command_line_render(tmpdir):
     _run('not_optimized.html out20.pdf -O none')
     _run('not_optimized.html out21.pdf -O none -O all')
     _run('not_optimized.html out22.pdf -O all -O none')
-    _run('not_optimized.html out23.pdf -o')
     # TODO: test that equivalent CLI options give equivalent PDF sizes,
     # unfortunately font optimization makes PDF generation not reproducible
     assert (

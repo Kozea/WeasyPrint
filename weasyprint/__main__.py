@@ -10,7 +10,6 @@ import argparse
 import logging
 import platform
 import sys
-import warnings
 
 import pydyf
 
@@ -50,11 +49,6 @@ def main(argv=None, stdout=None, stdin=None):
 
         Force the input character encoding (e.g. ``-e utf8``).
 
-    .. option:: -f <output_format>, --format <output_format>
-
-        Choose the output file format among PDF and PNG (e.g. ``-f png``).
-        Required if the output is not a ``.pdf`` or ``.png`` filename.
-
     .. option:: -s <filename_or_URL>, --stylesheet <filename_or_URL>
 
         Filename or URL of a user cascading stylesheet (see
@@ -64,11 +58,6 @@ def main(argv=None, stdout=None, stdin=None):
     .. option:: -m <type>, --media-type <type>
 
         Set the media type to use for ``@media``. Defaults to ``print``.
-
-    .. option:: -r <dpi>, --resolution <dpi>
-
-        For PNG output only. Set the resolution in PNG pixel per CSS inch.
-        Defaults to 96, which means that PNG pixels match CSS pixels.
 
     .. option:: -u <URL>, --base-url <URL>
 
@@ -148,12 +137,6 @@ def main(argv=None, stdout=None, stdin=None):
                         help='Show debugging messages.')
     parser.add_argument('-q', '--quiet', action='store_true',
                         help='Hide logging messages.')
-    parser.add_argument('-o', '--optimize-images', action='store_true',
-                        help='Deprecated, use "-O images" instead.')
-    parser.add_argument('-f', '--format', choices=('pdf',),
-                        help='Deprecated.')
-    parser.add_argument('-r', '--resolution', type=float,
-                        help='Deprecated.')
     parser.add_argument(
         'input', help='URL or filename of the HTML input, or - for stdin')
     parser.add_argument(
@@ -183,15 +166,6 @@ def main(argv=None, stdout=None, stdin=None):
             optimize_size |= {'images', 'fonts'}
         else:
             optimize_size.add(arg)
-
-    if args.optimize_images:
-        optimize_size.add('images')
-
-    if any((args.optimize_images, args.format, args.resolution)):
-        warnings.warn(
-            '--optimize-images, --format and --resolution options are '
-            'deprecated and will be removed in future versions.',
-            FutureWarning)
 
     kwargs = {
         'stylesheets': args.stylesheet,
