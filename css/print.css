@@ -32,8 +32,7 @@ body #main {
       display: none; }
   body #main li {
     border: none !important;
-    font-size: 1em !important;
-    padding: 0.5em 0 0.5em 2em !important; }
+    font-size: 1em !important; }
   body #main main.index section:nth-of-type(1) h2::before {
     background: none;
     content: url(img/logotype-white.svg); }
@@ -68,3 +67,5 @@ body #main {
     color: inherit !important;
     margin: 1em 0 !important;
     padding: 0 !important; }
+  body #main #samples article {
+    break-inside: avoid; }
