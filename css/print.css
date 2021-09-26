@@ -69,3 +69,5 @@ body #main {
     padding: 0 !important; }
   body #main #samples article {
     break-inside: avoid; }
+  body #main #samples article img {
+    float: none; }
