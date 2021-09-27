@@ -6,7 +6,7 @@
 nav, aside + aside, footer {
   display: none; }
 
-html, body {
+html, body, body #main {
   display: block; }
 
 body #main {
@@ -69,5 +69,8 @@ body #main {
     padding: 0 !important; }
   body #main #samples article {
     break-inside: avoid; }
-  body #main #samples article img {
-    float: none; }
+  body #main #samples article ul {
+    padding: 0 }
+  body #main #samples article ul a {
+    border: none;
+    padding: 0 0 0 2em; }
