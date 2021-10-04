@@ -298,6 +298,7 @@ def first_letter_to_box(box, skip_stack, first_letter_style):
             elif child.text:
                 character_found = False
                 if skip_stack:
+                    # TODO: handle multiple skip stacks
                     child_skip_stack, = skip_stack.values()
                     if child_skip_stack:
                         index, = child_skip_stack
