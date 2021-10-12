@@ -510,7 +510,7 @@ def test_preferred_widths_5():
 
 
 @assert_no_logs
-def test_float_in_inline():
+def test_float_in_inline_1():
     page, = render_pages('''
       <style>
         @font-face { src: url(weasyprint.otf); font-family: weasyprint }
@@ -552,6 +552,114 @@ def test_float_in_inline():
 
     p3, = line2.children
     assert p3.width == 2 * 20
+
+
+@assert_no_logs
+def test_float_in_inline_2():
+    page, = render_pages('''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        @page {
+          size: 10em;
+        }
+        article {
+          font-family: weasyprint;
+          line-height: 1;
+        }
+        div {
+          float: left;
+          width: 50%;
+        }
+      </style>
+      <article>
+        <span>
+          <div>a b c</div>
+          1 2 3 4 5 6
+        </span>
+      </article>''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    line1, line2 = article.children
+    span1, = line1.children
+    div, text = span1.children
+    assert div.children[0].children[0].text.strip() == 'a b c'
+    assert text.text.strip() == '1 2 3'
+    span2, = line2.children
+    text, = span2.children
+    assert text.text.strip() == '4 5 6'
+
+
+@assert_no_logs
+def test_float_in_inline_3():
+    page, = render_pages('''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        @page {
+          size: 10em;
+        }
+        article {
+          font-family: weasyprint;
+          line-height: 1;
+        }
+        div {
+          float: left;
+          width: 50%;
+        }
+      </style>
+      <article>
+        <span>
+          1 2 3 <div>a b c</div> 4 5 6
+        </span>
+      </article>''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    line1, line2 = article.children
+    span1, = line1.children
+    text, div = span1.children
+    assert text.text.strip() == '1 2 3'
+    assert div.children[0].children[0].text.strip() == 'a b c'
+    span2, = line2.children
+    text, = span2.children
+    assert text.text.strip() == '4 5 6'
+
+
+@assert_no_logs
+def test_float_in_inline_4():
+    page, = render_pages('''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        @page {
+          size: 10em;
+        }
+        article {
+          font-family: weasyprint;
+          line-height: 1;
+        }
+        div {
+          float: left;
+          width: 50%;
+        }
+      </style>
+      <article>
+        <span>
+          1 2 3 4 <div>a b c</div> 5 6
+        </span>
+      </article>''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    line1, line2 = article.children
+    span1, div = line1.children
+    text1, text2 = span1.children
+    assert text1.text.strip() == '1 2 3 4'
+    assert text2.text.strip() == '5'
+    assert div.position_y == 16
+    assert div.children[0].children[0].text.strip() == 'a b c'
+    span2, = line2.children
+    text, = span2.children
+    assert text.text.strip() == '6'
 
 
 @assert_no_logs
