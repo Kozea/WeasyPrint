@@ -714,6 +714,8 @@ def split_inline_box(context, box, position_x, max_x, skip_stack,
                 max_x, position_x, max_position_y)
             if child.is_floated():
                 float_resume_index = index + 1
+                if child not in waiting_floats:
+                    max_x -= child.margin_width()
             continue
 
         is_last_child = (index == len(box.children) - 1)
