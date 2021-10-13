@@ -212,9 +212,7 @@ class Layout:
         if letter_spacing == 'normal':
             letter_spacing = 0
 
-        if text and (word_spacing != 0 or letter_spacing != 0):
-            letter_spacing = units_from_double(letter_spacing)
-            space_spacing = units_from_double(word_spacing) + letter_spacing
+        if self.text and (word_spacing or letter_spacing):
             attr_list = pango.pango_layout_get_attributes(self.layout)
             if not attr_list:
                 # TODO: list should be freed
@@ -226,11 +224,17 @@ class Layout:
                 attr.start_index, attr.end_index = start, end
                 pango.pango_attr_list_change(attr_list, attr)
 
-            add_attr(0, len(bytestring), letter_spacing)
-            position = bytestring.find(b' ')
-            while position != -1:
-                add_attr(position, position + 1, space_spacing)
-                position = bytestring.find(b' ', position + 1)
+            if letter_spacing:
+                letter_spacing = units_from_double(letter_spacing)
+                add_attr(0, len(bytestring), letter_spacing)
+
+            if word_spacing:
+                space_spacing = (
+                    units_from_double(word_spacing) + letter_spacing)
+                position = bytestring.find(b' ')
+                while position != -1:
+                    add_attr(position, position + 1, space_spacing)
+                    position = bytestring.find(b' ', position + 1)
 
             pango.pango_layout_set_attributes(self.layout, attr_list)
 

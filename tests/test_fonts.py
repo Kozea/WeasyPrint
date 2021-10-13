@@ -41,6 +41,21 @@ def test_kerning_default():
 
 
 @assert_no_logs
+def test_ligatures_word_space():
+    # Kerning and ligatures are on for text with increased word spacing
+    # https://github.com/Kozea/WeasyPrint/issues/1469
+    page, = render_pages('''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        body { font-family: weasyprint; word-spacing: 1em; width: 10em }
+      </style>
+      aa liga aa''')
+    html, = page.children
+    body, = html.children
+    assert len(body.children) == 1
+
+
+@assert_no_logs
 def test_kerning_deactivate():
     # Deactivate kerning
     page, = render_pages('''
