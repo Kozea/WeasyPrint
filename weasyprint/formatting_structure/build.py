@@ -72,7 +72,6 @@ def build_formatting_structure(element_tree, style_for, get_image_from_uri,
 
     box.is_for_root_element = True
     # If this is changed, maybe update weasy.layout.page.make_margin_boxes()
-    process_whitespace(box)
     box = anonymous_table_boxes(box)
     box = flex_boxes(box)
     box = inline_in_block(box)
@@ -190,6 +189,7 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
             counter_values.pop(name)
 
     box.children = children
+    process_whitespace(box)
     # calculate string-set and bookmark-label
     set_content_lists(
         element, box, style, counter_values, target_collector, counter_style)

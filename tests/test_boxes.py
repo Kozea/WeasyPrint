@@ -64,7 +64,7 @@ def test_inline_in_block_1():
                     ('div', 'Text', 'Hello, '),
                     ('em', 'Inline', [
                         ('em', 'Text', 'World')]),
-                    ('div', 'Text', '!\n')])]),
+                    ('div', 'Text', '! ')])]),
             ('p', 'Block', [
                 ('p', 'Line', [
                     ('p', 'Text', 'Lipsum.')])])])]
@@ -86,7 +86,7 @@ def test_inline_in_block_2():
                     ('div', 'Text', 'Hello, '),
                     ('em', 'Inline', [
                         ('em', 'Text', 'World')]),
-                    ('div', 'Text', '!\n')])])])]
+                    ('div', 'Text', '! ')])])])]
     box = parse(source)
     box = build.inline_in_block(box)
     assert_tree(box, expected)
@@ -151,8 +151,7 @@ def test_block_in_inline():
                             ('span', 'Block', [  # This block is "pulled up"
                                 ('span', 'Line', [
                                     ('span', 'Text', 'sit')])]),
-                            # No whitespace processing here.
-                            ('strong', 'Text', '\n      '),
+                            ('strong', 'Text', ' '),
                             ('span', 'Block', [  # This block is "pulled up"
                                 ('span', 'Line', [
                                     ('span', 'Text', 'amet,')])])]),
@@ -180,8 +179,7 @@ def test_block_in_inline():
                     ('p', 'Line', [
                         ('em', 'Inline', [
                             ('strong', 'Inline', [
-                                # Whitespace processing not done yet.
-                                ('strong', 'Text', '\n      ')])])])]),
+                                ('strong', 'Text', ' ')])])])]),
                 ('span', 'Block', [
                     ('span', 'Line', [
                         ('span', 'Text', 'amet,')])]),
