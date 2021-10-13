@@ -288,11 +288,6 @@ def test_bookmarks_14():
              f </h1>
       <h1> g <span> h </span> i </h1>
     ''').write_pdf()
-    # a
-    # |_ b
-    # |_ c
-    # L_ d
-    # e
     assert re.findall(b'/Count ([0-9-]*)', pdf)[-1] == b'4'
     assert re.findall(b'/Title \\((.*)\\)', pdf) == [
         b'a', b'b c d', b'e f', b'g h i']

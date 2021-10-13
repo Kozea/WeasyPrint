@@ -342,6 +342,7 @@ def make_margin_boxes(context, page, state):
                 context.get_image_from_uri, context.target_collector,
                 context.counter_style, context, page)
             build.process_whitespace(box)
+            build.process_text_transform(box)
             box = build.anonymous_table_boxes(box)
             box = build.flex_boxes(box)
             box = build.inline_in_block(box)
