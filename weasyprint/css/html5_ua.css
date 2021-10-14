@@ -318,7 +318,7 @@ hr { border-style: inset; border-width: 1px; color: gray; display: block; margin
 html { display: block; }
 i { font-style: italic; }
 *[dir=auto] { /* unicode-bidi: isolate; */ }
-bdo[dir=auto] { /* unicode-bidi: bidi-override isolate; }
+bdo[dir=auto] { /* unicode-bidi: bidi-override isolate; */ }
 input[type=hidden] { display: none; }
 menu[type=context] { display: none; }
 pre[dir=auto] { /* unicode-bidi: plaintext; */ }
