@@ -339,7 +339,7 @@ def _linebox_layout(context, box, index, child, new_children, page_is_empty,
                 line.block_ellipsis = box.style['block_ellipsis']
                 break
 
-    if new_children:
+    if new_children and new_children[-1].resume_at:
         resume_at = {index: new_children[-1].resume_at}
 
     return abort, stop, resume_at, position_y
@@ -558,7 +558,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
     new_children = []
     next_page = {'break': 'any', 'page': None}
 
-    resume_at = {}
+    resume_at = None
     if is_start:
         skip_stack = {0: None}
         first_letter_style = getattr(box, 'first_letter_style', None)
@@ -606,6 +606,8 @@ def block_container_layout(context, box, max_position_y, skip_stack,
             skip_stack = None
 
         if child_resume_at:
+            if resume_at is None:
+                resume_at = {}
             for key, value in child_resume_at.items():
                 resume_at[key] = value
 
@@ -614,9 +616,6 @@ def block_container_layout(context, box, max_position_y, skip_stack,
             return None, None, {'break': 'any', 'page': page}, [], False
         elif stop:
             break
-
-    else:
-        resume_at = None
 
     box_is_fragmented = resume_at is not None
     if box.style['continue'] == 'discard':
