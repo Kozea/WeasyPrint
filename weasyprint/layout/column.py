@@ -120,7 +120,7 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
             resolve_percentages(block, containing_block)
             block.position_x = box.content_box_x()
             block.position_y = current_position_y
-            new_child, _, _, adjoining_margins, _ = block_level_layout(
+            new_child, _, _, _, adjoining_margins, _ = block_level_layout(
                 context, block, original_max_position_y, skip_stack,
                 containing_block, page_is_empty, absolute_boxes, fixed_boxes,
                 adjoining_margins, discard=False)
@@ -139,7 +139,7 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
         current_position_y += collapse_margin(adjoining_margins)
         adjoining_margins = []
         column_box = create_column_box(column_children)
-        new_child, _, _, _, _ = block_box_layout(
+        new_child, _, _, _, _, _ = block_box_layout(
             context, column_box, float('inf'), skip_stack, containing_block,
             page_is_empty, [], [], [], discard=False)
         height = new_child.margin_height()
@@ -159,7 +159,9 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
 
             for i in range(count):
                 # Render the column
-                new_box, resume_at, next_page, _, _ = block_box_layout(
+                # TODO: handle out_of_flow_resume_at
+                (new_box, resume_at, out_of_flow_resume_at, next_page, _,
+                 _) = block_box_layout(
                     context, column_box, box.content_box_y() + height,
                     column_skip_stack, containing_block, page_is_empty,
                     [], [], [], discard=False)
@@ -181,7 +183,7 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
                         in_flow_children[-1].margin_height())
 
                     # Get the minimum size needed to render the next box
-                    next_box, _, _, _, _ = block_box_layout(
+                    next_box, _, _, _, _, _ = block_box_layout(
                         context, column_box, box.content_box_y(),
                         column_skip_stack, containing_block, True, [], [], [],
                         discard=False)
@@ -242,7 +244,9 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
                     box.width - (i + 1) * width - i * style['column_gap'])
             else:
                 column_box.position_x += i * (width + style['column_gap'])
-            new_child, column_skip_stack, column_next_page, _, _ = (
+            # TODO: handle out_of_flow_resume_at
+            (new_child, column_skip_stack, column_out_of_flow_resume_at,
+             column_next_page, _, _) = (
                 block_box_layout(
                     context, column_box, max_position_y, skip_stack,
                     containing_block, page_is_empty, absolute_boxes,
@@ -269,9 +273,12 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
             column.height = max_column_height
             new_children.append(column)
 
+    out_of_flow_resume_at = None
     if box.children and not new_children:
         # The box has children but none can be drawn, let's skip the whole box
-        return None, (0, None), {'break': 'any', 'page': None}, [], False
+        return (
+            None, (0, None), out_of_flow_resume_at,
+            {'break': 'any', 'page': None}, [], False)
 
     # Set the height of box and the columns
     box.children = new_children
@@ -296,4 +303,4 @@ def columns_layout(context, box, max_position_y, skip_stack, containing_block,
         for absolute_box in absolute_boxes:
             absolute_layout(context, absolute_box, box, fixed_boxes)
 
-    return box, skip_stack, next_page, [], False
+    return box, skip_stack, out_of_flow_resume_at, next_page, [], False

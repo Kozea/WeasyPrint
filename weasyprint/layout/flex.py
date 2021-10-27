@@ -460,7 +460,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
             else:
                 child_copy = child.copy()
             block.block_level_width(child_copy, parent_box)
-            new_child, _, _, adjoining_margins, _ = (
+            new_child, _, _, _, adjoining_margins, _ = (
                 block.block_level_layout_switch(
                     context, child_copy, float('inf'), child_skip_stack,
                     parent_box, page_is_empty, absolute_boxes, fixed_boxes,
@@ -839,10 +839,11 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
     for line in flex_lines:
         for i, child in line:
             if child.is_flex_item:
-                new_child, child_resume_at = block.block_level_layout_switch(
-                    context, child, max_position_y, child_skip_stack, box,
-                    page_is_empty, absolute_boxes, fixed_boxes,
-                    adjoining_margins=[], discard=False)[:2]
+                new_child, child_resume_at, out_of_flow_child_resume_at = (
+                    block.block_level_layout_switch(
+                        context, child, max_position_y, child_skip_stack, box,
+                        page_is_empty, absolute_boxes, fixed_boxes,
+                        adjoining_margins=[], discard=False))[:3]
                 if new_child is None:
                     if resume_at:
                         index, = resume_at
@@ -890,4 +891,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
     context.finish_block_formatting_context(box)
 
     # TODO: check these returned values
-    return box, resume_at, {'break': 'any', 'page': None}, [], False
+    out_of_flow_resume_at = None
+    return (
+        box, resume_at, out_of_flow_resume_at, {'break': 'any', 'page': None},
+        [], False)

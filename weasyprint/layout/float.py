@@ -62,7 +62,8 @@ def float_layout(context, box, containing_block, absolute_boxes, fixed_boxes,
 
     if isinstance(box, boxes.BlockContainerBox):
         context.create_block_formatting_context()
-        box, resume_at, _, _, _ = block_container_layout(
+        # TODO: handle out_of_flow_resume_at
+        box, resume_at, _, _, _, _ = block_container_layout(
             context, box, max_position_y=max_position_y,
             skip_stack=skip_stack, page_is_empty=False,
             absolute_boxes=absolute_boxes, fixed_boxes=fixed_boxes,

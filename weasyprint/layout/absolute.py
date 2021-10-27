@@ -203,7 +203,7 @@ def absolute_block(context, box, containing_block, fixed_boxes):
     if box.is_table_wrapper:
         table_wrapper_width(context, box, (cb_width, cb_height))
 
-    new_box, _, _, _, _ = block_container_layout(
+    new_box, _, _, _, _, _ = block_container_layout(
         context, box, max_position_y=float('inf'), skip_stack=None,
         page_is_empty=False, absolute_boxes=absolute_boxes,
         fixed_boxes=fixed_boxes, adjoining_margins=None, discard=False)

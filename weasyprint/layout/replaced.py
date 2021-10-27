@@ -293,7 +293,10 @@ def block_replaced_box_layout(context, box, containing_block):
     next_page = {'break': 'any', 'page': None}
     adjoining_margins = []
     collapsing_through = False
-    return box, resume_at, next_page, adjoining_margins, collapsing_through
+    out_of_flow_resume_at = None
+    return (
+        box, resume_at, out_of_flow_resume_at, next_page, adjoining_margins,
+        collapsing_through)
 
 
 @handle_min_max_width

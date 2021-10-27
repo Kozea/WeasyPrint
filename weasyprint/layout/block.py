@@ -412,8 +412,8 @@ def _in_flow_layout(context, box, index, child, new_children, page_is_empty,
 
     if not getattr(child, 'first_letter_style', None):
         child.first_letter_style = first_letter_style
-    (new_child, resume_at, next_page, next_adjoining_margins,
-     collapsing_through) = block_level_layout(
+    (new_child, resume_at, out_of_flow_resume_at, next_page,
+     next_adjoining_margins, collapsing_through) = block_level_layout(
          context, child, max_position_y, skip_stack, new_containing_block,
          page_is_empty_with_no_children, absolute_boxes, fixed_boxes,
          adjoining_margins, discard)
@@ -558,7 +558,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
     new_children = []
     next_page = {'break': 'any', 'page': None}
 
-    resume_at = None
+    resume_at = out_of_flow_resume_at = None
     if is_start:
         skip_stack = {0: None}
         first_letter_style = getattr(box, 'first_letter_style', None)
@@ -579,9 +579,11 @@ def block_container_layout(context, box, max_position_y, skip_stack,
         child.position_x = position_x
         child.position_y = position_y  # doesn’t count adjoining_margins
 
+        child_resume_at = out_of_flow_child_resume_at = None
+
         if not child.is_in_normal_flow():
             abort = False
-            stop, child_resume_at = _out_of_flow_layout(
+            stop, out_of_flow_child_resume_at = _out_of_flow_layout(
                 context, box, index, child, new_children, page_is_empty,
                 absolute_boxes, fixed_boxes, adjoining_margins,
                 allowed_max_position_y, skip_stack)
@@ -610,10 +612,15 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                 resume_at = {}
             for key, value in child_resume_at.items():
                 resume_at[key] = value
+        elif out_of_flow_child_resume_at:
+            if out_of_flow_resume_at is None:
+                out_of_flow_resume_at = {}
+            for key, value in out_of_flow_child_resume_at.items():
+                out_of_flow_resume_at[key] = value
 
         if abort:
             page = child.page_values()[0]
-            return None, None, {'break': 'any', 'page': page}, [], False
+            return None, None, None, {'break': 'any', 'page': page}, [], False
         elif stop:
             break
 
@@ -625,7 +632,7 @@ def block_container_layout(context, box, max_position_y, skip_stack,
             box.style['break_inside'] in ('avoid', 'avoid-page') and
             not page_is_empty):
         return (
-            None, None, {'break': 'any', 'page': None}, [], False)
+            None, None, None, {'break': 'any', 'page': None}, [], False)
 
     if collapsing_with_children:
         box.position_y += (
@@ -710,7 +717,9 @@ def block_container_layout(context, box, max_position_y, skip_stack,
     if next_page['page'] is None:
         next_page['page'] = new_box.page_values()[1]
 
-    return new_box, resume_at, next_page, adjoining_margins, collapsing_through
+    return (
+        new_box, resume_at, out_of_flow_resume_at, next_page,
+        adjoining_margins, collapsing_through)
 
 
 def collapse_margin(adjoining_margins):

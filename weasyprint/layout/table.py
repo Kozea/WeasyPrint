@@ -141,7 +141,7 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
                 # The computed height is a minimum
                 cell.computed_height = cell.height
                 cell.height = 'auto'
-                cell, _, _, _, _ = block_container_layout(
+                cell, _, _, _, _, _ = block_container_layout(
                     context, cell, max_position_y=float('inf'),
                     skip_stack=None, page_is_empty=False,
                     absolute_boxes=absolute_boxes,
@@ -461,8 +461,10 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
             for cell in row.children
             if cell.grid_x == column.grid_x]
 
+    # TODO: handle out_of_flow_resume_at
     header, new_table_children, footer, position_y, resume_at, next_page = (
         all_groups_layout())
+    out_of_flow_resume_at = None
 
     if new_table_children is None:
         assert resume_at is None
@@ -470,7 +472,8 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
         adjoining_margins = []
         collapsing_through = False
         return (
-            table, resume_at, next_page, adjoining_margins, collapsing_through)
+            table, resume_at, out_of_flow_resume_at, next_page,
+            adjoining_margins, collapsing_through)
 
     table = table.copy_with_children(
         ([header] if header is not None else []) +
@@ -521,7 +524,9 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
         resume_at = None
     adjoining_margins = []
     collapsing_through = False
-    return table, resume_at, next_page, adjoining_margins, collapsing_through
+    return (
+        table, resume_at, out_of_flow_resume_at, next_page, adjoining_margins,
+        collapsing_through)
 
 
 def add_top_padding(box, extra_padding):
