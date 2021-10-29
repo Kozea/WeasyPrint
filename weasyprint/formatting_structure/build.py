@@ -45,6 +45,10 @@ BOX_TYPE_FROM_DISPLAY = {
     ('table-caption',): boxes.TableCaptionBox,
 }
 
+# http://stackoverflow.com/questions/16317534/
+ASCII_TO_WIDE = {i: chr(i + 0xfee0) for i in range(0x21, 0x7f)}
+ASCII_TO_WIDE.update({0x20: '\u3000', 0x2D: '\u2212'})
+
 
 def build_formatting_structure(element_tree, style_for, get_image_from_uri,
                                base_url, target_collector, counter_style):
@@ -72,7 +76,6 @@ def build_formatting_structure(element_tree, style_for, get_image_from_uri,
 
     box.is_for_root_element = True
     # If this is changed, maybe update weasy.layout.page.make_margin_boxes()
-    process_whitespace(box)
     box = anonymous_table_boxes(box)
     box = flex_boxes(box)
     box = inline_in_block(box)
@@ -190,9 +193,10 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
             counter_values.pop(name)
 
     box.children = children
-    # calculate string-set and bookmark-label
+    process_whitespace(box)
     set_content_lists(
         element, box, style, counter_values, target_collector, counter_style)
+    process_text_transform(box)
 
     if marker_boxes and len(box.children) == 1:
         # See https://www.w3.org/TR/css-lists-3/#list-style-position-outside
@@ -374,7 +378,6 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
         has_text.add(True)
         if text:
             if content_boxes and isinstance(content_boxes[-1], boxes.TextBox):
-                content_boxes[-1].original_text += text
                 content_boxes[-1].text += text
             else:
                 content_boxes.append(
@@ -1256,6 +1259,26 @@ def process_whitespace(box, following_collapsible_space=False):
     return following_collapsible_space
 
 
+def process_text_transform(box):
+    if isinstance(box, boxes.TextBox):
+        text_transform = box.style['text_transform']
+        if text_transform != 'none':
+            box.text = {
+                'uppercase': lambda text: text.upper(),
+                'lowercase': lambda text: text.lower(),
+                # Python’s unicode.captitalize is not the same.
+                'capitalize': lambda text: text.title(),
+                'full-width': lambda text: text.translate(ASCII_TO_WIDE),
+            }[text_transform](box.text)
+        if box.style['hyphens'] == 'none':
+            box.text = box.text.replace('\u00AD', '')  # U+00AD is soft hyphen
+
+    if isinstance(box, boxes.ParentBox) and not box.is_running():
+        for child in box.children:
+            if isinstance(child, (boxes.TextBox, boxes.InlineBox)):
+                process_text_transform(child)
+
+
 def inline_in_block(box):
     """Build the structure of lines inside blocks and return a new box tree.
 
@@ -1547,10 +1570,10 @@ def set_viewport_overflow(root_box):
 
 def box_text(box):
     if isinstance(box, boxes.TextBox):
-        return box.original_text
+        return box.text
     elif isinstance(box, boxes.ParentBox):
         return ''.join(
-            child.original_text for child in box.descendants()
+            child.text for child in box.descendants()
             if not child.element_tag.endswith('::before') and
             not child.element_tag.endswith('::after') and
             not child.element_tag.endswith('::marker') and

@@ -75,6 +75,10 @@ def preserve_ratio(svg, node, font_size, width, height, viewbox=None):
     viewbox = viewbox or node.get_viewbox()
     if viewbox:
         viewbox_width, viewbox_height = viewbox[2:]
+    elif svg.tree == node:
+        viewbox_width, viewbox_height = svg.get_intrinsic_size(font_size)
+        if None in (viewbox_width, viewbox_height):
+            return 1, 1, 0, 0
     else:
         return 1, 1, 0, 0
 
@@ -112,8 +116,9 @@ def preserve_ratio(svg, node, font_size, width, height, viewbox=None):
         elif y_position == 'max':
             translate_y += height - viewbox_height * scale_y
 
-    translate_x -= viewbox[0] * scale_x
-    translate_y -= viewbox[1] * scale_y
+    if viewbox:
+        translate_x -= viewbox[0] * scale_x
+        translate_y -= viewbox[1] * scale_y
 
     return scale_x, scale_y, translate_x, translate_y
 
