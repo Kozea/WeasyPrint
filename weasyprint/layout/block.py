@@ -6,8 +6,6 @@
 
 """
 
-from itertools import chain
-
 from ..formatting_structure import boxes
 from .absolute import AbsolutePlaceholder, absolute_layout
 from .column import columns_layout
@@ -560,22 +558,13 @@ def block_container_layout(context, box, max_position_y, skip_stack,
 
     resume_at = out_of_flow_resume_at = None
     if is_start:
-        skip_stack = {0: None}
+        skip = 0
         first_letter_style = getattr(box, 'first_letter_style', None)
     else:
+        (skip, skip_stack), = skip_stack.items()
         first_letter_style = None
 
-    next_skip = tuple(skip_stack.keys())[-1] + 1
-    if box.children:
-        children = chain(
-            ((skip, box.children[skip], skip_stack)
-             for skip, skip_stack in skip_stack.items()),
-            ((skip, child, None) for skip, child
-             in enumerate(box.children[next_skip:], start=next_skip)))
-    else:
-        children = ()
-
-    for index, child, skip_stack in children:
+    for index, child in enumerate(box.children[skip:], start=skip):
         child.position_x = position_x
         child.position_y = position_y  # doesn’t count adjoining_margins
 
