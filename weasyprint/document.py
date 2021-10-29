@@ -10,6 +10,7 @@ import hashlib
 import io
 import math
 import shutil
+import struct
 import zlib
 from os.path import basename
 from urllib.parse import unquote, urlsplit
@@ -255,18 +256,33 @@ class Stream(pydyf.Stream):
         self._x_objects[group.id] = group
         return group
 
-    def _save_jpeg2000(self, pillow_image, optimize):
+    def _save_png(self, pillow_image, optimize):
         image_file = io.BytesIO()
-        try:
-            pillow_image.save(image_file, format='JPEG2000', optimize=optimize)
-        except OSError:
-            # Set number of resolutions to 1 because of
-            # https://github.com/uclouvain/openjpeg/issues/215
-            image_file.seek(0)
-            pillow_image.save(
-                image_file, format='JPEG2000', optimize=optimize,
-                num_resolutions=1)
+        pillow_image.save(image_file, format='PNG', optimize=optimize)
         return image_file
+
+    def _get_png_data(self, image_file):
+        image_file.seek(0)
+        # Read the PNG header, then discard it because we know it's a PNG. If
+        # this weren't just output from Pillow, we should actually check it.
+        res=image_file.read(8)
+
+        png_data = b''
+        raw_chunk_len = image_file.read(4)
+        # PNG files consist of a series of chunks.
+        while len(raw_chunk_len) > 0:
+            # Each chunk begins with its data length (four bytes, may be zero),
+            # then its type (four ASCII characters), then the data, then four
+            # bytes of a CRC.
+            chunk_len, = struct.unpack('!I', raw_chunk_len)
+            chunk_type = image_file.read(4)
+            chunk_data = image_file.read(chunk_len)
+            if chunk_type == b'IDAT':
+                png_data += chunk_data
+            # We aren't checking the CRC, we assume this is a valid PNG.
+            _chunk_crc = image_file.read(4)
+            raw_chunk_len = image_file.read(4)
+        return png_data
 
     def add_image(self, pillow_image, image_rendering, optimize_size):
         image_name = f'i{pillow_image.id}'
@@ -306,24 +322,42 @@ class Stream(pydyf.Stream):
             extra['Filter'] = '/DCTDecode'
             image_file = io.BytesIO()
             pillow_image.save(image_file, format='JPEG', optimize=optimize)
+            stream = [image_file.getvalue()]
         else:
-            extra['Filter'] = '/JPXDecode'
+            extra['Filter'] = '/FlateDecode'
+            extra['DecodeParms'] = pydyf.Dictionary({
+                # Predictor 15 specifies that we're providing PNG data,
+                # ostensibly using an "optimum predictor", but doesn't actually
+                # matter as long as the predictor value is 10+ according to the
+                # spec. (Other PNG predictor values assert that we're using
+                # specific predictors that we don't want to commit to, but
+                # "optimum" can vary.)
+                'Predictor': 15,
+                'Columns': pillow_image.width,
+            })
+            if pillow_image.mode in ('RGB', 'RGBA'):
+                # Defaults to 1.
+                extra['DecodeParms']['Colors'] = 3
             if pillow_image.mode in ('RGBA', 'LA'):
                 alpha = pillow_image.getchannel('A')
                 pillow_image = pillow_image.convert(pillow_image.mode[:-1])
-                alpha_file = self._save_jpeg2000(alpha, optimize)
-                extra['SMask'] = pydyf.Stream([alpha_file.getvalue()], extra={
-                    'Filter': '/JPXDecode',
+                alpha_file = self._save_png(alpha, optimize)
+                extra['SMask'] = pydyf.Stream([self._get_png_data(alpha_file)], extra={
+                    'Filter': '/FlateDecode',
                     'Type': '/XObject',
                     'Subtype': '/Image',
+                    'DecodeParms': pydyf.Dictionary({
+                        'Predictor': 15,
+                        'Columns': pillow_image.width,
+                    }),
                     'Width': pillow_image.width,
                     'Height': pillow_image.height,
                     'ColorSpace': '/DeviceGray',
                     'BitsPerComponent': 8,
                     'Interpolate': interpolate,
                 })
-            image_file = self._save_jpeg2000(pillow_image, optimize)
-        stream = [image_file.getvalue()]
+            image_file = self._save_png(pillow_image, optimize)
+            stream = [self._get_png_data(image_file)]
 
         xobject = pydyf.Stream(stream, extra=extra)
         self._images[image_name] = xobject
