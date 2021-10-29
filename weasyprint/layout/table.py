@@ -83,10 +83,7 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
             skip = 0
         else:
             (skip, skip_stack), = skip_stack.items()
-            # TODO: handle multiple skip stacks (actually handle skip stack)
-            assert not skip_stack  # No breaks inside rows for now
-        for i, row in enumerate(group.children[skip:]):
-            index_row = i + skip
+        for index_row, row in enumerate(group.children[skip:], start=skip):
             row.index = index_row
 
             if new_group_children:
@@ -103,7 +100,7 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
             row.width = rows_width
             # Place cells at the top of the row and layout their content
             new_row_children = []
-            for cell in row.children:
+            for index_cell, cell in enumerate(row.children):
                 spanned_widths = column_widths[cell.grid_x:][:cell.colspan]
                 # In the fixed layout the grid width is set by cells in
                 # the first row and column elements.
@@ -141,12 +138,33 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
                 # The computed height is a minimum
                 cell.computed_height = cell.height
                 cell.height = 'auto'
-                cell, _, _, _, _ = block_container_layout(
-                    context, cell, max_position_y=float('inf'),
-                    skip_stack=None, page_is_empty=False,
+                if skip_stack:
+                    if index_cell in skip_stack:
+                        cell_skip_stack = skip_stack[index_cell]
+                    else:
+                        cell_skip_stack = {len(cell.children): None}
+                else:
+                    cell_skip_stack = None
+                new_cell, cell_resume_at, _, _, _ = block_container_layout(
+                    context, cell, max_position_y=max_position_y,
+                    skip_stack=cell_skip_stack, page_is_empty=False,
                     absolute_boxes=absolute_boxes,
                     fixed_boxes=fixed_boxes, adjoining_margins=None,
                     discard=False)
+                if new_cell is None:
+                    cell = cell.copy_with_children([])
+                    cell, _, _, _, _ = block_container_layout(
+                        context, cell, max_position_y=max_position_y,
+                        skip_stack=cell_skip_stack, page_is_empty=True,
+                        absolute_boxes=[], fixed_boxes=[],
+                        adjoining_margins=None, discard=False)
+                    cell_resume_at = {0: None}
+                else:
+                    cell = new_cell
+                if cell_resume_at:
+                    if resume_at is None:
+                        resume_at = {index_row: {}}
+                    resume_at[index_row][index_cell] = cell_resume_at
                 cell.empty = not any(
                     child.is_floated() or child.is_in_normal_flow()
                     for child in cell.children)
@@ -226,6 +244,24 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
                             child.translate(dy=vertical_align_shift)
 
             next_position_y = row.position_y + row.height + border_spacing_y
+
+            # Break if one cell was broken
+            if resume_at:
+                values, = list(resume_at.values())
+                if len(row.children) == len(values):
+                    for cell_resume_at in values.values():
+                        if cell_resume_at != {0: None}:
+                            new_group_children.append(row)
+                            break
+                    else:
+                        # No cell was displayed, give up row
+                        next_position_y = float('inf')
+                        page_is_empty = False
+                        resume_at = None
+                else:
+                    new_group_children.append(row)
+                    break
+
             # Break if this row overflows the page, unless there is no
             # other content on the page.
             if next_position_y > max_position_y and not page_is_empty:
@@ -247,9 +283,10 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
                     return None, None, next_page
                 break
 
-            position_y = next_position_y
             new_group_children.append(row)
+            position_y = next_position_y
             page_is_empty = False
+            skip_stack = None
 
         # Do not keep the row group if we made a page break
         # before any of its rows or with 'avoid'
