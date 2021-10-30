@@ -256,32 +256,31 @@ class Stream(pydyf.Stream):
         self._x_objects[group.id] = group
         return group
 
-    def _save_png(self, pillow_image, optimize):
+    def _get_png_data(self, pillow_image, optimize):
         image_file = io.BytesIO()
         pillow_image.save(image_file, format='PNG', optimize=optimize)
-        return image_file
 
-    def _get_png_data(self, image_file):
-        image_file.seek(0)
         # Read the PNG header, then discard it because we know it's a PNG. If
         # this weren't just output from Pillow, we should actually check it.
-        res=image_file.read(8)
+        image_file.seek(8)
 
         png_data = b''
-        raw_chunk_len = image_file.read(4)
+        raw_chunk_length = image_file.read(4)
         # PNG files consist of a series of chunks.
-        while len(raw_chunk_len) > 0:
+        while len(raw_chunk_length) > 0:
             # Each chunk begins with its data length (four bytes, may be zero),
             # then its type (four ASCII characters), then the data, then four
             # bytes of a CRC.
-            chunk_len, = struct.unpack('!I', raw_chunk_len)
+            chunk_len, = struct.unpack('!I', raw_chunk_length)
             chunk_type = image_file.read(4)
-            chunk_data = image_file.read(chunk_len)
             if chunk_type == b'IDAT':
-                png_data += chunk_data
+                png_data += image_file.read(chunk_len)
+            else:
+                image_file.seek(chunk_len, io.SEEK_CUR)
             # We aren't checking the CRC, we assume this is a valid PNG.
-            _chunk_crc = image_file.read(4)
-            raw_chunk_len = image_file.read(4)
+            image_file.seek(4, io.SEEK_CUR)
+            raw_chunk_length = image_file.read(4)
+
         return png_data
 
     def add_image(self, pillow_image, image_rendering, optimize_size):
@@ -341,8 +340,8 @@ class Stream(pydyf.Stream):
             if pillow_image.mode in ('RGBA', 'LA'):
                 alpha = pillow_image.getchannel('A')
                 pillow_image = pillow_image.convert(pillow_image.mode[:-1])
-                alpha_file = self._save_png(alpha, optimize)
-                extra['SMask'] = pydyf.Stream([self._get_png_data(alpha_file)], extra={
+                alpha_data = self._get_png_data(alpha, optimize)
+                extra['SMask'] = pydyf.Stream([alpha_data], extra={
                     'Filter': '/FlateDecode',
                     'Type': '/XObject',
                     'Subtype': '/Image',
@@ -355,9 +354,8 @@ class Stream(pydyf.Stream):
                     'ColorSpace': '/DeviceGray',
                     'BitsPerComponent': 8,
                     'Interpolate': interpolate,
-                })
-            image_file = self._save_png(pillow_image, optimize)
-            stream = [self._get_png_data(image_file)]
+                    })
+            stream = [self._get_png_data(pillow_image, optimize)]
 
         xobject = pydyf.Stream(stream, extra=extra)
         self._images[image_name] = xobject
