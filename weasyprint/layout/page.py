@@ -13,6 +13,7 @@ from ..formatting_structure import boxes, build
 from ..logger import PROGRESS_LOGGER
 from .absolute import absolute_layout
 from .block import block_container_layout, block_level_layout
+from .float import float_layout
 from .min_max import handle_min_max_height, handle_min_max_width
 from .percent import resolve_percentages
 from .preferred import max_content_width, min_content_width
@@ -547,11 +548,24 @@ def make_page(context, root_box, page_type, resume_at, page_number,
     page_is_empty = True
     adjoining_margins = []
     positioned_boxes = []  # Mixed absolute and fixed
+    out_of_flow_boxes = []
+    broken_out_of_flow = []
+    for box, containing_block, skip_stack in context.broken_out_of_flow:
+        box.position_y = 0
+        out_of_flow_box, out_of_flow_resume_at = float_layout(
+            context, box, containing_block, positioned_boxes, positioned_boxes,
+            page_content_bottom, skip_stack)
+        out_of_flow_boxes.append(out_of_flow_box)
+        if out_of_flow_resume_at:
+            broken_out_of_flow.append(
+                (box, containing_block, out_of_flow_resume_at))
+    context.broken_out_of_flow = broken_out_of_flow
     root_box, resume_at, next_page, _, _ = block_level_layout(
         context, root_box, page_content_bottom, resume_at,
         initial_containing_block, page_is_empty, positioned_boxes,
         positioned_boxes, adjoining_margins, discard=False)
     assert root_box
+    root_box.children = tuple(out_of_flow_boxes) + root_box.children
 
     page.fixed_boxes = [
         placeholder._box for placeholder in positioned_boxes
