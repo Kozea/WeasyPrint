@@ -81,6 +81,8 @@ class SVGImage:
                 ratio = None
         elif width and height:
             ratio = width / height
+        else:
+            ratio = 1
         return width, height, ratio
 
     def draw(self, stream, concrete_width, concrete_height, image_rendering):
