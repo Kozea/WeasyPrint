@@ -75,7 +75,7 @@ def text(svg, node, font_size):
     letter_spacing = svg.length(node.get('letter-spacing'), font_size)
     text_anchor = node.get('text-anchor')
     # TODO: use real values
-    ascent, descent = 100, 20
+    ascent, descent = font_size * .8, font_size * .2
     if text_anchor == 'middle':
         x_align = - (width / 2. + x_bearing)
         if letter_spacing and node.text:
