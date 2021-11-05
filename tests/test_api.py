@@ -304,7 +304,10 @@ def test_command_line_render(tmpdir):
     combined = b'<style>' + css + b'</style>' + html
     linked = b'<link rel=stylesheet href=style.css>' + html
 
-    py.path.local(resource_filename('')).chdir()
+    tmpdir.chdir()
+    pattern_bytes = Path(resource_filename('pattern.png')).read_bytes()
+    tmpdir.join('pattern.png').write_binary(pattern_bytes)
+
     # Reference
     html_obj = FakeHTML(string=combined, base_url='dummy.html')
     pdf_bytes = html_obj.write_pdf()
@@ -312,10 +315,6 @@ def test_command_line_render(tmpdir):
         string=combined, base_url='dummy.html',
         media_type='screen').write_pdf()
 
-    tmpdir.chdir()
-    with open(resource_filename('pattern.png'), 'rb') as pattern_fd:
-        pattern_bytes = pattern_fd.read()
-    tmpdir.join('pattern.png').write_binary(pattern_bytes)
     tmpdir.join('no_css.html').write_binary(html)
     tmpdir.join('combined.html').write_binary(combined)
     tmpdir.join('combined-UTF-16BE.html').write_binary(
