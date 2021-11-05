@@ -14,6 +14,8 @@ from codecs import BOM_UTF16_BE
 
 import pytest
 from weasyprint import Attachment
+from weasyprint.document import Document, DocumentMetadata
+from weasyprint.text.fonts import FontConfiguration
 from weasyprint.urls import path2url
 
 from .testing_utils import (
@@ -472,6 +474,21 @@ def test_embed_image_once():
           <img src="blue.jpg">
           <div style="background: url(blue.jpg) no-repeat"></div>
         ''').write_pdf().count(b'/Filter /DCTDecode') == 1
+
+
+@assert_no_logs
+def test_embed_images_from_pages():
+    page1, = FakeHTML(
+        base_url=resource_filename('dummy.html'),
+        string='<img src="pattern.png">').render().pages
+    page2, = FakeHTML(
+        base_url=resource_filename('dummy.html'),
+        string='<img src="pattern.palette.png">').render().pages
+    document = Document(
+        (page1, page2), metadata=DocumentMetadata(),
+        font_config=FontConfiguration(), url_fetcher=None,
+        optimize_size=()).write_pdf()
+    assert document.count(b'/Filter /JPXDecode') == 2
 
 
 @assert_no_logs

@@ -94,10 +94,8 @@ class SVGImage:
 def get_image_from_uri(cache, url_fetcher, optimize_size, url,
                        forced_mime_type=None, context=None):
     """Get an Image instance from an image URI."""
-    missing = object()
-    image = cache.get(url, missing)
-    if image is not missing:
-        return image
+    if url in cache:
+        return cache[url]
 
     try:
         with fetch(url_fetcher, url) as result:
@@ -133,7 +131,7 @@ def get_image_from_uri(cache, url_fetcher, optimize_size, url,
                             raster_exception)
                 else:
                     # Store image id to enable cache in Stream.add_image
-                    pillow_image.id = len(cache)
+                    pillow_image.id = hash(url)
                     image = RasterImage(pillow_image, optimize_size)
 
     except (URLFetchingError, ImageLoadingError) as exception:
