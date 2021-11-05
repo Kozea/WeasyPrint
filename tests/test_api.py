@@ -305,7 +305,11 @@ def test_command_line_render(tmpdir):
     linked = b'<link rel=stylesheet href=style.css>' + html
     not_optimized = b'<body>a<img src="not-optimized.jpg">'
 
-    py.path.local(resource_filename('')).chdir()
+    tmpdir.chdir()
+    for name in ('pattern.png', 'not-optimized.jpg'):
+        pattern_bytes = Path(resource_filename(name)).read_bytes()
+        tmpdir.join(name).write_binary(pattern_bytes)
+
     # Reference
     html_obj = FakeHTML(string=combined, base_url='dummy.html')
     pdf_bytes = html_obj.write_pdf()
@@ -313,11 +317,6 @@ def test_command_line_render(tmpdir):
         string=combined, base_url='dummy.html',
         media_type='screen').write_pdf()
 
-    tmpdir.chdir()
-    for name in ('pattern.png', 'not-optimized.jpg'):
-        with open(resource_filename(name), 'rb') as pattern_fd:
-            pattern_bytes = pattern_fd.read()
-        tmpdir.join(name).write_binary(pattern_bytes)
     tmpdir.join('no_css.html').write_binary(html)
     tmpdir.join('combined.html').write_binary(combined)
     tmpdir.join('combined-UTF-16BE.html').write_binary(
