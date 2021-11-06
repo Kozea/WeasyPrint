@@ -275,11 +275,11 @@ def path(svg, node, font_size):
             svg.stream.line_to(old_x, y)
             current_point = old_x, y
 
-        elif letter in 'zZ':
+        elif letter in 'zZ' and first_path_point:
             # End of path
             node.vertices.append(None)
             svg.stream.close()
-            current_point = first_path_point or (0, 0)
+            current_point = first_path_point
 
         if letter not in 'zZ':
             node.vertices.append(current_point)
