@@ -80,7 +80,7 @@ def test_column_gap(value, width):
 
 
 @assert_no_logs
-def test_column_span():
+def test_column_span_1():
     page, = render_pages('''
       <style>
         @font-face { src: url(weasyprint.otf); font-family: weasyprint }
@@ -108,6 +108,35 @@ def test_column_span():
     assert (column4.position_x, column4.position_y) == (5 * 16, 96)
 
     assert column1.height == 16
+
+
+@assert_no_logs
+def test_column_span_2():
+    page, = render_pages('''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        body { margin: 0; font-family: weasyprint; line-height: 1 }
+        div { columns: 2; width: 10em; column-gap: 0 }
+        section { column-span: all; margin: 1em 0 }
+      </style>
+
+      <div>
+        <section>test</section>
+        abc def
+        ghi jkl
+        mno pqr
+        stu vwx
+      </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    section1, column1, column2 = div.children
+    assert (section1.content_box_x(), section1.content_box_y()) == (0, 16)
+    assert (column1.position_x, column1.position_y) == (0, 3 * 16)
+    assert (column2.position_x, column2.position_y) == (5 * 16, 3 * 16)
+
+    assert column1.height == column2.height == 16 * 4
 
 
 @assert_no_logs
