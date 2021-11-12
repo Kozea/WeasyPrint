@@ -10,6 +10,7 @@
 import functools
 import math
 from urllib.parse import unquote, urljoin
+from pathlib import Path
 
 from tinycss2.color3 import parse_color
 
@@ -145,6 +146,10 @@ def safe_urljoin(base_url, url):
     if url_is_absolute(url):
         return iri_to_uri(url)
     elif base_url:
+        # Make sure url is relative before joining base_url
+        url_path = Path(url)
+        if url_path.is_absolute():
+            url = str(url_path.relative_to(url_path.root))
         return iri_to_uri(urljoin(base_url, url))
     else:
         raise InvalidValues(
