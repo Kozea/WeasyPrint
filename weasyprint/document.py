@@ -66,7 +66,7 @@ def _w3c_date_to_pdf(string, attr_name):
 
 
 class Font:
-    def __init__(self, file_content, pango_font, index):
+    def __init__(self, font_hash, file_content, pango_font, index):
         pango_metrics = pango.pango_font_get_metrics(pango_font, ffi.NULL)
         self._font_description = pango.pango_font_describe(pango_font)
         self.family = ffi.string(pango.pango_font_description_get_family(
@@ -76,6 +76,7 @@ class Font:
         description_string = ffi.string(
             pango.pango_font_description_to_string(self._font_description))
         sha = hashlib.sha256()
+        sha.update(str(font_hash).encode())
         sha.update(description_string)
 
         self.file_content = file_content
@@ -213,7 +214,8 @@ class Stream(pydyf.Stream):
                 super().set_state(key)
 
     def add_font(self, font_hash, font_content, pango_font, index):
-        self._document.fonts[font_hash] = Font(font_content, pango_font, index)
+        self._document.fonts[font_hash] = Font(
+            font_hash, font_content, pango_font, index)
         return self._document.fonts[font_hash]
 
     def get_fonts(self):
