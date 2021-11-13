@@ -243,7 +243,9 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
                         for child in cell.children:
                             child.translate(dy=vertical_align_shift)
 
-            next_position_y = row.position_y + row.height + border_spacing_y
+            next_position_y = row.position_y + row.height
+            if resume_at is None:
+                next_position_y += border_spacing_y
 
             # Break if one cell was broken
             if resume_at:
@@ -373,7 +375,9 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
         return new_table_children, resume_at, next_page, position_y
 
     # Layout for row groups, rows and cells
-    position_y = table.content_box_y() + border_spacing_y
+    position_y = table.content_box_y()
+    if skip_stack is None:
+        position_y += border_spacing_y
     initial_position_y = position_y
     table_rows = [
         child for child in table.children
