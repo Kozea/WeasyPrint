@@ -290,6 +290,9 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
             page_is_empty = False
             skip_stack = None
 
+            if resume_at:
+                break
+
         # Do not keep the row group if we made a page break
         # before any of its rows or with 'avoid'
         if resume_at and not original_page_is_empty and (
