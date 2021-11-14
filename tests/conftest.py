@@ -25,7 +25,7 @@ MAGIC_NUMBER = b'\x89\x50\x4e\x47\x0d\x0a\x1a\x0a'
 
 
 def document_write_png(self, target=None, resolution=96, antialiasing=1,
-                       zoom=4/30):
+                       zoom=4/30, split_images=False):
     # Use temporary files because gs on Windows doesn’t accept binary on stdin
     with NamedTemporaryFile(delete=False) as pdf:
         pdf.write(self.write_pdf(zoom=zoom))
@@ -40,17 +40,20 @@ def document_write_png(self, target=None, resolution=96, antialiasing=1,
         'Ghostscript error: '
         f'{pngs.split(MAGIC_NUMBER)[0].decode("ascii").strip()}')
 
+    if split_images:
+        assert target is None
+
     # TODO: use a different way to find PNG files in stream
     magic_numbers = pngs.count(MAGIC_NUMBER)
     if magic_numbers == 1:
         if target is None:
-            return pngs
+            return [pngs] if split_images else pngs
         png = io.BytesIO(pngs)
     else:
-        images = []
-        for i, png in enumerate(pngs[8:].split(MAGIC_NUMBER)):
-            images.append(Image.open(io.BytesIO(MAGIC_NUMBER + png)))
-
+        images = [MAGIC_NUMBER + png for png in pngs[8:].split(MAGIC_NUMBER)]
+        if split_images:
+            return images
+        images = [Image.open(io.BytesIO(image)) for image in images]
         width = max(image.width for image in images)
         height = sum(image.height for image in images)
         output_image = Image.new('RGBA', (width, height))
