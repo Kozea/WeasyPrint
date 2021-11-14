@@ -2,6 +2,59 @@ Changelog
 =========
 
 
+Version 53.4
+------------
+
+Released on 2021-11-14.
+
+Bug fixes:
+
+* `#1446 <https://github.com/Kozea/WeasyPrint/issues/1446>`_:
+  Fix background on pages with a bleed property
+* `#1455 <https://github.com/Kozea/WeasyPrint/issues/1455>`_:
+  Use SVG width/height as inner size when no viewBox is given
+* `#1469 <https://github.com/Kozea/WeasyPrint/issues/1469>`_:
+  Only enable letter- and word-spacing when needed
+* `#1471 <https://github.com/Kozea/WeasyPrint/issues/1471>`_:
+  Don’t display inputs with "hidden" type
+* `#1485 <https://github.com/Kozea/WeasyPrint/issues/1485>`_:
+  Allow quotes in url() syntax for SVG,
+  Use better approximations for font ascent and descent values in SVG
+* `#1486 <https://github.com/Kozea/WeasyPrint/issues/1486>`_:
+  Fix images embedded from multiple pages
+* `#1489 <https://github.com/Kozea/WeasyPrint/issues/1489>`_:
+  Use a better hash for fonts to avoid collisions
+* `abd54c4 <https://github.com/Kozea/WeasyPrint/commit/abd54c4>`_:
+  Set SVG ratio when width and height are 0
+
+Contributors:
+
+* Guillaume Ayoub
+* Lucie Anglade
+
+Backers and sponsors:
+
+* Grip Angebotssoftware
+* SimonSoft
+* Menutech
+* Manuel Barkhau
+* Simon Sapin
+* KontextWork
+* René Fritz
+* Maykin Media
+* NCC Group
+* Crisp BV
+* Des images et des mots
+* Andreas Zettl
+* Nathalie Gutton
+* Tom Pohl
+* Moritz Mahringer
+* Florian Demmer
+* Yanal-Yvez Fargialla
+* G. Allard
+* Gábor
+
+
 Version 53.3
 ------------
 
