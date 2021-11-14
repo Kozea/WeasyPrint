@@ -136,7 +136,7 @@ class StackingContext:
                 result = dispatch(child)
                 if result is not None:
                     new_children.append(result)
-            box.children = new_children
+            box = box.copy_with_children(new_children)
             return box
 
         box = dispatch_children(box)

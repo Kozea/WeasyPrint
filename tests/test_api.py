@@ -975,3 +975,12 @@ def test_http():
         assert HTML(root_url + '/deflate').etree_element.get('test') == 'ok'
         assert HTML(
             root_url + '/raw-deflate').etree_element.get('test') == 'ok'
+
+
+@assert_no_logs
+def test_page_copy_relative():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/1473
+    document = FakeHTML(string='<div style="position: relative">a').render()
+    duplicated_pages = document.copy([*document.pages, *document.pages])
+    pngs = duplicated_pages.write_png(split_images=True)
+    assert pngs[0] == pngs[1]
