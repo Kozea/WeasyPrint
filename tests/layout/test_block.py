@@ -833,3 +833,46 @@ def test_continue_discard_children():
     assert div_2.position_y == 2 + 25
     assert div_3.position_y == 2 + 25 * 2
     assert article.border_bottom_width == 1
+
+
+@assert_no_logs
+def test_block_in_block_with_bottom_padding():
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1476
+    page_1, page_2 = render_pages('''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        @page { size: 8em 3.5em }
+        body { line-height: 1; orphans: 1; widows: 1; font-family: weasyprint }
+        div { padding-bottom: 1em }
+      </style>
+      abc def
+      <div>
+        <p>
+          ghi jkl
+          mno pqr
+        </p>
+      </div>
+      stu vwx''')
+
+    html, = page_1.children
+    body, = html.children
+    anon_body, div = body.children
+    line, = anon_body.children
+    assert line.height == 16
+    assert line.children[0].text == 'abc def'
+    p, = div.children
+    line, = p.children
+    assert line.height == 16
+    assert line.children[0].text == 'ghi jkl'
+
+    html, = page_2.children
+    body, = html.children
+    div, anon_body = body.children
+    p, = div.children
+    line, = p.children
+    assert line.height == 16
+    assert line.children[0].text == 'mno pqr'
+    line, = anon_body.children
+    assert line.height == 16
+    assert line.content_box_y() == 16 + 16  # p content + div padding
+    assert line.children[0].text == 'stu vwx'

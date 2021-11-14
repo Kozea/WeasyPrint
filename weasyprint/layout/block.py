@@ -411,7 +411,6 @@ def _in_flow_layout(context, box, index, child, new_children, page_is_empty,
          context, child, max_position_y, skip_stack, new_containing_block,
          page_is_empty_with_no_children, absolute_boxes, fixed_boxes,
          adjoining_margins, discard)
-    skip_stack = None
 
     if new_child is not None:
         # index in its non-laid-out parent, not in future new parent
@@ -425,27 +424,46 @@ def _in_flow_layout(context, box, index, child, new_children, page_is_empty,
             offset_y = (
                 collapse_margin(adjoining_margins) - new_child.margin_top)
             new_child.translate(0, offset_y)
-            adjoining_margins = []
         # else: blocks handle that themselves.
 
-        adjoining_margins = next_adjoining_margins
-        adjoining_margins.append(new_child.margin_bottom)
-
         if not collapsing_through:
+            new_content_position_y = (
+                new_child.content_box_y() + new_child.height)
             new_position_y = (
                 new_child.border_box_y() + new_child.border_height())
 
-            if (new_position_y > allowed_max_position_y and
+            if (new_content_position_y > allowed_max_position_y and
                     not page_is_empty_with_no_children):
-                # The child overflows the page area, put it on the
-                # next page. (But don’t delay whole blocks if eg.
-                # only the bottom border overflows.)
+                # The child content overflows the page area, display it on the
+                # next page.
+                remove_placeholders([new_child], absolute_boxes, fixed_boxes)
                 new_child = None
+            elif (new_position_y > allowed_max_position_y and
+                    not page_is_empty_with_no_children):
+                # The child border/padding overflows the page area, do the
+                # layout again with a lower max_y value.
+                remove_placeholders([new_child], absolute_boxes, fixed_boxes)
+                max_position_y -= (
+                    new_child.padding_bottom + new_child.border_bottom_width)
+                (new_child, resume_at, next_page, next_adjoining_margins,
+                 collapsing_through) = block_level_layout(
+                     context, child, max_position_y, skip_stack,
+                     new_containing_block, page_is_empty_with_no_children,
+                     absolute_boxes, fixed_boxes, adjoining_margins, discard)
+                if new_child:
+                    position_y = (
+                        new_child.border_box_y() + new_child.border_height())
             else:
                 position_y = new_position_y
 
-        if new_child is not None and new_child.clearance is not None:
+        adjoining_margins = next_adjoining_margins
+        if new_child:
+            adjoining_margins.append(new_child.margin_bottom)
+
+        if new_child and new_child.clearance:
             position_y = new_child.border_box_y() + new_child.border_height()
+
+    skip_stack = None
 
     if new_child is None:
         # Nothing fits in the remaining space of this page: break
