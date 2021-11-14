@@ -135,6 +135,7 @@ class FontConfiguration:
                 # Back to default.
                 self._tempdir = None
         self._filenames = []
+        self._url_list = []
 
     def add_font_face(self, rule_descriptors, url_fetcher):
         if self.font_map is None:
@@ -142,6 +143,10 @@ class FontConfiguration:
         for font_type, url in rule_descriptors['src']:
             if url is None:
                 continue
+            if (url_fetcher, url) in self._url_list:
+                continue
+            else:
+                self._url_list.append((url_fetcher, url))
             if font_type in ('external', 'local'):
                 config = self._fontconfig_config
                 if font_type == 'local':
