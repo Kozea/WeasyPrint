@@ -273,7 +273,11 @@ class Box:
 
     def is_floated(self):
         """Return whether this box is floated."""
-        return self.style['float'] != 'none'
+        return self.style['float'] in ('left', 'right')
+
+    def is_footnote(self):
+        """Return whether this box is a footnote."""
+        return self.style['float'] == 'footnote'
 
     def is_absolutely_positioned(self):
         """Return whether this box is in the absolute positioning scheme."""
@@ -287,7 +291,7 @@ class Box:
         """Return whether this box is in normal flow."""
         return not (
             self.is_floated() or self.is_absolutely_positioned() or
-            self.is_running())
+            self.is_running() or self.is_footnote())
 
     # Start and end page values for named pages
 

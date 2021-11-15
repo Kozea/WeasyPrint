@@ -1357,7 +1357,7 @@ def inline_in_block(box):
         if new_line_children and child_box.is_absolutely_positioned():
             new_line_children.append(child_box)
         elif isinstance(child_box, boxes.InlineLevelBox) or (
-                new_line_children and child_box.is_floated()):
+                new_line_children and not child_box.is_in_normal_flow()):
             # Do not append white space at the start of a line:
             # It would be removed during layout.
             if new_line_children or not (
