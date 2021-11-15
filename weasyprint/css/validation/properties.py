@@ -669,7 +669,7 @@ def display(tokens):
 @single_keyword
 def float_(keyword):  # XXX do not hide the "float" builtin
     """``float`` property validation."""
-    return keyword in ('left', 'right', 'none')
+    return keyword in ('left', 'right', 'footnote', 'none')
 
 
 @property()
