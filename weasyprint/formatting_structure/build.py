@@ -134,8 +134,9 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
         state = (
             # Shared mutable objects:
             [0],  # quote_depth: single integer
-            {},  # counter_values: name -> stacked/scoped values
-            [set()]  # counter_scopes: element tree depths -> counter names
+            # TODO: define the footnote counter where it can be updated by page
+            {'footnote': [0]},  # counter_values: name -> stacked/scoped values
+            [{'footnote'}]  # counter_scopes: element depths -> counter names
         )
     quote_depth, counter_values, counter_scopes = state
 
@@ -215,6 +216,7 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
 
     if style['float'] == 'footnote':
         style = style_for(element, 'footnote-call')
+        counter_values['footnote'][-1] += 1
         box = make_box(f'{element.tag}::footnote-call', style, [], element)
         box.children = content_to_boxes(
             style, box, quote_depth, counter_values, get_image_from_uri,
