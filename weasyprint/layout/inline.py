@@ -581,9 +581,6 @@ def _out_of_flow_layout(context, box, containing_block, index, child,
                         box.style['direction'] == 'rtl')):
                     old_child.translate(dx=dx)
 
-    elif child.is_footnote():
-        pass
-
     elif child.is_running():
         running_name = child.style['position'][1]
         page = context.current_page

@@ -137,7 +137,7 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
             {},  # counter_values: name -> stacked/scoped values
             [set()]  # counter_scopes: element tree depths -> counter names
         )
-    _quote_depth, counter_values, counter_scopes = state
+    quote_depth, counter_values, counter_scopes = state
 
     update_counters(state, style)
 
@@ -212,6 +212,13 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
         # almost what we want, so…
         if style['list_style_position'] == 'outside':
             box.children.append(boxes.TextBox.anonymous_from(box, '​'))
+
+    if style['float'] == 'footnote':
+        style = style_for(element, 'footnote-call')
+        box = make_box(f'{element.tag}::footnote-call', style, [], element)
+        box.children = content_to_boxes(
+            style, box, quote_depth, counter_values, get_image_from_uri,
+            target_collector, counter_style)
 
     # Specific handling for the element. (eg. replaced element)
     return html.handle_element(element, box, get_image_from_uri, base_url)

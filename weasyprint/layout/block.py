@@ -245,8 +245,6 @@ def _out_of_flow_layout(context, box, index, child, new_children,
                 if result:
                     new_children, resume_at = result
             stop = True
-    elif child.is_footnote():
-        pass
     elif child.is_running():
         running_name = child.style['position'][1]
         page = context.current_page
