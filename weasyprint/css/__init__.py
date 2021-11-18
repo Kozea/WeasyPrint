@@ -1012,7 +1012,7 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                 if font_config is not None:
                     font_filename = font_config.add_font_face(
                         rule_descriptors, url_fetcher)
-                    if font_filename:
+                    if font_filename and font_filename not in fonts:
                         fonts.append(font_filename)
 
         elif (rule.type == 'at-rule' and

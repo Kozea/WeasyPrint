@@ -12,6 +12,7 @@ import pathlib
 import sys
 import tempfile
 import warnings
+import hashlib
 
 from fontTools.ttLib import TTFont, woff2
 
@@ -123,7 +124,7 @@ class FontConfiguration:
 
         # On Windows the font tempfiles cannot be deleted,
         # putting them in a subfolder made my life easier.
-        self._tempdir = None
+        self._tempdir = tempfile.gettempdir()
         if sys.platform.startswith('win'):
             self._tempdir = os.path.join(
                 tempfile.gettempdir(), 'weasyprint')
@@ -133,7 +134,7 @@ class FontConfiguration:
                 pass
             except Exception:
                 # Back to default.
-                self._tempdir = None
+                self._tempdir = tempfile.gettempdir()
         self._filenames = []
 
     def add_font_face(self, rule_descriptors, url_fetcher):
@@ -194,7 +195,13 @@ class FontConfiguration:
                             font = result['string']
                         else:
                             font = result['file_obj'].read()
-                    if font[:3] == b'wOF':
+                    font_hasher = hashlib.sha256()
+                    font_hasher.update(font)
+                    font_filename = str(pathlib.Path(
+                      self._tempdir,
+                      f'wp_font_{font_hasher.hexdigest()}'
+                      ).resolve())
+                    if font[:3] == b'wOF' and font_filename not in self._filenames:
                         out = io.BytesIO()
                         if font[3:4] == b'F':
                             # woff font
@@ -218,12 +225,11 @@ class FontConfiguration:
                 features_string = ''
                 for key, value in font_features(**features).items():
                     features_string += f'<string>{key} {value}</string>'
-                fd = tempfile.NamedTemporaryFile(
-                    'wb', dir=self._tempdir, delete=False)
-                font_filename = fd.name
-                fd.write(font)
-                fd.close()
-                self._filenames.append(font_filename)
+                if font_filename not in self._filenames:
+                    fd = open(font_filename, 'wb')
+                    fd.write(font)
+                    fd.close()
+                    self._filenames.append(font_filename)
                 fontconfig_style = FONTCONFIG_STYLE[
                     rule_descriptors.get('font_style', 'normal')]
                 fontconfig_weight = FONTCONFIG_WEIGHT[
@@ -258,24 +264,32 @@ class FontConfiguration:
                           mode="assign_replace">{features_string}</edit>
                   </match>
                 </fontconfig>'''
-                fd = tempfile.NamedTemporaryFile(
-                    'w', dir=self._tempdir, delete=False)
-                fd.write(xml)
-                fd.close()
-                self._filenames.append(fd.name)
-                fontconfig.FcConfigParseAndLoad(
-                    config, fd.name.encode(FILESYSTEM_ENCODING),
-                    True)
-                font_added = fontconfig.FcConfigAppFontAddFile(
-                    config, font_filename.encode(FILESYSTEM_ENCODING))
-                if font_added:
-                    # TODO: We should mask local fonts with the same name
-                    # too as explained in Behdad's blog entry.
-                    pangoft2.pango_fc_font_map_config_changed(
-                        ffi.cast('PangoFcFontMap *', self.font_map))
-                    return font_filename
+                xml_hasher = hashlib.sha256()
+                xml_hasher.update(xml.encode('utf-8'))
+                xml_filename = str(pathlib.Path(
+                  self._tempdir,
+                  f'wp_fc_{xml_hasher.hexdigest()}'
+                  ).resolve())
+                if xml_filename not in self._filenames:
+                    fd = open(xml_filename, 'w')
+                    fd.write(xml)
+                    fd.close()
+                    self._filenames.append(xml_filename)
+                    fontconfig.FcConfigParseAndLoad(
+                        config, xml_filename.encode(FILESYSTEM_ENCODING),
+                        True)
+                    font_added = fontconfig.FcConfigAppFontAddFile(
+                        config, font_filename.encode(FILESYSTEM_ENCODING))
+                    if font_added:
+                        # TODO: We should mask local fonts with the same name
+                        # too as explained in Behdad's blog entry.
+                        pangoft2.pango_fc_font_map_config_changed(
+                            ffi.cast('PangoFcFontMap *', self.font_map))
+                        return font_filename
+                    else:
+                        LOGGER.debug('Failed to load font at %r', url)
                 else:
-                    LOGGER.debug('Failed to load font at %r', url)
+                    return font_filename
         LOGGER.warning(
             'Font-face %r cannot be loaded', rule_descriptors['font_family'])
 
