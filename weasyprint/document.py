@@ -994,12 +994,14 @@ class Document:
         #: A :obj:`dict` of fonts used by the document. Keys are hashes used to
         #: identify fonts, values are ``Font`` objects.
         self.fonts = {}
+
         # Keep a reference to font_config to avoid its garbage collection until
         # rendering is destroyed. This is needed as font_config.__del__ removes
         # fonts that may be used when rendering
         self._font_config = font_config
-        # Optimize size of generated PDF. Can contain "images" and "fonts".
-        self.optimize_size = optimize_size
+        # Set of flags for PDF size optimization. Can contain "images" and
+        # "fonts".
+        self._optimize_size = optimize_size
 
     def copy(self, pages='all'):
         """Take a subset of the pages.
@@ -1034,7 +1036,7 @@ class Document:
             pages = list(pages)
         return type(self)(
             pages, self.metadata, self.url_fetcher, self._font_config,
-            self.optimize_size)
+            self._optimize_size)
 
     def make_bookmark_tree(self):
         """Make a tree of all bookmarks in the document.
@@ -1332,7 +1334,7 @@ class Document:
         for file_hash, fonts in fonts_by_file_hash.items():
             content = fonts[0].file_content
 
-            if 'fonts' in self.optimize_size:
+            if 'fonts' in self._optimize_size:
                 # Optimize font
                 cmap = {}
                 for font in fonts:
