@@ -51,11 +51,12 @@ ASCII_TO_WIDE.update({0x20: '\u3000', 0x2D: '\u2212'})
 
 
 def build_formatting_structure(element_tree, style_for, get_image_from_uri,
-                               base_url, target_collector, counter_style):
+                               base_url, target_collector, counter_style,
+                               footnotes):
     """Build a formatting structure (box tree) from an element tree."""
     box_list = element_to_box(
         element_tree, style_for, get_image_from_uri, base_url,
-        target_collector, counter_style)
+        target_collector, counter_style, footnotes)
     if box_list:
         box, = box_list
     else:
@@ -70,7 +71,7 @@ def build_formatting_structure(element_tree, style_for, get_image_from_uri,
             return style
         box, = element_to_box(
             element_tree, root_style_for, get_image_from_uri, base_url,
-            target_collector, counter_style)
+            target_collector, counter_style, footnotes)
 
     target_collector.check_pending_targets()
 
@@ -91,7 +92,7 @@ def make_box(element_tag, style, content, element):
 
 
 def element_to_box(element, style_for, get_image_from_uri, base_url,
-                   target_collector, counter_style, state=None):
+                   target_collector, counter_style, footnotes, state=None):
     """Convert an element and its children into a box with children.
 
     Return a list of boxes. Most of the time the list will have one item but
@@ -175,7 +176,7 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
     for child_element in element:
         children.extend(element_to_box(
             child_element, style_for, get_image_from_uri, base_url,
-            target_collector, counter_style, state))
+            target_collector, counter_style, footnotes, state))
         text = child_element.tail
         if text:
             text_box = boxes.TextBox.anonymous_from(box, text)
@@ -215,12 +216,16 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
             box.children.append(boxes.TextBox.anonymous_from(box, '​'))
 
     if style['float'] == 'footnote':
+        style['float'] = 'none'
         style = style_for(element, 'footnote-call')
         counter_values['footnote'][-1] += 1
-        box = make_box(f'{element.tag}::footnote-call', style, [], element)
-        box.children = content_to_boxes(
+        footnote_call_box = make_box(
+            f'{element.tag}::footnote-call', style, [], element)
+        footnote_call_box.children = content_to_boxes(
             style, box, quote_depth, counter_values, get_image_from_uri,
             target_collector, counter_style)
+        footnotes[footnote_call_box] = box
+        box = footnote_call_box
 
     # Specific handling for the element. (eg. replaced element)
     return html.handle_element(element, box, get_image_from_uri, base_url)

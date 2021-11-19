@@ -884,6 +884,7 @@ class Document:
         target_collector = TargetCollector()
         page_rules = []
         user_stylesheets = []
+        footnotes = {}
         image_cache = {} if image_cache is None else image_cache
         for css in stylesheets or []:
             if not hasattr(css, 'matcher'):
@@ -900,7 +901,7 @@ class Document:
         PROGRESS_LOGGER.info('Step 4 - Creating formatting structure')
         context = LayoutContext(
             style_for, get_image_from_uri, font_config, counter_style,
-            target_collector)
+            target_collector, footnotes)
         return context
 
     @classmethod
@@ -919,7 +920,8 @@ class Document:
 
         root_box = build_formatting_structure(
             html.etree_element, context.style_for, context.get_image_from_uri,
-            html.base_url, context.target_collector, counter_style)
+            html.base_url, context.target_collector, counter_style,
+            context.footnotes)
 
         page_boxes = layout_document(html, root_box, context)
         rendering = cls(

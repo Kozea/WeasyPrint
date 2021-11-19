@@ -210,12 +210,13 @@ def layout_document(html, root_box, context, max_loops=8):
 
 class LayoutContext:
     def __init__(self, style_for, get_image_from_uri, font_config,
-                 counter_style, target_collector):
+                 counter_style, target_collector, footnotes):
         self.style_for = style_for
         self.get_image_from_uri = partial(get_image_from_uri, context=self)
         self.font_config = font_config
         self.counter_style = counter_style
         self.target_collector = target_collector
+        self.footnotes = footnotes
         self._excluded_shapes_lists = []
         self.excluded_shapes = None  # Not initialized yet
         self.string_set = defaultdict(lambda: defaultdict(lambda: list()))
