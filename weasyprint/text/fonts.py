@@ -197,9 +197,10 @@ class FontConfiguration:
                             font = result['file_obj'].read()
                     font_hasher = hashlib.sha256()
                     font_hasher.update(font)
+                    font_digest = font_hasher.hexdigest()
                     font_filename = str(pathlib.Path(
                       self._tempdir,
-                      f'wp_font_{font_hasher.hexdigest()}'
+                      f'wp_font_{font_digest}'
                       ).resolve())
                     if font[:3] == b'wOF' and font_filename not in self._filenames:
                         out = io.BytesIO()
@@ -225,17 +226,44 @@ class FontConfiguration:
                 features_string = ''
                 for key, value in font_features(**features).items():
                     features_string += f'<string>{key} {value}</string>'
-                if font_filename not in self._filenames:
-                    fd = open(font_filename, 'wb')
-                    fd.write(font)
-                    fd.close()
-                    self._filenames.append(font_filename)
                 fontconfig_style = FONTCONFIG_STYLE[
                     rule_descriptors.get('font_style', 'normal')]
                 fontconfig_weight = FONTCONFIG_WEIGHT[
                     rule_descriptors.get('font_weight', 'normal')]
                 fontconfig_stretch = FONTCONFIG_STRETCH[
                     rule_descriptors.get('font_stretch', 'normal')]
+
+                # Generate unique identifier for font with properties
+                font_property_hasher = hashlib.sha256()
+                font_property_hasher.update(','.join([
+                    font_digest,
+                    rule_descriptors['font_family'],
+                    fontconfig_style,
+                    fontconfig_weight,
+                    fontconfig_stretch,
+                    features_string,
+                    ]).encode('utf-8'))
+                font_property_digest = font_property_hasher.hexdigest()
+
+                # Write decoded font to file
+                if font_filename not in self._filenames:
+                    fd = open(font_filename, 'wb')
+                    fd.write(font)
+                    fd.close()
+                    self._filenames.append(font_filename)
+                # Create symlink for fontconfig to identify font with properties
+                font_symlink = pathlib.Path(
+                    self._tempdir,
+                    f'wp_fontlink_{font_property_digest}',
+                    )
+                if str(font_symlink) not in self._filenames:
+                    if font_symlink.exists():
+                        # Multiple FontConfiguration's creating identical fonts?
+                        font_symlink.unlink()
+                    font_symlink.symlink_to(font_filename)
+                    self._filenames.append(str(font_symlink))
+                font_filename = str(font_symlink)
+
                 xml = f'''<?xml version="1.0"?>
                 <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
                 <fontconfig>
