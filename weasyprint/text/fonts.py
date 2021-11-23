@@ -6,6 +6,7 @@
 
 """
 
+import hashlib
 import io
 import os
 import pathlib
@@ -200,8 +201,8 @@ class FontConfiguration:
                         font_hasher = hashlib.sha256()
                         font_hasher.update(font)
                         font_digest = font_hasher.hashdigest()
-                        decoded_woff_directory = self._woff_cache.get(font_digest)
-                        if decoded_woff_directory is None:
+                        decoded_woff_path = self._woff_cache.get(font_digest)
+                        if decoded_woff_path is None:
                             out = io.BytesIO()
                             if font[3:4] == b'F':
                                 # woff font
@@ -213,7 +214,7 @@ class FontConfiguration:
                                 woff2.decompress(io.BytesIO(font), out)
                             font = out.getvalue()
                         else:
-                            fd = open('rb', decoded_woff_directory)
+                            fd = open('rb', decoded_woff_path)
                             font = fd.read()
                             fd.close()
                 except Exception as exc:
