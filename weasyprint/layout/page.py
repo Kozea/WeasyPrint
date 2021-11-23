@@ -8,7 +8,7 @@
 
 import copy
 
-from ..css import PageType, computed_from_cascaded
+from ..css import AnonymousStyle, PageType, computed_from_cascaded
 from ..formatting_structure import boxes, build
 from ..logger import PROGRESS_LOGGER
 from .absolute import absolute_layout
@@ -533,7 +533,8 @@ def make_page(context, root_box, page_type, resume_at, page_number,
     initial_containing_block = page
 
     footnote_area_style = context.style_for(page_type, '@footnote')
-    footnote_area = boxes.FootnoteAreaBox(page, footnote_area_style)
+    footnote_area = boxes.FootnoteAreaBox(
+        page, footnote_area_style or AnonymousStyle(page.style))
     resolve_percentages(footnote_area, page)
     footnote_area.position_x = page.content_box_x()
     footnote_area.position_y = page_content_bottom
