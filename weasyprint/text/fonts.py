@@ -135,6 +135,7 @@ class FontConfiguration:
                 # Back to default.
                 self._tempdir = None
         self._filenames = []
+        self._woff_cache = {}
 
     def add_font_face(self, rule_descriptors, url_fetcher):
         if self.font_map is None:
@@ -194,17 +195,27 @@ class FontConfiguration:
                             font = result['string']
                         else:
                             font = result['file_obj'].read()
-                    if font[:3] == b'wOF':
-                        out = io.BytesIO()
-                        if font[3:4] == b'F':
-                            # woff font
-                            ttfont = TTFont(io.BytesIO(font))
-                            ttfont.flavor = ttfont.flavorData = None
-                            ttfont.save(out)
-                        elif font[3:4] == b'2':
-                            # woff2 font
-                            woff2.decompress(io.BytesIO(font), out)
-                        font = out.getvalue()
+                    font_is_woff = font[:3] == b'wOF'
+                    if font_is_woff:
+                        font_hasher = hashlib.sha256()
+                        font_hasher.update(font)
+                        font_digest = font_hasher.hashdigest()
+                        decoded_woff_directory = self._woff_cache.get(font_digest)
+                        if decoded_woff_directory is None:
+                            out = io.BytesIO()
+                            if font[3:4] == b'F':
+                                # woff font
+                                ttfont = TTFont(io.BytesIO(font))
+                                ttfont.flavor = ttfont.flavorData = None
+                                ttfont.save(out)
+                            elif font[3:4] == b'2':
+                                # woff2 font
+                                woff2.decompress(io.BytesIO(font), out)
+                            font = out.getvalue()
+                        else:
+                            fd = open('rb', decoded_woff_directory)
+                            font = fd.read()
+                            fd.close()
                 except Exception as exc:
                     LOGGER.debug(
                         'Failed to load font at %r (%s)', url, exc)
@@ -224,6 +235,8 @@ class FontConfiguration:
                 fd.write(font)
                 fd.close()
                 self._filenames.append(font_filename)
+                if font_is_woff and font_digest not in self._woff_cache:
+                    self._woff_cache[font_digest] = font_filename
                 fontconfig_style = FONTCONFIG_STYLE[
                     rule_descriptors.get('font_style', 'normal')]
                 fontconfig_weight = FONTCONFIG_WEIGHT[
