@@ -612,7 +612,14 @@ def block_container_layout(context, box, max_position_y, skip_stack,
         if abort:
             page = child.page_values()[0]
             return None, None, {'break': 'any', 'page': page}, [], False
-        elif stop:
+
+        if context.footnotes:
+            for new_child in new_children:
+                for descendant in new_child.descendants():
+                    if descendant.footnote in context.footnotes:
+                        context.layout_footnote(context, descendant.footnote)
+
+        if stop:
             break
 
     else:

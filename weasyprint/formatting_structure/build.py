@@ -50,6 +50,15 @@ ASCII_TO_WIDE = {i: chr(i + 0xfee0) for i in range(0x21, 0x7f)}
 ASCII_TO_WIDE.update({0x20: '\u3000', 0x2D: '\u2212'})
 
 
+def create_anonymous_boxes(box):
+    """Create anonymous boxes in box descendants according to layout rules."""
+    box = anonymous_table_boxes(box)
+    box = flex_boxes(box)
+    box = inline_in_block(box)
+    box = block_in_inline(box)
+    return box
+
+
 def build_formatting_structure(element_tree, style_for, get_image_from_uri,
                                base_url, target_collector, counter_style,
                                footnotes):
@@ -77,10 +86,7 @@ def build_formatting_structure(element_tree, style_for, get_image_from_uri,
 
     box.is_for_root_element = True
     # If this is changed, maybe update weasy.layout.page.make_margin_boxes()
-    box = anonymous_table_boxes(box)
-    box = flex_boxes(box)
-    box = inline_in_block(box)
-    box = block_in_inline(box)
+    box = create_anonymous_boxes(box)
     box = set_viewport_overflow(box)
     return box
 
@@ -216,16 +222,16 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
             box.children.append(boxes.TextBox.anonymous_from(box, '​'))
 
     if style['float'] == 'footnote':
+        box = create_anonymous_boxes(box)
+        footnotes.append(box)
         style['float'] = 'none'
         style = style_for(element, 'footnote-call')
         counter_values['footnote'][-1] += 1
-        footnote_call_box = make_box(
-            f'{element.tag}::footnote-call', style, [], element)
-        footnote_call_box.children = content_to_boxes(
+        box = make_box(f'{element.tag}::footnote-call', style, [], element)
+        box.children = content_to_boxes(
             style, box, quote_depth, counter_values, get_image_from_uri,
             target_collector, counter_style)
-        footnotes[footnote_call_box] = box
-        box = footnote_call_box
+        box.footnote = footnotes[-1]
 
     # Specific handling for the element. (eg. replaced element)
     return html.handle_element(element, box, get_image_from_uri, base_url)

@@ -83,6 +83,7 @@ class Box:
     bookmark_label = None
     string_set = None
     download_name = None
+    footnote = None
 
     # Default, overriden on some subclasses
     def all_children(self):
@@ -675,6 +676,18 @@ class MarginBox(BlockContainerBox):
 
     def __repr__(self):
         return f'<{type(self).__name__} {self.at_keyword}>'
+
+
+class FootnoteAreaBox(BlockBox):
+    """Box displaying footnotes, as defined in GCPM."""
+    def __init__(self, page, style):
+        self.page = page
+        # Footnote area boxes are not linked to any element.
+        super().__init__(
+            element_tag=None, style=style, element=None, children=[])
+
+    def __repr__(self):
+        return f'<{type(self).__name__} @footnote>'
 
 
 class FlexContainerBox(ParentBox):

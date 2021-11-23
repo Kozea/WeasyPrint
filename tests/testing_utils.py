@@ -166,7 +166,7 @@ def _parse_base(html_content, base_url=BASE_URL):
         images.get_image_from_uri, cache={}, url_fetcher=document.url_fetcher,
         optimize_size=())
     target_collector = TargetCollector()
-    footnotes = {}
+    footnotes = []
     return (
         document.etree_element, style_for, get_image_from_uri, base_url,
         target_collector, counter_style, footnotes)

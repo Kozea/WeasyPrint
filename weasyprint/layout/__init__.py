@@ -17,11 +17,13 @@
 
 from collections import defaultdict
 from functools import partial
+from math import inf
 
 from ..formatting_structure import boxes
 from ..logger import PROGRESS_LOGGER
 from .absolute import absolute_box_layout, absolute_layout
 from .background import layout_backgrounds
+from .block import block_level_layout
 from .page import make_all_pages, make_margin_boxes
 
 
@@ -193,7 +195,7 @@ def layout_document(html, root_box, context, max_loops=8):
     # Add margin boxes
     for i, page in enumerate(pages):
         root_children = []
-        root, = page.children
+        root, footnote_area = page.children
         root_children.extend(layout_fixed_boxes(context, pages[:i], page))
         root_children.extend(root.children)
         root_children.extend(layout_fixed_boxes(context, pages[i + 1:], page))
@@ -202,22 +204,26 @@ def layout_document(html, root_box, context, max_loops=8):
 
         # page_maker's page_state is ready for the MarginBoxes
         state = context.page_maker[context.current_page][3]
-        page.children = (root,) + tuple(
-            make_margin_boxes(context, page, state))
+        page.children = (root,)
+        if footnote_area.children:
+            page.children += (footnote_area,)
+        page.children += tuple(make_margin_boxes(context, page, state))
         layout_backgrounds(page, context.get_image_from_uri)
         yield page
 
 
 class LayoutContext:
     def __init__(self, style_for, get_image_from_uri, font_config,
-                 counter_style, target_collector, footnotes):
+                 counter_style, target_collector):
         self.style_for = style_for
         self.get_image_from_uri = partial(get_image_from_uri, context=self)
         self.font_config = font_config
         self.counter_style = counter_style
         self.target_collector = target_collector
-        self.footnotes = footnotes
         self._excluded_shapes_lists = []
+        self.footnotes = []
+        self.page_footnotes = {}
+        self.current_footnote_area = None
         self.excluded_shapes = None  # Not initialized yet
         self.string_set = defaultdict(lambda: defaultdict(lambda: list()))
         self.running_elements = defaultdict(
@@ -306,3 +312,17 @@ class LayoutContext:
         for previous_page in range(self.current_page - 1, 0, -1):
             if previous_page in store[name]:
                 return store[name][previous_page][-1]
+
+    def layout_footnote(self, context, footnote):
+        if footnote in self.footnotes:
+            self.footnotes.remove(footnote)
+            old_height = self.current_footnote_area.height
+            if old_height == 'auto':
+                old_height = 0
+            self.current_footnote_area.children = (
+                self.current_footnote_area.children + (footnote,))
+            self.current_footnote_area, _, _, _, _ = block_level_layout(
+                context, self.current_footnote_area, inf, None,
+                self.current_footnote_area.page, True, [], [], [], False)
+            self.current_footnote_area.translate(
+                dy=(old_height - self.current_footnote_area.height))
