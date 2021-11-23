@@ -222,14 +222,24 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
             box.children.append(boxes.TextBox.anonymous_from(box, '​'))
 
     if style['float'] == 'footnote':
+        style['float'] = 'none'
+        counter_values['footnote'][-1] += 1
+
+        marker_style = style_for(element, 'footnote-marker')
+        marker = make_box(
+            f'{element.tag}::footnote-marker', marker_style, [], element)
+        marker.children = content_to_boxes(
+            marker_style, box, quote_depth, counter_values, get_image_from_uri,
+            target_collector, counter_style)
+        box.children.insert(0, marker)
         box = create_anonymous_boxes(box)
         footnotes.append(box)
-        style['float'] = 'none'
-        style = style_for(element, 'footnote-call')
-        counter_values['footnote'][-1] += 1
-        box = make_box(f'{element.tag}::footnote-call', style, [], element)
+
+        call_style = style_for(element, 'footnote-call')
+        box = make_box(
+            f'{element.tag}::footnote-call', call_style, [], element)
         box.children = content_to_boxes(
-            style, box, quote_depth, counter_values, get_image_from_uri,
+            call_style, box, quote_depth, counter_values, get_image_from_uri,
             target_collector, counter_style)
         box.footnote = footnotes[-1]
 
