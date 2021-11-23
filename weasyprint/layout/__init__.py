@@ -316,13 +316,15 @@ class LayoutContext:
     def layout_footnote(self, context, footnote):
         if footnote in self.footnotes:
             self.footnotes.remove(footnote)
-            old_height = self.current_footnote_area.height
-            if old_height == 'auto':
-                old_height = 0
+            if self.current_footnote_area.height == 'auto':
+                previous_height = 0
+            else:
+                previous_height = self.current_footnote_area.margin_height()
             self.current_footnote_area.children = (
                 self.current_footnote_area.children + (footnote,))
-            self.current_footnote_area, _, _, _, _ = block_level_layout(
+            footnote_area, _, _, _, _ = block_level_layout(
                 context, self.current_footnote_area, inf, None,
                 self.current_footnote_area.page, True, [], [], [], False)
-            self.current_footnote_area.translate(
-                dy=(old_height - self.current_footnote_area.height))
+            self.current_footnote_area.height = footnote_area.height
+            return footnote_area.margin_height() - previous_height
+        return 0

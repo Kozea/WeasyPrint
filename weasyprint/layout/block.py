@@ -525,10 +525,6 @@ def block_container_layout(context, box, max_position_y, skip_stack,
     # block_container_layout, there's probably a better solution.
     assert isinstance(box, (boxes.BlockContainerBox, boxes.FlexBox))
 
-    # We have to work around floating point rounding errors here.
-    # The 1e-9 value comes from PEP 485.
-    allowed_max_position_y = max_position_y * (1 + 1e-9)
-
     if establishes_formatting_context(box):
         context.create_block_formatting_context()
 
@@ -548,6 +544,13 @@ def block_container_layout(context, box, max_position_y, skip_stack,
 
     adjoining_margins.append(box.margin_top)
     this_box_adjoining_margins = adjoining_margins
+
+    if context.current_footnote_area.height != 'auto':
+        max_position_y -= context.current_footnote_area.margin_height()
+
+    # We have to work around floating point rounding errors here.
+    # The 1e-9 value comes from PEP 485.
+    allowed_max_position_y = max_position_y * (1 + 1e-9)
 
     collapsing_with_children = not (
         box.border_top_width or box.padding_top or box.is_flex_item or
@@ -617,7 +620,10 @@ def block_container_layout(context, box, max_position_y, skip_stack,
             for new_child in new_children:
                 for descendant in new_child.descendants():
                     if descendant.footnote in context.footnotes:
-                        context.layout_footnote(context, descendant.footnote)
+                        extra_height = context.layout_footnote(
+                            context, descendant.footnote)
+                        max_position_y -= extra_height
+                        allowed_max_position_y -= extra_height
 
         if stop:
             break

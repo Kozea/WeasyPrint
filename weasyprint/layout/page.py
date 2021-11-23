@@ -562,9 +562,15 @@ def make_page(context, root_box, page_type, resume_at, page_number,
         if placeholder._box.style['position'] == 'fixed']
     for absolute_box in positioned_boxes:
         absolute_layout(context, absolute_box, page, positioned_boxes)
+
+    footnote_area, _, _, _, _ = block_level_layout(
+        context, context.current_footnote_area, float('inf'), None,
+        context.current_footnote_area.page, True, [], [], [], False)
+    footnote_area.translate(dy=-footnote_area.height)
+
     context.finish_block_formatting_context(root_box)
 
-    page.children = [root_box]
+    page.children = [root_box, footnote_area]
     descendants = page.descendants()
 
     # Update page counter values
@@ -671,8 +677,6 @@ def make_page(context, root_box, page_type, resume_at, page_number,
 
     if page_type.blank:
         resume_at = previous_resume_at
-
-    page.children.append(context.current_footnote_area)
 
     return page, resume_at, next_page
 
