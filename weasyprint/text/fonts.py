@@ -200,7 +200,7 @@ class FontConfiguration:
                     if font_is_woff:
                         font_hasher = hashlib.sha256()
                         font_hasher.update(font)
-                        font_digest = font_hasher.hashdigest()
+                        font_digest = font_hasher.hexdigest()
                         decoded_woff_path = self._woff_cache.get(font_digest)
                         if decoded_woff_path is None:
                             out = io.BytesIO()
