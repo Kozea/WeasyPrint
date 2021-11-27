@@ -326,6 +326,14 @@ def _linebox_layout(context, box, index, child, new_children, page_is_empty,
             line.translate(0, -box.margin_top)
             box.margin_top = 0
 
+        if context.footnotes:
+            for descendant in line.descendants():
+                if descendant.footnote in context.footnotes:
+                    context.layout_footnote(descendant.footnote)
+                    if position_y > context.page_bottom - bottom_space:
+                        context.report_footnote(descendant.footnote)
+                        stop = True
+
         new_children.append(line)
         position_y = new_position_y
         skip_stack = resume_at
@@ -611,17 +619,7 @@ def block_container_layout(context, box, bottom_space, skip_stack,
         if abort:
             page = child.page_values()[0]
             return None, None, {'break': 'any', 'page': page}, [], False
-
-        if isinstance(child, boxes.LineBox) and context.footnotes:
-            for new_child in new_children:
-                for descendant in new_child.descendants():
-                    if descendant.footnote in context.footnotes:
-                        context.layout_footnote(descendant.footnote)
-                        if position_y > context.page_bottom - bottom_space:
-                            context.report_footnote(descendant.footnote)
-                            break
-
-        if stop:
+        elif stop:
             break
 
     else:
