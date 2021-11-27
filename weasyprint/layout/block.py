@@ -603,6 +603,10 @@ def block_container_layout(context, box, max_position_y, skip_stack,
             adjoining_margins = []
 
         else:
+            if context.current_footnote_area.height != 'auto':
+                max_position_y += context.current_footnote_area.margin_height()
+                allowed_max_position_y += (
+                    context.current_footnote_area.margin_height())
             (abort, stop, resume_at, position_y, adjoining_margins,
              next_page, new_children) = _in_flow_layout(
                  context, box, index, child, new_children, page_is_empty,
@@ -611,19 +615,26 @@ def block_container_layout(context, box, max_position_y, skip_stack,
                  skip_stack, first_letter_style, draw_bottom_decoration,
                  collapsing_with_children, discard, next_page)
             skip_stack = None
+            if context.current_footnote_area.height != 'auto':
+                max_position_y -= context.current_footnote_area.margin_height()
+                allowed_max_position_y -= (
+                    context.current_footnote_area.margin_height())
 
         if abort:
             page = child.page_values()[0]
             return None, None, {'break': 'any', 'page': page}, [], False
 
-        if context.footnotes:
+        if isinstance(child, boxes.LineBox) and context.footnotes:
             for new_child in new_children:
                 for descendant in new_child.descendants():
                     if descendant.footnote in context.footnotes:
                         extra_height = context.layout_footnote(
-                            context, descendant.footnote)
+                            descendant.footnote)
                         max_position_y -= extra_height
                         allowed_max_position_y -= extra_height
+                        if position_y > max_position_y:
+                            context.report_footnote(descendant.footnote)
+                            break
 
         if stop:
             break

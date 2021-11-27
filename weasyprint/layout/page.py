@@ -549,6 +549,15 @@ def make_page(context, root_box, page_type, resume_at, page_number,
     assert isinstance(root_box, (boxes.BlockBox, boxes.FlexContainerBox))
     context.create_block_formatting_context()
     context.current_page = page_number
+    context.current_page_footnotes = context.reported_footnotes.copy()
+
+    if context.reported_footnotes:
+        footnote_area.children = tuple(context.reported_footnotes)
+        context.reported_footnotes = []
+        footnote_area, _, _, _, _ = block_level_layout(
+            context, footnote_area, float('inf'), None, footnote_area.page,
+            True, [], [], [], False)
+
     context.current_footnote_area = footnote_area
     page_is_empty = True
     adjoining_margins = []
@@ -566,8 +575,8 @@ def make_page(context, root_box, page_type, resume_at, page_number,
         absolute_layout(context, absolute_box, page, positioned_boxes)
 
     footnote_area, _, _, _, _ = block_level_layout(
-        context, context.current_footnote_area, float('inf'), None,
-        context.current_footnote_area.page, True, [], [], [], False)
+        context, footnote_area, float('inf'), None, footnote_area.page,
+        True, [], [], [], False)
     footnote_area.translate(dy=-footnote_area.height)
 
     context.finish_block_formatting_context(root_box)

@@ -223,6 +223,8 @@ class LayoutContext:
         self._excluded_shapes_lists = []
         self.footnotes = []
         self.page_footnotes = {}
+        self.current_page_footnotes = []
+        self.reported_footnotes = []
         self.current_footnote_area = None
         self.excluded_shapes = None  # Not initialized yet
         self.string_set = defaultdict(lambda: defaultdict(lambda: list()))
@@ -313,18 +315,30 @@ class LayoutContext:
             if previous_page in store[name]:
                 return store[name][previous_page][-1]
 
-    def layout_footnote(self, context, footnote):
+    def layout_footnote(self, footnote):
         if footnote in self.footnotes:
             self.footnotes.remove(footnote)
+            self.current_page_footnotes.append(footnote)
             if self.current_footnote_area.height == 'auto':
                 previous_height = 0
             else:
                 previous_height = self.current_footnote_area.margin_height()
-            self.current_footnote_area.children = (
-                self.current_footnote_area.children + (footnote,))
+            self.current_footnote_area.children = self.current_page_footnotes
             footnote_area, _, _, _, _ = block_level_layout(
-                context, self.current_footnote_area, inf, None,
+                self, self.current_footnote_area, inf, None,
                 self.current_footnote_area.page, True, [], [], [], False)
             self.current_footnote_area.height = footnote_area.height
             return footnote_area.margin_height() - previous_height
         return 0
+
+    def report_footnote(self, footnote):
+        self.current_page_footnotes.remove(footnote)
+        self.reported_footnotes.append(footnote)
+        self.current_footnote_area.children = self.current_page_footnotes
+        if self.current_footnote_area.children:
+            footnote_area, _, _, _, _ = block_level_layout(
+                self, self.current_footnote_area, inf, None,
+                self.current_footnote_area.page, True, [], [], [], False)
+            self.current_footnote_area.height = footnote_area.height
+        else:
+            self.current_footnote_area.height = 0
