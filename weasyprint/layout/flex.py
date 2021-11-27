@@ -20,7 +20,7 @@ class FlexLine(list):
     pass
 
 
-def flex_layout(context, box, max_position_y, skip_stack, containing_block,
+def flex_layout(context, box, bottom_space, skip_stack, containing_block,
                 page_is_empty, absolute_boxes, fixed_boxes):
     from . import block, preferred
 
@@ -49,7 +49,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                 box.padding_left - box.padding_right -
                 box.border_left_width - box.border_right_width)
         else:
-            main_space = max_position_y - box.position_y
+            main_space = context.page_bottom - bottom_space - box.position_y
             if containing_block.height != 'auto':
                 if isinstance(containing_block.height, Dimension):
                     assert containing_block.height.unit == 'px'
@@ -66,7 +66,8 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
         available_cross_space = getattr(box, cross)
     else:
         if cross == 'height':
-            main_space = max_position_y - box.content_box_y()
+            main_space = (
+                context.page_bottom - bottom_space - box.content_box_y())
             if containing_block.height != 'auto':
                 if isinstance(containing_block.height, Dimension):
                     assert containing_block.height.unit == 'px'
@@ -154,7 +155,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
             new_child.style['min_height'] = Dimension(0, 'px')
             new_child.style['max_height'] = Dimension(float('inf'), 'px')
             new_child = block.block_level_layout(
-                context, new_child, float('inf'), child_skip_stack,
+                context, new_child, -float('inf'), child_skip_stack,
                 parent_box, page_is_empty, [], [], [], False)[0]
             content_size = new_child.height
             child.min_height = min(specified_size, content_size)
@@ -213,7 +214,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                         new_child = child.copy()
                     new_child.width = float('inf')
                     new_child = block.block_level_layout(
-                        context, new_child, float('inf'), child_skip_stack,
+                        context, new_child, -float('inf'), child_skip_stack,
                         parent_box, page_is_empty, absolute_boxes, fixed_boxes,
                         adjoining_margins=[], discard=False)[0]
                     child.flex_base_size = new_child.margin_height()
@@ -228,7 +229,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
                         new_child = child.copy()
                     new_child.width = 0
                     new_child = block.block_level_layout(
-                        context, new_child, float('inf'), child_skip_stack,
+                        context, new_child, -float('inf'), child_skip_stack,
                         parent_box, page_is_empty, absolute_boxes, fixed_boxes,
                         adjoining_margins=[], discard=False)[0]
                     child.flex_base_size = new_child.margin_height()
@@ -462,7 +463,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
             block.block_level_width(child_copy, parent_box)
             new_child, _, _, adjoining_margins, _ = (
                 block.block_level_layout_switch(
-                    context, child_copy, float('inf'), child_skip_stack,
+                    context, child_copy, -float('inf'), child_skip_stack,
                     parent_box, page_is_empty, absolute_boxes, fixed_boxes,
                     adjoining_margins=[], discard=False))
 
@@ -840,7 +841,7 @@ def flex_layout(context, box, max_position_y, skip_stack, containing_block,
         for i, child in line:
             if child.is_flex_item:
                 new_child, child_resume_at = block.block_level_layout_switch(
-                    context, child, max_position_y, child_skip_stack, box,
+                    context, child, bottom_space, child_skip_stack, box,
                     page_is_empty, absolute_boxes, fixed_boxes,
                     adjoining_margins=[], discard=False)[:2]
                 if new_child is None:

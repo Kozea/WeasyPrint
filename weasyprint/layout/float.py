@@ -62,14 +62,14 @@ def float_layout(context, box, containing_block, absolute_boxes, fixed_boxes):
     if isinstance(box, boxes.BlockContainerBox):
         context.create_block_formatting_context()
         box, _, _, _, _ = block_container_layout(
-            context, box, max_position_y=float('inf'),
+            context, box, bottom_space=-float('inf'),
             skip_stack=None, page_is_empty=False,
             absolute_boxes=absolute_boxes, fixed_boxes=fixed_boxes,
             adjoining_margins=None, discard=False)
         context.finish_block_formatting_context(box)
     elif isinstance(box, boxes.FlexContainerBox):
         box, _, _, _, _ = flex_layout(
-            context, box, max_position_y=float('inf'),
+            context, box, bottom_space=-float('inf'),
             skip_stack=None, containing_block=containing_block,
             page_is_empty=False, absolute_boxes=absolute_boxes,
             fixed_boxes=fixed_boxes)

@@ -204,7 +204,7 @@ def absolute_block(context, box, containing_block, fixed_boxes):
         table_wrapper_width(context, box, (cb_width, cb_height))
 
     new_box, _, _, _, _ = block_container_layout(
-        context, box, max_position_y=float('inf'), skip_stack=None,
+        context, box, bottom_space=-float('inf'), skip_stack=None,
         page_is_empty=False, absolute_boxes=absolute_boxes,
         fixed_boxes=fixed_boxes, adjoining_margins=None, discard=False)
 
@@ -242,7 +242,7 @@ def absolute_flex(context, box, containing_block_sizes, fixed_boxes,
         table_wrapper_width(context, box, (cb_width, cb_height))
 
     new_box, _, _, _, _ = flex_layout(
-        context, box, max_position_y=float('inf'), skip_stack=None,
+        context, box, bottom_space=-float('inf'), skip_stack=None,
         containing_block=containing_block, page_is_empty=False,
         absolute_boxes=absolute_boxes, fixed_boxes=fixed_boxes)
 

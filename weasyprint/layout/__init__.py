@@ -225,8 +225,9 @@ class LayoutContext:
         self.page_footnotes = {}
         self.current_page_footnotes = []
         self.reported_footnotes = []
-        self.current_footnote_area = None
+        self.current_footnote_area = None  # Not initialized yet
         self.excluded_shapes = None  # Not initialized yet
+        self.page_bottom = None
         self.string_set = defaultdict(lambda: defaultdict(lambda: list()))
         self.running_elements = defaultdict(
             lambda: defaultdict(lambda: list()))
@@ -319,26 +320,26 @@ class LayoutContext:
         if footnote in self.footnotes:
             self.footnotes.remove(footnote)
             self.current_page_footnotes.append(footnote)
-            if self.current_footnote_area.height == 'auto':
-                previous_height = 0
-            else:
-                previous_height = self.current_footnote_area.margin_height()
+            if self.current_footnote_area.height != 'auto':
+                self.page_bottom += self.current_footnote_area.margin_height()
             self.current_footnote_area.children = self.current_page_footnotes
             footnote_area, _, _, _, _ = block_level_layout(
-                self, self.current_footnote_area, inf, None,
+                self, self.current_footnote_area, -inf, None,
                 self.current_footnote_area.page, True, [], [], [], False)
             self.current_footnote_area.height = footnote_area.height
-            return footnote_area.margin_height() - previous_height
+            self.page_bottom -= footnote_area.margin_height()
         return 0
 
     def report_footnote(self, footnote):
         self.current_page_footnotes.remove(footnote)
         self.reported_footnotes.append(footnote)
+        self.page_bottom += self.current_footnote_area.margin_height()
         self.current_footnote_area.children = self.current_page_footnotes
         if self.current_footnote_area.children:
             footnote_area, _, _, _, _ = block_level_layout(
-                self, self.current_footnote_area, inf, None,
+                self, self.current_footnote_area, -inf, None,
                 self.current_footnote_area.page, True, [], [], [], False)
             self.current_footnote_area.height = footnote_area.height
+            self.page_bottom -= footnote_area.margin_height()
         else:
             self.current_footnote_area.height = 0
