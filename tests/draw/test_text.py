@@ -533,3 +533,28 @@ def test_text_line_through():
         }
       </style>
       <div>abc</div>''')
+
+
+def test_zero_width_character():
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1508
+    assert_pixels('zero_width_character', 6, 4, '''
+        ______
+        _RRRR_
+        _RRRR_
+        ______
+    ''', '''
+      <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page {
+          size: 6px 4px;
+          background: white;
+          margin: 1px;
+        }
+        body {
+          color: red;
+          font-family: weasyprint;
+          font-size: 2px;
+          line-height: 1;
+        }
+      </style>
+      <div>a&zwnj;b</div>''')
