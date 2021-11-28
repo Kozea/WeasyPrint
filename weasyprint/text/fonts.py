@@ -196,6 +196,11 @@ class FontConfiguration:
                             font = result['string']
                         else:
                             font = result['file_obj'].read()
+                except Exception as exc:
+                    LOGGER.debug(
+                        'Failed to load font at %r (%s)', url, exc)
+                    continue
+                try:
                     font_is_woff = font[:3] == b'wOF'
                     if font_is_woff:
                         font_hasher = hashlib.sha256()
@@ -204,22 +209,21 @@ class FontConfiguration:
                         decoded_woff_path = self._woff_cache.get(font_digest)
                         if decoded_woff_path is None:
                             out = io.BytesIO()
-                            if font[3:4] == b'F':
+                            woff_version_byte = font[3:4]
+                            if woff_version_byte == b'F':
                                 # woff font
                                 ttfont = TTFont(io.BytesIO(font))
                                 ttfont.flavor = ttfont.flavorData = None
                                 ttfont.save(out)
-                            elif font[3:4] == b'2':
+                            elif woff_version_byte == b'2':
                                 # woff2 font
                                 woff2.decompress(io.BytesIO(font), out)
                             font = out.getvalue()
                         else:
-                            fd = open('rb', decoded_woff_path)
-                            font = fd.read()
-                            fd.close()
+                            font = pathlib.Path(decoded_woff_path).read_bytes()
                 except Exception as exc:
                     LOGGER.debug(
-                        'Failed to load font at %r (%s)', url, exc)
+                        'Failed to handle woff font at %r (%s)', url, exc)
                     continue
                 features = {
                     rules[0][0].replace('-', '_'): rules[0][1] for rules in

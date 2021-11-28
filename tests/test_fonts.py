@@ -141,7 +141,8 @@ def test_font_face_descriptors():
 
 @assert_no_logs
 def test_woff_simple():
-    page, = render_pages('''
+    page, = render_pages((
+      '''
       <style>
         @font-face {
           src: url(weasyprint.otf);
@@ -151,14 +152,26 @@ def test_woff_simple():
           src: url(weasyprint.woff);
           font-family: weasyprint-woff;
         }
+        @font-face {
+          src: url(weasyprint.woff);
+          font-family: weasyprint-woff-cached;
+        }
         span:nth-child(1) { font-family: weasyprint-otf }
         span:nth-child(2) { font-family: weasyprint-woff }
-        span:nth-child(3) { font-family: sans }
-      </style>
-      <span>woff font</span><span>woff font</span><span>woff font</span>''')
+        span:nth-child(3) { font-family: weasyprint-woff-cached }
+        span:nth-child(4) { font-family: sans }
+      </style>'''
+      '<span>woff font</span>'
+      '<span>woff font</span>'
+      '<span>woff font</span>'
+      '<span>woff font</span>'))
     html, = page.children
     body, = html.children
     line, = body.children
-    span1, span2, span3 = line.children
+    span1, span2, span3, span4 = line.children
+    # otf font matches woff font
     assert span1.width == span2.width
-    assert span1.width != span3.width
+    # woff font matches woff font loaded from cache
+    assert span1.width == span3.width
+    # the default font does not match the loaded fonts
+    assert span1.width != span4.width
