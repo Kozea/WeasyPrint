@@ -217,6 +217,7 @@ def _out_of_flow_layout(context, box, index, child, new_children,
                         adjoining_margins, max_position_y):
     stop = False
     resume_at = None
+    out_of_flow_resume_at = None
 
     child.position_y += collapse_margin(adjoining_margins)
     if child.is_absolutely_positioned():
@@ -228,8 +229,9 @@ def _out_of_flow_layout(context, box, index, child, new_children,
         else:
             fixed_boxes.append(placeholder)
     elif child.is_floated():
-        new_child = float_layout(
-            context, child, box, absolute_boxes, fixed_boxes)
+        new_child, out_of_flow_resume_at = float_layout(
+            context, child, box, absolute_boxes, fixed_boxes, max_position_y,
+            skip_stack=None)
         # New page if overflow
         if (page_is_empty and not new_children) or not (
                 new_child.position_y + new_child.height > max_position_y):
@@ -250,7 +252,7 @@ def _out_of_flow_layout(context, box, index, child, new_children,
         page = context.current_page
         context.running_elements[running_name][page].append(child)
 
-    return stop, resume_at
+    return stop, resume_at, out_of_flow_resume_at
 
 
 def _linebox_layout(context, box, index, child, new_children, page_is_empty,
@@ -266,8 +268,8 @@ def _linebox_layout(context, box, index, child, new_children, page_is_empty,
         position_y += collapse_margin(adjoining_margins)
     new_containing_block = box
     lines_iterator = iter_line_boxes(
-        context, child, position_y, skip_stack, new_containing_block,
-        absolute_boxes, fixed_boxes, first_letter_style)
+        context, child, position_y, max_position_y, skip_stack,
+        new_containing_block, absolute_boxes, fixed_boxes, first_letter_style)
     for i, (line, resume_at) in enumerate(lines_iterator):
         line.resume_at = resume_at
         new_position_y = line.position_y + line.height
@@ -585,10 +587,13 @@ def block_container_layout(context, box, max_position_y, skip_stack,
 
         if not child.is_in_normal_flow():
             abort = False
-            stop, resume_at = _out_of_flow_layout(
+            stop, resume_at, out_of_flow_resume_at = _out_of_flow_layout(
                 context, box, index, child, new_children, page_is_empty,
                 absolute_boxes, fixed_boxes, adjoining_margins,
                 allowed_max_position_y)
+            if out_of_flow_resume_at:
+                context.broken_out_of_flow.append(
+                    (child, box, out_of_flow_resume_at))
 
         elif isinstance(child, boxes.LineBox):
             abort, stop, resume_at, position_y = _linebox_layout(

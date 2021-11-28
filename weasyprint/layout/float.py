@@ -22,7 +22,8 @@ def float_width(box, context, containing_block):
         box.width = shrink_to_fit(context, box, containing_block.width)
 
 
-def float_layout(context, box, containing_block, absolute_boxes, fixed_boxes):
+def float_layout(context, box, containing_block, absolute_boxes, fixed_boxes,
+                 max_position_y, skip_stack):
     """Set the width and position of floating ``box``."""
     from .block import block_container_layout
     from .flex import flex_layout
@@ -61,26 +62,27 @@ def float_layout(context, box, containing_block, absolute_boxes, fixed_boxes):
 
     if isinstance(box, boxes.BlockContainerBox):
         context.create_block_formatting_context()
-        box, _, _, _, _ = block_container_layout(
-            context, box, max_position_y=float('inf'),
-            skip_stack=None, page_is_empty=False,
+        box, resume_at, _, _, _ = block_container_layout(
+            context, box, max_position_y=max_position_y,
+            skip_stack=skip_stack, page_is_empty=True,
             absolute_boxes=absolute_boxes, fixed_boxes=fixed_boxes,
             adjoining_margins=None, discard=False)
         context.finish_block_formatting_context(box)
     elif isinstance(box, boxes.FlexContainerBox):
-        box, _, _, _, _ = flex_layout(
-            context, box, max_position_y=float('inf'),
-            skip_stack=None, containing_block=containing_block,
-            page_is_empty=False, absolute_boxes=absolute_boxes,
+        box, resume_at, _, _, _ = flex_layout(
+            context, box, max_position_y=max_position_y,
+            skip_stack=skip_stack, containing_block=containing_block,
+            page_is_empty=True, absolute_boxes=absolute_boxes,
             fixed_boxes=fixed_boxes)
     else:
         assert isinstance(box, boxes.BlockReplacedBox)
+        resume_at = None
 
     box = find_float_position(context, box, containing_block)
 
     context.excluded_shapes.append(box)
 
-    return box
+    return box, resume_at
 
 
 def find_float_position(context, box, containing_block):

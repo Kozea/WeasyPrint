@@ -218,11 +218,11 @@ class LayoutContext:
         self.target_collector = target_collector
         self._excluded_shapes_lists = []
         self.excluded_shapes = None  # Not initialized yet
-        self.string_set = defaultdict(lambda: defaultdict(lambda: list()))
-        self.running_elements = defaultdict(
-            lambda: defaultdict(lambda: list()))
+        self.string_set = defaultdict(lambda: defaultdict(lambda: []))
+        self.running_elements = defaultdict(lambda: defaultdict(lambda: []))
         self.current_page = None
         self.forced_break = False
+        self.broken_out_of_flow = []
 
         # Cache
         self.strut_layouts = {}
