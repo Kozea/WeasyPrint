@@ -171,7 +171,7 @@ def test_woff_simple():
     span1, span2, span3, span4 = line.children
     # otf font matches woff font
     assert span1.width == span2.width
-    # woff font matches woff font loaded from cache
+    # otf font matches woff font loaded from cache
     assert span1.width == span3.width
     # the default font does not match the loaded fonts
     assert span1.width != span4.width
