@@ -330,7 +330,7 @@ def _linebox_layout(context, box, index, child, new_children, page_is_empty,
             for descendant in line.descendants():
                 if descendant.footnote in context.footnotes:
                     context.layout_footnote(descendant.footnote)
-                    if position_y > context.page_bottom - bottom_space:
+                    if new_position_y > context.page_bottom - bottom_space:
                         context.report_footnote(descendant.footnote)
                         stop = True
 
