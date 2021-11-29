@@ -91,12 +91,15 @@ class Font:
             b'/' + self.hash.encode('ascii') + b'+' +
             self.family.replace(b' ', b''))
         self.italic_angle = 0  # TODO: this should be different
-        self.ascent = int(
-            pango.pango_font_metrics_get_ascent(pango_metrics) /
-            font_size * 1000)
-        self.descent = -int(
-            pango.pango_font_metrics_get_descent(pango_metrics) /
-            font_size * 1000)
+        if font_size:
+            self.ascent = int(
+                pango.pango_font_metrics_get_ascent(pango_metrics) /
+                font_size * 1000)
+            self.descent = -int(
+                pango.pango_font_metrics_get_descent(pango_metrics) /
+                font_size * 1000)
+        else:
+            self.ascent = self.descent = 0
         self.upem = harfbuzz.hb_face_get_upem(hb_face)
         self.png = harfbuzz.hb_ot_color_has_png(hb_face)
         self.svg = harfbuzz.hb_ot_color_has_svg(hb_face)

@@ -100,6 +100,23 @@ def test_text_font_size_zero():
 
 
 @assert_no_logs
+def test_text_font_size_very_small():
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1499
+    page, = render_pages('''
+      <style>
+        p { font-size: 0.00000001px }
+      </style>
+      <p>test font size zero</p>
+    ''')
+    html, = page.children
+    body, = html.children
+    paragraph, = body.children
+    line, = paragraph.children
+    assert line.height < 0.001
+    assert paragraph.height < 0.001
+
+
+@assert_no_logs
 def test_text_spaced_inlines():
     page, = render_pages('''
       <p>start <i><b>bi1</b> <b>bi2</b></i> <b>b1</b> end</p>
