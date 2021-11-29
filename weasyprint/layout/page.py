@@ -532,8 +532,6 @@ def make_page(context, root_box, page_type, resume_at, page_number,
     initial_containing_block = page
 
     footnote_area_style = context.style_for(page_type, '@footnote')
-    if footnote_area_style is None:
-        footnote_area_style = AnonymousStyle(page.style)
     footnote_area = boxes.FootnoteAreaBox(page, footnote_area_style)
     resolve_percentages(footnote_area, page)
     footnote_area.position_x = page.content_box_x()
