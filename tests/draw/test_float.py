@@ -671,3 +671,40 @@ def test_float_split_10():
         <div class="pushed">bbbbb bbbbb</div>
     '''
     assert_pixels('float_split_10', 16, 4, expected_pixels, html)
+
+
+@assert_no_logs
+def test_float_split_11():
+    expected_pixels = '''
+        BBBB________gggg
+        BBBB________gggg
+        BBBB________gggg
+        BBBB________gggg
+    '''
+    html = '''
+        <style>
+          @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+          @page {
+            background: white;
+            size: 16px 2px;
+          }
+          body {
+            color: red;
+            font-family: weasyprint;
+            font-size: 2px;
+            line-height: 1;
+          }
+          div.split {
+            color: blue;
+            float: left;
+            width: 4px;
+          }
+          div.split2 {
+            color: green;
+            float: right;
+            width: 4px;
+          </style>
+          <div class="split">aa aa</div>
+          <div class="split2">cc cc</div>
+    '''
+    assert_pixels('float_split_11', 16, 4, expected_pixels, html)
