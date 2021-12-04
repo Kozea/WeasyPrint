@@ -320,6 +320,7 @@ def test_float_replaced_inline_rtl():
     ''')
 
 
+@pytest.mark.xfail
 @assert_no_logs
 def test_float_split_1():
     expected_pixels = '''
@@ -353,6 +354,7 @@ def test_float_split_1():
     assert_pixels('float_split_1', 16, 4, expected_pixels, html)
 
 
+@pytest.mark.xfail
 @assert_no_logs
 def test_float_split_2():
     expected_pixels = '''
@@ -454,6 +456,7 @@ def test_float_split_4():
     assert_pixels('float_split_4', 16, 4, expected_pixels, html)
 
 
+@pytest.mark.xfail
 @assert_no_logs
 def test_float_split_5():
     expected_pixels = '''
@@ -492,6 +495,7 @@ def test_float_split_5():
     assert_pixels('float_split_5', 16, 4, expected_pixels, html)
 
 
+@pytest.mark.xfail
 @assert_no_logs
 def test_float_split_6():
     expected_pixels = '''
@@ -530,6 +534,7 @@ def test_float_split_6():
     assert_pixels('float_split_6', 16, 4, expected_pixels, html)
 
 
+@pytest.mark.xfail
 @assert_no_logs
 def test_float_split_7():
     expected_pixels = '''
@@ -568,6 +573,7 @@ def test_float_split_7():
     assert_pixels('float_split_7', 16, 4, expected_pixels, html)
 
 
+@pytest.mark.xfail
 @assert_no_logs
 def test_float_split_8():
     expected_pixels = '''
@@ -602,6 +608,7 @@ def test_float_split_8():
     assert_pixels('float_split_8', 16, 4, expected_pixels, html)
 
 
+@pytest.mark.xfail
 @assert_no_logs
 def test_float_split_9():
     expected_pixels = '''
@@ -673,6 +680,7 @@ def test_float_split_10():
     assert_pixels('float_split_10', 16, 4, expected_pixels, html)
 
 
+@pytest.mark.xfail
 @assert_no_logs
 def test_float_split_11():
     expected_pixels = '''
