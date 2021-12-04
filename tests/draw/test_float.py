@@ -318,3 +318,356 @@ def test_float_replaced_inline_rtl():
         <img src="blue.jpg">
       </div>
     ''')
+
+
+@assert_no_logs
+def test_float_split_1():
+    expected_pixels = '''
+        BBBBRRRRRRRRRRRR
+        BBBBRRRRRRRRRRRR
+        BBBB____________
+        BBBB____________
+    '''
+    html = '''
+        <style>
+            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+            @page {
+                background: white;
+                size: 16px 2px;
+            }
+            body {
+                color: red;
+                font-family: weasyprint;
+                font-size: 2px;
+                line-height: 1;
+            }
+            div.split {
+                color: blue;
+                float: left;
+                width: 4px;
+            }
+        </style>
+        <div class="split">aa aa</div>
+        <div>bbbbbb</div>
+    '''
+    assert_pixels('float_split_1', 16, 4, expected_pixels, html)
+
+
+@assert_no_logs
+def test_float_split_2():
+    expected_pixels = '''
+        RRRRRRRRRRRRBBBB
+        RRRRRRRRRRRRBBBB
+        ____________BBBB
+        ____________BBBB
+    '''
+    html = '''
+        <style>
+          @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+          @page {
+            background: white;
+            size: 16px 2px;
+          }
+          body {
+            color: red;
+            font-family: weasyprint;
+            font-size: 2px;
+            line-height: 1;
+          }
+          div.split {
+            color: blue;
+            float: right;
+            width: 4px;
+          }
+        </style>
+        <div class="split">aa aa</div>
+        <div>bbbbbb</div>
+    '''
+    assert_pixels('float_split_2', 16, 4, expected_pixels, html)
+
+
+@pytest.mark.xfail
+@assert_no_logs
+def test_float_split_3():
+    expected_pixels = '''
+        BBBBRRRRRRRRRRRR
+        BBBBRRRRRRRRRRRR
+        RRRRRRRRRR______
+        RRRRRRRRRR______
+    '''
+    html = '''
+        <style>
+            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+            @page {
+                background: white;
+                size: 16px 2px;
+            }
+            body {
+                color: red;
+                font-family: weasyprint;
+                font-size: 2px;
+                line-height: 1;
+            }
+            div.split {
+                color: blue;
+                float: left;
+                width: 4px;
+            }
+        </style>
+        <div class="split">aa</div>
+        <div>bbbbbb bbbbb</div>
+    '''
+    assert_pixels('float_split_3', 16, 4, expected_pixels, html)
+
+
+@pytest.mark.xfail
+@assert_no_logs
+def test_float_split_4():
+    expected_pixels = '''
+        RRRRRRRRRRRRBBBB
+        RRRRRRRRRRRRBBBB
+        RRRRRRRRRR______
+        RRRRRRRRRR______
+    '''
+    html = '''
+        <style>
+            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+            @page {
+                background: white;
+                size: 16px 2px;
+            }
+            body {
+                color: red;
+                font-family: weasyprint;
+                font-size: 2px;
+                line-height: 1;
+            }
+            div.split {
+                color: blue;
+                float: right;
+                width: 4px;
+            }
+        </style>
+        <div class="split">aa</div>
+        <div>bbbbbb bbbbb</div>
+    '''
+    assert_pixels('float_split_4', 16, 4, expected_pixels, html)
+
+
+@assert_no_logs
+def test_float_split_5():
+    expected_pixels = '''
+        BBBBRRRRRRRRgggg
+        BBBBRRRRRRRRgggg
+        BBBB________gggg
+        BBBB________gggg
+    '''
+    html = '''
+        <style>
+            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+            @page {
+                background: white;
+                size: 16px 2px;
+            }
+            body {
+                color: red;
+                font-family: weasyprint;
+                font-size: 2px;
+                line-height: 1;
+            }
+            div.split {
+                color: blue;
+                float: left;
+                width: 4px;
+            }
+            div.split2 {
+                color: green;
+                float: right;
+                width: 4px;
+        </style>
+        <div class="split">aa aa</div>
+        <div class="split2">cc cc</div>
+        <div>bbbb</div>
+    '''
+    assert_pixels('float_split_5', 16, 4, expected_pixels, html)
+
+
+@assert_no_logs
+def test_float_split_6():
+    expected_pixels = '''
+        BBBBRRRRRRRRgggg
+        BBBBRRRRRRRRgggg
+        BBBB____________
+        BBBB____________
+    '''
+    html = '''
+        <style>
+            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+            @page {
+                background: white;
+                size: 16px 2px;
+            }
+            body {
+                color: red;
+                font-family: weasyprint;
+                font-size: 2px;
+                line-height: 1;
+            }
+            div.split {
+                color: blue;
+                float: left;
+                width: 4px;
+            }
+            div.split2 {
+                color: green;
+                float: right;
+                width: 4px;
+            </style>
+            <div class="split">aa aa</div>
+            <div class="split2">cc</div>
+            <div>bbbb</div>
+        '''
+    assert_pixels('float_split_6', 16, 4, expected_pixels, html)
+
+
+@assert_no_logs
+def test_float_split_7():
+    expected_pixels = '''
+        BBBBRRRRRRRRgggg
+        BBBBRRRRRRRRgggg
+        ____________gggg
+        ____________gggg
+    '''
+    html = '''
+        <style>
+            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+            @page {
+                background: white;
+                size: 16px 2px;
+            }
+            body {
+                color: red;
+                font-family: weasyprint;
+                font-size: 2px;
+                line-height: 1;
+            }
+            div.split {
+                color: blue;
+                float: left;
+                width: 4px;
+            }
+            div.split2 {
+                color: green;
+                float: right;
+                width: 4px;
+            </style>
+            <div class="split">aa</div>
+            <div class="split2">cc cc</div>
+            <div>bbbb</div>
+        '''
+    assert_pixels('float_split_7', 16, 4, expected_pixels, html)
+
+
+@assert_no_logs
+def test_float_split_8():
+    expected_pixels = '''
+        BBBB__RRRRRRRRRR
+        BBBB__RRRRRRRRRR
+        BBBB____________
+        BBBB____________
+    '''
+    html = '''
+        <style>
+            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+            @page {
+                background: white;
+                size: 16px 2px;
+            }
+            body {
+                color: red;
+                font-family: weasyprint;
+                font-size: 2px;
+                line-height: 1;
+            }
+            div.split {
+                color: blue;
+                float: left;
+                margin-right: 2px;
+                width: 4px;
+            }
+        </style>
+        <div class="split">aa aa</div>
+        <div>bbbbb</div>
+    '''
+    assert_pixels('float_split_8', 16, 4, expected_pixels, html)
+
+
+@assert_no_logs
+def test_float_split_9():
+    expected_pixels = '''
+        RRRRRRRRRRBBBB__
+        RRRRRRRRRRBBBB__
+        __________BBBB__
+        __________BBBB__
+    '''
+    html = '''
+        <style>
+            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+            @page {
+                background: white;
+                size: 16px 2px;
+            }
+            body {
+                color: red;
+                font-family: weasyprint;
+                font-size: 2px;
+                line-height: 1;
+            }
+            div.split {
+                color: blue;
+                float: right;
+                margin-right: 2px;
+                width: 4px;
+            }
+        </style>
+        <div class="split">aa aa</div>
+        <div>bbbbb</div>
+    '''
+    assert_pixels('float_split_9', 16, 4, expected_pixels, html)
+
+
+@pytest.mark.xfail
+@assert_no_logs
+def test_float_split_10():
+    expected_pixels = '''
+        BBBB__RRRRRRRRRR
+        BBBB__RRRRRRRRRR
+        __RRRRRRRRRR____
+        __RRRRRRRRRR____
+    '''
+    html = '''
+        <style>
+            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+            @page {
+                background: white;
+                size: 16px 2px;
+            }
+            body {
+                color: red;
+                font-family: weasyprint;
+                font-size: 2px;
+                line-height: 1;
+            }
+            div.split {
+                color: blue;
+                float: left;
+                width: 4px;
+            }
+            div.pushed {
+                margin-left: 2px;
+            }
+        </style>
+        <div class="split">aa</div>
+        <div class="pushed">bbbbb bbbbb</div>
+    '''
+    assert_pixels('float_split_10', 16, 4, expected_pixels, html)
