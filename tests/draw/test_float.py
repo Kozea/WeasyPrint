@@ -522,11 +522,11 @@ def test_float_split_6():
                 color: green;
                 float: right;
                 width: 4px;
-            </style>
-            <div class="split">aa aa</div>
-            <div class="split2">cc</div>
-            <div>bbbb</div>
-        '''
+        </style>
+        <div class="split">aa aa</div>
+        <div class="split2">cc</div>
+        <div>bbbb</div>
+    '''
     assert_pixels('float_split_6', 16, 4, expected_pixels, html)
 
 
@@ -560,11 +560,11 @@ def test_float_split_7():
                 color: green;
                 float: right;
                 width: 4px;
-            </style>
-            <div class="split">aa</div>
-            <div class="split2">cc cc</div>
-            <div>bbbb</div>
-        '''
+        </style>
+        <div class="split">aa</div>
+        <div class="split2">cc cc</div>
+        <div>bbbb</div>
+    '''
     assert_pixels('float_split_7', 16, 4, expected_pixels, html)
 
 
