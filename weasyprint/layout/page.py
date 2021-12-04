@@ -8,7 +8,7 @@
 
 import copy
 
-from ..css import AnonymousStyle, PageType, computed_from_cascaded
+from ..css import PageType, computed_from_cascaded
 from ..formatting_structure import boxes, build
 from ..logger import PROGRESS_LOGGER
 from .absolute import absolute_layout
