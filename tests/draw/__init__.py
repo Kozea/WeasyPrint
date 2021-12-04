@@ -49,6 +49,13 @@ def assert_pixels(name, expected_width, expected_height, expected_pixels,
         f'Expected {len(expected_pixels)} pixels, '
         f'got {expected_height * expected_width}')
     pixels = html_to_pixels(name, expected_width, expected_height, html)
+    if len(pixels) != len(expected_pixels):
+        write_png(name, pixels, expected_width, expected_height)
+        expected_raw = [pixel or (255, 255, 255) for pixel in expected_pixels]
+        write_png(
+            name + '.expected', expected_raw, expected_width, expected_height)
+    assert len(pixels) == len(expected_pixels), (
+        f'Expected {len(expected_pixels)} pixels, got {len(pixels)}')
     assert_pixels_equal(
         name, expected_width, expected_height, pixels, expected_pixels)
 
@@ -129,11 +136,6 @@ def document_to_pixels(document, name, expected_width, expected_height):
 def assert_pixels_equal(name, width, height, raw, expected_raw, tolerance=0):
     """Take 2 matrices of pixels and assert that they are the same."""
     if raw != expected_raw:  # pragma: no cover
-        if len(raw) != len(expected_raw):
-            write_png(name, raw, width, height)
-            write_png(name + '.expected', expected_raw, width, height)
-            assert 0, (
-                f'Expected {len(expected_raw)} pixels, got {len(raw)}')
         for i, (value, expected) in enumerate(zip(raw, expected_raw)):
             if expected is None:
                 continue
