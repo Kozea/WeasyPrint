@@ -129,6 +129,11 @@ def document_to_pixels(document, name, expected_width, expected_height):
 def assert_pixels_equal(name, width, height, raw, expected_raw, tolerance=0):
     """Take 2 matrices of pixels and assert that they are the same."""
     if raw != expected_raw:  # pragma: no cover
+        if len(raw) != len(expected_raw):
+            write_png(name, raw, width, height)
+            write_png(name + '.expected', expected_raw, width, height)
+            assert 0, (
+                f'Expected {len(expected_raw)} pixels, got {len(raw)}')
         for i, (value, expected) in enumerate(zip(raw, expected_raw)):
             if expected is None:
                 continue
