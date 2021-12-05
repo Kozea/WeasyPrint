@@ -558,3 +558,29 @@ def test_zero_width_character():
         }
       </style>
       <div>a&zwnj;b</div>''')
+
+
+def test_tabulation_character():
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1515
+    assert_pixels('zero_width_character', 10, 4, '''
+        __________
+        _RR____RR_
+        _RR____RR_
+        __________
+    ''', '''
+      <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page {
+          size: 10px 4px;
+          background: white;
+          margin: 1px;
+        }
+        body {
+          color: red;
+          font-family: weasyprint;
+          font-size: 2px;
+          line-height: 1;
+          tab-size: 3;
+        }
+      </style>
+      <pre>a&Tab;b</pre>''')
