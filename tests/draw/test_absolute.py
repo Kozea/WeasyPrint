@@ -43,7 +43,7 @@ def test_absolute_split_1():
             }
         </style>
         <div class="split">aa aa</div>
-        <div>bbbbbb</div>
+        <div>bbbbbb bb</div>
     '''
     assert_pixels('absolute_split_1', 16, 4, expected_pixels, html)
 
@@ -54,8 +54,8 @@ def test_absolute_split_2():
     expected_pixels = '''
         RRRRRRRRRRRRBBBB
         RRRRRRRRRRRRBBBB
-        ____________BBBB
-        ____________BBBB
+        RRRR________BBBB
+        RRRR________BBBB
     '''
     html = '''
         <style>
@@ -79,7 +79,7 @@ def test_absolute_split_2():
             }
         </style>
         <div class="split">aa aa</div>
-        <div>bbbbbb</div>
+        <div>bbbbbb bb</div>
     '''
     assert_pixels('absolute_split_2', 16, 4, expected_pixels, html)
 
@@ -160,8 +160,8 @@ def test_absolute_split_5():
     expected_pixels = '''
         BBBBRRRR____gggg
         BBBBRRRR____gggg
-        BBBB________gggg
-        BBBB________gggg
+        BBBBRRRRRR__gggg
+        BBBBRRRRRR__gggg
     '''
     html = '''
         <style>
@@ -192,7 +192,7 @@ def test_absolute_split_5():
         </style>
         <div class="split">aa aa</div>
         <div class="split2">cc cc</div>
-        <div>bbbb</div>
+        <div>bbbb bbbbb</div>
     '''
     assert_pixels('absolute_split_5', 16, 4, expected_pixels, html)
 
@@ -203,8 +203,8 @@ def test_absolute_split_6():
     expected_pixels = '''
         BBBBRRRR____gggg
         BBBBRRRR____gggg
-        BBBB____________
-        BBBB____________
+        BBBBRRRRRR______
+        BBBBRRRRRR______
     '''
     html = '''
         <style>
@@ -233,7 +233,7 @@ def test_absolute_split_6():
         </style>
         <div class="split">aa aa</div>
         <div class="split2">cc</div>
-        <div>bbbb</div>
+        <div>bbbb bbbbb</div>
     '''
     assert_pixels('absolute_split_6', 16, 4, expected_pixels, html)
 
@@ -244,8 +244,8 @@ def test_absolute_split_7():
     expected_pixels = '''
         BBBBRRRRRRRRgggg
         BBBBRRRRRRRRgggg
-        ____________gggg
-        ____________gggg
+        ____RRRR____gggg
+        ____RRRR____gggg
     '''
     html = '''
         <style>
@@ -278,46 +278,6 @@ def test_absolute_split_7():
         </style>
         <div class="split">aa</div>
         <div class="split2">cc cc</div>
-        <div class="push">bbbb</div>
+        <div class="push">bbbb bb</div>
     '''
     assert_pixels('absolute_split_7', 16, 4, expected_pixels, html)
-
-
-@pytest.mark.xfail
-@assert_no_logs
-def test_absolute_split_8():
-    expected_pixels = '''
-        BBBB________gggg
-        BBBB________gggg
-        BBBB________gggg
-        BBBB________gggg
-    '''
-    html = '''
-        <style>
-            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
-            @page {
-                background: white;
-                size: 16px 2px;
-            }
-            body {
-                color: red;
-                font-family: weasyprint;
-                font-size: 2px;
-                line-height: 1;
-            }
-            div.split {
-                color: blue;
-                position: absolute;
-                width: 4px;
-            }
-            div.split2 {
-                color: green;
-                position: absolute;
-                top: 0;
-                right: 0;
-                width: 4px;
-        </style>
-        <div class="split">aa aa</div>
-        <div class="split2">cc cc</div>
-    '''
-    assert_pixels('absolute_split_8', 16, 4, expected_pixels, html)

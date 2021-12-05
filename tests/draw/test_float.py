@@ -326,8 +326,8 @@ def test_float_split_1():
     expected_pixels = '''
         BBBBRRRRRRRRRRRR
         BBBBRRRRRRRRRRRR
-        BBBB____________
-        BBBB____________
+        BBBBRRRR________
+        BBBBRRRR________
     '''
     html = '''
         <style>
@@ -349,7 +349,7 @@ def test_float_split_1():
             }
         </style>
         <div class="split">aa aa</div>
-        <div>bbbbbb</div>
+        <div>bbbbbb bb</div>
     '''
     assert_pixels('float_split_1', 16, 4, expected_pixels, html)
 
@@ -360,8 +360,8 @@ def test_float_split_2():
     expected_pixels = '''
         RRRRRRRRRRRRBBBB
         RRRRRRRRRRRRBBBB
-        ____________BBBB
-        ____________BBBB
+        RRRR________BBBB
+        RRRR________BBBB
     '''
     html = '''
         <style>
@@ -383,7 +383,7 @@ def test_float_split_2():
           }
         </style>
         <div class="split">aa aa</div>
-        <div>bbbbbb</div>
+        <div>bbbbbb bb</div>
     '''
     assert_pixels('float_split_2', 16, 4, expected_pixels, html)
 
@@ -462,8 +462,8 @@ def test_float_split_5():
     expected_pixels = '''
         BBBBRRRRRRRRgggg
         BBBBRRRRRRRRgggg
-        BBBB________gggg
-        BBBB________gggg
+        BBBBRRRR____gggg
+        BBBBRRRR____gggg
     '''
     html = '''
         <style>
@@ -490,7 +490,7 @@ def test_float_split_5():
         </style>
         <div class="split">aa aa</div>
         <div class="split2">cc cc</div>
-        <div>bbbb</div>
+        <div>bbbb bb</div>
     '''
     assert_pixels('float_split_5', 16, 4, expected_pixels, html)
 
@@ -501,8 +501,8 @@ def test_float_split_6():
     expected_pixels = '''
         BBBBRRRRRRRRgggg
         BBBBRRRRRRRRgggg
-        BBBB____________
-        BBBB____________
+        BBBBRRRR________
+        BBBBRRRR________
     '''
     html = '''
         <style>
@@ -529,7 +529,7 @@ def test_float_split_6():
         </style>
         <div class="split">aa aa</div>
         <div class="split2">cc</div>
-        <div>bbbb</div>
+        <div>bbbb bb</div>
     '''
     assert_pixels('float_split_6', 16, 4, expected_pixels, html)
 
@@ -540,8 +540,8 @@ def test_float_split_7():
     expected_pixels = '''
         BBBBRRRRRRRRgggg
         BBBBRRRRRRRRgggg
-        ____________gggg
-        ____________gggg
+        RRRR________gggg
+        RRRR________gggg
     '''
     html = '''
         <style>
@@ -568,7 +568,7 @@ def test_float_split_7():
         </style>
         <div class="split">aa</div>
         <div class="split2">cc cc</div>
-        <div>bbbb</div>
+        <div>bbbb bb</div>
     '''
     assert_pixels('float_split_7', 16, 4, expected_pixels, html)
 
@@ -579,8 +579,8 @@ def test_float_split_8():
     expected_pixels = '''
         BBBB__RRRRRRRRRR
         BBBB__RRRRRRRRRR
-        BBBB____________
-        BBBB____________
+        BBBB__RRRR______
+        BBBB__RRRR______
     '''
     html = '''
         <style>
@@ -603,7 +603,7 @@ def test_float_split_8():
             }
         </style>
         <div class="split">aa aa</div>
-        <div>bbbbb</div>
+        <div>bbbbb bb</div>
     '''
     assert_pixels('float_split_8', 16, 4, expected_pixels, html)
 
@@ -614,8 +614,8 @@ def test_float_split_9():
     expected_pixels = '''
         RRRRRRRRRRBBBB__
         RRRRRRRRRRBBBB__
-        __________BBBB__
-        __________BBBB__
+        RRRR______BBBB__
+        RRRR______BBBB__
     '''
     html = '''
         <style>
@@ -638,7 +638,7 @@ def test_float_split_9():
             }
         </style>
         <div class="split">aa aa</div>
-        <div>bbbbb</div>
+        <div>bbbbb bb</div>
     '''
     assert_pixels('float_split_9', 16, 4, expected_pixels, html)
 
@@ -678,41 +678,3 @@ def test_float_split_10():
         <div class="pushed">bbbbb bbbbb</div>
     '''
     assert_pixels('float_split_10', 16, 4, expected_pixels, html)
-
-
-@pytest.mark.xfail
-@assert_no_logs
-def test_float_split_11():
-    expected_pixels = '''
-        BBBB________gggg
-        BBBB________gggg
-        BBBB________gggg
-        BBBB________gggg
-    '''
-    html = '''
-        <style>
-          @font-face {src: url(weasyprint.otf); font-family: weasyprint}
-          @page {
-            background: white;
-            size: 16px 2px;
-          }
-          body {
-            color: red;
-            font-family: weasyprint;
-            font-size: 2px;
-            line-height: 1;
-          }
-          div.split {
-            color: blue;
-            float: left;
-            width: 4px;
-          }
-          div.split2 {
-            color: green;
-            float: right;
-            width: 4px;
-          </style>
-          <div class="split">aa aa</div>
-          <div class="split2">cc cc</div>
-    '''
-    assert_pixels('float_split_11', 16, 4, expected_pixels, html)
