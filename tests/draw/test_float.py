@@ -320,7 +320,44 @@ def test_float_replaced_inline_rtl():
     ''')
 
 
-@pytest.mark.xfail
+@assert_no_logs
+def test_float_margin():
+    expected_pixels = '''
+        BBBBRRRRRRRRRR__
+        BBBBRRRRRRRRRR__
+        __RRRRRRRRRR____
+        __RRRRRRRRRR____
+    '''
+    html = '''
+        <style>
+            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+            @page {
+                background: white;
+                size: 16px 2px;
+            }
+            body {
+                color: red;
+                font-family: weasyprint;
+                font-size: 2px;
+                line-height: 1;
+                orphans: 1;
+                widows: 1;
+            }
+            div.split {
+                color: blue;
+                float: left;
+                width: 4px;
+            }
+            div.pushed {
+                margin-left: 2px;
+            }
+        </style>
+        <div class="split">aa</div>
+        <div class="pushed">bbbbb bbbbb</div>
+    '''
+    assert_pixels('float_split_10', 16, 4, expected_pixels, html)
+
+
 @assert_no_logs
 def test_float_split_1():
     expected_pixels = '''
@@ -341,6 +378,8 @@ def test_float_split_1():
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
+                orphans: 1;
+                widows: 1;
             }
             div.split {
                 color: blue;
@@ -375,6 +414,8 @@ def test_float_split_2():
             font-family: weasyprint;
             font-size: 2px;
             line-height: 1;
+            orphans: 1;
+            widows: 1;
           }
           div.split {
             color: blue;
@@ -388,7 +429,6 @@ def test_float_split_2():
     assert_pixels('float_split_2', 16, 4, expected_pixels, html)
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_float_split_3():
     expected_pixels = '''
@@ -409,6 +449,8 @@ def test_float_split_3():
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
+                orphans: 1;
+                widows: 1;
             }
             div.split {
                 color: blue;
@@ -422,7 +464,6 @@ def test_float_split_3():
     assert_pixels('float_split_3', 16, 4, expected_pixels, html)
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_float_split_4():
     expected_pixels = '''
@@ -443,6 +484,8 @@ def test_float_split_4():
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
+                orphans: 1;
+                widows: 1;
             }
             div.split {
                 color: blue;
@@ -456,7 +499,6 @@ def test_float_split_4():
     assert_pixels('float_split_4', 16, 4, expected_pixels, html)
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_float_split_5():
     expected_pixels = '''
@@ -477,6 +519,8 @@ def test_float_split_5():
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
+                orphans: 1;
+                widows: 1;
             }
             div.split {
                 color: blue;
@@ -495,7 +539,6 @@ def test_float_split_5():
     assert_pixels('float_split_5', 16, 4, expected_pixels, html)
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_float_split_6():
     expected_pixels = '''
@@ -516,6 +559,8 @@ def test_float_split_6():
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
+                orphans: 1;
+                widows: 1;
             }
             div.split {
                 color: blue;
@@ -534,7 +579,6 @@ def test_float_split_6():
     assert_pixels('float_split_6', 16, 4, expected_pixels, html)
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_float_split_7():
     expected_pixels = '''
@@ -555,6 +599,8 @@ def test_float_split_7():
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
+                orphans: 1;
+                widows: 1;
             }
             div.split {
                 color: blue;
@@ -573,7 +619,6 @@ def test_float_split_7():
     assert_pixels('float_split_7', 16, 4, expected_pixels, html)
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_float_split_8():
     expected_pixels = '''
@@ -594,6 +639,8 @@ def test_float_split_8():
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
+                orphans: 1;
+                widows: 1;
             }
             div.split {
                 color: blue;
@@ -608,7 +655,6 @@ def test_float_split_8():
     assert_pixels('float_split_8', 16, 4, expected_pixels, html)
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_float_split_9():
     expected_pixels = '''
@@ -629,6 +675,8 @@ def test_float_split_9():
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
+                orphans: 1;
+                widows: 1;
             }
             div.split {
                 color: blue;
@@ -641,40 +689,3 @@ def test_float_split_9():
         <div>bbbbb bb</div>
     '''
     assert_pixels('float_split_9', 16, 4, expected_pixels, html)
-
-
-@pytest.mark.xfail
-@assert_no_logs
-def test_float_split_10():
-    expected_pixels = '''
-        BBBB__RRRRRRRRRR
-        BBBB__RRRRRRRRRR
-        __RRRRRRRRRR____
-        __RRRRRRRRRR____
-    '''
-    html = '''
-        <style>
-            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
-            @page {
-                background: white;
-                size: 16px 2px;
-            }
-            body {
-                color: red;
-                font-family: weasyprint;
-                font-size: 2px;
-                line-height: 1;
-            }
-            div.split {
-                color: blue;
-                float: left;
-                width: 4px;
-            }
-            div.pushed {
-                margin-left: 2px;
-            }
-        </style>
-        <div class="split">aa</div>
-        <div class="pushed">bbbbb bbbbb</div>
-    '''
-    assert_pixels('float_split_10', 16, 4, expected_pixels, html)
