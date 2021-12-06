@@ -1,6 +1,6 @@
 """
     weasyprint.tests.test_draw.test_absolute
-    -------------------------------------
+    ----------------------------------------
 
     Test how absolutes are drawn.
 
