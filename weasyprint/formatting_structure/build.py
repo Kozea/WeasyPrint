@@ -134,6 +134,13 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
     if display == ('none',):
         return []
 
+    if style['float'] == 'footnote':
+        if style['footnote_display'] == 'block':
+            style['display'] = ('block', 'flow')
+        else:
+            # TODO: handle compact footnotes
+            style['display'] = ('inline', 'flow')
+
     box = make_box(element.tag, style, [], element)
 
     if state is None:
@@ -246,7 +253,6 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
             marker_style, box, quote_depth, counter_values, get_image_from_uri,
             target_collector, counter_style)
         box.children.insert(0, marker)
-        box = create_anonymous_boxes(box)
 
     # Specific handling for the element. (eg. replaced element)
     return html.handle_element(element, box, get_image_from_uri, base_url)

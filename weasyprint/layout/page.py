@@ -552,9 +552,11 @@ def make_page(context, root_box, page_type, resume_at, page_number,
     if context.reported_footnotes:
         footnote_area.children = tuple(context.reported_footnotes)
         context.reported_footnotes = []
+        reported_footnote_area = build.create_anonymous_boxes(
+            footnote_area.deepcopy())
         reported_footnote_area, _, _, _, _ = block_level_layout(
-            context, footnote_area, -float('inf'), None, footnote_area.page,
-            True, [], [], [], False)
+            context, reported_footnote_area, -float('inf'), None,
+            footnote_area.page, True, [], [], [], False)
         footnote_area.height = reported_footnote_area.height
         context.page_bottom -= reported_footnote_area.margin_height()
 
@@ -573,6 +575,7 @@ def make_page(context, root_box, page_type, resume_at, page_number,
     for absolute_box in positioned_boxes:
         absolute_layout(context, absolute_box, page, positioned_boxes)
 
+    footnote_area = build.create_anonymous_boxes(footnote_area)
     footnote_area, _, _, _, _ = block_level_layout(
         context, footnote_area, -float('inf'), None, footnote_area.page,
         True, [], [], [], False)

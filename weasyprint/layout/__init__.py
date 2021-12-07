@@ -19,7 +19,7 @@ from collections import defaultdict
 from functools import partial
 from math import inf
 
-from ..formatting_structure import boxes
+from ..formatting_structure import boxes, build
 from ..logger import PROGRESS_LOGGER
 from .absolute import absolute_box_layout, absolute_layout
 from .background import layout_backgrounds
@@ -322,9 +322,11 @@ class LayoutContext:
         if self.current_footnote_area.height != 'auto':
             self.page_bottom += self.current_footnote_area.margin_height()
         self.current_footnote_area.children = self.current_page_footnotes
+        footnote_area = build.create_anonymous_boxes(
+            self.current_footnote_area.deepcopy())
         footnote_area, _, _, _, _ = block_level_layout(
-            self, self.current_footnote_area, -inf, None,
-            self.current_footnote_area.page, True, [], [], [], False)
+            self, footnote_area, -inf, None, self.current_footnote_area.page,
+            True, [], [], [], False)
         self.current_footnote_area.height = footnote_area.height
         self.page_bottom -= footnote_area.margin_height()
 
@@ -334,8 +336,10 @@ class LayoutContext:
         self.page_bottom += self.current_footnote_area.margin_height()
         self.current_footnote_area.children = self.current_page_footnotes
         if self.current_footnote_area.children:
+            footnote_area = build.create_anonymous_boxes(
+                self.current_footnote_area.deepcopy())
             footnote_area, _, _, _, _ = block_level_layout(
-                self, self.current_footnote_area, -inf, None,
+                self, footnote_area, -inf, None,
                 self.current_footnote_area.page, True, [], [], [], False)
             self.current_footnote_area.height = footnote_area.height
             self.page_bottom -= footnote_area.margin_height()

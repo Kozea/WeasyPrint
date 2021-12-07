@@ -120,6 +120,7 @@ INITIAL_VALUES = {
     'bookmark_level': 'none',
     'bookmark_state': 'open',
     'content': 'normal',
+    'footnote_display': 'block',
     'quotes': list('“”‘’'),  # chosen by the user agent
     'string_set': 'none',
 

@@ -1457,6 +1457,13 @@ def bookmark_state(keyword):
     return keyword in ('open', 'closed')
 
 
+@property(unstable=True)
+@single_keyword
+def footnote_display(keyword):
+    """Validation for ``bookmark-state``."""
+    return keyword in ('block', 'inline', 'compact')
+
+
 @property(unstable=True, wants_base_url=True)
 @comma_separated_list
 def string_set(tokens, base_url):
