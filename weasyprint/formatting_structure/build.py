@@ -180,9 +180,24 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
         children.append(boxes.TextBox.anonymous_from(box, text))
 
     for child_element in element:
-        children.extend(element_to_box(
+        child_boxes = element_to_box(
             child_element, style_for, get_image_from_uri, base_url,
-            target_collector, counter_style, footnotes, state))
+            target_collector, counter_style, footnotes, state)
+
+        if child_boxes and child_boxes[0].style['float'] == 'footnote':
+            footnote = child_boxes[0]
+            footnote.style['float'] = 'none'
+            footnotes.append(footnote)
+            call_style = style_for(element, 'footnote-call')
+            footnote_call = make_box(
+                f'{element.tag}::footnote-call', call_style, [], element)
+            footnote_call.children = content_to_boxes(
+                call_style, footnote_call, quote_depth, counter_values,
+                get_image_from_uri, target_collector, counter_style)
+            footnote_call.footnote = footnote
+            child_boxes = [footnote_call]
+
+        children.extend(child_boxes)
         text = child_element.tail
         if text:
             text_box = boxes.TextBox.anonymous_from(box, text)
@@ -190,6 +205,7 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
                 children[-1].text += text_box.text
             else:
                 children.append(text_box)
+
     children.extend(before_after_to_box(
         element, 'after', state, style_for, get_image_from_uri,
         target_collector, counter_style))
@@ -222,10 +238,7 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
             box.children.append(boxes.TextBox.anonymous_from(box, '​'))
 
     if style['float'] == 'footnote':
-        style['float'] = 'none'
         counter_values['footnote'][-1] += 1
-
-        # TODO: footnote body style should inherit from footnote’s area style
         marker_style = style_for(element, 'footnote-marker')
         marker = make_box(
             f'{element.tag}::footnote-marker', marker_style, [], element)
@@ -234,16 +247,6 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
             target_collector, counter_style)
         box.children.insert(0, marker)
         box = create_anonymous_boxes(box)
-        footnotes.append(box)
-
-        # TODO: footnote call style should inherit from footnote’s parent style
-        call_style = style_for(element, 'footnote-call')
-        box = make_box(
-            f'{element.tag}::footnote-call', call_style, [], element)
-        box.children = content_to_boxes(
-            call_style, box, quote_depth, counter_values, get_image_from_uri,
-            target_collector, counter_style)
-        box.footnote = footnotes[-1]
 
     # Specific handling for the element. (eg. replaced element)
     return html.handle_element(element, box, get_image_from_uri, base_url)
