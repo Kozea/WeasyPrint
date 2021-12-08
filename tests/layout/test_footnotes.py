@@ -120,6 +120,13 @@ def test_long_footnote():
 @pytest.mark.xfail
 @assert_no_logs
 def test_after_marker_footnote():
+    # TODO: this syntax is in the specification, but we’re currently limited to
+    # one pseudo element per selector, according to CSS 2.1:
+    # https://drafts.csswg.org/css2/#selector-syntax
+    # and Selectors Level 3:
+    # https://drafts.csswg.org/selectors-3/#selector-syntax
+    # This limitation doesn’t exist anymore in Selectors Level 4:
+    # https://drafts.csswg.org/selectors-4/#typedef-compound-selector
     page, = render_pages('''
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
@@ -369,9 +376,10 @@ def test_footnote_longer_than_space_left():
     assert footnote_content3.text == 'jkl'
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_footnote_longer_than_page():
+    # Nothing is defined for this use case in the specification. In WeasyPrint,
+    # the content simply overflows.
     page1, page2 = render_pages('''
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
@@ -390,23 +398,23 @@ def test_footnote_longer_than_page():
             }
         </style>
         <div>abc<span>def ghi jkl mno</span></div>''')
-    html1, footnote_area1 = page1.children
+    html1, = page1.children
     body1, = html1.children
     div, = body1.children
     div_textbox, footnote_call = div.children[0].children
     assert div_textbox.text == 'abc'
     assert footnote_call.children[0].text == '1'
-    footnote_line1, footnote_line2 = footnote_area1.children[0].children
-    footnote_marker1, footnote_content1 = footnote_line1.children
-    footnote_content2 = footnote_line2.children[0]
-    assert footnote_marker1.children[0].text == '1.'
-    assert footnote_content1.text == 'def'
-    assert footnote_content2.text == 'ghi'
 
     html2, footnote_area2 = page2.children
     assert not html2.children
-    footnote_line3, footnote_line4 = footnote_area2.children[0].children
+    footnote_line1, footnote_line2, footnote_line3, footnote_line4 = (
+        footnote_area2.children[0].children)
+    footnote_marker1, footnote_content1 = footnote_line1.children
+    footnote_content2 = footnote_line2.children[0]
     footnote_content3 = footnote_line3.children[0]
     footnote_content4 = footnote_line4.children[0]
+    assert footnote_marker1.children[0].text == '1.'
+    assert footnote_content1.text == 'def'
+    assert footnote_content2.text == 'ghi'
     assert footnote_content3.text == 'jkl'
     assert footnote_content4.text == 'mno'
