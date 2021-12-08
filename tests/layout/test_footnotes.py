@@ -195,7 +195,6 @@ def test_several_footnote():
     assert footnote_textbox2.text == 'mn'
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_reported_footnote_1():
     page1, page2, = render_pages('''
@@ -330,7 +329,6 @@ def test_footnote_display_inline():
     assert footnote_textbox2.text == 'i'
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_footnote_longer_than_space_left():
     page1, page2 = render_pages('''

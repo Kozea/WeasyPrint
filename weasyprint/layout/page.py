@@ -746,8 +746,10 @@ def remake_page(index, context, root_box, html):
         next_page_side = 'right' if direction_ltr ^ break_verso else 'left'
     else:
         next_page_side = None
-    blank = ((next_page_side == 'left' and right_page) or
-             (next_page_side == 'right' and not right_page))
+    blank = bool(
+        (next_page_side == 'left' and right_page) or
+        (next_page_side == 'right' and not right_page) or
+        (context.reported_footnotes and initial_resume_at is None))
     if blank:
         next_page_name = ''
     side = 'right' if right_page else 'left'
@@ -832,7 +834,7 @@ def make_all_pages(context, root_box, html, pages):
             yield pages[i]
 
         i += 1
-        if resume_at is None:
+        if resume_at is None and not context.reported_footnotes:
             # Throw away obsolete pages
             context.page_maker = context.page_maker[:i + 1]
             return

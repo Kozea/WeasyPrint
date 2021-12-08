@@ -332,7 +332,6 @@ def _linebox_layout(context, box, index, child, new_children, page_is_empty,
                     context.layout_footnote(descendant.footnote)
                     if new_position_y > context.page_bottom - bottom_space:
                         context.report_footnote(descendant.footnote)
-                        stop = True
 
         new_children.append(line)
         position_y = new_position_y
