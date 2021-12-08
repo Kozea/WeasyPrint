@@ -290,14 +290,13 @@ def test_reported_footnote_2():
     assert footnote_textbox2.text == 'f2'
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_footnote_display_inline():
     page, = render_pages('''
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
-                size: 9px 7px;
+                size: 9px 50px;
                 background: white;
             }
             div {
@@ -308,7 +307,7 @@ def test_footnote_display_inline():
             }
             span {
                 float: footnote;
-                footnote-diplay: inline;
+                footnote-display: inline;
             }
         </style>
         <div>abc<span>d</span> fgh<span>i</span></div>''')
@@ -316,14 +315,15 @@ def test_footnote_display_inline():
     body, = html.children
     div, = body.children
     div_line1, div_line2 = div.children
-    div_textbox1, footnote_call1 = div_line1.children[0].children
-    div_textbox2, footnote_call2 = div_line2.children[0].children
+    div_textbox1, footnote_call1 = div_line1.children
+    div_textbox2, footnote_call2 = div_line2.children
     assert div_textbox1.text == 'abc'
-    assert div_textbox2.text == 'abc'
+    assert div_textbox2.text == 'fgh'
     assert footnote_call1.children[0].text == '1'
     assert footnote_call2.children[0].text == '2'
-    footnote_mark1, footnote_textbox1, footnote_mark2, footnote_textbox2 = (
-        footnote_area.children[0].children[0].children)
+    line = footnote_area.children[0]
+    footnote_mark1, footnote_textbox1 = line.children[0].children
+    footnote_mark2, footnote_textbox2 = line.children[1].children
     assert footnote_mark1.children[0].text == '1.'
     assert footnote_textbox1.text == 'd'
     assert footnote_mark2.children[0].text == '2.'
