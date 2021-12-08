@@ -289,7 +289,6 @@ def test_reported_footnote_2():
     assert footnote_textbox2.text == 'f2'
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_reported_footnote_3():
     page1, page2, = render_pages('''
@@ -306,35 +305,37 @@ def test_reported_footnote_3():
                 orphans: 1;
                 widows: 1;
             }
-            div.long {
-                height: 7px;
-            }
             span {
                 float: footnote;
             }
         </style>
-        <div class="long">abc<span>long wow</span></div><div>hij<span>f2</span></div>''')
-    html1, footnote= page1.children
+        <div>
+          abc<span>1</span>
+          def<span>v long 2</span>
+          ghi<span>3</span>
+        </div>''')
+    html1, footnote_area1 = page1.children
     body1, = html1.children
     div1, = body1.children
-    div_line1_text, div_footnote_call1 = div1.children
-    assert div_line1_text.text == 'abc'
-    assert div_footnote_call1.children[0].text == '1'
+    line1, line2, line3 = div1.children
+    assert line1.children[0].text == 'abc'
+    assert line1.children[1].children[0].text == '1'
+    assert line2.children[0].text == 'def'
+    assert line2.children[1].children[0].text == '2'
+    assert line3.children[0].text == 'ghi'
+    assert line3.children[1].children[0].text == '3'
+    footnote1, = footnote_area1.children
+    assert footnote1.children[0].children[0].children[0].text == '1.'
+    assert footnote1.children[0].children[1].text == '1'
 
-    html2, footnote_area = page2.children
-    body2, = html2.children
-    div2, = body2.children
-    div_line2_text, div_footnote_call2 = div2.children
-    assert div_line2_text.text == 'hij'
-    line = footnote_area.children[0]
-    footnote_mark1, footnote_textbox1 = line.children[0].children
-    footnote_mark2, footnote_textbox2 = line.children[1].children
-    assert footnote_mark1.children[0].text == '1.'
-    footnote1_line1, footnote1_line2 = footnote_textbox1.children
-    assert footnote_line1.text == 'long'
-    assert footnote_line2.text == 'wow'
-    assert footnote_mark2.children[0].text == '2.'
-    assert footnote_textbox2.text == 'f2'
+    html2, footnote_area2 = page2.children
+    footnote2, footnote3 = footnote_area2.children
+    assert footnote2.children[0].children[0].children[0].text == '2.'
+    assert footnote2.children[0].children[1].text == 'v'
+    assert footnote2.children[1].children[0].text == 'long'
+    assert footnote2.children[2].children[0].text == '2'
+    assert footnote3.children[0].children[0].children[0].text == '3.'
+    assert footnote3.children[0].children[1].text == '3'
 
 
 @assert_no_logs
