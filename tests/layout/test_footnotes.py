@@ -296,6 +296,55 @@ def test_reported_footnote_2():
     assert footnote_textbox2.text == 'f2'
 
 
+@pytest.mark.xfail
+@assert_no_logs
+def test_reported_footnote_3():
+    page1, page2, = render_pages('''
+        <style>
+            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+            @page {
+                size: 9px 10px;
+                background: white;
+            }
+            div {
+                color: red;
+                font-family: weasyprint;
+                font-size: 2px;
+                line-height: 1;
+                orphans: 1;
+                widows: 1;
+            }
+            div.long {
+                height: 7px;
+            }
+            span {
+                float: footnote;
+            }
+        </style>
+        <div class="long">abc<span>long wow</span></div><div>hij<span>f2</span></div>''')
+    html1, footnote= page1.children
+    body1, = html1.children
+    div1, = body1.children
+    div_line1_text, div_footnote_call1 = div1.children
+    assert div_line1_text.text == 'abc'
+    assert div_footnote_call1.children[0].text == '1'
+
+    html2, footnote_area = page2.children
+    body2, = html2.children
+    div2, = body2.children
+    div_line2_text, div_footnote_call2 = div2.children
+    assert div_line2_text.text == 'hij'
+    line = footnote_area.children[0]
+    footnote_mark1, footnote_textbox1 = line.children[0].children
+    footnote_mark2, footnote_textbox2 = line.children[1].children
+    assert footnote_mark1.children[0].text == '1.'
+    footnote1_line1, footnote1_line2 = footnote_textbox1.children
+    assert footnote_line1.text == 'long'
+    assert footnote_line2.text == 'wow'
+    assert footnote_mark2.children[0].text == '2.'
+    assert footnote_textbox2.text == 'f2'
+
+
 @assert_no_logs
 def test_footnote_display_inline():
     page, = render_pages('''
