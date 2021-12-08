@@ -21,7 +21,6 @@ def test_inline_footnote():
                 background: white;
             }
             div {
-                color: red;
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
@@ -56,7 +55,6 @@ def test_block_footnote():
              background: white;
          }
          div {
-             color: red;
              font-family: weasyprint;
              font-size: 2px;
              line-height: 1;
@@ -90,7 +88,6 @@ def test_long_footnote():
                 background: white;
             }
             div {
-                color: red;
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
@@ -135,7 +132,6 @@ def test_after_marker_footnote():
                 background: white;
             }
             div {
-                color: red;
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
@@ -163,7 +159,6 @@ def test_several_footnote():
                 background: white;
             }
             div {
-                color: red;
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
@@ -212,7 +207,6 @@ def test_reported_footnote_1():
                 background: white;
             }
             div {
-                color: red;
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
@@ -258,7 +252,6 @@ def test_reported_footnote_2():
                 background: white;
             }
             div {
-                color: red;
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
@@ -307,7 +300,6 @@ def test_reported_footnote_3():
                 background: white;
             }
             div {
-                color: red;
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
@@ -355,7 +347,6 @@ def test_footnote_display_inline():
                 background: white;
             }
             div {
-                color: red;
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
@@ -395,7 +386,6 @@ def test_footnote_longer_than_space_left():
                 background: white;
             }
             div {
-                color: red;
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
@@ -437,7 +427,6 @@ def test_footnote_longer_than_page():
                 background: white;
             }
             div {
-                color: red;
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
