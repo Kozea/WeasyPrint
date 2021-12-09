@@ -579,7 +579,7 @@ def make_page(context, root_box, page_type, resume_at, page_number,
     footnote_area, _, _, _, _ = block_level_layout(
         context, footnote_area, -float('inf'), None, footnote_area.page,
         True, [], [], [], False)
-    footnote_area.translate(dy=-footnote_area.height)
+    footnote_area.translate(dy=-footnote_area.margin_height())
 
     context.finish_block_formatting_context(root_box)
 
