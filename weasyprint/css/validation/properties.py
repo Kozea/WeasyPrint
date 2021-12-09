@@ -1460,8 +1460,15 @@ def bookmark_state(keyword):
 @property(unstable=True)
 @single_keyword
 def footnote_display(keyword):
-    """Validation for ``bookmark-state``."""
+    """Validation for ``footnote-display``."""
     return keyword in ('block', 'inline', 'compact')
+
+
+@property(unstable=True)
+@single_keyword
+def footnote_policy(keyword):
+    """Validation for ``footnote-policy``."""
+    return keyword in ('auto', 'line', 'block')
 
 
 @property(unstable=True, wants_base_url=True)

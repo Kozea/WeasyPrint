@@ -254,6 +254,31 @@ def _out_of_flow_layout(context, box, index, child, new_children,
     return stop, resume_at
 
 
+def _break_line(box, new_children, lines_iterator, page_is_empty, index,
+                skip_stack, resume_at):
+    over_orphans = len(new_children) - box.style['orphans']
+    if over_orphans < 0 and not page_is_empty:
+        # Reached the bottom of the page before we had
+        # enough lines for orphans, cancel the whole box.
+        return True, False, resume_at
+    # How many lines we need on the next page to satisfy widows
+    # -1 for the current line.
+    needed = box.style['widows'] - 1
+    if needed:
+        for _ in lines_iterator:
+            needed -= 1
+            if needed == 0:
+                break
+    if needed > over_orphans and not page_is_empty:
+        # Total number of lines < orphans + widows
+        return True, False, resume_at
+    if needed and needed <= over_orphans:
+        # Remove lines to keep them for the next page
+        del new_children[-needed:]
+    # Page break here, resume before this line
+    return False, True, {index: skip_stack}
+
+
 def _linebox_layout(context, box, index, child, new_children, page_is_empty,
                     absolute_boxes, fixed_boxes, adjoining_margins,
                     bottom_space, position_y, skip_stack, first_letter_style,
@@ -284,33 +309,13 @@ def _linebox_layout(context, box, index, child, new_children, page_is_empty,
         # Allow overflow if the first line of the page is higher
         # than the page itself so that we put *something* on this
         # page and can advance in the context.
-        if (new_children or not page_is_empty) and (
-                new_position_y + offset_y >
-                context.page_bottom - bottom_space):
-            over_orphans = len(new_children) - box.style['orphans']
-            if over_orphans < 0 and not page_is_empty:
-                # Reached the bottom of the page before we had
-                # enough lines for orphans, cancel the whole box.
-                abort = True
-                break
-            # How many lines we need on the next page to satisfy widows
-            # -1 for the current line.
-            needed = box.style['widows'] - 1
-            if needed:
-                for _ in lines_iterator:
-                    needed -= 1
-                    if needed == 0:
-                        break
-            if needed > over_orphans and not page_is_empty:
-                # Total number of lines < orphans + widows
-                abort = True
-                break
-            if needed and needed <= over_orphans:
-                # Remove lines to keep them for the next page
-                del new_children[-needed:]
-            # Page break here, resume before this line
-            resume_at = {index: skip_stack}
-            stop = True
+        overflow = (
+            (new_children or not page_is_empty) and
+            (new_position_y + offset_y > context.page_bottom - bottom_space))
+        if overflow:
+            abort, stop, resume_at = _break_line(
+                box, new_children, lines_iterator, page_is_empty, index,
+                skip_stack, resume_at)
             break
 
         # TODO: this is incomplete.
@@ -327,12 +332,27 @@ def _linebox_layout(context, box, index, child, new_children, page_is_empty,
             box.margin_top = 0
 
         if context.footnotes:
-            for descendant in line.descendants():
-                if descendant.footnote in context.footnotes:
-                    context.layout_footnote(descendant.footnote)
-                    if (new_position_y > context.page_bottom - bottom_space or
-                            context.reported_footnotes):
-                        context.report_footnote(descendant.footnote)
+            break_linebox = False
+            footnotes = (
+                descendant.footnote for descendant in line.descendants()
+                if descendant.footnote in context.footnotes)
+            for footnote in footnotes:
+                context.layout_footnote(footnote)
+                overflow = context.reported_footnotes or (
+                    new_position_y + offset_y >
+                    context.page_bottom - bottom_space)
+                if overflow:
+                    context.report_footnote(footnote)
+                    if footnote.style['footnote_policy'] == 'line':
+                        abort, stop, resume_at = _break_line(
+                            box, new_children, lines_iterator, page_is_empty,
+                            index, skip_stack, resume_at)
+                        break_linebox = True
+                    elif footnote.style['footnote_policy'] == 'block':
+                        abort = break_linebox = True
+                    break
+            if break_linebox:
+                break
 
         new_children.append(line)
         position_y = new_position_y

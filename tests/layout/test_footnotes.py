@@ -457,3 +457,85 @@ def test_footnote_longer_than_page():
     assert footnote_content2.text == 'ghi'
     assert footnote_content3.text == 'jkl'
     assert footnote_content4.text == 'mno'
+
+
+@assert_no_logs
+def test_footnote_policy_line():
+    page1, page2 = render_pages('''
+        <style>
+            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+            @page {
+                size: 9px 9px;
+                background: white;
+            }
+            div {
+                font-family: weasyprint;
+                font-size: 2px;
+                line-height: 1;
+            }
+            span {
+                float: footnote;
+                footnote-policy: line;
+            }
+        </style>
+        <div>abc def ghi jkl<span>1</span></div>''')
+    html, = page1.children
+    body, = html.children
+    div, = body.children
+    linebox1, linebox2 = div.children
+    assert linebox1.children[0].text == 'abc'
+    assert linebox2.children[0].text == 'def'
+
+    html, footnote_area = page2.children
+    body, = html.children
+    div, = body.children
+    linebox1, linebox2 = div.children
+    assert linebox1.children[0].text == 'ghi'
+    assert linebox2.children[0].text == 'jkl'
+    assert linebox2.children[1].children[0].text == '1'
+
+    footnote_marker, footnote_textbox = (
+        footnote_area.children[0].children[0].children)
+    assert footnote_marker.children[0].text == '1.'
+    assert footnote_textbox.text == '1'
+
+
+@assert_no_logs
+def test_footnote_policy_block():
+    page1, page2 = render_pages('''
+        <style>
+            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+            @page {
+                size: 9px 9px;
+                background: white;
+            }
+            div {
+                font-family: weasyprint;
+                font-size: 2px;
+                line-height: 1;
+            }
+            span {
+                float: footnote;
+                footnote-policy: block;
+            }
+        </style>
+        <div>abc</div><div>def ghi jkl<span>1</span></div>''')
+    html, = page1.children
+    body, = html.children
+    div, = body.children
+    linebox1, = div.children
+    assert linebox1.children[0].text == 'abc'
+
+    html, footnote_area = page2.children
+    body, = html.children
+    div, = body.children
+    linebox1, linebox2, linebox3 = div.children
+    assert linebox1.children[0].text == 'def'
+    assert linebox2.children[0].text == 'ghi'
+    assert linebox3.children[0].text == 'jkl'
+    assert linebox3.children[1].children[0].text == '1'
+
+    footnote_marker, footnote_textbox = (
+        footnote_area.children[0].children[0].children)
+    assert footnote_marker.children[0].text == '1.'
+    assert footnote_textbox.text == '1'

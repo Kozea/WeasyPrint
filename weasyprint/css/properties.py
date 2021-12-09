@@ -121,6 +121,7 @@ INITIAL_VALUES = {
     'bookmark_state': 'open',
     'content': 'normal',
     'footnote_display': 'block',
+    'footnote_policy': 'auto',
     'quotes': list('“”‘’'),  # chosen by the user agent
     'string_set': 'none',
 
