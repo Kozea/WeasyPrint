@@ -98,3 +98,37 @@ def test_long_footnote():
         }
     </style>
     <div>abc<span>de f</span></div>''')
+
+
+@assert_no_logs
+def test_footnote_margin():
+    assert_pixels('footnote_margin', 9, 7, '''
+        RRRRRRRR_
+        RRRRRRRR_
+        _________
+        _________
+        _RRRRRR__
+        _RRRRRR__
+        _________
+    ''', '''
+    <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page {
+            size: 9px 7px;
+            background: white;
+
+            @footnote {
+                margin: 1px;
+            }
+        }
+        div {
+            color: red;
+            font-family: weasyprint;
+            font-size: 2px;
+            line-height: 1;
+        }
+        span {
+            float: footnote;
+        }
+    </style>
+    <div>abc<span>d</span></div>''')
