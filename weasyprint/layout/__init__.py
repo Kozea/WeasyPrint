@@ -115,14 +115,18 @@ def layout_document(html, root_box, context, max_loops=8):
     """
     initialize_page_maker(context, root_box)
     pages = []
+    original_footnotes = []
     actual_total_pages = 0
 
     for loop in range(max_loops):
         if loop > 0:
             PROGRESS_LOGGER.info(
                 'Step 5 - Creating layout - Repagination #%d', loop)
+            context.footnotes = original_footnotes.copy()
 
         initial_total_pages = actual_total_pages
+        if loop == 0:
+            original_footnotes = context.footnotes.copy()
         pages = list(make_all_pages(context, root_box, html, pages))
         actual_total_pages = len(pages)
 

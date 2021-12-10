@@ -539,3 +539,41 @@ def test_footnote_policy_block():
         footnote_area.children[0].children[0].children)
     assert footnote_marker.children[0].text == '1.'
     assert footnote_textbox.text == '1'
+
+
+@assert_no_logs
+def test_footnote_repagination():
+    page, = render_pages('''
+        <style>
+            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+            @page {
+                size: 9px 7px;
+                background: white;
+            }
+            div {
+                font-family: weasyprint;
+                font-size: 2px;
+                line-height: 1;
+            }
+            div::after {
+                content: counter(pages);
+            }
+            span {
+                float: footnote;
+            }
+        </style>
+        <div>ab<span>de</span></div>''')
+    html, footnote_area = page.children
+    body, = html.children
+    div, = body.children
+    div_textbox, footnote_call, div_after = div.children[0].children
+    assert div_textbox.text == 'ab'
+    assert footnote_call.children[0].text == '1'
+    assert div_textbox.position_y == 0
+    assert div_after.children[0].text == '1'
+
+    footnote_marker, footnote_textbox = (
+        footnote_area.children[0].children[0].children)
+    assert footnote_marker.children[0].text == '1.'
+    assert footnote_textbox.text == 'de'
+    assert footnote_area.position_y == 5
