@@ -274,8 +274,15 @@ Missing Library
 +++++++++++++++
 
 On Windows, most of the problems come from unreachable libraries. If you get an
-error like ``cannot load library 'xxx': error xxx``, it means that this library
-is not installed or not in the ``PATH`` environment variable.
+error like ``cannot load library 'xxx': error xxx``, it means that WeasyPrint
+can’t find this library.
+
+You can set the ``WEASYPRINT_DLL_DIRECTORIES`` environment variable to list the
+folders where the libraries can be found. For example, in ``cmd.exe``:
+
+.. code-block:: doscon
+
+    > set WEASYPRINT_DLL_DIRECTORIES=C:\GTK3\bin;D:\GTK3\bin
 
 You can find more about this issue in `#589`_, `#721`_ or `#1240`_.
 
