@@ -1,6 +1,6 @@
 """
-    weasyprint.layout.blocks
-    ------------------------
+    weasyprint.layout.block
+    -----------------------
 
     Page breaking and layout for block-level and block-container boxes.
 
@@ -217,6 +217,7 @@ def _out_of_flow_layout(context, box, index, child, new_children,
                         adjoining_margins, bottom_space):
     stop = False
     resume_at = None
+    out_of_flow_resume_at = None
 
     child.position_y += collapse_margin(adjoining_margins)
     if child.is_absolutely_positioned():
@@ -228,8 +229,9 @@ def _out_of_flow_layout(context, box, index, child, new_children,
         else:
             fixed_boxes.append(placeholder)
     elif child.is_floated():
-        new_child = float_layout(
-            context, child, box, absolute_boxes, fixed_boxes)
+        new_child, out_of_flow_resume_at = float_layout(
+            context, child, box, absolute_boxes, fixed_boxes, bottom_space,
+            skip_stack=None)
         # New page if overflow
         if (page_is_empty and not new_children) or not (
                 new_child.position_y + new_child.height >
@@ -251,7 +253,7 @@ def _out_of_flow_layout(context, box, index, child, new_children,
         page = context.current_page
         context.running_elements[running_name][page].append(child)
 
-    return stop, resume_at
+    return stop, resume_at, out_of_flow_resume_at
 
 
 def _break_line(box, new_children, lines_iterator, page_is_empty, index,
@@ -292,8 +294,8 @@ def _linebox_layout(context, box, index, child, new_children, page_is_empty,
         position_y += collapse_margin(adjoining_margins)
     new_containing_block = box
     lines_iterator = iter_line_boxes(
-        context, child, position_y, skip_stack, new_containing_block,
-        absolute_boxes, fixed_boxes, first_letter_style)
+        context, child, position_y, bottom_space, skip_stack,
+        new_containing_block, absolute_boxes, fixed_boxes, first_letter_style)
     for i, (line, resume_at) in enumerate(lines_iterator):
         line.resume_at = resume_at
         new_position_y = line.position_y + line.height
@@ -472,7 +474,7 @@ def _in_flow_layout(context, box, index, child, new_children, page_is_empty,
             elif (new_position_y > context.page_bottom - bottom_space and
                     not page_is_empty_with_no_children):
                 # The child border/padding overflows the page area, do the
-                # layout again with a lower max_y value.
+                # layout again with a higher bottom_space value.
                 remove_placeholders([new_child], absolute_boxes, fixed_boxes)
                 bottom_space += (
                     new_child.padding_bottom + new_child.border_bottom_width)
@@ -612,10 +614,13 @@ def block_container_layout(context, box, bottom_space, skip_stack,
 
         if not child.is_in_normal_flow():
             abort = False
-            stop, resume_at = _out_of_flow_layout(
+            stop, resume_at, out_of_flow_resume_at = _out_of_flow_layout(
                 context, box, index, child, new_children, page_is_empty,
                 absolute_boxes, fixed_boxes, adjoining_margins,
                 bottom_space)
+            if out_of_flow_resume_at:
+                context.broken_out_of_flow.append(
+                    (child, box, out_of_flow_resume_at))
 
         elif isinstance(child, boxes.LineBox):
             abort, stop, resume_at, position_y = _linebox_layout(

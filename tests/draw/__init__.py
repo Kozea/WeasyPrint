@@ -8,6 +8,7 @@
 
 import io
 import os
+from itertools import zip_longest
 
 from PIL import Image
 
@@ -129,12 +130,14 @@ def document_to_pixels(document, name, expected_width, expected_height):
 def assert_pixels_equal(name, width, height, raw, expected_raw, tolerance=0):
     """Take 2 matrices of pixels and assert that they are the same."""
     if raw != expected_raw:  # pragma: no cover
-        for i, (value, expected) in enumerate(zip(raw, expected_raw)):
+        pixels = zip_longest(raw, expected_raw, fillvalue=(-1, -1, -1))
+        for i, (value, expected) in enumerate(pixels):
             if expected is None:
                 continue
             if any(abs(value - expected) > tolerance
                    for value, expected in zip(value, expected)):
-                write_png(name, raw, width, height)
+                actual_height = len(raw) // width
+                write_png(name, raw, width, actual_height)
                 expected_raw = [
                     pixel or (255, 255, 255) for pixel in expected_raw]
                 write_png(name + '.expected', expected_raw, width, height)

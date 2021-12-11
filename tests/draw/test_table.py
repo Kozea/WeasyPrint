@@ -782,7 +782,7 @@ def test_tables_9():
 
 @assert_no_logs
 def test_tables_10():
-    assert_pixels('collapsed_border_tfoot', 22, 36, '''
+    assert_pixels('collapsed_border_tfoot', 22, 34, '''
         ______________________
         __RRRRRRRRRRRRRRRRRR__
         __R_____R____R_____R__
@@ -812,8 +812,6 @@ def test_tables_10():
         _BBBBBBBBBBBBBBBBBBBB_
         _BBBBBBBBBBBBBBBBBBBB_
         _BBBBBBBBBBBBBBBBBBBB_
-        ______________________
-        ______________________
         ______________________
         ______________________
         ______________________

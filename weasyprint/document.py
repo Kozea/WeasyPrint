@@ -91,12 +91,15 @@ class Font:
             b'/' + self.hash.encode('ascii') + b'+' +
             self.family.replace(b' ', b''))
         self.italic_angle = 0  # TODO: this should be different
-        self.ascent = int(
-            pango.pango_font_metrics_get_ascent(pango_metrics) /
-            font_size * 1000)
-        self.descent = -int(
-            pango.pango_font_metrics_get_descent(pango_metrics) /
-            font_size * 1000)
+        if font_size:
+            self.ascent = int(
+                pango.pango_font_metrics_get_ascent(pango_metrics) /
+                font_size * 1000)
+            self.descent = -int(
+                pango.pango_font_metrics_get_descent(pango_metrics) /
+                font_size * 1000)
+        else:
+            self.ascent = self.descent = 0
         self.upem = harfbuzz.hb_face_get_upem(hb_face)
         self.png = harfbuzz.hb_ot_color_has_png(hb_face)
         self.svg = harfbuzz.hb_ot_color_has_svg(hb_face)
@@ -995,12 +998,14 @@ class Document:
         #: A :obj:`dict` of fonts used by the document. Keys are hashes used to
         #: identify fonts, values are ``Font`` objects.
         self.fonts = {}
+
         # Keep a reference to font_config to avoid its garbage collection until
         # rendering is destroyed. This is needed as font_config.__del__ removes
         # fonts that may be used when rendering
         self._font_config = font_config
-        # Optimize size of generated PDF. Can contain "images" and "fonts".
-        self.optimize_size = optimize_size
+        # Set of flags for PDF size optimization. Can contain "images" and
+        # "fonts".
+        self._optimize_size = optimize_size
 
     def copy(self, pages='all'):
         """Take a subset of the pages.
@@ -1035,7 +1040,7 @@ class Document:
             pages = list(pages)
         return type(self)(
             pages, self.metadata, self.url_fetcher, self._font_config,
-            self.optimize_size)
+            self._optimize_size)
 
     def make_bookmark_tree(self):
         """Make a tree of all bookmarks in the document.
@@ -1333,7 +1338,7 @@ class Document:
         for file_hash, fonts in fonts_by_file_hash.items():
             content = fonts[0].file_content
 
-            if 'fonts' in self.optimize_size:
+            if 'fonts' in self._optimize_size:
                 # Optimize font
                 cmap = {}
                 for font in fonts:

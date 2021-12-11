@@ -438,7 +438,6 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
         # in @page context. Obsoletes the parse_again function's deepcopy.
         # TODO: Is propbably superfluous in_page_context.
         parent_box.cached_counter_values = copy.deepcopy(counter_values)
-
     for type_, value in content_list:
         if type_ == 'string':
             add_text(value)
@@ -1224,16 +1223,7 @@ def flex_children(box, children):
                 # https://www.w3.org/TR/css-flexbox-1/#flex-items
                 continue
             if isinstance(child, boxes.InlineLevelBox):
-                # TODO: Only create block boxes for text runs, not for other
-                # inline level boxes. This is false but currently needed
-                # because block_level_width and block_level_layout are called
-                # in layout.flex.
-                if isinstance(child, boxes.ParentBox):
-                    anonymous = boxes.BlockBox.anonymous_from(
-                        box, child.children)
-                    anonymous.style = child.style
-                else:
-                    anonymous = boxes.BlockBox.anonymous_from(box, [child])
+                anonymous = boxes.BlockBox.anonymous_from(box, [child])
                 anonymous.is_flex_item = True
                 flex_children.append(anonymous)
             else:

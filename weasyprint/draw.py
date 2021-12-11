@@ -1123,13 +1123,16 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y):
         string += '<'
         for i in range(num_glyphs):
             glyph_info = glyphs[i]
+            glyph = glyph_info.glyph
             width = glyph_info.geometry.width
+            if glyph == pango.PANGO_GLYPH_EMPTY:
+                string += f'>{-width / font_size}<'
+                continue
             utf8_position = utf8_positions[i]
 
             offset = glyph_info.geometry.x_offset / font_size
             if offset:
                 string += f'>{-offset}<'
-            glyph = glyph_info.glyph
             string += f'{glyph:04x}'
 
             # Ink bounding box and logical widths in font
@@ -1162,7 +1165,7 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y):
                 string += f'>{kerning}<'
 
             # Mapping between glyphs and characters
-            if glyph not in font.cmap and glyph != pango.PANGO_GLYPH_EMPTY:
+            if glyph not in font.cmap:
                 utf8_slice = slice(previous_utf8_position, utf8_position)
                 font.cmap[glyph] = utf8_text[utf8_slice].decode('utf-8')
             previous_utf8_position = utf8_position
