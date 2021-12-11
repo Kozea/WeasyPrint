@@ -708,7 +708,7 @@ def test_box_decoration_break_slice_bottom_padding():  # pragma: no cover
     # break between a parent and its last child, put last child on next page.
     # TODO: at the end of block_container_layout, we should check that the box
     # with its bottom border/padding doesn't cross the bottom line. If it does,
-    # we should re-render the box with a max_position_y including the bottom
+    # we should re-render the box with a bottom_space including the bottom
     # border/padding.
     page_1, page_2 = render_pages('''
       <style>

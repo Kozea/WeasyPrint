@@ -83,6 +83,7 @@ class Box:
     bookmark_label = None
     string_set = None
     download_name = None
+    footnote = None
 
     # Default, overriden on some subclasses
     def all_children(self):
@@ -273,7 +274,11 @@ class Box:
 
     def is_floated(self):
         """Return whether this box is floated."""
-        return self.style['float'] != 'none'
+        return self.style['float'] in ('left', 'right')
+
+    def is_footnote(self):
+        """Return whether this box is a footnote."""
+        return self.style['float'] == 'footnote'
 
     def is_absolutely_positioned(self):
         """Return whether this box is in the absolute positioning scheme."""
@@ -287,7 +292,7 @@ class Box:
         """Return whether this box is in normal flow."""
         return not (
             self.is_floated() or self.is_absolutely_positioned() or
-            self.is_running())
+            self.is_running() or self.is_footnote())
 
     # Start and end page values for named pages
 
@@ -671,6 +676,18 @@ class MarginBox(BlockContainerBox):
 
     def __repr__(self):
         return f'<{type(self).__name__} {self.at_keyword}>'
+
+
+class FootnoteAreaBox(BlockBox):
+    """Box displaying footnotes, as defined in GCPM."""
+    def __init__(self, page, style):
+        self.page = page
+        # Footnote area boxes are not linked to any element.
+        super().__init__(
+            element_tag=None, style=style, element=None, children=[])
+
+    def __repr__(self):
+        return f'<{type(self).__name__} @footnote>'
 
 
 class FlexContainerBox(ParentBox):

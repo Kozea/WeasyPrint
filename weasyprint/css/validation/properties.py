@@ -669,7 +669,7 @@ def display(tokens):
 @single_keyword
 def float_(keyword):  # XXX do not hide the "float" builtin
     """``float`` property validation."""
-    return keyword in ('left', 'right', 'none')
+    return keyword in ('left', 'right', 'footnote', 'none')
 
 
 @property()
@@ -1455,6 +1455,20 @@ def bookmark_level(token):
 def bookmark_state(keyword):
     """Validation for ``bookmark-state``."""
     return keyword in ('open', 'closed')
+
+
+@property(unstable=True)
+@single_keyword
+def footnote_display(keyword):
+    """Validation for ``footnote-display``."""
+    return keyword in ('block', 'inline', 'compact')
+
+
+@property(unstable=True)
+@single_keyword
+def footnote_policy(keyword):
+    """Validation for ``footnote-policy``."""
+    return keyword in ('auto', 'line', 'block')
 
 
 @property(unstable=True, wants_base_url=True)

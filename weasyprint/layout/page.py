@@ -344,10 +344,7 @@ def make_margin_boxes(context, page, state):
                 context.counter_style, context, page)
             build.process_whitespace(box)
             build.process_text_transform(box)
-            box = build.anonymous_table_boxes(box)
-            box = build.flex_boxes(box)
-            box = build.inline_in_block(box)
-            box = build.block_in_inline(box)
+            box = build.create_anonymous_boxes(box)
         resolve_percentages(box, containing_block)
         if not box.is_generated:
             box.width = box.height = 0
@@ -437,8 +434,7 @@ def make_margin_boxes(context, page, state):
 def margin_box_content_layout(context, page, box):
     """Layout a margin box’s content once the box has dimensions."""
     box, resume_at, next_page, _, _ = block_container_layout(
-        context, box,
-        max_position_y=float('inf'), skip_stack=None,
+        context, box, bottom_space=-float('inf'), skip_stack=None,
         page_is_empty=True, absolute_boxes=[], fixed_boxes=[],
         adjoining_margins=None, discard=False)
     assert resume_at is None
@@ -533,8 +529,14 @@ def make_page(context, root_box, page_type, resume_at, page_number,
 
     root_box.position_x = page.content_box_x()
     root_box.position_y = page.content_box_y()
-    page_content_bottom = root_box.position_y + page.height
+    context.page_bottom = root_box.position_y + page.height
     initial_containing_block = page
+
+    footnote_area_style = context.style_for(page_type, '@footnote')
+    footnote_area = boxes.FootnoteAreaBox(page, footnote_area_style)
+    resolve_percentages(footnote_area, page)
+    footnote_area.position_x = page.content_box_x()
+    footnote_area.position_y = context.page_bottom
 
     if page_type.blank:
         previous_resume_at = resume_at
@@ -545,6 +547,20 @@ def make_page(context, root_box, page_type, resume_at, page_number,
     assert isinstance(root_box, (boxes.BlockBox, boxes.FlexContainerBox))
     context.create_block_formatting_context()
     context.current_page = page_number
+    context.current_page_footnotes = context.reported_footnotes.copy()
+    context.current_footnote_area = footnote_area
+
+    if context.reported_footnotes:
+        footnote_area.children = tuple(context.reported_footnotes)
+        context.reported_footnotes = []
+        reported_footnote_area = build.create_anonymous_boxes(
+            footnote_area.deepcopy())
+        reported_footnote_area, _, _, _, _ = block_level_layout(
+            context, reported_footnote_area, -float('inf'), None,
+            footnote_area.page, True, [], [], [], False)
+        footnote_area.height = reported_footnote_area.height
+        context.page_bottom -= reported_footnote_area.margin_height()
+
     page_is_empty = True
     adjoining_margins = []
     positioned_boxes = []  # Mixed absolute and fixed
@@ -554,16 +570,16 @@ def make_page(context, root_box, page_type, resume_at, page_number,
         box.position_y = 0
         out_of_flow_box, out_of_flow_resume_at = float_layout(
             context, box, containing_block, positioned_boxes, positioned_boxes,
-            page_content_bottom, skip_stack)
+            0, skip_stack)
         out_of_flow_boxes.append(out_of_flow_box)
         if out_of_flow_resume_at:
             broken_out_of_flow.append(
                 (box, containing_block, out_of_flow_resume_at))
     context.broken_out_of_flow = broken_out_of_flow
     root_box, resume_at, next_page, _, _ = block_level_layout(
-        context, root_box, page_content_bottom, resume_at,
-        initial_containing_block, page_is_empty, positioned_boxes,
-        positioned_boxes, adjoining_margins, discard=False)
+        context, root_box, 0, resume_at, initial_containing_block,
+        page_is_empty, positioned_boxes, positioned_boxes, adjoining_margins,
+        discard=False)
     assert root_box
     root_box.children = tuple(out_of_flow_boxes) + root_box.children
 
@@ -572,9 +588,16 @@ def make_page(context, root_box, page_type, resume_at, page_number,
         if placeholder._box.style['position'] == 'fixed']
     for absolute_box in positioned_boxes:
         absolute_layout(context, absolute_box, page, positioned_boxes)
+
+    footnote_area = build.create_anonymous_boxes(footnote_area.deepcopy())
+    footnote_area, _, _, _, _ = block_level_layout(
+        context, footnote_area, -float('inf'), None, footnote_area.page,
+        True, [], [], [], False)
+    footnote_area.translate(dy=-footnote_area.margin_height())
+
     context.finish_block_formatting_context(root_box)
 
-    page.children = [root_box]
+    page.children = [root_box, footnote_area]
     descendants = page.descendants()
 
     # Update page counter values
@@ -737,8 +760,10 @@ def remake_page(index, context, root_box, html):
         next_page_side = 'right' if direction_ltr ^ break_verso else 'left'
     else:
         next_page_side = None
-    blank = ((next_page_side == 'left' and right_page) or
-             (next_page_side == 'right' and not right_page))
+    blank = bool(
+        (next_page_side == 'left' and right_page) or
+        (next_page_side == 'right' and not right_page) or
+        (context.reported_footnotes and initial_resume_at is None))
     if blank:
         next_page_name = ''
     side = 'right' if right_page else 'left'
@@ -823,7 +848,7 @@ def make_all_pages(context, root_box, html, pages):
             yield pages[i]
 
         i += 1
-        if resume_at is None:
+        if resume_at is None and not context.reported_footnotes:
             # Throw away obsolete pages
             context.page_maker = context.page_maker[:i + 1]
             return
