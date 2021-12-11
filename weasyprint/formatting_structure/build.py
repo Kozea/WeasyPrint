@@ -50,12 +50,22 @@ ASCII_TO_WIDE = {i: chr(i + 0xfee0) for i in range(0x21, 0x7f)}
 ASCII_TO_WIDE.update({0x20: '\u3000', 0x2D: '\u2212'})
 
 
+def create_anonymous_boxes(box):
+    """Create anonymous boxes in box descendants according to layout rules."""
+    box = anonymous_table_boxes(box)
+    box = flex_boxes(box)
+    box = inline_in_block(box)
+    box = block_in_inline(box)
+    return box
+
+
 def build_formatting_structure(element_tree, style_for, get_image_from_uri,
-                               base_url, target_collector, counter_style):
+                               base_url, target_collector, counter_style,
+                               footnotes):
     """Build a formatting structure (box tree) from an element tree."""
     box_list = element_to_box(
         element_tree, style_for, get_image_from_uri, base_url,
-        target_collector, counter_style)
+        target_collector, counter_style, footnotes)
     if box_list:
         box, = box_list
     else:
@@ -70,16 +80,13 @@ def build_formatting_structure(element_tree, style_for, get_image_from_uri,
             return style
         box, = element_to_box(
             element_tree, root_style_for, get_image_from_uri, base_url,
-            target_collector, counter_style)
+            target_collector, counter_style, footnotes)
 
     target_collector.check_pending_targets()
 
     box.is_for_root_element = True
     # If this is changed, maybe update weasy.layout.page.make_margin_boxes()
-    box = anonymous_table_boxes(box)
-    box = flex_boxes(box)
-    box = inline_in_block(box)
-    box = block_in_inline(box)
+    box = create_anonymous_boxes(box)
     box = set_viewport_overflow(box)
     return box
 
@@ -91,7 +98,7 @@ def make_box(element_tag, style, content, element):
 
 
 def element_to_box(element, style_for, get_image_from_uri, base_url,
-                   target_collector, counter_style, state=None):
+                   target_collector, counter_style, footnotes, state=None):
     """Convert an element and its children into a box with children.
 
     Return a list of boxes. Most of the time the list will have one item but
@@ -127,6 +134,13 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
     if display == ('none',):
         return []
 
+    if style['float'] == 'footnote':
+        if style['footnote_display'] == 'block':
+            style['display'] = ('block', 'flow')
+        else:
+            # TODO: handle compact footnotes
+            style['display'] = ('inline', 'flow')
+
     box = make_box(element.tag, style, [], element)
 
     if state is None:
@@ -134,10 +148,11 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
         state = (
             # Shared mutable objects:
             [0],  # quote_depth: single integer
-            {},  # counter_values: name -> stacked/scoped values
-            [set()]  # counter_scopes: element tree depths -> counter names
+            # TODO: define the footnote counter where it can be updated by page
+            {'footnote': [0]},  # counter_values: name -> stacked/scoped values
+            [{'footnote'}]  # counter_scopes: element depths -> counter names
         )
-    _quote_depth, counter_values, counter_scopes = state
+    quote_depth, counter_values, counter_scopes = state
 
     update_counters(state, style)
 
@@ -172,9 +187,24 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
         children.append(boxes.TextBox.anonymous_from(box, text))
 
     for child_element in element:
-        children.extend(element_to_box(
+        child_boxes = element_to_box(
             child_element, style_for, get_image_from_uri, base_url,
-            target_collector, counter_style, state))
+            target_collector, counter_style, footnotes, state)
+
+        if child_boxes and child_boxes[0].style['float'] == 'footnote':
+            footnote = child_boxes[0]
+            footnote.style['float'] = 'none'
+            footnotes.append(footnote)
+            call_style = style_for(element, 'footnote-call')
+            footnote_call = make_box(
+                f'{element.tag}::footnote-call', call_style, [], element)
+            footnote_call.children = content_to_boxes(
+                call_style, footnote_call, quote_depth, counter_values,
+                get_image_from_uri, target_collector, counter_style)
+            footnote_call.footnote = footnote
+            child_boxes = [footnote_call]
+
+        children.extend(child_boxes)
         text = child_element.tail
         if text:
             text_box = boxes.TextBox.anonymous_from(box, text)
@@ -182,6 +212,7 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
                 children[-1].text += text_box.text
             else:
                 children.append(text_box)
+
     children.extend(before_after_to_box(
         element, 'after', state, style_for, get_image_from_uri,
         target_collector, counter_style))
@@ -212,6 +243,16 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
         # almost what we want, so…
         if style['list_style_position'] == 'outside':
             box.children.append(boxes.TextBox.anonymous_from(box, '​'))
+
+    if style['float'] == 'footnote':
+        counter_values['footnote'][-1] += 1
+        marker_style = style_for(element, 'footnote-marker')
+        marker = make_box(
+            f'{element.tag}::footnote-marker', marker_style, [], element)
+        marker.children = content_to_boxes(
+            marker_style, box, quote_depth, counter_values, get_image_from_uri,
+            target_collector, counter_style)
+        box.children.insert(0, marker)
 
     # Specific handling for the element. (eg. replaced element)
     return html.handle_element(element, box, get_image_from_uri, base_url)
@@ -1347,7 +1388,7 @@ def inline_in_block(box):
         if new_line_children and child_box.is_absolutely_positioned():
             new_line_children.append(child_box)
         elif isinstance(child_box, boxes.InlineLevelBox) or (
-                new_line_children and child_box.is_floated()):
+                new_line_children and not child_box.is_in_normal_flow()):
             # Do not append white space at the start of a line:
             # It would be removed during layout.
             if new_line_children or not (

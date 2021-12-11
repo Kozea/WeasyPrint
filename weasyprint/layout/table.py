@@ -12,7 +12,7 @@ from .percent import resolve_one_percentage, resolve_percentages
 from .preferred import max_content_width, table_and_columns_preferred_widths
 
 
-def table_layout(context, table, max_position_y, skip_stack, containing_block,
+def table_layout(context, table, bottom_space, skip_stack, containing_block,
                  page_is_empty, absolute_boxes, fixed_boxes):
     """Layout for a table box."""
     from .block import (
@@ -65,7 +65,7 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
 
     # Make this a sub-function so that many local variables like rows_x
     # don't need to be passed as parameters.
-    def group_layout(group, position_y, max_position_y, page_is_empty,
+    def group_layout(group, position_y, bottom_space, page_is_empty,
                      skip_stack):
         resume_at = None
         next_page = {'break': 'any', 'page': None}
@@ -146,17 +146,15 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
                 else:
                     cell_skip_stack = None
                 new_cell, cell_resume_at, _, _, _ = block_container_layout(
-                    context, cell, max_position_y=max_position_y,
-                    skip_stack=cell_skip_stack, page_is_empty=False,
-                    absolute_boxes=absolute_boxes,
+                    context, cell, bottom_space, cell_skip_stack,
+                    page_is_empty=False, absolute_boxes=absolute_boxes,
                     fixed_boxes=fixed_boxes, adjoining_margins=None,
                     discard=False)
                 if new_cell is None:
                     cell = cell.copy_with_children([])
                     cell, _, _, _, _ = block_container_layout(
-                        context, cell, max_position_y=max_position_y,
-                        skip_stack=cell_skip_stack, page_is_empty=True,
-                        absolute_boxes=[], fixed_boxes=[],
+                        context, cell, bottom_space, cell_skip_stack,
+                        page_is_empty=True, absolute_boxes=[], fixed_boxes=[],
                         adjoining_margins=None, discard=False)
                     cell_resume_at = {0: None}
                 else:
@@ -266,7 +264,8 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
 
             # Break if this row overflows the page, unless there is no
             # other content on the page.
-            if next_position_y > max_position_y and not page_is_empty:
+            if not page_is_empty and (
+                    next_position_y > context.page_bottom - bottom_space):
                 if new_group_children:
                     previous_row = new_group_children[-1]
                     page_break = block_level_page_break(previous_row, row)
@@ -321,7 +320,7 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
 
         return group, resume_at, next_page
 
-    def body_groups_layout(skip_stack, position_y, max_position_y,
+    def body_groups_layout(skip_stack, position_y, bottom_space,
                            page_is_empty):
         if skip_stack is None:
             skip = 0
@@ -349,7 +348,7 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
                     break
 
             new_group, resume_at, next_page = group_layout(
-                group, position_y, max_position_y, page_is_empty, skip_stack)
+                group, position_y, bottom_space, page_is_empty, skip_stack)
             skip_stack = None
 
             if new_group is None:
@@ -396,14 +395,14 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
         # the footer, the header and/or the footer are not rendered.
 
         if page_is_empty:
-            header_footer_max_position_y = max_position_y
+            header_footer_bottom_space = bottom_space
         else:
-            header_footer_max_position_y = float('inf')
+            header_footer_bottom_space = -float('inf')
 
         if table.children and table.children[0].is_header:
             header = table.children[0]
             header, resume_at, next_page = group_layout(
-                header, position_y, header_footer_max_position_y,
+                header, position_y, header_footer_bottom_space,
                 skip_stack=None, page_is_empty=False)
             if header and not resume_at:
                 header_height = header.height + border_spacing_y
@@ -415,7 +414,7 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
         if table.children and table.children[-1].is_footer:
             footer = table.children[-1]
             footer, resume_at, next_page = group_layout(
-                footer, position_y, header_footer_max_position_y,
+                footer, position_y, header_footer_bottom_space,
                 skip_stack=None, page_is_empty=False)
             if footer and not resume_at:
                 footer_height = footer.height + border_spacing_y
@@ -440,10 +439,8 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
             # Try with both the header and footer
             new_table_children, resume_at, next_page, end_position_y = (
                 body_groups_layout(
-                    skip_stack,
-                    position_y=position_y + header_height,
-                    max_position_y=max_position_y - footer_height,
-                    page_is_empty=avoid_breaks))
+                    skip_stack, position_y + header_height,
+                    bottom_space + footer_height, page_is_empty=avoid_breaks))
             if new_table_children or not table_rows or not page_is_empty:
                 footer.translate(dy=end_position_y - footer.position_y)
                 end_position_y += footer_height
@@ -458,9 +455,7 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
             # Try with just the header
             new_table_children, resume_at, next_page, end_position_y = (
                 body_groups_layout(
-                    skip_stack,
-                    position_y=position_y + header_height,
-                    max_position_y=max_position_y,
+                    skip_stack, position_y + header_height, bottom_space,
                     page_is_empty=avoid_breaks))
             if new_table_children or not table_rows or not page_is_empty:
                 return (
@@ -474,9 +469,7 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
             # Try with just the footer
             new_table_children, resume_at, next_page, end_position_y = (
                 body_groups_layout(
-                    skip_stack,
-                    position_y=position_y,
-                    max_position_y=max_position_y - footer_height,
+                    skip_stack, position_y, bottom_space + footer_height,
                     page_is_empty=avoid_breaks))
             if new_table_children or not table_rows or not page_is_empty:
                 footer.translate(dy=end_position_y - footer.position_y)
@@ -491,7 +484,7 @@ def table_layout(context, table, max_position_y, skip_stack, containing_block,
         assert not (header or footer)
         new_table_children, resume_at, next_page, end_position_y = (
             body_groups_layout(
-                skip_stack, position_y, max_position_y, page_is_empty))
+                skip_stack, position_y, bottom_space, page_is_empty))
         return (
             header, new_table_children, footer, end_position_y, resume_at,
             next_page)

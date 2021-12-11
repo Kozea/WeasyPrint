@@ -17,11 +17,13 @@
 
 from collections import defaultdict
 from functools import partial
+from math import inf
 
-from ..formatting_structure import boxes
+from ..formatting_structure import boxes, build
 from ..logger import PROGRESS_LOGGER
 from .absolute import absolute_box_layout, absolute_layout
 from .background import layout_backgrounds
+from .block import block_level_layout
 from .page import make_all_pages, make_margin_boxes
 
 
@@ -113,14 +115,18 @@ def layout_document(html, root_box, context, max_loops=8):
     """
     initialize_page_maker(context, root_box)
     pages = []
+    original_footnotes = []
     actual_total_pages = 0
 
     for loop in range(max_loops):
         if loop > 0:
             PROGRESS_LOGGER.info(
                 'Step 5 - Creating layout - Repagination #%d', loop)
+            context.footnotes = original_footnotes.copy()
 
         initial_total_pages = actual_total_pages
+        if loop == 0:
+            original_footnotes = context.footnotes.copy()
         pages = list(make_all_pages(context, root_box, html, pages))
         actual_total_pages = len(pages)
 
@@ -193,7 +199,7 @@ def layout_document(html, root_box, context, max_loops=8):
     # Add margin boxes
     for i, page in enumerate(pages):
         root_children = []
-        root, = page.children
+        root, footnote_area = page.children
         root_children.extend(layout_fixed_boxes(context, pages[:i], page))
         root_children.extend(root.children)
         root_children.extend(layout_fixed_boxes(context, pages[i + 1:], page))
@@ -202,8 +208,10 @@ def layout_document(html, root_box, context, max_loops=8):
 
         # page_maker's page_state is ready for the MarginBoxes
         state = context.page_maker[context.current_page][3]
-        page.children = (root,) + tuple(
-            make_margin_boxes(context, page, state))
+        page.children = (root,)
+        if footnote_area.children:
+            page.children += (footnote_area,)
+        page.children += tuple(make_margin_boxes(context, page, state))
         layout_backgrounds(page, context.get_image_from_uri)
         yield page
 
@@ -217,7 +225,13 @@ class LayoutContext:
         self.counter_style = counter_style
         self.target_collector = target_collector
         self._excluded_shapes_lists = []
+        self.footnotes = []
+        self.page_footnotes = {}
+        self.current_page_footnotes = []
+        self.reported_footnotes = []
+        self.current_footnote_area = None  # Not initialized yet
         self.excluded_shapes = None  # Not initialized yet
+        self.page_bottom = None
         self.string_set = defaultdict(lambda: defaultdict(lambda: []))
         self.running_elements = defaultdict(lambda: defaultdict(lambda: []))
         self.current_page = None
@@ -305,3 +319,33 @@ class LayoutContext:
         for previous_page in range(self.current_page - 1, 0, -1):
             if previous_page in store[name]:
                 return store[name][previous_page][-1]
+
+    def layout_footnote(self, footnote):
+        self.footnotes.remove(footnote)
+        self.current_page_footnotes.append(footnote)
+        if self.current_footnote_area.height != 'auto':
+            self.page_bottom += self.current_footnote_area.margin_height()
+        self.current_footnote_area.children = self.current_page_footnotes
+        footnote_area = build.create_anonymous_boxes(
+            self.current_footnote_area.deepcopy())
+        footnote_area, _, _, _, _ = block_level_layout(
+            self, footnote_area, -inf, None, self.current_footnote_area.page,
+            True, [], [], [], False)
+        self.current_footnote_area.height = footnote_area.height
+        self.page_bottom -= footnote_area.margin_height()
+
+    def report_footnote(self, footnote):
+        self.current_page_footnotes.remove(footnote)
+        self.reported_footnotes.append(footnote)
+        self.page_bottom += self.current_footnote_area.margin_height()
+        self.current_footnote_area.children = self.current_page_footnotes
+        if self.current_footnote_area.children:
+            footnote_area = build.create_anonymous_boxes(
+                self.current_footnote_area.deepcopy())
+            footnote_area, _, _, _, _ = block_level_layout(
+                self, footnote_area, -inf, None,
+                self.current_footnote_area.page, True, [], [], [], False)
+            self.current_footnote_area.height = footnote_area.height
+            self.page_bottom -= footnote_area.margin_height()
+        else:
+            self.current_footnote_area.height = 0

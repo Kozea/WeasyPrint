@@ -922,7 +922,8 @@ class Document:
 
         root_box = build_formatting_structure(
             html.etree_element, context.style_for, context.get_image_from_uri,
-            html.base_url, context.target_collector, counter_style)
+            html.base_url, context.target_collector, counter_style,
+            context.footnotes)
 
         page_boxes = layout_document(html, root_box, context)
         rendering = cls(

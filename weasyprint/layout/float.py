@@ -23,7 +23,7 @@ def float_width(box, context, containing_block):
 
 
 def float_layout(context, box, containing_block, absolute_boxes, fixed_boxes,
-                 max_position_y, skip_stack):
+                 bottom_space, skip_stack):
     """Set the width and position of floating ``box``."""
     from .block import block_container_layout
     from .flex import flex_layout
@@ -63,14 +63,14 @@ def float_layout(context, box, containing_block, absolute_boxes, fixed_boxes,
     if isinstance(box, boxes.BlockContainerBox):
         context.create_block_formatting_context()
         box, resume_at, _, _, _ = block_container_layout(
-            context, box, max_position_y=max_position_y,
+            context, box, bottom_space=bottom_space,
             skip_stack=skip_stack, page_is_empty=True,
             absolute_boxes=absolute_boxes, fixed_boxes=fixed_boxes,
             adjoining_margins=None, discard=False)
         context.finish_block_formatting_context(box)
     elif isinstance(box, boxes.FlexContainerBox):
         box, resume_at, _, _, _ = flex_layout(
-            context, box, max_position_y=max_position_y,
+            context, box, bottom_space=bottom_space,
             skip_stack=skip_stack, containing_block=containing_block,
             page_is_empty=True, absolute_boxes=absolute_boxes,
             fixed_boxes=fixed_boxes)
