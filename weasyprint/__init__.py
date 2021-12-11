@@ -194,7 +194,7 @@ class CSS:
     arguments.
 
     An additional argument called ``font_config`` must be provided to handle
-    ``@font-config`` rules. The same ``text.fonts.FontConfiguration`` object
+    ``@font-face`` rules. The same ``text.fonts.FontConfiguration`` object
     must be used for different ``CSS`` objects applied to the same document.
 
     ``CSS`` objects have no public attributes or methods. They are only meant
