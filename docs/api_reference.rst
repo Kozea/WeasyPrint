@@ -391,16 +391,19 @@ to their position in the document:
 You can also use `running elements`_ to put HTML boxes into the page margins
 (but the ``start`` parameter of ``element()`` is not supported).
 
-The other features of GCPM are **not** implemented:
+Footnotes_ are supported. You can put a box in the footnote area using the
+``float: footnote`` property. Footnote markers and footnote calls can be
+defined using the ``::footnote-marker`` and ``::footnote-call``
+pseudo-elements. You can also change the way footnotes are displayed using the
+``footnote-display`` property (``compact`` is not supported), and influence
+over the rendering of difficult pages with ``footnote-policy``.
 
-- footnotes (``float: footnote``, ``footnote-display``, ``footnote`` counter,
-  ``::footnote-call``, ``::footnote-marker``, ``@footnote`` rule,
-  ``footnote-policy``);
-- page groups (``:nth(X of pagename)`` pseudo-class).
+Page groups (``:nth(X of pagename)`` pseudo-class) are not supported.
 
 .. _CSS Generated Content for Paged Media Module: http://www.w3.org/TR/css-gcpm-3/
 .. _Page selectors: https://www.w3.org/TR/css-gcpm-3/#document-page-selectors
 .. _running elements: https://www.w3.org/TR/css-gcpm-3/#running-elements
+.. _Footnotes: https://www.w3.org/TR/css-gcpm-3/#footnotes
 
 CSS Generated Content Module Level 3
 ++++++++++++++++++++++++++++++++++++
