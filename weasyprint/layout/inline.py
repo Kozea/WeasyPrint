@@ -864,7 +864,9 @@ def split_inline_box(context, box, position_x, max_x, bottom_space, skip_stack,
 
     if new_box.style['position'] == 'relative':
         for absolute_box in absolute_boxes:
-            absolute_layout(context, absolute_box, new_box, fixed_boxes)
+            absolute_layout(
+                context, absolute_box, new_box, fixed_boxes, bottom_space,
+                skip_stack=None)
 
     if resume_at is not None:
         index = tuple(resume_at)[0]

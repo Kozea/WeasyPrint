@@ -716,7 +716,9 @@ def block_container_layout(context, box, bottom_space, skip_stack,
     if new_box.style['position'] == 'relative':
         # New containing block, resolve the layout of the absolute descendants
         for absolute_box in absolute_boxes:
-            absolute_layout(context, absolute_box, new_box, fixed_boxes)
+            absolute_layout(
+                context, absolute_box, new_box, fixed_boxes, bottom_space,
+                skip_stack=None)
 
     for child in new_box.children:
         relative_positioning(child, (new_box.width, new_box.height))

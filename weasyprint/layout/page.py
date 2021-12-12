@@ -11,7 +11,7 @@ import copy
 from ..css import PageType, computed_from_cascaded
 from ..formatting_structure import boxes, build
 from ..logger import PROGRESS_LOGGER
-from .absolute import absolute_layout
+from .absolute import absolute_box_layout, absolute_layout
 from .block import block_container_layout, block_level_layout
 from .float import float_layout
 from .min_max import handle_min_max_height, handle_min_max_width
@@ -568,9 +568,15 @@ def make_page(context, root_box, page_type, resume_at, page_number,
     broken_out_of_flow = []
     for box, containing_block, skip_stack in context.broken_out_of_flow:
         box.position_y = 0
-        out_of_flow_box, out_of_flow_resume_at = float_layout(
-            context, box, containing_block, positioned_boxes, positioned_boxes,
-            0, skip_stack)
+        if box.is_floated():
+            out_of_flow_box, out_of_flow_resume_at = float_layout(
+                context, box, containing_block, positioned_boxes,
+                positioned_boxes, 0, skip_stack)
+        else:
+            assert box.is_absolutely_positioned()
+            out_of_flow_box, out_of_flow_resume_at = absolute_box_layout(
+                context, box, containing_block, positioned_boxes, 0,
+                skip_stack)
         out_of_flow_boxes.append(out_of_flow_box)
         if out_of_flow_resume_at:
             broken_out_of_flow.append(
@@ -587,7 +593,9 @@ def make_page(context, root_box, page_type, resume_at, page_number,
         placeholder._box for placeholder in positioned_boxes
         if placeholder._box.style['position'] == 'fixed']
     for absolute_box in positioned_boxes:
-        absolute_layout(context, absolute_box, page, positioned_boxes)
+        absolute_layout(
+            context, absolute_box, page, positioned_boxes, bottom_space=0,
+            skip_stack=None)
 
     footnote_area = build.create_anonymous_boxes(footnote_area.deepcopy())
     footnote_area, _, _, _, _ = block_level_layout(
@@ -777,8 +785,8 @@ def remake_page(index, context, root_box, html):
     # make_page wants a page_number of index + 1
     page_number = index + 1
     page, resume_at, next_page = make_page(
-        context, root_box, page_type, initial_resume_at,
-        page_number, page_state)
+        context, root_box, page_type, initial_resume_at, page_number,
+        page_state)
     assert next_page
     if blank:
         next_page['page'] = initial_next_page['page']

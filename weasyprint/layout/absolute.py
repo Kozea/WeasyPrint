@@ -187,7 +187,8 @@ def absolute_height(box, context, containing_block):
     return translate_box_height, translate_y
 
 
-def absolute_block(context, box, containing_block, fixed_boxes):
+def absolute_block(context, box, containing_block, fixed_boxes, bottom_space,
+                   skip_stack):
     from .block import block_container_layout
 
     cb_x, cb_y, cb_width, cb_height = containing_block
@@ -203,13 +204,15 @@ def absolute_block(context, box, containing_block, fixed_boxes):
     if box.is_table_wrapper:
         table_wrapper_width(context, box, (cb_width, cb_height))
 
-    new_box, _, _, _, _ = block_container_layout(
-        context, box, bottom_space=-float('inf'), skip_stack=None,
-        page_is_empty=False, absolute_boxes=absolute_boxes,
-        fixed_boxes=fixed_boxes, adjoining_margins=None, discard=False)
+    new_box, resume_at, _, _, _ = block_container_layout(
+        context, box, bottom_space, skip_stack, page_is_empty=True,
+        absolute_boxes=absolute_boxes, fixed_boxes=fixed_boxes,
+        adjoining_margins=None, discard=False)
 
     for child_placeholder in absolute_boxes:
-        absolute_layout(context, child_placeholder, new_box, fixed_boxes)
+        absolute_layout(
+            context, child_placeholder, new_box, fixed_boxes, bottom_space,
+            skip_stack)
 
     if translate_box_width:
         translate_x -= new_box.width
@@ -218,11 +221,11 @@ def absolute_block(context, box, containing_block, fixed_boxes):
 
     new_box.translate(translate_x, translate_y)
 
-    return new_box
+    return new_box, resume_at
 
 
-def absolute_flex(context, box, containing_block_sizes, fixed_boxes,
-                  containing_block):
+def absolute_flex(context, box, containing_block, fixed_boxes, bottom_space,
+                  skip_stack, containing_block_sizes):
     from .flex import flex_layout
 
     # TODO: this function is really close to absolute_block, we should have
@@ -241,13 +244,15 @@ def absolute_flex(context, box, containing_block_sizes, fixed_boxes,
     if box.is_table_wrapper:
         table_wrapper_width(context, box, (cb_width, cb_height))
 
-    new_box, _, _, _, _ = flex_layout(
-        context, box, bottom_space=-float('inf'), skip_stack=None,
-        containing_block=containing_block, page_is_empty=False,
-        absolute_boxes=absolute_boxes, fixed_boxes=fixed_boxes)
+    new_box, resume_at, _, _, _ = flex_layout(
+        context, box, bottom_space, skip_stack, containing_block,
+        page_is_empty=True, absolute_boxes=absolute_boxes,
+        fixed_boxes=fixed_boxes)
 
     for child_placeholder in absolute_boxes:
-        absolute_layout(context, child_placeholder, new_box, fixed_boxes)
+        absolute_layout(
+            context, child_placeholder, new_box, fixed_boxes, bottom_space,
+            skip_stack)
 
     if translate_box_width:
         translate_x -= new_box.width
@@ -256,31 +261,37 @@ def absolute_flex(context, box, containing_block_sizes, fixed_boxes,
 
     new_box.translate(translate_x, translate_y)
 
-    return new_box
+    return new_box, resume_at
 
 
-def absolute_layout(context, placeholder, containing_block, fixed_boxes):
+def absolute_layout(context, placeholder, containing_block, fixed_boxes,
+                    bottom_space, skip_stack):
     """Set the width of absolute positioned ``box``."""
     assert not placeholder._layout_done
     box = placeholder._box
-    placeholder.set_laid_out_box(
-        absolute_box_layout(context, box, containing_block, fixed_boxes))
+    new_box, resume_at = absolute_box_layout(
+        context, box, containing_block, fixed_boxes, bottom_space, skip_stack)
+    placeholder.set_laid_out_box(new_box)
+    if resume_at:
+        context.broken_out_of_flow.append(
+            (box, containing_block, resume_at))
 
 
-def absolute_box_layout(context, box, containing_block, fixed_boxes):
-    cb = containing_block
+def absolute_box_layout(context, box, containing_block, fixed_boxes,
+                        bottom_space, skip_stack):
     # TODO: handle inline boxes (point 10.1.4.1)
     # http://www.w3.org/TR/CSS2/visudet.html#containing-block-details
     if isinstance(containing_block, boxes.PageBox):
-        cb_x = cb.content_box_x()
-        cb_y = cb.content_box_y()
-        cb_width = cb.width
-        cb_height = cb.height
+        cb_x = containing_block.content_box_x()
+        cb_y = containing_block.content_box_y()
+        cb_width = containing_block.width
+        cb_height = containing_block.height
     else:
-        cb_x = cb.padding_box_x()
-        cb_y = cb.padding_box_y()
-        cb_width = cb.padding_width()
-        cb_height = cb.padding_height()
+        cb_x = containing_block.padding_box_x()
+        cb_y = containing_block.padding_box_y()
+        cb_width = containing_block.padding_width()
+        cb_height = containing_block.padding_height()
+    original_containing_block = containing_block
     containing_block = cb_x, cb_y, cb_width, cb_height
 
     resolve_percentages(box, (cb_width, cb_height))
@@ -289,15 +300,19 @@ def absolute_box_layout(context, box, containing_block, fixed_boxes):
     context.create_block_formatting_context()
     # Absolute tables are wrapped into block boxes
     if isinstance(box, boxes.BlockBox):
-        new_box = absolute_block(context, box, containing_block, fixed_boxes)
+        new_box, resume_at = absolute_block(
+            context, box, containing_block, fixed_boxes,
+            bottom_space, skip_stack)
     elif isinstance(box, boxes.FlexContainerBox):
-        new_box = absolute_flex(
-            context, box, containing_block, fixed_boxes, cb)
+        new_box, resume_at = absolute_flex(
+            context, box, containing_block, fixed_boxes,
+            bottom_space, skip_stack, original_containing_block)
     else:
         assert isinstance(box, boxes.BlockReplacedBox)
         new_box = absolute_replaced(context, box, containing_block)
+        resume_at = None
     context.finish_block_formatting_context(new_box)
-    return new_box
+    return new_box, resume_at
 
 
 def absolute_replaced(context, box, containing_block):

@@ -12,14 +12,13 @@ from ..testing_utils import assert_no_logs
 from . import assert_pixels
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_absolute_split_1():
     expected_pixels = '''
         BBBBRRRRRRRR____
         BBBBRRRRRRRR____
-        BBBB____________
-        BBBB____________
+        BBBBRR__________
+        BBBBRR__________
     '''
     html = '''
         <style>
@@ -33,22 +32,23 @@ def test_absolute_split_1():
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
+                orphans: 1;
+                widows: 1;
             }
             div.split {
                 color: blue;
+                left: 0;
                 position: absolute;
                 top: 0;
-                left: 0;
                 width: 4px;
             }
         </style>
         <div class="split">aa aa</div>
-        <div>bbbbbb bb</div>
+        <div>bbbbbb bbb</div>
     '''
     assert_pixels('absolute_split_1', 16, 4, expected_pixels, html)
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_absolute_split_2():
     expected_pixels = '''
@@ -69,6 +69,8 @@ def test_absolute_split_2():
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
+                orphans: 1;
+                widows: 1;
             }
             div.split {
                 color: blue;
@@ -104,6 +106,8 @@ def test_absolute_split_3():
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
+                orphans: 1;
+                widows: 1;
             }
             div.split {
                 color: blue;
@@ -139,6 +143,8 @@ def test_absolute_split_4():
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
+                orphans: 1;
+                widows: 1;
             }
             div.split {
                 color: blue;
@@ -154,7 +160,6 @@ def test_absolute_split_4():
     assert_pixels('absolute_split_4', 16, 4, expected_pixels, html)
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_absolute_split_5():
     expected_pixels = '''
@@ -175,6 +180,8 @@ def test_absolute_split_5():
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
+                orphans: 1;
+                widows: 1;
             }
             div.split {
                 color: blue;
@@ -197,7 +204,6 @@ def test_absolute_split_5():
     assert_pixels('absolute_split_5', 16, 4, expected_pixels, html)
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_absolute_split_6():
     expected_pixels = '''
@@ -218,6 +224,8 @@ def test_absolute_split_6():
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
+                orphans: 1;
+                widows: 1;
             }
             div.split {
                 color: blue;
@@ -238,7 +246,6 @@ def test_absolute_split_6():
     assert_pixels('absolute_split_6', 16, 4, expected_pixels, html)
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_absolute_split_7():
     expected_pixels = '''
@@ -259,6 +266,8 @@ def test_absolute_split_7():
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
+                orphans: 1;
+                widows: 1;
             }
             div.split {
                 color: blue;
@@ -281,3 +290,48 @@ def test_absolute_split_7():
         <div class="push">bbbb bb</div>
     '''
     assert_pixels('absolute_split_7', 16, 4, expected_pixels, html)
+
+
+@pytest.mark.xfail
+@assert_no_logs
+def test_absolute_next_page():
+    # TODO: currently, the layout of absolute boxes forces to render a box,
+    # even when it doesn’t fit in the page. This workaround avoids placeholders
+    # with no box. Instead, we should remove these placeholders, or avoid
+    # crashes when they’re rendered.
+    expected_pixels = '''
+        RRRRRRRRRR______
+        RRRRRRRRRR______
+        RRRRRRRRRR______
+        RRRRRRRRRR______
+        BBBBBBRRRR______
+        BBBBBBRRRR______
+        BBBBBB__________
+        ________________
+    '''
+    html = '''
+        <style>
+            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+            @page {
+                background: white;
+                size: 16px 4px;
+            }
+            body {
+                color: red;
+                font-family: weasyprint;
+                font-size: 2px;
+                line-height: 1;
+                orphans: 1;
+                widows: 1;
+            }
+            div.split {
+                color: blue;
+                position: absolute;
+                font-size: 3px;
+            }
+        </style>
+        aaaaa aaaaa
+        <div class="split">bb</div>
+        aaaaa
+    '''
+    assert_pixels('absolute_next_page', 16, 8, expected_pixels, html)

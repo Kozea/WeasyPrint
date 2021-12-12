@@ -393,7 +393,6 @@ def test_float_split_1():
     assert_pixels('float_split_1', 16, 4, expected_pixels, html)
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_float_split_2():
     expected_pixels = '''

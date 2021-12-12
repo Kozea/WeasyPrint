@@ -91,13 +91,16 @@ def layout_fixed_boxes(context, pages, containing_page):
             # Absolute boxes in fixed boxes are rendered as fixed boxes'
             # children, even when they are fixed themselves.
             absolute_boxes = []
-            yield absolute_box_layout(
-                context, box, containing_page, absolute_boxes)
+            absolute_box, _ = absolute_box_layout(
+                context, box, containing_page, absolute_boxes,
+                bottom_space=-inf, skip_stack=None)
+            yield absolute_box
             while absolute_boxes:
                 new_absolute_boxes = []
                 for box in absolute_boxes:
                     absolute_layout(
-                        context, box, containing_page, new_absolute_boxes)
+                        context, box, containing_page, new_absolute_boxes,
+                        bottom_space=-inf, skip_stack=None)
                 absolute_boxes = new_absolute_boxes
 
 
