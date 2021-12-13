@@ -2,6 +2,103 @@ Changelog
 =========
 
 
+Version 54.0b1
+--------------
+
+Released on 2021-12-13.
+
+**This version is experimental, don't use it in production. If you find bugs,
+please report them!**
+
+Dependencies:
+
+* html5lib 1.1+ is now needed.
+
+New features:
+
+* `#1509 <https://github.com/Kozea/WeasyPrint/pull/1509>`_:
+  Support footnotes, with financial support from Code & Co.
+* `#36 <https://github.com/Kozea/WeasyPrint/issues/36>`_:
+  Handle parallel flows for floats, absolutes, table-cells
+* `#1389 <https://github.com/Kozea/WeasyPrint/pull/1389>`_:
+  Support ``text-align-last`` and ``text-align-all`` properties
+* `#1434 <https://github.com/Kozea/WeasyPrint/pull/1434>`_:
+  Draw SVG and PNG emojis
+* `#1520 <https://github.com/Kozea/WeasyPrint/pull/1520>`_:
+  Support ``overflow-wrap: anywhere``
+* `#1435 <https://github.com/Kozea/WeasyPrint/issues/1435>`_:
+  Add environment variable to set DLL folder on Windows
+
+Performance:
+
+* `#1439 <https://github.com/Kozea/WeasyPrint/issues/1439>`_:
+  Cache SVG ``use`` tags
+* `#1481 <https://github.com/Kozea/WeasyPrint/pull/1481>`_:
+  Encode non-JPEG images as PNGs instead of JPEG2000s
+
+Bug fixes:
+
+* `#137 <https://github.com/Kozea/WeasyPrint/issues/137>`_:
+  Don’t use ``text-transform`` text for content-based uses
+* `#1443 <https://github.com/Kozea/WeasyPrint/issues/1443>`_:
+  Don’t serialize and parse again inline SVG files
+* `#607 <https://github.com/Kozea/WeasyPrint/issues/607>`_:
+  Correctly handle whitespaces in bookmark labels
+* `#1094 <https://github.com/Kozea/WeasyPrint/issues/1094>`_:
+  Fix column height with ``column-span`` content
+* `#1473 <https://github.com/Kozea/WeasyPrint/issues/1473>`_:
+  Fix absolutely positioned boxes in duplicated pages
+* `#1491 <https://github.com/Kozea/WeasyPrint/issues/1491>`_:
+  Fix ``taget-counter`` attribute in flex items
+* `#1515 <https://github.com/Kozea/WeasyPrint/issues/1515>`_,
+  `#1508 <https://github.com/Kozea/WeasyPrint/issues/1508>`_:
+  Don’t draw empty glyphs
+* `#1499 <https://github.com/Kozea/WeasyPrint/issues/1499>`_:
+  Don’t crash when font size is really small
+
+Documentation:
+
+* `#1519 <https://github.com/Kozea/WeasyPrint/issues/1519>`_:
+  Fix typo
+
+Packaging:
+
+* The source package does not include a ``setup.py`` file anymore. You can find
+  more information about this in
+  `issue #1410 <https://github.com/Kozea/WeasyPrint/issues/1410>`_.
+
+Contirbutors:
+
+* Guillaume Ayoub
+* Lucie Anglade
+* Colin Kinloch
+* aschmitz
+* Pablo González
+* Rian McGuire
+
+Backers and sponsors:
+
+* Grip Angebotssoftware
+* Manuel Barkhau
+* SimonSoft
+* Menutech
+* KontextWork
+* Crisp BV
+* Maykin Media
+* René Fritz
+* Simon Sapin
+* NCC Group
+* Nathalie Gutton
+* Andreas Zettl
+* Tom Pohl
+* Des images et des mots
+* Moritz Mahringer
+* Florian Demmer
+* Yanal-Yvez Fargialla
+* Gábor
+* Piotr Horzycki
+
+
 Version 53.4
 ------------
 
