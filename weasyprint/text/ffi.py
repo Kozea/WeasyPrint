@@ -284,6 +284,7 @@ ffi.cdef('''
         PangoAttrList *list, PangoAttribute *attr);
     PangoAttribute * pango_attr_font_features_new (const gchar *features);
     PangoAttribute * pango_attr_letter_spacing_new (int letter_spacing);
+    PangoAttribute * pango_attr_insert_hyphens_new (gboolean insert_hyphens);
     void pango_attribute_destroy (PangoAttribute *attr);
 
     PangoTabArray * pango_tab_array_new_with_positions (

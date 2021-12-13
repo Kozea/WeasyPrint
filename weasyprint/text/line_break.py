@@ -212,7 +212,10 @@ class Layout:
         if letter_spacing == 'normal':
             letter_spacing = 0
 
-        if self.text and (word_spacing or letter_spacing):
+        word_breaking = (
+            self.style['overflow_wrap'] in ('anywhere', 'break-word'))
+
+        if self.text and (word_spacing or letter_spacing or word_breaking):
             attr_list = pango.pango_layout_get_attributes(self.layout)
             if not attr_list:
                 # TODO: list should be freed
@@ -235,6 +238,12 @@ class Layout:
                 while position != -1:
                     add_attr(position, position + 1, space_spacing)
                     position = bytestring.find(b' ', position + 1)
+
+            if word_breaking:
+                # TODO: attributes should be freed
+                attr = pango.pango_attr_insert_hyphens_new(False)
+                attr.start_index, attr.end_index = 0, len(bytestring)
+                pango.pango_attr_list_change(attr_list, attr)
 
             pango.pango_layout_set_attributes(self.layout, attr_list)
 
