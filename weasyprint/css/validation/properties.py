@@ -1176,7 +1176,7 @@ def white_space(keyword):
 @single_keyword
 def overflow_wrap(keyword):
     """``overflow-wrap`` property validation."""
-    return keyword in ('normal', 'break-word')
+    return keyword in ('anywhere', 'normal', 'break-word')
 
 
 @property()
