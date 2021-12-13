@@ -33,7 +33,7 @@ from .validation.descriptors import preprocess_descriptors
 # Reject anything not in here:
 PSEUDO_ELEMENTS = (
     None, 'before', 'after', 'marker', 'first-line', 'first-letter',
-    'footnote-call')
+    'footnote-call', 'footnote-marker')
 
 
 PageType = namedtuple('PageType', ['side', 'blank', 'first', 'index', 'name'])
