@@ -198,19 +198,16 @@ def inline_min_content_width(context, box, outer=True, skip_stack=None,
     widths = inline_line_widths(
         context, box, outer, is_line_start, minimum=True,
         skip_stack=skip_stack, first_line=first_line)
-
-    if first_line:
-        widths = [next(widths)]
-    else:
-        widths = list(widths)
-        widths[-1] -= trailing_whitespace_size(context, box)
-    return adjust(box, outer, max(widths))
+    width = next(widths) if first_line else max(widths)
+    return adjust(box, outer, width)
 
 
 def inline_max_content_width(context, box, outer=True, is_line_start=False):
     """Return the max-content width for an ``InlineBox``."""
     widths = list(
         inline_line_widths(context, box, outer, is_line_start, minimum=False))
+    # Remove trailing space, as split_first_line keeps trailing spaces when
+    # max_width is not set.
     widths[-1] -= trailing_whitespace_size(context, box)
     return adjust(box, outer, max(widths))
 
