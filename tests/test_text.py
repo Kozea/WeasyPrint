@@ -903,8 +903,8 @@ def test_overflow_wrap(wrap, text, test, full_text):
     page, = render_pages('''
       <style>
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
-        body {width: 80px; overflow: hidden; font-family: weasyprint; }
-        span {overflow-wrap: %s; white-space: normal; }
+        body {width: 80px; overflow: hidden; font-family: weasyprint}
+        span {overflow-wrap: %s}
       </style>
       <body style="hyphens: auto;" lang="en">
         <span>%s
@@ -932,10 +932,35 @@ def test_overflow_wrap_2(wrap, text, body_width, expected_width):
     page, = render_pages('''
       <style>
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
-        body {width: %dpx; font-family: weasyprint; font-size: 20px; }
-        table {overflow-wrap: %s; white-space: normal; }
+        body {width: %dpx; font-family: weasyprint; font-size: 20px}
+        table {overflow-wrap: %s}
       </style>
       <table><tr><td>%s''' % (body_width, wrap, text))
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    tr, = row_group.children
+    td, = tr.children
+    assert td.width == expected_width
+
+
+@assert_no_logs
+@pytest.mark.parametrize('wrap, text, body_width, expected_width', (
+    ('anywhere', 'aaaaaa', 10, 20),
+    ('anywhere', 'aaaaaa', 40, 40),
+    ('break-word', 'aaaaaa', 40, 120),
+    ('normal', 'aaaaaa', 40, 120),
+))
+def test_overflow_wrap_trailing_space(wrap, text, body_width, expected_width):
+    page, = render_pages('''
+      <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        body {width: %dpx; font-family: weasyprint; font-size: 20px}
+        table {overflow-wrap: %s}
+      </style>
+      <table><tr><td>%s ''' % (body_width, wrap, text))
     html, = page.children
     body, = html.children
     table_wrapper, = body.children
