@@ -357,7 +357,11 @@ def expand_text_decoration(base_url, name, tokens):
 
     for token in tokens:
         keyword = get_keyword(token)
-        if keyword in (
+
+        if keyword == 'inherit':
+            yield 'text_decoration', tokens[0].lower_value
+            return
+        elif keyword in (
                 'none', 'underline', 'overline', 'line-through', 'blink'):
             text_decoration_line.add(keyword)
         elif keyword in ('solid', 'double', 'dotted', 'dashed', 'wavy'):

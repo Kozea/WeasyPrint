@@ -132,6 +132,11 @@ def test_spacing_invalid(rule):
     ('text-decoration-line: overline', {'text_decoration_line': {'overline'}}),
     ('text-decoration-line: overline blink line-through', {
         'text_decoration_line': {'blink', 'line-through', 'overline'}}),
+    ('text-decoration: none', {
+        'text_decoration_line': 'none',
+        'text_decoration_color': 'currentColor',
+        'text_decoration_style': 'solid'}),
+    ('text-decoration: inherit', { 'text_decoration': 'inherit'}),
 ))
 def test_decoration_line(rule, result):
     assert expand_to_dict(rule) == result
