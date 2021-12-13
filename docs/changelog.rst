@@ -49,7 +49,7 @@ Bug fixes:
 * `#1473 <https://github.com/Kozea/WeasyPrint/issues/1473>`_:
   Fix absolutely positioned boxes in duplicated pages
 * `#1491 <https://github.com/Kozea/WeasyPrint/issues/1491>`_:
-  Fix ``taget-counter`` attribute in flex items
+  Fix ``target-counter`` attribute in flex items
 * `#1515 <https://github.com/Kozea/WeasyPrint/issues/1515>`_,
   `#1508 <https://github.com/Kozea/WeasyPrint/issues/1508>`_:
   Don’t draw empty glyphs
