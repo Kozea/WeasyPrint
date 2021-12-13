@@ -891,6 +891,7 @@ def test_hyphenate_limit_chars_punctuation(css):
 
 @assert_no_logs
 @pytest.mark.parametrize('wrap, text, test, full_text', (
+    ('anywhere', 'aaaaaaaa', lambda a: a > 1, 'aaaaaaaa'),
     ('break-word', 'aaaaaaaa', lambda a: a > 1, 'aaaaaaaa'),
     ('normal', 'aaaaaaaa', lambda a: a == 1, 'aaaaaaaa'),
     ('break-word', 'hyphenations', lambda a: a > 3,
@@ -918,6 +919,32 @@ def test_overflow_wrap(wrap, text, test, full_text):
     lines_full_text = ''.join(line for line in lines)
     assert test(len(lines))
     assert full_text == lines_full_text
+
+
+@assert_no_logs
+@pytest.mark.parametrize('wrap, text, body_width, expected_width', (
+    ('anywhere', 'aaaaaa', 10, 20),
+    ('anywhere', 'aaaaaa', 40, 40),
+    ('break-word', 'aaaaaa', 40, 100),
+    ('normal', 'aaaaaa', 40, 100),
+))
+def test_overflow_wrap_2(wrap, text, body_width, expected_width):
+    page, = render_pages('''
+      <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        body {width: %dpx; font-family: weasyprint; font-size: 20px; }
+        table {overflow-wrap: %s; white-space: normal; }
+      </style>
+      <table><tr><td>%s
+    ''' % (body_width, wrap, text))
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    tr, = row_group.children
+    td, = tr.children
+    assert td.width == expected_width
 
 
 def white_space_lines(width, space):

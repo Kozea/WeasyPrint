@@ -536,7 +536,8 @@ def split_first_line(text, style, context, max_width, justification_spacing,
     first_line_width, _ = line_size(first_line, style)
     space = max_width - first_line_width
     # If we can break words and the first line is too long
-    if not minimum and overflow_wrap == 'break-word' and space < 0:
+    if space < 0 and (overflow_wrap == 'anywhere' or
+                      (overflow_wrap == 'break-word' and not minimum)):
         # Is it really OK to remove hyphenation for word-break ?
         hyphenated = False
         # TODO: Modify code to preserve W3C condition:
