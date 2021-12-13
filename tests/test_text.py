@@ -925,8 +925,8 @@ def test_overflow_wrap(wrap, text, test, full_text):
 @pytest.mark.parametrize('wrap, text, body_width, expected_width', (
     ('anywhere', 'aaaaaa', 10, 20),
     ('anywhere', 'aaaaaa', 40, 40),
-    ('break-word', 'aaaaaa', 40, 100),
-    ('normal', 'aaaaaa', 40, 100),
+    ('break-word', 'aaaaaa', 40, 120),
+    ('normal', 'aaaaaa', 40, 120),
 ))
 def test_overflow_wrap_2(wrap, text, body_width, expected_width):
     page, = render_pages('''
@@ -935,8 +935,7 @@ def test_overflow_wrap_2(wrap, text, body_width, expected_width):
         body {width: %dpx; font-family: weasyprint; font-size: 20px; }
         table {overflow-wrap: %s; white-space: normal; }
       </style>
-      <table><tr><td>%s
-    ''' % (body_width, wrap, text))
+      <table><tr><td>%s''' % (body_width, wrap, text))
     html, = page.children
     body, = html.children
     table_wrapper, = body.children
