@@ -349,41 +349,43 @@ def expand_background(base_url, name, tokens):
 
 
 @expander('text-decoration')
-def expand_text_decoration(base_url, name, tokens):
+@generic_expander('-line', '-color', '-style')
+def expand_text_decoration(name, tokens):
     """Expand the ``text-decoration`` shorthand property."""
-    text_decoration_line = set()
-    text_decoration_color = None
-    text_decoration_style = None
+    text_decoration_line = []
+    text_decoration_color = []
+    text_decoration_style = []
+    none_in_line = False
 
     for token in tokens:
         keyword = get_keyword(token)
         if keyword in (
                 'none', 'underline', 'overline', 'line-through', 'blink'):
-            text_decoration_line.add(keyword)
+            text_decoration_line.append(token)
+            if none_in_line:
+                raise InvalidValues
+            elif keyword == 'none':
+                none_in_line = True
         elif keyword in ('solid', 'double', 'dotted', 'dashed', 'wavy'):
-            if text_decoration_style is not None:
+            if text_decoration_style:
                 raise InvalidValues
             else:
-                text_decoration_style = keyword
+                text_decoration_style.append(token)
         else:
             color = parse_color(token)
             if color is None:
                 raise InvalidValues
-            elif text_decoration_color is not None:
+            elif text_decoration_color:
                 raise InvalidValues
             else:
-                text_decoration_color = color
+                text_decoration_color.append(token)
 
-    if 'none' in text_decoration_line:
-        if len(text_decoration_line) != 1:
-            raise InvalidValues
-        text_decoration_line = 'none'
-    elif not text_decoration_line:
-        text_decoration_line = 'none'
-
-    yield 'text_decoration_line', text_decoration_line
-    yield 'text_decoration_color', text_decoration_color or 'currentColor'
-    yield 'text_decoration_style', text_decoration_style or 'solid'
+    if text_decoration_line:
+        yield '-line', text_decoration_line
+    if text_decoration_color:
+        yield '-color', text_decoration_color
+    if text_decoration_style:
+        yield '-style', text_decoration_style
 
 
 @expander('page-break-after')

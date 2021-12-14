@@ -10,6 +10,7 @@ import math
 
 import pytest
 import tinycss2
+from tinycss2.color3 import parse_color
 from weasyprint.css import preprocess_declarations
 from weasyprint.css.computed_values import ZERO_PIXELS
 from weasyprint.css.properties import INITIAL_VALUES
@@ -153,15 +154,15 @@ def test_decoration_style(rule, result):
     ('text-decoration: none', {'text_decoration_line': 'none'}),
     ('text-decoration: overline', {'text_decoration_line': {'overline'}}),
     ('text-decoration: overline blink line-through', {
-        'text_decoration_line': {'blink', 'line-through', 'overline'}}),
-    ('text-decoration: red', {'text_decoration_color': (1, 0, 0, 1)}),
+        'text_decoration_line': {'blink', 'line-through', 'overline'},
+    }),
+    ('text-decoration: red', {'text_decoration_color': parse_color('red')}),
+    ('text-decoration: inherit', {
+        f'text_decoration_{key}': 'inherit'
+        for key in ('color', 'line', 'style')}),
 ))
 def test_decoration(rule, result):
-    default = {
-        key: value for key, value in INITIAL_VALUES.items()
-        if key.startswith('text_decoration_')}
-    real_result = {**default, **result}
-    assert expand_to_dict(rule) == real_result
+    assert expand_to_dict(rule) == result
 
 
 @assert_no_logs
