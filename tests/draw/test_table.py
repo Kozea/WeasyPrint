@@ -1106,3 +1106,39 @@ def test_tables_16():
         <tr><td></td><td></td></tr>
       <table style="bottom: 0; right: 0">
         <tr><td></td><td></td></tr>''')
+
+
+@assert_no_logs
+def test_tables_18():
+    assert_pixels('table_split_separate', 12, 22, '''
+      ____________
+      _RRRRRRRRRR_
+      _R________R_
+      _R_RRRRRR_R_
+      _R_R____R_R_
+      _R_R_BB_R_R_
+      _R_R_BB_R_R_
+      _R_R_BB_R_R_
+      _R_R_BB_R_R_
+      _R_R____R_R_
+      ____________
+      ____________
+      _R_R_BB_R_R_
+      _R_R_BB_R_R_
+      _R_R_BB_R_R_
+      _R_R_BB_R_R_
+      _R_R____R_R_
+      _R_RRRRRR_R_
+      _R________R_
+      _RRRRRRRRRR_
+      ____________
+      ____________
+    ''', '''
+      <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page { size: 12px 11px; margin: 1px; background: #fff }
+        table { border: 1px red solid; border-spacing: 1px; font-size: 2px;
+                line-height: 1; color: blue; font-family: weasyprint }
+        td { border: 1px red solid; padding: 1px; line-height: 1; }
+      </style>
+      <table><tr><td>a a a a</td></tr>''')

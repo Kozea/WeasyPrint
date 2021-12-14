@@ -19,6 +19,8 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
         block_container_layout, block_level_page_break,
         find_earlier_page_break)
 
+    table.remove_decoration(start=skip_stack is not None, end=False)
+
     column_widths = table.column_widths
 
     if table.style['border_collapse'] == 'separate':
