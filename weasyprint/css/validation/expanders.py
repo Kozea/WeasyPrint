@@ -524,17 +524,19 @@ def expand_font(name, tokens):
 
 
 @expander('word-wrap')
-def expand_word_wrap(base_url, name, tokens):
+@generic_expander('overflow-wrap')
+def expand_word_wrap(name, tokens):
     """Expand the ``word-wrap`` legacy property.
 
-    See http://http://www.w3.org/TR/css3-text/#overflow-wrap
+    See http://www.w3.org/TR/css3-text/#overflow-wrap
 
     """
     keyword = overflow_wrap(tokens)
     if keyword is None:
         raise InvalidValues
 
-    yield 'overflow-wrap', keyword
+    if len(tokens) == 1:
+        yield 'overflow-wrap', tokens
 
 
 @expander('flex')

@@ -863,6 +863,8 @@ def test_overflow_wrap():
         'overflow_wrap': 'normal'}
     assert expand_to_dict('overflow-wrap: break-word') == {
         'overflow_wrap': 'break-word'}
+    assert expand_to_dict('overflow-wrap: inherit') == {
+        'overflow_wrap': 'inherit'}
     assert_invalid('overflow-wrap: none')
     assert_invalid('overflow-wrap: normal, break-word')
 
@@ -873,6 +875,8 @@ def test_expand_word_wrap():
         'overflow_wrap': 'normal'}
     assert expand_to_dict('word-wrap: break-word') == {
         'overflow_wrap': 'break-word'}
+    assert expand_to_dict('word-wrap: inherit') == {
+        'overflow_wrap': 'inherit'}
     assert_invalid('word-wrap: none')
     assert_invalid('word-wrap: normal, break-word')
 
