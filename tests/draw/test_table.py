@@ -1176,3 +1176,25 @@ def test_tables_18():
         td { border: 1px red solid; padding: 1px; line-height: 1; }
       </style>
       <table><tr><td>a a a a</td></tr>''')
+
+
+@assert_no_logs
+def test_tables_19():
+    # Regression test: https://github.com/Kozea/WeasyPrint/issues/1523
+    assert_pixels('table_split_crash', 2, 8, '''
+      RR
+      RR
+      RR
+      RR
+      RR
+      RR
+      RR
+      RR
+    ''', '''
+      <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page {size: 2px 4px}
+        table {border-collapse: collapse; color: red}
+        body {font-size: 2px; font-family: weasyprint; line-height: 1}
+      </style>
+      <table><tr><td>a a a a</td></tr></table>''')

@@ -261,14 +261,13 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                 next_position_y += border_spacing_y
 
             # Break if one cell was broken
+            break_cell = False
             if resume_at:
                 values, = list(resume_at.values())
                 if len(row.children) == len(values):
                     for cell_resume_at in values.values():
                         if cell_resume_at != {0: None}:
-                            new_group_children.append(row)
-                            if table.style['border_collapse'] == 'collapse':
-                                table.skip_cell_border_bottom = True
+                            break_cell = True
                             break
                     else:
                         # No cell was displayed, give up row
@@ -276,10 +275,7 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                         page_is_empty = False
                         resume_at = None
                 else:
-                    new_group_children.append(row)
-                    if table.style['border_collapse'] == 'collapse':
-                        table.skip_cell_border_bottom = True
-                    break
+                    break_cell = True
 
             # Break if this row overflows the page, unless there is no
             # other content on the page.
@@ -308,7 +304,10 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
             page_is_empty = False
             skip_stack = None
 
-            if resume_at:
+            if break_cell and table.style['border_collapse'] == 'collapse':
+                table.skip_cell_border_bottom = True
+
+            if break_cell or resume_at:
                 break
 
         # Do not keep the row group if we made a page break
