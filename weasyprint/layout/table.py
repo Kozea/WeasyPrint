@@ -49,21 +49,27 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
         rows_width = rows_x - position_x
 
     if table.style['border_collapse'] == 'collapse':
+        table.skip_cell_border_top = False
+        table.skip_cell_border_bottom = False
+        split_cells = False
         if skip_stack:
             (skipped_groups, group_skip_stack), = skip_stack.items()
             if group_skip_stack:
-                skipped_rows, = group_skip_stack
+                (skipped_rows, cells_skip_stack), = group_skip_stack.items()
+                if cells_skip_stack:
+                    split_cells = True
             else:
                 skipped_rows = 0
             for group in table.children[:skipped_groups]:
                 skipped_rows += len(group.children)
         else:
             skipped_rows = 0
-        _, horizontal_borders = table.collapsed_border_grid
-        if horizontal_borders:
-            table.border_top_width = max(
-                width for _, (_, width, _)
-                in horizontal_borders[skipped_rows]) / 2
+        if not split_cells:
+            _, horizontal_borders = table.collapsed_border_grid
+            if horizontal_borders:
+                table.border_top_width = max(
+                    width for _, (_, width, _)
+                    in horizontal_borders[skipped_rows]) / 2
 
     # Make this a sub-function so that many local variables like rows_x
     # don't need to be passed as parameters.
@@ -147,6 +153,10 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                         cell_skip_stack = {len(cell.children): None}
                 else:
                     cell_skip_stack = None
+                if cell_skip_stack:
+                    cell.remove_decoration(start=True, end=False)
+                    if table.style['border_collapse'] == 'collapse':
+                        table.skip_cell_border_top = True
                 new_cell, cell_resume_at, _, _, _ = block_container_layout(
                     context, cell, bottom_space, cell_skip_stack,
                     page_is_empty=False, absolute_boxes=absolute_boxes,
@@ -161,6 +171,9 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                     cell_resume_at = {0: None}
                 else:
                     cell = new_cell
+                cell.remove_decoration(
+                    start=cell_skip_stack is not None,
+                    end=cell_resume_at is not None)
                 if cell_resume_at:
                     if resume_at is None:
                         resume_at = {index_row: {}}
@@ -254,6 +267,8 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                     for cell_resume_at in values.values():
                         if cell_resume_at != {0: None}:
                             new_group_children.append(row)
+                            if table.style['border_collapse'] == 'collapse':
+                                table.skip_cell_border_bottom = True
                             break
                     else:
                         # No cell was displayed, give up row
@@ -262,6 +277,8 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                         resume_at = None
                 else:
                     new_group_children.append(row)
+                    if table.style['border_collapse'] == 'collapse':
+                        table.skip_cell_border_bottom = True
                     break
 
             # Break if this row overflows the page, unless there is no
