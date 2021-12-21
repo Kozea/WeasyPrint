@@ -1106,3 +1106,95 @@ def test_tables_16():
         <tr><td></td><td></td></tr>
       <table style="bottom: 0; right: 0">
         <tr><td></td><td></td></tr>''')
+
+
+@assert_no_logs
+def test_tables_17():
+    assert_pixels('table_split_collapse', 16, 20, '''
+      ________________
+      _RRRRRRRRRRRRRR_
+      _RRRRRRRRRRRRRR_
+      _RR____RR____RR_
+      _RR_BB_RR_BB_RR_
+      _RR_BB_RR_BB_RR_
+      _RR_BB_RR____RR_
+      _RR_BB_RR____RR_
+      _RR____RR____RR_
+      ________________
+      ________________
+      _RR_BB_RR____RR_
+      _RR_BB_RR____RR_
+      _RR_BB_RR____RR_
+      _RR_BB_RR____RR_
+      _RR____RR____RR_
+      _RRRRRRRRRRRRRR_
+      _RRRRRRRRRRRRRR_
+      ________________
+      ________________
+    ''', '''
+      <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page { size: 16px 10px; margin: 1px; background: #fff }
+        table { border-collapse: collapse; font-size: 2px; line-height: 1;
+                color: blue; font-family: weasyprint }
+        td { border: 2px red solid; padding: 1px; line-height: 1 }
+      </style>
+      <table><tr><td>a a a a</td><td>a</td></tr>''')
+
+
+@assert_no_logs
+def test_tables_18():
+    assert_pixels('table_split_separate', 12, 22, '''
+      ____________
+      _RRRRRRRRRR_
+      _R________R_
+      _R_RRRRRR_R_
+      _R_R____R_R_
+      _R_R_BB_R_R_
+      _R_R_BB_R_R_
+      _R_R_BB_R_R_
+      _R_R_BB_R_R_
+      _R_R____R_R_
+      ____________
+      ____________
+      _R_R_BB_R_R_
+      _R_R_BB_R_R_
+      _R_R_BB_R_R_
+      _R_R_BB_R_R_
+      _R_R____R_R_
+      _R_RRRRRR_R_
+      _R________R_
+      _RRRRRRRRRR_
+      ____________
+      ____________
+    ''', '''
+      <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page { size: 12px 11px; margin: 1px; background: #fff }
+        table { border: 1px red solid; border-spacing: 1px; font-size: 2px;
+                line-height: 1; color: blue; font-family: weasyprint }
+        td { border: 1px red solid; padding: 1px; line-height: 1; }
+      </style>
+      <table><tr><td>a a a a</td></tr>''')
+
+
+@assert_no_logs
+def test_tables_19():
+    # Regression test: https://github.com/Kozea/WeasyPrint/issues/1523
+    assert_pixels('table_split_crash', 2, 8, '''
+      RR
+      RR
+      RR
+      RR
+      RR
+      RR
+      RR
+      RR
+    ''', '''
+      <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page {size: 2px 4px}
+        table {border-collapse: collapse; color: red}
+        body {font-size: 2px; font-family: weasyprint; line-height: 1}
+      </style>
+      <table><tr><td>a a a a</td></tr></table>''')

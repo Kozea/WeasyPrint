@@ -19,6 +19,8 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
         block_container_layout, block_level_page_break,
         find_earlier_page_break)
 
+    table.remove_decoration(start=skip_stack is not None, end=False)
+
     column_widths = table.column_widths
 
     if table.style['border_collapse'] == 'separate':
@@ -47,21 +49,27 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
         rows_width = rows_x - position_x
 
     if table.style['border_collapse'] == 'collapse':
+        table.skip_cell_border_top = False
+        table.skip_cell_border_bottom = False
+        split_cells = False
         if skip_stack:
             (skipped_groups, group_skip_stack), = skip_stack.items()
             if group_skip_stack:
-                skipped_rows, = group_skip_stack
+                (skipped_rows, cells_skip_stack), = group_skip_stack.items()
+                if cells_skip_stack:
+                    split_cells = True
             else:
                 skipped_rows = 0
             for group in table.children[:skipped_groups]:
                 skipped_rows += len(group.children)
         else:
             skipped_rows = 0
-        _, horizontal_borders = table.collapsed_border_grid
-        if horizontal_borders:
-            table.border_top_width = max(
-                width for _, (_, width, _)
-                in horizontal_borders[skipped_rows]) / 2
+        if not split_cells:
+            _, horizontal_borders = table.collapsed_border_grid
+            if horizontal_borders:
+                table.border_top_width = max(
+                    width for _, (_, width, _)
+                    in horizontal_borders[skipped_rows]) / 2
 
     # Make this a sub-function so that many local variables like rows_x
     # don't need to be passed as parameters.
@@ -145,6 +153,10 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                         cell_skip_stack = {len(cell.children): None}
                 else:
                     cell_skip_stack = None
+                if cell_skip_stack:
+                    cell.remove_decoration(start=True, end=False)
+                    if table.style['border_collapse'] == 'collapse':
+                        table.skip_cell_border_top = True
                 new_cell, cell_resume_at, _, _, _ = block_container_layout(
                     context, cell, bottom_space, cell_skip_stack,
                     page_is_empty=False, absolute_boxes=absolute_boxes,
@@ -159,6 +171,9 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                     cell_resume_at = {0: None}
                 else:
                     cell = new_cell
+                cell.remove_decoration(
+                    start=cell_skip_stack is not None,
+                    end=cell_resume_at is not None)
                 if cell_resume_at:
                     if resume_at is None:
                         resume_at = {index_row: {}}
@@ -246,12 +261,13 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                 next_position_y += border_spacing_y
 
             # Break if one cell was broken
+            break_cell = False
             if resume_at:
                 values, = list(resume_at.values())
                 if len(row.children) == len(values):
                     for cell_resume_at in values.values():
                         if cell_resume_at != {0: None}:
-                            new_group_children.append(row)
+                            break_cell = True
                             break
                     else:
                         # No cell was displayed, give up row
@@ -259,8 +275,7 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                         page_is_empty = False
                         resume_at = None
                 else:
-                    new_group_children.append(row)
-                    break
+                    break_cell = True
 
             # Break if this row overflows the page, unless there is no
             # other content on the page.
@@ -289,7 +304,10 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
             page_is_empty = False
             skip_stack = None
 
-            if resume_at:
+            if break_cell and table.style['border_collapse'] == 'collapse':
+                table.skip_cell_border_bottom = True
+
+            if break_cell or resume_at:
                 break
 
         # Do not keep the row group if we made a page break
@@ -682,13 +700,10 @@ def auto_table_layout(context, box, containing_block):
     if box.margin_right != 'auto':
         margins += box.margin_right
     paddings = table.padding_left + table.padding_right
+    borders = table.border_left_width + table.border_right_width
 
     cb_width, _ = containing_block
-    available_width = cb_width - margins - paddings
-
-    if table.style['border_collapse'] == 'collapse':
-        available_width -= (
-            table.border_left_width + table.border_right_width)
+    available_width = cb_width - margins - paddings - borders
 
     if table.width == 'auto':
         if available_width <= table_min_content_width:

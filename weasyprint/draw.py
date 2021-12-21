@@ -857,15 +857,23 @@ def draw_collapsed_borders(stream, table):
         if width == 0 or color.alpha == 0:
             return
         pos_x = column_positions[x]
-        pos_y1 = row_positions[y] - half_max_width(horizontal_borders, [
-            (y, x - 1), (y, x)], vertical=False)
-        pos_y2 = row_positions[y + 1] + half_max_width(horizontal_borders, [
-            (y + 1, x - 1), (y + 1, x)], vertical=False)
+        pos_y1 = row_positions[y]
+        if y != 0 or not table.skip_cell_border_top:
+            pos_y1 -= half_max_width(horizontal_borders, [
+                (y, x - 1), (y, x)], vertical=False)
+        pos_y2 = row_positions[y + 1]
+        if y != grid_height - 1 or not table.skip_cell_border_bottom:
+            pos_y2 += half_max_width(horizontal_borders, [
+                (y + 1, x - 1), (y + 1, x)], vertical=False)
         segments.append((
             score, style, width, color, 'left',
             (pos_x - width / 2, pos_y1, 0, pos_y2 - pos_y1)))
 
     def add_horizontal(x, y):
+        if y == 0 and table.skip_cell_border_top:
+            return
+        if y == grid_height and table.skip_cell_border_bottom:
+            return
         yy = row_number(y, horizontal=True)
         score, (style, width, color) = horizontal_borders[yy][x]
         if width == 0 or color.alpha == 0:
@@ -1177,7 +1185,8 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y):
                 hb_data = harfbuzz.hb_blob_get_data(hb_blob, stream.length)
                 if hb_data != ffi.NULL:
                     svg_data = ffi.unpack(hb_data, int(stream.length[0]))
-                    image = SVGImage(svg_data, None, None, stream)
+                    tree = ElementTree.fromstring(svg_data)
+                    image = SVGImage(tree, None, None, stream)
                     a = d = font.widths[glyph] / 1000 / font.upem * font_size
                     emojis.append([image, font, a, d, x_advance, 0])
             elif font.png:
