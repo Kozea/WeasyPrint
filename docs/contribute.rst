@@ -13,11 +13,9 @@ install WeasyPrint dependencies.
    git clone https://github.com/Kozea/WeasyPrint.git
    cd WeasyPrint
    python -m venv venv
-   venv/bin/pip install .[doc,test]
+   venv/bin/pip install -e .[doc,test]
 
-You can then let your terminal in the current directory and launch Python to
-test your changes. ``import weasyprint`` will then import the working directory
-code, so that you can modify it and test your changes.
+You can then launch Python to test your changes.
 
 .. code-block:: shell
 
