@@ -690,13 +690,22 @@ def expand_line_clamp(name, tokens):
 
 
 @expander('text-align')
-def expand_text_align(base_url, name, tokens):
+@generic_expander('-all', '-last')
+def expand_text_align(name, tokens):
     """Expand the ``text-align`` property."""
     if len(tokens) == 1:
         keyword = get_single_keyword(tokens)
-        align_all = 'justify' if keyword == 'justify-all' else keyword
-        yield 'text_align_all', align_all
-        align_last = 'start' if keyword == 'justify' else align_all
-        yield 'text_align_last', align_last
+        if keyword == 'justify-all':
+            line, column = tokens[0].source_line, tokens[0].source_column
+            align_all = IdentToken(line, column, 'justify')
+        else:
+            align_all = tokens[0]
+        yield '-all', [align_all]
+        if keyword == 'justify':
+            line, column = tokens[0].source_line, tokens[0].source_column
+            align_last = IdentToken(line, column, 'start')
+        else:
+            align_last = align_all
+        yield '-last', [align_last]
     else:
         raise InvalidValues
