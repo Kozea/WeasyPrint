@@ -1017,6 +1017,11 @@ def test_radial_gradient():
         'flex_shrink': 1,
         'flex_basis': 'auto',
     }),
+    ('flex: inherit', {
+        'flex_grow': 'inherit',
+        'flex_shrink': 'inherit',
+        'flex_basis': 'inherit',
+    }),
 ))
 def test_flex(rule, result):
     assert expand_to_dict(rule) == result

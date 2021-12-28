@@ -8,10 +8,10 @@
 
 import functools
 
-from tinycss2.ast import IdentToken
+from tinycss2.ast import DimensionToken, IdentToken, NumberToken
 from tinycss2.color3 import parse_color
 
-from ..properties import INITIAL_VALUES, Dimension
+from ..properties import INITIAL_VALUES
 from ..utils import (
     InvalidValues, get_keyword, get_single_keyword, split_on_comma)
 from .descriptors import expand_font_variant
@@ -564,15 +564,19 @@ def expand_word_wrap(name, tokens):
 
 
 @expander('flex')
-def expand_flex(base_url, name, tokens):
+@generic_expander('-grow', '-shrink', '-basis')
+def expand_flex(name, tokens):
     """Expand the ``flex`` property."""
     keyword = get_single_keyword(tokens)
     if keyword == 'none':
-        yield 'flex-grow', 0
-        yield 'flex-shrink', 0
-        yield 'flex-basis', 'auto'
+        line, column = tokens[0].source_line, tokens[0].source_column
+        zero_token = NumberToken(line, column, 0, 0, '0')
+        auto_token = IdentToken(line, column, 'auto')
+        yield '-grow', [zero_token]
+        yield '-shrink', [zero_token]
+        yield '-basis', [auto_token]
     else:
-        grow, shrink, basis = 1, 1, Dimension(0, 'px')
+        grow, shrink, basis = 1, 1, None
         grow_found, shrink_found, basis_found = False, False, False
         for token in tokens:
             # "A unitless zero that is not already preceded by two flex factors
@@ -583,7 +587,7 @@ def expand_flex(base_url, name, tokens):
             if not basis_found and not forced_flex_factor:
                 new_basis = flex_basis([token])
                 if new_basis is not None:
-                    basis = new_basis
+                    basis = token
                     basis_found = True
                     continue
             if not grow_found:
@@ -604,9 +608,17 @@ def expand_flex(base_url, name, tokens):
                     continue
             else:
                 raise InvalidValues
-        yield 'flex-grow', grow
-        yield 'flex-shrink', shrink
-        yield 'flex-basis', basis
+        line, column = tokens[0].source_line, tokens[0].source_column
+        int_grow = int(grow) if float(grow).is_integer() else None
+        int_shrink = int(shrink) if float(shrink).is_integer() else None
+        grow_token = NumberToken(line, column, grow, int_grow, str(grow))
+        shrink_token = NumberToken(
+            line, column, shrink, int_shrink, str(shrink))
+        if not basis_found:
+            basis = DimensionToken(line, column, 0, 0, '0', 'px')
+        yield '-grow', [grow_token]
+        yield '-shrink', [shrink_token]
+        yield '-basis', [basis]
 
 
 @expander('flex-flow')
@@ -644,20 +656,16 @@ def expand_line_clamp(name, tokens):
     if len(tokens) == 1:
         keyword = get_single_keyword(tokens)
         if keyword == 'none':
-            none_token = IdentToken(
-                tokens[0].source_line, tokens[0].source_column, 'none')
-            auto_token = IdentToken(
-                tokens[0].source_line, tokens[0].source_column, 'auto')
-            discard_token = IdentToken(
-                tokens[0].source_line, tokens[0].source_column, 'auto')
+            line, column = tokens[0].source_line, tokens[0].source_column
+            none_token = IdentToken(line, column, 'none')
+            auto_token = IdentToken(line, column, 'auto')
             yield 'max-lines', [none_token]
             yield 'continue', [auto_token]
             yield 'block-ellipsis', [none_token]
         elif tokens[0].type == 'number' and tokens[0].int_value is not None:
-            auto_token = IdentToken(
-                tokens[0].source_line, tokens[0].source_column, 'auto')
-            discard_token = IdentToken(
-                tokens[0].source_line, tokens[0].source_column, 'discard')
+            line, column = tokens[0].source_line, tokens[0].source_column
+            auto_token = IdentToken(line, column, 'auto')
+            discard_token = IdentToken(line, column, 'discard')
             yield 'max-lines', [tokens[0]]
             yield 'continue', [discard_token]
             yield 'block-ellipsis', [auto_token]
@@ -668,8 +676,8 @@ def expand_line_clamp(name, tokens):
             max_lines = tokens[0].int_value
             ellipsis = block_ellipsis([tokens[1]])
             if max_lines and ellipsis is not None:
-                discard_token = IdentToken(
-                    tokens[0].source_line, tokens[0].source_column, 'discard')
+                line, column = tokens[0].source_line, tokens[0].source_column
+                discard_token = IdentToken(line, column, 'discard')
                 yield 'max-lines', [tokens[0]]
                 yield 'continue', [discard_token]
                 yield 'block-ellipsis', [tokens[1]]
