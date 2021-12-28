@@ -1076,6 +1076,8 @@ def test_function_symbols(rule):
 @pytest.mark.parametrize('rule, result', (
     ('page-break-after: left', {'break_after': 'left'}),
     ('page-break-before: always', {'break_before': 'page'}),
+    ('page-break-after: inherit', {'break_after': 'inherit'}),
+    ('page-break-before: inherit', {'break_before': 'inherit'}),
 ))
 def test_page_break(rule, result):
     assert expand_to_dict(rule) == result

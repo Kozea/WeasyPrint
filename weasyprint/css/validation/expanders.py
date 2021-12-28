@@ -27,11 +27,6 @@ from .properties import (
 EXPANDERS = {}
 
 
-class AutoFakeToken:
-    type = 'ident'
-    lower_value = 'auto'
-
-
 def expander(property_name):
     """Decorator adding a function to the ``EXPANDERS``."""
     def expander_decorator(function):
@@ -389,9 +384,7 @@ def expand_text_decoration(name, tokens):
         yield '-style', text_decoration_style
 
 
-@expander('page-break-after')
-@expander('page-break-before')
-def expand_page_break_before_after(base_url, name, tokens):
+def expand_page_break_before_after(name, tokens):
     """Expand legacy ``page-break-before`` and ``page-break-after`` properties.
 
     See https://www.w3.org/TR/css-break-3/#page-break-properties
@@ -400,11 +393,35 @@ def expand_page_break_before_after(base_url, name, tokens):
     keyword = get_single_keyword(tokens)
     new_name = name.split('-', 1)[1]
     if keyword in ('auto', 'left', 'right', 'avoid'):
-        yield new_name, keyword
+        yield new_name, tokens
     elif keyword == 'always':
-        yield new_name, 'page'
+        token = IdentToken(
+            tokens[0].source_line, tokens[0].source_column, 'page')
+        yield new_name, [token]
     else:
         raise InvalidValues
+
+
+@expander('page-break-after')
+@generic_expander('break-after')
+def expand_page_break_after(name, tokens):
+    """Expand legacy ``page-break-after`` property.
+
+    See https://www.w3.org/TR/css-break-3/#page-break-properties
+
+    """
+    return expand_page_break_before_after(name, tokens)
+
+
+@expander('page-break-before')
+@generic_expander('break-before')
+def expand_page_break_before(name, tokens):
+    """Expand legacy ``page-break-before`` property.
+
+    See https://www.w3.org/TR/css-break-3/#page-break-properties
+
+    """
+    return expand_page_break_before_after(name, tokens)
 
 
 @expander('page-break-inside')
