@@ -426,7 +426,8 @@ def expand_page_break_before(name, tokens):
 
 
 @expander('page-break-inside')
-def expand_page_break_inside(base_url, name, tokens):
+@generic_expander('break-inside')
+def expand_page_break_inside(name, tokens):
     """Expand the legacy ``page-break-inside`` property.
 
     See https://www.w3.org/TR/css-break-3/#page-break-properties
@@ -434,7 +435,7 @@ def expand_page_break_inside(base_url, name, tokens):
     """
     keyword = get_single_keyword(tokens)
     if keyword in ('auto', 'avoid'):
-        yield 'break-inside', keyword
+        yield 'break-inside', tokens
     else:
         raise InvalidValues
 

@@ -1104,6 +1104,7 @@ def test_page_break_invalid(rule):
 @assert_no_logs
 @pytest.mark.parametrize('rule, result', (
     ('page-break-inside: avoid', {'break_inside': 'avoid'}),
+    ('page-break-inside: inherit', {'break_inside': 'inherit'}),
 ))
 def test_page_break_inside(rule, result):
     assert expand_to_dict(rule) == result
