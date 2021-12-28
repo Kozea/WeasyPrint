@@ -70,47 +70,6 @@ def expand_four_sides(base_url, name, tokens):
         yield result
 
 
-@expander('border-radius')
-def border_radius(base_url, name, tokens):
-    """Validator for the ``border-radius`` property."""
-    current = horizontal = []
-    vertical = []
-    for token in tokens:
-        if token.type == 'literal' and token.value == '/':
-            if current is horizontal:
-                if token == tokens[-1]:
-                    raise InvalidValues('Expected value after "/" separator')
-                else:
-                    current = vertical
-            else:
-                raise InvalidValues('Expected only one "/" separator')
-        else:
-            current.append(token)
-
-    if not vertical:
-        vertical = horizontal[:]
-
-    for values in horizontal, vertical:
-        # Make sure we have 4 tokens
-        if len(values) == 1:
-            values *= 4
-        elif len(values) == 2:
-            values *= 2  # (br, bl) defaults to (tl, tr)
-        elif len(values) == 3:
-            values.append(values[1])  # bl defaults to tr
-        elif len(values) != 4:
-            raise InvalidValues(
-                f'Expected 1 to 4 token components got {len(values)}')
-    corners = ('top-left', 'top-right', 'bottom-right', 'bottom-left')
-    for corner, tokens in zip(corners, zip(horizontal, vertical)):
-        new_name = f'border-{corner}-radius'
-        # validate_non_shorthand returns [(name, value)], we want
-        # to yield (name, value)
-        result, = validate_non_shorthand(
-            base_url, new_name, tokens, required=True)
-        yield result
-
-
 def generic_expander(*expanded_names, **kwargs):
     """Decorator helping expanders to handle ``inherit`` and ``initial``.
 
@@ -165,6 +124,48 @@ def generic_expander(*expanded_names, **kwargs):
                 yield actual_new_name, value
         return generic_expander_wrapper
     return generic_expander_decorator
+
+
+@expander('border-radius')
+@generic_expander(
+    'border-top-left-radius', 'border-top-right-radius',
+    'border-bottom-right-radius', 'border-bottom-left-radius',
+    wants_base_url=True)
+def border_radius(name, tokens, base_url):
+    """Validator for the ``border-radius`` property."""
+    current = horizontal = []
+    vertical = []
+    for token in tokens:
+        if token.type == 'literal' and token.value == '/':
+            if current is horizontal:
+                if token == tokens[-1]:
+                    raise InvalidValues('Expected value after "/" separator')
+                else:
+                    current = vertical
+            else:
+                raise InvalidValues('Expected only one "/" separator')
+        else:
+            current.append(token)
+
+    if not vertical:
+        vertical = horizontal[:]
+
+    for values in horizontal, vertical:
+        # Make sure we have 4 tokens
+        if len(values) == 1:
+            values *= 4
+        elif len(values) == 2:
+            values *= 2  # (br, bl) defaults to (tl, tr)
+        elif len(values) == 3:
+            values.append(values[1])  # bl defaults to tr
+        elif len(values) != 4:
+            raise InvalidValues(
+                f'Expected 1 to 4 token components got {len(values)}')
+    corners = ('top-left', 'top-right', 'bottom-right', 'bottom-left')
+    for corner, tokens in zip(corners, zip(horizontal, vertical)):
+        new_name = f'border-{corner}-radius'
+        validate_non_shorthand(base_url, new_name, tokens, required=True)
+        yield new_name, tokens
 
 
 @expander('list-style')

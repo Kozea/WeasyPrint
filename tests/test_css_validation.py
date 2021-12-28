@@ -615,6 +615,12 @@ def test_expand_background_position():
         'border_bottom_right_radius': ((3, '%'), (3, '%')),
         'border_bottom_left_radius': ((4, 'rem'), (4, 'rem')),
     }),
+    ('border-radius: inherit', {
+        'border_top_left_radius': 'inherit',
+        'border_top_right_radius': 'inherit',
+        'border_bottom_right_radius': 'inherit',
+        'border_bottom_left_radius': 'inherit',
+    }),
 ))
 def test_expand_border_radius(rule, result):
     assert expand_to_dict(rule) == result
@@ -625,6 +631,9 @@ def test_expand_border_radius(rule, result):
     ('border-radius: 1px 1px 1px 1px 1px', '1 to 4 token'),
     ('border-radius: 1px 1px 1px 1px 1px / 1px', '1 to 4 token'),
     ('border-radius: 1px / 1px / 1px', 'only one "/"'),
+    ('border-radius: 12deg', 'invalid'),
+    ('border-radius: 1px 1px 1px 12deg', 'invalid'),
+    ('border-radius: super', 'invalid'),
     ('border-radius: 1px, 1px', 'invalid'),
     ('border-radius: 1px /', 'value after "/"'),
 ))
