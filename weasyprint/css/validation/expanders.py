@@ -8,6 +8,7 @@
 
 import functools
 
+from tinycss2.ast import IdentToken
 from tinycss2.color3 import parse_color
 
 from ..properties import INITIAL_VALUES, Dimension
@@ -437,7 +438,9 @@ def expand_columns(name, tokens):
         yield name, [token]
     if len(tokens) == 1:
         name = 'column-width' if name == 'column-count' else 'column-count'
-        yield name, [AutoFakeToken()]
+        token = IdentToken(
+            tokens[0].source_line, tokens[0].source_column, 'auto')
+        yield name, [token]
 
 
 @expander('font-variant')
