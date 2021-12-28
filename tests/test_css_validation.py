@@ -1049,6 +1049,10 @@ def test_flex_invalid(rule):
         'flex_direction': 'row',
         'flex_wrap': 'wrap',
     }),
+    ('flex-flow: inherit', {
+        'flex_direction': 'inherit',
+        'flex_wrap': 'inherit',
+    }),
 ))
 def test_flex_flow(rule, result):
     assert expand_to_dict(rule) == result
