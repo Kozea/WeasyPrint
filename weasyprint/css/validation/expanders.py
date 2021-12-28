@@ -637,18 +637,29 @@ def expand_flex_flow(base_url, name, tokens):
 
 
 @expander('line-clamp')
-def expand_line_clamp(base_url, name, tokens):
+@generic_expander('max-lines', 'continue', 'block-ellipsis')
+def expand_line_clamp(name, tokens):
     """Expand the ``line-clamp`` property."""
     if len(tokens) == 1:
         keyword = get_single_keyword(tokens)
         if keyword == 'none':
-            yield 'max_lines', 'none'
-            yield 'continue', 'auto'
-            yield 'block-ellipsis', 'none'
+            none_token = IdentToken(
+                tokens[0].source_line, tokens[0].source_column, 'none')
+            auto_token = IdentToken(
+                tokens[0].source_line, tokens[0].source_column, 'auto')
+            discard_token = IdentToken(
+                tokens[0].source_line, tokens[0].source_column, 'auto')
+            yield 'max-lines', [none_token]
+            yield 'continue', [auto_token]
+            yield 'block-ellipsis', [none_token]
         elif tokens[0].type == 'number' and tokens[0].int_value is not None:
-            yield 'max_lines', tokens[0].int_value
-            yield 'continue', 'discard'
-            yield 'block-ellipsis', 'auto'
+            auto_token = IdentToken(
+                tokens[0].source_line, tokens[0].source_column, 'auto')
+            discard_token = IdentToken(
+                tokens[0].source_line, tokens[0].source_column, 'discard')
+            yield 'max-lines', [tokens[0]]
+            yield 'continue', [discard_token]
+            yield 'block-ellipsis', [auto_token]
         else:
             raise InvalidValues
     elif len(tokens) == 2:
@@ -656,9 +667,11 @@ def expand_line_clamp(base_url, name, tokens):
             max_lines = tokens[0].int_value
             ellipsis = block_ellipsis([tokens[1]])
             if max_lines and ellipsis is not None:
-                yield 'max_lines', tokens[0].value
-                yield 'continue', 'discard'
-                yield 'block-ellipsis', ellipsis
+                discard_token = IdentToken(
+                    tokens[0].source_line, tokens[0].source_column, 'discard')
+                yield 'max-lines', [tokens[0]]
+                yield 'continue', [discard_token]
+                yield 'block-ellipsis', [tokens[1]]
             else:
                 raise InvalidValues
         else:

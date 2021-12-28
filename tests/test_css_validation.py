@@ -1146,6 +1146,9 @@ def test_columns_invalid(rule, reason):
     ('line-clamp: 3 "…"', {
         'max_lines': 3, 'continue': 'discard',
         'block_ellipsis': ('string', '…')}),
+    ('line-clamp: inherit', {
+        'max_lines': 'inherit', 'continue': 'inherit',
+        'block_ellipsis': 'inherit'}),
 ))
 def test_line_clamp(rule, result):
     assert expand_to_dict(rule) == result
