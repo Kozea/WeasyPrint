@@ -25,14 +25,14 @@ def use(svg, node, font_size):
         if attribute in node.attrib:
             del node.attrib[attribute]
 
-    parsed_url = parse_url(node.get_href())
-    if parsed_url.fragment and not parsed_url.path:
+    parsed_url = parse_url(node.get_href(svg.url))
+    if parsed_url.fragment and parsed_url[:3] == parse_url(svg.url)[:3]:
         if parsed_url.fragment in svg.use_cache:
             tree = svg.use_cache[parsed_url.fragment].copy()
         else:
             try:
                 tree = svg.tree.get_child(parsed_url.fragment).copy()
-            except AttributeError:
+            except Exception:
                 return
             else:
                 svg.use_cache[parsed_url.fragment] = tree
@@ -41,7 +41,7 @@ def use(svg, node, font_size):
         try:
             bytestring_svg = svg.url_fetcher(url)
             use_svg = SVG(bytestring_svg, url)
-        except TypeError:
+        except Exception:
             return
         else:
             use_svg.get_intrinsic_size(font_size)

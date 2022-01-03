@@ -6,8 +6,6 @@
 
 """
 
-from urllib.parse import urljoin
-
 from .utils import preserve_ratio
 
 
@@ -34,7 +32,7 @@ def image(svg, node, font_size):
     x, y = svg.point(node.get('x'), node.get('y'), font_size)
     svg.stream.transform(e=x, f=y)
     base_url = node.get('{http://www.w3.org/XML/1998/namespace}base')
-    url = urljoin(base_url or svg.url, node.get_href())
+    url = node.get_href(base_url or svg.url)
     image = svg.context.get_image_from_uri(url=url, forced_mime_type='image/*')
     if image is None:
         return

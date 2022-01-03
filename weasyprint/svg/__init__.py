@@ -12,6 +12,7 @@ from xml.etree import ElementTree
 
 from cssselect2 import ElementWrapper
 
+from ..urls import get_url_attribute
 from .bounding_box import bounding_box, is_valid_bounding_box
 from .css import parse_declarations, parse_stylesheets
 from .defs import (
@@ -175,9 +176,12 @@ class Node:
             return tuple(
                 float(number) for number in normalize(viewbox).split())
 
-    def get_href(self):
+    def get_href(self, base_url):
         """Get the href attribute, with or without a namespace."""
-        return self.get('{http://www.w3.org/1999/xlink}href', self.get('href'))
+        for attr_name in ('{http://www.w3.org/1999/xlink}href', 'href'):
+            url = get_url_attribute(self, attr_name, base_url)
+            if url:
+                return url
 
     @staticmethod
     def process_whitespace(string, preserve):
