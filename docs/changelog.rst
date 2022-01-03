@@ -2,6 +2,24 @@ Changelog
 =========
 
 
+Version 54.0
+------------
+
+Not released yet.
+
+This version also includes the changes from unstable b1 version listed
+below.
+
+Bug fixes:
+
+* `#1531 <https://github.com/Kozea/WeasyPrint/issues/1531>`_:
+  Always use absolute paths to get hrefs in SVG
+* `#1523 <https://github.com/Kozea/WeasyPrint/issues/1523>`_:
+  Fix many rendering problems of broken tables
+* `e1aee70 <https://github.com/Kozea/WeasyPrint/commit/e1aee70>`_:
+  Fix support of fonts with SVG emojis
+
+
 Version 54.0b1
 --------------
 
