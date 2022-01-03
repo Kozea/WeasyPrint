@@ -633,7 +633,7 @@ def display(tokens):
                 'table-header-group', 'table-footer-group', 'table-row',
                 'table-column-group', 'table-column'):
             return (value,)
-        elif value in ('inline-table', 'inline-flex', 'inline-grid'):
+        elif value in ('inline-table', 'inline-flex'):
             return tuple(value.split('-'))
         elif value == 'inline-block':
             return ('inline', 'flow-root')
@@ -645,7 +645,7 @@ def display(tokens):
             if outside:
                 return
             outside = value
-        elif value in ('flow', 'flow-root', 'table', 'flex', 'grid'):
+        elif value in ('flow', 'flow-root', 'table', 'flex'):
             if inside:
                 return
             inside = value
