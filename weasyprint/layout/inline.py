@@ -472,8 +472,10 @@ def split_inline_level(context, box, position_x, max_x, bottom_space,
             skip = skip or 0
             assert skip_stack is None
 
+        is_line_start = len(line_children) == 0
         new_box, skip, preserved_line_break = split_text_box(
-            context, box, max_x - position_x, skip)
+            context, box, max_x - position_x, skip,
+            is_line_start=is_line_start)
 
         if skip is None:
             resume_at = None
@@ -882,7 +884,7 @@ def split_inline_box(context, box, position_x, max_x, bottom_space, skip_stack,
         float_widths)
 
 
-def split_text_box(context, box, available_width, skip):
+def split_text_box(context, box, available_width, skip, is_line_start=True):
     """Keep as much text as possible from a TextBox in a limited width.
 
     Try not to overflow but always have some text in ``new_box``.
@@ -900,7 +902,8 @@ def split_text_box(context, box, available_width, skip):
     if font_size == 0 or not text:
         return None, None, False
     layout, length, resume_index, width, height, baseline = split_first_line(
-        text, box.style, context, available_width, box.justification_spacing)
+        text, box.style, context, available_width, box.justification_spacing,
+        is_line_start=is_line_start)
     assert resume_index != 0
 
     # Convert ``length`` and ``resume_at`` from UTF-8 indexes in text

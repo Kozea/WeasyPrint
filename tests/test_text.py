@@ -922,6 +922,38 @@ def test_overflow_wrap(wrap, text, test, full_text):
 
 
 @assert_no_logs
+@pytest.mark.parametrize('span_css, expected_lines', (
+    # overflow-wrap: anywhere and break-word are only allowed to break a word
+    # "if there are no otherwise-acceptable break points in the line", which
+    # means they should not split a word if it fits cleanly into the next line.
+    # This can be done accidentally if it is in its own inline element.
+    ('overflow-wrap: anywhere', ['aaa', 'bbb']),
+    ('overflow-wrap: break-word', ['aaa', 'bbb']),
+))
+def test_wrap_overflow_word_break(span_css, expected_lines):
+    page, = render_pages('''
+      <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        body {width: 80px; overflow: hidden; font-family: weasyprint}
+        span {%s}
+      </style>
+      <body>
+        <span>aaa </span><span>bbb
+    ''' % span_css)
+    html, = page.children
+    body, = html.children
+    lines = body.children
+    lines = []
+    print(body.children)
+    for line in body.children:
+        line_text = ''
+        for span_box in line.children:
+            line_text += span_box.children[0].text
+        lines.append(line_text)
+    assert lines == expected_lines
+
+
+@assert_no_logs
 @pytest.mark.parametrize('wrap, text, body_width, expected_width', (
     ('anywhere', 'aaaaaa', 10, 20),
     ('anywhere', 'aaaaaa', 40, 40),

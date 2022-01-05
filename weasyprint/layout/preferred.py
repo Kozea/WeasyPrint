@@ -307,7 +307,7 @@ def inline_line_widths(context, box, outer, is_line_start, minimum,
                         split_first_line(
                             child_text[resume_index:], child.style, context,
                             max_width, child.justification_spacing,
-                            minimum=True))
+                            is_line_start=is_line_start, minimum=True))
                     lines.append(width)
                     if first_line:
                         break
