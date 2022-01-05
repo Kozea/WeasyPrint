@@ -154,6 +154,7 @@ INITIAL_VALUES = {
     'text_indent': Dimension(0, 'px'),
     'text_transform': 'none',
     'white_space': 'normal',
+    'word_break': 'normal',
     'word_spacing': 0,  # computed value for 'normal'
 
     # Transforms 1 (CR): https://www.w3.org/TR/css-transforms-1/
@@ -270,6 +271,7 @@ INHERITED = {
     'visibility',
     'white_space',
     'widows',
+    'word_break',
     'word_spacing',
 }
 

@@ -1180,6 +1180,13 @@ def overflow_wrap(keyword):
 
 
 @property()
+@single_keyword
+def word_break(keyword):
+    """``word-break`` property validation."""
+    return keyword in ('normal', 'break-all')
+
+
+@property()
 @single_token
 def flex_basis(token):
     """``flex-basis`` property validation."""

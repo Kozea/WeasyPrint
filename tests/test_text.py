@@ -929,6 +929,10 @@ def test_overflow_wrap(wrap, text, test, full_text):
     # This can be done accidentally if it is in its own inline element.
     ('overflow-wrap: anywhere', ['aaa', 'bbb']),
     ('overflow-wrap: break-word', ['aaa', 'bbb']),
+
+    # On the other hand, word-break: break-all mandates a break anywhere at the
+    # end of a line, even if the word could fit cleanly onto the next line.
+    ('word-break: break-all', ['aaa b', 'bb']),
 ))
 def test_wrap_overflow_word_break(span_css, expected_lines):
     page, = render_pages('''
