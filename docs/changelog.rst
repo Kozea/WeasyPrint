@@ -5,7 +5,7 @@ Changelog
 Version 54.0
 ------------
 
-Not released yet.
+Released on 2022-01-08.
 
 This version also includes the changes from unstable b1 version listed
 below.
