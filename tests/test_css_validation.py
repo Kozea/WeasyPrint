@@ -10,6 +10,7 @@ import math
 
 import pytest
 import tinycss2
+from tinycss2.color3 import parse_color
 from weasyprint.css import preprocess_declarations
 from weasyprint.css.computed_values import ZERO_PIXELS
 from weasyprint.css.properties import INITIAL_VALUES
@@ -153,15 +154,15 @@ def test_decoration_style(rule, result):
     ('text-decoration: none', {'text_decoration_line': 'none'}),
     ('text-decoration: overline', {'text_decoration_line': {'overline'}}),
     ('text-decoration: overline blink line-through', {
-        'text_decoration_line': {'blink', 'line-through', 'overline'}}),
-    ('text-decoration: red', {'text_decoration_color': (1, 0, 0, 1)}),
+        'text_decoration_line': {'blink', 'line-through', 'overline'},
+    }),
+    ('text-decoration: red', {'text_decoration_color': parse_color('red')}),
+    ('text-decoration: inherit', {
+        f'text_decoration_{key}': 'inherit'
+        for key in ('color', 'line', 'style')}),
 ))
 def test_decoration(rule, result):
-    default = {
-        key: value for key, value in INITIAL_VALUES.items()
-        if key.startswith('text_decoration_')}
-    real_result = {**default, **result}
-    assert expand_to_dict(rule) == real_result
+    assert expand_to_dict(rule) == result
 
 
 @assert_no_logs
@@ -614,6 +615,12 @@ def test_expand_background_position():
         'border_bottom_right_radius': ((3, '%'), (3, '%')),
         'border_bottom_left_radius': ((4, 'rem'), (4, 'rem')),
     }),
+    ('border-radius: inherit', {
+        'border_top_left_radius': 'inherit',
+        'border_top_right_radius': 'inherit',
+        'border_bottom_right_radius': 'inherit',
+        'border_bottom_left_radius': 'inherit',
+    }),
 ))
 def test_expand_border_radius(rule, result):
     assert expand_to_dict(rule) == result
@@ -624,6 +631,9 @@ def test_expand_border_radius(rule, result):
     ('border-radius: 1px 1px 1px 1px 1px', '1 to 4 token'),
     ('border-radius: 1px 1px 1px 1px 1px / 1px', '1 to 4 token'),
     ('border-radius: 1px / 1px / 1px', 'only one "/"'),
+    ('border-radius: 12deg', 'invalid'),
+    ('border-radius: 1px 1px 1px 12deg', 'invalid'),
+    ('border-radius: super', 'invalid'),
     ('border-radius: 1px, 1px', 'invalid'),
     ('border-radius: 1px /', 'value after "/"'),
 ))
@@ -863,6 +873,8 @@ def test_overflow_wrap():
         'overflow_wrap': 'normal'}
     assert expand_to_dict('overflow-wrap: break-word') == {
         'overflow_wrap': 'break-word'}
+    assert expand_to_dict('overflow-wrap: inherit') == {
+        'overflow_wrap': 'inherit'}
     assert_invalid('overflow-wrap: none')
     assert_invalid('overflow-wrap: normal, break-word')
 
@@ -873,6 +885,8 @@ def test_expand_word_wrap():
         'overflow_wrap': 'normal'}
     assert expand_to_dict('word-wrap: break-word') == {
         'overflow_wrap': 'break-word'}
+    assert expand_to_dict('word-wrap: inherit') == {
+        'overflow_wrap': 'inherit'}
     assert_invalid('word-wrap: none')
     assert_invalid('word-wrap: normal, break-word')
 
@@ -1003,6 +1017,11 @@ def test_radial_gradient():
         'flex_shrink': 1,
         'flex_basis': 'auto',
     }),
+    ('flex: inherit', {
+        'flex_grow': 'inherit',
+        'flex_shrink': 'inherit',
+        'flex_basis': 'inherit',
+    }),
 ))
 def test_flex(rule, result):
     assert expand_to_dict(rule) == result
@@ -1034,6 +1053,10 @@ def test_flex_invalid(rule):
     ('flex-flow: row wrap', {
         'flex_direction': 'row',
         'flex_wrap': 'wrap',
+    }),
+    ('flex-flow: inherit', {
+        'flex_direction': 'inherit',
+        'flex_wrap': 'inherit',
     }),
 ))
 def test_flex_flow(rule, result):
@@ -1071,6 +1094,8 @@ def test_function_symbols(rule):
 @pytest.mark.parametrize('rule, result', (
     ('page-break-after: left', {'break_after': 'left'}),
     ('page-break-before: always', {'break_before': 'page'}),
+    ('page-break-after: inherit', {'break_after': 'inherit'}),
+    ('page-break-before: inherit', {'break_before': 'inherit'}),
 ))
 def test_page_break(rule, result):
     assert expand_to_dict(rule) == result
@@ -1088,6 +1113,7 @@ def test_page_break_invalid(rule):
 @assert_no_logs
 @pytest.mark.parametrize('rule, result', (
     ('page-break-inside: avoid', {'break_inside': 'avoid'}),
+    ('page-break-inside: inherit', {'break_inside': 'inherit'}),
 ))
 def test_page_break_inside(rule, result):
     assert expand_to_dict(rule) == result
@@ -1129,6 +1155,9 @@ def test_columns_invalid(rule, reason):
     ('line-clamp: 3 "…"', {
         'max_lines': 3, 'continue': 'discard',
         'block_ellipsis': ('string', '…')}),
+    ('line-clamp: inherit', {
+        'max_lines': 'inherit', 'continue': 'inherit',
+        'block_ellipsis': 'inherit'}),
 ))
 def test_line_clamp(rule, result):
     assert expand_to_dict(rule) == result
@@ -1142,4 +1171,31 @@ def test_line_clamp(rule, result):
     ('line-clamp: 1px 2px', 'invalid'),
 ))
 def test_line_clamp_invalid(rule, reason):
+    assert_invalid(rule, reason)
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, result', (
+    ('text-align: start', {
+        'text_align_all': 'start', 'text_align_last': 'start'}),
+    ('text-align: right', {
+        'text_align_all': 'right', 'text_align_last': 'right'}),
+    ('text-align: justify', {
+        'text_align_all': 'justify', 'text_align_last': 'start'}),
+    ('text-align: justify-all', {
+        'text_align_all': 'justify', 'text_align_last': 'justify'}),
+    ('text-align: inherit', {
+        'text_align_all': 'inherit', 'text_align_last': 'inherit'}),
+))
+def test_text_align(rule, result):
+    assert expand_to_dict(rule) == result
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, reason', (
+    ('text-align: none', 'invalid'),
+    ('text-align: start end', 'invalid'),
+    ('text-align: 1', 'invalid'),
+))
+def test_text_align_invalid(rule, reason):
     assert_invalid(rule, reason)

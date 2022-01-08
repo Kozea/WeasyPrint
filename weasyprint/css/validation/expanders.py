@@ -8,9 +8,10 @@
 
 import functools
 
+from tinycss2.ast import DimensionToken, IdentToken, NumberToken
 from tinycss2.color3 import parse_color
 
-from ..properties import INITIAL_VALUES, Dimension
+from ..properties import INITIAL_VALUES
 from ..utils import (
     InvalidValues, get_keyword, get_single_keyword, split_on_comma)
 from .descriptors import expand_font_variant
@@ -24,11 +25,6 @@ from .properties import (
     validate_non_shorthand)
 
 EXPANDERS = {}
-
-
-class AutoFakeToken:
-    type = 'ident'
-    lower_value = 'auto'
 
 
 def expander(property_name):
@@ -71,47 +67,6 @@ def expand_four_sides(base_url, name, tokens):
         # to yield (name, value)
         result, = validate_non_shorthand(
             base_url, new_name, [token], required=True)
-        yield result
-
-
-@expander('border-radius')
-def border_radius(base_url, name, tokens):
-    """Validator for the ``border-radius`` property."""
-    current = horizontal = []
-    vertical = []
-    for token in tokens:
-        if token.type == 'literal' and token.value == '/':
-            if current is horizontal:
-                if token == tokens[-1]:
-                    raise InvalidValues('Expected value after "/" separator')
-                else:
-                    current = vertical
-            else:
-                raise InvalidValues('Expected only one "/" separator')
-        else:
-            current.append(token)
-
-    if not vertical:
-        vertical = horizontal[:]
-
-    for values in horizontal, vertical:
-        # Make sure we have 4 tokens
-        if len(values) == 1:
-            values *= 4
-        elif len(values) == 2:
-            values *= 2  # (br, bl) defaults to (tl, tr)
-        elif len(values) == 3:
-            values.append(values[1])  # bl defaults to tr
-        elif len(values) != 4:
-            raise InvalidValues(
-                f'Expected 1 to 4 token components got {len(values)}')
-    corners = ('top-left', 'top-right', 'bottom-right', 'bottom-left')
-    for corner, tokens in zip(corners, zip(horizontal, vertical)):
-        new_name = f'border-{corner}-radius'
-        # validate_non_shorthand returns [(name, value)], we want
-        # to yield (name, value)
-        result, = validate_non_shorthand(
-            base_url, new_name, tokens, required=True)
         yield result
 
 
@@ -169,6 +124,48 @@ def generic_expander(*expanded_names, **kwargs):
                 yield actual_new_name, value
         return generic_expander_wrapper
     return generic_expander_decorator
+
+
+@expander('border-radius')
+@generic_expander(
+    'border-top-left-radius', 'border-top-right-radius',
+    'border-bottom-right-radius', 'border-bottom-left-radius',
+    wants_base_url=True)
+def border_radius(name, tokens, base_url):
+    """Validator for the ``border-radius`` property."""
+    current = horizontal = []
+    vertical = []
+    for token in tokens:
+        if token.type == 'literal' and token.value == '/':
+            if current is horizontal:
+                if token == tokens[-1]:
+                    raise InvalidValues('Expected value after "/" separator')
+                else:
+                    current = vertical
+            else:
+                raise InvalidValues('Expected only one "/" separator')
+        else:
+            current.append(token)
+
+    if not vertical:
+        vertical = horizontal[:]
+
+    for values in horizontal, vertical:
+        # Make sure we have 4 tokens
+        if len(values) == 1:
+            values *= 4
+        elif len(values) == 2:
+            values *= 2  # (br, bl) defaults to (tl, tr)
+        elif len(values) == 3:
+            values.append(values[1])  # bl defaults to tr
+        elif len(values) != 4:
+            raise InvalidValues(
+                f'Expected 1 to 4 token components got {len(values)}')
+    corners = ('top-left', 'top-right', 'bottom-right', 'bottom-left')
+    for corner, tokens in zip(corners, zip(horizontal, vertical)):
+        new_name = f'border-{corner}-radius'
+        validate_non_shorthand(base_url, new_name, tokens, required=True)
+        yield new_name, tokens
 
 
 @expander('list-style')
@@ -349,46 +346,46 @@ def expand_background(base_url, name, tokens):
 
 
 @expander('text-decoration')
-def expand_text_decoration(base_url, name, tokens):
+@generic_expander('-line', '-color', '-style')
+def expand_text_decoration(name, tokens):
     """Expand the ``text-decoration`` shorthand property."""
-    text_decoration_line = set()
-    text_decoration_color = None
-    text_decoration_style = None
+    text_decoration_line = []
+    text_decoration_color = []
+    text_decoration_style = []
+    none_in_line = False
 
     for token in tokens:
         keyword = get_keyword(token)
         if keyword in (
                 'none', 'underline', 'overline', 'line-through', 'blink'):
-            text_decoration_line.add(keyword)
+            text_decoration_line.append(token)
+            if none_in_line:
+                raise InvalidValues
+            elif keyword == 'none':
+                none_in_line = True
         elif keyword in ('solid', 'double', 'dotted', 'dashed', 'wavy'):
-            if text_decoration_style is not None:
+            if text_decoration_style:
                 raise InvalidValues
             else:
-                text_decoration_style = keyword
+                text_decoration_style.append(token)
         else:
             color = parse_color(token)
             if color is None:
                 raise InvalidValues
-            elif text_decoration_color is not None:
+            elif text_decoration_color:
                 raise InvalidValues
             else:
-                text_decoration_color = color
+                text_decoration_color.append(token)
 
-    if 'none' in text_decoration_line:
-        if len(text_decoration_line) != 1:
-            raise InvalidValues
-        text_decoration_line = 'none'
-    elif not text_decoration_line:
-        text_decoration_line = 'none'
-
-    yield 'text_decoration_line', text_decoration_line
-    yield 'text_decoration_color', text_decoration_color or 'currentColor'
-    yield 'text_decoration_style', text_decoration_style or 'solid'
+    if text_decoration_line:
+        yield '-line', text_decoration_line
+    if text_decoration_color:
+        yield '-color', text_decoration_color
+    if text_decoration_style:
+        yield '-style', text_decoration_style
 
 
-@expander('page-break-after')
-@expander('page-break-before')
-def expand_page_break_before_after(base_url, name, tokens):
+def expand_page_break_before_after(name, tokens):
     """Expand legacy ``page-break-before`` and ``page-break-after`` properties.
 
     See https://www.w3.org/TR/css-break-3/#page-break-properties
@@ -397,15 +394,40 @@ def expand_page_break_before_after(base_url, name, tokens):
     keyword = get_single_keyword(tokens)
     new_name = name.split('-', 1)[1]
     if keyword in ('auto', 'left', 'right', 'avoid'):
-        yield new_name, keyword
+        yield new_name, tokens
     elif keyword == 'always':
-        yield new_name, 'page'
+        token = IdentToken(
+            tokens[0].source_line, tokens[0].source_column, 'page')
+        yield new_name, [token]
     else:
         raise InvalidValues
 
 
+@expander('page-break-after')
+@generic_expander('break-after')
+def expand_page_break_after(name, tokens):
+    """Expand legacy ``page-break-after`` property.
+
+    See https://www.w3.org/TR/css-break-3/#page-break-properties
+
+    """
+    return expand_page_break_before_after(name, tokens)
+
+
+@expander('page-break-before')
+@generic_expander('break-before')
+def expand_page_break_before(name, tokens):
+    """Expand legacy ``page-break-before`` property.
+
+    See https://www.w3.org/TR/css-break-3/#page-break-properties
+
+    """
+    return expand_page_break_before_after(name, tokens)
+
+
 @expander('page-break-inside')
-def expand_page_break_inside(base_url, name, tokens):
+@generic_expander('break-inside')
+def expand_page_break_inside(name, tokens):
     """Expand the legacy ``page-break-inside`` property.
 
     See https://www.w3.org/TR/css-break-3/#page-break-properties
@@ -413,7 +435,7 @@ def expand_page_break_inside(base_url, name, tokens):
     """
     keyword = get_single_keyword(tokens)
     if keyword in ('auto', 'avoid'):
-        yield 'break-inside', keyword
+        yield 'break-inside', tokens
     else:
         raise InvalidValues
 
@@ -435,7 +457,9 @@ def expand_columns(name, tokens):
         yield name, [token]
     if len(tokens) == 1:
         name = 'column-width' if name == 'column-count' else 'column-count'
-        yield name, [AutoFakeToken()]
+        token = IdentToken(
+            tokens[0].source_line, tokens[0].source_column, 'auto')
+        yield name, [token]
 
 
 @expander('font-variant')
@@ -524,29 +548,35 @@ def expand_font(name, tokens):
 
 
 @expander('word-wrap')
-def expand_word_wrap(base_url, name, tokens):
+@generic_expander('overflow-wrap')
+def expand_word_wrap(name, tokens):
     """Expand the ``word-wrap`` legacy property.
 
-    See http://http://www.w3.org/TR/css3-text/#overflow-wrap
+    See http://www.w3.org/TR/css3-text/#overflow-wrap
 
     """
     keyword = overflow_wrap(tokens)
     if keyword is None:
         raise InvalidValues
 
-    yield 'overflow-wrap', keyword
+    if len(tokens) == 1:
+        yield 'overflow-wrap', tokens
 
 
 @expander('flex')
-def expand_flex(base_url, name, tokens):
+@generic_expander('-grow', '-shrink', '-basis')
+def expand_flex(name, tokens):
     """Expand the ``flex`` property."""
     keyword = get_single_keyword(tokens)
     if keyword == 'none':
-        yield 'flex-grow', 0
-        yield 'flex-shrink', 0
-        yield 'flex-basis', 'auto'
+        line, column = tokens[0].source_line, tokens[0].source_column
+        zero_token = NumberToken(line, column, 0, 0, '0')
+        auto_token = IdentToken(line, column, 'auto')
+        yield '-grow', [zero_token]
+        yield '-shrink', [zero_token]
+        yield '-basis', [auto_token]
     else:
-        grow, shrink, basis = 1, 1, Dimension(0, 'px')
+        grow, shrink, basis = 1, 1, None
         grow_found, shrink_found, basis_found = False, False, False
         for token in tokens:
             # "A unitless zero that is not already preceded by two flex factors
@@ -557,7 +587,7 @@ def expand_flex(base_url, name, tokens):
             if not basis_found and not forced_flex_factor:
                 new_basis = flex_basis([token])
                 if new_basis is not None:
-                    basis = new_basis
+                    basis = token
                     basis_found = True
                     continue
             if not grow_found:
@@ -578,32 +608,41 @@ def expand_flex(base_url, name, tokens):
                     continue
             else:
                 raise InvalidValues
-        yield 'flex-grow', grow
-        yield 'flex-shrink', shrink
-        yield 'flex-basis', basis
+        line, column = tokens[0].source_line, tokens[0].source_column
+        int_grow = int(grow) if float(grow).is_integer() else None
+        int_shrink = int(shrink) if float(shrink).is_integer() else None
+        grow_token = NumberToken(line, column, grow, int_grow, str(grow))
+        shrink_token = NumberToken(
+            line, column, shrink, int_shrink, str(shrink))
+        if not basis_found:
+            basis = DimensionToken(line, column, 0, 0, '0', 'px')
+        yield '-grow', [grow_token]
+        yield '-shrink', [shrink_token]
+        yield '-basis', [basis]
 
 
 @expander('flex-flow')
-def expand_flex_flow(base_url, name, tokens):
+@generic_expander('flex-direction', 'flex-wrap')
+def expand_flex_flow(name, tokens):
     """Expand the ``flex-flow`` property."""
     if len(tokens) == 2:
         for sorted_tokens in tokens, tokens[::-1]:
             direction = flex_direction([sorted_tokens[0]])
             wrap = flex_wrap([sorted_tokens[1]])
             if direction and wrap:
-                yield 'flex-direction', direction
-                yield 'flex-wrap', wrap
+                yield 'flex-direction', [sorted_tokens[0]]
+                yield 'flex-wrap', [sorted_tokens[1]]
                 break
         else:
             raise InvalidValues
     elif len(tokens) == 1:
         direction = flex_direction([tokens[0]])
         if direction:
-            yield 'flex-direction', direction
+            yield 'flex-direction', [tokens[0]]
         else:
             wrap = flex_wrap([tokens[0]])
             if wrap:
-                yield 'flex-wrap', wrap
+                yield 'flex-wrap', [tokens[0]]
             else:
                 raise InvalidValues
     else:
@@ -611,18 +650,25 @@ def expand_flex_flow(base_url, name, tokens):
 
 
 @expander('line-clamp')
-def expand_line_clamp(base_url, name, tokens):
+@generic_expander('max-lines', 'continue', 'block-ellipsis')
+def expand_line_clamp(name, tokens):
     """Expand the ``line-clamp`` property."""
     if len(tokens) == 1:
         keyword = get_single_keyword(tokens)
         if keyword == 'none':
-            yield 'max_lines', 'none'
-            yield 'continue', 'auto'
-            yield 'block-ellipsis', 'none'
+            line, column = tokens[0].source_line, tokens[0].source_column
+            none_token = IdentToken(line, column, 'none')
+            auto_token = IdentToken(line, column, 'auto')
+            yield 'max-lines', [none_token]
+            yield 'continue', [auto_token]
+            yield 'block-ellipsis', [none_token]
         elif tokens[0].type == 'number' and tokens[0].int_value is not None:
-            yield 'max_lines', tokens[0].int_value
-            yield 'continue', 'discard'
-            yield 'block-ellipsis', 'auto'
+            line, column = tokens[0].source_line, tokens[0].source_column
+            auto_token = IdentToken(line, column, 'auto')
+            discard_token = IdentToken(line, column, 'discard')
+            yield 'max-lines', [tokens[0]]
+            yield 'continue', [discard_token]
+            yield 'block-ellipsis', [auto_token]
         else:
             raise InvalidValues
     elif len(tokens) == 2:
@@ -630,9 +676,11 @@ def expand_line_clamp(base_url, name, tokens):
             max_lines = tokens[0].int_value
             ellipsis = block_ellipsis([tokens[1]])
             if max_lines and ellipsis is not None:
-                yield 'max_lines', tokens[0].value
-                yield 'continue', 'discard'
-                yield 'block-ellipsis', ellipsis
+                line, column = tokens[0].source_line, tokens[0].source_column
+                discard_token = IdentToken(line, column, 'discard')
+                yield 'max-lines', [tokens[0]]
+                yield 'continue', [discard_token]
+                yield 'block-ellipsis', [tokens[1]]
             else:
                 raise InvalidValues
         else:
@@ -642,13 +690,22 @@ def expand_line_clamp(base_url, name, tokens):
 
 
 @expander('text-align')
-def expand_text_align(base_url, name, tokens):
+@generic_expander('-all', '-last')
+def expand_text_align(name, tokens):
     """Expand the ``text-align`` property."""
     if len(tokens) == 1:
         keyword = get_single_keyword(tokens)
-        align_all = 'justify' if keyword == 'justify-all' else keyword
-        yield 'text_align_all', align_all
-        align_last = 'start' if keyword == 'justify' else align_all
-        yield 'text_align_last', align_last
+        if keyword == 'justify-all':
+            line, column = tokens[0].source_line, tokens[0].source_column
+            align_all = IdentToken(line, column, 'justify')
+        else:
+            align_all = tokens[0]
+        yield '-all', [align_all]
+        if keyword == 'justify':
+            line, column = tokens[0].source_line, tokens[0].source_column
+            align_last = IdentToken(line, column, 'start')
+        else:
+            align_last = align_all
+        yield '-last', [align_last]
     else:
         raise InvalidValues
