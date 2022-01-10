@@ -305,8 +305,8 @@ def absolute_box_layout(context, box, containing_block, fixed_boxes,
             bottom_space, skip_stack)
     elif isinstance(box, boxes.FlexContainerBox):
         new_box, resume_at = absolute_flex(
-            context, box, containing_block, fixed_boxes,
-            bottom_space, skip_stack, original_containing_block)
+            context, box, original_containing_block, fixed_boxes,
+            bottom_space, skip_stack, containing_block)
     else:
         assert isinstance(box, boxes.BlockReplacedBox)
         new_box = absolute_replaced(context, box, containing_block)
