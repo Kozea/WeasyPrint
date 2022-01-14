@@ -1360,3 +1360,25 @@ def test_running_img():
       </style>
       <img src="pattern.png" />
     ''')
+
+
+@pytest.mark.xfail
+@assert_no_logs
+def test_running_absolute():
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1540
+    render_pages('''
+      <style>
+        footer {
+          position: running(footer);
+        }
+        p {
+          position: absolute;
+        }
+        @page {
+          @bottom-center {
+            content: element(footer);
+          }
+        }
+      </style>
+      <footer>Hello!<p>Bonjour!</p></footer>
+    ''')
