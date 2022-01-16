@@ -259,6 +259,7 @@ missing or different values (``text-indent``, ``text-align``,
 New properties defined in Level 3 are supported:
 
 - the ``overflow-wrap`` property replacing ``word-wrap``;
+- the ``break-all`` value of the ``word-break`` property (see `#1153`_);
 - the ``full-width`` value of the ``text-transform`` property; and
 - the ``tab-size`` property.
 
@@ -292,7 +293,7 @@ Automatic hyphenation can be disabled again with the ``manual`` value:
 The other features provided by `CSS Text Module Level 3`_ are **not**
 supported:
 
-- the ``line-break`` and ``word-break`` properties;
+- the ``line-break`` property;
 - the ``start``, ``end``, ``match-parent`` and ``start end`` values of the
   ``text-align`` property;
 - the ``text-align-last`` and ``text-justify`` properties; and
@@ -308,6 +309,7 @@ supported:
 - the ``pre-wrap-auto`` value of the ``white-space`` property; and
 - the ``text-spacing`` property.
 
+.. _#1153: https://github.com/Kozea/WeasyPrint/issues/1153
 .. _supported by Pyphen: https://github.com/Kozea/Pyphen/tree/master/pyphen/dictionaries
 .. _hyphenation: http://www.w3.org/TR/css3-text/#hyphenation
 .. _CSS Text Module Level 3: https://www.w3.org/TR/css-text-3/
