@@ -302,7 +302,7 @@ def create_layout(text, style, context, max_width, justification_spacing):
 
 
 def split_first_line(text, style, context, max_width, justification_spacing,
-                     minimum=False):
+                     is_line_start=True, minimum=False):
     """Fit as much as possible in the available width for one line of text.
 
     Return ``(layout, length, resume_index, width, height, baseline)``.
@@ -545,8 +545,12 @@ def split_first_line(text, style, context, max_width, justification_spacing,
     first_line_width, _ = line_size(first_line, style)
     space = max_width - first_line_width
     # If we can break words and the first line is too long
-    if space < 0 and (overflow_wrap == 'anywhere' or
-                      (overflow_wrap == 'break-word' and not minimum)):
+    if space < 0 and ((style['word_break'] == 'break-all') or
+                      (is_line_start and
+                       (
+                        overflow_wrap == 'anywhere' or
+                        (overflow_wrap == 'break-word' and not minimum)
+                       ))):
         # Is it really OK to remove hyphenation for word-break ?
         hyphenated = False
         # TODO: Modify code to preserve W3C condition:
