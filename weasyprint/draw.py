@@ -378,8 +378,10 @@ def draw_background_image(stream, layer, image_rendering):
 
     if repeat_x == 'no-repeat':
         # We want at least the whole image_width drawn on sub_surface, but we
-        # want to be sure it will not be repeated on the painting_width.
-        repeat_width = max(image_width, painting_width)
+        # want to be sure it will not be repeated on the painting_width. We
+        # double the painting width to ensure viewers don't incorrectly bleed
+        # the edge of the pattern into the painting area. (See #1539.)
+        repeat_width = max(image_width, 2 * painting_width)
     elif repeat_x in ('repeat', 'round'):
         # We repeat the image each image_width.
         repeat_width = image_width
@@ -399,7 +401,7 @@ def draw_background_image(stream, layer, image_rendering):
 
     # Comments above apply here too.
     if repeat_y == 'no-repeat':
-        repeat_height = max(image_height, painting_height)
+        repeat_height = max(image_height, 2 * painting_height)
     elif repeat_y in ('repeat', 'round'):
         repeat_height = image_height
     else:
@@ -411,11 +413,6 @@ def draw_background_image(stream, layer, image_rendering):
             position_y = 0
         else:
             repeat_height = image_height
-
-    if repeat_x == repeat_y == 'no-repeat':
-        # PDF patterns always repeat, use a big number to hide repetition
-        repeat_width = 2 * stream.page_rectangle[2]
-        repeat_height = 2 * stream.page_rectangle[3]
 
     matrix = Matrix(e=position_x + positioning_x, f=position_y + positioning_y)
     matrix @= stream.ctm
