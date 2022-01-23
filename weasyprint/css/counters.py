@@ -9,8 +9,6 @@
 
 """
 
-from copy import deepcopy
-
 from .utils import remove_whitespace
 
 
@@ -298,4 +296,5 @@ class CounterStyle(dict):
         return prefix + value + suffix
 
     def copy(self):
-        return CounterStyle(deepcopy(self))
+        # Values are dicts but they are never modified, no need to deepcopy
+        return CounterStyle(super().copy())
