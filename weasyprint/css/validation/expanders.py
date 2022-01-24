@@ -695,6 +695,8 @@ def expand_text_align(name, tokens):
     """Expand the ``text-align`` property."""
     if len(tokens) == 1:
         keyword = get_single_keyword(tokens)
+        if keyword is None:
+            raise InvalidValues
         if keyword == 'justify-all':
             line, column = tokens[0].source_line, tokens[0].source_column
             align_all = IdentToken(line, column, 'justify')
