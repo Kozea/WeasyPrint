@@ -7,6 +7,7 @@
 """
 
 import re
+from math import inf
 
 import pyphen
 
@@ -328,8 +329,7 @@ def split_first_line(text, style, context, max_width, justification_spacing,
 
     # Step #1: Get a draft layout with the first line
     layout = None
-    if (max_width is not None and max_width != float('inf') and
-            style['font_size']):
+    if max_width is not None and max_width != inf and style['font_size']:
         if max_width == 0:
             # Trying to find minimum size, let's naively split on spaces and
             # keep one word + one letter

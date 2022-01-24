@@ -9,6 +9,7 @@
 import math
 from io import BytesIO
 from itertools import cycle
+from math import inf
 from xml.etree import ElementTree
 
 import pydyf
@@ -43,7 +44,7 @@ class RasterImage:
         self._intrinsic_height = pillow_image.height
         self._intrinsic_ratio = (
             self._intrinsic_width / self._intrinsic_height
-            if self._intrinsic_height != 0 else float('inf'))
+            if self._intrinsic_height != 0 else inf)
 
     def get_intrinsic_size(self, image_resolution, font_size):
         return (

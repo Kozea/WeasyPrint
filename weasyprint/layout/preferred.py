@@ -11,6 +11,7 @@
 """
 
 import sys
+from math import inf
 
 from ..formatting_structure import boxes
 from ..text.line_break import split_first_line
@@ -114,7 +115,7 @@ def min_max(box, width):
     else:
         min_width = min_width.value
     if max_width == 'auto' or max_width.unit == '%':
-        max_width = float('inf')
+        max_width = inf
     else:
         max_width = max_width.value
 
@@ -352,7 +353,7 @@ def _percentage_contribution(box):
         box.style['min_width'].unit == '%' else 0)
     max_width = (
         box.style['max_width'].value if box.style['max_width'] != 'auto' and
-        box.style['max_width'].unit == '%' else float('inf'))
+        box.style['max_width'].unit == '%' else inf)
     width = (
         box.style['width'].value if box.style['width'] != 'auto' and
         box.style['width'].unit == '%' else 0)

@@ -6,6 +6,8 @@
 
 """
 
+from math import inf
+
 import tinycss2
 
 from ...logger import LOGGER
@@ -282,7 +284,7 @@ def range(tokens):
         values = []
         for i, token in enumerate(tokens):
             if token.type == 'ident' and token.value == 'infinite':
-                values.append(float('inf') if i else -float('inf'))
+                values.append(inf if i else -inf)
             elif token.type == 'number' and token.is_integer:
                 values.append(token.int_value)
         if len(values) == 2 and values[0] <= values[1]:

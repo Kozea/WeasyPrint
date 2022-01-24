@@ -7,6 +7,7 @@
 """
 
 import unicodedata
+from math import inf
 
 from ..css import computed_from_cascaded
 from ..css.computed_values import ex_ratio, strut_layout
@@ -406,7 +407,7 @@ def inline_block_box_layout(context, box, position_x, skip_stack,
     box.position_x = position_x
     box.position_y = 0
     box, _, _, _, _ = block_container_layout(
-        context, box, bottom_space=-float('inf'), skip_stack=skip_stack,
+        context, box, bottom_space=-inf, skip_stack=skip_stack,
         page_is_empty=True, absolute_boxes=absolute_boxes,
         fixed_boxes=fixed_boxes, adjoining_margins=None, discard=False)
     box.baseline = inline_block_baseline(box)
@@ -517,8 +518,8 @@ def split_inline_level(context, box, position_x, max_x, bottom_space,
             if getattr(box, f'margin_{side}') == 'auto':
                 setattr(box, f'margin_{side}', 0)
         new_box, resume_at, _, _, _ = flex_layout(
-            context, box, -float('inf'), skip_stack, containing_block,
-            False, absolute_boxes, fixed_boxes)
+            context, box, -inf, skip_stack, containing_block, False,
+            absolute_boxes, fixed_boxes)
         preserved_line_break = False
         first_letter = '\u2e80'
         last_letter = '\u2e80'
@@ -1164,8 +1165,7 @@ def add_word_spacing(context, box, justification_spacing, x_advance):
         nb_spaces = count_spaces(box)
         if nb_spaces > 0:
             layout = create_layout(
-                box.text, box.style, context, -float('inf'),
-                box.justification_spacing)
+                box.text, box.style, context, -inf, box.justification_spacing)
             layout.deactivate()
             extra_space = justification_spacing * nb_spaces
             x_advance += extra_space

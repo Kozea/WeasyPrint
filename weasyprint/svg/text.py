@@ -6,7 +6,7 @@
 
 """
 
-from math import cos, radians, sin
+from math import cos, inf, radians, sin
 
 from .bounding_box import EMPTY_BOUNDING_BOX, extend_bounding_box
 from .utils import normalize, size
@@ -44,7 +44,7 @@ def text(svg, node, font_size):
             style['font_weight'] = 400
 
     layout, _, _, width, height, _ = split_first_line(
-        node.text, style, svg.context, float('inf'), 0)
+        node.text, style, svg.context, inf, 0)
     # TODO: get real values
     x_bearing, y_bearing = 0, 0
 
@@ -132,7 +132,7 @@ def text(svg, node, font_size):
         svg.cursor_d_position[0] += dx or 0
         svg.cursor_d_position[1] += dy or 0
         layout, _, _, width, height, _ = split_first_line(
-            letter, style, svg.context, float('inf'), 0)
+            letter, style, svg.context, inf, 0)
         svg.stream.push_state()
         x = svg.cursor_position[0] if x is None else x
         y = svg.cursor_position[1] if y is None else y

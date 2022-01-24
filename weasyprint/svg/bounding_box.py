@@ -6,12 +6,12 @@
 
 """
 
-from math import atan, atan2, cos, isinf, pi, radians, sin, sqrt, tan
+from math import atan, atan2, cos, inf, isinf, pi, radians, sin, sqrt, tan
 
 from .path import PATH_LETTERS
 from .utils import normalize, point
 
-EMPTY_BOUNDING_BOX = float('inf'), float('inf'), 0, 0
+EMPTY_BOUNDING_BOX = inf, inf, 0, 0
 
 
 def bounding_box(svg, node, font_size, stroke):
@@ -332,8 +332,8 @@ def extend_bounding_box(bounding_box, points):
     """Extend a bounding box to include given points."""
     minx, miny, width, height = bounding_box
     maxx, maxy = (
-        float('-inf') if isinf(minx) else minx + width,
-        float('-inf') if isinf(miny) else miny + height)
+        -inf if isinf(minx) else minx + width,
+        -inf if isinf(miny) else miny + height)
     x_list, y_list = zip(*points)
     minx, miny, maxx, maxy = (
         min(minx, *x_list), min(miny, *y_list),

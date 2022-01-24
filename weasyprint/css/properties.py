@@ -7,6 +7,7 @@
 """
 
 import collections
+from math import inf
 
 from tinycss2.color3 import parse_color
 
@@ -31,8 +32,8 @@ INITIAL_VALUES = {
     'margin_right': Dimension(0, 'px'),
     'margin_bottom': Dimension(0, 'px'),
     'margin_left': Dimension(0, 'px'),
-    'max_height': Dimension(float('inf'), 'px'),  # parsed value for 'none'
-    'max_width': Dimension(float('inf'), 'px'),
+    'max_height': Dimension(inf, 'px'),  # parsed value for 'none'
+    'max_width': Dimension(inf, 'px'),
     'padding_top': Dimension(0, 'px'),
     'padding_right': Dimension(0, 'px'),
     'padding_bottom': Dimension(0, 'px'),
