@@ -84,6 +84,8 @@ class Box:
     string_set = None
     download_name = None
     footnote = None
+    cached_counter_values = None
+    missing_link = None
 
     # Default, overriden on some subclasses
     def all_children(self):

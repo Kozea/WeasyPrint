@@ -6,6 +6,8 @@
 
 """
 
+from math import inf
+
 from ..formatting_structure import boxes
 
 
@@ -88,8 +90,7 @@ def resolve_percentages(box, containing_block, main_flex_direction=None):
             assert height.unit == 'px'
             box.height = height.value
         resolve_one_percentage(box, 'min_height', 0, main_flex_direction)
-        resolve_one_percentage(
-            box, 'max_height', float('inf'), main_flex_direction)
+        resolve_one_percentage(box, 'max_height', inf, main_flex_direction)
     else:
         resolve_one_percentage(box, 'height', cb_height)
         resolve_one_percentage(

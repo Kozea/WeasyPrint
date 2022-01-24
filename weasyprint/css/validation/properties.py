@@ -7,6 +7,8 @@
 
 """
 
+from math import inf
+
 from tinycss2.color3 import parse_color
 
 from .. import computed_values
@@ -1005,7 +1007,7 @@ def max_width_height(token):
     if length:
         return length
     if get_keyword(token) == 'none':
-        return Dimension(float('inf'), 'px')
+        return Dimension(inf, 'px')
 
 
 @property()

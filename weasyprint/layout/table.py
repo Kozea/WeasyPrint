@@ -6,6 +6,8 @@
 
 """
 
+from math import inf
+
 from ..formatting_structure import boxes
 from ..logger import LOGGER
 from .percent import resolve_one_percentage, resolve_percentages
@@ -271,7 +273,7 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                             break
                     else:
                         # No cell was displayed, give up row
-                        next_position_y = float('inf')
+                        next_position_y = inf
                         page_is_empty = False
                         resume_at = None
                 else:
@@ -415,7 +417,7 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
         if page_is_empty:
             header_footer_bottom_space = bottom_space
         else:
-            header_footer_bottom_space = -float('inf')
+            header_footer_bottom_space = -inf
 
         if table.children and table.children[0].is_header:
             header = table.children[0]

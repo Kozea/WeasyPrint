@@ -6,7 +6,7 @@
 
 """
 
-from math import floor
+from math import floor, inf
 
 from .absolute import absolute_layout
 from .percent import resolve_percentages
@@ -142,7 +142,7 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
         column_box = create_column_box(column_children)
         column_box.position_y = current_position_y
         new_child, _, _, _, _ = block_box_layout(
-            context, column_box, -float('inf'), skip_stack, containing_block,
+            context, column_box, -inf, skip_stack, containing_block,
             page_is_empty, [], [], [], discard=False)
         height = new_child.margin_height()
         if style['column_fill'] == 'balance':
@@ -151,7 +151,7 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
         # Try to render columns until the content fits, increase the column
         # height step by step.
         column_skip_stack = skip_stack
-        lost_space = float('inf')
+        lost_space = inf
         while True:
             # Remove extra excluded shapes introduced during previous loop
             new_excluded_shapes = (
@@ -219,7 +219,7 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
                 # We rendered the whole content, stop
                 break
             else:
-                if lost_space == float('inf'):
+                if lost_space == inf:
                     # We didn't find the extra size needed to render a child in
                     # the previous column, increase height by the minimal
                     # value.

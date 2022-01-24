@@ -6,6 +6,8 @@
 
 """
 
+from math import inf
+
 from ..formatting_structure import boxes
 from .absolute import AbsolutePlaceholder, absolute_layout
 from .column import columns_layout
@@ -731,7 +733,7 @@ def block_container_layout(context, box, bottom_space, skip_stack,
         # new_box.height
         new_box.height = max(
             min(new_box.height, new_box.max_height), new_box.min_height)
-    elif bottom_space > -float('inf'):
+    elif bottom_space > -inf:
         # Make the box fill the blank space at the bottom of the page
         # https://www.w3.org/TR/css-break-3/#box-splitting
         new_box.height = (

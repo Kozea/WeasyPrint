@@ -7,6 +7,7 @@
 """
 
 import copy
+from math import inf
 
 from ..css import PageType, computed_from_cascaded
 from ..formatting_structure import boxes, build
@@ -434,9 +435,9 @@ def make_margin_boxes(context, page, state):
 def margin_box_content_layout(context, page, box):
     """Layout a margin box’s content once the box has dimensions."""
     box, resume_at, next_page, _, _ = block_container_layout(
-        context, box, bottom_space=-float('inf'), skip_stack=None,
-        page_is_empty=True, absolute_boxes=[], fixed_boxes=[],
-        adjoining_margins=None, discard=False)
+        context, box, bottom_space=-inf, skip_stack=None, page_is_empty=True,
+        absolute_boxes=[], fixed_boxes=[], adjoining_margins=None,
+        discard=False)
     assert resume_at is None
 
     vertical_align = box.style['vertical_align']
@@ -556,8 +557,8 @@ def make_page(context, root_box, page_type, resume_at, page_number,
         reported_footnote_area = build.create_anonymous_boxes(
             footnote_area.deepcopy())
         reported_footnote_area, _, _, _, _ = block_level_layout(
-            context, reported_footnote_area, -float('inf'), None,
-            footnote_area.page, True, [], [], [], False)
+            context, reported_footnote_area, -inf, None, footnote_area.page,
+            True, [], [], [], False)
         footnote_area.height = reported_footnote_area.height
         context.page_bottom -= reported_footnote_area.margin_height()
 
@@ -599,8 +600,8 @@ def make_page(context, root_box, page_type, resume_at, page_number,
 
     footnote_area = build.create_anonymous_boxes(footnote_area.deepcopy())
     footnote_area, _, _, _, _ = block_level_layout(
-        context, footnote_area, -float('inf'), None, footnote_area.page,
-        True, [], [], [], False)
+        context, footnote_area, -inf, None, footnote_area.page, True, [], [],
+        [], False)
     footnote_area.translate(dy=-footnote_area.margin_height())
 
     context.finish_block_formatting_context(root_box)
@@ -643,8 +644,7 @@ def make_page(context, root_box, page_type, resume_at, page_number,
         # string-set and bookmark-labels don't create boxes, only `content`
         # requires another call to make_page. There is maximum one 'content'
         # item per box.
-        # TODO: remove attribute or set a default value in Box class
-        if hasattr(child, 'missing_link'):
+        if child.missing_link:
             # A CounterLookupItem exists for the css-token 'content'
             counter_lookup = target_collector.counter_lookup_items.get(
                 (child.missing_link, 'content'))

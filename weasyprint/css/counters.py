@@ -9,6 +9,8 @@
 
 """
 
+from math import inf
+
 from .utils import remove_whitespace
 
 
@@ -152,7 +154,7 @@ class CounterStyle(dict):
 
         # Step 2
         if counter['range'] in ('auto', None):
-            min_range, max_range = -float('inf'), float('inf')
+            min_range, max_range = -inf, inf
             if system in ('alphabetic', 'symbolic'):
                 min_range = 1
             elif system == 'additive':
