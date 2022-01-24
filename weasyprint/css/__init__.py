@@ -1041,10 +1041,10 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                 'symbols': None,
                 'additive_symbols': None,
             }
-            rule_descriptors = dict(
-                preprocess_descriptors('counter-style', base_url, content))
+            rule_descriptors = preprocess_descriptors(
+                'counter-style', base_url, content)
 
-            for descriptor_name, descriptor_value in rule_descriptors.items():
+            for descriptor_name, descriptor_value in rule_descriptors:
                 counter[descriptor_name] = descriptor_value
 
             if counter['system'] is None:

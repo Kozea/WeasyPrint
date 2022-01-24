@@ -1349,7 +1349,8 @@ class Document:
                     ttfont = TTFont(full_font, fontNumber=fonts[0].index)
                     options = subset.Options(
                         retain_gids=True, passthrough_tables=True,
-                        ignore_missing_glyphs=True, notdef_glyph=True)
+                        ignore_missing_glyphs=True, hinting=False)
+                    options.drop_tables += ['GSUB', 'GPOS']
                     subsetter = subset.Subsetter(options)
                     subsetter.populate(gids=cmap)
                     subsetter.subset(ttfont)
