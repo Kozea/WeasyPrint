@@ -1362,7 +1362,6 @@ def test_running_img():
     ''')
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_running_absolute():
     # Test regression: https://github.com/Kozea/WeasyPrint/issues/1540
