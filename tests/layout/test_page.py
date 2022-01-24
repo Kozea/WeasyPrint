@@ -1342,3 +1342,42 @@ def test_running_elements_display():
         getattr(node, 'text', '') for node in center.descendants()) == 'block'
     assert ''.join(
         getattr(node, 'text', '') for node in right.descendants()) == 'table'
+
+
+@assert_no_logs
+def test_running_img():
+    # Test regression
+    render_pages('''
+      <style>
+        img {
+          position: running(img);
+        }
+        @page {
+          @bottom-center {
+            content: element(img);
+          }
+        }
+      </style>
+      <img src="pattern.png" />
+    ''')
+
+
+@assert_no_logs
+def test_running_absolute():
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1540
+    render_pages('''
+      <style>
+        footer {
+          position: running(footer);
+        }
+        p {
+          position: absolute;
+        }
+        @page {
+          @bottom-center {
+            content: element(footer);
+          }
+        }
+      </style>
+      <footer>Hello!<p>Bonjour!</p></footer>
+    ''')

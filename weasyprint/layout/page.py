@@ -434,11 +434,16 @@ def make_margin_boxes(context, page, state):
 
 def margin_box_content_layout(context, page, box):
     """Layout a margin box’s content once the box has dimensions."""
+    positioned_boxes = []
     box, resume_at, next_page, _, _ = block_container_layout(
         context, box, bottom_space=-inf, skip_stack=None, page_is_empty=True,
-        absolute_boxes=[], fixed_boxes=[], adjoining_margins=None,
-        discard=False)
+        absolute_boxes=positioned_boxes, fixed_boxes=positioned_boxes,
+        adjoining_margins=None, discard=False)
     assert resume_at is None
+    for absolute_box in positioned_boxes:
+        absolute_layout(
+            context, absolute_box, box, positioned_boxes, bottom_space=0,
+            skip_stack=None)
 
     vertical_align = box.style['vertical_align']
     # Every other value is read as 'top', ie. no change.
