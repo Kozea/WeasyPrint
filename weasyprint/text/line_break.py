@@ -371,8 +371,6 @@ def split_first_line(text, style, context, max_width, justification_spacing,
     # https://mail.gnome.org/archives/gtk-i18n-list/2013-September/msg00006
     # is a good thread related to this problem.
     first_line_text = text.encode('utf-8')[:index].decode('utf-8')
-    # We can’t rely on first_line_width, see
-    # https://github.com/Kozea/WeasyPrint/issues/1051
     first_line_fits = (
         first_line_width <= max_width or
         ' ' in first_line_text.strip() or
