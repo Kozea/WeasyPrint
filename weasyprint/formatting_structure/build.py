@@ -10,7 +10,6 @@
 
 """
 
-import copy
 import re
 import unicodedata
 
@@ -432,12 +431,11 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
     # Pointless to collect missing target counters in MarginBoxes.
     need_collect_missing = target_collector.collecting and not in_page_context
 
-    # TODO: remove attribute or set a default value in Box class
-    if not hasattr(parent_box, 'cached_counter_values'):
+    if parent_box.cached_counter_values is None:
         # Store the counter_values in the parent_box to make them accessible
-        # in @page context. Obsoletes the parse_again function's deepcopy.
-        # TODO: Is propbably superfluous in_page_context.
-        parent_box.cached_counter_values = copy.deepcopy(counter_values)
+        # in @page context.
+        parent_box.cached_counter_values = {
+            key: value.copy() for key, value in counter_values.items()}
     for type_, value in content_list:
         if type_ == 'string':
             add_text(value)

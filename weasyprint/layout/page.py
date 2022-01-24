@@ -643,8 +643,7 @@ def make_page(context, root_box, page_type, resume_at, page_number,
         # string-set and bookmark-labels don't create boxes, only `content`
         # requires another call to make_page. There is maximum one 'content'
         # item per box.
-        # TODO: remove attribute or set a default value in Box class
-        if hasattr(child, 'missing_link'):
+        if child.missing_link:
             # A CounterLookupItem exists for the css-token 'content'
             counter_lookup = target_collector.counter_lookup_items.get(
                 (child.missing_link, 'content'))

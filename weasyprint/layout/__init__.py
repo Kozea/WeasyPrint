@@ -178,8 +178,7 @@ def layout_document(html, root_box, context, max_loops=8):
                 else:
                     checklist.append(child.element)
 
-            # TODO: remove attribute or set a default value in Box class
-            if hasattr(child, 'missing_link'):
+            if child.missing_link:
                 for (box, css_token), item in (
                         context.target_collector.counter_lookup_items.items()):
                     if child.missing_link == box and css_token != 'content':

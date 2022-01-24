@@ -136,10 +136,10 @@ class TargetCollector:
             item.target_box = target_box
             # Store the counter_values in the target_box like
             # compute_content_list does.
-            # TODO: remove attribute or set a default value in Box class
-            if not hasattr(target_box, 'cached_counter_values'):
-                target_box.cached_counter_values = copy.deepcopy(
-                    target_counter_values)
+            if target_box.cached_counter_values is None:
+                target_box.cached_counter_values = {
+                    key: value.copy() for key, value
+                    in target_counter_values.items()}
 
     def collect_missing_counters(self, parent_box, css_token,
                                  parse_again_function, missing_counters,
@@ -158,8 +158,7 @@ class TargetCollector:
 
         # No need to add empty miss-lists
         if missing_counters or missing_target_counters:
-            # TODO: remove attribute or set a default value in Box class
-            if not hasattr(parent_box, 'missing_link'):
+            if parent_box.missing_link is None:
                 parent_box.missing_link = parent_box
             counter_lookup_item = CounterLookupItem(
                 parse_again_function, missing_counters,
