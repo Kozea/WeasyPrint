@@ -984,9 +984,7 @@ def test_overflow_wrap_2(wrap, text, body_width, expected_width):
 
 @assert_no_logs
 @pytest.mark.parametrize('wrap, text, body_width, expected_width', (
-    # TODO: broken with Pango 1.50,
-    # see https://gitlab.gnome.org/GNOME/pango/-/issues/646
-    # ('anywhere', 'aaaaaa', 10, 20),
+    ('anywhere', 'aaaaaa', 10, 20),
     ('anywhere', 'aaaaaa', 40, 40),
     ('break-word', 'aaaaaa', 40, 120),
     ('normal', 'abcdef', 40, 120),
