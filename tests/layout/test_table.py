@@ -2054,6 +2054,40 @@ def test_table_html_tag():
      ''',
      [1, 2],
      [30, 0, 40]),
+    ('''
+      <style>
+        @page { size: 120px }
+        h1 { height: 30px}
+        td { line-height: 40px }
+        table { table-layout: fixed; width: 100%; orphans: 1; widows: 1 }
+      </style>
+      <h1>Dummy title</h1>
+      <table>
+        <tr><td>r1l1</td></tr>
+        <tr style="break-inside: avoid"><td>r2l1<br>r2l2</td></tr>
+        <tr><td>r3l1</td></tr>
+      </table>
+     ''',
+     [1, 2],
+     [30, 0, 80]),
+    ('''
+      <style>
+        @page { size: 120px }
+        h1 { height: 30px}
+        td { line-height: 40px }
+        table { table-layout: fixed; width: 100%; orphans: 1; widows: 1 }
+      </style>
+      <h1>Dummy title</h1>
+      <table>
+        <tbody>
+          <tr><td>r1l1</td></tr>
+          <tr style="break-inside: avoid"><td>r2l1<br>r2l2</td></tr>
+        </tbody>
+        <tr><td>r3l1</td></tr>
+      </table>
+     ''',
+     [1, 2],
+     [30, 0, 80]),
 ))
 def test_table_page_breaks(html, rows, positions):
     pages = render_pages(html)

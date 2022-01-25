@@ -194,6 +194,11 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                     cell.height = max(cell.height, cell.computed_height)
                 new_row_children.append(cell)
 
+            if resume_at and not page_is_empty:
+                if row.style['break_inside'] in ('avoid', 'avoid-page'):
+                    resume_at = {index_row: {}}
+                    break
+
             row = row.copy_with_children(new_row_children)
 
             # Table height algorithm
