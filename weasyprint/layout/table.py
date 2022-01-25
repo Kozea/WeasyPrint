@@ -165,24 +165,17 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                 # test_table_break_children_margin.
                 new_cell, cell_resume_at, _, _, _ = block_container_layout(
                     context, cell, bottom_space, cell_skip_stack,
-                    page_is_empty=False, absolute_boxes=absolute_boxes,
+                    page_is_empty=page_is_empty, absolute_boxes=absolute_boxes,
                     fixed_boxes=fixed_boxes, adjoining_margins=None,
                     discard=False)
                 if new_cell is None:
-                    if page_is_empty:
-                        cell, cell_resume_at, _, _, _ = block_container_layout(
-                            context, cell, bottom_space, cell_skip_stack,
-                            page_is_empty=True, absolute_boxes=[],
-                            fixed_boxes=[], adjoining_margins=None,
-                            discard=False)
-                    else:
-                        cell = cell.copy_with_children([])
-                        cell, _, _, _, _ = block_container_layout(
-                            context, cell, bottom_space, cell_skip_stack,
-                            page_is_empty=True, absolute_boxes=[],
-                            fixed_boxes=[], adjoining_margins=None,
-                            discard=False)
-                        cell_resume_at = {0: None}
+                    cell = cell.copy_with_children([])
+                    cell, _, _, _, _ = block_container_layout(
+                        context, cell, bottom_space, cell_skip_stack,
+                        page_is_empty=True, absolute_boxes=[],
+                        fixed_boxes=[], adjoining_margins=None,
+                        discard=False)
+                    cell_resume_at = {0: None}
                 else:
                     cell = new_cell
 

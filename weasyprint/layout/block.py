@@ -30,15 +30,20 @@ def block_level_layout(context, box, bottom_space, skip_stack,
         if box.margin_bottom == 'auto':
             box.margin_bottom = 0
 
-        if (context.current_page > 1 and page_is_empty):
-            # TODO: we should take care of cases when this box doesn't have
-            # collapsing margins with the first child of the page, see
-            # test_margin_break_clearance.
-            if box.style['margin_break'] == 'discard':
-                box.margin_top = 0
-            elif box.style['margin_break'] == 'auto':
-                if not context.forced_break:
+        if context.current_page > 1 and page_is_empty:
+            # TODO: this condition is wrong, it only works for blocks whose
+            # parent breaks collapsing margins. It should work for blocks whose
+            # one of the ancestors breaks collapsing margins.
+            # See test_margin_break_clearance.
+            collapse_with_page = (
+                containing_block.is_for_root_element or
+                adjoining_margins)
+            if collapse_with_page:
+                if box.style['margin_break'] == 'discard':
                     box.margin_top = 0
+                elif box.style['margin_break'] == 'auto':
+                    if not context.forced_break:
+                        box.margin_top = 0
 
         collapsed_margin = collapse_margin(
             adjoining_margins + [box.margin_top])
