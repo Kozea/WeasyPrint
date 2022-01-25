@@ -2753,3 +2753,21 @@ def test_table_break_children_margin():
       </table>
     '''
     assert len(render_pages(html)) == 3
+
+
+def test_table_td_break_inside_avoid():
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1547
+    html = '''
+      <style>
+        @page { size: 4cm }
+        td { break-inside: avoid; line-height: 3cm }
+      </style>
+      <table>
+        <tr>
+          <td>
+            a<br>a
+          </td>
+        </tr>
+      </table>
+    '''
+    assert len(render_pages(html)) == 2
