@@ -1056,9 +1056,8 @@ def collapse_table_borders(table, grid_width, grid_height):
         'hidden', 'double', 'solid', 'dashed', 'dotted', 'ridge',
         'outset', 'groove', 'inset', 'none'])))
     style_map = {'inset': 'ridge', 'outset': 'groove'}
-    transparent = TRANSPARENT
     weak_null_border = (
-        (0, 0, style_scores['none']), ('none', 0, transparent))
+        (0, 0, style_scores['none']), ('none', 0, TRANSPARENT))
     vertical_borders = [[weak_null_border for x in range(grid_width + 1)]
                         for y in range(grid_height)]
     horizontal_borders = [[weak_null_border for x in range(grid_width)]
@@ -1094,7 +1093,7 @@ def collapse_table_borders(table, grid_width, grid_height):
     #  row group, column, column group and, lastly, table"
     # See http://www.w3.org/TR/CSS21/tables.html#border-conflict-resolution
     strong_null_border = (
-        (1, 0, style_scores['hidden']), ('hidden', 0, transparent))
+        (1, 0, style_scores['hidden']), ('hidden', 0, TRANSPARENT))
     grid_y = 0
     for row_group in table.children:
         for row in row_group.children:
@@ -1139,7 +1138,7 @@ def collapse_table_borders(table, grid_width, grid_height):
     def set_transparent_border(box, side, twice_width):
         box.style[f'border_{side}_style'] = 'solid'
         box.style[f'border_{side}_width'] = twice_width / 2
-        box.style[f'border_{side}_color'] = transparent
+        box.style[f'border_{side}_color'] = TRANSPARENT
 
     def remove_borders(box):
         set_transparent_border(box, 'top', 0)
