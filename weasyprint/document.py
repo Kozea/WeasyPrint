@@ -802,9 +802,7 @@ class Page:
             # Make (0, 0) the top-left corner, and make user units CSS pixels:
             stream.transform(a=scale, d=scale, e=left_x, f=top_y)
             if clip:
-                width = self.width
-                height = self.height
-                stream.rectangle(0, 0, width, height)
+                stream.rectangle(0, 0, self.width, self.height)
                 stream.clip()
             draw_page(self._page_box, stream)
 
