@@ -6,7 +6,7 @@
 
 """
 
-from math import cos, inf, radians, sin
+from math import inf, radians
 
 from .bounding_box import EMPTY_BOUNDING_BOX, extend_bounding_box
 from .utils import normalize, size
@@ -120,6 +120,7 @@ def text(svg, node, font_size):
         svg.cursor_position = (x + dx, y + dy)
         return
 
+    svg.stream.push_state()
     svg.stream.begin_text()
     emoji_lines = []
 
@@ -133,21 +134,14 @@ def text(svg, node, font_size):
         svg.cursor_d_position[1] += dy or 0
         layout, _, _, width, height, _ = split_first_line(
             letter, style, svg.context, inf, 0)
-        svg.stream.push_state()
         x = svg.cursor_position[0] if x is None else x
         y = svg.cursor_position[1] if y is None else y
         if i:
             x += letter_spacing
         x_position = x + svg.cursor_d_position[0] + x_align
         y_position = y + svg.cursor_d_position[1] + y_align
-        svg.stream.move_to(x_position, y_position)
         cursor_position = x + width, y
         angle = last_r if r is None else r
-        if angle:
-            svg.stream.transform(e=x_position, f=y_position)
-            svg.stream.transform(
-                a=cos(angle), b=sin(angle), c=-sin(angle), d=cos(angle))
-            svg.stream.transform(e=-x_position, f=-y_position)
         points = (
             (cursor_position[0] + x_align +
              svg.cursor_d_position[0],
@@ -163,12 +157,12 @@ def text(svg, node, font_size):
         svg.fill_stroke(node, font_size, text=True)
         emojis = draw_first_line(
             svg.stream, TextBox(layout, style), 'none', 'none',
-            x_position, y_position)
+            x_position, y_position, angle)
         emoji_lines.append((font_size, x, y, emojis))
-        svg.stream.pop_state()
         svg.cursor_position = cursor_position
 
     svg.stream.end_text()
+    svg.stream.pop_state()
 
     for font_size, x, y, emojis in emoji_lines:
         draw_emojis(svg.stream, font_size, x, y, emojis)
