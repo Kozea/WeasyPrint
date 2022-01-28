@@ -338,27 +338,38 @@ class SVG:
     def draw(self, stream, concrete_width, concrete_height, base_url,
              url_fetcher, context):
         """Draw image on a stream."""
-        self.stream = stream
+        try:
+            self.stream = stream
 
-        self.concrete_width = concrete_width
-        self.concrete_height = concrete_height
-        self.normalized_diagonal = (
-            hypot(concrete_width, concrete_height) / sqrt(2))
+            self.concrete_width = concrete_width
+            self.concrete_height = concrete_height
+            self.normalized_diagonal = (
+                hypot(concrete_width, concrete_height) / sqrt(2))
 
-        viewbox = self.get_viewbox()
-        if viewbox:
-            self.inner_width, self.inner_height = viewbox[2], viewbox[3]
-        else:
-            self.inner_width = self.concrete_width
-            self.inner_height = self.concrete_height
-        self.inner_diagonal = (
-            hypot(self.inner_width, self.inner_height) / sqrt(2))
+            viewbox = self.get_viewbox()
+            if viewbox:
+                self.inner_width, self.inner_height = viewbox[2], viewbox[3]
+            else:
+                self.inner_width = self.concrete_width
+                self.inner_height = self.concrete_height
+            self.inner_diagonal = (
+                hypot(self.inner_width, self.inner_height) / sqrt(2))
 
-        self.base_url = base_url
-        self.url_fetcher = url_fetcher
-        self.context = context
+            self.base_url = base_url
+            self.url_fetcher = url_fetcher
+            self.context = context
 
-        self.draw_node(self.tree, size('12pt'))
+            self.draw_node(self.tree, size('12pt'))
+        finally:
+            del self.stream
+            del self.concrete_width
+            del self.concrete_height
+            del self.normalized_diagonal
+            del self.inner_width
+            del self.inner_height
+            del self.base_url
+            del self.url_fetcher
+            del self.context
 
     def draw_node(self, node, font_size, fill_stroke=True):
         """Draw a node."""
