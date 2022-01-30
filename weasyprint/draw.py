@@ -10,7 +10,7 @@ import contextlib
 import operator
 from colorsys import hsv_to_rgb, rgb_to_hsv
 from io import BytesIO
-from math import ceil, floor, pi, sqrt, tan
+from math import ceil, cos, floor, pi, sin, sqrt, tan
 from xml.etree import ElementTree
 
 from PIL import Image
@@ -1031,8 +1031,11 @@ def draw_emojis(stream, font_size, x, y, emojis):
             stream.pop_state()
 
 
-def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y):
+def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y,
+                    angle=0):
     """Draw the given ``textbox`` line to the document ``stream``."""
+    from .document import Matrix
+
     pango.pango_layout_set_single_paragraph_mode(
         textbox.pango_layout.layout, True)
 
@@ -1083,7 +1086,11 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y):
     while runs[-1].next != ffi.NULL:
         runs.append(runs[-1].next)
 
-    stream.text_matrix(font_size, 0, 0, -font_size, x, y)
+    matrix = Matrix(font_size, 0, 0, -font_size, x, y)
+    if angle:
+        matrix = Matrix(a=cos(angle), b=-sin(angle),
+                        c=sin(angle), d=cos(angle)) @ matrix
+    stream.text_matrix(*matrix.values)
     last_font = None
     string = ''
     fonts = stream.get_fonts()
