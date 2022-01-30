@@ -286,3 +286,25 @@ def test_text_tspan():
         </text>
       </svg>
     ''')
+
+
+@assert_no_logs
+def test_text_rotate():
+    assert_pixels('text_rotate', 20, 4, '''
+        __RR__RR__RR________
+        __RR__RR__RR________
+        BB__BB__BB__________
+        BB__BB__BB__________
+    ''', '''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        @page { size: 20px 4px }
+        svg { display: block }
+      </style>
+      <svg width="20px" height="4px" xmlns="http://www.w3.org/2000/svg">
+        <text x="2" y="1.5" font-family="weasyprint" font-size="2" fill="red"
+          letter-spacing="2">abc</text>
+        <text x="2" y="1.5" font-family="weasyprint" font-size="2" fill="blue"
+          rotate="180" letter-spacing="2">abc</text>
+      </svg>
+    ''')
