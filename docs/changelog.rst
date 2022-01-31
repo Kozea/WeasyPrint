@@ -2,6 +2,56 @@ Changelog
 =========
 
 
+Version 54.1
+------------
+
+Released on 2022-01-31.
+
+Features:
+
+* `#1547 <https://github.com/Kozea/WeasyPrint/issues/1547>`_:
+  Handle break-inside: avoid on tr tags
+
+Bug fixes:
+
+* `#1540 <https://github.com/Kozea/WeasyPrint/issues/1540>`_,
+  `#1239 <https://github.com/Kozea/WeasyPrint/issues/1239>`_:
+  Handle absolute children in running elements
+* `#1538 <https://github.com/Kozea/WeasyPrint/issues/1538>`_:
+  Handle invalid values in text-align
+* `#1536 <https://github.com/Kozea/WeasyPrint/issues/1536>`_:
+  Handle absolute flex boxes
+
+Contirbutors:
+
+* Guillaume Ayoub
+* Lucie Anglade
+
+Backers and sponsors:
+
+* H-Net: Humanities and Social Sciences Online
+* Grip Angebotssoftware
+* Manuel Barkhau
+* SimonSoft
+* Menutech
+* KontextWork
+* Crisp BV
+* Maykin Media
+* René Fritz
+* Simon Sapin
+* NCC Group
+* Nathalie Gutton
+* Andreas Zettl
+* Tom Pohl
+* Spacinov
+* Des images et des mots
+* Moritz Mahringer
+* Florian Demmer
+* Yanal-Yvez Fargialla
+* Gábor
+* Piotr Horzycki
+
+
 Version 54.0
 ------------
 
@@ -18,6 +68,32 @@ Bug fixes:
   Fix many rendering problems of broken tables
 * `e1aee70 <https://github.com/Kozea/WeasyPrint/commit/e1aee70>`_:
   Fix support of fonts with SVG emojis
+
+Contirbutors:
+
+* Guillaume Ayoub
+
+Backers and sponsors:
+
+* Grip Angebotssoftware
+* Manuel Barkhau
+* SimonSoft
+* Menutech
+* KontextWork
+* Crisp BV
+* Maykin Media
+* René Fritz
+* Simon Sapin
+* NCC Group
+* Nathalie Gutton
+* Andreas Zettl
+* Tom Pohl
+* Des images et des mots
+* Moritz Mahringer
+* Florian Demmer
+* Yanal-Yvez Fargialla
+* Gábor
+* Piotr Horzycki
 
 
 Version 54.0b1
