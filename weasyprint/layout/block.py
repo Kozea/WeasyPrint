@@ -466,7 +466,13 @@ def _in_flow_layout(context, box, index, child, new_children, page_is_empty,
             new_position_y = (
                 new_child.border_box_y() + new_child.border_height())
 
-            if (new_content_position_y > context.page_bottom - bottom_space and
+            # Use a small fudge factor on this due to box splitting setting the
+            # height of some elements to the remaining height of the page:
+            # https://www.w3.org/TR/css-break-3/#box-splitting
+            # (Occasionally the order of this calculation would otherwise come
+            # out with unequal float values, forcing the box to the next page.)
+            if (new_content_position_y >
+                    context.page_bottom - bottom_space + 0.001 and
                     not page_is_empty_with_no_children):
                 # The child content overflows the page area, display it on the
                 # next page.
