@@ -142,6 +142,40 @@ def test_page_breaks(html):
 
 
 @assert_no_logs
+def test_page_breaks_box_split():
+    # If floats round the wrong way, a block that gets filled to the end of a
+    # page due to breaking over the page may be forced onto the next page
+    # because it is slightly taller than can fit on the previous page, even if
+    # it wouldn't have been without being filled. These numbers aren't ideal,
+    # but they do seem to trigger the issue.
+    page_1, page_2 = render_pages('''
+      <style>
+        @page { size: 982.4146981627297px; margin: 0 }
+        div { font-size: 5px; height: 200.0123456789px; margin: 0; padding: 0 }
+        figure { margin: 0; padding: 0 }
+      </style>
+      <div>text</div>
+      <div>text</div><!-- no page break here -->
+      <section>
+        <div>line1</div>
+        <div>line2</div><!-- page break here -->
+        <div>line3</div>
+        <div>line4</div>
+      </section>
+    ''')
+    html, = page_1.children
+    body, = html.children
+    assert len(body.children) == 3
+    div1, div2, section = body.children
+    assert len(section.children) == 2
+
+    html, = page_2.children
+    body, = html.children
+    section, = body.children
+    assert len(section.children) == 2
+
+
+@assert_no_logs
 def test_page_breaks_complex_1():
     page_1, page_2, page_3, page_4 = render_pages('''
       <style>
