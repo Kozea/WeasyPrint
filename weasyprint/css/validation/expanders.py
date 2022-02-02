@@ -646,6 +646,8 @@ def expand_text_align(base_url, name, tokens):
     """Expand the ``text-align`` property."""
     if len(tokens) == 1:
         keyword = get_single_keyword(tokens)
+        if keyword is None:
+            raise InvalidValues
         align_all = 'justify' if keyword == 'justify-all' else keyword
         yield 'text_align_all', align_all
         align_last = 'start' if keyword == 'justify' else align_all

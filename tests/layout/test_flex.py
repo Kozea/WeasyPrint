@@ -542,3 +542,12 @@ def test_flex_undefined_percentage_height_multiple_lines():
         <div style="width: 100%">a</div>
         <div style="width: 100%">b</div>
       </div>''')
+
+
+@assert_no_logs
+def test_flex_absolute():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/1536
+    page, = render_pages('''
+      <div style="display: flex; position: absolute">
+        <div>a</div>
+      </div>''')
