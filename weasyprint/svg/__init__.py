@@ -722,17 +722,9 @@ class SVG:
 class Pattern(SVG):
     """SVG node applied as a pattern."""
     def __init__(self, tree, svg):
+        super().__init__(tree._etree_node, svg.url)
         self.svg = svg
         self.tree = tree
-        self.url = svg.url
-
-        self.filters = {}
-        self.gradients = {}
-        self.images = {}
-        self.markers = {}
-        self.masks = {}
-        self.patterns = {}
-        self.paths = {}
 
     def draw_node(self, node, font_size, fill_stroke=True):
         # Store the original tree in self.tree when calling draw(), so that we

@@ -453,10 +453,6 @@ def _in_flow_layout(context, box, index, child, new_children, page_is_empty,
          fixed_boxes, adjoining_margins, discard)
 
     if new_child is not None:
-        # index in its non-laid-out parent, not in future new parent
-        # May be used in find_earlier_page_break()
-        new_child.index = index
-
         # We need to do this after the child layout to have the
         # used value for margin_top (eg. it might be a percentage.)
         if not isinstance(new_child, (boxes.BlockBox, boxes.TableBox)):
@@ -547,6 +543,9 @@ def _in_flow_layout(context, box, index, child, new_children, page_is_empty,
             abort, stop, resume_at, position_y, adjoining_margins, next_page,
             new_children)
 
+    # index in its non-laid-out parent, not in future new parent
+    # May be used in find_earlier_page_break()
+    new_child.index = index
     new_children.append(new_child)
     if resume_at is not None:
         resume_at = {index: resume_at}
