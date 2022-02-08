@@ -922,11 +922,11 @@ def split_text_box(context, box, available_width, skip, is_line_start=True):
     # resume_at is not set). One code point is one or more byte, so
     # UTF-8 indexes are always bigger or equal to Unicode indexes.
     new_text = layout.text
-    encoded = text.encode('utf8')
+    encoded = text.encode('utf-8')
     if resume_index is not None:
-        between = encoded[length:resume_index].decode('utf8')
-        resume_index = len(encoded[:resume_index].decode('utf8'))
-    length = len(encoded[:length].decode('utf8'))
+        between = encoded[length:resume_index].decode('utf-8')
+        resume_index = len(encoded[:resume_index].decode('utf-8'))
+    length = len(encoded[:length].decode('utf-8'))
 
     if length > 0:
         box = box.copy_with_text(new_text)

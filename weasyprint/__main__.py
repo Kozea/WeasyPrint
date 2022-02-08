@@ -47,7 +47,7 @@ def main(argv=None, stdout=None, stdin=None):
 
     .. option:: -e <input_encoding>, --encoding <input_encoding>
 
-        Force the input character encoding (e.g. ``-e utf8``).
+        Force the input character encoding (e.g. ``-e utf-8``).
 
     .. option:: -s <filename_or_URL>, --stylesheet <filename_or_URL>
 

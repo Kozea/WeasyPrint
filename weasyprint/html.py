@@ -59,7 +59,7 @@ def ascii_lower(string):
 
     """
     # This turns out to be faster than unicode.translate()
-    return string.encode('utf8').lower().decode('utf8')
+    return string.encode('utf-8').lower().decode('utf-8')
 
 
 def element_has_link_type(element, link_type):

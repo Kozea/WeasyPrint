@@ -57,7 +57,7 @@ def _test_resource(class_, basename, check, **kwargs):
     check(class_(relative_path, **kwargs))
     kwargs.pop('base_url', None)
     check(class_(string=content, base_url=relative_filename, **kwargs))
-    encoding = kwargs.get('encoding') or 'utf8'
+    encoding = kwargs.get('encoding') or 'utf-8'
     check(class_(string=content.decode(encoding),  # unicode
                  base_url=relative_filename, **kwargs))
     with pytest.raises(TypeError):
@@ -285,7 +285,7 @@ def test_python_render(tmpdir):
     assert FakeHTML(
         string=html_string, base_url=base_url, media_type='screen'
     ).write_png(
-        stylesheets=[io.BytesIO(css_string.encode('utf8'))]
+        stylesheets=[io.BytesIO(css_string.encode('utf-8'))]
     ) == rotated_png_bytes
     assert FakeHTML(
         string=f'<style>{css_string}</style>{html_string}',

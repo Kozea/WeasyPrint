@@ -39,7 +39,7 @@ def first_line_metrics(first_line, text, layout, resume_at, space_collapse,
                        style, hyphenated=False, hyphenation_character=None):
     length = first_line.length
     if hyphenated:
-        length -= len(hyphenation_character.encode('utf8'))
+        length -= len(hyphenation_character.encode('utf-8'))
     elif resume_at:
         # Set an infinite width as we don't want to break lines when drawing,
         # the lines have already been split and the size may differ. Rendering
@@ -62,14 +62,14 @@ def first_line_metrics(first_line, text, layout, resume_at, space_collapse,
         if '\u00ad' in first_line_text:
             soft_hyphens = 0
             if first_line_text[0] == '\u00ad':
-                length += 2  # len('\u00ad'.encode('utf8'))
+                length += 2  # len('\u00ad'.encode('utf-8'))
             for i in range(len(layout.text)):
                 while i + soft_hyphens + 1 < len(first_line_text):
                     if first_line_text[i + soft_hyphens + 1] == '\u00ad':
                         soft_hyphens += 1
                     else:
                         break
-            length += soft_hyphens * 2  # len('\u00ad'.encode('utf8'))
+            length += soft_hyphens * 2  # len('\u00ad'.encode('utf-8'))
 
     width, height = line_size(first_line, style)
     baseline = units_to_double(pango.pango_layout_get_baseline(layout.layout))
@@ -465,7 +465,7 @@ def split_first_line(text, style, context, max_width, justification_spacing,
                     next_word = f' {next_word}'
                     layout.set_text(first_line_text)
                     first_line, index = layout.get_first_line()
-                    resume_index = len((first_line_text + ' ').encode('utf8'))
+                    resume_index = len((first_line_text + ' ').encode('utf-8'))
                 else:
                     first_line_text, next_word = '', first_line_text
             soft_hyphen_indexes = [
@@ -505,13 +505,13 @@ def split_first_line(text, style, context, max_width, justification_spacing,
                     layout = new_layout
                     first_line = new_first_line
                     index = new_index
-                    resume_index = len(new_first_line_text.encode('utf8'))
+                    resume_index = len(new_first_line_text.encode('utf-8'))
                     if text[len(new_first_line_text)] == soft_hyphen:
                         # Recreate the layout with no max_width to be sure that
                         # we don't break before the soft hyphen
                         pango.pango_layout_set_width(
                             layout.layout, units_from_double(-1))
-                        resume_index += len(soft_hyphen.encode('utf8'))
+                        resume_index += len(soft_hyphen.encode('utf-8'))
                     break
 
             if not hyphenated and not first_line_text:
@@ -522,9 +522,9 @@ def split_first_line(text, style, context, max_width, justification_spacing,
                 pango.pango_layout_set_width(
                     layout.layout, units_from_double(-1))
                 first_line, index = layout.get_first_line()
-                resume_index = len(new_first_line_text.encode('utf8'))
+                resume_index = len(new_first_line_text.encode('utf-8'))
                 if text[len(first_line_text)] == soft_hyphen:
-                    resume_index += len(soft_hyphen.encode('utf8'))
+                    resume_index += len(soft_hyphen.encode('utf-8'))
 
     if not hyphenated and first_line_text.endswith(soft_hyphen):
         # Recreate the layout with no max_width to be sure that
@@ -536,7 +536,7 @@ def split_first_line(text, style, context, max_width, justification_spacing,
         pango.pango_layout_set_width(
             layout.layout, units_from_double(-1))
         first_line, index = layout.get_first_line()
-        resume_index = len(first_line_text.encode('utf8'))
+        resume_index = len(first_line_text.encode('utf-8'))
 
     # Step 5: Try to break word if it's too long for the line
     overflow_wrap = style['overflow_wrap']
