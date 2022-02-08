@@ -73,6 +73,26 @@ def test_line_breaking_rtl():
 
 
 @assert_no_logs
+def test_line_breaking_nbsp():
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1561
+    page, = render_pages('''
+      <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        body { font-family: weasyprint; width: 7.5em }
+      </style>
+      <body>a <span>b</span> c d&nbsp;<span>ef
+    ''')
+    html, = page.children
+    body, = html.children
+    line_1, line_2 = body.children
+    assert line_1.children[0].text == 'a '
+    assert line_1.children[1].children[0].text == 'b'
+    assert line_1.children[2].text == ' c'
+    assert line_2.children[0].text == 'd\xa0'
+    assert line_2.children[1].children[0].text == 'ef'
+
+
+@assert_no_logs
 def test_text_dimension():
     string = 'This is a text for test. This is a test for text.py'
     _, _, _, width_1, height_1, _ = make_text(string, 200, font_size=12)

@@ -609,59 +609,68 @@ def _break_waiting_children(context, box, max_x, bottom_space,
         waiting_children_copy = waiting_children.copy()
         while waiting_children_copy:
             child_index, child = waiting_children_copy.pop()
-            if child.is_in_normal_flow() and can_break_inside(child):
-                # Break the waiting child at its last possible breaking point.
-                # TODO: The dirty solution chosen here is to decrease the
-                # actual size by 1 and render the waiting child again with this
-                # constraint. We may find a better way.
-                max_x = child.position_x + child.margin_width() - 1
+            if not child.is_in_normal_flow() or not can_break_inside(child):
+                continue
+
+            # Break the waiting child at its last possible breaking point.
+            # TODO: The dirty solution chosen here is to decrease the
+            # actual size by 1 and render the waiting child again with this
+            # constraint. We may find a better way.
+            max_x = child.position_x + child.margin_width() - 1
+            while max_x > child.position_x:
                 new_child, child_resume_at, _, _, _, _ = split_inline_level(
                     context, child, child.position_x, max_x, bottom_space,
                     None, box, absolute_boxes, fixed_boxes, line_placeholders,
                     waiting_floats, line_children)
+                if child_resume_at:
+                    break
+                max_x -= 1
+            else:
+                # No line break found
+                continue
 
-                children.extend(waiting_children_copy)
-                if new_child is None:
-                    # May be None where we have an empty TextBox.
-                    assert isinstance(child, boxes.TextBox)
-                else:
-                    children.append((child_index, new_child))
+            children.extend(waiting_children_copy)
+            if new_child is None:
+                # May be None where we have an empty TextBox.
+                assert isinstance(child, boxes.TextBox)
+            else:
+                children.append((child_index, new_child))
 
-                # As this child has already been broken following the original
-                # skip stack, we have to add the original skip stack to the
-                # partial skip stack we get after the new rendering.
+            # As this child has already been broken following the original
+            # skip stack, we have to add the original skip stack to the
+            # partial skip stack we get after the new rendering.
 
-                # Combining skip stacks is a bit complicated. We have to:
-                # - set `child_index` as the first number
-                # - append the new stack if it's an absolute one
-                # - otherwise append the combined stacks
-                #   (resume_at + initial_skip_stack)
+            # Combining skip stacks is a bit complicated. We have to:
+            # - set `child_index` as the first number
+            # - append the new stack if it's an absolute one
+            # - otherwise append the combined stacks
+            #   (resume_at + initial_skip_stack)
 
-                # extract the initial index
-                if initial_skip_stack is None:
-                    current_skip_stack = None
-                    initial_index = 0
-                else:
-                    (initial_index, current_skip_stack), = (
-                        initial_skip_stack.items())
-                # child_resume_at is an absolute skip stack
-                if child_index > initial_index:
-                    return {child_index: child_resume_at}
+            # extract the initial index
+            if initial_skip_stack is None:
+                current_skip_stack = None
+                initial_index = 0
+            else:
+                (initial_index, current_skip_stack), = (
+                    initial_skip_stack.items())
+            # child_resume_at is an absolute skip stack
+            if child_index > initial_index:
+                return {child_index: child_resume_at}
 
-                # combine the stacks
-                current_resume_at = child_resume_at
-                stack = []
-                while current_skip_stack and current_resume_at:
-                    (skip, current_skip_stack), = current_skip_stack.items()
-                    (resume, current_resume_at), = current_resume_at.items()
-                    stack.append(skip + resume)
-                    if resume != 0:
-                        break
-                resume_at = current_resume_at
-                while stack:
-                    resume_at = {stack.pop(): resume_at}
-                # insert the child index
-                return {child_index: resume_at}
+            # combine the stacks
+            current_resume_at = child_resume_at
+            stack = []
+            while current_skip_stack and current_resume_at:
+                (skip, current_skip_stack), = current_skip_stack.items()
+                (resume, current_resume_at), = current_resume_at.items()
+                stack.append(skip + resume)
+                if resume != 0:
+                    break
+            resume_at = current_resume_at
+            while stack:
+                resume_at = {stack.pop(): resume_at}
+            # insert the child index
+            return {child_index: resume_at}
 
     if children:
         # Too wide, can't break waiting children and the inline is
@@ -785,10 +794,10 @@ def split_inline_box(context, box, position_x, max_x, bottom_space, skip_stack,
         else:
             if isinstance(box, boxes.LineBox):
                 line_children.append((index, new_child))
-            # TODO: we should try to find a better condition here.
             trailing_whitespace = (
                 isinstance(new_child, boxes.TextBox) and
-                not new_child.text.strip())
+                new_child.text and
+                unicodedata.category(new_child.text[-1]) == 'Zs')
             new_position_x = new_child.position_x + new_child.margin_width()
 
             if new_position_x > max_x and not trailing_whitespace:
