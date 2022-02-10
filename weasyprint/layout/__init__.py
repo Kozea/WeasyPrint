@@ -323,23 +323,30 @@ class LayoutContext:
                 return store[name][previous_page][-1]
 
     def layout_footnote(self, footnote):
+        """Add a footnote to the layout for this page."""
         self.footnotes.remove(footnote)
         self.current_page_footnotes.append(footnote)
-        if self.current_footnote_area.height != 'auto':
-            self.page_bottom += self.current_footnote_area.margin_height()
-        self.current_footnote_area.children = self.current_page_footnotes
-        footnote_area = build.create_anonymous_boxes(
-            self.current_footnote_area.deepcopy())
-        footnote_area, _, _, _, _ = block_level_layout(
-            self, footnote_area, -inf, None, self.current_footnote_area.page,
-            True, [], [], [], False)
-        self.current_footnote_area.height = footnote_area.height
-        self.page_bottom -= footnote_area.margin_height()
+        self._update_footnote_area()
+
+    def unlayout_footnote(self, footnote):
+        """Remove a footnote from the layout and return it to the waitlist."""
+        self.footnotes.append(footnote)
+        if footnote in self.current_page_footnotes:
+            self.current_page_footnotes.remove(footnote)
+        else:
+            self.reported_footnotes.remove(footnote)
+        self._update_footnote_area()
 
     def report_footnote(self, footnote):
+        """Mark a footnote as being moved to the next page."""
         self.current_page_footnotes.remove(footnote)
         self.reported_footnotes.append(footnote)
-        self.page_bottom += self.current_footnote_area.margin_height()
+        self._update_footnote_area()
+
+    def _update_footnote_area(self):
+        """Update the page bottom size and our footnote area height."""
+        if self.current_footnote_area.height != 'auto':
+            self.page_bottom += self.current_footnote_area.margin_height()
         self.current_footnote_area.children = self.current_page_footnotes
         if self.current_footnote_area.children:
             footnote_area = build.create_anonymous_boxes(

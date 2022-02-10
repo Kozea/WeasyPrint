@@ -8,7 +8,7 @@
 
 import pytest
 
-from ..testing_utils import assert_no_logs, render_pages
+from ..testing_utils import assert_no_logs, render_pages, tree_position
 
 
 @assert_no_logs
@@ -336,6 +336,44 @@ def test_reported_footnote_3():
     assert footnote2.children[2].children[0].text == '2'
     assert footnote3.children[0].children[0].children[0].text == '3.'
     assert footnote3.children[0].children[1].text == '3'
+
+
+@assert_no_logs
+@pytest.mark.parametrize('css, tail', (
+    ('p { break-inside: avoid }', '<br>e<br>f'),
+    ('p { widows: 4 }', '<br>e<br>f'),
+    ('p + p { break-before: avoid }', '</p><p>e<br>f'),
+))
+def test_footnote_area_after_call(css, tail):
+    pages = render_pages('''
+        <style>
+            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+            @page {
+                size: 9px 10px;
+                background: white;
+                margin: 0;
+            }
+            body {
+                font-family: weasyprint;
+                font-size: 2px;
+                line-height: 1;
+                orphans: 2;
+                widows: 2;
+                margin: 0;
+            }
+            span {
+                float: footnote;
+            }
+            %s
+        </style>
+        <div>a<br>b</div>
+        <p>c<br>d<span>x</span>%s</p>''' % (css, tail))
+
+    footnote_call = tree_position(
+        pages, lambda box: box.element_tag == 'p::footnote-call')
+    footnote_area = tree_position(
+        pages, lambda box: type(box).__name__ == 'FootnoteAreaBox')
+    assert footnote_call < footnote_area
 
 
 @assert_no_logs
