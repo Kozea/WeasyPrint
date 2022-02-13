@@ -9,7 +9,7 @@ Installation
 
 WeasyPrint |version| depends on:
 
-* Python_ ≥ 3.6.0
+* Python_ ≥ 3.7.0
 * Pango_ ≥ 1.44.0
 * pydyf_ ≥ 0.0.3
 * CFFI_ ≥ 0.6
@@ -49,7 +49,7 @@ Ubuntu_, Fedora_, Archlinux_, Gentoo_…
 
 If WeasyPrint is not available on your distribution, or if you want to use a
 more recent version of WeasyPrint, you have to be sure that Python_ (at least
-version 3.6.0) and Pango_ (at least version 1.44.0) are installed on your
+version 3.7.0) and Pango_ (at least version 1.44.0) are installed on your
 system. You can verify this by launching::
 
   python3 --version

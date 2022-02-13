@@ -9,7 +9,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ['3.6', '3.7', '3.8', '3.9', '3.10', 'pypy3']
+        python-version: ['3.7', '3.8', '3.9', '3.10', 'pypy3']
         exclude:
           # Pillow wheel missing for this configuration
           - os: macos-latest
