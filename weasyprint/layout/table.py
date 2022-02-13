@@ -301,7 +301,8 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                     page_break = block_level_page_break(previous_row, row)
                     if page_break == 'avoid':
                         earlier_page_break = find_earlier_page_break(
-                            new_group_children, absolute_boxes, fixed_boxes)
+                            context, new_group_children, absolute_boxes,
+                            fixed_boxes)
                         if earlier_page_break:
                             new_group_children, resume_at = earlier_page_break
                             break
@@ -390,7 +391,8 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                     page_break = block_level_page_break(previous_group, group)
                     if page_break == 'avoid':
                         earlier_page_break = find_earlier_page_break(
-                            new_table_children, absolute_boxes, fixed_boxes)
+                            context, new_table_children, absolute_boxes,
+                            fixed_boxes)
                         if earlier_page_break is not None:
                             new_table_children, resume_at = earlier_page_break
                             break

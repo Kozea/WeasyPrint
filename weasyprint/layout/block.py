@@ -251,7 +251,7 @@ def _out_of_flow_layout(context, box, index, child, new_children,
             resume_at = {index: None}
             if new_children and page_break in ('avoid', 'avoid-page'):
                 result = find_earlier_page_break(
-                    new_children, absolute_boxes, fixed_boxes)
+                    context, new_children, absolute_boxes, fixed_boxes)
                 if result:
                     new_children, resume_at = result
             stop = True
@@ -294,6 +294,7 @@ def _linebox_layout(context, box, index, child, new_children, page_is_empty,
                     draw_bottom_decoration):
     abort = stop = False
     resume_at = None
+    new_footnotes = []
 
     assert len(box.children) == 1, 'line box with siblings before layout'
 
@@ -347,6 +348,7 @@ def _linebox_layout(context, box, index, child, new_children, page_is_empty,
                 if descendant.footnote in context.footnotes)
             for footnote in footnotes:
                 context.layout_footnote(footnote)
+                new_footnotes.append(footnote)
                 overflow = context.reported_footnotes or (
                     new_position_y + offset_y >
                     context.page_bottom - bottom_space)
@@ -376,7 +378,7 @@ def _linebox_layout(context, box, index, child, new_children, page_is_empty,
     if new_children:
         resume_at = {index: new_children[-1].resume_at}
 
-    return abort, stop, resume_at, position_y
+    return abort, stop, resume_at, position_y, new_footnotes
 
 
 def _in_flow_layout(context, box, index, child, new_children, page_is_empty,
@@ -479,13 +481,15 @@ def _in_flow_layout(context, box, index, child, new_children, page_is_empty,
                     not page_is_empty_with_no_children):
                 # The child content overflows the page area, display it on the
                 # next page.
-                remove_placeholders([new_child], absolute_boxes, fixed_boxes)
+                remove_placeholders(
+                    context, [new_child], absolute_boxes, fixed_boxes)
                 new_child = None
             elif (new_position_y > context.page_bottom - bottom_space and
                     not page_is_empty_with_no_children):
                 # The child border/padding overflows the page area, do the
                 # layout again with a higher bottom_space value.
-                remove_placeholders([new_child], absolute_boxes, fixed_boxes)
+                remove_placeholders(
+                    context, [new_child], absolute_boxes, fixed_boxes)
                 bottom_space += (
                     new_child.padding_bottom + new_child.border_bottom_width)
                 (new_child, resume_at, next_page, next_adjoining_margins,
@@ -513,7 +517,7 @@ def _in_flow_layout(context, box, index, child, new_children, page_is_empty,
         if page_break in ('avoid', 'avoid-page'):
             # TODO: fill the blank space at the bottom of the page
             result = find_earlier_page_break(
-                new_children, absolute_boxes, fixed_boxes)
+                context, new_children, absolute_boxes, fixed_boxes)
             if result:
                 new_children, resume_at = result
                 stop = True
@@ -537,7 +541,8 @@ def _in_flow_layout(context, box, index, child, new_children, page_is_empty,
             # This box has only rendered absolute children, keep them
             # for the next page. This is for example useful for list
             # markers.
-            remove_placeholders(new_children, absolute_boxes, fixed_boxes)
+            remove_placeholders(
+                context, new_children, absolute_boxes, fixed_boxes)
             new_children = []
 
         if new_children:
@@ -611,6 +616,7 @@ def block_container_layout(context, box, bottom_space, skip_stack,
 
     new_children = []
     next_page = {'break': 'any', 'page': None}
+    all_footnotes = []
 
     last_in_flow_child = None
 
@@ -624,6 +630,7 @@ def block_container_layout(context, box, bottom_space, skip_stack,
     for index, child in enumerate(box.children[skip:], start=(skip or 0)):
         child.position_x = position_x
         child.position_y = position_y  # doesn’t count adjoining_margins
+        new_footnotes = []
 
         if not child.is_in_normal_flow():
             abort = False
@@ -636,13 +643,15 @@ def block_container_layout(context, box, bottom_space, skip_stack,
                     (child, box, out_of_flow_resume_at))
 
         elif isinstance(child, boxes.LineBox):
-            abort, stop, resume_at, position_y = _linebox_layout(
+            (abort, stop, resume_at, position_y,
+             new_footnotes) = _linebox_layout(
                 context, box, index, child, new_children, page_is_empty,
                 absolute_boxes, fixed_boxes, adjoining_margins, bottom_space,
                 position_y, skip_stack, first_letter_style,
                 draw_bottom_decoration)
             draw_bottom_decoration |= resume_at is None
             adjoining_margins = []
+            all_footnotes += new_footnotes
 
         else:
             (abort, stop, resume_at, position_y, adjoining_margins,
@@ -656,6 +665,8 @@ def block_container_layout(context, box, bottom_space, skip_stack,
 
         if abort:
             page = child.page_values()[0]
+            for footnote in new_footnotes:
+                context.unlayout_footnote(footnote)
             return None, None, {'break': 'any', 'page': page}, [], False
         elif stop:
             break
@@ -670,6 +681,8 @@ def block_container_layout(context, box, bottom_space, skip_stack,
     if (box_is_fragmented and
             box.style['break_inside'] in ('avoid', 'avoid-page') and
             not page_is_empty):
+        for footnote in all_footnotes:
+            context.unlayout_footnote(footnote)
         return (
             None, None, {'break': 'any', 'page': None}, [], False)
 
@@ -852,7 +865,7 @@ def block_level_page_name(sibling_before, sibling_after):
         return after_page
 
 
-def find_earlier_page_break(children, absolute_boxes, fixed_boxes):
+def find_earlier_page_break(context, children, absolute_boxes, fixed_boxes):
     """Find the last possible page break in ``children``.
 
     Because of a `page-break-before: avoid` or a `page-break-after: avoid` we
@@ -874,7 +887,8 @@ def find_earlier_page_break(children, absolute_boxes, fixed_boxes):
             return None
         new_children = children[:index]
         resume_at = {0: new_children[-1].resume_at}
-        remove_placeholders(children[index:], absolute_boxes, fixed_boxes)
+        remove_placeholders(
+            context, children[index:], absolute_boxes, fixed_boxes)
         return new_children, resume_at
 
     previous_in_flow = None
@@ -904,7 +918,7 @@ def find_earlier_page_break(children, absolute_boxes, fixed_boxes):
                 boxes.BlockBox, boxes.TableBox, boxes.TableRowGroupBox)
             if isinstance(child, breakable_box_types):
                 result = find_earlier_page_break(
-                    child.children, absolute_boxes, fixed_boxes)
+                    context, child.children, absolute_boxes, fixed_boxes)
                 if result:
                     new_grand_children, resume_at = result
                     new_child = child.copy_with_children(new_grand_children)
@@ -925,7 +939,7 @@ def find_earlier_page_break(children, absolute_boxes, fixed_boxes):
         return None
 
     # TODO: don’t remove absolute and fixed placeholders found in table footers
-    remove_placeholders(children[index:], absolute_boxes, fixed_boxes)
+    remove_placeholders(context, children[index:], absolute_boxes, fixed_boxes)
     return new_children, resume_at
 
 
@@ -941,7 +955,7 @@ def reversed_enumerate(seq):
     return zip(reversed(range(len(seq))), reversed(seq))
 
 
-def remove_placeholders(box_list, absolute_boxes, fixed_boxes):
+def remove_placeholders(context, box_list, absolute_boxes, fixed_boxes):
     """Remove placeholders from absolute and fixed lists.
 
     For boxes that have been removed in find_earlier_page_break(), remove the
@@ -950,9 +964,12 @@ def remove_placeholders(box_list, absolute_boxes, fixed_boxes):
     """
     for box in box_list:
         if isinstance(box, boxes.ParentBox):
-            remove_placeholders(box.children, absolute_boxes, fixed_boxes)
+            remove_placeholders(
+                context, box.children, absolute_boxes, fixed_boxes)
         if box.style['position'] == 'absolute' and box in absolute_boxes:
             # box is not in absolute_boxes if its parent has position: relative
             absolute_boxes.remove(box)
         elif box.style['position'] == 'fixed':
             fixed_boxes.remove(box)
+        if box.footnote:
+            context.unlayout_footnote(box.footnote)

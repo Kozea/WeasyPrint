@@ -158,6 +158,27 @@ def serialize(box_list):
             for box in box_list]
 
 
+def tree_position(box_list, matcher):
+    """Return a list identifying the first matching box's tree position.
+
+    Given a list of Boxes, this function returns a list containing the first
+    (depth-first) Box that the matcher function identifies. This list can then
+    be compared to another similarly-obtained list to assert that one Box is in
+    the document tree before or after another.
+
+    box_list: a list of Box objects, possibly PageBoxes
+    matcher: a function that takes a Box and returns truthy when it matches
+
+    """
+    for i, box in enumerate(box_list):
+        if matcher(box):
+            return [i]
+        elif hasattr(box, 'children'):
+            position = tree_position(box.children, matcher)
+            if position:
+                return [i] + position
+
+
 def _parse_base(html_content, base_url=BASE_URL):
     document = FakeHTML(string=html_content, base_url=base_url)
     counter_style = CounterStyle()
