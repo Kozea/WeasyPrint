@@ -1,10 +1,4 @@
-"""
-    weasyprint.css.descriptors
-    --------------------------
-
-    Validate descriptors used for some at-rules.
-
-"""
+"""Validate descriptors used for some at-rules."""
 
 from math import inf
 

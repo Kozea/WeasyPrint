@@ -1,10 +1,4 @@
-"""
-    weasyprint.css.properties
-    -------------------------
-
-    Various data about known properties.
-
-"""
+"""Various data about known CSS properties."""
 
 import collections
 from math import inf
@@ -14,8 +8,8 @@ from tinycss2.color3 import parse_color
 Dimension = collections.namedtuple('Dimension', ['value', 'unit'])
 
 
-# See http://www.w3.org/TR/CSS21/propidx.html
 INITIAL_VALUES = {
+    # CSS 2.1: http://www.w3.org/TR/CSS21/propidx.html
     'bottom': 'auto',
     'caption_side': 'top',
     'clear': 'none',
@@ -217,6 +211,8 @@ KNOWN_PROPERTIES = set(name.replace('_', '-') for name in INITIAL_VALUES)
 
 # Do not list shorthand properties here as we handle them before inheritance.
 #
+# Values inherited but not applicable to print are not included.
+#
 # text_decoration is not a really inherited, see
 # http://www.w3.org/TR/CSS2/text.html#propdef-text-decoration
 #
@@ -275,22 +271,6 @@ INHERITED = {
     'word_break',
     'word_spacing',
 }
-
-# Inherited but not applicable to print:
-#    azimuth
-#    cursor
-#    elevation
-#    pitch_range
-#    pitch
-#    richness
-#    speak_header
-#    speak_numeral
-#    speak_punctuation
-#    speak
-#    speech_rate
-#    stress
-#    voice_family
-#    volume
 
 
 # http://www.w3.org/TR/CSS21/tables.html#model

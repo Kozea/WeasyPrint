@@ -1,8 +1,4 @@
-"""
-    weasyprint.backgrounds
-    ----------------------
-
-"""
+"""Manage background position and size."""
 
 from collections import namedtuple
 from itertools import cycle

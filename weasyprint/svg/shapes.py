@@ -1,10 +1,4 @@
-"""
-    weasyprint.svg.shapes
-    ---------------------
-
-    Draw simple shapes.
-
-"""
+"""Draw simple shapes."""
 
 from math import atan2, pi, sqrt
 

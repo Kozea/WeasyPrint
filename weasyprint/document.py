@@ -1,8 +1,4 @@
-"""
-    weasyprint.document
-    -------------------
-
-"""
+"""Document generation management."""
 
 import collections
 import functools

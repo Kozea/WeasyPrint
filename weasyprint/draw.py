@@ -1,10 +1,4 @@
-"""
-    weasyprint.draw
-    ---------------
-
-    Take an "after layout" box tree and draw it onto a pydyf stream.
-
-"""
+"""Take an "after layout" box tree and draw it onto a pydyf stream."""
 
 import contextlib
 import operator

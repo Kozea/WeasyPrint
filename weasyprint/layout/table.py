@@ -1,10 +1,4 @@
-"""
-    weasyprint.layout.tables
-    ------------------------
-
-    Layout for tables and internal table boxes.
-
-"""
+"""Layout for tables and internal table boxes."""
 
 from math import inf
 

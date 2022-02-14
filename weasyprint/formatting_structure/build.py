@@ -1,12 +1,6 @@
-"""
-    weasyprint.formatting_structure.build
-    -------------------------------------
+"""Turn an element tree with style into a "before layout" box tree.
 
-    Turn an element tree with associated CSS style (computed values)
-    into a "before layout" formatting structure / box tree.
-
-    This includes creating anonymous boxes and processing whitespace
-    as necessary.
+This includes creating anonymous boxes and processing whitespace as necessary.
 
 """
 

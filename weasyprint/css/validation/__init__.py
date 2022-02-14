@@ -1,10 +1,4 @@
-"""
-    weasyprint.css.validation
-    -------------------------
-
-    Validate properties, expanders and descriptors.
-
-"""
+"""Validate properties, expanders and descriptors."""
 
 
 from tinycss2 import serialize

@@ -1,11 +1,4 @@
-"""
-    weasyprint.css.computed_values
-    ------------------------------
-
-    Convert *specified* property values (the result of the cascade and
-    inhertance) into *computed* values (that are inherited).
-
-"""
+"""Convert specified property values into computed values."""
 
 from collections import OrderedDict
 from urllib.parse import unquote

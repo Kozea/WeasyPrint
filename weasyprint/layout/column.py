@@ -1,10 +1,4 @@
-"""
-    weasyprint.layout.columns
-    -------------------------
-
-    Layout for columns.
-
-"""
+"""Layout for columns."""
 
 from math import floor, inf
 

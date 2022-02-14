@@ -1,10 +1,4 @@
-"""
-    weasyprint.__main__
-    -------------------
-
-    Command-line interface to WeasyPrint.
-
-"""
+"""Command-line interface to WeasyPrint."""
 
 import argparse
 import logging

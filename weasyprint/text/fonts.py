@@ -1,10 +1,4 @@
-"""
-    weasyprint.text.fonts
-    ---------------------
-
-    Interface with external libraries managing fonts installed on the system.
-
-"""
+"""Interface with external libraries managing fonts installed on the system."""
 
 import hashlib
 import io

@@ -1,8 +1,4 @@
-"""
-    weasyprint.stacking
-    -------------------
-
-"""
+"""Stacking contexts management."""
 
 import operator
 

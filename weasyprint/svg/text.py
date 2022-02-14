@@ -1,10 +1,4 @@
-"""
-    weasyprint.svg.text
-    -------------------
-
-    Draw text.
-
-"""
+"""Draw text."""
 
 from math import inf, radians
 

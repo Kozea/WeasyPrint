@@ -1,10 +1,4 @@
-"""
-    weasyprint.svg.bounding_box
-    ---------------------------
-
-    Calculate bounding boxes of SVG tags.
-
-"""
+"""Calculate bounding boxes of SVG tags."""
 
 from math import atan, atan2, cos, inf, isinf, pi, radians, sin, sqrt, tan
 

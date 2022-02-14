@@ -1,10 +1,4 @@
-"""
-    weasyprint.layout.leader
-    ------------------------
-
-    Leader management.
-
-"""
+"""Leaders management."""
 
 from ..formatting_structure import boxes
 

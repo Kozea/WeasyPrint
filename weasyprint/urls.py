@@ -1,10 +1,4 @@
-"""
-    weasyprint.utils
-    ----------------
-
-    Various utility functions and classes.
-
-"""
+"""Various utility functions and classes for URL management."""
 
 import codecs
 import contextlib

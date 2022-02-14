@@ -1,10 +1,4 @@
-"""
-    weasyprint.svg.path
-    -------------------
-
-    Draw paths.
-
-"""
+"""Draw paths."""
 
 from math import atan2, cos, isclose, pi, radians, sin, tan
 

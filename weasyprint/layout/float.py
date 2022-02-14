@@ -1,10 +1,4 @@
-"""
-    weasyprint.float
-    ----------------
-
-    Layout for floating boxes.
-
-"""
+"""Layout for floating boxes."""
 
 from ..formatting_structure import boxes
 from .min_max import handle_min_max_width

@@ -1,10 +1,4 @@
-"""
-    weasyprint.text.line_break
-    --------------------------
-
-    Decide where to break text lines.
-
-"""
+"""Decide where to break text lines."""
 
 import re
 from math import inf

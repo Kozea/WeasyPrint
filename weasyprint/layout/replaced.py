@@ -1,10 +1,6 @@
-"""
-    weasyprint.layout.replaced
-    --------------------------
+"""Layout for images and other replaced elements.
 
-    Layout for images and other replaced elements.
-
-    See http://dev.w3.org/csswg/css-images-3/#sizing
+See http://dev.w3.org/csswg/css-images-3/#sizing
 
 """
 

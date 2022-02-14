@@ -1,10 +1,4 @@
-"""
-    weasyprint.layout.pages
-    -----------------------
-
-    Layout for pages and CSS3 margin boxes.
-
-"""
+"""Layout for pages and CSS3 margin boxes."""
 
 import copy
 from math import inf

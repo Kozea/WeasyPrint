@@ -1,8 +1,4 @@
-"""
-    weasyprint.layout.min_max
-    -------------------------
-
-"""
+"""Decorators handling min- and max- widths and heights."""
 
 import functools
 

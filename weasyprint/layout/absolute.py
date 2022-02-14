@@ -1,8 +1,4 @@
-"""
-    weasyprint.absolute
-    -------------------
-
-"""
+"""Absolutely positioned boxes management."""
 
 from ..formatting_structure import boxes
 from .min_max import handle_min_max_width

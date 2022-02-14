@@ -1,9 +1,6 @@
-"""
-    weasyprint.css.validation.properties
-    ------------------------------------
+"""Validate properties.
 
-    Validate properties.
-    See http://www.w3.org/TR/CSS21/propidx.html and various CSS3 modules.
+See http://www.w3.org/TR/CSS21/propidx.html and various CSS3 modules.
 
 """
 

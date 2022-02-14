@@ -1,12 +1,10 @@
-"""
-    weasyprint.layout.preferred
-    ---------------------------
+"""Preferred and minimum preferred width.
 
-    Preferred and minimum preferred width, aka. max-content and min-content
-    width, aka. the shrink-to-fit algorithm.
+Also known as max-content and min-content width, also known as the
+shrink-to-fit algorithm.
 
-    Terms used (max-content width, min-content width) are defined in David
-    Baron's unofficial draft (http://dbaron.org/css/intrinsic/).
+Terms used (max-content width, min-content width) are defined in David
+Baron's unofficial draft (http://dbaron.org/css/intrinsic/).
 
 """
 

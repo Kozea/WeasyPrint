@@ -1,10 +1,4 @@
-"""
-    weasyprint.svg.image
-    --------------------
-
-    Draw image and svg tags.
-
-"""
+"""Draw image and svg tags."""
 
 from .utils import preserve_ratio
 

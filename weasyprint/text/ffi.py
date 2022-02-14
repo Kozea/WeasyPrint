@@ -1,10 +1,4 @@
-"""
-    weasyprint.text.ffi
-    -------------------
-
-    Imports of dynamic libraries used for text layout.
-
-"""
+"""Imports of dynamic libraries used for text layout."""
 
 import os
 

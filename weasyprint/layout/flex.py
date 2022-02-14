@@ -1,10 +1,4 @@
-"""
-    weasyprint.layout.flex
-    ------------------------
-
-    Layout for flex containers and flex-items.
-
-"""
+"""Layout for flex containers and flex-items."""
 
 import sys
 from math import inf, log10

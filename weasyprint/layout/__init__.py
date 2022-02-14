@@ -1,17 +1,12 @@
-"""
-    weasyprint.layout
-    -----------------
+"""Transform a "before layout" box tree into an "after layout" tree.
 
-    Transform a "before layout" box tree into an "after layout" tree.
-    (Surprising, hu?)
+Break boxes across lines and pages; determine the size and dimension of each
+box fragement.
 
-    Break boxes across lines and pages; determine the size and dimension
-    of each box fragement.
+Boxes in the new tree have *used values* in their ``position_x``,
+``position_y``, ``width`` and ``height`` attributes, amongst others.
 
-    Boxes in the new tree have *used values* in their ``position_x``,
-    ``position_y``, ``width`` and ``height`` attributes, amongst others.
-
-    See http://www.w3.org/TR/CSS21/cascade.html#used-value
+See http://www.w3.org/TR/CSS21/cascade.html#used-value
 
 """
 

@@ -1,10 +1,4 @@
-"""
-    weasyprint.css.expanders
-    ------------------------
-
-    Validate properties expanders.
-
-"""
+"""Validate properties expanders."""
 
 import functools
 

@@ -1,11 +1,7 @@
-"""
-    weasyprint.css.counters
-    -----------------------
+"""Implement counter styles.
 
-    Implement counter styles.
-
-    These are defined in CSS Counter Styles Level 3:
-    https://www.w3.org/TR/css-counter-styles-3/#counter-style-system
+These are defined in CSS Counter Styles Level 3:
+https://www.w3.org/TR/css-counter-styles-3/#counter-style-system
 
 """
 

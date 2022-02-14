@@ -1,16 +1,14 @@
-"""
-    weasyprint.css
-    --------------
+"""Find and apply CSS.
 
-    This module takes care of steps 3 and 4 of “CSS 2.1 processing model”:
-    Retrieve stylesheets associated with a document and annotate every element
-    with a value for every CSS property.
+This module takes care of steps 3 and 4 of “CSS 2.1 processing model”: Retrieve
+stylesheets associated with a document and annotate every element with a value
+for every CSS property.
 
-    http://www.w3.org/TR/CSS21/intro.html#processing-model
+http://www.w3.org/TR/CSS21/intro.html#processing-model
 
-    This module does this in more than two steps. The
-    :func:`get_all_computed_styles` function does everything, but it is itsef
-    based on other functions in this module.
+This module does this in more than two steps. The
+:func:`get_all_computed_styles` function does everything, but it is itsef based
+on other functions in this module.
 
 """
 

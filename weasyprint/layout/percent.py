@@ -1,10 +1,4 @@
-"""
-    weasyprint.layout.percentages
-    -----------------------------
-
-    Resolve percentages into fixed values.
-
-"""
+"""Resolve percentages into fixed values."""
 
 from math import inf
 

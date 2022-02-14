@@ -1,10 +1,4 @@
-"""
-    weasyprint.layout.block
-    -----------------------
-
-    Page breaking and layout for block-level and block-container boxes.
-
-"""
+"""Page breaking and layout for block-level and block-container boxes."""
 
 from math import inf
 

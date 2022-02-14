@@ -1,10 +1,4 @@
-"""
-    weasyprint.layout.inline
-    ------------------------
-
-    Line breaking and layout for inline-level boxes.
-
-"""
+"""Layout for inline-level boxes."""
 
 import unicodedata
 from math import inf

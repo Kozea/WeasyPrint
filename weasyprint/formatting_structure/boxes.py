@@ -1,55 +1,50 @@
-"""
-    weasyprint.formatting_structure.boxes
-    -------------------------------------
+"""Classes for all types of boxes in the CSS formatting structure / box model.
 
-    Classes for all types of boxes in the CSS formatting structure / box model.
+See http://www.w3.org/TR/CSS21/visuren.html
 
-    See http://www.w3.org/TR/CSS21/visuren.html
+Names are the same as in CSS 2.1 with the exception of ``TextBox``. In
+WeasyPrint, any text is in a ``TextBox``. What CSS calls anonymous inline boxes
+are text boxes but not all text boxes are anonymous inline boxes.
 
-    Names are the same as in CSS 2.1 with the exception of ``TextBox``. In
-    WeasyPrint, any text is in a ``TextBox``. What CSS calls anonymous
-    inline boxes are text boxes but not all text boxes are anonymous
-    inline boxes.
+See http://www.w3.org/TR/CSS21/visuren.html#anonymous
 
-    See http://www.w3.org/TR/CSS21/visuren.html#anonymous
+Abstract classes, should not be instantiated:
 
-    Abstract classes, should not be instantiated:
+* Box
+* BlockLevelBox
+* InlineLevelBox
+* BlockContainerBox
+* ReplacedBox
+* ParentBox
+* AtomicInlineLevelBox
 
-    * Box
-    * BlockLevelBox
-    * InlineLevelBox
-    * BlockContainerBox
-    * ReplacedBox
-    * ParentBox
-    * AtomicInlineLevelBox
+Concrete classes:
 
-    Concrete classes:
+* PageBox
+* BlockBox
+* InlineBox
+* InlineBlockBox
+* BlockReplacedBox
+* InlineReplacedBox
+* TextBox
+* LineBox
+* Various table-related Box subclasses
 
-    * PageBox
-    * BlockBox
-    * InlineBox
-    * InlineBlockBox
-    * BlockReplacedBox
-    * InlineReplacedBox
-    * TextBox
-    * LineBox
-    * Various table-related Box subclasses
+All concrete box classes whose name contains "Inline" or "Block" have one of
+the following "outside" behavior:
 
-    All concrete box classes whose name contains "Inline" or "Block" have
-    one of the following "outside" behavior:
+* Block-level (inherits from :class:`BlockLevelBox`)
+* Inline-level (inherits from :class:`InlineLevelBox`)
 
-    * Block-level (inherits from :class:`BlockLevelBox`)
-    * Inline-level (inherits from :class:`InlineLevelBox`)
+and one of the following "inside" behavior:
 
-    and one of the following "inside" behavior:
+* Block container (inherits from :class:`BlockContainerBox`)
+* Inline content (InlineBox and :class:`TextBox`)
+* Replaced content (inherits from :class:`ReplacedBox`)
 
-    * Block container (inherits from :class:`BlockContainerBox`)
-    * Inline content (InlineBox and :class:`TextBox`)
-    * Replaced content (inherits from :class:`ReplacedBox`)
+… with various combinasions of both.
 
-    ... with various combinasions of both.
-
-    See respective docstrings for details.
+See respective docstrings for details.
 
 """
 

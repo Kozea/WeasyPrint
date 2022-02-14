@@ -1,10 +1,4 @@
-"""
-    weasyprint.images
-    -----------------
-
-    Fetch and decode images in various formats.
-
-"""
+"""Fetch and decode images in various formats."""
 
 import math
 from io import BytesIO

@@ -1,11 +1,7 @@
-"""
-    WeasyPrint
-    ==========
+"""The Awesome Document Factory.
 
-    WeasyPrint converts web documents to PDF.
-
-    The public API is what is accessible from this "root" packages
-    without importing sub-modules.
+The public API is what is accessible from this "root" packages without
+importing sub-modules.
 
 """
 

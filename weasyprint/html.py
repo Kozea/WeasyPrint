@@ -1,13 +1,9 @@
-"""
-    weasyprint.html
-    ---------------
+"""Specific handling for some HTML elements, especially replaced elements.
 
-    Specific handling for some HTML elements, especially replaced elements.
-
-    Replaced elements (eg. <img> elements) are rendered externally and
-    behave as an atomic opaque box in CSS. In general, they may or may not
-    have intrinsic dimensions. But the only replaced elements currently
-    supported in WeasyPrint are images with intrinsic dimensions.
+Replaced elements (eg. <img> elements) are rendered externally and behave as an
+atomic opaque box in CSS. In general, they may or may not have intrinsic
+dimensions. But the only replaced elements currently supported in WeasyPrint
+are images with intrinsic dimensions.
 
 """
 

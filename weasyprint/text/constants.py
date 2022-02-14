@@ -1,10 +1,4 @@
-"""
-    weasyprint.text.constants
-    -------------------------
-
-    Constants used for text layout.
-
-"""
+"""Constants used for text layout."""
 
 from .ffi import pango
 

@@ -1,10 +1,6 @@
-"""
-    weasyprint.media_queries
-    ------------------------
+"""Handle media queries.
 
-    This module handles media queries.
-
-    https://www.w3.org/TR/mediaqueries-4/
+https://www.w3.org/TR/mediaqueries-4/
 
 """
 
