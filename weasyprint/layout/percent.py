@@ -133,15 +133,20 @@ def resolve_percentages(box, containing_block, main_flex_direction=None):
 
 
 def resolve_radii_percentages(box):
-    corners = ('top_left', 'top_right', 'bottom_right', 'bottom_left')
-    for corner in corners:
+    for corner in ('top_left', 'top_right', 'bottom_right', 'bottom_left'):
         property_name = f'border_{corner}_radius'
+        rx, ry = box.style[property_name]
+
+        # Short track for common case
+        if (0, 'px') in (rx, ry):
+            setattr(box, property_name, (0, 0))
+            continue
+
         for side in corner.split('_'):
             if side in box.remove_decoration_sides:
                 setattr(box, property_name, (0, 0))
                 break
         else:
-            rx, ry = box.style[property_name]
             rx = percentage(rx, box.border_width())
             ry = percentage(ry, box.border_height())
             setattr(box, property_name, (rx, ry))
