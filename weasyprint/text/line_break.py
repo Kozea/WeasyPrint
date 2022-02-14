@@ -47,23 +47,9 @@ def first_line_metrics(first_line, text, layout, resume_at, space_collapse,
         if space_collapse:
             first_line_text = first_line_text.rstrip(' ')
 
-        # Remove soft hyphens
-        layout.set_text(first_line_text.replace('\u00ad', ''))
-
+        layout.set_text(first_line_text)
         first_line, _ = layout.get_first_line()
         length = first_line.length if first_line is not None else 0
-
-        if '\u00ad' in first_line_text:
-            soft_hyphens = 0
-            if first_line_text[0] == '\u00ad':
-                length += 2  # len('\u00ad'.encode('utf-8'))
-            for i in range(len(layout.text)):
-                while i + soft_hyphens + 1 < len(first_line_text):
-                    if first_line_text[i + soft_hyphens + 1] == '\u00ad':
-                        soft_hyphens += 1
-                    else:
-                        break
-            length += soft_hyphens * 2  # len('\u00ad'.encode('utf-8'))
 
     width, height = line_size(first_line, style)
     baseline = units_to_double(pango.pango_layout_get_baseline(layout.layout))
@@ -411,7 +397,7 @@ def split_first_line(text, style, context, max_width, justification_spacing,
     lang = style['lang'] and pyphen.language_fallback(style['lang'])
     total, left, right = style['hyphenate_limit_chars']
     hyphenated = False
-    soft_hyphen = '\u00ad'
+    soft_hyphen = '\xad'
 
     try_hyphenate = False
     if hyphens != 'none':

@@ -713,53 +713,53 @@ def test_hyphenate_character_5():
 
 
 @assert_no_logs
-def test_hyphenate_manual_1():
-    for i in range(1, len('hyphénation')):
-        for hyphenate_character in ('!', 'ù ù'):
-            word = 'hyphénation'[:i] + '\u00ad' + 'hyphénation'[i:]
-            page, = render_pages(
-                '<html style="width: 5em; font-family: weasyprint">'
-                '<style>@font-face {'
-                '  src: url(weasyprint.otf); font-family: weasyprint}</style>'
-                '<body style="hyphens: manual;'
-                f'  hyphenate-character: \'{hyphenate_character}\'"'
-                f'  lang=fr>{word}')
-            html, = page.children
-            body, = html.children
-            lines = body.children
-            assert len(lines) == 2
-            assert lines[0].children[0].text.endswith(hyphenate_character)
-            full_text = ''.join(
-                child.text for line in lines for child in line.children)
-            assert full_text.replace(hyphenate_character, '') == word
+@pytest.mark.parametrize('i', (range(1, len('hyphénation'))))
+def test_hyphenate_manual_1(i):
+    for hyphenate_character in ('!', 'ù ù'):
+        word = 'hyphénation'[:i] + '\xad' + 'hyphénation'[i:]
+        page, = render_pages(
+            '<html style="width: 5em; font-family: weasyprint">'
+            '<style>@font-face {'
+            '  src: url(weasyprint.otf); font-family: weasyprint}</style>'
+            '<body style="hyphens: manual;'
+            f'  hyphenate-character: \'{hyphenate_character}\'"'
+            f'  lang=fr>{word}')
+        html, = page.children
+        body, = html.children
+        lines = body.children
+        assert len(lines) == 2
+        assert lines[0].children[0].text.endswith(hyphenate_character)
+        full_text = ''.join(
+            child.text for line in lines for child in line.children)
+        assert full_text.replace(hyphenate_character, '') == word
 
 
 @assert_no_logs
-def test_hyphenate_manual_2():
-    for i in range(1, len('hy phénation')):
-        for hyphenate_character in ('!', 'ù ù'):
-            word = 'hy phénation'[:i] + '\u00ad' + 'hy phénation'[i:]
-            page, = render_pages(
-                '<html style="width: 5em; font-family: weasyprint">'
-                '<style>@font-face {'
-                '  src: url(weasyprint.otf); font-family: weasyprint}</style>'
-                '<body style="hyphens: manual;'
-                f'  hyphenate-character: \'{hyphenate_character}\'"'
-                f'  lang=fr>{word}')
-            html, = page.children
-            body, = html.children
-            lines = body.children
-            assert len(lines) in (2, 3)
-            full_text = ''.join(
-                child.text for line in lines for child in line.children)
-            full_text = full_text.replace(hyphenate_character, '')
-            if lines[0].children[0].text.endswith(hyphenate_character):
-                assert full_text == word
-            else:
-                assert lines[0].children[0].text.endswith('y')
-                if len(lines) == 3:
-                    assert lines[1].children[0].text.endswith(
-                        hyphenate_character)
+@pytest.mark.parametrize('i', (range(1, len('hy phénation'))))
+def test_hyphenate_manual_2(i):
+    for hyphenate_character in ('!', 'ù ù'):
+        word = 'hy phénation'[:i] + '\xad' + 'hy phénation'[i:]
+        page, = render_pages(
+            '<html style="width: 5em; font-family: weasyprint">'
+            '<style>@font-face {'
+            '  src: url(weasyprint.otf); font-family: weasyprint}</style>'
+            '<body style="hyphens: manual;'
+            f'  hyphenate-character: \'{hyphenate_character}\'"'
+            f'  lang=fr>{word}')
+        html, = page.children
+        body, = html.children
+        lines = body.children
+        assert len(lines) in (2, 3)
+        full_text = ''.join(
+            child.text for line in lines for child in line.children)
+        full_text = full_text.replace(hyphenate_character, '')
+        if lines[0].children[0].text.endswith(hyphenate_character):
+            assert full_text == word
+        else:
+            assert lines[0].children[0].text.rstrip('\xad').endswith('y')
+            if len(lines) == 3:
+                assert lines[1].children[0].text.rstrip('\xad').endswith(
+                    hyphenate_character)
 
 
 @assert_no_logs
