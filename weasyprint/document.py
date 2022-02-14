@@ -84,8 +84,7 @@ class Font:
         self.hash = ''.join(
             chr(65 + letter % 26) for letter in sha.digest()[:6])
         self.name = (
-            b'/' + self.hash.encode('ascii') + b'+' +
-            self.family.replace(b' ', b''))
+            b'/' + self.hash.encode() + b'+' + self.family.replace(b' ', b''))
         self.italic_angle = 0  # TODO: this should be different
         if font_size:
             self.ascent = int(
@@ -1442,12 +1441,12 @@ class Document:
                 b'1 begincodespacerange',
                 b'<0000> <ffff>',
                 b'endcodespacerange',
-                f'{len(font.cmap)} beginbfchar'.encode('ascii')])
+                f'{len(font.cmap)} beginbfchar'.encode()])
             for glyph, text in font.cmap.items():
                 unicode_codepoints = ''.join(
                     f'{letter.encode("utf-16-be").hex()}' for letter in text)
                 to_unicode.stream.append(
-                    f'<{glyph:04x}> <{unicode_codepoints}>'.encode('ascii'))
+                    f'<{glyph:04x}> <{unicode_codepoints}>'.encode())
             to_unicode.stream.extend([
                 b'endbfchar',
                 b'endcmap',

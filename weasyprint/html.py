@@ -27,8 +27,8 @@ if HTML5_UA is None:
     HTML5_UA_STYLESHEET = HTML5_PH_STYLESHEET = CSS(string='')
 else:
     HTML5_UA_STYLESHEET = CSS(
-        string=HTML5_UA.decode('utf-8'), counter_style=HTML5_UA_COUNTER_STYLE)
-    HTML5_PH_STYLESHEET = CSS(string=HTML5_PH.decode('utf-8'))
+        string=HTML5_UA.decode(), counter_style=HTML5_UA_COUNTER_STYLE)
+    HTML5_PH_STYLESHEET = CSS(string=HTML5_PH.decode())
 
 # http://whatwg.org/C#space-character
 HTML_WHITESPACE = ' \t\n\f\r'
@@ -55,7 +55,7 @@ def ascii_lower(string):
 
     """
     # This turns out to be faster than unicode.translate()
-    return string.encode('utf-8').lower().decode('utf-8')
+    return string.encode().lower().decode()
 
 
 def element_has_link_type(element, link_type):

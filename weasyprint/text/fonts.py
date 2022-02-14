@@ -68,17 +68,9 @@ def _check_font_configuration(font_config):
             'FontConfig: No fonts configured. Expect ugly output.')
         return
 
-    # TODO: on Windows we could try to add the system fonts like that:
-    # fontdir = os.path.join(os.environ['WINDIR'], 'Fonts')
-    # fontconfig.FcConfigAppFontAddDir(
-    #     font_config,
-    #     # not sure which encoding fontconfig expects
-    #     fontdir.encode('mbcs'))
-
 
 _check_font_configuration(ffi.gc(
-    fontconfig.FcInitLoadConfigAndFonts(),
-    fontconfig.FcConfigDestroy))
+    fontconfig.FcInitLoadConfigAndFonts(), fontconfig.FcConfigDestroy))
 
 
 class FontConfiguration:
@@ -141,7 +133,7 @@ class FontConfiguration:
             if font_type in ('external', 'local'):
                 config = self._fontconfig_config
                 if font_type == 'local':
-                    font_name = url.encode('utf-8')
+                    font_name = url.encode()
                     pattern = ffi.gc(
                         fontconfig.FcPatternCreate(),
                         fontconfig.FcPatternDestroy)
@@ -161,7 +153,7 @@ class FontConfiguration:
                     if matching_pattern == ffi.NULL:
                         LOGGER.debug(
                             'Failed to get matching local font for %r',
-                            font_name.decode('utf-8'))
+                            font_name.decode())
                         continue
 
                     # TODO: do many fonts have multiple family values?
@@ -182,7 +174,7 @@ class FontConfiguration:
                     else:
                         LOGGER.debug(
                             'Failed to load local font "%s"',
-                            font_name.decode('utf-8'))
+                            font_name.decode())
                         continue
                 try:
                     with fetch(url_fetcher, url) as result:

@@ -1073,7 +1073,7 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y,
             first_line, second_line = textbox.pango_layout.get_first_line()
 
     font_size = textbox.style['font_size']
-    utf8_text = textbox.pango_layout.text.encode('utf-8')
+    utf8_text = textbox.pango_layout.text.encode()
     previous_utf8_position = 0
 
     runs = [first_line.runs[0]]
@@ -1173,7 +1173,7 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y,
             # Mapping between glyphs and characters
             if glyph not in font.cmap:
                 utf8_slice = slice(previous_utf8_position, utf8_position)
-                font.cmap[glyph] = utf8_text[utf8_slice].decode('utf-8')
+                font.cmap[glyph] = utf8_text[utf8_slice].decode()
             previous_utf8_position = utf8_position
 
             if font.svg:

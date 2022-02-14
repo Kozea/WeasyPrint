@@ -50,13 +50,11 @@ def test_line_breaking():
     assert resume_index is None
 
     _, _, resume_index, _, _, _ = make_text(string, 90, font_size=100)
-    assert string.encode('utf-8')[resume_index:].decode('utf-8') == (
-        'is a text for test')
+    assert string.encode()[resume_index:].decode() == 'is a text for test'
 
     _, _, resume_index, _, _, _ = make_text(
         string, 100, font_family=SANS_FONTS.split(','), font_size=19)
-    assert string.encode('utf-8')[resume_index:].decode('utf-8') == (
-        'text for test')
+    assert string.encode()[resume_index:].decode() == 'text for test'
 
 
 @assert_no_logs
@@ -68,8 +66,7 @@ def test_line_breaking_rtl():
     assert resume_index is None
 
     _, _, resume_index, _, _, _ = make_text(string, 90, font_size=100)
-    assert string.encode('utf-8')[resume_index:].decode('utf-8') == (
-        'ايبسوم دولا')
+    assert string.encode()[resume_index:].decode() == 'ايبسوم دولا'
 
 
 @assert_no_logs

@@ -40,7 +40,7 @@ def _test_resource(class_, basename, check, **kwargs):
     check(class_(filename=absolute_path, **kwargs))
     check(class_(url, **kwargs))
     check(class_(guess=url, **kwargs))
-    url = path2url(absolute_filename.encode('utf-8'))
+    url = path2url(absolute_filename.encode())
     check(class_(url=url, **kwargs))
     with open(absolute_filename, 'rb') as fd:
         check(class_(fd, **kwargs))
@@ -285,7 +285,7 @@ def test_python_render(tmpdir):
     assert FakeHTML(
         string=html_string, base_url=base_url, media_type='screen'
     ).write_png(
-        stylesheets=[io.BytesIO(css_string.encode('utf-8'))]
+        stylesheets=[io.BytesIO(css_string.encode())]
     ) == rotated_png_bytes
     assert FakeHTML(
         string=f'<style>{css_string}</style>{html_string}',
@@ -320,7 +320,7 @@ def test_command_line_render(tmpdir):
     tmpdir.join('no_css.html').write_binary(html)
     tmpdir.join('combined.html').write_binary(combined)
     tmpdir.join('combined-UTF-16BE.html').write_binary(
-        combined.decode('ascii').encode('UTF-16BE'))
+        combined.decode().encode('UTF-16BE'))
     tmpdir.join('linked.html').write_binary(linked)
     tmpdir.join('not_optimized.html').write_binary(not_optimized)
     tmpdir.join('style.css').write_binary(css)

@@ -37,7 +37,7 @@ def test_unicode():
         image = os.path.join(temp, 'pattern.png')
         html = os.path.join(temp, 'doc.html')
         with open(stylesheet, 'wb') as fd:
-            fd.write(style.encode('utf-8'))
+            fd.write(style.encode())
         with open(resource_filename('pattern.png'), 'rb') as fd:
             image_content = fd.read()
         with open(image, 'wb') as fd:
@@ -49,7 +49,7 @@ def test_unicode():
             '''.format(
                 ensure_url(stylesheet), ensure_url(image), text
             )
-            fd.write(html_content.encode('utf-8'))
+            fd.write(html_content.encode())
 
         document = FakeHTML(html, encoding='utf-8')
         lines = document_to_pixels(document, 'unicode', 200, 50)

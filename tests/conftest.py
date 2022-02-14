@@ -38,7 +38,7 @@ def document_write_png(self, target=None, resolution=96, antialiasing=1,
 
     assert pngs.startswith(MAGIC_NUMBER), (
         'Ghostscript error: '
-        f'{pngs.split(MAGIC_NUMBER)[0].decode("ascii").strip()}')
+        f'{pngs.split(MAGIC_NUMBER)[0].decode().strip()}')
 
     if split_images:
         assert target is None

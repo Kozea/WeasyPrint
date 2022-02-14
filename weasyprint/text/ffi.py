@@ -423,5 +423,5 @@ def unicode_to_char_p(string):
     The byte string must live at least as long as the pointer is used.
 
     """
-    bytestring = string.encode('utf-8').replace(b'\x00', b'')
+    bytestring = string.encode().replace(b'\x00', b'')
     return ffi.new('char[]', bytestring), bytestring

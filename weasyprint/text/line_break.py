@@ -32,7 +32,7 @@ def first_line_metrics(first_line, text, layout, resume_at, space_collapse,
                        style, hyphenated=False, hyphenation_character=None):
     length = first_line.length
     if hyphenated:
-        length -= len(hyphenation_character.encode('utf-8'))
+        length -= len(hyphenation_character.encode())
     elif resume_at:
         # Set an infinite width as we don't want to break lines when drawing,
         # the lines have already been split and the size may differ. Rendering
@@ -40,7 +40,7 @@ def first_line_metrics(first_line, text, layout, resume_at, space_collapse,
         pango.pango_layout_set_width(layout.layout, -1)
 
         # Create layout with final text
-        first_line_text = text.encode('utf-8')[:length].decode('utf-8')
+        first_line_text = text.encode()[:length].decode()
 
         # Remove trailing spaces if spaces collapse
         if space_collapse:
@@ -167,7 +167,7 @@ class Layout:
             # End-of-line not found, keep the whole text
             pass
         text, bytestring = unicode_to_char_p(text)
-        self.text = bytestring.decode('utf-8')
+        self.text = bytestring.decode()
         pango.pango_layout_set_text(self.layout, text, -1)
 
         word_spacing = self.style['word_spacing']
@@ -337,14 +337,14 @@ def split_first_line(text, style, context, max_width, justification_spacing,
     # Step #3: Try to put the first word of the second line on the first line
     # https://mail.gnome.org/archives/gtk-i18n-list/2013-September/msg00006
     # is a good thread related to this problem.
-    first_line_text = text.encode('utf-8')[:index].decode('utf-8')
+    first_line_text = text.encode()[:index].decode()
     first_line_fits = (
         first_line_width <= max_width or
         ' ' in first_line_text.strip() or
         can_break_text(first_line_text.strip(), style['lang']))
     if first_line_fits:
         # The first line fits but may have been cut too early by Pango
-        second_line_text = text.encode('utf-8')[index:].decode('utf-8')
+        second_line_text = text.encode()[index:].decode()
     else:
         # The line can't be split earlier, try to hyphenate the first word.
         first_line_text = ''
@@ -361,7 +361,7 @@ def split_first_line(text, style, context, max_width, justification_spacing,
             first_line_width, _ = line_size(first_line, style)
             if index is None and first_line_text:
                 # The next word fits in the first line, keep the layout
-                resume_index = len(new_first_line_text.encode('utf-8')) + 1
+                resume_index = len(new_first_line_text.encode()) + 1
                 return first_line_metrics(
                     first_line, text, layout, resume_index, space_collapse,
                     style)
@@ -371,7 +371,7 @@ def split_first_line(text, style, context, max_width, justification_spacing,
             else:
                 # Second line is None
                 resume_index = first_line.length + 1
-                if resume_index >= len(text.encode('utf-8')):
+                if resume_index >= len(text.encode()):
                     resume_index = None
     elif first_line_text:
         # We found something on the first line but we did not find a word on
@@ -432,7 +432,7 @@ def split_first_line(text, style, context, max_width, justification_spacing,
                     next_word = f' {next_word}'
                     layout.set_text(first_line_text)
                     first_line, index = layout.get_first_line()
-                    resume_index = len((first_line_text + ' ').encode('utf-8'))
+                    resume_index = len((first_line_text + ' ').encode())
                 else:
                     first_line_text, next_word = '', first_line_text
             soft_hyphen_indexes = [
@@ -472,13 +472,13 @@ def split_first_line(text, style, context, max_width, justification_spacing,
                     layout = new_layout
                     first_line = new_first_line
                     index = new_index
-                    resume_index = len(new_first_line_text.encode('utf-8'))
+                    resume_index = len(new_first_line_text.encode())
                     if text[len(new_first_line_text)] == soft_hyphen:
                         # Recreate the layout with no max_width to be sure that
                         # we don't break before the soft hyphen
                         pango.pango_layout_set_width(
                             layout.layout, units_from_double(-1))
-                        resume_index += len(soft_hyphen.encode('utf-8'))
+                        resume_index += len(soft_hyphen.encode())
                     break
 
             if not hyphenated and not first_line_text:
@@ -489,9 +489,9 @@ def split_first_line(text, style, context, max_width, justification_spacing,
                 pango.pango_layout_set_width(
                     layout.layout, units_from_double(-1))
                 first_line, index = layout.get_first_line()
-                resume_index = len(new_first_line_text.encode('utf-8'))
+                resume_index = len(new_first_line_text.encode())
                 if text[len(first_line_text)] == soft_hyphen:
-                    resume_index += len(soft_hyphen.encode('utf-8'))
+                    resume_index += len(soft_hyphen.encode())
 
     if not hyphenated and first_line_text.endswith(soft_hyphen):
         # Recreate the layout with no max_width to be sure that
@@ -503,7 +503,7 @@ def split_first_line(text, style, context, max_width, justification_spacing,
         pango.pango_layout_set_width(
             layout.layout, units_from_double(-1))
         first_line, index = layout.get_first_line()
-        resume_index = len(first_line_text.encode('utf-8'))
+        resume_index = len(first_line_text.encode())
 
     # Step 5: Try to break word if it's too long for the line
     overflow_wrap = style['overflow_wrap']
@@ -531,7 +531,7 @@ def split_first_line(text, style, context, max_width, justification_spacing,
             layout.layout, PANGO_WRAP_MODE['WRAP_CHAR'])
         first_line, index = layout.get_first_line()
         resume_index = index or first_line.length
-        if resume_index >= len(text.encode('utf-8')):
+        if resume_index >= len(text.encode()):
             resume_index = None
 
     return first_line_metrics(

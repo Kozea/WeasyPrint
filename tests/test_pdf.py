@@ -31,8 +31,8 @@ RIGHT = round(210 * 72 / 25.4, 6)
 @pytest.mark.parametrize('zoom', (1, 1.5, 0.5))
 def test_page_size_zoom(zoom):
     pdf = FakeHTML(string='<style>@page{size:3in 4in').write_pdf(zoom=zoom)
-    assert '/MediaBox [ 0 0 {} {} ]'.format(
-        int(216 * zoom), int(288 * zoom)).encode('ascii') in pdf
+    width, height = int(216 * zoom), int(288 * zoom)
+    assert f'/MediaBox [ 0 0 {width} {height} ]'.encode() in pdf
 
 
 @assert_no_logs
@@ -98,7 +98,7 @@ def test_bookmarks_4():
     # 10
     # L_ 11
     assert re.findall(b'/Title \\((.*)\\)', pdf) == [
-        str(i).encode('ascii') for i in range(1, 12)]
+        str(i).encode() for i in range(1, 12)]
     counts = re.findall(b'/Count ([0-9-]*)', pdf)
     counts.pop(0)  # Page count
     outlines = counts.pop()
@@ -122,7 +122,7 @@ def test_bookmarks_5():
     # L_ 4
     #    L_ 5
     assert re.findall(b'/Title \\((.*)\\)', pdf) == [
-        str(i).encode('ascii') for i in range(1, 6)]
+        str(i).encode() for i in range(1, 6)]
     counts = re.findall(b'/Count ([0-9-]*)', pdf)
     counts.pop(0)  # Page count
     outlines = counts.pop()
@@ -153,7 +153,7 @@ def test_bookmarks_6():
     #    L_ 8
     # 9
     assert re.findall(b'/Title \\((.*)\\)', pdf) == [
-        str(i).encode('ascii') for i in range(1, 10)]
+        str(i).encode() for i in range(1, 10)]
     counts = re.findall(b'/Count ([0-9-]*)', pdf)
     counts.pop(0)  # Page count
     outlines = counts.pop()
@@ -381,7 +381,7 @@ def test_relative_links_no_height():
         string='<a href="../lipsum" style="display: block"></a>a',
         base_url='http://weasyprint.org/foo/bar/').write_pdf()
     assert b'/S /URI\n/URI (http://weasyprint.org/foo/lipsum)'
-    assert f'/Rect [ 0 {TOP} {RIGHT} {TOP} ]'.encode('ascii') in pdf
+    assert f'/Rect [ 0 {TOP} {RIGHT} {TOP} ]'.encode() in pdf
 
 
 @assert_no_logs
@@ -391,7 +391,7 @@ def test_relative_links_missing_base():
         string='<a href="../lipsum" style="display: block"></a>a',
         base_url=None).write_pdf()
     assert b'/S /URI\n/URI (../lipsum)'
-    assert f'/Rect [ 0 {TOP} {RIGHT} {TOP} ]'.encode('ascii') in pdf
+    assert f'/Rect [ 0 {TOP} {RIGHT} {TOP} ]'.encode() in pdf
 
 
 @assert_no_logs
@@ -581,25 +581,23 @@ def test_embedded_files_attachments(tmpdir):
             io.BytesIO(b'file like obj')
         ]
     )
-    assert (
-        '<{}>'.format(hashlib.md5(b'hi there').hexdigest()).encode('ascii')
-        in pdf)
+    assert '<{}>'.format(hashlib.md5(b'hi there').hexdigest()).encode() in pdf
     assert b'/F ()' in pdf
     assert b'/UF (attachment.bin)' in pdf
     name = BOM_UTF16_BE + 'some file attachment äöü'.encode('utf-16-be')
-    assert b'/Desc <' + name.hex().encode('ascii') + b'>' in pdf
+    assert b'/Desc <' + name.hex().encode() + b'>' in pdf
 
-    assert hashlib.md5(adata).hexdigest().encode('ascii') in pdf
-    assert os.path.basename(absolute_tmp_file).encode('ascii') in pdf
+    assert hashlib.md5(adata).hexdigest().encode() in pdf
+    assert os.path.basename(absolute_tmp_file).encode() in pdf
 
-    assert hashlib.md5(rdata).hexdigest().encode('ascii') in pdf
+    assert hashlib.md5(rdata).hexdigest().encode() in pdf
     name = BOM_UTF16_BE + 'some file attachment äöü'.encode('utf-16-be')
-    assert b'/Desc <' + name.hex().encode('ascii') + b'>' in pdf
+    assert b'/Desc <' + name.hex().encode() + b'>' in pdf
 
-    assert hashlib.md5(b'oob attachment').hexdigest().encode('ascii') in pdf
+    assert hashlib.md5(b'oob attachment').hexdigest().encode() in pdf
     assert b'/Desc (Hello)' in pdf
-    assert hashlib.md5(b'raw URL').hexdigest().encode('ascii') in pdf
-    assert hashlib.md5(b'file like obj').hexdigest().encode('ascii') in pdf
+    assert hashlib.md5(b'raw URL').hexdigest().encode() in pdf
+    assert hashlib.md5(b'file like obj').hexdigest().encode() in pdf
 
     assert b'/EmbeddedFiles' in pdf
     assert b'/Outlines' in pdf
@@ -612,7 +610,7 @@ def test_attachments_data():
       <meta charset="utf-8">
       <link rel="attachment" href="data:,some data">
     ''').write_pdf()
-    md5 = '<{}>'.format(hashlib.md5(b'some data').hexdigest()).encode('ascii')
+    md5 = '<{}>'.format(hashlib.md5(b'some data').hexdigest()).encode()
     assert md5 in pdf
 
 
@@ -648,7 +646,7 @@ def test_annotations():
         download>A link that lets you download an attachment</a>
     ''').write_pdf()
 
-    assert hashlib.md5(b'some data').hexdigest().encode('ascii') in pdf
+    assert hashlib.md5(b'some data').hexdigest().encode() in pdf
     assert b'/FileAttachment' in pdf
     assert b'/EmbeddedFiles' not in pdf
 
@@ -670,6 +668,6 @@ def test_bleed(style, media, bleed, trim):
       <style>@page { %s }</style>
       <body>test
     ''' % style).write_pdf()
-    assert '/MediaBox [ {} {} {} {} ]'.format(*media).encode('ascii') in pdf
-    assert '/BleedBox [ {} {} {} {} ]'.format(*bleed).encode('ascii') in pdf
-    assert '/TrimBox [ {} {} {} {} ]'.format(*trim).encode('ascii') in pdf
+    assert '/MediaBox [ {} {} {} {} ]'.format(*media).encode() in pdf
+    assert '/BleedBox [ {} {} {} {} ]'.format(*bleed).encode() in pdf
+    assert '/TrimBox [ {} {} {} {} ]'.format(*trim).encode() in pdf
