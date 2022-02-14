@@ -174,8 +174,8 @@ def block_level_width(box, containing_block):
             paddings_plus_borders + margin_l + margin_r)
     margin_sum = cb_width - paddings_plus_borders - width
     if margin_l == 'auto' and margin_r == 'auto':
-        box.margin_left = margin_sum / 2.
-        box.margin_right = margin_sum / 2.
+        box.margin_left = margin_sum / 2
+        box.margin_right = margin_sum / 2
     elif margin_l == 'auto' and margin_r != 'auto':
         box.margin_left = margin_sum - margin_r
     elif margin_l != 'auto' and margin_r == 'auto':

@@ -34,7 +34,7 @@ LENGTHS_TO_PIXELS = {
     'in': 96.,  # LENGTHS_TO_PIXELS['pt'] * 72
     'cm': 96. / 2.54,  # LENGTHS_TO_PIXELS['in'] / 2.54
     'mm': 96. / 25.4,  # LENGTHS_TO_PIXELS['in'] / 25.4
-    'q': 96. / 25.4 / 4.,  # LENGTHS_TO_PIXELS['mm'] / 4
+    'q': 96. / 25.4 / 4,  # LENGTHS_TO_PIXELS['mm'] / 4
 }
 
 # http://dev.w3.org/csswg/css-values/#resolution

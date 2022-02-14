@@ -248,7 +248,7 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                     if cell.vertical_align == 'bottom':
                         add_top_padding(cell, extra)
                     elif cell.vertical_align == 'middle':
-                        extra /= 2.
+                        extra /= 2
                         add_top_padding(cell, extra)
                         cell.padding_bottom += extra
                     else:

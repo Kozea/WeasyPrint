@@ -18,7 +18,7 @@ def percentage(value, refer_to):
         return value.value
     else:
         assert value.unit == '%'
-        return refer_to * value.value / 100.
+        return refer_to * value.value / 100
 
 
 def resolve_one_percentage(box, property_name, refer_to,

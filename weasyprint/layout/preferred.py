@@ -153,7 +153,7 @@ def margin_width(box, width, left=True, right=True):
         width += box.style['border_right_width']
 
     if percentages < 100:
-        return width / (1 - percentages / 100.)
+        return width / (1 - percentages / 100)
     else:
         # Pathological case, ignore
         return 0
@@ -570,14 +570,14 @@ def table_and_columns_preferred_widths(context, box, outer=True):
 
     # Calculate the max- and min-content widths of table and columns
     small_percentage_contributions = [
-        max_content_widths[i] / (intrinsic_percentages[i] / 100.)
+        max_content_widths[i] / (intrinsic_percentages[i] / 100)
         for i in range(grid_width)
         if intrinsic_percentages[i]]
     large_percentage_contribution_numerator = sum(
         max_content_widths[i] for i in range(grid_width)
         if intrinsic_percentages[i] == 0)
     large_percentage_contribution_denominator = (
-        (100 - sum(intrinsic_percentages)) / 100.)
+        (100 - sum(intrinsic_percentages)) / 100)
     if large_percentage_contribution_denominator == 0:
         if large_percentage_contribution_numerator == 0:
             large_percentage_contribution = 0

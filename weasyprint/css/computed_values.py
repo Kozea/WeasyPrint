@@ -580,7 +580,7 @@ def font_size(style, name, value):
         else:
             return parent_font_size * 0.8
     elif value.unit == '%':
-        return value.value * parent_font_size / 100.
+        return value.value * parent_font_size / 100
     else:
         return length(
             style, name, value, pixels_only=True,
@@ -612,7 +612,7 @@ def line_height(style, name, value):
     elif not value.unit:
         return ('NUMBER', value.value)
     elif value.unit == '%':
-        factor = value.value / 100.
+        factor = value.value / 100
         font_size_value = style['font_size']
         pixels = factor * font_size_value
     else:

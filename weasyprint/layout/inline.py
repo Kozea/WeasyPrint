@@ -1049,7 +1049,7 @@ def inline_box_verticality(box, top_bottom_subtrees, baseline_y):
             child_baseline_y = baseline_y
         elif vertical_align == 'middle':
             one_ex = box.style['font_size'] * ex_ratio(box.style)
-            top = baseline_y - (one_ex + child.margin_height()) / 2.
+            top = baseline_y - (one_ex + child.margin_height()) / 2
             child_baseline_y = top + child.baseline
         elif vertical_align == 'text-top':
             # align top with the top of the parent’s content area

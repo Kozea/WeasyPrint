@@ -71,7 +71,7 @@ def text(svg, node, font_size):
     # TODO: use real values
     ascent, descent = font_size * .8, font_size * .2
     if text_anchor == 'middle':
-        x_align = - (width / 2. + x_bearing)
+        x_align = - (width / 2 + x_bearing)
         if letter_spacing and node.text:
             x_align -= (len(node.text) - 1) * letter_spacing / 2
     elif text_anchor == 'end':
