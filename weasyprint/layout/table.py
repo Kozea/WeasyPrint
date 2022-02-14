@@ -655,9 +655,7 @@ def fixed_table_layout(box):
                 width_per_column = width / len(columns_without_width)
                 for j in columns_without_width:
                     column_widths[j] = width_per_column
-            del width
         i += cell.colspan
-    del i
 
     # Distribute the remaining space equally on columns that do not have
     # a width yet.

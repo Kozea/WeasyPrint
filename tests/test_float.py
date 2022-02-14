@@ -246,7 +246,6 @@ def test_floats_page_breaks_1():
         assert all([img.element_tag == 'img' for img in images])
         assert all([img.position_x == 10 for img in images])
         page_images.append(images)
-        del images
     positions_y = [[img.position_y for img in images]
                    for images in page_images]
     assert positions_y == [[10], [10]]
@@ -274,7 +273,6 @@ def test_floats_page_breaks_2():
         assert all([img.element_tag == 'img' for img in images])
         assert all([img.position_x == 10 for img in images])
         page_images.append(images)
-        del images
     positions_y = [[img.position_y for img in images]
                    for images in page_images]
     assert positions_y == [[10], [10]]
@@ -306,7 +304,6 @@ def test_floats_page_breaks_3():
         assert all([img.element_tag == 'img' for img in images])
         assert all([img.position_x == 10 for img in images])
         page_images.append(images)
-        del images
     positions_y = [[img.position_y for img in images]
                    for images in page_images]
     assert positions_y == [[10, 40], [10, 40], [10]]
@@ -343,8 +340,6 @@ def test_floats_page_breaks_4():
         divs = [div for div in page.descendants() if div.element_tag == 'div']
         assert all([div.element_tag == 'div' for div in divs])
         page_divs.append(divs)
-        del divs
-
     positions_y = [[div.position_y for div in divs] for divs in page_divs]
     assert positions_y == [[10, 70], [10]]
 
@@ -382,8 +377,6 @@ def test_floats_page_breaks_5():
         divs = [div for div in page.descendants() if div.element_tag == 'div']
         assert all([div.element_tag == 'div' for div in divs])
         page_divs.append(divs)
-        del divs
-
     positions_y = [[div.position_y for div in divs] for divs in page_divs]
     assert positions_y == [[10], [10, 30]]
 
@@ -421,8 +414,6 @@ def test_floats_page_breaks_6():
         divs = [div for div in page.descendants() if div.element_tag == 'div']
         assert all([div.element_tag == 'div' for div in divs])
         page_divs.append(divs)
-        del divs
-
     positions_y = [[div.position_y for div in divs] for divs in page_divs]
     assert positions_y == [[10], [10], [10]]
 
