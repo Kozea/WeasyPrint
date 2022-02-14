@@ -14,6 +14,7 @@ import sys
 import traceback
 import zlib
 from gzip import GzipFile
+from pathlib import Path
 from urllib.parse import quote, unquote, urljoin, urlsplit
 from urllib.request import Request, pathname2url, urlopen
 
@@ -74,11 +75,13 @@ def iri_to_uri(url):
 def path2url(path):
     """Return file URL of `path`.
 
-    Accepts 'str' or 'bytes', returns 'str'.
+    Accepts 'str', 'bytes' or 'Path', returns 'str'.
 
     """
     # Ensure 'str'
-    if isinstance(path, bytes):
+    if isinstance(path, Path):
+        path = str(path)
+    elif isinstance(path, bytes):
         path = path.decode(FILESYSTEM_ENCODING)
     # If a trailing path.sep is given, keep it
     wants_trailing_slash = path.endswith(os.path.sep) or path.endswith('/')

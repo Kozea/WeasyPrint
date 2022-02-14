@@ -251,8 +251,8 @@ class Attachment:
                  string=None, base_url=None, url_fetcher=default_url_fetcher,
                  description=None):
         self.source = _select_source(
-            guess, filename, url, file_obj, string,
-            base_url=base_url, url_fetcher=url_fetcher)
+            guess, filename, url, file_obj, string, base_url=base_url,
+            url_fetcher=url_fetcher)
         self.description = description
 
 
@@ -268,8 +268,8 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
         param for param in (guess, filename, url, file_obj, string) if
         param is not None]
     if len(selected_params) != 1:
-        raise TypeError('Expected exactly one source, got ' + (
-            ', '.join(selected_params) or 'nothing'))
+        source = ', '.join(selected_params) or 'nothing'
+        raise TypeError(f'Expected exactly one source, got {source}')
     elif guess is not None:
         if hasattr(guess, 'read'):
             type_ = 'file_obj'
@@ -286,8 +286,6 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
         with result as result:
             yield result
     elif filename is not None:
-        if isinstance(filename, Path):
-            filename = str(filename)
         if base_url is None:
             base_url = path2url(filename)
         with open(filename, 'rb') as file_obj:
