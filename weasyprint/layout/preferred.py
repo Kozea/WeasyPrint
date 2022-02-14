@@ -264,7 +264,6 @@ def inline_line_widths(context, box, outer, is_line_start, minimum,
     if skip_stack is None:
         skip = 0
     else:
-        # TODO: handle multiple skip stacks
         (skip, skip_stack), = skip_stack.items()
     for child in box.children[skip:]:
         if child.is_absolutely_positioned():

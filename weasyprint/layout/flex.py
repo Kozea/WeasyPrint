@@ -101,7 +101,6 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
             context, parent_box)
     original_skip_stack = skip_stack
     if skip_stack is not None:
-        # TODO: handle multiple skip stacks
         (skip, skip_stack), = skip_stack.items()
         if box.style['flex_direction'].endswith('-reverse'):
             children = children[:skip + 1]
@@ -845,7 +844,6 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
                     box.children.append(new_child)
                     if child_resume_at is not None:
                         if original_skip_stack:
-                            # TODO: handle multiple skip stacks
                             first_level_skip, = original_skip_stack
                         else:
                             first_level_skip = 0

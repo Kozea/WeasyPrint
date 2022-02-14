@@ -618,7 +618,6 @@ def block_container_layout(context, box, bottom_space, skip_stack,
         skip = 0
         first_letter_style = getattr(box, 'first_letter_style', None)
     else:
-        # TODO: handle multiple skip stacks
         (skip, skip_stack), = skip_stack.items()
         first_letter_style = None
     for index, child in enumerate(box.children[skip:], start=(skip or 0)):

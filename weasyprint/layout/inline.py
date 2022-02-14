@@ -187,7 +187,6 @@ def skip_first_whitespace(box, skip_stack):
         index = 0
         next_skip_stack = None
     else:
-        # TODO: handle multiple skip stacks
         (index, next_skip_stack), = skip_stack.items()
 
     if isinstance(box, boxes.TextBox):
@@ -298,7 +297,6 @@ def first_letter_to_box(box, skip_stack, first_letter_style):
             elif child.text:
                 character_found = False
                 if skip_stack:
-                    # TODO: handle multiple skip stacks
                     child_skip_stack, = skip_stack.values()
                     if child_skip_stack:
                         index, = child_skip_stack
@@ -348,7 +346,6 @@ def first_letter_to_box(box, skip_stack, first_letter_style):
                             index: {child_index + 1: grandchild_skip_stack}}
         elif isinstance(child, boxes.ParentBox):
             if skip_stack:
-                # TODO: handle multiple skip stacks
                 child_skip_stack, = skip_stack.values()
             else:
                 child_skip_stack = None
@@ -711,7 +708,6 @@ def split_inline_box(context, box, position_x, max_x, bottom_space, skip_stack,
     if is_start:
         skip = 0
     else:
-        # TODO: handle multiple skip stacks
         (skip, skip_stack), = skip_stack.items()
 
     for i, child in enumerate(box.children[skip:]):
