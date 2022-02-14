@@ -5,7 +5,6 @@ from math import inf
 
 import pyphen
 
-from ..logger import LOGGER
 from .constants import LST_TO_ISO, PANGO_STRETCH, PANGO_STYLE, PANGO_WRAP_MODE
 from .ffi import (
     ffi, gobject, pango, pangoft2, unicode_to_char_p, units_from_double,
@@ -141,25 +140,14 @@ class Layout:
             style['font_variant_east_asian'], style['font_feature_settings'])
         if features and context:
             features = ','.join(
-                f'{key} {value}' for key, value in features.items())
-
+                f'{key} {value}' for key, value in features.items()).encode()
             # TODO: attributes should be freed.
             # In the meantime, keep a cache to avoid leaking too many of them.
-            attr = context.font_features.get(features)
-            if attr is None:
-                try:
-                    attr = pango.pango_attr_font_features_new(
-                        features.encode('ascii'))
-                except AttributeError:
-                    LOGGER.error(
-                        'OpenType features are not available '
-                        'with Pango < 1.38')
-                else:
-                    context.font_features[features] = attr
-            if attr is not None:
-                attr_list = pango.pango_attr_list_new()
-                pango.pango_attr_list_insert(attr_list, attr)
-                pango.pango_layout_set_attributes(self.layout, attr_list)
+            attr = context.font_features.setdefault(
+                features, pango.pango_attr_font_features_new(features))
+            attr_list = pango.pango_attr_list_new()
+            pango.pango_attr_list_insert(attr_list, attr)
+            pango.pango_layout_set_attributes(self.layout, attr_list)
 
     def get_first_line(self):
         first_line = pango.pango_layout_get_line_readonly(self.layout, 0)
