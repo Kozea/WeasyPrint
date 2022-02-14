@@ -164,7 +164,7 @@ class Layout:
             # Keep only the first line plus one character, we don't need more
             text = text[:text.index('\n') + 2]
         except ValueError:
-            # End-of-line not found, keept the whole text
+            # End-of-line not found, keep the whole text
             pass
         text, bytestring = unicode_to_char_p(text)
         self.text = bytestring.decode('utf-8')
@@ -173,8 +173,7 @@ class Layout:
         word_spacing = self.style['word_spacing']
         if justify:
             # Justification is needed when drawing text but is useless during
-            # layout. Ignore it before layout is reactivated before the drawing
-            # step.
+            # layout, when it can be ignored.
             word_spacing += self.justification_spacing
 
         letter_spacing = self.style['letter_spacing']
@@ -370,7 +369,7 @@ def split_first_line(text, style, context, max_width, justification_spacing,
                 # Text may have been split elsewhere by Pango earlier
                 resume_index = index
             else:
-                # Second line is none
+                # Second line is None
                 resume_index = first_line.length + 1
                 if resume_index >= len(text.encode('utf-8')):
                     resume_index = None
@@ -400,7 +399,7 @@ def split_first_line(text, style, context, max_width, justification_spacing,
                 space = max_width - first_line_width
                 if style['hyphenate_limit_zone'].unit == '%':
                     limit_zone = (
-                        max_width * style['hyphenate_limit_zone'].value / 100.)
+                        max_width * style['hyphenate_limit_zone'].value / 100)
                 else:
                     limit_zone = style['hyphenate_limit_zone'].value
                 if space > limit_zone or space < 0:
