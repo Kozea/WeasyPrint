@@ -343,6 +343,7 @@ def test_reported_footnote_3():
     ('p { break-inside: avoid }', '<br>e<br>f'),
     ('p { widows: 4 }', '<br>e<br>f'),
     ('p + p { break-before: avoid }', '</p><p>e<br>f'),
+    ('p + p { break-before: avoid }', '<span>y</span><span>z</span></p><p>e'),
 ))
 def test_footnote_area_after_call(css, tail):
     pages = render_pages('''
