@@ -48,6 +48,7 @@ ffi.cdef('''
     typedef gint PangoGlyphUnit;
 
     const guint PANGO_GLYPH_EMPTY = 0x0FFFFFFF;
+    const guint PANGO_GLYPH_UNKNOWN_FLAG = 0x10000000;
 
     typedef enum {
         PANGO_STYLE_NORMAL,
