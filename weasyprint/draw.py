@@ -1133,7 +1133,8 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y):
             glyph_info = glyphs[i]
             glyph = glyph_info.glyph
             width = glyph_info.geometry.width
-            if glyph == pango.PANGO_GLYPH_EMPTY:
+            if (glyph == pango.PANGO_GLYPH_EMPTY or
+                    glyph & pango.PANGO_GLYPH_UNKNOWN_FLAG):
                 string += f'>{-width / font_size}<'
                 continue
             utf8_position = utf8_positions[i]
