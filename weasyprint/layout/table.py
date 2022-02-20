@@ -288,8 +288,8 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
 
             # Break if this row overflows the page, unless there is no
             # other content on the page.
-            if not page_is_empty and (
-                    next_position_y > context.page_bottom - bottom_space):
+            if not page_is_empty and context.overflows_page(
+                    bottom_space, next_position_y):
                 if new_group_children:
                     previous_row = new_group_children[-1]
                     page_break = block_level_page_break(previous_row, row)

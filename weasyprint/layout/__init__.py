@@ -241,6 +241,11 @@ class LayoutContext:
         self.tables = {}
         self.dictionaries = {}
 
+    def overflows_page(self, bottom_space, position_y):
+        # Use a small fudge factor to avoid floating numbers errors.
+        # The 1e-9 value comes from PEP 485.
+        return position_y > (self.page_bottom - bottom_space) * (1 + 1e-9)
+
     def create_block_formatting_context(self):
         self.excluded_shapes = []
         self._excluded_shapes_lists.append(self.excluded_shapes)

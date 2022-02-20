@@ -234,9 +234,9 @@ def _out_of_flow_layout(context, box, index, child, new_children,
             context, child, box, absolute_boxes, fixed_boxes, bottom_space,
             skip_stack=None)
         # New page if overflow
-        if (page_is_empty and not new_children) or not (
-                new_child.position_y + new_child.height >
-                context.page_bottom - bottom_space):
+        page_overflow = context.overflows_page(
+            bottom_space, new_child.position_y + new_child.height)
+        if (page_is_empty and not new_children) or not page_overflow:
             new_child.index = index
             new_children.append(new_child)
         else:
@@ -315,7 +315,7 @@ def _linebox_layout(context, box, index, child, new_children, page_is_empty,
         # page and can advance in the context.
         overflow = (
             (new_children or not page_is_empty) and
-            (new_position_y + offset_y > context.page_bottom - bottom_space))
+            context.overflows_page(bottom_space, new_position_y + offset_y))
         if overflow:
             abort, stop, resume_at = _break_line(
                 box, new_children, lines_iterator, page_is_empty, index,
@@ -327,8 +327,8 @@ def _linebox_layout(context, box, index, child, new_children, page_is_empty,
         # "When an unforced page break occurs here, both the adjoining
         #  ‘margin-top’ and ‘margin-bottom’ are set to zero."
         # See https://github.com/Kozea/WeasyPrint/issues/115
-        elif page_is_empty and (
-                new_position_y > context.page_bottom - bottom_space):
+        elif page_is_empty and context.overflows_page(
+                bottom_space, new_position_y):
             # Remove the top border when a page is empty and the box is
             # too high to be drawn in one page
             new_position_y -= box.margin_top
@@ -343,9 +343,10 @@ def _linebox_layout(context, box, index, child, new_children, page_is_empty,
             for footnote in footnotes:
                 context.layout_footnote(footnote)
                 new_footnotes.append(footnote)
-                overflow = context.reported_footnotes or (
-                    new_position_y + offset_y >
-                    context.page_bottom - bottom_space)
+                overflow = (
+                    context.reported_footnotes or
+                    context.overflows_page(
+                        bottom_space, new_position_y + offset_y))
                 if overflow:
                     context.report_footnote(footnote)
                     if footnote.style['footnote_policy'] == 'line':
@@ -464,22 +465,16 @@ def _in_flow_layout(context, box, index, child, new_children, page_is_empty,
             new_position_y = (
                 new_child.border_box_y() + new_child.border_height())
 
-            # Use a small fudge factor on this due to box splitting setting the
-            # height of some elements to the remaining height of the page:
-            # https://www.w3.org/TR/css-break-3/#box-splitting
-            # (Occasionally the order of this calculation would otherwise come
-            # out with unequal float values, forcing the box to the next page.)
-            # The 1e-9 value comes from PEP 485.
-            if (new_content_position_y >
-                    (context.page_bottom - bottom_space) * (1 + 1e-9) and
-                    not page_is_empty_with_no_children):
+            page_overflow = context.overflows_page(
+                bottom_space, new_content_position_y)
+            if page_overflow and not page_is_empty_with_no_children:
                 # The child content overflows the page area, display it on the
                 # next page.
                 remove_placeholders(
                     context, [new_child], absolute_boxes, fixed_boxes)
                 new_child = None
-            elif (new_position_y > context.page_bottom - bottom_space and
-                    not page_is_empty_with_no_children):
+            elif not page_is_empty_with_no_children and context.overflows_page(
+                    bottom_space, new_position_y):
                 # The child border/padding overflows the page area, do the
                 # layout again with a higher bottom_space value.
                 remove_placeholders(
