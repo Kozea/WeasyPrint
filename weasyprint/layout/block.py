@@ -464,7 +464,6 @@ def _in_flow_layout(context, box, index, child, new_children, page_is_empty,
                 new_child.content_box_y() + new_child.height)
             new_position_y = (
                 new_child.border_box_y() + new_child.border_height())
-
             page_overflow = context.overflows_page(
                 bottom_space, new_content_position_y)
             if page_overflow and not page_is_empty_with_no_children:
