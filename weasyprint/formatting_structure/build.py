@@ -42,6 +42,10 @@ BOX_TYPE_FROM_DISPLAY = {
 ASCII_TO_WIDE = {i: chr(i + 0xfee0) for i in range(0x21, 0x7f)}
 ASCII_TO_WIDE.update({0x20: '\u3000', 0x2D: '\u2212'})
 
+LINE_FEED_RE = re.compile('\r\n?')
+TAB_RE = re.compile('[\t ]*\n[\t ]*')
+SPACE_RE = re.compile(' +')
+
 
 def create_anonymous_boxes(box):
     """Create anonymous boxes in box descendants according to layout rules."""
@@ -1238,7 +1242,7 @@ def process_whitespace(box, following_collapsible_space=False):
             return following_collapsible_space
 
         # Normalize line feeds
-        text = re.sub('\r\n?', '\n', text)
+        text = LINE_FEED_RE.sub('\n', text)
 
         new_line_collapse = box.style['white_space'] in ('normal', 'nowrap')
         space_collapse = box.style['white_space'] in (
@@ -1246,7 +1250,7 @@ def process_whitespace(box, following_collapsible_space=False):
 
         if space_collapse:
             # \r characters were removed/converted earlier
-            text = re.sub('[\t ]*\n[\t ]*', '\n', text)
+            text = TAB_RE.sub('\n', text)
 
         if new_line_collapse:
             # TODO: this should be language-specific
@@ -1257,7 +1261,7 @@ def process_whitespace(box, following_collapsible_space=False):
 
         if space_collapse:
             text = text.replace('\t', ' ')
-            text = re.sub(' +', ' ', text)
+            text = SPACE_RE.sub(' ', text)
             previous_text = text
             if following_collapsible_space and text.startswith(' '):
                 text = text[1:]
