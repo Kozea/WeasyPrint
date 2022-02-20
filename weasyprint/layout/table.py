@@ -766,10 +766,6 @@ def auto_table_layout(context, box, containing_block):
             else:
                 break
         if upper_guess == lower_guess:
-            # TODO: Uncomment the assert when bugs #770 and #628 are closed
-            # Equivalent to "assert assignable_width == sum(upper_guess)"
-            # assert abs(assignable_width - sum(upper_guess)) <= (
-            #     assignable_width * 1e-9)
             table.column_widths = upper_guess
         else:
             added_widths = [
