@@ -1059,10 +1059,10 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y,
 
             textbox.pango_layout.set_text(new_text + ellipsis)
 
-    first_line, second_line = textbox.pango_layout.get_first_line()
+    first_line, index = textbox.pango_layout.get_first_line()
 
     if block_ellipsis != 'none':
-        while second_line:
+        while index:
             last_word_end = get_last_word_end(
                 textbox.pango_layout.text[:-len(ellipsis)],
                 textbox.style['lang'])
@@ -1070,7 +1070,7 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y,
                 break
             new_text = textbox.pango_layout.text[:last_word_end]
             textbox.pango_layout.set_text(new_text + ellipsis)
-            first_line, second_line = textbox.pango_layout.get_first_line()
+            first_line, index = textbox.pango_layout.get_first_line()
 
     font_size = textbox.style['font_size']
     utf8_text = textbox.pango_layout.text.encode()
