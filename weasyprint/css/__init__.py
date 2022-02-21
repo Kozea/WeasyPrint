@@ -585,15 +585,7 @@ def declaration_precedence(origin, importance):
         return 5
 
 
-class Style(dict):
-    @property
-    def variables(self):
-        return {
-            key: value for (key, value) in self.items()
-            if key.startswith('__')}
-
-
-class AnonymousStyle(Style):
+class AnonymousStyle(dict):
     """Computed style used for anonymous boxes."""
     def __init__(self, parent_style):
         # border-*-style is none, so border-width computes to zero.
@@ -608,8 +600,6 @@ class AnonymousStyle(Style):
         })
         self.parent_style = parent_style
         self.specified = self
-        if parent_style:
-            self.update(parent_style.variables)
 
     def copy(self):
         copy = AnonymousStyle(self.parent_style)
@@ -627,7 +617,7 @@ class AnonymousStyle(Style):
         return self[key]
 
 
-class ComputedStyle(Style):
+class ComputedStyle(dict):
     """Computed style used for non-anonymous boxes."""
     def __init__(self, parent_style, cascaded, element, pseudo_type,
                  root_style, base_url):
@@ -639,11 +629,6 @@ class ComputedStyle(Style):
         self.pseudo_type = pseudo_type
         self.root_style = root_style
         self.base_url = base_url
-        if parent_style:
-            self.update(parent_style.variables)
-        self.update({
-            key: value[0] for (key, value) in cascaded.items()
-            if key.startswith('__')})
 
     def copy(self):
         copy = ComputedStyle(
@@ -664,14 +649,17 @@ class ComputedStyle(Style):
         if key in self.cascaded:
             value = keyword = self.cascaded[key][0]
         else:
-            keyword = 'inherit' if key in INHERITED else 'initial'
+            if key in INHERITED or key.startswith('__'):
+                keyword = 'inherit'
+            else:
+                keyword = 'initial'
 
         if keyword == 'inherit' and self.parent_style is None:
             # On the root element, 'inherit' from initial values
             keyword = 'initial'
 
         if keyword == 'initial':
-            value = INITIAL_VALUES[key]
+            value = None if key.startswith('__') else INITIAL_VALUES[key]
             if key not in INITIAL_NOT_COMPUTED:
                 # The value is the same as when computed
                 self[key] = value
@@ -694,8 +682,7 @@ class ComputedStyle(Style):
         if key in self:
             return self[key]
 
-        getter = computed_values.COMPUTER_FUNCTIONS.get
-        function = getter(key)
+        function = computed_values.COMPUTER_FUNCTIONS.get(key)
         already_computed_value = False
 
         if value:

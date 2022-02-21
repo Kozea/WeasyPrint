@@ -148,10 +148,10 @@ COMPUTING_ORDER = _computing_order()
 COMPUTER_FUNCTIONS = {}
 
 
-def _resolve_var(computed, variable_name, default):
+def _resolve_var(computed, variable_name, default, parent_style):
     known_variable_names = [variable_name]
 
-    computed_value = computed.get(variable_name)
+    computed_value = computed[variable_name]
     if computed_value and len(computed_value) == 1:
         value = computed_value[0]
         if value.type == 'ident' and value.value == 'initial':
@@ -168,7 +168,10 @@ def _resolve_var(computed, variable_name, default):
                 computed_value = default
                 break
             known_variable_names.append(new_variable_name)
-            computed_value = computed.get(new_variable_name, new_default)
+            if new_variable_name in computed:
+                computed_value = computed[new_variable_name]
+            else:
+                computed_value = parent_style[new_variable_name] or new_default
             default = new_default
         else:
             break
@@ -191,7 +194,8 @@ def compute_variable(value, name, computed, base_url, parent_style):
 
     if value and isinstance(value, tuple) and value[0] == 'var()':
         variable_name, default = value[1]
-        computed_value = _resolve_var(computed, variable_name, default)
+        computed_value = _resolve_var(
+            computed, variable_name, default, parent_style)
         if computed_value is None:
             new_value = None
         else:
