@@ -1,6 +1,9 @@
 name: WeasyPrint's samples tests
 on: [push, pull_request]
 
+env:
+  REPORTS_FOLDER: 'report'
+
 jobs:
   tests:
     name: ${{ matrix.os }} - ${{ matrix.python-version }}
@@ -21,19 +24,27 @@ jobs:
         run: python -m pip install .
       - name: Clone samples repository
         run: git clone https://github.com/CourtBouillon/weasyprint-samples.git
+      - name: Create output folder
+        run: mkdir ${{env.REPORTS_FOLDER}}
       - name: Book classical
-        run: python -m weasyprint weasyprint-samples/book/book.html -s weasyprint-samples/book/book-classical.css book-classical.pdf
+        run: python -m weasyprint weasyprint-samples/book/book.html -s weasyprint-samples/book/book-classical.css${{env.REPORTS_FOLDER}}/book-classical.pdf
       - name: Book fancy
-        run: python -m weasyprint weasyprint-samples/book/book.html -s weasyprint-samples/book/book.css book-fancy.pdf
+        run: python -m weasyprint weasyprint-samples/book/book.html -s weasyprint-samples/book/book.css ${{env.REPORTS_FOLDER}}/book-fancy.pdf
       - name: Invoice
-        run: python -m weasyprint weasyprint-samples/invoice/invoice.html invoice.pdf
+        run: python -m weasyprint weasyprint-samples/invoice/invoice.html ${{env.REPORTS_FOLDER}}/invoice.pdf
       - name: Letter
-        run: python -m weasyprint weasyprint-samples/letter/letter.html letter.pdf
+        run: python -m weasyprint weasyprint-samples/letter/letter.html ${{env.REPORTS_FOLDER}}/letter.pdf
       - name: Poster
-        run: python -m weasyprint weasyprint-samples/poster/poster.html -s weasyprint-samples/poster/poster.css poster.pdf
+        run: python -m weasyprint weasyprint-samples/poster/poster.html -s weasyprint-samples/poster/poster.css ${{env.REPORTS_FOLDER}}/poster.pdf
       - name: Flyer
-        run: python -m weasyprint weasyprint-samples/poster/poster.html -s weasyprint-samples/poster/flyer.css flyer.pdf
+        run: python -m weasyprint weasyprint-samples/poster/poster.html -s weasyprint-samples/poster/flyer.css ${{env.REPORTS_FOLDER}}/flyer.pdf
       - name: Report
-        run: python -m weasyprint weasyprint-samples/report/report.html report.pdf
+        run: python -m weasyprint weasyprint-samples/report/report.html ${{env.REPORTS_FOLDER}}/report.pdf
       - name: Ticket
-        run: python -m weasyprint weasyprint-samples/ticket/ticket.html ticket.pdf
+        run: python -m weasyprint weasyprint-samples/ticket/ticket.html ${{env.REPORTS_FOLDER}}/ticket.pdf
+      - name: Archive generated PDFs
+        uses: actions/upload-artifact@v2
+        with:
+	  name: generated-reports
+	  path: ${{env.REPORTS_FOLDER}}
+	  retention-days: 1
