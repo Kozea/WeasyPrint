@@ -40,6 +40,3 @@ jobs:
         run: python -m weasyprint weasyprint-samples/report/report.html report.pdf
       - name: Ticket
         run: python -m weasyprint weasyprint-samples/ticket/ticket.html ticket.pdf
-	
-	
-	
