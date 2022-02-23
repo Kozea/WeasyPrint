@@ -27,7 +27,7 @@ jobs:
       - name: Create output folder
         run: mkdir ${{env.REPORTS_FOLDER}}
       - name: Book classical
-        run: python -m weasyprint weasyprint-samples/book/book.html -s weasyprint-samples/book/book-classical.css${{env.REPORTS_FOLDER}}/book-classical.pdf
+        run: python -m weasyprint weasyprint-samples/book/book.html -s weasyprint-samples/book/book-classical.css ${{env.REPORTS_FOLDER}}/book-classical.pdf
       - name: Book fancy
         run: python -m weasyprint weasyprint-samples/book/book.html -s weasyprint-samples/book/book.css ${{env.REPORTS_FOLDER}}/book-fancy.pdf
       - name: Invoice
