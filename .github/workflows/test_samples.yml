@@ -15,9 +15,6 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install DejaVu and Ghostscript (Ubuntu)
-        if: matrix.os == 'ubuntu-latest'
-        run: sudo apt-get update -y && sudo apt-get install git -y
       - name: Upgrade pip and setuptools
         run: python -m pip install --upgrade pip setuptools
       - name: Install requirements
