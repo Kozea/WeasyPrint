@@ -45,6 +45,6 @@ jobs:
       - name: Archive generated PDFs
         uses: actions/upload-artifact@v2
         with:
-	  name: generated-reports
-	  path: ${{env.REPORTS_FOLDER}}
-	  retention-days: 1
+          name: generated-documents
+          path: ${{env.REPORTS_FOLDER}}
+          retention-days: 1
