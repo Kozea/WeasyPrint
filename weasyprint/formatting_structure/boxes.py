@@ -325,7 +325,7 @@ class ParentBox(Box):
     def copy_with_children(self, new_children):
         """Create a new equivalent box with given ``new_children``."""
         new_box = self.copy()
-        new_box.children = tuple(new_children)
+        new_box.children = list(new_children)
 
         # Clear and reset removed decorations as we don't want to keep the
         # previous data, for example when a box is split between two pages.

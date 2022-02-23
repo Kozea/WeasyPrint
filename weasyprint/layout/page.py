@@ -587,7 +587,7 @@ def make_page(context, root_box, page_type, resume_at, page_number,
         page_is_empty, positioned_boxes, positioned_boxes, adjoining_margins,
         discard=False)
     assert root_box
-    root_box.children = tuple(out_of_flow_boxes) + root_box.children
+    root_box.children = out_of_flow_boxes + root_box.children
 
     page.fixed_boxes = [
         placeholder._box for placeholder in positioned_boxes
