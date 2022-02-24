@@ -7,3 +7,4 @@
 /pytest_cache
 /tests/draw/results
 /venv
+/.venv
