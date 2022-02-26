@@ -330,12 +330,16 @@ class LayoutContext:
 
     def unlayout_footnote(self, footnote):
         """Remove a footnote from the layout and return it to the waitlist."""
-        self.footnotes.append(footnote)
-        if footnote in self.current_page_footnotes:
-            self.current_page_footnotes.remove(footnote)
-        else:
-            self.reported_footnotes.remove(footnote)
-        self._update_footnote_area()
+
+        # Handle unlayouting a footnote that hasn't been laid out yet (or has
+        # already been unlayout'd):
+        if footnote not in self.footnotes:
+            self.footnotes.append(footnote)
+            if footnote in self.current_page_footnotes:
+                self.current_page_footnotes.remove(footnote)
+            elif footnote in self.reported_footnotes:
+                self.reported_footnotes.remove(footnote)
+            self._update_footnote_area()
 
     def report_footnote(self, footnote):
         """Mark a footnote as being moved to the next page."""
