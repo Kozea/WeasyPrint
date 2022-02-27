@@ -2,6 +2,59 @@ Changelog
 =========
 
 
+Version 54.2
+------------
+
+Released on 2022-02-27.
+
+Bug fixes:
+
+* `#1575 <https://github.com/Kozea/WeasyPrint/issues/1575>`_:
+  Always store parent blocks children as lists
+* `#1574 <https://github.com/Kozea/WeasyPrint/issues/1574>`_,
+  `#1559 <https://github.com/Kozea/WeasyPrint/pull/1559>`_:
+  Fix float rounding errors
+* `#1571 <https://github.com/Kozea/WeasyPrint/issues/1571>`_:
+  Ignore unknown glyphs
+* `#1561 <https://github.com/Kozea/WeasyPrint/issues/1561>`_,
+  `#1562 <https://github.com/Kozea/WeasyPrint/issues/1562>`_:
+  Fix line break when breaks occur between a nbsp and an inline block
+* `#1560 <https://github.com/Kozea/WeasyPrint/issues/1560>`_:
+  Always set the child index
+* `#1558 <https://github.com/Kozea/WeasyPrint/issues/1558>`_:
+  Fix patterns with use tags
+
+Contributors:
+
+* Guillaume Ayoub
+* Lucie Anglade
+* Jack Lin
+* aschmitz
+
+Backers and sponsors:
+
+* Grip Angebotssoftware
+* Manuel Barkhau
+* Crisp BV
+* SimonSoft
+* Menutech
+* KontextWork
+* Maykin Media
+* René Fritz
+* NCC Group
+* Spacinov
+* Nathalie Gutton
+* Andreas Zettl
+* Tom Pohl
+* Kobalt
+* Moritz Mahringer
+* Florian Demmer
+* Yanal-Yvez Fargialla
+* Gábor
+* Piotr Horzycki
+* DeivGuerrero
+
+
 Version 54.1
 ------------
 
