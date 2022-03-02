@@ -1196,6 +1196,10 @@ def test_text_align(rule, result):
     ('text-align: none', 'invalid'),
     ('text-align: start end', 'invalid'),
     ('text-align: 1', 'invalid'),
+    ('text-align: left left', 'invalid'),
+    ('text-align: top', 'invalid'),
+    ('text-align: "right"', 'invalid'),
+    ('text-align: 1px', 'invalid'),
 ))
 def test_text_align_invalid(rule, reason):
     assert_invalid(rule, reason)

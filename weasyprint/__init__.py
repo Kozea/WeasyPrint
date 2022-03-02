@@ -12,7 +12,7 @@ import cssselect2
 import html5lib
 import tinycss2
 
-VERSION = __version__ = '54.1'
+VERSION = __version__ = '54.2'
 
 __all__ = [
     'HTML', 'CSS', 'Attachment', 'Document', 'Page', 'default_url_fetcher',
