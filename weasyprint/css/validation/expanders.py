@@ -21,7 +21,7 @@ from .properties import (
     flex_grow_shrink, flex_wrap, font_family, font_size, font_stretch,
     font_style, font_weight, line_height, list_style_image,
     list_style_position, list_style_type, other_colors, overflow_wrap,
-    validate_non_shorthand)
+    text_align_all, validate_non_shorthand)
 
 EXPANDERS = {}
 
@@ -648,9 +648,12 @@ def expand_text_align(base_url, name, tokens):
         keyword = get_single_keyword(tokens)
         if keyword is None:
             raise InvalidValues
-        align_all = 'justify' if keyword == 'justify-all' else keyword
-        yield 'text_align_all', align_all
+        align_all = (
+            'justify' if keyword == 'justify-all' else text_align_all(tokens))
+        if align_all is None:
+            raise InvalidValues
         align_last = 'start' if keyword == 'justify' else align_all
+        yield 'text_align_all', align_all
         yield 'text_align_last', align_last
     else:
         raise InvalidValues

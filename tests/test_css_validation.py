@@ -1143,3 +1143,29 @@ def test_line_clamp(rule, result):
 ))
 def test_line_clamp_invalid(rule, reason):
     assert_invalid(rule, reason)
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, result', (
+    ('text-align: left', {
+        'text_align_all': 'left', 'text_align_last': 'left'}),
+    ('text-align: end', {
+        'text_align_all': 'end', 'text_align_last': 'end'}),
+    ('text-align: justify', {
+        'text_align_all': 'justify', 'text_align_last': 'start'}),
+    ('text-align: justify-all', {
+        'text_align_all': 'justify', 'text_align_last': 'justify'})))
+def test_text_align(rule, result):
+    assert expand_to_dict(rule) == result
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, reason', (
+    ('text-align: none', 'invalid'),
+    ('text-align: left left', 'invalid'),
+    ('text-align: top', 'invalid'),
+    ('text-align: "right"', 'invalid'),
+    ('text-align: 1px', 'invalid'),
+))
+def test_text_align_invalid(rule, reason):
+    assert_invalid(rule, reason)
