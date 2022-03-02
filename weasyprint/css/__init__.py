@@ -33,6 +33,11 @@ PSEUDO_ELEMENTS = (
     None, 'before', 'after', 'marker', 'first-line', 'first-letter',
     'footnote-call', 'footnote-marker')
 
+DEFAULT_CACHE = {
+    'length_ch': {},
+    'length_ex': {},
+}
+
 
 PageType = namedtuple('PageType', ['side', 'blank', 'first', 'index', 'name'])
 
@@ -600,6 +605,10 @@ class AnonymousStyle(dict):
         })
         self.parent_style = parent_style
         self.specified = self
+        if parent_style:
+            self.cache = parent_style.cache
+        else:
+            self.cache = DEFAULT_CACHE.copy()
 
     def copy(self):
         copy = AnonymousStyle(self.parent_style)
@@ -629,6 +638,10 @@ class ComputedStyle(dict):
         self.pseudo_type = pseudo_type
         self.root_style = root_style
         self.base_url = base_url
+        if parent_style:
+            self.cache = parent_style.cache
+        else:
+            self.cache = DEFAULT_CACHE.copy()
 
     def copy(self):
         copy = ComputedStyle(

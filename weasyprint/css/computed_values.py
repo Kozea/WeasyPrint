@@ -178,6 +178,23 @@ def _resolve_var(computed, variable_name, default, parent_style):
     return computed_value
 
 
+def _font_style_cache_key(style, font_size):
+    return str((
+        style['font_family'],
+        font_size,
+        style['font_style'],
+        style['font_stretch'],
+        style['font_weight'],
+        style['font_variant_ligatures'],
+        style['font_variant_position'],
+        style['font_variant_caps'],
+        style['font_variant_numeric'],
+        style['font_variant_alternates'],
+        style['font_variant_east_asian'],
+        style['font_feature_settings'],
+    ))
+
+
 def register_computer(name):
     """Decorator registering a property ``name`` for a function."""
     name = name.replace('-', '_')
@@ -321,17 +338,30 @@ def length(style, name, value, font_size=None, pixels_only=False):
         if font_size is None:
             font_size = style['font_size']
         if unit == 'ex':
-            # TODO: cache
-            result = value.value * font_size * ex_ratio(style)
+            cache_key = _font_style_cache_key(style, None)
+
+            if cache_key in style.cache['length_ex']:
+                ratio = style.cache['length_ex'][cache_key]
+            else:
+                ratio = ex_ratio(style)
+                style.cache['length_ex'][cache_key] = ratio
+
+            result = value.value * font_size * ratio
         elif unit == 'ch':
-            # TODO: cache
             # TODO: use context to use @font-face fonts
-            layout = Layout(
-                context=None, font_size=font_size,
-                style=style)
-            layout.set_text('0')
-            line, _ = layout.get_first_line()
-            logical_width, _ = line_size(line, style)
+            cache_key = _font_style_cache_key(style, font_size)
+
+            if cache_key in style.cache['length_ch']:
+                logical_width = style.cache['length_ch'][cache_key]
+            else:
+                layout = Layout(
+                    context=None, font_size=font_size,
+                    style=style)
+                layout.set_text('0')
+                line, _ = layout.get_first_line()
+                logical_width, _ = line_size(line, style)
+                style.cache['length_ch'][cache_key] = logical_width
+
             result = value.value * logical_width
         elif unit == 'em':
             result = value.value * font_size
