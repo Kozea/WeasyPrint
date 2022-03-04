@@ -594,6 +594,12 @@ def make_page(context, root_box, page_type, resume_at, page_number,
     assert root_box
     root_box.children = out_of_flow_boxes + root_box.children
 
+    footnote_area = build.create_anonymous_boxes(footnote_area.deepcopy())
+    footnote_area, _, _, _, _ = block_level_layout(
+        context, footnote_area, -float('inf'), None, footnote_area.page,
+        True, positioned_boxes, positioned_boxes, [], False)
+    footnote_area.translate(dy=-footnote_area.margin_height())
+
     page.fixed_boxes = [
         placeholder._box for placeholder in positioned_boxes
         if placeholder._box.style['position'] == 'fixed']
@@ -601,12 +607,6 @@ def make_page(context, root_box, page_type, resume_at, page_number,
         absolute_layout(
             context, absolute_box, page, positioned_boxes, bottom_space=0,
             skip_stack=None)
-
-    footnote_area = build.create_anonymous_boxes(footnote_area.deepcopy())
-    footnote_area, _, _, _, _ = block_level_layout(
-        context, footnote_area, -float('inf'), None, footnote_area.page,
-        True, [], [], [], False)
-    footnote_area.translate(dy=-footnote_area.margin_height())
 
     context.finish_block_formatting_context(root_box)
 

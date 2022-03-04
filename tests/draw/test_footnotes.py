@@ -132,3 +132,40 @@ def test_footnote_margin():
         }
     </style>
     <div>abc<span>d</span></div>''')
+
+
+@assert_no_logs
+def test_footnote_with_absolute():
+    assert_pixels('footnote_with_absolute', 9, 7, '''
+        _RRRR____
+        _RRRR____
+        _________
+        _RRRR____
+        _RRRR____
+        BB_______
+        BB_______
+    ''', '''
+    <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page {
+            size: 9px 7px;
+            background: white;
+            margin: 0 1px 2px;
+        }
+        div {
+            color: red;
+            font-family: weasyprint;
+            font-size: 2px;
+            line-height: 1;
+        }
+        span {
+            float: footnote;
+        }
+        mark {
+            display: block;
+            position: absolute;
+            left: -1px;
+            color: blue;
+        }
+    </style>
+    <div>a<span><mark>d</mark></span></div>''')
