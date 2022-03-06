@@ -63,29 +63,39 @@ def _w3c_date_to_pdf(string, attr_name):
 
 
 class Font:
-    def __init__(self, font_hash, file_content, pango_font, index):
-        pango_metrics = pango.pango_font_get_metrics(pango_font, ffi.NULL)
+    def __init__(self, pango_font):
         hb_font = pango.pango_font_get_hb_font(pango_font)
         hb_face = harfbuzz.hb_font_get_face(hb_font)
-        self._font_description = pango.pango_font_describe(pango_font)
-        self.family = ffi.string(pango.pango_font_description_get_family(
-            self._font_description))
-        font_size = pango.pango_font_description_get_size(
-            self._font_description)
-        description_string = ffi.string(
-            pango.pango_font_description_to_string(self._font_description))
-        sha = hashlib.sha256()
-        sha.update(str(font_hash).encode())
-        sha.update(description_string)
+        self.index = harfbuzz.hb_face_get_index(hb_face)
+        hb_blob = ffi.gc(
+            harfbuzz.hb_face_reference_blob(hb_face),
+            harfbuzz.hb_blob_destroy)
+        with ffi.new('unsigned int *') as length:
+            hb_data = harfbuzz.hb_blob_get_data(hb_blob, length)
+            self.file_content = ffi.unpack(hb_data, int(length[0]))
 
-        self.file_content = file_content
-        self.index = index
-        self.file_hash = hash(file_content + bytes(index))
-        self.hash = ''.join(
-            chr(65 + letter % 26) for letter in sha.digest()[:6])
-        self.name = (
-            b'/' + self.hash.encode() + b'+' + self.family.replace(b' ', b''))
-        self.italic_angle = 0  # TODO: this should be different
+        pango_metrics = pango.pango_font_get_metrics(pango_font, ffi.NULL)
+        description = pango.pango_font_describe(pango_font)
+        font_size = pango.pango_font_description_get_size(description)
+        self.style = pango.pango_font_description_get_style(description)
+        self.family = ffi.string(
+            pango.pango_font_description_get_family(description))
+        digest = hashlib.sha1(self.file_content + bytes(self.index)).digest()
+        self.hash = ''.join(chr(65 + letter % 26) for letter in digest[:6])
+
+        # Name
+        description_string = ffi.string(
+            pango.pango_font_description_to_string(description))
+        fields = description_string.split(b' ')
+        if fields and b'=' in fields[-1]:
+            fields.pop()  # Remove variations
+        if fields:
+            fields.pop()  # Remove font size
+        else:
+            fields = [b'Unknown']
+        self.name = b'/' + self.hash.encode() + b'+' + b''.join(fields)
+
+        # Ascent & descent
         if font_size:
             self.ascent = int(
                 pango.pango_font_metrics_get_ascent(pango_metrics) /
@@ -95,6 +105,9 @@ class Font:
                 font_size * 1000)
         else:
             self.ascent = self.descent = 0
+
+        # Various properties
+        self.italic_angle = 0  # TODO: this should be different
         self.upem = harfbuzz.hb_face_get_upem(hb_face)
         self.png = harfbuzz.hb_ot_color_has_png(hb_face)
         self.svg = harfbuzz.hb_ot_color_has_svg(hb_face)
@@ -104,17 +117,15 @@ class Font:
         self.widths = {}
         self.cmap = {}
 
-    @property
-    def flags(self):
-        flags = 2 ** (3 - 1)  # Symbolic, custom character set
-        if pango.pango_font_description_get_style(self._font_description):
-            flags += 2 ** (7 - 1)  # Italic
+        # Font flags
+        self.flags = 2 ** (3 - 1)  # Symbolic, custom character set
+        if self.style:
+            self.flags += 2 ** (7 - 1)  # Italic
         if b'Serif' in self.family.split():
-            flags += 2 ** (2 - 1)  # Serif
+            self.flags += 2 ** (2 - 1)  # Serif
         widths = self.widths.values()
         if len(widths) > 1 and len(set(widths)) == 1:
-            flags += 2 ** (1 - 1)  # FixedPitch
-        return flags
+            self.flags += 2 ** (1 - 1)  # FixedPitch
 
 
 class Stream(pydyf.Stream):
@@ -217,13 +228,11 @@ class Stream(pydyf.Stream):
                     self._states[key] = pydyf.Dictionary({'ca': alpha})
                 super().set_state(key)
 
-    def add_font(self, font_hash, font_content, pango_font, index):
-        self._document.fonts[font_hash] = Font(
-            font_hash, font_content, pango_font, index)
-        return self._document.fonts[font_hash]
-
-    def get_fonts(self):
-        return self._document.fonts
+    def add_font(self, pango_font):
+        face = pango.pango_font_get_face(pango_font)
+        if face not in self._document.fonts:
+            self._document.fonts[face] = Font(pango_font)
+        return self._document.fonts[face]
 
     def add_group(self, bounding_box):
         states = pydyf.Dictionary()
@@ -1323,10 +1332,7 @@ class Document:
         pdf_fonts = pydyf.Dictionary()
         fonts_by_file_hash = {}
         for font in self.fonts.values():
-            if font.file_hash in fonts_by_file_hash:
-                fonts_by_file_hash[font.file_hash].append(font)
-            else:
-                fonts_by_file_hash[font.file_hash] = [font]
+            fonts_by_file_hash.setdefault(font.hash, []).append(font)
         font_references_by_file_hash = {}
         for file_hash, fonts in fonts_by_file_hash.items():
             content = fonts[0].file_content
@@ -1409,7 +1415,7 @@ class Document:
                 'StemV': font.stemv,
                 'StemH': font.stemh,
                 (f'FontFile{"3" if font_type == "otf" else "2"}'):
-                    font_references_by_file_hash[font.file_hash],
+                    font_references_by_file_hash[font.hash],
             })
             if font_type == 'otf':
                 font_descriptor['Subtype'] = '/OpenType'

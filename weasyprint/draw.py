@@ -1087,7 +1087,6 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y,
     stream.text_matrix(*matrix.values)
     last_font = None
     string = ''
-    fonts = stream.get_fonts()
     x_advance = 0
     emojis = []
     for run in runs:
@@ -1101,19 +1100,7 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y,
 
         # Font content
         pango_font = glyph_item.item.analysis.font
-        hb_font = pango.pango_font_get_hb_font(pango_font)
-        hb_face = harfbuzz.hb_font_get_face(hb_font)
-        font_hash = hash(hb_face)
-        if font_hash in fonts:
-            font = fonts[font_hash]
-        else:
-            hb_blob = ffi.gc(
-                harfbuzz.hb_face_reference_blob(hb_face),
-                harfbuzz.hb_blob_destroy)
-            hb_data = harfbuzz.hb_blob_get_data(hb_blob, stream.length)
-            file_content = ffi.unpack(hb_data, int(stream.length[0]))
-            index = harfbuzz.hb_face_get_index(hb_face)
-            font = stream.add_font(font_hash, file_content, pango_font, index)
+        font = stream.add_font(pango_font)
 
         # Positions of the glyphs in the UTF-8 string
         utf8_positions = [offset + clusters[i] for i in range(1, num_glyphs)]
@@ -1178,6 +1165,8 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y,
             previous_utf8_position = utf8_position
 
             if font.svg:
+                hb_font = pango.pango_font_get_hb_font(pango_font)
+                hb_face = harfbuzz.hb_font_get_face(hb_font)
                 hb_blob = ffi.gc(
                     harfbuzz.hb_ot_color_glyph_reference_svg(hb_face, glyph),
                     harfbuzz.hb_blob_destroy)
@@ -1189,6 +1178,7 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y,
                     a = d = font.widths[glyph] / 1000 / font.upem * font_size
                     emojis.append([image, font, a, d, x_advance, 0])
             elif font.png:
+                hb_font = pango.pango_font_get_hb_font(pango_font)
                 hb_blob = ffi.gc(
                     harfbuzz.hb_ot_color_glyph_reference_png(hb_font, glyph),
                     harfbuzz.hb_blob_destroy)
