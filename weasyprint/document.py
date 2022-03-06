@@ -229,10 +229,15 @@ class Stream(pydyf.Stream):
                 super().set_state(key)
 
     def add_font(self, pango_font):
-        face = pango.pango_font_get_face(pango_font)
-        if face not in self._document.fonts:
-            self._document.fonts[face] = Font(pango_font)
-        return self._document.fonts[face]
+        try:
+            key = pango.pango_font_get_face(pango_font)
+        except AttributeError:
+            # Slower workaround for Pango < 1.46
+            hb_font = pango.pango_font_get_hb_font(pango_font)
+            key = harfbuzz.hb_font_get_face(hb_font)
+        if key not in self._document.fonts:
+            self._document.fonts[key] = Font(pango_font)
+        return self._document.fonts[key]
 
     def add_group(self, bounding_box):
         states = pydyf.Dictionary()
