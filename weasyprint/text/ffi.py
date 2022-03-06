@@ -44,7 +44,6 @@ ffi.cdef('''
     typedef ... PangoAttrList;
     typedef ... PangoAttrClass;
     typedef ... PangoFont;
-    typedef ... PangoFontFace;
     typedef guint PangoGlyph;
     typedef gint PangoGlyphUnit;
 
@@ -215,7 +214,6 @@ ffi.cdef('''
     PangoLayoutLine * pango_layout_get_line_readonly (
         PangoLayout *layout, int line);
 
-    PangoFontFace * pango_font_get_face (PangoFont *font);
     hb_font_t * pango_font_get_hb_font (PangoFont *font);
 
     PangoFontDescription * pango_font_description_new (void);

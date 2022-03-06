@@ -63,16 +63,14 @@ def _w3c_date_to_pdf(string, attr_name):
 
 
 class Font:
-    def __init__(self, pango_font):
-        hb_font = pango.pango_font_get_hb_font(pango_font)
-        hb_face = harfbuzz.hb_font_get_face(hb_font)
-        self.index = harfbuzz.hb_face_get_index(hb_face)
+    def __init__(self, pango_font, hb_face):
         hb_blob = ffi.gc(
             harfbuzz.hb_face_reference_blob(hb_face),
             harfbuzz.hb_blob_destroy)
         with ffi.new('unsigned int *') as length:
             hb_data = harfbuzz.hb_blob_get_data(hb_blob, length)
             self.file_content = ffi.unpack(hb_data, int(length[0]))
+        self.index = harfbuzz.hb_face_get_index(hb_face)
 
         pango_metrics = pango.pango_font_get_metrics(pango_font, ffi.NULL)
         description = pango.pango_font_describe(pango_font)
@@ -229,15 +227,11 @@ class Stream(pydyf.Stream):
                 super().set_state(key)
 
     def add_font(self, pango_font):
-        try:
-            key = pango.pango_font_get_face(pango_font)
-        except AttributeError:
-            # Slower workaround for Pango < 1.46
-            hb_font = pango.pango_font_get_hb_font(pango_font)
-            key = harfbuzz.hb_font_get_face(hb_font)
-        if key not in self._document.fonts:
-            self._document.fonts[key] = Font(pango_font)
-        return self._document.fonts[key]
+        hb_font = pango.pango_font_get_hb_font(pango_font)
+        hb_face = harfbuzz.hb_font_get_face(hb_font)
+        if hb_face not in self._document.fonts:
+            self._document.fonts[hb_face] = Font(pango_font, hb_face)
+        return self._document.fonts[hb_face]
 
     def add_group(self, bounding_box):
         states = pydyf.Dictionary()
