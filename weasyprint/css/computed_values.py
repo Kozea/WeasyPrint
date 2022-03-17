@@ -7,7 +7,7 @@ from tinycss2.color3 import parse_color
 
 from ..logger import LOGGER
 from ..text.ffi import ffi, pango, units_to_double
-from ..text.line_break import Layout, first_line_metrics, line_size
+from ..text.line_break import Layout, first_line_metrics
 from ..urls import get_link_attribute
 from .properties import (
     INHERITED, INITIAL_NOT_COMPUTED, INITIAL_VALUES, Dimension)
@@ -178,10 +178,9 @@ def _resolve_var(computed, variable_name, default, parent_style):
     return computed_value
 
 
-def _font_style_cache_key(style, font_size):
+def _font_style_cache_key(style):
     return str((
         style['font_family'],
-        font_size,
         style['font_style'],
         style['font_stretch'],
         style['font_weight'],
@@ -338,31 +337,26 @@ def length(style, name, value, font_size=None, pixels_only=False):
         if font_size is None:
             font_size = style['font_size']
         if unit == 'ex':
-            cache_key = _font_style_cache_key(style, None)
+            cache_key = _font_style_cache_key(style)
 
-            if cache_key in style.cache['length_ex']:
-                ratio = style.cache['length_ex'][cache_key]
+            if cache_key in style.cache['ratio_ex']:
+                ratio = style.cache['ratio_ex'][cache_key]
             else:
-                ratio = ex_ratio(style)
-                style.cache['length_ex'][cache_key] = ratio
+                ratio = _character_ratio(style, 'x')
+                style.cache['ratio_ex'][cache_key] = ratio
 
             result = value.value * font_size * ratio
         elif unit == 'ch':
             # TODO: use context to use @font-face fonts
-            cache_key = _font_style_cache_key(style, font_size)
+            cache_key = _font_style_cache_key(style)
 
-            if cache_key in style.cache['length_ch']:
-                logical_width = style.cache['length_ch'][cache_key]
+            if cache_key in style.cache['ratio_ch']:
+                ratio = style.cache['ratio_ch'][cache_key]
             else:
-                layout = Layout(
-                    context=None, font_size=font_size,
-                    style=style)
-                layout.set_text('0')
-                line, _ = layout.get_first_line()
-                logical_width, _ = line_size(line, style)
-                style.cache['length_ch'][cache_key] = logical_width
+                ratio = _character_ratio(style, '0')
+                style.cache['ratio_ch'][cache_key] = ratio
 
-            result = value.value * logical_width
+            result = value.value * font_size * ratio
         elif unit == 'em':
             result = value.value * font_size
         elif unit == 'rem':
@@ -775,7 +769,7 @@ def strut_layout(style, context=None):
     return result
 
 
-def ex_ratio(style):
+def _character_ratio(style, character):
     """Return the ratio 1ex/font_size, according to given style."""
     # TODO: use context to use @font-face fonts
 
@@ -788,14 +782,17 @@ def ex_ratio(style):
     font_size = 1000
 
     layout = Layout(context=None, font_size=font_size, style=style)
-    layout.set_text('x')
+    layout.set_text(character)
     line, _ = layout.get_first_line()
 
     ink_extents = ffi.new('PangoRectangle *')
     pango.pango_layout_line_get_extents(line, ink_extents, ffi.NULL)
-    height_above_baseline = units_to_double(ink_extents.y)
+    if character == 'x':
+        measure = units_to_double(ink_extents.y)
+    else:
+        measure = units_to_double(ink_extents.width)
     ffi.release(ink_extents)
 
     # Zero means some kind of failure, fallback is 0.5.
     # We round to try keeping exact values that were altered by Pango.
-    return round(-height_above_baseline / font_size, 5) or 0.5
+    return round(measure / font_size, 5) or 0.5

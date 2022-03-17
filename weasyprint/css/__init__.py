@@ -34,8 +34,8 @@ PSEUDO_ELEMENTS = (
     'footnote-call', 'footnote-marker')
 
 DEFAULT_CACHE = {
-    'length_ch': {},
-    'length_ex': {},
+    'ratio_ch': {},
+    'ratio_ex': {},
 }
 
 
