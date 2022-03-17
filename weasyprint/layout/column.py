@@ -135,17 +135,15 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
         adjoining_margins = []
         column_box = create_column_box(column_children)
         column_box.position_y = current_position_y
-        new_child, _, _, _, _ = block_box_layout(
-            context, column_box, -inf, skip_stack, containing_block,
-            page_is_empty, [], [], [], discard=False)
-        height = new_child.margin_height()
-        if style['column_fill'] == 'balance':
-            height /= count
+        max_height = context.page_bottom - current_position_y
+        height = max_height
 
         # Try to render columns until the content fits, increase the column
         # height step by step.
         column_skip_stack = skip_stack
         lost_space = inf
+        first_probe_run = True
+        forced_end_probing = False
         while True:
             # Remove extra excluded shapes introduced during previous loop
             new_excluded_shapes = (
@@ -153,6 +151,7 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
             for i in range(new_excluded_shapes):
                 context.excluded_shapes.pop()
 
+            consumed_heights = []
             for i in range(count):
                 # Render the column
                 new_box, resume_at, next_page, _, _ = block_box_layout(
@@ -163,19 +162,23 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
                 if new_box is None:
                     # We didn't render anything. Give up and use the max
                     # content height.
-                    height *= count
-                    continue
+                    height = max_height
+                    forced_end_probing = True
+                    break
                 column_skip_stack = resume_at
 
                 in_flow_children = [
                     child for child in new_box.children
                     if child.is_in_normal_flow()]
 
+                consumed_height = (
+                    in_flow_children[-1].margin_height() +
+                    in_flow_children[-1].position_y - current_position_y)
+                consumed_heights.append(consumed_height)
+
                 if in_flow_children:
                     # Get the empty space at the bottom of the column box
-                    empty_space = height - (
-                        in_flow_children[-1].position_y - box.content_box_y() +
-                        in_flow_children[-1].margin_height())
+                    empty_space = height - consumed_height
 
                     # Get the minimum size needed to render the next box
                     next_box, _, _, _, _ = block_box_layout(
@@ -209,19 +212,40 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
                 if resume_at is None:
                     break
 
-            if column_skip_stack is None:
-                # We rendered the whole content, stop
+            if forced_end_probing:
                 break
-            else:
-                if lost_space == inf:
-                    # We didn't find the extra size needed to render a child in
-                    # the previous column, increase height by the minimal
-                    # value.
-                    height += 1
+
+            if first_probe_run:
+                # This is the first loop through, we might bail here.
+                if column_skip_stack or max(consumed_heights) >= max_height:
+                    # Even at maximum height, not everything fits. Stop now and
+                    # let the columns continue on the next page.
+                    break
                 else:
-                    # Increase the columns heights and render them once again
-                    height += lost_space
-                column_skip_stack = skip_stack
+                    # Everything fit, start expanding columns at the average of
+                    # the column heights.
+                    height = sum(consumed_heights) / count
+            else:
+                if column_skip_stack is None:
+                    # We rendered the whole content, stop
+                    break
+                else:
+                    if lost_space == inf:
+                        # We didn't find the extra size needed to render a
+                        # child in the previous column, increase height by the
+                        # minimal value.
+                        add_height = 1
+                    else:
+                        # Increase the column heights and render them again
+                        add_height = lost_space
+
+                    if height + add_height > max_height:
+                        height = max_height
+                        break
+
+                    height += add_height
+                    column_skip_stack = skip_stack
+            first_probe_run = False
 
         # TODO: check box.style['max']-height
         bottom_space = max(

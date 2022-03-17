@@ -176,6 +176,38 @@ def test_columns_multipage():
 
 
 @assert_no_logs
+def test_column_breaks():
+    page1, page2 = render_pages('''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        div { columns: 2; column-gap: 1px }
+        body { margin: 0; font-family: weasyprint;
+               font-size: 1px; line-height: 1px }
+        @page { margin: 0; size: 3px 2px }
+        section { break-before: always; }
+      </style>
+      <div>a<section>b</section><section>c</section></div>
+    ''')
+    html, = page1.children
+    body, = html.children
+    div, = body.children
+    columns = div.children
+    assert len(columns) == 2
+    assert len(columns[0].children) == 1
+    assert len(columns[1].children) == 1
+    columns[0].children[0].children[0].children[0].text == 'a'
+    columns[1].children[0].children[0].children[0].text == 'b'
+
+    html, = page2.children
+    body, = html.children
+    div, = body.children
+    columns = div.children
+    assert len(columns) == 1
+    assert len(columns[0].children) == 1
+    columns[0].children[0].children[0].children[0].text == 'c'
+
+
+@assert_no_logs
 def test_columns_not_enough_content():
     page, = render_pages('''
       <style>
