@@ -4,9 +4,7 @@ import unicodedata
 from math import inf
 
 from ..css import computed_from_cascaded
-from ..css.computed_values import length as computed_length
-from ..css.computed_values import strut_layout
-from ..css.properties import Dimension
+from ..css.computed_values import character_ratio, strut_layout
 from ..formatting_structure import boxes
 from ..text.line_break import can_break_text, create_layout, split_first_line
 from .absolute import AbsolutePlaceholder, absolute_layout
@@ -1050,9 +1048,7 @@ def inline_box_verticality(box, top_bottom_subtrees, baseline_y):
         if vertical_align == 'baseline':
             child_baseline_y = baseline_y
         elif vertical_align == 'middle':
-            one_ex = computed_length(
-                box.style, 'height', Dimension(1, 'em'),
-                box.style['font_size'], pixels_only=True)
+            one_ex = box.style['font_size'] * character_ratio(box.style, 'x')
             top = baseline_y - (one_ex + child.margin_height()) / 2
             child_baseline_y = top + child.baseline
         elif vertical_align == 'text-top':

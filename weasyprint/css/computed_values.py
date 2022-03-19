@@ -337,25 +337,11 @@ def length(style, name, value, font_size=None, pixels_only=False):
         if font_size is None:
             font_size = style['font_size']
         if unit == 'ex':
-            cache_key = _font_style_cache_key(style)
-
-            if cache_key in style.cache['ratio_ex']:
-                ratio = style.cache['ratio_ex'][cache_key]
-            else:
-                ratio = _character_ratio(style, 'x')
-                style.cache['ratio_ex'][cache_key] = ratio
-
+            # TODO: use context to use @font-face fonts
+            ratio = character_ratio(style, 'x')
             result = value.value * font_size * ratio
         elif unit == 'ch':
-            # TODO: use context to use @font-face fonts
-            cache_key = _font_style_cache_key(style)
-
-            if cache_key in style.cache['ratio_ch']:
-                ratio = style.cache['ratio_ch'][cache_key]
-            else:
-                ratio = _character_ratio(style, '0')
-                style.cache['ratio_ch'][cache_key] = ratio
-
+            ratio = character_ratio(style, '0')
             result = value.value * font_size * ratio
         elif unit == 'em':
             result = value.value * font_size
@@ -769,9 +755,16 @@ def strut_layout(style, context=None):
     return result
 
 
-def _character_ratio(style, character):
-    """Return the ratio 1ex/font_size, according to given style."""
+def character_ratio(style, character):
+    """Return the ratio of 1ex/font_size or 1ch/font_size."""
     # TODO: use context to use @font-face fonts
+
+    assert character in ('x', '0')
+
+    cache = style.cache[f'ratio_{"ex" if character == "x" else "ch"}']
+    cache_key = _font_style_cache_key(style)
+    if cache_key in cache:
+        return cache[cache_key]
 
     # Avoid recursion for letter-spacing and word-spacing properties
     style = style.copy()
@@ -795,4 +788,6 @@ def _character_ratio(style, character):
 
     # Zero means some kind of failure, fallback is 0.5.
     # We round to try keeping exact values that were altered by Pango.
-    return round(measure / font_size, 5) or 0.5
+    ratio = round(measure / font_size, 5) or 0.5
+    cache[cache_key] = ratio
+    return ratio
