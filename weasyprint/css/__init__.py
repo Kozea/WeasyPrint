@@ -33,12 +33,6 @@ PSEUDO_ELEMENTS = (
     None, 'before', 'after', 'marker', 'first-line', 'first-letter',
     'footnote-call', 'footnote-marker')
 
-DEFAULT_CACHE = {
-    'ratio_ch': {},
-    'ratio_ex': {},
-}
-
-
 PageType = namedtuple('PageType', ['side', 'blank', 'first', 'index', 'name'])
 
 
@@ -608,7 +602,7 @@ class AnonymousStyle(dict):
         if parent_style:
             self.cache = parent_style.cache
         else:
-            self.cache = DEFAULT_CACHE.copy()
+            self.cache = {'ratio_ch': {}, 'ratio_ex': {}}
 
     def copy(self):
         copy = AnonymousStyle(self.parent_style)
@@ -641,7 +635,7 @@ class ComputedStyle(dict):
         if parent_style:
             self.cache = parent_style.cache
         else:
-            self.cache = DEFAULT_CACHE.copy()
+            self.cache = {'ratio_ch': {}, 'ratio_ex': {}}
 
     def copy(self):
         copy = ComputedStyle(
