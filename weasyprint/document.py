@@ -91,7 +91,7 @@ class Font:
             fields.pop()  # Remove font size
         else:
             fields = [b'Unknown']
-        self.name = b'/' + self.hash.encode() + b'+' + b''.join(fields)
+        self.name = b'/' + self.hash.encode() + b'+' + b'-'.join(fields)
 
         # Ascent & descent
         if font_size:
