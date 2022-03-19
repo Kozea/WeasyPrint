@@ -1343,19 +1343,20 @@ class Document:
                     cmap = {**cmap, **font.cmap}
                 full_font = io.BytesIO(content)
                 optimized_font = io.BytesIO()
+                options = subset.Options(
+                    retain_gids=True, passthrough_tables=True,
+                    ignore_missing_glyphs=True, hinting=False)
+                options.drop_tables += ['GSUB', 'GPOS']
+                subsetter = subset.Subsetter(options)
+                subsetter.populate(gids=cmap)
                 try:
                     ttfont = TTFont(full_font, fontNumber=fonts[0].index)
-                    options = subset.Options(
-                        retain_gids=True, passthrough_tables=True,
-                        ignore_missing_glyphs=True, hinting=False)
-                    options.drop_tables += ['GSUB', 'GPOS']
-                    subsetter = subset.Subsetter(options)
-                    subsetter.populate(gids=cmap)
                     subsetter.subset(ttfont)
-                    ttfont.save(optimized_font)
-                    content = optimized_font.getvalue()
                 except TTLibError:
                     LOGGER.warning('Unable to optimize font')
+                else:
+                    ttfont.save(optimized_font)
+                    content = optimized_font.getvalue()
 
             if fonts[0].png or fonts[0].svg:
                 # Add empty glyphs instead of PNG or SVG emojis
