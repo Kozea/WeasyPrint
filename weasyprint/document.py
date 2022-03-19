@@ -544,6 +544,8 @@ def rectangle_aabb(matrix, pos_x, pos_y, width, height):
     Return its axis-aligned bounding box as ``(x1, y1, x2, y2)``.
 
     """
+    if not matrix:
+        return pos_x, pos_y, pos_x + width, pos_y + height
     transform_point = matrix.transform_point
     x1, y1 = transform_point(pos_x, pos_y)
     x2, y2 = transform_point(pos_x + width, pos_y)
@@ -711,16 +713,8 @@ class Page:
                 assert isinstance(target, str)
                 if link_type == 'external' and box.is_attachment:
                     link_type = 'attachment'
-                if matrix:
-                    link = (
-                        link_type, target,
-                        rectangle_aabb(matrix, pos_x, pos_y, width, height),
-                        box.download_name)
-                else:
-                    link = (
-                        link_type, target,
-                        (pos_x, pos_y, pos_x + width, pos_y + height),
-                        box.download_name)
+                rectangle = rectangle_aabb(matrix, pos_x, pos_y, width, height)
+                link = (link_type, target, rectangle, box.download_name)
                 self.links.append(link)
             if matrix and (has_bookmark or has_anchor):
                 pos_x, pos_y = matrix.transform_point(pos_x, pos_y)
