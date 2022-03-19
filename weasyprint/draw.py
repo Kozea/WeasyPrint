@@ -13,6 +13,7 @@ from .formatting_structure import boxes
 from .images import RasterImage, SVGImage
 from .layout import replaced
 from .layout.background import BackgroundLayer
+from .matrix import Matrix
 from .stacking import StackingContext
 from .text.ffi import ffi, harfbuzz, pango, units_from_double, units_to_double
 from .text.line_break import get_last_word_end
@@ -357,8 +358,6 @@ def draw_table_backgrounds(stream, page, table):
 
 
 def draw_background_image(stream, layer, image_rendering):
-    from .document import Matrix
-
     if layer.image is None or 0 in layer.size:
         return
 
@@ -1028,8 +1027,6 @@ def draw_emojis(stream, font_size, x, y, emojis):
 def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y,
                     angle=0):
     """Draw the given ``textbox`` line to the document ``stream``."""
-    from .document import Matrix
-
     pango.pango_layout_set_single_paragraph_mode(
         textbox.pango_layout.layout, True)
 

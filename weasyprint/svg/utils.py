@@ -12,6 +12,8 @@ from urllib.parse import urlparse
 
 from tinycss2.color3 import parse_color
 
+from ..matrix import Matrix
+
 
 class PointError(Exception):
     """Exception raised when parsing a point fails."""
@@ -144,8 +146,6 @@ def transform(transform_string, font_size, normalized_diagonal):
     """Get a matrix corresponding to the transform string."""
     # TODO: merge with Page._gather_links_and_bookmarks and
     # css.validation.properties.transform
-    from ..document import Matrix
-
     transformations = re.findall(
         r'(\w+) ?\( ?(.*?) ?\)', normalize(transform_string))
     matrix = Matrix()

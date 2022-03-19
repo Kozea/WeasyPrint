@@ -2,6 +2,7 @@
 
 from math import atan2, cos, isclose, pi, radians, sin, tan
 
+from ..matrix import Matrix
 from .utils import normalize, point
 
 PATH_LETTERS = 'achlmqstvzACHLMQSTVZ'
@@ -14,8 +15,6 @@ def _rotate(x, y, angle):
 
 def path(svg, node, font_size):
     """Draw path node."""
-    from ..document import Matrix
-
     string = node.get('d', '')
 
     for letter in PATH_LETTERS:

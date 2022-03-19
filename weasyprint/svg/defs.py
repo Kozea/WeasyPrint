@@ -11,6 +11,7 @@ from math import ceil, hypot
 
 import pydyf
 
+from ..matrix import Matrix
 from .bounding_box import is_valid_bounding_box
 from .utils import color, parse_url, size, transform
 
@@ -80,8 +81,6 @@ def draw_gradient_or_pattern(svg, node, name, font_size, opacity, stroke):
 def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
     """Draw given gradient node."""
     # TODO: merge with Gradient.draw
-    from ..document import Matrix
-
     positions = []
     colors = []
     for child in gradient:
@@ -455,7 +454,6 @@ def spread_radial_gradient(spread, positions, colors, fx, fy, fr, cx, cy, r,
 
 def draw_pattern(svg, node, pattern, font_size, opacity, stroke):
     """Draw given gradient node."""
-    from ..document import Matrix
     from . import Pattern
 
     pattern._etree_node.tag = 'svg'
