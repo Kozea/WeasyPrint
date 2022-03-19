@@ -109,8 +109,6 @@ class HTML:
         access to individual pages and various meta-data.
         See :meth:`write_pdf` to get a PDF directly.
 
-        .. versionadded:: 0.15
-
         :param list stylesheets:
             An optional list of user stylesheets. List elements are
             :class:`CSS` objects, filenames, URLs, or file
@@ -231,8 +229,6 @@ class CSS:
 
 class Attachment:
     """File attachment for a PDF document.
-
-    .. versionadded:: 0.22
 
     An instance is created in the same way as :class:`HTML`, except that the
     HTML specific arguments (``encoding`` and ``media_type``) are not

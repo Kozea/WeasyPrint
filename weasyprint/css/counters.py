@@ -35,8 +35,6 @@ def parse_counter_style_name(tokens, counter_style):
 class CounterStyle(dict):
     """Counter styles dictionary.
 
-    .. versionadded:: 0.52
-
     Keep a list of counter styles defined by ``@counter-style`` rules, indexed
     by their names.
 

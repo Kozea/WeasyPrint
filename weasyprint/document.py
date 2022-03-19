@@ -600,8 +600,6 @@ def resolve_links(pages):
 class Page:
     """Represents a single rendered page.
 
-    .. versionadded:: 0.15
-
     Should be obtained from :attr:`Document.pages` but not
     instantiated directly.
 
@@ -764,8 +762,6 @@ class Page:
 class DocumentMetadata:
     """Meta-information belonging to a whole :class:`Document`.
 
-    .. versionadded:: 0.20
-
     New attributes may be added in future versions of WeasyPrint.
 
     """
@@ -811,8 +807,6 @@ class DocumentMetadata:
         #: :obj:`None`. (Defaults to the empty list.)
         #: Extracted from the ``<link rel=attachment>`` elements in HTML
         #: and written to the ``/EmbeddedFiles`` dictionary in PDF.
-        #:
-        #: .. versionadded:: 0.22
         self.attachments = attachments or []
 
 
@@ -962,8 +956,6 @@ class Document:
     def copy(self, pages='all'):
         """Take a subset of the pages.
 
-        .. versionadded:: 0.15
-
         :type pages: :term:`iterable`
         :param pages:
             An iterable of :class:`Page` objects from :attr:`pages`.
@@ -996,8 +988,6 @@ class Document:
 
     def make_bookmark_tree(self):
         """Make a tree of all bookmarks in the document.
-
-        .. versionadded:: 0.15
 
         :return: A list of bookmark subtrees.
             A subtree is ``(label, target, children, state)``. ``label`` is

@@ -76,8 +76,6 @@ _check_font_configuration(ffi.gc(
 class FontConfiguration:
     """A FreeType font configuration.
 
-    .. versionadded:: 0.32
-
     Keep a list of fonts, including fonts installed on the system, fonts
     installed for the current user, and fonts referenced by cascading
     stylesheets.
