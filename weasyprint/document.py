@@ -1413,7 +1413,7 @@ class Document:
                 'CapHeight': font.bbox[3],
                 'StemV': font.stemv,
                 'StemH': font.stemh,
-                (f'FontFile{"3" if font_type == "otf" else "2"}'):
+                (f'FontFile{3 if font_type == "otf" else 2}'):
                     font_references_by_file_hash[font.hash],
             })
             if font_type == 'otf':
@@ -1421,7 +1421,7 @@ class Document:
             pdf.add_object(font_descriptor)
             subfont_dictionary = pydyf.Dictionary({
                 'Type': '/Font',
-                'Subtype': f'/CIDFontType{"0" if font_type == "otf" else "2"}',
+                'Subtype': f'/CIDFontType{0 if font_type == "otf" else 2}',
                 'BaseFont': font.name,
                 'CIDSystemInfo': pydyf.Dictionary({
                     'Registry': pydyf.String('Adobe'),
