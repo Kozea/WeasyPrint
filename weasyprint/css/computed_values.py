@@ -781,7 +781,7 @@ def character_ratio(style, character):
     ink_extents = ffi.new('PangoRectangle *')
     pango.pango_layout_line_get_extents(line, ink_extents, ffi.NULL)
     if character == 'x':
-        measure = units_to_double(ink_extents.y)
+        measure = -units_to_double(ink_extents.y)
     else:
         measure = units_to_double(ink_extents.width)
     ffi.release(ink_extents)
