@@ -295,6 +295,7 @@ def get_html_metadata(html):
     title = None
     description = None
     generator = None
+    producer = None
     keywords = []
     authors = []
     created = None
@@ -317,6 +318,8 @@ def get_html_metadata(html):
                 description = content
             elif name == 'generator' and generator is None:
                 generator = content
+            elif name == 'producer' and producer is None:
+                producer = content
             elif name == 'dcterms.created' and created is None:
                 created = parse_w3c_date(name, content)
             elif name == 'dcterms.modified' and modified is None:
@@ -332,7 +335,7 @@ def get_html_metadata(html):
     return dict(title=title, description=description, generator=generator,
                 keywords=keywords, authors=authors,
                 created=created, modified=modified,
-                attachments=attachments)
+                attachments=attachments, producer=producer)
 
 
 def strip_whitespace(string):

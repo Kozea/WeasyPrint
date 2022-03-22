@@ -210,7 +210,7 @@ class DocumentMetadata:
     """
     def __init__(self, title=None, authors=None, description=None,
                  keywords=None, generator=None, created=None, modified=None,
-                 attachments=None):
+                 attachments=None, producer=None):
         #: The title of the document, as a string or :obj:`None`.
         #: Extracted from the ``<title>`` element in HTML
         #: and written to the ``/Title`` info field in PDF.
@@ -251,6 +251,11 @@ class DocumentMetadata:
         #: Extracted from the ``<link rel=attachment>`` elements in HTML
         #: and written to the ``/EmbeddedFiles`` dictionary in PDF.
         self.attachments = attachments or []
+        #: The name of one of the software packages
+        #: used to produce the document, as a string or :obj:`None`.
+        #: Extracted from the ``<meta name=producer>`` element in HTML
+        #: and written to the ``/Producer`` info field in PDF.
+        self.producer = producer
 
 
 class Document:
@@ -654,7 +659,10 @@ class Document:
                 ', '.join(self.metadata.keywords))
         if self.metadata.generator:
             pdf.info['Creator'] = pydyf.String(self.metadata.generator)
-        pdf.info['Producer'] = pydyf.String(f'WeasyPrint {__version__}')
+        if self.metadata.producer:
+            pdf.info['Producer'] = pydyf.String(self.metadata.producer)
+        else:
+            pdf.info['Producer'] = pydyf.String(f'WeasyPrint {__version__}')
         if self.metadata.created:
             pdf.info['CreationDate'] = pydyf.String(
                 _w3c_date_to_pdf(self.metadata.created, 'created'))
