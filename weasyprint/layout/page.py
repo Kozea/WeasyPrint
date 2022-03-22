@@ -856,6 +856,7 @@ def make_all_pages(context, root_box, html, pages):
 
         i += 1
         if resume_at is None and not context.reported_footnotes:
-            # Throw away obsolete pages
+            # Throw away obsolete pages and broken out-of-flow boxes
             context.page_maker = context.page_maker[:i + 1]
+            context.broken_out_of_flow.clear()
             return
