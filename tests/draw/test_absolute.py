@@ -335,3 +335,120 @@ def test_absolute_next_page():
         aaaaa
     '''
     assert_pixels('absolute_next_page', 16, 8, expected_pixels, html)
+
+
+@assert_no_logs
+def test_absolute_rtl_1():
+    expected_pixels = '''
+        __________RRRRRR
+        __________RRRRRR
+        ________________
+    '''
+    html = '''
+        <style>
+            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+            @page {
+                background: white;
+                size: 16px 3px;
+            }
+            div {
+                color: red;
+                direction: rtl;
+                font-family: weasyprint;
+                font-size: 2px;
+                line-height: 1;
+                position: absolute;
+            }
+        </style>
+        <div>bbb</div>
+    '''
+    assert_pixels('absolute_rtl_1', 16, 3, expected_pixels, html)
+
+
+@assert_no_logs
+def test_absolute_rtl_2():
+    expected_pixels = '''
+        ________________
+        _________RRRRRR_
+        _________RRRRRR_
+    '''
+    html = '''
+        <style>
+            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+            @page {
+                background: white;
+                size: 16px 3px;
+            }
+            div {
+                color: red;
+                direction: rtl;
+                font-family: weasyprint;
+                font-size: 2px;
+                line-height: 1;
+                padding: 1px;
+                position: absolute;
+            }
+        </style>
+        <div>bbb</div>
+    '''
+    assert_pixels('absolute_rtl_2', 16, 3, expected_pixels, html)
+
+
+@assert_no_logs
+def test_absolute_rtl_3():
+    expected_pixels = '''
+        ________________
+        RRRRRR__________
+        RRRRRR__________
+    '''
+    html = '''
+        <style>
+            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+            @page {
+                background: white;
+                size: 16px 3px;
+            }
+            div {
+                bottom: 0;
+                color: red;
+                direction: rtl;
+                font-family: weasyprint;
+                font-size: 2px;
+                left: 0;
+                line-height: 1;
+                position: absolute;
+            }
+        </style>
+        <div>bbb</div>
+    '''
+    assert_pixels('absolute_rtl_3', 16, 3, expected_pixels, html)
+
+
+@assert_no_logs
+def test_absolute_rtl_4():
+    expected_pixels = '''
+        ________________
+        _________RRRRRR_
+        _________RRRRRR_
+    '''
+    html = '''
+        <style>
+            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+            @page {
+                background: white;
+                size: 16px 3px;
+            }
+            div {
+                color: red;
+                direction: rtl;
+                font-family: weasyprint;
+                font-size: 2px;
+                line-height: 1;
+                position: absolute;
+                right: 1px;
+                top: 1px;
+            }
+        </style>
+        <div>bbb</div>
+    '''
+    assert_pixels('absolute_rtl_4', 16, 3, expected_pixels, html)
