@@ -194,6 +194,8 @@ def absolute_block(context, box, containing_block, fixed_boxes, bottom_space,
     translate_box_height, translate_y = absolute_height(
         box, context, containing_block)
 
+    bottom_space += translate_y
+
     # This box is the containing block for absolute descendants.
     absolute_boxes = []
 
