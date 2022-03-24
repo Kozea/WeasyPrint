@@ -63,7 +63,7 @@ def absolute_width(box, context, containing_block):
 
     cb_x, cb_y, cb_width, cb_height = containing_block
 
-    # TODO: handle bidi
+    ltr = box.style['direction'] == 'ltr'
     padding_plus_borders_x = padding_l + padding_r + border_l + border_r
     translate_x = 0
     translate_box_width = False
@@ -76,6 +76,9 @@ def absolute_width(box, context, containing_block):
         available_width = cb_width - (
             padding_plus_borders_x + box.margin_left + box.margin_right)
         box.width = shrink_to_fit(context, box, available_width)
+        if not ltr:
+            translate_box_width = True
+            translate_x = default_translate_x + available_width
     elif left != 'auto' and right != 'auto' and width != 'auto':
         width_for_margins = cb_width - (
             right + left + width + padding_plus_borders_x)
@@ -83,14 +86,18 @@ def absolute_width(box, context, containing_block):
             if width + padding_plus_borders_x + right + left <= cb_width:
                 box.margin_left = box.margin_right = width_for_margins / 2
             else:
-                box.margin_left = 0
-                box.margin_right = width_for_margins
+                if ltr:
+                    box.margin_left, box.margin_right = 0, width_for_margins
+                else:
+                    box.margin_left, box.margin_right = width_for_margins, 0
         elif margin_l == 'auto':
             box.margin_left = width_for_margins
         elif margin_r == 'auto':
             box.margin_right = width_for_margins
-        else:
+        elif ltr:
             box.margin_right = width_for_margins
+        else:
+            box.margin_left = width_for_margins
         translate_x = left + default_translate_x
     else:
         if margin_l == 'auto':
@@ -104,9 +111,15 @@ def absolute_width(box, context, containing_block):
             translate_x = cb_width - right - spacing + default_translate_x
             translate_box_width = True
         elif left == right == 'auto':
-            pass  # Keep the static position
+            if not ltr:
+                available_width = cb_width - (
+                    padding_plus_borders_x +
+                    box.margin_left + box.margin_right)
+                translate_box_width = True
+                translate_x = default_translate_x + available_width
         elif width == right == 'auto':
-            box.width = shrink_to_fit(context, box, cb_width - spacing - left)
+            box.width = shrink_to_fit(
+                context, box, cb_width - spacing - left)
             translate_x = left + default_translate_x
         elif left == 'auto':
             translate_x = (
