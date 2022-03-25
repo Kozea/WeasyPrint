@@ -257,8 +257,9 @@ def _out_of_flow_layout(context, box, index, child, new_children,
     return stop, resume_at, out_of_flow_resume_at
 
 
-def _break_line(box, new_children, lines_iterator, page_is_empty, index,
-                skip_stack, resume_at):
+def _break_line(context, box, line, new_children, lines_iterator,
+                page_is_empty, index, skip_stack, resume_at, absolute_boxes,
+                fixed_boxes):
     over_orphans = len(new_children) - box.style['orphans']
     if over_orphans < 0 and not page_is_empty:
         # Reached the bottom of the page before we had
@@ -277,8 +278,12 @@ def _break_line(box, new_children, lines_iterator, page_is_empty, index,
         return True, False, resume_at
     if needed and needed <= over_orphans:
         # Remove lines to keep them for the next page
+        for child in new_children[-needed:]:
+            remove_placeholders(
+                context, child.children, absolute_boxes, fixed_boxes)
         del new_children[-needed:]
     # Page break here, resume before this line
+    remove_placeholders(context, line.children, absolute_boxes, fixed_boxes)
     return False, True, {index: skip_stack}
 
 
@@ -318,8 +323,9 @@ def _linebox_layout(context, box, index, child, new_children, page_is_empty,
             context.overflows_page(bottom_space, new_position_y + offset_y))
         if overflow:
             abort, stop, resume_at = _break_line(
-                box, new_children, lines_iterator, page_is_empty, index,
-                skip_stack, resume_at)
+                context, box, line, new_children, lines_iterator,
+                page_is_empty, index, skip_stack, resume_at, absolute_boxes,
+                fixed_boxes)
             break
 
         # TODO: this is incomplete.
@@ -351,8 +357,9 @@ def _linebox_layout(context, box, index, child, new_children, page_is_empty,
                     context.report_footnote(footnote)
                     if footnote.style['footnote_policy'] == 'line':
                         abort, stop, resume_at = _break_line(
-                            box, new_children, lines_iterator, page_is_empty,
-                            index, skip_stack, resume_at)
+                            context, box, line, new_children, lines_iterator,
+                            page_is_empty, index, skip_stack, resume_at,
+                            absolute_boxes, fixed_boxes)
                         break_linebox = True
                     elif footnote.style['footnote_policy'] == 'block':
                         abort = break_linebox = True

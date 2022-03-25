@@ -527,3 +527,109 @@ def test_absolute_rtl_4():
         <div>bbb</div>
     '''
     assert_pixels('absolute_rtl_4', 16, 3, expected_pixels, html)
+
+
+@assert_no_logs
+def test_absolute_pages_counter():
+    expected_pixels = '''
+        ______
+        _RR___
+        _RR___
+        _RR___
+        _RR___
+        _____B
+        ______
+        _RR___
+        _RR___
+        _BB___
+        _BB___
+        _____B
+    '''
+    html = '''
+        <style>
+            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+            @page {
+                background: white;
+                font-family: weasyprint;
+                margin: 1px;
+                size: 6px 6px;
+                @bottom-right-corner {
+                    color: blue;
+                    content: counter(pages);
+                    font-size: 1px;
+                }
+            }
+            body {
+                color: red;
+                font-family: weasyprint;
+                font-size: 2px;
+                line-height: 1;
+                orphans: 1;
+                widows: 1;
+            }
+            div {
+                color: blue;
+                position: absolute;
+            }
+        </style>
+        a a a <div>a a</div>
+    '''
+    assert_pixels('absolute_pages_counter', 6, 12, expected_pixels, html)
+
+
+@assert_no_logs
+def test_absolute_pages_counter_orphans():
+    expected_pixels = '''
+        ______
+        _RR___
+        _RR___
+        _RR___
+        _RR___
+        ______
+        ______
+        ______
+        _____B
+        ______
+        _RR___
+        _RR___
+        _BB___
+        _BB___
+        _GG___
+        _GG___
+        ______
+        _____B
+    '''
+    html = '''
+        <style>
+            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+            @page {
+                background: white;
+                font-family: weasyprint;
+                margin: 1px;
+                size: 6px 9px;
+                @bottom-right-corner {
+                    color: blue;
+                    content: counter(pages);
+                    font-size: 1px;
+                }
+            }
+            body {
+                color: red;
+                font-family: weasyprint;
+                font-size: 2px;
+                line-height: 1;
+                orphans: 2;
+                widows: 2;
+            }
+            div {
+                color: blue;
+                position: absolute;
+            }
+            div ~ div {
+                color: lime;
+            }
+        </style>
+        a a a <div>a a a</div> a <div>a a a</div>
+    '''
+    assert_pixels(
+        'absolute_pages_counter_orphans', 6, 18, expected_pixels, html)
