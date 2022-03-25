@@ -13,7 +13,7 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
     """Layout for a table box."""
     from .block import (
         avoid_page_break, block_container_layout, block_level_page_break,
-        find_earlier_page_break)
+        find_earlier_page_break, force_page_break)
 
     table.remove_decoration(start=skip_stack is not None, end=False)
 
@@ -93,7 +93,7 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
             if new_group_children:
                 page_break = block_level_page_break(
                     new_group_children[-1], row)
-                if page_break in ('page', 'recto', 'verso', 'left', 'right'):
+                if force_page_break(page_break, context):
                     next_page['break'] = page_break
                     resume_at = {index_row: None}
                     break
@@ -370,7 +370,7 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
             if new_table_children:
                 page_break = block_level_page_break(
                     new_table_children[-1], group)
-                if page_break in ('page', 'recto', 'verso', 'left', 'right'):
+                if force_page_break(page_break, context):
                     next_page['break'] = page_break
                     resume_at = {index_group: None}
                     break

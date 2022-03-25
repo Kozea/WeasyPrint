@@ -388,8 +388,7 @@ def _in_flow_layout(context, box, index, child, new_children, page_is_empty,
         # Between in-flow siblings
         page_break = block_level_page_break(last_in_flow_child, child)
         page_name = block_level_page_name(last_in_flow_child, child)
-        if page_name or page_break in (
-                'page', 'left', 'right', 'recto', 'verso'):
+        if page_name or force_page_break(page_break, context):
             page_name = child.page_values()[0]
             next_page = {'break': page_break, 'page': page_name}
             resume_at = {index: None}
@@ -973,3 +972,11 @@ def avoid_page_break(page_break, context):
     if context.in_column:
         return page_break in ('avoid', 'avoid-page', 'avoid-column')
     return page_break in ('avoid', 'avoid-page')
+
+
+def force_page_break(page_break, context):
+    """Test whether we should force breaks."""
+    if context.in_column:
+        return page_break in (
+            'page', 'left', 'right', 'recto', 'verso', 'column')
+    return page_break in ('page', 'left', 'right', 'recto', 'verso')
