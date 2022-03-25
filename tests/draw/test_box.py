@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.test_draw.test_box
-    -----------------------------------
-
-    Test how boxes, borders, outlines are drawn.
-
-"""
+"""Test how boxes, borders, outlines are drawn."""
 
 import itertools
 

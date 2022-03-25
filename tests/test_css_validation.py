@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.test_css_properties
-    ------------------------------------
-
-    Test expanders for shorthand properties.
-
-"""
+"""Test expanders for shorthand properties."""
 
 import math
 

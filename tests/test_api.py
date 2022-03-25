@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.test_api
-    -------------------------
-
-    Test the public API.
-
-"""
+"""Test the public API."""
 
 import gzip
 import io

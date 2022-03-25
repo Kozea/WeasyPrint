@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.layout.list
-    ----------------------------
-
-    Tests for lists layout.
-
-"""
+"""Tests for lists layout."""
 
 import pytest
 

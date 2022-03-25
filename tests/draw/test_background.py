@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.test_draw.test_background
-    ------------------------------------------
-
-    Test how backgrounds are drawn.
-
-"""
+"""Test how backgrounds are drawn."""
 
 import pytest
 

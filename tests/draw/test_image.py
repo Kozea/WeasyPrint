@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.test_draw.test_image
-    -------------------------------------
-
-    Test how images are drawn.
-
-"""
+"""Test how images are drawn."""
 
 import pytest
 

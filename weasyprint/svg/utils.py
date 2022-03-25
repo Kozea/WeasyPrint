@@ -1,10 +1,4 @@
-"""
-    weasyprint.svg.utils
-    --------------------
-
-    Util functions for SVG rendering.
-
-"""
+"""Util functions for SVG rendering."""
 
 import re
 from math import cos, radians, sin, tan

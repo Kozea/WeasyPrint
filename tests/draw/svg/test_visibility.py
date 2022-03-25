@@ -1,11 +1,4 @@
-"""
-    weasyprint.tests.test_draw.svg.test_visibility
-    ----------------------------------------------
-
-    Test how the visibility is controlled with "visibility" and "display"
-    attributes.
-
-"""
+"""Test how the visibility is controlled with "visibility" and "display"."""
 
 from ...testing_utils import assert_no_logs
 from .. import assert_pixels

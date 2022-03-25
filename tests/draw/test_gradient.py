@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.test_draw.test_gradient
-    ----------------------------------------
-
-    Test how gradients are drawn.
-
-"""
+"""Test how gradients are drawn."""
 
 from ..testing_utils import assert_no_logs
 from . import assert_pixels

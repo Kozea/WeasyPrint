@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.test_draw.svg.test_gradients
-    ------------------------------------------
-
-    Test how SVG simple gradients are drawn.
-
-"""
+"""Test how SVG simple gradients are drawn."""
 
 import pytest
 

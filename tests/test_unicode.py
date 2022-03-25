@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.test_unicode
-    -----------------------------
-
-    Test various unicode texts and filenames.
-
-"""
+"""Test various unicode texts and filenames."""
 
 import os.path
 import shutil

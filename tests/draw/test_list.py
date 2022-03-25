@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.test_draw.test_list
-    ------------------------------------
-
-    Test how lists are drawn.
-
-"""
+"""Test how lists are drawn."""
 
 import pytest
 

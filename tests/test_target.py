@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.test_target
-    ----------------------------
-
-    Test the CSS cross references using target-*() functions.
-
-"""
+"""Test the CSS cross references using target-*() functions."""
 
 from .testing_utils import FakeHTML, assert_no_logs
 

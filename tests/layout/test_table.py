@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.layout.table
-    -----------------------------
-
-    Tests for layout of tables.
-
-"""
+"""Tests for layout of tables."""
 
 import pytest
 

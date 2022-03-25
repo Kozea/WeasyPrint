@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.test_fonts
-    ---------------------------
-
-    Test the fonts features.
-
-"""
+"""Test the fonts features."""
 
 from .testing_utils import assert_no_logs, render_pages
 

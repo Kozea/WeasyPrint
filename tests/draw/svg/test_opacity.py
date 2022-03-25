@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.test_draw.svg.test_opacity
-    -------------------------------------------
-
-    Test how opacity is handled for SVG.
-
-"""
+"""Test how opacity is handled for SVG."""
 
 import pytest
 

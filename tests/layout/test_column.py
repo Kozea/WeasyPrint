@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.layout.column
-    ------------------------------
-
-    Tests for multicolumn layout.
-
-"""
+"""Tests for multicolumn layout."""
 
 import pytest
 

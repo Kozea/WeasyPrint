@@ -1,7 +1,1 @@
-"""
-    weasyprint.tests
-    ----------------
-
-    The Weasyprint test suite.
-
-"""
+"""The Weasyprint test suite."""

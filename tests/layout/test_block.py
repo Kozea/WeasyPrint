@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.layout.block
-    -----------------------------
-
-    Tests for blocks layout.
-
-"""
+"""Tests for blocks layout."""
 
 import pytest
 from weasyprint.formatting_structure import boxes

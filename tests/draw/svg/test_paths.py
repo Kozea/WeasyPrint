@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.test_draw.svg.test_paths
-    ------------------------------------------
-
-    Test how SVG simple paths are drawn.
-
-"""
+"""Test how SVG simple paths are drawn."""
 
 from ...testing_utils import assert_no_logs
 from .. import assert_pixels

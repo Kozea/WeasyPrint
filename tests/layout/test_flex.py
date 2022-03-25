@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.layout.flex
-    ----------------------------
-
-    Tests for flex layout.
-
-"""
+"""Tests for flex layout."""
 
 import pytest
 

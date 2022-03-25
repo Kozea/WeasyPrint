@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.test_draw.test_leader
-    --------------------------------------
-
-    Test how leaders are drawn.
-
-"""
+"""Test how leaders are drawn."""
 
 import pytest
 

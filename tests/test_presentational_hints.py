@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.test_presentational_hints
-    ------------------------------------------
-
-    Test the HTML presentational hints.
-
-"""
+"""Test the HTML presentational hints."""
 
 from weasyprint import CSS, HTML
 

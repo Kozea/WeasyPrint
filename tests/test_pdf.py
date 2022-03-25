@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.test_pdf
-    -------------------------
-
-    Test PDF-related code, including metadata, bookmarks and hyperlinks.
-
-"""
+"""Test PDF-related code, including metadata, bookmarks and hyperlinks."""
 
 import hashlib
 import io

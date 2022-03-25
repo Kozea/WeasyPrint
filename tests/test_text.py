@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.test_text
-    --------------------------
-
-    Test the text layout.
-
-"""
+"""Test the text layout."""
 
 import pytest
 from weasyprint.css.properties import INITIAL_VALUES

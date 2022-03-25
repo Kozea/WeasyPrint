@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.layout.position
-    --------------------------------
-
-    Tests for position property.
-
-"""
+"""Tests for position property."""
 
 from ..testing_utils import assert_no_logs, render_pages
 

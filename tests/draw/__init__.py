@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.test_draw
-    --------------------------
-
-    Test the final, drawn results and compare PNG images pixel per pixel.
-
-"""
+"""Test the final, drawn results and compare PNG images pixel per pixel."""
 
 import io
 import os

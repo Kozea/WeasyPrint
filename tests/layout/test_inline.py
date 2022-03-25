@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.layout.inline
-    ------------------------------
-
-    Tests for inline layout.
-
-"""
+"""Tests for inlines layout."""
 
 import pytest
 from weasyprint.formatting_structure import boxes

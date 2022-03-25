@@ -1,12 +1,8 @@
-"""
-    weasyprint.tests.conftest
-    -------------------------
+"""Configuration for WeasyPrint tests.
 
-    Configuration for WeasyPrint tests.
+This module adds a PNG export based on Ghostscript.
 
-    This module adds a PNG export based on Ghostscript.
-
-    Note that Ghostscript is released under AGPL.
+Note that Ghostscript is released under AGPL.
 
 """
 

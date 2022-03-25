@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.test_draw.svg.test_images
-    ------------------------------------------
-
-    Test how images are drawn in SVG.
-
-"""
+"""Test how images are drawn in SVG."""
 
 import pytest
 from weasyprint.urls import path2url

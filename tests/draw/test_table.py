@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.test_draw.test_tables
-    --------------------------------------
-
-    Test how tables are drawn.
-
-"""
+"""Test how tables are drawn."""
 
 import pytest
 from weasyprint.html import HTML_HANDLERS

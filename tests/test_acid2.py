@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.test_draw.test_acid2
-    -------------------------------------
-
-    Check the famous Acid2 test.
-
-"""
+"""Check the famous Acid2 test."""
 
 import io
 

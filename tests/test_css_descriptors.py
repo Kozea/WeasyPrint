@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.test_css_descriptors
-    -------------------------------------
-
-    Test CSS descriptors.
-
-"""
+"""Test CSS descriptors."""
 
 import pytest
 import tinycss2

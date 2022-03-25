@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.test_css
-    -------------------------
-
-    Test the CSS parsing, cascade, inherited and computed values.
-
-"""
+"""Test the CSS parsing, cascade, inherited and computed values."""
 
 from math import isclose
 

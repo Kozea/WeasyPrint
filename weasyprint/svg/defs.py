@@ -1,10 +1,4 @@
-"""
-    weasyprint.svg.defs
-    -------------------
-
-    Parse and draw definitions: gradients, patterns, masks, uses…
-
-"""
+"""Parse and draw definitions: gradients, patterns, masks, uses…"""
 
 from itertools import cycle
 from math import ceil, hypot

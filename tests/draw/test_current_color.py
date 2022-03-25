@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.test_draw.test_current_color
-    ---------------------------------------------
-
-    Test the currentColor value.
-
-"""
+"""Test the currentColor value."""
 
 from ..testing_utils import assert_no_logs
 from . import assert_pixels

@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.test_draw.svg.test_clip
-    ----------------------------------------
-
-    Test clip-path attribute.
-
-"""
+"""Test clip-path attribute."""
 
 import pytest
 

@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.test_draw.test_text
-    ------------------------------------
-
-    Test how text is drawn.
-
-"""
+"""Test how text is drawn."""
 
 import pytest
 

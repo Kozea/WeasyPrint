@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.layout.shrink_to_fit
-    -------------------------------------
-
-    Tests for shrink-to-fit algorithm.
-
-"""
+"""Tests for shrink-to-fit algorithm."""
 
 import pytest
 

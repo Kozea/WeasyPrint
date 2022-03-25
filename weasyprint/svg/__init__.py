@@ -1,10 +1,4 @@
-"""
-    weasyprint.svg
-    --------------
-
-    Render SVG images.
-
-"""
+"""Render SVG images."""
 
 import re
 from math import cos, hypot, pi, radians, sin, sqrt

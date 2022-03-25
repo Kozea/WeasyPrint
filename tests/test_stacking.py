@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.stacking
-    -------------------------
-
-    Test CSS stacking contexts.
-
-"""
+"""Test CSS stacking contexts."""
 
 import pytest
 from weasyprint.stacking import StackingContext

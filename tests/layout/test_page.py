@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.layout.page
-    ----------------------------
-
-    Tests for pages layout.
-
-"""
+"""Tests for pages layout."""
 
 import pytest
 from weasyprint.formatting_structure import boxes

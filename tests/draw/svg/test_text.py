@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.test_draw.svg.test_text
-    ----------------------------------------
-
-    Test how SVG text is drawn.
-
-"""
+"""Test how SVG text is drawn."""
 
 from ...testing_utils import assert_no_logs
 from .. import assert_pixels

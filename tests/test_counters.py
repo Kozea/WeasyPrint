@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.test_counters
-    ------------------------------
-
-    Test CSS counters.
-
-"""
+"""Test CSS counters."""
 
 import pytest
 from weasyprint import HTML

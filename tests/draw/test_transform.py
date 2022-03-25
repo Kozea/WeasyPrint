@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.test_draw.test_transform
-    -----------------------------------------
-
-    Test transformations.
-
-"""
+"""Test transformations."""
 
 from ..testing_utils import assert_no_logs
 from . import assert_pixels

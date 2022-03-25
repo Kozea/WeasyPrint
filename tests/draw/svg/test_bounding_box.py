@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.test_draw.svg.test_bounding_box
-    ------------------------------------------------
-
-    Test how bounding boxes are defined for SVG tags.
-
-"""
+"""Test how bounding boxes are defined for SVG tags."""
 
 import pytest
 

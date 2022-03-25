@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.test_draw.test_float
-    -------------------------------------
-
-    Test how floats are drawn.
-
-"""
+"""Test how floats are drawn."""
 
 import pytest
 

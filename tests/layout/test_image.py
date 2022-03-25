@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.layout.image
-    -----------------------------
-
-    Tests for image layout.
-
-"""
+"""Tests for images layout."""
 
 import pytest
 from weasyprint.formatting_structure import boxes

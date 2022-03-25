@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.test_draw.test_overflow
-    ----------------------------------------
-
-    Test overflow and clipping.
-
-"""
+"""Test overflow and clipping."""
 
 import pytest
 

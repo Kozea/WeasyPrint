@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.test_draw.test_before_after
-    --------------------------------------------
-
-    Test how before and after pseudo elements are drawn.
-
-"""
+"""Test how before and after pseudo elements are drawn."""
 
 from ..testing_utils import assert_no_logs
 from . import assert_same_rendering

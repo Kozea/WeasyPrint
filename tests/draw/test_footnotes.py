@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.test_draw.test_footnotes
-    -----------------------------------------
-
-    Test how footnotes are drawn.
-
-"""
+"""Test how footnotes are drawn."""
 
 from ..testing_utils import assert_no_logs
 from . import assert_pixels

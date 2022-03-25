@@ -1,11 +1,4 @@
-"""
-    weasyprint.css.utils
-    --------------------
-
-    Utils for CSS properties.
-    See http://www.w3.org/TR/CSS21/propidx.html and various CSS3 modules.
-
-"""
+"""Utils for CSS properties."""
 
 import functools
 import math

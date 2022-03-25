@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.test_draw.test_opacity
-    ---------------------------------------
-
-    Test opacity.
-
-"""
+"""Test opacity."""
 
 from ..testing_utils import assert_no_logs
 from . import assert_same_rendering

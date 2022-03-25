@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.layout.footnotes
-    ---------------------------------
-
-    Tests for footnotes layout.
-
-"""
+"""Tests for footnotes layout."""
 
 import pytest
 

@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.test_draw.svg.test_defs
-    ----------------------------------------
-
-    Test how SVG definitions are drawn.
-
-"""
+"""Test how SVG definitions are drawn."""
 
 from ...testing_utils import assert_no_logs
 from .. import assert_pixels

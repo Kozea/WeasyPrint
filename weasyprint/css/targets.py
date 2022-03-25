@@ -1,12 +1,8 @@
-"""
-    weasyprint.formatting_structure.targets
-    ---------------------------------------
+"""Handle target-counter, target-counters and target-text.
 
-    Handle target-counter, target-counters and target-text.
-
-    The TargetCollector is a structure providing required targets'
-    counter_values and stuff needed to build pending targets later,
-    when the layout of all targeted anchors has been done.
+The TargetCollector is a structure providing required targets' counter_values
+and stuff needed to build pending targets later, when the layout of all
+targeted anchors has been done.
 
 """
 

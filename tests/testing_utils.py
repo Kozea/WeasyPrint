@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.testing_utils
-    ------------------------------
-
-    Helpers for tests.
-
-"""
+"""Helpers for tests."""
 
 import contextlib
 import functools

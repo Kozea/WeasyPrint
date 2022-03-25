@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.test_draw.test_column
-    --------------------------------------
-
-    Test how columns are drawn.
-
-"""
+"""Test how columns are drawn."""
 
 from ..testing_utils import assert_no_logs
 from . import assert_pixels

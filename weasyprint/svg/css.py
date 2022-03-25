@@ -1,10 +1,4 @@
-"""
-    weasyprint.svg.css
-    ------------------
-
-    Apply CSS to SVG documents.
-
-"""
+"""Apply CSS to SVG documents."""
 
 from urllib.parse import urljoin
 

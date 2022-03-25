@@ -1,10 +1,4 @@
-"""
-    weasyprint.tests.test_variables
-    -------------------------------
-
-    Test CSS custom proproperties, also known as CSS variables.
-
-"""
+"""Test CSS custom proproperties, also known as CSS variables."""
 
 import pytest
 from weasyprint.css.properties import KNOWN_PROPERTIES
