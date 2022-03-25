@@ -286,6 +286,87 @@ def test_absolute_split_7():
     assert_pixels('absolute_split_7', 16, 4, expected_pixels, html)
 
 
+@assert_no_logs
+def test_absolute_split_8():
+    expected_pixels = '''
+        ______
+        ______
+        ______
+        ______
+        __RR__
+        __RR__
+        ______
+        ______
+    '''
+    html = '''
+        <style>
+            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+            @page {
+                background: white;
+                margin: 2px 0;
+                size: 6px 8px;
+            }
+            body {
+                color: red;
+                font-family: weasyprint;
+                font-size: 2px;
+                line-height: 1;
+                orphans: 1;
+                widows: 1;
+            }
+            div {
+                position: absolute;
+                left: 2px;
+                top: 2px;
+                width: 2px;
+            }
+        </style>
+        <div>a a a a</div>
+    '''
+    assert_pixels('absolute_split_8', 6, 8, expected_pixels, html)
+
+
+@assert_no_logs
+def test_absolute_split_9():
+    expected_pixels = '''
+        ______
+        ______
+        BBRRBB
+        BBRRBB
+        BBRR__
+        BBRR__
+        ______
+        ______
+    '''
+    html = '''
+        <style>
+            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+            @page {
+                background: white;
+                margin: 2px 0;
+                size: 6px 8px;
+            }
+            body {
+                color: blue;
+                font-family: weasyprint;
+                font-size: 2px;
+                line-height: 1;
+                orphans: 1;
+                widows: 1;
+            }
+            div {
+                color: red;
+                position: absolute;
+                left: 2px;
+                top: 0;
+                width: 2px;
+            }
+        </style>
+        aaa a<div>a a a a</div>
+    '''
+    assert_pixels('absolute_split_9', 6, 8, expected_pixels, html)
+
+
 @pytest.mark.xfail
 @assert_no_logs
 def test_absolute_next_page():
