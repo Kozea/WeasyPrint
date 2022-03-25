@@ -243,7 +243,7 @@ def _out_of_flow_layout(context, box, index, child, new_children,
             last_in_flow_child = find_last_in_flow_child(new_children)
             page_break = block_level_page_break(last_in_flow_child, child)
             resume_at = {index: None}
-            if new_children and page_break in ('avoid', 'avoid-page'):
+            if new_children and avoid_page_break(page_break, context):
                 result = find_earlier_page_break(
                     context, new_children, absolute_boxes, fixed_boxes)
                 if result:
@@ -502,7 +502,7 @@ def _in_flow_layout(context, box, index, child, new_children, page_is_empty,
 
     if new_child is None:
         # Nothing fits in the remaining space of this page: break
-        if page_break in ('avoid', 'avoid-page'):
+        if avoid_page_break(page_break, context):
             # TODO: fill the blank space at the bottom of the page
             result = find_earlier_page_break(
                 context, new_children, absolute_boxes, fixed_boxes)
@@ -666,7 +666,7 @@ def block_container_layout(context, box, bottom_space, skip_stack,
         resume_at = None
 
     if (box_is_fragmented and
-            box.style['break_inside'] in ('avoid', 'avoid-page') and
+            avoid_page_break(box.style['break_inside'], context) and
             not page_is_empty):
         for footnote in all_footnotes:
             context.unlayout_footnote(footnote)
@@ -808,7 +808,7 @@ def block_level_page_break(sibling_before, sibling_after):
     * 'left' or 'right' take priority over 'always', 'avoid' or 'auto'
     * Among 'left' and 'right', later values in the tree take priority.
 
-    See http://dev.w3.org/csswg/css3-page/#allowed-pg-brk
+    See https://drafts.csswg.org/css-page-3/#allowed-pg-brk
 
     """
     values = []
@@ -836,9 +836,15 @@ def block_level_page_break(sibling_before, sibling_after):
         if value in ('left', 'right', 'recto', 'verso') or (value, result) in (
                 ('page', 'auto'),
                 ('page', 'avoid'),
-                ('avoid', 'auto'),
                 ('page', 'avoid-page'),
-                ('avoid-page', 'auto')):
+                ('page', 'avoid-column'),
+                ('column', 'auto'),
+                ('column', 'avoid'),
+                ('column', 'avoid-page'),
+                ('column', 'avoid-column'),
+                ('avoid', 'auto'),
+                ('avoid-page', 'auto'),
+                ('avoid-column', 'auto')):
             result = value
 
     return result
@@ -889,9 +895,9 @@ def find_earlier_page_break(context, children, absolute_boxes, fixed_boxes):
             continue
 
         if child.is_in_normal_flow():
+            page_break = block_level_page_break(child, previous_in_flow)
             if previous_in_flow is not None and (
-                    block_level_page_break(child, previous_in_flow) not in
-                    ('avoid', 'avoid-page')):
+                    not avoid_page_break(page_break, context)):
                 index += 1  # break after child
                 new_children = children[:index]
                 # Get the index in the original parent
@@ -900,7 +906,7 @@ def find_earlier_page_break(context, children, absolute_boxes, fixed_boxes):
             previous_in_flow = child
 
         if child.is_in_normal_flow() and (
-                child.style['break_inside'] not in ('avoid', 'avoid-page')):
+                not avoid_page_break(child.style['break_inside'], context)):
             breakable_box_types = (
                 boxes.BlockBox, boxes.TableBox, boxes.TableRowGroupBox)
             if isinstance(child, breakable_box_types):
@@ -960,3 +966,10 @@ def remove_placeholders(context, box_list, absolute_boxes, fixed_boxes):
             fixed_boxes.remove(box)
         if box.footnote:
             context.unlayout_footnote(box.footnote)
+
+
+def avoid_page_break(page_break, context):
+    """Test whether we should avoid breaks."""
+    if context.in_column:
+        return page_break in ('avoid', 'avoid-page', 'avoid-column')
+    return page_break in ('avoid', 'avoid-page')

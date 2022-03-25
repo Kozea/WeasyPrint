@@ -12,7 +12,7 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                  page_is_empty, absolute_boxes, fixed_boxes):
     """Layout for a table box."""
     from .block import (
-        block_container_layout, block_level_page_break,
+        avoid_page_break, block_container_layout, block_level_page_break,
         find_earlier_page_break)
 
     table.remove_decoration(start=skip_stack is not None, end=False)
@@ -191,7 +191,7 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                 new_row_children.append(cell)
 
             if resume_at and not page_is_empty:
-                if row.style['break_inside'] in ('avoid', 'avoid-page'):
+                if avoid_page_break(row.style['break_inside'], context):
                     resume_at = {index_row: {}}
                     break
 
@@ -293,7 +293,7 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                 if new_group_children:
                     previous_row = new_group_children[-1]
                     page_break = block_level_page_break(previous_row, row)
-                    if page_break == 'avoid':
+                    if avoid_page_break(page_break, context):
                         earlier_page_break = find_earlier_page_break(
                             context, new_group_children, absolute_boxes,
                             fixed_boxes)
@@ -323,7 +323,7 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
         # Do not keep the row group if we made a page break
         # before any of its rows or with 'avoid'
         if resume_at and not original_page_is_empty and (
-                group.style['break_inside'] in ('avoid', 'avoid-page') or
+                avoid_page_break(group.style['break_inside'], context) or
                 not new_group_children):
             return None, None, next_page
 
@@ -383,7 +383,7 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                 if new_table_children:
                     previous_group = new_table_children[-1]
                     page_break = block_level_page_break(previous_group, group)
-                    if page_break == 'avoid':
+                    if avoid_page_break(page_break, context):
                         earlier_page_break = find_earlier_page_break(
                             context, new_table_children, absolute_boxes,
                             fixed_boxes)
@@ -460,8 +460,8 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
         avoid_breaks = False
         for group in table.children[skip:]:
             if not group.is_header and not group.is_footer:
-                avoid_breaks = (
-                    group.style['break_inside'] in ('avoid', 'avoid-page'))
+                avoid_breaks = avoid_page_break(
+                    group.style['break_inside'], context)
                 break
 
         if header and footer:
@@ -581,8 +581,8 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
         group.width = last.position_x + last.width - first.position_x
         group.height = columns_height
 
-    if resume_at and not page_is_empty and (
-            table.style['break_inside'] in ('avoid', 'avoid-page')):
+    avoid_break = avoid_page_break(table.style['break_inside'], context)
+    if resume_at and not page_is_empty and avoid_break:
         table = None
         resume_at = None
     adjoining_margins = []
