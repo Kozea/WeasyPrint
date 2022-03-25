@@ -33,12 +33,12 @@ def test_text_stroke():
     ''', '''
       <style>
         @font-face { src: url(weasyprint.otf); font-family: weasyprint }
-        @page { size: 20px 4px }
+        @page { font-size: 1px; size: 20em 8ex }
         svg { display: block }
       </style>
       <svg width="20px" height="4px" xmlns="http://www.w3.org/2000/svg">
         <text x="2" y="2.5" font-family="weasyprint" font-size="2"
-              fill="transparent" stroke="blue" stroke-width="2">
+              fill="transparent" stroke="blue" stroke-width="1ex">
           A B C
         </text>
       </svg>

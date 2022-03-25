@@ -537,3 +537,30 @@ def test_path_Aa7():
           stroke="lime" stroke-width="2" fill="none"/>
       </svg>
     ''')
+
+
+@assert_no_logs
+def test_path_wrong_point():
+    assert_pixels('path_wrong_point', 12, 12, '''
+        ____________
+        GG__________
+        GG__________
+        GG__________
+        GG__________
+        ____________
+        ____________
+        ____________
+        ____________
+        ____________
+        ____________
+        ____________
+    ''', '''
+      <style>
+        @page { size: 12px }
+        svg { display: block }
+      </style>
+      <svg width="12px" height="12px" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 1 1 L 1 5 L"
+          stroke="lime" stroke-width="2" fill="none"/>
+      </svg>
+    ''')
