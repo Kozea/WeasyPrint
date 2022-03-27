@@ -567,8 +567,8 @@ def test_path_wrong_point():
 
 
 @assert_no_logs
-def test_path_markers():
-    assert_pixels('path_markers', 12, 12, '''
+def test_path_markers_l():
+    assert_pixels('path_markers_l', 12, 12, '''
         _________zz_
         _RR_____zzRz
         _RRGGGGzzRzz
@@ -594,7 +594,41 @@ def test_path_markers():
           orient="auto">
           <rect x="0" y="0" width="1" height="2" fill="red" />
         </marker>
-        <path d="M 2 3 h 7 l 0 4 l 0 3"
+        <path d="M 2 3 l 7 0 l 0 4 l 0 3"
+          stroke="lime" stroke-width="2" fill="none" marker="url('#line')"/>
+      </svg>
+    ''')
+
+
+@assert_no_logs
+def test_path_markers_hv():
+    assert_pixels('path_markers_hv', 12, 12, '''
+        _________zz_
+        _RR_____zzRz
+        _RRGGGGzzRzz
+        _RRGGGzzRzz_
+        _RR___zRzz__
+        ________zG__
+        _______RRRR_
+        _______RRRR_
+        ________GG__
+        _______RRRR_
+        _______RRRR_
+        ____________
+    ''', '''
+      <style>
+        @page { size: 12px }
+        svg { display: block }
+      </style>
+      <svg width="12px" height="12px" xmlns="http://www.w3.org/2000/svg">
+        <marker id="line"
+          viewBox="0 0 1 2" refX="0.5" refY="1"
+          markerUnits="strokeWidth"
+          markerWidth="1" markerHeight="2"
+          orient="auto">
+          <rect x="0" y="0" width="1" height="2" fill="red" />
+        </marker>
+        <path d="M 2 3 h 7 v 4 v 3"
           stroke="lime" stroke-width="2" fill="none" marker="url(#line)"/>
       </svg>
     ''')
