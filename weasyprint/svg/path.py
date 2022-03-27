@@ -264,7 +264,7 @@ def path(svg, node, font_size):
             if letter == 'v':
                 y += old_y
             angle = pi / 2 if y > old_y else -pi / 2
-            node.vertices.append((-angle, angle))
+            node.vertices.append((pi - angle, angle))
             svg.stream.line_to(old_x, y)
             current_point = old_x, y
 
