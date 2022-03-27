@@ -489,13 +489,13 @@ class SVG:
             marker_node = self.markers.get(marker)
 
             # Calculate position, scale and clipping
-            if 'viewBox' in node.attrib:
-                marker_width, marker_height = svg.point(
+            if 'viewBox' in marker_node.attrib:
+                marker_width, marker_height = self.point(
                     marker_node.get('markerWidth', 3),
                     marker_node.get('markerHeight', 3),
                     font_size)
                 scale_x, scale_y, translate_x, translate_y = preserve_ratio(
-                    svg, marker_node, font_size, marker_width, marker_height)
+                    self, marker_node, font_size, marker_width, marker_height)
 
                 clip_x, clip_y, viewbox_width, viewbox_height = (
                     marker_node.get_viewbox())
