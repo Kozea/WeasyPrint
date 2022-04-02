@@ -158,10 +158,10 @@ def test_columns_multipage():
     assert len(columns) == 2
     assert len(columns[0].children) == 2
     assert len(columns[1].children) == 2
-    columns[0].children[0].children[0].text == 'a'
-    columns[0].children[1].children[0].text == 'b'
-    columns[1].children[0].children[0].text == 'c'
-    columns[1].children[1].children[0].text == 'd'
+    assert columns[0].children[0].children[0].text == 'a'
+    assert columns[0].children[1].children[0].text == 'b'
+    assert columns[1].children[0].children[0].text == 'c'
+    assert columns[1].children[1].children[0].text == 'd'
 
     html, = page2.children
     body, = html.children
@@ -170,9 +170,9 @@ def test_columns_multipage():
     assert len(columns) == 2
     assert len(columns[0].children) == 2
     assert len(columns[1].children) == 1
-    columns[0].children[0].children[0].text == 'e'
-    columns[0].children[1].children[0].text == 'f'
-    columns[1].children[0].children[0].text == 'g'
+    assert columns[0].children[0].children[0].text == 'e'
+    assert columns[0].children[1].children[0].text == 'f'
+    assert columns[1].children[0].children[0].text == 'g'
 
 
 @assert_no_logs
@@ -195,8 +195,8 @@ def test_column_breaks():
     assert len(columns) == 2
     assert len(columns[0].children) == 1
     assert len(columns[1].children) == 1
-    columns[0].children[0].children[0].children[0].text == 'a'
-    columns[1].children[0].children[0].children[0].text == 'b'
+    assert columns[0].children[0].children[0].children[0].text == 'a'
+    assert columns[1].children[0].children[0].children[0].text == 'b'
 
     html, = page2.children
     body, = html.children
@@ -204,7 +204,7 @@ def test_column_breaks():
     columns = div.children
     assert len(columns) == 1
     assert len(columns[0].children) == 1
-    columns[0].children[0].children[0].children[0].text == 'c'
+    assert columns[0].children[0].children[0].children[0].text == 'c'
 
 
 @assert_no_logs
