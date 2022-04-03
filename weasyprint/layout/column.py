@@ -19,6 +19,7 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
     width = None
     style = box.style
     original_bottom_space = bottom_space
+    context.in_column = True
 
     if box.style['position'] == 'relative':
         # New containing block, use a new absolute list
@@ -294,6 +295,7 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
 
     if box.children and not new_children:
         # The box has children but none can be drawn, let's skip the whole box
+        context.in_column = False
         return None, (0, None), {'break': 'any', 'page': None}, [], False
 
     # Set the height of box and the columns
@@ -321,4 +323,5 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
                 context, absolute_box, box, fixed_boxes, bottom_space,
                 skip_stack=None)
 
+    context.in_column = False
     return box, skip_stack, next_page, [], False

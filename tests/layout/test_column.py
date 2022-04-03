@@ -79,7 +79,7 @@ def test_column_span_1():
       <style>
         @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         body { margin: 0; font-family: weasyprint; line-height: 1 }
-        div { columns: 2; width: 10em; column-gap: 0 }
+        div { columns: 2; width: 10em; column-gap: 0; orphans: 1; widows: 1 }
         section { column-span: all; margin: 1em 0 }
       </style>
 
@@ -152,10 +152,10 @@ def test_columns_multipage():
     assert len(columns) == 2
     assert len(columns[0].children) == 2
     assert len(columns[1].children) == 2
-    columns[0].children[0].children[0].text == 'a'
-    columns[0].children[1].children[0].text == 'b'
-    columns[1].children[0].children[0].text == 'c'
-    columns[1].children[1].children[0].text == 'd'
+    assert columns[0].children[0].children[0].text == 'a'
+    assert columns[0].children[1].children[0].text == 'b'
+    assert columns[1].children[0].children[0].text == 'c'
+    assert columns[1].children[1].children[0].text == 'd'
 
     html, = page2.children
     body, = html.children
@@ -164,13 +164,13 @@ def test_columns_multipage():
     assert len(columns) == 2
     assert len(columns[0].children) == 2
     assert len(columns[1].children) == 1
-    columns[0].children[0].children[0].text == 'e'
-    columns[0].children[1].children[0].text == 'f'
-    columns[1].children[0].children[0].text == 'g'
+    assert columns[0].children[0].children[0].text == 'e'
+    assert columns[0].children[1].children[0].text == 'f'
+    assert columns[1].children[0].children[0].text == 'g'
 
 
 @assert_no_logs
-def test_column_breaks():
+def test_columns_breaks():
     page1, page2 = render_pages('''
       <style>
         @font-face { src: url(weasyprint.otf); font-family: weasyprint }
@@ -189,8 +189,8 @@ def test_column_breaks():
     assert len(columns) == 2
     assert len(columns[0].children) == 1
     assert len(columns[1].children) == 1
-    columns[0].children[0].children[0].children[0].text == 'a'
-    columns[1].children[0].children[0].children[0].text == 'b'
+    assert columns[0].children[0].children[0].children[0].text == 'a'
+    assert columns[1].children[0].children[0].children[0].text == 'b'
 
     html, = page2.children
     body, = html.children
@@ -198,7 +198,200 @@ def test_column_breaks():
     columns = div.children
     assert len(columns) == 1
     assert len(columns[0].children) == 1
-    columns[0].children[0].children[0].children[0].text == 'c'
+    assert columns[0].children[0].children[0].children[0].text == 'c'
+
+
+@assert_no_logs
+def test_columns_break_after_column_1():
+    page1, = render_pages('''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        div { columns: 2; column-gap: 1px }
+        body { margin: 0; font-family: weasyprint;
+               font-size: 1px; line-height: 1px; orphans: 1; widows: 1 }
+        @page { margin: 0; size: 3px 10px }
+        section { break-after: column }
+      </style>
+      <div>a b <section>c</section> d</div>
+    ''')
+    html, = page1.children
+    body, = html.children
+    div, = body.children
+    columns = div.children
+    assert len(columns) == 2
+    assert columns[0].children[0].children[0].children[0].text == 'a'
+    assert columns[0].children[0].children[1].children[0].text == 'b'
+    assert columns[0].children[1].children[0].children[0].text == 'c'
+    assert columns[1].children[0].children[0].children[0].text == 'd'
+
+
+@assert_no_logs
+def test_columns_break_after_column_2():
+    page1, = render_pages('''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        div { columns: 2; column-gap: 1px }
+        body { margin: 0; font-family: weasyprint;
+               font-size: 1px; line-height: 1px; orphans: 1; widows: 1 }
+        @page { margin: 0; size: 3px 10px }
+        section { break-after: column }
+      </style>
+      <div><section>a</section> b c d</div>
+    ''')
+    html, = page1.children
+    body, = html.children
+    div, = body.children
+    columns = div.children
+    assert len(columns) == 2
+    assert columns[0].children[0].children[0].children[0].text == 'a'
+    assert columns[1].children[0].children[0].children[0].text == 'b'
+    assert columns[1].children[0].children[1].children[0].text == 'c'
+    assert columns[1].children[0].children[2].children[0].text == 'd'
+
+
+@assert_no_logs
+def test_columns_break_after_avoid_column():
+    page1, = render_pages('''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        div { columns: 2; column-gap: 1px }
+        body { margin: 0; font-family: weasyprint;
+               font-size: 1px; line-height: 1px; orphans: 1; widows: 1 }
+        @page { margin: 0; size: 3px 10px }
+        section { break-after: avoid-column }
+      </style>
+      <div>a <section>b</section> c d</div>
+    ''')
+    html, = page1.children
+    body, = html.children
+    div, = body.children
+    columns = div.children
+    assert len(columns) == 2
+    assert columns[0].children[0].children[0].children[0].text == 'a'
+    assert columns[0].children[1].children[0].children[0].text == 'b'
+    assert columns[0].children[2].children[0].children[0].text == 'c'
+    assert columns[1].children[0].children[0].children[0].text == 'd'
+
+
+@assert_no_logs
+def test_columns_break_before_column_1():
+    page1, = render_pages('''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        div { columns: 2; column-gap: 1px }
+        body { margin: 0; font-family: weasyprint;
+               font-size: 1px; line-height: 1px; orphans: 1; widows: 1 }
+        @page { margin: 0; size: 3px 10px }
+        section { break-before: column }
+      </style>
+      <div>a b c <section>d</section></div>
+    ''')
+    html, = page1.children
+    body, = html.children
+    div, = body.children
+    columns = div.children
+    assert len(columns) == 2
+    assert columns[0].children[0].children[0].children[0].text == 'a'
+    assert columns[0].children[0].children[1].children[0].text == 'b'
+    assert columns[0].children[0].children[2].children[0].text == 'c'
+    assert columns[1].children[0].children[0].children[0].text == 'd'
+
+
+@assert_no_logs
+def test_columns_break_before_column_2():
+    page1, = render_pages('''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        div { columns: 2; column-gap: 1px }
+        body { margin: 0; font-family: weasyprint;
+               font-size: 1px; line-height: 1px; orphans: 1; widows: 1 }
+        @page { margin: 0; size: 3px 10px }
+        section { break-before: column }
+      </style>
+      <div>a <section>b</section> c d</div>
+    ''')
+    html, = page1.children
+    body, = html.children
+    div, = body.children
+    columns = div.children
+    assert len(columns) == 2
+    assert columns[0].children[0].children[0].children[0].text == 'a'
+    assert columns[1].children[0].children[0].children[0].text == 'b'
+    assert columns[1].children[1].children[0].children[0].text == 'c'
+    assert columns[1].children[1].children[1].children[0].text == 'd'
+
+
+@assert_no_logs
+def test_columns_break_before_avoid_column():
+    page1, = render_pages('''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        div { columns: 2; column-gap: 1px }
+        body { margin: 0; font-family: weasyprint;
+               font-size: 1px; line-height: 1px; orphans: 1; widows: 1 }
+        @page { margin: 0; size: 3px 10px }
+        section { break-before: avoid-column }
+      </style>
+      <div>a b <section>c</section> d</div>
+    ''')
+    html, = page1.children
+    body, = html.children
+    div, = body.children
+    columns = div.children
+    assert len(columns) == 2
+    assert columns[0].children[0].children[0].children[0].text == 'a'
+    assert columns[0].children[0].children[1].children[0].text == 'b'
+    assert columns[0].children[1].children[0].children[0].text == 'c'
+    assert columns[1].children[0].children[0].children[0].text == 'd'
+
+
+@pytest.mark.xfail
+@assert_no_logs
+def test_columns_break_inside_column_1():
+    page1, = render_pages('''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        div { columns: 2; column-gap: 1px }
+        body { margin: 0; font-family: weasyprint;
+               font-size: 1px; line-height: 1px; orphans: 1; widows: 1 }
+        @page { margin: 0; size: 3px 10px }
+        section { break-inside: avoid-column }
+      </style>
+      <div><section>a b c</section> d</div>
+    ''')
+    html, = page1.children
+    body, = html.children
+    div, = body.children
+    columns = div.children
+    assert len(columns) == 2
+    assert columns[0].children[0].children[0].children[0].text == 'a'
+    assert columns[0].children[0].children[1].children[0].text == 'b'
+    assert columns[0].children[0].children[2].children[0].text == 'c'
+    assert columns[1].children[0].children[0].children[0].text == 'd'
+
+
+@assert_no_logs
+def test_columns_break_inside_column_2():
+    page1, = render_pages('''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        div { columns: 2; column-gap: 1px }
+        body { margin: 0; font-family: weasyprint;
+               font-size: 1px; line-height: 1px; orphans: 1; widows: 1 }
+        @page { margin: 0; size: 3px 10px }
+        section { break-inside: avoid-column }
+      </style>
+      <div>a <section>b c d</section></div>
+    ''')
+    html, = page1.children
+    body, = html.children
+    div, = body.children
+    columns = div.children
+    assert len(columns) == 2
+    assert columns[0].children[0].children[0].children[0].text == 'a'
+    assert columns[1].children[0].children[0].children[0].text == 'b'
+    assert columns[1].children[0].children[1].children[0].text == 'c'
+    assert columns[1].children[0].children[2].children[0].text == 'd'
 
 
 @assert_no_logs
@@ -250,7 +443,7 @@ def test_columns_fixed_height(prop):
     page, = render_pages('''
       <style>
         @font-face { src: url(weasyprint.otf); font-family: weasyprint }
-        div { columns: 4; column-gap: 0; %s: 10px }
+        div { columns: 4; column-gap: 0; %s: 10px; orphans: 1; widows: 1 }
         body { margin: 0; font-family: weasyprint; line-height: 1px }
         @page { margin: 0; size: 4px 50px; font-size: 1px }
       </style>
@@ -273,7 +466,7 @@ def test_columns_padding():
     page, = render_pages('''
       <style>
         @font-face { src: url(weasyprint.otf); font-family: weasyprint }
-        div { columns: 4; column-gap: 0; padding: 1px }
+        div { columns: 4; column-gap: 0; padding: 1px; orphans: 1; widows: 1 }
         body { margin: 0; font-family: weasyprint; line-height: 1px }
         @page { margin: 0; size: 6px 50px; font-size: 1px }
       </style>
@@ -301,7 +494,7 @@ def test_columns_relative():
         @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         article { position: absolute; top: 3px }
         div { columns: 4; column-gap: 0; position: relative;
-              top: 1px; left: 2px }
+              top: 1px; left: 2px; orphans: 1; widows: 1 }
         body { margin: 0; font-family: weasyprint; line-height: 1px }
         @page { margin: 0; size: 4px 50px; font-size: 1px }
       </style>

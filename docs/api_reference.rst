@@ -644,7 +644,7 @@ The ``column-gap``, ``column-rule-color``, ``column-rule-style`` and
 are supported.
 
 The ``break-before``, ``break-after`` and ``break-inside`` properties are
-**not** supported.
+supported.
 
 The ``column-span`` property is supported for direct children of columns.
 
