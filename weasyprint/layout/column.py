@@ -97,11 +97,13 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
 
     # Balance.
     #
-    # The current algorithm starts from the ideal height (the total height
-    # divided by the number of columns). We then iterate until the last column
-    # is not the highest one. At the end of each loop, we add the minimal
-    # height needed to make one direct child at the top of one column go to the
-    # end of the previous column.
+    # The current algorithm starts from the total available height, to check
+    # whether the whole content can fit. If it doesn’t fit, we keep the partial
+    # rendering. If it fits, we try to balance the columns starting from the
+    # ideal height (the total height divided by the number of columns). We then
+    # iterate until the last column is not the highest one. At the end of each
+    # loop, we add the minimal height needed to make one direct child at the
+    # top of one column go to the end of the previous column.
     #
     # We rely on a real rendering for each loop, and with a stupid algorithm
     # like this it can last minutes…
@@ -131,7 +133,7 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
         # We have a list of children that we have to balance between columns.
         column_children = column_children_or_block
 
-        # Find the total height of the content
+        # Find the total height available for the first run.
         current_position_y += collapse_margin(adjoining_margins)
         adjoining_margins = []
         column_box = create_column_box(column_children)
