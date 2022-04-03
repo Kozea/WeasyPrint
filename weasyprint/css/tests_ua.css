@@ -3,7 +3,8 @@
 */
 @page { background: white; bleed: 0; @footnote { margin: 0 } }
 html, body, div, h1, h2, h3, h4, ol, p, ul, hr, pre, section, article
-                { display: block; }
+                { display: block }
+body            { orphans: 1; widows: 1 }
 li              { display: list-item }
 head            { display: none }
 pre             { white-space: pre }
@@ -22,18 +23,18 @@ colgroup, x-colgroup { display: table-column-group }
 td, th, x-td, x-th   { display: table-cell }
 caption, x-caption   { display: table-caption }
 
-*[lang] { -weasy-lang: attr(lang); }
-a[href] { -weasy-link: attr(href); }
-a[name] { -weasy-anchor: attr(name); }
-*[id] { -weasy-anchor: attr(id); }
-h1 { bookmark-level: 1; bookmark-label: content(text); }
-h2 { bookmark-level: 2; bookmark-label: content(text); }
-h3 { bookmark-level: 3; bookmark-label: content(text); }
-h4 { bookmark-level: 4; bookmark-label: content(text); }
-h5 { bookmark-level: 5; bookmark-label: content(text); }
-h6 { bookmark-level: 6; bookmark-label: content(text); }
+*[lang] { -weasy-lang: attr(lang) }
+a[href] { -weasy-link: attr(href) }
+a[name] { -weasy-anchor: attr(name) }
+*[id] { -weasy-anchor: attr(id) }
+h1 { bookmark-level: 1; bookmark-label: content(text) }
+h2 { bookmark-level: 2; bookmark-label: content(text) }
+h3 { bookmark-level: 3; bookmark-label: content(text) }
+h4 { bookmark-level: 4; bookmark-label: content(text) }
+h5 { bookmark-level: 5; bookmark-label: content(text) }
+h6 { bookmark-level: 6; bookmark-label: content(text) }
 
-::marker { unicode-bidi: isolate; font-variant-numeric: tabular-nums; }
+::marker { unicode-bidi: isolate; font-variant-numeric: tabular-nums }
 
-::footnote-call { content: counter(footnote); }
-::footnote-marker { content: counter(footnote) '.'; }
+::footnote-call { content: counter(footnote) }
+::footnote-marker { content: counter(footnote) '.' }

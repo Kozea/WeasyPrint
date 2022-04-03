@@ -334,8 +334,6 @@ def test_float_margin():
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
-                orphans: 1;
-                widows: 1;
             }
             div.split {
                 color: blue;
@@ -372,8 +370,6 @@ def test_float_split_1():
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
-                orphans: 1;
-                widows: 1;
             }
             div.split {
                 color: blue;
@@ -407,8 +403,6 @@ def test_float_split_2():
             font-family: weasyprint;
             font-size: 2px;
             line-height: 1;
-            orphans: 1;
-            widows: 1;
           }
           div.split {
             color: blue;
@@ -442,8 +436,6 @@ def test_float_split_3():
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
-                orphans: 1;
-                widows: 1;
             }
             div.split {
                 color: blue;
@@ -477,8 +469,6 @@ def test_float_split_4():
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
-                orphans: 1;
-                widows: 1;
             }
             div.split {
                 color: blue;
@@ -512,8 +502,6 @@ def test_float_split_5():
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
-                orphans: 1;
-                widows: 1;
             }
             div.split {
                 color: blue;
@@ -552,8 +540,6 @@ def test_float_split_6():
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
-                orphans: 1;
-                widows: 1;
             }
             div.split {
                 color: blue;
@@ -592,8 +578,6 @@ def test_float_split_7():
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
-                orphans: 1;
-                widows: 1;
             }
             div.split {
                 color: blue;
@@ -632,8 +616,6 @@ def test_float_split_8():
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
-                orphans: 1;
-                widows: 1;
             }
             div.split {
                 color: blue;
@@ -668,8 +650,6 @@ def test_float_split_9():
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
-                orphans: 1;
-                widows: 1;
             }
             div.split {
                 color: blue;

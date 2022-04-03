@@ -2053,7 +2053,7 @@ def test_table_html_tag():
         @page { size: 120px }
         h1 { height: 30px}
         td { line-height: 40px }
-        table { table-layout: fixed; width: 100%; orphans: 1; widows: 1 }
+        table { table-layout: fixed; width: 100% }
       </style>
       <h1>Dummy title</h1>
       <table>
@@ -2069,7 +2069,7 @@ def test_table_html_tag():
         @page { size: 120px }
         h1 { height: 30px}
         td { line-height: 40px }
-        table { table-layout: fixed; width: 100%; orphans: 1; widows: 1 }
+        table { table-layout: fixed; width: 100% }
       </style>
       <h1>Dummy title</h1>
       <table>

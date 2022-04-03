@@ -233,7 +233,6 @@ def test_page_breaks_complex_2():
       <style>
         @page { size: 140px; margin: 0 }
         img { height: 25px; vertical-align: top }
-        p { orphans: 1; widows: 1 }
       </style>
       <img src=pattern.png>
       <div>
@@ -265,7 +264,6 @@ def test_page_breaks_complex_3():
       <style>
         @page { size: 140px; margin: 0 }
         img { height: 25px; vertical-align: top }
-        p { orphans: 1; widows: 1 }
       </style>
       <img src=pattern.png><!-- page break here -->
       <div>
@@ -297,7 +295,6 @@ def test_page_breaks_complex_4():
       <style>
         @page { size: 140px; margin: 0 }
         img { height: 25px; vertical-align: top }
-        p { orphans: 1; widows: 1 }
       </style>
       <img src=pattern.png><!-- page break here -->
       <div>
@@ -333,7 +330,6 @@ def test_page_breaks_complex_5():
       <style>
         @page { size: 100px; margin: 0 }
         img { height: 30px; display: block; }
-        p { orphans: 1; widows: 1 }
       </style>
       <div>
         <img src=pattern.png style="page-break-after: always">
@@ -366,7 +362,6 @@ def test_page_breaks_complex_6():
       <style>
         @page { size: 100px; margin: 0 }
         img { height: 30px; display: block; }
-        p { orphans: 1; widows: 1 }
       </style>
       <div>
         <img src=pattern.png style="page-break-after: always">

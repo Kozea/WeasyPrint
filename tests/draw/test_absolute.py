@@ -26,8 +26,6 @@ def test_absolute_split_1():
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
-                orphans: 1;
-                widows: 1;
             }
             div.split {
                 color: blue;
@@ -63,8 +61,6 @@ def test_absolute_split_2():
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
-                orphans: 1;
-                widows: 1;
             }
             div.split {
                 color: blue;
@@ -100,8 +96,6 @@ def test_absolute_split_3():
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
-                orphans: 1;
-                widows: 1;
             }
             div.split {
                 color: blue;
@@ -137,8 +131,6 @@ def test_absolute_split_4():
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
-                orphans: 1;
-                widows: 1;
             }
             div.split {
                 color: blue;
@@ -174,8 +166,6 @@ def test_absolute_split_5():
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
-                orphans: 1;
-                widows: 1;
             }
             div.split {
                 color: blue;
@@ -218,8 +208,6 @@ def test_absolute_split_6():
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
-                orphans: 1;
-                widows: 1;
             }
             div.split {
                 color: blue;
@@ -260,8 +248,6 @@ def test_absolute_split_7():
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
-                orphans: 1;
-                widows: 1;
             }
             div.split {
                 color: blue;
@@ -311,8 +297,6 @@ def test_absolute_split_8():
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
-                orphans: 1;
-                widows: 1;
             }
             div {
                 position: absolute;
@@ -351,8 +335,6 @@ def test_absolute_split_9():
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
-                orphans: 1;
-                widows: 1;
             }
             div {
                 color: red;
@@ -396,8 +378,6 @@ def test_absolute_next_page():
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
-                orphans: 1;
-                widows: 1;
             }
             div.split {
                 color: blue;
@@ -564,8 +544,6 @@ def test_absolute_pages_counter():
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
-                orphans: 1;
-                widows: 1;
             }
             div {
                 color: blue;

@@ -156,8 +156,6 @@ def test_several_footnote():
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
-                orphans: 1;
-                widows: 1;
             }
             span {
                 float: footnote;
@@ -204,8 +202,6 @@ def test_reported_footnote_1():
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
-                orphans: 1;
-                widows: 1;
             }
             span {
                 float: footnote;
@@ -249,8 +245,6 @@ def test_reported_footnote_2():
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
-                orphans: 1;
-                widows: 1;
             }
             span {
                 float: footnote;
@@ -296,8 +290,6 @@ def test_reported_footnote_3():
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
-                orphans: 1;
-                widows: 1;
             }
             span {
                 float: footnote;
@@ -505,6 +497,8 @@ def test_footnote_policy_line():
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
+                orphans: 2;
+                widows: 2;
             }
             span {
                 float: footnote;
