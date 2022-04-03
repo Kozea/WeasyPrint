@@ -686,9 +686,11 @@ The `CSS Custom Properties for Cascading Variables Module Level 1`_ "introduces
 cascading variables as a new primitive value type that is accepted by all CSS
 properties, and custom properties for defining them."
 
-The custom properties and the ``var()`` notation are supported.
+The custom properties are supported. The ``var()`` notation is `only supported
+in single-value properties`_.
 
 .. _CSS Custom Properties for Cascading Variables Module Level 1: https://www.w3.org/TR/css-variables/
+.. _only supported in single-value properties: https://github.com/Kozea/WeasyPrint/issues/1219
 
 CSS Text Decoration Module Level 3
 ++++++++++++++++++++++++++++++++++
