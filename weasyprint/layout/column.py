@@ -218,7 +218,7 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
 
             if first_probe_run:
                 # This is the first loop through, we might bail here.
-                if column_skip_stack or max(consumed_heights) >= max_height:
+                if column_skip_stack or max(consumed_heights) > max_height:
                     # Even at maximum height, not everything fits. Stop now and
                     # let the columns continue on the next page.
                     break
