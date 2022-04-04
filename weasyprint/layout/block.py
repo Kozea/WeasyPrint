@@ -750,7 +750,7 @@ def block_container_layout(context, box, bottom_space, skip_stack,
         # new_box.height
         new_box.height = max(
             min(new_box.height, new_box.max_height), new_box.min_height)
-    elif bottom_space > -inf:
+    elif bottom_space > -inf and not new_box.is_column:
         # Make the box fill the blank space at the bottom of the page
         # https://www.w3.org/TR/css-break-3/#box-splitting
         new_box.height = (
