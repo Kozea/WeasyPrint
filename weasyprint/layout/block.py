@@ -662,6 +662,7 @@ def block_container_layout(context, box, bottom_space, skip_stack,
                 context.unlayout_footnote(footnote)
             return None, None, {'break': 'any', 'page': page}, [], False
         elif stop:
+            adjoining_margins = []
             break
 
     else:
