@@ -128,6 +128,17 @@ cover_image = '''
     ________
 '''
 
+border_image = '''
+    ________
+    _GGGGGG_
+    _GrBBBG_
+    _GBBBBG_
+    _GBBBBG_
+    _GBBBBG_
+    _GGGGGG_
+    ________
+'''
+
 
 @assert_no_logs
 @pytest.mark.parametrize('filename, image', (
@@ -522,3 +533,25 @@ def test_image_position():
               object-position: bottom 50% right 50% }
       </style>
       <img src="pattern.png">''')
+
+
+@assert_no_logs
+def test_images_border():
+    assert_pixels('image_border', 8, 8, border_image, '''
+      <style>
+        @page { size: 8px }
+        body { margin: 0; background: #fff; font-size: 0 }
+        img { margin: 1px; border: 1px solid lime }
+      </style>
+      <div><img src="pattern.png"></div>''')
+
+
+@assert_no_logs
+def test_images_border_absolute():
+    assert_pixels('image_border_absolute', 8, 8, border_image, '''
+      <style>
+        @page { size: 8px }
+        body { margin: 0; background: #fff; font-size: 0 }
+        img { margin: 1px; border: 1px solid lime; position: absolute }
+      </style>
+      <div><img src="pattern.png"></div>''')
