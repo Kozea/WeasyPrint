@@ -80,16 +80,27 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
     # ]
     columns_and_blocks = []
     column_children = []
-    for child in box.children:
+
+    if skip_stack:
+        skip, = skip_stack.keys()
+    else:
+        skip = 0
+
+    for index, child in enumerate(box.children[skip:], start=skip):
         if child.style['column_span'] == 'all':
             if column_children:
-                columns_and_blocks.append(column_children)
-            columns_and_blocks.append(child.copy())
+                columns_and_blocks.append(
+                    (index - len(column_children), column_children))
+            columns_and_blocks.append((index, child.copy()))
             column_children = []
             continue
         column_children.append(child.copy())
     if column_children:
-        columns_and_blocks.append(column_children)
+        columns_and_blocks.append(
+            (index + 1 - len(column_children), column_children))
+
+    if skip_stack:
+        skip_stack = {0: skip_stack[skip]}
 
     if not box.children:
         next_page = {'break': 'any', 'page': None}
@@ -111,21 +122,33 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
     adjoining_margins = []
     current_position_y = box.content_box_y()
     new_children = []
-    for column_children_or_block in columns_and_blocks:
+    column_skip_stack = None
+    forced_end_probing = False
+    for index, column_children_or_block in columns_and_blocks:
         if not isinstance(column_children_or_block, list):
             # We get a spanning block, we display it like other blocks.
             block = column_children_or_block
             resolve_percentages(block, containing_block)
             block.position_x = box.content_box_x()
             block.position_y = current_position_y
-            new_child, _, _, adjoining_margins, _ = block_level_layout(
-                context, block, original_bottom_space, skip_stack,
-                containing_block, page_is_empty, absolute_boxes, fixed_boxes,
-                adjoining_margins, discard=False)
+            new_child, resume_at, next_page, adjoining_margins, _ = (
+                block_level_layout(
+                    context, block, original_bottom_space, skip_stack,
+                    containing_block, page_is_empty, absolute_boxes,
+                    fixed_boxes, adjoining_margins, discard=False))
+            skip_stack = None
+            if new_child is None:
+                forced_end_probing = True
+                break
             new_children.append(new_child)
             current_position_y = (
                 new_child.border_height() + new_child.border_box_y())
             adjoining_margins.append(new_child.margin_bottom)
+            if resume_at:
+                forced_end_probing = True
+                column_skip_stack = resume_at
+                break
+            page_is_empty = False
             continue
 
         excluded_shapes = context.excluded_shapes[:]
@@ -146,8 +169,9 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
         column_skip_stack = skip_stack
         lost_space = inf
         first_probe_run = True
-        forced_end_probing = False
         while True:
+            column_skip_stack = skip_stack
+
             # Remove extra excluded shapes introduced during previous loop
             new_excluded_shapes = (
                 len(context.excluded_shapes) - len(excluded_shapes))
@@ -249,7 +273,6 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
                         break
 
                     height += add_height
-                    column_skip_stack = skip_stack
             first_probe_run = False
 
         # TODO: check box.style['max']-height
@@ -297,6 +320,9 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
             column.height = max_column_height
             new_children.append(column)
 
+        skip_stack = None
+        page_is_empty = False
+
     if box.children and not new_children:
         # The box has children but none can be drawn, let's skip the whole box
         context.in_column = False
@@ -327,5 +353,10 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
                 context, absolute_box, box, fixed_boxes, bottom_space,
                 skip_stack=None)
 
+    if column_skip_stack:
+        skip, = column_skip_stack.keys()
+        skip_stack = {index + skip: column_skip_stack[skip]}
+    elif forced_end_probing:
+        skip_stack = {index: None}
     context.in_column = False
     return box, skip_stack, next_page, [], False

@@ -134,6 +134,177 @@ def test_column_span_2():
 
 
 @assert_no_logs
+def test_column_span_3():
+    page1, page2 = render_pages('''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        @page { margin: 0; size: 8px 3px }
+        body { font-family: weasyprint; font-size: 1px }
+        div { columns: 2; column-gap: 0; line-height: 1 }
+        section { column-span: all }
+      </style>
+      <div>
+        abc def
+        ghi jkl
+        <section>line1 line2</section>
+        mno pqr
+      </div>
+    ''')
+    html, = page1.children
+    body, = html.children
+    div, = body.children
+    column1, column2, section = div.children
+    assert (column1.position_x, column1.position_y) == (0, 0)
+    assert (column2.position_x, column2.position_y) == (4, 0)
+    assert (section.position_x, section.position_y) == (0, 2)
+
+    assert column1.children[0].children[0].children[0].text == 'abc'
+    assert column1.children[0].children[1].children[0].text == 'def'
+    assert column2.children[0].children[0].children[0].text == 'ghi'
+    assert column2.children[0].children[1].children[0].text == 'jkl'
+    assert section.children[0].children[0].text == 'line1'
+
+    html, = page2.children
+    body, = html.children
+    div, = body.children
+    section, column1, column2 = div.children
+    assert (section.position_x, section.position_y) == (0, 0)
+    assert (column1.position_x, column1.position_y) == (0, 1)
+    assert (column2.position_x, column2.position_y) == (4, 1)
+
+    assert section.children[0].children[0].text == 'line2'
+    assert column1.children[0].children[0].children[0].text == 'mno'
+    assert column2.children[0].children[0].children[0].text == 'pqr'
+
+
+@assert_no_logs
+def test_column_span_4():
+    page1, page2 = render_pages('''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        @page { margin: 0; size: 8px 3px }
+        body { font-family: weasyprint; font-size: 1px }
+        div { columns: 2; column-gap: 0; line-height: 1 }
+        section { column-span: all }
+      </style>
+      <div>
+        abc def
+        <section>line1</section>
+        ghi jkl
+        mno pqr
+      </div>
+    ''')
+    html, = page1.children
+    body, = html.children
+    div, = body.children
+    column1, column2, section, column3, column4 = div.children
+    assert (column1.position_x, column1.position_y) == (0, 0)
+    assert (column2.position_x, column2.position_y) == (4, 0)
+    assert (section.position_x, section.position_y) == (0, 1)
+    assert (column3.position_x, column3.position_y) == (0, 2)
+    assert (column4.position_x, column4.position_y) == (4, 2)
+
+    assert column1.children[0].children[0].children[0].text == 'abc'
+    assert column2.children[0].children[0].children[0].text == 'def'
+    assert section.children[0].children[0].text == 'line1'
+    assert column3.children[0].children[0].children[0].text == 'ghi'
+    assert column4.children[0].children[0].children[0].text == 'jkl'
+
+    html, = page2.children
+    body, = html.children
+    div, = body.children
+    column1, column2 = div.children
+    assert (column1.position_x, column1.position_y) == (0, 0)
+    assert (column2.position_x, column2.position_y) == (4, 0)
+
+    assert column1.children[0].children[0].children[0].text == 'mno'
+    assert column2.children[0].children[0].children[0].text == 'pqr'
+
+
+@assert_no_logs
+def test_column_span_5():
+    page1, page2 = render_pages('''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        @page { margin: 0; size: 8px 3px }
+        body { font-family: weasyprint; font-size: 1px }
+        div { columns: 2; column-gap: 0; line-height: 1 }
+        section { column-span: all }
+      </style>
+      <div>
+        abc def
+        ghi jkl
+        <section>line1</section>
+        mno pqr
+      </div>
+    ''')
+    html, = page1.children
+    body, = html.children
+    div, = body.children
+    column1, column2, section = div.children
+    assert (column1.position_x, column1.position_y) == (0, 0)
+    assert (column2.position_x, column2.position_y) == (4, 0)
+    assert (section.position_x, section.position_y) == (0, 2)
+
+    assert column1.children[0].children[0].children[0].text == 'abc'
+    assert column1.children[0].children[1].children[0].text == 'def'
+    assert column2.children[0].children[0].children[0].text == 'ghi'
+    assert column2.children[0].children[1].children[0].text == 'jkl'
+    assert section.children[0].children[0].text == 'line1'
+
+    html, = page2.children
+    body, = html.children
+    div, = body.children
+    column1, column2 = div.children
+    assert (column1.position_x, column1.position_y) == (0, 0)
+    assert (column2.position_x, column2.position_y) == (4, 0)
+
+    assert column1.children[0].children[0].children[0].text == 'mno'
+    assert column2.children[0].children[0].children[0].text == 'pqr'
+
+
+@assert_no_logs
+def test_column_span_6():
+    page1, page2 = render_pages('''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        @page { margin: 0; size: 8px 3px }
+        body { font-family: weasyprint; font-size: 1px }
+        div { columns: 2; column-gap: 0; line-height: 1 }
+        section { column-span: all }
+      </style>
+      <div>
+        abc def
+        ghi jkl
+        mno pqr
+        <section>line1</section>
+      </div>
+    ''')
+    html, = page1.children
+    body, = html.children
+    div, = body.children
+    column1, column2 = div.children
+    assert (column1.position_x, column1.position_y) == (0, 0)
+    assert (column2.position_x, column2.position_y) == (4, 0)
+
+    assert column1.children[0].children[0].children[0].text == 'abc'
+    assert column1.children[0].children[1].children[0].text == 'def'
+    assert column1.children[0].children[2].children[0].text == 'ghi'
+    assert column2.children[0].children[0].children[0].text == 'jkl'
+    assert column2.children[0].children[1].children[0].text == 'mno'
+    assert column2.children[0].children[2].children[0].text == 'pqr'
+
+    html, = page2.children
+    body, = html.children
+    div, = body.children
+    section, = div.children
+    assert section.children[0].children[0].text == 'line1'
+    assert (section.position_x, section.position_y) == (0, 0)
+
+    assert section.children[0].children[0].text == 'line1'
+
+
+@assert_no_logs
 def test_columns_multipage():
     page1, page2 = render_pages('''
       <style>
