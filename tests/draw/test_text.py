@@ -529,6 +529,34 @@ def test_text_line_through():
       <div>abc</div>''')
 
 
+def test_text_multiple_text_decoration():
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1621
+    assert_pixels('text_multiple_text_decoration', 13, 7, '''
+        _____________
+        _zzzzzzzzzzz_
+        _zRRRRRRRRRz_
+        _zBBBBBBBBBz_
+        _zBBBBBBBBBz_
+        _zzzzzzzzzzz_
+        _____________
+    ''', '''
+      <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page {
+          size: 13px 7px;
+          background: white;
+          margin: 2px;
+        }
+        body {
+          color: red;
+          font-family: weasyprint;
+          font-size: 3px;
+          text-decoration: underline line-through blue;
+        }
+      </style>
+      <div>abc</div>''')
+
+
 def test_zero_width_character():
     # Test regression: https://github.com/Kozea/WeasyPrint/issues/1508
     assert_pixels('zero_width_character', 6, 4, '''

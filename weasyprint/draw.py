@@ -1000,16 +1000,19 @@ def draw_text(stream, textbox, offset_x, text_overflow, block_ellipsis):
         thickness = textbox.pango_layout.underline_thickness
         offset_y = (
             textbox.baseline - textbox.pango_layout.ascent + thickness / 2)
+        draw_text_decoration(
+            stream, textbox, offset_x, offset_y, thickness, color)
     if 'underline' in values:
         thickness = textbox.pango_layout.underline_thickness
         offset_y = (
             textbox.baseline - textbox.pango_layout.underline_position +
             thickness / 2)
+        draw_text_decoration(
+            stream, textbox, offset_x, offset_y, thickness, color)
     if 'line-through' in values:
         thickness = textbox.pango_layout.strikethrough_thickness
         offset_y = (
             textbox.baseline - textbox.pango_layout.strikethrough_position)
-    if values != 'none':
         draw_text_decoration(
             stream, textbox, offset_x, offset_y, thickness, color)
 
