@@ -124,6 +124,7 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
     new_children = []
     column_skip_stack = None
     forced_end_probing = False
+    break_page = False
     for index, column_children_or_block in columns_and_blocks:
         if not isinstance(column_children_or_block, list):
             # We get a spanning block, we display it like other blocks.
@@ -139,6 +140,7 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
             skip_stack = None
             if new_child is None:
                 forced_end_probing = True
+                break_page = True
                 break
             new_children.append(new_child)
             current_position_y = (
@@ -146,6 +148,7 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
             adjoining_margins.append(new_child.margin_bottom)
             if resume_at:
                 forced_end_probing = True
+                break_page = True
                 column_skip_stack = resume_at
                 break
             page_is_empty = False
@@ -299,6 +302,7 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
                     containing_block, page_is_empty, absolute_boxes,
                     fixed_boxes, None, discard=False))
             if new_child is None:
+                break_page = True
                 break
             next_page = column_next_page
             skip_stack = column_skip_stack
@@ -356,7 +360,7 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
     if column_skip_stack:
         skip, = column_skip_stack.keys()
         skip_stack = {index + skip: column_skip_stack[skip]}
-    elif forced_end_probing:
+    elif break_page:
         skip_stack = {index: None}
     context.in_column = False
     return box, skip_stack, next_page, [], False
