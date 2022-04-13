@@ -516,7 +516,6 @@ def test_columns_break_before_avoid_column():
     assert columns[1].children[0].children[0].children[0].text == 'd'
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_columns_break_inside_column_1():
     page1, = render_pages('''
@@ -566,13 +565,39 @@ def test_columns_break_inside_column_2():
 
 
 @assert_no_logs
+def test_columns_break_inside_column_not_empty_page():
+    page1, = render_pages('''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        div { columns: 2; column-gap: 1px }
+        body { margin: 0; font-family: weasyprint;
+               font-size: 1px; line-height: 1px }
+        @page { margin: 0; size: 3px 10px }
+        section { break-inside: avoid-column }
+      </style>
+      <p>p</p>
+      <div><section>a b c</section> d</div>
+    ''')
+    html, = page1.children
+    body, = html.children
+    p, div, = body.children
+    assert p.children[0].children[0].text == 'p'
+    columns = div.children
+    assert len(columns) == 2
+    assert columns[0].children[0].children[0].children[0].text == 'a'
+    assert columns[0].children[0].children[1].children[0].text == 'b'
+    assert columns[0].children[0].children[2].children[0].text == 'c'
+    assert columns[1].children[0].children[0].children[0].text == 'd'
+
+
+@assert_no_logs
 def test_columns_not_enough_content():
     page, = render_pages('''
       <style>
         @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         div { columns: 5; column-gap: 0 }
-        body { margin: 0; font-family: weasyprint }
-        @page { margin: 0; size: 5px; font-size: 1px }
+        body { margin: 0; font-family: weasyprint; font-size: 1px }
+        @page { margin: 0; size: 5px }
       </style>
       <div>a b c</div>
     ''')
@@ -585,6 +610,40 @@ def test_columns_not_enough_content():
     assert [column.width for column in columns] == [1, 1, 1]
     assert [column.position_x for column in columns] == [0, 1, 2]
     assert [column.position_y for column in columns] == [0, 0, 0]
+
+
+@assert_no_logs
+def test_columns_higher_than_page():
+    page1, page2 = render_pages('''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        div { columns: 5; column-gap: 0 }
+        body { margin: 0; font-family: weasyprint; font-size: 2px }
+        @page { margin: 0; size: 5px 1px }
+      </style>
+      <div>a b c d e f g h</div>
+    ''')
+    html, = page1.children
+    body, = html.children
+    div, = body.children
+    assert div.width == 5
+    columns = div.children
+    assert len(columns) == 5
+    assert columns[0].children[0].children[0].text == 'a'
+    assert columns[1].children[0].children[0].text == 'b'
+    assert columns[2].children[0].children[0].text == 'c'
+    assert columns[3].children[0].children[0].text == 'd'
+    assert columns[4].children[0].children[0].text == 'e'
+
+    html, = page2.children
+    body, = html.children
+    div, = body.children
+    assert div.width == 5
+    columns = div.children
+    assert len(columns) == 3
+    assert columns[0].children[0].children[0].text == 'f'
+    assert columns[1].children[0].children[0].text == 'g'
+    assert columns[2].children[0].children[0].text == 'h'
 
 
 @assert_no_logs

@@ -172,6 +172,8 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
         column_skip_stack = skip_stack
         lost_space = inf
         first_probe_run = True
+        original_page_is_empty = page_is_empty
+        page_is_empty = False
         while True:
             column_skip_stack = skip_stack
 
@@ -187,13 +189,12 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
                 new_box, resume_at, next_page, _, _ = block_box_layout(
                     context, column_box,
                     context.page_bottom - current_position_y - height,
-                    column_skip_stack, containing_block, page_is_empty,
-                    [], [], [], discard=False)
+                    column_skip_stack, containing_block,
+                    page_is_empty or first_probe_run, [], [], [],
+                    discard=False)
                 if new_box is None:
-                    # We didn't render anything. Give up and use the max
-                    # content height.
-                    height = max_height
-                    forced_end_probing = True
+                    # We didn't render anything, retry.
+                    column_skip_stack = {0: None}
                     break
                 column_skip_stack = resume_at
 
@@ -299,7 +300,7 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
             new_child, column_skip_stack, column_next_page, _, _ = (
                 block_box_layout(
                     context, column_box, bottom_space, skip_stack,
-                    containing_block, page_is_empty, absolute_boxes,
+                    containing_block, original_page_is_empty, absolute_boxes,
                     fixed_boxes, None, discard=False))
             if new_child is None:
                 break_page = True
