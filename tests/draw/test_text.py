@@ -557,6 +557,139 @@ def test_text_multiple_text_decoration():
       <div>abc</div>''')
 
 
+def test_text_nested_text_decoration():
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1621
+    assert_pixels('text_nested_text_decoration', 13, 7, '''
+        _____________
+        _zzzzzzzzzzz_
+        _zRRRRRRRRRz_
+        _zRRRBBBRRRz_
+        _zBBBBBBBBBz_
+        _zzzzzzzzzzz_
+        _____________
+    ''', '''
+      <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page {
+          size: 13px 7px;
+          background: white;
+          margin: 2px;
+        }
+        body {
+          color: red;
+          font-family: weasyprint;
+          font-size: 3px;
+          text-decoration: underline blue;
+        }
+        span {
+          text-decoration: line-through;
+        }
+      </style>
+      <div>a<span>b</span>c</div>''')
+
+
+@pytest.mark.xfail
+def test_text_nested_text_decoration_color():
+    # See weasyprint.css.text_decoration’s TODO
+    assert_pixels('text_nested_text_decoration_color', 13, 7, '''
+        _____________
+        _zzzzzzzzzzz_
+        _zRRRRRRRRRz_
+        _zRRRGGGRRRz_
+        _zBBBBBBBBBz_
+        _zzzzzzzzzzz_
+        _____________
+    ''', '''
+      <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page {
+          size: 13px 7px;
+          background: white;
+          margin: 2px;
+        }
+        body {
+          color: red;
+          font-family: weasyprint;
+          font-size: 3px;
+          text-decoration: underline blue;
+        }
+        span {
+          text-decoration: line-through lime;
+        }
+      </style>
+      <div>a<span>b</span>c</div>''')
+
+
+@pytest.mark.xfail
+def test_text_nested_block_text_decoration():
+    # See weasyprint.css.text_decoration’s TODO
+    assert_pixels('text_nested_block_text_decoration', 7, 13, '''
+        _______
+        _zzzzz_
+        _zRRRz_
+        _zRRRz_
+        _zBBBz_
+        _zRRRz_
+        _zGGGz_
+        _zBBBz_
+        _zRRRz_
+        _zRRRz_
+        _zBBBz_
+        _zzzzz_
+        _______
+    ''', '''
+      <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page {
+          size: 7px 13px;
+          background: white;
+          margin: 2px;
+        }
+        body {
+          color: red;
+          font-family: weasyprint;
+          font-size: 3px;
+          text-decoration: underline blue;
+        }
+        article {
+          text-decoration: line-through lime;
+        }
+      </style>
+      <div>a<article>b</article>c</div>''')
+
+
+@pytest.mark.xfail
+def test_text_float_text_decoration():
+    # See weasyprint.css.text_decoration’s TODO
+    assert_pixels('text_float_text_decoration', 13, 7, '''
+        _____________
+        _zzzzz_______
+        _zRRRz__RRR__
+        _zRRRz__RRR__
+        _zBBBz__RRR__
+        _zzzzz_______
+        _____________
+    ''', '''
+      <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page {
+          size: 13px 7px;
+          background: white;
+          margin: 2px;
+        }
+        div {
+          color: red;
+          font-family: weasyprint;
+          font-size: 3px;
+          text-decoration: underline blue;
+        }
+        span {
+          float: right;
+        }
+      </style>
+      <div>a<span>b</span></div>''')
+
+
 def test_zero_width_character():
     # Test regression: https://github.com/Kozea/WeasyPrint/issues/1508
     assert_pixels('zero_width_character', 6, 4, '''

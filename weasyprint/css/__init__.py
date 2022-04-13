@@ -229,6 +229,23 @@ def get_child_text(element):
     return ''.join(content)
 
 
+def text_decoration(key, value, parent_value, cascaded):
+    # The text-decoration-* properties are not inherited but propagated
+    # using specific rules.
+    # See https://drafts.csswg.org/css-text-decor-3/#line-decoration
+    # TODO: these rules don’t follow the specification.
+    if key in ('text_decoration_color', 'text_decoration_style'):
+        if not cascaded:
+            value = parent_value
+    elif key == 'text_decoration_line':
+        if parent_value != 'none':
+            if value == 'none':
+                value = parent_value
+            else:
+                value = value | parent_value
+    return value
+
+
 def find_stylesheets(wrapper_element, device_media_type, url_fetcher, base_url,
                      font_config, counter_style, page_rules):
     """Yield the stylesheets in ``element_tree``.
@@ -615,6 +632,10 @@ class AnonymousStyle(dict):
         elif key == 'page':
             # page is not inherited but taken from the ancestor if 'auto'
             self[key] = self.parent_style[key]
+        elif key.startswith('text_decoration_'):
+            self[key] = text_decoration(
+                key, INITIAL_VALUES[key], self.parent_style[key],
+                cascaded=False)
         else:
             self[key] = INITIAL_VALUES[key]
         return self[key]
@@ -673,6 +694,10 @@ class ComputedStyle(dict):
         elif keyword == 'inherit':
             # Values in parent_style are already computed.
             self[key] = value = self.parent_style[key]
+
+        if key.startswith('text_decoration_') and self.parent_style:
+            self[key] = text_decoration(
+                key, value, self.parent_style[key], key in self.cascaded)
 
         if key == 'page' and value == 'auto':
             # The page property does not inherit. However, if the page
