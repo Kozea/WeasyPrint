@@ -582,7 +582,7 @@ def test_text_nested_text_decoration():
           text-decoration: underline blue;
         }
         span {
-          text-decoration: line-through;
+          text-decoration: line-through blue;
         }
       </style>
       <div>a<span>b</span>c</div>''')
