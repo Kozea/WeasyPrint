@@ -699,7 +699,7 @@ class Document:
                 options = subset.Options(
                     retain_gids=True, passthrough_tables=True,
                     ignore_missing_glyphs=True, hinting=False)
-                options.drop_tables += ['GSUB', 'GPOS']
+                options.drop_tables += ['GSUB', 'GPOS', 'SVG']
                 subsetter = subset.Subsetter(options)
                 subsetter.populate(gids=cmap)
                 try:
