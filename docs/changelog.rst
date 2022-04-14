@@ -2,6 +2,47 @@ Changelog
 =========
 
 
+Version 54.3
+------------
+
+Released on 2022-04-04.
+
+Bug fixes:
+
+* `#1588 <https://github.com/Kozea/WeasyPrint/pull/1588>`_:
+  Support position: absolute in footnotes
+* `#1586 <https://github.com/Kozea/WeasyPrint/issues/1586>`_:
+  Fix discarded text-align values
+
+Contributors:
+
+* aschmitz
+* Guillaume Ayoub
+
+Backers and sponsors:
+
+* Grip Angebotssoftware
+* Manuel Barkhau
+* Crisp BV
+* SimonSoft
+* Menutech
+* KontextWork
+* Maykin Media
+* René Fritz
+* NCC Group
+* Spacinov
+* Nathalie Gutton
+* Andreas Zettl
+* Tom Pohl
+* Kobalt
+* Moritz Mahringer
+* Florian Demmer
+* Yanal-Yvez Fargialla
+* Gábor
+* Piotr Horzycki
+* DeivGuerrero
+
+
 Version 54.2
 ------------
 
