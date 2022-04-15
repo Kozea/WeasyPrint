@@ -1030,6 +1030,10 @@ def draw_emojis(stream, font_size, x, y, emojis):
 def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y,
                     angle=0):
     """Draw the given ``textbox`` line to the document ``stream``."""
+    font_size = textbox.style['font_size']
+    if font_size < 1e-6:  # Default float precision used by pydyf
+        return []
+
     pango.pango_layout_set_single_paragraph_mode(
         textbox.pango_layout.layout, True)
 
@@ -1072,7 +1076,6 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y,
             textbox.pango_layout.set_text(new_text + ellipsis)
             first_line, index = textbox.pango_layout.get_first_line()
 
-    font_size = textbox.style['font_size']
     utf8_text = textbox.pango_layout.text.encode()
     previous_utf8_position = 0
 

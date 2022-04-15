@@ -715,6 +715,29 @@ def test_zero_width_character():
       <div>a&zwnj;b</div>''')
 
 
+def test_font_size_very_small():
+    assert_pixels('font_size_very_small', 10, 4, '''
+        __________
+        __________
+        __________
+        __________
+    ''', '''
+      <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page {
+          size: 10px 4px;
+          background: white;
+          margin: 1px;
+        }
+        body {
+          font-family: weasyprint;
+          font-size: 0.00000001px;
+        }
+      </style>
+      test font size zero
+    ''')
+
+
 def test_tabulation_character():
     # Test regression: https://github.com/Kozea/WeasyPrint/issues/1515
     assert_pixels('zero_width_character', 10, 4, '''
