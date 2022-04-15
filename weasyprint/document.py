@@ -434,9 +434,8 @@ class Document:
 
         :return: A list of bookmark subtrees.
             A subtree is ``(label, target, children, state)``. ``label`` is
-            a string, ``target`` is ``(page_number, x, y)`` like in
-            :meth:`resolve_links`, and ``children`` is a
-            list of child subtrees.
+            a string, ``target`` is ``(page_number, x, y)``  and ``children``
+            is a list of child subtrees.
 
         """
         root = []
