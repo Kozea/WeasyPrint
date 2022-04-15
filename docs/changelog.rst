@@ -2,6 +2,107 @@ Changelog
 =========
 
 
+Version 55.0b1
+--------------
+
+Released on 2022-04-15.
+
+**This version is experimental, don't use it in production. If you find bugs,
+please report them!**
+
+Dependencies:
+
+* Python 3.7+ is now needed, Python 3.6 is not supported anymore
+
+Features:
+
+* `#1534 <https://github.com/Kozea/WeasyPrint/pull/1534>`_:
+  Support ``word-break: break-all``
+* `#489 <https://github.com/Kozea/WeasyPrint/issues/489>`_,
+  `#1619 <https://github.com/Kozea/WeasyPrint/pull/1619>`_:
+  Support column breaks
+* `#1553 <https://github.com/Kozea/WeasyPrint/issues/1553>`_:
+  Allow reproducible PDF generation
+
+Bug fixes:
+
+* `#1007 <https://github.com/Kozea/WeasyPrint/issues/1007>`_,
+  `#1524 <https://github.com/Kozea/WeasyPrint/pull/1524>`_:
+  Handle ``inherit`` in shorthand properties
+* `#1539 <https://github.com/Kozea/WeasyPrint/issues/1539>`_,
+  `#1541 <https://github.com/Kozea/WeasyPrint/pull/1541>`_:
+  Space out no-repeat patterns
+* `#1554 <https://github.com/Kozea/WeasyPrint/pull/1554>`_:
+  Avoid invalid PDF operators when drawing SVG text
+* `#1564 <https://github.com/Kozea/WeasyPrint/issues/1564>`_,
+  `#1566 <https://github.com/Kozea/WeasyPrint/pull/1566>`_,
+  `#1570 <https://github.com/Kozea/WeasyPrint/pull/1570>`_:
+  Don’t output footnotes before their call sites
+* `#1020 <https://github.com/Kozea/WeasyPrint/issues/1020>`_,
+  `#1597 <https://github.com/Kozea/WeasyPrint/pull/1597>`_:
+  Prevent infinite loops in multi-column layout
+* `#1512 <https://github.com/Kozea/WeasyPrint/issues/1512>`_,
+  `#1613 <https://github.com/Kozea/WeasyPrint/pull/1613>`_:
+  Fix position of absolute boxes in right-to-left contexts
+* `#1093 <https://github.com/Kozea/WeasyPrint/issues/1093>`_:
+  Draw borders around absolute replaced boxes
+* `#984 <https://github.com/Kozea/WeasyPrint/issues/984>`_,
+  `#1604 <https://github.com/Kozea/WeasyPrint/issues/1604>`_:
+  Fix skip stacks for columns
+* `#1621 <https://github.com/Kozea/WeasyPrint/issues/1621>`_:
+  Better support of nested ``text-decoration`` properties
+* `fe1f3d9 <https://github.com/Kozea/WeasyPrint/commit/fe1f3d9>`_:
+  Fix absolute blocks in lines
+* `4650b70 <https://github.com/Kozea/WeasyPrint/commit/4650b70>`_:
+  Clear adjoining margins when a container’s child doesn’t fit
+
+Performance:
+
+* `#1548 <https://github.com/Kozea/WeasyPrint/pull/1548>`_:
+  Improve tests speed
+* `3b0ae92 <https://github.com/Kozea/WeasyPrint/commit/3b0ae92>`_,
+  `#1457 <https://github.com/Kozea/WeasyPrint/issues/1457>`_:
+  Improve fonts management
+* `#1597 <https://github.com/Kozea/WeasyPrint/pull/1597>`_:
+  Improve column layout speed
+* `#1587 <https://github.com/Kozea/WeasyPrint/pull/1587>`_,
+  `#1607 <https://github.com/Kozea/WeasyPrint/pull/1607>`_,
+  `#1608 <https://github.com/Kozea/WeasyPrint/pull/1608>`_:
+  Cache ``ch`` and ``ex`` units calculations
+
+Contributors:
+
+* Guillaume Ayoub
+* aschmitz
+* Lucie Anglade
+* Christoph Kepper
+* Jack Lin
+* Rian McGuire
+
+Backers and sponsors:
+
+* Grip Angebotssoftware
+* Manuel Barkhau
+* Crisp BV
+* SimonSoft
+* Menutech
+* KontextWork
+* Maykin Media
+* René Fritz
+* NCC Group
+* Spacinov
+* Nathalie Gutton
+* Andreas Zettl
+* Tom Pohl
+* Kobalt
+* Moritz Mahringer
+* Florian Demmer
+* Yanal-Yvez Fargialla
+* Gábor
+* Piotr Horzycki
+* DeivGuerrero
+
+
 Version 54.3
 ------------
 
