@@ -202,13 +202,11 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
                     child for child in new_box.children
                     if child.is_in_normal_flow()]
 
-                consumed_height = (
-                    in_flow_children[-1].margin_height() +
-                    in_flow_children[-1].position_y - current_position_y)
-                consumed_heights.append(consumed_height)
-
                 if in_flow_children:
                     # Get the empty space at the bottom of the column box
+                    consumed_height = (
+                        in_flow_children[-1].margin_height() +
+                        in_flow_children[-1].position_y - current_position_y)
                     empty_space = height - consumed_height
 
                     # Get the minimum size needed to render the next box
@@ -222,7 +220,9 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
                             next_box_size = child.margin_height()
                             break
                 else:
-                    empty_space = next_box_size = 0
+                    consumed_height = empty_space = next_box_size = 0
+
+                consumed_heights.append(consumed_height)
 
                 # Append the size needed to render the next box in this
                 # column.
