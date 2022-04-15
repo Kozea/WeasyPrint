@@ -69,8 +69,6 @@ class StackingContext:
         def dispatch(box):
             if isinstance(box, AbsolutePlaceholder):
                 box = box._box
-            elif isinstance(box, StackingContext):
-                box = box.box
             style = box.style
             absolute_and_z_index = (
                 style['position'] != 'static' and style['z_index'] != 'auto')
