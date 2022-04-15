@@ -1,5 +1,7 @@
 """Test how gradients are drawn."""
 
+import pytest
+
 from ..testing_utils import assert_no_logs
 from . import assert_pixels
 
@@ -64,8 +66,10 @@ def test_linear_gradients_4():
     )''')
 
 
+@pytest.mark.xfail
 @assert_no_logs
 def test_linear_gradients_5():
+    # See https://bugs.ghostscript.com/show_bug.cgi?id=705225
     assert_pixels('linear_gradient_5', 10, 5, '''
         rBrrrBrrrB
         rBrrrBrrrB
@@ -155,8 +159,10 @@ def test_linear_gradients_11():
     )''')
 
 
+@pytest.mark.xfail
 @assert_no_logs
 def test_linear_gradients_12():
+    # See https://bugs.ghostscript.com/show_bug.cgi?id=705225
     assert_pixels('linear_gradient_12', 9, 5, '''
         BBBBBBBBB
         BBBBBBBBB
