@@ -636,6 +636,12 @@ def test_low_level_api():
         <body style="transform-origin: 0 0; transform: rotate(90deg)">
         <h1 style="transform: translateX(50px)">!
     ''', [[(1, '!', (0, 50), 'open')]], [('!', (0, 0, 50), [], 'open')], True),
+    ('''
+        <body>
+        <h1 style="width: 10px; line-height: 10px;
+                   transform: skew(45deg, 45deg)">!
+    ''', [[(1, '!', (-5, -5), 'open')]], [('!', (0, -5, -5), [], 'open')],
+     False),
 ))
 @assert_no_logs
 def test_assert_bookmarks(html, expected_by_page, expected_tree, round):
