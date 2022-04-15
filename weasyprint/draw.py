@@ -1020,12 +1020,11 @@ def draw_text(stream, textbox, offset_x, text_overflow, block_ellipsis):
 
 
 def draw_emojis(stream, font_size, x, y, emojis):
-    for emoji in emojis:
-        for image, font, a, d, e, f in emojis:
-            stream.push_state()
-            stream.transform(a=a, d=d, e=x + e * font_size, f=y + f)
-            image.draw(stream, font_size, font_size, None)
-            stream.pop_state()
+    for image, font, a, d, e, f in emojis:
+        stream.push_state()
+        stream.transform(a=a, d=d, e=x + e * font_size, f=y + f)
+        image.draw(stream, font_size, font_size, None)
+        stream.pop_state()
 
 
 def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y,
