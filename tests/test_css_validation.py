@@ -43,6 +43,26 @@ def test_not_print():
 
 
 @assert_no_logs
+def test_unstable_prefix():
+    assert expand_to_dict(
+        '-weasy-max-lines: 3',
+        'prefixes on unstable attributes are deprecated') == {'max_lines': 3}
+
+
+@assert_no_logs
+def test_normal_prefix():
+    assert expand_to_dict(
+        '-weasy-display: block',
+        'prefix on this attribute is not supported') == {}
+
+
+@assert_no_logs
+def test_unknown_prefix():
+    assert expand_to_dict(
+        '-unknown-display: block', 'prefixed selectors are ignored') == {}
+
+
+@assert_no_logs
 @pytest.mark.parametrize('rule, values', (
     ('1px, 3em, auto, auto', ((1, 'px'), (3, 'em'), 'auto', 'auto')),
     ('1px, 3em, auto auto', ((1, 'px'), (3, 'em'), 'auto', 'auto')),
