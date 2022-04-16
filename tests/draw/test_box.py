@@ -153,3 +153,80 @@ def test_display_inline_block_twice():
     html = '<div style="background: red; display: inline-block">'
     document = HTML(string=html).render()
     assert document.write_pdf() == document.write_pdf()
+
+
+@assert_no_logs
+def test_draw_border_radius():
+    expected_pixels = '''
+        ___zzzzz
+        __zzzzzz
+        _zzzzzzz
+        zzzzzzzz
+        zzzzzzzz
+        zzzzzzzR
+        zzzzzzRR
+        zzzzzRRR
+    '''
+    html = '''
+      <style>
+        @page {
+          size: 8px 8px;
+        }
+        div {
+          background: red;
+          border-radius: 50% 0 0 0;
+          height: 16px;
+          width: 16px;
+        }
+      </style>
+      <div></div>
+    '''
+    assert_pixels('draw_border_radius', 8, 8, expected_pixels, html)
+
+
+@assert_no_logs
+def test_draw_split_border_radius():
+    expected_pixels = '''
+        ___zzzzz
+        __zzzzzz
+        _zzzzzzz
+        zzzzzzzz
+        zzzzzzzz
+        zzzzzzzz
+        zzzzzzRR
+        zzzzzRRR
+
+        RRRRRRRR
+        RRRRRRRR
+        RRRRRRRR
+        RRRRRRRR
+        RRRRRRRR
+        RRRRRRRR
+        RRRRRRRR
+        RRRRRRRR
+
+        zzzzzzRR
+        zzzzzzzR
+        zzzzzzzz
+        zzzzzzzz
+        zzzzzzzz
+        zzzzzzzz
+        _zzzzzzz
+        __zzzzzz
+    '''
+    html = '''
+      <style>
+        @page {
+          size: 8px 8px;
+        }
+        div {
+          background: red;
+          color: transparent;
+          border-radius: 8px;
+          line-height: 9px;
+          width: 16px;
+        }
+      </style>
+      <div>a b c</div>
+    '''
+    assert_pixels('draw_split_border_radius', 8, 24, expected_pixels, html)
