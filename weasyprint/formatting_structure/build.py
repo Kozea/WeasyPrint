@@ -575,6 +575,8 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
                         context=context, page=page)
             content_boxes.append(new_box)
         elif type_ == 'leader()':
+            if not value[1]:
+                continue
             text_box = boxes.TextBox.anonymous_from(parent_box, value[1])
             leader_box = boxes.InlineBox.anonymous_from(
                 parent_box, (text_box,))

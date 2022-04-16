@@ -186,6 +186,44 @@ def test_leader_float():
     assert_pixels('leader-float', 16, 4, expected_pixels, html)
 
 
+@pytest.mark.xfail
+@assert_no_logs
+def test_leader_float_small():
+    expected_pixels = '''
+        bbRRBB__BB____BB
+        bbRRBB__BB____BB
+        RR__BB__BB____BB
+        RR__BB__BB____BB
+    '''
+    html = '''
+      <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page {
+          background: white;
+          size: 16px 4px;
+        }
+        body {
+          color: red;
+          font-family: weasyprint;
+          font-size: 2px;
+          line-height: 1;
+        }
+        article {
+          background: lime;
+          color: navy;
+          float: left;
+        }
+        div::after {
+          color: blue;
+          content: leader('. ') 'a';
+        }
+      </style>
+      <div>a<article>a</article></div>
+      <div>a</div>
+    '''
+    assert_pixels('leader-float-small', 16, 4, expected_pixels, html)
+
+
 @assert_no_logs
 def test_leader_in_inline():
     expected_pixels = '''
@@ -373,3 +411,96 @@ def test_leader_float_leader():
       <div>c</div>
     '''
     assert_pixels('leader-float-leader', 16, 6, expected_pixels, html)
+
+
+@assert_no_logs
+def test_leader_empty_string():
+    expected_pixels = '''
+        RRRR____
+        ________
+    '''
+    html = '''
+      <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page {
+          background: white;
+          size: 8px 2px;
+        }
+        body {
+          color: red;
+          font-family: weasyprint;
+          font-size: 1px;
+          line-height: 1;
+        }
+        div::after {
+          color: blue;
+          content: leader('');
+        }
+      </style>
+      <div>aaaa</div>
+    '''
+    assert_pixels('leader-empty-string', 8, 2, expected_pixels, html)
+
+
+@assert_no_logs
+def test_leader_zero_width_string():
+    expected_pixels = '''
+        RRRR____
+        ________
+    '''
+    html = '''
+      <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page {
+          background: white;
+          size: 8px 2px;
+        }
+        body {
+          color: red;
+          font-family: weasyprint;
+          font-size: 1px;
+          line-height: 1;
+        }
+        div::after {
+          color: blue;
+          content: leader('​');  /* zero-width space */
+        }
+      </style>
+      <div>aaaa</div>
+    '''
+    assert_pixels('leader-zero-width-string', 8, 2, expected_pixels, html)
+
+
+@assert_no_logs
+def test_leader_absolute():
+    expected_pixels = '''
+        BBBBRRRR
+        ______GG
+    '''
+    html = '''
+      <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page {
+          background: white;
+          size: 8px 2px;
+        }
+        body {
+          color: red;
+          font-family: weasyprint;
+          font-size: 1px;
+          line-height: 1;
+        }
+        div::before {
+          color: blue;
+          content: leader('z');
+        }
+        article {
+          bottom: 0;
+          color: lime;
+          position: absolute;
+          right: 0;
+        }
+      </style>
+      <div>aa<article>bb</article>aa</div>
+    '''
+    assert_pixels('leader-absolute', 8, 2, expected_pixels, html)
