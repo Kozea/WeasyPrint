@@ -12,7 +12,6 @@ def test_inline_footnote():
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
                 size: 9px 7px;
-                background: white;
             }
             div {
                 font-family: weasyprint;
@@ -46,7 +45,6 @@ def test_block_footnote():
          @font-face {src: url(weasyprint.otf); font-family: weasyprint}
          @page {
              size: 9px 7px;
-             background: white;
          }
          div {
              font-family: weasyprint;
@@ -79,7 +77,6 @@ def test_long_footnote():
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
                 size: 9px 7px;
-                background: white;
             }
             div {
                 font-family: weasyprint;
@@ -123,7 +120,6 @@ def test_after_marker_footnote():
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
                 size: 9px 7px;
-                background: white;
             }
             div {
                 font-family: weasyprint;
@@ -150,7 +146,6 @@ def test_several_footnote():
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
                 size: 9px 7px;
-                background: white;
             }
             div {
                 font-family: weasyprint;
@@ -196,7 +191,6 @@ def test_reported_footnote_1():
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
                 size: 9px 7px;
-                background: white;
             }
             div {
                 font-family: weasyprint;
@@ -239,7 +233,6 @@ def test_reported_footnote_2():
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
                 size: 9px 7px;
-                background: white;
             }
             div {
                 font-family: weasyprint;
@@ -284,7 +277,6 @@ def test_reported_footnote_3():
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
                 size: 9px 10px;
-                background: white;
             }
             div {
                 font-family: weasyprint;
@@ -337,7 +329,6 @@ def test_footnote_area_after_call(css, tail):
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
                 size: 9px 10px;
-                background: white;
                 margin: 0;
             }
             body {
@@ -370,7 +361,6 @@ def test_footnote_display_inline():
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
                 size: 9px 50px;
-                background: white;
             }
             div {
                 font-family: weasyprint;
@@ -409,7 +399,6 @@ def test_footnote_longer_than_space_left():
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
                 size: 9px 7px;
-                background: white;
             }
             div {
                 font-family: weasyprint;
@@ -450,7 +439,6 @@ def test_footnote_longer_than_page():
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
                 size: 9px 7px;
-                background: white;
             }
             div {
                 font-family: weasyprint;
@@ -491,7 +479,6 @@ def test_footnote_policy_line():
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
                 size: 9px 9px;
-                background: white;
             }
             div {
                 font-family: weasyprint;
@@ -534,7 +521,6 @@ def test_footnote_policy_block():
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
                 size: 9px 9px;
-                background: white;
             }
             div {
                 font-family: weasyprint;
@@ -575,7 +561,6 @@ def test_footnote_repagination():
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
                 size: 9px 7px;
-                background: white;
             }
             div {
                 font-family: weasyprint;

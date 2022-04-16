@@ -119,7 +119,6 @@ def test_margin_boxes():
         @page {
           size: 15px;
           margin: 4px 6px 7px 5px;
-          background: white;
 
           @top-left-corner {
             margin: 1px;

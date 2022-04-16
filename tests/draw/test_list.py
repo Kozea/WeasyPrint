@@ -46,7 +46,7 @@ def test_list_style_image(position, pixels):
     assert_pixels(f'list_style_image_{position}', 12, 10, pixels, '''
       <style>
         @page { size: 12px 10px }
-        body { margin: 0; background: white; font-family: %s }
+        body { margin: 0; font-family: %s }
         ul { margin: 2px 2px 0 7px; list-style: url(pattern.png) %s;
              font-size: 2px }
       </style>
@@ -69,7 +69,7 @@ def test_list_style_image_none():
     ''', '''
       <style>
         @page { size: 10px }
-        body { margin: 0; background: white; font-family: %s }
+        body { margin: 0; font-family: %s }
         ul { margin: 0 0 0 5px; list-style: none; font-size: 2px; }
       </style>
       <ul><li>''' % (SANS_FONTS,))

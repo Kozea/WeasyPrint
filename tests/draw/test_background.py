@@ -57,7 +57,7 @@ def test_canvas_background_size():
     '''
     html = '''
       <style>
-         @page { size: 10px; margin: 2px; background: white }
+         @page { size: 10px; margin: 2px }
          /* html’s background propagates to the whole canvas */
          html { background: linear-gradient(
            red 0, red 50%, blue 50%, blue 100%); }

@@ -16,7 +16,7 @@ def test_float():
         __________
     ''', '''
       <style>
-        @page { size: 10px 5px; background: white }
+        @page { size: 10px 5px }
       </style>
       <div>
         <img style="float: left" src="pattern.png">
@@ -35,7 +35,7 @@ def test_float_rtl():
         __________
     ''', '''
       <style>
-        @page { size: 10px 5px; background: white }
+        @page { size: 10px 5px }
       </style>
       <div style="direction: rtl">
         <img style="float: left" src="pattern.png">
@@ -55,7 +55,7 @@ def test_float_inline():
     ''', '''
       <style>
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
-        @page { size: 15px 5px; background: white }
+        @page { size: 15px 5px }
         body { font-family: weasyprint; font-size: 2px; line-height: 1;
                color: lime }
       </style>
@@ -78,7 +78,7 @@ def test_float_inline_rtl():
     ''', '''
       <style>
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
-        @page { size: 15px 5px; background: white }
+        @page { size: 15px 5px }
         body { font-family: weasyprint; font-size: 2px; line-height: 1;
                color: lime }
       </style>
@@ -101,7 +101,7 @@ def test_float_inline_block():
     ''', '''
       <style>
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
-        @page { size: 15px 5px; background: white }
+        @page { size: 15px 5px }
         body { font-family: weasyprint; font-size: 2px; line-height: 1;
                color: lime }
       </style>
@@ -124,7 +124,7 @@ def test_float_inline_block_rtl():
     ''', '''
       <style>
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
-        @page { size: 15px 5px; background: white }
+        @page { size: 15px 5px }
         body { font-family: weasyprint; font-size: 2px; line-height: 1;
                color: lime }
       </style>
@@ -147,7 +147,7 @@ def test_float_table():
     ''', '''
       <style>
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
-        @page { size: 15px 5px; background: white }
+        @page { size: 15px 5px }
         body { font-family: weasyprint; font-size: 2px; line-height: 1;
                color: lime }
       </style>
@@ -170,7 +170,7 @@ def test_float_table_rtl():
     ''', '''
       <style>
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
-        @page { size: 15px 5px; background: white }
+        @page { size: 15px 5px }
         body { font-family: weasyprint; font-size: 2px; line-height: 1;
                color: lime }
       </style>
@@ -193,7 +193,7 @@ def test_float_inline_table():
     ''', '''
       <style>
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
-        @page { size: 15px 5px; background: white }
+        @page { size: 15px 5px }
         table { display: inline-table }
         body { font-family: weasyprint; font-size: 2px; line-height: 1;
                color: lime }
@@ -217,7 +217,7 @@ def test_float_inline_table_rtl():
     ''', '''
       <style>
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
-        @page { size: 15px 5px; background: white }
+        @page { size: 15px 5px }
         table { display: inline-table }
         body { font-family: weasyprint; font-size: 2px; line-height: 1;
                color: lime }
@@ -240,7 +240,7 @@ def test_float_replaced_block():
         _______________
     ''', '''
       <style>
-        @page { size: 15px 5px; background: white }
+        @page { size: 15px 5px }
       </style>
       <div>
         <img style="float: left" src="pattern.png">
@@ -260,7 +260,7 @@ def test_float_replaced_block_rtl():
         _______________
     ''', '''
       <style>
-        @page { size: 15px 5px; background: white }
+        @page { size: 15px 5px }
       </style>
       <div style="direction: rtl">
         <img style="float: left" src="pattern.png">
@@ -281,7 +281,7 @@ def test_float_replaced_inline():
         _______________
     ''', '''
       <style>
-        @page { size: 15px 5px; background: white }
+        @page { size: 15px 5px }
         body { line-height: 1px }
       </style>
       <div>
@@ -303,7 +303,7 @@ def test_float_replaced_inline_rtl():
         _______________
     ''', '''
       <style>
-        @page { size: 15px 5px; background: white }
+        @page { size: 15px 5px }
         body { line-height: 1px }
       </style>
       <div style="direction: rtl">
@@ -326,7 +326,6 @@ def test_float_margin():
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
-                background: white;
                 size: 16px 2px;
             }
             body {
@@ -362,7 +361,6 @@ def test_float_split_1():
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
-                background: white;
                 size: 16px 2px;
             }
             body {
@@ -395,7 +393,6 @@ def test_float_split_2():
         <style>
           @font-face {src: url(weasyprint.otf); font-family: weasyprint}
           @page {
-            background: white;
             size: 16px 2px;
           }
           body {
@@ -428,7 +425,6 @@ def test_float_split_3():
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
-                background: white;
                 size: 16px 2px;
             }
             body {
@@ -461,7 +457,6 @@ def test_float_split_4():
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
-                background: white;
                 size: 16px 2px;
             }
             body {
@@ -494,7 +489,6 @@ def test_float_split_5():
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
-                background: white;
                 size: 16px 2px;
             }
             body {
@@ -532,7 +526,6 @@ def test_float_split_6():
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
-                background: white;
                 size: 16px 2px;
             }
             body {
@@ -570,7 +563,6 @@ def test_float_split_7():
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
-                background: white;
                 size: 16px 2px;
             }
             body {
@@ -608,7 +600,6 @@ def test_float_split_8():
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
-                background: white;
                 size: 16px 2px;
             }
             body {
@@ -642,7 +633,6 @@ def test_float_split_9():
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
-                background: white;
                 size: 16px 2px;
             }
             body {

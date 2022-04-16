@@ -20,7 +20,6 @@ def test_leader_simple():
       <style>
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
-          background: white;
           size: 16px 6px;
         }
         body {
@@ -65,7 +64,6 @@ def test_leader_too_long():
       <style>
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
-          background: white;
           size: 16px 14px;
         }
         body {
@@ -98,7 +96,6 @@ def test_leader_alone():
       <style>
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
-          background: white;
           size: 16px 2px;
         }
         body {
@@ -127,7 +124,6 @@ def test_leader_content():
       <style>
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
-          background: white;
           size: 16px 2px;
         }
         body {
@@ -159,7 +155,6 @@ def test_leader_float():
       <style>
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
-          background: white;
           size: 16px 4px;
         }
         body {
@@ -199,7 +194,6 @@ def test_leader_float_small():
       <style>
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
-          background: white;
           size: 16px 4px;
         }
         body {
@@ -234,7 +228,6 @@ def test_leader_in_inline():
       <style>
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
-          background: white;
           size: 16px 2px;
         }
         body {
@@ -269,7 +262,6 @@ def test_leader_bad_alignment():
       <style>
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
-          background: white;
           size: 16px 4px;
         }
         body {
@@ -302,7 +294,6 @@ def test_leader_simple_rtl():
       <style>
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
-          background: white;
           size: 16px 6px;
         }
         body {
@@ -349,7 +340,6 @@ def test_leader_too_long_rtl():
       <style>
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
-          background: white;
           size: 16px 14px;
         }
         body {
@@ -391,7 +381,6 @@ def test_leader_float_leader():
       <style>
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
-          background: white;
           size: 16px 6px;
         }
         body {
@@ -423,7 +412,6 @@ def test_leader_empty_string():
       <style>
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
-          background: white;
           size: 8px 2px;
         }
         body {
@@ -452,7 +440,6 @@ def test_leader_zero_width_string():
       <style>
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
-          background: white;
           size: 8px 2px;
         }
         body {
@@ -481,7 +468,6 @@ def test_leader_absolute():
       <style>
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
-          background: white;
           size: 8px 2px;
         }
         body {

@@ -16,7 +16,7 @@ def test_column_rule_1():
         div { columns: 2; column-rule-style: solid;
               column-rule-width: 1px; column-gap: 3px;
               column-rule-color: red }
-        body { margin: 0; font-size: 0; background: white }
+        body { margin: 0; font-size: 0 }
         @page { margin: 0; size: 5px 3px }
       </style>
       <div>
@@ -39,7 +39,7 @@ def test_column_rule_2():
         div { columns: 2; column-rule-style: dotted;
               column-rule-width: 1px; column-gap: 3px;
               column-rule-color: red }
-        body { margin: 0; font-size: 0; background: white }
+        body { margin: 0; font-size: 0 }
         @page { margin: 0; size: 5px 3px }
       </style>
       <div>

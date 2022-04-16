@@ -18,7 +18,6 @@ def test_absolute_split_1():
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
-                background: white;
                 size: 16px 2px;
             }
             body {
@@ -53,7 +52,6 @@ def test_absolute_split_2():
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
-                background: white;
                 size: 16px 2px;
             }
             body {
@@ -88,7 +86,6 @@ def test_absolute_split_3():
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
-                background: white;
                 size: 16px 2px;
             }
             body {
@@ -123,7 +120,6 @@ def test_absolute_split_4():
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
-                background: white;
                 size: 16px 2px;
             }
             body {
@@ -158,7 +154,6 @@ def test_absolute_split_5():
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
-                background: white;
                 size: 16px 2px;
             }
             body {
@@ -200,7 +195,6 @@ def test_absolute_split_6():
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
-                background: white;
                 size: 16px 2px;
             }
             body {
@@ -240,7 +234,6 @@ def test_absolute_split_7():
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
-                background: white;
                 size: 16px 2px;
             }
             body {
@@ -288,7 +281,6 @@ def test_absolute_split_8():
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
-                background: white;
                 margin: 2px 0;
                 size: 6px 8px;
             }
@@ -326,7 +318,6 @@ def test_absolute_split_9():
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
-                background: white;
                 margin: 2px 0;
                 size: 6px 8px;
             }
@@ -370,7 +361,6 @@ def test_absolute_next_page():
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
-                background: white;
                 size: 16px 4px;
             }
             body {
@@ -403,7 +393,6 @@ def test_absolute_rtl_1():
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
-                background: white;
                 size: 16px 3px;
             }
             div {
@@ -431,7 +420,6 @@ def test_absolute_rtl_2():
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
-                background: white;
                 size: 16px 3px;
             }
             div {
@@ -460,7 +448,6 @@ def test_absolute_rtl_3():
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
-                background: white;
                 size: 16px 3px;
             }
             div {
@@ -490,7 +477,6 @@ def test_absolute_rtl_4():
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
-                background: white;
                 size: 16px 3px;
             }
             div {
@@ -529,7 +515,6 @@ def test_absolute_pages_counter():
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
-                background: white;
                 font-family: weasyprint;
                 margin: 1px;
                 size: 6px 6px;
@@ -581,7 +566,6 @@ def test_absolute_pages_counter_orphans():
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
-                background: white;
                 font-family: weasyprint;
                 margin: 1px;
                 size: 6px 9px;

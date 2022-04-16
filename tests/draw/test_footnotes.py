@@ -19,7 +19,6 @@ def test_inline_footnote():
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
             size: 9px 7px;
-            background: white;
         }
         div {
             color: red;
@@ -49,7 +48,6 @@ def test_block_footnote():
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
             size: 9px 7px;
-            background: white;
         }
         div {
             color: red;
@@ -79,7 +77,6 @@ def test_long_footnote():
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
             size: 9px 7px;
-            background: white;
         }
         div {
             color: red;
@@ -109,7 +106,6 @@ def test_footnote_margin():
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
             size: 9px 7px;
-            background: white;
 
             @footnote {
                 margin: 1px;
@@ -143,7 +139,6 @@ def test_footnote_with_absolute():
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
             size: 9px 7px;
-            background: white;
             margin: 0 1px 2px;
         }
         div {

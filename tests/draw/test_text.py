@@ -19,7 +19,6 @@ def test_text_overflow_clip():
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
           size: 9px 7px;
-          background: white;
         }
         body {
           color: red;
@@ -59,7 +58,6 @@ def test_text_overflow_ellipsis():
       <style>
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
-          background: white;
           size: 9px 16px;
         }
         body {
@@ -102,7 +100,7 @@ def test_text_align_rtl_trailing_whitespace():
     ''', '''
       <style>
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
-        @page { background: white; size: 9px }
+        @page { size: 9px }
         body { font-family: weasyprint; color: blue; font-size: 1px }
         p { background: red; line-height: 1; width: 7em; margin: 1em }
       </style>
@@ -347,7 +345,6 @@ def test_text_align_right():
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
           size: 9px 6px;
-          background: white;
         }
         body {
           color: red;
@@ -376,7 +373,6 @@ def test_text_align_justify():
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
           size: 9px 6px;
-          background: white;
         }
         body {
           color: red;
@@ -403,7 +399,6 @@ def test_text_word_spacing():
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
           size: 19px 4px;
-          background: white;
         }
         body {
           color: red;
@@ -430,7 +425,6 @@ def test_text_letter_spacing():
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
           size: 19px 4px;
-          background: white;
         }
         body {
           color: red;
@@ -460,7 +454,6 @@ def test_text_underline():
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
           size: 13px 7px;
-          background: white;
           margin: 2px;
         }
         body {
@@ -489,7 +482,6 @@ def test_text_overline():
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
           size: 13px 7px;
-          background: white;
           margin: 2px;
         }
         body {
@@ -516,7 +508,6 @@ def test_text_line_through():
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
           size: 13px 7px;
-          background: white;
           margin: 2px;
         }
         body {
@@ -544,7 +535,6 @@ def test_text_multiple_text_decoration():
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
           size: 13px 7px;
-          background: white;
           margin: 2px;
         }
         body {
@@ -572,7 +562,6 @@ def test_text_nested_text_decoration():
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
           size: 13px 7px;
-          background: white;
           margin: 2px;
         }
         body {
@@ -604,7 +593,6 @@ def test_text_nested_text_decoration_color():
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
           size: 13px 7px;
-          background: white;
           margin: 2px;
         }
         body {
@@ -642,7 +630,6 @@ def test_text_nested_block_text_decoration():
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
           size: 7px 13px;
-          background: white;
           margin: 2px;
         }
         body {
@@ -674,7 +661,6 @@ def test_text_float_text_decoration():
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
           size: 13px 7px;
-          background: white;
           margin: 2px;
         }
         div {
@@ -702,7 +688,6 @@ def test_zero_width_character():
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
           size: 6px 4px;
-          background: white;
           margin: 1px;
         }
         body {
@@ -726,7 +711,6 @@ def test_font_size_very_small():
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
           size: 10px 4px;
-          background: white;
           margin: 1px;
         }
         body {
@@ -750,7 +734,6 @@ def test_tabulation_character():
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
           size: 10px 4px;
-          background: white;
           margin: 1px;
         }
         body {

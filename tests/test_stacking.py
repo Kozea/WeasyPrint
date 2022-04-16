@@ -9,7 +9,6 @@ from .testing_utils import assert_no_logs, render_pages, serialize
 z_index_source = '''
   <style>
     @page { size: 10px }
-    body { background: white }
     div, div * { width: 10px; height: 10px; position: absolute }
     article { background: red; z-index: %s }
     section { background: blue; z-index: %s }
