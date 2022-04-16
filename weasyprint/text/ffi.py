@@ -385,7 +385,7 @@ def _dlopen(ffi, *names):
     return ffi.dlopen(names[0])  # pragma: no cover
 
 
-if hasattr(os, 'add_dll_directory'):
+if hasattr(os, 'add_dll_directory'):  # pragma: no cover
     dll_directories = os.getenv(
         'WEASYPRINT_DLL_DIRECTORIES',
         'C:\\Program Files\\GTK3-Runtime Win64\\bin').split(';')
