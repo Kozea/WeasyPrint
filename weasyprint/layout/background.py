@@ -3,6 +3,8 @@
 from collections import namedtuple
 from itertools import cycle
 
+from tinycss2.color3 import parse_color
+
 from ..formatting_structure import boxes
 from . import replaced
 from .percent import percentage, resolve_radii_percentages
@@ -56,16 +58,18 @@ def layout_box_backgrounds(page, box, get_image_from_uri, layout_children=True,
 
     if style['visibility'] == 'hidden':
         box.background = None
-        if page != box:  # Pages need a background for bleed box
+        images = []
+        color = parse_color('transparent')
+        if box != page:  # Pages need a background for bleed box
             return
-
-    images = [get_image_from_uri(url=value) if type_ == 'url' else value
-              for type_, value in style['background_image']]
-    color = get_color(style, 'background_color')
-    if color.alpha == 0 and not any(images):
-        box.background = None
-        if page != box:  # Pages need a background for bleed box
-            return
+    else:
+        images = [get_image_from_uri(url=value) if type_ == 'url' else value
+                  for type_, value in style['background_image']]
+        color = get_color(style, 'background_color')
+        if color.alpha == 0 and not any(images):
+            box.background = None
+            if box != page:  # Pages need a background for bleed box
+                return
 
     layers = [
         layout_background_layer(box, page, style['image_resolution'], *layer)
@@ -98,11 +102,10 @@ def layout_background_layer(box, page, resolution, image, size, clip, repeat,
                 clipped_boxes += [
                     cell.rounded_border_box() for cell in row.children]
                 total_height = max(total_height, max(
-                    cell.border_box_y() + cell.border_height()
-                    for cell in row.children))
+                    cell.border_height() for cell in row.children))
         painting_area = [
             box.border_box_x(), box.border_box_y(),
-            box.border_box_x() + box.border_width(), total_height]
+            box.border_width(), total_height]
     elif isinstance(box, boxes.TableRowBox):
         if box.children:
             clipped_boxes = [
@@ -111,8 +114,7 @@ def layout_background_layer(box, page, resolution, image, size, clip, repeat,
                 cell.border_height() for cell in box.children)
             painting_area = [
                 box.border_box_x(), box.border_box_y(),
-                box.border_box_x() + box.border_width(),
-                box.border_box_y() + height]
+                box.border_width(), height]
     elif isinstance(box, (boxes.TableColumnGroupBox, boxes.TableColumnBox)):
         cells = box.get_cells()
         if cells:
@@ -122,8 +124,7 @@ def layout_background_layer(box, page, resolution, image, size, clip, repeat,
                 cell.border_box_x() + cell.border_width()
                 for cell in cells)
             painting_area = [
-                min_x, box.border_box_y(), max_x - min_x,
-                box.border_box_y() + box.border_height()]
+                min_x, box.border_box_y(), max_x - min_x, box.border_height()]
     else:
         painting_area = box_rectangle(box, clip)
         if clip == 'border-box':

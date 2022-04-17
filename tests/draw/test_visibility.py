@@ -8,7 +8,7 @@ visibility_source = '''
     @page { size: 12px 7px }
     body { background: #fff; font: 1px/1 serif }
     img { margin: 1px 0 0 1px; }
-    %(extra_css)s
+    %s
   </style>
   <div>
     <img src="pattern.png">
@@ -26,7 +26,7 @@ def test_visibility_1():
         _BBBB_BBBB__
         ____________
         ____________
-    ''', visibility_source % {'extra_css': ''})
+    ''', visibility_source % '')
 
 
 @assert_no_logs
@@ -39,7 +39,7 @@ def test_visibility_2():
         ____________
         ____________
         ____________
-    ''', visibility_source % {'extra_css': 'div { visibility: hidden }'})
+    ''', visibility_source % 'div { visibility: hidden }')
 
 
 @assert_no_logs
@@ -52,5 +52,18 @@ def test_visibility_3():
         ______BBBB__
         ____________
         ____________
-    ''', visibility_source % {'extra_css': '''div { visibility: hidden }
-                                 span { visibility: visible } '''})
+    ''', visibility_source % 'div { visibility: hidden } '
+                             'span { visibility: visible }')
+
+
+@assert_no_logs
+def test_visibility_4():
+    assert_pixels('visibility_hidden_page', 12, 7, '''
+        ____________
+        _rBBB_rBBB__
+        _BBBB_BBBB__
+        _BBBB_BBBB__
+        _BBBB_BBBB__
+        ____________
+        ____________
+    ''', visibility_source % '@page { visibility: hidden; background: red }')

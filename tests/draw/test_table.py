@@ -1192,3 +1192,24 @@ def test_tables_19():
         body {font-size: 2px; font-family: weasyprint; line-height: 1}
       </style>
       <table><tr><td>a a a a</td></tr></table>''')
+
+
+@assert_no_logs
+def test_tables_20():
+    assert_pixels('table_empty_group_row_background', 20, 5, '''
+      ____________________
+      _RRRRRRRRRRRR_______
+      _RBBBBBBBBBBR_______
+      _RRRRRRRRRRRR_______
+      ____________________
+    ''', '''
+      <style>
+        @page { size: 20px 5px; margin: 1px }
+        table { width: 10px; border: 1px red solid }
+        td { height: 1px; background: blue }
+        col, tr, tbody, tfoot { background: lime }
+      </style>
+      <table>
+      <col></col><col></col>
+      <tbody><tr></tr><tr><td></td></tr></tbody>
+      <tfoot></tfoot>''')
