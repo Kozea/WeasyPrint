@@ -1883,7 +1883,7 @@ def test_table_vertical_align():
       <style>
         @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 28px 10px }
-        html { background: #fff; font-size: 1px; color: red }
+        html { font-size: 1px; color: red }
         body { margin: 0; width: 28px; height: 10px }
         td {
           width: 1em;

@@ -6,7 +6,7 @@ from . import assert_pixels
 visibility_source = '''
   <style>
     @page { size: 12px 7px }
-    body { background: #fff; font: 1px/1 serif }
+    body { font: 1px/1 serif }
     img { margin: 1px 0 0 1px; }
     %s
   </style>

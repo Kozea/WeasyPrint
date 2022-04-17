@@ -231,7 +231,7 @@ def test_python_render(tmpdir):
     base_url = resource_filename('dummy.html')
     html_string = '<body><img src=pattern.png>'
     css_string = '''
-        @page { margin: 2px; size: 8px; background: #fff }
+        @page { margin: 2px; size: 8px }
         body { margin: 0; font-size: 0 }
         img { image-rendering: pixelated }
 
@@ -290,7 +290,7 @@ def test_python_render(tmpdir):
 @assert_no_logs
 def test_command_line_render(tmpdir):
     css = b'''
-        @page { margin: 2px; size: 8px; background: #fff }
+        @page { margin: 2px; size: 8px }
         @media screen { img { transform: rotate(-90deg) } }
         body { margin: 0; font-size: 0 }
     '''
@@ -415,7 +415,7 @@ def test_unicode_filenames(tmpdir):
     # Replicate pattern.png in CSS so that base_url does not matter.
     html = b'''
         <style>
-            @page { margin: 2px; size: 8px; background: #fff }
+            @page { margin: 2px; size: 8px }
             html { background: #00f; }
             body { background: #f00; width: 1px; height: 1px }
         </style>
@@ -446,7 +446,7 @@ def test_unicode_filenames(tmpdir):
 def test_low_level_api():
     html = FakeHTML(string='<body>')
     css = CSS(string='''
-        @page { margin: 2px; size: 8px; background: #fff }
+        @page { margin: 2px; size: 8px }
         html { background: #00f; }
         body { background: #f00; width: 1px; height: 1px }
     ''')
@@ -848,7 +848,7 @@ def test_url_fetcher():
 
     base_url = resource_filename('dummy.html')
     css = CSS(string='''
-        @page { size: 8px; margin: 2px; background: #fff }
+        @page { size: 8px; margin: 2px }
         body { margin: 0; font-size: 0 }
     ''', base_url=base_url)
 

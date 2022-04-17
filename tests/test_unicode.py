@@ -14,10 +14,7 @@ from .testing_utils import FakeHTML, assert_no_logs, resource_filename
 def test_unicode():
     text = 'I løvë Unicode'
     style = '''
-      @page {
-        background: #fff;
-        size: 200px 50px;
-      }
+      @page { size: 200px 50px }
       p { color: blue }
     '''
     expected_lines = html_to_pixels('unicode_reference', 200, 50, '''

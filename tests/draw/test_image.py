@@ -152,7 +152,7 @@ def test_images(filename, image):
     assert_pixels(f'inline_image_{filename}', 8, 8, image, '''
       <style>
         @page { size: 8px }
-        body { margin: 2px 0 0 2px; background: #fff; font-size: 0 }
+        body { margin: 2px 0 0 2px; font-size: 0 }
       </style>
       <div><img src="%s"></div>''' % filename)
 
@@ -168,7 +168,7 @@ def test_resized_images(filename):
     assert_pixels(f'resized_image_{filename}', 12, 12, resized_image, '''
       <style>
         @page { size: 12px }
-        body { margin: 2px 0 0 2px; background: #fff; font-size: 0 }
+        body { margin: 2px 0 0 2px; font-size: 0 }
         img { display: block; width: 8px; image-rendering: pixelated }
       </style>
       <div><img src="%s"></div>''' % filename)
@@ -191,7 +191,7 @@ def test_svg_sizing(viewbox, width, height):
         centered_image, '''
       <style>
         @page { size: 8px }
-        body { margin: 2px 0 0 2px; background: #fff; font-size: 0 }
+        body { margin: 2px 0 0 2px; font-size: 0 }
         svg { display: block }
       </style>
       <svg %s %s %s>
@@ -220,7 +220,7 @@ def test_svg_resizing(viewbox, width, height, image):
         f'svg_resizing_{viewbox}_{width}_{height}', 12, 12, image, '''
       <style>
         @page { size: 12px }
-        body { margin: 2px 0 0 2px; background: #fff; font-size: 0 }
+        body { margin: 2px 0 0 2px; font-size: 0 }
         svg { display: block; width: 8px }
       </style>
       <svg %s %s %s>
@@ -237,7 +237,7 @@ def test_images_block():
     assert_pixels('block_image', 8, 8, centered_image, '''
       <style>
         @page { size: 8px }
-        body { margin: 0; background: #fff; font-size: 0 }
+        body { margin: 0; font-size: 0 }
         img { display: block; margin: 2px auto 0 }
       </style>
       <div><img src="pattern.png"></div>''')
@@ -249,7 +249,7 @@ def test_images_not_found():
         assert_pixels('image_not_found', 8, 8, no_image, '''
           <style>
             @page { size: 8px }
-            body { margin: 0; background: #fff; font-size: 0 }
+            body { margin: 0; font-size: 0 }
             img { display: block; margin: 2px auto 0 }
           </style>
           <div><img src="inexistent1.png" alt=""></div>''')
@@ -263,7 +263,7 @@ def test_images_no_src():
     assert_pixels('image_no_src', 8, 8, no_image, '''
       <style>
         @page { size: 8px }
-        body { margin: 0; background: #fff; font-size: 0 }
+        body { margin: 0; font-size: 0 }
         img { display: block; margin: 2px auto 0 }
       </style>
       <div><img alt=""></div>''')
@@ -276,7 +276,7 @@ def test_images_alt():
             (name, '''
               <style>
                 @page { size: 200px 30px }
-                body { margin: 0; background: #fff; font-size: 0 }
+                body { margin: 0; font-size: 0 }
               </style>
               <div>%s</div>''' % html)
             for name, html in [
@@ -311,7 +311,7 @@ def test_images_no_width():
     assert_pixels('image_0x1', 8, 8, no_image, '''
       <style>
         @page { size: 8px }
-        body { margin: 2px; background: #fff; font-size: 0 }
+        body { margin: 2px; font-size: 0 }
       </style>
       <div><img src="pattern.png" alt="not shown"
                 style="width: 0; height: 1px"></div>''')
@@ -322,7 +322,7 @@ def test_images_no_height():
     assert_pixels('image_1x0', 8, 8, no_image, '''
       <style>
         @page { size: 8px }
-        body { margin: 2px; background: #fff; font-size: 0 }
+        body { margin: 2px; font-size: 0 }
       </style>
       <div><img src="pattern.png" alt="not shown"
                 style="width: 1px; height: 0"></div>''')
@@ -333,7 +333,7 @@ def test_images_no_width_height():
     assert_pixels('image_0x0', 8, 8, no_image, '''
       <style>
         @page { size: 8px }
-        body { margin: 2px; background: #fff; font-size: 0 }
+        body { margin: 2px; font-size: 0 }
       </style>
       <div><img src="pattern.png" alt="not shown"
                 style="width: 0; height: 0"></div>''')
@@ -343,7 +343,7 @@ def test_images_no_width_height():
 def test_images_page_break():
     assert_pixels('image_page_break', 8, 3 * 8, page_break, '''
       <style>
-        @page { size: 8px; margin: 2px; background: #fff }
+        @page { size: 8px; margin: 2px }
         body { font-size: 0 }
       </style>
       <div><img src="pattern.png"></div>
@@ -355,7 +355,7 @@ def test_image_repeat_inline():
     # Test regression: https://github.com/Kozea/WeasyPrint/issues/808
     assert_pixels('image_page_repeat_inline', 8, 2 * 8, table, '''
       <style>
-        @page { size: 8px; margin: 0; background: #fff }
+        @page { size: 8px; margin: 0 }
         table { border-collapse: collapse; margin: 2px }
         th, td { border: none; padding: 0 }
         th { height: 4px; line-height: 4px }
@@ -378,7 +378,7 @@ def test_image_repeat_block():
     # Test regression: https://github.com/Kozea/WeasyPrint/issues/808
     assert_pixels('image_page_repeat_block', 8, 2 * 8, table, '''
       <style>
-        @page { size: 8px; margin: 0; background: #fff }
+        @page { size: 8px; margin: 0 }
         table { border-collapse: collapse; margin: 2px }
         th, td { border: none; padding: 0 }
         th { height: 4px }
@@ -401,7 +401,7 @@ def test_images_padding():
     # Regression test: padding used to be ignored on images
     assert_pixels('image_with_padding', 8, 8, centered_image, '''
       <style>
-        @page { size: 8px; background: #fff }
+        @page { size: 8px }
         body { font-size: 0 }
       </style>
       <div style="line-height: 1px">
@@ -415,7 +415,7 @@ def test_images_in_inline_block():
     assert_pixels('image_in_inline_block', 8, 8, centered_image, '''
       <style>
         @page { size: 8px }
-        body { margin: 2px 0 0 2px; background: #fff; font-size: 0 }
+        body { margin: 2px 0 0 2px; font-size: 0 }
       </style>
       <div style="display: inline-block">
         <p><img src=pattern.png></p>
@@ -443,7 +443,7 @@ def test_images_shared_pattern():
     ''', '''
       <style>
         @page { size: 12px }
-        body { margin: 2px; background: #fff; font-size: 0 }
+        body { margin: 2px; font-size: 0 }
       </style>
       <div style="background: url(blue.jpg);
                   height: 2px; margin-bottom: 1px"></div>
@@ -455,23 +455,23 @@ def test_images_shared_pattern():
 def test_image_resolution():
     assert_same_rendering(20, 20, [
         ('image_resolution_ref', '''
-            <style>@page { size: 20px; margin: 2px; background: #fff }</style>
+            <style>@page { size: 20px; margin: 2px }</style>
             <div style="font-size: 0">
                 <img src="pattern.png" style="width: 8px"></div>
         '''),
         ('image_resolution_img', '''
-            <style>@page { size: 20px; margin: 2px; background: #fff }</style>
+            <style>@page { size: 20px; margin: 2px }</style>
             <div style="image-resolution: .5dppx; font-size: 0">
                 <img src="pattern.png"></div>
         '''),
         ('image_resolution_content', '''
-            <style>@page { size: 20px; margin: 2px; background: #fff }
+            <style>@page { size: 20px; margin: 2px }
                    div::before { content: url(pattern.png) }
             </style>
             <div style="image-resolution: .5dppx; font-size: 0"></div>
         '''),
         ('image_resolution_background', '''
-            <style>@page { size: 20px; margin: 2px; background: #fff }
+            <style>@page { size: 20px; margin: 2px }
             </style>
             <div style="height: 16px; image-resolution: .5dppx;
                         background: url(pattern.png) no-repeat"></div>
@@ -484,7 +484,7 @@ def test_image_cover():
     assert_pixels('image_cover', 8, 8, cover_image, '''
       <style>
         @page { size: 8px }
-        body { margin: 2px 0 0 2px; background: #fff; font-size: 0 }
+        body { margin: 2px 0 0 2px; font-size: 0 }
         img { object-fit: cover; height: 4px; width: 2px }
       </style>
       <img src="pattern.png">''')
@@ -495,7 +495,7 @@ def test_image_contain():
     assert_pixels('image_contain', 8, 8, centered_image, '''
       <style>
         @page { size: 8px }
-        body { margin: 1px 0 0 2px; background: #fff; font-size: 0 }
+        body { margin: 1px 0 0 2px; font-size: 0 }
         img { object-fit: contain; height: 6px; width: 4px }
       </style>
       <img src="pattern.png">''')
@@ -506,7 +506,7 @@ def test_image_none():
     assert_pixels('image_none', 8, 8, centered_image, '''
       <style>
         @page { size: 8px }
-        body { margin: 1px 0 0 1px; background: #fff; font-size: 0 }
+        body { margin: 1px 0 0 1px; font-size: 0 }
         img { object-fit: none; height: 6px; width: 6px }
       </style>
       <img src="pattern.png">''')
@@ -517,7 +517,7 @@ def test_image_scale_down():
     assert_pixels('image_scale_down', 8, 8, centered_image, '''
       <style>
         @page { size: 8px }
-        body { margin: 1px 0 0 1px; background: #fff; font-size: 0 }
+        body { margin: 1px 0 0 1px; font-size: 0 }
         img { object-fit: scale-down; height: 6px; width: 6px }
       </style>
       <img src="pattern.png">''')
@@ -528,7 +528,7 @@ def test_image_position():
     assert_pixels('image_position', 8, 8, centered_image, '''
       <style>
         @page { size: 8px }
-        body { margin: 1px 0 0 1px; background: #fff; font-size: 0 }
+        body { margin: 1px 0 0 1px; font-size: 0 }
         img { object-fit: none; height: 6px; width: 6px;
               object-position: bottom 50% right 50% }
       </style>
@@ -540,7 +540,7 @@ def test_images_border():
     assert_pixels('image_border', 8, 8, border_image, '''
       <style>
         @page { size: 8px }
-        body { margin: 0; background: #fff; font-size: 0 }
+        body { margin: 0; font-size: 0 }
         img { margin: 1px; border: 1px solid lime }
       </style>
       <div><img src="pattern.png"></div>''')
@@ -551,7 +551,7 @@ def test_images_border_absolute():
     assert_pixels('image_border_absolute', 8, 8, border_image, '''
       <style>
         @page { size: 8px }
-        body { margin: 0; background: #fff; font-size: 0 }
+        body { margin: 0; font-size: 0 }
         img { margin: 1px; border: 1px solid lime; position: absolute }
       </style>
       <div><img src="pattern.png"></div>''')

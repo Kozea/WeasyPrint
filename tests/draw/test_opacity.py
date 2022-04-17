@@ -6,7 +6,6 @@ from . import assert_same_rendering
 opacity_source = '''
     <style>
         @page { size: 60px 60px }
-        body { margin: 0; background: #fff }
         div { background: #000; width: 20px; height: 20px }
     </style>
     %s'''

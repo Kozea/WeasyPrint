@@ -26,7 +26,7 @@ HTML_HANDLERS['x-td'] = HTML_HANDLERS['td']
 HTML_HANDLERS['x-th'] = HTML_HANDLERS['th']
 tables_source = '''
   <style>
-    @page { size: 28px; background: #fff }
+    @page { size: 28px }
     x-table { margin: 1px; padding: 1px; border-spacing: 1px;
               border: 1px solid transparent }
     x-td { width: 2px; height: 2px; padding: 1px;
@@ -763,7 +763,7 @@ def test_tables_9():
         ______________________
     ''', '''
       <style>
-        @page { size: 22px 18px; margin: 1px; background: #fff }
+        @page { size: 22px 18px; margin: 1px }
         td { border: 1px red solid; width: 4px; height: 2px; }
       </style>
       <table style="table-layout: fixed; border-collapse: collapse">
@@ -813,7 +813,7 @@ def test_tables_10():
         ______________________
     ''', '''
       <style>
-        @page { size: 22px 17px; margin: 1px; background: #fff }
+        @page { size: 22px 17px; margin: 1px }
         td { border: 1px red solid; width: 4px; height: 2px; }
       </style>
       <table style="table-layout: fixed; margin-left: 1px;
@@ -843,7 +843,7 @@ def test_tables_11():
       ____________________
     ''', '''
       <style>
-        @page { size: 20px 10px; margin: 1px; background: #fff }
+        @page { size: 20px 10px; margin: 1px }
         body { text-align: right; font-size: 0 }
         table { display: inline-table; width: 11px }
         td { border: 1px red solid; width: 4px; height: 3px }
@@ -1063,7 +1063,7 @@ def test_tables_15():
         ______________________
     ''', '''
       <style>
-        @page { size: 22px 18px; margin: 1px; background: #fff }
+        @page { size: 22px 18px; margin: 1px }
         td { border: 1px red solid; width: 4px; height: 3px; }
       </style>
       <table style="table-layout: fixed; margin-left: 1px;
@@ -1090,7 +1090,7 @@ def test_tables_16():
       ____________________
     ''', '''
       <style>
-        @page { size: 20px 10px; margin: 1px; background: #fff }
+        @page { size: 20px 10px; margin: 1px }
         body { text-align: right; font-size: 0 }
         table { position: absolute; width: 11px;
                 table-layout: fixed; border-collapse: collapse }
@@ -1128,7 +1128,7 @@ def test_tables_17():
     ''', '''
       <style>
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
-        @page { size: 16px 10px; margin: 1px; background: #fff }
+        @page { size: 16px 10px; margin: 1px }
         table { border-collapse: collapse; font-size: 2px; line-height: 1;
                 color: blue; font-family: weasyprint }
         td { border: 2px red solid; padding: 1px; line-height: 1 }
@@ -1164,7 +1164,7 @@ def test_tables_18():
     ''', '''
       <style>
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
-        @page { size: 12px 11px; margin: 1px; background: #fff }
+        @page { size: 12px 11px; margin: 1px }
         table { border: 1px red solid; border-spacing: 1px; font-size: 2px;
                 line-height: 1; color: blue; font-family: weasyprint }
         td { border: 1px red solid; padding: 1px; line-height: 1; }
@@ -1186,10 +1186,10 @@ def test_tables_19():
       RR
     ''', '''
       <style>
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
-        @page {size: 2px 4px}
-        table {border-collapse: collapse; color: red}
-        body {font-size: 2px; font-family: weasyprint; line-height: 1}
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        @page { size: 2px 4px }
+        table { border-collapse: collapse; color: red }
+        body { font-size: 2px; font-family: weasyprint; line-height: 1 }
       </style>
       <table><tr><td>a a a a</td></tr></table>''')
 

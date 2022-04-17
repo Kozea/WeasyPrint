@@ -21,7 +21,7 @@ def test_overflow_1():
     ''', '''
       <style>
         @page { size: 8px }
-        body { margin: 2px 0 0 2px; background: #fff; font-size:0 }
+        body { margin: 2px 0 0 2px; font-size: 0 }
         div { height: 2px; overflow: hidden }
       </style>
       <div><img src="pattern.png"></div>''')
@@ -42,7 +42,7 @@ def test_overflow_2():
         ________
     ''', '''
       <style>
-        @page { size: 8px; background: #fff; margin: 2px 2px 3px 2px }
+        @page { size: 8px; margin: 2px 2px 3px 2px }
         body { height: 1px; overflow: hidden; font-size: 0 }
       </style>
       <div><img src="pattern.png"></div>''')
@@ -62,7 +62,7 @@ def test_overflow_3():
         ________
     ''', '''
       <style>
-        @page { size: 8px; background: #fff; margin: 2px; }
+        @page { size: 8px; margin: 2px; }
         div { width: 2px; height: 2px; overflow: hidden;
               border: 1px solid blue; }
       </style>
@@ -171,7 +171,7 @@ def test_overflow_4():
 def test_clip(number, css, pixels):
     assert_pixels('background_repeat_clipped_%s' % number, 14, 16, pixels, '''
       <style>
-        @page { size: 14px 16px; background: #fff }
+        @page { size: 14px 16px }
         div { margin: 1px; border: 1px green solid;
               background: url(pattern.png);
               position: absolute; /* clip only applies on abspos */

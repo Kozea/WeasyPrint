@@ -15,7 +15,6 @@ def test_borders(margin='10px', prop='border'):
     source = '''
       <style>
         @page { size: 140px 110px }
-        html { background: #fff }
         body { width: 100px; height: 70px;
                margin: %s; %s: 10px %s blue }
       </style>
@@ -64,7 +63,6 @@ def test_small_borders_1(border_style):
     html = '''
       <style>
         @page { size: 50px 50px }
-        html { background: #fff }
         body { margin: 5px; height: 0; border: 10px %s blue }
       </style>
       <body>''' % border_style
@@ -80,7 +78,6 @@ def test_small_borders_2(border_style):
     html = '''
       <style>
         @page { size: 50px 50px }
-        html { background: #fff }
         body { height: 0; width: 0; border-width: 1px 0; border-style: %s }
       </style>
       <body>''' % border_style

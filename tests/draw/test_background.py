@@ -530,7 +530,7 @@ def test_background_origin():
                 @page { size: 12px }
                 html { background: #fff }
                 body { margin: 1px; padding: 1px; height: 6px;
-                       border: 1px solid  transparent;
+                       border: 1px solid transparent;
                        background: url(pattern.png) bottom right no-repeat;
                        background-origin: %s }
             </style>
@@ -842,7 +842,7 @@ def test_background_clip(value, pixels):
         @page { size: 8px }
         html { background: #fff }
         body { margin: 1px; padding: 1px; height: 2px;
-               border: 1px solid  transparent;
+               border: 1px solid transparent;
                background: %s }
       </style>
       <body>''' % value)

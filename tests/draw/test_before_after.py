@@ -10,7 +10,7 @@ def test_before_after_1():
         ('pseudo_before', '''
             <style>
                 @page { size: 300px 30px }
-                body { margin: 0; background: #fff }
+                body { margin: 0 }
                 a[href]:before { content: '[' attr(href) '] ' }
             </style>
             <p><a href="some url">some content</a></p>
@@ -18,7 +18,7 @@ def test_before_after_1():
         ('pseudo_before_reference', '''
             <style>
                 @page { size: 300px 30px }
-                body { margin: 0; background: #fff }
+                body { margin: 0 }
             </style>
             <p><a href="another url"><span>[some url] </span>some content</p>
         ''')
@@ -31,7 +31,7 @@ def test_before_after_2():
         ('pseudo_quotes', '''
             <style>
                 @page { size: 500px 30px }
-                body { margin: 0; background: #fff; quotes: '«' '»' '“' '”' }
+                body { margin: 0; quotes: '«' '»' '“' '”' }
                 q:before { content: open-quote ' '}
                 q:after { content: ' ' close-quote }
             </style>
@@ -40,7 +40,7 @@ def test_before_after_2():
         ('pseudo_quotes_reference', '''
             <style>
                 @page { size: 500px 30px }
-                body { margin: 0; background: #fff }
+                body { margin: 0 }
                 q:before, q:after { content: none }
             </style>
             <p><span><span>« </span>Lorem ipsum
@@ -56,7 +56,7 @@ def test_before_after_3():
         ('pseudo_url', '''
             <style>
                 @page { size: 100px 30px }
-                body { margin: 0; background: #fff; }
+                body { margin: 0; }
                 p:before { content: 'a' url(pattern.png) 'b'}
             </style>
             <p>c</p>
@@ -64,7 +64,7 @@ def test_before_after_3():
         ('pseudo_url_reference', '''
             <style>
                 @page { size: 100px 30px }
-                body { margin: 0; background: #fff }
+                body { margin: 0 }
             </style>
             <p><span>a<img src="pattern.png" alt="Missing image">b</span>c</p>
         ''')

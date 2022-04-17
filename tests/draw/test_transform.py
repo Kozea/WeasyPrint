@@ -17,7 +17,7 @@ def test_2d_transform_1():
         ________
     ''', '''
       <style>
-        @page { size: 8px; margin: 2px; background: #fff; }
+        @page { size: 8px; margin: 2px; }
         div { transform: rotate(90deg); font-size: 0 }
       </style>
       <div><img src="pattern.png"></div>''')
@@ -40,7 +40,7 @@ def test_2d_transform_2():
         ____________
     ''', '''
       <style>
-        @page { size: 12px; margin: 2px; background: #fff; }
+        @page { size: 12px; margin: 2px; }
         div { transform: translateX(3px) rotate(90deg);
               font-size: 0; width: 4px }
       </style>
@@ -65,7 +65,7 @@ def test_2d_transform_3():
         ____________
     ''', '''
       <style>
-        @page { size: 12px; margin: 2px; background: #fff; }
+        @page { size: 12px; margin: 2px; }
         div { transform: rotate(90deg) translateX(3px);
               font-size: 0; width: 4px }
       </style>
@@ -89,7 +89,7 @@ def test_2d_transform_4():
         ____________
     ''', '''
       <style>
-        @page { size: 12px; margin: 2px; background: #fff; }
+        @page { size: 12px; margin: 2px; }
         div { transform: rotate(90deg); font-size: 0; width: 4px }
         img { transform: translateX(3px) }
       </style>
@@ -109,7 +109,7 @@ def test_2d_transform_5():
         ________
     ''', '''
       <style>
-        @page { size: 8px; margin: 2px; background: #fff; }
+        @page { size: 8px; margin: 2px; }
         div { transform: matrix(-1, 0, 0, 1, 0, 0); font-size: 0 }
       </style>
       <div><img src="pattern.png"></div>''')
@@ -128,7 +128,7 @@ def test_2d_transform_6():
         ___BBBB_
     ''', '''
       <style>
-        @page { size: 8px; margin: 2px; background: #fff; }
+        @page { size: 8px; margin: 2px; }
         div { transform: translate(1px, 2px); font-size: 0 }
       </style>
       <div><img src="pattern.png"></div>''')
@@ -147,7 +147,7 @@ def test_2d_transform_7():
         ________
     ''', '''
       <style>
-        @page { size: 8px; margin: 2px; background: #fff; }
+        @page { size: 8px; margin: 2px; }
         div { transform: translate(25%, 0); font-size: 0 }
       </style>
       <div><img src="pattern.png"></div>''')
@@ -166,7 +166,7 @@ def test_2d_transform_8():
         ________
     ''', '''
       <style>
-        @page { size: 8px; margin: 2px; background: #fff; }
+        @page { size: 8px; margin: 2px; }
         div { transform: translateX(0.25em); font-size: 12px }
         div div { font-size: 0 }
       </style>
@@ -186,7 +186,7 @@ def test_2d_transform_9():
         ________
     ''', '''
       <style>
-        @page { size: 8px; margin: 2px; background: #fff; }
+        @page { size: 8px; margin: 2px; }
         div { transform: translateY(-1px); font-size: 0 }
       </style>
       <div><img src="pattern.png"></div>''')
@@ -207,7 +207,7 @@ def test_2d_transform_10():
         __________
     ''', '''
       <style>
-        @page { size: 10px; margin: 2px; background: #fff; }
+        @page { size: 10px; margin: 2px; }
         div { transform: scale(2, 2);
               transform-origin: 1px 1px 1px;
               image-rendering: pixelated;
@@ -231,7 +231,7 @@ def test_2d_transform_11():
         __________
     ''', '''
       <style>
-        @page { size: 10px; margin: 2px; background: #fff; }
+        @page { size: 10px; margin: 2px; }
         div { transform: scale(1, 2);
               transform-origin: 1px 1px;
               image-rendering: pixelated;
@@ -255,7 +255,7 @@ def test_2d_transform_12():
         __________
     ''', '''
       <style>
-        @page { size: 10px; margin: 2px; background: #fff; }
+        @page { size: 10px; margin: 2px; }
         div { transform: scaleY(2);
               transform-origin: 1px 1px 0;
               image-rendering: pixelated;
@@ -279,7 +279,7 @@ def test_2d_transform_13():
         __________
     ''', '''
       <style>
-        @page { size: 10px; margin: 2px; background: #fff; }
+        @page { size: 10px; margin: 2px; }
         div { transform: scaleX(2);
               transform-origin: 1px 1px;
               image-rendering: pixelated;
