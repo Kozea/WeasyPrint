@@ -552,9 +552,7 @@ def expand_word_wrap(name, tokens):
     keyword = overflow_wrap(tokens)
     if keyword is None:
         raise InvalidValues
-
-    if len(tokens) == 1:
-        yield 'overflow-wrap', tokens
+    yield 'overflow-wrap', tokens
 
 
 @expander('flex')

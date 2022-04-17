@@ -185,6 +185,7 @@ def test_decoration(rule, result):
     'text-decoration: red red',
     'text-decoration: 1px',
     'text-decoration: underline none',
+    'text-decoration: none none',
 ))
 def test_decoration_invalid(rule):
     assert_invalid(rule)
