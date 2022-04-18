@@ -4,7 +4,6 @@ import hashlib
 import io
 import os
 import pathlib
-import sys
 import tempfile
 import warnings
 
@@ -106,19 +105,6 @@ class FontConfiguration:
         # pango_fc_font_map_set_config keeps a reference to config
         fontconfig.FcConfigDestroy(self._fontconfig_config)
 
-        # On Windows the font tempfiles cannot be deleted,
-        # putting them in a subfolder made my life easier.
-        self._tempdir = None
-        if sys.platform.startswith('win'):
-            self._tempdir = os.path.join(
-                tempfile.gettempdir(), 'weasyprint')
-            try:
-                os.mkdir(self._tempdir)
-            except FileExistsError:
-                pass
-            except Exception:
-                # Back to default.
-                self._tempdir = None
         self._filenames = []
         self._woff_cache = {}
 
@@ -218,8 +204,7 @@ class FontConfiguration:
                 features_string = ''
                 for key, value in font_features(**features).items():
                     features_string += f'<string>{key} {value}</string>'
-                fd = tempfile.NamedTemporaryFile(
-                    'wb', dir=self._tempdir, delete=False)
+                fd = tempfile.NamedTemporaryFile('wb', delete=False)
                 font_filename = fd.name
                 fd.write(font)
                 fd.close()
@@ -260,8 +245,7 @@ class FontConfiguration:
                           mode="assign_replace">{features_string}</edit>
                   </match>
                 </fontconfig>'''
-                fd = tempfile.NamedTemporaryFile(
-                    'w', dir=self._tempdir, delete=False)
+                fd = tempfile.NamedTemporaryFile('w', delete=False)
                 fd.write(xml)
                 fd.close()
                 self._filenames.append(fd.name)
