@@ -69,20 +69,10 @@ def draw_page(page, stream):
 
 
 def draw_box_background_and_border(stream, page, box):
-    draw_background(stream, box.background)
     if isinstance(box, boxes.TableBox):
-        draw_table_backgrounds(stream, page, box)
-        if box.style['border_collapse'] == 'separate':
-            draw_border(stream, box)
-            for row_group in box.children:
-                for row in row_group.children:
-                    for cell in row.children:
-                        if (cell.style['empty_cells'] == 'show' or
-                                not cell.empty):
-                            draw_border(stream, cell)
-        else:
-            draw_collapsed_borders(stream, box)
+        draw_table(stream, box)
     else:
+        draw_background(stream, box.background)
         draw_border(stream, box)
 
 
@@ -341,23 +331,6 @@ def draw_background(stream, bg, clip_box=True, bleed=None, marks=()):
             draw_background_image(stream, layer, bg.image_rendering)
 
 
-def draw_table_backgrounds(stream, page, table):
-    """Draw the background color and image of the table children."""
-    for column_group in table.column_groups:
-        draw_background(stream, column_group.background)
-        for column in column_group.children:
-            draw_background(stream, column.background)
-    for row_group in table.children:
-        draw_background(stream, row_group.background)
-        for row in row_group.children:
-            draw_background(stream, row.background)
-            for cell in row.children:
-                if (table.style['border_collapse'] == 'collapse' or
-                        cell.style['empty_cells'] == 'show' or
-                        not cell.empty):
-                    draw_background(stream, cell.background)
-
-
 def draw_background_image(stream, layer, image_rendering):
     if layer.image is None or 0 in layer.size:
         return
@@ -391,7 +364,7 @@ def draw_background_image(stream, layer, image_rendering):
             position_x = 0
         else:
             # We don't repeat the image.
-            repeat_width = image_width
+            repeat_width = positioning_width
 
     # Comments above apply here too.
     if repeat_y == 'no-repeat':
@@ -406,7 +379,7 @@ def draw_background_image(stream, layer, image_rendering):
                 positioning_height - image_height) / (n_repeats - 1)
             position_y = 0
         else:
-            repeat_height = image_height
+            repeat_height = positioning_height
 
     matrix = Matrix(e=position_x + positioning_x, f=position_y + positioning_y)
     matrix @= stream.ctm
@@ -426,11 +399,6 @@ def draw_background_image(stream, layer, image_rendering):
             stream.rectangle(
                 painting_x, painting_y, painting_width, painting_height)
         stream.fill()
-
-
-def xy_offset(x, y, offset_x, offset_y, offset):
-    """Increment X and Y coordinates by the given offsets."""
-    return x + offset_x * offset, y + offset_y * offset
 
 
 def styled_color(style, color, side):
@@ -773,6 +741,34 @@ def draw_outlines(stream, box):
         for child in box.children:
             if isinstance(child, boxes.Box):
                 draw_outlines(stream, child)
+
+
+def draw_table(stream, table):
+    # Draw backgrounds
+    draw_background(stream, table.background)
+    for column_group in table.column_groups:
+        draw_background(stream, column_group.background)
+        for column in column_group.children:
+            draw_background(stream, column.background)
+    for row_group in table.children:
+        draw_background(stream, row_group.background)
+        for row in row_group.children:
+            draw_background(stream, row.background)
+            for cell in row.children:
+                if (table.style['border_collapse'] == 'collapse' or
+                        cell.style['empty_cells'] == 'show' or
+                        not cell.empty):
+                    draw_background(stream, cell.background)
+
+    # Draw borders
+    if table.style['border_collapse'] == 'collapse':
+        return draw_collapsed_borders(stream, table)
+    draw_border(stream, table)
+    for row_group in table.children:
+        for row in row_group.children:
+            for cell in row.children:
+                if cell.style['empty_cells'] == 'show' or not cell.empty:
+                    draw_border(stream, cell)
 
 
 def draw_collapsed_borders(stream, table):

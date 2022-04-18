@@ -15,6 +15,7 @@ PIXELS_BY_CHAR = dict(
     G=(0, 255, 0),  # lime green
     V=(191, 0, 64),  # average of 1*B and 3*R.
     S=(255, 63, 63),  # R above R above #fff
+    K=(0, 0, 0),  # black
     r=(255, 0, 0),  # red
     g=(0, 128, 0),  # half green
     b=(0, 0, 128),  # half blue

@@ -619,7 +619,7 @@ def test_background_repeat_space_1():
         @page { size: 12px 16px }
         html { background: #fff }
         body { margin: 1px; height: 14px;
-               background: url(pattern.png) space; }
+               background: url(pattern.png) space }
       </style>
       <body>''')
 
@@ -646,7 +646,7 @@ def test_background_repeat_space_2():
         @page { size: 12px 14px }
         html { background: #fff }
         body { margin: 1px; height: 12px;
-               background: url(pattern.png) space; }
+               background: url(pattern.png) space }
       </style>
       <body>''')
 
@@ -672,7 +672,28 @@ def test_background_repeat_space_3():
         @page { size: 12px 13px }
         html { background: #fff }
         body { margin: 1px; height: 11px;
-               background: url(pattern.png) repeat space; }
+               background: url(pattern.png) repeat space }
+      </style>
+      <body>''')
+
+
+@assert_no_logs
+def test_background_repeat_space_4():
+    assert_pixels('background_space_no_repeat', 8, 8, '''
+        ________
+        _rBBBGG_
+        _BBBBGG_
+        _BBBBGG_
+        _BBBBGG_
+        _GGGGGG_
+        _GGGGGG_
+        ________
+    ''', '''
+      <style>
+        @page { size: 8px }
+        html { background: #fff }
+        body { margin: 1px; height: 6px;
+               background: url(pattern.png) space lime }
       </style>
       <body>''')
 
@@ -1004,7 +1025,99 @@ def test_bleed_background_size():
     '''
     html = '''
       <style>
-         @page { size: 2px; background: red; bleed: 1px }
+         @page { size: 2px; bleed: 1px; background: red }
       </style>
       <body>'''
     assert_pixels('bleed_background_size', 4, 4, expected_pixels, html)
+
+
+@assert_no_logs
+def test_background_size_clip():
+    expected_pixels = '''
+        BBBB
+        BRBB
+        BBBB
+        BBBB
+    '''
+    html = '''
+      <style>
+         @page { size: 4px; margin: 1px;
+                 background: url(pattern.png) red;
+                 background-clip: content-box }
+      </style>
+      <body>'''
+    assert_pixels('background_size_clip', 4, 4, expected_pixels, html)
+
+
+@assert_no_logs
+def test_bleed_background_size_clip():
+    expected_pixels = '''
+        RRRRRR
+        RBBBBR
+        RBRBBR
+        RBBBBR
+        RBBBBR
+        RRRRRR
+    '''
+    html = '''
+      <style>
+         @page { size: 4px; bleed: 1px; margin: 1px;
+                 background: url(pattern.png) red;
+                 background-clip: content-box }
+      </style>
+      <body>'''
+    assert_pixels('bleed_background_size_clip', 6, 6, expected_pixels, html)
+
+
+@assert_no_logs
+def test_marks_crop():
+    expected_pixels = '''
+        KK__KK
+        K____K
+        ______
+        ______
+        K____K
+        KK__KK
+    '''
+    html = '''
+      <style>
+         @page { size: 4px; bleed: 1px; margin: 1px; marks: crop }
+      </style>
+      <body>'''
+    assert_pixels('marks_crop', 6, 6, expected_pixels, html)
+
+
+@assert_no_logs
+def test_marks_cross():
+    expected_pixels = '''
+        __KK__
+        ______
+        K____K
+        K____K
+        ______
+        __KK__
+    '''
+    html = '''
+      <style>
+         @page { size: 4px; bleed: 1px; margin: 1px; marks: cross }
+      </style>
+      <body>'''
+    assert_pixels('marks_cross', 6, 6, expected_pixels, html)
+
+
+@assert_no_logs
+def test_marks_crop_cross():
+    expected_pixels = '''
+        KKKKKK
+        K____K
+        K____K
+        K____K
+        K____K
+        KKKKKK
+    '''
+    html = '''
+      <style>
+         @page { size: 4px; bleed: 1px; margin: 1px; marks: crop cross }
+      </style>
+      <body>'''
+    assert_pixels('marks_crop_cross', 6, 6, expected_pixels, html)
