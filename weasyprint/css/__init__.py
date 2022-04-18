@@ -874,12 +874,9 @@ def parse_page_selectors(rule):
 
 
 def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
-                          url_fetcher, matcher, page_rules, fonts,
-                          font_config, counter_style, ignore_imports=False):
-    """Do the work that can be done early on stylesheet, before they are
-    in a document.
-
-    """
+                          url_fetcher, matcher, page_rules, font_config,
+                          counter_style, ignore_imports=False):
+    """Do what can be done early on stylesheet, before being in a document."""
     for rule in stylesheet_rules:
         if getattr(rule, 'content', None) is None and (
                 rule.type != 'at-rule' or rule.lower_at_keyword != 'import'):
@@ -975,7 +972,7 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
             content_rules = tinycss2.parse_rule_list(rule.content)
             preprocess_stylesheet(
                 device_media_type, base_url, content_rules, url_fetcher,
-                matcher, page_rules, fonts, font_config, counter_style,
+                matcher, page_rules, font_config, counter_style,
                 ignore_imports=True)
 
         elif rule.type == 'at-rule' and rule.lower_at_keyword == 'page':
@@ -1028,10 +1025,7 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                     break
             else:
                 if font_config is not None:
-                    font_filename = font_config.add_font_face(
-                        rule_descriptors, url_fetcher)
-                    if font_filename:
-                        fonts.append(font_filename)
+                    font_config.add_font_face(rule_descriptors, url_fetcher)
 
         elif (rule.type == 'at-rule' and
                 rule.lower_at_keyword == 'counter-style'):

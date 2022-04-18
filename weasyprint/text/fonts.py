@@ -1,11 +1,11 @@
 """Interface with external libraries managing fonts installed on the system."""
 
-import hashlib
-import io
-import os
-import pathlib
-import tempfile
-import warnings
+from hashlib import sha1
+from io import BytesIO
+from pathlib import Path
+from shutil import rmtree
+from tempfile import mkdtemp
+from warnings import warn
 
 from fontTools.ttLib import TTFont, woff2
 
@@ -17,7 +17,7 @@ from .constants import (
 from .ffi import ffi, fontconfig, gobject, pangoft2
 
 
-def _check_font_configuration(font_config):
+def _check_font_configuration(font_config):  # pragma: no cover
     """Check whether the given font_config has fonts.
 
     The default fontconfig configuration file may be missing (particularly
@@ -57,15 +57,10 @@ def _check_font_configuration(font_config):
     config_files = fontconfig.FcConfigGetConfigFiles(font_config)
     config_file = fontconfig.FcStrListNext(config_files)
     if config_file == ffi.NULL:
-        warnings.warn(
-            'FontConfig cannot load default config file. '
-            'Expect ugly output.')
-        return
+        warn('FontConfig cannot load default config file. Expect ugly output.')
     else:
         # Useless config file, or indeed no fonts.
-        warnings.warn(
-            'FontConfig: No fonts configured. Expect ugly output.')
-        return
+        warn('No fonts configured in FontConfig. Expect ugly output.')
 
 
 _check_font_configuration(ffi.gc(
@@ -105,12 +100,32 @@ class FontConfiguration:
         # pango_fc_font_map_set_config keeps a reference to config
         fontconfig.FcConfigDestroy(self._fontconfig_config)
 
-        self._filenames = []
-        self._woff_cache = {}
+        # Temporary folder storing fonts and Fontconfig config files
+        self._folder = Path(mkdtemp(prefix='weasyprint-'))
 
     def add_font_face(self, rule_descriptors, url_fetcher):
-        if self.font_map is None:
+        features = {
+            rules[0][0].replace('-', '_'): rules[0][1] for rules in
+            rule_descriptors.get('font_variant', [])}
+        key = 'font_feature_settings'
+        if key in rule_descriptors:
+            features[key] = rule_descriptors[key]
+        features_string = ''.join(
+            f'<string>{key} {value}</string>'
+            for key, value in font_features(**features).items())
+        fontconfig_style = FONTCONFIG_STYLE[
+            rule_descriptors.get('font_style', 'normal')]
+        fontconfig_weight = FONTCONFIG_WEIGHT[
+            rule_descriptors.get('font_weight', 'normal')]
+        fontconfig_stretch = FONTCONFIG_STRETCH[
+            rule_descriptors.get('font_stretch', 'normal')]
+        config_key = sha1((
+            f'{rule_descriptors["font_family"]}-{fontconfig_style}-'
+            f'{fontconfig_weight}-{features_string}').encode()).hexdigest()
+        font_path = self._folder / config_key
+        if font_path.exists():
             return
+
         for font_type, url in rule_descriptors['src']:
             if url is None:
                 continue
@@ -154,12 +169,13 @@ class FontConfiguration:
                             matching_pattern, b'file', 0, filename)
                         path = ffi.string(filename[0]).decode(
                             FILESYSTEM_ENCODING)
-                        url = pathlib.Path(path).as_uri()
+                        url = Path(path).as_uri()
                     else:
                         LOGGER.debug(
-                            'Failed to load local font "%s"',
-                            font_name.decode())
+                            'Failed to load local font %r', font_name.decode())
                         continue
+
+                # Get font content
                 try:
                     with fetch(url_fetcher, url) as result:
                         if 'string' in result:
@@ -167,62 +183,37 @@ class FontConfiguration:
                         else:
                             font = result['file_obj'].read()
                 except Exception as exc:
-                    LOGGER.debug(
-                        'Failed to load font at %r (%s)', url, exc)
+                    LOGGER.debug('Failed to load font at %r (%s)', url, exc)
                     continue
+
+                # Store font content
                 try:
-                    font_is_woff = font[:3] == b'wOF'
-                    if font_is_woff:
-                        font_hasher = hashlib.sha256()
-                        font_hasher.update(font)
-                        font_digest = font_hasher.hexdigest()
-                        decoded_woff_path = self._woff_cache.get(font_digest)
-                        if decoded_woff_path is None:
-                            out = io.BytesIO()
-                            woff_version_byte = font[3:4]
-                            if woff_version_byte == b'F':
-                                # woff font
-                                ttfont = TTFont(io.BytesIO(font))
-                                ttfont.flavor = ttfont.flavorData = None
-                                ttfont.save(out)
-                            elif woff_version_byte == b'2':
-                                # woff2 font
-                                woff2.decompress(io.BytesIO(font), out)
-                            font = out.getvalue()
-                        else:
-                            font = pathlib.Path(decoded_woff_path).read_bytes()
+                    # Decode woff and woff2 fonts
+                    if font[:3] == b'wOF':
+                        out = BytesIO()
+                        woff_version_byte = font[3:4]
+                        if woff_version_byte == b'F':
+                            # woff font
+                            ttfont = TTFont(BytesIO(font))
+                            ttfont.flavor = ttfont.flavorData = None
+                            ttfont.save(out)
+                        elif woff_version_byte == b'2':
+                            # woff2 font
+                            woff2.decompress(BytesIO(font), out)
+                        font = out.getvalue()
                 except Exception as exc:
                     LOGGER.debug(
                         'Failed to handle woff font at %r (%s)', url, exc)
                     continue
-                features = {
-                    rules[0][0].replace('-', '_'): rules[0][1] for rules in
-                    rule_descriptors.get('font_variant', [])}
-                if 'font_feature_settings' in rule_descriptors:
-                    features['font_feature_settings'] = (
-                        rule_descriptors['font_feature_settings'])
-                features_string = ''
-                for key, value in font_features(**features).items():
-                    features_string += f'<string>{key} {value}</string>'
-                fd = tempfile.NamedTemporaryFile('wb', delete=False)
-                font_filename = fd.name
-                fd.write(font)
-                fd.close()
-                self._filenames.append(font_filename)
-                if font_is_woff and font_digest not in self._woff_cache:
-                    self._woff_cache[font_digest] = font_filename
-                fontconfig_style = FONTCONFIG_STYLE[
-                    rule_descriptors.get('font_style', 'normal')]
-                fontconfig_weight = FONTCONFIG_WEIGHT[
-                    rule_descriptors.get('font_weight', 'normal')]
-                fontconfig_stretch = FONTCONFIG_STRETCH[
-                    rule_descriptors.get('font_stretch', 'normal')]
-                xml = f'''<?xml version="1.0"?>
+                font_path.write_bytes(font)
+
+                xml_path = self._folder / f'{config_key}.xml'
+                xml_path.write_text(f'''<?xml version="1.0"?>
                 <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
                 <fontconfig>
                   <match target="scan">
                     <test name="file" compare="eq">
-                      <string>{font_filename}</string>
+                      <string>{font_path}</string>
                     </test>
                     <edit name="family" mode="assign_replace">
                       <string>{rule_descriptors['font_family']}</string>
@@ -239,43 +230,30 @@ class FontConfiguration:
                   </match>
                   <match target="font">
                     <test name="file" compare="eq">
-                      <string>{font_filename}</string>
+                      <string>{font_path}</string>
                     </test>
                     <edit name="fontfeatures"
                           mode="assign_replace">{features_string}</edit>
                   </match>
-                </fontconfig>'''
-                fd = tempfile.NamedTemporaryFile('w', delete=False)
-                fd.write(xml)
-                fd.close()
-                self._filenames.append(fd.name)
+                </fontconfig>''')
+
+                # TODO: We should mask local fonts with the same name
+                # too as explained in Behdad's blog entry.
                 fontconfig.FcConfigParseAndLoad(
-                    config, fd.name.encode(FILESYSTEM_ENCODING),
+                    config, str(xml_path).encode(FILESYSTEM_ENCODING),
                     True)
                 font_added = fontconfig.FcConfigAppFontAddFile(
-                    config, font_filename.encode(FILESYSTEM_ENCODING))
+                    config, str(font_path).encode(FILESYSTEM_ENCODING))
                 if font_added:
-                    # TODO: We should mask local fonts with the same name
-                    # too as explained in Behdad's blog entry.
-                    pangoft2.pango_fc_font_map_config_changed(
+                    return pangoft2.pango_fc_font_map_config_changed(
                         ffi.cast('PangoFcFontMap *', self.font_map))
-                    return font_filename
-                else:
-                    LOGGER.debug('Failed to load font at %r', url)
+                LOGGER.debug('Failed to load font at %r', url)
         LOGGER.warning(
             'Font-face %r cannot be loaded', rule_descriptors['font_family'])
 
     def __del__(self):
         """Clean a font configuration for a document."""
-        # Can't cleanup the temporary font files on Windows, library has
-        # still open file handles. On Unix `os.remove()` a file that is in
-        # use works fine, on Windows a PermissionError is raised.
-        # FcConfigAppFontClear and pango_fc_font_map_shutdown don't help.
-        for filename in self._filenames:
-            try:
-                os.remove(filename)
-            except OSError:
-                continue
+        rmtree(self._folder, ignore_errors=True)
 
 
 def font_features(font_kerning='normal', font_variant_ligatures='normal',

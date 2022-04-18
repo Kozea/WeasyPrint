@@ -112,11 +112,9 @@ def test_font_face_bad_1():
 def test_font_face_bad_2():
     stylesheet = tinycss2.parse_stylesheet('@font-face{}')
     with capture_logs() as logs:
-        descriptors = []
         preprocess_stylesheet(
             'print', 'http://wp.org/foo/', stylesheet, None, None, None,
-            descriptors, None, None)
-        assert not descriptors
+            None, None)
     assert logs == [
         "WARNING: Missing src descriptor in '@font-face' rule at 1:1"]
 
@@ -124,11 +122,9 @@ def test_font_face_bad_2():
 def test_font_face_bad_3():
     stylesheet = tinycss2.parse_stylesheet('@font-face{src: url(test.woff)}')
     with capture_logs() as logs:
-        descriptors = []
         preprocess_stylesheet(
             'print', 'http://wp.org/foo/', stylesheet, None, None, None,
-            descriptors, None, None)
-        assert not descriptors
+            None, None)
     assert logs == [
         "WARNING: Missing font-family descriptor in '@font-face' rule at 1:1"]
 
@@ -136,11 +132,9 @@ def test_font_face_bad_3():
 def test_font_face_bad_4():
     stylesheet = tinycss2.parse_stylesheet('@font-face{font-family: test}')
     with capture_logs() as logs:
-        descriptors = []
         preprocess_stylesheet(
             'print', 'http://wp.org/foo/', stylesheet, None, None, None,
-            descriptors, None, None)
-        assert not descriptors
+            None, None)
     assert logs == [
         "WARNING: Missing src descriptor in '@font-face' rule at 1:1"]
 
@@ -149,11 +143,9 @@ def test_font_face_bad_5():
     stylesheet = tinycss2.parse_stylesheet(
         '@font-face { font-family: test; src: wrong }')
     with capture_logs() as logs:
-        descriptors = []
         preprocess_stylesheet(
             'print', 'http://wp.org/foo/', stylesheet, None, None, None,
-            descriptors, None, None)
-        assert not descriptors
+            None, None)
     assert logs == [
         'WARNING: Ignored `src: wrong ` at 1:33, invalid value.',
         "WARNING: Missing src descriptor in '@font-face' rule at 1:1"]
@@ -163,11 +155,9 @@ def test_font_face_bad_6():
     stylesheet = tinycss2.parse_stylesheet(
         '@font-face { font-family: good, bad; src: url(test.woff) }')
     with capture_logs() as logs:
-        descriptors = []
         preprocess_stylesheet(
             'print', 'http://wp.org/foo/', stylesheet, None, None, None,
-            descriptors, None, None)
-        assert not descriptors
+            None, None)
     assert logs == [
         'WARNING: Ignored `font-family: good, bad` at 1:14, invalid value.',
         "WARNING: Missing font-family descriptor in '@font-face' rule at 1:1"]
@@ -177,11 +167,9 @@ def test_font_face_bad_7():
     stylesheet = tinycss2.parse_stylesheet(
         '@font-face { font-family: good, bad; src: really bad }')
     with capture_logs() as logs:
-        descriptors = []
         preprocess_stylesheet(
             'print', 'http://wp.org/foo/', stylesheet, None, None, None,
-            descriptors, None, None)
-        assert not descriptors
+            None, None)
     assert logs == [
         'WARNING: Ignored `font-family: good, bad` at 1:14, invalid value.',
         'WARNING: Ignored `src: really bad ` at 1:38, invalid value.',
@@ -197,9 +185,7 @@ def test_font_face_bad_7():
 def test_counter_style_invalid(rule):
     stylesheet = tinycss2.parse_stylesheet(rule)
     with capture_logs() as logs:
-        descriptors = []
         preprocess_stylesheet(
             'print', 'http://wp.org/foo/', stylesheet, None, None, None,
-            descriptors, None, {})
-        assert not descriptors
+            None, {})
     assert len(logs) >= 1

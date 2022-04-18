@@ -221,10 +221,9 @@ class CSS:
         self.base_url = base_url
         self.matcher = matcher or cssselect2.Matcher()
         self.page_rules = [] if page_rules is None else page_rules
-        self.fonts = []
         preprocess_stylesheet(
             media_type, base_url, stylesheet, url_fetcher, self.matcher,
-            self.page_rules, self.fonts, font_config, counter_style)
+            self.page_rules, font_config, counter_style)
 
 
 class Attachment:
