@@ -1239,6 +1239,47 @@ def test_margin_boxes_vertical_align():
 def test_margin_boxes_element():
     pages = render_pages('''
       <style>
+        @page {
+          counter-increment: count;
+          counter-reset: page pages;
+          margin: 50px;
+          size: 200px;
+          @bottom-center {
+            content: counter(page) ' of ' counter(pages)
+                     ' (' counter(count) ')';
+          }
+        }
+        h1 {
+          height: 40px;
+        }
+      </style>
+      <h1>test1</h1>
+      <h1>test2</h1>
+      <h1>test3</h1>
+      <h1>test4</h1>
+      <h1>test5</h1>
+      <h1>test6</h1>
+    ''')
+    footer1_text = ''.join(
+        getattr(node, 'text', '')
+        for node in pages[0].children[1].descendants())
+    assert footer1_text == '0 of 3 (1)'
+
+    footer2_text = ''.join(
+        getattr(node, 'text', '')
+        for node in pages[1].children[1].descendants())
+    assert footer2_text == '0 of 3 (2)'
+
+    footer3_text = ''.join(
+        getattr(node, 'text', '')
+        for node in pages[2].children[1].descendants())
+    assert footer3_text == '0 of 3 (3)'
+
+
+@assert_no_logs
+def test_margin_boxes_running_element():
+    pages = render_pages('''
+      <style>
         footer {
           position: running(footer);
         }
