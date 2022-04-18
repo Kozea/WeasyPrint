@@ -78,6 +78,47 @@ def test_relative_positioning_2():
 
 
 @assert_no_logs
+def test_relative_positioning_3():
+    page, = render_pages('''
+      <style>
+        img { width: 20px }
+        body { font-size: 0 } /* Remove spaces */
+      </style>
+      <body>
+      <span><img src=pattern.png></span>
+      <span style="position: relative; left: 10px; right: 5px
+        "><img src=pattern.png></span>
+      <span><img src=pattern.png></span>
+    ''')
+    html, = page.children
+    body, = html.children
+    line, = body.children
+    span1, span2, span3 = line.children
+    assert span2.position_x == 20 + 10
+
+
+@assert_no_logs
+def test_relative_positioning_4():
+    page, = render_pages('''
+      <style>
+        img { width: 20px }
+        body { direction: rtl; width: 100px;
+               font-size: 0 } /* Remove spaces */
+      </style>
+      <body>
+      <span><img src=pattern.png></span>
+      <span style="position: relative; left: 10px; right: 5px
+        "><img src=pattern.png></span>
+      <span><img src=pattern.png></span>
+    ''')
+    html, = page.children
+    body, = html.children
+    line, = body.children
+    span1, span2, span3 = line.children
+    assert span2.position_x == 100 - 20 - 5 - 20
+
+
+@assert_no_logs
 def test_absolute_positioning_1():
     page, = render_pages('''
       <div style="margin: 3px">
