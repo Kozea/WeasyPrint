@@ -1059,6 +1059,41 @@ def test_margin_box_string_set_9():
 
 
 @assert_no_logs
+def test_margin_box_string_set_10():
+    page_1, page_2, page_3, page_4 = render_pages('''
+      <style>
+        @page { @top-left  { content: '[' string(p, start) ']' } }
+        p { string-set: p content(); page-break-after: always }
+      </style>
+      <article></article>
+      <p>1</p>
+      <article></article>
+      <p>2</p>
+      <p>3</p>
+      <article></article>
+    ''')
+    html, top_left = page_1.children
+    left_line_box, = top_left.children
+    left_text_box, = left_line_box.children
+    assert left_text_box.text == '[]'
+
+    html, top_left = page_2.children
+    left_line_box, = top_left.children
+    left_text_box, = left_line_box.children
+    assert left_text_box.text == '[1]'
+
+    html, top_left = page_3.children
+    left_line_box, = top_left.children
+    left_text_box, = left_line_box.children
+    assert left_text_box.text == '[3]'
+
+    html, top_left = page_4.children
+    left_line_box, = top_left.children
+    left_text_box, = left_line_box.children
+    assert left_text_box.text == '[3]'
+
+
+@assert_no_logs
 def test_page_counters():
     """Test page-based counters."""
     pages = render_pages('''
