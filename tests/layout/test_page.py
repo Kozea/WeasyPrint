@@ -540,6 +540,29 @@ def test_recto_verso_break(direction, page_break, pages_number):
 
 
 @assert_no_logs
+@pytest.mark.parametrize('direction, page_break, first_page', (
+    ('ltr', 'recto', 'right'),
+    ('ltr', 'verso', 'left'),
+    ('rtl', 'recto', 'left'),
+    ('rtl', 'verso', 'right'),
+    ('ltr', 'right', 'right'),
+    ('ltr', 'left', 'left'),
+    ('rtl', 'right', 'right'),
+    ('rtl', 'left', 'left'),
+))
+def test_recto_verso_break_root(direction, page_break, first_page):
+    page, = render_pages('''
+      <style>
+        @page:left { size: 4px /* len('left') */ }
+        @page:right { size: 5px /* len('right') */ }
+        html { direction: %s; break-before: %s }
+      </style>
+      abc
+    ''' % (direction, page_break))
+    assert page.width == len(first_page)
+
+
+@assert_no_logs
 def test_page_names_1():
     pages = render_pages('''
       <style>
