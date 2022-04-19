@@ -60,6 +60,14 @@ class CounterLookupItem:
         self.cached_page_counter_values = {}
 
 
+def anchor_name_from_token(anchor_token):
+    """Get anchor name from string or uri token."""
+    if anchor_token[0] == 'string' and anchor_token[1].startswith('#'):
+        return anchor_token[1][1:]
+    elif anchor_token[0] == 'url' and anchor_token[1][0] == 'internal':
+        return anchor_token[1][1]
+
+
 class TargetCollector:
     """Collector of HTML targets used by CSS content with ``target-*``."""
 
@@ -79,13 +87,6 @@ class TargetCollector:
         # to call the needed parse_again functions.
         self.had_pending_targets = False
 
-    def anchor_name_from_token(self, anchor_token):
-        """Get anchor name from string or uri token."""
-        if anchor_token[0] == 'string' and anchor_token[1].startswith('#'):
-            return anchor_token[1][1:]
-        elif anchor_token[0] == 'url' and anchor_token[1][0] == 'internal':
-            return anchor_token[1][1]
-
     def collect_anchor(self, anchor_name):
         """Create a TargetLookupItem for the given `anchor_name``."""
         if anchor_name and isinstance(anchor_name, str):
@@ -103,7 +104,7 @@ class TargetCollector:
         tree again.
 
         """
-        anchor_name = self.anchor_name_from_token(anchor_token)
+        anchor_name = anchor_name_from_token(anchor_token)
         item = self.target_lookup_items.get(
             anchor_name, TargetLookupItem('undefined'))
 

@@ -10,7 +10,7 @@ import unicodedata
 import tinycss2.color3
 
 from .. import html
-from ..css import computed_values, properties
+from ..css import computed_values, properties, targets
 from ..logger import LOGGER
 from . import boxes
 
@@ -369,26 +369,6 @@ def marker_to_box(element, state, parent_style, style_for, get_image_from_uri,
     yield marker_box
 
 
-def _collect_missing_counter(counter_name, counter_values, missing_counters):
-    """Collect missing counters."""
-    if counter_name not in list(counter_values) + missing_counters:
-        missing_counters.append(counter_name)
-
-
-def _collect_missing_target_counter(counter_name, lookup_counter_values,
-                                    anchor_name, missing_target_counters):
-    """Collect missing target counters.
-
-    The corresponding TargetLookupItem caches the target's page based
-    counter values during pagination.
-
-    """
-    if counter_name not in lookup_counter_values:
-        missing_counters = missing_target_counters.setdefault(anchor_name, [])
-        if counter_name not in missing_counters:
-            missing_counters.append(counter_name)
-
-
 def compute_content_list(content_list, parent_box, counter_values, css_token,
                          parse_again, target_collector, counter_style,
                          get_image_from_uri=None, quote_depth=None,
@@ -451,25 +431,6 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
             # Simulate the step of white space processing
             # (normally done during the layout)
             add_text(added_text.strip())
-        elif type_ == 'counter()':
-            counter_name, counter_type = value
-            if need_collect_missing:
-                _collect_missing_counter(
-                    counter_name, counter_values, missing_counters)
-            if counter_type != 'none':
-                counter_value = counter_values.get(counter_name, [0])[-1]
-                add_text(
-                    counter_style.render_value(counter_value, counter_type))
-        elif type_ == 'counters()':
-            counter_name, separator, counter_type = value
-            if need_collect_missing:
-                _collect_missing_counter(
-                    counter_name, counter_values, missing_counters)
-            if counter_type != 'none':
-                add_text(separator.join(
-                    counter_style.render_value(counter_value, counter_type)
-                    for counter_value
-                    in counter_values.get(counter_name, [0])))
         elif type_ == 'string()':
             if not in_page_context:
                 # string() is currently only valid in @page context
@@ -479,54 +440,53 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
                     ' '.join(value))
                 continue
             add_text(context.get_string_set_for(page, *value))
-        elif type_ == 'target-counter()':
-            anchor_token, counter_name, counter_type = value
-            lookup_target = target_collector.lookup_target(
-                anchor_token, parent_box, css_token, parse_again)
-            if lookup_target.state == 'up-to-date':
-                target_values = lookup_target.target_box.cached_counter_values
-                if need_collect_missing:
-                    _collect_missing_target_counter(
-                        counter_name, target_values,
-                        target_collector.anchor_name_from_token(anchor_token),
-                        missing_target_counters)
-                # Mixin target's cached page counters.
-                # cached_page_counter_values are empty during layout.
-                local_counters = (
-                    lookup_target.cached_page_counter_values.copy())
-                local_counters.update(target_values)
-                if counter_type != 'none':
-                    counter_value = local_counters.get(counter_name, [0])[-1]
-                    add_text(counter_style.render_value(
-                        counter_value, counter_type))
+        elif type_ in ('counter()', 'counters()'):
+            counter_name, counter_type = value[0], value[-1]
+            if counter_type == 'none':
+                continue
+            if need_collect_missing:
+                if counter_name not in list(counter_values) + missing_counters:
+                    missing_counters.append(counter_name)
+            if type_ == 'counter()':
+                counter_value = counter_values.get(counter_name, [0])[-1]
+                text = counter_style.render_value(counter_value, counter_type)
             else:
-                break
-        elif type_ == 'target-counters()':
-            anchor_token, counter_name, separator, counter_type = value
+                separator = value[1]
+                text = separator.join(
+                    counter_style.render_value(counter_value, counter_type)
+                    for counter_value in counter_values.get(counter_name, [0]))
+            add_text(text)
+        elif type_ in ('target-counter()', 'target-counters()'):
+            (anchor_token, counter_name), counter_type = value[:2], value[-1]
+            if counter_type == 'none':
+                continue
             lookup_target = target_collector.lookup_target(
                 anchor_token, parent_box, css_token, parse_again)
-            if lookup_target.state == 'up-to-date':
+            if lookup_target.state != 'up-to-date':
+                break
+            target_values = lookup_target.target_box.cached_counter_values
+            if need_collect_missing and counter_name not in target_values:
+                anchor_name = targets.anchor_name_from_token(anchor_token)
+                missing_counters = missing_target_counters.setdefault(
+                    anchor_name, [])
+                if counter_name not in missing_counters:
+                    missing_counters.append(counter_name)
+            # Mixin target's cached page counters.
+            # cached_page_counter_values are empty during layout.
+            local_counters = lookup_target.cached_page_counter_values.copy()
+            local_counters.update(target_values)
+            if type_ == 'target-counter()':
+                counter_value = local_counters.get(counter_name, [0])[-1]
+                text = counter_style.render_value(counter_value, counter_type)
+            else:
+                separator = value[2]
                 if separator[0] != 'string':
                     break
                 separator_string = separator[1]
-                target_values = lookup_target.target_box.cached_counter_values
-                if need_collect_missing:
-                    _collect_missing_target_counter(
-                        counter_name, target_values,
-                        target_collector.anchor_name_from_token(anchor_token),
-                        missing_target_counters)
-                # Mixin target's cached page counters.
-                # cached_page_counter_values are empty during layout.
-                local_counters = (
-                    lookup_target.cached_page_counter_values.copy())
-                local_counters.update(target_values)
-                if counter_type != 'none':
-                    add_text(separator_string.join(
-                        counter_style.render_value(counter_value, counter_type)
-                        for counter_value
-                        in local_counters.get(counter_name, [0])))
-            else:
-                break
+                text = separator_string.join(
+                    counter_style.render_value(counter_value, counter_type)
+                    for counter_value in local_counters.get(counter_name, [0]))
+            add_text(text)
         elif type_ == 'target-text()':
             anchor_token, text_style = value
             lookup_target = target_collector.lookup_target(
@@ -541,9 +501,7 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
                 add_text(text.strip())
             else:
                 break
-        elif (type_ == 'quote' and
-                quote_depth is not None and
-                quote_style is not None):
+        elif type_ == 'quote' and None not in (quote_depth, quote_style):
             is_open = 'open' in value
             insert = not value.startswith('no-')
             if not is_open:
