@@ -427,7 +427,7 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
                 content_boxes.append(
                     boxes.InlineReplacedBox.anonymous_from(parent_box, image))
         elif type_ == 'content()':
-            added_text = TEXT_CONTENT_EXTRACTORS[value](parent_box)
+            added_text = extract_text(value, parent_box)
             # Simulate the step of white space processing
             # (normally done during the layout)
             add_text(added_text.strip())
@@ -495,7 +495,7 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
                 target_box = lookup_target.target_box
                 # TODO: 'before'- and 'after'- content referring missing
                 # counters are not properly set.
-                text = TEXT_CONTENT_EXTRACTORS[text_style](target_box)
+                text = extract_text(text_style, target_box)
                 # Simulate the step of white space processing
                 # (normally done during the layout)
                 add_text(text.strip())
@@ -1564,50 +1564,29 @@ def box_text(box):
             not child.element_tag.endswith('::after') and
             not child.element_tag.endswith('::marker') and
             isinstance(child, boxes.TextBox))
-    else:
+    return ''
+
+
+def extract_text(text_part, box):
+    if text_part in ('text', 'content'):
+        return box_text(box)
+    elif text_part in ('before', 'after'):
+        if isinstance(box, boxes.ParentBox):
+            return ''.join(
+                box_text(child) for child in box.descendants()
+                if child.element_tag.endswith(f'::{text_part}') and
+                not isinstance(child, boxes.ParentBox))
         return ''
-
-
-def box_text_first_letter(box):
-    # TODO: use the same code as in inlines.first_letter_to_box
-    character_found = False
-    first_letter = ''
-    text = box_text(box)
-    while text:
-        next_letter = text[0]
-        category = unicodedata.category(next_letter)
-        if category not in ('Ps', 'Pe', 'Pi', 'Pf', 'Po'):
-            if character_found:
-                break
-            character_found = True
-        first_letter += next_letter
-        text = text[1:]
-    return first_letter
-
-
-def box_text_before(box):
-    if isinstance(box, boxes.ParentBox):
-        return ''.join(
-            box_text(child) for child in box.descendants()
-            if child.element_tag.endswith('::before') and
-            not isinstance(child, boxes.ParentBox))
-    else:
-        return ''
-
-
-def box_text_after(box):
-    if isinstance(box, boxes.ParentBox):
-        return ''.join(
-            box_text(child) for child in box.descendants()
-            if child.element_tag.endswith('::after') and
-            not isinstance(child, boxes.ParentBox))
-    else:
-        return ''
-
-
-TEXT_CONTENT_EXTRACTORS = {
-    'text': box_text,
-    'content': box_text,
-    'before': box_text_before,
-    'after': box_text_after,
-    'first-letter': box_text_first_letter}
+    elif text_part == 'first-letter':
+        # TODO: use the same code as in inlines.first_letter_to_box
+        character_found = False
+        first_letter = ''
+        text = box_text(box)
+        for letter in text:
+            category = unicodedata.category(letter)
+            if category not in ('Ps', 'Pe', 'Pi', 'Pf', 'Po'):
+                if character_found:
+                    break
+                character_found = True
+            first_letter += letter
+        return first_letter

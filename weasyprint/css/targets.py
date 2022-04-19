@@ -22,7 +22,7 @@ class TargetLookupItem:
 
         # Required by target-counter and target-counters to access the
         # target's .cached_counter_values.
-        # Needed for target-text via TEXT_CONTENT_EXTRACTORS.
+        # Needed for target-text via extract_text().
         self.target_box = None
 
         # Functions that have to been called to check pending targets.
