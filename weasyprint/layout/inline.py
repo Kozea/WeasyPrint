@@ -1164,7 +1164,8 @@ def add_word_spacing(context, box, justification_spacing, x_advance):
         nb_spaces = count_spaces(box)
         if nb_spaces > 0:
             layout = create_layout(
-                box.text, box.style, context, -inf, box.justification_spacing)
+                box.text, box.style, context, max_width=None,
+                justification_spacing=box.justification_spacing)
             layout.deactivate()
             extra_space = justification_spacing * nb_spaces
             x_advance += extra_space

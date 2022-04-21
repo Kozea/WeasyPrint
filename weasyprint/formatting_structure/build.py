@@ -44,7 +44,7 @@ ASCII_TO_WIDE.update({0x20: '\u3000', 0x2D: '\u2212'})
 
 LINE_FEED_RE = re.compile('\r\n?')
 TAB_RE = re.compile('[\t ]*\n[\t ]*')
-SPACE_RE = re.compile(' +')
+SPACE_RE = re.compile('[\t ]+')
 
 
 def create_anonymous_boxes(box):
@@ -1220,9 +1220,7 @@ def process_whitespace(box, following_collapsible_space=False):
             text = text.replace('\n', ' ')
 
         if space_collapse:
-            text = text.replace('\t', ' ')
-            text = SPACE_RE.sub(' ', text)
-            previous_text = text
+            previous_text = text = SPACE_RE.sub(' ', text)
             if following_collapsible_space and text.startswith(' '):
                 text = text[1:]
                 box.leading_collapsible_space = True
