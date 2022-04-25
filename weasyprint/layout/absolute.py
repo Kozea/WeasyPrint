@@ -204,8 +204,11 @@ def absolute_block(context, box, containing_block, fixed_boxes, bottom_space,
 
     translate_box_width, translate_x = absolute_width(
         box, context, containing_block)
-    translate_box_height, translate_y = absolute_height(
-        box, context, containing_block)
+    if skip_stack:
+        translate_box_height, translate_y = False, 0
+    else:
+        translate_box_height, translate_y = absolute_height(
+            box, context, containing_block)
 
     bottom_space += translate_y
 
