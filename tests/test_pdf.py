@@ -474,6 +474,20 @@ def test_missing_links():
 
 
 @assert_no_logs
+def test_anchor_multiple_pages():
+    pdf = FakeHTML(string='''
+      <style> a { display: block; break-after: page } </style>
+      <div id="lipsum">
+        <a href="#lipsum"></a>
+        <a href="#lipsum"></a>
+        <a href="#lipsum"></a>
+      </div>
+    ''', base_url=None).write_pdf()
+    first_page, = re.findall(b'/Kids \\[ (\\d+) 0 R', pdf)
+    assert b'/Names [ (lipsum) [ ' + first_page in pdf
+
+
+@assert_no_logs
 def test_embed_gif():
     assert b'/Filter /DCTDecode' not in FakeHTML(
         base_url=resource_filename('dummy.html'),
