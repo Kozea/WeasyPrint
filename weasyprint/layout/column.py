@@ -314,6 +314,7 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
             max_column_height = max(
                 max_column_height, new_child.margin_height())
             if skip_stack is None:
+                bottom_space = original_bottom_space
                 break
             i += 1
             if i == count and not known_height:

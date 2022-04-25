@@ -387,6 +387,37 @@ def test_column_span_8():
 
 
 @assert_no_logs
+def test_column_span_9():
+    page1, = render_pages('''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        @page { margin: 0; size: 8px 3px }
+        body { font-family: weasyprint; font-size: 1px }
+        div { columns: 2; column-gap: 0; line-height: 1 }
+        section { column-span: all }
+      </style>
+      <div>
+        abc
+        <section>line1</section>
+        def ghi
+      </div>
+    ''')
+    html, = page1.children
+    body, = html.children
+    div, = body.children
+    column1, section, column2, column3 = div.children
+    assert (column1.position_x, column1.position_y) == (0, 0)
+    assert (section.position_x, section.position_y) == (0, 1)
+    assert (column2.position_x, column2.position_y) == (0, 2)
+    assert (column3.position_x, column3.position_y) == (4, 2)
+
+    assert column1.children[0].children[0].children[0].text == 'abc'
+    assert section.children[0].children[0].text == 'line1'
+    assert column2.children[0].children[0].children[0].text == 'def'
+    assert column3.children[0].children[0].children[0].text == 'ghi'
+
+
+@assert_no_logs
 def test_columns_multipage():
     page1, page2 = render_pages('''
       <style>
