@@ -63,8 +63,9 @@ def resolve_links(pages):
     for i, page in enumerate(pages):
         paged_anchors.append([])
         for anchor_name, (point_x, point_y) in page.anchors.items():
-            paged_anchors[-1].append((anchor_name, point_x, point_y))
-            anchors.add(anchor_name)
+            if anchor_name not in anchors:
+                paged_anchors[-1].append((anchor_name, point_x, point_y))
+                anchors.add(anchor_name)
     for page in pages:
         page_links = []
         for link in page.links:
