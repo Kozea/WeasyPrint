@@ -174,6 +174,7 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
         first_probe_run = True
         original_page_is_empty = page_is_empty
         page_is_empty = False
+        stop_rendering = False
         while True:
             column_skip_stack = skip_stack
 
@@ -251,6 +252,7 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
                 if column_skip_stack or max(consumed_heights) > max_height:
                     # Even at maximum height, not everything fits. Stop now and
                     # let the columns continue on the next page.
+                    stop_rendering = True
                     break
                 else:
                     # Everything fit, start expanding columns at the average of
@@ -274,6 +276,7 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
 
                     if height + add_height > max_height:
                         height = max_height
+                        stop_rendering = True
                         break
 
                     height += add_height
@@ -327,6 +330,9 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
 
         skip_stack = None
         page_is_empty = False
+
+        if stop_rendering:
+            break
 
     if box.children and not new_children:
         # The box has children but none can be drawn, let's skip the whole box
