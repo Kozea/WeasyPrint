@@ -5,6 +5,7 @@ from urllib.parse import urljoin
 import cssselect2
 import tinycss2
 
+from ..logger import LOGGER
 from .utils import parse_url
 
 
@@ -72,7 +73,13 @@ def parse_stylesheets(tree, url):
         for rule in find_stylesheets_rules(tree, stylesheet, url):
             normal_declarations, important_declarations = parse_declarations(
                 rule.content)
-            for selector in cssselect2.compile_selector_list(rule.prelude):
+            try:
+                selectors = cssselect2.compile_selector_list(rule.prelude)
+            except cssselect2.parser.SelectorError as exception:
+                LOGGER.warning(
+                    'Failed to apply CSS rule in SVG rule: %s', exception)
+                break
+            for selector in selectors:
                 if (selector.pseudo_element is None and
                         not selector.never_matches):
                     if normal_declarations:
