@@ -1313,6 +1313,9 @@ def test_margin_boxes_running_element():
             content: element(footer);
           }
         }
+        body {
+          font-size: 1px
+        }
         h1 {
           height: 40px;
         }
