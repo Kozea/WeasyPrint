@@ -870,3 +870,112 @@ def test_block_in_block_with_bottom_padding():
     assert line.height == 16
     assert line.content_box_y() == 16 + 16  # p content + div padding
     assert line.children[0].text == 'stu vwx'
+
+
+@assert_no_logs
+def test_page_breaks_1():
+    # last div does not fit, pushed to next page
+    pages = render_pages('''
+      <style>
+        @page{
+          size: 110px;
+          margin: 10px;
+          padding: 0;
+        }
+        .large {
+          width: 10px;
+          height: 60px;
+        }
+        .small {
+          width: 10px;
+          height: 20px;
+        }
+      </style>
+      <body>
+        <div class="large"></div>
+        <div class="small"></div>
+        <div class="large"></div>
+    ''')
+
+    assert len(pages) == 2
+    page_divs = []
+    for page in pages:
+        divs = [div for div in page.descendants() if div.element_tag == 'div']
+        assert all([div.element_tag == 'div' for div in divs])
+        page_divs.append(divs)
+    positions_y = [[div.position_y for div in divs] for divs in page_divs]
+    assert positions_y == [[10, 70], [10]]
+
+
+@assert_no_logs
+def test_page_breaks_2():
+    # last div does not fit, pushed to next page
+    # center div must not
+    pages = render_pages('''
+      <style>
+        @page{
+          size: 110px;
+          margin: 10px;
+          padding: 0;
+        }
+        .large {
+          width: 10px;
+          height: 60px;
+        }
+        .small {
+          width: 10px;
+          height: 20px;
+          page-break-after: avoid;
+        }
+      </style>
+      <body>
+        <div class="large"></div>
+        <div class="small"></div>
+        <div class="large"></div>
+    ''')
+
+    assert len(pages) == 2
+    page_divs = []
+    for page in pages:
+        divs = [div for div in page.descendants() if div.element_tag == 'div']
+        assert all([div.element_tag == 'div' for div in divs])
+        page_divs.append(divs)
+    positions_y = [[div.position_y for div in divs] for divs in page_divs]
+    assert positions_y == [[10], [10, 30]]
+
+
+@assert_no_logs
+def test_page_breaks_3():
+    # center div must be the last element,
+    # but div won't fit and will get pushed anyway
+    pages = render_pages('''
+      <style>
+        @page{
+          size: 110px;
+          margin: 10px;
+          padding: 0;
+        }
+        .large {
+          width: 10px;
+          height: 80px;
+        }
+        .small {
+          width: 10px;
+          height: 20px;
+          page-break-after: avoid;
+        }
+      </style>
+      <body>
+        <div class="large"></div>
+        <div class="small"></div>
+        <div class="large"></div>
+    ''')
+
+    assert len(pages) == 3
+    page_divs = []
+    for page in pages:
+        divs = [div for div in page.descendants() if div.element_tag == 'div']
+        assert all([div.element_tag == 'div' for div in divs])
+        page_divs.append(divs)
+    positions_y = [[div.position_y for div in divs] for divs in page_divs]
+    assert positions_y == [[10], [10], [10]]
