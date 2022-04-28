@@ -103,7 +103,7 @@ def text(svg, node, font_size):
         y_align = -descent
 
     # Set bounding box
-    node.bounding_box = EMPTY_BOUNDING_BOX
+    node.text_bounding_box = EMPTY_BOUNDING_BOX
 
     # Return early when there’s no text
     if not node.text:
@@ -141,7 +141,8 @@ def text(svg, node, font_size):
              cursor_position[1] + y_align + svg.cursor_d_position[1]),
             (cursor_position[0] + x_align + width + svg.cursor_d_position[0],
              cursor_position[1] + y_align + height + svg.cursor_d_position[1]))
-        node.bounding_box = extend_bounding_box(node.bounding_box, points)
+        node.text_bounding_box = extend_bounding_box(
+            node.text_bounding_box, points)
 
         layout.reactivate(style)
         svg.fill_stroke(node, font_size, text=True)
