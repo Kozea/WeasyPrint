@@ -137,14 +137,10 @@ def text(svg, node, font_size):
         cursor_position = x + width, y
         angle = last_r if r is None else r
         points = (
-            (cursor_position[0] + x_align +
-             svg.cursor_d_position[0],
-             cursor_position[1] + y_align +
-             svg.cursor_d_position[1]),
-            (cursor_position[0] + x_align + width +
-             svg.cursor_d_position[0],
-             cursor_position[1] + y_align + height +
-             svg.cursor_d_position[1]))
+            (cursor_position[0] + x_align + svg.cursor_d_position[0],
+             cursor_position[1] + y_align + svg.cursor_d_position[1]),
+            (cursor_position[0] + x_align + width + svg.cursor_d_position[0],
+             cursor_position[1] + y_align + height + svg.cursor_d_position[1]))
         node.bounding_box = extend_bounding_box(node.bounding_box, points)
 
         layout.reactivate(style)
