@@ -611,6 +611,7 @@ def block_container_layout(context, box, bottom_space, skip_stack,
     new_children = []
     next_page = {'break': 'any', 'page': None}
     all_footnotes = []
+    broken_out_of_flow = []
 
     last_in_flow_child = None
 
@@ -632,8 +633,7 @@ def block_container_layout(context, box, bottom_space, skip_stack,
                 absolute_boxes, fixed_boxes, adjoining_margins,
                 bottom_space)
             if out_of_flow_resume_at:
-                context.broken_out_of_flow.append(
-                    (child, box, out_of_flow_resume_at))
+                broken_out_of_flow.append((child, box, out_of_flow_resume_at))
 
         elif isinstance(child, boxes.LineBox):
             (abort, stop, resume_at, position_y,
@@ -679,6 +679,8 @@ def block_container_layout(context, box, bottom_space, skip_stack,
             context.unlayout_footnote(footnote)
         return (
             None, None, {'break': 'any', 'page': None}, [], False)
+
+    context.broken_out_of_flow.extend(broken_out_of_flow)
 
     if collapsing_with_children:
         box.position_y += (
