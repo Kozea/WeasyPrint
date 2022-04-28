@@ -378,7 +378,7 @@ class SVG:
             if is_valid_bounding_box(box):
                 coords = (box[0], box[1], box[0] + box[2], box[1] + box[3])
             else:
-                coords = (0, 0, self.concrete_width, self.concrete_height)
+                coords = (0, 0, self.inner_width, self.inner_height)
             self.stream = self.stream.add_group(coords)
 
         # Apply transform attribute
