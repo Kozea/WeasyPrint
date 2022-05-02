@@ -336,21 +336,11 @@ def test_reported_sequential_footnote():
         <div>
             a<span>b</span><span>c</span><span>d</span><span>e</span>
         </div>''')
-    line = tree_position(
-        pages, lambda box: type(box).__name__ == 'TextBox' and box.text == 'a')
-    fn_1 = tree_position(
-        pages, lambda box: type(box).__name__ == 'TextBox' and box.text == 'b')
-    fn_2 = tree_position(
-        pages, lambda box: type(box).__name__ == 'TextBox' and box.text == 'c')
-    fn_3 = tree_position(
-        pages, lambda box: type(box).__name__ == 'TextBox' and box.text == 'd')
-    fn_4 = tree_position(
-        pages, lambda box: type(box).__name__ == 'TextBox' and box.text == 'e')
 
-    assert line < fn_1
-    assert fn_1 < fn_2
-    assert fn_2 < fn_3
-    assert fn_3 < fn_4
+    positions = [
+        tree_position(pages, lambda box: getattr(box, 'text', None) == letter)
+        for letter in 'abcde']
+    assert sorted(positions) == positions
 
 
 @assert_no_logs
