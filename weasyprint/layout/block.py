@@ -355,15 +355,22 @@ def _linebox_layout(context, box, index, child, new_children, page_is_empty,
                         bottom_space, new_position_y + offset_y))
                 if overflow:
                     context.report_footnote(footnote)
-                    if footnote.style['footnote_policy'] == 'line':
-                        abort, stop, resume_at = _break_line(
-                            context, box, line, new_children, lines_iterator,
-                            page_is_empty, index, skip_stack, resume_at,
-                            absolute_boxes, fixed_boxes)
-                        break_linebox = True
-                    elif footnote.style['footnote_policy'] == 'block':
-                        abort = break_linebox = True
-                    break
+                    # If we've put other content on this page, then we may want
+                    # to push this line or block to the next page. Otherwise,
+                    # we can't (and would loop forever if we tried), so don't
+                    # even try.
+                    if new_children or not page_is_empty:
+                        if footnote.style['footnote_policy'] == 'line':
+                            abort, stop, resume_at = _break_line(
+                                context, box, line, new_children,
+                                lines_iterator, page_is_empty, index,
+                                skip_stack, resume_at, absolute_boxes,
+                                fixed_boxes)
+                            break_linebox = True
+                            break
+                        elif footnote.style['footnote_policy'] == 'block':
+                            abort = break_linebox = True
+                            break
             if break_linebox:
                 break
 
