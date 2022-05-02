@@ -325,6 +325,43 @@ def test_reported_footnote_3():
 
 
 @assert_no_logs
+def test_reported_sequential_footnote():
+    pages = render_pages('''
+        <style>
+            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+            @page {
+                size: 9px 7px;
+            }
+            div {
+                font-family: weasyprint;
+                font-size: 2px;
+                line-height: 1;
+            }
+            span {
+                float: footnote;
+            }
+        </style>
+        <div>
+            a<span>b</span><span>c</span><span>d</span><span>e</span>
+        </div>''')
+    line = tree_position(
+        pages, lambda box: type(box).__name__ == 'TextBox' and box.text == 'a')
+    fn_1 = tree_position(
+        pages, lambda box: type(box).__name__ == 'TextBox' and box.text == 'b')
+    fn_2 = tree_position(
+        pages, lambda box: type(box).__name__ == 'TextBox' and box.text == 'c')
+    fn_3 = tree_position(
+        pages, lambda box: type(box).__name__ == 'TextBox' and box.text == 'd')
+    fn_4 = tree_position(
+        pages, lambda box: type(box).__name__ == 'TextBox' and box.text == 'e')
+
+    assert line < fn_1
+    assert fn_1 < fn_2
+    assert fn_2 < fn_3
+    assert fn_3 < fn_4
+
+
+@assert_no_logs
 @pytest.mark.parametrize('css, tail', (
     ('p { break-inside: avoid }', '<br>e<br>f'),
     ('p { widows: 4 }', '<br>e<br>f'),
