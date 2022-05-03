@@ -22,13 +22,9 @@ from .urls import get_url_attribute
 HTML5_UA_COUNTER_STYLE = CounterStyle()
 HTML5_UA = get_data('weasyprint', 'css/html5_ua.css')
 HTML5_PH = get_data('weasyprint', 'css/html5_ph.css')
-if HTML5_UA is None:
-    LOGGER.warning('User agent stylesheet could not be loaded')
-    HTML5_UA_STYLESHEET = HTML5_PH_STYLESHEET = CSS(string='')
-else:
-    HTML5_UA_STYLESHEET = CSS(
-        string=HTML5_UA.decode(), counter_style=HTML5_UA_COUNTER_STYLE)
-    HTML5_PH_STYLESHEET = CSS(string=HTML5_PH.decode())
+HTML5_UA_STYLESHEET = CSS(
+    string=HTML5_UA.decode(), counter_style=HTML5_UA_COUNTER_STYLE)
+HTML5_PH_STYLESHEET = CSS(string=HTML5_PH.decode())
 
 # http://whatwg.org/C#space-character
 HTML_WHITESPACE = ' \t\n\f\r'
