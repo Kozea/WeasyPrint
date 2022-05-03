@@ -367,9 +367,10 @@ def _linebox_layout(context, box, index, child, new_children, page_is_empty,
                                 skip_stack, resume_at, absolute_boxes,
                                 fixed_boxes)
                             break_linebox = True
+                            break
                         elif footnote.style['footnote_policy'] == 'block':
                             abort = break_linebox = True
-                        break
+                            break
             if break_linebox:
                 break
 

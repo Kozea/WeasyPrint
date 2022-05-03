@@ -344,6 +344,33 @@ def test_reported_sequential_footnote():
 
 
 @assert_no_logs
+def test_reported_sequential_footnote_second_line():
+    pages = render_pages('''
+        <style>
+            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+            @page {
+                size: 9px 7px;
+            }
+            div {
+                font-family: weasyprint;
+                font-size: 2px;
+                line-height: 1;
+            }
+            span {
+                float: footnote;
+            }
+        </style>
+        <div>
+            aaa a<span>b</span><span>c</span><span>d</span><span>e</span>
+        </div>''')
+
+    positions = [
+        tree_position(pages, lambda box: getattr(box, 'text', None) == letter)
+        for letter in 'abc']
+    assert sorted(positions) == positions
+
+
+@assert_no_logs
 @pytest.mark.parametrize('css, tail', (
     ('p { break-inside: avoid }', '<br>e<br>f'),
     ('p { widows: 4 }', '<br>e<br>f'),
