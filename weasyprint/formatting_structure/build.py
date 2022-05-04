@@ -89,9 +89,8 @@ def build_formatting_structure(element_tree, style_for, get_image_from_uri,
 
 
 def make_box(element_tag, style, content, element):
-    box = BOX_TYPE_FROM_DISPLAY[style['display'][:2]](
+    return BOX_TYPE_FROM_DISPLAY[style['display'][:2]](
         element_tag, style, element, content)
-    return box
 
 
 def element_to_box(element, style_for, get_image_from_uri, base_url,
