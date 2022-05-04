@@ -164,8 +164,7 @@ def handle_embed(element, box, get_image_from_uri, base_url):
 
 @handler('object')
 def handle_object(element, box, get_image_from_uri, base_url):
-    """Handle ``<object>`` elements, return either an image or the fallback
-    content.
+    """Handle ``<object>`` elements, return either an image or the fallback.
 
     See: https://www.w3.org/TR/html5/embedded-content-0.html#the-object-element
 
@@ -181,9 +180,7 @@ def handle_object(element, box, get_image_from_uri, base_url):
 
 
 def integer_attribute(element, box, name, minimum=1):
-    """Read an integer attribute from the HTML element and set it on the box.
-
-    """
+    """Read an integer attribute from an HTML element and set it on the box."""
     value = element.get(name, '').strip()
     if value:
         try:
