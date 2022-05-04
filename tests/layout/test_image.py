@@ -10,8 +10,11 @@ def get_img(html):
     page, = render_pages(html)
     html, = page.children
     body, = html.children
-    line, = body.children
-    img, = line.children
+    if body.children:
+        line, = body.children
+        img, = line.children
+    else:
+        img = None
     return body, img
 
 
@@ -67,7 +70,7 @@ def test_images_2():
 def test_images_3(url):
     # Invalid images
     with capture_logs() as logs:
-        body, img = get_img("<img src='%s' alt='invalid image'>" % url)
+        body, img = get_img(f"<img src='{url}' alt='invalid image'>")
     assert len(logs) == 1
     assert 'ERROR: Failed to load image' in logs[0]
     assert isinstance(img, boxes.InlineBox)  # not a replaced box
@@ -315,6 +318,21 @@ def test_images_18():
             data:image/svg+xml,
             <svg viewBox='0 0 20 10'></svg>
         ">''')
+
+
+@pytest.mark.parametrize('html, children', (
+    ('<embed>', []),
+    ('<embed src="unknown">', []),
+    ('<object></object>', []),
+    ('<object data="unknown"></object>', []),
+    ('<object>abc</object>', ['TextBox']),
+    ('<object data="unknown">abc</object>', ['TextBox']),
+))
+def test_images_19(html, children):
+    body, img = get_img(html)
+    img_children = [
+        type(child).__name__ for child in getattr(img, 'children', [])]
+    assert img_children == children
 
 
 @assert_no_logs
