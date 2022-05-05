@@ -7,6 +7,7 @@ importing sub-modules.
 
 import contextlib
 from pathlib import Path
+from urllib.parse import urljoin
 
 import cssselect2
 import html5lib
@@ -25,6 +26,20 @@ from .urls import (  # noqa isort:skip
 from .logger import LOGGER, PROGRESS_LOGGER  # noqa isort:skip
 # Some imports are at the end of the file (after the CSS class)
 # to work around circular imports.
+
+
+def _find_base_url(html_document, fallback_base_url):
+    """Return the base URL for the document.
+
+    See http://www.w3.org/TR/html5/urls.html#document-base-url
+
+    """
+    first_base_element = next(iter(html_document.iter('base')), None)
+    if first_base_element is not None:
+        href = first_base_element.get('href', '').strip()
+        if href:
+            return urljoin(fallback_base_url, href)
+    return fallback_base_url
 
 
 class HTML:
@@ -84,7 +99,7 @@ class HTML:
                     source, override_encoding=encoding,
                     transport_encoding=protocol_encoding,
                     namespaceHTMLElements=False)
-        self.base_url = find_base_url(result, base_url)
+        self.base_url = _find_base_url(result, base_url)
         self.url_fetcher = url_fetcher
         self.media_type = media_type
         self.wrapper_element = cssselect2.ElementWrapper.from_html_root(
@@ -313,6 +328,5 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
 # Work around circular imports.
 from .css import preprocess_stylesheet  # noqa isort:skip
 from .html import (  # noqa isort:skip
-    HTML5_UA_COUNTER_STYLE, HTML5_UA_STYLESHEET, HTML5_PH_STYLESHEET,
-    find_base_url)
+    HTML5_UA_COUNTER_STYLE, HTML5_UA_STYLESHEET, HTML5_PH_STYLESHEET)
 from .document import Document, Page  # noqa isort:skip

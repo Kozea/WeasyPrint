@@ -787,8 +787,12 @@ def table_boxes_children(box, children):
         # Rule XXX (not in the spec): column groups have at least
         # one column child.
         if not children:
+            if box.span is None or box.span < 1:
+                span = 1
+            else:
+                span = box.span
             children = [boxes.TableColumnBox.anonymous_from(box, [])
-                        for _i in range(box.span)]
+                        for _ in range(span)]
 
     # rule 1.3
     if box.tabular_container and len(children) >= 2:
@@ -906,7 +910,6 @@ def wrap_table(box, children):
                 # already generates x TableColumnBox children
                 column.grid_x = grid_x
                 grid_x += 1
-            group.span = len(group.children)
         else:
             grid_x += group.span
     grid_width = grid_x

@@ -600,6 +600,16 @@ class TableColumnGroupBox(ParentBox):
         return [
             cell for column in self.children for cell in column.get_cells()]
 
+    @property
+    def span(self):
+        if self.children:
+            return len(self.children)
+        else:
+            try:
+                return max(int(self.element.get('span', '').strip()), 1)
+            except ValueError:
+                return 1
+
 
 # Not really a parent box, but pretending to be removes some corner cases.
 class TableColumnBox(ParentBox):
@@ -628,6 +638,14 @@ class TableColumnBox(ParentBox):
         Is set on instances.
 
         """
+        raise NotImplementedError
+
+    @property
+    def span(self):
+        try:
+            return max(int(self.element.get('span', '').strip()), 1)
+        except ValueError:
+            return 1
 
 
 class TableCellBox(BlockContainerBox):

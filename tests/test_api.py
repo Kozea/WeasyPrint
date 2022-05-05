@@ -128,8 +128,8 @@ def _round_meta(pages):
 def test_html_parsing():
     """Test the constructor for the HTML class."""
     _test_resource(FakeHTML, 'doc1.html', _check_doc1)
-    _test_resource(FakeHTML, 'doc1_UTF-16BE.html', _check_doc1,
-                   encoding='UTF-16BE')
+    _test_resource(
+        FakeHTML, 'doc1_UTF-16BE.html', _check_doc1, encoding='UTF-16BE')
 
     py.path.local(os.path.dirname(__file__)).chdir()
     filename = os.path.join('resources', 'doc1.html')
@@ -138,9 +138,11 @@ def test_html_parsing():
     _test_resource(FakeHTML, 'doc1.html', _check_doc1, base_url=filename)
     _check_doc1(FakeHTML(string=string, base_url=filename))
     _check_doc1(FakeHTML(string=string), has_base_url=False)
-    string_with_meta = string.replace(
+    string_with_base = string.replace(
         '<meta', '<base href="resources/"><meta')
-    _check_doc1(FakeHTML(string=string_with_meta, base_url='.'))
+    _check_doc1(FakeHTML(string=string_with_base, base_url='.'))
+    string_with_empty_base = string.replace('<meta', '<base><meta')
+    _check_doc1(FakeHTML(string=string_with_empty_base), has_base_url=False)
 
 
 @assert_no_logs
@@ -652,24 +654,25 @@ def test_assert_bookmarks(html, expected_by_page, expected_tree, round):
     assert document.make_bookmark_tree() == expected_tree
 
 
-@assert_no_logs
-def test_links():
-    def assert_links(html, expected_links_by_page, expected_anchors_by_page,
-                     expected_resolved_links,
-                     base_url=resource_filename('<inline HTML>'),
-                     warnings=(), round=False):
-        with capture_logs() as logs:
-            document = FakeHTML(string=html, base_url=base_url).render()
-            if round:
-                _round_meta(document.pages)
-            resolved_links = list(resolve_links(document.pages))
-        assert len(logs) == len(warnings)
-        for message, expected in zip(logs, warnings):
-            assert expected in message
-        assert [p.links for p in document.pages] == expected_links_by_page
-        assert [p.anchors for p in document.pages] == expected_anchors_by_page
-        assert resolved_links == expected_resolved_links
+def assert_links(html, expected_links_by_page, expected_anchors_by_page,
+                 expected_resolved_links,
+                 base_url=resource_filename('<inline HTML>'), warnings=(),
+                 round=False):
+    with capture_logs() as logs:
+        document = FakeHTML(string=html, base_url=base_url).render()
+        if round:
+            _round_meta(document.pages)
+        resolved_links = list(resolve_links(document.pages))
+    assert len(logs) == len(warnings)
+    for message, expected in zip(logs, warnings):
+        assert expected in message
+    assert [p.links for p in document.pages] == expected_links_by_page
+    assert [p.anchors for p in document.pages] == expected_anchors_by_page
+    assert resolved_links == expected_resolved_links
 
+
+@assert_no_logs
+def test_links_1():
     assert_links('''
         <style>
             body { font-size: 10px; line-height: 2; width: 200px }
@@ -713,6 +716,9 @@ def test_links():
             [('lipsum', 0, 0)]),
     ])
 
+
+@assert_no_logs
+def test_links_2():
     assert_links(
         '''
             <body style="width: 200px">
@@ -723,6 +729,9 @@ def test_links():
                   (5, 10, 195, 10), None)], [])],
         base_url='http://weasyprint.org/foo/bar/')
 
+
+@assert_no_logs
+def test_links_3():
     assert_links(
         '''
             <body style="width: 200px">
@@ -734,6 +743,9 @@ def test_links():
                   (5, 10, 195, 10), None)], [])],
         base_url='http://weasyprint.org/foo/bar/')
 
+
+@assert_no_logs
+def test_links_4():
     # Relative URI reference without a base URI: allowed for links
     assert_links(
         '''
@@ -743,6 +755,9 @@ def test_links():
         [([('external', '../lipsum', (5, 10, 195, 10), None)], [])],
         base_url=None)
 
+
+@assert_no_logs
+def test_links_5():
     # Relative URI reference without a base URI: not supported for -weasy-link
     assert_links(
         '''
@@ -753,6 +768,9 @@ def test_links():
             'WARNING: Ignored `-weasy-link: url(../lipsum)` at 1:1, '
             'Relative URI reference without a base URI'])
 
+
+@assert_no_logs
+def test_links_6():
     # Internal or absolute URI reference without a base URI: OK
     assert_links(
         '''
@@ -769,6 +787,9 @@ def test_links():
           [('lipsum', 5, 10)])],
         base_url=None)
 
+
+@assert_no_logs
+def test_links_7():
     assert_links(
         '''
             <body style="width: 200px">
@@ -781,6 +802,9 @@ def test_links():
           [('lipsum', 5, 10)])],
         base_url=None)
 
+
+@assert_no_logs
+def test_links_8():
     assert_links(
         '''
             <style> a { display: block; height: 15px } </style>
@@ -797,6 +821,9 @@ def test_links():
         warnings=[
             'ERROR: No anchor #missing for internal URI reference'])
 
+
+@assert_no_logs
+def test_links_9():
     assert_links(
         '''
             <body style="width: 100px; transform: translateY(100px)">
@@ -809,6 +836,9 @@ def test_links():
           [('lipsum', 70, 10)])],
         round=True)
 
+
+@assert_no_logs
+def test_links_10():
     # Download for attachment
     assert_links(
         '''
@@ -820,6 +850,17 @@ def test_links():
         [{}], [([('attachment', 'pattern.png',
                   (5, 10, 195, 10), 'wow.png')], [])],
         base_url=None)
+
+
+@assert_no_logs
+def test_links_11():
+    # Attachment with missing href
+    assert_links(
+        '''
+            <body style="width: 200px">
+            <a rel=attachment download="wow.png"
+                style="display: block; margin: 10px 5px">
+        ''', [[]], [{}], [([], [])], base_url=None)
 
 
 # Make relative URL references work with our custom URL scheme.
@@ -890,20 +931,25 @@ def test_url_fetcher():
         url_fetcher=fetcher_2).render()
 
 
-@assert_no_logs
-def test_html_meta():
-    def assert_meta(html, **meta):
-        meta.setdefault('title', None)
-        meta.setdefault('authors', [])
-        meta.setdefault('keywords', [])
-        meta.setdefault('generator', None)
-        meta.setdefault('description', None)
-        meta.setdefault('created', None)
-        meta.setdefault('modified', None)
-        meta.setdefault('attachments', [])
-        assert vars(FakeHTML(string=html).render().metadata) == meta
+def assert_meta(html, **meta):
+    meta.setdefault('title', None)
+    meta.setdefault('authors', [])
+    meta.setdefault('keywords', [])
+    meta.setdefault('generator', None)
+    meta.setdefault('description', None)
+    meta.setdefault('created', None)
+    meta.setdefault('modified', None)
+    meta.setdefault('attachments', [])
+    assert vars(FakeHTML(string=html).render().metadata) == meta
 
+
+@assert_no_logs
+def test_html_meta_1():
     assert_meta('<body>')
+
+
+@assert_no_logs
+def test_html_meta_2():
     assert_meta(
         '''
             <meta name=author content="I Me &amp; Myself">
@@ -930,6 +976,10 @@ def test_html_meta():
         description="Blah… ",
         created='2011-04',
         modified='2013')
+
+
+@assert_no_logs
+def test_html_meta_3():
     assert_meta(
         '''
             <title>One</title>
@@ -940,6 +990,21 @@ def test_html_meta():
         ''',
         title='One',
         authors=['', 'Me'])
+
+
+@assert_no_logs
+def test_html_meta_4():
+    with capture_logs() as logs:
+        assert_meta(
+            '''
+                <meta name=dcterms.created content=wrong>
+                <meta name=author content=Me>
+                <title>Title</title>
+            ''',
+            title='Title',
+            authors=['Me'])
+    assert len(logs) == 1
+    assert 'Invalid date' in logs[0]
 
 
 @assert_no_logs

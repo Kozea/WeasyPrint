@@ -2799,3 +2799,117 @@ def test_table_td_break_inside_avoid():
       </table>
     '''
     assert len(render_pages(html)) == 2
+
+
+@assert_no_logs
+def test_table_bad_int_td_th_span():
+    page, = render_pages('''
+      <table>
+        <tr>
+          <td colspan="bad"></td>
+          <td rowspan="23.4"></td>
+        </tr>
+        <tr>
+          <th colspan="x" rowspan="-2"></th>
+          <th></th>
+        </tr>
+      </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row_1, row_2 = row_group.children
+    td_1, td_2 = row_1.children
+    assert td_1.width == td_2.width
+    th_1, th_2 = row_2.children
+    assert th_1.width == th_2.width
+
+
+@assert_no_logs
+def test_table_bad_int_col_span():
+    page, = render_pages('''
+      <table>
+        <colgroup>
+          <col span="bad" style="width:25px" />
+        </colgroup>
+        <tr>
+          <td>a</td>
+          <td>a</td>
+        </tr>
+      </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, td_2 = row.children
+    assert td_1.width == 25
+
+
+@assert_no_logs
+def test_table_bad_int_colgroup_span():
+    page, = render_pages('''
+      <table>
+        <colgroup span="bad" style="width:25px">
+          <col />
+        </colgroup>
+        <tr>
+          <td>a</td>
+          <td>a</td>
+        </tr>
+      </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, td_2 = row.children
+    assert td_1.width == 25
+
+
+@assert_no_logs
+def test_table_different_display():
+    # Test display attribute set on different table elements
+    render_pages('''
+      <table style="font-size: 1px">
+        <colgroup style="display: block"><div>a</div></colgroup>
+        <col style="display: block"><div>a</div></col>
+        <tr style="display: block"><div>a</div></tr>
+        <td style="display: block"><div>a</div></td>
+        <th style="display: block"><div>a</div></th>
+        <thead>
+          <colgroup style="display: block"><div>a</div></colgroup>
+          <col style="display: block"><div>a</div></col>
+          <tr style="display: block"><div>a</div></tr>
+          <td style="display: block"><div>a</div></td>
+          <th style="display: block"><div>a</div></th>
+        </thead>
+        <tbody>
+          <colgroup style="display: block"><div>a</div></colgroup>
+          <col style="display: block"><div>a</div></col>
+          <tr style="display: block"><div>a</div></tr>
+          <td style="display: block"><div>a</div></td>
+          <th style="display: block"><div>a</div></th>
+        </tbody>
+        <tr>
+          <colgroup style="display: block"><div>a</div></colgroup>
+          <col style="display: block"><div>a</div></col>
+          <tr style="display: block"><div>a</div></tr>
+          <td style="display: block"><div>a</div></td>
+          <th style="display: block"><div>a</div></th>
+        </tr>
+        <td>
+          <colgroup style="display: block"><div>a</div></colgroup>
+          <col style="display: block"><div>a</div></col>
+          <tr style="display: block"><div>a</div></tr>
+          <td style="display: block"><div>a</div></td>
+          <th style="display: block"><div>a</div></th>
+        </td>
+      </table>
+    ''')

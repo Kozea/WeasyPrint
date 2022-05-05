@@ -623,6 +623,20 @@ def test_attachments_data():
 
 
 @assert_no_logs
+def test_attachments_no_href():
+    with capture_logs() as logs:
+        pdf = FakeHTML(string='''
+          <title>Test document 2</title>
+          <meta charset="utf-8">
+          <link rel="attachment">
+        ''').write_pdf()
+    assert b'Names' not in pdf
+    assert b'Outlines' not in pdf
+    assert len(logs) == 1
+    assert 'Missing href' in logs[0]
+
+
+@assert_no_logs
 def test_attachments_none():
     pdf = FakeHTML(string='''
       <title>Test document 3</title>

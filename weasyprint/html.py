@@ -9,7 +9,6 @@ are images with intrinsic dimensions.
 
 import re
 from pkgutil import get_data
-from urllib.parse import urljoin
 
 from . import CSS
 from .css import get_child_text
@@ -179,42 +178,24 @@ def handle_object(element, box, get_image_from_uri, base_url):
     return [box]
 
 
-def integer_attribute(element, box, name, minimum=1):
-    """Read an integer attribute from an HTML element and set it on the box."""
-    value = element.get(name, '').strip()
-    if value:
-        try:
-            value = int(value)
-        except ValueError:
-            pass
-        else:
-            if value >= minimum:
-                setattr(box, name, value)
-
-
 @handler('colgroup')
 def handle_colgroup(element, box, _get_image_from_uri, _base_url):
     """Handle the ``span`` attribute."""
     if isinstance(box, boxes.TableColumnGroupBox):
-        if any(child.tag == 'col' for child in element):
-            box.span = None  # sum of the children’s spans
-        else:
-            integer_attribute(element, box, 'span')
-            box.children = (
+        if not any(child.tag == 'col' for child in element):
+            box.children = [
                 boxes.TableColumnBox.anonymous_from(box, [])
-                for _i in range(box.span))
+                for _ in range(box.span)]
     return [box]
 
 
 @handler('col')
 def handle_col(element, box, _get_image_from_uri, _base_url):
     """Handle the ``span`` attribute."""
-    if isinstance(box, boxes.TableColumnBox):
-        integer_attribute(element, box, 'span')
-        if box.span > 1:
-            # Generate multiple boxes
-            # http://lists.w3.org/Archives/Public/www-style/2011Nov/0293.html
-            return [box.copy() for _i in range(box.span)]
+    if isinstance(box, boxes.TableColumnBox) and box.span > 1:
+        # Generate multiple boxes
+        # http://lists.w3.org/Archives/Public/www-style/2011Nov/0293.html
+        return [box.copy() for _i in range(box.span)]
     return [box]
 
 
@@ -228,8 +209,14 @@ def handle_td(element, box, _get_image_from_uri, _base_url):
         # but HTML 5 removed it
         # http://www.w3.org/TR/html5/tabular-data.html#attr-tdth-colspan
         # rowspan=0 is still there though.
-        integer_attribute(element, box, 'colspan')
-        integer_attribute(element, box, 'rowspan', minimum=0)
+        try:
+            box.colspan = max(int(element.get('colspan', '').strip()), 1)
+        except ValueError:
+            box.colspan = 1
+        try:
+            box.rowspan = max(int(element.get('rowspan', '').strip()), 0)
+        except ValueError:
+            box.rowspan = 1
     return [box]
 
 
@@ -253,25 +240,11 @@ def handle_svg(element, box, get_image_from_uri, base_url):
     context = get_image_from_uri.keywords['context']
     try:
         image = SVGImage(element, base_url, url_fetcher, context)
-    except Exception as exception:
+    except Exception as exception:  # pragma: no cover
         LOGGER.error('Failed to load inline SVG: %s', exception)
         return []
     else:
         return [make_replaced_box(element, box, image)]
-
-
-def find_base_url(html_document, fallback_base_url):
-    """Return the base URL for the document.
-
-    See http://www.w3.org/TR/html5/urls.html#document-base-url
-
-    """
-    first_base_element = next(iter(html_document.iter('base')), None)
-    if first_base_element is not None:
-        href = first_base_element.get('href', '').strip()
-        if href:
-            return urljoin(fallback_base_url, href)
-    return fallback_base_url
 
 
 def get_html_metadata(html):
@@ -375,7 +348,11 @@ W3C_DATE_RE = re.compile('''
 
 
 def parse_w3c_date(meta_name, string):
-    """http://www.w3.org/TR/NOTE-datetime"""
+    """Parse datetimes as defined by the W3C.
+
+    See https://www.w3.org/TR/NOTE-datetime
+
+    """
     if W3C_DATE_RE.match(string):
         return string
     else:
