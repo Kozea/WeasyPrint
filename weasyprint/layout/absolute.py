@@ -63,7 +63,10 @@ def absolute_width(box, context, containing_block):
 
     cb_x, cb_y, cb_width, cb_height = containing_block
 
-    ltr = box.style['direction'] == 'ltr'
+    if box.style.parent_style:
+        ltr = (box.style.parent_style['direction'] == 'ltr')
+    else:
+        ltr = True
     padding_plus_borders_x = padding_l + padding_r + border_l + border_r
     translate_x = 0
     translate_box_width = False
