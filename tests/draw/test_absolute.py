@@ -488,9 +488,11 @@ def test_absolute_rtl_1():
                 background: white;
                 size: 16px 3px;
             }
+            body {
+                direction: rtl;
+            }
             div {
                 color: red;
-                direction: rtl;
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
@@ -516,9 +518,11 @@ def test_absolute_rtl_2():
                 background: white;
                 size: 16px 3px;
             }
+            body {
+                direction: rtl;
+            }
             div {
                 color: red;
-                direction: rtl;
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
@@ -545,10 +549,12 @@ def test_absolute_rtl_3():
                 background: white;
                 size: 16px 3px;
             }
+            body {
+                direction: rtl;
+            }
             div {
                 bottom: 0;
                 color: red;
-                direction: rtl;
                 font-family: weasyprint;
                 font-size: 2px;
                 left: 0;
@@ -575,9 +581,11 @@ def test_absolute_rtl_4():
                 background: white;
                 size: 16px 3px;
             }
+            body {
+                direction: rtl;
+            }
             div {
                 color: red;
-                direction: rtl;
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
@@ -589,6 +597,33 @@ def test_absolute_rtl_4():
         <div>bbb</div>
     '''
     assert_pixels('absolute_rtl_4', 16, 3, expected_pixels, html)
+
+
+@assert_no_logs
+def test_absolute_rtl_5():
+    expected_pixels = '''
+        RRRRRR__________
+        RRRRRR__________
+        ________________
+    '''
+    html = '''
+        <style>
+            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+            @page {
+                size: 16px 3px;
+            }
+            div {
+                color: red;
+                direction: rtl;
+                font-family: weasyprint;
+                font-size: 2px;
+                line-height: 1;
+                position: absolute;
+            }
+        </style>
+        <div>bbb</div>
+    '''
+    assert_pixels('absolute_rtl_5', 16, 3, expected_pixels, html)
 
 
 @assert_no_logs
