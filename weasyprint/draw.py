@@ -125,7 +125,7 @@ def draw_stacking_context(stream, stacking_context):
         if isinstance(box, (boxes.BlockBox, boxes.MarginBox,
                             boxes.InlineBlockBox, boxes.TableCellBox,
                             boxes.FlexContainerBox)):
-            # The canvas background was removed by set_canvas_background
+            # The canvas background was removed by layout_backgrounds
             draw_box_background_and_border(stream, stacking_context.page, box)
 
         with stacked(stream):
