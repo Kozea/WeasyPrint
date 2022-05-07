@@ -274,12 +274,12 @@ class CounterStyle(dict):
         # Step 6
         return initial
 
-    def render_marker(self, counter_name, counter_value):
+    def render_marker(self, counter_name, counter_value, ltr):
         """Generate the content of a ::marker pseudo-element."""
         counter = self.resolve_counter(counter_name)
         if counter is None:
             if 'decimal' in self:
-                return self.render_marker('decimal', counter_value)
+                return self.render_marker('decimal', counter_value, ltr)
             else:
                 # Could happen if the UA stylesheet is not used
                 return ''
@@ -289,7 +289,10 @@ class CounterStyle(dict):
 
         value = self.render_value(counter_value, counter_name=counter_name)
         assert value is not None
-        return prefix + value + suffix
+        if ltr == 'ltr':
+            return prefix + value + suffix
+        else:
+            return prefix + suffix + value
 
     def copy(self):
         # Values are dicts but they are never modified, no need to deepcopy
