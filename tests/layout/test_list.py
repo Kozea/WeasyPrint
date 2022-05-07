@@ -1,6 +1,7 @@
 """Tests for lists layout."""
 
 import pytest
+from weasyprint import HTML
 
 from ..testing_utils import assert_no_logs, render_pages
 
@@ -103,3 +104,70 @@ def test_lists_page_break():
     assert len(ul.children) == 1
     for li in ul.children:
         assert len(li.children) == 2
+
+
+def test_order_lists():
+
+    check = [["1. ", "one"],
+             ["2. ", "two"],
+             ["3. ", "three"]]
+    page1, = render_pages('''
+<html lang="en">
+<header>test_order_lists</header>
+<body>
+<ol>
+    <li>one</li>
+    <li>two</li>
+    <li>three</li>
+</ol>
+</body>
+</html>
+    ''')
+
+    html, = page1.children
+    body, = html.children
+    header, ol = body.children
+
+    for count, li in enumerate(ol.children):
+        marker, li = li.children
+        assert marker._box.children[0].children[0].text == \
+               check[count][0]
+        assert li.children[0].children[0].text == \
+               check[count][1]
+
+
+def test_order_lists_rtl():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/1620
+
+    def render_pages(html_content):
+        """ replace test render_page because style over-ride dir=rtl"""
+        return [
+            page._page_box for page in
+            HTML(string=html_content).render().pages]
+
+    check = [[". 1", "one"],
+             [". 2", "two"],
+             [". 3", "three"]]
+    page1, = render_pages('''
+<html lang="en" dir="rtl">
+<header>issue1620</header>
+<body>
+<ol>
+    <li>one</li>
+    <li>two</li>
+    <li>three</li>
+</ol>
+</body>
+</html>
+    ''')
+
+    html, = page1.children
+    body, = html.children
+    header, ol = body.children
+
+    for count, li in enumerate(ol.children):
+        marker, li = li.children
+        assert marker._box.children[0].children[0].text == \
+               check[count][0]
+        assert li.children[0].children[0].text == \
+               check[count][1]
