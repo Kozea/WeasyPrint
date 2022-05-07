@@ -173,7 +173,7 @@ You can then install WeasyPrint in a `virtual environment`_ using `pip`_::
 
   python3 -m venv venv
   source venv/bin/activate
-  pip install weasyprint
+  pip3 install weasyprint
   weasyprint --info
 
 .. _Homebrew: https://brew.sh/
