@@ -1126,7 +1126,7 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y,
             offset = glyph_info.geometry.x_offset / font_size
             if offset:
                 string += f'>{-offset}<'
-            string += f'{glyph:02x}'
+            string += f'{glyph:02x}' if font.bitmap else f'{glyph:04x}'
 
             # Ink bounding box and logical widths in font
             if glyph not in font.widths:
