@@ -5,6 +5,7 @@ import io
 import struct
 
 import pydyf
+from fontTools.ttLib import TTFont
 
 from ..logger import LOGGER
 from ..matrix import Matrix
@@ -52,6 +53,17 @@ class Font:
                 font_size * 1000)
         else:
             self.ascent = self.descent = 0
+
+        # Fonttools
+        full_font = io.BytesIO(self.file_content)
+        try:
+            self.ttfont = TTFont(full_font, fontNumber=self.index)
+        except Exception:
+            LOGGER.warning('Unable to read font')
+            self.ttfont = None
+            self.bitmap = False
+        else:
+            self.bitmap = 'EBDT' in self.ttfont and 'EBLC' in self.ttfont
 
         # Various properties
         self.italic_angle = 0  # TODO: this should be different

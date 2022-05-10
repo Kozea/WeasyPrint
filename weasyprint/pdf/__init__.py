@@ -9,7 +9,7 @@ from urllib.parse import unquote, urlsplit
 
 import pydyf
 from fontTools import subset
-from fontTools.ttLib import TTFont, TTLibError, ttFont
+from fontTools.ttLib import TTLibError, ttFont
 
 from .. import Attachment, __version__
 from ..html import W3C_DATE_RE
@@ -455,14 +455,16 @@ def generate_pdf(pages, url_fetcher, metadata, fonts, target, zoom,
     for file_hash, file_fonts in fonts_by_file_hash.items():
         # TODO: find why we can have multiple fonts for one font file
         font = file_fonts[0]
+        if font.bitmap:
+            continue
         content = font.file_content
+        ttfont = font.ttfont
 
         if 'fonts' in optimize_size:
             # Optimize font
             cmap = {}
-            for font in file_fonts:
-                cmap = {**cmap, **font.cmap}
-            full_font = io.BytesIO(content)
+            for file_font in file_fonts:
+                cmap = {**cmap, **file_font.cmap}
             optimized_font = io.BytesIO()
             options = subset.Options(
                 retain_gids=True, passthrough_tables=True,
@@ -470,24 +472,17 @@ def generate_pdf(pages, url_fetcher, metadata, fonts, target, zoom,
             options.drop_tables += ['GSUB', 'GPOS', 'SVG']
             subsetter = subset.Subsetter(options)
             subsetter.populate(gids=cmap)
-            bitmap_font = False
             try:
-                ttfont = TTFont(full_font, fontNumber=font.index)
-                if 'EBDT' in ttfont.keys():
-                    bitmap_font = True
-                else:
-                    subsetter.subset(ttfont)
+                subsetter.subset(ttfont)
             except TTLibError:
                 LOGGER.warning('Unable to optimize font')
             else:
                 ttfont.save(optimized_font)
                 content = optimized_font.getvalue()
 
-        if font.png or font.svg:
+        if ttfont is not None and (font.png or font.svg):
             # Add empty glyphs instead of PNG or SVG emojis
-            full_font = io.BytesIO(content)
             try:
-                ttfont = TTFont(full_font, fontNumber=font.index)
                 if 'loca' not in ttfont or 'glyf' not in ttfont:
                     ttfont['loca'] = ttFont.getTableClass('loca')()
                     ttfont['glyf'] = ttFont.getTableClass('glyf')()
@@ -528,7 +523,7 @@ def generate_pdf(pages, url_fetcher, metadata, fonts, target, zoom,
             current_widths.append(font.widths[i])
         font_type = 'otf' if font.file_content[:4] == b'OTTO' else 'ttf'
         font_file = f'FontFile{3 if font_type == "otf" else 2}'
-        if not bitmap_font:
+        if not font.bitmap:
             font_descriptor = pydyf.Dictionary({
                 'Type': '/FontDescriptor',
                 'FontName': font.name,
@@ -600,11 +595,11 @@ def generate_pdf(pages, url_fetcher, metadata, fonts, target, zoom,
         pdf.add_object(to_unicode)
         font_dictionary = pydyf.Dictionary({
             'Type': '/Font',
-            'Subtype': f'/Type{3 if bitmap_font else 0}',
+            'Subtype': f'/Type{3 if font.bitmap else 0}',
             'BaseFont': font.name,
             'ToUnicode': to_unicode.reference,
         })
-        if bitmap_font:
+        if font.bitmap:
             font_dictionary['FontBBox'] = pydyf.Array([0, 0, 1, 1])
             font_dictionary['FontMatrix'] = pydyf.Array([1, 0, 0, 1, 0, 0])
             font_dictionary['FirstChar'] = 0
@@ -618,12 +613,13 @@ def generate_pdf(pages, url_fetcher, metadata, fonts, target, zoom,
                 'Type': '/Encoding',
                 'Differences': pydyf.Array(differences),
             })
-            font_glyphs = ttfont['EBDT'].strikeData[0]
             char_procs = pydyf.Dictionary({})
+            font_glyphs = font.ttfont['EBDT'].strikeData[0]
+            bitmap_size = font.ttfont['EBLC'].strikes[0].bitmapSizeTable
             font_size = (
-                ttfont['EBLC'].strikes[0].bitmapSizeTable.hori.ascender -
-                ttfont['EBLC'].strikes[0].bitmapSizeTable.hori.descender)
+                bitmap_size.hori.ascender - bitmap_size.hori.descender)
             for key, value in font_glyphs.items():
+                # TODO: Ignore useless characters
                 height = value.data[0]
                 width = value.data[1]
                 bitmap = value.data[5:]
@@ -662,11 +658,12 @@ def generate_pdf(pages, url_fetcher, metadata, fonts, target, zoom,
                     b'Q',
                 ])
                 pdf.add_object(bitmap)
-                glyph_id = ttfont['glyf'].getGlyphID(key)
+                glyph_id = font.ttfont['glyf'].getGlyphID(key)
                 char_procs[glyph_id] = bitmap.reference
             pdf.add_object(char_procs)
-            font_dictionary['Widths'] = pydyf.Array(
-                [font.widths.get(i, 0) / 1000 for i in range(256)])
+            bitmap_height = font.ascent - font.descent
+            font_dictionary['Widths'] = pydyf.Array([
+                font.widths.get(i, 0) / bitmap_height for i in range(256)])
             font_dictionary['CharProcs'] = char_procs.reference
         else:
             font_dictionary['Encoding'] = '/Identity-H'
