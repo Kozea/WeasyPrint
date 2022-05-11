@@ -5,7 +5,8 @@ import io
 import struct
 
 import pydyf
-from fontTools.ttLib import TTFont
+from fontTools import subset
+from fontTools.ttLib import TTFont, TTLibError, ttFont
 
 from ..logger import LOGGER
 from ..matrix import Matrix
@@ -85,6 +86,55 @@ class Font:
         widths = self.widths.values()
         if len(widths) > 1 and len(set(widths)) == 1:
             self.flags += 2 ** (1 - 1)  # FixedPitch
+
+    def clean(self, cmap):
+        if self.ttfont is None:
+            return
+
+        if cmap:
+            optimized_font = io.BytesIO()
+            options = subset.Options(
+                retain_gids=True, passthrough_tables=True,
+                ignore_missing_glyphs=True, hinting=False)
+            options.drop_tables += ['GSUB', 'GPOS', 'SVG']
+            subsetter = subset.Subsetter(options)
+            subsetter.populate(gids=cmap)
+            try:
+                subsetter.subset(self.ttfont)
+            except TTLibError:
+                LOGGER.warning('Unable to optimize font')
+            else:
+                self.ttfont.save(optimized_font)
+                self.file_content = optimized_font.getvalue()
+
+        if not (self.png or self.svg):
+            return
+
+        try:
+            # Add empty glyphs instead of PNG or SVG emojis
+            if 'loca' not in self.ttfont or 'glyf' not in self.ttfont:
+                self.ttfont['loca'] = ttFont.getTableClass('loca')()
+                self.ttfont['glyf'] = ttFont.getTableClass('glyf')()
+                self.ttfont['glyf'].glyphOrder = self.ttfont.getGlyphOrder()
+                self.ttfont['glyf'].glyphs = {
+                    name: ttFont.getTableModule('glyf').Glyph()
+                    for name in self.ttfont['glyf'].glyphOrder}
+            else:
+                for glyph in self.ttfont['glyf'].glyphs:
+                    self.ttfont['glyf'][glyph] = (
+                        ttFont.getTableModule('glyf').Glyph())
+            for table_name in ('CBDT', 'CBLC', 'SVG '):
+                if table_name in self.ttfont:
+                    del self.ttfont[table_name]
+            output_font = io.BytesIO()
+            self.ttfont.save(output_font)
+            self.file_content = output_font.getvalue()
+        except TTLibError:
+            LOGGER.warning('Unable to save emoji font')
+
+    @property
+    def type(self):
+        return 'otf' if self.file_content[:4] == b'OTTO' else 'ttf'
 
 
 class Stream(pydyf.Stream):

@@ -8,8 +8,6 @@ from os.path import basename
 from urllib.parse import unquote, urlsplit
 
 import pydyf
-from fontTools import subset
-from fontTools.ttLib import TTLibError, ttFont
 
 from .. import Attachment, __version__
 from ..html import W3C_DATE_RE
@@ -457,59 +455,22 @@ def generate_pdf(pages, url_fetcher, metadata, fonts, target, zoom,
         font = file_fonts[0]
         if font.bitmap:
             continue
-        content = font.file_content
-        ttfont = font.ttfont
 
+        # Clean font, optimize and handle emojis
+        cmap = {}
         if 'fonts' in optimize_size:
-            # Optimize font
-            cmap = {}
             for file_font in file_fonts:
                 cmap = {**cmap, **file_font.cmap}
-            optimized_font = io.BytesIO()
-            options = subset.Options(
-                retain_gids=True, passthrough_tables=True,
-                ignore_missing_glyphs=True, hinting=False)
-            options.drop_tables += ['GSUB', 'GPOS', 'SVG']
-            subsetter = subset.Subsetter(options)
-            subsetter.populate(gids=cmap)
-            try:
-                subsetter.subset(ttfont)
-            except TTLibError:
-                LOGGER.warning('Unable to optimize font')
-            else:
-                ttfont.save(optimized_font)
-                content = optimized_font.getvalue()
-
-        if ttfont is not None and (font.png or font.svg):
-            # Add empty glyphs instead of PNG or SVG emojis
-            try:
-                if 'loca' not in ttfont or 'glyf' not in ttfont:
-                    ttfont['loca'] = ttFont.getTableClass('loca')()
-                    ttfont['glyf'] = ttFont.getTableClass('glyf')()
-                    ttfont['glyf'].glyphOrder = ttfont.getGlyphOrder()
-                    ttfont['glyf'].glyphs = {
-                        name: ttFont.getTableModule('glyf').Glyph()
-                        for name in ttfont['glyf'].glyphOrder}
-                else:
-                    for glyph in ttfont['glyf'].glyphs:
-                        ttfont['glyf'][glyph] = (
-                            ttFont.getTableModule('glyf').Glyph())
-                for table_name in ('CBDT', 'CBLC', 'SVG '):
-                    if table_name in ttfont:
-                        del ttfont[table_name]
-                output_font = io.BytesIO()
-                ttfont.save(output_font)
-                content = output_font.getvalue()
-            except TTLibError:
-                LOGGER.warning('Unable to save emoji font')
+        font.clean(cmap)
 
         # Include font
-        font_type = 'otf' if content[:4] == b'OTTO' else 'ttf'
-        if font_type == 'otf':
+        if font.type == 'otf':
             font_extra = pydyf.Dictionary({'Subtype': '/OpenType'})
         else:
-            font_extra = pydyf.Dictionary({'Length1': len(content)})
-        font_stream = pydyf.Stream([content], font_extra, compress=True)
+            font_extra = pydyf.Dictionary(
+                {'Length1': len(font.file_content)})
+        font_stream = pydyf.Stream(
+            [font.file_content], font_extra, compress=True)
         pdf.add_object(font_stream)
         font_references_by_file_hash[file_hash] = font_stream.reference
 
@@ -521,8 +482,7 @@ def generate_pdf(pages, url_fetcher, metadata, fonts, target, zoom,
                 current_widths = pydyf.Array()
                 widths.append(current_widths)
             current_widths.append(font.widths[i])
-        font_type = 'otf' if font.file_content[:4] == b'OTTO' else 'ttf'
-        font_file = f'FontFile{3 if font_type == "otf" else 2}'
+        font_file = f'FontFile{3 if font.type == "otf" else 2}'
         to_unicode = pydyf.Stream([
             b'/CIDInit /ProcSet findresource begin',
             b'12 dict begin',
@@ -649,12 +609,12 @@ def generate_pdf(pages, url_fetcher, metadata, fonts, target, zoom,
                     (int(''.join(bits), 2).to_bytes(padded_width, 'big'),))
                 pdf.add_object(stream)
                 font_descriptor['CIDSet'] = stream.reference
-            if font_type == 'otf':
+            if font.type == 'otf':
                 font_descriptor['Subtype'] = '/OpenType'
             pdf.add_object(font_descriptor)
             subfont_dictionary = pydyf.Dictionary({
                 'Type': '/Font',
-                'Subtype': f'/CIDFontType{0 if font_type == "otf" else 2}',
+                'Subtype': f'/CIDFontType{0 if font.type == "otf" else 2}',
                 'BaseFont': font.name,
                 'CIDSystemInfo': pydyf.Dictionary({
                     'Registry': pydyf.String('Adobe'),
