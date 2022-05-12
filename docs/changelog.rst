@@ -2,6 +2,58 @@ Changelog
 =========
 
 
+Version 55.0
+------------
+
+Released on 2022-05-12.
+
+This version also includes the changes from unstable b1 version listed
+below.
+
+Bug fixes:
+
+* `#1626 <https://github.com/Kozea/WeasyPrint/issues/1626>`_,
+  `3802f88 <https://github.com/Kozea/WeasyPrint/commit/3802f88>`_:
+  Fix the vertical position and available height of absolute boxes
+* `9641098 <https://github.com/Kozea/WeasyPrint/commit/9641098>`_,
+  `e5e6b88 <https://github.com/Kozea/WeasyPrint/commit/e5e6b88>`_:
+  Minor fixes for multi-column layout
+* `0fcc7de <https://github.com/Kozea/WeasyPrint/commit/0fcc7de>`_:
+  Don’t stop rendering SVG when CSS parsing fails
+* `#1636 <https://github.com/Kozea/WeasyPrint/pull/1636>`_:
+  Fix sequential footnotes that could disappear when overflowing
+* `#1637 <https://github.com/Kozea/WeasyPrint/issues/1637>`_:
+  Fix position of absolute boxes with right-to-left direction
+* `#1641 <https://github.com/Kozea/WeasyPrint/issues/1641>`_:
+  Fix relative paths for SVG files stored as data URLs
+
+Contributors:
+
+* Guillaume Ayoub
+* aschmitz
+
+Backers and sponsors:
+
+* Grip Angebotssoftware
+* Manuel Barkhau
+* Crisp BV
+* SimonSoft
+* Menutech
+* Spacinov
+* KontextWork
+* René Fritz
+* NCC Group
+* Kobalt
+* Nathalie Gutton
+* Andreas Zettl
+* Tom Pohl
+* Moritz Mahringer
+* Florian Demmer
+* Yanal-Yvez Fargialla
+* Gábor
+* Piotr Horzycki
+
+
 Version 55.0b1
 --------------
 
