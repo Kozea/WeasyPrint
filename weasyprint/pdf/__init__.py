@@ -518,6 +518,7 @@ def generate_pdf(pages, url_fetcher, metadata, fonts, target, zoom,
         })
 
         if font.bitmap:
+            # https://docs.microsoft.com/typography/opentype/spec/ebdt
             font_dictionary['FontBBox'] = pydyf.Array([0, 0, 1, 1])
             font_dictionary['FontMatrix'] = pydyf.Array([1, 0, 0, 1, 0, 0])
             font_dictionary['FirstChar'] = 0
@@ -536,52 +537,130 @@ def generate_pdf(pages, url_fetcher, metadata, fonts, target, zoom,
             bitmap_size = font.ttfont['EBLC'].strikes[0].bitmapSizeTable
             font_size = (
                 bitmap_size.hori.ascender - bitmap_size.hori.descender)
-            for key, value in font_glyphs.items():
+            widths = [0] * 256
+            glyphs_info = {}
+            for key, glyph in font_glyphs.items():
                 # TODO: Ignore useless characters
-                height = value.data[0]
-                width = value.data[1]
-                bitmap = value.data[5:]
-                number_of_bytes = math.ceil(width / 8)
-                if value.getFormat() == 8:
-                    data_bits = height * number_of_bytes * 8 * '1'
-                elif value.getFormat() == 2:
+                # Get and store glyph metrics
+                height, width = glyph.data[0:2]
+                bearing_x = int.from_bytes(
+                    glyph.data[2:3], 'big', signed=True)
+                bearing_y = int.from_bytes(
+                    glyph.data[3:4], 'big', signed=True)
+                advance = glyph.data[4]
+                position_y = bearing_y - height
+                glyph_id = font.ttfont['glyf'].getGlyphID(key)
+                widths[glyph_id] = advance / font_size
+                stride = math.ceil(width / 8)
+                glyph_info = glyphs_info[glyph_id] = {
+                    'width': width,
+                    'height': height,
+                    'x': bearing_x,
+                    'y': position_y,
+                    'stride': stride,
+                    'bitmap': None,
+                    'subglyphs': None,
+                }
+
+                # Apply glyph format tweaks
+                glyph_format = glyph.getFormat()
+                data_start = 5 if glyph_format in (1, 2, 8) else 8
+                data = glyph.data[data_start:]
+                if glyph_format in (1, 6):
+                    glyph_info['bitmap'] = data
+                elif glyph_format in (2, 7):
                     padding = (8 - (width % 8)) % 8
-                    bits = bin(int(bitmap.hex(), 16))[2:]
-                    bits = bits.zfill(8 * len(bitmap))
-                    data_bits = ''.join(
+                    bits = bin(int(data.hex(), 16))[2:]
+                    bits = bits.zfill(8 * len(data))
+                    bitmap_bits = ''.join(
                         bits[i * width:(i + 1) * width] + padding * '0'
                         for i in range(height))
+                    glyph_info['bitmap'] = int(bitmap_bits, 2).to_bytes(
+                        height * stride, 'big')
+                elif glyph_format in (8, 9):
+                    subglyphs = glyph_info['subglyphs'] = []
+                    i = 0 if glyph_format == 9 else 1
+                    number_of_components = int.from_bytes(
+                        data[i:i+2], 'big')
+                    for j in range(number_of_components):
+                        index = (i + 2) + (j * 4)
+                        subglyph_id = int.from_bytes(
+                            data[index:index+2], 'big')
+                        x = int.from_bytes(
+                            data[index+2:index+3], 'big', signed=True)
+                        y = int.from_bytes(
+                            data[index+3:index+4], 'big', signed=True)
+                        subglyphs.append(
+                            {'id': subglyph_id, 'x': x, 'y': y})
+                else:  # pragma: no cover
+                    LOGGER.warning(
+                        f'Unsupported bitmap glyph format: {glyph_format}')
+                    glyph_info['bitmap'] = bytes(height * stride)
+
+            for glyph_id, glyph_info in glyphs_info.items():
+                # Draw glyph
+                stride = glyph_info['stride']
+                width = glyph_info['width']
+                height = glyph_info['height']
+                x = glyph_info['x']
+                y = glyph_info['y']
+                if glyph_info['bitmap'] is None:
+                    length = height * stride
+                    bitmap_int = int.from_bytes(bytes(length), 'big')
+                    for subglyph in glyph_info['subglyphs']:
+                        sub_x = subglyph['x']
+                        sub_y = subglyph['y']
+                        if subglyph['id'] not in glyphs_info:
+                            LOGGER.warning(
+                                f'Unknown subglyph: {subglyph["id"]}')
+                            continue
+                        subglyph = glyphs_info[subglyph['id']]
+                        if subglyph['bitmap'] is None:
+                            # TODO: support subglyph in subglyph
+                            LOGGER.warning(
+                                'Unsupported subglyph in subglyph: '
+                                f'{subglyph["id"]}')
+                            continue
+                        for row_y in range(subglyph['height']):
+                            row_slice = slice(
+                                row_y * subglyph['stride'],
+                                (row_y + 1) * subglyph['stride'])
+                            row = subglyph['bitmap'][row_slice]
+                            row_int = int.from_bytes(row, 'big')
+                            shift = (
+                                stride * 8 * (height - sub_y - row_y - 1))
+                            stride_difference = stride - subglyph['stride']
+                            if stride_difference > 0:
+                                row_int <<= stride_difference * 8
+                            elif stride_difference < 0:
+                                row_int >>= -stride_difference * 8
+                            if sub_x > 0:
+                                row_int >>= sub_x
+                            elif sub_x < 0:
+                                row_int <<= -sub_x
+                            row_int %= 1 << stride * 8
+                            row_int <<= shift
+                            bitmap_int |= row_int
+                    bitmap = bitmap_int.to_bytes(length, 'big')
                 else:
-                    # TODO: handle other formats
-                    data_bits = height * number_of_bytes * 8 * '1'
-                data = int(data_bits, 2).to_bytes(
-                    height * number_of_bytes, 'big')
-                position_y = value.data[3] - value.data[0]
-                bitmap = pydyf.Stream([
-                    b'0 0 0 -1 1 1 d1',
-                    b'q',
-                    f'{value.data[1] / font_size} 0'.encode(),
-                    f'0 {value.data[0] / font_size}'.encode(),
-                    f'0 {position_y / font_size}'.encode(),
-                    b'cm',
+                    bitmap = glyph_info['bitmap']
+                bitmap_stream = pydyf.Stream([
+                    b'0 0 d0',
+                    width / font_size, b'0 0', height / font_size,
+                    x / font_size, y / font_size, b'cm',
                     b'BI',
                     b'/IM true',
                     b'/W', width,
                     b'/H', height,
                     b'/BPC 1',
                     b'/D [1 0]',
-                    b'ID',
-                    data,
-                    b'EI',
-                    b'Q',
+                    b'ID', bitmap, b'EI'
                 ])
-                pdf.add_object(bitmap)
-                glyph_id = font.ttfont['glyf'].getGlyphID(key)
-                char_procs[glyph_id] = bitmap.reference
+                pdf.add_object(bitmap_stream)
+                char_procs[glyph_id] = bitmap_stream.reference
+
             pdf.add_object(char_procs)
-            bitmap_height = font.ascent - font.descent
-            font_dictionary['Widths'] = pydyf.Array([
-                font.widths.get(i, 0) / bitmap_height for i in range(256)])
+            font_dictionary['Widths'] = pydyf.Array(widths)
             font_dictionary['CharProcs'] = char_procs.reference
 
         else:
