@@ -159,18 +159,18 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                 # force to render something if the page is actually empty, or
                 # just draw an empty cell otherwise. See
                 # test_table_break_children_margin.
-                new_cell, cell_resume_at, _, _, _ = block_container_layout(
+                new_cell, cell_resume_at, _, _, _, _ = block_container_layout(
                     context, cell, bottom_space, cell_skip_stack,
                     page_is_empty=page_is_empty, absolute_boxes=absolute_boxes,
                     fixed_boxes=fixed_boxes, adjoining_margins=None,
-                    discard=False)
+                    discard=False, max_lines=None)
                 if new_cell is None:
                     cell = cell.copy_with_children([])
-                    cell, _, _, _, _ = block_container_layout(
+                    cell, _, _, _, _, _ = block_container_layout(
                         context, cell, bottom_space, cell_skip_stack,
                         page_is_empty=True, absolute_boxes=[],
                         fixed_boxes=[], adjoining_margins=None,
-                        discard=False)
+                        discard=False, max_lines=None)
                     cell_resume_at = {0: None}
                 else:
                     cell = new_cell
