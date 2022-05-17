@@ -8,9 +8,9 @@ are images with intrinsic dimensions.
 """
 
 import re
-from pkgutil import get_data
+from importlib.resources import read_text
 
-from . import CSS
+from . import CSS, css
 from .css import get_child_text
 from .css.counters import CounterStyle
 from .formatting_structure import boxes
@@ -19,12 +19,11 @@ from .logger import LOGGER
 from .urls import get_url_attribute
 
 HTML5_UA_COUNTER_STYLE = CounterStyle()
-# Fallback is useful when package is not installed, for example for packaging
-HTML5_UA = get_data('weasyprint', 'css/html5_ua.css') or b''
-HTML5_PH = get_data('weasyprint', 'css/html5_ph.css') or b''
+HTML5_UA = read_text(css, 'html5_ua.css')
+HTML5_PH = read_text(css, 'html5_ph.css')
 HTML5_UA_STYLESHEET = CSS(
-    string=HTML5_UA.decode(), counter_style=HTML5_UA_COUNTER_STYLE)
-HTML5_PH_STYLESHEET = CSS(string=HTML5_PH.decode())
+    string=HTML5_UA, counter_style=HTML5_UA_COUNTER_STYLE)
+HTML5_PH_STYLESHEET = CSS(string=HTML5_PH)
 
 # http://whatwg.org/C#space-character
 HTML_WHITESPACE = ' \t\n\f\r'
