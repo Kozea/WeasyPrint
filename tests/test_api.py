@@ -327,10 +327,10 @@ def test_command_line_render(tmpdir):
     _run('combined-UTF-16BE.html out3.pdf --encoding UTF-16BE')
     assert tmpdir.join('out3.pdf').read_binary() == pdf_bytes
 
-    _run(tmpdir.join('combined.html').strpath + ' out4.pdf')
+    _run(f'{tmpdir.join("combined.html").strpath} out4.pdf')
     assert tmpdir.join('out4.pdf').read_binary() == pdf_bytes
 
-    _run(path2url(tmpdir.join('combined.html').strpath) + ' out5.pdf')
+    _run(f'{path2url(tmpdir.join("combined.html").strpath)} out5.pdf')
     assert tmpdir.join('out5.pdf').read_binary() == pdf_bytes
 
     _run('linked.html --debug out6.pdf')  # test relative URLs
@@ -1036,10 +1036,10 @@ def test_http():
             (b'<html test=accept-encoding-header-fail>', [])
         ),
     }) as root_url:
-        assert HTML(root_url + '/gzip').etree_element.get('test') == 'ok'
-        assert HTML(root_url + '/deflate').etree_element.get('test') == 'ok'
+        assert HTML(f'{root_url}/gzip').etree_element.get('test') == 'ok'
+        assert HTML(f'{root_url}/deflate').etree_element.get('test') == 'ok'
         assert HTML(
-            root_url + '/raw-deflate').etree_element.get('test') == 'ok'
+            f'{root_url}/raw-deflate').etree_element.get('test') == 'ok'
 
 
 @assert_no_logs

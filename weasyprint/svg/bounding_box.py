@@ -81,7 +81,7 @@ def bounding_box_path(svg, node, font_size):
     while path_data:
         path_data = path_data.strip()
         if path_data.split(' ', 1)[0] in PATH_LETTERS:
-            letter, path_data = (path_data + ' ').split(' ', 1)
+            letter, path_data = (f'{path_data} ').split(' ', 1)
 
         if letter in 'aA':
             # Elliptical arc curve
@@ -141,7 +141,7 @@ def bounding_box_path(svg, node, font_size):
 
         elif letter in 'hH':
             # Horizontal line
-            x, path_data = (path_data + ' ').split(' ', 1)
+            x, path_data = (f'{path_data} ').split(' ', 1)
             x, _ = svg.point(x, 0, font_size)
 
             # Relative coordinate, convert to absolute
@@ -187,7 +187,7 @@ def bounding_box_path(svg, node, font_size):
 
         elif letter in 'vV':
             # Vertical line
-            y, path_data = (path_data + ' ').split(' ', 1)
+            y, path_data = (f'{path_data} ').split(' ', 1)
             _, y = svg.point(0, y, font_size)
 
             # Relative coordinate, convert to absolute

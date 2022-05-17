@@ -707,7 +707,7 @@ def test_hyphenate_character_5():
 @pytest.mark.parametrize('i', (range(1, len('hyphénation'))))
 def test_hyphenate_manual_1(i):
     for hyphenate_character in ('!', 'ù ù'):
-        word = 'hyphénation'[:i] + '\xad' + 'hyphénation'[i:]
+        word = f'{"hyphénation"[:i]}\xad{"hyphénation"[i:]}'
         page, = render_pages(
             '<html style="width: 5em; font-family: weasyprint">'
             '<style>@font-face {'
@@ -729,7 +729,7 @@ def test_hyphenate_manual_1(i):
 @pytest.mark.parametrize('i', (range(1, len('hy phénation'))))
 def test_hyphenate_manual_2(i):
     for hyphenate_character in ('!', 'ù ù'):
-        word = 'hy phénation'[:i] + '\xad' + 'hy phénation'[i:]
+        word = f'{"hy phénation"[:i]}\xad{"hy phénation"[i:]}'
         page, = render_pages(
             '<html style="width: 5em; font-family: weasyprint">'
             '<style>@font-face {'

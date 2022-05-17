@@ -29,7 +29,7 @@ def path(svg, node, font_size):
     while string:
         string = string.strip()
         if string.split(' ', 1)[0] in PATH_LETTERS:
-            letter, string = (string + ' ').split(' ', 1)
+            letter, string = (f'{string} ').split(' ', 1)
             if last_letter in (None, 'z', 'Z') and letter not in 'mM':
                 node.vertices.append(current_point)
                 first_path_point = current_point
@@ -181,7 +181,7 @@ def path(svg, node, font_size):
 
         elif letter in 'hH':
             # Horizontal line
-            x, string = (string + ' ').split(' ', 1)
+            x, string = (f'{string} ').split(' ', 1)
             old_x, old_y = current_point
             x, _ = svg.point(x, 0, font_size)
             if letter == 'h':
@@ -258,7 +258,7 @@ def path(svg, node, font_size):
 
         elif letter in 'vV':
             # Vertical line
-            y, string = (string + ' ').split(' ', 1)
+            y, string = (f'{string} ').split(' ', 1)
             old_x, old_y = current_point
             _, y = svg.point(0, y, font_size)
             if letter == 'v':

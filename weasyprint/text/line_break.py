@@ -432,7 +432,7 @@ def split_first_line(text, style, context, max_width, justification_spacing,
                     next_word = f' {next_word}'
                     layout.set_text(first_line_text)
                     first_line, index = layout.get_first_line()
-                    resume_index = len((first_line_text + ' ').encode())
+                    resume_index = len((f'{first_line_text} ').encode())
                 else:
                     first_line_text, next_word = '', first_line_text
             soft_hyphen_indexes = [

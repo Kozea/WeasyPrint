@@ -22,7 +22,7 @@ def test_unicode():
       <p><img src="pattern.png"> {1}</p>
     '''.format(style, text))
 
-    temp = tempfile.mkdtemp(prefix=text + '-')
+    temp = tempfile.mkdtemp(prefix=f'{text}-')
     try:
         stylesheet = os.path.join(temp, 'style.css')
         image = os.path.join(temp, 'pattern.png')

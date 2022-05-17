@@ -96,7 +96,7 @@ def write_png(basename, pixels, width, height):  # pragma: no cover
     directory = os.path.join(os.path.dirname(__file__), 'results')
     if not os.path.isdir(directory):
         os.mkdir(directory)
-    filename = os.path.join(directory, basename + '.png')
+    filename = os.path.join(directory, f'{basename}.png')
     image = Image.new('RGB', (width, height))
     image.putdata(pixels)
     image.save(filename)
@@ -135,7 +135,7 @@ def assert_pixels_equal(name, width, height, raw, expected_raw, tolerance=0):
                 write_png(name, raw, width, actual_height)
                 expected_raw = [
                     pixel or (255, 255, 255) for pixel in expected_raw]
-                write_png(name + '.expected', expected_raw, width, height)
+                write_png(f'{name}.expected', expected_raw, width, height)
                 x = i % width
                 y = i // width
                 assert 0, (
