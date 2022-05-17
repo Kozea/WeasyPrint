@@ -307,6 +307,14 @@ def _linebox_layout(context, box, index, child, new_children, page_is_empty,
         context, child, position_y, bottom_space, skip_stack,
         new_containing_block, absolute_boxes, fixed_boxes, first_letter_style)
     for i, (line, resume_at) in enumerate(lines_iterator):
+        # Break box if we reached max-lines
+        if max_lines is not None:
+            if max_lines == 0:
+                line.block_ellipsis = box.style['block_ellipsis']
+                break
+            max_lines -= 1
+
+        # Update line resume_at and position_y
         line.resume_at = resume_at
         new_position_y = line.position_y + line.height
 
@@ -380,14 +388,6 @@ def _linebox_layout(context, box, index, child, new_children, page_is_empty,
         new_children.append(line)
         position_y = new_position_y
         skip_stack = resume_at
-
-        # Break box if we reached max-lines
-        if max_lines:
-            if i >= max_lines - 1:
-                line.block_ellipsis = box.style['block_ellipsis']
-                max_lines = 0
-                break
-            max_lines -= i
 
     if new_children:
         resume_at = {index: new_children[-1].resume_at}
@@ -672,10 +672,9 @@ def block_container_layout(context, box, bottom_space, skip_stack,
                  next_page, max_lines)
             skip_stack = None
 
-            if new_max_lines is not None:
-                if max_lines is not None:
-                    max_lines = new_max_lines
-                if new_max_lines <= 0:
+            if None not in (new_max_lines, max_lines):
+                max_lines = new_max_lines
+                if max_lines <= 0:
                     stop = True
 
         if abort:
