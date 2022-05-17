@@ -310,7 +310,7 @@ def _linebox_layout(context, box, index, child, new_children, page_is_empty,
         # Break box if we reached max-lines
         if max_lines is not None:
             if max_lines == 0:
-                line.block_ellipsis = box.style['block_ellipsis']
+                new_children[-1].block_ellipsis = box.style['block_ellipsis']
                 break
             max_lines -= 1
 
@@ -676,6 +676,18 @@ def block_container_layout(context, box, bottom_space, skip_stack,
                 max_lines = new_max_lines
                 if max_lines <= 0:
                     stop = True
+                    last_child = (child == box.children[-1])
+                    if not last_child:
+                        children = new_children
+                        while children:
+                            last_child = children[-1]
+                            if isinstance(last_child, boxes.LineBox):
+                                last_child.block_ellipsis = (
+                                    box.style['block_ellipsis'])
+                            elif isinstance(last_child, boxes.ParentBox):
+                                children = last_child.children
+                                continue
+                            break
 
         if abort:
             page = child.page_values()[0]
