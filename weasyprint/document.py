@@ -679,7 +679,7 @@ class Document:
                 pdf.catalog['Names'] = pydyf.Dictionary()
             pdf.catalog['Names']['EmbeddedFiles'] = content.reference
 
-        # Embeded fonts
+        # Embedded fonts
         pdf_fonts = pydyf.Dictionary()
         fonts_by_file_hash = {}
         for font in self.fonts.values():
