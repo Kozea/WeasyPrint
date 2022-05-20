@@ -10,6 +10,7 @@ import pydyf
 from fontTools import subset
 from fontTools.ttLib import TTFont, TTLibError, ttFont
 
+from . import pdfa
 from .. import Attachment, __version__
 from ..html import W3C_DATE_RE
 from ..links import make_page_bookmark_tree, resolve_links
@@ -17,6 +18,10 @@ from ..logger import LOGGER, PROGRESS_LOGGER
 from ..matrix import Matrix
 from ..urls import URLFetchingError
 from .stream import Stream
+
+VARIANTS = {
+    name: function for variants in (pdfa.VARIANTS,)
+    for (name, function) in variants.items()}
 
 
 def _w3c_date_to_pdf(string, attr_name):
@@ -230,7 +235,7 @@ def _create_bookmarks(bookmarks, pdf, parent=None):
 
 
 def generate_pdf(pages, url_fetcher, metadata, fonts, target, zoom,
-                 attachments, finisher, identifier, optimize_size):
+                 attachments, finisher, optimize_size, identifier, variant):
     # 0.75 = 72 PDF point per inch / 96 CSS pixel per inch
     scale = zoom * 0.75
 
@@ -589,5 +594,9 @@ def generate_pdf(pages, url_fetcher, metadata, fonts, target, zoom,
             name_array.append(anchor[1])
         dests = pydyf.Dictionary({'Names': name_array})
         pdf.catalog['Names'] = pydyf.Dictionary({'Dests': dests})
+
+    # Variants
+    if variant:
+        VARIANTS[variant](pdf, metadata)
 
     return pdf

@@ -147,7 +147,8 @@ class HTML:
     def write_pdf(self, target=None, stylesheets=None, zoom=1,
                   attachments=None, finisher=None, presentational_hints=False,
                   optimize_size=('fonts',), font_config=None,
-                  counter_style=None, image_cache=None):
+                  counter_style=None, image_cache=None, identifier=None,
+                  variant=None):
         """Render the document to a PDF file.
 
         This is a shortcut for calling :meth:`render`, then
@@ -182,6 +183,8 @@ class HTML:
         :type counter_style: :class:`css.counters.CounterStyle`
         :param counter_style: A dictionary storing ``@counter-style`` rules.
         :param dict image_cache: A dictionary used to cache images.
+        :param bytes identifier: A bytestring used as PDF file identifier.
+        :param str variant: A PDF variant name.
         :returns:
             The PDF as :obj:`bytes` if ``target`` is not provided or
             :obj:`None`, otherwise :obj:`None` (the PDF is written to
@@ -193,7 +196,8 @@ class HTML:
                 stylesheets, presentational_hints=presentational_hints,
                 optimize_size=optimize_size, font_config=font_config,
                 counter_style=counter_style, image_cache=image_cache)
-            .write_pdf(target, zoom, attachments, finisher))
+            .write_pdf(
+                target, zoom, attachments, finisher, identifier, variant))
 
 
 class CSS:

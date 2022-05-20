@@ -9,6 +9,7 @@ import pydyf
 
 from . import HTML, LOGGER, __version__
 from .text.ffi import pango
+from .pdf import VARIANTS
 
 
 class PrintInfo(argparse.Action):
@@ -60,9 +61,17 @@ def main(argv=None, stdout=None, stdin=None):
 
     .. option:: -a <file>, --attachment <file>
 
-        Adds an attachment to the document.  The attachment is
-        included in the PDF output. This option can be used multiple
-        times.
+        Adds an attachment to the document. The attachment is included in the
+        PDF output. This option can be used multiple times.
+
+    .. option:: --pdf-identifier <identifier>
+
+        PDF file identifier, used to check whether two different files
+        are two different versions of the same original document.
+
+    .. option:: --pdf-variant <variant-name>
+
+        PDF variant to generate (e.g. ``--pdf-variant pdf/a-3b``).
 
     .. option:: -p, --presentational-hints
 
@@ -119,6 +128,9 @@ def main(argv=None, stdout=None, stdin=None):
     parser.add_argument('-a', '--attachment', action='append',
                         help='URL or filename of a file '
                              'to attach to the PDF document')
+    parser.add_argument('--pdf-identifier', help='PDF file identifier')
+    parser.add_argument('--pdf-variant', choices=VARIANTS,
+                        help='PDF variant to generate')
     parser.add_argument('-p', '--presentational-hints', action='store_true',
                         help='Follow HTML presentational hints.')
     parser.add_argument('-O', '--optimize-size', action='append',
@@ -165,7 +177,10 @@ def main(argv=None, stdout=None, stdin=None):
         'stylesheets': args.stylesheet,
         'presentational_hints': args.presentational_hints,
         'optimize_size': tuple(optimize_size),
-        'attachments': args.attachment}
+        'attachments': args.attachment,
+        'identifier': args.pdf_identifier,
+        'variant': args.pdf_variant,
+    }
 
     # Default to logging to stderr.
     if args.debug:
