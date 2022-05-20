@@ -7,6 +7,7 @@ import shutil
 import zlib
 from os.path import basename
 from urllib.parse import unquote, urlsplit
+from xml.etree import ElementTree
 
 import pydyf
 from fontTools import subset
@@ -29,6 +30,18 @@ from .matrix import Matrix
 from .stream import Stream
 from .text.fonts import FontConfiguration
 from .urls import URLFetchingError
+
+
+# XML namespaces used for metadata
+NS = {
+    'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
+    'dc': 'http://purl.org/dc/elements/1.1/',
+    'xmp': 'http://ns.adobe.com/xap/1.0/',
+    'pdf': 'http://ns.adobe.com/pdf/1.3/',
+    'pdfaid': 'http://www.aiim.org/pdfa/ns/id/',
+}
+for key, value in NS.items():
+    ElementTree.register_namespace(key, value)
 
 
 def _w3c_date_to_pdf(string, attr_name):
@@ -59,6 +72,80 @@ def _w3c_date_to_pdf(string, attr_name):
         else:
             pdf_date += 'Z'
     return pdf_date
+
+
+def _pdf_2b(pdf, metadata):
+    # Add ICC profile
+    profile = pydyf.Stream(
+        [open('/tmp/icc', 'rb').read()],
+        pydyf.Dictionary({'N': 3, 'Alternate': '/DeviceRGB'}),
+        compress=True,
+    )
+    pdf.add_object(profile)
+    pdf.catalog['OutputIntents'] = pydyf.Array([
+        pydyf.Dictionary({
+            'Type': '/OutputIntent',
+            'S': '/GTS_PDFA1',
+            'OutputConditionIdentifier': pydyf.String('sRGB IEC61966-2.1'),
+            'DestOutputProfile': profile.reference,
+        }),
+    ])
+
+    # Add metadata
+    rdf = ElementTree.Element(f'{{{NS["rdf"]}}}RDF')
+
+    element = ElementTree.SubElement(rdf, f'{{{NS["rdf"]}}}Description')
+    element.attrib[f'{{{NS["pdfaid"]}}}part'] = '2'
+    element.attrib[f'{{{NS["pdfaid"]}}}conformance'] = 'B'
+
+    element = ElementTree.SubElement(rdf, f'{{{NS["rdf"]}}}Description')
+    element.attrib[f'{{{NS["pdf"]}}}Producer'] = f'WeasyPrint {__version__}'
+
+    if metadata.title:
+        element = ElementTree.SubElement(
+            rdf, f'{{{NS["rdf"]}}}Description')
+        element = ElementTree.SubElement(element, f'{{{NS["dc"]}}}title')
+        element = ElementTree.SubElement(element, f'{{{NS["rdf"]}}}Alt')
+        element = ElementTree.SubElement(element, f'{{{NS["rdf"]}}}li')
+        element.attrib['xml:lang'] = 'x-default'
+        element.text = metadata.title
+    if metadata.authors:
+        element = ElementTree.SubElement(rdf, f'{{{NS["rdf"]}}}Description')
+        element = ElementTree.SubElement(element, f'{{{NS["dc"]}}}creator')
+        element = ElementTree.SubElement(element, f'{{{NS["rdf"]}}}Seq')
+        for author in metadata.authors:
+            author_element = ElementTree.SubElement(
+                element, f'{{{NS["rdf"]}}}li')
+            author_element.text = author
+    if metadata.description:
+        element = ElementTree.SubElement(
+            rdf, f'{{{NS["rdf"]}}}Description')
+        element = ElementTree.SubElement(element, f'{{{NS["dc"]}}}subject')
+        element = ElementTree.SubElement(element, f'{{{NS["rdf"]}}}Bag')
+        element = ElementTree.SubElement(element, f'{{{NS["rdf"]}}}li')
+        element.text = metadata.description
+    if metadata.keywords:
+        element = ElementTree.SubElement(rdf, f'{{{NS["rdf"]}}}Description')
+        element = ElementTree.SubElement(element, f'{{{NS["pdf"]}}}Keywords')
+        element.text = ', '.join(metadata.keywords)
+    if metadata.generator:
+        element = ElementTree.SubElement(rdf, f'{{{NS["rdf"]}}}Description')
+        element = ElementTree.SubElement(
+            element, f'{{{NS["xmp"]}}}CreatorTool')
+        element.text = metadata.generator
+    if metadata.created:
+        element = ElementTree.SubElement(rdf, f'{{{NS["rdf"]}}}Description')
+        element = ElementTree.SubElement(element, f'{{{NS["xmp"]}}}CreateDate')
+        element.text = metadata.created
+    if metadata.modified:
+        element = ElementTree.SubElement(rdf, f'{{{NS["rdf"]}}}Description')
+        element = ElementTree.SubElement(element, f'{{{NS["xmp"]}}}ModifyDate')
+        element.text = metadata.modified
+    xml = ElementTree.tostring(rdf, encoding='utf-8')
+    metadata = pydyf.Stream(
+        [xml], extra={'Type': '/Metadata', 'Subtype': '/XML'})
+    pdf.add_object(metadata)
+    pdf.catalog['Metadata'] = metadata.reference
 
 
 def _write_pdf_attachment(pdf, attachment, url_fetcher):
@@ -453,7 +540,8 @@ class Document:
                 page_number, matrix)
         return root
 
-    def write_pdf(self, target=None, zoom=1, attachments=None, finisher=None):
+    def write_pdf(self, target=None, zoom=1, attachments=None, finisher=None,
+                  identifier=None):
         """Paint the pages in a PDF file, with metadata.
 
         :type target:
@@ -473,6 +561,7 @@ class Document:
         :param finisher: A finisher function, that accepts the document and a
             :class:`pydyf.PDF` object as parameters, can be passed to perform
             post-processing on the PDF right before the trailer is written.
+        :param bytes identifier: An bytestring used as PDF file identifier.
         :returns:
             The PDF as :obj:`bytes` if ``target`` is not provided or
             :obj:`None`, otherwise :obj:`None` (the PDF is written to
@@ -641,11 +730,11 @@ class Document:
         PROGRESS_LOGGER.info('Step 7 - Adding PDF metadata')
 
         # PDF information
+        pdf.info['Producer'] = pydyf.String(f'WeasyPrint {__version__}')
         if self.metadata.title:
             pdf.info['Title'] = pydyf.String(self.metadata.title)
         if self.metadata.authors:
-            pdf.info['Author'] = pydyf.String(
-                ', '.join(self.metadata.authors))
+            pdf.info['Author'] = pydyf.String(', '.join(self.metadata.authors))
         if self.metadata.description:
             pdf.info['Subject'] = pydyf.String(self.metadata.description)
         if self.metadata.keywords:
@@ -653,7 +742,6 @@ class Document:
                 ', '.join(self.metadata.keywords))
         if self.metadata.generator:
             pdf.info['Creator'] = pydyf.String(self.metadata.generator)
-        pdf.info['Producer'] = pydyf.String(f'WeasyPrint {__version__}')
         if self.metadata.created:
             pdf.info['CreationDate'] = pydyf.String(
                 _w3c_date_to_pdf(self.metadata.created, 'created'))
@@ -781,6 +869,7 @@ class Document:
                     'Ordering': pydyf.String('Identity'),
                     'Supplement': 0,
                 }),
+                'CIDToGIDMap': '/Identity',
                 'W': widths,
                 'FontDescriptor': font_descriptor.reference,
             })
@@ -841,7 +930,7 @@ class Document:
             finisher(self, pdf)
 
         file_obj = io.BytesIO()
-        pdf.write(file_obj)
+        pdf.write(file_obj, identifier=identifier)
 
         if target is None:
             return file_obj.getvalue()
