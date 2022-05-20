@@ -6,8 +6,13 @@ on:
     tags:
       - "*"
  
+permissions:
+  contents: read
+
 jobs:
   doconfly:
+    permissions:
+      contents: none
     name: doconfly job
     runs-on: ubuntu-latest
     env:

@@ -4,6 +4,9 @@ on: [push, pull_request]
 env:
   REPORTS_FOLDER: 'report'
 
+permissions:
+  contents: read
+
 jobs:
   tests:
     name: ${{ matrix.os }} - ${{ matrix.python-version }}

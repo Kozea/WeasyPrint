@@ -1,6 +1,9 @@
 name: WeasyPrint's tests
 on: [push, pull_request]
 
+permissions:
+  contents: read
+
 jobs:
   tests:
     name: ${{ matrix.os }} - ${{ matrix.python-version }}
