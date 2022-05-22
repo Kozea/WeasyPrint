@@ -294,6 +294,84 @@ def test_line_clamp_number(assert_pixels):
     ''')
 
 
+def test_line_clamp_nested(assert_pixels):
+    assert_pixels('''
+        BBBB__BB__
+        BBBB__BB__
+        BBBB__BB__
+        BBBB__BB__
+        BBBBBBBBBB
+        BBBBBBBBBB
+        __________
+        __________
+        __________
+        __________
+    ''', '''
+      <style>
+        @page {size: 10px 10px;}
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        div {
+          color: blue;
+          font-family: weasyprint;
+          font-size: 2px;
+          line-clamp: 3 "(…)";
+        }
+      </style>
+
+      <div>
+        aa a
+        <p>
+          bb b
+          cc c
+          dddd
+          eeee
+          ffff
+          gggg
+          hhhh
+        </p>
+      </div>
+    ''')
+
+
+def test_line_clamp_nested_after(assert_pixels):
+    assert_pixels('''
+        BBBB__BB__
+        BBBB__BB__
+        BBBB__BB__
+        BBBB__BB__
+        BBBBBBBBBB
+        BBBBBBBBBB
+        __________
+        __________
+        __________
+        __________
+    ''', '''
+      <style>
+        @page {size: 10px 10px;}
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        div {
+          color: blue;
+          font-family: weasyprint;
+          font-size: 2px;
+          line-clamp: 3 "(…)";
+        }
+      </style>
+
+      <div>
+        aa a
+        <p>
+          bb b
+        </p>
+        cc c
+        dddd
+        eeee
+        ffff
+        gggg
+        hhhh
+      </div>
+    ''')
+
+
 @pytest.mark.xfail
 def test_ellipsis_nested(assert_pixels):
     assert_pixels('''
