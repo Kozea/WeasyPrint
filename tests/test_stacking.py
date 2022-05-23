@@ -3,7 +3,6 @@
 import pytest
 from weasyprint.stacking import StackingContext
 
-from .draw import assert_pixels
 from .testing_utils import assert_no_logs, render_pages, serialize
 
 z_index_source = '''
@@ -73,7 +72,5 @@ def test_image_contexts():
     ((1, 2, 'auto'), 'B'),
     ((-1, 'auto', -2), 'B'),
 ))
-def test_z_index(z_indexes, color):
-    assert_pixels(
-        'z_index_%s_%s_%s' % z_indexes, '\n'.join([color * 10] * 10),
-        z_index_source % z_indexes)
+def test_z_index(assert_pixels, z_indexes, color):
+    assert_pixels('\n'.join([color * 10] * 10), z_index_source % z_indexes)

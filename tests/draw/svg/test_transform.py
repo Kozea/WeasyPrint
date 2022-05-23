@@ -1,12 +1,11 @@
 """Test how SVG shapes are transformed."""
 
 from ...testing_utils import assert_no_logs
-from .. import assert_pixels
 
 
 @assert_no_logs
-def test_transform_translate():
-    assert_pixels('transform_translate', '''
+def test_transform_translate(assert_pixels):
+    assert_pixels('''
         _________
         _RRRRRRR_
         _RRRRRRR_
@@ -29,8 +28,8 @@ def test_transform_translate():
 
 
 @assert_no_logs
-def test_transform_translatex():
-    assert_pixels('transform_translatex', '''
+def test_transform_translatex(assert_pixels):
+    assert_pixels('''
         _________
         _RRRRRRR_
         _RRRRRRR_
@@ -53,8 +52,8 @@ def test_transform_translatex():
 
 
 @assert_no_logs
-def test_transform_translatey():
-    assert_pixels('transform_translatey', '''
+def test_transform_translatey(assert_pixels):
+    assert_pixels('''
         _________
         _RRRRRRR_
         _RRRRRRR_
@@ -77,8 +76,8 @@ def test_transform_translatey():
 
 
 @assert_no_logs
-def test_transform_rotate():
-    assert_pixels('transform_rotate', '''
+def test_transform_rotate(assert_pixels):
+    assert_pixels('''
         _________
         _RRRRRRR_
         _RRRRRRR_
@@ -101,8 +100,8 @@ def test_transform_rotate():
 
 
 @assert_no_logs
-def test_transform_rotate_cx_cy():
-    assert_pixels('transform_rotate_cx_cy', '''
+def test_transform_rotate_cx_cy(assert_pixels):
+    assert_pixels('''
         _________
         _RRRRRRR_
         _RRRRRRR_
@@ -125,8 +124,8 @@ def test_transform_rotate_cx_cy():
 
 
 @assert_no_logs
-def test_transform_skew():
-    assert_pixels('transform_skew', '''
+def test_transform_skew(assert_pixels):
+    assert_pixels('''
         _________
         _RRR_____
         _RRRRRR__
@@ -149,8 +148,8 @@ def test_transform_skew():
 
 
 @assert_no_logs
-def test_transform_skewx():
-    assert_pixels('transform_skewx', '''
+def test_transform_skewx(assert_pixels):
+    assert_pixels('''
         _________
         _RRRRR___
         _RRRRRR__
@@ -173,8 +172,8 @@ def test_transform_skewx():
 
 
 @assert_no_logs
-def test_transform_skewy():
-    assert_pixels('transform_skewy', '''
+def test_transform_skewy(assert_pixels):
+    assert_pixels('''
         _________
         _RR______
         _RRRR____
@@ -197,8 +196,8 @@ def test_transform_skewy():
 
 
 @assert_no_logs
-def test_transform_scale():
-    assert_pixels('transform_scale', '''
+def test_transform_scale(assert_pixels):
+    assert_pixels('''
         _________
         _RRRRRRR_
         _RRRRRRR_
@@ -221,8 +220,8 @@ def test_transform_scale():
 
 
 @assert_no_logs
-def test_transform_scale_2():
-    assert_pixels('transform_scale_2', '''
+def test_transform_scale_2(assert_pixels):
+    assert_pixels('''
         _________
         _RRRRRRR_
         _RRRRRRR_
@@ -245,8 +244,8 @@ def test_transform_scale_2():
 
 
 @assert_no_logs
-def test_transform_scalex():
-    assert_pixels('transform_scalex', '''
+def test_transform_scalex(assert_pixels):
+    assert_pixels('''
         _________
         _RRRRRRR_
         _RRRRRRR_
@@ -269,8 +268,8 @@ def test_transform_scalex():
 
 
 @assert_no_logs
-def test_transform_scaley():
-    assert_pixels('transform_scaley', '''
+def test_transform_scaley(assert_pixels):
+    assert_pixels('''
         _________
         _RRRR____
         _RRRR____
@@ -293,8 +292,8 @@ def test_transform_scaley():
 
 
 @assert_no_logs
-def test_transform_matrix():
-    assert_pixels('transform_matrix', '''
+def test_transform_matrix(assert_pixels):
+    assert_pixels('''
         _________
         _RRRRRRR_
         _RRRRRRR_
@@ -318,8 +317,8 @@ def test_transform_matrix():
 
 
 @assert_no_logs
-def test_transform_multiple():
-    assert_pixels('transform_multiple', '''
+def test_transform_multiple(assert_pixels):
+    assert_pixels('''
         _________
         _RRRRRRR_
         _RRRRRRR_

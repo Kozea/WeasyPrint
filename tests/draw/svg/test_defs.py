@@ -3,7 +3,6 @@
 from base64 import b64encode
 
 from ...testing_utils import assert_no_logs
-from .. import assert_pixels
 
 SVG = '''
 <svg width="10px" height="10px" xmlns="http://www.w3.org/2000/svg">
@@ -31,8 +30,8 @@ RESULT = '''
 
 
 @assert_no_logs
-def test_use():
-    assert_pixels('use', RESULT, '''
+def test_use(assert_pixels):
+    assert_pixels(RESULT, '''
       <style>
         @page { size: 10px }
         svg { display: block }
@@ -41,9 +40,9 @@ def test_use():
 
 
 @assert_no_logs
-def test_use_base64():
+def test_use_base64(assert_pixels):
     base64_svg = b64encode(SVG.encode()).decode()
-    assert_pixels('use_base64', RESULT, '''
+    assert_pixels(RESULT, '''
       <style>
         @page { size: 10px }
         img { display: block }

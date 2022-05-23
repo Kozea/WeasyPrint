@@ -1,12 +1,11 @@
 """Test how SVG simple paths are drawn."""
 
 from ...testing_utils import assert_no_logs
-from .. import assert_pixels
 
 
 @assert_no_logs
-def test_path_Hh():
-    assert_pixels('path_Hh', '''
+def test_path_Hh(assert_pixels):
+    assert_pixels('''
         BBBBBBBB__
         BBBBBBBB__
         __________
@@ -36,8 +35,8 @@ def test_path_Hh():
 
 
 @assert_no_logs
-def test_path_Vv():
-    assert_pixels('path_Vv', '''
+def test_path_Vv(assert_pixels):
+    assert_pixels('''
         BB____GG__
         BB____GG__
         BB____GG__
@@ -67,8 +66,8 @@ def test_path_Vv():
 
 
 @assert_no_logs
-def test_path_Ll():
-    assert_pixels('path_Ll', '''
+def test_path_Ll(assert_pixels):
+    assert_pixels('''
         ______RR__
         ______RR__
         ______RR__
@@ -94,8 +93,8 @@ def test_path_Ll():
 
 
 @assert_no_logs
-def test_path_Zz():
-    assert_pixels('path_Zz', '''
+def test_path_Zz(assert_pixels):
+    assert_pixels('''
         BBBBBBB___
         BBBBBBB___
         BB___BB___
@@ -121,8 +120,8 @@ def test_path_Zz():
 
 
 @assert_no_logs
-def test_path_Zz_fill():
-    assert_pixels('path_Zz_fill', '''
+def test_path_Zz_fill(assert_pixels):
+    assert_pixels('''
         BBBBBBB___
         BBBBBBB___
         BBGGGBB___
@@ -148,8 +147,8 @@ def test_path_Zz_fill():
 
 
 @assert_no_logs
-def test_path_Cc():
-    assert_pixels('path_Cc', '''
+def test_path_Cc(assert_pixels):
+    assert_pixels('''
         __________
         __________
         __________
@@ -175,8 +174,8 @@ def test_path_Cc():
 
 
 @assert_no_logs
-def test_path_Ss():
-    assert_pixels('path_Ss', '''
+def test_path_Ss(assert_pixels):
+    assert_pixels('''
         __________
         __________
         __________
@@ -202,8 +201,8 @@ def test_path_Ss():
 
 
 @assert_no_logs
-def test_path_CcSs():
-    assert_pixels('path_CcSs', '''
+def test_path_CcSs(assert_pixels):
+    assert_pixels('''
         __BBBBBB__
         __BBBBBBB_
         _____BBBB_
@@ -235,8 +234,8 @@ def test_path_CcSs():
 
 
 @assert_no_logs
-def test_path_Qq():
-    assert_pixels('path_Qq', '''
+def test_path_Qq(assert_pixels):
+    assert_pixels('''
         __________
         __________
         __________
@@ -262,8 +261,8 @@ def test_path_Qq():
 
 
 @assert_no_logs
-def test_path_Tt():
-    assert_pixels('path_Tt', '''
+def test_path_Tt(assert_pixels):
+    assert_pixels('''
         __________
         __________
         __________
@@ -289,8 +288,8 @@ def test_path_Tt():
 
 
 @assert_no_logs
-def test_path_QqTt():
-    assert_pixels('path_QqTt', '''
+def test_path_QqTt(assert_pixels):
+    assert_pixels('''
         _BBBB_______
         BBBBBBB_____
         BBBBBBBB__BB
@@ -318,8 +317,8 @@ def test_path_QqTt():
 
 
 @assert_no_logs
-def test_path_QqTt2():
-    assert_pixels('path_QqTt2', '''
+def test_path_QqTt2(assert_pixels):
+    assert_pixels('''
         _BBBB_______
         BBBBBBB_____
         BBBBBBBB__BB
@@ -347,8 +346,8 @@ def test_path_QqTt2():
 
 
 @assert_no_logs
-def test_path_Aa():
-    assert_pixels('path_Aa', '''
+def test_path_Aa(assert_pixels):
+    assert_pixels('''
         __BBBB______
         _BBBBB______
         BBBBBB______
@@ -376,8 +375,8 @@ def test_path_Aa():
 
 
 @assert_no_logs
-def test_path_Aa2():
-    assert_pixels('path_Aa2', '''
+def test_path_Aa2(assert_pixels):
+    assert_pixels('''
         ______GGGG__
         ______GGGGG_
         ______GGGGGG
@@ -403,8 +402,8 @@ def test_path_Aa2():
 
 
 @assert_no_logs
-def test_path_Aa3():
-    assert_pixels('path_Aa3', '''
+def test_path_Aa3(assert_pixels):
+    assert_pixels('''
         ______GGGG__
         ______GGGGG_
         ______GGGGGG
@@ -430,8 +429,8 @@ def test_path_Aa3():
 
 
 @assert_no_logs
-def test_path_Aa4():
-    assert_pixels('path_Aa4', '''
+def test_path_Aa4(assert_pixels):
+    assert_pixels('''
         ____________
         ____BBB_____
         ____BBB_____
@@ -459,8 +458,8 @@ def test_path_Aa4():
 
 
 @assert_no_logs
-def test_path_Aa5():
-    assert_pixels('path_Aa5', '''
+def test_path_Aa5(assert_pixels):
+    assert_pixels('''
         __BBBBBBBB__
         _BBBBBBBBBB_
         BBBBBBBBBBBB
@@ -486,8 +485,8 @@ def test_path_Aa5():
 
 
 @assert_no_logs
-def test_path_Aa6():
-    assert_pixels('path_Aa6', '''
+def test_path_Aa6(assert_pixels):
+    assert_pixels('''
         __BBBBBBBB__
         _BBBBBBBBBB_
         BBBBBBBBBBBB
@@ -513,8 +512,8 @@ def test_path_Aa6():
 
 
 @assert_no_logs
-def test_path_Aa7():
-    assert_pixels('path_Aa7', '''
+def test_path_Aa7(assert_pixels):
+    assert_pixels('''
         ____________
         ____________
         ____________
@@ -540,8 +539,8 @@ def test_path_Aa7():
 
 
 @assert_no_logs
-def test_path_wrong_point():
-    assert_pixels('path_wrong_point', '''
+def test_path_wrong_point(assert_pixels):
+    assert_pixels('''
         ____________
         GG__________
         GG__________
@@ -567,8 +566,8 @@ def test_path_wrong_point():
 
 
 @assert_no_logs
-def test_path_markers_l():
-    assert_pixels('path_markers_l', '''
+def test_path_markers_l(assert_pixels):
+    assert_pixels('''
         _________zz_
         _RR_____zzRz
         _RRGGGGzzRzz
@@ -601,8 +600,8 @@ def test_path_markers_l():
 
 
 @assert_no_logs
-def test_path_markers_hv():
-    assert_pixels('path_markers_hv', '''
+def test_path_markers_hv(assert_pixels):
+    assert_pixels('''
         _________zz_
         _RR_____zzRz
         _RRGGGGzzRzz

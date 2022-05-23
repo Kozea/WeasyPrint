@@ -17,6 +17,8 @@ from PIL import Image
 from weasyprint import HTML
 from weasyprint.document import Document
 
+from . import draw
+
 MAGIC_NUMBER = b'\x89\x50\x4e\x47\x0d\x0a\x1a\x0a'
 
 
@@ -82,7 +84,35 @@ def html_write_png(self, target=None, stylesheets=None, resolution=96,
             target, resolution)
 
 
-@pytest.fixture(autouse=True)
-def monkey_write_png(monkeypatch):
-    Document.write_png = document_write_png
-    HTML.write_png = html_write_png
+Document.write_png = document_write_png
+HTML.write_png = html_write_png
+
+
+def test_filename(filename):
+    return ''.join(
+        character if character.isalnum() else '_'
+        for character in filename[5:50]).rstrip('_')
+
+
+@pytest.fixture
+def assert_pixels(request, *args, **kwargs):
+    return lambda *args, **kwargs: draw.assert_pixels(
+        test_filename(request.node.name), *args, **kwargs)
+
+
+@pytest.fixture
+def assert_same_renderings(request, *args, **kwargs):
+    return lambda *args, **kwargs: draw.assert_same_renderings(
+        test_filename(request.node.name), *args, **kwargs)
+
+
+@pytest.fixture
+def assert_different_renderings(request, *args, **kwargs):
+    return lambda *args, **kwargs: draw.assert_different_renderings(
+        test_filename(request.node.name), *args, **kwargs)
+
+
+@pytest.fixture
+def assert_pixels_equal(request, *args, **kwargs):
+    return lambda *args, **kwargs: draw.assert_pixels_equal(
+        test_filename(request.node.name), *args, **kwargs)

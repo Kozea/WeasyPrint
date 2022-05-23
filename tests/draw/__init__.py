@@ -47,78 +47,40 @@ def assert_pixels(name, expected_pixels, html):
     """Helper testing the size of the image and the pixels values."""
     expected_width, expected_height, expected_pixels = parse_pixels(
         expected_pixels)
-    width, height, pixels = html_to_pixels(name, html)
+    width, height, pixels = html_to_pixels(html)
     assert (expected_width, expected_height) == (width, height), (
         'Images do not have the same sizes')
     assert_pixels_equal(name, width, height, pixels, expected_pixels)
 
 
-def assert_same_rendering(*documents, tolerance=0):
-    """Render HTML documents to PNG and check that they render the same.
-
-    Each document is passed as a (name, html_source) tuple.
-
-    """
+def assert_same_renderings(name, *documents, tolerance=0):
+    """Render HTML documents to PNG and check that they're the same."""
     pixels_list = []
 
-    for name, html in documents:
-        width, height, pixels = html_to_pixels(name, html)
-        pixels_list.append((name, pixels))
+    for html in documents:
+        width, height, pixels = html_to_pixels(html)
+        pixels_list.append(pixels)
 
-    _name, reference = pixels_list[0]
-    for name, pixels in pixels_list[1:]:
-        assert_pixels_equal(name, width, height, pixels, reference, tolerance)
+    reference = pixels_list[0]
+    for i, pixels in enumerate(pixels_list[1:], start=1):
+        assert_pixels_equal(
+            f'{name}_{i}', width, height, pixels, reference, tolerance)
 
 
-def assert_different_renderings(*documents):
-    """Render HTML documents to PNG and check that they don't render the same.
-
-    Each document is passed as a (name, html_source) tuple.
-
-    """
+def assert_different_renderings(name, *documents):
+    """Render HTML documents to PNG and check that they’re different."""
     pixels_list = []
 
-    for name, html in documents:
-        width, height, pixels = html_to_pixels(name, html)
-        pixels_list.append((name, pixels))
+    for html in documents:
+        width, height, pixels = html_to_pixels(html)
+        pixels_list.append(pixels)
 
-    for i, (name_1, pixels_1) in enumerate(pixels_list):
-        for name_2, pixels_2 in pixels_list[i + 1:]:
+    for i, pixels_1 in enumerate(pixels_list, start=1):
+        for j, pixels_2 in enumerate(pixels_list[i:], start=i+1):
             if pixels_1 == pixels_2:  # pragma: no cover
+                name_1, name_2 = f'{name}_{i}', f'{name}_{j}'
                 write_png(name_1, pixels_1, width, height)
-                # Same as "assert pixels_1 != pixels_2" but the output of
-                # the assert hook would be gigantic and useless.
                 assert False, f'{name_1} and {name_2} are the same'
-
-
-def write_png(basename, pixels, width, height):  # pragma: no cover
-    """Take a pixel matrix and write a PNG file."""
-    directory = os.path.join(os.path.dirname(__file__), 'results')
-    if not os.path.isdir(directory):
-        os.mkdir(directory)
-    filename = os.path.join(directory, f'{basename}.png')
-    image = Image.new('RGB', (width, height))
-    image.putdata(pixels)
-    image.save(filename)
-
-
-def html_to_pixels(name, html):
-    """Render an HTML document to PNG, checks its size and return pixel data.
-
-    Also return the document to aid debugging.
-
-    """
-    document = FakeHTML(
-        string=html,
-        # Dummy filename, but in the right directory.
-        base_url=resource_filename('<test>'))
-    return document_to_pixels(document, name)
-
-
-def document_to_pixels(document, name):
-    """Render an HTML document to PNG, check its size and return pixel data."""
-    image = Image.open(io.BytesIO(document.write_png()))
-    return image.width, image.height, image.getdata()
 
 
 def assert_pixels_equal(name, width, height, raw, expected_raw, tolerance=0):
@@ -140,3 +102,33 @@ def assert_pixels_equal(name, width, height, raw, expected_raw, tolerance=0):
                 assert 0, (
                     f'Pixel ({x}, {y}) in {name}: '
                     f'expected rgba{expected}, got rgba{value}')
+
+
+def write_png(basename, pixels, width, height):  # pragma: no cover
+    """Take a pixel matrix and write a PNG file."""
+    directory = os.path.join(os.path.dirname(__file__), 'results')
+    if not os.path.isdir(directory):
+        os.mkdir(directory)
+    filename = os.path.join(directory, f'{basename}.png')
+    image = Image.new('RGB', (width, height))
+    image.putdata(pixels)
+    image.save(filename)
+
+
+def html_to_pixels(html):
+    """Render an HTML document to PNG, checks its size and return pixel data.
+
+    Also return the document to aid debugging.
+
+    """
+    document = FakeHTML(
+        string=html,
+        # Dummy filename, but in the right directory.
+        base_url=resource_filename('<test>'))
+    return document_to_pixels(document)
+
+
+def document_to_pixels(document):
+    """Render an HTML document to PNG, check its size and return pixel data."""
+    image = Image.open(io.BytesIO(document.write_png()))
+    return image.width, image.height, image.getdata()

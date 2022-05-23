@@ -3,20 +3,18 @@
 import pytest
 
 from ..testing_utils import assert_no_logs
-from . import assert_pixels
 
 
 @assert_no_logs
-def test_leader_simple():
-    expected_pixels = '''
+def test_leader_simple(assert_pixels):
+    assert_pixels('''
         RR__BBBBBBBB__BB
         RR__BBBBBBBB__BB
         RRRR__BBBB__BBBB
         RRRR__BBBB__BBBB
         RR__BBBB__BBBBBB
         RR__BBBB__BBBBBB
-    '''
-    html = '''
+    ''', '''
       <style>
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
@@ -38,13 +36,12 @@ def test_leader_simple():
       <div>a</div>
       <div>bb</div>
       <div>c</div>
-    '''
-    assert_pixels('leader-simple', expected_pixels, html)
+    ''')
 
 
 @assert_no_logs
-def test_leader_too_long():
-    expected_pixels = '''
+def test_leader_too_long(assert_pixels):
+    assert_pixels('''
         RRRRRRRRRR______
         RRRRRRRRRR______
         BBBBBBBBBBBB__BB
@@ -59,8 +56,7 @@ def test_leader_too_long():
         RR__RR__RR__RR__
         RR__BBBB__BBBBBB
         RR__BBBB__BBBBBB
-    '''
-    html = '''
+    ''', '''
       <style>
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
@@ -82,17 +78,15 @@ def test_leader_too_long():
       <div>aaaaa</div>
       <div>a a a a a a a</div>
       <div>a a a a a</div>
-    '''
-    assert_pixels('leader-too-long', expected_pixels, html)
+    ''')
 
 
 @assert_no_logs
-def test_leader_alone():
-    expected_pixels = '''
+def test_leader_alone(assert_pixels):
+    assert_pixels('''
         RRBBBBBBBBBBBBBB
         RRBBBBBBBBBBBBBB
-    '''
-    html = '''
+    ''', '''
       <style>
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
@@ -110,17 +104,15 @@ def test_leader_alone():
         }
       </style>
       <div>a</div>
-    '''
-    assert_pixels('leader-alone', expected_pixels, html)
+    ''')
 
 
 @assert_no_logs
-def test_leader_content():
-    expected_pixels = '''
+def test_leader_content(assert_pixels):
+    assert_pixels('''
         RR____BB______BB
         RR____BB______BB
-    '''
-    html = '''
+    ''', '''
       <style>
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
@@ -138,20 +130,18 @@ def test_leader_content():
         }
       </style>
       <div>a</div>
-    '''
-    assert_pixels('leader-content', expected_pixels, html)
+    ''')
 
 
 @pytest.mark.xfail
 @assert_no_logs
-def test_leader_float():
-    expected_pixels = '''
+def test_leader_float(assert_pixels):
+    assert_pixels('''
         bbGRR___BB____BB
         bbGRR___BB____BB
         GGGRR___BB____BB
         ___RR___BB____BB
-    '''
-    html = '''
+    ''', '''
       <style>
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
@@ -177,20 +167,18 @@ def test_leader_float():
       </style>
       <div>a<article>a</article></div>
       <div>a</div>
-    '''
-    assert_pixels('leader-float', expected_pixels, html)
+    ''')
 
 
 @pytest.mark.xfail
 @assert_no_logs
-def test_leader_float_small():
-    expected_pixels = '''
+def test_leader_float_small(assert_pixels):
+    assert_pixels('''
         bbRRBB__BB____BB
         bbRRBB__BB____BB
         RR__BB__BB____BB
         RR__BB__BB____BB
-    '''
-    html = '''
+    ''', '''
       <style>
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
@@ -214,17 +202,15 @@ def test_leader_float_small():
       </style>
       <div>a<article>a</article></div>
       <div>a</div>
-    '''
-    assert_pixels('leader-float-small', expected_pixels, html)
+    ''')
 
 
 @assert_no_logs
-def test_leader_in_inline():
-    expected_pixels = '''
+def test_leader_in_inline(assert_pixels):
+    assert_pixels('''
         RR__GGBBBBBB__RR
         RR__GGBBBBBB__RR
-    '''
-    html = '''
+    ''', '''
       <style>
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
@@ -245,20 +231,18 @@ def test_leader_in_inline():
         }
       </style>
       <div>a <span>a</span> a</div>
-    '''
-    assert_pixels('leader-in-inline', expected_pixels, html)
+    ''')
 
 
 @pytest.mark.xfail
 @assert_no_logs
-def test_leader_bad_alignment():
-    expected_pixels = '''
+def test_leader_bad_alignment(assert_pixels):
+    assert_pixels('''
         RRRRRR__________
         RRRRRR__________
         ______BB______RR
         ______BB______RR
-    '''
-    html = '''
+    ''', '''
       <style>
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
@@ -276,21 +260,19 @@ def test_leader_bad_alignment():
         }
       </style>
       <div>aaa</div>
-    '''
-    assert_pixels('leader-in-inline', expected_pixels, html)
+    ''')
 
 
 @assert_no_logs
-def test_leader_simple_rtl():
-    expected_pixels = '''
+def test_leader_simple_rtl(assert_pixels):
+    assert_pixels('''
         BB__BBBBBBBB__RR
         BB__BBBBBBBB__RR
         BBBB__BBBB__RRRR
         BBBB__BBBB__RRRR
         BBBBBB__BBBB__RR
         BBBBBB__BBBB__RR
-    '''
-    html = '''
+    ''', '''
       <style>
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
@@ -314,13 +296,12 @@ def test_leader_simple_rtl():
       <div>a</div>
       <div>bb</div>
       <div>c</div>
-    '''
-    assert_pixels('leader-simple-rtl', expected_pixels, html)
+    ''')
 
 
 @assert_no_logs
-def test_leader_too_long_rtl():
-    expected_pixels = '''
+def test_leader_too_long_rtl(assert_pixels):
+    assert_pixels('''
         ______RRRRRRRRRR
         ______RRRRRRRRRR
         BB__BBBBBBBBBBBB
@@ -335,8 +316,7 @@ def test_leader_too_long_rtl():
         __RR__RR__RR__RR
         BBBBBB__BBBB__RR
         BBBBBB__BBBB__RR
-    '''
-    html = '''
+    ''', '''
       <style>
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
@@ -360,24 +340,22 @@ def test_leader_too_long_rtl():
       <div>aaaaa</div>
       <div>a a a a a a a</div>
       <div>a a a a a</div>
-    '''
-    assert_pixels('leader-too-long-rtl', expected_pixels, html)
+    ''')
 
 
 @assert_no_logs
-def test_leader_float_leader():
+def test_leader_float_leader(assert_pixels):
     # Test regression: https://github.com/Kozea/WeasyPrint/issues/1409
     # Leaders in floats are not displayed at all in many cases with the current
     # implementation, and this case is not really specified. So…
-    expected_pixels = '''
+    assert_pixels('''
         RR____________BB
         RR____________BB
         RRRR__________BB
         RRRR__________BB
         RR____________BB
         RR____________BB
-    '''
-    html = '''
+    ''', '''
       <style>
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
@@ -398,17 +376,15 @@ def test_leader_float_leader():
       <div>a</div>
       <div>bb</div>
       <div>c</div>
-    '''
-    assert_pixels('leader-float-leader', expected_pixels, html)
+    ''')
 
 
 @assert_no_logs
-def test_leader_empty_string():
-    expected_pixels = '''
+def test_leader_empty_string(assert_pixels):
+    assert_pixels('''
         RRRR____
         ________
-    '''
-    html = '''
+    ''', '''
       <style>
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
@@ -426,17 +402,15 @@ def test_leader_empty_string():
         }
       </style>
       <div>aaaa</div>
-    '''
-    assert_pixels('leader-empty-string', expected_pixels, html)
+    ''')
 
 
 @assert_no_logs
-def test_leader_zero_width_string():
-    expected_pixels = '''
+def test_leader_zero_width_string(assert_pixels):
+    assert_pixels('''
         RRRR____
         ________
-    '''
-    html = '''
+    ''', '''
       <style>
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
@@ -454,17 +428,15 @@ def test_leader_zero_width_string():
         }
       </style>
       <div>aaaa</div>
-    '''
-    assert_pixels('leader-zero-width-string', expected_pixels, html)
+    ''')
 
 
 @assert_no_logs
-def test_leader_absolute():
-    expected_pixels = '''
+def test_leader_absolute(assert_pixels):
+    assert_pixels('''
         BBBBRRRR
         ______GG
-    '''
-    html = '''
+    ''', '''
       <style>
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
@@ -488,5 +460,4 @@ def test_leader_absolute():
         }
       </style>
       <div>aa<article>bb</article>aa</div>
-    '''
-    assert_pixels('leader-absolute', expected_pixels, html)
+    ''')

@@ -3,7 +3,6 @@
 import pytest
 
 from ...testing_utils import assert_no_logs
-from .. import assert_same_rendering
 
 # TODO: xfail tests fail because of GhostScript and are supposed to work with
 # real PDF files.
@@ -17,75 +16,75 @@ opacity_source = '''
 
 
 @assert_no_logs
-def test_opacity():
-    assert_same_rendering(
-        ('opacity_reference', opacity_source % '''
+def test_opacity(assert_same_renderings):
+    assert_same_renderings(
+        '''
             <rect x="2" y="2" width="5" height="5" stroke-width="2"
                   stroke="rgb(127, 255, 127)" fill="rgb(127, 127, 255)" />
-        '''),
-        ('opacity', opacity_source % '''
+        ''',
+        '''
             <rect x="2" y="2" width="5" height="5" stroke-width="2"
                   stroke="lime" fill="blue" opacity="0.5" />
-        '''),
+        ''',
     )
 
 
 @assert_no_logs
-def test_fill_opacity():
-    assert_same_rendering(
-        ('fill_opacity_reference', opacity_source % '''
+def test_fill_opacity(assert_same_renderings):
+    assert_same_renderings(
+        '''
             <rect x="2" y="2" width="5" height="5"
                   fill="blue" opacity="0.5" />
             <rect x="2" y="2" width="5" height="5" stroke-width="2"
                   stroke="lime" fill="transparent" />
-        '''),
-        ('fill_opacity', opacity_source % '''
+        ''',
+        '''
             <rect x="2" y="2" width="5" height="5" stroke-width="2"
                   stroke="lime" fill="blue" fill-opacity="0.5" />
-        '''),
+        ''',
     )
 
 
 @pytest.mark.xfail
 @assert_no_logs
-def test_stroke_opacity():
-    assert_same_rendering(
-        ('stroke_opacity_reference', opacity_source % '''
+def test_stroke_opacity(assert_same_renderings):
+    assert_same_renderings(
+        '''
             <rect x="2" y="2" width="5" height="5"
                   fill="blue" />
             <rect x="2" y="2" width="5" height="5" stroke-width="2"
                   stroke="lime" fill="transparent" opacity="0.5" />
-        '''),
-        ('stroke_opacity', opacity_source % '''
+        ''',
+        '''
             <rect x="2" y="2" width="5" height="5" stroke-width="2"
                   stroke="lime" fill="blue" stroke-opacity="0.5" />
-        '''),
+        ''',
     )
 
 
 @pytest.mark.xfail
 @assert_no_logs
-def test_stroke_fill_opacity():
-    assert_same_rendering(
-        ('stroke_fill_opacity_reference', opacity_source % '''
+def test_stroke_fill_opacity(assert_same_renderings):
+    assert_same_renderings(
+        '''
             <rect x="2" y="2" width="5" height="5"
                   fill="blue" opacity="0.5" />
             <rect x="2" y="2" width="5" height="5" stroke-width="2"
                   stroke="lime" fill="transparent" opacity="0.5" />
-        '''),
-        ('stroke_fill_opacity', opacity_source % '''
+        ''',
+        '''
             <rect x="2" y="2" width="5" height="5" stroke-width="2"
                   stroke="lime" fill="blue"
                   stroke-opacity="0.5" fill-opacity="0.5" />
-        '''),
+        ''',
     )
 
 
 @pytest.mark.xfail
 @assert_no_logs
-def test_pattern_gradient_stroke_fill_opacity():
-    assert_same_rendering(
-        ('pattern_gradient_stroke_fill_opacity_reference', opacity_source % '''
+def test_pattern_gradient_stroke_fill_opacity(assert_same_renderings):
+    assert_same_renderings(
+        '''
             <defs>
               <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1"
                               gradientUnits="objectBoundingBox">
@@ -105,8 +104,8 @@ def test_pattern_gradient_stroke_fill_opacity():
                   fill="url(#pat)" opacity="0.5" />
             <rect x="2" y="2" width="5" height="5" stroke-width="2"
                   stroke="url(#grad)" fill="transparent" opacity="0.5" />
-        '''),
-        ('pattern_gradient_stroke_fill_opacity', opacity_source % '''
+        ''',
+        '''
             <defs>
               <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1"
                               gradientUnits="objectBoundingBox">
@@ -125,5 +124,5 @@ def test_pattern_gradient_stroke_fill_opacity():
             <rect x="2" y="2" width="5" height="5" stroke-width="2"
                   stroke="url(#grad)" fill="url(#pat)"
                   stroke-opacity="0.5" fill-opacity="0.5" />
-        '''),
+        ''',
     )

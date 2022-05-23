@@ -3,20 +3,19 @@
 import pytest
 
 from ..testing_utils import assert_no_logs
-from . import assert_pixels
 
 
 @assert_no_logs
 @pytest.mark.parametrize(
-    'name, expected_pixels, html', (
-        ('all_blue', (10 * (10 * 'B' + '\n')), '''
+    'expected_pixels, html', (
+        ((10 * (10 * 'B' + '\n')), '''
            <style>
              @page { size: 10px }
              /* body’s background propagates to the whole canvas */
              body { margin: 2px; background: #00f; height: 5px }
            </style>
          <body>'''),
-        ('blocks', '''
+        ('''
              rrrrrrrrrr
              rrrrrrrrrr
              rrBBBBBBrr
@@ -37,12 +36,12 @@ from . import assert_pixels
           </style>
           <body>'''),
     ))
-def test_canvas_background(name, expected_pixels, html):
-    assert_pixels(name, expected_pixels, html)
+def test_canvas_background(assert_pixels, expected_pixels, html):
+    assert_pixels(expected_pixels, html)
 
 
-def test_canvas_background_size():
-    expected_pixels = '''
+def test_canvas_background_size(assert_pixels):
+    assert_pixels('''
         __________
         __________
         __RRRRRR__
@@ -53,8 +52,7 @@ def test_canvas_background_size():
         __BBBBBB__
         __________
         __________
-    '''
-    html = '''
+    ''', '''
       <style>
          @page { size: 10px; margin: 2px }
          /* html’s background propagates to the whole canvas */
@@ -63,13 +61,13 @@ def test_canvas_background_size():
          /* html has a background, so body’s does not propagate */
          body { margin: 1px; background: lime; height: 1px }
       </style>
-      <body>'''
-    assert_pixels('background-size', expected_pixels, html)
+      <body>
+    ''')
 
 
 @assert_no_logs
-@pytest.mark.parametrize('name, css, pixels', (
-    ('repeat', 'url(pattern.png)', '''
+@pytest.mark.parametrize('css, pixels', (
+    ('url(pattern.png)', '''
         ______________
         ______________
         __rBBBrBBBrB__
@@ -87,7 +85,7 @@ def test_canvas_background_size():
         ______________
         ______________
     '''),
-    ('repeat_x', 'url(pattern.png) repeat-x', '''
+    ('url(pattern.png) repeat-x', '''
         ______________
         ______________
         __rBBBrBBBrB__
@@ -105,7 +103,7 @@ def test_canvas_background_size():
         ______________
         ______________
     '''),
-    ('repeat_y', 'url(pattern.png) repeat-y', '''
+    ('url(pattern.png) repeat-y', '''
         ______________
         ______________
         __rBBB________
@@ -124,7 +122,7 @@ def test_canvas_background_size():
         ______________
     '''),
 
-    ('left_top', 'url(pattern.png) no-repeat 0 0%', '''
+    ('url(pattern.png) no-repeat 0 0%', '''
         ______________
         ______________
         __rBBB________
@@ -142,7 +140,7 @@ def test_canvas_background_size():
         ______________
         ______________
     '''),
-    ('center_top', 'url(pattern.png) no-repeat 50% 0px', '''
+    ('url(pattern.png) no-repeat 50% 0px', '''
         ______________
         ______________
         _____rBBB_____
@@ -160,7 +158,7 @@ def test_canvas_background_size():
         ______________
         ______________
     '''),
-    ('right_top', 'url(pattern.png) no-repeat 6px top', '''
+    ('url(pattern.png) no-repeat 6px top', '''
         ______________
         ______________
         ________rBBB__
@@ -178,7 +176,7 @@ def test_canvas_background_size():
         ______________
         ______________
     '''),
-    ('bottom_6_right_0', 'url(pattern.png) no-repeat bottom 6px right 0', '''
+    ('url(pattern.png) no-repeat bottom 6px right 0', '''
         ______________
         ______________
         ________rBBB__
@@ -196,7 +194,7 @@ def test_canvas_background_size():
         ______________
         ______________
     '''),
-    ('left_center', 'url(pattern.png) no-repeat left center', '''
+    ('url(pattern.png) no-repeat left center', '''
         ______________
         ______________
         ______________
@@ -214,7 +212,7 @@ def test_canvas_background_size():
         ______________
         ______________
     '''),
-    ('center_left', 'url(pattern.png) no-repeat center left', '''
+    ('url(pattern.png) no-repeat center left', '''
         ______________
         ______________
         ______________
@@ -232,7 +230,7 @@ def test_canvas_background_size():
         ______________
         ______________
     '''),
-    ('center_center', 'url(pattern.png) no-repeat 3px 3px', '''
+    ('url(pattern.png) no-repeat 3px 3px', '''
         ______________
         ______________
         ______________
@@ -250,7 +248,7 @@ def test_canvas_background_size():
         ______________
         ______________
     '''),
-    ('right_center', 'url(pattern.png) no-repeat 100% 50%', '''
+    ('url(pattern.png) no-repeat 100% 50%', '''
         ______________
         ______________
         ______________
@@ -269,7 +267,7 @@ def test_canvas_background_size():
         ______________
     '''),
 
-    ('left_bottom', 'url(pattern.png) no-repeat 0% bottom', '''
+    ('url(pattern.png) no-repeat 0% bottom', '''
         ______________
         ______________
         ______________
@@ -287,7 +285,7 @@ def test_canvas_background_size():
         ______________
         ______________
     '''),
-    ('center_bottom', 'url(pattern.png) no-repeat center 6px', '''
+    ('url(pattern.png) no-repeat center 6px', '''
         ______________
         ______________
         ______________
@@ -305,7 +303,7 @@ def test_canvas_background_size():
         ______________
         ______________
     '''),
-    ('bottom_center', 'url(pattern.png) no-repeat bottom center', '''
+    ('url(pattern.png) no-repeat bottom center', '''
         ______________
         ______________
         ______________
@@ -323,7 +321,7 @@ def test_canvas_background_size():
         ______________
         ______________
     '''),
-    ('right_bottom', 'url(pattern.png) no-repeat 6px 100%', '''
+    ('url(pattern.png) no-repeat 6px 100%', '''
         ______________
         ______________
         ______________
@@ -341,8 +339,7 @@ def test_canvas_background_size():
         ______________
         ______________
     '''),
-
-    ('repeat_x_1px_2px', 'url(pattern.png) repeat-x 1px 2px', '''
+    ('url(pattern.png) repeat-x 1px 2px', '''
         ______________
         ______________
         ______________
@@ -360,7 +357,7 @@ def test_canvas_background_size():
         ______________
         ______________
     '''),
-    ('repeat_y_local_2px_1px', 'url(pattern.png) repeat-y local 2px 1px', '''
+    ('url(pattern.png) repeat-y local 2px 1px', '''
         ______________
         ______________
         ____BBBB______
@@ -378,8 +375,7 @@ def test_canvas_background_size():
         ______________
         ______________
     '''),
-
-    ('fixed', 'url(pattern.png) no-repeat fixed', '''
+    ('url(pattern.png) no-repeat fixed', '''
         # The image is actually here:
         #######
         ______________
@@ -399,7 +395,7 @@ def test_canvas_background_size():
         ______________
         ______________
     '''),
-    ('fixed_right', 'url(pattern.png) no-repeat fixed right 3px', '''
+    ('url(pattern.png) no-repeat fixed right 3px', '''
         #                   x x x x
         ______________
         ______________
@@ -418,7 +414,7 @@ def test_canvas_background_size():
         ______________
         ______________
     '''),
-    ('fixed_center_center', 'url(pattern.png)no-repeat fixed 50%center', '''
+    ('url(pattern.png)no-repeat fixed 50%center', '''
         ______________
         ______________
         ______________
@@ -436,8 +432,7 @@ def test_canvas_background_size():
         ______________
         ______________
     '''),
-    ('multi_under', '''url(pattern.png) no-repeat,
-                       url(pattern.png) no-repeat 2px 1px''', '''
+    ('url(pattern.png) no-repeat, url(pattern.png) no-repeat 2px 1px', '''
         ______________
         ______________
         __rBBB________
@@ -455,8 +450,7 @@ def test_canvas_background_size():
         ______________
         ______________
     '''),
-    ('multi_over', '''url(pattern.png) no-repeat 2px 1px,
-                      url(pattern.png) no-repeat''', '''
+    ('url(pattern.png) no-repeat 2px 1px, url(pattern.png) no-repeat', '''
         ______________
         ______________
         __rBBB________
@@ -475,30 +469,23 @@ def test_canvas_background_size():
         ______________
     '''),
 ))
-def test_background_image(name, css, pixels):
-    # pattern.png looks like this:
-
-    #    rBBB
-    #    BBBB
-    #    BBBB
-    #    BBBB
-
-    assert_pixels(f'background_{name}', pixels, '''
+def test_background_image(assert_pixels, css, pixels):
+    assert_pixels(pixels, '''
       <style>
         @page { size: 14px 16px }
         html { background: #fff }
-        body { margin: 2px; height: 10px;
-               background: %s }
+        body { margin: 2px; height: 10px; background: %s }
         p { background: none }
       </style>
       <body>
-      <p>&nbsp;''' % css)
+      <p>&nbsp;
+    ''' % css)
 
 
 @assert_no_logs
-def test_background_image_zero_size_background():
+def test_background_image_zero_size_background(assert_pixels):
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/217
-    assert_pixels('zero_size_background', '''
+    assert_pixels('''
         __________
         __________
         __________
@@ -517,25 +504,13 @@ def test_background_image_zero_size_background():
                background-size: cover;
                display: inline-block }
       </style>
-      <body>''')
+      <body>
+    ''')
 
 
 @assert_no_logs
-def test_background_origin():
-    """Test the background-origin property."""
-    def test_value(value, pixels, css=None):
-        assert_pixels(f'background_origin_{value}', pixels, '''
-            <style>
-                @page { size: 12px }
-                html { background: #fff }
-                body { margin: 1px; padding: 1px; height: 6px;
-                       border: 1px solid transparent;
-                       background: url(pattern.png) bottom right no-repeat;
-                       background-origin: %s }
-            </style>
-            <body>''' % (css or value,))
-
-    test_value('border-box', '''
+@pytest.mark.parametrize('css, pixels', (
+    ('border-box', '''
         ____________
         ____________
         ____________
@@ -548,8 +523,8 @@ def test_background_origin():
         _______BBBB_
         _______BBBB_
         ____________
-    ''')
-    test_value('padding-box', '''
+    '''),
+    ('padding-box', '''
         ____________
         ____________
         ____________
@@ -562,8 +537,8 @@ def test_background_origin():
         ______BBBB__
         ____________
         ____________
-    ''')
-    test_value('content-box', '''
+    '''),
+    ('content-box', '''
         ____________
         ____________
         ____________
@@ -576,9 +551,8 @@ def test_background_origin():
         ____________
         ____________
         ____________
-    ''')
-
-    test_value('border-box_clip', '''
+    '''),
+    ('border-box; background-clip: content-box', '''
         ____________
         ____________
         ____________
@@ -591,12 +565,25 @@ def test_background_origin():
         ____________
         ____________
         ____________
-    ''', css='border-box; background-clip: content-box')
+    ''')
+))
+def test_background_origin(assert_pixels, css, pixels):
+    """Test the background-origin property."""
+    assert_pixels(pixels, '''
+      <style>
+        @page { size: 12px }
+        html { background: #fff }
+        body { margin: 1px; padding: 1px; height: 6px;
+               border: 1px solid transparent;
+               background: url(pattern.png) bottom right no-repeat;
+               background-origin: %s }
+      </style>
+      <body>''' % css)
 
 
 @assert_no_logs
-def test_background_repeat_space_1():
-    assert_pixels('background_repeat_space', '''
+def test_background_repeat_space_1(assert_pixels):
+    assert_pixels('''
         ____________
         _rBBB__rBBB_
         _BBBB__BBBB_
@@ -624,8 +611,8 @@ def test_background_repeat_space_1():
 
 
 @assert_no_logs
-def test_background_repeat_space_2():
-    assert_pixels('background_repeat_space', '''
+def test_background_repeat_space_2(assert_pixels):
+    assert_pixels('''
         ____________
         _rBBB__rBBB_
         _BBBB__BBBB_
@@ -651,8 +638,8 @@ def test_background_repeat_space_2():
 
 
 @assert_no_logs
-def test_background_repeat_space_3():
-    assert_pixels('background_repeat_space', '''
+def test_background_repeat_space_3(assert_pixels):
+    assert_pixels('''
         ____________
         _rBBBrBBBrB_
         _BBBBBBBBBB_
@@ -677,8 +664,8 @@ def test_background_repeat_space_3():
 
 
 @assert_no_logs
-def test_background_repeat_space_4():
-    assert_pixels('background_space_no_repeat', '''
+def test_background_repeat_space_4(assert_pixels):
+    assert_pixels('''
         ________
         _rBBBGG_
         _BBBBGG_
@@ -698,8 +685,8 @@ def test_background_repeat_space_4():
 
 
 @assert_no_logs
-def test_background_repeat_round_1():
-    assert_pixels('background_repeat_round', '''
+def test_background_repeat_round_1(assert_pixels):
+    assert_pixels('''
         __________
         _rrBBBBBB_
         _rrBBBBBB_
@@ -726,8 +713,8 @@ def test_background_repeat_round_1():
 
 
 @assert_no_logs
-def test_background_repeat_round_2():
-    assert_pixels('background_repeat_round', '''
+def test_background_repeat_round_2(assert_pixels):
+    assert_pixels('''
         __________
         _rrBBBBBB_
         _rrBBBBBB_
@@ -758,8 +745,8 @@ def test_background_repeat_round_2():
 
 
 @assert_no_logs
-def test_background_repeat_round_3():
-    assert_pixels('background_repeat_round', '''
+def test_background_repeat_round_3(assert_pixels):
+    assert_pixels('''
         __________
         _rrBBBBBB_
         _rrBBBBBB_
@@ -786,8 +773,8 @@ def test_background_repeat_round_3():
 
 
 @assert_no_logs
-def test_background_repeat_round_4():
-    assert_pixels('background_repeat_round', '''
+def test_background_repeat_round_4(assert_pixels):
+    assert_pixels('''
         __________
         _rBBBrBBB_
         _rBBBrBBB_
@@ -814,7 +801,7 @@ def test_background_repeat_round_4():
 
 
 @assert_no_logs
-@pytest.mark.parametrize('value, pixels', (
+@pytest.mark.parametrize('css, pixels', (
     ('#00f border-box', '''
         ________
         _BBBBBB_
@@ -856,8 +843,8 @@ def test_background_repeat_round_4():
         ________
     '''),
 ))
-def test_background_clip(value, pixels):
-    assert_pixels(f'background_clip_{value}', pixels, '''
+def test_background_clip(assert_pixels, css, pixels):
+    assert_pixels(pixels, '''
       <style>
         @page { size: 8px }
         html { background: #fff }
@@ -865,12 +852,12 @@ def test_background_clip(value, pixels):
                border: 1px solid transparent;
                background: %s }
       </style>
-      <body>''' % value)
+      <body>''' % css)
 
 
 @assert_no_logs
-@pytest.mark.parametrize('name, expected_pixels, html', (
-    ('background_size', '''
+@pytest.mark.parametrize('expected_pixels, html', (
+    ('''
          ____________
          ____________
          ____________
@@ -894,7 +881,7 @@ def test_background_clip(value, pixels):
                             bottom right / 80% 8px; }
        </style>
        <body>'''),
-    ('background_size_auto', '''
+    ('''
          ____________
          ____________
          ____________
@@ -917,7 +904,7 @@ def test_background_clip(value, pixels):
                 background: url(pattern.png) bottom right/auto no-repeat }
        </style>
        <body>'''),
-    ('background_size_contain', '''
+    ('''
          ______________
          _rrBBBBBB_____
          _rrBBBBBB_____
@@ -940,7 +927,7 @@ def test_background_clip(value, pixels):
        </style>
        <body>'''),
 
-    ('background_size_mixed', '''
+    ('''
          ______________
          _rrBBBBBB_____
          _rrBBBBBB_____
@@ -962,7 +949,7 @@ def test_background_clip(value, pixels):
                 clip: auto; /* no-op to cover more validation */ }
        </style>
        <body>'''),
-    ('background_size_double', '''
+    ('''
          ______________
          _rrBBBBBB_____
          _BBBBBBBB_____
@@ -984,7 +971,7 @@ def test_background_clip(value, pixels):
                 clip: auto; /* no-op to cover more validation */ }
        </style>
        <body>'''),
-    ('background_size_cover', '''
+    ('''
          ______________
          _rrrBBBBBBBBB_
          _rrrBBBBBBBBB_
@@ -1007,113 +994,101 @@ def test_background_clip(value, pixels):
        <body>'''),
     )
 )
-def test_background_size(name, expected_pixels, html):
-    assert_pixels(name, expected_pixels, html)
+def test_background_size(assert_pixels, expected_pixels, html):
+    assert_pixels(expected_pixels, html)
 
 
 @assert_no_logs
-def test_bleed_background_size():
-    expected_pixels = '''
+def test_bleed_background_size(assert_pixels):
+    assert_pixels('''
         RRRR
         RRRR
         RRRR
         RRRR
-    '''
-    html = '''
+    ''', '''
       <style>
          @page { size: 2px; bleed: 1px; background: red }
       </style>
-      <body>'''
-    assert_pixels('bleed_background_size', expected_pixels, html)
+      <body>''')
 
 
 @assert_no_logs
-def test_background_size_clip():
-    expected_pixels = '''
+def test_background_size_clip(assert_pixels):
+    assert_pixels('''
         BBBB
         BRBB
         BBBB
         BBBB
-    '''
-    html = '''
+    ''', '''
       <style>
          @page { size: 4px; margin: 1px;
                  background: url(pattern.png) red;
                  background-clip: content-box }
       </style>
-      <body>'''
-    assert_pixels('background_size_clip', expected_pixels, html)
+      <body>''')
 
 
 @assert_no_logs
-def test_bleed_background_size_clip():
-    expected_pixels = '''
+def test_bleed_background_size_clip(assert_pixels):
+    assert_pixels('''
         RRRRRR
         RBBBBR
         RBRBBR
         RBBBBR
         RBBBBR
         RRRRRR
-    '''
-    html = '''
+    ''', '''
       <style>
          @page { size: 4px; bleed: 1px; margin: 1px;
                  background: url(pattern.png) red;
                  background-clip: content-box }
       </style>
-      <body>'''
-    assert_pixels('bleed_background_size_clip', expected_pixels, html)
+      <body>''')
 
 
 @assert_no_logs
-def test_marks_crop():
-    expected_pixels = '''
+def test_marks_crop(assert_pixels):
+    assert_pixels('''
         KK__KK
         K____K
         ______
         ______
         K____K
         KK__KK
-    '''
-    html = '''
+    ''', '''
       <style>
          @page { size: 4px; bleed: 1px; margin: 1px; marks: crop }
       </style>
-      <body>'''
-    assert_pixels('marks_crop', expected_pixels, html)
+      <body>''')
 
 
 @assert_no_logs
-def test_marks_cross():
-    expected_pixels = '''
+def test_marks_cross(assert_pixels):
+    assert_pixels('''
         __KK__
         ______
         K____K
         K____K
         ______
         __KK__
-    '''
-    html = '''
+    ''', '''
       <style>
          @page { size: 4px; bleed: 1px; margin: 1px; marks: cross }
       </style>
-      <body>'''
-    assert_pixels('marks_cross', expected_pixels, html)
+      <body>''')
 
 
 @assert_no_logs
-def test_marks_crop_cross():
-    expected_pixels = '''
+def test_marks_crop_cross(assert_pixels):
+    assert_pixels('''
         KKKKKK
         K____K
         K____K
         K____K
         K____K
         KKKKKK
-    '''
-    html = '''
+    ''', '''
       <style>
          @page { size: 4px; bleed: 1px; margin: 1px; marks: crop cross }
       </style>
-      <body>'''
-    assert_pixels('marks_crop_cross', expected_pixels, html)
+      <body>''')

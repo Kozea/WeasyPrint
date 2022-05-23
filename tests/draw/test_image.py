@@ -3,7 +3,6 @@
 import pytest
 
 from ..testing_utils import assert_no_logs, capture_logs
-from . import assert_pixels, assert_same_rendering
 
 centered_image = '''
     ________
@@ -148,8 +147,8 @@ border_image = '''
     ('pattern.gif', centered_image),
     ('blue.jpg', blue_image)
 ))
-def test_images(filename, image):
-    assert_pixels(f'inline_image_{filename}', image, '''
+def test_images(assert_pixels, filename, image):
+    assert_pixels(image, '''
       <style>
         @page { size: 8px }
         body { margin: 2px 0 0 2px; font-size: 0 }
@@ -164,8 +163,8 @@ def test_images(filename, image):
     'pattern.palette.png',
     'pattern.gif',
 ))
-def test_resized_images(filename):
-    assert_pixels(f'resized_image_{filename}', resized_image, '''
+def test_resized_images(assert_pixels, filename):
+    assert_pixels(resized_image, '''
       <style>
         @page { size: 12px }
         body { margin: 2px 0 0 2px; font-size: 0 }
@@ -185,8 +184,8 @@ def test_resized_images(filename):
     ('0 0 4 4', 4, 4),
     ('0 0 4 4', 4, 4),
 ))
-def test_svg_sizing(viewbox, width, height):
-    assert_pixels(f'svg_sizing_{viewbox}_{width}_{height}', centered_image, '''
+def test_svg_sizing(assert_pixels, viewbox, width, height):
+    assert_pixels(centered_image, '''
       <style>
         @page { size: 8px }
         body { margin: 2px 0 0 2px; font-size: 0 }
@@ -213,8 +212,8 @@ def test_svg_sizing(viewbox, width, height):
     ('0 0 4 4', 8, 8, resized_image),
     ('0 0 4 4', 800, 800, resized_image),
 ))
-def test_svg_resizing(viewbox, width, height, image):
-    assert_pixels(f'svg_resizing_{viewbox}_{width}_{height}', image, '''
+def test_svg_resizing(assert_pixels, viewbox, width, height, image):
+    assert_pixels(image, '''
       <style>
         @page { size: 12px }
         body { margin: 2px 0 0 2px; font-size: 0 }
@@ -230,8 +229,8 @@ def test_svg_resizing(viewbox, width, height, image):
 
 
 @assert_no_logs
-def test_images_block():
-    assert_pixels('block_image', centered_image, '''
+def test_images_block(assert_pixels):
+    assert_pixels(centered_image, '''
       <style>
         @page { size: 8px }
         body { margin: 0; font-size: 0 }
@@ -241,9 +240,9 @@ def test_images_block():
 
 
 @assert_no_logs
-def test_images_not_found():
+def test_images_not_found(assert_pixels):
     with capture_logs() as logs:
-        assert_pixels('image_not_found', no_image, '''
+        assert_pixels(no_image, '''
           <style>
             @page { size: 8px }
             body { margin: 0; font-size: 0 }
@@ -256,8 +255,8 @@ def test_images_not_found():
 
 
 @assert_no_logs
-def test_images_no_src():
-    assert_pixels('image_no_src', no_image, '''
+def test_images_no_src(assert_pixels):
+    assert_pixels(no_image, '''
       <style>
         @page { size: 8px }
         body { margin: 0; font-size: 0 }
@@ -267,35 +266,31 @@ def test_images_no_src():
 
 
 @assert_no_logs
-def test_images_alt():
+def test_images_alt(assert_same_renderings):
     with capture_logs() as logs:
         documents = (
-            (name, '''
+            '''
               <style>
                 @page { size: 200px 30px }
                 body { margin: 0; font-size: 0 }
               </style>
-              <div>%s</div>''' % html)
-            for name, html in (
-                ('image_alt_text_reference', 'Hello, world!'),
-                ('image_alt_text_not_found',
-                    '<img src="inexistent2.png" alt="Hello, world!">'),
-                ('image_alt_text_no_src',
-                    '<img alt="Hello, world!">'),
-                ('image_svg_no_intrinsic_size',
-                    '''<img src="data:image/svg+xml,<svg></svg>"
-                            alt="Hello, world!">'''),
+              <div>%s</div>''' % html
+            for html in (
+                'Hello',
+                '<img src="inexistent2.png" alt="Hello">',
+                '<img alt="Hello">',
+                '<img src="data:image/svg+xml,<svg></svg>" alt="Hello">',
             ))
-        assert_same_rendering(*documents)
+        assert_same_renderings(*documents)
     assert len(logs) == 1
     assert 'ERROR: Failed to load image' in logs[0]
     assert 'inexistent2.png' in logs[0]
 
 
 @assert_no_logs
-def test_images_repeat_transparent():
+def test_images_repeat_transparent(assert_pixels):
     # Test regression: https://github.com/Kozea/WeasyPrint/issues/1440
-    assert_pixels('image_repeat_transparent', '_\n_\n_', '''
+    assert_pixels('_\n_\n_', '''
       <style>
         @page { size: 1px }
         div { height: 100px; width: 100px; background: url(logo_small.png) }
@@ -304,8 +299,8 @@ def test_images_repeat_transparent():
 
 
 @assert_no_logs
-def test_images_no_width():
-    assert_pixels('image_0x1', no_image, '''
+def test_images_no_width(assert_pixels):
+    assert_pixels(no_image, '''
       <style>
         @page { size: 8px }
         body { margin: 2px; font-size: 0 }
@@ -315,8 +310,8 @@ def test_images_no_width():
 
 
 @assert_no_logs
-def test_images_no_height():
-    assert_pixels('image_1x0', no_image, '''
+def test_images_no_height(assert_pixels):
+    assert_pixels(no_image, '''
       <style>
         @page { size: 8px }
         body { margin: 2px; font-size: 0 }
@@ -326,8 +321,8 @@ def test_images_no_height():
 
 
 @assert_no_logs
-def test_images_no_width_height():
-    assert_pixels('image_0x0', no_image, '''
+def test_images_no_width_height(assert_pixels):
+    assert_pixels(no_image, '''
       <style>
         @page { size: 8px }
         body { margin: 2px; font-size: 0 }
@@ -337,8 +332,8 @@ def test_images_no_width_height():
 
 
 @assert_no_logs
-def test_images_page_break():
-    assert_pixels('image_page_break', page_break, '''
+def test_images_page_break(assert_pixels):
+    assert_pixels(page_break, '''
       <style>
         @page { size: 8px; margin: 2px }
         body { font-size: 0 }
@@ -348,9 +343,9 @@ def test_images_page_break():
 
 
 @assert_no_logs
-def test_image_repeat_inline():
+def test_image_repeat_inline(assert_pixels):
     # Test regression: https://github.com/Kozea/WeasyPrint/issues/808
-    assert_pixels('image_page_repeat_inline', table, '''
+    assert_pixels(table, '''
       <style>
         @page { size: 8px; margin: 0 }
         table { border-collapse: collapse; margin: 2px }
@@ -371,9 +366,9 @@ def test_image_repeat_inline():
 
 
 @assert_no_logs
-def test_image_repeat_block():
+def test_image_repeat_block(assert_pixels):
     # Test regression: https://github.com/Kozea/WeasyPrint/issues/808
-    assert_pixels('image_page_repeat_block', table, '''
+    assert_pixels(table, '''
       <style>
         @page { size: 8px; margin: 0 }
         table { border-collapse: collapse; margin: 2px }
@@ -394,9 +389,9 @@ def test_image_repeat_block():
 
 
 @assert_no_logs
-def test_images_padding():
+def test_images_padding(assert_pixels):
     # Regression test: padding used to be ignored on images
-    assert_pixels('image_with_padding', centered_image, '''
+    assert_pixels(centered_image, '''
       <style>
         @page { size: 8px }
         body { font-size: 0 }
@@ -407,9 +402,9 @@ def test_images_padding():
 
 
 @assert_no_logs
-def test_images_in_inline_block():
+def test_images_in_inline_block(assert_pixels):
     # Regression test: this used to cause an exception
-    assert_pixels('image_in_inline_block', centered_image, '''
+    assert_pixels(centered_image, '''
       <style>
         @page { size: 8px }
         body { margin: 2px 0 0 2px; font-size: 0 }
@@ -420,11 +415,11 @@ def test_images_in_inline_block():
 
 
 @assert_no_logs
-def test_images_shared_pattern():
+def test_images_shared_pattern(assert_pixels):
     # The same image is used in a repeating background,
     # then in a non-repating <img>.
     # If Pattern objects are shared carelessly, the image will be repeated.
-    assert_pixels('image_shared_pattern', '''
+    assert_pixels('''
         ____________
         ____________
         __aaaaaaaa__
@@ -449,36 +444,36 @@ def test_images_shared_pattern():
 
 
 @assert_no_logs
-def test_image_resolution():
-    assert_same_rendering(
-        ('image_resolution_ref', '''
+def test_image_resolution(assert_same_renderings):
+    assert_same_renderings(
+        '''
             <style>@page { size: 20px; margin: 2px }</style>
             <div style="font-size: 0">
                 <img src="pattern.png" style="width: 8px"></div>
-        '''),
-        ('image_resolution_img', '''
+        ''',
+        '''
             <style>@page { size: 20px; margin: 2px }</style>
             <div style="image-resolution: .5dppx; font-size: 0">
                 <img src="pattern.png"></div>
-        '''),
-        ('image_resolution_content', '''
+        ''',
+        '''
             <style>@page { size: 20px; margin: 2px }
                    div::before { content: url(pattern.png) }
             </style>
             <div style="image-resolution: .5dppx; font-size: 0"></div>
-        '''),
-        ('image_resolution_background', '''
+        ''',
+        '''
             <style>@page { size: 20px; margin: 2px }
             </style>
             <div style="height: 16px; image-resolution: .5dppx;
                         background: url(pattern.png) no-repeat"></div>
-        '''),
+        ''',
     )
 
 
 @assert_no_logs
-def test_image_cover():
-    assert_pixels('image_cover', cover_image, '''
+def test_image_cover(assert_pixels):
+    assert_pixels(cover_image, '''
       <style>
         @page { size: 8px }
         body { margin: 2px 0 0 2px; font-size: 0 }
@@ -488,8 +483,8 @@ def test_image_cover():
 
 
 @assert_no_logs
-def test_image_contain():
-    assert_pixels('image_contain', centered_image, '''
+def test_image_contain(assert_pixels):
+    assert_pixels(centered_image, '''
       <style>
         @page { size: 8px }
         body { margin: 1px 0 0 2px; font-size: 0 }
@@ -499,8 +494,8 @@ def test_image_contain():
 
 
 @assert_no_logs
-def test_image_none():
-    assert_pixels('image_none', centered_image, '''
+def test_image_none(assert_pixels):
+    assert_pixels(centered_image, '''
       <style>
         @page { size: 8px }
         body { margin: 1px 0 0 1px; font-size: 0 }
@@ -510,8 +505,8 @@ def test_image_none():
 
 
 @assert_no_logs
-def test_image_scale_down():
-    assert_pixels('image_scale_down', centered_image, '''
+def test_image_scale_down(assert_pixels):
+    assert_pixels(centered_image, '''
       <style>
         @page { size: 8px }
         body { margin: 1px 0 0 1px; font-size: 0 }
@@ -521,8 +516,8 @@ def test_image_scale_down():
 
 
 @assert_no_logs
-def test_image_position():
-    assert_pixels('image_position', centered_image, '''
+def test_image_position(assert_pixels):
+    assert_pixels(centered_image, '''
       <style>
         @page { size: 8px }
         body { margin: 1px 0 0 1px; font-size: 0 }
@@ -533,8 +528,8 @@ def test_image_position():
 
 
 @assert_no_logs
-def test_images_border():
-    assert_pixels('image_border', border_image, '''
+def test_images_border(assert_pixels):
+    assert_pixels(border_image, '''
       <style>
         @page { size: 8px }
         body { margin: 0; font-size: 0 }
@@ -544,8 +539,8 @@ def test_images_border():
 
 
 @assert_no_logs
-def test_images_border_absolute():
-    assert_pixels('image_border_absolute', border_image, '''
+def test_images_border_absolute(assert_pixels):
+    assert_pixels(border_image, '''
       <style>
         @page { size: 8px }
         body { margin: 0; font-size: 0 }

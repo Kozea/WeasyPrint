@@ -4,7 +4,6 @@ import pytest
 from weasyprint.html import HTML_HANDLERS
 
 from ..testing_utils import assert_no_logs
-from . import assert_pixels
 
 # TODO: refactor colspan/rowspan into CSS:
 # td, th { column-span: attr(colspan integer) }
@@ -45,8 +44,8 @@ tables_source = '''
 
 
 @assert_no_logs
-def test_tables_1():
-    assert_pixels('table_borders', '''
+def test_tables_1(assert_pixels):
+    assert_pixels('''
         ____________________________
         _BBBBBBBBBBBBBBBBBBBBBBBBBB_
         _B________________________B_
@@ -82,8 +81,8 @@ def test_tables_1():
 
 
 @assert_no_logs
-def test_tables_1_rtl():
-    assert_pixels('table_borders_rtl', '''
+def test_tables_1_rtl(assert_pixels):
+    assert_pixels('''
         ____________________________
         _BBBBBBBBBBBBBBBBBBBBBBBBBB_
         _B________________________B_
@@ -120,8 +119,8 @@ def test_tables_1_rtl():
 
 
 @assert_no_logs
-def test_tables_2():
-    assert_pixels('table_collapsed_borders', '''
+def test_tables_2(assert_pixels):
+    assert_pixels('''
         ____________________________
         _BBBBBBBBBBBBBBBBBB_________
         _BBBBBBBBBBBBBBBBBB_________
@@ -158,8 +157,8 @@ def test_tables_2():
 
 
 @assert_no_logs
-def test_tables_2_rtl():
-    assert_pixels('table_collapsed_borders_rtl', '''
+def test_tables_2_rtl(assert_pixels):
+    assert_pixels('''
         ____________________________
         _________BBBBBBBBBBBBBBBBBB_
         _________BBBBBBBBBBBBBBBBBB_
@@ -197,8 +196,8 @@ def test_tables_2_rtl():
 
 
 @assert_no_logs
-def test_tables_3():
-    assert_pixels('table_collapsed_borders_paged', '''
+def test_tables_3(assert_pixels):
+    assert_pixels('''
         ____________________________
         _tttttttttttttttttttttttttt_
         _t________________________t_
@@ -261,8 +260,8 @@ def test_tables_3():
 
 
 @assert_no_logs
-def test_tables_3_rtl():
-    assert_pixels('table_collapsed_borders_paged_rtl', '''
+def test_tables_3_rtl(assert_pixels):
+    assert_pixels('''
         ____________________________
         _tttttttttttttttttttttttttt_
         _t________________________t_
@@ -326,8 +325,8 @@ def test_tables_3_rtl():
 
 
 @assert_no_logs
-def test_tables_4():
-    assert_pixels('table_td_backgrounds', '''
+def test_tables_4(assert_pixels):
+    assert_pixels('''
         ____________________________
         _BBBBBBBBBBBBBBBBBBBBBBBBBB_
         _B________________________B_
@@ -363,8 +362,8 @@ def test_tables_4():
 
 
 @assert_no_logs
-def test_tables_4_rtl():
-    assert_pixels('table_td_backgrounds_rtl', '''
+def test_tables_4_rtl(assert_pixels):
+    assert_pixels('''
         ____________________________
         _BBBBBBBBBBBBBBBBBBBBBBBBBB_
         _B________________________B_
@@ -401,8 +400,8 @@ def test_tables_4_rtl():
 
 
 @assert_no_logs
-def test_tables_5():
-    assert_pixels('table_row_backgrounds', '''
+def test_tables_5(assert_pixels):
+    assert_pixels('''
         ____________________________
         _BBBBBBBBBBBBBBBBBBBBBBBBBB_
         _B________________________B_
@@ -439,8 +438,8 @@ def test_tables_5():
 
 
 @assert_no_logs
-def test_tables_5_rtl():
-    assert_pixels('table_row_backgrounds_rtl', '''
+def test_tables_5_rtl(assert_pixels):
+    assert_pixels('''
         ____________________________
         _BBBBBBBBBBBBBBBBBBBBBBBBBB_
         _B________________________B_
@@ -478,8 +477,8 @@ def test_tables_5_rtl():
 
 
 @assert_no_logs
-def test_tables_6():
-    assert_pixels('table_column_backgrounds', '''
+def test_tables_6(assert_pixels):
+    assert_pixels('''
         ____________________________
         _BBBBBBBBBBBBBBBBBBBBBBBBBB_
         _B________________________B_
@@ -516,8 +515,8 @@ def test_tables_6():
 
 
 @assert_no_logs
-def test_tables_6_rtl():
-    assert_pixels('table_column_backgrounds_rtl', '''
+def test_tables_6_rtl(assert_pixels):
+    assert_pixels('''
         ____________________________
         _BBBBBBBBBBBBBBBBBBBBBBBBBB_
         _B________________________B_
@@ -555,8 +554,8 @@ def test_tables_6_rtl():
 
 
 @assert_no_logs
-def test_tables_7():
-    assert_pixels('table_borders_and_row_backgrounds', '''
+def test_tables_7(assert_pixels):
+    assert_pixels('''
         ____________________________
         _BBBBBBBBBBBBBBBBBBBBBBBBBB_
         _B________________________B_
@@ -593,8 +592,8 @@ def test_tables_7():
 
 
 @assert_no_logs
-def test_tables_7_rtl():
-    assert_pixels('table_borders_and_row_backgrounds_rtl', '''
+def test_tables_7_rtl(assert_pixels):
+    assert_pixels('''
         ____________________________
         _BBBBBBBBBBBBBBBBBBBBBBBBBB_
         _B________________________B_
@@ -632,8 +631,8 @@ def test_tables_7_rtl():
 
 
 @assert_no_logs
-def test_tables_8():
-    assert_pixels('table_borders_and_column_backgrounds', '''
+def test_tables_8(assert_pixels):
+    assert_pixels('''
         ____________________________
         _BBBBBBBBBBBBBBBBBBBBBBBBBB_
         _B________________________B_
@@ -670,8 +669,8 @@ def test_tables_8():
 
 
 @assert_no_logs
-def test_tables_8_rtl():
-    assert_pixels('table_borders_and_column_backgrounds_rtl', '''
+def test_tables_8_rtl(assert_pixels):
+    assert_pixels('''
         ____________________________
         _BBBBBBBBBBBBBBBBBBBBBBBBBB_
         _B________________________B_
@@ -709,8 +708,8 @@ def test_tables_8_rtl():
 
 
 @assert_no_logs
-def test_tables_9():
-    assert_pixels('collapsed_border_thead', '''
+def test_tables_9(assert_pixels):
+    assert_pixels('''
         ______________________
         _BBBBBBBBBBBBBBBBBBBB_
         _BBBBBBBBBBBBBBBBBBBB_
@@ -761,8 +760,8 @@ def test_tables_9():
 
 
 @assert_no_logs
-def test_tables_10():
-    assert_pixels('collapsed_border_tfoot', '''
+def test_tables_10(assert_pixels):
+    assert_pixels('''
         ______________________
         __RRRRRRRRRRRRRRRRRR__
         __R_____R____R_____R__
@@ -812,11 +811,11 @@ def test_tables_10():
 
 
 @assert_no_logs
-def test_tables_11():
+def test_tables_11(assert_pixels):
     # Regression test for inline table with collapsed border and alignment
     # rendering borders incorrectly
     # https://github.com/Kozea/WeasyPrint/issues/82
-    assert_pixels('inline_text_align', '''
+    assert_pixels('''
       ____________________
       ________RRRRRRRRRRR_
       ________R____R____R_
@@ -839,8 +838,8 @@ def test_tables_11():
 
 
 @assert_no_logs
-def test_tables_12():
-    assert_pixels('table_collapsed_borders', '''
+def test_tables_12(assert_pixels):
+    assert_pixels('''
         ____________________________
         _________BBBBBBBBBBBBBBBBBB_
         _________BBBBBBBBBBBBBBBBBB_
@@ -878,8 +877,8 @@ def test_tables_12():
 
 
 @assert_no_logs
-def test_tables_13():
-    assert_pixels('table_collapsed_borders_paged', '''
+def test_tables_13(assert_pixels):
+    assert_pixels('''
         ____________________________
         _tttttttttttttttttttttttttt_
         _t________________________t_
@@ -944,8 +943,8 @@ def test_tables_13():
 
 @pytest.mark.xfail
 @assert_no_logs
-def test_tables_14():
-    assert_pixels('table_background_column_paged', '''
+def test_tables_14(assert_pixels):
+    assert_pixels('''
         ____________________________
         _RRR_RRR_RRR________________
         _RRR_RRR_RRR________________
@@ -1007,10 +1006,10 @@ def test_tables_14():
 
 
 @assert_no_logs
-def test_tables_15():
+def test_tables_15(assert_pixels):
     # Regression test for colspan in last body line with footer
     # https://github.com/Kozea/WeasyPrint/issues/1250
-    assert_pixels('colspan_last_row', '''
+    assert_pixels('''
         ______________________
         __RRRRRRRRRRRRRRRRRR__
         __R_____R____R_____R__
@@ -1062,8 +1061,8 @@ def test_tables_15():
 
 
 @assert_no_logs
-def test_tables_16():
-    assert_pixels('table_absolute', '''
+def test_tables_16(assert_pixels):
+    assert_pixels('''
       ____________________
       _RRRRRRRRRRR________
       _R____R____R________
@@ -1089,8 +1088,8 @@ def test_tables_16():
 
 
 @assert_no_logs
-def test_tables_17():
-    assert_pixels('table_split_collapse', '''
+def test_tables_17(assert_pixels):
+    assert_pixels('''
       ________________
       _RRRRRRRRRRRRRR_
       _RRRRRRRRRRRRRR_
@@ -1123,8 +1122,8 @@ def test_tables_17():
 
 
 @assert_no_logs
-def test_tables_18():
-    assert_pixels('table_split_separate', '''
+def test_tables_18(assert_pixels):
+    assert_pixels('''
       ____________
       _RRRRRRRRRR_
       _R________R_
@@ -1159,9 +1158,9 @@ def test_tables_18():
 
 
 @assert_no_logs
-def test_tables_19():
+def test_tables_19(assert_pixels):
     # Regression test: https://github.com/Kozea/WeasyPrint/issues/1523
-    assert_pixels('table_split_crash', '''
+    assert_pixels('''
       RR
       RR
       RR
@@ -1181,8 +1180,8 @@ def test_tables_19():
 
 
 @assert_no_logs
-def test_tables_20():
-    assert_pixels('table_empty_group_row_background', '''
+def test_tables_20(assert_pixels):
+    assert_pixels('''
       ____________________
       _RRRRRRRRRRRR_______
       _RBBBBBBBBBBR_______

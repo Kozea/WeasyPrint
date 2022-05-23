@@ -1,12 +1,11 @@
 """Test how SVG simple shapes are drawn."""
 
 from ...testing_utils import assert_no_logs
-from .. import assert_pixels
 
 
 @assert_no_logs
-def test_rect_stroke():
-    assert_pixels('rect_stroke', '''
+def test_rect_stroke(assert_pixels):
+    assert_pixels('''
         _________
         _RRRRRRR_
         _RRRRRRR_
@@ -29,8 +28,8 @@ def test_rect_stroke():
 
 
 @assert_no_logs
-def test_rect_fill():
-    assert_pixels('rect_fill', '''
+def test_rect_fill(assert_pixels):
+    assert_pixels('''
         _________
         _________
         __RRRRR__
@@ -52,8 +51,8 @@ def test_rect_fill():
 
 
 @assert_no_logs
-def test_rect_stroke_fill():
-    assert_pixels('rect_stroke_fill', '''
+def test_rect_stroke_fill(assert_pixels):
+    assert_pixels('''
         _________
         _RRRRRRR_
         _RRRRRRR_
@@ -76,8 +75,8 @@ def test_rect_stroke_fill():
 
 
 @assert_no_logs
-def test_rect_round():
-    assert_pixels('rect_round', '''
+def test_rect_round(assert_pixels):
+    assert_pixels('''
         _zzzzzzz_
         zzzzzzzzz
         zzRRRRRzz
@@ -99,8 +98,8 @@ def test_rect_round():
 
 
 @assert_no_logs
-def test_rect_round_zero():
-    assert_pixels('rect_round_zero', '''
+def test_rect_round_zero(assert_pixels):
+    assert_pixels('''
         RRRRRRRRR
         RRRRRRRRR
         RRRRRRRRR
@@ -122,8 +121,8 @@ def test_rect_round_zero():
 
 
 @assert_no_logs
-def test_line():
-    assert_pixels('line', '''
+def test_line(assert_pixels):
+    assert_pixels('''
         _________
         _________
         _________
@@ -146,8 +145,8 @@ def test_line():
 
 
 @assert_no_logs
-def test_polyline():
-    assert_pixels('polyline', '''
+def test_polyline(assert_pixels):
+    assert_pixels('''
         _________
         RRRRRR___
         RRRRRR___
@@ -170,8 +169,8 @@ def test_polyline():
 
 
 @assert_no_logs
-def test_polyline_fill():
-    assert_pixels('polyline_fill', '''
+def test_polyline_fill(assert_pixels):
+    assert_pixels('''
         _________
         RRRRRR___
         RRRRRR___
@@ -194,8 +193,8 @@ def test_polyline_fill():
 
 
 @assert_no_logs
-def test_polygon():
-    assert_pixels('polygon', '''
+def test_polygon(assert_pixels):
+    assert_pixels('''
         _________
         RRRRRR___
         RRRRRR___
@@ -218,8 +217,8 @@ def test_polygon():
 
 
 @assert_no_logs
-def test_polygon_fill():
-    assert_pixels('polygon_fill', '''
+def test_polygon_fill(assert_pixels):
+    assert_pixels('''
         _________
         RRRRRR___
         RRRRRR___
@@ -242,8 +241,8 @@ def test_polygon_fill():
 
 
 @assert_no_logs
-def test_circle_stroke():
-    assert_pixels('circle_stroke', '''
+def test_circle_stroke(assert_pixels):
+    assert_pixels('''
         __________
         __RRRRRR__
         _RRRRRRRR_
@@ -267,8 +266,8 @@ def test_circle_stroke():
 
 
 @assert_no_logs
-def test_circle_fill():
-    assert_pixels('circle_fill', '''
+def test_circle_fill(assert_pixels):
+    assert_pixels('''
         __________
         __RRRRRR__
         _RRRRRRRR_
@@ -292,8 +291,8 @@ def test_circle_fill():
 
 
 @assert_no_logs
-def test_ellipse_stroke():
-    assert_pixels('ellipse_stroke', '''
+def test_ellipse_stroke(assert_pixels):
+    assert_pixels('''
         __________
         __RRRRRR__
         _RRRRRRRR_
@@ -317,8 +316,8 @@ def test_ellipse_stroke():
 
 
 @assert_no_logs
-def test_ellipse_fill():
-    assert_pixels('ellipse_fill', '''
+def test_ellipse_fill(assert_pixels):
+    assert_pixels('''
         __________
         __RRRRRR__
         _RRRRRRRR_
@@ -342,8 +341,8 @@ def test_ellipse_fill():
 
 
 @assert_no_logs
-def test_rect_in_g():
-    assert_pixels('rect_in_g', '''
+def test_rect_in_g(assert_pixels):
+    assert_pixels('''
         RRRRR____
         RRRRR____
         RRRRR____
@@ -367,8 +366,8 @@ def test_rect_in_g():
 
 
 @assert_no_logs
-def test_rect_x_y_in_g():
-    assert_pixels('rect_x_y_in_g', '''
+def test_rect_x_y_in_g(assert_pixels):
+    assert_pixels('''
         _________
         _________
         __RRRRR__
@@ -392,8 +391,8 @@ def test_rect_x_y_in_g():
 
 
 @assert_no_logs
-def test_rect_stroke_zero():
-    assert_pixels('rect_stroke_zero', '''
+def test_rect_stroke_zero(assert_pixels):
+    assert_pixels('''
         _________
         _________
         _________
@@ -416,8 +415,8 @@ def test_rect_stroke_zero():
 
 
 @assert_no_logs
-def test_rect_width_height_zero():
-    assert_pixels('rect_fill', '''
+def test_rect_width_height_zero(assert_pixels):
+    assert_pixels('''
         _________
         _________
         _________

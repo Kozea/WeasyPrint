@@ -1,12 +1,11 @@
 """Test how footnotes are drawn."""
 
 from ..testing_utils import assert_no_logs
-from . import assert_pixels
 
 
 @assert_no_logs
-def test_inline_footnote():
-    assert_pixels('span_footnote', '''
+def test_inline_footnote(assert_pixels):
+    assert_pixels('''
         RRRRRRRR_
         RRRRRRRR_
         _________
@@ -34,8 +33,8 @@ def test_inline_footnote():
 
 
 @assert_no_logs
-def test_block_footnote():
-    assert_pixels('div_footnote', '''
+def test_block_footnote(assert_pixels):
+    assert_pixels('''
         RRRRRRRR_
         RRRRRRRR_
         _________
@@ -63,8 +62,8 @@ def test_block_footnote():
 
 
 @assert_no_logs
-def test_long_footnote():
-    assert_pixels('long_footnote', '''
+def test_long_footnote(assert_pixels):
+    assert_pixels('''
         RRRRRRRR_
         RRRRRRRR_
         _________
@@ -92,8 +91,8 @@ def test_long_footnote():
 
 
 @assert_no_logs
-def test_footnote_margin():
-    assert_pixels('footnote_margin', '''
+def test_footnote_margin(assert_pixels):
+    assert_pixels('''
         RRRRRRRR_
         RRRRRRRR_
         _________
@@ -125,8 +124,8 @@ def test_footnote_margin():
 
 
 @assert_no_logs
-def test_footnote_with_absolute():
-    assert_pixels('footnote_with_absolute', '''
+def test_footnote_with_absolute(assert_pixels):
+    assert_pixels('''
         _RRRR____
         _RRRR____
         _________

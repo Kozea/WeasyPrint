@@ -2,7 +2,6 @@
 
 import pytest
 
-from ..draw import assert_pixels
 from ..testing_utils import assert_no_logs, capture_logs, render_pages
 
 
@@ -1867,8 +1866,8 @@ def test_table_row_height_3():
 
 
 @assert_no_logs
-def test_table_vertical_align():
-    assert_pixels('table_vertical_align', '''
+def test_table_vertical_align(assert_pixels):
+    assert_pixels('''
         rrrrrrrrrrrrrrrrrrrrrrrrrrrr
         rBBBBBBBBBBBBBBBBBBBBBBBBBBr
         rBrBB_BB_BB_BB_BBrrBBrrBB_Br

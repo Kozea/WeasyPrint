@@ -1,12 +1,11 @@
 """Test how SVG simple patterns are drawn."""
 
 from ...testing_utils import assert_no_logs
-from .. import assert_pixels
 
 
 @assert_no_logs
-def test_pattern():
-    assert_pixels('pattern', '''
+def test_pattern(assert_pixels):
+    assert_pixels('''
         BBrrBBrr
         BBrrBBrr
         rrBBrrBB
@@ -37,8 +36,8 @@ def test_pattern():
 
 
 @assert_no_logs
-def test_pattern_2():
-    assert_pixels('pattern_2', '''
+def test_pattern_2(assert_pixels):
+    assert_pixels('''
         BBrrBBrr
         BBrrBBrr
         rrBBrrBB
@@ -69,8 +68,8 @@ def test_pattern_2():
 
 
 @assert_no_logs
-def test_pattern_3():
-    assert_pixels('pattern_3', '''
+def test_pattern_3(assert_pixels):
+    assert_pixels('''
         BBrrBBrr
         BBrrBBrr
         rrBBrrBB
@@ -101,8 +100,8 @@ def test_pattern_3():
 
 
 @assert_no_logs
-def test_pattern_4():
-    assert_pixels('pattern_4', '''
+def test_pattern_4(assert_pixels):
+    assert_pixels('''
         BBrrBBrr
         BBrrBBrr
         rrBBrrBB

@@ -1,7 +1,6 @@
 """Test visibility."""
 
 from ..testing_utils import assert_no_logs
-from . import assert_pixels
 
 visibility_source = '''
   <style>
@@ -17,8 +16,8 @@ visibility_source = '''
 
 
 @assert_no_logs
-def test_visibility_1():
-    assert_pixels('visibility_reference', '''
+def test_visibility_1(assert_pixels):
+    assert_pixels('''
         ____________
         _rBBB_rBBB__
         _BBBB_BBBB__
@@ -30,8 +29,8 @@ def test_visibility_1():
 
 
 @assert_no_logs
-def test_visibility_2():
-    assert_pixels('visibility_hidden', '''
+def test_visibility_2(assert_pixels):
+    assert_pixels('''
         ____________
         ____________
         ____________
@@ -43,8 +42,8 @@ def test_visibility_2():
 
 
 @assert_no_logs
-def test_visibility_3():
-    assert_pixels('visibility_mixed', '''
+def test_visibility_3(assert_pixels):
+    assert_pixels('''
         ____________
         ______rBBB__
         ______BBBB__
@@ -57,8 +56,8 @@ def test_visibility_3():
 
 
 @assert_no_logs
-def test_visibility_4():
-    assert_pixels('visibility_hidden_page', '''
+def test_visibility_4(assert_pixels):
+    assert_pixels('''
         ____________
         _rBBB_rBBB__
         _BBBB_BBBB__

@@ -4,12 +4,11 @@ import pytest
 from weasyprint.urls import path2url
 
 from ...testing_utils import assert_no_logs, resource_filename
-from .. import assert_pixels
 
 
 @assert_no_logs
-def test_image_svg():
-    assert_pixels('test_image_svg', '''
+def test_image_svg(assert_pixels):
+    assert_pixels('''
         ____
         ____
         __B_
@@ -28,8 +27,8 @@ def test_image_svg():
 
 
 @assert_no_logs
-def test_image_svg_viewbox():
-    assert_pixels('test_image_svg_viewbox', '''
+def test_image_svg_viewbox(assert_pixels):
+    assert_pixels('''
         ____
         ____
         __B_
@@ -48,8 +47,8 @@ def test_image_svg_viewbox():
 
 
 @assert_no_logs
-def test_image_svg_align_default():
-    assert_pixels('test_image_svg_align_default', '''
+def test_image_svg_align_default(assert_pixels):
+    assert_pixels('''
         __BRRR__
         __BRRR__
         __RRRG__
@@ -73,8 +72,8 @@ def test_image_svg_align_default():
 
 
 @assert_no_logs
-def test_image_svg_align_none():
-    assert_pixels('test_image_svg_align_none', '''
+def test_image_svg_align_none(assert_pixels):
+    assert_pixels('''
         BBRRRRRR
         BBRRRRRR
         RRRRRRGG
@@ -99,8 +98,8 @@ def test_image_svg_align_none():
 
 
 @assert_no_logs
-def test_image_svg_align_meet_x():
-    assert_pixels('test_image_svg_align_meet_x', '''
+def test_image_svg_align_meet_x(assert_pixels):
+    assert_pixels('''
         ____BRRR
         ____BRRR
         ____RRRG
@@ -125,8 +124,8 @@ def test_image_svg_align_meet_x():
 
 
 @assert_no_logs
-def test_image_svg_align_meet_y():
-    assert_pixels('test_image_svg_align_meet_y', '''
+def test_image_svg_align_meet_y(assert_pixels):
+    assert_pixels('''
         ________
         ________
         ________
@@ -151,8 +150,8 @@ def test_image_svg_align_meet_y():
 
 
 @assert_no_logs
-def test_image_svg_align_slice_x():
-    assert_pixels('test_image_svg_align_slice_x', '''
+def test_image_svg_align_slice_x(assert_pixels):
+    assert_pixels('''
         BBRRRRRR
         BBRRRRRR
         BBRRRRRR
@@ -177,8 +176,8 @@ def test_image_svg_align_slice_x():
 
 
 @assert_no_logs
-def test_image_svg_align_slice_y():
-    assert_pixels('test_image_svg_align_slice_y', '''
+def test_image_svg_align_slice_y(assert_pixels):
+    assert_pixels('''
         BBRR____
         BBRR____
         BBRR____
@@ -204,8 +203,8 @@ def test_image_svg_align_slice_y():
 
 @pytest.mark.xfail
 @assert_no_logs
-def test_image_svg_percentage():
-    assert_pixels('test_image_svg_percentage', '''
+def test_image_svg_percentage(assert_pixels):
+    assert_pixels('''
         ____
         ____
         __B_
@@ -223,8 +222,8 @@ def test_image_svg_percentage():
     ''')
 
 
-def test_image_svg_wrong():
-    assert_pixels('test_image_svg_wrong', '''
+def test_image_svg_wrong(assert_pixels):
+    assert_pixels('''
         ____
         ____
         ____
@@ -241,8 +240,8 @@ def test_image_svg_wrong():
 
 
 @assert_no_logs
-def test_image_image():
-    assert_pixels('test_image_image', '''
+def test_image_image(assert_pixels):
+    assert_pixels('''
         rBBB
         BBBB
         BBBB
@@ -258,8 +257,8 @@ def test_image_image():
     ''' % path2url(resource_filename('pattern.png')))
 
 
-def test_image_image_wrong():
-    assert_pixels('test_image_image_wrong', '''
+def test_image_image_wrong(assert_pixels):
+    assert_pixels('''
         ____
         ____
         ____

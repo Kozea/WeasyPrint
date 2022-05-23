@@ -1,12 +1,11 @@
 """Test how SVG text is drawn."""
 
 from ...testing_utils import assert_no_logs
-from .. import assert_pixels
 
 
 @assert_no_logs
-def test_text_fill():
-    assert_pixels('text_fill', '''
+def test_text_fill(assert_pixels):
+    assert_pixels('''
         BBBBBB__BBBBBB______
         BBBBBB__BBBBBB______
     ''', '''
@@ -24,8 +23,8 @@ def test_text_fill():
 
 
 @assert_no_logs
-def test_text_stroke():
-    assert_pixels('text_stroke', '''
+def test_text_stroke(assert_pixels):
+    assert_pixels('''
         _BBBBBBBBBBBB_______
         _BBBBBBBBBBBB_______
         _BBBBBBBBBBBB_______
@@ -46,8 +45,8 @@ def test_text_stroke():
 
 
 @assert_no_logs
-def test_text_x():
-    assert_pixels('text_x', '''
+def test_text_x(assert_pixels):
+    assert_pixels('''
         BB__BB_BBBB_________
         BB__BB_BBBB_________
     ''', '''
@@ -66,8 +65,8 @@ def test_text_x():
 
 
 @assert_no_logs
-def test_text_y():
-    assert_pixels('text_y', '''
+def test_text_y(assert_pixels):
+    assert_pixels('''
         __________BBBBB_____BBBBBBBBBB
         __________BBBBB_____BBBBBBBBBB
         __________BBBBB_____BBBBBBBBBB
@@ -94,8 +93,8 @@ def test_text_y():
 
 
 @assert_no_logs
-def test_text_xy():
-    assert_pixels('text_xy', '''
+def test_text_xy(assert_pixels):
+    assert_pixels('''
         __________BBBBB_____BBBBBBBBBB
         __________BBBBB_____BBBBBBBBBB
         __________BBBBB_____BBBBBBBBBB
@@ -122,8 +121,8 @@ def test_text_xy():
 
 
 @assert_no_logs
-def test_text_dx():
-    assert_pixels('text_dx', '''
+def test_text_dx(assert_pixels):
+    assert_pixels('''
         BB__BB_BBBB_________
         BB__BB_BBBB_________
     ''', '''
@@ -142,8 +141,8 @@ def test_text_dx():
 
 
 @assert_no_logs
-def test_text_dy():
-    assert_pixels('text_dy', '''
+def test_text_dy(assert_pixels):
+    assert_pixels('''
         __________BBBBB_____BBBBBBBBBB
         __________BBBBB_____BBBBBBBBBB
         __________BBBBB_____BBBBBBBBBB
@@ -170,8 +169,8 @@ def test_text_dy():
 
 
 @assert_no_logs
-def test_text_dx_dy():
-    assert_pixels('text_dx_dy', '''
+def test_text_dx_dy(assert_pixels):
+    assert_pixels('''
         __________BBBBB_____BBBBBBBBBB
         __________BBBBB_____BBBBBBBBBB
         __________BBBBB_____BBBBBBBBBB
@@ -198,8 +197,8 @@ def test_text_dx_dy():
 
 
 @assert_no_logs
-def test_text_anchor_start():
-    assert_pixels('text_anchor_start', '''
+def test_text_anchor_start(assert_pixels):
+    assert_pixels('''
         __BBBBBB____________
         __BBBBBB____________
         ____BBBBBB__________
@@ -224,8 +223,8 @@ def test_text_anchor_start():
 
 
 @assert_no_logs
-def test_text_anchor_middle():
-    assert_pixels('text_anchor_middle', '''
+def test_text_anchor_middle(assert_pixels):
+    assert_pixels('''
         _______BBBBBB_______
         _______BBBBBB_______
     ''', '''
@@ -244,8 +243,8 @@ def test_text_anchor_middle():
 
 
 @assert_no_logs
-def test_text_anchor_end():
-    assert_pixels('text_anchor_end', '''
+def test_text_anchor_end(assert_pixels):
+    assert_pixels('''
         ____________BBBBBB__
         ____________BBBBBB__
     ''', '''
@@ -264,8 +263,8 @@ def test_text_anchor_end():
 
 
 @assert_no_logs
-def test_text_tspan():
-    assert_pixels('text_tspan', '''
+def test_text_tspan(assert_pixels):
+    assert_pixels('''
         BBBBBB__BBBBBB______
         BBBBBB__BBBBBB______
     ''', '''
@@ -283,8 +282,8 @@ def test_text_tspan():
 
 
 @assert_no_logs
-def test_text_rotate():
-    assert_pixels('text_rotate', '''
+def test_text_rotate(assert_pixels):
+    assert_pixels('''
         __RR__RR__RR________
         __RR__RR__RR________
         BB__BB__BB__________

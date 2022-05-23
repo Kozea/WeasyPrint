@@ -3,18 +3,16 @@
 import pytest
 
 from ..testing_utils import assert_no_logs
-from . import assert_pixels
 
 
 @assert_no_logs
-def test_absolute_split_1():
-    expected_pixels = '''
+def test_absolute_split_1(assert_pixels):
+    assert_pixels('''
         BBBBRRRRRRRR____
         BBBBRRRRRRRR____
         BBBBRR__________
         BBBBRR__________
-    '''
-    html = '''
+    ''', '''
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
@@ -36,19 +34,17 @@ def test_absolute_split_1():
         </style>
         <div class="split">aa aa</div>
         <div>bbbbbb bbb</div>
-    '''
-    assert_pixels('absolute_split_1', expected_pixels, html)
+    ''')
 
 
 @assert_no_logs
-def test_absolute_split_2():
-    expected_pixels = '''
+def test_absolute_split_2(assert_pixels):
+    assert_pixels('''
         RRRRRRRRRRRRBBBB
         RRRRRRRRRRRRBBBB
         RRRR________BBBB
         RRRR________BBBB
-    '''
-    html = '''
+    ''', '''
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
@@ -70,19 +66,17 @@ def test_absolute_split_2():
         </style>
         <div class="split">aa aa</div>
         <div>bbbbbb bb</div>
-    '''
-    assert_pixels('absolute_split_2', expected_pixels, html)
+    ''')
 
 
 @assert_no_logs
-def test_absolute_split_3():
-    expected_pixels = '''
+def test_absolute_split_3(assert_pixels):
+    assert_pixels('''
         BBBBRRRRRRRR____
         BBBBRRRRRRRR____
         RRRRRRRRRR______
         RRRRRRRRRR______
-    '''
-    html = '''
+    ''', '''
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
@@ -104,19 +98,17 @@ def test_absolute_split_3():
         </style>
         <div class="split">aa</div>
         <div>bbbbbb bbbbb</div>
-    '''
-    assert_pixels('absolute_split_3', expected_pixels, html)
+    ''')
 
 
 @assert_no_logs
-def test_absolute_split_4():
-    expected_pixels = '''
+def test_absolute_split_4(assert_pixels):
+    assert_pixels('''
         RRRRRRRRRRRRBBBB
         RRRRRRRRRRRRBBBB
         RRRRRRRRRR______
         RRRRRRRRRR______
-    '''
-    html = '''
+    ''', '''
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
@@ -138,19 +130,17 @@ def test_absolute_split_4():
         </style>
         <div class="split">aa</div>
         <div>bbbbbb bbbbb</div>
-    '''
-    assert_pixels('absolute_split_4', expected_pixels, html)
+    ''')
 
 
 @assert_no_logs
-def test_absolute_split_5():
-    expected_pixels = '''
+def test_absolute_split_5(assert_pixels):
+    assert_pixels('''
         BBBBRRRR____gggg
         BBBBRRRR____gggg
         BBBBRRRRRR__gggg
         BBBBRRRRRR__gggg
-    '''
-    html = '''
+    ''', '''
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
@@ -179,19 +169,17 @@ def test_absolute_split_5():
         <div class="split">aa aa</div>
         <div class="split2">cc cc</div>
         <div>bbbb bbbbb</div>
-    '''
-    assert_pixels('absolute_split_5', expected_pixels, html)
+    ''')
 
 
 @assert_no_logs
-def test_absolute_split_6():
-    expected_pixels = '''
+def test_absolute_split_6(assert_pixels):
+    assert_pixels('''
         BBBBRRRR____gggg
         BBBBRRRR____gggg
         BBBBRRRRRR______
         BBBBRRRRRR______
-    '''
-    html = '''
+    ''', '''
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
@@ -218,19 +206,17 @@ def test_absolute_split_6():
         <div class="split">aa aa</div>
         <div class="split2">cc</div>
         <div>bbbb bbbbb</div>
-    '''
-    assert_pixels('absolute_split_6', expected_pixels, html)
+    ''')
 
 
 @assert_no_logs
-def test_absolute_split_7():
-    expected_pixels = '''
+def test_absolute_split_7(assert_pixels):
+    assert_pixels('''
         BBBBRRRRRRRRgggg
         BBBBRRRRRRRRgggg
         ____RRRR____gggg
         ____RRRR____gggg
-    '''
-    html = '''
+    ''', '''
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
@@ -261,13 +247,12 @@ def test_absolute_split_7():
         <div class="split">aa</div>
         <div class="split2">cc cc</div>
         <div class="push">bbbb bb</div>
-    '''
-    assert_pixels('absolute_split_7', expected_pixels, html)
+    ''')
 
 
 @assert_no_logs
-def test_absolute_split_8():
-    expected_pixels = '''
+def test_absolute_split_8(assert_pixels):
+    assert_pixels('''
         ______
         ______
         ______
@@ -276,8 +261,7 @@ def test_absolute_split_8():
         __RR__
         ______
         ______
-    '''
-    html = '''
+    ''', '''
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
@@ -298,13 +282,12 @@ def test_absolute_split_8():
             }
         </style>
         <div>a a a a</div>
-    '''
-    assert_pixels('absolute_split_8', expected_pixels, html)
+    ''')
 
 
 @assert_no_logs
-def test_absolute_split_9():
-    expected_pixels = '''
+def test_absolute_split_9(assert_pixels):
+    assert_pixels('''
         ______
         ______
         BBRRBB
@@ -313,8 +296,7 @@ def test_absolute_split_9():
         BBRR__
         ______
         ______
-    '''
-    html = '''
+    ''', '''
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
@@ -336,13 +318,12 @@ def test_absolute_split_9():
             }
         </style>
         aaa a<div>a a a a</div>
-    '''
-    assert_pixels('absolute_split_9', expected_pixels, html)
+    ''')
 
 
 @assert_no_logs
-def test_absolute_split_10():
-    expected_pixels = '''
+def test_absolute_split_10(assert_pixels):
+    assert_pixels('''
         BB____
         BB____
         __RR__
@@ -356,8 +337,7 @@ def test_absolute_split_10():
         __RR__
         ______
         ______
-    '''
-    html = '''
+    ''', '''
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
@@ -383,21 +363,19 @@ def test_absolute_split_10():
         <article>a</article>
         <div>a a a a</div>
         <article>a</article>
-    '''
-    assert_pixels('absolute_split_10', expected_pixels, html)
+    ''')
 
 
 @assert_no_logs
-def test_absolute_split_11():
-    expected_pixels = '''
+def test_absolute_split_11(assert_pixels):
+    assert_pixels('''
         BBBBBB
         BBBBBB
         BBRRBB
         BBRRBB
         __RR__
         __RR__
-    '''
-    html = '''
+    ''', '''
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
@@ -418,18 +396,17 @@ def test_absolute_split_11():
             }
         </style>
         aaa aaa<div>a a</div>
-    '''
-    assert_pixels('absolute_split_11', expected_pixels, html)
+    ''')
 
 
 @pytest.mark.xfail
 @assert_no_logs
-def test_absolute_next_page():
+def test_absolute_next_page(assert_pixels):
     # TODO: currently, the layout of absolute boxes forces to render a box,
     # even when it doesn’t fit in the page. This workaround avoids placeholders
     # with no box. Instead, we should remove these placeholders, or avoid
     # crashes when they’re rendered.
-    expected_pixels = '''
+    assert_pixels('''
         RRRRRRRRRR______
         RRRRRRRRRR______
         RRRRRRRRRR______
@@ -438,8 +415,7 @@ def test_absolute_next_page():
         BBBBBBRRRR______
         BBBBBB__________
         ________________
-    '''
-    html = '''
+    ''', '''
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
@@ -460,18 +436,16 @@ def test_absolute_next_page():
         aaaaa aaaaa
         <div class="split">bb</div>
         aaaaa
-    '''
-    assert_pixels('absolute_next_page', expected_pixels, html)
+    ''')
 
 
 @assert_no_logs
-def test_absolute_rtl_1():
-    expected_pixels = '''
+def test_absolute_rtl_1(assert_pixels):
+    assert_pixels('''
         __________RRRRRR
         __________RRRRRR
         ________________
-    '''
-    html = '''
+    ''', '''
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
@@ -489,18 +463,16 @@ def test_absolute_rtl_1():
             }
         </style>
         <div>bbb</div>
-    '''
-    assert_pixels('absolute_rtl_1', expected_pixels, html)
+    ''')
 
 
 @assert_no_logs
-def test_absolute_rtl_2():
-    expected_pixels = '''
+def test_absolute_rtl_2(assert_pixels):
+    assert_pixels('''
         ________________
         _________RRRRRR_
         _________RRRRRR_
-    '''
-    html = '''
+    ''', '''
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
@@ -519,18 +491,16 @@ def test_absolute_rtl_2():
             }
         </style>
         <div>bbb</div>
-    '''
-    assert_pixels('absolute_rtl_2', expected_pixels, html)
+    ''')
 
 
 @assert_no_logs
-def test_absolute_rtl_3():
-    expected_pixels = '''
+def test_absolute_rtl_3(assert_pixels):
+    assert_pixels('''
         ________________
         RRRRRR__________
         RRRRRR__________
-    '''
-    html = '''
+    ''', '''
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
@@ -550,18 +520,16 @@ def test_absolute_rtl_3():
             }
         </style>
         <div>bbb</div>
-    '''
-    assert_pixels('absolute_rtl_3', expected_pixels, html)
+    ''')
 
 
 @assert_no_logs
-def test_absolute_rtl_4():
-    expected_pixels = '''
+def test_absolute_rtl_4(assert_pixels):
+    assert_pixels('''
         ________________
         _________RRRRRR_
         _________RRRRRR_
-    '''
-    html = '''
+    ''', '''
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
@@ -581,18 +549,16 @@ def test_absolute_rtl_4():
             }
         </style>
         <div>bbb</div>
-    '''
-    assert_pixels('absolute_rtl_4', expected_pixels, html)
+    ''')
 
 
 @assert_no_logs
-def test_absolute_rtl_5():
-    expected_pixels = '''
+def test_absolute_rtl_5(assert_pixels):
+    assert_pixels('''
         RRRRRR__________
         RRRRRR__________
         ________________
-    '''
-    html = '''
+    ''', '''
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
@@ -608,13 +574,12 @@ def test_absolute_rtl_5():
             }
         </style>
         <div>bbb</div>
-    '''
-    assert_pixels('absolute_rtl_5', expected_pixels, html)
+    ''')
 
 
 @assert_no_logs
-def test_absolute_pages_counter():
-    expected_pixels = '''
+def test_absolute_pages_counter(assert_pixels):
+    assert_pixels('''
         ______
         _RR___
         _RR___
@@ -627,8 +592,7 @@ def test_absolute_pages_counter():
         _BB___
         _BB___
         _____B
-    '''
-    html = '''
+    ''', '''
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
@@ -653,13 +617,12 @@ def test_absolute_pages_counter():
             }
         </style>
         a a a <div>a a</div>
-    '''
-    assert_pixels('absolute_pages_counter', expected_pixels, html)
+    ''')
 
 
 @assert_no_logs
-def test_absolute_pages_counter_orphans():
-    expected_pixels = '''
+def test_absolute_pages_counter_orphans(assert_pixels):
+    assert_pixels('''
         ______
         _RR___
         _RR___
@@ -678,8 +641,7 @@ def test_absolute_pages_counter_orphans():
         _GG___
         ______
         _____B
-    '''
-    html = '''
+    ''', '''
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
@@ -709,5 +671,4 @@ def test_absolute_pages_counter_orphans():
             }
         </style>
         a a a <div>a a a</div> a <div>a a a</div>
-    '''
-    assert_pixels('absolute_pages_counter_orphans', expected_pixels, html)
+    ''')

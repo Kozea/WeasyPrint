@@ -3,7 +3,6 @@
 import pytest
 
 from ..testing_utils import SANS_FONTS, assert_no_logs
-from . import assert_pixels
 
 
 @assert_no_logs
@@ -42,8 +41,8 @@ from . import assert_pixels
         ____________
      ''')
 ))
-def test_list_style_image(position, pixels):
-    assert_pixels(f'list_style_image_{position}', pixels, '''
+def test_list_style_image(assert_pixels, position, pixels):
+    assert_pixels(pixels, '''
       <style>
         @page { size: 12px 10px }
         body { margin: 0; font-family: %s }
@@ -54,8 +53,8 @@ def test_list_style_image(position, pixels):
 
 
 @assert_no_logs
-def test_list_style_image_none():
-    assert_pixels('list_style_none', '''
+def test_list_style_image_none(assert_pixels):
+    assert_pixels('''
         __________
         __________
         __________

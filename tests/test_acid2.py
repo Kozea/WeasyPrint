@@ -31,5 +31,4 @@ def test_acid2():
     ref_pixels = ref_image.getdata()
     width, height = ref_image.size
 
-    assert_pixels_equal(
-        'acid2', width, height, test_pixels, ref_pixels, tolerance=2)
+    assert_pixels_equal(width, height, test_pixels, ref_pixels, tolerance=2)

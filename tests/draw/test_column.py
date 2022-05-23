@@ -1,12 +1,11 @@
 """Test how columns are drawn."""
 
 from ..testing_utils import assert_no_logs
-from . import assert_pixels
 
 
 @assert_no_logs
-def test_column_rule_1():
-    assert_pixels('solid', '''
+def test_column_rule_1(assert_pixels):
+    assert_pixels('''
         a_r_a
         a_r_a
         _____
@@ -28,8 +27,8 @@ def test_column_rule_1():
 
 
 @assert_no_logs
-def test_column_rule_2():
-    assert_pixels('dotted', '''
+def test_column_rule_2(assert_pixels):
+    assert_pixels('''
         a_r_a
         a___a
         a_r_a

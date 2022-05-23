@@ -6,22 +6,21 @@ import tempfile
 
 from weasyprint.urls import ensure_url
 
-from .draw import assert_pixels_equal, document_to_pixels, html_to_pixels
+from .draw import document_to_pixels, html_to_pixels
 from .testing_utils import FakeHTML, assert_no_logs, resource_filename
 
 
 @assert_no_logs
-def test_unicode():
+def test_unicode(assert_pixels_equal):
     text = 'I løvë Unicode'
     style = '''
       @page { size: 200px 50px }
       p { color: blue }
     '''
-    expected_width, expected_height, expected_lines = html_to_pixels(
-        'unicode_reference', '''
-          <style>{0}</style>
-          <p><img src="pattern.png"> {1}</p>
-        '''.format(style, text))
+    expected_width, expected_height, expected_lines = html_to_pixels('''
+      <style>{0}</style>
+      <p><img src="pattern.png"> {1}</p>
+    '''.format(style, text))
 
     temp = tempfile.mkdtemp(prefix=f'{text}-')
     try:
@@ -44,8 +43,8 @@ def test_unicode():
             fd.write(html_content.encode())
 
         document = FakeHTML(html, encoding='utf-8')
-        width, height, lines = document_to_pixels(document, 'unicode')
+        width, height, lines = document_to_pixels(document)
         assert (expected_width, expected_height) == (width, height)
-        assert_pixels_equal('unicode', width, height, lines, expected_lines)
+        assert_pixels_equal(width, height, lines, expected_lines)
     finally:
         shutil.rmtree(temp)

@@ -3,12 +3,11 @@
 import pytest
 
 from ...testing_utils import assert_no_logs
-from .. import assert_pixels
 
 
 @assert_no_logs
-def test_clip_path():
-    assert_pixels('clip_path', '''
+def test_clip_path(assert_pixels):
+    assert_pixels('''
         _________
         _________
         __RRRRR__
@@ -36,8 +35,8 @@ def test_clip_path():
 
 
 @assert_no_logs
-def test_clip_path_on_group():
-    assert_pixels('clip_path_on_group', '''
+def test_clip_path_on_group(assert_pixels):
+    assert_pixels('''
         _________
         _________
         __BBBB___
@@ -68,8 +67,8 @@ def test_clip_path_on_group():
 
 @pytest.mark.xfail
 @assert_no_logs
-def test_clip_path_group_on_group():
-    assert_pixels('clip_path_group_on_group', 9, 9, '''
+def test_clip_path_group_on_group(assert_pixels):
+    assert_pixels(9, 9, '''
         _________
         _________
         __BB_____

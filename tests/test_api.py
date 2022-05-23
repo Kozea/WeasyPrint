@@ -16,7 +16,7 @@ from weasyprint import CSS, HTML, __main__, default_url_fetcher
 from weasyprint.document import resolve_links
 from weasyprint.urls import path2url
 
-from .draw import assert_pixels_equal, parse_pixels
+from .draw import parse_pixels
 from .testing_utils import (
     FakeHTML, assert_no_logs, capture_logs, http_server, resource_filename)
 
@@ -164,7 +164,8 @@ def test_css_parsing():
     _test_resource(CSS, 'latin1-test.css', check_css, encoding='latin1')
 
 
-def check_png_pattern(png_bytes, x2=False, blank=False, rotated=False):
+def check_png_pattern(assert_pixels_equal, png_bytes, x2=False, blank=False,
+                      rotated=False):
     if blank:
         expected_pixels = '''
             ________
@@ -219,11 +220,11 @@ def check_png_pattern(png_bytes, x2=False, blank=False, rotated=False):
         '''
     image = Image.open(io.BytesIO(png_bytes))
     width, height, pixels = parse_pixels(expected_pixels)
-    assert_pixels_equal('api_png', width, height, image.getdata(), pixels)
+    assert_pixels_equal(width, height, image.getdata(), pixels)
 
 
 @assert_no_logs
-def test_python_render(tmpdir):
+def test_python_render(assert_pixels_equal, tmpdir):
     """Test rendering with the Python API."""
     base_url = resource_filename('dummy.html')
     html_string = '<body><img src=pattern.png>'
@@ -241,7 +242,7 @@ def test_python_render(tmpdir):
     pdf_bytes = html.write_pdf(stylesheets=[css])
     assert png_bytes.startswith(b'\211PNG\r\n\032\n')
     assert pdf_bytes.startswith(b'%PDF')
-    check_png_pattern(png_bytes)
+    check_png_pattern(assert_pixels_equal, png_bytes)
 
     png_file = _fake_file()
     html.write_png(png_file, stylesheets=[css])
@@ -267,11 +268,11 @@ def test_python_render(tmpdir):
     assert pdf_bytes.startswith(b'%PDF')
 
     x2_png_bytes = html.write_png(stylesheets=[css], resolution=192)
-    check_png_pattern(x2_png_bytes, x2=True)
+    check_png_pattern(assert_pixels_equal, x2_png_bytes, x2=True)
 
     screen_css = CSS(string=css_string, media_type='screen')
     rotated_png_bytes = html.write_png(stylesheets=[screen_css])
-    check_png_pattern(rotated_png_bytes, rotated=True)
+    check_png_pattern(assert_pixels_equal, rotated_png_bytes, rotated=True)
 
     assert FakeHTML(
         string=html_string, base_url=base_url, media_type='screen'
@@ -407,7 +408,7 @@ def test_command_line_render(tmpdir):
 
 
 @assert_no_logs
-def test_unicode_filenames(tmpdir):
+def test_unicode_filenames(assert_pixels_equal, tmpdir):
     """Test non-ASCII filenames both in Unicode or bytes form."""
     # Replicate pattern.png in CSS so that base_url does not matter.
     html = b'''
@@ -419,7 +420,7 @@ def test_unicode_filenames(tmpdir):
         <body>
     '''
     png_bytes = FakeHTML(string=html).write_png()
-    check_png_pattern(png_bytes)
+    check_png_pattern(assert_pixels_equal, png_bytes)
     unicode_filename = 'Unicödé'
     if sys.platform.startswith('darwin'):  # pragma: no cover
         unicode_filename = unicodedata.normalize('NFD', unicode_filename)
@@ -440,7 +441,7 @@ def test_unicode_filenames(tmpdir):
 
 
 @assert_no_logs
-def test_low_level_api():
+def test_low_level_api(assert_pixels_equal):
     html = FakeHTML(string='<body>')
     css = CSS(string='''
         @page { margin: 2px; size: 8px }
@@ -462,7 +463,7 @@ def test_low_level_api():
     page, = document.pages
     assert (page.width, page.height) == (8, 8)
     png_bytes = document.write_png(resolution=192)
-    check_png_pattern(png_bytes, x2=True)
+    check_png_pattern(assert_pixels_equal, png_bytes, x2=True)
 
     document = html.render([css])
     page, = document.pages
@@ -863,7 +864,7 @@ uses_relative.append('weasyprint-custom')
 
 
 @assert_no_logs
-def test_url_fetcher():
+def test_url_fetcher(assert_pixels_equal):
     filename = resource_filename('pattern.png')
     with open(filename, 'rb') as pattern_fd:
         pattern_png = pattern_fd.read()
@@ -890,7 +891,9 @@ def test_url_fetcher():
 
     def test(html, blank=False):
         html = FakeHTML(string=html, url_fetcher=fetcher, base_url=base_url)
-        check_png_pattern(html.write_png(stylesheets=[css]), blank=blank)
+        check_png_pattern(
+            assert_pixels_equal, html.write_png(stylesheets=[css]),
+            blank=blank)
 
     test('<body><img src="pattern.png">')  # Test a "normal" URL
     test(f'<body><img src="{Path(filename).as_uri()}">')

@@ -3,13 +3,12 @@
 import pytest
 
 from ..testing_utils import assert_no_logs
-from . import assert_pixels
 
 
 @assert_no_logs
-def test_overflow_1():
+def test_overflow_1(assert_pixels):
     # See test_images
-    assert_pixels('inline_image_overflow', '''
+    assert_pixels('''
         ________
         ________
         __rBBB__
@@ -28,10 +27,10 @@ def test_overflow_1():
 
 
 @assert_no_logs
-def test_overflow_2():
+def test_overflow_2(assert_pixels):
     # <body> is only 1px high, but its overflow is propageted to the viewport
     # ie. the padding edge of the page box.
-    assert_pixels('inline_image_viewport_overflow', '''
+    assert_pixels('''
         ________
         ________
         __rBBB__
@@ -49,9 +48,9 @@ def test_overflow_2():
 
 
 @assert_no_logs
-def test_overflow_3():
+def test_overflow_3(assert_pixels):
     # Assert that the border is not clipped by overflow: hidden
-    assert_pixels('border_box_overflow', '''
+    assert_pixels('''
         ________
         ________
         __BBBB__
@@ -70,9 +69,9 @@ def test_overflow_3():
 
 
 @assert_no_logs
-def test_overflow_4():
+def test_overflow_4(assert_pixels):
     # Assert that the page margins aren't clipped by body's overflow
-    assert_pixels('border_box_overflow', '''
+    assert_pixels('''
         rr______
         rr______
         __BBBB__
@@ -168,8 +167,8 @@ def test_overflow_4():
         ______________
     '''),
 ))
-def test_clip(number, css, pixels):
-    assert_pixels('background_repeat_clipped_%s' % number, pixels, '''
+def test_clip(assert_pixels, number, css, pixels):
+    assert_pixels(pixels, '''
       <style>
         @page { size: 14px 16px }
         div { margin: 1px; border: 1px green solid;

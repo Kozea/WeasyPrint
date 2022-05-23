@@ -6,11 +6,11 @@ import pytest
 from weasyprint import HTML
 
 from ..testing_utils import assert_no_logs
-from . import assert_different_renderings, assert_pixels
 
 
 @assert_no_logs
-def test_borders(margin='10px', prop='border'):
+def test_borders(assert_pixels, assert_different_renderings, margin='10px',
+                 prop='border'):
     """Test the rendering of borders"""
     source = '''
       <style>
@@ -23,7 +23,7 @@ def test_borders(margin='10px', prop='border'):
     # Do not test the exact rendering of earch border style but at least
     # check that they do not do the same.
     documents = (
-        (f'{prop}_{border_style}', source % (margin, prop, border_style))
+        source % (margin, prop, border_style)
         for border_style in (
             'none', 'solid', 'dashed', 'dotted', 'double',
             'inset', 'outset', 'groove', 'ridge'))
@@ -47,12 +47,14 @@ def test_borders(margin='10px', prop='border'):
             solid_pixels[y][x] = 'B'
     pixels = '\n'.join(''.join(chars) for chars in solid_pixels)
     html = source % (css_margin, prop, 'solid')
-    assert_pixels(f'{prop}_solid', pixels, html)
+    assert_pixels(pixels, html)
 
 
 @assert_no_logs
-def test_outlines():
-    return test_borders(margin='20px', prop='outline')
+def test_outlines(assert_pixels, assert_different_renderings):
+    return test_borders(
+        assert_pixels, assert_different_renderings,
+        margin='20px', prop='outline')
 
 
 @assert_no_logs
@@ -93,8 +95,8 @@ def test_em_borders():
 
 
 @assert_no_logs
-def test_margin_boxes():
-    assert_pixels('margin_boxes', '''
+def test_margin_boxes(assert_pixels):
+    assert_pixels('''
         _______________
         _GGG______BBBB_
         _GGG______BBBB_
@@ -153,8 +155,8 @@ def test_display_inline_block_twice():
 
 
 @assert_no_logs
-def test_draw_border_radius():
-    expected_pixels = '''
+def test_draw_border_radius(assert_pixels):
+    assert_pixels('''
         ___zzzzz
         __zzzzzz
         _zzzzzzz
@@ -163,8 +165,7 @@ def test_draw_border_radius():
         zzzzzzzR
         zzzzzzRR
         zzzzzRRR
-    '''
-    html = '''
+    ''', '''
       <style>
         @page {
           size: 8px 8px;
@@ -177,13 +178,12 @@ def test_draw_border_radius():
         }
       </style>
       <div></div>
-    '''
-    assert_pixels('draw_border_radius', expected_pixels, html)
+    ''')
 
 
 @assert_no_logs
-def test_draw_split_border_radius():
-    expected_pixels = '''
+def test_draw_split_border_radius(assert_pixels):
+    assert_pixels('''
         ___zzzzz
         __zzzzzz
         _zzzzzzz
@@ -210,8 +210,7 @@ def test_draw_split_border_radius():
         zzzzzzzz
         _zzzzzzz
         __zzzzzz
-    '''
-    html = '''
+    ''', '''
       <style>
         @page {
           size: 8px 8px;
@@ -225,5 +224,4 @@ def test_draw_split_border_radius():
         }
       </style>
       <div>a b c</div>
-    '''
-    assert_pixels('draw_split_border_radius', expected_pixels, html)
+    ''')

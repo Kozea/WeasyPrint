@@ -1,12 +1,11 @@
 """Test how the visibility is controlled with "visibility" and "display"."""
 
 from ...testing_utils import assert_no_logs
-from .. import assert_pixels
 
 
 @assert_no_logs
-def test_visibility_visible():
-    assert_pixels('visibility_visible', '''
+def test_visibility_visible(assert_pixels):
+    assert_pixels('''
         _________
         _________
         __RRRRR__
@@ -29,8 +28,8 @@ def test_visibility_visible():
 
 
 @assert_no_logs
-def test_visibility_hidden():
-    assert_pixels('visibility_hidden', '''
+def test_visibility_hidden(assert_pixels):
+    assert_pixels('''
         _________
         _________
         _________
@@ -53,8 +52,8 @@ def test_visibility_hidden():
 
 
 @assert_no_logs
-def test_visibility_inherit_hidden():
-    assert_pixels('visibility_inherit_hidden', '''
+def test_visibility_inherit_hidden(assert_pixels):
+    assert_pixels('''
         _________
         _________
         _________
@@ -78,8 +77,8 @@ def test_visibility_inherit_hidden():
 
 
 @assert_no_logs
-def test_visibility_inherit_visible():
-    assert_pixels('visibility_inherit_visible', '''
+def test_visibility_inherit_visible(assert_pixels):
+    assert_pixels('''
         _________
         _________
         __RRRRR__
@@ -104,8 +103,8 @@ def test_visibility_inherit_visible():
 
 
 @assert_no_logs
-def test_display_inline():
-    assert_pixels('display_inline', '''
+def test_display_inline(assert_pixels):
+    assert_pixels('''
         _________
         _________
         __RRRRR__
@@ -128,8 +127,8 @@ def test_display_inline():
 
 
 @assert_no_logs
-def test_display_none():
-    assert_pixels('display_none', '''
+def test_display_none(assert_pixels):
+    assert_pixels('''
         _________
         _________
         _________
@@ -152,8 +151,8 @@ def test_display_none():
 
 
 @assert_no_logs
-def test_display_inherit_none():
-    assert_pixels('display_inherit_none', '''
+def test_display_inherit_none(assert_pixels):
+    assert_pixels('''
         _________
         _________
         _________
@@ -177,8 +176,8 @@ def test_display_inherit_none():
 
 
 @assert_no_logs
-def test_display_inherit_inline():
-    assert_pixels('display_inherit_inline', '''
+def test_display_inherit_inline(assert_pixels):
+    assert_pixels('''
         _________
         _________
         _________

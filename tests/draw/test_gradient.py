@@ -3,12 +3,11 @@
 import pytest
 
 from ..testing_utils import assert_no_logs
-from . import assert_pixels
 
 
 @assert_no_logs
-def test_linear_gradients_1():
-    assert_pixels('linear_gradient_1', '''
+def test_linear_gradients_1(assert_pixels):
+    assert_pixels('''
         _____
         _____
         _____
@@ -24,8 +23,8 @@ def test_linear_gradients_1():
 
 
 @assert_no_logs
-def test_linear_gradients_2():
-    assert_pixels('linear_gradient_2', '''
+def test_linear_gradients_2(assert_pixels):
+    assert_pixels('''
         _____
         _____
         _____
@@ -41,8 +40,8 @@ def test_linear_gradients_2():
 
 
 @assert_no_logs
-def test_linear_gradients_3():
-    assert_pixels('linear_gradient_3', '''
+def test_linear_gradients_3(assert_pixels):
+    assert_pixels('''
         ___BBrrrr
         ___BBrrrr
         ___BBrrrr
@@ -54,8 +53,8 @@ def test_linear_gradients_3():
 
 
 @assert_no_logs
-def test_linear_gradients_4():
-    assert_pixels('linear_gradient_4', '''
+def test_linear_gradients_4(assert_pixels):
+    assert_pixels('''
         BBBBBBrrrr
         BBBBBBrrrr
         BBBBBBrrrr
@@ -68,22 +67,23 @@ def test_linear_gradients_4():
 
 @pytest.mark.xfail
 @assert_no_logs
-def test_linear_gradients_5():
+def test_linear_gradients_5(assert_pixels):
     # See https://bugs.ghostscript.com/show_bug.cgi?id=705225
-    assert_pixels('linear_gradient_5', '''
+    assert_pixels('''
         rBrrrBrrrB
         rBrrrBrrrB
         rBrrrBrrrB
         rBrrrBrrrB
         rBrrrBrrrB
-    ''', '''<style>@page { size: 10px 5px; background: repeating-linear-gradient(
+    ''', '''
+      <style>@page { size: 10px 5px; background: repeating-linear-gradient(
       to right, blue 50%, blue 60%, red 60%, red 90%
     )''')
 
 
 @assert_no_logs
-def test_linear_gradients_6():
-    assert_pixels('linear_gradient_6', '''
+def test_linear_gradients_6(assert_pixels):
+    assert_pixels('''
         BBBrrrrrr
         BBBrrrrrr
         BBBrrrrrr
@@ -95,8 +95,8 @@ def test_linear_gradients_6():
 
 
 @assert_no_logs
-def test_linear_gradients_7():
-    assert_pixels('linear_gradient_7', '''
+def test_linear_gradients_7(assert_pixels):
+    assert_pixels('''
         hhhhhhhhh
         hhhhhhhhh
         hhhhhhhhh
@@ -108,8 +108,8 @@ def test_linear_gradients_7():
 
 
 @assert_no_logs
-def test_linear_gradients_8():
-    assert_pixels('linear_gradient_8', '''
+def test_linear_gradients_8(assert_pixels):
+    assert_pixels('''
         BBBBBBBBB
         BBBBBBBBB
         BBBBBBBBB
@@ -121,8 +121,8 @@ def test_linear_gradients_8():
 
 
 @assert_no_logs
-def test_linear_gradients_9():
-    assert_pixels('linear_gradient_9', '''
+def test_linear_gradients_9(assert_pixels):
+    assert_pixels('''
         BBBBBBBBB
         BBBBBBBBB
         BBBBBBBBB
@@ -134,8 +134,8 @@ def test_linear_gradients_9():
 
 
 @assert_no_logs
-def test_linear_gradients_10():
-    assert_pixels('linear_gradient_10', '''
+def test_linear_gradients_10(assert_pixels):
+    assert_pixels('''
         BBBBBBBBB
         BBBBBBBBB
         BBBBBBBBB
@@ -147,8 +147,8 @@ def test_linear_gradients_10():
 
 
 @assert_no_logs
-def test_linear_gradients_11():
-    assert_pixels('linear_gradient_11', '''
+def test_linear_gradients_11(assert_pixels):
+    assert_pixels('''
         BBBrBBBBB
         BBBrBBBBB
         BBBrBBBBB
@@ -161,9 +161,9 @@ def test_linear_gradients_11():
 
 @pytest.mark.xfail
 @assert_no_logs
-def test_linear_gradients_12():
+def test_linear_gradients_12(assert_pixels):
     # See https://bugs.ghostscript.com/show_bug.cgi?id=705225
-    assert_pixels('linear_gradient_12', '''
+    assert_pixels('''
         BBBBBBBBB
         BBBBBBBBB
         BBBBBBBBB
@@ -175,8 +175,8 @@ def test_linear_gradients_12():
 
 
 @assert_no_logs
-def test_linear_gradients_13():
-    assert_pixels('linear_gradient_13', '''
+def test_linear_gradients_13(assert_pixels):
+    assert_pixels('''
         _____
         _____
         _____
@@ -193,8 +193,8 @@ def test_linear_gradients_13():
 
 
 @assert_no_logs
-def test_radial_gradients_1():
-    assert_pixels('radial_gradient_1', '''
+def test_radial_gradients_1(assert_pixels):
+    assert_pixels('''
         BBBBBB
         BBBBBB
         BBBBBB
@@ -206,8 +206,8 @@ def test_radial_gradients_1():
 
 
 @assert_no_logs
-def test_radial_gradients_2():
-    assert_pixels('radial_gradient_2', '''
+def test_radial_gradients_2(assert_pixels):
+    assert_pixels('''
         RRRRRR
         RRRRRR
         RRRRRR
@@ -219,8 +219,8 @@ def test_radial_gradients_2():
 
 
 @assert_no_logs
-def test_radial_gradients_3():
-    assert_pixels('radial_gradient_3', '''
+def test_radial_gradients_3(assert_pixels):
+    assert_pixels('''
         BzzzzzzzzB
         zzzzzzzzzz
         zzzzzzzzzz
@@ -242,8 +242,8 @@ def test_radial_gradients_3():
 
 
 @assert_no_logs
-def test_radial_gradients_4():
-    assert_pixels('radial_gradient_4', '''
+def test_radial_gradients_4(assert_pixels):
+    assert_pixels('''
         BzzzzzzzzB
         zzzzzzzzzz
         zzzzzzzzzz
@@ -265,8 +265,8 @@ def test_radial_gradients_4():
 
 
 @assert_no_logs
-def test_radial_gradients_5():
-    assert_pixels('radial_gradient_5', '''
+def test_radial_gradients_5(assert_pixels):
+    assert_pixels('''
         SzzzzzzzzS
         zzzzzzzzzz
         zzzzzzzzzz
