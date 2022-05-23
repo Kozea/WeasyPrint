@@ -2,6 +2,7 @@
 
 import hashlib
 import io
+import math
 import zlib
 from os.path import basename
 from urllib.parse import unquote, urlsplit
@@ -256,6 +257,10 @@ def generate_pdf(pages, url_fetcher, metadata, fonts, target, zoom,
     })
     pdf.add_object(resources)
     pdf_names = []
+
+    # Variants
+    if variant:
+        VARIANTS[variant](pdf, metadata)
 
     # Links and anchors
     page_links_and_anchors = list(resolve_links(pages))
@@ -526,6 +531,16 @@ def generate_pdf(pages, url_fetcher, metadata, fonts, target, zoom,
             'StemH': font.stemh,
             font_file: font_references_by_file_hash[font.hash],
         })
+        if pdf.version <= b'1.4':
+            cids = sorted(font.widths)
+            padded_width = int(math.ceil(cids[-1] / 8))
+            bits = ['0'] * padded_width * 8
+            for cid in cids:
+                bits[cid] = '1'
+            stream = pydyf.Stream(
+                (int(''.join(bits), 2).to_bytes(padded_width, 'big'),))
+            pdf.add_object(stream)
+            font_descriptor['CIDSet'] = stream.reference
         if font_type == 'otf':
             font_descriptor['Subtype'] = '/OpenType'
         pdf.add_object(font_descriptor)
@@ -594,9 +609,5 @@ def generate_pdf(pages, url_fetcher, metadata, fonts, target, zoom,
             name_array.append(anchor[1])
         dests = pydyf.Dictionary({'Names': name_array})
         pdf.catalog['Names'] = pydyf.Dictionary({'Dests': dests})
-
-    # Variants
-    if variant:
-        VARIANTS[variant](pdf, metadata)
 
     return pdf
