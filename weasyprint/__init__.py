@@ -148,7 +148,7 @@ class HTML:
                   attachments=None, finisher=None, presentational_hints=False,
                   optimize_size=('fonts',), font_config=None,
                   counter_style=None, image_cache=None, identifier=None,
-                  variant=None):
+                  variant=None, version=None):
         """Render the document to a PDF file.
 
         This is a shortcut for calling :meth:`render`, then
@@ -185,6 +185,7 @@ class HTML:
         :param dict image_cache: A dictionary used to cache images.
         :param bytes identifier: A bytestring used as PDF file identifier.
         :param str variant: A PDF variant name.
+        :param str version: A PDF version number.
         :returns:
             The PDF as :obj:`bytes` if ``target`` is not provided or
             :obj:`None`, otherwise :obj:`None` (the PDF is written to
@@ -193,11 +194,11 @@ class HTML:
         """
         return (
             self.render(
-                stylesheets, presentational_hints=presentational_hints,
-                optimize_size=optimize_size, font_config=font_config,
-                counter_style=counter_style, image_cache=image_cache)
+                stylesheets, presentational_hints, optimize_size, font_config,
+                counter_style, image_cache)
             .write_pdf(
-                target, zoom, attachments, finisher, identifier, variant))
+                target, zoom, attachments, finisher, identifier, variant,
+                version))
 
 
 class CSS:

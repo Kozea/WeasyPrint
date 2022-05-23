@@ -11,13 +11,13 @@ import pydyf
 from fontTools import subset
 from fontTools.ttLib import TTFont, TTLibError, ttFont
 
-from . import pdfa
 from .. import Attachment, __version__
 from ..html import W3C_DATE_RE
 from ..links import make_page_bookmark_tree, resolve_links
 from ..logger import LOGGER, PROGRESS_LOGGER
 from ..matrix import Matrix
 from ..urls import URLFetchingError
+from . import pdfa
 from .stream import Stream
 
 VARIANTS = {
@@ -236,14 +236,15 @@ def _create_bookmarks(bookmarks, pdf, parent=None):
 
 
 def generate_pdf(pages, url_fetcher, metadata, fonts, target, zoom,
-                 attachments, finisher, optimize_size, identifier, variant):
+                 attachments, finisher, optimize_size, identifier, variant,
+                 version):
     # 0.75 = 72 PDF point per inch / 96 CSS pixel per inch
     scale = zoom * 0.75
 
     PROGRESS_LOGGER.info('Step 6 - Creating PDF')
 
     pdf = pydyf.PDF()
-    pdf.version = b'1.7'
+    pdf.version = str(version or '1.7').encode()
     states = pydyf.Dictionary()
     x_objects = pydyf.Dictionary()
     patterns = pydyf.Dictionary()

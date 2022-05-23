@@ -297,7 +297,7 @@ class Document:
         return root
 
     def write_pdf(self, target=None, zoom=1, attachments=None, finisher=None,
-                  identifier=None, variant=None):
+                  identifier=None, variant=None, version=None):
         """Paint the pages in a PDF file, with metadata.
 
         :type target:
@@ -319,6 +319,7 @@ class Document:
             post-processing on the PDF right before the trailer is written.
         :param bytes identifier: A bytestring used as PDF file identifier.
         :param str variant: A PDF variant name.
+        :param str version: A PDF version number.
         :returns:
             The PDF as :obj:`bytes` if ``target`` is not provided or
             :obj:`None`, otherwise :obj:`None` (the PDF is written to
@@ -328,7 +329,7 @@ class Document:
         pdf = generate_pdf(
             self.pages, self.url_fetcher, self.metadata, self.fonts, target,
             zoom, attachments, finisher, self._optimize_size, identifier,
-            variant)
+            variant, version)
 
         if finisher:
             finisher(self, pdf)

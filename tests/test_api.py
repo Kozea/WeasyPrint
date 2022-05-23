@@ -419,6 +419,16 @@ def test_pdfa(version, pdf_version):
     assert f'part="{version}"'.encode() in stdout
 
 
+def test_pdf_identifier():
+    stdout = _run('--pdf-identifier=abc - -', b'test')
+    assert b'abc' in stdout
+
+
+def test_pdf_version():
+    stdout = _run('--pdf-version=1.4 - -', b'test')
+    assert b'PDF-1.4' in stdout
+
+
 @assert_no_logs
 def test_unicode_filenames(assert_pixels_equal, tmpdir):
     """Test non-ASCII filenames both in Unicode or bytes form."""

@@ -8,8 +8,8 @@ import sys
 import pydyf
 
 from . import HTML, LOGGER, __version__
-from .text.ffi import pango
 from .pdf import VARIANTS
+from .text.ffi import pango
 
 
 class PrintInfo(argparse.Action):
@@ -73,6 +73,10 @@ def main(argv=None, stdout=None, stdin=None):
 
         PDF variant to generate (e.g. ``--pdf-variant pdf/a-3b``).
 
+    .. option:: --pdf-version <version-number>
+
+        PDF version number (default is 1.7).
+
     .. option:: -p, --presentational-hints
 
         Follow `HTML presentational hints
@@ -131,6 +135,7 @@ def main(argv=None, stdout=None, stdin=None):
     parser.add_argument('--pdf-identifier', help='PDF file identifier')
     parser.add_argument('--pdf-variant', choices=VARIANTS,
                         help='PDF variant to generate')
+    parser.add_argument('--pdf-version', help='PDF version number')
     parser.add_argument('-p', '--presentational-hints', action='store_true',
                         help='Follow HTML presentational hints.')
     parser.add_argument('-O', '--optimize-size', action='append',
@@ -180,6 +185,7 @@ def main(argv=None, stdout=None, stdin=None):
         'attachments': args.attachment,
         'identifier': args.pdf_identifier,
         'variant': args.pdf_variant,
+        'version': args.pdf_version,
     }
 
     # Default to logging to stderr.
