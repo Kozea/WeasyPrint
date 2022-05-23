@@ -407,6 +407,18 @@ def test_command_line_render(tmpdir):
         _run('--version')
 
 
+@pytest.mark.parametrize('version, pdf_version', (
+    (1, '1.4'),
+    (2, '1.7'),
+    (3, '1.7'),
+    (4, '2.0'),
+))
+def test_pdfa(version, pdf_version):
+    stdout = _run(f'--pdf-variant=pdf/a-{version}b - -', b'test')
+    assert f'PDF-{pdf_version}'.encode() in stdout
+    assert f'part="{version}"'.encode() in stdout
+
+
 @assert_no_logs
 def test_unicode_filenames(assert_pixels_equal, tmpdir):
     """Test non-ASCII filenames both in Unicode or bytes form."""
