@@ -724,7 +724,7 @@ def test_font_size_very_small():
 
 def test_tabulation_character():
     # Test regression: https://github.com/Kozea/WeasyPrint/issues/1515
-    assert_pixels('zero_width_character', 10, 4, '''
+    assert_pixels('tabulation_character', 10, 4, '''
         __________
         _RR____RR_
         _RR____RR_
