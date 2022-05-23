@@ -176,7 +176,6 @@ def check_png_pattern(png_bytes, x2=False, blank=False, rotated=False):
             ________
             ________
         '''
-        size = 8
     elif x2:
         expected_pixels = '''
             ________________
@@ -196,7 +195,6 @@ def check_png_pattern(png_bytes, x2=False, blank=False, rotated=False):
             ________________
             ________________
         '''
-        size = 16
     elif rotated:
         expected_pixels = '''
             ________
@@ -208,7 +206,6 @@ def check_png_pattern(png_bytes, x2=False, blank=False, rotated=False):
             ________
             ________
         '''
-        size = 8
     else:
         expected_pixels = '''
             ________
@@ -220,11 +217,9 @@ def check_png_pattern(png_bytes, x2=False, blank=False, rotated=False):
             ________
             ________
         '''
-        size = 8
     image = Image.open(io.BytesIO(png_bytes))
-    assert_pixels_equal(
-        'api_png', size, size, image.getdata(),
-        parse_pixels(expected_pixels))
+    width, height, pixels = parse_pixels(expected_pixels)
+    assert_pixels_equal('api_png', width, height, image.getdata(), pixels)
 
 
 @assert_no_logs

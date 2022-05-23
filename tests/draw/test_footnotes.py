@@ -6,7 +6,7 @@ from . import assert_pixels
 
 @assert_no_logs
 def test_inline_footnote():
-    assert_pixels('span_footnote', 9, 7, '''
+    assert_pixels('span_footnote', '''
         RRRRRRRR_
         RRRRRRRR_
         _________
@@ -35,7 +35,7 @@ def test_inline_footnote():
 
 @assert_no_logs
 def test_block_footnote():
-    assert_pixels('div_footnote', 9, 7, '''
+    assert_pixels('div_footnote', '''
         RRRRRRRR_
         RRRRRRRR_
         _________
@@ -64,7 +64,7 @@ def test_block_footnote():
 
 @assert_no_logs
 def test_long_footnote():
-    assert_pixels('long_footnote', 9, 7, '''
+    assert_pixels('long_footnote', '''
         RRRRRRRR_
         RRRRRRRR_
         _________
@@ -93,7 +93,7 @@ def test_long_footnote():
 
 @assert_no_logs
 def test_footnote_margin():
-    assert_pixels('footnote_margin', 9, 7, '''
+    assert_pixels('footnote_margin', '''
         RRRRRRRR_
         RRRRRRRR_
         _________
@@ -126,7 +126,7 @@ def test_footnote_margin():
 
 @assert_no_logs
 def test_footnote_with_absolute():
-    assert_pixels('footnote_with_absolute', 9, 7, '''
+    assert_pixels('footnote_with_absolute', '''
         _RRRR____
         _RRRR____
         _________

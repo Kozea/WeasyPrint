@@ -43,7 +43,7 @@ from . import assert_pixels
      ''')
 ))
 def test_list_style_image(position, pixels):
-    assert_pixels(f'list_style_image_{position}', 12, 10, pixels, '''
+    assert_pixels(f'list_style_image_{position}', pixels, '''
       <style>
         @page { size: 12px 10px }
         body { margin: 0; font-family: %s }
@@ -55,7 +55,7 @@ def test_list_style_image(position, pixels):
 
 @assert_no_logs
 def test_list_style_image_none():
-    assert_pixels('list_style_none', 10, 10, '''
+    assert_pixels('list_style_none', '''
         __________
         __________
         __________

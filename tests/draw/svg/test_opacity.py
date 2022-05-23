@@ -18,7 +18,7 @@ opacity_source = '''
 
 @assert_no_logs
 def test_opacity():
-    assert_same_rendering(9, 9, (
+    assert_same_rendering(
         ('opacity_reference', opacity_source % '''
             <rect x="2" y="2" width="5" height="5" stroke-width="2"
                   stroke="rgb(127, 255, 127)" fill="rgb(127, 127, 255)" />
@@ -27,12 +27,12 @@ def test_opacity():
             <rect x="2" y="2" width="5" height="5" stroke-width="2"
                   stroke="lime" fill="blue" opacity="0.5" />
         '''),
-    ))
+    )
 
 
 @assert_no_logs
 def test_fill_opacity():
-    assert_same_rendering(9, 9, (
+    assert_same_rendering(
         ('fill_opacity_reference', opacity_source % '''
             <rect x="2" y="2" width="5" height="5"
                   fill="blue" opacity="0.5" />
@@ -43,13 +43,13 @@ def test_fill_opacity():
             <rect x="2" y="2" width="5" height="5" stroke-width="2"
                   stroke="lime" fill="blue" fill-opacity="0.5" />
         '''),
-    ))
+    )
 
 
 @pytest.mark.xfail
 @assert_no_logs
 def test_stroke_opacity():
-    assert_same_rendering(9, 9, (
+    assert_same_rendering(
         ('stroke_opacity_reference', opacity_source % '''
             <rect x="2" y="2" width="5" height="5"
                   fill="blue" />
@@ -60,13 +60,13 @@ def test_stroke_opacity():
             <rect x="2" y="2" width="5" height="5" stroke-width="2"
                   stroke="lime" fill="blue" stroke-opacity="0.5" />
         '''),
-    ))
+    )
 
 
 @pytest.mark.xfail
 @assert_no_logs
 def test_stroke_fill_opacity():
-    assert_same_rendering(9, 9, (
+    assert_same_rendering(
         ('stroke_fill_opacity_reference', opacity_source % '''
             <rect x="2" y="2" width="5" height="5"
                   fill="blue" opacity="0.5" />
@@ -78,13 +78,13 @@ def test_stroke_fill_opacity():
                   stroke="lime" fill="blue"
                   stroke-opacity="0.5" fill-opacity="0.5" />
         '''),
-    ))
+    )
 
 
 @pytest.mark.xfail
 @assert_no_logs
 def test_pattern_gradient_stroke_fill_opacity():
-    assert_same_rendering(9, 9, (
+    assert_same_rendering(
         ('pattern_gradient_stroke_fill_opacity_reference', opacity_source % '''
             <defs>
               <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1"
@@ -126,4 +126,4 @@ def test_pattern_gradient_stroke_fill_opacity():
                   stroke="url(#grad)" fill="url(#pat)"
                   stroke-opacity="0.5" fill-opacity="0.5" />
         '''),
-    ))
+    )

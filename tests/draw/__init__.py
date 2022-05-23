@@ -8,49 +8,52 @@ from PIL import Image
 
 from ..testing_utils import FakeHTML, resource_filename
 
+# NOTE: "r" is not half red on purpose. In the pixel strings it has
+# better contrast with "B" than does "R". eg. "rBBBrrBrB" vs "RBBBRRBRB".
 PIXELS_BY_CHAR = dict(
     _=(255, 255, 255),  # white
     R=(255, 0, 0),  # red
     B=(0, 0, 255),  # blue
     G=(0, 255, 0),  # lime green
     V=(191, 0, 64),  # average of 1*B and 3*R.
-    S=(255, 63, 63),  # R above R above #fff
+    S=(255, 63, 63),  # R above R above _
     K=(0, 0, 0),  # black
     r=(255, 0, 0),  # red
     g=(0, 128, 0),  # half green
     b=(0, 0, 128),  # half blue
     v=(128, 0, 128),  # average of B and R.
+    s=(255, 127, 127),  # R above _
+    t=(127, 255, 127),  # G above _
+    u=(128, 0, 127),  # r above B above _
     h=(64, 0, 64),  # half average of B and R.
-    a=(0, 0, 254),  # JPG is lossy...
-    p=(192, 0, 63),  # R above R above B above #fff.
+    a=(0, 0, 254),  # R in lossy JPG
+    p=(192, 0, 63),  # R above R above B above _
     z=None,
 )
 
-# NOTE: "r" is not half red on purpose. In the pixel strings it has
-# better contrast with "B" than does "R". eg. "rBBBrrBrB" vs "RBBBRRBRB".
 
-
-def parse_pixels(pixels, pixels_overrides=None):
-    chars = dict(PIXELS_BY_CHAR, **(pixels_overrides or {}))
+def parse_pixels(pixels):
     lines = (line.split('#')[0].strip() for line in pixels.splitlines())
-    return tuple(chars[char] for line in lines if line for char in line)
+    lines = tuple(line for line in lines if line)
+    widths = {len(line) for line in lines}
+    assert len(widths) == 1, 'All lines of pixels must have the same width'
+    width = widths.pop()
+    height = len(lines)
+    pixels = tuple(PIXELS_BY_CHAR[char] for line in lines for char in line)
+    return width, height, pixels
 
 
-def assert_pixels(name, expected_width, expected_height, expected_pixels,
-                  html):
+def assert_pixels(name, expected_pixels, html):
     """Helper testing the size of the image and the pixels values."""
-    if isinstance(expected_pixels, str):
-        expected_pixels = parse_pixels(expected_pixels)
-    assert len(expected_pixels) == expected_height * expected_width, (
-        f'Expected {len(expected_pixels)} pixels, '
-        f'got {expected_height * expected_width}')
-    pixels = html_to_pixels(name, expected_width, expected_height, html)
-    assert_pixels_equal(
-        name, expected_width, expected_height, pixels, expected_pixels)
+    expected_width, expected_height, expected_pixels = parse_pixels(
+        expected_pixels)
+    width, height, pixels = html_to_pixels(name, html)
+    assert (expected_width, expected_height) == (width, height), (
+        'Images do not have the same sizes')
+    assert_pixels_equal(name, width, height, pixels, expected_pixels)
 
 
-def assert_same_rendering(expected_width, expected_height, documents,
-                          tolerance=0):
+def assert_same_rendering(*documents, tolerance=0):
     """Render HTML documents to PNG and check that they render the same.
 
     Each document is passed as a (name, html_source) tuple.
@@ -59,18 +62,15 @@ def assert_same_rendering(expected_width, expected_height, documents,
     pixels_list = []
 
     for name, html in documents:
-        pixels = html_to_pixels(
-            name, expected_width, expected_height, html)
+        width, height, pixels = html_to_pixels(name, html)
         pixels_list.append((name, pixels))
 
     _name, reference = pixels_list[0]
     for name, pixels in pixels_list[1:]:
-        assert_pixels_equal(
-            name, expected_width, expected_height, pixels, reference,
-            tolerance)
+        assert_pixels_equal(name, width, height, pixels, reference, tolerance)
 
 
-def assert_different_renderings(expected_width, expected_height, documents):
+def assert_different_renderings(*documents):
     """Render HTML documents to PNG and check that they don't render the same.
 
     Each document is passed as a (name, html_source) tuple.
@@ -79,13 +79,13 @@ def assert_different_renderings(expected_width, expected_height, documents):
     pixels_list = []
 
     for name, html in documents:
-        pixels = html_to_pixels(name, expected_width, expected_height, html)
+        width, height, pixels = html_to_pixels(name, html)
         pixels_list.append((name, pixels))
 
     for i, (name_1, pixels_1) in enumerate(pixels_list):
         for name_2, pixels_2 in pixels_list[i + 1:]:
             if pixels_1 == pixels_2:  # pragma: no cover
-                write_png(name_1, pixels_1, expected_width, expected_height)
+                write_png(name_1, pixels_1, width, height)
                 # Same as "assert pixels_1 != pixels_2" but the output of
                 # the assert hook would be gigantic and useless.
                 assert False, f'{name_1} and {name_2} are the same'
@@ -102,7 +102,7 @@ def write_png(basename, pixels, width, height):  # pragma: no cover
     image.save(filename)
 
 
-def html_to_pixels(name, expected_width, expected_height, html):
+def html_to_pixels(name, html):
     """Render an HTML document to PNG, checks its size and return pixel data.
 
     Also return the document to aid debugging.
@@ -112,14 +112,13 @@ def html_to_pixels(name, expected_width, expected_height, html):
         string=html,
         # Dummy filename, but in the right directory.
         base_url=resource_filename('<test>'))
-    pixels = document_to_pixels(
-        document, name, expected_width, expected_height)
-    return pixels
+    return document_to_pixels(document, name)
 
 
-def document_to_pixels(document, name, expected_width, expected_height):
+def document_to_pixels(document, name):
     """Render an HTML document to PNG, check its size and return pixel data."""
-    return Image.open(io.BytesIO(document.write_png())).getdata()
+    image = Image.open(io.BytesIO(document.write_png()))
+    return image.width, image.height, image.getdata()
 
 
 def assert_pixels_equal(name, width, height, raw, expected_raw, tolerance=0):

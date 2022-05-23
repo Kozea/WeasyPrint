@@ -18,7 +18,7 @@ visibility_source = '''
 
 @assert_no_logs
 def test_visibility_1():
-    assert_pixels('visibility_reference', 12, 7, '''
+    assert_pixels('visibility_reference', '''
         ____________
         _rBBB_rBBB__
         _BBBB_BBBB__
@@ -31,7 +31,7 @@ def test_visibility_1():
 
 @assert_no_logs
 def test_visibility_2():
-    assert_pixels('visibility_hidden', 12, 7, '''
+    assert_pixels('visibility_hidden', '''
         ____________
         ____________
         ____________
@@ -44,7 +44,7 @@ def test_visibility_2():
 
 @assert_no_logs
 def test_visibility_3():
-    assert_pixels('visibility_mixed', 12, 7, '''
+    assert_pixels('visibility_mixed', '''
         ____________
         ______rBBB__
         ______BBBB__
@@ -58,7 +58,7 @@ def test_visibility_3():
 
 @assert_no_logs
 def test_visibility_4():
-    assert_pixels('visibility_hidden_page', 12, 7, '''
+    assert_pixels('visibility_hidden_page', '''
         ____________
         _rBBB_rBBB__
         _BBBB_BBBB__

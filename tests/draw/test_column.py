@@ -6,7 +6,7 @@ from . import assert_pixels
 
 @assert_no_logs
 def test_column_rule_1():
-    assert_pixels('solid', 5, 3, '''
+    assert_pixels('solid', '''
         a_r_a
         a_r_a
         _____
@@ -29,7 +29,7 @@ def test_column_rule_1():
 
 @assert_no_logs
 def test_column_rule_2():
-    assert_pixels('dotted', 5, 3, '''
+    assert_pixels('dotted', '''
         a_r_a
         a___a
         a_r_a

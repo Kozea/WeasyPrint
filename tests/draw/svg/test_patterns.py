@@ -6,7 +6,7 @@ from .. import assert_pixels
 
 @assert_no_logs
 def test_pattern():
-    assert_pixels('pattern', 8, 8, '''
+    assert_pixels('pattern', '''
         BBrrBBrr
         BBrrBBrr
         rrBBrrBB
@@ -38,7 +38,7 @@ def test_pattern():
 
 @assert_no_logs
 def test_pattern_2():
-    assert_pixels('pattern_2', 8, 8, '''
+    assert_pixels('pattern_2', '''
         BBrrBBrr
         BBrrBBrr
         rrBBrrBB
@@ -70,7 +70,7 @@ def test_pattern_2():
 
 @assert_no_logs
 def test_pattern_3():
-    assert_pixels('pattern_3', 8, 8, '''
+    assert_pixels('pattern_3', '''
         BBrrBBrr
         BBrrBBrr
         rrBBrrBB
@@ -102,7 +102,7 @@ def test_pattern_3():
 
 @assert_no_logs
 def test_pattern_4():
-    assert_pixels('pattern_4', 8, 8, '''
+    assert_pixels('pattern_4', '''
         BBrrBBrr
         BBrrBBrr
         rrBBrrBB

@@ -6,7 +6,7 @@ from . import assert_same_rendering
 
 @assert_no_logs
 def test_before_after_1():
-    assert_same_rendering(300, 30, [
+    assert_same_rendering(
         ('pseudo_before', '''
             <style>
                 @page { size: 300px 30px }
@@ -21,13 +21,12 @@ def test_before_after_1():
                 body { margin: 0 }
             </style>
             <p><a href="another url"><span>[some url] </span>some content</p>
-        ''')
-    ], tolerance=10)
+        '''), tolerance=10)
 
 
 @assert_no_logs
 def test_before_after_2():
-    assert_same_rendering(500, 30, [
+    assert_same_rendering(
         ('pseudo_quotes', '''
             <style>
                 @page { size: 500px 30px }
@@ -46,13 +45,12 @@ def test_before_after_2():
             <p><span><span>« </span>Lorem ipsum
                 <span><span>“ </span>dolor<span> ”</span></span>
                 sit amet<span> »</span></span></p>
-        ''')
-    ], tolerance=10)
+        '''), tolerance=10)
 
 
 @assert_no_logs
 def test_before_after_3():
-    assert_same_rendering(100, 30, [
+    assert_same_rendering(
         ('pseudo_url', '''
             <style>
                 @page { size: 100px 30px }
@@ -67,5 +65,4 @@ def test_before_after_3():
                 body { margin: 0 }
             </style>
             <p><span>a<img src="pattern.png" alt="Missing image">b</span>c</p>
-        ''')
-    ], tolerance=10)
+        '''), tolerance=10)

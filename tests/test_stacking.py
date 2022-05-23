@@ -75,5 +75,5 @@ def test_image_contexts():
 ))
 def test_z_index(z_indexes, color):
     assert_pixels(
-        'z_index_%s_%s_%s' % z_indexes, 10, 10, '\n'.join([color * 10] * 10),
+        'z_index_%s_%s_%s' % z_indexes, '\n'.join([color * 10] * 10),
         z_index_source % z_indexes)

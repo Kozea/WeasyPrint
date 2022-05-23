@@ -8,7 +8,7 @@ from .. import assert_pixels
 
 @assert_no_logs
 def test_linear_gradient():
-    assert_pixels('linear_gradient', 10, 10, '''
+    assert_pixels('linear_gradient', '''
         BBBBBBBBBB
         BBBBBBBBBB
         BBBBBBBBBB
@@ -39,7 +39,7 @@ def test_linear_gradient():
 
 @assert_no_logs
 def test_linear_gradient_userspace():
-    assert_pixels('linear_gradient_userspace', 10, 10, '''
+    assert_pixels('linear_gradient_userspace', '''
         BBBBBBBBBB
         BBBBBBBBBB
         BBBBBBBBBB
@@ -70,7 +70,7 @@ def test_linear_gradient_userspace():
 
 @assert_no_logs
 def test_linear_gradient_multicolor():
-    assert_pixels('linear_gradient_multicolor', 10, 8, '''
+    assert_pixels('linear_gradient_multicolor', '''
         BBBBBBBBBB
         BBBBBBBBBB
         RRRRRRRRRR
@@ -103,7 +103,7 @@ def test_linear_gradient_multicolor():
 
 @assert_no_logs
 def test_linear_gradient_multicolor_userspace():
-    assert_pixels('linear_gradient_multicolor_userspace', 10, 8, '''
+    assert_pixels('linear_gradient_multicolor_userspace', '''
         BBBBBBBBBB
         BBBBBBBBBB
         RRRRRRRRRR
@@ -137,7 +137,7 @@ def test_linear_gradient_multicolor_userspace():
 @pytest.mark.xfail
 @assert_no_logs
 def test_linear_gradient_transform():
-    assert_pixels('linear_gradient_transform', 10, 8, '''
+    assert_pixels('linear_gradient_transform', '''
         BBBBBBBBBB
         RRRRRRRRRR
         GGGGGGGGGG
@@ -170,7 +170,7 @@ def test_linear_gradient_transform():
 
 @assert_no_logs
 def test_linear_gradient_repeat():
-    assert_pixels('linear_gradient_repeat', 10, 16, '''
+    assert_pixels('linear_gradient_repeat', '''
         BBBBBBBBBB
         BBBBBBBBBB
         RRRRRRRRRR
@@ -212,7 +212,7 @@ def test_linear_gradient_repeat():
 @pytest.mark.xfail
 @assert_no_logs
 def test_linear_gradient_repeat_long():
-    assert_pixels('linear_gradient_repeat_long', 10, 16, '''
+    assert_pixels('linear_gradient_repeat_long', '''
         BBBBBBBBBB
         RRRRRRRRRR
         GGGGGGGGGG
@@ -253,7 +253,7 @@ def test_linear_gradient_repeat_long():
 
 @assert_no_logs
 def test_linear_gradient_reflect():
-    assert_pixels('linear_gradient_reflect', 10, 16, '''
+    assert_pixels('linear_gradient_reflect', '''
         BBBBBBBBBB
         BBBBBBBBBB
         RRRRRRRRRR
@@ -294,7 +294,7 @@ def test_linear_gradient_reflect():
 
 @assert_no_logs
 def test_radial_gradient():
-    assert_pixels('radial_gradient', 10, 10, '''
+    assert_pixels('radial_gradient', '''
         rrrrrrrrrr
         rrrrrrrrrr
         rrrrBBrrrr
@@ -326,7 +326,7 @@ def test_radial_gradient():
 
 @assert_no_logs
 def test_radial_gradient_userspace():
-    assert_pixels('radial_gradient_userspace', 10, 10, '''
+    assert_pixels('radial_gradient_userspace', '''
         rrrrrrrrrr
         rrrrrrrrrr
         rrrrBBrrrr
@@ -357,7 +357,7 @@ def test_radial_gradient_userspace():
 
 @assert_no_logs
 def test_radial_gradient_multicolor():
-    assert_pixels('radial_gradient_multicolor', 10, 10, '''
+    assert_pixels('radial_gradient_multicolor', '''
         rrrrrrrrrr
         rrrGGGGrrr
         rrGGBBGGrr
@@ -391,7 +391,7 @@ def test_radial_gradient_multicolor():
 
 @assert_no_logs
 def test_radial_gradient_multicolor_userspace():
-    assert_pixels('radial_gradient_multicolor_userspace', 10, 10, '''
+    assert_pixels('radial_gradient_multicolor_userspace', '''
         rrrrrrrrrr
         rrrGGGGrrr
         rrGGBBGGrr
@@ -426,7 +426,7 @@ def test_radial_gradient_multicolor_userspace():
 @pytest.mark.xfail
 @assert_no_logs
 def test_radial_gradient_repeat():
-    assert_pixels('radial_gradient_repeat', 10, 10, '''
+    assert_pixels('radial_gradient_repeat', '''
         GBrrrrrrBG
         BrrGGGGrrB
         rrGGBBGGrr
@@ -461,7 +461,7 @@ def test_radial_gradient_repeat():
 @pytest.mark.xfail
 @assert_no_logs
 def test_radial_gradient_reflect():
-    assert_pixels('radial_gradient_reflect', 10, 10, '''
+    assert_pixels('radial_gradient_reflect', '''
         BGrrrrrrGB
         GrrGGGGrrG
         rrGGBBGGrr

@@ -6,7 +6,7 @@ import pytest
 from weasyprint import HTML
 
 from ..testing_utils import assert_no_logs
-from . import PIXELS_BY_CHAR, assert_different_renderings, assert_pixels
+from . import assert_different_renderings, assert_pixels
 
 
 @assert_no_logs
@@ -22,31 +22,32 @@ def test_borders(margin='10px', prop='border'):
 
     # Do not test the exact rendering of earch border style but at least
     # check that they do not do the same.
-    assert_different_renderings(140, 110, [
+    documents = (
         (f'{prop}_{border_style}', source % (margin, prop, border_style))
-        for border_style in [
+        for border_style in (
             'none', 'solid', 'dashed', 'dotted', 'double',
-            'inset', 'outset', 'groove', 'ridge']])
+            'inset', 'outset', 'groove', 'ridge'))
+    assert_different_renderings(*documents)
 
     css_margin = margin
     width = 140
     height = 110
     margin = 10
     border = 10
-    solid_pixels = [PIXELS_BY_CHAR['_'] for i in range(width * height)]
+    solid_pixels = [['_'] * width for _ in range(height)]
     for x in range(margin, width - margin):
         for y in itertools.chain(
                 range(margin, margin + border),
                 range(height - margin - border, height - margin)):
-            solid_pixels[y * width + x] = PIXELS_BY_CHAR['B']
+            solid_pixels[y][x] = 'B'
     for y in range(margin, height - margin):
         for x in itertools.chain(
                 range(margin, margin + border),
                 range(width - margin - border, width - margin)):
-            solid_pixels[y * width + x] = PIXELS_BY_CHAR['B']
-    assert_pixels(
-        f'{prop}_solid', 140, 110, solid_pixels,
-        source % (css_margin, prop, 'solid'))
+            solid_pixels[y][x] = 'B'
+    pixels = '\n'.join(''.join(chars) for chars in solid_pixels)
+    html = source % (css_margin, prop, 'solid')
+    assert_pixels(f'{prop}_solid', pixels, html)
 
 
 @assert_no_logs
@@ -93,7 +94,7 @@ def test_em_borders():
 
 @assert_no_logs
 def test_margin_boxes():
-    assert_pixels('margin_boxes', 15, 15, '''
+    assert_pixels('margin_boxes', '''
         _______________
         _GGG______BBBB_
         _GGG______BBBB_
@@ -177,7 +178,7 @@ def test_draw_border_radius():
       </style>
       <div></div>
     '''
-    assert_pixels('draw_border_radius', 8, 8, expected_pixels, html)
+    assert_pixels('draw_border_radius', expected_pixels, html)
 
 
 @assert_no_logs
@@ -225,4 +226,4 @@ def test_draw_split_border_radius():
       </style>
       <div>a b c</div>
     '''
-    assert_pixels('draw_split_border_radius', 8, 24, expected_pixels, html)
+    assert_pixels('draw_split_border_radius', expected_pixels, html)

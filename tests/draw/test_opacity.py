@@ -13,7 +13,7 @@ opacity_source = '''
 
 @assert_no_logs
 def test_opacity_1():
-    assert_same_rendering(60, 60, [
+    assert_same_rendering(
         ('opacity_0_reference', opacity_source % '''
             <div></div>
         '''),
@@ -21,24 +21,24 @@ def test_opacity_1():
             <div></div>
             <div style="opacity: 0"></div>
         '''),
-    ])
+    )
 
 
 @assert_no_logs
 def test_opacity_2():
-    assert_same_rendering(60, 60, [
+    assert_same_rendering(
         ('opacity_color_reference', opacity_source % '''
             <div style="background: rgb(102, 102, 102)"></div>
         '''),
         ('opacity_color', opacity_source % '''
             <div style="opacity: 0.6"></div>
         '''),
-    ])
+    )
 
 
 @assert_no_logs
 def test_opacity_3():
-    assert_same_rendering(60, 60, [
+    assert_same_rendering(
         ('opacity_multiplied_reference', opacity_source % '''
             <div style="background: rgb(102, 102, 102)"></div>
         '''),
@@ -50,4 +50,4 @@ def test_opacity_3():
                 <div style="opacity: 0.9"></div>
             </div>
         '''),  # 0.9 * 0.666666 == 0.6
-    ])
+    )

@@ -6,7 +6,7 @@ from .. import assert_pixels
 
 @assert_no_logs
 def test_rect_stroke():
-    assert_pixels('rect_stroke', 9, 9, '''
+    assert_pixels('rect_stroke', '''
         _________
         _RRRRRRR_
         _RRRRRRR_
@@ -30,7 +30,7 @@ def test_rect_stroke():
 
 @assert_no_logs
 def test_rect_fill():
-    assert_pixels('rect_fill', 9, 9, '''
+    assert_pixels('rect_fill', '''
         _________
         _________
         __RRRRR__
@@ -53,7 +53,7 @@ def test_rect_fill():
 
 @assert_no_logs
 def test_rect_stroke_fill():
-    assert_pixels('rect_stroke_fill', 9, 9, '''
+    assert_pixels('rect_stroke_fill', '''
         _________
         _RRRRRRR_
         _RRRRRRR_
@@ -77,7 +77,7 @@ def test_rect_stroke_fill():
 
 @assert_no_logs
 def test_rect_round():
-    assert_pixels('rect_round', 9, 9, '''
+    assert_pixels('rect_round', '''
         _zzzzzzz_
         zzzzzzzzz
         zzRRRRRzz
@@ -100,7 +100,7 @@ def test_rect_round():
 
 @assert_no_logs
 def test_rect_round_zero():
-    assert_pixels('rect_round_zero', 9, 9, '''
+    assert_pixels('rect_round_zero', '''
         RRRRRRRRR
         RRRRRRRRR
         RRRRRRRRR
@@ -123,7 +123,7 @@ def test_rect_round_zero():
 
 @assert_no_logs
 def test_line():
-    assert_pixels('line', 9, 9, '''
+    assert_pixels('line', '''
         _________
         _________
         _________
@@ -147,7 +147,7 @@ def test_line():
 
 @assert_no_logs
 def test_polyline():
-    assert_pixels('polyline', 9, 9, '''
+    assert_pixels('polyline', '''
         _________
         RRRRRR___
         RRRRRR___
@@ -171,7 +171,7 @@ def test_polyline():
 
 @assert_no_logs
 def test_polyline_fill():
-    assert_pixels('polyline_fill', 9, 9, '''
+    assert_pixels('polyline_fill', '''
         _________
         RRRRRR___
         RRRRRR___
@@ -195,7 +195,7 @@ def test_polyline_fill():
 
 @assert_no_logs
 def test_polygon():
-    assert_pixels('polygon', 9, 9, '''
+    assert_pixels('polygon', '''
         _________
         RRRRRR___
         RRRRRR___
@@ -219,7 +219,7 @@ def test_polygon():
 
 @assert_no_logs
 def test_polygon_fill():
-    assert_pixels('polygon_fill', 9, 9, '''
+    assert_pixels('polygon_fill', '''
         _________
         RRRRRR___
         RRRRRR___
@@ -243,7 +243,7 @@ def test_polygon_fill():
 
 @assert_no_logs
 def test_circle_stroke():
-    assert_pixels('circle_stroke', 10, 10, '''
+    assert_pixels('circle_stroke', '''
         __________
         __RRRRRR__
         _RRRRRRRR_
@@ -268,7 +268,7 @@ def test_circle_stroke():
 
 @assert_no_logs
 def test_circle_fill():
-    assert_pixels('circle_fill', 10, 10, '''
+    assert_pixels('circle_fill', '''
         __________
         __RRRRRR__
         _RRRRRRRR_
@@ -293,7 +293,7 @@ def test_circle_fill():
 
 @assert_no_logs
 def test_ellipse_stroke():
-    assert_pixels('ellipse_stroke', 10, 10, '''
+    assert_pixels('ellipse_stroke', '''
         __________
         __RRRRRR__
         _RRRRRRRR_
@@ -318,7 +318,7 @@ def test_ellipse_stroke():
 
 @assert_no_logs
 def test_ellipse_fill():
-    assert_pixels('ellipse_fill', 10, 10, '''
+    assert_pixels('ellipse_fill', '''
         __________
         __RRRRRR__
         _RRRRRRRR_
@@ -343,7 +343,7 @@ def test_ellipse_fill():
 
 @assert_no_logs
 def test_rect_in_g():
-    assert_pixels('rect_in_g', 9, 9, '''
+    assert_pixels('rect_in_g', '''
         RRRRR____
         RRRRR____
         RRRRR____
@@ -368,7 +368,7 @@ def test_rect_in_g():
 
 @assert_no_logs
 def test_rect_x_y_in_g():
-    assert_pixels('rect_x_y_in_g', 9, 9, '''
+    assert_pixels('rect_x_y_in_g', '''
         _________
         _________
         __RRRRR__
@@ -393,7 +393,7 @@ def test_rect_x_y_in_g():
 
 @assert_no_logs
 def test_rect_stroke_zero():
-    assert_pixels('rect_stroke_zero', 9, 9, '''
+    assert_pixels('rect_stroke_zero', '''
         _________
         _________
         _________
@@ -417,7 +417,7 @@ def test_rect_stroke_zero():
 
 @assert_no_logs
 def test_rect_width_height_zero():
-    assert_pixels('rect_fill', 9, 9, '''
+    assert_pixels('rect_fill', '''
         _________
         _________
         _________

@@ -6,7 +6,7 @@ from .. import assert_pixels
 
 @assert_no_logs
 def test_visibility_visible():
-    assert_pixels('visibility_visible', 9, 9, '''
+    assert_pixels('visibility_visible', '''
         _________
         _________
         __RRRRR__
@@ -30,7 +30,7 @@ def test_visibility_visible():
 
 @assert_no_logs
 def test_visibility_hidden():
-    assert_pixels('visibility_hidden', 9, 9, '''
+    assert_pixels('visibility_hidden', '''
         _________
         _________
         _________
@@ -54,7 +54,7 @@ def test_visibility_hidden():
 
 @assert_no_logs
 def test_visibility_inherit_hidden():
-    assert_pixels('visibility_inherit_hidden', 9, 9, '''
+    assert_pixels('visibility_inherit_hidden', '''
         _________
         _________
         _________
@@ -79,7 +79,7 @@ def test_visibility_inherit_hidden():
 
 @assert_no_logs
 def test_visibility_inherit_visible():
-    assert_pixels('visibility_inherit_visible', 9, 9, '''
+    assert_pixels('visibility_inherit_visible', '''
         _________
         _________
         __RRRRR__
@@ -105,7 +105,7 @@ def test_visibility_inherit_visible():
 
 @assert_no_logs
 def test_display_inline():
-    assert_pixels('display_inline', 9, 9, '''
+    assert_pixels('display_inline', '''
         _________
         _________
         __RRRRR__
@@ -129,7 +129,7 @@ def test_display_inline():
 
 @assert_no_logs
 def test_display_none():
-    assert_pixels('display_none', 9, 9, '''
+    assert_pixels('display_none', '''
         _________
         _________
         _________
@@ -153,7 +153,7 @@ def test_display_none():
 
 @assert_no_logs
 def test_display_inherit_none():
-    assert_pixels('display_inherit_none', 9, 9, '''
+    assert_pixels('display_inherit_none', '''
         _________
         _________
         _________
@@ -178,7 +178,7 @@ def test_display_inherit_none():
 
 @assert_no_logs
 def test_display_inherit_inline():
-    assert_pixels('display_inherit_inline', 9, 9, '''
+    assert_pixels('display_inherit_inline', '''
         _________
         _________
         _________

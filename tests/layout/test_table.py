@@ -1868,7 +1868,7 @@ def test_table_row_height_3():
 
 @assert_no_logs
 def test_table_vertical_align():
-    assert_pixels('table_vertical_align', 28, 10, '''
+    assert_pixels('table_vertical_align', '''
         rrrrrrrrrrrrrrrrrrrrrrrrrrrr
         rBBBBBBBBBBBBBBBBBBBBBBBBBBr
         rBrBB_BB_BB_BB_BBrrBBrrBB_Br

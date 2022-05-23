@@ -8,7 +8,7 @@ from .. import assert_pixels
 
 @assert_no_logs
 def test_bounding_box_rect():
-    assert_pixels('bounding_box_rect', 5, 5, '''
+    assert_pixels('bounding_box_rect', '''
         BBBBB
         BBBBR
         BBBRR
@@ -34,7 +34,7 @@ def test_bounding_box_rect():
 
 @assert_no_logs
 def test_bounding_box_circle():
-    assert_pixels('bounding_box_circle', 10, 10, '''
+    assert_pixels('bounding_box_circle', '''
         __________
         __BBBBBB__
         _BBBBBBBR_
@@ -65,7 +65,7 @@ def test_bounding_box_circle():
 
 @assert_no_logs
 def test_bounding_box_ellipse():
-    assert_pixels('bounding_box_ellipse', 10, 10, '''
+    assert_pixels('bounding_box_ellipse', '''
         __________
         __BBBBBB__
         _BBBBBBBR_
@@ -96,7 +96,7 @@ def test_bounding_box_ellipse():
 
 @assert_no_logs
 def test_bounding_box_line():
-    assert_pixels('bounding_box_line', 5, 5, '''
+    assert_pixels('bounding_box_line', '''
         BB___
         BBB__
         _BRR_
@@ -123,7 +123,7 @@ def test_bounding_box_line():
 
 @assert_no_logs
 def test_bounding_box_polygon():
-    assert_pixels('bounding_box_polygon', 5, 5, '''
+    assert_pixels('bounding_box_polygon', '''
         BBBBB
         BBBBR
         BBBRR
@@ -149,7 +149,7 @@ def test_bounding_box_polygon():
 
 @assert_no_logs
 def test_bounding_box_polyline():
-    assert_pixels('bounding_box_polyline', 5, 5, '''
+    assert_pixels('bounding_box_polyline', '''
         BBBBB
         BBBBR
         BBBRR
@@ -176,7 +176,7 @@ def test_bounding_box_polyline():
 @pytest.mark.xfail
 @assert_no_logs
 def test_bounding_box_text():
-    assert_pixels('bounding_box_text', 2, 2, '''
+    assert_pixels('bounding_box_text', '''
         BB
         BR
     ''', '''
@@ -203,7 +203,7 @@ def test_bounding_box_text():
 
 @assert_no_logs
 def test_bounding_box_path_hv():
-    assert_pixels('bounding_box_path_hv', 5, 5, '''
+    assert_pixels('bounding_box_path_hv', '''
         BBBBB
         BBBBR
         BBBRR
@@ -229,7 +229,7 @@ def test_bounding_box_path_hv():
 
 @assert_no_logs
 def test_bounding_box_path_l():
-    assert_pixels('bounding_box_path_l', 5, 5, '''
+    assert_pixels('bounding_box_path_l', '''
         BBBBB
         BBBBR
         BBBRR
@@ -256,7 +256,7 @@ def test_bounding_box_path_l():
 @pytest.mark.xfail
 @assert_no_logs
 def test_bounding_box_path_c():
-    assert_pixels('bounding_box_path_c', 5, 5, '''
+    assert_pixels('bounding_box_path_c', '''
         BBB__
         BBR__
         _____
@@ -286,7 +286,7 @@ def test_bounding_box_path_c():
 @pytest.mark.xfail
 @assert_no_logs
 def test_bounding_box_path_s():
-    assert_pixels('bounding_box_path_s', 5, 5, '''
+    assert_pixels('bounding_box_path_s', '''
         BBB__
         BBR__
         _____

@@ -32,7 +32,7 @@ RESULT = '''
 
 @assert_no_logs
 def test_use():
-    assert_pixels('use', 10, 10, RESULT, '''
+    assert_pixels('use', RESULT, '''
       <style>
         @page { size: 10px }
         svg { display: block }
@@ -43,7 +43,7 @@ def test_use():
 @assert_no_logs
 def test_use_base64():
     base64_svg = b64encode(SVG.encode()).decode()
-    assert_pixels('use_base64', 10, 10, RESULT, '''
+    assert_pixels('use_base64', RESULT, '''
       <style>
         @page { size: 10px }
         img { display: block }

@@ -39,7 +39,7 @@ def test_leader_simple():
       <div>bb</div>
       <div>c</div>
     '''
-    assert_pixels('leader-simple', 16, 6, expected_pixels, html)
+    assert_pixels('leader-simple', expected_pixels, html)
 
 
 @assert_no_logs
@@ -83,7 +83,7 @@ def test_leader_too_long():
       <div>a a a a a a a</div>
       <div>a a a a a</div>
     '''
-    assert_pixels('leader-too-long', 16, 14, expected_pixels, html)
+    assert_pixels('leader-too-long', expected_pixels, html)
 
 
 @assert_no_logs
@@ -111,7 +111,7 @@ def test_leader_alone():
       </style>
       <div>a</div>
     '''
-    assert_pixels('leader-alone', 16, 2, expected_pixels, html)
+    assert_pixels('leader-alone', expected_pixels, html)
 
 
 @assert_no_logs
@@ -139,7 +139,7 @@ def test_leader_content():
       </style>
       <div>a</div>
     '''
-    assert_pixels('leader-content', 16, 2, expected_pixels, html)
+    assert_pixels('leader-content', expected_pixels, html)
 
 
 @pytest.mark.xfail
@@ -178,7 +178,7 @@ def test_leader_float():
       <div>a<article>a</article></div>
       <div>a</div>
     '''
-    assert_pixels('leader-float', 16, 4, expected_pixels, html)
+    assert_pixels('leader-float', expected_pixels, html)
 
 
 @pytest.mark.xfail
@@ -215,7 +215,7 @@ def test_leader_float_small():
       <div>a<article>a</article></div>
       <div>a</div>
     '''
-    assert_pixels('leader-float-small', 16, 4, expected_pixels, html)
+    assert_pixels('leader-float-small', expected_pixels, html)
 
 
 @assert_no_logs
@@ -246,7 +246,7 @@ def test_leader_in_inline():
       </style>
       <div>a <span>a</span> a</div>
     '''
-    assert_pixels('leader-in-inline', 16, 2, expected_pixels, html)
+    assert_pixels('leader-in-inline', expected_pixels, html)
 
 
 @pytest.mark.xfail
@@ -277,7 +277,7 @@ def test_leader_bad_alignment():
       </style>
       <div>aaa</div>
     '''
-    assert_pixels('leader-in-inline', 16, 4, expected_pixels, html)
+    assert_pixels('leader-in-inline', expected_pixels, html)
 
 
 @assert_no_logs
@@ -315,7 +315,7 @@ def test_leader_simple_rtl():
       <div>bb</div>
       <div>c</div>
     '''
-    assert_pixels('leader-simple-rtl', 16, 6, expected_pixels, html)
+    assert_pixels('leader-simple-rtl', expected_pixels, html)
 
 
 @assert_no_logs
@@ -361,7 +361,7 @@ def test_leader_too_long_rtl():
       <div>a a a a a a a</div>
       <div>a a a a a</div>
     '''
-    assert_pixels('leader-too-long-rtl', 16, 14, expected_pixels, html)
+    assert_pixels('leader-too-long-rtl', expected_pixels, html)
 
 
 @assert_no_logs
@@ -399,7 +399,7 @@ def test_leader_float_leader():
       <div>bb</div>
       <div>c</div>
     '''
-    assert_pixels('leader-float-leader', 16, 6, expected_pixels, html)
+    assert_pixels('leader-float-leader', expected_pixels, html)
 
 
 @assert_no_logs
@@ -427,7 +427,7 @@ def test_leader_empty_string():
       </style>
       <div>aaaa</div>
     '''
-    assert_pixels('leader-empty-string', 8, 2, expected_pixels, html)
+    assert_pixels('leader-empty-string', expected_pixels, html)
 
 
 @assert_no_logs
@@ -455,7 +455,7 @@ def test_leader_zero_width_string():
       </style>
       <div>aaaa</div>
     '''
-    assert_pixels('leader-zero-width-string', 8, 2, expected_pixels, html)
+    assert_pixels('leader-zero-width-string', expected_pixels, html)
 
 
 @assert_no_logs
@@ -489,4 +489,4 @@ def test_leader_absolute():
       </style>
       <div>aa<article>bb</article>aa</div>
     '''
-    assert_pixels('leader-absolute', 8, 2, expected_pixels, html)
+    assert_pixels('leader-absolute', expected_pixels, html)

@@ -8,15 +8,15 @@ from . import assert_pixels
 
 @assert_no_logs
 @pytest.mark.parametrize(
-    'name, expected_width, expected_height, expected_pixels, html', (
-        ('all_blue', 10, 10, (10 * (10 * 'B' + '\n')), '''
+    'name, expected_pixels, html', (
+        ('all_blue', (10 * (10 * 'B' + '\n')), '''
            <style>
              @page { size: 10px }
              /* body’s background propagates to the whole canvas */
              body { margin: 2px; background: #00f; height: 5px }
            </style>
          <body>'''),
-        ('blocks', 10, 10, '''
+        ('blocks', '''
              rrrrrrrrrr
              rrrrrrrrrr
              rrBBBBBBrr
@@ -37,9 +37,8 @@ from . import assert_pixels
           </style>
           <body>'''),
     ))
-def test_canvas_background(name, expected_width, expected_height,
-                           expected_pixels, html):
-    assert_pixels(name, expected_width, expected_height, expected_pixels, html)
+def test_canvas_background(name, expected_pixels, html):
+    assert_pixels(name, expected_pixels, html)
 
 
 def test_canvas_background_size():
@@ -65,7 +64,7 @@ def test_canvas_background_size():
          body { margin: 1px; background: lime; height: 1px }
       </style>
       <body>'''
-    assert_pixels('background-size', 10, 10, expected_pixels, html)
+    assert_pixels('background-size', expected_pixels, html)
 
 
 @assert_no_logs
@@ -484,7 +483,7 @@ def test_background_image(name, css, pixels):
     #    BBBB
     #    BBBB
 
-    assert_pixels(f'background_{name}', 14, 16, pixels, '''
+    assert_pixels(f'background_{name}', pixels, '''
       <style>
         @page { size: 14px 16px }
         html { background: #fff }
@@ -499,7 +498,7 @@ def test_background_image(name, css, pixels):
 @assert_no_logs
 def test_background_image_zero_size_background():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/217
-    assert_pixels('zero_size_background', 10, 10, '''
+    assert_pixels('zero_size_background', '''
         __________
         __________
         __________
@@ -525,7 +524,7 @@ def test_background_image_zero_size_background():
 def test_background_origin():
     """Test the background-origin property."""
     def test_value(value, pixels, css=None):
-        assert_pixels(f'background_origin_{value}', 12, 12, pixels, '''
+        assert_pixels(f'background_origin_{value}', pixels, '''
             <style>
                 @page { size: 12px }
                 html { background: #fff }
@@ -597,7 +596,7 @@ def test_background_origin():
 
 @assert_no_logs
 def test_background_repeat_space_1():
-    assert_pixels('background_repeat_space', 12, 16, '''
+    assert_pixels('background_repeat_space', '''
         ____________
         _rBBB__rBBB_
         _BBBB__BBBB_
@@ -626,7 +625,7 @@ def test_background_repeat_space_1():
 
 @assert_no_logs
 def test_background_repeat_space_2():
-    assert_pixels('background_repeat_space', 12, 14, '''
+    assert_pixels('background_repeat_space', '''
         ____________
         _rBBB__rBBB_
         _BBBB__BBBB_
@@ -653,7 +652,7 @@ def test_background_repeat_space_2():
 
 @assert_no_logs
 def test_background_repeat_space_3():
-    assert_pixels('background_repeat_space', 12, 13, '''
+    assert_pixels('background_repeat_space', '''
         ____________
         _rBBBrBBBrB_
         _BBBBBBBBBB_
@@ -679,7 +678,7 @@ def test_background_repeat_space_3():
 
 @assert_no_logs
 def test_background_repeat_space_4():
-    assert_pixels('background_space_no_repeat', 8, 8, '''
+    assert_pixels('background_space_no_repeat', '''
         ________
         _rBBBGG_
         _BBBBGG_
@@ -700,7 +699,7 @@ def test_background_repeat_space_4():
 
 @assert_no_logs
 def test_background_repeat_round_1():
-    assert_pixels('background_repeat_round', 10, 14, '''
+    assert_pixels('background_repeat_round', '''
         __________
         _rrBBBBBB_
         _rrBBBBBB_
@@ -728,7 +727,7 @@ def test_background_repeat_round_1():
 
 @assert_no_logs
 def test_background_repeat_round_2():
-    assert_pixels('background_repeat_round', 10, 18, '''
+    assert_pixels('background_repeat_round', '''
         __________
         _rrBBBBBB_
         _rrBBBBBB_
@@ -760,7 +759,7 @@ def test_background_repeat_round_2():
 
 @assert_no_logs
 def test_background_repeat_round_3():
-    assert_pixels('background_repeat_round', 10, 14, '''
+    assert_pixels('background_repeat_round', '''
         __________
         _rrBBBBBB_
         _rrBBBBBB_
@@ -788,7 +787,7 @@ def test_background_repeat_round_3():
 
 @assert_no_logs
 def test_background_repeat_round_4():
-    assert_pixels('background_repeat_round', 10, 14, '''
+    assert_pixels('background_repeat_round', '''
         __________
         _rBBBrBBB_
         _rBBBrBBB_
@@ -858,7 +857,7 @@ def test_background_repeat_round_4():
     '''),
 ))
 def test_background_clip(value, pixels):
-    assert_pixels(f'background_clip_{value}', 8, 8, pixels, '''
+    assert_pixels(f'background_clip_{value}', pixels, '''
       <style>
         @page { size: 8px }
         html { background: #fff }
@@ -870,149 +869,146 @@ def test_background_clip(value, pixels):
 
 
 @assert_no_logs
-@pytest.mark.parametrize(
-    'name, expected_width, expected_height, expected_pixels, html', (
-        ('background_size', 12, 12, '''
-             ____________
-             ____________
-             ____________
-             ___rrBBBBBB_
-             ___rrBBBBBB_
-             ___BBBBBBBB_
-             ___BBBBBBBB_
-             ___BBBBBBBB_
-             ___BBBBBBBB_
-             ___BBBBBBBB_
-             ___BBBBBBBB_
-             ____________
-         ''', '''
-           <style>
-             @page { size: 12px }
-             html { background: #fff }
-             body { margin: 1px; height: 10px;
-                    /* Use nearest neighbor algorithm for image resizing: */
-                    image-rendering: pixelated;
-                    background: url(pattern.png) no-repeat
-                                bottom right / 80% 8px; }
-           </style>
-           <body>'''),
-        ('background_size_auto', 12, 12, '''
-             ____________
-             ____________
-             ____________
-             ____________
-             ____________
-             ____________
-             ____________
-             _______rBBB_
-             _______BBBB_
-             _______BBBB_
-             _______BBBB_
-             ____________
-         ''', '''
-           <style>
-             @page { size: 12px }
-             html { background: #fff }
-             body { margin: 1px; height: 10px;
-                    /* Use nearest neighbor algorithm for image resizing: */
-                    image-rendering: pixelated;
-                    background: url(pattern.png) bottom right/auto no-repeat }
-           </style>
-           <body>'''),
-        ('background_size_contain', 14, 10, '''
-             ______________
-             _rrBBBBBB_____
-             _rrBBBBBB_____
-             _BBBBBBBB_____
-             _BBBBBBBB_____
-             _BBBBBBBB_____
-             _BBBBBBBB_____
-             _BBBBBBBB_____
-             _BBBBBBBB_____
-             ______________
-         ''', '''
-           <style>
-             @page { size: 14px 10px }
-             html { background: #fff }
-             body { margin: 1px; height: 8px;
-                    /* Use nearest neighbor algorithm for image resizing: */
-                    image-rendering: pixelated;
-                    background: url(pattern.png) no-repeat;
-                    background-size: contain }
-           </style>
-           <body>'''),
+@pytest.mark.parametrize('name, expected_pixels, html', (
+    ('background_size', '''
+         ____________
+         ____________
+         ____________
+         ___rrBBBBBB_
+         ___rrBBBBBB_
+         ___BBBBBBBB_
+         ___BBBBBBBB_
+         ___BBBBBBBB_
+         ___BBBBBBBB_
+         ___BBBBBBBB_
+         ___BBBBBBBB_
+         ____________
+     ''', '''
+       <style>
+         @page { size: 12px }
+         html { background: #fff }
+         body { margin: 1px; height: 10px;
+                /* Use nearest neighbor algorithm for image resizing: */
+                image-rendering: pixelated;
+                background: url(pattern.png) no-repeat
+                            bottom right / 80% 8px; }
+       </style>
+       <body>'''),
+    ('background_size_auto', '''
+         ____________
+         ____________
+         ____________
+         ____________
+         ____________
+         ____________
+         ____________
+         _______rBBB_
+         _______BBBB_
+         _______BBBB_
+         _______BBBB_
+         ____________
+     ''', '''
+       <style>
+         @page { size: 12px }
+         html { background: #fff }
+         body { margin: 1px; height: 10px;
+                /* Use nearest neighbor algorithm for image resizing: */
+                image-rendering: pixelated;
+                background: url(pattern.png) bottom right/auto no-repeat }
+       </style>
+       <body>'''),
+    ('background_size_contain', '''
+         ______________
+         _rrBBBBBB_____
+         _rrBBBBBB_____
+         _BBBBBBBB_____
+         _BBBBBBBB_____
+         _BBBBBBBB_____
+         _BBBBBBBB_____
+         _BBBBBBBB_____
+         _BBBBBBBB_____
+         ______________
+     ''', '''
+       <style>
+         @page { size: 14px 10px }
+         html { background: #fff }
+         body { margin: 1px; height: 8px;
+                /* Use nearest neighbor algorithm for image resizing: */
+                image-rendering: pixelated;
+                background: url(pattern.png) no-repeat;
+                background-size: contain }
+       </style>
+       <body>'''),
 
-        ('background_size_mixed', 14, 10, '''
-             ______________
-             _rrBBBBBB_____
-             _rrBBBBBB_____
-             _BBBBBBBB_____
-             _BBBBBBBB_____
-             _BBBBBBBB_____
-             _BBBBBBBB_____
-             _BBBBBBBB_____
-             _BBBBBBBB_____
-             ______________
-         ''', '''
-           <style>
-             @page { size: 14px 10px }
-             html { background: #fff }
-             body { margin: 1px; height: 8px;
-                    /* Use nearest neighbor algorithm for image resizing: */
-                    image-rendering: pixelated;
-                    background: url(pattern.png) no-repeat left / auto 8px;
-                    clip: auto; /* no-op to cover more validation */ }
-           </style>
-           <body>'''),
-        ('background_size_double', 14, 10, '''
-             ______________
-             _rrBBBBBB_____
-             _BBBBBBBB_____
-             _BBBBBBBB_____
-             _BBBBBBBB_____
-             ______________
-             ______________
-             ______________
-             ______________
-             ______________
-         ''', '''
-           <style>
-             @page { size: 14px 10px }
-             html { background: #fff }
-             body { margin: 1px; height: 8px;
-                    /* Use nearest neighbor algorithm for image resizing: */
-                    image-rendering: pixelated;
-                    background: url(pattern.png) no-repeat 0 0 / 8px 4px;
-                    clip: auto; /* no-op to cover more validation */ }
-           </style>
-           <body>'''),
-        ('background_size_cover', 14, 10, '''
-             ______________
-             _rrrBBBBBBBBB_
-             _rrrBBBBBBBBB_
-             _rrrBBBBBBBBB_
-             _BBBBBBBBBBBB_
-             _BBBBBBBBBBBB_
-             _BBBBBBBBBBBB_
-             _BBBBBBBBBBBB_
-             _BBBBBBBBBBBB_
-             ______________
-         ''', '''
-           <style>
-             @page { size: 14px 10px }
-             html { background: #fff }
-             body { margin: 1px; height: 8px;
-                    /* Use nearest neighbor algorithm for image resizing: */
-                    image-rendering: pixelated;
-                    background: url(pattern.png) no-repeat right 0/cover }
-           </style>
-           <body>'''),
+    ('background_size_mixed', '''
+         ______________
+         _rrBBBBBB_____
+         _rrBBBBBB_____
+         _BBBBBBBB_____
+         _BBBBBBBB_____
+         _BBBBBBBB_____
+         _BBBBBBBB_____
+         _BBBBBBBB_____
+         _BBBBBBBB_____
+         ______________
+     ''', '''
+       <style>
+         @page { size: 14px 10px }
+         html { background: #fff }
+         body { margin: 1px; height: 8px;
+                /* Use nearest neighbor algorithm for image resizing: */
+                image-rendering: pixelated;
+                background: url(pattern.png) no-repeat left / auto 8px;
+                clip: auto; /* no-op to cover more validation */ }
+       </style>
+       <body>'''),
+    ('background_size_double', '''
+         ______________
+         _rrBBBBBB_____
+         _BBBBBBBB_____
+         _BBBBBBBB_____
+         _BBBBBBBB_____
+         ______________
+         ______________
+         ______________
+         ______________
+         ______________
+     ''', '''
+       <style>
+         @page { size: 14px 10px }
+         html { background: #fff }
+         body { margin: 1px; height: 8px;
+                /* Use nearest neighbor algorithm for image resizing: */
+                image-rendering: pixelated;
+                background: url(pattern.png) no-repeat 0 0 / 8px 4px;
+                clip: auto; /* no-op to cover more validation */ }
+       </style>
+       <body>'''),
+    ('background_size_cover', '''
+         ______________
+         _rrrBBBBBBBBB_
+         _rrrBBBBBBBBB_
+         _rrrBBBBBBBBB_
+         _BBBBBBBBBBBB_
+         _BBBBBBBBBBBB_
+         _BBBBBBBBBBBB_
+         _BBBBBBBBBBBB_
+         _BBBBBBBBBBBB_
+         ______________
+     ''', '''
+       <style>
+         @page { size: 14px 10px }
+         html { background: #fff }
+         body { margin: 1px; height: 8px;
+                /* Use nearest neighbor algorithm for image resizing: */
+                image-rendering: pixelated;
+                background: url(pattern.png) no-repeat right 0/cover }
+       </style>
+       <body>'''),
     )
 )
-def test_background_size(name, expected_width, expected_height,
-                         expected_pixels, html):
-    assert_pixels(
-        name, expected_width, expected_height, expected_pixels, html)
+def test_background_size(name, expected_pixels, html):
+    assert_pixels(name, expected_pixels, html)
 
 
 @assert_no_logs
@@ -1028,7 +1024,7 @@ def test_bleed_background_size():
          @page { size: 2px; bleed: 1px; background: red }
       </style>
       <body>'''
-    assert_pixels('bleed_background_size', 4, 4, expected_pixels, html)
+    assert_pixels('bleed_background_size', expected_pixels, html)
 
 
 @assert_no_logs
@@ -1046,7 +1042,7 @@ def test_background_size_clip():
                  background-clip: content-box }
       </style>
       <body>'''
-    assert_pixels('background_size_clip', 4, 4, expected_pixels, html)
+    assert_pixels('background_size_clip', expected_pixels, html)
 
 
 @assert_no_logs
@@ -1066,7 +1062,7 @@ def test_bleed_background_size_clip():
                  background-clip: content-box }
       </style>
       <body>'''
-    assert_pixels('bleed_background_size_clip', 6, 6, expected_pixels, html)
+    assert_pixels('bleed_background_size_clip', expected_pixels, html)
 
 
 @assert_no_logs
@@ -1084,7 +1080,7 @@ def test_marks_crop():
          @page { size: 4px; bleed: 1px; margin: 1px; marks: crop }
       </style>
       <body>'''
-    assert_pixels('marks_crop', 6, 6, expected_pixels, html)
+    assert_pixels('marks_crop', expected_pixels, html)
 
 
 @assert_no_logs
@@ -1102,7 +1098,7 @@ def test_marks_cross():
          @page { size: 4px; bleed: 1px; margin: 1px; marks: cross }
       </style>
       <body>'''
-    assert_pixels('marks_cross', 6, 6, expected_pixels, html)
+    assert_pixels('marks_cross', expected_pixels, html)
 
 
 @assert_no_logs
@@ -1120,4 +1116,4 @@ def test_marks_crop_cross():
          @page { size: 4px; bleed: 1px; margin: 1px; marks: crop cross }
       </style>
       <body>'''
-    assert_pixels('marks_crop_cross', 6, 6, expected_pixels, html)
+    assert_pixels('marks_crop_cross', expected_pixels, html)

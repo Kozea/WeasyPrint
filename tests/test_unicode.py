@@ -17,10 +17,11 @@ def test_unicode():
       @page { size: 200px 50px }
       p { color: blue }
     '''
-    expected_lines = html_to_pixels('unicode_reference', 200, 50, '''
-      <style>{0}</style>
-      <p><img src="pattern.png"> {1}</p>
-    '''.format(style, text))
+    expected_width, expected_height, expected_lines = html_to_pixels(
+        'unicode_reference', '''
+          <style>{0}</style>
+          <p><img src="pattern.png"> {1}</p>
+        '''.format(style, text))
 
     temp = tempfile.mkdtemp(prefix=f'{text}-')
     try:
@@ -43,7 +44,8 @@ def test_unicode():
             fd.write(html_content.encode())
 
         document = FakeHTML(html, encoding='utf-8')
-        lines = document_to_pixels(document, 'unicode', 200, 50)
-        assert_pixels_equal('unicode', 200, 50, lines, expected_lines)
+        width, height, lines = document_to_pixels(document, 'unicode')
+        assert (expected_width, expected_height) == (width, height)
+        assert_pixels_equal('unicode', width, height, lines, expected_lines)
     finally:
         shutil.rmtree(temp)

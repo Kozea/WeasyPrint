@@ -6,7 +6,7 @@ from . import assert_pixels
 
 
 def test_text_overflow_clip():
-    assert_pixels('text_overflow', 9, 7, '''
+    assert_pixels('text_overflow', '''
         _________
         _RRRRRRR_
         _RRRRRRR_
@@ -37,7 +37,7 @@ def test_text_overflow_clip():
 
 
 def test_text_overflow_ellipsis():
-    assert_pixels('text_overflow', 9, 16, '''
+    assert_pixels('text_overflow', '''
         _________
         _RRRRRR__
         _RRRRRR__
@@ -87,7 +87,7 @@ def test_text_overflow_ellipsis():
 def test_text_align_rtl_trailing_whitespace():
     # Test text alignment for rtl text with trailing space.
     # Test regression: https://github.com/Kozea/WeasyPrint/issues/1111
-    assert_pixels('text_overflow', 9, 9, '''
+    assert_pixels('text_overflow', '''
         _________
         _rrrrBBB_
         _________
@@ -113,7 +113,7 @@ def test_text_align_rtl_trailing_whitespace():
 
 
 def test_max_lines_ellipsis():
-    assert_pixels('max_lines_ellipsis', 10, 10, '''
+    assert_pixels('max_lines_ellipsis', '''
         BBBBBBBB__
         BBBBBBBB__
         BBBBBBBBBB
@@ -144,7 +144,7 @@ def test_max_lines_ellipsis():
 
 @pytest.mark.xfail
 def test_max_lines_nested():
-    assert_pixels('max_lines_nested', 10, 12, '''
+    assert_pixels('max_lines_nested', '''
         BBBBBBBBBB
         BBBBBBBBBB
         BBBBBBBBBB
@@ -191,7 +191,7 @@ def test_max_lines_nested():
 
 
 def test_line_clamp():
-    assert_pixels('line_clamp', 10, 10, '''
+    assert_pixels('line_clamp', '''
         BBBB__BB__
         BBBB__BB__
         BBBB__BB__
@@ -228,7 +228,7 @@ def test_line_clamp():
 
 
 def test_line_clamp_none():
-    assert_pixels('line_clamp_none', 10, 10, '''
+    assert_pixels('line_clamp_none', '''
         BBBB__BB__
         BBBB__BB__
         BBBB__BB__
@@ -263,7 +263,7 @@ def test_line_clamp_none():
 
 
 def test_line_clamp_number():
-    assert_pixels('line_clamp_number', 10, 10, '''
+    assert_pixels('line_clamp_number', '''
         BBBB__BB__
         BBBB__BB__
         BBBB__BB__
@@ -298,7 +298,7 @@ def test_line_clamp_number():
 
 @pytest.mark.xfail
 def test_ellipsis_nested():
-    assert_pixels('ellipsis_nested', 10, 10, '''
+    assert_pixels('ellipsis_nested', '''
         BBBBBB____
         BBBBBB____
         BBBBBB____
@@ -333,7 +333,7 @@ def test_ellipsis_nested():
 
 
 def test_text_align_right():
-    assert_pixels('text_align_right', 9, 6, '''
+    assert_pixels('text_align_right', '''
         _________
         __RR__RR_
         __RR__RR_
@@ -361,7 +361,7 @@ def test_text_align_right():
 
 
 def test_text_align_justify():
-    assert_pixels('text_align_justify', 9, 6, '''
+    assert_pixels('text_align_justify', '''
         _________
         _RR___RR_
         _RR___RR_
@@ -389,7 +389,7 @@ def test_text_align_justify():
 
 
 def test_text_word_spacing():
-    assert_pixels('text_word_spacing', 19, 4, '''
+    assert_pixels('text_word_spacing', '''
         ___________________
         _RR____RR____RR____
         _RR____RR____RR____
@@ -415,7 +415,7 @@ def test_text_word_spacing():
 
 
 def test_text_letter_spacing():
-    assert_pixels('text_letter_spacing', 19, 4, '''
+    assert_pixels('text_letter_spacing', '''
         ___________________
         _RR____RR____RR____
         _RR____RR____RR____
@@ -441,7 +441,7 @@ def test_text_letter_spacing():
 
 
 def test_text_underline():
-    assert_pixels('text_underline', 13, 7, '''
+    assert_pixels('text_underline', '''
         _____________
         _zzzzzzzzzzz_
         _zRRRRRRRRRz_
@@ -469,7 +469,7 @@ def test_text_underline():
 def test_text_overline():
     # Ascent value seems to be a bit random, don’t try to get the exact
     # position of the line
-    assert_pixels('text_overline', 13, 7, '''
+    assert_pixels('text_overline', '''
         _____________
         _zzzzzzzzzzz_
         _zzzzzzzzzzz_
@@ -495,7 +495,7 @@ def test_text_overline():
 
 
 def test_text_line_through():
-    assert_pixels('text_line_through', 13, 7, '''
+    assert_pixels('text_line_through', '''
         _____________
         _zzzzzzzzzzz_
         _zRRRRRRRRRz_
@@ -522,7 +522,7 @@ def test_text_line_through():
 
 def test_text_multiple_text_decoration():
     # Test regression: https://github.com/Kozea/WeasyPrint/issues/1621
-    assert_pixels('text_multiple_text_decoration', 13, 7, '''
+    assert_pixels('text_multiple_text_decoration', '''
         _____________
         _zzzzzzzzzzz_
         _zRRRRRRRRRz_
@@ -549,7 +549,7 @@ def test_text_multiple_text_decoration():
 
 def test_text_nested_text_decoration():
     # Test regression: https://github.com/Kozea/WeasyPrint/issues/1621
-    assert_pixels('text_nested_text_decoration', 13, 7, '''
+    assert_pixels('text_nested_text_decoration', '''
         _____________
         _zzzzzzzzzzz_
         _zRRRRRRRRRz_
@@ -580,7 +580,7 @@ def test_text_nested_text_decoration():
 @pytest.mark.xfail
 def test_text_nested_text_decoration_color():
     # See weasyprint.css.text_decoration’s TODO
-    assert_pixels('text_nested_text_decoration_color', 13, 7, '''
+    assert_pixels('text_nested_text_decoration_color', '''
         _____________
         _zzzzzzzzzzz_
         _zRRRRRRRRRz_
@@ -611,7 +611,7 @@ def test_text_nested_text_decoration_color():
 @pytest.mark.xfail
 def test_text_nested_block_text_decoration():
     # See weasyprint.css.text_decoration’s TODO
-    assert_pixels('text_nested_block_text_decoration', 7, 13, '''
+    assert_pixels('text_nested_block_text_decoration', '''
         _______
         _zzzzz_
         _zRRRz_
@@ -648,7 +648,7 @@ def test_text_nested_block_text_decoration():
 @pytest.mark.xfail
 def test_text_float_text_decoration():
     # See weasyprint.css.text_decoration’s TODO
-    assert_pixels('text_float_text_decoration', 13, 7, '''
+    assert_pixels('text_float_text_decoration', '''
         _____________
         _zzzzz_______
         _zRRRz__RRR__
@@ -678,7 +678,7 @@ def test_text_float_text_decoration():
 
 def test_zero_width_character():
     # Test regression: https://github.com/Kozea/WeasyPrint/issues/1508
-    assert_pixels('zero_width_character', 6, 4, '''
+    assert_pixels('zero_width_character', '''
         ______
         _RRRR_
         _RRRR_
@@ -701,7 +701,7 @@ def test_zero_width_character():
 
 
 def test_font_size_very_small():
-    assert_pixels('font_size_very_small', 10, 4, '''
+    assert_pixels('font_size_very_small', '''
         __________
         __________
         __________
@@ -724,7 +724,7 @@ def test_font_size_very_small():
 
 def test_tabulation_character():
     # Test regression: https://github.com/Kozea/WeasyPrint/issues/1515
-    assert_pixels('tabulation_character', 10, 4, '''
+    assert_pixels('tabulation_character', '''
         __________
         _RR____RR_
         _RR____RR_

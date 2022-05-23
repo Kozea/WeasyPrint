@@ -37,7 +37,7 @@ def test_absolute_split_1():
         <div class="split">aa aa</div>
         <div>bbbbbb bbb</div>
     '''
-    assert_pixels('absolute_split_1', 16, 4, expected_pixels, html)
+    assert_pixels('absolute_split_1', expected_pixels, html)
 
 
 @assert_no_logs
@@ -71,7 +71,7 @@ def test_absolute_split_2():
         <div class="split">aa aa</div>
         <div>bbbbbb bb</div>
     '''
-    assert_pixels('absolute_split_2', 16, 4, expected_pixels, html)
+    assert_pixels('absolute_split_2', expected_pixels, html)
 
 
 @assert_no_logs
@@ -105,7 +105,7 @@ def test_absolute_split_3():
         <div class="split">aa</div>
         <div>bbbbbb bbbbb</div>
     '''
-    assert_pixels('absolute_split_3', 16, 4, expected_pixels, html)
+    assert_pixels('absolute_split_3', expected_pixels, html)
 
 
 @assert_no_logs
@@ -139,7 +139,7 @@ def test_absolute_split_4():
         <div class="split">aa</div>
         <div>bbbbbb bbbbb</div>
     '''
-    assert_pixels('absolute_split_4', 16, 4, expected_pixels, html)
+    assert_pixels('absolute_split_4', expected_pixels, html)
 
 
 @assert_no_logs
@@ -180,7 +180,7 @@ def test_absolute_split_5():
         <div class="split2">cc cc</div>
         <div>bbbb bbbbb</div>
     '''
-    assert_pixels('absolute_split_5', 16, 4, expected_pixels, html)
+    assert_pixels('absolute_split_5', expected_pixels, html)
 
 
 @assert_no_logs
@@ -219,7 +219,7 @@ def test_absolute_split_6():
         <div class="split2">cc</div>
         <div>bbbb bbbbb</div>
     '''
-    assert_pixels('absolute_split_6', 16, 4, expected_pixels, html)
+    assert_pixels('absolute_split_6', expected_pixels, html)
 
 
 @assert_no_logs
@@ -262,7 +262,7 @@ def test_absolute_split_7():
         <div class="split2">cc cc</div>
         <div class="push">bbbb bb</div>
     '''
-    assert_pixels('absolute_split_7', 16, 4, expected_pixels, html)
+    assert_pixels('absolute_split_7', expected_pixels, html)
 
 
 @assert_no_logs
@@ -299,7 +299,7 @@ def test_absolute_split_8():
         </style>
         <div>a a a a</div>
     '''
-    assert_pixels('absolute_split_8', 6, 8, expected_pixels, html)
+    assert_pixels('absolute_split_8', expected_pixels, html)
 
 
 @assert_no_logs
@@ -337,7 +337,7 @@ def test_absolute_split_9():
         </style>
         aaa a<div>a a a a</div>
     '''
-    assert_pixels('absolute_split_9', 6, 8, expected_pixels, html)
+    assert_pixels('absolute_split_9', expected_pixels, html)
 
 
 @assert_no_logs
@@ -384,7 +384,7 @@ def test_absolute_split_10():
         <div>a a a a</div>
         <article>a</article>
     '''
-    assert_pixels('absolute_split_10', 6, 12, expected_pixels, html)
+    assert_pixels('absolute_split_10', expected_pixels, html)
 
 
 @assert_no_logs
@@ -419,7 +419,7 @@ def test_absolute_split_11():
         </style>
         aaa aaa<div>a a</div>
     '''
-    assert_pixels('absolute_split_11', 6, 6, expected_pixels, html)
+    assert_pixels('absolute_split_11', expected_pixels, html)
 
 
 @pytest.mark.xfail
@@ -461,7 +461,7 @@ def test_absolute_next_page():
         <div class="split">bb</div>
         aaaaa
     '''
-    assert_pixels('absolute_next_page', 16, 8, expected_pixels, html)
+    assert_pixels('absolute_next_page', expected_pixels, html)
 
 
 @assert_no_logs
@@ -490,7 +490,7 @@ def test_absolute_rtl_1():
         </style>
         <div>bbb</div>
     '''
-    assert_pixels('absolute_rtl_1', 16, 3, expected_pixels, html)
+    assert_pixels('absolute_rtl_1', expected_pixels, html)
 
 
 @assert_no_logs
@@ -520,7 +520,7 @@ def test_absolute_rtl_2():
         </style>
         <div>bbb</div>
     '''
-    assert_pixels('absolute_rtl_2', 16, 3, expected_pixels, html)
+    assert_pixels('absolute_rtl_2', expected_pixels, html)
 
 
 @assert_no_logs
@@ -551,7 +551,7 @@ def test_absolute_rtl_3():
         </style>
         <div>bbb</div>
     '''
-    assert_pixels('absolute_rtl_3', 16, 3, expected_pixels, html)
+    assert_pixels('absolute_rtl_3', expected_pixels, html)
 
 
 @assert_no_logs
@@ -582,7 +582,7 @@ def test_absolute_rtl_4():
         </style>
         <div>bbb</div>
     '''
-    assert_pixels('absolute_rtl_4', 16, 3, expected_pixels, html)
+    assert_pixels('absolute_rtl_4', expected_pixels, html)
 
 
 @assert_no_logs
@@ -609,7 +609,7 @@ def test_absolute_rtl_5():
         </style>
         <div>bbb</div>
     '''
-    assert_pixels('absolute_rtl_5', 16, 3, expected_pixels, html)
+    assert_pixels('absolute_rtl_5', expected_pixels, html)
 
 
 @assert_no_logs
@@ -654,7 +654,7 @@ def test_absolute_pages_counter():
         </style>
         a a a <div>a a</div>
     '''
-    assert_pixels('absolute_pages_counter', 6, 12, expected_pixels, html)
+    assert_pixels('absolute_pages_counter', expected_pixels, html)
 
 
 @assert_no_logs
@@ -710,5 +710,4 @@ def test_absolute_pages_counter_orphans():
         </style>
         a a a <div>a a a</div> a <div>a a a</div>
     '''
-    assert_pixels(
-        'absolute_pages_counter_orphans', 6, 18, expected_pixels, html)
+    assert_pixels('absolute_pages_counter_orphans', expected_pixels, html)

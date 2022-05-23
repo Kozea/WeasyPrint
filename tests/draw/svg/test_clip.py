@@ -8,7 +8,7 @@ from .. import assert_pixels
 
 @assert_no_logs
 def test_clip_path():
-    assert_pixels('clip_path', 9, 9, '''
+    assert_pixels('clip_path', '''
         _________
         _________
         __RRRRR__
@@ -37,7 +37,7 @@ def test_clip_path():
 
 @assert_no_logs
 def test_clip_path_on_group():
-    assert_pixels('clip_path_on_group', 9, 9, '''
+    assert_pixels('clip_path_on_group', '''
         _________
         _________
         __BBBB___

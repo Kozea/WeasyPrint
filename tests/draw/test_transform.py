@@ -6,7 +6,7 @@ from . import assert_pixels
 
 @assert_no_logs
 def test_2d_transform_1():
-    assert_pixels('image_rotate90', 8, 8, '''
+    assert_pixels('image_rotate90', '''
         ________
         ________
         __BBBr__
@@ -25,7 +25,7 @@ def test_2d_transform_1():
 
 @assert_no_logs
 def test_2d_transform_2():
-    assert_pixels('image_translateX_rotate90', 12, 12, '''
+    assert_pixels('image_translateX_rotate90', '''
         ____________
         ____________
         _____BBBr___
@@ -50,7 +50,7 @@ def test_2d_transform_2():
 @assert_no_logs
 def test_2d_transform_3():
     # A translateX after the rotation is actually a translateY
-    assert_pixels('image_rotate90_translateX', 12, 12, '''
+    assert_pixels('image_rotate90_translateX', '''
         ____________
         ____________
         ____________
@@ -74,7 +74,7 @@ def test_2d_transform_3():
 
 @assert_no_logs
 def test_2d_transform_4():
-    assert_pixels('nested_rotate90_translateX', 12, 12, '''
+    assert_pixels('nested_rotate90_translateX', '''
         ____________
         ____________
         ____________
@@ -98,7 +98,7 @@ def test_2d_transform_4():
 
 @assert_no_logs
 def test_2d_transform_5():
-    assert_pixels('image_reflection', 8, 8, '''
+    assert_pixels('image_reflection', '''
         ________
         ________
         __BBBr__
@@ -117,7 +117,7 @@ def test_2d_transform_5():
 
 @assert_no_logs
 def test_2d_transform_6():
-    assert_pixels('image_translate', 8, 8, '''
+    assert_pixels('image_translate', '''
         ________
         ________
         ________
@@ -136,7 +136,7 @@ def test_2d_transform_6():
 
 @assert_no_logs
 def test_2d_transform_7():
-    assert_pixels('image_translate_percentage', 8, 8, '''
+    assert_pixels('image_translate_percentage', '''
         ________
         ________
         ___rBBB_
@@ -155,7 +155,7 @@ def test_2d_transform_7():
 
 @assert_no_logs
 def test_2d_transform_8():
-    assert_pixels('image_translateX', 8, 8, '''
+    assert_pixels('image_translateX', '''
         ________
         ________
         _____rBB
@@ -175,7 +175,7 @@ def test_2d_transform_8():
 
 @assert_no_logs
 def test_2d_transform_9():
-    assert_pixels('image_translateY', 8, 8, '''
+    assert_pixels('image_translateY', '''
         ________
         __rBBB__
         __BBBB__
@@ -194,7 +194,7 @@ def test_2d_transform_9():
 
 @assert_no_logs
 def test_2d_transform_10():
-    assert_pixels('image_scale', 10, 10, '''
+    assert_pixels('image_scale', '''
         __________
         _rrBBBBBB_
         _rrBBBBBB_
@@ -218,7 +218,7 @@ def test_2d_transform_10():
 
 @assert_no_logs
 def test_2d_transform_11():
-    assert_pixels('image_scale12', 10, 10, '''
+    assert_pixels('image_scale12', '''
         __________
         __rBBB____
         __rBBB____
@@ -242,7 +242,7 @@ def test_2d_transform_11():
 
 @assert_no_logs
 def test_2d_transform_12():
-    assert_pixels('image_scaleY', 10, 10, '''
+    assert_pixels('image_scaleY', '''
         __________
         __rBBB____
         __rBBB____
@@ -266,7 +266,7 @@ def test_2d_transform_12():
 
 @assert_no_logs
 def test_2d_transform_13():
-    assert_pixels('image_scaleX', 10, 10, '''
+    assert_pixels('image_scaleX', '''
         __________
         __________
         _rrBBBBBB_
