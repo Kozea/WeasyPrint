@@ -27,7 +27,7 @@ solve this issue with a small amount of code. If you use another framework, you
 can read these extensions and probably find an equivalent workaround.
 
 .. _Flask-Weasyprint: https://github.com/Kozea/Flask-WeasyPrint
-.. _Flask: http://flask.pocoo.org/
+.. _Flask: https://flask.palletsprojects.com/
 .. _Django-WeasyPrint: https://github.com/fdemmer/django-weasyprint
 .. _Django: https://www.djangoproject.com/
 
