@@ -116,48 +116,55 @@ def main(argv=None, stdout=None, stdin=None):
 
     """
     parser = argparse.ArgumentParser(
-        prog='weasyprint', description='Renders web pages to PDF.')
-    parser.add_argument('--version', action='version',
-                        version=f'WeasyPrint version {__version__}',
-                        help="Print WeasyPrint's version number and exit.")
-    parser.add_argument('-i', '--info', action=PrintInfo, nargs=0,
-                        help='Print system information and exit.')
-    parser.add_argument('-e', '--encoding',
-                        help='Character encoding of the input')
-    parser.add_argument('-s', '--stylesheet', action='append',
-                        help='URL or filename for a user CSS stylesheet. '
-                             'May be given multiple times.')
-    parser.add_argument('-m', '--media-type', default='print',
-                        help='Media type to use for @media, defaults to print')
-    parser.add_argument('-u', '--base-url',
-                        help='Base for relative URLs in the HTML input. '
-                             "Defaults to the input's own filename or URL "
-                             'or the current directory for stdin.')
-    parser.add_argument('-a', '--attachment', action='append',
-                        help='URL or filename of a file '
-                             'to attach to the PDF document')
-    parser.add_argument('--pdf-identifier', help='PDF file identifier.')
-    parser.add_argument('--pdf-variant', choices=VARIANTS,
-                        help='PDF variant to generate.')
-    parser.add_argument('--pdf-version', help='PDF version number.')
-    parser.add_argument('--custom-metadata', action='store_true',
-                        help='Include custom HTML meta tags in PDF metadata.')
-    parser.add_argument('-p', '--presentational-hints', action='store_true',
-                        help='Follow HTML presentational hints.')
-    parser.add_argument('-O', '--optimize-size', action='append',
-                        help='Optimize output size for specified features.',
-                        choices=('images', 'fonts', 'all', 'none'),
-                        default=['fonts'])
-    parser.add_argument('-v', '--verbose', action='store_true',
-                        help='Show warnings and information messages.')
-    parser.add_argument('-d', '--debug', action='store_true',
-                        help='Show debugging messages.')
-    parser.add_argument('-q', '--quiet', action='store_true',
-                        help='Hide logging messages.')
+        prog='weasyprint', description='Render web pages to PDF.')
+    parser.add_argument(
+        '--version', action='version',
+        version=f'WeasyPrint version {__version__}',
+        help='print WeasyPrint’s version number and exit')
+    parser.add_argument(
+        '-i', '--info', action=PrintInfo, nargs=0,
+        help='print system information and exit')
+    parser.add_argument(
+        '-e', '--encoding', help='character encoding of the input')
+    parser.add_argument(
+        '-s', '--stylesheet', action='append',
+        help='URL or filename for a user CSS stylesheet, '
+        'may be given multiple times')
+    parser.add_argument(
+        '-m', '--media-type', default='print',
+        help='media type to use for @media, defaults to print')
+    parser.add_argument(
+        '-u', '--base-url',
+        help='base for relative URLs in the HTML input, defaults to the '
+        'input’s own filename or URL or the current directory for stdin')
+    parser.add_argument(
+        '-a', '--attachment', action='append',
+        help='URL or filename of a file to attach to the PDF document')
+    parser.add_argument('--pdf-identifier', help='PDF file identifier')
+    parser.add_argument(
+        '--pdf-variant', choices=VARIANTS, help='PDF variant to generate')
+    parser.add_argument('--pdf-version', help='PDF version number')
+    parser.add_argument(
+        '--custom-metadata', action='store_true',
+        help='include custom HTML meta tags in PDF metadata')
+    parser.add_argument(
+        '-p', '--presentational-hints', action='store_true',
+        help='follow HTML presentational hints')
+    parser.add_argument(
+        '-O', '--optimize-size', action='append',
+        help='optimize output size for specified features',
+        choices=('images', 'fonts', 'all', 'none'), default=['fonts'])
+    parser.add_argument(
+        '-v', '--verbose', action='store_true',
+        help='show warnings and information messages')
+    parser.add_argument(
+        '-d', '--debug', action='store_true', help='show debugging messages')
+    parser.add_argument(
+        '-q', '--quiet', action='store_true', help='hide logging messages')
     parser.add_argument(
         'input', help='URL or filename of the HTML input, or - for stdin')
     parser.add_argument(
-        'output', help='Filename where output is written, or - for stdout')
+        'output', help='filename where output is written, or - for stdout')
 
     args = parser.parse_args(argv)
 
@@ -205,8 +212,9 @@ def main(argv=None, stdout=None, stdin=None):
         handler.setFormatter(logging.Formatter('%(levelname)s: %(message)s'))
         LOGGER.addHandler(handler)
 
-    html = HTML(source, base_url=args.base_url, encoding=args.encoding,
-                media_type=args.media_type)
+    html = HTML(
+        source, base_url=args.base_url, encoding=args.encoding,
+        media_type=args.media_type)
     html.write_pdf(output, **kwargs)
 
 
