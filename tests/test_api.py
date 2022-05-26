@@ -429,6 +429,27 @@ def test_pdf_version():
     assert b'PDF-1.4' in stdout
 
 
+def test_pdf_custom_metadata():
+    stdout = _run('--custom-metadata - -', b'<meta name=key content=value />')
+    assert b'/key' in stdout
+    assert b'value' in stdout
+
+
+def test_bad_pdf_custom_metadata():
+    stdout = _run(
+        '--custom-metadata - -',
+        '<meta name=é content=value />'.encode('latin1'))
+    assert b'value' not in stdout
+
+
+def test_partial_pdf_custom_metadata():
+    stdout = _run(
+        '--custom-metadata - -',
+        '<meta name=a.b/céd0 content=value />'.encode('latin1'))
+    assert b'/abcd0' in stdout
+    assert b'value' in stdout
+
+
 @assert_no_logs
 def test_unicode_filenames(assert_pixels_equal, tmpdir):
     """Test non-ASCII filenames both in Unicode or bytes form."""
@@ -960,6 +981,7 @@ def assert_meta(html, **meta):
     meta.setdefault('created', None)
     meta.setdefault('modified', None)
     meta.setdefault('attachments', [])
+    meta.setdefault('custom', {})
     assert vars(FakeHTML(string=html).render().metadata) == meta
 
 
@@ -995,7 +1017,8 @@ def test_html_meta_2():
         keywords=['html', 'css', 'pdf', 'Python; pydyf'],
         description="Blah… ",
         created='2011-04',
-        modified='2013')
+        modified='2013',
+        custom={'dummy': 'ignored'})
 
 
 @assert_no_logs

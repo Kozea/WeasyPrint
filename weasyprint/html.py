@@ -280,15 +280,19 @@ def get_html_metadata(html):
                         keywords.append(keyword)
             elif name == 'author':
                 authors.append(content)
-            elif name == 'description' and description is None:
-                description = content
-            elif name == 'generator' and generator is None:
-                generator = content
-            elif name == 'dcterms.created' and created is None:
-                created = parse_w3c_date(name, content)
-            elif name == 'dcterms.modified' and modified is None:
-                modified = parse_w3c_date(name, content)
-            else:
+            elif name == 'description':
+                if description is None:
+                    description = content
+            elif name == 'generator':
+                if generator is None:
+                    generator = content
+            elif name == 'dcterms.created':
+                if created is None:
+                    created = parse_w3c_date(name, content)
+            elif name == 'dcterms.modified':
+                if modified is None:
+                    modified = parse_w3c_date(name, content)
+            elif name and name not in custom:
                 custom[name] = content
         elif element.tag == 'link' and element_has_link_type(
                 element, 'attachment'):

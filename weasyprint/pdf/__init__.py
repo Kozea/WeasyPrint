@@ -424,9 +424,10 @@ def generate_pdf(pages, url_fetcher, metadata, fonts, target, zoom,
             _w3c_date_to_pdf(metadata.modified, 'modified'))
     if custom_metadata:
         for key, value in metadata.custom.items():
-            key = ''.join(char for char in key if char.isalphanum())
+            key = ''.join(char for char in key if char.isalnum())
             key = key.encode('ascii', errors='ignore').decode()
-            pdf.info[key] = pydyf.String(value)
+            if key:
+                pdf.info[key] = pydyf.String(value)
 
     # Embedded files
     attachments = metadata.attachments + (attachments or [])
