@@ -237,7 +237,7 @@ def _create_bookmarks(bookmarks, pdf, parent=None):
 
 def generate_pdf(pages, url_fetcher, metadata, fonts, target, zoom,
                  attachments, finisher, optimize_size, identifier, variant,
-                 version):
+                 version, custom_metadata):
     # 0.75 = 72 PDF point per inch / 96 CSS pixel per inch
     scale = zoom * 0.75
 
@@ -422,6 +422,9 @@ def generate_pdf(pages, url_fetcher, metadata, fonts, target, zoom,
     if metadata.modified:
         pdf.info['ModDate'] = pydyf.String(
             _w3c_date_to_pdf(metadata.modified, 'modified'))
+    if custom_metadata:
+        for key, value in metadata.custom.items():
+            pdf.info[key] = pydyf.String(value)
 
     # Embedded files
     attachments = metadata.attachments + (attachments or [])

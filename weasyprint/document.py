@@ -104,7 +104,7 @@ class DocumentMetadata:
     """
     def __init__(self, title=None, authors=None, description=None,
                  keywords=None, generator=None, created=None, modified=None,
-                 attachments=None):
+                 attachments=None, custom=None):
         #: The title of the document, as a string or :obj:`None`.
         #: Extracted from the ``<title>`` element in HTML
         #: and written to the ``/Title`` info field in PDF.
@@ -145,6 +145,9 @@ class DocumentMetadata:
         #: Extracted from the ``<link rel=attachment>`` elements in HTML
         #: and written to the ``/EmbeddedFiles`` dictionary in PDF.
         self.attachments = attachments or []
+        #: Custom metadata, as a dict whose keys are the metadata names and
+        #: values are the metadata values.
+        self.custom = custom or {}
 
 
 class Document:
@@ -297,7 +300,8 @@ class Document:
         return root
 
     def write_pdf(self, target=None, zoom=1, attachments=None, finisher=None,
-                  identifier=None, variant=None, version=None):
+                  identifier=None, variant=None, version=None,
+                  custom_metadata=False):
         """Paint the pages in a PDF file, with metadata.
 
         :type target:
@@ -320,6 +324,8 @@ class Document:
         :param bytes identifier: A bytestring used as PDF file identifier.
         :param str variant: A PDF variant name.
         :param str version: A PDF version number.
+        :param bool custom_metadata: A boolean defining whether custom HTML
+            metadata should be stored in the generated PDF.
         :returns:
             The PDF as :obj:`bytes` if ``target`` is not provided or
             :obj:`None`, otherwise :obj:`None` (the PDF is written to
@@ -329,7 +335,7 @@ class Document:
         pdf = generate_pdf(
             self.pages, self.url_fetcher, self.metadata, self.fonts, target,
             zoom, attachments, finisher, self._optimize_size, identifier,
-            variant, version)
+            variant, version, custom_metadata)
 
         if finisher:
             finisher(self, pdf)

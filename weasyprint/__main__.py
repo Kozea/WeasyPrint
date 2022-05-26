@@ -77,6 +77,10 @@ def main(argv=None, stdout=None, stdin=None):
 
         PDF version number (default is 1.7).
 
+    .. option:: --custom-metadata
+
+        Include custom HTML meta tags in PDF metadata.
+
     .. option:: -p, --presentational-hints
 
         Follow `HTML presentational hints
@@ -132,10 +136,12 @@ def main(argv=None, stdout=None, stdin=None):
     parser.add_argument('-a', '--attachment', action='append',
                         help='URL or filename of a file '
                              'to attach to the PDF document')
-    parser.add_argument('--pdf-identifier', help='PDF file identifier')
+    parser.add_argument('--pdf-identifier', help='PDF file identifier.')
     parser.add_argument('--pdf-variant', choices=VARIANTS,
-                        help='PDF variant to generate')
-    parser.add_argument('--pdf-version', help='PDF version number')
+                        help='PDF variant to generate.')
+    parser.add_argument('--pdf-version', help='PDF version number.')
+    parser.add_argument('--custom-metadata', action='store_true',
+                        help='Include custom HTML meta tags in PDF metadata.')
     parser.add_argument('-p', '--presentational-hints', action='store_true',
                         help='Follow HTML presentational hints.')
     parser.add_argument('-O', '--optimize-size', action='append',
@@ -186,6 +192,7 @@ def main(argv=None, stdout=None, stdin=None):
         'identifier': args.pdf_identifier,
         'variant': args.pdf_variant,
         'version': args.pdf_version,
+        'custom_metadata': args.custom_metadata,
     }
 
     # Default to logging to stderr.
