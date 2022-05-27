@@ -1,7 +1,8 @@
 """PDF/A generation."""
 
 from importlib.resources import read_binary
-from xml.etree import ElementTree
+from xml.etree.ElementTree import (
+    Element, SubElement, register_namespace, tostring)
 
 import pydyf
 
@@ -17,7 +18,7 @@ NS = {
     'pdfaid': 'http://www.aiim.org/pdfa/ns/id/',
 }
 for key, value in NS.items():
-    ElementTree.register_namespace(key, value)
+    register_namespace(key, value)
 
 
 def pdfa(pdf, metadata, version):
@@ -51,70 +52,66 @@ def pdfa(pdf, metadata, version):
     ])
 
     # Add metadata
-    rdf = ElementTree.Element(f'{{{NS["rdf"]}}}RDF')
+    rdf = Element(f'{{{NS["rdf"]}}}RDF')
 
-    element = ElementTree.SubElement(rdf, f'{{{NS["rdf"]}}}Description')
+    element = SubElement(rdf, f'{{{NS["rdf"]}}}Description')
     element.attrib[f'{{{NS["rdf"]}}}about'] = ''
     element.attrib[f'{{{NS["pdfaid"]}}}part'] = str(version)
     element.attrib[f'{{{NS["pdfaid"]}}}conformance'] = 'B'
 
-    element = ElementTree.SubElement(rdf, f'{{{NS["rdf"]}}}Description')
+    element = SubElement(rdf, f'{{{NS["rdf"]}}}Description')
     element.attrib[f'{{{NS["rdf"]}}}about'] = ''
     element.attrib[f'{{{NS["pdf"]}}}Producer'] = f'WeasyPrint {__version__}'
 
     if metadata.title:
-        element = ElementTree.SubElement(
-            rdf, f'{{{NS["rdf"]}}}Description')
+        element = SubElement(rdf, f'{{{NS["rdf"]}}}Description')
         element.attrib[f'{{{NS["rdf"]}}}about'] = ''
-        element = ElementTree.SubElement(element, f'{{{NS["dc"]}}}title')
-        element = ElementTree.SubElement(element, f'{{{NS["rdf"]}}}Alt')
-        element = ElementTree.SubElement(element, f'{{{NS["rdf"]}}}li')
+        element = SubElement(element, f'{{{NS["dc"]}}}title')
+        element = SubElement(element, f'{{{NS["rdf"]}}}Alt')
+        element = SubElement(element, f'{{{NS["rdf"]}}}li')
         element.attrib['xml:lang'] = 'x-default'
         element.text = metadata.title
     if metadata.authors:
-        element = ElementTree.SubElement(rdf, f'{{{NS["rdf"]}}}Description')
+        element = SubElement(rdf, f'{{{NS["rdf"]}}}Description')
         element.attrib[f'{{{NS["rdf"]}}}about'] = ''
-        element = ElementTree.SubElement(element, f'{{{NS["dc"]}}}creator')
-        element = ElementTree.SubElement(element, f'{{{NS["rdf"]}}}Seq')
+        element = SubElement(element, f'{{{NS["dc"]}}}creator')
+        element = SubElement(element, f'{{{NS["rdf"]}}}Seq')
         for author in metadata.authors:
-            author_element = ElementTree.SubElement(
-                element, f'{{{NS["rdf"]}}}li')
+            author_element = SubElement(element, f'{{{NS["rdf"]}}}li')
             author_element.text = author
     if metadata.description:
-        element = ElementTree.SubElement(
-            rdf, f'{{{NS["rdf"]}}}Description')
+        element = SubElement(rdf, f'{{{NS["rdf"]}}}Description')
         element.attrib[f'{{{NS["rdf"]}}}about'] = ''
-        element = ElementTree.SubElement(element, f'{{{NS["dc"]}}}subject')
-        element = ElementTree.SubElement(element, f'{{{NS["rdf"]}}}Bag')
-        element = ElementTree.SubElement(element, f'{{{NS["rdf"]}}}li')
+        element = SubElement(element, f'{{{NS["dc"]}}}subject')
+        element = SubElement(element, f'{{{NS["rdf"]}}}Bag')
+        element = SubElement(element, f'{{{NS["rdf"]}}}li')
         element.text = metadata.description
     if metadata.keywords:
-        element = ElementTree.SubElement(rdf, f'{{{NS["rdf"]}}}Description')
+        element = SubElement(rdf, f'{{{NS["rdf"]}}}Description')
         element.attrib[f'{{{NS["rdf"]}}}about'] = ''
-        element = ElementTree.SubElement(element, f'{{{NS["pdf"]}}}Keywords')
+        element = SubElement(element, f'{{{NS["pdf"]}}}Keywords')
         element.text = ', '.join(metadata.keywords)
     if metadata.generator:
-        element = ElementTree.SubElement(rdf, f'{{{NS["rdf"]}}}Description')
+        element = SubElement(rdf, f'{{{NS["rdf"]}}}Description')
         element.attrib[f'{{{NS["rdf"]}}}about'] = ''
-        element = ElementTree.SubElement(
-            element, f'{{{NS["xmp"]}}}CreatorTool')
+        element = SubElement(element, f'{{{NS["xmp"]}}}CreatorTool')
         element.text = metadata.generator
     if metadata.created:
-        element = ElementTree.SubElement(rdf, f'{{{NS["rdf"]}}}Description')
+        element = SubElement(rdf, f'{{{NS["rdf"]}}}Description')
         element.attrib[f'{{{NS["rdf"]}}}about'] = ''
-        element = ElementTree.SubElement(element, f'{{{NS["xmp"]}}}CreateDate')
+        element = SubElement(element, f'{{{NS["xmp"]}}}CreateDate')
         element.text = metadata.created
     if metadata.modified:
-        element = ElementTree.SubElement(rdf, f'{{{NS["rdf"]}}}Description')
+        element = SubElement(rdf, f'{{{NS["rdf"]}}}Description')
         element.attrib[f'{{{NS["rdf"]}}}about'] = ''
-        element = ElementTree.SubElement(element, f'{{{NS["xmp"]}}}ModifyDate')
+        element = SubElement(element, f'{{{NS["xmp"]}}}ModifyDate')
         element.text = metadata.modified
-    xml = ElementTree.tostring(rdf, encoding='utf-8')
+    xml = tostring(rdf, encoding='utf-8')
     header = b'<?xpacket begin="" id="W5M0MpCehiHzreSzNTczkc9d"?>'
     footer = b'<?xpacket end="r"?>'
-    metadata = pydyf.Stream(
-        [b'\n'.join((header, xml, footer))],
-        extra={'Type': '/Metadata', 'Subtype': '/XML'})
+    stream_content = b'\n'.join((header, xml, footer))
+    extra = {'Type': '/Metadata', 'Subtype': '/XML'}
+    metadata = pydyf.Stream([stream_content], extra=extra)
     pdf.add_object(metadata)
     pdf.catalog['Metadata'] = metadata.reference
 
