@@ -24,7 +24,10 @@ def use(svg, node, font_size):
     svg_url = parse_url(svg.url)
     if svg_url.scheme == 'data':
         svg_url = parse_url('')
-    if parsed_url.fragment and parsed_url[:3] == svg_url[:3]:
+    same_origin = (
+        parsed_url[:3] == ('', '', '') or
+        parsed_url[:3] == svg_url[:3])
+    if parsed_url.fragment and same_origin:
         if parsed_url.fragment in svg.use_cache:
             tree = svg.use_cache[parsed_url.fragment].copy()
         else:
