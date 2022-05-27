@@ -6,7 +6,6 @@ from itertools import cycle
 from math import inf
 from xml.etree import ElementTree
 
-import pydyf
 from PIL import Image
 
 from .layout.percent import percentage
@@ -279,68 +278,32 @@ class Gradient:
             if 0 not in (a0, a1) and (a0, a1) != (1, 1):
                 color_couples[i][2] = a0 / a1
 
-        shading = stream.add_shading()
-        shading['ShadingType'] = 2 if type_ == 'linear' else 3
-        shading['ColorSpace'] = '/DeviceRGB'
-        shading['Domain'] = pydyf.Array([positions[0], positions[-1]])
-        shading['Coords'] = pydyf.Array(points)
-        shading['Function'] = pydyf.Dictionary({
-            'FunctionType': 3,
-            'Domain': pydyf.Array([positions[0], positions[-1]]),
-            'Encode': pydyf.Array((len(colors) - 1) * [0, 1]),
-            'Bounds': pydyf.Array(positions[1:-1]),
-            'Functions': pydyf.Array([
-                pydyf.Dictionary({
-                    'FunctionType': 2,
-                    'Domain': pydyf.Array([0, 1]),
-                    'C0': pydyf.Array(c0),
-                    'C1': pydyf.Array(c1),
-                    'N': n,
-                }) for c0, c1, n in color_couples
-            ]),
-        })
-        if not self.repeating:
-            shading['Extend'] = pydyf.Array([b'true', b'true'])
+        shading_type = 2 if type_ == 'linear' else 3
+        domain = (positions[0], positions[-1])
+        extend = not self.repeating
+        encode = (len(colors) - 1) * (0, 1)
+        bounds = positions[1:-1]
+        sub_functions = (
+            stream.create_interpolation_function((0, 1), c0, c1, n)
+            for c0, c1, n in color_couples)
+        function = stream.create_stitching_function(
+            domain, encode, bounds, sub_functions)
+        shading = stream.add_shading(
+            shading_type, 'RGB', domain, points, extend, function)
         stream.transform(d=scale_y)
 
         if any(alpha != 1 for alpha in alphas):
-            alpha_stream = stream.add_group(
-                [0, 0, concrete_width, concrete_height])
-            alpha_state = pydyf.Dictionary({
-                'Type': '/ExtGState',
-                'SMask': pydyf.Dictionary({
-                    'Type': '/Mask',
-                    'S': '/Luminosity',
-                    'G': alpha_stream,
-                }),
-                'ca': 1,
-                'AIS': 'false',
-            })
-            stream.set_state(alpha_state)
+            alpha_stream = stream.set_alpha_state(
+                0, 0, concrete_width, concrete_height)
 
-            alpha_shading = alpha_stream.add_shading()
-            alpha_shading['ShadingType'] = 2 if type_ == 'linear' else 3
-            alpha_shading['ColorSpace'] = '/DeviceGray'
-            alpha_shading['Domain'] = pydyf.Array(
-                [positions[0], positions[-1]])
-            alpha_shading['Coords'] = pydyf.Array(points)
-            alpha_shading['Function'] = pydyf.Dictionary({
-                'FunctionType': 3,
-                'Domain': pydyf.Array([positions[0], positions[-1]]),
-                'Encode': pydyf.Array((len(colors) - 1) * [0, 1]),
-                'Bounds': pydyf.Array(positions[1:-1]),
-                'Functions': pydyf.Array([
-                    pydyf.Dictionary({
-                        'FunctionType': 2,
-                        'Domain': pydyf.Array([0, 1]),
-                        'C0': pydyf.Array([c0]),
-                        'C1': pydyf.Array([c1]),
-                        'N': 1,
-                    }) for c0, c1 in alpha_couples
-                ]),
-            })
-            if not self.repeating:
-                alpha_shading['Extend'] = pydyf.Array([b'true', b'true'])
+            shading_type = 2 if type_ == 'linear' else 3
+            sub_functions = (
+                stream.create_interpolation_function((0, 1), (c0,), (c1,), 1)
+                for c0, c1 in alpha_couples)
+            function = stream.create_stitching_function(
+                domain, encode, bounds, sub_functions)
+            alpha_shading = alpha_stream.add_shading(
+                shading_type, 'Gray', domain, points, extend, function)
             alpha_stream.transform(d=scale_y)
             alpha_stream.stream = [f'/{alpha_shading.id} sh']
 

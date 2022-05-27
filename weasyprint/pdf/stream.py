@@ -6,9 +6,9 @@ import struct
 
 import pydyf
 
-from .logger import LOGGER
-from .matrix import Matrix
-from .text.ffi import ffi, harfbuzz, pango
+from ..logger import LOGGER
+from ..matrix import Matrix
+from ..text.ffi import ffi, harfbuzz, pango
 
 
 class Font:
@@ -77,12 +77,12 @@ class Font:
 
 class Stream(pydyf.Stream):
     """PDF stream object with extra features."""
-    def __init__(self, document, page_rectangle, states, x_objects, patterns,
+    def __init__(self, fonts, page_rectangle, states, x_objects, patterns,
                  shadings, images, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.compress = True
         self.page_rectangle = page_rectangle
-        self._document = document
+        self._fonts = fonts
         self._states = states
         self._x_objects = x_objects
         self._patterns = patterns
@@ -175,12 +175,33 @@ class Stream(pydyf.Stream):
                     self._states[key] = pydyf.Dictionary({'ca': alpha})
                 super().set_state(key)
 
+    def set_alpha_state(self, x, y, width, height):
+        alpha_stream = self.add_group((x, y, width, height))
+        alpha_state = pydyf.Dictionary({
+            'Type': '/ExtGState',
+            'SMask': pydyf.Dictionary({
+                'Type': '/Mask',
+                'S': '/Luminosity',
+                'G': alpha_stream,
+            }),
+            'ca': 1,
+            'AIS': 'false',
+        })
+        self.set_state(alpha_state)
+        return alpha_stream
+
+    def set_blend_mode(self, mode):
+        self.set_state(pydyf.Dictionary({
+            'Type': '/ExtGState',
+            'BM': f'/{mode}',
+        }))
+
     def add_font(self, pango_font):
         hb_font = pango.pango_font_get_hb_font(pango_font)
         hb_face = harfbuzz.hb_font_get_face(hb_font)
-        if hb_face not in self._document.fonts:
-            self._document.fonts[hb_face] = Font(pango_font, hb_face)
-        return self._document.fonts[hb_face]
+        if hb_face not in self._fonts:
+            self._fonts[hb_face] = Font(pango_font, hb_face)
+        return self._fonts[hb_face]
 
     def add_group(self, bounding_box):
         states = pydyf.Dictionary()
@@ -207,8 +228,8 @@ class Stream(pydyf.Stream):
             }),
         })
         group = Stream(
-            self._document, self.page_rectangle, states, x_objects,
-            patterns, shadings, self._images, extra=extra)
+            self._fonts, self.page_rectangle, states, x_objects, patterns,
+            shadings, self._images, extra=extra)
         group.id = f'x{len(self._x_objects)}'
         self._x_objects[group.id] = group
         return group
@@ -342,14 +363,43 @@ class Stream(pydyf.Stream):
             'Resources': resources,
         })
         pattern = Stream(
-            self._document, self.page_rectangle, states, x_objects, patterns,
+            self._fonts, self.page_rectangle, states, x_objects, patterns,
             shadings, self._images, extra=extra)
         pattern.id = f'p{len(self._patterns)}'
         self._patterns[pattern.id] = pattern
         return pattern
 
-    def add_shading(self):
-        shading = pydyf.Dictionary()
+    def add_shading(self, shading_type, color_space, domain, coords, extend,
+                    function):
+        shading = pydyf.Dictionary({
+            'ShadingType': shading_type,
+            'ColorSpace': f'/Device{color_space}',
+            'Domain': pydyf.Array(domain),
+            'Coords': pydyf.Array(coords),
+            'Function': function,
+        })
+        if extend:
+            shading['Extend'] = pydyf.Array((b'true', b'true'))
         shading.id = f's{len(self._shadings)}'
         self._shadings[shading.id] = shading
         return shading
+
+    @staticmethod
+    def create_interpolation_function(domain, c0, c1, n):
+        return pydyf.Dictionary({
+            'FunctionType': 2,
+            'Domain': pydyf.Array(domain),
+            'C0': pydyf.Array(c0),
+            'C1': pydyf.Array(c1),
+            'N': n,
+        })
+
+    @staticmethod
+    def create_stitching_function(domain, encode, bounds, sub_functions):
+        return pydyf.Dictionary({
+            'FunctionType': 3,
+            'Domain': pydyf.Array(domain),
+            'Encode': pydyf.Array(encode),
+            'Bounds': pydyf.Array(bounds),
+            'Functions': pydyf.Array(sub_functions),
+        })
