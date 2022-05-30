@@ -534,9 +534,6 @@ def generate_pdf(pages, url_fetcher, metadata, fonts, target, zoom,
             })
             char_procs = pydyf.Dictionary({})
             font_glyphs = font.ttfont['EBDT'].strikeData[0]
-            bitmap_size = font.ttfont['EBLC'].strikes[0].bitmapSizeTable
-            font_size = (
-                bitmap_size.hori.ascender - bitmap_size.hori.descender)
             widths = [0] * 256
             glyphs_info = {}
             for key, glyph in font_glyphs.items():
@@ -550,7 +547,7 @@ def generate_pdf(pages, url_fetcher, metadata, fonts, target, zoom,
                 advance = glyph.data[4]
                 position_y = bearing_y - height
                 glyph_id = font.ttfont['glyf'].getGlyphID(key)
-                widths[glyph_id] = advance / font_size
+                widths[glyph_id] = advance
                 stride = math.ceil(width / 8)
                 glyph_info = glyphs_info[glyph_id] = {
                     'width': width,
@@ -646,8 +643,7 @@ def generate_pdf(pages, url_fetcher, metadata, fonts, target, zoom,
                     bitmap = glyph_info['bitmap']
                 bitmap_stream = pydyf.Stream([
                     b'0 0 d0',
-                    width / font_size, b'0 0', height / font_size,
-                    x / font_size, y / font_size, b'cm',
+                    f'{width} 0 0 {height} {x} {y} cm'.encode(),
                     b'BI',
                     b'/IM true',
                     b'/W', width,
