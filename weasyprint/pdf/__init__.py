@@ -521,23 +521,28 @@ def generate_pdf(pages, url_fetcher, metadata, fonts, target, zoom,
             # https://docs.microsoft.com/typography/opentype/spec/ebdt
             font_dictionary['FontBBox'] = pydyf.Array([0, 0, 1, 1])
             font_dictionary['FontMatrix'] = pydyf.Array([1, 0, 0, 1, 0, 0])
-            font_dictionary['FirstChar'] = 0
-            font_dictionary['LastChar'] = 255
+            if 'fonts' in optimize_size:
+                chars = tuple(sorted(font.cmap))
+            else:
+                chars = tuple(range(256))
+            first, last = chars[0], chars[-1]
+            font_dictionary['FirstChar'] = first
+            font_dictionary['LastChar'] = last
             differences = []
             for index, index_widths in zip(widths[::2], widths[1::2]):
                 differences.append(index)
                 for i in range(len(index_widths)):
-                    differences.append(f'/{i + index}')
+                    if i + index in chars:
+                        differences.append(f'/{i + index}')
             font_dictionary['Encoding'] = pydyf.Dictionary({
                 'Type': '/Encoding',
                 'Differences': pydyf.Array(differences),
             })
             char_procs = pydyf.Dictionary({})
             font_glyphs = font.ttfont['EBDT'].strikeData[0]
-            widths = [0] * 256
+            widths = [0] * (last - first + 1)
             glyphs_info = {}
             for key, glyph in font_glyphs.items():
-                # TODO: Ignore useless characters
                 # Get and store glyph metrics
                 height, width = glyph.data[0:2]
                 bearing_x = int.from_bytes(
@@ -547,7 +552,8 @@ def generate_pdf(pages, url_fetcher, metadata, fonts, target, zoom,
                 advance = glyph.data[4]
                 position_y = bearing_y - height
                 glyph_id = font.ttfont['glyf'].getGlyphID(key)
-                widths[glyph_id] = advance
+                if glyph_id in chars:
+                    widths[glyph_id - first] = advance
                 stride = math.ceil(width / 8)
                 glyph_info = glyphs_info[glyph_id] = {
                     'width': width,
@@ -595,6 +601,10 @@ def generate_pdf(pages, url_fetcher, metadata, fonts, target, zoom,
                     glyph_info['bitmap'] = bytes(height * stride)
 
             for glyph_id, glyph_info in glyphs_info.items():
+                # Don’t store glyph not in cmap
+                if glyph_id not in chars:
+                    continue
+
                 # Draw glyph
                 stride = glyph_info['stride']
                 width = glyph_info['width']
@@ -607,16 +617,16 @@ def generate_pdf(pages, url_fetcher, metadata, fonts, target, zoom,
                     for subglyph in glyph_info['subglyphs']:
                         sub_x = subglyph['x']
                         sub_y = subglyph['y']
-                        if subglyph['id'] not in glyphs_info:
-                            LOGGER.warning(
-                                f'Unknown subglyph: {subglyph["id"]}')
+                        sub_id = subglyph['id']
+                        if sub_id not in glyphs_info:
+                            LOGGER.warning(f'Unknown subglyph: {sub_id}')
                             continue
-                        subglyph = glyphs_info[subglyph['id']]
+                        subglyph = glyphs_info[sub_id]
                         if subglyph['bitmap'] is None:
                             # TODO: support subglyph in subglyph
                             LOGGER.warning(
                                 'Unsupported subglyph in subglyph: '
-                                f'{subglyph["id"]}')
+                                f'{sub_id}')
                             continue
                         for row_y in range(subglyph['height']):
                             row_slice = slice(
