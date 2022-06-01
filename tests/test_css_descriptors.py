@@ -67,7 +67,7 @@ def test_font_face_3():
 
 @assert_no_logs
 def test_font_face_4():
-    # See bug #487
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/487
     stylesheet = tinycss2.parse_stylesheet(
         '@font-face {'
         '  font-family: Gentium Hard;'
@@ -80,6 +80,27 @@ def test_font_face_4():
         tinycss2.parse_declaration_list(at_rule.content)))
     assert font_family == ('font_family', 'Gentium Hard')
     assert src == ('src', (('local', 'Gentium Hard'),))
+
+
+@assert_no_logs
+def test_font_face_5():
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1653
+    stylesheet = tinycss2.parse_stylesheet(
+        '@font-face {'
+        '  font-family: Gentium Hard;'
+        '  src: local(Gentium Hard);'
+        '  src: local(Gentium Soft),'
+        '}')
+    at_rule, = stylesheet
+    assert at_rule.at_keyword == 'font-face'
+    with capture_logs() as logs:
+        font_family, src = list(preprocess_descriptors(
+            'font-face', 'http://weasyprint.org/foo/',
+            tinycss2.parse_declaration_list(at_rule.content)))
+    assert font_family == ('font_family', 'Gentium Hard')
+    assert src == ('src', (('local', 'Gentium Hard'),))
+    assert len(logs) == 1
+    assert 'invalid value' in logs[0]
 
 
 def test_font_face_bad_1():

@@ -141,7 +141,7 @@ def font_family(tokens, allow_spaces=False):
 @comma_separated_list
 def src(tokens, base_url):
     """``src`` descriptor validation."""
-    if len(tokens) <= 2:
+    if len(tokens) in (1, 2):
         tokens, token = tokens[:-1], tokens[-1]
         if token.type == 'function' and token.lower_name == 'format':
             tokens, token = tokens[:-1], tokens[-1]
