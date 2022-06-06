@@ -551,7 +551,7 @@ def generate_pdf(pages, url_fetcher, metadata, fonts, target, zoom,
                     glyph.data[3:4], 'big', signed=True)
                 advance = glyph.data[4]
                 position_y = bearing_y - height
-                glyph_id = font.ttfont['glyf'].getGlyphID(key)
+                glyph_id = font.ttfont.getGlyphID(key)
                 if glyph_id in chars:
                     widths[glyph_id - first] = advance
                 stride = math.ceil(width / 8)
