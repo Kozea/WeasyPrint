@@ -345,17 +345,17 @@ EAST_ASIAN_KEYS = {
 
 # Fontconfig features
 FONTCONFIG_WEIGHT = {
-    'normal': 'normal',
-    'bold': 'bold',
-    100: 'thin',
-    200: 'extralight',
-    300: 'light',
-    400: 'normal',
-    500: 'medium',
-    600: 'demibold',
-    700: 'bold',
-    800: 'extrabold',
-    900: 'black',
+    'normal': 80,
+    'bold': 200,
+    100: 0,
+    200: 40,
+    300: 50,
+    400: 80,
+    500: 100,
+    600: 180,
+    700: 200,
+    800: 205,
+    900: 210,
 }
 FONTCONFIG_STYLE = {
     'normal': 'roman',

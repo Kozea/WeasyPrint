@@ -222,7 +222,7 @@ class FontConfiguration:
                       <const>{fontconfig_style}</const>
                     </edit>
                     <edit name="weight" mode="assign_replace">
-                      <const>{fontconfig_weight}</const>
+                      <int>{fontconfig_weight}</int>
                     </edit>
                     <edit name="width" mode="assign_replace">
                       <const>{fontconfig_stretch}</const>
