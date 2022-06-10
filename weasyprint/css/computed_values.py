@@ -168,11 +168,14 @@ def _resolve_var(computed, variable_name, default, parent_style):
                 computed_value = default
                 break
             known_variable_names.append(new_variable_name)
-            if new_variable_name in computed:
-                computed_value = computed[new_variable_name]
+            default = new_default
+            computed_value = computed[new_variable_name]
+            if computed_value is not None:
+                continue
+            if parent_style is None:
+                computed_value = new_default
             else:
                 computed_value = parent_style[new_variable_name] or new_default
-            default = new_default
         else:
             break
     return computed_value

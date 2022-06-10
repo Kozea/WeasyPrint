@@ -79,6 +79,26 @@ def test_variable_chain():
     assert paragraph.width == 10
 
 
+def test_variable_chain_root():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/1656
+    page, = parse('''
+      <style>
+        html { --var2: 10px; --var1: var(--var2); width: var(--var1) }
+      </style>
+    ''')
+    html, = page.children
+    assert html.width == 10
+
+
+def test_variable_chain_root_missing():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/1656
+    page, = parse('''
+      <style>
+        html { --var1: var(--var-missing); width: var(--var1) }
+      </style>
+    ''')
+
+
 def test_variable_partial_1():
     page, = parse('''
       <style>
