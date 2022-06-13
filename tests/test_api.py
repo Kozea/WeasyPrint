@@ -13,7 +13,7 @@ import py
 import pytest
 from PIL import Image
 from weasyprint import CSS, HTML, __main__, default_url_fetcher
-from weasyprint.document import resolve_links
+from weasyprint.links import resolve_links
 from weasyprint.urls import path2url
 
 from .draw import parse_pixels
@@ -405,6 +405,49 @@ def test_command_line_render(tmpdir):
 
     with pytest.raises(SystemExit):
         _run('--version')
+
+
+@pytest.mark.parametrize('version, pdf_version', (
+    (1, '1.4'),
+    (2, '1.7'),
+    (3, '1.7'),
+    (4, '2.0'),
+))
+def test_pdfa(version, pdf_version):
+    stdout = _run(f'--pdf-variant=pdf/a-{version}b - -', b'test')
+    assert f'PDF-{pdf_version}'.encode() in stdout
+    assert f'part="{version}"'.encode() in stdout
+
+
+def test_pdf_identifier():
+    stdout = _run('--pdf-identifier=abc - -', b'test')
+    assert b'abc' in stdout
+
+
+def test_pdf_version():
+    stdout = _run('--pdf-version=1.4 - -', b'test')
+    assert b'PDF-1.4' in stdout
+
+
+def test_pdf_custom_metadata():
+    stdout = _run('--custom-metadata - -', b'<meta name=key content=value />')
+    assert b'/key' in stdout
+    assert b'value' in stdout
+
+
+def test_bad_pdf_custom_metadata():
+    stdout = _run(
+        '--custom-metadata - -',
+        '<meta name=é content=value />'.encode('latin1'))
+    assert b'value' not in stdout
+
+
+def test_partial_pdf_custom_metadata():
+    stdout = _run(
+        '--custom-metadata - -',
+        '<meta name=a.b/céd0 content=value />'.encode('latin1'))
+    assert b'/abcd0' in stdout
+    assert b'value' in stdout
 
 
 @assert_no_logs
@@ -938,6 +981,7 @@ def assert_meta(html, **meta):
     meta.setdefault('created', None)
     meta.setdefault('modified', None)
     meta.setdefault('attachments', [])
+    meta.setdefault('custom', {})
     assert vars(FakeHTML(string=html).render().metadata) == meta
 
 
@@ -973,7 +1017,8 @@ def test_html_meta_2():
         keywords=['html', 'css', 'pdf', 'Python; pydyf'],
         description="Blah… ",
         created='2011-04',
-        modified='2013')
+        modified='2013',
+        custom={'dummy': 'ignored'})
 
 
 @assert_no_logs

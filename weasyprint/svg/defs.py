@@ -3,8 +3,6 @@
 from itertools import cycle
 from math import ceil, hypot
 
-import pydyf
-
 from ..matrix import Matrix
 from .bounding_box import is_valid_bounding_box
 from .utils import color, parse_url, size, transform
@@ -218,67 +216,32 @@ def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
     pattern = svg.stream.add_pattern(width, height, width, height, matrix)
     group = pattern.add_group([0, 0, width, height])
 
-    shading = group.add_shading()
-    shading['ShadingType'] = shading_type
-    shading['ColorSpace'] = '/DeviceRGB'
-    shading['Domain'] = pydyf.Array([positions[0], positions[-1]])
-    shading['Coords'] = pydyf.Array(coords)
-    shading['Function'] = pydyf.Dictionary({
-        'FunctionType': 3,
-        'Domain': pydyf.Array([positions[0], positions[-1]]),
-        'Encode': pydyf.Array((len(colors) - 1) * [0, 1]),
-        'Bounds': pydyf.Array(positions[1:-1]),
-        'Functions': pydyf.Array([
-            pydyf.Dictionary({
-                'FunctionType': 2,
-                'Domain': pydyf.Array([positions[0], positions[-1]]),
-                'C0': pydyf.Array(c0),
-                'C1': pydyf.Array(c1),
-                'N': n,
-            }) for c0, c1, n in color_couples
-        ]),
-    })
-    if spread not in ('repeat', 'reflect'):
-        shading['Extend'] = pydyf.Array([b'true', b'true'])
+    domain = (positions[0], positions[-1])
+    extend = spread not in ('repeat', 'reflect')
+    encode = (len(colors) - 1) * (0, 1)
+    bounds = positions[1:-1]
+    sub_functions = (
+        group.create_interpolation_function(domain, c0, c1, n)
+        for c0, c1, n in color_couples)
+    function = group.create_stitching_function(
+        domain, encode, bounds, sub_functions)
+    shading = group.add_shading(
+        shading_type, 'RGB', domain, coords, extend, function)
 
     if any(alpha != 1 for alpha in alphas):
-        alpha_stream = group.add_group(
-            [0, 0, svg.concrete_width, svg.concrete_height])
-        state = pydyf.Dictionary({
-            'Type': '/ExtGState',
-            'SMask': pydyf.Dictionary({
-                'Type': '/Mask',
-                'S': '/Luminosity',
-                'G': alpha_stream,
-            }),
-            'ca': 1,
-            'AIS': 'false',
-        })
-        group.set_state(state)
-
-        alpha_shading = alpha_stream.add_shading()
-        alpha_shading['ShadingType'] = shading_type
-        alpha_shading['ColorSpace'] = '/DeviceGray'
-        alpha_shading['Domain'] = pydyf.Array(
-            [positions[0], positions[-1]])
-        alpha_shading['Coords'] = pydyf.Array(coords)
-        alpha_shading['Function'] = pydyf.Dictionary({
-            'FunctionType': 3,
-            'Domain': pydyf.Array([positions[0], positions[-1]]),
-            'Encode': pydyf.Array((len(colors) - 1) * [0, 1]),
-            'Bounds': pydyf.Array(positions[1:-1]),
-            'Functions': pydyf.Array([
-                pydyf.Dictionary({
-                    'FunctionType': 2,
-                    'Domain': pydyf.Array([0, 1]),
-                    'C0': pydyf.Array([c0]),
-                    'C1': pydyf.Array([c1]),
-                    'N': 1,
-                }) for c0, c1 in alpha_couples
-            ]),
-        })
-        if spread not in ('repeat', 'reflect'):
-            alpha_shading['Extend'] = pydyf.Array([b'true', b'true'])
+        alpha_stream = group.set_alpha_state(
+            0, 0, svg.concrete_width, svg.concrete_height)
+        domain = (positions[0], positions[-1])
+        extend = spread not in ('repeat', 'reflect')
+        encode = (len(colors) - 1) * (0, 1)
+        bounds = positions[1:-1]
+        sub_functions = (
+            group.create_interpolation_function((0, 1), c0, c1, 1)
+            for c0, c1 in alpha_couples)
+        function = group.create_stitching_function(
+            domain, encode, bounds, sub_functions)
+        alpha_shading = alpha_stream.add_shading(
+            shading_type, 'Gray', domain, coords, extend, function)
         alpha_stream.stream = [f'/{alpha_shading.id} sh']
 
     group.shading(shading.id)
@@ -529,11 +492,7 @@ def apply_filters(svg, node, filter_node, font_size):
         elif child.tag == 'feBlend':
             mode = child.get('mode', 'normal')
             mode = mode.replace('-', ' ').title().replace(' ', '')
-            blend_mode = pydyf.Dictionary({
-                'Type': '/ExtGState',
-                'BM': f'/{mode}',
-            })
-            svg.stream.set_state(blend_mode)
+            svg.stream.set_blend_mode(mode)
 
 
 def paint_mask(svg, node, mask, font_size):
@@ -561,21 +520,8 @@ def paint_mask(svg, node, mask, font_size):
         x, y = 0, 0
         width, height = width_ref, height_ref
 
-    alpha_stream = svg.stream.add_group([x, y, width, height])
-    state = pydyf.Dictionary({
-        'Type': '/ExtGState',
-        'SMask': pydyf.Dictionary({
-            'Type': '/Mask',
-            'S': '/Luminance',
-            'G': alpha_stream,
-        }),
-        'ca': 1,
-        'AIS': 'false',
-    })
-    svg.stream.set_state(state)
-
     svg_stream = svg.stream
-    svg.stream = alpha_stream
+    svg.stream = svg.stream.set_alpha_state(x, y, width, height)
     svg.draw_node(mask, font_size)
     svg.stream = svg_stream
 

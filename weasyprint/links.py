@@ -2,45 +2,10 @@
 
 import math
 
-import pydyf
-
 from .formatting_structure import boxes
 from .layout.percent import percentage
 from .logger import LOGGER
 from .matrix import Matrix
-
-
-def add_links(links, anchors, matrix, pdf, page, names):
-    """Include hyperlinks in given PDF page."""
-    for link in links:
-        link_type, link_target, rectangle, _ = link
-        x1, y1 = matrix.transform_point(*rectangle[:2])
-        x2, y2 = matrix.transform_point(*rectangle[2:])
-        if link_type in ('internal', 'external'):
-            annot = pydyf.Dictionary({
-                'Type': '/Annot',
-                'Subtype': '/Link',
-                'Rect': pydyf.Array([x1, y1, x2, y2]),
-                'BS': pydyf.Dictionary({'W': 0}),
-            })
-            if link_type == 'internal':
-                annot['Dest'] = pydyf.String(link_target)
-            else:
-                annot['A'] = pydyf.Dictionary({
-                    'Type': '/Action',
-                    'S': '/URI',
-                    'URI': pydyf.String(link_target),
-                })
-            pdf.add_object(annot)
-            if 'Annots' not in page:
-                page['Annots'] = pydyf.Array()
-            page['Annots'].append(annot.reference)
-
-    for anchor in anchors:
-        anchor_name, x, y = anchor
-        x, y = matrix.transform_point(x, y)
-        names.append([
-            anchor_name, pydyf.Array([page.reference, '/XYZ', x, y, 0])])
 
 
 def resolve_links(pages):
@@ -183,35 +148,6 @@ def gather_links_and_bookmarks(box, anchors, links, bookmarks,
 
     for child in box.all_children():
         gather_links_and_bookmarks(child, anchors, links, bookmarks, matrix)
-
-
-def create_bookmarks(bookmarks, pdf, parent=None):
-    count = len(bookmarks)
-    outlines = []
-    for title, (page, x, y), children, state in bookmarks:
-        destination = pydyf.Array((
-            pdf.objects[pdf.pages['Kids'][page * 3]].reference,
-            '/XYZ', x, y, 0))
-        outline = pydyf.Dictionary({
-            'Title': pydyf.String(title), 'Dest': destination})
-        pdf.add_object(outline)
-        children_outlines, children_count = create_bookmarks(
-            children, pdf, parent=outline)
-        outline['Count'] = children_count
-        if state == 'closed':
-            outline['Count'] *= -1
-        else:
-            count += children_count
-        if outlines:
-            outline['Prev'] = outlines[-1].reference
-            outlines[-1]['Next'] = outline.reference
-        if children_outlines:
-            outline['First'] = children_outlines[0].reference
-            outline['Last'] = children_outlines[-1].reference
-        if parent is not None:
-            outline['Parent'] = parent.reference
-        outlines.append(outline)
-    return outlines, count
 
 
 def make_page_bookmark_tree(page, skipped_levels, last_by_depth,

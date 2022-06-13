@@ -12,7 +12,7 @@ requires-python = '>=3.7'
 readme = {file = 'README.rst', content-type = 'text/x-rst'}
 license = {file = 'LICENSE'}
 dependencies = [
-  'pydyf >=0.0.3',
+  'pydyf >=0.2.0',
   'cffi >=0.6',
   'html5lib >=1.1',
   'tinycss2 >=1.0.0',

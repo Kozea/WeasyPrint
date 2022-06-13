@@ -1,129 +1,23 @@
 """Document generation management."""
 
 import functools
-import hashlib
 import io
 import shutil
-import zlib
-from os.path import basename
-from urllib.parse import unquote, urlsplit
 
-import pydyf
-from fontTools import subset
-from fontTools.ttLib import TTFont, TTLibError, ttFont
-
-from . import CSS, Attachment, __version__
+from . import CSS
 from .css import get_all_computed_styles
 from .css.counters import CounterStyle
 from .css.targets import TargetCollector
 from .draw import draw_page, stacked
 from .formatting_structure.build import build_formatting_structure
-from .html import W3C_DATE_RE, get_html_metadata
+from .html import get_html_metadata
 from .images import get_image_from_uri as original_get_image_from_uri
 from .layout import LayoutContext, layout_document
-from .links import (
-    add_links, create_bookmarks, gather_links_and_bookmarks,
-    make_page_bookmark_tree, resolve_links)
-from .logger import LOGGER, PROGRESS_LOGGER
+from .links import gather_links_and_bookmarks, make_page_bookmark_tree
+from .logger import PROGRESS_LOGGER
 from .matrix import Matrix
-from .stream import Stream
+from .pdf import generate_pdf
 from .text.fonts import FontConfiguration
-from .urls import URLFetchingError
-
-
-def _w3c_date_to_pdf(string, attr_name):
-    """Tranform W3C date to PDF format."""
-    if string is None:
-        return None
-    match = W3C_DATE_RE.match(string)
-    if match is None:
-        LOGGER.warning(f'Invalid {attr_name} date: {string!r}')
-        return None
-    groups = match.groupdict()
-    pdf_date = ''
-    found = groups['hour']
-    for key in ('second', 'minute', 'hour', 'day', 'month', 'year'):
-        if groups[key]:
-            found = True
-            pdf_date = groups[key] + pdf_date
-        elif found:
-            pdf_date = f'{(key in ("day", "month")):02d}{pdf_date}'
-    if groups['hour']:
-        assert groups['minute']
-        if groups['tz_hour']:
-            assert groups['tz_hour'].startswith(('+', '-'))
-            assert groups['tz_minute']
-            tz_hour = int(groups['tz_hour'])
-            tz_minute = int(groups['tz_minute'])
-            pdf_date += f"{tz_hour:+03d}'{tz_minute:02d}"
-        else:
-            pdf_date += 'Z'
-    return pdf_date
-
-
-def _write_pdf_attachment(pdf, attachment, url_fetcher):
-    """Write an attachment to the PDF stream.
-
-    :return:
-        the attachment PDF dictionary.
-
-    """
-    # Attachments from document links like <link> or <a> can only be URLs.
-    # They're passed in as tuples
-    url = ''
-    if isinstance(attachment, tuple):
-        url, description = attachment
-        attachment = Attachment(
-            url=url, url_fetcher=url_fetcher, description=description)
-    elif not isinstance(attachment, Attachment):
-        attachment = Attachment(guess=attachment, url_fetcher=url_fetcher)
-
-    try:
-        with attachment.source as (source_type, source, url, _):
-            if isinstance(source, bytes):
-                source = io.BytesIO(source)
-            uncompressed_length = 0
-            stream = b''
-            md5 = hashlib.md5()
-            compress = zlib.compressobj()
-            for data in iter(lambda: source.read(4096), b''):
-                uncompressed_length += len(data)
-                md5.update(data)
-                compressed = compress.compress(data)
-                stream += compressed
-            compressed = compress.flush(zlib.Z_FINISH)
-            stream += compressed
-            file_extra = pydyf.Dictionary({
-                'Type': '/EmbeddedFile',
-                'Filter': '/FlateDecode',
-                'Params': pydyf.Dictionary({
-                    'CheckSum': f'<{md5.hexdigest()}>',
-                    'Size': uncompressed_length,
-                })
-            })
-            file_stream = pydyf.Stream([stream], file_extra)
-            pdf.add_object(file_stream)
-
-    except URLFetchingError as exception:
-        LOGGER.error('Failed to load attachment: %s', exception)
-        return
-
-    # TODO: Use the result object from a URL fetch operation to provide more
-    # details on the possible filename.
-    if url and urlsplit(url).path:
-        filename = basename(unquote(urlsplit(url).path))
-    else:
-        filename = 'attachment.bin'
-
-    attachment = pydyf.Dictionary({
-        'Type': '/Filespec',
-        'F': pydyf.String(),
-        'UF': pydyf.String(filename),
-        'EF': pydyf.Dictionary({'F': file_stream.reference}),
-        'Desc': pydyf.String(attachment.description or ''),
-    })
-    pdf.add_object(attachment)
-    return attachment
 
 
 class Page:
@@ -210,7 +104,7 @@ class DocumentMetadata:
     """
     def __init__(self, title=None, authors=None, description=None,
                  keywords=None, generator=None, created=None, modified=None,
-                 attachments=None):
+                 attachments=None, custom=None):
         #: The title of the document, as a string or :obj:`None`.
         #: Extracted from the ``<title>`` element in HTML
         #: and written to the ``/Title`` info field in PDF.
@@ -251,6 +145,9 @@ class DocumentMetadata:
         #: Extracted from the ``<link rel=attachment>`` elements in HTML
         #: and written to the ``/EmbeddedFiles`` dictionary in PDF.
         self.attachments = attachments or []
+        #: Custom metadata, as a dict whose keys are the metadata names and
+        #: values are the metadata values.
+        self.custom = custom or {}
 
 
 class Document:
@@ -320,57 +217,6 @@ class Document:
             DocumentMetadata(**get_html_metadata(html)),
             html.url_fetcher, font_config, optimize_size)
         return rendering
-
-    def _reference_resources(self, pdf, resources, images, fonts):
-        if 'Font' in resources:
-            assert resources['Font'] is None
-            resources['Font'] = fonts
-        self._use_references(pdf, resources, images)
-        pdf.add_object(resources)
-        return resources.reference
-
-    def _use_references(self, pdf, resources, images):
-        # XObjects
-        for key, x_object in resources.get('XObject', {}).items():
-            # Images
-            if x_object is None:
-                x_object = images[key]
-                if x_object.number is not None:
-                    # Image already added to PDF
-                    resources['XObject'][key] = x_object.reference
-                    continue
-
-            pdf.add_object(x_object)
-            resources['XObject'][key] = x_object.reference
-
-            # Masks
-            if 'SMask' in x_object.extra:
-                pdf.add_object(x_object.extra['SMask'])
-                x_object.extra['SMask'] = x_object.extra['SMask'].reference
-
-            # Resources
-            if 'Resources' in x_object.extra:
-                x_object.extra['Resources'] = self._reference_resources(
-                    pdf, x_object.extra['Resources'], images,
-                    resources['Font'])
-
-        # Patterns
-        for key, pattern in resources.get('Pattern', {}).items():
-            pdf.add_object(pattern)
-            resources['Pattern'][key] = pattern.reference
-            if 'Resources' in pattern.extra:
-                pattern.extra['Resources'] = self._reference_resources(
-                    pdf, pattern.extra['Resources'], images, resources['Font'])
-
-        # Shadings
-        for key, shading in resources.get('Shading', {}).items():
-            pdf.add_object(shading)
-            resources['Shading'][key] = shading.reference
-
-        # Alpha states
-        for key, alpha in resources.get('ExtGState', {}).items():
-            if 'SMask' in alpha and 'G' in alpha['SMask']:
-                alpha['SMask']['G'] = alpha['SMask']['G'].reference
 
     def __init__(self, pages, metadata, url_fetcher, font_config,
                  optimize_size):
@@ -453,7 +299,9 @@ class Document:
                 page_number, matrix)
         return root
 
-    def write_pdf(self, target=None, zoom=1, attachments=None, finisher=None):
+    def write_pdf(self, target=None, zoom=1, attachments=None, finisher=None,
+                  identifier=None, variant=None, version=None,
+                  custom_metadata=False):
         """Paint the pages in a PDF file, with metadata.
 
         :type target:
@@ -473,382 +321,34 @@ class Document:
         :param finisher: A finisher function, that accepts the document and a
             :class:`pydyf.PDF` object as parameters, can be passed to perform
             post-processing on the PDF right before the trailer is written.
+        :param bytes identifier: A bytestring used as PDF file identifier.
+        :param str variant: A PDF variant name.
+        :param str version: A PDF version number.
+        :param bool custom_metadata: A boolean defining whether custom HTML
+            metadata should be stored in the generated PDF.
         :returns:
             The PDF as :obj:`bytes` if ``target`` is not provided or
             :obj:`None`, otherwise :obj:`None` (the PDF is written to
             ``target``).
 
         """
-        # 0.75 = 72 PDF point per inch / 96 CSS pixel per inch
-        scale = zoom * 0.75
-
-        PROGRESS_LOGGER.info('Step 6 - Creating PDF')
-
-        pdf = pydyf.PDF()
-        states = pydyf.Dictionary()
-        x_objects = pydyf.Dictionary()
-        patterns = pydyf.Dictionary()
-        shadings = pydyf.Dictionary()
-        images = {}
-        resources = pydyf.Dictionary({
-            'ExtGState': states,
-            'XObject': x_objects,
-            'Pattern': patterns,
-            'Shading': shadings,
-        })
-        pdf.add_object(resources)
-        pdf_names = []
-
-        # Links and anchors
-        page_links_and_anchors = list(resolve_links(self.pages))
-        attachment_links = [
-            [link for link in page_links if link[0] == 'attachment']
-            for page_links, page_anchors in page_links_and_anchors]
-
-        # Annotations
-        annot_files = {}
-        # A single link can be split in multiple regions. We don't want to
-        # embed a file multiple times of course, so keep a reference to every
-        # embedded URL and reuse the object number.
-        for page_links in attachment_links:
-            for link_type, annot_target, rectangle, _ in page_links:
-                if link_type == 'attachment' and target not in annot_files:
-                    # TODO: Use the title attribute as description. The comment
-                    # above about multiple regions won't always be correct,
-                    # because two links might have the same href, but different
-                    # titles.
-                    annot_files[annot_target] = _write_pdf_attachment(
-                        pdf, (annot_target, None), self.url_fetcher)
-
-        # Bookmarks
-        root = []
-        # At one point in the document, for each "output" depth, how much
-        # to add to get the source level (CSS values of bookmark-level).
-        # E.g. with <h1> then <h3>, level_shifts == [0, 1]
-        # 1 means that <h3> has depth 3 - 1 = 2 in the output.
-        skipped_levels = []
-        last_by_depth = [root]
-        previous_level = 0
-
-        for page_number, (page, links_and_anchors, page_links) in enumerate(
-                zip(self.pages, page_links_and_anchors, attachment_links)):
-            # Draw from the top-left corner
-            matrix = Matrix(scale, 0, 0, -scale, 0, page.height * scale)
-
-            # Links and anchors
-            links, anchors = links_and_anchors
-
-            page_width = scale * (
-                page.width + page.bleed['left'] + page.bleed['right'])
-            page_height = scale * (
-                page.height + page.bleed['top'] + page.bleed['bottom'])
-            left = -scale * page.bleed['left']
-            top = -scale * page.bleed['top']
-            right = left + page_width
-            bottom = top + page_height
-
-            page_rectangle = (
-                left / scale, top / scale,
-                (right - left) / scale, (bottom - top) / scale)
-            stream = Stream(
-                self, page_rectangle, states, x_objects, patterns, shadings,
-                images)
-            stream.transform(d=-1, f=(page.height * scale))
-            page.paint(stream, scale=scale)
-            pdf.add_object(stream)
-
-            pdf_page = pydyf.Dictionary({
-                'Type': '/Page',
-                'Parent': pdf.pages.reference,
-                'MediaBox': pydyf.Array([left, top, right, bottom]),
-                'Contents': stream.reference,
-                'Resources': resources.reference,
-            })
-            pdf.add_page(pdf_page)
-
-            add_links(links, anchors, matrix, pdf, pdf_page, pdf_names)
-
-            # Bleed
-            bleed = {key: value * 0.75 for key, value in page.bleed.items()}
-
-            trim_left = left + bleed['left']
-            trim_top = top + bleed['top']
-            trim_right = right - bleed['right']
-            trim_bottom = bottom - bleed['bottom']
-
-            # Arbitrarly set PDF BleedBox between CSS bleed box (MediaBox) and
-            # CSS page box (TrimBox) at most 10 points from the TrimBox.
-            bleed_left = trim_left - min(10, bleed['left'])
-            bleed_top = trim_top - min(10, bleed['top'])
-            bleed_right = trim_right + min(10, bleed['right'])
-            bleed_bottom = trim_bottom + min(10, bleed['bottom'])
-
-            pdf_page['TrimBox'] = pydyf.Array([
-                trim_left, trim_top, trim_right, trim_bottom])
-            pdf_page['BleedBox'] = pydyf.Array([
-                bleed_left, bleed_top, bleed_right, bleed_bottom])
-
-            # Annotations
-            # TODO: splitting a link into multiple independent rectangular
-            # annotations works well for pure links, but rather mediocre for
-            # other annotations and fails completely for transformed (CSS) or
-            # complex link shapes (area). It would be better to use /AP for all
-            # links and coalesce link shapes that originate from the same HTML
-            # link. This would give a feeling similiar to what browsers do with
-            # links that span multiple lines.
-            for link_type, annot_target, rectangle, _ in page_links:
-                annot_file = annot_files[annot_target]
-                if link_type == 'attachment' and annot_file is not None:
-                    rectangle = (
-                        *matrix.transform_point(*rectangle[:2]),
-                        *matrix.transform_point(*rectangle[2:]))
-                    annot = pydyf.Dictionary({
-                        'Type': '/Annot',
-                        'Rect': pydyf.Array(rectangle),
-                        'Subtype': '/FileAttachment',
-                        'T': pydyf.String(),
-                        'FS': annot_file.reference,
-                        'AP': pydyf.Dictionary({'N': pydyf.Stream([], {
-                            'Type': '/XObject',
-                            'Subtype': '/Form',
-                            'BBox': pydyf.Array(rectangle),
-                            'Length': 0,
-                        })})
-                    })
-                    pdf.add_object(annot)
-                    if 'Annots' not in pdf_page:
-                        pdf_page['Annots'] = pydyf.Array()
-                    pdf_page['Annots'].append(annot.reference)
-
-            # Bookmarks
-            previous_level = make_page_bookmark_tree(
-                page, skipped_levels, last_by_depth, previous_level,
-                page_number, matrix)
-
-        # Outlines
-        outlines, count = create_bookmarks(root, pdf)
-        if outlines:
-            outlines_dictionary = pydyf.Dictionary({
-                'Count': count,
-                'First': outlines[0].reference,
-                'Last': outlines[-1].reference,
-            })
-            pdf.add_object(outlines_dictionary)
-            for outline in outlines:
-                outline['Parent'] = outlines_dictionary.reference
-            pdf.catalog['Outlines'] = outlines_dictionary.reference
-
-        PROGRESS_LOGGER.info('Step 7 - Adding PDF metadata')
-
-        # PDF information
-        if self.metadata.title:
-            pdf.info['Title'] = pydyf.String(self.metadata.title)
-        if self.metadata.authors:
-            pdf.info['Author'] = pydyf.String(
-                ', '.join(self.metadata.authors))
-        if self.metadata.description:
-            pdf.info['Subject'] = pydyf.String(self.metadata.description)
-        if self.metadata.keywords:
-            pdf.info['Keywords'] = pydyf.String(
-                ', '.join(self.metadata.keywords))
-        if self.metadata.generator:
-            pdf.info['Creator'] = pydyf.String(self.metadata.generator)
-        pdf.info['Producer'] = pydyf.String(f'WeasyPrint {__version__}')
-        if self.metadata.created:
-            pdf.info['CreationDate'] = pydyf.String(
-                _w3c_date_to_pdf(self.metadata.created, 'created'))
-        if self.metadata.modified:
-            pdf.info['ModDate'] = pydyf.String(
-                _w3c_date_to_pdf(self.metadata.modified, 'modified'))
-
-        # Embedded files
-        attachments = self.metadata.attachments + (attachments or [])
-        pdf_attachments = []
-        for attachment in attachments:
-            pdf_attachment = _write_pdf_attachment(
-                pdf, attachment, self.url_fetcher)
-            if pdf_attachment is not None:
-                pdf_attachments.append(pdf_attachment)
-        if pdf_attachments:
-            content = pydyf.Dictionary({'Names': pydyf.Array()})
-            for i, pdf_attachment in enumerate(pdf_attachments):
-                content['Names'].append(pydyf.String(f'attachment{i}'))
-                content['Names'].append(pdf_attachment.reference)
-            pdf.add_object(content)
-            if 'Names' not in pdf.catalog:
-                pdf.catalog['Names'] = pydyf.Dictionary()
-            pdf.catalog['Names']['EmbeddedFiles'] = content.reference
-
-        # Embedded fonts
-        pdf_fonts = pydyf.Dictionary()
-        fonts_by_file_hash = {}
-        for font in self.fonts.values():
-            fonts_by_file_hash.setdefault(font.hash, []).append(font)
-        font_references_by_file_hash = {}
-        for file_hash, fonts in fonts_by_file_hash.items():
-            content = fonts[0].file_content
-
-            if 'fonts' in self._optimize_size:
-                # Optimize font
-                cmap = {}
-                for font in fonts:
-                    cmap = {**cmap, **font.cmap}
-                full_font = io.BytesIO(content)
-                optimized_font = io.BytesIO()
-                options = subset.Options(
-                    retain_gids=True, passthrough_tables=True,
-                    ignore_missing_glyphs=True, hinting=False)
-                options.drop_tables += ['GSUB', 'GPOS', 'SVG']
-                subsetter = subset.Subsetter(options)
-                subsetter.populate(gids=cmap)
-                try:
-                    ttfont = TTFont(full_font, fontNumber=fonts[0].index)
-                    subsetter.subset(ttfont)
-                except TTLibError:
-                    LOGGER.warning('Unable to optimize font')
-                else:
-                    ttfont.save(optimized_font)
-                    content = optimized_font.getvalue()
-
-            if fonts[0].png or fonts[0].svg:
-                # Add empty glyphs instead of PNG or SVG emojis
-                full_font = io.BytesIO(content)
-                try:
-                    ttfont = TTFont(full_font, fontNumber=fonts[0].index)
-                    if 'loca' not in ttfont or 'glyf' not in ttfont:
-                        ttfont['loca'] = ttFont.getTableClass('loca')()
-                        ttfont['glyf'] = ttFont.getTableClass('glyf')()
-                        ttfont['glyf'].glyphOrder = ttfont.getGlyphOrder()
-                        ttfont['glyf'].glyphs = {
-                            name: ttFont.getTableModule('glyf').Glyph()
-                            for name in ttfont['glyf'].glyphOrder}
-                    else:
-                        for glyph in ttfont['glyf'].glyphs:
-                            ttfont['glyf'][glyph] = (
-                                ttFont.getTableModule('glyf').Glyph())
-                    for table_name in ('CBDT', 'CBLC', 'SVG '):
-                        if table_name in ttfont:
-                            del ttfont[table_name]
-                    output_font = io.BytesIO()
-                    ttfont.save(output_font)
-                    content = output_font.getvalue()
-                except TTLibError:
-                    LOGGER.warning('Unable to save emoji font')
-
-            # Include font
-            font_type = 'otf' if content[:4] == b'OTTO' else 'ttf'
-            if font_type == 'otf':
-                font_extra = pydyf.Dictionary({'Subtype': '/OpenType'})
-            else:
-                font_extra = pydyf.Dictionary({'Length1': len(content)})
-            font_stream = pydyf.Stream([content], font_extra, compress=True)
-            pdf.add_object(font_stream)
-            font_references_by_file_hash[file_hash] = font_stream.reference
-
-        for font in self.fonts.values():
-            widths = pydyf.Array()
-            for i in sorted(font.widths):
-                if i - 1 not in font.widths:
-                    widths.append(i)
-                    current_widths = pydyf.Array()
-                    widths.append(current_widths)
-                current_widths.append(font.widths[i])
-            font_type = 'otf' if font.file_content[:4] == b'OTTO' else 'ttf'
-            font_descriptor = pydyf.Dictionary({
-                'Type': '/FontDescriptor',
-                'FontName': font.name,
-                'FontFamily': pydyf.String(font.family),
-                'Flags': font.flags,
-                'FontBBox': pydyf.Array(font.bbox),
-                'ItalicAngle': font.italic_angle,
-                'Ascent': font.ascent,
-                'Descent': font.descent,
-                'CapHeight': font.bbox[3],
-                'StemV': font.stemv,
-                'StemH': font.stemh,
-                (f'FontFile{3 if font_type == "otf" else 2}'):
-                    font_references_by_file_hash[font.hash],
-            })
-            if font_type == 'otf':
-                font_descriptor['Subtype'] = '/OpenType'
-            pdf.add_object(font_descriptor)
-            subfont_dictionary = pydyf.Dictionary({
-                'Type': '/Font',
-                'Subtype': f'/CIDFontType{0 if font_type == "otf" else 2}',
-                'BaseFont': font.name,
-                'CIDSystemInfo': pydyf.Dictionary({
-                    'Registry': pydyf.String('Adobe'),
-                    'Ordering': pydyf.String('Identity'),
-                    'Supplement': 0,
-                }),
-                'W': widths,
-                'FontDescriptor': font_descriptor.reference,
-            })
-            pdf.add_object(subfont_dictionary)
-            to_unicode = pydyf.Stream([
-                b'/CIDInit /ProcSet findresource begin',
-                b'12 dict begin',
-                b'begincmap',
-                b'/CIDSystemInfo',
-                b'<< /Registry (Adobe)',
-                b'/Ordering (UCS)',
-                b'/Supplement 0',
-                b'>> def',
-                b'/CMapName /Adobe-Identity-UCS def',
-                b'/CMapType 2 def',
-                b'1 begincodespacerange',
-                b'<0000> <ffff>',
-                b'endcodespacerange',
-                f'{len(font.cmap)} beginbfchar'.encode()])
-            for glyph, text in font.cmap.items():
-                unicode_codepoints = ''.join(
-                    f'{letter.encode("utf-16-be").hex()}' for letter in text)
-                to_unicode.stream.append(
-                    f'<{glyph:04x}> <{unicode_codepoints}>'.encode())
-            to_unicode.stream.extend([
-                b'endbfchar',
-                b'endcmap',
-                b'CMapName currentdict /CMap defineresource pop',
-                b'end',
-                b'end'])
-            pdf.add_object(to_unicode)
-            font_dictionary = pydyf.Dictionary({
-                'Type': '/Font',
-                'Subtype': '/Type0',
-                'BaseFont': font.name,
-                'Encoding': '/Identity-H',
-                'DescendantFonts': pydyf.Array([subfont_dictionary.reference]),
-                'ToUnicode': to_unicode.reference,
-            })
-            pdf.add_object(font_dictionary)
-            pdf_fonts[font.hash] = font_dictionary.reference
-
-        pdf.add_object(pdf_fonts)
-        resources['Font'] = pdf_fonts.reference
-        self._use_references(pdf, resources, images)
-
-        # Anchors
-        if pdf_names:
-            # Anchors are name trees that have to be sorted
-            name_array = pydyf.Array()
-            for anchor in sorted(pdf_names):
-                name_array.append(pydyf.String(anchor[0]))
-                name_array.append(anchor[1])
-            pdf.catalog['Names'] = pydyf.Dictionary(
-                {'Dests': pydyf.Dictionary({'Names': name_array})})
+        pdf = generate_pdf(
+            self.pages, self.url_fetcher, self.metadata, self.fonts, target,
+            zoom, attachments, finisher, self._optimize_size, identifier,
+            variant, version, custom_metadata)
 
         if finisher:
             finisher(self, pdf)
 
-        file_obj = io.BytesIO()
-        pdf.write(file_obj)
+        output = io.BytesIO()
+        pdf.write(output, version=pdf.version, identifier=identifier)
 
         if target is None:
-            return file_obj.getvalue()
+            return output.getvalue()
         else:
-            file_obj.seek(0)
+            output.seek(0)
             if hasattr(target, 'write'):
-                shutil.copyfileobj(file_obj, target)
+                shutil.copyfileobj(output, target)
             else:
                 with open(target, 'wb') as fd:
-                    shutil.copyfileobj(file_obj, fd)
+                    shutil.copyfileobj(output, fd)

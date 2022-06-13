@@ -266,6 +266,7 @@ def get_html_metadata(html):
     created = None
     modified = None
     attachments = []
+    custom = {}
     for element in html.wrapper_element.query_all('title', 'meta', 'link'):
         element = element.etree_element
         if element.tag == 'title' and title is None:
@@ -279,14 +280,20 @@ def get_html_metadata(html):
                         keywords.append(keyword)
             elif name == 'author':
                 authors.append(content)
-            elif name == 'description' and description is None:
-                description = content
-            elif name == 'generator' and generator is None:
-                generator = content
-            elif name == 'dcterms.created' and created is None:
-                created = parse_w3c_date(name, content)
-            elif name == 'dcterms.modified' and modified is None:
-                modified = parse_w3c_date(name, content)
+            elif name == 'description':
+                if description is None:
+                    description = content
+            elif name == 'generator':
+                if generator is None:
+                    generator = content
+            elif name == 'dcterms.created':
+                if created is None:
+                    created = parse_w3c_date(name, content)
+            elif name == 'dcterms.modified':
+                if modified is None:
+                    modified = parse_w3c_date(name, content)
+            elif name and name not in custom:
+                custom[name] = content
         elif element.tag == 'link' and element_has_link_type(
                 element, 'attachment'):
             url = get_url_attribute(element, 'href', html.base_url)
@@ -298,7 +305,7 @@ def get_html_metadata(html):
     return dict(title=title, description=description, generator=generator,
                 keywords=keywords, authors=authors,
                 created=created, modified=modified,
-                attachments=attachments)
+                attachments=attachments, custom=custom)
 
 
 def strip_whitespace(string):

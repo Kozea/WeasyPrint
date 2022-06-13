@@ -1145,9 +1145,9 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y,
                     font.bbox[2] = int(units_to_double(x2 * 1000) / font_size)
                 if y2 > font.bbox[3]:
                     font.bbox[3] = int(units_to_double(y2 * 1000) / font_size)
-                font.widths[glyph] = int(
+                font.widths[glyph] = int(round(
                     units_to_double(stream.logical_rect.width * 1000) /
-                    font_size)
+                    font_size))
 
             # Kerning, word spacing, letter spacing
             kerning = int(
