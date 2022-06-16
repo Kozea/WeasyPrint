@@ -153,8 +153,8 @@ can contain hyperlinks, bookmarks and attachments.
 Hyperlinks will be clickable in PDF viewers that support them. They can
 be either internal, to another part of the same document (eg.
 ``<a href="#pdf">``) or external, to an URL. External links are resolved
-to absolute URLs: ``<a href="/news/">`` on the WeasyPrint website would always
-point to http://weasyprint.org/news/ in PDF files.
+to absolute URLs: ``<a href="/samples/">`` on the WeasyPrint website would always
+point to https://weasyprint.org/samples/ in PDF files.
 
 PDF bookmarks are also called outlines and are generally shown in a
 sidebar. Clicking on an entry scrolls the matching part of the document
@@ -166,6 +166,13 @@ specified through ``<link rel=attachment>`` elements to add resources globally
 or through regular links with ``<a rel=attachment>`` to attach a resource that
 can be saved by clicking on said link. The ``title`` attribute can be used as
 description of the attachment.
+
+The generation of PDF/A documents (A-1b, A-2b, A-3b and A-4b) is supported.
+However, the generated documents are not guaranteed to be valid, and users have
+the responsibility to check that they follow the rules listed by the related
+specifications. The major rules to follow are to include a PDF identifier, to
+check the PDF version, and to avoid anti-aliasing for images using
+``image-rendering: crisp-edges``.
 
 
 Fonts
