@@ -177,11 +177,8 @@ are automatically embedded in PDF files.
 Pango always uses fontconfig to access fonts, even on Windows and macOS. You
 can list the available fonts thanks to the ``fc-list`` command, and know which
 font is matched by a given pattern thanks to ``fc-match``. Copying a font file
-into the ``~/.local/share/fonts`` or ``~/.fonts`` directory is generally enough
-to install a new font. WeasyPrint should support `any font format handled by
-FreeType`_.
-
-.. _any font format handled by FreeType: https://en.wikipedia.org/wiki/FreeType#File_formats
+into the ``~/.local/share/fonts`` directory is generally enough to install a
+new font. WeasyPrint should support the major font formats handled by Harfbuzz.
 
 
 CSS
