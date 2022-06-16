@@ -1,11 +1,6 @@
 """Test how opacity is handled for SVG."""
 
-import pytest
-
 from ...testing_utils import assert_no_logs
-
-# TODO: xfail tests fail because of GhostScript and are supposed to work with
-# real PDF files.
 
 opacity_source = '''
   <style>
@@ -45,7 +40,6 @@ def test_fill_opacity(assert_same_renderings):
     )
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_stroke_opacity(assert_same_renderings):
     assert_same_renderings(
@@ -62,7 +56,6 @@ def test_stroke_opacity(assert_same_renderings):
     )
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_stroke_fill_opacity(assert_same_renderings):
     assert_same_renderings(
@@ -80,7 +73,6 @@ def test_stroke_fill_opacity(assert_same_renderings):
     )
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_pattern_gradient_stroke_fill_opacity(assert_same_renderings):
     assert_same_renderings(
