@@ -743,3 +743,31 @@ def test_tabulation_character(assert_pixels):
         }
       </style>
       <pre>a&Tab;b</pre>''')
+
+
+def test_otb_font(assert_pixels):
+    assert_pixels('''
+        ____________________
+        __RR______RR________
+        __RR__RR__RR________
+        __RR__RR__RR________
+        ____________________
+        ____________________
+    ''', '''
+      <style>
+        @page {
+          size: 20px 6px;
+          margin: 1px;
+        }
+        @font-face {
+          src: url(weasyprint.otb);
+          font-family: weasyprint-otb;
+        }
+        body {
+          color: red;
+          font-family: weasyprint-otb;
+          font-size: 4px;
+          line-height: 1;
+        }
+      </style>
+      AaA''')

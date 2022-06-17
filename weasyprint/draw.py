@@ -1079,7 +1079,7 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y,
     while runs[-1].next != ffi.NULL:
         runs.append(runs[-1].next)
 
-    matrix = Matrix(font_size, 0, 0, -font_size, x, y)
+    matrix = Matrix(1, 0, 0, -1, x, y)
     if angle:
         matrix = Matrix(a=cos(angle), b=-sin(angle),
                         c=sin(angle), d=cos(angle)) @ matrix
@@ -1111,7 +1111,7 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y,
                 stream.show_text(string)
             string = ''
             last_font = font
-        stream.set_font_size(font.hash, 1)
+        stream.set_font_size(font.hash, 1 if font.bitmap else font_size)
         string += '<'
         for i in range(num_glyphs):
             glyph_info = glyphs[i]
@@ -1126,7 +1126,7 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y,
             offset = glyph_info.geometry.x_offset / font_size
             if offset:
                 string += f'>{-offset}<'
-            string += f'{glyph:04x}'
+            string += f'{glyph:02x}' if font.bitmap else f'{glyph:04x}'
 
             # Ink bounding box and logical widths in font
             if glyph not in font.widths:

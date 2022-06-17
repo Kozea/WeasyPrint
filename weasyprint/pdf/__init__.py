@@ -8,8 +8,6 @@ from os.path import basename
 from urllib.parse import unquote, urlsplit
 
 import pydyf
-from fontTools import subset
-from fontTools.ttLib import TTFont, TTLibError, ttFont
 
 from .. import Attachment, __version__
 from ..html import W3C_DATE_RE
@@ -455,62 +453,24 @@ def generate_pdf(pages, url_fetcher, metadata, fonts, target, zoom,
     for file_hash, file_fonts in fonts_by_file_hash.items():
         # TODO: find why we can have multiple fonts for one font file
         font = file_fonts[0]
-        content = font.file_content
+        if font.bitmap:
+            continue
 
+        # Clean font, optimize and handle emojis
+        cmap = {}
         if 'fonts' in optimize_size:
-            # Optimize font
-            cmap = {}
-            for font in file_fonts:
-                cmap = {**cmap, **font.cmap}
-            full_font = io.BytesIO(content)
-            optimized_font = io.BytesIO()
-            options = subset.Options(
-                retain_gids=True, passthrough_tables=True,
-                ignore_missing_glyphs=True, hinting=False)
-            options.drop_tables += ['GSUB', 'GPOS', 'SVG']
-            subsetter = subset.Subsetter(options)
-            subsetter.populate(gids=cmap)
-            try:
-                ttfont = TTFont(full_font, fontNumber=font.index)
-                subsetter.subset(ttfont)
-            except TTLibError:
-                LOGGER.warning('Unable to optimize font')
-            else:
-                ttfont.save(optimized_font)
-                content = optimized_font.getvalue()
-
-        if font.png or font.svg:
-            # Add empty glyphs instead of PNG or SVG emojis
-            full_font = io.BytesIO(content)
-            try:
-                ttfont = TTFont(full_font, fontNumber=font.index)
-                if 'loca' not in ttfont or 'glyf' not in ttfont:
-                    ttfont['loca'] = ttFont.getTableClass('loca')()
-                    ttfont['glyf'] = ttFont.getTableClass('glyf')()
-                    ttfont['glyf'].glyphOrder = ttfont.getGlyphOrder()
-                    ttfont['glyf'].glyphs = {
-                        name: ttFont.getTableModule('glyf').Glyph()
-                        for name in ttfont['glyf'].glyphOrder}
-                else:
-                    for glyph in ttfont['glyf'].glyphs:
-                        ttfont['glyf'][glyph] = (
-                            ttFont.getTableModule('glyf').Glyph())
-                for table_name in ('CBDT', 'CBLC', 'SVG '):
-                    if table_name in ttfont:
-                        del ttfont[table_name]
-                output_font = io.BytesIO()
-                ttfont.save(output_font)
-                content = output_font.getvalue()
-            except TTLibError:
-                LOGGER.warning('Unable to save emoji font')
+            for file_font in file_fonts:
+                cmap = {**cmap, **file_font.cmap}
+        font.clean(cmap)
 
         # Include font
-        font_type = 'otf' if content[:4] == b'OTTO' else 'ttf'
-        if font_type == 'otf':
+        if font.type == 'otf':
             font_extra = pydyf.Dictionary({'Subtype': '/OpenType'})
         else:
-            font_extra = pydyf.Dictionary({'Length1': len(content)})
-        font_stream = pydyf.Stream([content], font_extra, compress=True)
+            font_extra = pydyf.Dictionary(
+                {'Length1': len(font.file_content)})
+        font_stream = pydyf.Stream(
+            [font.file_content], font_extra, compress=True)
         pdf.add_object(font_stream)
         font_references_by_file_hash[file_hash] = font_stream.reference
 
@@ -522,49 +482,7 @@ def generate_pdf(pages, url_fetcher, metadata, fonts, target, zoom,
                 current_widths = pydyf.Array()
                 widths.append(current_widths)
             current_widths.append(font.widths[i])
-        font_type = 'otf' if font.file_content[:4] == b'OTTO' else 'ttf'
-        font_file = f'FontFile{3 if font_type == "otf" else 2}'
-        font_descriptor = pydyf.Dictionary({
-            'Type': '/FontDescriptor',
-            'FontName': font.name,
-            'FontFamily': pydyf.String(font.family),
-            'Flags': font.flags,
-            'FontBBox': pydyf.Array(font.bbox),
-            'ItalicAngle': font.italic_angle,
-            'Ascent': font.ascent,
-            'Descent': font.descent,
-            'CapHeight': font.bbox[3],
-            'StemV': font.stemv,
-            'StemH': font.stemh,
-            font_file: font_references_by_file_hash[font.hash],
-        })
-        if pdf.version <= b'1.4':
-            cids = sorted(font.widths)
-            padded_width = int(math.ceil(cids[-1] / 8))
-            bits = ['0'] * padded_width * 8
-            for cid in cids:
-                bits[cid] = '1'
-            stream = pydyf.Stream(
-                (int(''.join(bits), 2).to_bytes(padded_width, 'big'),))
-            pdf.add_object(stream)
-            font_descriptor['CIDSet'] = stream.reference
-        if font_type == 'otf':
-            font_descriptor['Subtype'] = '/OpenType'
-        pdf.add_object(font_descriptor)
-        subfont_dictionary = pydyf.Dictionary({
-            'Type': '/Font',
-            'Subtype': f'/CIDFontType{0 if font_type == "otf" else 2}',
-            'BaseFont': font.name,
-            'CIDSystemInfo': pydyf.Dictionary({
-                'Registry': pydyf.String('Adobe'),
-                'Ordering': pydyf.String('Identity'),
-                'Supplement': 0,
-            }),
-            'CIDToGIDMap': '/Identity',
-            'W': widths,
-            'FontDescriptor': font_descriptor.reference,
-        })
-        pdf.add_object(subfont_dictionary)
+        font_file = f'FontFile{3 if font.type == "otf" else 2}'
         to_unicode = pydyf.Stream([
             b'/CIDInit /ProcSet findresource begin',
             b'12 dict begin',
@@ -594,12 +512,208 @@ def generate_pdf(pages, url_fetcher, metadata, fonts, target, zoom,
         pdf.add_object(to_unicode)
         font_dictionary = pydyf.Dictionary({
             'Type': '/Font',
-            'Subtype': '/Type0',
+            'Subtype': f'/Type{3 if font.bitmap else 0}',
             'BaseFont': font.name,
-            'Encoding': '/Identity-H',
-            'DescendantFonts': pydyf.Array([subfont_dictionary.reference]),
             'ToUnicode': to_unicode.reference,
         })
+
+        if font.bitmap:
+            # https://docs.microsoft.com/typography/opentype/spec/ebdt
+            font_dictionary['FontBBox'] = pydyf.Array([0, 0, 1, 1])
+            font_dictionary['FontMatrix'] = pydyf.Array([1, 0, 0, 1, 0, 0])
+            if 'fonts' in optimize_size:
+                chars = tuple(sorted(font.cmap))
+            else:
+                chars = tuple(range(256))
+            first, last = chars[0], chars[-1]
+            font_dictionary['FirstChar'] = first
+            font_dictionary['LastChar'] = last
+            differences = []
+            for index, index_widths in zip(widths[::2], widths[1::2]):
+                differences.append(index)
+                for i in range(len(index_widths)):
+                    if i + index in chars:
+                        differences.append(f'/{i + index}')
+            font_dictionary['Encoding'] = pydyf.Dictionary({
+                'Type': '/Encoding',
+                'Differences': pydyf.Array(differences),
+            })
+            char_procs = pydyf.Dictionary({})
+            font_glyphs = font.ttfont['EBDT'].strikeData[0]
+            widths = [0] * (last - first + 1)
+            glyphs_info = {}
+            for key, glyph in font_glyphs.items():
+                # Get and store glyph metrics
+                height, width = glyph.data[0:2]
+                bearing_x = int.from_bytes(
+                    glyph.data[2:3], 'big', signed=True)
+                bearing_y = int.from_bytes(
+                    glyph.data[3:4], 'big', signed=True)
+                advance = glyph.data[4]
+                position_y = bearing_y - height
+                glyph_id = font.ttfont.getGlyphID(key)
+                if glyph_id in chars:
+                    widths[glyph_id - first] = advance
+                stride = math.ceil(width / 8)
+                glyph_info = glyphs_info[glyph_id] = {
+                    'width': width,
+                    'height': height,
+                    'x': bearing_x,
+                    'y': position_y,
+                    'stride': stride,
+                    'bitmap': None,
+                    'subglyphs': None,
+                }
+
+                # Apply glyph format tweaks
+                glyph_format = glyph.getFormat()
+                data_start = 5 if glyph_format in (1, 2, 8) else 8
+                data = glyph.data[data_start:]
+                if glyph_format in (1, 6):
+                    glyph_info['bitmap'] = data
+                elif glyph_format in (2, 7):
+                    padding = (8 - (width % 8)) % 8
+                    bits = bin(int(data.hex(), 16))[2:]
+                    bits = bits.zfill(8 * len(data))
+                    bitmap_bits = ''.join(
+                        bits[i * width:(i + 1) * width] + padding * '0'
+                        for i in range(height))
+                    glyph_info['bitmap'] = int(bitmap_bits, 2).to_bytes(
+                        height * stride, 'big')
+                elif glyph_format in (8, 9):
+                    subglyphs = glyph_info['subglyphs'] = []
+                    i = 0 if glyph_format == 9 else 1
+                    number_of_components = int.from_bytes(
+                        data[i:i+2], 'big')
+                    for j in range(number_of_components):
+                        index = (i + 2) + (j * 4)
+                        subglyph_id = int.from_bytes(
+                            data[index:index+2], 'big')
+                        x = int.from_bytes(
+                            data[index+2:index+3], 'big', signed=True)
+                        y = int.from_bytes(
+                            data[index+3:index+4], 'big', signed=True)
+                        subglyphs.append(
+                            {'id': subglyph_id, 'x': x, 'y': y})
+                else:  # pragma: no cover
+                    LOGGER.warning(
+                        f'Unsupported bitmap glyph format: {glyph_format}')
+                    glyph_info['bitmap'] = bytes(height * stride)
+
+            for glyph_id, glyph_info in glyphs_info.items():
+                # Don’t store glyph not in cmap
+                if glyph_id not in chars:
+                    continue
+
+                # Draw glyph
+                stride = glyph_info['stride']
+                width = glyph_info['width']
+                height = glyph_info['height']
+                x = glyph_info['x']
+                y = glyph_info['y']
+                if glyph_info['bitmap'] is None:
+                    length = height * stride
+                    bitmap_int = int.from_bytes(bytes(length), 'big')
+                    for subglyph in glyph_info['subglyphs']:
+                        sub_x = subglyph['x']
+                        sub_y = subglyph['y']
+                        sub_id = subglyph['id']
+                        if sub_id not in glyphs_info:
+                            LOGGER.warning(f'Unknown subglyph: {sub_id}')
+                            continue
+                        subglyph = glyphs_info[sub_id]
+                        if subglyph['bitmap'] is None:
+                            # TODO: support subglyph in subglyph
+                            LOGGER.warning(
+                                'Unsupported subglyph in subglyph: '
+                                f'{sub_id}')
+                            continue
+                        for row_y in range(subglyph['height']):
+                            row_slice = slice(
+                                row_y * subglyph['stride'],
+                                (row_y + 1) * subglyph['stride'])
+                            row = subglyph['bitmap'][row_slice]
+                            row_int = int.from_bytes(row, 'big')
+                            shift = (
+                                stride * 8 * (height - sub_y - row_y - 1))
+                            stride_difference = stride - subglyph['stride']
+                            if stride_difference > 0:
+                                row_int <<= stride_difference * 8
+                            elif stride_difference < 0:
+                                row_int >>= -stride_difference * 8
+                            if sub_x > 0:
+                                row_int >>= sub_x
+                            elif sub_x < 0:
+                                row_int <<= -sub_x
+                            row_int %= 1 << stride * 8
+                            row_int <<= shift
+                            bitmap_int |= row_int
+                    bitmap = bitmap_int.to_bytes(length, 'big')
+                else:
+                    bitmap = glyph_info['bitmap']
+                bitmap_stream = pydyf.Stream([
+                    b'0 0 d0',
+                    f'{width} 0 0 {height} {x} {y} cm'.encode(),
+                    b'BI',
+                    b'/IM true',
+                    b'/W', width,
+                    b'/H', height,
+                    b'/BPC 1',
+                    b'/D [1 0]',
+                    b'ID', bitmap, b'EI'
+                ])
+                pdf.add_object(bitmap_stream)
+                char_procs[glyph_id] = bitmap_stream.reference
+
+            pdf.add_object(char_procs)
+            font_dictionary['Widths'] = pydyf.Array(widths)
+            font_dictionary['CharProcs'] = char_procs.reference
+
+        else:
+            font_descriptor = pydyf.Dictionary({
+                'Type': '/FontDescriptor',
+                'FontName': font.name,
+                'FontFamily': pydyf.String(font.family),
+                'Flags': font.flags,
+                'FontBBox': pydyf.Array(font.bbox),
+                'ItalicAngle': font.italic_angle,
+                'Ascent': font.ascent,
+                'Descent': font.descent,
+                'CapHeight': font.bbox[3],
+                'StemV': font.stemv,
+                'StemH': font.stemh,
+                font_file: font_references_by_file_hash[font.hash],
+            })
+            if pdf.version <= b'1.4':
+                cids = sorted(font.widths)
+                padded_width = int(math.ceil(cids[-1] / 8))
+                bits = ['0'] * padded_width * 8
+                for cid in cids:
+                    bits[cid] = '1'
+                stream = pydyf.Stream(
+                    (int(''.join(bits), 2).to_bytes(padded_width, 'big'),))
+                pdf.add_object(stream)
+                font_descriptor['CIDSet'] = stream.reference
+            if font.type == 'otf':
+                font_descriptor['Subtype'] = '/OpenType'
+            pdf.add_object(font_descriptor)
+            subfont_dictionary = pydyf.Dictionary({
+                'Type': '/Font',
+                'Subtype': f'/CIDFontType{0 if font.type == "otf" else 2}',
+                'BaseFont': font.name,
+                'CIDSystemInfo': pydyf.Dictionary({
+                    'Registry': pydyf.String('Adobe'),
+                    'Ordering': pydyf.String('Identity'),
+                    'Supplement': 0,
+                }),
+                'CIDToGIDMap': '/Identity',
+                'W': widths,
+                'FontDescriptor': font_descriptor.reference,
+            })
+            pdf.add_object(subfont_dictionary)
+            font_dictionary['Encoding'] = '/Identity-H'
+            font_dictionary['DescendantFonts'] = pydyf.Array(
+                [subfont_dictionary.reference])
         pdf.add_object(font_dictionary)
         pdf_fonts[font.hash] = font_dictionary.reference
 
