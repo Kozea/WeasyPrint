@@ -2,6 +2,75 @@ Changelog
 =========
 
 
+Version 56.0b1
+--------------
+
+Released on 2022-06-17.
+
+**This version is experimental, don't use it in production. If you find bugs,
+please report them!**
+
+Dependencies:
+
+* pydyf 0.2.0+ is now needed
+
+Features:
+
+* `#1660 <https://github.com/Kozea/WeasyPrint/pull/1660>`_:
+  Support nested line-clamp, with financial support from Expert Germany
+* `#1644 <https://github.com/Kozea/WeasyPrint/pull/1644>`_,
+  `#1645 <https://github.com/Kozea/WeasyPrint/issues/1645>`_:
+  Support bitmap fonts, with financial support from Expert Germany
+* `#1651 <https://github.com/Kozea/WeasyPrint/pull/1651>`_,
+  `#630 <https://github.com/Kozea/WeasyPrint/issues/630>`_:
+  Support PDF/A, with financial support from Blueshoe
+
+Bug fixes:
+
+* `#1656 <https://github.com/Kozea/WeasyPrint/issues/1656>`_:
+  Fix chained variables in the same selector block
+* `#1028 <https://github.com/Kozea/WeasyPrint/issues/1028>`_:
+  Fix font weight management in @font-face rules
+* `#1653 <https://github.com/Kozea/WeasyPrint/issues/1653>`_:
+  Don’t crash when @font-face’s src ends with a comma
+* `#1650 <https://github.com/Kozea/WeasyPrint/issues/1650>`_:
+  Don’t check origin when URL only contains fragment
+* `e38bff8 <https://github.com/Kozea/WeasyPrint/commit/e38bff8>`_:
+  Don’t crash when inherited SVG attributes are not set on the parent
+
+Performance:
+
+* `e6021da <https://github.com/Kozea/WeasyPrint/commit/e6021da>`_:
+  Launch tests in parallel by default
+
+Contributors:
+
+* Guillaume Ayoub
+* aschmitz
+* Lucie Anglade
+
+Backers and sponsors:
+
+* Grip Angebotssoftware
+* Manuel Barkhau
+* Crisp BV
+* SimonSoft
+* Menutech
+* Spacinov
+* KontextWork
+* René Fritz
+* NCC Group
+* Kobalt
+* Des images et des mots
+* Andreas Zettl
+* Tom Pohl
+* Moritz Mahringer
+* Florian Demmer
+* Yanal-Yvez Fargialla
+* Gábor
+* Piotr Horzycki
+
+
 Version 55.0
 ------------
 
