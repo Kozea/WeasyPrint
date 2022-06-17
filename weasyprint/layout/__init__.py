@@ -356,9 +356,9 @@ class LayoutContext:
         if self.current_footnote_area.children:
             footnote_area = build.create_anonymous_boxes(
                 self.current_footnote_area.deepcopy())
-            footnote_area, _, _, _, _ = block_level_layout(
+            footnote_area, _, _, _, _, _ = block_level_layout(
                 self, footnote_area, -inf, None,
-                self.current_footnote_area.page, True, [], [], [], False)
+                self.current_footnote_area.page, True, [], [], [], False, None)
             self.current_footnote_area.height = footnote_area.height
             self.page_bottom -= footnote_area.margin_height()
         else:

@@ -429,10 +429,10 @@ def make_margin_boxes(context, page, state):
 def margin_box_content_layout(context, page, box):
     """Layout a margin box’s content once the box has dimensions."""
     positioned_boxes = []
-    box, resume_at, next_page, _, _ = block_container_layout(
+    box, resume_at, next_page, _, _, _ = block_container_layout(
         context, box, bottom_space=-inf, skip_stack=None, page_is_empty=True,
         absolute_boxes=positioned_boxes, fixed_boxes=positioned_boxes,
-        adjoining_margins=None, discard=False)
+        adjoining_margins=None, discard=False, max_lines=None)
     assert resume_at is None
     for absolute_box in positioned_boxes:
         absolute_layout(
@@ -555,9 +555,9 @@ def make_page(context, root_box, page_type, resume_at, page_number,
         context.reported_footnotes = []
         reported_footnote_area = build.create_anonymous_boxes(
             footnote_area.deepcopy())
-        reported_footnote_area, _, _, _, _ = block_level_layout(
+        reported_footnote_area, _, _, _, _, _ = block_level_layout(
             context, reported_footnote_area, -inf, None, footnote_area.page,
-            True, [], [], [], False)
+            True, [], [], [], False, None)
         footnote_area.height = reported_footnote_area.height
         context.page_bottom -= reported_footnote_area.margin_height()
 
@@ -582,17 +582,17 @@ def make_page(context, root_box, page_type, resume_at, page_number,
             broken_out_of_flow.append(
                 (box, containing_block, out_of_flow_resume_at))
     context.broken_out_of_flow = broken_out_of_flow
-    root_box, resume_at, next_page, _, _ = block_level_layout(
+    root_box, resume_at, next_page, _, _, _ = block_level_layout(
         context, root_box, 0, resume_at, initial_containing_block,
         page_is_empty, positioned_boxes, positioned_boxes, adjoining_margins,
-        discard=False)
+        False, None)
     assert root_box
     root_box.children = out_of_flow_boxes + root_box.children
 
     footnote_area = build.create_anonymous_boxes(footnote_area.deepcopy())
-    footnote_area, _, _, _, _ = block_level_layout(
+    footnote_area, _, _, _, _, _ = block_level_layout(
         context, footnote_area, -inf, None, footnote_area.page, True,
-        positioned_boxes, positioned_boxes, [], False)
+        positioned_boxes, positioned_boxes, [], False, None)
     footnote_area.translate(dy=-footnote_area.margin_height())
 
     page.fixed_boxes = [

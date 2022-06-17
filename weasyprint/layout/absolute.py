@@ -196,10 +196,10 @@ def absolute_block(context, box, containing_block, fixed_boxes, bottom_space,
         table_wrapper_width(context, box, (cb_width, cb_height))
 
     if isinstance(box, (boxes.BlockBox)):
-        new_box, resume_at, _, _, _ = block_container_layout(
+        new_box, resume_at, _, _, _, _ = block_container_layout(
             context, box, bottom_space, skip_stack, page_is_empty=True,
             absolute_boxes=absolute_boxes, fixed_boxes=fixed_boxes,
-            adjoining_margins=None, discard=False)
+            adjoining_margins=None, discard=False, max_lines=None)
     else:
         new_box, resume_at, _, _, _ = flex_layout(
             context, box, bottom_space, skip_stack, containing_block,

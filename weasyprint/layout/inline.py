@@ -397,10 +397,11 @@ def inline_block_box_layout(context, box, position_x, skip_stack,
 
     box.position_x = position_x
     box.position_y = 0
-    box, _, _, _, _ = block_container_layout(
+    box, _, _, _, _, _ = block_container_layout(
         context, box, bottom_space=-inf, skip_stack=skip_stack,
         page_is_empty=True, absolute_boxes=absolute_boxes,
-        fixed_boxes=fixed_boxes, adjoining_margins=None, discard=False)
+        fixed_boxes=fixed_boxes, adjoining_margins=None, discard=False,
+        max_lines=None)
     box.baseline = inline_block_baseline(box)
     return box
 
