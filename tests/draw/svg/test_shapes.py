@@ -435,3 +435,26 @@ def test_rect_width_height_zero(assert_pixels):
             <rect x="2" y="2" width="5" height="5" fill="red" />
         </svg>
     ''')
+
+
+@assert_no_logs
+def test_rect_fill_inherit(assert_pixels):
+    assert_pixels('''
+        _________
+        _________
+        __KKKKK__
+        __KKKKK__
+        __KKKKK__
+        __KKKKK__
+        __KKKKK__
+        _________
+        _________
+    ''', '''
+      <style>
+        @page { size: 9px }
+        svg { display: block }
+      </style>
+      <svg width="9px" height="9px" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="2" width="5" height="5" fill="inherit" />
+      </svg>
+    ''')

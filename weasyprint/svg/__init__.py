@@ -150,9 +150,13 @@ class Node:
                     child.attrib[key] = child.get('color', 'black')
 
             # Handle 'inherit' values
-            for key, value in child.attrib.items():
+            for key, value in child.attrib.copy().items():
                 if value == 'inherit':
-                    child.attrib[key] = self.get(key)
+                    value = self.get(key)
+                    if value is None:
+                        del child.attrib[key]
+                    else:
+                        child.attrib[key] = value
 
             # Fix text in text tags
             if child.tag in ('text', 'textPath', 'a'):
