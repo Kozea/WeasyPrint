@@ -543,15 +543,36 @@ def generate_pdf(pages, url_fetcher, metadata, fonts, target, zoom,
             widths = [0] * (last - first + 1)
             glyphs_info = {}
             for key, glyph in font_glyphs.items():
-                # Get and store glyph metrics
-                height, width = glyph.data[0:2]
-                bearing_x = int.from_bytes(
-                    glyph.data[2:3], 'big', signed=True)
-                bearing_y = int.from_bytes(
-                    glyph.data[3:4], 'big', signed=True)
-                advance = glyph.data[4]
-                position_y = bearing_y - height
+                glyph_format = glyph.getFormat()
                 glyph_id = font.ttfont.getGlyphID(key)
+
+                # Get and store glyph metrics
+                if glyph_format == 5:
+                    data = glyph.data
+                    subtables = font.ttfont['EBLC'].strikes[0].indexSubTables
+                    for subtable in subtables:
+                        first_index = subtable.firstGlyphIndex
+                        last_index = subtable.lastGlyphIndex
+                        if first_index <= glyph_id <= last_index:
+                            height = subtable.metrics.height
+                            advance = width = subtable.metrics.width
+                            bearing_x = subtable.metrics.horiBearingX
+                            bearing_y = subtable.metrics.horiBearingY
+                            break
+                    else:
+                        LOGGER.warning(
+                            f'Unknown bitmap metrics for glyph: {glyph_id}')
+                        continue
+                else:
+                    data_start = 5 if glyph_format in (1, 2, 8) else 8
+                    data = glyph.data[data_start:]
+                    height, width = glyph.data[0:2]
+                    bearing_x = int.from_bytes(
+                        glyph.data[2:3], 'big', signed=True)
+                    bearing_y = int.from_bytes(
+                        glyph.data[3:4], 'big', signed=True)
+                    advance = glyph.data[4]
+                position_y = bearing_y - height
                 if glyph_id in chars:
                     widths[glyph_id - first] = advance
                 stride = math.ceil(width / 8)
@@ -565,13 +586,10 @@ def generate_pdf(pages, url_fetcher, metadata, fonts, target, zoom,
                     'subglyphs': None,
                 }
 
-                # Apply glyph format tweaks
-                glyph_format = glyph.getFormat()
-                data_start = 5 if glyph_format in (1, 2, 8) else 8
-                data = glyph.data[data_start:]
+                # Decode bitmaps
                 if glyph_format in (1, 6):
                     glyph_info['bitmap'] = data
-                elif glyph_format in (2, 7):
+                elif glyph_format in (2, 5, 7):
                     padding = (8 - (width % 8)) % 8
                     bits = bin(int(data.hex(), 16))[2:]
                     bits = bits.zfill(8 * len(data))
