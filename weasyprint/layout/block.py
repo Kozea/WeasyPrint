@@ -15,9 +15,14 @@ from .table import table_layout, table_wrapper_width
 
 
 def block_level_layout(context, box, bottom_space, skip_stack,
-                       containing_block, page_is_empty, absolute_boxes,
-                       fixed_boxes, adjoining_margins, discard, max_lines):
+                       containing_block, page_is_empty=True,
+                       absolute_boxes=None, fixed_boxes=None,
+                       adjoining_margins=None, discard=False, max_lines=None):
     """Lay out the block-level ``box``."""
+    absolute_boxes = [] if absolute_boxes is None else absolute_boxes
+    fixed_boxes = [] if fixed_boxes is None else fixed_boxes
+    adjoining_margins = [] if adjoining_margins is None else adjoining_margins
+
     if not isinstance(box, boxes.TableBox):
         resolve_percentages(box, containing_block)
 

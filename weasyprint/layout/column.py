@@ -136,8 +136,7 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
                 block_level_layout(
                     context, block, original_bottom_space, skip_stack,
                     containing_block, page_is_empty, absolute_boxes,
-                    fixed_boxes, adjoining_margins, discard=False,
-                    max_lines=None))
+                    fixed_boxes, adjoining_margins))
             skip_stack = None
             if new_child is None:
                 forced_end_probing = True
