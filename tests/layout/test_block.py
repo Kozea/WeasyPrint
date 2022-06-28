@@ -257,7 +257,7 @@ def test_block_percentage_heights():
     ('width: 10%; height: 1000px; min-width: auto; max-height: none',),
 ))
 def test_box_sizing(size):
-    # http://www.w3.org/TR/css3-ui/#box-sizing
+    # https://www.w3.org/TR/css-ui-3/#box-sizing
     page, = render_pages('''
       <style>
         @page { size: 100000px }
@@ -312,7 +312,7 @@ def test_box_sizing(size):
     ('min-width: 0; min-height: 0; width: 0; height: 0'),
 ))
 def test_box_sizing_zero(size):
-    # http://www.w3.org/TR/css3-ui/#box-sizing
+    # https://www.w3.org/TR/css-ui-3/#box-sizing
     page, = render_pages('''
       <style>
         @page { size: 100000px }
@@ -565,7 +565,7 @@ def test_vertical_space_9(margin_1, margin_2, result):
 
 @assert_no_logs
 def test_box_decoration_break_block_slice():
-    # http://www.w3.org/TR/css3-background/#the-box-decoration-break
+    # https://www.w3.org/TR/css-backgrounds-3/#the-box-decoration-break
     page_1, page_2 = render_pages('''
       <style>
         @page { size: 100px }
@@ -614,7 +614,7 @@ def test_box_decoration_break_block_slice():
 
 @assert_no_logs
 def test_box_decoration_break_block_clone():
-    # http://www.w3.org/TR/css3-background/#the-box-decoration-break
+    # https://www.w3.org/TR/css-backgrounds-3/#the-box-decoration-break
     page_1, page_2 = render_pages('''
       <style>
         @page { size: 100px }

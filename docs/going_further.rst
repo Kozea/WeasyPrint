@@ -100,7 +100,7 @@ like this:
 7. Metadata −such as document information, attachments, embedded files,
    hyperlinks, and PDF trim and bleed boxes− are added to the PDF.
 
-.. _like in web browsers: http://www.html5rocks.com/en/tutorials/internals/howbrowserswork/#The_main_flow
+.. _like in web browsers: https://www.html5rocks.com/en/tutorials/internals/howbrowserswork/#The_main_flow
 
 
 Parsing HTML
@@ -147,7 +147,7 @@ specificity and source order. Missing values are filled in through
 *inheritance* (from the parent element) or the property’s *initial value*,
 so that every element has a *specified value* for every property.
 
-.. _cascade: http://www.w3.org/TR/CSS21/cascade.html
+.. _cascade: https://www.w3.org/TR/CSS21/cascade.html
 
 These *specified values* are turned into *computed values* in the
 ``css.computed_values`` module. Keywords and lengths in various units are
@@ -174,7 +174,7 @@ Boxes may have children and thus form a tree, much like elements. This tree is
 generally close but not identical to the ElementTree tree: some elements
 generate more than one box or none.
 
-.. _visual formatting model: http://www.w3.org/TR/CSS21/visuren.html
+.. _visual formatting model: https://www.w3.org/TR/CSS21/visuren.html
 
 Boxes are of a lot of different kinds. For example you should not confuse
 *block-level boxes* and *block containers*, though *block boxes* are both.  The
@@ -217,7 +217,7 @@ layout result.
 According to the `box model`_, each box has rectangular margin, border,
 padding and content areas:
 
-.. _box model: http://www.w3.org/TR/CSS21/box.html
+.. _box model: https://www.w3.org/TR/CSS21/box.html
 
 .. image:: https://www.w3.org/TR/CSS21/images/boxdim.png
    :alt: CSS Box Model
@@ -239,8 +239,8 @@ The final result of the layout is a list of ``PageBox`` objects.
 .. [#] These are the coordinates *if* no `CSS transform`_ applies.
        Transforms change the actual location of boxes, but they are applied
        later during drawing and do not affect layout.
-.. _used values: http://www.w3.org/TR/CSS21/cascade.html#used-value
-.. _CSS transform: http://www.w3.org/TR/css3-transforms/
+.. _used values: https://www.w3.org/TR/CSS21/cascade.html#used-value
+.. _CSS transform: https://www.w3.org/TR/css-transforms-1/
 
 
 Stacking & Drawing
@@ -257,7 +257,7 @@ the layout or stacking instead.
 
 The code lives in the ``draw`` module.
 
-.. _stacking rules: http://www.w3.org/TR/CSS21/zindex.html
+.. _stacking rules: https://www.w3.org/TR/CSS21/zindex.html
 
 
 Metadata

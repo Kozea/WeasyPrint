@@ -180,7 +180,7 @@ def get_next_linebox(context, linebox, position_y, bottom_space, skip_stack,
 def skip_first_whitespace(box, skip_stack):
     """Return ``skip_stack`` to start just after removable leading spaces.
 
-    See http://www.w3.org/TR/CSS21/text.html#white-space-model
+    See https://www.w3.org/TR/CSS21/text.html#white-space-model
 
     """
     if skip_stack is None:
@@ -382,12 +382,12 @@ def inline_block_box_layout(context, box, position_x, skip_stack,
 
     resolve_percentages(box, containing_block)
 
-    # http://www.w3.org/TR/CSS21/visudet.html#inlineblock-width
+    # https://www.w3.org/TR/CSS21/visudet.html#inlineblock-width
     if box.margin_left == 'auto':
         box.margin_left = 0
     if box.margin_right == 'auto':
         box.margin_right = 0
-    # http://www.w3.org/TR/CSS21/visudet.html#block-root-margin
+    # https://www.w3.org/TR/CSS21/visudet.html#block-root-margin
     if box.margin_top == 'auto':
         box.margin_top = 0
     if box.margin_bottom == 'auto':
@@ -411,7 +411,7 @@ def inline_block_baseline(box):
 
     Position is taken from the top of its margin box.
 
-    http://www.w3.org/TR/CSS21/visudet.html#propdef-vertical-align
+    https://www.w3.org/TR/CSS21/visudet.html#propdef-vertical-align
 
     """
     if box.is_table_wrapper:
@@ -897,7 +897,7 @@ def split_text_box(context, box, available_width, skip, is_line_start=True):
         box.pango_layout = layout
         # "The height of the content area should be based on the font,
         #  but this specification does not specify how."
-        # http://www.w3.org/TR/CSS21/visudet.html#inline-non-replaced
+        # https://www.w3.org/TR/CSS21/visudet.html#inline-non-replaced
         # We trust Pango and use the height of the LayoutLine.
         box.height = height
         # "only the 'line-height' is used when calculating the height
@@ -920,7 +920,7 @@ def split_text_box(context, box, available_width, skip, is_line_start=True):
         preserved_line_break = (
             (length != resume_index) and between.strip(' '))
         if preserved_line_break:
-            # See http://unicode.org/reports/tr14/
+            # See https://unicode.org/reports/tr14/
             # \r is already handled by process_whitespace
             line_breaks = ('\n', '\t', '\f', '\u0085', '\u2028', '\u2029')
             assert between in line_breaks, (
@@ -1159,7 +1159,7 @@ def add_word_spacing(context, box, justification_spacing, x_advance):
 
 
 def is_phantom_linebox(linebox):
-    # See http://www.w3.org/TR/CSS21/visuren.html#phantom-line-box
+    # See https://www.w3.org/TR/CSS21/visuren.html#phantom-line-box
     for child in linebox.children:
         if isinstance(child, boxes.InlineBox):
             if not is_phantom_linebox(child):

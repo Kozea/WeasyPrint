@@ -303,7 +303,7 @@ def test_links():
         p { display: block; height: 90pt; margin: 0 0 10pt 0 }
         img { width: 30pt; vertical-align: top }
       </style>
-      <p><a href="http://weasyprint.org"><img src=pattern.png></a></p>
+      <p><a href="https://weasyprint.org"><img src=pattern.png></a></p>
       <p style="padding: 0 10pt"><a
          href="#lipsum"><img style="border: solid 1pt"
                              src=pattern.png></a></p>
@@ -322,13 +322,13 @@ def test_links():
             b'/Rect \\[ ([\\d\\.]+ [\\d\\.]+ [\\d\\.]+ [\\d\\.]+) \\]', pdf)]
 
     # 30pt wide (like the image), 20pt high (like line-height)
-    assert uris.pop(0) == b'http://weasyprint.org'
+    assert uris.pop(0) == b'https://weasyprint.org'
     assert subtypes.pop(0) == b'/Link'
     assert types.pop(0) == b'/URI'
     assert rects.pop(0) == [0, TOP, 30, TOP - 20]
 
     # The image itself: 30*30pt
-    assert uris.pop(0) == b'http://weasyprint.org'
+    assert uris.pop(0) == b'https://weasyprint.org'
     assert subtypes.pop(0) == b'/Link'
     assert types.pop(0) == b'/URI'
     assert rects.pop(0) == [0, TOP, 30, TOP - 30]
@@ -373,8 +373,8 @@ def test_relative_links_no_height():
     # 100% wide (block), 0pt high
     pdf = FakeHTML(
         string='<a href="../lipsum" style="display: block"></a>a',
-        base_url='http://weasyprint.org/foo/bar/').write_pdf()
-    assert b'/S /URI\n/URI (http://weasyprint.org/foo/lipsum)'
+        base_url='https://weasyprint.org/foo/bar/').write_pdf()
+    assert b'/S /URI\n/URI (https://weasyprint.org/foo/lipsum)'
     assert f'/Rect [ 0 {TOP} {RIGHT} {TOP} ]'.encode() in pdf
 
 
@@ -438,15 +438,15 @@ def test_relative_links_anchors():
 def test_relative_links_different_base():
     pdf = FakeHTML(
         string='<a href="/test/lipsum"></a>a',
-        base_url='http://weasyprint.org/foo/bar/').write_pdf()
-    assert b'http://weasyprint.org/test/lipsum' in pdf
+        base_url='https://weasyprint.org/foo/bar/').write_pdf()
+    assert b'https://weasyprint.org/test/lipsum' in pdf
 
 
 @assert_no_logs
 def test_relative_links_same_base():
     pdf = FakeHTML(
         string='<a id="test" href="/foo/bar/#test"></a>a',
-        base_url='http://weasyprint.org/foo/bar/').write_pdf()
+        base_url='https://weasyprint.org/foo/bar/').write_pdf()
     assert b'/Dest (test)' in pdf
 
 

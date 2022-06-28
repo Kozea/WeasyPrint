@@ -198,7 +198,7 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
             row = row.copy_with_children(new_row_children)
 
             # Table height algorithm
-            # http://www.w3.org/TR/CSS21/tables.html#height-layout
+            # https://www.w3.org/TR/CSS21/tables.html#height-layout
 
             # cells with vertical-align: baseline
             baseline_cells = []
@@ -604,7 +604,7 @@ def add_top_padding(box, extra_padding):
 def fixed_table_layout(box):
     """Run the fixed table layout and return a list of column widths.
 
-    http://www.w3.org/TR/CSS21/tables.html#fixed-table-layout
+    https://www.w3.org/TR/CSS21/tables.html#fixed-table-layout
 
     """
     table = box.get_wrapped_table()
@@ -693,7 +693,7 @@ def fixed_table_layout(box):
 def auto_table_layout(context, box, containing_block):
     """Run the auto table layout and return a list of column widths.
 
-    http://www.w3.org/TR/CSS21/tables.html#auto-table-layout
+    https://www.w3.org/TR/CSS21/tables.html#auto-table-layout
 
     """
     table = box.get_wrapped_table()
@@ -809,7 +809,7 @@ def table_wrapper_width(context, wrapper, containing_block):
 def cell_baseline(cell):
     """Return the y position of a cell baseline from the top of its border box.
 
-    See http://www.w3.org/TR/CSS21/tables.html#height-layout
+    See https://www.w3.org/TR/CSS21/tables.html#height-layout
 
     """
     result = find_in_flow_baseline(
@@ -849,7 +849,7 @@ def distribute_excess_width(context, grid, excess_width, column_widths,
 
     Return excess width left when it's impossible without breaking rules.
 
-    See http://dbaron.org/css/intrinsic/#distributetocols
+    See https://dbaron.org/css/intrinsic/#distributetocols
 
     """
     # First group

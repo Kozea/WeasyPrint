@@ -48,7 +48,7 @@ def use(svg, node, font_size):
 
     if tree.tag in ('svg', 'symbol'):
         # Explicitely specified
-        # http://www.w3.org/TR/SVG11/struct.html#UseElement
+        # https://www.w3.org/TR/SVG11/struct.html#UseElement
         tree._etree_node.tag = 'svg'
         if 'width' in node.attrib and 'height' in node.attrib:
             tree.attrib['width'] = node.attrib['width']

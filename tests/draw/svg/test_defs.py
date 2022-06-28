@@ -5,7 +5,7 @@ from base64 import b64encode
 from ...testing_utils import assert_no_logs
 
 SVG = '''
-<svg width="10px" height="10px" xmlns="http://www.w3.org/2000/svg">
+<svg width="10px" height="10px" xmlns="https://www.w3.org/2000/svg">
   <defs>
     <rect id="rectangle" width="5" height="2" fill="red" />
   </defs>

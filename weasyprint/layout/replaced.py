@@ -1,6 +1,6 @@
 """Layout for images and other replaced elements.
 
-See http://dev.w3.org/csswg/css-images-3/#sizing
+See https://drafts.csswg.org/css-images-3/#sizing
 
 """
 
@@ -15,7 +15,7 @@ def default_image_sizing(intrinsic_width, intrinsic_height, intrinsic_ratio,
 
     Return a ``(concrete_width, concrete_height)`` tuple.
 
-    See http://dev.w3.org/csswg/css-images-3/#default-sizing
+    See https://drafts.csswg.org/css-images-3/#default-sizing
 
     """
     if specified_width == 'auto':
@@ -53,7 +53,7 @@ def contain_constraint_image_sizing(constraint_width, constraint_height,
 
     Return a ``(concrete_width, concrete_height)`` tuple.
 
-    See http://dev.w3.org/csswg/css-images-3/#contain-constraint
+    See https://drafts.csswg.org/css-images-3/#contain-constraint
 
     """
     return _constraint_image_sizing(
@@ -66,7 +66,7 @@ def cover_constraint_image_sizing(constraint_width, constraint_height,
 
     Return a ``(concrete_width, concrete_height)`` tuple.
 
-    See http://dev.w3.org/csswg/css-images-3/#cover-constraint
+    See https://drafts.csswg.org/css-images-3/#cover-constraint
 
     """
     return _constraint_image_sizing(
@@ -139,7 +139,7 @@ def replaced_box_width(box, containing_block):
         box.style['image_resolution'], box.style['font_size'])
 
     # This algorithm simply follows the different points of the specification:
-    # http://www.w3.org/TR/CSS21/visudet.html#inline-replaced-width
+    # https://www.w3.org/TR/CSS21/visudet.html#inline-replaced-width
     if box.height == 'auto' and box.width == 'auto':
         if width is not None:
             # Point #1
@@ -168,7 +168,7 @@ def replaced_box_width(box, containing_block):
 @handle_min_max_height
 def replaced_box_height(box):
     """Compute and set the used height for replaced boxes."""
-    # http://www.w3.org/TR/CSS21/visudet.html#inline-replaced-height
+    # https://www.w3.org/TR/CSS21/visudet.html#inline-replaced-height
     width, height, ratio = box.replacement.get_intrinsic_size(
         box.style['image_resolution'], box.style['font_size'])
 
@@ -282,7 +282,7 @@ def block_replaced_box_layout(context, box, containing_block):
         replaced_box_height(box)
 
     # Don't collide with floats
-    # http://www.w3.org/TR/CSS21/visuren.html#floats
+    # https://www.w3.org/TR/CSS21/visuren.html#floats
     box.position_x, box.position_y, _ = avoid_collisions(
         context, box, containing_block, outer=False)
     resume_at = None
@@ -296,6 +296,6 @@ def block_replaced_box_layout(context, box, containing_block):
 def block_replaced_width(box, containing_block):
     from .block import block_level_width
 
-    # http://www.w3.org/TR/CSS21/visudet.html#block-replaced-width
+    # https://www.w3.org/TR/CSS21/visudet.html#block-replaced-width
     replaced_box_width.without_min_max(box, containing_block)
     block_level_width.without_min_max(box, containing_block)

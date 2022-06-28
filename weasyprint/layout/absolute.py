@@ -48,7 +48,7 @@ class AbsolutePlaceholder:
 
 @handle_min_max_width
 def absolute_width(box, context, cb_x, cb_y, cb_width, cb_height):
-    # http://www.w3.org/TR/CSS2/visudet.html#abs-replaced-width
+    # https://www.w3.org/TR/CSS2/visudet.html#abs-replaced-width
     ltr = (
         box.style.parent_style is None or
         box.style.parent_style['direction'] == 'ltr')
@@ -122,7 +122,7 @@ def absolute_width(box, context, cb_x, cb_y, cb_width, cb_height):
 
 
 def absolute_height(box, context, cb_x, cb_y, cb_width, cb_height):
-    # http://www.w3.org/TR/CSS2/visudet.html#abs-non-replaced-height
+    # https://www.w3.org/TR/CSS2/visudet.html#abs-non-replaced-height
     paddings_borders = (
         box.padding_top + box.padding_bottom +
         box.border_top_width + box.border_bottom_width)
@@ -235,7 +235,7 @@ def absolute_layout(context, placeholder, containing_block, fixed_boxes,
 def absolute_box_layout(context, box, containing_block, fixed_boxes,
                         bottom_space, skip_stack):
     # TODO: handle inline boxes (point 10.1.4.1)
-    # http://www.w3.org/TR/CSS2/visudet.html#containing-block-details
+    # https://www.w3.org/TR/CSS2/visudet.html#containing-block-details
     if isinstance(containing_block, boxes.PageBox):
         cb_x = containing_block.content_box_x()
         cb_y = containing_block.content_box_y()
@@ -271,7 +271,7 @@ def absolute_replaced(context, box, cb_x, cb_y, cb_width, cb_height):
         box.style.parent_style is None or
         box.style.parent_style['direction'] == 'ltr')
 
-    # http://www.w3.org/TR/CSS21/visudet.html#abs-replaced-width
+    # https://www.w3.org/TR/CSS21/visudet.html#abs-replaced-width
     if box.left == box.right == 'auto':
         # static position:
         if ltr:
@@ -307,7 +307,7 @@ def absolute_replaced(context, box, cb_x, cb_y, cb_width, cb_height):
         else:
             box.left = cb_width - (box.margin_width() + box.right)
 
-    # http://www.w3.org/TR/CSS21/visudet.html#abs-replaced-height
+    # https://www.w3.org/TR/CSS21/visudet.html#abs-replaced-height
     if box.top == box.bottom == 'auto':
         box.top = box.position_y - cb_y
     if 'auto' in (box.top, box.bottom):

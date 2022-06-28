@@ -370,7 +370,7 @@ def test_fixed_positioning():
 
 @assert_no_logs
 def test_fixed_positioning_regression_1():
-    # Regression test for https://github.com/Kozea/WeasyPrint/issues/641
+    # Regression test for https://github.com/Kozea/WeasyPrint/pull/641
     page_1, page_2 = render_pages('''
       <style>
         @page:first { size: 100px 200px }

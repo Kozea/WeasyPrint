@@ -75,7 +75,7 @@ def gather_links_and_bookmarks(box, anchors, links, bookmarks,
     # "Transforms apply to block-level and atomic inline-level elements,
     #  but do not apply to elements which may be split into
     #  multiple inline-level boxes."
-    # http://www.w3.org/TR/css3-2d-transforms/#introduction
+    # https://www.w3.org/TR/css-transforms-1/#introduction
     if box.style['transform'] and not isinstance(box, boxes.InlineBox):
         border_width = box.border_width()
         border_height = box.border_height()

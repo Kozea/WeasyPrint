@@ -4,7 +4,7 @@ Also known as max-content and min-content width, also known as the
 shrink-to-fit algorithm.
 
 Terms used (max-content width, min-content width) are defined in David
-Baron's unofficial draft (http://dbaron.org/css/intrinsic/).
+Baron's unofficial draft (https://dbaron.org/css/intrinsic/).
 
 """
 
@@ -22,7 +22,7 @@ def shrink_to_fit(context, box, available_content_width):
     *Warning:* both available_content_width and the return value are
     for width of the *content area*, not margin area.
 
-    http://www.w3.org/TR/CSS21/visudet.html#float-width
+    https://www.w3.org/TR/CSS21/visudet.html#float-width
 
     """
     return min(
@@ -92,7 +92,7 @@ def _block_content_width(context, box, function, outer):
     if width == 'auto' or width.unit == '%':
         # "percentages on the following properties are treated instead as
         # though they were the following: width: auto"
-        # http://dbaron.org/css/intrinsic/#outer-intrinsic
+        # https://dbaron.org/css/intrinsic/#outer-intrinsic
         children_widths = [
             function(context, child, outer=True) for child in box.children
             if not child.is_absolutely_positioned()]
@@ -313,11 +313,11 @@ def inline_line_widths(context, box, outer, is_line_start, minimum,
                     current_line += lines[0]
                     break
         else:
-            # http://www.w3.org/TR/css3-text/#line-break-details
+            # https://www.w3.org/TR/css-text-3/#overflow-wrap
             # "The line breaking behavior of a replaced element
             #  or other atomic inline is equivalent to that
             #  of the Object Replacement Character (U+FFFC)."
-            # http://www.unicode.org/reports/tr14/#DescriptionOfProperties
+            # https://www.unicode.org/reports/tr14/#DescriptionOfProperties
             # "By default, there is a break opportunity
             #  both before and after any inline object."
             if minimum:
@@ -342,7 +342,7 @@ def inline_line_widths(context, box, outer, is_line_start, minimum,
 def _percentage_contribution(box):
     """Return the percentage contribution of a cell, column or column group.
 
-    http://dbaron.org/css/intrinsic/#pct-contrib
+    https://dbaron.org/css/intrinsic/#pct-contrib
 
     """
     min_width = (
@@ -366,7 +366,7 @@ def table_and_columns_preferred_widths(context, box, outer=True):
        column_intrinsic_percentages, constrainedness,
        total_horizontal_border_spacing, grid)``
 
-    http://dbaron.org/css/intrinsic/
+    https://dbaron.org/css/intrinsic/
 
     """
     from .table import distribute_excess_width
@@ -586,7 +586,7 @@ def table_and_columns_preferred_widths(context, box, outer=True):
             # infinitely large number if the numerator is nonzero [and] the
             # denominator of that ratio is 0."
             #
-            # http://dbaron.org/css/intrinsic/#autotableintrinsic
+            # https://dbaron.org/css/intrinsic/#autotableintrinsic
             #
             # Please note that "an infinitely large number" is not "infinite",
             # and that's probably not a coincindence: putting 'inf' here breaks
@@ -607,7 +607,7 @@ def table_and_columns_preferred_widths(context, box, outer=True):
     if table.style['width'] != 'auto' and table.style['width'].unit == 'px':
         # "percentages on the following properties are treated instead as
         # though they were the following: width: auto"
-        # http://dbaron.org/css/intrinsic/#outer-intrinsic
+        # https://dbaron.org/css/intrinsic/#outer-intrinsic
         table_min_width = table_max_width = table.style['width'].value
     else:
         table_min_width = table_min_content_width

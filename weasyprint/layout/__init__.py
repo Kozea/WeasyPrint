@@ -6,7 +6,7 @@ box fragement.
 Boxes in the new tree have *used values* in their ``position_x``,
 ``position_y``, ``width`` and ``height`` attributes, amongst others.
 
-See http://www.w3.org/TR/CSS21/cascade.html#used-value
+See https://www.w3.org/TR/CSS21/cascade.html#used-value
 
 """
 
@@ -34,7 +34,7 @@ def initialize_page_maker(context, root_box):
     page_break = root_box.style['break_before']
 
     # TODO: take care of text direction and writing mode
-    # https://www.w3.org/TR/css3-page/#progression
+    # https://www.w3.org/TR/css-page-3/#progression
     if page_break == 'right':
         right_page = True
     elif page_break == 'left':
@@ -252,7 +252,7 @@ class LayoutContext:
         self._excluded_shapes_lists.append(self.excluded_shapes)
 
     def finish_block_formatting_context(self, root_box):
-        # See http://www.w3.org/TR/CSS2/visudet.html#root-height
+        # See https://www.w3.org/TR/CSS2/visudet.html#root-height
         if root_box.style['height'] == 'auto' and self.excluded_shapes:
             box_bottom = root_box.content_box_y() + root_box.height
             max_shape_bottom = max([
@@ -285,7 +285,7 @@ class LayoutContext:
          4: ['Third Header', '3.5th Header']}
 
         Value depends on current page.
-        http://dev.w3.org/csswg/css-gcpm/#funcdef-string
+        https://drafts.csswg.org/css-gcpm/#funcdef-string
 
         :param store: dictionary where the resolved value is stored.
         :param page: current page.

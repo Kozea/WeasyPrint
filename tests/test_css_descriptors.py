@@ -13,16 +13,16 @@ def test_font_face_1():
     stylesheet = tinycss2.parse_stylesheet(
         '@font-face {'
         '  font-family: Gentium Hard;'
-        '  src: url(http://example.com/fonts/Gentium.woff);'
+        '  src: url(https://example.com/fonts/Gentium.woff);'
         '}')
     at_rule, = stylesheet
     assert at_rule.at_keyword == 'font-face'
     font_family, src = list(preprocess_descriptors(
-        'font-face', 'http://weasyprint.org/foo/',
+        'font-face', 'https://weasyprint.org/foo/',
         tinycss2.parse_declaration_list(at_rule.content)))
     assert font_family == ('font_family', 'Gentium Hard')
     assert src == (
-        'src', (('external', 'http://example.com/fonts/Gentium.woff'),))
+        'src', (('external', 'https://example.com/fonts/Gentium.woff'),))
 
 
 @assert_no_logs
@@ -39,11 +39,11 @@ def test_font_face_2():
     assert at_rule.at_keyword == 'font-face'
     font_family, src, font_style, font_weight, font_stretch = list(
         preprocess_descriptors(
-            'font-face', 'http://weasyprint.org/foo/',
+            'font-face', 'https://weasyprint.org/foo/',
             tinycss2.parse_declaration_list(at_rule.content)))
     assert font_family == ('font_family', 'Fonty Smiley')
     assert src == (
-        'src', (('external', 'http://weasyprint.org/foo/Fonty-Smiley.woff'),))
+        'src', (('external', 'https://weasyprint.org/foo/Fonty-Smiley.woff'),))
     assert font_style == ('font_style', 'italic')
     assert font_weight == ('font_weight', 200)
     assert font_stretch == ('font_stretch', 'condensed')
@@ -59,7 +59,7 @@ def test_font_face_3():
     at_rule, = stylesheet
     assert at_rule.at_keyword == 'font-face'
     font_family, src = list(preprocess_descriptors(
-        'font-face', 'http://weasyprint.org/foo/',
+        'font-face', 'https://weasyprint.org/foo/',
         tinycss2.parse_declaration_list(at_rule.content)))
     assert font_family == ('font_family', 'Gentium Hard')
     assert src == ('src', (('local', None),))
@@ -76,7 +76,7 @@ def test_font_face_4():
     at_rule, = stylesheet
     assert at_rule.at_keyword == 'font-face'
     font_family, src = list(preprocess_descriptors(
-        'font-face', 'http://weasyprint.org/foo/',
+        'font-face', 'https://weasyprint.org/foo/',
         tinycss2.parse_declaration_list(at_rule.content)))
     assert font_family == ('font_family', 'Gentium Hard')
     assert src == ('src', (('local', 'Gentium Hard'),))
@@ -95,7 +95,7 @@ def test_font_face_5():
     assert at_rule.at_keyword == 'font-face'
     with capture_logs() as logs:
         font_family, src = list(preprocess_descriptors(
-            'font-face', 'http://weasyprint.org/foo/',
+            'font-face', 'https://weasyprint.org/foo/',
             tinycss2.parse_declaration_list(at_rule.content)))
     assert font_family == ('font_family', 'Gentium Hard')
     assert src == ('src', (('local', 'Gentium Hard'),))
@@ -118,11 +118,11 @@ def test_font_face_bad_1():
     with capture_logs() as logs:
         font_family, src, font_stretch = list(
             preprocess_descriptors(
-                'font-face', 'http://weasyprint.org/foo/',
+                'font-face', 'https://weasyprint.org/foo/',
                 tinycss2.parse_declaration_list(at_rule.content)))
     assert font_family == ('font_family', 'Bad Font')
     assert src == (
-        'src', (('external', 'http://weasyprint.org/foo/BadFont.woff'),))
+        'src', (('external', 'https://weasyprint.org/foo/BadFont.woff'),))
     assert font_stretch == ('font_stretch', 'expanded')
     assert logs == [
         'WARNING: Ignored `font-style: wrong` at 1:91, invalid value.',
@@ -134,7 +134,7 @@ def test_font_face_bad_2():
     stylesheet = tinycss2.parse_stylesheet('@font-face{}')
     with capture_logs() as logs:
         preprocess_stylesheet(
-            'print', 'http://wp.org/foo/', stylesheet, None, None, None,
+            'print', 'https://wp.org/foo/', stylesheet, None, None, None,
             None, None)
     assert logs == [
         "WARNING: Missing src descriptor in '@font-face' rule at 1:1"]
@@ -144,7 +144,7 @@ def test_font_face_bad_3():
     stylesheet = tinycss2.parse_stylesheet('@font-face{src: url(test.woff)}')
     with capture_logs() as logs:
         preprocess_stylesheet(
-            'print', 'http://wp.org/foo/', stylesheet, None, None, None,
+            'print', 'https://wp.org/foo/', stylesheet, None, None, None,
             None, None)
     assert logs == [
         "WARNING: Missing font-family descriptor in '@font-face' rule at 1:1"]
@@ -154,7 +154,7 @@ def test_font_face_bad_4():
     stylesheet = tinycss2.parse_stylesheet('@font-face{font-family: test}')
     with capture_logs() as logs:
         preprocess_stylesheet(
-            'print', 'http://wp.org/foo/', stylesheet, None, None, None,
+            'print', 'https://wp.org/foo/', stylesheet, None, None, None,
             None, None)
     assert logs == [
         "WARNING: Missing src descriptor in '@font-face' rule at 1:1"]
@@ -165,7 +165,7 @@ def test_font_face_bad_5():
         '@font-face { font-family: test; src: wrong }')
     with capture_logs() as logs:
         preprocess_stylesheet(
-            'print', 'http://wp.org/foo/', stylesheet, None, None, None,
+            'print', 'https://wp.org/foo/', stylesheet, None, None, None,
             None, None)
     assert logs == [
         'WARNING: Ignored `src: wrong ` at 1:33, invalid value.',
@@ -177,7 +177,7 @@ def test_font_face_bad_6():
         '@font-face { font-family: good, bad; src: url(test.woff) }')
     with capture_logs() as logs:
         preprocess_stylesheet(
-            'print', 'http://wp.org/foo/', stylesheet, None, None, None,
+            'print', 'https://wp.org/foo/', stylesheet, None, None, None,
             None, None)
     assert logs == [
         'WARNING: Ignored `font-family: good, bad` at 1:14, invalid value.',
@@ -189,7 +189,7 @@ def test_font_face_bad_7():
         '@font-face { font-family: good, bad; src: really bad }')
     with capture_logs() as logs:
         preprocess_stylesheet(
-            'print', 'http://wp.org/foo/', stylesheet, None, None, None,
+            'print', 'https://wp.org/foo/', stylesheet, None, None, None,
             None, None)
     assert logs == [
         'WARNING: Ignored `font-family: good, bad` at 1:14, invalid value.',
@@ -207,6 +207,6 @@ def test_counter_style_invalid(rule):
     stylesheet = tinycss2.parse_stylesheet(rule)
     with capture_logs() as logs:
         preprocess_stylesheet(
-            'print', 'http://wp.org/foo/', stylesheet, None, None, None,
+            'print', 'https://wp.org/foo/', stylesheet, None, None, None,
             None, {})
     assert len(logs) >= 1

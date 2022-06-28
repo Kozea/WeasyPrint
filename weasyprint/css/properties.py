@@ -9,7 +9,7 @@ Dimension = collections.namedtuple('Dimension', ['value', 'unit'])
 
 
 INITIAL_VALUES = {
-    # CSS 2.1: http://www.w3.org/TR/CSS21/propidx.html
+    # CSS 2.1: https://www.w3.org/TR/CSS21/propidx.html
     'bottom': 'auto',
     'caption_side': 'top',
     'clear': 'none',
@@ -42,7 +42,7 @@ INITIAL_VALUES = {
     'width': 'auto',
     'z_index': 'auto',
 
-    # Backgrounds and Borders 3 (CR): https://www.w3.org/TR/css3-background/
+    # Backgrounds and Borders 3 (CR): https://www.w3.org/TR/css-backgrounds-3/
     'background_attachment': ('scroll',),
     'background_clip': ('border-box',),
     'background_color': parse_color('transparent'),
@@ -71,7 +71,7 @@ INITIAL_VALUES = {
     'border_top_style': 'none',
     'border_top_width': 3,  # computed value for 'medium'
 
-    # Color 3 (REC): https://www.w3.org/TR/css3-color/
+    # Color 3 (REC): https://www.w3.org/TR/css-color-3/
     'opacity': 1,
 
     # Multi-column Layout (WD): https://www.w3.org/TR/css-multicol-1/
@@ -120,7 +120,7 @@ INITIAL_VALUES = {
     'quotes': list('“”‘’'),  # chosen by the user agent
     'string_set': 'none',
 
-    # Images 3/4 (CR/WD): https://www.w3.org/TR/css4-images/
+    # Images 3/4 (CR/WD): https://www.w3.org/TR/css-images-4/
     'image_resolution': 1,  # dppx
     'image_rendering': 'auto',
     # https://drafts.csswg.org/css-images-3/
@@ -214,10 +214,10 @@ KNOWN_PROPERTIES = set(name.replace('_', '-') for name in INITIAL_VALUES)
 # Values inherited but not applicable to print are not included.
 #
 # text_decoration is not a really inherited, see
-# http://www.w3.org/TR/CSS2/text.html#propdef-text-decoration
+# https://www.w3.org/TR/CSS2/text.html#propdef-text-decoration
 #
 # link: click events normally bubble up to link ancestors
-#   See http://lists.w3.org/Archives/Public/www-style/2012Jun/0315.html
+#   See https://lists.w3.org/Archives/Public/www-style/2012Jun/0315.html
 INHERITED = {
     'block_ellipsis',
     'border_collapse',
@@ -270,8 +270,8 @@ INHERITED = {
 }
 
 
-# http://www.w3.org/TR/CSS21/tables.html#model
-# See also http://lists.w3.org/Archives/Public/www-style/2012Jun/0066.html
+# https://www.w3.org/TR/CSS21/tables.html#model
+# See also https://lists.w3.org/Archives/Public/www-style/2012Jun/0066.html
 # Only non-inherited properties need to be included here.
 TABLE_WRAPPER_BOX_PROPERTIES = {
     'bottom',

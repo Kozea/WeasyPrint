@@ -58,7 +58,7 @@ def parse_stylesheets(tree, url):
     # TODO: support contentStyleType on <svg>
     stylesheets = []
     for element in tree.etree_element.iter():
-        # http://www.w3.org/TR/SVG/styling.html#StyleElement
+        # https://www.w3.org/TR/SVG/styling.html#StyleElement
         if (element.tag == '{http://www.w3.org/2000/svg}style' and
                 element.get('type', 'text/css') == 'text/css' and
                 element.text):

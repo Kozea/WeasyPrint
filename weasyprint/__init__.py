@@ -31,7 +31,7 @@ from .logger import LOGGER, PROGRESS_LOGGER  # noqa isort:skip
 def _find_base_url(html_document, fallback_base_url):
     """Return the base URL for the document.
 
-    See http://www.w3.org/TR/html5/urls.html#document-base-url
+    See https://www.w3.org/TR/html5/urls.html#document-base-url
 
     """
     first_base_element = next(iter(html_document.iter('base')), None)

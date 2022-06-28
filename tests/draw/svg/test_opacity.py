@@ -7,7 +7,7 @@ opacity_source = '''
     @page { size: 9px }
     svg { display: block }
   </style>
-  <svg width="9px" height="9px" xmlns="http://www.w3.org/2000/svg">%s</svg>'''
+  <svg width="9px" height="9px" xmlns="https://www.w3.org/2000/svg">%s</svg>'''
 
 
 @assert_no_logs

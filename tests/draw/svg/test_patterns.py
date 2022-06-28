@@ -19,7 +19,7 @@ def test_pattern(assert_pixels):
         @page { size: 8px }
         svg { display: block }
       </style>
-      <svg width="8px" height="8px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="8px" height="8px" xmlns="https://www.w3.org/2000/svg">
         <defs>
           <pattern id="pat" x="0" y="0" width="4" height="4"
             patternUnits="userSpaceOnUse"
@@ -51,7 +51,7 @@ def test_pattern_2(assert_pixels):
         @page { size: 8px }
         svg { display: block }
       </style>
-      <svg width="8px" height="8px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="8px" height="8px" xmlns="https://www.w3.org/2000/svg">
         <defs>
           <pattern id="pat" x="0" y="0" width="50%" height="50%"
             patternUnits="objectBoundingBox"
@@ -83,7 +83,7 @@ def test_pattern_3(assert_pixels):
         @page { size: 8px }
         svg { display: block }
       </style>
-      <svg width="8px" height="8px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="8px" height="8px" xmlns="https://www.w3.org/2000/svg">
         <defs>
           <pattern id="pat" x="0" y="0" width="4" height="4"
             patternUnits="userSpaceOnUse"
@@ -115,7 +115,7 @@ def test_pattern_4(assert_pixels):
         @page { size: 8px }
         svg { display: block }
       </style>
-      <svg width="8px" height="8px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="8px" height="8px" xmlns="https://www.w3.org/2000/svg">
         <defs>
           <pattern id="pat" x="0" y="0" width="4" height="4"
             patternUnits="userSpaceOnUse"

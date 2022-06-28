@@ -2229,7 +2229,7 @@ Bug fixes:
 Release process:
 
 * Drop Python 3.1 support.
-* Set up [Travis CI](http://travis-ci.org/)
+* Set up [Travis CI](https://travis-ci.org/)
   to automatically test all pushes and pull requests.
 * Start testing on Python 3.4 locally. (Travis does not support 3.4 yet.)
 
@@ -2241,11 +2241,11 @@ Released on 2014-01-11.
 
 New features:
 
-* Add the `overflow-wrap <http://dev.w3.org/csswg/css-text/#overflow-wrap>`_
+* Add the `overflow-wrap <https://drafts.csswg.org/css-text/#overflow-wrap>`_
   property, allowing line breaks inside otherwise-unbreakable words.
   Thanks Frédérick Deslandes!
 * Add the `image-resolution
-  <http://dev.w3.org/csswg/css-images-3/#the-image-resolution>`_ property,
+  <https://drafts.csswg.org/css-images-3/#the-image-resolution>`_ property,
   allowing images to be sized proportionally to their intrinsic size
   at a resolution other than 96 image pixels per CSS ``in``
   (ie. one image pixel per CSS ``px``)
@@ -2516,7 +2516,7 @@ Released on 2012-07-19.
   WeasyPrint for fetching linked stylesheets or images, eg. to generate them
   on the fly without going through the network.
   This enables the creation of `Flask-WeasyPrint
-  <http://packages.python.org/Flask-WeasyPrint/>`_.
+  <https://packages.python.org/Flask-WeasyPrint/>`_.
 
 
 Version 0.11
@@ -2568,7 +2568,7 @@ Released on 2012-06-04.
 
 Bookmarks can be controlled by the ``-weasy-bookmark-level`` and
 ``-weasy-bookmark-label`` properties, as described in `CSS Generated Content
-for Paged Media Module <http://dev.w3.org/csswg/css3-gcpm/#bookmarks>`_.
+for Paged Media Module <https://drafts.csswg.org/css-gcpm-3/#bookmarks>`_.
 
 The default UA stylesheet sets a matching bookmark level on all ``<h1>``
 to ``<h6>`` elements.
@@ -2588,8 +2588,8 @@ Released on 2012-05-07.
 * Speed improvements on big stylesheets / small documents thanks to tinycss.
 * Many bug fixes
 
-.. _tinycss: http://packages.python.org/tinycss/
-.. _cssselect: http://packages.python.org/cssselect/
+.. _tinycss: https://packages.python.org/tinycss/
+.. _cssselect: https://packages.python.org/cssselect/
 
 
 Version 0.7.1

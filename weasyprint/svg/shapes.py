@@ -68,7 +68,7 @@ def rect(svg, node, font_size):
         ry = height / 2
 
     # Inspired by Cairo Cookbook
-    # http://cairographics.org/cookbook/roundedrectangles/
+    # https://cairographics.org/cookbook/roundedrectangles/
     ARC_TO_BEZIER = 4 * (2 ** .5 - 1) / 3
     c1, c2 = ARC_TO_BEZIER * rx, ARC_TO_BEZIER * ry
 

@@ -1413,7 +1413,7 @@ def test_layout_table_auto_45():
 @assert_no_logs
 def test_layout_table_auto_46():
     # Test regression:
-    # http://test.weasyprint.org/suite-css21/chapter8/section2/test56/
+    # https://test.weasyprint.org/suite-css21/chapter8/section2/test56/
     page, = render_pages('''
       <div style="position: absolute">
         <table style="margin: 50px; border: 20px solid black">
@@ -1842,7 +1842,7 @@ def test_table_row_height_2():
 
 @assert_no_logs
 def test_table_row_height_3():
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/937
     page, = render_pages('''
       <style>
         @font-face { src: url(weasyprint.otf); font-family: weasyprint }

@@ -18,7 +18,7 @@ def expand_to_dict(css, expected_error=None):
     declarations = tinycss2.parse_declaration_list(css)
 
     with capture_logs() as logs:
-        base_url = 'http://weasyprint.org/foo/'
+        base_url = 'https://weasyprint.org/foo/'
         declarations = list(preprocess_declarations(base_url, declarations))
 
     if expected_error:
@@ -360,7 +360,7 @@ def test_expand_borders_invalid():
         'list_style_type': 'inherit',
     }),
     ('list-style: url(../bar/lipsum.png)', {
-        'list_style_image': ('url', 'http://weasyprint.org/bar/lipsum.png'),
+        'list_style_image': ('url', 'https://weasyprint.org/bar/lipsum.png'),
     }),
     ('list-style: square', {
         'list_style_type': 'square',
@@ -422,7 +422,7 @@ def test_expand_background():
     assert_background('red', background_color=(1, 0, 0, 1))
     assert_background(
         'url(lipsum.png)',
-        background_image=[('url', 'http://weasyprint.org/foo/lipsum.png')])
+        background_image=[('url', 'https://weasyprint.org/foo/lipsum.png')])
     assert_background(
         'no-repeat',
         background_repeat=[('no-repeat', 'no-repeat')])
@@ -468,7 +468,7 @@ def test_expand_background():
     assert_background(
         'url(bar) #f00 repeat-y center left fixed',
         background_color=(1, 0, 0, 1),
-        background_image=[('url', 'http://weasyprint.org/foo/bar')],
+        background_image=[('url', 'https://weasyprint.org/foo/bar')],
         background_repeat=[('no-repeat', 'repeat')],
         background_attachment=['fixed'],
         background_position=[('left', (0, '%'), 'top', (50, '%'))])
@@ -515,7 +515,7 @@ def test_expand_background():
     assert_background(
         'url(bar) center, no-repeat',
         background_color=(0, 0, 0, 0),
-        background_image=[('url', 'http://weasyprint.org/foo/bar'),
+        background_image=[('url', 'https://weasyprint.org/foo/bar'),
                           ('none', None)],
         background_position=[('left', (50, '%'), 'top', (50, '%')),
                              ('left', (0, '%'), 'top', (0, '%'))],

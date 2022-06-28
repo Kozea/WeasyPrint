@@ -18,7 +18,7 @@ def test_image_svg(assert_pixels):
         @page { size: 4px 4px }
         svg { display: block }
       </style>
-      <svg width="4px" height="4px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="4px" height="4px" xmlns="https://www.w3.org/2000/svg">
         <svg x="1" y="1" width="2" height="2" viewBox="0 0 10 10">
           <rect x="5" y="5" width="5" height="5" fill="blue" />
         </svg>
@@ -38,7 +38,7 @@ def test_image_svg_viewbox(assert_pixels):
         @page { size: 4px 4px }
         svg { display: block }
       </style>
-      <svg viewBox="0 0 4 4" xmlns="http://www.w3.org/2000/svg">
+      <svg viewBox="0 0 4 4" xmlns="https://www.w3.org/2000/svg">
         <svg x="1" y="1" width="2" height="2" viewBox="10 10 10 10">
           <rect x="15" y="15" width="5" height="5" fill="blue" />
         </svg>
@@ -63,7 +63,7 @@ def test_image_svg_align_default(assert_pixels):
         svg { display: block }
       </style>
       <svg width="8px" height="4px" viewBox="0 0 4 4"
-           xmlns="http://www.w3.org/2000/svg">
+           xmlns="https://www.w3.org/2000/svg">
         <rect width="4" height="4" fill="red" />
         <rect width="1" height="2" fill="blue" />
         <rect x="3" y="2" width="1" height="2" fill="lime" />
@@ -89,7 +89,7 @@ def test_image_svg_align_none(assert_pixels):
       </style>
       <svg width="8px" height="4px" viewBox="0 0 4 4"
            preserveAspectRatio="none"
-           xmlns="http://www.w3.org/2000/svg">
+           xmlns="https://www.w3.org/2000/svg">
         <rect width="4" height="4" fill="red" />
         <rect width="1" height="2" fill="blue" />
         <rect x="3" y="2" width="1" height="2" fill="lime" />
@@ -115,7 +115,7 @@ def test_image_svg_align_meet_x(assert_pixels):
       </style>
       <svg width="8px" height="4px" viewBox="0 0 4 4"
            preserveAspectRatio="xMaxYMax meet"
-           xmlns="http://www.w3.org/2000/svg">
+           xmlns="https://www.w3.org/2000/svg">
         <rect width="4" height="4" fill="red" />
         <rect width="1" height="2" fill="blue" />
         <rect x="3" y="2" width="1" height="2" fill="lime" />
@@ -141,7 +141,7 @@ def test_image_svg_align_meet_y(assert_pixels):
       </style>
       <svg width="4px" height="8px" viewBox="0 0 4 4"
            preserveAspectRatio="xMaxYMax meet"
-           xmlns="http://www.w3.org/2000/svg">
+           xmlns="https://www.w3.org/2000/svg">
         <rect width="4" height="4" fill="red" />
         <rect width="1" height="2" fill="blue" />
         <rect x="3" y="2" width="1" height="2" fill="lime" />
@@ -167,7 +167,7 @@ def test_image_svg_align_slice_x(assert_pixels):
       </style>
       <svg width="8px" height="4px" viewBox="0 0 4 4"
            preserveAspectRatio="xMinYMin slice"
-           xmlns="http://www.w3.org/2000/svg">
+           xmlns="https://www.w3.org/2000/svg">
         <rect width="4" height="4" fill="red" />
         <rect width="1" height="2" fill="blue" />
         <rect x="3" y="2" width="1" height="2" fill="lime" />
@@ -193,7 +193,7 @@ def test_image_svg_align_slice_y(assert_pixels):
       </style>
       <svg width="4px" height="8px" viewBox="0 0 4 4"
            preserveAspectRatio="xMinYMin slice"
-           xmlns="http://www.w3.org/2000/svg">
+           xmlns="https://www.w3.org/2000/svg">
         <rect width="4" height="4" fill="red" />
         <rect width="1" height="2" fill="blue" />
         <rect x="3" y="2" width="1" height="2" fill="lime" />
@@ -214,7 +214,7 @@ def test_image_svg_percentage(assert_pixels):
         @page { size: 4px 4px }
         svg { display: block }
       </style>
-      <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+      <svg width="100%" height="100%" xmlns="https://www.w3.org/2000/svg">
         <svg x="1" y="1" width="50%" height="50%" viewBox="0 0 10 10">
           <rect x="5" y="5" width="5" height="5" fill="blue" />
         </svg>
@@ -233,7 +233,7 @@ def test_image_svg_wrong(assert_pixels):
         @page { size: 4px 4px }
         svg { display: block }
       </style>
-      <svg width="4px" height="4px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="4px" height="4px" xmlns="https://www.w3.org/2000/svg">
         <That’s bad!
       </svg>
     ''')
@@ -251,7 +251,7 @@ def test_image_image(assert_pixels):
         @page { size: 4px 4px }
         svg { display: block }
       </style>
-      <svg width="4px" height="4px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="4px" height="4px" xmlns="https://www.w3.org/2000/svg">
         <image xlink:href="%s" />
       </svg>
     ''' % path2url(resource_filename('pattern.png')))
@@ -268,7 +268,7 @@ def test_image_image_wrong(assert_pixels):
         @page { size: 4px 4px }
         svg { display: block }
       </style>
-      <svg width="4px" height="4px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="4px" height="4px" xmlns="https://www.w3.org/2000/svg">
         <image xlink:href="it doesn’t exist, mouhahahaha" />
       </svg>
     ''')

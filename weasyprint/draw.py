@@ -78,7 +78,7 @@ def draw_box_background_and_border(stream, page, box):
 
 def draw_stacking_context(stream, stacking_context):
     """Draw a ``stacking_context`` on ``stream``."""
-    # See http://www.w3.org/TR/CSS2/zindex.html
+    # See https://www.w3.org/TR/CSS2/zindex.html
     with stacked(stream):
         box = stacking_context.box
 
@@ -267,7 +267,7 @@ def draw_background(stream, bg, clip_box=True, bleed=None, marks=()):
             svg = f'''
               <svg height="{height}" width="{width}"
                    fill="transparent" stroke="black" stroke-width="1"
-                   xmlns="http://www.w3.org/2000/svg">
+                   xmlns="https://www.w3.org/2000/svg">
             '''
             if 'crop' in marks:
                 svg += f'''
@@ -520,7 +520,7 @@ def clip_border_segment(stream, style, width, side, border_box,
         pi" Quart. J. Pure. Appl. Math., vol. 45 (1913-1914), pp. 350-372],
         wonderfully explained by Dr Rob.
 
-        http://mathforum.org/dr.math/faq/formulas/
+        https://mathforum.org/dr.math/faq/formulas/
 
         """
         x = (a - b) / (a + b)

@@ -1,6 +1,6 @@
 """Validate properties.
 
-See http://www.w3.org/TR/CSS21/propidx.html and various CSS3 modules.
+See https://www.w3.org/TR/CSS21/propidx.html and various CSS3 modules.
 
 """
 
@@ -1268,7 +1268,7 @@ def image_rendering(keyword):
 def size(tokens):
     """``size`` property validation.
 
-    See http://www.w3.org/TR/css3-page/#page-size-prop
+    See https://www.w3.org/TR/css-page-3/#page-size-prop
 
     """
     lengths = [get_length(token, negative=False) for token in tokens]

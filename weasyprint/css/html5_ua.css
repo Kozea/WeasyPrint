@@ -8,7 +8,7 @@ what various web browsers use.
 
 */
 
-/* http://www.w3.org/TR/html5/Overview#scroll-to-the-fragment-identifier */
+/* https://www.w3.org/TR/html5/Overview#scroll-to-the-fragment-identifier */
 *[id] { -weasy-anchor: attr(id); }
 a[name] { -weasy-anchor: attr(name); }
 

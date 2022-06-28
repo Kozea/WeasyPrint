@@ -11,11 +11,11 @@ from ..logger import LOGGER
 
 # XML namespaces used for metadata
 NS = {
-    'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
-    'dc': 'http://purl.org/dc/elements/1.1/',
-    'xmp': 'http://ns.adobe.com/xap/1.0/',
-    'pdf': 'http://ns.adobe.com/pdf/1.3/',
-    'pdfaid': 'http://www.aiim.org/pdfa/ns/id/',
+    'rdf': 'https://www.w3.org/1999/02/22-rdf-syntax-ns#',
+    'dc': 'https://purl.org/dc/elements/1.1/',
+    'xmp': 'https://ns.adobe.com/xap/1.0/',
+    'pdf': 'https://ns.adobe.com/pdf/1.3/',
+    'pdfaid': 'https://www.aiim.org/pdfa/ns/id/',
 }
 for key, value in NS.items():
     register_namespace(key, value)

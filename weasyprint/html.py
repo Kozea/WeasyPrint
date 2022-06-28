@@ -25,7 +25,7 @@ HTML5_UA_STYLESHEET = CSS(
     string=HTML5_UA, counter_style=HTML5_UA_COUNTER_STYLE)
 HTML5_PH_STYLESHEET = CSS(string=HTML5_PH)
 
-# http://whatwg.org/C#space-character
+# https://html.spec.whatwg.org/multipage/#space-character
 HTML_WHITESPACE = ' \t\n\f\r'
 HTML_SPACE_SEPARATED_TOKENS_RE = re.compile(f'[^{HTML_WHITESPACE}]+')
 
@@ -37,7 +37,7 @@ def ascii_lower(string):
     :returns: A new Unicode string.
 
     This is used for `ASCII case-insensitive
-    <http://whatwg.org/C#ascii-case-insensitive>`_ matching.
+    <https://whatwg.org/C#ascii-case-insensitive>`_ matching.
 
     This is different from the :meth:`str.lower` method of Unicode strings
     which also affect non-ASCII characters,
@@ -114,7 +114,7 @@ def handle_img(element, box, get_image_from_uri, base_url):
 
     Return either an image or the alt-text.
 
-    See: http://www.w3.org/TR/html5/embedded-content-1.html#the-img-element
+    See: https://www.w3.org/TR/html5/embedded-content-1.html#the-img-element
 
     """
     src = get_url_attribute(element, 'src', base_url)
@@ -194,7 +194,7 @@ def handle_col(element, box, _get_image_from_uri, _base_url):
     """Handle the ``span`` attribute."""
     if isinstance(box, boxes.TableColumnBox) and box.span > 1:
         # Generate multiple boxes
-        # http://lists.w3.org/Archives/Public/www-style/2011Nov/0293.html
+        # https://lists.w3.org/Archives/Public/www-style/2011Nov/0293.html
         return [box.copy() for _i in range(box.span)]
     return [box]
 
@@ -205,9 +205,9 @@ def handle_td(element, box, _get_image_from_uri, _base_url):
     """Handle the ``colspan``, ``rowspan`` attributes."""
     if isinstance(box, boxes.TableCellBox):
         # HTML 4.01 gives special meaning to colspan=0
-        # http://www.w3.org/TR/html401/struct/tables.html#adef-rowspan
+        # https://www.w3.org/TR/html401/struct/tables.html#adef-rowspan
         # but HTML 5 removed it
-        # http://www.w3.org/TR/html5/tabular-data.html#attr-tdth-colspan
+        # https://html.spec.whatwg.org/multipage/tables.html#attr-tdth-colspan
         # rowspan=0 is still there though.
         try:
             box.colspan = max(int(element.get('colspan', '').strip()), 1)
@@ -252,10 +252,10 @@ def get_html_metadata(html):
 
     Relevant specs:
 
-    http://www.whatwg.org/html#the-title-element
-    http://www.whatwg.org/html#standard-metadata-names
-    http://wiki.whatwg.org/wiki/MetaExtensions
-    http://microformats.org/wiki/existing-rel-values#HTML5_link_type_extensions
+    https://www.whatwg.org/html#the-title-element
+    https://www.whatwg.org/html#standard-metadata-names
+    https://wiki.whatwg.org/wiki/MetaExtensions
+    https://microformats.org/wiki/existing-rel-values#HTML5_link_type_extensions
 
     """
     title = None
@@ -312,8 +312,8 @@ def strip_whitespace(string):
     """Use the HTML definition of "space character",
     not all Unicode Whitespace.
 
-    http://www.whatwg.org/html#strip-leading-and-trailing-whitespace
-    http://www.whatwg.org/html#space-character
+    https://www.whatwg.org/html#strip-leading-and-trailing-whitespace
+    https://www.whatwg.org/html#space-character
 
     """
     return string.strip(HTML_WHITESPACE)

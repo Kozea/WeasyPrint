@@ -119,7 +119,7 @@ def block_box_layout(context, box, bottom_space, skip_stack,
     new_box = result[0]
     if new_box and new_box.is_table_wrapper:
         # Don't collide with floats
-        # http://www.w3.org/TR/CSS21/visuren.html#floats
+        # https://www.w3.org/TR/CSS21/visuren.html#floats
         position_x, position_y, _ = avoid_collisions(
             context, new_box, containing_block, outer=False)
         new_box.translate(
@@ -139,7 +139,7 @@ def block_level_width(box, containing_block):
         # TODO: what is the real text direction?
         direction = 'ltr'
 
-    # http://www.w3.org/TR/CSS21/visudet.html#blockwidth
+    # https://www.w3.org/TR/CSS21/visudet.html#blockwidth
 
     # These names are waaay too long
     margin_l = box.margin_left
@@ -345,7 +345,7 @@ def _linebox_layout(context, box, index, child, new_children, page_is_empty,
             break
 
         # TODO: this is incomplete.
-        # See http://dev.w3.org/csswg/css3-page/#allowed-pg-brk
+        # See https://drafts.csswg.org/css-page-3/#allowed-pg-brk
         # "When an unforced page break occurs here, both the adjoining
         #  ‘margin-top’ and ‘margin-bottom’ are set to zero."
         # See https://github.com/Kozea/WeasyPrint/issues/115
@@ -765,7 +765,7 @@ def block_container_layout(context, box, bottom_space, skip_stack,
         start=not is_start, end=box_is_fragmented and not discard)
 
     # TODO: See corner cases in
-    # http://www.w3.org/TR/CSS21/visudet.html#normal-block
+    # https://www.w3.org/TR/CSS21/visudet.html#normal-block
     # TODO: See float.float_layout
     if new_box.height == 'auto':
         if context.excluded_shapes and new_box.style['overflow'] != 'visible':
@@ -824,7 +824,7 @@ def collapse_margin(adjoining_margins):
 def establishes_formatting_context(box):
     """Return whether a box establishes a block formatting context.
 
-    See http://www.w3.org/TR/CSS2/visuren.html#block-formatting
+    See https://www.w3.org/TR/CSS2/visuren.html#block-formatting
 
     """
     return (

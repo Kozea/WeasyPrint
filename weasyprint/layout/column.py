@@ -15,7 +15,7 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
         collapse_margin)
 
     # Implementation of the multi-column pseudo-algorithm:
-    # https://www.w3.org/TR/css3-multicol/#pseudo-algorithm
+    # https://www.w3.org/TR/css-multicol-1/#pseudo-algorithm
     width = None
     style = box.style
     original_bottom_space = bottom_space

@@ -4,7 +4,7 @@ This module takes care of steps 3 and 4 of “CSS 2.1 processing model”: Retri
 stylesheets associated with a document and annotate every element with a value
 for every CSS property.
 
-http://www.w3.org/TR/CSS21/intro.html#processing-model
+https://www.w3.org/TR/CSS21/intro.html#processing-model
 
 This module does this in more than two steps. The
 :func:`get_all_computed_styles` function does everything, but it is itsef based
@@ -48,7 +48,7 @@ class StyleFor:
         #     values: (values, weight)
         #         values: a PropertyValue-like object
         #         weight: values with a greater weight take precedence, see
-        #             http://www.w3.org/TR/CSS21/cascade.html#cascading-order
+        #             https://www.w3.org/TR/CSS21/cascade.html#cascading-order
         self._cascaded_styles = cascaded_styles = {}
 
         # keys: (element, pseudo_element_type), like cascaded_styles
@@ -587,7 +587,7 @@ def declaration_precedence(origin, importance):
     and ``'user agent'``.
 
     """
-    # See http://www.w3.org/TR/CSS21/cascade.html#cascading-order
+    # See https://www.w3.org/TR/CSS21/cascade.html#cascading-order
     if origin == 'user agent':
         return 1
     elif origin == 'user' and not importance:

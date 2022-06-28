@@ -127,7 +127,7 @@ def http_server(handlers):
         return [response]
 
     # Port 0: let the OS pick an available port number
-    # http://stackoverflow.com/a/1365284/1162888
+    # https://stackoverflow.com/a/1365284/1162888
     server = wsgiref.simple_server.make_server('127.0.0.1', 0, wsgi_app)
     _host, port = server.socket.getsockname()
     thread = threading.Thread(target=server.serve_forever)

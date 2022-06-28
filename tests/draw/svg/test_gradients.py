@@ -23,7 +23,7 @@ def test_linear_gradient(assert_pixels):
         @page { size: 10px }
         svg { display: block }
       </style>
-      <svg width="10px" height="10px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="10px" height="10px" xmlns="https://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1"
             gradientUnits="objectBoundingBox">
@@ -54,7 +54,7 @@ def test_linear_gradient_userspace(assert_pixels):
         @page { size: 10px }
         svg { display: block }
       </style>
-      <svg width="10px" height="10px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="10px" height="10px" xmlns="https://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="grad" x1="0" y1="0" x2="0" y2="10"
             gradientUnits="userSpaceOnUse">
@@ -83,7 +83,7 @@ def test_linear_gradient_multicolor(assert_pixels):
         @page { size: 10px 8px }
         svg { display: block }
       </style>
-      <svg width="10px" height="8px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="10px" height="8px" xmlns="https://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1"
             gradientUnits="objectBoundingBox">
@@ -116,7 +116,7 @@ def test_linear_gradient_multicolor_userspace(assert_pixels):
         @page { size: 10px 8px }
         svg { display: block }
       </style>
-      <svg width="10px" height="8px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="10px" height="8px" xmlns="https://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="grad" x1="0" y1="0" x2="0" y2="8"
             gradientUnits="userSpaceOnUse">
@@ -150,7 +150,7 @@ def test_linear_gradient_transform(assert_pixels):
         @page { size: 10px 8px}
         svg { display: block }
       </style>
-      <svg width="10px" height="8px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="10px" height="8px" xmlns="https://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1"
             gradientUnits="objectBoundingBox" gradientTransform="scale(0.5)">
@@ -191,7 +191,7 @@ def test_linear_gradient_repeat(assert_pixels):
         @page { size: 10px 16px }
         svg { display: block }
       </style>
-      <svg width="11px" height="16px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="11px" height="16px" xmlns="https://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="grad" x1="0" y1="0" x2="0" y2="0.5"
             gradientUnits="objectBoundingBox" spreadMethod="repeat">
@@ -233,7 +233,7 @@ def test_linear_gradient_repeat_long(assert_pixels):
         @page { size: 10px 16px }
         svg { display: block }
       </style>
-      <svg width="11px" height="16px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="11px" height="16px" xmlns="https://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="grad" x1="0" y1="0" x2="0" y2="0.25"
             gradientUnits="objectBoundingBox" spreadMethod="repeat">
@@ -274,7 +274,7 @@ def test_linear_gradient_reflect(assert_pixels):
         @page { size: 10px 16px }
         svg { display: block }
       </style>
-      <svg width="11px" height="16px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="11px" height="16px" xmlns="https://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="grad" x1="0" y1="0" x2="0" y2="0.5"
             gradientUnits="objectBoundingBox" spreadMethod="reflect">
@@ -309,7 +309,7 @@ def test_radial_gradient(assert_pixels):
         @page { size: 10px }
         svg { display: block }
       </style>
-      <svg width="10px" height="10px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="10px" height="10px" xmlns="https://www.w3.org/2000/svg">
         <defs>
           <radialGradient id="grad" cx="0.5" cy="0.5" r="0.5"
             fx="0.5" fy="0.5" fr="0.2"
@@ -341,7 +341,7 @@ def test_radial_gradient_userspace(assert_pixels):
         @page { size: 10px }
         svg { display: block }
       </style>
-      <svg width="10px" height="10px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="10px" height="10px" xmlns="https://www.w3.org/2000/svg">
         <defs>
           <radialGradient id="grad" cx="5" cy="5" r="5" fx="5" fy="5" fr="2"
             gradientUnits="userSpaceOnUse">
@@ -372,7 +372,7 @@ def test_radial_gradient_multicolor(assert_pixels):
         @page { size: 10px }
         svg { display: block }
       </style>
-      <svg width="10px" height="10px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="10px" height="10px" xmlns="https://www.w3.org/2000/svg">
         <defs>
           <radialGradient id="grad" cx="0.5" cy="0.5" r="0.5"
             fx="0.5" fy="0.5" fr="0.2"
@@ -406,7 +406,7 @@ def test_radial_gradient_multicolor_userspace(assert_pixels):
         @page { size: 10px }
         svg { display: block }
       </style>
-      <svg width="10px" height="10px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="10px" height="10px" xmlns="https://www.w3.org/2000/svg">
         <defs>
           <radialGradient id="grad" cx="5" cy="5" r="5"
             fx="5" fy="5" fr="2"
@@ -441,7 +441,7 @@ def test_radial_gradient_repeat(assert_pixels):
         @page { size: 10px }
         svg { display: block }
       </style>
-      <svg width="10px" height="10px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="10px" height="10px" xmlns="https://www.w3.org/2000/svg">
         <defs>
           <radialGradient id="grad" cx="0.5" cy="0.5" r="0.5"
             fx="0.5" fy="0.5" fr="0.2"
@@ -476,7 +476,7 @@ def test_radial_gradient_reflect(assert_pixels):
         @page { size: 10px }
         svg { display: block }
       </style>
-      <svg width="10px" height="10px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="10px" height="10px" xmlns="https://www.w3.org/2000/svg">
         <defs>
           <radialGradient id="grad" cx="0.5" cy="0.5" r="0.5"
             fx="0.5" fy="0.5" fr="0.2"

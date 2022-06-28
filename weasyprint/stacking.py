@@ -11,8 +11,8 @@ _Z_INDEX_GETTER = operator.attrgetter('z_index')
 class StackingContext:
     """Stacking contexts define the paint order of all pieces of a document.
 
-    http://www.w3.org/TR/CSS21/visuren.html#x43
-    http://www.w3.org/TR/CSS21/zindex.html
+    https://www.w3.org/TR/CSS21/visuren.html#x43
+    https://www.w3.org/TR/CSS21/zindex.html
 
     """
     def __init__(self, box, child_contexts, blocks, floats, blocks_and_cells,

@@ -9,7 +9,7 @@ from tinycss2.color3 import parse_color
 from ..urls import iri_to_uri, url_is_absolute
 from .properties import Dimension
 
-# http://dev.w3.org/csswg/css3-values/#angles
+# https://drafts.csswg.org/css-values-3/#angles
 # 1<unit> is this many radians.
 ANGLE_TO_RADIANS = {
     'rad': 1,
@@ -19,7 +19,7 @@ ANGLE_TO_RADIANS = {
 }
 
 # How many CSS pixels is one <unit>?
-# http://www.w3.org/TR/CSS21/syndata.html#length-units
+# https://www.w3.org/TR/CSS21/syndata.html#length-units
 LENGTHS_TO_PIXELS = {
     'px': 1,
     'pt': 1. / 0.75,
@@ -30,7 +30,7 @@ LENGTHS_TO_PIXELS = {
     'q': 96. / 25.4 / 4,  # LENGTHS_TO_PIXELS['mm'] / 4
 }
 
-# http://dev.w3.org/csswg/css-values/#resolution
+# https://drafts.csswg.org/css-values/#resolution
 RESOLUTION_TO_DPPX = {
     'dppx': 1,
     'dpi': 1 / LENGTHS_TO_PIXELS['in'],
@@ -257,7 +257,7 @@ def parse_2d_position(tokens):
 def parse_position(tokens):
     """Parse background-position and object-position.
 
-    See http://dev.w3.org/csswg/css3-background/#the-background-position
+    See https://drafts.csswg.org/css-backgrounds-3/#the-background-position
     https://drafts.csswg.org/css-images-3/#propdef-object-position
 
     """

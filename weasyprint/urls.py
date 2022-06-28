@@ -15,9 +15,9 @@ from urllib.request import Request, pathname2url, urlopen
 from . import __version__
 from .logger import LOGGER
 
-# See http://stackoverflow.com/a/11687993/1162888
+# See https://stackoverflow.com/a/11687993/1162888
 # Both are needed in Python 3 as the re module does not like to mix
-# http://tools.ietf.org/html/rfc3986#section-3.1
+# https://datatracker.ietf.org/doc/html/rfc3986#section-3.1
 UNICODE_SCHEME_RE = re.compile('^([a-zA-Z][a-zA-Z0-9.+-]+):')
 BYTES_SCHEME_RE = re.compile(b'^([a-zA-Z][a-zA-Z0-9.+-]+):')
 

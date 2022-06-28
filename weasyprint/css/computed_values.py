@@ -21,7 +21,7 @@ ZERO_PIXELS = Dimension(0, 'px')
 
 # Value in pixels of font-size for <absolute-size> keywords: 12pt (16px) for
 # medium, and scaling factors given in CSS3 for others:
-# http://www.w3.org/TR/css3-fonts/#font-size-prop
+# https://www.w3.org/TR/css-fonts-3/#font-size-prop
 FONT_SIZE_KEYWORDS = OrderedDict(
     # medium is 16px, others are a ratio of medium
     (name, INITIAL_VALUES['font_size'] * a / b)
@@ -45,7 +45,7 @@ BORDER_WIDTH_KEYWORDS = {
 }
 assert INITIAL_VALUES['border_top_width'] == BORDER_WIDTH_KEYWORDS['medium']
 
-# http://www.w3.org/TR/CSS21/fonts.html#propdef-font-weight
+# https://www.w3.org/TR/CSS21/fonts.html#propdef-font-weight
 FONT_WEIGHT_RELATIVE = dict(
     bolder={
         100: 400,
@@ -71,7 +71,7 @@ FONT_WEIGHT_RELATIVE = dict(
     },
 )
 
-# http://www.w3.org/TR/css3-page/#size
+# https://www.w3.org/TR/css-page-3/#size
 # name=(width in pixels, height in pixels)
 PAGE_SIZES = {
     'a10': (Dimension(26, 'mm'), Dimension(37, 'mm'),),
@@ -538,7 +538,7 @@ def content(style, name, values):
 def display(style, name, value):
     """Compute the ``display`` property.
 
-    See http://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
+    See https://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
 
     """
     float_ = style.specified['float']
@@ -561,7 +561,7 @@ def display(style, name, value):
 def compute_float(style, name, value):
     """Compute the ``float`` property.
 
-    See http://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
+    See https://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
 
     """
     if style.specified['position'] in ('absolute', 'fixed'):

@@ -130,13 +130,13 @@ class DocumentMetadata:
         self.generator = generator
         #: The creation date of the document, as a string or :obj:`None`.
         #: Dates are in one of the six formats specified in
-        #: `W3C’s profile of ISO 8601 <http://www.w3.org/TR/NOTE-datetime>`_.
+        #: `W3C’s profile of ISO 8601 <https://www.w3.org/TR/NOTE-datetime>`_.
         #: Extracted from the ``<meta name=dcterms.created>`` element in HTML
         #: and written to the ``/CreationDate`` info field in PDF.
         self.created = created
         #: The modification date of the document, as a string or :obj:`None`.
         #: Dates are in one of the six formats specified in
-        #: `W3C’s profile of ISO 8601 <http://www.w3.org/TR/NOTE-datetime>`_.
+        #: `W3C’s profile of ISO 8601 <https://www.w3.org/TR/NOTE-datetime>`_.
         #: Extracted from the ``<meta name=dcterms.modified>`` element in HTML
         #: and written to the ``/ModDate`` info field in PDF.
         self.modified = modified

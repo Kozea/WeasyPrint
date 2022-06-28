@@ -18,7 +18,7 @@ def test_bounding_box_rect(assert_pixels):
         @page { size: 5px }
         svg { display: block }
       </style>
-      <svg width="5px" height="5px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="5px" height="5px" xmlns="https://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="grad" x1="0" y1="0" x2="1" y2="1"
             gradientUnits="objectBoundingBox">
@@ -49,7 +49,7 @@ def test_bounding_box_circle(assert_pixels):
         @page { size: 10px }
         svg { display: block }
       </style>
-      <svg width="10px" height="10px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="10px" height="10px" xmlns="https://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="grad" x1="0" y1="0" x2="1" y2="1"
             gradientUnits="objectBoundingBox">
@@ -80,7 +80,7 @@ def test_bounding_box_ellipse(assert_pixels):
         @page { size: 10px }
         svg { display: block }
       </style>
-      <svg width="10px" height="10px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="10px" height="10px" xmlns="https://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="grad" x1="0" y1="0" x2="1" y2="1"
             gradientUnits="objectBoundingBox">
@@ -106,7 +106,7 @@ def test_bounding_box_line(assert_pixels):
         @page { size: 5px }
         svg { display: block }
       </style>
-      <svg width="5px" height="5px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="5px" height="5px" xmlns="https://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="grad" x1="0" y1="0" x2="1" y2="1"
             gradientUnits="objectBoundingBox">
@@ -133,7 +133,7 @@ def test_bounding_box_polygon(assert_pixels):
         @page { size: 5px }
         svg { display: block }
       </style>
-      <svg width="5px" height="5px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="5px" height="5px" xmlns="https://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="grad" x1="0" y1="0" x2="1" y2="1"
             gradientUnits="objectBoundingBox">
@@ -159,7 +159,7 @@ def test_bounding_box_polyline(assert_pixels):
         @page { size: 5px }
         svg { display: block }
       </style>
-      <svg width="5px" height="5px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="5px" height="5px" xmlns="https://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="grad" x1="0" y1="0" x2="1" y2="1"
             gradientUnits="objectBoundingBox">
@@ -184,7 +184,7 @@ def test_bounding_box_text(assert_pixels):
         @page { size: 2px }
         svg { display: block }
       </style>
-      <svg width="2px" height="2px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="2px" height="2px" xmlns="https://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="grad" x1="0" y1="0" x2="1" y2="1"
             gradientUnits="objectBoundingBox">
@@ -213,7 +213,7 @@ def test_bounding_box_path_hv(assert_pixels):
         @page { size: 5px }
         svg { display: block }
       </style>
-      <svg width="5px" height="5px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="5px" height="5px" xmlns="https://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="grad" x1="0" y1="0" x2="1" y2="1"
             gradientUnits="objectBoundingBox">
@@ -239,7 +239,7 @@ def test_bounding_box_path_l(assert_pixels):
         @page { size: 5px }
         svg { display: block }
       </style>
-      <svg width="5px" height="5px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="5px" height="5px" xmlns="https://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="grad" x1="0" y1="0" x2="1" y2="1"
             gradientUnits="objectBoundingBox">
@@ -266,7 +266,7 @@ def test_bounding_box_path_c(assert_pixels):
         @page { size: 5px }
         svg { display: block }
       </style>
-      <svg width="5px" height="5px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="5px" height="5px" xmlns="https://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="grad" x1="0" y1="0" x2="1" y2="1"
             gradientUnits="objectBoundingBox">
@@ -296,7 +296,7 @@ def test_bounding_box_path_s(assert_pixels):
         @page { size: 5px }
         svg { display: block }
       </style>
-      <svg width="5px" height="5px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="5px" height="5px" xmlns="https://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="grad" x1="0" y1="0" x2="1" y2="1"
             gradientUnits="objectBoundingBox">

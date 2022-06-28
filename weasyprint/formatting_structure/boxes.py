@@ -1,12 +1,12 @@
 """Classes for all types of boxes in the CSS formatting structure / box model.
 
-See http://www.w3.org/TR/CSS21/visuren.html
+See https://www.w3.org/TR/CSS21/visuren.html
 
 Names are the same as in CSS 2.1 with the exception of ``TextBox``. In
 WeasyPrint, any text is in a ``TextBox``. What CSS calls anonymous inline boxes
 are text boxes but not all text boxes are anonymous inline boxes.
 
-See http://www.w3.org/TR/CSS21/visuren.html#anonymous
+See https://www.w3.org/TR/CSS21/visuren.html#anonymous
 
 Abstract classes, should not be instantiated:
 
@@ -56,7 +56,7 @@ from ..css import computed_from_cascaded
 class Box:
     """Abstract base class for all boxes."""
     # Definitions for the rules generating anonymous table boxes
-    # http://www.w3.org/TR/CSS21/tables.html#anonymous-boxes
+    # https://www.w3.org/TR/CSS21/tables.html#anonymous-boxes
     proper_table_child = False
     internal_table_or_caption = False
     tabular_container = False
@@ -190,7 +190,7 @@ class Box:
     def hit_area(self):
         """Return the (x, y, w, h) rectangle where the box is clickable."""
         # "Border area. That's the area that hit-testing is done on."
-        # http://lists.w3.org/Archives/Public/www-style/2012Jun/0318.html
+        # https://lists.w3.org/Archives/Public/www-style/2012Jun/0318.html
         # TODO: manage the border radii, use outer_border_radii instead
         return (self.border_box_x(), self.border_box_y(),
                 self.border_width(), self.border_height())
@@ -222,7 +222,7 @@ class Box:
         height = self.border_height() - bt - bb
 
         # Fix overlapping curves
-        # See http://www.w3.org/TR/css3-background/#corner-overlap
+        # See https://www.w3.org/TR/css-backgrounds-3/#corner-overlap
         ratio = min([1] + [
             extent / sum_radii
             for extent, sum_radii in [
@@ -536,7 +536,7 @@ class InlineReplacedBox(ReplacedBox, AtomicInlineLevelBox):
 class TableBox(BlockLevelBox, ParentBox):
     """Box for elements with ``display: table``"""
     # Definitions for the rules generating anonymous table boxes
-    # http://www.w3.org/TR/CSS21/tables.html#anonymous-boxes
+    # https://www.w3.org/TR/CSS21/tables.html#anonymous-boxes
     tabular_container = True
 
     def all_children(self):

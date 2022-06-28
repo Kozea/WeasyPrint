@@ -18,14 +18,14 @@ def test_acid2():
         return HTML(resource_filename(filename)).render()
 
     with capture_logs():
-        # This is a copy of http://www.webstandards.org/files/acid2/test.html
+        # This is a copy of https://www.webstandards.org/files/acid2/test.html
         document = render('acid2-test.html')
         intro_page, test_page = document.pages
         # Ignore the intro page: it is not in the reference
         test_png = document.copy([test_page]).write_png()
         test_pixels = Image.open(io.BytesIO(test_png)).getdata()
 
-    # This is a copy of http://www.webstandards.org/files/acid2/reference.html
+    # This is a copy of https://www.webstandards.org/files/acid2/reference.html
     ref_png = render('acid2-reference.html').write_png()
     ref_image = Image.open(io.BytesIO(ref_png))
     ref_pixels = ref_image.getdata()

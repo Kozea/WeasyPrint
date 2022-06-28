@@ -38,7 +38,7 @@ BOX_TYPE_FROM_DISPLAY = {
     ('table-caption',): boxes.TableCaptionBox,
 }
 
-# http://stackoverflow.com/questions/16317534/
+# https://stackoverflow.com/questions/16317534/
 ASCII_TO_WIDE = {i: chr(i + 0xfee0) for i in range(0x21, 0x7f)}
 ASCII_TO_WIDE.update({0x20: '\u3000', 0x2D: '\u2212'})
 
@@ -115,7 +115,7 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
         ]
 
     ``TextBox``es are anonymous inline boxes:
-    See http://www.w3.org/TR/CSS21/visuren.html#anonymous
+    See https://www.w3.org/TR/CSS21/visuren.html#anonymous
 
     """
     if not isinstance(element.tag, str):
@@ -700,7 +700,7 @@ def update_counters(state, style):
         # 'auto' is the initial value but is not valid in stylesheet:
         # there was no counter-increment declaration for this element.
         # (Or the winning value was 'initial'.)
-        # http://dev.w3.org/csswg/css3-lists/#declaring-a-list-item
+        # https://drafts.csswg.org/css-lists-3/#declaring-a-list-item
         if 'list-item' in style['display']:
             counter_increment = [('list-item', 1)]
         else:
@@ -762,7 +762,7 @@ def anonymous_table_boxes(box):
 
     Take and return a ``Box`` object.
 
-    See http://www.w3.org/TR/CSS21/tables.html#anonymous-boxes
+    See https://www.w3.org/TR/CSS21/tables.html#anonymous-boxes
 
     """
     if not isinstance(box, boxes.ParentBox) or box.is_running():
@@ -799,7 +799,7 @@ def table_boxes_children(box, children):
         # TODO: Maybe only remove text if internal is also
         #       a proper table descendant of box.
         # This is what the spec says, but maybe not what browsers do:
-        # http://lists.w3.org/Archives/Public/www-style/2011Oct/0567
+        # https://lists.w3.org/Archives/Public/www-style/2011Oct/0567
 
         # Last child
         internal, text = children[-2:]
@@ -875,8 +875,8 @@ def wrap_table(box, children):
     Because of colspan/rowspan works, grid_y is implicitly the index of a row,
     but grid_x is an explicit attribute on cells, columns and column group.
 
-    http://www.w3.org/TR/CSS21/tables.html#model
-    http://www.w3.org/TR/CSS21/tables.html#table-layout
+    https://www.w3.org/TR/CSS21/tables.html#model
+    https://www.w3.org/TR/CSS21/tables.html#table-layout
 
     """
     # Group table children by type
@@ -937,7 +937,7 @@ def wrap_table(box, children):
     # Assign a (x,y) position in the grid to each cell.
     # rowspan can not extend beyond a row group, so each row group
     # is independent.
-    # http://www.w3.org/TR/CSS21/tables.html#table-layout
+    # https://www.w3.org/TR/CSS21/tables.html#table-layout
     # Column 0 is on the left if direction is ltr, right if rtl.
     # This algorithm does not change.
     grid_height = 0
@@ -955,7 +955,7 @@ def wrap_table(box, children):
                     grid_x += 1
                 cell.grid_x = grid_x
                 new_grid_x = grid_x + cell.colspan
-                # http://www.w3.org/TR/html401/struct/tables.html#adef-rowspan
+                # https://www.w3.org/TR/html401/struct/tables.html#adef-rowspan
                 if cell.rowspan != 1:
                     max_rowspan = len(occupied_cells_by_row) + 1
                     if cell.rowspan == 0:
@@ -1030,7 +1030,7 @@ def collapse_table_borders(table, grid_width, grid_height):
         width = box_style[f'border_{side}_width']
         color = get_color(box_style, f'border_{side}_color')
 
-        # http://www.w3.org/TR/CSS21/tables.html#border-conflict-resolution
+        # https://www.w3.org/TR/CSS21/tables.html#border-conflict-resolution
         score = ((1 if style == 'hidden' else 0), width, style_scores[style])
 
         style = style_map.get(style, style)
@@ -1051,7 +1051,7 @@ def collapse_table_borders(table, grid_width, grid_height):
     # The order is important here:
     # "A style set on a cell wins over one on a row, which wins over a
     #  row group, column, column group and, lastly, table"
-    # See http://www.w3.org/TR/CSS21/tables.html#border-conflict-resolution
+    # See https://www.w3.org/TR/CSS21/tables.html#border-conflict-resolution
     strong_null_border = (
         (1, 0, style_scores['hidden']), ('hidden', 0, TRANSPARENT))
     grid_y = 0
@@ -1142,7 +1142,7 @@ def collapse_table_borders(table, grid_width, grid_height):
         x=0, y=grid_height, w=grid_width))
     # "UAs must compute an initial left and right border width for the table
     #  by examining the first and last cells in the first row of the table."
-    # http://www.w3.org/TR/CSS21/tables.html#collapsing-borders
+    # https://www.w3.org/TR/CSS21/tables.html#collapsing-borders
     # ... so h=1, not grid_height:
     set_transparent_border(table, 'left', max_vertical_width(
         x=0, y=0, h=1))
@@ -1157,7 +1157,7 @@ def flex_boxes(box):
 
     Take and return a ``Box`` object.
 
-    See http://www.w3.org/TR/css-flexbox-1/#flex-items
+    See https://www.w3.org/TR/css-flexbox-1/#flex-items
 
     """
     if not isinstance(box, boxes.ParentBox) or box.is_running():
@@ -1194,8 +1194,8 @@ def flex_children(box, children):
 def process_whitespace(box, following_collapsible_space=False):
     """First part of "The 'white-space' processing model".
 
-    See http://www.w3.org/TR/CSS21/text.html#white-space-model
-    http://dev.w3.org/csswg/css3-text/#white-space-rules
+    See https://www.w3.org/TR/CSS21/text.html#white-space-model
+    https://drafts.csswg.org/css-text-3/#white-space-rules
 
     """
     if isinstance(box, boxes.TextBox):
@@ -1218,7 +1218,7 @@ def process_whitespace(box, following_collapsible_space=False):
             # TODO: this should be language-specific
             # Could also replace with a zero width space character (U+200B),
             # or no character
-            # CSS3: http://www.w3.org/TR/css3-text/#line-break-transform
+            # CSS3: https://www.w3.org/TR/css-text-3/#overflow-wrap
             text = text.replace('\n', ' ')
 
         if space_collapse:
@@ -1274,7 +1274,7 @@ def inline_in_block(box):
     This line box will be broken into multiple lines later.
 
     This is the first case in
-    http://www.w3.org/TR/CSS21/visuren.html#anonymous-block-level
+    https://www.w3.org/TR/CSS21/visuren.html#anonymous-block-level
 
     Eg.::
 
@@ -1385,7 +1385,7 @@ def block_in_inline(box):
     in an anonymous block-level box.
 
     This is the second case in
-    http://www.w3.org/TR/CSS21/visuren.html#anonymous-block-level
+    https://www.w3.org/TR/CSS21/visuren.html#anonymous-block-level
 
     Eg. if this is given::
 
@@ -1539,7 +1539,7 @@ def set_viewport_overflow(root_box):
     Like backgrounds, ``overflow`` on the root element must be propagated
     to the viewport.
 
-    See http://www.w3.org/TR/CSS21/visufx.html#overflow
+    See https://www.w3.org/TR/CSS21/visufx.html#overflow
     """
     chosen_box = root_box
     if (root_box.element_tag.lower() == 'html' and

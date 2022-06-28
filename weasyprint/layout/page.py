@@ -102,9 +102,9 @@ class HorizontalBox(OrientedBox):
 
 
 def compute_fixed_dimension(context, box, outer, vertical, top_or_left):
-    """
-    Compute and set a margin box fixed dimension on ``box``, as described in:
-    http://dev.w3.org/csswg/css3-page/#margin-constraints
+    """Compute and set a margin box fixed dimension on ``box``.
+
+    Described in: https://drafts.csswg.org/css-page-3/#margin-constraints
 
     :param box:
         The margin box to work on
@@ -134,7 +134,7 @@ def compute_fixed_dimension(context, box, outer, vertical, top_or_left):
             # XXX this is not in the spec, but without it box.inner
             # would end up with a negative value.
             # Instead, this will trigger rule 3 below.
-            # http://lists.w3.org/Archives/Public/www-style/2012Jul/0006.html
+            # https://lists.w3.org/Archives/Public/www-style/2012Jul/0006.html
             box.inner = 0
     # Rule 3
     if 'auto' not in [box.margin_a, box.margin_b, box.inner]:
@@ -175,7 +175,7 @@ def compute_fixed_dimension(context, box, outer, vertical, top_or_left):
 def compute_variable_dimension(context, side_boxes, vertical, outer_sum):
     """
     Compute and set a margin box fixed dimension on ``box``, as described in:
-    http://dev.w3.org/csswg/css3-page/#margin-dimension
+    https://drafts.csswg.org/css-page-3/#margin-dimension
 
     :param side_boxes: Three boxes on a same side (as opposed to a corner.)
         A list of:
@@ -359,7 +359,7 @@ def make_margin_boxes(context, page, state):
     page_end_y = margin_top + max_box_height
 
     # Margin box dimensions, described in
-    # http://dev.w3.org/csswg/css3-page/#margin-box-dimensions
+    # https://drafts.csswg.org/css-page-3/#margin-box-dimensions
     generated_boxes = []
 
     for prefix, vertical, containing_block, position_x, position_y in [
@@ -468,8 +468,8 @@ def page_width_or_height(box, containing_block_size):
      over-constrained, instead of ignoring any margins, the containing block
      is resized to coincide with the margin edges of the page box."
 
-    http://dev.w3.org/csswg/css3-page/#page-box-page-rule
-    http://www.w3.org/TR/CSS21/visudet.html#blockwidth
+    https://drafts.csswg.org/css-page-3/#page-box-page-rule
+    https://www.w3.org/TR/CSS21/visudet.html#blockwidth
 
     """
     remaining = containing_block_size - box.padding_plus_border
@@ -543,7 +543,7 @@ def make_page(context, root_box, page_type, resume_at, page_number,
         root_box = root_box.copy_with_children([])
 
     # TODO: handle cases where the root element is something else.
-    # See http://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
+    # See https://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
     assert isinstance(root_box, (boxes.BlockBox, boxes.FlexContainerBox))
     context.create_block_formatting_context()
     context.current_page = page_number
@@ -721,7 +721,7 @@ def set_page_type_computed_styles(page_type, html, style_for):
     style_for.set_computed_styles(
         page_type,
         # @page inherits from the root element:
-        # http://lists.w3.org/Archives/Public/www-style/2012Jan/1164.html
+        # https://lists.w3.org/Archives/Public/www-style/2012Jan/1164.html
         root=html.etree_element, parent=html.etree_element,
         base_url=html.base_url)
 

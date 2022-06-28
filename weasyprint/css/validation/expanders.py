@@ -167,7 +167,7 @@ def border_radius(name, tokens, base_url):
 def expand_list_style(name, tokens, base_url):
     """Expand the ``list-style`` shorthand property.
 
-    See http://www.w3.org/TR/CSS21/generate.html#propdef-list-style
+    See https://www.w3.org/TR/CSS21/generate.html#propdef-list-style
 
     """
     type_specified = image_specified = False
@@ -209,7 +209,7 @@ def expand_list_style(name, tokens, base_url):
 def expand_border(base_url, name, tokens):
     """Expand the ``border`` shorthand property.
 
-    See http://www.w3.org/TR/CSS21/box.html#propdef-border
+    See https://www.w3.org/TR/CSS21/box.html#propdef-border
 
     """
     for suffix in ('-top', '-right', '-bottom', '-left'):
@@ -227,7 +227,7 @@ def expand_border(base_url, name, tokens):
 def expand_border_side(name, tokens):
     """Expand the ``border-*`` shorthand properties.
 
-    See http://www.w3.org/TR/CSS21/box.html#propdef-border-top
+    See https://www.w3.org/TR/CSS21/box.html#propdef-border-top
 
     """
     for token in tokens:
@@ -246,7 +246,7 @@ def expand_border_side(name, tokens):
 def expand_background(base_url, name, tokens):
     """Expand the ``background`` shorthand property.
 
-    See http://dev.w3.org/csswg/css3-background/#the-background
+    See https://drafts.csswg.org/css-backgrounds-3/#the-background
 
     """
     properties = [
@@ -546,7 +546,7 @@ def expand_font(name, tokens):
 def expand_word_wrap(name, tokens):
     """Expand the ``word-wrap`` legacy property.
 
-    See http://www.w3.org/TR/css3-text/#overflow-wrap
+    See https://www.w3.org/TR/css-text-3/#overflow-wrap
 
     """
     keyword = overflow_wrap(tokens)

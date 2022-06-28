@@ -130,7 +130,7 @@ def test_position_x_rtl():
 
 @assert_no_logs
 def test_breaking_linebox_regression_1():
-    # See http://unicode.org/reports/tr14/
+    # See https://unicode.org/reports/tr14/
     page, = render_pages('<pre>a\nb\rc\r\nd\u2029e</pre>')
     html, = page.children
     body, = html.children
@@ -1005,7 +1005,7 @@ def test_vertical_align_13():
 
 @assert_no_logs
 def test_box_decoration_break_inline_slice():
-    # http://www.w3.org/TR/css3-background/#the-box-decoration-break
+    # https://www.w3.org/TR/css-backgrounds-3/#the-box-decoration-break
     page_1, = render_pages('''
       <style>
         @font-face { src: url(weasyprint.otf); font-family: weasyprint }
@@ -1036,7 +1036,7 @@ def test_box_decoration_break_inline_slice():
 
 @assert_no_logs
 def test_box_decoration_break_inline_clone():
-    # http://www.w3.org/TR/css3-background/#the-box-decoration-break
+    # https://www.w3.org/TR/css-backgrounds-3/#the-box-decoration-break
     page_1, = render_pages('''
       <style>
         @font-face { src: url(weasyprint.otf); font-family: weasyprint }

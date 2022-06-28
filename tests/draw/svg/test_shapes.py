@@ -20,7 +20,7 @@ def test_rect_stroke(assert_pixels):
         @page { size: 9px }
         svg { display: block }
       </style>
-      <svg width="9px" height="9px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="9px" height="9px" xmlns="https://www.w3.org/2000/svg">
         <rect x="2" y="2" width="5" height="5"
               stroke-width="2" stroke="red" fill="none" />
       </svg>
@@ -44,7 +44,7 @@ def test_rect_fill(assert_pixels):
         @page { size: 9px }
         svg { display: block }
       </style>
-      <svg width="9px" height="9px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="9px" height="9px" xmlns="https://www.w3.org/2000/svg">
         <rect x="2" y="2" width="5" height="5" fill="red" />
       </svg>
     ''')
@@ -67,7 +67,7 @@ def test_rect_stroke_fill(assert_pixels):
         @page { size: 9px }
         svg { display: block }
       </style>
-      <svg width="9px" height="9px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="9px" height="9px" xmlns="https://www.w3.org/2000/svg">
         <rect x="2" y="2" width="5" height="5"
               stroke-width="2" stroke="red" fill="blue" />
       </svg>
@@ -91,7 +91,7 @@ def test_rect_round(assert_pixels):
         @page { size: 9px }
         svg { display: block }
       </style>
-      <svg width="9px" height="9px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="9px" height="9px" xmlns="https://www.w3.org/2000/svg">
         <rect width="9" height="9" fill="red" rx="4" ry="4" />
       </svg>
     ''')
@@ -114,7 +114,7 @@ def test_rect_round_zero(assert_pixels):
         @page { size: 9px }
         svg { display: block }
       </style>
-      <svg width="9px" height="9px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="9px" height="9px" xmlns="https://www.w3.org/2000/svg">
         <rect width="9" height="9" fill="red" rx="0" ry="4" />
       </svg>
     ''')
@@ -137,7 +137,7 @@ def test_line(assert_pixels):
         @page { size: 9px }
         svg { display: block }
       </style>
-      <svg width="9px" height="9px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="9px" height="9px" xmlns="https://www.w3.org/2000/svg">
         <line x1="0" y1="5" x2="6" y2="5"
           stroke="red" stroke-width="2"/>
       </svg>
@@ -161,7 +161,7 @@ def test_polyline(assert_pixels):
         @page { size: 9px }
         svg { display: block }
       </style>
-      <svg width="9px" height="9px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="9px" height="9px" xmlns="https://www.w3.org/2000/svg">
         <polyline points="1,6, 1,2, 5,2, 5,6"
           stroke="red" stroke-width="2" fill="none"/>
       </svg>
@@ -185,7 +185,7 @@ def test_polyline_fill(assert_pixels):
         @page { size: 9px }
         svg { display: block }
       </style>
-      <svg width="9px" height="9px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="9px" height="9px" xmlns="https://www.w3.org/2000/svg">
         <polyline points="1,6, 1,2, 5,2, 5,6"
           stroke="red" stroke-width="2" fill="blue"/>
       </svg>
@@ -209,7 +209,7 @@ def test_polygon(assert_pixels):
         @page { size: 9px }
         svg { display: block }
       </style>
-      <svg width="9px" height="9px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="9px" height="9px" xmlns="https://www.w3.org/2000/svg">
         <polygon points="1,6, 1,2, 5,2, 5,6"
           stroke="red" stroke-width="2" fill="none"/>
       </svg>
@@ -233,7 +233,7 @@ def test_polygon_fill(assert_pixels):
         @page { size: 9px }
         svg { display: block }
       </style>
-      <svg width="9px" height="9px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="9px" height="9px" xmlns="https://www.w3.org/2000/svg">
         <polygon points="1,6, 1,2, 5,2, 5,6"
           stroke="red" stroke-width="2" fill="blue"/>
       </svg>
@@ -258,7 +258,7 @@ def test_circle_stroke(assert_pixels):
         @page { size: 10px }
         svg { display: block }
       </style>
-      <svg width="10px" height="10px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="10px" height="10px" xmlns="https://www.w3.org/2000/svg">
         <circle cx="5" cy="5" r="3"
           stroke="red" stroke-width="2" fill="none"/>
       </svg>
@@ -283,7 +283,7 @@ def test_circle_fill(assert_pixels):
         @page { size: 10px }
         svg { display: block }
       </style>
-      <svg width="10px" height="10px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="10px" height="10px" xmlns="https://www.w3.org/2000/svg">
         <circle cx="5" cy="5" r="3"
           stroke="red" stroke-width="2" fill="blue"/>
       </svg>
@@ -308,7 +308,7 @@ def test_ellipse_stroke(assert_pixels):
         @page { size: 10px }
         svg { display: block }
       </style>
-      <svg width="10px" height="10px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="10px" height="10px" xmlns="https://www.w3.org/2000/svg">
         <ellipse cx="5" cy="5" rx="3" ry="3"
           stroke="red" stroke-width="2" fill="none"/>
       </svg>
@@ -333,7 +333,7 @@ def test_ellipse_fill(assert_pixels):
         @page { size: 10px }
         svg { display: block }
       </style>
-      <svg width="10px" height="10px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="10px" height="10px" xmlns="https://www.w3.org/2000/svg">
         <ellipse cx="5" cy="5" rx="3" ry="3"
           stroke="red" stroke-width="2" fill="blue"/>
       </svg>
@@ -357,7 +357,7 @@ def test_rect_in_g(assert_pixels):
         @page { size: 9px }
         svg { display: block }
       </style>
-      <svg width="9px" height="9px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="9px" height="9px" xmlns="https://www.w3.org/2000/svg">
         <g x="5" y="5">
           <rect width="5" height="5" fill="red" />
         </g>
@@ -382,7 +382,7 @@ def test_rect_x_y_in_g(assert_pixels):
         @page { size: 9px }
         svg { display: block }
       </style>
-      <svg width="9px" height="9px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="9px" height="9px" xmlns="https://www.w3.org/2000/svg">
         <g x="5" y="5">
           <rect x="2" y="2" width="5" height="5" fill="red" />
         </g>
@@ -407,7 +407,7 @@ def test_rect_stroke_zero(assert_pixels):
         @page { size: 9px }
         svg { display: block }
       </style>
-      <svg width="9px" height="9px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="9px" height="9px" xmlns="https://www.w3.org/2000/svg">
         <rect x="2" y="2" width="5" height="5"
               stroke-width="0" stroke="red" fill="none" />
       </svg>
@@ -431,7 +431,7 @@ def test_rect_width_height_zero(assert_pixels):
             @page { size: 9px }
             svg { display: block }
         </style>
-        <svg width="0" height="0" xmlns="http://www.w3.org/2000/svg">
+        <svg width="0" height="0" xmlns="https://www.w3.org/2000/svg">
             <rect x="2" y="2" width="5" height="5" fill="red" />
         </svg>
     ''')
@@ -454,7 +454,7 @@ def test_rect_fill_inherit(assert_pixels):
         @page { size: 9px }
         svg { display: block }
       </style>
-      <svg width="9px" height="9px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="9px" height="9px" xmlns="https://www.w3.org/2000/svg">
         <rect x="2" y="2" width="5" height="5" fill="inherit" />
       </svg>
     ''')

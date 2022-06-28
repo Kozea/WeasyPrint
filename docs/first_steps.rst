@@ -20,14 +20,14 @@ WeasyPrint |version| depends on:
 * Pillow_ ≥ 4.0.0
 * fontTools_ ≥ 4.0.0
 
-.. _Python: http://www.python.org/
-.. _Pango: http://pango.gnome.org/
+.. _Python: https://www.python.org/
+.. _Pango: https://pango.gnome.org/
 .. _CFFI: https://cffi.readthedocs.io/
 .. _html5lib: https://html5lib.readthedocs.io/
 .. _pydyf: https://doc.courtbouillon.org/pydyf/
 .. _tinycss2: https://doc.courtbouillon.org/tinycss2/
 .. _cssselect2: https://doc.courtbouillon.org/cssselect2/
-.. _Pyphen: http://pyphen.org/
+.. _Pyphen: https://pyphen.org/
 .. _Pillow: https://python-pillow.org/
 .. _fontTools: https://github.com/fonttools/fonttools
 
@@ -307,7 +307,7 @@ Using the WeasyPrint command line interface can be as simple as this:
 
 .. code-block:: sh
 
-    weasyprint http://weasyprint.org /tmp/weasyprint-website.pdf
+    weasyprint https://weasyprint.org /tmp/weasyprint-website.pdf
 
 You may see warnings on the standard error output about unsupported CSS
 properties. See :ref:`Command-Line API` for the details of all available
@@ -320,7 +320,7 @@ use the shell’s redirection instead:
 
 .. code-block:: sh
 
-    weasyprint http://weasyprint.org /tmp/weasyprint-website.pdf \
+    weasyprint https://weasyprint.org /tmp/weasyprint-website.pdf \
         -s <(echo 'body { font-family: serif !important }')
 
 If you have many documents to convert you may prefer using the Python API
@@ -343,14 +343,14 @@ The Python version of the above example goes like this:
 .. code-block:: python
 
     from weasyprint import HTML
-    HTML('http://weasyprint.org/').write_pdf('/tmp/weasyprint-website.pdf')
+    HTML('https://weasyprint.org/').write_pdf('/tmp/weasyprint-website.pdf')
 
 … or with the inline stylesheet:
 
 .. code-block:: python
 
     from weasyprint import HTML, CSS
-    HTML('http://weasyprint.org/').write_pdf('/tmp/weasyprint-website.pdf',
+    HTML('https://weasyprint.org/').write_pdf('/tmp/weasyprint-website.pdf',
         stylesheets=[CSS(string='body { font-family: serif !important }')])
 
 Instantiating HTML and CSS Objects
@@ -367,8 +367,8 @@ Alternatively, use a named argument so that no guessing is involved:
     HTML('../foo.html')  # Same as …
     HTML(filename='../foo.html')
 
-    HTML('http://weasyprint.org')  # Same as …
-    HTML(url='http://weasyprint.org')
+    HTML('https://weasyprint.org')  # Same as …
+    HTML(url='https://weasyprint.org')
 
     HTML(sys.stdin)  # Same as …
     HTML(file_obj=sys.stdin)
@@ -400,7 +400,7 @@ If you have ``@font-face`` rules in your CSS, you have to create a
     css = CSS(string='''
         @font-face {
             font-family: Gentium;
-            src: url(http://example.com/fonts/Gentium.otf);
+            src: url(https://example.com/fonts/Gentium.otf);
         }
         h1 { font-family: Gentium }''', font_config=font_config)
     html.write_pdf(
@@ -445,7 +445,7 @@ See the :ref:`Python API` for details. A few random examples:
 .. code-block:: python
 
     # Print the outline of the document.
-    # Output on http://www.w3.org/TR/CSS21/intro.html
+    # Output on https://www.w3.org/TR/CSS21/intro.html
     #     1. Introduction to CSS 2.1 (page 2)
     #       1. A brief CSS 2.1 tutorial for HTML (page 2)
     #       2. A brief CSS 2.1 tutorial for XML (page 5)
@@ -510,7 +510,7 @@ If a ``file_obj`` is given, the resource will be closed automatically by
 the function internally used by WeasyPrint to retreive data.
 
 .. _Flask-Weasyprint: https://github.com/Kozea/Flask-WeasyPrint
-.. _Flask: http://flask.pocoo.org/
+.. _Flask: https://flask.pocoo.org/
 .. _Django-WeasyPrint: https://github.com/fdemmer/django-weasyprint
 .. _Django: https://www.djangoproject.com/
 
@@ -527,11 +527,11 @@ rendering time may be slightly increased.
 .. code-block:: python
 
     # No size optimization, faster, but generated PDF is larger
-    HTML('http://example.org/').write_pdf(
+    HTML('https://example.org/').write_pdf(
         'example.pdf', optimize_size=())
 
     # Full size optimization, slower, but generated PDF is smaller
-    HTML('http://example.org/').write_pdf(
+    HTML('https://example.org/').write_pdf(
         'example.pdf', optimize_size=('fonts', 'images'))
 
 ``image_cache`` gives the possibility to use a cache for images, avoiding to
@@ -545,7 +545,7 @@ time when you render a lot of documents that use the same images.
 
     cache = {}
     for i in range(10):
-        HTML(f'http://example.org/?id={i}').write_pdf(
+        HTML(f'https://example.org/?id={i}').write_pdf(
             f'example-{i}.pdf', image_cache=cache)
 
 
@@ -610,7 +610,7 @@ untrusted users, you should:
 Infinite Requests
 ~~~~~~~~~~~~~~~~~
 
-WeasyPrint can reach files on the network, for example using ``http://``
+WeasyPrint can reach files on the network, for example using ``https://``
 URIs. For various reasons, HTTP requests may take a long time and lead to
 problems similar to :ref:`Long Renderings`.
 
@@ -687,7 +687,7 @@ Leaks can include (but are not restricted to):
 
 - locally installed fonts (using ``font-family`` and ``@font-face``),
 - network configuration (IPv4 and IPv6 support, IP addressing, firewall
-  configuration, using ``http://`` URIs and tracking time used to render
+  configuration, using ``https://`` URIs and tracking time used to render
   documents),
 - Python, Pango and other libraries versions (implementation details
   lead to different renderings).

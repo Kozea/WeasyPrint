@@ -223,7 +223,7 @@ def test_styles():
 @assert_no_logs
 def test_whitespace():
     # TODO: test more cases
-    # http://www.w3.org/TR/CSS21/text.html#white-space-model
+    # https://www.w3.org/TR/CSS21/text.html#white-space-model
     assert_tree(parse_all('''
       <p>Lorem \t\r\n  ipsum\t<strong>  dolor
         <img src=pattern.png> sit
@@ -338,10 +338,10 @@ def test_images_2():
 
 @assert_no_logs
 def test_tables_1():
-    # Rules in http://www.w3.org/TR/CSS21/tables.html#anonymous-boxes
+    # Rules in https://www.w3.org/TR/CSS21/tables.html#anonymous-boxes
 
     # Rule 1.3
-    # Also table model: http://www.w3.org/TR/CSS21/tables.html#model
+    # Also table model: https://www.w3.org/TR/CSS21/tables.html#model
     assert_tree(parse_all('''
       <x-table>
         <x-tr>
@@ -408,7 +408,7 @@ def test_tables_2():
 
 @assert_no_logs
 def test_tables_3():
-    # http://www.w3.org/TR/CSS21/tables.html#anonymous-boxes
+    # https://www.w3.org/TR/CSS21/tables.html#anonymous-boxes
     # Rules 1.1 and 1.2
     # Rule XXX (not in the spec): column groups have at least one column child
     assert_tree(parse_all('''

@@ -148,7 +148,7 @@ def process_color_stops(vector_length, positions):
     ``positions`` is a list of ``None``, or ``Dimension`` in px or %. 0 is the
     starting point, 1 the ending point.
 
-    See http://dev.w3.org/csswg/css-images-3/#color-stop-syntax.
+    See https://drafts.csswg.org/css-images-3/#color-stop-syntax.
 
     Return processed color stops, as a list of floats in px.
 
@@ -205,7 +205,7 @@ def normalize_stop_positions(positions):
 
 def gradient_average_color(colors, positions):
     """
-    http://dev.w3.org/csswg/css-images-3/#gradient-average-color
+    https://drafts.csswg.org/css-images-3/#gradient-average-color
     """
     nb_stops = len(positions)
     assert nb_stops > 1
