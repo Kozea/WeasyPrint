@@ -43,10 +43,10 @@ def ascii_lower(string):
     which also affect non-ASCII characters,
     sometimes mapping them into the ASCII range:
 
-    >>> keyword = u'Bac\N{KELVIN SIGN}ground'
-    >>> assert keyword.lower() == u'background'
+    >>> keyword = 'Bac\N{KELVIN SIGN}ground'
+    >>> assert keyword.lower() == 'background'
     >>> assert ascii_lower(keyword) != keyword.lower()
-    >>> assert ascii_lower(keyword) == u'bac\N{KELVIN SIGN}ground'
+    >>> assert ascii_lower(keyword) == 'bac\N{KELVIN SIGN}ground'
 
     """
     # This turns out to be faster than unicode.translate()
