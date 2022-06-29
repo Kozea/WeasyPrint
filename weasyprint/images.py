@@ -1,6 +1,7 @@
 """Fetch and decode images in various formats."""
 
 import math
+from hashlib import md5
 from io import BytesIO
 from itertools import cycle
 from math import inf
@@ -129,7 +130,7 @@ def get_image_from_uri(cache, url_fetcher, optimize_size, url,
                             raster_exception)
                 else:
                     # Store image id to enable cache in Stream.add_image
-                    image_id = hash(url)
+                    image_id = md5(url.encode()).hexdigest()
                     image = RasterImage(pillow_image, image_id, optimize_size)
 
     except (URLFetchingError, ImageLoadingError) as exception:
