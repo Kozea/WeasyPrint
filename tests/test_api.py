@@ -358,6 +358,7 @@ def test_command_line_render(tmpdir):
     assert tmpdir.join('out13.pdf').read_binary() == rotated_pdf_bytes
     assert tmpdir.join('out14.pdf').read_binary() == rotated_pdf_bytes
 
+    os.environ['SOURCE_DATE_EPOCH'] = '0'
     _run('not_optimized.html out15.pdf')
     _run('not_optimized.html out16.pdf -O images')
     _run('not_optimized.html out17.pdf -O fonts')
@@ -366,12 +367,20 @@ def test_command_line_render(tmpdir):
     _run('not_optimized.html out20.pdf -O none')
     _run('not_optimized.html out21.pdf -O none -O all')
     _run('not_optimized.html out22.pdf -O all -O none')
-    # TODO: test that equivalent CLI options give equivalent PDF sizes,
-    # unfortunately font optimization makes PDF generation not reproducible
     assert (
         len(tmpdir.join('out16.pdf').read_binary()) <
         len(tmpdir.join('out15.pdf').read_binary()) <
         len(tmpdir.join('out20.pdf').read_binary()))
+    assert len({
+        tmpdir.join(f'out{i}.pdf').read_binary()
+        for i in (16, 18, 19, 21)}) == 1
+    assert len({
+        tmpdir.join(f'out{i}.pdf').read_binary()
+        for i in (15, 17)}) == 1
+    assert len({
+        tmpdir.join(f'out{i}.pdf').read_binary()
+        for i in (20, 22)}) == 1
+    os.environ.pop('SOURCE_DATE_EPOCH')
 
     stdout = _run('combined.html -')
     assert stdout.count(b'attachment') == 0
@@ -448,6 +457,14 @@ def test_partial_pdf_custom_metadata():
         '<meta name=a.b/céd0 content=value />'.encode('latin1'))
     assert b'/abcd0' in stdout
     assert b'value' in stdout
+
+
+def test_reproducible():
+    os.environ['SOURCE_DATE_EPOCH'] = '0'
+    stdout1 = _run('- -', b'<body>a<img src=pattern.png>')
+    stdout2 = _run('- -', b'<body>a<img src=pattern.png>')
+    os.environ.pop('SOURCE_DATE_EPOCH')
+    assert stdout1 == stdout2
 
 
 @assert_no_logs
