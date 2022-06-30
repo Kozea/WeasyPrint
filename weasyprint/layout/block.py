@@ -226,6 +226,7 @@ def _out_of_flow_layout(context, box, index, child, new_children,
                         adjoining_margins, bottom_space):
     stop = False
     resume_at = None
+    new_child = None
     out_of_flow_resume_at = None
 
     child.position_y += collapse_margin(adjoining_margins)
