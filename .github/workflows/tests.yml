@@ -39,9 +39,6 @@ jobs:
           rm C:\msys64\mingw64\bin\python.exe
       - name: Upgrade pip and setuptools
         run: python -m pip install --upgrade pip setuptools
-      - name: Upgrade cffi (Windows)
-        if: matrix.os == 'windows-latest'
-        run: python -m pip install --upgrade cffi
       - name: Install tests’ requirements
         run: python -m pip install .[test]
       - name: Launch tests
