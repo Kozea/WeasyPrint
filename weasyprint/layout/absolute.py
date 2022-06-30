@@ -229,7 +229,8 @@ def absolute_layout(context, placeholder, containing_block, fixed_boxes,
         context, box, containing_block, fixed_boxes, bottom_space, skip_stack)
     placeholder.set_laid_out_box(new_box)
     if resume_at:
-        context.broken_out_of_flow.append((box, containing_block, resume_at))
+        context.broken_out_of_flow[placeholder] = (
+            box, containing_block, resume_at)
 
 
 def absolute_box_layout(context, box, containing_block, fixed_boxes,

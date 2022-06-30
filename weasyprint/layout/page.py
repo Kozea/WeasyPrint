@@ -564,8 +564,9 @@ def make_page(context, root_box, page_type, resume_at, page_number,
     adjoining_margins = []
     positioned_boxes = []  # Mixed absolute and fixed
     out_of_flow_boxes = []
-    broken_out_of_flow = []
-    for box, containing_block, skip_stack in context.broken_out_of_flow:
+    broken_out_of_flow = {}
+    context_out_of_flow = context.broken_out_of_flow.values()
+    for box, containing_block, skip_stack in context_out_of_flow:
         box.position_y = 0
         if box.is_floated():
             out_of_flow_box, out_of_flow_resume_at = float_layout(
@@ -578,8 +579,8 @@ def make_page(context, root_box, page_type, resume_at, page_number,
                 skip_stack)
         out_of_flow_boxes.append(out_of_flow_box)
         if out_of_flow_resume_at:
-            broken_out_of_flow.append(
-                (box, containing_block, out_of_flow_resume_at))
+            broken_out_of_flow[out_of_flow_box] = (
+                box, containing_block, out_of_flow_resume_at)
     context.broken_out_of_flow = broken_out_of_flow
     root_box, resume_at, next_page, _, _, _ = block_level_layout(
         context, root_box, 0, resume_at, initial_containing_block,

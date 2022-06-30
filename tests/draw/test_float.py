@@ -659,3 +659,84 @@ def test_float_split_10(assert_pixels):
         <div>bbbbb bbbbb</div>
         <div class="split">aa aa</div>
         <div>bbb bbb</div>''')
+
+
+@assert_no_logs
+def test_float_split_11(assert_pixels):
+    assert_pixels('''
+        BBBBBBBBBBBBBBBB
+        BBBBBBBBBBBBBBBB
+        BBBBBBBBBBBBBBBB
+        BBBBBBBBBBBBBBBB
+        BBBBBBBBBBBBBBBB
+        BBBBGG______BBBB
+        BBBBGG______BBBB
+        BBBB________BBBB
+        BBBB________BBBB
+        ________________
+    ''', '''
+        <style>
+            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+            @page {
+                size: 16px 5px;
+            }
+            body {
+                color: lime;
+                font-family: weasyprint;
+                font-size: 2px;
+                line-height: 1;
+            }
+            article {
+                background: blue;
+                height: 5px;
+            }
+            div {
+                background: red;
+                color: blue;
+            }
+        </style>
+        <article></article>
+        a
+        <div style="float: left"><p>aa<p>aa</div>
+        <div style="float: right"><p>bb<p>bb</div>''')
+
+
+@assert_no_logs
+def test_float_split_12(assert_pixels):
+    assert_pixels('''
+        BBBBBBBBBBBBBBBB
+        BBBBBBBBBBBBBBBB
+        BBBBBBBBBBBBBBBB
+        BBBBBBBBBBBBBBBB
+        BBBBBBBBBBBBBBBB
+        BBBBGG______BBBB
+        BBBBGG______BBBB
+        BBBB________BBBB
+        BBBB________BBBB
+        ________________
+    ''', '''
+        <style>
+            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+            @page {
+                size: 16px 5px;
+            }
+            body {
+                color: lime;
+                font-family: weasyprint;
+                font-size: 2px;
+                line-height: 1;
+            }
+            article {
+                background: blue;
+                height: 5px;
+            }
+            div {
+                background: red;
+                color: blue;
+            }
+        </style>
+        <article></article>
+        <section>
+          <div style="float: left"><p>aa<p>aa</div>
+          a
+          <div style="float: right"><p>bb<p>bb</div>''')

@@ -233,7 +233,7 @@ class LayoutContext:
         self.running_elements = defaultdict(lambda: defaultdict(lambda: []))
         self.current_page = None
         self.forced_break = False
-        self.broken_out_of_flow = []
+        self.broken_out_of_flow = {}
         self.in_column = False
 
         # Cache

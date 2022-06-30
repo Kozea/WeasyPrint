@@ -230,7 +230,7 @@ def _out_of_flow_layout(context, box, index, child, new_children,
 
     child.position_y += collapse_margin(adjoining_margins)
     if child.is_absolutely_positioned():
-        placeholder = AbsolutePlaceholder(child)
+        new_child = placeholder = AbsolutePlaceholder(child)
         placeholder.index = index
         new_children.append(placeholder)
         if child.style['position'] == 'absolute':
@@ -262,7 +262,7 @@ def _out_of_flow_layout(context, box, index, child, new_children,
         page = context.current_page
         context.running_elements[running_name][page].append(child)
 
-    return stop, resume_at, out_of_flow_resume_at
+    return stop, resume_at, new_child, out_of_flow_resume_at
 
 
 def _break_line(context, box, line, new_children, lines_iterator,
@@ -629,7 +629,7 @@ def block_container_layout(context, box, bottom_space, skip_stack,
     new_children = []
     next_page = {'break': 'any', 'page': None}
     all_footnotes = []
-    broken_out_of_flow = []
+    broken_out_of_flow = {}
 
     last_in_flow_child = None
 
@@ -649,12 +649,14 @@ def block_container_layout(context, box, bottom_space, skip_stack,
 
         if not child.is_in_normal_flow():
             abort = False
-            stop, resume_at, out_of_flow_resume_at = _out_of_flow_layout(
-                context, box, index, child, new_children, page_is_empty,
-                absolute_boxes, fixed_boxes, adjoining_margins,
-                bottom_space)
+            stop, resume_at, new_child, out_of_flow_resume_at = (
+                _out_of_flow_layout(
+                    context, box, index, child, new_children, page_is_empty,
+                    absolute_boxes, fixed_boxes, adjoining_margins,
+                    bottom_space))
             if out_of_flow_resume_at:
-                broken_out_of_flow.append((child, box, out_of_flow_resume_at))
+                broken_out_of_flow[new_child] = (
+                    child, box, out_of_flow_resume_at)
 
         elif isinstance(child, boxes.LineBox):
             (abort, stop, resume_at, position_y,
@@ -696,6 +698,8 @@ def block_container_layout(context, box, bottom_space, skip_stack,
 
         if abort:
             page = child.page_values()[0]
+            remove_placeholders(
+                context, box.children[skip:], absolute_boxes, fixed_boxes)
             for footnote in new_footnotes:
                 context.unlayout_footnote(footnote)
             return (
@@ -720,7 +724,8 @@ def block_container_layout(context, box, bottom_space, skip_stack,
         return (
             None, None, {'break': 'any', 'page': None}, [], False, max_lines)
 
-    context.broken_out_of_flow.extend(broken_out_of_flow)
+    for key, value in broken_out_of_flow.items():
+        context.broken_out_of_flow[key] = value
 
     if collapsing_with_children:
         box.position_y += (
@@ -1005,6 +1010,8 @@ def remove_placeholders(context, box_list, absolute_boxes, fixed_boxes):
     For boxes that have been removed in find_earlier_page_break(), remove the
     matching placeholders in absolute_boxes and fixed_boxes.
 
+    Also takes care of removed footnotes and floats.
+
     """
     for box in box_list:
         if isinstance(box, boxes.ParentBox):
@@ -1017,6 +1024,8 @@ def remove_placeholders(context, box_list, absolute_boxes, fixed_boxes):
             fixed_boxes.remove(box)
         if box.footnote:
             context.unlayout_footnote(box.footnote)
+        if box in context.broken_out_of_flow:
+            context.broken_out_of_flow.pop(box)
 
 
 def avoid_page_break(page_break, context):
