@@ -1,11 +1,7 @@
 """Stacking contexts management."""
 
-import operator
-
 from .formatting_structure import boxes
 from .layout.absolute import AbsolutePlaceholder
-
-_Z_INDEX_GETTER = operator.attrgetter('z_index')
 
 
 class StackingContext:
@@ -33,8 +29,8 @@ class StackingContext:
                 self.zero_z_contexts.append(context)
             else:  # context.z_index > 0
                 self.positive_z_contexts.append(context)
-        self.negative_z_contexts.sort(key=_Z_INDEX_GETTER)
-        self.positive_z_contexts.sort(key=_Z_INDEX_GETTER)
+        self.negative_z_contexts.sort(key=lambda context: context.z_index)
+        self.positive_z_contexts.sort(key=lambda context: context.z_index)
         # sort() is stable, so the lists are now storted
         # by z-index, then tree order.
 
@@ -58,81 +54,78 @@ class StackingContext:
             child_contexts = children
         # child_contexts: where to put sub-contexts that we find here.
         # May not be the same as children for:
-        #   "treat the element as if it created a new stacking context,
-        #    but any positioned descendants and descendants which actually
-        #    create a new stacking context should be considered part of the
-        #    parent stacking context, not this new one."
+        #   "treat the element as if it created a new stacking context, but any
+        #    positioned descendants and descendants which actually create a new
+        #    stacking context should be considered part of the parent stacking
+        #    context, not this new one."
         blocks = []
         floats = []
         blocks_and_cells = []
-
-        def dispatch(box):
-            if isinstance(box, AbsolutePlaceholder):
-                box = box._box
-            style = box.style
-            absolute_and_z_index = (
-                style['position'] != 'static' and style['z_index'] != 'auto')
-            if (absolute_and_z_index or
-                    style['opacity'] < 1 or
-                    # 'transform: none' gives a "falsy" empty list here
-                    style['transform'] or
-                    style['overflow'] != 'visible'):
-                # This box defines a new stacking context, remove it
-                # from the "normal" children list.
-                child_contexts.append(
-                    StackingContext.from_box(box, page))
-            else:
-                if style['position'] != 'static':
-                    assert style['z_index'] == 'auto'
-                    # "Fake" context: sub-contexts will go in this
-                    # `child_contexts` list.
-                    # Insert at the position before creating the sub-context.
-                    index = len(child_contexts)
-                    child_contexts.insert(
-                        index,
-                        StackingContext.from_box(box, page, child_contexts))
-                elif box.is_floated():
-                    floats.append(StackingContext.from_box(
-                        box, page, child_contexts))
-                elif isinstance(
-                        box, (boxes.InlineBlockBox, boxes.InlineFlexBox)):
-                    # Have this fake stacking context be part of the "normal"
-                    # box tree, because we need its position in the middle
-                    # of a tree of inline boxes.
-                    return StackingContext.from_box(box, page, child_contexts)
-                else:
-                    if isinstance(box, boxes.BlockLevelBox):
-                        blocks_index = len(blocks)
-                        blocks_and_cells_index = len(blocks_and_cells)
-                    elif isinstance(box, boxes.TableCellBox):
-                        blocks_index = None
-                        blocks_and_cells_index = len(blocks_and_cells)
-                    else:
-                        blocks_index = None
-                        blocks_and_cells_index = None
-
-                    box = dispatch_children(box)
-
-                    # Insert at the positions before dispatch the children.
-                    if blocks_index is not None:
-                        blocks.insert(blocks_index, box)
-                    if blocks_and_cells_index is not None:
-                        blocks_and_cells.insert(blocks_and_cells_index, box)
-
-                    return box
-
-        def dispatch_children(box):
-            if not isinstance(box, boxes.ParentBox):
-                return box
-
-            new_children = []
-            for child in box.children:
-                result = dispatch(child)
-                if result is not None:
-                    new_children.append(result)
-            box = box.copy_with_children(new_children)
-            return box
-
-        box = dispatch_children(box)
-
+        box = _dispatch_children(
+            box, page, child_contexts, blocks, floats, blocks_and_cells)
         return cls(box, children, blocks, floats, blocks_and_cells, page)
+
+
+def _dispatch(box, page, child_contexts, blocks, floats, blocks_and_cells):
+    if isinstance(box, AbsolutePlaceholder):
+        box = box._box
+    style = box.style
+
+    # Remove boxes defining a new stacking context from the children list.
+    defines_stacking_context = (
+        (style['position'] != 'static' and style['z_index'] != 'auto') or
+        style['opacity'] < 1 or
+        style['transform'] or  # 'transform: none' gives a "falsy" empty list
+        style['overflow'] != 'visible')
+    if defines_stacking_context:
+        child_contexts.append(StackingContext.from_box(box, page))
+        return
+
+    if style['position'] != 'static':
+        assert style['z_index'] == 'auto'
+        # "Fake" context: sub-contexts will go in this `child_contexts` list.
+        # Insert at the position before creating the sub-context.
+        index = len(child_contexts)
+        stacking_context = StackingContext.from_box(box, page, child_contexts)
+        child_contexts.insert(index, stacking_context)
+    elif box.is_floated():
+        floats.append(StackingContext.from_box(box, page, child_contexts))
+    elif isinstance(box, (boxes.InlineBlockBox, boxes.InlineFlexBox)):
+        # Have this fake stacking context be part of the "normal" box tree,
+        # because we need its position in the middle of a tree of inline boxes.
+        return StackingContext.from_box(box, page, child_contexts)
+    else:
+        if isinstance(box, boxes.BlockLevelBox):
+            blocks_index = len(blocks)
+            blocks_and_cells_index = len(blocks_and_cells)
+        elif isinstance(box, boxes.TableCellBox):
+            blocks_index = None
+            blocks_and_cells_index = len(blocks_and_cells)
+        else:
+            blocks_index = None
+            blocks_and_cells_index = None
+
+        box = _dispatch_children(
+            box, page, child_contexts, blocks, floats, blocks_and_cells)
+
+        # Insert at the positions before dispatch the children.
+        if blocks_index is not None:
+            blocks.insert(blocks_index, box)
+        if blocks_and_cells_index is not None:
+            blocks_and_cells.insert(blocks_and_cells_index, box)
+
+        return box
+
+
+def _dispatch_children(box, page, child_contexts, blocks, floats,
+                       blocks_and_cells):
+    if not isinstance(box, boxes.ParentBox):
+        return box
+
+    new_children = []
+    for child in box.children:
+        result = _dispatch(
+            child, page, child_contexts, blocks, floats, blocks_and_cells)
+        if result is not None:
+            new_children.append(result)
+    return box.copy_with_children(new_children)
