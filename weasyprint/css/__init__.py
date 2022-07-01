@@ -211,12 +211,11 @@ class StyleFor:
         if selector_page_type.index is not None:
             a, b, group = selector_page_type.index
             # TODO: handle group
-            if a:
-                if (page_type.index + 1 - b) % a:
-                    return False
+            offset = page_type.index + 1 - b
+            if a == 0:
+                return offset == 0
             else:
-                if page_type.index + 1 != b:
-                    return False
+                return offset / a >= 0 and not offset % a
         return True
 
 
