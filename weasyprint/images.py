@@ -7,7 +7,7 @@ from itertools import cycle
 from math import inf
 from xml.etree import ElementTree
 
-from PIL import Image
+from PIL import Image, ImageOps
 
 from .layout.percent import percentage
 from .logger import LOGGER
@@ -131,6 +131,8 @@ def get_image_from_uri(cache, url_fetcher, optimize_size, url,
                 else:
                     # Store image id to enable cache in Stream.add_image
                     image_id = md5(url.encode()).hexdigest()
+                    if 'exif' in pillow_image.info:
+                        pillow_image = ImageOps.exif_transpose(pillow_image)
                     image = RasterImage(pillow_image, image_id, optimize_size)
 
     except (URLFetchingError, ImageLoadingError) as exception:

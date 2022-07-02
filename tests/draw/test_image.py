@@ -547,3 +547,18 @@ def test_images_border_absolute(assert_pixels):
         img { margin: 1px; border: 1px solid lime; position: absolute }
       </style>
       <div><img src="pattern.png"></div>''')
+
+
+@assert_no_logs
+def test_image_exif(assert_same_renderings):
+    assert_same_renderings(
+        '''
+            <style>@page { size: 10px }</style>
+            <img style="display: block" src="not-optimized.jpg">
+        ''',
+        '''
+            <style>@page { size: 10px }</style>
+            <img style="display: block" src="not-optimized-exif.jpg">
+        ''',
+        tolerance=25,
+    )
