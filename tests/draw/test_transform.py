@@ -285,3 +285,25 @@ def test_2d_transform_13(assert_pixels):
               font-size: 0 }
       </style>
       <div><img src="pattern.png"></div>''')
+
+
+@assert_no_logs
+def test_2d_transform_opacity(assert_pixels):
+    assert_pixels('''
+        __________
+        __________
+        __________
+        _ss_______
+        _ss_______
+        __________
+        __________
+        __________
+        __________
+        __________
+    ''', '''
+      <style>
+        @page { size: 10px; margin: 2px; }
+        div { transform: translate(-1px, 1px); background: red;
+              height: 2px; width: 2px; opacity: 0.5 }
+      </style>
+      <div></div>''')
