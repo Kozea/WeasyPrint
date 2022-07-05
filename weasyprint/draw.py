@@ -108,10 +108,7 @@ def draw_stacking_context(stream, stacking_context):
 
         if box.style['opacity'] < 1:
             original_stream = stream
-            stream = stream.add_group([
-                box.border_box_x(), box.border_box_y(),
-                box.border_box_x() + box.border_width(),
-                box.border_box_y() + box.border_height()])
+            stream = stream.add_group(stream.page_rectangle)
 
         if box.transformation_matrix:
             if box.transformation_matrix.determinant:
