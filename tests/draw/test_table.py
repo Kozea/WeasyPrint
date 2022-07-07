@@ -728,6 +728,7 @@ def test_tables_9(assert_pixels):
         ______________________
         ______________________
         ______________________
+        ______________________
         _BBBBBBBBBBBBBBBBBBBB_
         _BBBBBBBBBBBBBBBBBBBB_
         _BBBBBBBBBBBBBBBBBBBB_
@@ -738,7 +739,6 @@ def test_tables_9(assert_pixels):
         _BBBBBBBBBBBBBBBBBBBB_
         __R_____R____R_____R__
         __RRRRRRRRRRRRRRRRRR__
-        ______________________
         ______________________
         ______________________
         ______________________
@@ -1235,3 +1235,71 @@ def test_tables_21(assert_pixels):
       <table>
         <tr><td>abc</td><td>abc</td></tr>
         <tr><td>abc</td><td></td></tr>''')
+
+
+@assert_no_logs
+def test_tables_22(assert_pixels):
+    assert_pixels('''
+      _________________________
+      _rrrrrrrrrrrrrrrrrrrrrrr_
+      _rKKKKKKKKKKrKKKKKKKKKKr_
+      _rKKKKKKKKKKrKKKKKKKKKKr_
+      _rrrrrrrrrrrrrrrrrrrrrrr_
+      _rKKKKKKBBBBrBBBBBBBBBBr_
+      _rKKKKKKBBBBrBBBBBBBBBBr_
+      _rBBBBBBBBBBrBBBBBBBBBBr_
+      _________________________
+      _________________________
+      _rrrrrrrrrrrrrrrrrrrrrrr_
+      _rKKKKKKKKKKrKKKKKKKKKKr_
+      _rKKKKKKKKKKrKKKKKKKKKKr_
+      _rrrrrrrrrrrrrrrrrrrrrrr_
+      _rKKKKKKBBBBrBBBBBBBBBBr_
+      _rKKKKKKBBBBrBBBBBBBBBBr_
+      _rrrrrrrrrrrrrrrrrrrrrrr_
+      _________________________
+    ''', '''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        @page { size: 25px 9px; margin: 1px }
+        table { border-collapse: collapse; font: 2px/1 weasyprint }
+        td { background: blue; border: 1px solid red }
+      </style>
+      <table>
+        <thead><tr><td>abcde</td><td>abcde</td></tr></thead>
+        <tbody><tr><td>abc abc</td><td></td></tr></tbody>''')
+
+
+@pytest.mark.xfail
+@assert_no_logs
+def test_tables_23(assert_pixels):
+    assert_pixels('''
+      _________________________
+      _rrrrrrrrrrrrrrrrrrrrrrr_
+      _rKKKKKKKKKKrKKKKKKKKKKr_
+      _rKKKKKKKKKKrKKKKKKKKKKr_
+      _rrrrrrrrrrrrrrrrrrrrrrr_
+      _rKKKKKKBBBBrBBBBBBBBBBr_
+      _rKKKKKKBBBBrBBBBBBBBBBr_
+      _rBBBBBBBBBBrBBBBBBBBBBr_
+      _________________________
+      _________________________
+      _rrrrrrrrrrrrrrrrrrrrrrr_
+      _rKKKKKKKKKKrKKKKKKKKKKr_
+      _rKKKKKKKKKKrKKKKKKKKKKr_
+      _rKKKKKKBBBBrBBBBBBBBBBr_
+      _rKKKKKKBBBBrBBBBBBBBBBr_
+      _rrrrrrrrrrrrrrrrrrrrrrr_
+      _________________________
+      _________________________
+    ''', '''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        @page { size: 25px 9px; margin: 1px }
+        table { border-collapse: collapse; font: 2px/1 weasyprint }
+        td { background: blue; border: 1px solid red }
+        thead td { border-bottom: none }
+      </style>
+      <table>
+        <thead><tr><td>abcde</td><td>abcde</td></tr></thead>
+        <tbody><tr><td>abc abc</td><td></td></tr></tbody>''')
