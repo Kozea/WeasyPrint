@@ -659,3 +659,42 @@ def test_float_split_10(assert_pixels):
         <div>bbbbb bbbbb</div>
         <div class="split">aa aa</div>
         <div>bbb bbb</div>''')
+
+
+@assert_no_logs
+def test_float_split_11(assert_pixels):
+    assert_pixels('''
+        ________________
+        _BBBBBBBBBB_____
+        _BBBBBBBBBB_____
+        _BBBBBBBBBB_____
+        _BBBBBBBBBB_____
+        ________________
+        ________________
+        ________________
+        _BBBB___________
+        _BBBB___________
+        _rrrrrrrrrrrrrr_
+        _rrrrrrrrrrrrrr_
+        ________________
+        ________________
+    ''', '''
+        <style>
+            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+            @page {
+                margin: 1px;
+                size: 16px 7px;
+            }
+            body {
+                color: red;
+                font-family: weasyprint;
+                font-size: 2px;
+                line-height: 1;
+            }
+            div.split {
+                color: blue;
+                float: right;
+            }
+        </style>
+        <div class="split">aaaaa aaaaa aa</div>
+        bbbbbbb''')
