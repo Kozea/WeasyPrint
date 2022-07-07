@@ -567,7 +567,7 @@ def make_page(context, root_box, page_type, resume_at, page_number,
     broken_out_of_flow = {}
     context_out_of_flow = context.broken_out_of_flow.values()
     for box, containing_block, skip_stack in context_out_of_flow:
-        box.position_y = 0
+        box.position_y = root_box.content_box_y()
         if box.is_floated():
             out_of_flow_box, out_of_flow_resume_at = float_layout(
                 context, box, containing_block, positioned_boxes,

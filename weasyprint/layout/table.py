@@ -15,15 +15,18 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
         avoid_page_break, block_container_layout, block_level_page_break,
         find_earlier_page_break, force_page_break)
 
-    table.remove_decoration(start=skip_stack is not None, end=False)
+    has_header = table.children and table.children[0].is_header
+    has_footer = table.children and table.children[-1].is_footer
+    collapse = table.style['border_collapse'] == 'collapse'
+    remove_start_decoration = skip_stack is not None and not has_header
+    table.remove_decoration(remove_start_decoration, end=False)
 
     column_widths = table.column_widths
 
-    if table.style['border_collapse'] == 'separate':
-        border_spacing_x, border_spacing_y = table.style['border_spacing']
+    if collapse:
+        border_spacing_x = border_spacing_y = 0
     else:
-        border_spacing_x = 0
-        border_spacing_y = 0
+        border_spacing_x, border_spacing_y = table.style['border_spacing']
 
     column_positions = table.column_positions = []
     rows_left_x = table.content_box_x() + border_spacing_x
@@ -44,7 +47,7 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
             column_positions.append(position_x)
         rows_width = rows_x - position_x
 
-    if table.style['border_collapse'] == 'collapse':
+    if collapse:
         table.skip_cell_border_top = False
         table.skip_cell_border_bottom = False
         split_cells = False
@@ -60,7 +63,7 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                 skipped_rows += len(group.children)
         else:
             skipped_rows = 0
-        if not split_cells:
+        if not split_cells and not has_header:
             _, horizontal_borders = table.collapsed_border_grid
             if horizontal_borders:
                 table.border_top_width = max(
@@ -149,9 +152,20 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                         cell_skip_stack = {len(cell.children): None}
                 else:
                     cell_skip_stack = None
-                if cell_skip_stack:
-                    cell.remove_decoration(start=True, end=False)
-                    if table.style['border_collapse'] == 'collapse':
+
+                # Adapt cell and table collapsing borders when a row is split
+                if cell_skip_stack and collapse:
+                    if has_header:
+                        # We have a header, we have to adapt the position of
+                        # the split cell to match the header’s bottom border
+                        header_rows = table.children[0].children
+                        if header_rows and header_rows[-1].children:
+                            cell.position_y += max(
+                                header.border_bottom_width
+                                for header in header_rows[-1].children)
+                    else:
+                        # We don’t have a header, we have to skip the
+                        # decoration at the top of the table when it’s drawn
                         table.skip_cell_border_top = True
 
                 # First try to render content as if there was already something
@@ -272,17 +286,11 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
             # Break if one cell was broken
             break_cell = False
             if resume_at:
-                values, = list(resume_at.values())
-                if len(row.children) == len(values):
-                    for cell_resume_at in values.values():
-                        if cell_resume_at != {0: None}:
-                            break_cell = True
-                            break
-                    else:
-                        # No cell was displayed, give up row
-                        next_position_y = inf
-                        page_is_empty = False
-                        resume_at = None
+                if all(child.empty for child in row.children):
+                    # No cell was displayed, give up row
+                    next_position_y = inf
+                    page_is_empty = False
+                    resume_at = None
                 else:
                     break_cell = True
 
@@ -314,7 +322,7 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
             page_is_empty = False
             skip_stack = None
 
-            if break_cell and table.style['border_collapse'] == 'collapse':
+            if break_cell and collapse and not has_footer:
                 table.skip_cell_border_bottom = True
 
             if break_cell or resume_at:
@@ -428,7 +436,7 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
         else:
             header_footer_bottom_space = -inf
 
-        if table.children and table.children[0].is_header:
+        if has_header:
             header = table.children[0]
             header, resume_at, next_page = group_layout(
                 header, position_y, header_footer_bottom_space,
@@ -440,7 +448,7 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
         else:
             header = None
 
-        if table.children and table.children[-1].is_footer:
+        if has_footer:
             footer = table.children[-1]
             footer, resume_at, next_page = group_layout(
                 footer, position_y, header_footer_bottom_space,
@@ -542,9 +550,9 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
         ([header] if header is not None else []) +
         new_table_children +
         ([footer] if footer is not None else []))
-    table.remove_decoration(
-        start=skip_stack is not None, end=resume_at is not None)
-    if table.style['border_collapse'] == 'collapse':
+    remove_end_decoration = resume_at is not None and not has_footer
+    table.remove_decoration(remove_start_decoration, remove_end_decoration)
+    if collapse:
         table.skipped_rows = skipped_rows
 
     # If the height property has a bigger value, just add blank space

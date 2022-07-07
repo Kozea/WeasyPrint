@@ -664,41 +664,40 @@ def test_float_split_10(assert_pixels):
 @assert_no_logs
 def test_float_split_11(assert_pixels):
     assert_pixels('''
-        BBBBBBBBBBBBBBBB
-        BBBBBBBBBBBBBBBB
-        BBBBBBBBBBBBBBBB
-        BBBBBBBBBBBBBBBB
-        BBBBBBBBBBBBBBBB
-        BBBBGG______BBBB
-        BBBBGG______BBBB
-        BBBB________BBBB
-        BBBB________BBBB
+        ________________
+        _BBBBBBBBBB_____
+        _BBBBBBBBBB_____
+        _BBBBBBBBBB_____
+        _BBBBBBBBBB_____
+        ________________
+        ________________
+        ________________
+        _BBBB___________
+        _BBBB___________
+        _rrrrrrrrrrrrrr_
+        _rrrrrrrrrrrrrr_
+        ________________
         ________________
     ''', '''
         <style>
             @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
-                size: 16px 5px;
+                margin: 1px;
+                size: 16px 7px;
             }
             body {
-                color: lime;
+                color: red;
                 font-family: weasyprint;
                 font-size: 2px;
                 line-height: 1;
             }
-            article {
-                background: blue;
-                height: 5px;
-            }
-            div {
-                background: red;
+            div.split {
                 color: blue;
+                float: right;
             }
         </style>
-        <article></article>
-        a
-        <div style="float: left"><p>aa<p>aa</div>
-        <div style="float: right"><p>bb<p>bb</div>''')
+        <div class="split">aaaaa aaaaa aa</div>
+        bbbbbbb''')
 
 
 @assert_no_logs
@@ -782,3 +781,43 @@ def test_float_split_13(assert_pixels):
           <div style="float: left"><p>a<p>aa</div>
           a
           <div style="float: right"><p>bb<p>bb</div>''')
+
+
+@assert_no_logs
+def test_float_split_14(assert_pixels):
+    assert_pixels('''
+        BBBBBBBBBBBBBBBB
+        BBBBBBBBBBBBBBBB
+        BBBBBBBBBBBBBBBB
+        BBBBBBBBBBBBBBBB
+        BBBBBBBBBBBBBBBB
+        BBBBGG______BBBB
+        BBBBGG______BBBB
+        BBBB________BBBB
+        BBBB________BBBB
+        ________________
+    ''', '''
+        <style>
+            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+            @page {
+                size: 16px 5px;
+            }
+            body {
+                color: lime;
+                font-family: weasyprint;
+                font-size: 2px;
+                line-height: 1;
+            }
+            article {
+                background: blue;
+                height: 5px;
+            }
+            div {
+                background: red;
+                color: blue;
+            }
+        </style>
+        <article></article>
+        a
+        <div style="float: left"><p>aa<p>aa</div>
+        <div style="float: right"><p>bb<p>bb</div>''')
