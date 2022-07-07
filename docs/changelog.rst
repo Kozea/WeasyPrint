@@ -2,6 +2,58 @@ Changelog
 =========
 
 
+Version 56.0
+------------
+
+Released on 2022-07-07.
+
+This version also includes the changes from unstable b1 version listed
+below.
+
+New features:
+
+* `70f9b62 <https://github.com/Kozea/WeasyPrint/commit/70f9b62>`_:
+  Support format 5 for bitmap glyphs
+
+Bug fixes:
+
+* `#1666 <https://github.com/Kozea/WeasyPrint/issues/1666>`_
+  Fix reproducible PDF generation with embedded images
+* `#1668 <https://github.com/Kozea/WeasyPrint/issues/1668>`_:
+  Fix @page:nth() selector
+* `3bd9a8e <https://github.com/Kozea/WeasyPrint/commit/3bd9a8e>_:
+  Don’t limit the opacity groups to the original box size
+* `cb9540b <https://github.com/Kozea/WeasyPrint/commit/cb9540b>`_,
+  `76d174f <https://github.com/Kozea/WeasyPrint/commit/76d174f>`_,
+  `9ce6547 <https://github.com/Kozea/WeasyPrint/commit/9ce6547>`_:
+  Minor bugfixes for split table rows
+
+Contributors:
+
+* Guillaume Ayoub
+
+Backers and sponsors:
+
+* Grip Angebotssoftware
+* Manuel Barkhau
+* Crisp BV
+* SimonSoft
+* Menutech
+* Spacinov
+* KontextWork
+* René Fritz
+* NCC Group
+* Kobalt
+* Des images et des mots
+* Andreas Zettl
+* Tom Pohl
+* Moritz Mahringer
+* Florian Demmer
+* Yanal-Yvez Fargialla
+* Gábor
+* Piotr Horzycki
+
+
 Version 56.0b1
 --------------
 
@@ -14,7 +66,7 @@ Dependencies:
 
 * pydyf 0.2.0+ is now needed
 
-Features:
+New features:
 
 * `#1660 <https://github.com/Kozea/WeasyPrint/pull/1660>`_:
   Support nested line-clamp, with financial support from Expert Germany
@@ -135,7 +187,7 @@ Dependencies:
 
 * Python 3.7+ is now needed, Python 3.6 is not supported anymore
 
-Features:
+New features:
 
 * `#1534 <https://github.com/Kozea/WeasyPrint/pull/1534>`_:
   Support ``word-break: break-all``
@@ -323,7 +375,7 @@ Version 54.1
 
 Released on 2022-01-31.
 
-Features:
+New features:
 
 * `#1547 <https://github.com/Kozea/WeasyPrint/issues/1547>`_:
   Handle break-inside: avoid on tr tags
