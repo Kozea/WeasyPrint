@@ -272,17 +272,11 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
             # Break if one cell was broken
             break_cell = False
             if resume_at:
-                values, = list(resume_at.values())
-                if len(row.children) == len(values):
-                    for cell_resume_at in values.values():
-                        if cell_resume_at != {0: None}:
-                            break_cell = True
-                            break
-                    else:
-                        # No cell was displayed, give up row
-                        next_position_y = inf
-                        page_is_empty = False
-                        resume_at = None
+                if all(child.empty for child in row.children):
+                    # No cell was displayed, give up row
+                    next_position_y = inf
+                    page_is_empty = False
+                    resume_at = None
                 else:
                     break_cell = True
 

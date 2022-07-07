@@ -1198,3 +1198,40 @@ def test_tables_20(assert_pixels):
       <col></col><col></col>
       <tbody><tr></tr><tr><td></td></tr></tbody>
       <tfoot></tfoot>''')
+
+
+@assert_no_logs
+def test_tables_21(assert_pixels):
+    assert_pixels('''
+      _________________________
+      _rrrrrrrrrrrrrrrrrrrrrrr_
+      _rBBBBBBBBBBrBBBBBBBBBBr_
+      _rBKKKKKKBBBrBKKKKKKBBBr_
+      _rBKKKKKKBBBrBKKKKKKBBBr_
+      _rBBBBBBBBBBrBBBBBBBBBBr_
+      _rrrrrrrrrrrrrrrrrrrrrrr_
+      _________________________
+      _________________________
+      _________________________
+      _________________________
+      _________________________
+      _rrrrrrrrrrrrrrrrrrrrrrr_
+      _rBBBBBBBBBBrBBBBBBBBBBr_
+      _rBKKKKKKBBBrBBBBBBBBBBr_
+      _rBKKKKKKBBBrBBBBBBBBBBr_
+      _rBBBBBBBBBBrBBBBBBBBBBr_
+      _rrrrrrrrrrrrrrrrrrrrrrr_
+      _________________________
+      _________________________
+      _________________________
+      _________________________
+    ''', '''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        @page { size: 25px 11px; margin: 1px }
+        table { border-collapse: collapse; font: 2px weasyprint; width: 100% }
+        td { background: blue; padding: 1px; border: 1px solid red }
+      </style>
+      <table>
+        <tr><td>abc</td><td>abc</td></tr>
+        <tr><td>abc</td><td></td></tr>''')
