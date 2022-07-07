@@ -21,7 +21,7 @@ Bug fixes:
   Fix reproducible PDF generation with embedded images
 * `#1668 <https://github.com/Kozea/WeasyPrint/issues/1668>`_:
   Fix @page:nth() selector
-* `3bd9a8e <https://github.com/Kozea/WeasyPrint/commit/3bd9a8e>_:
+* `3bd9a8e <https://github.com/Kozea/WeasyPrint/commit/3bd9a8e>`_:
   Don’t limit the opacity groups to the original box size
 * `cb9540b <https://github.com/Kozea/WeasyPrint/commit/cb9540b>`_,
   `76d174f <https://github.com/Kozea/WeasyPrint/commit/76d174f>`_,
