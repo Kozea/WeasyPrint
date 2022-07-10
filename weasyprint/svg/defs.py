@@ -236,7 +236,7 @@ def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
         encode = (len(colors) - 1) * (0, 1)
         bounds = positions[1:-1]
         sub_functions = (
-            group.create_interpolation_function((0, 1), c0, c1, 1)
+            group.create_interpolation_function((0, 1), [c0], [c1], 1)
             for c0, c1 in alpha_couples)
         function = group.create_stitching_function(
             domain, encode, bounds, sub_functions)
