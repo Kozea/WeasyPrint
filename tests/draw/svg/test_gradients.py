@@ -490,3 +490,34 @@ def test_radial_gradient_reflect(assert_pixels):
         <rect x="0" y="0" width="10" height="10" fill="url(#grad)" />
       </svg>
     ''')
+
+
+@assert_no_logs
+def test_linear_gradient_opacity(assert_pixels):
+    assert_pixels('''
+        BBBBBBBBBB
+        BBBBBBBBBB
+        BBBBBBBBBB
+        BBBBBBBBBB
+        BBBBBBBBBB
+        ssssssssss
+        ssssssssss
+        ssssssssss
+        ssssssssss
+        ssssssssss
+    ''', '''
+      <style>
+        @page { size: 10px }
+        svg { display: block }
+      </style>
+      <svg width="10px" height="10px" xmlns="https://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1"
+            gradientUnits="objectBoundingBox">
+            <stop stop-color="blue" offset="50%"></stop>
+            <stop stop-color="red" stop-opacity="0.502" offset="50%"></stop>
+          </linearGradient>
+        </defs>
+        <rect x="0" y="0" width="10" height="10" fill="url(#grad)" />
+      </svg>
+    ''')
