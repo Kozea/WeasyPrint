@@ -845,7 +845,7 @@ def test_otb_font(assert_pixels):
           color: red;
           font-family: weasyprint-otb;
           font-size: 4px;
-          line-height: 1;
+          line-height: 0.8;
         }
       </style>
       AaA''')
