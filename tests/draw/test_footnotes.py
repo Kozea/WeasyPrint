@@ -157,3 +157,202 @@ def test_footnote_with_absolute(assert_pixels):
         }
     </style>
     <div>a<span><mark>d</mark></span></div>''')
+
+
+@assert_no_logs
+def test_footnote_max_height_1(assert_pixels):
+    assert_pixels('''
+        RRRRRRRR_
+        RRRRRRRR_
+        RRRR_____
+        RRRR_____
+        _BBBBBB__
+        _BBBBBB__
+        _________
+        _________
+        _________
+        _________
+        _BBBBBB__
+        _BBBBBB__
+    ''', '''
+    <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page {
+            size: 9px 6px;
+
+            @footnote {
+                margin-left: 1px;
+                max-height: 3px;
+            }
+        }
+        div {
+            color: red;
+            font-family: weasyprint;
+            font-size: 2px;
+            line-height: 1;
+        }
+        div.footnote {
+            float: footnote;
+            color: blue;
+        }
+    </style>
+    <div>ab<div class="footnote">c</div><div class="footnote">d</div></div>
+    <div>ef</div>''')
+
+
+@assert_no_logs
+def test_footnote_max_height_2(assert_pixels):
+    assert_pixels('''
+        RRRRRRRR_
+        RRRRRRRR_
+        _________
+        _________
+        _BBBBBB__
+        _BBBBBB__
+        _________
+        _________
+        _________
+        _________
+        _BBBBBB__
+        _BBBBBB__
+    ''', '''
+    <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page {
+            size: 9px 6px;
+
+            @footnote {
+                margin-left: 1px;
+                max-height: 3px;
+            }
+        }
+        div {
+            color: red;
+            font-family: weasyprint;
+            font-size: 2px;
+            line-height: 1;
+        }
+        div.footnote {
+            float: footnote;
+            color: blue;
+        }
+    </style>
+    <div>ab<div class="footnote">c</div><div class="footnote">d</div></div>''')
+
+
+@assert_no_logs
+def test_footnote_max_height_3(assert_pixels):
+    assert_pixels('''
+        RRRRRRRR_
+        RRRRRRRR_
+        _________
+        _________
+        _________
+        _________
+    ''', '''
+    <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page {
+            size: 9px 6px;
+
+            @footnote {
+                margin-left: 1px;
+                max-height: 0px;
+            }
+        }
+        div {
+            color: red;
+            font-family: weasyprint;
+            font-size: 2px;
+            line-height: 1;
+        }
+        div.footnote {
+            float: footnote;
+            color: blue;
+        }
+    </style>
+    <div>ab<div class="footnote">c</div><div class="footnote">d</div></div>''')
+
+
+@assert_no_logs
+def test_footnote_max_height_4(assert_pixels):
+    assert_pixels('''
+        RRRRRRRR_
+        RRRRRRRR_
+        RRRR_____
+        RRRR_____
+        _BBBBBB__
+        _BBBBBB__
+        RRRR_____
+        RRRR_____
+        _________
+        _________
+        _BBBBBB__
+        _BBBBBB__
+    ''', '''
+    <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page {
+            size: 9px 6px;
+
+            @footnote {
+                margin-left: 1px;
+                max-height: 3px;
+            }
+        }
+        div {
+            color: red;
+            font-family: weasyprint;
+            font-size: 2px;
+            line-height: 1;
+        }
+        div.footnote {
+            float: footnote;
+            color: blue;
+        }
+    </style>
+    <div>ab<div class="footnote">c</div><div class="footnote">d</div></div>
+    <div>ef</div>
+    <div>gh</div>''')
+
+
+@assert_no_logs
+def test_footnote_max_height_5(assert_pixels):
+    assert_pixels('''
+        RRRRRRRRRR
+        RRRRRRRRRR
+        _BBBBBB___
+        _BBBBBB___
+        _BBBBBB___
+        _BBBBBB___
+        RRRR______
+        RRRR______
+        __________
+        __________
+        _BBBBBB___
+        _BBBBBB___
+    ''', '''
+    <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page {
+            size: 10px 6px;
+
+            @footnote {
+                margin-left: 1px;
+                max-height: 4px;
+            }
+        }
+        div {
+            color: red;
+            font-family: weasyprint;
+            font-size: 2px;
+            line-height: 1;
+        }
+        div.footnote {
+            float: footnote;
+            color: blue;
+        }
+    </style>
+    <div>ab<div class="footnote">c</div><div class="footnote">d</div>
+    <div class="footnote">e</div></div>
+    <div>fg</div>''')

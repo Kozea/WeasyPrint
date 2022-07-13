@@ -643,3 +643,57 @@ def test_footnote_repagination():
     assert footnote_marker.children[0].text == '1.'
     assert footnote_textbox.text == 'de'
     assert footnote_area.position_y == 5
+
+
+@assert_no_logs
+def test_footnote_max_height():
+    page1, page2 = render_pages('''
+      <style>
+          @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+          @page {
+              size: 10px 6px;
+
+              @footnote {
+                  margin-left: 1px;
+                  max-height: 4px;
+              }
+          }
+          div {
+              color: red;
+              font-family: weasyprint;
+              font-size: 2px;
+              line-height: 1;
+          }
+          div.footnote {
+              float: footnote;
+              color: blue;
+          }
+      </style>
+      <div>ab<div class="footnote">c</div><div class="footnote">d</div>
+      <div class="footnote">e</div></div>
+      <div>fg</div>''')
+    html1, footnote_area1= page1.children
+    body1, = html1.children
+    div, = body1.children
+    div_textbox, footnote_call1, footnote_call2, footnote_call3 = div.children[0].children
+    assert div_textbox.text == 'ab'
+    assert footnote_call1.children[0].text == '1'
+    assert footnote_call2.children[0].text == '2'
+    assert footnote_call3.children[0].text == '3'
+    footnote_line1, footnote_line2 = footnote_area1.children[0].children
+    footnote_marker1, footnote_content1 = footnote_line1[0].children
+    assert footnote_marker1.children[0].text == '1.'
+    assert footnote_content1.text == 'c'
+    footnote_marker2, footnote_content2 = footnote_line2[0].children
+    assert footnote_marker2.children[0].text == '2.'
+    assert footnote_content2.text == 'd'
+
+    html2, footnote_area2 = page2.children
+    body2, = html2.children
+    div2, = body2.children
+    div_textbox2 = div2.children[0].children
+    assert div_textbox2.text == 'fg'
+    footnote_line3 = footnote_area2.children[0].children
+    footnote_marker3, footnote_content3 = footnote_line3[0].children
+    assert footnote_marker2.children[0].text == '3.'
+    assert footnote_content2.text == 'e'
