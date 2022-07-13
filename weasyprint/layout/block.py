@@ -361,7 +361,7 @@ def _linebox_layout(context, box, index, child, new_children, page_is_empty,
                 overflow = context.layout_footnote(footnote)
                 new_footnotes.append(footnote)
                 overflow = (
-                    (overflow and not page_is_empty) or
+                    overflow or
                     context.reported_footnotes or
                     context.overflows_page(
                         bottom_space, new_position_y + offset_y))

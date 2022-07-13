@@ -242,6 +242,8 @@ def test_footnote_max_height_2(assert_pixels):
 
 @assert_no_logs
 def test_footnote_max_height_3(assert_pixels):
+    # This case is crazy and the rendering is not really defined, but this test
+    # is useful to check that there’s no endless loop.
     assert_pixels('''
         RRRRRRRR_
         RRRRRRRR_
@@ -249,6 +251,12 @@ def test_footnote_max_height_3(assert_pixels):
         _________
         _________
         _________
+        _________
+        _________
+        _________
+        _________
+        _________
+        _BBBBBB__
     ''', '''
     <style>
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
@@ -257,7 +265,7 @@ def test_footnote_max_height_3(assert_pixels):
 
             @footnote {
                 margin-left: 1px;
-                max-height: 0px;
+                max-height: 1px;
             }
         }
         div {
@@ -319,23 +327,23 @@ def test_footnote_max_height_4(assert_pixels):
 @assert_no_logs
 def test_footnote_max_height_5(assert_pixels):
     assert_pixels('''
-        RRRRRRRRRR
-        RRRRRRRRRR
-        _BBBBBB___
-        _BBBBBB___
-        _BBBBBB___
-        _BBBBBB___
-        RRRR______
-        RRRR______
-        __________
-        __________
-        _BBBBBB___
-        _BBBBBB___
+        RRRRRRRR__RR
+        RRRRRRRR__RR
+        _BBBBBB_____
+        _BBBBBB_____
+        _BBBBBB_____
+        _BBBBBB_____
+        RRRR________
+        RRRR________
+        ____________
+        ____________
+        _BBBBBB_____
+        _BBBBBB_____
     ''', '''
     <style>
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
-            size: 10px 6px;
+            size: 12px 6px;
 
             @footnote {
                 margin-left: 1px;
