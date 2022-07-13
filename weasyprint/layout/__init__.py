@@ -327,7 +327,7 @@ class LayoutContext:
         """Add a footnote to the layout for this page."""
         self.footnotes.remove(footnote)
         self.current_page_footnotes.append(footnote)
-        self._update_footnote_area()
+        return self._update_footnote_area()
 
     def unlayout_footnote(self, footnote):
         """Remove a footnote from the layout and return it to the waitlist."""
@@ -361,5 +361,11 @@ class LayoutContext:
                 self.current_footnote_area.page)[0]
             self.current_footnote_area.height = footnote_area.height
             self.page_bottom -= footnote_area.margin_height()
+            last_child = footnote_area.children[-1]
+            overflow = (
+                last_child.position_y + last_child.margin_height() >
+                footnote_area.position_y + footnote_area.margin_height())
+            return overflow
         else:
             self.current_footnote_area.height = 0
+            return False

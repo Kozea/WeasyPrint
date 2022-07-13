@@ -364,9 +364,10 @@ def _linebox_layout(context, box, index, child, new_children, page_is_empty,
                 descendant.footnote for descendant in line.descendants()
                 if descendant.footnote in context.footnotes)
             for footnote in footnotes:
-                context.layout_footnote(footnote)
+                overflow = context.layout_footnote(footnote)
                 new_footnotes.append(footnote)
                 overflow = (
+                    overflow or
                     context.reported_footnotes or
                     context.overflows_page(
                         bottom_space, new_position_y + offset_y))
