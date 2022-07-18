@@ -14,12 +14,12 @@ from ..links import make_page_bookmark_tree, resolve_links
 from ..logger import LOGGER, PROGRESS_LOGGER
 from ..matrix import Matrix
 from ..urls import URLFetchingError
-from . import pdfa
+from . import pdfa, pdfua
 from .fonts import build_fonts_dictionary
 from .stream import Stream
 
 VARIANTS = {
-    name: function for variants in (pdfa.VARIANTS,)
+    name: function for variants in (pdfa.VARIANTS, pdfua.VARIANTS)
     for (name, function) in variants.items()}
 
 
@@ -257,7 +257,7 @@ def generate_pdf(pages, url_fetcher, metadata, fonts, target, zoom,
 
     # Variants
     if variant:
-        VARIANTS[variant](pdf, metadata)
+        VARIANTS[variant](pdf, pages, metadata)
 
     # Links and anchors
     page_links_and_anchors = list(resolve_links(pages))
@@ -322,6 +322,7 @@ def generate_pdf(pages, url_fetcher, metadata, fonts, target, zoom,
             'MediaBox': pydyf.Array([left, top, right, bottom]),
             'Contents': stream.reference,
             'Resources': resources.reference,
+            'Tabs': '/S',
         })
         pdf.add_page(pdf_page)
 
