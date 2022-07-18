@@ -234,6 +234,35 @@ def test_counters_8():
                     ('p::before', 'Text', 'a')])])])])])
 
 
+@pytest.mark.xfail
+@assert_no_logs
+def test_counters_9():
+    document = HTML(string='''
+      <ol>
+        <li></li>
+        <li>
+          <ol style="counter-reset: a">
+            <li></li>
+            <li></li>
+          </ol>
+        </li>
+        <li></li>
+      </ol>
+    ''').render()
+    page, = document.pages
+    html, = page._page_box.children
+    body, = html.children
+    ol1, = body.children
+    oli1, oli2, oli3 = ol1.children
+    marker, ol2 = oli2.children
+    oli21, oli22 = ol2.children
+    assert oli1.children[0].children[0].children[0].text == '1. '
+    assert oli2.children[0].children[0].children[0].text == '2. '
+    assert oli21.children[0].children[0].children[0].text == '1. '
+    assert oli22.children[0].children[0].children[0].text == '2. '
+    assert oli3.children[0].children[0].children[0].text == '3. '
+
+
 @assert_no_logs
 def test_counter_styles_1():
     assert_tree(parse_all('''
