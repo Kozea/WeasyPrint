@@ -1,11 +1,11 @@
 """PDF metadata stream generation."""
 
+from xml.etree.ElementTree import (
+    Element, SubElement, register_namespace, tostring)
+
 import pydyf
 
 from .. import __version__
-
-from xml.etree.ElementTree import (
-    Element, SubElement, register_namespace, tostring)
 
 # XML namespaces used for metadata
 NS = {
@@ -20,7 +20,7 @@ for key, value in NS.items():
     register_namespace(key, value)
 
 
-def add_metadata(pdf, metadata, variant, version):
+def add_metadata(pdf, metadata, variant, version, conformance):
     """Add PDF stream of metadata.
 
     Described in ISO-32000-1:2008, 14.3.2.
@@ -33,8 +33,8 @@ def add_metadata(pdf, metadata, variant, version):
     element = SubElement(rdf, f'{{{NS["rdf"]}}}Description')
     element.attrib[f'{{{NS["rdf"]}}}about'] = ''
     element.attrib[f'{{{NS[namespace]}}}part'] = str(version)
-    if variant == 'a':
-        element.attrib[f'{{{NS[namespace]}}}conformance'] = 'B'
+    if conformance:
+        element.attrib[f'{{{NS[namespace]}}}conformance'] = conformance
 
     element = SubElement(rdf, f'{{{NS["rdf"]}}}Description')
     element.attrib[f'{{{NS["rdf"]}}}about'] = ''

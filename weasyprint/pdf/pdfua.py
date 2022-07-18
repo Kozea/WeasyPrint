@@ -2,8 +2,8 @@
 
 import pydyf
 
-from .metadata import add_metadata
 from ..logger import LOGGER
+from .metadata import add_metadata
 
 
 def pdfua(pdf, pages, metadata, version):
@@ -19,7 +19,7 @@ def pdfua(pdf, pages, metadata, version):
         'DisplayDocTitle': 'true',
     })
 
-    add_metadata(pdf, metadata, 'ua', version)
+    add_metadata(pdf, metadata, 'ua', version, conformance=None)
 
 
 VARIANTS = {

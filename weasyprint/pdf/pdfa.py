@@ -1,11 +1,11 @@
 """PDF/A generation."""
 
+from importlib.resources import read_binary
+
 import pydyf
 
-from .metadata import add_metadata
 from ..logger import LOGGER
-
-from importlib.resources import read_binary
+from .metadata import add_metadata
 
 
 def pdfa(pdf, metadata, version):
@@ -38,7 +38,7 @@ def pdfa(pdf, metadata, version):
     else:
         pdf.version = b'2.0'
 
-    add_metadata(pdf, metadata, 'a', version)
+    add_metadata(pdf, metadata, 'a', version, 'B')
 
 
 VARIANTS = {
