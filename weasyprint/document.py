@@ -334,8 +334,8 @@ class Document:
         """
         pdf = generate_pdf(
             self.pages, self.url_fetcher, self.metadata, self.fonts, target,
-            zoom, attachments, finisher, self._optimize_size, identifier,
-            variant, version, custom_metadata)
+            zoom, attachments, self._optimize_size, identifier, variant,
+            version, custom_metadata)
 
         if finisher:
             finisher(self, pdf)

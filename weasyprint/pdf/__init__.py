@@ -232,8 +232,8 @@ def _create_bookmarks(bookmarks, pdf, parent=None):
 
 
 def generate_pdf(pages, url_fetcher, metadata, fonts, target, zoom,
-                 attachments, finisher, optimize_size, identifier, variant,
-                 version, custom_metadata):
+                 attachments, optimize_size, identifier, variant, version,
+                 custom_metadata):
     # 0.75 = 72 PDF point per inch / 96 CSS pixel per inch
     scale = zoom * 0.75
 
