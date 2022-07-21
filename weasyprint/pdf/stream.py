@@ -140,16 +140,18 @@ class Font:
 class Stream(pydyf.Stream):
     """PDF stream object with extra features."""
     def __init__(self, fonts, page_rectangle, states, x_objects, patterns,
-                 shadings, images, *args, **kwargs):
+                 shadings, images, mark, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.compress = True
         self.page_rectangle = page_rectangle
+        self.marked = []
         self._fonts = fonts
         self._states = states
         self._x_objects = x_objects
         self._patterns = patterns
         self._shadings = shadings
         self._images = images
+        self._mark = mark
         self._current_color = self._current_color_stroke = None
         self._current_alpha = self._current_alpha_stroke = None
         self._current_font = self._current_font_size = None
@@ -294,7 +296,7 @@ class Stream(pydyf.Stream):
         })
         group = Stream(
             self._fonts, self.page_rectangle, states, x_objects, patterns,
-            shadings, self._images, extra=extra)
+            shadings, self._images, self._mark, extra=extra)
         group.id = f'x{len(self._x_objects)}'
         self._x_objects[group.id] = group
         return group
@@ -429,7 +431,7 @@ class Stream(pydyf.Stream):
         })
         pattern = Stream(
             self._fonts, self.page_rectangle, states, x_objects, patterns,
-            shadings, self._images, extra=extra)
+            shadings, self._images, self._mark, extra=extra)
         pattern.id = f'p{len(self._patterns)}'
         self._patterns[pattern.id] = pattern
         return pattern
@@ -448,6 +450,29 @@ class Stream(pydyf.Stream):
         shading.id = f's{len(self._shadings)}'
         self._shadings[shading.id] = shading
         return shading
+
+    def begin_marked_content(self, key, box, mcid=False):
+        if not self._mark:
+            return
+        self.stream.append(f'/{key}')
+        if mcid:
+            self.stream.append(pydyf.Dictionary({'MCID': len(self.marked)}))
+            self.stream.append(b'BDC')
+            self.marked.append((key, box))
+        else:
+            self.stream.append(b'BMC')
+
+    def end_marked_content(self):
+        if not self._mark:
+            return
+        if self.stream and self.stream[-1] in (b'BMC', b'BDC'):
+            if self.stream[-1] == b'BDC':
+                self.stream.pop()
+                self.marked.pop()
+            self.stream.pop()
+            self.stream.pop()
+        else:
+            self.stream.append(b'EMC')
 
     @staticmethod
     def create_interpolation_function(domain, c0, c1, n):

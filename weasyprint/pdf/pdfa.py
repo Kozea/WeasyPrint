@@ -1,5 +1,6 @@
 """PDF/A generation."""
 
+from functools import partial
 from importlib.resources import read_binary
 
 import pydyf
@@ -8,7 +9,7 @@ from ..logger import LOGGER
 from .metadata import add_metadata
 
 
-def pdfa(pdf, metadata, version):
+def pdfa(pdf, metadata, pages, page_streams, version):
     """Set metadata for PDF/A documents."""
     LOGGER.warning(
         'PDF/A support is experimental, '
@@ -30,20 +31,10 @@ def pdfa(pdf, metadata, version):
         }),
     ])
 
-    # Set PDF version
-    if version == 1:
-        pdf.version = b'1.4'
-    elif version in (2, 3):
-        pdf.version = b'1.7'
-    else:
-        pdf.version = b'2.0'
-
+    # Common PDF metadata stream
     add_metadata(pdf, metadata, 'a', version, 'B')
 
 
 VARIANTS = {
-    'pdf/a-1b': lambda pdf, pages, metadata: pdfa(pdf, metadata, 1),
-    'pdf/a-2b': lambda pdf, pages, metadata: pdfa(pdf, metadata, 2),
-    'pdf/a-3b': lambda pdf, pages, metadata: pdfa(pdf, metadata, 3),
-    'pdf/a-4b': lambda pdf, pages, metadata: pdfa(pdf, metadata, 4),
-}
+    f'pdf/a-{i}b': (partial(pdfa, version=i), {'version': pdf_version})
+    for i, pdf_version in enumerate(('1.4', '1.7', '1.7', '2.0'), start=1)}

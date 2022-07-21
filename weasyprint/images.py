@@ -50,11 +50,13 @@ class RasterImage:
         if self._intrinsic_width <= 0 or self._intrinsic_height <= 0:
             return
 
+        stream.begin_marked_content('Artifact', None)
         image_name = stream.add_image(
             self._pillow_image, image_rendering, self._optimize_size)
         stream.transform(
             concrete_width, 0, 0, -concrete_height, 0, concrete_height)
         stream.draw_x_object(image_name)
+        stream.end_marked_content()
 
 
 class SVGImage:

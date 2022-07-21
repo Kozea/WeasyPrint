@@ -151,18 +151,22 @@ def draw_stacking_context(stream, stacking_context):
 
             # Point 6
             if isinstance(box, boxes.InlineBox):
+                stream.begin_marked_content('Span', box, mcid=True)
                 draw_inline_level(stream, stacking_context.page, box)
+                stream.end_marked_content()
 
             # Point 7
             for block in [box] + stacking_context.blocks_and_cells:
                 if isinstance(block, boxes.ReplacedBox):
                     draw_border(stream, block)
                     draw_replacedbox(stream, block)
-                else:
+                elif block.children:
+                    if not isinstance(block.children[-1], boxes.LineBox):
+                        continue
+                    stream.begin_marked_content('P', box, mcid=True)
                     for child in block.children:
-                        if isinstance(child, boxes.LineBox):
-                            draw_inline_level(
-                                stream, stacking_context.page, child)
+                        draw_inline_level(stream, stacking_context.page, child)
+                    stream.end_marked_content()
 
             # Point 8
             for child_context in stacking_context.zero_z_contexts:
@@ -441,9 +445,12 @@ def draw_border(stream, box):
                             box.style['column_rule_style'],
                             get_color(box.style, 'column_rule_color'), 'left'))
 
+    stream.begin_marked_content('Artifact', box)
+
     # The box is hidden, easy.
     if box.style['visibility'] != 'visible':
         draw_column_border()
+        stream.end_marked_content()
         return
 
     widths = [getattr(box, f'border_{side}_width') for side in SIDES]
@@ -451,6 +458,7 @@ def draw_border(stream, box):
     # No border, return early.
     if all(width == 0 for width in widths):
         draw_column_border()
+        stream.end_marked_content()
         return
 
     colors = [get_color(box.style, f'border_{side}_color') for side in SIDES]
@@ -464,6 +472,7 @@ def draw_border(stream, box):
             len(set(colors)) == 1):
         draw_rounded_border(stream, box, styles[0], colors[0])
         draw_column_border()
+        stream.end_marked_content()
         return
 
     # We're not smart enough to find a good way to draw the borders :/. We must
@@ -479,6 +488,7 @@ def draw_border(stream, box):
                 stream, box, style, styled_color(style, color, side))
 
     draw_column_border()
+    stream.end_marked_content()
 
 
 def clip_border_segment(stream, style, width, side, border_box,
@@ -936,10 +946,15 @@ def draw_inline_level(stream, page, box, offset_x=0, text_overflow='clip',
         draw_background(stream, box.background)
         draw_border(stream, box)
         if isinstance(box, (boxes.InlineBox, boxes.LineBox)):
+            link_annotation = None
             if isinstance(box, boxes.LineBox):
                 text_overflow = box.text_overflow
                 block_ellipsis = box.block_ellipsis
+            else:
+                link_annotation = box.link_annotation
             ellipsis = 'none'
+            if link_annotation:
+                stream.begin_marked_content('Link', box, mcid=True)
             for i, child in enumerate(box.children):
                 if i == len(box.children) - 1:
                     # Last child
@@ -956,6 +971,8 @@ def draw_inline_level(stream, page, box, offset_x=0, text_overflow='clip',
                     draw_inline_level(
                         stream, page, child, child_offset_x, text_overflow,
                         ellipsis)
+            if link_annotation:
+                stream.end_marked_content()
         elif isinstance(box, boxes.InlineReplacedBox):
             draw_replacedbox(stream, box)
         else:

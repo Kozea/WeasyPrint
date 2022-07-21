@@ -453,6 +453,8 @@ class InlineBox(InlineLevelBox, ParentBox):
     inline box.
 
     """
+    link_annotation = None
+
     def hit_area(self):
         """Return the (x, y, w, h) rectangle where the box is clickable."""
         # Use line-height (margin_height) rather than border_height
