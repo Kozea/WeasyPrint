@@ -451,16 +451,14 @@ class Stream(pydyf.Stream):
         self._shadings[shading.id] = shading
         return shading
 
-    def begin_marked_content(self, key, box, mcid=False):
+    def begin_marked_content(self, tag, box, mcid=False):
         if not self._mark:
             return
-        self.stream.append(f'/{key}')
+        property_list = None
         if mcid:
-            self.stream.append(pydyf.Dictionary({'MCID': len(self.marked)}))
-            self.stream.append(b'BDC')
-            self.marked.append((key, box))
-        else:
-            self.stream.append(b'BMC')
+            property_list = pydyf.Dictionary({'MCID': len(self.marked)})
+            self.marked.append((tag, box))
+        super().begin_marked_content(tag, property_list)
 
     def end_marked_content(self):
         if not self._mark:
@@ -472,7 +470,7 @@ class Stream(pydyf.Stream):
             self.stream.pop()
             self.stream.pop()
         else:
-            self.stream.append(b'EMC')
+            super().end_marked_content()
 
     @staticmethod
     def create_interpolation_function(domain, c0, c1, n):
