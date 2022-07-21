@@ -110,13 +110,13 @@ def _round_meta(pages):
             anchors[anchor_name] = round(pos_x, 6), round(pos_y, 6)
         links = page.links
         for i, link in enumerate(links):
-            link_type, target, rectangle, download_name = link
+            link_type, target, rectangle, box = link
             pos_x, pos_y, width, height = rectangle
             link = (
                 link_type, target,
                 (round(pos_x, 6), round(pos_y, 6),
                  round(width, 6), round(height, 6)),
-                download_name)
+                box)
             links[i] = link
         bookmarks = page.bookmarks
         for i, (level, label, (pos_x, pos_y), state) in enumerate(bookmarks):
@@ -710,21 +710,30 @@ def test_assert_bookmarks(html, expected_by_page, expected_tree, round):
     assert document.make_bookmark_tree() == expected_tree
 
 
-def assert_links(html, expected_links_by_page, expected_anchors_by_page,
-                 expected_resolved_links,
+def simplify_links(links):
+    return [
+        (link_type, link_target, rectangle)
+        for link_type, link_target, rectangle, box in links]
+
+
+def assert_links(html, links, anchors, resolved_links,
                  base_url=resource_filename('<inline HTML>'), warnings=(),
                  round=False):
     with capture_logs() as logs:
         document = FakeHTML(string=html, base_url=base_url).render()
         if round:
             _round_meta(document.pages)
-        resolved_links = list(resolve_links(document.pages))
+        document_resolved_links = [
+            (simplify_links(page_links), page_anchors)
+            for page_links, page_anchors in resolve_links(document.pages)]
     assert len(logs) == len(warnings)
     for message, expected in zip(logs, warnings):
         assert expected in message
-    assert [p.links for p in document.pages] == expected_links_by_page
-    assert [p.anchors for p in document.pages] == expected_anchors_by_page
-    assert resolved_links == expected_resolved_links
+    document_links = [simplify_links(page.links) for page in document.pages]
+    document_anchors = [page.anchors for page in document.pages]
+    assert document_links == links
+    assert document_anchors == anchors
+    assert document_resolved_links == resolved_links
 
 
 @assert_no_logs
@@ -746,29 +755,27 @@ def test_links_1():
         </p>
     ''', [
         [
-            ('external', 'https://weasyprint.org', (0, 0, 30, 20), None),
-            ('external', 'https://weasyprint.org', (0, 0, 30, 30), None),
-            ('internal', 'lipsum', (10, 100, 42, 120), None),
-            ('internal', 'lipsum', (10, 100, 42, 132), None)
+            ('external', 'https://weasyprint.org', (0, 0, 30, 20)),
+            ('external', 'https://weasyprint.org', (0, 0, 30, 30)),
+            ('internal', 'lipsum', (10, 100, 42, 120)),
+            ('internal', 'lipsum', (10, 100, 42, 132))
         ],
-        [('internal', 'hello', (0, 0, 200, 30), None)],
+        [('internal', 'hello', (0, 0, 200, 30))],
     ], [
         {'hello': (0, 200)},
         {'lipsum': (0, 0)}
     ], [
         (
             [
-                ('external', 'https://weasyprint.org', (0, 0, 30, 20), None),
-                ('external', 'https://weasyprint.org', (0, 0, 30, 30), None),
-                ('internal', 'lipsum', (10, 100, 42, 120), None),
-                ('internal', 'lipsum', (10, 100, 42, 132), None)
+                ('external', 'https://weasyprint.org', (0, 0, 30, 20)),
+                ('external', 'https://weasyprint.org', (0, 0, 30, 30)),
+                ('internal', 'lipsum', (10, 100, 42, 120)),
+                ('internal', 'lipsum', (10, 100, 42, 132))
             ],
             [('hello', 0, 200)],
         ),
         (
-            [
-                ('internal', 'hello', (0, 0, 200, 30), None)
-            ],
+            [('internal', 'hello', (0, 0, 200, 30))],
             [('lipsum', 0, 0)]),
     ])
 
@@ -780,9 +787,9 @@ def test_links_2():
             <body style="width: 200px">
             <a href="../lipsum/é_%E9" style="display: block; margin: 10px 5px">
         ''', [[('external', 'https://weasyprint.org/foo/lipsum/%C3%A9_%E9',
-                (5, 10, 195, 10), None)]],
+                (5, 10, 195, 10))]],
         [{}], [([('external', 'https://weasyprint.org/foo/lipsum/%C3%A9_%E9',
-                  (5, 10, 195, 10), None)], [])],
+                  (5, 10, 195, 10))], [])],
         base_url='https://weasyprint.org/foo/bar/')
 
 
@@ -794,9 +801,9 @@ def test_links_3():
             <div style="display: block; margin: 10px 5px;
                         -weasy-link: url(../lipsum/é_%E9)">
         ''', [[('external', 'https://weasyprint.org/foo/lipsum/%C3%A9_%E9',
-                (5, 10, 195, 10), None)]],
+                (5, 10, 195, 10))]],
         [{}], [([('external', 'https://weasyprint.org/foo/lipsum/%C3%A9_%E9',
-                  (5, 10, 195, 10), None)], [])],
+                  (5, 10, 195, 10))], [])],
         base_url='https://weasyprint.org/foo/bar/')
 
 
@@ -807,8 +814,8 @@ def test_links_4():
         '''
             <body style="width: 200px">
             <a href="../lipsum" style="display: block; margin: 10px 5px">
-        ''', [[('external', '../lipsum', (5, 10, 195, 10), None)]], [{}],
-        [([('external', '../lipsum', (5, 10, 195, 10), None)], [])],
+        ''', [[('external', '../lipsum', (5, 10, 195, 10))]], [{}],
+        [([('external', '../lipsum', (5, 10, 195, 10))], [])],
         base_url=None)
 
 
@@ -835,11 +842,11 @@ def test_links_6():
                 style="display: block; margin: 10px 5px"></a>
             <a href="https://weasyprint.org/" style="display: block"></a>
         ''', [[
-            ('internal', 'lipsum', (5, 10, 195, 10), None),
-            ('external', 'https://weasyprint.org/', (0, 10, 200, 10), None)]],
+            ('internal', 'lipsum', (5, 10, 195, 10)),
+            ('external', 'https://weasyprint.org/', (0, 10, 200, 10))]],
         [{'lipsum': (5, 10)}],
-        [([('internal', 'lipsum', (5, 10, 195, 10), None),
-           ('external', 'https://weasyprint.org/', (0, 10, 200, 10), None)],
+        [([('internal', 'lipsum', (5, 10, 195, 10)),
+           ('external', 'https://weasyprint.org/', (0, 10, 200, 10))],
           [('lipsum', 5, 10)])],
         base_url=None)
 
@@ -852,10 +859,9 @@ def test_links_7():
             <div style="-weasy-link: url(#lipsum);
                         margin: 10px 5px" id="lipsum">
         ''',
-        [[('internal', 'lipsum', (5, 10, 195, 10), None)]],
+        [[('internal', 'lipsum', (5, 10, 195, 10))]],
         [{'lipsum': (5, 10)}],
-        [([('internal', 'lipsum', (5, 10, 195, 10), None)],
-          [('lipsum', 5, 10)])],
+        [([('internal', 'lipsum', (5, 10, 195, 10))], [('lipsum', 5, 10)])],
         base_url=None)
 
 
@@ -868,11 +874,10 @@ def test_links_8():
                 <a href="#lipsum"></a>
                 <a href="#missing" id="lipsum"></a>
         ''',
-        [[('internal', 'lipsum', (0, 0, 200, 15), None),
-          ('internal', 'missing', (0, 15, 200, 30), None)]],
+        [[('internal', 'lipsum', (0, 0, 200, 15)),
+          ('internal', 'missing', (0, 15, 200, 30))]],
         [{'lipsum': (0, 15)}],
-        [([('internal', 'lipsum', (0, 0, 200, 15), None)],
-          [('lipsum', 0, 15)])],
+        [([('internal', 'lipsum', (0, 0, 200, 15))], [('lipsum', 0, 15)])],
         base_url=None,
         warnings=[
             'ERROR: No anchor #missing for internal URI reference'])
@@ -886,10 +891,9 @@ def test_links_9():
             <a href="#lipsum" id="lipsum" style="display: block; height: 20px;
                 transform: rotate(90deg) scale(2)">
         ''',
-        [[('internal', 'lipsum', (30, 10, 70, 210), None)]],
+        [[('internal', 'lipsum', (30, 10, 70, 210))]],
         [{'lipsum': (70, 10)}],
-        [([('internal', 'lipsum', (30, 10, 70, 210), None)],
-          [('lipsum', 70, 10)])],
+        [([('internal', 'lipsum', (30, 10, 70, 210))], [('lipsum', 70, 10)])],
         round=True)
 
 
@@ -901,10 +905,8 @@ def test_links_10():
             <body style="width: 200px">
             <a rel=attachment href="pattern.png" download="wow.png"
                 style="display: block; margin: 10px 5px">
-        ''', [[('attachment', 'pattern.png',
-                (5, 10, 195, 10), 'wow.png')]],
-        [{}], [([('attachment', 'pattern.png',
-                  (5, 10, 195, 10), 'wow.png')], [])],
+        ''', [[('attachment', 'pattern.png', (5, 10, 195, 10))]],
+        [{}], [([('attachment', 'pattern.png', (5, 10, 195, 10))], [])],
         base_url=None)
 
 

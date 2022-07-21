@@ -77,7 +77,6 @@ class Box:
     transformation_matrix = None
     bookmark_label = None
     string_set = None
-    download_name = None
     footnote = None
     cached_counter_values = None
     missing_link = None
