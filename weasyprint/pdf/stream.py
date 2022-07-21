@@ -451,10 +451,42 @@ class Stream(pydyf.Stream):
         self._shadings[shading.id] = shading
         return shading
 
-    def begin_marked_content(self, tag, box, mcid=False):
+    def begin_marked_content(self, box, mcid=False, tag=None):
         if not self._mark:
             return
         property_list = None
+        if tag is None:
+            etag = box.element.tag if box.element else None
+            if etag == 'div':
+                tag = 'Div'
+            elif etag == 'span':
+                tag = 'span'
+            elif etag == 'article':
+                tag = 'Art'
+            elif etag == 'section':
+                tag = 'Sect'
+            elif etag == 'blockquote':
+                tag = 'BlockQuote'
+            elif etag == 'p':
+                tag = 'P'
+            elif etag in ('h1', 'h2', 'h3', 'h4', 'h5', 'h6'):
+                tag = etag.upper()
+            elif etag in ('dl', 'ul', 'ol'):
+                tag = 'L'
+            elif etag == 'li':
+                tag = 'LI'
+            elif etag == 'dt':
+                tag = 'Lbl'
+            elif etag == 'dd':
+                tag = 'LBody'
+            elif etag == 'table':
+                tag = 'Table'
+            elif etag in ('tr', 'th', 'td'):
+                tag = etag.upper()
+            elif etag in ('thead', 'tbody', 'tfoot'):
+                tag = etag[:2].upper() + etag[2:]
+            else:
+                tag = 'NonStruct'
         if mcid:
             property_list = pydyf.Dictionary({'MCID': len(self.marked)})
             self.marked.append((tag, box))

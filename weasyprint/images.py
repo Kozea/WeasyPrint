@@ -50,7 +50,7 @@ class RasterImage:
         if self._intrinsic_width <= 0 or self._intrinsic_height <= 0:
             return
 
-        stream.begin_marked_content('Artifact', None)
+        stream.begin_marked_content(None, tag='Artifact')
         image_name = stream.add_image(
             self._pillow_image, image_rendering, self._optimize_size)
         stream.transform(

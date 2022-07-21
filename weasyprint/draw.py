@@ -151,7 +151,7 @@ def draw_stacking_context(stream, stacking_context):
 
             # Point 6
             if isinstance(box, boxes.InlineBox):
-                stream.begin_marked_content('Span', box, mcid=True)
+                stream.begin_marked_content(box, mcid=True)
                 draw_inline_level(stream, stacking_context.page, box)
                 stream.end_marked_content()
 
@@ -163,7 +163,7 @@ def draw_stacking_context(stream, stacking_context):
                 elif block.children:
                     if not isinstance(block.children[-1], boxes.LineBox):
                         continue
-                    stream.begin_marked_content('P', box, mcid=True)
+                    stream.begin_marked_content(box, mcid=True)
                     for child in block.children:
                         draw_inline_level(stream, stacking_context.page, child)
                     stream.end_marked_content()
@@ -445,7 +445,7 @@ def draw_border(stream, box):
                             box.style['column_rule_style'],
                             get_color(box.style, 'column_rule_color'), 'left'))
 
-    stream.begin_marked_content('Artifact', box)
+    stream.begin_marked_content(box, tag='Artifact')
 
     # The box is hidden, easy.
     if box.style['visibility'] != 'visible':
@@ -954,7 +954,7 @@ def draw_inline_level(stream, page, box, offset_x=0, text_overflow='clip',
                 link_annotation = box.link_annotation
             ellipsis = 'none'
             if link_annotation:
-                stream.begin_marked_content('Link', box, mcid=True)
+                stream.begin_marked_content(box, mcid=True, tag='Link')
             for i, child in enumerate(box.children):
                 if i == len(box.children) - 1:
                     # Last child
