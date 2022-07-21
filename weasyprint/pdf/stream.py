@@ -170,7 +170,10 @@ class Stream(pydyf.Stream):
         self._ctm_stack.append(self.ctm)
 
     def pop_state(self):
-        super().pop_state()
+        if self.stream and self.stream[-1] == b'q':
+            self.stream.pop()
+        else:
+            super().pop_state()
         self._current_color = self._current_color_stroke = None
         self._current_alpha = self._current_alpha_stroke = None
         self._current_font = None
