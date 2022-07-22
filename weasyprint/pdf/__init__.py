@@ -417,6 +417,8 @@ def generate_pdf(pages, url_fetcher, metadata, fonts, target, zoom,
     if metadata.modified:
         pdf.info['ModDate'] = pydyf.String(
             _w3c_date_to_pdf(metadata.modified, 'modified'))
+    if metadata.lang:
+        pdf.catalog['Lang'] = pydyf.String(metadata.lang)
     if custom_metadata:
         for key, value in metadata.custom.items():
             key = ''.join(char for char in key if char.isalnum())
