@@ -456,35 +456,34 @@ class Stream(pydyf.Stream):
             return
         property_list = None
         if tag is None:
-            etag = box.element.tag if box.element else None
-            if etag == 'div':
+            if box.element_tag == 'div':
                 tag = 'Div'
-            elif etag == 'span':
+            elif box.element_tag == 'span':
                 tag = 'span'
-            elif etag == 'article':
+            elif box.element_tag == 'article':
                 tag = 'Art'
-            elif etag == 'section':
+            elif box.element_tag == 'section':
                 tag = 'Sect'
-            elif etag == 'blockquote':
+            elif box.element_tag == 'blockquote':
                 tag = 'BlockQuote'
-            elif etag == 'p':
+            elif box.element_tag == 'p':
                 tag = 'P'
-            elif etag in ('h1', 'h2', 'h3', 'h4', 'h5', 'h6'):
-                tag = etag.upper()
-            elif etag in ('dl', 'ul', 'ol'):
+            elif box.element_tag in ('h1', 'h2', 'h3', 'h4', 'h5', 'h6'):
+                tag = box.element_tag.upper()
+            elif box.element_tag in ('dl', 'ul', 'ol'):
                 tag = 'L'
-            elif etag == 'li':
+            elif box.element_tag == 'li':
                 tag = 'LI'
-            elif etag == 'dt':
+            elif box.element_tag == 'dt':
                 tag = 'Lbl'
-            elif etag == 'dd':
+            elif box.element_tag == 'dd':
                 tag = 'LBody'
-            elif etag == 'table':
+            elif box.element_tag == 'table':
                 tag = 'Table'
-            elif etag in ('tr', 'th', 'td'):
-                tag = etag.upper()
-            elif etag in ('thead', 'tbody', 'tfoot'):
-                tag = etag[:2].upper() + etag[2:]
+            elif box.element_tag in ('tr', 'th', 'td'):
+                tag = box.element_tag.upper()
+            elif box.element_tag in ('thead', 'tbody', 'tfoot'):
+                tag = box.element_tag[:2].upper() + box.element_tag[2:]
             else:
                 tag = 'NonStruct'
         if mcid:
