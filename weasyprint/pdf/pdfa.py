@@ -9,7 +9,7 @@ from ..logger import LOGGER
 from .metadata import add_metadata
 
 
-def pdfa(pdf, metadata, pages, page_streams, version):
+def pdfa(pdf, metadata, document, page_streams, version):
     """Set metadata for PDF/A documents."""
     LOGGER.warning(
         'PDF/A support is experimental, '

@@ -6,7 +6,7 @@ from ..logger import LOGGER
 from .metadata import add_metadata
 
 
-def pdfua(pdf, metadata, pages, page_streams):
+def pdfua(pdf, metadata, document, page_streams):
     """Set metadata for PDF/UA documents."""
     LOGGER.warning(
         'PDF/UA support is experimental, '
@@ -30,46 +30,59 @@ def pdfua(pdf, metadata, pages, page_streams):
     structure_root['K'] = pydyf.Array([structure_document.reference])
     pdf.catalog['StructTreeRoot'] = structure_root.reference
 
+    structure = {}
+    document.build_element_structure(structure)
+
     elements = []
     content_mapping['Nums'] = pydyf.Array()
-    links = []
     for page_number, page_stream in enumerate(page_streams):
         page_elements = []
         for mcid, (key, box) in enumerate(page_stream.marked):
-            kids = [mcid]
-            if key == 'Link':
-                reference = pydyf.Dictionary({
-                    'Type': '/OBJR',
-                    'Obj': box.link_annotation.reference,
-                })
-                pdf.add_object(reference)
-                kids.append(reference.reference)
-            element = pydyf.Dictionary({
-                'Type': '/StructElem',
-                'S': f'/{key}',
-                'P': structure_document.reference,
-                'Pg': f'{pdf.pages["Kids"][3 * page_number]} 0 R',
-                'K': pydyf.Array(kids)
-            })
-            pdf.add_object(element)
-            page_elements.append(element.reference)
-            if key == 'Link':
-                links.append((element.reference, box.link_annotation))
+            # Build structure elements
+            kid = mcid
+            etree_element = box.element
+            child_structure_data_element = None
+            while True:
+                if etree_element is None:
+                    structure_data = structure.setdefault(
+                        box, {'parent': None, 'children': ()})
+                else:
+                    structure_data = structure[etree_element]
+                new_element = 'element' not in structure_data
+                if new_element:
+                    structure_data['element'] = pydyf.Dictionary({
+                        'Type': '/StructElem',
+                        'S': f'/{key}',
+                        'K': pydyf.Array([kid])
+                    })
+                    pdf.add_object(structure_data['element'])
+                else:
+                    structure_data['element']['K'].append(kid)
+                kid = structure_data['element'].reference
+                if child_structure_data_element is not None:
+                    child_structure_data_element['P'] = kid
+                if not new_element:
+                    break
+                page_elements.append(kid)
+                child_structure_data_element = structure_data['element']
+                if structure_data['parent'] is None:
+                    structure_data['element']['P'] = (
+                        structure_document.reference)
+                    break
+                else:
+                    etree_element = structure_data['parent']
         content_mapping['Nums'].append(page_number)
         content_mapping['Nums'].append(pydyf.Array(page_elements))
         elements.extend(page_elements)
     structure_document['K'] = pydyf.Array(elements)
-    for i, (link, annotation) in enumerate(links, start=page_number + 1):
-        content_mapping['Nums'].append(i)
-        content_mapping['Nums'].append(link)
-        annotation['StructParent'] = i
 
     # Common PDF metadata stream
     add_metadata(pdf, metadata, 'ua', version=1, conformance=None)
 
     # PDF document extra metadata
     # TODO: that’s a dirty way to get the document root’s language
-    pdf.catalog['Lang'] = pydyf.String(pages[0]._page_box.style['lang'])
+    pdf.catalog['Lang'] = pydyf.String(
+        document.pages[0]._page_box.style['lang'])
     pdf.catalog['ViewerPreferences'] = pydyf.Dictionary({
         'DisplayDocTitle': 'true',
     })

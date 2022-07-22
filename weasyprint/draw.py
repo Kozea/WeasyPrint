@@ -82,6 +82,8 @@ def draw_stacking_context(stream, stacking_context):
     with stacked(stream):
         box = stacking_context.box
 
+        stream.begin_marked_content(box, mcid=True)
+
         # apply the viewport_overflow to the html box, see #35
         if box.is_for_root_element and (
                 stacking_context.page.style['overflow'] != 'visible'):
@@ -114,6 +116,7 @@ def draw_stacking_context(stream, stacking_context):
             if box.transformation_matrix.determinant:
                 stream.transform(*box.transformation_matrix.values)
             else:
+                stream.end_marked_content()
                 return
 
         # Point 1 is done in draw_page
@@ -151,9 +154,7 @@ def draw_stacking_context(stream, stacking_context):
 
             # Point 6
             if isinstance(box, boxes.InlineBox):
-                stream.begin_marked_content(box, mcid=True)
                 draw_inline_level(stream, stacking_context.page, box)
-                stream.end_marked_content()
 
             # Point 7
             for block in [box] + stacking_context.blocks_and_cells:
@@ -161,12 +162,14 @@ def draw_stacking_context(stream, stacking_context):
                     draw_border(stream, block)
                     draw_replacedbox(stream, block)
                 elif block.children:
-                    if not isinstance(block.children[-1], boxes.LineBox):
-                        continue
-                    stream.begin_marked_content(box, mcid=True)
-                    for child in block.children:
-                        draw_inline_level(stream, stacking_context.page, child)
-                    stream.end_marked_content()
+                    if block != box:
+                        stream.begin_marked_content(block, mcid=True)
+                    if isinstance(block.children[-1], boxes.LineBox):
+                        for child in block.children:
+                            draw_inline_level(
+                                stream, stacking_context.page, child)
+                    if block != box:
+                        stream.end_marked_content()
 
             # Point 8
             for child_context in stacking_context.zero_z_contexts:
@@ -186,6 +189,8 @@ def draw_stacking_context(stream, stacking_context):
             stream.set_alpha(box.style['opacity'], stroke=True, fill=True)
             stream.draw_x_object(group_id)
             stream.pop_state()
+
+        stream.end_marked_content()
 
 
 def rounded_box_path(stream, radii):
@@ -232,8 +237,6 @@ def draw_background(stream, bg, clip_box=True, bleed=None, marks=()):
         return
 
     with stacked(stream):
-        stream.begin_marked_content(None, tag='Artifact')
-
         if clip_box:
             for box in bg.layers[-1].clipped_boxes:
                 rounded_box_path(stream, box)
@@ -332,8 +335,6 @@ def draw_background(stream, bg, clip_box=True, bleed=None, marks=()):
         # Paint in reversed order: first layer is "closest" to the viewer.
         for layer in reversed(bg.layers):
             draw_background_image(stream, layer, bg.image_rendering)
-
-        stream.end_marked_content()
 
 
 def draw_background_image(stream, layer, image_rendering):
@@ -449,12 +450,9 @@ def draw_border(stream, box):
                             box.style['column_rule_style'],
                             get_color(box.style, 'column_rule_color'), 'left'))
 
-    stream.begin_marked_content(box, tag='Artifact')
-
     # The box is hidden, easy.
     if box.style['visibility'] != 'visible':
         draw_column_border()
-        stream.end_marked_content()
         return
 
     widths = [getattr(box, f'border_{side}_width') for side in SIDES]
@@ -462,7 +460,6 @@ def draw_border(stream, box):
     # No border, return early.
     if all(width == 0 for width in widths):
         draw_column_border()
-        stream.end_marked_content()
         return
 
     colors = [get_color(box.style, f'border_{side}_color') for side in SIDES]
@@ -476,7 +473,6 @@ def draw_border(stream, box):
             len(set(colors)) == 1):
         draw_rounded_border(stream, box, styles[0], colors[0])
         draw_column_border()
-        stream.end_marked_content()
         return
 
     # We're not smart enough to find a good way to draw the borders :/. We must
@@ -492,7 +488,6 @@ def draw_border(stream, box):
                 stream, box, style, styled_color(style, color, side))
 
     draw_column_border()
-    stream.end_marked_content()
 
 
 def clip_border_segment(stream, style, width, side, border_box,

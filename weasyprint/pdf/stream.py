@@ -494,14 +494,7 @@ class Stream(pydyf.Stream):
     def end_marked_content(self):
         if not self._mark:
             return
-        if self.stream and self.stream[-1] in (b'BMC', b'BDC'):
-            if self.stream[-1] == b'BDC':
-                self.stream.pop()
-                self.marked.pop()
-            self.stream.pop()
-            self.stream.pop()
-        else:
-            super().end_marked_content()
+        super().end_marked_content()
 
     @staticmethod
     def create_interpolation_function(domain, c0, c1, n):

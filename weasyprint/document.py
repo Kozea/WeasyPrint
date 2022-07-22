@@ -216,6 +216,7 @@ class Document:
             [Page(page_box) for page_box in page_boxes],
             DocumentMetadata(**get_html_metadata(html)),
             html.url_fetcher, font_config, optimize_size)
+        rendering._html = html
         return rendering
 
     def __init__(self, pages, metadata, url_fetcher, font_config,
@@ -241,6 +242,15 @@ class Document:
         # Set of flags for PDF size optimization. Can contain "images" and
         # "fonts".
         self._optimize_size = optimize_size
+
+    def build_element_structure(self, structure, etree_element=None):
+        if etree_element is None:
+            etree_element = self._html.etree_element
+            structure[etree_element] = {'parent': None}
+        structure[etree_element]['children'] = tuple(etree_element)
+        for child in etree_element:
+            structure[child] = {'parent': etree_element}
+            self.build_element_structure(structure, child)
 
     def copy(self, pages='all'):
         """Take a subset of the pages.
@@ -333,9 +343,8 @@ class Document:
 
         """
         pdf = generate_pdf(
-            self.pages, self.url_fetcher, self.metadata, self.fonts, target,
-            zoom, attachments, self._optimize_size, identifier, variant,
-            version, custom_metadata)
+            self, target, zoom, attachments, self._optimize_size, identifier,
+            variant, version, custom_metadata)
 
         if finisher:
             finisher(self, pdf)
