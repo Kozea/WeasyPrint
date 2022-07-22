@@ -232,6 +232,8 @@ def draw_background(stream, bg, clip_box=True, bleed=None, marks=()):
         return
 
     with stacked(stream):
+        stream.begin_marked_content(None, tag='Artifact')
+
         if clip_box:
             for box in bg.layers[-1].clipped_boxes:
                 rounded_box_path(stream, box)
@@ -330,6 +332,8 @@ def draw_background(stream, bg, clip_box=True, bleed=None, marks=()):
         # Paint in reversed order: first layer is "closest" to the viewer.
         for layer in reversed(bg.layers):
             draw_background_image(stream, layer, bg.image_rendering)
+
+        stream.end_marked_content()
 
 
 def draw_background_image(stream, layer, image_rendering):
