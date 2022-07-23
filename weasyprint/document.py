@@ -247,7 +247,6 @@ class Document:
         if etree_element is None:
             etree_element = self._html.etree_element
             structure[etree_element] = {'parent': None}
-        structure[etree_element]['children'] = tuple(etree_element)
         for child in etree_element:
             structure[child] = {'parent': etree_element}
             self.build_element_structure(structure, child)

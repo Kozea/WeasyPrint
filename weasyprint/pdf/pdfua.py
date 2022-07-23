@@ -45,7 +45,7 @@ def pdfua(pdf, metadata, document, page_streams):
             while True:
                 if etree_element is None:
                     structure_data = structure.setdefault(
-                        box, {'parent': None, 'children': ()})
+                        box, {'parent': None})
                 else:
                     structure_data = structure[etree_element]
                 new_element = 'element' not in structure_data
