@@ -456,36 +456,7 @@ class Stream(pydyf.Stream):
             return
         property_list = None
         if tag is None:
-            if box.element_tag == 'div':
-                tag = 'Div'
-            elif box.element_tag == 'span':
-                tag = 'span'
-            elif box.element_tag == 'article':
-                tag = 'Art'
-            elif box.element_tag == 'section':
-                tag = 'Sect'
-            elif box.element_tag == 'blockquote':
-                tag = 'BlockQuote'
-            elif box.element_tag == 'p':
-                tag = 'P'
-            elif box.element_tag in ('h1', 'h2', 'h3', 'h4', 'h5', 'h6'):
-                tag = box.element_tag.upper()
-            elif box.element_tag in ('dl', 'ul', 'ol'):
-                tag = 'L'
-            elif box.element_tag == 'li':
-                tag = 'LI'
-            elif box.element_tag == 'dt':
-                tag = 'Lbl'
-            elif box.element_tag == 'dd':
-                tag = 'LBody'
-            elif box.element_tag == 'table':
-                tag = 'Table'
-            elif box.element_tag in ('tr', 'th', 'td'):
-                tag = box.element_tag.upper()
-            elif box.element_tag in ('thead', 'tbody', 'tfoot'):
-                tag = box.element_tag[:2].upper() + box.element_tag[2:]
-            else:
-                tag = 'NonStruct'
+            tag = self.get_marked_content_tag(box.element_tag)
         if mcid:
             property_list = pydyf.Dictionary({'MCID': len(self.marked)})
             self.marked.append((tag, box))
@@ -515,3 +486,35 @@ class Stream(pydyf.Stream):
             'Bounds': pydyf.Array(bounds),
             'Functions': pydyf.Array(sub_functions),
         })
+
+    def get_marked_content_tag(self, element_tag):
+        if element_tag == 'div':
+            return 'Div'
+        elif element_tag == 'span':
+            return 'span'
+        elif element_tag == 'article':
+            return 'Art'
+        elif element_tag == 'section':
+            return 'Sect'
+        elif element_tag == 'blockquote':
+            return 'BlockQuote'
+        elif element_tag == 'p':
+            return 'P'
+        elif element_tag in ('h1', 'h2', 'h3', 'h4', 'h5', 'h6'):
+            return element_tag.upper()
+        elif element_tag in ('dl', 'ul', 'ol'):
+            return 'L'
+        elif element_tag == 'li':
+            return 'LI'
+        elif element_tag == 'dt':
+            return 'LI'
+        elif element_tag == 'dd':
+            return 'LI'
+        elif element_tag == 'table':
+            return 'Table'
+        elif element_tag in ('tr', 'th', 'td'):
+            return element_tag.upper()
+        elif element_tag in ('thead', 'tbody', 'tfoot'):
+            return element_tag[:2].upper() + element_tag[2:]
+        else:
+            return 'NonStruct'
