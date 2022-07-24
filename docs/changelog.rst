@@ -2,6 +2,44 @@ Changelog
 =========
 
 
+Version 56.1
+------------
+
+Released on 2022-07-24.
+
+Bug fixes:
+
+* `#1674 <https://github.com/Kozea/WeasyPrint/issues/1674>`_:
+  Follow max-height on footnot area, with financial support from Code & Co.
+* `#1678 <https://github.com/Kozea/WeasyPrint/issues/1678>`_:
+  Fix gradients with opacity set
+
+Contributors:
+
+* Guillaume Ayoub
+* Lucie Anglade
+
+Backers and sponsors:
+
+* Grip Angebotssoftware
+* Manuel Barkhau
+* Crisp BV
+* SimonSoft
+* Menutech
+* Spacinov
+* KontextWork
+* René Fritz
+* NCC Group
+* Kobalt
+* Tom Pohl
+* Moritz Mahringer
+* Florian Demmer
+* Yanal-Yvez Fargialla
+* Gábor
+* Piotr Horzycki
+* Andrew Ittner
+
+
 Version 56.0
 ------------
 
