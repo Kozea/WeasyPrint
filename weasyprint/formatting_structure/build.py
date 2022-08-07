@@ -5,6 +5,7 @@ This includes creating anonymous boxes and processing whitespace as necessary.
 """
 
 import re
+import regex
 import unicodedata
 
 import tinycss2.color3
@@ -1252,8 +1253,7 @@ def process_text_transform(box):
             box.text = {
                 'uppercase': lambda text: text.upper(),
                 'lowercase': lambda text: text.lower(),
-                # Python’s unicode.captitalize is not the same.
-                'capitalize': lambda text: text.title(),
+                'capitalize': lambda text: capitalize(text),
                 'full-width': lambda text: text.translate(ASCII_TO_WIDE),
             }[text_transform](box.text)
         if box.style['hyphens'] == 'none':
@@ -1263,6 +1263,19 @@ def process_text_transform(box):
         for child in box.children:
             if isinstance(child, (boxes.TextBox, boxes.InlineBox)):
                 process_text_transform(child)
+
+
+def capitalize(text):
+    """Capitalize the first unicode "typographic_letter_unit" for each word whilst
+    leaving all other characters untouched.
+
+    This behaviour matches the CSS capitalize text transform.
+
+    Python's "capitalize" and "title" methods do not provide this functionality
+    """
+    CAPITALIZE_RE = regex.compile(r"\b([\p{L}\p{N}])", regex.WORD)
+
+    return CAPITALIZE_RE.sub(lambda x: x.group(1).upper(), text)
 
 
 def inline_in_block(box):

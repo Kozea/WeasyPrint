@@ -20,6 +20,7 @@ dependencies = [
   'Pyphen >=0.9.1',
   'Pillow >=4.0.0',
   'fonttools[woff] >=4.0.0',
+  'regex >= 2022.7.25',
 ]
 classifiers = [
   'Development Status :: 5 - Production/Stable',
