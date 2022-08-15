@@ -834,6 +834,7 @@ def make_all_pages(context, root_box, html, pages):
 
     """
     i = 0
+    reported_footnotes = None
     while True:
         remake_state = context.page_maker[i][-1]
         if (len(pages) == 0 or
@@ -846,16 +847,19 @@ def make_all_pages(context, root_box, html, pages):
             remake_state['anchors'] = []
             remake_state['content_lookups'] = []
             page, resume_at = remake_page(i, context, root_box, html)
+            reported_footnotes = context.reported_footnotes
             yield page
         else:
             PROGRESS_LOGGER.info(
                 'Step 5 - Creating layout - Page %d (up-to-date)', i + 1)
             resume_at = context.page_maker[i + 1][0]
+            reported_footnotes = None
             yield pages[i]
 
         i += 1
-        if resume_at is None and not context.reported_footnotes:
-            # Throw away obsolete pages and broken out-of-flow boxes
+        if resume_at is None and not reported_footnotes:
+            # Throw away obsolete pages and content
             context.page_maker = context.page_maker[:i + 1]
             context.broken_out_of_flow.clear()
+            context.reported_footnotes.clear()
             return
