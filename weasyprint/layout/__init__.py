@@ -331,9 +331,8 @@ class LayoutContext:
 
     def unlayout_footnote(self, footnote):
         """Remove a footnote from the layout and return it to the waitlist."""
-
-        # Handle unlayouting a footnote that hasn't been laid out yet (or has
-        # already been unlayout'd):
+        # TODO: Handle unlayouting a footnote that hasn't been laid out yet or
+        # has already been unlayouted
         if footnote not in self.footnotes:
             self.footnotes.append(footnote)
             if footnote in self.current_page_footnotes:
