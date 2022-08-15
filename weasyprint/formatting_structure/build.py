@@ -1252,8 +1252,7 @@ def process_text_transform(box):
             box.text = {
                 'uppercase': lambda text: text.upper(),
                 'lowercase': lambda text: text.lower(),
-                # Python’s unicode.captitalize is not the same.
-                'capitalize': lambda text: text.title(),
+                'capitalize': lambda text: capitalize(text),
                 'full-width': lambda text: text.translate(ASCII_TO_WIDE),
             }[text_transform](box.text)
         if box.style['hyphens'] == 'none':
@@ -1263,6 +1262,31 @@ def process_text_transform(box):
         for child in box.children:
             if isinstance(child, (boxes.TextBox, boxes.InlineBox)):
                 process_text_transform(child)
+
+
+def capitalize(text: str) -> str:
+    """Capitalize the first unicode "typographic_letter_unit" for each word whilst
+    leaving all other characters untouched.
+
+    This matches the CSS "text transform: capitalize" behaviour
+
+    """
+    letter_found = False
+    output_text = list(text)
+
+    gc_text = [unicodedata.category(char) for char in text]
+
+    for i, cat in enumerate(gc_text):
+        if not letter_found:
+            if cat[0] in ("L", "N"):
+                letter_found = True
+                output_text[i] = output_text[i].upper()
+                pass
+
+        if cat[0] == "Z":
+            letter_found = False
+
+    return "".join(output_text)
 
 
 def inline_in_block(box):
