@@ -104,7 +104,7 @@ class DocumentMetadata:
     """
     def __init__(self, title=None, authors=None, description=None,
                  keywords=None, generator=None, created=None, modified=None,
-                 attachments=None, custom=None):
+                 attachments=None, lang=None, custom=None):
         #: The title of the document, as a string or :obj:`None`.
         #: Extracted from the ``<title>`` element in HTML
         #: and written to the ``/Title`` info field in PDF.
@@ -145,6 +145,9 @@ class DocumentMetadata:
         #: Extracted from the ``<link rel=attachment>`` elements in HTML
         #: and written to the ``/EmbeddedFiles`` dictionary in PDF.
         self.attachments = attachments or []
+        #: Document language as BCP 47 language tags.
+        #: Extracted from ``<html lang=lang>`` in HTML.
+        self.lang = lang
         #: Custom metadata, as a dict whose keys are the metadata names and
         #: values are the metadata values.
         self.custom = custom or {}

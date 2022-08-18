@@ -998,6 +998,7 @@ def assert_meta(html, **meta):
     meta.setdefault('created', None)
     meta.setdefault('modified', None)
     meta.setdefault('attachments', [])
+    meta.setdefault('lang', None)
     meta.setdefault('custom', {})
     assert vars(FakeHTML(string=html).render().metadata) == meta
 
@@ -1011,6 +1012,7 @@ def test_html_meta_1():
 def test_html_meta_2():
     assert_meta(
         '''
+            <html lang="en"><head>
             <meta name=author content="I Me &amp; Myself">
             <meta name=author content="Smith, John">
             <title>Test document</title>
@@ -1027,6 +1029,7 @@ def test_html_meta_2():
             <meta name=dcterms.modified content=2013>
             <meta name=keywords content="Python; pydyf">
             <meta name=description content="Blah… ">
+            </head></html>
         ''',
         authors=['I Me & Myself', 'Smith, John'],
         title='Test document',
@@ -1035,6 +1038,7 @@ def test_html_meta_2():
         description="Blah… ",
         created='2011-04',
         modified='2013',
+        lang='en',
         custom={'dummy': 'ignored'})
 
 

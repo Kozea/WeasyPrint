@@ -267,6 +267,7 @@ def get_html_metadata(html):
     modified = None
     attachments = []
     custom = {}
+    lang = html.etree_element.attrib.get('lang', None)
     for element in html.wrapper_element.query_all('title', 'meta', 'link'):
         element = element.etree_element
         if element.tag == 'title' and title is None:
@@ -305,7 +306,7 @@ def get_html_metadata(html):
     return dict(title=title, description=description, generator=generator,
                 keywords=keywords, authors=authors,
                 created=created, modified=modified,
-                attachments=attachments, custom=custom)
+                attachments=attachments, lang=lang, custom=custom)
 
 
 def strip_whitespace(string):
