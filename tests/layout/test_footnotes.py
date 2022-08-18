@@ -646,6 +646,53 @@ def test_footnote_repagination():
 
 
 @assert_no_logs
+def test_reported_footnote_repagination():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/1700
+    page1, page2 = render_pages('''
+        <style>
+            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+            @page {
+                size: 5px;
+            }
+            div {
+                font-family: weasyprint;
+                font-size: 2px;
+                line-height: 1;
+            }
+            span {
+                float: footnote;
+            }
+            a::after {
+                content: target-counter(attr(href), page);
+            }
+        </style>
+        <div><a href="#i">a</a> bb<span>de</span> <i id="i">fg</i></div>''')
+    html, = page1.children
+    body, = html.children
+    div, = body.children
+    line1, line2 = div.children
+    a, = line1.children
+    assert a.children[0].text == 'a'
+    assert a.children[1].children[0].text == '2'
+    b, footnote_call, _ = line2.children
+    assert b.text == 'bb'
+    assert footnote_call.children[0].text == '1'
+
+    html, footnote_area = page2.children
+    body, = html.children
+    div, = body.children
+    line1, = div.children
+    i, = line1.children
+    assert i.children[0].text == 'fg'
+
+    footnote_marker, footnote_textbox = (
+        footnote_area.children[0].children[0].children)
+    assert footnote_marker.children[0].text == '1.'
+    assert footnote_textbox.text == 'de'
+    assert footnote_area.position_y == 3
+
+
+@assert_no_logs
 def test_footnote_max_height():
     page1, page2 = render_pages('''
       <style>

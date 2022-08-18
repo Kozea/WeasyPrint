@@ -424,6 +424,17 @@ def draw_border(stream, box):
     # We need a plan to draw beautiful borders, and that's difficult, no need
     # to lie. Let's try to find the cases that we can handle in a smart way.
 
+    def get_columns_with_rule():
+        """Yield columns that have a rule drawn on the left."""
+        skip_next = True
+        for child in box.children:
+            if child.style['column_span'] == 'all':
+                skip_next = True
+            elif skip_next:
+                skip_next = False
+            else:
+                yield child
+
     def draw_column_border():
         """Draw column borders."""
         columns = (
@@ -432,14 +443,14 @@ def draw_border(stream, box):
                 box.style['column_count'] != 'auto'))
         if columns and box.style['column_rule_width']:
             border_widths = (0, 0, 0, box.style['column_rule_width'])
-            for child in box.children[1:]:
+            for child in get_columns_with_rule():
                 with stacked(stream):
                     position_x = (child.position_x - (
                         box.style['column_rule_width'] +
                         box.style['column_gap']) / 2)
                     border_box = (
                         position_x, child.position_y,
-                        box.style['column_rule_width'], box.height)
+                        box.style['column_rule_width'], child.height)
                     clip_border_segment(
                         stream, box.style['column_rule_style'],
                         box.style['column_rule_width'], 'left', border_box,

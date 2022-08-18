@@ -2,6 +2,7 @@
 
 import pytest
 from weasyprint.css.properties import INITIAL_VALUES
+from weasyprint.formatting_structure.build import capitalize
 from weasyprint.text.line_break import split_first_line
 
 from .testing_utils import MONO_FONTS, SANS_FONTS, assert_no_logs, render_pages
@@ -1229,7 +1230,7 @@ def test_text_transform():
     p1, p2, p3, p4, p5 = body.children
     line1, = p1.children
     text1, = line1.children
-    assert text1.text == 'Hé Lo1'
+    assert text1.text == 'Hé LO1'
     line2, = p2.children
     text2, = line2.children
     assert text2.text == 'HÉ LO1'
@@ -1242,6 +1243,28 @@ def test_text_transform():
     line5, = p5.children
     text5, = line5.children
     assert text5.text == 'hé lO1'
+
+
+@assert_no_logs
+@pytest.mark.parametrize(
+    'original, transformed', (
+        ('abc def ghi', 'Abc Def Ghi'),
+        ('AbC def ghi', 'AbC Def Ghi'),
+        ('I’m SO cool', 'I’m SO Cool'),
+        ('Wow.wow!wow', 'Wow.wow!wow'),
+        ('!now not tomorrow', '!Now Not Tomorrow'),
+        ('SUPER cool', 'SUPER Cool'),
+        ('i 😻 non‑breaking characters', 'I 😻 Non‑breaking Characters'),
+        ('3lite 3lite', '3lite 3lite'),
+        ('one/two/three', 'One/two/three'),
+        ('supernatural,super', 'Supernatural,super'),
+        ('éternel αιώνια', 'Éternel Αιώνια'),
+    )
+)
+def test_text_transform_capitalize(original, transformed):
+    # Results are different for different browsers, we almost get the same
+    # results as Firefox, that’s good enough!
+    assert capitalize(original) == transformed
 
 
 @assert_no_logs
