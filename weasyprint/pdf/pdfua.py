@@ -110,9 +110,8 @@ def pdfua(pdf, metadata, document, page_streams):
     add_metadata(pdf, metadata, 'ua', version=1, conformance=None)
 
     # PDF document extra metadata
-    # TODO: that’s a dirty way to get the document root’s language
-    pdf.catalog['Lang'] = pydyf.String(
-        document.pages[0]._page_box.style['lang'])
+    if 'Lang' not in pdf.catalog:
+        pdf.catalog['Lang'] = pydyf.String()
     pdf.catalog['ViewerPreferences'] = pydyf.Dictionary({
         'DisplayDocTitle': 'true',
     })
