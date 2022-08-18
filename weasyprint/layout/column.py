@@ -255,8 +255,8 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
                     stop_rendering = True
                     break
                 else:
-                    # Everything fit, start expanding columns at the average of
-                    # the column heights.
+                    # Everything fits, start expanding columns at the average
+                    # of the column heights.
                     height = sum(consumed_heights)
                     if style['column_fill'] == 'balance':
                         height /= count
