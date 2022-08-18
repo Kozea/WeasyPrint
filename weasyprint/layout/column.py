@@ -12,7 +12,7 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
     """Lay out a multi-column ``box``."""
     from .block import (
         block_box_layout, block_level_layout, block_level_width,
-        collapse_margin)
+        collapse_margin, remove_placeholders)
 
     # Implementation of the multi-column pseudo-algorithm:
     # https://www.w3.org/TR/css-multicol-1/#pseudo-algorithm
@@ -185,6 +185,7 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
                 context.excluded_shapes.pop()
 
             consumed_heights = []
+            new_boxes = []
             for i in range(count):
                 # Render the column
                 new_box, resume_at, next_page, _, _, _ = block_box_layout(
@@ -197,6 +198,7 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
                     # We didn't render anything, retry.
                     column_skip_stack = {0: None}
                     break
+                new_boxes.append(new_box)
                 column_skip_stack = resume_at
 
                 in_flow_children = [
@@ -220,6 +222,7 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
                         if child.is_in_normal_flow():
                             next_box_size = child.margin_height()
                             break
+                    remove_placeholders(context, [next_box], [], [])
                 else:
                     consumed_height = empty_space = next_box_size = 0
 
@@ -243,6 +246,8 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
                 # Stop if we already rendered the whole content
                 if resume_at is None:
                     break
+
+            remove_placeholders(context, new_boxes, [], [])
 
             if forced_end_probing:
                 break
