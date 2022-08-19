@@ -349,7 +349,7 @@ class LayoutContext:
 
     def _update_footnote_area(self):
         """Update the page bottom size and our footnote area height."""
-        if self.current_footnote_area.height != 'auto':
+        if self.current_footnote_area.height != 'auto' and not self.in_column:
             self.page_bottom += self.current_footnote_area.margin_height()
         self.current_footnote_area.children = self.current_page_footnotes
         if self.current_footnote_area.children:
@@ -359,7 +359,8 @@ class LayoutContext:
                 self, footnote_area, -inf, None,
                 self.current_footnote_area.page)[0]
             self.current_footnote_area.height = footnote_area.height
-            self.page_bottom -= footnote_area.margin_height()
+            if not self.in_column:
+                self.page_bottom -= footnote_area.margin_height()
             last_child = footnote_area.children[-1]
             overflow = (
                 last_child.position_y + last_child.margin_height() >
