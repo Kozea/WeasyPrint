@@ -803,13 +803,15 @@ def block_container_layout(context, box, bottom_space, skip_stack,
     elif bottom_space > -inf and not new_box.is_column:
         # Make the box fill the blank space at the bottom of the page
         # https://www.w3.org/TR/css-break-3/#box-splitting
-        new_box.height = (
+        new_box_height = (
             context.page_bottom - bottom_space - new_box.position_y -
             (new_box.margin_height() - new_box.height))
-        if draw_bottom_decoration:
-            new_box.height += (
-                box.padding_bottom + box.border_bottom_width +
-                box.margin_bottom)
+        if new_box_height > new_box.height:
+            new_box.height = new_box_height
+            if draw_bottom_decoration:
+                new_box.height += (
+                    box.padding_bottom + box.border_bottom_width +
+                    box.margin_bottom)
 
     if next_page['page'] is None:
         next_page['page'] = new_box.page_values()[1]
