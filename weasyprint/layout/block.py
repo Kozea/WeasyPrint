@@ -102,6 +102,8 @@ def block_box_layout(context, box, bottom_space, skip_stack,
                 new_box.margin_bottom + new_box.padding_bottom +
                 new_box.border_bottom_width)
             if columns_bottom_space:
+                remove_placeholders(
+                    context, [new_box], absolute_boxes, fixed_boxes)
                 bottom_space += columns_bottom_space
                 result = columns_layout(
                     context, box, bottom_space, skip_stack,
