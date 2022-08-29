@@ -695,19 +695,21 @@ class ComputedStyle(dict):
             self[key] = value = self.parent_style[key]
 
         if key.startswith('text_decoration_') and self.parent_style:
-            self[key] = text_decoration(
+            value = text_decoration(
                 key, value, self.parent_style[key], key in self.cascaded)
-
-        if key == 'page' and value == 'auto':
+            if key in self:
+                del self[key]
+        elif key == 'page' and value == 'auto':
             # The page property does not inherit. However, if the page
             # value on an element is auto, then its used value is the value
             # specified on its nearest ancestor with a non-auto value. When
             # specified on the root element, the used value for auto is the
             # empty string.
-            self['page'] = value = (
+            value = (
                 '' if self.parent_style is None else self.parent_style['page'])
-
-        if key in ('position', 'float', 'display'):
+            if key in self:
+                del self[key]
+        elif key in ('position', 'float', 'display'):
             self.specified[key] = value
 
         if key in self:

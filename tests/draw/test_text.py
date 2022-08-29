@@ -752,6 +752,35 @@ def test_text_float_text_decoration(assert_pixels):
       <div>a<span>b</span></div>''')
 
 
+def test_text_decoration_var(assert_pixels):
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1697
+    assert_pixels('''
+        _____________
+        _zzzzzzzzzzz_
+        _zRRRRRRRRRz_
+        _zBBBBBBBBBz_
+        _zRRRRRRRRRz_
+        _zzzzzzzzzzz_
+        _____________
+    ''', '''
+      <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page {
+          size: 13px 7px;
+          margin: 2px;
+        }
+        body {
+          --blue: blue;
+          color: red;
+          font-family: weasyprint;
+          font-size: 3px;
+          text-decoration-color: var(--blue);
+          text-decoration-line: line-through;
+        }
+      </style>
+      <div>abc</div>''')
+
+
 def test_zero_width_character(assert_pixels):
     # Test regression: https://github.com/Kozea/WeasyPrint/issues/1508
     assert_pixels('''
