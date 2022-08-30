@@ -288,13 +288,14 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
                     height -= new_footnotes_height - footnote_heights[-1]
                     footnote_heights.append(new_footnotes_height)
                     continue
-                # max_height -= new_footnotes_height
                 if column_skip_stack or max(consumed_heights) > max_height:
                     # Even at maximum height, not everything fits. Stop now and
                     # let the columns continue on the next page.
+                    height += footnote_heights[-1]
                     if len(footnote_heights) > 2:
-                        new_footnotes_height = min(footnote_heights[-2:])
-                    height -= new_footnotes_height - footnote_heights[-1]
+                        new_footnotes_height = min(
+                            new_footnotes_height, footnote_heights[-1])
+                    height -= new_footnotes_height
                     stop_rendering = True
                     break
                 else:
@@ -302,6 +303,7 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
                     # of the column heights.
                     balancing = True
                     height = sum(consumed_heights)
+                    max_height -= new_footnotes_height
                     if style['column_fill'] == 'balance':
                         height /= count
 
