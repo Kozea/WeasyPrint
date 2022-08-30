@@ -19,9 +19,6 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
     width = None
     style = box.style
     original_bottom_space = bottom_space
-    original_footnotes_height = (
-        0 if context.current_footnote_area.height == 'auto'
-        else context.current_footnote_area.margin_height())
     context.in_column = True
 
     if box.style['position'] == 'relative':
@@ -177,12 +174,10 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
         original_page_is_empty = page_is_empty
         page_is_empty = False
         stop_rendering = False
-        # Rendering is done in 4 steps:
-        # 1. render the whole content and see if it fits
-        # 2. if footnotes have been rendered, re-render with the footnotes
-        # 3. if rendered footnotes changed in 2, re-render with the footnotes
-        # 4. balance if everything fits
-        step = 1
+        balancing = False
+        footnote_heights = [
+            0 if context.current_footnote_area.height == 'auto'
+            else context.current_footnote_area.margin_height()]
         while True:
             column_skip_stack = skip_stack
 
@@ -200,7 +195,7 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
                     context, column_box,
                     context.page_bottom - current_position_y - height,
                     column_skip_stack, containing_block,
-                    page_is_empty or (step < 4), [], [], [],
+                    page_is_empty or not balancing, [], [], [],
                     discard=False, max_lines=None)
                 if new_box is None:
                     # We didn't render anything, retry.
@@ -266,28 +261,7 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
             if forced_end_probing:
                 break
 
-            if step < 4:
-                # This is the first loop through, we might bail here.
-                if new_footnotes_height != original_footnotes_height:
-                    # Footnotes have been rendered, try to re-render with the
-                    # new footnote area height.
-                    height -= new_footnotes_height - original_footnotes_height
-                    original_footnotes_height = new_footnotes_height
-                    step += 1
-                    continue
-                step = 4
-                if column_skip_stack or max(consumed_heights) > max_height:
-                    # Even at maximum height, not everything fits. Stop now and
-                    # let the columns continue on the next page.
-                    stop_rendering = True
-                    break
-                else:
-                    # Everything fits, start expanding columns at the average
-                    # of the column heights.
-                    height = sum(consumed_heights)
-                    if style['column_fill'] == 'balance':
-                        height /= count
-            else:
+            if balancing:
                 if column_skip_stack is None:
                     # We rendered the whole content, stop
                     break
@@ -307,6 +281,29 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
                         break
 
                     height += add_height
+            else:
+                if new_footnotes_height not in footnote_heights:
+                    # Footnotes have been rendered, try to re-render with the
+                    # new footnote area height.
+                    height -= new_footnotes_height - footnote_heights[-1]
+                    footnote_heights.append(new_footnotes_height)
+                    continue
+                # max_height -= new_footnotes_height
+                if column_skip_stack or max(consumed_heights) > max_height:
+                    # Even at maximum height, not everything fits. Stop now and
+                    # let the columns continue on the next page.
+                    if len(footnote_heights) > 2:
+                        new_footnotes_height = min(footnote_heights[-2:])
+                    height -= new_footnotes_height - footnote_heights[-1]
+                    stop_rendering = True
+                    break
+                else:
+                    # Everything fits, start expanding columns at the average
+                    # of the column heights.
+                    balancing = True
+                    height = sum(consumed_heights)
+                    if style['column_fill'] == 'balance':
+                        height /= count
 
         # TODO: check box.style['max']-height
         bottom_space = max(
@@ -358,6 +355,16 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
 
         if stop_rendering:
             break
+
+    reported_footnotes = 0
+    while (
+            context.current_page_footnotes and
+            context.current_footnote_area.height > new_footnotes_height):
+        context.report_footnote(context.current_page_footnotes[-1])
+        reported_footnotes += 1
+    if reported_footnotes:
+        extra = context.reported_footnotes[-1:-reported_footnotes-1:-1]
+        context.reported_footnotes[-reported_footnotes:] = extra
 
     if box.children and not new_children:
         # The box has children but none can be drawn, let's skip the whole box
