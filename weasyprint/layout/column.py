@@ -288,7 +288,10 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
                     height -= new_footnotes_height - footnote_heights[-1]
                     footnote_heights.append(new_footnotes_height)
                     continue
-                if column_skip_stack or max(consumed_heights) > max_height:
+                if (
+                        column_skip_stack or
+                        max(consumed_heights) > max_height or
+                        len(footnote_heights) > 2):
                     # Even at maximum height, not everything fits. Stop now and
                     # let the columns continue on the next page.
                     height += footnote_heights[-1]
