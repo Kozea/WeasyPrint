@@ -364,7 +364,7 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
     reported_footnotes = 0
     while (
             context.current_page_footnotes and
-            context.current_footnote_area.height > new_footnotes_height):
+            context.current_footnote_area.margin_height() > new_footnotes_height):
         context.report_footnote(context.current_page_footnotes[-1])
         reported_footnotes += 1
     if reported_footnotes >= 2:
