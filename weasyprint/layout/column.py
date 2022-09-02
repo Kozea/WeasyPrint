@@ -164,7 +164,8 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
         adjoining_margins = []
         column_box = create_column_box(column_children)
         column_box.position_y = current_position_y
-        max_height = context.page_bottom - current_position_y
+        max_height = (
+            context.page_bottom - current_position_y - original_bottom_space)
         height = max_height
 
         # Try to render columns until the content fits, increase the column
