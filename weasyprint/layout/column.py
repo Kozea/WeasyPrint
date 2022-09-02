@@ -367,7 +367,7 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
             context.current_footnote_area.height > new_footnotes_height):
         context.report_footnote(context.current_page_footnotes[-1])
         reported_footnotes += 1
-    if reported_footnotes:
+    if reported_footnotes >= 2:
         extra = context.reported_footnotes[-1:-reported_footnotes-1:-1]
         context.reported_footnotes[-reported_footnotes:] = extra
 
