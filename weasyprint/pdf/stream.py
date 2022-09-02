@@ -491,7 +491,7 @@ class Stream(pydyf.Stream):
         if element_tag == 'div':
             return 'Div'
         elif element_tag == 'span':
-            return 'span'
+            return 'Span'
         elif element_tag == 'article':
             return 'Art'
         elif element_tag == 'section':
