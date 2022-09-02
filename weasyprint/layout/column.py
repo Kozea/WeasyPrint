@@ -339,6 +339,8 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
             columns.append(new_child)
             max_column_height = max(
                 max_column_height, new_child.margin_height())
+            # Drop column’s bottom margin if it overflows the page
+            max_column_height = min(max_column_height, max_height)
             if skip_stack is None:
                 bottom_space = original_bottom_space
                 break
@@ -364,7 +366,8 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
     reported_footnotes = 0
     while (
             context.current_page_footnotes and
-            context.current_footnote_area.margin_height() > new_footnotes_height):
+            context.current_footnote_area.margin_height() >
+            new_footnotes_height):
         context.report_footnote(context.current_page_footnotes[-1])
         reported_footnotes += 1
     if reported_footnotes >= 2:
