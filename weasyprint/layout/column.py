@@ -14,65 +14,45 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
         block_box_layout, block_level_layout, block_level_width,
         collapse_margin, remove_placeholders)
 
-    # Implementation of the multi-column pseudo-algorithm:
-    # https://www.w3.org/TR/css-multicol-1/#pseudo-algorithm
-    width = None
     style = box.style
+    width = style['column_width']
+    count = style['column_count']
+    gap = style['column_gap']
+    height = style['height']
     original_bottom_space = bottom_space
     context.in_column = True
 
-    if box.style['position'] == 'relative':
+    if style['position'] == 'relative':
         # New containing block, use a new absolute list
         absolute_boxes = []
 
     box = box.copy_with_children(box.children)
     box.position_y += collapse_margin(adjoining_margins) - box.margin_top
 
-    height = box.style['height']
+    # Set height if defined
     if height != 'auto' and height.unit != '%':
         assert height.unit == 'px'
-        known_height = True
-        bottom_space = max(
-            bottom_space,
-            context.page_bottom - box.content_box_y() - height.value)
+        height_defined = True
+        empty_space = context.page_bottom - box.content_box_y() - height.value
+        bottom_space = max(bottom_space, empty_space)
     else:
-        known_height = False
+        height_defined = False
 
-    # TODO: the available width can be unknown if the containing block needs
-    # the size of this block to know its own size.
+    # TODO: the columns container width can be unknown if the containing block
+    # needs the size of this block to know its own size
     block_level_width(box, containing_block)
-    available_width = box.width
-    if style['column_width'] == 'auto' and style['column_count'] != 'auto':
-        count = style['column_count']
-        width = max(
-            0, available_width - (count - 1) * style['column_gap']) / count
-    elif (style['column_width'] != 'auto' and
-            style['column_count'] == 'auto'):
-        count = max(1, int(floor(
-            (available_width + style['column_gap']) /
-            (style['column_width'] + style['column_gap']))))
-        width = (
-            (available_width + style['column_gap']) / count -
-            style['column_gap'])
-    else:
-        count = min(style['column_count'], int(floor(
-            (available_width + style['column_gap']) /
-            (style['column_width'] + style['column_gap']))))
-        width = (
-            (available_width + style['column_gap']) / count -
-            style['column_gap'])
 
-    def create_column_box(children):
-        column_box = box.anonymous_from(box, children=children)
-        resolve_percentages(column_box, containing_block)
-        column_box.is_column = True
-        column_box.width = width
-        column_box.position_x = box.content_box_x()
-        column_box.position_y = box.content_box_y()
-        return column_box
+    # Define the number of columns and their widths
+    if width == 'auto' and count != 'auto':
+        width = max(0, box.width - (count - 1) * gap) / count
+    elif width != 'auto' and count == 'auto':
+        count = max(1, int(floor((box.width + gap) / (width + gap))))
+        width = (box.width + gap) / count - gap
+    else:  # overconstrained, with width != 'auto' and count != 'auto'
+        count = min(count, int(floor((box.width + gap) / (width + gap))))
+        width = (box.width + gap) / count - gap
 
-    # Handle column-span property.
-    # We want to get the following structure:
+    # Handle column-span property with the following structure:
     # columns_and_blocks = [
     #     [column_child_1, column_child_2],
     #     spanning_block,
@@ -80,24 +60,19 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
     # ]
     columns_and_blocks = []
     column_children = []
-
-    if skip_stack:
-        skip, = skip_stack.keys()
-    else:
-        skip = 0
-
-    for index, child in enumerate(box.children[skip:], start=skip):
+    skip, = skip_stack.keys() if skip_stack else (0,)
+    for i, child in enumerate(box.children[skip:], start=skip):
         if child.style['column_span'] == 'all':
             if column_children:
                 columns_and_blocks.append(
-                    (index - len(column_children), column_children))
-            columns_and_blocks.append((index, child.copy()))
+                    (i - len(column_children), column_children))
+            columns_and_blocks.append((i, child.copy()))
             column_children = []
             continue
         column_children.append(child.copy())
     if column_children:
         columns_and_blocks.append(
-            (index + 1 - len(column_children), column_children))
+            (i + 1 - len(column_children), column_children))
 
     if skip_stack:
         skip_stack = {0: skip_stack[skip]}
@@ -106,7 +81,7 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
         next_page = {'break': 'any', 'page': None}
         skip_stack = None
 
-    # Balance.
+    # Find height and balance.
     #
     # The current algorithm starts from the total available height, to check
     # whether the whole content can fit. If it doesn’t fit, we keep the partial
@@ -123,11 +98,15 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
     current_position_y = box.content_box_y()
     new_children = []
     column_skip_stack = None
-    forced_end_probing = False
+    last_loop = False
     break_page = False
+    footnote_area_heights = [
+        0 if context.current_footnote_area.height == 'auto'
+        else context.current_footnote_area.margin_height()]
+    last_footnotes_height = 0
     for index, column_children_or_block in columns_and_blocks:
         if not isinstance(column_children_or_block, list):
-            # We get a spanning block, we display it like other blocks.
+            # We have a spanning block, we display it like other blocks
             block = column_children_or_block
             resolve_percentages(block, containing_block)
             block.position_x = box.content_box_x()
@@ -139,7 +118,7 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
                     fixed_boxes, adjoining_margins))
             skip_stack = None
             if new_child is None:
-                forced_end_probing = True
+                last_loop = True
                 break_page = True
                 break
             new_children.append(new_child)
@@ -147,51 +126,42 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
                 new_child.border_height() + new_child.border_box_y())
             adjoining_margins.append(new_child.margin_bottom)
             if resume_at:
-                forced_end_probing = True
+                last_loop = True
                 break_page = True
                 column_skip_stack = resume_at
                 break
             page_is_empty = False
             continue
 
-        excluded_shapes = context.excluded_shapes[:]
-
-        # We have a list of children that we have to balance between columns.
+        # We have a list of children that we have to balance between columns
         column_children = column_children_or_block
 
-        # Find the total height available for the first run.
+        # Find the total height available for the first run
         current_position_y += collapse_margin(adjoining_margins)
         adjoining_margins = []
-        column_box = create_column_box(column_children)
-        column_box.position_y = current_position_y
-        max_height = (
+        column_box = _create_column_box(
+            box, containing_block, column_children, width, current_position_y)
+        height = max_height = (
             context.page_bottom - current_position_y - original_bottom_space)
-        height = max_height
 
         # Try to render columns until the content fits, increase the column
-        # height step by step.
+        # height step by step
         column_skip_stack = skip_stack
         lost_space = inf
+        original_excluded_shapes = context.excluded_shapes[:]
         original_page_is_empty = page_is_empty
-        page_is_empty = False
-        stop_rendering = False
-        balancing = False
-        footnote_heights = [
-            0 if context.current_footnote_area.height == 'auto'
-            else context.current_footnote_area.margin_height()]
+        page_is_empty = stop_rendering = balancing = False
         while True:
-            column_skip_stack = skip_stack
-
-            # Remove extra excluded shapes introduced during previous loop
-            new_excluded_shapes = (
-                len(context.excluded_shapes) - len(excluded_shapes))
-            for i in range(new_excluded_shapes):
+            # Remove extra excluded shapes introduced during the previous loop
+            while len(context.excluded_shapes) > len(original_excluded_shapes):
                 context.excluded_shapes.pop()
 
+            # Render the columns
+            column_skip_stack = skip_stack
             consumed_heights = []
             new_boxes = []
             for i in range(count):
-                # Render the column
+                # Render one column
                 new_box, resume_at, next_page, _, _, _ = block_box_layout(
                     context, column_box,
                     context.page_bottom - current_position_y - height,
@@ -199,16 +169,16 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
                     page_is_empty or not balancing, [], [], [],
                     discard=False, max_lines=None)
                 if new_box is None:
-                    # We didn't render anything, retry.
+                    # We didn't render anything, retry
                     column_skip_stack = {0: None}
                     break
                 new_boxes.append(new_box)
                 column_skip_stack = resume_at
 
+                # Calculate consumed height, empty space and next box height
                 in_flow_children = [
                     child for child in new_box.children
                     if child.is_in_normal_flow()]
-
                 if in_flow_children:
                     # Get the empty space at the bottom of the column box
                     consumed_height = (
@@ -216,22 +186,21 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
                         in_flow_children[-1].position_y - current_position_y)
                     empty_space = height - consumed_height
 
+                    # Get the minimum size needed to render the next box
                     if column_skip_stack:
-                        # Get the minimum size needed to render the next box
-                        next_box, _, _, _, _, _ = block_box_layout(
-                            context, column_box,
-                            context.page_bottom - box.content_box_y(),
-                            column_skip_stack, containing_block, True, [], [],
-                            [], discard=False, max_lines=None)
+                        next_box = block_box_layout(
+                            context, column_box, inf, column_skip_stack,
+                            containing_block, True, [], [], [],
+                            discard=False, max_lines=None)[0]
                         for child in next_box.children:
                             if child.is_in_normal_flow():
-                                next_box_size = child.margin_height()
+                                next_box_height = child.margin_height()
                                 break
                         remove_placeholders(context, [next_box], [], [])
                     else:
-                        next_box_size = 0
+                        next_box_height = 0
                 else:
-                    consumed_height = empty_space = next_box_size = 0
+                    consumed_height = empty_space = next_box_height = 0
 
                 consumed_heights.append(consumed_height)
 
@@ -247,87 +216,83 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
                 # introduced by rounding errors. As the workaround below at
                 # least adds 1 pixel for each loop, we can ignore lost spaces
                 # lower than 1px.
-                if next_box_size - empty_space > 1:
-                    lost_space = min(lost_space, next_box_size - empty_space)
+                if next_box_height - empty_space > 1:
+                    lost_space = min(lost_space, next_box_height - empty_space)
 
                 # Stop if we already rendered the whole content
                 if resume_at is None:
                     break
 
-            new_footnotes_height = (
+            # Remove placeholders but keep the current footnote area height
+            last_footnotes_height = (
                 0 if context.current_footnote_area.height == 'auto'
                 else context.current_footnote_area.margin_height())
             remove_placeholders(context, new_boxes, [], [])
 
-            if forced_end_probing:
+            if last_loop:
                 break
 
             if balancing:
                 if column_skip_stack is None:
                     # We rendered the whole content, stop
                     break
-                else:
-                    if lost_space == inf:
-                        # We didn't find the extra size needed to render a
-                        # child in the previous column, increase height by the
-                        # minimal value.
-                        add_height = 1
-                    else:
-                        # Increase the column heights and render them again
-                        add_height = lost_space
 
-                    if height + add_height > max_height:
-                        height = max_height
-                        stop_rendering = True
-                        break
+                # Increase the column heights and render them again
+                add_height = 1 if lost_space == inf else lost_space
+                height += add_height
 
-                    height += add_height
-            else:
-                if new_footnotes_height not in footnote_heights:
-                    # Footnotes have been rendered, try to re-render with the
-                    # new footnote area height.
-                    height -= new_footnotes_height - footnote_heights[-1]
-                    footnote_heights.append(new_footnotes_height)
-                    continue
-                if (
-                        column_skip_stack or
-                        max(consumed_heights) > max_height or
-                        len(footnote_heights) > 2):
-                    # Even at maximum height, not everything fits. Stop now and
-                    # let the columns continue on the next page.
-                    height += footnote_heights[-1]
-                    if len(footnote_heights) > 2:
-                        new_footnotes_height = min(
-                            new_footnotes_height, footnote_heights[-1])
-                    height -= new_footnotes_height
+                if height > max_height:
+                    # We reached max height, stop rendering
+                    height = max_height
                     stop_rendering = True
                     break
-                else:
+            else:
+                if last_footnotes_height not in footnote_area_heights:
+                    # Footnotes have been rendered, try to re-render with the
+                    # new footnote area height
+                    height -= last_footnotes_height - footnote_area_heights[-1]
+                    footnote_area_heights.append(last_footnotes_height)
+                    continue
+
+                everything_fits = (
+                    not column_skip_stack and
+                    max(consumed_heights) <= max_height)
+                if everything_fits:
                     # Everything fits, start expanding columns at the average
-                    # of the column heights.
-                    max_height -= new_footnotes_height
+                    # of the column heights
+                    max_height -= last_footnotes_height
                     if style['column_fill'] == 'balance':
                         balancing = True
                         height = sum(consumed_heights) / count
                     else:
                         break
+                else:
+                    # Content overflows even at maximum height, stop now and
+                    # let the columns continue on the next page
+                    height += footnote_area_heights[-1]
+                    if len(footnote_area_heights) > 2:
+                        last_footnotes_height = min(
+                            last_footnotes_height, footnote_area_heights[-1])
+                    height -= last_footnotes_height
+                    stop_rendering = True
+                    break
 
-        # TODO: check box.style['max']-height
+        # TODO: check style['max']-height
         bottom_space = max(
             bottom_space, context.page_bottom - current_position_y - height)
 
-        # Replace the current box children with columns
+        # Replace the current box children with real columns
         i = 0
         max_column_height = 0
         columns = []
         while True:
-            column_box = create_column_box(column_children)
-            column_box.position_y = current_position_y
+            column_box = _create_column_box(
+                box, containing_block, column_children, width,
+                current_position_y)
             if style['direction'] == 'rtl':
-                column_box.position_x += (
-                    box.width - (i + 1) * width - i * style['column_gap'])
+                column_box.position_x += box.width - (i + 1) * width - i * gap
             else:
-                column_box.position_x += i * (width + style['column_gap'])
+                column_box.position_x += i * (width + gap)
             new_child, column_skip_stack, column_next_page, _, _, _ = (
                 block_box_layout(
                     context, column_box, bottom_space, skip_stack,
@@ -341,20 +306,19 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
             columns.append(new_child)
             max_column_height = max(
                 max_column_height, new_child.margin_height())
-            # Drop column’s bottom margin if it overflows the page
-            max_column_height = min(max_column_height, max_height)
             if skip_stack is None:
                 bottom_space = original_bottom_space
                 break
             i += 1
-            if i == count and not known_height:
+            if i == count and not height_defined:
                 # [If] a declaration that constrains the column height
                 # (e.g., using height or max-height). In this case,
                 # additional column boxes are created in the inline
                 # direction.
                 break
 
-        current_position_y += max_column_height
+        # Update the current y position and set the columns’ height
+        current_position_y += min(max_height, max_column_height)
         for column in columns:
             column.height = max_column_height
             new_children.append(column)
@@ -365,23 +329,15 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
         if stop_rendering:
             break
 
-    reported_footnotes = 0
-    while (
-            context.current_page_footnotes and
-            context.current_footnote_area.margin_height() >
-            new_footnotes_height):
-        context.report_footnote(context.current_page_footnotes[-1])
-        reported_footnotes += 1
-    if reported_footnotes >= 2:
-        extra = context.reported_footnotes[-1:-reported_footnotes-1:-1]
-        context.reported_footnotes[-reported_footnotes:] = extra
+    # Report footnotes above the defined footnotes height
+    _report_footnotes(context, last_footnotes_height)
 
     if box.children and not new_children:
         # The box has children but none can be drawn, let's skip the whole box
         context.in_column = False
         return None, (0, None), {'break': 'any', 'page': None}, [], False
 
-    # Set the height of box and the columns
+    # Set the height of the containing box
     box.children = new_children
     current_position_y += collapse_margin(adjoining_margins)
     height = current_position_y - box.content_box_y()
@@ -390,6 +346,8 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
         height_difference = 0
     else:
         height_difference = box.height - height
+
+    # Update the latest columns’ height to respect min-height
     if box.min_height != 'auto' and box.min_height > box.height:
         height_difference += box.min_height - box.height
         box.height = box.min_height
@@ -399,19 +357,52 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
         else:
             break
 
-    if box.style['position'] == 'relative':
+    if style['position'] == 'relative':
         # New containing block, resolve the layout of the absolute descendants
         for absolute_box in absolute_boxes:
             absolute_layout(
                 context, absolute_box, box, fixed_boxes, bottom_space,
                 skip_stack=None)
 
+    # Calculate skip stack
     if column_skip_stack:
         skip, = column_skip_stack.keys()
         skip_stack = {index + skip: column_skip_stack[skip]}
     elif break_page:
         skip_stack = {index: None}
-    context.in_column = False
+
+    # Update page bottom according to the new footnotes
     if context.current_footnote_area.height != 'auto':
         context.page_bottom -= context.current_footnote_area.margin_height()
+
+    context.in_column = False
     return box, skip_stack, next_page, [], False
+
+
+def _report_footnotes(context, footnotes_height):
+    """Report footnotes above the defined footnotes height."""
+    if not context.current_page_footnotes:
+        return
+
+    # Report and count footnotes
+    reported_footnotes = 0
+    while context.current_footnote_area.margin_height() > footnotes_height:
+        context.report_footnote(context.current_page_footnotes[-1])
+        reported_footnotes += 1
+
+    # Revert reported footnotes, as they’ve been reported starting from the
+    # last one
+    if reported_footnotes >= 2:
+        extra = context.reported_footnotes[-1:-reported_footnotes-1:-1]
+        context.reported_footnotes[-reported_footnotes:] = extra
+
+
+def _create_column_box(box, containing_block, children, width, position_y):
+    """Create a column box including given children."""
+    column_box = box.anonymous_from(box, children=children)
+    resolve_percentages(column_box, containing_block)
+    column_box.is_column = True
+    column_box.width = width
+    column_box.position_x = box.content_box_x()
+    column_box.position_y = position_y
+    return column_box
