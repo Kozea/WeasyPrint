@@ -59,7 +59,7 @@ test = ['pytest', 'pytest-xdist', 'pytest-flake8', 'pytest-isort', 'pytest-cov',
 weasyprint = 'weasyprint.__main__:main'
 
 [tool.flit.sdist]
-exclude = ['.*', 'tests/results']
+exclude = ['.*']
 
 [tool.pytest.ini_options]
 addopts = '--isort --flake8 --numprocesses=auto'
