@@ -42,13 +42,21 @@ Tests
 -----
 
 Tests are stored in the ``tests`` folder at the top of the repository. They use
-the `pytest`_ library.
+the pytest_ library.
 
-You can launch tests (with code coverage and lint) using the following command::
+You can launch tests using the following command::
 
   venv/bin/python -m pytest
 
+WeasyPrint also uses isort_ to check imports and flake8_ to check the coding
+style::
+
+  venv/bin/python -m isort . --check --diff
+  venv/bin/python -m flake8
+
 .. _pytest: https://docs.pytest.org/
+.. _isort: https://pycqa.github.io/isort/
+.. _flake8: https://flake8.pycqa.org/
 
 
 Documentation

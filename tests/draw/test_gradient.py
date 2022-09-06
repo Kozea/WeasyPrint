@@ -102,7 +102,8 @@ def test_linear_gradients_7(assert_pixels):
         hhhhhhhhh
         hhhhhhhhh
         hhhhhhhhh
-    ''', '''<style>@page { size: 9px 5px; background: repeating-linear-gradient(
+    ''', '''<style>@page { size: 9px 5px; background:
+    repeating-linear-gradient(
       to right, black 3px, black 3px, #800080 3px, #800080 3px
     )''')
 
@@ -115,9 +116,8 @@ def test_linear_gradients_8(assert_pixels):
         BBBBBBBBB
         BBBBBBBBB
         BBBBBBBBB
-    ''', '''<style>@page { size: 9px 5px; background: repeating-linear-gradient(
-      to right, blue 3px
-    )''')
+    ''', '''<style>@page { size: 9px 5px; background:
+      repeating-linear-gradient(to right, blue 3px)''')
 
 
 @assert_no_logs
@@ -128,9 +128,8 @@ def test_linear_gradients_9(assert_pixels):
         BBBBBBBBB
         BBBBBBBBB
         BBBBBBBBB
-    ''', '''<style>@page { size: 9px 5px; background: repeating-linear-gradient(
-      45deg, blue 3px
-    )''')
+    ''', '''<style>@page { size: 9px 5px; background:
+      repeating-linear-gradient(45deg, blue 3px)''')
 
 
 @assert_no_logs
@@ -169,8 +168,8 @@ def test_linear_gradients_12(assert_pixels):
         BBBBBBBBB
         BBBBBBBBB
         BBBBBBBBB
-    ''', '''<style>@page { size: 9px 5px; background: repeating-linear-gradient(
-      to right, red 3px, blue 3px, blue 4px, red 4px
+    ''', '''<style>@page { size: 9px 5px; background:
+      repeating-linear-gradient(to right, red 3px, blue 3px, blue 4px, red 4px
     )''')
 
 
