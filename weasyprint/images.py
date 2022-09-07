@@ -7,12 +7,16 @@ from itertools import cycle
 from math import inf
 from xml.etree import ElementTree
 
-from PIL import Image, ImageOps
+from PIL import Image, ImageFile, ImageOps
 
 from .layout.percent import percentage
 from .logger import LOGGER
 from .svg import SVG
 from .urls import URLFetchingError, fetch
+
+
+# Don’t crash when converting truncated images
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 
 class ImageLoadingError(ValueError):
