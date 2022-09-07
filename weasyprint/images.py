@@ -14,7 +14,6 @@ from .logger import LOGGER
 from .svg import SVG
 from .urls import URLFetchingError, fetch
 
-
 # Don’t crash when converting truncated images
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
