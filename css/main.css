@@ -117,10 +117,10 @@ body p a:hover, footer ul li a:hover, nav ul li a:hover {
   color: #14213d;
 }
 
-body main section:nth-of-type(1), main.index section:nth-of-type(4), footer {
+body main section:nth-of-type(1), main.index section:nth-of-type(4), main.index section:nth-of-type(5), footer {
   position: relative;
 }
-body main section:nth-of-type(1)::before, footer::before, main.index section:nth-of-type(4)::before {
+body main section:nth-of-type(1)::before, footer::before, main.index section:nth-of-type(4)::before, main.index section:nth-of-type(5)::before {
   content: "";
   left: 50%;
   height: 100%;
@@ -314,6 +314,23 @@ body pre {
   padding: 2em;
   width: 100%;
 }
+
+#support ul li::before {
+  border-bottom: solid 1px;
+  border-left: solid 1px;
+  content: "";
+  height: 0.5em;
+  margin: 0.25em 0.25em 0 0;
+  min-width: 0.5em;
+}
+#support ul li {
+  align-items: flex-start;
+  display: flex;
+}
+#support ul {
+  font-size: 1.3rem;
+}
+
 
 #samples article {
   clear: left;
@@ -763,25 +780,25 @@ main.index section:nth-of-type(3) {
     width: 33.3333333333%;
   }
 }
-main.index section:nth-of-type(4) {
+main.index section:nth-of-type(5) {
   margin-top: 6em;
   padding: 1px 16.6666666667% 3em;
 }
-main.index section:nth-of-type(4)::before {
+main.index section:nth-of-type(5)::before {
   background-color: #f6f6f6;
 }
 @media screen and (max-width: 580px) {
-  main.index section:nth-of-type(4) {
+  main.index section:nth-of-type(5) {
     padding: 1px 0 3em;
   }
 }
-main.index section:nth-of-type(4) h2 {
+main.index section:nth-of-type(5) h2 {
   margin-bottom: 0;
 }
-main.index section:nth-of-type(4) h3 {
+main.index section:nth-of-type(5) h3 {
   margin: 1.5em 0 0.75em;
 }
-main.index section:nth-of-type(5) {
+main.index section:nth-of-type(6), main.index section:nth-of-type(4) {
   padding: 0 8.3333333333%;
 }
 
