@@ -382,6 +382,15 @@ def _dlopen(ffi, *names):
         except OSError:
             pass
     # Re-raise the exception.
+    print(
+        '\n-----\n\n'
+        'WeasyPrint could not import some external libraries. Please '
+        'carefully follow the installation steps before reporting an issue:\n'
+        'https://doc.courtbouillon.org/weasyprint/stable/'
+        'first_steps.html#installation\n'
+        'https://doc.courtbouillon.org/weasyprint/stable/'
+        'first_steps.html#troubleshooting',
+        '\n\n-----\n')
     return ffi.dlopen(names[0])  # pragma: no cover
 
 
