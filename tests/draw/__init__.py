@@ -49,7 +49,9 @@ def assert_pixels(name, expected_pixels, html):
         expected_pixels)
     width, height, pixels = html_to_pixels(html)
     assert (expected_width, expected_height) == (width, height), (
-        'Images do not have the same sizes')
+        'Images do not have the same sizes:\n'
+        f'- expected: {expected_width} × {expected_height}\n'
+        f'- result: {width} × {height}')
     assert_pixels_equal(name, width, height, pixels, expected_pixels)
 
 
