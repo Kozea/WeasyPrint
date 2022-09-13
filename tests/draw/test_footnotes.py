@@ -257,6 +257,12 @@ def test_footnote_max_height_3(assert_pixels):
         _________
         _________
         _BBBBBB__
+        _________
+        _________
+        _________
+        _________
+        _________
+        _BBBBBB__
     ''', '''
     <style>
         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
