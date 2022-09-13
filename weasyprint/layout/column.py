@@ -373,6 +373,7 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
 
     # Update page bottom according to the new footnotes
     if context.current_footnote_area.height != 'auto':
+        context.page_bottom += footnote_area_heights[0]
         context.page_bottom -= context.current_footnote_area.margin_height()
 
     context.in_column = False
