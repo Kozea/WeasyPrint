@@ -364,7 +364,8 @@ class LayoutContext:
             last_child = footnote_area.children[-1]
             overflow = (
                 last_child.position_y + last_child.margin_height() >
-                footnote_area.position_y + footnote_area.margin_height())
+                footnote_area.position_y + footnote_area.margin_height() -
+                footnote_area.margin_bottom)
             return overflow
         else:
             self.current_footnote_area.height = 0
