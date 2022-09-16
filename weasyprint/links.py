@@ -34,15 +34,14 @@ def resolve_links(pages):
     for page in pages:
         page_links = []
         for link in page.links:
-            link_type, anchor_name, rectangle, _ = link
+            link_type, anchor_name, _, _ = link
             if link_type == 'internal':
                 if anchor_name not in anchors:
                     LOGGER.error(
                         'No anchor #%s for internal URI reference',
                         anchor_name)
                 else:
-                    page_links.append(
-                        (link_type, anchor_name, rectangle, None))
+                    page_links.append(link)
             else:
                 # External link
                 page_links.append(link)
@@ -136,7 +135,7 @@ def gather_links_and_bookmarks(box, anchors, links, bookmarks,
             if link_type == 'external' and box.is_attachment:
                 link_type = 'attachment'
             rectangle = rectangle_aabb(matrix, pos_x, pos_y, width, height)
-            link = (link_type, target, rectangle, box.download_name)
+            link = (link_type, target, rectangle, box)
             links.append(link)
         if matrix and (has_bookmark or has_anchor):
             pos_x, pos_y = matrix.transform_point(pos_x, pos_y)

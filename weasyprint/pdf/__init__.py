@@ -14,13 +14,13 @@ from ..links import make_page_bookmark_tree, resolve_links
 from ..logger import LOGGER, PROGRESS_LOGGER
 from ..matrix import Matrix
 from ..urls import URLFetchingError
-from . import pdfa
+from . import pdfa, pdfua
 from .fonts import build_fonts_dictionary
 from .stream import Stream
 
 VARIANTS = {
-    name: function for variants in (pdfa.VARIANTS,)
-    for (name, function) in variants.items()}
+    name: data for variants in (pdfa.VARIANTS, pdfua.VARIANTS)
+    for (name, data) in variants.items()}
 
 
 def _w3c_date_to_pdf(string, attr_name):
@@ -170,31 +170,32 @@ def _use_references(pdf, resources, images):
             alpha['SMask']['G'] = alpha['SMask']['G'].reference
 
 
-def _add_links(links, anchors, matrix, pdf, page, names):
+def _add_links(links, anchors, matrix, pdf, page, names, mark):
     """Include hyperlinks in given PDF page."""
-    for link in links:
-        link_type, link_target, rectangle, _ = link
+    for link_type, link_target, rectangle, box in links:
         x1, y1 = matrix.transform_point(*rectangle[:2])
         x2, y2 = matrix.transform_point(*rectangle[2:])
         if link_type in ('internal', 'external'):
-            annot = pydyf.Dictionary({
+            box.link_annotation = pydyf.Dictionary({
                 'Type': '/Annot',
                 'Subtype': '/Link',
                 'Rect': pydyf.Array([x1, y1, x2, y2]),
                 'BS': pydyf.Dictionary({'W': 0}),
             })
+            if mark:
+                box.link_annotation['Contents'] = pydyf.String(link_target)
             if link_type == 'internal':
-                annot['Dest'] = pydyf.String(link_target)
+                box.link_annotation['Dest'] = pydyf.String(link_target)
             else:
-                annot['A'] = pydyf.Dictionary({
+                box.link_annotation['A'] = pydyf.Dictionary({
                     'Type': '/Action',
                     'S': '/URI',
                     'URI': pydyf.String(link_target),
                 })
-            pdf.add_object(annot)
+            pdf.add_object(box.link_annotation)
             if 'Annots' not in page:
                 page['Annots'] = pydyf.Array()
-            page['Annots'].append(annot.reference)
+            page['Annots'].append(box.link_annotation.reference)
 
     for anchor in anchors:
         anchor_name, x, y = anchor
@@ -231,16 +232,23 @@ def _create_bookmarks(bookmarks, pdf, parent=None):
     return outlines, count
 
 
-def generate_pdf(pages, url_fetcher, metadata, fonts, target, zoom,
-                 attachments, finisher, optimize_size, identifier, variant,
-                 version, custom_metadata):
+def generate_pdf(document, target, zoom, attachments, optimize_size,
+                 identifier, variant, version, custom_metadata):
     # 0.75 = 72 PDF point per inch / 96 CSS pixel per inch
     scale = zoom * 0.75
 
     PROGRESS_LOGGER.info('Step 6 - Creating PDF')
 
-    pdf = pydyf.PDF()
-    pdf.version = str(version or '1.7').encode()
+    # Set properties according to PDF variants
+    mark = False
+    if variant:
+        variant_function, properties = VARIANTS[variant]
+        if 'version' in properties:
+            version = properties['version']
+        if 'mark' in properties:
+            mark = properties['mark']
+
+    pdf = pydyf.PDF((version or '1.7'), identifier)
     states = pydyf.Dictionary()
     x_objects = pydyf.Dictionary()
     patterns = pydyf.Dictionary()
@@ -255,12 +263,8 @@ def generate_pdf(pages, url_fetcher, metadata, fonts, target, zoom,
     pdf.add_object(resources)
     pdf_names = []
 
-    # Variants
-    if variant:
-        VARIANTS[variant](pdf, metadata)
-
     # Links and anchors
-    page_links_and_anchors = list(resolve_links(pages))
+    page_links_and_anchors = list(resolve_links(document.pages))
     attachment_links = [
         [link for link in page_links if link[0] == 'attachment']
         for page_links, page_anchors in page_links_and_anchors]
@@ -277,7 +281,7 @@ def generate_pdf(pages, url_fetcher, metadata, fonts, target, zoom,
                 # above about multiple regions won't always be correct, because
                 # two links might have the same href, but different titles.
                 annot_files[annot_target] = _write_pdf_attachment(
-                    pdf, (annot_target, None), url_fetcher)
+                    pdf, (annot_target, None), document.url_fetcher)
 
     # Bookmarks
     root = []
@@ -288,9 +292,10 @@ def generate_pdf(pages, url_fetcher, metadata, fonts, target, zoom,
     skipped_levels = []
     last_by_depth = [root]
     previous_level = 0
+    page_streams = []
 
     for page_number, (page, links_and_anchors, page_links) in enumerate(
-            zip(pages, page_links_and_anchors, attachment_links)):
+            zip(document.pages, page_links_and_anchors, attachment_links)):
         # Draw from the top-left corner
         matrix = Matrix(scale, 0, 0, -scale, 0, page.height * scale)
 
@@ -310,11 +315,11 @@ def generate_pdf(pages, url_fetcher, metadata, fonts, target, zoom,
             left / scale, top / scale,
             (right - left) / scale, (bottom - top) / scale)
         stream = Stream(
-            fonts, page_rectangle, states, x_objects, patterns, shadings,
-            images)
+            document.fonts, page_rectangle, states, x_objects, patterns,
+            shadings, images, mark)
         stream.transform(d=-1, f=(page.height * scale))
-        page.paint(stream, scale=scale)
         pdf.add_object(stream)
+        page_streams.append(stream)
 
         pdf_page = pydyf.Dictionary({
             'Type': '/Page',
@@ -323,9 +328,13 @@ def generate_pdf(pages, url_fetcher, metadata, fonts, target, zoom,
             'Contents': stream.reference,
             'Resources': resources.reference,
         })
+        if mark:
+            pdf_page['Tabs'] = '/S'
+            pdf_page['StructParents'] = page_number
         pdf.add_page(pdf_page)
 
-        _add_links(links, anchors, matrix, pdf, pdf_page, pdf_names)
+        _add_links(links, anchors, matrix, pdf, pdf_page, pdf_names, mark)
+        page.paint(stream, scale=scale)
 
         # Bleed
         bleed = {key: value * 0.75 for key, value in page.bleed.items()}
@@ -401,6 +410,7 @@ def generate_pdf(pages, url_fetcher, metadata, fonts, target, zoom,
 
     # PDF information
     pdf.info['Producer'] = pydyf.String(f'WeasyPrint {__version__}')
+    metadata = document.metadata
     if metadata.title:
         pdf.info['Title'] = pydyf.String(metadata.title)
     if metadata.authors:
@@ -430,7 +440,8 @@ def generate_pdf(pages, url_fetcher, metadata, fonts, target, zoom,
     attachments = metadata.attachments + (attachments or [])
     pdf_attachments = []
     for attachment in attachments:
-        pdf_attachment = _write_pdf_attachment(pdf, attachment, url_fetcher)
+        pdf_attachment = _write_pdf_attachment(
+            pdf, attachment, document.url_fetcher)
         if pdf_attachment is not None:
             pdf_attachments.append(pdf_attachment)
     if pdf_attachments:
@@ -444,7 +455,7 @@ def generate_pdf(pages, url_fetcher, metadata, fonts, target, zoom,
         pdf.catalog['Names']['EmbeddedFiles'] = content.reference
 
     # Embedded fonts
-    pdf_fonts = build_fonts_dictionary(pdf, fonts, optimize_size)
+    pdf_fonts = build_fonts_dictionary(pdf, document.fonts, optimize_size)
     pdf.add_object(pdf_fonts)
     resources['Font'] = pdf_fonts.reference
     _use_references(pdf, resources, images)
@@ -458,5 +469,9 @@ def generate_pdf(pages, url_fetcher, metadata, fonts, target, zoom,
             name_array.append(anchor[1])
         dests = pydyf.Dictionary({'Names': name_array})
         pdf.catalog['Names'] = pydyf.Dictionary({'Dests': dests})
+
+    # Apply PDF variants functions
+    if variant:
+        variant_function(pdf, metadata, document, page_streams)
 
     return pdf

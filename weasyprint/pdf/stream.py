@@ -140,16 +140,18 @@ class Font:
 class Stream(pydyf.Stream):
     """PDF stream object with extra features."""
     def __init__(self, fonts, page_rectangle, states, x_objects, patterns,
-                 shadings, images, *args, **kwargs):
+                 shadings, images, mark, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.compress = True
         self.page_rectangle = page_rectangle
+        self.marked = []
         self._fonts = fonts
         self._states = states
         self._x_objects = x_objects
         self._patterns = patterns
         self._shadings = shadings
         self._images = images
+        self._mark = mark
         self._current_color = self._current_color_stroke = None
         self._current_alpha = self._current_alpha_stroke = None
         self._current_font = self._current_font_size = None
@@ -170,7 +172,10 @@ class Stream(pydyf.Stream):
         self._ctm_stack.append(self.ctm)
 
     def pop_state(self):
-        super().pop_state()
+        if self.stream and self.stream[-1] == b'q':
+            self.stream.pop()
+        else:
+            super().pop_state()
         self._current_color = self._current_color_stroke = None
         self._current_alpha = self._current_alpha_stroke = None
         self._current_font = None
@@ -291,7 +296,7 @@ class Stream(pydyf.Stream):
         })
         group = Stream(
             self._fonts, self.page_rectangle, states, x_objects, patterns,
-            shadings, self._images, extra=extra)
+            shadings, self._images, self._mark, extra=extra)
         group.id = f'x{len(self._x_objects)}'
         self._x_objects[group.id] = group
         return group
@@ -426,7 +431,7 @@ class Stream(pydyf.Stream):
         })
         pattern = Stream(
             self._fonts, self.page_rectangle, states, x_objects, patterns,
-            shadings, self._images, extra=extra)
+            shadings, self._images, self._mark, extra=extra)
         pattern.id = f'p{len(self._patterns)}'
         self._patterns[pattern.id] = pattern
         return pattern
@@ -445,6 +450,22 @@ class Stream(pydyf.Stream):
         shading.id = f's{len(self._shadings)}'
         self._shadings[shading.id] = shading
         return shading
+
+    def begin_marked_content(self, box, mcid=False, tag=None):
+        if not self._mark:
+            return
+        property_list = None
+        if tag is None:
+            tag = self.get_marked_content_tag(box.element_tag)
+        if mcid:
+            property_list = pydyf.Dictionary({'MCID': len(self.marked)})
+            self.marked.append((tag, box))
+        super().begin_marked_content(tag, property_list)
+
+    def end_marked_content(self):
+        if not self._mark:
+            return
+        super().end_marked_content()
 
     @staticmethod
     def create_interpolation_function(domain, c0, c1, n):
@@ -465,3 +486,35 @@ class Stream(pydyf.Stream):
             'Bounds': pydyf.Array(bounds),
             'Functions': pydyf.Array(sub_functions),
         })
+
+    def get_marked_content_tag(self, element_tag):
+        if element_tag == 'div':
+            return 'Div'
+        elif element_tag == 'span':
+            return 'Span'
+        elif element_tag == 'article':
+            return 'Art'
+        elif element_tag == 'section':
+            return 'Sect'
+        elif element_tag == 'blockquote':
+            return 'BlockQuote'
+        elif element_tag == 'p':
+            return 'P'
+        elif element_tag in ('h1', 'h2', 'h3', 'h4', 'h5', 'h6'):
+            return element_tag.upper()
+        elif element_tag in ('dl', 'ul', 'ol'):
+            return 'L'
+        elif element_tag == 'li':
+            return 'LI'
+        elif element_tag == 'dt':
+            return 'LI'
+        elif element_tag == 'dd':
+            return 'LI'
+        elif element_tag == 'table':
+            return 'Table'
+        elif element_tag in ('tr', 'th', 'td'):
+            return element_tag.upper()
+        elif element_tag in ('thead', 'tbody', 'tfoot'):
+            return element_tag[:2].upper() + element_tag[2:]
+        else:
+            return 'NonStruct'

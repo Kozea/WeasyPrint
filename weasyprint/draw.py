@@ -82,6 +82,8 @@ def draw_stacking_context(stream, stacking_context):
     with stacked(stream):
         box = stacking_context.box
 
+        stream.begin_marked_content(box, mcid=True)
+
         # apply the viewport_overflow to the html box, see #35
         if box.is_for_root_element and (
                 stacking_context.page.style['overflow'] != 'visible'):
@@ -114,6 +116,7 @@ def draw_stacking_context(stream, stacking_context):
             if box.transformation_matrix.determinant:
                 stream.transform(*box.transformation_matrix.values)
             else:
+                stream.end_marked_content()
                 return
 
         # Point 1 is done in draw_page
@@ -158,11 +161,15 @@ def draw_stacking_context(stream, stacking_context):
                 if isinstance(block, boxes.ReplacedBox):
                     draw_border(stream, block)
                     draw_replacedbox(stream, block)
-                else:
-                    for child in block.children:
-                        if isinstance(child, boxes.LineBox):
+                elif block.children:
+                    if block != box:
+                        stream.begin_marked_content(block, mcid=True)
+                    if isinstance(block.children[-1], boxes.LineBox):
+                        for child in block.children:
                             draw_inline_level(
                                 stream, stacking_context.page, child)
+                    if block != box:
+                        stream.end_marked_content()
 
             # Point 8
             for child_context in stacking_context.zero_z_contexts:
@@ -182,6 +189,8 @@ def draw_stacking_context(stream, stacking_context):
             stream.set_alpha(box.style['opacity'], stroke=True, fill=True)
             stream.draw_x_object(group_id)
             stream.pop_state()
+
+        stream.end_marked_content()
 
 
 def rounded_box_path(stream, radii):
@@ -947,10 +956,15 @@ def draw_inline_level(stream, page, box, offset_x=0, text_overflow='clip',
         draw_background(stream, box.background)
         draw_border(stream, box)
         if isinstance(box, (boxes.InlineBox, boxes.LineBox)):
+            link_annotation = None
             if isinstance(box, boxes.LineBox):
                 text_overflow = box.text_overflow
                 block_ellipsis = box.block_ellipsis
+            else:
+                link_annotation = box.link_annotation
             ellipsis = 'none'
+            if link_annotation:
+                stream.begin_marked_content(box, mcid=True, tag='Link')
             for i, child in enumerate(box.children):
                 if i == len(box.children) - 1:
                     # Last child
@@ -967,6 +981,8 @@ def draw_inline_level(stream, page, box, offset_x=0, text_overflow='clip',
                     draw_inline_level(
                         stream, page, child, child_offset_x, text_overflow,
                         ellipsis)
+            if link_annotation:
+                stream.end_marked_content()
         elif isinstance(box, boxes.InlineReplacedBox):
             draw_replacedbox(stream, box)
         else:
