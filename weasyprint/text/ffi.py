@@ -220,18 +220,26 @@ ffi.cdef('''
     void pango_font_description_free (PangoFontDescription *desc);
     PangoFontDescription * pango_font_description_copy (
         const PangoFontDescription *desc);
+
     void pango_font_description_set_family (
         PangoFontDescription *desc, const char *family);
     void pango_font_description_set_style (
         PangoFontDescription *desc, PangoStyle style);
-    PangoStyle pango_font_description_get_style (
-        const PangoFontDescription *desc);
     void pango_font_description_set_stretch (
         PangoFontDescription *desc, PangoStretch stretch);
     void pango_font_description_set_weight (
         PangoFontDescription *desc, PangoWeight weight);
     void pango_font_description_set_absolute_size (
         PangoFontDescription *desc, double size);
+    void pango_font_description_set_variations (
+        PangoFontDescription* desc, const char* variations);
+
+    PangoStyle pango_font_description_get_style (
+        const PangoFontDescription *desc);
+    const char* pango_font_description_get_variations (
+        const PangoFontDescription* desc);
+    PangoWeight pango_font_description_get_weight (
+        const PangoFontDescription* desc);
     int pango_font_description_get_size (PangoFontDescription *desc);
 
     int pango_glyph_string_get_width (PangoGlyphString *glyphs);
@@ -241,7 +249,7 @@ ffi.cdef('''
     PangoFontDescription * pango_font_describe (PangoFont *font);
     const char * pango_font_description_get_family (
         const PangoFontDescription *desc);
-    int pango_font_description_hash (const PangoFontDescription *desc);
+    guint pango_font_description_hash (const PangoFontDescription *desc);
 
     PangoContext * pango_context_new ();
     PangoContext * pango_font_map_create_context (PangoFontMap *fontmap);

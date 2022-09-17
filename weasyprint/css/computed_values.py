@@ -194,6 +194,7 @@ def _font_style_cache_key(style):
         style['font_variant_alternates'],
         style['font_variant_east_asian'],
         style['font_feature_settings'],
+        style['font_variation_settings'],
     ))
 
 
