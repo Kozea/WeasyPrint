@@ -431,8 +431,7 @@ def _in_flow_layout(context, box, index, child, new_children, page_is_empty,
 
     if not new_containing_block.is_table_wrapper:
         resolve_percentages(child, new_containing_block)
-        if (child.is_in_normal_flow() and last_in_flow_child is None and
-                collapsing_with_children):
+        if last_in_flow_child is None and collapsing_with_children:
             # TODO: add the adjoining descendants' margin top to
             # [child.margin_top]
             old_collapsed_margin = collapse_margin(adjoining_margins)
