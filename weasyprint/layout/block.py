@@ -32,6 +32,8 @@ def block_level_layout(context, box, bottom_space, skip_stack,
             box.margin_bottom = 0
 
         if context.current_page > 1 and page_is_empty:
+            # When an unforced break occurs before or after a block-level box,
+            # any margins adjoining the break are truncated to zero.
             # TODO: this condition is wrong, it only works for blocks whose
             # parent breaks collapsing margins. It should work for blocks whose
             # one of the ancestors breaks collapsing margins.
@@ -435,10 +437,17 @@ def _in_flow_layout(context, box, index, child, new_children, page_is_empty,
             # TODO: add the adjoining descendants' margin top to
             # [child.margin_top]
             old_collapsed_margin = collapse_margin(adjoining_margins)
-            if child.margin_top == 'auto':
+            # TODO: the margin-top value is set afterwards in
+            # block_level_layout, we shouldn’t duplicate this code
+            child_margin_top = child.margin_top
+            if child_margin_top == 'auto':
                 child_margin_top = 0
-            else:
-                child_margin_top = child.margin_top
+            elif context.current_page > 1 and page_is_empty:
+                if box.style['margin_break'] == 'discard':
+                    child_margin_top = 0
+                elif box.style['margin_break'] == 'auto':
+                    if not context.forced_break:
+                        child_margin_top = 0
             new_collapsed_margin = collapse_margin(
                 adjoining_margins + [child_margin_top])
             collapsed_margin_difference = (

@@ -103,3 +103,31 @@ def test_lists_page_break():
     assert len(ul.children) == 1
     for li in ul.children:
         assert len(li.children) == 2
+
+
+def test_lists_page_break_margin():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/1058
+    page1, page2 = render_pages('''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        @page { size: 300px 100px }
+        ul { font-size: 30px; font-family: weasyprint; margin: 0 }
+        p { margin: 10px 0 }
+      </style>
+      <ul>
+        <li><p>a</p></li>
+        <li><p>a</p></li>
+        <li><p>a</p></li>
+        <li><p>a</p></li>
+      </ul>
+    ''')
+    for page in (page1, page2):
+        html, = page.children
+        body, = html.children
+        ul, = body.children
+        assert len(ul.children) == 2
+        for li in ul.children:
+            assert len(li.children) == 2
+            assert (
+                li.children[0].position_y ==
+                li.children[1].children[0].position_y)
