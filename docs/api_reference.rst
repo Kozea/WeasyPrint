@@ -174,6 +174,12 @@ specifications. The major rules to follow are to include a PDF identifier, to
 check the PDF version, and to avoid anti-aliasing for images using
 ``image-rendering: crisp-edges``.
 
+The generation of PDF/UA documents (UA-1) is supported. However, the generated
+documents are not guaranteed to be valid, and users have the responsibility to
+check that they follow the rules listed by the related specifications. The main
+constraint is to use a correct HTML structure to avoid inconsistencies in the
+PDF structure.
+
 
 Fonts
 ~~~~~
@@ -238,8 +244,8 @@ To the best of our knowledge, everything else that applies to the
 print media **is** supported. Please report a bug if you find this list
 incomplete.
 
-Selectors Level 3
-+++++++++++++++++
+Selectors Level 3 / 4
++++++++++++++++++++++
 
 With the exceptions noted here, all `Selectors Level 3`_ are supported.
 
@@ -247,7 +253,14 @@ PDF is generally not interactive. The ``:hover``, ``:active``, ``:focus``,
 ``:target`` and ``:visited`` pseudo-classes are accepted as valid but
 never match anything.
 
+Everything in `Selectors Level 4`_ is supported, except:
+
+- ``:dir``,
+- input pseudo-classes (``:valid``, ``:invalid``…),
+- column selector (``||``, ``:nth-col()``, ``:nth-last-col()``).
+
 .. _Selectors Level 3: https://www.w3.org/TR/selectors-3/
+.. _Selectors Level 4: https://www.w3.org/TR/selectors-4/
 
 CSS Text Module Level 3 / 4
 +++++++++++++++++++++++++++
@@ -265,9 +278,11 @@ New properties defined in Level 3 are supported:
 - the ``overflow-wrap`` property replacing ``word-wrap``;
 - the ``break-all`` value of the ``word-break`` property (see `#1153`_);
 - the ``full-width`` value of the ``text-transform`` property; and
+- the ``start``, ``end`` and ``justify-all`` values of the ``text-align`` property;
+- the ``text-align-last`` and ``text-justify`` properties; and
 - the ``tab-size`` property.
 
-Experimental_ properties controling hyphenation_ are supported by WeasyPrint:
+Properties controling hyphenation_ are supported by WeasyPrint:
 
 - ``hyphens``,
 - ``hyphenate-character``,
@@ -298,9 +313,7 @@ The other features provided by `CSS Text Module Level 3`_ are **not**
 supported:
 
 - the ``line-break`` property;
-- the ``start``, ``end``, ``match-parent`` and ``start end`` values of the
-  ``text-align`` property;
-- the ``text-align-last`` and ``text-justify`` properties; and
+- the ``match-parent`` value of the ``text-align`` property;
 - the ``text-indent`` and ``hanging-punctuation`` properties.
 
 The other features provided by `CSS Text Module Level 4`_ are **not**
@@ -319,8 +332,8 @@ supported:
 .. _CSS Text Module Level 3: https://www.w3.org/TR/css-text-3/
 .. _CSS Text Module Level 4: https://www.w3.org/TR/css-text-4/
 
-CSS Fonts Module Level 3
-++++++++++++++++++++++++
+CSS Fonts Module Level 3 / 4
+++++++++++++++++++++++++++++
 
 The `CSS Fonts Module Level 3`_ is a candidate recommendation describing "how
 font properties are specified and how font resources are loaded dynamically".
@@ -344,7 +357,7 @@ but that should not be a problem for common use.
 
 The shorthand ``font`` and ``font-variant`` properties are supported.
 
-WeasyPrint supports the ``@font-face`` rule, provided that Pango >= 1.38 is installed.
+WeasyPrint supports the ``@font-face`` rule.
 
 WeasyPrint does **not** support the ``@font-feature-values`` rule and the
 values of ``font-variant-alternates`` other than ``normal`` and
@@ -353,6 +366,13 @@ values of ``font-variant-alternates`` other than ``normal`` and
 The ``font-variant-caps`` property is supported but needs the small-caps variant of
 the font to be installed. WeasyPrint does **not** simulate missing small-caps
 fonts.
+
+From `CSS Fonts Module Level 4`_ we only support the
+``font-variation-settings`` property enabling specific font variations.
+
+.. _CSS Fonts Module Level 3: https://www.w3.org/TR/css-fonts-3/
+.. _CSS Fonts Module Level 4: https://www.w3.org/TR/css-fonts-4/
+
 
 CSS Paged Media Module Level 3
 ++++++++++++++++++++++++++++++
@@ -445,7 +465,7 @@ identifiers) in the current document:
 In particular, ``target-counter()`` and ``target-text()`` are useful when it
 comes to tables of contents (see `an example`_).
 
-You can also control `PDF bookmarks`_ with WeasyPrint. Using the experimental_
+You can also control `PDF bookmarks`_ with WeasyPrint. Using the
 ``bookmark-level``, ``bookmark-label`` and ``bookmark-state`` properties, you
 can add bookmarks that will be available in your PDF reader.
 
@@ -469,7 +489,6 @@ The other features of this module are **not** implemented:
 .. _Cross-references: https://www.w3.org/TR/css-content-3/#cross-references
 .. _an example: https://github.com/Kozea/WeasyPrint/pull/652#issuecomment-403276559
 .. _PDF bookmarks: https://www.w3.org/TR/css-content-3/#bookmark-generation
-.. _experimental: https://www.w3.org/TR/css-2010/#experimental
 .. _user agent stylesheet: https://github.com/Kozea/WeasyPrint/blob/master/weasyprint/css/html5_ua.css
 
 CSS Color Module Level 3
@@ -496,13 +515,14 @@ with the transform property. Using transform, elements can be translated,
 rotated and scaled in two or three dimensional space."
 
 WeasyPrint supports the ``transform`` and ``transform-origin`` properties, and
-all the 2D transformations (``matrix``, ``rotate``, ``translate(X|Y)?``,
-``scale(X|Y)?``, ``skew(X|Y)?``).
+all the 2D transformations (``matrix``, ``rotate``, ``translate``,
+``translateX``, ``translateY``, ``scale``, ``scaleX``, ``scaleY``, ``skew``,
+``skewX``, ``skewY``).
 
 WeasyPrint does **not** support the ``transform-style``, ``perspective``,
 ``perspective-origin`` and ``backface-visibility`` properties, and all the 3D
-transformations (``matrix3d``, ``rotate(3d|X|Y|Z)``, ``translate(3d|Z)``,
-``scale(3d|Z)``).
+transformations (``matrix3d``, ``rotate3d``, ``rotateX``, ``rotateY``,
+``rotateZ``, ``translate3d``, ``translateZ``, ``scale3d``, ``scaleZ``).
 
 .. _CSS Transforms Module Level 1: https://drafts.csswg.org/css-transforms-1/
 
