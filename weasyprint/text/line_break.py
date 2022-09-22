@@ -110,6 +110,11 @@ class Layout:
             self.font, style['font_weight'])
         pango.pango_font_description_set_absolute_size(
             self.font, units_from_double(font_size))
+        if style['font_variation_settings'] != 'normal':
+            string = ','.join(
+                f'{key}={value}' for key, value in
+                style['font_variation_settings']).encode()
+            pango.pango_font_description_set_variations(self.font, string)
         pango.pango_layout_set_font_description(self.layout, self.font)
 
         text_decoration = style['text_decoration_line']

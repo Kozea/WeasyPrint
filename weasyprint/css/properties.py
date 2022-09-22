@@ -101,6 +101,9 @@ INITIAL_VALUES = {
     'font_variant_position': 'normal',
     'font_weight': 400,
 
+    # Fonts 4 (WD): https://www.w3.org/TR/css-fonts-4/
+    'font_variation_settings': 'normal',
+
     # Fragmentation 3/4 (CR/WD): https://www.w3.org/TR/css-break-4/
     'box_decoration_break': 'slice',
     'break_after': 'auto',
@@ -240,6 +243,7 @@ INHERITED = {
     'font_variant_ligatures',
     'font_variant_numeric',
     'font_variant_position',
+    'font_variation_settings',
     'font_weight',
     'hyphens',
     'hyphenate_character',

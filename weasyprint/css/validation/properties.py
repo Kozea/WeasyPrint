@@ -842,6 +842,22 @@ def font_variant_east_asian(tokens):
 
 
 @property()
+def font_variation_settings(tokens):
+    """``font-variation-settings`` property validation."""
+    if len(tokens) == 1 and get_keyword(tokens[0]) == 'normal':
+        return 'normal'
+
+    @comma_separated_list
+    def font_variation_settings_list(tokens):
+        if len(tokens) == 2:
+            key, value = tokens
+            if key.type == 'string' and value.type == 'number':
+                return key.value, value.value
+
+    return font_variation_settings_list(tokens)
+
+
+@property()
 @single_token
 def font_size(token):
     """``font-size`` property validation."""
