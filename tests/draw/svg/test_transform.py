@@ -28,6 +28,30 @@ def test_transform_translate(assert_pixels):
 
 
 @assert_no_logs
+def test_transform_translate_one(assert_pixels):
+    assert_pixels('''
+        _________
+        _RRRRRRR_
+        _RRRRRRR_
+        _RR___RR_
+        _RR___RR_
+        _RR___RR_
+        _RRRRRRR_
+        _RRRRRRR_
+        _________
+    ''', '''
+      <style>
+        @page { size: 9px }
+        svg { display: block }
+      </style>
+      <svg width="9px" height="9px" xmlns="https://www.w3.org/2000/svg">
+        <rect x="0" y="2" width="5" height="5" transform="translate(2)"
+              stroke-width="2" stroke="red" fill="none" />
+      </svg>
+    ''')
+
+
+@assert_no_logs
 def test_transform_translatex(assert_pixels):
     assert_pixels('''
         _________
@@ -142,6 +166,30 @@ def test_transform_skew(assert_pixels):
       </style>
       <svg width="9px" height="9px" xmlns="https://www.w3.org/2000/svg">
         <rect x="2" y="2" width="2" height="2" transform="skew(20 20)"
+              stroke-width="2" stroke="red" fill="none" />
+      </svg>
+    ''')
+
+
+@assert_no_logs
+def test_transform_skew_one(assert_pixels):
+    assert_pixels('''
+        _________
+        _RRRRR___
+        _RRRRRR__
+        __RRRRR__
+        __RRRRR__
+        _________
+        _________
+        _________
+        _________
+    ''', '''
+      <style>
+        @page { size: 9px }
+        svg { display: block }
+      </style>
+      <svg width="9px" height="9px" xmlns="https://www.w3.org/2000/svg">
+        <rect x="2" y="2" width="2" height="2" transform="skew(20)"
               stroke-width="2" stroke="red" fill="none" />
       </svg>
     ''')

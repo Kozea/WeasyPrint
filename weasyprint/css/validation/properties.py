@@ -1510,7 +1510,7 @@ def transform(tokens):
                 length = get_length(args[0], percentage=True)
                 if name == 'rotate' and angle is not None:
                     transforms.append((name, angle))
-                elif name == 'skewx' and angle is not None:
+                elif name in ('skewx', 'skew') and angle is not None:
                     transforms.append(('skew', (angle, 0)))
                 elif name == 'skewy' and angle is not None:
                     transforms.append(('skew', (0, angle)))
