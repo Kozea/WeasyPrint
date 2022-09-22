@@ -2,6 +2,73 @@ Changelog
 =========
 
 
+Version 57.0b1
+--------------
+
+Released on 2022-09-22.
+
+**This version is experimental, don't use it in production. If you find bugs,
+please report them!**
+
+New features:
+
+* `#1704 <https://github.com/Kozea/WeasyPrint/pull/1704>`_:
+  Support PDF/UA, with financial support from Novareto
+* `#1454 <https://github.com/Kozea/WeasyPrint/issues/1454>`_:
+  Support variable fonts
+
+Bug fixes:
+
+* `#1058 <https://github.com/Kozea/WeasyPrint/issues/1058>`_:
+  Fix bullet position after page break, with financial support from OpenZeppelin
+* `#1707 <https://github.com/Kozea/WeasyPrint/issues/1707>`_:
+  Fix footnote positioning in multicolumn layout, with financial support from Code & Co.
+* `#1722 <https://github.com/Kozea/WeasyPrint/issues/1722>`_:
+  Handle skew transformation with only one parameter
+* `#1715 <https://github.com/Kozea/WeasyPrint/issues/1715>`_:
+  Don’t crash when images are truncated
+* `#1697 <https://github.com/Kozea/WeasyPrint/issues/1697>`_:
+  Don’t crash when attr() is used in text-decoration-color
+* `#1695 <https://github.com/Kozea/WeasyPrint/pull/1695>`_:
+  Include language information in PDF metadata
+* `#1612 <https://github.com/Kozea/WeasyPrint/issues/1612>`_:
+  Don’t lowercase letters when capitalizing text
+* `#1700 <https://github.com/Kozea/WeasyPrint/issues/1700>`_:
+  Fix crash when rendering footnote with repagination
+* `#1667 <https://github.com/Kozea/WeasyPrint/issues/1667>`_:
+  Follow EXIF metadata for image rotation
+* `#1669 <https://github.com/Kozea/WeasyPrint/issues/1669>`_:
+  Take care of floats when remvoving placeholders
+* `#1638 <https://github.com/Kozea/WeasyPrint/issues/1638>`_:
+  Use the original box when breaking waiting children
+
+Contributors:
+
+* Guillaume Ayoub
+* Konstantin Weddige
+* VeteraNovis
+* Lucie Anglade
+
+Backers and sponsors:
+
+* Grip Angebotssoftware
+* Manuel Barkhau
+* Crisp BV
+* SimonSoft
+* Menutech
+* Spacinov
+* KontextWork
+* René Fritz
+* NCC Group
+* Kobalt
+* Tom Pohl
+* John R Ellis
+* Moritz Mahringer
+* Gábor
+* Piotr Horzycki
+* Andrew Ittner
+
+
 Version 56.1
 ------------
 
