@@ -562,3 +562,19 @@ def test_image_exif(assert_same_renderings):
         ''',
         tolerance=25,
     )
+
+
+@assert_no_logs
+def test_image_exif_image_orientation(assert_same_renderings):
+    assert_same_renderings(
+        '''
+            <style>@page { size: 10px }</style>
+            <img style="display: block; image-orientation: 180deg"
+                 src="not-optimized-exif.jpg">
+        ''',
+        '''
+            <style>@page { size: 10px }</style>
+            <img style="display: block" src="not-optimized-exif.jpg">
+        ''',
+        tolerance=25,
+    )

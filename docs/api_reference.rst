@@ -587,9 +587,7 @@ The ``object-fit`` and ``object-position`` properties are supported.
 The ``from-image`` and ``snap`` values of the ``image-resolution`` property are
 **not** supported, but the ``resolution`` value is supported.
 
-The ``image-rendering`` property is supported.
-
-The ``image-orientation`` property is **not** supported.
+The ``image-rendering`` and ``image-orientation`` properties are supported.
 
 .. _Image Values and Replaced Content Module Level 3: https://www.w3.org/TR/css-images-3/
 .. _Image Values and Replaced Content Module Level 4: https://www.w3.org/TR/css-images-4/

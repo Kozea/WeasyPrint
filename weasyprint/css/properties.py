@@ -126,7 +126,7 @@ INITIAL_VALUES = {
     # Images 3/4 (CR/WD): https://www.w3.org/TR/css-images-4/
     'image_resolution': 1,  # dppx
     'image_rendering': 'auto',
-    # https://drafts.csswg.org/css-images-3/
+    'image_orientation': 'from-image',
     'object_fit': 'fill',
     'object_position': (('left', Dimension(50, '%'),
                          'top', Dimension(50, '%')),),

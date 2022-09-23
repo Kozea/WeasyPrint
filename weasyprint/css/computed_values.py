@@ -1,6 +1,7 @@
 """Convert specified property values into computed values."""
 
 from collections import OrderedDict
+from math import pi
 from urllib.parse import unquote
 
 from tinycss2.color3 import parse_color
@@ -385,6 +386,15 @@ def background_size(style, name, values):
         value if value in ('contain', 'cover') else
         length_or_percentage_tuple(style, name, value)
         for value in values)
+
+
+@register_computer('image-orientation')
+def image_orientation(style, name, values):
+    """Compute the ``image-orientation`` properties."""
+    if values in ('none', 'from-image'):
+        return values
+    angle, flip = values
+    return (int(round(angle / pi * 2)) % 4 * 90, flip)
 
 
 @register_computer('border-top-width')

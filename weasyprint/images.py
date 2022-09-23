@@ -92,7 +92,8 @@ class SVGImage:
 
 
 def get_image_from_uri(cache, url_fetcher, optimize_size, url,
-                       forced_mime_type=None, context=None):
+                       forced_mime_type=None, context=None,
+                       orientation='from-image'):
     """Get an Image instance from an image URI."""
     if url in cache:
         return cache[url]
@@ -134,8 +135,19 @@ def get_image_from_uri(cache, url_fetcher, optimize_size, url,
                 else:
                     # Store image id to enable cache in Stream.add_image
                     image_id = md5(url.encode()).hexdigest()
-                    if 'exif' in pillow_image.info:
-                        pillow_image = ImageOps.exif_transpose(pillow_image)
+                    if orientation == 'from-image':
+                        if 'exif' in pillow_image.info:
+                            pillow_image = ImageOps.exif_transpose(
+                                pillow_image)
+                    elif orientation != 'none':
+                        angle, flip = orientation
+                        if angle > 0:
+                            rotation = getattr(
+                                Image.Transpose, f'ROTATE_{angle}')
+                            pillow_image = pillow_image.transpose(rotation)
+                        if flip:
+                            pillow_image = pillow_image.transpose(
+                                Image.Transpose.FLIP_LEFT_RIGHT)
                     image = RasterImage(pillow_image, image_id, optimize_size)
 
     except (URLFetchingError, ImageLoadingError) as exception:

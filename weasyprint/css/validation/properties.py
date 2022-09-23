@@ -1281,6 +1281,30 @@ def image_rendering(keyword):
 
 
 @property(unstable=True)
+def image_orientation(tokens):
+    """Validation for ``image-orientation``."""
+    keyword = get_single_keyword(tokens)
+    if keyword in ('none', 'from-image'):
+        return keyword
+    angle, flip = None, None
+    for token in tokens:
+        keyword = get_keyword(token)
+        if keyword == 'flip':
+            if flip is not None:
+                return
+            flip = True
+            continue
+        if angle is None:
+            angle = get_angle(token)
+            if angle is not None:
+                continue
+        return
+    angle = 0 if angle is None else angle
+    flip = False if flip is None else flip
+    return (angle, flip)
+
+
+@property(unstable=True)
 def size(tokens):
     """``size`` property validation.
 

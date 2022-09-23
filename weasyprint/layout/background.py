@@ -51,8 +51,10 @@ def layout_box_backgrounds(page, box, get_image_from_uri, layout_children=True,
         images = []
         color = parse_color('transparent')
     else:
+        orientation = style['image_orientation']
         images = [
-            get_image_from_uri(url=value) if type_ == 'url' else value
+            get_image_from_uri(url=value, orientation=orientation)
+            if type_ == 'url' else value
             for type_, value in style['background_image']]
         color = get_color(style, 'background_color')
 

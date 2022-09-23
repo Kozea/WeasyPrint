@@ -333,7 +333,8 @@ def marker_to_box(element, state, parent_style, style_for, get_image_from_uri,
     else:
         if image_type == 'url':
             # image may be None here too, in case the image is not available.
-            image = get_image_from_uri(url=image)
+            image = get_image_from_uri(
+                url=image, orientation=style['image_orientation'])
             if image is not None:
                 box = boxes.InlineReplacedBox.anonymous_from(box, image)
                 children.append(box)
@@ -421,7 +422,8 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
             if origin != 'external':
                 # Embedding internal references is impossible
                 continue
-            image = get_image_from_uri(url=uri)
+            image = get_image_from_uri(
+                url=uri, orientation=parent_box.style['image_orientation'])
             if image is not None:
                 content_boxes.append(
                     boxes.InlineReplacedBox.anonymous_from(parent_box, image))

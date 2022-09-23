@@ -1,6 +1,6 @@
 """Test expanders for shorthand properties."""
 
-import math
+from math import pi
 
 import pytest
 import tinycss2
@@ -223,8 +223,7 @@ def test_size_invalid(rule):
     ('transform: none', {'transform': ()}),
     ('transform: translate(6px) rotate(90deg)', {
         'transform': (
-            ('translate', ((6, 'px'), (0, 'px'))),
-            ('rotate', math.pi / 2))}),
+            ('translate', ((6, 'px'), (0, 'px'))), ('rotate', pi / 2))}),
     ('transform: translate(-4px, 0)', {
         'transform': (('translate', ((-4, 'px'), (0, None))),)}),
     ('transform: translate(6px, 20%)', {
@@ -818,7 +817,6 @@ def test_linear_gradient():
     red = (1, 0, 0, 1)
     lime = (0, 1, 0, 1)
     blue = (0, 0, 1, 1)
-    pi = math.pi
 
     def gradient(css, direction, colors=(blue,), stop_positions=(None,)):
         for repeating, prefix in ((False, ''), (True, 'repeating-')):
@@ -1217,4 +1215,35 @@ def test_text_align(rule, result):
     ('text-align: 1px', 'invalid'),
 ))
 def test_text_align_invalid(rule, reason):
+    assert_invalid(rule, reason)
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, result', (
+    ('image-orientation: none', {'image_orientation': 'none'}),
+    ('image-orientation: from-image', {'image_orientation': 'from-image'}),
+    ('image-orientation: 90deg', {'image_orientation': (pi / 2, False)}),
+    ('image-orientation: 30deg', {'image_orientation': (pi / 6, False)}),
+    ('image-orientation: 180deg flip', {'image_orientation': (pi, True)}),
+    ('image-orientation: 0deg flip', {'image_orientation': (0, True)}),
+    ('image-orientation: flip 90deg', {'image_orientation': (pi / 2, True)}),
+    ('image-orientation: flip', {'image_orientation': (0, True)}),
+))
+def test_image_orientation(rule, result):
+    assert expand_to_dict(rule) == result
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, reason', (
+    ('image-orientation: none none', 'invalid'),
+    ('image-orientation: unknown', 'invalid'),
+    ('image-orientation: none flip', 'invalid'),
+    ('image-orientation: from-image flip', 'invalid'),
+    ('image-orientation: 10', 'invalid'),
+    ('image-orientation: 10 flip', 'invalid'),
+    ('image-orientation: flip 10', 'invalid'),
+    ('image-orientation: flip flip', 'invalid'),
+    ('image-orientation: 90deg flop', 'invalid'),
+    ('image-orientation: 90deg 180deg', 'invalid'),
+))
+def test_image_orientation_invalid(rule, reason):
     assert_invalid(rule, reason)

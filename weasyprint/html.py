@@ -120,7 +120,8 @@ def handle_img(element, box, get_image_from_uri, base_url):
     src = get_url_attribute(element, 'src', base_url)
     alt = element.get('alt')
     if src:
-        image = get_image_from_uri(url=src)
+        image = get_image_from_uri(
+            url=src, orientation=box.style['image_orientation'])
         if image is not None:
             return [make_replaced_box(element, box, image)]
         else:
@@ -154,7 +155,9 @@ def handle_embed(element, box, get_image_from_uri, base_url):
     src = get_url_attribute(element, 'src', base_url)
     type_ = element.get('type', '').strip()
     if src:
-        image = get_image_from_uri(url=src, forced_mime_type=type_)
+        image = get_image_from_uri(
+            url=src, forced_mime_type=type_,
+            orientation=box.style['image_orientation'])
         if image is not None:
             return [make_replaced_box(element, box, image)]
     # No fallback.
@@ -171,7 +174,9 @@ def handle_object(element, box, get_image_from_uri, base_url):
     data = get_url_attribute(element, 'data', base_url)
     type_ = element.get('type', '').strip()
     if data:
-        image = get_image_from_uri(url=data, forced_mime_type=type_)
+        image = get_image_from_uri(
+            url=data, forced_mime_type=type_,
+            orientation=box.style['image_orientation'])
         if image is not None:
             return [make_replaced_box(element, box, image)]
     # The element’s children are the fallback.
