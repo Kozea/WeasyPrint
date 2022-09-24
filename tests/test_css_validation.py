@@ -1232,6 +1232,7 @@ def test_text_align_invalid(rule, reason):
 def test_image_orientation(rule, result):
     assert expand_to_dict(rule) == result
 
+
 @assert_no_logs
 @pytest.mark.parametrize('rule, reason', (
     ('image-orientation: none none', 'invalid'),

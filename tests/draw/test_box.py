@@ -15,8 +15,7 @@ def test_borders(assert_pixels, assert_different_renderings, margin='10px',
     source = '''
       <style>
         @page { size: 140px 110px }
-        body { width: 100px; height: 70px;
-               margin: %s; %s: 10px %s blue }
+        body { width: 100px; height: 70px; margin: %s; %s: 10px %s blue }
       </style>
       <body>'''
 
@@ -92,6 +91,33 @@ def test_em_borders():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/1378
     html = '<body style="border: 1em solid">'
     HTML(string=html).write_pdf()
+
+
+@assert_no_logs
+def test_borders_box_sizing(assert_pixels):
+    assert_pixels('''
+        ________
+        _RRRRRR_
+        _R____R_
+        _RRRRRR_
+        ________
+    ''', '''
+      <style>
+        @page {
+          size: 8px 5px;
+        }
+        div {
+          border: 1px solid red;
+          box-sizing: border-box;
+          height: 3px;
+          margin: 1px;
+          min-height: auto;
+          min-width: auto;
+          width: 6px;
+        }
+      </style>
+      <div></div>
+    ''')
 
 
 @assert_no_logs

@@ -398,7 +398,7 @@ def _dlopen(ffi, *names):
         'first_steps.html#installation\n'
         'https://doc.courtbouillon.org/weasyprint/stable/'
         'first_steps.html#troubleshooting',
-        '\n\n-----\n')
+        '\n\n-----\n')  # pragma: no cover
     return ffi.dlopen(names[0])  # pragma: no cover
 
 

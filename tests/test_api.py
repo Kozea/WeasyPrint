@@ -428,6 +428,11 @@ def test_pdfa(version, pdf_version):
     assert f'part="{version}"'.encode() in stdout
 
 
+def test_pdfua():
+    stdout = _run('--pdf-variant=pdf/ua-1 - -', b'test')
+    assert b'part="1"' in stdout
+
+
 def test_pdf_identifier():
     stdout = _run('--pdf-identifier=abc - -', b'test')
     assert b'abc' in stdout
@@ -1020,6 +1025,7 @@ def test_html_meta_2():
             <title>Test document</title>
             <h1>Another title</h1>
             <meta name=generator content="Human after all">
+            <meta name=generator content="Human">
             <meta name=dummy content=ignored>
             <meta name=dummy>
             <meta content=ignored>
@@ -1031,6 +1037,8 @@ def test_html_meta_2():
             <meta name=dcterms.modified content=2013>
             <meta name=keywords content="Python; pydyf">
             <meta name=description content="Blah… ">
+            <meta name=description content="*Oh-no/">
+            <meta name=dcterms.modified content=2012>
             </head></html>
         ''',
         authors=['I Me & Myself', 'Smith, John'],
