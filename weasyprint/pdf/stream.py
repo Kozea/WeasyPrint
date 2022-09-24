@@ -31,8 +31,8 @@ class Font:
             pango.pango_font_description_get_family(description))
         digest = pango.pango_font_description_hash(description)
         self.hash = ''.join(
-            chr(65 + letter % 26) + chr(65 + (letter << 6) % 26)
-            for letter in (digest % (2 ** (3 * 8))).to_bytes(3, 'big'))
+            chr(65 + letter % 26) + chr(65 + (letter << 6) % 26) for letter
+            in (hash(str(digest)) % (2 ** (3 * 8))).to_bytes(3, 'big'))
 
         # Name
         description_string = ffi.string(
