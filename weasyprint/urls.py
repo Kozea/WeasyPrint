@@ -124,12 +124,10 @@ def get_url_attribute(element, attr_name, base_url, allow_relative=False):
 
 def url_join(base_url, url, allow_relative, context, context_args):
     """Like urllib.urljoin, but warn if base_url is required but missing."""
-    if url_is_absolute(url):
+    if url_is_absolute(url) or allow_relative:
         return iri_to_uri(url)
     elif base_url:
         return iri_to_uri(urljoin(base_url, url))
-    elif allow_relative:
-        return iri_to_uri(url)
     else:
         LOGGER.error(
             f'Relative URI reference without a base URI: {context}',
@@ -140,7 +138,7 @@ def url_join(base_url, url, allow_relative, context, context_args):
 def get_link_attribute(element, attr_name, base_url):
     """Get the URL value of an element attribute.
 
-    Return ``('external', absolute_uri)``, or ``('internal',
+    Return ``('external', uri)``, or ``('internal',
     unquoted_fragment_id)``, or ``None``.
 
     """
@@ -148,9 +146,14 @@ def get_link_attribute(element, attr_name, base_url):
     if attr_value.startswith('#') and len(attr_value) > 1:
         # Do not require a base_url when the value is just a fragment.
         return ('url', ('internal', unquote(attr_value[1:])))
-    uri = get_url_attribute(element, attr_name, base_url, allow_relative=True)
+
+    allow_relative = False
+    if element.get('rel') == 'relative':
+        allow_relative = True
+
+    uri = get_url_attribute(element, attr_name, base_url, allow_relative=allow_relative)
     if uri:
-        if base_url:
+        if base_url and not allow_relative:
             parsed = urlsplit(uri)
             # Compare with fragments removed
             if parsed[:-1] == urlsplit(base_url)[:-1]:
