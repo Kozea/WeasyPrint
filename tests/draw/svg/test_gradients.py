@@ -521,3 +521,34 @@ def test_linear_gradient_opacity(assert_pixels):
         <rect x="0" y="0" width="10" height="10" fill="url(#grad)" />
       </svg>
     ''')
+
+
+@assert_no_logs
+@pytest.mark.parametrize('url', ('#grad\'', '\'#gra', '!', '#'))
+def test_gradient_bad_url(assert_pixels, url):
+    assert_pixels('''
+        __________
+        __________
+        __________
+        __________
+        __________
+        __________
+        __________
+        __________
+        __________
+        __________
+    ''', '''
+      <style>
+        @page { size: 10px }
+        svg { display: block }
+      </style>
+      <svg width="10px" height="10px" xmlns="https://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1"
+            gradientUnits="objectBoundingBox">
+            <stop stop-color="blue"></stop>
+          </linearGradient>
+        </defs>
+        <rect x="0" y="0" width="10" height="10" fill="url(%s)" />
+      </svg>
+    ''' % url)

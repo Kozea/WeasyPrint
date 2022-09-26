@@ -124,8 +124,8 @@ def parse_url(url):
     if url and url.startswith('url(') and url.endswith(')'):
         url = url[4:-1]
         if len(url) >= 2:
-            for quote in '\'"':
-                if url[0] == url[-1]:
+            for quote in ("'", '"'):
+                if url[0] == url[-1] == quote:
                     url = url[1:-1]
                     break
     return urlparse(url or '')

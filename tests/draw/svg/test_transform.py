@@ -387,3 +387,27 @@ def test_transform_multiple(assert_pixels):
               stroke-width="2" stroke="red" fill="none" />
       </svg>
     ''')
+
+
+@assert_no_logs
+def test_transform_unknown(assert_pixels):
+    assert_pixels('''
+        RRRRR____
+        R__RR____
+        R__RR____
+        R__RR____
+        RRRRR____
+        RRRRR____
+        _________
+        _________
+        _________
+    ''', '''
+      <style>
+        @page { size: 9px }
+        svg { display: block }
+      </style>
+      <svg width="9px" height="9px" xmlns="https://www.w3.org/2000/svg">
+        <rect x="0" y="0" width="4" height="5" transform="unknown(2)"
+              stroke-width="2" stroke="red" fill="none" />
+      </svg>
+    ''')
