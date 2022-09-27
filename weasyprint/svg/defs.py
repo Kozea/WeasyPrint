@@ -245,6 +245,7 @@ def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
         alpha_stream.stream = [f'/{alpha_shading.id} sh']
 
     group.shading(shading.id)
+    pattern.set_alpha(1)
     pattern.draw_x_object(group.id)
     svg.stream.color_space('Pattern', stroke=stroke)
     svg.stream.set_color_special(pattern.id, stroke=stroke)

@@ -1,5 +1,7 @@
 """Test how opacity is handled for SVG."""
 
+import pytest
+
 from ...testing_utils import assert_no_logs
 
 opacity_source = '''
@@ -13,11 +15,11 @@ opacity_source = '''
 @assert_no_logs
 def test_opacity(assert_same_renderings):
     assert_same_renderings(
-        '''
+        opacity_source % '''
             <rect x="2" y="2" width="5" height="5" stroke-width="2"
                   stroke="rgb(127, 255, 127)" fill="rgb(127, 127, 255)" />
         ''',
-        '''
+        opacity_source % '''
             <rect x="2" y="2" width="5" height="5" stroke-width="2"
                   stroke="lime" fill="blue" opacity="0.5" />
         ''',
@@ -27,21 +29,27 @@ def test_opacity(assert_same_renderings):
 @assert_no_logs
 def test_fill_opacity(assert_same_renderings):
     assert_same_renderings(
-        '''
+        opacity_source % '''
             <rect x="2" y="2" width="5" height="5"
                   fill="blue" opacity="0.5" />
             <rect x="2" y="2" width="5" height="5" stroke-width="2"
                   stroke="lime" fill="transparent" />
         ''',
-        '''
+        opacity_source % '''
             <rect x="2" y="2" width="5" height="5" stroke-width="2"
                   stroke="lime" fill="blue" fill-opacity="0.5" />
         ''',
     )
 
 
+@pytest.mark.xfail
 @assert_no_logs
 def test_stroke_opacity(assert_same_renderings):
+    # TODO: This test (and the other ones) fail because of a difference between
+    # the PDF and the SVG specifications: transparent borders have to be drawn
+    # on top of the shape filling in SVG but not in PDF. See:
+    # - PDF-1.7 11.7.4.4 Note 2
+    # - https://www.w3.org/TR/SVG2/render.html#PaintingShapesAndText
     assert_same_renderings(
         '''
             <rect x="2" y="2" width="5" height="5"
@@ -49,23 +57,24 @@ def test_stroke_opacity(assert_same_renderings):
             <rect x="2" y="2" width="5" height="5" stroke-width="2"
                   stroke="lime" fill="transparent" opacity="0.5" />
         ''',
-        '''
+        opacity_source % '''
             <rect x="2" y="2" width="5" height="5" stroke-width="2"
                   stroke="lime" fill="blue" stroke-opacity="0.5" />
         ''',
     )
 
 
+@pytest.mark.xfail
 @assert_no_logs
 def test_stroke_fill_opacity(assert_same_renderings):
     assert_same_renderings(
-        '''
+        opacity_source % '''
             <rect x="2" y="2" width="5" height="5"
                   fill="blue" opacity="0.5" />
             <rect x="2" y="2" width="5" height="5" stroke-width="2"
                   stroke="lime" fill="transparent" opacity="0.5" />
         ''',
-        '''
+        opacity_source % '''
             <rect x="2" y="2" width="5" height="5" stroke-width="2"
                   stroke="lime" fill="blue"
                   stroke-opacity="0.5" fill-opacity="0.5" />
@@ -73,10 +82,11 @@ def test_stroke_fill_opacity(assert_same_renderings):
     )
 
 
+@pytest.mark.xfail
 @assert_no_logs
 def test_pattern_gradient_stroke_fill_opacity(assert_same_renderings):
     assert_same_renderings(
-        '''
+        opacity_source % '''
             <defs>
               <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1"
                               gradientUnits="objectBoundingBox">
@@ -97,7 +107,7 @@ def test_pattern_gradient_stroke_fill_opacity(assert_same_renderings):
             <rect x="2" y="2" width="5" height="5" stroke-width="2"
                   stroke="url(#grad)" fill="transparent" opacity="0.5" />
         ''',
-        '''
+        opacity_source % '''
             <defs>
               <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1"
                               gradientUnits="objectBoundingBox">
@@ -117,4 +127,5 @@ def test_pattern_gradient_stroke_fill_opacity(assert_same_renderings):
                   stroke="url(#grad)" fill="url(#pat)"
                   stroke-opacity="0.5" fill-opacity="0.5" />
         ''',
+        tolerance=1,
     )
