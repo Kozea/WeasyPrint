@@ -34,9 +34,8 @@ def document_write_png(self, target=None, resolution=96, antialiasing=1,
     pngs = run(command, stdout=PIPE).stdout
     os.remove(pdf.name)
 
-    assert pngs.startswith(MAGIC_NUMBER), (
-        'Ghostscript error: '
-        f'{pngs.split(MAGIC_NUMBER)[0].decode().strip()}')
+    error = pngs.split(MAGIC_NUMBER)[0].decode().strip()
+    assert pngs.startswith(MAGIC_NUMBER), f'Ghostscript error: {error}'
 
     if split_images:
         assert target is None
