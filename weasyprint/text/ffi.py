@@ -44,6 +44,7 @@ ffi.cdef('''
     typedef ... PangoAttrList;
     typedef ... PangoAttrClass;
     typedef ... PangoFont;
+    typedef ... PangoFontFace;
     typedef guint PangoGlyph;
     typedef gint PangoGlyphUnit;
 
@@ -257,6 +258,8 @@ ffi.cdef('''
     PangoFontMetrics * pango_context_get_metrics (
         PangoContext *context, const PangoFontDescription *desc,
         PangoLanguage *language);
+    PangoFontMetrics * pango_font_get_metrics (
+        PangoFont *font, PangoLanguage *language);
     void pango_font_metrics_unref (PangoFontMetrics *metrics);
     int pango_font_metrics_get_ascent (PangoFontMetrics *metrics);
     int pango_font_metrics_get_descent (PangoFontMetrics *metrics);
@@ -268,16 +271,12 @@ ffi.cdef('''
         PangoFontMetrics *metrics);
     int pango_font_metrics_get_strikethrough_position (
         PangoFontMetrics *metrics);
-
-    void pango_context_set_round_glyph_positions (
-        PangoContext *context, gboolean round_positions);
-
-    PangoFontMetrics * pango_font_get_metrics (
-        PangoFont *font, PangoLanguage *language);
-
     void pango_font_get_glyph_extents (
         PangoFont *font, PangoGlyph glyph, PangoRectangle *ink_rect,
         PangoRectangle *logical_rect);
+    PangoFontFace* pango_font_get_face (PangoFont* font);
+    void pango_context_set_round_glyph_positions (
+        PangoContext *context, gboolean round_positions);
 
     PangoAttrList * pango_attr_list_new (void);
     void pango_attr_list_unref (PangoAttrList *list);

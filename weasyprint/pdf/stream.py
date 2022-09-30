@@ -311,11 +311,12 @@ class Stream(pydyf.Stream):
         }))
 
     def add_font(self, pango_font):
-        hb_font = pango.pango_font_get_hb_font(pango_font)
-        hb_face = harfbuzz.hb_font_get_face(hb_font)
-        if pango_font not in self._fonts:
-            self._fonts[pango_font] = Font(pango_font, hb_face)
-        return self._fonts[pango_font]
+        pango_face = pango.pango_font_get_face(pango_font)
+        if pango_face not in self._fonts:
+            hb_font = pango.pango_font_get_hb_font(pango_font)
+            hb_face = harfbuzz.hb_font_get_face(hb_font)
+            self._fonts[pango_face] = Font(pango_font, hb_face)
+        return self._fonts[pango_face]
 
     def add_group(self, bounding_box):
         states = pydyf.Dictionary()
