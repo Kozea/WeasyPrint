@@ -2,6 +2,7 @@
 
 import io
 import struct
+from functools import lru_cache
 
 import pydyf
 from fontTools import subset
@@ -310,6 +311,7 @@ class Stream(pydyf.Stream):
             'BM': f'/{mode}',
         }))
 
+    @lru_cache
     def add_font(self, pango_font):
         pango_face = pango.pango_font_get_face(pango_font)
         if pango_face not in self._fonts:
