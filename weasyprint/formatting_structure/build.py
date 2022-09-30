@@ -1239,10 +1239,8 @@ def process_whitespace(box, following_collapsible_space=False):
             if isinstance(child, (boxes.TextBox, boxes.InlineBox)):
                 following_collapsible_space = process_whitespace(
                     child, following_collapsible_space)
-            else:
-                process_whitespace(child)
-                if child.is_in_normal_flow():
-                    following_collapsible_space = False
+            elif child.is_in_normal_flow():
+                following_collapsible_space = False
 
     return following_collapsible_space
 
