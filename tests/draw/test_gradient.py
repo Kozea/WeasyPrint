@@ -65,10 +65,8 @@ def test_linear_gradients_4(assert_pixels):
     )''')
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_linear_gradients_5(assert_pixels):
-    # See https://bugs.ghostscript.com/show_bug.cgi?id=705225
     assert_pixels('''
         rBrrrBrrrB
         rBrrrBrrrB
@@ -158,10 +156,8 @@ def test_linear_gradients_11(assert_pixels):
     )''')
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_linear_gradients_12(assert_pixels):
-    # See https://bugs.ghostscript.com/show_bug.cgi?id=705225
     assert_pixels('''
         BBBBBBBBB
         BBBBBBBBB
