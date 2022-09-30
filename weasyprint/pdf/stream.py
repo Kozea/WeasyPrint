@@ -24,7 +24,9 @@ class Font:
         self.index = harfbuzz.hb_face_get_index(hb_face)
 
         pango_metrics = pango.pango_font_get_metrics(pango_font, ffi.NULL)
-        self.description = description = pango.pango_font_describe(pango_font)
+        self.description = description = ffi.gc(
+            pango.pango_font_describe(pango_font),
+            pango.pango_font_description_free)
         self.font_size = pango.pango_font_description_get_size(description)
         self.style = pango.pango_font_description_get_style(description)
         self.family = ffi.string(
