@@ -626,18 +626,18 @@ class AnonymousStyle(dict):
         return copy
 
     def __missing__(self, key):
-        if key in INHERITED or key.startswith('__'):
-            self[key] = self.parent_style[key]
+        if key in INHERITED or key[:2] == '__':
+            value = self[key] = self.parent_style[key]
         elif key == 'page':
             # page is not inherited but taken from the ancestor if 'auto'
-            self[key] = self.parent_style[key]
-        elif key.startswith('text_decoration_'):
-            self[key] = text_decoration(
+            value = self[key] = self.parent_style[key]
+        elif key[:16] == 'text_decoration_':
+            value = self[key] = text_decoration(
                 key, INITIAL_VALUES[key], self.parent_style[key],
                 cascaded=False)
         else:
-            self[key] = INITIAL_VALUES[key]
-        return self[key]
+            value = self[key] = INITIAL_VALUES[key]
+        return value
 
 
 class ComputedStyle(dict):
@@ -676,7 +676,7 @@ class ComputedStyle(dict):
         if key in self.cascaded:
             value = keyword = self.cascaded[key][0]
         else:
-            if key in INHERITED or key.startswith('__'):
+            if key in INHERITED or key[:2] == '__':
                 keyword = 'inherit'
             else:
                 keyword = 'initial'
@@ -686,7 +686,7 @@ class ComputedStyle(dict):
             keyword = 'initial'
 
         if keyword == 'initial':
-            value = None if key.startswith('__') else INITIAL_VALUES[key]
+            value = None if key[:2] == '__' else INITIAL_VALUES[key]
             if key not in INITIAL_NOT_COMPUTED:
                 # The value is the same as when computed
                 self[key] = value
@@ -694,7 +694,7 @@ class ComputedStyle(dict):
             # Values in parent_style are already computed.
             self[key] = value = self.parent_style[key]
 
-        if key.startswith('text_decoration_') and self.parent_style:
+        if key[:16] == 'text_decoration_' and self.parent_style:
             value = text_decoration(
                 key, value, self.parent_style[key], key in self.cascaded)
             if key in self:
