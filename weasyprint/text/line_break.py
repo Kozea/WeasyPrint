@@ -436,7 +436,7 @@ def split_first_line(text, style, context, max_width, justification_spacing,
                         first_line_text.rsplit(' ', 1))
                     next_word = f' {next_word}'
                     layout.set_text(first_line_text)
-                    first_line, index = layout.get_first_line()
+                    first_line, _ = layout.get_first_line()
                     resume_index = len((f'{first_line_text} ').encode())
                 else:
                     first_line_text, next_word = '', first_line_text
@@ -467,16 +467,15 @@ def split_first_line(text, style, context, max_width, justification_spacing,
                 new_layout = create_layout(
                     hyphenated_first_line_text, style, context, max_width,
                     justification_spacing)
-                new_first_line, new_index = new_layout.get_first_line()
+                new_first_line, index = new_layout.get_first_line()
                 new_first_line_width, _ = line_size(new_first_line, style)
                 new_space = max_width - new_first_line_width
-                if new_index is None and (
+                if index is None and (
                         new_space >= 0 or
                         first_word_part == dictionary_iterations[-1]):
                     hyphenated = True
                     layout = new_layout
                     first_line = new_first_line
-                    index = new_index
                     resume_index = len(new_first_line_text.encode())
                     if text[len(new_first_line_text)] == soft_hyphen:
                         # Recreate the layout with no max_width to be sure that
@@ -493,7 +492,7 @@ def split_first_line(text, style, context, max_width, justification_spacing,
                 layout.set_text(hyphenated_first_line_text)
                 pango.pango_layout_set_width(
                     layout.layout, units_from_double(-1))
-                first_line, index = layout.get_first_line()
+                first_line, _ = layout.get_first_line()
                 resume_index = len(new_first_line_text.encode())
                 if text[len(first_line_text)] == soft_hyphen:
                     resume_index += len(soft_hyphen.encode())
@@ -507,7 +506,7 @@ def split_first_line(text, style, context, max_width, justification_spacing,
         layout.set_text(hyphenated_first_line_text)
         pango.pango_layout_set_width(
             layout.layout, units_from_double(-1))
-        first_line, index = layout.get_first_line()
+        first_line, _ = layout.get_first_line()
         resume_index = len(first_line_text.encode())
 
     # Step 5: Try to break word if it's too long for the line
