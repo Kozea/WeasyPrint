@@ -380,8 +380,11 @@ def split_first_line(text, style, context, max_width, justification_spacing,
     hyphenated = False
     soft_hyphen = '\xad'
 
-    try_hyphenate = False
+    auto_hyphenation = manual_hyphenation = False
     if hyphens != 'none':
+        manual_hyphenation = (
+            soft_hyphen in first_line_text or soft_hyphen in next_word)
+    if hyphens == 'auto' and lang:
         next_word_boundaries = get_next_word_boundaries(second_line_text, lang)
         if next_word_boundaries:
             # We have a word to hyphenate
@@ -399,90 +402,81 @@ def split_first_line(text, style, context, max_width, justification_spacing,
                 if space > limit_zone or space < 0:
                     # Available space is worth the try, or the line is even too
                     # long to fit: try to hyphenate
-                    try_hyphenate = True
+                    auto_hyphenation = True
 
-    if try_hyphenate:
-        # Automatic hyphenation possible and next word is long enough
-        auto_hyphenation = hyphens == 'auto' and lang
-        manual_hyphenation = False
-        if auto_hyphenation:
-            if soft_hyphen in first_line_text or soft_hyphen in next_word:
-                # Automatic hyphenation opportunities within a word must be
-                # ignored if the word contains a conditional hyphen, in favor
-                # of the conditional hyphen(s).
-                # See https://drafts.csswg.org/css-text-3/#valdef-hyphens-auto
-                manual_hyphenation = True
-        else:
-            manual_hyphenation = hyphens == 'manual'
-
-        if manual_hyphenation:
-            # Manual hyphenation: check that the line ends with a soft
-            # hyphen and add the missing hyphen
-            if first_line_text.endswith(soft_hyphen):
-                # The first line has been split on a soft hyphen
-                if ' ' in first_line_text:
-                    first_line_text, next_word = (
-                        first_line_text.rsplit(' ', 1))
-                    next_word = f' {next_word}'
-                    layout.set_text(first_line_text)
-                    first_line, _ = layout.get_first_line()
-                    resume_index = len((f'{first_line_text} ').encode())
-                else:
-                    first_line_text, next_word = '', first_line_text
-            soft_hyphen_indexes = [
-                match.start() for match in re.finditer(soft_hyphen, next_word)]
-            soft_hyphen_indexes.reverse()
-            dictionary_iterations = [
-                next_word[:i + 1] for i in soft_hyphen_indexes]
-        elif auto_hyphenation:
-            dictionary_key = (lang, left, right, total)
-            dictionary = context.dictionaries.get(dictionary_key)
-            if dictionary is None:
-                dictionary = pyphen.Pyphen(lang=lang, left=left, right=right)
-                context.dictionaries[dictionary_key] = dictionary
-            dictionary_iterations = [
-                start for start, end in dictionary.iterate(next_word)]
-        else:
-            dictionary_iterations = []
-
-        if dictionary_iterations:
-            for first_word_part in dictionary_iterations:
-                new_first_line_text = (
-                    first_line_text +
-                    second_line_text[:start_word] +
-                    first_word_part)
-                hyphenated_first_line_text = (
-                    new_first_line_text + style['hyphenate_character'])
-                new_layout = create_layout(
-                    hyphenated_first_line_text, style, context, max_width,
-                    justification_spacing)
-                new_first_line, index = new_layout.get_first_line()
-                new_first_line_width, _ = line_size(new_first_line, style)
-                new_space = max_width - new_first_line_width
-                if index is None and (
-                        new_space >= 0 or
-                        first_word_part == dictionary_iterations[-1]):
-                    hyphenated = True
-                    layout = new_layout
-                    first_line = new_first_line
-                    resume_index = len(new_first_line_text.encode())
-                    if text[len(new_first_line_text)] == soft_hyphen:
-                        # Recreate the layout with no max_width to be sure that
-                        # we don't break before the soft hyphen
-                        pango.pango_layout_set_width(layout.layout, -1)
-                        resume_index += len(soft_hyphen.encode())
-                    break
-
-            if not hyphenated and not first_line_text:
-                # Recreate the layout with no max_width to be sure that
-                # we don't break before or inside the hyphenate character
-                hyphenated = True
-                layout.set_text(hyphenated_first_line_text)
-                pango.pango_layout_set_width(layout.layout, -1)
+    # Automatic hyphenation opportunities within a word must be ignored if the
+    # word contains a conditional hyphen, in favor of the conditional
+    # hyphen(s).
+    # See https://drafts.csswg.org/css-text-3/#valdef-hyphens-auto
+    if manual_hyphenation:
+        # Manual hyphenation: check that the line ends with a soft
+        # hyphen and add the missing hyphen
+        if first_line_text.endswith(soft_hyphen):
+            # The first line has been split on a soft hyphen
+            if ' ' in first_line_text:
+                first_line_text, next_word = first_line_text.rsplit(' ', 1)
+                next_word = f' {next_word}'
+                layout.set_text(first_line_text)
                 first_line, _ = layout.get_first_line()
+                resume_index = len((f'{first_line_text} ').encode())
+            else:
+                first_line_text, next_word = '', first_line_text
+        soft_hyphen_indexes = [
+            match.start() for match in re.finditer(soft_hyphen, next_word)]
+        soft_hyphen_indexes.reverse()
+        dictionary_iterations = [
+            next_word[:i + 1] for i in soft_hyphen_indexes]
+        start_word = 0
+    elif auto_hyphenation:
+        dictionary_key = (lang, left, right, total)
+        dictionary = context.dictionaries.get(dictionary_key)
+        if dictionary is None:
+            dictionary = pyphen.Pyphen(lang=lang, left=left, right=right)
+            context.dictionaries[dictionary_key] = dictionary
+        dictionary_iterations = [
+            start for start, end in dictionary.iterate(next_word)]
+    else:
+        dictionary_iterations = []
+
+    if dictionary_iterations:
+        for first_word_part in dictionary_iterations:
+            new_first_line_text = (
+                first_line_text +
+                second_line_text[:start_word] +
+                first_word_part)
+            hyphenated_first_line_text = (
+                new_first_line_text + style['hyphenate_character'])
+            new_layout = create_layout(
+                hyphenated_first_line_text, style, context, max_width,
+                justification_spacing)
+            new_first_line, index = new_layout.get_first_line()
+            new_first_line_width, _ = line_size(new_first_line, style)
+            new_space = max_width - new_first_line_width
+            hyphenated = (
+                index is None and (
+                    new_space >= 0 or
+                    first_word_part == dictionary_iterations[-1]))
+            if hyphenated:
+                layout = new_layout
+                first_line = new_first_line
                 resume_index = len(new_first_line_text.encode())
-                if text[len(first_line_text)] == soft_hyphen:
+                if text[len(new_first_line_text)] == soft_hyphen:
+                    # Recreate the layout with no max_width to be sure that
+                    # we don't break before the soft hyphen
+                    pango.pango_layout_set_width(layout.layout, -1)
                     resume_index += len(soft_hyphen.encode())
+                break
+
+        if not hyphenated and not first_line_text:
+            # Recreate the layout with no max_width to be sure that
+            # we don't break before or inside the hyphenate character
+            hyphenated = True
+            layout.set_text(hyphenated_first_line_text)
+            pango.pango_layout_set_width(layout.layout, -1)
+            first_line, _ = layout.get_first_line()
+            resume_index = len(new_first_line_text.encode())
+            if text[len(first_line_text)] == soft_hyphen:
+                resume_index += len(soft_hyphen.encode())
 
     if not hyphenated and first_line_text.endswith(soft_hyphen):
         # Recreate the layout with no max_width to be sure that
