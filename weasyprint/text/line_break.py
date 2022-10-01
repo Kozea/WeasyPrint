@@ -469,8 +469,7 @@ def split_first_line(text, style, context, max_width, justification_spacing,
                     if text[len(new_first_line_text)] == soft_hyphen:
                         # Recreate the layout with no max_width to be sure that
                         # we don't break before the soft hyphen
-                        pango.pango_layout_set_width(
-                            layout.layout, units_from_double(-1))
+                        pango.pango_layout_set_width(layout.layout, -1)
                         resume_index += len(soft_hyphen.encode())
                     break
 
@@ -479,8 +478,7 @@ def split_first_line(text, style, context, max_width, justification_spacing,
                 # we don't break before or inside the hyphenate character
                 hyphenated = True
                 layout.set_text(hyphenated_first_line_text)
-                pango.pango_layout_set_width(
-                    layout.layout, units_from_double(-1))
+                pango.pango_layout_set_width(layout.layout, -1)
                 first_line, _ = layout.get_first_line()
                 resume_index = len(new_first_line_text.encode())
                 if text[len(first_line_text)] == soft_hyphen:
@@ -493,8 +491,7 @@ def split_first_line(text, style, context, max_width, justification_spacing,
         hyphenated_first_line_text = (
             first_line_text + style['hyphenate_character'])
         layout.set_text(hyphenated_first_line_text)
-        pango.pango_layout_set_width(
-            layout.layout, units_from_double(-1))
+        pango.pango_layout_set_width(layout.layout, -1)
         first_line, _ = layout.get_first_line()
         resume_index = len(first_line_text.encode())
 
