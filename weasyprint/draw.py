@@ -1099,10 +1099,6 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y,
     utf8_text = textbox.pango_layout.text.encode()
     previous_utf8_position = 0
 
-    runs = [first_line.runs[0]]
-    while runs[-1].next != ffi.NULL:
-        runs.append(runs[-1].next)
-
     matrix = Matrix(1, 0, 0, -1, x, y)
     if angle:
         matrix = Matrix(a=cos(angle), b=-sin(angle),
@@ -1112,9 +1108,11 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y,
     string = ''
     x_advance = 0
     emojis = []
-    for run in runs:
+    run = first_line.runs[0]
+    while run != ffi.NULL:
         # Pango objects
         glyph_item = run.data
+        run = run.next
         glyph_string = glyph_item.glyphs
         glyphs = glyph_string.glyphs
         num_glyphs = glyph_string.num_glyphs
