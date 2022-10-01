@@ -161,12 +161,10 @@ class Layout:
         return first_line, index
 
     def set_text(self, text, justify=False):
-        try:
+        index = text.find('\n')
+        if index != -1:
             # Keep only the first line plus one character, we don't need more
-            text = text[:text.index('\n') + 2]
-        except ValueError:
-            # End-of-line not found, keep the whole text
-            pass
+            text = text[:index+2]
         text, bytestring = unicode_to_char_p(text)
         self.text = bytestring.decode()
         pango.pango_layout_set_text(self.layout, text, -1)
