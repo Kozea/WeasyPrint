@@ -363,7 +363,6 @@ def split_first_line(text, style, context, max_width, justification_spacing,
             new_first_line_text = first_line_text + next_word
             layout.set_text(new_first_line_text)
             first_line, index = layout.get_first_line()
-            first_line_width, _ = line_size(first_line, style)
             if index is None and first_line_text:
                 # The next word fits in the first line, keep the layout
                 resume_index = len(new_first_line_text.encode()) + 1
