@@ -106,44 +106,6 @@ ffi.cdef('''
     } GSList;
 
     typedef struct {
-        const PangoAttrClass *klass;
-        guint start_index;
-        guint end_index;
-    } PangoAttribute;
-
-    typedef struct {
-        PangoLayout *layout;
-        gint         start_index;
-        gint         length;
-        GSList      *runs;
-        guint        is_paragraph_start : 1;
-        guint        resolved_dir : 3;
-    } PangoLayoutLine;
-
-    typedef struct  {
-        int x;
-        int y;
-        int width;
-        int height;
-    } PangoRectangle;
-
-    typedef struct {
-        guint is_line_break: 1;
-        guint is_mandatory_break : 1;
-        guint is_char_break : 1;
-        guint is_white : 1;
-        guint is_cursor_position : 1;
-        guint is_word_start : 1;
-        guint is_word_end : 1;
-        guint is_sentence_boundary : 1;
-        guint is_sentence_start : 1;
-        guint is_sentence_end : 1;
-        guint backspace_deletes_character : 1;
-        guint is_expandable_space : 1;
-        guint is_word_boundary : 1;
-    } PangoLogAttr;
-
-    typedef struct {
         void *shape_engine;
         void *lang_engine;
         PangoFont *font;
@@ -188,6 +150,49 @@ ffi.cdef('''
         PangoItem        *item;
         PangoGlyphString *glyphs;
     } PangoGlyphItem;
+
+    typedef struct GSListRuns {
+       PangoGlyphItem    *data;
+       struct GSListRuns *next;
+    } GSListRuns;
+
+    typedef struct {
+        const PangoAttrClass *klass;
+        guint start_index;
+        guint end_index;
+    } PangoAttribute;
+
+    typedef struct {
+        PangoLayout *layout;
+        gint         start_index;
+        gint         length;
+        GSListRuns  *runs;
+        guint        is_paragraph_start : 1;
+        guint        resolved_dir : 3;
+    } PangoLayoutLine;
+
+    typedef struct  {
+        int x;
+        int y;
+        int width;
+        int height;
+    } PangoRectangle;
+
+    typedef struct {
+        guint is_line_break: 1;
+        guint is_mandatory_break : 1;
+        guint is_char_break : 1;
+        guint is_white : 1;
+        guint is_cursor_position : 1;
+        guint is_word_start : 1;
+        guint is_word_end : 1;
+        guint is_sentence_boundary : 1;
+        guint is_sentence_start : 1;
+        guint is_sentence_end : 1;
+        guint backspace_deletes_character : 1;
+        guint is_expandable_space : 1;
+        guint is_word_boundary : 1;
+    } PangoLogAttr;
 
     int pango_version (void);
 

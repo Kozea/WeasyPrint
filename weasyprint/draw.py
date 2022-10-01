@@ -1114,7 +1114,7 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y,
     emojis = []
     for run in runs:
         # Pango objects
-        glyph_item = ffi.cast('PangoGlyphItem *', run.data)
+        glyph_item = run.data
         glyph_string = glyph_item.glyphs
         glyphs = glyph_string.glyphs
         num_glyphs = glyph_string.num_glyphs
