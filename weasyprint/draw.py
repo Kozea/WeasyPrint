@@ -1101,8 +1101,9 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y,
 
     matrix = Matrix(1, 0, 0, -1, x, y)
     if angle:
-        matrix = Matrix(a=cos(angle), b=-sin(angle),
-                        c=sin(angle), d=cos(angle)) @ matrix
+        a, c = cos(angle), sin(angle)
+        b, d = -c, a
+        matrix = Matrix(a, b, c, d) @ matrix
     stream.text_matrix(*matrix.values)
     last_font = None
     string = ''
