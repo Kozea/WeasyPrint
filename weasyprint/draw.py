@@ -1132,8 +1132,10 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y,
             if string:
                 stream.show_text(string)
             string = ''
+            if last_font is None or font.bitmap != last_font.bitmap:
+                stream.set_font_size(
+                    font.hash, 1 if font.bitmap else font_size)
             last_font = font
-        stream.set_font_size(font.hash, 1 if font.bitmap else font_size)
         string += '<'
         for i in range(num_glyphs):
             glyph_info = glyphs[i]
