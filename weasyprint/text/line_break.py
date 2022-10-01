@@ -165,8 +165,8 @@ class Layout:
         if index != -1:
             # Keep only the first line plus one character, we don't need more
             text = text[:index+2]
+        self.text = text
         text, bytestring = unicode_to_char_p(text)
-        self.text = bytestring.decode()
         pango.pango_layout_set_text(self.layout, text, -1)
 
         word_spacing = self.style['word_spacing']
