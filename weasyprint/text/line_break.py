@@ -293,29 +293,26 @@ def split_first_line(text, style, context, max_width, justification_spacing,
         max_width = None
 
     # Step #1: Get a draft layout with the first line
-    layout = None
     if max_width is not None and max_width != inf and style['font_size']:
+        short_text = text
         if max_width == 0:
             # Trying to find minimum size, let's naively split on spaces and
             # keep one word + one letter
             space_index = text.find(' ')
-            if space_index == -1:
-                expected_length = len(text)
-            else:
-                expected_length = space_index + 2  # index + space + one letter
+            if space_index != -1:
+                short_text = text[:space_index+2]  # index + space + one letter
         else:
-            expected_length = int(max_width / style['font_size'] * 2.5)
-        if expected_length < len(text):
-            # Try to use a small amount of text instead of the whole text
-            layout = create_layout(
-                text[:expected_length], style, context, max_width,
-                justification_spacing)
+            short_text = text[:int(max_width / style['font_size'] * 2.5)]
+        # Try to use a small amount of text instead of the whole text
+        layout = create_layout(
+            short_text, style, context, max_width, justification_spacing)
+        first_line, resume_index = layout.get_first_line()
+        if resume_index is None and short_text != text:
+            # The small amount of text fits in one line, give up and use
+            # the whole text
+            layout.set_text(text)
             first_line, resume_index = layout.get_first_line()
-            if resume_index is None:
-                # The small amount of text fits in one line, give up and use
-                # the whole text
-                layout = None
-    if layout is None:
+    else:
         layout = create_layout(
             text, style, context, original_max_width, justification_spacing)
         first_line, resume_index = layout.get_first_line()
