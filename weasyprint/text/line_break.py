@@ -146,7 +146,6 @@ class Layout:
         if features and context:
             features = ','.join(
                 f'{key} {value}' for key, value in features.items()).encode()
-            # TODO: attributes should be freed.
             # In the meantime, keep a cache to avoid leaking too many of them.
             attr = context.font_features.setdefault(
                 features, pango.pango_attr_font_features_new(features))
@@ -190,12 +189,12 @@ class Layout:
 
         if self.text and (word_spacing or letter_spacing or word_breaking):
             attr_list = pango.pango_layout_get_attributes(self.layout)
-            if not attr_list:
-                # TODO: list should be freed
-                attr_list = pango.pango_attr_list_new()
+            if attr_list == ffi.NULL:
+                attr_list = ffi.gc(
+                    pango.pango_attr_list_new(),
+                    pango.pango_attr_list_unref)
 
             def add_attr(start, end, spacing):
-                # TODO: attributes should be freed
                 attr = pango.pango_attr_letter_spacing_new(spacing)
                 attr.start_index, attr.end_index = start, end
                 pango.pango_attr_list_change(attr_list, attr)
@@ -213,7 +212,6 @@ class Layout:
                     position = bytestring.find(b' ', position + 1)
 
             if word_breaking:
-                # TODO: attributes should be freed
                 attr = pango.pango_attr_insert_hyphens_new(False)
                 attr.start_index, attr.end_index = 0, len(bytestring)
                 pango.pango_attr_list_change(attr_list, attr)
