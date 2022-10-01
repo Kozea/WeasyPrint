@@ -379,8 +379,7 @@ def split_first_line(text, style, context, max_width, justification_spacing,
 
     auto_hyphenation = manual_hyphenation = False
     if hyphens != 'none':
-        manual_hyphenation = (
-            soft_hyphen in first_line_text or soft_hyphen in next_word)
+        manual_hyphenation = soft_hyphen in first_line_text + next_word
     if hyphens == 'auto' and lang:
         next_word_boundaries = get_next_word_boundaries(second_line_text, lang)
         if next_word_boundaries:
