@@ -156,10 +156,7 @@ class Layout:
     def get_first_line(self):
         first_line = pango.pango_layout_get_line_readonly(self.layout, 0)
         second_line = pango.pango_layout_get_line_readonly(self.layout, 1)
-        if second_line != ffi.NULL:
-            index = second_line.start_index
-        else:
-            index = None
+        index = None if second_line == ffi.NULL else second_line.start_index
         self.first_line_direction = first_line.resolved_dir
         return first_line, index
 
@@ -315,16 +312,15 @@ def split_first_line(text, style, context, max_width, justification_spacing,
             layout = create_layout(
                 text[:expected_length], style, context, max_width,
                 justification_spacing)
-            first_line, index = layout.get_first_line()
-            if index is None:
+            first_line, resume_index = layout.get_first_line()
+            if resume_index is None:
                 # The small amount of text fits in one line, give up and use
                 # the whole text
                 layout = None
     if layout is None:
         layout = create_layout(
             text, style, context, original_max_width, justification_spacing)
-        first_line, index = layout.get_first_line()
-    resume_index = index
+        first_line, resume_index = layout.get_first_line()
 
     # Step #2: Don't split lines when it's not needed
     if max_width is None:
@@ -332,7 +328,7 @@ def split_first_line(text, style, context, max_width, justification_spacing,
         return first_line_metrics(
             first_line, text, layout, resume_index, space_collapse, style)
     first_line_width, _ = line_size(first_line, style)
-    if index is None and first_line_width <= max_width:
+    if resume_index is None and first_line_width <= max_width:
         # The first line fits in the available width
         return first_line_metrics(
             first_line, text, layout, resume_index, space_collapse, style)
@@ -340,14 +336,14 @@ def split_first_line(text, style, context, max_width, justification_spacing,
     # Step #3: Try to put the first word of the second line on the first line
     # https://mail.gnome.org/archives/gtk-i18n-list/2013-September/msg00006
     # is a good thread related to this problem.
-    first_line_text = text.encode()[:index].decode()
+    first_line_text = text.encode()[:resume_index].decode()
     first_line_fits = (
         first_line_width <= max_width or
         ' ' in first_line_text.strip() or
         can_break_text(first_line_text.strip(), style['lang']))
     if first_line_fits:
         # The first line fits but may have been cut too early by Pango
-        second_line_text = text.encode()[index:].decode()
+        second_line_text = text.encode()[resume_index:].decode()
     else:
         # The line can't be split earlier, try to hyphenate the first word.
         first_line_text = ''
@@ -360,21 +356,19 @@ def split_first_line(text, style, context, max_width, justification_spacing,
             # only try when space collapsing is allowed
             new_first_line_text = first_line_text + next_word
             layout.set_text(new_first_line_text)
-            first_line, index = layout.get_first_line()
-            if index is None and first_line_text:
-                # The next word fits in the first line, keep the layout
-                resume_index = len(new_first_line_text.encode()) + 1
-                return first_line_metrics(
-                    first_line, text, layout, resume_index, space_collapse,
-                    style)
-            elif index:
-                # Text may have been split elsewhere by Pango earlier
-                resume_index = index
-            else:
-                # Second line is None
-                resume_index = first_line.length + 1
-                if resume_index >= len(text.encode()):
-                    resume_index = None
+            first_line, resume_index = layout.get_first_line()
+            if resume_index is None:
+                if first_line_text:
+                    # The next word fits in the first line, keep the layout
+                    resume_index = len(new_first_line_text.encode()) + 1
+                    return first_line_metrics(
+                        first_line, text, layout, resume_index, space_collapse,
+                        style)
+                else:
+                    # Second line is None
+                    resume_index = first_line.length + 1
+                    if resume_index >= len(text.encode()):
+                        resume_index = None
     elif first_line_text:
         # We found something on the first line but we did not find a word on
         # the next line, no need to hyphenate, we can keep the current layout
