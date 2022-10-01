@@ -960,7 +960,6 @@ def test_wrap_overflow_word_break(span_css, expected_lines):
     body, = html.children
     lines = body.children
     lines = []
-    print(body.children)
     for line in body.children:
         line_text = ''
         for span_box in line.children:
