@@ -1,7 +1,5 @@
 """Test how gradients are drawn."""
 
-import pytest
-
 from ..testing_utils import assert_no_logs
 
 
