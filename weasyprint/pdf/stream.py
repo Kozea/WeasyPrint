@@ -316,9 +316,6 @@ class Stream(pydyf.Stream):
         if pango.pango_version() > 14600:
             pango_face = pango.pango_font_get_face(pango_font)
         else:
-            LOGGER.warning(
-                'The generated PDF may be bigger than expected. '
-                'Please use Pango 1.46 or newer to get smaller documents.')
             pango_face = pango_font
         if pango_face not in self._fonts:
             hb_font = pango.pango_font_get_hb_font(pango_font)
