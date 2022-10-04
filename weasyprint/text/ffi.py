@@ -280,6 +280,8 @@ ffi.cdef('''
         PangoFont *font, PangoGlyph glyph, PangoRectangle *ink_rect,
         PangoRectangle *logical_rect);
     PangoFontFace* pango_font_get_face (PangoFont* font);
+    PangoFontDescription* pango_font_face_describe (PangoFontFace* face);
+
     void pango_context_set_round_glyph_positions (
         PangoContext *context, gboolean round_positions);
 

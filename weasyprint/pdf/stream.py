@@ -15,7 +15,9 @@ from ..text.ffi import ffi, harfbuzz, pango, units_to_double
 
 
 class Font:
-    def __init__(self, pango_font, hb_face):
+    def __init__(self, pango_font):
+        hb_font = pango.pango_font_get_hb_font(pango_font)
+        hb_face = harfbuzz.hb_font_get_face(hb_font)
         hb_blob = ffi.gc(
             harfbuzz.hb_face_reference_blob(hb_face),
             harfbuzz.hb_blob_destroy)
@@ -315,13 +317,14 @@ class Stream(pydyf.Stream):
     def add_font(self, pango_font):
         if pango.pango_version() > 14600:
             pango_face = pango.pango_font_get_face(pango_font)
+            description = pango.pango_font_face_describe(pango_face)
         else:
-            pango_face = pango_font
-        if pango_face not in self._fonts:
-            hb_font = pango.pango_font_get_hb_font(pango_font)
-            hb_face = harfbuzz.hb_font_get_face(hb_font)
-            self._fonts[pango_face] = Font(pango_font, hb_face)
-        return self._fonts[pango_face]
+            description = pango.pango_font_describe(pango_font)
+        key = pango.pango_font_description_hash(description)
+        pango.pango_font_description_free(description)
+        if key not in self._fonts:
+            self._fonts[key] = Font(pango_font)
+        return self._fonts[key]
 
     def add_group(self, bounding_box):
         states = pydyf.Dictionary()
