@@ -468,7 +468,10 @@ def generate_pdf(document, target, zoom, attachments, optimize_size,
             name_array.append(pydyf.String(anchor[0]))
             name_array.append(anchor[1])
         dests = pydyf.Dictionary({'Names': name_array})
-        pdf.catalog['Names'] = pydyf.Dictionary({'Dests': dests})
+        if 'Names' in pdf.catalog:
+            pdf.catalog['Names']['Dests'] = dests
+        else:
+            pdf.catalog['Names'] = pydyf.Dictionary({'Dests': dests})
 
     # Apply PDF variants functions
     if variant:

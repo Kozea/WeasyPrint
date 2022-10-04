@@ -620,6 +620,21 @@ def test_attachments_data():
     ''').write_pdf()
     md5 = '<{}>'.format(hashlib.md5(b'some data').hexdigest()).encode()
     assert md5 in pdf
+    assert b'EmbeddedFiles' in pdf
+
+
+@assert_no_logs
+def test_attachments_data_with_anchor():
+    pdf = FakeHTML(string='''
+      <title>Test document 2</title>
+      <meta charset="utf-8">
+      <link rel="attachment" href="data:,some data">
+      <h1 id="title">Title</h1>
+      <a href="#title">example</a>
+    ''').write_pdf()
+    md5 = '<{}>'.format(hashlib.md5(b'some data').hexdigest()).encode()
+    assert md5 in pdf
+    assert b'EmbeddedFiles' in pdf
 
 
 @assert_no_logs
