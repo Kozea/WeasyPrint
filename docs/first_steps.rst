@@ -164,18 +164,9 @@ following packages::
 macOS
 ~~~~~
 
-The easiest way to install WeasyPrint on macOS is to use Homebrew_.
+The easiest way to install WeasyPrint on macOS is to use Homebrew_::
 
-When Homebrew is installed, install Python, Pango and libffi::
-
-  brew install python pango libffi
-
-You can then install WeasyPrint in a `virtual environment`_ using `pip`_::
-
-  python3 -m venv venv
-  source venv/bin/activate
-  pip3 install weasyprint
-  weasyprint --info
+  brew install weasyprint
 
 .. _Homebrew: https://brew.sh/
 
