@@ -185,7 +185,7 @@ def block_level_width(box, containing_block):
         width = box.width = cb_width - (
             paddings_plus_borders + margin_l + margin_r)
     margin_sum = cb_width - paddings_plus_borders - width
-    if margin_l == 'auto' and margin_r == 'auto':
+    if margin_l == margin_r == 'auto':
         box.margin_left = margin_sum / 2
         box.margin_right = margin_sum / 2
     elif margin_l == 'auto' and margin_r != 'auto':
@@ -750,9 +750,9 @@ def block_container_layout(context, box, bottom_space, skip_stack,
         # Top and bottom margins of this box
         if (box.height in ('auto', 0) and
             get_clearance(context, box, collapsed_margin) is None and
-            all(value == 0 for value in [
+            all(value == 0 for value in (
                 box.min_height, box.border_top_width, box.padding_top,
-                box.border_bottom_width, box.padding_bottom])):
+                box.border_bottom_width, box.padding_bottom))):
             collapsing_through = True
         else:
             position_y += collapsed_margin

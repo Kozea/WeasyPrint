@@ -93,7 +93,7 @@ def resolve_percentages(box, containing_block, main_flex_direction=None):
             box, 'max_height', cb_height, main_flex_direction)
 
     # Used value == computed value
-    for side in ['top', 'right', 'bottom', 'left']:
+    for side in ('top', 'right', 'bottom', 'left'):
         prop = f'border_{side}_width'
         setattr(box, prop, box.style[prop])
 

@@ -123,13 +123,13 @@ class StyleFor:
             if ('table' in style['display'] and
                     style['border_collapse'] == 'collapse'):
                 # Padding do not apply
-                for side in ['top', 'bottom', 'left', 'right']:
+                for side in ('top', 'bottom', 'left', 'right'):
                     style[f'padding_{side}'] = computed_values.ZERO_PIXELS
             if (len(style['display']) == 1 and
                     style['display'][0].startswith('table-') and
                     style['display'][0] != 'table-caption'):
                 # Margins do not apply
-                for side in ['top', 'bottom', 'left', 'right']:
+                for side in ('top', 'bottom', 'left', 'right'):
                     style[f'margin_{side}'] = computed_values.ZERO_PIXELS
 
         return style

@@ -506,7 +506,7 @@ def split_inline_level(context, box, position_x, max_x, bottom_space,
     elif isinstance(box, boxes.InlineFlexBox):
         box.position_x = position_x
         box.position_y = 0
-        for side in ['top', 'right', 'bottom', 'left']:
+        for side in ('top', 'right', 'bottom', 'left'):
             if getattr(box, f'margin_{side}') == 'auto':
                 setattr(box, f'margin_{side}', 0)
         new_box, resume_at, _, _, _ = flex_layout(

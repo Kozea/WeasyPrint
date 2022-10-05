@@ -167,7 +167,7 @@ def font_weight(token):
     if keyword in ('normal', 'bold'):
         return keyword
     if token.type == 'number' and token.int_value is not None:
-        if token.int_value in [100, 200, 300, 400, 500, 600, 700, 800, 900]:
+        if token.int_value in (100, 200, 300, 400, 500, 600, 700, 800, 900):
             return token.int_value
 
 

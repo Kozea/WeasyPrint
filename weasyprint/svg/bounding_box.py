@@ -252,7 +252,7 @@ def _bounding_box_elliptical_arc(x1, y1, rx, ry, phi, large, sweep, x, y):
     cx = cxprime * cos(phi) - cyprime * sin(phi) + (x1 + x) / 2
     cy = cxprime * sin(phi) + cyprime * cos(phi) + (y1 + y) / 2
 
-    if phi == 0 or phi == pi:
+    if phi in (0, pi):
         minx = cx - rx
         tminx = atan2(0, -rx)
         maxx = cx + rx
@@ -261,7 +261,7 @@ def _bounding_box_elliptical_arc(x1, y1, rx, ry, phi, large, sweep, x, y):
         tminy = atan2(-ry, 0)
         maxy = cy + ry
         tmaxy = atan2(ry, 0)
-    elif phi == pi / 2 or phi == 3 * pi / 2:
+    elif phi in (pi / 2, 3 * pi / 2):
         minx = cx - ry
         tminx = atan2(0, -ry)
         maxx = cx + ry

@@ -1,6 +1,7 @@
 """Imports of dynamic libraries used for text layout."""
 
 import os
+from contextlib import suppress
 
 import cffi
 
@@ -391,10 +392,8 @@ ffi.cdef('''
 def _dlopen(ffi, *names):
     """Try various names for the same library, for different platforms."""
     for name in names:
-        try:
+        with suppress(OSError):
             return ffi.dlopen(name)
-        except OSError:
-            pass
     # Re-raise the exception.
     print(
         '\n-----\n\n'
@@ -413,10 +412,8 @@ if hasattr(os, 'add_dll_directory'):  # pragma: no cover
         'WEASYPRINT_DLL_DIRECTORIES',
         'C:\\Program Files\\GTK3-Runtime Win64\\bin').split(';')
     for dll_directory in dll_directories:
-        try:
+        with suppress((OSError, FileNotFoundError)):
             os.add_dll_directory(dll_directory)
-        except (OSError, FileNotFoundError):
-            pass
 
 gobject = _dlopen(
     ffi, 'gobject-2.0-0', 'gobject-2.0', 'libgobject-2.0-0',

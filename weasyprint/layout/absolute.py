@@ -21,7 +21,7 @@ class AbsolutePlaceholder:
         object.__setattr__(self, '_layout_done', True)
 
     def translate(self, dx=0, dy=0, ignore_floats=False):
-        if dx == 0 and dy == 0:
+        if dx == dy == 0:
             return
         if self._layout_done:
             self._box.translate(dx, dy, ignore_floats)

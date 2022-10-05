@@ -99,7 +99,7 @@ def replacedbox_layout(box):
     if object_fit == 'fill':
         draw_width, draw_height = box.width, box.height
     else:
-        if object_fit == 'contain' or object_fit == 'scale-down':
+        if object_fit in ('contain', 'scale-down'):
             draw_width, draw_height = contain_constraint_image_sizing(
                 box.width, box.height, intrinsic_ratio)
         elif object_fit == 'cover':
@@ -140,7 +140,7 @@ def replaced_box_width(box, containing_block):
 
     # This algorithm simply follows the different points of the specification:
     # https://www.w3.org/TR/CSS21/visudet.html#inline-replaced-width
-    if box.height == 'auto' and box.width == 'auto':
+    if box.height == box.width == 'auto':
         if width is not None:
             # Point #1
             box.width = width
@@ -173,12 +173,12 @@ def replaced_box_height(box):
         box.style['image_resolution'], box.style['font_size'])
 
     # Test 'auto' on the computed width, not the used width
-    if box.height == 'auto' and box.width == 'auto':
+    if box.height == box.width == 'auto':
         box.height = height
     elif box.height == 'auto' and ratio:
         box.height = box.width / ratio
 
-    if box.height == 'auto' and box.width == 'auto' and height is not None:
+    if box.height == box.width == 'auto' and height is not None:
         box.height = height
     elif ratio is not None and box.height == 'auto':
         box.height = box.width / ratio
@@ -191,14 +191,14 @@ def replaced_box_height(box):
 
 def inline_replaced_box_layout(box, containing_block):
     """Lay out an inline :class:`boxes.ReplacedBox` ``box``."""
-    for side in ['top', 'right', 'bottom', 'left']:
+    for side in ('top', 'right', 'bottom', 'left'):
         if getattr(box, f'margin_{side}') == 'auto':
             setattr(box, f'margin_{side}', 0)
     inline_replaced_box_width_height(box, containing_block)
 
 
 def inline_replaced_box_width_height(box, containing_block):
-    if box.style['width'] == 'auto' and box.style['height'] == 'auto':
+    if box.style['width'] == box.style['height'] == 'auto':
         replaced_box_width.without_min_max(box, containing_block)
         replaced_box_height.without_min_max(box)
         min_max_auto_replaced(box)
@@ -269,7 +269,7 @@ def block_replaced_box_layout(context, box, containing_block):
     from .float import avoid_collisions
 
     box = box.copy()
-    if box.style['width'] == 'auto' and box.style['height'] == 'auto':
+    if box.style['width'] == box.style['height'] == 'auto':
         computed_margins = box.margin_left, box.margin_right
         block_replaced_width.without_min_max(
             box, containing_block)

@@ -122,7 +122,7 @@ class Box:
 
         """
         # Overridden in ParentBox to also translate children, if any.
-        if dx == 0 and dy == 0:
+        if dx == dy == 0:
             return
         self.position_x += dx
         self.position_y += dy
@@ -224,12 +224,12 @@ class Box:
         # See https://www.w3.org/TR/css-backgrounds-3/#corner-overlap
         ratio = min([1] + [
             extent / sum_radii
-            for extent, sum_radii in [
+            for extent, sum_radii in (
                 (width, tlrx + trrx),
                 (width, blrx + brrx),
                 (height, tlry + blry),
                 (height, trry + brry),
-            ]
+            )
             if sum_radii > 0
         ])
         return (

@@ -123,7 +123,7 @@ def compute_fixed_dimension(context, box, outer, vertical, top_or_left):
 
     # Rule 2
     total = box.padding_plus_border + sum(
-        value for value in [box.margin_a, box.margin_b, box.inner]
+        value for value in (box.margin_a, box.margin_b, box.inner)
         if value != 'auto')
     if total > outer:
         if box.margin_a == 'auto':
@@ -163,7 +163,7 @@ def compute_fixed_dimension(context, box, outer, vertical, top_or_left):
         box.inner = (outer - box.padding_plus_border -
                      box.margin_a - box.margin_b)
     # Rule 6
-    if box.margin_a == 'auto' and box.margin_b == 'auto':
+    if box.margin_a == box.margin_b == 'auto':
         box.margin_a = box.margin_b = (
             outer - box.padding_plus_border - box.inner) / 2
 
@@ -362,7 +362,7 @@ def make_margin_boxes(context, page, state):
     # https://drafts.csswg.org/css-page-3/#margin-box-dimensions
     generated_boxes = []
 
-    for prefix, vertical, containing_block, position_x, position_y in [
+    for prefix, vertical, containing_block, position_x, position_y in (
         ('top', False, (max_box_width, margin_top),
             margin_left, 0),
         ('bottom', False, (max_box_width, margin_bottom),
@@ -371,7 +371,7 @@ def make_margin_boxes(context, page, state):
             0, margin_top),
         ('right', True, (margin_right, max_box_height),
             page_end_x, margin_top),
-    ]:
+    ):
         if vertical:
             suffixes = ['top', 'middle', 'bottom']
             fixed_outer, variable_outer = containing_block
@@ -399,18 +399,18 @@ def make_margin_boxes(context, page, state):
                     variable_outer - box.margin_width())
             compute_fixed_dimension(
                 context, box, fixed_outer, not vertical,
-                prefix in ['top', 'left'])
+                prefix in ('top', 'left'))
             generated_boxes.append(box)
 
     # Corner boxes
 
-    for at_keyword, cb_width, cb_height, position_x, position_y in [
+    for at_keyword, cb_width, cb_height, position_x, position_y in (
         ('@top-left-corner', margin_left, margin_top, 0, 0),
         ('@top-right-corner', margin_right, margin_top, page_end_x, 0),
         ('@bottom-left-corner', margin_left, margin_bottom, 0, page_end_y),
         ('@bottom-right-corner', margin_right, margin_bottom,
             page_end_x, page_end_y),
-    ]:
+    ):
         box = make_box(at_keyword, (cb_width, cb_height))
         if not box.is_generated:
             continue

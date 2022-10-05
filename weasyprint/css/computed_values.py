@@ -1,6 +1,7 @@
 """Convert specified property values into computed values."""
 
 from collections import OrderedDict
+from contextlib import suppress
 from math import pi
 from urllib.parse import unquote
 
@@ -228,11 +229,9 @@ def compute_variable(value, name, computed, base_url, parent_style):
 
         # See https://drafts.csswg.org/css-variables/#invalid-variables
         if new_value is None:
-            try:
+            with suppress(BaseException):
                 computed_value = ''.join(
                     token.serialize() for token in computed_value)
-            except BaseException:
-                pass
             LOGGER.warning(
                 'Unsupported computed value "%s" set in variable %r '
                 'for property %r.', computed_value,

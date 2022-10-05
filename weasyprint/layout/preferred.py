@@ -226,8 +226,7 @@ def column_group_content_width(context, box):
 def table_cell_min_content_width(context, box, outer):
     """Return the min-content width for a ``TableCellBox``."""
     children_widths = [
-        min_content_width(context, child, outer=True)
-        for child in box.children
+        min_content_width(context, child) for child in box.children
         if not child.is_absolutely_positioned()]
     children_min_width = margin_width(
         box, max(children_widths) if children_widths else 0)
@@ -408,11 +407,9 @@ def table_and_columns_preferred_widths(context, box, outer=True):
         min_width = block_min_content_width(context, table, outer=False)
         max_width = block_max_content_width(context, table, outer=False)
         outer_min_width = adjust(
-            box, outer=True, width=block_min_content_width(
-                context, table, outer=True))
+            box, outer=True, width=block_min_content_width(context, table))
         outer_max_width = adjust(
-            box, outer=True, width=block_max_content_width(
-                context, table, outer=True))
+            box, outer=True, width=block_max_content_width(context, table))
         result = ([], [], [], [], total_horizontal_border_spacing, [])
         context.tables[table] = result = {
             False: (min_width, max_width) + result,
@@ -698,7 +695,7 @@ def flex_min_content_width(context, box, outer=True):
     # TODO: use real values, see
     # https://www.w3.org/TR/css-flexbox-1/#intrinsic-sizes
     min_contents = [
-        min_content_width(context, child, outer=True)
+        min_content_width(context, child)
         for child in box.children if child.is_flex_item]
     if not min_contents:
         return adjust(box, outer, 0)
@@ -714,7 +711,7 @@ def flex_max_content_width(context, box, outer=True):
     # TODO: use real values, see
     # https://www.w3.org/TR/css-flexbox-1/#intrinsic-sizes
     max_contents = [
-        max_content_width(context, child, outer=True)
+        max_content_width(context, child)
         for child in box.children if child.is_flex_item]
     if not max_contents:
         return adjust(box, outer, 0)

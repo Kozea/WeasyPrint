@@ -1,6 +1,7 @@
 """Render SVG images."""
 
 import re
+from contextlib import suppress
 from math import cos, hypot, pi, radians, sin, sqrt
 from xml.etree import ElementTree
 
@@ -415,10 +416,8 @@ class SVG:
 
         # Draw node
         if visible and node.tag in TAGS:
-            try:
+            with suppress(PointError):
                 TAGS[node.tag](self, node, font_size)
-            except PointError:
-                pass
 
         # Draw node children
         if display and node.tag not in DEF_TYPES:

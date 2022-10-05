@@ -1,6 +1,7 @@
 """Util functions for SVG rendering."""
 
 import re
+from contextlib import suppress
 from math import cos, radians, sin, tan
 from urllib.parse import urlparse
 
@@ -29,12 +30,10 @@ def size(string, font_size=None, percentage_reference=None):
     if not string:
         return 0
 
-    try:
+    with suppress(ValueError):
         return float(string)
-    except ValueError:
-        # Not a float, try something else
-        pass
 
+    # Not a float, try something else
     string = normalize(string).split(' ', 1)[0]
     if string.endswith('%'):
         assert percentage_reference is not None
