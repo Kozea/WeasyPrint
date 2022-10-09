@@ -222,8 +222,6 @@ def test_styles():
 
 @assert_no_logs
 def test_whitespace():
-    # TODO: test more cases
-    # https://www.w3.org/TR/CSS21/text.html#white-space-model
     assert_tree(parse_all('''
       <p>Lorem \t\r\n  ipsum\t<strong>  dolor
         <img src=pattern.png> sit

@@ -574,7 +574,8 @@ def compute_float(style, name, value):
     See https://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
 
     """
-    if style.specified['position'] in ('absolute', 'fixed'):
+    position = style.specified['position']
+    if position in ('absolute', 'fixed') or position[0] == 'running()':
         return 'none'
     else:
         return value

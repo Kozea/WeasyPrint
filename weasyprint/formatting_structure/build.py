@@ -1234,15 +1234,17 @@ def process_whitespace(box, following_collapsible_space=False):
 
         box.text = text
 
-    elif isinstance(box, boxes.ParentBox) and not box.is_running():
+    elif isinstance(box, boxes.ParentBox):
         for child in box.children:
             if isinstance(child, (boxes.TextBox, boxes.InlineBox)):
-                following_collapsible_space = process_whitespace(
+                child_collapsible_space = process_whitespace(
                     child, following_collapsible_space)
+                if box.is_in_normal_flow() and child.is_in_normal_flow():
+                    following_collapsible_space = child_collapsible_space
             elif child.is_in_normal_flow():
                 following_collapsible_space = False
 
-    return following_collapsible_space
+    return following_collapsible_space and not box.is_running()
 
 
 def process_text_transform(box):

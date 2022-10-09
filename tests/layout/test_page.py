@@ -1471,3 +1471,45 @@ def test_running_absolute():
       </style>
       <footer>Hello!<p>Bonjour!</p></footer>
     ''')
+
+
+@assert_no_logs
+def test_running_flex():
+    # Test regression
+    render_pages('''
+      <style>
+        footer {
+          display: flex;
+          position: running(footer);
+        }
+        @page {
+          @bottom-center {
+            content: element(footer);
+          }
+        }
+      </style>
+      <footer>
+        Hello!
+      </footer>
+    ''')
+
+
+@assert_no_logs
+def test_running_float():
+    # Test regression
+    render_pages('''
+      <style>
+        footer {
+          float: left;
+          position: running(footer);
+        }
+        @page {
+          @bottom-center {
+            content: element(footer);
+          }
+        }
+      </style>
+      <footer>
+        Hello!
+      </footer>
+    ''')
