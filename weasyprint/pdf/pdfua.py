@@ -62,6 +62,7 @@ def pdfua(pdf, metadata, document, page_streams):
                         'Type': '/StructElem',
                         'S': f'/{key}',
                         'K': pydyf.Array(kids),
+                        'Pg': pdf.pages['Kids'][page_number],
                     })
                     pdf.add_object(child)
                     if key == 'LI':
@@ -73,6 +74,7 @@ def pdfua(pdf, metadata, document, page_streams):
                             'Type': '/StructElem',
                             'S': f'/{sub_key}',
                             'K': pydyf.Array(kids),
+                            'Pg': pdf.pages['Kids'][page_number],
                             'P': child.reference,
                         })
                         pdf.add_object(real_child)
@@ -115,6 +117,7 @@ def pdfua(pdf, metadata, document, page_streams):
     pdf.catalog['ViewerPreferences'] = pydyf.Dictionary({
         'DisplayDocTitle': 'true',
     })
+    pdf.catalog['MarkInfo'] = pydyf.Dictionary({'Marked': 'true'})
 
 
 VARIANTS = {'pdf/ua-1': (pdfua, {'mark': True})}

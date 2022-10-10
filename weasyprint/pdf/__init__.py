@@ -208,8 +208,7 @@ def _create_bookmarks(bookmarks, pdf, parent=None):
     count = len(bookmarks)
     outlines = []
     for title, (page, x, y), children, state in bookmarks:
-        destination = pydyf.Array((
-            pdf.objects[pdf.pages['Kids'][page*3]].reference, '/XYZ', x, y, 0))
+        destination = pydyf.Array((pdf.pages['Kids'][page], '/XYZ', x, y, 0))
         outline = pydyf.Dictionary({
             'Title': pydyf.String(title), 'Dest': destination})
         pdf.add_object(outline)
