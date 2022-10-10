@@ -33,11 +33,11 @@ def pdfua(pdf, metadata, document, page_streams):
     structure = {}
     document.build_element_structure(structure)
 
-    elements = []
+    document_children = []
     content_mapping['Nums'] = pydyf.Array()
     links = []
     for page_number, page_stream in enumerate(page_streams):
-        page_elements = []
+        parents = [None] * len(page_stream.marked)
         for mcid, (key, box) in enumerate(page_stream.marked):
             # Build structure elements
             kids = [mcid]
@@ -78,11 +78,21 @@ def pdfua(pdf, metadata, document, page_streams):
                             'P': child.reference,
                         })
                         pdf.add_object(real_child)
+                        for kid in kids:
+                            if isinstance(kid, int):
+                                parents[kid] = real_child.reference
                         child['K'] = pydyf.Array([real_child.reference])
                         structure_data['element'] = real_child
+                    else:
+                        for kid in kids:
+                            if isinstance(kid, int):
+                                parents[kid] = child.reference
                 else:
                     child = structure_data['element']
                     child['K'].extend(kids)
+                    for kid in kids:
+                        if isinstance(kid, int):
+                            parents[kid] = child.reference
                 kid = child.reference
                 if key == 'Link':
                     links.append((kid, box.link_annotation))
@@ -90,19 +100,18 @@ def pdfua(pdf, metadata, document, page_streams):
                     child_structure_data_element['P'] = kid
                 if not new_element:
                     break
-                page_elements.append(kid)
                 kids = [kid]
                 child_structure_data_element = child
                 if structure_data['parent'] is None:
                     child['P'] = structure_document.reference
+                    document_children.append(child.reference)
                     break
                 else:
                     etree_element = structure_data['parent']
                 key = page_stream.get_marked_content_tag(etree_element.tag)
         content_mapping['Nums'].append(page_number)
-        content_mapping['Nums'].append(pydyf.Array(page_elements))
-        elements.extend(page_elements)
-    structure_document['K'] = pydyf.Array(elements)
+        content_mapping['Nums'].append(pydyf.Array(parents))
+    structure_document['K'] = pydyf.Array(document_children)
     for i, (link, annotation) in enumerate(links, start=page_number + 1):
         content_mapping['Nums'].append(i)
         content_mapping['Nums'].append(link)
