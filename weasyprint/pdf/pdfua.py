@@ -30,13 +30,12 @@ def pdfua(pdf, metadata, document, page_streams):
     structure_root['K'] = pydyf.Array([structure_document.reference])
     pdf.catalog['StructTreeRoot'] = structure_root.reference
 
-    structure = {}
-    document.build_element_structure(structure)
-
     document_children = []
     content_mapping['Nums'] = pydyf.Array()
     links = []
     for page_number, page_stream in enumerate(page_streams):
+        structure = {}
+        document.build_element_structure(structure)
         parents = [None] * len(page_stream.marked)
         for mcid, (key, box) in enumerate(page_stream.marked):
             # Build structure elements
