@@ -201,7 +201,9 @@ def _build_bitmap_font_dictionary(font_dictionary, pdf, font, widths,
         }
 
         # Decode bitmaps
-        if glyph_format in (1, 6):
+        if 0 in (width, height) or not data:
+            glyph_info['bitmap'] = b''
+        elif glyph_format in (1, 6):
             glyph_info['bitmap'] = data
         elif glyph_format in (2, 5, 7):
             padding = (8 - (width % 8)) % 8
