@@ -44,7 +44,7 @@ def pdfua(pdf, metadata, document, page_streams):
                 object_reference = pydyf.Dictionary({
                     'Type': '/OBJR',
                     'Obj': box.link_annotation.reference,
-                    'Pg': pdf.pages['Kids'][page_number],
+                    'Pg': pdf.page_references[page_number],
                 })
                 pdf.add_object(object_reference)
                 links.append((object_reference.reference, box.link_annotation))
@@ -62,7 +62,7 @@ def pdfua(pdf, metadata, document, page_streams):
                         'Type': '/StructElem',
                         'S': f'/{key}',
                         'K': pydyf.Array(kids),
-                        'Pg': pdf.pages['Kids'][page_number],
+                        'Pg': pdf.page_references[page_number],
                     })
                     pdf.add_object(child)
                     if key == 'LI':
@@ -74,7 +74,7 @@ def pdfua(pdf, metadata, document, page_streams):
                             'Type': '/StructElem',
                             'S': f'/{sub_key}',
                             'K': pydyf.Array(kids),
-                            'Pg': pdf.pages['Kids'][page_number],
+                            'Pg': pdf.page_references[page_number],
                             'P': child.reference,
                         })
                         pdf.add_object(real_child)
