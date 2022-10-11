@@ -71,7 +71,10 @@ class Font:
             self.ttfont = None
             self.bitmap = False
         else:
-            self.bitmap = 'EBDT' in self.ttfont and 'EBLC' in self.ttfont
+            self.bitmap = (
+                'EBDT' in self.ttfont and
+                'EBLC' in self.ttfont and
+                not self.ttfont['glyf'].glyphs)
 
         # Various properties
         self.italic_angle = 0  # TODO: this should be different
