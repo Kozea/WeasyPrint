@@ -246,6 +246,8 @@ def draw_background(stream, bg, clip_box=True, bleed=None, marks=()):
         # Background color
         if bg.color.alpha > 0:
             with stacked(stream):
+                stream.set_color_rgb(*bg.color[:3])
+                stream.set_alpha(bg.color.alpha)
                 painting_area = bg.layers[-1].painting_area
                 if painting_area:
                     if bleed:
@@ -259,8 +261,6 @@ def draw_background(stream, bg, clip_box=True, bleed=None, marks=()):
                     stream.clip()
                     stream.end()
                 stream.rectangle(*stream.page_rectangle)
-                stream.set_color_rgb(*bg.color[:3])
-                stream.set_alpha(bg.color.alpha)
                 stream.fill()
 
         if bleed and marks:
@@ -686,37 +686,38 @@ def clip_border_segment(stream, style, width, side, border_box,
 
 
 def draw_rounded_border(stream, box, style, color):
-    rounded_box_path(stream, box.rounded_padding_box())
     if style in ('ridge', 'groove'):
-        rounded_box_path(stream, box.rounded_box_ratio(1 / 2))
         stream.set_color_rgb(*color[0][:3])
         stream.set_alpha(color[0][3])
-        stream.fill(even_odd=True)
+        rounded_box_path(stream, box.rounded_padding_box())
         rounded_box_path(stream, box.rounded_box_ratio(1 / 2))
-        rounded_box_path(stream, box.rounded_border_box())
+        stream.fill(even_odd=True)
         stream.set_color_rgb(*color[1][:3])
         stream.set_alpha(color[1][3])
+        rounded_box_path(stream, box.rounded_box_ratio(1 / 2))
+        rounded_box_path(stream, box.rounded_border_box())
         stream.fill(even_odd=True)
         return
+    stream.set_color_rgb(*color[:3])
+    stream.set_alpha(color[3])
+    rounded_box_path(stream, box.rounded_padding_box())
     if style == 'double':
         rounded_box_path(stream, box.rounded_box_ratio(1 / 3))
         rounded_box_path(stream, box.rounded_box_ratio(2 / 3))
     rounded_box_path(stream, box.rounded_border_box())
-    stream.set_color_rgb(*color[:3])
-    stream.set_alpha(color[3])
     stream.fill(even_odd=True)
 
 
 def draw_rect_border(stream, box, widths, style, color):
     bbx, bby, bbw, bbh = box
     bt, br, bb, bl = widths
-    stream.rectangle(*box)
     if style in ('ridge', 'groove'):
+        stream.set_color_rgb(*color[0][:3])
+        stream.set_alpha(color[0][3])
+        stream.rectangle(*box)
         stream.rectangle(
             bbx + bl / 2, bby + bt / 2,
             bbw - (bl + br) / 2, bbh - (bt + bb) / 2)
-        stream.set_color_rgb(*color[0][:3])
-        stream.set_alpha(color[0][3])
         stream.fill(even_odd=True)
         stream.rectangle(
             bbx + bl / 2, bby + bt / 2,
@@ -726,6 +727,9 @@ def draw_rect_border(stream, box, widths, style, color):
         stream.set_alpha(color[1][3])
         stream.fill(even_odd=True)
         return
+    stream.set_color_rgb(*color[:3])
+    stream.set_alpha(color[3])
+    stream.rectangle(*box)
     if style == 'double':
         stream.rectangle(
             bbx + bl / 3, bby + bt / 3,
@@ -734,8 +738,6 @@ def draw_rect_border(stream, box, widths, style, color):
             bbx + bl * 2 / 3, bby + bt * 2 / 3,
             bbw - (bl + br) * 2 / 3, bbh - (bt + bb) * 2 / 3)
     stream.rectangle(bbx + bl, bby + bt, bbw - bl - br, bbh - bt - bb)
-    stream.set_color_rgb(*color[:3])
-    stream.set_alpha(color[3])
     stream.fill(even_odd=True)
 
 
