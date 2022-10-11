@@ -41,12 +41,13 @@ def pdfua(pdf, metadata, document, page_streams):
             # Build structure elements
             kids = [mcid]
             if key == 'Link':
-                reference = pydyf.Dictionary({
+                object_reference = pydyf.Dictionary({
                     'Type': '/OBJR',
                     'Obj': box.link_annotation.reference,
+                    'Pg': pdf.pages['Kids'][page_number],
                 })
-                pdf.add_object(reference)
-                kids.append(reference.reference)
+                pdf.add_object(object_reference)
+                links.append((object_reference.reference, box.link_annotation))
             etree_element = box.element
             child_structure_data_element = None
             while True:
@@ -93,8 +94,6 @@ def pdfua(pdf, metadata, document, page_streams):
                         if isinstance(kid, int):
                             parents[kid] = child.reference
                 kid = child.reference
-                if key == 'Link':
-                    links.append((kid, box.link_annotation))
                 if child_structure_data_element is not None:
                     child_structure_data_element['P'] = kid
                 if not new_element:
