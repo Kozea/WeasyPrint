@@ -288,6 +288,11 @@ class SVG:
         self.tree = Node(wrapper, style)
         self.url = url
 
+        # Replace 'currentColor' value
+        for key in COLOR_ATTRIBUTES:
+            if self.tree.get(key) == 'currentColor':
+                self.tree.attrib[key] = self.tree.get('color', 'black')
+
         self.filters = {}
         self.gradients = {}
         self.images = {}

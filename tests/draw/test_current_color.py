@@ -1,5 +1,7 @@
 """Test the currentColor value."""
 
+import pytest
+
 from ..testing_utils import assert_no_logs
 
 
@@ -50,3 +52,31 @@ def test_current_color_4(assert_pixels):
                 color: lime; border: 1px solid; border-color: inherit }
       </style>
       <table><td>''')
+
+
+@assert_no_logs
+def test_current_color_svg_1(assert_pixels):
+    assert_pixels('KK\nKK', '''
+      <style>
+        @page { size: 2px }
+        svg { display: block }
+      </style>
+      <svg xmlns="http://www.w3.org/2000/svg"
+           width="2" height="2" fill="currentColor">
+        <rect width="2" height="2"></rect>
+      </svg>''')
+
+
+@pytest.mark.xfail
+@assert_no_logs
+def test_current_color_svg_2(assert_pixels):
+    assert_pixels('GG\nGG', '''
+      <style>
+        @page { size: 2px }
+        svg { display: block }
+        body { color: lime }
+      </style>
+      <svg xmlns="http://www.w3.org/2000/svg"
+           width="2" height="2">
+        <rect width="2" height="2" fill="currentColor"></rect>
+      </svg>''')
