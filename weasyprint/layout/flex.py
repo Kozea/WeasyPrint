@@ -677,7 +677,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
         box.content_box_y() if cross == 'height'
         else box.content_box_x())
     for line in flex_lines:
-        line.lower_baseline = 0
+        line.lower_baseline = -inf
         # TODO: don't duplicate this loop
         for i, child in line:
             align_self = child.style['align_self']
@@ -687,6 +687,8 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
                 # TODO: handle vertical text
                 child.baseline = child._baseline - position_cross
                 line.lower_baseline = max(line.lower_baseline, child.baseline)
+        if line.lower_baseline == -inf:
+            line.lower_baseline = line[0][1]._baseline if line else 0
         for i, child in line:
             cross_margins = (
                 (child.margin_top, child.margin_bottom) if cross == 'height'
