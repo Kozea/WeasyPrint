@@ -2,6 +2,81 @@ Changelog
 =========
 
 
+Version 57.0
+------------
+
+Released on 2022-10-18.
+
+This version also includes the changes from unstable b1 version listed
+below.
+
+New features:
+
+* `a4fc7a1 <https://github.com/Kozea/WeasyPrint/commit/a4fc7a1>`_:
+  Support image-orientation
+
+Bug fixes:
+
+* `#1739 <https://github.com/Kozea/WeasyPrint/issues/1739>`_:
+  Set baseline on all flex containers
+* `#1740 <https://github.com/Kozea/WeasyPrint/issues/1740>`_:
+  Don’t crash when currentColor is set on root svg tag
+* `#1718 <https://github.com/Kozea/WeasyPrint/issues/1718>`_:
+  Don’t crash with empty bitmap glyphs
+* `#1736 <https://github.com/Kozea/WeasyPrint/issues/1736>`_:
+  Always use the font’s vector variant when possible
+* `eef8b4d <https://github.com/Kozea/WeasyPrint/commit/eef8b4d>`_:
+  Always set color and state before drawing
+* `#1662 <https://github.com/Kozea/WeasyPrint/issues/1662>`_:
+  Use a stable key to store stream fonts
+* `#1733 <https://github.com/Kozea/WeasyPrint/issues/1733>`_:
+  Don’t remove attachments when adding internal anchors
+* `3c4fa50 <https://github.com/Kozea/WeasyPrint/commit/3c4fa50>`_,
+  `c215697 <https://github.com/Kozea/WeasyPrint/commit/c215697>`_,
+  `d275dac <https://github.com/Kozea/WeasyPrint/commit/d275dac>`_,
+  `b04bfff <https://github.com/Kozea/WeasyPrint/commit/b04bfff>`_:
+  Fix many bugs related to PDF/UA structure
+
+Performance:
+
+* `dfccf1b <https://github.com/Kozea/WeasyPrint/commit/dfccf1b>`_:
+  Use faces as fonts dictionary keys
+* `0dc12b6 <https://github.com/Kozea/WeasyPrint/commit/0dc12b6>`_:
+  Cache add_font to avoid calling get_face too often
+* `75e17bf <https://github.com/Kozea/WeasyPrint/commit/75e17bf>`_:
+  Don’t call process_whitespace twice on many children
+* `498d3e1 <https://github.com/Kozea/WeasyPrint/commit/498d3e1>`_:
+  Optimize __missing__ functions
+
+Documentation:
+
+* `863b3d6 <https://github.com/Kozea/WeasyPrint/commit/863b3d6>`_:
+  Update documentation of installation on macOS with Homebrew
+
+Contributors:
+
+* Guillaume Ayoub
+
+Backers and sponsors:
+
+* Grip Angebotssoftware
+* Manuel Barkhau
+* Crisp BV
+* SimonSoft
+* Menutech
+* Spacinov
+* KontextWork
+* René Fritz
+* NCC Group
+* Kobalt
+* Tom Pohl
+* John R Ellis
+* Castedo Ellerman
+* Moritz Mahringer
+* Gábor
+* Piotr Horzycki
+
+
 Version 57.0b1
 --------------
 
