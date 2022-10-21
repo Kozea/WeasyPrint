@@ -827,6 +827,30 @@ def test_font_size_very_small(assert_pixels):
     ''')
 
 
+def test_missing_glyph_fallback(assert_pixels):
+    # The apostrophe is not included in weasyprint.otf
+    assert_pixels('''
+        zzzzzzzzzzzzzzzzz___
+        zzzzzzzzzzzzzzzzzRR_
+        zzzzzzzzzzzzzzzzzRR_
+        zzzzzzzzzzzzzzzzz___
+    ''', '''
+      <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page {
+          size: 20px 4px;
+        }
+        body {
+          color: red;
+          font-family: weasyprint;
+          font-size: 2px;
+          line-height: 0;
+          margin: 2px 1px;
+          text-align: right;
+        }
+      </style>'a''')
+
+
 def test_tabulation_character(assert_pixels):
     # Test regression: https://github.com/Kozea/WeasyPrint/issues/1515
     assert_pixels('''
