@@ -1801,7 +1801,7 @@ Documentation:
 * `#796 <https://github.com/Kozea/WeasyPrint/pull/796>`_:
   Fix a small typo in the tutorial
 * `#792 <https://github.com/Kozea/WeasyPrint/pull/792>`_:
-  Document no alignement character support
+  Document no alignment character support
 * `#773 <https://github.com/Kozea/WeasyPrint/pull/773>`_:
   Fix phrasing in Hacking section
 * `#402 <https://github.com/Kozea/WeasyPrint/issues/402>`_:
@@ -2055,7 +2055,7 @@ Bug fixes:
 * `#500 <https://github.com/Kozea/WeasyPrint/pull/500>`_:
   Improve readability of _select_source function.
 * `#498 <https://github.com/Kozea/WeasyPrint/issues/498>`_:
-  Use CSS prefixes as recommanded by the CSSWG.
+  Use CSS prefixes as recommended by the CSSWG.
 * `#441 <https://github.com/Kozea/WeasyPrint/issues/441>`_:
   Fix rendering problems and crashes when using @font-face.
 * `bb3a4db <https://github.com/Kozea/WeasyPrint/commit/bb3a4db>`_:
@@ -2487,7 +2487,7 @@ Bug fixes:
 * `#145 <https://github.com/Kozea/WeasyPrint/issues/145>`_:
   Fix parsing HTML from an HTTP URL on Python 3.x
 * `#40 <https://github.com/Kozea/WeasyPrint/issues/40>`_:
-  Use more general hyphenation dictionnaries for specific document languages.
+  Use more general hyphenation dictionaries for specific document languages.
   (E.g. use ``hyph_fr.dic`` for ``lang="fr_FR"``.)
 * `#26 <https://github.com/Kozea/WeasyPrint/issues/26>`_:
   Fix ``min-width`` and ``max-width`` on floats.

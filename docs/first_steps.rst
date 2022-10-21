@@ -499,7 +499,7 @@ A custom fetcher should be returning a :obj:`dict` with
   the *filename* parameter in a *Content-Disposition* header
 
 If a ``file_obj`` is given, the resource will be closed automatically by
-the function internally used by WeasyPrint to retreive data.
+the function internally used by WeasyPrint to retrieve data.
 
 .. _Flask-Weasyprint: https://github.com/Kozea/Flask-WeasyPrint
 .. _Flask: https://flask.pocoo.org/
