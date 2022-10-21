@@ -3,6 +3,7 @@
 import io
 import struct
 from functools import lru_cache
+from hashlib import md5
 
 import pydyf
 from fontTools import subset
@@ -34,14 +35,14 @@ class Font:
         self.style = pango.pango_font_description_get_style(description)
         self.family = ffi.string(
             pango.pango_font_description_get_family(description))
-        digest = pango.pango_font_description_hash(description)
-        self.hash = ''.join(
-            chr(65 + letter % 26) + chr(65 + (letter << 6) % 26) for letter
-            in (hash(str(digest)) % (2 ** (3 * 8))).to_bytes(3, 'big'))
-
-        # Name
         description_string = ffi.string(
             pango.pango_font_description_to_string(description))
+        # Never use the built-in hash function here: it’s not stable
+        self.hash = ''.join(
+            chr(65 + letter % 26) for letter
+            in md5(description_string).digest()[:6])
+
+        # Name
         fields = description_string.split(b' ')
         if fields and b'=' in fields[-1]:
             fields.pop()  # Remove variations
