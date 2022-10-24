@@ -1,6 +1,7 @@
 """Layout for pages and CSS3 margin boxes."""
 
 import copy
+from itertools import chain
 from math import inf
 
 from ..css import PageType, computed_from_cascaded
@@ -605,7 +606,9 @@ def make_page(context, root_box, page_type, resume_at, page_number,
     context.finish_block_formatting_context(root_box)
 
     page.children = [root_box, footnote_area]
-    descendants = page.descendants()
+    descendants = chain(page.descendants(), *(
+        child.descendants() if hasattr(child, 'descendants') else (child,)
+        for child in positioned_boxes))
 
     # Update page counter values
     _standardize_page_based_counters(style, None)

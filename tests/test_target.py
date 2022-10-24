@@ -157,3 +157,28 @@ def test_target_float():
     text_box, after = inline.children
     assert text_box.text == 'link'
     assert after.children[0].children[0].text == '1'
+
+
+@assert_no_logs
+def test_target_absolute():
+    document = FakeHTML(string='''
+      <style>
+        a::after {
+          content: target-counter('#h', page);
+        }
+        div {
+           position: absolute;
+        }
+      </style>
+      <div><a id="span">link</a></div>
+      <h1 id="h">abc</h1>
+    ''')
+    page, = document.render().pages
+    html, = page._page_box.children
+    body, = html.children
+    div, h1 = body.children
+    line, = div.children
+    inline, = line.children
+    text_box, after = inline.children
+    assert text_box.text == 'link'
+    assert after.children[0].text == '1'
