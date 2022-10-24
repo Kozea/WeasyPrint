@@ -89,7 +89,7 @@ class TargetCollector:
 
     def collect_anchor(self, anchor_name):
         """Create a TargetLookupItem for the given `anchor_name``."""
-        if anchor_name and isinstance(anchor_name, str):
+        if isinstance(anchor_name, str):
             if self.target_lookup_items.get(anchor_name) is not None:
                 LOGGER.warning('Anchor defined twice: %r', anchor_name)
             else:

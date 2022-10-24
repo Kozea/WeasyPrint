@@ -750,7 +750,7 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
 
     style = ComputedStyle(
         parent_style, cascaded, element, pseudo_type, root_style, base_url)
-    if target_collector:
+    if target_collector and style['anchor']:
         target_collector.collect_anchor(style['anchor'])
     return style
 
