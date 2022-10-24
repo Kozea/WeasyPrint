@@ -282,7 +282,7 @@ New properties defined in Level 3 are supported:
 - the ``text-align-last`` and ``text-justify`` properties; and
 - the ``tab-size`` property.
 
-Properties controling hyphenation_ are supported by WeasyPrint:
+Properties controlling hyphenation_ are supported by WeasyPrint:
 
 - ``hyphens``,
 - ``hyphenate-character``,
