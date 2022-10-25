@@ -63,7 +63,7 @@ htmlhelp_basename = 'weasyprintdoc'
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'weasyprint', 'WeasyPrint Documentation',
+    ('manpage', 'weasyprint', 'The Awesome Document Factory',
      ['Simon Sapin and contributors'], 1)
 ]
 
@@ -72,8 +72,8 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [(
     'index', 'WeasyPrint', 'WeasyPrint Documentation',
-    'Simon Sapin', 'WeasyPrint', 'The Awesome Document Factory',
-    'Miscellaneous'),
+    'Simon Sapin and contributors', 'WeasyPrint',
+    'The Awesome Document Factory', 'Miscellaneous'),
 ]
 
 # Example configuration for intersphinx: refer to the Python standard library.
