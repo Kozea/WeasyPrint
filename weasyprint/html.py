@@ -7,8 +7,17 @@ are images with intrinsic dimensions.
 
 """
 
+try:
+    # Available in Python 3.9+
+    from importlib.resources import files
+except ImportError:
+    # Deprecated in Python 3.11+
+    from importlib.resources import read_text
+else:
+    def read_text(package, resource):
+        return (files(package) / resource).read_text()
+
 import re
-from importlib.resources import read_text
 
 from . import CSS, css
 from .css import get_child_text
