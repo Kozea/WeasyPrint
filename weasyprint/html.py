@@ -15,7 +15,7 @@ except ImportError:
     from importlib.resources import read_text
 else:
     def read_text(package, resource):
-        return (files(package) / resource).read_text()
+        return (files(package) / resource).read_text('utf-8')
 
 import re
 
