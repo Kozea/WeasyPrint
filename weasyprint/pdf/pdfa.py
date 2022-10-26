@@ -1,7 +1,16 @@
 """PDF/A generation."""
 
+try:
+    # Available in Python 3.9+
+    from importlib.resources import files
+except ImportError:
+    # Deprecated in Python 3.11+
+    from importlib.resources import read_binary
+else:
+    def read_binary(package, resource):
+        return (files(package) / resource).read_bytes()
+
 from functools import partial
-from importlib.resources import read_binary
 
 import pydyf
 
