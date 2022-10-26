@@ -17,7 +17,7 @@ WeasyPrint |version| depends on:
 * tinycss2_ ≥ 1.0.0
 * cssselect2_ ≥ 0.1
 * Pyphen_ ≥ 0.9.1
-* Pillow_ ≥ 4.0.0
+* Pillow_ ≥ 9.1.0
 * fontTools_ ≥ 4.0.0
 
 .. _Python: https://www.python.org/
