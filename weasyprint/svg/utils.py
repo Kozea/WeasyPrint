@@ -38,6 +38,9 @@ def size(string, font_size=None, percentage_reference=None):
     if string.endswith('%'):
         assert percentage_reference is not None
         return float(string[:-1]) * percentage_reference / 100
+    elif string.endswith('rem'):
+        assert font_size is not None
+        return font_size * float(string[:-3])
     elif string.endswith('em'):
         assert font_size is not None
         return font_size * float(string[:-2])
