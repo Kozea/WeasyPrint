@@ -135,6 +135,8 @@ def get_image_from_uri(cache, url_fetcher, optimize_size, url,
                 else:
                     # Store image id to enable cache in Stream.add_image
                     image_id = md5(url.encode()).hexdigest()
+                    # Keep image format as it is discarded by transposition
+                    image_format = pillow_image.format
                     if orientation == 'from-image':
                         if 'exif' in pillow_image.info:
                             pillow_image = ImageOps.exif_transpose(
@@ -148,6 +150,7 @@ def get_image_from_uri(cache, url_fetcher, optimize_size, url,
                         if flip:
                             pillow_image = pillow_image.transpose(
                                 Image.Transpose.FLIP_LEFT_RIGHT)
+                    pillow_image.format = image_format
                     image = RasterImage(pillow_image, image_id, optimize_size)
 
     except (URLFetchingError, ImageLoadingError) as exception:

@@ -2,7 +2,8 @@
 
 import pytest
 
-from ..testing_utils import assert_no_logs, capture_logs
+from ..testing_utils import (
+    FakeHTML, assert_no_logs, capture_logs, resource_filename)
 
 centered_image = '''
     ________
@@ -578,3 +579,15 @@ def test_image_exif_image_orientation(assert_same_renderings):
         ''',
         tolerance=25,
     )
+
+
+@assert_no_logs
+def test_image_exif_image_orientation_keep_format():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/1755
+    pdf = FakeHTML(
+        string='''
+          <style>@page { size: 10px }</style>
+          <img style="display: block; image-orientation: 180deg"
+               src="not-optimized-exif.jpg">''',
+        base_url=resource_filename('<inline HTML>')).write_pdf()
+    assert b'DCTDecode' in pdf
