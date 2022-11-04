@@ -2,6 +2,65 @@ Changelog
 =========
 
 
+Version 57.1
+------------
+
+Released on 2022-11-04.
+
+Dependencies:
+
+* `#1754 <https://github.com/Kozea/WeasyPrint/pull/1754>`_:
+  Pillow 9.1.0 is now needed
+
+Bug fixes:
+
+* `#1756 <https://github.com/Kozea/WeasyPrint/pull/1756>`_:
+  Fix rem font size for SVG images
+* `#1755 <https://github.com/Kozea/WeasyPrint/issues/1755>`_:
+  Keep format when transposing images
+* `#1753 <https://github.com/Kozea/WeasyPrint/issues/1753>`_:
+  Don’t use deprecated ``read_text`` function when ``files`` is available
+* `#1741 <https://github.com/Kozea/WeasyPrint/issues/1741>`_:
+  Generate better manpage
+* `#1747 <https://github.com/Kozea/WeasyPrint/issues/1747>`_:
+  Correctly set target counters in pages’ absolute elements
+* `#1748 <https://github.com/Kozea/WeasyPrint/issues/1748>`_:
+  Always set font size when font is changed in line
+* `2b05137 <https://github.com/Kozea/WeasyPrint/commit/2b05137>`_:
+  Fix stability of font identifiers
+
+Documentation:
+
+* `#1750 <https://github.com/Kozea/WeasyPrint/pull/1750>`_:
+  Fix documentation spelling
+
+Contributors:
+
+* Guillaume Ayoub
+* Eli Schwartz
+* Mikhail Anikin
+* Scott Kitterman
+
+Backers and sponsors:
+
+* Grip Angebotssoftware
+* Manuel Barkhau
+* Crisp BV
+* SimonSoft
+* Menutech
+* Spacinov
+* KontextWork
+* René Fritz
+* NCC Group
+* Kobalt
+* Tom Pohl
+* John R Ellis
+* Castedo Ellerman
+* Moritz Mahringer
+* Gábor
+* Piotr Horzycki
+
+
 Version 57.0
 ------------
 
