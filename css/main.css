@@ -1,4 +1,3 @@
-@charset "UTF-8";
 @font-face {
   font-family: "Rosario";
   font-style: italic;
@@ -78,49 +77,34 @@
 }
 
 @media screen and (min-width: 581px) {
-  body pre, main.index section:nth-of-type(1) ul { font-size: 1.1rem; }
+  pre, #factory ul { font-size: 1.1rem; }
+  p { font-size: 1.3rem; }
+  #factory, h3, #floss p { font-size: 1.9rem; }
+  h2 { font-size: 3rem; }
 }
 @media screen and (max-width: 580px) {
-  body pre, main.index section:nth-of-type(1) ul { font-size: 0.88rem; }
+  pre, #factory ul { font-size: 0.88rem; }
+  p { font-size: 1.04rem; }
+  #factory, h3, #floss p { font-size: 1.52rem; }
+  h2 { font-size: 2.4rem; }
 }
 
-@media screen and (min-width: 581px) {
-  body p { font-size: 1.3rem; }
-}
-@media screen and (max-width: 580px) {
-  body p { font-size: 1.04rem; }
-}
-
-@media screen and (min-width: 581px) {
-  body main section:nth-of-type(1), body h3, main.index section:nth-of-type(2) p { font-size: 1.9rem; }
-}
-@media screen and (max-width: 580px) {
-  body main section:nth-of-type(1), body h3, main.index section:nth-of-type(2) p { font-size: 1.52rem; }
-}
-
-@media screen and (min-width: 581px) {
-  body h2 { font-size: 3rem; }
-}
-@media screen and (max-width: 580px) {
-  body h2 { font-size: 2.4rem; }
-}
-
-body p a, footer ul li a, nav ul li a {
+:is(p, footer li, nav li) a {
   background-size: 201% 100%;
   background-position: 0 50%;
   padding: 0 0.3em;
   transition: background-position 0.2s ease-out, color 0.2s ease-in-out;
   transition-delay: 0.05s, 0.1s;
 }
-body p a:hover, footer ul li a:hover, nav ul li a:hover {
+:is(p, footer li, nav li) a:hover {
   background-position: -100% 0;
   color: #14213d;
 }
 
-body main section:nth-of-type(1), main.index section:nth-of-type(4), main.index section:nth-of-type(5), footer {
+section, footer {
   position: relative;
 }
-body main section:nth-of-type(1)::before, footer::before, main.index section:nth-of-type(4)::before, main.index section:nth-of-type(5)::before {
+:is(#factory, #support, #involved, footer)::before {
   content: "";
   left: 50%;
   height: 100%;
@@ -131,25 +115,25 @@ body main section:nth-of-type(1)::before, footer::before, main.index section:nth
   z-index: -1;
 }
 
-body #main > aside:nth-of-type(1), body pre code, main.index section:nth-of-type(1) p strong, main.index section:nth-of-type(1) ul, main.index section:nth-of-type(1) label:nth-of-type(1), nav #menu-close, aside + aside label {
+aside:nth-of-type(1), #factory p strong, #factory ul, #factory label:nth-of-type(1) {
   font-family: "Mononoki", monospace;
   font-weight: 400;
   letter-spacing: -0.05em;
 }
 
-main.index section:nth-of-type(1) p {
+#factory p {
   font-size: 1.3rem;
 }
 @media screen and (max-width: 580px) {
-  main.index section:nth-of-type(1) p {
+  #factory p {
     font-size: 1.04rem;
   }
 }
 
-main.index section:nth-of-type(3) ul li {
+#about ul li {
   position: relative;
 }
-main.index section:nth-of-type(3) ul li a::before {
+#about ul li a::before {
   content: "";
   height: 100%;
   left: 0;
@@ -158,16 +142,13 @@ main.index section:nth-of-type(3) ul li a::before {
   width: 100%;
 }
 
-html, body {
+html {
+  background: white;
   display: flex;
   justify-content: center;
 }
 
 body {
-  margin: 0;
-  overflow-x: hidden;
-}
-body #main {
   background: url("img/print/bleed-top-left.svg") top left/45px no-repeat, url("img/print/bleed-top-right.svg") top right/45px no-repeat, url("img/print/bleed-bottom-left.svg") bottom left/45px no-repeat, url("img/print/bleed-bottom-right.svg") bottom right/45px no-repeat, transparent;
   box-sizing: border-box;
   color: #6f7a89;
@@ -178,12 +159,13 @@ body #main {
   line-height: 1.3;
   margin: 20px;
   max-width: 100%;
+  overflow-x: hidden;
   padding: 45px 45px 0;
   position: relative;
   transition: color 0.25s;
   width: 1340px;
 }
-body #main::before, body #main::after {
+body::before, body::after {
   background-color: #1ee494;
   content: "";
   height: 100%;
@@ -191,18 +173,18 @@ body #main::before, body #main::after {
   top: 0;
   width: 1px;
 }
-body #main::before {
+body::before {
   left: 0;
 }
-body #main::after {
+body::after {
   right: 0;
 }
 @media screen and (max-width: 580px) {
-  body #main {
+  body {
     margin: 0;
   }
 }
-body #main > aside:nth-of-type(1) {
+aside:nth-of-type(1) {
   align-items: center;
   display: flex;
   color: #1ee494;
@@ -214,17 +196,15 @@ body #main > aside:nth-of-type(1) {
   position: absolute;
   right: 0;
   top: 0;
-  width: -moz-min-content;
-  width: -webkit-min-content;
   width: min-content;
 }
-body #main > aside:nth-of-type(1) a {
+aside:nth-of-type(1) a {
   border-right: solid 9px;
   overflow: hidden;
   padding-right: 0.2em;
   white-space: nowrap;
 }
-body main::before, body main::after {
+main::before, main::after {
   background-color: #1ee494;
   content: "";
   height: 1px;
@@ -233,16 +213,13 @@ body main::before, body main::after {
   transform: translateX(-50%);
   width: 100%;
 }
-body main::before {
+main::before {
   top: 0;
 }
-body main::after {
+main::after {
   bottom: 0;
 }
-body main:not(.index) section:nth-of-type(1) {
-  min-height: 60vh;
-}
-body main section:nth-of-type(1) {
+#factory {
   align-content: center;
   align-items: center;
   box-sizing: border-box;
@@ -253,28 +230,23 @@ body main section:nth-of-type(1) {
   padding: 3em 8.3333333333%;
   text-align: center;
 }
-body main section:nth-of-type(1)::before {
+#factory::before {
   background-color: #14213d;
-}
-body main section:nth-of-type(1)::before {
   border-top: solid 116px #14213d;
   top: -116px;
 }
 @media screen and (max-width: 580px) {
-  body main section:nth-of-type(1) {
+  #factory {
     padding: 6em 0;
   }
 }
-body main section:nth-of-type(1) p {
-  font-size: inherit;
-}
-body main section + section h2 {
+section + section h2 {
   color: #14213d;
   margin-top: -0.5em;
   padding: 2em 0 0 0.25em;
   position: relative;
 }
-body main section + section h2::before {
+section + section h2::before {
   border-left: solid 1px #1ee494;
   bottom: 0.1em;
   content: "";
@@ -283,36 +255,28 @@ body main section + section h2::before {
   left: 0;
   position: absolute;
 }
-body h1 {
+h1 {
   display: none;
 }
-body h2 {
+h2 {
   font-style: italic;
   font-weight: 400;
   line-height: 1;
 }
-body h3 {
+h3 {
   color: #14213d;
   font-weight: 400;
   margin-bottom: 0;
 }
-body ul {
+ul {
   list-style-type: none;
 }
-body a {
+a {
   color: inherit;
   text-decoration: none;
 }
-body p a {
+p a {
   background-image: linear-gradient(90deg, rgba(111, 122, 137, 0.3) 0%, rgba(111, 122, 137, 0.3) 50%, #1ee494 50%, #1ee494 100%);
-}
-body pre {
-  box-sizing: border-box;
-  background-color: #f6f6f6;
-  margin: 2em 0 4em;
-  overflow: auto;
-  padding: 2em;
-  width: 100%;
 }
 
 #support ul li::before {
@@ -489,25 +453,25 @@ footer > ul:nth-of-type(2) li a#website::before {
     text-align: center;
   }
 }
-main.index section:nth-of-type(1) {
+#factory {
   align-content: flex-start;
   padding-bottom: 0;
 }
 @media screen and (min-width: 581px) {
-  main.index section:nth-of-type(1) {
+  #factory {
     margin-bottom: 185px;
   }
 }
 @media screen and (max-width: 580px) {
-  main.index section:nth-of-type(1) {
+  #factory {
     margin-bottom: 150px;
   }
 }
-main.index section:nth-of-type(1) h2 {
+#factory h2 {
   margin-bottom: 0;
   width: 100%;
 }
-main.index section:nth-of-type(1) h2::before {
+#factory h2::before {
   background: url("img/logotype-white.gif") top center/contain no-repeat;
   content: url("img/fake-logo.svg");
   display: block;
@@ -516,11 +480,11 @@ main.index section:nth-of-type(1) h2::before {
   min-width: 15rem;
   width: 33.3333333333%;
 }
-main.index section:nth-of-type(1) p strong {
+#factory p strong {
   color: #1ee494;
   margin: auto 0.25em;
 }
-main.index section:nth-of-type(1) ul {
+#factory ul {
   background-color: #f6f6f6;
   border-radius: 0.35rem;
   color: #14213d;
@@ -534,16 +498,16 @@ main.index section:nth-of-type(1) ul {
   z-index: 6;
 }
 @media screen and (min-width: 581px) {
-  main.index section:nth-of-type(1) ul {
+  #factory ul {
     top: calc(100% - 370px / 2 - 1.75em);
   }
 }
 @media screen and (max-width: 580px) {
-  main.index section:nth-of-type(1) ul {
+  #factory ul {
     top: calc(100% - 300px / 2 - 1.75em);
   }
 }
-main.index section:nth-of-type(1) ul::after {
+#factory ul::after {
   align-items: center;
   background: url("img/arrow-bottom.svg") center/1em no-repeat;
   border-bottom-right-radius: 0.35rem;
@@ -559,7 +523,7 @@ main.index section:nth-of-type(1) ul::after {
   top: 0;
   width: 0.5em;
 }
-main.index section:nth-of-type(1) ul li {
+#factory ul li {
   border-radius: 0.35rem;
   color: transparent;
   cursor: pointer;
@@ -567,38 +531,38 @@ main.index section:nth-of-type(1) ul li {
   overflow: hidden;
   transition: color 0.2s ease 0.2s, height 0.25s ease, padding 0.25s ease;
 }
-main.index section:nth-of-type(1) ul li::before {
+#factory ul li::before {
   color: transparent;
   content: "–";
   margin: 0 0.5em;
 }
-main.index section:nth-of-type(1) ul li:hover {
+#factory ul li:hover {
   background-color: #e2e4e8;
 }
-main.index section:nth-of-type(1) ul li.active::before {
+#factory ul li.active::before {
   color: inherit;
 }
-main.index section:nth-of-type(1) ul li.active, main.index section:nth-of-type(1) ul:hover li {
+#factory ul li.active, #factory ul:hover li {
   color: #14213d;
   height: 1em;
   padding: 1.25em 0.5em;
 }
-main.index section:nth-of-type(1) ul:hover::after {
+#factory ul:hover::after {
   opacity: 0;
 }
-main.index section:nth-of-type(1) input, main.index section:nth-of-type(1) label {
+#factory input, #factory label {
   bottom: 0;
   height: 6rem;
   left: 0;
   position: absolute;
 }
 @media screen and (max-width: 580px) {
-  main.index section:nth-of-type(1) input, main.index section:nth-of-type(1) label {
+  #factory input, #factory label {
     transform: translateX(-20px);
     bottom: -150px;
   }
 }
-main.index section:nth-of-type(1) input {
+#factory input {
   border: 0;
   cursor: pointer;
   margin: 0;
@@ -606,37 +570,37 @@ main.index section:nth-of-type(1) input {
   width: 17rem;
   z-index: 5;
 }
-main.index section:nth-of-type(1) input:not(:checked) ~ dl dt {
+#factory input:not(:checked) ~ dl dt {
   display: block;
 }
-main.index section:nth-of-type(1) input:checked ~ dl dt.active::before {
+#factory input:checked ~ dl dt.active::before {
   background-position: 90% 0;
   opacity: 0;
 }
-main.index section:nth-of-type(1) input:checked ~ dl dt.active + dd img {
+#factory input:checked ~ dl dt.active + dd img {
   opacity: 1;
   top: 50%;
 }
-main.index section:nth-of-type(1) input:checked ~ label:nth-of-type(1) {
+#factory input:checked ~ label:nth-of-type(1) {
   color: #6f7a89 !important;
 }
-main.index section:nth-of-type(1) input:checked ~ label:nth-of-type(1)::after {
+#factory input:checked ~ label:nth-of-type(1)::after {
   background-color: #14213d;
   left: 8.5rem;
   padding: 0.25rem;
   right: 5rem;
   transition: background-color 0.25s ease, left 0.25s ease 0.05s, padding 0.25s ease, right 0.25s ease, transform 0.2s ease;
 }
-main.index section:nth-of-type(1) input:checked ~ label:nth-of-type(2) {
+#factory input:checked ~ label:nth-of-type(2) {
   color: #14213d !important;
 }
-main.index section:nth-of-type(1) input:hover ~ label:nth-of-type(1)::before, main.index section:nth-of-type(1) input:hover ~ label:nth-of-type(1)::after {
+#factory input:hover ~ label:nth-of-type(1)::before, #factory input:hover ~ label:nth-of-type(1)::after {
   transform: scale(1.1);
 }
-main.index section:nth-of-type(1) input:hover ~ label:nth-of-type(1)::before {
+#factory input:hover ~ label:nth-of-type(1)::before {
   box-shadow: 0 5px 5px 0 rgba(111, 122, 137, 0.3);
 }
-main.index section:nth-of-type(1) label {
+#factory label {
   align-items: center;
   box-shadow: 0 0 0 0 #e2e4e8;
   box-sizing: border-box;
@@ -645,7 +609,7 @@ main.index section:nth-of-type(1) label {
   padding: 1rem;
   transition: box-shadow 0.2s ease, opacity 0.2s ease;
 }
-main.index section:nth-of-type(1) label:nth-of-type(1) {
+#factory label:nth-of-type(1) {
   animation: switch-fade-in 1s ease 1s both, color-fade-to-primary 0.25s ease 2.25s both;
   background-image: linear-gradient(90deg, transparent 0%, transparent 33.33%, #e2e4e8 33.33%, #e2e4e8 66.66%, #1ee494 66.66%, #1ee494 100%);
   background-size: 300% 100%;
@@ -656,7 +620,7 @@ main.index section:nth-of-type(1) label:nth-of-type(1) {
   width: 17rem;
   z-index: 1;
 }
-main.index section:nth-of-type(1) label:nth-of-type(1)::before, main.index section:nth-of-type(1) label:nth-of-type(1)::after {
+#factory label:nth-of-type(1)::before, #factory label:nth-of-type(1)::after {
   animation: opacity-fade-in 1s ease 1.6s both;
   border-radius: 3.5rem;
   content: "";
@@ -665,14 +629,14 @@ main.index section:nth-of-type(1) label:nth-of-type(1)::before, main.index secti
   position: absolute;
   top: 1.25rem;
 }
-main.index section:nth-of-type(1) label:nth-of-type(1)::before {
+#factory label:nth-of-type(1)::before {
   animation: opacity-fade-in 0.25s ease-in-out 1.85s both;
   background-color: #f6f6f6;
   box-shadow: 0 5px 5px 0 rgba(111, 122, 137, 0.1);
   transition: box-shadow 0.2s, transform 0.2s ease;
   width: 6rem;
 }
-main.index section:nth-of-type(1) label:nth-of-type(1)::after {
+#factory label:nth-of-type(1)::after {
   animation: opacity-fade-in 0.25s ease-in-out 2s both;
   background-clip: content-box;
   background-color: #1ee494;
@@ -682,7 +646,7 @@ main.index section:nth-of-type(1) label:nth-of-type(1)::after {
   transition: background-color 0.25s ease, left 0.25s ease, padding 0.25s ease, right 0.25s ease 0.05s, transform 0.2s ease;
   z-index: 1;
 }
-main.index section:nth-of-type(1) label:nth-of-type(2) {
+#factory label:nth-of-type(2) {
   animation: color-fade-to-grey 0.25s ease 2.25s both;
   color: #6f7a89;
   font-style: italic;
@@ -691,7 +655,7 @@ main.index section:nth-of-type(1) label:nth-of-type(2) {
   width: 5rem;
   z-index: 2;
 }
-main.index section:nth-of-type(1) dl {
+#factory dl {
   background-image: linear-gradient(transparent 0%, transparent 33.33%, #e2e4e8 33.33%, #e2e4e8 66.66%, transparent 66.66%, transparent 100%);
   background-size: 100% 300%;
   background-position-x: 0;
@@ -700,51 +664,51 @@ main.index section:nth-of-type(1) dl {
   width: 100%;
 }
 @media screen and (min-width: 581px) {
-  main.index section:nth-of-type(1) dl {
+  #factory dl {
     height: 370px;
     margin: 2em 0 -185px;
   }
 }
 @media screen and (max-width: 580px) {
-  main.index section:nth-of-type(1) dl {
+  #factory dl {
     height: 300px;
     margin: 2em -45px -150px;
     width: calc(100% + 45px * 2);
   }
 }
-main.index section:nth-of-type(1) dl * {
+#factory dl * {
   z-index: -1;
 }
-main.index section:nth-of-type(1) dl dt {
+#factory dl dt {
   color: transparent;
   font-size: 0;
 }
-main.index section:nth-of-type(1) dl dt, main.index section:nth-of-type(1) dl dt::before {
+#factory dl dt, #factory dl dt::before {
   height: 100%;
   left: 0;
   position: absolute;
   top: 0;
   width: 100%;
 }
-main.index section:nth-of-type(1) dl dt::before {
+#factory dl dt::before {
   content: "";
   opacity: 1;
   transition: background-position 0.25s ease, opacity 0.25s ease;
 }
-main.index section:nth-of-type(1) dl dt:nth-of-type(1)::before {
+#factory dl dt:nth-of-type(1)::before {
   background: url("img/documents/reports-html.png") center/cover no-repeat;
 }
-main.index section:nth-of-type(1) dl dt:nth-of-type(2)::before {
+#factory dl dt:nth-of-type(2)::before {
   background: url("img/documents/invoices-html.png") center/cover no-repeat;
 }
-main.index section:nth-of-type(1) dl dt:nth-of-type(3)::before {
+#factory dl dt:nth-of-type(3)::before {
   background: url("img/documents/tickets-html.png") center/cover no-repeat;
 }
-main.index section:nth-of-type(1) dl dt:not(.active)::before {
+#factory dl dt:not(.active)::before {
   background-position: 90% 0;
   opacity: 0;
 }
-main.index section:nth-of-type(1) dl img {
+#factory dl img {
   left: 50%;
   opacity: 0;
   position: absolute;
@@ -753,119 +717,119 @@ main.index section:nth-of-type(1) dl img {
   transition: opacity 0.25s ease, top 0.25s ease;
 }
 @media screen and (min-width: 581px) {
-  main.index section:nth-of-type(1) dl img {
+  #factory dl img {
     max-width: 100%;
   }
 }
-main.index section:nth-of-type(2) {
+#floss {
   display: inline-block;
   padding: 2em 0;
   vertical-align: top;
   width: 100%;
 }
 @media screen and (min-width: 581px) {
-  main.index section:nth-of-type(2) {
+  #floss {
     padding: 2em 8.3333333333%;
     width: 41.6666666667%;
   }
 }
-main.index section:nth-of-type(2) p {
+#floss p {
   color: #14213d;
 }
-main.index section:nth-of-type(3) {
+#about {
   display: inline-block;
 }
 @media screen and (min-width: 581px) {
-  main.index section:nth-of-type(3) {
+  #about {
     width: 33.3333333333%;
   }
 }
-main.index section:nth-of-type(5) {
+#involved {
   margin-top: 6em;
   padding: 1px 16.6666666667% 3em;
 }
-main.index section:nth-of-type(5)::before {
+#involved::before {
   background-color: #f6f6f6;
 }
 @media screen and (max-width: 580px) {
-  main.index section:nth-of-type(5) {
+  #involved {
     padding: 1px 0 3em;
   }
 }
-main.index section:nth-of-type(5) h2 {
+#involved h2 {
   margin-bottom: 0;
 }
-main.index section:nth-of-type(5) h3 {
+#involved h3 {
   margin: 1.5em 0 0.75em;
 }
-main.index section:nth-of-type(6), main.index section:nth-of-type(4) {
+#samples, #support {
   padding: 0 8.3333333333%;
 }
 
-#main::before, #main::after {
+body::before, body::after {
   animation: vertical-page-border-fade-in 1.5s ease both 1.25s;
 }
-#main main::before, #main main::after {
+main::before, main::after {
   animation: horizontal-page-border-fade-in 1s ease both 0.25s;
 }
-#main nav.index ul li {
+nav ul li {
   animation: color-fade-to-light 0.5s ease both;
 }
-#main nav.index ul li:nth-of-type(1) {
+nav ul li:nth-of-type(1) {
   animation-delay: 150ms;
 }
-#main nav.index ul li:nth-of-type(2) {
+nav ul li:nth-of-type(2) {
   animation-delay: 200ms;
 }
-#main nav.index ul li:nth-of-type(3) {
+nav ul li:nth-of-type(3) {
   animation-delay: 250ms;
 }
-#main nav.index ul li:nth-of-type(4) {
+nav ul li:nth-of-type(4) {
   animation-delay: 300ms;
 }
-#main nav.index ul li:nth-of-type(5) {
+nav ul li:nth-of-type(5) {
   animation-delay: 350ms;
 }
-#main nav.index ul li:nth-of-type(6) {
+nav ul li:nth-of-type(6) {
   animation-delay: 400ms;
 }
-#main > aside.index:nth-of-type(1) {
+aside:nth-of-type(1) {
   animation: color-fade-to-action 0.5s ease both 2.5s;
 }
-#main > aside.index:nth-of-type(1) a {
+aside:nth-of-type(1) a {
   animation-delay: 2.5s, 4.5s;
 }
-#main > aside.index:nth-of-type(2) {
+aside:nth-of-type(2) {
   animation: color-fade-to-light 0.5s ease both 2.5s;
 }
-#main > aside.index:nth-of-type(2) progress {
+aside:nth-of-type(2) progress {
   animation: opacity-fade-in 0.75s ease both 2.5s;
 }
-#main main.index section:nth-of-type(1) {
+#factory {
   animation: header-height-fade-in 0.5s ease-in both 0.25s;
 }
-#main main.index section:nth-of-type(1) h2 {
+#factory h2 {
   animation: color-fade-to-light 0.5s ease both 1s;
 }
-#main main.index section:nth-of-type(1) h2::before {
+#factory h2::before {
   animation: opacity-fade-in 0.75s ease both 0.25s;
 }
-#main main.index section:nth-of-type(1) p {
+#factory p {
   animation: color-fade-to-light 0.5s ease both 1s;
 }
-#main main.index section:nth-of-type(1) p strong {
+#factory p strong {
   animation: color-fade-to-action 0.5s ease both 1s;
 }
-#main main.index section:nth-of-type(1) ul, #main main.index section:nth-of-type(1) dt {
+#factory ul, #factory dt {
   animation: opacity-fade-in 0.5s ease both 1.2s;
 }
-#main main.index section:nth-of-type(1) dl {
+#factory dl {
   animation: start-list-fade-in 1s ease both 1s;
 }
-#main main.index section:nth-of-type(1) label {
+#factory label {
   animation-delay: 1.5s;
 }
-#main main.index section:nth-of-type(1) label:nth-of-type(1)::before, #main main.index section:nth-of-type(1) label:nth-of-type(1)::after {
+#factory label:nth-of-type(1)::before, #factory label:nth-of-type(1)::after {
   animation-delay: 2s;
 }
 
@@ -913,15 +877,12 @@ aside + aside a:focus {
     font-size: 1.1rem;
     margin-right: 1em;
   }
-  nav #menu-close {
-    display: none;
-  }
 }
 @media screen and (max-width: 830px) {
-  #main nav, #main nav.index {
+  nav {
     width: 0;
   }
-  #main nav ul, #main nav.index ul {
+  nav ul {
     background-color: #1ee494;
     background-clip: content-box;
     border-radius: 100%;
@@ -936,20 +897,20 @@ aside + aside a:focus {
     width: 3em;
     z-index: 10;
   }
-  #main nav ul::before, #main nav.index ul::before {
+  nav ul::before {
     content: url("img/menu-picto.svg");
     transition: opacity 0.2s ease 1.2s, height 0.2s ease 1.2s, width 0.2s ease 1.2s;
   }
-  #main nav ul li, #main nav.index ul li {
+  nav ul li {
     font-size: 0;
     margin: 0.5em 0.5em 0.5em 2em;
     width: 100%;
   }
-  #main nav ul li a, #main nav.index ul li a {
+  nav ul li a {
     color: #14213d;
     font-size: inherit;
   }
-  #main nav ul:hover, #main nav.index ul:hover {
+  nav ul:hover {
     border-radius: 0;
     height: 100%;
     margin: 0;
@@ -957,46 +918,46 @@ aside + aside a:focus {
     transition: border-radius 0.5s ease, height 0.4s ease 0.8s, margin 0.4s ease 0.5s, transform 0.5s ease, width 0.3s ease 0.5s;
     width: 100%;
   }
-  #main nav ul:hover::before, #main nav.index ul:hover::before {
+  nav ul:hover::before {
     opacity: 0;
     height: 0;
     transition: opacity 0.2s ease, height 0.2s ease 0.2s, width 0.2s ease 0.2s;
     width: 0;
   }
-  #main nav ul:hover li, #main nav.index ul:hover li {
+  nav ul:hover li {
     font-size: 1.3rem;
     transition: font-size 0.1s ease 1s;
   }
-  #main nav ul:hover li:nth-of-type(1), #main nav.index ul:hover li:nth-of-type(1) {
+  nav ul:hover li:nth-of-type(1) {
     animation: 0.25s fade-in-from-left both;
     animation-delay: 1075ms;
   }
-  #main nav ul:hover li:nth-of-type(2), #main nav.index ul:hover li:nth-of-type(2) {
+  nav ul:hover li:nth-of-type(2) {
     animation: 0.25s fade-in-from-left both;
     animation-delay: 1150ms;
   }
-  #main nav ul:hover li:nth-of-type(3), #main nav.index ul:hover li:nth-of-type(3) {
+  nav ul:hover li:nth-of-type(3) {
     animation: 0.25s fade-in-from-left both;
     animation-delay: 1225ms;
   }
-  #main nav ul:hover li:nth-of-type(4), #main nav.index ul:hover li:nth-of-type(4) {
+  nav ul:hover li:nth-of-type(4) {
     animation: 0.25s fade-in-from-left both;
     animation-delay: 1300ms;
   }
-  #main nav ul:hover li:nth-of-type(5), #main nav.index ul:hover li:nth-of-type(5) {
+  nav ul:hover li:nth-of-type(5) {
     animation: 0.25s fade-in-from-left both;
     animation-delay: 1375ms;
   }
-  #main nav ul:hover li:nth-of-type(6), #main nav.index ul:hover li:nth-of-type(6) {
+  nav ul:hover li:nth-of-type(6) {
     animation: 0.25s fade-in-from-left both;
     animation-delay: 1450ms;
   }
-  #main nav:hover + aside:nth-of-type(1)::before, #main nav:hover + aside:nth-of-type(1)::after, #main nav.index:hover + aside:nth-of-type(1)::before, #main nav.index:hover + aside:nth-of-type(1)::after {
+  nav:hover + aside:nth-of-type(1)::before, nav:hover + aside:nth-of-type(1)::after {
     opacity: 1;
     right: 0;
     transition: opacity 0.2s ease 1.2s, right 0.2s ease 1.2s;
   }
-  #main > aside:nth-of-type(1)::before, #main > aside:nth-of-type(1)::after {
+  aside:nth-of-type(1)::before, aside:nth-of-type(1)::after {
     color: #14213d;
     opacity: 0;
     right: -3rem;
@@ -1004,7 +965,7 @@ aside + aside a:focus {
     transition: opacity 0.2s ease, right 0.2s ease;
     z-index: 15;
   }
-  #main > aside:nth-of-type(1)::before {
+  aside:nth-of-type(1)::before {
     content: "×";
     font-family: "Rosario", sans;
     font-size: 1.52rem;
@@ -1012,7 +973,7 @@ aside + aside a:focus {
     padding: 0 1rem;
     top: 1rem;
   }
-  #main > aside:nth-of-type(1)::after {
+  aside:nth-of-type(1)::after {
     content: "close";
     font-size: 0.68rem;
     padding: 0.5rem 2rem 1rem 0.5rem;
@@ -1020,51 +981,51 @@ aside + aside a:focus {
     transform-origin: bottom right;
     bottom: 100%;
   }
-  #main aside + aside {
+  aside + aside {
     right: 50%;
     transform: translate(50%, 1em);
   }
 }
 
-#main main section:nth-of-type(1)::before {
+#factory::before {
   height: 100%;
   transition: height 500ms 500ms;
 }
-#main nav ul li, #main aside, #main main > * > *:not(input), #main footer {
+nav ul li, aside, main > * > *:not(input), footer {
   opacity: 1;
   transition: opacity 500ms 500ms;
 }
-#main main.start ul li {
+main.start ul li {
   animation-duration: 1s;
   animation-fill-mode: both;
   animation-name: start-list-fade-in;
   animation-timing-function: ease;
 }
-#main > aside:nth-of-type(1) a {
+aside:nth-of-type(1) a {
   animation: typing 2s steps(35, end) 0.5s both, cursor 2s step-end infinite 3s;
 }
 @media screen and (min-width: 831px) {
-  #main ul li:nth-of-type(1) {
+  ul li:nth-of-type(1) {
     animation-delay: 150ms;
     transition-delay: 150ms;
   }
-  #main ul li:nth-of-type(2) {
+  ul li:nth-of-type(2) {
     animation-delay: 200ms;
     transition-delay: 200ms;
   }
-  #main ul li:nth-of-type(3) {
+  ul li:nth-of-type(3) {
     animation-delay: 250ms;
     transition-delay: 250ms;
   }
-  #main ul li:nth-of-type(4) {
+  ul li:nth-of-type(4) {
     animation-delay: 300ms;
     transition-delay: 300ms;
   }
-  #main ul li:nth-of-type(5) {
+  ul li:nth-of-type(5) {
     animation-delay: 350ms;
     transition-delay: 350ms;
   }
-  #main ul li:nth-of-type(6) {
+  ul li:nth-of-type(6) {
     animation-delay: 400ms;
     transition-delay: 400ms;
   }
