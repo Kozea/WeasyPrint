@@ -369,18 +369,21 @@ def generate_pdf(document, target, zoom, attachments, optimize_size,
                 rectangle = (
                     *matrix.transform_point(*rectangle[:2]),
                     *matrix.transform_point(*rectangle[2:]))
+                stream = pydyf.Stream([], {
+                    'Type': '/XObject',
+                    'Subtype': '/Form',
+                    'BBox': pydyf.Array(rectangle),
+                    'Length': 0,
+                })
+                pdf.add_object(stream)
                 annot = pydyf.Dictionary({
                     'Type': '/Annot',
                     'Rect': pydyf.Array(rectangle),
                     'Subtype': '/FileAttachment',
                     'T': pydyf.String(),
                     'FS': annot_file.reference,
-                    'AP': pydyf.Dictionary({'N': pydyf.Stream([], {
-                        'Type': '/XObject',
-                        'Subtype': '/Form',
-                        'BBox': pydyf.Array(rectangle),
-                        'Length': 0,
-                    })})
+                    'AP': pydyf.Dictionary({'N': stream.reference}),
+                    'AS': '/N',
                 })
                 pdf.add_object(annot)
                 if 'Annots' not in pdf_page:
