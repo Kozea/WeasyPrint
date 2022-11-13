@@ -182,6 +182,11 @@ class Node:
             if url:
                 return url
 
+    def del_href(self):
+        """Remove the href attributes, with or without a namespace."""
+        for attr_name in ('{http://www.w3.org/1999/xlink}href', 'href'):
+            self.attrib.pop(attr_name, None)
+
     @staticmethod
     def process_whitespace(string, preserve):
         """Replace newlines by spaces, and merge spaces if not preserved."""
@@ -308,6 +313,7 @@ class SVG:
         self.text_path_width = 0
 
         self.parse_defs(self.tree)
+        self.inherit_defs()
 
     def get_intrinsic_size(self, font_size):
         """Get intrinsic size of the image."""
@@ -709,6 +715,32 @@ class SVG:
                 getattr(self, f'{def_type}s')[node.attrib['id']] = node
         for child in node:
             self.parse_defs(child)
+
+    def inherit_defs(self):
+        """Handle inheritance of different defined elements lists."""
+        for defs in (self.gradients, self.patterns):
+            for element in defs.values():
+                self.inherit_element(element, defs)
+
+    def inherit_element(self, element, defs):
+        """Recursively handle inheritance of defined element."""
+        href = element.get_href(self.url)
+        if not href:
+            return
+        element.del_href()
+        parent = defs.get(parse_url(href).fragment)
+        if not parent:
+            return
+        self.inherit_element(parent, defs)
+        for key, value in parent.attrib.items():
+            if key not in element.attrib:
+                element.attrib[key] = value
+        if next(iter(element), None) is None:
+            # Override element’s __iter__ with parent’s __iter__. As special
+            # methods are bound to classes and not instances, we have to create
+            # and assign a new type.
+            element.__class__ = type(
+                'Node', (Node,), {'__iter__': lambda self: parent.__iter__()})
 
     def calculate_bounding_box(self, node, font_size, stroke=True):
         """Calculate the bounding box of a node."""

@@ -292,6 +292,108 @@ def test_linear_gradient_reflect(assert_pixels):
 
 
 @assert_no_logs
+def test_linear_gradient_inherit_attributes(assert_pixels):
+    assert_pixels('''
+        BBBBBBBBBB
+        BBBBBBBBBB
+        BBBBBBBBBB
+        BBBBBBBBBB
+        BBBBBBBBBB
+        RRRRRRRRRR
+        RRRRRRRRRR
+        RRRRRRRRRR
+        RRRRRRRRRR
+        RRRRRRRRRR
+    ''', '''
+      <style>
+        @page { size: 10px }
+        svg { display: block }
+      </style>
+      <svg width="10px" height="10px" xmlns="https://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="parent" x1="0" y1="0" x2="0" y2="1"
+            gradientUnits="objectBoundingBox">
+          </linearGradient>
+          <linearGradient id="grad" href="#parent">
+            <stop stop-color="blue" offset="50%"></stop>
+            <stop stop-color="red" offset="50%"></stop>
+          </linearGradient>
+        </defs>
+        <rect x="0" y="0" width="10" height="10" fill="url(#grad)" />
+      </svg>
+    ''')
+
+
+@assert_no_logs
+def test_linear_gradient_inherit_children(assert_pixels):
+    assert_pixels('''
+        BBBBBBBBBB
+        BBBBBBBBBB
+        BBBBBBBBBB
+        BBBBBBBBBB
+        BBBBBBBBBB
+        RRRRRRRRRR
+        RRRRRRRRRR
+        RRRRRRRRRR
+        RRRRRRRRRR
+        RRRRRRRRRR
+    ''', '''
+      <style>
+        @page { size: 10px }
+        svg { display: block }
+      </style>
+      <svg width="10px" height="10px" xmlns="https://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="parent">
+            <stop stop-color="blue" offset="50%"></stop>
+            <stop stop-color="red" offset="50%"></stop>
+          </linearGradient>
+          <linearGradient id="grad" href="#parent"
+            x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
+          </linearGradient>
+        </defs>
+        <rect x="0" y="0" width="10" height="10" fill="url(#grad)" />
+      </svg>
+    ''')
+
+
+@assert_no_logs
+def test_linear_gradient_inherit_no_override(assert_pixels):
+    assert_pixels('''
+        BBBBBBBBBB
+        BBBBBBBBBB
+        BBBBBBBBBB
+        BBBBBBBBBB
+        BBBBBBBBBB
+        RRRRRRRRRR
+        RRRRRRRRRR
+        RRRRRRRRRR
+        RRRRRRRRRR
+        RRRRRRRRRR
+    ''', '''
+      <style>
+        @page { size: 10px }
+        svg { display: block }
+      </style>
+      <svg width="10px" height="10px" xmlns="https://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="parent"
+            x1="1" y1="1" x2="1" y2="0" gradientUnits="userSpaceOnUse">
+            <stop stop-color="red" offset="50%"></stop>
+            <stop stop-color="blue" offset="50%"></stop>
+          </linearGradient>
+          <linearGradient id="grad" href="#parent"
+            x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
+            <stop stop-color="blue" offset="50%"></stop>
+            <stop stop-color="red" offset="50%"></stop>
+          </linearGradient>
+        </defs>
+        <rect x="0" y="0" width="10" height="10" fill="url(#grad)" />
+      </svg>
+    ''')
+
+
+@assert_no_logs
 def test_radial_gradient(assert_pixels):
     assert_pixels('''
         rrrrrrrrrr
@@ -493,7 +595,112 @@ def test_radial_gradient_reflect(assert_pixels):
 
 
 @assert_no_logs
-def test_linear_gradient_opacity(assert_pixels):
+def test_radial_gradient_inherit_attributes(assert_pixels):
+    assert_pixels('''
+        rrrrrrrrrr
+        rrrrrrrrrr
+        rrrrBBrrrr
+        rrrBBBBrrr
+        rrBBBBBBrr
+        rrBBBBBBrr
+        rrrBBBBrrr
+        rrrrBBrrrr
+        rrrrrrrrrr
+        rrrrrrrrrr
+    ''', '''
+      <style>
+        @page { size: 10px }
+        svg { display: block }
+      </style>
+      <svg width="10px" height="10px" xmlns="https://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="parent" cx="0.5" cy="0.5" r="0.5"
+            fx="0.5" fy="0.5" fr="0.2"
+            gradientUnits="objectBoundingBox">
+          </radialGradient>
+          <radialGradient id="grad" href="#parent">
+            <stop stop-color="blue" offset="25%"></stop>
+            <stop stop-color="red" offset="25%"></stop>
+          </radialGradient>
+        </defs>
+        <rect x="0" y="0" width="10" height="10" fill="url(#grad)" />
+      </svg>
+    ''')
+
+
+@assert_no_logs
+def test_radial_gradient_inherit_children(assert_pixels):
+    assert_pixels('''
+        rrrrrrrrrr
+        rrrrrrrrrr
+        rrrrBBrrrr
+        rrrBBBBrrr
+        rrBBBBBBrr
+        rrBBBBBBrr
+        rrrBBBBrrr
+        rrrrBBrrrr
+        rrrrrrrrrr
+        rrrrrrrrrr
+    ''', '''
+      <style>
+        @page { size: 10px }
+        svg { display: block }
+      </style>
+      <svg width="10px" height="10px" xmlns="https://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="parent">
+            <stop stop-color="blue" offset="25%"></stop>
+            <stop stop-color="red" offset="25%"></stop>
+          </radialGradient>
+          <radialGradient id="grad" href="#parent"
+            cx="0.5" cy="0.5" r="0.5" fx="0.5" fy="0.5" fr="0.2"
+            gradientUnits="objectBoundingBox">
+          </radialGradient>
+        </defs>
+        <rect x="0" y="0" width="10" height="10" fill="url(#grad)" />
+      </svg>
+    ''')
+
+
+@assert_no_logs
+def test_radial_gradient_inherit_no_override(assert_pixels):
+    assert_pixels('''
+        rrrrrrrrrr
+        rrrrrrrrrr
+        rrrrBBrrrr
+        rrrBBBBrrr
+        rrBBBBBBrr
+        rrBBBBBBrr
+        rrrBBBBrrr
+        rrrrBBrrrr
+        rrrrrrrrrr
+        rrrrrrrrrr
+    ''', '''
+      <style>
+        @page { size: 10px }
+        svg { display: block }
+      </style>
+      <svg width="10px" height="10px" xmlns="https://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="parent" cx="5" cy="5" r="5" fx="5" fy="5" fr="2"
+            gradientUnits="userSpaceOnUse">
+            <stop stop-color="red" offset="25%"></stop>
+            <stop stop-color="blue" offset="25%"></stop>
+          </radialGradient>
+          <radialGradient id="grad" href="#parent" cx="0.5" cy="0.5" r="0.5"
+            fx="0.5" fy="0.5" fr="0.2"
+            gradientUnits="objectBoundingBox">
+            <stop stop-color="blue" offset="25%"></stop>
+            <stop stop-color="red" offset="25%"></stop>
+          </radialGradient>
+        </defs>
+        <rect x="0" y="0" width="10" height="10" fill="url(#grad)" />
+      </svg>
+    ''')
+
+
+@assert_no_logs
+def test_gradient_opacity(assert_pixels):
     assert_pixels('''
         BBBBBBBBBB
         BBBBBBBBBB
