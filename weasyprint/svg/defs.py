@@ -206,15 +206,19 @@ def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
         if 0 not in (a0, a1) and (a0, a1) != (1, 1):
             color_couples[i][2] = a0 / a1
 
+    x1, y1 = 0, 0
     if 'gradientTransform' in gradient.attrib:
         transform_matrix = transform(
             gradient.get('gradientTransform'), font_size,
             svg.normalized_diagonal)
+        x1, y1 = transform_matrix.invert.transform_point(0, 0)
+        x2, y2 = transform_matrix.invert.transform_point(width, height)
+        width, height = x2 - x1, y2 - y1
         matrix = transform_matrix @ matrix
 
     matrix = matrix @ svg.stream.ctm
     pattern = svg.stream.add_pattern(width, height, width, height, matrix)
-    group = pattern.add_group([0, 0, width, height])
+    group = pattern.add_group([x1, y1, width, height])
 
     domain = (positions[0], positions[-1])
     extend = spread not in ('repeat', 'reflect')

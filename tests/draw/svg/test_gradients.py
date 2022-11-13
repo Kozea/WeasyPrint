@@ -133,7 +133,6 @@ def test_linear_gradient_multicolor_userspace(assert_pixels):
     ''')
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_linear_gradient_transform(assert_pixels):
     assert_pixels('''
