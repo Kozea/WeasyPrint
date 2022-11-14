@@ -105,10 +105,8 @@ def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
     if not is_valid_bounding_box(bounding_box):
         return False
     if gradient.get('gradientUnits') == 'userSpaceOnUse':
-        x, y = bounding_box[0], bounding_box[1]
         width, height = svg.inner_width, svg.inner_height
     else:
-        x, y = 0, 0
         width, height = bounding_box[2], bounding_box[3]
 
     spread = gradient.get('spreadMethod', 'pad')
@@ -136,8 +134,7 @@ def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
     if gradient.get('gradientUnits') == 'userSpaceOnUse':
         matrix = Matrix()
     else:
-        matrix = Matrix(
-            a=width, d=height, e=bounding_box[0], f=bounding_box[1])
+        matrix = Matrix(a=width, d=height)
     if gradient.tag == 'linearGradient':
         shading_type = 2
         x1, y1 = (
@@ -163,6 +160,8 @@ def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
             spread, positions, colors, fx, fy, fr, cx, cy, r, width, height,
             matrix)
 
+    if gradient.get('gradientUnits') != 'userSpaceOnUse':
+        matrix @= Matrix(e=bounding_box[0], f=bounding_box[1])
     matrix @= svg.stream.ctm
 
     alphas = [color[3] for color in colors]
@@ -184,20 +183,18 @@ def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
         if 0 not in (a0, a1) and (a0, a1) != (1, 1):
             color_couples[i][2] = a0 / a1
 
-    x1, y1 = x, y
+    x, y = 0, 0
     if 'gradientTransform' in gradient.attrib:
         transform_matrix = transform(
             gradient.get('gradientTransform'), font_size,
             svg.normalized_diagonal)
-        x1, y1 = transform_matrix.invert.transform_point(x1, y1)
-        x2, y2 = transform_matrix.invert.transform_point(
-            x1 + width, y1 + height)
-        width, height = x2 - x1, y2 - y1
+        x, y = transform_matrix.invert.transform_point(x, y)
+        width, height = transform_matrix.invert.transform_point(width, height)
         matrix = transform_matrix @ matrix
 
     pattern = svg.stream.add_pattern(
-        x1, y1, width, height, width, height, matrix)
-    group = pattern.add_group([x1, y1, width, height])
+        x, y, width, height, width, height, matrix)
+    group = pattern.add_group([x, y, width, height])
 
     domain = (positions[0], positions[-1])
     extend = spread not in ('repeat', 'reflect')
@@ -212,7 +209,7 @@ def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
         shading_type, 'RGB', domain, coords, extend, function)
 
     if any(alpha != 1 for alpha in alphas):
-        alpha_stream = group.set_alpha_state(x1, y1, width, height)
+        alpha_stream = group.set_alpha_state(x, y, width, height)
         domain = (positions[0], positions[-1])
         extend = spread not in ('repeat', 'reflect')
         encode = (len(colors) - 1) * (0, 1)
