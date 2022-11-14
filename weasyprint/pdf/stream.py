@@ -466,7 +466,8 @@ class Stream(pydyf.Stream):
         self._images[image_name] = xobject
         return image_name
 
-    def add_pattern(self, width, height, repeat_width, repeat_height, matrix):
+    def add_pattern(self, x, y, width, height, repeat_width, repeat_height,
+                    matrix):
         states = pydyf.Dictionary()
         x_objects = pydyf.Dictionary()
         patterns = pydyf.Dictionary()
@@ -481,7 +482,7 @@ class Stream(pydyf.Stream):
         extra = pydyf.Dictionary({
             'Type': '/Pattern',
             'PatternType': 1,
-            'BBox': pydyf.Array([0, 0, width, height]),
+            'BBox': pydyf.Array([x, y, width, height]),
             'XStep': repeat_width,
             'YStep': repeat_height,
             'TilingType': 1,

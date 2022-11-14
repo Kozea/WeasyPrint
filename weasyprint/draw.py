@@ -390,7 +390,7 @@ def draw_background_image(stream, layer, image_rendering):
     matrix = Matrix(e=position_x + positioning_x, f=position_y + positioning_y)
     matrix @= stream.ctm
     pattern = stream.add_pattern(
-        image_width, image_height, repeat_width, repeat_height, matrix)
+        0, 0, image_width, image_height, repeat_width, repeat_height, matrix)
     group = pattern.add_group([0, 0, repeat_width, repeat_height])
 
     with stacked(stream):

@@ -137,12 +137,12 @@ def test_linear_gradient_multicolor_userspace(assert_pixels):
 def test_linear_gradient_transform(assert_pixels):
     assert_pixels('''
         BBBBBBBBBB
+        BBBBBBBBBB
+        BBBBBBBBBB
+        BBBBBBBBBB
+        BBBBBBBBBB
         RRRRRRRRRR
         GGGGGGGGGG
-        vvvvvvvvvv
-        vvvvvvvvvv
-        vvvvvvvvvv
-        vvvvvvvvvv
         vvvvvvvvvv
     ''', '''
       <style>
@@ -152,7 +152,8 @@ def test_linear_gradient_transform(assert_pixels):
       <svg width="10px" height="8px" xmlns="https://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1"
-            gradientUnits="objectBoundingBox" gradientTransform="scale(0.5)">
+            gradientUnits="objectBoundingBox"
+            gradientTransform="matrix(0.5, 0, 0, 0.5, 0, 0.5)">
             <stop stop-color="blue" offset="25%"></stop>
             <stop stop-color="red" offset="25%"></stop>
             <stop stop-color="red" offset="50%"></stop>
@@ -207,7 +208,6 @@ def test_linear_gradient_repeat(assert_pixels):
     ''')
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_linear_gradient_repeat_long(assert_pixels):
     assert_pixels('''
