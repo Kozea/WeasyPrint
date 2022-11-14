@@ -104,10 +104,11 @@ def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
     bounding_box = svg.calculate_bounding_box(node, font_size, stroke)
     if not is_valid_bounding_box(bounding_box):
         return False
-    x, y = bounding_box[0], bounding_box[1]
     if gradient.get('gradientUnits') == 'userSpaceOnUse':
+        x, y = bounding_box[0], bounding_box[1]
         width, height = svg.inner_width, svg.inner_height
     else:
+        x, y = 0, 0
         width, height = bounding_box[2], bounding_box[3]
 
     spread = gradient.get('spreadMethod', 'pad')
@@ -135,7 +136,8 @@ def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
     if gradient.get('gradientUnits') == 'userSpaceOnUse':
         matrix = Matrix()
     else:
-        matrix = Matrix(a=width, d=height)
+        matrix = Matrix(
+            a=width, d=height, e=bounding_box[0], f=bounding_box[1])
     if gradient.tag == 'linearGradient':
         shading_type = 2
         x1, y1 = (
