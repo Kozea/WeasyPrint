@@ -523,20 +523,19 @@ def test_radial_gradient_multicolor_userspace(assert_pixels):
     ''')
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_radial_gradient_repeat(assert_pixels):
     assert_pixels('''
-        GBrrrrrrBG
+        GBBrrrrBBG
         BrrGGGGrrB
-        rrGGBBGGrr
-        rGGBBBBGGr
-        rGBBBBBBGr
-        rGBBBBBBGr
-        rGGBBBBGGr
-        rrGGBBGGrr
+        BrGBBBBGrB
+        rGBBrrBBGr
+        rGBrGGrBGr
+        rGBrGGrBGr
+        rGBBrrBBGr
+        BrGBBBBGrB
         BrrGGGGrrB
-        GBrrrrrrBG
+        GBBrrrrBBG
     ''', '''
       <style>
         @page { size: 10px }
@@ -558,20 +557,19 @@ def test_radial_gradient_repeat(assert_pixels):
     ''')
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_radial_gradient_reflect(assert_pixels):
     assert_pixels('''
-        BGrrrrrrGB
-        GrrGGGGrrG
-        rrGGBBGGrr
-        rGGBBBBGGr
+        GrrrrrrrrG
+        rrrGGGGrrr
+        rrGBBBBGrr
         rGBBBBBBGr
+        rGBBGGBBGr
+        rGBBGGBBGr
         rGBBBBBBGr
-        rGGBBBBGGr
-        rrGGBBGGrr
-        GrrGGGGrrG
-        BGrrrrrrGB
+        rrGBBBBGrr
+        rrrGGGGrrr
+        GrrrrrrrrG
     ''', '''
       <style>
         @page { size: 10px }

@@ -302,16 +302,13 @@ def spread_radial_gradient(spread, positions, colors, fx, fy, fr, cx, cy, r,
         # Keep original lists and values, they’re useful
         original_colors = colors.copy()
         original_positions = positions.copy()
-        gradient_length = r - fr
 
         # Get the maximum distance between the center and the corners, to find
         # how many times we have to repeat the colors outside
-        tw, th = matrix.transform_point(width, height)
-        max_distance = max(
-            hypot(tw - fx, th - fy),
-            hypot(tw - fx, -fy),
-            hypot(-fx, th - fy),
-            hypot(-fx, -fy))
+        tw, th = matrix.invert.transform_point(width, height)
+        max_distance = hypot(
+            max(abs(fx), abs(tw - fx)), max(abs(fy), abs(th - fy)))
+        gradient_length = r - fr
         repeat_after = ceil((max_distance - r) / gradient_length)
         if repeat_after > 0:
             # Repeat colors and extrapolate positions
@@ -322,7 +319,7 @@ def spread_radial_gradient(spread, positions, colors, fx, fy, fr, cx, cy, r,
                 assert spread == 'reflect'
                 colors = []
                 for i in range(repeat):
-                    colors += original_colors[::1 if i % 2 else -1]
+                    colors += original_colors[::-1 if i % 2 else 1]
             positions = [
                 i + position for i in range(repeat) for position in positions]
             r += gradient_length * repeat_after
@@ -347,7 +344,8 @@ def spread_radial_gradient(spread, positions, colors, fx, fy, fr, cx, cy, r,
             else:
                 assert spread == 'reflect'
                 for i in range(full_repeat):
-                    colors += original_colors[::1 if i % 2 else -1]
+                    colors += original_colors[
+                        ::-1 if (i + repeat_after) % 2 else 1]
             positions = [
                 i - full_repeat + position for i in range(full_repeat)
                 for position in original_positions] + positions
@@ -366,6 +364,8 @@ def spread_radial_gradient(spread, positions, colors, fx, fy, fr, cx, cy, r,
         assert 0 < partial_repeat < 1
         reverse = original_positions[::-1]
         ratio = 1 - partial_repeat
+        if spread == 'reflect':
+            original_colors = original_colors[::-1]
         for i, position in enumerate(reverse, start=1):
             if position == ratio:
                 # The center is a color of the gradient, truncate original
@@ -375,8 +375,7 @@ def spread_radial_gradient(spread, positions, colors, fx, fy, fr, cx, cy, r,
                     position - full_repeat - 1
                     for position in original_positions[-i:]]
                 positions = new_positions + positions
-                coords = (fx, fy, fr, cx, cy, r)
-                return positions, colors, coords
+                break
             if position < ratio:
                 # The center is between two colors of the gradient,
                 # define the center color as the average of these two
@@ -394,6 +393,7 @@ def spread_radial_gradient(spread, positions, colors, fx, fy, fr, cx, cy, r,
                     in original_positions[-(i - 1):]]
                 positions = (
                     [ratio - 1 - full_repeat] + new_positions + positions)
+                break
 
     coords = (fx, fy, fr, cx, cy, r)
     return positions, colors, coords
