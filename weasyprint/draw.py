@@ -273,7 +273,7 @@ def draw_background(stream, bg, clip_box=True, bleed=None, marks=()):
             svg = f'''
               <svg height="{height}" width="{width}"
                    fill="transparent" stroke="black" stroke-width="1"
-                   xmlns="https://www.w3.org/2000/svg">
+                   xmlns="http://www.w3.org/2000/svg">
             '''
             if 'crop' in marks:
                 svg += f'''

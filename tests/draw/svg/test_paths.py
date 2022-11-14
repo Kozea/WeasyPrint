@@ -21,7 +21,7 @@ def test_path_Hh(assert_pixels):
         @page { size: 10px }
         svg { display: block }
       </style>
-      <svg width="10px" height="10px" xmlns="https://www.w3.org/2000/svg">
+      <svg width="10px" height="10px" xmlns="http://www.w3.org/2000/svg">
         <path d="M 0 1 H 8 H 1"
           stroke="blue" stroke-width="2" fill="none"/>
         <path d="M 0 4 H 8 4"
@@ -52,7 +52,7 @@ def test_path_Vv(assert_pixels):
         @page { size: 10px }
         svg { display: block }
       </style>
-      <svg width="10px" height="10px" xmlns="https://www.w3.org/2000/svg">
+      <svg width="10px" height="10px" xmlns="http://www.w3.org/2000/svg">
         <path d="M 1 0 V 1 V 4"
           stroke="blue" stroke-width="2" fill="none"/>
         <path d="M 4 6 V 4 10"
@@ -83,7 +83,7 @@ def test_path_Ll(assert_pixels):
         @page { size: 10px }
         svg { display: block }
       </style>
-      <svg width="10px" height="10px" xmlns="https://www.w3.org/2000/svg">
+      <svg width="10px" height="10px" xmlns="http://www.w3.org/2000/svg">
         <path d="M 4 3 L 4 10"
           stroke="blue" stroke-width="2" fill="none"/>
         <path d="M 7 0 l 0 6"
@@ -110,7 +110,7 @@ def test_path_Zz(assert_pixels):
         @page { size: 10px }
         svg { display: block }
       </style>
-      <svg width="10px" height="10px" xmlns="https://www.w3.org/2000/svg">
+      <svg width="10px" height="10px" xmlns="http://www.w3.org/2000/svg">
         <path d="M 1 1 H 6 V 5 H 1 Z"
           stroke="blue" stroke-width="2" fill="none"/>
         <path d="M 9 10 V 7 H 5 V 10 z"
@@ -137,7 +137,7 @@ def test_path_Zz_fill(assert_pixels):
         @page { size: 10px }
         svg { display: block }
       </style>
-      <svg width="10px" height="10px" xmlns="https://www.w3.org/2000/svg">
+      <svg width="10px" height="10px" xmlns="http://www.w3.org/2000/svg">
         <path d="M 1 1 H 6 V 5 H 1 Z"
           stroke="blue" stroke-width="2" fill="lime"/>
         <path d="M 9 10 V 7 H 5 V 10 z"
@@ -164,7 +164,7 @@ def test_path_Cc(assert_pixels):
         @page { size: 10px }
         svg { display: block }
       </style>
-      <svg width="10px" height="10px" xmlns="https://www.w3.org/2000/svg">
+      <svg width="10px" height="10px" xmlns="http://www.w3.org/2000/svg">
         <path d="M 2 5 C 2 5 3 5 5 5"
           stroke="blue" stroke-width="2" fill="none"/>
         <path d="M 2 8 c 0 0 1 0 3 0"
@@ -191,7 +191,7 @@ def test_path_Ss(assert_pixels):
         @page { size: 10px }
         svg { display: block }
       </style>
-      <svg width="10px" height="10px" xmlns="https://www.w3.org/2000/svg">
+      <svg width="10px" height="10px" xmlns="http://www.w3.org/2000/svg">
         <path d="M 2 5 S 3 5 5 5"
           stroke="blue" stroke-width="2" fill="none"/>
         <path d="M 2 8 s 1 0 3 0"
@@ -220,7 +220,7 @@ def test_path_CcSs(assert_pixels):
         @page { size: 10px 12px }
         svg { display: block }
       </style>
-      <svg width="10px" height="12px" xmlns="https://www.w3.org/2000/svg">
+      <svg width="10px" height="12px" xmlns="http://www.w3.org/2000/svg">
         <path d="M 2 1 C 2 1 3 1 5 1 S 8 3 8 1"
           stroke="blue" stroke-width="2" fill="none"/>
         <path d="M 2 4 C 2 4 3 4 5 4 s 3 2 1 0"
@@ -251,7 +251,7 @@ def test_path_Qq(assert_pixels):
         @page { size: 10px }
         svg { display: block }
       </style>
-      <svg width="10px" height="10px" xmlns="https://www.w3.org/2000/svg">
+      <svg width="10px" height="10px" xmlns="http://www.w3.org/2000/svg">
         <path d="M 2 5 Q 4 5 6 5"
           stroke="blue" stroke-width="2" fill="none"/>
         <path d="M 2 8 q 2 0 4 0"
@@ -278,7 +278,7 @@ def test_path_Tt(assert_pixels):
         @page { size: 10px }
         svg { display: block }
       </style>
-      <svg width="10px" height="10px" xmlns="https://www.w3.org/2000/svg">
+      <svg width="10px" height="10px" xmlns="http://www.w3.org/2000/svg">
         <path d="M 2 5 T 6 5"
           stroke="blue" stroke-width="2" fill="none"/>
         <path d="M 2 8 t 4 0"
@@ -307,7 +307,7 @@ def test_path_QqTt(assert_pixels):
         @page { size: 12px }
         svg { display: block }
       </style>
-      <svg width="12px" height="12px" xmlns="https://www.w3.org/2000/svg">
+      <svg width="12px" height="12px" xmlns="http://www.w3.org/2000/svg">
         <path d="M 0 3 Q 3 0 6 3 T 12 3"
           stroke="blue" stroke-width="2" fill="none"/>
         <path d="M 0 9 Q 3 6 6 9 t 6 0"
@@ -336,7 +336,7 @@ def test_path_QqTt2(assert_pixels):
         @page { size: 12px }
         svg { display: block }
       </style>
-      <svg width="12px" height="12px" xmlns="https://www.w3.org/2000/svg">
+      <svg width="12px" height="12px" xmlns="http://www.w3.org/2000/svg">
         <path d="M 0 3 q 3 -3 6 0 T 12 3"
           stroke="blue" stroke-width="2" fill="none"/>
         <path d="M 0 9 q 3 -3 6 0 t 6 0"
@@ -365,7 +365,7 @@ def test_path_Aa(assert_pixels):
         @page { size: 12px }
         svg { display: block }
       </style>
-      <svg width="12px" height="12px" xmlns="https://www.w3.org/2000/svg">
+      <svg width="12px" height="12px" xmlns="http://www.w3.org/2000/svg">
         <path d="M 1 6 A 5 5 0 0 1 6 1"
           stroke="blue" stroke-width="2" fill="none"/>
         <path d="M 6 11 a 5 5 0 0 1 5 -5"
@@ -394,7 +394,7 @@ def test_path_Aa2(assert_pixels):
         @page { size: 12px }
         svg { display: block }
       </style>
-      <svg width="12px" height="12px" xmlns="https://www.w3.org/2000/svg">
+      <svg width="12px" height="12px" xmlns="http://www.w3.org/2000/svg">
         <path d="M 1 6 A 5 5 0 1 0 6 1"
           stroke="lime" stroke-width="2" fill="none"/>
       </svg>
@@ -421,7 +421,7 @@ def test_path_Aa3(assert_pixels):
         @page { size: 12px }
         svg { display: block }
       </style>
-      <svg width="12px" height="12px" xmlns="https://www.w3.org/2000/svg">
+      <svg width="12px" height="12px" xmlns="http://www.w3.org/2000/svg">
         <path d="M 1 6 a 5 5 0 1 0 5 -5"
           stroke="lime" stroke-width="2" fill="none"/>
       </svg>
@@ -448,7 +448,7 @@ def test_path_Aa4(assert_pixels):
         @page { size: 12px }
         svg { display: block }
       </style>
-      <svg width="12px" height="12px" xmlns="https://www.w3.org/2000/svg">
+      <svg width="12px" height="12px" xmlns="http://www.w3.org/2000/svg">
         <path d="M 1 6 A 5 5 0 0 0 6 1"
           stroke="blue" stroke-width="2" fill="none"/>
         <path d="M 6 11 a 5 5 0 0 0 5 -5"
@@ -477,7 +477,7 @@ def test_path_Aa5(assert_pixels):
         @page { size: 12px }
         svg { display: block }
       </style>
-      <svg width="12px" height="12px" xmlns="https://www.w3.org/2000/svg">
+      <svg width="12px" height="12px" xmlns="http://www.w3.org/2000/svg">
         <path d="M 6 11 A 5 5 0 1 1 11 6"
           stroke="blue" stroke-width="2" fill="none"/>
       </svg>
@@ -504,7 +504,7 @@ def test_path_Aa6(assert_pixels):
         @page { size: 12px }
         svg { display: block }
       </style>
-      <svg width="12px" height="12px" xmlns="https://www.w3.org/2000/svg">
+      <svg width="12px" height="12px" xmlns="http://www.w3.org/2000/svg">
         <path d="M 6 11 a 5 5 0 1 1 5 -5"
           stroke="blue" stroke-width="2" fill="none"/>
       </svg>
@@ -531,7 +531,7 @@ def test_path_Aa7(assert_pixels):
         @page { size: 12px }
         svg { display: block }
       </style>
-      <svg width="12px" height="12px" xmlns="https://www.w3.org/2000/svg">
+      <svg width="12px" height="12px" xmlns="http://www.w3.org/2000/svg">
         <path d="M 1 6 A 5 5 0 0 0 11 6"
           stroke="lime" stroke-width="2" fill="none"/>
       </svg>
@@ -558,7 +558,7 @@ def test_path_wrong_point(assert_pixels):
         @page { size: 12px }
         svg { display: block }
       </style>
-      <svg width="12px" height="12px" xmlns="https://www.w3.org/2000/svg">
+      <svg width="12px" height="12px" xmlns="http://www.w3.org/2000/svg">
         <path d="M 1 1 L 1 5 L"
           stroke="lime" stroke-width="2" fill="none"/>
       </svg>
@@ -585,7 +585,7 @@ def test_path_markers_l(assert_pixels):
         @page { size: 12px }
         svg { display: block }
       </style>
-      <svg width="12px" height="12px" xmlns="https://www.w3.org/2000/svg">
+      <svg width="12px" height="12px" xmlns="http://www.w3.org/2000/svg">
         <marker id="line"
           viewBox="0 0 1 2" refX="0.5" refY="1"
           markerUnits="strokeWidth"
@@ -619,7 +619,7 @@ def test_path_markers_hv(assert_pixels):
         @page { size: 12px }
         svg { display: block }
       </style>
-      <svg width="12px" height="12px" xmlns="https://www.w3.org/2000/svg">
+      <svg width="12px" height="12px" xmlns="http://www.w3.org/2000/svg">
         <marker id="line"
           viewBox="0 0 1 2" refX="0.5" refY="1"
           markerUnits="strokeWidth"

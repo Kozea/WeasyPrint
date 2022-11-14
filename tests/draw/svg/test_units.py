@@ -20,7 +20,7 @@ def test_units_px(assert_pixels):
         @page { size: 9px }
         svg { display: block }
       </style>
-      <svg width="9px" height="9px" xmlns="https://www.w3.org/2000/svg">
+      <svg width="9px" height="9px" xmlns="http://www.w3.org/2000/svg">
         <rect x="2px" y="2px" width="5px" height="5px"
               stroke-width="2px" stroke="red" fill="none" />
       </svg>
@@ -45,7 +45,7 @@ def test_units_em(assert_pixels):
         svg { display: block }
       </style>
       <svg width="9px" height="9px" font-size="1px"
-           xmlns="https://www.w3.org/2000/svg">
+           xmlns="http://www.w3.org/2000/svg">
         <rect x="2em" y="2em" width="5em" height="5em"
               stroke-width="2em" stroke="red" fill="none" />
       </svg>
@@ -70,7 +70,7 @@ def test_units_ex(assert_pixels):
         svg { display: block }
       </style>
       <svg width="9px" height="9px" font-size="1px"
-           xmlns="https://www.w3.org/2000/svg">
+           xmlns="http://www.w3.org/2000/svg">
         <rect x="4ex" y="4ex" width="10ex" height="10ex"
               stroke-width="4ex" stroke="red" fill="none" />
       </svg>
@@ -94,7 +94,7 @@ def test_units_unknown(assert_pixels):
         @page { size: 9px }
         svg { display: block }
       </style>
-      <svg width="9px" height="9px" xmlns="https://www.w3.org/2000/svg">
+      <svg width="9px" height="9px" xmlns="http://www.w3.org/2000/svg">
         <rect x="2px" y="2unk" width="5px" height="5px"
               stroke-width="2px" stroke="red" fill="none" />
       </svg>
