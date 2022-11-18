@@ -297,7 +297,7 @@ class Stream(pydyf.Stream):
                 super().set_state(key)
 
     def set_alpha_state(self, x, y, width, height):
-        alpha_stream = self.add_group((x, y, width, height))
+        alpha_stream = self.add_group(x, y, width, height)
         alpha_state = pydyf.Dictionary({
             'Type': '/ExtGState',
             'SMask': pydyf.Dictionary({
@@ -330,7 +330,7 @@ class Stream(pydyf.Stream):
             self._fonts[key] = Font(pango_font)
         return self._fonts[key]
 
-    def add_group(self, bounding_box):
+    def add_group(self, x, y, width, height):
         states = pydyf.Dictionary()
         x_objects = pydyf.Dictionary()
         patterns = pydyf.Dictionary()
@@ -345,7 +345,7 @@ class Stream(pydyf.Stream):
         extra = pydyf.Dictionary({
             'Type': '/XObject',
             'Subtype': '/Form',
-            'BBox': pydyf.Array(bounding_box),
+            'BBox': pydyf.Array((x, y, x + width, y + height)),
             'Resources': resources,
             'Group': pydyf.Dictionary({
                 'Type': '/Group',
@@ -482,7 +482,7 @@ class Stream(pydyf.Stream):
         extra = pydyf.Dictionary({
             'Type': '/Pattern',
             'PatternType': 1,
-            'BBox': pydyf.Array([x, y, width, height]),
+            'BBox': pydyf.Array([x, y, x + width, y + height]),
             'XStep': repeat_width,
             'YStep': repeat_height,
             'TilingType': 1,

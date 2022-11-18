@@ -106,8 +106,11 @@ def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
         return False
     if gradient.get('gradientUnits') == 'userSpaceOnUse':
         width, height = svg.inner_width, svg.inner_height
+        matrix = Matrix()
     else:
-        width, height = bounding_box[2], bounding_box[3]
+        width, height = 1, 1
+        e, f, a, d = bounding_box
+        matrix = Matrix(a=a, d=d, e=e, f=f)
 
     spread = gradient.get('spreadMethod', 'pad')
     if spread in ('repeat', 'reflect'):
@@ -131,38 +134,30 @@ def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
             positions.append(positions[-1] + 1)
             colors.append(colors[-1])
 
-    if gradient.get('gradientUnits') == 'userSpaceOnUse':
-        matrix = Matrix()
-    else:
-        matrix = Matrix(a=width, d=height)
     if gradient.tag == 'linearGradient':
         shading_type = 2
         x1, y1 = (
-            size(gradient.get('x1', 0), font_size, 1),
-            size(gradient.get('y1', 0), font_size, 1))
+            size(gradient.get('x1', 0), font_size, width),
+            size(gradient.get('y1', 0), font_size, height))
         x2, y2 = (
-            size(gradient.get('x2', '100%'), font_size, 1),
-            size(gradient.get('y2', 0), font_size, 1))
+            size(gradient.get('x2', '100%'), font_size, width),
+            size(gradient.get('y2', 0), font_size, height))
         positions, colors, coords = spread_linear_gradient(
             spread, positions, colors, x1, y1, x2, y2, matrix)
     else:
         assert gradient.tag == 'radialGradient'
         shading_type = 3
         cx, cy = (
-            size(gradient.get('cx', '50%'), font_size, 1),
-            size(gradient.get('cy', '50%'), font_size, 1))
-        r = size(gradient.get('r', '50%'), font_size, 1)
+            size(gradient.get('cx', '50%'), font_size, width),
+            size(gradient.get('cy', '50%'), font_size, height))
+        r = size(gradient.get('r', '50%'), font_size, hypot(width, height))
         fx, fy = (
             size(gradient.get('fx', cx), font_size, width),
             size(gradient.get('fy', cy), font_size, height))
-        fr = size(gradient.get('fr', 0), font_size, 1)
+        fr = size(gradient.get('fr', 0), font_size, hypot(width, height))
         positions, colors, coords = spread_radial_gradient(
             spread, positions, colors, fx, fy, fr, cx, cy, r, width, height,
             matrix)
-
-    if gradient.get('gradientUnits') != 'userSpaceOnUse':
-        matrix @= Matrix(e=bounding_box[0], f=bounding_box[1])
-    matrix @= svg.stream.ctm
 
     alphas = [color[3] for color in colors]
     alpha_couples = [
@@ -183,18 +178,19 @@ def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
         if 0 not in (a0, a1) and (a0, a1) != (1, 1):
             color_couples[i][2] = a0 / a1
 
-    x, y = 0, 0
+    x1, y1 = 0, 0
     if 'gradientTransform' in gradient.attrib:
         transform_matrix = transform(
             gradient.get('gradientTransform'), font_size,
             svg.normalized_diagonal)
-        x, y = transform_matrix.invert.transform_point(x, y)
-        width, height = transform_matrix.invert.transform_point(width, height)
         matrix = transform_matrix @ matrix
+        x1, y1 = transform_matrix.invert.transform_point(x1, y1)
+        x2, y2 = transform_matrix.invert.transform_point(width, height)
+        width, height = x2 - x1, y2 - y1
 
     pattern = svg.stream.add_pattern(
-        x, y, width, height, width, height, matrix)
-    group = pattern.add_group([x, y, width, height])
+        x1, y1, width, height, width, height, matrix @ svg.stream.ctm)
+    group = pattern.add_group(x1, y1, width, height)
 
     domain = (positions[0], positions[-1])
     extend = spread not in ('repeat', 'reflect')
@@ -209,7 +205,7 @@ def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
         shading_type, 'RGB', domain, coords, extend, function)
 
     if any(alpha != 1 for alpha in alphas):
-        alpha_stream = group.set_alpha_state(x, y, width, height)
+        alpha_stream = group.set_alpha_state(x1, y1, width, height)
         domain = (positions[0], positions[-1])
         extend = spread not in ('repeat', 'reflect')
         encode = (len(colors) - 1) * (0, 1)
@@ -447,7 +443,7 @@ def draw_pattern(svg, node, pattern, font_size, opacity, stroke):
         matrix)
     stream_pattern.set_alpha(opacity)
 
-    group = stream_pattern.add_group([0, 0, pattern_width, pattern_height])
+    group = stream_pattern.add_group(0, 0, pattern_width, pattern_height)
     Pattern(pattern, svg).draw(
         group, pattern_width, pattern_height, svg.base_url,
         svg.url_fetcher, svg.context)

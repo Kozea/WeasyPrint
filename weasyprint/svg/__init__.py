@@ -395,7 +395,7 @@ class SVG:
                 coords = (box[0], box[1], box[0] + box[2], box[1] + box[3])
             else:
                 coords = (0, 0, self.inner_width, self.inner_height)
-            self.stream = self.stream.add_group(coords)
+            self.stream = self.stream.add_group(*coords)
 
         # Apply transform attribute
         self.transform(node.get('transform'), font_size)

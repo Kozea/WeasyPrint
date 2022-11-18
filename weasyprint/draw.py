@@ -110,7 +110,7 @@ def draw_stacking_context(stream, stacking_context):
 
         if box.style['opacity'] < 1:
             original_stream = stream
-            stream = stream.add_group(stream.page_rectangle)
+            stream = stream.add_group(*stream.page_rectangle)
 
         if box.transformation_matrix:
             if box.transformation_matrix.determinant:
@@ -391,7 +391,7 @@ def draw_background_image(stream, layer, image_rendering):
     matrix @= stream.ctm
     pattern = stream.add_pattern(
         0, 0, image_width, image_height, repeat_width, repeat_height, matrix)
-    group = pattern.add_group([0, 0, repeat_width, repeat_height])
+    group = pattern.add_group(0, 0, repeat_width, repeat_height)
 
     with stacked(stream):
         layer.image.draw(group, image_width, image_height, image_rendering)
