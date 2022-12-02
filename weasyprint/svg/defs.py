@@ -104,12 +104,13 @@ def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
     bounding_box = svg.calculate_bounding_box(node, font_size, stroke)
     if not is_valid_bounding_box(bounding_box):
         return False
-    x, y = bounding_box[0], bounding_box[1]
-    matrix = Matrix(e=x, f=y)
     if gradient.get('gradientUnits') == 'userSpaceOnUse':
         width, height = svg.inner_width, svg.inner_height
+        matrix = Matrix()
     else:
-        width, height = bounding_box[2], bounding_box[3]
+        width, height = 1, 1
+        e, f, a, d = bounding_box
+        matrix = Matrix(a=a, d=d, e=e, f=f)
 
     spread = gradient.get('spreadMethod', 'pad')
     if spread in ('repeat', 'reflect'):
@@ -133,59 +134,36 @@ def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
             positions.append(positions[-1] + 1)
             colors.append(colors[-1])
 
+    if 'gradientTransform' in gradient.attrib:
+        transform_matrix = transform(
+            gradient.get('gradientTransform'), font_size,
+            svg.normalized_diagonal)
+        matrix = transform_matrix @ matrix
+
     if gradient.tag == 'linearGradient':
         shading_type = 2
         x1, y1 = (
-            size(gradient.get('x1', 0), font_size, 1),
-            size(gradient.get('y1', 0), font_size, 1))
+            size(gradient.get('x1', 0), font_size, width),
+            size(gradient.get('y1', 0), font_size, height))
         x2, y2 = (
-            size(gradient.get('x2', '100%'), font_size, 1),
-            size(gradient.get('y2', 0), font_size, 1))
-        if gradient.get('gradientUnits') == 'userSpaceOnUse':
-            x1 -= x
-            y1 -= y
-            x2 -= x
-            y2 -= y
-        else:
-            length = min(width, height)
-            x1 *= length
-            y1 *= length
-            x2 *= length
-            y2 *= length
-            a = (width / height) if height < width else 1
-            d = (height / width) if height > width else 1
-            matrix = Matrix(a=a, d=d) @ matrix
+            size(gradient.get('x2', '100%'), font_size, width),
+            size(gradient.get('y2', 0), font_size, height))
         positions, colors, coords = spread_linear_gradient(
-            spread, positions, colors, x1, y1, x2, y2)
+            spread, positions, colors, x1, y1, x2, y2, bounding_box, matrix)
     else:
         assert gradient.tag == 'radialGradient'
         shading_type = 3
         cx, cy = (
-            size(gradient.get('cx', '50%'), font_size, 1),
-            size(gradient.get('cy', '50%'), font_size, 1))
-        r = size(gradient.get('r', '50%'), font_size, 1)
+            size(gradient.get('cx', '50%'), font_size, width),
+            size(gradient.get('cy', '50%'), font_size, height))
+        r = size(gradient.get('r', '50%'), font_size, hypot(width, height))
         fx, fy = (
             size(gradient.get('fx', cx), font_size, width),
             size(gradient.get('fy', cy), font_size, height))
-        fr = size(gradient.get('fr', 0), font_size, 1)
-        if gradient.get('gradientUnits') == 'userSpaceOnUse':
-            cx -= x
-            cy -= y
-            fx -= x
-            fy -= y
-        else:
-            length = min(width, height)
-            cx *= length
-            cy *= length
-            r *= length
-            fx *= length
-            fy *= length
-            fr *= length
-            a = (width / height) if height < width else 1
-            d = (height / width) if height > width else 1
-            matrix = Matrix(a=a, d=d) @ matrix
+        fr = size(gradient.get('fr', 0), font_size, hypot(width, height))
         positions, colors, coords = spread_radial_gradient(
-            spread, positions, colors, fx, fy, fr, cx, cy, r, width, height)
+            spread, positions, colors, fx, fy, fr, cx, cy, r, width, height,
+            matrix)
 
     alphas = [color[3] for color in colors]
     alpha_couples = [
@@ -206,15 +184,15 @@ def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
         if 0 not in (a0, a1) and (a0, a1) != (1, 1):
             color_couples[i][2] = a0 / a1
 
+    bx1, by1 = 0, 0
     if 'gradientTransform' in gradient.attrib:
-        transform_matrix = transform(
-            gradient.get('gradientTransform'), font_size,
-            svg.normalized_diagonal)
-        matrix = transform_matrix @ matrix
+        bx1, by1 = transform_matrix.invert.transform_point(bx1, by1)
+        bx2, by2 = transform_matrix.invert.transform_point(width, height)
+        width, height = bx2 - bx1, by2 - by1
 
-    matrix = matrix @ svg.stream.ctm
-    pattern = svg.stream.add_pattern(width, height, width, height, matrix)
-    group = pattern.add_group([0, 0, width, height])
+    pattern = svg.stream.add_pattern(
+        bx1, by1, width, height, width, height, matrix @ svg.stream.ctm)
+    group = pattern.add_group(bx1, by1, width, height)
 
     domain = (positions[0], positions[-1])
     extend = spread not in ('repeat', 'reflect')
@@ -229,8 +207,7 @@ def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
         shading_type, 'RGB', domain, coords, extend, function)
 
     if any(alpha != 1 for alpha in alphas):
-        alpha_stream = group.set_alpha_state(
-            0, 0, svg.concrete_width, svg.concrete_height)
+        alpha_stream = group.set_alpha_state(bx1, by1, width, height)
         domain = (positions[0], positions[-1])
         extend = spread not in ('repeat', 'reflect')
         encode = (len(colors) - 1) * (0, 1)
@@ -252,7 +229,8 @@ def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
     return True
 
 
-def spread_linear_gradient(spread, positions, colors, x1, y1, x2, y2):
+def spread_linear_gradient(spread, positions, colors, x1, y1, x2, y2,
+                           bounding_box, matrix):
     """Repeat linear gradient."""
     # TODO: merge with LinearGradient.layout
     from ..images import gradient_average_color, normalize_stop_positions
@@ -267,7 +245,6 @@ def spread_linear_gradient(spread, positions, colors, x1, y1, x2, y2):
 
         # Define defined gradient length and steps between positions
         stop_length = last - first
-        assert stop_length > 0
         position_steps = [
             positions[i + 1] - positions[i]
             for i in range(len(positions) - 1)]
@@ -287,15 +264,33 @@ def spread_linear_gradient(spread, positions, colors, x1, y1, x2, y2):
                 [0] + position_steps + [0] + position_steps[::-1])
             previous_colors = cycle(colors + colors[::-1])
 
+        # Normalize bounding box
+        bx1, by1, bw, bh = bounding_box
+        bx1, bx2 = (bx1, bx1 + bw) if bw > 0 else (bx1 + bw, bx1)
+        by1, by2 = (by1, by1 + bh) if bh > 0 else (by1 + bh, by1)
+
+        # Transform gradient vector coordinates
+        tx1, ty1 = matrix.transform_point(x1, y1)
+        tx2, ty2 = matrix.transform_point(x2, y2)
+
+        # Find the extremities of the repeating vector, by projecting the
+        # bounding box corners on the gradient vector
+        xb, yb = tx1, ty1
+        xv, yv = tx2 - tx1, ty2 - ty1
+        xa1, xa2 = (bx1, bx2) if tx1 < tx2 else (bx2, bx1)
+        ya1, ya2 = (by1, by2) if ty1 < ty2 else (by2, by1)
+        min_vector = ((xa1 - xb) * xv + (ya1 - yb) * yv) / hypot(xv, yv) ** 2
+        max_vector = ((xa2 - xb) * xv + (ya2 - yb) * yv) / hypot(xv, yv) ** 2
+
         # Add colors after last step
-        while last < hypot(x2 - x1, y2 - y1):
+        while last < max_vector:
             step = next(next_steps)
             colors.append(next(next_colors))
             positions.append(positions[-1] + step)
             last += step * stop_length
 
-        # Add colors before last step
-        while first > 0:
+        # Add colors before first step
+        while first > min_vector:
             step = next(previous_steps)
             colors.insert(0, next(previous_colors))
             positions.insert(0, positions[0] - step)
@@ -308,7 +303,7 @@ def spread_linear_gradient(spread, positions, colors, x1, y1, x2, y2):
 
 
 def spread_radial_gradient(spread, positions, colors, fx, fy, fr, cx, cy, r,
-                           width, height):
+                           width, height, matrix):
     """Repeat radial gradient."""
     # TODO: merge with RadialGradient._repeat
     from ..images import gradient_average_color, normalize_stop_positions
@@ -320,15 +315,13 @@ def spread_radial_gradient(spread, positions, colors, fx, fy, fr, cx, cy, r,
         # Keep original lists and values, they’re useful
         original_colors = colors.copy()
         original_positions = positions.copy()
-        gradient_length = r - fr
 
         # Get the maximum distance between the center and the corners, to find
         # how many times we have to repeat the colors outside
-        max_distance = max(
-            hypot(width - fx, height - fy),
-            hypot(width - fx, -fy),
-            hypot(-fx, height - fy),
-            hypot(-fx, -fy))
+        tw, th = matrix.invert.transform_point(width, height)
+        max_distance = hypot(
+            max(abs(fx), abs(tw - fx)), max(abs(fy), abs(th - fy)))
+        gradient_length = r - fr
         repeat_after = ceil((max_distance - r) / gradient_length)
         if repeat_after > 0:
             # Repeat colors and extrapolate positions
@@ -339,7 +332,7 @@ def spread_radial_gradient(spread, positions, colors, fx, fy, fr, cx, cy, r,
                 assert spread == 'reflect'
                 colors = []
                 for i in range(repeat):
-                    colors += original_colors[::1 if i % 2 else -1]
+                    colors += original_colors[::-1 if i % 2 else 1]
             positions = [
                 i + position for i in range(repeat) for position in positions]
             r += gradient_length * repeat_after
@@ -364,7 +357,8 @@ def spread_radial_gradient(spread, positions, colors, fx, fy, fr, cx, cy, r,
             else:
                 assert spread == 'reflect'
                 for i in range(full_repeat):
-                    colors += original_colors[::1 if i % 2 else -1]
+                    colors += original_colors[
+                        ::-1 if (i + repeat_after) % 2 else 1]
             positions = [
                 i - full_repeat + position for i in range(full_repeat)
                 for position in original_positions] + positions
@@ -383,6 +377,8 @@ def spread_radial_gradient(spread, positions, colors, fx, fy, fr, cx, cy, r,
         assert 0 < partial_repeat < 1
         reverse = original_positions[::-1]
         ratio = 1 - partial_repeat
+        if spread == 'reflect':
+            original_colors = original_colors[::-1]
         for i, position in enumerate(reverse, start=1):
             if position == ratio:
                 # The center is a color of the gradient, truncate original
@@ -392,8 +388,7 @@ def spread_radial_gradient(spread, positions, colors, fx, fy, fr, cx, cy, r,
                     position - full_repeat - 1
                     for position in original_positions[-i:]]
                 positions = new_positions + positions
-                coords = (fx, fy, fr, cx, cy, r)
-                return positions, colors, coords
+                break
             if position < ratio:
                 # The center is between two colors of the gradient,
                 # define the center color as the average of these two
@@ -411,6 +406,7 @@ def spread_radial_gradient(spread, positions, colors, fx, fy, fr, cx, cy, r,
                     in original_positions[-(i - 1):]]
                 positions = (
                     [ratio - 1 - full_repeat] + new_positions + positions)
+                break
 
     coords = (fx, fy, fr, cx, cy, r)
     return positions, colors, coords
@@ -461,10 +457,11 @@ def draw_pattern(svg, node, pattern, font_size, opacity, stroke):
 
     matrix = matrix @ svg.stream.ctm
     stream_pattern = svg.stream.add_pattern(
-        pattern_width, pattern_height, pattern_width, pattern_height, matrix)
+        0, 0, pattern_width, pattern_height, pattern_width, pattern_height,
+        matrix)
     stream_pattern.set_alpha(opacity)
 
-    group = stream_pattern.add_group([0, 0, pattern_width, pattern_height])
+    group = stream_pattern.add_group(0, 0, pattern_width, pattern_height)
     Pattern(pattern, svg).draw(
         group, pattern_width, pattern_height, svg.base_url,
         svg.url_fetcher, svg.context)

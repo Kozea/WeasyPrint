@@ -14,7 +14,7 @@ def test_text_fill(assert_pixels):
         @page { size: 20px 2px }
         svg { display: block }
       </style>
-      <svg width="20px" height="2px" xmlns="https://www.w3.org/2000/svg">
+      <svg width="20px" height="2px" xmlns="http://www.w3.org/2000/svg">
         <text x="0" y="1.5" font-family="weasyprint" font-size="2" fill="blue">
           ABC DEF
         </text>
@@ -35,7 +35,7 @@ def test_text_stroke(assert_pixels):
         @page { font-size: 1px; size: 20em 8ex }
         svg { display: block }
       </style>
-      <svg width="20px" height="4px" xmlns="https://www.w3.org/2000/svg">
+      <svg width="20px" height="4px" xmlns="http://www.w3.org/2000/svg">
         <text x="2" y="2.5" font-family="weasyprint" font-size="2"
               fill="transparent" stroke="blue" stroke-width="1ex">
           A B C
@@ -55,7 +55,7 @@ def test_text_x(assert_pixels):
         @page { size: 20px 2px }
         svg { display: block }
       </style>
-      <svg width="20px" height="2px" xmlns="https://www.w3.org/2000/svg">
+      <svg width="20px" height="2px" xmlns="http://www.w3.org/2000/svg">
         <text x="0 4 7" y="1.5" font-family="weasyprint" font-size="2"
               fill="blue">
           ABCD
@@ -83,7 +83,7 @@ def test_text_y(assert_pixels):
         @page { size: 30px 10px }
         svg { display: block }
       </style>
-      <svg width="30px" height="10px" xmlns="https://www.w3.org/2000/svg">
+      <svg width="30px" height="10px" xmlns="http://www.w3.org/2000/svg">
         <text x="0" y="9 9 4 9 4" font-family="weasyprint" font-size="5"
               fill="blue">
           ABCDEF
@@ -111,7 +111,7 @@ def test_text_xy(assert_pixels):
         @page { size: 30px 10px }
         svg { display: block }
       </style>
-      <svg width="30px" height="10px" xmlns="https://www.w3.org/2000/svg">
+      <svg width="30px" height="10px" xmlns="http://www.w3.org/2000/svg">
         <text x="0 10" y="9 4 9 4" font-family="weasyprint" font-size="5"
               fill="blue">
           ABCDE
@@ -131,7 +131,7 @@ def test_text_dx(assert_pixels):
         @page { size: 20px 2px }
         svg { display: block }
       </style>
-      <svg width="20px" height="2px" xmlns="https://www.w3.org/2000/svg">
+      <svg width="20px" height="2px" xmlns="http://www.w3.org/2000/svg">
         <text dx="0 2 1" y="1.5" font-family="weasyprint" font-size="2"
               fill="blue">
           ABCD
@@ -159,7 +159,7 @@ def test_text_dy(assert_pixels):
         @page { size: 30px 10px }
         svg { display: block }
       </style>
-      <svg width="30px" height="10px" xmlns="https://www.w3.org/2000/svg">
+      <svg width="30px" height="10px" xmlns="http://www.w3.org/2000/svg">
         <text x="0" dy="9 0 -5 5 -5" font-family="weasyprint" font-size="5"
               fill="blue">
           ABCDEF
@@ -187,7 +187,7 @@ def test_text_dx_dy(assert_pixels):
         @page { size: 30px 10px }
         svg { display: block }
       </style>
-      <svg width="30px" height="10px" xmlns="https://www.w3.org/2000/svg">
+      <svg width="30px" height="10px" xmlns="http://www.w3.org/2000/svg">
         <text dx="0 5" dy="9 -5 5 -5" font-family="weasyprint" font-size="5"
               fill="blue">
           ABCDE
@@ -209,7 +209,7 @@ def test_text_anchor_start(assert_pixels):
         @page { size: 20px 4px }
         svg { display: block }
       </style>
-      <svg width="20px" height="4px" xmlns="https://www.w3.org/2000/svg">
+      <svg width="20px" height="4px" xmlns="http://www.w3.org/2000/svg">
         <text x="2" y="1.5" font-family="weasyprint" font-size="2"
               fill="blue">
           ABC
@@ -233,7 +233,7 @@ def test_text_anchor_middle(assert_pixels):
         @page { size: 20px 2px }
         svg { display: block }
       </style>
-      <svg width="20px" height="2px" xmlns="https://www.w3.org/2000/svg">
+      <svg width="20px" height="2px" xmlns="http://www.w3.org/2000/svg">
         <text x="10" y="1.5" font-family="weasyprint" font-size="2"
               fill="blue" text-anchor="middle">
           ABC
@@ -253,7 +253,7 @@ def test_text_anchor_end(assert_pixels):
         @page { size: 20px 2px }
         svg { display: block }
       </style>
-      <svg width="20px" height="2px" xmlns="https://www.w3.org/2000/svg">
+      <svg width="20px" height="2px" xmlns="http://www.w3.org/2000/svg">
         <text x="18" y="1.5" font-family="weasyprint" font-size="2"
               fill="blue" text-anchor="end">
           ABC
@@ -273,7 +273,7 @@ def test_text_tspan(assert_pixels):
         @page { size: 20px 2px }
         svg { display: block }
       </style>
-      <svg width="20px" height="2px" xmlns="https://www.w3.org/2000/svg">
+      <svg width="20px" height="2px" xmlns="http://www.w3.org/2000/svg">
         <text x="10" y="10" font-family="weasyprint" font-size="2" fill="blue">
           <tspan x="0" y="1.5">ABC DEF</tspan>
         </text>
@@ -294,7 +294,7 @@ def test_text_rotate(assert_pixels):
         @page { size: 20px 4px }
         svg { display: block }
       </style>
-      <svg width="20px" height="4px" xmlns="https://www.w3.org/2000/svg">
+      <svg width="20px" height="4px" xmlns="http://www.w3.org/2000/svg">
         <text x="2" y="1.5" font-family="weasyprint" font-size="2" fill="red"
           letter-spacing="2">abc</text>
         <text x="2" y="1.5" font-family="weasyprint" font-size="2" fill="blue"

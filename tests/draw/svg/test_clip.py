@@ -22,7 +22,7 @@ def test_clip_path(assert_pixels):
         @page { size: 9px }
         svg { display: block }
       </style>
-      <svg width="9px" height="9px" xmlns="https://www.w3.org/2000/svg">
+      <svg width="9px" height="9px" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <clipPath id="clip">
             <rect x="2" y="2" width="5" height="5" />
@@ -51,7 +51,7 @@ def test_clip_path_on_group(assert_pixels):
         @page { size: 9px }
         svg { display: block }
       </style>
-      <svg width="9px" height="9px" xmlns="https://www.w3.org/2000/svg">
+      <svg width="9px" height="9px" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <clipPath id="clip">
             <rect x="2" y="2" width="5" height="5" />
@@ -83,7 +83,7 @@ def test_clip_path_group_on_group(assert_pixels):
         @page { size: 9px }
         svg { display: block }
       </style>
-      <svg width="9px" height="9px" xmlns="https://www.w3.org/2000/svg">
+      <svg width="9px" height="9px" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <clipPath id="clip">
             <rect x="2" y="2" width="2" height="2" />

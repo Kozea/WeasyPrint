@@ -110,7 +110,7 @@ def draw_stacking_context(stream, stacking_context):
 
         if box.style['opacity'] < 1:
             original_stream = stream
-            stream = stream.add_group(stream.page_rectangle)
+            stream = stream.add_group(*stream.page_rectangle)
 
         if box.transformation_matrix:
             if box.transformation_matrix.determinant:
@@ -273,7 +273,7 @@ def draw_background(stream, bg, clip_box=True, bleed=None, marks=()):
             svg = f'''
               <svg height="{height}" width="{width}"
                    fill="transparent" stroke="black" stroke-width="1"
-                   xmlns="https://www.w3.org/2000/svg">
+                   xmlns="http://www.w3.org/2000/svg">
             '''
             if 'crop' in marks:
                 svg += f'''
@@ -390,8 +390,8 @@ def draw_background_image(stream, layer, image_rendering):
     matrix = Matrix(e=position_x + positioning_x, f=position_y + positioning_y)
     matrix @= stream.ctm
     pattern = stream.add_pattern(
-        image_width, image_height, repeat_width, repeat_height, matrix)
-    group = pattern.add_group([0, 0, repeat_width, repeat_height])
+        0, 0, image_width, image_height, repeat_width, repeat_height, matrix)
+    group = pattern.add_group(0, 0, repeat_width, repeat_height)
 
     with stacked(stream):
         layer.image.draw(group, image_width, image_height, image_rendering)
