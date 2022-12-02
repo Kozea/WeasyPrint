@@ -134,6 +134,12 @@ def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
             positions.append(positions[-1] + 1)
             colors.append(colors[-1])
 
+    if 'gradientTransform' in gradient.attrib:
+        transform_matrix = transform(
+            gradient.get('gradientTransform'), font_size,
+            svg.normalized_diagonal)
+        matrix = transform_matrix @ matrix
+
     if gradient.tag == 'linearGradient':
         shading_type = 2
         x1, y1 = (
@@ -143,7 +149,7 @@ def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
             size(gradient.get('x2', '100%'), font_size, width),
             size(gradient.get('y2', 0), font_size, height))
         positions, colors, coords = spread_linear_gradient(
-            spread, positions, colors, x1, y1, x2, y2, matrix)
+            spread, positions, colors, x1, y1, x2, y2, bounding_box, matrix)
     else:
         assert gradient.tag == 'radialGradient'
         shading_type = 3
@@ -178,19 +184,15 @@ def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
         if 0 not in (a0, a1) and (a0, a1) != (1, 1):
             color_couples[i][2] = a0 / a1
 
-    x1, y1 = 0, 0
+    bx1, by1 = 0, 0
     if 'gradientTransform' in gradient.attrib:
-        transform_matrix = transform(
-            gradient.get('gradientTransform'), font_size,
-            svg.normalized_diagonal)
-        matrix = transform_matrix @ matrix
-        x1, y1 = transform_matrix.invert.transform_point(x1, y1)
-        x2, y2 = transform_matrix.invert.transform_point(width, height)
-        width, height = x2 - x1, y2 - y1
+        bx1, by1 = transform_matrix.invert.transform_point(bx1, by1)
+        bx2, by2 = transform_matrix.invert.transform_point(width, height)
+        width, height = bx2 - bx1, by2 - by1
 
     pattern = svg.stream.add_pattern(
-        x1, y1, width, height, width, height, matrix @ svg.stream.ctm)
-    group = pattern.add_group(x1, y1, width, height)
+        bx1, by1, width, height, width, height, matrix @ svg.stream.ctm)
+    group = pattern.add_group(bx1, by1, width, height)
 
     domain = (positions[0], positions[-1])
     extend = spread not in ('repeat', 'reflect')
@@ -205,7 +207,7 @@ def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
         shading_type, 'RGB', domain, coords, extend, function)
 
     if any(alpha != 1 for alpha in alphas):
-        alpha_stream = group.set_alpha_state(x1, y1, width, height)
+        alpha_stream = group.set_alpha_state(bx1, by1, width, height)
         domain = (positions[0], positions[-1])
         extend = spread not in ('repeat', 'reflect')
         encode = (len(colors) - 1) * (0, 1)
@@ -227,7 +229,8 @@ def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
     return True
 
 
-def spread_linear_gradient(spread, positions, colors, x1, y1, x2, y2, matrix):
+def spread_linear_gradient(spread, positions, colors, x1, y1, x2, y2,
+                           bounding_box, matrix):
     """Repeat linear gradient."""
     # TODO: merge with LinearGradient.layout
     from ..images import gradient_average_color, normalize_stop_positions
@@ -242,7 +245,6 @@ def spread_linear_gradient(spread, positions, colors, x1, y1, x2, y2, matrix):
 
         # Define defined gradient length and steps between positions
         stop_length = last - first
-        assert stop_length > 0
         position_steps = [
             positions[i + 1] - positions[i]
             for i in range(len(positions) - 1)]
@@ -262,17 +264,33 @@ def spread_linear_gradient(spread, positions, colors, x1, y1, x2, y2, matrix):
                 [0] + position_steps + [0] + position_steps[::-1])
             previous_colors = cycle(colors + colors[::-1])
 
-        # Add colors after last step
+        # Normalize bounding box
+        bx1, by1, bw, bh = bounding_box
+        bx1, bx2 = (bx1, bx1 + bw) if bw > 0 else (bx1 + bw, bx1)
+        by1, by2 = (by1, by1 + bh) if bh > 0 else (by1 + bh, by1)
+
+        # Transform gradient vector coordinates
         tx1, ty1 = matrix.transform_point(x1, y1)
         tx2, ty2 = matrix.transform_point(x2, y2)
-        while last < hypot(tx2 - tx1, ty2 - ty1):
+
+        # Find the extremities of the repeating vector, by projecting the
+        # bounding box corners on the gradient vector
+        xb, yb = tx1, ty1
+        xv, yv = tx2 - tx1, ty2 - ty1
+        xa1, xa2 = (bx1, bx2) if tx1 < tx2 else (bx2, bx1)
+        ya1, ya2 = (by1, by2) if ty1 < ty2 else (by2, by1)
+        min_vector = ((xa1 - xb) * xv + (ya1 - yb) * yv) / hypot(xv, yv) ** 2
+        max_vector = ((xa2 - xb) * xv + (ya2 - yb) * yv) / hypot(xv, yv) ** 2
+
+        # Add colors after last step
+        while last < max_vector:
             step = next(next_steps)
             colors.append(next(next_colors))
             positions.append(positions[-1] + step)
             last += step * stop_length
 
-        # Add colors before last step
-        while first > 0:
+        # Add colors before first step
+        while first > min_vector:
             step = next(previous_steps)
             colors.insert(0, next(previous_colors))
             positions.insert(0, positions[0] - step)
