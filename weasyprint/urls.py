@@ -153,7 +153,7 @@ def get_link_attribute(element, attr_name, base_url):
         if base_url:
             parsed = urlsplit(uri)
             # Compare with fragments removed
-            if parsed[:-1] == urlsplit(base_url)[:-1]:
+            if parsed.fragment and parsed[:-1] == urlsplit(base_url)[:-1]:
                 return ('url', ('internal', unquote(parsed.fragment)))
         return ('url', ('external', uri))
 

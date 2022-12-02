@@ -926,6 +926,21 @@ def test_links_11():
         ''', [[]], [{}], [([], [])], base_url=None)
 
 
+@assert_no_logs
+def test_links_12():
+    # Absolute URI with no fragment and the same base URI: keep external URI
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/1767
+    assert_links(
+        '''
+            <body style="width: 200px">
+            <a href="https://weasyprint.org"
+               style="display: block; margin: 10px 5px">
+        ''',
+        [[('external', 'https://weasyprint.org', (5, 10, 195, 10))]], [{}],
+        [([('external', 'https://weasyprint.org', (5, 10, 195, 10))], [])],
+        base_url='https://weasyprint.org')
+
+
 # Make relative URL references work with our custom URL scheme.
 uses_relative.append('weasyprint-custom')
 
