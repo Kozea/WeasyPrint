@@ -178,7 +178,8 @@ class Node:
     def get_href(self, base_url):
         """Get the href attribute, with or without a namespace."""
         for attr_name in ('{http://www.w3.org/1999/xlink}href', 'href'):
-            url = get_url_attribute(self, attr_name, base_url)
+            url = get_url_attribute(
+                self, attr_name, base_url, allow_relative=True)
             if url:
                 return url
 
