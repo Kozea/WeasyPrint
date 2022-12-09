@@ -40,6 +40,11 @@ def pdfa(pdf, metadata, document, page_streams, version):
         }),
     ])
 
+    # Print annotations
+    for pdf_object in pdf.objects:
+        if isinstance(pdf_object, dict) and pdf_object.get('Type') == '/Annot':
+            pdf_object['F'] = 2 ** (3 - 1)
+
     # Common PDF metadata stream
     add_metadata(pdf, metadata, 'a', version, 'B')
 
