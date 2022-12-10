@@ -114,6 +114,7 @@ def pdfua(pdf, metadata, document, page_streams):
         content_mapping['Nums'].append(i)
         content_mapping['Nums'].append(link)
         annotation['StructParent'] = i
+        annotation['F'] = 2 ** (2 - 1)
 
     # Common PDF metadata stream
     add_metadata(pdf, metadata, 'ua', version=1, conformance=None)
