@@ -444,7 +444,7 @@ nav #sponsor a:is(:hover, :focus) {
   transition-delay: 0.25s;
 }
 
-#factory #data-sample label:is(:hover, :focus) {
+#factory #data-sample:has(label) label:is(:hover, :focus) {
   background: var(--gray);
 }
 
