@@ -632,6 +632,10 @@ nav #sponsor a:is(:hover, :focus) {
 
 /* Samples */
 
+#samples article:first-of-type h3 {
+  margin-top: 0;
+}
+
 #samples img {
   aspect-ratio: 1.5;
   float: left;
