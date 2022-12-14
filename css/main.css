@@ -35,7 +35,7 @@
 }
 @keyframes blinking {
   from { width: 0 }
-  to { width: 22em }
+  to { width: 23.25em }
 }
 @keyframes vertical-border {
   from { bottom: 100% }
