@@ -114,11 +114,14 @@ aside {
 
 aside::after {
   animation: 0.75s steps(2, jump-none) infinite alternate appear;
-  content: "▮";
-  font-size: 1.5em;
+  background-color: var(--green);
+  content: "";
+  display: block;
+  height: 14pt;
   position: absolute;
-  right: -6pt;
+  right: -7pt;
   top: 0;
+  width: 8pt;
 }
 
 aside::before {
