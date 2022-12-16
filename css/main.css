@@ -35,7 +35,7 @@
 }
 @keyframes blinking {
   from { width: 0 }
-  to { width: 23.25em }
+  to { width: 280pt }
 }
 @keyframes vertical-border {
   from { bottom: 100% }
@@ -100,12 +100,12 @@ body {
 aside {
   animation: blinking 2s steps(45, end) 0.5s both;
   color: var(--green);
-  font: 15px Mononoki;
+  font: 12pt Mononoki;
   height: 20px;
   left: 50%;
   line-height: 20px;
   position: absolute;
-  transform: translate(-11em);
+  transform: translate(-140pt);
   top: 15px;
   vertical-align: middle;
   word-break: break-all;
@@ -117,8 +117,8 @@ aside::after {
   content: "▮";
   font-size: 1.5em;
   position: absolute;
-  right: -0.5em;
-  top: -0.05em;
+  right: -6pt;
+  top: 0;
 }
 
 aside::before {
