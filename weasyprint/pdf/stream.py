@@ -319,11 +319,12 @@ class Stream(pydyf.Stream):
 
     @lru_cache()
     def add_font(self, pango_font):
-        if pango.pango_version() > 14600:
-            pango_face = pango.pango_font_get_face(pango_font)
-            description = pango.pango_font_face_describe(pango_face)
-        else:
-            description = pango.pango_font_describe(pango_font)
+        description = pango.pango_font_describe(pango_font)
+        mask = (
+            pango.PANGO_FONT_MASK_SIZE +
+            pango.PANGO_FONT_MASK_GRAVITY +
+            pango.PANGO_FONT_MASK_VARIATIONS)
+        pango.pango_font_description_unset_fields(description, mask)
         key = pango.pango_font_description_hash(description)
         pango.pango_font_description_free(description)
         if key not in self._fonts:
