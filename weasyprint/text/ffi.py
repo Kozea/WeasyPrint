@@ -45,7 +45,6 @@ ffi.cdef('''
     typedef ... PangoAttrList;
     typedef ... PangoAttrClass;
     typedef ... PangoFont;
-    typedef ... PangoFontFace;
     typedef guint PangoGlyph;
     typedef gint PangoGlyphUnit;
 
@@ -71,6 +70,12 @@ ffi.cdef('''
         PANGO_WEIGHT_HEAVY = 900,
         PANGO_WEIGHT_ULTRAHEAVY = 1000
     } PangoWeight;
+
+    typedef enum {
+        PANGO_FONT_MASK_SIZE = 1 << 5,
+        PANGO_FONT_MASK_GRAVITY = 1 << 6,
+        PANGO_FONT_MASK_VARIATIONS = 1 << 7
+    } PangoFontMask;
 
     typedef enum {
         PANGO_STRETCH_ULTRA_CONDENSED,
@@ -249,6 +254,9 @@ ffi.cdef('''
         const PangoFontDescription* desc);
     int pango_font_description_get_size (PangoFontDescription *desc);
 
+    void pango_font_description_unset_fields (
+        PangoFontDescription* desc, PangoFontMask to_unset);
+
     int pango_glyph_string_get_width (PangoGlyphString *glyphs);
     char * pango_font_description_to_string (
         const PangoFontDescription *desc);
@@ -280,8 +288,6 @@ ffi.cdef('''
     void pango_font_get_glyph_extents (
         PangoFont *font, PangoGlyph glyph, PangoRectangle *ink_rect,
         PangoRectangle *logical_rect);
-    PangoFontFace* pango_font_get_face (PangoFont* font);
-    PangoFontDescription* pango_font_face_describe (PangoFontFace* face);
 
     void pango_context_set_round_glyph_positions (
         PangoContext *context, gboolean round_positions);
