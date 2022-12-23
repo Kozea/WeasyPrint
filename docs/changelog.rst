@@ -2,6 +2,46 @@ Changelog
 =========
 
 
+Version 57.2
+------------
+
+Released on 2022-12-23.
+
+Bug fixes:
+
+* `0f2e377 <https://github.com/Kozea/WeasyPrint/commit/0f2e377>`_:
+  Print annotations with PDF/A
+* `0e9426f <https://github.com/Kozea/WeasyPrint/commit/0e9426f>`_:
+  Hide annotations with PDF/UA
+* `#1764 <https://github.com/Kozea/WeasyPrint/issues/1764>`_:
+  Use reference instead of stream for annotation appearance stream
+* `#1783 <https://github.com/Kozea/WeasyPrint/pull/1783>`_:
+  Fix multiple font weights for @font-face declarations
+
+Contributors:
+
+* Guillaume Ayoub
+
+Backers and sponsors:
+
+* Grip Angebotssoftware
+* Manuel Barkhau
+* Crisp BV
+* SimonSoft
+* Menutech
+* Spacinov
+* KontextWork
+* René Fritz
+* NCC Group
+* Kobalt
+* Tom Pohl
+* Castedo Ellerman
+* Moritz Mahringer
+* Piotr Horzycki
+* Gábor Nyers
+* Sidharth Kapur
+
+
 Version 57.1
 ------------
 
