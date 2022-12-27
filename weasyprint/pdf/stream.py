@@ -423,7 +423,7 @@ class Stream(pydyf.Stream):
         })
 
         optimize = 'images' in optimize_size
-        if pillow_image.format == 'JPEG':
+        if pillow_image.format in ('JPEG', 'MPO'):
             extra['Filter'] = '/DCTDecode'
             image_file = io.BytesIO()
             pillow_image.save(image_file, format='JPEG', optimize=optimize)
