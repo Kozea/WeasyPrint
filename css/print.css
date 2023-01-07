@@ -1,76 +1,144 @@
+@import "main.css";
+
 @page {
-  margin: 8mm;
-  background: url("img/print/bleed-top-left.svg") top left/45px no-repeat, url("img/print/bleed-top-right.svg") top right/45px no-repeat, url("img/print/bleed-bottom-left.svg") bottom left/45px no-repeat, url("img/print/bleed-bottom-right.svg") bottom right/45px no-repeat, transparent; }
+  background:
+    url("img/print/bleed-top-left.svg") -10mm -10mm/10mm,
+    url("img/print/bleed-top-right.svg") 190mm -10mm/10mm,
+    url("img/print/bleed-bottom-left.svg") -10mm 277mm/10mm,
+    url("img/print/bleed-bottom-right.svg") 190mm 277mm/10mm;
+  background-repeat: no-repeat;
+  margin: 10mm;
+}
+
 @page:first {
-  background-color: #14213d; }
-nav, aside + aside, footer {
-  display: none; }
+  background-color: #14213d;
+}
 
-html, body, body #main {
-  display: block; }
 
-body #main {
-  background: none;
-  max-width: none;
-  width: auto; }
-  body #main::before, body #main::after {
-    display: none; }
-  body #main main::before, body #main main::after {
-    display: none; }
-  body #main section {
-    padding: 0; }
-    body #main section + section h2 {
-      margin: 1em 0 0.5em;
-      padding: 0; }
-      body #main section + section h2::before {
-        display: none; }
-  body #main article {
-    padding: 0; }
-  body #main section:nth-of-type(1) {
-    break-after: page; }
-    body #main section:nth-of-type(1)::before {
-      display: none; }
-  body #main li {
-    border: none !important;
-    font-size: 1em !important; }
-  body #main main.index section:nth-of-type(1) h2::before {
-    background: none;
-    content: url(img/logotype-white.svg); }
-  body #main main.index section:nth-of-type(1) ul {
-    margin: auto;
-    position: static;
-    transform: none;
-    width: auto; }
-    body #main main.index section:nth-of-type(1) ul li, body #main main.index section:nth-of-type(1) ul li.active {
-      color: inherit;
-      height: auto;
-      padding: 0.5em 1em !important; }
-      body #main main.index section:nth-of-type(1) ul li::before, body #main main.index section:nth-of-type(1) ul li.active::before {
-        color: inherit;
-        margin: 0 0.5em 0 0; }
-  body #main main.news section:nth-of-type(2) article {
-    break-inside: avoid; }
-    body #main main.news section:nth-of-type(2) article aside {
-      position: static; }
-  body #main main.start section:nth-of-type(1) ul {
-    display: block; }
-  body #main main.about ul li {
-    display: block; }
-  body #main main.donate section:nth-of-type(2) ul {
-    display: block;
-    padding: 0; }
-    body #main main.donate section:nth-of-type(2) ul li {
-      padding: 0 !important; }
-      body #main main.donate section:nth-of-type(2) ul li::before, body #main main.donate section:nth-of-type(2) ul li::after {
-        display: none; }
-  body #main main.donate section:nth-of-type(2) p {
-    color: inherit !important;
-    margin: 1em 0 !important;
-    padding: 0 !important; }
-  body #main #samples article {
-    break-inside: avoid; }
-  body #main #samples article ul {
-    padding: 0 }
-  body #main #samples article ul a {
-    border: none;
-    padding: 0 0 0 2em; }
+
+/* Main Structure */
+
+html {
+  font-size: 14pt;
+}
+
+nav, footer {
+  display: none;
+}
+
+aside {
+  width: 100%;
+}
+
+
+
+/* Common Tags */
+
+a {
+  background-color: var(--gray);
+}
+
+
+
+/* Titles */
+
+h1 {
+  font-size: 4em;
+  margin: 1.5em 0 0.5em;
+}
+
+
+
+/* Specific Classes */
+
+.buttons {
+  display: block;
+  margin: 0.5em 0;
+}
+
+.buttons li {
+  display: inline-block;
+}
+
+.buttons a {
+  padding: 0.25em 0.25em 0.25em 0.5em;
+}
+
+
+
+/* Factory */
+
+#factory h2 {
+  padding-top: 0;
+}
+
+#factory #print {
+  display: none;
+}
+
+#factory #data-sample {
+  text-align: center;
+}
+
+#factory #data-sample label {
+  display: inline-block;
+  padding: 0.5em;
+}
+
+#factory dd {
+  display: none;
+}
+
+
+
+/* Figures */
+
+#figures li {
+  color: var(--white);
+  padding-top: 2em;
+  text-align: center;
+}
+
+
+
+/* Samples */
+
+#samples {
+  break-before: always;
+}
+
+
+
+/* Support */
+
+#support {
+  break-before: always;
+}
+
+
+
+/* Sponsors */
+
+#sponsors {
+  break-before: always;
+}
+
+#sponsors .gold img {
+  max-height: 20mm;
+  max-width: 60mm;
+}
+
+#sponsors .silver img {
+  max-height: 15mm;
+  max-width: 40mm;
+}
+
+#sponsors .bronze img {
+  max-height: 12mm;
+  max-width: 26mm;
+}
+
+#sponsors .user img {
+  max-height: 8mm;
+  max-width: 20mm;
+}

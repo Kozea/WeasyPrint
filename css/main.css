@@ -27,43 +27,6 @@
 
 
 
-/* Animations */
-
-@keyframes appear {
-  from { opacity: 0% }
-  to { opacity: 100% }
-}
-@keyframes blinking {
-  from { width: 0 }
-  to { width: 280pt }
-}
-@keyframes vertical-border {
-  from { bottom: 100% }
-  to { bottom: 0% }
-}
-@keyframes horizontal-border {
-  from { width: 0% }
-  to { width: 100% }
-}
-@keyframes slide-gradient {
-  from { background-position: 100% 50% }
-  to { background-position: 0% 50% }
-}
-@keyframes slide-background {
-  from { bottom: 0 }
-  to { bottom: 10em }
-}
-@keyframes slide-image {
-  from { height: 0; margin-bottom: 18em }
-  to { height: 18em; margin-bottom: 0em }
-}
-@keyframes text-appear {
-  from { color: transparent }
-  to { color: var(--blue) }
-}
-
-
-
 /* Main Structure */
 
 :root {
@@ -86,19 +49,10 @@ html {
 }
 
 body {
-  background:
-    url(img/print/bleed-top-left.svg) top left / 45px,
-    url(img/print/bleed-top-right.svg) top right / 45px;
-  background-repeat: no-repeat;
   line-height: 1.2;
-  margin: 1em;
-  max-width: 95%;
-  position: relative;
-  width: 60em;
 }
 
 aside {
-  animation: blinking 2s steps(45, end) 0.5s both;
   color: var(--green);
   font: 12pt Mononoki;
   height: 20px;
@@ -112,105 +66,15 @@ aside {
   z-index: -1;
 }
 
-aside::after {
-  animation: 0.75s steps(2, jump-none) infinite alternate appear;
-  background-color: var(--green);
-  content: "";
-  display: block;
-  height: 14pt;
-  position: absolute;
-  right: -7pt;
-  top: 0;
-  width: 8pt;
-}
-
-aside::before {
-  background-color: var(--blue);
-  content: "";
-  height: 50em;
-  top: 20px;
-  position: absolute;
-  width: 22em;
-}
-
-section {
-  padding: 1em 5em 3em;
-}
-
-footer {
-  background:
-    url(img/logotype-black.svg) 15% 30% / 15%,
-    url(img/print/bleed-bottom-left.svg) bottom left / 45px,
-    url(img/print/bleed-bottom-right.svg) bottom right / 45px,
-    var(--gray);
-  background-repeat: no-repeat;
-  font-size: 0.8em;
-  padding: 1em;
-}
-
-
-
-/* Main Borders */
-
-body::before,
-body::after {
-  animation: vertical-border 1s ease-in-out 2s both;
-  border-left: 1px solid var(--green);
-  content: "";
-  position: absolute;
-  top: 0;
-}
-
-body::before {
-  left: 0;
-}
-
-body::after {
-  right: 0;
-}
-
-nav::before,
-footer::after {
-  border-top: 1px solid var(--green);
-  content: "";
-  left: 50%;
-  position: absolute;
-  transform: translate(-50%);
-}
-
-nav::before {
-  animation: horizontal-border 1s ease-out 1s both;
-  top: 0;
-}
-
-footer::after {
-  animation: horizontal-border 1s ease-in 2s both;
-  bottom: 0;
-}
-
 
 
 /* Common Tags */
 
 a {
-  background-image: linear-gradient(
-    90deg,
-    var(--gray) 50%,
-    var(--green) 50%);
-  background-position: 0 50%;
-  background-size: 200% 100%;
   color: inherit;
   margin: 0 -0.1em;
   padding: 0 0.2em;
   text-decoration: inherit;
-  transition:
-    background-position 0.2s ease-out 0.05s,
-    color 0.2s ease-in-out 0.1s;
-}
-
-a:is(:hover, :focus) {
-  background-position: -100% 0;
-  color: var(--blue);
 }
 
 
@@ -218,21 +82,18 @@ a:is(:hover, :focus) {
 /* Titles */
 
 h1 {
-  background: url(img/logotype-white.gif) top center/contain no-repeat;
-  color: transparent;
-  font-size: 0;
-  height: 3rem;
-  margin: 3.5rem 2rem 0;
+  color: var(--white);
+  font-weight: normal;
+  text-align: center;
 }
 
 h2 {
-  border-left: 1px solid var(--green);
   color: var(--black);
   font-size: 2.2em;
   font-style: italic;
   font-weight: normal;
-  margin: -1em 0 0.5em;
-  padding: 1.5em 0 0 0.5em;
+  margin-top: -1em;
+  padding-top: 1.5em;
 }
 
 h3 {
@@ -266,8 +127,6 @@ h3 {
   display: inline-block;
   margin: 0;
   padding: 1em;
-  transition-property: border-color, color;
-  transition-duration: 0.5s;
 }
 
 .buttons a::before {
@@ -280,27 +139,8 @@ h3 {
   height: 0.6em;
   margin-right: 0.5em;
   padding: 2px;
-  transition:
-    background-color 0.3s,
-    border-bottom-color 0.15s,
-    border-left-color 0.15s 0.15s,
-    border-right-color 0.15s 0.45s,
-    border-top-color 0.15s 0.3s,
-    transform 0.6s;
-  transition-timing-function: ease;
   vertical-align: 0.09em;
   width: 0.6em;
-}
-
-.buttons a:is(:hover, :focus) {
-  border-color: var(--green);
-  color: var(--green);
-}
-
-.buttons a:is(:hover, :focus)::before {
-  border-color: var(--green);
-  background-color: var(--green);
-  transform: rotate(360deg);
 }
 
 
@@ -309,7 +149,6 @@ h3 {
 
 nav ul {
   align-items: center;
-  animation: 1s ease-in-out 1s both appear;
   color: var(--white);
   display: flex;
   flex-wrap: wrap;
@@ -343,12 +182,6 @@ nav #sponsor a {
   border-radius: 0.5em;
   margin: 0;
   padding: 1em;
-  transition: background-color 0.5s, color 0.5s;
-}
-
-nav #sponsor a:is(:hover, :focus) {
-  background-color: var(--white);
-  color: var(--blue);
 }
 
 
@@ -361,19 +194,6 @@ nav #sponsor a:is(:hover, :focus) {
   text-align: center;
 }
 
-#factory::before {
-  animation: slide-background 0.5s ease-in-out both;
-  background: var(--blue);
-  bottom: 0;
-  content: "";
-  height: 500%;
-  left: 50%;
-  position: absolute;
-  transform: translate(-50%);
-  width: 100vw;
-  z-index: -2;
-}
-
 #factory h2 {
   border: none;
   color: inherit;
@@ -382,33 +202,7 @@ nav #sponsor a:is(:hover, :focus) {
 }
 
 #factory #data-sample {
-  animation: 1s ease-in-out 1.75s both appear;
-  background: var(--white);
-  border-radius: 0.5em;
-  color: var(--black);
   font: 0.8em Mononoki;
-  left: 50%;
-  margin: 2em 0;
-  overflow: hidden;
-  position: absolute;
-  text-align: left;
-  transform: translate(-50%);
-  width: 18em;
-  z-index: 1;
-}
-
-#factory #data-sample::before {
-  content: "↓";
-  font-size: 1.4em;
-  position: absolute;
-  right: 0.75em;
-  top: 0.65em;
-  transition: opacity 0.5s;
-  visibility: hidden;
-}
-
-#factory #data-sample:hover::before {
-  opacity: 0;
 }
 
 #factory #data-sample input {
@@ -421,11 +215,6 @@ nav #sponsor a:is(:hover, :focus) {
   width: 1em;
 }
 
-#factory #data-sample input:checked::before {
-  content: "-";
-  visibility: hidden;
-}
-
 #factory #data-sample label {
   display: block;
   height: 1.2em;
@@ -435,117 +224,7 @@ nav #sponsor a:is(:hover, :focus) {
   transition-property: padding-bottom, padding-top, height;
 }
 
-#factory #data-sample label:not(:has(:checked)) {
-  height: 0;
-  padding-bottom: 0;
-  padding-top: 0;
-}
-
-#factory #data-sample:hover label {
-  height: 1.2em;
-  padding: 1.2em;
-  transition-delay: 0.25s;
-}
-
-#factory #data-sample:has(label) label:is(:hover, :focus) {
-  background: var(--gray);
-}
-
-#factory #print {
-  animation:
-    0.5s ease-out 1.5s both text-appear,
-    1.5s cubic-bezier(0.5, 0.1, 0, 1) 1.5s both slide-gradient;
-  background-image: linear-gradient(
-    90deg,
-    var(--gray) 34%,
-    var(--green) 34%,
-    var(--green) 66%,
-    transparent 66%);
-  background-size: 300% 100%;
-  bottom: 10em;
-  color: transparent;
-  left: 2em;
-  line-height: 1;
-  padding: 2em;
-  position: absolute;
-  text-align: left;
-  text-align-last: justify;
-  visibility: hidden;
-  width: 10em;
-}
-
-#factory #print::before {
-  animation: 1s ease-in-out 1.5s both appear;
-  background: var(--white);
-  border-radius: 5em;
-  box-shadow: 0 0.2em 0.5em -0.2em var(--dark-gray);
-  content: "";
-  height: 2.5em;
-  left: 35%;
-  margin: -0.75em 0;
-  position: absolute;
-  transition: transform 0.15s ease-in-out;
-  width: 30%;
-}
-
-#factory #print::after {
-  animation: 1s ease-in-out 1.5s both appear;
-  background-color: var(--green);
-  border-radius: 5em;
-  content: "";
-  height: 1.8em;
-  width: 1.8em;
-  margin: -0.4em 0.4em;
-  position: absolute;
-  transition:
-    transform 0.15s ease-in-out,
-    left 0.3s ease-out,
-    background-color 0.3s ease-out,
-    height 0.3s ease-in,
-    width 0.2s ease-in-out,
-    margin-top 0.3s ease-in;
-}
-
-#factory #print:has(input:not(:checked))::after {
-  left: 35%;
-}
-
-#factory #print:has(input:checked)::after {
-  background-color: var(--blue);
-  height: 2.2em;
-  left: calc(65% - (2.2em + 2 * 0.4em));
-  margin-top: -0.6em;
-  width: 2.2em;
-}
-
-#factory #print:hover::before,
-#factory #print:hover::after {
-  transform: scale(1.1);
-}
-
-#factory #print input {
-  appearance: none;
-  cursor: pointer;
-  height: 4em;
-  left: 35%;
-  margin: -1.2em 0 0;
-  position: absolute;
-  width: 30%;
-  z-index: 1;
-}
-
-/* Show elements in browsers supporting :has */
-#factory:has(p) #data-sample::before,
-#factory:has(p) #data-sample input:checked::before,
-#factory:has(p) #print {
-  visibility: visible;
-}
-#factory:has(p) #data-sample label {
-  cursor: pointer;
-}
-
 #factory dl {
-  animation: slide-image 1s ease-in-out 1s both;
   background: var(--half-gray);
   height: 0;
   margin: 4em 0 18em 0;
@@ -560,33 +239,13 @@ nav #sponsor a:is(:hover, :focus) {
   margin: 0;
 }
 
-#factory img {
-  animation: slide-image 0.5s ease-in-out 1.5s both;
-  display: block;
-  object-fit: cover;
-  object-position: 50% 50%;
-  width: 100%;
-}
-
-#factory #data-sample:has([value=reports]:not(:checked)) ~ dl [data-sample=reports],
-#factory #data-sample:has([value=invoices]:not(:checked)) ~ dl [data-sample=invoices],
-#factory #data-sample:has([value=tickets]:not(:checked)) ~ dl [data-sample=tickets] {
-  display: none;
-}
-
-#factory #print:has(input:checked) ~ dl .html,
-#factory #print:has(input:not(:checked)) ~ dl .thumbnail {
-  display: none
-}
-
-#factory form:has(input:is(:focus, :hover)) ~ dl img {
-  animation-delay: 0s;
-  animation-duration: 0.2s;
-}
-
 
 
 /* Figures */
+
+#figures {
+  margin-top: -6em;
+}
 
 #figures h2 {
   display: none;
@@ -595,40 +254,28 @@ nav #sponsor a:is(:hover, :focus) {
 #figures ul {
   align-items: center;
   display: flex;
-  justify-content: space-between;
+  justify-content: space-around;
   line-height: 1.1;
   margin: 0;
-  padding: 0;
+  padding: 1em;
 }
 
 #figures li {
-  background: var(--blue);
-  color: var(--white);
+  border-right: 1px solid var(--green);
+  color: var(--black);
   display: flex;
   flex-direction: column;
-  height: 10em;
   justify-content: center;
-  padding: 0 2em;
-  text-align: center;
-  width: 6em;
-}
-
-#figures li:first-child {
-  background: var(--green);
-  color: var(--black);
-}
-
-#figures li:nth-child(even) {
-  background: var(--gray);
-  color: var(--black);
+  padding: 5em 1.2em 0;
+  text-align: right;
+  width: 7em;
 }
 
 #figures span {
   display: block;
-  font-size: 2.5em;
-  margin: -0.5em -0.5em 0 -0.5em;
-  line-height: 1.2;
-  vertical-align: top;
+  font-size: 3em;
+  line-height: 1;
+  font-variant-numeric: lining-nums;
 }
 
 
@@ -659,11 +306,6 @@ nav #sponsor a:is(:hover, :focus) {
 
 
 /* Support */
-
-#support {
-  background: var(--light-gray);
-  padding: 1em 8em;
-}
 
 #support li {
   list-style: '— ';
@@ -704,17 +346,9 @@ nav #sponsor a:is(:hover, :focus) {
   max-width: 150px;
 }
 
-#sponsors .user {
-  margin: auto;
-  max-width: 700px;
-}
-
 #sponsors .user img {
-  filter: grayscale(100%);
   max-height: 40px;
   max-width: 120px;
-  opacity: 0.6;
-  transition: filter 0.5s;
 }
 
 #sponsors .user img:hover {
@@ -724,11 +358,6 @@ nav #sponsor a:is(:hover, :focus) {
 
 
 /* About */
-
-#about {
-  background: var(--light-gray);
-  padding: 1em 8em;
-}
 
 #about h2 {
   display: none;
@@ -848,6 +477,14 @@ footer #links #website::before {
 
   #figures ul {
     flex-direction: column;
+    margin-top: 4em;
+  }
+
+  #figures li {
+    border: none;
+    padding-top: 2em;
+    text-align: center;
+    width: auto;
   }
 
   #samples .buttons {
