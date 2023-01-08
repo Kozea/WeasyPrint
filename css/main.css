@@ -400,13 +400,13 @@ footer #links {
 }
 
 footer #links a {
-  margin: 0 0.5em;
+  margin: 0;
 }
 
 footer #links a::before {
   display: inline-block;
   height: 1.2em;
-  margin-right: 0.5em;
+  margin-right: 0.25em;
   vertical-align: bottom;
   width: 1.2em;
 }
@@ -431,97 +431,6 @@ footer #links #website::before {
   content: url(img/about/picto-website.svg);
 }
 
-
-/* Responsive */
-
-@media (max-width: 950px) {
-  aside {
-    display: none;
-  }
-
-  nav ul {
-    justify-content: center;
-  }
-
-  nav li {
-    padding: 0.35em 0;
-  }
-
-  nav #sponsor {
-    margin: auto;
-    width: 100%;
-  }
-
-  h1 {
-    margin-bottom: 1em;
-    margin-top: 1em;
-  }
-
-  h2 {
-    font-size: 1.8em;
-  }
-
-  section ul {
-    padding-left: 0;
-  }
-
-  #factory h2 {
-    padding-top: 0.75em;
-  }
-
-  #factory #print {
-    bottom: 0;
-    left: 50%;
-    transform: translate(-50%);
-  }
-
-  #figures ul {
-    flex-direction: column;
-    margin-top: 4em;
-  }
-
-  #figures li {
-    border: none;
-    padding-top: 2em;
-    text-align: center;
-    width: auto;
-  }
-
-  #samples .buttons {
-    clear: left;
-    margin: 0.5em 0;
-  }
-
-  #samples .buttons li {
-    margin-top: 0.5em;
-  }
-
-  section {
-    padding: 1em 1em 3em;
-  }
-
-  #support,
-  #about {
-    padding-left: 2em;
-    padding-right: 2em;
-  }
-
-  footer {
-    background:
-      url(img/logotype-black.svg) 3.75em 2em / auto 2em,
-      url(img/print/bleed-bottom-left.svg) bottom left / 45px,
-      url(img/print/bleed-bottom-right.svg) bottom right / 45px,
-      var(--gray);
-    background-repeat: no-repeat;
-  }
-
-  footer #toc {
-    columns: 1;
-    margin: 5em 0 2em 2.5em;
-  }
-
-  footer #links {
-    flex-direction: column;
-    padding: 0 0 2em 2em;
-  }
+footer #links #linkedin::before {
+  content: url(img/about/picto-linkedin.svg);
 }
