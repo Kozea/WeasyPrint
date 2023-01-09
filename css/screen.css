@@ -138,19 +138,14 @@ footer::after {
 /* Common Tags */
 
 a {
-  background-image: linear-gradient(
-    90deg,
-    var(--gray) 50%,
-    var(--green) 50%);
-  background-position: 0 50%;
-  background-size: 200% 100%;
+  background: linear-gradient(90deg, var(--green) 50%, var(--gray) 50%) 100% 0 / 200% 100% no-repeat;
   transition:
     background-position 0.2s ease-out 0.05s,
     color 0.2s ease-in-out 0.1s;
 }
 
 a:is(:hover, :focus) {
-  background-position: -100% 0;
+  background-position: 0 0;
   color: var(--blue);
 }
 
@@ -159,7 +154,7 @@ a:is(:hover, :focus) {
 /* Titles */
 
 h1 {
-  background: url(img/logotype-white.gif) top center/contain no-repeat;
+  background: url(img/logotype-white.gif) top center / contain no-repeat;
   color: transparent;
   font-size: 0;
   height: 3rem;

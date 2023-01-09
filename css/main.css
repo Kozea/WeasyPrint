@@ -162,10 +162,7 @@ nav li {
 }
 
 nav a {
-  background-image: linear-gradient(
-    90deg,
-    var(--blue) 50%,
-    var(--green) 50%);
+  background-image: linear-gradient(90deg, var(--green) 50%, var(--blue) 50%);
   color: inherit;
   display: block;
   margin-right: 1em;
@@ -383,10 +380,7 @@ footer li li {
 }
 
 footer a {
-  background-image: linear-gradient(
-    90deg,
-    var(--gray) 50%,
-    var(--half-gray) 50%);
+  background-image: linear-gradient(90deg, var(--half-gray) 50%, var(--gray) 50%);
 }
 
 footer #toc {
