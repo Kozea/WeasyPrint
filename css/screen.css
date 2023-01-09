@@ -508,6 +508,12 @@ nav #sponsor a:is(:hover, :focus) {
     margin-top: 0.5em;
   }
 
+  #samples img {
+    float: none;
+    margin: 0 0 1em;
+    width: 100%;
+  }
+
   section {
     padding: 1em 1em 3em;
   }
