@@ -1,76 +1,302 @@
 <!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width initial-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link href="css/img/logotype-picto.svg" type="image/svg" rel="shortcut icon">
+    <link href="css/screen.css" rel="stylesheet" media="screen">
+    <link href="css/print.css" rel="stylesheet" media="print">
+    <link href="https://www.courtbouillon.org/blog.rss" type="application/rss+xml" rel="alternate" title="RSS feed">
 
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width initial-scale=1">
-<meta http-equiv="X-UA-Compatible" content="IE=edge">
-<link href="/css/img/logotype-picto.svg" type="image/svg" rel="shortcut icon">
-<link href="/css/main.css" rel="stylesheet">
-<link href="/css/print.css" rel="stylesheet" media="print">
-<link href="/feed.xml" type="application/rss+xml" rel="alternate" title="RSS feed">
+    <title>WeasyPrint</title>
+    <meta name="description" content="WeasyPrint, The Awesome Document Factory. Transform HTML and CSS into PDF documents.">
+  </head>
 
-<title>WeasyPrint</title>
-<meta name="description" content="The Awesome Document Factory">
-
-<body>
-  <div id="main">
-    <nav class="index">
+  <body>
+    <nav>
       <ul>
         <li><a href="#samples">Samples</a></li>
         <li><a href="https://doc.courtbouillon.org/weasyprint/">Documentation</a></li>
-        <li><a href="#about">About</a></li>
-        <li><a href="#support">Contact Us</a></li>
+        <li><a href="#support">Professional Support</a></li>
+        <li><a href="https://www.courtbouillon.org/blog-articles">Blog</a></li>
+        <li id="sponsor"><a href="https://opencollective.com/courtbouillon">Become a Sponsor</a></li>
       </ul>
     </nav>
 
-    <aside class="index">
-      <a>
-        WeasyPrint − The Awesome Document Factory
-      </a>
-    </aside>
+    <aside>WeasyPrint − The Awesome Document Factory</aside>
 
-    <aside class="index">
-      <a href="https://opencollective.com/courtbouillon">
-        Become a sponsor
-      </a>
-    </aside>
-
-    <main class="index" onclick="/* iOS hack */">
+    <main>
       <h1>WeasyPrint</h1>
 
-      <section>
-        <h2 id="factory">The Awesome Document Factory</h2>
+      <section id="factory">
+        <h2>The Awesome Document Factory</h2>
 
         <p>
           WeasyPrint is a smart solution helping web developers to create PDF
-          documents. It turns simple <strong>HTML pages</strong> into gorgeous:
+          documents. It’s free and open source software that can be easily
+          plugged to your applications and websites and turns simple
+          <strong>HTML pages</strong> into gorgeous:
         </p>
 
-        <ul>
-          <li class="active" data-sample="reports">Statistical reports</li>
-          <li data-sample="invoices">Invoices</li>
-          <li data-sample="tickets">Tickets</li>
-        </ul>
+        <form id="data-sample">
+          <label><input type="radio" name="data-sample" value="reports" checked>Statistical reports</label>
+          <label><input type="radio" name="data-sample" value="invoices">Invoices</label>
+          <label><input type="radio" name="data-sample" value="tickets">Tickets</label>
+        </form>
 
-        <input type="checkbox" name="switch">
-        <label for="switch">html</label>
-        <label for="switch">print</label>
+        <form id="print">
+          <label><input type="checkbox">html print</label>
+        </form>
 
         <dl>
-          <dt class="active" data-sample="reports">Statistical report</dt>
-          <dd><img src="/css/img/documents/reports-thumbnail.png" alt="Statistical reports"></dd>
-          <dt data-sample="invoices">Invoices report</dt>
-          <dd><img src="/css/img/documents/invoices-thumbnail.png" alt="Invoices"></dd>
-          <dt data-sample="tickets">Tickets</dt>
-          <dd><img src="/css/img/documents/tickets-thumbnail.png" alt="Tickets"></dd>
+          <dt>Statistical report</dt>
+          <dd data-sample="reports" class="thumbnail"><img src="css/img/documents/reports-thumbnail.jpg" alt="Statistical reports"></dd>
+          <dd data-sample="reports" class="html"><img src="css/img/documents/reports-html.jpg" alt="Statistical reports"></dd>
+          <dt>Invoices report</dt>
+          <dd data-sample="invoices" class="thumbnail"><img src="css/img/documents/invoices-thumbnail.jpg" alt="Invoices"></dd>
+          <dd data-sample="invoices" class="html"><img src="css/img/documents/invoices-html.jpg" alt="Invoices"></dd>
+          <dt>Tickets</dt>
+          <dd data-sample="tickets" class="thumbnail"><img src="css/img/documents/tickets-thumbnail.jpg" alt="Tickets"></dd>
+          <dd data-sample="tickets" class="html"><img src="css/img/documents/tickets-html.jpg" alt="Tickets"></dd>
         </dl>
-
       </section>
 
-      <section>
+      <section id="figures">
+        <h2>Key Figures</h2>
+        <ul>
+          <li><span>11</span> years of experience</li>
+          <li><span>700k</span> downloads last month</li>
+          <li><span>5.3k</span> stargazers on GitHub</li>
+        </ul>
+      </section>
+
+      <section id="samples">
+        <h2>Samples</h2>
+
+        <article>
+          <h3>Reports</h3>
+
+          <img loading="lazy" src="css/img/documents/reports-thumbnail.jpg" alt="Report thumbnail">
+
+          <p>
+            A small report with a <strong>table of contents</strong>,
+            <strong>customized headers</strong>,
+            <strong>different page layouts</strong> and
+            <strong>nice typography features</strong>.
+          </p>
+
+          <ul class="buttons">
+            <li><a href="https://github.com/CourtBouillon/weasyprint-samples/raw/master/report/report.pdf">PDF</a></li>
+            <li><a href="https://github.com/CourtBouillon/weasyprint-samples/tree/master/report">Source</a></li>
+          </ul>
+        </article>
+
+        <article>
+          <h3>Invoices</h3>
+
+          <img loading="lazy" src="css/img/documents/invoices-thumbnail.jpg" alt="Invoice thumbnail">
+
+          <p>
+            A simple invoice with a <strong>delicate layout</strong>,
+            <strong>tables</strong> and <strong>a nice footer</strong>.
+          </p>
+
+          <ul class="buttons">
+            <li><a href="https://github.com/CourtBouillon/weasyprint-samples/raw/master/invoice/invoice.pdf">PDF</a></li>
+            <li><a href="https://github.com/CourtBouillon/weasyprint-samples/tree/master/invoice">Source</a></li>
+          </ul>
+        </article>
+
+        <article>
+          <h3>Tickets</h3>
+
+          <img loading="lazy" src="css/img/documents/tickets-thumbnail.jpg" alt="Ticket thumbnail">
+
+          <p>
+            A ticket with a <strong>barcode</strong>, with just
+            <strong>50 lines of HTML</strong> and <strong>150 lines of CSS</strong>.
+          </p>
+
+          <ul class="buttons">
+            <li><a href="https://github.com/CourtBouillon/weasyprint-samples/raw/master/ticket/ticket.pdf">PDF</a></li>
+            <li><a href="https://github.com/CourtBouillon/weasyprint-samples/tree/master/ticket">Source</a></li>
+          </ul>
+        </article>
+
+        <article>
+          <h3>Books</h3>
+
+          <img loading="lazy" src="css/img/documents/books-thumbnail.jpg" alt="Book thumbnail">
+
+          <p>
+            A full book with a <strong>nice cover</strong>, a
+            <strong>simple table of contents</strong> and <strong>running elements</strong>.
+            Comes with an <strong>alternate stylesheet</strong>.
+          </p>
+
+          <ul class="buttons">
+            <li><a href="https://github.com/CourtBouillon/weasyprint-samples/raw/master/book/book.pdf">Fancy PDF</a></li>
+            <li><a href="https://github.com/CourtBouillon/weasyprint-samples/raw/master/book/book-classical.pdf">Classical PDF</a></li>
+            <li><a href="https://github.com/CourtBouillon/weasyprint-samples/tree/master/">Source</a></li>
+          </ul>
+        </article>
+
+        <article>
+          <h3>Letters</h3>
+
+          <img loading="lazy" src="css/img/documents/letters-thumbnail.jpg" alt="Letter thumbnail">
+
+          <p>
+            A letter with a <strong>nice coupon</strong> made of <strong>form inputs</strong>,
+            that also <strong>renders nicely in a browser</strong>.
+          </p>
+
+          <ul class="buttons">
+            <li><a href="https://github.com/CourtBouillon/weasyprint-samples/raw/master/letter/letter.pdf">PDF</a></li>
+            <li><a href="https://github.com/CourtBouillon/weasyprint-samples/tree/master/letter">Source</a></li>
+          </ul>
+        </article>
+
+        <article>
+          <h3>Posters</h3>
+
+          <img loading="lazy" src="css/img/documents/posters-thumbnail.jpg" alt="Poster thumbnail">
+
+          <p>
+            A poster mainly composed of <strong>images</strong> fitting in <strong>one page</strong>,
+            with an <strong>alternate stylesheet</strong> used to generate <strong>a flyer</strong>.
+          </p>
+
+          <ul class="buttons">
+            <li><a href="https://github.com/CourtBouillon/weasyprint-samples/raw/master/poster/poster.pdf">Poster PDF</a></li>
+            <li><a href="https://github.com/CourtBouillon/weasyprint-samples/raw/master/poster/flyer.pdf">Flyer PDF</a></li>
+            <li><a href="https://github.com/CourtBouillon/weasyprint-samples/tree/master/poster">Source</a></li>
+          </ul>
+        </article>
+      </section>
+
+      <section id="support">
+        <h2>Professional Support</h2>
+
         <p>
-          WeasyPrint is free and open source software that can be easily plugged to
-          your applications and websites.
+          You can improve your experience with WeasyPrint thanks to our professional support.
         </p>
+        <ul>
+          <li>A bug is driving you crazy and you want it to be fixed as soon as possible?</li>
+          <li>Your documents are nice, but a new feature would make them awesome?</li>
+          <li>You have a sweet design, but need help to convert it in HTML/CSS template?</li>
+        </ul>
+        <p>
+          Please contact us by
+          <a title="contact@courtbouillon.org" href="mailto:contact@courtbouillon.org">mail</a>,
+          by <a title="CourtBouillon" href="https://matrix.to/#/%23CourtBouillon_WeasyPrint:gitter.im">chat</a>
+          or by <a title="@BouillonCourt" href="https://twitter.com/BouillonCourt">tweet</a>
+          to get in touch, we’ll be happy to find the best way to help you!
+        </p>
+        <ul class="buttons">
+          <li><a href="mailto:contact@courtbouillon.org">Contact Us</a></li>
+        </ul>
+      </section>
+
+      <section id="sponsors">
+        <h2>Sponsorship</h2>
+        <p>
+          With donations and sponsorship, you help the projects to be better.
+          Donations allow the CourtBouillon team to have more time dedicated to add
+          new features, fix bugs, and improve documentation.
+        </p>
+        <ul class="buttons">
+          <li><a href="https://opencollective.com/courtbouillon">Become a Sponsor</a></li>
+        </ul>
+
+        <h3>Silver Sponsors</h3>
+        <ul class="sponsors silver">
+          <li><a href="https://www.crisp.nl/" title="Crisp">
+            Crisp
+            <img loading="lazy" alt="Crisp logo" src="https://www.courtbouillon.org/static/images/sponsor-crisp.svg">
+          </a></li>
+          <li><a href="https://www.spacinov.com" title="Spacinov">
+            Spacinov
+            <img loading="lazy" alt="Spacinov logo" src="https://www.courtbouillon.org/static/images/sponsor-spacinov.png">
+          </a></li>
+          <li><a href="https://www.kobalt.fr/" title="Kobalt">
+            Kobalt
+            <img loading="lazy" alt="Kobalt logo" src="https://www.courtbouillon.org/static/images/sponsor-kobalt.png">
+          </a></li>
+        </ul>
+
+        <h3>Bronze Sponsors</h3>
+        <ul class="sponsors bronze">
+          <li><a href="https://getgrip.de/" title="Grip Angebotssoftware">
+            Grip Angebotssoftware
+            <img loading="lazy" alt="Grip Angebotssoftware logo" src="https://www.courtbouillon.org/static/images/sponsor-grip.png">
+          </a></li>
+          <li><a href="https://www.simonsoft.se/" title="Simonsoft">
+            Simonsoft
+            <img loading="lazy" alt="SimonSoft logo" src="https://www.courtbouillon.org/static/images/sponsor-simonsoft.png">
+          </a></li>
+          <li><a href="https://menutech.com/" title="Menutech">
+            Menutech
+            <img loading="lazy" alt="Menutech logo" src="https://www.courtbouillon.org/static/images/sponsor-menutech.svg">
+          </a></li>
+          <li><a href="https://gitlab.com/mbarkhau" title="Manuel Barkhau">
+            Manuel Barkhau
+            <img loading="lazy" alt="Manuel Barkhau logo" src="https://www.courtbouillon.org/static/images/sponsor-mbarkhau.png">
+          </a></li>
+          <li><a href="https://kontextwork.de" title="KontextWork">
+            KontextWork
+            <img loading="lazy" alt="KontextWork logo" src="https://www.courtbouillon.org/static/images/sponsor-kontextwork.png">
+          </a></li>
+          <li><a href="https://colorcube.de" title="René Fritz">
+            Colorcube
+            <img loading="lazy" alt="Colorcube logo" src="https://www.courtbouillon.org/static/images/sponsor-renefritz.webp">
+          </a></li>
+          <li><a href="https://www.nccgroup.com/" title="NCC Group">
+            NCC Group
+            <img loading="lazy" alt="NCC Group logo" src="https://www.courtbouillon.org/static/images/sponsor-nccgroup.jpg">
+          </a></li>
+        </ul>
+
+        <h3>Trusted By</h3>
+        <ul class="sponsors user">
+          <li>
+            IETF
+            <img loading="lazy" alt="IETF logo" src="css/img/logos/ietf.svg">
+          </li>
+          <li>
+            Gemeente Amsterdam
+            <img loading="lazy" alt="Gemeente Amsterdam logo" src="css/img/logos/gemeente-amsterdam.svg">
+          </li>
+          <li>
+            OpenEdition
+            <img loading="lazy" alt="OpenEdition logo" src="css/img/logos/openedition.svg">
+          </li>
+          <li>
+            MetLife
+            <img loading="lazy" alt="MetLife logo" src="css/img/logos/metlife.svg">
+          </li>
+          <li>
+            République Française
+            <img loading="lazy" alt="République Française logo" src="css/img/logos/republique-francaise.svg">
+          </li>
+          <li>
+            Code&Co.
+            <img loading="lazy" alt="Code&Co. logo" src="css/img/logos/codeandco.svg">
+          </li>
+          <li>
+            Universitätsbibliothek Mannheim
+            <img loading="lazy" alt="Universitätsbibliothek Mannheim logo" src="css/img/logos/universitatsbibliothek-mannheim.svg">
+          </li>
+          <li>
+            GOV.UK
+            <img loading="lazy" alt="GOV.UK logo" src="css/img/logos/gov-uk.svg">
+          </li>
+          <li>
+            Province of British Columbia
+            <img loading="lazy" alt="Province of British Columbia logo" src="css/img/logos/province-of-british-columbia.svg">
+          </li>
+        </ul>
       </section>
 
       <section id="about">
@@ -82,222 +308,29 @@
           <a href="https://www.courtbouillon.org/">CourtBouillon</a>.
         </p>
       </section>
-
-      <section id="support">
-        <h2>Professional Support</h2>
-
-        <p>
-           You can improve your experience with WeasyPrint thanks to our professional support.
-        </p>
-        <ul>
-          <li>A bug is driving you crazy and you want it to be fixed as soon as possible?</li>
-          <li>Your documents are nice, but a new feature would make them awesome?</li>
-          <li>You have a sweet design, but need help to convert it in HTML/CSS template?</li>
-        </ul>
-        <p>
-          Please contact us by
-          <a title="contact@courtbouillon.org" href="mailto:contact@courtbouillon.org">mail</a>,
-          by <a title="CourtBouillon" href="https://matrix.to/#/#CourtBouillon_community:gitter.im">chat</a>
-          or by <a title="@BouillonCourt" href="https://twitter.com/BouillonCourt">tweet</a>
-          to get in touch, we’ll be happy to find the best way to help you!
-        </p>
-      </section>
-
-      <section>
-        <h2 id="involved">Get Involved</h2>
-
-        <h3>Use WeasyPrint</h3>
-
-        <p>
-          You are a web designer or a developer interested in trying WeasyPrint? Just
-          follow the few steps given in the
-          <a href="https://doc.courtbouillon.org/weasyprint/stable/first_steps.html">First steps</a>
-          section of the documentation.
-        </p>
-
-        <h3>Report Bugs</h3>
-        <p>
-          We are trying our best to provide stable and reliable versions of
-          WeasyPrint. If you find a problem in the latest version, please
-          <a href="https://github.com/Kozea/WeasyPrint/issues/new">open a new issue on GitHub</a> …
-          if nobody already did!
-        </p>
-
-        <h3>Improve Code & Documentation</h3>
-        <p>
-          WeasyPrint is free and open source software, meaning that you can improve
-          it for yourself and for the others.
-          <a href="https://github.com/Kozea/WeasyPrint">Get the source</a>!
-          And even if you have no programming skills, you can help us improving
-          <a href="https://doc.courtbouillon.org/weasyprint/">the documentation</a>.
-        </p>
-
-        <h3>Donate</h3>
-        <p>
-          If you want to see WeasyPrint grow and become even better,
-          <a href="https://opencollective.com/courtbouillon">support us by providing a financial help</a>. Let us
-          drive the development of the features and improvements that matter to you!
-        </p>
-
-        <h3>Tell Us About You</h3>
-        <p>
-          Meeting our wonderful users is the best way to discover the real
-          needs of companies, developers and final customers. Happy? Unhappy?
-          Please let us know how we could provide you a better experience, or
-          how useful WeasyPrint is in your daily life.
-        </p>
-      </section>
-
-      <section id="samples">
-        <h2>Samples</h2>
-
-        <article>
-          <h3>Reports</h3>
-
-          <img src="/css/img/documents/reports-thumbnail.png" alt="Report thumbnail"/>
-
-          <p>
-            A small report with a <strong>table of contents</strong>,
-            <strong>customized headers</strong>,
-            <strong>different page layouts</strong> and
-            <strong>nice typography features</strong>.
-          </p>
-
-          <ul>
-            <li><a href="https://github.com/CourtBouillon/weasyprint-samples/raw/master/report/report.pdf">PDF</a></li>
-            <li><a href="https://github.com/CourtBouillon/weasyprint-samples/tree/master/report">Source</a></li>
-          </ul>
-        </article>
-
-        <article>
-          <h3>Invoices</h3>
-
-          <img src="/css/img/documents/invoices-thumbnail.png" alt="Invoice thumbnail"/>
-
-          <p>
-            A simple invoice with a <strong>delicate layout</strong>,
-            <strong>tables</strong> and <strong>a nice footer</strong>.
-          </p>
-
-          <ul>
-            <li><a href="https://github.com/CourtBouillon/weasyprint-samples/raw/master/invoice/invoice.pdf">PDF</a></li>
-            <li><a href="https://github.com/CourtBouillon/weasyprint-samples/tree/master/invoice">Source</a></li>
-          </ul>
-        </article>
-
-        <article>
-          <h3>Tickets</h3>
-
-          <img src="/css/img/documents/tickets-thumbnail.png" alt="Ticket thumbnail"/>
-
-          <p>
-            A ticket with a <strong>barcode</strong>, with just
-            <strong>50 lines of HTML</strong> and <strong>150 lines of CSS</strong>.
-          </p>
-
-          <ul>
-            <li><a href="https://github.com/CourtBouillon/weasyprint-samples/raw/master/ticket/ticket.pdf">PDF</a></li>
-            <li><a href="https://github.com/CourtBouillon/weasyprint-samples/tree/master/ticket">Source</a></li>
-          </ul>
-        </article>
-
-        <article>
-          <h3>Books</h3>
-
-          <img src="/css/img/documents/books-thumbnail.jpg"book alt="Book thumbnail"/>
-
-          <p>
-            A full book with a <strong>nice cover</strong>, a
-            <strong>simple table of contents</strong> and <strong>running elements</strong>.
-            Comes with an <strong>alternate stylesheet</strong>.
-          </p>
-
-          <ul>
-            <li><a href="https://github.com/CourtBouillon/weasyprint-samples/raw/master/book/book.pdf">Fancy PDF</a></li>
-            <li><a href="https://github.com/CourtBouillon/weasyprint-samples/raw/master/book/book-classical.pdf">Classical PDF</a></li>
-            <li><a href="https://github.com/CourtBouillon/weasyprint-samples/tree/master/">Source</a></li>
-          </ul>
-        </article>
-
-        <article>
-          <h3>Letters</h3>
-
-          <img src="/css/img/documents/letters-thumbnail.png" alt="Letter thumbnail"/>
-
-          <p>
-            A letter with a <strong>nice coupon</strong> made of <strong>form inputs</strong>,
-            that also <strong>renders nicely in a browser</strong>.
-          </p>
-
-          <ul>
-            <li><a href="https://github.com/CourtBouillon/weasyprint-samples/raw/master/letter/letter.pdf">PDF</a></li>
-            <li><a href="https://github.com/CourtBouillon/weasyprint-samples/tree/master/letter">Source</a></li>
-          </ul>
-        </article>
-
-        <article>
-          <h3>Posters</h3>
-
-          <img src="/css/img/documents/posters-thumbnail.jpg" alt="Poster thumbnail"/>
-
-          <p>
-            A poster mainly composed of <strong>images</strong> fitting in <strong>one page</strong>,
-            with an <strong>alternate stylesheet</strong> used to generate <strong>a flyer</strong>.
-          </p>
-
-          <ul>
-            <li><a href="https://github.com/CourtBouillon/weasyprint-samples/raw/master/poster/poster.pdf">Poster PDF</a></li>
-            <li><a href="https://github.com/CourtBouillon/weasyprint-samples/raw/master/poster/flyer.pdf">Flyer PDF</a></li>
-            <li><a href="https://github.com/CourtBouillon/weasyprint-samples/tree/master/poster">Source</a></li>
-          </ul>
-        </article>
-      </section>
     </main>
 
-    <footer class="index">
-      <ul>
+    <footer>
+      <ul id="toc">
         <li><a href="/">WeasyPrint</a></li>
         <li>
           <ul>
-            <li><a href="/#factory">The Awesome Document Factory</a></li>
-            <li><a href="/#involved">Get Involved</a></li>
+            <li><a href="#factory">The Awesome Document Factory</a></li>
+            <li><a href="#figures">Key Figures</a></li>
           </ul>
         </li>
-        <li><a href="#about">About</a></li>
-        <li><a href="/samples/">Samples</a></li>
-        <li><a href="https://opencollective.com/courtbouillon/">Become a Sponsor</a></li>
+        <li><a href="#samples">Samples</a></li>
+        <li><a href="#support">Support</a></li>
+        <li><a href="#sponsors">Sponsors</a></li>
       </ul>
-      <ul>
+      <ul id="links">
         <li><a id="website" href="https://courtbouillon.org">CourtBouillon</a></li>
         <li><a id="mail" href="mailto:contact@courtbouillon.org">contact@courtbouillon.org</a></li>
-        <li><a id="gitter" href="https://gitter.im/CourtBouillon/WeasyPrint">Gitter</a></li>
+        <li><a id="matrix" href="https://matrix.to/#/%23CourtBouillon_WeasyPrint:gitter.im">Chat</a></li>
         <li><a id="twitter" href="https://twitter.com/BouillonCourt">@BouillonCourt</a></li>
         <li><a id="github" href="https://github.com/Kozea/WeasyPrint/">GitHub</a></li>
+        <li><a id="linkedin" href="https://linkedin.com/company/courtbouillon">LinkedIn</a></li>
       </ul>
     </footer>
-  </div>
-
-  <script type="text/javascript">
-   window.onload = function () {
-       var samples = document.querySelectorAll("li[data-sample]");
-       var images = document.querySelectorAll("dt[data-sample]");
-       for (var i = 0; i < samples.length; i++) {
-           var sample = samples[i];
-           sample.onclick = function () {
-               for (var i = 0; i < samples.length; i++) {
-                   var removed_sample = samples[i];
-                   removed_sample.classList.remove("active");
-               }
-               this.classList.add("active");
-               for (var i = 0; i < images.length; i++) {
-                   var removed_image = images[i];
-                   removed_image.classList.remove("active");
-               }
-               var attribute = this.getAttribute("data-sample");
-               var image = document.querySelectorAll("dt[data-sample='" + attribute + "']")[0];
-               image.classList.add("active");
-           };
-       }
-   }
-  </script>
-</body>
+  </body>
+</html>

@@ -1,0 +1,537 @@
+@import "main.css";
+
+
+
+/* Animations */
+
+@keyframes appear {
+  from { opacity: 0% }
+  to { opacity: 100% }
+}
+@keyframes expand {
+  from { width: 0 }
+  to { width: 280pt }
+}
+@keyframes vertical-border {
+  from { bottom: 100% }
+  to { bottom: 0% }
+}
+@keyframes horizontal-border {
+  from { width: 0% }
+  to { width: 100% }
+}
+@keyframes slide-gradient {
+  from { background-position: 100% 50% }
+  to { background-position: 0% 50% }
+}
+@keyframes slide-background {
+  from { bottom: 0 }
+  to { bottom: 10em }
+}
+@keyframes slide-image {
+  from { height: 0; margin-bottom: 18em }
+  to { height: 18em; margin-bottom: 0em }
+}
+@keyframes text-appear {
+  from { color: transparent }
+  to { color: var(--blue) }
+}
+
+
+
+/* Main Structure */
+
+body {
+  background:
+    url(img/print/bleed-top-left.svg) top left / 45px,
+    url(img/print/bleed-top-right.svg) top right / 45px;
+  background-repeat: no-repeat;
+  margin: 1em;
+  max-width: 95%;
+  position: relative;
+  width: 60em;
+}
+
+aside {
+  animation: expand 2s steps(45, end) 0.5s both;
+  word-break: break-all;
+}
+
+aside::after {
+  animation: appear 0.75s steps(2, jump-none) infinite alternate;
+  background-color: var(--green);
+  content: "";
+  display: block;
+  height: 14pt;
+  position: absolute;
+  right: -7pt;
+  top: 0;
+  width: 8pt;
+}
+
+aside::before {
+  background-color: var(--blue);
+  content: "";
+  height: 50em;
+  top: 20px;
+  position: absolute;
+  width: 22em;
+}
+
+section {
+  padding: 1em 5em 3em;
+}
+
+footer {
+  background:
+    url(img/logotype-black.svg) 15% 30% / 15%,
+    url(img/print/bleed-bottom-left.svg) bottom left / 45px,
+    url(img/print/bleed-bottom-right.svg) bottom right / 45px,
+    var(--gray);
+  background-repeat: no-repeat;
+  font-size: 0.8em;
+  padding: 1em;
+}
+
+
+
+/* Main Borders */
+
+body::before,
+body::after {
+  animation: vertical-border 1s ease-in-out 2s both;
+  border-left: 1px solid var(--green);
+  content: "";
+  position: absolute;
+  top: 0;
+}
+
+body::before {
+  left: 0;
+}
+
+body::after {
+  right: 0;
+}
+
+nav::before,
+footer::after {
+  border-top: 1px solid var(--green);
+  content: "";
+  left: 50%;
+  position: absolute;
+  transform: translate(-50%);
+}
+
+nav::before {
+  animation: horizontal-border 1s ease-out 1s both;
+  top: 0;
+}
+
+footer::after {
+  animation: horizontal-border 1s ease-in 2s both;
+  bottom: 0;
+}
+
+
+
+/* Common Tags */
+
+a {
+  background: linear-gradient(90deg, var(--green) 50%, var(--gray) 50%) 100% 0 / 200% 100% no-repeat;
+  transition:
+    background-position 0.2s ease-out 0.05s,
+    color 0.2s ease-in-out 0.1s;
+}
+
+a:is(:hover, :focus) {
+  background-position: 0 0;
+  color: var(--blue);
+}
+
+
+
+/* Titles */
+
+h2 {
+  border-left: 1px solid var(--green);
+  margin-left: 0.5em;
+  padding-left: 0.5em;
+}
+
+
+
+/* Specific Classes */
+
+.buttons a {
+  transition-property: border-color, color;
+  transition-duration: 0.5s;
+}
+
+.buttons a::before {
+  transition:
+    background-color 0.3s,
+    border-bottom-color 0.15s,
+    border-left-color 0.15s 0.15s,
+    border-right-color 0.15s 0.45s,
+    border-top-color 0.15s 0.3s,
+    transform 0.6s;
+  transition-timing-function: ease;
+}
+
+.buttons a:is(:hover, :focus) {
+  border-color: var(--green);
+  color: var(--green);
+}
+
+.buttons a:is(:hover, :focus)::before {
+  border-color: var(--green);
+  background-color: var(--green);
+  transform: rotate(360deg);
+}
+
+
+
+/* Nav */
+
+nav ul {
+  animation: 1s ease-in-out 1s both appear;
+}
+
+nav #sponsor a {
+  transition: background-color 0.5s, color 0.5s;
+}
+
+nav #sponsor a:is(:hover, :focus) {
+  background-color: var(--white);
+  color: var(--blue);
+}
+
+
+
+/* Factory */
+
+#factory::before {
+  animation: slide-background 0.5s ease-in-out both;
+  background: var(--blue);
+  bottom: 0;
+  content: "";
+  height: 500%;
+  left: 50%;
+  position: absolute;
+  transform: translate(-50%);
+  width: 100vw;
+  z-index: -2;
+}
+
+#factory #data-sample {
+  animation: 1s ease-in-out 1.75s both appear;
+  background: var(--white);
+  border-radius: 0.5em;
+  color: var(--black);
+}
+
+#factory #data-sample::before {
+  content: "↓";
+  font-size: 1.4em;
+  position: absolute;
+  right: 0.75em;
+  top: 0.65em;
+  transition: opacity 0.5s;
+  visibility: hidden;
+}
+
+#factory #data-sample:hover::before {
+  opacity: 0;
+}
+
+#factory #data-sample input:checked::before {
+  content: "-";
+  visibility: hidden;
+}
+
+#factory #data-sample label:not(:has(:checked)) {
+  height: 0;
+  padding-bottom: 0;
+  padding-top: 0;
+}
+
+#factory #data-sample:hover label {
+  height: 1.2em;
+  padding: 1.2em;
+  transition-delay: 0.25s;
+}
+
+#factory #data-sample:has(label) label:is(:hover, :focus) {
+  background: var(--gray);
+}
+
+#factory #print {
+  animation:
+    0.5s ease-out 1.5s both text-appear,
+    1.5s cubic-bezier(0.5, 0.1, 0, 1) 1.5s both slide-gradient;
+  background-image: linear-gradient(
+    90deg,
+    var(--gray) 34%,
+    var(--green) 34%,
+    var(--green) 66%,
+    transparent 66%);
+  background-size: 300% 100%;
+  bottom: 10em;
+  color: transparent;
+  left: 2em;
+  line-height: 1;
+  padding: 2em;
+  position: absolute;
+  text-align: left;
+  text-align-last: justify;
+  visibility: hidden;
+  width: 10em;
+}
+
+#factory #print::before {
+  animation: 1s ease-in-out 1.5s both appear;
+  background: var(--white);
+  border-radius: 5em;
+  box-shadow: 0 0.2em 0.5em -0.2em var(--dark-gray);
+  content: "";
+  height: 2.5em;
+  left: 35%;
+  margin: -0.75em 0;
+  position: absolute;
+  transition: transform 0.15s ease-in-out;
+  width: 30%;
+}
+
+#factory #print::after {
+  animation: 1s ease-in-out 1.5s both appear;
+  background-color: var(--green);
+  border-radius: 5em;
+  content: "";
+  height: 1.8em;
+  width: 1.8em;
+  margin: -0.4em 0.4em;
+  position: absolute;
+  transition:
+    transform 0.15s ease-in-out,
+    left 0.3s ease-out,
+    background-color 0.3s ease-out,
+    height 0.3s ease-in,
+    width 0.2s ease-in-out,
+    margin-top 0.3s ease-in;
+}
+
+#factory #print:has(input:not(:checked))::after {
+  left: 35%;
+}
+
+#factory #print:has(input:checked)::after {
+  background-color: var(--blue);
+  height: 2.2em;
+  left: calc(65% - (2.2em + 2 * 0.4em));
+  margin-top: -0.6em;
+  width: 2.2em;
+}
+
+#factory #print:hover::before,
+#factory #print:hover::after {
+  transform: scale(1.1);
+}
+
+#factory #print input {
+  appearance: none;
+  cursor: pointer;
+  height: 4em;
+  left: 35%;
+  margin: -1.2em 0 0;
+  position: absolute;
+  width: 30%;
+  z-index: 1;
+}
+
+/* Show elements in browsers supporting :has */
+#factory:has(p) #data-sample::before,
+#factory:has(p) #data-sample input:checked::before,
+#factory:has(p) #print {
+  visibility: visible;
+}
+#factory:has(p) #data-sample label {
+  cursor: pointer;
+}
+
+#factory dl {
+  animation: slide-image 1s ease-in-out 1s both;
+}
+
+#factory img {
+  animation: slide-image 0.5s ease-in-out 1.5s both;
+  display: block;
+  object-fit: cover;
+  object-position: 50% 50%;
+  width: 100%;
+}
+
+#factory #data-sample {
+  left: 50%;
+  margin: 2em 0;
+  overflow: hidden;
+  position: absolute;
+  text-align: left;
+  transform: translate(-50%);
+  width: 18em;
+  z-index: 1;
+}
+
+#factory #data-sample:has([value=reports]:not(:checked)) ~ dl [data-sample=reports],
+#factory #data-sample:has([value=invoices]:not(:checked)) ~ dl [data-sample=invoices],
+#factory #data-sample:has([value=tickets]:not(:checked)) ~ dl [data-sample=tickets] {
+  display: none;
+}
+
+#factory #print:has(input:checked) ~ dl .html,
+#factory #print:has(input:not(:checked)) ~ dl .thumbnail {
+  display: none
+}
+
+#factory form:has(input:is(:focus, :hover)) ~ dl img {
+  animation-delay: 0s;
+  animation-duration: 0.2s;
+}
+
+
+
+/* Sponsors */
+
+#sponsors .user {
+  margin: auto;
+  max-width: 700px;
+}
+
+#sponsors .user img {
+  filter: grayscale(100%);
+  opacity: 0.6;
+  transition: filter 0.5s;
+}
+
+#sponsors .user img:hover {
+  filter: grayscale(10%);
+}
+
+
+
+/* Support */
+
+#support {
+  background: var(--light-gray);
+  padding: 1em 8em;
+}
+
+
+
+/* About */
+
+#about {
+  background: var(--light-gray);
+  padding: 1em 8em;
+}
+
+
+/* Responsive */
+
+@media (max-width: 950px) {
+  aside {
+    display: none;
+  }
+
+  nav ul {
+    justify-content: center;
+  }
+
+  nav li {
+    padding: 0.35em 0;
+  }
+
+  nav #sponsor {
+    margin: auto;
+    width: 100%;
+  }
+
+  h1 {
+    margin-bottom: 1em;
+    margin-top: 1em;
+  }
+
+  h2 {
+    font-size: 1.8em;
+  }
+
+  section ul {
+    padding-left: 0;
+  }
+
+  #factory h2 {
+    padding-top: 0.75em;
+  }
+
+  #factory #print {
+    bottom: 0;
+    left: 50%;
+    transform: translate(-50%);
+  }
+
+  #figures ul {
+    flex-direction: column;
+    margin-top: 4em;
+  }
+
+  #figures li {
+    border: none;
+    padding-top: 2em;
+    text-align: center;
+    width: auto;
+  }
+
+  #samples .buttons {
+    clear: left;
+    margin: 0.5em 0;
+  }
+
+  #samples .buttons li {
+    margin-top: 0.5em;
+  }
+
+  #samples img {
+    float: none;
+    margin: 0 0 1em;
+    width: 100%;
+  }
+
+  section {
+    padding: 1em 1em 3em;
+  }
+
+  #support,
+  #about {
+    padding-left: 2em;
+    padding-right: 2em;
+  }
+
+  footer {
+    background:
+      url(img/logotype-black.svg) 3.75em 2em / auto 2em,
+      url(img/print/bleed-bottom-left.svg) bottom left / 45px,
+      url(img/print/bleed-bottom-right.svg) bottom right / 45px,
+      var(--gray);
+    background-repeat: no-repeat;
+  }
+
+  footer #toc {
+    columns: 1;
+    margin: 5em 0 2em 2.5em;
+  }
+
+  footer #links {
+    flex-direction: column;
+    padding: 0 0 2em 2em;
+  }
+}
