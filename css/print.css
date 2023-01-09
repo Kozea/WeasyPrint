@@ -43,8 +43,8 @@ a {
 /* Titles */
 
 h1 {
-  font-size: 4em;
-  margin: 1.5em 0 0.5em;
+  background-image: url(img/logotype-white.svg);
+  margin: 8rem 0 5rem;
 }
 
 

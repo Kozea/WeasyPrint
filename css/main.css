@@ -82,9 +82,11 @@ a {
 /* Titles */
 
 h1 {
-  color: var(--white);
-  font-weight: normal;
-  text-align: center;
+  background: url(img/logotype-white.gif) top center / contain no-repeat;
+  color: transparent;
+  font-size: 0;
+  height: 3rem;
+  margin: 3.5rem 2rem 0;
 }
 
 h2 {

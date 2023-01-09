@@ -153,14 +153,6 @@ a:is(:hover, :focus) {
 
 /* Titles */
 
-h1 {
-  background: url(img/logotype-white.gif) top center / contain no-repeat;
-  color: transparent;
-  font-size: 0;
-  height: 3rem;
-  margin: 3.5rem 2rem 0;
-}
-
 h2 {
   border-left: 1px solid var(--green);
   margin-left: 0.5em;
