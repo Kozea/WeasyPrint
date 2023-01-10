@@ -213,34 +213,6 @@ def handle_col(element, box, _get_image_from_uri, _base_url):
     return [box]
 
 
-@handler('th')
-@handler('td')
-def handle_td(element, box, _get_image_from_uri, _base_url):
-    """Handle the ``colspan``, ``rowspan`` attributes."""
-    if isinstance(box, boxes.TableCellBox):
-        # HTML 4.01 gives special meaning to colspan=0
-        # https://www.w3.org/TR/html401/struct/tables.html#adef-rowspan
-        # but HTML 5 removed it
-        # https://html.spec.whatwg.org/multipage/tables.html#attr-tdth-colspan
-        # rowspan=0 is still there though.
-        try:
-            box.colspan = max(int(element.get('colspan', '').strip()), 1)
-        except ValueError:
-            box.colspan = 1
-        try:
-            box.rowspan = max(int(element.get('rowspan', '').strip()), 0)
-        except ValueError:
-            box.rowspan = 1
-    return [box]
-
-
-@handler('a')
-def handle_a(element, box, _get_image_from_uri, base_url):
-    """Handle the ``rel`` attribute."""
-    box.is_attachment = element_has_link_type(element, 'attachment')
-    return [box]
-
-
 @handler('{http://www.w3.org/2000/svg}svg')
 def handle_svg(element, box, get_image_from_uri, base_url):
     """Handle ``<svg>`` elements.

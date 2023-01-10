@@ -132,7 +132,7 @@ def gather_links_and_bookmarks(box, anchors, links, bookmarks,
             assert token_type == 'url'
             link_type, target = link
             assert isinstance(target, str)
-            if link_type == 'external' and box.is_attachment:
+            if link_type == 'external' and box.is_attachment():
                 link_type = 'attachment'
             rectangle = rectangle_aabb(matrix, pos_x, pos_y, width, height)
             link = (link_type, target, rectangle, box)

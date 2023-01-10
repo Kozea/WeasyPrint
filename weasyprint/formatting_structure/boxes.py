@@ -71,7 +71,6 @@ class Box:
     is_for_root_element = False
     is_column = False
     is_leader = False
-    is_attachment = False
 
     # Other properties
     transformation_matrix = None
@@ -295,6 +294,16 @@ class Box:
     def page_values(self):
         """Return start and end page values."""
         return (self.style['page'], self.style['page'])
+
+    # PDF Attachment
+
+    def is_attachment(self):
+        """Return whether this link should be stored as a PDF attachment."""
+        from ..html import element_has_link_type
+
+        if self.element is not None and self.element.tag == 'a':
+            return element_has_link_type(self.element, 'attachment')
+        return False
 
 
 class ParentBox(Box):
@@ -653,9 +662,22 @@ class TableCellBox(BlockContainerBox):
     """Box for elements with ``display: table-cell``"""
     internal_table_or_caption = True
 
-    # Default values. May be overriden on instances.
-    colspan = 1
-    rowspan = 1
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # HTML 4.01 gives special meaning to colspan=0
+        # https://www.w3.org/TR/html401/struct/tables.html#adef-rowspan
+        # but HTML 5 removed it
+        # https://html.spec.whatwg.org/multipage/tables.html#attr-tdth-colspan
+        # rowspan=0 is still there though.
+        try:
+            self.colspan = max(int(self.element.get('colspan', '').strip()), 1)
+        except (AttributeError, ValueError):
+            self.colspan = 1
+        try:
+            self.rowspan = max(int(self.element.get('rowspan', '').strip()), 0)
+        except (AttributeError, ValueError):
+            self.rowspan = 1
 
 
 class TableCaptionBox(BlockBox):

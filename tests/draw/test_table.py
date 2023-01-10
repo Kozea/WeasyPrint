@@ -1,14 +1,9 @@
 """Test how tables are drawn."""
 
 import pytest
-from weasyprint.html import HTML_HANDLERS
 
 from ..testing_utils import assert_no_logs
 
-# TODO: refactor colspan/rowspan into CSS:
-# td, th { column-span: attr(colspan integer) }
-HTML_HANDLERS['x-td'] = HTML_HANDLERS['td']
-HTML_HANDLERS['x-th'] = HTML_HANDLERS['th']
 tables_source = '''
   <style>
     @page { size: 28px }
