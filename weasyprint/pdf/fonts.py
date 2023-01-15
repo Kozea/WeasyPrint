@@ -37,13 +37,27 @@ def build_fonts_dictionary(pdf, fonts, optimize_size):
         font_references_by_file_hash[file_hash] = font_stream.reference
 
     for font in fonts.values():
+        if 'fonts' not in optimize_size and font.ttfont:
+            # Store width and Unicode map for all glyphs
+            font_widths, cmap = {}, {}
+            for letter, key in font.ttfont.getBestCmap().items():
+                glyph = font.ttfont.getGlyphID(key)
+                if glyph not in cmap:
+                    cmap[glyph] = chr(letter)
+                font_widths[glyph] = font.ttfont.getGlyphSet()[key].width
+        else:
+            # Only store widths and map for used glyphs
+            font_widths = font.widths
+            cmap = font.cmap
+
         widths = pydyf.Array()
-        for i in sorted(font.widths):
-            if i - 1 not in font.widths:
+        for i in sorted(font_widths):
+            if i - 1 not in font_widths:
                 widths.append(i)
                 current_widths = pydyf.Array()
                 widths.append(current_widths)
-            current_widths.append(font.widths[i])
+            current_widths.append(font_widths[i])
+
         font_file = f'FontFile{3 if font.type == "otf" else 2}'
         to_unicode = pydyf.Stream([
             b'/CIDInit /ProcSet findresource begin',
@@ -59,8 +73,8 @@ def build_fonts_dictionary(pdf, fonts, optimize_size):
             b'1 begincodespacerange',
             b'<0000> <ffff>',
             b'endcodespacerange',
-            f'{len(font.cmap)} beginbfchar'.encode()])
-        for glyph, text in font.cmap.items():
+            f'{len(cmap)} beginbfchar'.encode()])
+        for glyph, text in cmap.items():
             unicode_codepoints = ''.join(
                 f'{letter.encode("utf-16-be").hex()}' for letter in text)
             to_unicode.stream.append(
