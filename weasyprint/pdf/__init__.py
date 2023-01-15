@@ -355,6 +355,118 @@ def generate_pdf(document, target, zoom, attachments, optimize_size,
         pdf_page['BleedBox'] = pydyf.Array([
             bleed_left, bleed_top, bleed_right, bleed_bottom])
 
+        # Inputs
+        if page.inputs:
+            if 'Annots' not in pdf_page:
+                pdf_page['Annots'] = pydyf.Array()
+            if 'AcroForm' not in pdf.catalog:
+                pdf.catalog['AcroForm'] = pydyf.Dictionary({
+                    'Fields': pydyf.Array(),
+                    'DR': resources.reference,
+                })
+        for element, style, rectangle in page.inputs:
+            rectangle = (
+                *matrix.transform_point(*rectangle[:2]),
+                *matrix.transform_point(*rectangle[2:]))
+            font_map = document._font_config.font_map
+            context = ffi.gc(
+                pango.pango_font_map_create_context(font_map),
+                gobject.g_object_unref)
+            font_description = ffi.gc(
+                pango.pango_font_description_new(),
+                pango.pango_font_description_free)
+            family_p, _ = unicode_to_char_p(','.join(style['font_family']))
+            pango.pango_font_description_set_family(font_description, family_p)
+            pango.pango_font_description_set_style(
+                font_description, PANGO_STYLE[style['font_style']])
+            pango.pango_font_description_set_stretch(
+                font_description, PANGO_STRETCH[style['font_stretch']])
+            pango.pango_font_description_set_weight(
+                font_description, style['font_weight'])
+            font = pango.pango_font_map_load_font(
+                font_map, context, font_description)
+            font = stream.add_font(font)
+
+            input_type = element.attrib.get('type')
+            if input_type == 'checkbox':
+                # Checkboxes
+                width = rectangle[2] - rectangle[0]
+                height = rectangle[1] - rectangle[3]
+                checked_stream = pydyf.Stream(extra={
+                    'Resources': resources.reference,
+                    'Type': '/XObject',
+                    'Subtype': '/Form',
+                    'BBox': pydyf.Array((0, 0, width, height)),
+                })
+                checked_stream.push_state()
+                checked_stream.begin_text()
+                checked_stream.set_color_rgb(*style['color'][:3])
+                checked_stream.set_font_size('ZaDi', style['font_size'])
+                x = (width - style['font_size']) / 1.3
+                y = (height - style['font_size']) / 1.3
+                checked_stream.stream.append(f'{x} {y} Td')
+                checked_stream.stream.append('(8) Tj')
+                checked_stream.end_text()
+                checked_stream.pop_state()
+                pdf.add_object(checked_stream)
+
+                unchecked_stream = pydyf.Stream()
+                unchecked_stream.push_state()
+                unchecked_stream.pop_state()
+                pdf.add_object(unchecked_stream)
+
+                checked = 'checked' in element.attrib
+                # field_stream = pydyf.Stream()
+                # field_stream.set_color_rgb(*style['color'][:3])
+                # field_stream.set_font_size('ZaDi', style['font_size'])
+                field = pydyf.Dictionary({
+                    'Type': '/Annot',
+                    'Subtype': '/Widget',
+                    # 'F': 4,
+                    'Rect': pydyf.Array(rectangle),
+                    'FT': '/Btn',
+                    'P': pdf_page.reference,
+                    'T': pydyf.String(element.attrib.get('name', '')),
+                    'V': '/Yes' if checked else '/Off',
+                    # 'DV': '/Yes' if checked else '/Off',
+                    'DR': resources.reference,
+                    # 'DA': pydyf.String(b' '.join(field_stream.stream)),
+                    # 'MK': pydyf.Dictionary({'CA': pydyf.String('8')}),
+                    'AP': pydyf.Dictionary({'N': pydyf.Dictionary({
+                        'Yes': checked_stream.reference,
+                        'Off': unchecked_stream.reference,
+                    })}),
+                    'AS': '/Yes' if checked else '/Off',
+                })
+            else:
+                # Text, password, textarea, files, and unknown
+                field_stream = pydyf.Stream()
+                field_stream.set_color_rgb(*style['color'][:3])
+                field_stream.set_font_size(font.hash, style['font_size'])
+                value = (
+                    element.attrib.get('value', '') if element.tag == 'input'
+                    else element.text)
+                field = pydyf.Dictionary({
+                    'FT': '/Tx',
+                    'DA': pydyf.String(b' '.join(field_stream.stream)),
+                    'Type': '/Annot',
+                    'Subtype': '/Widget',
+                    'Rect': pydyf.Array(rectangle),
+                    'T': pydyf.String(element.attrib.get('name', 'unknown')),
+                    'V': pydyf.String(value),
+                    'P': pdf_page.reference,
+                })
+                if element.tag == 'textarea':
+                    field['Ff'] = 2 ** (13 - 1)
+                elif input_type == 'password':
+                    field['Ff'] = 2 ** (14 - 1)
+                elif input_type == 'file':
+                    field['Ff'] = 2 ** (21 - 1)
+
+            pdf.add_object(field)
+            pdf_page['Annots'].append(field.reference)
+            pdf.catalog['AcroForm']['Fields'].append(field.reference)
+
         # Annotations
         # TODO: splitting a link into multiple independent rectangular
         # annotations works well for pure links, but rather mediocre for
@@ -459,6 +571,15 @@ def generate_pdf(document, target, zoom, attachments, optimize_size,
     # Embedded fonts
     pdf_fonts = build_fonts_dictionary(pdf, document.fonts, optimize_size)
     pdf.add_object(pdf_fonts)
+    if 'AcroForm' in pdf.catalog:
+        # Include Dingbats for forms
+        dingbats = pydyf.Dictionary({
+            'Type': '/Font',
+            'Subtype': '/Type1',
+            'BaseFont': '/ZapfDingbats',
+        })
+        pdf.add_object(dingbats)
+        pdf_fonts['ZaDi'] = dingbats.reference
     resources['Font'] = pdf_fonts.reference
     _use_references(pdf, resources, images)
 

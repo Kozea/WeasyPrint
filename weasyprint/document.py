@@ -47,10 +47,10 @@ class Page:
         #: from the top-left of the page.
         self.bookmarks = []
 
-        #: The :obj:`list` of ``(link_type, target, rectangle)`` :obj:`tuples
-        #: <tuple>`. A ``rectangle`` is ``(x, y, width, height)``, in CSS
-        #: pixels from the top-left of the page. ``link_type`` is one of three
-        #: strings:
+        #: The :obj:`list` of ``(link_type, target, rectangle, box)``
+        #: :obj:`tuples <tuple>`. A ``rectangle`` is ``(x, y, width, height)``,
+        #: in CSS pixels from the top-left of the page. ``link_type`` is one of
+        #: three strings:
         #:
         #: * ``'external'``: ``target`` is an absolute URL
         #: * ``'internal'``: ``target`` is an anchor name (see
@@ -66,8 +66,14 @@ class Page:
         #: ``(x, y)`` point in CSS pixels from the top-left of the page.
         self.anchors = {}
 
+        #: The :obj:`list` of ``(element, attributes, rectangle)`` :obj:`tuples
+        #: <tuple>`. A ``rectangle`` is ``(x, y, width, height)``, in CSS
+        #: pixels from the top-left of the page. ``atributes`` is a
+        #: :ojb:`dict` of HTML tag attributes and values.
+        self.inputs = []
+
         gather_links_and_bookmarks(
-            page_box, self.anchors, self.links, self.bookmarks)
+            page_box, self.anchors, self.links, self.bookmarks, self.inputs)
         self._page_box = page_box
 
     def paint(self, stream, left_x=0, top_y=0, scale=1, clip=False):

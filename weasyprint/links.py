@@ -68,7 +68,7 @@ def rectangle_aabb(matrix, pos_x, pos_y, width, height):
     return box_x1, box_y1, box_x2, box_y2
 
 
-def gather_links_and_bookmarks(box, anchors, links, bookmarks,
+def gather_links_and_bookmarks(box, anchors, links, bookmarks, inputs,
                                parent_matrix=None):
     # Get box transformation matrix.
     # "Transforms apply to block-level and atomic inline-level elements,
@@ -124,9 +124,12 @@ def gather_links_and_bookmarks(box, anchors, links, bookmarks,
     has_link = link and not isinstance(box, (boxes.TextBox, boxes.LineBox))
     # In case of duplicate IDs, only the first is an anchor.
     has_anchor = anchor_name and anchor_name not in anchors
+    is_input = box.is_input()
 
-    if has_bookmark or has_link or has_anchor:
+    if has_bookmark or has_link or has_anchor or is_input:
         pos_x, pos_y, width, height = box.hit_area()
+        if has_link or is_input:
+            rectangle = rectangle_aabb(matrix, pos_x, pos_y, width, height)
         if has_link:
             token_type, link = link
             assert token_type == 'url'
@@ -134,9 +137,9 @@ def gather_links_and_bookmarks(box, anchors, links, bookmarks,
             assert isinstance(target, str)
             if link_type == 'external' and box.is_attachment():
                 link_type = 'attachment'
-            rectangle = rectangle_aabb(matrix, pos_x, pos_y, width, height)
-            link = (link_type, target, rectangle, box)
-            links.append(link)
+            links.append((link_type, target, rectangle, box))
+        if is_input:
+            inputs.append((box.element, box.style, rectangle))
         if matrix and (has_bookmark or has_anchor):
             pos_x, pos_y = matrix.transform_point(pos_x, pos_y)
         if has_bookmark:
@@ -146,7 +149,8 @@ def gather_links_and_bookmarks(box, anchors, links, bookmarks,
             anchors[anchor_name] = pos_x, pos_y
 
     for child in box.all_children():
-        gather_links_and_bookmarks(child, anchors, links, bookmarks, matrix)
+        gather_links_and_bookmarks(
+            child, anchors, links, bookmarks, inputs, matrix)
 
 
 def make_page_bookmark_tree(page, skipped_levels, last_by_depth,
