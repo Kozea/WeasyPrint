@@ -5,6 +5,7 @@ import io
 import shutil
 
 from . import CSS
+from .anchors import gather_anchors, make_page_bookmark_tree
 from .css import get_all_computed_styles
 from .css.counters import CounterStyle
 from .css.targets import TargetCollector
@@ -13,7 +14,6 @@ from .formatting_structure.build import build_formatting_structure
 from .html import get_html_metadata
 from .images import get_image_from_uri as original_get_image_from_uri
 from .layout import LayoutContext, layout_document
-from .links import gather_links_and_bookmarks, make_page_bookmark_tree
 from .logger import PROGRESS_LOGGER
 from .matrix import Matrix
 from .pdf import generate_pdf
@@ -72,7 +72,7 @@ class Page:
         #: :ojb:`dict` of HTML tag attributes and values.
         self.inputs = []
 
-        gather_links_and_bookmarks(
+        gather_anchors(
             page_box, self.anchors, self.links, self.bookmarks, self.inputs)
         self._page_box = page_box
 
@@ -247,7 +247,7 @@ class Document:
         # Keep a reference to font_config to avoid its garbage collection until
         # rendering is destroyed. This is needed as font_config.__del__ removes
         # fonts that may be used when rendering
-        self._font_config = font_config
+        self.font_config = font_config
         # Set of flags for PDF size optimization. Can contain "images" and
         # "fonts".
         self._optimize_size = optimize_size
@@ -290,7 +290,7 @@ class Document:
         elif not isinstance(pages, list):
             pages = list(pages)
         return type(self)(
-            pages, self.metadata, self.url_fetcher, self._font_config,
+            pages, self.metadata, self.url_fetcher, self.font_config,
             self._optimize_size)
 
     def make_bookmark_tree(self):

@@ -13,7 +13,7 @@ import py
 import pytest
 from PIL import Image
 from weasyprint import CSS, HTML, __main__, default_url_fetcher
-from weasyprint.links import resolve_links
+from weasyprint.pdf.anchors import resolve_links
 from weasyprint.urls import path2url
 
 from .draw import parse_pixels
