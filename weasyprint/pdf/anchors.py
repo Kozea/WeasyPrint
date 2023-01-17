@@ -114,6 +114,7 @@ def add_inputs(inputs, matrix, pdf, page, resources, stream, font_map):
         font = pango.pango_font_map_load_font(
             font_map, context, font_description)
         font = stream.add_font(font)
+        font.used_in_forms = True
 
         input_type = element.attrib.get('type')
         if input_type == 'checkbox':

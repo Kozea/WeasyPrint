@@ -21,7 +21,7 @@ def build_fonts_dictionary(pdf, fonts, optimize_size):
 
         # Clean font, optimize and handle emojis
         cmap = {}
-        if 'fonts' in optimize_size:
+        if 'fonts' in optimize_size and not font.used_in_forms:
             for file_font in file_fonts:
                 cmap = {**cmap, **file_font.cmap}
         font.clean(cmap)
@@ -37,7 +37,14 @@ def build_fonts_dictionary(pdf, fonts, optimize_size):
         font_references_by_file_hash[file_hash] = font_stream.reference
 
     for font in fonts.values():
-        if 'fonts' not in optimize_size and font.ttfont:
+        optimize = (
+            'fonts' in optimize_size and
+            font.ttfont and not font.used_in_forms)
+        if optimize:
+            # Only store widths and map for used glyphs
+            font_widths = font.widths
+            cmap = font.cmap
+        else:
             # Store width and Unicode map for all glyphs
             font_widths, cmap = {}, {}
             for letter, key in font.ttfont.getBestCmap().items():
@@ -45,10 +52,6 @@ def build_fonts_dictionary(pdf, fonts, optimize_size):
                 if glyph not in cmap:
                     cmap[glyph] = chr(letter)
                 font_widths[glyph] = font.ttfont.getGlyphSet()[key].width
-        else:
-            # Only store widths and map for used glyphs
-            font_widths = font.widths
-            cmap = font.cmap
 
         widths = pydyf.Array()
         for i in sorted(font_widths):
