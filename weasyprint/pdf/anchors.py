@@ -110,11 +110,6 @@ def add_inputs(inputs, matrix, pdf, page, resources, stream, font_map):
         rectangle = (
             *matrix.transform_point(*rectangle[:2]),
             *matrix.transform_point(*rectangle[2:]))
-        font_description = get_font_description(style)
-        font = pango.pango_font_map_load_font(
-            font_map, context, font_description)
-        font = stream.add_font(font)
-        font.used_in_forms = True
 
         input_type = element.attrib.get('type')
         if input_type == 'checkbox':
@@ -140,27 +135,18 @@ def add_inputs(inputs, matrix, pdf, page, resources, stream, font_map):
             pdf.add_object(checked_stream)
 
             unchecked_stream = pydyf.Stream()
-            unchecked_stream.push_state()
-            unchecked_stream.pop_state()
             pdf.add_object(unchecked_stream)
 
             checked = 'checked' in element.attrib
-            # field_stream = pydyf.Stream()
-            # field_stream.set_color_rgb(*style['color'][:3])
-            # field_stream.set_font_size('ZaDi', style['font_size'])
             field = pydyf.Dictionary({
                 'Type': '/Annot',
                 'Subtype': '/Widget',
-                # 'F': 4,
                 'Rect': pydyf.Array(rectangle),
                 'FT': '/Btn',
                 'P': page.reference,
                 'T': pydyf.String(element.attrib.get('name', '')),
                 'V': '/Yes' if checked else '/Off',
-                # 'DV': '/Yes' if checked else '/Off',
                 'DR': resources.reference,
-                # 'DA': pydyf.String(b' '.join(field_stream.stream)),
-                # 'MK': pydyf.Dictionary({'CA': pydyf.String('8')}),
                 'AP': pydyf.Dictionary({'N': pydyf.Dictionary({
                     'Yes': checked_stream.reference,
                     'Off': unchecked_stream.reference,
@@ -169,6 +155,12 @@ def add_inputs(inputs, matrix, pdf, page, resources, stream, font_map):
             })
         else:
             # Text, password, textarea, files, and unknown
+            font_description = get_font_description(style)
+            font = pango.pango_font_map_load_font(
+                font_map, context, font_description)
+            font = stream.add_font(font)
+            font.used_in_forms = True
+
             field_stream = pydyf.Stream()
             field_stream.set_color_rgb(*style['color'][:3])
             field_stream.set_font_size(font.hash, style['font_size'])
