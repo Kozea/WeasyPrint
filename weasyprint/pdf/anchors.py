@@ -113,6 +113,8 @@ def add_inputs(inputs, matrix, pdf, page, resources, stream, font_map):
 
         input_type = element.attrib.get('type')
         input_name = pydyf.String(element.attrib.get('name', 'unknown'))
+        # TODO: where does this 0.75 scale come from?
+        font_size = style['font_size'] * 0.75
         if input_type == 'checkbox':
             # Checkboxes
             width = rectangle[2] - rectangle[0]
@@ -126,9 +128,11 @@ def add_inputs(inputs, matrix, pdf, page, resources, stream, font_map):
             checked_stream.push_state()
             checked_stream.begin_text()
             checked_stream.set_color_rgb(*style['color'][:3])
-            checked_stream.set_font_size('ZaDi', style['font_size'])
-            x = (width - style['font_size']) / 1.3
-            y = (height - style['font_size']) / 1.3
+            checked_stream.set_font_size('ZaDi', font_size)
+            # Center (let’s assume that Dingbat’s check has a 0.8em size)
+            x = (width - font_size * 0.8) / 2
+            y = (height - font_size * 0.8) / 2
+            # TODO: we should have these operators in pydyf
             checked_stream.stream.append(f'{x} {y} Td')
             checked_stream.stream.append('(8) Tj')
             checked_stream.end_text()
@@ -164,8 +168,7 @@ def add_inputs(inputs, matrix, pdf, page, resources, stream, font_map):
 
             field_stream = pydyf.Stream()
             field_stream.set_color_rgb(*style['color'][:3])
-            # TODO: where does this 0.75 scale come from?
-            field_stream.set_font_size(font.hash, style['font_size'] * 0.75)
+            field_stream.set_font_size(font.hash, font_size)
             value = (
                 element.text if element.tag == 'textarea'
                 else element.attrib.get('value', ''))
