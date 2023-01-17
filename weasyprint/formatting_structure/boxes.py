@@ -310,8 +310,10 @@ class Box:
     def is_input(self):
         """Return whether this box is a form input."""
         # https://html.spec.whatwg.org/multipage/forms.html#category-submit
-        return self.element is not None and self.element.tag in (
-            'button', 'input', 'select', 'textarea')
+        if self.element is not None:
+            if self.element.tag in ('button', 'input', 'select', 'textarea'):
+                return not isinstance(self, (LineBox, TextBox))
+        return False
 
 
 class ParentBox(Box):

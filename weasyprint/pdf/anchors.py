@@ -112,6 +112,7 @@ def add_inputs(inputs, matrix, pdf, page, resources, stream, font_map):
             *matrix.transform_point(*rectangle[2:]))
 
         input_type = element.attrib.get('type')
+        input_name = pydyf.String(element.attrib.get('name', 'unknown'))
         if input_type == 'checkbox':
             # Checkboxes
             width = rectangle[2] - rectangle[0]
@@ -144,7 +145,7 @@ def add_inputs(inputs, matrix, pdf, page, resources, stream, font_map):
                 'Rect': pydyf.Array(rectangle),
                 'FT': '/Btn',
                 'P': page.reference,
-                'T': pydyf.String(element.attrib.get('name', '')),
+                'T': pydyf.String(input_name),
                 'V': '/Yes' if checked else '/Off',
                 'DR': resources.reference,
                 'AP': pydyf.Dictionary({'N': pydyf.Dictionary({
@@ -163,17 +164,18 @@ def add_inputs(inputs, matrix, pdf, page, resources, stream, font_map):
 
             field_stream = pydyf.Stream()
             field_stream.set_color_rgb(*style['color'][:3])
-            field_stream.set_font_size(font.hash, style['font_size'])
+            # TODO: where does this 0.75 scale come from?
+            field_stream.set_font_size(font.hash, style['font_size'] * 0.75)
             value = (
-                element.attrib.get('value', '') if element.tag == 'input'
-                else element.text)
+                element.text if element.tag == 'textarea'
+                else element.attrib.get('value', ''))
             field = pydyf.Dictionary({
-                'FT': '/Tx',
-                'DA': pydyf.String(b' '.join(field_stream.stream)),
                 'Type': '/Annot',
                 'Subtype': '/Widget',
+                'FT': '/Tx',
+                'DA': pydyf.String(b' '.join(field_stream.stream)),
                 'Rect': pydyf.Array(rectangle),
-                'T': pydyf.String(element.attrib.get('name', 'unknown')),
+                'T': pydyf.String(input_name),
                 'V': pydyf.String(value),
                 'P': page.reference,
             })
