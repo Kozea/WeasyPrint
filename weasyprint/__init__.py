@@ -148,7 +148,8 @@ class HTML:
                   attachments=None, finisher=None, presentational_hints=False,
                   optimize_size=('fonts',), font_config=None,
                   counter_style=None, image_cache=None, identifier=None,
-                  variant=None, version=None, custom_metadata=False):
+                  variant=None, version=None, forms=False,
+                  custom_metadata=False):
         """Render the document to a PDF file.
 
         This is a shortcut for calling :meth:`render`, then
@@ -186,8 +187,9 @@ class HTML:
         :param bytes identifier: A bytestring used as PDF file identifier.
         :param str variant: A PDF variant name.
         :param str version: A PDF version number.
-        :param bool custom_metadata: A boolean defining whether custom HTML
-            metadata should be stored in the generated PDF.
+        :param bool version: Whether PDF forms have to be included.
+        :param bool custom_metadata: Whether custom HTML metadata should be
+            stored in the generated PDF.
         :returns:
             The PDF as :obj:`bytes` if ``target`` is not provided or
             :obj:`None`, otherwise :obj:`None` (the PDF is written to
@@ -200,7 +202,7 @@ class HTML:
                 counter_style, image_cache)
             .write_pdf(
                 target, zoom, attachments, finisher, identifier, variant,
-                version, custom_metadata))
+                version, custom_metadata, forms))
 
 
 class CSS:

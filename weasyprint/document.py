@@ -319,7 +319,7 @@ class Document:
 
     def write_pdf(self, target=None, zoom=1, attachments=None, finisher=None,
                   identifier=None, variant=None, version=None,
-                  custom_metadata=False):
+                  custom_metadata=False, forms=False):
         """Paint the pages in a PDF file, with metadata.
 
         :type target:
@@ -342,6 +342,7 @@ class Document:
         :param bytes identifier: A bytestring used as PDF file identifier.
         :param str variant: A PDF variant name.
         :param str version: A PDF version number.
+        :param bool version: Whether PDF forms have to be included.
         :param bool custom_metadata: A boolean defining whether custom HTML
             metadata should be stored in the generated PDF.
         :returns:
@@ -352,7 +353,7 @@ class Document:
         """
         pdf = generate_pdf(
             self, target, zoom, attachments, self._optimize_size, identifier,
-            variant, version, custom_metadata)
+            variant, version, custom_metadata, forms)
 
         if finisher:
             finisher(self, pdf)

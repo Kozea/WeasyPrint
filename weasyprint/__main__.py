@@ -145,6 +145,8 @@ def main(argv=None, stdout=None, stdin=None):
         '--pdf-variant', choices=VARIANTS, help='PDF variant to generate')
     parser.add_argument('--pdf-version', help='PDF version number')
     parser.add_argument(
+        '--pdf-forms', action='store_true', help='Include PDF forms')
+    parser.add_argument(
         '--custom-metadata', action='store_true',
         help='include custom HTML meta tags in PDF metadata')
     parser.add_argument(
@@ -199,6 +201,7 @@ def main(argv=None, stdout=None, stdin=None):
         'identifier': args.pdf_identifier,
         'variant': args.pdf_variant,
         'version': args.pdf_version,
+        'forms': args.pdf_forms,
         'custom_metadata': args.custom_metadata,
     }
 
