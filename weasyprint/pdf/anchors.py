@@ -134,7 +134,7 @@ def add_inputs(inputs, matrix, pdf, page, resources, stream, font_map):
             y = (height - font_size * 0.8) / 2
             # TODO: we should have these operators in pydyf
             checked_stream.stream.append(f'{x} {y} Td')
-            checked_stream.stream.append('(8) Tj')
+            checked_stream.stream.append('(4) Tj')
             checked_stream.end_text()
             checked_stream.pop_state()
             pdf.add_object(checked_stream)
