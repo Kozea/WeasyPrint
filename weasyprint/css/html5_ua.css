@@ -294,7 +294,116 @@ fieldset { display: block; border-style: groove; border-width: 2px; margin-left:
 figcaption { display: block; /* unicode-bidi: isolate; */ }
 figure { display: block; margin: 1em 40px; /* unicode-bidi: isolate; */ }
 footer { display: block; /* unicode-bidi: isolate; */ }
+
 form { display: block; /* unicode-bidi: isolate; */ }
+button,
+input,
+select,
+textarea {
+  border: 2px solid black;
+  display: inline-block;
+  height: 2em;
+  max-height: 3em;
+  max-width: 10em;
+  min-width: 1em;
+  padding: 0.2em;
+  overflow: hidden;
+  width: fit-content;
+}
+input:not([type="image"]) {
+  box-sizing: border-box;
+}
+input[type="button"],
+input[type="reset"],
+input[type="submit"],
+button {
+  background: lightgrey;
+  border-radius: 0.25em 0.25em;
+  height: auto;
+  text-align: center;
+  white-space: pre;
+}
+input[type="submit"]:not([value])::before {
+  content: "Submit";
+}
+input[type="reset"]:not([value])::before {
+  content: "Reset";
+}
+input[type="button"]::before {
+  content: attr(value);
+}
+input[type="checkbox"],
+input[type="radio"] {
+  height: 1em;
+  width: 1em;
+}
+input[type="checkbox"] {
+  margin: 0.2em 0.2em 0.2em 0.4em;
+}
+input[type="color"] {
+  background: lightgrey;
+}
+input[type="date"],
+input[type="datetime-local"],
+input[type="month"],
+intput[type="time"] {
+  font-family: monospace;
+}
+input[type="file"] {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+input[type="hidden"] {
+  display: none;
+}
+input[type="image"] {
+  box-sizing: content-box;
+}
+input[type="radio"] {
+  border-radius: 50%;
+  margin: 0.2em 0.2em 0 0.4em;
+}
+input[type="range"] {
+  border: initial;
+  margin: 0.2em;
+}
+input[value] {
+  max-width: 10em;
+  width: auto;
+}
+input[value]::before {
+  content: attr(value);
+}
+select {
+  background: lightgrey;
+  border-radius: 0.25em 0.25em;
+  max-width: none;
+  padding: 0.1em 0.2em;
+  text-indent: 0;
+}
+select:not(:has(option[selected])) option:first-of-type,
+option[selected]:not(option[selected] ~ option[selected]) {
+  height: auto;
+}
+option {
+  display: block;
+  height: 0;
+  overflow: hidden;
+  text-indent: 0;
+  white-space: nowrap;
+}
+textarea {
+  box-sizing: border-box;
+  font-family: monospace;
+  height: auto;
+  margin: 0.1em 0;
+  overflow: hidden;
+  overflow-wrap: break-word;
+  padding: 0.2em;
+  white-space: pre-wrap;
+}
+
 frame { display: block; }
 frameset { display: block; }
 
@@ -414,7 +523,6 @@ ol ol { margin-bottom: 0; margin-top: 0; }
 ul ol { margin-bottom: 0; margin-top: 0; }
 
 optgroup { text-indent: 0; }
-option { text-indent: 0; display: none; } /* Don't display the tag, it's replaced content in dynamic browsers */
 output { /* unicode-bidi: isolate; */ }
 output[dir] { /* unicode-bidi: isolate; */ }
 p { display: block; margin-bottom: 1em; margin-top: 1em; /* unicode-bidi: isolate; */ }
@@ -430,7 +538,6 @@ s { text-decoration: line-through; }
 samp { font-family: monospace; }
 script { display: none; }
 section { display: block; /* unicode-bidi: isolate; */ }
-select { text-indent: 0; }
 small { font-size: smaller; }
 source { display: none; }
 strike { text-decoration: line-through; }
