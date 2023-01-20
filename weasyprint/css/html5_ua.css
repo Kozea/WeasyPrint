@@ -301,12 +301,10 @@ select,
 textarea {
   border: 2px solid black;
   display: inline-block;
-  height: 2em;
-  max-height: 3em;
-  max-width: 10em;
-  min-width: 1em;
+  font-size: 0.85em;
   padding: 0.2em;
-  overflow: hidden;
+  white-space: pre;
+  width: 20em;
 }
 input:not([type="image"]) {
   box-sizing: border-box;
@@ -317,18 +315,20 @@ input[type="submit"],
 button {
   background: lightgrey;
   border-radius: 0.25em;
-  height: auto;
   text-align: center;
-  white-space: pre;
+}
+input[type="button"][value],
+input[type="reset"][value],
+input[type="submit"][value],
+button[value] {
+  max-width: 100%;
+  width: auto;
 }
 input[type="submit"]:not([value])::before {
   content: "Submit";
 }
 input[type="reset"]:not([value])::before {
   content: "Reset";
-}
-input[type="button"]::before {
-  content: attr(value);
 }
 input[type="checkbox"],
 input[type="radio"] {
@@ -341,17 +341,6 @@ input[type="checkbox"] {
 input[type="color"] {
   background: lightgrey;
 }
-input[type="date"],
-input[type="datetime-local"],
-input[type="month"],
-intput[type="time"] {
-  font-family: monospace;
-}
-input[type="file"] {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 input[type="hidden"] {
   display: none;
 }
@@ -362,42 +351,48 @@ input[type="radio"] {
   border-radius: 50%;
   margin: 0.2em 0.2em 0 0.4em;
 }
-input[type="range"] {
-  border: initial;
-  margin: 0.2em;
-}
-input[value] {
-  max-width: 10em;
-  width: auto;
-}
 input[value]::before {
   content: attr(value);
+  display: block;
+  overflow: hidden;
+}
+input::before,
+input[value=""]::before {
+  content: " ";
 }
 select {
   background: lightgrey;
   border-radius: 0.25em 0.25em;
-  padding: 0.1em 0.2em;
+  padding-right: 1.5em;
+  position: relative;
+  white-space: normal;
+}
+select::before {
+  content: "˅";
+  position: absolute;
+  right: 0;
+  text-align: center;
+  width: 1.5em;
+}
+option {
+  display: none;
+  white-space: nowrap;
 }
 select:not(:has(option[selected])) option:first-of-type,
 option[selected]:not(option[selected] ~ option[selected]) {
-  height: auto;
-}
-option {
   display: block;
-  height: 0;
   overflow: hidden;
-  text-indent: 0;
-  white-space: nowrap;
 }
 textarea {
   box-sizing: border-box;
-  font-family: monospace;
-  height: auto;
   margin: 0.1em 0;
   overflow: hidden;
   overflow-wrap: break-word;
   padding: 0.2em;
   white-space: pre-wrap;
+}
+textarea:empty {
+  height: 3em;
 }
 
 frame { display: block; }
