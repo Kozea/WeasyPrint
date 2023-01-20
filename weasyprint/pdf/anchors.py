@@ -104,6 +104,7 @@ def add_inputs(inputs, matrix, pdf, page, resources, stream, font_map):
             'DR': resources.reference,
             'NeedAppearances': 'true',
         })
+    page_reference = page['Contents'].split()[0]
     context = ffi.gc(
         pango.pango_font_map_create_context(font_map),
         gobject.g_object_unref)
@@ -113,7 +114,8 @@ def add_inputs(inputs, matrix, pdf, page, resources, stream, font_map):
             *matrix.transform_point(*rectangle[2:]))
 
         input_type = element.attrib.get('type')
-        input_name = pydyf.String(element.attrib.get('name', f'unknown-{i}'))
+        default_name = f'unknown-{page_reference}-{i}'
+        input_name = pydyf.String(element.attrib.get('name', default_name))
         # TODO: where does this 0.75 scale come from?
         font_size = style['font_size'] * 0.75
         if input_type == 'checkbox':
