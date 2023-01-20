@@ -102,6 +102,7 @@ def add_inputs(inputs, matrix, pdf, page, resources, stream, font_map):
         pdf.catalog['AcroForm'] = pydyf.Dictionary({
             'Fields': pydyf.Array(),
             'DR': resources.reference,
+            'NeedAppearances': 'true',
         })
     context = ffi.gc(
         pango.pango_font_map_create_context(font_map),
