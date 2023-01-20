@@ -214,7 +214,6 @@ blink { text-decoration: blink; }
 blockquote { display: block; margin: 1em 40px; /* unicode-bidi: isolate; */ }
 body { display: block; margin: 8px; }
 br::before { content: '\A'; white-space: pre-line; }
-button { display: inline-block; text-align: center; text-indent: 0; }
 caption { display: table-caption; /* unicode-bidi: isolate; */ }
 center { display: block; text-align: center; /* unicode-bidi: isolate; */ }
 cite { font-style: italic; }
@@ -308,7 +307,6 @@ textarea {
   min-width: 1em;
   padding: 0.2em;
   overflow: hidden;
-  width: fit-content;
 }
 input:not([type="image"]) {
   box-sizing: border-box;
@@ -318,7 +316,7 @@ input[type="reset"],
 input[type="submit"],
 button {
   background: lightgrey;
-  border-radius: 0.25em 0.25em;
+  border-radius: 0.25em;
   height: auto;
   text-align: center;
   white-space: pre;
@@ -378,9 +376,7 @@ input[value]::before {
 select {
   background: lightgrey;
   border-radius: 0.25em 0.25em;
-  max-width: none;
   padding: 0.1em 0.2em;
-  text-indent: 0;
 }
 select:not(:has(option[selected])) option:first-of-type,
 option[selected]:not(option[selected] ~ option[selected]) {
