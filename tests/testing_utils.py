@@ -47,7 +47,7 @@ PROPER_CHILDREN = dict((key, tuple(map(tuple, value))) for key, value in {
 
 class FakeHTML(HTML):
     """Like weasyprint.HTML, but with a lighter UA stylesheet."""
-    def _ua_stylesheets(self):
+    def _ua_stylesheets(self, forms=False):
         return [TEST_UA_STYLESHEET]
 
 
