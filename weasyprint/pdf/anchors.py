@@ -118,6 +118,8 @@ def add_inputs(inputs, matrix, pdf, page, resources, stream, font_map):
         input_name = pydyf.String(element.attrib.get('name', default_name))
         # TODO: where does this 0.75 scale come from?
         font_size = style['font_size'] * 0.75
+        field_stream = pydyf.Stream()
+        field_stream.set_color_rgb(*style['color'][:3])
         if input_type == 'checkbox':
             # Checkboxes
             width = rectangle[2] - rectangle[0]
@@ -131,7 +133,7 @@ def add_inputs(inputs, matrix, pdf, page, resources, stream, font_map):
             checked_stream.push_state()
             checked_stream.begin_text()
             checked_stream.set_color_rgb(*style['color'][:3])
-            checked_stream.set_font_size('ZaDi', font_size)
+            checked_stream.set_font_size('ZaDb', font_size)
             # Center (let’s assume that Dingbat’s check has a 0.8em size)
             x = (width - font_size * 0.8) / 2
             y = (height - font_size * 0.8) / 2
@@ -146,6 +148,7 @@ def add_inputs(inputs, matrix, pdf, page, resources, stream, font_map):
             pdf.add_object(unchecked_stream)
 
             checked = 'checked' in element.attrib
+            field_stream.set_font_size('ZaDb', font_size)
             field = pydyf.Dictionary({
                 'Type': '/Annot',
                 'Subtype': '/Widget',
@@ -154,12 +157,12 @@ def add_inputs(inputs, matrix, pdf, page, resources, stream, font_map):
                 'P': page.reference,
                 'T': pydyf.String(input_name),
                 'V': '/Yes' if checked else '/Off',
-                'DR': resources.reference,
                 'AP': pydyf.Dictionary({'N': pydyf.Dictionary({
                     'Yes': checked_stream.reference,
                     'Off': unchecked_stream.reference,
                 })}),
                 'AS': '/Yes' if checked else '/Off',
+                'DA': pydyf.String(b' '.join(field_stream.stream)),
             })
         else:
             # Text, password, textarea, files, and unknown
@@ -169,8 +172,6 @@ def add_inputs(inputs, matrix, pdf, page, resources, stream, font_map):
             font = stream.add_font(font)
             font.used_in_forms = True
 
-            field_stream = pydyf.Stream()
-            field_stream.set_color_rgb(*style['color'][:3])
             field_stream.set_font_size(font.hash, font_size)
             value = (
                 element.text if element.tag == 'textarea'
@@ -178,12 +179,12 @@ def add_inputs(inputs, matrix, pdf, page, resources, stream, font_map):
             field = pydyf.Dictionary({
                 'Type': '/Annot',
                 'Subtype': '/Widget',
-                'FT': '/Tx',
-                'DA': pydyf.String(b' '.join(field_stream.stream)),
                 'Rect': pydyf.Array(rectangle),
+                'FT': '/Tx',
+                'P': page.reference,
                 'T': pydyf.String(input_name),
                 'V': pydyf.String(value),
-                'P': page.reference,
+                'DA': pydyf.String(b' '.join(field_stream.stream)),
             })
             if element.tag == 'textarea':
                 field['Ff'] = 2 ** (13 - 1)

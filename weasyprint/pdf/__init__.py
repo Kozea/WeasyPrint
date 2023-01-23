@@ -263,7 +263,7 @@ def generate_pdf(document, target, zoom, attachments, optimize_size,
             'BaseFont': '/ZapfDingbats',
         })
         pdf.add_object(dingbats)
-        pdf_fonts['ZaDi'] = dingbats.reference
+        pdf_fonts['ZaDb'] = dingbats.reference
     resources['Font'] = pdf_fonts.reference
     _use_references(pdf, resources, images)
 
