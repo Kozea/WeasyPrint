@@ -171,10 +171,9 @@ class Document:
     """
 
     @classmethod
-    def _build_layout_context(cls, html, stylesheets,
-                              presentational_hints=False,
-                              optimize_size=('fonts',), font_config=None,
-                              counter_style=None, image_cache=None):
+    def _build_layout_context(cls, html, stylesheets, presentational_hints,
+                              optimize_size, font_config, counter_style,
+                              image_cache, forms):
         if font_config is None:
             font_config = FontConfiguration()
         if counter_style is None:
@@ -191,7 +190,7 @@ class Document:
             user_stylesheets.append(css)
         style_for = get_all_computed_styles(
             html, user_stylesheets, presentational_hints, font_config,
-            counter_style, page_rules, target_collector)
+            counter_style, page_rules, target_collector, forms)
         get_image_from_uri = functools.partial(
             original_get_image_from_uri, cache=image_cache,
             url_fetcher=html.url_fetcher, optimize_size=optimize_size)
@@ -202,9 +201,8 @@ class Document:
         return context
 
     @classmethod
-    def _render(cls, html, stylesheets, presentational_hints=False,
-                optimize_size=('fonts',), font_config=None, counter_style=None,
-                image_cache=None):
+    def _render(cls, html, stylesheets, presentational_hints, optimize_size,
+                font_config, counter_style, image_cache, forms):
         if font_config is None:
             font_config = FontConfiguration()
 
@@ -213,7 +211,7 @@ class Document:
 
         context = cls._build_layout_context(
             html, stylesheets, presentational_hints, optimize_size,
-            font_config, counter_style, image_cache)
+            font_config, counter_style, image_cache, forms)
 
         root_box = build_formatting_structure(
             html.etree_element, context.style_for, context.get_image_from_uri,
@@ -319,7 +317,7 @@ class Document:
 
     def write_pdf(self, target=None, zoom=1, attachments=None, finisher=None,
                   identifier=None, variant=None, version=None,
-                  custom_metadata=False, forms=False):
+                  custom_metadata=False):
         """Paint the pages in a PDF file, with metadata.
 
         :type target:
@@ -342,7 +340,6 @@ class Document:
         :param bytes identifier: A bytestring used as PDF file identifier.
         :param str variant: A PDF variant name.
         :param str version: A PDF version number.
-        :param bool version: Whether PDF forms have to be included.
         :param bool custom_metadata: A boolean defining whether custom HTML
             metadata should be stored in the generated PDF.
         :returns:
@@ -353,7 +350,7 @@ class Document:
         """
         pdf = generate_pdf(
             self, target, zoom, attachments, self._optimize_size, identifier,
-            variant, version, custom_metadata, forms)
+            variant, version, custom_metadata)
 
         if finisher:
             finisher(self, pdf)

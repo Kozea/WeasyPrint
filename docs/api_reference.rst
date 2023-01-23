@@ -743,3 +743,22 @@ All the ``flex-*``, ``align-*``, ``justify-*`` and ``order`` properties are
 supported. The ``flex`` and ``flex-flow`` shorthands are supported too.
 
 .. _CSS Flexible Box Layout Module Level 1: https://www.w3.org/TR/css-flexbox-1/
+
+CSS Basic User Interface Module Level 3/4
++++++++++++++++++++++++++++++++++++++++++
+
+The `CSS Basic User Interface Module Level 3/4`_ "enables authors to style user
+interface related properties and values."
+
+The ``outline-width``, ``outline-style``, ``outline-color`` properties and the
+``outline`` shorthand are supported. The ``outline-offset`` property is **not**
+supported.
+
+The ``resize``, ``cursor``, ``caret-*`` and ``nav-*`` properties are **not**
+supported.
+
+The ``appearance`` property is supported. When set to ``auto``, it displays
+form fields as PDF form fields (supported for text inputs, check boxes and
+text areas only).
+
+The ``accent-color`` property is **not** supported.

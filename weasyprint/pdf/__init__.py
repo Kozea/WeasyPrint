@@ -101,7 +101,7 @@ def _use_references(pdf, resources, images):
 
 
 def generate_pdf(document, target, zoom, attachments, optimize_size,
-                 identifier, variant, version, custom_metadata, forms):
+                 identifier, variant, version, custom_metadata):
     # 0.75 = 72 PDF point per inch / 96 CSS pixel per inch
     scale = zoom * 0.75
 
@@ -176,10 +176,9 @@ def generate_pdf(document, target, zoom, attachments, optimize_size,
         add_links(links_and_anchors, matrix, pdf, pdf_page, pdf_names, mark)
         add_annotations(
             links_and_anchors[0], matrix, document, pdf, pdf_page, annot_files)
-        if forms:
-            add_inputs(
-                page.inputs, matrix, pdf, pdf_page, resources, stream,
-                document.font_config.font_map)
+        add_inputs(
+            page.inputs, matrix, pdf, pdf_page, resources, stream,
+            document.font_config.font_map)
         page.paint(stream, scale=scale)
 
         # Bleed

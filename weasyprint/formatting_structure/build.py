@@ -219,7 +219,7 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
         if not counter_values[name]:
             counter_values.pop(name)
 
-    box.children = children
+    box.children = children if style['appearance'] == 'none' else []
     process_whitespace(box)
     set_content_lists(
         element, box, style, counter_values, target_collector, counter_style)
