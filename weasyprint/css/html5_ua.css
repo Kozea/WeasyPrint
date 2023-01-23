@@ -302,12 +302,10 @@ textarea {
   border: 2px solid black;
   display: inline-block;
   font-size: 0.85em;
+  height: 1.5em;
   padding: 0.2em;
   white-space: pre;
   width: 20em;
-}
-input:not([type="image"]) {
-  box-sizing: border-box;
 }
 input[type="button"],
 input[type="reset"],
@@ -343,9 +341,6 @@ input[type="color"] {
 }
 input[type="hidden"] {
   display: none;
-}
-input[type="image"] {
-  box-sizing: content-box;
 }
 input[type="radio"] {
   border-radius: 50%;
@@ -384,7 +379,7 @@ option[selected]:not(option[selected] ~ option[selected]) {
   overflow: hidden;
 }
 textarea {
-  box-sizing: border-box;
+  height: 3em;
   margin: 0.1em 0;
   overflow: hidden;
   overflow-wrap: break-word;
