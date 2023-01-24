@@ -299,10 +299,10 @@ button,
 input,
 select,
 textarea {
-  border: 2px solid black;
+  border: 1px solid black;
   display: inline-block;
   font-size: 0.85em;
-  height: 1.5em;
+  height: 1.2em;
   padding: 0.2em;
   white-space: pre;
   width: 20em;
@@ -330,11 +330,12 @@ input[type="reset"]:not([value])::before {
 }
 input[type="checkbox"],
 input[type="radio"] {
-  height: 1em;
-  width: 1em;
+  height: 1.2em;
+  width: 1.2em;
 }
-input[type="checkbox"] {
-  margin: 0.2em 0.2em 0.2em 0.4em;
+input[type="checkbox"][checked],
+input[type="radio"][checked] {
+  background: black content-box;
 }
 input[type="color"] {
   background: lightgrey;
