@@ -90,7 +90,11 @@ def gather_anchors(box, anchors, links, bookmarks, inputs, parent_matrix=None):
     is_input = box.is_input()
 
     if has_bookmark or has_link or has_anchor or is_input:
-        pos_x, pos_y, width, height = box.hit_area()
+        if is_input:
+            pos_x, pos_y = box.content_box_x(), box.content_box_y()
+            width, height = box.width, box.height
+        else:
+            pos_x, pos_y, width, height = box.hit_area()
         if has_link or is_input:
             rectangle = rectangle_aabb(matrix, pos_x, pos_y, width, height)
         if has_link:
