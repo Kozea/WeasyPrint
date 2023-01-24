@@ -13,6 +13,7 @@ from weasyprint.css import get_all_computed_styles
 from weasyprint.css.counters import CounterStyle
 from weasyprint.css.targets import TargetCollector
 from weasyprint.formatting_structure import boxes, build
+from weasyprint.html import HTML5_UA_STYLESHEET
 from weasyprint.logger import LOGGER
 from weasyprint.urls import path2url
 
@@ -48,7 +49,9 @@ PROPER_CHILDREN = dict((key, tuple(map(tuple, value))) for key, value in {
 class FakeHTML(HTML):
     """Like weasyprint.HTML, but with a lighter UA stylesheet."""
     def _ua_stylesheets(self, forms=False):
-        return [TEST_UA_STYLESHEET]
+        return [
+            TEST_UA_STYLESHEET if stylesheet == HTML5_UA_STYLESHEET
+            else stylesheet for stylesheet in super()._ua_stylesheets(forms)]
 
 
 def resource_filename(basename):
