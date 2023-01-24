@@ -464,6 +464,30 @@ def test_partial_pdf_custom_metadata():
     assert b'value' in stdout
 
 
+@pytest.mark.parametrize('html, field', (
+    (b'<input>', b'/Tx'),
+    (b'<input type="checkbox">', b'/Btn'),
+    (b'<textarea></textarea>', b'/Tx'),
+))
+def test_pdf_inputs(html, field):
+    stdout = _run('--pdf-forms - -', html)
+    assert b'AcroForm' in stdout
+    assert field in stdout
+    stdout = _run('- -', html)
+    assert b'AcroForm' not in stdout
+
+
+@pytest.mark.parametrize('css, with_forms, without_forms', (
+    ('appearance: auto', True, True),
+    ('appearance: none', False, False),
+    ('', True, False),
+))
+def test_appearance(css, with_forms, without_forms):
+    html = f'<input style="{css}">'.encode()
+    assert (b'AcroForm' in _run('--pdf-forms - -', html)) is with_forms
+    assert (b'AcroForm' in _run('- -', html)) is without_forms
+
+
 def test_reproducible():
     os.environ['SOURCE_DATE_EPOCH'] = '0'
     stdout1 = _run('- -', b'<body>a<img src=pattern.png>')
