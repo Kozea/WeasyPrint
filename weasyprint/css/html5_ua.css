@@ -333,12 +333,15 @@ input[type="radio"] {
   height: 1.2em;
   width: 1.2em;
 }
-input[type="checkbox"][checked],
-input[type="radio"][checked] {
-  background: black content-box;
+input[type="checkbox"][checked]:before,
+input[type="radio"][checked]:before {
+  background: black;
+  content: "";
+  display: block;
+  height: 100%;
 }
-input[type="color"] {
-  background: lightgrey;
+input[type="radio"][checked]:before {
+  border-radius: 50%;
 }
 input[type="hidden"] {
   display: none;
