@@ -55,6 +55,9 @@ def build_fonts_dictionary(pdf, fonts, optimize_size):
                 width = font.ttfont.getGlyphSet()[key].width
                 font_widths[glyph] = width * ratio
 
+        max_x = max(font_widths.values()) if font_widths else 0
+        bbox = (0, font.descent, max_x, font.ascent)
+
         widths = pydyf.Array()
         for i in sorted(font_widths):
             if i - 1 not in font_widths:
@@ -107,11 +110,11 @@ def build_fonts_dictionary(pdf, fonts, optimize_size):
                 'FontName': font.name,
                 'FontFamily': pydyf.String(font.family),
                 'Flags': font.flags,
-                'FontBBox': pydyf.Array(font.bbox),
+                'FontBBox': pydyf.Array(bbox),
                 'ItalicAngle': font.italic_angle,
                 'Ascent': font.ascent,
                 'Descent': font.descent,
-                'CapHeight': font.bbox[3],
+                'CapHeight': bbox[3],
                 'StemV': font.stemv,
                 'StemH': font.stemh,
                 font_file: font_references_by_file_hash[font.hash],

@@ -1157,19 +1157,6 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y,
             if glyph not in font.widths:
                 pango.pango_font_get_glyph_extents(
                     pango_font, glyph, stream.ink_rect, stream.logical_rect)
-                x1, y1, x2, y2 = (
-                    stream.ink_rect.x,
-                    -stream.ink_rect.y - stream.ink_rect.height,
-                    stream.ink_rect.x + stream.ink_rect.width,
-                    -stream.ink_rect.y)
-                if x1 < font.bbox[0]:
-                    font.bbox[0] = int(units_to_double(x1 * 1000) / font_size)
-                if y1 < font.bbox[1]:
-                    font.bbox[1] = int(units_to_double(y1 * 1000) / font_size)
-                if x2 > font.bbox[2]:
-                    font.bbox[2] = int(units_to_double(x2 * 1000) / font_size)
-                if y2 > font.bbox[3]:
-                    font.bbox[3] = int(units_to_double(y2 * 1000) / font_size)
                 font.widths[glyph] = int(round(
                     units_to_double(stream.logical_rect.width * 1000) /
                     font_size))
