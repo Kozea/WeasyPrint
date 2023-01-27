@@ -144,9 +144,6 @@ def add_inputs(inputs, matrix, pdf, page, resources, stream, font_map):
             checked_stream.pop_state()
             pdf.add_object(checked_stream)
 
-            unchecked_stream = pydyf.Stream()
-            pdf.add_object(unchecked_stream)
-
             checked = 'checked' in element.attrib
             field_stream.set_font_size('ZaDb', font_size)
             field = pydyf.Dictionary({
@@ -159,7 +156,6 @@ def add_inputs(inputs, matrix, pdf, page, resources, stream, font_map):
                 'V': '/Yes' if checked else '/Off',
                 'AP': pydyf.Dictionary({'N': pydyf.Dictionary({
                     'Yes': checked_stream.reference,
-                    'Off': unchecked_stream.reference,
                 })}),
                 'AS': '/Yes' if checked else '/Off',
                 'DA': pydyf.String(b' '.join(field_stream.stream)),
