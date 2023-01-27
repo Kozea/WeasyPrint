@@ -748,7 +748,7 @@ def strut_layout(style, context=None):
         if key in context.strut_layouts:
             return context.strut_layouts[key]
 
-    layout = Layout(context, style['font_size'], style)
+    layout = Layout(context, style)
     layout.set_text(' ')
     line, _ = layout.get_first_line()
     _, _, _, _, text_height, baseline = first_line_metrics(
@@ -782,11 +782,10 @@ def character_ratio(style, character):
     style = style.copy()
     style['letter_spacing'] = 'normal'
     style['word_spacing'] = 0
-
     # Random big value
-    font_size = 1000
+    style['font_size'] = 1000
 
-    layout = Layout(context=None, font_size=font_size, style=style)
+    layout = Layout(context=None, style=style)
     layout.set_text(character)
     line, _ = layout.get_first_line()
 
@@ -802,6 +801,6 @@ def character_ratio(style, character):
 
     # Zero means some kind of failure, fallback is 0.5.
     # We round to try keeping exact values that were altered by Pango.
-    ratio = round(measure / font_size, 5) or 0.5
+    ratio = round(measure / style['font_size'], 5) or 0.5
     cache[cache_key] = ratio
     return ratio

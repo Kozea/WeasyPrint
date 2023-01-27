@@ -330,7 +330,7 @@ def font_features(font_kerning='normal', font_variant_ligatures='normal',
     return features
 
 
-def get_font_description(style, font_size=None):
+def get_font_description(style):
     font_description = ffi.gc(
         pango.pango_font_description_new(),
         pango.pango_font_description_free)
@@ -342,9 +342,8 @@ def get_font_description(style, font_size=None):
         font_description, PANGO_STRETCH[style['font_stretch']])
     pango.pango_font_description_set_weight(
         font_description, style['font_weight'])
-    if font_size is not None:
-        pango.pango_font_description_set_absolute_size(
-            font_description, units_from_double(font_size))
+    pango.pango_font_description_set_absolute_size(
+        font_description, units_from_double(style['font_size']))
     if style['font_variation_settings'] != 'normal':
         string = ','.join(
             f'{key}={value}' for key, value in

@@ -58,13 +58,13 @@ def first_line_metrics(first_line, text, layout, resume_at, space_collapse,
 
 class Layout:
     """Object holding PangoLayout-related cdata pointers."""
-    def __init__(self, context, font_size, style, justification_spacing=0,
+    def __init__(self, context, style, justification_spacing=0,
                  max_width=None):
         self.justification_spacing = justification_spacing
-        self.setup(context, font_size, style)
+        self.setup(context, style)
         self.max_width = max_width
 
-    def setup(self, context, font_size, style):
+    def setup(self, context, style):
         self.context = context
         self.style = style
         self.first_line_direction = 0
@@ -94,7 +94,7 @@ class Layout:
 
         assert not isinstance(style['font_family'], str), (
             'font_family should be a list')
-        font_description = get_font_description(style, font_size)
+        font_description = get_font_description(style)
         self.layout = ffi.gc(
             pango.pango_layout_new(pango_context),
             gobject.g_object_unref)
@@ -203,8 +203,7 @@ class Layout:
     def set_tabs(self):
         if isinstance(self.style['tab_size'], int):
             layout = Layout(
-                self.context, self.style['font_size'], self.style,
-                self.justification_spacing)
+                self.context, self.style, self.justification_spacing)
             layout.set_text(' ' * self.style['tab_size'])
             line, _ = layout.get_first_line()
             width, _ = line_size(line, self.style)
@@ -222,7 +221,7 @@ class Layout:
         del self.layout, self.language, self.style
 
     def reactivate(self, style):
-        self.setup(self.context, style['font_size'], style)
+        self.setup(self.context, style)
         self.set_text(self.text, justify=True)
 
 
@@ -236,8 +235,7 @@ def create_layout(text, style, context, max_width, justification_spacing):
         or ``None`` for unlimited width.
 
     """
-    layout = Layout(
-        context, style['font_size'], style, justification_spacing, max_width)
+    layout = Layout(context, style, justification_spacing, max_width)
 
     # Make sure that max_width * Pango.SCALE == max_width * 1024 fits in a
     # signed integer. Treat bigger values same as None: unconstrained width.
