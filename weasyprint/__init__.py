@@ -106,7 +106,9 @@ class HTML:
             result, content_language=None)
         self.etree_element = self.wrapper_element.etree_element
 
-    def _ua_stylesheets(self):
+    def _ua_stylesheets(self, forms=False):
+        if forms:
+            return [HTML5_UA_STYLESHEET, HTML5_UA_FORM_STYLESHEET]
         return [HTML5_UA_STYLESHEET]
 
     def _ua_counter_style(self):
@@ -117,7 +119,7 @@ class HTML:
 
     def render(self, stylesheets=None, presentational_hints=False,
                optimize_size=('fonts',), font_config=None, counter_style=None,
-               image_cache=None):
+               image_cache=None, forms=False):
         """Lay out and paginate the document, but do not (yet) export it.
 
         This returns a :class:`document.Document` object which provides
@@ -137,18 +139,20 @@ class HTML:
         :type counter_style: :class:`css.counters.CounterStyle`
         :param counter_style: A dictionary storing ``@counter-style`` rules.
         :param dict image_cache: A dictionary used to cache images.
+        :param bool forms: Whether PDF forms have to be included.
         :returns: A :class:`document.Document` object.
 
         """
         return Document._render(
-            self, stylesheets, presentational_hints,
-            optimize_size, font_config, counter_style, image_cache)
+            self, stylesheets, presentational_hints, optimize_size,
+            font_config, counter_style, image_cache, forms)
 
     def write_pdf(self, target=None, stylesheets=None, zoom=1,
                   attachments=None, finisher=None, presentational_hints=False,
                   optimize_size=('fonts',), font_config=None,
                   counter_style=None, image_cache=None, identifier=None,
-                  variant=None, version=None, custom_metadata=False):
+                  variant=None, version=None, forms=False,
+                  custom_metadata=False):
         """Render the document to a PDF file.
 
         This is a shortcut for calling :meth:`render`, then
@@ -186,8 +190,9 @@ class HTML:
         :param bytes identifier: A bytestring used as PDF file identifier.
         :param str variant: A PDF variant name.
         :param str version: A PDF version number.
-        :param bool custom_metadata: A boolean defining whether custom HTML
-            metadata should be stored in the generated PDF.
+        :param bool forms: Whether PDF forms have to be included.
+        :param bool custom_metadata: Whether custom HTML metadata should be
+            stored in the generated PDF.
         :returns:
             The PDF as :obj:`bytes` if ``target`` is not provided or
             :obj:`None`, otherwise :obj:`None` (the PDF is written to
@@ -197,7 +202,7 @@ class HTML:
         return (
             self.render(
                 stylesheets, presentational_hints, optimize_size, font_config,
-                counter_style, image_cache)
+                counter_style, image_cache, forms)
             .write_pdf(
                 target, zoom, attachments, finisher, identifier, variant,
                 version, custom_metadata))
@@ -335,5 +340,6 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
 # Work around circular imports.
 from .css import preprocess_stylesheet  # noqa isort:skip
 from .html import (  # noqa isort:skip
-    HTML5_UA_COUNTER_STYLE, HTML5_UA_STYLESHEET, HTML5_PH_STYLESHEET)
+    HTML5_UA_COUNTER_STYLE, HTML5_UA_STYLESHEET, HTML5_UA_FORM_STYLESHEET,
+    HTML5_PH_STYLESHEET)
 from .document import Document, Page  # noqa isort:skip

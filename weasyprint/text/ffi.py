@@ -269,6 +269,10 @@ ffi.cdef('''
     PangoContext * pango_context_new ();
     PangoContext * pango_font_map_create_context (PangoFontMap *fontmap);
 
+    PangoFont* pango_font_map_load_font (
+        PangoFontMap* fontmap, PangoContext* context,
+        const PangoFontDescription* desc);
+
     PangoFontMetrics * pango_context_get_metrics (
         PangoContext *context, const PangoFontDescription *desc,
         PangoLanguage *language);

@@ -64,7 +64,8 @@ def test_expand_shorthands():
 @assert_no_logs
 def test_annotate_document():
     document = FakeHTML(resource_filename('doc1.html'))
-    document._ua_stylesheets = lambda: [CSS(resource_filename('mini_ua.css'))]
+    document._ua_stylesheets = (
+        lambda *_, **__: [CSS(resource_filename('mini_ua.css'))])
     style_for = get_all_computed_styles(
         document, user_stylesheets=[CSS(resource_filename('user.css'))])
 

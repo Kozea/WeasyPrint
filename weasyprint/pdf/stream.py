@@ -84,9 +84,9 @@ class Font:
         self.svg = harfbuzz.hb_ot_color_has_svg(hb_face)
         self.stemv = 80
         self.stemh = 80
-        self.bbox = [0, 0, 0, 0]
         self.widths = {}
         self.cmap = {}
+        self.used_in_forms = False
 
         # Font flags
         self.flags = 2 ** (3 - 1)  # Symbolic, custom character set

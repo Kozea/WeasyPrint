@@ -5,6 +5,7 @@ import io
 import shutil
 
 from . import CSS
+from .anchors import gather_anchors, make_page_bookmark_tree
 from .css import get_all_computed_styles
 from .css.counters import CounterStyle
 from .css.targets import TargetCollector
@@ -13,7 +14,6 @@ from .formatting_structure.build import build_formatting_structure
 from .html import get_html_metadata
 from .images import get_image_from_uri as original_get_image_from_uri
 from .layout import LayoutContext, layout_document
-from .links import gather_links_and_bookmarks, make_page_bookmark_tree
 from .logger import PROGRESS_LOGGER
 from .matrix import Matrix
 from .pdf import generate_pdf
@@ -47,10 +47,10 @@ class Page:
         #: from the top-left of the page.
         self.bookmarks = []
 
-        #: The :obj:`list` of ``(link_type, target, rectangle)`` :obj:`tuples
-        #: <tuple>`. A ``rectangle`` is ``(x, y, width, height)``, in CSS
-        #: pixels from the top-left of the page. ``link_type`` is one of three
-        #: strings:
+        #: The :obj:`list` of ``(link_type, target, rectangle, box)``
+        #: :obj:`tuples <tuple>`. A ``rectangle`` is ``(x, y, width, height)``,
+        #: in CSS pixels from the top-left of the page. ``link_type`` is one of
+        #: three strings:
         #:
         #: * ``'external'``: ``target`` is an absolute URL
         #: * ``'internal'``: ``target`` is an anchor name (see
@@ -66,8 +66,14 @@ class Page:
         #: ``(x, y)`` point in CSS pixels from the top-left of the page.
         self.anchors = {}
 
-        gather_links_and_bookmarks(
-            page_box, self.anchors, self.links, self.bookmarks)
+        #: The :obj:`list` of ``(element, attributes, rectangle)`` :obj:`tuples
+        #: <tuple>`. A ``rectangle`` is ``(x, y, width, height)``, in CSS
+        #: pixels from the top-left of the page. ``atributes`` is a
+        #: :ojb:`dict` of HTML tag attributes and values.
+        self.inputs = []
+
+        gather_anchors(
+            page_box, self.anchors, self.links, self.bookmarks, self.inputs)
         self._page_box = page_box
 
     def paint(self, stream, left_x=0, top_y=0, scale=1, clip=False):
@@ -165,10 +171,9 @@ class Document:
     """
 
     @classmethod
-    def _build_layout_context(cls, html, stylesheets,
-                              presentational_hints=False,
-                              optimize_size=('fonts',), font_config=None,
-                              counter_style=None, image_cache=None):
+    def _build_layout_context(cls, html, stylesheets, presentational_hints,
+                              optimize_size, font_config, counter_style,
+                              image_cache, forms):
         if font_config is None:
             font_config = FontConfiguration()
         if counter_style is None:
@@ -185,7 +190,7 @@ class Document:
             user_stylesheets.append(css)
         style_for = get_all_computed_styles(
             html, user_stylesheets, presentational_hints, font_config,
-            counter_style, page_rules, target_collector)
+            counter_style, page_rules, target_collector, forms)
         get_image_from_uri = functools.partial(
             original_get_image_from_uri, cache=image_cache,
             url_fetcher=html.url_fetcher, optimize_size=optimize_size)
@@ -196,9 +201,8 @@ class Document:
         return context
 
     @classmethod
-    def _render(cls, html, stylesheets, presentational_hints=False,
-                optimize_size=('fonts',), font_config=None, counter_style=None,
-                image_cache=None):
+    def _render(cls, html, stylesheets, presentational_hints, optimize_size,
+                font_config, counter_style, image_cache, forms):
         if font_config is None:
             font_config = FontConfiguration()
 
@@ -207,7 +211,7 @@ class Document:
 
         context = cls._build_layout_context(
             html, stylesheets, presentational_hints, optimize_size,
-            font_config, counter_style, image_cache)
+            font_config, counter_style, image_cache, forms)
 
         root_box = build_formatting_structure(
             html.etree_element, context.style_for, context.get_image_from_uri,
@@ -241,7 +245,7 @@ class Document:
         # Keep a reference to font_config to avoid its garbage collection until
         # rendering is destroyed. This is needed as font_config.__del__ removes
         # fonts that may be used when rendering
-        self._font_config = font_config
+        self.font_config = font_config
         # Set of flags for PDF size optimization. Can contain "images" and
         # "fonts".
         self._optimize_size = optimize_size
@@ -284,7 +288,7 @@ class Document:
         elif not isinstance(pages, list):
             pages = list(pages)
         return type(self)(
-            pages, self.metadata, self.url_fetcher, self._font_config,
+            pages, self.metadata, self.url_fetcher, self.font_config,
             self._optimize_size)
 
     def make_bookmark_tree(self):

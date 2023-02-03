@@ -299,15 +299,13 @@ button,
 input,
 select,
 textarea {
-  border: 2px solid black;
+  border: 1px solid black;
   display: inline-block;
   font-size: 0.85em;
+  height: 1.2em;
   padding: 0.2em;
   white-space: pre;
   width: 20em;
-}
-input:not([type="image"]) {
-  box-sizing: border-box;
 }
 input[type="button"],
 input[type="reset"],
@@ -332,20 +330,21 @@ input[type="reset"]:not([value])::before {
 }
 input[type="checkbox"],
 input[type="radio"] {
-  height: 1em;
-  width: 1em;
+  height: 1.2em;
+  width: 1.2em;
 }
-input[type="checkbox"] {
-  margin: 0.2em 0.2em 0.2em 0.4em;
+input[type="checkbox"][checked]:before,
+input[type="radio"][checked]:before {
+  background: black;
+  content: "";
+  display: block;
+  height: 100%;
 }
-input[type="color"] {
-  background: lightgrey;
+input[type="radio"][checked]:before {
+  border-radius: 50%;
 }
 input[type="hidden"] {
   display: none;
-}
-input[type="image"] {
-  box-sizing: content-box;
 }
 input[type="radio"] {
   border-radius: 50%;
@@ -384,7 +383,7 @@ option[selected]:not(option[selected] ~ option[selected]) {
   overflow: hidden;
 }
 textarea {
-  box-sizing: border-box;
+  height: 3em;
   margin: 0.1em 0;
   overflow: hidden;
   overflow-wrap: break-word;

@@ -13,8 +13,10 @@ from ..logger import LOGGER
 from ..urls import FILESYSTEM_ENCODING, fetch
 from .constants import (
     CAPS_KEYS, EAST_ASIAN_KEYS, FONTCONFIG_STRETCH, FONTCONFIG_STYLE,
-    FONTCONFIG_WEIGHT, LIGATURE_KEYS, NUMERIC_KEYS)
-from .ffi import ffi, fontconfig, gobject, pangoft2
+    FONTCONFIG_WEIGHT, LIGATURE_KEYS, NUMERIC_KEYS, PANGO_STRETCH, PANGO_STYLE)
+from .ffi import (
+    ffi, fontconfig, gobject, pango, pangoft2, unicode_to_char_p,
+    units_from_double)
 
 
 def _check_font_configuration(font_config):  # pragma: no cover
@@ -326,3 +328,26 @@ def font_features(font_kerning='normal', font_variant_ligatures='normal',
         features.update(dict(font_feature_settings))
 
     return features
+
+
+def get_font_description(style):
+    font_description = ffi.gc(
+        pango.pango_font_description_new(),
+        pango.pango_font_description_free)
+    family_p, family = unicode_to_char_p(','.join(style['font_family']))
+    pango.pango_font_description_set_family(font_description, family_p)
+    pango.pango_font_description_set_style(
+        font_description, PANGO_STYLE[style['font_style']])
+    pango.pango_font_description_set_stretch(
+        font_description, PANGO_STRETCH[style['font_stretch']])
+    pango.pango_font_description_set_weight(
+        font_description, style['font_weight'])
+    pango.pango_font_description_set_absolute_size(
+        font_description, units_from_double(style['font_size']))
+    if style['font_variation_settings'] != 'normal':
+        string = ','.join(
+            f'{key}={value}' for key, value in
+            style['font_variation_settings']).encode()
+        pango.pango_font_description_set_variations(
+            font_description, string)
+    return font_description

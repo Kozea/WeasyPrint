@@ -29,9 +29,12 @@ from .urls import get_url_attribute
 
 HTML5_UA_COUNTER_STYLE = CounterStyle()
 HTML5_UA = read_text(css, 'html5_ua.css')
+HTML5_UA_FORM = read_text(css, 'html5_ua_form.css')
 HTML5_PH = read_text(css, 'html5_ph.css')
 HTML5_UA_STYLESHEET = CSS(
     string=HTML5_UA, counter_style=HTML5_UA_COUNTER_STYLE)
+HTML5_UA_FORM_STYLESHEET = CSS(
+    string=HTML5_UA_FORM, counter_style=HTML5_UA_COUNTER_STYLE)
 HTML5_PH_STYLESHEET = CSS(string=HTML5_PH)
 
 # https://html.spec.whatwg.org/multipage/#space-character

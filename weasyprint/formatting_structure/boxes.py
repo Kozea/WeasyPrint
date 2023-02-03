@@ -295,7 +295,7 @@ class Box:
         """Return start and end page values."""
         return (self.style['page'], self.style['page'])
 
-    # PDF Attachment
+    # PDF attachments
 
     def is_attachment(self):
         """Return whether this link should be stored as a PDF attachment."""
@@ -303,6 +303,16 @@ class Box:
 
         if self.element is not None and self.element.tag == 'a':
             return element_has_link_type(self.element, 'attachment')
+        return False
+
+    # Forms
+
+    def is_input(self):
+        """Return whether this box is a form input."""
+        # https://html.spec.whatwg.org/multipage/forms.html#category-submit
+        if self.style['appearance'] == 'auto' and self.element is not None:
+            if self.element.tag in ('button', 'input', 'select', 'textarea'):
+                return not isinstance(self, (LineBox, TextBox))
         return False
 
 

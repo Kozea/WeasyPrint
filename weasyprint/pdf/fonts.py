@@ -21,7 +21,7 @@ def build_fonts_dictionary(pdf, fonts, optimize_size):
 
         # Clean font, optimize and handle emojis
         cmap = {}
-        if 'fonts' in optimize_size:
+        if 'fonts' in optimize_size and not font.used_in_forms:
             for file_font in file_fonts:
                 cmap = {**cmap, **file_font.cmap}
         font.clean(cmap)
@@ -37,13 +37,35 @@ def build_fonts_dictionary(pdf, fonts, optimize_size):
         font_references_by_file_hash[file_hash] = font_stream.reference
 
     for font in fonts.values():
+        optimize = (
+            'fonts' in optimize_size and
+            font.ttfont and not font.used_in_forms)
+        if optimize:
+            # Only store widths and map for used glyphs
+            font_widths = font.widths
+            cmap = font.cmap
+        else:
+            # Store width and Unicode map for all glyphs
+            font_widths, cmap = {}, {}
+            ratio = 1024 / font.ttfont['head'].unitsPerEm
+            for letter, key in font.ttfont.getBestCmap().items():
+                glyph = font.ttfont.getGlyphID(key)
+                if glyph not in cmap:
+                    cmap[glyph] = chr(letter)
+                width = font.ttfont.getGlyphSet()[key].width
+                font_widths[glyph] = width * ratio
+
+        max_x = max(font_widths.values()) if font_widths else 0
+        bbox = (0, font.descent, max_x, font.ascent)
+
         widths = pydyf.Array()
-        for i in sorted(font.widths):
-            if i - 1 not in font.widths:
+        for i in sorted(font_widths):
+            if i - 1 not in font_widths:
                 widths.append(i)
                 current_widths = pydyf.Array()
                 widths.append(current_widths)
-            current_widths.append(font.widths[i])
+            current_widths.append(font_widths[i])
+
         font_file = f'FontFile{3 if font.type == "otf" else 2}'
         to_unicode = pydyf.Stream([
             b'/CIDInit /ProcSet findresource begin',
@@ -59,8 +81,8 @@ def build_fonts_dictionary(pdf, fonts, optimize_size):
             b'1 begincodespacerange',
             b'<0000> <ffff>',
             b'endcodespacerange',
-            f'{len(font.cmap)} beginbfchar'.encode()])
-        for glyph, text in font.cmap.items():
+            f'{len(cmap)} beginbfchar'.encode()])
+        for glyph, text in cmap.items():
             unicode_codepoints = ''.join(
                 f'{letter.encode("utf-16-be").hex()}' for letter in text)
             to_unicode.stream.append(
@@ -88,11 +110,11 @@ def build_fonts_dictionary(pdf, fonts, optimize_size):
                 'FontName': font.name,
                 'FontFamily': pydyf.String(font.family),
                 'Flags': font.flags,
-                'FontBBox': pydyf.Array(font.bbox),
+                'FontBBox': pydyf.Array(bbox),
                 'ItalicAngle': font.italic_angle,
                 'Ascent': font.ascent,
                 'Descent': font.descent,
-                'CapHeight': font.bbox[3],
+                'CapHeight': bbox[3],
                 'StemV': font.stemv,
                 'StemH': font.stemh,
                 font_file: font_references_by_file_hash[font.hash],

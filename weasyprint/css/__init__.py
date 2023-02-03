@@ -1096,7 +1096,7 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
 def get_all_computed_styles(html, user_stylesheets=None,
                             presentational_hints=False, font_config=None,
                             counter_style=None, page_rules=None,
-                            target_collector=None):
+                            target_collector=None, forms=False):
     """Compute all the computed styles of all elements in ``html`` document.
 
     Do everything from finding author stylesheets to parsing and applying them.
@@ -1112,7 +1112,7 @@ def get_all_computed_styles(html, user_stylesheets=None,
     for style in html._ua_counter_style():
         for key, value in style.items():
             counter_style[key] = value
-    for sheet in (html._ua_stylesheets() or []):
+    for sheet in (html._ua_stylesheets(forms) or []):
         sheets.append((sheet, 'user agent', None))
     if presentational_hints:
         for sheet in (html._ph_stylesheets() or []):

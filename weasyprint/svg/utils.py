@@ -140,8 +140,7 @@ def color(string):
 
 def transform(transform_string, font_size, normalized_diagonal):
     """Get a matrix corresponding to the transform string."""
-    # TODO: merge with Page._gather_links_and_bookmarks and
-    # css.validation.properties.transform
+    # TODO: merge with gather_anchors and css.validation.properties.transform
     transformations = re.findall(
         r'(\w+) ?\( ?(.*?) ?\)', normalize(transform_string))
     matrix = Matrix()

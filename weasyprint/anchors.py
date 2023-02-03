@@ -1,51 +1,10 @@
-"""PDF links and bookmarks management."""
+"""Find anchors, links, bookmarks and inputs in documents."""
 
 import math
 
 from .formatting_structure import boxes
 from .layout.percent import percentage
-from .logger import LOGGER
 from .matrix import Matrix
-
-
-def resolve_links(pages):
-    """Resolve internal hyperlinks.
-
-    Links to a missing anchor are removed with a warning.
-
-    If multiple anchors have the same name, the first one is used.
-
-    :returns:
-        A generator yielding lists (one per page) like :attr:`Page.links`,
-        except that ``target`` for internal hyperlinks is
-        ``(page_number, x, y)`` instead of an anchor name.
-        The page number is a 0-based index into the :attr:`pages` list,
-        and ``x, y`` are in CSS pixels from the top-left of the page.
-
-    """
-    anchors = set()
-    paged_anchors = []
-    for i, page in enumerate(pages):
-        paged_anchors.append([])
-        for anchor_name, (point_x, point_y) in page.anchors.items():
-            if anchor_name not in anchors:
-                paged_anchors[-1].append((anchor_name, point_x, point_y))
-                anchors.add(anchor_name)
-    for page in pages:
-        page_links = []
-        for link in page.links:
-            link_type, anchor_name, _, _ = link
-            if link_type == 'internal':
-                if anchor_name not in anchors:
-                    LOGGER.error(
-                        'No anchor #%s for internal URI reference',
-                        anchor_name)
-                else:
-                    page_links.append(link)
-            else:
-                # External link
-                page_links.append(link)
-        yield page_links, paged_anchors.pop(0)
 
 
 def rectangle_aabb(matrix, pos_x, pos_y, width, height):
@@ -68,8 +27,12 @@ def rectangle_aabb(matrix, pos_x, pos_y, width, height):
     return box_x1, box_y1, box_x2, box_y2
 
 
-def gather_links_and_bookmarks(box, anchors, links, bookmarks,
-                               parent_matrix=None):
+def gather_anchors(box, anchors, links, bookmarks, inputs, parent_matrix=None):
+    """Gather anchors and other data related to specific positions in PDF.
+
+    Currently finds anchors, links, bookmarks and inputs.
+
+    """
     # Get box transformation matrix.
     # "Transforms apply to block-level and atomic inline-level elements,
     #  but do not apply to elements which may be split into
@@ -124,9 +87,16 @@ def gather_links_and_bookmarks(box, anchors, links, bookmarks,
     has_link = link and not isinstance(box, (boxes.TextBox, boxes.LineBox))
     # In case of duplicate IDs, only the first is an anchor.
     has_anchor = anchor_name and anchor_name not in anchors
+    is_input = box.is_input()
 
-    if has_bookmark or has_link or has_anchor:
-        pos_x, pos_y, width, height = box.hit_area()
+    if has_bookmark or has_link or has_anchor or is_input:
+        if is_input:
+            pos_x, pos_y = box.content_box_x(), box.content_box_y()
+            width, height = box.width, box.height
+        else:
+            pos_x, pos_y, width, height = box.hit_area()
+        if has_link or is_input:
+            rectangle = rectangle_aabb(matrix, pos_x, pos_y, width, height)
         if has_link:
             token_type, link = link
             assert token_type == 'url'
@@ -134,9 +104,9 @@ def gather_links_and_bookmarks(box, anchors, links, bookmarks,
             assert isinstance(target, str)
             if link_type == 'external' and box.is_attachment():
                 link_type = 'attachment'
-            rectangle = rectangle_aabb(matrix, pos_x, pos_y, width, height)
-            link = (link_type, target, rectangle, box)
-            links.append(link)
+            links.append((link_type, target, rectangle, box))
+        if is_input:
+            inputs.append((box.element, box.style, rectangle))
         if matrix and (has_bookmark or has_anchor):
             pos_x, pos_y = matrix.transform_point(pos_x, pos_y)
         if has_bookmark:
@@ -146,7 +116,7 @@ def gather_links_and_bookmarks(box, anchors, links, bookmarks,
             anchors[anchor_name] = pos_x, pos_y
 
     for child in box.all_children():
-        gather_links_and_bookmarks(child, anchors, links, bookmarks, matrix)
+        gather_anchors(child, anchors, links, bookmarks, inputs, matrix)
 
 
 def make_page_bookmark_tree(page, skipped_levels, last_by_depth,

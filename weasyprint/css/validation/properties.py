@@ -1592,3 +1592,12 @@ def transform(tokens):
             else:
                 return
         return tuple(transforms)
+
+
+@property()
+@single_token
+def appearance(token):
+    """``appearance`` property validation."""
+    keyword = get_keyword(token)
+    if keyword in ('none', 'auto'):
+        return keyword

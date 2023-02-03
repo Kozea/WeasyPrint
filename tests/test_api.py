@@ -13,7 +13,7 @@ import py
 import pytest
 from PIL import Image
 from weasyprint import CSS, HTML, __main__, default_url_fetcher
-from weasyprint.links import resolve_links
+from weasyprint.pdf.anchors import resolve_links
 from weasyprint.urls import path2url
 
 from .draw import parse_pixels
@@ -462,6 +462,30 @@ def test_partial_pdf_custom_metadata():
         '<meta name=a.b/céd0 content=value />'.encode('latin1'))
     assert b'/abcd0' in stdout
     assert b'value' in stdout
+
+
+@pytest.mark.parametrize('html, field', (
+    (b'<input>', b'/Tx'),
+    (b'<input type="checkbox">', b'/Btn'),
+    (b'<textarea></textarea>', b'/Tx'),
+))
+def test_pdf_inputs(html, field):
+    stdout = _run('--pdf-forms - -', html)
+    assert b'AcroForm' in stdout
+    assert field in stdout
+    stdout = _run('- -', html)
+    assert b'AcroForm' not in stdout
+
+
+@pytest.mark.parametrize('css, with_forms, without_forms', (
+    ('appearance: auto', True, True),
+    ('appearance: none', False, False),
+    ('', True, False),
+))
+def test_appearance(css, with_forms, without_forms):
+    html = f'<input style="{css}">'.encode()
+    assert (b'AcroForm' in _run('--pdf-forms - -', html)) is with_forms
+    assert (b'AcroForm' in _run('- -', html)) is without_forms
 
 
 def test_reproducible():

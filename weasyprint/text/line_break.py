@@ -5,11 +5,11 @@ from math import inf
 
 import pyphen
 
-from .constants import LST_TO_ISO, PANGO_STRETCH, PANGO_STYLE, PANGO_WRAP_MODE
+from .constants import LST_TO_ISO, PANGO_WRAP_MODE
 from .ffi import (
     ffi, gobject, pango, pangoft2, unicode_to_char_p, units_from_double,
     units_to_double)
-from .fonts import font_features
+from .fonts import font_features, get_font_description
 
 
 def line_size(line, style):
@@ -58,13 +58,13 @@ def first_line_metrics(first_line, text, layout, resume_at, space_collapse,
 
 class Layout:
     """Object holding PangoLayout-related cdata pointers."""
-    def __init__(self, context, font_size, style, justification_spacing=0,
+    def __init__(self, context, style, justification_spacing=0,
                  max_width=None):
         self.justification_spacing = justification_spacing
-        self.setup(context, font_size, style)
+        self.setup(context, style)
         self.max_width = max_width
 
-    def setup(self, context, font_size, style):
+    def setup(self, context, style):
         self.context = context
         self.style = style
         self.first_line_direction = 0
@@ -78,9 +78,6 @@ class Layout:
             pango.pango_font_map_create_context(font_map),
             gobject.g_object_unref)
         pango.pango_context_set_round_glyph_positions(pango_context, False)
-        self.layout = ffi.gc(
-            pango.pango_layout_new(pango_context),
-            gobject.g_object_unref)
 
         if style['font_language_override'] != 'normal':
             lang_p, lang = unicode_to_char_p(LST_TO_ISO.get(
@@ -97,31 +94,17 @@ class Layout:
 
         assert not isinstance(style['font_family'], str), (
             'font_family should be a list')
-        self.font = ffi.gc(
-            pango.pango_font_description_new(),
-            pango.pango_font_description_free)
-        family_p, family = unicode_to_char_p(','.join(style['font_family']))
-        pango.pango_font_description_set_family(self.font, family_p)
-        pango.pango_font_description_set_style(
-            self.font, PANGO_STYLE[style['font_style']])
-        pango.pango_font_description_set_stretch(
-            self.font, PANGO_STRETCH[style['font_stretch']])
-        pango.pango_font_description_set_weight(
-            self.font, style['font_weight'])
-        pango.pango_font_description_set_absolute_size(
-            self.font, units_from_double(font_size))
-        if style['font_variation_settings'] != 'normal':
-            string = ','.join(
-                f'{key}={value}' for key, value in
-                style['font_variation_settings']).encode()
-            pango.pango_font_description_set_variations(self.font, string)
-        pango.pango_layout_set_font_description(self.layout, self.font)
+        font_description = get_font_description(style)
+        self.layout = ffi.gc(
+            pango.pango_layout_new(pango_context),
+            gobject.g_object_unref)
+        pango.pango_layout_set_font_description(self.layout, font_description)
 
         text_decoration = style['text_decoration_line']
         if text_decoration != 'none':
             metrics = ffi.gc(
                 pango.pango_context_get_metrics(
-                    pango_context, self.font, self.language),
+                    pango_context, font_description, self.language),
                 pango.pango_font_metrics_unref)
             self.ascent = units_to_double(
                 pango.pango_font_metrics_get_ascent(metrics))
@@ -220,8 +203,7 @@ class Layout:
     def set_tabs(self):
         if isinstance(self.style['tab_size'], int):
             layout = Layout(
-                self.context, self.style['font_size'], self.style,
-                self.justification_spacing)
+                self.context, self.style, self.justification_spacing)
             layout.set_text(' ' * self.style['tab_size'])
             line, _ = layout.get_first_line()
             width, _ = line_size(line, self.style)
@@ -236,10 +218,10 @@ class Layout:
         pango.pango_layout_set_tabs(self.layout, array)
 
     def deactivate(self):
-        del self.layout, self.font, self.language, self.style
+        del self.layout, self.language, self.style
 
     def reactivate(self, style):
-        self.setup(self.context, style['font_size'], style)
+        self.setup(self.context, style)
         self.set_text(self.text, justify=True)
 
 
@@ -253,8 +235,7 @@ def create_layout(text, style, context, max_width, justification_spacing):
         or ``None`` for unlimited width.
 
     """
-    layout = Layout(
-        context, style['font_size'], style, justification_spacing, max_width)
+    layout = Layout(context, style, justification_spacing, max_width)
 
     # Make sure that max_width * Pango.SCALE == max_width * 1024 fits in a
     # signed integer. Treat bigger values same as None: unconstrained width.

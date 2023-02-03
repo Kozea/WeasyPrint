@@ -19,15 +19,12 @@ INITIAL_VALUES = {
     'display': ('inline', 'flow'),
     'empty_cells': 'show',
     'float': 'none',
-    'height': 'auto',
     'left': 'auto',
     'line_height': 'normal',
     'margin_top': Dimension(0, 'px'),
     'margin_right': Dimension(0, 'px'),
     'margin_bottom': Dimension(0, 'px'),
     'margin_left': Dimension(0, 'px'),
-    'max_height': Dimension(inf, 'px'),  # parsed value for 'none'
-    'max_width': Dimension(inf, 'px'),
     'padding_top': Dimension(0, 'px'),
     'padding_right': Dimension(0, 'px'),
     'padding_bottom': Dimension(0, 'px'),
@@ -39,7 +36,6 @@ INITIAL_VALUES = {
     'unicode_bidi': 'normal',
     'vertical_align': 'baseline',
     'visibility': 'visible',
-    'width': 'auto',
     'z_index': 'auto',
 
     # Backgrounds and Borders 3 (CR): https://www.w3.org/TR/css-backgrounds-3/
@@ -159,12 +155,20 @@ INITIAL_VALUES = {
     'transform_origin': (Dimension(50, '%'), Dimension(50, '%')),
     'transform': (),  # computed value for 'none'
 
-    # User Interface 3 (REC): https://www.w3.org/TR/css-ui-3/
-    'box_sizing': 'content-box',
+    # User Interface 3/4 (REC/WD): https://www.w3.org/TR/css-ui-4/
+    'appearance': 'none',
     'outline_color': 'currentColor',  # invert is not supported
     'outline_style': 'none',
     'outline_width': 3,  # computed value for 'medium'
-    'overflow_wrap': 'normal',
+
+    # Sizing 3 (WD): https://www.w3.org/TR/css-sizing-3/
+    'box_sizing': 'content-box',
+    'height': 'auto',
+    'max_height': Dimension(inf, 'px'),  # parsed value for 'none'
+    'max_width': Dimension(inf, 'px'),
+    'min_height': 'auto',
+    'min_width': 'auto',
+    'width': 'auto',
 
     # Flexible Box Layout Module 1 (CR): https://www.w3.org/TR/css-flexbox-1/
     'align_content': 'stretch',
@@ -176,8 +180,6 @@ INITIAL_VALUES = {
     'flex_shrink': 1,
     'flex_wrap': 'nowrap',
     'justify_content': 'flex-start',
-    'min_height': 'auto',
-    'min_width': 'auto',
     'order': 0,
 
     # Text Decoration Module 3 (CR): https://www.w3.org/TR/css-text-decor-3/
@@ -185,11 +187,12 @@ INITIAL_VALUES = {
     'text_decoration_color': 'currentColor',
     'text_decoration_style': 'solid',
 
-    # Overflow Module 3 (WD): https://www.w3.org/TR/css-overflow-3/
+    # Overflow Module 3/4 (WD): https://www.w3.org/TR/css-overflow-4/
     'block_ellipsis': 'none',
     'continue': 'auto',
     'max_lines': 'none',
     'overflow': 'visible',
+    'overflow_wrap': 'normal',
     'text_overflow': 'clip',
 
     # Lists Module 3 (WD): https://drafts.csswg.org/css-lists-3/
