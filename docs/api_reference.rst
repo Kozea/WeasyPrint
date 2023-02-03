@@ -180,6 +180,10 @@ check that they follow the rules listed by the related specifications. The main
 constraint is to use a correct HTML structure to avoid inconsistencies in the
 PDF structure.
 
+Generated PDFs can include forms, using the ``appearance: auto`` CSS property
+or the ``--pdf-forms`` CLI option. Text inputs, text areas and check boxes are
+supported.
+
 
 Fonts
 ~~~~~
