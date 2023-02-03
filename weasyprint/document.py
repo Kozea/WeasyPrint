@@ -69,7 +69,7 @@ class Page:
         #: The :obj:`list` of ``(element, attributes, rectangle)`` :obj:`tuples
         #: <tuple>`. A ``rectangle`` is ``(x, y, width, height)``, in CSS
         #: pixels from the top-left of the page. ``atributes`` is a
-        #: :ojb:`dict` of HTML tag attributes and values.
+        #: :obj:`dict` of HTML tag attributes and values.
         self.inputs = []
 
         gather_anchors(
