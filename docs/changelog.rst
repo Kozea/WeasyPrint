@@ -2,6 +2,53 @@ Changelog
 =========
 
 
+Version 58.0b1
+--------------
+
+Released on 2023-02-03.
+
+**This version is experimental, don't use it in production. If you find bugs,
+please report them!**
+
+New features:
+
+* `#61 <https://github.com/Kozea/WeasyPrint/issues/61>`_,
+  `#1796 <https://github.com/Kozea/WeasyPrint/pull/1796>`_:
+  Support PDF forms, with financial support from Personalkollen
+* `#1173 <https://github.com/Kozea/WeasyPrint/issues/1173>`_:
+  Add style for form fields
+
+Bug fixes:
+
+* `#1777 <https://github.com/Kozea/WeasyPrint/issues/1777>`_:
+  Detect JPEG/MPO images as normal JPEG files
+* `#1771 <https://github.com/Kozea/WeasyPrint/pull/1771>`_:
+  Improve SVG gradients
+
+Contributors:
+
+* Guillaume Ayoub
+* Lucie Anglade
+
+Backers and sponsors:
+
+* Kobalt
+* Grip Angebotssoftware
+* Crisp BV
+* Spacinov
+* Castedo Ellerman
+* Manuel Barkhau
+* SimonSoft
+* Menutech
+* KontextWork
+* NCC Group
+* René Fritz
+* Moritz Mahringer
+* Yanal-Yvez Fargialla
+* Piotr Horzycki
+* Healthchecks.io
+
+
 Version 57.2
 ------------
 
