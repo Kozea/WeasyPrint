@@ -821,3 +821,40 @@ def test_float_split_14(assert_pixels):
         a
         <div style="float: left"><p>aa<p>aa</div>
         <div style="float: right"><p>bb<p>bb</div>''')
+
+
+@pytest.mark.xfail
+@assert_no_logs
+def test_float_split_15(assert_pixels):
+    assert_pixels('''
+        BB__RRRRRRRRRR__
+        BB__RRRRRRRRRR__
+        BB__RRRRRRRRRR__
+        BB__RRRRRRRRRR__
+        GGBBRRRRRRRRRR__
+        GGBBRRRRRRRRRR__
+        GGBBRRRRRRRRRR__
+        GGBBRRRRRRRRRR__
+        RRRRRRRRRR______
+        RRRRRRRRRR______
+    ''', '''
+        <style>
+            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+            @page {
+                size: 16px 2px;
+            }
+            body {
+                color: red;
+                font-family: weasyprint;
+                font-size: 2px;
+                line-height: 1;
+            }
+        </style>
+        <div style="float: left; position: relative; color: blue; width: 4px">
+          a a a
+          <div style="float: left; color: lime; width: 2px">
+            a a
+          </div>
+          a a
+        </div>
+        <div>bbbbb bbbbb bbbbb bbbbb bbbbb</div>''')
