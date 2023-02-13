@@ -672,3 +672,101 @@ def test_absolute_pages_counter_orphans(assert_pixels):
         </style>
         a a a <div>a a a</div> a <div>a a a</div>
     ''')
+
+
+@assert_no_logs
+def test_absolute_in_inline(assert_pixels):
+    assert_pixels('''
+        ______
+        _GG___
+        _GG___
+        _GG___
+        _GG___
+        ______
+        ______
+        ______
+        ______
+
+        ______
+        _RR___
+        _RR___
+        _RR___
+        _RR___
+        _BB___
+        _BB___
+        ______
+        ______
+    ''', '''
+        <style>
+            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+            @page {
+                margin: 1px;
+                size: 6px 9px;
+            }
+            body {
+                color: red;
+                font-family: weasyprint;
+                font-size: 2px;
+                line-height: 1;
+                orphans: 2;
+                widows: 2;
+            }
+            p {
+                color: lime;
+            }
+            div {
+                color: blue;
+                position: absolute;
+            }
+        </style>
+        <p>a a</p> a a <div>a</div>
+    ''')
+
+
+@assert_no_logs
+def test_fixed_in_inline(assert_pixels):
+    assert_pixels('''
+        ______
+        _GG___
+        _GG___
+        _GG___
+        _GG___
+        _BB___
+        _BB___
+        ______
+        ______
+
+        ______
+        _RR___
+        _RR___
+        _RR___
+        _RR___
+        _BB___
+        _BB___
+        ______
+        ______
+    ''', '''
+        <style>
+            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+            @page {
+                margin: 1px;
+                size: 6px 9px;
+            }
+            body {
+                color: red;
+                font-family: weasyprint;
+                font-size: 2px;
+                line-height: 1;
+                orphans: 2;
+                widows: 2;
+            }
+            p {
+                color: lime;
+            }
+            div {
+                color: blue;
+                position: fixed;
+            }
+        </style>
+        <p>a a</p> a a <div>a</div>
+    ''')

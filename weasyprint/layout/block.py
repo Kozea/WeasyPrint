@@ -1032,9 +1032,8 @@ def remove_placeholders(context, box_list, absolute_boxes, fixed_boxes):
             remove_placeholders(
                 context, box.children, absolute_boxes, fixed_boxes)
         if box.style['position'] == 'absolute' and box in absolute_boxes:
-            # box is not in absolute_boxes if its parent has position: relative
             absolute_boxes.remove(box)
-        elif box.style['position'] == 'fixed':
+        elif box.style['position'] == 'fixed' and box in fixed_boxes:
             fixed_boxes.remove(box)
         if box.footnote:
             context.unlayout_footnote(box.footnote)
