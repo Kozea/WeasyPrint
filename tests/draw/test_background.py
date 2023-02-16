@@ -582,6 +582,30 @@ def test_background_origin(assert_pixels, css, pixels):
 
 
 @assert_no_logs
+def test_background_transform(assert_pixels):
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/1809
+    assert_pixels('''
+        _______
+        _RRRRR_
+        _RRRRR_
+        _RRRRR_
+        _RRRRR_
+        _RRRRR_
+        _______
+    ''', '''
+      <style>
+        @page { size: 7px 7px }
+        html { background: #fff }
+        body { position: absolute;
+               width: 5px; height: 5px;
+               top: -5px; left: -5px;
+               transform: translate(6px 6px);
+               background: red }
+      </style>
+      <body>''')
+
+
+@assert_no_logs
 def test_background_repeat_space_1(assert_pixels):
     assert_pixels('''
         ____________

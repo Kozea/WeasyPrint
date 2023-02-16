@@ -260,7 +260,7 @@ def draw_background(stream, bg, clip_box=True, bleed=None, marks=()):
                     stream.rectangle(*painting_area)
                     stream.clip()
                     stream.end()
-                stream.rectangle(*stream.page_rectangle)
+                stream.rectangle(*painting_area)
                 stream.fill()
 
         if bleed and marks:
