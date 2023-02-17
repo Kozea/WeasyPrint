@@ -2,6 +2,46 @@ Changelog
 =========
 
 
+Version 58.0
+------------
+
+Released on 2023-02-17.
+
+This version also includes the changes from unstable b1 version listed
+below.
+
+Bug fixes:
+
+* `#1807 <https://github.com/Kozea/WeasyPrint/issues/1807>`_:
+  Don’t crash when out-of-flow box is split in out-of-flow parent
+* `#1806 <https://github.com/Kozea/WeasyPrint/issues/1806>`_:
+  Don’t crash when fixed elements aren’t displayed yet in aborted line
+* `#1809 <https://github.com/Kozea/WeasyPrint/issues/1809>`_:
+  Fix background drawing for out-of-the-page transformed boxes
+
+Contributors:
+
+* Guillaume Ayoub
+
+Backers and sponsors:
+
+* Kobalt
+* Grip Angebotssoftware
+* Crisp BV
+* Spacinov
+* Castedo Ellerman
+* Manuel Barkhau
+* SimonSoft
+* Menutech
+* KontextWork
+* NCC Group
+* René Fritz
+* Moritz Mahringer
+* Yanal-Yvez Fargialla
+* Piotr Horzycki
+* Healthchecks.io
+
+
 Version 58.0b1
 --------------
 
