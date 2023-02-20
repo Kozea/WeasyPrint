@@ -15,7 +15,7 @@ pagination, and meant to be easy to hack on.
 * Free software: BSD license
 * For Python 3.7+, tested on CPython and PyPy
 * Documentation: https://doc.courtbouillon.org/weasyprint
-* Examples: https://weasyprint.org/samples/
+* Examples: https://weasyprint.org/#samples/
 * Changelog: https://github.com/Kozea/WeasyPrint/releases
 * Code, issues, tests: https://github.com/Kozea/WeasyPrint
 * Code of conduct: https://www.courtbouillon.org/code-of-conduct
