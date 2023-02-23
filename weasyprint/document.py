@@ -291,9 +291,15 @@ class Document:
             pages, self.metadata, self.url_fetcher, self.font_config,
             self._optimize_size)
 
-    def make_bookmark_tree(self):
+    def make_bookmark_tree(self, scale=1, transform_pages=False):
         """Make a tree of all bookmarks in the document.
 
+        :param float scale:
+            Zoom scale.
+        :param bool transform_pages:
+            A boolean defining whether the default PDF page transformation
+            matrix has to be applied to bookmark coordinates, setting the
+            bottom-left corner as the origin.
         :return: A list of bookmark subtrees.
             A subtree is ``(label, target, children, state)``. ``label`` is
             a string, ``target`` is ``(page_number, x, y)``  and ``children``
@@ -308,8 +314,11 @@ class Document:
         skipped_levels = []
         last_by_depth = [root]
         previous_level = 0
-        matrix = Matrix()
         for page_number, page in enumerate(self.pages):
+            if transform_pages:
+                matrix = Matrix(a=scale, d=-scale, f=page.height * scale)
+            else:
+                matrix = Matrix(a=scale, d=scale)
             previous_level = make_page_bookmark_tree(
                 page, skipped_levels, last_by_depth, previous_level,
                 page_number, matrix)

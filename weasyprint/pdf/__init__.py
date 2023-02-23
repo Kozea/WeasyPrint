@@ -202,7 +202,7 @@ def generate_pdf(document, target, zoom, attachments, optimize_size,
             bleed_left, bleed_top, bleed_right, bleed_bottom])
 
     # Outlines
-    add_outlines(pdf, document.make_bookmark_tree())
+    add_outlines(pdf, document.make_bookmark_tree(scale, transform_pages=True))
 
     PROGRESS_LOGGER.info('Step 7 - Adding PDF metadata')
 

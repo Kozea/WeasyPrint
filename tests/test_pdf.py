@@ -290,6 +290,18 @@ def test_bookmarks_14():
 
 
 @assert_no_logs
+def test_bookmarks_15():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/1815
+    pdf = FakeHTML(string='''
+      <style>@page { size: 10pt 10pt }</style>
+      <h1>a</h1>
+    ''').write_pdf()
+    assert re.findall(b'/Count ([0-9-]*)', pdf)[-1] == b'1'
+    assert re.findall(b'/Title \\((.*)\\)', pdf) == [b'a']
+    assert b'/XYZ 0 10 0' in pdf
+
+
+@assert_no_logs
 def test_links_none():
     pdf = FakeHTML(string='<body>').write_pdf()
     assert b'Annots' not in pdf
