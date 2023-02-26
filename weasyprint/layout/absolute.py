@@ -318,9 +318,9 @@ def absolute_replaced(context, box, cb_x, cb_y, cb_width, cb_height):
             box.margin_bottom = 0
         remaining = cb_height - box.margin_height()
         if box.top == 'auto':
-            box.top = remaining
+            box.top = remaining - box.bottom
         if box.bottom == 'auto':
-            box.bottom = remaining
+            box.bottom = remaining - box.top
     elif 'auto' in (box.margin_top, box.margin_bottom):
         remaining = cb_height - (box.border_height() + box.top + box.bottom)
         if box.margin_top == box.margin_bottom == 'auto':
