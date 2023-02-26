@@ -327,23 +327,30 @@ def test_absolute_positioning_8():
 def test_absolute_images():
     page, = render_pages('''
       <style>
+        @page { size: 50px; }
         img { display: block; position: absolute }
       </style>
       <div style="margin: 10px">
         <img src=pattern.png />
         <img src=pattern.png style="left: 15px" />
+        <img src=pattern.png style="top: 15px" />
+        <img src=pattern.png style="bottom: 25px" />
       </div>
     ''')
     html, = page.children
     body, = html.children
     div, = body.children
-    img1, img2 = div.children
+    img1, img2, img3, img4 = div.children
     assert div.height == 0
     assert (div.position_x, div.position_y) == (0, 0)
     assert (img1.position_x, img1.position_y) == (10, 10)
     assert (img1.width, img1.height) == (4, 4)
     assert (img2.position_x, img2.position_y) == (15, 10)
     assert (img2.width, img2.height) == (4, 4)
+    assert (img3.position_x, img3.position_y) == (10, 15)
+    assert (img3.width, img3.height) == (4, 4)
+    assert (img4.position_x, img4.position_y) == (10, 21)  # (50 - 4) - 25
+    assert (img4.width, img4.height) == (4, 4)
 
     # TODO: test the various cases in absolute_replaced()
 
