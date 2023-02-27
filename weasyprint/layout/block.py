@@ -213,7 +213,7 @@ def relative_positioning(box, containing_block):
 
         if box.top != 'auto':
             translate_y = box.top
-        elif box.style['bottom'] != 'auto':
+        elif box.bottom != 'auto':
             translate_y = -box.bottom
         else:
             translate_y = 0
