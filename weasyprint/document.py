@@ -2,7 +2,10 @@
 
 import functools
 import io
+import os
 import shutil
+from pathlib import Path
+from tempfile import NamedTemporaryFile
 
 from . import CSS
 from .anchors import gather_anchors, make_page_bookmark_tree
@@ -364,15 +367,26 @@ class Document:
         if finisher:
             finisher(self, pdf)
 
-        output = io.BytesIO()
-        pdf.write(output, version=pdf.version, identifier=identifier)
+        if hasattr(target, 'write'):
+            pdf.write(target, version=pdf.version, identifier=identifier)
+            return
 
         if target is None:
-            return output.getvalue()
-        else:
-            output.seek(0)
-            if hasattr(target, 'write'):
-                shutil.copyfileobj(output, target)
-            else:
-                with open(target, 'wb') as fd:
-                    shutil.copyfileobj(output, fd)
+            # TODO: Should we make None value for target parameter deprecated in write_pdf()?
+            # Returning bytes.
+            # You should avoid target=None value if you may run out of RAM.
+            # Consumes a double amount of memory. It creates document in BinaryIO and returns bytes copy from it.
+            # Just for a moment two copies of PDF document will be in memory.
+            # Also pydyf.PDF object is in a memory.
+            bytes_io = io.BytesIO()
+            pdf.write(bytes_io, version=pdf.version, identifier=identifier)
+            return bytes_io.getvalue()
+
+        temp_file = NamedTemporaryFile(buffering=8388608, dir=Path(target).parent, delete=False, suffix=".pdf~")
+        try:
+            pdf.write(temp_file, version=pdf.version, identifier=identifier)
+            temp_file.close()
+            shutil.move(temp_file.name, target)
+        finally:
+            if os.path.exists(temp_file.name):
+                os.remove(temp_file.name)

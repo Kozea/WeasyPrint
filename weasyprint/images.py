@@ -1,16 +1,22 @@
 """Fetch and decode images in various formats."""
 
+import io
 import math
 from hashlib import md5
 from io import BytesIO
 from itertools import cycle
 from math import inf
+from pathlib import Path
+from typing import Optional, Union, Collection
+from urllib.parse import unquote
 from xml.etree import ElementTree
 
-from PIL import Image, ImageFile, ImageOps
+from PIL import Image, ImageFile
 
+from pydyf import DelayedBytes
 from .layout.percent import percentage
 from .logger import LOGGER
+from .rotate_fn import rotate_pillow_image
 from .svg import SVG
 from .urls import URLFetchingError, fetch
 
@@ -32,10 +38,31 @@ class ImageLoadingError(ValueError):
         return cls(f'{name}: {value}' if value else name)
 
 
+
+RAM_SAVE = True
+"""
+This is temporary constant that defines RAM Saving when work with images.
+When it is True, local images will not be kept im memory.
+PROS: Lowers memory consumption.
+CONS: Had to read images twice from disk. Might affect speed a little.
+"""
+# TODO: Should RAM_SAVE be introduced as a parameter into render() method?
+#       It was my temp quick-fix ugly solution to put it as module constant.
+
+
 class RasterImage:
-    def __init__(self, pillow_image, image_id, optimize_size):
+    def __init__(self, pillow_image, image_id, optimize_size,
+                 url: Optional[str] = None, orientation: Optional[str] = None):
+
         pillow_image.id = image_id
-        self._pillow_image = pillow_image
+
+        if RAM_SAVE and url and url.startswith("file://"):
+            quoted_path = url[7:]
+            path = unquote(quoted_path)
+            self._pillow_image = DelayedPillowImage(pillow_image, path, orientation, optimize_size)
+        else:
+            self._pillow_image = pillow_image
+
         self._optimize_size = optimize_size
         self._intrinsic_width = pillow_image.width
         self._intrinsic_height = pillow_image.height
@@ -136,22 +163,8 @@ def get_image_from_uri(cache, url_fetcher, optimize_size, url,
                     # Store image id to enable cache in Stream.add_image
                     image_id = md5(url.encode()).hexdigest()
                     # Keep image format as it is discarded by transposition
-                    image_format = pillow_image.format
-                    if orientation == 'from-image':
-                        if 'exif' in pillow_image.info:
-                            pillow_image = ImageOps.exif_transpose(
-                                pillow_image)
-                    elif orientation != 'none':
-                        angle, flip = orientation
-                        if angle > 0:
-                            rotation = getattr(
-                                Image.Transpose, f'ROTATE_{angle}')
-                            pillow_image = pillow_image.transpose(rotation)
-                        if flip:
-                            pillow_image = pillow_image.transpose(
-                                Image.Transpose.FLIP_LEFT_RIGHT)
-                    pillow_image.format = image_format
-                    image = RasterImage(pillow_image, image_id, optimize_size)
+                    pillow_image = rotate_pillow_image(pillow_image, orientation)
+                    image = RasterImage(pillow_image, image_id, optimize_size, url=url, orientation=orientation)
 
     except (URLFetchingError, ImageLoadingError) as exception:
         LOGGER.error('Failed to load image at %r: %s', url, exception)
@@ -665,3 +678,47 @@ class RadialGradient(Gradient):
             size_x = 1e7
             size_y = 1e-7
         return size_x, size_y
+
+
+class DelayedPillowImage(DelayedBytes):
+    def __init__(self, pillow_image,
+                 path: Union[str, Path], orientation, optimize_size: Collection[str]):
+        """
+        Memory efficient replacer of PIL Image.
+        Does not keep image in memory. Retreives image bytes on demand.
+        """
+
+        # Those are paramerers to recreate image bytes from file
+        self.path = path
+        self.orientation = orientation
+        self.optimize_size = optimize_size
+
+        # These parameters of original Image object that used somewhere else.
+        self.id = pillow_image.id
+        self.info = pillow_image.info
+        self.mode = pillow_image.mode
+        self.width = pillow_image.width
+        self.height = pillow_image.height
+        self.format = pillow_image.format
+
+    def __repr__(self):
+        return f"<Picture {self.path}>"
+
+    def get_bytes(self):
+
+        original_pillow_image = Image.open(self.path)
+        rotated_pillow_image = rotate_pillow_image(original_pillow_image, self.orientation)
+
+
+        if rotated_pillow_image is original_pillow_image:
+            if original_pillow_image.format == 'JPEG' and ('not_jpegs' in self.optimize_size):
+                return Path(self.path).read_bytes()
+
+        optimize = 'images' in self.optimize_size
+        return get_jpeg_bytes(rotated_pillow_image, optimize)
+
+
+def get_jpeg_bytes(pillow_image, optimize: bool):
+    image_file = io.BytesIO()
+    pillow_image.save(image_file, format='JPEG', optimize=optimize)
+    return image_file.getvalue()

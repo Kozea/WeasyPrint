@@ -10,6 +10,7 @@ from fontTools import subset
 from fontTools.ttLib import TTFont, TTLibError, ttFont
 from fontTools.varLib.mutator import instantiateVariableFont
 
+from ..images import DelayedPillowImage, get_jpeg_bytes
 from ..logger import LOGGER
 from ..matrix import Matrix
 from ..text.ffi import ffi, harfbuzz, pango, units_to_double
@@ -425,9 +426,10 @@ class Stream(pydyf.Stream):
         optimize = 'images' in optimize_size
         if pillow_image.format in ('JPEG', 'MPO'):
             extra['Filter'] = '/DCTDecode'
-            image_file = io.BytesIO()
-            pillow_image.save(image_file, format='JPEG', optimize=optimize)
-            stream = [image_file.getvalue()]
+            if isinstance(pillow_image, DelayedPillowImage):
+                stream = [pillow_image]
+            else:
+                stream = [get_jpeg_bytes(pillow_image, optimize)]
         else:
             extra['Filter'] = '/FlateDecode'
             extra['DecodeParms'] = pydyf.Dictionary({
