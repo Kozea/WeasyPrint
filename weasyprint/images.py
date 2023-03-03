@@ -13,7 +13,7 @@ from xml.etree import ElementTree
 
 from PIL import Image, ImageFile
 
-from pydyf import DelayedBytes
+import pydyf
 from .layout.percent import percentage
 from .logger import LOGGER
 from .rotate_fn import rotate_pillow_image
@@ -680,7 +680,7 @@ class RadialGradient(Gradient):
         return size_x, size_y
 
 
-class DelayedPillowImage(DelayedBytes):
+class DelayedPillowImage(pydyf.Object):
     def __init__(self, pillow_image,
                  path: Union[str, Path], orientation, optimize_size: Collection[str]):
         """
@@ -703,8 +703,9 @@ class DelayedPillowImage(DelayedBytes):
 
     def __repr__(self):
         return f"<Picture {self.path}>"
-
-    def get_bytes(self):
+    
+    @property
+    def data(self) -> bytes:
 
         original_pillow_image = Image.open(self.path)
         rotated_pillow_image = rotate_pillow_image(original_pillow_image, self.orientation)
