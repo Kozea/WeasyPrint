@@ -36,9 +36,9 @@ class ImageLoadingError(ValueError):
 
 
 class RasterImage:
-    def __init__(self, pillow_image, image_id, optimize_size, cache_path=None):
+    def __init__(self, pillow_image, image_id, optimize_size, cache):
         self.id = image_id
-        self._cache_path = cache_path
+        self._cache = cache
 
         if 'transparency' in pillow_image.info:
             pillow_image = pillow_image.convert('RGBA')
@@ -92,7 +92,7 @@ class RasterImage:
                 alpha = pillow_image.getchannel('A')
                 pillow_image = pillow_image.convert(pillow_image.mode[:-1])
                 alpha_data = self._get_png_data(alpha, optimize)
-                stream = self.get_stream(alpha_data)
+                stream = self.get_stream(alpha_data, alpha=True)
                 self.extra['SMask'] = pydyf.Stream(stream, extra={
                     'Filter': '/FlateDecode',
                     'Type': '/XObject',
@@ -151,20 +151,20 @@ class RasterImage:
         return b''.join(png_data)
 
     def get_stream(self, data, alpha=False):
-        if self._cache_path:
-            path = self._cache_path / f'{self.id}{int(alpha)}'
-            path.write_bytes(data)
-            return [LazyImage(path)]
-        else:
-            return [data]
+        key = f'{self.id}{int(alpha)}'
+        return [LazyImage(self._cache, key, data)]
 
 
-class LazyImage:
-    def __init__(self, path):
-        self._path = path
+class LazyImage(pydyf.Object):
+    def __init__(self, cache, key, data):
+        super().__init__()
+        self._key = key
+        self._cache = cache
+        cache[key] = data
 
-    def __bytes__(self):
-        self._path.read_bytes()
+    @property
+    def data(self):
+        return self._cache[self._key]
 
 
 class SVGImage:
@@ -240,13 +240,14 @@ def get_image_from_uri(cache, url_fetcher, optimize_size, url,
             else:
                 # Store image id to enable cache in Stream.add_image
                 image_id = md5(url.encode()).hexdigest()
-                # Keep image format as it is discarded by transposition
                 pillow_image = rotate_pillow_image(pillow_image, orientation)
-                image = RasterImage(pillow_image, image_id, optimize_size)
+                image = RasterImage(
+                    pillow_image, image_id, optimize_size, cache)
 
     except (URLFetchingError, ImageLoadingError) as exception:
         LOGGER.error('Failed to load image at %r: %s', url, exception)
         image = None
+
     cache[url] = image
     return image
 
@@ -269,6 +270,8 @@ def rotate_pillow_image(pillow_image, orientation):
         if flip:
             pillow_image = pillow_image.transpose(
                 Image.Transpose.FLIP_LEFT_RIGHT)
+
+    # Keep image format as it is discarded by transposition
     pillow_image.format = image_format
     return pillow_image
 

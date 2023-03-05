@@ -2,6 +2,8 @@
 
 import functools
 import io
+from hashlib import md5
+from pathlib import Path
 
 from . import CSS
 from .anchors import gather_anchors, make_page_bookmark_tree
@@ -158,6 +160,52 @@ class DocumentMetadata:
         self.custom = custom or {}
 
 
+class DiskCache:
+    """Dict-like storing images content on disk.
+
+    Bytestrings values are stored on disk. Other Python objects (i.e.
+    RasterImage instances) are still stored in memory, but are much more
+    lightweight.
+
+    """
+    def __init__(self, folder):
+        self._path = Path(folder)
+        self._path.mkdir(parents=True, exist_ok=True)
+        self._memory_cache = {}
+        self._disk_paths = set()
+
+    def _path_from_key(self, key):
+        return self._path / md5(key.encode()).hexdigest()
+
+    def __getitem__(self, key):
+        if key in self._memory_cache:
+            return self._memory_cache[key]
+        else:
+            return self._path_from_key(key).read_bytes()
+
+    def __setitem__(self, key, value):
+        if isinstance(value, bytes):
+            path = self._path_from_key(key)
+            self._disk_paths.add(path)
+            path.write_bytes(value)
+        else:
+            self._memory_cache[key] = value
+
+    def __contains__(self, key):
+        return (
+            key in self._memory_cache or
+            self._path_from_key(key).exists())
+
+    def __del__(self):
+        try:
+            for path in self._disk_paths:
+                path.unlink(missing_ok=True)
+            self._path.rmdir()
+        except Exception:
+            # Silently ignore errors while clearing cache
+            pass
+
+
 class Document:
     """A rendered document ready to be painted in a pydyf stream.
 
@@ -180,7 +228,10 @@ class Document:
         target_collector = TargetCollector()
         page_rules = []
         user_stylesheets = []
-        image_cache = {} if image_cache is None else image_cache
+        if image_cache is None:
+            image_cache = {}
+        elif not isinstance(image_cache, DiskCache):
+            image_cache = DiskCache(image_cache)
         for css in stylesheets or []:
             if not hasattr(css, 'matcher'):
                 css = CSS(

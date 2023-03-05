@@ -94,6 +94,11 @@ def main(argv=None, stdout=None, stdin=None):
         multiple times, ``all`` adds all allowed values, ``none`` removes all
         previously set values.
 
+    .. option:: -c <folder>, --cache-folder <folder>
+
+        Store cache on disk instead of memory. The ``folder`` is created if
+        needed and cleaned after the PDF is generated.
+
     .. option:: -v, --verbose
 
         Show warnings and information messages.
@@ -157,6 +162,10 @@ def main(argv=None, stdout=None, stdin=None):
         help='optimize output size for specified features',
         choices=('images', 'fonts', 'all', 'none'), default=['fonts'])
     parser.add_argument(
+        '-c', '--cache-folder',
+        help='Store cache on disk instead of memory. The ``folder`` is '
+        'created if needed and cleaned after the PDF is generated.')
+    parser.add_argument(
         '-v', '--verbose', action='store_true',
         help='show warnings and information messages')
     parser.add_argument(
@@ -203,6 +212,7 @@ def main(argv=None, stdout=None, stdin=None):
         'version': args.pdf_version,
         'forms': args.pdf_forms,
         'custom_metadata': args.custom_metadata,
+        'image_cache': args.cache_folder,
     }
 
     # Default to logging to stderr.
