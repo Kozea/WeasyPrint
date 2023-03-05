@@ -133,9 +133,7 @@ class HTML:
         :param bool presentational_hints:
             Whether HTML presentational hints are followed.
         :param tuple optimize_size:
-            Optimize size of generated PDF. Can contain: "fonts";
-            "images" applies `optimize=True` parameter to image compression;
-            "not_jpegs" tries to prevent keep jpeg data same as in file.
+            Optimize size of generated PDF. Can contain "images" and "fonts".
         :type font_config: :class:`text.fonts.FontConfiguration`
         :param font_config: A font configuration handling ``@font-face`` rules.
         :type counter_style: :class:`css.counters.CounterStyle`
@@ -183,9 +181,7 @@ class HTML:
         :param bool presentational_hints: Whether HTML presentational hints are
             followed.
         :param tuple optimize_size:
-            Optimize size of generated PDF. Can contain: "fonts";
-            "images" applies `optimize=True` parameter to image compression;
-            "not_jpegs" tries to prevent keep jpeg data same as in file.
+            Optimize size of generated PDF. Can contain "images" and "fonts".
         :type font_config: :class:`text.fonts.FontConfiguration`
         :param font_config: A font configuration handling ``@font-face`` rules.
         :type counter_style: :class:`css.counters.CounterStyle`
