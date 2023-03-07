@@ -2,6 +2,53 @@ Changelog
 =========
 
 
+Version 58.1
+------------
+
+Released on 2023-03-07.
+
+Bug fixes:
+
+* `#1815 <https://github.com/Kozea/WeasyPrint/issues/1815>`_:
+  Fix bookmarks coordinates
+* `#1822 <https://github.com/Kozea/WeasyPrint/issues/1822>`_,
+  `#1823 <https://github.com/Kozea/WeasyPrint/pull/1823>`_:
+  Fix vertical positioning for absolute replaced elements
+
+Documentation:
+
+* `#1814 <https://github.com/Kozea/WeasyPrint/pull/1814>`_:
+  Fix broken link pointing to samples
+
+Contributors:
+
+* Guillaume Ayoub
+* Jonas Castro
+* Lucie Anglade
+* Menelaos Kotoglou
+
+Backers and sponsors:
+
+* Kobalt
+* Grip Angebotssoftware
+* Spacinov
+* Crisp BV
+* Castedo Ellerman
+* Manuel Barkhau
+* SimonSoft
+* Menutech
+* KontextWork
+* NCC Group
+* René Fritz
+* Moritz Mahringer
+* Yanal-Yvez Fargialla
+* Piotr Horzycki
+* Healthchecks.io
+* Hammerbacher
+* TrainingSparkle
+* Synapsium
+
+
 Version 58.0
 ------------
 
