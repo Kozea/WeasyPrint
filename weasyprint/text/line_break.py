@@ -185,8 +185,10 @@ class Layout:
                 space_spacing = (
                     units_from_double(word_spacing) + letter_spacing)
                 position = bytestring.find(b' ')
+                last_position = len(bytestring) - 1
                 while position != -1:
-                    add_attr(position, position + 1, space_spacing)
+                    factor = 1 + (position == last_position)
+                    add_attr(position, position + 1, factor * space_spacing)
                     position = bytestring.find(b' ', position + 1)
 
             if word_breaking:
