@@ -182,12 +182,19 @@ class Layout:
                 add_attr(0, len(bytestring), letter_spacing)
 
             if word_spacing:
+                if bytestring == b' ':
+                    # We need more than one space to set word spacing
+                    self.text = ' ​'  # Space + zero-width space
+                    text, bytestring = unicode_to_char_p(self.text)
+                    pango.pango_layout_set_text(self.layout, text, -1)
+
                 space_spacing = (
                     units_from_double(word_spacing) + letter_spacing)
                 position = bytestring.find(b' ')
-                last_position = len(bytestring) - 1
+                # Pango gives only half of word-spacing on boundaries
+                boundary_positions = (0, len(bytestring) - 1)
                 while position != -1:
-                    factor = 1 + (position == last_position)
+                    factor = 1 + (position in boundary_positions)
                     add_attr(position, position + 1, factor * space_spacing)
                     position = bytestring.find(b' ', position + 1)
 

@@ -458,8 +458,16 @@ def test_text_align_justify_no_break_between_children():
     assert span_3.position_x == 5 * 16  # (3 + 1) characters + 1 space
 
 
+@pytest.mark.parametrize('text', (
+    'Lorem ipsum dolor<em>sit amet</em>',
+    'Lorem ipsum <em>dolorsit</em> amet',
+    'Lorem ipsum <em></em>dolorsit amet',
+    'Lorem ipsum<em> </em>dolorsit amet',
+    'Lorem ipsum<em> dolorsit</em> amet',
+    'Lorem ipsum <em>dolorsit </em>amet',
+))
 @assert_no_logs
-def test_word_spacing():
+def test_word_spacing(text):
     # keep the empty <style> as a regression test: element.text is None
     # (Not a string.)
     page, = render_pages('''
@@ -470,15 +478,14 @@ def test_word_spacing():
     line, = body.children
     strong_1, = line.children
 
-    # TODO: Pango gives only half of word-spacing to a space at the end
-    # of a TextBox. Is this what we want?
     page, = render_pages('''
       <style>strong { word-spacing: 11px }</style>
-      <body><strong>Lorem ipsum dolor<em>sit amet</em></strong>''')
+      <body><strong>%s</strong>''' % text)
     html, = page.children
     body, = html.children
     line, = body.children
     strong_2, = line.children
+
     assert strong_2.width - strong_1.width == 33
 
 
