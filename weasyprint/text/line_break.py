@@ -184,7 +184,7 @@ class Layout:
             if word_spacing:
                 if bytestring == b' ':
                     # We need more than one space to set word spacing
-                    self.text = ' ​'  # Space + zero-width space
+                    self.text = ' \u200b'  # Space + zero-width space
                     text, bytestring = unicode_to_char_p(self.text)
                     pango.pango_layout_set_text(self.layout, text, -1)
 
