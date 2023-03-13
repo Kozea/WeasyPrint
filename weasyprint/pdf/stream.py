@@ -1,7 +1,6 @@
 """PDF stream."""
 
 import io
-from copy import deepcopy
 from functools import lru_cache
 from hashlib import md5
 
@@ -370,9 +369,12 @@ class Stream(pydyf.Stream):
             return image_name
 
         interpolate = 'true' if image_rendering == 'auto' else 'false'
-        extra = deepcopy(image.extra)
+        extra = image.extra.copy()
         extra['Interpolate'] = interpolate
         if 'SMask' in extra:
+            extra['SMask'] = pydyf.Stream(
+                extra['SMask'].stream.copy(), extra['SMask'].extra.copy(),
+                extra['SMask'].compress)
             extra['SMask'].extra['Interpolate'] = interpolate
 
         xobject = pydyf.Stream(image.stream, extra=extra)
