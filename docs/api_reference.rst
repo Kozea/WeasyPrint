@@ -645,6 +645,8 @@ supported.
 The ``attr()`` functional notation is allowed in the ``content`` and
 ``string-set`` properties.
 
+The ``calc()`` function is **not** supported.
+
 Viewport-percentage lengths (``vw``, ``vh``, ``vmin``, ``vmax``) are **not**
 supported.
 
