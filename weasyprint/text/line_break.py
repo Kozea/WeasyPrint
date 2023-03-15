@@ -1,5 +1,6 @@
 """Decide where to break text lines."""
 
+from collections import namedtuple
 import re
 from math import inf
 
@@ -7,9 +8,176 @@ import pyphen
 
 from .constants import LST_TO_ISO, PANGO_STRETCH, PANGO_STYLE, PANGO_WRAP_MODE
 from .ffi import (
-    ffi, gobject, pango, pangoft2, unicode_to_char_p, units_from_double,
-    units_to_double)
+    ffi, gobject, harfbuzz, pango, pangoft2, unicode_to_char_p,
+    units_from_double, units_to_double, glist_to_list, PANGO_SCALE)
 from .fonts import font_features
+
+ShapingResult = namedtuple(
+    'ShapingResult', 'start end item hb_buffer glyph_positions glyph_infos ' \
+    'hb_font pango_font')
+
+
+def pango_attrs_from_style(context, style, start, end):
+    """
+    Returns an array of Pango attributes corresponding to the provided style.
+    """
+    assert not isinstance(style['font_family'], str), (
+        'font_family should be a list')
+
+    font_desc_key = (
+        style['font_family'], style['font_style'], style['font_stretch'],
+        style['font_weight'], style['font_size'])
+
+    if context and font_desc_key in context.pango_font_descs:
+        font_desc = context.pango_font_descs[font_desc_key]
+    else:
+        font_desc = ffi.gc(
+            pango.pango_font_description_new(),
+            pango.pango_font_description_free)
+        family_p, _family = unicode_to_char_p(','.join(style['font_family']))
+        pango.pango_font_description_set_family(font_desc, family_p)
+        pango.pango_font_description_set_style(
+            font_desc, PANGO_STYLE[style['font_style']])
+        pango.pango_font_description_set_stretch(
+            font_desc, PANGO_STRETCH[style['font_stretch']])
+        pango.pango_font_description_set_weight(
+            font_desc, style['font_weight'])
+        pango.pango_font_description_set_absolute_size(
+            font_desc, style['font_size'] * PANGO_SCALE)
+
+    # TODO: Freeing the AttrList will free attributes belonging to it, which
+    # means we can't later free them. Make sure we never lose track of any
+    # attributes we generate here.
+    font_desc_attr = pango.pango_attr_font_desc_new(font_desc)
+
+    # TODO: Copy font_features handling from line_break.py here too.
+
+    attrs = [font_desc_attr]
+    for attr in attrs:
+        attr.start_index = start
+        attr.end_index = end
+
+    return attrs
+
+
+def shape_string(context, style, shaping_string, pango_attrs = None):
+    if context is None:
+        font_map = ffi.gc(
+            pangoft2.pango_ft2_font_map_new(), gobject.g_object_unref)
+    else:
+        font_map = context.font_config.font_map
+
+    if context is None or context.pango_context is None:
+        pango_context = ffi.gc(
+            pango.pango_font_map_create_context(font_map),
+            gobject.g_object_unref)
+        pango.pango_context_set_round_glyph_positions(pango_context, False)
+
+        if context is not None:
+            context.pango_context = pango_context
+    else:
+        pango_context = context.pango_context
+
+    # TODO: Set language on Pango attr list
+    # TODO: Set Pango attributes at all
+    attr_list = ffi.gc(
+        pango.pango_attr_list_new(), pango.pango_attr_list_unref)
+
+    if not pango_attrs:
+        pango_attrs = pango_attrs_from_style(
+            context, style, 0, len(shaping_string))
+
+    for pango_attr in pango_attrs:
+        pango.pango_attr_list_insert(attr_list, pango_attr)
+
+    # We don't use ffi.unicode_to_char_p because we don't actually want to skip
+    # nulls: that makes it hard to track which character is which.
+    shaping_utf8 = shaping_string.encode()
+    shaping_utf8_length = len(shaping_utf8)
+    shaping_utf8_ptr = ffi.new('char[]', shaping_utf8)
+
+    if style['direction'] == 'rtl':
+        base_direction = pango.PANGO_DIRECTION_RTL
+    else:
+        base_direction = pango.PANGO_DIRECTION_LTR
+
+    # We assume we can have Pango itemize all of the content at once. This may
+    # lead to long pauses for many-megabyte strings, but this isn't an
+    # interactive program anyway: the only concern would be memory usage.
+    itemized = pango.pango_itemize_with_base_dir(
+        pango_context, base_direction, shaping_utf8_ptr, 0,
+        shaping_utf8_length, attr_list, ffi.NULL)
+    # TODO: free itemize results
+
+    # TODO: Set Harfbuzz buffer language and possibly(?) script
+    hb_shaping_string = ffi.gc(
+        harfbuzz.hb_buffer_create(), harfbuzz.hb_buffer_destroy)
+    # Unfortunately, hb_buffer_add_utf8 sets the cluster values used inside
+    # Harfbuzz to the *byte* position of each codepoint, not its actual
+    # codepoint index. This makes it very difficult to index back into a string
+    # position, so we add each codepoint manually. This may be moderately
+    # inefficient, since we make an FFI call per character. Luckily, we only do
+    # it once per character, as this is reused in future shaping.
+    harfbuzz.hb_buffer_pre_allocate(hb_shaping_string, len(shaping_string))
+    harfbuzz.hb_buffer_set_content_type(
+        hb_shaping_string, harfbuzz.HB_BUFFER_CONTENT_TYPE_UNICODE)
+    for cp_index, codepoint in enumerate(shaping_string):
+        harfbuzz.hb_buffer_add(hb_shaping_string, ord(codepoint), cp_index)
+
+    items = glist_to_list(itemized, 'PangoItem *')
+    shaping_results = []
+
+    end_char = 0
+    for item in items:
+        # Start is inclusive, end is exclusive.
+        start_byte = item.offset
+        end_byte = start_byte + item.length
+        start_char = end_char
+        end_char = start_char + item.num_chars
+        # Make sure we don't go off the end of the string.
+        assert end_byte <= shaping_utf8_length
+
+        # Allocate a buffer for this item's text to pass to Harfbuzz to shape.
+        item_buffer = ffi.gc(
+            harfbuzz.hb_buffer_create(), harfbuzz.hb_buffer_destroy)
+        harfbuzz.hb_buffer_append(
+            item_buffer, hb_shaping_string, start_char, end_char)
+        harfbuzz.hb_buffer_set_cluster_level(
+            item_buffer, harfbuzz.HB_BUFFER_CLUSTER_LEVEL_MONOTONE_CHARACTERS)
+        harfbuzz.hb_buffer_set_flags(
+            item_buffer, harfbuzz.HB_BUFFER_FLAG_PRODUCE_UNSAFE_TO_CONCAT)
+
+        # Set the buffer's direction from what Pango computed.
+        if item.analysis.level % 2 == 0:
+            hb_direction = harfbuzz.HB_DIRECTION_LTR
+        else:
+            hb_direction = harfbuzz.HB_DIRECTION_RTL
+        harfbuzz.hb_buffer_set_direction(item_buffer, hb_direction)
+
+        # Get the hb_font_t Pango would use for this item.
+        hb_font = pango.pango_font_get_hb_font(item.analysis.font)
+
+        # Ask Harfbuzz to shape the item for us. This may not fit on one line -
+        # that's fine, we'll handle it later.
+        harfbuzz.hb_shape(hb_font, item_buffer, ffi.NULL, 0)
+
+        # Get the position information for the shaped glyphs.
+        num_glyphs = ffi.new('unsigned int *')
+        glyph_positions = harfbuzz.hb_buffer_get_glyph_positions(
+            item_buffer, num_glyphs)
+        num_glyphs = num_glyphs[0]
+        glyph_positions = ffi.cast(
+            f'hb_glyph_position_t[{num_glyphs}]', glyph_positions)
+
+        # Get the glyph info structures for the shaped glyphs.
+        glyph_infos = harfbuzz.hb_buffer_get_glyph_infos(item_buffer, ffi.NULL)
+        glyph_infos = ffi.cast(f'hb_glyph_info_t[{num_glyphs}]', glyph_infos)
+
+        shaping_results.append(ShapingResult(
+            start_char, end_char, item, item_buffer, glyph_positions,
+            glyph_infos, hb_font, item.analysis.font))
+
+    return shaping_utf8_ptr, shaping_utf8_length, items, shaping_results
 
 
 def line_size(line, style):

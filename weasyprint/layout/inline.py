@@ -1,12 +1,19 @@
 """Layout for inline-level boxes."""
 
+from collections import namedtuple
 import unicodedata
 from math import inf
 
 from ..css import computed_from_cascaded
 from ..css.computed_values import character_ratio, strut_layout
 from ..formatting_structure import boxes
-from ..text.line_break import can_break_text, create_layout, split_first_line
+from ..text.constants import PANGO_STRETCH, PANGO_STYLE
+from ..text.ffi import (
+    ffi, gobject, glist_to_list, harfbuzz, pango, PANGO_SCALE, pangoft2,
+    unicode_to_char_p)
+from ..text.line_break import (
+    can_break_text, create_layout, pango_attrs_from_style, split_first_line,
+    shape_string)
 from .absolute import AbsolutePlaceholder, absolute_layout
 from .flex import flex_layout
 from .float import avoid_collisions, float_layout
@@ -17,6 +24,14 @@ from .preferred import (
     inline_min_content_width, shrink_to_fit, trailing_whitespace_size)
 from .replaced import inline_replaced_box_layout
 from .table import find_in_flow_baseline, table_wrapper_width
+
+
+AtomicBoxRecord = namedtuple('AtomicBoxRecord', 'position box')
+
+LinePosition = namedtuple(
+    'LinePosition',
+    'char_index width_no_spaces child_index shaping_index glyph_index ' \
+    'atomic_index is_glyph_start')
 
 
 def iter_line_boxes(context, box, position_y, bottom_space, skip_stack,
@@ -35,6 +50,19 @@ def iter_line_boxes(context, box, position_y, bottom_space, skip_stack,
     else:
         box.text_indent = 0
     while True:
+        if not hasattr(box, 'shaping_string'):
+            box.shaping_string = get_shaping_string(context, box)
+            num_log_attrs = len(box.shaping_string) + 1
+            box.log_attrs = ffi.new(f'PangoLogAttr[{num_log_attrs}]')
+
+            shaping_utf8_ptr, shaping_utf8_length, _items, \
+                box.shaping_results = shape_string(context, box.style, \
+                box.shaping_string, box.pango_attrs)
+
+            pango.pango_default_break(
+                shaping_utf8_ptr, shaping_utf8_length, ffi.NULL,
+                ffi.cast('PangoLogAttr *', box.log_attrs), num_log_attrs)
+
         line, resume_at = get_next_linebox(
             context, box, position_y, bottom_space, skip_stack,
             containing_block, absolute_boxes, fixed_boxes, first_letter_style)
@@ -55,9 +83,11 @@ def get_next_linebox(context, linebox, position_y, bottom_space, skip_stack,
                      containing_block, absolute_boxes, fixed_boxes,
                      first_letter_style):
     """Return ``(line, resume_at)``."""
-    skip_stack = skip_first_whitespace(linebox, skip_stack)
-    if skip_stack == 'continue':
-        return None, None
+    # TODO: Given shaping_string, we should probably handle this separately
+    # somehow:
+    # skip_stack = skip_first_whitespace(linebox, skip_stack)
+    # if skip_stack == 'continue':
+    #     return None, None
 
     skip_stack = first_letter_to_box(linebox, skip_stack, first_letter_style)
 
@@ -102,7 +132,8 @@ def get_next_linebox(context, linebox, position_y, bottom_space, skip_stack,
             line.height = 0
             break
 
-        remove_last_whitespace(context, line)
+        # TODO: Figure out how to handle this.
+        # remove_last_whitespace(context, line)
 
         new_position_x, _, new_available_width = avoid_collisions(
             context, linebox, containing_block, outer=False)
@@ -175,6 +206,54 @@ def get_next_linebox(context, linebox, position_y, bottom_space, skip_stack,
         line.children += tuple(float_children)
 
     return line, resume_at
+
+
+def get_shaping_string(context, box, start_position = 0):
+    """Returns a Unicode string containing the content from this LineBox.
+
+    This largely relies on InlineLevelBoxes building their own Unicode strings
+    and returning them, but it should assemble a string containing Unicode text
+    representing the content that should be set as part of this line.
+
+    Notably, atomic boxes (display: inline-block) or replaced boxes (<img>,
+    etc.) do not have their content represented here as text, as they are set
+    separately. Instead, their content should be represented here as a single
+    U+FFFC, the Unicode "Object Replacement Character", to ensure that text on
+    either side of such boxes does not get shaped together. This is also
+    appropriate for line-breaking behavior (see
+    http://www.w3.org/TR/css3-text/#line-break-details).
+    """
+    atomic_boxes = []
+    pango_attrs = []
+
+    if isinstance(box, boxes.TextBox):
+        text = box.text
+        pango_attrs = pango_attrs_from_style(
+            context, box.style, start_position, start_position + len(text))
+    elif not isinstance(box, boxes.AtomicInlineLevelBox):
+        # Handle these recursively.
+        strings = []
+        position = start_position
+
+        # TODO: add U+FFFC on the appropriate (bidi!) side if there is
+        # padding/margin/border.
+
+        for child in box.children:
+            strings.append(get_shaping_string(context, child, position))
+            atomic_boxes.extend(child.atomic_boxes)
+            pango_attrs.extend(child.pango_attrs)
+            position = child.shaping_range[1]
+
+        text = ''.join(strings)
+    else:
+        text = '\ufffc'
+        atomic_boxes.append(AtomicBoxRecord(start_position, box))
+
+    box.shaping_range = (start_position, start_position + len(text))
+    box.atomic_boxes = atomic_boxes
+    box.pango_attrs = pango_attrs
+
+    return text
 
 
 def skip_first_whitespace(box, skip_stack):
@@ -435,7 +514,10 @@ def inline_block_width(box, context, containing_block):
         box.border_left_width + box.border_right_width +
         box.padding_left + box.padding_right)
     if box.width == 'auto':
-        box.width = shrink_to_fit(context, box, available_content_width)
+        #box.width = shrink_to_fit(context, box, available_content_width)
+        # TODO: Fix layout/preferred.py's inline_min_content_width to not
+        # eventually call split_first_line, and use the line above instead.
+        box.width = 33
 
 
 def split_inline_level(context, box, position_x, max_x, bottom_space,
@@ -645,10 +727,127 @@ def _break_waiting_children(context, box, max_x, bottom_space,
         return {children[-1][0] + 1: None}
 
 
+def slice_box_tree(box, start, end, parent_linebox, position_x, widths,
+    replaced_atomic_boxes, width_offset):
+    """
+    Returns a tree of elements cut to the specified range of shaping ranges.
+    """
+    assert box.shaping_range[0] <= start
+    assert box.shaping_range[1] >= end
+
+    # TextBoxes can't be manipulated in many of the normal ways.
+    if isinstance(box, boxes.TextBox):
+        new_box = box.copy()
+        if start == width_offset:
+            start_width = 0
+        else:
+            start_width = widths[start - width_offset]
+        new_box.width = widths[end - width_offset] - start_width
+    elif isinstance(box, boxes.AtomicInlineLevelBox):
+        # We don't have to copy here, as this is regenerated each time we might
+        # possibly call this function.
+        # print(box, replaced_atomic_boxes)
+        new_box = replaced_atomic_boxes[start]
+    else:
+        new_box = box.copy_with_children([])
+        new_box.remove_decoration(
+            start=not (box.shaping_range[0] == start),
+            end=not box.shaping_range[1] == end)
+
+    new_box.parent_linebox = parent_linebox
+    new_box.translate(position_x, 0)
+    new_box.render_range = (
+        max(start, box.shaping_range[0]),
+        min(end, box.shaping_range[1]))
+
+    if isinstance(box, (boxes.AtomicInlineLevelBox, boxes.TextBox)):
+        return new_box
+
+    # Trim all sub-ranges, as appropriate.
+    new_box.children = []
+    next_x = position_x
+    for child in box.children:
+        if child.shaping_range[1] <= start:
+            continue
+        if child.shaping_range[0] > end:
+            break
+
+        child_start = max(start, child.shaping_range[0])
+        child_end = min(end, child.shaping_range[1])
+
+        new_child = slice_box_tree(
+                child, child_start, child_end, parent_linebox, next_x, widths,
+                replaced_atomic_boxes, width_offset)
+
+        new_box.children.append(new_child)
+
+        next_x = new_child.position_x + new_child.width
+
+    new_box.width = next_x - position_x
+
+    return new_box
+
+
+def apply_inline_box_sizes(context, box):
+    """Sets position and size attributes on boxes in a LineBox."""
+    if isinstance(box, boxes.TextBox):
+        # TODO: actually calculate these values
+        box.border_top_width = box.border_bottom_width = 0
+        box.border_left_width = box.border_right_width = 0
+        # TODO: should we be setting these here?
+        box.padding_top = box.padding_bottom = 0
+        box.padding_left = box.padding_right = 0
+        box.margin_top = box.margin_bottom = 0
+        box.margin_left = box.margin_right = 0
+
+        line_height, box.baseline = strut_layout(box.style, context)
+        box.height = box.style['font_size']
+        half_leading = (line_height - box.height) / 2
+        # Set margins to the half leading but also compensate for borders and
+        # paddings. We want margin_height() == line_height
+        box.margin_top = (
+            half_leading - box.border_top_width - box.padding_top)
+        box.margin_bottom = (
+            half_leading - box.border_bottom_width - box.padding_bottom)
+
+    elif isinstance(box, boxes.AtomicInlineLevelBox):
+        # TODO: process the child here
+        for child in box.children:
+            apply_inline_box_sizes(context, child)
+        # TODO: surely this is incorrect / could be faster
+        box.baseline = max(child.baseline for child in box.children)
+        box.height = max(child.height for child in box.children)
+        # TODO: should we be setting these here?
+        box.padding_top = box.padding_bottom = 0
+        box.padding_left = box.padding_right = 0
+        box.border_top_width = box.border_bottom_width = 0
+        box.border_left_width = box.border_right_width = 0
+        box.margin_top = box.margin_bottom = 0
+        box.margin_left = box.margin_right = 0
+    else:
+        for child in box.children:
+            apply_inline_box_sizes(context, child)
+        # TODO: surely this is incorrect / could be faster
+        box.baseline = max(child.baseline for child in box.children)
+        box.height = max(child.height for child in box.children)
+        # box.width = sum(child.width if hasattr(child, 'width') else 0 for child in box.children)
+
+        if not isinstance(box, boxes.LineBox):
+            # TODO: should we be setting these here?
+            box.padding_top = box.padding_bottom = 0
+            box.padding_left = box.padding_right = 0
+            box.border_top_width = box.border_bottom_width = 0
+            box.border_left_width = box.border_right_width = 0
+            box.margin_top = box.margin_bottom = 0
+            box.margin_left = box.margin_right = 0
+
+
 def split_inline_box(context, box, position_x, max_x, bottom_space, skip_stack,
                      containing_block, absolute_boxes, fixed_boxes,
                      line_placeholders, waiting_floats, line_children):
     """Same behavior as split_inline_level."""
+
+    # TODO: use pango_tailor_break and pango_attr_break as well.
 
     # In some cases (shrink-to-fit result being the preferred width)
     # max_x is coming from Pango itself,
@@ -657,204 +856,196 @@ def split_inline_box(context, box, position_x, max_x, bottom_space, skip_stack,
     # Increase the value a bit to compensate and not introduce
     # an unexpected line break. The 1e-9 value comes from PEP 485.
     max_x *= 1 + 1e-9
-
+    log_attrs = box.log_attrs
+    first_char = 0 if skip_stack is None else skip_stack[0]
+    first_glyph = 0 if skip_stack is None else skip_stack[1]
+    first_child_index = 0 if skip_stack is None else skip_stack[2]
+    first_shaping_index = 0 if skip_stack is None else skip_stack[3]
+    atomic_index = 0 if skip_stack is None else skip_stack[4]
+    if atomic_index < len(box.atomic_boxes):
+        next_atomic_char = box.atomic_boxes[atomic_index].position
+    else:
+        next_atomic_char = None
+    last_break = None
     is_start = skip_stack is None
-    initial_position_x = position_x
-    initial_skip_stack = skip_stack
-    assert isinstance(box, (boxes.LineBox, boxes.InlineBox))
-    left_spacing = (
-        box.padding_left + box.margin_left + box.border_left_width)
-    right_spacing = (
-        box.padding_right + box.margin_right + box.border_right_width)
-    content_box_left = position_x
+    is_end = False
+    max_width = (max_x - position_x) * PANGO_SCALE
+    char_index = first_char # The *character* position in the shaping string.
+    glyph_index = first_glyph # The *glyph* position in the shaping result
+    width = 0           # The width of this line, in Pango units
+    width_no_spaces = 0 # Width of this line without ignorable trailing space
+    line_positions = [] # Some LinePosition objects on this line
+    wrap_opportunity = False # The line_positions index we can wrap at
+    child_index = first_child_index
+    current_child = box.children[child_index]
+    shaping_index = first_shaping_index
+    shaping = box.shaping_results[shaping_index]
+    cumulative_widths = []
+    replaced_atomic_boxes = {}
 
-    children = []
-    waiting_children = []
-    preserved_line_break = False
-    first_letter = last_letter = None
-    float_widths = {'left': 0, 'right': 0}
-    float_resume_index = 0
+    # Loop over positions in this string trying to find the next position to
+    # break at.
 
-    if box.style['position'] == 'relative':
-        absolute_boxes = []
+    # This iteration is tricky: to determine width, we have to iterate over
+    # glyphs from Harfbuzz, but we also need to know if we can break at a given
+    # location, and that information comes from Pango and is based on
+    # characters. Harfbuzz may produce more than one glyph per character (via a
+    # substitution, for example), or may produce one glyph for several
+    # characters (like a ligature).
 
-    if is_start:
-        skip = 0
-    else:
-        (skip, skip_stack), = skip_stack.items()
+    # Harfbuzz tracks the lowest character index it used in a glyph, which we
+    # can use to determine which characters created a glyph (namely, those with
+    # the index of the "cluster" identifier on the glyph, through those with
+    # the index of the cluster identifier from the glyph with the next highest
+    # one, or the end of the string if there is no such glyph). However, we
+    # can't just check Pango when we *finish* a glyph (or cluster thereof with
+    # the same cluster index): we may want to break in the middle of a
+    # ligature, for example a ligature for "hello world" could be split at the
+    # space. If that happens, we need to re-shape with the break and try again.
+    # On the other hand, even if a character is composed of several glyphs, we
+    # can't really split it between them, so all we really need to track are
+    # character locations. Additionally, we only have to track character
+    # positions that we could break at without extra trouble. Therefore, we
+    # could add entries to line_positions when we are at a character that is
+    # breakable without additional complications (where we don't have to look
+    # for a hyphenation point or add extra characters, which we'll handle in a
+    # separate process).
 
-    for i, child in enumerate(box.children[skip:]):
-        index = i + skip
-        child.position_y = box.position_y
+    # TODO: For now, we actually add *every* "end of character/glyph" position
+    # to line_positions, which is wasteful and makes it harder to backtrack to
+    # the last word break position.
+    while True:
+        # print('Shaping range:', char_index, current_child.shaping_range,
+        #     f'starting "{box.shaping_string[char_index]}"')
+        # TODO: check for atomic inlines
 
-        if not child.is_in_normal_flow():
-            _out_of_flow_layout(
-                context, box, containing_block, index, child, children,
-                line_children, waiting_children, waiting_floats,
-                absolute_boxes, fixed_boxes, line_placeholders, float_widths,
-                max_x, position_x, bottom_space)
-            if child.is_floated():
-                float_resume_index = index + 1
-                if child not in waiting_floats:
-                    max_x -= child.margin_width()
-            continue
+        # When we reach the top of this loop, we're at the beginning of both a
+        # new character and a new glyph.
 
-        is_last_child = (index == len(box.children) - 1)
-        available_width = max_x
-        child_waiting_floats = []
-        new_child, resume_at, preserved, first, last, new_float_widths = (
-            split_inline_level(
-                context, child, position_x, available_width, bottom_space,
-                skip_stack, containing_block, absolute_boxes, fixed_boxes,
-                line_placeholders, child_waiting_floats, line_children))
-        if box.style['direction'] == 'rtl':
-            end_spacing = left_spacing
-            max_x -= new_float_widths['left']
-        else:
-            end_spacing = right_spacing
-            max_x -= new_float_widths['right']
-        if is_last_child and end_spacing and resume_at is None:
-            # TODO: we should take care of children added into absolute_boxes,
-            # fixed_boxes and other lists.
-            available_width -= end_spacing
-            new_child, resume_at, preserved, first, last, new_float_widths = (
-                split_inline_level(
-                    context, child, position_x, available_width, bottom_space,
-                    skip_stack, containing_block, absolute_boxes, fixed_boxes,
-                    line_placeholders, child_waiting_floats, line_children))
+        # Add this glyph to the width.
+        glyphs_start_cluster = char_index
+        prev_glyph_index = glyph_index
+        while glyph_index < len(shaping.glyph_infos) and \
+            shaping.glyph_infos[glyph_index].cluster == glyphs_start_cluster:
 
-        skip_stack = None
-        if preserved:
-            preserved_line_break = True
+            # If this is an atomic box, set it and use its width data.
+            # Because this can depend on its horizontal position, we have to do
+            # it here, although in some cases that means we may calculate the
+            # width of the atomic inline multiple times (if it is near the end
+            # of a line).
+            if next_atomic_char == char_index:
+                old_box = box.atomic_boxes[atomic_index].box
+                new_box = atomic_box(context, old_box, 0, None,
+                    containing_block, absolute_boxes, fixed_boxes)
+                replaced_atomic_boxes[char_index] = new_box
 
-        can_break = None
-        if last_letter is True:
-            last_letter = ' '
-        elif last_letter is False:
-            last_letter = ' '  # no-break space
-        elif box.style['white_space'] in ('pre', 'nowrap'):
-            can_break = False
-        if can_break is None:
-            if None in (last_letter, first):
-                can_break = False
-            elif first in (True, False):
-                can_break = first
+                atomic_index += 1
+                if atomic_index < len(box.atomic_boxes):
+                    next_atomic_char = box.atomic_boxes[atomic_index].position
+                else:
+                    next_atomic_char = None
+
+                glyph_width = new_box.width * PANGO_SCALE
+                char_index += 1
             else:
-                can_break = can_break_text(
-                    last_letter + first, child.style['lang'])
+                glyph_width = shaping.glyph_positions[glyph_index].x_advance
 
-        if can_break:
-            children.extend(waiting_children)
-            waiting_children = []
+            width += glyph_width
+            glyph_index += 1
 
-        if first_letter is None:
-            first_letter = first
-        if child.trailing_collapsible_space:
-            last_letter = True
+        if glyph_index == len(shaping.glyph_infos):
+            glyphs_end_cluster = shaping.end + 1
         else:
-            last_letter = last
+            glyphs_end_cluster = shaping.glyph_infos[glyph_index].cluster
 
-        if new_child is None:
-            # May be None where we have an empty TextBox.
-            assert isinstance(child, boxes.TextBox)
-        else:
-            if isinstance(box, boxes.LineBox):
-                line_children.append((index, new_child))
-            trailing_whitespace = (
-                isinstance(new_child, boxes.TextBox) and
-                new_child.text and
-                unicodedata.category(new_child.text[-1]) == 'Zs')
-            new_position_x = new_child.position_x + new_child.margin_width()
+        while char_index < glyphs_end_cluster:
+            # TODO: handle cases where we must preserve whitespace
+            if log_attrs[char_index].is_white == 0:
+                width_no_spaces = width
+                if char_index > 0 and log_attrs[char_index - 1].is_white == 1 \
+                    and char_index > first_char:
+                    wrap_opportunity = len(line_positions)
 
-            if new_position_x > max_x and not trailing_whitespace:
-                previous_resume_at = _break_waiting_children(
-                    context, box, max_x, bottom_space, initial_skip_stack,
-                    absolute_boxes, fixed_boxes, line_placeholders,
-                    waiting_floats, line_children, children, waiting_children)
-                if previous_resume_at:
-                    resume_at = previous_resume_at
-                    break
+            # TODO: theoretically, a Pango-approved line breaking opportunity
+            # could occur in the middle of a ligature'd glyph. This is
+            # unlikely, but we should consider handling it.
+            cumulative_widths.append(width / PANGO_SCALE)
+            char_index += 1
 
-            position_x = new_position_x
-            waiting_children.append((index, new_child, child))
+        # We subtract 1 from char_index here because the loop above has
+        # incremented it past the end of the current cluster. (And we don't do
+        # this inside the loop because we don't currently support splitting a
+        # line inside a glyph cluster, even if it is multiple characters.)
+        line_positions.append(LinePosition(
+            char_index - 1, width_no_spaces, child_index, shaping_index,
+            glyph_index - 1, atomic_index,
+            glyphs_start_cluster == char_index - 1))
 
-        waiting_floats.extend(child_waiting_floats)
-        if resume_at is not None:
-            children.extend(waiting_children)
-            resume_at = {index: resume_at}
+        # TODO: handle hyphenation (including soft hyphens)
+
+        # TODO: handle text-overflow: ellipsis / block-ellipsis != none
+        # https://www.w3.org/TR/css-overflow-3/
+
+        # TODO: handle cases where ellipsis / hyphen isn't in the current font
+        # (may have to go back to Pango to shape it? may always have to, to
+        # figure out the ideal font for it given the current style?)
+
+        # TODO: handle character-by-character breaking (both cases!)
+        if width > max_width:
+            if not wrap_opportunity:
+                wrap_opportunity = len(line_positions) - 1
             break
+
+        if char_index >= len(box.shaping_string):
+            is_end = True
+            break
+
+        if char_index >= shaping.end:
+            shaping_index += 1
+            shaping = box.shaping_results[shaping_index]
+            char_index = shaping.start
+            glyph_index = 0
+
+        if char_index >= current_child.shaping_range[1]:
+            child_index += 1
+            current_child = box.children[child_index]
+
+        # TODO: What about break_removes_preceding or break_inserts_hyphen?
+
+    if is_end:
+        break_pos = line_positions[-1]
     else:
-        children.extend(waiting_children)
+        break_pos = line_positions[wrap_opportunity]
+    last_char = break_pos.char_index
+
+    # TODO: It's not okay to just arbitrarily slice glyphs apart here, they may
+    # require reshaping. See HB_GLYPH_FLAG_UNSAFE_TO_CONCAT in
+    # https://harfbuzz.github.io/harfbuzz-hb-buffer.html#hb-glyph-flags-t for a
+    # reasonable algorithm for handling the splitting, but we theoretically
+    # should handle any reshaping, then check the width to make sure we haven't
+    # gone over our maximum width (and fall back to hyphenating or cutting off
+    # this word if we did).
+
+    new_box = slice_box_tree(
+        box, first_char, last_char, box, position_x, cumulative_widths,
+        replaced_atomic_boxes, first_char)
+
+    apply_inline_box_sizes(context, new_box)
+
+    new_box.position_x = 0
+
+    # Returns (new_box, resume_at, preserved_line_break, first_letter,
+    #     last_letter, float_widths)
+    # ``resume_at`` is ``None`` if all of the content fits. Otherwise it can be
+    # passed as a ``skip_stack`` parameter to resume where we left off.
+    # TODO: Calculate float widths
+    if last_char < len(box.shaping_string):# and last_char < 100:
+        resume_at = (break_pos.char_index, break_pos.glyph_index,
+            break_pos.child_index, break_pos.shaping_index,
+            break_pos.atomic_index)
+    else:
         resume_at = None
-
-    # Reorder inline blocks when direction is rtl
-    if box.style['direction'] == 'rtl' and len(children) > 1:
-        in_flow_children = [
-            box_child for _, box_child, _ in children
-            if box_child.is_in_normal_flow()]
-        position_x = in_flow_children[0].position_x
-        for child in in_flow_children[::-1]:
-            child.translate(
-                dx=(position_x - child.position_x), ignore_floats=True)
-            position_x += child.margin_width()
-
-    is_end = resume_at is None
-    new_box = box.copy_with_children(
-        [box_child for index, box_child, _ in children])
-    new_box.remove_decoration(start=not is_start, end=not is_end)
-    if isinstance(box, boxes.LineBox):
-        # We must reset line box width according to its new children
-        new_box.width = 0
-        children = new_box.children
-        if new_box.style['direction'] == 'ltr':
-            children = children[::-1]
-        for child in children:
-            if child.is_in_normal_flow():
-                new_box.width = (
-                    child.position_x + child.margin_width() -
-                    new_box.position_x)
-                break
-    else:
-        new_box.position_x = initial_position_x
-        if box.style['box_decoration_break'] == 'clone':
-            translation_needed = True
-        else:
-            translation_needed = (
-                is_start if box.style['direction'] == 'ltr' else is_end)
-        if translation_needed:
-            for child in new_box.children:
-                child.translate(dx=left_spacing)
-        new_box.width = position_x - content_box_left
-        new_box.translate(dx=float_widths['left'], ignore_floats=True)
-
-    line_height, new_box.baseline = strut_layout(box.style, context)
-    new_box.height = box.style['font_size']
-    half_leading = (line_height - new_box.height) / 2
-    # Set margins to the half leading but also compensate for borders and
-    # paddings. We want margin_height() == line_height
-    new_box.margin_top = (
-        half_leading - new_box.border_top_width - new_box.padding_top)
-    new_box.margin_bottom = (
-        half_leading - new_box.border_bottom_width - new_box.padding_bottom)
-
-    if new_box.style['position'] == 'relative':
-        for absolute_box in absolute_boxes:
-            absolute_layout(
-                context, absolute_box, new_box, fixed_boxes, bottom_space,
-                skip_stack=None)
-
-    if resume_at is not None:
-        index = tuple(resume_at)[0]
-        if index < float_resume_index:
-            resume_at = {float_resume_index: None}
-
-    if box.is_leader:
-        first_letter = True
-        last_letter = False
-
-    return (
-        new_box, resume_at, preserved_line_break, first_letter, last_letter,
-        float_widths)
+    return (new_box, resume_at, False, None, None, {'left': 0, 'right': 0})
 
 
 def split_text_box(context, box, available_width, skip, is_line_start=True):

@@ -82,6 +82,10 @@ class Box:
     cached_counter_values = None
     missing_link = None
 
+    # Positioning
+    position_x = 0
+    position_y = 0
+
     # Default, overriden on some subclasses
     def all_children(self):
         return ()

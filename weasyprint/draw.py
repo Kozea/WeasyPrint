@@ -2,6 +2,7 @@
 
 import contextlib
 import operator
+import traceback
 from colorsys import hsv_to_rgb, rgb_to_hsv
 from io import BytesIO
 from math import ceil, cos, floor, pi, sin, sqrt, tan
@@ -15,8 +16,7 @@ from .layout import replaced
 from .layout.background import BackgroundLayer
 from .matrix import Matrix
 from .stacking import StackingContext
-from .text.ffi import ffi, harfbuzz, pango, units_from_double, units_to_double
-from .text.line_break import get_last_word_end
+from .text.ffi import ffi, harfbuzz, pango, PANGO_SCALE
 
 SIDES = ('top', 'right', 'bottom', 'left')
 
@@ -976,7 +976,6 @@ def draw_text(stream, textbox, offset_x, text_overflow, block_ellipsis):
     stream.set_color_rgb(*textbox.style['color'][:3])
     stream.set_alpha(textbox.style['color'][3])
 
-    textbox.pango_layout.reactivate(textbox.style)
     stream.begin_text()
     emojis = draw_first_line(
         stream, textbox, text_overflow, block_ellipsis, x, y)
@@ -989,27 +988,26 @@ def draw_text(stream, textbox, offset_x, text_overflow, block_ellipsis):
     color = textbox.style['text_decoration_color']
     if color == 'currentColor':
         color = textbox.style['color']
-    if 'overline' in values:
-        thickness = textbox.pango_layout.underline_thickness
-        offset_y = (
-            textbox.baseline - textbox.pango_layout.ascent + thickness / 2)
-        draw_text_decoration(
-            stream, textbox, offset_x, offset_y, thickness, color)
-    if 'underline' in values:
-        thickness = textbox.pango_layout.underline_thickness
-        offset_y = (
-            textbox.baseline - textbox.pango_layout.underline_position +
-            thickness / 2)
-        draw_text_decoration(
-            stream, textbox, offset_x, offset_y, thickness, color)
-    if 'line-through' in values:
-        thickness = textbox.pango_layout.strikethrough_thickness
-        offset_y = (
-            textbox.baseline - textbox.pango_layout.strikethrough_position)
-        draw_text_decoration(
-            stream, textbox, offset_x, offset_y, thickness, color)
-
-    textbox.pango_layout.deactivate()
+    # TODO: Render these correctly
+    # if 'overline' in values:
+    #     thickness = textbox.pango_layout.underline_thickness
+    #     offset_y = (
+    #         textbox.baseline - textbox.pango_layout.ascent + thickness / 2)
+    #     draw_text_decoration(
+    #         stream, textbox, offset_x, offset_y, thickness, color)
+    # if 'underline' in values:
+    #     thickness = textbox.pango_layout.underline_thickness
+    #     offset_y = (
+    #         textbox.baseline - textbox.pango_layout.underline_position +
+    #         thickness / 2)
+    #     draw_text_decoration(
+    #         stream, textbox, offset_x, offset_y, thickness, color)
+    # if 'line-through' in values:
+    #     thickness = textbox.pango_layout.strikethrough_thickness
+    #     offset_y = (
+    #         textbox.baseline - textbox.pango_layout.strikethrough_position)
+    #     draw_text_decoration(
+    #         stream, textbox, offset_x, offset_y, thickness, color)
 
 
 def draw_emojis(stream, font_size, x, y, emojis):
@@ -1027,54 +1025,45 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y,
     if font_size < 1e-6:  # Default float precision used by pydyf
         return []
 
-    pango.pango_layout_set_single_paragraph_mode(
-        textbox.pango_layout.layout, True)
+    # TODO: handle ellipses (but maybe in layout.inline instead?)
+    # if text_overflow == 'ellipsis' or block_ellipsis != 'none':
+    #     assert textbox.pango_layout.max_width is not None
+    #     max_width = textbox.pango_layout.max_width
+    #     pango.pango_layout_set_width(
+    #         textbox.pango_layout.layout, units_from_double(max_width))
+    #     if text_overflow == 'ellipsis':
+    #         pango.pango_layout_set_ellipsize(
+    #             textbox.pango_layout.layout, pango.PANGO_ELLIPSIZE_END)
+    #     else:
+    #         if block_ellipsis == 'auto':
+    #             ellipsis = '…'
+    #         else:
+    #             assert block_ellipsis[0] == 'string'
+    #             ellipsis = block_ellipsis[1]
 
-    if text_overflow == 'ellipsis' or block_ellipsis != 'none':
-        assert textbox.pango_layout.max_width is not None
-        max_width = textbox.pango_layout.max_width
-        pango.pango_layout_set_width(
-            textbox.pango_layout.layout, units_from_double(max_width))
-        if text_overflow == 'ellipsis':
-            pango.pango_layout_set_ellipsize(
-                textbox.pango_layout.layout, pango.PANGO_ELLIPSIZE_END)
-        else:
-            if block_ellipsis == 'auto':
-                ellipsis = '…'
-            else:
-                assert block_ellipsis[0] == 'string'
-                ellipsis = block_ellipsis[1]
+    #         # Remove last word if hyphenated
+    #         new_text = textbox.pango_layout.text
+    #         if new_text.endswith(textbox.style['hyphenate_character']):
+    #             last_word_end = get_last_word_end(
+    #                 new_text[:-len(textbox.style['hyphenate_character'])],
+    #                 textbox.style['lang'])
+    #             if last_word_end:
+    #                 new_text = new_text[:last_word_end]
 
-            # Remove last word if hyphenated
-            new_text = textbox.pango_layout.text
-            if new_text.endswith(textbox.style['hyphenate_character']):
-                last_word_end = get_last_word_end(
-                    new_text[:-len(textbox.style['hyphenate_character'])],
-                    textbox.style['lang'])
-                if last_word_end:
-                    new_text = new_text[:last_word_end]
+    #         textbox.pango_layout.set_text(new_text + ellipsis)
 
-            textbox.pango_layout.set_text(new_text + ellipsis)
+    # first_line, index = textbox.pango_layout.get_first_line()
 
-    first_line, index = textbox.pango_layout.get_first_line()
-
-    if block_ellipsis != 'none':
-        while index:
-            last_word_end = get_last_word_end(
-                textbox.pango_layout.text[:-len(ellipsis)],
-                textbox.style['lang'])
-            if last_word_end is None:
-                break
-            new_text = textbox.pango_layout.text[:last_word_end]
-            textbox.pango_layout.set_text(new_text + ellipsis)
-            first_line, index = textbox.pango_layout.get_first_line()
-
-    utf8_text = textbox.pango_layout.text.encode()
-    previous_utf8_position = 0
-
-    runs = [first_line.runs[0]]
-    while runs[-1].next != ffi.NULL:
-        runs.append(runs[-1].next)
+    # if block_ellipsis != 'none':
+    #     while index:
+    #         last_word_end = get_last_word_end(
+    #             textbox.pango_layout.text[:-len(ellipsis)],
+    #             textbox.style['lang'])
+    #         if last_word_end is None:
+    #             break
+    #         new_text = textbox.pango_layout.text[:last_word_end]
+    #         textbox.pango_layout.set_text(new_text + ellipsis)
+    #         first_line, index = textbox.pango_layout.get_first_line()
 
     matrix = Matrix(1, 0, 0, -1, x, y)
     if angle:
@@ -1085,22 +1074,25 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y,
     string = ''
     x_advance = 0
     emojis = []
-    for run in runs:
-        # Pango objects
-        glyph_item = ffi.cast('PangoGlyphItem *', run.data)
-        glyph_string = glyph_item.glyphs
-        glyphs = glyph_string.glyphs
-        num_glyphs = glyph_string.num_glyphs
-        offset = glyph_item.item.offset
-        clusters = glyph_string.log_clusters
+
+    if not hasattr(textbox, 'parent_linebox'):
+        # TODO: this is a problem if it happens - how did it happen?
+        return []
+
+    parent_linebox = textbox.parent_linebox
+    for shaping in parent_linebox.shaping_results:
+        if shaping.end < textbox.render_range[0]:
+            # Skip to the first shaping result we can use.
+            continue
+        if shaping.start > textbox.render_range[1]:
+            # We're past the shaping results we need to render; we're done.
+            break
 
         # Font content
-        pango_font = glyph_item.item.analysis.font
-        font = stream.add_font(pango_font)
+        font = stream.add_font(shaping.pango_font)
 
         # Positions of the glyphs in the UTF-8 string
-        utf8_positions = [offset + clusters[i] for i in range(1, num_glyphs)]
-        utf8_positions.append(offset + glyph_item.item.length)
+        last_cluster = -1
 
         # Go through the run glyphs
         if font != last_font:
@@ -1110,58 +1102,65 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y,
             last_font = font
         stream.set_font_size(font.hash, 1 if font.bitmap else font_size)
         string += '<'
-        for i in range(num_glyphs):
-            glyph_info = glyphs[i]
-            glyph = glyph_info.glyph
-            width = glyph_info.geometry.width
-            if (glyph == pango.PANGO_GLYPH_EMPTY or
-                    glyph & pango.PANGO_GLYPH_UNKNOWN_FLAG):
-                string += f'>{-width / font_size}<'
+        for i, glyph_info in enumerate(shaping.glyph_infos):
+            if glyph_info.cluster < textbox.render_range[0]:
                 continue
-            utf8_position = utf8_positions[i]
+            if glyph_info.cluster >= textbox.render_range[1]:
+                break
+            glyph = glyph_info.codepoint # It's a glyph ID, oddity of HarfBuzz
 
-            offset = glyph_info.geometry.x_offset / font_size
+            width = shaping.glyph_positions[i].x_advance
+
+            offset = shaping.glyph_positions[i].x_offset / font_size
             if offset:
                 string += f'>{-offset}<'
             string += f'{glyph:02x}' if font.bitmap else f'{glyph:04x}'
 
             # Ink bounding box and logical widths in font
             if glyph not in font.widths:
-                pango.pango_font_get_glyph_extents(
-                    pango_font, glyph, stream.ink_rect, stream.logical_rect)
+                harfbuzz.hb_font_get_glyph_extents(
+                    shaping.hb_font, glyph, stream.hb_extents)
+                extents = stream.hb_extents
                 x1, y1, x2, y2 = (
-                    stream.ink_rect.x,
-                    -stream.ink_rect.y - stream.ink_rect.height,
-                    stream.ink_rect.x + stream.ink_rect.width,
-                    -stream.ink_rect.y)
+                    extents.x_bearing,
+                    extents.y_bearing + extents.height,
+                    extents.x_bearing + extents.width,
+                    extents.y_bearing)
                 if x1 < font.bbox[0]:
-                    font.bbox[0] = int(units_to_double(x1 * 1000) / font_size)
+                    font.bbox[0] = int(x1 * 1000 / font_size / PANGO_SCALE)
                 if y1 < font.bbox[1]:
-                    font.bbox[1] = int(units_to_double(y1 * 1000) / font_size)
+                    font.bbox[1] = int(y1 * 1000 / font_size / PANGO_SCALE)
                 if x2 > font.bbox[2]:
-                    font.bbox[2] = int(units_to_double(x2 * 1000) / font_size)
+                    font.bbox[2] = int(x2 * 1000 / font_size / PANGO_SCALE)
                 if y2 > font.bbox[3]:
-                    font.bbox[3] = int(units_to_double(y2 * 1000) / font_size)
+                    font.bbox[3] = int(y2 * 1000 / font_size / PANGO_SCALE)
                 font.widths[glyph] = int(round(
-                    units_to_double(stream.logical_rect.width * 1000) /
-                    font_size))
+                    abs(width) * 1000 / font_size / PANGO_SCALE))
 
             # Kerning, word spacing, letter spacing
             kerning = int(
                 font.widths[glyph] -
-                units_to_double(width * 1000) / font_size +
+                width * 1000 / font_size / PANGO_SCALE +
                 offset)
             if kerning:
                 string += f'>{kerning}<'
 
             # Mapping between glyphs and characters
-            if glyph not in font.cmap:
-                utf8_slice = slice(previous_utf8_position, utf8_position)
-                font.cmap[glyph] = utf8_text[utf8_slice].decode()
-            previous_utf8_position = utf8_position
+            if glyph not in font.cmap and \
+                shaping.glyph_infos[i].cluster != last_cluster:
+                # If there is a multi-glyph output for a given run of text
+                # (for example, a multi-glyph ligature, or a multi-glyph
+                # expansion), this assigns all of the text to the first glyph.
+                # This is not ideal, we should investigate adding a PDF span
+                # and ActualText entry over these instead.
+                utf8_slice = slice(
+                    last_cluster + 1,
+                    shaping.glyph_infos[i].cluster + 1)
+                font.cmap[glyph] = parent_linebox.shaping_string[utf8_slice]
+            last_cluster = shaping.glyph_infos[i].cluster
 
             if font.svg:
-                hb_font = pango.pango_font_get_hb_font(pango_font)
+                hb_font = pango.pango_font_get_hb_font(shaping.pango_font)
                 hb_face = harfbuzz.hb_font_get_face(hb_font)
                 hb_blob = ffi.gc(
                     harfbuzz.hb_ot_color_glyph_reference_svg(hb_face, glyph),
@@ -1174,7 +1173,7 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y,
                     a = d = font.widths[glyph] / 1000 / font.upem * font_size
                     emojis.append([image, font, a, d, x_advance, 0])
             elif font.png:
-                hb_font = pango.pango_font_get_hb_font(pango_font)
+                hb_font = pango.pango_font_get_hb_font(shaping.pango_font)
                 hb_blob = ffi.gc(
                     harfbuzz.hb_ot_color_glyph_reference_png(hb_font, glyph),
                     harfbuzz.hb_blob_destroy)
@@ -1190,8 +1189,8 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y,
                     pango.pango_font_get_glyph_extents(
                         pango_font, glyph, stream.ink_rect,
                         stream.logical_rect)
-                    f = units_to_double(
-                        (-stream.logical_rect.y - stream.logical_rect.height))
+                    f = ((-stream.logical_rect.y - stream.logical_rect.height)
+                            / PANGO_SCALE)
                     f = f / font_size - font_size
                     emojis.append([image, font, a, d, x_advance, f])
 

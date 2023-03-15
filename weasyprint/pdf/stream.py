@@ -160,6 +160,7 @@ class Stream(pydyf.Stream):
         self.length = ffi.new('unsigned int *')
         self.ink_rect = ffi.new('PangoRectangle *')
         self.logical_rect = ffi.new('PangoRectangle *')
+        self.hb_extents = ffi.new('hb_glyph_extents_t *')
 
     @property
     def ctm(self):

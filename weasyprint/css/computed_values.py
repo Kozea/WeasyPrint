@@ -6,8 +6,8 @@ from urllib.parse import unquote
 from tinycss2.color3 import parse_color
 
 from ..logger import LOGGER
-from ..text.ffi import ffi, pango, units_to_double
-from ..text.line_break import Layout, first_line_metrics
+from ..text.ffi import ffi, harfbuzz, pango, units_to_double, PANGO_SCALE
+from ..text.line_break import Layout, shape_string
 from ..urls import get_link_attribute
 from .properties import (
     INHERITED, INITIAL_NOT_COMPUTED, INITIAL_VALUES, Dimension)
@@ -719,13 +719,15 @@ def word_spacing(style, name, value):
 
 
 def strut_layout(style, context=None):
-    """Return a tuple of the used value of ``line-height`` and the baseline.
+    """Return a tuple of the strut value of ``line-height`` and the baseline.
 
     The baseline is given from the top edge of line height.
 
+    Used in CSS Inline Layout Module Level 3's "Logical Height Contributions of
+    Inline Boxes", and is technically only valid for inline boxes without
+    directly-contained glyphs or where the line-height value is not "normal":
+    other boxes should use their maximum ascender and descender values.
     """
-    # TODO: always get the real value for `context`? (if we really care…)
-
     if style['font_size'] == 0:
         return 0, 0
 
@@ -737,20 +739,29 @@ def strut_layout(style, context=None):
         if key in context.strut_layouts:
             return context.strut_layouts[key]
 
-    layout = Layout(context, style['font_size'], style)
-    layout.set_text(' ')
-    line, _ = layout.get_first_line()
-    _, _, _, _, text_height, baseline = first_line_metrics(
-        line, '', layout, resume_at=None, space_collapse=False, style=style)
+    _, _, _, shaping_results = shape_string(context, style, ' ')
+    if style['direction'] == 'rtl':
+        direction = harfbuzz.HB_DIRECTION_RTL
+    else:
+        direction = harfbuzz.HB_DIRECTION_LTR
+    extents = ffi.new('hb_font_extents_t *')
+
+    harfbuzz.hb_font_get_extents_for_direction(
+        shaping_results[0].hb_font, direction, extents)
+
+    text_height = (extents.ascender - extents.descender) / PANGO_SCALE
+
     if style['line_height'] == 'normal':
-        result = text_height, baseline
+        result = text_height + (extents.line_gap / PANGO_SCALE), \
+            (extents.ascender + (extents.line_gap / 2)) / PANGO_SCALE
         if context:
             context.strut_layouts[key] = result
         return result
     type_, line_height = style['line_height']
     if type_ == 'NUMBER':
         line_height *= style['font_size']
-    result = line_height, baseline + (line_height - text_height) / 2
+    result = line_height, (extents.ascender / PANGO_SCALE) + \
+        (line_height - text_height) / 2
     if context:
         context.strut_layouts[key] = result
     return result

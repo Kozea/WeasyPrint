@@ -219,6 +219,7 @@ class LayoutContext:
         self.style_for = style_for
         self.get_image_from_uri = partial(get_image_from_uri, context=self)
         self.font_config = font_config
+        self.pango_context = None # Not initialized yet
         self.counter_style = counter_style
         self.target_collector = target_collector
         self._excluded_shapes_lists = []
@@ -238,6 +239,8 @@ class LayoutContext:
 
         # Cache
         self.strut_layouts = {}
+        self.pango_font_descs = {}
+        self.pango_font_feats = {}
         self.font_features = {}
         self.tables = {}
         self.dictionaries = {}
