@@ -45,7 +45,7 @@ def _w3c_date_to_pdf(string, attr_name):
             pdf_date += f"{tz_hour:+03d}'{tz_minute:02d}"
         else:
             pdf_date += 'Z'
-    return pdf_date
+    return f'D:{pdf_date}'
 
 
 def _reference_resources(pdf, resources, images, fonts):

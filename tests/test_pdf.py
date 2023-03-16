@@ -562,8 +562,8 @@ def test_document_info():
         b'006600740065007200a00061006c006c>') in pdf
     assert b'/Keywords (html, css, pdf)' in pdf
     assert b'/Subject <feff0042006c0061006820260020>' in pdf
-    assert b'/CreationDate (20110421230000Z)' in pdf
-    assert b"/ModDate (20130721234600+01'00)" in pdf
+    assert b'/CreationDate (D:20110421230000Z)' in pdf
+    assert b"/ModDate (D:20130721234600+01'00)" in pdf
 
 
 @assert_no_logs
