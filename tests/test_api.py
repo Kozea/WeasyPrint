@@ -368,6 +368,8 @@ def test_command_line_render(tmpdir):
     _run('not_optimized.html out20.pdf -O none')
     _run('not_optimized.html out21.pdf -O none -O all')
     _run('not_optimized.html out22.pdf -O all -O none')
+    _run('not_optimized.html out23.pdf -O pdf')
+    _run('not_optimized.html out24.pdf -O none -O fonts -O pdf')
     assert (
         len(tmpdir.join('out16.pdf').read_binary()) <
         len(tmpdir.join('out15.pdf').read_binary()) <
@@ -377,7 +379,7 @@ def test_command_line_render(tmpdir):
         for i in (16, 18, 19, 21)}) == 1
     assert len({
         tmpdir.join(f'out{i}.pdf').read_binary()
-        for i in (15, 17)}) == 1
+        for i in (15, 17, 23, 24)}) == 1
     assert len({
         tmpdir.join(f'out{i}.pdf').read_binary()
         for i in (20, 22)}) == 1
