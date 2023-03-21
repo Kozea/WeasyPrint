@@ -26,7 +26,7 @@ RIGHT = round(210 * 72 / 25.4, 6)
 def test_page_size_zoom(zoom):
     pdf = FakeHTML(string='<style>@page{size:3in 4in').write_pdf(zoom=zoom)
     width, height = int(216 * zoom), int(288 * zoom)
-    assert f'/MediaBox [ 0 0 {width} {height} ]'.encode() in pdf
+    assert f'/MediaBox [0 0 {width} {height}]'.encode() in pdf
 
 
 @assert_no_logs
@@ -57,7 +57,7 @@ def test_bookmarks_2():
 @assert_no_logs
 def test_bookmarks_3():
     pdf = FakeHTML(string='<h1>a nbsp…</h1>').write_pdf()
-    assert re.findall(b'/Title <(.*)>', pdf) == [
+    assert re.findall(b'/Title <(\\w*)>', pdf) == [
         b'feff006100a0006e0062007300702026']
 
 
@@ -327,11 +327,11 @@ def test_links():
     ''', base_url=resource_filename('<inline HTML>')).write_pdf()
 
     uris = re.findall(b'/URI \\((.*)\\)', pdf)
-    types = re.findall(b'/S (.*)', pdf)
-    subtypes = re.findall(b'/Subtype (.*)', pdf)
+    types = re.findall(b'/S (/\\w*)', pdf)
+    subtypes = re.findall(b'/Subtype (/\\w*)', pdf)
     rects = [
         [float(number) for number in match.split()] for match in re.findall(
-            b'/Rect \\[ ([\\d\\.]+ [\\d\\.]+ [\\d\\.]+ [\\d\\.]+) \\]', pdf)]
+            b'/Rect \\[([\\d\\.]+ [\\d\\.]+ [\\d\\.]+ [\\d\\.]+)\\]', pdf)]
 
     # 30pt wide (like the image), 20pt high (like line-height)
     assert uris.pop(0) == b'https://weasyprint.org'
@@ -349,7 +349,7 @@ def test_links():
     assert subtypes.pop(0) == b'/Link'
     assert b'/Dest (lipsum)' in pdf
     link = re.search(
-        b'\\(lipsum\\) \\[ \\d+ 0 R /XYZ ([\\d\\.]+ [\\d\\.]+ [\\d\\.]+) ]',
+        b'\\(lipsum\\) \\[\\d+ 0 R /XYZ ([\\d\\.]+ [\\d\\.]+ [\\d\\.]+)]',
         pdf).group(1)
     assert [float(number) for number in link.split()] == [0, TOP, 0]
     assert rects.pop(0) == [10, TOP - 100, 10 + 32, TOP - 100 - 20]
@@ -362,7 +362,7 @@ def test_links():
     assert subtypes.pop(0) == b'/Link'
     assert b'/Dest (hello)' in pdf
     link = re.search(
-        b'\\(hello\\) \\[ \\d+ 0 R /XYZ ([\\d\\.]+ [\\d\\.]+ [\\d\\.]+) ]',
+        b'\\(hello\\) \\[\\d+ 0 R /XYZ ([\\d\\.]+ [\\d\\.]+ [\\d\\.]+)]',
         pdf).group(1)
     assert [float(number) for number in link.split()] == [0, TOP - 200, 0]
     assert rects.pop(0) == [0, TOP, RIGHT, TOP - 30]
@@ -387,7 +387,7 @@ def test_relative_links_no_height():
         string='<a href="../lipsum" style="display: block"></a>a',
         base_url='https://weasyprint.org/foo/bar/').write_pdf()
     assert b'/S /URI\n/URI (https://weasyprint.org/foo/lipsum)'
-    assert f'/Rect [ 0 {TOP} {RIGHT} {TOP} ]'.encode() in pdf
+    assert f'/Rect [0 {TOP} {RIGHT} {TOP}]'.encode() in pdf
 
 
 @assert_no_logs
@@ -397,7 +397,7 @@ def test_relative_links_missing_base():
         string='<a href="../lipsum" style="display: block"></a>a',
         base_url=None).write_pdf()
     assert b'/S /URI\n/URI (../lipsum)'
-    assert f'/Rect [ 0 {TOP} {RIGHT} {TOP} ]'.encode() in pdf
+    assert f'/Rect [0 {TOP} {RIGHT} {TOP}]'.encode() in pdf
 
 
 @assert_no_logs
@@ -421,11 +421,11 @@ def test_relative_links_internal():
         base_url=None).write_pdf()
     assert b'/Dest (lipsum)' in pdf
     link = re.search(
-        b'\\(lipsum\\) \\[ \\d+ 0 R /XYZ ([\\d\\.]+ [\\d\\.]+ [\\d\\.]+) ]',
+        b'\\(lipsum\\) \\[\\d+ 0 R /XYZ ([\\d\\.]+ [\\d\\.]+ [\\d\\.]+)]',
         pdf).group(1)
     assert [float(number) for number in link.split()] == [0, TOP, 0]
     rect = re.search(
-        b'/Rect \\[ ([\\d\\.]+ [\\d\\.]+ [\\d\\.]+ [\\d\\.]+) \\]',
+        b'/Rect \\[([\\d\\.]+ [\\d\\.]+ [\\d\\.]+ [\\d\\.]+)\\]',
         pdf).group(1)
     assert [float(number) for number in rect.split()] == [0, TOP, RIGHT, TOP]
 
@@ -437,11 +437,11 @@ def test_relative_links_anchors():
         base_url=None).write_pdf()
     assert b'/Dest (lipsum)' in pdf
     link = re.search(
-        b'\\(lipsum\\) \\[ \\d+ 0 R /XYZ ([\\d\\.]+ [\\d\\.]+ [\\d\\.]+) ]',
+        b'\\(lipsum\\) \\[\\d+ 0 R /XYZ ([\\d\\.]+ [\\d\\.]+ [\\d\\.]+)]',
         pdf).group(1)
     assert [float(number) for number in link.split()] == [0, TOP, 0]
     rect = re.search(
-        b'/Rect \\[ ([\\d\\.]+ [\\d\\.]+ [\\d\\.]+ [\\d\\.]+) \\]',
+        b'/Rect \\[([\\d\\.]+ [\\d\\.]+ [\\d\\.]+ [\\d\\.]+)\\]',
         pdf).group(1)
     assert [float(number) for number in rect.split()] == [0, TOP, RIGHT, TOP]
 
@@ -474,11 +474,11 @@ def test_missing_links():
     assert b'/Dest (lipsum)' in pdf
     assert len(logs) == 1
     link = re.search(
-        b'\\(lipsum\\) \\[ \\d+ 0 R /XYZ ([\\d\\.]+ [\\d\\.]+ [\\d\\.]+) ]',
+        b'\\(lipsum\\) \\[\\d+ 0 R /XYZ ([\\d\\.]+ [\\d\\.]+ [\\d\\.]+)]',
         pdf).group(1)
     assert [float(number) for number in link.split()] == [0, TOP - 15, 0]
     rect = re.search(
-        b'/Rect \\[ ([\\d\\.]+ [\\d\\.]+ [\\d\\.]+ [\\d\\.]+) \\]',
+        b'/Rect \\[([\\d\\.]+ [\\d\\.]+ [\\d\\.]+ [\\d\\.]+)\\]',
         pdf).group(1)
     assert [float(number) for number in rect.split()] == [
         0, TOP, RIGHT, TOP - 15]
@@ -495,8 +495,8 @@ def test_anchor_multiple_pages():
         <a href="#lipsum"></a>
       </div>
     ''', base_url=None).write_pdf()
-    first_page, = re.findall(b'/Kids \\[ (\\d+) 0 R', pdf)
-    assert b'/Names [ (lipsum) [ ' + first_page in pdf
+    first_page, = re.findall(b'/Kids \\[(\\d+) 0 R', pdf)
+    assert b'/Names [(lipsum) [' + first_page in pdf
 
 
 @assert_no_logs
@@ -717,6 +717,6 @@ def test_bleed(style, media, bleed, trim):
       <style>@page { %s }</style>
       <body>test
     ''' % style).write_pdf()
-    assert '/MediaBox [ {} {} {} {} ]'.format(*media).encode() in pdf
-    assert '/BleedBox [ {} {} {} {} ]'.format(*bleed).encode() in pdf
-    assert '/TrimBox [ {} {} {} {} ]'.format(*trim).encode() in pdf
+    assert '/MediaBox [{} {} {} {}]'.format(*media).encode() in pdf
+    assert '/BleedBox [{} {} {} {}]'.format(*bleed).encode() in pdf
+    assert '/TrimBox [{} {} {} {}]'.format(*trim).encode() in pdf
