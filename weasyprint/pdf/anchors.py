@@ -138,9 +138,8 @@ def add_inputs(inputs, matrix, pdf, page, resources, stream, font_map,
             # Center (let’s assume that Dingbat’s check has a 0.8em size)
             x = (width - font_size * 0.8) / 2
             y = (height - font_size * 0.8) / 2
-            # TODO: we should have these operators in pydyf
-            checked_stream.stream.append(f'{x} {y} Td')
-            checked_stream.stream.append('(4) Tj')
+            checked_stream.move_text_to(x, y)
+            checked_stream.show_text_string('4')
             checked_stream.end_text()
             checked_stream.pop_state()
             pdf.add_object(checked_stream)
