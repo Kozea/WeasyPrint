@@ -385,9 +385,9 @@ def test_command_line_render(tmpdir):
         for i in (20, 22)}) == 1
     os.environ.pop('SOURCE_DATE_EPOCH')
 
-    stdout = _run('combined.html -')
+    stdout = _run('-O none combined.html -')
     assert stdout.count(b'attachment') == 0
-    stdout = _run('combined.html -')
+    stdout = _run('-O none combined.html -')
     assert stdout.count(b'attachment') == 0
     stdout = _run('-O none -a pattern.png combined.html -')
     assert stdout.count(b'attachment') == 1
