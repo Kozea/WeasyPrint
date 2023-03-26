@@ -296,8 +296,8 @@ class Document:
         # rendering is destroyed. This is needed as font_config.__del__ removes
         # fonts that may be used when rendering
         self.font_config = font_config
-        # Set of flags for PDF size optimization. Can contain "images" and
-        # "fonts".
+        # Set of flags for PDF size optimization. Can contain "images", "fonts"
+        # and "pdf".
         self._optimize_size = optimize_size
 
     def build_element_structure(self, structure, etree_element=None):
@@ -414,13 +414,15 @@ class Document:
         if finisher:
             finisher(self, pdf)
 
+        compress = 'pdf' in self._optimize_size
+
         if target is None:
             output = io.BytesIO()
-            pdf.write(output, version=pdf.version, identifier=identifier)
+            pdf.write(output, pdf.version, identifier, compress)
             return output.getvalue()
 
         if hasattr(target, 'write'):
-            pdf.write(target, version=pdf.version, identifier=identifier)
+            pdf.write(target, pdf.version, identifier, compress)
         else:
             with open(target, 'wb') as fd:
-                pdf.write(fd, version=pdf.version, identifier=identifier)
+                pdf.write(fd, pdf.version, identifier, compress)

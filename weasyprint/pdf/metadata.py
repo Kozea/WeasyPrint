@@ -20,7 +20,7 @@ for key, value in NS.items():
     register_namespace(key, value)
 
 
-def add_metadata(pdf, metadata, variant, version, conformance):
+def add_metadata(pdf, metadata, variant, version, conformance, compress):
     """Add PDF stream of metadata.
 
     Described in ISO-32000-1:2008, 14.3.2.
@@ -88,6 +88,6 @@ def add_metadata(pdf, metadata, variant, version, conformance):
     footer = b'<?xpacket end="r"?>'
     stream_content = b'\n'.join((header, xml, footer))
     extra = {'Type': '/Metadata', 'Subtype': '/XML'}
-    metadata = pydyf.Stream([stream_content], extra=extra)
+    metadata = pydyf.Stream([stream_content], extra, compress)
     pdf.add_object(metadata)
     pdf.catalog['Metadata'] = metadata.reference

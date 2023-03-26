@@ -8,6 +8,7 @@ from ..logger import LOGGER
 
 
 def build_fonts_dictionary(pdf, fonts, optimize_size):
+    compress = 'pdf' in optimize_size
     pdf_fonts = pydyf.Dictionary()
     fonts_by_file_hash = {}
     for font in fonts.values():
@@ -32,7 +33,7 @@ def build_fonts_dictionary(pdf, fonts, optimize_size):
         else:
             font_extra = pydyf.Dictionary({'Length1': len(font.file_content)})
         font_stream = pydyf.Stream(
-            [font.file_content], font_extra, compress=True)
+            [font.file_content], font_extra, compress=compress)
         pdf.add_object(font_stream)
         font_references_by_file_hash[file_hash] = font_stream.reference
 
@@ -80,7 +81,7 @@ def build_fonts_dictionary(pdf, fonts, optimize_size):
             b'1 begincodespacerange',
             b'<0000> <ffff>',
             b'endcodespacerange',
-            f'{len(cmap)} beginbfchar'.encode()])
+            f'{len(cmap)} beginbfchar'.encode()], compress=compress)
         for glyph, text in cmap.items():
             unicode_codepoints = ''.join(
                 f'{letter.encode("utf-16-be").hex()}' for letter in text)
@@ -125,7 +126,8 @@ def build_fonts_dictionary(pdf, fonts, optimize_size):
                 for cid in cids:
                     bits[cid] = '1'
                 stream = pydyf.Stream(
-                    (int(''.join(bits), 2).to_bytes(padded_width, 'big'),))
+                    (int(''.join(bits), 2).to_bytes(padded_width, 'big'),),
+                    compress=compress)
                 pdf.add_object(stream)
                 font_descriptor['CIDSet'] = stream.reference
             if font.type == 'otf':
@@ -156,6 +158,7 @@ def build_fonts_dictionary(pdf, fonts, optimize_size):
 
 def _build_bitmap_font_dictionary(font_dictionary, pdf, font, widths,
                                   optimize_size):
+    compress = 'pdf' in optimize_size
     # https://docs.microsoft.com/typography/opentype/spec/ebdt
     font_dictionary['FontBBox'] = pydyf.Array([0, 0, 1, 1])
     font_dictionary['FontMatrix'] = pydyf.Array([1, 0, 0, 1, 0, 0])
@@ -308,7 +311,7 @@ def _build_bitmap_font_dictionary(font_dictionary, pdf, font, widths,
             b'/BPC 1',
             b'/D [1 0]',
             b'ID', bitmap, b'EI'
-        ])
+        ], compress=compress)
         pdf.add_object(bitmap_stream)
         char_procs[glyph_id] = bitmap_stream.reference
 

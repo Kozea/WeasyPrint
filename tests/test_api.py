@@ -303,11 +303,12 @@ def test_command_line_render(tmpdir):
         tmpdir.join(name).write_binary(pattern_bytes)
 
     # Reference
+    optimize_size = ('fonts', 'pdf')
     html_obj = FakeHTML(string=combined, base_url='dummy.html')
-    pdf_bytes = html_obj.write_pdf()
+    pdf_bytes = html_obj.write_pdf(optimize_size=optimize_size)
     rotated_pdf_bytes = FakeHTML(
         string=combined, base_url='dummy.html',
-        media_type='screen').write_pdf()
+        media_type='screen').write_pdf(optimize_size=optimize_size)
 
     tmpdir.join('no_css.html').write_binary(html)
     tmpdir.join('combined.html').write_binary(combined)
@@ -386,9 +387,9 @@ def test_command_line_render(tmpdir):
     assert stdout.count(b'attachment') == 0
     stdout = _run('combined.html -')
     assert stdout.count(b'attachment') == 0
-    stdout = _run('-a pattern.png combined.html -')
+    stdout = _run('-O none -a pattern.png combined.html -')
     assert stdout.count(b'attachment') == 1
-    stdout = _run('-a style.css -a pattern.png combined.html -')
+    stdout = _run('-O none -a style.css -a pattern.png combined.html -')
     assert stdout.count(b'attachment') == 2
 
     os.mkdir('subdirectory')
@@ -423,42 +424,58 @@ def test_command_line_render(tmpdir):
     (4, '2.0'),
 ))
 def test_pdfa(version, pdf_version):
-    stdout = _run(f'--pdf-variant=pdf/a-{version}b - -', b'test')
+    stdout = _run(f'--pdf-variant=pdf/a-{version}b -O none - -', b'test')
     assert f'PDF-{pdf_version}'.encode() in stdout
     assert f'part="{version}"'.encode() in stdout
 
 
+@pytest.mark.parametrize('version, pdf_version', (
+    (1, '1.4'),
+    (2, '1.7'),
+    (3, '1.7'),
+    (4, '2.0'),
+))
+def test_pdfa_compressed(version, pdf_version):
+    _run(f'--pdf-variant=pdf/a-{version}b - -', b'test')
+
+
 def test_pdfua():
-    stdout = _run('--pdf-variant=pdf/ua-1 - -', b'test')
+    stdout = _run('--pdf-variant=pdf/ua-1 -O none - -', b'test')
     assert b'part="1"' in stdout
 
 
+def test_pdfua_compressed():
+    _run('--pdf-variant=pdf/ua-1 - -', b'test')
+
+
 def test_pdf_identifier():
-    stdout = _run('--pdf-identifier=abc - -', b'test')
+    stdout = _run('--pdf-identifier=abc -O none - -', b'test')
     assert b'abc' in stdout
 
 
 def test_pdf_version():
-    stdout = _run('--pdf-version=1.4 - -', b'test')
+    stdout = _run('--pdf-version=1.4 -O none - -', b'test')
     assert b'PDF-1.4' in stdout
 
 
 def test_pdf_custom_metadata():
-    stdout = _run('--custom-metadata - -', b'<meta name=key content=value />')
+    stdout = _run(
+        '--custom-metadata -O none - -',
+        b'<meta name=key content=value />')
     assert b'/key' in stdout
     assert b'value' in stdout
 
 
 def test_bad_pdf_custom_metadata():
     stdout = _run(
-        '--custom-metadata - -',
+        '--custom-metadata -O none - -',
         '<meta name=é content=value />'.encode('latin1'))
     assert b'value' not in stdout
 
 
 def test_partial_pdf_custom_metadata():
     stdout = _run(
-        '--custom-metadata - -',
+        '--custom-metadata -O none - -',
         '<meta name=a.b/céd0 content=value />'.encode('latin1'))
     assert b'/abcd0' in stdout
     assert b'value' in stdout
@@ -470,7 +487,7 @@ def test_partial_pdf_custom_metadata():
     (b'<textarea></textarea>', b'/Tx'),
 ))
 def test_pdf_inputs(html, field):
-    stdout = _run('--pdf-forms - -', html)
+    stdout = _run('--pdf-forms -O none - -', html)
     assert b'AcroForm' in stdout
     assert field in stdout
     stdout = _run('- -', html)
@@ -484,8 +501,8 @@ def test_pdf_inputs(html, field):
 ))
 def test_appearance(css, with_forms, without_forms):
     html = f'<input style="{css}">'.encode()
-    assert (b'AcroForm' in _run('--pdf-forms - -', html)) is with_forms
-    assert (b'AcroForm' in _run('- -', html)) is without_forms
+    assert (b'AcroForm' in _run('--pdf-forms -O none - -', html)) is with_forms
+    assert (b'AcroForm' in _run(' -O none - -', html)) is without_forms
 
 
 def test_reproducible():

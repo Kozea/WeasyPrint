@@ -118,8 +118,8 @@ class HTML:
         return [HTML5_PH_STYLESHEET]
 
     def render(self, stylesheets=None, presentational_hints=False,
-               optimize_size=('fonts',), font_config=None, counter_style=None,
-               image_cache=None, forms=False):
+               optimize_size=('fonts', 'pdf'), font_config=None,
+               counter_style=None, image_cache=None, forms=False):
         """Lay out and paginate the document, but do not (yet) export it.
 
         This returns a :class:`document.Document` object which provides
@@ -133,7 +133,8 @@ class HTML:
         :param bool presentational_hints:
             Whether HTML presentational hints are followed.
         :param tuple optimize_size:
-            Optimize size of generated PDF. Can contain "images" and "fonts".
+            Optimize size of generated PDF. Can contain "images", "fonts" and
+            "pdf".
         :type font_config: :class:`text.fonts.FontConfiguration`
         :param font_config: A font configuration handling ``@font-face`` rules.
         :type counter_style: :class:`css.counters.CounterStyle`
@@ -153,7 +154,7 @@ class HTML:
 
     def write_pdf(self, target=None, stylesheets=None, zoom=1,
                   attachments=None, finisher=None, presentational_hints=False,
-                  optimize_size=('fonts',), font_config=None,
+                  optimize_size=('fonts', 'pdf'), font_config=None,
                   counter_style=None, image_cache=None, identifier=None,
                   variant=None, version=None, forms=False,
                   custom_metadata=False):
@@ -185,7 +186,8 @@ class HTML:
         :param bool presentational_hints: Whether HTML presentational hints are
             followed.
         :param tuple optimize_size:
-            Optimize size of generated PDF. Can contain "images" and "fonts".
+            Optimize size of generated PDF. Can contain "images", "fonts" and
+            "pdf".
         :type font_config: :class:`text.fonts.FontConfiguration`
         :param font_config: A font configuration handling ``@font-face`` rules.
         :type counter_style: :class:`css.counters.CounterStyle`

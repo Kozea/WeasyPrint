@@ -90,9 +90,10 @@ def main(argv=None, stdout=None, stdin=None):
     .. option:: -O <type>, --optimize-size <type>
 
         Optimize the size of generated documents. Supported types are
-        ``images``, ``fonts``, ``all`` and ``none``. This option can be used
-        multiple times, ``all`` adds all allowed values, ``none`` removes all
-        previously set values.
+        ``images``, ``fonts``, ``pdf``, ``all`` and ``none``. This option can
+        be used multiple times, ``all`` adds all allowed values, ``none``
+        removes all previously set values (including the default ones,
+        ``fonts`` and ``pdf``).
 
     .. option:: -c <folder>, --cache-folder <folder>
 
@@ -160,7 +161,8 @@ def main(argv=None, stdout=None, stdin=None):
     parser.add_argument(
         '-O', '--optimize-size', action='append',
         help='optimize output size for specified features',
-        choices=('images', 'fonts', 'all', 'none'), default=['fonts'])
+        choices=('images', 'fonts', 'pdf', 'all', 'none'),
+        default=['fonts', 'pdf'])
     parser.add_argument(
         '-c', '--cache-folder',
         help='Store cache on disk instead of memory. The ``folder`` is '
@@ -198,7 +200,7 @@ def main(argv=None, stdout=None, stdin=None):
         if arg == 'none':
             optimize_size.clear()
         elif arg == 'all':
-            optimize_size |= {'images', 'fonts'}
+            optimize_size |= {'images', 'fonts', 'pdf'}
         else:
             optimize_size.add(arg)
 

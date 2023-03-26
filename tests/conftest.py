@@ -74,7 +74,7 @@ def document_write_png(self, target=None, resolution=96, antialiasing=1,
 
 
 def html_write_png(self, target=None, stylesheets=None, resolution=96,
-                   presentational_hints=False, optimize_size=('fonts',),
+                   presentational_hints=False, optimize_size=('fonts', 'pdf'),
                    font_config=None, counter_style=None, image_cache=None):
     return self.render(
         stylesheets, presentational_hints=presentational_hints,

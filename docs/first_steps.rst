@@ -513,7 +513,8 @@ WeasyPrint provides two options to deal with images: ``optimize_size`` and
 
 ``optimize_size`` can enable size optimization for images, but also for fonts.
 When enabled, the generated PDF will include smaller images and fonts, but the
-rendering time may be slightly increased.
+rendering time may be slightly increased. The whole structure of the PDF can be
+compressed too.
 
 .. code-block:: python
 
@@ -523,7 +524,7 @@ rendering time may be slightly increased.
 
     # Full size optimization, slower, but generated PDF is smaller
     HTML('https://example.org/').write_pdf(
-        'example.pdf', optimize_size=('fonts', 'images'))
+        'example.pdf', optimize_size=('fonts', 'images', 'pdf'))
 
 ``image_cache`` gives the possibility to use a cache for images, avoiding to
 download, parse and optimize them each time they are used.

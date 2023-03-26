@@ -195,7 +195,6 @@ class Stream(pydyf.Stream):
     def __init__(self, fonts, page_rectangle, states, x_objects, patterns,
                  shadings, images, mark, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.compress = True
         self.page_rectangle = page_rectangle
         self.marked = []
         self._fonts = fonts
@@ -356,7 +355,8 @@ class Stream(pydyf.Stream):
         })
         group = Stream(
             self._fonts, self.page_rectangle, states, x_objects, patterns,
-            shadings, self._images, self._mark, extra=extra)
+            shadings, self._images, self._mark, extra=extra,
+            compress=self.compress)
         group.id = f'x{len(self._x_objects)}'
         self._x_objects[group.id] = group
         return group
@@ -407,7 +407,8 @@ class Stream(pydyf.Stream):
         })
         pattern = Stream(
             self._fonts, self.page_rectangle, states, x_objects, patterns,
-            shadings, self._images, self._mark, extra=extra)
+            shadings, self._images, self._mark, extra=extra,
+            compress=self.compress)
         pattern.id = f'p{len(self._patterns)}'
         self._patterns[pattern.id] = pattern
         return pattern
