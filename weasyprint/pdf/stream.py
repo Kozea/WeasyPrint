@@ -1,7 +1,6 @@
 """PDF stream."""
 
 import io
-import struct
 from functools import lru_cache
 from hashlib import md5
 
@@ -362,108 +361,23 @@ class Stream(pydyf.Stream):
         self._x_objects[group.id] = group
         return group
 
-    def _get_png_data(self, pillow_image, optimize):
-        image_file = io.BytesIO()
-        pillow_image.save(image_file, format='PNG', optimize=optimize)
-
-        # Read the PNG header, then discard it because we know it's a PNG. If
-        # this weren't just output from Pillow, we should actually check it.
-        image_file.seek(8)
-
-        png_data = b''
-        raw_chunk_length = image_file.read(4)
-        # PNG files consist of a series of chunks.
-        while len(raw_chunk_length) > 0:
-            # Each chunk begins with its data length (four bytes, may be zero),
-            # then its type (four ASCII characters), then the data, then four
-            # bytes of a CRC.
-            chunk_len, = struct.unpack('!I', raw_chunk_length)
-            chunk_type = image_file.read(4)
-            if chunk_type == b'IDAT':
-                png_data += image_file.read(chunk_len)
-            else:
-                image_file.seek(chunk_len, io.SEEK_CUR)
-            # We aren't checking the CRC, we assume this is a valid PNG.
-            image_file.seek(4, io.SEEK_CUR)
-            raw_chunk_length = image_file.read(4)
-
-        return png_data
-
-    def add_image(self, pillow_image, image_rendering, optimize_size):
-        image_name = f'i{pillow_image.id}'
+    def add_image(self, image, image_rendering):
+        image_name = f'i{image.id}{image_rendering}'
         self._x_objects[image_name] = None  # Set by write_pdf
         if image_name in self._images:
             # Reuse image already stored in document
             return image_name
 
-        if 'transparency' in pillow_image.info:
-            pillow_image = pillow_image.convert('RGBA')
-        elif pillow_image.mode in ('1', 'P', 'I'):
-            pillow_image = pillow_image.convert('RGB')
-
-        if pillow_image.mode in ('RGB', 'RGBA'):
-            color_space = '/DeviceRGB'
-        elif pillow_image.mode in ('L', 'LA'):
-            color_space = '/DeviceGray'
-        elif pillow_image.mode == 'CMYK':
-            color_space = '/DeviceCMYK'
-        else:
-            LOGGER.warning('Unknown image mode: %s', pillow_image.mode)
-            color_space = '/DeviceRGB'
-
         interpolate = 'true' if image_rendering == 'auto' else 'false'
-        extra = pydyf.Dictionary({
-            'Type': '/XObject',
-            'Subtype': '/Image',
-            'Width': pillow_image.width,
-            'Height': pillow_image.height,
-            'ColorSpace': color_space,
-            'BitsPerComponent': 8,
-            'Interpolate': interpolate,
-        })
+        extra = image.extra.copy()
+        extra['Interpolate'] = interpolate
+        if 'SMask' in extra:
+            extra['SMask'] = pydyf.Stream(
+                extra['SMask'].stream.copy(), extra['SMask'].extra.copy(),
+                extra['SMask'].compress)
+            extra['SMask'].extra['Interpolate'] = interpolate
 
-        optimize = 'images' in optimize_size
-        if pillow_image.format in ('JPEG', 'MPO'):
-            extra['Filter'] = '/DCTDecode'
-            image_file = io.BytesIO()
-            pillow_image.save(image_file, format='JPEG', optimize=optimize)
-            stream = [image_file.getvalue()]
-        else:
-            extra['Filter'] = '/FlateDecode'
-            extra['DecodeParms'] = pydyf.Dictionary({
-                # Predictor 15 specifies that we're providing PNG data,
-                # ostensibly using an "optimum predictor", but doesn't actually
-                # matter as long as the predictor value is 10+ according to the
-                # spec. (Other PNG predictor values assert that we're using
-                # specific predictors that we don't want to commit to, but
-                # "optimum" can vary.)
-                'Predictor': 15,
-                'Columns': pillow_image.width,
-            })
-            if pillow_image.mode in ('RGB', 'RGBA'):
-                # Defaults to 1.
-                extra['DecodeParms']['Colors'] = 3
-            if pillow_image.mode in ('RGBA', 'LA'):
-                alpha = pillow_image.getchannel('A')
-                pillow_image = pillow_image.convert(pillow_image.mode[:-1])
-                alpha_data = self._get_png_data(alpha, optimize)
-                extra['SMask'] = pydyf.Stream([alpha_data], extra={
-                    'Filter': '/FlateDecode',
-                    'Type': '/XObject',
-                    'Subtype': '/Image',
-                    'DecodeParms': pydyf.Dictionary({
-                        'Predictor': 15,
-                        'Columns': pillow_image.width,
-                    }),
-                    'Width': pillow_image.width,
-                    'Height': pillow_image.height,
-                    'ColorSpace': '/DeviceGray',
-                    'BitsPerComponent': 8,
-                    'Interpolate': interpolate,
-                    })
-            stream = [self._get_png_data(pillow_image, optimize)]
-
-        xobject = pydyf.Stream(stream, extra=extra)
+        xobject = pydyf.Stream(image.stream, extra=extra)
         self._images[image_name] = xobject
         return image_name
 

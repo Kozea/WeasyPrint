@@ -1,12 +1,15 @@
 """Fetch and decode images in various formats."""
 
+import io
 import math
+import struct
 from hashlib import md5
 from io import BytesIO
 from itertools import cycle
 from math import inf
 from xml.etree import ElementTree
 
+import pydyf
 from PIL import Image, ImageFile, ImageOps
 
 from .layout.percent import percentage
@@ -33,31 +36,135 @@ class ImageLoadingError(ValueError):
 
 
 class RasterImage:
-    def __init__(self, pillow_image, image_id, optimize_size):
-        pillow_image.id = image_id
-        self._pillow_image = pillow_image
-        self._optimize_size = optimize_size
-        self._intrinsic_width = pillow_image.width
-        self._intrinsic_height = pillow_image.height
-        self._intrinsic_ratio = (
-            self._intrinsic_width / self._intrinsic_height
-            if self._intrinsic_height != 0 else inf)
+    def __init__(self, pillow_image, image_id, optimize_size, cache):
+        self.id = image_id
+        self._cache = cache
 
-    def get_intrinsic_size(self, image_resolution, font_size):
-        return (
-            self._intrinsic_width / image_resolution,
-            self._intrinsic_height / image_resolution,
-            self._intrinsic_ratio)
+        if 'transparency' in pillow_image.info:
+            pillow_image = pillow_image.convert('RGBA')
+        elif pillow_image.mode in ('1', 'P', 'I'):
+            pillow_image = pillow_image.convert('RGB')
+
+        self.width = pillow_image.width
+        self.height = pillow_image.height
+        self.ratio = (self.width / self.height) if self.height != 0 else inf
+
+        if pillow_image.mode in ('RGB', 'RGBA'):
+            color_space = '/DeviceRGB'
+        elif pillow_image.mode in ('L', 'LA'):
+            color_space = '/DeviceGray'
+        elif pillow_image.mode == 'CMYK':
+            color_space = '/DeviceCMYK'
+        else:
+            LOGGER.warning('Unknown image mode: %s', pillow_image.mode)
+            color_space = '/DeviceRGB'
+
+        self.extra = pydyf.Dictionary({
+            'Type': '/XObject',
+            'Subtype': '/Image',
+            'Width': self.width,
+            'Height': self.height,
+            'ColorSpace': color_space,
+            'BitsPerComponent': 8,
+        })
+        optimize = 'images' in optimize_size
+        if pillow_image.format in ('JPEG', 'MPO'):
+            self.extra['Filter'] = '/DCTDecode'
+            image_file = io.BytesIO()
+            pillow_image.save(image_file, format='JPEG', optimize=optimize)
+            self.stream = self.get_stream(image_file.getvalue())
+        else:
+            self.extra['Filter'] = '/FlateDecode'
+            self.extra['DecodeParms'] = pydyf.Dictionary({
+                # Predictor 15 specifies that we're providing PNG data,
+                # ostensibly using an "optimum predictor", but doesn't actually
+                # matter as long as the predictor value is 10+ according to the
+                # spec. (Other PNG predictor values assert that we're using
+                # specific predictors that we don't want to commit to, but
+                # "optimum" can vary.)
+                'Predictor': 15,
+                'Columns': self.width,
+            })
+            if pillow_image.mode in ('RGB', 'RGBA'):
+                # Defaults to 1.
+                self.extra['DecodeParms']['Colors'] = 3
+            if pillow_image.mode in ('RGBA', 'LA'):
+                alpha = pillow_image.getchannel('A')
+                pillow_image = pillow_image.convert(pillow_image.mode[:-1])
+                alpha_data = self._get_png_data(alpha, optimize)
+                stream = self.get_stream(alpha_data, alpha=True)
+                self.extra['SMask'] = pydyf.Stream(stream, extra={
+                    'Filter': '/FlateDecode',
+                    'Type': '/XObject',
+                    'Subtype': '/Image',
+                    'DecodeParms': pydyf.Dictionary({
+                        'Predictor': 15,
+                        'Columns': pillow_image.width,
+                    }),
+                    'Width': pillow_image.width,
+                    'Height': pillow_image.height,
+                    'ColorSpace': '/DeviceGray',
+                    'BitsPerComponent': 8,
+                })
+
+            png_data = self._get_png_data(pillow_image, optimize)
+            self.stream = self.get_stream(png_data)
+
+    def get_intrinsic_size(self, resolution, font_size):
+        return self.width / resolution, self.height / resolution, self.ratio
 
     def draw(self, stream, concrete_width, concrete_height, image_rendering):
-        if self._intrinsic_width <= 0 or self._intrinsic_height <= 0:
+        if self.width <= 0 or self.height <= 0:
             return
 
-        image_name = stream.add_image(
-            self._pillow_image, image_rendering, self._optimize_size)
+        image_name = stream.add_image(self, image_rendering)
         stream.transform(
             concrete_width, 0, 0, -concrete_height, 0, concrete_height)
         stream.draw_x_object(image_name)
+
+    @staticmethod
+    def _get_png_data(pillow_image, optimize):
+        image_file = io.BytesIO()
+        pillow_image.save(image_file, format='PNG', optimize=optimize)
+
+        # Read the PNG header, then discard it because we know it's a PNG. If
+        # this weren't just output from Pillow, we should actually check it.
+        image_file.seek(8)
+
+        png_data = []
+        raw_chunk_length = image_file.read(4)
+        # PNG files consist of a series of chunks.
+        while raw_chunk_length:
+            # Each chunk begins with its data length (four bytes, may be zero),
+            # then its type (four ASCII characters), then the data, then four
+            # bytes of a CRC.
+            chunk_len, = struct.unpack('!I', raw_chunk_length)
+            chunk_type = image_file.read(4)
+            if chunk_type == b'IDAT':
+                png_data.append(image_file.read(chunk_len))
+            else:
+                image_file.seek(chunk_len, io.SEEK_CUR)
+            # We aren't checking the CRC, we assume this is a valid PNG.
+            image_file.seek(4, io.SEEK_CUR)
+            raw_chunk_length = image_file.read(4)
+
+        return b''.join(png_data)
+
+    def get_stream(self, data, alpha=False):
+        key = f'{self.id}{int(alpha)}'
+        return [LazyImage(self._cache, key, data)]
+
+
+class LazyImage(pydyf.Object):
+    def __init__(self, cache, key, data):
+        super().__init__()
+        self._key = key
+        self._cache = cache
+        cache[key] = data
+
+    @property
+    def data(self):
+        return self._cache[self._key]
 
 
 class SVGImage:
@@ -106,58 +213,67 @@ def get_image_from_uri(cache, url_fetcher, optimize_size, url,
                 string = result['file_obj'].read()
             mime_type = forced_mime_type or result['mime_type']
 
-            image = None
-            svg_exceptions = []
-            # Try to rely on given mimetype for SVG
-            if mime_type == 'image/svg+xml':
+        image = None
+        svg_exceptions = []
+        # Try to rely on given mimetype for SVG
+        if mime_type == 'image/svg+xml':
+            try:
+                tree = ElementTree.fromstring(string)
+                image = SVGImage(tree, url, url_fetcher, context)
+            except Exception as svg_exception:
+                svg_exceptions.append(svg_exception)
+        # Try pillow for raster images, or for failing SVG
+        if image is None:
+            try:
+                pillow_image = Image.open(BytesIO(string))
+            except Exception as raster_exception:
+                if mime_type == 'image/svg+xml':
+                    # Tried SVGImage then Pillow for a SVG, abort
+                    raise ImageLoadingError.from_exception(svg_exceptions[0])
                 try:
+                    # Last chance, try SVG
                     tree = ElementTree.fromstring(string)
                     image = SVGImage(tree, url, url_fetcher, context)
-                except Exception as svg_exception:
-                    svg_exceptions.append(svg_exception)
-            # Try pillow for raster images, or for failing SVG
-            if image is None:
-                try:
-                    pillow_image = Image.open(BytesIO(string))
-                except Exception as raster_exception:
-                    if mime_type == 'image/svg+xml':
-                        # Tried SVGImage then Pillow for a SVG, abort
-                        raise ImageLoadingError.from_exception(
-                            svg_exceptions[0])
-                    try:
-                        # Last chance, try SVG
-                        tree = ElementTree.fromstring(string)
-                        image = SVGImage(tree, url, url_fetcher, context)
-                    except Exception:
-                        # Tried Pillow then SVGImage for a raster, abort
-                        raise ImageLoadingError.from_exception(
-                            raster_exception)
-                else:
-                    # Store image id to enable cache in Stream.add_image
-                    image_id = md5(url.encode()).hexdigest()
-                    # Keep image format as it is discarded by transposition
-                    image_format = pillow_image.format
-                    if orientation == 'from-image':
-                        if 'exif' in pillow_image.info:
-                            pillow_image = ImageOps.exif_transpose(
-                                pillow_image)
-                    elif orientation != 'none':
-                        angle, flip = orientation
-                        if angle > 0:
-                            rotation = getattr(
-                                Image.Transpose, f'ROTATE_{angle}')
-                            pillow_image = pillow_image.transpose(rotation)
-                        if flip:
-                            pillow_image = pillow_image.transpose(
-                                Image.Transpose.FLIP_LEFT_RIGHT)
-                    pillow_image.format = image_format
-                    image = RasterImage(pillow_image, image_id, optimize_size)
+                except Exception:
+                    # Tried Pillow then SVGImage for a raster, abort
+                    raise ImageLoadingError.from_exception(raster_exception)
+            else:
+                # Store image id to enable cache in Stream.add_image
+                image_id = md5(url.encode()).hexdigest()
+                pillow_image = rotate_pillow_image(pillow_image, orientation)
+                image = RasterImage(
+                    pillow_image, image_id, optimize_size, cache)
 
     except (URLFetchingError, ImageLoadingError) as exception:
         LOGGER.error('Failed to load image at %r: %s', url, exception)
         image = None
+
     cache[url] = image
     return image
+
+
+def rotate_pillow_image(pillow_image, orientation):
+    """Return a copy of a Pillow image with modified orientation.
+
+    If orientation is not changed, return the same image.
+
+    """
+    image_format = pillow_image.format
+    if orientation == 'from-image':
+        if 'exif' in pillow_image.info:
+            pillow_image = ImageOps.exif_transpose(pillow_image)
+    elif orientation != 'none':
+        angle, flip = orientation
+        if angle > 0:
+            rotation = getattr(Image.Transpose, f'ROTATE_{angle}')
+            pillow_image = pillow_image.transpose(rotation)
+        if flip:
+            pillow_image = pillow_image.transpose(
+                Image.Transpose.FLIP_LEFT_RIGHT)
+
+    # Keep image format as it is discarded by transposition
+    pillow_image.format = image_format
+    return pillow_image
 
 
 def process_color_stops(vector_length, positions):

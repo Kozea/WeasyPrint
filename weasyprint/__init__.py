@@ -138,7 +138,11 @@ class HTML:
         :param font_config: A font configuration handling ``@font-face`` rules.
         :type counter_style: :class:`css.counters.CounterStyle`
         :param counter_style: A dictionary storing ``@counter-style`` rules.
-        :param dict image_cache: A dictionary used to cache images.
+        :param image_cache:
+            A dictionary used to cache images, or a folder path where images
+            are temporarily stored.
+        :type image_cache:
+            :obj:`dict`, :obj:`str` or :class:`document.DiskCache`
         :param bool forms: Whether PDF forms have to be included.
         :returns: A :class:`document.Document` object.
 
@@ -186,7 +190,11 @@ class HTML:
         :param font_config: A font configuration handling ``@font-face`` rules.
         :type counter_style: :class:`css.counters.CounterStyle`
         :param counter_style: A dictionary storing ``@counter-style`` rules.
-        :param dict image_cache: A dictionary used to cache images.
+        :param image_cache:
+            A dictionary used to cache images, or a folder path where images
+            are temporarily stored.
+        :type image_cache:
+            :obj:`dict`, :obj:`str` or :class:`document.DiskCache`
         :param bytes identifier: A bytestring used as PDF file identifier.
         :param str variant: A PDF variant name.
         :param str version: A PDF version number.
