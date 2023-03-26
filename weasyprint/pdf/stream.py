@@ -377,7 +377,7 @@ class Stream(pydyf.Stream):
                 extra['SMask'].compress)
             extra['SMask'].extra['Interpolate'] = interpolate
 
-        xobject = pydyf.Stream(image.stream, extra=extra)
+        xobject = pydyf.Stream(image.stream, extra)
         self._images[image_name] = xobject
         return image_name
 

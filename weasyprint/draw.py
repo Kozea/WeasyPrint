@@ -1202,8 +1202,7 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y,
                     png_data = ffi.unpack(hb_data, int(stream.length[0]))
                     pillow_image = Image.open(BytesIO(png_data))
                     image_id = f'{font.hash}{glyph}'
-                    image = RasterImage(
-                        pillow_image, image_id, optimize_size=(), cache={})
+                    image = RasterImage(pillow_image, image_id)
                     d = font.widths[glyph] / 1000
                     a = pillow_image.width / pillow_image.height * d
                     pango.pango_font_get_glyph_extents(

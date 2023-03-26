@@ -118,8 +118,9 @@ class HTML:
         return [HTML5_PH_STYLESHEET]
 
     def render(self, stylesheets=None, presentational_hints=False,
-               optimize_size=('fonts', 'pdf'), font_config=None,
-               counter_style=None, image_cache=None, forms=False):
+               optimize_size=('fonts', 'pdf'), jpeg_quality=None,
+               font_config=None, counter_style=None, image_cache=None,
+               forms=False):
         """Lay out and paginate the document, but do not (yet) export it.
 
         This returns a :class:`document.Document` object which provides
@@ -135,6 +136,7 @@ class HTML:
         :param tuple optimize_size:
             Optimize size of generated PDF. Can contain "images", "fonts" and
             "pdf".
+        :param int jpeg_quality: JPEG quality between 0 (worst) to 95 (best).
         :type font_config: :class:`text.fonts.FontConfiguration`
         :param font_config: A font configuration handling ``@font-face`` rules.
         :type counter_style: :class:`css.counters.CounterStyle`
@@ -150,13 +152,13 @@ class HTML:
         """
         return Document._render(
             self, stylesheets, presentational_hints, optimize_size,
-            font_config, counter_style, image_cache, forms)
+            jpeg_quality, font_config, counter_style, image_cache, forms)
 
     def write_pdf(self, target=None, stylesheets=None, zoom=1,
                   attachments=None, finisher=None, presentational_hints=False,
-                  optimize_size=('fonts', 'pdf'), font_config=None,
-                  counter_style=None, image_cache=None, identifier=None,
-                  variant=None, version=None, forms=False,
+                  optimize_size=('fonts', 'pdf'), jpeg_quality=None,
+                  font_config=None, counter_style=None, image_cache=None,
+                  identifier=None, variant=None, version=None, forms=False,
                   custom_metadata=False):
         """Render the document to a PDF file.
 
@@ -188,6 +190,7 @@ class HTML:
         :param tuple optimize_size:
             Optimize size of generated PDF. Can contain "images", "fonts" and
             "pdf".
+        :param int jpeg_quality: JPEG quality between 0 (worst) to 95 (best).
         :type font_config: :class:`text.fonts.FontConfiguration`
         :param font_config: A font configuration handling ``@font-face`` rules.
         :type counter_style: :class:`css.counters.CounterStyle`
@@ -211,8 +214,8 @@ class HTML:
         """
         return (
             self.render(
-                stylesheets, presentational_hints, optimize_size, font_config,
-                counter_style, image_cache, forms)
+                stylesheets, presentational_hints, optimize_size, jpeg_quality,
+                font_config, counter_style, image_cache, forms)
             .write_pdf(
                 target, zoom, attachments, finisher, identifier, variant,
                 version, custom_metadata))

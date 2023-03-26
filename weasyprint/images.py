@@ -36,9 +36,17 @@ class ImageLoadingError(ValueError):
 
 
 class RasterImage:
-    def __init__(self, pillow_image, image_id, optimize_size, cache):
+    def __init__(self, pillow_image, image_id, cache=None, optimize_size=(),
+                 jpeg_quality=None):
         self.id = image_id
-        self._cache = cache
+        self._cache = {} if cache is None else cache
+        self._optimize_size = optimize_size
+        self._jpeg_quality = jpeg_quality
+        self._intrinsic_width = pillow_image.width
+        self._intrinsic_height = pillow_image.height
+        self._intrinsic_ratio = (
+            self._intrinsic_width / self._intrinsic_height
+            if self._intrinsic_height != 0 else inf)
 
         if 'transparency' in pillow_image.info:
             pillow_image = pillow_image.convert('RGBA')
@@ -71,7 +79,10 @@ class RasterImage:
         if pillow_image.format in ('JPEG', 'MPO'):
             self.extra['Filter'] = '/DCTDecode'
             image_file = io.BytesIO()
-            pillow_image.save(image_file, format='JPEG', optimize=optimize)
+            options = {'format': 'JPEG', 'optimize': optimize}
+            if jpeg_quality is not None:
+                options['quality'] = jpeg_quality
+            pillow_image.save(image_file, **options)
             self.stream = self.get_stream(image_file.getvalue())
         else:
             self.extra['Filter'] = '/FlateDecode'
@@ -116,7 +127,6 @@ class RasterImage:
     def draw(self, stream, concrete_width, concrete_height, image_rendering):
         if self.width <= 0 or self.height <= 0:
             return
-
         image_name = stream.add_image(self, image_rendering)
         stream.transform(
             concrete_width, 0, 0, -concrete_height, 0, concrete_height)
@@ -138,12 +148,12 @@ class RasterImage:
             # Each chunk begins with its data length (four bytes, may be zero),
             # then its type (four ASCII characters), then the data, then four
             # bytes of a CRC.
-            chunk_len, = struct.unpack('!I', raw_chunk_length)
+            chunk_length, = struct.unpack('!I', raw_chunk_length)
             chunk_type = image_file.read(4)
             if chunk_type == b'IDAT':
-                png_data.append(image_file.read(chunk_len))
+                png_data.append(image_file.read(chunk_length))
             else:
-                image_file.seek(chunk_len, io.SEEK_CUR)
+                image_file.seek(chunk_length, io.SEEK_CUR)
             # We aren't checking the CRC, we assume this is a valid PNG.
             image_file.seek(4, io.SEEK_CUR)
             raw_chunk_length = image_file.read(4)
@@ -198,7 +208,7 @@ class SVGImage:
             self._url_fetcher, self._context)
 
 
-def get_image_from_uri(cache, url_fetcher, optimize_size, url,
+def get_image_from_uri(cache, url_fetcher, optimize_size, jpeg_quality, url,
                        forced_mime_type=None, context=None,
                        orientation='from-image'):
     """Get an Image instance from an image URI."""
@@ -242,7 +252,7 @@ def get_image_from_uri(cache, url_fetcher, optimize_size, url,
                 image_id = md5(url.encode()).hexdigest()
                 pillow_image = rotate_pillow_image(pillow_image, orientation)
                 image = RasterImage(
-                    pillow_image, image_id, optimize_size, cache)
+                    pillow_image, image_id, cache, optimize_size, jpeg_quality)
 
     except (URLFetchingError, ImageLoadingError) as exception:
         LOGGER.error('Failed to load image at %r: %s', url, exception)
