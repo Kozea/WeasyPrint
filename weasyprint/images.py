@@ -36,8 +36,17 @@ class ImageLoadingError(ValueError):
 
 
 class RasterImage:
-    def __init__(self, pillow_image, image_id, cache=None, optimize_size=(),
-                 jpeg_quality=None):
+    def __init__(self, pillow_image, image_id, image_data, cache=None,
+                 optimize_size=(), jpeg_quality=None, orientation='none'):
+        # Transpose image
+        original_pillow_image = pillow_image
+        pillow_image = rotate_pillow_image(pillow_image, orientation)
+        if original_pillow_image is not pillow_image:
+            # Keep image format as it is discarded by transposition
+            pillow_image.format = original_pillow_image.format
+            # Discard original data, as the image has been transformed
+            image_data = None
+
         self.id = image_id
         self._cache = {} if cache is None else cache
         self._optimize_size = optimize_size
@@ -78,12 +87,14 @@ class RasterImage:
         optimize = 'images' in optimize_size
         if pillow_image.format in ('JPEG', 'MPO'):
             self.extra['Filter'] = '/DCTDecode'
-            image_file = io.BytesIO()
-            options = {'format': 'JPEG', 'optimize': optimize}
-            if jpeg_quality is not None:
-                options['quality'] = jpeg_quality
-            pillow_image.save(image_file, **options)
-            self.stream = self.get_stream(image_file.getvalue())
+            if image_data is None or optimize or jpeg_quality is not None:
+                image_file = io.BytesIO()
+                options = {'format': 'JPEG', 'optimize': optimize}
+                if jpeg_quality is not None:
+                    options['quality'] = jpeg_quality
+                pillow_image.save(image_file, **options)
+                image_data = image_file.getvalue()
+            self.stream = self.get_stream(image_data)
         else:
             self.extra['Filter'] = '/FlateDecode'
             self.extra['DecodeParms'] = pydyf.Dictionary({
@@ -100,8 +111,11 @@ class RasterImage:
                 # Defaults to 1.
                 self.extra['DecodeParms']['Colors'] = 3
             if pillow_image.mode in ('RGBA', 'LA'):
+                # Remove alpha channel from image and discard original data
                 alpha = pillow_image.getchannel('A')
                 pillow_image = pillow_image.convert(pillow_image.mode[:-1])
+                image_data = None
+                # Save alpha channel as mask
                 alpha_data = self._get_png_data(alpha, optimize)
                 stream = self.get_stream(alpha_data, alpha=True)
                 self.extra['SMask'] = pydyf.Stream(stream, extra={
@@ -118,7 +132,7 @@ class RasterImage:
                     'BitsPerComponent': 8,
                 })
 
-            png_data = self._get_png_data(pillow_image, optimize)
+            png_data = self._get_png_data(pillow_image, optimize, image_data)
             self.stream = self.get_stream(png_data)
 
     def get_intrinsic_size(self, resolution, font_size):
@@ -133,9 +147,13 @@ class RasterImage:
         stream.draw_x_object(image_name)
 
     @staticmethod
-    def _get_png_data(pillow_image, optimize):
-        image_file = io.BytesIO()
-        pillow_image.save(image_file, format='PNG', optimize=optimize)
+    def _get_png_data(pillow_image, optimize, image_data=None):
+        format = pillow_image.format
+        if image_data is not None and format == 'PNG' and not optimize:
+            image_file = io.BytesIO(image_data)
+        else:
+            image_file = io.BytesIO()
+            pillow_image.save(image_file, format='PNG', optimize=optimize)
 
         # Read the PNG header, then discard it because we know it's a PNG. If
         # this weren't just output from Pillow, we should actually check it.
@@ -250,9 +268,9 @@ def get_image_from_uri(cache, url_fetcher, optimize_size, jpeg_quality, url,
             else:
                 # Store image id to enable cache in Stream.add_image
                 image_id = md5(url.encode()).hexdigest()
-                pillow_image = rotate_pillow_image(pillow_image, orientation)
                 image = RasterImage(
-                    pillow_image, image_id, cache, optimize_size, jpeg_quality)
+                    pillow_image, image_id, string, cache, optimize_size,
+                    jpeg_quality, orientation)
 
     except (URLFetchingError, ImageLoadingError) as exception:
         LOGGER.error('Failed to load image at %r: %s', url, exception)
