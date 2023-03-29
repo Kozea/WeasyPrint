@@ -7,6 +7,8 @@ from hashlib import md5
 from io import BytesIO
 from itertools import cycle
 from math import inf
+from pathlib import Path
+from urllib.parse import urlparse
 from xml.etree import ElementTree
 
 import pydyf
@@ -36,8 +38,9 @@ class ImageLoadingError(ValueError):
 
 
 class RasterImage:
-    def __init__(self, pillow_image, image_id, image_data, cache=None,
-                 optimize_size=(), jpeg_quality=None, orientation='none'):
+    def __init__(self, pillow_image, image_id, image_data, filename=None,
+                 cache=None, optimize_size=(), jpeg_quality=None,
+                 orientation='none'):
         # Transpose image
         original_pillow_image = pillow_image
         pillow_image = rotate_pillow_image(pillow_image, orientation)
@@ -45,7 +48,7 @@ class RasterImage:
             # Keep image format as it is discarded by transposition
             pillow_image.format = original_pillow_image.format
             # Discard original data, as the image has been transformed
-            image_data = None
+            image_data = filename = None
 
         self.id = image_id
         self._cache = {} if cache is None else cache
@@ -94,7 +97,8 @@ class RasterImage:
                     options['quality'] = jpeg_quality
                 pillow_image.save(image_file, **options)
                 image_data = image_file.getvalue()
-            self.stream = self.get_stream(image_data)
+                filename = None
+            self.stream = self.get_stream(image_data, filename)
         else:
             self.extra['Filter'] = '/FlateDecode'
             self.extra['DecodeParms'] = pydyf.Dictionary({
@@ -178,9 +182,12 @@ class RasterImage:
 
         return b''.join(png_data)
 
-    def get_stream(self, data, alpha=False):
-        key = f'{self.id}{int(alpha)}'
-        return [LazyImage(self._cache, key, data)]
+    def get_stream(self, data, filename=None, alpha=False):
+        if filename:
+            return [LazyLocalImage(filename)]
+        else:
+            key = f'{self.id}{int(alpha)}'
+            return [LazyImage(self._cache, key, data)]
 
 
 class LazyImage(pydyf.Object):
@@ -193,6 +200,16 @@ class LazyImage(pydyf.Object):
     @property
     def data(self):
         return self._cache[self._key]
+
+
+class LazyLocalImage(pydyf.Object):
+    def __init__(self, filename):
+        super().__init__()
+        self._filename = filename
+
+    @property
+    def data(self):
+        return Path(self._filename).read_bytes()
 
 
 class SVGImage:
@@ -235,6 +252,8 @@ def get_image_from_uri(cache, url_fetcher, optimize_size, jpeg_quality, url,
 
     try:
         with fetch(url_fetcher, url) as result:
+            parsed_url = urlparse(result.get('redirected_url'))
+            filename = parsed_url.path if parsed_url.scheme == 'file' else None
             if 'string' in result:
                 string = result['string']
             else:
@@ -269,8 +288,8 @@ def get_image_from_uri(cache, url_fetcher, optimize_size, jpeg_quality, url,
                 # Store image id to enable cache in Stream.add_image
                 image_id = md5(url.encode()).hexdigest()
                 image = RasterImage(
-                    pillow_image, image_id, string, cache, optimize_size,
-                    jpeg_quality, orientation)
+                    pillow_image, image_id, string, filename, cache,
+                    optimize_size, jpeg_quality, orientation)
 
     except (URLFetchingError, ImageLoadingError) as exception:
         LOGGER.error('Failed to load image at %r: %s', url, exception)
