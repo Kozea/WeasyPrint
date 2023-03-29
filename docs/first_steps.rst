@@ -540,6 +540,11 @@ time when you render a lot of documents that use the same images.
         HTML(f'https://example.org/?id={i}').write_pdf(
             f'example-{i}.pdf', image_cache=cache)
 
+It’s also possible to cache images on disk instead of keeping them in memory.
+The ``--cache-folder`` CLI option can be used to define the folder used to
+store temporary images. You can also provide this folder path as a string for
+``image_cache``.
+
 
 Logging
 ~~~~~~~
