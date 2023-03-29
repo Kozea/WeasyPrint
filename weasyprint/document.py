@@ -230,7 +230,7 @@ class Document:
         user_stylesheets = []
         if image_cache is None:
             image_cache = {}
-        elif not isinstance(image_cache, DiskCache):
+        elif not isinstance(image_cache, (dict, DiskCache)):
             image_cache = DiskCache(image_cache)
         for css in stylesheets or []:
             if not hasattr(css, 'matcher'):
