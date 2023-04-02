@@ -219,7 +219,7 @@ class Document:
 
     @classmethod
     def _build_layout_context(cls, html, stylesheets, presentational_hints,
-                              optimize_size, jpeg_quality, font_config,
+                              optimize_size, jpeg_quality, dpi, font_config,
                               counter_style, image_cache, forms):
         if font_config is None:
             font_config = FontConfiguration()
@@ -244,7 +244,7 @@ class Document:
         get_image_from_uri = functools.partial(
             original_get_image_from_uri, cache=image_cache,
             url_fetcher=html.url_fetcher, optimize_size=optimize_size,
-            jpeg_quality=jpeg_quality)
+            jpeg_quality=jpeg_quality, dpi=dpi)
         PROGRESS_LOGGER.info('Step 4 - Creating formatting structure')
         context = LayoutContext(
             style_for, get_image_from_uri, font_config, counter_style,
@@ -253,7 +253,8 @@ class Document:
 
     @classmethod
     def _render(cls, html, stylesheets, presentational_hints, optimize_size,
-                jpeg_quality, font_config, counter_style, image_cache, forms):
+                jpeg_quality, dpi, font_config, counter_style, image_cache,
+                forms):
         if font_config is None:
             font_config = FontConfiguration()
 
@@ -262,7 +263,7 @@ class Document:
 
         context = cls._build_layout_context(
             html, stylesheets, presentational_hints, optimize_size,
-            jpeg_quality, font_config, counter_style, image_cache, forms)
+            jpeg_quality, dpi, font_config, counter_style, image_cache, forms)
 
         root_box = build_formatting_structure(
             html.etree_element, context.style_for, context.get_image_from_uri,

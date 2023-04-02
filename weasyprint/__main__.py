@@ -175,6 +175,9 @@ def main(argv=None, stdout=None, stdin=None):
         '-j', '--jpeg-quality', type=int,
         help='JPEG quality between 0 (worst) to 95 (best)')
     parser.add_argument(
+        '-D', '--dpi', type=int,
+        help='Maximum resolution of images embedded in the PDF')
+    parser.add_argument(
         '-v', '--verbose', action='store_true',
         help='show warnings and information messages')
     parser.add_argument(
@@ -216,6 +219,7 @@ def main(argv=None, stdout=None, stdin=None):
         'presentational_hints': args.presentational_hints,
         'optimize_size': tuple(optimize_size),
         'jpeg_quality': args.jpeg_quality,
+        'dpi': args.dpi,
         'attachments': args.attachment,
         'identifier': args.pdf_identifier,
         'variant': args.pdf_variant,
