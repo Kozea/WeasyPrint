@@ -8,7 +8,8 @@ from io import BytesIO
 from itertools import cycle
 from math import inf
 from pathlib import Path
-from urllib.parse import unquote, urlparse
+from urllib.parse import urlparse
+from urllib.request import url2pathname
 from xml.etree import ElementTree
 
 import pydyf
@@ -287,7 +288,7 @@ def get_image_from_uri(cache, url_fetcher, optimize_size, jpeg_quality, dpi,
         with fetch(url_fetcher, url) as result:
             parsed_url = urlparse(result.get('redirected_url'))
             if parsed_url.scheme == 'file':
-                filename = unquote(parsed_url.path)
+                filename = url2pathname(parsed_url.path)
             else:
                 filename = None
             if 'string' in result:
