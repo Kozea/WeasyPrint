@@ -53,7 +53,6 @@ class RasterImage:
 
         self.id = image_id
         self._cache = {} if cache is None else cache
-        self._optimize_size = optimize_size
         self._jpeg_quality = jpeg_quality
         self._dpi = dpi
 
@@ -66,8 +65,8 @@ class RasterImage:
         self.width = pillow_image.width
         self.height = pillow_image.height
         self.ratio = (self.width / self.height) if self.height != 0 else inf
+        self.optimize = optimize = 'images' in optimize_size
 
-        optimize = 'images' in optimize_size
         if pillow_image.format in ('JPEG', 'MPO'):
             self.format = 'JPEG'
             if image_data is None or optimize or jpeg_quality is not None:
@@ -105,9 +104,10 @@ class RasterImage:
                 image = Image.open(io.BytesIO(self.image_data.data))
                 width = int(round(self.width * ratio))
                 height = int(round(self.height * ratio))
-                image.thumbnail((width, height))
+                image.thumbnail((max(1, width), max(1, height)))
                 image_file = io.BytesIO()
-                image.save(image_file, format=image.format)
+                image.save(
+                    image_file, format=image.format, optimize=self.optimize)
                 width, height = image.width, image.height
                 self.image_data = self.cache_image_data(image_file.getvalue())
         else:
