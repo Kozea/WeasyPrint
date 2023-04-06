@@ -104,6 +104,10 @@ def main(argv=None, stdout=None, stdin=None):
 
         JPEG quality between 0 (worst) to 95 (best).
 
+    .. option:: -D <dpi>, --dpi <dpi>
+
+        Maximum resolution of images embedded in the PDF.
+
     .. option:: -v, --verbose
 
         Show warnings and information messages.
