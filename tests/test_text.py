@@ -1025,6 +1025,19 @@ def test_overflow_wrap_trailing_space(wrap, text, body_width, expected_width):
     assert td.width == expected_width
 
 
+def test_line_break_before_trailing_space():
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1852
+    page, = render_pages('''
+        <p style="display: inline-block">test\u2028 </p>a
+        <p style="display: inline-block">test\u2028</p>a
+    ''')
+    html, = page.children
+    body, = html.children
+    line, = body.children
+    p1, space1, p2, space2 = line.children
+    assert p1.width == p2.width
+
+
 def white_space_lines(width, space):
     page, = render_pages('''
       <style>
