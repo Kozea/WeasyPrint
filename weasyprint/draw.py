@@ -1210,7 +1210,7 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y,
                     f = f / font_size - font_size
                     emojis.append([image, font, a, d, x_advance, f])
 
-            x_advance += (font.widths[glyph] + offset) / 1000
+            x_advance += (font.widths[glyph] + offset - kerning) / 1000
 
         # Close the last glyphs list, remove if empty
         if string[-1] == '<':
