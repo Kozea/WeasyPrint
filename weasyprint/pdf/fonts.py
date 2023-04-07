@@ -47,13 +47,12 @@ def build_fonts_dictionary(pdf, fonts, optimize_size):
         else:
             # Store width and Unicode map for all glyphs
             font_widths, cmap = {}, {}
-            ratio = 1024 / font.ttfont['head'].unitsPerEm
             for letter, key in font.ttfont.getBestCmap().items():
                 glyph = font.ttfont.getGlyphID(key)
                 if glyph not in cmap:
                     cmap[glyph] = chr(letter)
                 width = font.ttfont.getGlyphSet()[key].width
-                font_widths[glyph] = width * ratio
+                font_widths[glyph] = width * 1000 / font.upem
 
         max_x = max(font_widths.values()) if font_widths else 0
         bbox = (0, font.descent, max_x, font.ascent)
