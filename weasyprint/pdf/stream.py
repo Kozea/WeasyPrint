@@ -97,7 +97,7 @@ class Font:
         if len(widths) > 1 and len(set(widths)) == 1:
             self.flags += 2 ** (1 - 1)  # FixedPitch
 
-    def clean(self, cmap):
+    def clean(self, cmap, hinting):
         if self.ttfont is None:
             return
 
@@ -106,7 +106,7 @@ class Font:
             optimized_font = io.BytesIO()
             options = subset.Options(
                 retain_gids=True, passthrough_tables=True,
-                ignore_missing_glyphs=True, hinting=False,
+                ignore_missing_glyphs=True, hinting=hinting,
                 desubroutinize=True)
             options.drop_tables += ['GSUB', 'GPOS', 'SVG']
             subsetter = subset.Subsetter(options)

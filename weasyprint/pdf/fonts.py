@@ -25,7 +25,8 @@ def build_fonts_dictionary(pdf, fonts, optimize_size):
         if 'fonts' in optimize_size and not font.used_in_forms:
             for file_font in file_fonts:
                 cmap = {**cmap, **file_font.cmap}
-        font.clean(cmap)
+        hinting = 'hinting' not in optimize_size
+        font.clean(cmap, hinting)
 
         # Include font
         if font.type == 'otf':

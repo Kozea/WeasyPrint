@@ -134,8 +134,8 @@ class HTML:
         :param bool presentational_hints:
             Whether HTML presentational hints are followed.
         :param tuple optimize_size:
-            Optimize size of generated PDF. Can contain "images", "fonts" and
-            "pdf".
+            Optimize size of generated PDF. Can contain "images", "fonts",
+            "hinting" and "pdf".
         :param int jpeg_quality: JPEG quality between 0 (worst) to 95 (best).
         :param int dpi: Maximum resolution of images embedded in the PDF.
         :type font_config: :class:`text.fonts.FontConfiguration`
@@ -188,8 +188,8 @@ class HTML:
         :param bool presentational_hints: Whether HTML presentational hints are
             followed.
         :param tuple optimize_size:
-            Optimize size of generated PDF. Can contain "images", "fonts" and
-            "pdf".
+            Optimize size of generated PDF. Can contain "images", "fonts",
+            "hinting" and "pdf".
         :param int jpeg_quality: JPEG quality between 0 (worst) to 95 (best).
         :param int dpi: Maximum resolution of images embedded in the PDF.
         :type font_config: :class:`text.fonts.FontConfiguration`

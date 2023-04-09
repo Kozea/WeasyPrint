@@ -376,12 +376,16 @@ def test_command_line_render(tmpdir):
     assert (
         len(tmpdir.join('out26.pdf').read_binary()) <
         len(tmpdir.join('out25.pdf').read_binary()) <
+        len(tmpdir.join('out19.pdf').read_binary()) <
         len(tmpdir.join('out16.pdf').read_binary()) <
         len(tmpdir.join('out15.pdf').read_binary()) <
         len(tmpdir.join('out20.pdf').read_binary()))
     assert len({
         tmpdir.join(f'out{i}.pdf').read_binary()
-        for i in (16, 18, 19, 21)}) == 1
+        for i in (16, 18)}) == 1
+    assert len({
+        tmpdir.join(f'out{i}.pdf').read_binary()
+        for i in (19, 21)}) == 1
     assert len({
         tmpdir.join(f'out{i}.pdf').read_binary()
         for i in (15, 17, 23, 24, 27)}) == 1
