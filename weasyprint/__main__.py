@@ -170,7 +170,7 @@ def main(argv=None, stdout=None, stdin=None):
         '-O', '--optimize-size', action='append',
         help='optimize output size for specified features',
         choices=('images', 'fonts', 'hinting', 'pdf', 'all', 'none'),
-        default=['fonts', 'pdf'])
+        default=['fonts', 'hinting', 'pdf'])
     parser.add_argument(
         '-c', '--cache-folder',
         help='Store cache on disk instead of memory. The ``folder`` is '

@@ -303,7 +303,7 @@ def test_command_line_render(tmpdir):
         tmpdir.join(name).write_binary(pattern_bytes)
 
     # Reference
-    optimize_size = ('fonts', 'pdf')
+    optimize_size = ('fonts', 'hinting', 'pdf')
     html_obj = FakeHTML(string=combined, base_url='dummy.html')
     pdf_bytes = html_obj.write_pdf(optimize_size=optimize_size)
     rotated_pdf_bytes = FakeHTML(
@@ -369,23 +369,19 @@ def test_command_line_render(tmpdir):
     _run('not_optimized.html out21.pdf -O none -O all')
     _run('not_optimized.html out22.pdf -O all -O none')
     _run('not_optimized.html out23.pdf -O pdf')
-    _run('not_optimized.html out24.pdf -O none -O fonts -O pdf')
+    _run('not_optimized.html out24.pdf -O none -O fonts -O pdf -O hinting')
     _run('not_optimized.html out25.pdf -O all -j 10')
     _run('not_optimized.html out26.pdf -O all -j 10 -D 1')
     _run(f'not_optimized.html out27.pdf -c {tmpdir}')
     assert (
         len(tmpdir.join('out26.pdf').read_binary()) <
         len(tmpdir.join('out25.pdf').read_binary()) <
-        len(tmpdir.join('out19.pdf').read_binary()) <
         len(tmpdir.join('out16.pdf').read_binary()) <
         len(tmpdir.join('out15.pdf').read_binary()) <
         len(tmpdir.join('out20.pdf').read_binary()))
     assert len({
         tmpdir.join(f'out{i}.pdf').read_binary()
-        for i in (16, 18)}) == 1
-    assert len({
-        tmpdir.join(f'out{i}.pdf').read_binary()
-        for i in (19, 21)}) == 1
+        for i in (16, 18, 19, 21)}) == 1
     assert len({
         tmpdir.join(f'out{i}.pdf').read_binary()
         for i in (15, 17, 23, 24, 27)}) == 1

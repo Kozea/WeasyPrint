@@ -524,7 +524,7 @@ compressed too.
 
     # Full size optimization, slower, but generated PDF is smaller
     HTML('https://example.org/').write_pdf(
-        'example.pdf', optimize_size=('fonts', 'images', 'pdf'))
+        'example.pdf', optimize_size=('fonts', 'images', 'hinting', 'pdf'))
 
 ``image_cache`` gives the possibility to use a cache for images, avoiding to
 download, parse and optimize them each time they are used.
