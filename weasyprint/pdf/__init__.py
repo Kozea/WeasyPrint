@@ -153,9 +153,10 @@ def generate_pdf(document, target, zoom, attachments, optimize_size,
         page_rectangle = (
             left / scale, top / scale,
             (right - left) / scale, (bottom - top) / scale)
+        compress = 'pdf' in optimize_size
         stream = Stream(
             document.fonts, page_rectangle, states, x_objects, patterns,
-            shadings, images, mark)
+            shadings, images, mark, compress=compress)
         stream.transform(d=-1, f=(page.height * scale))
         pdf.add_object(stream)
         page_streams.append(stream)
@@ -175,10 +176,11 @@ def generate_pdf(document, target, zoom, attachments, optimize_size,
 
         add_links(links_and_anchors, matrix, pdf, pdf_page, pdf_names, mark)
         add_annotations(
-            links_and_anchors[0], matrix, document, pdf, pdf_page, annot_files)
+            links_and_anchors[0], matrix, document, pdf, pdf_page, annot_files,
+            compress)
         add_inputs(
             page.inputs, matrix, pdf, pdf_page, resources, stream,
-            document.font_config.font_map)
+            document.font_config.font_map, compress)
         page.paint(stream, scale=scale)
 
         # Bleed
@@ -281,6 +283,7 @@ def generate_pdf(document, target, zoom, attachments, optimize_size,
 
     # Apply PDF variants functions
     if variant:
-        variant_function(pdf, metadata, document, page_streams)
+        compress = 'pdf' in optimize_size
+        variant_function(pdf, metadata, document, page_streams, compress)
 
     return pdf

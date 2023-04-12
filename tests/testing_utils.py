@@ -53,6 +53,19 @@ class FakeHTML(HTML):
             TEST_UA_STYLESHEET if stylesheet == HTML5_UA_STYLESHEET
             else stylesheet for stylesheet in super()._ua_stylesheets(forms)]
 
+    def write_pdf(self, target=None, stylesheets=None, zoom=1,
+                  attachments=None, finisher=None, presentational_hints=False,
+                  optimize_size=('fonts',), jpeg_quality=None, dpi=None,
+                  font_config=None, counter_style=None, image_cache=None,
+                  identifier=None, variant=None, version=None, forms=False,
+                  custom_metadata=False):
+        # Override function to set PDF size optimization to False by default
+        return super().write_pdf(
+            target, stylesheets, zoom, attachments, finisher,
+            presentational_hints, optimize_size, jpeg_quality, dpi,
+            font_config, counter_style, image_cache, identifier, variant,
+            version, forms, custom_metadata)
+
 
 def resource_filename(basename):
     """Return the absolute path of the resource called ``basename``."""
@@ -182,7 +195,7 @@ def _parse_base(html_content, base_url=BASE_URL):
     style_for = get_all_computed_styles(document, counter_style=counter_style)
     get_image_from_uri = functools.partial(
         images.get_image_from_uri, cache={}, url_fetcher=document.url_fetcher,
-        optimize_size=())
+        optimize_size=(), jpeg_quality=None, dpi=None)
     target_collector = TargetCollector()
     footnotes = []
     return (

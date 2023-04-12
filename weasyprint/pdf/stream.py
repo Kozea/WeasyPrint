@@ -97,7 +97,7 @@ class Font:
         if len(widths) > 1 and len(set(widths)) == 1:
             self.flags += 2 ** (1 - 1)  # FixedPitch
 
-    def clean(self, cmap):
+    def clean(self, cmap, hinting):
         if self.ttfont is None:
             return
 
@@ -106,7 +106,7 @@ class Font:
             optimized_font = io.BytesIO()
             options = subset.Options(
                 retain_gids=True, passthrough_tables=True,
-                ignore_missing_glyphs=True, hinting=False,
+                ignore_missing_glyphs=True, hinting=hinting,
                 desubroutinize=True)
             options.drop_tables += ['GSUB', 'GPOS', 'SVG']
             subsetter = subset.Subsetter(options)
@@ -195,7 +195,6 @@ class Stream(pydyf.Stream):
     def __init__(self, fonts, page_rectangle, states, x_objects, patterns,
                  shadings, images, mark, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.compress = True
         self.page_rectangle = page_rectangle
         self.marked = []
         self._fonts = fonts
@@ -356,28 +355,20 @@ class Stream(pydyf.Stream):
         })
         group = Stream(
             self._fonts, self.page_rectangle, states, x_objects, patterns,
-            shadings, self._images, self._mark, extra=extra)
+            shadings, self._images, self._mark, extra=extra,
+            compress=self.compress)
         group.id = f'x{len(self._x_objects)}'
         self._x_objects[group.id] = group
         return group
 
-    def add_image(self, image, image_rendering):
-        image_name = f'i{image.id}{image_rendering}'
+    def add_image(self, image, width, height, interpolate):
+        image_name = f'i{image.id}{width}{height}{interpolate}'
         self._x_objects[image_name] = None  # Set by write_pdf
         if image_name in self._images:
             # Reuse image already stored in document
             return image_name
 
-        interpolate = 'true' if image_rendering == 'auto' else 'false'
-        extra = image.extra.copy()
-        extra['Interpolate'] = interpolate
-        if 'SMask' in extra:
-            extra['SMask'] = pydyf.Stream(
-                extra['SMask'].stream.copy(), extra['SMask'].extra.copy(),
-                extra['SMask'].compress)
-            extra['SMask'].extra['Interpolate'] = interpolate
-
-        xobject = pydyf.Stream(image.stream, extra=extra)
+        xobject = image.get_xobject(width, height, interpolate)
         self._images[image_name] = xobject
         return image_name
 
@@ -407,7 +398,8 @@ class Stream(pydyf.Stream):
         })
         pattern = Stream(
             self._fonts, self.page_rectangle, states, x_objects, patterns,
-            shadings, self._images, self._mark, extra=extra)
+            shadings, self._images, self._mark, extra=extra,
+            compress=self.compress)
         pattern.id = f'p{len(self._patterns)}'
         self._patterns[pattern.id] = pattern
         return pattern

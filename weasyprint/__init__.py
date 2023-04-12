@@ -118,7 +118,8 @@ class HTML:
         return [HTML5_PH_STYLESHEET]
 
     def render(self, stylesheets=None, presentational_hints=False,
-               optimize_size=('fonts',), font_config=None, counter_style=None,
+               optimize_size=('fonts', 'hinting', 'pdf'), jpeg_quality=None,
+               dpi=None, font_config=None, counter_style=None,
                image_cache=None, forms=False):
         """Lay out and paginate the document, but do not (yet) export it.
 
@@ -133,7 +134,10 @@ class HTML:
         :param bool presentational_hints:
             Whether HTML presentational hints are followed.
         :param tuple optimize_size:
-            Optimize size of generated PDF. Can contain "images" and "fonts".
+            Optimize size of generated PDF. Can contain "images", "fonts",
+            "hinting" and "pdf".
+        :param int jpeg_quality: JPEG quality between 0 (worst) to 95 (best).
+        :param int dpi: Maximum resolution of images embedded in the PDF.
         :type font_config: :class:`text.fonts.FontConfiguration`
         :param font_config: A font configuration handling ``@font-face`` rules.
         :type counter_style: :class:`css.counters.CounterStyle`
@@ -141,22 +145,21 @@ class HTML:
         :param image_cache:
             A dictionary used to cache images, or a folder path where images
             are temporarily stored.
-        :type image_cache:
-            :obj:`dict`, :obj:`str` or :class:`document.DiskCache`
+        :type image_cache: :obj:`dict` or :obj:`str`
         :param bool forms: Whether PDF forms have to be included.
         :returns: A :class:`document.Document` object.
 
         """
         return Document._render(
             self, stylesheets, presentational_hints, optimize_size,
-            font_config, counter_style, image_cache, forms)
+            jpeg_quality, dpi, font_config, counter_style, image_cache, forms)
 
     def write_pdf(self, target=None, stylesheets=None, zoom=1,
                   attachments=None, finisher=None, presentational_hints=False,
-                  optimize_size=('fonts',), font_config=None,
-                  counter_style=None, image_cache=None, identifier=None,
-                  variant=None, version=None, forms=False,
-                  custom_metadata=False):
+                  optimize_size=('fonts', 'hinting', 'pdf'), jpeg_quality=None,
+                  dpi=None, font_config=None, counter_style=None,
+                  image_cache=None, identifier=None, variant=None,
+                  version=None, forms=False, custom_metadata=False):
         """Render the document to a PDF file.
 
         This is a shortcut for calling :meth:`render`, then
@@ -185,7 +188,10 @@ class HTML:
         :param bool presentational_hints: Whether HTML presentational hints are
             followed.
         :param tuple optimize_size:
-            Optimize size of generated PDF. Can contain "images" and "fonts".
+            Optimize size of generated PDF. Can contain "images", "fonts",
+            "hinting" and "pdf".
+        :param int jpeg_quality: JPEG quality between 0 (worst) to 95 (best).
+        :param int dpi: Maximum resolution of images embedded in the PDF.
         :type font_config: :class:`text.fonts.FontConfiguration`
         :param font_config: A font configuration handling ``@font-face`` rules.
         :type counter_style: :class:`css.counters.CounterStyle`
@@ -193,8 +199,7 @@ class HTML:
         :param image_cache:
             A dictionary used to cache images, or a folder path where images
             are temporarily stored.
-        :type image_cache:
-            :obj:`dict`, :obj:`str` or :class:`document.DiskCache`
+        :type image_cache: :obj:`dict` or :obj:`str`
         :param bytes identifier: A bytestring used as PDF file identifier.
         :param str variant: A PDF variant name.
         :param str version: A PDF version number.
@@ -209,8 +214,8 @@ class HTML:
         """
         return (
             self.render(
-                stylesheets, presentational_hints, optimize_size, font_config,
-                counter_style, image_cache, forms)
+                stylesheets, presentational_hints, optimize_size, jpeg_quality,
+                dpi, font_config, counter_style, image_cache, forms)
             .write_pdf(
                 target, zoom, attachments, finisher, identifier, variant,
                 version, custom_metadata))

@@ -219,8 +219,8 @@ class Document:
 
     @classmethod
     def _build_layout_context(cls, html, stylesheets, presentational_hints,
-                              optimize_size, font_config, counter_style,
-                              image_cache, forms):
+                              optimize_size, jpeg_quality, dpi, font_config,
+                              counter_style, image_cache, forms):
         if font_config is None:
             font_config = FontConfiguration()
         if counter_style is None:
@@ -230,7 +230,7 @@ class Document:
         user_stylesheets = []
         if image_cache is None:
             image_cache = {}
-        elif not isinstance(image_cache, DiskCache):
+        elif not isinstance(image_cache, (dict, DiskCache)):
             image_cache = DiskCache(image_cache)
         for css in stylesheets or []:
             if not hasattr(css, 'matcher'):
@@ -243,7 +243,8 @@ class Document:
             counter_style, page_rules, target_collector, forms)
         get_image_from_uri = functools.partial(
             original_get_image_from_uri, cache=image_cache,
-            url_fetcher=html.url_fetcher, optimize_size=optimize_size)
+            url_fetcher=html.url_fetcher, optimize_size=optimize_size,
+            jpeg_quality=jpeg_quality, dpi=dpi)
         PROGRESS_LOGGER.info('Step 4 - Creating formatting structure')
         context = LayoutContext(
             style_for, get_image_from_uri, font_config, counter_style,
@@ -252,7 +253,8 @@ class Document:
 
     @classmethod
     def _render(cls, html, stylesheets, presentational_hints, optimize_size,
-                font_config, counter_style, image_cache, forms):
+                jpeg_quality, dpi, font_config, counter_style, image_cache,
+                forms):
         if font_config is None:
             font_config = FontConfiguration()
 
@@ -261,7 +263,7 @@ class Document:
 
         context = cls._build_layout_context(
             html, stylesheets, presentational_hints, optimize_size,
-            font_config, counter_style, image_cache, forms)
+            jpeg_quality, dpi, font_config, counter_style, image_cache, forms)
 
         root_box = build_formatting_structure(
             html.etree_element, context.style_for, context.get_image_from_uri,
@@ -296,8 +298,8 @@ class Document:
         # rendering is destroyed. This is needed as font_config.__del__ removes
         # fonts that may be used when rendering
         self.font_config = font_config
-        # Set of flags for PDF size optimization. Can contain "images" and
-        # "fonts".
+        # Set of flags for PDF size optimization. Can contain "images", "fonts"
+        # and "pdf".
         self._optimize_size = optimize_size
 
     def build_element_structure(self, structure, etree_element=None):
@@ -414,13 +416,15 @@ class Document:
         if finisher:
             finisher(self, pdf)
 
+        compress = 'pdf' in self._optimize_size
+
         if target is None:
             output = io.BytesIO()
-            pdf.write(output, version=pdf.version, identifier=identifier)
+            pdf.write(output, pdf.version, identifier, compress)
             return output.getvalue()
 
         if hasattr(target, 'write'):
-            pdf.write(target, version=pdf.version, identifier=identifier)
+            pdf.write(target, pdf.version, identifier, compress)
         else:
             with open(target, 'wb') as fd:
-                pdf.write(fd, version=pdf.version, identifier=identifier)
+                pdf.write(fd, pdf.version, identifier, compress)

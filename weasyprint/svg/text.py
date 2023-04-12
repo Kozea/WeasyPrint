@@ -12,6 +12,10 @@ class TextBox:
         self.pango_layout = pango_layout
         self.style = style
 
+    @property
+    def text(self):
+        return self.pango_layout.text
+
 
 def text(svg, node, font_size):
     """Draw text node."""

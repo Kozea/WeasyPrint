@@ -90,14 +90,23 @@ def main(argv=None, stdout=None, stdin=None):
     .. option:: -O <type>, --optimize-size <type>
 
         Optimize the size of generated documents. Supported types are
-        ``images``, ``fonts``, ``all`` and ``none``. This option can be used
-        multiple times, ``all`` adds all allowed values, ``none`` removes all
-        previously set values.
+        ``images``, ``fonts``, ``hinting``, ``pdf``, ``all`` and ``none``.
+        This option can be used multiple times, ``all`` adds all allowed
+        values, ``none`` removes all previously set values (including the
+        default ones, ``fonts`` and ``pdf``).
 
     .. option:: -c <folder>, --cache-folder <folder>
 
         Store cache on disk instead of memory. The ``folder`` is created if
         needed and cleaned after the PDF is generated.
+
+    .. option:: -j <quality>, --jpeg-quality <quality>
+
+        JPEG quality between 0 (worst) to 95 (best).
+
+    .. option:: -D <dpi>, --dpi <dpi>
+
+        Maximum resolution of images embedded in the PDF.
 
     .. option:: -v, --verbose
 
@@ -160,11 +169,18 @@ def main(argv=None, stdout=None, stdin=None):
     parser.add_argument(
         '-O', '--optimize-size', action='append',
         help='optimize output size for specified features',
-        choices=('images', 'fonts', 'all', 'none'), default=['fonts'])
+        choices=('images', 'fonts', 'hinting', 'pdf', 'all', 'none'),
+        default=['fonts', 'hinting', 'pdf'])
     parser.add_argument(
         '-c', '--cache-folder',
         help='Store cache on disk instead of memory. The ``folder`` is '
         'created if needed and cleaned after the PDF is generated.')
+    parser.add_argument(
+        '-j', '--jpeg-quality', type=int,
+        help='JPEG quality between 0 (worst) to 95 (best)')
+    parser.add_argument(
+        '-D', '--dpi', type=int,
+        help='Maximum resolution of images embedded in the PDF')
     parser.add_argument(
         '-v', '--verbose', action='store_true',
         help='show warnings and information messages')
@@ -198,7 +214,7 @@ def main(argv=None, stdout=None, stdin=None):
         if arg == 'none':
             optimize_size.clear()
         elif arg == 'all':
-            optimize_size |= {'images', 'fonts'}
+            optimize_size |= {'images', 'fonts', 'hinting', 'pdf'}
         else:
             optimize_size.add(arg)
 
@@ -206,6 +222,8 @@ def main(argv=None, stdout=None, stdin=None):
         'stylesheets': args.stylesheet,
         'presentational_hints': args.presentational_hints,
         'optimize_size': tuple(optimize_size),
+        'jpeg_quality': args.jpeg_quality,
+        'dpi': args.dpi,
         'attachments': args.attachment,
         'identifier': args.pdf_identifier,
         'variant': args.pdf_variant,

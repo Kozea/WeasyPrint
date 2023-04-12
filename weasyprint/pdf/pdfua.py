@@ -6,7 +6,7 @@ from ..logger import LOGGER
 from .metadata import add_metadata
 
 
-def pdfua(pdf, metadata, document, page_streams):
+def pdfua(pdf, metadata, document, page_streams, compress):
     """Set metadata for PDF/UA documents."""
     LOGGER.warning(
         'PDF/UA support is experimental, '
@@ -117,7 +117,7 @@ def pdfua(pdf, metadata, document, page_streams):
         annotation['F'] = 2 ** (2 - 1)
 
     # Common PDF metadata stream
-    add_metadata(pdf, metadata, 'ua', version=1, conformance=None)
+    add_metadata(pdf, metadata, 'ua', 1, conformance=None, compress=compress)
 
     # PDF document extra metadata
     if 'Lang' not in pdf.catalog:

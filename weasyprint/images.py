@@ -7,6 +7,9 @@ from hashlib import md5
 from io import BytesIO
 from itertools import cycle
 from math import inf
+from pathlib import Path
+from urllib.parse import urlparse
+from urllib.request import url2pathname
 from xml.etree import ElementTree
 
 import pydyf
@@ -36,79 +39,52 @@ class ImageLoadingError(ValueError):
 
 
 class RasterImage:
-    def __init__(self, pillow_image, image_id, optimize_size, cache):
+    def __init__(self, pillow_image, image_id, image_data, filename=None,
+                 cache=None, optimize_size=(), jpeg_quality=None, dpi=None,
+                 orientation='none'):
+        # Transpose image
+        original_pillow_image = pillow_image
+        pillow_image = rotate_pillow_image(pillow_image, orientation)
+        if original_pillow_image is not pillow_image:
+            # Keep image format as it is discarded by transposition
+            pillow_image.format = original_pillow_image.format
+            # Discard original data, as the image has been transformed
+            image_data = filename = None
+
         self.id = image_id
-        self._cache = cache
+        self._cache = {} if cache is None else cache
+        self._jpeg_quality = jpeg_quality
+        self._dpi = dpi
 
         if 'transparency' in pillow_image.info:
             pillow_image = pillow_image.convert('RGBA')
         elif pillow_image.mode in ('1', 'P', 'I'):
             pillow_image = pillow_image.convert('RGB')
 
+        self.mode = pillow_image.mode
         self.width = pillow_image.width
         self.height = pillow_image.height
         self.ratio = (self.width / self.height) if self.height != 0 else inf
+        self.optimize = optimize = 'images' in optimize_size
 
-        if pillow_image.mode in ('RGB', 'RGBA'):
-            color_space = '/DeviceRGB'
-        elif pillow_image.mode in ('L', 'LA'):
-            color_space = '/DeviceGray'
-        elif pillow_image.mode == 'CMYK':
-            color_space = '/DeviceCMYK'
-        else:
-            LOGGER.warning('Unknown image mode: %s', pillow_image.mode)
-            color_space = '/DeviceRGB'
-
-        self.extra = pydyf.Dictionary({
-            'Type': '/XObject',
-            'Subtype': '/Image',
-            'Width': self.width,
-            'Height': self.height,
-            'ColorSpace': color_space,
-            'BitsPerComponent': 8,
-        })
-        optimize = 'images' in optimize_size
         if pillow_image.format in ('JPEG', 'MPO'):
-            self.extra['Filter'] = '/DCTDecode'
-            image_file = io.BytesIO()
-            pillow_image.save(image_file, format='JPEG', optimize=optimize)
-            self.stream = self.get_stream(image_file.getvalue())
+            self.format = 'JPEG'
+            if image_data is None or optimize or jpeg_quality is not None:
+                image_file = io.BytesIO()
+                options = {'format': 'JPEG', 'optimize': optimize}
+                if jpeg_quality is not None:
+                    options['quality'] = jpeg_quality
+                pillow_image.save(image_file, **options)
+                image_data = image_file.getvalue()
+                filename = None
         else:
-            self.extra['Filter'] = '/FlateDecode'
-            self.extra['DecodeParms'] = pydyf.Dictionary({
-                # Predictor 15 specifies that we're providing PNG data,
-                # ostensibly using an "optimum predictor", but doesn't actually
-                # matter as long as the predictor value is 10+ according to the
-                # spec. (Other PNG predictor values assert that we're using
-                # specific predictors that we don't want to commit to, but
-                # "optimum" can vary.)
-                'Predictor': 15,
-                'Columns': self.width,
-            })
-            if pillow_image.mode in ('RGB', 'RGBA'):
-                # Defaults to 1.
-                self.extra['DecodeParms']['Colors'] = 3
-            if pillow_image.mode in ('RGBA', 'LA'):
-                alpha = pillow_image.getchannel('A')
-                pillow_image = pillow_image.convert(pillow_image.mode[:-1])
-                alpha_data = self._get_png_data(alpha, optimize)
-                stream = self.get_stream(alpha_data, alpha=True)
-                self.extra['SMask'] = pydyf.Stream(stream, extra={
-                    'Filter': '/FlateDecode',
-                    'Type': '/XObject',
-                    'Subtype': '/Image',
-                    'DecodeParms': pydyf.Dictionary({
-                        'Predictor': 15,
-                        'Columns': pillow_image.width,
-                    }),
-                    'Width': pillow_image.width,
-                    'Height': pillow_image.height,
-                    'ColorSpace': '/DeviceGray',
-                    'BitsPerComponent': 8,
-                })
-
-            png_data = self._get_png_data(pillow_image, optimize)
-            self.stream = self.get_stream(png_data)
+            self.format = 'PNG'
+            if image_data is None or optimize or pillow_image.format != 'PNG':
+                image_file = io.BytesIO()
+                pillow_image.save(image_file, format='PNG', optimize=optimize)
+                image_data = image_file.getvalue()
+                filename = None
+        self.image_data = self.cache_image_data(image_data, filename)
 
     def get_intrinsic_size(self, resolution, font_size):
         return self.width / resolution, self.height / resolution, self.ratio
@@ -117,15 +93,112 @@ class RasterImage:
         if self.width <= 0 or self.height <= 0:
             return
 
-        image_name = stream.add_image(self, image_rendering)
+        width, height = self.width, self.height
+        if self._dpi:
+            pt_to_in = 4 / 3 / 96
+            width_inches = abs(concrete_width * stream.ctm[0][0] * pt_to_in)
+            height_inches = abs(concrete_height * stream.ctm[1][1] * pt_to_in)
+            dpi = max(self.width / width_inches, self.height / height_inches)
+            if dpi > self._dpi:
+                ratio = self._dpi / dpi
+                image = Image.open(io.BytesIO(self.image_data.data))
+                width = int(round(self.width * ratio))
+                height = int(round(self.height * ratio))
+                image.thumbnail((max(1, width), max(1, height)))
+                image_file = io.BytesIO()
+                image.save(
+                    image_file, format=image.format, optimize=self.optimize)
+                width, height = image.width, image.height
+                self.image_data = self.cache_image_data(image_file.getvalue())
+        else:
+            dpi = None
+
+        interpolate = 'true' if image_rendering == 'auto' else 'false'
+
+        image_name = stream.add_image(self, width, height, interpolate)
         stream.transform(
             concrete_width, 0, 0, -concrete_height, 0, concrete_height)
         stream.draw_x_object(image_name)
 
+    def cache_image_data(self, data, filename=None, alpha=False):
+        if filename:
+            return LazyLocalImage(filename)
+        else:
+            key = f'{self.id}{int(alpha)}{self._dpi or ""}'
+            return LazyImage(self._cache, key, data)
+
+    def get_xobject(self, width, height, interpolate):
+        if self.mode in ('RGB', 'RGBA'):
+            color_space = '/DeviceRGB'
+        elif self.mode in ('L', 'LA'):
+            color_space = '/DeviceGray'
+        elif self.mode == 'CMYK':
+            color_space = '/DeviceCMYK'
+        else:
+            LOGGER.warning('Unknown image mode: %s', self.mode)
+            color_space = '/DeviceRGB'
+
+        extra = pydyf.Dictionary({
+            'Type': '/XObject',
+            'Subtype': '/Image',
+            'Width': width,
+            'Height': height,
+            'ColorSpace': color_space,
+            'BitsPerComponent': 8,
+            'Interpolate': interpolate,
+        })
+
+        if self.format == 'JPEG':
+            extra['Filter'] = '/DCTDecode'
+            return pydyf.Stream([self.image_data], extra)
+
+        extra['Filter'] = '/FlateDecode'
+        extra['DecodeParms'] = pydyf.Dictionary({
+            # Predictor 15 specifies that we're providing PNG data,
+            # ostensibly using an "optimum predictor", but doesn't actually
+            # matter as long as the predictor value is 10+ according to the
+            # spec. (Other PNG predictor values assert that we're using
+            # specific predictors that we don't want to commit to, but
+            # "optimum" can vary.)
+            'Predictor': 15,
+            'Columns': width,
+        })
+        if self.mode in ('RGB', 'RGBA'):
+            # Defaults to 1.
+            extra['DecodeParms']['Colors'] = 3
+        if self.mode in ('RGBA', 'LA'):
+            # Remove alpha channel from image
+            pillow_image = Image.open(io.BytesIO(self.image_data.data))
+            alpha = pillow_image.getchannel('A')
+            pillow_image = pillow_image.convert(self.mode[:-1])
+            png_data = self._get_png_data(pillow_image)
+            # Save alpha channel as mask
+            alpha_data = self._get_png_data(alpha)
+            stream = self.cache_image_data(alpha_data, alpha=True)
+            extra['SMask'] = pydyf.Stream([stream], extra={
+                'Filter': '/FlateDecode',
+                'Type': '/XObject',
+                'Subtype': '/Image',
+                'DecodeParms': pydyf.Dictionary({
+                    'Predictor': 15,
+                    'Columns': width,
+                }),
+                'Width': width,
+                'Height': height,
+                'ColorSpace': '/DeviceGray',
+                'BitsPerComponent': 8,
+                'Interpolate': interpolate,
+            })
+        else:
+            png_data = self._get_png_data(
+                Image.open(io.BytesIO(self.image_data.data)))
+
+        return pydyf.Stream([self.cache_image_data(png_data)], extra)
+
     @staticmethod
-    def _get_png_data(pillow_image, optimize):
-        image_file = io.BytesIO()
-        pillow_image.save(image_file, format='PNG', optimize=optimize)
+    def _get_png_data(pillow_image):
+        image_file = BytesIO()
+        pillow_image.save(image_file, format='PNG')
 
         # Read the PNG header, then discard it because we know it's a PNG. If
         # this weren't just output from Pillow, we should actually check it.
@@ -138,21 +211,17 @@ class RasterImage:
             # Each chunk begins with its data length (four bytes, may be zero),
             # then its type (four ASCII characters), then the data, then four
             # bytes of a CRC.
-            chunk_len, = struct.unpack('!I', raw_chunk_length)
+            chunk_length, = struct.unpack('!I', raw_chunk_length)
             chunk_type = image_file.read(4)
             if chunk_type == b'IDAT':
-                png_data.append(image_file.read(chunk_len))
+                png_data.append(image_file.read(chunk_length))
             else:
-                image_file.seek(chunk_len, io.SEEK_CUR)
+                image_file.seek(chunk_length, io.SEEK_CUR)
             # We aren't checking the CRC, we assume this is a valid PNG.
             image_file.seek(4, io.SEEK_CUR)
             raw_chunk_length = image_file.read(4)
 
         return b''.join(png_data)
-
-    def get_stream(self, data, alpha=False):
-        key = f'{self.id}{int(alpha)}'
-        return [LazyImage(self._cache, key, data)]
 
 
 class LazyImage(pydyf.Object):
@@ -165,6 +234,16 @@ class LazyImage(pydyf.Object):
     @property
     def data(self):
         return self._cache[self._key]
+
+
+class LazyLocalImage(pydyf.Object):
+    def __init__(self, filename):
+        super().__init__()
+        self._filename = filename
+
+    @property
+    def data(self):
+        return Path(self._filename).read_bytes()
 
 
 class SVGImage:
@@ -198,8 +277,8 @@ class SVGImage:
             self._url_fetcher, self._context)
 
 
-def get_image_from_uri(cache, url_fetcher, optimize_size, url,
-                       forced_mime_type=None, context=None,
+def get_image_from_uri(cache, url_fetcher, optimize_size, jpeg_quality, dpi,
+                       url, forced_mime_type=None, context=None,
                        orientation='from-image'):
     """Get an Image instance from an image URI."""
     if url in cache:
@@ -207,6 +286,11 @@ def get_image_from_uri(cache, url_fetcher, optimize_size, url,
 
     try:
         with fetch(url_fetcher, url) as result:
+            parsed_url = urlparse(result.get('redirected_url'))
+            if parsed_url.scheme == 'file':
+                filename = url2pathname(parsed_url.path)
+            else:
+                filename = None
             if 'string' in result:
                 string = result['string']
             else:
@@ -240,9 +324,9 @@ def get_image_from_uri(cache, url_fetcher, optimize_size, url,
             else:
                 # Store image id to enable cache in Stream.add_image
                 image_id = md5(url.encode()).hexdigest()
-                pillow_image = rotate_pillow_image(pillow_image, orientation)
                 image = RasterImage(
-                    pillow_image, image_id, optimize_size, cache)
+                    pillow_image, image_id, string, filename, cache,
+                    optimize_size, jpeg_quality, dpi, orientation)
 
     except (URLFetchingError, ImageLoadingError) as exception:
         LOGGER.error('Failed to load image at %r: %s', url, exception)
