@@ -57,6 +57,7 @@ Python API
 .. autoclass:: CSS(input, **kwargs)
 .. autoclass:: Attachment(input, **kwargs)
 .. autofunction:: default_url_fetcher
+.. autodata:: DEFAULT_OPTIONS
 
 .. module:: weasyprint.document
 .. autoclass:: Document

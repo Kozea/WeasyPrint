@@ -8,7 +8,7 @@ import sys
 import threading
 import wsgiref.simple_server
 
-from weasyprint import CSS, HTML, images
+from weasyprint import CSS, DEFAULT_OPTIONS, HTML, images
 from weasyprint.css import get_all_computed_styles
 from weasyprint.css.counters import CounterStyle
 from weasyprint.css.targets import TargetCollector
@@ -48,23 +48,20 @@ PROPER_CHILDREN = dict((key, tuple(map(tuple, value))) for key, value in {
 
 class FakeHTML(HTML):
     """Like weasyprint.HTML, but with a lighter UA stylesheet."""
+    def __init__(self, *args, force_uncompressed_pdf=True, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._force_uncompressed_pdf = force_uncompressed_pdf
+
     def _ua_stylesheets(self, forms=False):
         return [
             TEST_UA_STYLESHEET if stylesheet == HTML5_UA_STYLESHEET
             else stylesheet for stylesheet in super()._ua_stylesheets(forms)]
 
-    def write_pdf(self, target=None, stylesheets=None, zoom=1,
-                  attachments=None, finisher=None, presentational_hints=False,
-                  optimize_size=('fonts',), jpeg_quality=None, dpi=None,
-                  font_config=None, counter_style=None, image_cache=None,
-                  identifier=None, variant=None, version=None, forms=False,
-                  custom_metadata=False):
-        # Override function to set PDF size optimization to False by default
-        return super().write_pdf(
-            target, stylesheets, zoom, attachments, finisher,
-            presentational_hints, optimize_size, jpeg_quality, dpi,
-            font_config, counter_style, image_cache, identifier, variant,
-            version, forms, custom_metadata)
+    def write_pdf(self, target=None, zoom=1, finisher=None, **options):
+        # Override function to force the generation of uncompressed PDFs
+        if self._force_uncompressed_pdf:
+            options['uncompressed_pdf'] = True
+        return super().write_pdf(target, zoom, finisher, **options)
 
 
 def resource_filename(basename):
@@ -195,7 +192,7 @@ def _parse_base(html_content, base_url=BASE_URL):
     style_for = get_all_computed_styles(document, counter_style=counter_style)
     get_image_from_uri = functools.partial(
         images.get_image_from_uri, cache={}, url_fetcher=document.url_fetcher,
-        optimize_size=(), jpeg_quality=None, dpi=None)
+        options=DEFAULT_OPTIONS)
     target_collector = TargetCollector()
     footnotes = []
     return (

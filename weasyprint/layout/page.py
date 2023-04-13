@@ -174,20 +174,21 @@ def compute_fixed_dimension(context, box, outer, vertical, top_or_left):
 
 
 def compute_variable_dimension(context, side_boxes, vertical, outer_sum):
-    """
-    Compute and set a margin box fixed dimension on ``box``, as described in:
-    https://drafts.csswg.org/css-page-3/#margin-dimension
+    """Compute and set a margin box fixed dimension on ``box``
 
-    :param side_boxes: Three boxes on a same side (as opposed to a corner.)
+    Described in: https://drafts.csswg.org/css-page-3/#margin-dimension
+
+    :param side_boxes:
+        Three boxes on a same side (as opposed to a corner).
         A list of:
         - A @*-left or @*-top margin box
         - A @*-center or @*-middle margin box
         - A @*-right or @*-bottom margin box
     :param vertical:
-        True to set height, margin-top and margin-bottom; False for width,
-        margin-left and margin-right
+        ``True`` to set height, margin-top and margin-bottom;
+        ``False`` for width, margin-left and margin-right.
     :param outer_sum:
-        The target total outer dimension (max box width or height)
+        The target total outer dimension (max box width or height).
 
     """
     box_class = VerticalBox if vertical else HorizontalBox
@@ -310,8 +311,10 @@ def make_margin_boxes(context, page, state):
 
         Return ``None`` if this margin box should not be generated.
 
-        :param at_keyword: which margin box to return, eg. '@top-left'
-        :param containing_block: as expected by :func:`resolve_percentages`.
+        :param at_keyword:
+            Which margin box to return, e.g. '@top-left'
+        :param containing_block:
+            As expected by :func:`resolve_percentages`.
 
         """
         style = context.style_for(page.page_type, at_keyword)
@@ -507,9 +510,11 @@ def make_page(context, root_box, page_type, resume_at, page_number,
     and ``resume_at`` indicates where in the document to start the next page,
     or is ``None`` if this was the last page.
 
-    :param page_number: integer, start at 1 for the first page
-    :param resume_at: as returned by ``make_page()`` for the previous page,
-                      or ``None`` for the first page.
+    :param int page_number:
+        Page number, starts at 1 for the first page.
+    :param resume_at:
+        As returned by ``make_page()`` for the previous page, or ``None`` for
+        the first page.
 
     """
     style = context.style_for(page_type)

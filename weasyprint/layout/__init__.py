@@ -105,10 +105,12 @@ def layout_document(html, root_box, context, max_loops=8):
     This includes line breaks, page breaks, absolute size and position for all
     boxes. Page based counters might require multiple passes.
 
-    :param root_box: root of the box tree (formatting structure of the html)
-                     the pages' boxes are created from that tree, i.e. this
-                     structure is not lost during pagination
-    :returns: a list of laid out Page objects.
+    :param root_box:
+        Root of the box tree (formatting structure of the HTML). The page boxes
+        are created from that tree, this structure is not lost during
+        pagination.
+    :returns:
+        A list of laid out Page objects.
 
     """
     initialize_page_maker(context, root_box)
@@ -287,13 +289,18 @@ class LayoutContext:
         Value depends on current page.
         https://drafts.csswg.org/css-gcpm/#funcdef-string
 
-        :param store: dictionary where the resolved value is stored.
-        :param page: current page.
-        :param name: name of the named string or running element.
-        :param keyword: indicates which value of the named string or running
-                        element to use. Default is the first assignment on the
-                        current page else the most recent assignment.
-        :returns: text for string set, box for running element
+        :param dict store:
+            Dictionary where the resolved value is stored.
+        :param page:
+            Current page.
+        :param str name:
+            Name of the named string or running element.
+        :param str keyword:
+            Indicates which value of the named string or running element to
+            use. Default is the first assignment on the current page else the
+            most recent assignment.
+        :returns:
+            Text for string set, box for running element.
 
         """
         if self.current_page in store[name]:
