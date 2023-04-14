@@ -226,11 +226,11 @@ class Document:
         target_collector = TargetCollector()
         page_rules = []
         user_stylesheets = []
-        cache_folder = options['cache_folder']
-        if cache_folder is None:
-            cache_folder = {}
-        elif not isinstance(cache_folder, (dict, DiskCache)):
-            cache_folder = DiskCache(cache_folder)
+        cache = options['cache']
+        if cache is None:
+            cache = {}
+        elif not isinstance(cache, (dict, DiskCache)):
+            cache = DiskCache(cache)
         for css in options['stylesheets'] or []:
             if not hasattr(css, 'matcher'):
                 css = CSS(
@@ -242,7 +242,7 @@ class Document:
             font_config, counter_style, page_rules, target_collector,
             options['pdf_forms'])
         get_image_from_uri = functools.partial(
-            original_get_image_from_uri, cache=cache_folder,
+            original_get_image_from_uri, cache=cache,
             url_fetcher=html.url_fetcher, options=options)
         PROGRESS_LOGGER.info('Step 4 - Creating formatting structure')
         context = LayoutContext(

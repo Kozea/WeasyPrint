@@ -54,10 +54,10 @@ VERSION = __version__ = '58.1'
 #:     Whether unmodified font files should be embedded when possible.
 #: :param bool hinting:
 #:     Whether hinting information should be kept in embedded fonts.
-#: :type image_cache: :obj:`dict` or :obj:`str`
-#: :param cache_folder:
-#:     A dictionary used to cache images, or a folder path where images
-#:     are temporarily stored.
+#: :type cache: :obj:`dict`, :class:`pathlib.Path` or :obj:`str`
+#: :param cache:
+#:     A dictionary used to cache images in memory, or a folder path where
+#:     images are temporarily stored.
 DEFAULT_OPTIONS = {
     'stylesheets': None,
     'media_type': 'print',
@@ -74,7 +74,7 @@ DEFAULT_OPTIONS = {
     'dpi': None,
     'full_fonts': False,
     'hinting': False,
-    'cache_folder': None,
+    'cache': None,
 }
 
 __all__ = [

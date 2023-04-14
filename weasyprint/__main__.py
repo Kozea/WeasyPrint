@@ -111,7 +111,7 @@ PARSER.add_argument(
     '--hinting', action='store_true',
     help='keep hinting information in embedded fonts')
 PARSER.add_argument(
-    '-c', '--cache-folder',
+    '-c', '--cache-folder', dest='cache',
     help='store cache on disk instead of memory, folder is '
     'created if needed and cleaned after the PDF is generated')
 PARSER.add_argument(
