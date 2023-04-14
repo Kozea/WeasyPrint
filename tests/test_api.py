@@ -76,10 +76,10 @@ def _check_doc1(html, has_base_url=True):
         assert html.base_url is None
 
 
-def _run(args, stdin=b'', uncompressed=False):
+def _run(args, stdin=b''):
     stdin = io.BytesIO(stdin)
     stdout = io.BytesIO()
-    HTML = partial(FakeHTML, force_uncompressed_pdf=uncompressed)
+    HTML = partial(FakeHTML, force_uncompressed_pdf=False)
     __main__.main(args.split(), stdin=stdin, stdout=stdout, HTML=HTML)
     return stdout.getvalue()
 
@@ -379,14 +379,14 @@ def test_command_line_render(tmpdir):
         for i in (15, 22)}) == 1
     os.environ.pop('SOURCE_DATE_EPOCH')
 
-    stdout = _run('combined.html -', uncompressed=True)
+    stdout = _run('combined.html --uncompressed-pdf -')
     assert stdout.count(b'attachment') == 0
-    stdout = _run('combined.html -', uncompressed=True)
+    stdout = _run('combined.html --uncompressed-pdf -')
     assert stdout.count(b'attachment') == 0
-    stdout = _run('-a pattern.png combined.html -', uncompressed=True)
+    stdout = _run('-a pattern.png --uncompressed-pdf combined.html -')
     assert stdout.count(b'attachment') == 1
     stdout = _run(
-        '-a style.css -a pattern.png combined.html -', uncompressed=True)
+        '-a style.css -a pattern.png --uncompressed-pdf combined.html -')
     assert stdout.count(b'attachment') == 2
 
     os.mkdir('subdirectory')
@@ -422,7 +422,7 @@ def test_command_line_render(tmpdir):
 ))
 def test_pdfa(version, pdf_version):
     stdout = _run(
-        f'--pdf-variant=pdf/a-{version}b - -', b'test', uncompressed=True)
+        f'--pdf-variant=pdf/a-{version}b --uncompressed-pdf - -', b'test')
     assert f'PDF-{pdf_version}'.encode() in stdout
     assert f'part="{version}"'.encode() in stdout
 
@@ -438,7 +438,7 @@ def test_pdfa_compressed(version, pdf_version):
 
 
 def test_pdfua():
-    stdout = _run('--pdf-variant=pdf/ua-1 - -', b'test', uncompressed=True)
+    stdout = _run('--pdf-variant=pdf/ua-1 --uncompressed-pdf - -', b'test')
     assert b'part="1"' in stdout
 
 
@@ -447,35 +447,34 @@ def test_pdfua_compressed():
 
 
 def test_pdf_identifier():
-    stdout = _run('--pdf-identifier=abc - -', b'test', uncompressed=True)
+    stdout = _run('--pdf-identifier=abc --uncompressed-pdf - -', b'test')
     assert b'abc' in stdout
 
 
 def test_pdf_version():
-    stdout = _run('--pdf-version=1.4 - -', b'test', uncompressed=True)
+    stdout = _run('--pdf-version=1.4 --uncompressed-pdf - -', b'test')
     assert b'PDF-1.4' in stdout
 
 
 def test_pdf_custom_metadata():
     stdout = _run(
-        '--custom-metadata - -', b'<meta name=key content=value />',
-        uncompressed=True)
+        '--custom-metadata --uncompressed-pdf - -',
+        b'<meta name=key content=value />')
     assert b'/key' in stdout
     assert b'value' in stdout
 
 
 def test_bad_pdf_custom_metadata():
     stdout = _run(
-        '--custom-metadata - -',
-        '<meta name=é content=value />'.encode('latin1'), uncompressed=True)
+        '--custom-metadata --uncompressed-pdf - -',
+        '<meta name=é content=value />'.encode('latin1'))
     assert b'value' not in stdout
 
 
 def test_partial_pdf_custom_metadata():
     stdout = _run(
-        '--custom-metadata - -',
-        '<meta name=a.b/céd0 content=value />'.encode('latin1'),
-        uncompressed=True)
+        '--custom-metadata --uncompressed-pdf - -',
+        '<meta name=a.b/céd0 content=value />'.encode('latin1'))
     assert b'/abcd0' in stdout
     assert b'value' in stdout
 
@@ -486,10 +485,10 @@ def test_partial_pdf_custom_metadata():
     (b'<textarea></textarea>', b'/Tx'),
 ))
 def test_pdf_inputs(html, field):
-    stdout = _run('--pdf-forms - -', html, uncompressed=True)
+    stdout = _run('--pdf-forms --uncompressed-pdf - -', html)
     assert b'AcroForm' in stdout
     assert field in stdout
-    stdout = _run('- -', html, uncompressed=True)
+    stdout = _run('--uncompressed-pdf - -', html)
     assert b'AcroForm' not in stdout
 
 
@@ -501,9 +500,9 @@ def test_pdf_inputs(html, field):
 def test_appearance(css, with_forms, without_forms):
     html = f'<input style="{css}">'.encode()
     assert with_forms is (
-        b'AcroForm' in _run('--pdf-forms - -', html, uncompressed=True))
+        b'AcroForm' in _run('--pdf-forms --uncompressed-pdf - -', html))
     assert without_forms is (
-        b'AcroForm' in _run(' - -', html, uncompressed=True))
+        b'AcroForm' in _run(' --uncompressed-pdf - -', html))
 
 
 def test_reproducible():
