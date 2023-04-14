@@ -163,9 +163,8 @@ class DocumentMetadata:
 class DiskCache:
     """Dict-like storing images content on disk.
 
-    Bytestrings values are stored on disk. Other Python objects (i.e.
-    RasterImage instances) are still stored in memory, but are much more
-    lightweight.
+    Bytestring values are stored on disk. Other lightweight Python objects
+    (i.e. RasterImage instances) are still stored in memory.
 
     """
     def __init__(self, folder):
