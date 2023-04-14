@@ -15,6 +15,7 @@ from xml.etree import ElementTree
 import pydyf
 from PIL import Image, ImageFile, ImageOps
 
+from . import DEFAULT_OPTIONS
 from .layout.percent import percentage
 from .logger import LOGGER
 from .svg import SVG
@@ -40,8 +41,7 @@ class ImageLoadingError(ValueError):
 
 class RasterImage:
     def __init__(self, pillow_image, image_id, image_data, filename=None,
-                 cache=None, optimize_size=(), jpeg_quality=None, dpi=None,
-                 orientation='none'):
+                 cache=None, orientation='none', options=DEFAULT_OPTIONS):
         # Transpose image
         original_pillow_image = pillow_image
         pillow_image = rotate_pillow_image(pillow_image, orientation)
@@ -53,8 +53,8 @@ class RasterImage:
 
         self.id = image_id
         self._cache = {} if cache is None else cache
-        self._jpeg_quality = jpeg_quality
-        self._dpi = dpi
+        self._jpeg_quality = jpeg_quality = options['jpeg_quality']
+        self._dpi = options['dpi']
 
         if 'transparency' in pillow_image.info:
             pillow_image = pillow_image.convert('RGBA')
@@ -65,15 +65,15 @@ class RasterImage:
         self.width = pillow_image.width
         self.height = pillow_image.height
         self.ratio = (self.width / self.height) if self.height != 0 else inf
-        self.optimize = optimize = 'images' in optimize_size
+        self.optimize = optimize = options['optimize_images']
 
         if pillow_image.format in ('JPEG', 'MPO'):
             self.format = 'JPEG'
             if image_data is None or optimize or jpeg_quality is not None:
                 image_file = io.BytesIO()
                 options = {'format': 'JPEG', 'optimize': optimize}
-                if jpeg_quality is not None:
-                    options['quality'] = jpeg_quality
+                if self._jpeg_quality is not None:
+                    options['quality'] = self._jpeg_quality
                 pillow_image.save(image_file, **options)
                 image_data = image_file.getvalue()
                 filename = None
@@ -277,9 +277,8 @@ class SVGImage:
             self._url_fetcher, self._context)
 
 
-def get_image_from_uri(cache, url_fetcher, optimize_size, jpeg_quality, dpi,
-                       url, forced_mime_type=None, context=None,
-                       orientation='from-image'):
+def get_image_from_uri(cache, url_fetcher, options, url, forced_mime_type=None,
+                       context=None, orientation='from-image'):
     """Get an Image instance from an image URI."""
     if url in cache:
         return cache[url]
@@ -326,7 +325,7 @@ def get_image_from_uri(cache, url_fetcher, optimize_size, jpeg_quality, dpi,
                 image_id = md5(url.encode()).hexdigest()
                 image = RasterImage(
                     pillow_image, image_id, string, filename, cache,
-                    optimize_size, jpeg_quality, dpi, orientation)
+                    orientation, options)
 
     except (URLFetchingError, ImageLoadingError) as exception:
         LOGGER.error('Failed to load image at %r: %s', url, exception)

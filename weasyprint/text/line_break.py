@@ -235,15 +235,7 @@ class Layout:
 
 
 def create_layout(text, style, context, max_width, justification_spacing):
-    """Return an opaque Pango layout with default Pango line-breaks.
-
-    :param text: Unicode
-    :param style: a style dict of computed values
-    :param max_width:
-        The maximum available width in the same unit as ``style['font_size']``,
-        or ``None`` for unlimited width.
-
-    """
+    """Return an opaque Pango layout with default Pango line-breaks."""
     layout = Layout(context, style, justification_spacing, max_width)
 
     # Make sure that max_width * Pango.SCALE == max_width * 1024 fits in a

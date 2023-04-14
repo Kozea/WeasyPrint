@@ -4,10 +4,11 @@ import argparse
 import logging
 import platform
 import sys
+from warnings import warn
 
 import pydyf
 
-from . import HTML, LOGGER, __version__
+from . import DEFAULT_OPTIONS, HTML, LOGGER, __version__
 from .pdf import VARIANTS
 from .text.ffi import pango
 
@@ -27,173 +28,125 @@ class PrintInfo(argparse.Action):
         sys.exit()
 
 
-def main(argv=None, stdout=None, stdin=None):
+class Parser(argparse.ArgumentParser):
+    def __init__(self, *args, **kwargs):
+        self._arguments = {}
+        super().__init__(*args, **kwargs)
+
+    def add_argument(self, *args, **kwargs):
+        super().add_argument(*args, **kwargs)
+        key = args[-1].lstrip('-')
+        kwargs['flags'] = args
+        kwargs['positional'] = args[-1][0] != '-'
+        self._arguments[key] = kwargs
+
+    @property
+    def docstring(self):
+        self._arguments['help'] = self._arguments.pop('help')
+        data = []
+        for key, args in self._arguments.items():
+            data.append('.. option:: ')
+            action = args.get('action', 'store')
+            for flag in args['flags']:
+                data.append(flag)
+                if not args['positional'] and action in ('store', 'append'):
+                    data.append(f' <{key}>')
+                data.append(', ')
+            data[-1] = '\n\n'
+            data.append(f'  {args["help"][0].upper()}{args["help"][1:]}.\n\n')
+            if 'choices' in args:
+                choices = ", ".join(args['choices'])
+                data.append(f'  Possible choices: {choices}.\n\n')
+            if action == 'append':
+                data.append('  This option can be passed multiple times.\n\n')
+        return ''.join(data)
+
+
+PARSER = Parser(
+    prog='weasyprint', description='Render web pages to PDF.')
+PARSER.add_argument(
+    'input', help='URL or filename of the HTML input, or - for stdin')
+PARSER.add_argument(
+    'output', help='filename where output is written, or - for stdout')
+PARSER.add_argument(
+    '-e', '--encoding', help='force the input character encoding')
+PARSER.add_argument(
+    '-s', '--stylesheet', action='append', dest='stylesheets',
+    help='URL or filename for a user CSS stylesheet')
+PARSER.add_argument(
+    '-m', '--media-type',
+    help='media type to use for @media, defaults to print')
+PARSER.add_argument(
+    '-u', '--base-url',
+    help='base for relative URLs in the HTML input, defaults to the '
+    'input’s own filename or URL or the current directory for stdin')
+PARSER.add_argument(
+    '-a', '--attachment', action='append', dest='attachments',
+    help='URL or filename of a file to attach to the PDF document')
+PARSER.add_argument('--pdf-identifier', help='PDF file identifier')
+PARSER.add_argument(
+    '--pdf-variant', choices=VARIANTS, help='PDF variant to generate')
+PARSER.add_argument('--pdf-version', help='PDF version number')
+PARSER.add_argument(
+    '--pdf-forms', action='store_true', help='include PDF forms')
+PARSER.add_argument(
+    '--uncompressed-pdf', action='store_true',
+    help='do not compress PDF content, mainly for debugging purpose')
+PARSER.add_argument(
+    '--custom-metadata', action='store_true',
+    help='include custom HTML meta tags in PDF metadata')
+PARSER.add_argument(
+    '-p', '--presentational-hints', action='store_true',
+    help='follow HTML presentational hints')
+PARSER.add_argument(
+    '--optimize-images', action='store_true',
+    help='optimize size of embedded images with no quality loss')
+PARSER.add_argument(
+    '-j', '--jpeg-quality', type=int,
+    help='JPEG quality between 0 (worst) to 95 (best)')
+PARSER.add_argument(
+    '--full-fonts', action='store_true',
+    help='embed unmodified font files when possible')
+PARSER.add_argument(
+    '--hinting', action='store_true',
+    help='keep hinting information in embedded fonts')
+PARSER.add_argument(
+    '-c', '--cache-folder',
+    help='store cache on disk instead of memory, folder is '
+    'created if needed and cleaned after the PDF is generated')
+PARSER.add_argument(
+    '-D', '--dpi', type=int,
+    help='set maximum resolution of images embedded in the PDF')
+PARSER.add_argument(
+    '-v', '--verbose', action='store_true',
+    help='show warnings and information messages')
+PARSER.add_argument(
+    '-d', '--debug', action='store_true', help='show debugging messages')
+PARSER.add_argument(
+    '-q', '--quiet', action='store_true', help='hide logging messages')
+PARSER.add_argument(
+    '--version', action='version',
+    version=f'WeasyPrint version {__version__}',
+    help='print WeasyPrint’s version number and exit')
+PARSER.add_argument(
+    '-i', '--info', action=PrintInfo, nargs=0,
+    help='print system information and exit')
+PARSER.add_argument(
+    '-O', '--optimize-size', action='append',
+    help='deprecated, use other options instead',
+    choices=('images', 'fonts', 'hinting', 'pdf', 'all', 'none'))
+PARSER.set_defaults(**DEFAULT_OPTIONS)
+
+
+def main(argv=None, stdout=None, stdin=None, HTML=HTML):
     """The ``weasyprint`` program takes at least two arguments:
 
     .. code-block:: sh
 
         weasyprint [options] <input> <output>
 
-    The input is a filename or URL to an HTML document, or ``-`` to read
-    HTML from stdin. The output is a filename, or ``-`` to write to stdout.
-
-    Options can be mixed anywhere before, between, or after the input and
-    output.
-
-    .. option:: -e <input_encoding>, --encoding <input_encoding>
-
-        Force the input character encoding (e.g. ``-e utf-8``).
-
-    .. option:: -s <filename_or_URL>, --stylesheet <filename_or_URL>
-
-        Filename or URL of a user cascading stylesheet (see
-        :ref:`Stylesheet Origins`) to add to the document
-        (e.g. ``-s print.css``). Multiple stylesheets are allowed.
-
-    .. option:: -m <type>, --media-type <type>
-
-        Set the media type to use for ``@media``. Defaults to ``print``.
-
-    .. option:: -u <URL>, --base-url <URL>
-
-        Set the base for relative URLs in the HTML input.
-        Defaults to the input’s own URL, or the current directory for stdin.
-
-    .. option:: -a <file>, --attachment <file>
-
-        Adds an attachment to the document. The attachment is included in the
-        PDF output. This option can be used multiple times.
-
-    .. option:: --pdf-identifier <identifier>
-
-        PDF file identifier, used to check whether two different files
-        are two different versions of the same original document.
-
-    .. option:: --pdf-variant <variant-name>
-
-        PDF variant to generate (e.g. ``--pdf-variant pdf/a-3b``).
-
-    .. option:: --pdf-version <version-number>
-
-        PDF version number (default is 1.7).
-
-    .. option:: --custom-metadata
-
-        Include custom HTML meta tags in PDF metadata.
-
-    .. option:: -p, --presentational-hints
-
-        Follow `HTML presentational hints
-        <https://www.w3.org/TR/html/rendering.html\
-        #the-css-user-agent-style-sheet-and-presentational-hints>`_.
-
-    .. option:: -O <type>, --optimize-size <type>
-
-        Optimize the size of generated documents. Supported types are
-        ``images``, ``fonts``, ``hinting``, ``pdf``, ``all`` and ``none``.
-        This option can be used multiple times, ``all`` adds all allowed
-        values, ``none`` removes all previously set values (including the
-        default ones, ``fonts`` and ``pdf``).
-
-    .. option:: -c <folder>, --cache-folder <folder>
-
-        Store cache on disk instead of memory. The ``folder`` is created if
-        needed and cleaned after the PDF is generated.
-
-    .. option:: -j <quality>, --jpeg-quality <quality>
-
-        JPEG quality between 0 (worst) to 95 (best).
-
-    .. option:: -D <dpi>, --dpi <dpi>
-
-        Maximum resolution of images embedded in the PDF.
-
-    .. option:: -v, --verbose
-
-        Show warnings and information messages.
-
-    .. option:: -d, --debug
-
-        Show debugging messages.
-
-    .. option:: -q, --quiet
-
-        Hide logging messages.
-
-    .. option:: --version
-
-        Show the version number. Other options and arguments are ignored.
-
-    .. option:: -h, --help
-
-        Show the command-line usage. Other options and arguments are ignored.
-
     """
-    parser = argparse.ArgumentParser(
-        prog='weasyprint', description='Render web pages to PDF.')
-    parser.add_argument(
-        '--version', action='version',
-        version=f'WeasyPrint version {__version__}',
-        help='print WeasyPrint’s version number and exit')
-    parser.add_argument(
-        '-i', '--info', action=PrintInfo, nargs=0,
-        help='print system information and exit')
-    parser.add_argument(
-        '-e', '--encoding', help='character encoding of the input')
-    parser.add_argument(
-        '-s', '--stylesheet', action='append',
-        help='URL or filename for a user CSS stylesheet, '
-        'may be given multiple times')
-    parser.add_argument(
-        '-m', '--media-type', default='print',
-        help='media type to use for @media, defaults to print')
-    parser.add_argument(
-        '-u', '--base-url',
-        help='base for relative URLs in the HTML input, defaults to the '
-        'input’s own filename or URL or the current directory for stdin')
-    parser.add_argument(
-        '-a', '--attachment', action='append',
-        help='URL or filename of a file to attach to the PDF document')
-    parser.add_argument('--pdf-identifier', help='PDF file identifier')
-    parser.add_argument(
-        '--pdf-variant', choices=VARIANTS, help='PDF variant to generate')
-    parser.add_argument('--pdf-version', help='PDF version number')
-    parser.add_argument(
-        '--pdf-forms', action='store_true', help='Include PDF forms')
-    parser.add_argument(
-        '--custom-metadata', action='store_true',
-        help='include custom HTML meta tags in PDF metadata')
-    parser.add_argument(
-        '-p', '--presentational-hints', action='store_true',
-        help='follow HTML presentational hints')
-    parser.add_argument(
-        '-O', '--optimize-size', action='append',
-        help='optimize output size for specified features',
-        choices=('images', 'fonts', 'hinting', 'pdf', 'all', 'none'),
-        default=['fonts', 'hinting', 'pdf'])
-    parser.add_argument(
-        '-c', '--cache-folder',
-        help='Store cache on disk instead of memory. The ``folder`` is '
-        'created if needed and cleaned after the PDF is generated.')
-    parser.add_argument(
-        '-j', '--jpeg-quality', type=int,
-        help='JPEG quality between 0 (worst) to 95 (best)')
-    parser.add_argument(
-        '-D', '--dpi', type=int,
-        help='Maximum resolution of images embedded in the PDF')
-    parser.add_argument(
-        '-v', '--verbose', action='store_true',
-        help='show warnings and information messages')
-    parser.add_argument(
-        '-d', '--debug', action='store_true', help='show debugging messages')
-    parser.add_argument(
-        '-q', '--quiet', action='store_true', help='hide logging messages')
-    parser.add_argument(
-        'input', help='URL or filename of the HTML input, or - for stdin')
-    parser.add_argument(
-        'output', help='filename where output is written, or - for stdout')
-
-    args = parser.parse_args(argv)
+    args = PARSER.parse_args(argv)
 
     if args.input == '-':
         source = stdin or sys.stdin.buffer
@@ -209,29 +162,34 @@ def main(argv=None, stdout=None, stdin=None):
     else:
         output = args.output
 
-    optimize_size = set()
-    for arg in args.optimize_size:
-        if arg == 'none':
-            optimize_size.clear()
-        elif arg == 'all':
-            optimize_size |= {'images', 'fonts', 'hinting', 'pdf'}
-        else:
-            optimize_size.add(arg)
+    # TODO: to be removed when --optimize-size is removed
+    optimize_size = {'fonts', 'hinting', 'pdf'}
+    if args.optimize_size is not None:
+        warn(
+            'The --optimize-size option is now deprecated '
+            'and will be removed in next version. '
+            'Please use the other options available in --help instead.',
+            category=FutureWarning)
+        for arg in args.optimize_size:
+            if arg == 'none':
+                optimize_size.clear()
+            elif arg == 'all':
+                optimize_size |= {'images', 'fonts', 'hinting', 'pdf'}
+            else:
+                optimize_size.add(arg)
+    del args.optimize_size
 
-    kwargs = {
-        'stylesheets': args.stylesheet,
-        'presentational_hints': args.presentational_hints,
-        'optimize_size': tuple(optimize_size),
-        'jpeg_quality': args.jpeg_quality,
-        'dpi': args.dpi,
-        'attachments': args.attachment,
-        'identifier': args.pdf_identifier,
-        'variant': args.pdf_variant,
-        'version': args.pdf_version,
-        'forms': args.pdf_forms,
-        'custom_metadata': args.custom_metadata,
-        'image_cache': args.cache_folder,
-    }
+    options = vars(args)
+
+    # TODO: to be removed when --optimize-size is removed
+    if 'images' in optimize_size:
+        options['optimize_images'] = True
+    if 'fonts' not in optimize_size:
+        options['full_fonts'] = True
+    if 'hinting' not in optimize_size:
+        options['hinting'] = True
+    if 'pdf' not in optimize_size:
+        options['uncompressed_pdf'] = True
 
     # Default to logging to stderr.
     if args.debug:
@@ -246,7 +204,10 @@ def main(argv=None, stdout=None, stdin=None):
     html = HTML(
         source, base_url=args.base_url, encoding=args.encoding,
         media_type=args.media_type)
-    html.write_pdf(output, **kwargs)
+    html.write_pdf(output, **options)
+
+
+main.__doc__ += '\n\n' + PARSER.docstring
 
 
 if __name__ == '__main__':  # pragma: no cover

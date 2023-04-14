@@ -6,6 +6,7 @@ import os
 import sys
 import unicodedata
 import zlib
+from functools import partial
 from pathlib import Path
 from urllib.parse import urljoin, uses_relative
 
@@ -75,14 +76,11 @@ def _check_doc1(html, has_base_url=True):
         assert html.base_url is None
 
 
-def _run(args, stdin=b''):
+def _run(args, stdin=b'', uncompressed=False):
     stdin = io.BytesIO(stdin)
     stdout = io.BytesIO()
-    try:
-        __main__.HTML = FakeHTML
-        __main__.main(args.split(), stdin=stdin, stdout=stdout)
-    finally:
-        __main__.HTML = HTML
+    HTML = partial(FakeHTML, force_uncompressed_pdf=uncompressed)
+    __main__.main(args.split(), stdin=stdin, stdout=stdout, HTML=HTML)
     return stdout.getvalue()
 
 
@@ -303,12 +301,12 @@ def test_command_line_render(tmpdir):
         tmpdir.join(name).write_binary(pattern_bytes)
 
     # Reference
-    optimize_size = ('fonts', 'hinting', 'pdf')
-    html_obj = FakeHTML(string=combined, base_url='dummy.html')
-    pdf_bytes = html_obj.write_pdf(optimize_size=optimize_size)
+    html_obj = FakeHTML(
+        string=combined, base_url='dummy.html', force_uncompressed_pdf=False)
+    pdf_bytes = html_obj.write_pdf()
     rotated_pdf_bytes = FakeHTML(
         string=combined, base_url='dummy.html',
-        media_type='screen').write_pdf(optimize_size=optimize_size)
+        media_type='screen', force_uncompressed_pdf=False).write_pdf()
 
     tmpdir.join('no_css.html').write_binary(html)
     tmpdir.join('combined.html').write_binary(combined)
@@ -361,42 +359,34 @@ def test_command_line_render(tmpdir):
 
     os.environ['SOURCE_DATE_EPOCH'] = '0'
     _run('not_optimized.html out15.pdf')
-    _run('not_optimized.html out16.pdf -O images')
-    _run('not_optimized.html out17.pdf -O fonts')
-    _run('not_optimized.html out18.pdf -O fonts -O images')
-    _run('not_optimized.html out19.pdf -O all')
-    _run('not_optimized.html out20.pdf -O none')
-    _run('not_optimized.html out21.pdf -O none -O all')
-    _run('not_optimized.html out22.pdf -O all -O none')
-    _run('not_optimized.html out23.pdf -O pdf')
-    _run('not_optimized.html out24.pdf -O none -O fonts -O pdf -O hinting')
-    _run('not_optimized.html out25.pdf -O all -j 10')
-    _run('not_optimized.html out26.pdf -O all -j 10 -D 1')
-    _run(f'not_optimized.html out27.pdf -c {tmpdir}')
+    _run('not_optimized.html out16.pdf --optimize-images')
+    _run('not_optimized.html out17.pdf --optimize-images -j 10')
+    _run('not_optimized.html out18.pdf --optimize-images -j 10 -D 1')
+    _run('not_optimized.html out19.pdf --hinting')
+    _run('not_optimized.html out20.pdf --full-fonts')
+    _run('not_optimized.html out21.pdf --full-fonts --uncompressed-pdf')
+    _run(f'not_optimized.html out22.pdf -c {tmpdir}')
     assert (
-        len(tmpdir.join('out26.pdf').read_binary()) <
-        len(tmpdir.join('out25.pdf').read_binary()) <
+        len(tmpdir.join('out18.pdf').read_binary()) <
+        len(tmpdir.join('out17.pdf').read_binary()) <
         len(tmpdir.join('out16.pdf').read_binary()) <
         len(tmpdir.join('out15.pdf').read_binary()) <
-        len(tmpdir.join('out20.pdf').read_binary()))
+        len(tmpdir.join('out19.pdf').read_binary()) <
+        len(tmpdir.join('out20.pdf').read_binary()) <
+        len(tmpdir.join('out21.pdf').read_binary()))
     assert len({
         tmpdir.join(f'out{i}.pdf').read_binary()
-        for i in (16, 18, 19, 21)}) == 1
-    assert len({
-        tmpdir.join(f'out{i}.pdf').read_binary()
-        for i in (15, 17, 23, 24, 27)}) == 1
-    assert len({
-        tmpdir.join(f'out{i}.pdf').read_binary()
-        for i in (20, 22)}) == 1
+        for i in (15, 22)}) == 1
     os.environ.pop('SOURCE_DATE_EPOCH')
 
-    stdout = _run('-O none combined.html -')
+    stdout = _run('combined.html -', uncompressed=True)
     assert stdout.count(b'attachment') == 0
-    stdout = _run('-O none combined.html -')
+    stdout = _run('combined.html -', uncompressed=True)
     assert stdout.count(b'attachment') == 0
-    stdout = _run('-O none -a pattern.png combined.html -')
+    stdout = _run('-a pattern.png combined.html -', uncompressed=True)
     assert stdout.count(b'attachment') == 1
-    stdout = _run('-O none -a style.css -a pattern.png combined.html -')
+    stdout = _run(
+        '-a style.css -a pattern.png combined.html -', uncompressed=True)
     assert stdout.count(b'attachment') == 2
 
     os.mkdir('subdirectory')
@@ -431,7 +421,8 @@ def test_command_line_render(tmpdir):
     (4, '2.0'),
 ))
 def test_pdfa(version, pdf_version):
-    stdout = _run(f'--pdf-variant=pdf/a-{version}b -O none - -', b'test')
+    stdout = _run(
+        f'--pdf-variant=pdf/a-{version}b - -', b'test', uncompressed=True)
     assert f'PDF-{pdf_version}'.encode() in stdout
     assert f'part="{version}"'.encode() in stdout
 
@@ -447,7 +438,7 @@ def test_pdfa_compressed(version, pdf_version):
 
 
 def test_pdfua():
-    stdout = _run('--pdf-variant=pdf/ua-1 -O none - -', b'test')
+    stdout = _run('--pdf-variant=pdf/ua-1 - -', b'test', uncompressed=True)
     assert b'part="1"' in stdout
 
 
@@ -456,34 +447,35 @@ def test_pdfua_compressed():
 
 
 def test_pdf_identifier():
-    stdout = _run('--pdf-identifier=abc -O none - -', b'test')
+    stdout = _run('--pdf-identifier=abc - -', b'test', uncompressed=True)
     assert b'abc' in stdout
 
 
 def test_pdf_version():
-    stdout = _run('--pdf-version=1.4 -O none - -', b'test')
+    stdout = _run('--pdf-version=1.4 - -', b'test', uncompressed=True)
     assert b'PDF-1.4' in stdout
 
 
 def test_pdf_custom_metadata():
     stdout = _run(
-        '--custom-metadata -O none - -',
-        b'<meta name=key content=value />')
+        '--custom-metadata - -', b'<meta name=key content=value />',
+        uncompressed=True)
     assert b'/key' in stdout
     assert b'value' in stdout
 
 
 def test_bad_pdf_custom_metadata():
     stdout = _run(
-        '--custom-metadata -O none - -',
-        '<meta name=é content=value />'.encode('latin1'))
+        '--custom-metadata - -',
+        '<meta name=é content=value />'.encode('latin1'), uncompressed=True)
     assert b'value' not in stdout
 
 
 def test_partial_pdf_custom_metadata():
     stdout = _run(
-        '--custom-metadata -O none - -',
-        '<meta name=a.b/céd0 content=value />'.encode('latin1'))
+        '--custom-metadata - -',
+        '<meta name=a.b/céd0 content=value />'.encode('latin1'),
+        uncompressed=True)
     assert b'/abcd0' in stdout
     assert b'value' in stdout
 
@@ -494,10 +486,10 @@ def test_partial_pdf_custom_metadata():
     (b'<textarea></textarea>', b'/Tx'),
 ))
 def test_pdf_inputs(html, field):
-    stdout = _run('--pdf-forms -O none - -', html)
+    stdout = _run('--pdf-forms - -', html, uncompressed=True)
     assert b'AcroForm' in stdout
     assert field in stdout
-    stdout = _run('- -', html)
+    stdout = _run('- -', html, uncompressed=True)
     assert b'AcroForm' not in stdout
 
 
@@ -508,8 +500,10 @@ def test_pdf_inputs(html, field):
 ))
 def test_appearance(css, with_forms, without_forms):
     html = f'<input style="{css}">'.encode()
-    assert (b'AcroForm' in _run('--pdf-forms -O none - -', html)) is with_forms
-    assert (b'AcroForm' in _run(' -O none - -', html)) is without_forms
+    assert with_forms is (
+        b'AcroForm' in _run('--pdf-forms - -', html, uncompressed=True))
+    assert without_forms is (
+        b'AcroForm' in _run(' - -', html, uncompressed=True))
 
 
 def test_reproducible():
@@ -565,20 +559,20 @@ def test_low_level_api(assert_pixels_equal):
     assert pdf_bytes.startswith(b'%PDF')
 
     png_bytes = html.write_png(stylesheets=[css])
-    document = html.render([css])
+    document = html.render(stylesheets=[css])
     page, = document.pages
     assert page.width == 8
     assert page.height == 8
     assert document.write_png() == png_bytes
     assert document.copy([page]).write_png() == png_bytes
 
-    document = html.render([css])
+    document = html.render(stylesheets=[css])
     page, = document.pages
     assert (page.width, page.height) == (8, 8)
     png_bytes = document.write_png(resolution=192)
     check_png_pattern(assert_pixels_equal, png_bytes, x2=True)
 
-    document = html.render([css])
+    document = html.render(stylesheets=[css])
     page, = document.pages
     assert (page.width, page.height) == (8, 8)
     # A resolution that is not multiple of 96:
