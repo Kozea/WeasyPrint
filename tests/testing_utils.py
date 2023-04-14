@@ -29,21 +29,21 @@ TEST_UA_STYLESHEET = CSS(filename=os.path.join(
     os.path.dirname(__file__), '..', 'weasyprint', 'css', 'tests_ua.css'
 ))
 
-PROPER_CHILDREN = dict((key, tuple(map(tuple, value))) for key, value in {
+PROPER_CHILDREN = {
     # Children can be of *any* type in *one* of the lists.
-    boxes.BlockContainerBox: [[boxes.BlockLevelBox], [boxes.LineBox]],
-    boxes.LineBox: [[boxes.InlineLevelBox]],
-    boxes.InlineBox: [[boxes.InlineLevelBox]],
-    boxes.TableBox: [[boxes.TableCaptionBox,
-                      boxes.TableColumnGroupBox, boxes.TableColumnBox,
-                      boxes.TableRowGroupBox, boxes.TableRowBox]],
-    boxes.InlineTableBox: [[boxes.TableCaptionBox,
-                            boxes.TableColumnGroupBox, boxes.TableColumnBox,
-                            boxes.TableRowGroupBox, boxes.TableRowBox]],
-    boxes.TableColumnGroupBox: [[boxes.TableColumnBox]],
-    boxes.TableRowGroupBox: [[boxes.TableRowBox]],
-    boxes.TableRowBox: [[boxes.TableCellBox]],
-}.items())
+    boxes.BlockContainerBox: ((boxes.BlockLevelBox,), (boxes.LineBox,)),
+    boxes.LineBox: ((boxes.InlineLevelBox,),),
+    boxes.InlineBox: ((boxes.InlineLevelBox,),),
+    boxes.TableBox: ((
+        boxes.TableCaptionBox, boxes.TableColumnGroupBox, boxes.TableColumnBox,
+        boxes.TableRowGroupBox, boxes.TableRowBox),),
+    boxes.InlineTableBox: ((
+        boxes.TableCaptionBox, boxes.TableColumnGroupBox, boxes.TableColumnBox,
+        boxes.TableRowGroupBox, boxes.TableRowBox),),
+    boxes.TableColumnGroupBox: ((boxes.TableColumnBox,),),
+    boxes.TableRowGroupBox: ((boxes.TableRowBox,),),
+    boxes.TableRowBox: ((boxes.TableCellBox,),),
+}
 
 
 class FakeHTML(HTML):
