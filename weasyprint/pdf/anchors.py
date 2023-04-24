@@ -2,6 +2,7 @@
 
 import hashlib
 import io
+import mimetypes
 import zlib
 from os.path import basename
 from urllib.parse import unquote, urlsplit
@@ -270,12 +271,19 @@ def write_pdf_attachment(pdf, attachment, url_fetcher):
                 stream += compressed
             compressed = compress.flush(zlib.Z_FINISH)
             stream += compressed
+            mime_type, _ = mimetypes.guess_type(url, strict=False)
+            if not mime_type:
+                mime_type = 'application/octet-stream'
+            mime_type = '/' + mime_type.replace('/', '#2f')
             file_extra = pydyf.Dictionary({
                 'Type': '/EmbeddedFile',
                 'Filter': '/FlateDecode',
+                "Subtype": mime_type,
                 'Params': pydyf.Dictionary({
                     'CheckSum': f'<{md5.hexdigest()}>',
                     'Size': uncompressed_length,
+                    'CreationDate': attachment.created,
+                    'ModDate': attachment.modified,
                 })
             })
             file_stream = pydyf.Stream([stream], file_extra)
@@ -296,10 +304,14 @@ def write_pdf_attachment(pdf, attachment, url_fetcher):
         'Type': '/Filespec',
         'F': pydyf.String(),
         'UF': pydyf.String(filename),
+        "AFRelationship": "/Data",
         'EF': pydyf.Dictionary({'F': file_stream.reference}),
         'Desc': pydyf.String(attachment.description or ''),
     })
     pdf.add_object(attachment)
+    if "AF" not in pdf.catalog:
+        pdf.catalog["AF"] = pydyf.Array()
+    pdf.catalog["AF"].append(attachment.reference)
     return attachment
 
 
