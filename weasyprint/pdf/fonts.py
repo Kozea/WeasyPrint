@@ -7,7 +7,7 @@ import pydyf
 from ..logger import LOGGER
 
 
-def build_fonts_dictionary(pdf, fonts, optimize_size):
+def build_fonts_dictionary(pdf, fonts, compress_pdf, subset, hinting):
     pdf_fonts = pydyf.Dictionary()
     fonts_by_file_hash = {}
     for font in fonts.values():
@@ -21,10 +21,10 @@ def build_fonts_dictionary(pdf, fonts, optimize_size):
 
         # Clean font, optimize and handle emojis
         cmap = {}
-        if 'fonts' in optimize_size and not font.used_in_forms:
+        if subset and not font.used_in_forms:
             for file_font in file_fonts:
                 cmap = {**cmap, **file_font.cmap}
-        font.clean(cmap)
+        font.clean(cmap, hinting)
 
         # Include font
         if font.type == 'otf':
@@ -32,28 +32,24 @@ def build_fonts_dictionary(pdf, fonts, optimize_size):
         else:
             font_extra = pydyf.Dictionary({'Length1': len(font.file_content)})
         font_stream = pydyf.Stream(
-            [font.file_content], font_extra, compress=True)
+            [font.file_content], font_extra, compress=compress_pdf)
         pdf.add_object(font_stream)
         font_references_by_file_hash[file_hash] = font_stream.reference
 
     for font in fonts.values():
-        optimize = (
-            'fonts' in optimize_size and
-            font.ttfont and not font.used_in_forms)
-        if optimize:
+        if subset and font.ttfont and not font.used_in_forms:
             # Only store widths and map for used glyphs
             font_widths = font.widths
             cmap = font.cmap
         else:
             # Store width and Unicode map for all glyphs
             font_widths, cmap = {}, {}
-            ratio = 1024 / font.ttfont['head'].unitsPerEm
             for letter, key in font.ttfont.getBestCmap().items():
                 glyph = font.ttfont.getGlyphID(key)
                 if glyph not in cmap:
                     cmap[glyph] = chr(letter)
                 width = font.ttfont.getGlyphSet()[key].width
-                font_widths[glyph] = width * ratio
+                font_widths[glyph] = width * 1000 / font.upem
 
         max_x = max(font_widths.values()) if font_widths else 0
         bbox = (0, font.descent, max_x, font.ascent)
@@ -81,7 +77,7 @@ def build_fonts_dictionary(pdf, fonts, optimize_size):
             b'1 begincodespacerange',
             b'<0000> <ffff>',
             b'endcodespacerange',
-            f'{len(cmap)} beginbfchar'.encode()])
+            f'{len(cmap)} beginbfchar'.encode()], compress=compress_pdf)
         for glyph, text in cmap.items():
             unicode_codepoints = ''.join(
                 f'{letter.encode("utf-16-be").hex()}' for letter in text)
@@ -103,7 +99,7 @@ def build_fonts_dictionary(pdf, fonts, optimize_size):
 
         if font.bitmap:
             _build_bitmap_font_dictionary(
-                font_dictionary, pdf, font, widths, optimize_size)
+                font_dictionary, pdf, font, widths, compress_pdf, subset)
         else:
             font_descriptor = pydyf.Dictionary({
                 'Type': '/FontDescriptor',
@@ -126,7 +122,8 @@ def build_fonts_dictionary(pdf, fonts, optimize_size):
                 for cid in cids:
                     bits[cid] = '1'
                 stream = pydyf.Stream(
-                    (int(''.join(bits), 2).to_bytes(padded_width, 'big'),))
+                    (int(''.join(bits), 2).to_bytes(padded_width, 'big'),),
+                    compress=compress_pdf)
                 pdf.add_object(stream)
                 font_descriptor['CIDSet'] = stream.reference
             if font.type == 'otf':
@@ -156,11 +153,11 @@ def build_fonts_dictionary(pdf, fonts, optimize_size):
 
 
 def _build_bitmap_font_dictionary(font_dictionary, pdf, font, widths,
-                                  optimize_size):
+                                  compress_pdf, subset):
     # https://docs.microsoft.com/typography/opentype/spec/ebdt
     font_dictionary['FontBBox'] = pydyf.Array([0, 0, 1, 1])
     font_dictionary['FontMatrix'] = pydyf.Array([1, 0, 0, 1, 0, 0])
-    if 'fonts' in optimize_size:
+    if subset:
         chars = tuple(sorted(font.cmap))
     else:
         chars = tuple(range(256))
@@ -309,7 +306,7 @@ def _build_bitmap_font_dictionary(font_dictionary, pdf, font, widths,
             b'/BPC 1',
             b'/D [1 0]',
             b'ID', bitmap, b'EI'
-        ])
+        ], compress=compress_pdf)
         pdf.add_object(bitmap_stream)
         char_procs[glyph_id] = bitmap_stream.reference
 

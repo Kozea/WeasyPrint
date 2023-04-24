@@ -458,8 +458,16 @@ def test_text_align_justify_no_break_between_children():
     assert span_3.position_x == 5 * 16  # (3 + 1) characters + 1 space
 
 
+@pytest.mark.parametrize('text', (
+    'Lorem ipsum dolor<em>sit amet</em>',
+    'Lorem ipsum <em>dolorsit</em> amet',
+    'Lorem ipsum <em></em>dolorsit amet',
+    'Lorem ipsum<em> </em>dolorsit amet',
+    'Lorem ipsum<em> dolorsit</em> amet',
+    'Lorem ipsum <em>dolorsit </em>amet',
+))
 @assert_no_logs
-def test_word_spacing():
+def test_word_spacing(text):
     # keep the empty <style> as a regression test: element.text is None
     # (Not a string.)
     page, = render_pages('''
@@ -470,15 +478,14 @@ def test_word_spacing():
     line, = body.children
     strong_1, = line.children
 
-    # TODO: Pango gives only half of word-spacing to a space at the end
-    # of a TextBox. Is this what we want?
     page, = render_pages('''
       <style>strong { word-spacing: 11px }</style>
-      <body><strong>Lorem ipsum dolor<em>sit amet</em></strong>''')
+      <body><strong>%s</strong>''' % text)
     html, = page.children
     body, = html.children
     line, = body.children
     strong_2, = line.children
+
     assert strong_2.width - strong_1.width == 33
 
 
@@ -1016,6 +1023,19 @@ def test_overflow_wrap_trailing_space(wrap, text, body_width, expected_width):
     tr, = row_group.children
     td, = tr.children
     assert td.width == expected_width
+
+
+def test_line_break_before_trailing_space():
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1852
+    page, = render_pages('''
+        <p style="display: inline-block">test\u2028 </p>a
+        <p style="display: inline-block">test\u2028</p>a
+    ''')
+    html, = page.children
+    body, = html.children
+    line, = body.children
+    p1, space1, p2, space2 = line.children
+    assert p1.width == p2.width
 
 
 def white_space_lines(width, space):

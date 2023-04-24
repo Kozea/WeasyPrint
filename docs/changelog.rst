@@ -2,6 +2,115 @@ Changelog
 =========
 
 
+Version 59.0b1
+--------------
+
+Released on 2023-04-14.
+
+**This version is experimental, don't use it in production. If you find bugs,
+please report them!**
+
+Command-line API:
+
+* The ``--optimize-size`` option and its short equivalent ``-O`` have been
+  deprecated. To activate or deactivate different size optimizations, you can
+  now use:
+
+  * ``--uncompressed-pdf``,
+  * ``--optimize-images``,
+  * ``--full-fonts``,
+  * ``--hinting``,
+  * ``--dpi <resolution>``, and
+  * ``--jpeg-quality <quality>``.
+
+* A new ``--cache-folder <folder>`` option has been added to store temporary
+  data in the given folder on the disk instead of keeping them in memory.
+
+Python API:
+
+* Global rendering options are now given in ``**options`` instead of dedicated
+  parameters, with slightly different names. It means that the signature of the
+  ``HTML.render()``, ``HTML.write_pdf()`` and ``Document.write_pdf()`` has
+  changed. Here are the steps to port your Python code to v59.0:
+
+  1. Use named parameters for these functions, not positioned parameters.
+  2. Rename some the parameters:
+
+     * ``image_cache`` becomes ``cache`` (see below),
+     * ``identifier`` becomes ``pdf_identifier``,
+     * ``variant`` becomes ``pdf_variant``,
+     * ``version`` becomes ``pdf_version``,
+     * ``forms`` becomes ``pdf_forms``,
+
+* The ``optimize_size`` parameter of ``HTML.render()``, ``HTML.write_pdf()``
+  and ``Document()`` has been removed and will be ignored. You can now use the
+  ``uncompressed_pdf``, ``full_fonts``, ``hinting``, ``dpi`` and
+  ``jpeg_quality`` parameters that are included in ``**options``.
+
+* The ``cache`` parameter can be included in ``**options`` to replace
+  ``image_cache``. If it is a dictionary, this dictionary will be used to store
+  temporary data in memory, and can be even shared between multiple documents.
+  If it’s a folder Path or string, WeasyPrint stores temporary data in the
+  given temporary folder on disk instead of keeping them in memory.
+
+New features:
+
+* `#1853 <https://github.com/Kozea/WeasyPrint/pull/1853>`_,
+  `#1854 <https://github.com/Kozea/WeasyPrint/issues/1854>`_:
+  Reduce PDF size, with financial support from Code & Co.
+* `#1824 <https://github.com/Kozea/WeasyPrint/issues/1824>`_,
+  `#1829 <https://github.com/Kozea/WeasyPrint/pull/1829>`_:
+  Reduce memory use for images
+* `#1858 <https://github.com/Kozea/WeasyPrint/issues/1858>`_:
+  Add an option to keep hinting information in embedded fonts
+
+Bug fixes:
+
+* `#1855 <https://github.com/Kozea/WeasyPrint/issues/1855>`_:
+  Fix position of emojis in justified text
+* `#1852 <https://github.com/Kozea/WeasyPrint/issues/1852>`_:
+  Don’t crash when line can be split before trailing spaces
+* `#1843 <https://github.com/Kozea/WeasyPrint/issues/1843>`_:
+  Fix syntax of dates in metadata
+* `#1827 <https://github.com/Kozea/WeasyPrint/issues/1827>`_,
+  `#1832 <https://github.com/Kozea/WeasyPrint/pull/1832>`_:
+  Fix word-spacing problems with nested tags
+
+Documentation:
+
+* `#1841 <https://github.com/Kozea/WeasyPrint/issues/1841>`_:
+  Add a paragraph about unsupported calc() function
+
+Contributors:
+
+* Guillaume Ayoub
+* Lucie Anglade
+* Alex Ch
+* whi_ne
+* Jonas Castro
+
+Backers and sponsors:
+
+* Castedo Ellerman
+* Kobalt
+* Spacinov
+* Grip Angebotssoftware
+* Crisp BV
+* Manuel Barkhau
+* SimonSoft
+* Menutech
+* KontextWork
+* NCC Group
+* René Fritz
+* Moritz Mahringer
+* Yanal-Yvez Fargialla
+* Piotr Horzycki
+* Healthchecks.io
+* TrainingSparkle
+* Hammerbacher
+* Synapsium
+
+
 Version 58.1
 ------------
 

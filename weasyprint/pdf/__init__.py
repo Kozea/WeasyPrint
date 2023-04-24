@@ -45,7 +45,7 @@ def _w3c_date_to_pdf(string, attr_name):
             pdf_date += f"{tz_hour:+03d}'{tz_minute:02d}"
         else:
             pdf_date += 'Z'
-    return pdf_date
+    return f'D:{pdf_date}'
 
 
 def _reference_resources(pdf, resources, images, fonts):
@@ -100,8 +100,7 @@ def _use_references(pdf, resources, images):
             alpha['SMask']['G'] = alpha['SMask']['G'].reference
 
 
-def generate_pdf(document, target, zoom, attachments, optimize_size,
-                 identifier, variant, version, custom_metadata):
+def generate_pdf(document, target, zoom, **options):
     # 0.75 = 72 PDF point per inch / 96 CSS pixel per inch
     scale = zoom * 0.75
 
@@ -109,6 +108,7 @@ def generate_pdf(document, target, zoom, attachments, optimize_size,
 
     # Set properties according to PDF variants
     mark = False
+    variant, version = options['pdf_variant'], options['pdf_version']
     if variant:
         variant_function, properties = VARIANTS[variant]
         if 'version' in properties:
@@ -116,6 +116,7 @@ def generate_pdf(document, target, zoom, attachments, optimize_size,
         if 'mark' in properties:
             mark = properties['mark']
 
+    identifier = options['pdf_identifier']
     pdf = pydyf.PDF((version or '1.7'), identifier)
     states = pydyf.Dictionary()
     x_objects = pydyf.Dictionary()
@@ -136,6 +137,7 @@ def generate_pdf(document, target, zoom, attachments, optimize_size,
 
     annot_files = {}
     pdf_pages, page_streams = [], []
+    compress = not options['uncompressed_pdf']
     for page_number, (page, links_and_anchors) in enumerate(
             zip(document.pages, page_links_and_anchors)):
         # Draw from the top-left corner
@@ -155,7 +157,7 @@ def generate_pdf(document, target, zoom, attachments, optimize_size,
             (right - left) / scale, (bottom - top) / scale)
         stream = Stream(
             document.fonts, page_rectangle, states, x_objects, patterns,
-            shadings, images, mark)
+            shadings, images, mark, compress=compress)
         stream.transform(d=-1, f=(page.height * scale))
         pdf.add_object(stream)
         page_streams.append(stream)
@@ -175,10 +177,11 @@ def generate_pdf(document, target, zoom, attachments, optimize_size,
 
         add_links(links_and_anchors, matrix, pdf, pdf_page, pdf_names, mark)
         add_annotations(
-            links_and_anchors[0], matrix, document, pdf, pdf_page, annot_files)
+            links_and_anchors[0], matrix, document, pdf, pdf_page, annot_files,
+            compress)
         add_inputs(
             page.inputs, matrix, pdf, pdf_page, resources, stream,
-            document.font_config.font_map)
+            document.font_config.font_map, compress)
         page.paint(stream, scale=scale)
 
         # Bleed
@@ -227,7 +230,7 @@ def generate_pdf(document, target, zoom, attachments, optimize_size,
             _w3c_date_to_pdf(metadata.modified, 'modified'))
     if metadata.lang:
         pdf.catalog['Lang'] = pydyf.String(metadata.lang)
-    if custom_metadata:
+    if options['custom_metadata']:
         for key, value in metadata.custom.items():
             key = ''.join(char for char in key if char.isalnum())
             key = key.encode('ascii', errors='ignore').decode()
@@ -235,7 +238,7 @@ def generate_pdf(document, target, zoom, attachments, optimize_size,
                 pdf.info[key] = pydyf.String(value)
 
     # Embedded files
-    attachments = metadata.attachments + (attachments or [])
+    attachments = metadata.attachments + (options['attachments'] or [])
     pdf_attachments = []
     for attachment in attachments:
         pdf_attachment = write_pdf_attachment(
@@ -256,7 +259,10 @@ def generate_pdf(document, target, zoom, attachments, optimize_size,
         pdf.catalog['Names']['EmbeddedFiles'] = content.reference
 
     # Embedded fonts
-    pdf_fonts = build_fonts_dictionary(pdf, document.fonts, optimize_size)
+    subset = not options['full_fonts']
+    hinting = options['hinting']
+    pdf_fonts = build_fonts_dictionary(
+        pdf, document.fonts, compress, subset, hinting)
     pdf.add_object(pdf_fonts)
     if 'AcroForm' in pdf.catalog:
         # Include Dingbats for forms
@@ -284,6 +290,6 @@ def generate_pdf(document, target, zoom, attachments, optimize_size,
 
     # Apply PDF variants functions
     if variant:
-        variant_function(pdf, metadata, document, page_streams)
+        variant_function(pdf, metadata, document, page_streams, compress)
 
     return pdf

@@ -45,9 +45,6 @@ HTML_SPACE_SEPARATED_TOKENS_RE = re.compile(f'[^{HTML_WHITESPACE}]+')
 def ascii_lower(string):
     r"""Transform (only) ASCII letters to lower case: A-Z is mapped to a-z.
 
-    :param string: An Unicode string.
-    :returns: A new Unicode string.
-
     This is used for `ASCII case-insensitive
     <https://whatwg.org/C#ascii-case-insensitive>`_ matching.
 
@@ -66,15 +63,9 @@ def ascii_lower(string):
 
 
 def element_has_link_type(element, link_type):
-    """
-    Return whether the given element has a ``rel`` attribute with the
-    given link type.
-
-    :param link_type: Must be a lower-case string.
-
-    """
-    return any(ascii_lower(token) == link_type for token in
-               HTML_SPACE_SEPARATED_TOKENS_RE.findall(element.get('rel', '')))
+    """Return whether element has a ``rel`` attribute with given link type."""
+    tokens = HTML_SPACE_SEPARATED_TOKENS_RE.findall(element.get('rel', ''))
+    return any(ascii_lower(token) == link_type for token in tokens)
 
 
 # Maps HTML tag names to function taking an HTML element and returning a Box.

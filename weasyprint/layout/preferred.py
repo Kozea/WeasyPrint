@@ -744,9 +744,12 @@ def trailing_whitespace_size(context, box):
         stripped_box = box.copy_with_text(stripped_text)
         stripped_box, resume, _ = split_text_box(
             context, stripped_box, None, old_resume)
-        assert stripped_box is not None
-        assert resume is None
-        return old_box.width - stripped_box.width
+        if stripped_box is None:
+            # old_box split just before the trailing spaces
+            return old_box.width
+        else:
+            assert resume is None
+            return old_box.width - stripped_box.width
     else:
         _, _, _, width, _, _ = split_first_line(
             box.text, box.style, context, None, box.justification_spacing)

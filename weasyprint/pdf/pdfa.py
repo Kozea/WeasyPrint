@@ -18,7 +18,7 @@ from ..logger import LOGGER
 from .metadata import add_metadata
 
 
-def pdfa(pdf, metadata, document, page_streams, version):
+def pdfa(pdf, metadata, document, page_streams, compress, version):
     """Set metadata for PDF/A documents."""
     LOGGER.warning(
         'PDF/A support is experimental, '
@@ -29,7 +29,7 @@ def pdfa(pdf, metadata, document, page_streams, version):
     profile = pydyf.Stream(
         [read_binary(__package__, 'sRGB2014.icc')],
         pydyf.Dictionary({'N': 3, 'Alternate': '/DeviceRGB'}),
-        compress=True)
+        compress=compress)
     pdf.add_object(profile)
     pdf.catalog['OutputIntents'] = pydyf.Array([
         pydyf.Dictionary({
@@ -46,7 +46,7 @@ def pdfa(pdf, metadata, document, page_streams, version):
             pdf_object['F'] = 2 ** (3 - 1)
 
     # Common PDF metadata stream
-    add_metadata(pdf, metadata, 'a', version, 'B')
+    add_metadata(pdf, metadata, 'a', version, 'B', compress)
 
 
 VARIANTS = {

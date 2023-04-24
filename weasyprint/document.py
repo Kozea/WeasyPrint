@@ -2,9 +2,10 @@
 
 import functools
 import io
-import shutil
+from hashlib import md5
+from pathlib import Path
 
-from . import CSS
+from . import CSS, DEFAULT_OPTIONS
 from .anchors import gather_anchors, make_page_bookmark_tree
 from .css import get_all_computed_styles
 from .css.counters import CounterStyle
@@ -159,6 +160,51 @@ class DocumentMetadata:
         self.custom = custom or {}
 
 
+class DiskCache:
+    """Dict-like storing images content on disk.
+
+    Bytestring values are stored on disk. Other lightweight Python objects
+    (i.e. RasterImage instances) are still stored in memory.
+
+    """
+    def __init__(self, folder):
+        self._path = Path(folder)
+        self._path.mkdir(parents=True, exist_ok=True)
+        self._memory_cache = {}
+        self._disk_paths = set()
+
+    def _path_from_key(self, key):
+        return self._path / md5(key.encode()).hexdigest()
+
+    def __getitem__(self, key):
+        if key in self._memory_cache:
+            return self._memory_cache[key]
+        else:
+            return self._path_from_key(key).read_bytes()
+
+    def __setitem__(self, key, value):
+        if isinstance(value, bytes):
+            path = self._path_from_key(key)
+            self._disk_paths.add(path)
+            path.write_bytes(value)
+        else:
+            self._memory_cache[key] = value
+
+    def __contains__(self, key):
+        return (
+            key in self._memory_cache or
+            self._path_from_key(key).exists())
+
+    def __del__(self):
+        try:
+            for path in self._disk_paths:
+                path.unlink(missing_ok=True)
+            self._path.rmdir()
+        except Exception:
+            # Silently ignore errors while clearing cache
+            pass
+
+
 class Document:
     """A rendered document ready to be painted in a pydyf stream.
 
@@ -171,9 +217,7 @@ class Document:
     """
 
     @classmethod
-    def _build_layout_context(cls, html, stylesheets, presentational_hints,
-                              optimize_size, font_config, counter_style,
-                              image_cache, forms):
+    def _build_layout_context(cls, html, font_config, counter_style, options):
         if font_config is None:
             font_config = FontConfiguration()
         if counter_style is None:
@@ -181,19 +225,24 @@ class Document:
         target_collector = TargetCollector()
         page_rules = []
         user_stylesheets = []
-        image_cache = {} if image_cache is None else image_cache
-        for css in stylesheets or []:
+        cache = options['cache']
+        if cache is None:
+            cache = {}
+        elif not isinstance(cache, (dict, DiskCache)):
+            cache = DiskCache(cache)
+        for css in options['stylesheets'] or []:
             if not hasattr(css, 'matcher'):
                 css = CSS(
                     guess=css, media_type=html.media_type,
                     font_config=font_config, counter_style=counter_style)
             user_stylesheets.append(css)
         style_for = get_all_computed_styles(
-            html, user_stylesheets, presentational_hints, font_config,
-            counter_style, page_rules, target_collector, forms)
+            html, user_stylesheets, options['presentational_hints'],
+            font_config, counter_style, page_rules, target_collector,
+            options['pdf_forms'])
         get_image_from_uri = functools.partial(
-            original_get_image_from_uri, cache=image_cache,
-            url_fetcher=html.url_fetcher, optimize_size=optimize_size)
+            original_get_image_from_uri, cache=cache,
+            url_fetcher=html.url_fetcher, options=options)
         PROGRESS_LOGGER.info('Step 4 - Creating formatting structure')
         context = LayoutContext(
             style_for, get_image_from_uri, font_config, counter_style,
@@ -201,8 +250,7 @@ class Document:
         return context
 
     @classmethod
-    def _render(cls, html, stylesheets, presentational_hints, optimize_size,
-                font_config, counter_style, image_cache, forms):
+    def _render(cls, html, font_config, counter_style, options):
         if font_config is None:
             font_config = FontConfiguration()
 
@@ -210,8 +258,7 @@ class Document:
             counter_style = CounterStyle()
 
         context = cls._build_layout_context(
-            html, stylesheets, presentational_hints, optimize_size,
-            font_config, counter_style, image_cache, forms)
+            html, font_config, counter_style, options)
 
         root_box = build_formatting_structure(
             html.etree_element, context.style_for, context.get_image_from_uri,
@@ -222,12 +269,11 @@ class Document:
         rendering = cls(
             [Page(page_box) for page_box in page_boxes],
             DocumentMetadata(**get_html_metadata(html)),
-            html.url_fetcher, font_config, optimize_size)
+            html.url_fetcher, font_config)
         rendering._html = html
         return rendering
 
-    def __init__(self, pages, metadata, url_fetcher, font_config,
-                 optimize_size):
+    def __init__(self, pages, metadata, url_fetcher, font_config):
         #: A list of :class:`Page` objects.
         self.pages = pages
         #: A :class:`DocumentMetadata` object.
@@ -246,9 +292,6 @@ class Document:
         # rendering is destroyed. This is needed as font_config.__del__ removes
         # fonts that may be used when rendering
         self.font_config = font_config
-        # Set of flags for PDF size optimization. Can contain "images" and
-        # "fonts".
-        self._optimize_size = optimize_size
 
     def build_element_structure(self, structure, etree_element=None):
         if etree_element is None:
@@ -288,8 +331,7 @@ class Document:
         elif not isinstance(pages, list):
             pages = list(pages)
         return type(self)(
-            pages, self.metadata, self.url_fetcher, self.font_config,
-            self._optimize_size)
+            pages, self.metadata, self.url_fetcher, self.font_config)
 
     def make_bookmark_tree(self, scale=1, transform_pages=False):
         """Make a tree of all bookmarks in the document.
@@ -324,9 +366,7 @@ class Document:
                 page_number, matrix)
         return root
 
-    def write_pdf(self, target=None, zoom=1, attachments=None, finisher=None,
-                  identifier=None, variant=None, version=None,
-                  custom_metadata=False):
+    def write_pdf(self, target=None, zoom=1, finisher=None, **options):
         """Paint the pages in a PDF file, with metadata.
 
         :type target:
@@ -339,40 +379,38 @@ class Document:
             All CSS units are affected, including physical units like
             ``cm`` and named sizes like ``A4``.  For values other than
             1, the physical CSS units will thus be "wrong".
-        :param list attachments: A list of additional file attachments for the
-            generated PDF document or :obj:`None`. The list's elements are
-            :class:`weasyprint.Attachment` objects, filenames, URLs or
-            file-like objects.
-        :param finisher: A finisher function, that accepts the document and a
-            :class:`pydyf.PDF` object as parameters, can be passed to perform
+        :type finisher: :term:`callable`
+        :param finisher:
+            A finisher function or callable that accepts the document and a
+            :class:`pydyf.PDF` object as parameters. Can be passed to perform
             post-processing on the PDF right before the trailer is written.
-        :param bytes identifier: A bytestring used as PDF file identifier.
-        :param str variant: A PDF variant name.
-        :param str version: A PDF version number.
-        :param bool custom_metadata: A boolean defining whether custom HTML
-            metadata should be stored in the generated PDF.
+        :param options:
+            The ``options`` parameter includes by default the
+            :data:`weasyprint.DEFAULT_OPTIONS` values.
         :returns:
             The PDF as :obj:`bytes` if ``target`` is not provided or
             :obj:`None`, otherwise :obj:`None` (the PDF is written to
             ``target``).
 
         """
-        pdf = generate_pdf(
-            self, target, zoom, attachments, self._optimize_size, identifier,
-            variant, version, custom_metadata)
+        new_options = DEFAULT_OPTIONS.copy()
+        new_options.update(options)
+        options = new_options
+        pdf = generate_pdf(self, target, zoom, **options)
+
+        identifier = options['pdf_identifier']
+        compress = not options['uncompressed_pdf']
 
         if finisher:
             finisher(self, pdf)
 
-        output = io.BytesIO()
-        pdf.write(output, version=pdf.version, identifier=identifier)
-
         if target is None:
+            output = io.BytesIO()
+            pdf.write(output, pdf.version, identifier, compress)
             return output.getvalue()
+
+        if hasattr(target, 'write'):
+            pdf.write(target, pdf.version, identifier, compress)
         else:
-            output.seek(0)
-            if hasattr(target, 'write'):
-                shutil.copyfileobj(output, target)
-            else:
-                with open(target, 'wb') as fd:
-                    shutil.copyfileobj(output, fd)
+            with open(target, 'wb') as fd:
+                pdf.write(fd, pdf.version, identifier, compress)

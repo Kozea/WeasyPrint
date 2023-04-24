@@ -43,7 +43,7 @@ jobs:
       - name: Ticket
         run: python -m weasyprint weasyprint-samples/ticket/ticket.html ${{env.REPORTS_FOLDER}}/ticket.pdf
       - name: Archive generated PDFs
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: generated-documents
           path: ${{env.REPORTS_FOLDER}}

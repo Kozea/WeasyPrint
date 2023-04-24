@@ -1052,6 +1052,10 @@ def draw_emojis(stream, font_size, x, y, emojis):
 def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y,
                     angle=0):
     """Draw the given ``textbox`` line to the document ``stream``."""
+    # Don’t draw lines with only invisible characters
+    if not textbox.text.strip():
+        return []
+
     font_size = textbox.style['font_size']
     if font_size < 1e-6:  # Default float precision used by pydyf
         return []
@@ -1198,8 +1202,7 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y,
                     png_data = ffi.unpack(hb_data, int(stream.length[0]))
                     pillow_image = Image.open(BytesIO(png_data))
                     image_id = f'{font.hash}{glyph}'
-                    image = RasterImage(
-                        pillow_image, image_id, optimize_size=())
+                    image = RasterImage(pillow_image, image_id, png_data)
                     d = font.widths[glyph] / 1000
                     a = pillow_image.width / pillow_image.height * d
                     pango.pango_font_get_glyph_extents(
@@ -1210,7 +1213,7 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y,
                     f = f / font_size - font_size
                     emojis.append([image, font, a, d, x_advance, f])
 
-            x_advance += (font.widths[glyph] + offset) / 1000
+            x_advance += (font.widths[glyph] + offset - kerning) / 1000
 
         # Close the last glyphs list, remove if empty
         if string[-1] == '<':

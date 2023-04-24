@@ -73,14 +73,10 @@ def document_write_png(self, target=None, resolution=96, antialiasing=1,
             shutil.copyfileobj(png, fd)
 
 
-def html_write_png(self, target=None, stylesheets=None, resolution=96,
-                   presentational_hints=False, optimize_size=('fonts',),
-                   font_config=None, counter_style=None, image_cache=None):
-    return self.render(
-        stylesheets, presentational_hints=presentational_hints,
-        optimize_size=optimize_size, font_config=font_config,
-        counter_style=counter_style, image_cache=image_cache).write_png(
-            target, resolution)
+def html_write_png(self, target=None, font_config=None, counter_style=None,
+                   resolution=96, **options):
+    document = self.render(font_config, counter_style, **options)
+    return document.write_png(target, resolution)
 
 
 Document.write_png = document_write_png

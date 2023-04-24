@@ -182,11 +182,20 @@ class Layout:
                 add_attr(0, len(bytestring), letter_spacing)
 
             if word_spacing:
+                if bytestring == b' ':
+                    # We need more than one space to set word spacing
+                    self.text = ' \u200b'  # Space + zero-width space
+                    text, bytestring = unicode_to_char_p(self.text)
+                    pango.pango_layout_set_text(self.layout, text, -1)
+
                 space_spacing = (
                     units_from_double(word_spacing) + letter_spacing)
                 position = bytestring.find(b' ')
+                # Pango gives only half of word-spacing on boundaries
+                boundary_positions = (0, len(bytestring) - 1)
                 while position != -1:
-                    add_attr(position, position + 1, space_spacing)
+                    factor = 1 + (position in boundary_positions)
+                    add_attr(position, position + 1, factor * space_spacing)
                     position = bytestring.find(b' ', position + 1)
 
             if word_breaking:
@@ -226,15 +235,7 @@ class Layout:
 
 
 def create_layout(text, style, context, max_width, justification_spacing):
-    """Return an opaque Pango layout with default Pango line-breaks.
-
-    :param text: Unicode
-    :param style: a style dict of computed values
-    :param max_width:
-        The maximum available width in the same unit as ``style['font_size']``,
-        or ``None`` for unlimited width.
-
-    """
+    """Return an opaque Pango layout with default Pango line-breaks."""
     layout = Layout(context, style, justification_spacing, max_width)
 
     # Make sure that max_width * Pango.SCALE == max_width * 1024 fits in a

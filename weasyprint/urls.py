@@ -175,9 +175,12 @@ def default_url_fetcher(url, timeout=10, ssl_context=None):
     ``url_fetcher`` argument to :class:`HTML` or :class:`CSS`.
     (See :ref:`URL Fetchers`.)
 
-    :param str url: The URL of the resource to fetch.
-    :param int timeout: The number of seconds before HTTP requests are dropped.
-    :param ssl.SSLContext ssl_context: An SSL context used for HTTP requests.
+    :param str url:
+        The URL of the resource to fetch.
+    :param int timeout:
+        The number of seconds before HTTP requests are dropped.
+    :param ssl.SSLContext ssl_context:
+        An SSL context used for HTTP requests.
     :raises: An exception indicating failure, e.g. :obj:`ValueError` on
         syntactically invalid URL.
     :returns: A :obj:`dict` with the following keys:

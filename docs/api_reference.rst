@@ -57,6 +57,7 @@ Python API
 .. autoclass:: CSS(input, **kwargs)
 .. autoclass:: Attachment(input, **kwargs)
 .. autofunction:: default_url_fetcher
+.. autodata:: DEFAULT_OPTIONS
 
 .. module:: weasyprint.document
 .. autoclass:: Document
@@ -644,6 +645,8 @@ supported.
 
 The ``attr()`` functional notation is allowed in the ``content`` and
 ``string-set`` properties.
+
+The ``calc()`` function is **not** supported.
 
 Viewport-percentage lengths (``vw``, ``vh``, ``vmin``, ``vmax``) are **not**
 supported.

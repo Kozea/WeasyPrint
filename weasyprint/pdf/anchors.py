@@ -92,7 +92,8 @@ def add_outlines(pdf, bookmarks, parent=None):
     return outlines, count
 
 
-def add_inputs(inputs, matrix, pdf, page, resources, stream, font_map):
+def add_inputs(inputs, matrix, pdf, page, resources, stream, font_map,
+               compress):
     """Include form inputs in PDF."""
     if not inputs:
         return
@@ -119,7 +120,7 @@ def add_inputs(inputs, matrix, pdf, page, resources, stream, font_map):
         input_name = pydyf.String(element.attrib.get('name', default_name))
         # TODO: where does this 0.75 scale come from?
         font_size = style['font_size'] * 0.75
-        field_stream = pydyf.Stream()
+        field_stream = pydyf.Stream(compress=compress)
         field_stream.set_color_rgb(*style['color'][:3])
         if input_type == 'checkbox':
             # Checkboxes
@@ -130,7 +131,7 @@ def add_inputs(inputs, matrix, pdf, page, resources, stream, font_map):
                 'Type': '/XObject',
                 'Subtype': '/Form',
                 'BBox': pydyf.Array((0, 0, width, height)),
-            })
+            }, compress=compress)
             checked_stream.push_state()
             checked_stream.begin_text()
             checked_stream.set_color_rgb(*style['color'][:3])
@@ -138,9 +139,8 @@ def add_inputs(inputs, matrix, pdf, page, resources, stream, font_map):
             # Center (let’s assume that Dingbat’s check has a 0.8em size)
             x = (width - font_size * 0.8) / 2
             y = (height - font_size * 0.8) / 2
-            # TODO: we should have these operators in pydyf
-            checked_stream.stream.append(f'{x} {y} Td')
-            checked_stream.stream.append('(4) Tj')
+            checked_stream.move_text_to(x, y)
+            checked_stream.show_text_string('4')
             checked_stream.end_text()
             checked_stream.pop_state()
             pdf.add_object(checked_stream)
@@ -195,7 +195,7 @@ def add_inputs(inputs, matrix, pdf, page, resources, stream, font_map):
         pdf.catalog['AcroForm']['Fields'].append(field.reference)
 
 
-def add_annotations(links, matrix, document, pdf, page, annot_files):
+def add_annotations(links, matrix, document, pdf, page, annot_files, compress):
     """Include annotations in PDF."""
     # TODO: splitting a link into multiple independent rectangular
     # annotations works well for pure links, but rather mediocre for
@@ -226,8 +226,7 @@ def add_annotations(links, matrix, document, pdf, page, annot_files):
             'Type': '/XObject',
             'Subtype': '/Form',
             'BBox': pydyf.Array(rectangle),
-            'Length': 0,
-        })
+        }, compress)
         pdf.add_object(stream)
         annot = pydyf.Dictionary({
             'Type': '/Annot',
@@ -286,7 +285,7 @@ def write_pdf_attachment(pdf, attachment, url_fetcher):
                     'ModDate': attachment.modified,
                 })
             })
-            file_stream = pydyf.Stream([stream], file_extra)
+            file_stream = pydyf.Stream([stream], file_extra, compress)
             pdf.add_object(file_stream)
 
     except URLFetchingError as exception:

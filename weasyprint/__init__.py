@@ -15,11 +15,73 @@ import cssselect2
 import html5lib
 import tinycss2
 
-VERSION = __version__ = '58.1'
+VERSION = __version__ = '59.0b1'
+
+#: Default values for command-line and Python API options. See
+#: :func:`__main__.main` to learn more about specific options for
+#: command-line.
+#:
+#: :param list stylesheets:
+#:     An optional list of user stylesheets. The list can include
+#:     are :class:`CSS` objects, filenames, URLs, or file-like
+#:     objects. (See :ref:`Stylesheet Origins`.)
+#: :param str media_type:
+#:     Media type to use for @media.
+#: :param list attachments:
+#:     A list of additional file attachments for the generated PDF
+#:     document or :obj:`None`. The list's elements are
+#:     :class:`Attachment` objects, filenames, URLs or file-like objects.
+#: :param bytes pdf_identifier:
+#:     A bytestring used as PDF file identifier.
+#: :param str pdf_variant:
+#:     A PDF variant name.
+#: :param str pdf_version:
+#:     A PDF version number.
+#: :param bool pdf_forms:
+#:     Whether PDF forms have to be included.
+#: :param bool uncompressed_pdf:
+#:     Whether PDF content should be compressed.
+#: :param bool custom_metadata:
+#:     Whether custom HTML metadata should be stored in the generated PDF.
+#: :param bool presentational_hints:
+#:     Whether HTML presentational hints are followed.
+#: :param bool optimize_images:
+#:     Whether size of embedded images should be optimized, with no quality
+#:     loss.
+#: :param int jpeg_quality:
+#:     JPEG quality between 0 (worst) to 95 (best).
+#: :param int dpi:
+#:     Maximum resolution of images embedded in the PDF.
+#: :param bool full_fonts:
+#:     Whether unmodified font files should be embedded when possible.
+#: :param bool hinting:
+#:     Whether hinting information should be kept in embedded fonts.
+#: :type cache: :obj:`dict`, :class:`pathlib.Path` or :obj:`str`
+#: :param cache:
+#:     A dictionary used to cache images in memory, or a folder path where
+#:     images are temporarily stored.
+DEFAULT_OPTIONS = {
+    'stylesheets': None,
+    'media_type': 'print',
+    'attachments': None,
+    'pdf_identifier': None,
+    'pdf_variant': None,
+    'pdf_version': None,
+    'pdf_forms': None,
+    'uncompressed_pdf': False,
+    'custom_metadata': False,
+    'presentational_hints': False,
+    'optimize_images': False,
+    'jpeg_quality': None,
+    'dpi': None,
+    'full_fonts': False,
+    'hinting': False,
+    'cache': None,
+}
 
 __all__ = [
-    'HTML', 'CSS', 'Attachment', 'Document', 'Page', 'default_url_fetcher',
-    'VERSION', '__version__']
+    'HTML', 'CSS', 'DEFAULT_OPTIONS', 'Attachment', 'Document', 'Page',
+    'default_url_fetcher', 'VERSION', '__version__']
 
 
 # Import after setting the version, as the version is used in other modules
@@ -55,12 +117,15 @@ class HTML:
     Alternatively, use **one** named argument so that no guessing is involved:
 
     :type filename: str or pathlib.Path
-    :param filename: A filename, relative to the current directory, or
-        absolute.
-    :param str url: An absolute, fully qualified URL.
+    :param filename:
+        A filename, relative to the current directory, or absolute.
+    :param str url:
+        An absolute, fully qualified URL.
     :type file_obj: :term:`file object`
-    :param file_obj: Any object with a ``read`` method.
-    :param str string: A string of HTML source.
+    :param file_obj:
+        Any object with a ``read`` method.
+    :param str string:
+        A string of HTML source.
 
     Specifying multiple inputs is an error:
     ``HTML(filename="foo.html", url="localhost://bar.html")``
@@ -68,20 +133,22 @@ class HTML:
 
     You can also pass optional named arguments:
 
-    :param str encoding: Force the source character encoding.
-    :param str base_url: The base used to resolve relative URLs
-        (e.g. in ``<img src="../foo.png">``). If not provided, try to use
-        the input filename, URL, or ``name`` attribute of :term:`file objects
-        <file object>`.
-    :type url_fetcher: :term:`function`
-    :param url_fetcher: A function or other callable
-        with the same signature as :func:`default_url_fetcher` called to
-        fetch external resources such as stylesheets and images.
-        (See :ref:`URL Fetchers`.)
-    :param str media_type: The media type to use for ``@media``.
-        Defaults to ``'print'``. **Note:** In some cases like
-        ``HTML(string=foo)`` relative URLs will be invalid if ``base_url``
-        is not provided.
+    :param str encoding:
+        Force the source character encoding.
+    :param str base_url:
+        The base used to resolve relative URLs (e.g. in
+        ``<img src="../foo.png">``). If not provided, try to use the input
+        filename, URL, or ``name`` attribute of
+        :term:`file objects <file object>`.
+    :type url_fetcher: :term:`callable`
+    :param url_fetcher:
+        A function or other callable with the same signature as
+        :func:`default_url_fetcher` called to fetch external resources such as
+        stylesheets and images. (See :ref:`URL Fetchers`.)
+    :param str media_type:
+        The media type to use for ``@media``. Defaults to ``'print'``.
+        **Note:** In some cases like ``HTML(string=foo)`` relative URLs will be
+        invalid if ``base_url`` is not provided.
 
     """
     def __init__(self, guess=None, filename=None, url=None, file_obj=None,
@@ -119,42 +186,32 @@ class HTML:
     def _ph_stylesheets(self):
         return [HTML5_PH_STYLESHEET]
 
-    def render(self, stylesheets=None, presentational_hints=False,
-               optimize_size=('fonts',), font_config=None, counter_style=None,
-               image_cache=None, forms=False):
+    def render(self, font_config=None, counter_style=None, **options):
         """Lay out and paginate the document, but do not (yet) export it.
 
         This returns a :class:`document.Document` object which provides
         access to individual pages and various meta-data.
         See :meth:`write_pdf` to get a PDF directly.
 
-        :param list stylesheets:
-            An optional list of user stylesheets. List elements are
-            :class:`CSS` objects, filenames, URLs, or file
-            objects. (See :ref:`Stylesheet Origins`.)
-        :param bool presentational_hints:
-            Whether HTML presentational hints are followed.
-        :param tuple optimize_size:
-            Optimize size of generated PDF. Can contain "images" and "fonts".
         :type font_config: :class:`text.fonts.FontConfiguration`
-        :param font_config: A font configuration handling ``@font-face`` rules.
+        :param font_config:
+            A font configuration handling ``@font-face`` rules.
         :type counter_style: :class:`css.counters.CounterStyle`
-        :param counter_style: A dictionary storing ``@counter-style`` rules.
-        :param dict image_cache: A dictionary used to cache images.
-        :param bool forms: Whether PDF forms have to be included.
+        :param counter_style:
+            A dictionary storing ``@counter-style`` rules.
+        :param options:
+            The ``options`` parameter includes by default the
+            :data:`DEFAULT_OPTIONS` values.
         :returns: A :class:`document.Document` object.
 
         """
-        return Document._render(
-            self, stylesheets, presentational_hints, optimize_size,
-            font_config, counter_style, image_cache, forms)
+        new_options = DEFAULT_OPTIONS.copy()
+        new_options.update(options)
+        options = new_options
+        return Document._render(self, font_config, counter_style, options)
 
-    def write_pdf(self, target=None, stylesheets=None, zoom=1,
-                  attachments=None, finisher=None, presentational_hints=False,
-                  optimize_size=('fonts',), font_config=None,
-                  counter_style=None, image_cache=None, identifier=None,
-                  variant=None, version=None, forms=False,
-                  custom_metadata=False):
+    def write_pdf(self, target=None, zoom=1, finisher=None,
+                  font_config=None, counter_style=None, **options):
         """Render the document to a PDF file.
 
         This is a shortcut for calling :meth:`render`, then
@@ -165,49 +222,37 @@ class HTML:
         :param target:
             A filename where the PDF file is generated, a file object, or
             :obj:`None`.
-        :param list stylesheets:
-            An optional list of user stylesheets. The list's elements
-            are :class:`CSS` objects, filenames, URLs, or file-like
-            objects. (See :ref:`Stylesheet Origins`.)
         :param float zoom:
             The zoom factor in PDF units per CSS units.  **Warning**:
             All CSS units are affected, including physical units like
             ``cm`` and named sizes like ``A4``.  For values other than
             1, the physical CSS units will thus be "wrong".
-        :param list attachments: A list of additional file attachments for the
-            generated PDF document or :obj:`None`. The list's elements are
-            :class:`Attachment` objects, filenames, URLs or file-like objects.
-        :param finisher: A finisher function, that accepts the document and a
-            :class:`pydyf.PDF` object as parameters, can be passed to perform
+        :type finisher: :term:`callable`
+        :param finisher:
+            A finisher function or callable that accepts the document and a
+            :class:`pydyf.PDF` object as parameters. Can be passed to perform
             post-processing on the PDF right before the trailer is written.
-        :param bool presentational_hints: Whether HTML presentational hints are
-            followed.
-        :param tuple optimize_size:
-            Optimize size of generated PDF. Can contain "images" and "fonts".
         :type font_config: :class:`text.fonts.FontConfiguration`
-        :param font_config: A font configuration handling ``@font-face`` rules.
+        :param font_config:
+            A font configuration handling ``@font-face`` rules.
         :type counter_style: :class:`css.counters.CounterStyle`
-        :param counter_style: A dictionary storing ``@counter-style`` rules.
-        :param dict image_cache: A dictionary used to cache images.
-        :param bytes identifier: A bytestring used as PDF file identifier.
-        :param str variant: A PDF variant name.
-        :param str version: A PDF version number.
-        :param bool forms: Whether PDF forms have to be included.
-        :param bool custom_metadata: Whether custom HTML metadata should be
-            stored in the generated PDF.
+        :param counter_style:
+            A dictionary storing ``@counter-style`` rules.
+        :param options:
+            The ``options`` parameter includes by default the
+            :data:`DEFAULT_OPTIONS` values.
         :returns:
             The PDF as :obj:`bytes` if ``target`` is not provided or
             :obj:`None`, otherwise :obj:`None` (the PDF is written to
             ``target``).
 
         """
+        new_options = DEFAULT_OPTIONS.copy()
+        new_options.update(options)
+        options = new_options
         return (
-            self.render(
-                stylesheets, presentational_hints, optimize_size, font_config,
-                counter_style, image_cache, forms)
-            .write_pdf(
-                target, zoom, attachments, finisher, identifier, variant,
-                version, custom_metadata))
+            self.render(font_config, counter_style, **options)
+            .write_pdf(target, zoom, finisher, **options))
 
 
 class CSS:
@@ -263,8 +308,9 @@ class Attachment:
     supported. An optional description can be provided with the ``description``
     argument.
 
-    :param description: A description of the attachment to be included in the
-        PDF document. May be :obj:`None`.
+    :param description:
+        A description of the attachment to be included in the PDF document.
+        May be :obj:`None`.
 
     """
     def __init__(self, guess=None, filename=None, url=None, file_obj=None,

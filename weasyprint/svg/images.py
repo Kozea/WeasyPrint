@@ -14,7 +14,7 @@ def svg(svg, node, font_size):
             node.get('width'), node.get('height'), font_size)
     scale_x, scale_y, translate_x, translate_y = preserve_ratio(
         svg, node, font_size, width, height)
-    if svg.tree != node:
+    if svg.tree != node and node.get('overflow', 'hidden') == 'hidden':
         svg.stream.rectangle(0, 0, width, height)
         svg.stream.clip()
         svg.stream.end()
