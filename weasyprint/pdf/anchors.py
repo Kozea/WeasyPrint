@@ -261,23 +261,18 @@ def write_pdf_attachment(pdf, attachment, url_fetcher):
             uncompressed_length = 0
             stream = b''
             md5 = hashlib.md5()
-            compress = zlib.compressobj()
             for data in iter(lambda: source.read(4096), b''):
                 uncompressed_length += len(data)
                 md5.update(data)
-                compressed = compress.compress(data)
-                stream += compressed
-            compressed = compress.flush(zlib.Z_FINISH)
-            stream += compressed
+                stream += data
             file_extra = pydyf.Dictionary({
                 'Type': '/EmbeddedFile',
-                'Filter': '/FlateDecode',
                 'Params': pydyf.Dictionary({
                     'CheckSum': f'<{md5.hexdigest()}>',
                     'Size': uncompressed_length,
                 })
             })
-            file_stream = pydyf.Stream([stream], file_extra, compress)
+            file_stream = pydyf.Stream([stream], file_extra, compress=True)
             pdf.add_object(file_stream)
 
     except URLFetchingError as exception:
