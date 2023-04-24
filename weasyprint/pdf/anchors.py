@@ -2,7 +2,6 @@
 
 import hashlib
 import io
-import zlib
 from os.path import basename
 from urllib.parse import unquote, urlsplit
 
