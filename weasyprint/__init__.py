@@ -6,6 +6,8 @@ importing sub-modules.
 """
 
 import contextlib
+import datetime
+import os
 from pathlib import Path
 from urllib.parse import urljoin
 
@@ -313,11 +315,36 @@ class Attachment:
     """
     def __init__(self, guess=None, filename=None, url=None, file_obj=None,
                  string=None, base_url=None, url_fetcher=default_url_fetcher,
-                 description=None):
+                 description=None, created=None, modified=None,
+                 af_relationship="Source"):
         self.source = _select_source(
             guess, filename, url, file_obj, string, base_url=base_url,
             url_fetcher=url_fetcher)
         self.description = description
+        self.af_relationship = af_relationship
+
+        def epoch_to_pdf(epoch):
+            dt_object = datetime.datetime.fromtimestamp(epoch)
+            return datetime_to_pdf(dt_object)
+
+        def datetime_to_pdf(dt_object):
+            return dt_object.strftime("D:%Y%m%d%H%M%SZ")
+
+        if created:
+            self.created = created
+        else:
+            if filename:
+                self.created = epoch_to_pdf(os.path.getctime(filename))
+            else:
+                self.created = datetime_to_pdf(datetime.datetime.now())
+
+        if modified:
+            self.modified = modified
+        else:
+            if filename:
+                self.modified = epoch_to_pdf(os.path.getmtime(filename))
+            else:
+                self.modified = datetime_to_pdf(datetime.datetime.now())
 
 
 @contextlib.contextmanager

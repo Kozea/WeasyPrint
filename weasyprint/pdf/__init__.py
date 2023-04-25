@@ -247,9 +247,12 @@ def generate_pdf(document, target, zoom, **options):
             pdf_attachments.append(pdf_attachment)
     if pdf_attachments:
         content = pydyf.Dictionary({'Names': pydyf.Array()})
+        if 'AF' not in pdf.catalog:
+            pdf.catalog['AF'] = pydyf.Array()
         for i, pdf_attachment in enumerate(pdf_attachments):
             content['Names'].append(pydyf.String(f'attachment{i}'))
             content['Names'].append(pdf_attachment.reference)
+            pdf.catalog['AF'].append(pdf_attachment.reference)
         pdf.add_object(content)
         if 'Names' not in pdf.catalog:
             pdf.catalog['Names'] = pydyf.Dictionary()
