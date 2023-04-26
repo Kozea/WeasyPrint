@@ -242,7 +242,7 @@ def generate_pdf(document, target, zoom, **options):
     pdf_attachments = []
     for attachment in attachments:
         pdf_attachment = write_pdf_attachment(
-            pdf, attachment, document.url_fetcher)
+            pdf, attachment, document.url_fetcher, compress)
         if pdf_attachment is not None:
             pdf_attachments.append(pdf_attachment)
     if pdf_attachments:

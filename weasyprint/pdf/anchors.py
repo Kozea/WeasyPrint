@@ -214,7 +214,7 @@ def add_annotations(links, matrix, document, pdf, page, annot_files, compress):
             # above about multiple regions won't always be correct, because
             # two links might have the same href, but different titles.
             annot_files[annot_target] = write_pdf_attachment(
-                pdf, (annot_target, None), document.url_fetcher)
+                pdf, (annot_target, None), document.url_fetcher, compress)
         annot_file = annot_files[annot_target]
         if annot_file is None:
             continue
@@ -242,7 +242,7 @@ def add_annotations(links, matrix, document, pdf, page, annot_files, compress):
         page['Annots'].append(annot.reference)
 
 
-def write_pdf_attachment(pdf, attachment, url_fetcher):
+def write_pdf_attachment(pdf, attachment, url_fetcher, compress):
     """Write an attachment to the PDF stream."""
     # Attachments from document links like <link> or <a> can only be URLs.
     # They're passed in as tuples
@@ -279,7 +279,7 @@ def write_pdf_attachment(pdf, attachment, url_fetcher):
                     'ModDate': attachment.modified,
                 })
             })
-            file_stream = pydyf.Stream([stream], file_extra, compress=True)
+            file_stream = pydyf.Stream([stream], file_extra, compress=compress)
             pdf.add_object(file_stream)
 
     except URLFetchingError as exception:
