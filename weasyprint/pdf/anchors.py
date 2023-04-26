@@ -297,7 +297,7 @@ def write_pdf_attachment(pdf, attachment, url_fetcher, compress):
         'Type': '/Filespec',
         'F': pydyf.String(),
         'UF': pydyf.String(filename),
-        "AFRelationship": "/Data",
+        "AFRelationship": "/"+attachment.af_relationship,
         'EF': pydyf.Dictionary({'F': file_stream.reference}),
         'Desc': pydyf.String(attachment.description or ''),
     })
