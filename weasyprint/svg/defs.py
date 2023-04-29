@@ -60,10 +60,8 @@ def use(svg, node, font_size):
             if key not in tree.attrib:
                 tree.attrib[key] = value
 
-    svg.stream.push_state()
+    node.override_iter(iter((tree,)))
     svg.stream.transform(e=x, f=y)
-    svg.draw_node(tree, font_size)
-    svg.stream.pop_state()
 
 
 def draw_gradient_or_pattern(svg, node, name, font_size, opacity, stroke):

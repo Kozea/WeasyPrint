@@ -284,6 +284,13 @@ class Node:
             str(rotate.pop(0) if rotate else original_rotate[-1])
             for i in range(len(self.text)))
 
+    def override_iter(self, iterator):
+        """Override node’s children iterator."""
+        # As special methods are bound to classes and not instances, we have to
+        # create and assign a new type.
+        self.__class__ = type(
+            'Node', (Node,), {'__iter__': lambda _: iterator})
+
 
 class SVG:
     """An SVG document."""
@@ -737,11 +744,7 @@ class SVG:
             if key not in element.attrib:
                 element.attrib[key] = value
         if next(iter(element), None) is None:
-            # Override element’s __iter__ with parent’s __iter__. As special
-            # methods are bound to classes and not instances, we have to create
-            # and assign a new type.
-            element.__class__ = type(
-                'Node', (Node,), {'__iter__': lambda self: parent.__iter__()})
+            element.override_iter(parent.__iter__())
 
     def calculate_bounding_box(self, node, font_size, stroke=True):
         """Calculate the bounding box of a node."""
