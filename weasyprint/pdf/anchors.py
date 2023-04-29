@@ -2,7 +2,6 @@
 
 import hashlib
 import io
-import zlib
 from os.path import basename
 from urllib.parse import unquote, urlsplit
 
@@ -214,7 +213,7 @@ def add_annotations(links, matrix, document, pdf, page, annot_files, compress):
             # above about multiple regions won't always be correct, because
             # two links might have the same href, but different titles.
             annot_files[annot_target] = write_pdf_attachment(
-                pdf, (annot_target, None), document.url_fetcher)
+                pdf, (annot_target, None), document.url_fetcher, compress)
         annot_file = annot_files[annot_target]
         if annot_file is None:
             continue
@@ -242,7 +241,7 @@ def add_annotations(links, matrix, document, pdf, page, annot_files, compress):
         page['Annots'].append(annot.reference)
 
 
-def write_pdf_attachment(pdf, attachment, url_fetcher):
+def write_pdf_attachment(pdf, attachment, url_fetcher, compress):
     """Write an attachment to the PDF stream."""
     # Attachments from document links like <link> or <a> can only be URLs.
     # They're passed in as tuples
@@ -261,23 +260,18 @@ def write_pdf_attachment(pdf, attachment, url_fetcher):
             uncompressed_length = 0
             stream = b''
             md5 = hashlib.md5()
-            compress = zlib.compressobj()
             for data in iter(lambda: source.read(4096), b''):
                 uncompressed_length += len(data)
                 md5.update(data)
-                compressed = compress.compress(data)
-                stream += compressed
-            compressed = compress.flush(zlib.Z_FINISH)
-            stream += compressed
+                stream += data
             file_extra = pydyf.Dictionary({
                 'Type': '/EmbeddedFile',
-                'Filter': '/FlateDecode',
                 'Params': pydyf.Dictionary({
                     'CheckSum': f'<{md5.hexdigest()}>',
                     'Size': uncompressed_length,
                 })
             })
-            file_stream = pydyf.Stream([stream], file_extra, compress)
+            file_stream = pydyf.Stream([stream], file_extra, compress=compress)
             pdf.add_object(file_stream)
 
     except URLFetchingError as exception:
