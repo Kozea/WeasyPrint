@@ -472,11 +472,7 @@ class Stream(pydyf.Stream):
             return element_tag.upper()
         elif element_tag in ('dl', 'ul', 'ol'):
             return 'L'
-        elif element_tag == 'li':
-            return 'LI'
-        elif element_tag == 'dt':
-            return 'LI'
-        elif element_tag == 'dd':
+        elif element_tag in ('li', 'dt', 'dd'):
             return 'LI'
         elif element_tag == 'table':
             return 'Table'
