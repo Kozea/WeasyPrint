@@ -40,7 +40,7 @@ Python API:
      * ``identifier`` becomes ``pdf_identifier``,
      * ``variant`` becomes ``pdf_variant``,
      * ``version`` becomes ``pdf_version``,
-     * ``forms`` becomes ``pdf_forms``,
+     * ``forms`` becomes ``pdf_forms``.
 
 * The ``optimize_size`` parameter of ``HTML.render()``, ``HTML.write_pdf()``
   and ``Document()`` has been removed and will be ignored. You can now use the
