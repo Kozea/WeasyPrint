@@ -94,6 +94,8 @@ class RasterImage:
             return
 
         width, height = self.width, self.height
+        interpolate = 'true' if image_rendering == 'auto' else 'false'
+        ratio = 1
         if self._dpi:
             pt_to_in = 4 / 3 / 96
             width_inches = abs(concrete_width * stream.ctm[0][0] * pt_to_in)
@@ -101,21 +103,8 @@ class RasterImage:
             dpi = max(self.width / width_inches, self.height / height_inches)
             if dpi > self._dpi:
                 ratio = self._dpi / dpi
-                image = Image.open(io.BytesIO(self.image_data.data))
-                width = int(round(self.width * ratio))
-                height = int(round(self.height * ratio))
-                image.thumbnail((max(1, width), max(1, height)))
-                image_file = io.BytesIO()
-                image.save(
-                    image_file, format=image.format, optimize=self.optimize)
-                width, height = image.width, image.height
-                self.image_data = self.cache_image_data(image_file.getvalue())
-        else:
-            dpi = None
+        image_name = stream.add_image(self, width, height, interpolate, ratio)
 
-        interpolate = 'true' if image_rendering == 'auto' else 'false'
-
-        image_name = stream.add_image(self, width, height, interpolate)
         stream.transform(
             concrete_width, 0, 0, -concrete_height, 0, concrete_height)
         stream.draw_x_object(image_name)
