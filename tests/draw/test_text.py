@@ -520,9 +520,9 @@ def test_text_underline(assert_pixels):
     assert_pixels('''
         _____________
         _zzzzzzzzzzz_
-        _zRRRRRRRRRz_
-        _zRRRRRRRRRz_
-        _zBBBBBBBBBz_
+        _zsssssssssz_
+        _zsssssssssz_
+        _zuuuuuuuuuz_
         _zzzzzzzzzzz_
         _____________
     ''', '''
@@ -533,7 +533,7 @@ def test_text_underline(assert_pixels):
           margin: 2px;
         }
         body {
-          color: red;
+          color: rgba(255, 0, 0, 0.5);
           font-family: weasyprint;
           font-size: 3px;
           text-decoration: underline blue;
@@ -601,9 +601,9 @@ def test_text_multiple_text_decoration(assert_pixels):
     assert_pixels('''
         _____________
         _zzzzzzzzzzz_
-        _zRRRRRRRRRz_
+        _zsssssssssz_
         _zBBBBBBBBBz_
-        _zBBBBBBBBBz_
+        _zuuuuuuuuuz_
         _zzzzzzzzzzz_
         _____________
     ''', '''
@@ -614,7 +614,7 @@ def test_text_multiple_text_decoration(assert_pixels):
           margin: 2px;
         }
         body {
-          color: red;
+          color: rgba(255, 0, 0, 0.5);
           font-family: weasyprint;
           font-size: 3px;
           text-decoration: underline line-through blue;
@@ -628,9 +628,9 @@ def test_text_nested_text_decoration(assert_pixels):
     assert_pixels('''
         _____________
         _zzzzzzzzzzz_
-        _zRRRRRRRRRz_
-        _zRRRBBBRRRz_
-        _zBBBBBBBBBz_
+        _zsssssssssz_
+        _zsssBBBsssz_
+        _zuuuuuuuuuz_
         _zzzzzzzzzzz_
         _____________
     ''', '''
@@ -641,7 +641,7 @@ def test_text_nested_text_decoration(assert_pixels):
           margin: 2px;
         }
         body {
-          color: red;
+          color: rgba(255, 0, 0, 0.5);
           font-family: weasyprint;
           font-size: 3px;
           text-decoration: underline blue;

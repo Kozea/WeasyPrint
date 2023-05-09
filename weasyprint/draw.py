@@ -1001,6 +1001,26 @@ def draw_text(stream, textbox, offset_x, text_overflow, block_ellipsis):
     if textbox.style['visibility'] != 'visible':
         return
 
+    text_decoration_values = textbox.style['text_decoration_line']
+    text_decoration_color = textbox.style['text_decoration_color']
+    if text_decoration_color == 'currentColor':
+        text_decoration_color = textbox.style['color']
+    if 'overline' in text_decoration_values:
+        thickness = textbox.pango_layout.underline_thickness
+        offset_y = (
+            textbox.baseline - textbox.pango_layout.ascent + thickness / 2)
+        draw_text_decoration(
+            stream, textbox, offset_x, offset_y, thickness,
+            text_decoration_color)
+    if 'underline' in text_decoration_values:
+        thickness = textbox.pango_layout.underline_thickness
+        offset_y = (
+            textbox.baseline - textbox.pango_layout.underline_position +
+            thickness / 2)
+        draw_text_decoration(
+            stream, textbox, offset_x, offset_y, thickness,
+            text_decoration_color)
+
     x, y = textbox.position_x, textbox.position_y + textbox.baseline
     stream.set_color_rgb(*textbox.style['color'][:3])
     stream.set_alpha(textbox.style['color'][3])
@@ -1013,30 +1033,13 @@ def draw_text(stream, textbox, offset_x, text_overflow, block_ellipsis):
 
     draw_emojis(stream, textbox.style['font_size'], x, y, emojis)
 
-    # Draw text decoration
-    values = textbox.style['text_decoration_line']
-    color = textbox.style['text_decoration_color']
-    if color == 'currentColor':
-        color = textbox.style['color']
-    if 'overline' in values:
-        thickness = textbox.pango_layout.underline_thickness
-        offset_y = (
-            textbox.baseline - textbox.pango_layout.ascent + thickness / 2)
-        draw_text_decoration(
-            stream, textbox, offset_x, offset_y, thickness, color)
-    if 'underline' in values:
-        thickness = textbox.pango_layout.underline_thickness
-        offset_y = (
-            textbox.baseline - textbox.pango_layout.underline_position +
-            thickness / 2)
-        draw_text_decoration(
-            stream, textbox, offset_x, offset_y, thickness, color)
-    if 'line-through' in values:
+    if 'line-through' in text_decoration_values:
         thickness = textbox.pango_layout.strikethrough_thickness
         offset_y = (
             textbox.baseline - textbox.pango_layout.strikethrough_position)
         draw_text_decoration(
-            stream, textbox, offset_x, offset_y, thickness, color)
+            stream, textbox, offset_x, offset_y, thickness,
+            text_decoration_color)
 
     textbox.pango_layout.deactivate()
 
