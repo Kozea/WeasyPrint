@@ -38,6 +38,10 @@ a {
   background-color: var(--gray);
 }
 
+input {
+  display: none;
+}
+
 
 
 /* Titles */
