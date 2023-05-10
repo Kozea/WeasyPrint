@@ -508,23 +508,30 @@ the function internally used by WeasyPrint to retrieve data.
 Image Cache and Optimization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-WeasyPrint provides two options to deal with images: ``optimize_size`` and
-``image_cache``.
+WeasyPrint provides many options to deal with images: ``optimize_images``,
+``jpeg_quality``, ``dpi`` and ``image_cache``.
 
-``optimize_size`` can enable size optimization for images, but also for fonts.
-When enabled, the generated PDF will include smaller images and fonts, but the
-rendering time may be slightly increased. The whole structure of the PDF can be
-compressed too.
+``optimize_images`` can enable size optimization for images. When enabled, the
+generated PDF will include smaller images with no quality penalty, but the
+rendering time may be slightly increased.
+
+The ``jpeg_quality`` option can be set to decrease the quality of JPEG images
+included in the PDF. You can set a value between 95 (best quality) to 0
+(smaller image size), depending on your needs.
+
+The ``dpi`` option offers the possibility to reduce the size (in pixels, and
+thus in bytes) of all included raster images. The resolution, set in dots per
+inch, indicates the maximum number of pixels included in one inch on the
+generated PDF.
 
 .. code-block:: python
 
-    # No size optimization, faster, but generated PDF is larger
-    HTML('https://example.org/').write_pdf(
-        'example.pdf', optimize_size=())
+    # Original high-quality images, faster, but generated PDF is larger
+    HTML('https://weasyprint.org/').write_pdf('weasyprint.pdf')
 
-    # Full size optimization, slower, but generated PDF is smaller
-    HTML('https://example.org/').write_pdf(
-        'example.pdf', optimize_size=('fonts', 'images', 'hinting', 'pdf'))
+    # Optimized lower-quality images, a bit slower, but generated PDF is smaller
+    HTML('https://weasyprint.org/').write_pdf(
+        'weasyprint.pdf', optimize_images=True, jpeg_quality=60, dpi=150)
 
 ``image_cache`` gives the possibility to use a cache for images, avoiding to
 download, parse and optimize them each time they are used.
@@ -537,7 +544,7 @@ time when you render a lot of documents that use the same images.
 
     cache = {}
     for i in range(10):
-        HTML(f'https://example.org/?id={i}').write_pdf(
+        HTML(f'https://weasyprint.org/').write_pdf(
             f'example-{i}.pdf', image_cache=cache)
 
 It’s also possible to cache images on disk instead of keeping them in memory.
