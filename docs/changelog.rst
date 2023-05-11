@@ -2,6 +2,55 @@ Changelog
 =========
 
 
+Version 59.0
+------------
+
+Released on 2023-05-11.
+
+This version also includes the changes from unstable b1 version listed
+below.
+
+Bug fixes:
+
+* `#1864 <https://github.com/Kozea/WeasyPrint/issues/1864>`_:
+  Handle overflow for svg and symbol tags in SVG images
+* `#1867 <https://github.com/Kozea/WeasyPrint/pull/1867>`_:
+  Remove duplicate compression of attachments
+* `d0ad5c1 <https://github.com/Kozea/WeasyPrint/commit/d0ad5c1>`_:
+  Override use tag children instead of drawing their references
+* `93df1a5 <https://github.com/Kozea/WeasyPrint/commit/93df1a5>`_:
+  Don’t resize the same image twice when the --dpi option is set
+* `#1874 <https://github.com/Kozea/WeasyPrint/pull/1874>`_:
+  Drawn underline and overline behind text
+
+Contributors:
+
+* Guillaume Ayoub
+* Timo Ramsauer
+* Alexander Mankuta
+
+Backers and sponsors:
+
+* Castedo Ellerman
+* Kobalt
+* Spacinov
+* Grip Angebotssoftware
+* Crisp BV
+* Manuel Barkhau
+* SimonSoft
+* Menutech
+* KontextWork
+* NCC Group
+* René Fritz
+* Moritz Mahringer
+* Yanal-Yvez Fargialla
+* Piotr Horzycki
+* Healthchecks.io
+* TrainingSparkle
+* Hammerbacher
+* Synapsium
+
+
 Version 59.0b1
 --------------
 
