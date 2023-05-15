@@ -380,8 +380,8 @@ class Stream(pydyf.Stream):
             width, height = thumbnail.width, thumbnail.height
             image.image_data = image.cache_image_data(image_file.getvalue())
 
-        xobject = image.get_xobject(width, height, interpolate)
-        self._images[image_name] = xobject
+        x_object = image.get_x_object(width, height, interpolate)
+        self._images[image_name] = x_object
         return image_name
 
     def add_pattern(self, x, y, width, height, repeat_width, repeat_height,

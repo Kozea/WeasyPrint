@@ -116,7 +116,7 @@ class RasterImage:
             key = f'{self.id}{int(alpha)}{self._dpi or ""}'
             return LazyImage(self._cache, key, data)
 
-    def get_xobject(self, width, height, interpolate):
+    def get_x_object(self, width, height, interpolate):
         if self.mode in ('RGB', 'RGBA'):
             color_space = '/DeviceRGB'
         elif self.mode in ('L', 'LA'):
