@@ -362,7 +362,8 @@ class Stream(pydyf.Stream):
         self._x_objects[group.id] = group
         return group
 
-    def add_image(self, image, width, height, interpolate, ratio):
+    def add_image(self, image, interpolate, ratio):
+        width, height = image.width, image.height
         image_name = f'i{image.id}{width}{height}{interpolate}{ratio}'
         self._x_objects[image_name] = None  # Set by write_pdf
         if image_name in self._images:

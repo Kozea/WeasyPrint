@@ -93,7 +93,6 @@ class RasterImage:
         if self.width <= 0 or self.height <= 0:
             return
 
-        width, height = self.width, self.height
         interpolate = 'true' if image_rendering == 'auto' else 'false'
         ratio = 1
         if self._dpi:
@@ -103,7 +102,7 @@ class RasterImage:
             dpi = max(self.width / width_inches, self.height / height_inches)
             if dpi > self._dpi:
                 ratio = self._dpi / dpi
-        image_name = stream.add_image(self, width, height, interpolate, ratio)
+        image_name = stream.add_image(self, interpolate, ratio)
 
         stream.transform(
             concrete_width, 0, 0, -concrete_height, 0, concrete_height)
