@@ -1032,11 +1032,14 @@ def collapse_table_borders(table, grid_width, grid_height):
 
     def restore_border_properties(box_style, side):
         if f'__border_{side}_style' in box_style:
-            box_style[f'border_{side}_style'] = box_style[f'__border_{side}_style']
+            box_style[f'border_{side}_style'] = \
+                box_style[f'__border_{side}_style']
         if f'__border_{side}_width' in box_style:
-            box_style[f'border_{side}_width'] = box_style[f'__border_{side}_width']
+            box_style[f'border_{side}_width'] = \
+                box_style[f'__border_{side}_width']
         if f'__border_{side}_color' in box_style:
-            box_style[f'border_{side}_color'] = box_style[f'__border_{side}_color']
+            box_style[f'border_{side}_color'] = \
+                box_style[f'__border_{side}_color']
 
     def set_one_border(border_grid, box_style, side, grid_x, grid_y):
         from ..draw import get_color
