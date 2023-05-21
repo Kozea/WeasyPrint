@@ -1513,3 +1513,68 @@ def test_running_float():
         Hello!
       </footer>
     ''')
+
+
+def _get_grid(table_wrapper):
+    table, = table_wrapper.children
+    return tuple(
+        [[(style, width, color) if width else None
+          for _score, (style, width, color) in column]
+         for column in grid]
+        for grid in table.collapsed_border_grid)
+
+
+black = (0, 0, 0, 1)
+red = (1, 0, 0, 1)
+black_3 = ('solid', 3, black)
+red_1 = ('solid', 1, red)
+
+
+@assert_no_logs
+def test_running_elements_table_border_collapse():
+    page0, page1 = render_pages('''
+      <style>
+        @page {
+          margin: 50px;
+          size: 200px;
+          @bottom-center { content: element(table) }
+        }
+        table { position: running(table) }
+        td { border: 1px solid red }
+        .content {
+          page-break-after:always;
+        }
+      </style>
+      <table style="border-collapse: collapse; border: 3px solid black">
+        <tr> <td>A</td> <td>B</td> </tr>
+        <tr> <td>C</td> <td>D</td> </tr>
+      </table>
+      <div class="content">page0</div>
+      <div class="content">page1</div>
+    ''')
+
+    page0_html, page0_center = page0.children
+    page0_table = page0_center.children[0]
+    page0_vertical_borders, page0_horizontal_borders = _get_grid(page0_table)
+    assert page0_vertical_borders == [
+        [black_3, red_1, black_3],
+        [black_3, red_1, black_3],
+    ]
+    assert page0_horizontal_borders == [
+        [black_3, black_3],
+        [red_1, red_1],
+        [black_3, black_3],
+    ]
+
+    page1_html, page1_center = page1.children
+    page1_table = page1_center.children[0]
+    page1_vertical_borders, page1_horizontal_borders = _get_grid(page1_table)
+    assert page1_vertical_borders == [
+        [black_3, red_1, black_3],
+        [black_3, red_1, black_3],
+    ]
+    assert page1_horizontal_borders == [
+        [black_3, black_3],
+        [red_1, red_1],
+        [black_3, black_3],
+    ]
