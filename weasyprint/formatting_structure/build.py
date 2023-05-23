@@ -1025,26 +1025,18 @@ def collapse_table_borders(table, grid_width, grid_height):
     horizontal_borders = [[weak_null_border for x in range(grid_width)]
                           for y in range(grid_height + 1)]
 
-    def backup_border_properties(box_style, side):
-        box_style[f'__border_{side}_style'] = box_style[f'border_{side}_style']
+    def backup_border_width(box_style, side):
         box_style[f'__border_{side}_width'] = box_style[f'border_{side}_width']
-        box_style[f'__border_{side}_color'] = box_style[f'border_{side}_color']
 
-    def restore_border_properties(box_style, side):
-        if f'__border_{side}_style' in box_style:
-            box_style[f'border_{side}_style'] = \
-                box_style[f'__border_{side}_style']
+    def restore_border_width(box_style, side):
         if f'__border_{side}_width' in box_style:
             box_style[f'border_{side}_width'] = \
                 box_style[f'__border_{side}_width']
-        if f'__border_{side}_color' in box_style:
-            box_style[f'border_{side}_color'] = \
-                box_style[f'__border_{side}_color']
 
     def set_one_border(border_grid, box_style, side, grid_x, grid_y):
         from ..draw import get_color
 
-        restore_border_properties(box_style, side)
+        restore_border_width(box_style, side)
         style = box_style[f'border_{side}_style']
         width = box_style[f'border_{side}_width']
         color = get_color(box_style, f'border_{side}_color')
@@ -1115,10 +1107,8 @@ def collapse_table_borders(table, grid_width, grid_height):
     # the correct widths on each box. The actual border grid will be
     # painted separately.
     def set_transparent_border(box, side, twice_width):
-        backup_border_properties(box.style, side)
-        box.style[f'border_{side}_style'] = 'solid'
+        backup_border_width(box.style, side)
         box.style[f'border_{side}_width'] = twice_width / 2
-        box.style[f'border_{side}_color'] = TRANSPARENT
 
     def remove_borders(box):
         set_transparent_border(box, 'top', 0)
