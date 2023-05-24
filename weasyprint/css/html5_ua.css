@@ -616,7 +616,7 @@ var { font-style: italic; }
 video { object-fit: contain; }
 xmp { display: block; font-family: monospace; margin-bottom: 1em; margin-top: 1em; /* unicode-bidi: isolate; */ white-space: pre; }
 
-::footnote-call { content: counter(footnote); vertical-align: baseline; font-size: 100%; line-height: inherit; font-variant-position: super; }
+::footnote-call { content: counter(footnote); vertical-align: super; font-size: smaller; line-height: inherit; }
 ::footnote-marker { content: counter(footnote) '. '; }
 
 @page {
