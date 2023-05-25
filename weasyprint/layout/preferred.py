@@ -147,13 +147,14 @@ def margin_width(box, width, left=True, right=True):
                 assert style_value.unit == '%'
                 percentages += style_value.value
 
+    collapse = box.style['border_collapse'] == 'collapse'
     if left:
-        if box.style['border_collapse'] and 'collapse_border_left_width' in box.style:
+        if collapse and 'collapse_border_left_width' in box.style:
             width += box.style['collapse_border_left_width']
         else:
             width += box.style['border_left_width']
     if right:
-        if box.style['border_collapse'] and 'collapse_border_right_width' in box.style:
+        if collapse and 'collapse_border_right_width' in box.style:
             width += box.style['collapse_border_right_width']
         else:
             width += box.style['border_right_width']
