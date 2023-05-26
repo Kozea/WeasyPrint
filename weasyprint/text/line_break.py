@@ -402,8 +402,7 @@ def split_first_line(text, style, context, max_width, justification_spacing,
         soft_hyphen_indexes = [
             match.start() for match in re.finditer(soft_hyphen, next_word)]
         soft_hyphen_indexes.reverse()
-        dictionary_iterations = [
-            next_word[:i + 1] for i in soft_hyphen_indexes]
+        dictionary_iterations = [next_word[:i+1] for i in soft_hyphen_indexes]
         start_word = 0
     elif auto_hyphenation:
         dictionary_key = (lang, left, right, total)
@@ -430,19 +429,12 @@ def split_first_line(text, style, context, max_width, justification_spacing,
             new_first_line, index = new_layout.get_first_line()
             new_first_line_width, _ = line_size(new_first_line, style)
             new_space = max_width - new_first_line_width
-            hyphenated = (
-                index is None and (
-                    new_space >= 0 or
-                    first_word_part == dictionary_iterations[-1]))
+            hyphenated = index is None and (
+                new_space >= 0 or first_word_part == dictionary_iterations[-1])
             if hyphenated:
                 layout = new_layout
                 first_line = new_first_line
                 resume_index = len(new_first_line_text.encode())
-                if text[len(new_first_line_text)] == soft_hyphen:
-                    # Recreate the layout with no max_width to be sure that
-                    # we don't break before the soft hyphen
-                    pango.pango_layout_set_width(layout.layout, -1)
-                    resume_index += len(soft_hyphen.encode())
                 break
 
         if not hyphenated and not first_line_text:

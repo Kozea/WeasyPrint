@@ -779,6 +779,19 @@ def test_hyphenate_manual_3():
 
 
 @assert_no_logs
+def test_hyphenate_manual_4():
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1878
+    page, = render_pages(
+        '<html style="width: 0.1em" lang="en">'
+        '<body style="hyphens: auto">test&shy;')
+    html, = page.children
+    body, = html.children
+    line_1, = body.children
+    # TODO: should not end with an hyphen
+    # assert line_1.children[0].text == 'test\xad'
+
+
+@assert_no_logs
 def test_hyphenate_limit_zone_1():
     page, = render_pages(
         '<html style="width: 12em; font-family: weasyprint">'
