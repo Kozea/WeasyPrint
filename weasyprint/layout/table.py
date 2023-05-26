@@ -1080,7 +1080,8 @@ def collapse_table_borders(table):
     # the correct widths on each box. The actual border grid will be
     # painted separately.
     def set_transparent_border(box, side, twice_width):
-        box.style[f'collapse_border_{side}_width'] = twice_width / 2
+        prop = f'border_{side}_width'
+        setattr(box, prop, twice_width / 2)
 
     def remove_borders(box):
         set_transparent_border(box, 'top', 0)

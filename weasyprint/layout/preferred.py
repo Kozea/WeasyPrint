@@ -149,13 +149,13 @@ def margin_width(box, width, left=True, right=True):
 
     collapse = box.style['border_collapse'] == 'collapse'
     if left:
-        if collapse and 'collapse_border_left_width' in box.style:
-            width += box.style['collapse_border_left_width']
+        if collapse and hasattr(box, 'border_left_width'):
+            width += box.border_left_width
         else:
             width += box.style['border_left_width']
     if right:
-        if collapse and 'collapse_border_right_width' in box.style:
-            width += box.style['collapse_border_right_width']
+        if collapse and hasattr(box, 'border_right_width'):
+            width += box.border_right_width
         else:
             width += box.style['border_right_width']
 
