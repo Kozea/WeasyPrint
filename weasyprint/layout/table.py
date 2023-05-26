@@ -1079,15 +1079,15 @@ def collapse_table_borders(table):
     # Now that all conflicts are resolved, set transparent borders of
     # the correct widths on each box. The actual border grid will be
     # painted separately.
-    def set_transparent_border(box, side, twice_width):
+    def set_border_used_width(box, side, twice_width):
         prop = f'border_{side}_width'
         setattr(box, prop, twice_width / 2)
 
     def remove_borders(box):
-        set_transparent_border(box, 'top', 0)
-        set_transparent_border(box, 'right', 0)
-        set_transparent_border(box, 'bottom', 0)
-        set_transparent_border(box, 'left', 0)
+        set_border_used_width(box, 'top', 0)
+        set_border_used_width(box, 'right', 0)
+        set_border_used_width(box, 'bottom', 0)
+        set_border_used_width(box, 'left', 0)
 
     def max_vertical_width(x, y, h):
         return max(
@@ -1104,13 +1104,13 @@ def collapse_table_borders(table):
         for row in row_group.children:
             remove_borders(row)
             for cell in row.children:
-                set_transparent_border(cell, 'top', max_horizontal_width(
+                set_border_used_width(cell, 'top', max_horizontal_width(
                     x=cell.grid_x, y=grid_y, w=cell.colspan))
-                set_transparent_border(cell, 'bottom', max_horizontal_width(
+                set_border_used_width(cell, 'bottom', max_horizontal_width(
                     x=cell.grid_x, y=grid_y + cell.rowspan, w=cell.colspan))
-                set_transparent_border(cell, 'left', max_vertical_width(
+                set_border_used_width(cell, 'left', max_vertical_width(
                     x=cell.grid_x, y=grid_y, h=cell.rowspan))
-                set_transparent_border(cell, 'right', max_vertical_width(
+                set_border_used_width(cell, 'right', max_vertical_width(
                     x=cell.grid_x + cell.colspan, y=grid_y, h=cell.rowspan))
             grid_y += 1
 
@@ -1119,17 +1119,17 @@ def collapse_table_borders(table):
         for column in column_group.children:
             remove_borders(column)
 
-    set_transparent_border(table, 'top', max_horizontal_width(
+    set_border_used_width(table, 'top', max_horizontal_width(
         x=0, y=0, w=grid_width))
-    set_transparent_border(table, 'bottom', max_horizontal_width(
+    set_border_used_width(table, 'bottom', max_horizontal_width(
         x=0, y=grid_height, w=grid_width))
     # "UAs must compute an initial left and right border width for the table
     #  by examining the first and last cells in the first row of the table."
     # https://www.w3.org/TR/CSS21/tables.html#collapsing-borders
     # ... so h=1, not grid_height:
-    set_transparent_border(table, 'left', max_vertical_width(
+    set_border_used_width(table, 'left', max_vertical_width(
         x=0, y=0, h=1))
-    set_transparent_border(table, 'right', max_vertical_width(
+    set_border_used_width(table, 'right', max_vertical_width(
         x=grid_width, y=0, h=1))
 
     return vertical_borders, horizontal_borders
