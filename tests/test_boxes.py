@@ -4,6 +4,7 @@ import pytest
 from weasyprint.css import PageType, get_all_computed_styles
 from weasyprint.formatting_structure import boxes, build
 from weasyprint.layout.page import set_page_type_computed_styles
+from weasyprint.layout.table import collapse_table_borders
 
 from .testing_utils import (
     FakeHTML, assert_no_logs, assert_tree, capture_logs, parse, parse_all,
@@ -19,7 +20,7 @@ def _get_grid(html):
         [[(style, width, color) if width else None
           for _score, (style, width, color) in column]
          for column in grid]
-        for grid in table.collapsed_border_grid)
+        for grid in collapse_table_borders(table))
 
 
 @assert_no_logs

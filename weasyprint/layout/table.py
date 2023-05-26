@@ -1,5 +1,7 @@
 """Layout for tables and internal table boxes."""
 
+import tinycss2.color3
+
 from math import inf
 
 from ..formatting_structure import boxes
@@ -804,6 +806,9 @@ def auto_table_layout(context, box, containing_block):
 def table_wrapper_width(context, wrapper, containing_block):
     """Find the width of each column and derive the wrapper width."""
     table = wrapper.get_wrapped_table()
+    collapse = table.style['border_collapse'] == 'collapse'
+    if collapse:
+        table.collapsed_border_grid = collapse_table_borders(table)
     resolve_percentages(table, containing_block)
 
     if table.style['table_layout'] == 'fixed' and table.width != 'auto':
@@ -973,3 +978,157 @@ def distribute_excess_width(context, grid, excess_width, column_widths,
 
     # Fifth group, part 2, aka abort
     return excess_width
+
+
+TRANSPARENT = tinycss2.color3.parse_color('transparent')
+
+
+def collapse_table_borders(table):
+    """Resolve border conflicts for a table in the collapsing border model.
+
+    Take a :class:`TableBox`; set appropriate border widths on the table,
+    column group, column, row group, row, and cell boxes; and return
+    a data structure for the resolved collapsed border grid.
+
+    """
+    grid_width, grid_height = table.grid_width, table.grid_height
+    if not (grid_width and grid_height):
+        # Don’t bother with empty tables
+        return [], []
+
+    style_scores = dict((v, i) for i, v in enumerate(reversed([
+        'hidden', 'double', 'solid', 'dashed', 'dotted', 'ridge',
+        'outset', 'groove', 'inset', 'none'])))
+    style_map = {'inset': 'ridge', 'outset': 'groove'}
+    weak_null_border = (
+        (0, 0, style_scores['none']), ('none', 0, TRANSPARENT))
+    vertical_borders = [[weak_null_border for x in range(grid_width + 1)]
+                        for y in range(grid_height)]
+    horizontal_borders = [[weak_null_border for x in range(grid_width)]
+                          for y in range(grid_height + 1)]
+
+    def set_one_border(border_grid, box_style, side, grid_x, grid_y):
+        from ..draw import get_color
+
+        style = box_style[f'border_{side}_style']
+        width = box_style[f'border_{side}_width']
+        color = get_color(box_style, f'border_{side}_color')
+
+        # https://www.w3.org/TR/CSS21/tables.html#border-conflict-resolution
+        score = ((1 if style == 'hidden' else 0), width, style_scores[style])
+
+        style = style_map.get(style, style)
+        previous_score, _ = border_grid[grid_y][grid_x]
+        # Strict < so that the earlier call wins in case of a tie.
+        if previous_score < score:
+            border_grid[grid_y][grid_x] = (score, (style, width, color))
+
+    def set_borders(box, x, y, w, h):
+        style = box.style
+        for yy in range(y, y + h):
+            set_one_border(vertical_borders, style, 'left', x, yy)
+            set_one_border(vertical_borders, style, 'right', x + w, yy)
+        for xx in range(x, x + w):
+            set_one_border(horizontal_borders, style, 'top', xx, y)
+            set_one_border(horizontal_borders, style, 'bottom', xx, y + h)
+
+    # The order is important here:
+    # "A style set on a cell wins over one on a row, which wins over a
+    #  row group, column, column group and, lastly, table"
+    # See https://www.w3.org/TR/CSS21/tables.html#border-conflict-resolution
+    strong_null_border = (
+        (1, 0, style_scores['hidden']), ('hidden', 0, TRANSPARENT))
+    grid_y = 0
+    for row_group in table.children:
+        for row in row_group.children:
+            for cell in row.children:
+                # No border inside of a cell with rowspan or colspan
+                for xx in range(cell.grid_x + 1, cell.grid_x + cell.colspan):
+                    for yy in range(grid_y, grid_y + cell.rowspan):
+                        vertical_borders[yy][xx] = strong_null_border
+                for xx in range(cell.grid_x, cell.grid_x + cell.colspan):
+                    for yy in range(grid_y + 1, grid_y + cell.rowspan):
+                        horizontal_borders[yy][xx] = strong_null_border
+                # The cell’s own borders
+                set_borders(cell, x=cell.grid_x, y=grid_y,
+                            w=cell.colspan, h=cell.rowspan)
+            grid_y += 1
+
+    grid_y = 0
+    for row_group in table.children:
+        for row in row_group.children:
+            set_borders(row, x=0, y=grid_y, w=grid_width, h=1)
+            grid_y += 1
+
+    grid_y = 0
+    for row_group in table.children:
+        rowspan = len(row_group.children)
+        set_borders(row_group, x=0, y=grid_y, w=grid_width, h=rowspan)
+        grid_y += rowspan
+
+    for column_group in table.column_groups:
+        for column in column_group.children:
+            set_borders(column, x=column.grid_x, y=0, w=1, h=grid_height)
+
+    for column_group in table.column_groups:
+        set_borders(column_group, x=column_group.grid_x, y=0,
+                    w=column_group.span, h=grid_height)
+
+    set_borders(table, x=0, y=0, w=grid_width, h=grid_height)
+
+    # Now that all conflicts are resolved, set transparent borders of
+    # the correct widths on each box. The actual border grid will be
+    # painted separately.
+    def set_transparent_border(box, side, twice_width):
+        box.style[f'collapse_border_{side}_width'] = twice_width / 2
+
+    def remove_borders(box):
+        set_transparent_border(box, 'top', 0)
+        set_transparent_border(box, 'right', 0)
+        set_transparent_border(box, 'bottom', 0)
+        set_transparent_border(box, 'left', 0)
+
+    def max_vertical_width(x, y, h):
+        return max(
+            width for grid_row in vertical_borders[y:y + h]
+            for _, (_, width, _) in [grid_row[x]])
+
+    def max_horizontal_width(x, y, w):
+        return max(
+            width for _, (_, width, _) in horizontal_borders[y][x:x + w])
+
+    grid_y = 0
+    for row_group in table.children:
+        remove_borders(row_group)
+        for row in row_group.children:
+            remove_borders(row)
+            for cell in row.children:
+                set_transparent_border(cell, 'top', max_horizontal_width(
+                    x=cell.grid_x, y=grid_y, w=cell.colspan))
+                set_transparent_border(cell, 'bottom', max_horizontal_width(
+                    x=cell.grid_x, y=grid_y + cell.rowspan, w=cell.colspan))
+                set_transparent_border(cell, 'left', max_vertical_width(
+                    x=cell.grid_x, y=grid_y, h=cell.rowspan))
+                set_transparent_border(cell, 'right', max_vertical_width(
+                    x=cell.grid_x + cell.colspan, y=grid_y, h=cell.rowspan))
+            grid_y += 1
+
+    for column_group in table.column_groups:
+        remove_borders(column_group)
+        for column in column_group.children:
+            remove_borders(column)
+
+    set_transparent_border(table, 'top', max_horizontal_width(
+        x=0, y=0, w=grid_width))
+    set_transparent_border(table, 'bottom', max_horizontal_width(
+        x=0, y=grid_height, w=grid_width))
+    # "UAs must compute an initial left and right border width for the table
+    #  by examining the first and last cells in the first row of the table."
+    # https://www.w3.org/TR/CSS21/tables.html#collapsing-borders
+    # ... so h=1, not grid_height:
+    set_transparent_border(table, 'left', max_vertical_width(
+        x=0, y=0, h=1))
+    set_transparent_border(table, 'right', max_vertical_width(
+        x=grid_width, y=0, h=1))
+
+    return vertical_borders, horizontal_borders
