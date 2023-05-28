@@ -27,7 +27,8 @@ class OrientedBox:
     @outer.setter
     def outer(self, new_outer_width):
         self.inner = min(
-            max(self.min_content_size, new_outer_width - self.sugar), self.max_content_size)
+            max(self.min_content_size, new_outer_width - self.sugar),
+            self.max_content_size)
 
     @property
     def outer_min_content_size(self):
@@ -210,9 +211,12 @@ def compute_variable_dimension(context, side_boxes, vertical, available_size):
             if available_size > (
                     box_a.outer_max_content_size +
                     box_c.outer_max_content_size):
-                # sum of the outer max-content widths is less than the available width
-                flex_space = (available_size -
-                    box_a.outer_max_content_size - box_c.outer_max_content_size)
+                # sum of the outer max-content widths
+                # is less than the available width
+                flex_space = (
+                    available_size -
+                    box_a.outer_max_content_size -
+                    box_c.outer_max_content_size)
                 flex_factor_a = box_a.outer_max_content_size
                 flex_factor_c = box_c.outer_max_content_size
                 flex_factor_sum = flex_factor_a + flex_factor_c
@@ -225,11 +229,12 @@ def compute_variable_dimension(context, side_boxes, vertical, available_size):
             elif available_size > (
                     box_a.outer_min_content_size +
                     box_c.outer_min_content_size):
-                # sum of the outer min-content widths is less than the available width
-                flex_space = (available_size -
-                    box_a.outer_min_content_size - box_c.outer_min_content_size)
-                box_a.inner = box_a.min_content_size
-                box_c.inner = box_c.min_content_size
+                # sum of the outer min-content widths
+                # is less than the available width
+                flex_space = (
+                    available_size -
+                    box_a.outer_min_content_size -
+                    box_c.outer_min_content_size)
                 flex_factor_a = (
                     box_a.max_content_size - box_a.min_content_size)
                 flex_factor_c = (
@@ -238,15 +243,15 @@ def compute_variable_dimension(context, side_boxes, vertical, available_size):
                 if flex_factor_sum == 0:
                     flex_factor_sum = 1
                 box_a.outer = box_a.min_content_size + (
-                   flex_space * flex_factor_a / flex_factor_sum)
+                    flex_space * flex_factor_a / flex_factor_sum)
                 box_c.outer = box_c.min_content_size + (
-                   flex_space * flex_factor_c / flex_factor_sum)
+                    flex_space * flex_factor_c / flex_factor_sum)
             else:
                 # otherwise
-                flex_space = (available_size -
-                    box_a.outer_min_content_size - box_c.outer_min_content_size)
-                box_a.inner = box_a.min_content_size
-                box_c.inner = box_c.min_content_size
+                flex_space = (
+                    available_size -
+                    box_a.outer_min_content_size -
+                    box_c.outer_min_content_size)
                 flex_factor_a = box_a.min_content_size
                 flex_factor_c = box_c.min_content_size
                 flex_factor_sum = flex_factor_a + flex_factor_c
@@ -268,9 +273,11 @@ def compute_variable_dimension(context, side_boxes, vertical, available_size):
             ac_max_content_size = 2 * max(
                 box_a.outer_max_content_size, box_c.outer_max_content_size)
             if available_size > (
-                box_b.outer_max_content_size + ac_max_content_size):
-                flex_space = (available_size -
-                    box_b.outer_max_content_size - ac_max_content_size)
+                    box_b.outer_max_content_size + ac_max_content_size):
+                flex_space = (
+                    available_size -
+                    box_b.outer_max_content_size -
+                    ac_max_content_size)
                 flex_factor_b = box_b.outer_max_content_size
                 flex_factor_ac = ac_max_content_size
                 flex_factor_sum = flex_factor_b + flex_factor_ac
@@ -282,9 +289,11 @@ def compute_variable_dimension(context, side_boxes, vertical, available_size):
                 ac_min_content_size = 2 * max(
                     box_a.outer_min_content_size, box_c.outer_min_content_size)
                 if available_size > (
-                    box_b.outer_min_content_size + ac_min_content_size):
-                    flex_space = (available_size -
-                        box_b.outer_min_content_size - ac_min_content_size)
+                        box_b.outer_min_content_size + ac_min_content_size):
+                    flex_space = (
+                        available_size -
+                        box_b.outer_min_content_size -
+                        ac_min_content_size)
                     flex_factor_b = (
                         box_b.max_content_size - box_b.min_content_size)
                     flex_factor_ac = ac_max_content_size - ac_min_content_size
@@ -294,8 +303,10 @@ def compute_variable_dimension(context, side_boxes, vertical, available_size):
                     box_b.outer = box_b.min_content_size + (
                         flex_space * flex_factor_b / flex_factor_sum)
                 else:
-                    flex_space = (available_size -
-                        box_b.outer_min_content_size - ac_min_content_size)
+                    flex_space = (
+                        available_size -
+                        box_b.outer_min_content_size -
+                        ac_min_content_size)
                     flex_factor_b = box_b.min_content_size
                     flex_factor_ac = ac_min_content_size
                     flex_factor_sum = flex_factor_b + flex_factor_ac
