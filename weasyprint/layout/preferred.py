@@ -289,10 +289,10 @@ def inline_line_widths(context, box, outer, is_line_start, minimum,
             else:
                 (skip, skip_stack), = skip_stack.items()
                 assert skip_stack is None
-            child_text = child.text[(skip or 0):]
+            child_text = child.text.encode()[(skip or 0):]
             if is_line_start and space_collapse:
-                child_text = child_text.lstrip(' ')
-            if minimum and child_text == ' ':
+                child_text = child_text.lstrip(b' ')
+            if minimum and child_text == b' ':
                 lines = [0, 0]
             else:
                 max_width = 0 if minimum else None
@@ -302,8 +302,8 @@ def inline_line_widths(context, box, outer, is_line_start, minimum,
                     resume_index += new_resume_index
                     _, _, new_resume_index, width, _, _ = (
                         split_first_line(
-                            child_text[resume_index:], child.style, context,
-                            max_width, child.justification_spacing,
+                            child_text[resume_index:].decode(), child.style,
+                            context, max_width, child.justification_spacing,
                             is_line_start=is_line_start, minimum=True))
                     lines.append(width)
                     if first_line:
