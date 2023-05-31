@@ -465,6 +465,34 @@ def test_breaking_linebox_regression_14():
 
 
 @assert_no_logs
+def test_breaking_linebox_regression_15():
+    # Regression test for https://github.com/ietf-tools/datatracker/issues/5507
+    page, = render_pages(
+        '<style>'
+        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
+        '  body {font-family: weasyprint; font-size: 4px}'
+        '  pre {float: left}'
+        '</style>'
+        '<pre>ab©\n'
+        'déf\n'
+        'ghïj\n'
+        'klm</pre>')
+    html, = page.children
+    body, = html.children
+    pre, = body.children
+    line1, line2, line3, line4 = pre.children
+    assert line1.children[0].text == 'ab©'
+    assert line2.children[0].text == 'déf'
+    assert line3.children[0].text == 'ghïj'
+    assert line4.children[0].text == 'klm'
+    assert line1.children[0].width == 4 * 3
+    assert line2.children[0].width == 4 * 3
+    assert line3.children[0].width == 4 * 4
+    assert line4.children[0].width == 4 * 3
+    assert pre.width == 4 * 4
+
+
+@assert_no_logs
 def test_linebox_text():
     page, = render_pages('''
       <style>
