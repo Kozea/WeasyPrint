@@ -195,7 +195,7 @@ WeasyPrint in a `virtual environment`_ using `pip`_::
   python3 -m pip install weasyprint
   python3 -m weasyprint --info
 
-.. _Microsoft Store: https://www.microsoft.com/en-us/search?q=python
+.. _Microsoft Store: https://apps.microsoft.com/store/search/python
 .. _GTK3 installer: https://github.com/tschoonj/GTK-for-Windows-Runtime-Environment-Installer/releases
 
 
