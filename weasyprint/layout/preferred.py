@@ -225,8 +225,15 @@ def column_group_content_width(context, box):
 
 def table_cell_min_content_width(context, box, outer):
     """Return the min-content width for a ``TableCellBox``."""
+    # See https://www.w3.org/TR/css-tables-3/#outer-min-content
+    min_width = box.style['min_width']
+    if min_width == 'auto':
+        min_width = 0
+    else:
+        min_width = min_width.value
     children_widths = [
-        min_content_width(context, child) for child in box.children
+        max(min_width, min_content_width(context, child))
+        for child in box.children
         if not child.is_absolutely_positioned()]
     children_min_width = margin_width(
         box, max(children_widths) if children_widths else 0)
