@@ -831,16 +831,26 @@ def test_page_names_10():
       <div id="running">running</div>
       <div id="fixed">fixed</div>
       <section>
-        text
+        <h1>text</h1>
         <div class="pagebreak"></div>
-        text
+        <article>text</article>
       </section>
     ''')
     page1, page2 = pages
 
     assert (page1.width, page1.height) == (100, 100)
+    html, runing = page1.children
+    body, = html.children
+    fixed, section, = body.children
+    h1, pagebreak = section.children
+    assert h1.element_tag == 'h1'
 
     assert (page2.width, page2.height) == (100, 100)
+    html, running = page2.children
+    fixed, body = html.children
+    section, = body.children
+    article, = section.children
+    assert article.element_tag == 'article'
 
 
 @assert_no_logs

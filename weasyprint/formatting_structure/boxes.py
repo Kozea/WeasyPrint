@@ -377,7 +377,10 @@ class ParentBox(Box):
 
     def page_values(self):
         start_value, end_value = super().page_values()
-        children = [c for c in self.children if not(c.is_absolutely_positioned() or c.is_running() or c.is_footnote())]
+        children = [
+            c for c in self.children
+            if not (c.is_absolutely_positioned() or c.is_running())
+        ]
         if children:
             if len(children) == 1:
                 page_values = children[0].page_values()
