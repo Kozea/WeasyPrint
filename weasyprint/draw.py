@@ -741,6 +741,55 @@ def draw_rect_border(stream, box, widths, style, color):
     stream.fill(even_odd=True)
 
 
+def draw_line(stream, x1, y1, x2, y2, thickness, style, color, offset=0):
+    assert x1 == x2 or y1 == y2  # Only works for vertical or horizontal lines
+
+    with stacked(stream):
+        stream.set_color_rgb(*color[:3], stroke=True)
+        stream.set_alpha(color[3], stroke=True)
+
+        if style == 'dashed':
+            stream.set_dash([5 * thickness], offset)
+        elif style == 'dotted':
+            stream.set_dash([thickness], offset)
+
+        if style == 'double':
+            stream.set_line_width(thickness / 3)
+            if x1 == x2:
+                stream.move_to(x1 - thickness / 3, y1)
+                stream.line_to(x2 - thickness / 3, y2)
+                stream.move_to(x1 + thickness / 3, y1)
+                stream.line_to(x2 + thickness / 3, y2)
+            elif y1 == y2:
+                stream.move_to(x1, y1 - thickness / 3)
+                stream.line_to(x2, y2 - thickness / 3)
+                stream.move_to(x1, y1 + thickness / 3)
+                stream.line_to(x2, y2 + thickness / 3)
+        elif style == 'wavy':
+            assert y1 == y2  # Only allowed for text decoration
+            up = 1
+            radius = 0.75 * thickness
+
+            stream.rectangle(x1, y1 - 2 * radius, x2 - x1, 4 * radius)
+            stream.clip()
+            stream.end()
+
+            x = x1 - offset
+            stream.move_to(x, y1)
+            while x < x2:
+                stream.curve_to(
+                    x + radius / 2, y1 + up * radius,
+                    x + 3 * radius / 2, y1 + up * radius,
+                    x + 2 * radius, y1)
+                x += 2 * radius
+                up *= -1
+        else:
+            stream.set_line_width(thickness)
+            stream.move_to(x1, y1)
+            stream.line_to(x2, y2)
+        stream.stroke()
+
+
 def draw_outlines(stream, box):
     width = box.style['outline_width']
     color = get_color(box.style, 'outline_color')
@@ -873,7 +922,7 @@ def draw_collapsed_borders(stream, table):
                 (y + 1, x - 1), (y + 1, x)], vertical=False)
         segments.append((
             score, style, width, color, 'left',
-            (pos_x - width / 2, pos_y1, 0, pos_y2 - pos_y1)))
+            (pos_x, pos_y1, 0, pos_y2 - pos_y1)))
 
     def add_horizontal(x, y):
         if y == 0 and table.skip_cell_border_top:
@@ -896,7 +945,7 @@ def draw_collapsed_borders(stream, table):
             pos_x2 = column_positions[x] + shift_before
         segments.append((
             score, style, width, color, 'top',
-            (pos_x1, pos_y - width / 2, pos_x2 - pos_x1, 0)))
+            (pos_x1, pos_y, pos_x2 - pos_x1, 0)))
 
     for x in range(grid_width):
         add_horizontal(x, 0)
@@ -914,14 +963,10 @@ def draw_collapsed_borders(stream, table):
 
     for segment in segments:
         _, style, width, color, side, border_box = segment
-        if side == 'top':
-            widths = (width, 0, 0, 0)
-        else:
-            widths = (0, 0, 0, width)
         with stacked(stream):
-            clip_border_segment(stream, style, width, side, border_box, widths)
-            draw_rect_border(
-                stream, border_box, widths, style,
+            bx, by, bw, bh = border_box
+            draw_line(
+                stream, bx, by, bx + bw, by + bh, width, style,
                 styled_color(style, color, side))
 
 
@@ -1230,59 +1275,10 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y,
     return emojis
 
 
-def draw_wave(stream, x, y, width, offset_x, radius):
-    up = 1
-    max_x = x + width
-
-    stream.rectangle(x, y - 2 * radius, width, 4 * radius)
-    stream.clip()
-    stream.end()
-
-    x -= offset_x
-    stream.move_to(x, y)
-
-    while x < max_x:
-        stream.curve_to(
-            x + radius / 2, y + up * radius,
-            x + 3 * radius / 2, y + up * radius,
-            x + 2 * radius, y)
-        x += 2 * radius
-        up *= -1
-
-
 def draw_text_decoration(stream, textbox, offset_x, offset_y, thickness,
                          color):
     """Draw text-decoration of ``textbox`` to a ``document.Stream``."""
-    style = textbox.style['text_decoration_style']
-    with stacked(stream):
-        stream.set_color_rgb(*color[:3], stroke=True)
-        stream.set_alpha(color[3], stroke=True)
-
-        if style == 'dashed':
-            stream.set_dash([5 * thickness], offset_x)
-        elif style == 'dotted':
-            stream.set_dash([thickness], offset_x)
-
-        if style == 'wavy':
-            thickness *= 0.75
-            draw_wave(
-                stream,
-                textbox.position_x, textbox.position_y + offset_y,
-                textbox.width, offset_x, thickness)
-        else:
-            stream.move_to(textbox.position_x, textbox.position_y + offset_y)
-            stream.line_to(
-                textbox.position_x + textbox.width,
-                textbox.position_y + offset_y)
-
-        stream.set_line_width(thickness)
-
-        if style == 'double':
-            delta = 2 * thickness
-            stream.move_to(
-                textbox.position_x, textbox.position_y + offset_y + delta)
-            stream.line_to(
-                textbox.position_x + textbox.width,
-                textbox.position_y + offset_y + delta)
-
-        stream.stroke()
+    draw_line(
+        stream, textbox.position_x, textbox.position_y + offset_y,
+        textbox.position_x + textbox.width, textbox.position_y + offset_y,
+        thickness, textbox.style['text_decoration_style'], color, offset_x)
