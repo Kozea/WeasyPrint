@@ -1385,3 +1385,20 @@ def test_continue():
     text2, = line2.children
     assert text1.text == 'abcd'
     assert text2.text == 'efgh'
+
+
+def test_first_letter_text_transform():
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1906
+    page, = render_pages('''
+      <style>
+        p:first-letter { text-transform: uppercase }
+      </style>
+      <p>abc
+    ''')
+    html, = page.children
+    body, = html.children
+    paragraph, = body.children
+    line, = paragraph.children
+    first_letter, _ = line.children
+    first_letter_text, = first_letter.children
+    assert first_letter_text.text == 'A'
