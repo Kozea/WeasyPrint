@@ -299,8 +299,8 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
             if not page_is_empty and context.overflows_page(
                     bottom_space, next_position_y):
 
-                for line in row.children:
-                    for descendant in line.descendants():
+                for cell in row.children:
+                    for descendant in cell.descendants():
                         if descendant.footnote is not None:
                             context.report_footnote(descendant.footnote)
 
