@@ -436,8 +436,8 @@ harfbuzz = _dlopen(
     'libharfbuzz.so.0', 'libharfbuzz.so.0', 'libharfbuzz.0.dylib',
     'libharfbuzz-0.dll')
 fontconfig = _dlopen(
-    ffi, 'fontconfig-1', 'fontconfig', 'libfontconfig', 'libfontconfig.so.1',
-    'libfontconfig.1.dylib', 'libfontconfig-1.dll')
+    ffi, 'libfontconfig-1.dll', 'fontconfig-1', 'fontconfig', 'libfontconfig', 
+    'libfontconfig.so.1', 'libfontconfig.1.dylib')
 pangoft2 = _dlopen(
     ffi, 'pangoft2-1.0-0', 'pangoft2-1.0', 'libpangoft2-1.0-0',
     'libpangoft2-1.0.so.0', 'libpangoft2-1.0.dylib', 'libpangoft2-1.0-0.dll')
