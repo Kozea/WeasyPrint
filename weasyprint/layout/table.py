@@ -298,6 +298,9 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
             # other content on the page.
             if not page_is_empty and context.overflows_page(
                     bottom_space, next_position_y):
+                for descendant in row.descendants():
+                    if descendant.footnote is not None:
+                        context.unlayout_footnote(descendant.footnote)
                 if new_group_children:
                     previous_row = new_group_children[-1]
                     page_break = block_level_page_break(previous_row, row)
@@ -333,6 +336,9 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
         if resume_at and not original_page_is_empty and (
                 avoid_page_break(group.style['break_inside'], context) or
                 not new_group_children):
+            for descendant in group.descendants():
+                if descendant.footnote is not None:
+                    context.unlayout_footnote(descendant.footnote)
             return None, None, next_page
 
         group = group.copy_with_children(new_group_children)
