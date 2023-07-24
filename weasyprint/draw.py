@@ -1098,7 +1098,7 @@ def draw_emojis(stream, font_size, x, y, emojis):
 
 
 def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y,
-                    angle=0):
+                    angle=0, scale_x=1):
     """Draw the given ``textbox`` line to the document ``stream``."""
     # Don’t draw lines with only invisible characters
     if not textbox.text.strip():
@@ -1153,7 +1153,7 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y,
     utf8_text = textbox.pango_layout.text.encode()
     previous_utf8_position = 0
 
-    matrix = Matrix(1, 0, 0, -1, x, y)
+    matrix = Matrix(scale_x, 0, 0, -1, x, y)
     if angle:
         a, c = cos(angle), sin(angle)
         b, d = -c, a

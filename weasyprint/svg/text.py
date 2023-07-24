@@ -68,9 +68,42 @@ def text(svg, node, font_size):
         ([pl.pop(0) if pl else None for pl in (x, y, dx, dy, rotate)], char)
         for char in node.text]
 
+    # Get textLength and lengthAdjust, if specified
+    text_length = 0
+    if 'textLength' in node.attrib:
+        text_length = size(normalize(node.attrib['textLength']), font_size, svg.inner_width)
+    length_adjust = node.attrib.get('lengthAdjust')
+    # any invalid lengthAdjust value reverts to the default 'spacing'
+    if length_adjust not in ['spacing', 'spacingAndGlyphs']:
+        length_adjust = 'spacing'
+
+    letter_spacing = svg.length(node.get('letter-spacing'), font_size)
+    scale_x = 1
+    if text_length:
+        # calculate the number of spaces to be considered for the text
+        # only deduct 0.5 and not 1 since the last letter has a half-space
+        # towards the end of the text element
+        spaces_count = (len(node.text) - 0.5)
+        # only adjust letter spacing to fit textLength if:
+        # - lengthAdjust is set to 'spacing'
+        # - text is longer than 1 glyph
+        if length_adjust == 'spacing' and len(node.text) > 1:
+            # browsers interpret letter-spacing as a negative offset when textLength is set,
+            # so doing the same here
+            # TODO: check if that behaviour is according to specs
+            letter_spacing = round((text_length - width - letter_spacing) / spaces_count)
+        if length_adjust == 'spacingAndGlyphs':
+            # scale letter_spacing up/down to textLength
+            width_with_spacing = width + spaces_count * letter_spacing
+            letter_spacing *= text_length/width_with_spacing
+            # calculate the glyphs scaling factor by:
+            # - deducting the scaled letter_spacing from textLength
+            # - dividing the calculated value by the original width
+            spaceless_text_length = text_length - spaces_count * letter_spacing
+            scale_x = spaceless_text_length/width
+
     # Align text box horizontally
     x_align = 0
-    letter_spacing = svg.length(node.get('letter-spacing'), font_size)
     text_anchor = node.get('text-anchor')
     # TODO: use real values
     ascent, descent = font_size * .8, font_size * .2
@@ -134,8 +167,10 @@ def text(svg, node, font_size):
             letter, style, svg.context, inf, 0)
         x = svg.cursor_position[0] if x is None else x
         y = svg.cursor_position[1] if y is None else y
+        width = width*scale_x
         if i:
             x += letter_spacing
+
         x_position = x + svg.cursor_d_position[0] + x_align
         y_position = y + svg.cursor_d_position[1] + y_align
         cursor_position = x + width, y
@@ -152,7 +187,7 @@ def text(svg, node, font_size):
         svg.fill_stroke(node, font_size, text=True)
         emojis = draw_first_line(
             svg.stream, TextBox(layout, style), 'none', 'none',
-            x_position, y_position, angle)
+            x_position, y_position, angle, scale_x)
         emoji_lines.append((font_size, x, y, emojis))
         svg.cursor_position = cursor_position
 
