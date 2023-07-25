@@ -169,7 +169,7 @@ def text(svg, node, font_size):
             letter, style, svg.context, inf, 0)
         x = svg.cursor_position[0] if x is None else x
         y = svg.cursor_position[1] if y is None else y
-        width = width*scale_x
+        width *= scale_x
         if i:
             x += letter_spacing
 
