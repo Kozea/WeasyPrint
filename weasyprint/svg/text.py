@@ -97,7 +97,7 @@ def text(svg, node, font_size):
         if length_adjust == 'spacingAndGlyphs':
             # scale letter_spacing up/down to textLength
             width_with_spacing = width + spaces_count * letter_spacing
-            letter_spacing *= text_length/width_with_spacing
+            letter_spacing *= text_length / width_with_spacing
             # calculate the glyphs scaling factor by:
             # - deducting the scaled letter_spacing from textLength
             # - dividing the calculated value by the original width
