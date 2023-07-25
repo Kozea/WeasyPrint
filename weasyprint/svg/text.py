@@ -69,33 +69,13 @@ def text(svg, node, font_size):
         ([pl.pop(0) if pl else None for pl in (x, y, dx, dy, rotate)], char)
         for char in node.text]
 
-    # Get textLength and lengthAdjust, if specified
-    text_length = 0
-    if 'textLength' in node.attrib:
-        text_length = size(
-            normalize(node.attrib['textLength']), font_size, svg.inner_width)
-    length_adjust = node.attrib.get('lengthAdjust')
-    # any invalid lengthAdjust value reverts to the default 'spacing'
-    if length_adjust not in ['spacing', 'spacingAndGlyphs']:
-        length_adjust = 'spacing'
-
     letter_spacing = svg.length(node.get('letter-spacing'), font_size)
+    text_length = svg.length(node.get('textLength'), font_size)
     scale_x = 1
-    if text_length:
+    if text_length and node.text:
         # calculate the number of spaces to be considered for the text
-        # only deduct 0.5 and not 1 since the last letter has a half-space
-        # towards the end of the text element
-        spaces_count = len(node.text) - 0.5
-        # only adjust letter spacing to fit textLength if:
-        # - lengthAdjust is set to 'spacing'
-        # - text is longer than 1 glyph
-        if length_adjust == 'spacing' and len(node.text) > 1:
-            # browsers interpret letter-spacing as a negative offset when
-            # textLength is set, so doing the same here
-            # TODO: check if that behaviour is according to specs
-            letter_spacing = round(
-                (text_length - width - letter_spacing) / spaces_count)
-        if length_adjust == 'spacingAndGlyphs':
+        spaces_count = len(node.text) - 1
+        if normalize(node.attrib.get('lengthAdjust')) == 'spacingAndGlyphs':
             # scale letter_spacing up/down to textLength
             width_with_spacing = width + spaces_count * letter_spacing
             letter_spacing *= text_length / width_with_spacing
@@ -104,6 +84,10 @@ def text(svg, node, font_size):
             # - dividing the calculated value by the original width
             spaceless_text_length = text_length - spaces_count * letter_spacing
             scale_x = spaceless_text_length / width
+        elif spaces_count:
+            # adjust letter spacing to fit textLength
+            letter_spacing = (text_length - width) / spaces_count
+        width = text_length
 
     # Align text box horizontally
     x_align = 0
