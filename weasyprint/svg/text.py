@@ -1,7 +1,8 @@
 """Draw text."""
 
-from math import inf, radians
+from math import cos, inf, radians, sin
 
+from ..matrix import Matrix
 from .bounding_box import EMPTY_BOUNDING_BOX, extend_bounding_box
 from .utils import normalize, size
 
@@ -187,9 +188,12 @@ def text(svg, node, font_size):
 
         layout.reactivate(style)
         svg.fill_stroke(node, font_size, text=True)
+        matrix = Matrix(a=scale_x, d=-1, e=x_position, f=y_position)
+        if angle:
+            a, c = cos(angle), sin(angle)
+            matrix = Matrix(a, -c, c, a) @ matrix
         emojis = draw_first_line(
-            svg.stream, TextBox(layout, style), 'none', 'none',
-            x_position, y_position, angle, scale_x)
+            svg.stream, TextBox(layout, style), 'none', 'none', matrix)
         emoji_lines.append((font_size, x, y, emojis))
         svg.cursor_position = cursor_position
 

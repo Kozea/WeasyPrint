@@ -4,7 +4,7 @@ import contextlib
 import operator
 from colorsys import hsv_to_rgb, rgb_to_hsv
 from io import BytesIO
-from math import ceil, cos, floor, pi, sin, sqrt, tan
+from math import ceil, floor, pi, sqrt, tan
 from xml.etree import ElementTree
 
 from PIL import Image
@@ -1073,7 +1073,7 @@ def draw_text(stream, textbox, offset_x, text_overflow, block_ellipsis):
     textbox.pango_layout.reactivate(textbox.style)
     stream.begin_text()
     emojis = draw_first_line(
-        stream, textbox, text_overflow, block_ellipsis, x, y)
+        stream, textbox, text_overflow, block_ellipsis, Matrix(d=-1, e=x, f=y))
     stream.end_text()
 
     draw_emojis(stream, textbox.style['font_size'], x, y, emojis)
@@ -1097,8 +1097,7 @@ def draw_emojis(stream, font_size, x, y, emojis):
         stream.pop_state()
 
 
-def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y,
-                    angle=0, scale_x=1):
+def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
     """Draw the given ``textbox`` line to the document ``stream``."""
     # Don’t draw lines with only invisible characters
     if not textbox.text.strip():
@@ -1152,12 +1151,6 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y,
 
     utf8_text = textbox.pango_layout.text.encode()
     previous_utf8_position = 0
-
-    matrix = Matrix(scale_x, 0, 0, -1, x, y)
-    if angle:
-        a, c = cos(angle), sin(angle)
-        b, d = -c, a
-        matrix = Matrix(a, b, c, d) @ matrix
     stream.text_matrix(*matrix.values)
     last_font = None
     string = ''
