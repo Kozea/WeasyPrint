@@ -13,8 +13,8 @@ on other functions in this module.
 """
 
 from collections import namedtuple
-from hashlib import md5
 from copy import deepcopy
+from hashlib import md5
 from logging import DEBUG, WARNING
 
 import cssselect2
