@@ -13,13 +13,13 @@ on other functions in this module.
 """
 
 from collections import namedtuple
+from hashlib import md5
+from copy import deepcopy
 from logging import DEBUG, WARNING
 
 import cssselect2
 import tinycss2
 import tinycss2.nth
-from hashlib import md5
-from copy import deepcopy
 
 from .. import CSS
 from ..logger import LOGGER, PROGRESS_LOGGER
