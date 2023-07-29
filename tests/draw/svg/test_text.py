@@ -301,3 +301,73 @@ def test_text_rotate(assert_pixels):
           rotate="180" letter-spacing="2">abc</text>
       </svg>
     ''')
+
+
+@assert_no_logs
+def test_text_text_length(assert_pixels):
+    assert_pixels('''
+        __RRRRRR____________
+        __RRRRRR____________
+        __BB__BB__BB________
+        __BB__BB__BB________
+    ''', '''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        @page { size: 20px 4px }
+        svg { display: block }
+      </style>
+      <svg width="20px" height="4px" xmlns="http://www.w3.org/2000/svg">
+        <text x="2" y="1.5" font-family="weasyprint" font-size="2" fill="red">
+          abc
+        </text>
+        <text x="2" y="3.5" font-family="weasyprint" font-size="2" fill="blue"
+          textLength="10">abc</text>
+      </svg>
+    ''')
+
+
+@assert_no_logs
+def test_text_length_adjust_glyphs_only(assert_pixels):
+    assert_pixels('''
+        __RRRRRR____________
+        __RRRRRR____________
+        __BBBBBBBBBBBB______
+        __BBBBBBBBBBBB______
+    ''', '''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        @page { size: 20px 4px }
+        svg { display: block }
+      </style>
+      <svg width="20px" height="4px" xmlns="http://www.w3.org/2000/svg">
+        <text x="2" y="1.5" font-family="weasyprint" font-size="2" fill="red">
+          abc
+        </text>
+        <text x="2" y="3.5" font-family="weasyprint" font-size="2" fill="blue"
+          textLength="12" lengthAdjust="spacingAndGlyphs">abc</text>
+      </svg>
+    ''')
+
+
+@assert_no_logs
+def test_text_length_adjust_spacing_and_glyphs(assert_pixels):
+    assert_pixels('''
+        __RR_RR_RR__________
+        __RR_RR_RR__________
+        __BBBB__BBBB__BBBB__
+        __BBBB__BBBB__BBBB__
+    ''', '''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        @page { size: 20px 4px }
+        svg { display: block }
+      </style>
+      <svg width="20px" height="4px" xmlns="http://www.w3.org/2000/svg">
+        <text x="2" y="1.5" font-family="weasyprint" font-size="2" fill="red"
+          letter-spacing="1">abc</text>
+        <text x="2" y="3.5" font-family="weasyprint" font-size="2" fill="blue"
+          letter-spacing="1" textLength="16" lengthAdjust="spacingAndGlyphs">
+          abc
+        </text>
+      </svg>
+    ''')
