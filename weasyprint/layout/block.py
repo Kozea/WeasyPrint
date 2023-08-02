@@ -501,6 +501,12 @@ def _in_flow_layout(context, box, index, child, new_children, page_is_empty,
                 new_child.border_box_y() + new_child.border_height())
             page_overflow = context.overflows_page(
                 bottom_space, new_content_position_y)
+
+            # Do not break boxes with defined height and hidden overflow.
+            # https://github.com/Kozea/WeasyPrint/issues/1904
+            if box.style['overflow'] == 'hidden' and box.style['height'] != 'auto':
+                page_overflow = False
+
             if page_overflow and not page_is_empty_with_no_children:
                 # The child content overflows the page area, display it on the
                 # next page.
