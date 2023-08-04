@@ -44,7 +44,7 @@ Tests
 Tests are stored in the ``tests`` folder at the top of the repository. They use
 the pytest_ library.
 
-Test required Ghostscript_ to be installed and available on the local path.
+Tests require Ghostscript_ to be installed and available on the local path.
 
 You can launch tests using the following command::
 
