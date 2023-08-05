@@ -44,6 +44,8 @@ Tests
 Tests are stored in the ``tests`` folder at the top of the repository. They use
 the pytest_ library.
 
+Tests require Ghostscript_ to be installed and available on the local path.
+
 You can launch tests using the following command::
 
   venv/bin/python -m pytest
@@ -55,6 +57,7 @@ style::
   venv/bin/python -m flake8
 
 .. _pytest: https://docs.pytest.org/
+.. _Ghostscript: https://www.ghostscript.com/
 .. _isort: https://pycqa.github.io/isort/
 .. _flake8: https://flake8.pycqa.org/
 
