@@ -60,12 +60,14 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
     # ]
     columns_and_blocks = []
     column_children = []
+    spanner_index = -1
     skip, = skip_stack.keys() if skip_stack else (0,)
     for i, child in enumerate(box.children[skip:], start=skip):
         if child.style['column_span'] == 'all':
             if column_children:
                 columns_and_blocks.append(
                     (i - len(column_children), column_children))
+            spanner_index = i
             columns_and_blocks.append((i, child.copy()))
             column_children = []
             continue
@@ -261,7 +263,8 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
                     # Everything fits, start expanding columns at the average
                     # of the column heights
                     max_height -= last_footnotes_height
-                    if style['column_fill'] == 'balance':
+                    if (style['column_fill'] == 'balance' or
+                            index < spanner_index):
                         balancing = True
                         height = sum(consumed_heights) / count
                     else:
