@@ -261,7 +261,8 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
                     # Everything fits, start expanding columns at the average
                     # of the column heights
                     max_height -= last_footnotes_height
-                    if style['column_fill'] == 'balance':
+                    if (style['column_fill'] == 'balance' or
+                            index < columns_and_blocks[-1][0]):
                         balancing = True
                         height = sum(consumed_heights) / count
                     else:
