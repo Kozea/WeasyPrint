@@ -743,6 +743,32 @@ def test_overflow_auto():
     assert article.height == 50 + 10 + 10
 
 
+def test_overflow_hidden_in_flow_layout():
+    page, = render_pages('''
+      <div style="overflow: hidden; height: 3px;">
+        <div>abc</div>
+        <div style="height: 100px; margin: 50px;">def</div>
+      </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    parent_div, = body.children
+    assert parent_div.height == 3
+
+
+def test_overflow_hidden_out_of_flow_layout():
+    page, = render_pages('''
+      <div style="overflow: hidden; height: 3px;">
+        <div style="float: left;">abc</div>
+        <div style="float: right; height: 100px; margin: 50px;">def</div>
+      </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    parent_div, = body.children
+    assert parent_div.height == 3
+
+
 @assert_no_logs
 def test_box_margin_top_repagination():
     # Test regression: https://github.com/Kozea/WeasyPrint/issues/943
