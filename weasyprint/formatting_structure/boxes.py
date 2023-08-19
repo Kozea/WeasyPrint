@@ -377,13 +377,17 @@ class ParentBox(Box):
 
     def page_values(self):
         start_value, end_value = super().page_values()
-        if self.children:
-            if len(self.children) == 1:
-                page_values = self.children[0].page_values()
+        children = [
+            c for c in self.children
+            if not (c.is_absolutely_positioned() or c.is_running())
+        ]
+        if children:
+            if len(children) == 1:
+                page_values = children[0].page_values()
                 start_value = page_values[0] or start_value
                 end_value = page_values[1] or end_value
             else:
-                start_box, end_box = self.children[0], self.children[-1]
+                start_box, end_box = children[0], children[-1]
                 start_value = start_box.page_values()[0] or start_value
                 end_value = end_box.page_values()[1] or end_value
         return start_value, end_value
