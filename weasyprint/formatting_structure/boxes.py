@@ -377,10 +377,11 @@ class ParentBox(Box):
 
     def page_values(self):
         start_value, end_value = super().page_values()
+        # TODO: We should find Class A possible page breaks according to
+        # https://drafts.csswg.org/css-page-3/#propdef-page
+        # Keep only children in normal flow for now.
         children = [
-            c for c in self.children
-            if not (c.is_absolutely_positioned() or c.is_running())
-        ]
+            child for child in self.children if child.is_in_normal_flow()]
         if children:
             if len(children) == 1:
                 page_values = children[0].page_values()
