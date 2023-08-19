@@ -418,8 +418,10 @@ class SVG:
                 width, height = self.point(
                     node.get('width'), node.get('height'), font_size)
                 self.stream.transform(a=width, d=height, e=x, f=y)
+            original_tag = clip_path._etree_node.tag
             clip_path._etree_node.tag = 'g'
             self.draw_node(clip_path, font_size, fill_stroke=False)
+            clip_path._etree_node.tag = original_tag
             # At least set the clipping area to an empty path, so that it’s
             # totally clipped when the clipping path is empty.
             self.stream.rectangle(0, 0, 0, 0)
