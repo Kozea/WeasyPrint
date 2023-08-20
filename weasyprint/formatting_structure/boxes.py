@@ -289,6 +289,16 @@ class Box:
             self.is_floated() or self.is_absolutely_positioned() or
             self.is_running() or self.is_footnote())
 
+    def is_monolithic(self):
+        """Return whether this box is monolithic."""
+        # https://www.w3.org/TR/css-break-3/#monolithic
+        return (
+            isinstance(self, AtomicInlineLevelBox) or
+            isinstance(self, ReplacedBox) or
+            self.style['overflow'] in ('auto', 'scroll') or
+            (self.style['overflow'] == 'hidden' and
+             self.style['height'] != 'auto'))
+
     # Start and end page values for named pages
 
     def page_values(self):

@@ -249,9 +249,11 @@ def _out_of_flow_layout(context, box, index, child, new_children,
         # New page if overflow
         page_overflow = context.overflows_page(
             bottom_space, new_child.position_y + new_child.height)
-        if box.style['overflow'] == 'hidden' and box.style['height'] != 'auto':
-            page_overflow = False
-        if (page_is_empty and not new_children) or not page_overflow:
+        add_child = (
+            (page_is_empty and not new_children) or
+            not page_overflow or
+            box.is_monolithic())
+        if add_child:
             new_child.index = index
             new_children.append(new_child)
         else:
@@ -501,19 +503,19 @@ def _in_flow_layout(context, box, index, child, new_children, page_is_empty,
                 new_child.content_box_y() + new_child.height)
             new_position_y = (
                 new_child.border_box_y() + new_child.border_height())
-            page_overflow = context.overflows_page(
+            content_page_overflow = context.overflows_page(
                 bottom_space, new_content_position_y)
-            if (box.style['overflow'] == 'hidden' and
-                    box.style['height'] != 'auto'):
-                page_overflow = False
-            if page_overflow and not page_is_empty_with_no_children:
+            border_page_overflow = context.overflows_page(
+                bottom_space, new_position_y)
+            can_break = not (
+                page_is_empty_with_no_children or box.is_monolithic())
+            if can_break and content_page_overflow:
                 # The child content overflows the page area, display it on the
                 # next page.
                 remove_placeholders(
                     context, [new_child], absolute_boxes, fixed_boxes)
                 new_child = None
-            elif not page_is_empty_with_no_children and context.overflows_page(
-                    bottom_space, new_position_y):
+            elif can_break and border_page_overflow:
                 # The child border/padding overflows the page area, do the
                 # layout again with a higher bottom_space value.
                 remove_placeholders(
