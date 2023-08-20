@@ -249,6 +249,8 @@ def _out_of_flow_layout(context, box, index, child, new_children,
         # New page if overflow
         page_overflow = context.overflows_page(
             bottom_space, new_child.position_y + new_child.height)
+        if box.style['overflow'] == 'hidden' and box.style['height'] != 'auto':
+            page_overflow = False
         if (page_is_empty and not new_children) or not page_overflow:
             new_child.index = index
             new_children.append(new_child)
@@ -501,6 +503,9 @@ def _in_flow_layout(context, box, index, child, new_children, page_is_empty,
                 new_child.border_box_y() + new_child.border_height())
             page_overflow = context.overflows_page(
                 bottom_space, new_content_position_y)
+            if (box.style['overflow'] == 'hidden' and
+                    box.style['height'] != 'auto'):
+                page_overflow = False
             if page_overflow and not page_is_empty_with_no_children:
                 # The child content overflows the page area, display it on the
                 # next page.
