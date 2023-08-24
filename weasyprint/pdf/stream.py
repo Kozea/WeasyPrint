@@ -8,7 +8,6 @@ import pydyf
 from fontTools import subset
 from fontTools.ttLib import TTFont, TTLibError, ttFont
 from fontTools.varLib.mutator import instantiateVariableFont
-from PIL import Image
 
 from ..logger import LOGGER
 from ..matrix import Matrix
@@ -362,26 +361,20 @@ class Stream(pydyf.Stream):
         self._x_objects[group.id] = group
         return group
 
-    def add_image(self, image, width, height, interpolate, ratio):
-        image_name = f'i{image.id}{width}{height}{interpolate}{ratio}'
+    def add_image(self, image, interpolate, ratio):
+        image_name = f'i{image.id}{int(interpolate)}'
         self._x_objects[image_name] = None  # Set by write_pdf
         if image_name in self._images:
             # Reuse image already stored in document
+            self._images[image_name]['dpi_ratios'].add(ratio)
             return image_name
 
-        if ratio != 1:
-            thumbnail = Image.open(io.BytesIO(image.image_data.data))
-            width = int(round(image.width * ratio))
-            height = int(round(image.height * ratio))
-            thumbnail.thumbnail((max(1, width), max(1, height)))
-            image_file = io.BytesIO()
-            thumbnail.save(
-                image_file, format=thumbnail.format, optimize=image.optimize)
-            width, height = thumbnail.width, thumbnail.height
-            image.image_data = image.cache_image_data(image_file.getvalue())
-
-        xobject = image.get_xobject(width, height, interpolate)
-        self._images[image_name] = xobject
+        self._images[image_name] = {
+            'image': image,
+            'interpolate': interpolate,
+            'dpi_ratios': {ratio},
+            'x_object': None,  # Set by write_pdf
+        }
         return image_name
 
     def add_pattern(self, x, y, width, height, repeat_width, repeat_height,

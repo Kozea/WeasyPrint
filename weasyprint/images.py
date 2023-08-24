@@ -93,8 +93,7 @@ class RasterImage:
         if self.width <= 0 or self.height <= 0:
             return
 
-        width, height = self.width, self.height
-        interpolate = 'true' if image_rendering == 'auto' else 'false'
+        interpolate = image_rendering == 'auto'
         ratio = 1
         if self._dpi:
             pt_to_in = 4 / 3 / 96
@@ -103,7 +102,7 @@ class RasterImage:
             dpi = max(self.width / width_inches, self.height / height_inches)
             if dpi > self._dpi:
                 ratio = self._dpi / dpi
-        image_name = stream.add_image(self, width, height, interpolate, ratio)
+        image_name = stream.add_image(self, interpolate, ratio)
 
         stream.transform(
             concrete_width, 0, 0, -concrete_height, 0, concrete_height)
@@ -116,7 +115,20 @@ class RasterImage:
             key = f'{self.id}{int(alpha)}{self._dpi or ""}'
             return LazyImage(self._cache, key, data)
 
-    def get_xobject(self, width, height, interpolate):
+    def get_x_object(self, interpolate, dpi_ratio):
+        if dpi_ratio == 1:
+            width, height = self.width, self.height
+        else:
+            thumbnail = Image.open(io.BytesIO(self.image_data.data))
+            width = max(1, int(round(self.width * dpi_ratio)))
+            height = max(1, int(round(self.height * dpi_ratio)))
+            thumbnail.thumbnail((width, height))
+            image_file = io.BytesIO()
+            thumbnail.save(
+                image_file, format=thumbnail.format, optimize=self.optimize)
+            width, height = thumbnail.width, thumbnail.height
+            self.image_data = self.cache_image_data(image_file.getvalue())
+
         if self.mode in ('RGB', 'RGBA'):
             color_space = '/DeviceRGB'
         elif self.mode in ('L', 'LA'):
@@ -134,7 +146,7 @@ class RasterImage:
             'Height': height,
             'ColorSpace': color_space,
             'BitsPerComponent': 8,
-            'Interpolate': interpolate,
+            'Interpolate': 'true' if interpolate else 'false',
         })
 
         if self.format == 'JPEG':
@@ -176,7 +188,7 @@ class RasterImage:
                 'Height': height,
                 'ColorSpace': '/DeviceGray',
                 'BitsPerComponent': 8,
-                'Interpolate': interpolate,
+                'Interpolate': 'true' if interpolate else 'false',
             })
         else:
             png_data = self._get_png_data(
