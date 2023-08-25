@@ -722,6 +722,19 @@ class PageBox(ParentBox):
     def __repr__(self):
         return f'<{type(self).__name__} {self.page_type}>'
 
+    @property
+    def bleed(self):
+        return {
+            side: self.style[f'bleed_{side}'].value
+            for side in ('top', 'right', 'bottom', 'left')}
+
+    @property
+    def bleed_area(self):
+        return (
+            -self.bleed['left'], -self.bleed['top'],
+            self.margin_width() + self.bleed['left'] + self.bleed['right'],
+            self.margin_height() + self.bleed['top'] + self.bleed['bottom'])
+
 
 class MarginBox(BlockContainerBox):
     """Box in page margins, as defined in CSS3 Paged Media"""

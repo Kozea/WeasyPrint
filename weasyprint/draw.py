@@ -55,14 +55,11 @@ def lighten(color):
 
 def draw_page(page, stream):
     """Draw the given PageBox."""
-    bleed = {
-        side: page.style[f'bleed_{side}'].value
-        for side in ('top', 'right', 'bottom', 'left')}
     marks = page.style['marks']
     stacking_context = StackingContext.from_page(page)
     draw_background(
-        stream, stacking_context.box.background, clip_box=False, bleed=bleed,
-        marks=marks)
+        stream, stacking_context.box.background, clip_box=False,
+        bleed=page.bleed, marks=marks)
     draw_background(stream, page.canvas_background, clip_box=False)
     draw_border(stream, page)
     draw_stacking_context(stream, stacking_context)
@@ -249,26 +246,14 @@ def draw_background(stream, bg, clip_box=True, bleed=None, marks=()):
                 stream.set_color_rgb(*bg.color[:3])
                 stream.set_alpha(bg.color.alpha)
                 painting_area = bg.layers[-1].painting_area
-                if painting_area:
-                    if bleed:
-                        # Painting area is the PDF BleedBox
-                        x, y, width, height = painting_area
-                        painting_area = (
-                            x - bleed['left'], y - bleed['top'],
-                            width + bleed['left'] + bleed['right'],
-                            height + bleed['top'] + bleed['bottom'])
-                    stream.rectangle(*painting_area)
-                    stream.clip()
-                    stream.end()
+                stream.rectangle(*painting_area)
+                stream.clip()
+                stream.end()
                 stream.rectangle(*painting_area)
                 stream.fill()
 
         if bleed and marks:
             x, y, width, height = bg.layers[-1].painting_area
-            x -= bleed['left']
-            y -= bleed['top']
-            width += bleed['left'] + bleed['right']
-            height += bleed['top'] + bleed['bottom']
             half_bleed = {key: value * 0.5 for key, value in bleed.items()}
             svg = f'''
               <svg height="{height}" width="{width}"
