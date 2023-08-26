@@ -218,6 +218,7 @@ def generate_pdf(document, target, zoom, **options):
 
     # PDF information
     pdf.info['Producer'] = pydyf.String(f'WeasyPrint {VERSION}')
+    pdf.info['Creator'] = pydyf.String(f'WeasyPrint {VERSION}')
     metadata = document.metadata
     if metadata.title:
         pdf.info['Title'] = pydyf.String(metadata.title)
