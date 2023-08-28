@@ -52,14 +52,7 @@ class StyleFor:
         #         weight: values with a greater weight take precedence, see
         #             https://www.w3.org/TR/CSS21/cascade.html#cascading-order
         self._cascaded_styles = cascaded_styles = {}
-        self._cascaded_style_indexes = {}
-
-        # keys: (element, pseudo_element_type), like cascaded_styles
-        # values: style dict objects:
-        #     keys: property name as a string
-        #     values: a PropertyValue-like object
-        self._computed_styles = {}
-
+        self._style_rel = StyleRelationship()
         self._sheets = sheets
 
         PROGRESS_LOGGER.info('Step 3 - Applying CSS')
@@ -87,17 +80,16 @@ class StyleFor:
                 for selector in sheet.matcher.match(element):
                     specificity, order, pseudo_type, declarations = selector
                     specificity = sheet_specificity or specificity
-                    style = cascaded_styles.setdefault(
-                        (element.etree_element, pseudo_type), {})
-                    style_copy = deepcopy(style)
+                    style = deepcopy(cascaded_styles.setdefault(
+                        (element.etree_element, pseudo_type), {}))
                     for name, values, importance in declarations:
                         precedence = declaration_precedence(origin, importance)
                         weight = (precedence, specificity)
-                        old_weight = style_copy.get(name, (None, None))[1]
+                        old_weight = style.get(name, (None, None))[1]
                         if old_weight is None or old_weight <= weight:
-                            style_copy[name] = values, weight
+                            style[name] = values, weight
                     self._set_cascade_style(
-                        element.etree_element, pseudo_type, style_copy)
+                        element.etree_element, pseudo_type, style)
             parent = element.parent.etree_element if element.parent else None
             self.set_computed_styles(
                 element.etree_element, root=html.etree_element, parent=parent,
@@ -124,32 +116,22 @@ class StyleFor:
         self._cascaded_styles.clear()
 
     def __call__(self, element, pseudo_type=None):
-        style = self._computed_styles.get((element, pseudo_type))
-
-        if style:
-            if ('table' in style['display'] and
-                    style['border_collapse'] == 'collapse'):
-                # Padding do not apply
-                for side in ('top', 'bottom', 'left', 'right'):
-                    style[f'padding_{side}'] = computed_values.ZERO_PIXELS
-            if (len(style['display']) == 1 and
-                    style['display'][0].startswith('table-') and
-                    style['display'][0] != 'table-caption'):
-                # Margins do not apply
-                for side in ('top', 'bottom', 'left', 'right'):
-                    style[f'margin_{side}'] = computed_values.ZERO_PIXELS
-
+        style_keys = self.get_computed_styles().get((element, pseudo_type))
+        if style_keys:
+            style, _ = style_keys
+        else:
+            style = None
         return style
 
     def _set_cascade_style(self, element, pseudo_type=None, style={}):
         """Set the cascade style"""
         styles = self.get_cascaded_styles()
-        style_indexes = self.get_cascaded_style_indexes()
+        style_indexes = self._get_cascaded_style_indexes()
         style_hash = md5(str(sorted(style.keys())).encode('utf8')
                          ).hexdigest()
         style_index = style_indexes.setdefault(style_hash, {})
         if style_index:
-            for i, values in style_index.items():
+            for i, values in sorted(style_index.items(), reverse=True):
                 if style == values:
                     styles[(element, pseudo_type)] = style_index[i]
                     break
@@ -182,13 +164,13 @@ class StyleFor:
             }
         else:
             assert parent is not None
-            parent_style = computed_styles[(parent, None)]
-            root_style = computed_styles[(root, None)]
+            parent_style, parent_keys = computed_styles[(parent, None)]
+            root_style, root_keys = computed_styles[(root, None)]
 
         cascaded = cascaded_styles.get((element, pseudo_type), {})
-        computed_styles[element, pseudo_type] = computed_from_cascaded(
+        computed_style = computed_from_cascaded(
             element, cascaded, parent_style, pseudo_type, root_style, base_url,
-            target_collector)
+            target_collector, self._style_rel)
 
         # The style of marker is deleted when display is different from
         # list-item.
@@ -201,6 +183,18 @@ class StyleFor:
             else:
                 if (element, 'marker') in cascaded_styles:
                     del cascaded_styles[element, 'marker']
+
+        if ('table' in computed_style['display'] and
+                computed_style['border_collapse'] == 'collapse'):
+            # Padding do not apply
+            for side in ('top', 'bottom', 'left', 'right'):
+                computed_style[f'padding_{side}'] = computed_values.ZERO_PIXELS
+        if (len(computed_style['display']) == 1 and
+                computed_style['display'][0].startswith('table-') and
+                computed_style['display'][0] != 'table-caption'):
+            # Margins do not apply
+            for side in ('top', 'bottom', 'left', 'right'):
+                computed_style[f'margin_{side}'] = computed_values.ZERO_PIXELS
 
     def add_page_declarations(self, page_type):
         cascaded_styles = self.get_cascaded_styles()
@@ -226,11 +220,11 @@ class StyleFor:
     def get_cascaded_styles(self):
         return self._cascaded_styles
 
-    def get_cascaded_style_indexes(self):
-        return self._cascaded_style_indexes
+    def _get_cascaded_style_indexes(self):
+        return self._style_rel._cascaded_style_indexes
 
     def get_computed_styles(self):
-        return self._computed_styles
+        return self._style_rel.get_computed_styles()
 
     @staticmethod
     def _page_type_match(selector_page_type, page_type):
@@ -674,10 +668,10 @@ class AnonymousStyle(dict):
         return value
 
 
-class ComputedStyle(dict):
+class ComputedStyle():
     """Computed style used for non-anonymous boxes."""
     def __init__(self, parent_style, cascaded, element, pseudo_type,
-                 root_style, base_url):
+                 root_style, base_url, style_rel):
         self.specified = {}
         self.parent_style = parent_style
         self.cascaded = cascaded
@@ -686,6 +680,7 @@ class ComputedStyle(dict):
         self.pseudo_type = pseudo_type
         self.root_style = root_style
         self.base_url = base_url
+        self.style_rel = style_rel
         if parent_style:
             self.cache = parent_style.cache
         else:
@@ -694,10 +689,63 @@ class ComputedStyle(dict):
     def copy(self):
         copy = ComputedStyle(
             self.parent_style, self.cascaded, self.element, self.pseudo_type,
-            self.root_style, self.base_url)
-        copy.update(self)
-        copy.specified = self.specified.copy()
+            self.root_style, self.base_url, self.style_rel)
         return copy
+
+    def get_style_keys(self):
+        computed_styles = self.style_rel.get_computed_styles()
+        _, computed_keys = computed_styles[(self.element, self.pseudo_type)]
+        return computed_keys
+
+    def get(self, key, default=None):
+        computed_styles = self.style_rel.get_computed_styles()
+        if (self.element, self.pseudo_type) not in computed_styles:
+            self.style_rel.set_computed_style(
+                self.element, self.pseudo_type, self, {})
+
+        _, computed_keys = computed_styles[(self.element, self.pseudo_type)]
+        if key in computed_keys:
+            return computed_keys[key]
+        else:
+            if default:
+                computed_keys[key] = default
+                return default
+            else:
+                return None
+
+    def __getitem__(self, key):
+        computed_styles = self.style_rel.get_computed_styles()
+        if (self.element, self.pseudo_type) not in computed_styles:
+            self.style_rel.set_computed_style(
+                self.element, self.pseudo_type, self, {})
+
+        _, computed_keys = computed_styles[(self.element, self.pseudo_type)]
+        if key in computed_keys:
+            return computed_keys[key]
+        else:
+            return self.__missing__(key)
+
+    def __setitem__(self, key, value):
+        computed_styles = self.style_rel.get_computed_styles()
+        if (self.element, self.pseudo_type) not in computed_styles:
+            self.style_rel.set_computed_style(
+                self.element, self.pseudo_type, self, {})
+            computed_styles = self.style_rel.get_computed_styles()
+        _, computed_keys = computed_styles[(self.element, self.pseudo_type)]
+
+        computed_keys_copy = deepcopy(computed_keys)
+        computed_keys_copy[key] = value
+        self.style_rel.set_computed_style_key(
+            self.element, self.pseudo_type, computed_keys_copy)
+
+    def __delitem__(self, key):
+        computed_styles = self.style_rel.get_computed_styles()
+        _, computed_keys = computed_styles[(self.element, self.pseudo_type)]
+
+        computed_keys_copy = deepcopy(computed_keys)
+        del computed_keys_copy[key]
+        self.style_rel.set_computed_style_key(
+            self.element, self.pseudo_type, computed_keys_copy)
 
     def __missing__(self, key):
         if key == 'float':
@@ -731,7 +779,7 @@ class ComputedStyle(dict):
         if key[:16] == 'text_decoration_' and self.parent_style:
             value = text_decoration(
                 key, value, self.parent_style[key], key in self.cascaded)
-            if key in self:
+            if key in self.get_style_keys():
                 del self[key]
         elif key == 'page' and value == 'auto':
             # The page property does not inherit. However, if the page
@@ -741,12 +789,12 @@ class ComputedStyle(dict):
             # empty string.
             value = (
                 '' if self.parent_style is None else self.parent_style['page'])
-            if key in self:
+            if key in self.get_style_keys():
                 del self[key]
         elif key in ('position', 'float', 'display'):
             self.specified[key] = value
 
-        if key in self:
+        if key in self.get_style_keys():
             return self[key]
 
         function = computed_values.COMPUTER_FUNCTIONS.get(key)
@@ -777,15 +825,22 @@ class ComputedStyle(dict):
 
 def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
                            root_style=None, base_url=None,
-                           target_collector=None):
+                           target_collector=None, style_rel=None):
     """Get a dict of computed style mixed from parent and cascaded styles."""
     if not cascaded and parent_style is not None:
-        return AnonymousStyle(parent_style)
+        style = AnonymousStyle(parent_style)
 
-    style = ComputedStyle(
-        parent_style, cascaded, element, pseudo_type, root_style, base_url)
-    if target_collector and style['anchor']:
-        target_collector.collect_anchor(style['anchor'])
+    else:
+        style = ComputedStyle(
+            parent_style, cascaded, element, pseudo_type, root_style, base_url,
+            style_rel)
+        if target_collector and style['anchor']:
+            target_collector.collect_anchor(style['anchor'])
+
+    if style_rel:
+        style_rel.set_computed_style(
+            element, pseudo_type, style, {})
+
     return style
 
 
@@ -1159,3 +1214,54 @@ def get_all_computed_styles(html, user_stylesheets=None,
         sheets.append((sheet, 'user', None))
 
     return StyleFor(html, sheets, presentational_hints, target_collector)
+
+
+class StyleRelationship(dict):
+    """Parent-child relationship of elements."""
+    def __init__(self):
+        # keys: (element, pseudo_element_type), like cascaded_styles
+        # values: dicts, like cascaded_styles
+        # Save cascade style reference
+        self._cascaded_style_indexes = {}
+        # keys: (element, pseudo_element_type), like cascaded_styles
+        # values: (style_object, add_keys)
+        #     style_object: CoputedStyle or AnonymousStyle
+        #     add_keys: add css properties
+        self._computed_key_indexes = {}
+
+    def __call__(self, element, pseudo_type=None):
+        return self.get((element, pseudo_type), (None, {}))
+
+    def get_computed_styles(self):
+        return self
+
+    def _get_computed_key_indexs(self):
+        return self._computed_key_indexes
+
+    def set_computed_style(self, element, pseudo_type=None,
+                           style=None, style_keys={}):
+        """Set the computed style"""
+        styles = self.get_computed_styles()
+        styles[(element, pseudo_type)] = (style, {})
+        self.set_computed_style_key(element, pseudo_type, style_keys)
+
+    def set_computed_style_key(self, element, pseudo_type=None, style_keys={}):
+        """Set the computed style keys"""
+        styles = self.get_computed_styles()
+        style, _ = styles[(element, pseudo_type)]
+        key_indexes = self._get_computed_key_indexs()
+        key_hash = md5(
+            str(sorted(style_keys.keys())).encode('utf8')).hexdigest()
+        key_index = key_indexes.setdefault(key_hash, {})
+        if key_index:
+            for i, values in sorted(key_index.items(), reverse=True):
+                if style_keys == values:
+                    styles[(element, pseudo_type)] = (style, key_index[i])
+                    break
+            else:
+                index = max(key_index) + 1
+                key_index[index] = deepcopy(style_keys)
+                styles[(element, pseudo_type)] = (style, key_index[index])
+        else:
+            key_index[0] = deepcopy(style_keys)
+            styles[(element, pseudo_type)] = (style, key_index[0])
