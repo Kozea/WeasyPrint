@@ -13,7 +13,6 @@ on other functions in this module.
 """
 
 from collections import namedtuple
-from copy import deepcopy
 from hashlib import md5
 from logging import DEBUG, WARNING
 
@@ -80,14 +79,16 @@ class StyleFor:
                 for selector in sheet.matcher.match(element):
                     specificity, order, pseudo_type, declarations = selector
                     specificity = sheet_specificity or specificity
-                    style = deepcopy(cascaded_styles.setdefault(
-                        (element.etree_element, pseudo_type), {}))
+                    style = cascaded_styles.setdefault(
+                        (element.etree_element, pseudo_type), {})
                     for name, values, importance in declarations:
                         precedence = declaration_precedence(origin, importance)
                         weight = (precedence, specificity)
                         old_weight = style.get(name, (None, None))[1]
                         if old_weight is None or old_weight <= weight:
-                            style[name] = values, weight
+                            style_copy = style.copy()
+                            style_copy[name] = values, weight
+                            style = style_copy
                     self._set_cascade_style(
                         element.etree_element, pseudo_type, style)
             parent = element.parent.etree_element if element.parent else None
@@ -116,12 +117,11 @@ class StyleFor:
         self._cascaded_styles.clear()
 
     def __call__(self, element, pseudo_type=None):
-        style_keys = self.get_computed_styles().get((element, pseudo_type))
-        if style_keys:
-            style, _ = style_keys
+        computed_style = self.get_computed_styles().get((element, pseudo_type))
+        if computed_style:
+            return computed_style["style"]
         else:
-            style = None
-        return style
+            return None
 
     def _set_cascade_style(self, element, pseudo_type=None, style={}):
         """Set the cascade style"""
@@ -137,10 +137,10 @@ class StyleFor:
                     break
             else:
                 index = max(style_index) + 1
-                style_index[index] = deepcopy(style)
+                style_index[index] = style.copy()
                 styles[(element, pseudo_type)] = style_index[index]
         else:
-            style_index[0] = deepcopy(style)
+            style_index[0] = style.copy()
             styles[(element, pseudo_type)] = style_index[0]
 
     def set_computed_styles(self, element, parent, root=None, pseudo_type=None,
@@ -164,8 +164,8 @@ class StyleFor:
             }
         else:
             assert parent is not None
-            parent_style, parent_keys = computed_styles[(parent, None)]
-            root_style, root_keys = computed_styles[(root, None)]
+            parent_style = computed_styles[(parent, None)]["style"]
+            root_style = computed_styles[(root, None)]["style"]
 
         cascaded = cascaded_styles.get((element, pseudo_type), {})
         computed_style = computed_from_cascaded(
@@ -206,16 +206,17 @@ class StyleFor:
                         specificity = sheet_specificity or specificity
                         style = cascaded_styles.setdefault(
                             (page_type, pseudo_type), {})
-                        style_copy = deepcopy(style)
                         for name, values, importance in declarations:
                             precedence = declaration_precedence(
                                 origin, importance)
                             weight = (precedence, specificity)
-                            old_weight = style_copy.get(name, (None, None))[1]
+                            old_weight = style.get(name, (None, None))[1]
                             if old_weight is None or old_weight <= weight:
+                                style_copy = style.copy()
                                 style_copy[name] = values, weight
+                                style = style_copy
                         self._set_cascade_style(
-                            page_type, pseudo_type, style_copy)
+                            page_type, pseudo_type, style)
 
     def get_cascaded_styles(self):
         return self._cascaded_styles
@@ -694,7 +695,8 @@ class ComputedStyle():
 
     def get_style_keys(self):
         computed_styles = self.style_rel.get_computed_styles()
-        _, computed_keys = computed_styles[(self.element, self.pseudo_type)]
+        computed_keys = computed_styles[(
+            self.element, self.pseudo_type)]["properties"]
         return computed_keys
 
     def get(self, key, default=None):
@@ -703,7 +705,8 @@ class ComputedStyle():
             self.style_rel.set_computed_style(
                 self.element, self.pseudo_type, self, {})
 
-        _, computed_keys = computed_styles[(self.element, self.pseudo_type)]
+        computed_keys = computed_styles[(
+            self.element, self.pseudo_type)]["properties"]
         if key in computed_keys:
             return computed_keys[key]
         else:
@@ -719,7 +722,8 @@ class ComputedStyle():
             self.style_rel.set_computed_style(
                 self.element, self.pseudo_type, self, {})
 
-        _, computed_keys = computed_styles[(self.element, self.pseudo_type)]
+        computed_keys = computed_styles[(
+            self.element, self.pseudo_type)]["properties"]
         if key in computed_keys:
             return computed_keys[key]
         else:
@@ -731,18 +735,20 @@ class ComputedStyle():
             self.style_rel.set_computed_style(
                 self.element, self.pseudo_type, self, {})
             computed_styles = self.style_rel.get_computed_styles()
-        _, computed_keys = computed_styles[(self.element, self.pseudo_type)]
+        computed_keys = computed_styles[(
+            self.element, self.pseudo_type)]["properties"]
 
-        computed_keys_copy = deepcopy(computed_keys)
+        computed_keys_copy = computed_keys.copy()
         computed_keys_copy[key] = value
         self.style_rel.set_computed_style_key(
             self.element, self.pseudo_type, computed_keys_copy)
 
     def __delitem__(self, key):
         computed_styles = self.style_rel.get_computed_styles()
-        _, computed_keys = computed_styles[(self.element, self.pseudo_type)]
+        computed_keys = computed_styles[(
+            self.element, self.pseudo_type)]["properties"]
 
-        computed_keys_copy = deepcopy(computed_keys)
+        computed_keys_copy = computed_keys.copy()
         del computed_keys_copy[key]
         self.style_rel.set_computed_style_key(
             self.element, self.pseudo_type, computed_keys_copy)
@@ -1230,7 +1236,7 @@ class StyleRelationship(dict):
         self._computed_key_indexes = {}
 
     def __call__(self, element, pseudo_type=None):
-        return self.get((element, pseudo_type), (None, {}))
+        return self.get((element, pseudo_type),  {"style": None, "properties": {}})
 
     def get_computed_styles(self):
         return self
@@ -1242,7 +1248,7 @@ class StyleRelationship(dict):
                            style=None, style_keys={}):
         """Set the computed style"""
         styles = self.get_computed_styles()
-        styles[(element, pseudo_type)] = (style, {})
+        styles[(element, pseudo_type)] = {"style": style, "properties": {}}
         self.set_computed_style_key(element, pseudo_type, style_keys)
 
     def set_computed_style_key(self, element, pseudo_type=None, style_keys={}):
@@ -1256,12 +1262,12 @@ class StyleRelationship(dict):
         if key_index:
             for i, values in sorted(key_index.items(), reverse=True):
                 if style_keys == values:
-                    styles[(element, pseudo_type)] = (style, key_index[i])
+                    styles[(element, pseudo_type)]["properties"] = key_index[i]
                     break
             else:
                 index = max(key_index) + 1
-                key_index[index] = deepcopy(style_keys)
-                styles[(element, pseudo_type)] = (style, key_index[index])
+                key_index[index] = style_keys.copy()
+                styles[(element, pseudo_type)]["properties"] = key_index[index]
         else:
-            key_index[0] = deepcopy(style_keys)
-            styles[(element, pseudo_type)] = (style, key_index[0])
+            key_index[0] = style_keys.copy()
+            styles[(element, pseudo_type)]["properties"] = key_index[0]
