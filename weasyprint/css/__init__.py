@@ -13,7 +13,6 @@ on other functions in this module.
 """
 
 from collections import namedtuple
-from hashlib import md5
 from logging import DEBUG, WARNING
 
 import cssselect2
@@ -141,8 +140,8 @@ class StyleFor:
             cascaded_styles[element] = {}
             element_styles = cascaded_styles[element]
         style_indexes = self._get_cascaded_style_indexes()
-        key_hash = md5(str(sorted(style.keys())).encode('utf8')).hexdigest()
-        style_index = style_indexes.setdefault(key_hash, {})
+        key_str = str(sorted(style.keys())).encode('utf8')
+        style_index = style_indexes.setdefault(key_str, {})
         if style_index:
             for i, values in sorted(style_index.items(), reverse=True):
                 if style == values:
@@ -1255,9 +1254,8 @@ class StyleRelationship(dict):
         """Set the computed style keys"""
         styles = self.get_computed_styles()
         key_indexes = self._get_computed_key_indexs()
-        key_hash = md5(
-            str(sorted(style_keys.keys())).encode('utf8')).hexdigest()
-        key_index = key_indexes.setdefault(key_hash, {})
+        key_str = str(sorted(style_keys.keys())).encode('utf8')
+        key_index = key_indexes.setdefault(key_str, {})
         if key_index:
             for i, values in sorted(key_index.items(), reverse=True):
                 if style_keys == values:
