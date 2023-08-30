@@ -58,7 +58,11 @@ class StyleFor:
         for specificity, attributes in find_style_attributes(
                 html.etree_element, presentational_hints, html.base_url):
             element, declarations, base_url = attributes
-            style = cascaded_styles.setdefault((element, None), {})
+            element_styles = cascaded_styles.get(element)
+            if element_styles is None:
+                cascaded_styles[element] = {}
+                element_styles = cascaded_styles[element]
+            style = element_styles.setdefault((element, None), {})
             for name, values, importance in preprocess_declarations(
                     base_url, declarations):
                 precedence = declaration_precedence('author', importance)
@@ -66,7 +70,7 @@ class StyleFor:
                 old_weight = style.get(name, (None, None))[1]
                 if old_weight is None or old_weight <= weight:
                     style[name] = values, weight
-            self._set_cascade_style(element, None, style)
+            self._set_cascaded_style(element, None, style)
 
         # First, add declarations and set computed styles for "real" elements
         # *in tree order*. Tree order is important so that parents have
@@ -74,12 +78,16 @@ class StyleFor:
 
         # Iterate on all elements, even if there is no cascaded style for them.
         for element in html.wrapper_element.iter_subtree():
+            element_styles = cascaded_styles.get(element.etree_element)
+            if element_styles is None:
+                cascaded_styles[element.etree_element] = {}
+                element_styles = cascaded_styles[element.etree_element]
             for sheet, origin, sheet_specificity in sheets:
                 # Add declarations for matched elements
                 for selector in sheet.matcher.match(element):
                     specificity, order, pseudo_type, declarations = selector
                     specificity = sheet_specificity or specificity
-                    style = cascaded_styles.setdefault(
+                    style = element_styles.setdefault(
                         (element.etree_element, pseudo_type), {})
                     for name, values, importance in declarations:
                         precedence = declaration_precedence(origin, importance)
@@ -89,7 +97,7 @@ class StyleFor:
                             style_copy = style.copy()
                             style_copy[name] = values, weight
                             style = style_copy
-                    self._set_cascade_style(
+                    self._set_cascaded_style(
                         element.etree_element, pseudo_type, style)
             parent = element.parent.etree_element if element.parent else None
             self.set_computed_styles(
@@ -104,13 +112,15 @@ class StyleFor:
 
         # Only iterate on pseudo-elements that have cascaded styles. (Others
         # might as well not exist.)
-        for element, pseudo_type in cascaded_styles:
-            if pseudo_type and not isinstance(element, PageType):
-                self.set_computed_styles(
-                    element, pseudo_type=pseudo_type,
-                    # The pseudo-element inherits from the element.
-                    root=html.etree_element, parent=element,
-                    base_url=html.base_url, target_collector=target_collector)
+        for element_styles in cascaded_styles.values():
+            for element, pseudo_type in element_styles:
+                if pseudo_type and not isinstance(element, PageType):
+                    self.set_computed_styles(
+                        element, pseudo_type=pseudo_type,
+                        # The pseudo-element inherits from the element.
+                        root=html.etree_element, parent=element,
+                        base_url=html.base_url,
+                        target_collector=target_collector)
 
         # Clear the cascaded styles, we don't need them anymore. Keep the
         # dictionary, it is used later for page margins.
@@ -123,24 +133,28 @@ class StyleFor:
         else:
             return None
 
-    def _set_cascade_style(self, element, pseudo_type=None, style={}):
+    def _set_cascaded_style(self, element, pseudo_type=None, style={}):
         """Set the cascade style"""
-        styles = self.get_cascaded_styles()
+        cascaded_styles = self.get_cascaded_styles()
+        element_styles = cascaded_styles.get(element)
+        if element_styles is None:
+            cascaded_styles[element] = {}
+            element_styles = cascaded_styles[element]
         style_indexes = self._get_cascaded_style_indexes()
         key_hash = md5(str(sorted(style.keys())).encode('utf8')).hexdigest()
         style_index = style_indexes.setdefault(key_hash, {})
         if style_index:
             for i, values in sorted(style_index.items(), reverse=True):
                 if style == values:
-                    styles[(element, pseudo_type)] = style_index[i]
+                    element_styles[(element, pseudo_type)] = style_index[i]
                     break
             else:
                 index = max(style_index) + 1
                 style_index[index] = style.copy()
-                styles[(element, pseudo_type)] = style_index[index]
+                element_styles[(element, pseudo_type)] = style_index[index]
         else:
             style_index[0] = style.copy()
-            styles[(element, pseudo_type)] = style_index[0]
+            element_styles[(element, pseudo_type)] = style_index[0]
 
     def set_computed_styles(self, element, parent, root=None, pseudo_type=None,
                             base_url=None, target_collector=None):
@@ -152,6 +166,10 @@ class StyleFor:
 
         """
         cascaded_styles = self.get_cascaded_styles()
+        element_styles = cascaded_styles.get(element)
+        if element_styles is None:
+            cascaded_styles[element] = {}
+            element_styles = cascaded_styles[element]
         computed_styles = self.get_computed_styles()
         if element == root and pseudo_type is None:
             assert parent is None
@@ -166,7 +184,7 @@ class StyleFor:
             parent_style = computed_styles[(parent, None)]["style"]
             root_style = computed_styles[(root, None)]["style"]
 
-        cascaded = cascaded_styles.get((element, pseudo_type), {})
+        cascaded = element_styles.get((element, pseudo_type), {})
         computed_style = computed_from_cascaded(
             element, cascaded, parent_style, pseudo_type, root_style, base_url,
             target_collector, self._style_rel)
@@ -175,13 +193,13 @@ class StyleFor:
         # list-item.
         if pseudo_type is None:
             for pseudo in (None, 'before', 'after'):
-                pseudo_style = cascaded_styles.get((element, pseudo), {})
+                pseudo_style = element_styles.get((element, pseudo), {})
                 if 'display' in pseudo_style:
                     if 'list-item' in pseudo_style['display'][0]:
                         break
             else:
-                if (element, 'marker') in cascaded_styles:
-                    del cascaded_styles[element, 'marker']
+                if (element, 'marker') in element_styles:
+                    del element_styles[element, 'marker']
 
         if ('table' in computed_style['display'] and
                 computed_style['border_collapse'] == 'collapse'):
@@ -197,13 +215,17 @@ class StyleFor:
 
     def add_page_declarations(self, page_type):
         cascaded_styles = self.get_cascaded_styles()
+        element_styles = cascaded_styles.get(page_type)
+        if element_styles is None:
+            cascaded_styles[page_type] = {}
+            element_styles = cascaded_styles[page_type]
         for sheet, origin, sheet_specificity in self._sheets:
             for _rule, selector_list, declarations in sheet.page_rules:
                 for selector in selector_list:
                     specificity, pseudo_type, selector_page_type = selector
                     if self._page_type_match(selector_page_type, page_type):
                         specificity = sheet_specificity or specificity
-                        style = cascaded_styles.setdefault(
+                        style = element_styles.setdefault(
                             (page_type, pseudo_type), {})
                         for name, values, importance in declarations:
                             precedence = declaration_precedence(
@@ -214,7 +236,7 @@ class StyleFor:
                                 style_copy = style.copy()
                                 style_copy[name] = values, weight
                                 style = style_copy
-                        self._set_cascade_style(
+                        self._set_cascaded_style(
                             page_type, pseudo_type, style)
 
     def get_cascaded_styles(self):

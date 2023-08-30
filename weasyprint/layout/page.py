@@ -790,8 +790,9 @@ def set_page_type_computed_styles(page_type, html, style_for):
         base_url=html.base_url)
 
     # Apply style for page pseudo-elements (margin boxes)
-    for element, pseudo_type in style_for.get_cascaded_styles():
-        if pseudo_type and element == page_type:
+    element_styles = style_for.get_cascaded_styles().get(page_type)
+    for element, pseudo_type in element_styles:
+        if pseudo_type:
             style_for.set_computed_styles(
                 element, pseudo_type=pseudo_type,
                 # The pseudo-element inherits from the element.
