@@ -127,9 +127,8 @@ class StyleFor:
         """Set the cascade style"""
         styles = self.get_cascaded_styles()
         style_indexes = self._get_cascaded_style_indexes()
-        style_hash = md5(str(sorted(style.keys())).encode('utf8')
-                         ).hexdigest()
-        style_index = style_indexes.setdefault(style_hash, {})
+        key_hash = md5(str(sorted(style.keys())).encode('utf8')).hexdigest()
+        style_index = style_indexes.setdefault(key_hash, {})
         if style_index:
             for i, values in sorted(style_index.items(), reverse=True):
                 if style == values:
@@ -1236,7 +1235,8 @@ class StyleRelationship(dict):
         self._computed_key_indexes = {}
 
     def __call__(self, element, pseudo_type=None):
-        return self.get((element, pseudo_type),  {"style": None, "properties": {}})
+        return self.get(
+            (element, pseudo_type),  {"style": None, "properties": {}})
 
     def get_computed_styles(self):
         return self
@@ -1254,7 +1254,6 @@ class StyleRelationship(dict):
     def set_computed_style_key(self, element, pseudo_type=None, style_keys={}):
         """Set the computed style keys"""
         styles = self.get_computed_styles()
-        style, _ = styles[(element, pseudo_type)]
         key_indexes = self._get_computed_key_indexs()
         key_hash = md5(
             str(sorted(style_keys.keys())).encode('utf8')).hexdigest()
