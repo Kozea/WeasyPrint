@@ -708,6 +708,8 @@ class ComputedStyle():
         else:
             self.cache = {'ratio_ch': {}, 'ratio_ex': {}}
 
+        style_rel.set_computed_style(element, pseudo_type, self, {})
+
     def copy(self):
         copy = ComputedStyle(
             self.parent_style, self.cascaded, self.element, self.pseudo_type,
@@ -715,19 +717,11 @@ class ComputedStyle():
         return copy
 
     def get_style_keys(self):
-        computed_styles = self.style_rel.get_computed_styles()
-        computed_keys = computed_styles[(
+        return self.style_rel.get_computed_styles()[(
             self.element, self.pseudo_type)]["properties"]
-        return computed_keys
 
     def get(self, key, default=None):
-        computed_styles = self.style_rel.get_computed_styles()
-        if (self.element, self.pseudo_type) not in computed_styles:
-            self.style_rel.set_computed_style(
-                self.element, self.pseudo_type, self, {})
-
-        computed_keys = computed_styles[(
-            self.element, self.pseudo_type)]["properties"]
+        computed_keys = self.get_style_keys()
         if key in computed_keys:
             return computed_keys[key]
         else:
@@ -738,37 +732,21 @@ class ComputedStyle():
                 return None
 
     def __getitem__(self, key):
-        computed_styles = self.style_rel.get_computed_styles()
-        if (self.element, self.pseudo_type) not in computed_styles:
-            self.style_rel.set_computed_style(
-                self.element, self.pseudo_type, self, {})
-
-        computed_keys = computed_styles[(
-            self.element, self.pseudo_type)]["properties"]
+        computed_keys = self.get_style_keys()
         if key in computed_keys:
             return computed_keys[key]
         else:
             return self.__missing__(key)
 
     def __setitem__(self, key, value):
-        computed_styles = self.style_rel.get_computed_styles()
-        if (self.element, self.pseudo_type) not in computed_styles:
-            self.style_rel.set_computed_style(
-                self.element, self.pseudo_type, self, {})
-            computed_styles = self.style_rel.get_computed_styles()
-        computed_keys = computed_styles[(
-            self.element, self.pseudo_type)]["properties"]
-
+        computed_keys = self.get_style_keys()
         computed_keys_copy = computed_keys.copy()
         computed_keys_copy[key] = value
         self.style_rel.set_computed_style_key(
             self.element, self.pseudo_type, computed_keys_copy)
 
     def __delitem__(self, key):
-        computed_styles = self.style_rel.get_computed_styles()
-        computed_keys = computed_styles[(
-            self.element, self.pseudo_type)]["properties"]
-
+        computed_keys = self.get_style_keys()
         computed_keys_copy = computed_keys.copy()
         del computed_keys_copy[key]
         self.style_rel.set_computed_style_key(
