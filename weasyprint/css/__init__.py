@@ -657,13 +657,16 @@ class AnonymousStyle():
     def __init__(self, parent_style, style_rel):
         self.parent_style = parent_style
         self.specified = self
-        self.style_rel = style_rel
+        if style_rel is not None:
+            self.style_rel = style_rel
+        else:
+            self.style_rel = StyleRelationship()
         if parent_style:
             self.cache = parent_style.cache
         else:
             self.cache = {'ratio_ch': {}, 'ratio_ex': {}}
 
-        style_rel.set_computed_style(self, None, self, {})
+        self.style_rel.set_computed_style(self, None, self, {})
 
         # border-*-style is none, so border-width computes to zero.
         # Other than that, properties that would need computing are
@@ -750,7 +753,6 @@ class ComputedStyle():
         style_rel.set_computed_style(element, pseudo_type, self, {})
 
     def copy(self):
-        # TODO: Need to modify for flex_layout(Consider sharing "properties")
         copy = ComputedStyle(
             self.parent_style, self.cascaded, self.element, self.pseudo_type,
             self.root_style, self.base_url, self.style_rel)
