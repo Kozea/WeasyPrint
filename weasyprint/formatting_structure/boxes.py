@@ -97,7 +97,8 @@ class Box:
     def anonymous_from(cls, parent, *args, **kwargs):
         """Return an anonymous box that inherits from ``parent``."""
         style = computed_from_cascaded(
-            cascaded={}, parent_style=parent.style, element=None)
+            cascaded={}, parent_style=parent.style, element=None,
+            style_rel=parent.style.style_rel)
         return cls(parent.element_tag, style, parent.element, *args, **kwargs)
 
     def copy(self):

@@ -247,6 +247,9 @@ class StyleFor:
     def get_computed_styles(self):
         return self._style_rel.get_computed_styles()
 
+    def get_style_rel(self):
+        return self._style_rel
+
     @staticmethod
     def _page_type_match(selector_page_type, page_type):
         if selector_page_type.side not in (None, page_type.side):
@@ -649,30 +652,67 @@ def declaration_precedence(origin, importance):
         return 5
 
 
-class AnonymousStyle(dict):
+class AnonymousStyle():
     """Computed style used for anonymous boxes."""
-    def __init__(self, parent_style):
-        # border-*-style is none, so border-width computes to zero.
-        # Other than that, properties that would need computing are
-        # border-*-color, but they do not apply.
-        self.update({
-            'border_top_width': 0,
-            'border_bottom_width': 0,
-            'border_left_width': 0,
-            'border_right_width': 0,
-            'outline_width': 0,
-        })
+    def __init__(self, parent_style, style_rel):
         self.parent_style = parent_style
         self.specified = self
+        self.style_rel = style_rel
         if parent_style:
             self.cache = parent_style.cache
         else:
             self.cache = {'ratio_ch': {}, 'ratio_ex': {}}
 
+        style_rel.set_computed_style(self, None, self, {})
+
+        # border-*-style is none, so border-width computes to zero.
+        # Other than that, properties that would need computing are
+        # border-*-color, but they do not apply.
+        self['border_top_width'] = 0
+        self['border_bottom_width'] = 0
+        self['border_left_width'] = 0
+        self['border_right_width'] = 0
+        self['outline_width'] = 0
+
     def copy(self):
-        copy = AnonymousStyle(self.parent_style)
-        copy.update(self)
+        copy = AnonymousStyle(self.parent_style, self.style_rel)
+        computed_keys = self.get_style_keys()
+        copy_computed_keys = copy.get_style_keys()
+        copy_computed_keys.update(computed_keys)
         return copy
+
+    def get_style_keys(self):
+        return self.style_rel.get_computed_styles()[(self, None)]["properties"]
+
+    def get(self, key, default=None):
+        computed_keys = self.get_style_keys()
+        if key in computed_keys:
+            return computed_keys[key]
+        else:
+            if default:
+                computed_keys[key] = default
+                return default
+            else:
+                return None
+
+    def __getitem__(self, key):
+        computed_keys = self.get_style_keys()
+        if key in computed_keys:
+            return computed_keys[key]
+        else:
+            return self.__missing__(key)
+
+    def __setitem__(self, key, value):
+        computed_keys = self.get_style_keys()
+        computed_keys_copy = computed_keys.copy()
+        computed_keys_copy[key] = value
+        self.style_rel.set_computed_style_key(self, None, computed_keys_copy)
+
+    def __delitem__(self, key):
+        computed_keys = self.get_style_keys()
+        computed_keys_copy = computed_keys.copy()
+        del computed_keys_copy[key]
+        self.style_rel.set_computed_style_key(self, None, computed_keys_copy)
 
     def __missing__(self, key):
         if key in INHERITED or key[:2] == '__':
@@ -710,6 +750,7 @@ class ComputedStyle():
         style_rel.set_computed_style(element, pseudo_type, self, {})
 
     def copy(self):
+        # TODO: Need to modify for flex_layout(Consider sharing "properties")
         copy = ComputedStyle(
             self.parent_style, self.cascaded, self.element, self.pseudo_type,
             self.root_style, self.base_url, self.style_rel)
@@ -832,7 +873,7 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
                            target_collector=None, style_rel=None):
     """Get a dict of computed style mixed from parent and cascaded styles."""
     if not cascaded and parent_style is not None:
-        style = AnonymousStyle(parent_style)
+        style = AnonymousStyle(parent_style, style_rel)
 
     else:
         style = ComputedStyle(

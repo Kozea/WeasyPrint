@@ -376,7 +376,8 @@ def make_margin_boxes(context, page, state):
         if style is None:
             # doesn't affect counters
             style = computed_from_cascaded(
-                element=None, cascaded={}, parent_style=page.style)
+                element=None, cascaded={}, parent_style=page.style,
+                style_rel=context.style_for.get_style_rel())
         _standardize_page_based_counters(style, at_keyword)
         box = boxes.MarginBox(at_keyword, style)
         # Empty boxes should not be generated, but they may be needed for
