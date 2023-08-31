@@ -1054,13 +1054,14 @@ def test_background_size_clip(assert_pixels):
 
 @assert_no_logs
 def test_bleed_background_size_clip(assert_pixels):
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/1943
     assert_pixels('''
-        RRRRRR
-        RBBBBR
-        RBRBBR
-        RBBBBR
-        RBBBBR
-        RRRRRR
+        BBBBBB
+        BBBBBB
+        BBRBBB
+        BBBBBB
+        BBBBBB
+        BBBBBB
     ''', '''
       <style>
          @page { size: 4px; bleed: 1px; margin: 1px;

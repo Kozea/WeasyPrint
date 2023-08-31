@@ -4,7 +4,7 @@ import contextlib
 import operator
 from colorsys import hsv_to_rgb, rgb_to_hsv
 from io import BytesIO
-from math import ceil, cos, floor, pi, sin, sqrt, tan
+from math import ceil, floor, pi, sqrt, tan
 from xml.etree import ElementTree
 
 from PIL import Image
@@ -55,14 +55,11 @@ def lighten(color):
 
 def draw_page(page, stream):
     """Draw the given PageBox."""
-    bleed = {
-        side: page.style[f'bleed_{side}'].value
-        for side in ('top', 'right', 'bottom', 'left')}
     marks = page.style['marks']
     stacking_context = StackingContext.from_page(page)
     draw_background(
-        stream, stacking_context.box.background, clip_box=False, bleed=bleed,
-        marks=marks)
+        stream, stacking_context.box.background, clip_box=False,
+        bleed=page.bleed, marks=marks)
     draw_background(stream, page.canvas_background, clip_box=False)
     draw_border(stream, page)
     draw_stacking_context(stream, stacking_context)
@@ -249,26 +246,14 @@ def draw_background(stream, bg, clip_box=True, bleed=None, marks=()):
                 stream.set_color_rgb(*bg.color[:3])
                 stream.set_alpha(bg.color.alpha)
                 painting_area = bg.layers[-1].painting_area
-                if painting_area:
-                    if bleed:
-                        # Painting area is the PDF BleedBox
-                        x, y, width, height = painting_area
-                        painting_area = (
-                            x - bleed['left'], y - bleed['top'],
-                            width + bleed['left'] + bleed['right'],
-                            height + bleed['top'] + bleed['bottom'])
-                    stream.rectangle(*painting_area)
-                    stream.clip()
-                    stream.end()
+                stream.rectangle(*painting_area)
+                stream.clip()
+                stream.end()
                 stream.rectangle(*painting_area)
                 stream.fill()
 
         if bleed and marks:
             x, y, width, height = bg.layers[-1].painting_area
-            x -= bleed['left']
-            y -= bleed['top']
-            width += bleed['left'] + bleed['right']
-            height += bleed['top'] + bleed['bottom']
             half_bleed = {key: value * 0.5 for key, value in bleed.items()}
             svg = f'''
               <svg height="{height}" width="{width}"
@@ -1073,7 +1058,7 @@ def draw_text(stream, textbox, offset_x, text_overflow, block_ellipsis):
     textbox.pango_layout.reactivate(textbox.style)
     stream.begin_text()
     emojis = draw_first_line(
-        stream, textbox, text_overflow, block_ellipsis, x, y)
+        stream, textbox, text_overflow, block_ellipsis, Matrix(d=-1, e=x, f=y))
     stream.end_text()
 
     draw_emojis(stream, textbox.style['font_size'], x, y, emojis)
@@ -1097,8 +1082,7 @@ def draw_emojis(stream, font_size, x, y, emojis):
         stream.pop_state()
 
 
-def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y,
-                    angle=0):
+def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
     """Draw the given ``textbox`` line to the document ``stream``."""
     # Don’t draw lines with only invisible characters
     if not textbox.text.strip():
@@ -1152,12 +1136,6 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y,
 
     utf8_text = textbox.pango_layout.text.encode()
     previous_utf8_position = 0
-
-    matrix = Matrix(1, 0, 0, -1, x, y)
-    if angle:
-        a, c = cos(angle), sin(angle)
-        b, d = -c, a
-        matrix = Matrix(a, b, c, d) @ matrix
     stream.text_matrix(*matrix.values)
     last_font = None
     string = ''
@@ -1236,7 +1214,16 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, x, y,
                 hb_data = harfbuzz.hb_blob_get_data(hb_blob, stream.length)
                 if hb_data != ffi.NULL:
                     svg_data = ffi.unpack(hb_data, int(stream.length[0]))
+                    # Do as explained in specification
+                    # https://learn.microsoft.com/typography/opentype/spec/svg
                     tree = ElementTree.fromstring(svg_data)
+                    defs = ElementTree.Element('defs')
+                    for child in list(tree):
+                        defs.append(child)
+                        tree.remove(child)
+                    tree.append(defs)
+                    ElementTree.SubElement(
+                        tree, 'use', attrib={'href': f'#glyph{glyph}'})
                     image = SVGImage(tree, None, None, stream)
                     a = d = font.widths[glyph] / 1000 / font.upem * font_size
                     emojis.append([image, font, a, d, x_advance, 0])

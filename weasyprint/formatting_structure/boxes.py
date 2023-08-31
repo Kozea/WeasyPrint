@@ -290,6 +290,16 @@ class Box:
             self.is_floated() or self.is_absolutely_positioned() or
             self.is_running() or self.is_footnote())
 
+    def is_monolithic(self):
+        """Return whether this box is monolithic."""
+        # https://www.w3.org/TR/css-break-3/#monolithic
+        return (
+            isinstance(self, AtomicInlineLevelBox) or
+            isinstance(self, ReplacedBox) or
+            self.style['overflow'] in ('auto', 'scroll') or
+            (self.style['overflow'] == 'hidden' and
+             self.style['height'] != 'auto'))
+
     # Start and end page values for named pages
 
     def page_values(self):
@@ -378,13 +388,18 @@ class ParentBox(Box):
 
     def page_values(self):
         start_value, end_value = super().page_values()
-        if self.children:
-            if len(self.children) == 1:
-                page_values = self.children[0].page_values()
+        # TODO: We should find Class A possible page breaks according to
+        # https://drafts.csswg.org/css-page-3/#propdef-page
+        # Keep only children in normal flow for now.
+        children = [
+            child for child in self.children if child.is_in_normal_flow()]
+        if children:
+            if len(children) == 1:
+                page_values = children[0].page_values()
                 start_value = page_values[0] or start_value
                 end_value = page_values[1] or end_value
             else:
-                start_box, end_box = self.children[0], self.children[-1]
+                start_box, end_box = children[0], children[-1]
                 start_value = start_box.page_values()[0] or start_value
                 end_value = end_box.page_values()[1] or end_value
         return start_value, end_value
@@ -602,9 +617,6 @@ class TableColumnGroupBox(ParentBox):
     internal_table_or_caption = True
     proper_parents = (TableBox, InlineTableBox)
 
-    # Default value. May be overriden on instances.
-    span = 1
-
     # Columns groups never have margins or paddings
     margin_top = 0
     margin_bottom = 0
@@ -638,9 +650,6 @@ class TableColumnBox(ParentBox):
     proper_table_child = True
     internal_table_or_caption = True
     proper_parents = (TableBox, InlineTableBox, TableColumnGroupBox)
-
-    # Default value. May be overriden on instances.
-    span = 1
 
     # Columns never have margins or paddings
     margin_top = 0
@@ -713,6 +722,19 @@ class PageBox(ParentBox):
 
     def __repr__(self):
         return f'<{type(self).__name__} {self.page_type}>'
+
+    @property
+    def bleed(self):
+        return {
+            side: self.style[f'bleed_{side}'].value
+            for side in ('top', 'right', 'bottom', 'left')}
+
+    @property
+    def bleed_area(self):
+        return (
+            -self.bleed['left'], -self.bleed['top'],
+            self.margin_width() + self.bleed['left'] + self.bleed['right'],
+            self.margin_height() + self.bleed['top'] + self.bleed['bottom'])
 
 
 class MarginBox(BlockContainerBox):

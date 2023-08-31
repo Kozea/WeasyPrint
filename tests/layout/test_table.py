@@ -2912,3 +2912,64 @@ def test_table_different_display():
         </td>
       </table>
     ''')
+
+
+@assert_no_logs
+def test_min_width_with_overflow():
+    # issue 1383
+    page, = render_pages('''
+<head>
+<style>
+table td { border: 1px solid black; }
+table.key-val tr td:nth-child(1) { min-width: 13em; }
+</style>
+</head>
+
+<body>
+<table class="key-val">
+    <tbody>
+        <tr>
+            <td>Normal Key 1</td>
+            <td>Normal Value 1</td>
+        </tr>
+        <tr>
+            <td>Normal Key 2</td>
+           <td>Normal Value 2</td>
+        </tr>
+    </tbody>
+</table>
+<table class="key-val">
+    <tbody>
+        <tr>
+            <td>Short value</td>
+            <td>Works as expected</td>
+        </tr>
+        <tr>
+            <td>Long Value</td>
+            <td>Annoyingly breaks my table layout: Sed ut perspiciatis
+                unde omnis iste natus error sit voluptatem
+                accusantium doloremque laudantium, totam rem aperiam,
+                eaque ipsa quae ab illo inventore veritatis et quasi
+                architecto beatae vitae dicta sunt explicabo.
+            </td>
+        </tr>
+    </tbody>
+</table>
+</body>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper_1, table_wrapper_2 = body.children
+
+    table1, = table_wrapper_1.children
+    tbody1, = table1.children
+    tr1, tr2 = tbody1.children
+    table1_td1, table1_td2 = tr1.children
+
+    table2, = table_wrapper_2.children
+    tbody2, = table2.children
+    tr1, tr2 = tbody2.children
+    table2_td1, table2_td2 = tr1.children
+
+    assert table1_td1.min_width == table2_td1.min_width
+    assert table1_td1.width == table2_td1.width
