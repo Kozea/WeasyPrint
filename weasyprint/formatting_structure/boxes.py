@@ -601,9 +601,6 @@ class TableColumnGroupBox(ParentBox):
     internal_table_or_caption = True
     proper_parents = (TableBox, InlineTableBox)
 
-    # Default value. May be overriden on instances.
-    span = 1
-
     # Columns groups never have margins or paddings
     margin_top = 0
     margin_bottom = 0
@@ -637,9 +634,6 @@ class TableColumnBox(ParentBox):
     proper_table_child = True
     internal_table_or_caption = True
     proper_parents = (TableBox, InlineTableBox, TableColumnGroupBox)
-
-    # Default value. May be overriden on instances.
-    span = 1
 
     # Columns never have margins or paddings
     margin_top = 0
