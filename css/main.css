@@ -423,6 +423,10 @@ footer #links #twitter::before {
   content: url(img/about/picto-twitter.svg);
 }
 
+footer #links #mastodon::before {
+  content: url(img/about/picto-mastodon.svg);
+}
+
 footer #links #website::before {
   content: url(img/about/picto-website.svg);
 }
