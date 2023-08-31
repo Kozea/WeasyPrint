@@ -657,10 +657,7 @@ class AnonymousStyle():
     def __init__(self, parent_style, style_rel):
         self.parent_style = parent_style
         self.specified = self
-        if style_rel is not None:
-            self.style_rel = style_rel
-        else:
-            self.style_rel = StyleRelationship()
+        self.style_rel = style_rel or StyleRelationship()
         if parent_style:
             self.cache = parent_style.cache
         else:
@@ -750,7 +747,7 @@ class ComputedStyle():
         else:
             self.cache = {'ratio_ch': {}, 'ratio_ex': {}}
 
-        style_rel.set_computed_style(element, pseudo_type, self, {})
+        self.style_rel.set_computed_style(element, pseudo_type, self, {})
 
     def copy(self):
         copy = ComputedStyle(
