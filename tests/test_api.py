@@ -745,7 +745,7 @@ def test_low_level_api(assert_pixels_equal):
         <h1 style="width: 10px; line-height: 10px;
                    transform: skew(45deg, 45deg)">!
     ''', [[(1, '!', (-5, -5), 'open')]], [('!', (0, -5, -5), [], 'open')],
-     False),
+     True),
 ))
 @assert_no_logs
 def test_assert_bookmarks(html, expected_by_page, expected_tree, round):

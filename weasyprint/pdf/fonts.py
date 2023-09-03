@@ -117,7 +117,7 @@ def build_fonts_dictionary(pdf, fonts, compress_pdf, subset, hinting):
             })
             if pdf.version <= b'1.4':
                 cids = sorted(font.widths)
-                padded_width = int(ceil(cids[-1] / 8))
+                padded_width = int(ceil((cids[-1] + 1) / 8))
                 bits = ['0'] * padded_width * 8
                 for cid in cids:
                     bits[cid] = '1'

@@ -1,7 +1,8 @@
 """Draw text."""
 
-from math import inf, radians
+from math import cos, inf, radians, sin
 
+from ..matrix import Matrix
 from .bounding_box import EMPTY_BOUNDING_BOX, extend_bounding_box
 from .utils import normalize, size
 
@@ -68,9 +69,28 @@ def text(svg, node, font_size):
         ([pl.pop(0) if pl else None for pl in (x, y, dx, dy, rotate)], char)
         for char in node.text]
 
+    letter_spacing = svg.length(node.get('letter-spacing'), font_size)
+    text_length = svg.length(node.get('textLength'), font_size)
+    scale_x = 1
+    if text_length and node.text:
+        # calculate the number of spaces to be considered for the text
+        spaces_count = len(node.text) - 1
+        if normalize(node.attrib.get('lengthAdjust')) == 'spacingAndGlyphs':
+            # scale letter_spacing up/down to textLength
+            width_with_spacing = width + spaces_count * letter_spacing
+            letter_spacing *= text_length / width_with_spacing
+            # calculate the glyphs scaling factor by:
+            # - deducting the scaled letter_spacing from textLength
+            # - dividing the calculated value by the original width
+            spaceless_text_length = text_length - spaces_count * letter_spacing
+            scale_x = spaceless_text_length / width
+        elif spaces_count:
+            # adjust letter spacing to fit textLength
+            letter_spacing = (text_length - width) / spaces_count
+        width = text_length
+
     # Align text box horizontally
     x_align = 0
-    letter_spacing = svg.length(node.get('letter-spacing'), font_size)
     text_anchor = node.get('text-anchor')
     # TODO: use real values
     ascent, descent = font_size * .8, font_size * .2
@@ -134,8 +154,10 @@ def text(svg, node, font_size):
             letter, style, svg.context, inf, 0)
         x = svg.cursor_position[0] if x is None else x
         y = svg.cursor_position[1] if y is None else y
+        width *= scale_x
         if i:
             x += letter_spacing
+
         x_position = x + svg.cursor_d_position[0] + x_align
         y_position = y + svg.cursor_d_position[1] + y_align
         cursor_position = x + width, y
@@ -150,9 +172,12 @@ def text(svg, node, font_size):
 
         layout.reactivate(style)
         svg.fill_stroke(node, font_size, text=True)
+        matrix = Matrix(a=scale_x, d=-1, e=x_position, f=y_position)
+        if angle:
+            a, c = cos(angle), sin(angle)
+            matrix = Matrix(a, -c, c, a) @ matrix
         emojis = draw_first_line(
-            svg.stream, TextBox(layout, style), 'none', 'none',
-            x_position, y_position, angle)
+            svg.stream, TextBox(layout, style), 'none', 'none', matrix)
         emoji_lines.append((font_size, x, y, emojis))
         svg.cursor_position = cursor_position
 

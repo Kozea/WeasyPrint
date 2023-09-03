@@ -5,7 +5,7 @@ from math import inf
 
 from ..css import computed_from_cascaded
 from ..css.computed_values import character_ratio, strut_layout
-from ..formatting_structure import boxes
+from ..formatting_structure import boxes, build
 from ..text.line_break import can_break_text, create_layout, split_first_line
 from .absolute import AbsolutePlaceholder, absolute_layout
 from .flex import flex_layout
@@ -338,6 +338,7 @@ def first_letter_to_box(box, skip_stack, first_letter_style):
                             box.element, first_letter)
                         line_box.children = (text_box,)
                         box.children = (letter_box,) + tuple(box.children)
+                    build.process_text_transform(text_box)
                     if skip_stack and child_skip_stack:
                         index, = skip_stack
                         (child_index, grandchild_skip_stack), = (
