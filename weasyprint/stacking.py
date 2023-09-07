@@ -88,7 +88,7 @@ def _dispatch(box, page, child_contexts, blocks, floats, blocks_and_cells):
         index = len(child_contexts)
         stacking_context = StackingContext.from_box(box, page, child_contexts)
         child_contexts.insert(index, stacking_context)
-    elif box.is_floated():
+    elif box.is_float():
         floats.append(StackingContext.from_box(box, page, child_contexts))
     elif isinstance(box, (boxes.InlineBlockBox, boxes.InlineFlexBox)):
         # Have this fake stacking context be part of the "normal" box tree,

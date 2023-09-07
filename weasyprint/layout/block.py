@@ -242,7 +242,7 @@ def _out_of_flow_layout(context, box, index, child, new_children,
             absolute_boxes.append(placeholder)
         else:
             fixed_boxes.append(placeholder)
-    elif child.is_floated():
+    elif child.is_float():
         new_child, out_of_flow_resume_at = float_layout(
             context, child, box, absolute_boxes, fixed_boxes, bottom_space,
             skip_stack=None)
@@ -854,7 +854,7 @@ def establishes_formatting_context(box):
 
     """
     return (
-        box.is_floated()
+        box.is_float()
     ) or (
         box.is_absolutely_positioned()
     ) or (

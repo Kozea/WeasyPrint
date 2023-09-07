@@ -126,7 +126,7 @@ class Box:
         self.position_x += dx
         self.position_y += dy
         for child in self.all_children():
-            if not (ignore_floats and child.is_floated()):
+            if not (ignore_floats and child.is_float()):
                 child.translate(dx, dy, ignore_floats)
 
     # Heights and widths
@@ -267,9 +267,23 @@ class Box:
 
     # Positioning schemes
 
-    def is_floated(self):
-        """Return whether this box is floated."""
-        return self.style['float'] in ('left', 'right')
+    def is_float(self):
+        """Return whether this box is float."""
+        return self.style['float'] != 'none' and not (
+            self.style['float'] == 'snap-block' and
+            self.style['float_reference'] == 'inline')
+
+    def is_page_float(self):
+        """Return whether this box is page float."""
+        return (
+            self.is_float() and
+            self.style['float_reference'] not in ('none', 'inline'))
+
+    def is_inline_float(self):
+        """Return whether this box is inline float."""
+        return (
+            self.is_float() and
+            self.style['float_reference'] == 'inline')
 
     def is_footnote(self):
         """Return whether this box is a footnote."""
@@ -286,7 +300,7 @@ class Box:
     def is_in_normal_flow(self):
         """Return whether this box is in normal flow."""
         return not (
-            self.is_floated() or self.is_absolutely_positioned() or
+            self.is_float() or self.is_absolutely_positioned() or
             self.is_running() or self.is_footnote())
 
     def is_monolithic(self):

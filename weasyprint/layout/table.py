@@ -197,7 +197,7 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                         resume_at = {index_row: {}}
                     resume_at[index_row][index_cell] = cell_resume_at
                 cell.empty = not any(
-                    child.is_floated() or child.is_in_normal_flow()
+                    child.is_float() or child.is_in_normal_flow()
                     for child in cell.children)
                 cell.content_height = cell.height
                 if cell.computed_height != 'auto':
