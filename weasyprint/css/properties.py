@@ -18,7 +18,6 @@ INITIAL_VALUES = {
     'direction': 'ltr',
     'display': ('inline', 'flow'),
     'empty_cells': 'show',
-    'float': 'none',
     'left': 'auto',
     'line_height': 'normal',
     'margin_top': Dimension(0, 'px'),
@@ -205,6 +204,10 @@ INITIAL_VALUES = {
     'list_style_image': ('none', None),
     'list_style_position': 'outside',
     'list_style_type': 'disc',
+
+    # CSS Page Floats (WD): https://drafts.csswg.org/css-page-floats/
+    'float': 'none',
+    'float_reference': 'inline',
 
     # Proprietary
     'anchor': None,  # computed value of 'none'
