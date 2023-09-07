@@ -426,6 +426,28 @@ nav #sponsor a:is(:hover, :focus) {
   padding: 1em 8em;
 }
 
+#support h3 {
+  margin-top: 0.5em;
+}
+
+#support article {
+  display: grid;
+  gap: 2em;
+  grid-auto-columns: 45%;
+  grid-template-areas: "a a";
+  margin: 2em 0;
+}
+
+#support article section {
+  background: var(--white);
+  border: 1px solid;
+  padding: 1em 2em;
+  transition: 0.5s;
+}
+
+#support article section:hover {
+  border-color: var(--green);
+}
 
 
 /* About */
@@ -514,6 +536,14 @@ nav #sponsor a:is(:hover, :focus) {
   #about {
     padding-left: 2em;
     padding-right: 2em;
+  }
+
+  #support article {
+    display: initial;
+  }
+
+  #support article section {
+    margin: 1em auto;
   }
 
   footer {
