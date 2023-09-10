@@ -1298,3 +1298,222 @@ def test_tables_23(assert_pixels):
       <table>
         <thead><tr><td>abcde</td><td>abcde</td></tr></thead>
         <tbody><tr><td>abc abc</td><td></td></tr></tbody>''')
+
+
+@assert_no_logs
+def test_running_elements_table_border_collapse(assert_pixels):
+    assert_pixels(2 * '''
+      KK_____________
+      KK_____________
+      _______________
+      _______________
+      _______________
+      KKKKKKK________
+      KRRKRRK________
+      KRRKRRK________
+      KKKKKKK________
+      KRRKRRK________
+      KRRKRRK________
+      KKKKKKK________
+      _______________
+      _______________
+      _______________
+    ''', '''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        @page {
+          margin: 0 0 10px 0;
+          size: 15px;
+          @bottom-left { content: element(table) }
+        }
+        body { font: 2px/1 weasyprint }
+        table {
+          border: 1px solid black;
+          border-collapse: collapse;
+          color: red;
+          position: running(table);
+        }
+        td { border: 1px solid black }
+        div { page-break-after: always }
+      </style>
+      <table>
+        <tr> <td>A</td> <td>B</td> </tr>
+        <tr> <td>C</td> <td>D</td> </tr>
+      </table>
+      <div>1</div>
+      <div>2</div>
+    ''')
+
+
+@assert_no_logs
+def test_running_elements_table_border_collapse_empty(assert_pixels):
+    assert_pixels(2 * '''
+      KK________
+      KK________
+      __________
+      __________
+      __________
+      __________
+      __________
+      __________
+      __________
+      __________
+    ''', '''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        @page {
+          margin: 0 0 5px 0;
+          size: 10px;
+          @bottom-left { content: element(table) }
+        }
+        body { font: 2px/1 weasyprint }
+        table {
+          border: 1px solid black;
+          border-collapse: collapse;
+          color: red;
+          position: running(table);
+        }
+        td { border: 1px solid black }
+        div { page-break-after: always }
+      </style>
+      <table></table>
+      <div>1</div>
+      <div>2</div>
+    ''')
+
+
+@pytest.mark.xfail
+@assert_no_logs
+def test_running_elements_table_border_collapse_border_style(assert_pixels):
+    assert_pixels(2 * '''
+      KK_____________
+      KK_____________
+      _______________
+      _______________
+      _______________
+      KKKZ___________
+      KRR_RR_________
+      KRR_RR_________
+      KKKK__Z________
+      KRRKRRK________
+      KRRKRRK________
+      KKKKKKK________
+      _______________
+      _______________
+      _______________
+    ''', '''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        @page {
+          margin: 0 0 10px 0;
+          size: 15px;
+          @bottom-left { content: element(table) }
+        }
+        body { font: 2px/1 weasyprint }
+        table {
+          border: 1px solid black;
+          border-collapse: collapse;
+          color: red;
+          position: running(table);
+        }
+        td { border: 1px solid black }
+        div { page-break-after: always }
+      </style>
+      <table>
+        <tr> <td>A</td> <td style="border-style: hidden">B</td> </tr>
+        <tr> <td>C</td> <td style="border-style: none">D</td> </tr>
+      </table>
+      <div>1</div>
+      <div>2</div>
+    ''')
+
+
+@assert_no_logs
+def test_running_elements_table_border_collapse_span(assert_pixels):
+    assert_pixels(2 * '''
+      KK_____________
+      KK_____________
+      _______________
+      _______________
+      _______________
+      KKKKKKKKKK_____
+      KRRKRRKRRK_____
+      KRRKRRKRRK_____
+      K__KKKKKKK_____
+      K__KRR___K_____
+      K__KRR___K_____
+      KKKKKKKKKK_____
+      _______________
+      _______________
+      _______________
+    ''', '''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        @page {
+          margin: 0 0 10px 0;
+          size: 15px;
+          @bottom-left { content: element(table) }
+        }
+        body { font: 2px/1 weasyprint }
+        table {
+          border: 1px solid black;
+          border-collapse: collapse;
+          color: red;
+          position: running(table);
+        }
+        td { border: 1px solid black }
+        div { page-break-after: always }
+      </style>
+      <table>
+        <tr> <td rowspan=2>A</td> <td>B</td> <td>C</td> </tr>
+        <tr> <td colspan=2>D</td> </tr>
+      </table>
+      <div>1</div>
+      <div>2</div>
+    ''')
+
+
+@assert_no_logs
+def test_running_elements_table_border_collapse_margin(assert_pixels):
+    assert_pixels(2 * '''
+      KK_____________
+      KK_____________
+      _______________
+      _______________
+      _______________
+      _______________
+      ____KKKKKKK____
+      ____KRRKRRK____
+      ____KRRKRRK____
+      ____KKKKKKK____
+      ____KRRKRRK____
+      ____KRRKRRK____
+      ____KKKKKKK____
+      _______________
+      _______________
+    ''', '''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        @page {
+          margin: 0 0 10px 0;
+          size: 15px;
+          @bottom-center { content: element(table); width: 100% }
+        }
+        body { font: 2px/1 weasyprint }
+        table {
+          border: 1px solid black;
+          border-collapse: collapse;
+          color: red;
+          margin: 1px auto;
+          position: running(table);
+        }
+        td { border: 1px solid black }
+        div { page-break-after: always }
+      </style>
+      <table>
+        <tr> <td>A</td> <td>B</td> </tr>
+        <tr> <td>C</td> <td>D</td> </tr>
+      </table>
+      <div>1</div>
+      <div>2</div>
+    ''')
