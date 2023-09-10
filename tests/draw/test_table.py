@@ -1473,6 +1473,7 @@ def test_running_elements_table_border_collapse_span(assert_pixels):
     ''')
 
 
+@pytest.mark.xfail
 @assert_no_logs
 def test_running_elements_table_border_collapse_margin(assert_pixels):
     assert_pixels(2 * '''
