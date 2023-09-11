@@ -812,9 +812,6 @@ def auto_table_layout(context, box, containing_block):
 def table_wrapper_width(context, wrapper, containing_block):
     """Find the width of each column and derive the wrapper width."""
     table = wrapper.get_wrapped_table()
-    collapse = table.style['border_collapse'] == 'collapse'
-    if collapse:
-        table.collapsed_border_grid = collapse_table_borders(table)
     resolve_percentages(table, containing_block)
 
     if table.style['table_layout'] == 'fixed' and table.width != 'auto':

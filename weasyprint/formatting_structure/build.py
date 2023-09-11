@@ -11,6 +11,8 @@ from .. import html
 from ..css import computed_values, properties, targets
 from ..logger import LOGGER
 from . import boxes
+from ..layout.table import collapse_table_borders
+
 
 # Maps values of the ``display`` CSS property to box types.
 BOX_TYPE_FROM_DISPLAY = {
@@ -977,6 +979,7 @@ def wrap_table(box, children):
     if table.style['border_collapse'] == 'collapse':
         table.grid_width = grid_width
         table.grid_height = grid_height
+        table.collapsed_border_grid = collapse_table_borders(table)
 
     if isinstance(box, boxes.InlineTableBox):
         wrapper_type = boxes.InlineBlockBox
