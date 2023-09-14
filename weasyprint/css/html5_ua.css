@@ -214,6 +214,7 @@ blink { text-decoration: blink; }
 blockquote { display: block; margin: 1em 40px; /* unicode-bidi: isolate; */ }
 body { display: block; margin: 8px; }
 br::before { content: '\A'; white-space: pre-line; }
+wbr::before { content: '\200B'; }
 caption { display: table-caption; /* unicode-bidi: isolate; */ }
 center { display: block; text-align: center; /* unicode-bidi: isolate; */ }
 cite { font-style: italic; }
