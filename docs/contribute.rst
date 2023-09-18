@@ -44,7 +44,8 @@ Tests
 Tests are stored in the ``tests`` folder at the top of the repository. They use
 the pytest_ library.
 
-Tests require Ghostscript_ to be installed and available on the local path.
+Tests require Ghostscript_ to be installed and available on the local path. You
+should also install all the `DejaVu fonts`_ if you’re on Linux.
 
 You can launch tests using the following command::
 
@@ -58,6 +59,7 @@ style::
 
 .. _pytest: https://docs.pytest.org/
 .. _Ghostscript: https://www.ghostscript.com/
+.. _DejaVu fonts: https://dejavu-fonts.github.io/
 .. _isort: https://pycqa.github.io/isort/
 .. _flake8: https://flake8.pycqa.org/
 
