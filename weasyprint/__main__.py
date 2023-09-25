@@ -139,8 +139,7 @@ PARSER.add_argument(
     choices=('images', 'fonts', 'hinting', 'pdf', 'all', 'none'))
 PARSER.add_argument(
     '-t', '--timeout', type=int,
-    help='Set timeout in seconds for HTTP requests'
-)
+    help='Set timeout in seconds for HTTP requests')
 PARSER.set_defaults(**DEFAULT_OPTIONS)
 
 
