@@ -1179,15 +1179,14 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
             utf8_position = utf8_positions[i]
 
             offset = glyph_info.geometry.x_offset / font_size
-
-            offset_y = glyph_info.geometry.y_offset / font_size / textbox.height
-            if offset_y:
+            rise = glyph_info.geometry.y_offset / 1000
+            if rise:
                 if string[-1] == '<':
                     string = string[:-1]
                 else:
                     string += '>'
                 stream.show_text(string)
-                stream.set_text_rise(-offset_y)
+                stream.set_text_rise(-rise)
                 string = ''
                 if offset:
                     string = f'{-offset}'
