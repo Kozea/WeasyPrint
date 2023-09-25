@@ -4,6 +4,7 @@ import argparse
 import logging
 import platform
 import sys
+from functools import partial
 from warnings import warn
 
 import pydyf
@@ -11,6 +12,7 @@ import pydyf
 from . import DEFAULT_OPTIONS, HTML, LOGGER, __version__
 from .pdf import VARIANTS
 from .text.ffi import pango
+from .urls import default_url_fetcher
 
 
 class PrintInfo(argparse.Action):
@@ -135,6 +137,10 @@ PARSER.add_argument(
     '-O', '--optimize-size', action='append',
     help='deprecated, use other options instead',
     choices=('images', 'fonts', 'hinting', 'pdf', 'all', 'none'))
+PARSER.add_argument(
+    '-t', '--timeout', type=int,
+    help='Set timeout in seconds for HTTP requests'
+)
 PARSER.set_defaults(**DEFAULT_OPTIONS)
 
 
@@ -179,6 +185,10 @@ def main(argv=None, stdout=None, stdin=None, HTML=HTML):
                 optimize_size.add(arg)
     del args.optimize_size
 
+    url_fetcher = default_url_fetcher
+    if args.timeout is not None:
+        url_fetcher = partial(default_url_fetcher, timeout=args.timeout)
+
     options = vars(args)
 
     # TODO: to be removed when --optimize-size is removed
@@ -203,7 +213,7 @@ def main(argv=None, stdout=None, stdin=None, HTML=HTML):
 
     html = HTML(
         source, base_url=args.base_url, encoding=args.encoding,
-        media_type=args.media_type)
+        media_type=args.media_type, url_fetcher=url_fetcher)
     html.write_pdf(output, **options)
 
 

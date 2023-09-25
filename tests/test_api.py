@@ -389,6 +389,9 @@ def test_command_line_render(tmpdir):
         '-a style.css -a pattern.png --uncompressed-pdf combined.html -')
     assert stdout.count(b'attachment') == 2
 
+    _run('combined.html out23.pdf --timeout 30')
+    assert tmpdir.join('out23.pdf').read_binary() == pdf_bytes
+
     os.mkdir('subdirectory')
     py.path.local('subdirectory').chdir()
     with capture_logs() as logs:
