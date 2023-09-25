@@ -422,18 +422,10 @@ def draw_pattern(svg, node, pattern, font_size, opacity, stroke):
     x, y = bounding_box[0], bounding_box[1]
     matrix = Matrix(e=x, f=y)
     if pattern.get('patternUnits') == 'userSpaceOnUse':
-        width, height = svg.inner_width, svg.inner_height
-    else:
-        width, height = bounding_box[2], bounding_box[3]
-
-    if pattern.get('patternUnits') == 'userSpaceOnUse':
-        x = size(pattern.get('x'), font_size, 1)
-        y = size(pattern.get('y'), font_size, 1)
         pattern_width = size(pattern.get('width', 0), font_size, 1)
         pattern_height = size(pattern.get('height', 0), font_size, 1)
     else:
-        x = size(pattern.get('x'), font_size, 1) * width
-        y = size(pattern.get('y'), font_size, 1) * height
+        width, height = bounding_box[2], bounding_box[3]
         pattern_width = (
             size(pattern.attrib.pop('width', '1'), font_size, 1) * width)
         pattern_height = (
