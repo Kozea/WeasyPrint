@@ -186,7 +186,7 @@ def main(argv=None, stdout=None, stdin=None, HTML=HTML):
     del args.optimize_size
 
     url_fetcher = default_url_fetcher
-    if args.timeout:
+    if args.timeout is not None:
         url_fetcher = partial(default_url_fetcher, timeout=args.timeout)
 
     options = vars(args)

@@ -58,8 +58,6 @@ VERSION = __version__ = '59.0'
 #: :param cache:
 #:     A dictionary used to cache images in memory, or a folder path where
 #:     images are temporarily stored.
-#: :param int timeout:
-#:     Timeout in seconds for HTTP requests before they are dropped.
 DEFAULT_OPTIONS = {
     'stylesheets': None,
     'media_type': 'print',
@@ -76,8 +74,7 @@ DEFAULT_OPTIONS = {
     'dpi': None,
     'full_fonts': False,
     'hinting': False,
-    'cache': None,
-    'timeout': None
+    'cache': None
 }
 
 __all__ = [
