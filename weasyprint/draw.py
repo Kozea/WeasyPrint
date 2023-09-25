@@ -1179,9 +1179,27 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
             utf8_position = utf8_positions[i]
 
             offset = glyph_info.geometry.x_offset / font_size
-            if offset:
-                string += f'>{-offset}<'
-            string += f'{glyph:02x}' if font.bitmap else f'{glyph:04x}'
+
+            offset_y = glyph_info.geometry.y_offset / font_size / textbox.height
+            if offset_y:
+                if string[-1] == '<':
+                    string = string[:-1]
+                else:
+                    string += '>'
+                stream.show_text(string)
+                stream.set_rise(-offset_y)
+                string = ''
+                if offset:
+                    string = f'{-offset}'
+                string += f'<{glyph:02x}>' if font.bitmap else f'<{glyph:04x}>'
+                stream.show_text(string)
+                stream.set_rise(0)
+                stream.set_rise(0)
+                string = '<'
+            else:
+                if offset:
+                    string += f'>{-offset}<'
+                string += f'{glyph:02x}' if font.bitmap else f'{glyph:04x}'
 
             # Ink bounding box and logical widths in font
             if glyph not in font.widths:
