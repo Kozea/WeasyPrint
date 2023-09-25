@@ -4,8 +4,8 @@ import argparse
 import logging
 import platform
 import sys
-from warnings import warn
 from functools import partial
+from warnings import warn
 
 import pydyf
 
