@@ -74,7 +74,7 @@ DEFAULT_OPTIONS = {
     'dpi': None,
     'full_fonts': False,
     'hinting': False,
-    'cache': None
+    'cache': None,
 }
 
 __all__ = [
