@@ -1194,7 +1194,6 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
                 string += f'<{glyph:02x}>' if font.bitmap else f'<{glyph:04x}>'
                 stream.show_text(string)
                 stream.set_text_rise(0)
-                stream.set_text_rise(0)
                 string = '<'
             else:
                 if offset:
