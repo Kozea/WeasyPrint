@@ -493,6 +493,37 @@ def test_breaking_linebox_regression_15():
 
 
 @assert_no_logs
+def test_breaking_linebox_regression_16():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/1973
+    page, = render_pages(
+        '<style>'
+        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
+        '  body {font-family: weasyprint; font-size: 4px}'
+        '  p {float: left}'
+        '</style>'
+        '<p>tést</p>'
+        '<pre>ab©\n'
+        'déf\n'
+        'ghïj\n'
+        'klm</pre>')
+    html, = page.children
+    body, = html.children
+    p, pre = body.children
+    line1, = p.children
+    assert line1.children[0].text == 'tést'
+    assert p.width == 4 * 4
+    line1, line2, line3, line4 = pre.children
+    assert line1.children[0].text == 'ab©'
+    assert line2.children[0].text == 'déf'
+    assert line3.children[0].text == 'ghïj'
+    assert line4.children[0].text == 'klm'
+    assert line1.children[0].width == 4 * 3
+    assert line2.children[0].width == 4 * 3
+    assert line3.children[0].width == 4 * 4
+    assert line4.children[0].width == 4 * 3
+
+
+@assert_no_logs
 def test_linebox_text():
     page, = render_pages('''
       <style>
