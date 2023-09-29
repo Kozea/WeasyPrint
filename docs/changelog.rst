@@ -2,6 +2,44 @@ Changelog
 =========
 
 
+Version 60.1
+------------
+
+Released on 2023-09-29.
+
+Bug fixes:
+
+* `#1973 <https://github.com/Kozea/WeasyPrint/issues/1973>`_:
+  Fix crash caused by wrong UTF-8 indices
+
+Contributors:
+
+* Guillaume Ayoub
+
+Backers and sponsors:
+
+* Spacinov
+* Kobalt
+* Grip Angebotssoftware
+* Manuel Barkhau
+* SimonSoft
+* Menutech
+* KontextWork
+* NCC Group
+* René Fritz
+* Nicola Auchmuty
+* Syslifters
+* Hammerbacher
+* TrainingSparkle
+* Daniel Kucharski
+* Healthchecks.io
+* Yanal-Yvez Fargialla
+* WakaTime
+* Paheko
+* Synapsium
+* DocRaptor
+
+
 Version 60.0
 ------------
 
