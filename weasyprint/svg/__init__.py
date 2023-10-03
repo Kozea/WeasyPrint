@@ -394,19 +394,17 @@ class SVG:
         if filter_:
             apply_filters(self, node, filter_, font_size)
 
+        # Apply transform attribute
+        self.transform(node.get('transform'), font_size)
+
         # Create substream for opacity
         opacity = float(node.get('opacity', 1))
         if fill_stroke and 0 <= opacity < 1:
             original_stream = self.stream
             box = self.calculate_bounding_box(node, font_size)
-            if is_valid_bounding_box(box):
-                coords = (box[0], box[1], box[0] + box[2], box[1] + box[3])
-            else:
-                coords = (0, 0, self.inner_width, self.inner_height)
-            self.stream = self.stream.add_group(*coords)
-
-        # Apply transform attribute
-        self.transform(node.get('transform'), font_size)
+            if not is_valid_bounding_box(box):
+                box = (0, 0, self.inner_width, self.inner_height)
+            self.stream = self.stream.add_group(*box)
 
         # Clip
         clip_path = parse_url(node.get('clip-path')).fragment
