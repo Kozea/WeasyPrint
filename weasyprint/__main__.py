@@ -140,6 +140,9 @@ PARSER.add_argument(
 PARSER.add_argument(
     '-t', '--timeout', type=int,
     help='Set timeout in seconds for HTTP requests')
+PARSER.add_argument(
+    '-r', '--recursionlimit', type=int,
+    help='Change recursionlimit in for python (in case of large tables) - default=1000')
 PARSER.set_defaults(**DEFAULT_OPTIONS)
 
 
@@ -187,6 +190,8 @@ def main(argv=None, stdout=None, stdin=None, HTML=HTML):
     url_fetcher = default_url_fetcher
     if args.timeout is not None:
         url_fetcher = partial(default_url_fetcher, timeout=args.timeout)
+    if args.recursionlimit is not None:
+        sys.setrecursionlimit(args.recursionlimit)
 
     options = vars(args)
 
