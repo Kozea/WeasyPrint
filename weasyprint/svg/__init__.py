@@ -511,12 +511,15 @@ class SVG:
             marker_node = self.markers.get(marker)
 
             # Calculate position, scale and clipping
+            translate_x, translate_y = self.point(
+                marker_node.get('refX'), marker_node.get('refY'),
+                font_size)
             if 'viewBox' in marker_node.attrib:
                 marker_width, marker_height = self.point(
                     marker_node.get('markerWidth', 3),
                     marker_node.get('markerHeight', 3),
                     font_size)
-                scale_x, scale_y, translate_x, translate_y = preserve_ratio(
+                scale_x, scale_y, _, _ = preserve_ratio(
                     self, marker_node, font_size, marker_width, marker_height)
 
                 clip_x, clip_y, viewbox_width, viewbox_height = (
@@ -553,11 +556,10 @@ class SVG:
                 if is_valid_bounding_box(box):
                     scale_x = scale_y = min(
                         marker_width / box[2], marker_height / box[3])
+                    translate_x /= scale_x
+                    translate_y /= scale_y
                 else:
                     scale_x = scale_y = 1
-                translate_x, translate_y = self.point(
-                    marker_node.get('refX'), marker_node.get('refY'),
-                    font_size)
                 clip_box = None
 
             # Scale
@@ -585,10 +587,9 @@ class SVG:
 
                 overflow = marker_node.get('overflow', 'hidden')
                 if clip_box and overflow in ('hidden', 'scroll'):
-                    self.stream.push_state()
                     self.stream.rectangle(*clip_box)
-                    self.stream.pop_state()
                     self.stream.clip()
+                    self.stream.end()
 
                 self.draw_node(child, font_size, fill_stroke)
                 self.stream.pop_state()
