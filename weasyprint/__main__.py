@@ -92,6 +92,12 @@ PARSER.add_argument('--pdf-version', help='PDF version number')
 PARSER.add_argument(
     '--pdf-forms', action='store_true', help='include PDF forms')
 PARSER.add_argument(
+    '--pdf-pagemode', help='PDF PageMode',
+    choices=('UseOutlines', 'UseThumbs', 'UseAttachments', 'FullScreen'))
+PARSER.add_argument(
+    '--pdf-pagelayout', help='PDF PageLayout',
+    choices=('SinglePage', 'OneColumn', 'TwoColumnLeft', 'TwoColumnRight', 'TwoPageLeft', 'TwoPageRight'))
+PARSER.add_argument(
     '--uncompressed-pdf', action='store_true',
     help='do not compress PDF content, mainly for debugging purpose')
 PARSER.add_argument(

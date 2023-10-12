@@ -237,6 +237,10 @@ def generate_pdf(document, target, zoom, **options):
             _w3c_date_to_pdf(metadata.modified, 'modified'))
     if metadata.lang:
         pdf.catalog['Lang'] = pydyf.String(metadata.lang)
+    if options['pdf_pagemode']:
+        pdf.catalog['PageMode'] = '/' + options['pdf_pagemode']
+    if options['pdf_pagelayout']:
+        pdf.catalog['PageLayout'] = '/' + options['pdf_pagelayout']
     if options['custom_metadata']:
         for key, value in metadata.custom.items():
             key = ''.join(char for char in key if char.isalnum())

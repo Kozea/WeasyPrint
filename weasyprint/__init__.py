@@ -66,6 +66,8 @@ DEFAULT_OPTIONS = {
     'pdf_variant': None,
     'pdf_version': None,
     'pdf_forms': None,
+    'pdf_pagemode': '',
+    'pdf_pagelayout': '',
     'uncompressed_pdf': False,
     'custom_metadata': False,
     'presentational_hints': False,
