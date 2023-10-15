@@ -2,7 +2,7 @@
 
 import functools
 import io
-from hashlib import md5
+from hashlib import blake2b
 from pathlib import Path
 
 from . import CSS, DEFAULT_OPTIONS
@@ -174,7 +174,7 @@ class DiskCache:
         self._disk_paths = set()
 
     def _path_from_key(self, key):
-        return self._path / md5(key.encode()).hexdigest()
+        return self._path / blake2b(key.encode(), digest_size=16).hexdigest()
 
     def __getitem__(self, key):
         if key in self._memory_cache:

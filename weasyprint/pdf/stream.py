@@ -2,7 +2,7 @@
 
 import io
 from functools import lru_cache
-from hashlib import md5
+from hashlib import blake2b
 
 import pydyf
 from fontTools import subset
@@ -39,7 +39,7 @@ class Font:
         # Never use the built-in hash function here: it’s not stable
         self.hash = ''.join(
             chr(65 + letter % 26) for letter
-            in md5(description_string).digest()[:6])
+            in blake2b(description_string, digest_size=16).digest()[:6])
 
         # Name
         fields = description_string.split(b' ')

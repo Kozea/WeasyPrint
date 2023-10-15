@@ -3,7 +3,7 @@
 import io
 import math
 import struct
-from hashlib import md5
+from hashlib import blake2b
 from io import BytesIO
 from itertools import cycle
 from math import inf
@@ -323,7 +323,7 @@ def get_image_from_uri(cache, url_fetcher, options, url, forced_mime_type=None,
                     raise ImageLoadingError.from_exception(raster_exception)
             else:
                 # Store image id to enable cache in Stream.add_image
-                image_id = md5(url.encode()).hexdigest()
+                image_id = blake2b(url.encode(), digest_size=16).hexdigest()
                 image = RasterImage(
                     pillow_image, image_id, string, filename, cache,
                     orientation, options)

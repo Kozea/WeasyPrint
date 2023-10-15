@@ -1,6 +1,6 @@
 """Interface with external libraries managing fonts installed on the system."""
 
-from hashlib import sha1
+from hashlib import blake2b
 from io import BytesIO
 from pathlib import Path
 from shutil import rmtree
@@ -121,9 +121,9 @@ class FontConfiguration:
             rule_descriptors.get('font_weight', 'normal')]
         fontconfig_stretch = FONTCONFIG_STRETCH[
             rule_descriptors.get('font_stretch', 'normal')]
-        config_key = sha1((
+        config_key = blake2b((
             f'{rule_descriptors["font_family"]}-{fontconfig_style}-'
-            f'{fontconfig_weight}-{features_string}').encode()).hexdigest()
+            f'{fontconfig_weight}-{features_string}').encode(), digest_size=20).hexdigest()
         font_path = self._folder / config_key
         if font_path.exists():
             return
