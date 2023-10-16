@@ -156,6 +156,7 @@ def draw_stacking_context(stream, stacking_context):
             # Point 7
             for block in [box] + stacking_context.blocks_and_cells:
                 if isinstance(block, boxes.ReplacedBox):
+                    draw_background(stream, block.background)
                     draw_border(stream, block)
                     draw_replacedbox(stream, block)
                 elif block.children:
