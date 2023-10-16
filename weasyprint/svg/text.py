@@ -44,8 +44,6 @@ def text(svg, node, font_size):
 
     layout, _, _, width, height, _ = split_first_line(
         node.text, style, svg.context, inf, 0)
-    # TODO: get real values
-    x_bearing, y_bearing = 0, 0
 
     # Get rotations and translations
     x, y, dx, dy, rotate = [], [], [], [], [0]
@@ -89,19 +87,8 @@ def text(svg, node, font_size):
             letter_spacing = (text_length - width) / spaces_count
         width = text_length
 
-    # Align text box horizontally
-    x_align = 0
-    text_anchor = node.get('text-anchor')
     # TODO: use real values
     ascent, descent = font_size * .8, font_size * .2
-    if text_anchor == 'middle':
-        x_align = - (width / 2 + x_bearing)
-        if letter_spacing and node.text:
-            x_align -= (len(node.text) - 1) * letter_spacing / 2
-    elif text_anchor == 'end':
-        x_align = - (width + x_bearing)
-        if letter_spacing and node.text:
-            x_align -= (len(node.text) - 1) * letter_spacing
 
     # Align text box vertically
     # TODO: This is a hack. Other baseline alignment tags are not supported.
@@ -111,11 +98,11 @@ def text(svg, node, font_size):
     alignment_baseline = node.get(
         'dominant-baseline', node.get('alignment-baseline'))
     if display_anchor == 'middle':
-        y_align = -height / 2 - y_bearing
+        y_align = -height / 2
     elif display_anchor == 'top':
-        y_align = -y_bearing
+        pass
     elif display_anchor == 'bottom':
-        y_align = -height - y_bearing
+        y_align = -height
     elif alignment_baseline in ('central', 'middle'):
         # TODO: This is wrong, we use font top-to-bottom
         y_align = (ascent + descent) / 2 - descent
@@ -157,16 +144,14 @@ def text(svg, node, font_size):
         width *= scale_x
         if i:
             x += letter_spacing
+        svg.cursor_position = x + width, y
 
-        x_position = x + svg.cursor_d_position[0] + x_align
+        x_position = x + svg.cursor_d_position[0]
         y_position = y + svg.cursor_d_position[1] + y_align
-        cursor_position = x + width, y
         angle = last_r if r is None else r
         points = (
-            (cursor_position[0] + x_align + svg.cursor_d_position[0],
-             cursor_position[1] + y_align + svg.cursor_d_position[1]),
-            (cursor_position[0] + x_align + width + svg.cursor_d_position[0],
-             cursor_position[1] + y_align + height + svg.cursor_d_position[1]))
+            (x_position, y_position),
+            (x_position + width, y_position - height))
         node.text_bounding_box = extend_bounding_box(
             node.text_bounding_box, points)
 
@@ -179,7 +164,6 @@ def text(svg, node, font_size):
         emojis = draw_first_line(
             svg.stream, TextBox(layout, style), 'none', 'none', matrix)
         emoji_lines.append((font_size, x, y, emojis))
-        svg.cursor_position = cursor_position
 
     svg.stream.end_text()
     svg.stream.pop_state()

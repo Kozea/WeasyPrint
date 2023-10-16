@@ -8,7 +8,8 @@ from xml.etree import ElementTree
 from cssselect2 import ElementWrapper
 
 from ..urls import get_url_attribute
-from .bounding_box import bounding_box, is_valid_bounding_box
+from .bounding_box import (
+    bounding_box, extend_bounding_box, is_valid_bounding_box)
 from .css import parse_declarations, parse_stylesheets
 from .defs import (
     apply_filters, clip_path, draw_gradient_or_pattern, paint_mask, use)
@@ -433,6 +434,12 @@ class SVG:
         display = node.get('display') != 'none'
         visible = display and (node.get('visibility') != 'hidden')
 
+        # Handle text anchor
+        text_anchor = node.get('text-anchor')
+        if node.tag == 'text' and text_anchor in ('middle', 'end'):
+            group = self.stream.add_group(0, 0, 0, 0)  # BBox set after drawing
+            original_stream, self.stream = self.stream, group
+
         # Draw node
         if visible and node.tag in TAGS:
             with suppress(PointError):
@@ -442,6 +449,27 @@ class SVG:
         if display and node.tag not in DEF_TYPES:
             for child in node:
                 self.draw_node(child, font_size, fill_stroke)
+                if node.tag in ('text', 'tspan'):
+                    if not is_valid_bounding_box(child.text_bounding_box):
+                        continue
+                    x1, y1 = child.text_bounding_box[:2]
+                    x2 = x1 + child.text_bounding_box[2]
+                    y2 = y1 + child.text_bounding_box[3]
+                    node.text_bounding_box = extend_bounding_box(
+                        node.text_bounding_box, ((x1, y1), (x2, y2)))
+
+        # Handle text anchor
+        if node.tag == 'text' and text_anchor in ('middle', 'end'):
+            group_id = self.stream.id
+            self.stream = original_stream
+            self.stream.push_state()
+            if is_valid_bounding_box(node.text_bounding_box):
+                x, y, width, height = node.text_bounding_box
+                group.extra['BBox'][:] = (x, y, x + width, y + height)
+                x_align = width / 2 if text_anchor == 'middle' else width
+                self.stream.transform(e=-x_align)
+            self.stream.draw_x_object(group_id)
+            self.stream.pop_state()
 
         # Apply mask
         mask = self.masks.get(parse_url(node.get('mask')).fragment)
