@@ -321,8 +321,7 @@ class Stream(pydyf.Stream):
         description = pango.pango_font_describe(pango_font)
         mask = (
             pango.PANGO_FONT_MASK_SIZE +
-            pango.PANGO_FONT_MASK_GRAVITY +
-            pango.PANGO_FONT_MASK_VARIATIONS)
+            pango.PANGO_FONT_MASK_GRAVITY)
         pango.pango_font_description_unset_fields(description, mask)
         key = pango.pango_font_description_hash(description)
         pango.pango_font_description_free(description)
