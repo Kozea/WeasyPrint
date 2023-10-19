@@ -34,6 +34,47 @@ class Font:
         self.style = pango.pango_font_description_get_style(description)
         self.family = ffi.string(
             pango.pango_font_description_get_family(description))
+
+        self.variations = pango.pango_font_description_get_variations(
+            self.description)
+        if self.variations == ffi.NULL:
+            self.variations = {}
+        else:
+            self.variations = {
+                part.split('=')[0]: float(part.split('=')[1])
+                for part in ffi.string(self.variations).decode().split(',')}
+        if 'wght' in self.variations:
+            if 0 < self.variations['wght'] <= 150:
+                pango.pango_font_description_set_weight(self.description,
+                                                        pango.PANGO_WEIGHT_THIN)
+            if 150 < self.variations['wght'] <= 250:
+                pango.pango_font_description_set_weight(self.description,
+                                                        pango.PANGO_WEIGHT_ULTRALIGHT)
+            if 250 < self.variations['wght'] <= 350:
+                pango.pango_font_description_set_weight(self.description,
+                                                        pango.PANGO_WEIGHT_LIGHT)
+            if 350 < self.variations['wght'] <= 450:
+                pango.pango_font_description_set_weight(self.description,
+                                                        pango.PANGO_WEIGHT_NORMAL)
+            if 450 < self.variations['wght'] <= 550:
+                pango.pango_font_description_set_weight(self.description,
+                                                        pango.PANGO_WEIGHT_MEDIUM)
+            if 550 < self.variations['wght'] <= 650:
+                pango.pango_font_description_set_weight(self.description,
+                                                        pango.PANGO_WEIGHT_SEMIBOLD)
+            if 650 < self.variations['wght'] <= 750:
+                pango.pango_font_description_set_weight(self.description,
+                                                        pango.PANGO_WEIGHT_BOLD)
+            if 750 < self.variations['wght'] <= 850:
+                pango.pango_font_description_set_weight(self.description,
+                                                        pango.PANGO_WEIGHT_ULTRABOLD)
+            if 850 < self.variations['wght'] <= 950:
+                pango.pango_font_description_set_weight(self.description,
+                                                        pango.PANGO_WEIGHT_HEAVY)
+            if 950 < self.variations['wght'] <= 1000:
+                pango.pango_font_description_set_weight(self.description,
+                                                        pango.PANGO_WEIGHT_ULTRAHEAVY)
+
         description_string = ffi.string(
             pango.pango_font_description_to_string(description))
         # Never use the built-in hash function here: it’s not stable
@@ -122,20 +163,12 @@ class Font:
 
         # Transform variable into static font
         if 'fvar' in self.ttfont:
-            variations = pango.pango_font_description_get_variations(
-                self.description)
-            if variations == ffi.NULL:
-                variations = {}
-            else:
-                variations = {
-                    part.split('=')[0]: float(part.split('=')[1])
-                    for part in ffi.string(variations).decode().split(',')}
-            if 'wght' not in variations:
-                variations['wght'] = pango.pango_font_description_get_weight(
+            if 'wght' not in self.variations:
+                self.variations['wght'] = pango.pango_font_description_get_weight(
                     self.description)
-            if 'opsz' not in variations:
-                variations['opsz'] = units_to_double(self.font_size)
-            if 'slnt' not in variations:
+            if 'opsz' not in self.variations:
+                self.variations['opsz'] = units_to_double(self.font_size)
+            if 'slnt' not in self.variations:
                 slnt = 0
                 if self.style == 1:
                     for axe in self.ttfont['fvar'].axes:
@@ -145,12 +178,12 @@ class Font:
                             else:
                                 slnt = axe.maxValue
                             break
-                variations['slnt'] = slnt
-            if 'ital' not in variations:
-                variations['ital'] = int(self.style == 2)
+                self.variations['slnt'] = slnt
+            if 'ital' not in self.variations:
+                self.variations['ital'] = int(self.style == 2)
             partial_font = io.BytesIO()
             try:
-                ttfont = instantiateVariableFont(self.ttfont, variations)
+                ttfont = instantiateVariableFont(self.ttfont, self.variations)
                 for key, (advance, bearing) in ttfont['hmtx'].metrics.items():
                     if advance < 0:
                         ttfont['hmtx'].metrics[key] = (0, bearing)
