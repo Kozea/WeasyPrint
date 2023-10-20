@@ -78,6 +78,34 @@ class Font:
             if self.variations['slnt'] != 0:
                 pango.pango_font_description_set_style(self.description,
                                                        pango.PANGO_STYLE_ITALIC)
+        if 'wdth' in self.variations:
+            if 0 < self.variations['wdth'] <= 56.25:
+                pango.pango_font_description_set_stretch(self.description,
+                                                         pango.PANGO_STRETCH_ULTRA_CONDENSED)
+            if 56.25 < self.variations['wdth'] <= 68.75:
+                pango.pango_font_description_set_stretch(self.description,
+                                                         pango.PANGO_STRETCH_EXTRA_CONDENSED)
+            if 68.75 < self.variations['wdth'] <= 81.25:
+                pango.pango_font_description_set_stretch(self.description,
+                                                         pango.PANGO_STRETCH_CONDENSED)
+            if 81.25 < self.variations['wdth'] <= 93.75:
+                pango.pango_font_description_set_stretch(self.description,
+                                                         pango.PANGO_STRETCH_SEMI_CONDENSED)
+            if 93.75 < self.variations['wdth'] <= 106.25:
+                pango.pango_font_description_set_stretch(self.description,
+                                                         pango.PANGO_STRETCH_NORMAL)
+            if 106.25 < self.variations['wdth'] <= 118.75:
+                pango.pango_font_description_set_stretch(self.description,
+                                                         pango.PANGO_STRETCH_SEMI_EXPANDED)
+            if 118.75 < self.variations['wdth'] <= 131.25:
+                pango.pango_font_description_set_stretch(self.description,
+                                                         pango.PANGO_STRETCH_EXPANDED)
+            if 131.25 < self.variations['wdth'] <= 175.00:
+                pango.pango_font_description_set_stretch(self.description,
+                                                         pango.PANGO_STRETCH_EXTRA_EXPANDED)
+            if 175.00 < self.variations['wdth'] <= 1000.00:
+                pango.pango_font_description_set_stretch(self.description,
+                                                         pango.PANGO_STRETCH_ULTRA_EXPANDED)
 
         description_string = ffi.string(
             pango.pango_font_description_to_string(description))
