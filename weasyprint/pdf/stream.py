@@ -74,6 +74,10 @@ class Font:
             if 950 < self.variations['wght'] <= 1000:
                 pango.pango_font_description_set_weight(self.description,
                                                         pango.PANGO_WEIGHT_ULTRAHEAVY)
+        if 'slnt' in self.variations:
+            if self.variations['slnt'] != 0:
+                pango.pango_font_description_set_style(self.description,
+                                                       pango.PANGO_STYLE_ITALIC)
 
         description_string = ffi.string(
             pango.pango_font_description_to_string(description))
