@@ -731,8 +731,9 @@ def draw_line(stream, x1, y1, x2, y2, thickness, style, color, offset=0):
     assert x1 == x2 or y1 == y2  # Only works for vertical or horizontal lines
 
     with stacked(stream):
-        stream.set_color_rgb(*color[:3], stroke=True)
-        stream.set_alpha(color[3], stroke=True)
+        if style not in ('ridge', 'groove'):
+            stream.set_color_rgb(*color[:3], stroke=True)
+            stream.set_alpha(color[3], stroke=True)
 
         if style == 'dashed':
             stream.set_dash([5 * thickness], offset)
@@ -751,6 +752,25 @@ def draw_line(stream, x1, y1, x2, y2, thickness, style, color, offset=0):
                 stream.line_to(x2, y2 - thickness / 3)
                 stream.move_to(x1, y1 + thickness / 3)
                 stream.line_to(x2, y2 + thickness / 3)
+        elif style in ('ridge', 'groove'):
+            stream.set_line_width(thickness / 2)
+            stream.set_color_rgb(*color[0][:3], stroke=True)
+            stream.set_alpha(color[0][3], stroke=True)
+            if x1 == x2:
+                stream.move_to(x1 + thickness / 4, y1)
+                stream.line_to(x2 + thickness / 4, y2)
+            elif y1 == y2:
+                stream.move_to(x1, y1 + thickness / 4)
+                stream.line_to(x2, y2 + thickness / 4)
+            stream.stroke()
+            stream.set_color_rgb(*color[1][:3], stroke=True)
+            stream.set_alpha(color[1][3], stroke=True)
+            if x1 == x2:
+                stream.move_to(x1 - thickness / 4, y1)
+                stream.line_to(x2 - thickness / 4, y2)
+            elif y1 == y2:
+                stream.move_to(x1, y1 - thickness / 4)
+                stream.line_to(x2, y2 - thickness / 4)
         elif style == 'wavy':
             assert y1 == y2  # Only allowed for text decoration
             up = 1
