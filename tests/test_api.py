@@ -482,15 +482,16 @@ def test_partial_pdf_custom_metadata():
     assert b'value' in stdout
 
 
-@pytest.mark.parametrize('html, field', (
-    (b'<input>', b'/Tx'),
-    (b'<input type="checkbox">', b'/Btn'),
-    (b'<textarea></textarea>', b'/Tx'),
+@pytest.mark.parametrize('html, fields', (
+    (b'<input>', [b'/Tx']),
+    (b'<input type="checkbox">', [b'/Btn']),
+    (b'<textarea></textarea>', [b'/Tx']),
+    (b'<select><option value="a">A</option></select>', [b'/Ch', b'/Opt']),
 ))
-def test_pdf_inputs(html, field):
+def test_pdf_inputs(html, fields):
     stdout = _run('--pdf-forms --uncompressed-pdf - -', html)
     assert b'AcroForm' in stdout
-    assert field in stdout
+    assert all(field in stdout for field in fields)
     stdout = _run('--uncompressed-pdf - -', html)
     assert b'AcroForm' not in stdout
 

@@ -833,6 +833,18 @@ def block_container_layout(context, box, bottom_space, skip_stack,
     if next_page['page'] is None:
         next_page['page'] = new_box.page_values()[1]
 
+    if (
+        box.element and
+        box.element.tag == 'select' and
+        box.element.attrib.get('multiple') is not None and
+        not box.element.attrib.get('height') and
+        not box.element.attrib.get('max-height')
+    ):
+        # Overriding the height when the select has the multiple attribute
+        # and no height attribute
+        options_number = len([child for child in box.element])
+        new_box.height = min(box.height * 4, box.height * options_number)
+
     return (
         new_box, resume_at, next_page, adjoining_margins, collapsing_through,
         max_lines)

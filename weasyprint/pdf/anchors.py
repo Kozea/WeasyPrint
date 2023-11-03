@@ -160,6 +160,75 @@ def add_inputs(inputs, matrix, pdf, page, resources, stream, font_map,
                 'AS': '/Yes' if checked else '/Off',
                 'DA': pydyf.String(b' '.join(field_stream.stream)),
             })
+        elif element.tag == "select":
+            # Text, password, textarea, files, and unknown
+            font_description = get_font_description(style)
+            font = pango.pango_font_map_load_font(
+                font_map, context, font_description)
+            font = stream.add_font(font)
+            font.used_in_forms = True
+
+            field_stream.set_font_size(font.hash, font_size)
+            multiple = element.attrib.get("multiple") is not None
+            options = []
+            selected_values = []
+            for option in element:
+                options.append(
+                    pydyf.Array(
+                        [f'({option.attrib.get("value")})', f'({option.text})']
+                    )
+                )
+                if option.attrib.get("selected") is not None:
+                    selected_values.append(
+                        pydyf.String(option.attrib.get("value"))
+                    )
+
+            if multiple:
+                field = pydyf.Dictionary({
+                    'DA': pydyf.String(b' '.join(field_stream.stream)),
+                    'F': 2 ** (3 - 1),  # Print flag
+                    'FT': '/Ch',
+                    'Ff': 2097152,
+                    'I': pydyf.Array([3]),
+                    'M': "(D:20231104123906+00'00')",
+                    'MK': pydyf.Dictionary({
+                        'BC': pydyf.Array([
+                            0.627451, 0.627451, 0.643137
+                        ]),
+                        'R': 0,
+                    }),
+                    'Opt': pydyf.Array(options),
+                    'P': page.reference,
+                    'Rect': pydyf.Array(rectangle),
+                    'Subtype': '/Widget',
+                    'T': pydyf.String(input_name),
+                    'Type': '/Annot',
+                    'V': pydyf.Array(selected_values)
+                    if len(selected_values) > 1
+                    else pydyf.String(element.attrib.get('value', '')),
+                })
+            else:
+                field = pydyf.Dictionary({
+                    'DA': pydyf.String(b' '.join(field_stream.stream)),
+                    'F': 2 ** (3 - 1),  # Print flag
+                    'FT': '/Ch',
+                    'Ff': 131072,
+                    'I': pydyf.Array([0]),
+                    'M': "(D:20231103110832+00'00')",
+                    'MK': pydyf.Dictionary({
+                        'BC': pydyf.Array([
+                            0.627451, 0.627451, 0.643137
+                        ]),
+                        'R': 0,
+                    }),
+                    'Opt': pydyf.Array(options),
+                    'P': page.reference,
+                    'Rect': pydyf.Array(rectangle),
+                    'Subtype': '/Widget',
+                    'T': pydyf.String(input_name),
+                    'Type': '/Annot',
+                    'V': pydyf.String(element.attrib.get('value', '')),
+                })
         else:
             # Text, password, textarea, files, and unknown
             font_description = get_font_description(style)

@@ -765,7 +765,7 @@ The ``resize``, ``cursor``, ``caret-*`` and ``nav-*`` properties are **not**
 supported.
 
 The ``appearance`` property is supported. When set to ``auto``, it displays
-form fields as PDF form fields (supported for text inputs, check boxes and
-text areas only).
+form fields as PDF form fields (supported for text inputs, check boxes, text
+areas, and select only).
 
 The ``accent-color`` property is **not** supported.
