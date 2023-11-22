@@ -180,7 +180,13 @@ def add_inputs(inputs, matrix, pdf, page, resources, stream, font_map,
                 'F': 2 ** (3 - 1),  # Print flag
                 'P': page.reference,
                 'T': pydyf.String(input_name),
-                'V': pydyf.String(value),
+                # Previously if the input had no value or the value was an
+                # empty string, the V key was filled with a pydyf.String(None)
+                # object. This caused the PDF input/textarea to be filled with
+                # the string "None". Now if the input has no value or the
+                # value is an empty string, the V key is filled with a
+                # pydyf.String('') object.
+                'V': pydyf.String(value or ''),
                 'DA': pydyf.String(b' '.join(field_stream.stream)),
             })
             if element.tag == 'textarea':
