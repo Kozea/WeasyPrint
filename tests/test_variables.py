@@ -3,11 +3,12 @@
 import pytest
 from weasyprint.css.properties import KNOWN_PROPERTIES
 
-from .testing_utils import render_pages as parse
+from .testing_utils import assert_no_logs, render_pages as parse
 
 SIDES = ('top', 'right', 'bottom', 'left')
 
 
+@assert_no_logs
 def test_variable_simple():
     page, = parse('''
       <style>
@@ -21,6 +22,7 @@ def test_variable_simple():
     assert paragraph.width == 10
 
 
+@assert_no_logs
 def test_variable_inherit():
     page, = parse('''
       <style>
@@ -35,6 +37,7 @@ def test_variable_inherit():
     assert paragraph.width == 10
 
 
+@assert_no_logs
 def test_variable_inherit_override():
     page, = parse('''
       <style>
@@ -49,6 +52,7 @@ def test_variable_inherit_override():
     assert paragraph.width == 10
 
 
+@assert_no_logs
 def test_variable_case_sensitive():
     page, = parse('''
       <style>
@@ -64,6 +68,7 @@ def test_variable_case_sensitive():
     assert paragraph.width == 10
 
 
+@assert_no_logs
 def test_variable_chain():
     page, = parse('''
       <style>
@@ -79,6 +84,7 @@ def test_variable_chain():
     assert paragraph.width == 10
 
 
+@assert_no_logs
 def test_variable_chain_root():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/1656
     page, = parse('''
@@ -99,6 +105,7 @@ def test_variable_chain_root_missing():
     ''')
 
 
+@assert_no_logs
 def test_variable_partial_1():
     page, = parse('''
       <style>
@@ -116,6 +123,7 @@ def test_variable_partial_1():
     assert div.margin_left == 10
 
 
+@assert_no_logs
 def test_variable_initial():
     page, = parse('''
       <style>
