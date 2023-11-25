@@ -149,3 +149,22 @@ def test_variable_fallback(prop):
       </style>
       <div></div>
     ''' % prop)
+
+
+@assert_no_logs
+def test_variable_list():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/1287
+    page, = parse('''
+      <style>
+        :root { --var: "Page " counter(page) "/" counter(pages) }
+        div::before { content: var(--var) }
+      </style>
+      <div></div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    line, = div.children
+    before, = line.children
+    text, = before.children
+    assert text.text == 'Page 1/1'

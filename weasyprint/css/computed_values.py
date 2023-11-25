@@ -211,42 +211,74 @@ def register_computer(name):
     return decorator
 
 
-def compute_variable(value, name, computed, base_url, parent_style):
-    already_computed_value = False
+def compute_variables(name, computed_style, parent_style):
+    original_values = computed_style.cascaded[name][0]
 
-    if value and isinstance(value, tuple) and value[0] == 'var()':
-        variable_name, default = value[1]
-        computed_value = _resolve_var(
-            computed, variable_name, default, parent_style)
-        if computed_value is None:
-            new_value = None
-        else:
-            prop = PROPERTIES[name.replace('_', '-')]
-            if prop.wants_base_url:
-                new_value = prop(computed_value, base_url)
+    if isinstance(original_values, list):
+        # Property with multiple values.
+        transformed_to_list = False
+        values = original_values
+    else:
+        # Property with single value, put in a list.
+        transformed_to_list = True
+        values = [original_values]
+
+    # Find variables.
+    variables = {
+        i: value[1] for i, value in enumerate(values)
+        if value and isinstance(value, tuple) and value[0] == 'var()'}
+    if not variables:
+        # No variable, return early.
+        return original_values, False
+
+    if not transformed_to_list:
+        # Don’t modify original list of values.
+        values = values.copy()
+
+    if name in INHERITED and parent_style:
+        inherited = True
+        computed = True
+    else:
+        inherited = False
+        computed = name not in INITIAL_NOT_COMPUTED
+
+    # Replace variables by real values.
+    for i, variable in variables.items():
+        variable_name, default = variable
+        value = _resolve_var(
+            computed_style, variable_name, default, parent_style)
+
+        if value is not None:
+            # Validate value.
+            validator = PROPERTIES[name.replace('_', '-')]
+            if validator.wants_base_url:
+                value = validator(value, computed_style.base_url)
             else:
-                new_value = prop(computed_value)
+                value = validator(value)
 
-        # See https://drafts.csswg.org/css-variables/#invalid-variables
-        if new_value is None:
+        if value is None:
+            # Invalid variable value, see
+            # https://www.w3.org/TR/css-variables-1/#invalid-variables.
             with suppress(BaseException):
-                computed_value = ''.join(
-                    token.serialize() for token in computed_value)
+                value = ''.join(token.serialize() for token in value)
             LOGGER.warning(
                 'Unsupported computed value "%s" set in variable %r '
-                'for property %r.', computed_value,
+                'for property %r.', value,
                 variable_name.replace('_', '-'), name.replace('_', '-'))
-            if name in INHERITED and parent_style:
-                already_computed_value = True
-                value = parent_style[name]
-            else:
-                already_computed_value = name not in INITIAL_NOT_COMPUTED
-                value = INITIAL_VALUES[name]
-        elif isinstance(new_value, list):
-            value, = new_value
+            values[i] = (parent_style if inherited else INITIAL_VALUES)[name]
+        elif not transformed_to_list:
+            # Validator returns multiple values. Replace original variable by
+            # possibly multiple computed values.
+            values[i:i+1] = value
         else:
-            value = new_value
-    return value, already_computed_value
+            # Save variable by single computed value.
+            values[i] = value
+
+    if transformed_to_list:
+        # Property with single value, unpack list.
+        values, = values
+
+    return values, computed
 
 
 @register_computer('background-image')

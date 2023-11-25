@@ -22,7 +22,8 @@ import tinycss2.nth
 from .. import CSS
 from ..logger import LOGGER, PROGRESS_LOGGER
 from ..urls import URLFetchingError, get_url_attribute, url_join
-from . import computed_values, counters, media_queries
+from . import counters, media_queries
+from .computed_values import compute_variables, COMPUTER_FUNCTIONS, ZERO_PIXELS
 from .properties import INHERITED, INITIAL_NOT_COMPUTED, INITIAL_VALUES
 from .utils import get_url, remove_whitespace
 from .validation import preprocess_declarations
@@ -124,13 +125,13 @@ class StyleFor:
                     style['border_collapse'] == 'collapse'):
                 # Padding do not apply
                 for side in ('top', 'bottom', 'left', 'right'):
-                    style[f'padding_{side}'] = computed_values.ZERO_PIXELS
+                    style[f'padding_{side}'] = ZERO_PIXELS
             if (len(style['display']) == 1 and
                     style['display'][0].startswith('table-') and
                     style['display'][0] != 'table-caption'):
                 # Margins do not apply
                 for side in ('top', 'bottom', 'left', 'right'):
-                    style[f'margin_{side}'] = computed_values.ZERO_PIXELS
+                    style[f'margin_{side}'] = ZERO_PIXELS
 
         return style
 
@@ -667,75 +668,69 @@ class ComputedStyle(dict):
 
     def __missing__(self, key):
         if key == 'float':
-            # Set specified value for position, needed for computed value
+            # Set specified value for position, needed for computed value.
             self['position']
         elif key == 'display':
-            # Set specified value for float, needed for computed value
+            # Set specified value for float, needed for computed value.
             self['float']
 
+        parent_style = self.parent_style
+
         if key in self.cascaded:
-            value = keyword = self.cascaded[key][0]
+            # Property defined in cascaded properties.
+            keyword, computed = compute_variables(key, self, parent_style)
+            value = keyword
         else:
+            # Property not defined in cascaded properties, define as inherited
+            # or initial value.
+            computed = False
             if key in INHERITED or key[:2] == '__':
                 keyword = 'inherit'
             else:
                 keyword = 'initial'
 
-        if keyword == 'inherit' and self.parent_style is None:
+        if keyword == 'inherit' and parent_style is None:
             # On the root element, 'inherit' from initial values
             keyword = 'initial'
 
         if keyword == 'initial':
             value = None if key[:2] == '__' else INITIAL_VALUES[key]
             if key not in INITIAL_NOT_COMPUTED:
-                # The value is the same as when computed
+                # The value is the same as when computed.
                 self[key] = value
         elif keyword == 'inherit':
             # Values in parent_style are already computed.
-            self[key] = value = self.parent_style[key]
+            self[key] = value = parent_style[key]
 
-        if key[:16] == 'text_decoration_' and self.parent_style:
+        if key[:16] == 'text_decoration_' and parent_style is not None:
+            # Text decorations are not inherited but propagated. See
+            # https://www.w3.org/TR/css-text-decor-3/#line-decoration.
             value = text_decoration(
-                key, value, self.parent_style[key], key in self.cascaded)
+                key, value, parent_style[key], key in self.cascaded)
             if key in self:
                 del self[key]
         elif key == 'page' and value == 'auto':
-            # The page property does not inherit. However, if the page
-            # value on an element is auto, then its used value is the value
-            # specified on its nearest ancestor with a non-auto value. When
-            # specified on the root element, the used value for auto is the
-            # empty string.
-            value = (
-                '' if self.parent_style is None else self.parent_style['page'])
+            # The page property does not inherit. However, if the page value on
+            # an element is auto, then its used value is the value specified on
+            # its nearest ancestor with a non-auto value. When specified on the
+            # root element, the used value for auto is the empty string. See
+            # https://www.w3.org/TR/css-page-3/#using-named-pages.
+            value = '' if parent_style is None else parent_style['page']
             if key in self:
                 del self[key]
         elif key in ('position', 'float', 'display'):
+            # Save specified values to define computed values for these
+            # specific properties. See
+            # https://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo.
             self.specified[key] = value
 
         if key in self:
+            # Value already computed and saved: return.
             return self[key]
 
-        function = computed_values.COMPUTER_FUNCTIONS.get(key)
-        already_computed_value = False
-
-        if value:
-            converted_to_list = False
-
-            if not isinstance(value, list):
-                converted_to_list = True
-                value = [value]
-
-            for i, v in enumerate(value):
-                value[i], already_computed_value = (
-                    computed_values.compute_variable(
-                        v, key, self, self.base_url, self.parent_style))
-
-            if converted_to_list:
-                value, = value
-
-        if function is not None and not already_computed_value:
-            value = function(self, key, value)
-        # else: same as specified
+        if not computed and key in COMPUTER_FUNCTIONS:
+            # Value not computed yet: compute.
+            value = COMPUTER_FUNCTIONS[key](self, key, value)
 
         self[key] = value
         return value
