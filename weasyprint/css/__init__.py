@@ -23,7 +23,7 @@ from .. import CSS
 from ..logger import LOGGER, PROGRESS_LOGGER
 from ..urls import URLFetchingError, get_url_attribute, url_join
 from . import counters, media_queries
-from .computed_values import compute_variables, COMPUTER_FUNCTIONS, ZERO_PIXELS
+from .computed_values import COMPUTER_FUNCTIONS, ZERO_PIXELS, compute_variables
 from .properties import INHERITED, INITIAL_NOT_COMPUTED, INITIAL_VALUES
 from .utils import get_url, remove_whitespace
 from .validation import preprocess_declarations
