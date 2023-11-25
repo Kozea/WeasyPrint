@@ -23,7 +23,7 @@ from .. import CSS
 from ..logger import LOGGER, PROGRESS_LOGGER
 from ..urls import URLFetchingError, get_url_attribute, url_join
 from . import counters, media_queries
-from .computed_values import COMPUTER_FUNCTIONS, ZERO_PIXELS, compute_variables
+from .computed_values import COMPUTER_FUNCTIONS, ZERO_PIXELS, compute_var
 from .properties import INHERITED, INITIAL_NOT_COMPUTED, INITIAL_VALUES
 from .utils import get_url, remove_whitespace
 from .validation import preprocess_declarations
@@ -678,7 +678,7 @@ class ComputedStyle(dict):
 
         if key in self.cascaded:
             # Property defined in cascaded properties.
-            keyword, computed = compute_variables(key, self, parent_style)
+            keyword, computed = compute_var(key, self, parent_style)
             value = keyword
         else:
             # Property not defined in cascaded properties, define as inherited
