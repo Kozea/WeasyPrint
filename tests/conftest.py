@@ -28,9 +28,9 @@ def document_write_png(self, target=None, resolution=96, antialiasing=1,
     with NamedTemporaryFile(delete=False) as pdf:
         pdf.write(self.write_pdf(zoom=zoom))
     command = [
-        'gs', '-q', '-dNOPAUSE', '-dBATCH', '-dPDFSTOPONERROR',
-        f'-dTextAlphaBits={antialiasing}', f'-dGraphicsAlphaBits={antialiasing}',
-        '-sDEVICE=png16m', f'-r{resolution / zoom}', '-sOutputFile=-',
+        'gs', '-q', '-dNOPAUSE', '-dBATCH', f'-dTextAlphaBits={antialiasing}',
+        f'-dGraphicsAlphaBits={antialiasing}', '-sDEVICE=png16m',
+        '-dPDFSTOPONERROR', f'-r{resolution / zoom}', '-sOutputFile=-',
         pdf.name]
     pngs = run(command, stdout=PIPE).stdout
     os.remove(pdf.name)
