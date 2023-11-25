@@ -3,15 +3,14 @@
 import pytest
 from weasyprint.css.properties import KNOWN_PROPERTIES
 
-from .testing_utils import assert_no_logs
-from .testing_utils import render_pages as parse
+from .testing_utils import assert_no_logs, render_pages
 
 SIDES = ('top', 'right', 'bottom', 'left')
 
 
 @assert_no_logs
 def test_variable_simple():
-    page, = parse('''
+    page, = render_pages('''
       <style>
         p { --var: 10px; width: var(--var) }
       </style>
@@ -25,7 +24,7 @@ def test_variable_simple():
 
 @assert_no_logs
 def test_variable_inherit():
-    page, = parse('''
+    page, = render_pages('''
       <style>
         html { --var: 10px }
         p { width: var(--var) }
@@ -40,7 +39,7 @@ def test_variable_inherit():
 
 @assert_no_logs
 def test_variable_inherit_override():
-    page, = parse('''
+    page, = render_pages('''
       <style>
         html { --var: 20px }
         p { width: var(--var); --var: 10px }
@@ -55,7 +54,7 @@ def test_variable_inherit_override():
 
 @assert_no_logs
 def test_variable_case_sensitive():
-    page, = parse('''
+    page, = render_pages('''
       <style>
         html { --var: 20px }
         body { --VAR: 10px }
@@ -71,7 +70,7 @@ def test_variable_case_sensitive():
 
 @assert_no_logs
 def test_variable_chain():
-    page, = parse('''
+    page, = render_pages('''
       <style>
         html { --foo: 10px }
         body { --var: var(--foo) }
@@ -88,7 +87,7 @@ def test_variable_chain():
 @assert_no_logs
 def test_variable_chain_root():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/1656
-    page, = parse('''
+    page, = render_pages('''
       <style>
         html { --var2: 10px; --var1: var(--var2); width: var(--var1) }
       </style>
@@ -99,7 +98,7 @@ def test_variable_chain_root():
 
 def test_variable_chain_root_missing():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/1656
-    page, = parse('''
+    page, = render_pages('''
       <style>
         html { --var1: var(--var-missing); width: var(--var1) }
       </style>
@@ -108,7 +107,7 @@ def test_variable_chain_root_missing():
 
 @assert_no_logs
 def test_variable_partial_1():
-    page, = parse('''
+    page, = render_pages('''
       <style>
         html { --var: 10px }
         div { margin: 0 0 0 var(--var) }
@@ -126,7 +125,7 @@ def test_variable_partial_1():
 
 @assert_no_logs
 def test_variable_initial():
-    page, = parse('''
+    page, = render_pages('''
       <style>
         html { --var: initial }
         p { width: var(--var, 10px) }
@@ -141,7 +140,7 @@ def test_variable_initial():
 
 @pytest.mark.parametrize('prop', sorted(KNOWN_PROPERTIES))
 def test_variable_fallback(prop):
-    parse('''
+    render_pages('''
       <style>
         div {
           --var: improperValue;
@@ -155,7 +154,7 @@ def test_variable_fallback(prop):
 @assert_no_logs
 def test_variable_list():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/1287
-    page, = parse('''
+    page, = render_pages('''
       <style>
         :root { --var: "Page " counter(page) "/" counter(pages) }
         div::before { content: var(--var) }
