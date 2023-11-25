@@ -16,7 +16,7 @@ from .properties import (
 from .utils import (
     ANGLE_TO_RADIANS, LENGTH_UNITS, LENGTHS_TO_PIXELS, check_var_function,
     safe_urljoin)
-from .validation.properties import PROPERTIES
+from .validation.properties import MULTIVAL_PROPERTIES, PROPERTIES
 
 ZERO_PIXELS = Dimension(0, 'px')
 
@@ -213,14 +213,14 @@ def register_computer(name):
 
 def compute_variables(name, computed_style, parent_style):
     original_values = computed_style.cascaded[name][0]
+    validation_name = name.replace('_', '-')
+    multiple_values = validation_name in MULTIVAL_PROPERTIES
 
-    if isinstance(original_values, list):
+    if multiple_values:
         # Property with multiple values.
-        transformed_to_list = False
         values = original_values
     else:
         # Property with single value, put in a list.
-        transformed_to_list = True
         values = [original_values]
 
     # Find variables.
@@ -231,7 +231,7 @@ def compute_variables(name, computed_style, parent_style):
         # No variable, return early.
         return original_values, False
 
-    if not transformed_to_list:
+    if not multiple_values:
         # Don’t modify original list of values.
         values = values.copy()
 
@@ -243,6 +243,7 @@ def compute_variables(name, computed_style, parent_style):
         computed = name not in INITIAL_NOT_COMPUTED
 
     # Replace variables by real values.
+    validator = PROPERTIES[validation_name]
     for i, variable in variables.items():
         variable_name, default = variable
         value = _resolve_var(
@@ -250,7 +251,6 @@ def compute_variables(name, computed_style, parent_style):
 
         if value is not None:
             # Validate value.
-            validator = PROPERTIES[name.replace('_', '-')]
             if validator.wants_base_url:
                 value = validator(value, computed_style.base_url)
             else:
@@ -263,18 +263,17 @@ def compute_variables(name, computed_style, parent_style):
                 value = ''.join(token.serialize() for token in value)
             LOGGER.warning(
                 'Unsupported computed value "%s" set in variable %r '
-                'for property %r.', value,
-                variable_name.replace('_', '-'), name.replace('_', '-'))
+                'for property %r.', value, variable_name.replace('_', '-'),
+                validation_name)
             values[i] = (parent_style if inherited else INITIAL_VALUES)[name]
-        elif not transformed_to_list:
-            # Validator returns multiple values. Replace original variable by
-            # possibly multiple computed values.
+        elif multiple_values:
+            # Replace original variable by possibly multiple computed values.
             values[i:i+1] = value
         else:
             # Save variable by single computed value.
             values[i] = value
 
-    if transformed_to_list:
+    if not multiple_values:
         # Property with single value, unpack list.
         values, = values
 
