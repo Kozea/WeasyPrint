@@ -76,7 +76,7 @@ def property(property_name=None, proprietary=False, unstable=False,
 
 
 def validate_non_shorthand(name, tokens, base_url=None, required=False):
-    """Default validator for non-shorthand properties."""
+    """Validator for non-shorthand properties."""
     if name.startswith('--'):
         # TODO: validate content
         return ((name, tokens),)

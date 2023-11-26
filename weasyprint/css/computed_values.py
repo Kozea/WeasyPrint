@@ -150,7 +150,7 @@ COMPUTING_ORDER = _computing_order()
 COMPUTER_FUNCTIONS = {}
 
 
-def _resolve_var(computed, variable_name, default, parent_style):
+def resolve_var(computed, variable_name, default, parent_style):
     known_variable_names = [variable_name]
 
     computed_value = computed[variable_name]
@@ -246,7 +246,7 @@ def compute_var(name, computed_style, parent_style):
     validator = PROPERTIES[validation_name]
     for i, variable in variables.items():
         variable_name, default = variable
-        value = _resolve_var(
+        value = resolve_var(
             computed_style, variable_name, default, parent_style)
 
         if value is not None:

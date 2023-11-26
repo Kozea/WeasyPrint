@@ -7,7 +7,8 @@ from tinycss2.color3 import parse_color
 
 from ..properties import INITIAL_VALUES
 from ..utils import (
-    InvalidValues, get_keyword, get_single_keyword, split_on_comma)
+    InvalidValues, check_var_function, get_keyword, get_single_keyword,
+    split_on_comma)
 from .descriptors import expand_font_variant
 from .properties import (
     background_attachment, background_image, background_position,
@@ -21,6 +22,20 @@ from .properties import (
 EXPANDERS = {}
 
 
+class PendingExpander:
+    def __init__(self, tokens, expander):
+        self.tokens = tokens
+        self.expander = expander
+
+    def solve(self, tokens, wanted_key):
+        for key, value in self.expander(tokens=tokens):
+            if key.startswith('-'):
+                key = f'{self.expander.keywords["name"]}{key}'
+            if key == wanted_key:
+                return value
+        raise KeyError
+
+
 def expander(property_name):
     """Decorator adding a function to the ``EXPANDERS``."""
     def expander_decorator(function):
@@ -29,6 +44,72 @@ def expander(property_name):
         EXPANDERS[property_name] = function
         return function
     return expander_decorator
+
+
+def generic_expander(*expanded_names, **kwargs):
+    """Decorator helping expanders to handle ``inherit`` and ``initial``.
+
+    Wrap an expander so that it does not have to handle the 'inherit' and
+    'initial' cases, and can just yield name suffixes. Missing suffixes
+    get the initial value.
+
+    """
+    wants_base_url = kwargs.pop('wants_base_url', False)
+    assert not kwargs
+
+    def generic_expander_decorator(wrapped):
+        """Decorate the ``wrapped`` expander."""
+        @functools.wraps(wrapped)
+        def generic_expander_wrapper(name, tokens, base_url):
+            """Wrap the expander."""
+            expander = functools.partial(wrapped, name=name)
+            if wants_base_url:
+                expander = functools.partial(expander, base_url=base_url)
+
+            skip_validation = False
+            keyword = get_single_keyword(tokens)
+            if keyword in ('inherit', 'initial'):
+                results = dict.fromkeys(expanded_names, keyword)
+                skip_validation = True
+            else:
+                for token in tokens:
+                    if check_var_function(token):
+                        # Found CSS variable, keep pending-substitution values.
+                        pending = PendingExpander(tokens, expander)
+                        results = dict.fromkeys(expanded_names, pending)
+                        skip_validation = True
+                        break
+
+            if not skip_validation:
+                results = {}
+                result = expander(tokens=tokens)
+                for new_name, new_token in result:
+                    assert new_name in expanded_names, new_name
+                    if new_name in results:
+                        raise InvalidValues(
+                            f'got multiple {new_name.strip("-")} values '
+                            f'in a {name} shorthand')
+                    results[new_name] = new_token
+
+            for new_name in expanded_names:
+                if new_name.startswith('-'):
+                    # new_name is a suffix
+                    actual_new_name = name + new_name
+                else:
+                    actual_new_name = new_name
+
+                if new_name in results:
+                    value = results[new_name]
+                    if not skip_validation:
+                        # validate_non_shorthand returns ((name, value),)
+                        (actual_new_name, value), = validate_non_shorthand(
+                            actual_new_name, value, base_url, required=True)
+                else:
+                    value = 'initial'
+
+                yield actual_new_name, value
+        return generic_expander_wrapper
+    return generic_expander_decorator
 
 
 @expander('border-color')
@@ -62,62 +143,6 @@ def expand_four_sides(name, tokens, base_url):
         result, = validate_non_shorthand(
             new_name, [token], base_url, required=True)
         yield result
-
-
-def generic_expander(*expanded_names, **kwargs):
-    """Decorator helping expanders to handle ``inherit`` and ``initial``.
-
-    Wrap an expander so that it does not have to handle the 'inherit' and
-    'initial' cases, and can just yield name suffixes. Missing suffixes
-    get the initial value.
-
-    """
-    wants_base_url = kwargs.pop('wants_base_url', False)
-    assert not kwargs
-
-    def generic_expander_decorator(wrapped):
-        """Decorate the ``wrapped`` expander."""
-        @functools.wraps(wrapped)
-        def generic_expander_wrapper(name, tokens, base_url):
-            """Wrap the expander."""
-            keyword = get_single_keyword(tokens)
-            if keyword in ('inherit', 'initial'):
-                results = dict.fromkeys(expanded_names, keyword)
-                skip_validation = True
-            else:
-                skip_validation = False
-                results = {}
-                if wants_base_url:
-                    result = wrapped(name, tokens, base_url)
-                else:
-                    result = wrapped(name, tokens)
-                for new_name, new_token in result:
-                    assert new_name in expanded_names, new_name
-                    if new_name in results:
-                        raise InvalidValues(
-                            f'got multiple {new_name.strip("-")} values '
-                            f'in a {name} shorthand')
-                    results[new_name] = new_token
-
-            for new_name in expanded_names:
-                if new_name.startswith('-'):
-                    # new_name is a suffix
-                    actual_new_name = name + new_name
-                else:
-                    actual_new_name = new_name
-
-                if new_name in results:
-                    value = results[new_name]
-                    if not skip_validation:
-                        # validate_non_shorthand returns ((name, value),)
-                        (actual_new_name, value), = validate_non_shorthand(
-                            actual_new_name, value, base_url, required=True)
-                else:
-                    value = 'initial'
-
-                yield actual_new_name, value
-        return generic_expander_wrapper
-    return generic_expander_decorator
 
 
 @expander('border-radius')
