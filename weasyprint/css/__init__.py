@@ -26,11 +26,11 @@ from . import counters, media_queries
 from .computed_values import (
     COMPUTER_FUNCTIONS, ZERO_PIXELS, compute_var, resolve_var)
 from .properties import INHERITED, INITIAL_NOT_COMPUTED, INITIAL_VALUES
-from .utils import check_var_function, get_url, remove_whitespace
+from .utils import (
+    InvalidValues, check_var_function, get_url, remove_whitespace)
 from .validation import preprocess_declarations
 from .validation.descriptors import preprocess_descriptors
 from .validation.expanders import PendingExpander
-from .validation.properties import validate_non_shorthand
 
 # Reject anything not in here:
 PSEUDO_ELEMENTS = (
@@ -732,6 +732,8 @@ class ComputedStyle(dict):
             return self[key]
 
         if isinstance(value, PendingExpander):
+            # Expander with pending values, validate them.
+            computed = False
             solved_tokens = []
             for token in value.tokens:
                 variable = check_var_function(token)
@@ -743,8 +745,19 @@ class ComputedStyle(dict):
                 else:
                     solved_tokens.append(token)
             original_key = key.replace('_', '-')
-            solved = value.solve(solved_tokens, original_key)
-            value = validate_non_shorthand(None, original_key, solved)[0][1]
+            try:
+                value = value.solve(solved_tokens, original_key)
+            except InvalidValues:
+                if key in INHERITED:
+                    # Values in parent_style are already computed.
+                    self[key] = value = parent_style[key]
+                    return value
+                else:
+                    value = INITIAL_VALUES[key]
+                    if key not in INITIAL_NOT_COMPUTED:
+                        # The value is the same as when computed.
+                        self[key] = value
+                        return value
 
         if not computed and key in COMPUTER_FUNCTIONS:
             # Value not computed yet: compute.
