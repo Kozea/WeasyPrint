@@ -23,6 +23,20 @@ def test_variable_simple():
 
 
 @assert_no_logs
+def test_variable_not_computed():
+    page, = render_pages('''
+      <style>
+        p { --var: 1rem; width: var(--var) }
+      </style>
+      <p></p>
+    ''')
+    html, = page.children
+    body, = html.children
+    paragraph, = body.children
+    assert paragraph.width == 16
+
+
+@assert_no_logs
 def test_variable_inherit():
     page, = render_pages('''
       <style>

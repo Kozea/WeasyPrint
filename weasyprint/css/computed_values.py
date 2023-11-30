@@ -267,11 +267,13 @@ def compute_var(name, computed_style, parent_style):
                 validation_name)
             values[i] = (parent_style if inherited else INITIAL_VALUES)[name]
         elif multiple_values:
-            # Replace original variable by possibly multiple computed values.
+            # Replace original variable by possibly multiple validated values.
             values[i:i+1] = value
+            computed = False
         else:
-            # Save variable by single computed value.
+            # Save variable by single validated value.
             values[i] = value
+            computed = False
 
     if not multiple_values:
         # Property with single value, unpack list.
