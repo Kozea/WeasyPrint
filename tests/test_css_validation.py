@@ -1253,7 +1253,6 @@ def test_image_orientation_invalid(rule, reason):
 
 
 @assert_no_logs
-#@pytest.mark.parametrize('expander', list(EXPANDERS) + list(PROPERTIES))
-@pytest.mark.parametrize('expander', list(EXPANDERS))
+@pytest.mark.parametrize('expander', list(EXPANDERS) + list(PROPERTIES))
 def test_empty_value(expander):
     assert_invalid(f'{expander}:', message='Ignored')
