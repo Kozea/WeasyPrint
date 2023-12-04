@@ -170,7 +170,7 @@ def preprocess_declarations(base_url, declarations):
         tokens = remove_whitespace(declaration.value)
         try:
             # Use list() to consume generators now and catch any error.
-            result = list(expander_(base_url, name, tokens))
+            result = list(expander_(name, tokens, base_url))
         except InvalidValues as exc:
             validation_error(
                 'warning',
