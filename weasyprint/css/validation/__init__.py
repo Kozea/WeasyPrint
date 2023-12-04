@@ -169,6 +169,10 @@ def preprocess_declarations(base_url, declarations):
         expander_ = EXPANDERS.get(name, validate_non_shorthand)
         tokens = remove_whitespace(declaration.value)
         try:
+            # Having no tokens is allowed by grammar but refused by all
+            # properties and expanders.
+            if not tokens:
+                raise InvalidValues('no value')
             # Use list() to consume generators now and catch any error.
             result = list(expander_(name, tokens, base_url))
         except InvalidValues as exc:

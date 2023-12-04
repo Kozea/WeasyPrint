@@ -8,6 +8,8 @@ from tinycss2.color3 import parse_color
 from weasyprint.css import preprocess_declarations
 from weasyprint.css.computed_values import ZERO_PIXELS
 from weasyprint.css.properties import INITIAL_VALUES
+from weasyprint.css.validation.expanders import EXPANDERS
+from weasyprint.css.validation.properties import PROPERTIES
 from weasyprint.images import LinearGradient, RadialGradient
 
 from .testing_utils import assert_no_logs, capture_logs
@@ -1248,3 +1250,10 @@ def test_image_orientation(rule, result):
 ))
 def test_image_orientation_invalid(rule, reason):
     assert_invalid(rule, reason)
+
+
+@assert_no_logs
+#@pytest.mark.parametrize('expander', list(EXPANDERS) + list(PROPERTIES))
+@pytest.mark.parametrize('expander', list(EXPANDERS))
+def test_empty_value(expander):
+    assert_invalid(f'{expander}:', message='Ignored')
