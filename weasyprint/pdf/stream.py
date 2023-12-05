@@ -11,6 +11,7 @@ from fontTools.varLib.mutator import instantiateVariableFont
 
 from ..logger import LOGGER
 from ..matrix import Matrix
+from ..text.constants import PANGO_STRETCH_PERCENT
 from ..text.ffi import ffi, harfbuzz, pango, units_to_double
 
 
@@ -35,80 +36,30 @@ class Font:
         self.family = ffi.string(
             pango.pango_font_description_get_family(description))
 
-        self.variations = pango.pango_font_description_get_variations(
+        self.variations = {}
+        variations = pango.pango_font_description_get_variations(
             self.description)
-        if self.variations == ffi.NULL:
-            self.variations = {}
-        else:
+        if variations != ffi.NULL:
             self.variations = {
                 part.split('=')[0]: float(part.split('=')[1])
-                for part in ffi.string(self.variations).decode().split(',')}
+                for part in ffi.string(variations).decode().split(',')}
         if 'wght' in self.variations:
-            if 0 < self.variations['wght'] <= 150:
-                pango.pango_font_description_set_weight(self.description,
-                                                        pango.PANGO_WEIGHT_THIN)
-            if 150 < self.variations['wght'] <= 250:
-                pango.pango_font_description_set_weight(self.description,
-                                                        pango.PANGO_WEIGHT_ULTRALIGHT)
-            if 250 < self.variations['wght'] <= 350:
-                pango.pango_font_description_set_weight(self.description,
-                                                        pango.PANGO_WEIGHT_LIGHT)
-            if 350 < self.variations['wght'] <= 450:
-                pango.pango_font_description_set_weight(self.description,
-                                                        pango.PANGO_WEIGHT_NORMAL)
-            if 450 < self.variations['wght'] <= 550:
-                pango.pango_font_description_set_weight(self.description,
-                                                        pango.PANGO_WEIGHT_MEDIUM)
-            if 550 < self.variations['wght'] <= 650:
-                pango.pango_font_description_set_weight(self.description,
-                                                        pango.PANGO_WEIGHT_SEMIBOLD)
-            if 650 < self.variations['wght'] <= 750:
-                pango.pango_font_description_set_weight(self.description,
-                                                        pango.PANGO_WEIGHT_BOLD)
-            if 750 < self.variations['wght'] <= 850:
-                pango.pango_font_description_set_weight(self.description,
-                                                        pango.PANGO_WEIGHT_ULTRABOLD)
-            if 850 < self.variations['wght'] <= 950:
-                pango.pango_font_description_set_weight(self.description,
-                                                        pango.PANGO_WEIGHT_HEAVY)
-            if 950 < self.variations['wght'] <= 1000:
-                pango.pango_font_description_set_weight(self.description,
-                                                        pango.PANGO_WEIGHT_ULTRAHEAVY)
-        if 'slnt' in self.variations:
-            if self.variations['slnt'] != 0:
-                pango.pango_font_description_set_style(self.description,
-                                                       pango.PANGO_STYLE_ITALIC)
+            pango.pango_font_description_set_weight(
+                self.description, int(round(self.variations['wght'])))
+        if self.variations.get('ital'):
+            pango.pango_font_description_set_style(
+                self.description, pango.PANGO_STYLE_ITALIC)
+        elif self.variations.get('slnt'):
+            pango.pango_font_description_set_style(
+                self.description, pango.PANGO_STYLE_OBLIQUE)
         if 'wdth' in self.variations:
-            if 0 < self.variations['wdth'] <= 56.25:
-                pango.pango_font_description_set_stretch(self.description,
-                                                         pango.PANGO_STRETCH_ULTRA_CONDENSED)
-            if 56.25 < self.variations['wdth'] <= 68.75:
-                pango.pango_font_description_set_stretch(self.description,
-                                                         pango.PANGO_STRETCH_EXTRA_CONDENSED)
-            if 68.75 < self.variations['wdth'] <= 81.25:
-                pango.pango_font_description_set_stretch(self.description,
-                                                         pango.PANGO_STRETCH_CONDENSED)
-            if 81.25 < self.variations['wdth'] <= 93.75:
-                pango.pango_font_description_set_stretch(self.description,
-                                                         pango.PANGO_STRETCH_SEMI_CONDENSED)
-            if 93.75 < self.variations['wdth'] <= 106.25:
-                pango.pango_font_description_set_stretch(self.description,
-                                                         pango.PANGO_STRETCH_NORMAL)
-            if 106.25 < self.variations['wdth'] <= 118.75:
-                pango.pango_font_description_set_stretch(self.description,
-                                                         pango.PANGO_STRETCH_SEMI_EXPANDED)
-            if 118.75 < self.variations['wdth'] <= 131.25:
-                pango.pango_font_description_set_stretch(self.description,
-                                                         pango.PANGO_STRETCH_EXPANDED)
-            if 131.25 < self.variations['wdth'] <= 175.00:
-                pango.pango_font_description_set_stretch(self.description,
-                                                         pango.PANGO_STRETCH_EXTRA_EXPANDED)
-            if 175.00 < self.variations['wdth'] <= 1000.00:
-                pango.pango_font_description_set_stretch(self.description,
-                                                         pango.PANGO_STRETCH_ULTRA_EXPANDED)
-
+            stretch = min(
+                PANGO_STRETCH_PERCENT.items(),
+                key=lambda item: abs(item[0] - self.variations['wdth']))[1]
+            pango.pango_font_description_set_stretch(self.description, stretch)
         description_string = ffi.string(
             pango.pango_font_description_to_string(description))
+
         # Never use the built-in hash function here: it’s not stable
         self.hash = ''.join(
             chr(65 + letter % 26) for letter
@@ -196,8 +147,9 @@ class Font:
         # Transform variable into static font
         if 'fvar' in self.ttfont:
             if 'wght' not in self.variations:
-                self.variations['wght'] = pango.pango_font_description_get_weight(
+                weight = pango.pango_font_description_get_weight(
                     self.description)
+                self.variations['wght'] = weight
             if 'opsz' not in self.variations:
                 self.variations['opsz'] = units_to_double(self.font_size)
             if 'slnt' not in self.variations:
