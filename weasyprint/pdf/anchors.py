@@ -150,7 +150,7 @@ def add_inputs(inputs, matrix, pdf, page, resources, stream, font_map,
                 'Subtype': '/Widget',
                 'Rect': pydyf.Array(rectangle),
                 'FT': '/Btn',
-                'F': 2 ** (3 - 1),  # Print flag
+                'F': 1 << (3 - 1),  # Print flag
                 'P': page.reference,
                 'T': pydyf.String(input_name),
                 'V': '/Yes' if checked else '/Off',
@@ -160,8 +160,8 @@ def add_inputs(inputs, matrix, pdf, page, resources, stream, font_map,
                 'AS': '/Yes' if checked else '/Off',
                 'DA': pydyf.String(b' '.join(field_stream.stream)),
             })
-        elif element.tag == "select":
-            # Text, password, textarea, files, and unknown
+        elif element.tag == 'select':
+            # Select fields
             font_description = get_font_description(style)
             font = pango.pango_font_map_load_font(
                 font_map, context, font_description)
@@ -169,70 +169,34 @@ def add_inputs(inputs, matrix, pdf, page, resources, stream, font_map,
             font.used_in_forms = True
 
             field_stream.set_font_size(font.hash, font_size)
-            multiple = element.attrib.get("multiple") is not None
             options = []
             selected_values = []
             for option in element:
-                options.append(
-                    pydyf.Array(
-                        [f'({option.attrib.get("value")})', f'({option.text})']
-                    )
-                )
-                if option.attrib.get("selected") is not None:
-                    selected_values.append(
-                        pydyf.String(option.attrib.get("value"))
-                    )
+                value = pydyf.String(option.attrib.get('value', ''))
+                text = pydyf.String(option.text)
+                options.append(pydyf.Array([value, text]))
+                if 'selected' in option.attrib:
+                    selected_values.append(value)
 
-            if multiple:
-                field = pydyf.Dictionary({
-                    'DA': pydyf.String(b' '.join(field_stream.stream)),
-                    'F': 2 ** (3 - 1),  # Print flag
-                    'FT': '/Ch',
-                    # To be a multiselect list we need to set the 21st bit to 1
-                    # outputing 2097152:
-                    # https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/PDF32000_2008.pdf # noqa: E501
-                    # This specification can be found on the link above on page
-                    # 445.
-                    'Ff': (1 << 21),
-                    'Opt': pydyf.Array(options),
-                    'P': page.reference,
-                    'Rect': pydyf.Array(rectangle),
-                    'Subtype': '/Widget',
-                    'T': pydyf.String(input_name),
-                    'Type': '/Annot',
-                    # The select value is a list of selected values that come
-                    # from the options with the selected property. If there are
-                    # no selected values, then the value is an empty string.
-                    'V': pydyf.Array(selected_values)
-                    if len(selected_values)
-                    else pydyf.String(''),
-                })
+            field = pydyf.Dictionary({
+                'DA': pydyf.String(b' '.join(field_stream.stream)),
+                'F': 1 << (3 - 1),  # Print flag
+                'FT': '/Ch',
+                'Opt': pydyf.Array(options),
+                'P': page.reference,
+                'Rect': pydyf.Array(rectangle),
+                'Subtype': '/Widget',
+                'T': pydyf.String(input_name),
+                'Type': '/Annot',
+            })
+            if 'multiple' in element.attrib:
+                field['Ff'] = 1 << (22 - 1)
+                field['V'] = pydyf.Array(selected_values)
             else:
-                field = pydyf.Dictionary({
-                    'DA': pydyf.String(b' '.join(field_stream.stream)),
-                    'F': 2 ** (3 - 1),  # Print flag
-                    'FT': '/Ch',
-                    # To be a combo box we need to set the 17th bit to 1
-                    # outputing 131072:
-                    # https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/PDF32000_2008.pdf # noqa: E501
-                    # This specification can be found on the link above on page
-                    # 444.
-                    'Ff': (1 << 17),
-                    'Opt': pydyf.Array(options),
-                    'P': page.reference,
-                    'Rect': pydyf.Array(rectangle),
-                    'Subtype': '/Widget',
-                    'T': pydyf.String(input_name),
-                    'Type': '/Annot',
-                    # Get the last value in the list when there are multiple
-                    # selected values in a single select box (this is the same
-                    # approach used by browsers).
-                    # If there are no selected values, then the value is an
-                    # empty string.
-                    'V': selected_values[-1]
-                    if len(selected_values)
-                    else pydyf.String(''),
-                })
+                field['Ff'] = 1 << (18 - 1)
+                field['V'] = (
+                    selected_values[-1] if selected_values
+                    else pydyf.String(''))
         else:
             # Text, password, textarea, files, and unknown
             font_description = get_font_description(style)
@@ -250,24 +214,18 @@ def add_inputs(inputs, matrix, pdf, page, resources, stream, font_map,
                 'Subtype': '/Widget',
                 'Rect': pydyf.Array(rectangle),
                 'FT': '/Tx',
-                'F': 2 ** (3 - 1),  # Print flag
+                'F': 1 << (3 - 1),  # Print flag
                 'P': page.reference,
                 'T': pydyf.String(input_name),
-                # Previously if the input had no value or the value was an
-                # empty string, the V key was filled with a pydyf.String(None)
-                # object. This caused the PDF input/textarea to be filled with
-                # the string "None". Now if the input has no value or the
-                # value is an empty string, the V key is filled with a
-                # pydyf.String('') object.
                 'V': pydyf.String(value or ''),
                 'DA': pydyf.String(b' '.join(field_stream.stream)),
             })
             if element.tag == 'textarea':
-                field['Ff'] = 2 ** (13 - 1)
+                field['Ff'] = 1 << (13 - 1)
             elif input_type == 'password':
-                field['Ff'] = 2 ** (14 - 1)
+                field['Ff'] = 1 << (14 - 1)
             elif input_type == 'file':
-                field['Ff'] = 2 ** (21 - 1)
+                field['Ff'] = 1 << (21 - 1)
 
         pdf.add_object(field)
         page['Annots'].append(field.reference)

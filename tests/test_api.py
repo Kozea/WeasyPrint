@@ -491,15 +491,12 @@ def test_partial_pdf_custom_metadata():
     (b'<select>'
      b'<option value="a">A</option>'
      b'<option value="b" selected>B</option>'
-     b'</select>'
-     , [b'/Ch', b'/Opt', b'/V (b)']),
-    # The selected values will be (b) and (c) in the PDF.
+     b'</select>', [b'/Ch', b'/Opt', b'/V (b)']),
     (b'<select multiple>'
      b'<option value="a">A</option>'
      b'<option value="b" selected>B</option>'
      b'<option value="c" selected>C</option>'
-     b'</select>'
-     , [b'/Ch', b'/Opt', b'[(b) (c)]']),
+     b'</select>', [b'/Ch', b'/Opt', b'[(b) (c)]']),
 ))
 def test_pdf_inputs(html, fields):
     stdout = _run('--pdf-forms --uncompressed-pdf - -', html)
