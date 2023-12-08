@@ -246,7 +246,7 @@ def compute_var(name, computed_style, parent_style):
     validator = PROPERTIES[validation_name]
     for i, variable in variables.items():
         variable_name, default = variable
-        value = resolve_var(
+        resolved_value = value = resolve_var(
             computed_style, variable_name, default, parent_style)
 
         if value is not None:
@@ -263,8 +263,8 @@ def compute_var(name, computed_style, parent_style):
                 value = ''.join(token.serialize() for token in value)
             LOGGER.warning(
                 'Unsupported computed value "%s" set in variable %r '
-                'for property %r.', value, variable_name.replace('_', '-'),
-                validation_name)
+                'for property %r.', resolved_value,
+                variable_name.replace('_', '-'), validation_name)
             values[i] = (parent_style if inherited else INITIAL_VALUES)[name]
         elif multiple_values:
             # Replace original variable by possibly multiple validated values.
