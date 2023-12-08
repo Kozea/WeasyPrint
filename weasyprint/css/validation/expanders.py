@@ -91,7 +91,7 @@ def generic_expander(*expanded_names, **kwargs):
     def generic_expander_decorator(wrapped):
         """Decorate the ``wrapped`` expander."""
         @functools.wraps(wrapped)
-        def generic_expander_wrapper(name, tokens, base_url):
+        def generic_expander_wrapper(tokens, name, base_url):
             """Wrap the expander."""
             expander = functools.partial(
                 generic_expander_wrapper, name=name, base_url=base_url)
@@ -132,7 +132,7 @@ def generic_expander(*expanded_names, **kwargs):
                     if not skip_validation:
                         # validate_non_shorthand returns ((name, value),)
                         (actual_new_name, value), = validate_non_shorthand(
-                            actual_new_name, value, base_url, required=True)
+                            value, actual_new_name, base_url, required=True)
                 else:
                     value = 'initial'
 
@@ -147,7 +147,7 @@ def generic_expander(*expanded_names, **kwargs):
 @expander('margin')
 @expander('padding')
 @expander('bleed')
-def expand_four_sides(name, tokens, base_url):
+def expand_four_sides(tokens, name, base_url):
     """Expand properties setting a token for the four sides of a box."""
     # Define expanded names.
     expanded_names = []
@@ -179,7 +179,7 @@ def expand_four_sides(name, tokens, base_url):
         # validate_non_shorthand returns ((name, value),), we want
         # to yield (name, value).
         result, = validate_non_shorthand(
-            new_name, [token], base_url, required=True)
+            [token], expanded_name, base_url, required=True)
         yield result
 
 
@@ -220,9 +220,9 @@ def border_radius(tokens, name, base_url):
                 f'Expected 1 to 4 token components got {len(values)}')
     corners = ('top-left', 'top-right', 'bottom-right', 'bottom-left')
     for corner, tokens in zip(corners, zip(horizontal, vertical)):
-        new_name = f'border-{corner}-radius'
-        validate_non_shorthand(new_name, tokens, base_url, required=True)
-        yield new_name, tokens
+        name = f'border-{corner}-radius'
+        validate_non_shorthand(tokens, name, base_url, required=True)
+        yield name, tokens
 
 
 @expander('list-style')
@@ -269,14 +269,14 @@ def expand_list_style(tokens, name, base_url):
 
 
 @expander('border')
-def expand_border(name, tokens, base_url):
+def expand_border(tokens, name, base_url):
     """Expand the ``border`` shorthand property.
 
     See https://www.w3.org/TR/CSS21/box.html#propdef-border
 
     """
     for suffix in ('-top', '-right', '-bottom', '-left'):
-        for new_prop in expand_border_side(name + suffix, tokens, base_url):
+        for new_prop in expand_border_side(tokens, name + suffix, base_url):
             yield new_prop
 
 
@@ -306,7 +306,7 @@ def expand_border_side(tokens, name):
 
 
 @expander('background')
-def expand_background(name, tokens, base_url):
+def expand_background(tokens, name, base_url):
     """Expand the ``background`` shorthand property.
 
     See https://drafts.csswg.org/css-backgrounds-3/#the-background

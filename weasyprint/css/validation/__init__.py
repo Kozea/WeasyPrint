@@ -174,7 +174,7 @@ def preprocess_declarations(base_url, declarations):
             if not tokens:
                 raise InvalidValues('no value')
             # Use list() to consume generators now and catch any error.
-            result = list(expander(name, tokens, base_url))
+            result = list(expander(tokens, name, base_url))
         except InvalidValues as exc:
             validation_error(
                 'warning',
