@@ -315,7 +315,7 @@ def test_variable_fallback(prop):
 
 
 @assert_no_logs
-def test_variable_list():
+def test_variable_list_content():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/1287
     page, = render_pages('''
       <style>
@@ -331,3 +331,51 @@ def test_variable_list():
     before, = line.children
     text, = before.children
     assert text.text == 'Page 1/1'
+
+
+@assert_no_logs
+@pytest.mark.parametrize('var, display', (
+    ('inline', 'var(--var)'),
+    ('inline-block', 'var(--var)'),
+    ('inline flow', 'var(--var)'),
+    ('inline', 'var(--var) flow'),
+    ('flow', 'inline var(--var)'),
+))
+def test_variable_list_display(var, display):
+    page, = render_pages('''
+      <style>
+        html { --var: %s }
+        div { display: %s }
+      </style>
+      <section><div></div></section>
+    ''' % (var, display))
+    html, = page.children
+    body, = html.children
+    section, = body.children
+    child, = section.children
+    assert type(child).__name__ == 'LineBox'
+
+
+@assert_no_logs
+@pytest.mark.parametrize('var, font', (
+    ('weasyprint', 'var(--var)'),
+    ('"weasyprint"', 'var(--var)'),
+    ('weasyprint', 'var(--var), monospace'),
+    ('weasyprint, monospace', 'var(--var)'),
+    ('monospace', 'weasyprint, var(--var)'),
+))
+def test_variable_list_font(var, font):
+    page, = render_pages('''
+      <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        html { font-size: 2px; --var: %s }
+        div { font-family: %s }
+      </style>
+      <div>aa</div>
+    ''' % (var, font))
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    line, = div.children
+    text, = line.children
+    assert text.width == 4

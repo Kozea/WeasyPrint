@@ -16,6 +16,7 @@ from .properties import (
 from .utils import (
     ANGLE_TO_RADIANS, LENGTH_UNITS, LENGTHS_TO_PIXELS, check_var_function,
     safe_urljoin)
+from .validation.expanders import PendingExpander
 from .validation.properties import MULTIVAL_PROPERTIES, PROPERTIES
 
 ZERO_PIXELS = Dimension(0, 'px')
@@ -216,9 +217,12 @@ def compute_var(name, computed_style, parent_style):
     validation_name = name.replace('_', '-')
     multiple_values = validation_name in MULTIVAL_PROPERTIES
 
+    if isinstance(original_values, PendingExpander):
+        return original_values, False
+
     if multiple_values:
         # Property with multiple values.
-        values = original_values
+        values = list(original_values)
     else:
         # Property with single value, put in a list.
         values = [original_values]
@@ -231,54 +235,46 @@ def compute_var(name, computed_style, parent_style):
         # No variable, return early.
         return original_values, False
 
-    if not multiple_values:
-        # Don’t modify original list of values.
-        values = values.copy()
-
     if name in INHERITED and parent_style:
-        inherited = True
         computed = True
+        default_values = parent_style[name]
     else:
-        inherited = False
         computed = name not in INITIAL_NOT_COMPUTED
+        default_values = INITIAL_VALUES[name]
 
     # Replace variables by real values.
     validator = PROPERTIES[validation_name]
     for i, variable in variables.items():
         variable_name, default = variable
-        resolved_value = value = resolve_var(
+        value = resolve_var(
             computed_style, variable_name, default, parent_style)
-
-        if value is not None:
-            # Validate value.
-            if validator.wants_base_url:
-                value = validator(value, computed_style.base_url)
-            else:
-                value = validator(value)
-
         if value is None:
-            # Invalid variable value, see
-            # https://www.w3.org/TR/css-variables-1/#invalid-variables.
-            with suppress(BaseException):
-                value = ''.join(token.serialize() for token in value)
             LOGGER.warning(
-                'Unsupported computed value "%s" set in variable %r '
-                'for property %r.', resolved_value,
+                'Unknown variable %r set for property %r.',
                 variable_name.replace('_', '-'), validation_name)
-            values[i] = (parent_style if inherited else INITIAL_VALUES)[name]
-        elif multiple_values:
-            # Replace original variable by possibly multiple validated values.
-            values[i:i+1] = value
-            computed = False
-        else:
-            # Save variable by single validated value.
-            values[i] = value
-            computed = False
+            return default_values, computed
+        values[i:i+1] = value
 
-    if not multiple_values:
-        # Property with single value, unpack list.
-        values, = values
+    # Validate value.
+    original_values = values
+    if validator.wants_base_url:
+        values = validator(values, computed_style.base_url)
+    else:
+        values = validator(values)
 
+    if values is None:
+        # Invalid variable value, see
+        # https://www.w3.org/TR/css-variables-1/#invalid-variables.
+        with suppress(BaseException):
+            original_values = ''.join(
+                token.serialize() for token in original_values)
+        LOGGER.warning(
+            'Unsupported computed value "%s" set in variable %r '
+            'for property %r.', original_values,
+            variable_name.replace('_', '-'), validation_name)
+        return default_values, computed
+
+    computed = False
     return values, computed
 
 
