@@ -2,6 +2,50 @@ Changelog
 =========
 
 
+Version 60.2
+------------
+
+Released on 2023-12-11.
+
+Bug fixes:
+
+* `#1982 <https://github.com/Kozea/WeasyPrint/issues/1982>`_:
+  Fix SVG markers size, position and drawing
+* `23cfc775 <https://github.com/Kozea/WeasyPrint/commit/23cfc775>`_:
+  Draw background behind absolutely positioned replaced boxes
+* `fe2f0c69 <https://github.com/Kozea/WeasyPrint/commit/fe2f0c69>`_:
+  Don’t crash with bitmap fonts with no "glyf" table
+* `14605225 <https://github.com/Kozea/WeasyPrint/commit/14605225>`_:
+  Improve SVG text-anchor attribute
+
+Contributors:
+
+* Guillaume Ayoub
+
+Backers and sponsors:
+
+* Spacinov
+* Kobalt
+* Grip Angebotssoftware
+* Manuel Barkhau
+* SimonSoft
+* Menutech
+* KontextWork
+* NCC Group
+* René Fritz
+* Nicola Auchmuty
+* Syslifters
+* Hammerbacher
+* TrainingSparkle
+* Daniel Kucharski
+* Healthchecks.io
+* Yanal-Yvez Fargialla
+* WakaTime
+* Paheko
+* Synapsium
+* DocRaptor
+
+
 Version 60.1
 ------------
 
