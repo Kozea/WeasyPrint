@@ -14,12 +14,15 @@ from xml.etree import ElementTree
 
 import pydyf
 from PIL import Image, ImageFile, ImageOps
+from pillow_heif import register_heif_opener
 
 from . import DEFAULT_OPTIONS
 from .layout.percent import percentage
 from .logger import LOGGER
 from .svg import SVG
 from .urls import URLFetchingError, fetch
+
+register_heif_opener()
 
 # Don’t crash when converting truncated images
 ImageFile.LOAD_TRUNCATED_IMAGES = True
