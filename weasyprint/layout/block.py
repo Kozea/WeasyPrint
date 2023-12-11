@@ -264,8 +264,9 @@ def _out_of_flow_layout(context, box, index, child, new_children,
                 result = find_earlier_page_break(
                     context, new_children, absolute_boxes, fixed_boxes)
                 if result:
-                    new_children, resume_at = result
             stop = True
+                    new_children[:], resume_at = result
+                    new_child = out_of_flow_resume_at = None
     elif child.is_running():
         running_name = child.style['position'][1]
         page = context.current_page
