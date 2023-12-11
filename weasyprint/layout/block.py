@@ -228,12 +228,17 @@ def relative_positioning(box, containing_block):
 def _out_of_flow_layout(context, box, index, child, new_children,
                         page_is_empty, absolute_boxes, fixed_boxes,
                         adjoining_margins, bottom_space):
-    stop = False
-    resume_at = None
-    new_child = None
-    out_of_flow_resume_at = None
+    stop = False  # whether we should stop parent rendering after this layout
+    resume_at = None  # where to resume in-flow rendering
+    new_child = None  # child rendered by this layout
+    out_of_flow_resume_at = None  # where to resume out-of-flow rendering
 
+    # Add the parent’s collapsing margins to shift the child’s position. Don’t
+    # include the out-of-flow child’s top margin because it doesn’t collapse
+    # with its parent.
     child.position_y += collapse_margin(adjoining_margins)
+
+    # Absolute child layout: create placeholder.
     if child.is_absolutely_positioned():
         new_child = placeholder = AbsolutePlaceholder(child)
         placeholder.index = index
@@ -242,11 +247,14 @@ def _out_of_flow_layout(context, box, index, child, new_children,
             absolute_boxes.append(placeholder)
         else:
             fixed_boxes.append(placeholder)
+
+    # Float child layout.
     elif child.is_floated():
         new_child, out_of_flow_resume_at = float_layout(
             context, child, box, absolute_boxes, fixed_boxes, bottom_space,
             skip_stack=None)
-        # New page if overflow
+
+        # Check that child doesn’t overflow page.
         page_overflow = context.overflows_page(
             bottom_space, new_child.position_y + new_child.height)
         add_child = (
@@ -254,19 +262,26 @@ def _out_of_flow_layout(context, box, index, child, new_children,
             not page_overflow or
             box.is_monolithic())
         if add_child:
+            # Child fits or has to fit, add it.
             new_child.index = index
             new_children.append(new_child)
         else:
+            # Child doesn’t fit and we can break, find where to break and stop
+            # parent rendering.
             last_in_flow_child = find_last_in_flow_child(new_children)
             page_break = block_level_page_break(last_in_flow_child, child)
             resume_at = {index: None}
+            stop = True
             if new_children and avoid_page_break(page_break, context):
+                # Can’t break inside float, find an earlier page break.
                 result = find_earlier_page_break(
                     context, new_children, absolute_boxes, fixed_boxes)
                 if result:
-            stop = True
+                    # Earlier page break found, drop whole child rendering.
                     new_children[:], resume_at = result
                     new_child = out_of_flow_resume_at = None
+
+    # Running element layout.
     elif child.is_running():
         running_name = child.style['position'][1]
         page = context.current_page
