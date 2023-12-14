@@ -162,10 +162,15 @@ class HTML:
             if isinstance(source, str):
                 result = html5lib.parse(source, namespaceHTMLElements=False)
             else:
-                result = html5lib.parse(
-                    source, override_encoding=encoding,
-                    transport_encoding=protocol_encoding,
-                    namespaceHTMLElements=False)
+                potentially_undefined_kwargs = {
+                    'namespaceHTMLElements': False,
+                    'transport_encoding': protocol_encoding,
+                    'override_encoding': encoding,
+                }
+
+                filtered_kwargs = {k: v for k, v in potentially_undefined_kwargs.items() if v is not None}
+                
+                result = html5lib.parse(source, **filtered_kwargs)
         self.base_url = _find_base_url(result, base_url)
         self.url_fetcher = url_fetcher
         self.media_type = media_type
