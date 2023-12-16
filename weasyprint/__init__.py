@@ -283,12 +283,12 @@ class CSS:
             base_url=base_url, url_fetcher=url_fetcher,
             check_css_mime_type=_check_mime_type)
         with result as (source_type, source, base_url, protocol_encoding):
-            if source_type == 'string' and not isinstance(source, bytes):
+            if source_type == 'file_obj':
+                source = source.read()
+            if isinstance(source, str):
                 # unicode, no encoding
                 stylesheet = tinycss2.parse_stylesheet(source)
             else:
-                if source_type == 'file_obj':
-                    source = source.read()
                 stylesheet, encoding = tinycss2.parse_stylesheet_bytes(
                     source, environment_encoding=encoding,
                     protocol_encoding=protocol_encoding)
