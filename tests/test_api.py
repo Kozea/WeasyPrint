@@ -52,7 +52,9 @@ def _test_resource(class_, basename, check, **kwargs):
     check(class_(relative_path, **kwargs))
     kwargs.pop('base_url', None)
     check(class_(string=content, base_url=relative_filename, **kwargs))
-    encoding = kwargs.get('encoding') or 'utf-8'
+    encoding = kwargs.pop('encoding', 'utf-8')
+    with open(absolute_filename, 'r', encoding=encoding) as fd:
+        check(class_(file_obj=fd, **kwargs))
     check(class_(string=content.decode(encoding),  # unicode
                  base_url=relative_filename, **kwargs))
     with pytest.raises(TypeError):
