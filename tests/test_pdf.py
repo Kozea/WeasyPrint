@@ -65,7 +65,7 @@ def test_bookmarks_3():
 def test_bookmarks_4():
     pdf = FakeHTML(string='''
       <style>
-        * { height: 90pt; margin: 0 0 10pt 0 }
+        h1, h2, h3, span { height: 90pt; margin: 0 0 10pt 0 }
       </style>
       <h1>1</h1>
       <h1>2</h1>

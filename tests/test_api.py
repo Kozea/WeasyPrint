@@ -615,7 +615,7 @@ def test_low_level_api(assert_pixels_equal):
 
 @pytest.mark.parametrize('html, expected_by_page, expected_tree, round', (
     ('''
-        <style>* { height: 10px }</style>
+        <style>h1, h2, h3, h4 { height: 10px }</style>
         <h1>a</h1>
         <h4 style="page-break-after: always">b</h4>
         <h3 style="position: relative; top: 2px; left: 3px">c</h3>
@@ -634,7 +634,7 @@ def test_low_level_api(assert_pixels_equal):
     ], False),
     ('''
         <style>
-            * { height: 90px; margin: 0 0 10px 0 }
+            h1, h2, h3, span { height: 90px; margin: 0 0 10px 0 }
         </style>
         <h1>Title 1</h1>
         <h1>Title 2</h1>

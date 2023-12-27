@@ -93,6 +93,30 @@ def test_overflow_4(assert_pixels):
 
 
 @assert_no_logs
+def test_overflow_5(assert_pixels):
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/2026
+    assert_pixels('''
+        BBBBBB__
+        BBBBBB__
+        BBBB____
+        BBBB____
+        BBBB____
+        ________
+        ________
+        ________
+    ''', '''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        @page { size: 8px }
+        body { font-family: weasyprint; line-height: 1; font-size: 2px }
+        p { color: blue }
+      </style>
+      <p>abc</p>
+      <p style="height: 3px; overflow: hidden">ab<br>ab<br>ab<br>ab</p>
+      ''')
+
+
+@assert_no_logs
 @pytest.mark.parametrize('number, css, pixels', (
     (1, '5px, 5px, 9px, auto', '''
         ______________
