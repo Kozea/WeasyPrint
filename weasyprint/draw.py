@@ -1053,9 +1053,7 @@ def draw_text(stream, textbox, offset_x, text_overflow, block_ellipsis):
         return
 
     text_decoration_values = textbox.style['text_decoration_line']
-    text_decoration_color = textbox.style['text_decoration_color']
-    if text_decoration_color == 'currentColor':
-        text_decoration_color = textbox.style['color']
+    text_decoration_color = get_color(textbox.style, 'text_decoration_color')
     if 'overline' in text_decoration_values:
         thickness = textbox.pango_layout.underline_thickness
         offset_y = (

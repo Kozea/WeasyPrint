@@ -26,30 +26,27 @@ EXPANDERS = {}
 class PendingExpander:
     """Expander with validation done when defining calculated values."""
     # See https://drafts.csswg.org/css-variables-2/#variables-in-shorthands.
-    def __init__(self, tokens, expander):
+    def __init__(self, tokens, validator):
         self.tokens = tokens
-        self.expander = expander
+        self.validator = validator
         self._reported_error = False
 
     def solve(self, tokens, wanted_key):
         """Get validated value for wanted key."""
         try:
-            for key, value in self.expander(tokens):
+            for key, value in self.validator(tokens):
                 if key.startswith('-'):
-                    key = f'{self.expander.keywords["name"]}{key}'
+                    key = f'{self.validator.keywords["name"]}{key}'
                 if key == wanted_key:
                     return value
         except InvalidValues as exc:
             if self._reported_error:
                 raise exc
-            source_line = tokens[0].source_line
-            source_column = tokens[0].source_column
-            prop = self.expander.keywords["name"]
+            prop = self.validator.keywords['name']
+            source_line = self.tokens[0].source_line
+            source_column = self.tokens[0].source_column
             value = ' '.join(token.serialize() for token in tokens)
-            if exc.args and exc.args[0]:
-                message = exc.args[0]
-            else:
-                message = 'invalid value'
+            message = (exc.args and exc.args[0]) or 'invalid value'
             LOGGER.warning(
                 'Ignored `%s: %s` at %d:%d, %s.',
                 prop, value, source_line, source_column, message)

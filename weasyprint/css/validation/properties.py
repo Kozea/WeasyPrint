@@ -8,6 +8,7 @@ from math import inf
 
 from tinycss2.color3 import parse_color
 
+from ...logger import LOGGER
 from .. import computed_values
 from ..properties import KNOWN_PROPERTIES, Dimension
 from ..utils import (
@@ -20,7 +21,6 @@ from ..utils import (
 PREFIX = '-weasy-'
 PROPRIETARY = set()
 UNSTABLE = set()
-MULTIVAL_PROPERTIES = set()
 
 # Yes/no validators for non-shorthand properties
 # Maps property names to functions taking a property name and a value list,
@@ -30,10 +30,31 @@ MULTIVAL_PROPERTIES = set()
 PROPERTIES = {}
 
 
+class PendingProperty:
+    """Property with validation done when defining calculated values."""
+    def __init__(self, tokens, name):
+        self.tokens = tokens
+        self.name = name
+
+    def solve(self, tokens, wanted_key):
+        """Get validated value."""
+        try:
+            return validate_non_shorthand(tokens, self.name)[0][1]
+        except InvalidValues as exc:
+            source_line = self.tokens[0].source_line
+            source_column = self.tokens[0].source_column
+            value = ' '.join(token.serialize() for token in tokens)
+            message = (exc.args and exc.args[0]) or 'invalid value'
+            LOGGER.warning(
+                'Ignored `%s: %s` at %d:%d, %s.',
+                self.name, value, source_line, source_column, message)
+            raise exc
+
+
 # Validators
 
 def property(property_name=None, proprietary=False, unstable=False,
-             multiple_values=False, wants_base_url=False):
+             wants_base_url=False):
     """Decorator adding a function to the ``PROPERTIES``.
 
     The name of the property covered by the decorated function is set to
@@ -49,8 +70,6 @@ def property(property_name=None, proprietary=False, unstable=False,
         the Candidate Recommandation stage. They can be used both
         vendor-prefixed or unprefixed.
         See https://www.w3.org/TR/CSS/#unstable-syntax
-    :param multiple_values:
-        Mark property as returning multiple values.
     :param wants_base_url:
         The function takes the stylesheet’s base URL as an additional
         parameter.
@@ -71,8 +90,6 @@ def property(property_name=None, proprietary=False, unstable=False,
             PROPRIETARY.add(name)
         if unstable:
             UNSTABLE.add(name)
-        if multiple_values:
-            MULTIVAL_PROPERTIES.add(name)
         return function
     return decorator
 
@@ -93,28 +110,16 @@ def validate_non_shorthand(tokens, name, base_url=None, required=False):
     if not required and name not in PROPERTIES:
         raise InvalidValues('property not supported yet')
 
-    if name in MULTIVAL_PROPERTIES:
-        var_found = False
-        new_tokens = []
-        for token in tokens:
-            if var_function := check_var_function(token):
-                new_tokens.append(var_function)
-                var_found = True
-            else:
-                new_tokens.append(token)
-        if var_found:
-            return ((name, tuple(new_tokens)),)
-    else:
-        for token in tokens:
-            var_function = check_var_function(token)
-            if var_function:
-                return ((name, var_function),)
+    function = PROPERTIES[name]
+    for token in tokens:
+        if check_var_function(token):
+            # Found CSS variable, return pending-substitution values.
+            return ((name, PendingProperty(tokens, name)),)
 
     keyword = get_single_keyword(tokens)
     if keyword in ('initial', 'inherit'):
         value = keyword
     else:
-        function = PROPERTIES[name]
         if function.wants_base_url:
             value = function(tokens, base_url)
         else:
@@ -124,7 +129,7 @@ def validate_non_shorthand(tokens, name, base_url=None, required=False):
     return ((name, value),)
 
 
-@property(multiple_values=True)
+@property()
 @comma_separated_list
 @single_keyword
 def background_attachment(keyword):
@@ -177,7 +182,7 @@ def color(token):
         return result
 
 
-@property('background-image', multiple_values=True, wants_base_url=True)
+@property('background-image', wants_base_url=True)
 @comma_separated_list
 @single_token
 def background_image(token, base_url):
@@ -199,7 +204,7 @@ def list_style_image(token, base_url):
             return 'url', parsed_url[1][1]
 
 
-@property(multiple_values=True)
+@property()
 def transform_origin(tokens):
     """``transform-origin`` property validation."""
     if len(tokens) == 3:
@@ -208,21 +213,21 @@ def transform_origin(tokens):
     return parse_2d_position(tokens)
 
 
-@property(multiple_values=True)
+@property()
 @comma_separated_list
 def background_position(tokens):
     """``background-position`` property validation."""
     return parse_position(tokens)
 
 
-@property(multiple_values=True)
+@property()
 @comma_separated_list
 def object_position(tokens):
     """``object-position`` property validation."""
     return parse_position(tokens)
 
 
-@property(multiple_values=True)
+@property()
 @comma_separated_list
 def background_repeat(tokens):
     """``background-repeat`` property validation."""
@@ -239,7 +244,7 @@ def background_repeat(tokens):
         return keywords
 
 
-@property(multiple_values=True)
+@property()
 @comma_separated_list
 def background_size(tokens):
     """Validation for ``background-size``."""
@@ -265,8 +270,8 @@ def background_size(tokens):
             return tuple(values)
 
 
-@property('background-clip', multiple_values=True)
-@property('background-origin', multiple_values=True)
+@property('background-clip')
+@property('background-origin')
 @comma_separated_list
 @single_keyword
 def box(keyword):
@@ -275,7 +280,7 @@ def box(keyword):
     return keyword in ('border-box', 'padding-box', 'content-box')
 
 
-@property(multiple_values=True)
+@property()
 def border_spacing(tokens):
     """Validator for the `border-spacing` property."""
     lengths = [get_length(token, negative=False) for token in tokens]
@@ -286,10 +291,10 @@ def border_spacing(tokens):
             return tuple(lengths)
 
 
-@property('border-top-right-radius', multiple_values=True)
-@property('border-bottom-right-radius', multiple_values=True)
-@property('border-bottom-left-radius', multiple_values=True)
-@property('border-top-left-radius', multiple_values=True)
+@property('border-top-right-radius')
+@property('border-bottom-right-radius')
+@property('border-bottom-left-radius')
+@property('border-top-left-radius')
 def border_corner_radius(tokens):
     """Validator for the `border-*-radius` properties."""
     lengths = [
@@ -395,7 +400,7 @@ def bleed(token):
         return get_length(token)
 
 
-@property(unstable=True, multiple_values=True)
+@property(unstable=True)
 def marks(tokens):
     """``marks`` property validation."""
     if len(tokens) == 2:
@@ -497,7 +502,7 @@ def clip(token):
         return ()
 
 
-@property(multiple_values=True, wants_base_url=True)
+@property(wants_base_url=True)
 def content(tokens, base_url):
     """``content`` property validation."""
     # See https://www.w3.org/TR/css-content-3/#content-property
@@ -629,7 +634,7 @@ def direction(keyword):
     return keyword in ('ltr', 'rtl')
 
 
-@property(multiple_values=True)
+@property()
 def display(tokens):
     """``display`` property validation."""
     for token in tokens:
@@ -682,7 +687,7 @@ def float_(keyword):  # XXX do not hide the "float" builtin
     return keyword in ('left', 'right', 'footnote', 'none')
 
 
-@property(multiple_values=True)
+@property()
 @comma_separated_list
 def font_family(tokens):
     """``font-family`` property validation."""
@@ -784,7 +789,7 @@ def font_variant_numeric(tokens):
         return tuple(values)
 
 
-@property(multiple_values=True)
+@property()
 def font_feature_settings(tokens):
     """``font-feature-settings`` property validation."""
     if len(tokens) == 1 and get_keyword(tokens[0]) == 'normal':
@@ -854,7 +859,7 @@ def font_variant_east_asian(tokens):
         return tuple(values)
 
 
-@property(multiple_values=True)
+@property()
 def font_variation_settings(tokens):
     """``font-variation-settings`` property validation."""
     if len(tokens) == 1 and get_keyword(tokens[0]) == 'normal':
@@ -1101,7 +1106,7 @@ def position(token):
         return keyword
 
 
-@property(multiple_values=True)
+@property()
 def quotes(tokens):
     """``quotes`` property validation."""
     if (tokens and len(tokens) % 2 == 0 and
@@ -1430,7 +1435,7 @@ def hyphenate_limit_zone(token):
     return get_length(token, negative=False, percentage=True)
 
 
-@property(unstable=True, multiple_values=True)
+@property(unstable=True)
 def hyphenate_limit_chars(tokens):
     """Validation for ``hyphenate-limit-chars``."""
     if len(tokens) == 1:
@@ -1486,7 +1491,7 @@ def lang(token):
         return ('string', token.value)
 
 
-@property(unstable=True, multiple_values=True, wants_base_url=True)
+@property(unstable=True, wants_base_url=True)
 def bookmark_label(tokens, base_url):
     """Validation for ``bookmark-label``."""
     parsed_tokens = tuple(
@@ -1528,7 +1533,7 @@ def footnote_policy(keyword):
     return keyword in ('auto', 'line', 'block')
 
 
-@property(unstable=True, multiple_values=True, wants_base_url=True)
+@property(unstable=True, wants_base_url=True)
 @comma_separated_list
 def string_set(tokens, base_url):
     """Validation for ``string-set``."""

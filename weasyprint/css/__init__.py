@@ -23,14 +23,14 @@ from .. import CSS
 from ..logger import LOGGER, PROGRESS_LOGGER
 from ..urls import URLFetchingError, get_url_attribute, url_join
 from . import counters, media_queries
-from .computed_values import (
-    COMPUTER_FUNCTIONS, ZERO_PIXELS, compute_var, resolve_var)
+from .computed_values import COMPUTER_FUNCTIONS, ZERO_PIXELS, resolve_var
 from .properties import INHERITED, INITIAL_NOT_COMPUTED, INITIAL_VALUES
 from .utils import (
     InvalidValues, check_var_function, get_url, remove_whitespace)
 from .validation import preprocess_declarations
 from .validation.descriptors import preprocess_descriptors
 from .validation.expanders import PendingExpander
+from .validation.properties import PendingProperty
 
 # Reject anything not in here:
 PSEUDO_ELEMENTS = (
@@ -166,18 +166,6 @@ class StyleFor:
         computed_styles[element, pseudo_type] = computed_from_cascaded(
             element, cascaded, parent_style, pseudo_type, root_style, base_url,
             target_collector)
-
-        # The style of marker is deleted when display is different from
-        # list-item.
-        if pseudo_type is None:
-            for pseudo in (None, 'before', 'after'):
-                pseudo_style = cascaded_styles.get((element, pseudo), {})
-                if 'display' in pseudo_style:
-                    if 'list-item' in pseudo_style['display'][0]:
-                        break
-            else:
-                if (element, 'marker') in cascaded_styles:
-                    del cascaded_styles[element, 'marker']
 
     def add_page_declarations(self, page_type):
         for sheet, origin, sheet_specificity in self._sheets:
@@ -681,27 +669,49 @@ class ComputedStyle(dict):
 
         if key in self.cascaded:
             # Property defined in cascaded properties.
-            keyword, computed = compute_var(key, self, parent_style)
-            value = keyword
+            value = self.cascaded[key][0]
         else:
             # Property not defined in cascaded properties, define as inherited
             # or initial value.
-            computed = False
             if key in INHERITED or key[:2] == '__':
-                keyword = 'inherit'
+                value = 'inherit'
             else:
-                keyword = 'initial'
+                value = 'initial'
 
-        if keyword == 'inherit' and parent_style is None:
+        if value == 'inherit' and parent_style is None:
             # On the root element, 'inherit' from initial values
-            keyword = 'initial'
+            value = 'initial'
 
-        if keyword == 'initial':
-            value = None if key[:2] == '__' else INITIAL_VALUES[key]
+        if isinstance(value, (PendingProperty, PendingExpander)):
+            # Property with pending values, validate them.
+            solved_tokens = []
+            for token in value.tokens:
+                if variable := check_var_function(token):
+                    variable_name, default = variable[1]
+                    tokens = resolve_var(
+                        self, variable_name, default, parent_style)
+                    solved_tokens.extend(tokens)
+                else:
+                    solved_tokens.append(token)
+            original_key = key.replace('_', '-')
+            try:
+                value = value.solve(solved_tokens, original_key)
+            except InvalidValues:
+                if key in INHERITED:
+                    # Values in parent_style are already computed.
+                    self[key] = value = parent_style[key]
+                else:
+                    value = INITIAL_VALUES[key]
+                    if key not in INITIAL_NOT_COMPUTED:
+                        # The value is the same as when computed.
+                        self[key] = value
+
+        if value == 'initial':
+            value = [] if key[:2] == '__' else INITIAL_VALUES[key]
             if key not in INITIAL_NOT_COMPUTED:
                 # The value is the same as when computed.
                 self[key] = value
-        elif keyword == 'inherit':
+        elif value == 'inherit':
             # Values in parent_style are already computed.
             self[key] = value = parent_style[key]
 
@@ -731,35 +741,7 @@ class ComputedStyle(dict):
             # Value already computed and saved: return.
             return self[key]
 
-        if isinstance(value, PendingExpander):
-            # Expander with pending values, validate them.
-            computed = False
-            solved_tokens = []
-            for token in value.tokens:
-                variable = check_var_function(token)
-                if variable:
-                    variable_name, default = variable[1]
-                    tokens = resolve_var(
-                        self, variable_name, default, parent_style)
-                    solved_tokens.extend(tokens)
-                else:
-                    solved_tokens.append(token)
-            original_key = key.replace('_', '-')
-            try:
-                value = value.solve(solved_tokens, original_key)
-            except InvalidValues:
-                if key in INHERITED:
-                    # Values in parent_style are already computed.
-                    self[key] = value = parent_style[key]
-                    return value
-                else:
-                    value = INITIAL_VALUES[key]
-                    if key not in INITIAL_NOT_COMPUTED:
-                        # The value is the same as when computed.
-                        self[key] = value
-                        return value
-
-        if not computed and key in COMPUTER_FUNCTIONS:
+        if key in COMPUTER_FUNCTIONS:
             # Value not computed yet: compute.
             value = COMPUTER_FUNCTIONS[key](self, key, value)
 

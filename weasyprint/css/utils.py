@@ -507,7 +507,7 @@ def check_var_function(token):
 
         # TODO: we should check authorized tokens
         # https://drafts.csswg.org/css-syntax-3/#typedef-declaration-value
-        return ('var()', (ident.value.replace('-', '_'), args or None))
+        return ('var()', (ident.value.replace('-', '_'), args))
 
 
 def get_string(token):

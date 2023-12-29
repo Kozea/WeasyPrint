@@ -1,7 +1,6 @@
 """Convert specified property values into computed values."""
 
 from collections import OrderedDict
-from contextlib import suppress
 from math import pi
 from urllib.parse import unquote
 
@@ -11,13 +10,10 @@ from ..logger import LOGGER
 from ..text.ffi import ffi, pango, units_to_double
 from ..text.line_break import Layout, first_line_metrics
 from ..urls import get_link_attribute
-from .properties import (
-    INHERITED, INITIAL_NOT_COMPUTED, INITIAL_VALUES, Dimension)
+from .properties import INITIAL_VALUES, Dimension
 from .utils import (
     ANGLE_TO_RADIANS, LENGTH_UNITS, LENGTHS_TO_PIXELS, check_var_function,
     safe_urljoin)
-from .validation.expanders import PendingExpander
-from .validation.properties import MULTIVAL_PROPERTIES, PROPERTIES
 
 ZERO_PIXELS = Dimension(0, 'px')
 
@@ -210,72 +206,6 @@ def register_computer(name):
         COMPUTER_FUNCTIONS[name] = function
         return function
     return decorator
-
-
-def compute_var(name, computed_style, parent_style):
-    original_values = computed_style.cascaded[name][0]
-    validation_name = name.replace('_', '-')
-    multiple_values = validation_name in MULTIVAL_PROPERTIES
-
-    if isinstance(original_values, PendingExpander):
-        return original_values, False
-
-    if multiple_values:
-        # Property with multiple values.
-        values = list(original_values)
-    else:
-        # Property with single value, put in a list.
-        values = [original_values]
-
-    # Find variables.
-    variables = {
-        i: value[1] for i, value in enumerate(values)
-        if value and isinstance(value, tuple) and value[0] == 'var()'}
-    if not variables:
-        # No variable, return early.
-        return original_values, False
-
-    if name in INHERITED and parent_style:
-        computed = True
-        default_values = parent_style[name]
-    else:
-        computed = name not in INITIAL_NOT_COMPUTED
-        default_values = INITIAL_VALUES[name]
-
-    # Replace variables by real values.
-    validator = PROPERTIES[validation_name]
-    for i, variable in variables.items():
-        variable_name, default = variable
-        value = resolve_var(
-            computed_style, variable_name, default, parent_style)
-        if value is None:
-            LOGGER.warning(
-                'Unknown variable %r set for property %r.',
-                variable_name.replace('_', '-'), validation_name)
-            return default_values, computed
-        values[i:i+1] = value
-
-    # Validate value.
-    original_values = values
-    if validator.wants_base_url:
-        values = validator(values, computed_style.base_url)
-    else:
-        values = validator(values)
-
-    if values is None:
-        # Invalid variable value, see
-        # https://www.w3.org/TR/css-variables-1/#invalid-variables.
-        with suppress(BaseException):
-            original_values = ''.join(
-                token.serialize() for token in original_values)
-        LOGGER.warning(
-            'Unsupported computed value "%s" set in variable %r '
-            'for property %r.', original_values,
-            variable_name.replace('_', '-'), validation_name)
-        return default_values, computed
-
-    computed = False
-    return values, computed
 
 
 def compute_attr(style, values):

@@ -166,7 +166,7 @@ def preprocess_declarations(base_url, declarations):
             validation_error('debug', 'prefixed selectors are ignored')
             continue
 
-        expander = EXPANDERS.get(name, validate_non_shorthand)
+        validator = EXPANDERS.get(name, validate_non_shorthand)
         tokens = remove_whitespace(declaration.value)
         try:
             # Having no tokens is allowed by grammar but refused by all
@@ -174,7 +174,7 @@ def preprocess_declarations(base_url, declarations):
             if not tokens:
                 raise InvalidValues('no value')
             # Use list() to consume generators now and catch any error.
-            result = list(expander(tokens, name, base_url))
+            result = list(validator(tokens, name, base_url))
         except InvalidValues as exc:
             validation_error(
                 'warning',
