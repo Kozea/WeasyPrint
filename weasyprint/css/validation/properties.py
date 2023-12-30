@@ -8,15 +8,14 @@ from math import inf
 
 from tinycss2.color3 import parse_color
 
-from ...logger import LOGGER
 from .. import computed_values
 from ..properties import KNOWN_PROPERTIES, Dimension
 from ..utils import (
-    InvalidValues, check_var_function, comma_separated_list, get_angle,
-    get_content_list, get_content_list_token, get_custom_ident, get_image,
-    get_keyword, get_length, get_resolution, get_single_keyword, get_url,
-    parse_2d_position, parse_function, parse_position, remove_whitespace,
-    single_keyword, single_token)
+    InvalidValues, Pending, check_var_function, comma_separated_list,
+    get_angle, get_content_list, get_content_list_token, get_custom_ident,
+    get_image, get_keyword, get_length, get_resolution, get_single_keyword,
+    get_url, parse_2d_position, parse_function, parse_position,
+    remove_whitespace, single_keyword, single_token)
 
 PREFIX = '-weasy-'
 PROPRIETARY = set()
@@ -30,25 +29,10 @@ UNSTABLE = set()
 PROPERTIES = {}
 
 
-class PendingProperty:
+class PendingProperty(Pending):
     """Property with validation done when defining calculated values."""
-    def __init__(self, tokens, name):
-        self.tokens = tokens
-        self.name = name
-
-    def solve(self, tokens, wanted_key):
-        """Get validated value."""
-        try:
-            return validate_non_shorthand(tokens, self.name)[0][1]
-        except InvalidValues as exc:
-            source_line = self.tokens[0].source_line
-            source_column = self.tokens[0].source_column
-            value = ' '.join(token.serialize() for token in tokens)
-            message = (exc.args and exc.args[0]) or 'invalid value'
-            LOGGER.warning(
-                'Ignored `%s: %s` at %d:%d, %s.',
-                self.name, value, source_line, source_column, message)
-            raise exc
+    def validate(self, tokens, wanted_key):
+        return validate_non_shorthand(tokens, self.name)[0][1]
 
 
 # Validators

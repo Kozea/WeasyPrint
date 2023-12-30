@@ -5,11 +5,10 @@ import functools
 from tinycss2.ast import DimensionToken, IdentToken, NumberToken
 from tinycss2.color3 import parse_color
 
-from ...logger import LOGGER
 from ..properties import INITIAL_VALUES
 from ..utils import (
-    InvalidValues, check_var_function, get_keyword, get_single_keyword,
-    split_on_comma)
+    InvalidValues, Pending, check_var_function, get_keyword,
+    get_single_keyword, split_on_comma)
 from .descriptors import expand_font_variant
 from .properties import (
     background_attachment, background_image, background_position,
@@ -23,35 +22,18 @@ from .properties import (
 EXPANDERS = {}
 
 
-class PendingExpander:
+class PendingExpander(Pending):
     """Expander with validation done when defining calculated values."""
-    # See https://drafts.csswg.org/css-variables-2/#variables-in-shorthands.
     def __init__(self, tokens, validator):
-        self.tokens = tokens
+        super().__init__(tokens, validator.keywords['name'])
         self.validator = validator
-        self._reported_error = False
 
-    def solve(self, tokens, wanted_key):
-        """Get validated value for wanted key."""
-        try:
-            for key, value in self.validator(tokens):
-                if key.startswith('-'):
-                    key = f'{self.validator.keywords["name"]}{key}'
-                if key == wanted_key:
-                    return value
-        except InvalidValues as exc:
-            if self._reported_error:
-                raise exc
-            prop = self.validator.keywords['name']
-            source_line = self.tokens[0].source_line
-            source_column = self.tokens[0].source_column
-            value = ' '.join(token.serialize() for token in tokens)
-            message = (exc.args and exc.args[0]) or 'invalid value'
-            LOGGER.warning(
-                'Ignored `%s: %s` at %d:%d, %s.',
-                prop, value, source_line, source_column, message)
-            self._reported_error = True
-            raise exc
+    def validate(self, tokens, wanted_key):
+        for key, value in self.validator(tokens):
+            if key.startswith('-'):
+                key = f'{self.validator.keywords["name"]}{key}'
+            if key == wanted_key:
+                return value
         raise KeyError
 
 

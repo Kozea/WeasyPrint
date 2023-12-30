@@ -25,12 +25,9 @@ from ..urls import URLFetchingError, get_url_attribute, url_join
 from . import counters, media_queries
 from .computed_values import COMPUTER_FUNCTIONS, ZERO_PIXELS, resolve_var
 from .properties import INHERITED, INITIAL_NOT_COMPUTED, INITIAL_VALUES
-from .utils import (
-    InvalidValues, check_var_function, get_url, remove_whitespace)
+from .utils import InvalidValues, Pending, get_url, remove_whitespace
 from .validation import preprocess_declarations
 from .validation.descriptors import preprocess_descriptors
-from .validation.expanders import PendingExpander
-from .validation.properties import PendingProperty
 
 # Reject anything not in here:
 PSEUDO_ELEMENTS = (
@@ -682,17 +679,15 @@ class ComputedStyle(dict):
             # On the root element, 'inherit' from initial values
             value = 'initial'
 
-        if isinstance(value, (PendingProperty, PendingExpander)):
+        if isinstance(value, Pending):
             # Property with pending values, validate them.
             solved_tokens = []
             for token in value.tokens:
-                if variable := check_var_function(token):
-                    variable_name, default = variable[1]
-                    tokens = resolve_var(
-                        self, variable_name, default, parent_style)
-                    solved_tokens.extend(tokens)
-                else:
+                tokens = resolve_var(self, token, parent_style)
+                if tokens is None:
                     solved_tokens.append(token)
+                else:
+                    solved_tokens.extend(tokens)
             original_key = key.replace('_', '-')
             try:
                 value = value.solve(solved_tokens, original_key)

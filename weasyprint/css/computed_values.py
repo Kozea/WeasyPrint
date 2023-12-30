@@ -13,7 +13,7 @@ from ..urls import get_link_attribute
 from .properties import INITIAL_VALUES, Dimension
 from .utils import (
     ANGLE_TO_RADIANS, LENGTH_UNITS, LENGTHS_TO_PIXELS, check_var_function,
-    safe_urljoin)
+    parse_function, safe_urljoin)
 
 ZERO_PIXELS = Dimension(0, 'px')
 
@@ -147,34 +147,41 @@ COMPUTING_ORDER = _computing_order()
 COMPUTER_FUNCTIONS = {}
 
 
-def resolve_var(computed, variable_name, default, parent_style):
-    known_variable_names = [variable_name]
+def resolve_var(computed, token, parent_style):
+    if not check_var_function(token):
+        return
 
-    computed_value = computed[variable_name]
-    if computed_value and len(computed_value) == 1:
-        value = computed_value[0]
-        if value.type == 'ident' and value.value == 'initial':
-            return default
+    if token.lower_name != 'var':
+        for i, argument in enumerate(token.arguments.copy()):
+            if argument.type == 'function' and argument.lower_name == 'var':
+                token.arguments[i:i+1] = resolve_var(
+                    computed, argument, parent_style)
+        return resolve_var(computed, token, parent_style)
 
-    computed_value = computed.get(variable_name, default)
+    default = None  # just for the linter
+    known_variable_names = set()
+    computed_value = (token,)
     while (computed_value and
             isinstance(computed_value, tuple)
             and len(computed_value) == 1):
-        var_function = check_var_function(computed_value[0])
-        if var_function:
-            new_variable_name, new_default = var_function[1]
-            if new_variable_name in known_variable_names:
+        value = computed_value[0]
+        if value.type == 'ident' and value.value == 'initial':
+            return default
+        if check_var_function(value):
+            args = parse_function(value)[1]
+            variable_name = args.pop(0).value.replace('-', '_')
+            if variable_name in known_variable_names:
                 computed_value = default
                 break
-            known_variable_names.append(new_variable_name)
-            default = new_default
-            computed_value = computed[new_variable_name]
+            known_variable_names.add(variable_name)
+            default = args
+            computed_value = computed[variable_name]
             if computed_value is not None:
                 continue
             if parent_style is None:
-                computed_value = new_default
+                computed_value = default
             else:
-                computed_value = parent_style[new_variable_name] or new_default
+                computed_value = parent_style[variable_name] or default
         else:
             break
     return computed_value

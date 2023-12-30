@@ -379,3 +379,97 @@ def test_variable_list_font(var, font):
     line, = div.children
     text, = line.children
     assert text.width == 4
+
+
+@assert_no_logs
+def test_variable_in_function():
+    page, = render_pages('''
+      <style>
+        html { --var: title }
+        h1 { counter-increment: var(--var) }
+        div::before { content: counter(var(--var)) }
+      </style>
+      <section>
+        <h1></h1>
+        <div></div>
+        <h1></h1>
+        <div></div>
+      </section>
+    ''')
+    html, = page.children
+    body, = html.children
+    section, = body.children
+    h11, div1, h12, div2 = section.children
+    assert div1.children[0].children[0].children[0].text == '1'
+    assert div2.children[0].children[0].children[0].text == '2'
+
+
+@assert_no_logs
+def test_variable_in_function_multiple_values():
+    page, = render_pages('''
+      <style>
+        html { --name: title; --counter: title, upper-roman }
+        h1 { counter-increment: var(--name) }
+        div::before { content: counter(var(--counter)) }
+      </style>
+      <section>
+        <h1></h1>
+        <div></div>
+        <h1></h1>
+        <div></div>
+      </section>
+    ''')
+    html, = page.children
+    body, = html.children
+    section, = body.children
+    h11, div1, h12, div2 = section.children
+    assert div1.children[0].children[0].children[0].text == 'I'
+    assert div2.children[0].children[0].children[0].text == 'II'
+
+
+@assert_no_logs
+def test_variable_in_variable_in_function():
+    page, = render_pages('''
+      <style>
+        html { --name: title; --counter: var(--name), upper-roman }
+        h1 { counter-increment: var(--name) }
+        div::before { content: counter(var(--counter)) }
+      </style>
+      <section>
+        <h1></h1>
+        <div></div>
+        <h1></h1>
+        <div></div>
+      </section>
+    ''')
+    html, = page.children
+    body, = html.children
+    section, = body.children
+    h11, div1, h12, div2 = section.children
+    assert div1.children[0].children[0].children[0].text == 'I'
+    assert div2.children[0].children[0].children[0].text == 'II'
+
+
+def test_variable_in_function_missing():
+    with capture_logs() as logs:
+        page, = render_pages('''
+          <style>
+            h1 { counter-increment: var(--var) }
+            div::before { content: counter(var(--var)) }
+          </style>
+          <section>
+            <h1></h1>
+            <div></div>
+            <h1></h1>
+            <div></div>
+          </section>
+        ''')
+        assert len(logs) == 2
+        assert 'no value' in logs[0]
+        assert 'invalid value' in logs[1]
+    html, = page.children
+    body, = html.children
+    section, = body.children
+    h11, div1, h12, div2 = section.children
+    assert not div1.children
+    assert not div2.children
