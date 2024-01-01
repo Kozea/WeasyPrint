@@ -4,6 +4,7 @@ from collections import OrderedDict
 from math import pi
 from urllib.parse import unquote
 
+from tinycss2.ast import FunctionBlock
 from tinycss2.color3 import parse_color
 
 from ..logger import LOGGER
@@ -152,11 +153,15 @@ def resolve_var(computed, token, parent_style):
         return
 
     if token.lower_name != 'var':
-        for i, argument in enumerate(token.arguments.copy()):
+        arguments = []
+        for i, argument in enumerate(token.arguments):
             if argument.type == 'function' and argument.lower_name == 'var':
-                token.arguments[i:i+1] = resolve_var(
-                    computed, argument, parent_style)
-        return resolve_var(computed, token, parent_style)
+                arguments.extend(resolve_var(computed, argument, parent_style))
+            else:
+                arguments.append(argument)
+        token = FunctionBlock(
+            token.source_line, token.source_column, token.name, arguments)
+        return resolve_var(computed, token, parent_style) or (token,)
 
     default = None  # just for the linter
     known_variable_names = set()

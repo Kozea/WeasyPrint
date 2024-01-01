@@ -417,14 +417,17 @@ def test_variable_in_function_multiple_values():
         <div></div>
         <h1></h1>
         <div></div>
+        <h1></h1>
+        <div style="--counter: var(--name), lower-roman"></div>
       </section>
     ''')
     html, = page.children
     body, = html.children
     section, = body.children
-    h11, div1, h12, div2 = section.children
+    h11, div1, h12, div2, h13, div3 = section.children
     assert div1.children[0].children[0].children[0].text == 'I'
     assert div2.children[0].children[0].children[0].text == 'II'
+    assert div3.children[0].children[0].children[0].text == 'iii'
 
 
 @assert_no_logs
@@ -440,14 +443,17 @@ def test_variable_in_variable_in_function():
         <div></div>
         <h1></h1>
         <div></div>
+        <h1></h1>
+        <div style="--counter: var(--name), lower-roman"></div>
       </section>
     ''')
     html, = page.children
     body, = html.children
     section, = body.children
-    h11, div1, h12, div2 = section.children
+    h11, div1, h12, div2, h13, div3 = section.children
     assert div1.children[0].children[0].children[0].text == 'I'
     assert div2.children[0].children[0].children[0].text == 'II'
+    assert div3.children[0].children[0].children[0].text == 'iii'
 
 
 def test_variable_in_function_missing():
