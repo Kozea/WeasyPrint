@@ -1,22 +1,20 @@
 """Convert specified property values into computed values."""
 
 from collections import OrderedDict
-from contextlib import suppress
 from math import pi
 from urllib.parse import unquote
 
+from tinycss2.ast import FunctionBlock
 from tinycss2.color3 import parse_color
 
 from ..logger import LOGGER
 from ..text.ffi import ffi, pango, units_to_double
 from ..text.line_break import Layout, first_line_metrics
 from ..urls import get_link_attribute
-from .properties import (
-    INHERITED, INITIAL_NOT_COMPUTED, INITIAL_VALUES, Dimension)
+from .properties import INITIAL_VALUES, Dimension
 from .utils import (
     ANGLE_TO_RADIANS, LENGTH_UNITS, LENGTHS_TO_PIXELS, check_var_function,
-    safe_urljoin)
-from .validation.properties import MULTIVAL_PROPERTIES, PROPERTIES
+    parse_function, safe_urljoin)
 
 ZERO_PIXELS = Dimension(0, 'px')
 
@@ -150,34 +148,45 @@ COMPUTING_ORDER = _computing_order()
 COMPUTER_FUNCTIONS = {}
 
 
-def _resolve_var(computed, variable_name, default, parent_style):
-    known_variable_names = [variable_name]
+def resolve_var(computed, token, parent_style):
+    if not check_var_function(token):
+        return
 
-    computed_value = computed[variable_name]
-    if computed_value and len(computed_value) == 1:
-        value = computed_value[0]
-        if value.type == 'ident' and value.value == 'initial':
-            return default
+    if token.lower_name != 'var':
+        arguments = []
+        for i, argument in enumerate(token.arguments):
+            if argument.type == 'function' and argument.lower_name == 'var':
+                arguments.extend(resolve_var(computed, argument, parent_style))
+            else:
+                arguments.append(argument)
+        token = FunctionBlock(
+            token.source_line, token.source_column, token.name, arguments)
+        return resolve_var(computed, token, parent_style) or (token,)
 
-    computed_value = computed.get(variable_name, default)
+    default = None  # just for the linter
+    known_variable_names = set()
+    computed_value = (token,)
     while (computed_value and
             isinstance(computed_value, tuple)
             and len(computed_value) == 1):
-        var_function = check_var_function(computed_value[0])
-        if var_function:
-            new_variable_name, new_default = var_function[1]
-            if new_variable_name in known_variable_names:
+        value = computed_value[0]
+        if value.type == 'ident' and value.value == 'initial':
+            return default
+        if check_var_function(value):
+            args = parse_function(value)[1]
+            variable_name = args.pop(0).value.replace('-', '_')
+            if variable_name in known_variable_names:
                 computed_value = default
                 break
-            known_variable_names.append(new_variable_name)
-            default = new_default
-            computed_value = computed[new_variable_name]
+            known_variable_names.add(variable_name)
+            default = args
+            computed_value = computed[variable_name]
             if computed_value is not None:
                 continue
             if parent_style is None:
-                computed_value = new_default
+                computed_value = default
             else:
-                computed_value = parent_style[new_variable_name] or new_default
+                computed_value = parent_style[variable_name] or default
         else:
             break
     return computed_value
@@ -209,77 +218,6 @@ def register_computer(name):
         COMPUTER_FUNCTIONS[name] = function
         return function
     return decorator
-
-
-def compute_var(name, computed_style, parent_style):
-    original_values = computed_style.cascaded[name][0]
-    validation_name = name.replace('_', '-')
-    multiple_values = validation_name in MULTIVAL_PROPERTIES
-
-    if multiple_values:
-        # Property with multiple values.
-        values = original_values
-    else:
-        # Property with single value, put in a list.
-        values = [original_values]
-
-    # Find variables.
-    variables = {
-        i: value[1] for i, value in enumerate(values)
-        if value and isinstance(value, tuple) and value[0] == 'var()'}
-    if not variables:
-        # No variable, return early.
-        return original_values, False
-
-    if not multiple_values:
-        # Don’t modify original list of values.
-        values = values.copy()
-
-    if name in INHERITED and parent_style:
-        inherited = True
-        computed = True
-    else:
-        inherited = False
-        computed = name not in INITIAL_NOT_COMPUTED
-
-    # Replace variables by real values.
-    validator = PROPERTIES[validation_name]
-    for i, variable in variables.items():
-        variable_name, default = variable
-        value = _resolve_var(
-            computed_style, variable_name, default, parent_style)
-
-        if value is not None:
-            # Validate value.
-            if validator.wants_base_url:
-                value = validator(value, computed_style.base_url)
-            else:
-                value = validator(value)
-
-        if value is None:
-            # Invalid variable value, see
-            # https://www.w3.org/TR/css-variables-1/#invalid-variables.
-            with suppress(BaseException):
-                value = ''.join(token.serialize() for token in value)
-            LOGGER.warning(
-                'Unsupported computed value "%s" set in variable %r '
-                'for property %r.', value, variable_name.replace('_', '-'),
-                validation_name)
-            values[i] = (parent_style if inherited else INITIAL_VALUES)[name]
-        elif multiple_values:
-            # Replace original variable by possibly multiple validated values.
-            values[i:i+1] = value
-            computed = False
-        else:
-            # Save variable by single validated value.
-            values[i] = value
-            computed = False
-
-    if not multiple_values:
-        # Property with single value, unpack list.
-        values, = values
-
-    return values, computed
 
 
 def compute_attr(style, values):

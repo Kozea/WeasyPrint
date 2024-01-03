@@ -11,16 +11,15 @@ from tinycss2.color3 import parse_color
 from .. import computed_values
 from ..properties import KNOWN_PROPERTIES, Dimension
 from ..utils import (
-    InvalidValues, check_var_function, comma_separated_list, get_angle,
-    get_content_list, get_content_list_token, get_custom_ident, get_image,
-    get_keyword, get_length, get_resolution, get_single_keyword, get_url,
-    parse_2d_position, parse_function, parse_position, remove_whitespace,
-    single_keyword, single_token)
+    InvalidValues, Pending, check_var_function, comma_separated_list,
+    get_angle, get_content_list, get_content_list_token, get_custom_ident,
+    get_image, get_keyword, get_length, get_resolution, get_single_keyword,
+    get_url, parse_2d_position, parse_function, parse_position,
+    remove_whitespace, single_keyword, single_token)
 
 PREFIX = '-weasy-'
 PROPRIETARY = set()
 UNSTABLE = set()
-MULTIVAL_PROPERTIES = set()
 
 # Yes/no validators for non-shorthand properties
 # Maps property names to functions taking a property name and a value list,
@@ -30,10 +29,16 @@ MULTIVAL_PROPERTIES = set()
 PROPERTIES = {}
 
 
+class PendingProperty(Pending):
+    """Property with validation done when defining calculated values."""
+    def validate(self, tokens, wanted_key):
+        return validate_non_shorthand(tokens, self.name)[0][1]
+
+
 # Validators
 
 def property(property_name=None, proprietary=False, unstable=False,
-             multiple_values=False, wants_base_url=False):
+             wants_base_url=False):
     """Decorator adding a function to the ``PROPERTIES``.
 
     The name of the property covered by the decorated function is set to
@@ -69,14 +74,12 @@ def property(property_name=None, proprietary=False, unstable=False,
             PROPRIETARY.add(name)
         if unstable:
             UNSTABLE.add(name)
-        if multiple_values:
-            MULTIVAL_PROPERTIES.add(name)
         return function
     return decorator
 
 
-def validate_non_shorthand(name, tokens, base_url=None, required=False):
-    """Default validator for non-shorthand properties."""
+def validate_non_shorthand(tokens, name, base_url=None, required=False):
+    """Validator for non-shorthand properties."""
     if name.startswith('--'):
         # TODO: validate content
         return ((name, tokens),)
@@ -91,17 +94,16 @@ def validate_non_shorthand(name, tokens, base_url=None, required=False):
     if not required and name not in PROPERTIES:
         raise InvalidValues('property not supported yet')
 
-    if name not in MULTIVAL_PROPERTIES:
-        for token in tokens:
-            var_function = check_var_function(token)
-            if var_function:
-                return ((name, var_function),)
+    function = PROPERTIES[name]
+    for token in tokens:
+        if check_var_function(token):
+            # Found CSS variable, return pending-substitution values.
+            return ((name, PendingProperty(tokens, name)),)
 
     keyword = get_single_keyword(tokens)
     if keyword in ('initial', 'inherit'):
         value = keyword
     else:
-        function = PROPERTIES[name]
         if function.wants_base_url:
             value = function(tokens, base_url)
         else:
@@ -484,7 +486,7 @@ def clip(token):
         return ()
 
 
-@property(multiple_values=True, wants_base_url=True)
+@property(wants_base_url=True)
 def content(tokens, base_url):
     """``content`` property validation."""
     # See https://www.w3.org/TR/css-content-3/#content-property

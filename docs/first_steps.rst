@@ -9,7 +9,7 @@ Installation
 
 WeasyPrint |version| depends on:
 
-* Python_ ≥ 3.7.0
+* Python_ ≥ 3.8.0
 * Pango_ ≥ 1.44.0
 * pydyf_ ≥ 0.6.0
 * CFFI_ ≥ 0.6
