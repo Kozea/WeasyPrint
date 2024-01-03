@@ -1,10 +1,8 @@
 """Convert specified property values into computed values."""
 
-from collections import OrderedDict
 from math import pi
 from urllib.parse import unquote
 
-from tinycss2.ast import FunctionBlock
 from tinycss2.color3 import parse_color
 
 from ..logger import LOGGER
@@ -13,8 +11,7 @@ from ..text.line_break import Layout, first_line_metrics
 from ..urls import get_link_attribute
 from .properties import INITIAL_VALUES, Dimension
 from .utils import (
-    ANGLE_TO_RADIANS, LENGTH_UNITS, LENGTHS_TO_PIXELS, check_var_function,
-    parse_function, safe_urljoin)
+    ANGLE_TO_RADIANS, LENGTH_UNITS, LENGTHS_TO_PIXELS, safe_urljoin)
 
 ZERO_PIXELS = Dimension(0, 'px')
 
@@ -22,19 +19,19 @@ ZERO_PIXELS = Dimension(0, 'px')
 # Value in pixels of font-size for <absolute-size> keywords: 12pt (16px) for
 # medium, and scaling factors given in CSS3 for others:
 # https://www.w3.org/TR/css-fonts-3/#font-size-prop
-FONT_SIZE_KEYWORDS = OrderedDict(
+FONT_SIZE_KEYWORDS = {
     # medium is 16px, others are a ratio of medium
-    (name, INITIAL_VALUES['font_size'] * a / b)
-    for name, a, b in (
-        ('xx-small', 3, 5),
-        ('x-small', 3, 4),
-        ('small', 8, 9),
-        ('medium', 1, 1),
-        ('large', 6, 5),
-        ('x-large', 3, 2),
-        ('xx-large', 2, 1),
+    name: INITIAL_VALUES['font_size'] * factor
+    for name, factor in (
+        ('xx-small', 3 / 5),
+        ('x-small', 3 / 4),
+        ('small', 8 / 9),
+        ('medium', 1),
+        ('large', 6 / 5),
+        ('x-large', 3 / 2),
+        ('xx-large', 2),
     )
-)
+}
 
 # These are unspecified, other than 'thin' <= 'medium' <= 'thick'.
 # Values are in pixels.
@@ -46,8 +43,8 @@ BORDER_WIDTH_KEYWORDS = {
 assert INITIAL_VALUES['border_top_width'] == BORDER_WIDTH_KEYWORDS['medium']
 
 # https://www.w3.org/TR/CSS21/fonts.html#propdef-font-weight
-FONT_WEIGHT_RELATIVE = dict(
-    bolder={
+FONT_WEIGHT_RELATIVE = {
+    'bolder': {
         100: 400,
         200: 400,
         300: 400,
@@ -58,7 +55,7 @@ FONT_WEIGHT_RELATIVE = dict(
         800: 900,
         900: 900,
     },
-    lighter={
+    'lighter': {
         100: 100,
         200: 100,
         300: 100,
@@ -69,131 +66,75 @@ FONT_WEIGHT_RELATIVE = dict(
         800: 700,
         900: 700,
     },
-)
+}
 
 # https://www.w3.org/TR/css-page-3/#size
-# name=(width in pixels, height in pixels)
 PAGE_SIZES = {
-    'a10': (Dimension(26, 'mm'), Dimension(37, 'mm'),),
-    'a9': (Dimension(37, 'mm'), Dimension(52, 'mm')),
-    'a8': (Dimension(52, 'mm'), Dimension(74, 'mm')),
-    'a7': (Dimension(74, 'mm'), Dimension(105, 'mm')),
-    'a6': (Dimension(105, 'mm'), Dimension(148, 'mm')),
-    'a5': (Dimension(148, 'mm'), Dimension(210, 'mm')),
-    'a4': (Dimension(210, 'mm'), Dimension(297, 'mm')),
-    'a3': (Dimension(297, 'mm'), Dimension(420, 'mm')),
-    'a2': (Dimension(420, 'mm'), Dimension(594, 'mm')),
-    'a1': (Dimension(594, 'mm'), Dimension(841, 'mm')),
-    'a0': (Dimension(841, 'mm'), Dimension(1189, 'mm')),
-    'b10': (Dimension(31, 'mm'), Dimension(44, 'mm')),
-    'b9': (Dimension(44, 'mm'), Dimension(62, 'mm')),
-    'b8': (Dimension(62, 'mm'), Dimension(88, 'mm')),
-    'b7': (Dimension(88, 'mm'), Dimension(125, 'mm')),
-    'b6': (Dimension(125, 'mm'), Dimension(176, 'mm')),
-    'b5': (Dimension(176, 'mm'), Dimension(250, 'mm')),
-    'b4': (Dimension(250, 'mm'), Dimension(353, 'mm')),
-    'b3': (Dimension(353, 'mm'), Dimension(500, 'mm')),
-    'b2': (Dimension(500, 'mm'), Dimension(707, 'mm')),
-    'b1': (Dimension(707, 'mm'), Dimension(1000, 'mm')),
-    'b0': (Dimension(1000, 'mm'), Dimension(1414, 'mm')),
-    'c10': (Dimension(28, 'mm'), Dimension(40, 'mm')),
-    'c9': (Dimension(40, 'mm'), Dimension(57, 'mm')),
-    'c8': (Dimension(57, 'mm'), Dimension(81, 'mm')),
-    'c7': (Dimension(81, 'mm'), Dimension(114, 'mm')),
-    'c6': (Dimension(114, 'mm'), Dimension(162, 'mm')),
-    'c5': (Dimension(162, 'mm'), Dimension(229, 'mm')),
-    'c4': (Dimension(229, 'mm'), Dimension(324, 'mm')),
-    'c3': (Dimension(324, 'mm'), Dimension(458, 'mm')),
-    'c2': (Dimension(458, 'mm'), Dimension(648, 'mm')),
-    'c1': (Dimension(648, 'mm'), Dimension(917, 'mm')),
-    'c0': (Dimension(917, 'mm'), Dimension(1297, 'mm')),
-    'jis-b10': (Dimension(32, 'mm'), Dimension(45, 'mm')),
-    'jis-b9': (Dimension(45, 'mm'), Dimension(64, 'mm')),
-    'jis-b8': (Dimension(64, 'mm'), Dimension(91, 'mm')),
-    'jis-b7': (Dimension(91, 'mm'), Dimension(128, 'mm')),
-    'jis-b6': (Dimension(128, 'mm'), Dimension(182, 'mm')),
-    'jis-b5': (Dimension(182, 'mm'), Dimension(257, 'mm')),
-    'jis-b4': (Dimension(257, 'mm'), Dimension(364, 'mm')),
-    'jis-b3': (Dimension(364, 'mm'), Dimension(515, 'mm')),
-    'jis-b2': (Dimension(515, 'mm'), Dimension(728, 'mm')),
-    'jis-b1': (Dimension(728, 'mm'), Dimension(1030, 'mm')),
-    'jis-b0': (Dimension(1030, 'mm'), Dimension(1456, 'mm')),
-    'letter': (Dimension(8.5, 'in'), Dimension(11, 'in')),
-    'legal': (Dimension(8.5, 'in'), Dimension(14, 'in')),
-    'ledger': (Dimension(11, 'in'), Dimension(17, 'in')),
+    page_size: (Dimension(width, unit), Dimension(height, unit))
+    for page_size, width, height, unit in (
+        ('a10', 26, 37, 'mm'),
+        ('a9', 37, 52, 'mm'),
+        ('a8', 52, 74, 'mm'),
+        ('a7', 74, 105, 'mm'),
+        ('a6', 105, 148, 'mm'),
+        ('a5', 148, 210, 'mm'),
+        ('a4', 210, 297, 'mm'),
+        ('a3', 297, 420, 'mm'),
+        ('a2', 420, 594, 'mm'),
+        ('a1', 594, 841, 'mm'),
+        ('a0', 841, 1189, 'mm'),
+        ('b10', 31, 44, 'mm'),
+        ('b9', 44, 62, 'mm'),
+        ('b8', 62, 88, 'mm'),
+        ('b7', 88, 125, 'mm'),
+        ('b6', 125, 176, 'mm'),
+        ('b5', 176, 250, 'mm'),
+        ('b4', 250, 353, 'mm'),
+        ('b3', 353, 500, 'mm'),
+        ('b2', 500, 707, 'mm'),
+        ('b1', 707, 1000, 'mm'),
+        ('b0', 1000, 1414, 'mm'),
+        ('c10', 28, 40, 'mm'),
+        ('c9', 40, 57, 'mm'),
+        ('c8', 57, 81, 'mm'),
+        ('c7', 81, 114, 'mm'),
+        ('c6', 114, 162, 'mm'),
+        ('c5', 162, 229, 'mm'),
+        ('c4', 229, 324, 'mm'),
+        ('c3', 324, 458, 'mm'),
+        ('c2', 458, 648, 'mm'),
+        ('c1', 648, 917, 'mm'),
+        ('c0', 917, 1297, 'mm'),
+        ('jis-b10', 32, 45, 'mm'),
+        ('jis-b9', 45, 64, 'mm'),
+        ('jis-b8', 64, 91, 'mm'),
+        ('jis-b7', 91, 128, 'mm'),
+        ('jis-b6', 128, 182, 'mm'),
+        ('jis-b5', 182, 257, 'mm'),
+        ('jis-b4', 257, 364, 'mm'),
+        ('jis-b3', 364, 515, 'mm'),
+        ('jis-b2', 515, 728, 'mm'),
+        ('jis-b1', 728, 1030, 'mm'),
+        ('jis-b0', 1030, 1456, 'mm'),
+        ('letter', 8.5, 11, 'in'),
+        ('legal', 8.5, 14, 'in'),
+        ('ledger', 11, 17, 'in'),
+    )
 }
 # In "portrait" orientation.
-for w, h in PAGE_SIZES.values():
-    assert w.value < h.value
+assert all(width.value < height.value for width, height in PAGE_SIZES.values())
 
 INITIAL_PAGE_SIZE = PAGE_SIZES['a4']
 INITIAL_VALUES['size'] = tuple(
-    d.value * LENGTHS_TO_PIXELS[d.unit] for d in INITIAL_PAGE_SIZE)
+    size.value * LENGTHS_TO_PIXELS[size.unit] for size in INITIAL_PAGE_SIZE)
 
-
-def _computing_order():
-    """Some computed values are required by others, so order matters."""
-    first = [
-        'font_stretch', 'font_weight', 'font_family', 'font_variant',
-        'font_style', 'font_size', 'line_height', 'marks']
-    order = sorted(INITIAL_VALUES)
-    for name in first:
-        order.remove(name)
-    return tuple(first + order)
-
-
-COMPUTING_ORDER = _computing_order()
 
 # Maps property names to functions returning the computed values
 COMPUTER_FUNCTIONS = {}
 
 
-def resolve_var(computed, token, parent_style):
-    if not check_var_function(token):
-        return
-
-    if token.lower_name != 'var':
-        arguments = []
-        for i, argument in enumerate(token.arguments):
-            if argument.type == 'function' and argument.lower_name == 'var':
-                arguments.extend(resolve_var(computed, argument, parent_style))
-            else:
-                arguments.append(argument)
-        token = FunctionBlock(
-            token.source_line, token.source_column, token.name, arguments)
-        return resolve_var(computed, token, parent_style) or (token,)
-
-    default = None  # just for the linter
-    known_variable_names = set()
-    computed_value = (token,)
-    while (computed_value and
-            isinstance(computed_value, tuple)
-            and len(computed_value) == 1):
-        value = computed_value[0]
-        if value.type == 'ident' and value.value == 'initial':
-            return default
-        if check_var_function(value):
-            args = parse_function(value)[1]
-            variable_name = args.pop(0).value.replace('-', '_')
-            if variable_name in known_variable_names:
-                computed_value = default
-                break
-            known_variable_names.add(variable_name)
-            default = args
-            computed_value = computed[variable_name]
-            if computed_value is not None:
-                continue
-            if parent_style is None:
-                computed_value = default
-            else:
-                computed_value = parent_style[variable_name] or default
-        else:
-            break
-    return computed_value
-
-
-def _font_style_cache_key(style):
-    return str((
+def _font_style_cache_key(style, include_size=False):
+    key = str((
         style['font_family'],
         style['font_style'],
         style['font_stretch'],
@@ -206,7 +147,12 @@ def _font_style_cache_key(style):
         style['font_variant_east_asian'],
         style['font_feature_settings'],
         style['font_variation_settings'],
+        style['font_language_override'],
+        style['lang'],
     ))
+    if include_size:
+        key += str(style['font_size']) + str(style['line_height'])
+    return key
 
 
 def register_computer(name):
@@ -225,9 +171,6 @@ def compute_attr(style, values):
     func_name, value = values
     assert func_name == 'attr()'
     attr_name, type_or_unit, fallback = value
-    # style.element sometimes is None
-    # style.element sometimes is a 'PageType' object without .get()
-    # so wrapt the .get() into try and return None instead of crashing
     try:
         attr_value = style.element.get(attr_name, fallback)
         if type_or_unit == 'string':
@@ -296,18 +239,15 @@ def length_or_percentage_tuple(style, name, values):
 @register_computer('clip')
 def length_tuple(style, name, values):
     """Compute the properties with a list of lengths."""
-    return tuple(length(style, name, value, pixels_only=True)
-                 for value in values)
+    return tuple(
+        length(style, name, value, pixels_only=True) for value in values)
 
 
 @register_computer('break-after')
 @register_computer('break-before')
 def break_before_after(style, name, value):
     """Compute the ``break-before`` and ``break-after`` properties."""
-    if value == 'always':
-        return 'page'
-    else:
-        return value
+    return 'page' if value == 'always' else value
 
 
 @register_computer('top')
@@ -371,10 +311,7 @@ def length(style, name, value, font_size=None, pixels_only=False):
 @register_computer('bleed-bottom')
 def bleed(style, name, value):
     if value == 'auto':
-        if 'crop' in style['marks']:
-            return Dimension(8, 'px')  # 6pt
-        else:
-            return Dimension(0, 'px')
+        return Dimension(8 if 'crop' in style['marks'] else 0, 'px')
     else:
         return length(style, name, value)
 
@@ -461,8 +398,7 @@ def _content_list(style, values):
             computed_value = compute_attr(style, value)
         elif value[0] in (
                 'counter()', 'counters()', 'content()', 'element()',
-                'string()',
-        ):
+                'string()'):
             # Other values need layout context, their computed value cannot be
             # better than their specified value yet.
             # See build.compute_content_list.
@@ -475,8 +411,7 @@ def _content_list(style, values):
                 if attr is None:
                     computed_value = None
                 else:
-                    computed_value = (value[0], (
-                        (attr,) + value[1][1:]))
+                    computed_value = (value[0], ((attr,) + value[1][1:]))
             else:
                 computed_value = value
         if computed_value is None:
@@ -517,11 +452,8 @@ def content(style, name, values):
 
 @register_computer('display')
 def display(style, name, value):
-    """Compute the ``display`` property.
-
-    See https://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
-
-    """
+    """Compute the ``display`` property."""
+    # See https://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo.
     float_ = style.specified['float']
     position = style.specified['position']
     if position in ('absolute', 'fixed') or float_ != 'none' or (
@@ -540,11 +472,8 @@ def display(style, name, value):
 
 @register_computer('float')
 def compute_float(style, name, value):
-    """Compute the ``float`` property.
-
-    See https://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
-
-    """
+    """Compute the ``float`` property."""
+    # See https://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo.
     position = style.specified['position']
     if position in ('absolute', 'fixed') or position[0] == 'running()':
         return 'none'
@@ -645,20 +574,17 @@ def lang(style, name, values):
     if values == 'none':
         return None
     else:
-        type_, key = values
-        if type_ == 'attr()':
+        name, key = values
+        if name == 'attr()':
             return style.element.get(key) or None
-        elif type_ == 'string':
+        elif name == 'string':
             return key
 
 
 @register_computer('tab-size')
 def tab_size(style, name, value):
     """Compute the ``tab-size`` property."""
-    if isinstance(value, int):
-        return value
-    else:
-        return length(style, name, value)
+    return value if isinstance(value, int) else length(style, name, value)
 
 
 @register_computer('transform')
@@ -677,8 +603,8 @@ def vertical_align(style, name, value):
     """Compute the ``vertical-align`` property."""
     # Use +/- half an em for super and sub, same as Pango.
     # (See the SUPERSUB_RISE constant in pango-markup.c)
-    if value in ('baseline', 'middle', 'text-top', 'text-bottom',
-                 'top', 'bottom'):
+    if value in (
+            'baseline', 'middle', 'text-top', 'text-bottom', 'top', 'bottom'):
         return value
     elif value == 'super':
         return style['font_size'] * 0.5
@@ -706,16 +632,11 @@ def strut_layout(style, context=None):
     The baseline is given from the top edge of line height.
 
     """
-    # TODO: always get the real value for `context`? (if we really care…)
-
     if style['font_size'] == 0:
         return 0, 0
 
     if context:
-        key = (
-            style['font_size'], style['font_language_override'], style['lang'],
-            tuple(style['font_family']), style['font_style'],
-            style['font_stretch'], style['font_weight'], style['line_height'])
+        key = _font_style_cache_key(style, include_size=True)
         if key in context.strut_layouts:
             return context.strut_layouts[key]
 

@@ -17,15 +17,18 @@ from logging import DEBUG, WARNING
 
 import cssselect2
 import tinycss2
+import tinycss2.ast
 import tinycss2.nth
 
 from .. import CSS
 from ..logger import LOGGER, PROGRESS_LOGGER
 from ..urls import URLFetchingError, get_url_attribute, url_join
 from . import counters, media_queries
-from .computed_values import COMPUTER_FUNCTIONS, ZERO_PIXELS, resolve_var
+from .computed_values import COMPUTER_FUNCTIONS, ZERO_PIXELS
 from .properties import INHERITED, INITIAL_NOT_COMPUTED, INITIAL_VALUES
-from .utils import InvalidValues, Pending, get_url, remove_whitespace
+from .utils import (
+    InvalidValues, Pending, check_var_function, get_url, parse_function,
+    remove_whitespace)
 from .validation import preprocess_declarations
 from .validation.descriptors import preprocess_descriptors
 
@@ -587,6 +590,51 @@ def declaration_precedence(origin, importance):
     else:
         assert origin == 'user'  # and importance
         return 5
+
+
+def resolve_var(computed, token, parent_style):
+    """Return token with resolved CSS variables."""
+    if not check_var_function(token):
+        return
+
+    if token.lower_name != 'var':
+        arguments = []
+        for i, argument in enumerate(token.arguments):
+            if argument.type == 'function' and argument.lower_name == 'var':
+                arguments.extend(resolve_var(computed, argument, parent_style))
+            else:
+                arguments.append(argument)
+        token = tinycss2.ast.FunctionBlock(
+            token.source_line, token.source_column, token.name, arguments)
+        return resolve_var(computed, token, parent_style) or (token,)
+
+    default = None  # just for the linter
+    known_variable_names = set()
+    computed_value = (token,)
+    while (computed_value and
+            isinstance(computed_value, tuple)
+            and len(computed_value) == 1):
+        value = computed_value[0]
+        if value.type == 'ident' and value.value == 'initial':
+            return default
+        if check_var_function(value):
+            args = parse_function(value)[1]
+            variable_name = args.pop(0).value.replace('-', '_')
+            if variable_name in known_variable_names:
+                computed_value = default
+                break
+            known_variable_names.add(variable_name)
+            default = args
+            computed_value = computed[variable_name]
+            if computed_value is not None:
+                continue
+            if parent_style is None:
+                computed_value = default
+            else:
+                computed_value = parent_style[variable_name] or default
+        else:
+            break
+    return computed_value
 
 
 class AnonymousStyle(dict):
