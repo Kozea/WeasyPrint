@@ -28,9 +28,9 @@ def expand_to_dict(css, expected_error=None):
     else:
         assert not logs
 
-    return dict(
-        (name, value) for name, value, _priority in declarations
-        if value != 'initial')
+    return {
+        name: value for name, value, _priority in declarations
+        if value != 'initial'}
 
 
 def assert_invalid(css, message='invalid'):

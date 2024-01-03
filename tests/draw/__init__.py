@@ -10,26 +10,26 @@ from ..testing_utils import FakeHTML, resource_filename
 
 # NOTE: "r" is not half red on purpose. In the pixel strings it has
 # better contrast with "B" than does "R". eg. "rBBBrrBrB" vs "RBBBRRBRB".
-PIXELS_BY_CHAR = dict(
-    _=(255, 255, 255),  # white
-    R=(255, 0, 0),  # red
-    B=(0, 0, 255),  # blue
-    G=(0, 255, 0),  # lime green
-    V=(191, 0, 64),  # average of 1*B and 3*R.
-    S=(255, 63, 63),  # R above R above _
-    K=(0, 0, 0),  # black
-    r=(255, 0, 0),  # red
-    g=(0, 128, 0),  # half green
-    b=(0, 0, 128),  # half blue
-    v=(128, 0, 128),  # average of B and R.
-    s=(255, 127, 127),  # R above _
-    t=(127, 255, 127),  # G above _
-    u=(128, 0, 127),  # r above B above _
-    h=(64, 0, 64),  # half average of B and R.
-    a=(0, 0, 254),  # R in lossy JPG
-    p=(192, 0, 63),  # R above R above B above _
-    z=None,
-)
+PIXELS_BY_CHAR = {
+    '_': (255, 255, 255),  # white
+    'R': (255, 0, 0),  # red
+    'B': (0, 0, 255),  # blue
+    'G': (0, 255, 0),  # lime green
+    'V': (191, 0, 64),  # average of 1*B and 3*R
+    'S': (255, 63, 63),  # R above R above _
+    'K': (0, 0, 0),  # black
+    'r': (255, 0, 0),  # red
+    'g': (0, 128, 0),  # half green
+    'b': (0, 0, 128),  # half blue
+    'v': (128, 0, 128),  # average of B and R
+    's': (255, 127, 127),  # R above _
+    't': (127, 255, 127),  # G above _
+    'u': (128, 0, 127),  # r above B above _
+    'h': (64, 0, 64),  # half average of B and R
+    'a': (0, 0, 254),  # R in lossy JPG
+    'p': (192, 0, 63),  # R above R above B above _
+    'z': None,
+}
 
 
 def parse_pixels(pixels):

@@ -840,12 +840,12 @@ def test_margin_box_string_set_2():
               @top-center { content: string(text_header) }
             }
             p {
-              string-set: text_header content(%(content_val)s);
+              string-set: text_header content(%s);
             }
-            %(extra_style)s
+            %s
           </style>
           <p>first assignment</p>
-        ''' % dict(content_val=content_val, extra_style=extra_style))
+        ''' % (content_val, extra_style))
 
         html, top_center = page_1.children
         line_box, = top_center.children

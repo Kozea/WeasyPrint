@@ -1014,16 +1014,17 @@ def collapse_table_borders(table, grid_width, grid_height):
         # Don’t bother with empty tables
         return [], []
 
-    style_scores = dict((v, i) for i, v in enumerate(reversed([
-        'hidden', 'double', 'solid', 'dashed', 'dotted', 'ridge',
-        'outset', 'groove', 'inset', 'none'])))
+    styles = reversed([
+        'hidden', 'double', 'solid', 'dashed', 'dotted', 'ridge', 'outset',
+        'groove', 'inset', 'none'])
+    style_scores = {style: score for score, style in enumerate(styles)}
     style_map = {'inset': 'ridge', 'outset': 'groove'}
     weak_null_border = (
         (0, 0, style_scores['none']), ('none', 0, TRANSPARENT))
-    vertical_borders = [[weak_null_border for x in range(grid_width + 1)]
-                        for y in range(grid_height)]
-    horizontal_borders = [[weak_null_border for x in range(grid_width)]
-                          for y in range(grid_height + 1)]
+    vertical_borders = [
+        [weak_null_border] * (grid_width + 1) for _ in range(grid_height)]
+    horizontal_borders = [
+        [weak_null_border] * grid_width for _ in range(grid_height + 1)]
 
     def set_one_border(border_grid, box_style, side, grid_x, grid_y):
         from ..draw import get_color
