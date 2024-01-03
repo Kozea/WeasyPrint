@@ -10,7 +10,7 @@ import unicodedata
 import tinycss2.color3
 
 from .. import html
-from ..css import computed_values, properties, targets
+from ..css import properties, targets
 from ..logger import LOGGER
 from . import boxes
 
@@ -361,7 +361,7 @@ def marker_to_box(element, state, parent_style, style_for, get_image_from_uri,
             translate_x = properties.Dimension(-100, '%')
         else:
             translate_x = properties.Dimension(100, '%')
-        translate_y = computed_values.ZERO_PIXELS
+        translate_y = properties.ZERO_PIXELS
         marker_box.style['transform'] = (
             ('translate', (translate_x, translate_y)),)
     else:

@@ -9,7 +9,7 @@ from math import inf
 from tinycss2.color3 import parse_color
 
 from .. import computed_values
-from ..properties import KNOWN_PROPERTIES, Dimension
+from ..properties import KNOWN_PROPERTIES, ZERO_PIXELS, Dimension
 from ..utils import (
     InvalidValues, Pending, check_var_function, comma_separated_list,
     get_angle, get_content_list, get_content_list_token, get_custom_ident,
@@ -1557,11 +1557,9 @@ def transform(tokens):
                 elif name == 'skewy' and angle is not None:
                     transforms.append(('skew', (0, angle)))
                 elif name in ('translatex', 'translate') and length:
-                    transforms.append((
-                        'translate', (length, computed_values.ZERO_PIXELS)))
+                    transforms.append(('translate', (length, ZERO_PIXELS)))
                 elif name == 'translatey' and length:
-                    transforms.append((
-                        'translate', (computed_values.ZERO_PIXELS, length)))
+                    transforms.append(('translate', (ZERO_PIXELS, length)))
                 elif name == 'scalex' and args[0].type == 'number':
                     transforms.append(('scale', (args[0].value, 1)))
                 elif name == 'scaley' and args[0].type == 'number':

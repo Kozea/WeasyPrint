@@ -24,8 +24,9 @@ from .. import CSS
 from ..logger import LOGGER, PROGRESS_LOGGER
 from ..urls import URLFetchingError, get_url_attribute, url_join
 from . import counters, media_queries
-from .computed_values import COMPUTER_FUNCTIONS, ZERO_PIXELS
-from .properties import INHERITED, INITIAL_NOT_COMPUTED, INITIAL_VALUES
+from .computed_values import COMPUTER_FUNCTIONS
+from .properties import (
+    INHERITED, INITIAL_NOT_COMPUTED, INITIAL_VALUES, ZERO_PIXELS)
 from .utils import (
     InvalidValues, Pending, check_var_function, get_url, parse_function,
     remove_whitespace)

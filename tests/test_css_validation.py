@@ -6,8 +6,7 @@ import pytest
 import tinycss2
 from tinycss2.color3 import parse_color
 from weasyprint.css import preprocess_declarations
-from weasyprint.css.computed_values import ZERO_PIXELS
-from weasyprint.css.properties import INITIAL_VALUES
+from weasyprint.css.properties import INITIAL_VALUES, ZERO_PIXELS
 from weasyprint.css.validation.expanders import EXPANDERS
 from weasyprint.css.validation.properties import PROPERTIES
 from weasyprint.images import LinearGradient, RadialGradient
