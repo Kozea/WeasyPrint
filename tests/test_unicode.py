@@ -13,10 +13,10 @@ def test_unicode(assert_pixels_equal, tmp_path):
       @page { size: 200px 50px }
       p { color: blue }
     '''
-    expected_width, expected_height, expected_lines = html_to_pixels('''
-      <style>{0}</style>
-      <p><img src="pattern.png"> {1}</p>
-    '''.format(style, text))
+    expected_width, expected_height, expected_lines = html_to_pixels(f'''
+      <style>{style}</style>
+      <p><img src="pattern.png"> {text}</p>
+    ''')
 
     stylesheet = tmp_path / 'style.css'
     image = tmp_path / 'pattern.png'

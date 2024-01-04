@@ -43,7 +43,7 @@ def test_box_tree():
 @assert_no_logs
 def test_html_entities():
     for quote in ['"', '&quot;', '&#x22;', '&#34;']:
-        assert_tree(parse('<p>{0}abc{1}'.format(quote, quote)), [
+        assert_tree(parse(f'<p>{quote}abc{quote}'), [
             ('p', 'Block', [
                 ('p', 'Text', '"abc"')])])
 
@@ -1112,7 +1112,7 @@ def test_page_counters():
         html, bottom_center = page.children
         line_box, = bottom_center.children
         text_box, = line_box.children
-        assert text_box.text == 'Page {0} of 3.'.format(page_number)
+        assert text_box.text == f'Page {page_number} of 3.'
 
 
 black = (0, 0, 0, 1)

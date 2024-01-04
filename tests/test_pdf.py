@@ -577,18 +577,18 @@ def test_embedded_files_attachments(tmp_path):
     relative_tmp_path.write_bytes(relative_data)
 
     pdf = FakeHTML(
-        string='''
+        string=f'''
           <title>Test document</title>
           <meta charset="utf-8">
           <link
             rel="attachment"
             title="some file attachment äöü"
             href="data:,hi%20there">
-          <link rel="attachment" href="{0}">
-          <link rel="attachment" href="{1}">
+          <link rel="attachment" href="{absolute_url}">
+          <link rel="attachment" href="{relative_tmp_path.name}">
           <h1>Heading 1</h1>
           <h2>Heading 2</h2>
-        '''.format(absolute_url, relative_tmp_path.name),
+        ''',
         base_url=tmp_path,
     ).write_pdf(
         attachments=[
@@ -597,7 +597,7 @@ def test_embedded_files_attachments(tmp_path):
             io.BytesIO(b'file like obj')
         ]
     )
-    assert '<{}>'.format(hashlib.md5(b'hi there').hexdigest()).encode() in pdf
+    assert f'<{hashlib.md5(b"hi there").hexdigest()}>'.encode() in pdf
     assert b'/F ()' in pdf
     assert b'/UF (attachment.bin)' in pdf
     name = BOM_UTF16_BE + 'some file attachment äöü'.encode('utf-16-be')
@@ -626,7 +626,7 @@ def test_attachments_data():
       <meta charset="utf-8">
       <link rel="attachment" href="data:,some data">
     ''').write_pdf()
-    md5 = '<{}>'.format(hashlib.md5(b'some data').hexdigest()).encode()
+    md5 = f'<{hashlib.md5(b"some data").hexdigest()}>'.encode()
     assert md5 in pdf
     assert b'EmbeddedFiles' in pdf
 
@@ -640,7 +640,7 @@ def test_attachments_data_with_anchor():
       <h1 id="title">Title</h1>
       <a href="#title">example</a>
     ''').write_pdf()
-    md5 = '<{}>'.format(hashlib.md5(b'some data').hexdigest()).encode()
+    md5 = f'<{hashlib.md5(b"some data").hexdigest()}>'.encode()
     assert md5 in pdf
     assert b'EmbeddedFiles' in pdf
 
@@ -713,6 +713,6 @@ def test_bleed(style, media, bleed, trim):
       <style>@page { %s }</style>
       <body>test
     ''' % style).write_pdf()
-    assert '/MediaBox [{} {} {} {}]'.format(*media).encode() in pdf
-    assert '/BleedBox [{} {} {} {}]'.format(*bleed).encode() in pdf
-    assert '/TrimBox [{} {} {} {}]'.format(*trim).encode() in pdf
+    assert f'/MediaBox {str(media).replace(",", "")}'.encode() in pdf
+    assert f'/BleedBox {str(bleed).replace(",", "")}'.encode() in pdf
+    assert f'/TrimBox {str(trim).replace(",", "")}'.encode() in pdf
