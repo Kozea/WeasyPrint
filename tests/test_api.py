@@ -6,7 +6,6 @@ import os
 import sys
 import unicodedata
 import zlib
-from contextlib import chdir
 from functools import partial
 from pathlib import Path
 from urllib.parse import urljoin, uses_relative
@@ -20,6 +19,25 @@ from weasyprint.urls import path2url
 from .draw import parse_pixels
 from .testing_utils import (
     FakeHTML, assert_no_logs, capture_logs, http_server, resource_path)
+
+try:
+    # Available in Python 3.11+
+    from contextlib import chdir
+except ImportError:
+    # Backported from Python 3.11
+    from contextlib import AbstractContextManager
+
+    class chdir(AbstractContextManager):
+        def __init__(self, path):
+            self.path = path
+            self._old_cwd = []
+
+        def __enter__(self):
+            self._old_cwd.append(os.getcwd())
+            os.chdir(self.path)
+
+        def __exit__(self, *excinfo):
+            os.chdir(self._old_cwd.pop())
 
 
 def _test_resource(class_, name, check, **kwargs):
