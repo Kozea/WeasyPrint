@@ -5,7 +5,6 @@ import logging
 import platform
 import sys
 from functools import partial
-from warnings import warn
 
 import pydyf
 
@@ -64,8 +63,7 @@ class Parser(argparse.ArgumentParser):
         return ''.join(data)
 
 
-PARSER = Parser(
-    prog='weasyprint', description='Render web pages to PDF.')
+PARSER = Parser(prog='weasyprint', description='Render web pages to PDF.')
 PARSER.add_argument(
     'input', help='URL or filename of the HTML input, or - for stdin')
 PARSER.add_argument(
@@ -134,10 +132,6 @@ PARSER.add_argument(
     '-i', '--info', action=PrintInfo, nargs=0,
     help='print system information and exit')
 PARSER.add_argument(
-    '-O', '--optimize-size', action='append',
-    help='deprecated, use other options instead',
-    choices=('images', 'fonts', 'hinting', 'pdf', 'all', 'none'))
-PARSER.add_argument(
     '-t', '--timeout', type=int,
     help='Set timeout in seconds for HTTP requests')
 PARSER.set_defaults(**DEFAULT_OPTIONS)
@@ -167,38 +161,11 @@ def main(argv=None, stdout=None, stdin=None, HTML=HTML):
     else:
         output = args.output
 
-    # TODO: to be removed when --optimize-size is removed
-    optimize_size = {'fonts', 'hinting', 'pdf'}
-    if args.optimize_size is not None:
-        warn(
-            'The --optimize-size option is now deprecated '
-            'and will be removed in next version. '
-            'Please use the other options available in --help instead.',
-            category=FutureWarning)
-        for arg in args.optimize_size:
-            if arg == 'none':
-                optimize_size.clear()
-            elif arg == 'all':
-                optimize_size |= {'images', 'fonts', 'hinting', 'pdf'}
-            else:
-                optimize_size.add(arg)
-    del args.optimize_size
-
     url_fetcher = default_url_fetcher
     if args.timeout is not None:
         url_fetcher = partial(default_url_fetcher, timeout=args.timeout)
 
     options = vars(args)
-
-    # TODO: to be removed when --optimize-size is removed
-    if 'images' in optimize_size:
-        options['optimize_images'] = True
-    if 'fonts' not in optimize_size:
-        options['full_fonts'] = True
-    if 'hinting' not in optimize_size:
-        options['hinting'] = True
-    if 'pdf' not in optimize_size:
-        options['uncompressed_pdf'] = True
 
     # Default to logging to stderr.
     if args.debug:
