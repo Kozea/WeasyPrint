@@ -133,7 +133,8 @@ class HTML:
 
     :param str encoding:
         Force the source character encoding.
-    :param str base_url:
+    :type base_url: str or pathlib.Path
+    :param base_url:
         The base used to resolve relative URLs (e.g. in
         ``<img src="../foo.png">``). If not provided, try to use the input
         filename, URL, or ``name`` attribute of
@@ -156,6 +157,8 @@ class HTML:
             'Step 1 - Fetching and parsing HTML - %s',
             guess or filename or url or
             getattr(file_obj, 'name', 'HTML string'))
+        if isinstance(base_url, Path):
+            base_url = str(base_url)
         result = _select_source(
             guess, filename, url, file_obj, string, base_url, url_fetcher)
         with result as (source_type, source, base_url, protocol_encoding):
