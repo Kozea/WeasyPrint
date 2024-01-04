@@ -10,7 +10,7 @@ are images with intrinsic dimensions.
 try:
     # Available in Python 3.9+
     from importlib.resources import files
-except ImportError:
+except ImportError:  # pragma: no cover
     # Deprecated in Python 3.11+
     from importlib.resources import read_text
 else:

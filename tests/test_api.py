@@ -504,26 +504,26 @@ def test_partial_pdf_custom_metadata():
 
 
 @pytest.mark.parametrize('html, fields', (
-    (b'<input>', [b'/Tx', b'/V ()']),
-    (b'<input value="">', [b'/Tx', b'/V ()']),
-    (b'<input type="checkbox">', [b'/Btn']),
-    (b'<textarea></textarea>', [b'/Tx', b'/V ()']),
-    (b'<select><option value="a">A</option></select>', [b'/Ch', b'/Opt']),
-    (b'<select>'
-     b'<option value="a">A</option>'
-     b'<option value="b" selected>B</option>'
-     b'</select>', [b'/Ch', b'/Opt', b'/V (b)']),
-    (b'<select multiple>'
-     b'<option value="a">A</option>'
-     b'<option value="b" selected>B</option>'
-     b'<option value="c" selected>C</option>'
-     b'</select>', [b'/Ch', b'/Opt', b'[(b) (c)]']),
+    ('<input>', ['/Tx', '/V ()']),
+    ('<input value="">', ['/Tx', '/V ()']),
+    ('<input type="checkbox">', ['/Btn']),
+    ('<textarea></textarea>', ['/Tx', '/V ()']),
+    ('<select><option value="a">A</option></select>', ['/Ch', '/Opt']),
+    ('<select>'
+     '<option value="a">A</option>'
+     '<option value="b" selected>B</option>'
+     '</select>', ['/Ch', '/Opt', '/V (b)']),
+    ('<select multiple>'
+     '<option value="a">A</option>'
+     '<option value="b" selected>B</option>'
+     '<option value="c" selected>C</option>'
+     '</select>', ['/Ch', '/Opt', '[(b) (c)]']),
 ))
 def test_pdf_inputs(html, fields):
-    stdout = _run('--pdf-forms --uncompressed-pdf - -', html)
+    stdout = _run('--pdf-forms --uncompressed-pdf - -', html.encode())
     assert b'AcroForm' in stdout
-    assert all(field in stdout for field in fields)
-    stdout = _run('--uncompressed-pdf - -', html)
+    assert all(field.encode() in stdout for field in fields)
+    stdout = _run('--uncompressed-pdf - -', html.encode())
     assert b'AcroForm' not in stdout
 
 
@@ -538,6 +538,11 @@ def test_appearance(css, with_forms, without_forms):
         b'AcroForm' in _run('--pdf-forms --uncompressed-pdf - -', html))
     assert without_forms is (
         b'AcroForm' in _run(' --uncompressed-pdf - -', html))
+
+
+def test_appearance_non_input():
+    html = '<div style="appearance: auto">'.encode()
+    assert b'AcroForm' not in _run('--pdf-forms --uncompressed-pdf - -', html)
 
 
 def test_reproducible():
