@@ -14,7 +14,7 @@ jobs:
         with:
           python-version: '3.11'
       - name: Use absolute imports and install Pango (MacOS)
-        if: matrix.os == 'macos-11'
+        if: matrix.os == 'macos-latest'
         run: |
           sed -i '' 's/^from \. /from weasyprint /' weasyprint/__main__.py
           sed -i '' 's/^from \./from weasyprint\./' weasyprint/__main__.py
