@@ -7,17 +7,12 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: ['ubuntu-20.04', 'macos-11', 'windows-2019']
+        os: ['macos-11', 'windows-2019']
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-      - name: Use absolute imports
-        if: matrix.os == 'ubuntu-20.04'
-        run: |
-          sed -i 's/^from \. /from weasyprint /' weasyprint/__main__.py
-          sed -i 's/^from \./from weasyprint\./' weasyprint/__main__.py
       - name: Use absolute imports and install Pango (MacOS)
         if: matrix.os == 'macos-11'
         run: |
