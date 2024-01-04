@@ -6,11 +6,11 @@ import os
 import sys
 import unicodedata
 import zlib
+from contextlib import chdir
 from functools import partial
 from pathlib import Path
 from urllib.parse import urljoin, uses_relative
 
-import py
 import pytest
 from PIL import Image
 from weasyprint import CSS, HTML, __main__, default_url_fetcher
@@ -19,44 +19,44 @@ from weasyprint.urls import path2url
 
 from .draw import parse_pixels
 from .testing_utils import (
-    FakeHTML, assert_no_logs, capture_logs, http_server, resource_filename)
+    FakeHTML, assert_no_logs, capture_logs, http_server, resource_path)
 
 
-def _test_resource(class_, basename, check, **kwargs):
+def _test_resource(class_, name, check, **kwargs):
     """Common code for testing the HTML and CSS classes."""
-    absolute_filename = resource_filename(basename)
-    absolute_path = Path(absolute_filename)
-    url = path2url(absolute_filename)
-    check(class_(absolute_filename, **kwargs))
+    absolute_path = resource_path(name)
+    absolute_filename = str(absolute_path)
+    url = path2url(absolute_path)
     check(class_(absolute_path, **kwargs))
-    check(class_(guess=absolute_filename, **kwargs))
+    check(class_(absolute_filename, **kwargs))
     check(class_(guess=absolute_path, **kwargs))
-    check(class_(filename=absolute_filename, **kwargs))
+    check(class_(guess=absolute_filename, **kwargs))
     check(class_(filename=absolute_path, **kwargs))
+    check(class_(filename=absolute_filename, **kwargs))
     check(class_(url, **kwargs))
     check(class_(guess=url, **kwargs))
     url = path2url(absolute_filename.encode())
     check(class_(url=url, **kwargs))
-    with open(absolute_filename, 'rb') as fd:
+    with absolute_path.open('rb') as fd:
         check(class_(fd, **kwargs))
-    with open(absolute_filename, 'rb') as fd:
+    with absolute_path.open('rb') as fd:
         check(class_(guess=fd, **kwargs))
-    with open(absolute_filename, 'rb') as fd:
+    with absolute_path.open('rb') as fd:
         check(class_(file_obj=fd, **kwargs))
-    with open(absolute_filename, 'rb') as fd:
-        content = fd.read()
-    py.path.local(os.path.dirname(__file__)).chdir()
-    relative_filename = os.path.join('resources', basename)
-    relative_path = Path(relative_filename)
-    check(class_(relative_filename, **kwargs))
-    check(class_(relative_path, **kwargs))
-    kwargs.pop('base_url', None)
-    check(class_(string=content, base_url=relative_filename, **kwargs))
-    encoding = kwargs.pop('encoding', 'utf-8')
-    with open(absolute_filename, 'r', encoding=encoding) as fd:
-        check(class_(file_obj=fd, **kwargs))
-    check(class_(string=content.decode(encoding),  # unicode
-                 base_url=relative_filename, **kwargs))
+    content = absolute_path.read_bytes()
+    with chdir(Path(__file__).parent):
+        relative_path = Path('resources') / name
+        relative_filename = str(relative_path)
+        check(class_(relative_path, **kwargs))
+        check(class_(relative_filename, **kwargs))
+        kwargs.pop('base_url', None)
+        check(class_(string=content, base_url=relative_filename, **kwargs))
+        encoding = kwargs.pop('encoding', 'utf-8')
+        with absolute_path.open('r', encoding=encoding) as fd:
+            check(class_(file_obj=fd, **kwargs))
+        check(class_(
+            string=content.decode(encoding), base_url=relative_filename,
+            **kwargs))
     with pytest.raises(TypeError):
         class_(filename='foo', url='bar')
 
@@ -131,18 +131,17 @@ def test_html_parsing():
     _test_resource(
         FakeHTML, 'doc1_UTF-16BE.html', _check_doc1, encoding='UTF-16BE')
 
-    py.path.local(os.path.dirname(__file__)).chdir()
-    filename = os.path.join('resources', 'doc1.html')
-    with open(filename, encoding='utf-8') as fd:
-        string = fd.read()
-    _test_resource(FakeHTML, 'doc1.html', _check_doc1, base_url=filename)
-    _check_doc1(FakeHTML(string=string, base_url=filename))
-    _check_doc1(FakeHTML(string=string), has_base_url=False)
-    string_with_base = string.replace(
-        '<meta', '<base href="resources/"><meta')
-    _check_doc1(FakeHTML(string=string_with_base, base_url='.'))
-    string_with_empty_base = string.replace('<meta', '<base><meta')
-    _check_doc1(FakeHTML(string=string_with_empty_base), has_base_url=False)
+    with chdir(Path(__file__).parent):
+        path = Path('resources') / 'doc1.html'
+        string = path.read_text()
+        _test_resource(FakeHTML, 'doc1.html', _check_doc1, base_url=path)
+        _check_doc1(FakeHTML(string=string, base_url=path))
+        _check_doc1(FakeHTML(string=string), has_base_url=False)
+        string_with_base = string.replace(
+            '<meta', '<base href="resources/"><meta')
+        _check_doc1(FakeHTML(string=string_with_base, base_url='.'))
+        string_with_no_base = string.replace('<meta', '<base><meta')
+        _check_doc1(FakeHTML(string=string_with_no_base), has_base_url=False)
 
 
 @assert_no_logs
@@ -224,9 +223,9 @@ def check_png_pattern(assert_pixels_equal, png_bytes, x2=False, blank=False,
 
 
 @assert_no_logs
-def test_python_render(assert_pixels_equal, tmpdir):
+def test_python_render(assert_pixels_equal, tmp_path):
     """Test rendering with the Python API."""
-    base_url = resource_filename('dummy.html')
+    base_url = str(resource_path('dummy.html'))
     html_string = '<body><img src=pattern.png>'
     css_string = '''
         @page { margin: 2px; size: 8px }
@@ -249,23 +248,23 @@ def test_python_render(assert_pixels_equal, tmpdir):
     assert png_file.getvalue() == png_bytes
     pdf_file = _fake_file()
     html.write_pdf(pdf_file, stylesheets=[css])
-    assert pdf_bytes.startswith(b'%PDF')
+    assert pdf_file.getvalue().startswith(b'%PDF')
 
-    png_file = tmpdir.join('1.png')
-    pdf_file = tmpdir.join('1.pdf')
-    html.write_png(png_file.strpath, stylesheets=[css])
-    html.write_pdf(pdf_file.strpath, stylesheets=[css])
-    assert png_file.read_binary() == png_bytes
-    assert pdf_bytes.startswith(b'%PDF')
+    png_path = tmp_path / '1.png'
+    pdf_path = tmp_path / '1.pdf'
+    html.write_png(png_path, stylesheets=[css])
+    html.write_pdf(pdf_path, stylesheets=[css])
+    assert png_path.read_bytes() == png_bytes
+    assert pdf_path.read_bytes().startswith(b'%PDF')
 
-    png_file = tmpdir.join('2.png')
-    pdf_file = tmpdir.join('2.pdf')
-    with open(png_file.strpath, 'wb') as png_fd:
+    png_path = tmp_path / '2.png'
+    pdf_path = tmp_path / '2.pdf'
+    with png_path.open('wb') as png_fd:
         html.write_png(png_fd, stylesheets=[css])
-    with open(pdf_file.strpath, 'wb') as pdf_fd:
+    with pdf_path.open('wb') as pdf_fd:
         html.write_pdf(pdf_fd, stylesheets=[css])
-    assert png_file.read_binary() == png_bytes
-    assert pdf_bytes.startswith(b'%PDF')
+    assert png_path.read_bytes() == png_bytes
+    assert pdf_path.read_bytes().startswith(b'%PDF')
 
     x2_png_bytes = html.write_png(stylesheets=[css], resolution=192)
     check_png_pattern(assert_pixels_equal, x2_png_bytes, x2=True)
@@ -286,7 +285,7 @@ def test_python_render(assert_pixels_equal, tmpdir):
 
 
 @assert_no_logs
-def test_command_line_render(tmpdir):
+def test_command_line_render(tmp_path):
     css = b'''
         @page { margin: 2px; size: 8px }
         @media screen { img { transform: rotate(-90deg) } }
@@ -297,120 +296,122 @@ def test_command_line_render(tmpdir):
     linked = b'<link rel=stylesheet href=style.css>' + html
     not_optimized = b'<body>a<img src="not-optimized.jpg">'
 
-    tmpdir.chdir()
     for name in ('pattern.png', 'not-optimized.jpg'):
-        pattern_bytes = Path(resource_filename(name)).read_bytes()
-        tmpdir.join(name).write_binary(pattern_bytes)
+        pattern_bytes = resource_path(name).read_bytes()
+        (tmp_path / name).write_bytes(pattern_bytes)
 
-    # Reference
-    html_obj = FakeHTML(
-        string=combined, base_url='dummy.html', force_uncompressed_pdf=False)
-    pdf_bytes = html_obj.write_pdf()
-    rotated_pdf_bytes = FakeHTML(
-        string=combined, base_url='dummy.html',
-        media_type='screen', force_uncompressed_pdf=False).write_pdf()
+    with chdir(tmp_path):
+        # Reference
+        html_obj = FakeHTML(
+            string=combined, base_url='dummy.html',
+            force_uncompressed_pdf=False)
+        pdf_bytes = html_obj.write_pdf()
+        rotated_pdf_bytes = FakeHTML(
+            string=combined, base_url='dummy.html',
+            media_type='screen', force_uncompressed_pdf=False).write_pdf()
 
-    tmpdir.join('no_css.html').write_binary(html)
-    tmpdir.join('combined.html').write_binary(combined)
-    tmpdir.join('combined-UTF-16BE.html').write_binary(
-        combined.decode().encode('UTF-16BE'))
-    tmpdir.join('linked.html').write_binary(linked)
-    tmpdir.join('not_optimized.html').write_binary(not_optimized)
-    tmpdir.join('style.css').write_binary(css)
+        (tmp_path / 'no_css.html').write_bytes(html)
+        (tmp_path / 'combined.html').write_bytes(combined)
+        (tmp_path / 'combined-UTF-16BE.html').write_bytes(
+            combined.decode().encode('UTF-16BE'))
+        (tmp_path / 'linked.html').write_bytes(linked)
+        (tmp_path / 'not_optimized.html').write_bytes(not_optimized)
+        (tmp_path / 'style.css').write_bytes(css)
 
-    _run('combined.html out2.pdf')
-    assert tmpdir.join('out2.pdf').read_binary() == pdf_bytes
+        _run('combined.html out2.pdf')
+        assert (tmp_path / 'out2.pdf').read_bytes() == pdf_bytes
 
-    _run('combined-UTF-16BE.html out3.pdf --encoding UTF-16BE')
-    assert tmpdir.join('out3.pdf').read_binary() == pdf_bytes
+        _run('combined-UTF-16BE.html out3.pdf --encoding UTF-16BE')
+        assert (tmp_path / 'out3.pdf').read_bytes() == pdf_bytes
 
-    _run(f'{tmpdir.join("combined.html").strpath} out4.pdf')
-    assert tmpdir.join('out4.pdf').read_binary() == pdf_bytes
+        _run(f'{(tmp_path / "combined.html")} out4.pdf')
+        assert (tmp_path / 'out4.pdf').read_bytes() == pdf_bytes
 
-    _run(f'{path2url(tmpdir.join("combined.html").strpath)} out5.pdf')
-    assert tmpdir.join('out5.pdf').read_binary() == pdf_bytes
+        _run(f'{path2url((tmp_path / "combined.html"))} out5.pdf')
+        assert (tmp_path / 'out5.pdf').read_bytes() == pdf_bytes
 
-    _run('linked.html --debug out6.pdf')  # test relative URLs
-    assert tmpdir.join('out6.pdf').read_binary() == pdf_bytes
+        _run('linked.html --debug out6.pdf')  # test relative URLs
+        assert (tmp_path / 'out6.pdf').read_bytes() == pdf_bytes
 
-    _run('combined.html --verbose out7')
-    _run('combined.html --quiet out8')
-    assert tmpdir.join('out7').read_binary() == pdf_bytes
-    assert tmpdir.join('out8').read_binary() == pdf_bytes
+        _run('combined.html --verbose out7')
+        _run('combined.html --quiet out8')
+        assert (tmp_path / 'out7').read_bytes() == pdf_bytes
+        assert (tmp_path / 'out8').read_bytes() == pdf_bytes
 
-    _run('no_css.html out9.pdf')
-    _run('no_css.html out10.pdf -s style.css')
-    assert tmpdir.join('out9.pdf').read_binary() != pdf_bytes
-    assert tmpdir.join('out10.pdf').read_binary() == pdf_bytes
+        _run('no_css.html out9.pdf')
+        _run('no_css.html out10.pdf -s style.css')
+        assert (tmp_path / 'out9.pdf').read_bytes() != pdf_bytes
+        assert (tmp_path / 'out10.pdf').read_bytes() == pdf_bytes
 
-    stdout = _run('combined.html -')
-    assert stdout == pdf_bytes
+        stdout = _run('combined.html -')
+        assert stdout == pdf_bytes
 
-    _run('- out11.pdf', stdin=combined)
-    assert tmpdir.join('out11.pdf').read_binary() == pdf_bytes
+        _run('- out11.pdf', stdin=combined)
+        assert (tmp_path / 'out11.pdf').read_bytes() == pdf_bytes
 
-    stdout = _run('- -', stdin=combined)
-    assert stdout == pdf_bytes
-
-    _run('combined.html out13.pdf --media-type screen')
-    _run('combined.html out12.pdf -m screen')
-    _run('linked.html out14.pdf -m screen')
-    assert tmpdir.join('out12.pdf').read_binary() == rotated_pdf_bytes
-    assert tmpdir.join('out13.pdf').read_binary() == rotated_pdf_bytes
-    assert tmpdir.join('out14.pdf').read_binary() == rotated_pdf_bytes
-
-    os.environ['SOURCE_DATE_EPOCH'] = '0'
-    _run('not_optimized.html out15.pdf')
-    _run('not_optimized.html out16.pdf --optimize-images')
-    _run('not_optimized.html out17.pdf --optimize-images -j 10')
-    _run('not_optimized.html out18.pdf --optimize-images -j 10 -D 1')
-    _run('not_optimized.html out19.pdf --hinting')
-    _run('not_optimized.html out20.pdf --full-fonts')
-    _run('not_optimized.html out21.pdf --full-fonts --uncompressed-pdf')
-    _run(f'not_optimized.html out22.pdf -c {tmpdir}')
-    assert (
-        len(tmpdir.join('out18.pdf').read_binary()) <
-        len(tmpdir.join('out17.pdf').read_binary()) <
-        len(tmpdir.join('out16.pdf').read_binary()) <
-        len(tmpdir.join('out15.pdf').read_binary()) <
-        len(tmpdir.join('out19.pdf').read_binary()) <
-        len(tmpdir.join('out20.pdf').read_binary()) <
-        len(tmpdir.join('out21.pdf').read_binary()))
-    assert len({
-        tmpdir.join(f'out{i}.pdf').read_binary()
-        for i in (15, 22)}) == 1
-    os.environ.pop('SOURCE_DATE_EPOCH')
-
-    stdout = _run('combined.html --uncompressed-pdf -')
-    assert stdout.count(b'attachment') == 0
-    stdout = _run('combined.html --uncompressed-pdf -')
-    assert stdout.count(b'attachment') == 0
-    stdout = _run('-a pattern.png --uncompressed-pdf combined.html -')
-    assert stdout.count(b'attachment') == 1
-    stdout = _run(
-        '-a style.css -a pattern.png --uncompressed-pdf combined.html -')
-    assert stdout.count(b'attachment') == 2
-
-    _run('combined.html out23.pdf --timeout 30')
-    assert tmpdir.join('out23.pdf').read_binary() == pdf_bytes
-
-    os.mkdir('subdirectory')
-    py.path.local('subdirectory').chdir()
-    with capture_logs() as logs:
         stdout = _run('- -', stdin=combined)
-    assert len(logs) == 1
-    assert logs[0].startswith('ERROR: Failed to load image')
-    assert stdout.startswith(b'%PDF')
+        assert stdout == pdf_bytes
 
-    with capture_logs() as logs:
-        stdout = _run('--base-url= - -', stdin=combined)
-    assert len(logs) == 1
-    assert logs[0].startswith(
-        'ERROR: Relative URI reference without a base URI')
-    assert stdout.startswith(b'%PDF')
+        _run('combined.html out13.pdf --media-type screen')
+        _run('combined.html out12.pdf -m screen')
+        _run('linked.html out14.pdf -m screen')
+        assert (tmp_path / 'out12.pdf').read_bytes() == rotated_pdf_bytes
+        assert (tmp_path / 'out13.pdf').read_bytes() == rotated_pdf_bytes
+        assert (tmp_path / 'out14.pdf').read_bytes() == rotated_pdf_bytes
 
-    stdout = _run('--base-url .. - -', stdin=combined)
-    assert stdout == pdf_bytes
+        os.environ['SOURCE_DATE_EPOCH'] = '0'
+        _run('not_optimized.html out15.pdf')
+        _run('not_optimized.html out16.pdf --optimize-images')
+        _run('not_optimized.html out17.pdf --optimize-images -j 10')
+        _run('not_optimized.html out18.pdf --optimize-images -j 10 -D 1')
+        _run('not_optimized.html out19.pdf --hinting')
+        _run('not_optimized.html out20.pdf --full-fonts')
+        _run('not_optimized.html out21.pdf --full-fonts --uncompressed-pdf')
+        _run(f'not_optimized.html out22.pdf -c {tmp_path}')
+        assert (
+            len((tmp_path / 'out18.pdf').read_bytes()) <
+            len((tmp_path / 'out17.pdf').read_bytes()) <
+            len((tmp_path / 'out16.pdf').read_bytes()) <
+            len((tmp_path / 'out15.pdf').read_bytes()) <
+            len((tmp_path / 'out19.pdf').read_bytes()) <
+            len((tmp_path / 'out20.pdf').read_bytes()) <
+            len((tmp_path / 'out21.pdf').read_bytes()))
+        assert len({
+            (tmp_path / f'out{i}.pdf').read_bytes()
+            for i in (15, 22)}) == 1
+        os.environ.pop('SOURCE_DATE_EPOCH')
+
+        stdout = _run('combined.html --uncompressed-pdf -')
+        assert stdout.count(b'attachment') == 0
+        stdout = _run('combined.html --uncompressed-pdf -')
+        assert stdout.count(b'attachment') == 0
+        stdout = _run('-a pattern.png --uncompressed-pdf combined.html -')
+        assert stdout.count(b'attachment') == 1
+        stdout = _run(
+            '-a style.css -a pattern.png --uncompressed-pdf combined.html -')
+        assert stdout.count(b'attachment') == 2
+
+        _run('combined.html out23.pdf --timeout 30')
+        assert (tmp_path / 'out23.pdf').read_bytes() == pdf_bytes
+
+    subdirectory = tmp_path / 'subdirectory'
+    subdirectory.mkdir()
+    with chdir(subdirectory):
+        with capture_logs() as logs:
+            stdout = _run('- -', stdin=combined)
+        assert len(logs) == 1
+        assert logs[0].startswith('ERROR: Failed to load image')
+        assert stdout.startswith(b'%PDF')
+
+        with capture_logs() as logs:
+            stdout = _run('--base-url= - -', stdin=combined)
+        assert len(logs) == 1
+        assert logs[0].startswith(
+            'ERROR: Relative URI reference without a base URI')
+        assert stdout.startswith(b'%PDF')
+
+        stdout = _run('--base-url .. - -', stdin=combined)
+        assert stdout == pdf_bytes
 
     with pytest.raises(SystemExit):
         _run('--info')
@@ -530,7 +531,7 @@ def test_reproducible():
 
 
 @assert_no_logs
-def test_unicode_filenames(assert_pixels_equal, tmpdir):
+def test_unicode_filenames(assert_pixels_equal, tmp_path):
     """Test non-ASCII filenames both in Unicode or bytes form."""
     # Replicate pattern.png in CSS so that base_url does not matter.
     html = b'''
@@ -547,19 +548,19 @@ def test_unicode_filenames(assert_pixels_equal, tmpdir):
     if sys.platform.startswith('darwin'):  # pragma: no cover
         unicode_filename = unicodedata.normalize('NFD', unicode_filename)
 
-    tmpdir.chdir()
-    tmpdir.join(unicode_filename).write(html)
-    bytes_file, = tmpdir.listdir()
-    assert bytes_file.basename == unicode_filename
+    with chdir(tmp_path):
+        (tmp_path / unicode_filename).write_bytes(html)
+        bytes_file, = tuple(tmp_path.iterdir())
+        assert bytes_file.name == unicode_filename
 
-    assert FakeHTML(unicode_filename).write_png() == png_bytes
-    assert FakeHTML(bytes_file.strpath).write_png() == png_bytes
+        assert FakeHTML(unicode_filename).write_png() == png_bytes
+        assert FakeHTML(bytes_file).write_png() == png_bytes
 
-    os.remove(unicode_filename)
-    assert tmpdir.listdir() == []
+        os.remove(unicode_filename)
+        assert not tuple(tmp_path.iterdir())
 
-    FakeHTML(string=html).write_png(unicode_filename)
-    assert bytes_file.read_binary() == png_bytes
+        FakeHTML(string=html).write_png(unicode_filename)
+        assert bytes_file.read_bytes() == png_bytes
 
 
 @assert_no_logs
@@ -745,7 +746,7 @@ def test_low_level_api(assert_pixels_equal):
           img { display: block; bookmark-label: attr(alt); bookmark-level: 1 }
         </style>
         <img src="%s" alt="Chocolate" />
-    ''' % path2url(resource_filename('pattern.png')),
+    ''' % path2url(resource_path('pattern.png')),
      [[(1, 'Chocolate', (0, 0), 'open')]],
      [('Chocolate', (0, 0, 0), [], 'open')], False),
     ('''
@@ -779,7 +780,7 @@ def simplify_links(links):
 
 
 def assert_links(html, links, anchors, resolved_links,
-                 base_url=resource_filename('<inline HTML>'), warnings=(),
+                 base_url=resource_path('<inline HTML>'), warnings=(),
                  round=False):
     with capture_logs() as logs:
         document = FakeHTML(string=html, base_url=base_url).render()
@@ -1004,9 +1005,8 @@ uses_relative.append('weasyprint-custom')
 
 @assert_no_logs
 def test_url_fetcher(assert_pixels_equal):
-    filename = resource_filename('pattern.png')
-    with open(filename, 'rb') as pattern_fd:
-        pattern_png = pattern_fd.read()
+    path = resource_path('pattern.png')
+    pattern_png = path.read_bytes()
 
     def fetcher(url):
         if url == 'weasyprint-custom:foo/%C3%A9_%e9_pattern':
@@ -1022,7 +1022,7 @@ def test_url_fetcher(assert_pixels_equal):
         else:
             return default_url_fetcher(url)
 
-    base_url = resource_filename('dummy.html')
+    base_url = str(resource_path('dummy.html'))
     css = CSS(string='''
         @page { size: 8px; margin: 2px }
         body { margin: 0; font-size: 0 }
@@ -1035,8 +1035,8 @@ def test_url_fetcher(assert_pixels_equal):
             blank=blank)
 
     test('<body><img src="pattern.png">')  # Test a "normal" URL
-    test(f'<body><img src="{Path(filename).as_uri()}">')
-    test(f'<body><img src="{Path(filename).as_uri()}?ignored">')
+    test(f'<body><img src="{path.as_uri()}">')
+    test(f'<body><img src="{path.as_uri()}?ignored">')
     test('<body><img src="weasyprint-custom:foo/é_%e9_pattern">')
     test('<body style="background: url(weasyprint-custom:foo/é_%e9_pattern)">')
     test('<body><li style="list-style: inside '

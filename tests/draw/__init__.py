@@ -1,12 +1,12 @@
 """Test the final, drawn results and compare PNG images pixel per pixel."""
 
 import io
-import os
 from itertools import zip_longest
+from pathlib import Path
 
 from PIL import Image
 
-from ..testing_utils import FakeHTML, resource_filename
+from ..testing_utils import FakeHTML, resource_path
 
 # NOTE: "r" is not half red on purpose. In the pixel strings it has
 # better contrast with "B" than does "R". eg. "rBBBrrBrB" vs "RBBBRRBRB".
@@ -106,15 +106,13 @@ def assert_pixels_equal(name, width, height, raw, expected_raw, tolerance=0):
                     f'expected rgba{expected}, got rgba{value}')
 
 
-def write_png(basename, pixels, width, height):  # pragma: no cover
+def write_png(name, pixels, width, height):  # pragma: no cover
     """Take a pixel matrix and write a PNG file."""
-    directory = os.path.join(os.path.dirname(__file__), 'results')
-    if not os.path.isdir(directory):
-        os.mkdir(directory)
-    filename = os.path.join(directory, f'{basename}.png')
+    directory = Path(__file__).parent / 'results'
+    directory.mkdir(exist_ok=True)
     image = Image.new('RGB', (width, height))
     image.putdata(pixels)
-    image.save(filename)
+    image.save(directory / f'{name}.png')
 
 
 def html_to_pixels(html):
@@ -123,10 +121,7 @@ def html_to_pixels(html):
     Also return the document to aid debugging.
 
     """
-    document = FakeHTML(
-        string=html,
-        # Dummy filename, but in the right directory.
-        base_url=resource_filename('<test>'))
+    document = FakeHTML(string=html, base_url=resource_path('<dummy>'))
     return document_to_pixels(document)
 
 
