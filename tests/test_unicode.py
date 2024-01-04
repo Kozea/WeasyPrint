@@ -21,7 +21,7 @@ def test_unicode(assert_pixels_equal, tmp_path):
     stylesheet = tmp_path / 'style.css'
     image = tmp_path / 'pattern.png'
     html = tmp_path / 'doc.html'
-    stylesheet.write_text(style)
+    stylesheet.write_text(style, 'utf-8')
     image.write_bytes(resource_path('pattern.png').read_bytes())
     html_content = f'''
       <link rel=stylesheet href="{ensure_url(str(stylesheet))}">

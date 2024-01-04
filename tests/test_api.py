@@ -151,7 +151,7 @@ def test_html_parsing():
 
     with chdir(Path(__file__).parent):
         path = Path('resources') / 'doc1.html'
-        string = path.read_text()
+        string = path.read_text('utf-8')
         _test_resource(FakeHTML, 'doc1.html', _check_doc1, base_url=path)
         _check_doc1(FakeHTML(string=string, base_url=path))
         _check_doc1(FakeHTML(string=string), has_base_url=False)
