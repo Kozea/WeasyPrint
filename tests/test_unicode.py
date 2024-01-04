@@ -27,7 +27,7 @@ def test_unicode(assert_pixels_equal, tmp_path):
       <link rel=stylesheet href="{ensure_url(str(stylesheet))}">
       <p><img src="{ensure_url(str(image))}"> {text}</p>
     '''
-    html.write_text(html_content)
+    html.write_text(html_content, 'utf-8')
 
     document = FakeHTML(html, encoding='utf-8')
     width, height, lines = document_to_pixels(document)
