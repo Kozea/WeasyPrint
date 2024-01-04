@@ -183,10 +183,9 @@ def draw_stacking_context(stream, stacking_context):
         if box.style['opacity'] < 1:
             group_id = stream.id
             stream = original_stream
-            stream.push_state()
-            stream.set_alpha(box.style['opacity'], stroke=True, fill=True)
-            stream.draw_x_object(group_id)
-            stream.pop_state()
+            with stacked(stream):
+                stream.set_alpha(box.style['opacity'], stroke=True, fill=True)
+                stream.draw_x_object(group_id)
 
         stream.end_marked_content()
 
@@ -990,12 +989,11 @@ def draw_replacedbox(stream, box):
         stream.clip()
         stream.end()
         stream.transform(e=draw_x, f=draw_y)
-        stream.push_state()
-        # TODO: Use the real intrinsic size here, not affected by
-        # 'image-resolution'?
-        box.replacement.draw(
-            stream, draw_width, draw_height, box.style['image_rendering'])
-        stream.pop_state()
+        with stacked(stream):
+            # TODO: Use the real intrinsic size here, not affected by
+            # 'image-resolution'?
+            box.replacement.draw(
+                stream, draw_width, draw_height, box.style['image_rendering'])
 
 
 def draw_inline_level(stream, page, box, offset_x=0, text_overflow='clip',
@@ -1095,10 +1093,9 @@ def draw_text(stream, textbox, offset_x, text_overflow, block_ellipsis):
 
 def draw_emojis(stream, font_size, x, y, emojis):
     for image, font, a, d, e, f in emojis:
-        stream.push_state()
-        stream.transform(a=a, d=d, e=x + e * font_size, f=y + f)
-        image.draw(stream, font_size, font_size, None)
-        stream.pop_state()
+        with stacked(stream):
+            stream.transform(a=a, d=d, e=x + e * font_size, f=y + f)
+            image.draw(stream, font_size, font_size, None)
 
 
 def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
