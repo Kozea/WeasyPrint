@@ -716,6 +716,7 @@ class ComputedStyle(dict):
         if key in self.cascaded:
             # Property defined in cascaded properties.
             value = self.cascaded[key][0]
+            pending = isinstance(value, Pending)
         else:
             # Property not defined in cascaded properties, define as inherited
             # or initial value.
@@ -723,12 +724,13 @@ class ComputedStyle(dict):
                 value = 'inherit'
             else:
                 value = 'initial'
+            pending = False
 
         if value == 'inherit' and parent_style is None:
             # On the root element, 'inherit' from initial values
             value = 'initial'
 
-        if isinstance(value, Pending):
+        if pending:
             # Property with pending values, validate them.
             solved_tokens = []
             for token in value.tokens:
