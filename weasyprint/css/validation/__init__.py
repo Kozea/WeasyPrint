@@ -1,7 +1,8 @@
 """Validate properties, expanders and descriptors."""
 
 
-from tinycss2 import serialize
+from cssselect2 import compile_selector_list
+from tinycss2 import parse_declaration_list, serialize
 
 from ... import LOGGER
 from ..utils import InvalidValues, remove_whitespace
@@ -106,7 +107,7 @@ NOT_PRINT_MEDIA = {
 }
 
 
-def preprocess_declarations(base_url, declarations):
+def preprocess_declarations(base_url, declarations, prelude=None):
     """Expand shorthand properties, filter unsupported properties and values.
 
     Log a warning for every ignored declaration.
@@ -120,6 +121,11 @@ def preprocess_declarations(base_url, declarations):
                 'Error: %s at %d:%d.',
                 declaration.message,
                 declaration.source_line, declaration.source_column)
+
+        if declaration.type == 'qualified-rule':
+            yield from preprocess_declarations(
+                base_url, parse_declaration_list(declaration.content),
+                declaration.prelude)
 
         if declaration.type != 'declaration':
             continue
@@ -183,4 +189,9 @@ def preprocess_declarations(base_url, declarations):
 
         important = declaration.important
         for long_name, value in result:
-            yield long_name.replace('-', '_'), value, important
+            if prelude is not None:
+                selectors = compile_selector_list(prelude)
+                declaration = (long_name.replace('-', '_'), value, important)
+                yield selectors, declaration
+            else:
+                yield long_name.replace('-', '_'), value, important
