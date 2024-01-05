@@ -13,6 +13,7 @@ on other functions in this module.
 """
 
 from collections import namedtuple
+from itertools import groupby
 from logging import DEBUG, WARNING
 
 import cssselect2
@@ -919,25 +920,32 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
             continue
 
         if rule.type == 'qualified-rule':
-            declarations = list(preprocess_declarations(
-                base_url, tinycss2.parse_declaration_list(rule.content)))
-            if declarations:
+            selectors_declarations = list(
+                preprocess_declarations(
+                    base_url, tinycss2.parse_declaration_list(rule.content),
+                    rule.prelude))
+
+            if selectors_declarations:
                 logger_level = WARNING
+                selectors_declarations = groupby(
+                    selectors_declarations, key=lambda x: x[0])
                 try:
-                    selectors = cssselect2.compile_selector_list(rule.prelude)
-                    for selector in selectors:
-                        matcher.add_selector(selector, declarations)
-                        if selector.pseudo_element not in PSEUDO_ELEMENTS:
-                            if selector.pseudo_element.startswith('-'):
-                                logger_level = DEBUG
-                                raise cssselect2.SelectorError(
-                                    'ignored prefixed pseudo-element: '
-                                    f'{selector.pseudo_element}')
-                            else:
-                                raise cssselect2.SelectorError(
-                                    'unknown pseudo-element: '
-                                    f'{selector.pseudo_element}')
-                    ignore_imports = True
+                    for selectors, declarations in selectors_declarations:
+                        declarations = [
+                            declaration[1] for declaration in declarations]
+                        for selector in selectors:
+                            matcher.add_selector(selector, declarations)
+                            if selector.pseudo_element not in PSEUDO_ELEMENTS:
+                                if selector.pseudo_element.startswith('-'):
+                                    logger_level = DEBUG
+                                    raise cssselect2.SelectorError(
+                                        'ignored prefixed pseudo-element: '
+                                        f'{selector.pseudo_element}')
+                                else:
+                                    raise cssselect2.SelectorError(
+                                        'unknown pseudo-element: '
+                                        f'{selector.pseudo_element}')
+                        ignore_imports = True
                 except cssselect2.SelectorError as exc:
                     LOGGER.log(
                         logger_level,
