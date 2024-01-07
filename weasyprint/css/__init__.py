@@ -715,16 +715,17 @@ class AnonymousStyle():
         else:
             self.cache = {'ratio_ch': {}, 'ratio_ex': {}}
 
-        self.style_rel.set_computed_style(self, None, self, {})
-
         # border-*-style is none, so border-width computes to zero.
         # Other than that, properties that would need computing are
         # border-*-color, but they do not apply.
-        self['border_top_width'] = 0
-        self['border_bottom_width'] = 0
-        self['border_left_width'] = 0
-        self['border_right_width'] = 0
-        self['outline_width'] = 0
+        inital_properties = {
+            'border_top_width': 0,
+            'border_bottom_width': 0,
+            'border_left_width': 0,
+            'border_right_width': 0,
+            'outline_width': 0,
+        }
+        self.style_rel.set_computed_style(self, None, self, inital_properties)
 
     def copy(self):
         copy = AnonymousStyle(self.parent_style, self.style_rel)
@@ -755,16 +756,14 @@ class AnonymousStyle():
             return self.__missing__(key)
 
     def __setitem__(self, key, value):
-        computed_keys = self.get_style_keys()
-        computed_keys_copy = computed_keys.copy()
-        computed_keys_copy[key] = value
-        self.style_rel.set_computed_style_key(self, None, computed_keys_copy)
+        computed_keys = self.get_style_keys().copy()
+        computed_keys[key] = value
+        self.style_rel.set_computed_style_key(self, None, computed_keys)
 
     def __delitem__(self, key):
-        computed_keys = self.get_style_keys()
-        computed_keys_copy = computed_keys.copy()
-        del computed_keys_copy[key]
-        self.style_rel.set_computed_style_key(self, None, computed_keys_copy)
+        computed_keys = self.get_style_keys().copy()
+        del computed_keys[key]
+        self.style_rel.set_computed_style_key(self, None, computed_keys)
 
     def __missing__(self, key):
         if key in INHERITED or key[:2] == '__':
@@ -799,7 +798,9 @@ class ComputedStyle():
         else:
             self.cache = {'ratio_ch': {}, 'ratio_ex': {}}
 
-        self.style_rel.set_computed_style(element, pseudo_type, self, {})
+        initial_computed_styles = {}
+        self.style_rel.set_computed_style(
+            element, pseudo_type, self, initial_computed_styles)
 
     def copy(self):
         copy = ComputedStyle(
@@ -830,18 +831,16 @@ class ComputedStyle():
             return self.__missing__(key)
 
     def __setitem__(self, key, value):
-        computed_keys = self.get_style_keys()
-        computed_keys_copy = computed_keys.copy()
-        computed_keys_copy[key] = value
+        computed_keys = self.get_style_keys().copy()
+        computed_keys[key] = value
         self.style_rel.set_computed_style_key(
-            self.element, self.pseudo_type, computed_keys_copy)
+            self.element, self.pseudo_type, computed_keys)
 
     def __delitem__(self, key):
-        computed_keys = self.get_style_keys()
-        computed_keys_copy = computed_keys.copy()
-        del computed_keys_copy[key]
+        computed_keys = self.get_style_keys().copy()
+        del computed_keys[key]
         self.style_rel.set_computed_style_key(
-            self.element, self.pseudo_type, computed_keys_copy)
+            self.element, self.pseudo_type, computed_keys)
 
     def __missing__(self, key):
         if key == 'float':
@@ -940,16 +939,16 @@ def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
     if not cascaded and parent_style is not None:
         style = AnonymousStyle(parent_style, style_rel)
 
+        if style_rel:
+            style_rel.set_computed_style(
+                element, pseudo_type, style, {})
+
     else:
         style = ComputedStyle(
             parent_style, cascaded, element, pseudo_type, root_style, base_url,
             style_rel)
         if target_collector and style['anchor']:
             target_collector.collect_anchor(style['anchor'])
-
-    if style_rel:
-        style_rel.set_computed_style(
-            element, pseudo_type, style, {})
 
     return style
 
