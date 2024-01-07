@@ -197,10 +197,12 @@ class StyleFor:
         # list-item.
         if pseudo_type is None:
             for pseudo in (None, 'before', 'after'):
-                pseudo_style = element_styles.get((element, pseudo), {})
-                if 'display' in pseudo_style:
-                    if 'list-item' in pseudo_style['display'][0]:
-                        break
+                pseudo_style_display = element_styles.get(
+                    (element, pseudo), {}).get('display')
+                if pseudo_style_display:
+                    if isinstance(pseudo_style_display[0], tuple):
+                        if 'list-item' in pseudo_style_display[0]:
+                            break
             else:
                 if (element, 'marker') in element_styles:
                     del element_styles[element, 'marker']
