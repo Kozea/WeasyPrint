@@ -73,8 +73,9 @@ class Font:
         else:
             self.bitmap = (
                 'EBDT' in self.ttfont and
-                'EBLC' in self.ttfont and
-                not self.ttfont['glyf'].glyphs)
+                'EBLC' in self.ttfont and (
+                    'glyf' not in self.ttfont or
+                    not self.ttfont['glyf'].glyphs))
 
         # Various properties
         self.italic_angle = 0  # TODO: this should be different
@@ -320,8 +321,7 @@ class Stream(pydyf.Stream):
         description = pango.pango_font_describe(pango_font)
         mask = (
             pango.PANGO_FONT_MASK_SIZE +
-            pango.PANGO_FONT_MASK_GRAVITY +
-            pango.PANGO_FONT_MASK_VARIATIONS)
+            pango.PANGO_FONT_MASK_GRAVITY)
         pango.pango_font_description_unset_fields(description, mask)
         key = pango.pango_font_description_hash(description)
         pango.pango_font_description_free(description)

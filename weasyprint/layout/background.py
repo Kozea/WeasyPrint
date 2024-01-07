@@ -137,7 +137,13 @@ def layout_background_layer(box, page, resolution, image, size, clip, repeat,
 
     if attachment == 'fixed':
         # Initial containing block
-        positioning_area = box_rectangle(page, 'content-box')
+        if isinstance(box, boxes.PageBox):
+            # […] if background-attachment is fixed then the image is
+            # positioned relative to the page box including its margins […].
+            # https://drafts.csswg.org/css-page/#painting
+            positioning_area = (0, 0, box.margin_width(), box.margin_height())
+        else:
+            positioning_area = box_rectangle(page, 'content-box')
     else:
         positioning_area = box_rectangle(box, origin)
 

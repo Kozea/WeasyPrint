@@ -2,7 +2,6 @@
 
 import hashlib
 import io
-import os
 import re
 from codecs import BOM_UTF16_BE
 
@@ -13,7 +12,7 @@ from weasyprint.text.fonts import FontConfiguration
 from weasyprint.urls import path2url
 
 from .testing_utils import (
-    FakeHTML, assert_no_logs, capture_logs, resource_filename)
+    FakeHTML, assert_no_logs, capture_logs, resource_path)
 
 # Top and right positions in points, rounded to the default float precision of
 # 6 digits, a rendered by pydyf
@@ -65,7 +64,7 @@ def test_bookmarks_3():
 def test_bookmarks_4():
     pdf = FakeHTML(string='''
       <style>
-        * { height: 90pt; margin: 0 0 10pt 0 }
+        h1, h2, h3, span { height: 90pt; margin: 0 0 10pt 0 }
       </style>
       <h1>1</h1>
       <h1>2</h1>
@@ -324,7 +323,7 @@ def test_links():
         <a style="display: block; page-break-before: always; height: 30pt"
            href="#hel%6Co"></a>a
       </p>
-    ''', base_url=resource_filename('<inline HTML>')).write_pdf()
+    ''', base_url=resource_path('<inline HTML>')).write_pdf()
 
     uris = re.findall(b'/URI \\((.*)\\)', pdf)
     types = re.findall(b'/S (/\\w*)', pdf)
@@ -376,7 +375,7 @@ def test_sorted_links():
       <p id="aaa">aaa</p>
       <a href="#zzz">z</a>
       <a href="#aaa">a</a>
-    ''', base_url=resource_filename('<inline HTML>')).write_pdf()
+    ''', base_url=resource_path('<inline HTML>')).write_pdf()
     assert b'(zzz) [' in pdf.split(b'(aaa) [')[-1]
 
 
@@ -502,7 +501,7 @@ def test_anchor_multiple_pages():
 @assert_no_logs
 def test_embed_gif():
     assert b'/Filter /DCTDecode' not in FakeHTML(
-        base_url=resource_filename('dummy.html'),
+        base_url=resource_path('dummy.html'),
         string='<img src="pattern.gif">').write_pdf()
 
 
@@ -510,7 +509,7 @@ def test_embed_gif():
 def test_embed_jpeg():
     # JPEG-encoded image, embedded in PDF:
     assert b'/Filter /DCTDecode' in FakeHTML(
-        base_url=resource_filename('dummy.html'),
+        base_url=resource_path('dummy.html'),
         string='<img src="blue.jpg">').write_pdf()
 
 
@@ -518,7 +517,7 @@ def test_embed_jpeg():
 def test_embed_image_once():
     # Image repeated multiple times, embedded once
     assert FakeHTML(
-        base_url=resource_filename('dummy.html'),
+        base_url=resource_path('dummy.html'),
         string='''
           <img src="blue.jpg">
           <div style="background: url(blue.jpg)"></div>
@@ -530,10 +529,10 @@ def test_embed_image_once():
 @assert_no_logs
 def test_embed_images_from_pages():
     page1, = FakeHTML(
-        base_url=resource_filename('dummy.html'),
+        base_url=resource_path('dummy.html'),
         string='<img src="blue.jpg">').render().pages
     page2, = FakeHTML(
-        base_url=resource_filename('dummy.html'),
+        base_url=resource_path('dummy.html'),
         string='<img src="not-optimized.jpg">').render().pages
     document = Document(
         (page1, page2), metadata=DocumentMetadata(),
@@ -566,18 +565,16 @@ def test_document_info():
 
 
 @assert_no_logs
-def test_embedded_files_attachments(tmpdir):
-    absolute_tmp_file = tmpdir.join('some_file.txt').strpath
-    adata = b'12345678'
-    with open(absolute_tmp_file, 'wb') as afile:
-        afile.write(adata)
-    absolute_url = path2url(absolute_tmp_file)
+def test_embedded_files_attachments(tmp_path):
+    absolute_tmp_path = tmp_path / 'some_file.txt'
+    absolute_data = b'12345678'
+    absolute_tmp_path.write_bytes(absolute_data)
+    absolute_url = path2url(absolute_tmp_path)
     assert absolute_url.startswith('file://')
 
-    relative_tmp_file = tmpdir.join('äöü.txt').strpath
-    rdata = b'abcdefgh'
-    with open(relative_tmp_file, 'wb') as rfile:
-        rfile.write(rdata)
+    relative_tmp_path = tmp_path / 'äöü.txt'
+    relative_data = b'abcdefgh'
+    relative_tmp_path.write_bytes(relative_data)
 
     pdf = FakeHTML(
         string='''
@@ -591,8 +588,8 @@ def test_embedded_files_attachments(tmpdir):
           <link rel="attachment" href="{1}">
           <h1>Heading 1</h1>
           <h2>Heading 2</h2>
-        '''.format(absolute_url, os.path.basename(relative_tmp_file)),
-        base_url=tmpdir.strpath,
+        '''.format(absolute_url, relative_tmp_path.name),
+        base_url=tmp_path,
     ).write_pdf(
         attachments=[
             Attachment('data:,oob attachment', description='Hello'),
@@ -606,10 +603,10 @@ def test_embedded_files_attachments(tmpdir):
     name = BOM_UTF16_BE + 'some file attachment äöü'.encode('utf-16-be')
     assert b'/Desc <' + name.hex().encode() + b'>' in pdf
 
-    assert hashlib.md5(adata).hexdigest().encode() in pdf
-    assert os.path.basename(absolute_tmp_file).encode() in pdf
+    assert hashlib.md5(absolute_data).hexdigest().encode() in pdf
+    assert absolute_tmp_path.name.encode() in pdf
 
-    assert hashlib.md5(rdata).hexdigest().encode() in pdf
+    assert hashlib.md5(relative_data).hexdigest().encode() in pdf
     name = BOM_UTF16_BE + 'some file attachment äöü'.encode('utf-16-be')
     assert b'/Desc <' + name.hex().encode() + b'>' in pdf
 

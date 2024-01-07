@@ -14,17 +14,11 @@ from functools import partial
 
 import pydyf
 
-from ..logger import LOGGER
 from .metadata import add_metadata
 
 
 def pdfa(pdf, metadata, document, page_streams, compress, version):
     """Set metadata for PDF/A documents."""
-    LOGGER.warning(
-        'PDF/A support is experimental, '
-        'generated PDF files are not guaranteed to be valid. '
-        'Please open an issue if you have problems generating PDF/A files.')
-
     # Add ICC profile
     profile = pydyf.Stream(
         [read_binary(__package__, 'sRGB2014.icc')],

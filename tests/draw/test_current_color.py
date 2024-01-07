@@ -80,3 +80,28 @@ def test_current_color_svg_2(assert_pixels):
            width="2" height="2">
         <rect width="2" height="2" fill="currentColor"></rect>
       </svg>''')
+
+
+@assert_no_logs
+def test_current_color_variable(assert_pixels):
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/2010
+    assert_pixels('GG\nGG', '''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        @page { size: 2px }
+        html { color: lime; font-family: weasyprint; --var: currentColor }
+        div { color: var(--var); font-size: 2px; line-height: 1 }
+      </style>
+      <div>aa''')
+
+
+@assert_no_logs
+def test_current_color_variable_border(assert_pixels):
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/2010
+    assert_pixels('GG\nGG', '''
+      <style>
+        @page { size: 2px }
+        html { color: lime; --var: currentColor }
+        div { color: var(--var); width: 0; height: 0; border: 1px solid }
+      </style>
+      <div>''')

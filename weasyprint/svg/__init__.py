@@ -8,7 +8,8 @@ from xml.etree import ElementTree
 from cssselect2 import ElementWrapper
 
 from ..urls import get_url_attribute
-from .bounding_box import bounding_box, is_valid_bounding_box
+from .bounding_box import (
+    bounding_box, extend_bounding_box, is_valid_bounding_box)
 from .css import parse_declarations, parse_stylesheets
 from .defs import (
     apply_filters, clip_path, draw_gradient_or_pattern, paint_mask, use)
@@ -394,19 +395,17 @@ class SVG:
         if filter_:
             apply_filters(self, node, filter_, font_size)
 
+        # Apply transform attribute
+        self.transform(node.get('transform'), font_size)
+
         # Create substream for opacity
         opacity = float(node.get('opacity', 1))
         if fill_stroke and 0 <= opacity < 1:
             original_stream = self.stream
             box = self.calculate_bounding_box(node, font_size)
-            if is_valid_bounding_box(box):
-                coords = (box[0], box[1], box[0] + box[2], box[1] + box[3])
-            else:
-                coords = (0, 0, self.inner_width, self.inner_height)
-            self.stream = self.stream.add_group(*coords)
-
-        # Apply transform attribute
-        self.transform(node.get('transform'), font_size)
+            if not is_valid_bounding_box(box):
+                box = (0, 0, self.inner_width, self.inner_height)
+            self.stream = self.stream.add_group(*box)
 
         # Clip
         clip_path = parse_url(node.get('clip-path')).fragment
@@ -435,6 +434,12 @@ class SVG:
         display = node.get('display') != 'none'
         visible = display and (node.get('visibility') != 'hidden')
 
+        # Handle text anchor
+        text_anchor = node.get('text-anchor')
+        if node.tag == 'text' and text_anchor in ('middle', 'end'):
+            group = self.stream.add_group(0, 0, 0, 0)  # BBox set after drawing
+            original_stream, self.stream = self.stream, group
+
         # Draw node
         if visible and node.tag in TAGS:
             with suppress(PointError):
@@ -444,6 +449,27 @@ class SVG:
         if display and node.tag not in DEF_TYPES:
             for child in node:
                 self.draw_node(child, font_size, fill_stroke)
+                if node.tag in ('text', 'tspan'):
+                    if not is_valid_bounding_box(child.text_bounding_box):
+                        continue
+                    x1, y1 = child.text_bounding_box[:2]
+                    x2 = x1 + child.text_bounding_box[2]
+                    y2 = y1 + child.text_bounding_box[3]
+                    node.text_bounding_box = extend_bounding_box(
+                        node.text_bounding_box, ((x1, y1), (x2, y2)))
+
+        # Handle text anchor
+        if node.tag == 'text' and text_anchor in ('middle', 'end'):
+            group_id = self.stream.id
+            self.stream = original_stream
+            self.stream.push_state()
+            if is_valid_bounding_box(node.text_bounding_box):
+                x, y, width, height = node.text_bounding_box
+                group.extra['BBox'][:] = (x, y, x + width, y + height)
+                x_align = width / 2 if text_anchor == 'middle' else width
+                self.stream.transform(e=-x_align)
+            self.stream.draw_x_object(group_id)
+            self.stream.pop_state()
 
         # Apply mask
         mask = self.masks.get(parse_url(node.get('mask')).fragment)
@@ -513,12 +539,15 @@ class SVG:
             marker_node = self.markers.get(marker)
 
             # Calculate position, scale and clipping
+            translate_x, translate_y = self.point(
+                marker_node.get('refX'), marker_node.get('refY'),
+                font_size)
             if 'viewBox' in marker_node.attrib:
                 marker_width, marker_height = self.point(
                     marker_node.get('markerWidth', 3),
                     marker_node.get('markerHeight', 3),
                     font_size)
-                scale_x, scale_y, translate_x, translate_y = preserve_ratio(
+                scale_x, scale_y, _, _ = preserve_ratio(
                     self, marker_node, font_size, marker_width, marker_height)
 
                 clip_x, clip_y, viewbox_width, viewbox_height = (
@@ -555,11 +584,10 @@ class SVG:
                 if is_valid_bounding_box(box):
                     scale_x = scale_y = min(
                         marker_width / box[2], marker_height / box[3])
+                    translate_x /= scale_x
+                    translate_y /= scale_y
                 else:
                     scale_x = scale_y = 1
-                translate_x, translate_y = self.point(
-                    marker_node.get('refX'), marker_node.get('refY'),
-                    font_size)
                 clip_box = None
 
             # Scale
@@ -587,10 +615,9 @@ class SVG:
 
                 overflow = marker_node.get('overflow', 'hidden')
                 if clip_box and overflow in ('hidden', 'scroll'):
-                    self.stream.push_state()
                     self.stream.rectangle(*clip_box)
-                    self.stream.pop_state()
                     self.stream.clip()
+                    self.stream.end()
 
                 self.draw_node(child, font_size, fill_stroke)
                 self.stream.pop_state()

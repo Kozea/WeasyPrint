@@ -1,35 +1,35 @@
 """Test the final, drawn results and compare PNG images pixel per pixel."""
 
 import io
-import os
 from itertools import zip_longest
+from pathlib import Path
 
 from PIL import Image
 
-from ..testing_utils import FakeHTML, resource_filename
+from ..testing_utils import FakeHTML, resource_path
 
 # NOTE: "r" is not half red on purpose. In the pixel strings it has
 # better contrast with "B" than does "R". eg. "rBBBrrBrB" vs "RBBBRRBRB".
-PIXELS_BY_CHAR = dict(
-    _=(255, 255, 255),  # white
-    R=(255, 0, 0),  # red
-    B=(0, 0, 255),  # blue
-    G=(0, 255, 0),  # lime green
-    V=(191, 0, 64),  # average of 1*B and 3*R.
-    S=(255, 63, 63),  # R above R above _
-    K=(0, 0, 0),  # black
-    r=(255, 0, 0),  # red
-    g=(0, 128, 0),  # half green
-    b=(0, 0, 128),  # half blue
-    v=(128, 0, 128),  # average of B and R.
-    s=(255, 127, 127),  # R above _
-    t=(127, 255, 127),  # G above _
-    u=(128, 0, 127),  # r above B above _
-    h=(64, 0, 64),  # half average of B and R.
-    a=(0, 0, 254),  # R in lossy JPG
-    p=(192, 0, 63),  # R above R above B above _
-    z=None,
-)
+PIXELS_BY_CHAR = {
+    '_': (255, 255, 255),  # white
+    'R': (255, 0, 0),  # red
+    'B': (0, 0, 255),  # blue
+    'G': (0, 255, 0),  # lime green
+    'V': (191, 0, 64),  # average of 1*B and 3*R
+    'S': (255, 63, 63),  # R above R above _
+    'K': (0, 0, 0),  # black
+    'r': (255, 0, 0),  # red
+    'g': (0, 128, 0),  # half green
+    'b': (0, 0, 128),  # half blue
+    'v': (128, 0, 128),  # average of B and R
+    's': (255, 127, 127),  # R above _
+    't': (127, 255, 127),  # G above _
+    'u': (128, 0, 127),  # r above B above _
+    'h': (64, 0, 64),  # half average of B and R
+    'a': (0, 0, 254),  # R in lossy JPG
+    'p': (192, 0, 63),  # R above R above B above _
+    'z': None,
+}
 
 
 def parse_pixels(pixels):
@@ -106,15 +106,13 @@ def assert_pixels_equal(name, width, height, raw, expected_raw, tolerance=0):
                     f'expected rgba{expected}, got rgba{value}')
 
 
-def write_png(basename, pixels, width, height):  # pragma: no cover
+def write_png(name, pixels, width, height):  # pragma: no cover
     """Take a pixel matrix and write a PNG file."""
-    directory = os.path.join(os.path.dirname(__file__), 'results')
-    if not os.path.isdir(directory):
-        os.mkdir(directory)
-    filename = os.path.join(directory, f'{basename}.png')
+    directory = Path(__file__).parent / 'results'
+    directory.mkdir(exist_ok=True)
     image = Image.new('RGB', (width, height))
     image.putdata(pixels)
-    image.save(filename)
+    image.save(directory / f'{name}.png')
 
 
 def html_to_pixels(html):
@@ -123,10 +121,7 @@ def html_to_pixels(html):
     Also return the document to aid debugging.
 
     """
-    document = FakeHTML(
-        string=html,
-        # Dummy filename, but in the right directory.
-        base_url=resource_filename('<test>'))
+    document = FakeHTML(string=html, base_url=resource_path('<dummy>'))
     return document_to_pixels(document)
 
 

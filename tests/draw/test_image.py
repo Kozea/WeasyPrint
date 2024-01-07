@@ -3,7 +3,7 @@
 import pytest
 
 from ..testing_utils import (
-    FakeHTML, assert_no_logs, capture_logs, resource_filename)
+    FakeHTML, assert_no_logs, capture_logs, resource_path)
 
 centered_image = '''
     ________
@@ -589,5 +589,5 @@ def test_image_exif_image_orientation_keep_format():
           <style>@page { size: 10px }</style>
           <img style="display: block; image-orientation: 180deg"
                src="not-optimized-exif.jpg">''',
-        base_url=resource_filename('<inline HTML>')).write_pdf()
+        base_url=resource_path('<inline HTML>')).write_pdf()
     assert b'DCTDecode' in pdf

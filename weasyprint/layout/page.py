@@ -774,6 +774,7 @@ def make_page(context, root_box, page_type, resume_at, page_number,
 
     if page_type.blank:
         resume_at = previous_resume_at
+        next_page = page_maker[page_number - 1][1]
 
     return page, resume_at, next_page
 
@@ -821,7 +822,6 @@ def remake_page(index, context, root_box, html):
     # Don't modify actual page_maker[index] values!
     # TODO: should we store (and reuse) page_type in the page_maker?
     page_state = copy.deepcopy(initial_page_state)
-    next_page_name = initial_next_page['page']
     first = index == 0
     if initial_next_page['break'] in ('left', 'right'):
         next_page_side = initial_next_page['break']
@@ -835,8 +835,7 @@ def remake_page(index, context, root_box, html):
         (next_page_side == 'left' and right_page) or
         (next_page_side == 'right' and not right_page) or
         (context.reported_footnotes and initial_resume_at is None))
-    if blank:
-        next_page_name = ''
+    next_page_name = '' if blank else initial_next_page['page']
     side = 'right' if right_page else 'left'
     page_type = PageType(side, blank, first, index, name=next_page_name)
     set_page_type_computed_styles(page_type, html, context.style_for)
@@ -851,8 +850,6 @@ def remake_page(index, context, root_box, html):
         context, root_box, page_type, initial_resume_at, page_number,
         page_state)
     assert next_page
-    if blank:
-        next_page['page'] = initial_next_page['page']
     right_page = not right_page
 
     # Check whether we need to append or update the next page_maker item

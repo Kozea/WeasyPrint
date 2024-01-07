@@ -9,7 +9,7 @@ Installation
 
 WeasyPrint |version| depends on:
 
-* Python_ ≥ 3.7.0
+* Python_ ≥ 3.8.0
 * Pango_ ≥ 1.44.0
 * pydyf_ ≥ 0.6.0
 * CFFI_ ≥ 0.6
@@ -472,8 +472,8 @@ to the default fetcher:
     def my_fetcher(url):
         if url.startswith('graph:'):
             graph_data = map(float, url[6:].split(','))
-            return dict(string=generate_graph(graph_data),
-                        mime_type='image/png')
+            string = generate_graph(graph_data)
+            return {'string': string, 'mime_type': 'image/png'}
         return default_url_fetcher(url)
 
     source = '<img src="graph:42,10.3,87">'

@@ -156,6 +156,7 @@ def draw_stacking_context(stream, stacking_context):
             # Point 7
             for block in [box] + stacking_context.blocks_and_cells:
                 if isinstance(block, boxes.ReplacedBox):
+                    draw_background(stream, block.background)
                     draw_border(stream, block)
                     draw_replacedbox(stream, block)
                 elif block.children:
@@ -730,8 +731,9 @@ def draw_line(stream, x1, y1, x2, y2, thickness, style, color, offset=0):
     assert x1 == x2 or y1 == y2  # Only works for vertical or horizontal lines
 
     with stacked(stream):
-        stream.set_color_rgb(*color[:3], stroke=True)
-        stream.set_alpha(color[3], stroke=True)
+        if style not in ('ridge', 'groove'):
+            stream.set_color_rgb(*color[:3], stroke=True)
+            stream.set_alpha(color[3], stroke=True)
 
         if style == 'dashed':
             stream.set_dash([5 * thickness], offset)
@@ -750,6 +752,25 @@ def draw_line(stream, x1, y1, x2, y2, thickness, style, color, offset=0):
                 stream.line_to(x2, y2 - thickness / 3)
                 stream.move_to(x1, y1 + thickness / 3)
                 stream.line_to(x2, y2 + thickness / 3)
+        elif style in ('ridge', 'groove'):
+            stream.set_line_width(thickness / 2)
+            stream.set_color_rgb(*color[0][:3], stroke=True)
+            stream.set_alpha(color[0][3], stroke=True)
+            if x1 == x2:
+                stream.move_to(x1 + thickness / 4, y1)
+                stream.line_to(x2 + thickness / 4, y2)
+            elif y1 == y2:
+                stream.move_to(x1, y1 + thickness / 4)
+                stream.line_to(x2, y2 + thickness / 4)
+            stream.stroke()
+            stream.set_color_rgb(*color[1][:3], stroke=True)
+            stream.set_alpha(color[1][3], stroke=True)
+            if x1 == x2:
+                stream.move_to(x1 - thickness / 4, y1)
+                stream.line_to(x2 - thickness / 4, y2)
+            elif y1 == y2:
+                stream.move_to(x1, y1 - thickness / 4)
+                stream.line_to(x2, y2 - thickness / 4)
         elif style == 'wavy':
             assert y1 == y2  # Only allowed for text decoration
             up = 1
@@ -1032,9 +1053,7 @@ def draw_text(stream, textbox, offset_x, text_overflow, block_ellipsis):
         return
 
     text_decoration_values = textbox.style['text_decoration_line']
-    text_decoration_color = textbox.style['text_decoration_color']
-    if text_decoration_color == 'currentColor':
-        text_decoration_color = textbox.style['color']
+    text_decoration_color = get_color(textbox.style, 'text_decoration_color')
     if 'overline' in text_decoration_values:
         thickness = textbox.pango_layout.underline_thickness
         offset_y = (
@@ -1179,9 +1198,25 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
             utf8_position = utf8_positions[i]
 
             offset = glyph_info.geometry.x_offset / font_size
-            if offset:
-                string += f'>{-offset}<'
-            string += f'{glyph:02x}' if font.bitmap else f'{glyph:04x}'
+            rise = glyph_info.geometry.y_offset / 1000
+            if rise:
+                if string[-1] == '<':
+                    string = string[:-1]
+                else:
+                    string += '>'
+                stream.show_text(string)
+                stream.set_text_rise(-rise)
+                string = ''
+                if offset:
+                    string = f'{-offset}'
+                string += f'<{glyph:02x}>' if font.bitmap else f'<{glyph:04x}>'
+                stream.show_text(string)
+                stream.set_text_rise(0)
+                string = '<'
+            else:
+                if offset:
+                    string += f'>{-offset}<'
+                string += f'{glyph:02x}' if font.bitmap else f'{glyph:04x}'
 
             # Ink bounding box and logical widths in font
             if glyph not in font.widths:

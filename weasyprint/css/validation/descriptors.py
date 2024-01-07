@@ -198,7 +198,7 @@ def font_variant(tokens):
     for name, sub_tokens in expand_font_variant(tokens):
         try:
             values.append(properties.validate_non_shorthand(
-                None, f'font-variant{name}', sub_tokens, required=True))
+                sub_tokens, f'font-variant{name}', required=True))
         except InvalidValues:
             return None
     return values

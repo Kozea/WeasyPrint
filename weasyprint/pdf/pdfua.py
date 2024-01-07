@@ -2,17 +2,11 @@
 
 import pydyf
 
-from ..logger import LOGGER
 from .metadata import add_metadata
 
 
 def pdfua(pdf, metadata, document, page_streams, compress):
     """Set metadata for PDF/UA documents."""
-    LOGGER.warning(
-        'PDF/UA support is experimental, '
-        'generated PDF files are not guaranteed to be valid. '
-        'Please open an issue if you have problems generating PDF/UA files.')
-
     # Structure for PDF tagging
     content_mapping = pydyf.Dictionary({})
     pdf.add_object(content_mapping)
