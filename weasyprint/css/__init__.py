@@ -652,7 +652,6 @@ class AnonymousStyle(dict):
             'outline_width': 0,
         })
         self.parent_style = parent_style
-        self.specified = self
         if parent_style:
             self.cache = parent_style.cache
         else:
@@ -682,7 +681,6 @@ class ComputedStyle(dict):
     """Computed style used for non-anonymous boxes."""
     def __init__(self, parent_style, cascaded, element, pseudo_type,
                  root_style, base_url):
-        self.specified = {}
         self.parent_style = parent_style
         self.cascaded = cascaded
         self.is_root_element = parent_style is None
@@ -700,17 +698,16 @@ class ComputedStyle(dict):
             self.parent_style, self.cascaded, self.element, self.pseudo_type,
             self.root_style, self.base_url)
         copy.update(self)
-        copy.specified = self.specified.copy()
         return copy
 
-    def __missing__(self, key):
-        if key == 'float':
-            # Set specified value for position, needed for computed value.
-            self['position']
-        elif key == 'display':
-            # Set specified value for float, needed for computed value.
-            self['float']
+    def specified_value(self, key):
+        """Return the specified value for a property."""
+        if key in self.cascaded:
+            return self.cascaded[key][0]
+        else:
+            return INITIAL_VALUES[key]
 
+    def __missing__(self, key):
         parent_style = self.parent_style
 
         if key in self.cascaded:
@@ -777,11 +774,6 @@ class ComputedStyle(dict):
             value = '' if parent_style is None else parent_style['page']
             if key in self:
                 del self[key]
-        elif key in ('position', 'float', 'display'):
-            # Save specified values to define computed values for these
-            # specific properties. See
-            # https://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo.
-            self.specified[key] = value
 
         if key in self:
             # Value already computed and saved: return.

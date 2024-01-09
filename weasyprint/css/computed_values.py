@@ -451,8 +451,8 @@ def content(style, name, values):
 def display(style, name, value):
     """Compute the ``display`` property."""
     # See https://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo.
-    float_ = style.specified['float']
-    position = style.specified['position']
+    float_ = style.specified_value('float')
+    position = style.specified_value('position')
     if position in ('absolute', 'fixed') or float_ != 'none' or (
             style.is_root_element):
         if value == ('inline-table',):
@@ -471,7 +471,7 @@ def display(style, name, value):
 def compute_float(style, name, value):
     """Compute the ``float`` property."""
     # See https://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo.
-    position = style.specified['position']
+    position = style.specified_value('position')
     if position in ('absolute', 'fixed') or position[0] == 'running()':
         return 'none'
     else:
