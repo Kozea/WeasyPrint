@@ -212,6 +212,46 @@ def test_floats_8():
 
 
 @assert_no_logs
+def test_floats_10():
+    # adjacent-floats-001
+    page, = render_pages('''
+      <div style="float: left">
+        <div style="float: inherit; width: 100px; height: 30px;">
+          test 1
+        </div>
+        <div style="float: inherit; width: 100px; height: 30px;">
+          test 2
+        </div>
+      </div>''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    div_1, div_2 = div.children
+    assert outer_area(div_1) == (0, 0, 100, 30)
+    assert outer_area(div_2) == (100, 0, 100, 30)
+
+
+@assert_no_logs
+def test_floats_11():
+    # adjacent-floats-001
+    page, = render_pages('''
+      <div style="float: none">
+        <div style="float: inherit; width: 100px; height: 30px;">
+          test 1
+        </div>
+        <div style="float: inherit; width: 100px; height: 30px;">
+          test 2
+        </div>
+      </div>''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    div_1, div_2 = div.children
+    assert outer_area(div_1) == (0, 0, 100, 30)
+    assert outer_area(div_2) == (0, 30, 100, 30)
+
+
+@assert_no_logs
 def test_floats_9():
     # Regression test
     # https://github.com/Kozea/WeasyPrint/issues/263
