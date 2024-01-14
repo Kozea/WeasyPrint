@@ -387,6 +387,8 @@ class SVG:
         # Update font size
         font_size = size(node.get('font-size', '1em'), font_size, font_size)
 
+        original_streams = []
+
         if fill_stroke:
             self.stream.push_state()
 
@@ -401,7 +403,7 @@ class SVG:
         # Create substream for opacity
         opacity = float(node.get('opacity', 1))
         if fill_stroke and 0 <= opacity < 1:
-            original_stream = self.stream
+            original_streams.append(self.stream)
             box = self.calculate_bounding_box(node, font_size)
             if not is_valid_bounding_box(box):
                 box = (0, 0, self.inner_width, self.inner_height)
@@ -438,7 +440,8 @@ class SVG:
         text_anchor = node.get('text-anchor')
         if node.tag == 'text' and text_anchor in ('middle', 'end'):
             group = self.stream.add_group(0, 0, 0, 0)  # BBox set after drawing
-            original_stream, self.stream = self.stream, group
+            original_streams.append(self.stream)
+            self.stream = group
 
         # Draw node
         if visible and node.tag in TAGS:
@@ -461,7 +464,7 @@ class SVG:
         # Handle text anchor
         if node.tag == 'text' and text_anchor in ('middle', 'end'):
             group_id = self.stream.id
-            self.stream = original_stream
+            self.stream = original_streams.pop()
             self.stream.push_state()
             if is_valid_bounding_box(node.text_bounding_box):
                 x, y, width, height = node.text_bounding_box
@@ -486,7 +489,7 @@ class SVG:
         # Apply opacity stream and restore original stream
         if fill_stroke and 0 <= opacity < 1:
             group_id = self.stream.id
-            self.stream = original_stream
+            self.stream = original_streams.pop()
             self.stream.set_alpha(opacity, stroke=True, fill=True)
             self.stream.draw_x_object(group_id)
 
