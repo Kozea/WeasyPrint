@@ -920,40 +920,42 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
             continue
 
         if rule.type == 'qualified-rule':
-            selectors_declarations = list(
-                preprocess_declarations(
-                    base_url, tinycss2.parse_declaration_list(rule.content),
-                    rule.prelude))
-
-            if selectors_declarations:
+            try:
                 logger_level = WARNING
-                selectors_declarations = groupby(
-                    selectors_declarations, key=lambda x: x[0])
-                try:
+                selectors_declarations = list(
+                    preprocess_declarations(
+                        base_url, tinycss2.parse_declaration_list(rule.content),
+                        rule.prelude))
+
+                if selectors_declarations:
+                    selectors_declarations = groupby(
+                        selectors_declarations, key=lambda x: x[0])
                     for selectors, declarations in selectors_declarations:
                         declarations = [
                             declaration[1] for declaration in declarations]
                         for selector in selectors:
                             matcher.add_selector(selector, declarations)
                             if selector.pseudo_element not in PSEUDO_ELEMENTS:
+                                prelude_string = tinycss2.serialize(prelude)
                                 if selector.pseudo_element.startswith('-'):
                                     logger_level = DEBUG
                                     raise cssselect2.SelectorError(
+                                        f"'{prelude_string}', "
                                         'ignored prefixed pseudo-element: '
                                         f'{selector.pseudo_element}')
                                 else:
                                     raise cssselect2.SelectorError(
+                                        f"'{prelude_string}', "
                                         'unknown pseudo-element: '
                                         f'{selector.pseudo_element}')
                         ignore_imports = True
-                except cssselect2.SelectorError as exc:
-                    LOGGER.log(
-                        logger_level,
-                        "Invalid or unsupported selector '%s', %s",
-                        tinycss2.serialize(rule.prelude), exc)
-                    continue
-            else:
-                ignore_imports = True
+                else:
+                    ignore_imports = True
+            except cssselect2.SelectorError as exc:
+                LOGGER.log(
+                    logger_level,
+                    "Invalid or unsupported selector, %s", exc)
+                continue
 
         elif rule.type == 'at-rule' and rule.lower_at_keyword == 'import':
             if ignore_imports:

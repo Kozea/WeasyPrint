@@ -1,7 +1,7 @@
 """Validate properties, expanders and descriptors."""
 
 
-from cssselect2 import compile_selector_list
+from cssselect2 import SelectorError, compile_selector_list
 from tinycss2 import parse_declaration_list, serialize
 from tinycss2.ast import FunctionBlock, LiteralToken
 
@@ -200,7 +200,10 @@ def preprocess_declarations(base_url, declarations, prelude=None):
         important = declaration.important
         for long_name, value in result:
             if prelude is not None:
-                selectors = compile_selector_list(prelude)
+                try:
+                    selectors = compile_selector_list(prelude)
+                except SelectorError as exc:
+                    raise SelectorError(f"'{serialize(prelude)}'")
                 declaration = (long_name.replace('-', '_'), value, important)
                 yield selectors, declaration
             else:
