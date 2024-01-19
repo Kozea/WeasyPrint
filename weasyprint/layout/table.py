@@ -83,7 +83,7 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
         group.width = rows_width
         new_group_children = []
         # For each rows, cells for which this is the last row (with rowspan)
-        ending_cells_by_row = [[] for row in group.children]
+        ending_cells_by_row = [[]] * len(group.children)
 
         is_group_start = skip_stack is None
         if is_group_start:

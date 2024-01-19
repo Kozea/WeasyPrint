@@ -391,7 +391,7 @@ def table_and_columns_preferred_widths(context, box, outer=True):
                 grid_width = max(cell.grid_x + cell.colspan, grid_width)
                 grid_height = max(row_number + cell.rowspan, grid_height)
             row_number += 1
-    grid = [[None] * grid_width for i in range(grid_height)]
+    grid = [[None] * grid_width] * grid_height
     row_number = 0
     for row_group in table.children:
         for row in row_group.children:
