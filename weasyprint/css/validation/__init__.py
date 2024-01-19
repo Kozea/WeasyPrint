@@ -3,6 +3,7 @@
 
 from cssselect2 import compile_selector_list
 from tinycss2 import parse_declaration_list, serialize
+from tinycss2.ast import FunctionBlock, LiteralToken
 
 from ... import LOGGER
 from ..utils import InvalidValues, remove_whitespace
@@ -123,9 +124,18 @@ def preprocess_declarations(base_url, declarations, prelude=None):
                 declaration.source_line, declaration.source_column)
 
         if declaration.type == 'qualified-rule':
+            declaration_prelude = declaration.prelude
+            if LiteralToken(1, 1, '&') in declaration.prelude:
+                is_token = LiteralToken(1, 1, ':'), FunctionBlock(1, 1, 'is', prelude)
+                declaration_prelude = []
+                for token in declaration.prelude:
+                    if token == LiteralToken(1, 1, '&'):
+                        declaration_prelude.extend(is_token)
+                    else:
+                        declaration_prelude.append(token)
             yield from preprocess_declarations(
                 base_url, parse_declaration_list(declaration.content),
-                declaration.prelude)
+                declaration_prelude)
 
         if declaration.type != 'declaration':
             continue
