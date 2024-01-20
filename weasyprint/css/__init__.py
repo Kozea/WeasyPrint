@@ -933,20 +933,19 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                     for selectors, declarations in selectors_declarations:
                         declarations = [
                             declaration[1] for declaration in declarations]
-                        print(selectors, declarations)
                         for selector in selectors:
                             matcher.add_selector(selector, declarations)
                             if selector.pseudo_element not in PSEUDO_ELEMENTS:
-                                prelude_string = tinycss2.serialize(prelude)
+                                prelude = tinycss2.serialize(rule.prelude)
                                 if selector.pseudo_element.startswith('-'):
                                     logger_level = DEBUG
                                     raise cssselect2.SelectorError(
-                                        f"'{prelude_string}', "
+                                        f"'{prelude}', "
                                         'ignored prefixed pseudo-element: '
                                         f'{selector.pseudo_element}')
                                 else:
                                     raise cssselect2.SelectorError(
-                                        f"'{prelude_string}', "
+                                        f"'{prelude}', "
                                         'unknown pseudo-element: '
                                         f'{selector.pseudo_element}')
                         ignore_imports = True
