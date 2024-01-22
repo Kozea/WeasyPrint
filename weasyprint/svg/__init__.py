@@ -119,6 +119,16 @@ class Node:
         """Text after the XML node."""
         return self._etree_node.tail
 
+    @property
+    def display(self):
+        """Whether node should be displayed."""
+        return self.get('display') != 'none'
+
+    @property
+    def visible(self):
+        """Whether node is visible."""
+        return self.display and self.get('visibility') != 'hidden'
+
     def __iter__(self):
         """Yield node children, handling cascade."""
         for wrapper in self._wrapper:
@@ -432,10 +442,6 @@ class SVG:
             if new_ctm.determinant:
                 self.stream.transform(*(old_ctm @ new_ctm.invert).values)
 
-        # Manage display and visibility
-        display = node.get('display') != 'none'
-        visible = display and (node.get('visibility') != 'hidden')
-
         # Handle text anchor
         text_anchor = node.get('text-anchor')
         if node.tag == 'text' and text_anchor in ('middle', 'end'):
@@ -444,12 +450,12 @@ class SVG:
             self.stream = group
 
         # Draw node
-        if visible and node.tag in TAGS:
+        if node.visible and node.tag in TAGS:
             with suppress(PointError):
                 TAGS[node.tag](self, node, font_size)
 
         # Draw node children
-        if display and node.tag not in DEF_TYPES:
+        if node.display and node.tag not in DEF_TYPES:
             for child in node:
                 self.draw_node(child, font_size, fill_stroke)
                 if node.tag in ('text', 'tspan'):
