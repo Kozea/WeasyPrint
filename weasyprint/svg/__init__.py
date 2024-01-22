@@ -9,7 +9,8 @@ from cssselect2 import ElementWrapper
 
 from ..urls import get_url_attribute
 from .bounding_box import (
-    bounding_box, extend_bounding_box, is_valid_bounding_box)
+    EMPTY_BOUNDING_BOX, bounding_box, extend_bounding_box,
+    is_valid_bounding_box)
 from .css import parse_declarations, parse_stylesheets
 from .defs import (
     apply_filters, clip_path, draw_gradient_or_pattern, paint_mask, use)
@@ -449,6 +450,10 @@ class SVG:
             original_streams.append(self.stream)
             self.stream = group
 
+        # Set text bounding box
+        if node.display and TAGS.get(node.tag) == text:
+            node.text_bounding_box = EMPTY_BOUNDING_BOX
+
         # Draw node
         if node.visible and node.tag in TAGS:
             with suppress(PointError):
@@ -458,7 +463,7 @@ class SVG:
         if node.display and node.tag not in DEF_TYPES:
             for child in node:
                 self.draw_node(child, font_size, fill_stroke)
-                if node.tag in ('text', 'tspan') and child.visible:
+                if TAGS.get(node.tag) == text and child.visible:
                     if not is_valid_bounding_box(child.text_bounding_box):
                         continue
                     x1, y1 = child.text_bounding_box[:2]
