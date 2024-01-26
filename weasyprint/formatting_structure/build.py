@@ -292,9 +292,7 @@ def before_after_to_box(element, pseudo_type, state, style_for,
     box.children = children
 
     # calculate the bookmark-label
-    if style['bookmark_label'] == 'none':
-        box.bookmark_label = ''
-    else:
+    if style['bookmark_level'] != 'none':
         _quote_depth, counter_values, _counter_scopes = state
         compute_bookmark_label(
             element, box, style['bookmark_label'], counter_values,
@@ -669,9 +667,7 @@ def set_content_lists(element, box, style, counter_values, target_collector,
             compute_string_set(
                 element, box, string_name, string_values, counter_values,
                 target_collector, counter_style)
-    if style['bookmark_label'] == 'none':
-        box.bookmark_label = ''
-    else:
+    if style['bookmark_level'] != 'none':
         compute_bookmark_label(
             element, box, style['bookmark_label'], counter_values,
             target_collector, counter_style)
