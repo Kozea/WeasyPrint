@@ -244,7 +244,7 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                     row.height = max(row_bottom_y - row.position_y, 0)
                 else:
                     row.height = max(row.height, max(
-                        row_cell.height for row_cell in ending_cells))
+                        row_cell.border_height() for row_cell in ending_cells))
                     row_bottom_y = row.position_y + row.height
             else:
                 row_bottom_y = row.position_y
