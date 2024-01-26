@@ -280,6 +280,7 @@ def test_text_tspan(assert_pixels):
       </svg>
     ''')
 
+
 @assert_no_logs
 def test_text_tspan_anchor_middle(assert_pixels):
     assert_pixels('''
@@ -296,8 +297,7 @@ def test_text_tspan_anchor_middle(assert_pixels):
           <tspan x="10" y="1.5" text-anchor="middle">ABC</tspan>
         </text>
       </svg>
-    ''',
-    )
+    ''')
 
 
 @assert_no_logs
@@ -316,8 +316,8 @@ def test_text_tspan_anchor_end(assert_pixels):
           <tspan x="18" y="1.5" text-anchor="end">ABC</tspan>
         </text>
       </svg>
-    ''',
-    )
+    ''')
+
 
 @assert_no_logs
 def test_text_rotate(assert_pixels):

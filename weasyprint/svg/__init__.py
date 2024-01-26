@@ -438,7 +438,7 @@ class SVG:
 
         # Handle text anchor
         text_anchor = node.get('text-anchor')
-        if (node.tag == 'text' or node.tag == 'tspan') and text_anchor in ('middle', 'end'):
+        if TAGS.get(node.tag) == text and text_anchor in ('middle', 'end'):
             group = self.stream.add_group(0, 0, 0, 0)  # BBox set after drawing
             original_streams.append(self.stream)
             self.stream = group
