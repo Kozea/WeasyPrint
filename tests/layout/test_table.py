@@ -8,16 +8,17 @@ from ..testing_utils import (
     assert_no_logs, capture_logs, parse_all, render_pages)
 
 
-def _get_grid(html):
+def _get_grid(html, grid_width, grid_height):
     html = parse_all(html)
     body, = html.children
     table_wrapper, = body.children
     table, = table_wrapper.children
+    border_lists = collapse_table_borders(table, grid_width, grid_height)
     return tuple(
         [[(style, width, color) if width else None
-          for _score, (style, width, color) in column]
-         for column in grid]
-        for grid in collapse_table_borders(table))
+          for _score, (style, width, color) in border]
+         for border in border_list]
+        for border_list in border_lists)
 
 
 @assert_no_logs
@@ -3029,7 +3030,7 @@ def test_border_collapse_1():
     assert isinstance(table, boxes.TableBox)
     assert not hasattr(table, 'collapsed_border_grid')
 
-    grid = _get_grid('<table style="border-collapse: collapse"></table>')
+    grid = _get_grid('<table style="border-collapse: collapse"></table>', 0, 0)
     assert grid == ([], [])
 
 
@@ -3041,7 +3042,7 @@ def test_border_collapse_2():
         <tr> <td>A</td> <td>B</td> </tr>
         <tr> <td>C</td> <td>D</td> </tr>
       </table>
-    ''')
+    ''', 2, 2)
     assert vertical_borders == [
         [black_3, red_1, black_3],
         [black_3, red_1, black_3],
@@ -3062,7 +3063,7 @@ def test_border_collapse_3():
         <tr> <td>A</td> <td style="border-style: hidden">B</td> </tr>
         <tr> <td>C</td> <td style="border-style: none">D</td> </tr>
       </table>
-    ''')
+    ''', 2, 2)
     assert vertical_borders == [
         [black_3, None, None],
         [black_3, black_3, black_3],
@@ -3086,7 +3087,7 @@ def test_border_collapse_4():
         <tr> <td></td> <td></td> <td></td> </tr>
         <tr> <td></td> <td></td> <td></td> </tr>
       </table>
-    ''')
+    ''', 3, 4)
     assert vertical_borders == [
         [yellow_5, black_3, red_1, yellow_5],
         [yellow_5, dashed_blue_5, green_5, green_5],
@@ -3112,7 +3113,7 @@ def test_border_collapse_5():
             <tr> <td rowspan=2></td> <td></td> <td></td> </tr>
             <tr>                     <td colspan=2></td> </tr>
         </table>
-    ''')
+    ''', 3, 2)
     assert vertical_borders == [
         [black_3, black_3, black_3, black_3],
         [black_3, black_3, None, black_3],

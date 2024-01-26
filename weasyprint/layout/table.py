@@ -986,7 +986,7 @@ def distribute_excess_width(context, grid, excess_width, column_widths,
 TRANSPARENT = tinycss2.color3.parse_color('transparent')
 
 
-def collapse_table_borders(table):
+def collapse_table_borders(table, grid_width, grid_height):
     """Resolve border conflicts for a table in the collapsing border model.
 
     Take a :class:`TableBox`; set appropriate border widths on the table,
@@ -994,7 +994,6 @@ def collapse_table_borders(table):
     a data structure for the resolved collapsed border grid.
 
     """
-    grid_width, grid_height = table.grid_width, table.grid_height
     if not (grid_width and grid_height):
         # Don’t bother with empty tables
         return [], []

@@ -972,9 +972,8 @@ def wrap_table(box, children):
     table = box.copy_with_children(row_groups)
     table.column_groups = tuple(column_groups)
     if table.style['border_collapse'] == 'collapse':
-        table.grid_width = grid_width
-        table.grid_height = grid_height
-        table.collapsed_border_grid = collapse_table_borders(table)
+        table.collapsed_border_grid = collapse_table_borders(
+            table, grid_width, grid_height)
 
     if isinstance(box, boxes.InlineTableBox):
         wrapper_type = boxes.InlineBlockBox
