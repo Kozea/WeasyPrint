@@ -12,6 +12,7 @@ from . import DEFAULT_OPTIONS, HTML, LOGGER, __version__
 from .pdf import VARIANTS
 from .text.ffi import pango
 from .urls import default_url_fetcher
+from .logging import set_log_level
 
 
 class PrintInfo(argparse.Action):
@@ -169,9 +170,12 @@ def main(argv=None, stdout=None, stdin=None, HTML=HTML):
 
     # Default to logging to stderr.
     if args.debug:
-        LOGGER.setLevel(logging.DEBUG)
+        set_log_level(logging.DEBUG)
     elif args.verbose:
-        LOGGER.setLevel(logging.INFO)
+        set_log_level(logging.INFO)
+    elif args.quiet:
+        set_log_level(logging.ERROR)
+
     if not args.quiet:
         handler = logging.StreamHandler()
         handler.setFormatter(logging.Formatter('%(levelname)s: %(message)s'))
