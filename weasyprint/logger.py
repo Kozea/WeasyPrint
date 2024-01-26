@@ -22,7 +22,8 @@ if not LOGGER.handlers:  # pragma: no cover
 
 PROGRESS_LOGGER = logging.getLogger('weasyprint.progress')
 
+
 def set_log_level(level):
     LOGGER.setLevel(level)
     PROGRESS_LOGGER.setLevel(level)
-    logging.getLogger("fontTools").setLevel(level)
+    logging.getLogger('fontTools').setLevel(level)

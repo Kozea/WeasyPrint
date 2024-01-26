@@ -9,10 +9,10 @@ from functools import partial
 import pydyf
 
 from . import DEFAULT_OPTIONS, HTML, LOGGER, __version__
+from .logger import set_log_level
 from .pdf import VARIANTS
 from .text.ffi import pango
 from .urls import default_url_fetcher
-from .logging import set_log_level
 
 
 class PrintInfo(argparse.Action):
