@@ -50,6 +50,27 @@ def test_borders(assert_pixels, assert_different_renderings, margin='10px',
 
 
 @assert_no_logs
+def test_borders_table_collapse(assert_pixels, assert_different_renderings):
+    """Test the rendering of collapsing borders."""
+    source = '''
+      <style>
+        @page { size: 140px 110px }
+        table { width: 100px; height: 70px; margin: 10px;
+                border-collapse: collapse; border: 10px %s blue }
+      </style>
+      <table><td>abc</td>'''
+
+    # Do not test the exact rendering of earch border style but at least
+    # check that they do not do the same.
+    documents = (
+        source % border_style
+        for border_style in (
+            'none', 'solid', 'dashed', 'dotted', 'double',
+            'inset', 'outset', 'groove', 'ridge'))
+    assert_different_renderings(*documents)
+
+
+@assert_no_logs
 def test_outlines(assert_pixels, assert_different_renderings):
     return test_borders(
         assert_pixels, assert_different_renderings,

@@ -2,10 +2,12 @@
 
 import functools
 import math
+from abc import ABC, abstractmethod
 from urllib.parse import unquote, urljoin
 
 from tinycss2.color3 import parse_color
 
+from .. import LOGGER
 from ..urls import iri_to_uri, url_is_absolute
 from .properties import Dimension
 
@@ -93,6 +95,41 @@ class CenterKeywordFakeToken:
     type = 'ident'
     lower_value = 'center'
     unit = None
+
+
+class Pending(ABC):
+    """Abstract class representing property value with pending validation."""
+    # See https://drafts.csswg.org/css-variables-2/#variables-in-shorthands.
+    def __init__(self, tokens, name):
+        self.tokens = tokens
+        self.name = name
+        self._reported_error = False
+
+    @abstractmethod
+    def validate(self, tokens, wanted_key):
+        """Get validated value for wanted key."""
+        raise NotImplementedError
+
+    def solve(self, tokens, wanted_key):
+        """Get validated value or raise error."""
+        try:
+            if not tokens:
+                # Having no tokens is allowed by grammar but refused by all
+                # properties and expanders.
+                raise InvalidValues('no value')
+            return self.validate(tokens, wanted_key)
+        except InvalidValues as exc:
+            if self._reported_error:
+                raise exc
+            source_line = self.tokens[0].source_line
+            source_column = self.tokens[0].source_column
+            value = ' '.join(token.serialize() for token in tokens)
+            message = (exc.args and exc.args[0]) or 'invalid value'
+            LOGGER.warning(
+                'Ignored `%s: %s` at %d:%d, %s.',
+                self.name, value, source_line, source_column, message)
+            self._reported_error = True
+            raise exc
 
 
 def split_on_comma(tokens):
@@ -496,18 +533,16 @@ def check_string_or_element_function(string_or_element, token):
 
 
 def check_var_function(token):
-    function = parse_function(token)
-    if function is None:
-        return
-    name, args = function
-    if name == 'var' and args:
-        ident = args.pop(0)
-        if ident.type != 'ident' or not ident.value.startswith('--'):
-            return
-
-        # TODO: we should check authorized tokens
-        # https://drafts.csswg.org/css-syntax-3/#typedef-declaration-value
-        return ('var()', (ident.value.replace('-', '_'), args or None))
+    if function := parse_function(token):
+        name, args = function
+        if name == 'var' and args:
+            ident = args.pop(0)
+            # TODO: we should check authorized tokens
+            # https://drafts.csswg.org/css-syntax-3/#typedef-declaration-value
+            return ident.type == 'ident' and ident.value.startswith('--')
+        for arg in args:
+            if check_var_function(arg):
+                return True
 
 
 def get_string(token):
@@ -699,11 +734,6 @@ def get_content_list_token(token, base_url):
     string = get_string(token)
     if string is not None:
         return string
-
-    # <var>
-    var = check_var_function(token)
-    if var is not None:
-        return var
 
     # contents
     if get_keyword(token) == 'contents':

@@ -31,10 +31,9 @@ NOT_PRINT_MEDIA = {
     'stress',
     'voice-family',
     'volume',
-    # Interactive
-    'cursor',
-    # Animations and transitions
+    # Animations, transitions, timelines
     'animation',
+    'animation-composition',
     'animation-delay',
     'animation-direction',
     'animation-duration',
@@ -42,12 +41,68 @@ NOT_PRINT_MEDIA = {
     'animation-iteration-count',
     'animation-name',
     'animation-play-state',
+    'animation-range',
+    'animation-range-end',
+    'animation-range-start',
+    'animation-timeline',
     'animation-timing-function',
+    'timeline-scope',
     'transition',
     'transition-delay',
     'transition-duration',
     'transition-property',
     'transition-timing-function',
+    'view-timeline',
+    'view-timeline-axis',
+    'view-timeline-inset',
+    'view-timeline-name',
+    'view-transition-name',
+    # Dynamic and interactive
+    'caret',
+    'caret-color',
+    'caret-shape',
+    'cursor',
+    'field-sizing',
+    'font-display',
+    'resize',
+    # Browser viewport scrolling
+    'overscroll-behavior',
+    'overscroll-behavior-block',
+    'overscroll-behavior-inline',
+    'overscroll-behavior-x',
+    'overscroll-behavior-y',
+    'scroll-behavior',
+    'scroll-margin',
+    'scroll-margin-block',
+    'scroll-margin-block-end',
+    'scroll-margin-block-start',
+    'scroll-margin-bottom',
+    'scroll-margin-inline',
+    'scroll-margin-inline-end',
+    'scroll-margin-inline-start',
+    'scroll-margin-left',
+    'scroll-margin-right',
+    'scroll-margin-top',
+    'scroll-padding',
+    'scroll-padding-block',
+    'scroll-padding-block-end',
+    'scroll-padding-block-start',
+    'scroll-padding-bottom',
+    'scroll-padding-inline',
+    'scroll-padding-inline-end',
+    'scroll-padding-inline-start',
+    'scroll-padding-left',
+    'scroll-padding-right',
+    'scroll-padding-top',
+    'scroll-snap-align',
+    'scroll-snap-stop',
+    'scroll-snap-type',
+    'scroll-timeline',
+    'scroll-timeline-axis',
+    'scroll-timeline-name',
+    'scrollbar-color',
+    'scrollbar-gutter',
+    'scrollbar-width',
 }
 
 
@@ -111,11 +166,15 @@ def preprocess_declarations(base_url, declarations):
             validation_error('debug', 'prefixed selectors are ignored')
             continue
 
-        expander_ = EXPANDERS.get(name, validate_non_shorthand)
+        validator = EXPANDERS.get(name, validate_non_shorthand)
         tokens = remove_whitespace(declaration.value)
         try:
+            # Having no tokens is allowed by grammar but refused by all
+            # properties and expanders.
+            if not tokens:
+                raise InvalidValues('no value')
             # Use list() to consume generators now and catch any error.
-            result = list(expander_(base_url, name, tokens))
+            result = list(validator(tokens, name, base_url))
         except InvalidValues as exc:
             validation_error(
                 'warning',

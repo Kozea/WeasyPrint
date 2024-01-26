@@ -8,11 +8,10 @@ import re
 import unicodedata
 
 from .. import html
-from ..css import computed_values, properties, targets
+from ..css import properties, targets
+from ..layout.table import collapse_table_borders
 from ..logger import LOGGER
 from . import boxes
-from ..layout.table import collapse_table_borders
-
 
 # Maps values of the ``display`` CSS property to box types.
 BOX_TYPE_FROM_DISPLAY = {
@@ -292,9 +291,7 @@ def before_after_to_box(element, pseudo_type, state, style_for,
     box.children = children
 
     # calculate the bookmark-label
-    if style['bookmark_label'] == 'none':
-        box.bookmark_label = ''
-    else:
+    if style['bookmark_level'] != 'none':
         _quote_depth, counter_values, _counter_scopes = state
         compute_bookmark_label(
             element, box, style['bookmark_label'], counter_values,
@@ -361,7 +358,7 @@ def marker_to_box(element, state, parent_style, style_for, get_image_from_uri,
             translate_x = properties.Dimension(-100, '%')
         else:
             translate_x = properties.Dimension(100, '%')
-        translate_y = computed_values.ZERO_PIXELS
+        translate_y = properties.ZERO_PIXELS
         marker_box.style['transform'] = (
             ('translate', (translate_x, translate_y)),)
     else:
@@ -669,9 +666,7 @@ def set_content_lists(element, box, style, counter_values, target_collector,
             compute_string_set(
                 element, box, string_name, string_values, counter_values,
                 target_collector, counter_style)
-    if style['bookmark_label'] == 'none':
-        box.bookmark_label = ''
-    else:
+    if style['bookmark_level'] != 'none':
         compute_bookmark_label(
             element, box, style['bookmark_label'], counter_values,
             target_collector, counter_style)

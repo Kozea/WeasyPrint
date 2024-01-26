@@ -189,7 +189,7 @@ def generate_pdf(document, target, zoom, **options):
         add_inputs(
             page.inputs, matrix, pdf, pdf_page, resources, stream,
             document.font_config.font_map, compress)
-        page.paint(stream, scale=scale)
+        page.paint(stream, scale)
 
         # Bleed
         bleed = {key: value * 0.75 for key, value in page.bleed.items()}

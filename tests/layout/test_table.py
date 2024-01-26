@@ -1881,6 +1881,24 @@ def test_table_row_height_3():
 
 
 @assert_no_logs
+def test_table_row_height_4():
+    # A row cannot be shorter than the border-height of its tallest cell
+    page, = render_pages('''
+      <table style="border-spacing: 0;">
+        <tr style="height: 4px;">
+          <td style="border: 1px solid; padding: 5px;"></td>
+        </tr>
+      </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    wrapper, = body.children
+    table, = wrapper.children
+    row_group, = table.children
+    assert row_group.height == 12
+
+
+@assert_no_logs
 def test_table_vertical_align(assert_pixels):
     assert_pixels('''
         rrrrrrrrrrrrrrrrrrrrrrrrrrrr

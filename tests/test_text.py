@@ -10,7 +10,7 @@ from .testing_utils import MONO_FONTS, SANS_FONTS, assert_no_logs, render_pages
 
 def make_text(text, width=None, **style):
     """Wrapper for split_first_line() creating a style dict."""
-    new_style = dict(INITIAL_VALUES)
+    new_style = INITIAL_VALUES.copy()
     new_style['font_family'] = MONO_FONTS.split(',')
     new_style.update(style)
     return split_first_line(

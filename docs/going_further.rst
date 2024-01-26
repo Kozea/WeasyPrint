@@ -200,7 +200,7 @@ The ``formatting_structure.build.build_formatting_structure`` function returns
 the box for the root element (and, through its ``children`` attribute, the
 whole tree).
 
-.. _user agent stylesheet: https://github.com/Kozea/WeasyPrint/blob/master/weasyprint/css/html5_ua.css
+.. _user agent stylesheet: https://github.com/Kozea/WeasyPrint/blob/main/weasyprint/css/html5_ua.css
 
 
 Layout

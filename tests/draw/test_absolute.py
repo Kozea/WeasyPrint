@@ -770,3 +770,26 @@ def test_fixed_in_inline(assert_pixels):
         </style>
         <p>a a</p> a a <div>a</div>
     ''')
+
+
+@assert_no_logs
+def test_absolute_image_background(assert_pixels):
+    assert_pixels('''
+        ____
+        _RBB
+        _BBB
+        _BBB
+    ''', '''
+        <style>
+          @page {
+            size: 4px;
+          }
+          img {
+            background: blue;
+            position: absolute;
+            top: 1px;
+            left: 1px;
+          }
+        </style>
+        <img src="pattern-transparent.svg" />
+    ''')

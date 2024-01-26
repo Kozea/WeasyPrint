@@ -32,7 +32,7 @@ def test_box_tree():
 @assert_no_logs
 def test_html_entities():
     for quote in ['"', '&quot;', '&#x22;', '&#34;']:
-        assert_tree(parse('<p>{0}abc{1}'.format(quote, quote)), [
+        assert_tree(parse(f'<p>{quote}abc{quote}'), [
             ('p', 'Block', [
                 ('p', 'Text', '"abc"')])])
 
@@ -829,12 +829,12 @@ def test_margin_box_string_set_2():
               @top-center { content: string(text_header) }
             }
             p {
-              string-set: text_header content(%(content_val)s);
+              string-set: text_header content(%s);
             }
-            %(extra_style)s
+            %s
           </style>
           <p>first assignment</p>
-        ''' % dict(content_val=content_val, extra_style=extra_style))
+        ''' % (content_val, extra_style))
 
         html, top_center = page_1.children
         line_box, = top_center.children
@@ -1101,7 +1101,7 @@ def test_page_counters():
         html, bottom_center = page.children
         line_box, = bottom_center.children
         text_box, = line_box.children
-        assert text_box.text == 'Page {0} of 3.'.format(page_number)
+        assert text_box.text == f'Page {page_number} of 3.'
 
 
 @assert_no_logs

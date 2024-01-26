@@ -9,7 +9,7 @@ Installation
 
 WeasyPrint |version| depends on:
 
-* Python_ ≥ 3.7.0
+* Python_ ≥ 3.8.0
 * Pango_ ≥ 1.44.0
 * pydyf_ ≥ 0.6.0
 * CFFI_ ≥ 0.6
@@ -70,12 +70,12 @@ in a `virtual environment`_ using `pip`_::
 .. _pip: https://pip.pypa.io/
 
 
-Alpine ≥ 3.12
+Alpine ≥ 3.14
 +++++++++++++
 
-To install WeasyPrint without a virtualenv, you need the following packages::
+To install WeasyPrint using your distribution’s package::
 
-  apk add py3-pip py3-pillow py3-cffi py3-brotli gcc musl-dev python3-dev pango
+  apk add weasyprint
 
 To install WeasyPrint inside a virtualenv using wheels (if possible), you need
 the following packages::
@@ -91,9 +91,9 @@ following packages::
 Archlinux
 +++++++++
 
-To install WeasyPrint without a virtualenv, you need the following packages::
+To install WeasyPrint using your distribution’s package::
 
-  pacman -S python-pip pango python-cffi python-pillow python-brotli python-zopfli
+  pacman -S python-weasyprint
 
 To install WeasyPrint inside a virtualenv using wheels (if possible), you need
 the following packages::
@@ -109,9 +109,9 @@ following packages::
 Debian ≥ 11
 +++++++++++
 
-To install WeasyPrint without a virtualenv, you need the following packages::
+To install WeasyPrint using your distribution’s package::
 
-  apt install python3-pip python3-cffi python3-brotli libpango-1.0-0 libpangoft2-1.0-0
+  apt install weasyprint
 
 To install WeasyPrint inside a virtualenv using wheels (if possible), you need
 the following packages::
@@ -127,9 +127,9 @@ following packages::
 Fedora ≥ 34
 +++++++++++
 
-To install WeasyPrint without a virtualenv, you need the following packages::
+To install WeasyPrint using your distribution’s package::
 
-  yum install python-pip python-pillow python-cffi python3-brotli pango
+  yum install weasyprint
 
 To install WeasyPrint inside a virtualenv using wheels (if possible), you need
 the following packages::
@@ -145,9 +145,9 @@ following packages::
 Ubuntu ≥ 20.04
 ++++++++++++++
 
-To install WeasyPrint without a virtualenv, you need the following packages::
+To install WeasyPrint using your distribution’s package::
 
-  apt install python3-pip python3-cffi python3-brotli libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0
+  apt install weasyprint
 
 To install WeasyPrint inside a virtualenv using wheels (if possible), you need
 the following packages::
@@ -472,8 +472,8 @@ to the default fetcher:
     def my_fetcher(url):
         if url.startswith('graph:'):
             graph_data = map(float, url[6:].split(','))
-            return dict(string=generate_graph(graph_data),
-                        mime_type='image/png')
+            string = generate_graph(graph_data)
+            return {'string': string, 'mime_type': 'image/png'}
         return default_url_fetcher(url)
 
     source = '<img src="graph:42,10.3,87">'

@@ -7,7 +7,8 @@ from tinycss2.color3 import parse_color
 
 from ..properties import INITIAL_VALUES
 from ..utils import (
-    InvalidValues, get_keyword, get_single_keyword, split_on_comma)
+    InvalidValues, Pending, check_var_function, get_keyword,
+    get_single_keyword, split_on_comma)
 from .descriptors import expand_font_variant
 from .properties import (
     background_attachment, background_image, background_position,
@@ -21,6 +22,30 @@ from .properties import (
 EXPANDERS = {}
 
 
+class PendingExpander(Pending):
+    """Expander with validation done when defining calculated values."""
+    def __init__(self, tokens, validator):
+        super().__init__(tokens, validator.keywords['name'])
+        self.validator = validator
+
+    def validate(self, tokens, wanted_key):
+        for key, value in self.validator(tokens):
+            if key.startswith('-'):
+                key = f'{self.validator.keywords["name"]}{key}'
+            if key == wanted_key:
+                return value
+        raise KeyError
+
+
+def _find_var(tokens, expander, expanded_names):
+    """Return pending expanders when var is found in tokens."""
+    for token in tokens:
+        if check_var_function(token):
+            # Found CSS variable, keep pending-substitution values.
+            pending = PendingExpander(tokens, expander)
+            return {name: pending for name in expanded_names}
+
+
 def expander(property_name):
     """Decorator adding a function to the ``EXPANDERS``."""
     def expander_decorator(function):
@@ -29,39 +54,6 @@ def expander(property_name):
         EXPANDERS[property_name] = function
         return function
     return expander_decorator
-
-
-@expander('border-color')
-@expander('border-style')
-@expander('border-width')
-@expander('margin')
-@expander('padding')
-@expander('bleed')
-def expand_four_sides(base_url, name, tokens):
-    """Expand properties setting a token for the four sides of a box."""
-    # Make sure we have 4 tokens
-    if len(tokens) == 1:
-        tokens *= 4
-    elif len(tokens) == 2:
-        tokens *= 2  # (bottom, left) defaults to (top, right)
-    elif len(tokens) == 3:
-        tokens += (tokens[1],)  # left defaults to right
-    elif len(tokens) != 4:
-        raise InvalidValues(
-            f'Expected 1 to 4 token components got {len(tokens)}')
-    for suffix, token in zip(('-top', '-right', '-bottom', '-left'), tokens):
-        i = name.rfind('-')
-        if i == -1:
-            new_name = name + suffix
-        else:
-            # eg. border-color becomes border-*-color, not border-color-*
-            new_name = name[:i] + suffix + name[i:]
-
-        # validate_non_shorthand returns ((name, value),), we want
-        # to yield (name, value)
-        result, = validate_non_shorthand(
-            base_url, new_name, [token], required=True)
-        yield result
 
 
 def generic_expander(*expanded_names, **kwargs):
@@ -78,19 +70,27 @@ def generic_expander(*expanded_names, **kwargs):
     def generic_expander_decorator(wrapped):
         """Decorate the ``wrapped`` expander."""
         @functools.wraps(wrapped)
-        def generic_expander_wrapper(base_url, name, tokens):
+        def generic_expander_wrapper(tokens, name, base_url):
             """Wrap the expander."""
+            expander = functools.partial(
+                generic_expander_wrapper, name=name, base_url=base_url)
+
+            skip_validation = False
             keyword = get_single_keyword(tokens)
             if keyword in ('inherit', 'initial'):
-                results = dict.fromkeys(expanded_names, keyword)
+                results = {name: keyword for name in expanded_names}
                 skip_validation = True
             else:
-                skip_validation = False
+                results = _find_var(tokens, expander, expanded_names)
+                if results:
+                    skip_validation = True
+
+            if not skip_validation:
                 results = {}
                 if wants_base_url:
-                    result = wrapped(name, tokens, base_url)
+                    result = wrapped(tokens, name, base_url)
                 else:
-                    result = wrapped(name, tokens)
+                    result = wrapped(tokens, name)
                 for new_name, new_token in result:
                     assert new_name in expanded_names, new_name
                     if new_name in results:
@@ -102,7 +102,7 @@ def generic_expander(*expanded_names, **kwargs):
             for new_name in expanded_names:
                 if new_name.startswith('-'):
                     # new_name is a suffix
-                    actual_new_name = name + new_name
+                    actual_new_name = f'{name}{new_name}'
                 else:
                     actual_new_name = new_name
 
@@ -111,7 +111,7 @@ def generic_expander(*expanded_names, **kwargs):
                     if not skip_validation:
                         # validate_non_shorthand returns ((name, value),)
                         (actual_new_name, value), = validate_non_shorthand(
-                            base_url, actual_new_name, value, required=True)
+                            value, actual_new_name, base_url, required=True)
                 else:
                     value = 'initial'
 
@@ -120,12 +120,54 @@ def generic_expander(*expanded_names, **kwargs):
     return generic_expander_decorator
 
 
+@expander('border-color')
+@expander('border-style')
+@expander('border-width')
+@expander('margin')
+@expander('padding')
+@expander('bleed')
+def expand_four_sides(tokens, name, base_url):
+    """Expand properties setting a token for the four sides of a box."""
+    # Define expanded names.
+    expanded_names = []
+    for suffix in ('-top', '-right', '-bottom', '-left'):
+        if (i := name.rfind('-')) == -1:
+            expanded_names.append(f'{name}{suffix}')
+        else:
+            # eg. border-color becomes border-*-color, not border-color-*
+            expanded_names.append(f'{name[:i]}{suffix}{name[i:]}')
+
+    # Return pending expanders if var is found.
+    expander = functools.partial(
+        expand_four_sides, name=name, base_url=base_url)
+    if result := _find_var(tokens, expander, expanded_names):
+        yield from result.items()
+        return
+
+    # Make sure we have 4 tokens.
+    if len(tokens) == 1:
+        tokens *= 4
+    elif len(tokens) == 2:
+        tokens *= 2  # (bottom, left) defaults to (top, right)
+    elif len(tokens) == 3:
+        tokens += (tokens[1],)  # left defaults to right
+    elif len(tokens) != 4:
+        raise InvalidValues(
+            f'Expected 1 to 4 token components got {len(tokens)}')
+    for expanded_name, token in zip(expanded_names, tokens):
+        # validate_non_shorthand returns ((name, value),), we want
+        # to yield (name, value).
+        result, = validate_non_shorthand(
+            [token], expanded_name, base_url, required=True)
+        yield result
+
+
 @expander('border-radius')
 @generic_expander(
     'border-top-left-radius', 'border-top-right-radius',
     'border-bottom-right-radius', 'border-bottom-left-radius',
     wants_base_url=True)
-def border_radius(name, tokens, base_url):
+def border_radius(tokens, name, base_url):
     """Validator for the ``border-radius`` property."""
     current = horizontal = []
     vertical = []
@@ -157,14 +199,14 @@ def border_radius(name, tokens, base_url):
                 f'Expected 1 to 4 token components got {len(values)}')
     corners = ('top-left', 'top-right', 'bottom-right', 'bottom-left')
     for corner, tokens in zip(corners, zip(horizontal, vertical)):
-        new_name = f'border-{corner}-radius'
-        validate_non_shorthand(base_url, new_name, tokens, required=True)
-        yield new_name, tokens
+        name = f'border-{corner}-radius'
+        validate_non_shorthand(tokens, name, base_url, required=True)
+        yield name, tokens
 
 
 @expander('list-style')
 @generic_expander('-type', '-position', '-image', wants_base_url=True)
-def expand_list_style(name, tokens, base_url):
+def expand_list_style(tokens, name, base_url):
     """Expand the ``list-style`` shorthand property.
 
     See https://www.w3.org/TR/CSS21/generate.html#propdef-list-style
@@ -206,14 +248,14 @@ def expand_list_style(name, tokens, base_url):
 
 
 @expander('border')
-def expand_border(base_url, name, tokens):
+def expand_border(tokens, name, base_url):
     """Expand the ``border`` shorthand property.
 
     See https://www.w3.org/TR/CSS21/box.html#propdef-border
 
     """
     for suffix in ('-top', '-right', '-bottom', '-left'):
-        for new_prop in expand_border_side(base_url, name + suffix, tokens):
+        for new_prop in expand_border_side(tokens, name + suffix, base_url):
             yield new_prop
 
 
@@ -224,7 +266,7 @@ def expand_border(base_url, name, tokens):
 @expander('column-rule')
 @expander('outline')
 @generic_expander('-width', '-color', '-style')
-def expand_border_side(name, tokens):
+def expand_border_side(tokens, name):
     """Expand the ``border-*`` shorthand properties.
 
     See https://www.w3.org/TR/CSS21/box.html#propdef-border-top
@@ -243,20 +285,26 @@ def expand_border_side(name, tokens):
 
 
 @expander('background')
-def expand_background(base_url, name, tokens):
+def expand_background(tokens, name, base_url):
     """Expand the ``background`` shorthand property.
 
     See https://drafts.csswg.org/css-backgrounds-3/#the-background
 
     """
-    properties = [
-        'background_color', 'background_image', 'background_repeat',
-        'background_attachment', 'background_position', 'background_size',
-        'background_clip', 'background_origin']
+    expanded_names = (
+        'background-color', 'background-image', 'background-repeat',
+        'background-attachment', 'background-position', 'background-size',
+        'background-clip', 'background-origin')
     keyword = get_single_keyword(tokens)
     if keyword in ('initial', 'inherit'):
-        for name in properties:
+        for name in expanded_names:
             yield name, keyword
+        return
+
+    expander = functools.partial(
+        expand_background, name=name, base_url=base_url)
+    if result := _find_var(tokens, expander, expanded_names):
+        yield from result.items()
         return
 
     def parse_layer(tokens, final_layer=False):
@@ -265,7 +313,7 @@ def expand_background(base_url, name, tokens):
         def add(name, value):
             if value is None:
                 return False
-            name = f'background_{name}'
+            name = f'background-{name}'
             if name in results:
                 raise InvalidValues
             results[name] = value
@@ -321,15 +369,15 @@ def expand_background(base_url, name, tokens):
             raise InvalidValues
 
         color = results.pop(
-            'background_color', INITIAL_VALUES['background_color'])
-        for name in properties:
-            if name not in results:
-                results[name] = INITIAL_VALUES[name][0]
+            'background-color', INITIAL_VALUES['background_color'])
+        for name in expanded_names:
+            if name not in results and name != 'background-color':
+                results[name] = INITIAL_VALUES[name.replace('-', '_')][0]
         return color, results
 
     layers = reversed(split_on_comma(tokens))
     color, last_layer = parse_layer(next(layers), final_layer=True)
-    results = dict((k, [v]) for k, v in last_layer.items())
+    results = {key: [value] for key, value in last_layer.items()}
     for tokens in layers:
         _, layer = parse_layer(tokens)
         for name, value in layer.items():
@@ -341,7 +389,7 @@ def expand_background(base_url, name, tokens):
 
 @expander('text-decoration')
 @generic_expander('-line', '-color', '-style')
-def expand_text_decoration(name, tokens):
+def expand_text_decoration(tokens, name):
     """Expand the ``text-decoration`` shorthand property."""
     text_decoration_line = []
     text_decoration_color = []
@@ -379,7 +427,7 @@ def expand_text_decoration(name, tokens):
         yield '-style', text_decoration_style
 
 
-def expand_page_break_before_after(name, tokens):
+def expand_page_break_before_after(tokens, name):
     """Expand legacy ``page-break-before`` and ``page-break-after`` properties.
 
     See https://www.w3.org/TR/css-break-3/#page-break-properties
@@ -399,29 +447,29 @@ def expand_page_break_before_after(name, tokens):
 
 @expander('page-break-after')
 @generic_expander('break-after')
-def expand_page_break_after(name, tokens):
+def expand_page_break_after(tokens, name):
     """Expand legacy ``page-break-after`` property.
 
     See https://www.w3.org/TR/css-break-3/#page-break-properties
 
     """
-    return expand_page_break_before_after(name, tokens)
+    return expand_page_break_before_after(tokens, name)
 
 
 @expander('page-break-before')
 @generic_expander('break-before')
-def expand_page_break_before(name, tokens):
+def expand_page_break_before(tokens, name):
     """Expand legacy ``page-break-before`` property.
 
     See https://www.w3.org/TR/css-break-3/#page-break-properties
 
     """
-    return expand_page_break_before_after(name, tokens)
+    return expand_page_break_before_after(tokens, name)
 
 
 @expander('page-break-inside')
 @generic_expander('break-inside')
-def expand_page_break_inside(name, tokens):
+def expand_page_break_inside(tokens, name):
     """Expand the legacy ``page-break-inside`` property.
 
     See https://www.w3.org/TR/css-break-3/#page-break-properties
@@ -436,7 +484,7 @@ def expand_page_break_inside(name, tokens):
 
 @expander('columns')
 @generic_expander('column-width', 'column-count')
-def expand_columns(name, tokens):
+def expand_columns(tokens, name):
     """Expand the ``columns`` shorthand property."""
     name = None
     if len(tokens) == 2 and get_keyword(tokens[0]) == 'auto':
@@ -459,7 +507,7 @@ def expand_columns(name, tokens):
 @expander('font-variant')
 @generic_expander('-alternates', '-caps', '-east-asian', '-ligatures',
                   '-numeric', '-position')
-def font_variant(name, tokens):
+def font_variant(tokens, name):
     """Expand the ``font-variant`` shorthand property.
 
     https://www.w3.org/TR/css-fonts-3/#font-variant-prop
@@ -471,7 +519,7 @@ def font_variant(name, tokens):
 @expander('font')
 @generic_expander('-style', '-variant-caps', '-weight', '-stretch', '-size',
                   'line-height', '-family')  # line-height is not a suffix
-def expand_font(name, tokens):
+def expand_font(tokens, name):
     """Expand the ``font`` shorthand property.
 
     https://www.w3.org/TR/css-fonts-3/#font-prop
@@ -543,7 +591,7 @@ def expand_font(name, tokens):
 
 @expander('word-wrap')
 @generic_expander('overflow-wrap')
-def expand_word_wrap(name, tokens):
+def expand_word_wrap(tokens, name):
     """Expand the ``word-wrap`` legacy property.
 
     See https://www.w3.org/TR/css-text-3/#overflow-wrap
@@ -557,7 +605,7 @@ def expand_word_wrap(name, tokens):
 
 @expander('flex')
 @generic_expander('-grow', '-shrink', '-basis')
-def expand_flex(name, tokens):
+def expand_flex(tokens, name):
     """Expand the ``flex`` property."""
     keyword = get_single_keyword(tokens)
     if keyword == 'none':
@@ -615,7 +663,7 @@ def expand_flex(name, tokens):
 
 @expander('flex-flow')
 @generic_expander('flex-direction', 'flex-wrap')
-def expand_flex_flow(name, tokens):
+def expand_flex_flow(tokens, name):
     """Expand the ``flex-flow`` property."""
     if len(tokens) == 2:
         for sorted_tokens in tokens, tokens[::-1]:
@@ -643,7 +691,7 @@ def expand_flex_flow(name, tokens):
 
 @expander('line-clamp')
 @generic_expander('max-lines', 'continue', 'block-ellipsis')
-def expand_line_clamp(name, tokens):
+def expand_line_clamp(tokens, name):
     """Expand the ``line-clamp`` property."""
     if len(tokens) == 1:
         keyword = get_single_keyword(tokens)
@@ -683,7 +731,7 @@ def expand_line_clamp(name, tokens):
 
 @expander('text-align')
 @generic_expander('-all', '-last')
-def expand_text_align(name, tokens):
+def expand_text_align(tokens, name):
     """Expand the ``text-align`` property."""
     if len(tokens) == 1:
         keyword = get_single_keyword(tokens)

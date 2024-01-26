@@ -2,10 +2,10 @@ name: doconfly
 on:
   push:
     branches:
-      - master
+      - main
     tags:
       - "*"
- 
+
 jobs:
   doconfly:
     name: doconfly job

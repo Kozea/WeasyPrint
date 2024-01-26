@@ -11,6 +11,7 @@ from fontTools.varLib.mutator import instantiateVariableFont
 
 from ..logger import LOGGER
 from ..matrix import Matrix
+from ..text.constants import PANGO_STRETCH_PERCENT
 from ..text.ffi import ffi, harfbuzz, pango, units_to_double
 
 
@@ -34,8 +35,31 @@ class Font:
         self.style = pango.pango_font_description_get_style(description)
         self.family = ffi.string(
             pango.pango_font_description_get_family(description))
+
+        self.variations = {}
+        variations = pango.pango_font_description_get_variations(
+            self.description)
+        if variations != ffi.NULL:
+            self.variations = {
+                part.split('=')[0]: float(part.split('=')[1])
+                for part in ffi.string(variations).decode().split(',')}
+        if 'wght' in self.variations:
+            pango.pango_font_description_set_weight(
+                self.description, int(round(self.variations['wght'])))
+        if self.variations.get('ital'):
+            pango.pango_font_description_set_style(
+                self.description, pango.PANGO_STYLE_ITALIC)
+        elif self.variations.get('slnt'):
+            pango.pango_font_description_set_style(
+                self.description, pango.PANGO_STYLE_OBLIQUE)
+        if 'wdth' in self.variations:
+            stretch = min(
+                PANGO_STRETCH_PERCENT.items(),
+                key=lambda item: abs(item[0] - self.variations['wdth']))[1]
+            pango.pango_font_description_set_stretch(self.description, stretch)
         description_string = ffi.string(
             pango.pango_font_description_to_string(description))
+
         # Never use the built-in hash function here: it’s not stable
         self.hash = ''.join(
             chr(65 + letter % 26) for letter
@@ -73,8 +97,9 @@ class Font:
         else:
             self.bitmap = (
                 'EBDT' in self.ttfont and
-                'EBLC' in self.ttfont and
-                not self.ttfont['glyf'].glyphs)
+                'EBLC' in self.ttfont and (
+                    'glyf' not in self.ttfont or
+                    not self.ttfont['glyf'].glyphs))
 
         # Various properties
         self.italic_angle = 0  # TODO: this should be different
@@ -121,20 +146,13 @@ class Font:
 
         # Transform variable into static font
         if 'fvar' in self.ttfont:
-            variations = pango.pango_font_description_get_variations(
-                self.description)
-            if variations == ffi.NULL:
-                variations = {}
-            else:
-                variations = {
-                    part.split('=')[0]: float(part.split('=')[1])
-                    for part in ffi.string(variations).decode().split(',')}
-            if 'wght' not in variations:
-                variations['wght'] = pango.pango_font_description_get_weight(
+            if 'wght' not in self.variations:
+                weight = pango.pango_font_description_get_weight(
                     self.description)
-            if 'opsz' not in variations:
-                variations['opsz'] = units_to_double(self.font_size)
-            if 'slnt' not in variations:
+                self.variations['wght'] = weight
+            if 'opsz' not in self.variations:
+                self.variations['opsz'] = units_to_double(self.font_size)
+            if 'slnt' not in self.variations:
                 slnt = 0
                 if self.style == 1:
                     for axe in self.ttfont['fvar'].axes:
@@ -144,12 +162,12 @@ class Font:
                             else:
                                 slnt = axe.maxValue
                             break
-                variations['slnt'] = slnt
-            if 'ital' not in variations:
-                variations['ital'] = int(self.style == 2)
+                self.variations['slnt'] = slnt
+            if 'ital' not in self.variations:
+                self.variations['ital'] = int(self.style == 2)
             partial_font = io.BytesIO()
             try:
-                ttfont = instantiateVariableFont(self.ttfont, variations)
+                ttfont = instantiateVariableFont(self.ttfont, self.variations)
                 for key, (advance, bearing) in ttfont['hmtx'].metrics.items():
                     if advance < 0:
                         ttfont['hmtx'].metrics[key] = (0, bearing)
@@ -320,8 +338,7 @@ class Stream(pydyf.Stream):
         description = pango.pango_font_describe(pango_font)
         mask = (
             pango.PANGO_FONT_MASK_SIZE +
-            pango.PANGO_FONT_MASK_GRAVITY +
-            pango.PANGO_FONT_MASK_VARIATIONS)
+            pango.PANGO_FONT_MASK_GRAVITY)
         pango.pango_font_description_unset_fields(description, mask)
         key = pango.pango_font_description_hash(description)
         pango.pango_font_description_free(description)

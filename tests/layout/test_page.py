@@ -448,6 +448,43 @@ def test_page_breaks_complex_8():
 
 
 @assert_no_logs
+def test_page_breaks_complex_9():
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1979
+    page_1, page_2, page_3, page_4, page_5 = render_pages('''
+      <style>
+        @page { size: 75px; margin: 0 }
+        div { height: 20px; margin: 10px }
+      </style>
+      <div style="height: 40px"></div>
+      <div></div>
+      <div style="break-before: left"></div>
+      <div style="break-before: right"></div>
+    ''')
+    html, = page_1.children
+    body, = html.children
+    div_1, = body.children
+    assert div_1.content_box_x() == 10
+    assert div_1.content_box_y() == 10
+    html, = page_2.children
+    body, = html.children
+    div_2, = body.children
+    assert div_2.content_box_x() == 10
+    assert div_2.content_box_y() == 0  # Unforced page break
+    html, = page_3.children
+    assert not html.children  # Empty page
+    html, = page_4.children
+    body, = html.children
+    div_3, = body.children
+    assert div_3.content_box_x() == 10
+    assert div_3.content_box_y() == 10  # Forced page break
+    html, = page_5.children
+    body, = html.children
+    div_4, = body.children
+    assert div_4.content_box_x() == 10
+    assert div_4.content_box_y() == 10  # Forced page break
+
+
+@assert_no_logs
 @pytest.mark.parametrize('break_after, margin_break, margin_top', (
     ('page', 'auto', 5),
     ('auto', 'auto', 0),
