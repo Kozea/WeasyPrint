@@ -41,6 +41,11 @@
 
 /* Main Structure */
 
+html {
+  background: var(--white);
+  display: flex;
+}
+
 body {
   background:
     url(img/print/bleed-top-left.svg) top left / 45px,

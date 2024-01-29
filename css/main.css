@@ -41,9 +41,7 @@
 }
 
 html {
-  background: var(--white);
   color: var(--dark-gray);
-  display: flex;
   font: 16pt Rosario;
   justify-content: center;
 }
