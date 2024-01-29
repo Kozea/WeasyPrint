@@ -1231,7 +1231,7 @@ def process_whitespace(box, following_collapsible_space=False):
 
         box.text = text
 
-    elif isinstance(box, boxes.ParentBox):
+    else:
         for child in box.children:
             if isinstance(child, (boxes.TextBox, boxes.InlineBox)):
                 child_collapsible_space = process_whitespace(
@@ -1257,7 +1257,7 @@ def process_text_transform(box):
         if box.style['hyphens'] == 'none':
             box.text = box.text.replace('\u00AD', '')  # U+00AD is soft hyphen
 
-    elif isinstance(box, boxes.ParentBox) and not box.is_running():
+    elif not box.is_running():
         for child in box.children:
             if isinstance(child, (boxes.TextBox, boxes.InlineBox)):
                 process_text_transform(child)
@@ -1316,7 +1316,7 @@ def inline_in_block(box):
         ]
 
     """
-    if not isinstance(box, boxes.ParentBox) or box.is_running():
+    if not box.children or box.is_running():
         return box
 
     box_children = list(box.children)
@@ -1451,7 +1451,7 @@ def block_in_inline(box):
         ]
 
     """
-    if not isinstance(box, boxes.ParentBox) or box.is_running():
+    if not box.children or box.is_running():
         return box
 
     new_children = []

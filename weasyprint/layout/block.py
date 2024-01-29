@@ -917,7 +917,7 @@ def block_level_page_break(sibling_before, sibling_after):
     box = sibling_before
     while isinstance(box, block_parallel_box_types):
         values.append(box.style['break_after'])
-        if not (isinstance(box, boxes.ParentBox) and box.children):
+        if not box.children:
             break
         box = box.children[-1]
     values.reverse()  # Have them in tree order
@@ -925,7 +925,7 @@ def block_level_page_break(sibling_before, sibling_after):
     box = sibling_after
     while isinstance(box, block_parallel_box_types):
         values.append(box.style['break_before'])
-        if not (isinstance(box, boxes.ParentBox) and box.children):
+        if not box.children:
             break
         box = box.children[0]
 

@@ -316,10 +316,9 @@ class LayoutContext:
                         for (string_name, _) in element.style['string_set']:
                             if string_name == name:
                                 return first_string
-                    if isinstance(element, boxes.ParentBox):
-                        if element.children:
-                            element = element.children[0]
-                            continue
+                    if element.children:
+                        element = element.children[0]
+                        continue
                     break
             elif keyword == 'last':
                 return last_string

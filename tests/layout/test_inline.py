@@ -62,10 +62,9 @@ def test_breaking_linebox():
         for child in line.children:
             assert child.element_tag in ('em', 'p')
             assert child.style['font_size'] == 13
-            if isinstance(child, boxes.ParentBox):
-                for child_child in child.children:
-                    assert child.element_tag in ('em', 'strong', 'span')
-                    assert child.style['font_size'] == 13
+            for child_child in child.children:
+                assert child.element_tag in ('em', 'strong', 'span')
+                assert child.style['font_size'] == 13
 
 
 @assert_no_logs

@@ -810,10 +810,9 @@ def draw_outlines(stream, box):
                     stream, outline_box, 4 * (width,), style,
                     styled_color(style, color, side))
 
-    if isinstance(box, boxes.ParentBox):
-        for child in box.children:
-            if isinstance(child, boxes.Box):
-                draw_outlines(stream, child)
+    for child in box.children:
+        if isinstance(child, boxes.Box):
+            draw_outlines(stream, child)
 
 
 def draw_table(stream, table):

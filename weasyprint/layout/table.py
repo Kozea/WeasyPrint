@@ -845,14 +845,14 @@ def find_in_flow_baseline(box, last=False, baseline_types=(boxes.LineBox,)):
     # See https://www.w3.org/TR/css-align-3/#synthesize-baseline
     if isinstance(box, baseline_types):
         return box.position_y + box.baseline
-    if isinstance(box, boxes.ParentBox) and not isinstance(
-            box, boxes.TableCaptionBox):
-        children = reversed(box.children) if last else box.children
-        for child in children:
-            if child.is_in_normal_flow():
-                result = find_in_flow_baseline(child, last, baseline_types)
-                if result is not None:
-                    return result
+    elif isinstance(box, boxes.TableCaptionBox):
+        return
+    children = reversed(box.children) if last else box.children
+    for child in children:
+        if child.is_in_normal_flow():
+            result = find_in_flow_baseline(child, last, baseline_types)
+            if result is not None:
+                return result
 
 
 def distribute_excess_width(context, grid, excess_width, column_widths,
