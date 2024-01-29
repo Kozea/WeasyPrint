@@ -6,8 +6,8 @@ jobs:
     name: ${{ matrix.os }}
     runs-on: 'windows-2019'
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       - name: Use absolute imports and install Pango (Windows)
