@@ -92,10 +92,14 @@ def resolve_percentages(box, containing_block, main_flex_direction=None):
         resolve_one_percentage(
             box, 'max_height', cb_height, main_flex_direction)
 
+    collapse = box.style['border_collapse'] == 'collapse'
     # Used value == computed value
     for side in ('top', 'right', 'bottom', 'left'):
         prop = f'border_{side}_width'
-        setattr(box, prop, box.style[prop])
+        # border-{side}-width would have been resolved
+        # during border conflict resolution for collapsed-borders
+        if not (collapse and hasattr(box, prop)):
+            setattr(box, prop, box.style[prop])
 
     # Shrink *content* widths and heights according to box-sizing
     # Thanks heavens and the spec: Our validator rejects negative values

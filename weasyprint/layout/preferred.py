@@ -135,6 +135,10 @@ def margin_width(box, width, left=True, right=True):
     """Add box paddings, borders and margins to ``width``."""
     percentages = 0
 
+    # See https://drafts.csswg.org/css-tables-3/#cell-intrinsic-offsets
+    # It is a set of computed values for border-left-width, padding-left,
+    # padding-right, and border-right-width (along with zero values for
+    # margin-left and margin-right)
     for value in (
         (['margin_left', 'padding_left'] if left else []) +
         (['margin_right', 'padding_right'] if right else [])
@@ -147,10 +151,24 @@ def margin_width(box, width, left=True, right=True):
                 assert style_value.unit == '%'
                 percentages += style_value.value
 
+    collapse = box.style['border_collapse'] == 'collapse'
     if left:
-        width += box.style['border_left_width']
+        if collapse and hasattr(box, 'border_left_width'):
+            # In collapsed-borders mode: the computed horizontal padding of the
+            # cell and, for border values, the used border-width values of the
+            # cell (half the winning border-width)
+            width += box.border_left_width
+        else:
+            # In separated-borders mode: the computed horizontal padding and
+            # border of the table-cell
+            width += box.style['border_left_width']
     if right:
-        width += box.style['border_right_width']
+        if collapse and hasattr(box, 'border_right_width'):
+            # [...] the used border-width values of the cell
+            width += box.border_right_width
+        else:
+            # [...] the computed border of the table-cell
+            width += box.style['border_right_width']
 
     if percentages < 100:
         return width / (1 - percentages / 100)
