@@ -1,0 +1,34 @@
+name: WeasyPrint’s exe generation
+on: [push]
+
+jobs:
+  generate:
+    name: ${{ matrix.os }}
+    runs-on: 'windows-2019'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Use absolute imports and install Pango (Windows)
+        run: |
+          C:\msys64\usr\bin\bash -lc 'pacman -S mingw-w64-x86_64-pango mingw-w64-x86_64-sed --noconfirm'
+          C:\msys64\mingw64\bin\sed -i 's/^from \. /from weasyprint /' weasyprint/__main__.py
+          C:\msys64\mingw64\bin\sed  -i 's/^from \./from weasyprint\./' weasyprint/__main__.py
+          echo "C:\msys64\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH
+          rm C:\msys64\mingw64\bin\python.exe
+      - name: Install requirements
+        run: python -m pip install . pyinstaller
+      - name: Generate executable
+        run: python -m PyInstaller weasyprint/__main__.py -n weasyprint -F
+      - name: Test executable
+        run: dist/weasyprint --info
+      - name: Store executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: weasyprint-windows
+          path: |
+            dist/weasyprint
+            dist/weasyprint.exe
+            README.rst
+            LICENSE
