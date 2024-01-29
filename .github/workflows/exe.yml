@@ -4,7 +4,7 @@ on: [push]
 jobs:
   generate:
     name: ${{ matrix.os }}
-    os: 'windows-2019'
+    runs-on: 'windows-2019'
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
