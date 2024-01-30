@@ -110,6 +110,22 @@ def test_variable_chain_root():
     assert html.width == 10
 
 
+def test_variable_self():
+    page, = render_pages('''
+      <style>
+        html { --var1: var(--var1) }
+      </style>
+    ''')
+
+
+def test_variable_loop():
+    page, = render_pages('''
+      <style>
+        html { --var1: var(--var2); --var2: var(--var1) }
+      </style>
+    ''')
+
+
 def test_variable_chain_root_missing():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/1656
     page, = render_pages('''
@@ -479,3 +495,29 @@ def test_variable_in_function_missing():
     h11, div1, h12, div2 = section.children
     assert not div1.children
     assert not div2.children
+
+
+@assert_no_logs
+def test_variable_in_function_in_variable():
+    page, = render_pages('''
+      <style>
+        html { --name: title; --counter: counter(var(--name), upper-roman) }
+        h1 { counter-increment: var(--name) }
+        div::before { content: var(--counter) }
+      </style>
+      <section>
+        <h1></h1>
+        <div></div>
+        <h1></h1>
+        <div></div>
+        <h1></h1>
+        <div style="--counter: counter(var(--name), lower-roman)"></div>
+      </section>
+    ''')
+    html, = page.children
+    body, = html.children
+    section, = body.children
+    h11, div1, h12, div2, h13, div3 = section.children
+    assert div1.children[0].children[0].children[0].text == 'I'
+    assert div2.children[0].children[0].children[0].text == 'II'
+    assert div3.children[0].children[0].children[0].text == 'iii'

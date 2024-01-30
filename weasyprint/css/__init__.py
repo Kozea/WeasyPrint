@@ -609,32 +609,17 @@ def resolve_var(computed, token, parent_style):
             token.source_line, token.source_column, token.name, arguments)
         return resolve_var(computed, token, parent_style) or (token,)
 
-    default = None  # just for the linter
-    known_variable_names = set()
-    computed_value = (token,)
-    while (computed_value and
-            isinstance(computed_value, tuple)
-            and len(computed_value) == 1):
-        value = computed_value[0]
-        if value.type == 'ident' and value.value == 'initial':
+    args = parse_function(token)[1]
+    variable_name = args.pop(0).value.replace('-', '_')  # first arg is name
+    default = args  # next args are default value
+    computed_value = []
+    for value in computed[variable_name]:
+        resolved = resolve_var(computed, value, parent_style)
+        computed_value.extend((value,) if resolved is None else resolved)
+    if len(computed_value) == 1:
+        token, = computed_value
+        if token.type == 'ident' and token.value == 'initial':
             return default
-        if check_var_function(value):
-            args = parse_function(value)[1]
-            variable_name = args.pop(0).value.replace('-', '_')
-            if variable_name in known_variable_names:
-                computed_value = default
-                break
-            known_variable_names.add(variable_name)
-            default = args
-            computed_value = computed[variable_name]
-            if computed_value is not None:
-                continue
-            if parent_style is None:
-                computed_value = default
-            else:
-                computed_value = parent_style[variable_name] or default
-        else:
-            break
     return computed_value
 
 
