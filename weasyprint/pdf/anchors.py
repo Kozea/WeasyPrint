@@ -298,6 +298,8 @@ def write_pdf_attachment(pdf, attachment, url_fetcher, compress):
     md5 = hashlib.md5()
     try:
         with attachment.source as (_, source, url, _):
+            if isinstance(source, str):
+                source = source.encode()
             if isinstance(source, bytes):
                 source = io.BytesIO(source)
             for data in iter(lambda: source.read(4096), b''):
