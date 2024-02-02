@@ -461,3 +461,139 @@ def test_leader_absolute(assert_pixels):
       </style>
       <div>aa<article>bb</article>aa</div>
     ''')
+
+
+@assert_no_logs
+def test_leader_padding(assert_pixels):
+    assert_pixels('''
+        RR__BBBBBBBB__BB
+        RR__BBBBBBBB__BB
+        __RR__BBBB__BBBB
+        __RR__BBBB__BBBB
+    ''', '''
+      <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page {
+          size: 16px 4px;
+        }
+        body {
+          color: red;
+          counter-reset: count;
+          font-family: weasyprint;
+          font-size: 2px;
+          line-height: 1;
+        }
+        div::after {
+          color: blue;
+          content: ' ' leader(dotted) ' ' counter(count, lower-roman);
+          counter-increment: count;
+        }
+        div + div {
+          padding-left: 2px;
+        }
+      </style>
+      <div>a</div>
+      <div>b</div>
+    ''')
+
+
+@assert_no_logs
+def test_leader_inline_padding(assert_pixels):
+    assert_pixels('''
+        RR__BBBBBBBB__BB
+        RR__BBBBBBBB__BB
+        __RR__BBBB__BBBB
+        __RR__BBBB__BBBB
+    ''', '''
+      <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page {
+          size: 16px 4px;
+        }
+        body {
+          color: red;
+          counter-reset: count;
+          font-family: weasyprint;
+          font-size: 2px;
+          line-height: 1;
+        }
+        span::after {
+          color: blue;
+          content: ' ' leader(dotted) ' ' counter(count, lower-roman);
+          counter-increment: count;
+        }
+        div + div span {
+          padding-left: 2px;
+        }
+      </style>
+      <div><span>a</span></div>
+      <div><span>b</span></div>
+    ''')
+
+
+@assert_no_logs
+def test_leader_margin(assert_pixels):
+    assert_pixels('''
+        RR__BBBBBBBB__BB
+        RR__BBBBBBBB__BB
+        __RR__BBBB__BBBB
+        __RR__BBBB__BBBB
+    ''', '''
+      <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page {
+          size: 16px 4px;
+        }
+        body {
+          color: red;
+          counter-reset: count;
+          font-family: weasyprint;
+          font-size: 2px;
+          line-height: 1;
+        }
+        div::after {
+          color: blue;
+          content: ' ' leader(dotted) ' ' counter(count, lower-roman);
+          counter-increment: count;
+        }
+        div + div {
+          margin-left: 2px;
+        }
+      </style>
+      <div>a</div>
+      <div>b</div>
+    ''')
+
+
+@assert_no_logs
+def test_leader_inline_margin(assert_pixels):
+    assert_pixels('''
+        RR__BBBBBBBB__BB
+        RR__BBBBBBBB__BB
+        __RR__BBBB__BBBB
+        __RR__BBBB__BBBB
+    ''', '''
+      <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page {
+          size: 16px 4px;
+        }
+        body {
+          color: red;
+          counter-reset: count;
+          font-family: weasyprint;
+          font-size: 2px;
+          line-height: 1;
+        }
+        span::after {
+          color: blue;
+          content: ' ' leader(dotted) ' ' counter(count, lower-roman);
+          counter-increment: count;
+        }
+        div + div span {
+          margin-left: 2px;
+        }
+      </style>
+      <div><span>a</span></div>
+      <div><span>b</span></div>
+    ''')

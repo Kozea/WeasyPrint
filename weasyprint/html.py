@@ -10,7 +10,7 @@ are images with intrinsic dimensions.
 try:
     # Available in Python 3.9+
     from importlib.resources import files
-except ImportError:
+except ImportError:  # pragma: no cover
     # Deprecated in Python 3.11+
     from importlib.resources import read_text
 else:
@@ -282,10 +282,18 @@ def get_html_metadata(html):
                 LOGGER.error('Missing href in <link rel="attachment">')
             else:
                 attachments.append((url, attachment_title))
-    return dict(title=title, description=description, generator=generator,
-                keywords=keywords, authors=authors,
-                created=created, modified=modified,
-                attachments=attachments, lang=lang, custom=custom)
+    return {
+        'title': title,
+        'description': description,
+        'generator': generator,
+        'keywords': keywords,
+        'authors': authors,
+        'created': created,
+        'modified': modified,
+        'attachments': attachments,
+        'lang': lang,
+        'custom': custom,
+    }
 
 
 def strip_whitespace(string):

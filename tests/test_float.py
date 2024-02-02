@@ -695,6 +695,52 @@ def test_float_text_indent_3():
     assert p2.width == 12 * 20  # p text
 
 
+@assert_no_logs
+def test_float_previous_break():
+    page1, page2 = render_pages('''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        @page {
+          size: 13px;
+        }
+        body {
+          font-family: weasyprint;
+          font-size: 2px;
+          line-height: 1;
+        }
+        p {
+          break-after: avoid;
+        }
+        section {
+          break-inside: avoid;
+          float: left;
+        }
+      </style>
+      <article>
+        oooooo
+        oooooo
+        oooooo
+        oooooo
+      </article>
+      <p>xxxxxx</p>
+      <p>yyyyyy</p>
+      <section>
+        <div>aaaaaa</div>
+        <div>cccccc</div>
+      </section>
+      <article>
+        dddddd
+      </article>''')
+
+    html, = page1.children
+    body, = html.children
+    article, = body.children
+
+    html, = page2.children
+    body, = html.children
+    p1, p2, section, article = body.children
+
+
 @pytest.mark.xfail
 @assert_no_logs
 def test_float_fail():

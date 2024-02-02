@@ -82,9 +82,11 @@ def layout_background_layer(box, page, resolution, image, size, clip, repeat,
     clipped_boxes = []
     painting_area = 0, 0, 0, 0
     if box is page:
-        painting_area = 0, 0, page.margin_width(), page.margin_height()
-        # XXX: how does border-radius work on pages?
-        clipped_boxes = [box.rounded_border_box()]
+        # [The page’s] background painting area is the bleed area […]
+        # regardless of background-clip.
+        # https://drafts.csswg.org/css-page-3/#painting
+        painting_area = page.bleed_area
+        clipped_boxes = []
     elif isinstance(box, boxes.TableRowGroupBox):
         clipped_boxes = []
         total_height = 0
@@ -135,7 +137,13 @@ def layout_background_layer(box, page, resolution, image, size, clip, repeat,
 
     if attachment == 'fixed':
         # Initial containing block
-        positioning_area = box_rectangle(page, 'content-box')
+        if isinstance(box, boxes.PageBox):
+            # […] if background-attachment is fixed then the image is
+            # positioned relative to the page box including its margins […].
+            # https://drafts.csswg.org/css-page/#painting
+            positioning_area = (0, 0, box.margin_width(), box.margin_height())
+        else:
+            positioning_area = box_rectangle(page, 'content-box')
     else:
         positioning_area = box_rectangle(box, origin)
 
@@ -215,13 +223,13 @@ def layout_backgrounds(page, get_image_from_uri):
                 break
 
     if chosen_box.background:
-        painting_area = box_rectangle(page, 'padding-box')
+        painting_area = box_rectangle(page, 'border-box')
         original_background = page.background
         layout_box_backgrounds(
             page, page, get_image_from_uri, layout_children=False,
             style=chosen_box.style)
         page.canvas_background = page.background._replace(
-            # TODO: shouldn’t background-clip be considered here?
+            # TODO: background-clip should be updated
             layers=[
                 layer._replace(painting_area=painting_area)
                 for layer in page.background.layers])

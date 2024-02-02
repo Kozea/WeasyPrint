@@ -10,7 +10,7 @@ from .testing_utils import MONO_FONTS, SANS_FONTS, assert_no_logs, render_pages
 
 def make_text(text, width=None, **style):
     """Wrapper for split_first_line() creating a style dict."""
-    new_style = dict(INITIAL_VALUES)
+    new_style = INITIAL_VALUES.copy()
     new_style['font_family'] = MONO_FONTS.split(',')
     new_style.update(style)
     return split_first_line(
@@ -779,6 +779,19 @@ def test_hyphenate_manual_3():
 
 
 @assert_no_logs
+def test_hyphenate_manual_4():
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1878
+    page, = render_pages(
+        '<html style="width: 0.1em" lang="en">'
+        '<body style="hyphens: auto">test&shy;')
+    html, = page.children
+    body, = html.children
+    line_1, = body.children
+    # TODO: should not end with an hyphen
+    # assert line_1.children[0].text == 'test\xad'
+
+
+@assert_no_logs
 def test_hyphenate_limit_zone_1():
     page, = render_pages(
         '<html style="width: 12em; font-family: weasyprint">'
@@ -1372,3 +1385,20 @@ def test_continue():
     text2, = line2.children
     assert text1.text == 'abcd'
     assert text2.text == 'efgh'
+
+
+def test_first_letter_text_transform():
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1906
+    page, = render_pages('''
+      <style>
+        p:first-letter { text-transform: uppercase }
+      </style>
+      <p>abc
+    ''')
+    html, = page.children
+    body, = html.children
+    paragraph, = body.children
+    line, = paragraph.children
+    first_letter, _ = line.children
+    first_letter_text, = first_letter.children
+    assert first_letter_text.text == 'A'

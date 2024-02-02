@@ -77,7 +77,7 @@ class Page:
             page_box, self.anchors, self.links, self.bookmarks, self.inputs)
         self._page_box = page_box
 
-    def paint(self, stream, left_x=0, top_y=0, scale=1, clip=False):
+    def paint(self, stream, scale=1):
         """Paint the page into the PDF file.
 
         :type stream: ``document.Stream``
@@ -95,11 +95,7 @@ class Page:
 
         """
         with stacked(stream):
-            # Make (0, 0) the top-left corner, and make user units CSS pixels:
-            stream.transform(a=scale, d=scale, e=left_x, f=top_y)
-            if clip:
-                stream.rectangle(0, 0, self.width, self.height)
-                stream.clip()
+            stream.transform(a=scale, d=scale)
             draw_page(self._page_box, stream)
 
 
@@ -218,10 +214,6 @@ class Document:
 
     @classmethod
     def _build_layout_context(cls, html, font_config, counter_style, options):
-        if font_config is None:
-            font_config = FontConfiguration()
-        if counter_style is None:
-            counter_style = CounterStyle()
         target_collector = TargetCollector()
         page_rules = []
         user_stylesheets = []

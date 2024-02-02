@@ -3,10 +3,10 @@
 import contextlib
 import functools
 import logging
-import os.path
 import sys
 import threading
 import wsgiref.simple_server
+from pathlib import Path
 
 from weasyprint import CSS, DEFAULT_OPTIONS, HTML, images
 from weasyprint.css import get_all_computed_styles
@@ -25,9 +25,8 @@ else:  # pragma: no cover
     SANS_FONTS = 'DejaVu Sans, sans'
     MONO_FONTS = 'DejaVu Sans Mono, monospace'
 
-TEST_UA_STYLESHEET = CSS(filename=os.path.join(
-    os.path.dirname(__file__), '..', 'weasyprint', 'css', 'tests_ua.css'
-))
+TEST_UA_STYLESHEET = CSS(
+    Path(__file__).parent.parent / 'weasyprint' / 'css' / 'tests_ua.css')
 
 PROPER_CHILDREN = {
     # Children can be of *any* type in *one* of the lists.
@@ -64,13 +63,13 @@ class FakeHTML(HTML):
         return super().write_pdf(target, zoom, finisher, **options)
 
 
-def resource_filename(basename):
-    """Return the absolute path of the resource called ``basename``."""
-    return os.path.join(os.path.dirname(__file__), 'resources', basename)
+def resource_path(name):
+    """Return the absolute path of the resource called ``name``."""
+    return Path(__file__).parent / 'resources' / name
 
 
 # Dummy filename, but in the right directory.
-BASE_URL = path2url(resource_filename('<test>'))
+BASE_URL = path2url(resource_path('<test>'))
 
 
 class CallbackHandler(logging.Handler):

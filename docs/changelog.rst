@@ -2,6 +2,221 @@ Changelog
 =========
 
 
+Version 60.2
+------------
+
+Released on 2023-12-11.
+
+Bug fixes:
+
+* `#1982 <https://github.com/Kozea/WeasyPrint/issues/1982>`_:
+  Fix SVG markers size, position and drawing
+* `23cfc775 <https://github.com/Kozea/WeasyPrint/commit/23cfc775>`_:
+  Draw background behind absolutely positioned replaced boxes
+* `fe2f0c69 <https://github.com/Kozea/WeasyPrint/commit/fe2f0c69>`_:
+  Don’t crash with bitmap fonts with no "glyf" table
+* `14605225 <https://github.com/Kozea/WeasyPrint/commit/14605225>`_:
+  Improve SVG text-anchor attribute
+
+Contributors:
+
+* Guillaume Ayoub
+
+Backers and sponsors:
+
+* Spacinov
+* Kobalt
+* Grip Angebotssoftware
+* Manuel Barkhau
+* SimonSoft
+* Menutech
+* KontextWork
+* NCC Group
+* René Fritz
+* Nicola Auchmuty
+* Syslifters
+* Hammerbacher
+* TrainingSparkle
+* Daniel Kucharski
+* Healthchecks.io
+* Yanal-Yvez Fargialla
+* WakaTime
+* Paheko
+* Synapsium
+* DocRaptor
+
+
+Version 60.1
+------------
+
+Released on 2023-09-29.
+
+Bug fixes:
+
+* `#1973 <https://github.com/Kozea/WeasyPrint/issues/1973>`_:
+  Fix crash caused by wrong UTF-8 indices
+
+Contributors:
+
+* Guillaume Ayoub
+
+Backers and sponsors:
+
+* Spacinov
+* Kobalt
+* Grip Angebotssoftware
+* Manuel Barkhau
+* SimonSoft
+* Menutech
+* KontextWork
+* NCC Group
+* René Fritz
+* Nicola Auchmuty
+* Syslifters
+* Hammerbacher
+* TrainingSparkle
+* Daniel Kucharski
+* Healthchecks.io
+* Yanal-Yvez Fargialla
+* WakaTime
+* Paheko
+* Synapsium
+* DocRaptor
+
+
+Version 60.0
+------------
+
+Released on 2023-09-25.
+
+New features:
+
+* `#1903 <https://github.com/Kozea/WeasyPrint/issues/1903>`_:
+  Print form fields
+* `#1922 <https://github.com/Kozea/WeasyPrint/pull/1922>`_:
+  Add support for textLength and lengthAdjust in SVG text elements
+* `#1965 <https://github.com/Kozea/WeasyPrint/issues/1965>`_:
+  Handle <wbr> tag
+* `#1970 <https://github.com/Kozea/WeasyPrint/pull/1970>`_:
+  Handle y offset of glyphs
+* `#1909 <https://github.com/Kozea/WeasyPrint/issues/1909>`_:
+  Add a --timeout option
+
+Bug fixes:
+
+* `#1887 <https://github.com/Kozea/WeasyPrint/pull/1887>`_:
+  Fix footnote-call displayed incorrectly for some fonts
+* `#1890 <https://github.com/Kozea/WeasyPrint/pull/1890>`_:
+  Fix page-margin boxes layout algorithm
+* `#1908 <https://github.com/Kozea/WeasyPrint/pull/1908>`_:
+  Fix IndexError when rendering PDF version 1.4
+* `#1906 <https://github.com/Kozea/WeasyPrint/issues/1906>`_:
+  Apply text transformations to first-letter pseudo elements
+* `#1915 <https://github.com/Kozea/WeasyPrint/pull/1915>`_:
+  Avoid footnote appearing before its call
+* `#1934 <https://github.com/Kozea/WeasyPrint/pull/1934>`_:
+  Fix balance before "column-span: all"
+* `#1935 <https://github.com/Kozea/WeasyPrint/issues/1935>`_:
+  Only draw required glyph with OpenType-SVG fonts
+* `#1595 <https://github.com/Kozea/WeasyPrint/issues/1595>`_:
+  Don’t draw clipPath when defined after reference
+* `#1895 <https://github.com/Kozea/WeasyPrint/pull/1895>`_:
+  Don’t ignore min-width when computing cell size
+* `#1899 <https://github.com/Kozea/WeasyPrint/pull/1899>`_:
+  Fix named pages inheritance
+* `#1936 <https://github.com/Kozea/WeasyPrint/pull/1936>`_:
+  Avoid page breaks caused by children of overflow hidden boxes
+* `#1943 <https://github.com/Kozea/WeasyPrint/issues/1943>`_:
+  Use bleed area for page’s painting area
+* `#1946 <https://github.com/Kozea/WeasyPrint/issues/1946>`_:
+  Use margin box of children to define available width for leaders
+
+Contributors:
+
+* Guillaume Ayoub
+* Sahil Rohilla
+* Azharuddin Syed
+* kygoh
+* Andy Lenards
+* Gaurav Samudra
+* Michael Wedl
+* Lucie Anglade
+* Obeida Shamoun
+* Evgeniy Krysanov
+
+Backers and sponsors:
+
+* Spacinov
+* Kobalt
+* Grip Angebotssoftware
+* Manuel Barkhau
+* SimonSoft
+* Menutech
+* KontextWork
+* NCC Group
+* René Fritz
+* Nicola Auchmuty
+* Syslifters
+* Hammerbacher
+* TrainingSparkle
+* Daniel Kucharski
+* Healthchecks.io
+* Yanal-Yvez Fargialla
+* WakaTime
+* Paheko
+* Synapsium
+* DocRaptor
+
+
+Version 59.0
+------------
+
+Released on 2023-05-11.
+
+This version also includes the changes from unstable b1 version listed
+below.
+
+Bug fixes:
+
+* `#1864 <https://github.com/Kozea/WeasyPrint/issues/1864>`_:
+  Handle overflow for svg and symbol tags in SVG images
+* `#1867 <https://github.com/Kozea/WeasyPrint/pull/1867>`_:
+  Remove duplicate compression of attachments
+* `d0ad5c1 <https://github.com/Kozea/WeasyPrint/commit/d0ad5c1>`_:
+  Override use tag children instead of drawing their references
+* `93df1a5 <https://github.com/Kozea/WeasyPrint/commit/93df1a5>`_:
+  Don’t resize the same image twice when the --dpi option is set
+* `#1874 <https://github.com/Kozea/WeasyPrint/pull/1874>`_:
+  Drawn underline and overline behind text
+
+Contributors:
+
+* Guillaume Ayoub
+* Timo Ramsauer
+* Alexander Mankuta
+
+Backers and sponsors:
+
+* Castedo Ellerman
+* Kobalt
+* Spacinov
+* Grip Angebotssoftware
+* Crisp BV
+* Manuel Barkhau
+* SimonSoft
+* Menutech
+* KontextWork
+* NCC Group
+* René Fritz
+* Moritz Mahringer
+* Yanal-Yvez Fargialla
+* Piotr Horzycki
+* Healthchecks.io
+* TrainingSparkle
+* Hammerbacher
+* Synapsium
+
+
 Version 59.0b1
 --------------
 
@@ -40,7 +255,7 @@ Python API:
      * ``identifier`` becomes ``pdf_identifier``,
      * ``variant`` becomes ``pdf_variant``,
      * ``version`` becomes ``pdf_version``,
-     * ``forms`` becomes ``pdf_forms``,
+     * ``forms`` becomes ``pdf_forms``.
 
 * The ``optimize_size`` parameter of ``HTML.render()``, ``HTML.write_pdf()``
   and ``Document()`` has been removed and will be ignored. You can now use the

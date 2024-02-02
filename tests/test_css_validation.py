@@ -6,8 +6,9 @@ import pytest
 import tinycss2
 from tinycss2.color3 import parse_color
 from weasyprint.css import preprocess_declarations
-from weasyprint.css.computed_values import ZERO_PIXELS
-from weasyprint.css.properties import INITIAL_VALUES
+from weasyprint.css.properties import INITIAL_VALUES, ZERO_PIXELS
+from weasyprint.css.validation.expanders import EXPANDERS
+from weasyprint.css.validation.properties import PROPERTIES
 from weasyprint.images import LinearGradient, RadialGradient
 
 from .testing_utils import assert_no_logs, capture_logs
@@ -27,9 +28,9 @@ def expand_to_dict(css, expected_error=None):
     else:
         assert not logs
 
-    return dict(
-        (name, value) for name, value, _priority in declarations
-        if value != 'initial')
+    return {
+        name: value for name, value, _priority in declarations
+        if value != 'initial'}
 
 
 def assert_invalid(css, message='invalid'):
@@ -1248,3 +1249,9 @@ def test_image_orientation(rule, result):
 ))
 def test_image_orientation_invalid(rule, reason):
     assert_invalid(rule, reason)
+
+
+@assert_no_logs
+@pytest.mark.parametrize('expander', list(EXPANDERS) + list(PROPERTIES))
+def test_empty_value(expander):
+    assert_invalid(f'{expander}:', message='Ignored')

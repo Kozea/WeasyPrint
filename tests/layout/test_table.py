@@ -1,8 +1,24 @@
 """Tests for layout of tables."""
 
 import pytest
+from weasyprint.formatting_structure import boxes
+from weasyprint.layout.table import collapse_table_borders
 
-from ..testing_utils import assert_no_logs, capture_logs, render_pages
+from ..testing_utils import (
+    assert_no_logs, capture_logs, parse_all, render_pages)
+
+
+def _get_grid(html, grid_width, grid_height):
+    html = parse_all(html)
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    border_lists = collapse_table_borders(table, grid_width, grid_height)
+    return tuple(
+        [[(style, width, color) if width else None
+          for _score, (style, width, color) in border]
+         for border in border_list]
+        for border_list in border_lists)
 
 
 @assert_no_logs
@@ -1866,6 +1882,24 @@ def test_table_row_height_3():
 
 
 @assert_no_logs
+def test_table_row_height_4():
+    # A row cannot be shorter than the border-height of its tallest cell
+    page, = render_pages('''
+      <table style="border-spacing: 0;">
+        <tr style="height: 4px;">
+          <td style="border: 1px solid; padding: 5px;"></td>
+        </tr>
+      </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    wrapper, = body.children
+    table, = wrapper.children
+    row_group, = table.children
+    assert row_group.height == 12
+
+
+@assert_no_logs
 def test_table_vertical_align(assert_pixels):
     assert_pixels('''
         rrrrrrrrrrrrrrrrrrrrrrrrrrrr
@@ -2912,3 +2946,180 @@ def test_table_different_display():
         </td>
       </table>
     ''')
+
+
+@assert_no_logs
+def test_min_width_with_overflow():
+    # issue 1383
+    page, = render_pages('''
+<head>
+<style>
+table td { border: 1px solid black; }
+table.key-val tr td:nth-child(1) { min-width: 13em; }
+</style>
+</head>
+
+<body>
+<table class="key-val">
+    <tbody>
+        <tr>
+            <td>Normal Key 1</td>
+            <td>Normal Value 1</td>
+        </tr>
+        <tr>
+            <td>Normal Key 2</td>
+           <td>Normal Value 2</td>
+        </tr>
+    </tbody>
+</table>
+<table class="key-val">
+    <tbody>
+        <tr>
+            <td>Short value</td>
+            <td>Works as expected</td>
+        </tr>
+        <tr>
+            <td>Long Value</td>
+            <td>Annoyingly breaks my table layout: Sed ut perspiciatis
+                unde omnis iste natus error sit voluptatem
+                accusantium doloremque laudantium, totam rem aperiam,
+                eaque ipsa quae ab illo inventore veritatis et quasi
+                architecto beatae vitae dicta sunt explicabo.
+            </td>
+        </tr>
+    </tbody>
+</table>
+</body>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper_1, table_wrapper_2 = body.children
+
+    table1, = table_wrapper_1.children
+    tbody1, = table1.children
+    tr1, tr2 = tbody1.children
+    table1_td1, table1_td2 = tr1.children
+
+    table2, = table_wrapper_2.children
+    tbody2, = table2.children
+    tr1, tr2 = tbody2.children
+    table2_td1, table2_td2 = tr1.children
+
+    assert table1_td1.min_width == table2_td1.min_width
+    assert table1_td1.width == table2_td1.width
+
+
+black = (0, 0, 0, 1)
+red = (1, 0, 0, 1)
+green = (0, 1, 0, 1)  # lime in CSS
+blue = (0, 0, 1, 1)
+yellow = (1, 1, 0, 1)
+black_3 = ('solid', 3, black)
+red_1 = ('solid', 1, red)
+yellow_5 = ('solid', 5, yellow)
+green_5 = ('solid', 5, green)
+dashed_blue_5 = ('dashed', 5, blue)
+
+
+@assert_no_logs
+def test_border_collapse_1():
+    html = parse_all('<table></table>')
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    assert isinstance(table, boxes.TableBox)
+    assert not hasattr(table, 'collapsed_border_grid')
+
+    grid = _get_grid('<table style="border-collapse: collapse"></table>', 0, 0)
+    assert grid == ([], [])
+
+
+@assert_no_logs
+def test_border_collapse_2():
+    vertical_borders, horizontal_borders = _get_grid('''
+      <style>td { border: 1px solid red }</style>
+      <table style="border-collapse: collapse; border: 3px solid black">
+        <tr> <td>A</td> <td>B</td> </tr>
+        <tr> <td>C</td> <td>D</td> </tr>
+      </table>
+    ''', 2, 2)
+    assert vertical_borders == [
+        [black_3, red_1, black_3],
+        [black_3, red_1, black_3],
+    ]
+    assert horizontal_borders == [
+        [black_3, black_3],
+        [red_1, red_1],
+        [black_3, black_3],
+    ]
+
+
+@assert_no_logs
+def test_border_collapse_3():
+    # hidden vs. none
+    vertical_borders, horizontal_borders = _get_grid('''
+      <style>table, td { border: 3px solid }</style>
+      <table style="border-collapse: collapse">
+        <tr> <td>A</td> <td style="border-style: hidden">B</td> </tr>
+        <tr> <td>C</td> <td style="border-style: none">D</td> </tr>
+      </table>
+    ''', 2, 2)
+    assert vertical_borders == [
+        [black_3, None, None],
+        [black_3, black_3, black_3],
+    ]
+    assert horizontal_borders == [
+        [black_3, None],
+        [black_3, None],
+        [black_3, black_3],
+    ]
+
+
+@assert_no_logs
+def test_border_collapse_4():
+    vertical_borders, horizontal_borders = _get_grid('''
+      <style>td { border: 1px solid red }</style>
+      <table style="border-collapse: collapse; border: 5px solid yellow">
+        <col style="border: 3px solid black" />
+        <tr> <td></td> <td></td> <td></td> </tr>
+        <tr> <td></td> <td style="border: 5px dashed blue"></td>
+          <td style="border: 5px solid lime"></td> </tr>
+        <tr> <td></td> <td></td> <td></td> </tr>
+        <tr> <td></td> <td></td> <td></td> </tr>
+      </table>
+    ''', 3, 4)
+    assert vertical_borders == [
+        [yellow_5, black_3, red_1, yellow_5],
+        [yellow_5, dashed_blue_5, green_5, green_5],
+        [yellow_5, black_3, red_1, yellow_5],
+        [yellow_5, black_3, red_1, yellow_5],
+    ]
+    assert horizontal_borders == [
+        [yellow_5, yellow_5, yellow_5],
+        [red_1, dashed_blue_5, green_5],
+        [red_1, dashed_blue_5, green_5],
+        [red_1, red_1, red_1],
+        [yellow_5, yellow_5, yellow_5],
+    ]
+
+
+@assert_no_logs
+def test_border_collapse_5():
+    # rowspan and colspan
+    vertical_borders, horizontal_borders = _get_grid('''
+        <style>col, tr { border: 3px solid }</style>
+        <table style="border-collapse: collapse">
+            <col /><col /><col />
+            <tr> <td rowspan=2></td> <td></td> <td></td> </tr>
+            <tr>                     <td colspan=2></td> </tr>
+        </table>
+    ''', 3, 2)
+    assert vertical_borders == [
+        [black_3, black_3, black_3, black_3],
+        [black_3, black_3, None, black_3],
+    ]
+    assert horizontal_borders == [
+        [black_3, black_3, black_3],
+        [None, black_3, black_3],
+        [black_3, black_3, black_3],
+    ]

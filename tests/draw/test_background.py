@@ -1053,14 +1053,51 @@ def test_background_size_clip(assert_pixels):
 
 
 @assert_no_logs
-def test_bleed_background_size_clip(assert_pixels):
+def test_page_background_fixed(assert_pixels):
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/1993
+    assert_pixels('''
+        RBBB
+        BBBB
+        BBBB
+        BBBB
+    ''', '''
+      <style>
+         @page { size: 4px; margin: 1px;
+                 background: url(pattern.png) red;
+                 background-attachment: fixed; }
+      </style>
+      <body>''')
+
+
+@assert_no_logs
+def test_page_background_fixed_bleed(assert_pixels):
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/1993
     assert_pixels('''
         RRRRRR
+        RRBBBR
         RBBBBR
-        RBRBBR
         RBBBBR
         RBBBBR
         RRRRRR
+    ''', '''
+      <style>
+         @page { size: 4px; margin: 1px; bleed: 1px;
+                 background: url(pattern.png) no-repeat red;
+                 background-attachment: fixed; }
+      </style>
+      <body>''')
+
+
+@assert_no_logs
+def test_bleed_background_size_clip(assert_pixels):
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/1943
+    assert_pixels('''
+        BBBBBB
+        BBBBBB
+        BBRBBB
+        BBBBBB
+        BBBBBB
+        BBBBBB
     ''', '''
       <style>
          @page { size: 4px; bleed: 1px; margin: 1px;

@@ -100,6 +100,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
         parent_box.width = preferred.flex_max_content_width(
             context, parent_box)
     original_skip_stack = skip_stack
+    children = sorted(children, key=lambda item: item.style['order'])
     if skip_stack is not None:
         (skip, skip_stack), = skip_stack.items()
         if box.style['flex_direction'].endswith('-reverse'):
@@ -263,8 +264,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
     line = []
     line_size = 0
     axis_size = getattr(box, axis)
-    for i, child in enumerate(
-            sorted(children, key=lambda item: item.style['order'])):
+    for i, child in enumerate(children):
         if not child.is_flex_item:
             continue
         line_size += child.hypothetical_main_size

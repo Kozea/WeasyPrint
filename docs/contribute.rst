@@ -13,7 +13,7 @@ install WeasyPrint dependencies.
    git clone https://github.com/Kozea/WeasyPrint.git
    cd WeasyPrint
    python -m venv venv
-   venv/bin/pip install -e .[doc,test]
+   venv/bin/pip install -e '.[doc,test]'
 
 You can then launch Python to test your changes.
 
@@ -44,6 +44,9 @@ Tests
 Tests are stored in the ``tests`` folder at the top of the repository. They use
 the pytest_ library.
 
+Tests require Ghostscript_ to be installed and available on the local path. You
+should also install all the `DejaVu fonts`_ if you’re on Linux.
+
 You can launch tests using the following command::
 
   venv/bin/python -m pytest
@@ -55,6 +58,8 @@ style::
   venv/bin/python -m flake8
 
 .. _pytest: https://docs.pytest.org/
+.. _Ghostscript: https://www.ghostscript.com/
+.. _DejaVu fonts: https://dejavu-fonts.github.io/
 .. _isort: https://pycqa.github.io/isort/
 .. _flake8: https://flake8.pycqa.org/
 

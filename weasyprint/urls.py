@@ -151,10 +151,19 @@ def get_link_attribute(element, attr_name, base_url):
     uri = get_url_attribute(element, attr_name, base_url, allow_relative=True)
     if uri:
         if base_url:
-            parsed = urlsplit(uri)
-            # Compare with fragments removed
-            if parsed.fragment and parsed[:-1] == urlsplit(base_url)[:-1]:
-                return ('url', ('internal', unquote(parsed.fragment)))
+            try:
+                parsed = urlsplit(uri)
+            except ValueError:
+                LOGGER.warning('Malformed URL: %s', uri)
+            else:
+                try:
+                    parsed_base = urlsplit(base_url)
+                except ValueError:
+                    LOGGER.warning('Malformed base URL: %s', base_url)
+                else:
+                    # Compare with fragments removed
+                    if parsed.fragment and parsed[:-1] == parsed_base[:-1]:
+                        return ('url', ('internal', unquote(parsed.fragment)))
         return ('url', ('external', uri))
 
 

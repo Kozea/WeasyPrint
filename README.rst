@@ -13,7 +13,7 @@ WebKit or Gecko. The CSS layout engine is written in Python, designed for
 pagination, and meant to be easy to hack on.
 
 * Free software: BSD license
-* For Python 3.7+, tested on CPython and PyPy
+* For Python 3.8+, tested on CPython and PyPy
 * Documentation: https://doc.courtbouillon.org/weasyprint
 * Examples: https://weasyprint.org/#samples
 * Changelog: https://github.com/Kozea/WeasyPrint/releases

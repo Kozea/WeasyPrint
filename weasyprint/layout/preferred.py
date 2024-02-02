@@ -135,6 +135,10 @@ def margin_width(box, width, left=True, right=True):
     """Add box paddings, borders and margins to ``width``."""
     percentages = 0
 
+    # See https://drafts.csswg.org/css-tables-3/#cell-intrinsic-offsets
+    # It is a set of computed values for border-left-width, padding-left,
+    # padding-right, and border-right-width (along with zero values for
+    # margin-left and margin-right)
     for value in (
         (['margin_left', 'padding_left'] if left else []) +
         (['margin_right', 'padding_right'] if right else [])
@@ -147,10 +151,24 @@ def margin_width(box, width, left=True, right=True):
                 assert style_value.unit == '%'
                 percentages += style_value.value
 
+    collapse = box.style['border_collapse'] == 'collapse'
     if left:
-        width += box.style['border_left_width']
+        if collapse and hasattr(box, 'border_left_width'):
+            # In collapsed-borders mode: the computed horizontal padding of the
+            # cell and, for border values, the used border-width values of the
+            # cell (half the winning border-width)
+            width += box.border_left_width
+        else:
+            # In separated-borders mode: the computed horizontal padding and
+            # border of the table-cell
+            width += box.style['border_left_width']
     if right:
-        width += box.style['border_right_width']
+        if collapse and hasattr(box, 'border_right_width'):
+            # [...] the used border-width values of the cell
+            width += box.border_right_width
+        else:
+            # [...] the computed border of the table-cell
+            width += box.style['border_right_width']
 
     if percentages < 100:
         return width / (1 - percentages / 100)
@@ -225,8 +243,15 @@ def column_group_content_width(context, box):
 
 def table_cell_min_content_width(context, box, outer):
     """Return the min-content width for a ``TableCellBox``."""
+    # See https://www.w3.org/TR/css-tables-3/#outer-min-content
+    min_width = box.style['min_width']
+    if min_width == 'auto':
+        min_width = 0
+    else:
+        min_width = min_width.value
     children_widths = [
-        min_content_width(context, child) for child in box.children
+        max(min_width, min_content_width(context, child))
+        for child in box.children
         if not child.is_absolutely_positioned()]
     children_min_width = margin_width(
         box, max(children_widths) if children_widths else 0)
@@ -289,10 +314,10 @@ def inline_line_widths(context, box, outer, is_line_start, minimum,
             else:
                 (skip, skip_stack), = skip_stack.items()
                 assert skip_stack is None
-            child_text = child.text[(skip or 0):]
+            child_text = child.text.encode()[(skip or 0):]
             if is_line_start and space_collapse:
-                child_text = child_text.lstrip(' ')
-            if minimum and child_text == ' ':
+                child_text = child_text.lstrip(b' ')
+            if minimum and child_text == b' ':
                 lines = [0, 0]
             else:
                 max_width = 0 if minimum else None
@@ -302,8 +327,8 @@ def inline_line_widths(context, box, outer, is_line_start, minimum,
                     resume_index += new_resume_index
                     _, _, new_resume_index, width, _, _ = (
                         split_first_line(
-                            child_text[resume_index:], child.style, context,
-                            max_width, child.justification_spacing,
+                            child_text[resume_index:].decode(), child.style,
+                            context, max_width, child.justification_spacing,
                             is_line_start=is_line_start, minimum=True))
                     lines.append(width)
                     if first_line:

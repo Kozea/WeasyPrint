@@ -706,14 +706,12 @@ def test_footnote_max_height():
               }
           }
           div {
-              color: red;
               font-family: weasyprint;
               font-size: 2px;
               line-height: 1;
           }
           div.footnote {
               float: footnote;
-              color: blue;
           }
       </style>
       <div>ab<div class="footnote">c</div><div class="footnote">d</div>
@@ -748,3 +746,100 @@ def test_footnote_max_height():
     footnote_marker3, footnote_content3 = footnote_line3.children
     assert footnote_marker3.children[0].text == '3.'
     assert footnote_content3.text == 'e'
+
+
+def test_footnote_table_aborted_row():
+    page1, page2 = render_pages('''
+      <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page {size: 10px 35px}
+        body {font-family: weasyprint; font-size: 2px}
+        tr {height: 10px}
+        .footnote {float: footnote}
+      </style>
+      <table><tbody>
+        <tr><td>abc</td></tr>
+        <tr><td>abc</td></tr>
+        <tr><td>abc</td></tr>
+        <tr><td>def<div class="footnote">f</div></td></tr>
+      </tbody></table>
+    ''')
+
+    html, = page1.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    tbody, = table.children
+    for tr in tbody.children:
+        td, = tr.children
+        line, = td.children
+        textbox, = line.children
+        assert textbox.text == 'abc'
+
+    html, footnote_area = page2.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    tbody, = table.children
+    tr, = tbody.children
+    td, = tr.children
+    line, = td.children
+    textbox, call = line.children
+    assert textbox.text == 'def'
+    footnote, = footnote_area.children
+    line, = footnote.children
+    marker, textbox = line.children
+    assert textbox.text == 'f'
+
+
+def test_footnote_table_aborted_group():
+    page1, page2 = render_pages('''
+      <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page {size: 10px 35px}
+        body {font-family: weasyprint; font-size: 2px}
+        tr {height: 10px}
+        tbody {break-inside: avoid}
+        .footnote {float: footnote}
+      </style>
+      <table>
+        <tbody>
+          <tr><td>abc</td></tr>
+          <tr><td>abc</td></tr>
+        </tbody>
+        <tbody>
+          <tr><td>def<div class="footnote">f</div></td></tr>
+          <tr><td>ghi</td></tr>
+        </tbody>
+      </table>
+    ''')
+
+    html, = page1.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    tbody, = table.children
+    for tr in tbody.children:
+        td, = tr.children
+        line, = td.children
+        textbox, = line.children
+        assert textbox.text == 'abc'
+
+    html, footnote_area = page2.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    tbody, = table.children
+    tr1, tr2 = tbody.children
+    td, = tr1.children
+    line, = td.children
+    textbox, call = line.children
+    assert textbox.text == 'def'
+    td, = tr2.children
+    line, = td.children
+    textbox, = line.children
+    assert textbox.text == 'ghi'
+    footnote, = footnote_area.children
+    line, = footnote.children
+    marker, textbox = line.children
+    assert textbox.text == 'f'

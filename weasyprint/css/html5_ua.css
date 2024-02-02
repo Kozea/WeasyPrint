@@ -214,6 +214,7 @@ blink { text-decoration: blink; }
 blockquote { display: block; margin: 1em 40px; /* unicode-bidi: isolate; */ }
 body { display: block; margin: 8px; }
 br::before { content: '\A'; white-space: pre-line; }
+wbr::before { content: '\200B'; }
 caption { display: table-caption; /* unicode-bidi: isolate; */ }
 center { display: block; text-align: center; /* unicode-bidi: isolate; */ }
 cite { font-style: italic; }
@@ -362,23 +363,29 @@ input[value=""]::before {
 select {
   background: lightgrey;
   border-radius: 0.25em 0.25em;
-  padding-right: 1.5em;
   position: relative;
   white-space: normal;
 }
-select::before {
+select[multiple] {
+  height: 3.6em;
+}
+select:not([multiple])::before {
   content: "˅";
   position: absolute;
   right: 0;
   text-align: center;
   width: 1.5em;
 }
-option {
-  display: none;
+select option {
+  padding-right: 1.5em;
   white-space: nowrap;
 }
+select:not([multiple]) option {
+  display: none;
+}
+select[multiple] option,
 select:not(:has(option[selected])) option:first-of-type,
-option[selected]:not(option[selected] ~ option[selected]) {
+select option[selected]:not(option[selected] ~ option[selected]) {
   display: block;
   overflow: hidden;
 }
@@ -616,7 +623,7 @@ var { font-style: italic; }
 video { object-fit: contain; }
 xmp { display: block; font-family: monospace; margin-bottom: 1em; margin-top: 1em; /* unicode-bidi: isolate; */ white-space: pre; }
 
-::footnote-call { content: counter(footnote); vertical-align: baseline; font-size: 100%; line-height: inherit; font-variant-position: super; }
+::footnote-call { content: counter(footnote); vertical-align: super; font-size: smaller; line-height: inherit; }
 ::footnote-marker { content: counter(footnote) '. '; }
 
 @page {

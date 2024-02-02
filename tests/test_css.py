@@ -12,20 +12,22 @@ from weasyprint.layout.page import set_page_type_computed_styles
 from weasyprint.urls import path2url
 
 from .testing_utils import (
-    BASE_URL, FakeHTML, assert_no_logs, capture_logs, resource_filename)
+    BASE_URL, FakeHTML, assert_no_logs, capture_logs, resource_path)
 
 
 @assert_no_logs
 def test_find_stylesheets():
-    html = FakeHTML(resource_filename('doc1.html'))
+    html = FakeHTML(resource_path('doc1.html'))
 
     sheets = list(css.find_stylesheets(
         html.wrapper_element, 'print', default_url_fetcher, html.base_url,
         font_config=None, counter_style=None, page_rules=None))
     assert len(sheets) == 2
     # Also test that stylesheets are in tree order
-    assert [s.base_url.rsplit('/', 1)[-1].rsplit(',', 1)[-1] for s in sheets] \
-        == ['a%7Bcolor%3AcurrentColor%7D', 'doc1.html']
+    sheet_names = [
+        sheet.base_url.rsplit('/', 1)[-1].rsplit(',', 1)[-1]
+        for sheet in sheets]
+    assert sheet_names == ['a%7Bcolor%3AcurrentColor%7D', 'doc1.html']
 
     rules = []
     for sheet in sheets:
@@ -41,7 +43,7 @@ def test_find_stylesheets():
 
 @assert_no_logs
 def test_expand_shorthands():
-    sheet = CSS(resource_filename('sheet2.css'))
+    sheet = CSS(resource_path('sheet2.css'))
     assert list(sheet.matcher.lower_local_name_selectors) == ['li']
 
     rules = sheet.matcher.lower_local_name_selectors['li'][0][4]
@@ -63,11 +65,11 @@ def test_expand_shorthands():
 
 @assert_no_logs
 def test_annotate_document():
-    document = FakeHTML(resource_filename('doc1.html'))
+    document = FakeHTML(resource_path('doc1.html'))
     document._ua_stylesheets = (
-        lambda *_, **__: [CSS(resource_filename('mini_ua.css'))])
+        lambda *_, **__: [CSS(resource_path('mini_ua.css'))])
     style_for = get_all_computed_styles(
-        document, user_stylesheets=[CSS(resource_filename('user.css'))])
+        document, user_stylesheets=[CSS(resource_path('user.css'))])
 
     # Element objects behave as lists of their children
     _head, body = document.etree_element
@@ -88,7 +90,7 @@ def test_annotate_document():
     span2 = style_for(span2)
 
     assert h1['background_image'] == (
-        ('url', path2url(resource_filename('logo_small.png'))),)
+        ('url', path2url(resource_path('logo_small.png'))),)
 
     assert h1['font_weight'] == 700
     assert h1['font_size'] == 40  # 2em
@@ -153,7 +155,7 @@ def test_annotate_document():
 
 @assert_no_logs
 def test_page():
-    document = FakeHTML(resource_filename('doc1.html'))
+    document = FakeHTML(resource_path('doc1.html'))
     style_for = get_all_computed_styles(
         document, user_stylesheets=[CSS(string='''
           html { color: red }

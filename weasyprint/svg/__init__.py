@@ -8,7 +8,9 @@ from xml.etree import ElementTree
 from cssselect2 import ElementWrapper
 
 from ..urls import get_url_attribute
-from .bounding_box import bounding_box, is_valid_bounding_box
+from .bounding_box import (
+    EMPTY_BOUNDING_BOX, bounding_box, extend_bounding_box,
+    is_valid_bounding_box)
 from .css import parse_declarations, parse_stylesheets
 from .defs import (
     apply_filters, clip_path, draw_gradient_or_pattern, paint_mask, use)
@@ -117,6 +119,16 @@ class Node:
     def tail(self):
         """Text after the XML node."""
         return self._etree_node.tail
+
+    @property
+    def display(self):
+        """Whether node should be displayed."""
+        return self.get('display') != 'none'
+
+    @property
+    def visible(self):
+        """Whether node is visible."""
+        return self.display and self.get('visibility') != 'hidden'
 
     def __iter__(self):
         """Yield node children, handling cascade."""
@@ -284,6 +296,13 @@ class Node:
             str(rotate.pop(0) if rotate else original_rotate[-1])
             for i in range(len(self.text)))
 
+    def override_iter(self, iterator):
+        """Override node’s children iterator."""
+        # As special methods are bound to classes and not instances, we have to
+        # create and assign a new type.
+        self.__class__ = type(
+            'Node', (Node,), {'__iter__': lambda _: iterator})
+
 
 class SVG:
     """An SVG document."""
@@ -379,6 +398,8 @@ class SVG:
         # Update font size
         font_size = size(node.get('font-size', '1em'), font_size, font_size)
 
+        original_streams = []
+
         if fill_stroke:
             self.stream.push_state()
 
@@ -387,19 +408,17 @@ class SVG:
         if filter_:
             apply_filters(self, node, filter_, font_size)
 
+        # Apply transform attribute
+        self.transform(node.get('transform'), font_size)
+
         # Create substream for opacity
         opacity = float(node.get('opacity', 1))
         if fill_stroke and 0 <= opacity < 1:
-            original_stream = self.stream
+            original_streams.append(self.stream)
             box = self.calculate_bounding_box(node, font_size)
-            if is_valid_bounding_box(box):
-                coords = (box[0], box[1], box[0] + box[2], box[1] + box[3])
-            else:
-                coords = (0, 0, self.inner_width, self.inner_height)
-            self.stream = self.stream.add_group(*coords)
-
-        # Apply transform attribute
-        self.transform(node.get('transform'), font_size)
+            if not is_valid_bounding_box(box):
+                box = (0, 0, self.inner_width, self.inner_height)
+            self.stream = self.stream.add_group(*box)
 
         # Clip
         clip_path = parse_url(node.get('clip-path')).fragment
@@ -411,8 +430,10 @@ class SVG:
                 width, height = self.point(
                     node.get('width'), node.get('height'), font_size)
                 self.stream.transform(a=width, d=height, e=x, f=y)
+            original_tag = clip_path._etree_node.tag
             clip_path._etree_node.tag = 'g'
             self.draw_node(clip_path, font_size, fill_stroke=False)
+            clip_path._etree_node.tag = original_tag
             # At least set the clipping area to an empty path, so that it’s
             # totally clipped when the clipping path is empty.
             self.stream.rectangle(0, 0, 0, 0)
@@ -422,19 +443,47 @@ class SVG:
             if new_ctm.determinant:
                 self.stream.transform(*(old_ctm @ new_ctm.invert).values)
 
-        # Manage display and visibility
-        display = node.get('display') != 'none'
-        visible = display and (node.get('visibility') != 'hidden')
+        # Handle text anchor
+        text_anchor = node.get('text-anchor')
+        if TAGS.get(node.tag) == text and text_anchor in ('middle', 'end'):
+            group = self.stream.add_group(0, 0, 0, 0)  # BBox set after drawing
+            original_streams.append(self.stream)
+            self.stream = group
+
+        # Set text bounding box
+        if node.display and TAGS.get(node.tag) == text:
+            node.text_bounding_box = EMPTY_BOUNDING_BOX
 
         # Draw node
-        if visible and node.tag in TAGS:
+        if node.visible and node.tag in TAGS:
             with suppress(PointError):
                 TAGS[node.tag](self, node, font_size)
 
         # Draw node children
-        if display and node.tag not in DEF_TYPES:
+        if node.display and node.tag not in DEF_TYPES:
             for child in node:
                 self.draw_node(child, font_size, fill_stroke)
+                if TAGS.get(node.tag) == text and child.visible:
+                    if not is_valid_bounding_box(child.text_bounding_box):
+                        continue
+                    x1, y1 = child.text_bounding_box[:2]
+                    x2 = x1 + child.text_bounding_box[2]
+                    y2 = y1 + child.text_bounding_box[3]
+                    node.text_bounding_box = extend_bounding_box(
+                        node.text_bounding_box, ((x1, y1), (x2, y2)))
+
+        # Handle text anchor
+        if TAGS.get(node.tag) == text and text_anchor in ('middle', 'end'):
+            group_id = self.stream.id
+            self.stream = original_streams.pop()
+            self.stream.push_state()
+            if is_valid_bounding_box(node.text_bounding_box):
+                x, y, width, height = node.text_bounding_box
+                group.extra['BBox'][:] = (x, y, x + width, y + height)
+                x_align = width / 2 if text_anchor == 'middle' else width
+                self.stream.transform(e=-x_align)
+            self.stream.draw_x_object(group_id)
+            self.stream.pop_state()
 
         # Apply mask
         mask = self.masks.get(parse_url(node.get('mask')).fragment)
@@ -451,7 +500,7 @@ class SVG:
         # Apply opacity stream and restore original stream
         if fill_stroke and 0 <= opacity < 1:
             group_id = self.stream.id
-            self.stream = original_stream
+            self.stream = original_streams.pop()
             self.stream.set_alpha(opacity, stroke=True, fill=True)
             self.stream.draw_x_object(group_id)
 
@@ -504,12 +553,15 @@ class SVG:
             marker_node = self.markers.get(marker)
 
             # Calculate position, scale and clipping
+            translate_x, translate_y = self.point(
+                marker_node.get('refX'), marker_node.get('refY'),
+                font_size)
             if 'viewBox' in marker_node.attrib:
                 marker_width, marker_height = self.point(
                     marker_node.get('markerWidth', 3),
                     marker_node.get('markerHeight', 3),
                     font_size)
-                scale_x, scale_y, translate_x, translate_y = preserve_ratio(
+                scale_x, scale_y, _, _ = preserve_ratio(
                     self, marker_node, font_size, marker_width, marker_height)
 
                 clip_x, clip_y, viewbox_width, viewbox_height = (
@@ -546,11 +598,10 @@ class SVG:
                 if is_valid_bounding_box(box):
                     scale_x = scale_y = min(
                         marker_width / box[2], marker_height / box[3])
+                    translate_x /= scale_x
+                    translate_y /= scale_y
                 else:
                     scale_x = scale_y = 1
-                translate_x, translate_y = self.point(
-                    marker_node.get('refX'), marker_node.get('refY'),
-                    font_size)
                 clip_box = None
 
             # Scale
@@ -578,10 +629,9 @@ class SVG:
 
                 overflow = marker_node.get('overflow', 'hidden')
                 if clip_box and overflow in ('hidden', 'scroll'):
-                    self.stream.push_state()
                     self.stream.rectangle(*clip_box)
-                    self.stream.pop_state()
                     self.stream.clip()
+                    self.stream.end()
 
                 self.draw_node(child, font_size, fill_stroke)
                 self.stream.pop_state()
@@ -737,11 +787,7 @@ class SVG:
             if key not in element.attrib:
                 element.attrib[key] = value
         if next(iter(element), None) is None:
-            # Override element’s __iter__ with parent’s __iter__. As special
-            # methods are bound to classes and not instances, we have to create
-            # and assign a new type.
-            element.__class__ = type(
-                'Node', (Node,), {'__iter__': lambda self: parent.__iter__()})
+            element.override_iter(parent.__iter__())
 
     def calculate_bounding_box(self, node, font_size, stroke=True):
         """Calculate the bounding box of a node."""

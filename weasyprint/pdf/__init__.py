@@ -62,11 +62,18 @@ def _use_references(pdf, resources, images):
     for key, x_object in resources.get('XObject', {}).items():
         # Images
         if x_object is None:
-            x_object = images[key]
-            if x_object.number is not None:
+            image_data = images[key]
+            x_object = image_data['x_object']
+
+            if x_object is not None:
                 # Image already added to PDF
                 resources['XObject'][key] = x_object.reference
                 continue
+
+            image = image_data['image']
+            dpi_ratio = max(image_data['dpi_ratios'])
+            x_object = image.get_x_object(image_data['interpolate'], dpi_ratio)
+            image_data['x_object'] = x_object
 
         pdf.add_object(x_object)
         resources['XObject'][key] = x_object.reference
@@ -182,7 +189,7 @@ def generate_pdf(document, target, zoom, **options):
         add_inputs(
             page.inputs, matrix, pdf, pdf_page, resources, stream,
             document.font_config.font_map, compress)
-        page.paint(stream, scale=scale)
+        page.paint(stream, scale)
 
         # Bleed
         bleed = {key: value * 0.75 for key, value in page.bleed.items()}

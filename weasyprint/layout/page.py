@@ -1,7 +1,6 @@
 """Layout for pages and CSS3 margin boxes."""
 
 import copy
-from itertools import chain
 from math import inf
 
 from ..css import PageType, computed_from_cascaded
@@ -24,6 +23,12 @@ class OrientedBox:
     def outer(self):
         return self.sugar + self.inner
 
+    @outer.setter
+    def outer(self, new_outer_width):
+        self.inner = min(
+            max(self.min_content_size, new_outer_width - self.sugar),
+            self.max_content_size)
+
     @property
     def outer_min_content_size(self):
         return self.sugar + (
@@ -33,10 +38,6 @@ class OrientedBox:
     def outer_max_content_size(self):
         return self.sugar + (
             self.max_content_size if self.inner == 'auto' else self.inner)
-
-    def shrink_to_fit(self, available):
-        self.inner = min(
-            max(self.min_content_size, available), self.max_content_size)
 
 
 class VerticalBox(OrientedBox):
@@ -173,7 +174,7 @@ def compute_fixed_dimension(context, box, outer, vertical, top_or_left):
     box.restore_box_attributes()
 
 
-def compute_variable_dimension(context, side_boxes, vertical, outer_sum):
+def compute_variable_dimension(context, side_boxes, vertical, available_size):
     """Compute and set a margin box fixed dimension on ``box``
 
     Described in: https://drafts.csswg.org/css-page-3/#margin-dimension
@@ -187,8 +188,8 @@ def compute_variable_dimension(context, side_boxes, vertical, outer_sum):
     :param vertical:
         ``True`` to set height, margin-top and margin-bottom;
         ``False`` for width, margin-left and margin-right.
-    :param outer_sum:
-        The target total outer dimension (max box width or height).
+    :param available_size:
+        The distance between the page box’s left right border edges
 
     """
     box_class = VerticalBox if vertical else HorizontalBox
@@ -201,68 +202,121 @@ def compute_variable_dimension(context, side_boxes, vertical, outer_sum):
         if box.margin_b == 'auto':
             box.margin_b = 0
 
-    if box_b.box.is_generated:
-        if box_b.inner == 'auto':
-            ac_max_content_size = 2 * max(
-                box_a.outer_max_content_size, box_c.outer_max_content_size)
-            if outer_sum >= (
-                    box_b.outer_max_content_size + ac_max_content_size):
-                box_b.inner = box_b.max_content_size
-            else:
-                ac_min_content_size = 2 * max(
-                    box_a.outer_min_content_size,
-                    box_c.outer_min_content_size)
-                box_b.inner = box_b.min_content_size
-                available = outer_sum - box_b.outer - ac_min_content_size
-                if available > 0:
-                    weight_ac = ac_max_content_size - ac_min_content_size
-                    weight_b = (
-                        box_b.max_content_size - box_b.min_content_size)
-                    weight_sum = weight_ac + weight_b
-                    # By definition of max_content_size and min_content_size,
-                    # weights can not be negative. weight_sum == 0 implies that
-                    # max_content_size == min_content_size for each box, in
-                    # which case the sum can not be both <= and > outer_sum
-                    # Therefore, one of the last two 'if' statements would not
-                    # have lead us here.
-                    assert weight_sum > 0
-                    box_b.inner += available * weight_b / weight_sum
-        if box_a.inner == 'auto':
-            box_a.shrink_to_fit((outer_sum - box_b.outer) / 2 - box_a.sugar)
-        if box_c.inner == 'auto':
-            box_c.shrink_to_fit((outer_sum - box_b.outer) / 2 - box_c.sugar)
-    else:
+    if not box_b.box.is_generated:
         # Non-generated boxes get zero for every box-model property
         assert box_b.inner == 0
         if box_a.inner == box_c.inner == 'auto':
-            if outer_sum >= (
+            # A and C both have 'width: auto'
+            if available_size > (
                     box_a.outer_max_content_size +
                     box_c.outer_max_content_size):
-                box_a.inner = box_a.max_content_size
-                box_c.inner = box_c.max_content_size
+                # sum of the outer max-content widths
+                # is less than the available width
+                flex_space = (
+                    available_size -
+                    box_a.outer_max_content_size -
+                    box_c.outer_max_content_size)
+                flex_factor_a = box_a.outer_max_content_size
+                flex_factor_c = box_c.outer_max_content_size
+                flex_factor_sum = flex_factor_a + flex_factor_c
+                if flex_factor_sum == 0:
+                    flex_factor_sum = 1
+                box_a.outer = box_a.max_content_size + (
+                    flex_space * flex_factor_a / flex_factor_sum)
+                box_c.outer = box_c.max_content_size + (
+                    flex_space * flex_factor_c / flex_factor_sum)
+            elif available_size > (
+                    box_a.outer_min_content_size +
+                    box_c.outer_min_content_size):
+                # sum of the outer min-content widths
+                # is less than the available width
+                flex_space = (
+                    available_size -
+                    box_a.outer_min_content_size -
+                    box_c.outer_min_content_size)
+                flex_factor_a = (
+                    box_a.max_content_size - box_a.min_content_size)
+                flex_factor_c = (
+                    box_c.max_content_size - box_c.min_content_size)
+                flex_factor_sum = flex_factor_a + flex_factor_c
+                if flex_factor_sum == 0:
+                    flex_factor_sum = 1
+                box_a.outer = box_a.min_content_size + (
+                    flex_space * flex_factor_a / flex_factor_sum)
+                box_c.outer = box_c.min_content_size + (
+                    flex_space * flex_factor_c / flex_factor_sum)
             else:
-                box_a.inner = box_a.min_content_size
-                box_c.inner = box_c.min_content_size
-                available = outer_sum - box_a.outer - box_c.outer
-                if available > 0:
-                    weight_a = (
-                        box_a.max_content_size - box_a.min_content_size)
-                    weight_c = (
-                        box_c.max_content_size - box_c.min_content_size)
-                    weight_sum = weight_a + weight_c
-                    # By definition of max_content_size and min_content_size,
-                    # weights can not be negative. weight_sum == 0 implies that
-                    # max_content_size == min_content_size for each box, in
-                    # which case the sum can not be both <= and > outer_sum
-                    # Therefore, one of the last two 'if' statements would not
-                    # have lead us here.
-                    assert weight_sum > 0
-                    box_a.inner += available * weight_a / weight_sum
-                    box_c.inner += available * weight_c / weight_sum
-        elif box_a.inner == 'auto':
-            box_a.shrink_to_fit(outer_sum - box_c.outer - box_a.sugar)
-        elif box_c.inner == 'auto':
-            box_c.shrink_to_fit(outer_sum - box_a.outer - box_c.sugar)
+                # otherwise
+                flex_space = (
+                    available_size -
+                    box_a.outer_min_content_size -
+                    box_c.outer_min_content_size)
+                flex_factor_a = box_a.min_content_size
+                flex_factor_c = box_c.min_content_size
+                flex_factor_sum = flex_factor_a + flex_factor_c
+                if flex_factor_sum == 0:
+                    flex_factor_sum = 1
+                box_a.outer = box_a.min_content_size + (
+                    flex_space * flex_factor_a / flex_factor_sum)
+                box_c.outer = box_c.min_content_size + (
+                    flex_space * flex_factor_c / flex_factor_sum)
+        else:
+            # only one box has 'width: auto'
+            if box_a.inner == 'auto':
+                box_a.outer = available_size - box_c.outer
+            elif box_c.inner == 'auto':
+                box_c.outer = available_size - box_a.outer
+    else:
+        if box_b.inner == 'auto':
+            # resolve any auto width of the middle box (B)
+            ac_max_content_size = 2 * max(
+                box_a.outer_max_content_size, box_c.outer_max_content_size)
+            if available_size > (
+                    box_b.outer_max_content_size + ac_max_content_size):
+                flex_space = (
+                    available_size -
+                    box_b.outer_max_content_size -
+                    ac_max_content_size)
+                flex_factor_b = box_b.outer_max_content_size
+                flex_factor_ac = ac_max_content_size
+                flex_factor_sum = flex_factor_b + flex_factor_ac
+                if flex_factor_sum == 0:
+                    flex_factor_sum = 1
+                box_b.outer = box_b.max_content_size + (
+                    flex_space * flex_factor_b / flex_factor_sum)
+            else:
+                ac_min_content_size = 2 * max(
+                    box_a.outer_min_content_size, box_c.outer_min_content_size)
+                if available_size > (
+                        box_b.outer_min_content_size + ac_min_content_size):
+                    flex_space = (
+                        available_size -
+                        box_b.outer_min_content_size -
+                        ac_min_content_size)
+                    flex_factor_b = (
+                        box_b.max_content_size - box_b.min_content_size)
+                    flex_factor_ac = ac_max_content_size - ac_min_content_size
+                    flex_factor_sum = flex_factor_b + flex_factor_ac
+                    if flex_factor_sum == 0:
+                        flex_factor_sum = 1
+                    box_b.outer = box_b.min_content_size + (
+                        flex_space * flex_factor_b / flex_factor_sum)
+                else:
+                    flex_space = (
+                        available_size -
+                        box_b.outer_min_content_size -
+                        ac_min_content_size)
+                    flex_factor_b = box_b.min_content_size
+                    flex_factor_ac = ac_min_content_size
+                    flex_factor_sum = flex_factor_b + flex_factor_ac
+                    if flex_factor_sum == 0:
+                        flex_factor_sum = 1
+                    box_b.outer = box_b.min_content_size + (
+                        flex_space * flex_factor_b / flex_factor_sum)
+        if box_a.inner == 'auto':
+            box_a.outer = (available_size - box_b.outer) / 2
+        if box_c.inner == 'auto':
+            box_c.outer = (available_size - box_b.outer) / 2
 
     # And, we’re done!
     assert 'auto' not in [box.inner for box in side_boxes]
@@ -611,9 +665,6 @@ def make_page(context, root_box, page_type, resume_at, page_number,
     context.finish_block_formatting_context(root_box)
 
     page.children = [root_box, footnote_area]
-    descendants = chain(page.descendants(), *(
-        child.descendants() if hasattr(child, 'descendants') else (child,)
-        for child in positioned_boxes))
 
     # Update page counter values
     _standardize_page_based_counters(style, None)
@@ -637,7 +688,7 @@ def make_page(context, root_box, page_type, resume_at, page_number,
         cached_anchors.extend(x_remake_state.get('anchors', []))
         cached_lookups.extend(x_remake_state.get('content_lookups', []))
 
-    for child in descendants:
+    for child in page.descendants(placeholders=True):
         # Cache target's page counters
         anchor = child.style['anchor']
         if anchor and anchor not in cached_anchors:
@@ -718,6 +769,7 @@ def make_page(context, root_box, page_type, resume_at, page_number,
 
     if page_type.blank:
         resume_at = previous_resume_at
+        next_page = page_maker[page_number - 1][1]
 
     return page, resume_at, next_page
 
@@ -764,7 +816,6 @@ def remake_page(index, context, root_box, html):
     # Don't modify actual page_maker[index] values!
     # TODO: should we store (and reuse) page_type in the page_maker?
     page_state = copy.deepcopy(initial_page_state)
-    next_page_name = initial_next_page['page']
     first = index == 0
     if initial_next_page['break'] in ('left', 'right'):
         next_page_side = initial_next_page['break']
@@ -778,8 +829,7 @@ def remake_page(index, context, root_box, html):
         (next_page_side == 'left' and right_page) or
         (next_page_side == 'right' and not right_page) or
         (context.reported_footnotes and initial_resume_at is None))
-    if blank:
-        next_page_name = ''
+    next_page_name = '' if blank else initial_next_page['page']
     side = 'right' if right_page else 'left'
     page_type = PageType(side, blank, first, index, name=next_page_name)
     set_page_type_computed_styles(page_type, html, context.style_for)
@@ -794,8 +844,6 @@ def remake_page(index, context, root_box, html):
         context, root_box, page_type, initial_resume_at, page_number,
         page_state)
     assert next_page
-    if blank:
-        next_page['page'] = initial_next_page['page']
     right_page = not right_page
 
     # Check whether we need to append or update the next page_maker item

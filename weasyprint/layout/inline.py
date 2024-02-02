@@ -5,7 +5,7 @@ from math import inf
 
 from ..css import computed_from_cascaded
 from ..css.computed_values import character_ratio, strut_layout
-from ..formatting_structure import boxes
+from ..formatting_structure import boxes, build
 from ..text.line_break import can_break_text, create_layout, split_first_line
 from .absolute import AbsolutePlaceholder, absolute_layout
 from .flex import flex_layout
@@ -192,13 +192,15 @@ def skip_first_whitespace(box, skip_stack):
     if isinstance(box, boxes.TextBox):
         assert next_skip_stack is None
         white_space = box.style['white_space']
-        length = len(box.text)
-        if index == length:
+        text = box.text.encode()
+        if index == len(text):
             # Starting a the end of the TextBox, no text to see: Continue
             return 'continue'
         if white_space in ('normal', 'nowrap', 'pre-line'):
-            while index < length and box.text[index] == ' ':
+            text = text[index:]
+            while text and text.startswith(b' '):
                 index += 1
+                text = text[1:]
         return {index: None} if index else None
 
     if isinstance(box, (boxes.LineBox, boxes.InlineBox)):
@@ -338,6 +340,7 @@ def first_letter_to_box(box, skip_stack, first_letter_style):
                             box.element, first_letter)
                         line_box.children = (text_box,)
                         box.children = (letter_box,) + tuple(box.children)
+                    build.process_text_transform(text_box)
                     if skip_stack and child_skip_stack:
                         index, = skip_stack
                         (child_index, grandchild_skip_stack), = (
@@ -479,7 +482,7 @@ def split_inline_level(context, box, position_x, max_x, bottom_space,
             if skip is None:
                 last_letter = box.text[-1]
             else:
-                last_letter = box.text[skip - 1]
+                last_letter = box.text.encode()[:skip].decode()[-1]
         else:
             first_letter = last_letter = None
     elif isinstance(box, boxes.InlineBox):
@@ -871,28 +874,16 @@ def split_text_box(context, box, available_width, skip, is_line_start=True):
     """
     assert isinstance(box, boxes.TextBox)
     font_size = box.style['font_size']
-    text = box.text[skip:]
+    text = box.text.encode()[skip:]
     if font_size == 0 or not text:
         return None, None, False
     layout, length, resume_index, width, height, baseline = split_first_line(
-        text, box.style, context, available_width, box.justification_spacing,
-        is_line_start=is_line_start)
+        text.decode(), box.style, context, available_width,
+        box.justification_spacing, is_line_start=is_line_start)
     assert resume_index != 0
 
-    # Convert ``length`` and ``resume_at`` from UTF-8 indexes in text
-    # to Unicode indexes.
-    # No need to encode what’s after resume_at (if set) or length (if
-    # resume_at is not set). One code point is one or more byte, so
-    # UTF-8 indexes are always bigger or equal to Unicode indexes.
-    new_text = layout.text
-    encoded = text.encode()
-    if resume_index is not None:
-        between = encoded[length:resume_index].decode()
-        resume_index = len(encoded[:resume_index].decode())
-    length = len(encoded[:length].decode())
-
     if length > 0:
-        box = box.copy_with_text(new_text)
+        box = box.copy_with_text(layout.text)
         box.width = width
         box.pango_layout = layout
         # "The height of the content area should be based on the font,
@@ -917,6 +908,7 @@ def split_text_box(context, box, available_width, skip, is_line_start=True):
     if resume_index is None:
         preserved_line_break = False
     else:
+        between = text[length:resume_index].decode()
         preserved_line_break = (
             (length != resume_index) and between.strip(' '))
         if preserved_line_break:

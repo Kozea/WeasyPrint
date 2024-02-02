@@ -62,10 +62,9 @@ def test_breaking_linebox():
         for child in line.children:
             assert child.element_tag in ('em', 'p')
             assert child.style['font_size'] == 13
-            if isinstance(child, boxes.ParentBox):
-                for child_child in child.children:
-                    assert child.element_tag in ('em', 'strong', 'span')
-                    assert child.style['font_size'] == 13
+            for child_child in child.children:
+                assert child.element_tag in ('em', 'strong', 'span')
+                assert child.style['font_size'] == 13
 
 
 @assert_no_logs
@@ -462,6 +461,65 @@ def test_breaking_linebox_regression_14():
     assert line1.children[0].children[0].children[0].text == 'a'
     assert line2.children[0].children[0].text == 'b'
     assert line2.children[1].children[0].text == 'c'
+
+
+@assert_no_logs
+def test_breaking_linebox_regression_15():
+    # Regression test for https://github.com/ietf-tools/datatracker/issues/5507
+    page, = render_pages(
+        '<style>'
+        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
+        '  body {font-family: weasyprint; font-size: 4px}'
+        '  pre {float: left}'
+        '</style>'
+        '<pre>ab©\n'
+        'déf\n'
+        'ghïj\n'
+        'klm</pre>')
+    html, = page.children
+    body, = html.children
+    pre, = body.children
+    line1, line2, line3, line4 = pre.children
+    assert line1.children[0].text == 'ab©'
+    assert line2.children[0].text == 'déf'
+    assert line3.children[0].text == 'ghïj'
+    assert line4.children[0].text == 'klm'
+    assert line1.children[0].width == 4 * 3
+    assert line2.children[0].width == 4 * 3
+    assert line3.children[0].width == 4 * 4
+    assert line4.children[0].width == 4 * 3
+    assert pre.width == 4 * 4
+
+
+@assert_no_logs
+def test_breaking_linebox_regression_16():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/1973
+    page, = render_pages(
+        '<style>'
+        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
+        '  body {font-family: weasyprint; font-size: 4px}'
+        '  p {float: left}'
+        '</style>'
+        '<p>tést</p>'
+        '<pre>ab©\n'
+        'déf\n'
+        'ghïj\n'
+        'klm</pre>')
+    html, = page.children
+    body, = html.children
+    p, pre = body.children
+    line1, = p.children
+    assert line1.children[0].text == 'tést'
+    assert p.width == 4 * 4
+    line1, line2, line3, line4 = pre.children
+    assert line1.children[0].text == 'ab©'
+    assert line2.children[0].text == 'déf'
+    assert line3.children[0].text == 'ghïj'
+    assert line4.children[0].text == 'klm'
+    assert line1.children[0].width == 4 * 3
+    assert line2.children[0].width == 4 * 3
+    assert line3.children[0].width == 4 * 4
+    assert line4.children[0].width == 4 * 3
 
 
 @assert_no_logs

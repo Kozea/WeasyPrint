@@ -9,7 +9,7 @@ Installation
 
 WeasyPrint |version| depends on:
 
-* Python_ ≥ 3.7.0
+* Python_ ≥ 3.8.0
 * Pango_ ≥ 1.44.0
 * pydyf_ ≥ 0.6.0
 * CFFI_ ≥ 0.6
@@ -70,12 +70,12 @@ in a `virtual environment`_ using `pip`_::
 .. _pip: https://pip.pypa.io/
 
 
-Alpine ≥ 3.12
+Alpine ≥ 3.14
 +++++++++++++
 
-To install WeasyPrint without a virtualenv, you need the following packages::
+To install WeasyPrint using your distribution’s package::
 
-  apk add py3-pip py3-pillow py3-cffi py3-brotli gcc musl-dev python3-dev pango
+  apk add weasyprint
 
 To install WeasyPrint inside a virtualenv using wheels (if possible), you need
 the following packages::
@@ -91,9 +91,9 @@ following packages::
 Archlinux
 +++++++++
 
-To install WeasyPrint without a virtualenv, you need the following packages::
+To install WeasyPrint using your distribution’s package::
 
-  pacman -S python-pip pango python-cffi python-pillow python-brotli python-zopfli
+  pacman -S python-weasyprint
 
 To install WeasyPrint inside a virtualenv using wheels (if possible), you need
 the following packages::
@@ -109,9 +109,9 @@ following packages::
 Debian ≥ 11
 +++++++++++
 
-To install WeasyPrint without a virtualenv, you need the following packages::
+To install WeasyPrint using your distribution’s package::
 
-  apt install python3-pip python3-cffi python3-brotli libpango-1.0-0 libpangoft2-1.0-0
+  apt install weasyprint
 
 To install WeasyPrint inside a virtualenv using wheels (if possible), you need
 the following packages::
@@ -127,9 +127,9 @@ following packages::
 Fedora ≥ 34
 +++++++++++
 
-To install WeasyPrint without a virtualenv, you need the following packages::
+To install WeasyPrint using your distribution’s package::
 
-  yum install python-pip python-pillow python-cffi python3-brotli pango
+  yum install weasyprint
 
 To install WeasyPrint inside a virtualenv using wheels (if possible), you need
 the following packages::
@@ -145,9 +145,9 @@ following packages::
 Ubuntu ≥ 20.04
 ++++++++++++++
 
-To install WeasyPrint without a virtualenv, you need the following packages::
+To install WeasyPrint using your distribution’s package::
 
-  apt install python3-pip python3-cffi python3-brotli libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0
+  apt install weasyprint
 
 To install WeasyPrint inside a virtualenv using wheels (if possible), you need
 the following packages::
@@ -195,7 +195,7 @@ WeasyPrint in a `virtual environment`_ using `pip`_::
   python3 -m pip install weasyprint
   python3 -m weasyprint --info
 
-.. _Microsoft Store: https://www.microsoft.com/en-us/search?q=python
+.. _Microsoft Store: https://apps.microsoft.com/store/search/python
 .. _GTK3 installer: https://github.com/tschoonj/GTK-for-Windows-Runtime-Environment-Installer/releases
 
 
@@ -472,8 +472,8 @@ to the default fetcher:
     def my_fetcher(url):
         if url.startswith('graph:'):
             graph_data = map(float, url[6:].split(','))
-            return dict(string=generate_graph(graph_data),
-                        mime_type='image/png')
+            string = generate_graph(graph_data)
+            return {'string': string, 'mime_type': 'image/png'}
         return default_url_fetcher(url)
 
     source = '<img src="graph:42,10.3,87">'
@@ -508,23 +508,30 @@ the function internally used by WeasyPrint to retrieve data.
 Image Cache and Optimization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-WeasyPrint provides two options to deal with images: ``optimize_size`` and
-``image_cache``.
+WeasyPrint provides many options to deal with images: ``optimize_images``,
+``jpeg_quality``, ``dpi`` and ``image_cache``.
 
-``optimize_size`` can enable size optimization for images, but also for fonts.
-When enabled, the generated PDF will include smaller images and fonts, but the
-rendering time may be slightly increased. The whole structure of the PDF can be
-compressed too.
+``optimize_images`` can enable size optimization for images. When enabled, the
+generated PDF will include smaller images with no quality penalty, but the
+rendering time may be slightly increased.
+
+The ``jpeg_quality`` option can be set to decrease the quality of JPEG images
+included in the PDF. You can set a value between 95 (best quality) to 0
+(smaller image size), depending on your needs.
+
+The ``dpi`` option offers the possibility to reduce the size (in pixels, and
+thus in bytes) of all included raster images. The resolution, set in dots per
+inch, indicates the maximum number of pixels included in one inch on the
+generated PDF.
 
 .. code-block:: python
 
-    # No size optimization, faster, but generated PDF is larger
-    HTML('https://example.org/').write_pdf(
-        'example.pdf', optimize_size=())
+    # Original high-quality images, faster, but generated PDF is larger
+    HTML('https://weasyprint.org/').write_pdf('weasyprint.pdf')
 
-    # Full size optimization, slower, but generated PDF is smaller
-    HTML('https://example.org/').write_pdf(
-        'example.pdf', optimize_size=('fonts', 'images', 'hinting', 'pdf'))
+    # Optimized lower-quality images, a bit slower, but generated PDF is smaller
+    HTML('https://weasyprint.org/').write_pdf(
+        'weasyprint.pdf', optimize_images=True, jpeg_quality=60, dpi=150)
 
 ``image_cache`` gives the possibility to use a cache for images, avoiding to
 download, parse and optimize them each time they are used.
@@ -537,7 +544,7 @@ time when you render a lot of documents that use the same images.
 
     cache = {}
     for i in range(10):
-        HTML(f'https://example.org/?id={i}').write_pdf(
+        HTML(f'https://weasyprint.org/').write_pdf(
             f'example-{i}.pdf', image_cache=cache)
 
 It’s also possible to cache images on disk instead of keeping them in memory.

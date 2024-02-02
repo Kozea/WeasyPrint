@@ -7,6 +7,7 @@ from tinycss2.color3 import parse_color
 
 Dimension = collections.namedtuple('Dimension', ['value', 'unit'])
 
+ZERO_PIXELS = Dimension(0, 'px')
 
 INITIAL_VALUES = {
     # CSS 2.1: https://www.w3.org/TR/CSS21/propidx.html
@@ -21,14 +22,14 @@ INITIAL_VALUES = {
     'float': 'none',
     'left': 'auto',
     'line_height': 'normal',
-    'margin_top': Dimension(0, 'px'),
-    'margin_right': Dimension(0, 'px'),
-    'margin_bottom': Dimension(0, 'px'),
-    'margin_left': Dimension(0, 'px'),
-    'padding_top': Dimension(0, 'px'),
-    'padding_right': Dimension(0, 'px'),
-    'padding_bottom': Dimension(0, 'px'),
-    'padding_left': Dimension(0, 'px'),
+    'margin_top': ZERO_PIXELS,
+    'margin_right': ZERO_PIXELS,
+    'margin_bottom': ZERO_PIXELS,
+    'margin_left': ZERO_PIXELS,
+    'padding_top': ZERO_PIXELS,
+    'padding_right': ZERO_PIXELS,
+    'padding_bottom': ZERO_PIXELS,
+    'padding_left': ZERO_PIXELS,
     'position': 'static',
     'right': 'auto',
     'table_layout': 'auto',
@@ -49,8 +50,8 @@ INITIAL_VALUES = {
     'background_repeat': (('repeat', 'repeat'),),
     'background_size': (('auto', 'auto'),),
     'border_bottom_color': 'currentColor',
-    'border_bottom_left_radius': (Dimension(0, 'px'), Dimension(0, 'px')),
-    'border_bottom_right_radius': (Dimension(0, 'px'), Dimension(0, 'px')),
+    'border_bottom_left_radius': (ZERO_PIXELS, ZERO_PIXELS),
+    'border_bottom_right_radius': (ZERO_PIXELS, ZERO_PIXELS),
     'border_bottom_style': 'none',
     'border_bottom_width': 3,
     'border_collapse': 'separate',
@@ -62,8 +63,8 @@ INITIAL_VALUES = {
     'border_right_width': 3,
     'border_spacing': (0, 0),
     'border_top_color': 'currentColor',
-    'border_top_left_radius': (Dimension(0, 'px'), Dimension(0, 'px')),
-    'border_top_right_radius': (Dimension(0, 'px'), Dimension(0, 'px')),
+    'border_top_left_radius': (ZERO_PIXELS, ZERO_PIXELS),
+    'border_top_right_radius': (ZERO_PIXELS, ZERO_PIXELS),
     'border_top_style': 'none',
     'border_top_width': 3,  # computed value for 'medium'
 
@@ -139,13 +140,13 @@ INITIAL_VALUES = {
     # Text 3/4 (WD/WD): https://www.w3.org/TR/css-text-4/
     'hyphenate_character': '‐',  # computed value chosen by the user agent
     'hyphenate_limit_chars': (5, 2, 2),
-    'hyphenate_limit_zone': Dimension(0, 'px'),
+    'hyphenate_limit_zone': ZERO_PIXELS,
     'hyphens': 'manual',
     'letter_spacing': 'normal',
     'tab_size': 8,
     'text_align_all': 'start',
     'text_align_last': 'auto',
-    'text_indent': Dimension(0, 'px'),
+    'text_indent': ZERO_PIXELS,
     'text_transform': 'none',
     'white_space': 'normal',
     'word_break': 'normal',

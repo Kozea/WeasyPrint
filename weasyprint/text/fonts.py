@@ -90,7 +90,7 @@ class FontConfiguration:
                 how-to-use-custom-application-fonts.html
 
         """
-        # Load the master config file and the fonts.
+        # Load the main config file and the fonts.
         self._fontconfig_config = ffi.gc(
             fontconfig.FcInitLoadConfigAndFonts(),
             fontconfig.FcConfigDestroy)

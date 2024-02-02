@@ -15,7 +15,7 @@ import cssselect2
 import html5lib
 import tinycss2
 
-VERSION = __version__ = '59.0b1'
+VERSION = __version__ = '60.2'
 
 #: Default values for command-line and Python API options. See
 #: :func:`__main__.main` to learn more about specific options for
@@ -135,7 +135,8 @@ class HTML:
 
     :param str encoding:
         Force the source character encoding.
-    :param str base_url:
+    :type base_url: str or pathlib.Path
+    :param base_url:
         The base used to resolve relative URLs (e.g. in
         ``<img src="../foo.png">``). If not provided, try to use the input
         filename, URL, or ``name`` attribute of
@@ -158,16 +159,20 @@ class HTML:
             'Step 1 - Fetching and parsing HTML - %s',
             guess or filename or url or
             getattr(file_obj, 'name', 'HTML string'))
+        if isinstance(base_url, Path):
+            base_url = str(base_url)
         result = _select_source(
             guess, filename, url, file_obj, string, base_url, url_fetcher)
         with result as (source_type, source, base_url, protocol_encoding):
             if isinstance(source, str):
                 result = html5lib.parse(source, namespaceHTMLElements=False)
             else:
-                result = html5lib.parse(
-                    source, override_encoding=encoding,
-                    transport_encoding=protocol_encoding,
-                    namespaceHTMLElements=False)
+                kwargs = {'namespaceHTMLElements': False}
+                if protocol_encoding is not None:
+                    kwargs['transport_encoding'] = protocol_encoding
+                if encoding is not None:
+                    kwargs['override_encoding'] = encoding
+                result = html5lib.parse(source, **kwargs)
         self.base_url = _find_base_url(result, base_url)
         self.url_fetcher = url_fetcher
         self.media_type = media_type
@@ -283,12 +288,12 @@ class CSS:
             base_url=base_url, url_fetcher=url_fetcher,
             check_css_mime_type=_check_mime_type)
         with result as (source_type, source, base_url, protocol_encoding):
-            if source_type == 'string' and not isinstance(source, bytes):
+            if source_type == 'file_obj':
+                source = source.read()
+            if isinstance(source, str):
                 # unicode, no encoding
                 stylesheet = tinycss2.parse_stylesheet(source)
             else:
-                if source_type == 'file_obj':
-                    source = source.read()
                 stylesheet, encoding = tinycss2.parse_stylesheet_bytes(
                     source, environment_encoding=encoding,
                     protocol_encoding=protocol_encoding)

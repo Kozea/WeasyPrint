@@ -5,17 +5,12 @@ env:
   REPORTS_FOLDER: 'report'
 
 jobs:
-  tests:
-    name: ${{ matrix.os }} - ${{ matrix.python-version }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest]
-        python-version: ['3.11']
+  samples:
+    name: Generate samples
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
       - name: Upgrade pip and setuptools
