@@ -294,6 +294,7 @@ def generate_pdf(document, target, zoom, **options):
 
     # Apply PDF variants functions
     if variant:
-        variant_function(pdf, metadata, document, page_streams, compress)
+        variant_function(
+            pdf, metadata, document, page_streams, attachments, compress)
 
     return pdf

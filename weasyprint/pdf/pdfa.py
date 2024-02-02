@@ -17,7 +17,8 @@ import pydyf
 from .metadata import add_metadata
 
 
-def pdfa(pdf, metadata, document, page_streams, compress, version):
+def pdfa(pdf, metadata, document, page_streams, attachments, compress,
+         version):
     """Set metadata for PDF/A documents."""
     # Add ICC profile
     profile = pydyf.Stream(
@@ -36,27 +37,28 @@ def pdfa(pdf, metadata, document, page_streams, compress, version):
 
     # Add AF for attachments
     if version >= 2:
-        attachments = []
+        relationships = {
+            f'<{attachment.md5}>': attachment.relationship
+            for attachment in attachments if attachment.md5}
+        pdf_attachments = []
         if 'Names' in pdf.catalog and 'EmbeddedFiles' in pdf.catalog['Names']:
             reference = int(pdf.catalog['Names']['EmbeddedFiles'].split()[0])
             names = pdf.objects[reference]
-            for name in names[1::2]:
-                attachments.append(name)
-        relationships = {
-            attachment.md5: attachment.relationship
-            for attachment in document.metadata.attachments
-            if attachment.md5}
+            for name in names['Names'][1::2]:
+                pdf_attachments.append(name)
         for pdf_object in pdf.objects:
             if isinstance(pdf_object, dict):
                 if pdf_object.get('Type') == '/Filespec':
-                    checksum = pdf_object['CheckSum']
+                    reference = int(pdf_object['EF']['F'].split()[0])
+                    stream = pdf.objects[reference]
+                    checksum = stream.extra['Params']['CheckSum']
                     relationship = relationships.get(checksum, 'Unspecified')
                     pdf_object['AFRelationship'] = f'/{relationship}'
-                    attachments.append(pdf_object.reference)
-        if attachments:
+                    pdf_attachments.append(pdf_object.reference)
+        if pdf_attachments:
             if 'AF' not in pdf.catalog:
                 pdf.catalog['AF'] = pydyf.Array()
-            pdf.catalog['AF'].extend(attachments)
+            pdf.catalog['AF'].extend(pdf_attachments)
 
     # Print annotations
     for pdf_object in pdf.objects:
