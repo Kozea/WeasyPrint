@@ -295,7 +295,6 @@ def write_pdf_attachment(pdf, attachment, url_fetcher, compress):
 
     uncompressed_length = 0
     stream = b''
-    md5 = hashlib.md5()
     try:
         with attachment.source as (_, source, url, _):
             if isinstance(source, str):
@@ -304,12 +303,11 @@ def write_pdf_attachment(pdf, attachment, url_fetcher, compress):
                 source = io.BytesIO(source)
             for data in iter(lambda: source.read(4096), b''):
                 uncompressed_length += len(data)
-                md5.update(data)
                 stream += data
     except URLFetchingError as exception:
         LOGGER.error('Failed to load attachment: %s', exception)
         return
-    attachment.md5 = md5.hexdigest()
+    attachment.md5 = hashlib.md5(data).hexdigest()
 
     # TODO: Use the result object from a URL fetch operation to provide more
     # details on the possible filename and MIME type.
