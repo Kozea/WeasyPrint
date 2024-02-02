@@ -6,8 +6,8 @@ importing sub-modules.
 """
 
 import contextlib
-import datetime
-import os
+from datetime import datetime
+from os.path import getctime, getmtime
 from pathlib import Path
 from urllib.parse import urljoin
 
@@ -310,46 +310,46 @@ class Attachment:
 
     An instance is created in the same way as :class:`HTML`, except that the
     HTML specific arguments (``encoding`` and ``media_type``) are not
-    supported. An optional description can be provided with the ``description``
-    argument.
+    supported.
 
-    :param description:
+    :param str description:
         A description of the attachment to be included in the PDF document.
         May be :obj:`None`.
+    :type created: :obj:`datetime.datetime`
+    :param created:
+        Creation date and time. Default is current date and time.
+    :type modified: :obj:`datetime.datetime`
+    :param modified:
+        Modification date and time. Default is current date and time.
+    :param str relationship:
+        A string that represents the relationship between the attachment and
+        the PDF it is embedded in. Default is 'Unspecified', other common
+        values are defined in ISO-32000-2:2020, 7.11.3.
 
     """
     def __init__(self, guess=None, filename=None, url=None, file_obj=None,
                  string=None, base_url=None, url_fetcher=default_url_fetcher,
                  description=None, created=None, modified=None,
-                 af_relationship="Source"):
+                 relationship='Unspecified'):
         self.source = _select_source(
             guess, filename, url, file_obj, string, base_url=base_url,
             url_fetcher=url_fetcher)
         self.description = description
-        self.af_relationship = af_relationship
+        self.relationship = relationship
+        self.md5 = None
 
-        def epoch_to_pdf(epoch):
-            dt_object = datetime.datetime.fromtimestamp(epoch)
-            return datetime_to_pdf(dt_object)
-
-        def datetime_to_pdf(dt_object):
-            return dt_object.strftime("D:%Y%m%d%H%M%SZ")
-
-        if created:
-            self.created = created
-        else:
+        if created is None:
             if filename:
-                self.created = epoch_to_pdf(os.path.getctime(filename))
+                created = datetime.fromtimestamp(getctime(filename))
             else:
-                self.created = datetime_to_pdf(datetime.datetime.now())
-
-        if modified:
-            self.modified = modified
-        else:
+                created = datetime.now()
+        if modified is None:
             if filename:
-                self.modified = epoch_to_pdf(os.path.getmtime(filename))
+                modified = datetime.fromtimestamp(getmtime(filename))
             else:
-                self.modified = datetime_to_pdf(datetime.datetime.now())
+                modified = datetime.now()
+        self.created = created.strftime('D:%Y%m%d%H%M%SZ')
+        self.modified = modified.strftime('D:%Y%m%d%H%M%SZ')
 
 
 @contextlib.contextmanager

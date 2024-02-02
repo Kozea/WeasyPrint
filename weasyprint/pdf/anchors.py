@@ -293,58 +293,54 @@ def write_pdf_attachment(pdf, attachment, url_fetcher, compress):
     elif not isinstance(attachment, Attachment):
         attachment = Attachment(guess=attachment, url_fetcher=url_fetcher)
 
+    uncompressed_length = 0
+    stream = b''
+    md5 = hashlib.md5()
     try:
-        with attachment.source as (source_type, source, url, _):
+        with attachment.source as (_, source, url, _):
             if isinstance(source, bytes):
                 source = io.BytesIO(source)
-            uncompressed_length = 0
-            stream = b''
-            md5 = hashlib.md5()
             for data in iter(lambda: source.read(4096), b''):
                 uncompressed_length += len(data)
                 md5.update(data)
                 stream += data
-            mime_type, _ = mimetypes.guess_type(url, strict=False)
-            if not mime_type:
-                mime_type = 'application/octet-stream'
-            mime_type = '/' + mime_type.replace('/', '#2f')
-            file_extra = pydyf.Dictionary({
-                'Type': '/EmbeddedFile',
-                "Subtype": mime_type,
-                'Params': pydyf.Dictionary({
-                    'CheckSum': f'<{md5.hexdigest()}>',
-                    'Size': uncompressed_length,
-                    'CreationDate': attachment.created,
-                    'ModDate': attachment.modified,
-                })
-            })
-            file_stream = pydyf.Stream([stream], file_extra, compress=compress)
-            pdf.add_object(file_stream)
-
     except URLFetchingError as exception:
         LOGGER.error('Failed to load attachment: %s', exception)
         return
+    attachment.md5 = md5.hexdigest()
 
     # TODO: Use the result object from a URL fetch operation to provide more
-    # details on the possible filename.
+    # details on the possible filename and MIME type.
     if url and urlsplit(url).path:
         filename = basename(unquote(urlsplit(url).path))
     else:
         filename = 'attachment.bin'
+    mime_type = mimetypes.guess_type(filename, strict=False)[0]
+    if not mime_type:
+        mime_type = 'application/octet-stream'
 
-    attachment = pydyf.Dictionary({
+    file_extra = pydyf.Dictionary({
+        'Type': '/EmbeddedFile',
+        'Subtype': f'/{mime_type.replace("/", "#2f")}',
+        'Params': pydyf.Dictionary({
+            'CheckSum': f'<{attachment.md5}>',
+            'Size': uncompressed_length,
+            'CreationDate': attachment.created,
+            'ModDate': attachment.modified,
+        })
+    })
+    file_stream = pydyf.Stream([stream], file_extra, compress=compress)
+    pdf.add_object(file_stream)
+
+    pdf_attachment = pydyf.Dictionary({
         'Type': '/Filespec',
         'F': pydyf.String(),
         'UF': pydyf.String(filename),
-        "AFRelationship": "/"+attachment.af_relationship,
         'EF': pydyf.Dictionary({'F': file_stream.reference}),
         'Desc': pydyf.String(attachment.description or ''),
     })
-    pdf.add_object(attachment)
-    if "AF" not in pdf.catalog:
-        pdf.catalog["AF"] = pydyf.Array()
-    pdf.catalog["AF"].append(attachment.reference)
-    return attachment
+    pdf.add_object(pdf_attachment)
+    return pdf_attachment
 
 
 def resolve_links(pages):
