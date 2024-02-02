@@ -970,6 +970,7 @@ def wrap_table(box, children):
         grid_height += len(group.children)
 
     table = box.copy_with_children(row_groups)
+    table.style = table.style.copy()
     table.column_groups = tuple(column_groups)
     if table.style['border_collapse'] == 'collapse':
         table.collapsed_border_grid = collapse_table_borders(
