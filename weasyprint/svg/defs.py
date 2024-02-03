@@ -5,7 +5,7 @@ from math import ceil, hypot
 
 from ..matrix import Matrix
 from .bounding_box import is_valid_bounding_box
-from .utils import color, parse_url, size, transform
+from .utils import alpha_value, color, parse_url, size, transform
 
 
 def use(svg, node, font_size):
@@ -83,7 +83,7 @@ def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
         positions.append(max(
             positions[-1] if positions else 0,
             size(child.get('offset'), font_size, 1)))
-        stop_opacity = float(child.get('stop-opacity', 1)) * opacity
+        stop_opacity = alpha_value(child.get('stop-opacity', 1)) * opacity
         stop_color = color(child.get('stop-color', 'black'))
         if stop_opacity < 1:
             stop_color = tuple(

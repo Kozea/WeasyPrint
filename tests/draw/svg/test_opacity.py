@@ -31,7 +31,7 @@ def test_fill_opacity(assert_same_renderings):
     assert_same_renderings(
         opacity_source % '''
             <rect x="2" y="2" width="5" height="5"
-                  fill="blue" opacity="0.5" />
+                  fill="blue" opacity="50%" />
             <rect x="2" y="2" width="5" height="5" stroke-width="2"
                   stroke="lime" fill="transparent" />
         ''',
@@ -59,7 +59,7 @@ def test_stroke_opacity(assert_same_renderings):
         ''',
         opacity_source % '''
             <rect x="2" y="2" width="5" height="5" stroke-width="2"
-                  stroke="lime" fill="blue" stroke-opacity="0.5" />
+                  stroke="lime" fill="blue" stroke-opacity="50%" />
         ''',
     )
 
@@ -82,7 +82,6 @@ def test_stroke_fill_opacity(assert_same_renderings):
     )
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_pattern_gradient_stroke_fill_opacity(assert_same_renderings):
     assert_same_renderings(
@@ -141,6 +140,6 @@ def test_translate_opacity(assert_same_renderings):
         ''',
         opacity_source % '''
             <rect x="2" y="2" width="5" height="5"
-                  fill="blue" opacity="0.5" />
+                  fill="blue" opacity="50%" />
         ''',
     )

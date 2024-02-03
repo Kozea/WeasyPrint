@@ -57,6 +57,17 @@ def size(string, font_size=None, percentage_reference=None):
     return 0
 
 
+def alpha_value(value):
+    """Return opacity between 0 and 1 from str, number or percentage."""
+    ratio = 1
+    if isinstance(value, str):
+        value = value.strip()
+        if value.endswith('%'):
+            ratio = 100
+            value = value[:-1].strip()
+    return min(1, max(0, float(value) / ratio))
+
+
 def point(svg, string, font_size):
     """Pop first two size values from a string."""
     match = re.match('(.*?) (.*?)(?: |$)', string)

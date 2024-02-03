@@ -11,23 +11,26 @@ opacity_source = '''
 
 
 @assert_no_logs
-def test_opacity_1(assert_same_renderings):
+def test_opacity_zero(assert_same_renderings):
     assert_same_renderings(
         opacity_source % '<div></div>',
         opacity_source % '<div></div><div style="opacity: 0"></div>',
+        opacity_source % '<div></div><div style="opacity: 0%"></div>',
     )
 
 
 @assert_no_logs
-def test_opacity_2(assert_same_renderings):
+def test_opacity_normal_range(assert_same_renderings):
     assert_same_renderings(
         opacity_source % '<div style="background: rgb(102, 102, 102)"></div>',
         opacity_source % '<div style="opacity: 0.6"></div>',
+        opacity_source % '<div style="opacity: 60%"></div>',
+        opacity_source % '<div style="opacity: 60.0%"></div>',
     )
 
 
 @assert_no_logs
-def test_opacity_3(assert_same_renderings):
+def test_opacity_nested(assert_same_renderings):
     assert_same_renderings(
         opacity_source % '<div style="background: rgb(102, 102, 102)"></div>',
         opacity_source % '<div style="opacity: 0.6"></div>',
@@ -36,4 +39,22 @@ def test_opacity_3(assert_same_renderings):
             <div style="opacity: 0.9"></div>
           </div>
         ''',  # 0.9 * 0.666666 == 0.6
+    )
+
+
+@assert_no_logs
+def test_opacity_percent_clamp_down(assert_same_renderings):
+    assert_same_renderings(
+        opacity_source % '<div></div>',
+        opacity_source % '<div style="opacity: 1.2"></div>',
+        opacity_source % '<div style="opacity: 120%"></div>',
+    )
+
+
+@assert_no_logs
+def test_opacity_percent_clamp_up(assert_same_renderings):
+    assert_same_renderings(
+        opacity_source % '<div></div>',
+        opacity_source % '<div></div><div style="opacity: -0.2"></div>',
+        opacity_source % '<div></div><div style="opacity: -20%"></div>',
     )
