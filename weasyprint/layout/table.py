@@ -1026,15 +1026,20 @@ def collapse_table_borders(table, grid_width, grid_height):
         if previous_score < score:
             border_grid[grid_y][grid_x] = (score, (style, width, color))
 
-    def set_borders(box, x, y, w, h):
+    def set_borders(box, x, y, w, h, rtl):
         style = box.style
+        if rtl:
+            start, end = 'right', 'left'
+        else:
+            start, end = 'left', 'right'
         for yy in range(y, y + h):
-            set_one_border(vertical_borders, style, 'left', x, yy)
-            set_one_border(vertical_borders, style, 'right', x + w, yy)
+            set_one_border(vertical_borders, style, start, x, yy)
+            set_one_border(vertical_borders, style, end, x + w, yy)
         for xx in range(x, x + w):
             set_one_border(horizontal_borders, style, 'top', xx, y)
             set_one_border(horizontal_borders, style, 'bottom', xx, y + h)
 
+    rtl = table.style['direction'] == 'rtl'
     # The order is important here:
     # "A style set on a cell wins over one on a row, which wins over a
     #  row group, column, column group and, lastly, table"
@@ -1044,7 +1049,8 @@ def collapse_table_borders(table, grid_width, grid_height):
     grid_y = 0
     for row_group in table.children:
         for row in row_group.children:
-            for cell in row.children:
+            cells = reversed(row.children) if rtl else row.children
+            for cell in cells:
                 # No border inside of a cell with rowspan or colspan
                 for xx in range(cell.grid_x + 1, cell.grid_x + cell.colspan):
                     for yy in range(grid_y, grid_y + cell.rowspan):
@@ -1054,30 +1060,30 @@ def collapse_table_borders(table, grid_width, grid_height):
                         horizontal_borders[yy][xx] = strong_null_border
                 # The cell’s own borders
                 set_borders(cell, x=cell.grid_x, y=grid_y,
-                            w=cell.colspan, h=cell.rowspan)
+                            w=cell.colspan, h=cell.rowspan, rtl=rtl)
             grid_y += 1
 
     grid_y = 0
     for row_group in table.children:
         for row in row_group.children:
-            set_borders(row, x=0, y=grid_y, w=grid_width, h=1)
+            set_borders(row, x=0, y=grid_y, w=grid_width, h=1, rtl=rtl)
             grid_y += 1
 
     grid_y = 0
     for row_group in table.children:
         rowspan = len(row_group.children)
-        set_borders(row_group, x=0, y=grid_y, w=grid_width, h=rowspan)
+        set_borders(row_group, x=0, y=grid_y, w=grid_width, h=rowspan, rtl=rtl)
         grid_y += rowspan
 
     for column_group in table.column_groups:
         for column in column_group.children:
-            set_borders(column, x=column.grid_x, y=0, w=1, h=grid_height)
+            set_borders(column, x=column.grid_x, y=0, w=1, h=grid_height, rtl=rtl)
 
     for column_group in table.column_groups:
         set_borders(column_group, x=column_group.grid_x, y=0,
-                    w=column_group.span, h=grid_height)
+                    w=column_group.span, h=grid_height, rtl=rtl)
 
-    set_borders(table, x=0, y=0, w=grid_width, h=grid_height)
+    set_borders(table, x=0, y=0, w=grid_width, h=grid_height, rtl=rtl)
 
     # Now that all conflicts are resolved, set transparent borders of
     # the correct widths on each box. The actual border grid will be
