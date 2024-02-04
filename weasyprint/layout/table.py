@@ -1077,7 +1077,8 @@ def collapse_table_borders(table, grid_width, grid_height):
 
     for column_group in table.column_groups:
         for column in column_group.children:
-            set_borders(column, x=column.grid_x, y=0, w=1, h=grid_height, rtl=rtl)
+            set_borders(column, x=column.grid_x, y=0,
+                        w=1, h=grid_height, rtl=rtl)
 
     for column_group in table.column_groups:
         set_borders(column_group, x=column_group.grid_x, y=0,

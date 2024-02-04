@@ -186,7 +186,8 @@ class Box:
     def padding_box_x(self):
         """Absolute horizontal position of the padding box."""
         if self.style['direction'] == 'rtl':
-            return self.position_x + self.margin_right + self.border_right_width
+            return self.position_x + self.margin_right + \
+                self.border_right_width
         else:
             return self.position_x + self.margin_left + self.border_left_width
 

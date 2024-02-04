@@ -28,11 +28,11 @@ PIXELS_BY_CHAR = {
     'h': (64, 0, 64),  # half average of B and R
     'a': (0, 0, 254),  # R in lossy JPG
     'p': (192, 0, 63),  # R above R above B above _
-    'f': (255, 0, 255), # fuchsia
-    'y': (255, 255, 0), # yellow
-    'o': (255, 165, 0), # orange
-    'q': (0, 255, 255), # aqua
-    'l': (0, 128, 128), # teal
+    'f': (255, 0, 255),  # fuchsia
+    'y': (255, 255, 0),  # yellow
+    'o': (255, 165, 0),  # orange
+    'q': (0, 255, 255),  # aqua
+    'l': (0, 128, 128),  # teal
     'z': None,
 }
 

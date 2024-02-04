@@ -1521,8 +1521,6 @@ def test_running_elements_table_border_collapse_margin(assert_pixels):
 
 @assert_no_logs
 def test_border_collapse_bidi_border_right(assert_pixels):
-    #           1         2         3         4         5         6         7         8         9         0         1
-    # 012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789
     assert_pixels('''
       ________________________________________________________________________________________________________________________
       _fffffqqqqqqqqqqqqqqqqqqqqqqllllllyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyoooooo__
@@ -1624,8 +1622,6 @@ def test_border_collapse_bidi_border_right(assert_pixels):
 
 @assert_no_logs
 def test_border_collapse_bidi_border_left(assert_pixels):
-    #           1         2         3         4         5         6         7         8         9         0         1
-    # 012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789
     assert_pixels('''
       ________________________________________________________________________________________________________________________
       _lllllqqqqqqqqqqqqqqqqqqqqqqooooooyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvv__
@@ -1727,8 +1723,6 @@ def test_border_collapse_bidi_border_left(assert_pixels):
 
 @assert_no_logs
 def test_border_collapse_bidi_border_top(assert_pixels):
-    #           1         2         3         4         5         6         7         8         9         0         1
-    # 012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789
     assert_pixels('''
       ________________________________________________________________________________________________________________________
       _fffffllllllllllllllllllllllooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooovvvvvv_______
@@ -1840,8 +1834,6 @@ def test_border_collapse_bidi_border_top(assert_pixels):
 
 @assert_no_logs
 def test_border_collapse_bidi_border_bottom(assert_pixels):
-    #           1         2         3         4         5         6         7         8         9         0         1
-    # 012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789
     assert_pixels('''
       ________________________________________________________________________________________________________________________
       _fffffqqqqqqqqqqqqqqqqqqqqqqyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvv_______
