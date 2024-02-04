@@ -19,7 +19,8 @@ from .path import path
 from .shapes import circle, ellipse, line, polygon, polyline, rect
 from .text import text
 from .utils import (
-    PointError, color, normalize, parse_url, preserve_ratio, size, transform)
+    PointError, alpha_value, color, normalize, parse_url, preserve_ratio, size,
+    transform)
 
 TAGS = {
     'a': text,
@@ -412,7 +413,7 @@ class SVG:
         self.transform(node.get('transform'), font_size)
 
         # Create substream for opacity
-        opacity = float(node.get('opacity', 1))
+        opacity = alpha_value(node.get('opacity', 1))
         if fill_stroke and 0 <= opacity < 1:
             original_streams.append(self.stream)
             box = self.calculate_bounding_box(node, font_size)
@@ -662,7 +663,7 @@ class SVG:
 
         # Get fill data
         fill_source, fill_color = self.get_paint(node.get('fill', 'black'))
-        fill_opacity = float(node.get('fill-opacity', 1))
+        fill_opacity = alpha_value(node.get('fill-opacity', 1))
         fill_drawn = draw_gradient_or_pattern(
             self, node, fill_source, font_size, fill_opacity, stroke=False)
         if fill_color and not fill_drawn:
@@ -673,7 +674,7 @@ class SVG:
 
         # Get stroke data
         stroke_source, stroke_color = self.get_paint(node.get('stroke'))
-        stroke_opacity = float(node.get('stroke-opacity', 1))
+        stroke_opacity = alpha_value(node.get('stroke-opacity', 1))
         stroke_drawn = draw_gradient_or_pattern(
             self, node, stroke_source, font_size, stroke_opacity, stroke=True)
         if stroke_color and not stroke_drawn:

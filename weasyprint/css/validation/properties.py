@@ -1029,6 +1029,8 @@ def opacity(token):
     """Validation for the ``opacity`` property."""
     if token.type == 'number':
         return min(1, max(0, token.value))
+    if token.type == 'percentage':
+        return min(1, max(0, token.value / 100))
 
 
 @property()
