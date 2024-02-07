@@ -38,3 +38,6 @@ h6 { bookmark-level: 6; bookmark-label: content(text) }
 
 ::footnote-call { content: counter(footnote) }
 ::footnote-marker { content: counter(footnote) '.' }
+
+*[dir=ltr] { direction: ltr; }
+*[dir=rtl] { direction: rtl; }

@@ -1611,7 +1611,7 @@ def test_border_collapse_bidi_border_right(assert_pixels):
       </table>
 
 
-      <table style="direction: rtl;">
+      <table dir="rtl">
          <tr>
          <td class="right">XX XX XX</td>
          <td class="left">XX</td>
@@ -1712,7 +1712,7 @@ def test_border_collapse_bidi_border_left(assert_pixels):
       </table>
 
 
-      <table style="direction: rtl;">
+      <table dir="rtl">
          <tr>
          <td class="right">XX XX XX</td>
          <td class="left">XX</td>
@@ -1823,7 +1823,7 @@ def test_border_collapse_bidi_border_top(assert_pixels):
       </table>
 
 
-      <table style="direction: rtl;">
+      <table dir="rtl">
          <tr>
          <td class="right">XX XX XX</td>
          <td class="left">XX</td>
@@ -1934,7 +1934,7 @@ def test_border_collapse_bidi_border_bottom(assert_pixels):
       </table>
 
 
-      <table style="direction: rtl;">
+      <table dir="rtl">
          <tr>
          <td class="right">XX XX XX</td>
          <td class="left">XX</td>
