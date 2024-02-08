@@ -171,12 +171,8 @@ class Box:
 
     def content_box_x(self):
         """Absolute horizontal position of the content box."""
-        if self.style['direction'] == 'rtl':
-            return self.position_x + self.margin_right + self.padding_right + \
-                self.border_right_width
-        else:
-            return self.position_x + self.margin_left + self.padding_left + \
-                self.border_left_width
+        return self.position_x + self.margin_left + self.padding_left + \
+            self.border_left_width
 
     def content_box_y(self):
         """Absolute vertical position of the content box."""
@@ -185,11 +181,7 @@ class Box:
 
     def padding_box_x(self):
         """Absolute horizontal position of the padding box."""
-        if self.style['direction'] == 'rtl':
-            return self.position_x + self.margin_right + \
-                self.border_right_width
-        else:
-            return self.position_x + self.margin_left + self.border_left_width
+        return self.position_x + self.margin_left + self.border_left_width
 
     def padding_box_y(self):
         """Absolute vertical position of the padding box."""
