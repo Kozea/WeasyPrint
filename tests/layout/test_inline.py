@@ -1127,9 +1127,15 @@ def test_box_decoration_break_inline_clone():
 @assert_no_logs
 def test_bidi_position_x_invariant():
     page, = render_pages('''
-      <div style="float: left; border-right: 100px solid black; direction: ltr">abc</div>
+      <style>
+        .float-border {
+          float: left;
+          border-right: 100px solid black;
+        }
+      </style>
+      <div class="float-border" style="direction: ltr">abc</div>
       <div>&nbsp;</div>
-      <div style="float: left; border-right: 100px solid black; direction: rtl">abc</div>
+      <div class="float-border" style="direction: rtl">abc</div>
     ''')
     html, = page.children
     body, = html.children
