@@ -5,7 +5,7 @@ import pydyf
 from .metadata import add_metadata
 
 
-def pdfua(pdf, metadata, document, page_streams, compress):
+def pdfua(pdf, metadata, document, page_streams, attachments, compress):
     """Set metadata for PDF/UA documents."""
     # Structure for PDF tagging
     content_mapping = pydyf.Dictionary({})
