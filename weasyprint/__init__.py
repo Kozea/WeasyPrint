@@ -6,6 +6,8 @@ importing sub-modules.
 """
 
 import contextlib
+from datetime import datetime
+from os.path import getctime, getmtime
 from pathlib import Path
 from urllib.parse import urljoin
 
@@ -308,21 +310,46 @@ class Attachment:
 
     An instance is created in the same way as :class:`HTML`, except that the
     HTML specific arguments (``encoding`` and ``media_type``) are not
-    supported. An optional description can be provided with the ``description``
-    argument.
+    supported.
 
-    :param description:
+    :param str description:
         A description of the attachment to be included in the PDF document.
         May be :obj:`None`.
+    :type created: :obj:`datetime.datetime`
+    :param created:
+        Creation date and time. Default is current date and time.
+    :type modified: :obj:`datetime.datetime`
+    :param modified:
+        Modification date and time. Default is current date and time.
+    :param str relationship:
+        A string that represents the relationship between the attachment and
+        the PDF it is embedded in. Default is 'Unspecified', other common
+        values are defined in ISO-32000-2:2020, 7.11.3.
 
     """
     def __init__(self, guess=None, filename=None, url=None, file_obj=None,
                  string=None, base_url=None, url_fetcher=default_url_fetcher,
-                 description=None):
+                 description=None, created=None, modified=None,
+                 relationship='Unspecified'):
         self.source = _select_source(
             guess, filename, url, file_obj, string, base_url=base_url,
             url_fetcher=url_fetcher)
         self.description = description
+        self.relationship = relationship
+        self.md5 = None
+
+        if created is None:
+            if filename:
+                created = datetime.fromtimestamp(getctime(filename))
+            else:
+                created = datetime.now()
+        if modified is None:
+            if filename:
+                modified = datetime.fromtimestamp(getmtime(filename))
+            else:
+                modified = datetime.now()
+        self.created = created.strftime('D:%Y%m%d%H%M%SZ')
+        self.modified = modified.strftime('D:%Y%m%d%H%M%SZ')
 
 
 @contextlib.contextmanager

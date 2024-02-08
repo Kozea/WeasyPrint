@@ -2,6 +2,7 @@
 
 import hashlib
 import io
+import mimetypes
 from os.path import basename
 from urllib.parse import unquote, urlsplit
 
@@ -252,7 +253,7 @@ def add_annotations(links, matrix, document, pdf, page, annot_files, compress):
             # above about multiple regions won't always be correct, because
             # two links might have the same href, but different titles.
             annot_files[annot_target] = write_pdf_attachment(
-                pdf, (annot_target, None), document.url_fetcher, compress)
+                pdf, Attachment(annot_target), compress)
         annot_file = annot_files[annot_target]
         if annot_file is None:
             continue
@@ -280,59 +281,59 @@ def add_annotations(links, matrix, document, pdf, page, annot_files, compress):
         page['Annots'].append(annot.reference)
 
 
-def write_pdf_attachment(pdf, attachment, url_fetcher, compress):
+def write_pdf_attachment(pdf, attachment, compress):
     """Write an attachment to the PDF stream."""
     # Attachments from document links like <link> or <a> can only be URLs.
     # They're passed in as tuples
-    url = ''
-    if isinstance(attachment, tuple):
-        url, description = attachment
-        attachment = Attachment(
-            url=url, url_fetcher=url_fetcher, description=description)
-    elif not isinstance(attachment, Attachment):
-        attachment = Attachment(guess=attachment, url_fetcher=url_fetcher)
-
+    url = None
+    uncompressed_length = 0
+    stream = b''
     try:
-        with attachment.source as (source_type, source, url, _):
+        with attachment.source as (_, source, url, _):
+            if isinstance(source, str):
+                source = source.encode()
             if isinstance(source, bytes):
                 source = io.BytesIO(source)
-            uncompressed_length = 0
-            stream = b''
-            md5 = hashlib.md5()
             for data in iter(lambda: source.read(4096), b''):
                 uncompressed_length += len(data)
-                md5.update(data)
                 stream += data
-            file_extra = pydyf.Dictionary({
-                'Type': '/EmbeddedFile',
-                'Params': pydyf.Dictionary({
-                    'CheckSum': f'<{md5.hexdigest()}>',
-                    'Size': uncompressed_length,
-                })
-            })
-            file_stream = pydyf.Stream([stream], file_extra, compress=compress)
-            pdf.add_object(file_stream)
-
     except URLFetchingError as exception:
         LOGGER.error('Failed to load attachment: %s', exception)
         return
+    attachment.md5 = hashlib.md5(data).hexdigest()
 
     # TODO: Use the result object from a URL fetch operation to provide more
-    # details on the possible filename.
+    # details on the possible filename and MIME type.
     if url and urlsplit(url).path:
         filename = basename(unquote(urlsplit(url).path))
     else:
         filename = 'attachment.bin'
+    mime_type = mimetypes.guess_type(filename, strict=False)[0]
+    if not mime_type:
+        mime_type = 'application/octet-stream'
 
-    attachment = pydyf.Dictionary({
+    file_extra = pydyf.Dictionary({
+        'Type': '/EmbeddedFile',
+        'Subtype': f'/{mime_type.replace("/", "#2f")}',
+        'Params': pydyf.Dictionary({
+            'CheckSum': f'<{attachment.md5}>',
+            'Size': uncompressed_length,
+            'CreationDate': attachment.created,
+            'ModDate': attachment.modified,
+        })
+    })
+    file_stream = pydyf.Stream([stream], file_extra, compress=compress)
+    pdf.add_object(file_stream)
+
+    pdf_attachment = pydyf.Dictionary({
         'Type': '/Filespec',
         'F': pydyf.String(),
         'UF': pydyf.String(filename),
         'EF': pydyf.Dictionary({'F': file_stream.reference}),
         'Desc': pydyf.String(attachment.description or ''),
     })
-    pdf.add_object(attachment)
-    return attachment
+    pdf.add_object(pdf_attachment)
+    return pdf_attachment
 
 
 def resolve_links(pages):
