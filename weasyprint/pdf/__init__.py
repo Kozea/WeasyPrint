@@ -2,7 +2,7 @@
 
 import pydyf
 
-from .. import VERSION
+from .. import VERSION, Attachment
 from ..html import W3C_DATE_RE
 from ..logger import LOGGER, PROGRESS_LOGGER
 from ..matrix import Matrix
@@ -245,11 +245,15 @@ def generate_pdf(document, target, zoom, **options):
                 pdf.info[key] = pydyf.String(value)
 
     # Embedded files
-    attachments = metadata.attachments + (options['attachments'] or [])
+    attachments = metadata.attachments.copy()
+    if options['attachments']:
+        for attachment in options['attachments']:
+            if not isinstance(attachment, Attachment):
+                attachment = Attachment(attachment)
+            attachments.append(attachment)
     pdf_attachments = []
     for attachment in attachments:
-        pdf_attachment = write_pdf_attachment(
-            pdf, attachment, document.url_fetcher, compress)
+        pdf_attachment = write_pdf_attachment(pdf, attachment, compress)
         if pdf_attachment is not None:
             pdf_attachments.append(pdf_attachment)
     if pdf_attachments:

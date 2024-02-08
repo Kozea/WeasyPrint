@@ -253,7 +253,7 @@ def add_annotations(links, matrix, document, pdf, page, annot_files, compress):
             # above about multiple regions won't always be correct, because
             # two links might have the same href, but different titles.
             annot_files[annot_target] = write_pdf_attachment(
-                pdf, (annot_target, None), document.url_fetcher, compress)
+                pdf, Attachment(annot_target), compress)
         annot_file = annot_files[annot_target]
         if annot_file is None:
             continue
@@ -281,18 +281,11 @@ def add_annotations(links, matrix, document, pdf, page, annot_files, compress):
         page['Annots'].append(annot.reference)
 
 
-def write_pdf_attachment(pdf, attachment, url_fetcher, compress):
+def write_pdf_attachment(pdf, attachment, compress):
     """Write an attachment to the PDF stream."""
     # Attachments from document links like <link> or <a> can only be URLs.
     # They're passed in as tuples
-    url = ''
-    if isinstance(attachment, tuple):
-        url, description = attachment
-        attachment = Attachment(
-            url=url, url_fetcher=url_fetcher, description=description)
-    elif not isinstance(attachment, Attachment):
-        attachment = Attachment(guess=attachment, url_fetcher=url_fetcher)
-
+    url = None
     uncompressed_length = 0
     stream = b''
     try:

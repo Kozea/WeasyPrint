@@ -19,7 +19,7 @@ else:
 
 import re
 
-from . import CSS, css
+from . import CSS, Attachment, css
 from .css import get_child_text
 from .css.counters import CounterStyle
 from .formatting_structure import boxes
@@ -281,7 +281,8 @@ def get_html_metadata(html):
             if url is None:
                 LOGGER.error('Missing href in <link rel="attachment">')
             else:
-                attachments.append((url, attachment_title))
+                attachment = Attachment(url=url, description=attachment_title)
+                attachments.append(attachment)
     return {
         'title': title,
         'description': description,
