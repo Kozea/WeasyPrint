@@ -31,9 +31,16 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
         border_spacing_x, border_spacing_y = table.style['border_spacing']
 
     column_positions = table.column_positions = []
-    rows_left_x = table.content_box_x() + border_spacing_x
+
+    if table.style['direction'] == 'rtl':
+        content_box_x = table.position_x + table.margin_right + \
+            table.padding_right + table.border_right_width
+    else:
+        content_box_x = table.content_box_x()
+
+    rows_left_x = content_box_x + border_spacing_x
     if table.style['direction'] == 'ltr':
-        position_x = table.content_box_x()
+        position_x = content_box_x
         rows_x = position_x + border_spacing_x
         for width in column_widths:
             position_x += border_spacing_x
@@ -41,7 +48,7 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
             position_x += width
         rows_width = position_x - rows_x
     else:
-        position_x = table.content_box_x() + table.width
+        position_x = content_box_x + table.width
         rows_x = position_x - border_spacing_x
         for width in column_widths:
             position_x -= border_spacing_x
