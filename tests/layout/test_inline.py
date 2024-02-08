@@ -1122,3 +1122,25 @@ def test_box_decoration_break_inline_clone():
     assert span.margin_width() == 16 + 2 * (5 + 1)
     text, = span.children
     assert text.position_x == 5 + 1
+
+
+@assert_no_logs
+def test_bidi_position_x_invariant():
+    page, = render_pages('''
+      <div style="float: left; border-right: 100px solid black; direction: ltr">abc</div>
+      <div>&nbsp;</div>
+      <div style="float: left; border-right: 100px solid black; direction: rtl">abc</div>
+    ''')
+    html, = page.children
+    body, = html.children
+    block_ltr, _, block_rtl = body.children
+
+    line_ltr, = block_ltr.children
+    text_ltr, = line_ltr.children
+
+    line_rtl, = block_rtl.children
+    text_rtl, = line_rtl.children
+
+    assert block_ltr.position_x == block_rtl.position_x
+    assert line_ltr.position_x == line_rtl.position_x
+    assert text_ltr.position_x == text_rtl.position_x
