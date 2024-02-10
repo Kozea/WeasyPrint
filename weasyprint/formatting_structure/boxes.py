@@ -53,6 +53,17 @@ import itertools
 from ..css import computed_from_cascaded
 
 
+class BidiAware:
+    def content_box_x(self):
+        """Absolute horizontal position of the content box."""
+        if self.style['direction'] == 'rtl':
+            return self.position_x + self.margin_right + self.padding_right + \
+                self.border_right_width
+        else:
+            return self.position_x + self.margin_left + self.padding_left + \
+                self.border_left_width
+
+
 class Box:
     """Abstract base class for all boxes."""
     # Definitions for the rules generating anonymous table boxes
@@ -565,7 +576,7 @@ class InlineReplacedBox(ReplacedBox, AtomicInlineLevelBox):
     """
 
 
-class TableBox(BlockLevelBox, ParentBox):
+class TableBox(BidiAware, BlockLevelBox, ParentBox):
     """Box for elements with ``display: table``"""
     # Definitions for the rules generating anonymous table boxes
     # https://www.w3.org/TR/CSS21/tables.html#anonymous-boxes
@@ -674,7 +685,7 @@ class TableColumnBox(ParentBox):
             return 1
 
 
-class TableCellBox(BlockContainerBox):
+class TableCellBox(BidiAware, BlockContainerBox):
     """Box for elements with ``display: table-cell``"""
     internal_table_or_caption = True
 
