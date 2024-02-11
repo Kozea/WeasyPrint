@@ -1580,41 +1580,39 @@ def test_border_collapse_bidi_border_right(assert_pixels):
       ________________________________________________________________________________________________________________________
     ''', '''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page {
           margin: 1px;
           size: 120px 56px;
-          @bottom-center { content: element(table); width: 100% }
         }
         table {
-         border-collapse:collapse;
-         margin-bottom: 1em;
-         }
-         tr {
-         border-left: 5px solid fuchsia;
-         border-right: 5px solid purple;
-         }
-         td.right {
-         background-color: yellow;
-         border-right: 5px solid orange;
-         }
-         td.left {
-         background-color: aqua;
-         border-right: 5px solid teal;
-         }
+          border-collapse:collapse;
+          margin-bottom: 1em;
+        }
+        tr {
+          border-left: 5px solid fuchsia;
+          border-right: 5px solid purple;
+        }
+        td.right {
+          background-color: yellow;
+          border-right: 5px solid orange;
+        }
+        td.left {
+          background-color: aqua;
+          border-right: 5px solid teal;
+        }
       </style>
       <table dir="ltr">
         <tr>
-        <td class="left">XX</td>
-        <td class="right">XX XX XX</td>
+          <td class="left">XX</td>
+          <td class="right">XX XX XX</td>
         </tr>
       </table>
 
 
       <table dir="rtl">
          <tr>
-         <td class="right">XX XX XX</td>
-         <td class="left">XX</td>
+           <td class="right">XX XX XX</td>
+           <td class="left">XX</td>
          </tr>
       </table>
      ''')
@@ -1681,44 +1679,42 @@ def test_border_collapse_bidi_border_left(assert_pixels):
       ________________________________________________________________________________________________________________________
     ''', '''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page {
           margin: 1px;
           size: 120px 56px;
-          @bottom-center { content: element(table); width: 100% }
         }
         table {
-         border-collapse:collapse;
-         margin-bottom: 1em;
-         }
-         tr {
-         border-left: 5px solid fuchsia;
-         border-right: 5px solid purple;
-         }
-         td.right {
-         background-color: yellow;
-         border-left: 5px solid orange;
-         }
-         td.left {
-         background-color: aqua;
-         border-left: 5px solid teal;
-         }
+          border-collapse:collapse;
+          margin-bottom: 1em;
+        }
+        tr {
+          border-left: 5px solid fuchsia;
+          border-right: 5px solid purple;
+        }
+        td.right {
+          background-color: yellow;
+          border-left: 5px solid orange;
+        }
+        td.left {
+          background-color: aqua;
+          border-left: 5px solid teal;
+        }
       </style>
       <table dir="ltr">
         <tr>
-        <td class="left">XX</td>
-        <td class="right">XX XX XX</td>
+          <td class="left">XX</td>
+          <td class="right">XX XX XX</td>
         </tr>
       </table>
 
 
       <table dir="rtl">
-         <tr>
-         <td class="right">XX XX XX</td>
-         <td class="left">XX</td>
-         </tr>
+        <tr>
+          <td class="right">XX XX XX</td>
+          <td class="left">XX</td>
+        </tr>
       </table>
-     ''')
+    ''')
 
 
 @assert_no_logs
@@ -1792,44 +1788,42 @@ def test_border_collapse_bidi_border_top(assert_pixels):
       ________________________________________________________________________________________________________________________
     ''', '''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page {
           margin: 1px;
           size: 120px 66px;
-          @bottom-center { content: element(table); width: 100% }
         }
         table {
-         border-collapse:collapse;
-         margin-bottom: 1em;
-         }
-         tr {
-         border-left: 5px solid fuchsia;
-         border-right: 5px solid purple;
-         }
-         td.right {
-         background-color: yellow;
-         border-top: 5px solid orange;
-         }
-         td.left {
-         background-color: aqua;
-         border-top: 5px solid teal;
-         }
+          border-collapse:collapse;
+          margin-bottom: 1em;
+        }
+        tr {
+          border-left: 5px solid fuchsia;
+          border-right: 5px solid purple;
+        }
+        td.right {
+          background-color: yellow;
+          border-top: 5px solid orange;
+        }
+        td.left {
+          background-color: aqua;
+          border-top: 5px solid teal;
+        }
       </style>
       <table dir="ltr">
         <tr>
-        <td class="left">XX</td>
-        <td class="right">XX XX XX</td>
+          <td class="left">XX</td>
+          <td class="right">XX XX XX</td>
         </tr>
       </table>
 
 
       <table dir="rtl">
-         <tr>
-         <td class="right">XX XX XX</td>
-         <td class="left">XX</td>
-         </tr>
+        <tr>
+          <td class="right">XX XX XX</td>
+          <td class="left">XX</td>
+        </tr>
       </table>
-     ''')
+    ''')
 
 
 @assert_no_logs
@@ -1903,44 +1897,42 @@ def test_border_collapse_bidi_border_bottom(assert_pixels):
       ________________________________________________________________________________________________________________________
     ''', '''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page {
           margin: 1px;
           size: 120px 66px;
-          @bottom-center { content: element(table); width: 100% }
         }
         table {
-         border-collapse:collapse;
-         margin-bottom: 1em;
-         }
-         tr {
-         border-left: 5px solid fuchsia;
-         border-right: 5px solid purple;
-         }
-         td.right {
-         background-color: yellow;
-         border-bottom: 5px solid orange;
-         }
-         td.left {
-         background-color: aqua;
-         border-bottom: 5px solid teal;
-         }
+          border-collapse:collapse;
+          margin-bottom: 1em;
+        }
+        tr {
+          border-left: 5px solid fuchsia;
+          border-right: 5px solid purple;
+        }
+        td.right {
+          background-color: yellow;
+          border-bottom: 5px solid orange;
+        }
+        td.left {
+          background-color: aqua;
+          border-bottom: 5px solid teal;
+        }
       </style>
       <table dir="ltr">
         <tr>
-        <td class="left">XX</td>
-        <td class="right">XX XX XX</td>
+          <td class="left">XX</td>
+          <td class="right">XX XX XX</td>
         </tr>
       </table>
 
 
       <table dir="rtl">
          <tr>
-         <td class="right">XX XX XX</td>
-         <td class="left">XX</td>
+           <td class="right">XX XX XX</td>
+           <td class="left">XX</td>
          </tr>
       </table>
-     ''')
+    ''')
 
 
 @assert_no_logs
@@ -2033,59 +2025,41 @@ def test_border_collapse_bidi_broad_border(assert_pixels):
       _llllllllllllllllllllllllllll_______________________________________________________________________________________________
       ____________________________________________________________________________________________________________________________
     ''', '''
-    <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN"
-                          "http://www.w3.org/TR/html4/strict.dtd">
-    <html>
-      <head>
-        <link rel="author"
-              title="Eira Monstad, Opera Software ASA"
-              href="mailto:public-testsuites@opera.com">
-        <link rel="help"
-              href="http://www.w3.org/TR/CSS21/tables.html#collapsing-borders">
-        <meta name="flags" content="">
-        <meta name="assert"
-          content="Collapsed borders should behave the same way in ltr and
-                   rtl contexts">
-        <title>CSS Test: border-collapse in bidi context - border-right</title>
-        <style type="text/css">
-          @page {
-            margin: 1px;
-            size: 124px 86px;
-          }
-          table {
+      <style type="text/css">
+        @page {
+          margin: 1px;
+          size: 124px 86px;
+        }
+        table {
           border-collapse:collapse;
           margin-bottom: 1em;
-          }
-          tr {
+        }
+        tr {
           border-left: 5px solid fuchsia;
           border-right: 15px solid purple;
-          }
-          td.right {
+        }
+        td.right {
           background-color: yellow;
           border-bottom: 5px solid orange;
-          }
-          td.left {
+        }
+        td.left {
           background-color: aqua;
           border-bottom: 15px solid teal;
-          }
-        </style>
-      </head>
+        }
+      </style>
 
-      <body>
-        <table dir="rtl">
-          <tr>
-            <td class="right">XX XX XX</td>
-            <td class="left">XX</td>
-          </tr>
-        </table>
+      <table dir="ltr">
+        <tr>
+          <td class="left">XX</td>
+          <td class="right">XX XX XX</td>
+        </tr>
+      </table>
 
 
-        <table dir="ltr">
-          <tr>
-            <td class="left">XX</td>
-            <td class="right">XX XX XX</td>
-          </tr>
-        </table>
-      </body>
-    </html>
+      <table dir="rtl">
+        <tr>
+          <td class="right">XX XX XX</td>
+          <td class="left">XX</td>
+        </tr>
+      </table>
     ''')
