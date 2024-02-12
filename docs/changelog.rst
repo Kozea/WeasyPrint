@@ -2,6 +2,116 @@ Changelog
 =========
 
 
+Version 61.0
+------------
+
+Released on 2024-02-12.
+
+Python API:
+
+* ``DocumentMetadata.attachments`` is now a list of ``Attachment`` objects, not
+  a list of ``(url, description)`` tuples.
+
+New features:
+
+* `#1219 <https://github.com/Kozea/WeasyPrint/issues/1219>`_,
+  `#2017 <https://github.com/Kozea/WeasyPrint/pull/2017>`_:
+  Support var() in shorthand and multiple-value functions
+* `#1986 <https://github.com/Kozea/WeasyPrint/issues/1986>`_:
+  Support percentages for opacity
+* `#2050 <https://github.com/Kozea/WeasyPrint/pull/2050>`_:
+  Build executable file for Windows
+* `#2000 <https://github.com/Kozea/WeasyPrint/pull/2000>`_:
+  Support select fields
+* `#1993 <https://github.com/Kozea/WeasyPrint/issues/1993>`_:
+  Handle background-attachment: fixed to cover the whole page
+* `#2023 <https://github.com/Kozea/WeasyPrint/issues/2023>`_,
+  `#2022 <https://github.com/Kozea/WeasyPrint/pull/2022>`_:
+  Allow text-based file objects for HTML and CSS classes
+* `#2014 <https://github.com/Kozea/WeasyPrint/pull/2014>`_:
+  Remove warnings for PDF/A and PDF/UA compatibility
+
+Bug fixes:
+
+* `#2052 <https://github.com/Kozea/WeasyPrint/issues/2052>`_,
+  `#1869 <https://github.com/Kozea/WeasyPrint/pull/1869>`_:
+  Handle attachments for PDF/A documents
+* `#2013 <https://github.com/Kozea/WeasyPrint/issues/2013>`_,
+  `#2051 <https://github.com/Kozea/WeasyPrint/pull/2051>`_:
+  Apply margin to running tables
+* `#1278 <https://github.com/Kozea/WeasyPrint/issues/1278>`_,
+  `#1884 <https://github.com/Kozea/WeasyPrint/pull/1884>`_:
+  Draw collapsed borders of running tables
+* `#2029 <https://github.com/Kozea/WeasyPrint/issues/2029>`_:
+  Fix page counter in non-root absolute boxes
+* `#2043 <https://github.com/Kozea/WeasyPrint/pull/2043>`_:
+  Fix text-anchor on SVG tspan elements
+* `#1968 <https://github.com/Kozea/WeasyPrint/issues/1968>`_,
+  `#2039 <https://github.com/Kozea/WeasyPrint/pull/2039>`_:
+  Use cell's border-height to calculate table row height
+* `#2030 <https://github.com/Kozea/WeasyPrint/issues/2030>`_:
+  Ensure that bounding box is set to invisible text tags
+* `#2040 <https://github.com/Kozea/WeasyPrint/issues/2040>`_,
+  `#2041 <https://github.com/Kozea/WeasyPrint/pull/2041>`_:
+  Don’t crash on malformed URLs
+* `#2026 <https://github.com/Kozea/WeasyPrint/issues/2026>`_:
+  Don’t break pages when fixed-height elements don’t overflow page
+* `#2038 <https://github.com/Kozea/WeasyPrint/issues/2038>`_:
+  Don’t mix original streams when drawing transparent text
+* `#2016 <https://github.com/Kozea/WeasyPrint/issues/2016>`_:
+  Avoid duplication when breaking out-of-flow boxes
+* `#2012 <https://github.com/Kozea/WeasyPrint/issues/2012>`_:
+  Don’t crash when CSS properties have no value
+* `#2010 <https://github.com/Kozea/WeasyPrint/issues/2010>`_,
+  `1287 <https://github.com/Kozea/WeasyPrint/issues/1287>`_:
+  Fix many corner cases with CSS variables
+* `#1996 <https://github.com/Kozea/WeasyPrint/issues/1996>`_:
+  Don’t crash when drawing groove/ridge collapsed borders
+* `#1982 <https://github.com/Kozea/WeasyPrint/issues/1982>`_:
+  Fix SVG markers size, position and drawing
+
+Documentation:
+
+* `#2021 <https://github.com/Kozea/WeasyPrint/issues/2021>`_,
+  `#2048 <https://github.com/Kozea/WeasyPrint/pull/2048>`_:
+  Replace non-virtualenv installation instructions with distribution packages
+
+Contributors:
+
+* Guillaume Ayoub
+* kygoh
+* Lucie Anglade
+* Timo Ramsauer
+* Alexander Gitter
+* Michael Lisitsa
+* Vagner José Nicolodi
+* Manolis Stamatogiannakis
+* Pascal de Bruijn
+* Viktor Shevtsov
+* Eduardo Gonzalez
+* Kesara Rathnayake
+
+Backers and sponsors:
+
+* Spacinov
+* Kobalt
+* Grip Angebotssoftware
+* Manuel Barkhau
+* SimonSoft
+* Menutech
+* KontextWork
+* René Fritz
+* Simon Sapin
+* Arcanite
+* TrainingSparkle
+* Healthchecks.io
+* Hammerbacher
+* Docraptor
+* Yanal-Yvez Fargialla
+* Morntag
+* NBCO
+
+
 Version 60.2
 ------------
 
