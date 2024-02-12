@@ -63,7 +63,7 @@ Bug fixes:
 * `#2012 <https://github.com/Kozea/WeasyPrint/issues/2012>`_:
   Don’t crash when CSS properties have no value
 * `#2010 <https://github.com/Kozea/WeasyPrint/issues/2010>`_,
-  `1287 <https://github.com/Kozea/WeasyPrint/issues/1287>`_:
+  `#1287 <https://github.com/Kozea/WeasyPrint/issues/1287>`_:
   Fix many corner cases with CSS variables
 * `#1996 <https://github.com/Kozea/WeasyPrint/issues/1996>`_:
   Don’t crash when drawing groove/ridge collapsed borders
