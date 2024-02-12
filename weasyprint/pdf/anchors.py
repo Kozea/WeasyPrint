@@ -300,7 +300,7 @@ def write_pdf_attachment(pdf, attachment, compress):
     except URLFetchingError as exception:
         LOGGER.error('Failed to load attachment: %s', exception)
         return
-    attachment.md5 = hashlib.md5(data).hexdigest()
+    attachment.md5 = hashlib.md5(stream).hexdigest()
 
     # TODO: Use the result object from a URL fetch operation to provide more
     # details on the possible filename and MIME type.
