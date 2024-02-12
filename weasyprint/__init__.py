@@ -348,8 +348,8 @@ class Attachment:
                 modified = datetime.fromtimestamp(getmtime(filename))
             else:
                 modified = datetime.now()
-        self.created = created.strftime('D:%Y%m%d%H%M%SZ')
-        self.modified = modified.strftime('D:%Y%m%d%H%M%SZ')
+        self.created = created
+        self.modified = modified
 
 
 @contextlib.contextmanager
