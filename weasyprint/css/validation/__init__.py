@@ -3,7 +3,7 @@
 
 from cssselect2 import SelectorError, compile_selector_list
 from tinycss2 import parse_blocks_contents, serialize
-from tinycss2.ast import FunctionBlock, LiteralToken
+from tinycss2.ast import FunctionBlock, LiteralToken, WhitespaceToken
 
 from ... import LOGGER
 from ..utils import InvalidValues, remove_whitespace
@@ -141,6 +141,10 @@ def preprocess_declarations(base_url, declarations, prelude=None):
                         declaration_prelude.extend(is_token)
                     else:
                         declaration_prelude.append(token)
+            else:
+                is_token = LiteralToken(1, 1, ':'), FunctionBlock(1, 1, 'is', prelude)
+                declaration_prelude = [
+                    *is_token, WhitespaceToken(1, 1, ' '), *declaration.prelude]
             yield from preprocess_declarations(
                 base_url, parse_blocks_contents(declaration.content),
                 declaration_prelude)
