@@ -3,7 +3,8 @@
 
 from cssselect2 import SelectorError, compile_selector_list
 from tinycss2 import parse_blocks_contents, serialize
-from tinycss2.ast import FunctionBlock, LiteralToken, WhitespaceToken
+from tinycss2.ast import (
+    FunctionBlock, IdentToken, LiteralToken, WhitespaceToken)
 
 from ... import LOGGER
 from ..utils import InvalidValues, remove_whitespace
@@ -106,6 +107,8 @@ NOT_PRINT_MEDIA = {
     'scrollbar-gutter',
     'scrollbar-width',
 }
+NESTING_SELECTOR = LiteralToken(1, 1, '&')
+ROOT_TOKEN = LiteralToken(1, 1, ':'), IdentToken(1, 1, 'root')
 
 
 def preprocess_declarations(base_url, declarations, prelude=None):
@@ -118,10 +121,21 @@ def preprocess_declarations(base_url, declarations, prelude=None):
     """
     if prelude is not None:
         try:
+            if NESTING_SELECTOR in prelude:
+                # Handle & selector in non-nested rule. MDN explains that & is
+                # then equivalent to :scope, and :scope is equivalent to :root
+                # as we don’t support :scope yet.
+                original_prelude, prelude = prelude, []
+                for token in original_prelude:
+                    if token == NESTING_SELECTOR:
+                        prelude.extend(ROOT_TOKEN)
+                    else:
+                        prelude.append(token)
             selectors = compile_selector_list(prelude)
-        except SelectorError as exc:
+        except SelectorError:
             raise SelectorError(f"'{serialize(prelude)}'")
 
+    is_token = LiteralToken(1, 1, ':'), FunctionBlock(1, 1, 'is', prelude)
     for declaration in declarations:
         if declaration.type == 'error':
             LOGGER.warning(
@@ -133,11 +147,10 @@ def preprocess_declarations(base_url, declarations, prelude=None):
             if prelude is None:
                 continue
             declaration_prelude = declaration.prelude
-            if LiteralToken(1, 1, '&') in declaration.prelude:
-                is_token = LiteralToken(1, 1, ':'), FunctionBlock(1, 1, 'is', prelude)
+            if NESTING_SELECTOR in declaration.prelude:
                 declaration_prelude = []
                 for token in declaration.prelude:
-                    if token == LiteralToken(1, 1, '&'):
+                    if token == NESTING_SELECTOR:
                         declaration_prelude.extend(is_token)
                     else:
                         declaration_prelude.append(token)
