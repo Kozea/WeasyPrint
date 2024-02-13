@@ -1049,7 +1049,6 @@ def collapse_table_borders(table, grid_width, grid_height):
     grid_y = 0
     for row_group in table.children:
         for row in row_group.children:
-            cells = row.children if ltr else reversed(row.children)
             for cell in row.children:
                 # No border inside of a cell with rowspan or colspan
                 for xx in range(cell.grid_x + 1, cell.grid_x + cell.colspan):
