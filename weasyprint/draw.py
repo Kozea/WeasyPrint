@@ -826,11 +826,7 @@ def draw_table(stream, table):
         draw_background(stream, row_group.background)
         for row in row_group.children:
             draw_background(stream, row.background)
-            if table.style['direction'] == 'rtl':
-                cells = reversed(row.children)
-            else:
-                cells = row.children
-            for cell in cells:
+            for cell in row.children:
                 if (table.style['border_collapse'] == 'collapse' or
                         cell.style['empty_cells'] == 'show' or
                         not cell.empty):
@@ -955,15 +951,11 @@ def draw_collapsed_borders(stream, table):
             score, style, width, color, 'top',
             (pos_x1, pos_y, pos_x2 - pos_x1, 0)))
 
-    if table.style['direction'] == 'rtl':
-        grid_width_range = range(grid_width - 1, -1, -1)
-    else:
-        grid_width_range = range(grid_width)
-    for x in grid_width_range:
+    for x in range(grid_width):
         add_horizontal(x, 0)
     for y in range(grid_height):
         add_vertical(0, y)
-        for x in grid_width_range:
+        for x in range(grid_width):
             add_vertical(x + 1, y)
             add_horizontal(x, y + 1)
 
