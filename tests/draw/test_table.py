@@ -1717,7 +1717,6 @@ def test_border_collapse_bidi_border_left(assert_pixels):
     ''')
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_border_collapse_bidi_border_top(assert_pixels):
     assert_pixels('''
@@ -1827,7 +1826,6 @@ def test_border_collapse_bidi_border_top(assert_pixels):
     ''')
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_border_collapse_bidi_border_bottom(assert_pixels):
     assert_pixels('''
@@ -1937,7 +1935,6 @@ def test_border_collapse_bidi_border_bottom(assert_pixels):
     ''')
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_border_collapse_bidi_broad_border(assert_pixels):
     assert_pixels('''
