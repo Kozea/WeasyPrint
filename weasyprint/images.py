@@ -273,9 +273,12 @@ class SVGImage:
         return width, height, ratio
 
     def draw(self, stream, concrete_width, concrete_height, image_rendering):
-        self._svg.draw(
-            stream, concrete_width, concrete_height, self._base_url,
-            self._url_fetcher, self._context)
+        try:
+            self._svg.draw(
+                stream, concrete_width, concrete_height, self._base_url,
+                self._url_fetcher, self._context)
+        except BaseException:
+            LOGGER.error('Failed to render SVG image %s', self._base_url)
 
 
 def get_image_from_uri(cache, url_fetcher, options, url, forced_mime_type=None,
