@@ -119,6 +119,7 @@ def preprocess_declarations(base_url, declarations, prelude=None):
     Return a iterable of ``(name, value, important)`` tuples.
 
     """
+    # Compile list of selectors.
     if prelude is not None:
         try:
             if NESTING_SELECTOR in prelude:
@@ -135,6 +136,7 @@ def preprocess_declarations(base_url, declarations, prelude=None):
         except SelectorError:
             raise SelectorError(f"'{serialize(prelude)}'")
 
+    # Yield declarations.
     is_token = LiteralToken(1, 1, ':'), FunctionBlock(1, 1, 'is', prelude)
     for declaration in declarations:
         if declaration.type == 'error':
@@ -144,10 +146,12 @@ def preprocess_declarations(base_url, declarations, prelude=None):
                 declaration.source_line, declaration.source_column)
 
         if declaration.type == 'qualified-rule':
+            # Nested rule.
             if prelude is None:
                 continue
             declaration_prelude = declaration.prelude
             if NESTING_SELECTOR in declaration.prelude:
+                # Replace & selector by parent.
                 declaration_prelude = []
                 for token in declaration.prelude:
                     if token == NESTING_SELECTOR:
@@ -155,6 +159,7 @@ def preprocess_declarations(base_url, declarations, prelude=None):
                     else:
                         declaration_prelude.append(token)
             else:
+                # No & selector, prepend parent.
                 is_token = LiteralToken(1, 1, ':'), FunctionBlock(1, 1, 'is', prelude)
                 declaration_prelude = [
                     *is_token, WhitespaceToken(1, 1, ' '), *declaration.prelude]
