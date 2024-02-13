@@ -464,7 +464,11 @@ class SVG:
         if node.display and node.tag not in DEF_TYPES:
             for child in node:
                 self.draw_node(child, font_size, fill_stroke)
-                if TAGS.get(node.tag) == text and child.visible:
+                visible_text_child = (
+                    TAGS.get(node.tag) == text and
+                    TAGS.get(child.tag) == text and
+                    child.visible)
+                if visible_text_child:
                     if not is_valid_bounding_box(child.text_bounding_box):
                         continue
                     x1, y1 = child.text_bounding_box[:2]

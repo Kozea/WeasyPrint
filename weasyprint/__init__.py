@@ -15,7 +15,7 @@ import cssselect2
 import html5lib
 import tinycss2
 
-VERSION = __version__ = '60.2'
+VERSION = __version__ = '61.0'
 
 #: Default values for command-line and Python API options. See
 #: :func:`__main__.main` to learn more about specific options for
@@ -348,8 +348,8 @@ class Attachment:
                 modified = datetime.fromtimestamp(getmtime(filename))
             else:
                 modified = datetime.now()
-        self.created = created.strftime('D:%Y%m%d%H%M%SZ')
-        self.modified = modified.strftime('D:%Y%m%d%H%M%SZ')
+        self.created = created
+        self.modified = modified
 
 
 @contextlib.contextmanager

@@ -300,7 +300,7 @@ def write_pdf_attachment(pdf, attachment, compress):
     except URLFetchingError as exception:
         LOGGER.error('Failed to load attachment: %s', exception)
         return
-    attachment.md5 = hashlib.md5(data).hexdigest()
+    attachment.md5 = hashlib.md5(stream).hexdigest()
 
     # TODO: Use the result object from a URL fetch operation to provide more
     # details on the possible filename and MIME type.
@@ -312,14 +312,16 @@ def write_pdf_attachment(pdf, attachment, compress):
     if not mime_type:
         mime_type = 'application/octet-stream'
 
+    creation = pydyf.String(attachment.created.strftime('D:%Y%m%d%H%M%SZ'))
+    mod = pydyf.String(attachment.modified.strftime('D:%Y%m%d%H%M%SZ'))
     file_extra = pydyf.Dictionary({
         'Type': '/EmbeddedFile',
         'Subtype': f'/{mime_type.replace("/", "#2f")}',
         'Params': pydyf.Dictionary({
             'CheckSum': f'<{attachment.md5}>',
             'Size': uncompressed_length,
-            'CreationDate': attachment.created,
-            'ModDate': attachment.modified,
+            'CreationDate': creation,
+            'ModDate': mod,
         })
     })
     file_stream = pydyf.Stream([stream], file_extra, compress=compress)
