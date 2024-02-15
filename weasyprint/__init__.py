@@ -7,8 +7,10 @@ importing sub-modules.
 
 import contextlib
 from datetime import datetime
+import importlib
 from os.path import getctime, getmtime
 from pathlib import Path
+from typing import TYPE_CHECKING
 from urllib.parse import urljoin
 
 import cssselect2
@@ -89,7 +91,7 @@ from .urls import (  # noqa isort:skip
     fetch, default_url_fetcher, path2url, ensure_url, url_is_absolute)
 from .logger import LOGGER, PROGRESS_LOGGER  # noqa isort:skip
 # Some imports are at the end of the file (after the CSS class)
-# to work around circular imports.
+# as they can significantly increase startup import time
 
 
 def _find_base_url(html_document, fallback_base_url):
@@ -181,14 +183,20 @@ class HTML:
         self.etree_element = self.wrapper_element.etree_element
 
     def _ua_stylesheets(self, forms=False):
+        from .html import HTML5_UA_FORM_STYLESHEET, HTML5_UA_STYLESHEET
+
         if forms:
             return [HTML5_UA_STYLESHEET, HTML5_UA_FORM_STYLESHEET]
         return [HTML5_UA_STYLESHEET]
 
     def _ua_counter_style(self):
+        from .html import HTML5_UA_COUNTER_STYLE
+
         return [HTML5_UA_COUNTER_STYLE.copy()]
 
     def _ph_stylesheets(self):
+        from .html import HTML5_PH_STYLESHEET
+
         return [HTML5_PH_STYLESHEET]
 
     def render(self, font_config=None, counter_style=None, **options):
@@ -213,6 +221,10 @@ class HTML:
         new_options = DEFAULT_OPTIONS.copy()
         new_options.update(options)
         options = new_options
+
+        # Work around circular import:
+        from .document import Document
+
         return Document._render(self, font_config, counter_style, options)
 
     def write_pdf(self, target=None, zoom=1, finisher=None,
@@ -300,6 +312,10 @@ class CSS:
         self.base_url = base_url
         self.matcher = matcher or cssselect2.Matcher()
         self.page_rules = [] if page_rules is None else page_rules
+
+        # Work around circular import:
+        from .css import preprocess_stylesheet
+
         preprocess_stylesheet(
             media_type, base_url, stylesheet, url_fetcher, self.matcher,
             self.page_rules, font_config, counter_style)
@@ -415,9 +431,31 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
         assert string is not None
         yield 'string', string, base_url, None
 
-# Work around circular imports.
-from .css import preprocess_stylesheet  # noqa isort:skip
-from .html import (  # noqa isort:skip
-    HTML5_UA_COUNTER_STYLE, HTML5_UA_STYLESHEET, HTML5_UA_FORM_STYLESHEET,
-    HTML5_PH_STYLESHEET)
-from .document import Document, Page  # noqa isort:skip
+
+if TYPE_CHECKING:
+    # To help type checkers and tools discover dynamic imports
+    from .document import Document, Page
+    from .html import (
+        HTML5_UA_COUNTER_STYLE,
+        HTML5_UA_STYLESHEET,
+        HTML5_UA_FORM_STYLESHEET,
+        HTML5_PH_STYLESHEET,
+    )
+
+
+_heavy_imports = {
+    "HTML5_UA_COUNTER_STYLE": "html",
+    "HTML5_UA_STYLESHEET": "html",
+    "HTML5_UA_FORM_STYLESHEET": "html",
+    "HTML5_PH_STYLESHEET": "html",
+    "Document": "document",
+    "Page": "document",
+}
+
+def __getattr__(attr_name: str) -> object:
+    module = _heavy_imports.get(attr_name)
+    if module is None:
+        return importlib.import_module(f".{attr_name}", __package__)
+
+    module_obj = importlib.import_module(f".{module}", __package__)
+    return getattr(module_obj, attr_name)
