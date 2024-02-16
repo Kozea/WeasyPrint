@@ -241,7 +241,8 @@ class Node:
             self.pop_rotation(original_rotate, rotate)
         if self.text:
             trailing_space = self.text.endswith(' ')
-        for child_element in element.iter_children():
+        element_children = tuple(element.iter_children())
+        for child_element in element_children:
             child = child_element.etree_element
             if child.tag in ('{http://www.w3.org/2000/svg}tref', 'tref'):
                 child_node = Node(child_element, self._style)
@@ -262,13 +263,16 @@ class Node:
             if original_rotate and 'rotate' not in child_node:
                 child_node.pop_rotation(original_rotate, rotate)
             children.append(child_node)
-            if child.tail:
+            tail = self.process_whitespace(child.tail, preserve)
+            if text_root and child_element is element_children[-1]:
+                if not preserve:
+                    tail = tail.rstrip(' ')
+            if tail:
                 anonymous_etree = ElementTree.Element(
                     '{http://www.w3.org/2000/svg}tspan')
                 anonymous = Node(
                     ElementWrapper.from_xml_root(anonymous_etree), self._style)
-                anonymous._etree_node.text = self.process_whitespace(
-                    child.tail, preserve)
+                anonymous._etree_node.text = tail
                 if original_rotate:
                     anonymous.pop_rotation(original_rotate, rotate)
                 if trailing_space and not preserve:
@@ -445,8 +449,12 @@ class SVG:
                 self.stream.transform(*(old_ctm @ new_ctm.invert).values)
 
         # Handle text anchor
-        text_anchor = node.get('text-anchor')
-        if TAGS.get(node.tag) == text and text_anchor in ('middle', 'end'):
+        if node.tag == 'text':
+            text_anchor = node.get('text-anchor')
+            children = tuple(node)
+            if children and not node.text:
+                text_anchor = children[0].get('text-anchor')
+        if node.tag == 'text' and text_anchor in ('middle', 'end'):
             group = self.stream.add_group(0, 0, 0, 0)  # BBox set after drawing
             original_streams.append(self.stream)
             self.stream = group
@@ -478,7 +486,7 @@ class SVG:
                         node.text_bounding_box, ((x1, y1), (x2, y2)))
 
         # Handle text anchor
-        if TAGS.get(node.tag) == text and text_anchor in ('middle', 'end'):
+        if node.tag == 'text' and text_anchor in ('middle', 'end'):
             group_id = self.stream.id
             self.stream = original_streams.pop()
             self.stream.push_state()
