@@ -67,6 +67,34 @@ def test_variable_inherit_override():
 
 
 @assert_no_logs
+def test_variable_default_unknown():
+    page, = render_pages('''
+      <style>
+        p { width: var(--x, 10px) }
+      </style>
+      <p></p>
+    ''')
+    html, = page.children
+    body, = html.children
+    paragraph, = body.children
+    assert paragraph.width == 10
+
+
+@assert_no_logs
+def test_variable_default_var():
+    page, = render_pages('''
+      <style>
+        p { --var: 10px; width: var(--x, var(--var)) }
+      </style>
+      <p></p>
+    ''')
+    html, = page.children
+    body, = html.children
+    paragraph, = body.children
+    assert paragraph.width == 10
+
+
+@assert_no_logs
 def test_variable_case_sensitive():
     page, = render_pages('''
       <style>
@@ -304,17 +332,48 @@ def test_variable_shorthand_background_invalid(var, background):
 
 @assert_no_logs
 def test_variable_initial():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/2075
     page, = render_pages('''
       <style>
         html { --var: initial }
-        p { width: var(--var, 10px) }
+        p { width: var(--var) }
       </style>
       <p></p>
     ''')
     html, = page.children
     body, = html.children
     paragraph, = body.children
-    assert paragraph.width == 10
+    assert paragraph.width == body.width
+
+
+@assert_no_logs
+def test_variable_initial_default():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/2075
+    page, = render_pages('''
+      <style>
+        p { --var: initial; width: var(--var, 10px) }
+      </style>
+      <p></p>
+    ''')
+    html, = page.children
+    body, = html.children
+    paragraph, = body.children
+    assert paragraph.width == body.width
+
+
+@assert_no_logs
+def test_variable_initial_default_var():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/2075
+    page, = render_pages('''
+      <style>
+        p { --var: initial; width: var(--var, var(--var)) }
+      </style>
+      <p></p>
+    ''')
+    html, = page.children
+    body, = html.children
+    paragraph, = body.children
+    assert paragraph.width == body.width
 
 
 @pytest.mark.parametrize('prop', sorted(KNOWN_PROPERTIES))

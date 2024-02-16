@@ -613,13 +613,9 @@ def resolve_var(computed, token, parent_style):
     variable_name = args.pop(0).value.replace('-', '_')  # first arg is name
     default = args  # next args are default value
     computed_value = []
-    for value in computed[variable_name]:
+    for value in (computed[variable_name] or default):
         resolved = resolve_var(computed, value, parent_style)
         computed_value.extend((value,) if resolved is None else resolved)
-    if len(computed_value) == 1:
-        token, = computed_value
-        if token.type == 'ident' and token.value == 'initial':
-            return default
     return computed_value
 
 
