@@ -11,7 +11,7 @@ from weasyprint.css.validation.expanders import EXPANDERS
 from weasyprint.css.validation.properties import PROPERTIES
 from weasyprint.images import LinearGradient, RadialGradient
 
-from .testing_utils import assert_no_logs, capture_logs
+from ..testing_utils import assert_no_logs, capture_logs
 
 
 def expand_to_dict(css, expected_error=None):

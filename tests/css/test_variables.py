@@ -1,9 +1,9 @@
-"""Test CSS custom proproperties, also known as CSS variables."""
+"""Test CSS custom properties, also known as CSS variables."""
 
 import pytest
 from weasyprint.css.properties import KNOWN_PROPERTIES
 
-from .testing_utils import assert_no_logs, capture_logs, render_pages
+from ..testing_utils import assert_no_logs, capture_logs, render_pages
 
 SIDES = ('top', 'right', 'bottom', 'left')
 

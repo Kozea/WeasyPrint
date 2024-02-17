@@ -1,11 +1,11 @@
 """Test the CSS cross references using target-*() functions."""
 
-from .testing_utils import FakeHTML, assert_no_logs
+from ..testing_utils import assert_no_logs, render_pages
 
 
 @assert_no_logs
 def test_target_counter():
-    document = FakeHTML(string='''
+    page, = render_pages('''
       <style>
         div:first-child { counter-reset: div }
         div { counter-increment: div }
@@ -20,8 +20,7 @@ def test_target_counter():
         <div id="id3"></div>
         <div id="id4"></div>
     ''')
-    page, = document.render().pages
-    html, = page._page_box.children
+    html, = page.children
     body, = html.children
     div1, div2, div3, div4 = body.children
     before = div1.children[0].children[0].children[0]
@@ -36,7 +35,7 @@ def test_target_counter():
 
 @assert_no_logs
 def test_target_counter_attr():
-    document = FakeHTML(string='''
+    page, = render_pages('''
       <style>
         div:first-child { counter-reset: div }
         div { counter-increment: div }
@@ -51,8 +50,7 @@ def test_target_counter_attr():
         <div id="id3" data-count="#id2"></div>
         <div id="id4" data-count="#id3"></div>
     ''')
-    page, = document.render().pages
-    html, = page._page_box.children
+    html, = page.children
     body, = html.children
     div1, div2, div3, div4 = body.children
     before = div1.children[0].children[0].children[0]
@@ -67,7 +65,7 @@ def test_target_counter_attr():
 
 @assert_no_logs
 def test_target_counters():
-    document = FakeHTML(string='''
+    page, = render_pages('''
       <style>
         div:first-child { counter-reset: div }
         div { counter-increment: div }
@@ -86,8 +84,7 @@ def test_target_counters():
           <div></div><div id="id4-2" data-count="#id1-2"></div>
         </div>
     ''')
-    page, = document.render().pages
-    html, = page._page_box.children
+    html, = page.children
     body, = html.children
     div1, div2, div3, div4 = body.children
     before = div1.children[1].children[0].children[0].children[0]
@@ -102,7 +99,7 @@ def test_target_counters():
 
 @assert_no_logs
 def test_target_text():
-    document = FakeHTML(string='''
+    page, = render_pages('''
       <style>
         a { display: block; color: red }
         div:first-child { counter-reset: div }
@@ -123,8 +120,7 @@ def test_target_text():
         <div id="id4">4 Chapter 4</div>
         <a id="link4"></a>
     ''')
-    page, = document.render().pages
-    html, = page._page_box.children
+    html, = page.children
     body, = html.children
     a1, div1, a2, div2, div3, a3, div4, a4 = body.children
     before = a1.children[0].children[0].children[0]
@@ -138,7 +134,7 @@ def test_target_text():
 
 @assert_no_logs
 def test_target_float():
-    document = FakeHTML(string='''
+    page, = render_pages('''
       <style>
         a::after {
           content: target-counter('#h', page);
@@ -148,8 +144,7 @@ def test_target_float():
       <div><a id="span">link</a></div>
       <h1 id="h">abc</h1>
     ''')
-    page, = document.render().pages
-    html, = page._page_box.children
+    html, = page.children
     body, = html.children
     div, h1 = body.children
     line, = div.children
@@ -161,7 +156,7 @@ def test_target_float():
 
 @assert_no_logs
 def test_target_absolute():
-    document = FakeHTML(string='''
+    page, = render_pages('''
       <style>
         a::after {
           content: target-counter('#h', page);
@@ -173,8 +168,7 @@ def test_target_absolute():
       <div><a id="span">link</a></div>
       <h1 id="h">abc</h1>
     ''')
-    page, = document.render().pages
-    html, = page._page_box.children
+    html, = page.children
     body, = html.children
     div, h1 = body.children
     line, = div.children

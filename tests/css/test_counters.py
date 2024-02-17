@@ -1,9 +1,11 @@
 """Test CSS counters."""
 
 import pytest
-from weasyprint import HTML
 
-from .testing_utils import assert_no_logs, assert_tree, parse_all, render_pages
+from ..testing_utils import (
+    FakeHTML, assert_no_logs, assert_tree, parse_all, render_pages)
+
+RENDER = FakeHTML(string='')._ua_counter_style()[0].render_value
 
 
 @assert_no_logs
@@ -237,7 +239,7 @@ def test_counters_8():
 @pytest.mark.xfail
 @assert_no_logs
 def test_counters_9():
-    document = HTML(string='''
+    page, = render_pages('''
       <ol>
         <li></li>
         <li>
@@ -248,8 +250,7 @@ def test_counters_9():
         </li>
         <li></li>
       </ol>
-    ''').render()
-    page, = document.pages
+    ''')
     html, = page._page_box.children
     body, = html.children
     ol1, = body.children
@@ -328,8 +329,7 @@ def test_counter_styles_2():
 
 @assert_no_logs
 def test_counter_styles_3():
-    render = HTML(string='')._ua_counter_style()[0].render_value
-    assert [render(value, 'decimal-leading-zero') for value in [
+    assert [RENDER(value, 'decimal-leading-zero') for value in [
         -1986, -1985,
         -11, -10, -9, -8,
         -1, 0, 1, 2,
@@ -344,8 +344,7 @@ def test_counter_styles_3():
 
 @assert_no_logs
 def test_counter_styles_4():
-    render = HTML(string='')._ua_counter_style()[0].render_value
-    assert [render(value, 'lower-roman') for value in [
+    assert [RENDER(value, 'lower-roman') for value in [
         -1986, -1985,
         -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
         49, 50,
@@ -361,8 +360,7 @@ def test_counter_styles_4():
 
 @assert_no_logs
 def test_counter_styles_5():
-    render = HTML(string='')._ua_counter_style()[0].render_value
-    assert [render(value, 'upper-roman') for value in [
+    assert [RENDER(value, 'upper-roman') for value in [
          -1986, -1985,
          -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
          49, 50,
@@ -378,8 +376,7 @@ def test_counter_styles_5():
 
 @assert_no_logs
 def test_counter_styles_6():
-    render = HTML(string='')._ua_counter_style()[0].render_value
-    assert [render(value, 'lower-alpha') for value in [
+    assert [RENDER(value, 'lower-alpha') for value in [
         -1986, -1985,
         -1, 0, 1, 2, 3, 4,
         25, 26, 27, 28, 29,
@@ -391,8 +388,7 @@ def test_counter_styles_6():
 
 @assert_no_logs
 def test_counter_styles_7():
-    render = HTML(string='')._ua_counter_style()[0].render_value
-    assert [render(value, 'upper-alpha') for value in [
+    assert [RENDER(value, 'upper-alpha') for value in [
         -1986, -1985,
         -1, 0, 1, 2, 3, 4,
         25, 26, 27, 28, 29,
@@ -404,8 +400,7 @@ def test_counter_styles_7():
 
 @assert_no_logs
 def test_counter_styles_8():
-    render = HTML(string='')._ua_counter_style()[0].render_value
-    assert [render(value, 'lower-latin') for value in [
+    assert [RENDER(value, 'lower-latin') for value in [
         -1986, -1985,
         -1, 0, 1, 2, 3, 4,
         25, 26, 27, 28, 29,
@@ -417,8 +412,7 @@ def test_counter_styles_8():
 
 @assert_no_logs
 def test_counter_styles_9():
-    render = HTML(string='')._ua_counter_style()[0].render_value
-    assert [render(value, 'upper-latin') for value in [
+    assert [RENDER(value, 'upper-latin') for value in [
         -1986, -1985,
         -1, 0, 1, 2, 3, 4,
         25, 26, 27, 28, 29,
@@ -430,8 +424,7 @@ def test_counter_styles_9():
 
 @assert_no_logs
 def test_counter_styles_10():
-    render = HTML(string='')._ua_counter_style()[0].render_value
-    assert [render(value, 'georgian') for value in [
+    assert [RENDER(value, 'georgian') for value in [
         -1986, -1985,
         -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
         20, 30, 40, 50, 60, 70, 80, 90, 100,
@@ -450,8 +443,7 @@ def test_counter_styles_10():
 
 @assert_no_logs
 def test_counter_styles_11():
-    render = HTML(string='')._ua_counter_style()[0].render_value
-    assert [render(value, 'armenian') for value in [
+    assert [RENDER(value, 'armenian') for value in [
         -1986, -1985,
         -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
         20, 30, 40, 50, 60, 70, 80, 90, 100,

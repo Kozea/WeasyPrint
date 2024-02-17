@@ -3,7 +3,7 @@
 import pytest
 from weasyprint.formatting_structure import boxes
 
-from .testing_utils import assert_no_logs, render_pages
+from ..testing_utils import assert_no_logs, render_pages
 
 
 def outer_area(box):
