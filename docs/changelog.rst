@@ -2,6 +2,53 @@ Changelog
 =========
 
 
+Version 61.1
+------------
+
+Released on 2024-02-26.
+
+Bug fixes:
+
+- `#2075 <https://github.com/Kozea/WeasyPrint/issues/2075>`_:
+  Use default value when variable is not defined
+- `#2070 <https://github.com/Kozea/WeasyPrint/issues/2070>`_:
+  Don’t crash when rendering SVGs with non-text a children
+- Don’t crash when SVG file can’t be rendered
+
+Documentation:
+
+- `#2067 <https://github.com/Kozea/WeasyPrint/pull/2067>`_:
+  Suggest "dnf" instead of "yum" to install Fedora packages
+- Improve documentation for Windows
+- Fix required version of TinyCSS2
+
+Contributors:
+
+* Guillaume Ayoub
+* Felix Schwarz
+* Lucie Anglade
+
+Backers and sponsors:
+
+* Spacinov
+* Kobalt
+* Grip Angebotssoftware
+* Manuel Barkhau
+* SimonSoft
+* Menutech
+* KontextWork
+* René Fritz
+* Simon Sapin
+* Arcanite
+* TrainingSparkle
+* Healthchecks.io
+* Hammerbacher
+* Docraptor
+* Yanal-Yvez Fargialla
+* Morntag
+* NBCO
+
+
 Version 61.0
 ------------
 
