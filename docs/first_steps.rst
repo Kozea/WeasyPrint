@@ -173,15 +173,11 @@ The easiest way to install WeasyPrint on macOS is to use Homebrew_::
 Windows
 ~~~~~~~
 
-Since v61, the easiest way to use WeasyPrint on Windows is to use the `executable`_
-of the latest release.
+To use WeasyPrint on Windows, the easiest way is to use the `executable`_ of
+the latest release.
 
-The executable doesn’t work for all cases. If you want to use WeasyPrint as a
-Python library you’ll have to follow a few steps that may not be
-easy. Please read this chapter carefully.
-
-Only Windows 11 64-bit is supported. You can find this information in the
-Control Panel → System and Security → System.
+If you want to use WeasyPrint as a Python library, you’ll have to follow a few
+extra steps. Please read this chapter carefully.
 
 The first step is to install the latest version of Python from the `Microsoft
 Store`_.
@@ -190,9 +186,9 @@ When Python is installed, you have to install GTK. Download the latest `GTK3
 installer`_ and launch it. If you don’t know what some options mean, you can
 safely keep the default options selected.
 
-When everything is OK, you can launch a command prompt by clicking on the Start
-menu, typing "cmd" and clicking the "Command Prompt" icon. You can then install
-WeasyPrint in a `virtual environment`_ using `pip`_::
+You can then launch a command prompt by clicking on the Start menu, typing
+"cmd" and clicking the "Command Prompt" icon. Install WeasyPrint in a `virtual
+environment`_ using `pip`_::
 
   python3 -m venv venv
   venv\Scripts\activate.bat
