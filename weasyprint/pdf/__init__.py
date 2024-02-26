@@ -115,16 +115,13 @@ def generate_pdf(document, target, zoom, **options):
 
     # Set properties according to PDF variants
     mark = False
-    variant, version = options['pdf_variant'], options['pdf_version']
+    variant = options['pdf_variant']
     if variant:
         variant_function, properties = VARIANTS[variant]
-        if 'version' in properties:
-            version = properties['version']
         if 'mark' in properties:
             mark = properties['mark']
 
-    identifier = options['pdf_identifier']
-    pdf = pydyf.PDF((version or '1.7'), identifier)
+    pdf = pydyf.PDF()
     states = pydyf.Dictionary()
     x_objects = pydyf.Dictionary()
     patterns = pydyf.Dictionary()
@@ -268,9 +265,8 @@ def generate_pdf(document, target, zoom, **options):
 
     # Embedded fonts
     subset = not options['full_fonts']
-    hinting = options['hinting']
     pdf_fonts = build_fonts_dictionary(
-        pdf, document.fonts, compress, subset, hinting)
+        pdf, document.fonts, compress, subset, options)
     pdf.add_object(pdf_fonts)
     if 'AcroForm' in pdf.catalog:
         # Include Dingbats for forms

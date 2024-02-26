@@ -17,7 +17,7 @@ from .images import get_image_from_uri as original_get_image_from_uri
 from .layout import LayoutContext, layout_document
 from .logger import PROGRESS_LOGGER
 from .matrix import Matrix
-from .pdf import generate_pdf
+from .pdf import VARIANTS, generate_pdf
 from .text.fonts import FontConfiguration
 
 
@@ -391,17 +391,25 @@ class Document:
 
         identifier = options['pdf_identifier']
         compress = not options['uncompressed_pdf']
+        version = options['pdf_version']
+        variant = options['pdf_variant']
+
+        # Set default PDF version for PDF variants.
+        if version is None and variant:
+            _, properties = VARIANTS[variant]
+            if 'version' in properties:
+                version = properties['version']
 
         if finisher:
             finisher(self, pdf)
 
         if target is None:
             output = io.BytesIO()
-            pdf.write(output, pdf.version, identifier, compress)
+            pdf.write(output, version, identifier, compress)
             return output.getvalue()
 
         if hasattr(target, 'write'):
-            pdf.write(target, pdf.version, identifier, compress)
+            pdf.write(target, version, identifier, compress)
         else:
             with open(target, 'wb') as fd:
-                pdf.write(fd, pdf.version, identifier, compress)
+                pdf.write(fd, version, identifier, compress)

@@ -7,7 +7,7 @@ import pydyf
 from ..logger import LOGGER
 
 
-def build_fonts_dictionary(pdf, fonts, compress_pdf, subset, hinting):
+def build_fonts_dictionary(pdf, fonts, compress_pdf, subset, options):
     pdf_fonts = pydyf.Dictionary()
     fonts_by_file_hash = {}
     for font in fonts.values():
@@ -24,7 +24,7 @@ def build_fonts_dictionary(pdf, fonts, compress_pdf, subset, hinting):
         if subset and not font.used_in_forms:
             for file_font in file_fonts:
                 cmap = {**cmap, **file_font.cmap}
-        font.clean(cmap, hinting)
+        font.clean(cmap, options['hinting'])
 
         # Include font
         if font.type == 'otf':
@@ -115,7 +115,7 @@ def build_fonts_dictionary(pdf, fonts, compress_pdf, subset, hinting):
                 'StemH': font.stemh,
                 font_file: font_references_by_file_hash[font.hash],
             })
-            if pdf.version <= b'1.4':
+            if str(options['pdf_version']) <= '1.4':  # Cast for bytes and None
                 cids = sorted(font.widths)
                 padded_width = int(ceil((cids[-1] + 1) / 8))
                 bits = ['0'] * padded_width * 8
