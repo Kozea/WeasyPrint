@@ -3009,6 +3009,34 @@ table.key-val tr td:nth-child(1) { min-width: 13em; }
     assert table1_td1.width == table2_td1.width
 
 
+@assert_no_logs
+def test_table_cell_max_width():
+    page, = render_pages('''
+    <style>
+      td {
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+        max-width: 45px;
+      }
+    </style>
+      <table>
+        <tr>
+          <td>abcde</td>
+        </tr>
+      </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    tbody, = table.children
+    tr, = tbody.children
+    td, = tr.children
+    assert td.max_width == 45
+    assert td.width == 45
+
+
 black = (0, 0, 0, 1)
 red = (1, 0, 0, 1)
 green = (0, 1, 0, 1)  # lime in CSS
