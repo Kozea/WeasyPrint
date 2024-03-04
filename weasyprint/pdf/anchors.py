@@ -174,7 +174,7 @@ def add_inputs(inputs, matrix, pdf, page, resources, stream, font_map,
             selected_values = []
             for option in element:
                 value = pydyf.String(option.attrib.get('value', ''))
-                text = pydyf.String(option.text)
+                text = pydyf.String(option.text or "")
                 options.append(pydyf.Array([value, text]))
                 if 'selected' in option.attrib:
                     selected_values.append(value)
