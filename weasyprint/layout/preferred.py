@@ -256,14 +256,7 @@ def table_cell_min_content_width(context, box, outer):
         outer,
         max(children_widths) if children_widths else 0)
 
-    width = box.style['width']
-    if width != 'auto' and width.unit == 'px':
-        cell_min_width = adjust(box, outer, width.value)
-    else:
-        cell_min_width = 0
-
-    return max(children_min_width, cell_min_width)
-
+    return children_min_width
 
 def table_cell_max_content_width(context, box, outer):
     """Return the max-content width for a ``TableCellBox``."""
