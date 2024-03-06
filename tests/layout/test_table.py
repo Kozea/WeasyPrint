@@ -515,7 +515,7 @@ def test_layout_table_auto_8():
 @assert_no_logs
 def test_layout_table_auto_9():
     page, = render_pages('''
-      <table style="border-spacing: 10px; width: 110px; margin: 5px">
+      <table style="border-spacing: 10px; width: 120px; margin: 5px">
         <tr>
           <td style="width: 60px"></td>
           <td></td>
@@ -1113,8 +1113,8 @@ def test_layout_table_auto_31():
 def test_layout_table_auto_32():
     # Table with a cell larger than the table's width
     page, = render_pages('''
-      <table style="width: 300px; margin: 100px">
-        <td style="width: 400px"></td>
+      <table style="width: 400px; margin: 100px">
+        <td style="width: 500px"></td>
       </table>
     ''')
     html, = page.children

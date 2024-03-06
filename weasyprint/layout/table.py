@@ -753,6 +753,7 @@ def auto_table_layout(context, box, containing_block):
     guesses = (
         min_content_guess, min_content_percentage_guess,
         min_content_specified_guess, max_content_guess)
+    # https://www.w3.org/TR/css-tables-3/#width-distribution-algorithm
     for i in range(len(grid)):
         if column_intrinsic_percentages[i]:
             min_content_percentage_guess[i] = max(
@@ -761,7 +762,9 @@ def auto_table_layout(context, box, containing_block):
             min_content_specified_guess[i] = min_content_percentage_guess[i]
             max_content_guess[i] = min_content_percentage_guess[i]
         elif constrainedness[i]:
-            min_content_specified_guess[i] = column_min_content_widths[i]
+            # any other column that is constrained is assigned
+            # its max-content width
+            min_content_specified_guess[i] = column_max_content_widths[i]
 
     if assignable_width <= sum(max_content_guess):
         # Default values shouldn't be used, but we never know.
