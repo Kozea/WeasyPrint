@@ -258,6 +258,7 @@ def table_cell_min_content_width(context, box, outer):
 
     return children_min_width
 
+
 def table_cell_max_content_width(context, box, outer):
     """Return the max-content width for a ``TableCellBox``."""
     return max(
