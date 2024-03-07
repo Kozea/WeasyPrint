@@ -3022,7 +3022,7 @@ def test_table_cell_max_width():
     </style>
       <table>
         <tr>
-          <td>abcde</td>
+          <td>abcdefghijkl</td>
         </tr>
       </table>
     ''')
