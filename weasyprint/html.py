@@ -281,7 +281,9 @@ def get_html_metadata(html):
             if url is None:
                 LOGGER.error('Missing href in <link rel="attachment">')
             else:
-                attachment = Attachment(url=url, description=attachment_title)
+                attachment = Attachment(
+                    url=url, description=attachment_title,
+                    url_fetcher=html.url_fetcher)
                 attachments.append(attachment)
     return {
         'title': title,
