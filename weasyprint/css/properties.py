@@ -74,7 +74,6 @@ INITIAL_VALUES = {
     # Multi-column Layout (WD): https://www.w3.org/TR/css-multicol-1/
     'column_width': 'auto',
     'column_count': 'auto',
-    'column_gap': Dimension(1, 'em'),
     'column_rule_color': 'currentColor',
     'column_rule_style': 'none',
     'column_rule_width': 'medium',
@@ -172,16 +171,28 @@ INITIAL_VALUES = {
     'width': 'auto',
 
     # Flexible Box Layout Module 1 (CR): https://www.w3.org/TR/css-flexbox-1/
-    'align_content': 'stretch',
-    'align_items': 'stretch',
-    'align_self': 'auto',
     'flex_basis': 'auto',
     'flex_direction': 'row',
     'flex_grow': 0,
     'flex_shrink': 1,
     'flex_wrap': 'nowrap',
-    'justify_content': 'flex-start',
+
+    # Grid Layout Module Level 2 (CR): https://www.w3.org/TR/css-grid-2/
+    'grid_auto_columns': 'auto',
+    'grid_auto_flow': ('row',),
+    'grid_auto_rows': 'auto',
+    'grid_template_areas': 'none',
+    'grid_template_columns': 'none',
+    'grid_template_rows': 'none',
+
+    # CSS Box Alignment Module Level 3 (WD): https://www.w3.org/TR/css-align-3/
+    'align_content': 'stretch',
+    'align_items': 'stretch',
+    'align_self': 'auto',
+    'justify_content': 'normal',
     'order': 0,
+    'column_gap': 'normal',
+    'row_gap': 'normal',
 
     # Text Decoration Module 3 (CR): https://www.w3.org/TR/css-text-decor-3/
     'text_decoration_line': 'none',
