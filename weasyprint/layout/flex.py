@@ -587,6 +587,8 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
         box.content_box_x() if axis == 'width'
         else box.content_box_y())
     justify_content = box.style['justify_content']
+    if justify_content == 'normal':
+        justify_content = 'flex-start'
     if box.style['flex_direction'].endswith('-reverse'):
         if justify_content == 'flex-start':
             justify_content = 'flex-end'

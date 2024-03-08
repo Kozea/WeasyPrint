@@ -381,7 +381,7 @@ def border_radius(style, name, values):
 def column_gap(style, name, value):
     """Compute the ``column-gap`` property."""
     if value == 'normal':
-        value = Dimension(1, 'em')
+        return value
     return length(style, name, value, pixels_only=True)
 
 
