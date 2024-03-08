@@ -26,6 +26,10 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
         # New containing block, use a new absolute list
         absolute_boxes = []
 
+    if gap == 'normal':
+        # 1em because in column context
+        gap = style['font_size']
+
     box = box.copy_with_children(box.children)
     box.position_y += collapse_margin(adjoining_margins) - box.margin_top
 

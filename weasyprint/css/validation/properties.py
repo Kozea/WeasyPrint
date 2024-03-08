@@ -658,10 +658,11 @@ def width_height(token):
         return 'auto'
 
 
-@property(unstable=True)
+@property('column-gap', unstable=True)
+@property('row-gap', unstable=True)
 @single_token
-def column_gap(token):
-    """Validation for the ``column-gap`` property."""
+def gap(token):
+    """Validation for the ``column-gap`` and ``row-gap`` properties."""
     length = get_length(token, negative=False)
     if length:
         return length
@@ -1318,7 +1319,7 @@ def justify_content(keyword):
     """``justify-content`` property validation."""
     return keyword in (
         'flex-start', 'flex-end', 'center', 'space-between', 'space-around',
-        'space-evenly', 'stretch')
+        'space-evenly', 'stretch', 'normal')
 
 
 @property()
