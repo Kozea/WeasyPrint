@@ -1299,11 +1299,28 @@ def flex_grow_shrink(token):
         return token.value
 
 
-@property()
-@single_token
-def order(token):
-    if token.type == 'number' and token.int_value is not None:
-        return token.int_value
+@property('grid-auto-columns')
+@property('grid-auto-rows')
+def grid_auto(tokens):
+    """``grid-auto-columns`` and ``grid-auto-rows`` properties validation"""
+    return_tokens = []
+    for token in tokens:
+        keyword = get_keyword(token)
+        if keyword in ('auto', 'min-content', 'max-content'):
+            return_tokens.append(keyword)
+            continue
+        elif keyword:
+            return
+        length = get_length(token, negative=False, percentage=True)
+        if length:
+            return_tokens.append(length)
+            continue
+        if token.type == 'dimension':
+            if token.value >= 0 and token.unit == 'fr':
+                return_tokens.append(token)
+                continue
+            else:
+                return
 
 
 @property()
@@ -1346,6 +1363,13 @@ def align_content(keyword):
     return keyword in (
         'flex-start', 'flex-end', 'center', 'space-between', 'space-around',
         'space-evenly', 'stretch', 'normal')
+
+
+@property()
+@single_token
+def order(token):
+    if token.type == 'number' and token.int_value is not None:
+        return token.int_value
 
 
 @property(unstable=True)
