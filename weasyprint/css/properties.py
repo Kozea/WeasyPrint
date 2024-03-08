@@ -178,9 +178,9 @@ INITIAL_VALUES = {
     'flex_wrap': 'nowrap',
 
     # Grid Layout Module Level 2 (CR): https://www.w3.org/TR/css-grid-2/
-    'grid_auto_columns': 'auto',
+    'grid_auto_columns': ('auto',),
     'grid_auto_flow': ('row',),
-    'grid_auto_rows': 'auto',
+    'grid_auto_rows': ('auto',),
     'grid_template_areas': 'none',
     'grid_template_columns': 'none',
     'grid_template_rows': 'none',
