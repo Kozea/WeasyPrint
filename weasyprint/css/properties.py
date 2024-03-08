@@ -186,8 +186,8 @@ INITIAL_VALUES = {
     'grid_template_rows': 'none',
 
     # CSS Box Alignment Module Level 3 (WD): https://www.w3.org/TR/css-align-3/
-    'align_content': 'stretch',
-    'align_items': 'stretch',
+    'align_content': 'normal',
+    'align_items': 'normal',
     'align_self': 'auto',
     'justify_content': 'normal',
     'order': 0,
