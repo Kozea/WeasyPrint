@@ -252,8 +252,10 @@ def add_annotations(links, matrix, document, pdf, page, annot_files, compress):
             # TODO: Use the title attribute as description. The comment
             # above about multiple regions won't always be correct, because
             # two links might have the same href, but different titles.
+            attachment = Attachment(
+                url=annot_target, url_fetcher=document.url_fetcher)
             annot_files[annot_target] = write_pdf_attachment(
-                pdf, Attachment(annot_target), compress)
+                pdf, attachment, compress)
         annot_file = annot_files[annot_target]
         if annot_file is None:
             continue

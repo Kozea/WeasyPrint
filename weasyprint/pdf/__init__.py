@@ -246,7 +246,8 @@ def generate_pdf(document, target, zoom, **options):
     if options['attachments']:
         for attachment in options['attachments']:
             if not isinstance(attachment, Attachment):
-                attachment = Attachment(attachment)
+                attachment = Attachment(
+                    attachment, url_fetcher=document.url_fetcher)
             attachments.append(attachment)
     pdf_attachments = []
     for attachment in attachments:
