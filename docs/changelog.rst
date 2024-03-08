@@ -2,6 +2,46 @@ Changelog
 =========
 
 
+Version 61.2
+------------
+
+Released on 2024-03-08.
+
+**This is a security update.**
+
+We strongly recommend to upgrade WeasyPrint to the latest version if you use
+WeasyPrint 61.0 or 61.1. Older versions are not impacted.
+
+Security:
+
+- Always use URL fetcher for attachments
+
+Contributors:
+
+* Guillaume Ayoub
+* Ilia Novoselov
+
+Backers and sponsors:
+
+* Spacinov
+* Kobalt
+* Grip Angebotssoftware
+* Manuel Barkhau
+* SimonSoft
+* Menutech
+* KontextWork
+* René Fritz
+* Simon Sapin
+* Arcanite
+* TrainingSparkle
+* Healthchecks.io
+* Hammerbacher
+* Docraptor
+* Yanal-Yvez Fargialla
+* Morntag
+* NBCO
+
+
 Version 61.1
 ------------
 
