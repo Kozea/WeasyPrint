@@ -1,6 +1,6 @@
 """Interface with external libraries managing fonts installed on the system."""
 
-from hashlib import sha1
+from hashlib import md5
 from io import BytesIO
 from pathlib import Path
 from shutil import rmtree
@@ -121,10 +121,11 @@ class FontConfiguration:
             rule_descriptors.get('font_weight', 'normal')]
         fontconfig_stretch = FONTCONFIG_STRETCH[
             rule_descriptors.get('font_stretch', 'normal')]
-        config_key = sha1((
+        config_key = (
             f'{rule_descriptors["font_family"]}-{fontconfig_style}-'
-            f'{fontconfig_weight}-{features_string}').encode()).hexdigest()
-        font_path = self._folder / config_key
+            f'{fontconfig_weight}-{features_string}').encode()
+        config_digest = md5(config_key, usedforsecurity=False).hexdigest()
+        font_path = self._folder / config_digest
         if font_path.exists():
             return
 
@@ -209,7 +210,7 @@ class FontConfiguration:
                     continue
                 font_path.write_bytes(font)
 
-                xml_path = self._folder / f'{config_key}.xml'
+                xml_path = self._folder / f'{config_digest}.xml'
                 xml_path.write_text(f'''<?xml version="1.0"?>
                 <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
                 <fontconfig>

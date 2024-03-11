@@ -169,7 +169,8 @@ class DiskCache:
         self._disk_paths = set()
 
     def _path_from_key(self, key):
-        return self._path / md5(key.encode()).hexdigest()
+        digest = md5(key.encode(), usedforsecurity=False).hexdigest()
+        return self._path / digest
 
     def __getitem__(self, key):
         if key in self._memory_cache:

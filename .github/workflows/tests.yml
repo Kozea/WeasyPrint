@@ -11,9 +11,9 @@ jobs:
         python-version: ['3.12']
         include:
           - os: ubuntu-latest
-            python-version: '3.8'
+            python-version: '3.9'
           - os: ubuntu-latest
-            python-version: 'pypy-3.8'
+            python-version: 'pypy-3.9'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
