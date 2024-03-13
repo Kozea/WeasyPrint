@@ -543,6 +543,7 @@ style { display: none; }
 sub { font-size: smaller; line-height: normal; vertical-align: sub; }
 summary { display: block; /* unicode-bidi: isolate; */ }
 sup { font-size: smaller; line-height: normal; vertical-align: super; }
+img, svg { overflow: hidden; }
 
 table { border-collapse: separate; border-color: gray; border-spacing: 2px; display: table; text-indent: 0; /* unicode-bidi: isolate; */ }
 

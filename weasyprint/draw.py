@@ -113,7 +113,7 @@ def draw_stacking_context(stream, stacking_context):
         # Point 2
         if isinstance(box, (boxes.BlockBox, boxes.MarginBox,
                             boxes.InlineBlockBox, boxes.TableCellBox,
-                            boxes.FlexContainerBox)):
+                            boxes.FlexContainerBox, boxes.ReplacedBox)):
             # The canvas background was removed by layout_backgrounds
             draw_background(stream, box.background)
             draw_border(stream, box)
@@ -148,14 +148,12 @@ def draw_stacking_context(stream, stacking_context):
             # Point 6
             if isinstance(box, boxes.InlineBox):
                 draw_inline_level(stream, stacking_context.page, box)
+            elif isinstance(box, boxes.ReplacedBox):
+                draw_replacedbox(stream, box)
 
             # Point 7
             for block in [box] + stacking_context.blocks_and_cells:
-                if isinstance(block, boxes.ReplacedBox):
-                    draw_background(stream, block.background)
-                    draw_border(stream, block)
-                    draw_replacedbox(stream, block)
-                elif block.children:
+                if block.children:
                     if block != box:
                         stream.begin_marked_content(block, mcid=True)
                     if isinstance(block.children[-1], boxes.LineBox):
@@ -983,9 +981,6 @@ def draw_replacedbox(stream, box):
         return
 
     with stacked(stream):
-        rounded_box_path(stream, box.rounded_content_box())
-        stream.clip()
-        stream.end()
         stream.transform(e=draw_x, f=draw_y)
         with stacked(stream):
             # TODO: Use the real intrinsic size here, not affected by
