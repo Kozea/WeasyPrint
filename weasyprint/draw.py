@@ -65,14 +65,6 @@ def draw_page(page, stream):
     draw_stacking_context(stream, stacking_context)
 
 
-def draw_box_background_and_border(stream, page, box):
-    if isinstance(box, boxes.TableBox):
-        draw_table(stream, box)
-    else:
-        draw_background(stream, box.background)
-        draw_border(stream, box)
-
-
 def draw_stacking_context(stream, stacking_context):
     """Draw a ``stacking_context`` on ``stream``."""
     # See https://www.w3.org/TR/CSS2/zindex.html
@@ -123,7 +115,8 @@ def draw_stacking_context(stream, stacking_context):
                             boxes.InlineBlockBox, boxes.TableCellBox,
                             boxes.FlexContainerBox)):
             # The canvas background was removed by layout_backgrounds
-            draw_box_background_and_border(stream, stacking_context.page, box)
+            draw_background(stream, box.background)
+            draw_border(stream, box)
 
         with stacked(stream):
             # dont clip the PageBox, see #35
@@ -142,8 +135,11 @@ def draw_stacking_context(stream, stacking_context):
 
             # Point 4
             for block in stacking_context.block_level_boxes:
-                draw_box_background_and_border(
-                    stream, stacking_context.page, block)
+                if isinstance(block, boxes.TableBox):
+                    draw_table(stream, block)
+                else:
+                    draw_background(stream, block.background)
+                    draw_border(stream, block)
 
             # Point 5
             for child_context in stacking_context.float_contexts:
