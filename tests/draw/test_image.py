@@ -16,6 +16,17 @@ centered_image = '''
     ________
 '''
 
+centered_image_overflow = '''
+    ________
+    ________
+    __rBBBBB
+    __BBBBBB
+    __BBBBBB
+    __BBBBBB
+    __BBBBBB
+    __BBBBBB
+'''
+
 resized_image = '''
     ____________
     ____________
@@ -174,6 +185,15 @@ def test_resized_images(assert_pixels, filename):
               overflow: hidden }
       </style>
       <div><img src="%s"></div>''' % filename)
+
+
+def test_image_overflow(assert_pixels):
+    assert_pixels(centered_image_overflow, '''
+      <style>
+        @page { size: 8px }
+        body { margin: 2px 0 0 2px; font-size: 0 }
+      </style>
+      <div><img src="pattern.svg"></div>''')
 
 
 @assert_no_logs
