@@ -7,11 +7,11 @@ Note that Ghostscript is released under AGPL.
 """
 
 import io
+import os
 import shutil
 from subprocess import PIPE, run
 from tempfile import NamedTemporaryFile
 
-import os
 import pytest
 from PIL import Image
 from weasyprint import HTML
