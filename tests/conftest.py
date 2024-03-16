@@ -11,6 +11,7 @@ import shutil
 from subprocess import PIPE, run
 from tempfile import NamedTemporaryFile
 
+import os
 import pytest
 from PIL import Image
 from weasyprint import HTML
@@ -24,15 +25,15 @@ MAGIC_NUMBER = b'\x89\x50\x4e\x47\x0d\x0a\x1a\x0a'
 def document_write_png(document, target=None, resolution=96, antialiasing=1,
                        zoom=4/30, split_images=False):
     # Use temporary files because gs on Windows doesn’t accept binary on stdin
-    with NamedTemporaryFile(delete_on_close=False) as pdf:
+    with NamedTemporaryFile(delete=False) as pdf:
         document.write_pdf(pdf, zoom=zoom)
-        pdf.close()
-        command = (
-            'gs', '-q', '-sDEVICE=png16m', f'-dTextAlphaBits={antialiasing}',
-            f'-dGraphicsAlphaBits={antialiasing}', '-dBATCH', '-dNOPAUSE',
-            '-dPDFSTOPONERROR', f'-r{resolution / zoom}', '-sOutputFile=-',
-            pdf.name)
-        pngs = run(command, stdout=PIPE).stdout
+    command = (
+        'gs', '-q', '-sDEVICE=png16m', f'-dTextAlphaBits={antialiasing}',
+        f'-dGraphicsAlphaBits={antialiasing}', '-dBATCH', '-dNOPAUSE',
+        '-dPDFSTOPONERROR', f'-r{resolution / zoom}', '-sOutputFile=-',
+        pdf.name)
+    pngs = run(command, stdout=PIPE).stdout
+    os.remove(pdf.name)
 
     error = pngs.split(MAGIC_NUMBER)[0].decode().strip() or 'no output'
     assert pngs.startswith(MAGIC_NUMBER), f'Ghostscript error: {error}'
