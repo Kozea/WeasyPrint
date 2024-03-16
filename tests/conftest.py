@@ -24,8 +24,9 @@ MAGIC_NUMBER = b'\x89\x50\x4e\x47\x0d\x0a\x1a\x0a'
 def document_write_png(document, target=None, resolution=96, antialiasing=1,
                        zoom=4/30, split_images=False):
     # Use temporary files because gs on Windows doesn’t accept binary on stdin
-    with NamedTemporaryFile(buffering=0) as pdf:
+    with NamedTemporaryFile(delete_on_close=False) as pdf:
         document.write_pdf(pdf, zoom=zoom)
+        pdf.close()
         command = (
             'gs', '-q', '-sDEVICE=png16m', f'-dTextAlphaBits={antialiasing}',
             f'-dGraphicsAlphaBits={antialiasing}', '-dBATCH', '-dNOPAUSE',
