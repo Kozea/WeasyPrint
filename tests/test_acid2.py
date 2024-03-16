@@ -2,20 +2,18 @@
 
 import io
 
-import pytest
 from PIL import Image
-from weasyprint import HTML
+from weasyprint import HTML, CSS
 
-from .draw import assert_pixels_equal
 from .testing_utils import assert_no_logs, capture_logs, resource_path
 
 
-@pytest.mark.xfail
 @assert_no_logs
-def test_acid2():
-    # TODO: fails because of Ghostscript rendering
+def test_acid2(assert_pixels_equal):
+    # Reduce image size and avoid Ghostscript rounding problems
+    stylesheets = (CSS(string='@page { size: 500px 800px }'),)
     def render(filename):
-        return HTML(resource_path(filename)).render()
+        return HTML(resource_path(filename)).render(stylesheets=stylesheets)
 
     with capture_logs():
         # This is a copy of https://www.webstandards.org/files/acid2/test.html
