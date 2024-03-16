@@ -85,11 +85,7 @@ def validate_non_shorthand(tokens, name, base_url=None, required=False):
         return ((name, tokens),)
 
     if not required and name not in KNOWN_PROPERTIES:
-        hyphens_name = name.replace('_', '-')
-        if hyphens_name in KNOWN_PROPERTIES:
-            raise InvalidValues(f'you probably mean "{hyphens_name}"')
-        else:
-            raise InvalidValues('unknown property')
+        raise InvalidValues('unknown property')
 
     if not required and name not in PROPERTIES:
         raise InvalidValues('property not supported yet')

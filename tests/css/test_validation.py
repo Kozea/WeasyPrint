@@ -1,21 +1,17 @@
-"""Test expanders for shorthand properties."""
+"""Test validation of properties."""
 
 from math import pi
 
 import pytest
 import tinycss2
-from tinycss2.color3 import parse_color
 from weasyprint.css import preprocess_declarations
-from weasyprint.css.properties import INITIAL_VALUES, ZERO_PIXELS
-from weasyprint.css.validation.expanders import EXPANDERS
 from weasyprint.css.validation.properties import PROPERTIES
 from weasyprint.images import LinearGradient, RadialGradient
 
 from ..testing_utils import assert_no_logs, capture_logs
 
 
-def expand_to_dict(css, expected_error=None):
-    """Helper to test shorthand properties expander functions."""
+def get_value(css, expected_error=None):
     declarations = tinycss2.parse_declaration_list(css)
 
     with capture_logs() as logs:
@@ -28,49 +24,58 @@ def expand_to_dict(css, expected_error=None):
     else:
         assert not logs
 
-    return {
-        name: value for name, value, _priority in declarations
-        if value != 'initial'}
+    if declarations:
+        assert len(declarations) == 1
+        return declarations[0][1]
+
+
+def get_default_value(values, index, default):
+    if index > len(values) - 1:
+        return default
+    return values[index] or default
 
 
 def assert_invalid(css, message='invalid'):
-    assert expand_to_dict(css, message) == {}
+    assert get_value(css, message) is None
 
 
 @assert_no_logs
 def test_not_print():
-    assert expand_to_dict(
-        'volume: 42', 'the property does not apply for the print media') == {}
+    assert_invalid('volume: 42', 'does not apply for the print media')
 
 
 @assert_no_logs
 def test_unstable_prefix():
-    assert expand_to_dict(
+    assert get_value(
         '-weasy-max-lines: 3',
-        'prefixes on unstable attributes are deprecated') == {'max_lines': 3}
+        'prefixes on unstable attributes are deprecated') == 3
 
 
 @assert_no_logs
 def test_normal_prefix():
-    assert expand_to_dict(
-        '-weasy-display: block',
-        'prefix on this attribute is not supported') == {}
+    assert_invalid(
+        '-weasy-display: block', 'prefix on this attribute is not supported')
 
 
 @assert_no_logs
 def test_unknown_prefix():
-    assert expand_to_dict(
-        '-unknown-display: block', 'prefixed selectors are ignored') == {}
+    assert_invalid('-unknown-display: block', 'prefixed selectors are ignored')
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule, values', (
+@pytest.mark.parametrize('prop', PROPERTIES)
+def test_empty_property_value(prop):
+    assert_invalid(f'{prop}:', message='Ignored')
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, value', (
     ('1px, 3em, auto, auto', ((1, 'px'), (3, 'em'), 'auto', 'auto')),
     ('1px, 3em, auto auto', ((1, 'px'), (3, 'em'), 'auto', 'auto')),
     ('1px 3em auto 1px', ((1, 'px'), (3, 'em'), 'auto', (1, 'px'))),
 ))
-def test_function(rule, values):
-    assert expand_to_dict('clip: rect(%s)' % rule) == {'clip': values}
+def test_clip(rule, value):
+    assert get_value(f'clip: rect({rule})') == value
 
 
 @assert_no_logs
@@ -79,32 +84,29 @@ def test_function(rule, values):
     'clip: rect(1px, 3em, auto)',
     'clip: rect(1px, 3em / auto)',
 ))
-def test_function_invalid(rule):
+def test_clip_invalid(rule):
     assert_invalid(rule)
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule, result', (
-    ('counter-reset: foo bar 2 baz', {
-        'counter_reset': (('foo', 0), ('bar', 2), ('baz', 0))}),
-    ('counter-increment: foo bar 2 baz', {
-        'counter_increment': (('foo', 1), ('bar', 2), ('baz', 1))}),
-    ('counter-reset: foo', {'counter_reset': (('foo', 0),)}),
-    ('counter-set: FoO', {'counter_set': (('FoO', 0),)}),
-    ('counter-increment: foo bAr 2 Bar', {
-        'counter_increment': (('foo', 1), ('bAr', 2), ('Bar', 1))}),
-    ('counter-reset: none', {'counter_reset': ()}),
+@pytest.mark.parametrize('rule, value', (
+    ('counter-reset: foo bar 2 baz', (('foo', 0), ('bar', 2), ('baz', 0))),
+    ('counter-increment: foo bar 2 baz', (('foo', 1), ('bar', 2), ('baz', 1))),
+    ('counter-reset: foo', (('foo', 0),)),
+    ('counter-set: FoO', (('FoO', 0),)),
+    ('counter-increment: foo bAr 2 Bar', (('foo', 1), ('bAr', 2), ('Bar', 1))),
+    ('counter-reset: none', ()),
 ))
-def test_counters(rule, result):
-    assert expand_to_dict(rule) == result
+def test_counters(rule, value):
+    assert get_value(rule) == value
 
 
-@pytest.mark.parametrize('rule, warning, result', (
-    ('counter-reset: foo initial', 'Invalid counter name: initial.', {}),
-    ('counter-reset: foo none', 'Invalid counter name: none.', {}),
+@pytest.mark.parametrize('rule, warning', (
+    ('counter-reset: foo initial', 'Invalid counter name: initial.'),
+    ('counter-reset: foo none', 'Invalid counter name: none.'),
 ))
-def test_counters_warning(rule, warning, result):
-    assert expand_to_dict(rule, warning) == result
+def test_counters_warning(rule, warning):
+    assert_invalid(rule, warning)
 
 
 @assert_no_logs
@@ -117,20 +119,14 @@ def test_counters_invalid(rule):
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule, result', (
-    ('letter-spacing: normal', {'letter_spacing': 'normal'}),
-    ('letter-spacing: 3px', {'letter_spacing': (3, 'px')}),
-    ('word-spacing: normal', {'word_spacing': 'normal'}),
-    ('word-spacing: 3px', {'word_spacing': (3, 'px')}),
+@pytest.mark.parametrize('rule, value', (
+    ('letter-spacing: normal', 'normal'),
+    ('letter-spacing: 3px', (3, 'px')),
+    ('word-spacing: normal', 'normal'),
+    ('word-spacing: 3px', (3, 'px')),
 ))
-def test_spacing(rule, result):
-    assert expand_to_dict(rule) == result
-
-
-@assert_no_logs
-def test_spacing_warning():
-    assert expand_to_dict(
-        'letter_spacing: normal', 'you probably mean "letter-spacing"') == {}
+def test_spacing(rule, value):
+    assert get_value(rule) == value
 
 
 @assert_no_logs
@@ -143,1115 +139,438 @@ def test_spacing_invalid(rule):
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule, result', (
-    ('text-decoration-line: none', {'text_decoration_line': 'none'}),
-    ('text-decoration-line: overline', {'text_decoration_line': {'overline'}}),
-    ('text-decoration-line: overline blink line-through', {
-        'text_decoration_line': {'blink', 'line-through', 'overline'}}),
+@pytest.mark.parametrize('rule, value', (
+    ('none', 'none'),
+    ('overline', {'overline'}),
+    ('overline blink line-through', {'blink', 'line-through', 'overline'}),
 ))
-def test_decoration_line(rule, result):
-    assert expand_to_dict(rule) == result
+def test_text_decoration_line(rule, value):
+    assert get_value(f'text-decoration-line: {rule}') == value
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule, result', (
-    ('text-decoration-style: solid', {'text_decoration_style': 'solid'}),
-    ('text-decoration-style: double', {'text_decoration_style': 'double'}),
-    ('text-decoration-style: dotted', {'text_decoration_style': 'dotted'}),
-    ('text-decoration-style: dashed', {'text_decoration_style': 'dashed'}),
+@pytest.mark.parametrize('rule, value', (
+    ('solid', 'solid'),
+    ('double', 'double'),
+    ('dotted', 'dotted'),
+    ('dashed', 'dashed'),
 ))
-def test_decoration_style(rule, result):
-    assert expand_to_dict(rule) == result
+def test_text_decoration_style(rule, value):
+    assert get_value(f'text-decoration-style: {rule}') == value
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule, result', (
-    ('text-decoration: none', {'text_decoration_line': 'none'}),
-    ('text-decoration: overline', {'text_decoration_line': {'overline'}}),
-    ('text-decoration: overline blink line-through', {
-        'text_decoration_line': {'blink', 'line-through', 'overline'},
-    }),
-    ('text-decoration: red', {'text_decoration_color': parse_color('red')}),
-    ('text-decoration: inherit', {
-        f'text_decoration_{key}': 'inherit'
-        for key in ('color', 'line', 'style')}),
+@pytest.mark.parametrize('rule, value', (
+    ('200px', ((200, 'px'), (200, 'px'))),
+    ('200px 300pt', ((200, 'px'), (300, 'pt'))),
+    ('auto', ((210, 'mm'), (297, 'mm'))),
+    ('portrait', ((210, 'mm'), (297, 'mm'))),
+    ('landscape', ((297, 'mm'), (210, 'mm'))),
+    ('A3 portrait', ((297, 'mm'), (420, 'mm'))),
+    ('A3 landscape', ((420, 'mm'), (297, 'mm'))),
+    ('portrait A3', ((297, 'mm'), (420, 'mm'))),
+    ('landscape A3', ((420, 'mm'), (297, 'mm'))),
 ))
-def test_decoration(rule, result):
-    assert expand_to_dict(rule) == result
-
-
-@assert_no_logs
-@pytest.mark.parametrize('rule', (
-    'text-decoration: solid solid',
-    'text-decoration: red red',
-    'text-decoration: 1px',
-    'text-decoration: underline none',
-    'text-decoration: none none',
-))
-def test_decoration_invalid(rule):
-    assert_invalid(rule)
-
-
-@assert_no_logs
-@pytest.mark.parametrize('rule, result', (
-    ('size: 200px', {'size': ((200, 'px'), (200, 'px'))}),
-    ('size: 200px 300pt', {'size': ((200, 'px'), (300, 'pt'))}),
-    ('size: auto', {'size': ((210, 'mm'), (297, 'mm'))}),
-    ('size: portrait', {'size': ((210, 'mm'), (297, 'mm'))}),
-    ('size: landscape', {'size': ((297, 'mm'), (210, 'mm'))}),
-    ('size: A3 portrait', {'size': ((297, 'mm'), (420, 'mm'))}),
-    ('size: A3 landscape', {'size': ((420, 'mm'), (297, 'mm'))}),
-    ('size: portrait A3', {'size': ((297, 'mm'), (420, 'mm'))}),
-    ('size: landscape A3', {'size': ((420, 'mm'), (297, 'mm'))}),
-))
-def test_size(rule, result):
-    assert expand_to_dict(rule) == result
+def test_size(rule, value):
+    assert get_value(f'size: {rule}') == value
 
 
 @pytest.mark.parametrize('rule', (
-    'size: A3 landscape A3',
-    'size: A12',
-    'size: foo',
-    'size: foo bar',
-    'size: 20%',
+    'A3 landscape A3',
+    'A12',
+    'foo',
+    'foo bar',
+    '20%',
 ))
 def test_size_invalid(rule):
-    assert_invalid(rule)
+    assert_invalid(f'size: {rule}')
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule, result', (
-    ('transform: none', {'transform': ()}),
-    ('transform: translate(6px) rotate(90deg)', {
-        'transform': (
-            ('translate', ((6, 'px'), (0, 'px'))), ('rotate', pi / 2))}),
-    ('transform: translate(-4px, 0)', {
-        'transform': (('translate', ((-4, 'px'), (0, None))),)}),
-    ('transform: translate(6px, 20%)', {
-        'transform': (('translate', ((6, 'px'), (20, '%'))),)}),
-    ('transform: scale(2)', {'transform': (('scale', (2, 2)),)}),
-    ('transform: translate(6px 20%)', {
-        'transform': (('translate', ((6, 'px'), (20, '%'))),)}),
+@pytest.mark.parametrize('rule, value', (
+    ('none', ()),
+    ('translate(6px) rotate(90deg)', (
+        ('translate', ((6, 'px'), (0, 'px'))), ('rotate', pi / 2))),
+    ('translate(-4px, 0)', (('translate', ((-4, 'px'), (0, None))),)),
+    ('translate(6px, 20%)', (('translate', ((6, 'px'), (20, '%'))),)),
+    ('scale(2)', (('scale', (2, 2)),)),
+    ('translate(6px 20%)', (('translate', ((6, 'px'), (20, '%'))),)),
 ))
-def test_transforms(rule, result):
-    assert expand_to_dict(rule) == result
+def test_transform(rule, value):
+    assert get_value(f'transform: {rule}') == value
 
 
 @assert_no_logs
 @pytest.mark.parametrize('rule', (
-    'transform: lipsumize(6px)',
-    'transform: foo',
-    'transform: scale(2) foo',
-    'transform: 6px',
+    'lipsumize(6px)',
+    'foo',
+    'scale(2) foo',
+    '6px',
 ))
-def test_transforms_invalid(rule):
-    assert_invalid(rule)
+def test_transform_invalid(rule):
+    assert_invalid(f'transform: {rule}')
 
 
-@assert_no_logs
-@pytest.mark.parametrize('rule, result', (
-    ('margin: inherit', {
-        'margin_top': 'inherit',
-        'margin_right': 'inherit',
-        'margin_bottom': 'inherit',
-        'margin_left': 'inherit',
-    }),
-    ('margin: 1em', {
-        'margin_top': (1, 'em'),
-        'margin_right': (1, 'em'),
-        'margin_bottom': (1, 'em'),
-        'margin_left': (1, 'em'),
-    }),
-    ('margin: -1em auto 20%', {
-        'margin_top': (-1, 'em'),
-        'margin_right': 'auto',
-        'margin_bottom': (20, '%'),
-        'margin_left': 'auto',
-    }),
-    ('padding: 1em 0', {
-        'padding_top': (1, 'em'),
-        'padding_right': (0, None),
-        'padding_bottom': (1, 'em'),
-        'padding_left': (0, None),
-    }),
-    ('padding: 1em 0 2%', {
-        'padding_top': (1, 'em'),
-        'padding_right': (0, None),
-        'padding_bottom': (2, '%'),
-        'padding_left': (0, None),
-    }),
-    ('padding: 1em 0 2em 5px', {
-        'padding_top': (1, 'em'),
-        'padding_right': (0, None),
-        'padding_bottom': (2, 'em'),
-        'padding_left': (5, 'px'),
-    }),
-))
-def test_expand_four_sides(rule, result):
-    assert expand_to_dict(rule) == result
-
-
-@assert_no_logs
-def test_expand_four_sides_warning():
-    assert expand_to_dict(
-        'padding: 1 2 3 4 5', 'Expected 1 to 4 token components got 5') == {}
-
-
-@assert_no_logs
 @pytest.mark.parametrize('rule', (
-    'margin: rgb(0, 0, 0)',
-    'padding: auto',
-    'padding: -12px',
-    'border-width: -3em',
-    'border-width: 12%',
+    'inexistent-gradient(blue, green)',
 ))
-def test_expand_four_sides_invalid(rule):
-    assert_invalid(rule)
+def test_background_image_invalid(rule):
+    assert_invalid(f'background-image: {rule}')
 
 
-@assert_no_logs
-@pytest.mark.parametrize('rule, result', (
-    ('border-top: 3px dotted red', {
-        'border_top_width': (3, 'px'),
-        'border_top_style': 'dotted',
-        'border_top_color': (1, 0, 0, 1),  # red
-    }),
-    ('border-top: 3px dotted', {
-        'border_top_width': (3, 'px'),
-        'border_top_style': 'dotted',
-    }),
-    ('border-top: 3px red', {
-        'border_top_width': (3, 'px'),
-        'border_top_color': (1, 0, 0, 1),  # red
-    }),
-    ('border-top: solid', {'border_top_style': 'solid'}),
-    ('border: 6px dashed lime', {
-        'border_top_width': (6, 'px'),
-        'border_top_style': 'dashed',
-        'border_top_color': (0, 1, 0, 1),  # lime
-
-        'border_left_width': (6, 'px'),
-        'border_left_style': 'dashed',
-        'border_left_color': (0, 1, 0, 1),  # lime
-
-        'border_bottom_width': (6, 'px'),
-        'border_bottom_style': 'dashed',
-        'border_bottom_color': (0, 1, 0, 1),  # lime
-
-        'border_right_width': (6, 'px'),
-        'border_right_style': 'dashed',
-        'border_right_color': (0, 1, 0, 1),  # lime
-    }),
-))
-def test_expand_borders(rule, result):
-    assert expand_to_dict(rule) == result
-
-
-@assert_no_logs
-def test_expand_borders_invalid():
-    assert_invalid('border: 6px dashed left')
-
-
-@assert_no_logs
-@pytest.mark.parametrize('rule, result', (
-    ('list-style: inherit', {
-        'list_style_position': 'inherit',
-        'list_style_image': 'inherit',
-        'list_style_type': 'inherit',
-    }),
-    ('list-style: url(../bar/lipsum.png)', {
-        'list_style_image': ('url', 'https://weasyprint.org/bar/lipsum.png'),
-    }),
-    ('list-style: square', {
-        'list_style_type': 'square',
-    }),
-    ('list-style: circle inside', {
-        'list_style_position': 'inside',
-        'list_style_type': 'circle',
-    }),
-    ('list-style: none circle inside', {
-        'list_style_position': 'inside',
-        'list_style_image': ('none', None),
-        'list_style_type': 'circle',
-    }),
-    ('list-style: none inside none', {
-        'list_style_position': 'inside',
-        'list_style_image': ('none', None),
-        'list_style_type': 'none',
-    }),
-    ('list-style: inside special none', {
-        'list_style_position': 'inside',
-        'list_style_image': ('none', None),
-        'list_style_type': 'special',
-    }),
-))
-def test_expand_list_style(rule, result):
-    assert expand_to_dict(rule) == result
-
-
-@assert_no_logs
-def test_expand_list_style_warning():
-    assert_invalid(
-        'list-style: circle disc',
-        'got multiple type values in a list-style shorthand')
-
-
-@assert_no_logs
-@pytest.mark.parametrize('rule', (
-    'list-style: none inside none none',
-    'list-style: 1px',
-))
-def test_expand_list_style_invalid(rule):
-    assert_invalid(rule)
-
-
-def assert_background(css, **expected):
-    """Helper checking the background properties."""
-    expanded = expand_to_dict(f'background: {css}')
-    assert expanded.pop('background_color') == expected.pop(
-        'background_color', INITIAL_VALUES['background_color'])
-    nb_layers = len(expanded['background_image'])
-    for name, value in expected.items():
-        assert expanded.pop(name) == value
-    for name, value in expanded.items():
-        assert tuple(value) == INITIAL_VALUES[name] * nb_layers
-
-
-@assert_no_logs
-def test_expand_background():
-    assert_background('red', background_color=(1, 0, 0, 1))
-    assert_background(
-        'url(lipsum.png)',
-        background_image=[('url', 'https://weasyprint.org/foo/lipsum.png')])
-    assert_background(
-        'no-repeat',
-        background_repeat=[('no-repeat', 'no-repeat')])
-    assert_background('fixed', background_attachment=['fixed'])
-    assert_background(
-        'repeat no-repeat fixed',
-        background_repeat=[('repeat', 'no-repeat')],
-        background_attachment=['fixed'])
-    assert_background(
-        'inherit', background_repeat='inherit',
-        background_attachment='inherit', background_image='inherit',
-        background_position='inherit', background_size='inherit',
-        background_clip='inherit', background_origin='inherit',
-        background_color='inherit')
-    assert_background(
-        'top',
-        background_position=[('left', (50, '%'), 'top', (0, '%'))])
-    assert_background(
-        'top right',
-        background_position=[('left', (100, '%'), 'top', (0, '%'))])
-    assert_background(
-        'top right 20px',
-        background_position=[('right', (20, 'px'), 'top', (0, '%'))])
-    assert_background(
-        'top 1% right 20px',
-        background_position=[('right', (20, 'px'), 'top', (1, '%'))])
-    assert_background(
-        'top no-repeat',
-        background_repeat=[('no-repeat', 'no-repeat')],
-        background_position=[('left', (50, '%'), 'top', (0, '%'))])
-    assert_background(
-        'top right no-repeat',
-        background_repeat=[('no-repeat', 'no-repeat')],
-        background_position=[('left', (100, '%'), 'top', (0, '%'))])
-    assert_background(
-        'top right 20px no-repeat',
-        background_repeat=[('no-repeat', 'no-repeat')],
-        background_position=[('right', (20, 'px'), 'top', (0, '%'))])
-    assert_background(
-        'top 1% right 20px no-repeat',
-        background_repeat=[('no-repeat', 'no-repeat')],
-        background_position=[('right', (20, 'px'), 'top', (1, '%'))])
-    assert_background(
-        'url(bar) #f00 repeat-y center left fixed',
-        background_color=(1, 0, 0, 1),
-        background_image=[('url', 'https://weasyprint.org/foo/bar')],
-        background_repeat=[('no-repeat', 'repeat')],
-        background_attachment=['fixed'],
-        background_position=[('left', (0, '%'), 'top', (50, '%'))])
-    assert_background(
-        '#00f 10% 200px',
-        background_color=(0, 0, 1, 1),
-        background_position=[('left', (10, '%'), 'top', (200, 'px'))])
-    assert_background(
-        'right 78px fixed',
-        background_attachment=['fixed'],
-        background_position=[('left', (100, '%'), 'top', (78, 'px'))])
-    assert_background(
-        'center / cover red',
-        background_size=['cover'],
-        background_position=[('left', (50, '%'), 'top', (50, '%'))],
-        background_color=(1, 0, 0, 1))
-    assert_background(
-        'center / auto red',
-        background_size=[('auto', 'auto')],
-        background_position=[('left', (50, '%'), 'top', (50, '%'))],
-        background_color=(1, 0, 0, 1))
-    assert_background(
-        'center / 42px',
-        background_size=[((42, 'px'), 'auto')],
-        background_position=[('left', (50, '%'), 'top', (50, '%'))])
-    assert_background(
-        'center / 7% 4em',
-        background_size=[((7, '%'), (4, 'em'))],
-        background_position=[('left', (50, '%'), 'top', (50, '%'))])
-    assert_background(
-        'red content-box',
-        background_color=(1, 0, 0, 1),
-        background_origin=['content-box'],
-        background_clip=['content-box'])
-    assert_background(
-        'red border-box content-box',
-        background_color=(1, 0, 0, 1),
-        background_origin=['border-box'],
-        background_clip=['content-box'])
-    assert_background(
-        'border-box red',
-        background_color=(1, 0, 0, 1),
-        background_origin=['border-box'])
-    assert_background(
-        'url(bar) center, no-repeat',
-        background_color=(0, 0, 0, 0),
-        background_image=[('url', 'https://weasyprint.org/foo/bar'),
-                          ('none', None)],
-        background_position=[('left', (50, '%'), 'top', (50, '%')),
-                             ('left', (0, '%'), 'top', (0, '%'))],
-        background_repeat=[('repeat', 'repeat'), ('no-repeat', 'no-repeat')])
-    # Color must be in the last layer:
-    assert_invalid('background: red, url(foo)')
-
-
-@assert_no_logs
-@pytest.mark.parametrize('rule', (
-    'background: 10px lipsum',
-    'background-position: 10px lipsum',
-    'background: content-box red content-box',
-    'background-image: inexistent-gradient(blue, green)',
-))
-def test_expand_background_invalid(rule):
-    assert_invalid(rule)
-
-
-@assert_no_logs
-def test_expand_background_position():
-    """Test the ``background-position`` property."""
-    def position(css, *expected):
-        [(name, [value])] = expand_to_dict(
-            f'background-position: {css}').items()
-        assert name == 'background_position'
-        assert value == expected
-    for css_x, val_x in [
-        ('left', (0, '%')), ('center', (50, '%')), ('right', (100, '%')),
-        ('4.5%', (4.5, '%')), ('12px', (12, 'px'))
-    ]:
-        for css_y, val_y in [
-            ('top', (0, '%')), ('center', (50, '%')), ('bottom', (100, '%')),
-            ('7%', (7, '%')), ('1.5px', (1.5, 'px'))
-        ]:
-            # Two tokens:
-            position('%s %s' % (css_x, css_y), 'left', val_x, 'top', val_y)
-        # One token:
-        position(css_x, 'left', val_x, 'top', (50, '%'))
+@pytest.mark.parametrize('rule, value', (
     # One token, vertical
-    position('top', 'left', (50, '%'), 'top', (0, '%'))
-    position('bottom', 'left', (50, '%'), 'top', (100, '%'))
+    ('top', (('left', (50, '%'), 'top', (0, '%')),)),
+    ('bottom', (('left', (50, '%'), 'top', (100, '%')),)),
 
-    # Three tokens:
-    position('center top 10%', 'left', (50, '%'), 'top', (10, '%'))
-    position('top 10% center', 'left', (50, '%'), 'top', (10, '%'))
-    position('center bottom 10%', 'left', (50, '%'), 'bottom', (10, '%'))
-    position('bottom 10% center', 'left', (50, '%'), 'bottom', (10, '%'))
+    # Three tokens
+    ('center top 10%', (('left', (50, '%'), 'top', (10, '%')),)),
+    ('top 10% center', (('left', (50, '%'), 'top', (10, '%')),)),
+    ('center bottom 10%', (('left', (50, '%'), 'bottom', (10, '%')),)),
+    ('bottom 10% center', (('left', (50, '%'), 'bottom', (10, '%')),)),
 
-    position('right top 10%', 'right', (0, '%'), 'top', (10, '%'))
-    position('top 10% right', 'right', (0, '%'), 'top', (10, '%'))
-    position('right bottom 10%', 'right', (0, '%'), 'bottom', (10, '%'))
-    position('bottom 10% right', 'right', (0, '%'), 'bottom', (10, '%'))
+    ('right top 10%', (('right', (0, '%'), 'top', (10, '%')),)),
+    ('top 10% right', (('right', (0, '%'), 'top', (10, '%')),)),
+    ('right bottom 10%', (('right', (0, '%'), 'bottom', (10, '%')),)),
+    ('bottom 10% right', (('right', (0, '%'), 'bottom', (10, '%')),)),
 
-    position('center left 10%', 'left', (10, '%'), 'top', (50, '%'))
-    position('left 10% center', 'left', (10, '%'), 'top', (50, '%'))
-    position('center right 10%', 'right', (10, '%'), 'top', (50, '%'))
-    position('right 10% center', 'right', (10, '%'), 'top', (50, '%'))
+    ('center left 10%', (('left', (10, '%'), 'top', (50, '%')),)),
+    ('left 10% center', (('left', (10, '%'), 'top', (50, '%')),)),
+    ('center right 10%', (('right', (10, '%'), 'top', (50, '%')),)),
+    ('right 10% center', (('right', (10, '%'), 'top', (50, '%')),)),
 
-    position('bottom left 10%', 'left', (10, '%'), 'bottom', (0, '%'))
-    position('left 10% bottom', 'left', (10, '%'), 'bottom', (0, '%'))
-    position('bottom right 10%', 'right', (10, '%'), 'bottom', (0, '%'))
-    position('right 10% bottom', 'right', (10, '%'), 'bottom', (0, '%'))
+    ('bottom left 10%', (('left', (10, '%'), 'bottom', (0, '%')),)),
+    ('left 10% bottom', (('left', (10, '%'), 'bottom', (0, '%')),)),
+    ('bottom right 10%', (('right', (10, '%'), 'bottom', (0, '%')),)),
+    ('right 10% bottom', (('right', (10, '%'), 'bottom', (0, '%')),)),
 
-    # Four tokens:
-    position('left 10% bottom 3px', 'left', (10, '%'), 'bottom', (3, 'px'))
-    position('bottom 3px left 10%', 'left', (10, '%'), 'bottom', (3, 'px'))
-    position('right 10% top 3px', 'right', (10, '%'), 'top', (3, 'px'))
-    position('top 3px right 10%', 'right', (10, '%'), 'top', (3, 'px'))
-
-    assert_invalid('background-position: left center 3px')
-    assert_invalid('background-position: 3px left')
-    assert_invalid('background-position: bottom 4%')
-    assert_invalid('background-position: bottom top')
-
-
-@assert_no_logs
-@pytest.mark.parametrize('rule, result', (
-    ('border-radius: 1px', {
-        'border_top_left_radius': ((1, 'px'), (1, 'px')),
-        'border_top_right_radius': ((1, 'px'), (1, 'px')),
-        'border_bottom_right_radius': ((1, 'px'), (1, 'px')),
-        'border_bottom_left_radius': ((1, 'px'), (1, 'px')),
-    }),
-    ('border-radius: 1px 2em', {
-        'border_top_left_radius': ((1, 'px'), (1, 'px')),
-        'border_top_right_radius': ((2, 'em'), (2, 'em')),
-        'border_bottom_right_radius': ((1, 'px'), (1, 'px')),
-        'border_bottom_left_radius': ((2, 'em'), (2, 'em')),
-    }),
-    ('border-radius: 1px / 2em', {
-        'border_top_left_radius': ((1, 'px'), (2, 'em')),
-        'border_top_right_radius': ((1, 'px'), (2, 'em')),
-        'border_bottom_right_radius': ((1, 'px'), (2, 'em')),
-        'border_bottom_left_radius': ((1, 'px'), (2, 'em')),
-    }),
-    ('border-radius: 1px 3px / 2em 4%', {
-        'border_top_left_radius': ((1, 'px'), (2, 'em')),
-        'border_top_right_radius': ((3, 'px'), (4, '%')),
-        'border_bottom_right_radius': ((1, 'px'), (2, 'em')),
-        'border_bottom_left_radius': ((3, 'px'), (4, '%')),
-    }),
-    ('border-radius: 1px 2em 3%', {
-        'border_top_left_radius': ((1, 'px'), (1, 'px')),
-        'border_top_right_radius': ((2, 'em'), (2, 'em')),
-        'border_bottom_right_radius': ((3, '%'), (3, '%')),
-        'border_bottom_left_radius': ((2, 'em'), (2, 'em')),
-    }),
-    ('border-radius: 1px 2em 3% 4rem', {
-        'border_top_left_radius': ((1, 'px'), (1, 'px')),
-        'border_top_right_radius': ((2, 'em'), (2, 'em')),
-        'border_bottom_right_radius': ((3, '%'), (3, '%')),
-        'border_bottom_left_radius': ((4, 'rem'), (4, 'rem')),
-    }),
-    ('border-radius: inherit', {
-        'border_top_left_radius': 'inherit',
-        'border_top_right_radius': 'inherit',
-        'border_bottom_right_radius': 'inherit',
-        'border_bottom_left_radius': 'inherit',
-    }),
+    # Four tokens
+    ('left 10% bottom 3px', (('left', (10, '%'), 'bottom', (3, 'px')),)),
+    ('bottom 3px left 10%', (('left', (10, '%'), 'bottom', (3, 'px')),)),
+    ('right 10% top 3px', (('right', (10, '%'), 'top', (3, 'px')),)),
+    ('top 3px right 10%', (('right', (10, '%'), 'top', (3, 'px')),)),
+) + tuple(
+    (css_x, (('left', val_x, 'top', (50, '%')),))
+    for css_x, val_x in (
+        ('left', (0, '%')), ('center', (50, '%')), ('right', (100, '%')),
+        ('4.5%', (4.5, '%')), ('12px', (12, 'px')))
+) + tuple(
+    (f'{css_x} {css_y}', (('left', val_x, 'top', val_y),))
+    for css_x, val_x in (
+        ('left', (0, '%')), ('center', (50, '%')), ('right', (100, '%')),
+        ('4.5%', (4.5, '%')), ('12px', (12, 'px')))
+    for css_y, val_y in (
+        ('top', (0, '%')), ('center', (50, '%')), ('bottom', (100, '%')),
+        ('7%', (7, '%')), ('1.5px', (1.5, 'px')))
 ))
-def test_expand_border_radius(rule, result):
-    assert expand_to_dict(rule) == result
+def test_background_position(rule, value):
+    assert get_value(f'background-position: {rule}') == value
 
 
-@assert_no_logs
-@pytest.mark.parametrize('rule, reason', (
-    ('border-radius: 1px 1px 1px 1px 1px', '1 to 4 token'),
-    ('border-radius: 1px 1px 1px 1px 1px / 1px', '1 to 4 token'),
-    ('border-radius: 1px / 1px / 1px', 'only one "/"'),
-    ('border-radius: 12deg', 'invalid'),
-    ('border-radius: 1px 1px 1px 12deg', 'invalid'),
-    ('border-radius: super', 'invalid'),
-    ('border-radius: 1px, 1px', 'invalid'),
-    ('border-radius: 1px /', 'value after "/"'),
+@pytest.mark.parametrize('rule', (
+    '10px lipsum',
+    'left center 3px',
+    '3px left',
+    'bottom 4%',
+    'bottom top'
 ))
-def test_expand_border_radius_invalid(rule, reason):
-    assert_invalid(rule, reason)
+def test_background_position_invalid(rule):
+    assert_invalid(f'background-position: {rule}')
 
 
-@assert_no_logs
-def test_font():
-    """Test the ``font`` property."""
-    assert expand_to_dict('font: 12px My Fancy Font, serif') == {
-        'font_size': (12, 'px'),
-        'font_family': ('My Fancy Font', 'serif'),
-    }
-    assert expand_to_dict('font: small/1.2 "Some Font", serif') == {
-        'font_size': 'small',
-        'line_height': (1.2, None),
-        'font_family': ('Some Font', 'serif'),
-    }
-    assert expand_to_dict('font: small-caps italic 700 large serif') == {
-        'font_style': 'italic',
-        'font_variant_caps': 'small-caps',
-        'font_weight': 700,
-        'font_size': 'large',
-        'font_family': ('serif',),
-    }
-    assert expand_to_dict(
-        'font: small-caps condensed normal 700 large serif'
-    ) == {
-        'font_stretch': 'condensed',
-        'font_variant_caps': 'small-caps',
-        'font_weight': 700,
-        'font_size': 'large',
-        'font_family': ('serif',),
-    }
-    assert_invalid('font-family: "My" Font, serif')
-    assert_invalid('font-family: "My" "Font", serif')
-    assert_invalid('font-family: "My", 12pt, serif')
-    assert_invalid('font: menu', 'System fonts are not supported')
-    assert_invalid('font: 12deg My Fancy Font, serif')
-    assert_invalid('font: 12px')
-    assert_invalid('font: 12px/foo serif')
-    assert_invalid('font: 12px "Invalid" family')
-    assert_invalid('font: normal normal normal normal normal large serif')
-    assert_invalid('font: normal small-caps italic 700 condensed large serif')
-    assert_invalid('font: small-caps italic 700 normal condensed large serif')
-    assert_invalid('font: small-caps italic 700 condensed normal large serif')
-    assert_invalid('font: normal normal normal normal')
-    assert_invalid('font: normal normal normal italic')
-    assert_invalid('font: caption', 'System fonts')
-
-
-@assert_no_logs
-def test_font_variant():
-    """Test the ``font-variant`` property."""
-    assert expand_to_dict('font-variant: normal') == {
-        'font_variant_alternates': 'normal',
-        'font_variant_caps': 'normal',
-        'font_variant_east_asian': 'normal',
-        'font_variant_ligatures': 'normal',
-        'font_variant_numeric': 'normal',
-        'font_variant_position': 'normal',
-    }
-    assert expand_to_dict('font-variant: none') == {
-        'font_variant_alternates': 'normal',
-        'font_variant_caps': 'normal',
-        'font_variant_east_asian': 'normal',
-        'font_variant_ligatures': 'none',
-        'font_variant_numeric': 'normal',
-        'font_variant_position': 'normal',
-    }
-    assert expand_to_dict('font-variant: historical-forms petite-caps') == {
-        'font_variant_alternates': 'historical-forms',
-        'font_variant_caps': 'petite-caps',
-    }
-    assert expand_to_dict(
-        'font-variant: lining-nums contextual small-caps common-ligatures'
-    ) == {
-        'font_variant_ligatures': ('contextual', 'common-ligatures'),
-        'font_variant_numeric': ('lining-nums',),
-        'font_variant_caps': 'small-caps',
-    }
-    assert expand_to_dict('font-variant: jis78 ruby proportional-width') == {
-        'font_variant_east_asian': ('jis78', 'ruby', 'proportional-width'),
-    }
-    # CSS2-style font-variant
-    assert expand_to_dict('font-variant: small-caps') == {
-        'font_variant_caps': 'small-caps',
-    }
-    assert_invalid('font-variant: normal normal')
-    assert_invalid('font-variant: 2')
-    assert_invalid('font-variant: ""')
-    assert_invalid('font-variant: extra')
-    assert_invalid('font-variant: jis78 jis04')
-    assert_invalid('font-variant: full-width lining-nums ordinal normal')
-    assert_invalid('font-variant: diagonal-fractions stacked-fractions')
-    assert_invalid(
-        'font-variant: common-ligatures contextual no-common-ligatures')
-    assert_invalid('font-variant: sub super')
-    assert_invalid('font-variant: slashed-zero slashed-zero')
-
-
-@assert_no_logs
-def test_line_height():
-    """Test the ``line-height`` property."""
-    assert expand_to_dict('line-height: 1px') == {'line_height': (1, 'px')}
-    assert expand_to_dict('line-height: 1.1%') == {'line_height': (1.1, '%')}
-    assert expand_to_dict('line-height: 1em') == {'line_height': (1, 'em')}
-    assert expand_to_dict('line-height: 1') == {'line_height': (1, None)}
-    assert expand_to_dict('line-height: 1.3') == {'line_height': (1.3, None)}
-    assert expand_to_dict('line-height: -0') == {'line_height': (0, None)}
-    assert expand_to_dict('line-height: 0px') == {'line_height': (0, 'px')}
-    assert_invalid('line-height: 1deg')
-    assert_invalid('line-height: -1px')
-    assert_invalid('line-height: -1')
-    assert_invalid('line-height: -0.5%')
-    assert_invalid('line-height: 1px 1px')
-
-
-@assert_no_logs
-def test_string_set():
-    """Test the ``string-set`` property."""
-    assert expand_to_dict('string-set: test content(text)') == {
-        'string_set': (('test', (('content()', 'text'),)),)}
-    assert expand_to_dict('string-set: test content(before)') == {
-        'string_set': (('test', (('content()', 'before'),)),)}
-    assert expand_to_dict('string-set: test "string"') == {
-        'string_set': (('test', (('string', 'string'),)),)}
-    assert expand_to_dict(
-        'string-set: test1 "string", test2 "string"') == {
-            'string_set': (
-                ('test1', (('string', 'string'),)),
-                ('test2', (('string', 'string'),)))}
-    assert expand_to_dict('string-set: test attr(class)') == {
-        'string_set': (('test', (('attr()', ('class', 'string', '')),)),)}
-    assert expand_to_dict('string-set: test counter(count)') == {
-        'string_set': (('test', (('counter()', ('count', 'decimal')),)),)}
-    assert expand_to_dict(
-        'string-set: test counter(count, upper-roman)') == {
-            'string_set': (
-                ('test', (('counter()', ('count', 'upper-roman')),)),)}
-    assert expand_to_dict('string-set: test counters(count, ".")') == {
-        'string_set': (
-            ('test', (('counters()', ('count', '.', 'decimal')),)),)}
-    assert expand_to_dict(
-        'string-set: test counters(count, ".", upper-roman)') == {
-            'string_set': (
-                ('test', (('counters()', ('count', '.', 'upper-roman')),)),)}
-    assert expand_to_dict(
-        'string-set: test content(text) "string" '
-        'attr(title) attr(title) counter(count)') == {
-            'string_set': (('test', (
-                ('content()', 'text'), ('string', 'string'),
-                ('attr()', ('title', 'string', '')),
-                ('attr()', ('title', 'string', '')),
-                ('counter()', ('count', 'decimal')))),)}
-
-    assert_invalid('string-set: test')
-    assert_invalid('string-set: test test1')
-    assert_invalid('string-set: test content(test)')
-    assert_invalid('string-set: test unknown()')
-    assert_invalid('string-set: test attr(id, class)')
-
-
-@assert_no_logs
-def test_linear_gradient():
-    red = (1, 0, 0, 1)
-    lime = (0, 1, 0, 1)
-    blue = (0, 0, 1, 1)
-
-    def gradient(css, direction, colors=(blue,), stop_positions=(None,)):
-        for repeating, prefix in ((False, ''), (True, 'repeating-')):
-            expanded = expand_to_dict(
-                'background-image: %slinear-gradient(%s)' % (prefix, css))
-            [(_, [(type_, image)])] = expanded.items()
-            assert type_ == 'linear-gradient'
-            assert isinstance(image, LinearGradient)
-            assert image.repeating == repeating
-            assert image.direction_type == direction[0]
-            if isinstance(image.direction, str):
-                image.direction == direction[1]
-            else:
-                assert image.direction == pytest.approx(direction[1])
-            assert image.colors == tuple(colors)
-            assert image.stop_positions == tuple(stop_positions)
-
-    def invalid(css):
-        assert_invalid('background-image: linear-gradient(%s)' % css)
-        assert_invalid('background-image: repeating-linear-gradient(%s)' % css)
-
-    invalid(' ')
-    invalid('1% blue')
-    invalid('blue 10deg')
-    invalid('blue 4')
-    invalid('soylent-green 4px')
-    invalid('red 4px 2px')
-    gradient('blue', ('angle', pi))
-    gradient('red', ('angle', pi), [red], [None])
-    gradient('blue 1%, lime,red 2em ', ('angle', pi),
-             [blue, lime, red], [(1, '%'), None, (2, 'em')])
-    invalid('18deg')
-    gradient('18deg, blue', ('angle', pi / 10))
-    gradient('4rad, blue', ('angle', 4))
-    gradient('.25turn, blue', ('angle', pi / 2))
-    gradient('100grad, blue', ('angle', pi / 2))
-    gradient('12rad, blue 1%, lime,red 2em ', ('angle', 12),
-             [blue, lime, red], [(1, '%'), None, (2, 'em')])
-    invalid('10arc-minutes, blue')
-    invalid('10px, blue')
-    invalid('to 90deg, blue')
-    gradient('to top, blue', ('angle', 0))
-    gradient('to right, blue', ('angle', pi / 2))
-    gradient('to bottom, blue', ('angle', pi))
-    gradient('to left, blue', ('angle', pi * 3 / 2))
-    gradient('to right, blue 1%, lime,red 2em ', ('angle', pi / 2),
-             [blue, lime, red], [(1, '%'), None, (2, 'em')])
-    invalid('to the top, blue')
-    invalid('to up, blue')
-    invalid('into top, blue')
-    invalid('top, blue')
-    gradient('to top left, blue', ('corner', 'top_left'))
-    gradient('to left top, blue', ('corner', 'top_left'))
-    gradient('to top right, blue', ('corner', 'top_right'))
-    gradient('to right top, blue', ('corner', 'top_right'))
-    gradient('to bottom left, blue', ('corner', 'bottom_left'))
-    gradient('to left bottom, blue', ('corner', 'bottom_left'))
-    gradient('to bottom right, blue', ('corner', 'bottom_right'))
-    gradient('to right bottom, blue', ('corner', 'bottom_right'))
-    invalid('to bottom up, blue')
-    invalid('bottom left, blue')
-
-
-@assert_no_logs
-def test_overflow_wrap():
-    assert expand_to_dict('overflow-wrap: normal') == {
-        'overflow_wrap': 'normal'}
-    assert expand_to_dict('overflow-wrap: break-word') == {
-        'overflow_wrap': 'break-word'}
-    assert expand_to_dict('overflow-wrap: inherit') == {
-        'overflow_wrap': 'inherit'}
-    assert_invalid('overflow-wrap: none')
-    assert_invalid('overflow-wrap: normal, break-word')
-
-
-@assert_no_logs
-def test_expand_word_wrap():
-    assert expand_to_dict('word-wrap: normal') == {
-        'overflow_wrap': 'normal'}
-    assert expand_to_dict('word-wrap: break-word') == {
-        'overflow_wrap': 'break-word'}
-    assert expand_to_dict('word-wrap: inherit') == {
-        'overflow_wrap': 'inherit'}
-    assert_invalid('word-wrap: none')
-    assert_invalid('word-wrap: normal, break-word')
-
-
-@assert_no_logs
-def test_radial_gradient():
-    red = (1, 0, 0, 1)
-    lime = (0, 1, 0, 1)
-    blue = (0, 0, 1, 1)
-
-    def gradient(css, shape='ellipse', size=('keyword', 'farthest-corner'),
-                 center=('left', (50, '%'), 'top', (50, '%')),
-                 colors=(blue,), stop_positions=(None,)):
-        for repeating, prefix in ((False, ''), (True, 'repeating-')):
-            expanded = expand_to_dict(
-                'background-image: %sradial-gradient(%s)' % (prefix, css))
-            [(_, [(type_, image)])] = expanded.items()
-            assert type_ == 'radial-gradient'
-            assert isinstance(image, RadialGradient)
-            assert image.repeating == repeating
-            assert image.shape == shape
-            assert image.size_type == size[0]
-            assert image.size == size[1]
-            assert image.center == center
-            assert image.colors == tuple(colors)
-            assert image.stop_positions == tuple(stop_positions)
-
-    def invalid(css):
-        assert_invalid('background-image: radial-gradient(%s)' % css)
-        assert_invalid('background-image: repeating-radial-gradient(%s)' % css)
-
-    invalid(' ')
-    invalid('1% blue')
-    invalid('blue 10deg')
-    invalid('blue 4')
-    invalid('soylent-green 4px')
-    invalid('red 4px 2px')
-    gradient('blue')
-    gradient('red', colors=[red])
-    gradient('blue 1%, lime,red 2em ', colors=[blue, lime, red],
-             stop_positions=[(1, '%'), None, (2, 'em')])
-    gradient('circle, blue', 'circle')
-    gradient('ellipse, blue', 'ellipse')
-    invalid('circle')
-    invalid('square, blue')
-    invalid('closest-triangle, blue')
-    invalid('center, blue')
-    gradient('ellipse closest-corner, blue',
-             'ellipse', ('keyword', 'closest-corner'))
-    gradient('circle closest-side, blue',
-             'circle', ('keyword', 'closest-side'))
-    gradient('farthest-corner circle, blue',
-             'circle', ('keyword', 'farthest-corner'))
-    gradient('farthest-side, blue',
-             'ellipse', ('keyword', 'farthest-side'))
-    gradient('5ch, blue',
-             'circle', ('explicit', ((5, 'ch'), (5, 'ch'))))
-    gradient('5ch circle, blue',
-             'circle', ('explicit', ((5, 'ch'), (5, 'ch'))))
-    gradient('circle 5ch, blue',
-             'circle', ('explicit', ((5, 'ch'), (5, 'ch'))))
-    invalid('ellipse 5ch')
-    invalid('5ch ellipse')
-    gradient('10px 50px, blue',
-             'ellipse', ('explicit', ((10, 'px'), (50, 'px'))))
-    gradient('10px 50px ellipse, blue',
-             'ellipse', ('explicit', ((10, 'px'), (50, 'px'))))
-    gradient('ellipse 10px 50px, blue',
-             'ellipse', ('explicit', ((10, 'px'), (50, 'px'))))
-    invalid('circle 10px 50px, blue')
-    invalid('10px 50px circle, blue')
-    invalid('10%, blue')
-    invalid('10% circle, blue')
-    invalid('circle 10%, blue')
-    gradient('10px 50px, blue',
-             'ellipse', ('explicit', ((10, 'px'), (50, 'px'))))
-    invalid('at appex, blue')
-    gradient('at top 10% right, blue',
-             center=('right', (0, '%'), 'top', (10, '%')))
-    gradient('circle at bottom, blue', shape='circle',
-             center=('left', (50, '%'), 'top', (100, '%')))
-    gradient('circle at 10px, blue', shape='circle',
-             center=('left', (10, 'px'), 'top', (50, '%')))
-    gradient('closest-side circle at right 5em, blue',
-             shape='circle', size=('keyword', 'closest-side'),
-             center=('left', (100, '%'), 'top', (5, 'em')))
-
-
-@assert_no_logs
-@pytest.mark.parametrize('rule, result', (
-    ('flex: auto', {
-        'flex_grow': 1,
-        'flex_shrink': 1,
-        'flex_basis': 'auto',
-    }),
-    ('flex: none', {
-        'flex_grow': 0,
-        'flex_shrink': 0,
-        'flex_basis': 'auto',
-    }),
-    ('flex: 10', {
-        'flex_grow': 10,
-        'flex_shrink': 1,
-        'flex_basis': ZERO_PIXELS,
-    }),
-    ('flex: 2 2', {
-        'flex_grow': 2,
-        'flex_shrink': 2,
-        'flex_basis': ZERO_PIXELS,
-    }),
-    ('flex: 2 2 1px', {
-        'flex_grow': 2,
-        'flex_shrink': 2,
-        'flex_basis': (1, 'px'),
-    }),
-    ('flex: 2 2 auto', {
-        'flex_grow': 2,
-        'flex_shrink': 2,
-        'flex_basis': 'auto',
-    }),
-    ('flex: 2 auto', {
-        'flex_grow': 2,
-        'flex_shrink': 1,
-        'flex_basis': 'auto',
-    }),
-    ('flex: 0 auto', {
-        'flex_grow': 0,
-        'flex_shrink': 1,
-        'flex_basis': 'auto',
-    }),
-    ('flex: inherit', {
-        'flex_grow': 'inherit',
-        'flex_shrink': 'inherit',
-        'flex_basis': 'inherit',
-    }),
+@pytest.mark.parametrize('rule', (
+    ('"My" Font, serif'),
+    ('"My" "Font", serif'),
+    ('"My", 12pt, serif'),
 ))
-def test_flex(rule, result):
-    assert expand_to_dict(rule) == result
+def test_font_family_invalid(rule):
+    assert_invalid(f'font-family: {rule}')
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, value', (
+    ('1px', (1, 'px')),
+    ('1.1%', (1.1, '%')),
+    ('1em', (1, 'em')),
+    ('1', (1, None)),
+    ('1.3', (1.3, None)),
+    ('-0', (0, None)),
+    ('0px', (0, 'px')),
+))
+def test_line_height(rule, value):
+    assert get_value(f'line-height: {rule}') == value
+
+
+@pytest.mark.parametrize('rule', (
+    '1deg',
+    '-1px',
+    '-1',
+    '-0.5%',
+    '1px 1px',
+))
+def test_line_height_invalid(rule):
+    assert_invalid(f'line-height: {rule}')
 
 
 @assert_no_logs
 @pytest.mark.parametrize('rule', (
-    'flex: auto 0 0 0',
-    'flex: 1px 2px',
-    'flex: auto auto',
-    'flex: auto 1 auto',
+    'symbols()',
+    'symbols(cyclic)',
+    'symbols(symbolic)',
+    'symbols(fixed)',
+    'symbols(alphabetic "a")',
+    'symbols(numeric "1")',
+    'symbols(test "a" "b")',
+    'symbols(fixed symbolic "a" "b")',
 ))
-def test_flex_invalid(rule):
-    assert_invalid(rule)
+def test_list_style_type_invalid(rule):
+    assert_invalid(f'list-style-type: {rule}')
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule, result', (
-    ('flex-flow: column', {
-        'flex_direction': 'column',
-    }),
-    ('flex-flow: wrap', {
-        'flex_wrap': 'wrap',
-    }),
-    ('flex-flow: wrap column', {
-        'flex_direction': 'column',
-        'flex_wrap': 'wrap',
-    }),
-    ('flex-flow: row wrap', {
-        'flex_direction': 'row',
-        'flex_wrap': 'wrap',
-    }),
-    ('flex-flow: inherit', {
-        'flex_direction': 'inherit',
-        'flex_wrap': 'inherit',
-    }),
+@pytest.mark.parametrize('rule, value', (
+    ('none', 'none'),
+    ('from-image', 'from-image'),
+    ('90deg', (pi / 2, False)),
+    ('30deg', (pi / 6, False)),
+    ('180deg flip', (pi, True)),
+    ('0deg flip', (0, True)),
+    ('flip 90deg', (pi / 2, True)),
+    ('flip', (0, True)),
 ))
-def test_flex_flow(rule, result):
-    assert expand_to_dict(rule) == result
+def test_image_orientation(rule, value):
+    assert get_value(f'image-orientation: {rule}') == value
 
 
 @assert_no_logs
 @pytest.mark.parametrize('rule', (
-    'flex-flow: 1px',
-    'flex-flow: wrap 1px',
-    'flex-flow: row row',
-    'flex-flow: wrap nowrap',
-    'flex-flow: column wrap nowrap row',
+    'none none',
+    'unknown',
+    'none flip',
+    'from-image flip',
+    '10',
+    '10 flip',
+    'flip 10',
+    'flip flip',
+    '90deg flop',
+    '90deg 180deg',
 ))
-def test_flex_flow_invalid(rule):
-    assert_invalid(rule)
+def test_image_orientation_invalid(rule):
+    assert_invalid(f'image-orientation: {rule}')
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, value', (
+    ('test content(text)', (('test', (('content()', 'text'),)),)),
+    ('test content(before)', (('test', (('content()', 'before'),)),)),
+    ('test "string"', (('test', (('string', 'string'),)),)),
+    ('test1 "string", test2 "string"', (
+        ('test1', (('string', 'string'),)),
+        ('test2', (('string', 'string'),)))),
+    ('test attr(class)', (('test', (('attr()', ('class', 'string', '')),)),)),
+    ('test counter(count)', (
+        ('test', (('counter()', ('count', 'decimal')),)),)),
+    ('test counter(count, upper-roman)', (
+        ('test', (('counter()', ('count', 'upper-roman')),)),)),
+    ('test counters(count, ".")', (
+        ('test', (('counters()', ('count', '.', 'decimal')),)),)),
+    ('test counters(count, ".", upper-roman)', (
+        ('test', (('counters()', ('count', '.', 'upper-roman')),)),)),
+    ('test content(text) "string" attr(title) attr(title) counter(count)', (
+        ('test', (
+            ('content()', 'text'), ('string', 'string'),
+            ('attr()', ('title', 'string', '')),
+            ('attr()', ('title', 'string', '')),
+            ('counter()', ('count', 'decimal')))),)),
+))
+def test_string_set(rule, value):
+    assert get_value(f'string-set: {rule}') == value
 
 
 @assert_no_logs
 @pytest.mark.parametrize('rule', (
-    'list-style-type: symbols()',
-    'list-style-type: symbols(cyclic)',
-    'list-style-type: symbols(symbolic)',
-    'list-style-type: symbols(fixed)',
-    'list-style-type: symbols(alphabetic "a")',
-    'list-style-type: symbols(numeric "1")',
-    'list-style-type: symbols(test "a" "b")',
-    'list-style-type: symbols(fixed symbolic "a" "b")',
+    'test',
+    'test test1',
+    'test content(test)',
+    'test unknown()',
+    'test attr(id, class)',
 ))
-def test_function_symbols(rule):
-    assert_invalid(rule)
+def test_string_set_invalid(rule):
+    assert_invalid(f'string-set: {rule}')
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule, result', (
-    ('page-break-after: left', {'break_after': 'left'}),
-    ('page-break-before: always', {'break_before': 'page'}),
-    ('page-break-after: inherit', {'break_after': 'inherit'}),
-    ('page-break-before: inherit', {'break_before': 'inherit'}),
+@pytest.mark.parametrize('rule, value', (
+    ('normal', 'normal'),
+    ('break-word', 'break-word'),
+    ('inherit', 'inherit'),
 ))
-def test_page_break(rule, result):
-    assert expand_to_dict(rule) == result
+def test_overflow_wrap(rule, value):
+    assert get_value(f'overflow-wrap: {rule}') == value
 
 
 @assert_no_logs
 @pytest.mark.parametrize('rule', (
-    'page-break-after: top',
-    'page-break-before: 1px',
+    'none',
+    'normal, break-word',
 ))
-def test_page_break_invalid(rule):
-    assert_invalid(rule)
+def test_overflow_wrap_invalid(rule):
+    assert_invalid(f'overflow-wrap: {rule}')
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule, result', (
-    ('page-break-inside: avoid', {'break_inside': 'avoid'}),
-    ('page-break-inside: inherit', {'break_inside': 'inherit'}),
+@pytest.mark.parametrize('rule, value', (
+    ('blue', ()),
+    ('red', (None, ((1, 0, 0, 1),))),
+    ('blue 1%, lime,red 2em ', (
+        None,
+        ((0, 0, 1, 1), (0, 1, 0, 1), (1, 0, 0, 1)),
+        ((1, '%'), None, (2, 'em')))),
+    ('18deg, blue', (('angle', pi / 10),)),
+    ('4rad, blue', (('angle', 4),)),
+    ('.25turn, blue', (('angle', pi / 2),)),
+    ('100grad, blue', (('angle', pi / 2),)),
+    ('12rad, blue 1%, lime,red 2em ', (
+        ('angle', 12),
+        ((0, 0, 1, 1), (0, 1, 0, 1), (1, 0, 0, 1)),
+        ((1, '%'), None, (2, 'em')))),
+    ('to top, blue', (('angle', 0),)),
+    ('to right, blue', (('angle', pi / 2),)),
+    ('to bottom, blue', (('angle', pi),)),
+    ('to left, blue', (('angle', pi * 3 / 2),)),
+    ('to right, blue 1%, lime,red 2em ', (
+        ('angle', pi / 2),
+        ((0, 0, 1, 1), (0, 1, 0, 1), (1, 0, 0, 1)),
+        ((1, '%'), None, (2, 'em')))),
+    ('to top left, blue', (('corner', 'top_left'),)),
+    ('to left top, blue', (('corner', 'top_left'),)),
+    ('to top right, blue', (('corner', 'top_right'),)),
+    ('to right top, blue', (('corner', 'top_right'),)),
+    ('to bottom left, blue', (('corner', 'bottom_left'),)),
+    ('to left bottom, blue', (('corner', 'bottom_left'),)),
+    ('to bottom right, blue', (('corner', 'bottom_right'),)),
+    ('to right bottom, blue', (('corner', 'bottom_right'),)),
 ))
-def test_page_break_inside(rule, result):
-    assert expand_to_dict(rule) == result
+def test_linear_gradient(rule, value):
+    direction = get_default_value(value, 0, ('angle', pi))
+    colors = get_default_value(value, 1, ((0, 0, 1, 1),))
+    stop_positions = get_default_value(value, 2, (None,))
+    for repeating, prefix in ((False, ''), (True, 'repeating-')):
+        (type_, image), = get_value(
+            f'background-image: {prefix}linear-gradient({rule})')
+        assert type_ == 'linear-gradient'
+        assert isinstance(image, LinearGradient)
+        assert image.repeating == repeating
+        assert image.direction_type == direction[0]
+        if isinstance(image.direction, str):
+            image.direction == direction[1]
+        else:
+            assert image.direction == pytest.approx(direction[1])
+        assert image.colors == tuple(colors)
+        assert image.stop_positions == tuple(stop_positions)
 
 
 @assert_no_logs
 @pytest.mark.parametrize('rule', (
-    'page-break-inside: top',
+    ' ',
+    '1% blue',
+    'blue 10deg',
+    'blue 4',
+    'soylent-green 4px',
+    'red 4px 2px',
+    '18deg',
+    '10arc-minutes, blue',
+    '10px, blue',
+    'to 90deg, blue',
+    'to the top, blue',
+    'to up, blue',
+    'into top, blue',
+    'top, blue',
+    'to bottom up, blue',
+    'bottom left, blue',
 ))
-def test_page_break_inside_invalid(rule):
-    assert_invalid(rule)
+def test_linear_gradient_invalid(rule):
+    assert_invalid(f'background-image: linear-gradient({rule})')
+    assert_invalid(f'background-image: repeating-linear-gradient({rule})')
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule, result', (
-    ('columns: 1em', {'column_width': (1, 'em'), 'column_count': 'auto'}),
-    ('columns: auto', {'column_width': 'auto', 'column_count': 'auto'}),
-    ('columns: auto auto', {'column_width': 'auto', 'column_count': 'auto'}),
+@pytest.mark.parametrize('rule, value', (
+    ('blue', ()),
+    ('red', (None, None, None, ((1, 0, 0, 1),))),
+    ('blue 1%, lime,red 2em ', (
+        None, None, None, ((0, 0, 1, 1), (0, 1, 0, 1), (1, 0, 0, 1)),
+        ((1, '%'), None, (2, 'em')))),
+    ('circle, blue', ('circle',)),
+    ('ellipse, blue', ()),
+    ('ellipse closest-corner, blue', (
+        'ellipse', ('keyword', 'closest-corner'))),
+    ('circle closest-side, blue', (
+        'circle', ('keyword', 'closest-side'))),
+    ('farthest-corner circle, blue', (
+        'circle', ('keyword', 'farthest-corner'))),
+    ('farthest-side, blue', (None, (('keyword', 'farthest-side')))),
+    ('5ch, blue', ('circle', ('explicit', ((5, 'ch'), (5, 'ch'))))),
+    ('5ch circle, blue', ('circle', ('explicit', ((5, 'ch'), (5, 'ch'))))),
+    ('circle 5ch, blue', ('circle', ('explicit', ((5, 'ch'), (5, 'ch'))))),
+    ('10px 50px, blue', (None, ('explicit', ((10, 'px'), (50, 'px'))))),
+    ('10px 50px ellipse, blue', (
+        None, ('explicit', ((10, 'px'), (50, 'px'))))),
+    ('ellipse 10px 50px, blue', (
+        None, ('explicit', ((10, 'px'), (50, 'px'))))),
+    ('10px 50px, blue', (
+        None, ('explicit', ((10, 'px'), (50, 'px'))))),
+    ('at top 10% right, blue', (
+        None, None, ('right', (0, '%'), 'top', (10, '%')))),
+    ('circle at bottom, blue', (
+        'circle', None, ('left', (50, '%'), 'top', (100, '%')))),
+    ('circle at 10px, blue', (
+        'circle', None, ('left', (10, 'px'), 'top', (50, '%')))),
+    ('closest-side circle at right 5em, blue', (
+        'circle', ('keyword', 'closest-side'),
+        ('left', (100, '%'), 'top', (5, 'em')))),
 ))
-def test_columns(rule, result):
-    assert expand_to_dict(rule) == result
+def test_radial_gradient(rule, value):
+    shape = get_default_value(value, 0, 'ellipse')
+    size = get_default_value(value, 1, ('keyword', 'farthest-corner'))
+    center = get_default_value(value, 2, ('left', (50, '%'), 'top', (50, '%')))
+    colors = get_default_value(value, 3, ((0, 0, 1, 1),))
+    stop_positions = get_default_value(value, 4, (None,))
+    for repeating, prefix in ((False, ''), (True, 'repeating-')):
+        (type_, image), = get_value(
+            f'background-image: {prefix}radial-gradient({rule})')
+        assert type_ == 'radial-gradient'
+        assert isinstance(image, RadialGradient)
+        assert image.repeating == repeating
+        assert image.shape == shape
+        assert image.size_type == size[0]
+        assert image.size == size[1]
+        assert image.center == center
+        assert image.colors == tuple(colors)
+        assert image.stop_positions == tuple(stop_positions)
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule, reason', (
-    ('columns: 1px 2px', 'invalid'),
-    ('columns: auto auto auto', 'multiple'),
+@pytest.mark.parametrize('rule', (
+    ' ',
+    '1% blue',
+    'blue 10deg',
+    'blue 4',
+    'soylent-green 4px',
+    'red 4px 2px',
+    'circle',
+    'square, blue',
+    'closest-triangle, blue',
+    'center, blue',
+    'ellipse 5ch',
+    '5ch ellipse',
+    'circle 10px 50px, blue',
+    '10px 50px circle, blue',
+    '10%, blue',
+    '10% circle, blue',
+    'circle 10%, blue',
+    'at appex, blue',
 ))
-def test_columns_invalid(rule, reason):
-    assert_invalid(rule, reason)
-
-
-@assert_no_logs
-@pytest.mark.parametrize('rule, result', (
-    ('line-clamp: none', {
-        'max_lines': 'none', 'continue': 'auto', 'block_ellipsis': 'none'}),
-    ('line-clamp: 2', {
-        'max_lines': 2, 'continue': 'discard', 'block_ellipsis': 'auto'}),
-    ('line-clamp: 3 "…"', {
-        'max_lines': 3, 'continue': 'discard',
-        'block_ellipsis': ('string', '…')}),
-    ('line-clamp: inherit', {
-        'max_lines': 'inherit', 'continue': 'inherit',
-        'block_ellipsis': 'inherit'}),
-))
-def test_line_clamp(rule, result):
-    assert expand_to_dict(rule) == result
-
-
-@assert_no_logs
-@pytest.mark.parametrize('rule, reason', (
-    ('line-clamp: none none none', 'invalid'),
-    ('line-clamp: 1px', 'invalid'),
-    ('line-clamp: 0 "…"', 'invalid'),
-    ('line-clamp: 1px 2px', 'invalid'),
-))
-def test_line_clamp_invalid(rule, reason):
-    assert_invalid(rule, reason)
-
-
-@assert_no_logs
-@pytest.mark.parametrize('rule, result', (
-    ('text-align: start', {
-        'text_align_all': 'start', 'text_align_last': 'start'}),
-    ('text-align: right', {
-        'text_align_all': 'right', 'text_align_last': 'right'}),
-    ('text-align: justify', {
-        'text_align_all': 'justify', 'text_align_last': 'start'}),
-    ('text-align: justify-all', {
-        'text_align_all': 'justify', 'text_align_last': 'justify'}),
-    ('text-align: inherit', {
-        'text_align_all': 'inherit', 'text_align_last': 'inherit'}),
-))
-def test_text_align(rule, result):
-    assert expand_to_dict(rule) == result
-
-
-@assert_no_logs
-@pytest.mark.parametrize('rule, reason', (
-    ('text-align: none', 'invalid'),
-    ('text-align: start end', 'invalid'),
-    ('text-align: 1', 'invalid'),
-    ('text-align: left left', 'invalid'),
-    ('text-align: top', 'invalid'),
-    ('text-align: "right"', 'invalid'),
-    ('text-align: 1px', 'invalid'),
-))
-def test_text_align_invalid(rule, reason):
-    assert_invalid(rule, reason)
-
-
-@assert_no_logs
-@pytest.mark.parametrize('rule, result', (
-    ('image-orientation: none', {'image_orientation': 'none'}),
-    ('image-orientation: from-image', {'image_orientation': 'from-image'}),
-    ('image-orientation: 90deg', {'image_orientation': (pi / 2, False)}),
-    ('image-orientation: 30deg', {'image_orientation': (pi / 6, False)}),
-    ('image-orientation: 180deg flip', {'image_orientation': (pi, True)}),
-    ('image-orientation: 0deg flip', {'image_orientation': (0, True)}),
-    ('image-orientation: flip 90deg', {'image_orientation': (pi / 2, True)}),
-    ('image-orientation: flip', {'image_orientation': (0, True)}),
-))
-def test_image_orientation(rule, result):
-    assert expand_to_dict(rule) == result
-
-
-@assert_no_logs
-@pytest.mark.parametrize('rule, reason', (
-    ('image-orientation: none none', 'invalid'),
-    ('image-orientation: unknown', 'invalid'),
-    ('image-orientation: none flip', 'invalid'),
-    ('image-orientation: from-image flip', 'invalid'),
-    ('image-orientation: 10', 'invalid'),
-    ('image-orientation: 10 flip', 'invalid'),
-    ('image-orientation: flip 10', 'invalid'),
-    ('image-orientation: flip flip', 'invalid'),
-    ('image-orientation: 90deg flop', 'invalid'),
-    ('image-orientation: 90deg 180deg', 'invalid'),
-))
-def test_image_orientation_invalid(rule, reason):
-    assert_invalid(rule, reason)
-
-
-@assert_no_logs
-@pytest.mark.parametrize('expander', list(EXPANDERS) + list(PROPERTIES))
-def test_empty_value(expander):
-    assert_invalid(f'{expander}:', message='Ignored')
+def test_radial_gradient_invalid(rule):
+    assert_invalid(f'background-image: radial-gradient({rule})')
+    assert_invalid(f'background-image: repeating-radial-gradient({rule})')

@@ -44,5 +44,3 @@ def test_error_recovery(style):
         html, = page.children
         assert html.style['color'] == (0, 0, 1, 1)  # blue
     assert len(logs) == 2
-
-

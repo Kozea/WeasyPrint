@@ -180,7 +180,7 @@ def test_target_absolute():
 
 @assert_no_logs
 def test_target_absolute_non_root():
-    document = FakeHTML(string='''
+    page, = render_pages('''
       <style>
         a::after {
           content: target-counter('#h', page);
@@ -195,8 +195,7 @@ def test_target_absolute_non_root():
       <section><div><a id="span">link</a></div></section>
       <h1 id="h">abc</h1>
     ''')
-    page, = document.render().pages
-    html, = page._page_box.children
+    html, = page.children
     body, = html.children
     section, h1 = body.children
     div, = section.children
