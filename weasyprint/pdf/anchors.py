@@ -1,8 +1,8 @@
 """Insert anchors, links, bookmarks and inputs in PDFs."""
 
-import hashlib
 import io
 import mimetypes
+from hashlib import md5
 from os.path import basename
 from urllib.parse import unquote, urlsplit
 
@@ -302,7 +302,7 @@ def write_pdf_attachment(pdf, attachment, compress):
     except URLFetchingError as exception:
         LOGGER.error('Failed to load attachment: %s', exception)
         return
-    attachment.md5 = hashlib.md5(stream).hexdigest()
+    attachment.md5 = md5(stream, usedforsecurity=False).hexdigest()
 
     # TODO: Use the result object from a URL fetch operation to provide more
     # details on the possible filename and MIME type.

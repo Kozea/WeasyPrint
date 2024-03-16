@@ -63,7 +63,7 @@ class Font:
         # Never use the built-in hash function here: it’s not stable
         self.hash = ''.join(
             chr(65 + letter % 26) for letter
-            in md5(description_string).digest()[:6])
+            in md5(description_string, usedforsecurity=False).digest()[:6])
 
         # Name
         fields = description_string.split(b' ')
