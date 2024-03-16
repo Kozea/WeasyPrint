@@ -7,7 +7,6 @@ Note that Ghostscript is released under AGPL.
 """
 
 import io
-import os
 import shutil
 from subprocess import PIPE, run
 from tempfile import NamedTemporaryFile
@@ -22,20 +21,19 @@ from . import draw
 MAGIC_NUMBER = b'\x89\x50\x4e\x47\x0d\x0a\x1a\x0a'
 
 
-def document_write_png(self, target=None, resolution=96, antialiasing=1,
+def document_write_png(document, target=None, resolution=96, antialiasing=1,
                        zoom=4/30, split_images=False):
     # Use temporary files because gs on Windows doesn’t accept binary on stdin
-    with NamedTemporaryFile(delete=False) as pdf:
-        pdf.write(self.write_pdf(zoom=zoom))
-    command = [
-        'gs', '-q', '-dNOPAUSE', '-dBATCH', f'-dTextAlphaBits={antialiasing}',
-        f'-dGraphicsAlphaBits={antialiasing}', '-sDEVICE=png16m',
-        '-dPDFSTOPONERROR', f'-r{resolution / zoom}', '-sOutputFile=-',
-        pdf.name]
-    pngs = run(command, stdout=PIPE).stdout
-    os.remove(pdf.name)
+    with NamedTemporaryFile(buffering=0) as pdf:
+        document.write_pdf(pdf, zoom=zoom)
+        command = [
+            'gs', '-q', '-dNOPAUSE', '-dBATCH', f'-dTextAlphaBits={antialiasing}',
+            f'-dGraphicsAlphaBits={antialiasing}', '-sDEVICE=png16m',
+            '-dPDFSTOPONERROR', f'-r{resolution / zoom}', '-sOutputFile=-',
+            pdf.name]
+        pngs = run(command, stdout=PIPE).stdout
 
-    error = pngs.split(MAGIC_NUMBER)[0].decode().strip()
+    error = pngs.split(MAGIC_NUMBER)[0].decode().strip() or 'no output'
     assert pngs.startswith(MAGIC_NUMBER), f'Ghostscript error: {error}'
 
     if split_images:
@@ -74,9 +72,9 @@ def document_write_png(self, target=None, resolution=96, antialiasing=1,
             shutil.copyfileobj(png, fd)
 
 
-def html_write_png(self, target=None, font_config=None, counter_style=None,
+def html_write_png(document, target=None, font_config=None, counter_style=None,
                    resolution=96, **options):
-    document = self.render(font_config, counter_style, **options)
+    document = document.render(font_config, counter_style, **options)
     return document.write_png(target, resolution)
 
 
