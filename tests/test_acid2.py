@@ -12,6 +12,7 @@ from .testing_utils import assert_no_logs, capture_logs, resource_path
 def test_acid2(assert_pixels_equal):
     # Reduce image size and avoid Ghostscript rounding problems
     stylesheets = (CSS(string='@page { size: 500px 800px }'),)
+
     def render(filename):
         return HTML(resource_path(filename)).render(stylesheets=stylesheets)
 

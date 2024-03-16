@@ -26,11 +26,11 @@ def document_write_png(document, target=None, resolution=96, antialiasing=1,
     # Use temporary files because gs on Windows doesn’t accept binary on stdin
     with NamedTemporaryFile(buffering=0) as pdf:
         document.write_pdf(pdf, zoom=zoom)
-        command = [
-            'gs', '-q', '-dNOPAUSE', '-dBATCH', f'-dTextAlphaBits={antialiasing}',
-            f'-dGraphicsAlphaBits={antialiasing}', '-sDEVICE=png16m',
+        command = (
+            'gs', '-q', '-sDEVICE=png16m', f'-dTextAlphaBits={antialiasing}',
+            f'-dGraphicsAlphaBits={antialiasing}', '-dBATCH', '-dNOPAUSE',
             '-dPDFSTOPONERROR', f'-r{resolution / zoom}', '-sOutputFile=-',
-            pdf.name]
+            pdf.name)
         pngs = run(command, stdout=PIPE).stdout
 
     error = pngs.split(MAGIC_NUMBER)[0].decode().strip() or 'no output'
