@@ -148,12 +148,12 @@ def draw_stacking_context(stream, stacking_context):
             # Point 6
             if isinstance(box, boxes.InlineBox):
                 draw_inline_level(stream, stacking_context.page, box)
-            elif isinstance(box, boxes.ReplacedBox):
-                draw_replacedbox(stream, box)
 
             # Point 7
             for block in [box] + stacking_context.blocks_and_cells:
-                if block.children:
+                if isinstance(block, boxes.ReplacedBox):
+                    draw_replacedbox(stream, block)
+                elif block.children:
                     if block != box:
                         stream.begin_marked_content(block, mcid=True)
                     if isinstance(block.children[-1], boxes.LineBox):

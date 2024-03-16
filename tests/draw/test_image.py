@@ -153,6 +153,7 @@ def test_images(assert_pixels, filename, image):
       <style>
         @page { size: 8px }
         body { margin: 2px 0 0 2px; font-size: 0 }
+        img { overflow: hidden }
       </style>
       <div><img src="%s"></div>''' % filename)
 
@@ -169,7 +170,8 @@ def test_resized_images(assert_pixels, filename):
       <style>
         @page { size: 12px }
         body { margin: 2px 0 0 2px; font-size: 0 }
-        img { display: block; width: 8px; image-rendering: pixelated }
+        img { display: block; width: 8px; image-rendering: pixelated;
+              overflow: hidden }
       </style>
       <div><img src="%s"></div>''' % filename)
 
@@ -478,7 +480,7 @@ def test_image_cover(assert_pixels):
       <style>
         @page { size: 8px }
         body { margin: 2px 0 0 2px; font-size: 0 }
-        img { object-fit: cover; height: 4px; width: 2px }
+        img { object-fit: cover; height: 4px; width: 2px; overflow: hidden }
       </style>
       <img src="pattern.png">''')
 
@@ -489,7 +491,7 @@ def test_image_contain(assert_pixels):
       <style>
         @page { size: 8px }
         body { margin: 1px 0 0 2px; font-size: 0 }
-        img { object-fit: contain; height: 6px; width: 4px }
+        img { object-fit: contain; height: 6px; width: 4px; overflow: hidden }
       </style>
       <img src="pattern.png">''')
 
