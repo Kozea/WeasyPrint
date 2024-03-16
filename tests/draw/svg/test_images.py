@@ -163,7 +163,7 @@ def test_image_svg_align_slice_x(assert_pixels):
     ''', '''
       <style>
         @page { size: 8px 8px }
-        svg { display: block }
+        svg { display: block; overflow: hidden }
       </style>
       <svg width="8px" height="4px" viewBox="0 0 4 4"
            preserveAspectRatio="xMinYMin slice"
@@ -189,7 +189,7 @@ def test_image_svg_align_slice_y(assert_pixels):
     ''', '''
       <style>
         @page { size: 8px 8px }
-        svg { display: block }
+        svg { display: block; overflow: hidden }
       </style>
       <svg width="4px" height="8px" viewBox="0 0 4 4"
            preserveAspectRatio="xMinYMin slice"
