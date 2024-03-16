@@ -472,8 +472,11 @@ def draw_border(stream, box):
         return
 
     # We're not smart enough to find a good way to draw the borders :/. We must
-    # draw them side by side.
-    for side, width, color, style in zip(SIDES, widths, colors, styles):
+    # draw them side by side. Order is not specified, but this one seems to be
+    # close to what other browsers do.
+    values = tuple(zip(SIDES, widths, colors, styles))
+    for index in (2, 3, 1, 0):
+        side, width, color, style = values[index]
         if width == 0 or not color:
             continue
         with stacked(stream):
