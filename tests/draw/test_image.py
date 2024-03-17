@@ -2,8 +2,7 @@
 
 import pytest
 
-from ..testing_utils import (
-    FakeHTML, assert_no_logs, capture_logs, resource_path)
+from ..testing_utils import FakeHTML, assert_no_logs, capture_logs, resource_path
 
 centered_image = '''
     ________

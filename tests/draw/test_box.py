@@ -3,6 +3,7 @@
 import itertools
 
 import pytest
+
 from weasyprint import HTML
 
 from ..testing_utils import assert_no_logs

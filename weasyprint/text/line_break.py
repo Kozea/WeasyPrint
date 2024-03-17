@@ -6,10 +6,11 @@ from math import inf
 import pyphen
 
 from .constants import LST_TO_ISO, PANGO_WRAP_MODE
-from .ffi import (
+from .fonts import font_features, get_font_description
+
+from .ffi import (  # isort:skip
     ffi, gobject, pango, pangoft2, unicode_to_char_p, units_from_double,
     units_to_double)
-from .fonts import font_features, get_font_description
 
 
 def line_size(line, style):

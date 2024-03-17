@@ -619,9 +619,9 @@ class LinearGradient(Gradient):
                 for i in range(len(positions) - 1)]
 
             # Create cycles used to add colors
-            next_steps = cycle([0] + position_steps)
+            next_steps = cycle((0, *position_steps))
             next_colors = cycle(colors)
-            previous_steps = cycle([0] + position_steps[::-1])
+            previous_steps = cycle((0, *position_steps[::-1]))
             previous_colors = cycle(colors[::-1])
 
             # Add colors after last step
@@ -820,8 +820,7 @@ class RadialGradient(Gradient):
                 new_positions = [
                     position - 1 - full_repeat for position
                     in original_positions[-(i - 1):]]
-                positions = (
-                    [ratio - 1 - full_repeat] + new_positions + positions)
+                positions = (ratio - 1 - full_repeat, *new_positions, *positions)
                 return points, positions, colors
 
     def _resolve_size(self, width, height, center_x, center_y):

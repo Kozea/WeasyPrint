@@ -1,12 +1,12 @@
 """Test the CSS parsing, cascade, inherited and computed values."""
 
-
 import pytest
+
 from weasyprint import CSS, default_url_fetcher
 from weasyprint.css import find_stylesheets, get_all_computed_styles
 from weasyprint.urls import path2url
 
-from ..testing_utils import (
+from ..testing_utils import (  # isort:skip
     BASE_URL, FakeHTML, assert_no_logs, capture_logs, resource_path)
 
 

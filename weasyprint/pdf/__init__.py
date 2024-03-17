@@ -7,11 +7,12 @@ from ..html import W3C_DATE_RE
 from ..logger import LOGGER, PROGRESS_LOGGER
 from ..matrix import Matrix
 from . import pdfa, pdfua
-from .anchors import (
-    add_annotations, add_inputs, add_links, add_outlines, resolve_links,
-    write_pdf_attachment)
 from .fonts import build_fonts_dictionary
 from .stream import Stream
+
+from .anchors import (  # isort:skip
+    add_annotations, add_inputs, add_links, add_outlines, resolve_links,
+    write_pdf_attachment)
 
 VARIANTS = {
     name: data for variants in (pdfa.VARIANTS, pdfua.VARIANTS)

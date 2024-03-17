@@ -87,7 +87,7 @@ for unit in ANGLE_TO_RADIANS:
     ATTR_FALLBACKS[unit] = ('angle', Dimension('0', unit))
 
 
-class InvalidValues(ValueError):
+class InvalidValues(ValueError):  # noqa: N818
     """Invalid or unsupported values for a known CSS property."""
 
 

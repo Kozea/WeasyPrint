@@ -4,6 +4,7 @@ from math import pi
 
 import pytest
 import tinycss2
+
 from weasyprint.css import preprocess_declarations
 from weasyprint.css.validation.properties import PROPERTIES
 from weasyprint.images import LinearGradient, RadialGradient
@@ -249,19 +250,21 @@ def test_background_image_invalid(rule):
     ('bottom 3px left 10%', (('left', (10, '%'), 'bottom', (3, 'px')),)),
     ('right 10% top 3px', (('right', (10, '%'), 'top', (3, 'px')),)),
     ('top 3px right 10%', (('right', (10, '%'), 'top', (3, 'px')),)),
-) + tuple(
-    (css_x, (('left', val_x, 'top', (50, '%')),))
-    for css_x, val_x in (
-        ('left', (0, '%')), ('center', (50, '%')), ('right', (100, '%')),
-        ('4.5%', (4.5, '%')), ('12px', (12, 'px')))
-) + tuple(
-    (f'{css_x} {css_y}', (('left', val_x, 'top', val_y),))
-    for css_x, val_x in (
-        ('left', (0, '%')), ('center', (50, '%')), ('right', (100, '%')),
-        ('4.5%', (4.5, '%')), ('12px', (12, 'px')))
-    for css_y, val_y in (
-        ('top', (0, '%')), ('center', (50, '%')), ('bottom', (100, '%')),
-        ('7%', (7, '%')), ('1.5px', (1.5, 'px')))
+    *tuple(
+        (css_x, (('left', val_x, 'top', (50, '%')),))
+        for css_x, val_x in (
+                ('left', (0, '%')), ('center', (50, '%')), ('right', (100, '%')),
+                ('4.5%', (4.5, '%')), ('12px', (12, 'px')))
+    ),
+    *tuple(
+        (f'{css_x} {css_y}', (('left', val_x, 'top', val_y),))
+        for css_x, val_x in (
+                ('left', (0, '%')), ('center', (50, '%')), ('right', (100, '%')),
+                ('4.5%', (4.5, '%')), ('12px', (12, 'px')))
+        for css_y, val_y in (
+                ('top', (0, '%')), ('center', (50, '%')), ('bottom', (100, '%')),
+                ('7%', (7, '%')), ('1.5px', (1.5, 'px')))
+    ),
 ))
 def test_background_position(rule, value):
     assert get_value(f'background-position: {rule}') == value

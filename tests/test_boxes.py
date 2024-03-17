@@ -1,11 +1,12 @@
 """Test that the "before layout" box tree is correctly constructed."""
 
 import pytest
+
 from weasyprint.css import PageType, get_all_computed_styles
 from weasyprint.formatting_structure import boxes, build
 from weasyprint.layout.page import set_page_type_computed_styles
 
-from .testing_utils import (
+from .testing_utils import (  # isort:skip
     FakeHTML, assert_no_logs, assert_tree, capture_logs, parse, parse_all,
     render_pages)
 

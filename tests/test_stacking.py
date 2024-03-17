@@ -1,6 +1,7 @@
 """Test CSS stacking contexts."""
 
 import pytest
+
 from weasyprint.stacking import StackingContext
 
 from .testing_utils import assert_no_logs, render_pages, serialize

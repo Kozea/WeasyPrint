@@ -1,6 +1,7 @@
 """Tests for floating boxes layout."""
 
 import pytest
+
 from weasyprint.formatting_structure import boxes
 
 from ..testing_utils import assert_no_logs, render_pages

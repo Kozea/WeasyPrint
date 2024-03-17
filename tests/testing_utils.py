@@ -4,8 +4,6 @@ import contextlib
 import functools
 import logging
 import sys
-import threading
-import wsgiref.simple_server
 from pathlib import Path
 
 from weasyprint import CSS, DEFAULT_OPTIONS, HTML, images
@@ -123,34 +121,6 @@ def assert_no_logs(function):
     return wrapper
 
 
-@contextlib.contextmanager
-def http_server(handlers):
-    def wsgi_app(environ, start_response):
-        handler = handlers.get(environ['PATH_INFO'])
-        if handler:
-            status = str('200 OK')
-            response, headers = handler(environ)
-            headers = [(str(name), str(value)) for name, value in headers]
-        else:  # pragma: no cover
-            status = str('404 Not Found')
-            response = b''
-            headers = []
-        start_response(status, headers)
-        return [response]
-
-    # Port 0: let the OS pick an available port number
-    # https://stackoverflow.com/a/1365284/1162888
-    server = wsgiref.simple_server.make_server('127.0.0.1', 0, wsgi_app)
-    _host, port = server.socket.getsockname()
-    thread = threading.Thread(target=server.serve_forever)
-    thread.start()
-    try:
-        yield f'http://127.0.0.1:{port}'
-    finally:
-        server.shutdown()
-        thread.join()
-
-
 def serialize(box_list):
     """Transform a box list into a structure easier to compare for testing."""
     return [(
@@ -182,7 +152,7 @@ def tree_position(box_list, matcher):
         elif hasattr(box, 'children'):
             position = tree_position(box.children, matcher)
             if position:
-                return [i] + position
+                return [i, *position]
 
 
 def _parse_base(html_content, base_url=BASE_URL):

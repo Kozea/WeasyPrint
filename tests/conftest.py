@@ -14,6 +14,7 @@ from tempfile import NamedTemporaryFile
 
 import pytest
 from PIL import Image
+
 from weasyprint import HTML
 from weasyprint.document import Document
 

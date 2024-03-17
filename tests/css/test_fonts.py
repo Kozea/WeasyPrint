@@ -3,6 +3,7 @@
 from math import isclose
 
 import pytest
+
 from weasyprint import CSS
 from weasyprint.css import get_all_computed_styles
 from weasyprint.css.computed_values import strut_layout

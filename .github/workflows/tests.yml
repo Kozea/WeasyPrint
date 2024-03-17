@@ -42,6 +42,4 @@ jobs:
       - name: Launch tests
         run: python -m pytest -n auto
       - name: Check coding style
-        run: python -m flake8
-      - name: Check imports order
-        run: python -m isort . --check --diff
+        run: python -m ruff check

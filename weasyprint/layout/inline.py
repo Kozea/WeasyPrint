@@ -13,8 +13,7 @@ from .float import avoid_collisions, float_layout
 from .leader import handle_leader
 from .min_max import handle_min_max_width
 from .percent import resolve_one_percentage, resolve_percentages
-from .preferred import (
-    inline_min_content_width, shrink_to_fit, trailing_whitespace_size)
+from .preferred import inline_min_content_width, shrink_to_fit, trailing_whitespace_size
 from .replaced import inline_replaced_box_layout
 from .table import find_in_flow_baseline, table_wrapper_width
 
@@ -294,8 +293,7 @@ def first_letter_to_box(box, skip_stack, first_letter_style):
                 letter_box = boxes.InlineBox(
                     f'{box.element_tag}::first-letter', letter_style,
                     box.element, [child])
-                box.children = (
-                    (letter_box,) + tuple(box.children[1:]))
+                box.children = ((letter_box, *box.children[1:]))
             elif child.text:
                 character_found = False
                 if skip_stack:
@@ -325,7 +323,7 @@ def first_letter_to_box(box, skip_stack, first_letter_style):
                             f'{box.element_tag}::first-letter', letter_style,
                             box.element, first_letter)
                         letter_box.children = (text_box,)
-                        box.children = (letter_box,) + tuple(box.children)
+                        box.children = (letter_box, *box.children)
                     else:
                         letter_box = boxes.BlockBox(
                             f'{box.element_tag}::first-letter',
@@ -339,7 +337,7 @@ def first_letter_to_box(box, skip_stack, first_letter_style):
                             f'{box.element_tag}::first-letter', letter_style,
                             box.element, first_letter)
                         line_box.children = (text_box,)
-                        box.children = (letter_box,) + tuple(box.children)
+                        box.children = (letter_box, *box.children)
                     build.process_text_transform(text_box)
                     if skip_stack and child_skip_stack:
                         index, = skip_stack
@@ -847,7 +845,7 @@ def split_inline_box(context, box, position_x, max_x, bottom_space, skip_stack,
                 skip_stack=None)
 
     if resume_at is not None:
-        index = tuple(resume_at)[0]
+        index = next(iter(resume_at))
         if index < float_resume_index:
             resume_at = {float_resume_index: None}
 

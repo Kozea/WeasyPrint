@@ -1,10 +1,13 @@
 """Test the public API."""
 
+import contextlib
 import gzip
 import io
 import os
 import sys
+import threading
 import unicodedata
+import wsgiref.simple_server
 import zlib
 from functools import partial
 from pathlib import Path
@@ -12,13 +15,13 @@ from urllib.parse import urljoin, uses_relative
 
 import pytest
 from PIL import Image
+
 from weasyprint import CSS, HTML, __main__, default_url_fetcher
 from weasyprint.pdf.anchors import resolve_links
 from weasyprint.urls import path2url
 
 from .draw import parse_pixels
-from .testing_utils import (
-    FakeHTML, assert_no_logs, capture_logs, http_server, resource_path)
+from .testing_utils import FakeHTML, assert_no_logs, capture_logs, resource_path
 
 try:
     # Available in Python 3.11+
@@ -27,7 +30,7 @@ except ImportError:
     # Backported from Python 3.11
     from contextlib import AbstractContextManager
 
-    class chdir(AbstractContextManager):
+    class chdir(AbstractContextManager):  # noqa: N801
         def __init__(self, path):
             self.path = path
             self._old_cwd = []
@@ -99,12 +102,12 @@ def _check_doc1(html, has_base_url=True):
 def _run(args, stdin=b''):
     stdin = io.BytesIO(stdin)
     stdout = io.BytesIO()
-    HTML = partial(FakeHTML, force_uncompressed_pdf=False)
+    HTML = partial(FakeHTML, force_uncompressed_pdf=False)  # noqa: N806
     __main__.main(args.split(), stdin=stdin, stdout=stdout, HTML=HTML)
     return stdout.getvalue()
 
 
-class _fake_file:
+class FakeFile:
     def __init__(self):
         self.chunks = []
 
@@ -261,10 +264,10 @@ def test_python_render(assert_pixels_equal, tmp_path):
     assert pdf_bytes.startswith(b'%PDF')
     check_png_pattern(assert_pixels_equal, png_bytes)
 
-    png_file = _fake_file()
+    png_file = FakeFile()
     html.write_png(png_file, stylesheets=[css])
     assert png_file.getvalue() == png_bytes
-    pdf_file = _fake_file()
+    pdf_file = FakeFile()
     html.write_pdf(pdf_file, stylesheets=[css])
     assert pdf_file.getvalue().startswith(b'%PDF')
 
@@ -1184,6 +1187,33 @@ def test_http():
         gzip_file.write(data)
         gzip_file.close()
         return file_obj.getvalue()
+
+    @contextlib.contextmanager
+    def http_server(handlers):
+        def wsgi_app(environ, start_response):
+            handler = handlers.get(environ['PATH_INFO'])
+            if handler:
+                status = str('200 OK')
+                response, headers = handler(environ)
+                headers = [(str(name), str(value)) for name, value in headers]
+            else:  # pragma: no cover
+                status = str('404 Not Found')
+                response = b''
+                headers = []
+            start_response(status, headers)
+            return [response]
+
+        # Port 0: let the OS pick an available port number
+        # https://stackoverflow.com/a/1365284/1162888
+        server = wsgiref.simple_server.make_server('127.0.0.1', 0, wsgi_app)
+        _host, port = server.socket.getsockname()
+        thread = threading.Thread(target=server.serve_forever)
+        thread.start()
+        try:
+            yield f'http://127.0.0.1:{port}'
+        finally:
+            server.shutdown()
+            thread.join()
 
     with http_server({
         '/gzip': lambda env: (

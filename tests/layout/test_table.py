@@ -1,11 +1,11 @@
 """Tests for layout of tables."""
 
 import pytest
+
 from weasyprint.formatting_structure import boxes
 from weasyprint.layout.table import collapse_table_borders
 
-from ..testing_utils import (
-    assert_no_logs, capture_logs, parse_all, render_pages)
+from ..testing_utils import assert_no_logs, capture_logs, parse_all, render_pages
 
 
 def _get_grid(html, grid_width, grid_height):
@@ -1961,7 +1961,7 @@ def test_table_vertical_align(assert_pixels):
           </td>
         </tr>
       </table>
-    ''')  # noqa
+    ''')
 
 
 @assert_no_logs

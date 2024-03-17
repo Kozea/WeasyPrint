@@ -2,7 +2,7 @@
 
 import pytest
 
-from ..testing_utils import (
+from ..testing_utils import (  # isort:skip
     FakeHTML, assert_no_logs, assert_tree, parse_all, render_pages)
 
 RENDER = FakeHTML(string='')._ua_counter_style()[0].render_value

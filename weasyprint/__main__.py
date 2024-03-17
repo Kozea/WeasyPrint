@@ -137,7 +137,7 @@ PARSER.add_argument(
 PARSER.set_defaults(**DEFAULT_OPTIONS)
 
 
-def main(argv=None, stdout=None, stdin=None, HTML=HTML):
+def main(argv=None, stdout=None, stdin=None, HTML=HTML):  # noqa: N803
     """The ``weasyprint`` program takes at least two arguments:
 
     .. code-block:: sh

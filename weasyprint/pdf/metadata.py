@@ -1,7 +1,6 @@
 """PDF metadata stream generation."""
 
-from xml.etree.ElementTree import (
-    Element, SubElement, register_namespace, tostring)
+from xml.etree.ElementTree import Element, SubElement, register_namespace, tostring
 
 import pydyf
 

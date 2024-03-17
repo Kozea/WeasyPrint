@@ -11,10 +11,11 @@ from fontTools.ttLib import TTFont, woff2
 
 from ..logger import LOGGER
 from ..urls import FILESYSTEM_ENCODING, fetch
-from .constants import (
+
+from .constants import (  # isort:skip
     CAPS_KEYS, EAST_ASIAN_KEYS, FONTCONFIG_STRETCH, FONTCONFIG_STYLE,
     FONTCONFIG_WEIGHT, LIGATURE_KEYS, NUMERIC_KEYS, PANGO_STRETCH, PANGO_STYLE)
-from .ffi import (
+from .ffi import (  # isort:skip
     ffi, fontconfig, gobject, pango, pangoft2, unicode_to_char_p,
     units_from_double)
 

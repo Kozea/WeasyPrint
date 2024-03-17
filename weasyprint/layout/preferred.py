@@ -431,8 +431,8 @@ def table_and_columns_preferred_widths(context, box, outer=True):
             box, outer=True, width=block_max_content_width(context, table))
         result = ([], [], [], [], total_horizontal_border_spacing, [])
         context.tables[table] = result = {
-            False: (min_width, max_width) + result,
-            True: (outer_min_width, outer_max_width) + result,
+            False: (min_width, max_width, *result),
+            True: (outer_min_width, outer_max_width, *result),
         }
         return result[outer]
 
@@ -616,9 +616,9 @@ def table_and_columns_preferred_widths(context, box, outer=True):
     table_min_content_width = (
         total_horizontal_border_spacing + sum(min_content_widths))
     table_max_content_width = (
-        total_horizontal_border_spacing + max(
-            [sum(max_content_widths), large_percentage_contribution] +
-            small_percentage_contributions))
+        total_horizontal_border_spacing + max([
+            sum(max_content_widths), large_percentage_contribution,
+            *small_percentage_contributions]))
 
     if table.style['width'] != 'auto' and table.style['width'].unit == 'px':
         # "percentages on the following properties are treated instead as
@@ -644,10 +644,8 @@ def table_and_columns_preferred_widths(context, box, outer=True):
         min_content_widths, max_content_widths, intrinsic_percentages,
         constrainedness, total_horizontal_border_spacing, zipped_grid)
     context.tables[table] = result = {
-        False: (table_min_content_width, table_max_content_width) + result,
-        True: (
-            (table_outer_min_content_width, table_outer_max_content_width) +
-            result),
+        False: (table_min_content_width, table_max_content_width, *result),
+        True: (table_outer_min_content_width, table_outer_max_content_width, *result),
     }
     return result[outer]
 

@@ -3,6 +3,7 @@
 import io
 
 from PIL import Image
+
 from weasyprint import CSS, HTML
 
 from .testing_utils import assert_no_logs, capture_logs, resource_path

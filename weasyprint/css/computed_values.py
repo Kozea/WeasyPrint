@@ -10,8 +10,7 @@ from ..text.ffi import ffi, pango, units_to_double
 from ..text.line_break import Layout, first_line_metrics
 from ..urls import get_link_attribute
 from .properties import INITIAL_VALUES, ZERO_PIXELS, Dimension
-from .utils import (
-    ANGLE_TO_RADIANS, LENGTH_UNITS, LENGTHS_TO_PIXELS, safe_urljoin)
+from .utils import ANGLE_TO_RADIANS, LENGTH_UNITS, LENGTHS_TO_PIXELS, safe_urljoin
 
 # Value in pixels of font-size for <absolute-size> keywords: 12pt (16px) for
 # medium, and scaling factors given in CSS3 for others:
