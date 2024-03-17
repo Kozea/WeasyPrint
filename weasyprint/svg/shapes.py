@@ -69,8 +69,8 @@ def rect(svg, node, font_size):
 
     # Inspired by Cairo Cookbook
     # https://cairographics.org/cookbook/roundedrectangles/
-    ARC_TO_BEZIER = 4 * (2 ** .5 - 1) / 3
-    c1, c2 = ARC_TO_BEZIER * rx, ARC_TO_BEZIER * ry
+    arc_to_bezier = 4 * (2 ** .5 - 1) / 3
+    c1, c2 = arc_to_bezier * rx, arc_to_bezier * ry
 
     svg.stream.move_to(x + rx, y)
     svg.stream.line_to(x + width - rx, y)

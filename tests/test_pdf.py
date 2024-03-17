@@ -6,13 +6,13 @@ import re
 from codecs import BOM_UTF16_BE
 
 import pytest
+
 from weasyprint import Attachment
 from weasyprint.document import Document, DocumentMetadata
 from weasyprint.text.fonts import FontConfiguration
 from weasyprint.urls import path2url
 
-from .testing_utils import (
-    FakeHTML, assert_no_logs, capture_logs, resource_path)
+from .testing_utils import FakeHTML, assert_no_logs, capture_logs, resource_path
 
 # Top and right positions in points, rounded to the default float precision of
 # 6 digits, a rendered by pydyf

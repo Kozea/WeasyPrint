@@ -1,6 +1,7 @@
 """Tests for images layout."""
 
 import pytest
+
 from weasyprint.formatting_structure import boxes
 
 from ..testing_utils import assert_no_logs, capture_logs, render_pages

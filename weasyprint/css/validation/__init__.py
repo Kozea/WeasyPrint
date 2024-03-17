@@ -1,10 +1,8 @@
 """Validate properties, expanders and descriptors."""
 
-
 from cssselect2 import SelectorError, compile_selector_list
 from tinycss2 import parse_blocks_contents, serialize
-from tinycss2.ast import (
-    FunctionBlock, IdentToken, LiteralToken, WhitespaceToken)
+from tinycss2.ast import FunctionBlock, IdentToken, LiteralToken, WhitespaceToken
 
 from ... import LOGGER
 from ..utils import InvalidValues, remove_whitespace

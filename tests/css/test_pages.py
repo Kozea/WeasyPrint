@@ -2,13 +2,12 @@
 
 import pytest
 import tinycss2
+
 from weasyprint import CSS
-from weasyprint.css import (
-    PageType, get_all_computed_styles, parse_page_selectors)
+from weasyprint.css import PageType, get_all_computed_styles, parse_page_selectors
 from weasyprint.layout.page import set_page_type_computed_styles
 
-from ..testing_utils import (
-    FakeHTML, assert_no_logs, render_pages, resource_path)
+from ..testing_utils import FakeHTML, assert_no_logs, render_pages, resource_path
 
 
 @assert_no_logs

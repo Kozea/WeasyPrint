@@ -85,9 +85,9 @@ __all__ = [
 
 
 # Import after setting the version, as the version is used in other modules
-from .urls import (  # noqa isort:skip
+from .urls import (  # noqa: I001, E402
     fetch, default_url_fetcher, path2url, ensure_url, url_is_absolute)
-from .logger import LOGGER, PROGRESS_LOGGER  # noqa isort:skip
+from .logger import LOGGER, PROGRESS_LOGGER  # noqa: E402
 # Some imports are at the end of the file (after the CSS class)
 # to work around circular imports.
 
@@ -416,8 +416,8 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
         yield 'string', string, base_url, None
 
 # Work around circular imports.
-from .css import preprocess_stylesheet  # noqa isort:skip
-from .html import (  # noqa isort:skip
+from .css import preprocess_stylesheet  # noqa: I001, E402
+from .html import (  # noqa: E402
     HTML5_UA_COUNTER_STYLE, HTML5_UA_STYLESHEET, HTML5_UA_FORM_STYLESHEET,
     HTML5_PH_STYLESHEET)
-from .document import Document, Page  # noqa isort:skip
+from .document import Document, Page  # noqa: E402

@@ -1,6 +1,7 @@
 """Tests for inlines layout."""
 
 import pytest
+
 from weasyprint.formatting_structure import boxes
 
 from ..testing_utils import SANS_FONTS, assert_no_logs, render_pages

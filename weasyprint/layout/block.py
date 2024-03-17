@@ -48,8 +48,7 @@ def block_level_layout(context, box, bottom_space, skip_stack,
                     if not context.forced_break:
                         box.margin_top = 0
 
-        collapsed_margin = collapse_margin(
-            adjoining_margins + [box.margin_top])
+        collapsed_margin = collapse_margin([*adjoining_margins, box.margin_top])
         box.clearance = get_clearance(context, box, collapsed_margin)
         if box.clearance is not None:
             top_border_edge = box.position_y + collapsed_margin + box.clearance
@@ -84,7 +83,7 @@ def block_level_layout_switch(context, box, bottom_space, skip_stack,
             page_is_empty, absolute_boxes, fixed_boxes)
     else:  # pragma: no cover
         raise TypeError(f'Layout for {type(box).__name__} not handled yet')
-    return result + (None,)
+    return (*result, None)
 
 
 def block_box_layout(context, box, bottom_space, skip_stack,
@@ -111,7 +110,7 @@ def block_box_layout(context, box, bottom_space, skip_stack,
                     context, box, bottom_space, skip_stack,
                     containing_block, page_is_empty, absolute_boxes,
                     fixed_boxes, adjoining_margins)
-        return result + (None,)
+        return (*result, None)
     elif box.is_table_wrapper:
         table_wrapper_width(
             context, box, (containing_block.width, containing_block.height))
@@ -469,7 +468,7 @@ def _in_flow_layout(context, box, index, child, new_children, page_is_empty,
                     if not context.forced_break:
                         child_margin_top = 0
             new_collapsed_margin = collapse_margin(
-                adjoining_margins + [child_margin_top])
+                [*adjoining_margins, child_margin_top])
             collapsed_margin_difference = (
                 new_collapsed_margin - old_collapsed_margin)
             for previous_new_child in new_children:
@@ -1013,7 +1012,7 @@ def find_earlier_page_break(context, children, absolute_boxes, fixed_boxes):
                 if result:
                     new_grand_children, resume_at = result
                     new_child = child.copy_with_children(new_grand_children)
-                    new_children = list(children[:index]) + [new_child]
+                    new_children = [*children[:index], new_child]
 
                     # Re-add footer at the end of split table
                     # TODO: fix table height and footer position

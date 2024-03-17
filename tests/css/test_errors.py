@@ -1,6 +1,7 @@
 """Test CSS errors and warnings."""
 
 import pytest
+
 from weasyprint import CSS
 
 from ..testing_utils import assert_no_logs, capture_logs, render_pages

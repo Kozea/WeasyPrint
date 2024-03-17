@@ -249,17 +249,15 @@ def spread_linear_gradient(spread, positions, colors, x1, y1, x2, y2,
 
         # Create cycles used to add colors
         if spread == 'repeat':
-            next_steps = cycle([0] + position_steps)
+            next_steps = cycle((0, *position_steps))
             next_colors = cycle(colors)
-            previous_steps = cycle([0] + position_steps[::-1])
+            previous_steps = cycle((0, *position_steps[::-1]))
             previous_colors = cycle(colors[::-1])
         else:
             assert spread == 'reflect'
-            next_steps = cycle(
-                [0] + position_steps[::-1] + [0] + position_steps)
+            next_steps = cycle((0, *position_steps[::-1], 0, *position_steps))
             next_colors = cycle(colors[::-1] + colors)
-            previous_steps = cycle(
-                [0] + position_steps + [0] + position_steps[::-1])
+            previous_steps = cycle((0, *position_steps, 0, *position_steps[::-1]))
             previous_colors = cycle(colors + colors[::-1])
 
         # Normalize bounding box
@@ -402,8 +400,7 @@ def spread_radial_gradient(spread, positions, colors, fx, fy, fr, cx, cy, r,
                 new_positions = [
                     position - 1 - full_repeat for position
                     in original_positions[-(i - 1):]]
-                positions = (
-                    [ratio - 1 - full_repeat] + new_positions + positions)
+                positions = [ratio - 1 - full_repeat, *new_positions, *positions]
                 break
 
     coords = (fx, fy, fr, cx, cy, r)

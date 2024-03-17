@@ -2,6 +2,7 @@
 
 import pytest
 import tinycss2
+
 from weasyprint.css import preprocess_stylesheet
 from weasyprint.css.validation.descriptors import preprocess_descriptors
 

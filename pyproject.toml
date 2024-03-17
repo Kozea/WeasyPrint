@@ -52,7 +52,7 @@ Donation = 'https://opencollective.com/courtbouillon'
 
 [project.optional-dependencies]
 doc = ['sphinx', 'sphinx_rtd_theme']
-test = ['pytest', 'isort', 'flake8']
+test = ['pytest', 'ruff']
 
 [project.scripts]
 weasyprint = 'weasyprint.__main__:main'
@@ -68,6 +68,6 @@ include = ['tests/*', 'weasyprint/*']
 exclude_lines = ['pragma: no cover', 'def __repr__', 'raise NotImplementedError']
 omit = ['.*']
 
-[tool.isort]
-default_section = 'FIRSTPARTY'
-multi_line_output = 4
+[tool.ruff.lint]
+select = ['E', 'W', 'F', 'I', 'N', 'RUF']
+ignore = ['RUF001', 'RUF002', 'RUF003']

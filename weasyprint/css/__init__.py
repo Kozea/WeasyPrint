@@ -26,13 +26,13 @@ from ..logger import LOGGER, PROGRESS_LOGGER
 from ..urls import URLFetchingError, get_url_attribute, url_join
 from . import counters, media_queries
 from .computed_values import COMPUTER_FUNCTIONS
-from .properties import (
-    INHERITED, INITIAL_NOT_COMPUTED, INITIAL_VALUES, ZERO_PIXELS)
-from .utils import (
-    InvalidValues, Pending, check_var_function, get_url, parse_function,
-    remove_whitespace)
+from .properties import INHERITED, INITIAL_NOT_COMPUTED, INITIAL_VALUES, ZERO_PIXELS
 from .validation import preprocess_declarations
 from .validation.descriptors import preprocess_descriptors
+
+from .utils import (  # isort:skip
+    InvalidValues, Pending, check_var_function, get_url, parse_function,
+    remove_whitespace)
 
 # Reject anything not in here:
 PSEUDO_ELEMENTS = (

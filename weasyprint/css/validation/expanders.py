@@ -6,11 +6,12 @@ from tinycss2.ast import DimensionToken, IdentToken, NumberToken
 from tinycss2.color3 import parse_color
 
 from ..properties import INITIAL_VALUES
-from ..utils import (
-    InvalidValues, Pending, check_var_function, get_keyword,
-    get_single_keyword, split_on_comma)
 from .descriptors import expand_font_variant
-from .properties import (
+
+from ..utils import (  # isort:skip
+    InvalidValues, Pending, check_var_function, get_keyword, get_single_keyword,
+    split_on_comma)
+from .properties import (  # isort:skip
     background_attachment, background_image, background_position,
     background_repeat, background_size, block_ellipsis, border_style,
     border_width, box, column_count, column_width, flex_basis, flex_direction,
