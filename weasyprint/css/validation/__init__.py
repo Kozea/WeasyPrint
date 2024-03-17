@@ -2,7 +2,7 @@
 
 
 from cssselect2 import SelectorError, compile_selector_list
-from tinycss2 import parse_declaration_list, serialize
+from tinycss2 import parse_blocks_contents, serialize
 from tinycss2.ast import FunctionBlock, LiteralToken
 
 from ... import LOGGER
@@ -116,6 +116,12 @@ def preprocess_declarations(base_url, declarations, prelude=None):
     Return a iterable of ``(name, value, important)`` tuples.
 
     """
+    if prelude is not None:
+        try:
+            selectors = compile_selector_list(prelude)
+        except SelectorError as exc:
+            raise SelectorError(f"'{serialize(prelude)}'")
+
     for declaration in declarations:
         if declaration.type == 'error':
             LOGGER.warning(
@@ -124,6 +130,8 @@ def preprocess_declarations(base_url, declarations, prelude=None):
                 declaration.source_line, declaration.source_column)
 
         if declaration.type == 'qualified-rule':
+            if prelude is None:
+                continue
             declaration_prelude = declaration.prelude
             if LiteralToken(1, 1, '&') in declaration.prelude:
                 is_token = LiteralToken(1, 1, ':'), FunctionBlock(1, 1, 'is', prelude)
@@ -134,7 +142,7 @@ def preprocess_declarations(base_url, declarations, prelude=None):
                     else:
                         declaration_prelude.append(token)
             yield from preprocess_declarations(
-                base_url, parse_declaration_list(declaration.content),
+                base_url, parse_blocks_contents(declaration.content),
                 declaration_prelude)
 
         if declaration.type != 'declaration':
@@ -200,10 +208,6 @@ def preprocess_declarations(base_url, declarations, prelude=None):
         important = declaration.important
         for long_name, value in result:
             if prelude is not None:
-                try:
-                    selectors = compile_selector_list(prelude)
-                except SelectorError as exc:
-                    raise SelectorError(f"'{serialize(prelude)}'")
                 declaration = (long_name.replace('-', '_'), value, important)
                 yield selectors, declaration
             else:

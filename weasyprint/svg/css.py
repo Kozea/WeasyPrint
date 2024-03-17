@@ -35,7 +35,7 @@ def parse_declarations(input):
     """Parse declarations in a given rule content."""
     normal_declarations = []
     important_declarations = []
-    for declaration in tinycss2.parse_declaration_list(input):
+    for declaration in tinycss2.parse_blocks_contents(input):
         # TODO: warn on error
         # if declaration.type == 'error':
         if (declaration.type == 'declaration' and
