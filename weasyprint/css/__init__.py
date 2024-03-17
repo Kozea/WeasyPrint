@@ -298,7 +298,7 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
 
     """
     def check_style_attribute(element, style_attribute):
-        declarations = tinycss2.parse_declaration_list(style_attribute)
+        declarations = tinycss2.parse_blocks_contents(style_attribute)
         return element, declarations, base_url
 
     for element in tree.iter():
@@ -924,7 +924,7 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                 logger_level = WARNING
                 selectors_declarations = list(
                     preprocess_declarations(
-                        base_url, tinycss2.parse_declaration_list(rule.content),
+                        base_url, tinycss2.parse_blocks_contents(rule.content),
                         rule.prelude))
 
                 if selectors_declarations:
@@ -933,6 +933,7 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                     for selectors, declarations in selectors_declarations:
                         declarations = [
                             declaration[1] for declaration in declarations]
+                        print(selectors, declarations)
                         for selector in selectors:
                             matcher.add_selector(selector, declarations)
                             if selector.pseudo_element not in PSEUDO_ELEMENTS:
@@ -1036,7 +1037,7 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
             for page_type in data:
                 specificity = page_type.pop('specificity')
                 page_type = PageType(**page_type)
-                content = tinycss2.parse_declaration_list(rule.content)
+                content = tinycss2.parse_blocks_contents(rule.content)
                 declarations = list(preprocess_declarations(base_url, content))
 
                 if declarations:
@@ -1049,7 +1050,7 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                         continue
                     declarations = list(preprocess_declarations(
                         base_url,
-                        tinycss2.parse_declaration_list(margin_rule.content)))
+                        tinycss2.parse_blocks_contents(margin_rule.content)))
                     if declarations:
                         selector_list = [(
                             specificity, f'@{margin_rule.lower_at_keyword}',
@@ -1059,7 +1060,7 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
 
         elif rule.type == 'at-rule' and rule.lower_at_keyword == 'font-face':
             ignore_imports = True
-            content = tinycss2.parse_declaration_list(rule.content)
+            content = tinycss2.parse_blocks_contents(rule.content)
             rule_descriptors = dict(
                 preprocess_descriptors('font-face', base_url, content))
             for key in ('src', 'font_family'):
@@ -1086,7 +1087,7 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                 continue
 
             ignore_imports = True
-            content = tinycss2.parse_declaration_list(rule.content)
+            content = tinycss2.parse_blocks_contents(rule.content)
             counter = {
                 'system': None,
                 'negative': None,
