@@ -155,9 +155,17 @@ def avoid_collisions(context, box, containing_block, outer=True):
             if shape.style['float'] == 'right']
 
         # Set the default maximum bounds
-        max_left_bound = containing_block.content_box_x()
-        max_right_bound = \
-            containing_block.content_box_x() + containing_block.width
+        rtl = containing_block.style['direction'] == 'rtl'
+        if isinstance(containing_block, boxes.TableCellBox) and rtl:
+            cb = containing_block
+            cb_x = cb.position_x + cb.margin_right + cb.padding_right + \
+                cb.border_right_width
+            max_left_bound = cb_x
+            max_right_bound = cb_x + containing_block.width
+        else:
+            max_left_bound = containing_block.content_box_x()
+            max_right_bound = \
+                containing_block.content_box_x() + containing_block.width
 
         if not outer:
             max_left_bound += box.margin_left

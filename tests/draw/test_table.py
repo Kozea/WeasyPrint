@@ -1517,3 +1517,549 @@ def test_running_elements_table_border_collapse_margin(assert_pixels):
       <div>1</div>
       <div>2</div>
     ''')
+
+
+@assert_no_logs
+def test_border_collapse_bidi_border_right(assert_pixels):
+    assert_pixels('''
+      ________________________________________________________________________________________________________________________
+      _fffffqqqqqqqqqqqqqqqqqqqqqqllllllyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyoooooo__
+      _fffffqqqqqqqqqqqqqqqqqqqqqqllllllyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyoooooo__
+      _fffffqqqqqqqqqqqqqqqqqqqqqqllllllyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyoooooo__
+      _fffffKKKKKqqKKKKKKKKKqqKKKKllllllKKKKKyyKKKKKKKKKyyKKKKyyyyyyKKKKKyyKKKKKKKKKyyKKKKyyyyyyKKKKKyyKKKKKKKKKyyKKKKoooooo__
+      _fffffqqKKqqqqKqqqqKKqqqqKqqllllllyyKKyyyyKyyyyKKyyyyKyyyyyyyyyyKKyyyyKyyyyKKyyyyKyyyyyyyyyyKKyyyyKyyyyKKyyyyKyyoooooo__
+      _fffffqqKKqqqqKqqqqKKqqqqKqqllllllyyKKyyyyKyyyyKKyyyyKyyyyyyyyyyKKyyyyKyyyyKKyyyyKyyyyyyyyyyKKyyyyKyyyyKKyyyyKyyoooooo__
+      _fffffqqqKKqqKqqqqqqKKqqKqqqllllllyyyKKyyKyyyyyyKKyyKyyyyyyyyyyyyKKyyKyyyyyyKKyyKyyyyyyyyyyyyKKyyKyyyyyyKKyyKyyyoooooo__
+      _fffffqqqqKKKqqqqqqqqKKKqqqqllllllyyyyKKKyyyyyyyyKKKyyyyyyyyyyyyyyKKKyyyyyyyyKKKyyyyyyyyyyyyyyKKKyyyyyyyyKKKyyyyoooooo__
+      _fffffqqqqKKKqqqqqqqqKKKqqqqllllllyyyyKKKyyyyyyyyKKKyyyyyyyyyyyyyyKKKyyyyyyyyKKKyyyyyyyyyyyyyyKKKyyyyyyyyKKKyyyyoooooo__
+      _fffffqqqqqKKqqqqqqqqqKKqqqqllllllyyyyyKKyyyyyyyyyKKyyyyyyyyyyyyyyyKKyyyyyyyyyKKyyyyyyyyyyyyyyyKKyyyyyyyyyKKyyyyoooooo__
+      _fffffqqqqKqKKqqqqqqqKqKKqqqllllllyyyyKyKKyyyyyyyKyKKyyyyyyyyyyyyyKyKKyyyyyyyKyKKyyyyyyyyyyyyyKyKKyyyyyyyKyKKyyyoooooo__
+      _fffffqqqKqqKKqqqqqqKqqKKqqqllllllyyyKyyKKyyyyyyKyyKKyyyyyyyyyyyyKyyKKyyyyyyKyyKKyyyyyyyyyyyyKyyKKyyyyyyKyyKKyyyoooooo__
+      _fffffqqqKqqqKKqqqqqKqqqKKqqllllllyyyKyyyKKyyyyyKyyyKKyyyyyyyyyyyKyyyKKyyyyyKyyyKKyyyyyyyyyyyKyyyKKyyyyyKyyyKKyyoooooo__
+      _fffffqqKqqqqqKKqqqKqqqqqKKqllllllyyKyyyyyKKyyyKyyyyyKKyyyyyyyyyKyyyyyKKyyyKyyyyyKKyyyyyyyyyKyyyyyKKyyyKyyyyyKKyoooooo__
+      _fffffKKKKqqqKKKKKKKKqqqKKKKllllllKKKKyyyKKKKKKKKyyyKKKKyyyyyyKKKKyyyKKKKKKKKyyyKKKKyyyyyyKKKKyyyKKKKKKKKyyyKKKKoooooo__
+      _fffffqqqqqqqqqqqqqqqqqqqqqqllllllyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyoooooo__
+      _fffffqqqqqqqqqqqqqqqqqqqqqqllllllyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyoooooo__
+      _fffffqqqqqqqqqqqqqqqqqqqqqqllllllyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyoooooo__
+      _fffffqqqqqqqqqqqqqqqqqqqqqqllllllyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyoooooo__
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      _fffffqqqqqqqqqqqqqqqqqqqqqqllllllyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyoooooo__
+      _fffffqqqqqqqqqqqqqqqqqqqqqqllllllyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyoooooo__
+      _fffffqqqqqqqqqqqqqqqqqqqqqqllllllyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyoooooo__
+      _fffffKKKKKqqKKKKKKKKKqqKKKKllllllKKKKKyyKKKKKKKKKyyKKKKyyyyyyKKKKKyyKKKKKKKKKyyKKKKyyyyyyKKKKKyyKKKKKKKKKyyKKKKoooooo__
+      _fffffqqKKqqqqKqqqqKKqqqqKqqllllllyyKKyyyyKyyyyKKyyyyKyyyyyyyyyyKKyyyyKyyyyKKyyyyKyyyyyyyyyyKKyyyyKyyyyKKyyyyKyyoooooo__
+      _fffffqqKKqqqqKqqqqKKqqqqKqqllllllyyKKyyyyKyyyyKKyyyyKyyyyyyyyyyKKyyyyKyyyyKKyyyyKyyyyyyyyyyKKyyyyKyyyyKKyyyyKyyoooooo__
+      _fffffqqqKKqqKqqqqqqKKqqKqqqllllllyyyKKyyKyyyyyyKKyyKyyyyyyyyyyyyKKyyKyyyyyyKKyyKyyyyyyyyyyyyKKyyKyyyyyyKKyyKyyyoooooo__
+      _fffffqqqqKKKqqqqqqqqKKKqqqqllllllyyyyKKKyyyyyyyyKKKyyyyyyyyyyyyyyKKKyyyyyyyyKKKyyyyyyyyyyyyyyKKKyyyyyyyyKKKyyyyoooooo__
+      _fffffqqqqKKKqqqqqqqqKKKqqqqllllllyyyyKKKyyyyyyyyKKKyyyyyyyyyyyyyyKKKyyyyyyyyKKKyyyyyyyyyyyyyyKKKyyyyyyyyKKKyyyyoooooo__
+      _fffffqqqqqKKqqqqqqqqqKKqqqqllllllyyyyyKKyyyyyyyyyKKyyyyyyyyyyyyyyyKKyyyyyyyyyKKyyyyyyyyyyyyyyyKKyyyyyyyyyKKyyyyoooooo__
+      _fffffqqqqKqKKqqqqqqqKqKKqqqllllllyyyyKyKKyyyyyyyKyKKyyyyyyyyyyyyyKyKKyyyyyyyKyKKyyyyyyyyyyyyyKyKKyyyyyyyKyKKyyyoooooo__
+      _fffffqqqKqqKKqqqqqqKqqKKqqqllllllyyyKyyKKyyyyyyKyyKKyyyyyyyyyyyyKyyKKyyyyyyKyyKKyyyyyyyyyyyyKyyKKyyyyyyKyyKKyyyoooooo__
+      _fffffqqqKqqqKKqqqqqKqqqKKqqllllllyyyKyyyKKyyyyyKyyyKKyyyyyyyyyyyKyyyKKyyyyyKyyyKKyyyyyyyyyyyKyyyKKyyyyyKyyyKKyyoooooo__
+      _fffffqqKqqqqqKKqqqKqqqqqKKqllllllyyKyyyyyKKyyyKyyyyyKKyyyyyyyyyKyyyyyKKyyyKyyyyyKKyyyyyyyyyKyyyyyKKyyyKyyyyyKKyoooooo__
+      _fffffKKKKqqqKKKKKKKKqqqKKKKllllllKKKKyyyKKKKKKKKyyyKKKKyyyyyyKKKKyyyKKKKKKKKyyyKKKKyyyyyyKKKKyyyKKKKKKKKyyyKKKKoooooo__
+      _fffffqqqqqqqqqqqqqqqqqqqqqqllllllyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyoooooo__
+      _fffffqqqqqqqqqqqqqqqqqqqqqqllllllyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyoooooo__
+      _fffffqqqqqqqqqqqqqqqqqqqqqqllllllyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyoooooo__
+      _fffffqqqqqqqqqqqqqqqqqqqqqqllllllyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyoooooo__
+      _fffffqqqqqqqqqqqqqqqqqqqqqqllllllyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyoooooo__
+      ________________________________________________________________________________________________________________________
+    ''', '''
+      <style>
+        @page {
+          margin: 1px;
+          size: 120px 56px;
+        }
+        table {
+          border-collapse:collapse;
+          margin-bottom: 1em;
+        }
+        tr {
+          border-left: 5px solid fuchsia;
+          border-right: 5px solid purple;
+        }
+        td.right {
+          background-color: yellow;
+          border-right: 5px solid orange;
+        }
+        td.left {
+          background-color: aqua;
+          border-right: 5px solid teal;
+        }
+      </style>
+      <table dir="ltr">
+        <tr>
+          <td class="left">XX</td>
+          <td class="right">XX XX XX</td>
+        </tr>
+      </table>
+
+
+      <table dir="rtl">
+         <tr>
+           <td class="right">XX XX XX</td>
+           <td class="left">XX</td>
+         </tr>
+      </table>
+     ''')
+
+
+@assert_no_logs
+def test_border_collapse_bidi_border_left(assert_pixels):
+    assert_pixels('''
+      ________________________________________________________________________________________________________________________
+      _lllllqqqqqqqqqqqqqqqqqqqqqqooooooyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvv__
+      _lllllqqqqqqqqqqqqqqqqqqqqqqooooooyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvv__
+      _lllllqqqqqqqqqqqqqqqqqqqqqqooooooyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvv__
+      _lllllKKKKKqqKKKKKKKKKqqKKKKooooooKKKKKyyKKKKKKKKKyyKKKKyyyyyyKKKKKyyKKKKKKKKKyyKKKKyyyyyyKKKKKyyKKKKKKKKKyyKKKKvvvvvv__
+      _lllllqqKKqqqqKqqqqKKqqqqKqqooooooyyKKyyyyKyyyyKKyyyyKyyyyyyyyyyKKyyyyKyyyyKKyyyyKyyyyyyyyyyKKyyyyKyyyyKKyyyyKyyvvvvvv__
+      _lllllqqKKqqqqKqqqqKKqqqqKqqooooooyyKKyyyyKyyyyKKyyyyKyyyyyyyyyyKKyyyyKyyyyKKyyyyKyyyyyyyyyyKKyyyyKyyyyKKyyyyKyyvvvvvv__
+      _lllllqqqKKqqKqqqqqqKKqqKqqqooooooyyyKKyyKyyyyyyKKyyKyyyyyyyyyyyyKKyyKyyyyyyKKyyKyyyyyyyyyyyyKKyyKyyyyyyKKyyKyyyvvvvvv__
+      _lllllqqqqKKKqqqqqqqqKKKqqqqooooooyyyyKKKyyyyyyyyKKKyyyyyyyyyyyyyyKKKyyyyyyyyKKKyyyyyyyyyyyyyyKKKyyyyyyyyKKKyyyyvvvvvv__
+      _lllllqqqqKKKqqqqqqqqKKKqqqqooooooyyyyKKKyyyyyyyyKKKyyyyyyyyyyyyyyKKKyyyyyyyyKKKyyyyyyyyyyyyyyKKKyyyyyyyyKKKyyyyvvvvvv__
+      _lllllqqqqqKKqqqqqqqqqKKqqqqooooooyyyyyKKyyyyyyyyyKKyyyyyyyyyyyyyyyKKyyyyyyyyyKKyyyyyyyyyyyyyyyKKyyyyyyyyyKKyyyyvvvvvv__
+      _lllllqqqqKqKKqqqqqqqKqKKqqqooooooyyyyKyKKyyyyyyyKyKKyyyyyyyyyyyyyKyKKyyyyyyyKyKKyyyyyyyyyyyyyKyKKyyyyyyyKyKKyyyvvvvvv__
+      _lllllqqqKqqKKqqqqqqKqqKKqqqooooooyyyKyyKKyyyyyyKyyKKyyyyyyyyyyyyKyyKKyyyyyyKyyKKyyyyyyyyyyyyKyyKKyyyyyyKyyKKyyyvvvvvv__
+      _lllllqqqKqqqKKqqqqqKqqqKKqqooooooyyyKyyyKKyyyyyKyyyKKyyyyyyyyyyyKyyyKKyyyyyKyyyKKyyyyyyyyyyyKyyyKKyyyyyKyyyKKyyvvvvvv__
+      _lllllqqKqqqqqKKqqqKqqqqqKKqooooooyyKyyyyyKKyyyKyyyyyKKyyyyyyyyyKyyyyyKKyyyKyyyyyKKyyyyyyyyyKyyyyyKKyyyKyyyyyKKyvvvvvv__
+      _lllllKKKKqqqKKKKKKKKqqqKKKKooooooKKKKyyyKKKKKKKKyyyKKKKyyyyyyKKKKyyyKKKKKKKKyyyKKKKyyyyyyKKKKyyyKKKKKKKKyyyKKKKvvvvvv__
+      _lllllqqqqqqqqqqqqqqqqqqqqqqooooooyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvv__
+      _lllllqqqqqqqqqqqqqqqqqqqqqqooooooyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvv__
+      _lllllqqqqqqqqqqqqqqqqqqqqqqooooooyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvv__
+      _lllllqqqqqqqqqqqqqqqqqqqqqqooooooyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvv__
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      _lllllqqqqqqqqqqqqqqqqqqqqqqooooooyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvv__
+      _lllllqqqqqqqqqqqqqqqqqqqqqqooooooyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvv__
+      _lllllqqqqqqqqqqqqqqqqqqqqqqooooooyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvv__
+      _lllllKKKKKqqKKKKKKKKKqqKKKKooooooKKKKKyyKKKKKKKKKyyKKKKyyyyyyKKKKKyyKKKKKKKKKyyKKKKyyyyyyKKKKKyyKKKKKKKKKyyKKKKvvvvvv__
+      _lllllqqKKqqqqKqqqqKKqqqqKqqooooooyyKKyyyyKyyyyKKyyyyKyyyyyyyyyyKKyyyyKyyyyKKyyyyKyyyyyyyyyyKKyyyyKyyyyKKyyyyKyyvvvvvv__
+      _lllllqqKKqqqqKqqqqKKqqqqKqqooooooyyKKyyyyKyyyyKKyyyyKyyyyyyyyyyKKyyyyKyyyyKKyyyyKyyyyyyyyyyKKyyyyKyyyyKKyyyyKyyvvvvvv__
+      _lllllqqqKKqqKqqqqqqKKqqKqqqooooooyyyKKyyKyyyyyyKKyyKyyyyyyyyyyyyKKyyKyyyyyyKKyyKyyyyyyyyyyyyKKyyKyyyyyyKKyyKyyyvvvvvv__
+      _lllllqqqqKKKqqqqqqqqKKKqqqqooooooyyyyKKKyyyyyyyyKKKyyyyyyyyyyyyyyKKKyyyyyyyyKKKyyyyyyyyyyyyyyKKKyyyyyyyyKKKyyyyvvvvvv__
+      _lllllqqqqKKKqqqqqqqqKKKqqqqooooooyyyyKKKyyyyyyyyKKKyyyyyyyyyyyyyyKKKyyyyyyyyKKKyyyyyyyyyyyyyyKKKyyyyyyyyKKKyyyyvvvvvv__
+      _lllllqqqqqKKqqqqqqqqqKKqqqqooooooyyyyyKKyyyyyyyyyKKyyyyyyyyyyyyyyyKKyyyyyyyyyKKyyyyyyyyyyyyyyyKKyyyyyyyyyKKyyyyvvvvvv__
+      _lllllqqqqKqKKqqqqqqqKqKKqqqooooooyyyyKyKKyyyyyyyKyKKyyyyyyyyyyyyyKyKKyyyyyyyKyKKyyyyyyyyyyyyyKyKKyyyyyyyKyKKyyyvvvvvv__
+      _lllllqqqKqqKKqqqqqqKqqKKqqqooooooyyyKyyKKyyyyyyKyyKKyyyyyyyyyyyyKyyKKyyyyyyKyyKKyyyyyyyyyyyyKyyKKyyyyyyKyyKKyyyvvvvvv__
+      _lllllqqqKqqqKKqqqqqKqqqKKqqooooooyyyKyyyKKyyyyyKyyyKKyyyyyyyyyyyKyyyKKyyyyyKyyyKKyyyyyyyyyyyKyyyKKyyyyyKyyyKKyyvvvvvv__
+      _lllllqqKqqqqqKKqqqKqqqqqKKqooooooyyKyyyyyKKyyyKyyyyyKKyyyyyyyyyKyyyyyKKyyyKyyyyyKKyyyyyyyyyKyyyyyKKyyyKyyyyyKKyvvvvvv__
+      _lllllKKKKqqqKKKKKKKKqqqKKKKooooooKKKKyyyKKKKKKKKyyyKKKKyyyyyyKKKKyyyKKKKKKKKyyyKKKKyyyyyyKKKKyyyKKKKKKKKyyyKKKKvvvvvv__
+      _lllllqqqqqqqqqqqqqqqqqqqqqqooooooyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvv__
+      _lllllqqqqqqqqqqqqqqqqqqqqqqooooooyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvv__
+      _lllllqqqqqqqqqqqqqqqqqqqqqqooooooyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvv__
+      _lllllqqqqqqqqqqqqqqqqqqqqqqooooooyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvv__
+      _lllllqqqqqqqqqqqqqqqqqqqqqqooooooyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvv__
+      ________________________________________________________________________________________________________________________
+    ''', '''
+      <style>
+        @page {
+          margin: 1px;
+          size: 120px 56px;
+        }
+        table {
+          border-collapse:collapse;
+          margin-bottom: 1em;
+        }
+        tr {
+          border-left: 5px solid fuchsia;
+          border-right: 5px solid purple;
+        }
+        td.right {
+          background-color: yellow;
+          border-left: 5px solid orange;
+        }
+        td.left {
+          background-color: aqua;
+          border-left: 5px solid teal;
+        }
+      </style>
+      <table dir="ltr">
+        <tr>
+          <td class="left">XX</td>
+          <td class="right">XX XX XX</td>
+        </tr>
+      </table>
+
+
+      <table dir="rtl">
+        <tr>
+          <td class="right">XX XX XX</td>
+          <td class="left">XX</td>
+        </tr>
+      </table>
+    ''')
+
+
+@assert_no_logs
+def test_border_collapse_bidi_border_top(assert_pixels):
+    assert_pixels('''
+      ________________________________________________________________________________________________________________________
+      _fffffllllllllllllllllllllllooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooovvvvvv_______
+      _fffffllllllllllllllllllllllooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooovvvvvv_______
+      _fffffllllllllllllllllllllllooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooovvvvvv_______
+      _fffffllllllllllllllllllllllooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooovvvvvv_______
+      _fffffllllllllllllllllllllllooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooovvvvvv_______
+      _fffffqqqqqqqqqqqqqqqqqqqqqqyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvv_______
+      _fffffqqqqqqqqqqqqqqqqqqqqqqyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvv_______
+      _fffffqqqqqqqqqqqqqqqqqqqqqqyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvv_______
+      _fffffKKKKKqqKKKKKKKKKqqKKKKyKKKKKyyKKKKKKKKKyyKKKKyyyyyyKKKKKyyKKKKKKKKKyyKKKKyyyyyyKKKKKyyKKKKKKKKKyyKKKKvvvvvv_______
+      _fffffqqKKqqqqKqqqqKKqqqqKqqyyyKKyyyyKyyyyKKyyyyKyyyyyyyyyyKKyyyyKyyyyKKyyyyKyyyyyyyyyyKKyyyyKyyyyKKyyyyKyyvvvvvv_______
+      _fffffqqKKqqqqKqqqqKKqqqqKqqyyyKKyyyyKyyyyKKyyyyKyyyyyyyyyyKKyyyyKyyyyKKyyyyKyyyyyyyyyyKKyyyyKyyyyKKyyyyKyyvvvvvv_______
+      _fffffqqqKKqqKqqqqqqKKqqKqqqyyyyKKyyKyyyyyyKKyyKyyyyyyyyyyyyKKyyKyyyyyyKKyyKyyyyyyyyyyyyKKyyKyyyyyyKKyyKyyyvvvvvv_______
+      _fffffqqqqKKKqqqqqqqqKKKqqqqyyyyyKKKyyyyyyyyKKKyyyyyyyyyyyyyyKKKyyyyyyyyKKKyyyyyyyyyyyyyyKKKyyyyyyyyKKKyyyyvvvvvv_______
+      _fffffqqqqKKKqqqqqqqqKKKqqqqyyyyyKKKyyyyyyyyKKKyyyyyyyyyyyyyyKKKyyyyyyyyKKKyyyyyyyyyyyyyyKKKyyyyyyyyKKKyyyyvvvvvv_______
+      _fffffqqqqqKKqqqqqqqqqKKqqqqyyyyyyKKyyyyyyyyyKKyyyyyyyyyyyyyyyKKyyyyyyyyyKKyyyyyyyyyyyyyyyKKyyyyyyyyyKKyyyyvvvvvv_______
+      _fffffqqqqKqKKqqqqqqqKqKKqqqyyyyyKyKKyyyyyyyKyKKyyyyyyyyyyyyyKyKKyyyyyyyKyKKyyyyyyyyyyyyyKyKKyyyyyyyKyKKyyyvvvvvv_______
+      _fffffqqqKqqKKqqqqqqKqqKKqqqyyyyKyyKKyyyyyyKyyKKyyyyyyyyyyyyKyyKKyyyyyyKyyKKyyyyyyyyyyyyKyyKKyyyyyyKyyKKyyyvvvvvv_______
+      _fffffqqqKqqqKKqqqqqKqqqKKqqyyyyKyyyKKyyyyyKyyyKKyyyyyyyyyyyKyyyKKyyyyyKyyyKKyyyyyyyyyyyKyyyKKyyyyyKyyyKKyyvvvvvv_______
+      _fffffqqKqqqqqKKqqqKqqqqqKKqyyyKyyyyyKKyyyKyyyyyKKyyyyyyyyyKyyyyyKKyyyKyyyyyKKyyyyyyyyyKyyyyyKKyyyKyyyyyKKyvvvvvv_______
+      _fffffKKKKqqqKKKKKKKKqqqKKKKyKKKKyyyKKKKKKKKyyyKKKKyyyyyyKKKKyyyKKKKKKKKyyyKKKKyyyyyyKKKKyyyKKKKKKKKyyyKKKKvvvvvv_______
+      _fffffqqqqqqqqqqqqqqqqqqqqqqyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvv_______
+      _fffffqqqqqqqqqqqqqqqqqqqqqqyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvv_______
+      _fffffqqqqqqqqqqqqqqqqqqqqqqyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvv_______
+      _fffffqqqqqqqqqqqqqqqqqqqqqqyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvv_______
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      _fffffllllllllllllllllllllllooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooovvvvvv_______
+      _fffffllllllllllllllllllllllooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooovvvvvv_______
+      _fffffllllllllllllllllllllllooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooovvvvvv_______
+      _fffffllllllllllllllllllllllooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooovvvvvv_______
+      _fffffllllllllllllllllllllllooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooovvvvvv_______
+      _fffffllllllllllllllllllllllooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooovvvvvv_______
+      _fffffqqqqqqqqqqqqqqqqqqqqqqyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvv_______
+      _fffffqqqqqqqqqqqqqqqqqqqqqqyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvv_______
+      _fffffKKKKKqqKKKKKKKKKqqKKKKyKKKKKyyKKKKKKKKKyyKKKKyyyyyyKKKKKyyKKKKKKKKKyyKKKKyyyyyyKKKKKyyKKKKKKKKKyyKKKKvvvvvv_______
+      _fffffqqKKqqqqKqqqqKKqqqqKqqyyyKKyyyyKyyyyKKyyyyKyyyyyyyyyyKKyyyyKyyyyKKyyyyKyyyyyyyyyyKKyyyyKyyyyKKyyyyKyyvvvvvv_______
+      _fffffqqKKqqqqKqqqqKKqqqqKqqyyyKKyyyyKyyyyKKyyyyKyyyyyyyyyyKKyyyyKyyyyKKyyyyKyyyyyyyyyyKKyyyyKyyyyKKyyyyKyyvvvvvv_______
+      _fffffqqqKKqqKqqqqqqKKqqKqqqyyyyKKyyKyyyyyyKKyyKyyyyyyyyyyyyKKyyKyyyyyyKKyyKyyyyyyyyyyyyKKyyKyyyyyyKKyyKyyyvvvvvv_______
+      _fffffqqqqKKKqqqqqqqqKKKqqqqyyyyyKKKyyyyyyyyKKKyyyyyyyyyyyyyyKKKyyyyyyyyKKKyyyyyyyyyyyyyyKKKyyyyyyyyKKKyyyyvvvvvv_______
+      _fffffqqqqKKKqqqqqqqqKKKqqqqyyyyyKKKyyyyyyyyKKKyyyyyyyyyyyyyyKKKyyyyyyyyKKKyyyyyyyyyyyyyyKKKyyyyyyyyKKKyyyyvvvvvv_______
+      _fffffqqqqqKKqqqqqqqqqKKqqqqyyyyyyKKyyyyyyyyyKKyyyyyyyyyyyyyyyKKyyyyyyyyyKKyyyyyyyyyyyyyyyKKyyyyyyyyyKKyyyyvvvvvv_______
+      _fffffqqqqKqKKqqqqqqqKqKKqqqyyyyyKyKKyyyyyyyKyKKyyyyyyyyyyyyyKyKKyyyyyyyKyKKyyyyyyyyyyyyyKyKKyyyyyyyKyKKyyyvvvvvv_______
+      _fffffqqqKqqKKqqqqqqKqqKKqqqyyyyKyyKKyyyyyyKyyKKyyyyyyyyyyyyKyyKKyyyyyyKyyKKyyyyyyyyyyyyKyyKKyyyyyyKyyKKyyyvvvvvv_______
+      _fffffqqqKqqqKKqqqqqKqqqKKqqyyyyKyyyKKyyyyyKyyyKKyyyyyyyyyyyKyyyKKyyyyyKyyyKKyyyyyyyyyyyKyyyKKyyyyyKyyyKKyyvvvvvv_______
+      _fffffqqKqqqqqKKqqqKqqqqqKKqyyyKyyyyyKKyyyKyyyyyKKyyyyyyyyyKyyyyyKKyyyKyyyyyKKyyyyyyyyyKyyyyyKKyyyKyyyyyKKyvvvvvv_______
+      _fffffKKKKqqqKKKKKKKKqqqKKKKyKKKKyyyKKKKKKKKyyyKKKKyyyyyyKKKKyyyKKKKKKKKyyyKKKKyyyyyyKKKKyyyKKKKKKKKyyyKKKKvvvvvv_______
+      _fffffqqqqqqqqqqqqqqqqqqqqqqyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvv_______
+      _fffffqqqqqqqqqqqqqqqqqqqqqqyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvv_______
+      _fffffqqqqqqqqqqqqqqqqqqqqqqyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvv_______
+      _fffffqqqqqqqqqqqqqqqqqqqqqqyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvv_______
+      _fffffqqqqqqqqqqqqqqqqqqqqqqyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvv_______
+      ________________________________________________________________________________________________________________________
+    ''', '''
+      <style>
+        @page {
+          margin: 1px;
+          size: 120px 66px;
+        }
+        table {
+          border-collapse:collapse;
+          margin-bottom: 1em;
+        }
+        tr {
+          border-left: 5px solid fuchsia;
+          border-right: 5px solid purple;
+        }
+        td.right {
+          background-color: yellow;
+          border-top: 5px solid orange;
+        }
+        td.left {
+          background-color: aqua;
+          border-top: 5px solid teal;
+        }
+      </style>
+      <table dir="ltr">
+        <tr>
+          <td class="left">XX</td>
+          <td class="right">XX XX XX</td>
+        </tr>
+      </table>
+
+
+      <table dir="rtl">
+        <tr>
+          <td class="right">XX XX XX</td>
+          <td class="left">XX</td>
+        </tr>
+      </table>
+    ''')
+
+
+@assert_no_logs
+def test_border_collapse_bidi_border_bottom(assert_pixels):
+    assert_pixels('''
+      ________________________________________________________________________________________________________________________
+      _fffffqqqqqqqqqqqqqqqqqqqqqqyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvv_______
+      _fffffqqqqqqqqqqqqqqqqqqqqqqyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvv_______
+      _fffffqqqqqqqqqqqqqqqqqqqqqqyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvv_______
+      _fffffKKKKKqqKKKKKKKKKqqKKKKyKKKKKyyKKKKKKKKKyyKKKKyyyyyyKKKKKyyKKKKKKKKKyyKKKKyyyyyyKKKKKyyKKKKKKKKKyyKKKKvvvvvv_______
+      _fffffqqKKqqqqKqqqqKKqqqqKqqyyyKKyyyyKyyyyKKyyyyKyyyyyyyyyyKKyyyyKyyyyKKyyyyKyyyyyyyyyyKKyyyyKyyyyKKyyyyKyyvvvvvv_______
+      _fffffqqKKqqqqKqqqqKKqqqqKqqyyyKKyyyyKyyyyKKyyyyKyyyyyyyyyyKKyyyyKyyyyKKyyyyKyyyyyyyyyyKKyyyyKyyyyKKyyyyKyyvvvvvv_______
+      _fffffqqqKKqqKqqqqqqKKqqKqqqyyyyKKyyKyyyyyyKKyyKyyyyyyyyyyyyKKyyKyyyyyyKKyyKyyyyyyyyyyyyKKyyKyyyyyyKKyyKyyyvvvvvv_______
+      _fffffqqqqKKKqqqqqqqqKKKqqqqyyyyyKKKyyyyyyyyKKKyyyyyyyyyyyyyyKKKyyyyyyyyKKKyyyyyyyyyyyyyyKKKyyyyyyyyKKKyyyyvvvvvv_______
+      _fffffqqqqKKKqqqqqqqqKKKqqqqyyyyyKKKyyyyyyyyKKKyyyyyyyyyyyyyyKKKyyyyyyyyKKKyyyyyyyyyyyyyyKKKyyyyyyyyKKKyyyyvvvvvv_______
+      _fffffqqqqqKKqqqqqqqqqKKqqqqyyyyyyKKyyyyyyyyyKKyyyyyyyyyyyyyyyKKyyyyyyyyyKKyyyyyyyyyyyyyyyKKyyyyyyyyyKKyyyyvvvvvv_______
+      _fffffqqqqKqKKqqqqqqqKqKKqqqyyyyyKyKKyyyyyyyKyKKyyyyyyyyyyyyyKyKKyyyyyyyKyKKyyyyyyyyyyyyyKyKKyyyyyyyKyKKyyyvvvvvv_______
+      _fffffqqqKqqKKqqqqqqKqqKKqqqyyyyKyyKKyyyyyyKyyKKyyyyyyyyyyyyKyyKKyyyyyyKyyKKyyyyyyyyyyyyKyyKKyyyyyyKyyKKyyyvvvvvv_______
+      _fffffqqqKqqqKKqqqqqKqqqKKqqyyyyKyyyKKyyyyyKyyyKKyyyyyyyyyyyKyyyKKyyyyyKyyyKKyyyyyyyyyyyKyyyKKyyyyyKyyyKKyyvvvvvv_______
+      _fffffqqKqqqqqKKqqqKqqqqqKKqyyyKyyyyyKKyyyKyyyyyKKyyyyyyyyyKyyyyyKKyyyKyyyyyKKyyyyyyyyyKyyyyyKKyyyKyyyyyKKyvvvvvv_______
+      _fffffKKKKqqqKKKKKKKKqqqKKKKyKKKKyyyKKKKKKKKyyyKKKKyyyyyyKKKKyyyKKKKKKKKyyyKKKKyyyyyyKKKKyyyKKKKKKKKyyyKKKKvvvvvv_______
+      _fffffqqqqqqqqqqqqqqqqqqqqqqyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvv_______
+      _fffffqqqqqqqqqqqqqqqqqqqqqqyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvv_______
+      _fffffqqqqqqqqqqqqqqqqqqqqqqyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvv_______
+      _lllllllllllllllllllllllllllooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo_______
+      _lllllllllllllllllllllllllllooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo_______
+      _lllllllllllllllllllllllllllooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo_______
+      _lllllllllllllllllllllllllllooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo_______
+      _lllllllllllllllllllllllllllooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo_______
+      _lllllllllllllllllllllllllllooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo_______
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      ________________________________________________________________________________________________________________________
+      _fffffqqqqqqqqqqqqqqqqqqqqqqyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvv_______
+      _fffffqqqqqqqqqqqqqqqqqqqqqqyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvv_______
+      _fffffqqqqqqqqqqqqqqqqqqqqqqyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvv_______
+      _fffffKKKKKqqKKKKKKKKKqqKKKKyKKKKKyyKKKKKKKKKyyKKKKyyyyyyKKKKKyyKKKKKKKKKyyKKKKyyyyyyKKKKKyyKKKKKKKKKyyKKKKvvvvvv_______
+      _fffffqqKKqqqqKqqqqKKqqqqKqqyyyKKyyyyKyyyyKKyyyyKyyyyyyyyyyKKyyyyKyyyyKKyyyyKyyyyyyyyyyKKyyyyKyyyyKKyyyyKyyvvvvvv_______
+      _fffffqqKKqqqqKqqqqKKqqqqKqqyyyKKyyyyKyyyyKKyyyyKyyyyyyyyyyKKyyyyKyyyyKKyyyyKyyyyyyyyyyKKyyyyKyyyyKKyyyyKyyvvvvvv_______
+      _fffffqqqKKqqKqqqqqqKKqqKqqqyyyyKKyyKyyyyyyKKyyKyyyyyyyyyyyyKKyyKyyyyyyKKyyKyyyyyyyyyyyyKKyyKyyyyyyKKyyKyyyvvvvvv_______
+      _fffffqqqqKKKqqqqqqqqKKKqqqqyyyyyKKKyyyyyyyyKKKyyyyyyyyyyyyyyKKKyyyyyyyyKKKyyyyyyyyyyyyyyKKKyyyyyyyyKKKyyyyvvvvvv_______
+      _fffffqqqqKKKqqqqqqqqKKKqqqqyyyyyKKKyyyyyyyyKKKyyyyyyyyyyyyyyKKKyyyyyyyyKKKyyyyyyyyyyyyyyKKKyyyyyyyyKKKyyyyvvvvvv_______
+      _fffffqqqqqKKqqqqqqqqqKKqqqqyyyyyyKKyyyyyyyyyKKyyyyyyyyyyyyyyyKKyyyyyyyyyKKyyyyyyyyyyyyyyyKKyyyyyyyyyKKyyyyvvvvvv_______
+      _fffffqqqqKqKKqqqqqqqKqKKqqqyyyyyKyKKyyyyyyyKyKKyyyyyyyyyyyyyKyKKyyyyyyyKyKKyyyyyyyyyyyyyKyKKyyyyyyyKyKKyyyvvvvvv_______
+      _fffffqqqKqqKKqqqqqqKqqKKqqqyyyyKyyKKyyyyyyKyyKKyyyyyyyyyyyyKyyKKyyyyyyKyyKKyyyyyyyyyyyyKyyKKyyyyyyKyyKKyyyvvvvvv_______
+      _fffffqqqKqqqKKqqqqqKqqqKKqqyyyyKyyyKKyyyyyKyyyKKyyyyyyyyyyyKyyyKKyyyyyKyyyKKyyyyyyyyyyyKyyyKKyyyyyKyyyKKyyvvvvvv_______
+      _fffffqqKqqqqqKKqqqKqqqqqKKqyyyKyyyyyKKyyyKyyyyyKKyyyyyyyyyKyyyyyKKyyyKyyyyyKKyyyyyyyyyKyyyyyKKyyyKyyyyyKKyvvvvvv_______
+      _fffffKKKKqqqKKKKKKKKqqqKKKKyKKKKyyyKKKKKKKKyyyKKKKyyyyyyKKKKyyyKKKKKKKKyyyKKKKyyyyyyKKKKyyyKKKKKKKKyyyKKKKvvvvvv_______
+      _fffffqqqqqqqqqqqqqqqqqqqqqqyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvv_______
+      _fffffqqqqqqqqqqqqqqqqqqqqqqyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvv_______
+      _fffffqqqqqqqqqqqqqqqqqqqqqqyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvv_______
+      _fffffqqqqqqqqqqqqqqqqqqqqqqyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvv_______
+      _lllllllllllllllllllllllllllooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo_______
+      _lllllllllllllllllllllllllllooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo_______
+      _lllllllllllllllllllllllllllooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo_______
+      _lllllllllllllllllllllllllllooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo_______
+      _lllllllllllllllllllllllllllooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo_______
+      _lllllllllllllllllllllllllllooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo_______
+      ________________________________________________________________________________________________________________________
+    ''', '''
+      <style>
+        @page {
+          margin: 1px;
+          size: 120px 66px;
+        }
+        table {
+          border-collapse:collapse;
+          margin-bottom: 1em;
+        }
+        tr {
+          border-left: 5px solid fuchsia;
+          border-right: 5px solid purple;
+        }
+        td.right {
+          background-color: yellow;
+          border-bottom: 5px solid orange;
+        }
+        td.left {
+          background-color: aqua;
+          border-bottom: 5px solid teal;
+        }
+      </style>
+      <table dir="ltr">
+        <tr>
+          <td class="left">XX</td>
+          <td class="right">XX XX XX</td>
+        </tr>
+      </table>
+
+
+      <table dir="rtl">
+         <tr>
+           <td class="right">XX XX XX</td>
+           <td class="left">XX</td>
+         </tr>
+      </table>
+    ''')
+
+
+@assert_no_logs
+def test_border_collapse_bidi_broad_border(assert_pixels):
+    assert_pixels('''
+      ____________________________________________________________________________________________________________________________
+      _fffffqqqqqqqqqqqqqqqqqqqqqqyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvvvvvvvvvvvv_
+      _fffffqqqqqqqqqqqqqqqqqqqqqqyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvvvvvvvvvvvv_
+      _fffffqqqqqqqqqqqqqqqqqqqqqqyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvvvvvvvvvvvv_
+      _fffffKKKKKqqKKKKKKKKKqqKKKKyKKKKKyyKKKKKKKKKyyKKKKyyyyyyKKKKKyyKKKKKKKKKyyKKKKyyyyyyKKKKKyyKKKKKKKKKyyKKKKvvvvvvvvvvvvvvvv_
+      _fffffqqKKqqqqKqqqqKKqqqqKqqyyyKKyyyyKyyyyKKyyyyKyyyyyyyyyyKKyyyyKyyyyKKyyyyKyyyyyyyyyyKKyyyyKyyyyKKyyyyKyyvvvvvvvvvvvvvvvv_
+      _fffffqqKKqqqqKqqqqKKqqqqKqqyyyKKyyyyKyyyyKKyyyyKyyyyyyyyyyKKyyyyKyyyyKKyyyyKyyyyyyyyyyKKyyyyKyyyyKKyyyyKyyvvvvvvvvvvvvvvvv_
+      _fffffqqqKKqqKqqqqqqKKqqKqqqyyyyKKyyKyyyyyyKKyyKyyyyyyyyyyyyKKyyKyyyyyyKKyyKyyyyyyyyyyyyKKyyKyyyyyyKKyyKyyyvvvvvvvvvvvvvvvv_
+      _fffffqqqqKKKqqqqqqqqKKKqqqqyyyyyKKKyyyyyyyyKKKyyyyyyyyyyyyyyKKKyyyyyyyyKKKyyyyyyyyyyyyyyKKKyyyyyyyyKKKyyyyvvvvvvvvvvvvvvvv_
+      _fffffqqqqKKKqqqqqqqqKKKqqqqyyyyyKKKyyyyyyyyKKKyyyyyyyyyyyyyyKKKyyyyyyyyKKKyyyyyyyyyyyyyyKKKyyyyyyyyKKKyyyyvvvvvvvvvvvvvvvv_
+      _fffffqqqqqKKqqqqqqqqqKKqqqqyyyyyyKKyyyyyyyyyKKyyyyyyyyyyyyyyyKKyyyyyyyyyKKyyyyyyyyyyyyyyyKKyyyyyyyyyKKyyyyvvvvvvvvvvvvvvvv_
+      _fffffqqqqKqKKqqqqqqqKqKKqqqyyyyyKyKKyyyyyyyKyKKyyyyyyyyyyyyyKyKKyyyyyyyKyKKyyyyyyyyyyyyyKyKKyyyyyyyKyKKyyyvvvvvvvvvvvvvvvv_
+      _fffffqqqKqqKKqqqqqqKqqKKqqqyyyyKyyKKyyyyyyKyyKKyyyyyyyyyyyyKyyKKyyyyyyKyyKKyyyyyyyyyyyyKyyKKyyyyyyKyyKKyyyvvvvvvvvvvvvvvvv_
+      _fffffqqqKqqqKKqqqqqKqqqKKqqyyyyKyyyKKyyyyyKyyyKKyyyyyyyyyyyKyyyKKyyyyyKyyyKKyyyyyyyyyyyKyyyKKyyyyyKyyyKKyyvvvvvvvvvvvvvvvv_
+      _fffffqqKqqqqqKKqqqKqqqqqKKqyyyKyyyyyKKyyyKyyyyyKKyyyyyyyyyKyyyyyKKyyyKyyyyyKKyyyyyyyyyKyyyyyKKyyyKyyyyyKKyvvvvvvvvvvvvvvvv_
+      _fffffKKKKqqqKKKKKKKKqqqKKKKyKKKKyyyKKKKKKKKyyyKKKKyyyyyyKKKKyyyKKKKKKKKyyyKKKKyyyyyyKKKKyyyKKKKKKKKyyyKKKKvvvvvvvvvvvvvvvv_
+      _fffffqqqqqqqqqqqqqqqqqqqqqqyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvvvvvvvvvvvv_
+      _fffffqqqqqqqqqqqqqqqqqqqqqqyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvvvvvvvvvvvv_
+      _fffffqqqqqqqqqqqqqqqqqqqqqqyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvvvvvvvvvvvv_
+      _llllllllllllllllllllllllllllyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvvvvvvvvvvvv_
+      _llllllllllllllllllllllllllllyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvvvvvvvvvvvv_
+      _llllllllllllllllllllllllllllyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvvvvvvvvvvvv_
+      _llllllllllllllllllllllllllllyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvvvvvvvvvvvv_
+      _llllllllllllllllllllllllllllyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvvvvvvvvvvvv_
+      _lllllllllllllllllllllllllllloooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooovvvvvvvvvvvvvvvv_
+      _lllllllllllllllllllllllllllloooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooovvvvvvvvvvvvvvvv_
+      _lllllllllllllllllllllllllllloooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooovvvvvvvvvvvvvvvv_
+      _lllllllllllllllllllllllllllloooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooovvvvvvvvvvvvvvvv_
+      _lllllllllllllllllllllllllllloooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooovvvvvvvvvvvvvvvv_
+      _lllllllllllllllllllllllllllloooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooovvvvvvvvvvvvvvvv_
+      _llllllllllllllllllllllllllll_______________________________________________________________________________________________
+      _llllllllllllllllllllllllllll_______________________________________________________________________________________________
+      _llllllllllllllllllllllllllll_______________________________________________________________________________________________
+      _llllllllllllllllllllllllllll_______________________________________________________________________________________________
+      _llllllllllllllllllllllllllll_______________________________________________________________________________________________
+      ____________________________________________________________________________________________________________________________
+      ____________________________________________________________________________________________________________________________
+      ____________________________________________________________________________________________________________________________
+      ____________________________________________________________________________________________________________________________
+      ____________________________________________________________________________________________________________________________
+      ____________________________________________________________________________________________________________________________
+      ____________________________________________________________________________________________________________________________
+      ____________________________________________________________________________________________________________________________
+      ____________________________________________________________________________________________________________________________
+      ____________________________________________________________________________________________________________________________
+      ____________________________________________________________________________________________________________________________
+      ____________________________________________________________________________________________________________________________
+      ____________________________________________________________________________________________________________________________
+      ____________________________________________________________________________________________________________________________
+      ____________________________________________________________________________________________________________________________
+      _fffffqqqqqqqqqqqqqqqqqqqqqqyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvvvvvvvvvvvv_
+      _fffffqqqqqqqqqqqqqqqqqqqqqqyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvvvvvvvvvvvv_
+      _fffffqqqqqqqqqqqqqqqqqqqqqqyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvvvvvvvvvvvv_
+      _fffffKKKKKqqKKKKKKKKKqqKKKKyKKKKKyyKKKKKKKKKyyKKKKyyyyyyKKKKKyyKKKKKKKKKyyKKKKyyyyyyKKKKKyyKKKKKKKKKyyKKKKvvvvvvvvvvvvvvvv_
+      _fffffqqKKqqqqKqqqqKKqqqqKqqyyyKKyyyyKyyyyKKyyyyKyyyyyyyyyyKKyyyyKyyyyKKyyyyKyyyyyyyyyyKKyyyyKyyyyKKyyyyKyyvvvvvvvvvvvvvvvv_
+      _fffffqqKKqqqqKqqqqKKqqqqKqqyyyKKyyyyKyyyyKKyyyyKyyyyyyyyyyKKyyyyKyyyyKKyyyyKyyyyyyyyyyKKyyyyKyyyyKKyyyyKyyvvvvvvvvvvvvvvvv_
+      _fffffqqqKKqqKqqqqqqKKqqKqqqyyyyKKyyKyyyyyyKKyyKyyyyyyyyyyyyKKyyKyyyyyyKKyyKyyyyyyyyyyyyKKyyKyyyyyyKKyyKyyyvvvvvvvvvvvvvvvv_
+      _fffffqqqqKKKqqqqqqqqKKKqqqqyyyyyKKKyyyyyyyyKKKyyyyyyyyyyyyyyKKKyyyyyyyyKKKyyyyyyyyyyyyyyKKKyyyyyyyyKKKyyyyvvvvvvvvvvvvvvvv_
+      _fffffqqqqKKKqqqqqqqqKKKqqqqyyyyyKKKyyyyyyyyKKKyyyyyyyyyyyyyyKKKyyyyyyyyKKKyyyyyyyyyyyyyyKKKyyyyyyyyKKKyyyyvvvvvvvvvvvvvvvv_
+      _fffffqqqqqKKqqqqqqqqqKKqqqqyyyyyyKKyyyyyyyyyKKyyyyyyyyyyyyyyyKKyyyyyyyyyKKyyyyyyyyyyyyyyyKKyyyyyyyyyKKyyyyvvvvvvvvvvvvvvvv_
+      _fffffqqqqKqKKqqqqqqqKqKKqqqyyyyyKyKKyyyyyyyKyKKyyyyyyyyyyyyyKyKKyyyyyyyKyKKyyyyyyyyyyyyyKyKKyyyyyyyKyKKyyyvvvvvvvvvvvvvvvv_
+      _fffffqqqKqqKKqqqqqqKqqKKqqqyyyyKyyKKyyyyyyKyyKKyyyyyyyyyyyyKyyKKyyyyyyKyyKKyyyyyyyyyyyyKyyKKyyyyyyKyyKKyyyvvvvvvvvvvvvvvvv_
+      _fffffqqqKqqqKKqqqqqKqqqKKqqyyyyKyyyKKyyyyyKyyyKKyyyyyyyyyyyKyyyKKyyyyyKyyyKKyyyyyyyyyyyKyyyKKyyyyyKyyyKKyyvvvvvvvvvvvvvvvv_
+      _fffffqqKqqqqqKKqqqKqqqqqKKqyyyKyyyyyKKyyyKyyyyyKKyyyyyyyyyKyyyyyKKyyyKyyyyyKKyyyyyyyyyKyyyyyKKyyyKyyyyyKKyvvvvvvvvvvvvvvvv_
+      _fffffKKKKqqqKKKKKKKKqqqKKKKyKKKKyyyKKKKKKKKyyyKKKKyyyyyyKKKKyyyKKKKKKKKyyyKKKKyyyyyyKKKKyyyKKKKKKKKyyyKKKKvvvvvvvvvvvvvvvv_
+      _fffffqqqqqqqqqqqqqqqqqqqqqqyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvvvvvvvvvvvv_
+      _fffffqqqqqqqqqqqqqqqqqqqqqqyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvvvvvvvvvvvv_
+      _fffffqqqqqqqqqqqqqqqqqqqqqqyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvvvvvvvvvvvv_
+      _fffffqqqqqqqqqqqqqqqqqqqqqqyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvvvvvvvvvvvv_
+      _llllllllllllllllllllllllllllyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvvvvvvvvvvvv_
+      _llllllllllllllllllllllllllllyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvvvvvvvvvvvv_
+      _llllllllllllllllllllllllllllyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvvvvvvvvvvvv_
+      _llllllllllllllllllllllllllllyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvvvvvvvvvvvv_
+      _llllllllllllllllllllllllllllyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyvvvvvvvvvvvvvvvv_
+      _lllllllllllllllllllllllllllloooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooovvvvvvvvvvvvvvvv_
+      _lllllllllllllllllllllllllllloooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooovvvvvvvvvvvvvvvv_
+      _lllllllllllllllllllllllllllloooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooovvvvvvvvvvvvvvvv_
+      _lllllllllllllllllllllllllllloooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooovvvvvvvvvvvvvvvv_
+      _lllllllllllllllllllllllllllloooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooovvvvvvvvvvvvvvvv_
+      _lllllllllllllllllllllllllllloooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooovvvvvvvvvvvvvvvv_
+      _llllllllllllllllllllllllllll_______________________________________________________________________________________________
+      _llllllllllllllllllllllllllll_______________________________________________________________________________________________
+      _llllllllllllllllllllllllllll_______________________________________________________________________________________________
+      _llllllllllllllllllllllllllll_______________________________________________________________________________________________
+      _llllllllllllllllllllllllllll_______________________________________________________________________________________________
+      ____________________________________________________________________________________________________________________________
+    ''', '''
+      <style type="text/css">
+        @page {
+          margin: 1px;
+          size: 124px 86px;
+        }
+        table {
+          border-collapse:collapse;
+          margin-bottom: 1em;
+        }
+        tr {
+          border-left: 5px solid fuchsia;
+          border-right: 15px solid purple;
+        }
+        td.right {
+          background-color: yellow;
+          border-bottom: 5px solid orange;
+        }
+        td.left {
+          background-color: aqua;
+          border-bottom: 15px solid teal;
+        }
+      </style>
+
+      <table dir="ltr">
+        <tr>
+          <td class="left">XX</td>
+          <td class="right">XX XX XX</td>
+        </tr>
+      </table>
+
+
+      <table dir="rtl">
+        <tr>
+          <td class="right">XX XX XX</td>
+          <td class="left">XX</td>
+        </tr>
+      </table>
+    ''')
