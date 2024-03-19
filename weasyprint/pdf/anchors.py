@@ -228,6 +228,10 @@ def add_inputs(inputs, matrix, pdf, page, resources, stream, font_map,
             elif input_type == 'file':
                 field['Ff'] = 1 << (21 - 1)
 
+            maxlength = element.get('maxlength')
+            if maxlength and maxlength.isdigit():
+                field['MaxLen'] = element.get('maxlength')
+
         pdf.add_object(field)
         page['Annots'].append(field.reference)
         pdf.catalog['AcroForm']['Fields'].append(field.reference)
