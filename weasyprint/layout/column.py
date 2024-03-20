@@ -49,7 +49,8 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
         count = max(1, int(floor((box.width + gap) / (width + gap))))
         width = (box.width + gap) / count - gap
     else:  # overconstrained, with width != 'auto' and count != 'auto'
-        count = min(count, int(floor((box.width + gap) / (width + gap))))
+        count = max(
+            1, min(count, int(floor((box.width + gap) / (width + gap)))))
         width = (box.width + gap) / count - gap
 
     # Handle column-span property with the following structure:

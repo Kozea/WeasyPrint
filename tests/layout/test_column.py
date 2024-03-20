@@ -1046,3 +1046,14 @@ def test_columns_regression_5():
       </div>
       <div style="height: 50px"></div>
     ''')
+
+
+@assert_no_logs
+def test_columns_regression_6():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/2103
+    render_pages('''
+      <style>
+        @page {width: 100px; height: 100px}
+      </style>
+      <div style="columns: 2; column-width: 100px; width: 10px">abc def</div>
+    ''')
