@@ -1095,14 +1095,11 @@ def collapse_table_borders(table, grid_width, grid_height):
         set_border_used_width(box, 'bottom', 0)
         set_border_used_width(box, 'left', 0)
 
-    def max_vertical_width(x, y, h):
-        return max(
-            width for grid_row in vertical_borders[y:y + h]
-            for _, (_, width, _) in [grid_row[x]])
+    def max_vertical_width(x, y1, y2):
+        return max(grid_row[x][1][1] for grid_row in vertical_borders[y1:y2])
 
-    def max_horizontal_width(x, y, w):
-        return max(
-            width for _, (_, width, _) in horizontal_borders[y][x:x + w])
+    def max_horizontal_width(x1, y, x2):
+        return max(width for _, (_, width, _) in horizontal_borders[y][x1:x2])
 
     grid_y = 0
     for row_group in table.children:
@@ -1110,14 +1107,23 @@ def collapse_table_borders(table, grid_width, grid_height):
         for row in row_group.children:
             remove_borders(row)
             for cell in row.children:
-                set_border_used_width(cell, 'top', max_horizontal_width(
-                    x=cell.grid_x, y=grid_y, w=cell.colspan))
-                set_border_used_width(cell, 'bottom', max_horizontal_width(
-                    x=cell.grid_x, y=grid_y + cell.rowspan, w=cell.colspan))
-                set_border_used_width(cell, 'left', max_vertical_width(
-                    x=cell.grid_x, y=grid_y, h=cell.rowspan))
-                set_border_used_width(cell, 'right', max_vertical_width(
-                    x=cell.grid_x + cell.colspan, y=grid_y, h=cell.rowspan))
+                x, y = cell.grid_x, grid_y
+                colspan, rowspan = cell.colspan, cell.rowspan
+                if table.style['direction'] == 'ltr':
+                    top = max_horizontal_width(x, y, x + colspan)
+                    bottom = max_horizontal_width(x, y + rowspan, x + colspan)
+                    left = max_vertical_width(x, y, y + rowspan)
+                    right = max_vertical_width(x + colspan, y, y + rowspan)
+                else:
+                    top = max_horizontal_width(-colspan - x, y, -x or None)
+                    bottom = max_horizontal_width(
+                        -colspan - x, y + rowspan, -x or None)
+                    left = max_vertical_width(-1 - colspan - x, y, y + rowspan)
+                    right = max_vertical_width(-1 - x, y, y + rowspan)
+                set_border_used_width(cell, 'top', top)
+                set_border_used_width(cell, 'bottom', bottom)
+                set_border_used_width(cell, 'left', left)
+                set_border_used_width(cell, 'right', right)
             grid_y += 1
 
     for column_group in table.column_groups:
@@ -1125,17 +1131,14 @@ def collapse_table_borders(table, grid_width, grid_height):
         for column in column_group.children:
             remove_borders(column)
 
-    set_border_used_width(table, 'top', max_horizontal_width(
-        x=0, y=0, w=grid_width))
+    set_border_used_width(table, 'top', max_horizontal_width(0, 0, grid_width))
     set_border_used_width(table, 'bottom', max_horizontal_width(
-        x=0, y=grid_height, w=grid_width))
+        0, grid_height, grid_width))
     # "UAs must compute an initial left and right border width for the table
     #  by examining the first and last cells in the first row of the table."
     # https://www.w3.org/TR/CSS21/tables.html#collapsing-borders
     # ... so h=1, not grid_height:
-    set_border_used_width(table, 'left', max_vertical_width(
-        x=0, y=0, h=1))
-    set_border_used_width(table, 'right', max_vertical_width(
-        x=grid_width, y=0, h=1))
+    set_border_used_width(table, 'left', max_vertical_width(0, 0, 1))
+    set_border_used_width(table, 'right', max_vertical_width(grid_width, 0, 1))
 
     return vertical_borders, horizontal_borders
