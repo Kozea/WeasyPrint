@@ -176,6 +176,9 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
                 new_boxes.append(new_box)
                 column_skip_stack = resume_at
 
+                # Avoid edge cases resulting in a UnboundLocalError in line 223
+                next_box_height = 0
+
                 # Calculate consumed height, empty space and next box height
                 in_flow_children = [
                     child for child in new_box.children
