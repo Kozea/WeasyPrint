@@ -483,10 +483,17 @@ and do not wish to include it in the bookmarks, add this in your stylesheet:
 
     h1 { bookmark-level: none }
 
+`Leaders`_ are also supported:
+
+.. code-block:: css
+
+    li a::after {
+        content: ' ' leader(dotted) ' ' target-counter(attr(href), page);
+    }
+
 The other features of this module are **not** implemented:
 
 - quotes (``content: *-quote``);
-- leaders (``content: leader()``).
 
 .. _CSS Generated Content Module Level 3: https://www.w3.org/TR/css-content-3/
 .. _Quotes: https://www.w3.org/TR/css-content-3/#quotes
@@ -495,6 +502,7 @@ The other features of this module are **not** implemented:
 .. _an example: https://github.com/Kozea/WeasyPrint/pull/652#issuecomment-403276559
 .. _PDF bookmarks: https://www.w3.org/TR/css-content-3/#bookmark-generation
 .. _user agent stylesheet: https://github.com/Kozea/WeasyPrint/blob/main/weasyprint/css/html5_ua.css
+.. _Leaders: https://www.w3.org/TR/css-content-3/#leaders
 
 CSS Color Module Level 3
 ++++++++++++++++++++++++
