@@ -699,7 +699,7 @@ def display(tokens):
                 'table-header-group', 'table-footer-group', 'table-row',
                 'table-column-group', 'table-column'):
             return (value,)
-        elif value in ('inline-table', 'inline-flex'):
+        elif value in ('inline-table', 'inline-flex', 'inline-grid'):
             return tuple(value.split('-'))
         elif value == 'inline-block':
             return ('inline', 'flow-root')
@@ -711,7 +711,7 @@ def display(tokens):
             if outside:
                 return
             outside = value
-        elif value in ('flow', 'flow-root', 'table', 'flex'):
+        elif value in ('flow', 'flow-root', 'table', 'flex', 'grid'):
             if inside:
                 return
             inside = value
@@ -1299,28 +1299,66 @@ def flex_grow_shrink(token):
         return token.value
 
 
+def _inflexible_breadth(token):
+    """Parse ``inflexible-breadth``."""
+    keyword = get_keyword(token)
+    if keyword in ('auto', 'min-content', 'max-content'):
+        return keyword
+    elif keyword:
+        return
+    length = get_length(token, negative=False, percentage=True)
+    if length:
+        return length
+
+
+def _track_breadth(token):
+    """Parse ``track-breadth``."""
+    if token.type == 'dimension' and token.value >= 0 and token.unit == 'fr':
+        return Dimension(token.value, token.unit)
+    return _inflexible_breadth(token)
+
+
 @property('grid-auto-columns')
 @property('grid-auto-rows')
 def grid_auto(tokens):
-    """``grid-auto-columns`` and ``grid-auto-rows`` properties validation"""
+    """``grid-auto-columns`` and ``grid-auto-rows`` properties validation."""
     return_tokens = []
     for token in tokens:
-        keyword = get_keyword(token)
-        if keyword in ('auto', 'min-content', 'max-content'):
-            return_tokens.append(keyword)
+        track_breadth = _track_breadth(token)
+        if track_breadth:
+            return_tokens.append(track_breadth)
             continue
-        elif keyword:
-            return
-        length = get_length(token, negative=False, percentage=True)
-        if length:
-            return_tokens.append(length)
-            continue
-        if token.type == 'dimension':
-            if token.value >= 0 and token.unit == 'fr':
-                return_tokens.append(token)
-                continue
-            else:
-                return
+        function = parse_function(token)
+        if function:
+            name, args = function
+            if name == 'minmax':
+                if len(args) == 2:
+                    inflexible_breadth = _inflexible_breadth(args[0])
+                    track_breadth = _track_breadth(args[1])
+                    if inflexible_breadth and track_breadth:
+                        return_tokens.append(
+                            ('minmax()', inflexible_breadth, track_breadth))
+                        continue
+            elif name == 'fit-content':
+                if len(args) == 1:
+                    length = get_length(args[0], negative=False, percentage=True)
+                    if length:
+                        return_tokens.append(('fit-content()', length))
+                        continue
+        return
+    return tuple(return_tokens)
+
+
+@property()
+def grid_auto_flow(tokens):
+    if len(tokens) == 1:
+        keyword = get_keyword(tokens[0])
+        if keyword in ('row', 'column'):
+            return (keyword,)
+    elif len(tokens) == 2:
+        keywords = [get_keyword(token) for token in tokens]
+        if 'dense' in keywords and ('row' in keywords or 'column' in keywords):
+            return tuple(keywords)
 
 
 @property()

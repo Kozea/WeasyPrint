@@ -685,3 +685,73 @@ def test_radial_gradient(rule, value):
 def test_radial_gradient_invalid(rule):
     assert_invalid(f'background-image: radial-gradient({rule})')
     assert_invalid(f'background-image: repeating-radial-gradient({rule})')
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, value', (
+    ('grid-auto-columns: 40px', ((40, 'px'),)),
+    ('grid-auto-columns: 2fr', ((2, 'fr'),)),
+    ('grid-auto-columns: 18%', ((18, '%'),)),
+    ('grid-auto-columns: auto', ('auto',)),
+    ('grid-auto-columns: min-content', ('min-content',)),
+    ('grid-auto-columns: max-content', ('max-content',)),
+    ('grid-auto-rows: fit-content(20%)', (('fit-content()', (20, '%')),)),
+    ('grid-auto-rows: minmax(20px, 25px)',
+     (('minmax()', (20, 'px'), (25, 'px')),)),
+    ('grid-auto-rows: minmax(min-content, max-content)',
+     (('minmax()', 'min-content', 'max-content'),)),
+    ('grid-auto-columns: min-content max-content',
+     ('min-content', 'max-content')),
+))
+def test_grid_auto_columns_rows(rule, value):
+    assert get_value(rule) == value
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', (
+    'grid-auto-columns: 40',
+    'grid-auto-rows: coucou',
+    'grid-auto-columns: fit-content',
+    'grid-auto-rows: fit-content(min-content)',
+    'grid-auto-columns: minmax(40px)',
+    'grid-auto-rows: minmax(2fr, 1fr)',
+    'grid-auto-columns: 1fr 1fr coucou',
+    'grid-auto-rows: fit-content()',
+    'grid-auto-columns: fit-content(2%, 18%)',
+))
+def test_grid_auto_columns_rows_invalid(rule):
+    assert_invalid(rule)
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, value', (
+    ('row', ('row',)),
+    ('column', ('column',)),
+    ('row dense', ('row', 'dense')),
+    ('column dense', ('column', 'dense')),
+    ('dense row', ('dense', 'row')),
+    ('dense column', ('dense', 'column')),
+))
+def test_grid_auto_flow(rule, value):
+    assert get_value(f'grid-auto-flow: {rule}') == value
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', (
+    'row row',
+    'column column',
+    'dense dense',
+    'dense',
+    'coucou',
+    'row column',
+    'column row',
+    'row coucou',
+    'column coucou',
+    'coucou row',
+    'coucou column',
+    'row column dense',
+))
+def test_grid_auto_flow_invalid(rule):
+    assert_invalid(f'grid-auto-flow: {rule}')
+
+
