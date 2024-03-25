@@ -796,3 +796,28 @@ def test_grid_template_columns_rows(rule, value):
 def test_grid_template_columns_rows_invalid(rule):
     assert_invalid(f'grid-template-columns: {rule}')
     assert_invalid(f'grid-template-rows: {rule}')
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, value', (
+    ('"head head" "nav main" "foot ...."',
+     (('head', 'head'), ('nav', 'main'), ('foot', None))),
+    ('"title board" "stats board"',
+     (('title', 'board'), ('stats', 'board'))),
+    ('". a" "b a" ".a"',
+     ((None, 'a'), ('b', 'a'), (None, 'a'))),
+))
+def test_grid_template_areas(rule, value):
+    assert get_value(f'grid-template-areas: {rule}') == value
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', (
+    '"head head coucou" "nav main" "foot ...."',
+    '". a" "b c" ". a"',
+    '". a" "b a" "a a"',
+    '"a a a a" "a b b a" "a a a a"',
+    '" "',
+))
+def test_grid_template_areas_invalid(rule):
+    assert_invalid(f'grid-template-areas: {rule}')

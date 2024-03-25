@@ -6,6 +6,7 @@ See https://www.w3.org/TR/CSS21/propidx.html and various CSS3 modules.
 
 from math import inf
 
+from tinycss2 import parse_component_value_list
 from tinycss2.color3 import parse_color
 
 from .. import computed_values
@@ -1500,6 +1501,61 @@ def grid_template(tokens):
         if includes_auto_repeat and includes_track:
             return
     return tuple(return_tokens)
+
+
+@property()
+def grid_template_areas(tokens):
+    """``grid-template-areas`` property validation."""
+    if len(tokens) == 1 and tokens[0] == 'none':
+        return 'none'
+    grid_areas = []
+    for token in tokens:
+        if token.type != 'string':
+            return
+        component_values = parse_component_value_list(token.value)
+        row = []
+        last_is_dot = False
+        for value in component_values:
+            if value.type == 'ident':
+                row.append(value.value)
+                last_is_dot = False
+            elif value.type == 'literal' and value.value == '.':
+                if last_is_dot:
+                    continue
+                row.append(None)
+                last_is_dot = True
+            elif value.type == 'whitespace':
+                last_is_dot = False
+            else:
+                return
+        if not row:
+            return
+        grid_areas.append(tuple(row))
+    # check row / column have the same sizes
+    if len(set(len(row) for row in grid_areas)) == 1:
+        # check areas are continuous rectangles
+        coordinates = set()
+        areas = set()
+        for y, row in enumerate(grid_areas):
+            for x, area in enumerate(row):
+                if (x, y) in coordinates or area is None:
+                    continue
+                if area in areas:
+                    return
+                areas.add(area)
+                coordinates.add((x, y))
+                nx = x + 1
+                for nx, narea in enumerate(row[x+1:], start=x+1):
+                    if narea != area:
+                        break
+                    coordinates.add((nx, y))
+                for ny, nrow in enumerate(grid_areas[y+1:], start=y+1):
+                    if set(nrow[x:nx]) == {area}:
+                        for nnx in range(x, nx):
+                            coordinates.add((nnx, ny))
+                    else:
+                        break
+        return tuple(grid_areas)
 
 
 @property()
