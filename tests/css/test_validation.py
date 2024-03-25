@@ -689,38 +689,38 @@ def test_radial_gradient_invalid(rule):
 
 @assert_no_logs
 @pytest.mark.parametrize('rule, value', (
-    ('grid-auto-columns: 40px', ((40, 'px'),)),
-    ('grid-auto-columns: 2fr', ((2, 'fr'),)),
-    ('grid-auto-columns: 18%', ((18, '%'),)),
-    ('grid-auto-columns: auto', ('auto',)),
-    ('grid-auto-columns: min-content', ('min-content',)),
-    ('grid-auto-columns: max-content', ('max-content',)),
-    ('grid-auto-rows: fit-content(20%)', (('fit-content()', (20, '%')),)),
-    ('grid-auto-rows: minmax(20px, 25px)',
-     (('minmax()', (20, 'px'), (25, 'px')),)),
-    ('grid-auto-rows: minmax(min-content, max-content)',
+    ('40px', ((40, 'px'),)),
+    ('2fr', ((2, 'fr'),)),
+    ('18%', ((18, '%'),)),
+    ('auto', ('auto',)),
+    ('min-content', ('min-content',)),
+    ('max-content', ('max-content',)),
+    ('fit-content(20%)', (('fit-content()', (20, '%')),)),
+    ('minmax(20px, 25px)', (('minmax()', (20, 'px'), (25, 'px')),)),
+    ('minmax(min-content, max-content)',
      (('minmax()', 'min-content', 'max-content'),)),
-    ('grid-auto-columns: min-content max-content',
-     ('min-content', 'max-content')),
+    ('min-content max-content', ('min-content', 'max-content')),
 ))
 def test_grid_auto_columns_rows(rule, value):
-    assert get_value(rule) == value
+    assert get_value(f'grid-auto-columns: {rule}') == value
+    assert get_value(f'grid-auto-rows: {rule}') == value
 
 
 @assert_no_logs
 @pytest.mark.parametrize('rule', (
-    'grid-auto-columns: 40',
-    'grid-auto-rows: coucou',
-    'grid-auto-columns: fit-content',
-    'grid-auto-rows: fit-content(min-content)',
-    'grid-auto-columns: minmax(40px)',
-    'grid-auto-rows: minmax(2fr, 1fr)',
-    'grid-auto-columns: 1fr 1fr coucou',
-    'grid-auto-rows: fit-content()',
-    'grid-auto-columns: fit-content(2%, 18%)',
+    '40',
+    'coucou',
+    'fit-content',
+    'fit-content(min-content)',
+    'minmax(40px)',
+    'minmax(2fr, 1fr)',
+    '1fr 1fr coucou',
+    'fit-content()',
+    'fit-content(2%, 18%)',
 ))
 def test_grid_auto_columns_rows_invalid(rule):
-    assert_invalid(rule)
+    assert_invalid(f'grid-auto-columns: {rule}')
+    assert_invalid(f'grid-auto-rows: {rule}')
 
 
 @assert_no_logs
@@ -755,3 +755,44 @@ def test_grid_auto_flow_invalid(rule):
     assert_invalid(f'grid-auto-flow: {rule}')
 
 
+@assert_no_logs
+@pytest.mark.parametrize('rule, value', (
+    ('none', 'none'),
+    ('subgrid', ('subgrid',)),
+    ('subgrid [a] repeat(auto-fill, [b]) [c]',
+     ('subgrid', ('a',), ('repeat()', 'auto-fill', (('b',),)), ('c',))),
+    ('subgrid [a] [a] [a] [a] repeat(auto-fill, [b]) [c] [c]',
+     ('subgrid', ('a',), ('a',), ('a',), ('a',),
+      ('repeat()', 'auto-fill', (('b',),)), ('c',), ('c',))),
+    ('subgrid [] [a]', ('subgrid', (), ('a',))),
+    ('subgrid [a] [b] [c] [d] [e] [f]',
+     ('subgrid', ('a',), ('b',), ('c',), ('d',), ('e',), ('f',))),
+    ('[outer-edge] 20px [main-start] 1fr [center] 1fr max-content [main-end]',
+     (('outer-edge',), (20, 'px'), ('main-start',), (1, 'fr'), ('center',),
+      (1, 'fr'), 'max-content', ('main-end',))),
+    ('repeat(auto-fill, minmax(25ch, 1fr))',
+     (('repeat()', 'auto-fill', (('minmax()', (25, 'ch'), (1, 'fr')),)),)),
+    ('[a] auto [b] minmax(min-content, 1fr) [b c d] '
+     'repeat(2, [e] 40px) repeat(5, auto)',
+     (('a',), 'auto', ('b',), ('minmax()', 'min-content', (1, 'fr')),
+      ('b', 'c', 'd'), ('repeat()', 2, (('e',), (40, 'px'))),
+      ('repeat()', 5, ('auto',)))),
+))
+def test_grid_template_columns_rows(rule, value):
+    assert get_value(f'grid-template-columns: {rule}') == value
+    assert get_value(f'grid-template-rows: {rule}') == value
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', (
+    'coucou',
+    'subgrid subgrid',
+    'subgrid coucou',
+    'subgrid [coucou] repeat(0, [wow])',
+    'subgrid [coucou] repeat(auto-fit [wow])',
+    'fit-content(18%) repeat(auto-fill, 15em)',
+    '[coucou] [wow]',
+))
+def test_grid_template_columns_rows_invalid(rule):
+    assert_invalid(f'grid-template-columns: {rule}')
+    assert_invalid(f'grid-template-rows: {rule}')

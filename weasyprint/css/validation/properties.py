@@ -1318,39 +1318,78 @@ def _track_breadth(token):
     return _inflexible_breadth(token)
 
 
+def _track_size(token):
+    """Parse ``track-size``."""
+    track_breadth = _track_breadth(token)
+    if track_breadth:
+        return track_breadth
+    function = parse_function(token)
+    if function:
+        name, args = function
+        if name == 'minmax':
+            if len(args) == 2:
+                inflexible_breadth = _inflexible_breadth(args[0])
+                track_breadth = _track_breadth(args[1])
+                if inflexible_breadth and track_breadth:
+                    return ('minmax()', inflexible_breadth, track_breadth)
+        elif name == 'fit-content':
+            if len(args) == 1:
+                length = get_length(args[0], negative=False, percentage=True)
+                if length:
+                    return ('fit-content()', length)
+
+
+def _fixed_size(token):
+    """Parse ``fixed-size``."""
+    length = get_length(token, negative=False, percentage=True)
+    if length:
+        return length
+    function = parse_function(token)
+    if function:
+        name, args = function
+        if name == 'minmax' and len(args) == 2:
+            length = get_length(args[0], negative=False, percentage=True)
+            if length:
+                track_breadth = _track_breadth(args[1])
+                if track_breadth:
+                    return ('minmax()', length, track_breadth)
+            keyword = get_keyword(args[0])
+            if keyword in ('min-content', 'max-content', 'auto') or length:
+                fixed_breadth = get_length(
+                    args[1], negative=False, percentage=True)
+                if fixed_breadth:
+                    return ('minmax()', length or keyword, fixed_breadth)
+
+
+def _line_names(arg):
+    """Parse ``line-names``."""
+    return_line_names = []
+    if arg.type == '[] block':
+        for token in arg.content:
+            if token.type == 'ident':
+                return_line_names.append(token.value)
+            elif token.type != 'whitespace':
+                return
+        return tuple(return_line_names)
+
+
 @property('grid-auto-columns')
 @property('grid-auto-rows')
 def grid_auto(tokens):
     """``grid-auto-columns`` and ``grid-auto-rows`` properties validation."""
     return_tokens = []
     for token in tokens:
-        track_breadth = _track_breadth(token)
-        if track_breadth:
-            return_tokens.append(track_breadth)
+        track_size = _track_size(token)
+        if track_size:
+            return_tokens.append(track_size)
             continue
-        function = parse_function(token)
-        if function:
-            name, args = function
-            if name == 'minmax':
-                if len(args) == 2:
-                    inflexible_breadth = _inflexible_breadth(args[0])
-                    track_breadth = _track_breadth(args[1])
-                    if inflexible_breadth and track_breadth:
-                        return_tokens.append(
-                            ('minmax()', inflexible_breadth, track_breadth))
-                        continue
-            elif name == 'fit-content':
-                if len(args) == 1:
-                    length = get_length(args[0], negative=False, percentage=True)
-                    if length:
-                        return_tokens.append(('fit-content()', length))
-                        continue
         return
     return tuple(return_tokens)
 
 
 @property()
 def grid_auto_flow(tokens):
+    """``grid-auto-flow`` property validation."""
     if len(tokens) == 1:
         keyword = get_keyword(tokens[0])
         if keyword in ('row', 'column'):
@@ -1359,6 +1398,108 @@ def grid_auto_flow(tokens):
         keywords = [get_keyword(token) for token in tokens]
         if 'dense' in keywords and ('row' in keywords or 'column' in keywords):
             return tuple(keywords)
+
+
+@property('grid-template-columns')
+@property('grid-template-rows')
+def grid_template(tokens):
+    """``grid-template-columns`` and ``grid-template-rows`` validation."""
+    return_tokens = []
+    if len(tokens) == 1 and get_keyword(tokens[0]) == 'none':
+        return 'none'
+    if get_keyword(tokens[0]) == 'subgrid':
+        return_tokens.append('subgrid')
+        for token in tokens[1:]:
+            line_names = _line_names(token)
+            if line_names is not None:
+                return_tokens.append(line_names)
+                continue
+            function = parse_function(token)
+            if function:
+                name, args = function
+                if name == 'repeat' and len(args) >= 2:
+                    if (args[0].type == 'number' and
+                            args[0].is_integer and args[0].value >= 1):
+                        number = args[0].int_value
+                    elif get_keyword(args[0]) == 'auto-fill':
+                        number = 'auto-fill'
+                    else:
+                        return
+                    line_names_list = []
+                    for arg in args[1:]:
+                        line_names = _line_names(arg)
+                        if line_names is not None:
+                            line_names_list.append(line_names)
+                    return_tokens.append(
+                        ('repeat()', number, tuple(line_names_list)))
+                    continue
+            return
+    else:
+        includes_auto_repeat = False
+        includes_track = False
+        last_is_line_name = False
+        for token in tokens:
+            line_names = _line_names(token)
+            if line_names is not None:
+                if last_is_line_name:
+                    return
+                return_tokens.append(line_names)
+                last_is_line_name = True
+                continue
+            last_is_line_name = False
+            fixed_size = _fixed_size(token)
+            if fixed_size:
+                return_tokens.append(fixed_size)
+                continue
+            track_size = _track_size(token)
+            if track_size:
+                return_tokens.append(track_size)
+                includes_track = True
+                continue
+            function = parse_function(token)
+            if function:
+                name, args = function
+                if name == 'repeat' and len(args) >= 2:
+                    if (args[0].type == 'number' and
+                            args[0].is_integer and args[0].value >= 1):
+                        number = args[0].int_value
+                    elif get_keyword(args[0]) in ('auto-fill', 'auto-fit'):
+                        # auto-repeat
+                        if includes_auto_repeat:
+                            return
+                        number = args[0].value
+                        includes_auto_repeat = True
+                    else:
+                        return
+                    names_and_sizes = []
+                    repeat_last_is_line_name = False
+                    for arg in args[1:]:
+                        line_names = _line_names(arg)
+                        if line_names is not None:
+                            if repeat_last_is_line_name:
+                                return
+                            names_and_sizes.append(line_names)
+                            repeat_last_is_line_name = True
+                            continue
+                        repeat_last_is_line_name = False
+                        # fixed-repead
+                        fixed_size = _fixed_size(arg)
+                        if fixed_size:
+                            names_and_sizes.append(fixed_size)
+                            continue
+                        # track-repeat
+                        track_size = _track_size(arg)
+                        if track_size:
+                            includes_track = True
+                            names_and_sizes.append(track_size)
+                            continue
+                        return
+                    return_tokens.append(
+                        ('repeat()', number, tuple(names_and_sizes)))
+            return
+        if includes_auto_repeat and includes_track:
+            return
+    return tuple(return_tokens)
 
 
 @property()
