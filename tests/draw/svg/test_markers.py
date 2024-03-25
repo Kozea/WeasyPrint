@@ -284,7 +284,8 @@ def test_markers_viewbox_stroke_width(assert_pixels):
       </style>
       <svg width="11px" height="13px" xmlns="http://www.w3.org/2000/svg">
         <defs>
-          <marker id="rectangle" viewBox="-1 -1 3 3" markerWidth="1.5" markerHeight="1.5">
+          <marker id="rectangle" viewBox="-1 -1 3 3"
+                  markerWidth="1.5" markerHeight="1.5">
             <rect x="-10" y="-10" width="20" height="20" fill="red" />
             <rect x="-1" y="-1" width="1" height="1" fill="blue" />
           </marker>
