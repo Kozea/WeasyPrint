@@ -569,11 +569,11 @@ class SVG:
             translate_x, translate_y = self.point(
                 marker_node.get('refX'), marker_node.get('refY'),
                 font_size)
+            marker_width, marker_height = self.point(
+                marker_node.get('markerWidth', 3),
+                marker_node.get('markerHeight', 3),
+                font_size)
             if 'viewBox' in marker_node.attrib:
-                marker_width, marker_height = self.point(
-                    marker_node.get('markerWidth', 3),
-                    marker_node.get('markerHeight', 3),
-                    font_size)
                 scale_x, scale_y, _, _ = preserve_ratio(
                     self, marker_node, font_size, marker_width, marker_height)
 
@@ -603,19 +603,8 @@ class SVG:
                     clip_x, clip_y,
                     marker_width / scale_x, marker_height / scale_y)
             else:
-                marker_width, marker_height = self.point(
-                    marker_node.get('markerWidth', 3),
-                    marker_node.get('markerHeight', 3),
-                    font_size)
-                box = self.calculate_bounding_box(marker_node, font_size)
-                if is_valid_bounding_box(box):
-                    scale_x = scale_y = min(
-                        marker_width / box[2], marker_height / box[3])
-                    translate_x /= scale_x
-                    translate_y /= scale_y
-                else:
-                    scale_x = scale_y = 1
-                clip_box = None
+                scale_x = scale_y = 1
+                clip_box = (0, 0, marker_width, marker_height)
 
             # Scale
             if marker_node.get('markerUnits') != 'userSpaceOnUse':
@@ -641,7 +630,7 @@ class SVG:
                 self.stream.transform(e=-translate_x, f=-translate_y)
 
                 overflow = marker_node.get('overflow', 'hidden')
-                if clip_box and overflow in ('hidden', 'scroll'):
+                if overflow in ('hidden', 'scroll'):
                     self.stream.rectangle(*clip_box)
                     self.stream.clip()
                     self.stream.end()
