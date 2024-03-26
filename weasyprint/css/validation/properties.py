@@ -1410,10 +1410,11 @@ def grid_template(tokens):
         return 'none'
     if get_keyword(tokens[0]) == 'subgrid':
         return_tokens.append('subgrid')
+        subgrid_tokens = []
         for token in tokens[1:]:
             line_names = _line_names(token)
             if line_names is not None:
-                return_tokens.append(line_names)
+                subgrid_tokens.append(line_names)
                 continue
             function = parse_function(token)
             if function:
@@ -1431,10 +1432,11 @@ def grid_template(tokens):
                         line_names = _line_names(arg)
                         if line_names is not None:
                             line_names_list.append(line_names)
-                    return_tokens.append(
+                    subgrid_tokens.append(
                         ('repeat()', number, tuple(line_names_list)))
                     continue
             return
+        return_tokens.append(tuple(subgrid_tokens))
     else:
         includes_auto_repeat = False
         includes_track = False
@@ -1487,22 +1489,29 @@ def grid_template(tokens):
                             names_and_sizes.append(line_names)
                             repeat_last_is_line_name = True
                             continue
-                        repeat_last_is_line_name = False
                         # fixed-repead
                         fixed_size = _fixed_size(arg)
                         if fixed_size:
+                            if not repeat_last_is_line_name:
+                                names_and_sizes.append(())
+                            repeat_last_is_line_name = False
                             names_and_sizes.append(fixed_size)
                             continue
                         # track-repeat
                         track_size = _track_size(arg)
                         if track_size:
                             includes_track = True
+                            if not repeat_last_is_line_name:
+                                names_and_sizes.append(())
+                            repeat_last_is_line_name = False
                             names_and_sizes.append(track_size)
                             continue
                         return
                     if not last_is_line_name:
                         return_tokens.append(())
                     last_is_line_name = False
+                    if not repeat_last_is_line_name:
+                        names_and_sizes.append(())
                     return_tokens.append(
                         ('repeat()', number, tuple(names_and_sizes)))
                     continue

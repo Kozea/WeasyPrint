@@ -758,25 +758,26 @@ def test_grid_auto_flow_invalid(rule):
 @assert_no_logs
 @pytest.mark.parametrize('rule, value', (
     ('none', 'none'),
-    ('subgrid', ('subgrid',)),
+    ('subgrid', ('subgrid', ())),
     ('subgrid [a] repeat(auto-fill, [b]) [c]',
-     ('subgrid', ('a',), ('repeat()', 'auto-fill', (('b',),)), ('c',))),
+     ('subgrid', (('a',), ('repeat()', 'auto-fill', (('b',),)), ('c',)))),
     ('subgrid [a] [a] [a] [a] repeat(auto-fill, [b]) [c] [c]',
-     ('subgrid', ('a',), ('a',), ('a',), ('a',),
-      ('repeat()', 'auto-fill', (('b',),)), ('c',), ('c',))),
-    ('subgrid [] [a]', ('subgrid', (), ('a',))),
+     ('subgrid', (('a',), ('a',), ('a',), ('a',),
+      ('repeat()', 'auto-fill', (('b',),)), ('c',), ('c',)))),
+    ('subgrid [] [a]', ('subgrid', ((), ('a',)))),
     ('subgrid [a] [b] [c] [d] [e] [f]',
-     ('subgrid', ('a',), ('b',), ('c',), ('d',), ('e',), ('f',))),
+     ('subgrid', (('a',), ('b',), ('c',), ('d',), ('e',), ('f',)))),
     ('[outer-edge] 20px [main-start] 1fr [center] 1fr max-content [main-end]',
      (('outer-edge',), (20, 'px'), ('main-start',), (1, 'fr'), ('center',),
       (1, 'fr'), (), 'max-content', ('main-end',))),
     ('repeat(auto-fill, minmax(25ch, 1fr))',
-     ((), ('repeat()', 'auto-fill', (('minmax()', (25, 'ch'), (1, 'fr')),)), ())),
+     ((), ('repeat()', 'auto-fill', (
+         (), ('minmax()', (25, 'ch'), (1, 'fr')), ())), ())),
     ('[a] auto [b] minmax(min-content, 1fr) [b c d] '
      'repeat(2, [e] 40px) repeat(5, auto)',
      (('a',), 'auto', ('b',), ('minmax()', 'min-content', (1, 'fr')),
-      ('b', 'c', 'd'), ('repeat()', 2, (('e',), (40, 'px'))),
-      (), ('repeat()', 5, ('auto',)), ())),
+      ('b', 'c', 'd'), ('repeat()', 2, (('e',), (40, 'px'), ())),
+      (), ('repeat()', 5, ((), 'auto', ())), ())),
 ))
 def test_grid_template_columns_rows(rule, value):
     assert get_value(f'grid-template-columns: {rule}') == value
