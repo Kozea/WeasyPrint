@@ -12,7 +12,7 @@ from ..testing_utils import assert_no_logs, capture_logs
 
 def expand_to_dict(css, expected_error=None):
     """Helper to test shorthand properties expander functions."""
-    declarations = tinycss2.parse_declaration_list(css)
+    declarations = tinycss2.parse_blocks_contents(css)
 
     with capture_logs() as logs:
         base_url = 'https://weasyprint.org/foo/'
