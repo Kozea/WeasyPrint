@@ -13,7 +13,7 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
     if grid_areas == 'none':
         grid_areas = ()
     grid_areas = [list(row) for row in grid_areas]
-    
+
     if rows == 'none':
         rows = ((),)
     rows = list(rows)
