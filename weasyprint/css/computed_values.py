@@ -593,7 +593,7 @@ def _compute_track_breadth(style, name, value):
     """Compute track breadth."""
     if value in ('auto', 'min-content', 'max-content'):
         return value
-    elif value.type == 'dimension':
+    elif isinstance(value, Dimension):
         if value.unit == 'fr':
             return value
         else:

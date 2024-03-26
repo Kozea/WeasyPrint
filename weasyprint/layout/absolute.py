@@ -178,6 +178,7 @@ def absolute_block(context, box, containing_block, fixed_boxes, bottom_space,
                    skip_stack, cb_x, cb_y, cb_width, cb_height):
     from .block import block_container_layout
     from .flex import flex_layout
+    from .grid import grid_layout
 
     translate_box_width, translate_x = absolute_width(
         box, context, cb_x, cb_y, cb_width, cb_height)
@@ -200,8 +201,13 @@ def absolute_block(context, box, containing_block, fixed_boxes, bottom_space,
             context, box, bottom_space, skip_stack, page_is_empty=True,
             absolute_boxes=absolute_boxes, fixed_boxes=fixed_boxes,
             adjoining_margins=None, discard=False, max_lines=None)
-    else:
+    elif isinstance(box, (boxes.FlexContainerBox)):
         new_box, resume_at, _, _, _ = flex_layout(
+            context, box, bottom_space, skip_stack, containing_block,
+            page_is_empty=True, absolute_boxes=absolute_boxes,
+            fixed_boxes=fixed_boxes)
+    elif isinstance(box, (boxes.GridContainerBox)):
+        new_box, resume_at, _, _, _ = grid_layout(
             context, box, bottom_space, skip_stack, containing_block,
             page_is_empty=True, absolute_boxes=absolute_boxes,
             fixed_boxes=fixed_boxes)
@@ -252,16 +258,15 @@ def absolute_box_layout(context, box, containing_block, fixed_boxes,
     resolve_position_percentages(box, (cb_width, cb_height))
 
     context.create_block_formatting_context()
-    # Absolute tables are wrapped into block boxes
-    if isinstance(box, (boxes.BlockBox, boxes.FlexContainerBox)):
-        new_box, resume_at = absolute_block(
-            context, box, containing_block, fixed_boxes, bottom_space,
-            skip_stack, cb_x, cb_y, cb_width, cb_height)
-    else:
-        assert isinstance(box, boxes.BlockReplacedBox)
+    if isinstance(box, boxes.BlockReplacedBox):
         new_box = absolute_replaced(
             context, box, cb_x, cb_y, cb_width, cb_height)
         resume_at = None
+    else:
+        # Absolute tables are wrapped into block boxes
+        new_box, resume_at = absolute_block(
+            context, box, containing_block, fixed_boxes, bottom_space,
+            skip_stack, cb_x, cb_y, cb_width, cb_height)
     context.finish_block_formatting_context(new_box)
     return new_box, resume_at
 
