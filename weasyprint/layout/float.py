@@ -21,6 +21,7 @@ def float_layout(context, box, containing_block, absolute_boxes, fixed_boxes,
     """Set the width and position of floating ``box``."""
     from .block import block_container_layout
     from .flex import flex_layout
+    from .grid import grid_layout
 
     cb_width, cb_height = (containing_block.width, containing_block.height)
     resolve_percentages(box, (cb_width, cb_height))
@@ -64,6 +65,12 @@ def float_layout(context, box, containing_block, absolute_boxes, fixed_boxes,
         context.finish_block_formatting_context(box)
     elif isinstance(box, boxes.FlexContainerBox):
         box, resume_at, _, _, _ = flex_layout(
+            context, box, bottom_space=bottom_space,
+            skip_stack=skip_stack, containing_block=containing_block,
+            page_is_empty=True, absolute_boxes=absolute_boxes,
+            fixed_boxes=fixed_boxes)
+    elif isinstance(box, boxes.GridContainerBox):
+        box, resume_at, _, _, _ = grid_layout(
             context, box, bottom_space=bottom_space,
             skip_stack=skip_stack, containing_block=containing_block,
             page_is_empty=True, absolute_boxes=absolute_boxes,
