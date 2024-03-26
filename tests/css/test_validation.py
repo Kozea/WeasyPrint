@@ -822,3 +822,42 @@ def test_grid_template_areas(rule, value):
 ))
 def test_grid_template_areas_invalid(rule):
     assert_invalid(f'grid-template-areas: {rule}')
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, value', (
+    ('auto', 'auto'),
+    ('4', (None, 4, None)),
+    ('C', (None, None, 'c')),
+    ('4 c', (None, 4, 'c')),
+    ('col -4', (None, -4, 'col')),
+    ('span c 4', ('span', 4, 'c')),
+    ('span 4 c', ('span', 4, 'c')),
+    ('4 span c', ('span', 4, 'c')),
+    ('super 4 span', ('span', 4, 'super')),
+))
+def test_grid_line(rule, value):
+    assert get_value(f'grid-row-start: {rule}') == value
+    assert get_value(f'grid-row-end: {rule}') == value
+    assert get_value(f'grid-column-start: {rule}') == value
+    assert get_value(f'grid-column-end: {rule}') == value
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', (
+    'span',
+    '0',
+    '1.1',
+    'span 0',
+    'span -1',
+    'span 2.1',
+    'span auto',
+    'auto auto',
+    '-4 cOL span',
+    'span 1.1 col',
+))
+def test_grid_line_invalid(rule):
+    assert_invalid(f'grid-row-start: {rule}')
+    assert_invalid(f'grid-row-end: {rule}')
+    assert_invalid(f'grid-column-start: {rule}')
+    assert_invalid(f'grid-column-end: {rule}')

@@ -1578,6 +1578,48 @@ def grid_template_areas(tokens):
         return tuple(grid_areas)
 
 
+@property('grid-row-start')
+@property('grid-row-end')
+@property('grid-column-start')
+@property('grid-column-end')
+def grid_line(tokens):
+    """``grid-[row|column]-[start—end]`` properties validation."""
+    if len(tokens) == 1:
+        token = tokens[0]
+        if keyword := get_keyword(token):
+            if keyword == 'auto':
+                return keyword
+            elif keyword != 'span':
+                return (None, None, keyword)
+        elif token.type == 'number' and token.is_integer and token.value:
+            return (None, token.value, None)
+        return
+    number = ident = span = None
+    for token in tokens:
+        if keyword := get_keyword(token):
+            if keyword == 'auto':
+                return
+            if keyword == 'span':
+                if span is None:
+                    span = 'span'
+                    continue
+            elif keyword and ident is None:
+                ident = keyword
+                continue
+        elif token.type == 'number' and token.is_integer and token.value:
+            if number is None:
+                number = token.value
+                continue
+        return
+    if span:
+        if number and number < 0:
+            return
+        elif ident or number:
+            return (span, number, ident)
+    elif number:
+        return (span, number, ident)
+
+
 @property()
 @single_keyword
 def flex_wrap(keyword):
