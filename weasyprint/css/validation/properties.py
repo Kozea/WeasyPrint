@@ -1444,16 +1444,21 @@ def grid_template(tokens):
             if line_names is not None:
                 if last_is_line_name:
                     return
-                return_tokens.append(line_names)
                 last_is_line_name = True
+                return_tokens.append(line_names)
                 continue
-            last_is_line_name = False
             fixed_size = _fixed_size(token)
             if fixed_size:
+                if not last_is_line_name:
+                    return_tokens.append(())
+                last_is_line_name = False
                 return_tokens.append(fixed_size)
                 continue
             track_size = _track_size(token)
             if track_size:
+                if not last_is_line_name:
+                    return_tokens.append(())
+                last_is_line_name = False
                 return_tokens.append(track_size)
                 includes_track = True
                 continue
@@ -1495,11 +1500,17 @@ def grid_template(tokens):
                             names_and_sizes.append(track_size)
                             continue
                         return
+                    if not last_is_line_name:
+                        return_tokens.append(())
+                    last_is_line_name = False
                     return_tokens.append(
                         ('repeat()', number, tuple(names_and_sizes)))
+                    continue
             return
         if includes_auto_repeat and includes_track:
             return
+        if not last_is_line_name:
+            return_tokens.append(())
     return tuple(return_tokens)
 
 
