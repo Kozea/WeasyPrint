@@ -770,24 +770,44 @@ def expand_grid(tokens, name):
     # TODO: write expander
 
 
+def _expand_grid_column_row_area(tokens, max_number):
+    grid_lines = [[]]
+    for token in tokens:
+        if token.type == 'literal' and token.value == '/':
+            grid_lines.append([])
+            continue
+        grid_lines[-1].append(token)
+    if not 1 <= len(grid_lines) <= max_number:
+        raise InvalidValues
+    validations = []
+    for tokens in grid_lines:
+        if not (validation := grid_line(tokens)):
+            raise InvalidValues
+        validations.append(validation)
+        yield tuple(tokens)
+    auto = IdentToken(token.source_line, token.source_column, 'auto')
+    if (lines := len(grid_lines)) <= 1:
+        custom_ident = set(validations[0][:2]) == {None}
+        value = tuple(grid_lines[0]) if custom_ident else (auto,)
+        grid_lines.append(tokens)
+        validations.append(validations[0])
+        yield value
+    if lines <= 2 < max_number:
+        custom_ident = set(validations[0][:2]) == {None}
+        yield tuple(grid_lines[0]) if custom_ident else (auto,)
+    if lines <= 3 < max_number:
+        custom_ident = set(validations[1][:2]) == {None}
+        yield tuple(grid_lines[1]) if custom_ident else (auto,)
+
+
 @expander('grid-column')
 @expander('grid-row')
 @generic_expander('-start', '-end')
 def expand_grid_column_row(tokens, name):
     """Expand the ``grid-[column|row]`` properties."""
-    grid_lines = [[]]
-    for token in tokens:
-        if token.type == 'literal' and token.value == '/':
-            if len(grid_lines) != 1:
-                raise InvalidValues
-            grid_lines.append([])
-            continue
-        grid_lines[-1].append(token)
-    if len(grid_lines) in (1, 2):
-        for token, side in zip(grid_lines, ('start', 'end')):
-            if not grid_line(token):
-                raise InvalidValues
-            yield f'-{side}', token
+    tokens_list = _expand_grid_column_row_area(tokens, 2)
+    for tokens, side in zip(tokens_list, ('start', 'end')):
+        yield f'-{side}', tokens
 
 
 @expander('grid-area')
@@ -795,7 +815,10 @@ def expand_grid_column_row(tokens, name):
                   'grid-column-start', 'grid-column-end')
 def expand_grid_area(tokens, name):
     """Expand the ``grid-area`` property."""
-    # TODO: write expander
+    tokens_list = _expand_grid_column_row_area(tokens, 4)
+    sides = ('row-start', 'row-end', 'column-start', 'column-end')
+    for tokens, side in zip(tokens_list, sides):
+        yield f'grid-{side}', tokens
 
 
 @expander('line-clamp')
