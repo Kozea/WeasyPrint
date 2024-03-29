@@ -11,6 +11,7 @@ from .. import html
 from ..css import properties, targets
 from ..layout.table import collapse_table_borders
 from ..logger import LOGGER
+from ..text.constants import get_lang_quotes
 from . import boxes
 
 # Maps values of the ``display`` CSS property to box types.
@@ -369,7 +370,7 @@ def marker_to_box(element, state, parent_style, style_for, get_image_from_uri,
 def compute_content_list(content_list, parent_box, counter_values, css_token,
                          parse_again, target_collector, counter_style,
                          get_image_from_uri=None, quote_depth=None,
-                         quote_style=None, context=None, page=None,
+                         quote_style=None, lang=None, context=None, page=None,
                          element=None):
     """Compute and return the boxes corresponding to the ``content_list``.
 
@@ -501,11 +502,14 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
                 break
         elif type_ == 'quote' and None not in (quote_depth, quote_style):
             is_open = 'open' in value
-            insert = not value.startswith('no-')
+            insert = not value.startswith('no-') and quote_style != 'none'
             if not is_open:
                 quote_depth[0] = max(0, quote_depth[0] - 1)
             if insert:
-                open_quotes, close_quotes = quote_style
+                if quote_style == 'auto':
+                    open_quotes, close_quotes = get_lang_quotes(lang)
+                else:
+                    open_quotes, close_quotes = quote_style
                 quotes = open_quotes if is_open else close_quotes
                 add_text(quotes[min(quote_depth[0], len(quotes) - 1)])
             if is_open:
@@ -589,7 +593,7 @@ def content_to_boxes(style, parent_box, quote_depth, counter_values,
     box_list = compute_content_list(
         style['content'], parent_box, counter_values, css_token, parse_again,
         target_collector, counter_style, get_image_from_uri, quote_depth,
-        style['quotes'], context, page)
+        style['quotes'], style['lang'], context, page)
     return box_list or []
 
 

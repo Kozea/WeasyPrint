@@ -757,6 +757,138 @@ def test_before_after_5():
 
 
 @assert_no_logs
+def test_quotes_auto():
+    assert_tree(parse_all('''
+      <style>
+        body { quotes: auto }
+        q:before { content: open-quote ' '}
+        q:after { content: ' ' close-quote }
+      </style>
+      <p><q>Lorem ipsum <q>dolor</q> sit amet</q></p>
+    '''), [
+        ('p', 'Block', [
+            ('p', 'Line', [
+                ('q', 'Inline', [
+                    ('q::before', 'Inline', [
+                        ('q::before', 'Text', '“ ')]),
+                    ('q', 'Text', 'Lorem ipsum '),
+                    ('q', 'Inline', [
+                        ('q::before', 'Inline', [
+                            ('q::before', 'Text', '‘ ')]),
+                        ('q', 'Text', 'dolor'),
+                        ('q::after', 'Inline', [
+                            ('q::after', 'Text', ' ’')])]),
+                    ('q', 'Text', ' sit amet'),
+                    ('q::after', 'Inline', [
+                        ('q::after', 'Text', ' ”')])])])])])
+
+
+@assert_no_logs
+def test_quotes_none():
+    assert_tree(parse_all('''
+      <style>
+        body { quotes: none }
+        q:before { content: open-quote ' '}
+        q:after { content: ' ' close-quote }
+      </style>
+      <p><q>Lorem ipsum <q>dolor</q> sit amet</q></p>
+    '''), [
+        ('p', 'Block', [
+            ('p', 'Line', [
+                ('q', 'Inline', [
+                    ('q::before', 'Inline', [
+                        ('q::before', 'Text', ' ')]),
+                    ('q', 'Text', 'Lorem ipsum '),
+                    ('q', 'Inline', [
+                        ('q::before', 'Inline', [
+                            ('q::before', 'Text', ' ')]),
+                        ('q', 'Text', 'dolor'),
+                        ('q::after', 'Inline', [
+                            ('q::after', 'Text', ' ')])]),
+                    ('q', 'Text', ' sit amet'),
+                    ('q::after', 'Inline', [
+                        ('q::after', 'Text', ' ')])])])])])
+
+
+@assert_no_logs
+def test_quotes_lang():
+    assert_tree(parse_all('''
+      <style>
+        q:before { content: open-quote ' '}
+        q:after { content: ' ' close-quote }
+      </style>
+      <p lang="fr"><q>Lorem ipsum <q>dolor</q> sit amet</q></p>
+    '''), [
+        ('p', 'Block', [
+            ('p', 'Line', [
+                ('q', 'Inline', [
+                    ('q::before', 'Inline', [
+                        ('q::before', 'Text', '« ')]),
+                    ('q', 'Text', 'Lorem ipsum '),
+                    ('q', 'Inline', [
+                        ('q::before', 'Inline', [
+                            ('q::before', 'Text', '« ')]),
+                        ('q', 'Text', 'dolor'),
+                        ('q::after', 'Inline', [
+                            ('q::after', 'Text', ' »')])]),
+                    ('q', 'Text', ' sit amet'),
+                    ('q::after', 'Inline', [
+                        ('q::after', 'Text', ' »')])])])])])
+
+
+@assert_no_logs
+def test_quotes_lang_alternate():
+    assert_tree(parse_all('''
+      <style>
+        q:before { content: open-quote ' '}
+        q:after { content: ' ' close-quote }
+      </style>
+      <p lang="fr_CH"><q>Lorem ipsum <q>dolor</q> sit amet</q></p>
+    '''), [
+        ('p', 'Block', [
+            ('p', 'Line', [
+                ('q', 'Inline', [
+                    ('q::before', 'Inline', [
+                        ('q::before', 'Text', '« ')]),
+                    ('q', 'Text', 'Lorem ipsum '),
+                    ('q', 'Inline', [
+                        ('q::before', 'Inline', [
+                            ('q::before', 'Text', '‹ ')]),
+                        ('q', 'Text', 'dolor'),
+                        ('q::after', 'Inline', [
+                            ('q::after', 'Text', ' ›')])]),
+                    ('q', 'Text', ' sit amet'),
+                    ('q::after', 'Inline', [
+                        ('q::after', 'Text', ' »')])])])])])
+
+
+@assert_no_logs
+def test_quotes_lang_parent():
+    assert_tree(parse_all('''
+      <style>
+        q:before { content: open-quote ' '}
+        q:after { content: ' ' close-quote }
+      </style>
+      <p lang="fr_CH_alt"><q>Lorem ipsum <q>dolor</q> sit amet</q></p>
+    '''), [
+        ('p', 'Block', [
+            ('p', 'Line', [
+                ('q', 'Inline', [
+                    ('q::before', 'Inline', [
+                        ('q::before', 'Text', '« ')]),
+                    ('q', 'Text', 'Lorem ipsum '),
+                    ('q', 'Inline', [
+                        ('q::before', 'Inline', [
+                            ('q::before', 'Text', '‹ ')]),
+                        ('q', 'Text', 'dolor'),
+                        ('q::after', 'Inline', [
+                            ('q::after', 'Text', ' ›')])]),
+                    ('q', 'Text', ' sit amet'),
+                    ('q::after', 'Inline', [
+                        ('q::after', 'Text', ' »')])])])])])
+
+
+@assert_no_logs
 def test_margin_boxes():
     page_1, page_2 = render_pages('''
       <style>

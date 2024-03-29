@@ -117,7 +117,7 @@ INITIAL_VALUES = {
     'content': 'normal',
     'footnote_display': 'block',
     'footnote_policy': 'auto',
-    'quotes': list('“”‘’'),  # chosen by the user agent
+    'quotes': 'auto',
     'string_set': 'none',
 
     # Images 3/4 (CR/WD): https://www.w3.org/TR/css-images-4/

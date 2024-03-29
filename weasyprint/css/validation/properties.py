@@ -1091,6 +1091,9 @@ def position(token):
 @property()
 def quotes(tokens):
     """``quotes`` property validation."""
+    if len(tokens) == 1:
+        if (keyword := get_keyword(tokens[0])) in ('auto', 'none'):
+            return keyword
     if (tokens and len(tokens) % 2 == 0 and
             all(token.type == 'string' for token in tokens)):
         strings = tuple(token.value for token in tokens)
