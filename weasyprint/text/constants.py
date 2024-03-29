@@ -4,7 +4,6 @@ from functools import lru_cache
 
 from .ffi import pango
 
-
 # Pango features
 PANGO_STYLE = {
     'normal': pango.PANGO_STYLE_NORMAL,
