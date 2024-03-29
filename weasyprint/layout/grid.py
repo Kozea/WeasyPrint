@@ -62,15 +62,23 @@ def placement(start, end, lines):
                 if step == -1:
                     coordinate_end = len(lines) - 1 - coordinate_end
         if span is not None:
-            size = number or 1
+            size = span_number = number or 1
             span_ident = ident
-        else:
+            if span_ident is not None:
+                for size, line in enumerate(lines[coordinate+1:], start=1):
+                    if span_ident in line:
+                        span_number -= 1
+                    if span_number == 0:
+                        break
+                else:
+                    size += span_number
+        elif coordinate is not None:
             size = coordinate_end - coordinate
         if coordinate is None:
-            if coordinate_span is None:
+            if span_ident is None:
                 coordinate = coordinate_end - size
             else:
-                number = coordinate_end
+                number = number or 1
                 if coordinate_end > 0:
                     for coordinate, line in enumerate(lines[coordinate_end-1::-1]):
                         if span_ident in line:
@@ -82,6 +90,14 @@ def placement(start, end, lines):
                         coordinate = -number
                 else:
                     coordinate = -number
+            size = coordinate_end - coordinate
+    else:
+        size = 1
+    if size < 0:
+        size = -size
+        coordinate -= size
+    if size == 0:
+        size = 1
     return (coordinate, size)
 
 
@@ -166,3 +182,4 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
             x, width = column_placement
             y, height = row_placement
             children_position[child] = (x, y, width, height)
+    # TODO: handle unpositioned items (auto/span or span/auto)
