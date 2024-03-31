@@ -731,6 +731,7 @@ def test_grid_auto_columns_rows_invalid(rule):
     ('column dense', ('column', 'dense')),
     ('dense row', ('dense', 'row')),
     ('dense column', ('dense', 'column')),
+    ('dense', ('dense', 'row')),
 ))
 def test_grid_auto_flow(rule, value):
     assert get_value(f'grid-auto-flow: {rule}') == value
@@ -741,7 +742,6 @@ def test_grid_auto_flow(rule, value):
     'row row',
     'column column',
     'dense dense',
-    'dense',
     'coucou',
     'row column',
     'column row',

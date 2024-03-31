@@ -1395,6 +1395,8 @@ def grid_auto_flow(tokens):
         keyword = get_keyword(tokens[0])
         if keyword in ('row', 'column'):
             return (keyword,)
+        elif keyword == 'dense':
+            return (keyword, 'row')
     elif len(tokens) == 2:
         keywords = [get_keyword(token) for token in tokens]
         if 'dense' in keywords and ('row' in keywords or 'column' in keywords):
