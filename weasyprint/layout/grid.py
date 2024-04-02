@@ -26,10 +26,13 @@ def _intersect_with_children(x, y, width, height, positions):
 
 def _get_placement(start, end, lines):
     # Input coordinates are 1-indexed, returned coordinates are 0-indexed.
-    if (start == end == 'auto' or
-        start == 'auto' and end[0] == 'span' or
-        end == 'auto' and start[0] == 'span' or
-        start[0] == 'span' and end[0] == 'span'):
+    if start == end == 'auto':
+        return
+    if start == 'auto' and end[0] == 'span':
+        return
+    if end == 'auto' and start[0] == 'span':
+        return
+    if start[0] == end[0] == 'span':
         return
     if start != 'auto':
         span, number, ident = start
@@ -102,7 +105,8 @@ def _get_placement(start, end, lines):
             else:
                 number = number or 1
                 if coordinate_end > 0:
-                    for coordinate, line in enumerate(lines[coordinate_end-1::-1]):
+                    iterable = enumerate(lines[coordinate_end-1::-1])
+                    for coordinate, line in iterable:
                         if span_ident in line:
                             number -= 1
                         if number == 0:
@@ -147,8 +151,8 @@ def _get_column_placement(row_placement, column_start, column_end,
                 placement = _get_placement(x + 1, column_end, columns)
             else:
                 assert column_start[0] == 'span'
-                # If the placement contains two spans, remove the one contributed
-                # by the end grid-placement property.
+                # If the placement contains two spans, remove the one
+                # contributed by the end grid-placement property.
                 # https://drafts.csswg.org/css-grid/#grid-placement-errors
                 assert column_start == 'auto' or column_start[1] == 'span'
                 span = _get_span(column_start)
@@ -188,7 +192,8 @@ def _distribute_extra_space(affected_sizes, affected_tracks_types,
                             sizing_functions, tracks_sizes, span, direction,
                             context, containing_block):
     assert affected_sizes in ('min', 'max')
-    assert affected_tracks_types in ('intrinsic', 'content-based', 'max-content')
+    assert affected_tracks_types in (
+        'intrinsic', 'content-based', 'max-content')
     assert size_contribution in ('mininum', 'min-content', 'max-content')
     assert direction in 'xy'
 
@@ -240,7 +245,8 @@ def _distribute_extra_space(affected_sizes, affected_tracks_types,
                 space -= sizes[affected_size_index]
             space = max(0, space)
             # 2.2 Distribute space up to limits.
-            tracks_numbers = list(enumerate(affected_tracks[i:i+span], start=i))
+            tracks_numbers = list(
+                enumerate(affected_tracks[i:i+span], start=i))
             item_incurred_increases = [0] * len(sizing_functions)
             affected_tracks_numbers = [
                 j for j, affected in tracks_numbers if affected]
@@ -251,7 +257,8 @@ def _distribute_extra_space(affected_sizes, affected_tracks_types,
                 affected_size = tracks_sizes[track_number][affected_size_index]
                 limit = tracks_sizes[track_number][1]
                 if affected_size + item_incurred_increase >= limit:
-                    extra = item_incurred_increase + affected_size_index - limit
+                    extra = (
+                        item_incurred_increase + affected_size_index - limit)
                     item_incurred_increase -= extra
                 space -= item_incurred_increase
                 item_incurred_increases[track_number] = item_incurred_increase
@@ -259,17 +266,22 @@ def _distribute_extra_space(affected_sizes, affected_tracks_types,
             if space and affected_tracks_numbers:
                 unaffected_tracks_numbers = [
                     j for j, affected in tracks_numbers if not affected]
-                distributed_space = space / (len(unaffected_tracks_numbers) or 1)
+                distributed_space = (
+                    space / (len(unaffected_tracks_numbers) or 1))
                 for track_number in unaffected_tracks_numbers:
                     base_size, growth_limit = tracks_sizes[track_number]
                     item_incurred_increase = distributed_space
-                    affected_size = tracks_sizes[track_number][affected_size_index]
+                    affected_size = (
+                        tracks_sizes[track_number][affected_size_index])
                     limit = tracks_sizes[track_number][1]
                     if affected_size + item_incurred_increase >= limit:
-                        extra = item_incurred_increase + affected_size_index - limit
+                        extra = (
+                            item_incurred_increase +
+                            affected_size_index - limit)
                         item_incurred_increase -= extra
                     space -= item_incurred_increase
-                    item_incurred_increases[track_number] = item_incurred_increase
+                    item_incurred_increases[track_number] = (
+                        item_incurred_increase)
             # 2.4 Distribute space beyond limits.
             if space:
                 # TODO
@@ -297,14 +309,15 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
         if isinstance(max_function, Dimension) and max_function.unit != 'fr':
             base_size = percentage(min_function, box_size)
         elif (min_function in ('min-content', 'max-content', 'auto') or
-                  min_function[0] == 'fit-content()'):
+              min_function[0] == 'fit-content()'):
             base_size = 0
         growth_limit = None
         if isinstance(max_function, Dimension) and max_function.unit != 'fr':
             growth_limit = percentage(min_function, box_size)
         elif (max_function in ('max-content', 'max-content', 'auto') or
-                  max_function[0] == 'fit-content()' or
-                  isinstance(max_function, Dimension) and max_function.unit == 'fr'):
+              max_function[0] == 'fit-content()' or
+              isinstance(max_function, Dimension) and
+              max_function.unit == 'fr'):
             growth_limit = inf
         if None not in (base_size, growth_limit):
             growth_limit = max(base_size, growth_limit)
@@ -345,33 +358,40 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
                 sizes[1] = max(sizes)
             continue
         if min_function == 'min-content':
-            sizes[0] = max(0, *(min_content_width(context, child) for child in children))
+            sizes[0] = max(0, *(
+                min_content_width(context, child) for child in children))
         elif min_function == 'max-content':
-            sizes[0] = max(0, *(max_content_width(context, child) for child in children))
+            sizes[0] = max(0, *(
+                max_content_width(context, child) for child in children))
         elif min_function == 'auto':
             # TODO: Handle min-/max-content constrained parents.
             # TODO: Use real "minimum contributions".
-            sizes[0] = max(0, *(min_content_width(context, child) for child in children))
+            sizes[0] = max(0, *(
+                min_content_width(context, child) for child in children))
         if max_function == 'min-content':
-            sizes[1] = max(min_content_width(context, child) for child in children)
-        elif max_function in ('auto', 'max-content') or max_function[0] == 'fit_content()':
-            sizes[1] = max(max_content_width(context, child) for child in children)
+            sizes[1] = max(
+                min_content_width(context, child) for child in children)
+        elif (max_function in ('auto', 'max-content') or
+              max_function[0] == 'fit_content()'):
+            sizes[1] = max(
+                max_content_width(context, child) for child in children)
         if None not in sizes:
             sizes[1] = max(sizes)
-    print(f'{direction} tracks_sizes', tracks_sizes)
-    # 1.2.3 Increase sizes to accommodate spanning items crossing content-sized tracks.
+    # 1.2.3 Increase sizes to accommodate items spanning content-sized tracks.
     spans = sorted({
         width if direction == 'x' else height
         for (_, _, width, height) in children_positions.values()
         if (width if direction == 'x' else height) >= 2})
     for span in spans:
         tracks_children = [[] for _ in range(len(sizing_functions))]
-        for i, (child, (x, y, width, height)) in enumerate(children_positions.items()):
+        iterable = enumerate(children_positions.items())
+        for i, (child, (x, y, width, height)) in iterable:
             coord, size = (x, width) if direction == 'x' else (y, height)
             if size != span:
                 continue
             for _, max_function in sizing_functions[i:i+span+1]:
-                if isinstance(max_function, Dimension) and max_function.unit == 'fr':
+                if (isinstance(max_function, Dimension) and
+                        max_function.unit == 'fr'):
                     break
             else:
                 tracks_children[coord + implicit_start].append(child)
@@ -392,18 +412,18 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
             'min', 'max-content', 'max-content', tracks_children,
             sizing_functions, tracks_sizes, span, direction, context,
             containing_block)
-
         # 1.2.3.4 Increase growth limit.
         for sizes in tracks_sizes:
             if None not in sizes:
                 sizes[1] = max(sizes)
-
-        for i, (child, (x, y, width, height)) in enumerate(children_positions.items()):
+        iterable = enumerate(children_positions.items())
+        for i, (child, (x, y, width, height)) in iterable:
             coord, size = (x, width) if direction == 'x' else (y, height)
             if size != span:
                 continue
             for _, max_function in sizing_functions[i:i+span+1]:
-                if isinstance(max_function, Dimension) and max_function.unit == 'fr':
+                if (isinstance(max_function, Dimension) and
+                        max_function.unit == 'fr'):
                     break
             else:
                 tracks_children[coord + implicit_start].append(child)
@@ -417,7 +437,7 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
             'max', 'max-content', 'max-content', tracks_children,
             sizing_functions, tracks_sizes, span, direction, context,
             containing_block)
-    # 1.2.4 Increase sizes to accommodate spanning items crossing flexible tracks.
+    # 1.2.4 Increase sizes to accommodate items spanning flexible tracks.
     # TODO
     # 1.2.5 Fix infinite growth limits.
     for sizes in tracks_sizes:
@@ -451,28 +471,42 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
             leftover_space = free_space
             flex_factor_sum = 0
             inflexible_tracks = set()
-            for i, (sizes, (_, max_function)) in enumerate(zip(tracks_sizes, sizing_functions)):
-                if i not in inflexible_tracks and isinstance(max_function, Dimension) and max_function.unit == 'fr':
+            iterable = enumerate(zip(tracks_sizes, sizing_functions))
+            for i, (sizes, (_, max_function)) in iterable:
+                if i not in inflexible_tracks and (
+                        isinstance(max_function, Dimension) and
+                        max_function.unit == 'fr'):
                     flex_factor_sum += max_function.value
             flex_factor_sum = max(1, flex_factor_sum)
             hypothetical_fr_size = leftover_space / flex_factor_sum
             stop = True
-            for i, (sizes, (_, max_function)) in enumerate(zip(tracks_sizes, sizing_functions)):
-                if i not in inflexible_tracks and isinstance(max_function, Dimension) and max_function.unit == 'fr':
+            iterable = enumerate(zip(tracks_sizes, sizing_functions))
+            for i, (sizes, (_, max_function)) in iterable:
+                if i not in inflexible_tracks and (
+                        isinstance(max_function, Dimension) and
+                        max_function.unit == 'fr'):
                     if hypothetical_fr_size * max_function.value < sizes[0]:
                         inflexible_tracks.add(i)
                         stop = False
         flex_fraction = hypothetical_fr_size
-        for i, (sizes, (_, max_function)) in enumerate(zip(tracks_sizes, sizing_functions)):
-            if isinstance(max_function, Dimension) and max_function.unit == 'fr':
+        iterable = enumerate(zip(tracks_sizes, sizing_functions))
+        for i, (sizes, (_, max_function)) in iterable:
+            if (isinstance(max_function, Dimension) and
+                    max_function.unit == 'fr'):
                 if flex_fraction * max_function.value > sizes[0]:
                     free_space -= flex_fraction * max_function.value
                     sizes[0] += flex_fraction * max_function.value
     # 1.5 Expand stretched auto tracks.
-    if ((direction == 'x' and containing_block.style['justify_content'] in ('normal', 'stretch')) or (
-            direction == 'y' and containing_block.style['align_content'] in ('normal', 'stretch'))) and free_space > 0:
+    x_stretch = (
+        direction == 'x' and
+        containing_block.style['justify_content'] in ('normal', 'stretch'))
+    y_stretch = (
+        direction == 'y' and
+        containing_block.style['align_content'] in ('normal', 'stretch'))
+    if (x_stretch or y_stretch) and free_space > 0:
         auto_tracks_sizes = [
-            sizes for sizes, (min_function, _) in zip(tracks_sizes, sizing_functions)
+            sizes for sizes, (min_function, _)
+            in zip(tracks_sizes, sizing_functions)
             if min_function == 'auto']
         if auto_tracks_sizes:
             distributed_free_space = free_space / len(auto_tracks_sizes)
@@ -484,8 +518,6 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
 
 def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                 page_is_empty, absolute_boxes, fixed_boxes):
-    print(box.element.get('id'))
-
     # Define explicit grid
     grid_areas = box.style['grid_template_areas']
     rows = box.style['grid_template_rows']
@@ -506,7 +538,8 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
 
     if columns == 'none':
         columns = ((),)
-    columns = [column if i % 2 else list(column) for i, column in enumerate(columns)]
+    columns = [
+        column if i % 2 else list(column) for i, column in enumerate(columns)]
 
     # Adjust rows number
     grid_areas_columns = len(grid_areas[0]) if grid_areas else 0
@@ -536,18 +569,22 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
             if area_name is None:
                 continue
             start_name = f'{area_name}-start'
-            if start_name not in [name for row in rows[::2] for name in row]:
+            names = [name for row in rows[::2] for name in row]
+            if start_name not in names:
                 rows[2*y].append(start_name)
-            if start_name not in [name for column in columns[::2] for name in column]:
+            names = [name for column in columns[::2] for name in column]
+            if start_name not in names:
                 columns[2*x].append(start_name)
     for y, row in enumerate(grid_areas[::-1]):
         for x, area_name in enumerate(row[::-1]):
             if area_name is None:
                 continue
             end_name = f'{area_name}-end'
-            if end_name not in [name for row in rows[::2] for name in row]:
+            names = [name for row in rows[::2] for name in row]
+            if end_name not in names:
                 rows[-2*y-1].append(end_name)
-            if end_name not in [name for column in columns[::2] for name in column]:
+            names = [name for column in columns[::2] for name in column]
+            if end_name not in names:
                 columns[-2*x-1].append(end_name)
 
     # 1. Run the grid placement algorithm.
@@ -560,7 +597,8 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         row_start = child.style['grid_row_start']
         row_end = child.style['grid_row_end']
 
-        column_placement = _get_placement(column_start, column_end, columns[::2])
+        column_placement = _get_placement(
+            column_start, column_end, columns[::2])
         row_placement = _get_placement(row_start, row_end, rows[::2])
 
         if column_placement and row_placement:
@@ -657,20 +695,26 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                 row_end = child.style['grid_row_end']
                 for y in count(cursor_y):
                     if row_start == 'auto':
-                        y, height = _get_placement((None, y + 1, None), row_end, rows[::2])
+                        y, height = _get_placement(
+                            (None, y + 1, None), row_end, rows[::2])
                     else:
                         assert row_start[0] == 'span'
                         assert row_start == 'auto' or row_start[1] == 'span'
                         span = _get_span(row_start)
-                        y, height = _get_placement(row_start, (None, y + 1 + span, None), rows[::2])
+                        y, height = _get_placement(
+                            row_start, (None, y + 1 + span, None), rows[::2])
                     if y < cursor_y:
                         continue
                     for row in range(y, y + height):
-                        if _intersect_with_children(x, y, width, height, children_positions.values()):
-                            # Child intersects with a positioned child on current row.
+                        intersect = _intersect_with_children(
+                            x, y, width, height, children_positions.values())
+                        if intersect:
+                            # Child intersects with a positioned child on
+                            # current row.
                             break
                     else:
-                        # Child doesn’t intersect with any positioned child on any row.
+                        # Child doesn’t intersect with any positioned child on
+                        # any row.
                         break
                 y_diff = y + height - implicit_y2
                 if y_diff > 0:
@@ -692,21 +736,29 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                     column_end = child.style['grid_column_end']
                     for x in range(cursor_x, implicit_x2):
                         if row_start == 'auto':
-                            y, height = _get_placement((None, y + 1, None), row_end, rows[::2])
+                            y, height = _get_placement(
+                                (None, y + 1, None), row_end, rows[::2])
                         else:
                             span = _get_span(row_start)
-                            y, height = _get_placement(row_start, (None, y + 1 + span, None), rows[::2])
+                            y, height = _get_placement(
+                                row_start, (None, y + 1 + span, None),
+                                rows[::2])
                         if column_start == 'auto':
-                            x, width = _get_placement((None, x + 1, None), column_end, columns[::2])
+                            x, width = _get_placement(
+                                (None, x + 1, None), column_end, columns[::2])
                         else:
                             span = _get_span(column_start)
-                            x, width = _get_placement(column_start, (None, x + 1 + span, None), columns[::2])
-                        if _intersect_with_children(x, y, width, height, children_positions.values()):
+                            x, width = _get_placement(
+                                column_start, (None, x + 1 + span, None),
+                                columns[::2])
+                        intersect = _intersect_with_children(
+                            x, y, width, height, children_positions.values())
+                        if intersect:
                             # Child intersects with a positioned child.
                             continue
                         else:
                             # Free place found.
-                            # 3. Set the item’s row-start and column-start lines.
+                            # 3. Set the item’s row-/column-start lines.
                             children_positions[child] = (x, y, width, height)
                             y_diff = cursor_y + height - 1 - implicit_y2
                             if y_diff > 0:
@@ -745,20 +797,26 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                 row_end = child.style['grid_row_end']
                 for y in count(cursor_y):
                     if row_start == 'auto':
-                        y, height = _get_placement((None, y + 1, None), row_end, rows[::2])
+                        y, height = _get_placement(
+                            (None, y + 1, None), row_end, rows[::2])
                     else:
                         assert row_start[0] == 'span'
                         assert row_start == 'auto' or row_start[1] == 'span'
                         span = _get_span(row_start)
-                        y, height = _get_placement(row_start, (None, y + 1 + span, None), rows[::2])
+                        y, height = _get_placement(
+                            row_start, (None, y + 1 + span, None), rows[::2])
                     if y < cursor_y:
                         continue
                     for row in range(y, y + height):
-                        if _intersect_with_children(x, y, width, height, children_positions.values()):
-                            # Child intersects with a positioned child on current row.
+                        intersect = _intersect_with_children(
+                            x, y, width, height, children_positions.values())
+                        if intersect:
+                            # Child intersects with a positioned child on
+                            # current row.
                             break
                     else:
-                        # Child doesn’t intersect with any positioned child on any row.
+                        # Child doesn’t intersect with any positioned child on
+                        # any row.
                         break
                 implicit_y2 = max(y + height, implicit_y2)
                 y_diff = y + height - implicit_y2
@@ -779,21 +837,29 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                     column_end = child.style['grid_column_end']
                     for x in range(cursor_x, implicit_x2):
                         if row_start == 'auto':
-                            y, height = _get_placement((None, y + 1, None), row_end, rows[::2])
+                            y, height = _get_placement(
+                                (None, y + 1, None), row_end, rows[::2])
                         else:
                             span = _get_span(row_start)
-                            y, height = _get_placement(row_start, (None, y + 1 + span, None), rows[::2])
+                            y, height = _get_placement(
+                                row_start, (None, y + 1 + span, None),
+                                rows[::2])
                         if column_start == 'auto':
-                            x, width = _get_placement((None, x + 1, None), column_end, columns[::2])
+                            x, width = _get_placement(
+                                (None, x + 1, None), column_end, columns[::2])
                         else:
                             span = _get_span(column_start)
-                            x, width = _get_placement(column_start, (None, x + 1 + span, None), columns[::2])
-                        if _intersect_with_children(x, y, width, height, children_positions.values()):
+                            x, width = _get_placement(
+                                column_start, (None, x + 1 + span, None),
+                                columns[::2])
+                        intersect = _intersect_with_children(
+                            x, y, width, height, children_positions.values())
+                        if intersect:
                             # Child intersects with a positioned child.
                             continue
                         else:
                             # Free place found.
-                            # 2. Set the item’s row-start and column-start lines.
+                            # 2. Set the item’s row-/column-start lines.
                             children_positions[child] = (x, y, width, height)
                             break
                     else:
@@ -853,8 +919,10 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         from .block import block_level_layout
         x, y, width, height = children_positions[child]
         # TODO: Include gutters, margins, borders, paddings.
-        child.position_x = box.content_box_x() + sum(size for size, _ in columns_sizes[:x])
-        child.position_y = box.content_box_y() + sum(size for size, _ in rows_sizes[:y])
+        child.position_x = box.content_box_x() + sum(
+            size for size, _ in columns_sizes[:x])
+        child.position_y = box.content_box_y() + sum(
+            size for size, _ in rows_sizes[:y])
         width = sum(size for size, _ in columns_sizes[x:x+width])
         height = sum(size for size, _ in rows_sizes[y:y+height])
         new_child, resume_at, next_page, _, _, _ = block_level_layout(
@@ -867,7 +935,5 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
 
     # TODO: Include gutters, margins, borders, paddings.
     box.height = sum(size for size, _ in rows_sizes)
-    print('heights', rows_sizes)
-    print('widths', columns_sizes)
     box.children = new_children
     return box, None, {'break': 'any', 'page': None}, [], False
