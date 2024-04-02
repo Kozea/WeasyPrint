@@ -9,6 +9,14 @@ from .percent import percentage
 from .preferred import max_content_width, min_content_width
 
 
+def _is_length(sizing):
+    return isinstance(sizing, Dimension) and sizing.unit != 'fr'
+
+
+def _is_fr(sizing):
+    return isinstance(sizing, Dimension) and sizing.unit == 'fr'
+
+
 def _intersect(position_1, size_1, position_2, size_2):
     return (
         position_1 < position_2 + size_2 and
@@ -182,7 +190,7 @@ def _get_sizing_functions(size):
         min_sizing, max_sizing = size[1:]
     if min_sizing[0] == 'fit-content()':
         min_sizing = 'auto'
-    elif isinstance(min_sizing, Dimension) and min_sizing.unit == 'fr':
+    elif _is_fr(min_sizing):
         min_sizing = 'auto'
     return (min_sizing, max_sizing)
 
@@ -306,18 +314,16 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
     # 1.1 initialize track sizes.
     for min_function, max_function in sizing_functions:
         base_size = None
-        if isinstance(max_function, Dimension) and max_function.unit != 'fr':
+        if _is_length(max_function):
             base_size = percentage(min_function, box_size)
         elif (min_function in ('min-content', 'max-content', 'auto') or
               min_function[0] == 'fit-content()'):
             base_size = 0
         growth_limit = None
-        if isinstance(max_function, Dimension) and max_function.unit != 'fr':
+        if _is_length(max_function):
             growth_limit = percentage(min_function, box_size)
         elif (max_function in ('max-content', 'max-content', 'auto') or
-              max_function[0] == 'fit-content()' or
-              isinstance(max_function, Dimension) and
-              max_function.unit == 'fr'):
+              max_function[0] == 'fit-content()' or _is_fr(max_function)):
             growth_limit = inf
         if None not in (base_size, growth_limit):
             growth_limit = max(base_size, growth_limit)
@@ -390,8 +396,7 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
             if size != span:
                 continue
             for _, max_function in sizing_functions[i:i+span+1]:
-                if (isinstance(max_function, Dimension) and
-                        max_function.unit == 'fr'):
+                if _is_fr(max_function):
                     break
             else:
                 tracks_children[coord + implicit_start].append(child)
@@ -422,8 +427,7 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
             if size != span:
                 continue
             for _, max_function in sizing_functions[i:i+span+1]:
-                if (isinstance(max_function, Dimension) and
-                        max_function.unit == 'fr'):
+                if _is_fr(max_function):
                     break
             else:
                 tracks_children[coord + implicit_start].append(child)
@@ -473,26 +477,21 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
             inflexible_tracks = set()
             iterable = enumerate(zip(tracks_sizes, sizing_functions))
             for i, (sizes, (_, max_function)) in iterable:
-                if i not in inflexible_tracks and (
-                        isinstance(max_function, Dimension) and
-                        max_function.unit == 'fr'):
+                if i not in inflexible_tracks and _is_fr(max_function):
                     flex_factor_sum += max_function.value
             flex_factor_sum = max(1, flex_factor_sum)
             hypothetical_fr_size = leftover_space / flex_factor_sum
             stop = True
             iterable = enumerate(zip(tracks_sizes, sizing_functions))
             for i, (sizes, (_, max_function)) in iterable:
-                if i not in inflexible_tracks and (
-                        isinstance(max_function, Dimension) and
-                        max_function.unit == 'fr'):
+                if i not in inflexible_tracks and _is_fr(max_function):
                     if hypothetical_fr_size * max_function.value < sizes[0]:
                         inflexible_tracks.add(i)
                         stop = False
         flex_fraction = hypothetical_fr_size
         iterable = enumerate(zip(tracks_sizes, sizing_functions))
         for i, (sizes, (_, max_function)) in iterable:
-            if (isinstance(max_function, Dimension) and
-                    max_function.unit == 'fr'):
+            if _is_fr(max_function):
                 if flex_fraction * max_function.value > sizes[0]:
                     free_space -= flex_fraction * max_function.value
                     sizes[0] += flex_fraction * max_function.value
