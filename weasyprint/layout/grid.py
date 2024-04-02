@@ -1,6 +1,12 @@
 """Layout for grid containers and grid-items."""
 
 from itertools import count, cycle
+from math import inf
+
+from ..css.properties import Dimension
+from ..formatting_structure import boxes
+from .percent import percentage
+from .preferred import max_content_width, min_content_width
 
 
 def _intersect(position_1, size_1, position_2, size_2):
@@ -166,8 +172,320 @@ def _get_column_placement(row_placement, column_start, column_end,
                     return placement
 
 
+def _get_sizing_functions(size):
+    min_sizing = max_sizing = size
+    if size[0] == 'minmax()':
+        min_sizing, max_sizing = size[1:]
+    if min_sizing[0] == 'fit-content()':
+        min_sizing = 'auto'
+    elif isinstance(min_sizing, Dimension) and min_sizing.unit == 'fr':
+        min_sizing = 'auto'
+    return (min_sizing, max_sizing)
+
+
+def _distribute_extra_space(affected_sizes, affected_tracks_types,
+                            size_contribution, tracks_children,
+                            sizing_functions, tracks_sizes, span, direction,
+                            context, containing_block):
+    assert affected_sizes in ('min', 'max')
+    assert affected_tracks_types in ('intrinsic', 'content-based', 'max-content')
+    assert size_contribution in ('mininum', 'min-content', 'max-content')
+    assert direction in 'xy'
+
+    # 1. Maintain separately for each affected track a planned increase.
+    planned_increases = [0] * len(tracks_sizes)
+
+    # 2. Distribute space.
+    affected_tracks = []
+    affected_size_index = 0 if affected_sizes == 'min' else 1
+    for functions in sizing_functions:
+        function = functions[affected_size_index]
+        if affected_tracks_types == 'intrinsic':
+            if (function in ('min-content', 'max-content', 'auto') or
+                    function[0] == 'fit-content()'):
+                affected_tracks.append(True)
+                continue
+        elif affected_tracks_types == 'content-based':
+            if function in ('min-content', 'max-content'):
+                affected_tracks.append(True)
+                continue
+        elif affected_tracks_types == 'max-content':
+            if function in ('max-content', 'auto'):
+                affected_tracks.append(True)
+                continue
+        affected_tracks.append(False)
+    for i, children in enumerate(tracks_children):
+        if not children:
+            continue
+        for item in children:
+            # 2.1 Find the space distribution.
+            # TODO: Differenciate minimum and min-content values.
+            # TODO: Find a better way to get height.
+            if direction == 'x':
+                if size_contribution in ('minimum', 'min-content'):
+                    space = min_content_width(context, item)
+                else:
+                    space = max_content_width(context, item)
+            else:
+                from .block import block_level_layout
+                item = item.deepcopy()
+                item.position_x = 0
+                item.position_y = 0
+                item, _, _, _, _, _ = block_level_layout(
+                    context, item, bottom_space=-inf, skip_stack=None,
+                    containing_block=containing_block, page_is_empty=True,
+                    absolute_boxes=[], fixed_boxes=[])
+                space = item.margin_height()
+            for sizes in tracks_sizes[i:i+span]:
+                space -= sizes[affected_size_index]
+            space = max(0, space)
+            # 2.2 Distribute space up to limits.
+            tracks_numbers = list(enumerate(affected_tracks[i:i+span], start=i))
+            item_incurred_increases = [0] * len(sizing_functions)
+            affected_tracks_numbers = [
+                j for j, affected in tracks_numbers if affected]
+            distributed_space = space / (len(affected_tracks_numbers) or 1)
+            for track_number in affected_tracks_numbers:
+                base_size, growth_limit = tracks_sizes[track_number]
+                item_incurred_increase = distributed_space
+                affected_size = tracks_sizes[track_number][affected_size_index]
+                limit = tracks_sizes[track_number][1]
+                if affected_size + item_incurred_increase >= limit:
+                    extra = item_incurred_increase + affected_size_index - limit
+                    item_incurred_increase -= extra
+                space -= item_incurred_increase
+                item_incurred_increases[track_number] = item_incurred_increase
+            # 2.3 Distribute space to non-affected tracks.
+            if space and affected_tracks_numbers:
+                unaffected_tracks_numbers = [
+                    j for j, affected in tracks_numbers if not affected]
+                distributed_space = space / (len(unaffected_tracks_numbers) or 1)
+                for track_number in unaffected_tracks_numbers:
+                    base_size, growth_limit = tracks_sizes[track_number]
+                    item_incurred_increase = distributed_space
+                    affected_size = tracks_sizes[track_number][affected_size_index]
+                    limit = tracks_sizes[track_number][1]
+                    if affected_size + item_incurred_increase >= limit:
+                        extra = item_incurred_increase + affected_size_index - limit
+                        item_incurred_increase -= extra
+                    space -= item_incurred_increase
+                    item_incurred_increases[track_number] = item_incurred_increase
+            # 2.4 Distribute space beyond limits.
+            if space:
+                # TODO
+                pass
+            # 2.5. Set the track’s planned increase.
+            for k, extra in enumerate(item_incurred_increases):
+                if extra > planned_increases[k]:
+                    planned_increases[k] = extra
+    # 3. Update the tracks’ affected size.
+    for i, increase in enumerate(planned_increases):
+        if affected_sizes == 'max' and tracks_sizes[i][1] is inf:
+            tracks_sizes[i][1] = tracks_sizes[i][0] + increase
+        else:
+            tracks_sizes[i][affected_size_index] += increase
+
+
+def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
+                          implicit_start, direction, context,
+                          containing_block):
+    assert direction in 'xy'
+    tracks_sizes = []
+    # 1.1 initialize track sizes.
+    for min_function, max_function in sizing_functions:
+        base_size = None
+        if isinstance(max_function, Dimension) and max_function.unit != 'fr':
+            base_size = percentage(min_function, box_size)
+        elif (min_function in ('min-content', 'max-content', 'auto') or
+                  min_function[0] == 'fit-content()'):
+            base_size = 0
+        growth_limit = None
+        if isinstance(max_function, Dimension) and max_function.unit != 'fr':
+            growth_limit = percentage(min_function, box_size)
+        elif (max_function in ('max-content', 'max-content', 'auto') or
+                  max_function[0] == 'fit-content()' or
+                  isinstance(max_function, Dimension) and max_function.unit == 'fr'):
+            growth_limit = inf
+        if None not in (base_size, growth_limit):
+            growth_limit = max(base_size, growth_limit)
+        tracks_sizes.append([base_size, growth_limit])
+
+    # 1.2 Resolve intrinsic track sizes.
+    # 1.2.1 Shim baseline-aligned items.
+    # TODO: Shim items.
+    # 1.2.2 Size tracks to fit non-spanning items.
+    tracks_children = [[] for _ in range(len(tracks_sizes))]
+    for child, (x, y, width, height) in children_positions.items():
+        coord, size = (x, width) if direction == 'x' else (y, height)
+        if size != 1:
+            continue
+        tracks_children[coord + implicit_start].append(child)
+    iterable = zip(tracks_children, sizing_functions, tracks_sizes)
+    for children, (min_function, max_function), sizes in iterable:
+        if not children:
+            continue
+        if direction == 'y':
+            # TODO: Find a better way to get height.
+            from .block import block_level_layout
+            height = 0
+            for child in children:
+                child = child.deepcopy()
+                child.position_x = 0
+                child.position_y = 0
+                child, _, _, _, _, _ = block_level_layout(
+                    context, child, bottom_space=-inf, skip_stack=None,
+                    containing_block=containing_block, page_is_empty=True,
+                    absolute_boxes=[], fixed_boxes=[])
+                height = max(height, child.margin_height())
+            if min_function in ('min-content', 'max_content', 'auto'):
+                sizes[0] = height
+            if max_function in ('min-content', 'max_content'):
+                sizes[1] = height
+            if None not in sizes:
+                sizes[1] = max(sizes)
+            continue
+        if min_function == 'min-content':
+            sizes[0] = max(0, *(min_content_width(context, child) for child in children))
+        elif min_function == 'max-content':
+            sizes[0] = max(0, *(max_content_width(context, child) for child in children))
+        elif min_function == 'auto':
+            # TODO: Handle min-/max-content constrained parents.
+            # TODO: Use real "minimum contributions".
+            sizes[0] = max(0, *(min_content_width(context, child) for child in children))
+        if max_function == 'min-content':
+            sizes[1] = max(min_content_width(context, child) for child in children)
+        elif max_function in ('auto', 'max-content') or max_function[0] == 'fit_content()':
+            sizes[1] = max(max_content_width(context, child) for child in children)
+        if None not in sizes:
+            sizes[1] = max(sizes)
+    print(f'{direction} tracks_sizes', tracks_sizes)
+    # 1.2.3 Increase sizes to accommodate spanning items crossing content-sized tracks.
+    spans = sorted({
+        width if direction == 'x' else height
+        for (_, _, width, height) in children_positions.values()
+        if (width if direction == 'x' else height) >= 2})
+    for span in spans:
+        tracks_children = [[] for _ in range(len(sizing_functions))]
+        for i, (child, (x, y, width, height)) in enumerate(children_positions.items()):
+            coord, size = (x, width) if direction == 'x' else (y, height)
+            if size != span:
+                continue
+            for _, max_function in sizing_functions[i:i+span+1]:
+                if isinstance(max_function, Dimension) and max_function.unit == 'fr':
+                    break
+            else:
+                tracks_children[coord + implicit_start].append(child)
+        # 1.2.3.1 For intrinsic minimums.
+        # TODO: Respect min-/max-content constraint.
+        _distribute_extra_space(
+            'min', 'intrinsic', 'mininum', tracks_children,
+            sizing_functions, tracks_sizes, span, direction, context,
+            containing_block)
+        # 1.2.3.2 For content-based minimums.
+        _distribute_extra_space(
+            'min', 'content-based', 'min-content', tracks_children,
+            sizing_functions, tracks_sizes, span, direction, context,
+            containing_block)
+        # 1.2.3.3 For max-content minimums.
+        # TODO: Respect max-content constraint.
+        _distribute_extra_space(
+            'min', 'max-content', 'max-content', tracks_children,
+            sizing_functions, tracks_sizes, span, direction, context,
+            containing_block)
+
+        # 1.2.3.4 Increase growth limit.
+        for sizes in tracks_sizes:
+            if None not in sizes:
+                sizes[1] = max(sizes)
+
+        for i, (child, (x, y, width, height)) in enumerate(children_positions.items()):
+            coord, size = (x, width) if direction == 'x' else (y, height)
+            if size != span:
+                continue
+            for _, max_function in sizing_functions[i:i+span+1]:
+                if isinstance(max_function, Dimension) and max_function.unit == 'fr':
+                    break
+            else:
+                tracks_children[coord + implicit_start].append(child)
+        # 1.2.3.5 For intrinsic maximums.
+        _distribute_extra_space(
+            'max', 'intrinsic', 'min-content', tracks_children,
+            sizing_functions, tracks_sizes, span, direction, context,
+            containing_block)
+        # 1.2.3.6 For max-content maximums.
+        _distribute_extra_space(
+            'max', 'max-content', 'max-content', tracks_children,
+            sizing_functions, tracks_sizes, span, direction, context,
+            containing_block)
+    # 1.2.4 Increase sizes to accommodate spanning items crossing flexible tracks.
+    # TODO
+    # 1.2.5 Fix infinite growth limits.
+    for sizes in tracks_sizes:
+        if sizes[1] is inf:
+            sizes[1] = sizes[0]
+    # 1.3 Maximize tracks.
+    # TODO: Include gutters.
+    if box_size == 'auto':
+        free_space = 0
+    else:
+        free_space = box_size - sum(size[0] for size in tracks_sizes)
+    if free_space > 0:
+        distributed_free_space = free_space / len(tracks_sizes)
+        for i, sizes in enumerate(tracks_sizes):
+            base_size, growth_limit = sizes
+            if base_size + distributed_free_space > growth_limit:
+                sizes[0] = growth_limit
+                free_space -= growth_limit - base_size
+            else:
+                sizes[0] += distributed_free_space
+                free_space -= distributed_free_space
+    # TODO: Respect max-width/-height.
+    # 1.4 Expand flexible tracks.
+    if free_space <= 0:
+        # TODO: Respect min-content constraint.
+        flex_fraction = 0
+    else:
+        # TODO: Take care of indefinite free space (!).
+        stop = False
+        while not stop:
+            leftover_space = free_space
+            flex_factor_sum = 0
+            inflexible_tracks = set()
+            for i, (sizes, (_, max_function)) in enumerate(zip(tracks_sizes, sizing_functions)):
+                if i not in inflexible_tracks and isinstance(max_function, Dimension) and max_function.unit == 'fr':
+                    flex_factor_sum += max_function.value
+            flex_factor_sum = max(1, flex_factor_sum)
+            hypothetical_fr_size = leftover_space / flex_factor_sum
+            stop = True
+            for i, (sizes, (_, max_function)) in enumerate(zip(tracks_sizes, sizing_functions)):
+                if i not in inflexible_tracks and isinstance(max_function, Dimension) and max_function.unit == 'fr':
+                    if hypothetical_fr_size * max_function.value < sizes[0]:
+                        inflexible_tracks.add(i)
+                        stop = False
+        flex_fraction = hypothetical_fr_size
+        for i, (sizes, (_, max_function)) in enumerate(zip(tracks_sizes, sizing_functions)):
+            if isinstance(max_function, Dimension) and max_function.unit == 'fr':
+                if flex_fraction * max_function.value > sizes[0]:
+                    free_space -= flex_fraction * max_function.value
+                    sizes[0] += flex_fraction * max_function.value
+    # 1.5 Expand stretched auto tracks.
+    if ((direction == 'x' and containing_block.style['justify_content'] in ('normal', 'stretch')) or (
+            direction == 'y' and containing_block.style['align_content'] in ('normal', 'stretch'))) and free_space > 0:
+        auto_tracks_sizes = [
+            sizes for sizes, (min_function, _) in zip(tracks_sizes, sizing_functions)
+            if min_function == 'auto']
+        if auto_tracks_sizes:
+            distributed_free_space = free_space / len(auto_tracks_sizes)
+            for sizes in auto_tracks_sizes:
+                sizes[0] += distributed_free_space
+
+    return tracks_sizes
+
+
 def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                 page_is_empty, absolute_boxes, fixed_boxes):
+    print(box.element.get('id'))
+
     # Define explicit grid
     grid_areas = box.style['grid_template_areas']
     rows = box.style['grid_template_rows']
@@ -390,12 +708,18 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                             # Free place found.
                             # 3. Set the item’s row-start and column-start lines.
                             children_positions[child] = (x, y, width, height)
+                            y_diff = cursor_y + height - 1 - implicit_y2
+                            if y_diff > 0:
+                                for _ in range(y_diff):
+                                    rows.append(next(auto_rows))
+                                    rows.append([])
+                                implicit_y2 = cursor_y + height - 1
                             break
                     else:
                         # No room found.
                         # 2. Return to the previous step.
                         cursor_y += 1
-                        y_diff = cursor_y - implicit_y2
+                        y_diff = cursor_y + 1 - implicit_y2
                         if y_diff > 0:
                             for _ in range(y_diff):
                                 rows.append(next(auto_rows))
@@ -476,7 +800,7 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                         # No room found.
                         # 2. Return to the previous step.
                         cursor_y += 1
-                        y_diff = cursor_y - implicit_y2
+                        y_diff = cursor_y + 1 - implicit_y2
                         if y_diff > 0:
                             for _ in range(y_diff):
                                 rows.append(next(auto_rows))
@@ -485,3 +809,65 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                         cursor_x = implicit_x1
                         continue
                     break
+
+    # 2. Find the size of the grid container.
+
+    if isinstance(box, boxes.GridBox):
+        from .block import block_level_width
+        block_level_width(box, containing_block)
+    else:
+        assert isinstance(box, boxes.InlineGridBox)
+        from .inline import inline_block_width
+        inline_block_width(box, context, containing_block)
+    if box.width == 'auto':
+        # TODO: calculate max-width
+        box.width = containing_block.width
+
+    # 3. Run the grid sizing algorithm.
+
+    # 3.0 List min/max sizing functions.
+    row_sizing_functions = [_get_sizing_functions(row) for row in rows[1::2]]
+    column_sizing_functions = [
+        _get_sizing_functions(column) for column in columns[1::2]]
+
+    # 3.1 Resolve the sizes of the grid columns.
+    columns_sizes = _resolve_tracks_sizes(
+        column_sizing_functions, box.width, children_positions, implicit_x1,
+        'x', context, box)
+
+    # 3.2 Resolve the sizes of the grid rows.
+    rows_sizes = _resolve_tracks_sizes(
+        row_sizing_functions, box.height, children_positions, implicit_y1, 'y',
+        context, box)
+
+    # 3.3 Re-resolve the sizes of the grid columns with min-/max-content.
+    # TODO: Re-resolve.
+    # 3.4 Re-re-resolve the sizes of the grid columns with min-/max-content.
+    # TODO: Re-re-resolve.
+    # 3.5 Align the tracks within the grid container.
+    # TODO: Align.
+
+    # 4. Lay out the grid items into their respective containing blocks.
+    new_children = []
+    for child in children:
+        from .block import block_level_layout
+        x, y, width, height = children_positions[child]
+        # TODO: Include gutters, margins, borders, paddings.
+        child.position_x = box.content_box_x() + sum(size for size, _ in columns_sizes[:x])
+        child.position_y = box.content_box_y() + sum(size for size, _ in rows_sizes[:y])
+        width = sum(size for size, _ in columns_sizes[x:x+width])
+        height = sum(size for size, _ in rows_sizes[y:y+height])
+        new_child, resume_at, next_page, _, _, _ = block_level_layout(
+            context, child, bottom_space, skip_stack, (width, height),
+            page_is_empty, absolute_boxes, fixed_boxes)
+        new_child.width = max(width, new_child.width)
+        new_child.height = max(height, new_child.height)
+        # TODO: Take care of page fragmentation.
+        new_children.append(new_child)
+
+    # TODO: Include gutters, margins, borders, paddings.
+    box.height = sum(size for size, _ in rows_sizes)
+    print('heights', rows_sizes)
+    print('widths', columns_sizes)
+    box.children = new_children
+    return box, None, {'break': 'any', 'page': None}, [], False
