@@ -32,107 +32,87 @@ def _intersect_with_children(x, y, width, height, positions):
     return False
 
 
-def _get_placement(start, end, lines):
-    # Input coordinates are 1-indexed, returned coordinates are 0-indexed.
-    if start == end == 'auto':
-        return
-    if start == 'auto' and end[0] == 'span':
-        return
-    if end == 'auto' and start[0] == 'span':
-        return
-    if start[0] == end[0] == 'span':
-        return
-    if start != 'auto':
-        span, number, ident = start
-        if ident and span is None and number is None:
-            for coordinate, line in enumerate(lines):
-                if f'{ident}-start' in line:
+def _get_line(line, lines, side):
+    span, number, ident = line
+    if ident and span is None and number is None:
+        for coord, line in enumerate(lines):
+            if f'{ident}-{side}' in line:
+                break
+        else:
+            number = 1
+    if number is not None and span is None:
+        if ident is None:
+            coord = number - 1
+        else:
+            step = 1 if number > 0 else -1
+            for coord, line in enumerate(lines[::step]):
+                if ident in line:
+                    number -= step
+                if number == 0:
                     break
             else:
-                number = 1
-        if number is not None and span is None:
-            if ident is None:
-                coordinate = number - 1
-            else:
-                step = 1 if number > 0 else -1
-                for coordinate, line in enumerate(lines[::step]):
-                    if ident in line:
-                        number -= step
-                    if number == 0:
-                        break
-                else:
-                    coordinate += abs(number)
-                if step == -1:
-                    coordinate = len(lines) - 1 - coordinate
+                coord += abs(number)
+            if step == -1:
+                coord = len(lines) - 1 - coord
+    if span is not None:
+        coord = None
+    return span, number, ident, coord
+
+
+def _get_placement(start, end, lines):
+    # Input coordinates are 1-indexed, returned coordinates are 0-indexed.
+    if start == 'auto' or start[0] == 'span':
+        if end == 'auto' or end[0] == 'span':
+            return
+    if start != 'auto':
+        span, number, ident, coord = _get_line(start, lines, 'start')
         if span is not None:
             size = number or 1
-            coordinate = None
             span_ident = ident
     else:
         size = 1
-        span_ident = None
-        coordinate = None
+        span_ident = coord = None
     if end != 'auto':
-        span, number, ident = end
-        if ident and span is None and number is None:
-            for coordinate_end, line in enumerate(lines):
-                if f'{ident}-end' in line:
-                    break
-            else:
-                number = 1
-        if number is not None and span is None:
-            if ident is None:
-                coordinate_end = number - 1
-            else:
-                step = 1 if number > 0 else -1
-                for coordinate_end, line in enumerate(lines[::step]):
-                    if ident in line:
-                        number -= step
-                    if number == 0:
-                        break
-                else:
-                    coordinate_end += abs(number)
-                if step == -1:
-                    coordinate_end = len(lines) - 1 - coordinate_end
+        span, number, ident, coord_end = _get_line(end, lines, 'end')
         if span is not None:
             size = span_number = number or 1
             span_ident = ident
             if span_ident is not None:
-                for size, line in enumerate(lines[coordinate+1:], start=1):
+                for size, line in enumerate(lines[coord+1:], start=1):
                     if span_ident in line:
                         span_number -= 1
                     if span_number == 0:
                         break
                 else:
                     size += span_number
-        elif coordinate is not None:
-            size = coordinate_end - coordinate
-        if coordinate is None:
+        elif coord is not None:
+            size = coord_end - coord
+        if coord is None:
             if span_ident is None:
-                coordinate = coordinate_end - size
+                coord = coord_end - size
             else:
                 number = number or 1
-                if coordinate_end > 0:
-                    iterable = enumerate(lines[coordinate_end-1::-1])
-                    for coordinate, line in iterable:
+                if coord_end > 0:
+                    iterable = enumerate(lines[coord_end-1::-1])
+                    for coord, line in iterable:
                         if span_ident in line:
                             number -= 1
                         if number == 0:
-                            coordinate = coordinate_end - 1 - coordinate
+                            coord = coord_end - 1 - coord
                             break
                     else:
-                        coordinate = -number
+                        coord = -number
                 else:
-                    coordinate = -number
-            size = coordinate_end - coordinate
+                    coord = -number
+            size = coord_end - coord
     else:
         size = 1
     if size < 0:
         size = -size
-        coordinate -= size
+        coord -= size
     if size == 0:
         size = 1
-    return (coordinate, size)
+    return (coord, size)
 
 
 def _get_span(place):
