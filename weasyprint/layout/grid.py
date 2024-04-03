@@ -5,7 +5,7 @@ from math import inf
 
 from ..css.properties import Dimension
 from ..formatting_structure import boxes
-from .percent import percentage
+from .percent import percentage, resolve_percentages
 from .preferred import max_content_width, min_content_width
 
 
@@ -930,8 +930,15 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
             size for size, _ in rows_sizes[:y])
         width = sum(size for size, _ in columns_sizes[x:x+width])
         height = sum(size for size, _ in rows_sizes[y:y+height])
+        # TODO: Find a better solution for the layout.
+        parent = boxes.BlockContainerBox.anonymous_from(containing_block, ())
+        resolve_percentages(parent, containing_block)
+        parent.position_x = child.position_x
+        parent.position_y = child.position_y
+        parent.width = width
+        parent.height = height
         new_child, resume_at, next_page, _, _, _ = block_level_layout(
-            context, child, bottom_space, skip_stack, (width, height),
+            context, child, bottom_space, skip_stack, parent,
             page_is_empty, absolute_boxes, fixed_boxes)
         new_child.width = max(width, new_child.width)
         new_child.height = max(height, new_child.height)
