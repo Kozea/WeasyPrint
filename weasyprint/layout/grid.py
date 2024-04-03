@@ -136,7 +136,8 @@ def _get_column_placement(row_placement, column_start, column_end,
             if x in occupied_columns:
                 continue
             if column_start == 'auto':
-                placement = _get_placement(x + 1, column_end, columns)
+                placement = _get_placement(
+                    (None, x + 1, None), column_end, columns)
             else:
                 assert column_start[0] == 'span'
                 # If the placement contains two spans, remove the one
@@ -144,14 +145,16 @@ def _get_column_placement(row_placement, column_start, column_end,
                 # https://drafts.csswg.org/css-grid/#grid-placement-errors
                 assert column_start == 'auto' or column_start[1] == 'span'
                 span = _get_span(column_start)
-                placement = _get_placement(column_start, x + 1 + span, columns)
+                placement = _get_placement(
+                    column_start, (None, x + 1 + span, None), columns)
             columns = range(placement[0], placement[0] + placement[1])
             if not set(columns) & occupied_columns:
                 return placement
     else:
         y = max(occupied_columns) + 1
         if column_start == 'auto':
-            return _get_placement(y + 1, column_end, columns)
+            return _get_placement(
+                (None, y + 1, None), column_end, columns)
         else:
             assert column_start[0] == 'span'
             # If the placement contains two spans, remove the one contributed
@@ -159,7 +162,8 @@ def _get_column_placement(row_placement, column_start, column_end,
             # https://drafts.csswg.org/css-grid/#grid-placement-errors
             assert column_start == 'auto' or column_start[1] == 'span'
             for end_y in count(y + 1):
-                placement = _get_placement(column_start, end_y + 1, columns)
+                placement = _get_placement(
+                    column_start, (None, end_y + 1, None), columns)
                 if placement[0] >= y:
                     return placement
 
