@@ -175,6 +175,40 @@ def _get_sizing_functions(size):
     return (min_sizing, max_sizing)
 
 
+def _get_template_tracks(tracks):
+    if tracks == 'none':
+        tracks = ((),)
+    tracks_list = []
+    for i, track in enumerate(tracks):
+        if i % 2:
+            # Track size
+            if track[0] == 'repeat()':
+                repeat_number, repeat_track_list = track[1:]
+                if not isinstance(repeat_number, int):
+                    # TODO: Respect auto-fit and auto-fill
+                    repeat_number = 1
+                for _ in range(repeat_number):
+                    for j, repeat_track in enumerate(repeat_track_list):
+                        if j % 2:
+                            # Track size in repeat
+                            tracks_list.append(repeat_track)
+                        else:
+                            # Line names in repeat
+                            if len(tracks_list) % 2:
+                                tracks_list[-1].extend(repeat_track)
+                            else:
+                                tracks_list.append(list(repeat_track))
+            else:
+                tracks_list.append(track)
+        else:
+            # Line names
+            if len(tracks_list) % 2:
+                tracks_list[-1].extend(track)
+            else:
+                tracks_list.append(list(track))
+    return tracks_list
+
+
 def _distribute_extra_space(affected_sizes, affected_tracks_types,
                             size_contribution, tracks_children,
                             sizing_functions, tracks_sizes, span, direction,
@@ -499,8 +533,6 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                 page_is_empty, absolute_boxes, fixed_boxes):
     # Define explicit grid
     grid_areas = box.style['grid_template_areas']
-    rows = box.style['grid_template_rows']
-    columns = box.style['grid_template_columns']
     flow = box.style['grid_auto_flow']
     auto_rows = cycle(box.style['grid_auto_rows'])
     auto_columns = cycle(box.style['grid_auto_columns'])
@@ -511,14 +543,8 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         grid_areas = ((None,),)
     grid_areas = [list(row) for row in grid_areas]
 
-    if rows == 'none':
-        rows = ((),)
-    rows = [row if i % 2 else list(row) for i, row in enumerate(rows)]
-
-    if columns == 'none':
-        columns = ((),)
-    columns = [
-        column if i % 2 else list(column) for i, column in enumerate(columns)]
+    rows = _get_template_tracks(box.style['grid_template_rows'])
+    columns = _get_template_tracks(box.style['grid_template_columns'])
 
     # Adjust rows number
     grid_areas_columns = len(grid_areas[0]) if grid_areas else 0
