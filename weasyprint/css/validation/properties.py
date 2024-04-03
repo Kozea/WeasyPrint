@@ -1528,7 +1528,7 @@ def grid_template(tokens):
 @property()
 def grid_template_areas(tokens):
     """``grid-template-areas`` property validation."""
-    if len(tokens) == 1 and tokens[0] == 'none':
+    if len(tokens) == 1 and get_keyword(tokens[0]) == 'none':
         return 'none'
     grid_areas = []
     for token in tokens:

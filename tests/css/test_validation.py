@@ -801,6 +801,7 @@ def test_grid_template_columns_rows_invalid(rule):
 
 @assert_no_logs
 @pytest.mark.parametrize('rule, value', (
+    ('none', 'none'),
     ('"head head" "nav main" "foot ...."',
      (('head', 'head'), ('nav', 'main'), ('foot', None))),
     ('"title board" "stats board"',
