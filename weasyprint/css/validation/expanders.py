@@ -17,9 +17,9 @@ from .properties import ( # isort:skip
     border_image_width, border_image_outset, border_image_repeat, border_style,
     border_width, box, column_count, column_width, flex_basis, flex_direction,
     flex_grow_shrink, flex_wrap, font_family, font_size, font_stretch,
-    font_style, font_weight, grid_line, line_height, list_style_image,
-    list_style_position, list_style_type, other_colors, overflow_wrap,
-    validate_non_shorthand)
+    font_style, font_weight, grid_line, grid_template, line_height,
+    list_style_image, list_style_position, list_style_type, other_colors,
+    overflow_wrap, validate_non_shorthand)
 
 EXPANDERS = {}
 
@@ -759,7 +759,38 @@ def expand_flex_flow(tokens, name):
 @generic_expander('-columns', '-rows', '-areas')
 def expand_grid_template(tokens, name):
     """Expand the ``grid-template`` property."""
-    # TODO: write expander
+    none = [IdentToken(tokens[0].source_line, tokens[0].source_column, 'none')]
+    if len(tokens) == 1 and get_keyword(tokens[0]) == 'none':
+        yield '-columns', none
+        yield '-rows', none
+        yield '-areas', none
+        return
+    slash_separated = [[]]
+    for token in tokens:
+        if token.type == 'literal' and token.value == '/':
+            slash_separated.append([])
+        else:
+            slash_separated[-1].append(token)
+    if len(slash_separated) == 2:
+        rows = grid_template(slash_separated[0])
+        columns = grid_template(slash_separated[1])
+        if columns:
+            if rows:
+                yield '-columns', slash_separated[1]
+                yield '-rows', slash_separated[0]
+                yield '-areas', none
+                return
+            columns = slash_separated[1]
+        else:
+            raise InvalidValues
+    elif len(slash_separated) == 1:
+        columns = none
+    else:
+        raise InvalidValues
+    # TODO: Handle last syntax.
+    yield '-columns', columns
+    yield '-rows', none
+    yield '-areas', none
 
 
 @expander('grid')
