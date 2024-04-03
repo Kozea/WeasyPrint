@@ -658,14 +658,11 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
     for child in remaining_grid_items:
         column_start = child.style['grid_column_start']
         column_end = child.style['grid_column_end']
-        if column_start == column_end == 'auto':
-            span = 1
-        elif column_start != 'auto':
-            is_span, span, _ = column_start
-            assert is_span
-        else:
-            is_span, span, _ = column_end
-            assert is_span
+        span = 1
+        if column_start != 'auto' and column_start[0] == 'span':
+            span = column_start[1]
+        elif column_end != 'auto' and column_end[0] == 'span':
+            span = column_end[1]
         implicit_x2 = max(implicit_x1 + (span or 1), implicit_x2)
 
     # 1.4 Position the remaining grid items.
