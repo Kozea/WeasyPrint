@@ -949,7 +949,12 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         # TODO: Take care of page fragmentation.
         new_children.append(new_child)
 
+    # TODO: Set real baseline value.
+    if isinstance(box, boxes.InlineGridBox):
+        box.baseline = 0
+
     # TODO: Include gutters, margins, borders, paddings.
     box.height = sum(size for size, _ in rows_sizes)
     box.children = new_children
+
     return box, None, {'break': 'any', 'page': None}, [], False
