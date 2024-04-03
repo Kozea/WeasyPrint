@@ -151,7 +151,7 @@ def _get_column_placement(row_placement, column_start, column_end,
             if not set(columns) & occupied_columns:
                 return placement
     else:
-        y = max(occupied_columns) + 1
+        y = max(occupied_columns or [0]) + 1
         if column_start == 'auto':
             return _get_placement(
                 (None, y + 1, None), column_end, columns)
