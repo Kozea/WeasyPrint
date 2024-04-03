@@ -647,10 +647,10 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
             column_end = child.style['grid_column_end']
             column_placement = _get_placement(
                 column_start, column_end, columns[::2])
+            remaining_grid_items.append(child)
             if column_placement:
                 x, width = column_placement
             else:
-                remaining_grid_items.append(child)
                 continue
         implicit_x1 = min(x, implicit_x1)
         implicit_x2 = max(x + width, implicit_x2)
