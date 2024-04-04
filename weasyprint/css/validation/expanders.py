@@ -799,6 +799,7 @@ def expand_grid_template(tokens, name):
 def expand_grid(tokens, name):
     """Expand the ``grid`` property."""
     # TODO: write expander
+    raise InvalidValues
 
 
 def _expand_grid_column_row_area(tokens, max_number):
