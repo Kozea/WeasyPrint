@@ -143,7 +143,7 @@ def _get_column_placement(row_placement, column_start, column_end,
                 # If the placement contains two spans, remove the one
                 # contributed by the end grid-placement property.
                 # https://drafts.csswg.org/css-grid/#grid-placement-errors
-                assert column_start == 'auto' or column_start[1] == 'span'
+                assert column_start == 'auto' or column_start[0] == 'span'
                 span = _get_span(column_start)
                 placement = _get_placement(
                     column_start, (None, x + 1 + span, None), columns)
@@ -160,7 +160,7 @@ def _get_column_placement(row_placement, column_start, column_end,
             # If the placement contains two spans, remove the one contributed
             # by the end grid-placement property.
             # https://drafts.csswg.org/css-grid/#grid-placement-errors
-            assert column_start == 'auto' or column_start[1] == 'span'
+            assert column_start == 'auto' or column_start[0] == 'span'
             for end_y in count(y + 1):
                 placement = _get_placement(
                     column_start, (None, end_y + 1, None), columns)
@@ -705,7 +705,7 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                             (None, y + 1, None), row_end, rows[::2])
                     else:
                         assert row_start[0] == 'span'
-                        assert row_start == 'auto' or row_start[1] == 'span'
+                        assert row_start == 'auto' or row_start[0] == 'span'
                         span = _get_span(row_start)
                         y, height = _get_placement(
                             row_start, (None, y + 1 + span, None), rows[::2])
@@ -807,7 +807,7 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                             (None, y + 1, None), row_end, rows[::2])
                     else:
                         assert row_start[0] == 'span'
-                        assert row_start == 'auto' or row_start[1] == 'span'
+                        assert row_start == 'auto' or row_start[0] == 'span'
                         span = _get_span(row_start)
                         y, height = _get_placement(
                             row_start, (None, y + 1 + span, None), rows[::2])
