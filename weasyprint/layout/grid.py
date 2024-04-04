@@ -188,19 +188,19 @@ def _get_template_tracks(tracks):
     tracks_list = []
     for i, track in enumerate(tracks):
         if i % 2:
-            # Track size
+            # Track size.
             if track[0] == 'repeat()':
                 repeat_number, repeat_track_list = track[1:]
                 if not isinstance(repeat_number, int):
-                    # TODO: Respect auto-fit and auto-fill
+                    # TODO: Respect auto-fit and auto-fill.
                     repeat_number = 1
                 for _ in range(repeat_number):
                     for j, repeat_track in enumerate(repeat_track_list):
                         if j % 2:
-                            # Track size in repeat
+                            # Track size in repeat.
                             tracks_list.append(repeat_track)
                         else:
-                            # Line names in repeat
+                            # Line names in repeat.
                             if len(tracks_list) % 2:
                                 tracks_list[-1].extend(repeat_track)
                             else:
@@ -208,7 +208,7 @@ def _get_template_tracks(tracks):
             else:
                 tracks_list.append(track)
         else:
-            # Line names
+            # Line names.
             if len(tracks_list) % 2:
                 tracks_list[-1].extend(track)
             else:
