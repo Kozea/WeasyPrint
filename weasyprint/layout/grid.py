@@ -48,6 +48,7 @@ def _get_line(line, lines, side):
             for coord, line in enumerate(lines[::step]):
                 if ident in line:
                     number -= step
+                    break
                 if number == 0:
                     break
             else:
@@ -332,18 +333,21 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
                           containing_block):
     assert direction in 'xy'
     tracks_sizes = []
-    # 1.1 initialize track sizes.
+    if box_size == 'auto':
+        # TODO: Check that auto box size is 0 for percentages.
+        box_size = 0
+    # 1.1 Initialize track sizes.
     for min_function, max_function in sizing_functions:
         base_size = None
-        if _is_length(max_function):
+        if _is_length(min_function):
             base_size = percentage(min_function, box_size)
         elif (min_function in ('min-content', 'max-content', 'auto') or
               min_function[0] == 'fit-content()'):
             base_size = 0
         growth_limit = None
         if _is_length(max_function):
-            growth_limit = percentage(min_function, box_size)
-        elif (max_function in ('max-content', 'max-content', 'auto') or
+            growth_limit = percentage(max_function, box_size)
+        elif (max_function in ('min-content', 'max-content', 'auto') or
               max_function[0] == 'fit-content()' or _is_fr(max_function)):
             growth_limit = inf
         if None not in (base_size, growth_limit):
@@ -359,7 +363,7 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
         coord, size = (x, width) if direction == 'x' else (y, height)
         if size != 1:
             continue
-        tracks_children[coord + implicit_start].append(child)
+        tracks_children[coord - implicit_start].append(child)
     iterable = zip(tracks_children, sizing_functions, tracks_sizes)
     for children, (min_function, max_function), sizes in iterable:
         if not children:
@@ -420,7 +424,7 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
                 if _is_fr(max_function):
                     break
             else:
-                tracks_children[coord + implicit_start].append(child)
+                tracks_children[coord - implicit_start].append(child)
         # 1.2.3.1 For intrinsic minimums.
         # TODO: Respect min-/max-content constraint.
         _distribute_extra_space(
@@ -451,7 +455,7 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
                 if _is_fr(max_function):
                     break
             else:
-                tracks_children[coord + implicit_start].append(child)
+                tracks_children[coord - implicit_start].append(child)
         # 1.2.3.5 For intrinsic maximums.
         _distribute_extra_space(
             'max', 'intrinsic', 'min-content', tracks_children,
@@ -492,10 +496,10 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
     else:
         # TODO: Take care of indefinite free space (!).
         stop = False
+        inflexible_tracks = set()
         while not stop:
             leftover_space = free_space
             flex_factor_sum = 0
-            inflexible_tracks = set()
             iterable = enumerate(zip(tracks_sizes, sizing_functions))
             for i, (sizes, (_, max_function)) in iterable:
                 if i not in inflexible_tracks and _is_fr(max_function):
@@ -538,6 +542,8 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
 
 def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                 page_is_empty, absolute_boxes, fixed_boxes):
+    context.create_block_formatting_context()
+
     # Define explicit grid
     grid_areas = box.style['grid_template_areas']
     flow = box.style['grid_auto_flow']
@@ -675,18 +681,6 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         _, y, _, height = position
         implicit_y1 = min(y, implicit_y1)
         implicit_y2 = max(y + height, implicit_y2)
-    for _ in range(0 - implicit_x1):
-        columns.insert(0, next(auto_columns_back))
-        columns.insert(0, [])
-    for _ in range(len(grid_areas[0]) if grid_areas else 0, implicit_x2):
-        columns.append(next(auto_columns))
-        columns.append([])
-    for _ in range(0 - implicit_y1):
-        rows.insert(0, next(auto_rows_back))
-        rows.insert(0, [])
-    for _ in range(len(grid_areas), implicit_y2):
-        rows.append(next(auto_rows))
-        rows.append([])
     cursor_x, cursor_y = implicit_x1, implicit_y1
     if 'dense' in flow:
         for child in remaining_grid_items:
@@ -827,7 +821,6 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                         # Child doesn’t intersect with any positioned child on
                         # any row.
                         break
-                implicit_y2 = max(y + height, implicit_y2)
                 y_diff = y + height - implicit_y2
                 if y_diff > 0:
                     for _ in range(y_diff):
@@ -885,6 +878,19 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                         continue
                     break
 
+    for _ in range(0 - implicit_x1):
+        columns.insert(0, next(auto_columns_back))
+        columns.insert(0, [])
+    for _ in range(len(grid_areas[0]) if grid_areas else 0, implicit_x2):
+        columns.append(next(auto_columns))
+        columns.append([])
+    for _ in range(0 - implicit_y1):
+        rows.insert(0, next(auto_rows_back))
+        rows.insert(0, [])
+    for _ in range(len(grid_areas), implicit_y2):
+        rows.append(next(auto_rows))
+        rows.append([])
+
     # 2. Find the size of the grid container.
 
     if isinstance(box, boxes.GridBox):
@@ -928,6 +934,7 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         from .block import block_level_layout
         x, y, width, height = children_positions[child]
         # TODO: Include gutters, margins, borders, paddings.
+        child = child.deepcopy()
         child.position_x = box.content_box_x() + sum(
             size for size, _ in columns_sizes[:x])
         child.position_y = box.content_box_y() + sum(
@@ -935,12 +942,13 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         width = sum(size for size, _ in columns_sizes[x:x+width])
         height = sum(size for size, _ in rows_sizes[y:y+height])
         # TODO: Find a better solution for the layout.
-        parent = boxes.BlockContainerBox.anonymous_from(containing_block, ())
+        parent = boxes.BlockContainerBox.anonymous_from(box, ())
         resolve_percentages(parent, containing_block)
         parent.position_x = child.position_x
         parent.position_y = child.position_y
         parent.width = width
         parent.height = height
+        bottom_space = -inf
         new_child, resume_at, next_page, _, _, _ = block_level_layout(
             context, child, bottom_space, skip_stack, parent,
             page_is_empty, absolute_boxes, fixed_boxes)
@@ -950,11 +958,14 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         new_children.append(new_child)
 
     # TODO: Set real baseline value.
+    box = box.copy_with_children(box.children)
     if isinstance(box, boxes.InlineGridBox):
         box.baseline = 0
 
     # TODO: Include gutters, margins, borders, paddings.
     box.height = sum(size for size, _ in rows_sizes)
     box.children = new_children
+
+    context.finish_block_formatting_context(box)
 
     return box, None, {'break': 'any', 'page': None}, [], False
