@@ -647,11 +647,11 @@ def grid_auto(style, name, values):
             return_values.append(track_breadth)
         elif value[0] == 'minmax()':
             return_values.append((
-                'minmax()', grid_auto(style, name, [value[1]]),
-                grid_auto(style, name, [value[2]])))
+                'minmax()', grid_auto(style, name, [value[1]])[0],
+                grid_auto(style, name, [value[2]])[0]))
         elif value[0] == 'fit-content()':
             return_values.append((
-                'fit-content()', grid_auto(style, name, [value[1]])))
+                'fit-content()', grid_auto(style, name, [value[1]])[0]))
     return tuple(return_values)
 
 
