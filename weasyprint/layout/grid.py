@@ -182,6 +182,9 @@ def _get_sizing_functions(size):
 def _get_template_tracks(tracks):
     if tracks == 'none':
         tracks = ((),)
+    if 'subgrid' in tracks:
+        # TODO: Support subgrids.
+        return [[]]
     tracks_list = []
     for i, track in enumerate(tracks):
         if i % 2:
