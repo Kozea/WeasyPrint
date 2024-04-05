@@ -755,10 +755,7 @@ def expand_flex_flow(tokens, name):
         raise InvalidValues
 
 
-@expander('grid-template')
-@generic_expander('-columns', '-rows', '-areas')
-def expand_grid_template(tokens, name):
-    """Expand the ``grid-template`` property."""
+def _expand_grid_template(tokens, name):
     line, column = tokens[0].source_line, tokens[0].source_column
     none = IdentToken(line, column, 'none')
     if len(tokens) == 1 and get_keyword(tokens[0]) == 'none':
@@ -792,6 +789,13 @@ def expand_grid_template(tokens, name):
     raise InvalidValues
 
 
+@expander('grid-template')
+@generic_expander('-columns', '-rows', '-areas')
+def expand_grid_template(tokens, name):
+    """Expand the ``grid-template`` property."""
+    yield from _expand_grid_template(tokens, name)
+
+
 @expander('grid')
 @generic_expander('-template-columns', '-template-rows', '-template-areas',
                   '-auto-columns', '-auto-rows', '-auto-flow')
@@ -803,8 +807,7 @@ def expand_grid(tokens, name):
     row = IdentToken(line, column, 'row')
     column = IdentToken(line, column, 'column')
     try:
-        template = tuple(
-            expand_grid_template(tokens, 'grid-template', base_url=None))
+        template = tuple(_expand_grid_template(tokens, 'grid-template'))
     except InvalidValues:
         pass
     else:
