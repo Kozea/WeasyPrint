@@ -500,8 +500,10 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
             flex_factor_sum = 0
             iterable = enumerate(zip(tracks_sizes, sizing_functions))
             for i, (sizes, (_, max_function)) in iterable:
-                if i not in inflexible_tracks and _is_fr(max_function):
-                    flex_factor_sum += max_function.value
+                if _is_fr(max_function):
+                    leftover_space += sizes[0]
+                    if i not in inflexible_tracks:
+                        flex_factor_sum += max_function.value
             flex_factor_sum = max(1, flex_factor_sum)
             hypothetical_fr_size = leftover_space / flex_factor_sum
             stop = True
@@ -517,7 +519,7 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
             if _is_fr(max_function):
                 if flex_fraction * max_function.value > sizes[0]:
                     free_space -= flex_fraction * max_function.value
-                    sizes[0] += flex_fraction * max_function.value
+                    sizes[0] = flex_fraction * max_function.value
     # 1.5 Expand stretched auto tracks.
     x_stretch = (
         direction == 'x' and
