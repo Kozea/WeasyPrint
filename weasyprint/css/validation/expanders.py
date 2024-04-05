@@ -17,7 +17,7 @@ from .properties import ( # isort:skip
     border_image_width, border_image_outset, border_image_repeat, border_style,
     border_width, box, column_count, column_width, flex_basis, flex_direction,
     flex_grow_shrink, flex_wrap, font_family, font_size, font_stretch,
-    font_style, font_weight, grid_line, grid_template, line_height,
+    font_style, font_weight, gap, grid_line, grid_template, line_height,
     list_style_image, list_style_position, list_style_type, other_colors,
     overflow_wrap, validate_non_shorthand)
 
@@ -900,6 +900,19 @@ def expand_grid_area(tokens, name):
     sides = ('row-start', 'row-end', 'column-start', 'column-end')
     for tokens, side in zip(tokens_list, sides):
         yield f'grid-{side}', tokens
+
+
+@expander('gap')
+@generic_expander('column-gap', 'row-gap')
+def expand_gap(tokens, name):
+    """Expand the ``gap`` property."""
+    if len(tokens) != 2:
+        raise InvalidValues
+    column_gap, row_gap = gap(tokens[0:1]), gap(tokens[1:2])
+    if None in (column_gap, row_gap):
+        raise InvalidValues
+    yield 'column-gap', tokens[0:1]
+    yield 'row-gap', tokens[1:2]
 
 
 @expander('line-clamp')
