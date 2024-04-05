@@ -288,7 +288,7 @@ def _distribute_extra_space(affected_sizes, affected_tracks_types,
                 limit = tracks_sizes[track_number][1]
                 if affected_size + item_incurred_increase >= limit:
                     extra = (
-                        item_incurred_increase + affected_size_index - limit)
+                        item_incurred_increase + affected_size - limit)
                     item_incurred_increase -= extra
                 space -= item_incurred_increase
                 item_incurred_increases[track_number] = item_incurred_increase
@@ -306,8 +306,7 @@ def _distribute_extra_space(affected_sizes, affected_tracks_types,
                     limit = tracks_sizes[track_number][1]
                     if affected_size + item_incurred_increase >= limit:
                         extra = (
-                            item_incurred_increase +
-                            affected_size_index - limit)
+                            item_incurred_increase + affected_size - limit)
                         item_incurred_increase -= extra
                     space -= item_incurred_increase
                     item_incurred_increases[track_number] = (
