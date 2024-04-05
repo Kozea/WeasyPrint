@@ -759,11 +759,12 @@ def expand_flex_flow(tokens, name):
 @generic_expander('-columns', '-rows', '-areas')
 def expand_grid_template(tokens, name):
     """Expand the ``grid-template`` property."""
-    none = [IdentToken(tokens[0].source_line, tokens[0].source_column, 'none')]
+    line, column = tokens[0].source_line, tokens[0].source_column
+    none = IdentToken(line, column, 'none')
     if len(tokens) == 1 and get_keyword(tokens[0]) == 'none':
-        yield '-columns', none
-        yield '-rows', none
-        yield '-areas', none
+        yield '-columns', [none]
+        yield '-rows', [none]
+        yield '-areas', [none]
         return
     slash_separated = [[]]
     for token in tokens:
@@ -778,19 +779,17 @@ def expand_grid_template(tokens, name):
             if rows:
                 yield '-columns', slash_separated[1]
                 yield '-rows', slash_separated[0]
-                yield '-areas', none
+                yield '-areas', [none]
                 return
             columns = slash_separated[1]
         else:
             raise InvalidValues
     elif len(slash_separated) == 1:
-        columns = none
+        columns = [none]
     else:
         raise InvalidValues
     # TODO: Handle last syntax.
-    yield '-columns', columns
-    yield '-rows', none
-    yield '-areas', none
+    raise InvalidValues
 
 
 @expander('grid')
@@ -798,8 +797,58 @@ def expand_grid_template(tokens, name):
                   '-auto-columns', '-auto-rows', '-auto-flow')
 def expand_grid(tokens, name):
     """Expand the ``grid`` property."""
-    # TODO: write expander
-    raise InvalidValues
+    line, column = tokens[0].source_line, tokens[0].source_column
+    auto = IdentToken(line, column, 'auto')
+    none = IdentToken(line, column, 'none')
+    row = IdentToken(line, column, 'row')
+    column = IdentToken(line, column, 'column')
+    try:
+        template = tuple(
+            expand_grid_template(tokens, 'grid-template', base_url=None))
+    except InvalidValues:
+        pass
+    else:
+        for key, value in template:
+            yield f'-template-{key.split("-")[-1]}', value
+        yield '-auto-columns', [auto]
+        yield '-auto-rows', [auto]
+        yield '-auto-flow', [row]
+        return
+    split_tokens = [[]]
+    for token in tokens:
+        if token.type == 'literal' and token.value == '/':
+            split_tokens.append([])
+            continue
+        split_tokens[-1].append(token)
+    if len(split_tokens) != 2:
+        raise InvalidValues
+    auto_track = None
+    dense = None
+    templates = {'row': [], 'column': []}
+    iterable = zip(split_tokens, templates.items())
+    for tokens, (track, track_templates) in iterable:
+        for token in tokens:
+            if get_keyword(token) == 'dense':
+                if dense or (auto_track and auto_track != track):
+                    raise InvalidValues
+                dense = token
+            elif get_keyword(token) == 'auto-flow':
+                if auto_track:
+                    raise InvalidValues
+                auto_track = track
+            else:
+                track_templates.append(token)
+    if not auto_track:
+        raise InvalidValues
+    non_auto_track = 'row' if auto_track == 'column' else 'column'
+    auto_track_token = column if auto_track == 'column' else row
+    yield '-auto-flow', (
+        (auto_track_token, dense) if dense else (auto_track_token,))
+    yield f'-auto-{auto_track}s', tuple(templates[auto_track])
+    yield f'-auto-{non_auto_track}s', [auto]
+    yield f'-template-{auto_track}s', [none]
+    yield f'-template-{non_auto_track}s', tuple(templates[non_auto_track])
+    yield '-template-areas', [none]
 
 
 def _expand_grid_column_row_area(tokens, max_number):

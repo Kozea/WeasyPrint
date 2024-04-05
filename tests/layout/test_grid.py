@@ -439,3 +439,69 @@ def test_grid_template_shorthand_fr():
     assert div_b.width == div_e.width == 6
     assert {div.height for div in article.children} == {2}
     assert article.width == 10
+
+
+@assert_no_logs
+def test_grid_shorthand_auto_flow_rows_fr_size():
+    page, = render_pages('''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        article {
+          display: grid;
+          font-family: weasyprint;
+          font-size: 2px;
+          grid: auto-flow 1fr / 6px;
+          line-height: 1;
+          width: 10px;
+        }
+      </style>
+      <article>
+        <div>a</div>
+        <div>b</div>
+        <div>c</div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div_a, div_b, div_c = article.children
+    assert div_a.position_x == div_b.position_x == div_c.position_x == 0
+    assert div_a.position_y == 0
+    assert div_b.position_y == 2
+    assert div_c.position_y == 4
+    assert div_a.width == div_b.width == div_c.width == 6
+    assert {div.height for div in article.children} == {2}
+    assert article.width == 10
+
+
+@assert_no_logs
+def test_grid_shorthand_auto_flow_columns_none_dense():
+    page, = render_pages('''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        article {
+          display: grid;
+          font-family: weasyprint;
+          font-size: 2px;
+          grid: none / auto-flow 1fr dense;
+          line-height: 1;
+          width: 10px;
+        }
+      </style>
+      <article>
+        <div>a</div>
+        <div>b</div>
+        <div>c</div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div_a, div_b, div_c = article.children
+    assert div_a.position_x == div_b.position_x == div_c.position_x == 0
+    assert div_a.position_y == 0
+    assert div_b.position_y == 2
+    assert div_c.position_y == 4
+    assert div_a.width == div_b.width == div_c.width == 10
+    assert {div.height for div in article.children} == {2}
+    assert article.width == 10
