@@ -50,7 +50,8 @@ def test_grid_rows():
     assert div_a.position_x == div_b.position_x == div_c.position_x == 0
     assert div_a.position_y < div_b.position_y < div_c.position_y
     assert div_a.height == div_b.height == div_c.height
-    assert article.width == div_a.width == div_b.width == div_c.width == html.width
+    assert article.width == html.width
+    assert div_a.width == div_b.width == div_c.width == html.width
 
 
 @assert_no_logs
@@ -275,7 +276,7 @@ def test_grid_template_areas_overlap():
     div_a1, div_a2, div_a3 = article.children
     assert div_a1.position_x == div_a2.position_x == div_a3.position_x == 0
     assert div_a1.position_y == div_a2.position_y == div_a3.position_y == 0
-    assert div_a1.width == div_a2.width == div_a3.width == 6  # 2 + (10 - 2) / 2
+    assert div_a1.width == div_a2.width == div_a3.width == 6  # 2 + (10-2) / 2
     assert div_a1.height == div_a2.height == div_a3.height == 2
     assert article.width == 10
 
@@ -308,7 +309,7 @@ def test_grid_template_areas_extra_span():
     article, = body.children
     div_a, div_b, div_c, div_d, div_e, div_f = article.children
     assert div_a.position_x == div_c.position_x == div_e.position_x == 0
-    assert div_d.position_x == 4  # 2 + (10 - 2 × 3) / 2
+    assert div_d.position_x == 4  # 2 + (10 - 2×3) / 2
     assert div_b.position_x == div_f.position_x == 6
     assert div_a.position_y == div_b.position_y == 0
     assert div_c.position_y == div_d.position_y == 2
