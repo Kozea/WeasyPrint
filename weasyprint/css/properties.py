@@ -201,10 +201,12 @@ INITIAL_VALUES = {
     'grid_column_end': 'auto',
 
     # CSS Box Alignment Module Level 3 (WD): https://www.w3.org/TR/css-align-3/
-    'align_content': 'normal',
-    'align_items': 'normal',
-    'align_self': 'auto',
-    'justify_content': 'normal',
+    'align_content': ('normal',),
+    'align_items': ('normal',),
+    'align_self': ('auto',),
+    'justify_content': ('normal',),
+    'justify_items': ('normal',),
+    'justify_self': ('normal',),
     'order': 0,
     'column_gap': 'normal',
     'row_gap': 'normal',

@@ -521,12 +521,12 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
                     free_space -= flex_fraction * max_function.value
                     sizes[0] = flex_fraction * max_function.value
     # 1.5 Expand stretched auto tracks.
+    justify_content = containing_block.style['justify_content']
+    align_content = containing_block.style['align_content']
     x_stretch = (
-        direction == 'x' and
-        containing_block.style['justify_content'] in ('normal', 'stretch'))
+        direction == 'x' and set(justify_content) & {'normal', 'stretch'})
     y_stretch = (
-        direction == 'y' and
-        containing_block.style['align_content'] in ('normal', 'stretch'))
+        direction == 'y' and set(align_content) & {'normal', 'stretch'})
     if (x_stretch or y_stretch) and free_space > 0:
         auto_tracks_sizes = [
             sizes for sizes, (min_function, _)

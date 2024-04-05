@@ -862,3 +862,274 @@ def test_grid_line_invalid(rule):
     assert_invalid(f'grid-row-end: {rule}')
     assert_invalid(f'grid-column-start: {rule}')
     assert_invalid(f'grid-column-end: {rule}')
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, value', (
+    ('normal', ('normal',)),
+    ('baseline', ('first', 'baseline')),
+    ('first baseline', ('first', 'baseline')),
+    ('last baseline', ('last', 'baseline')),
+    ('baseline last', ('baseline', 'last')),
+    ('space-between', ('space-between',)),
+    ('space-around', ('space-around',)),
+    ('space-evenly', ('space-evenly',)),
+    ('stretch', ('stretch',)),
+    ('center', ('center',)),
+    ('start', ('start',)),
+    ('end', ('end',)),
+    ('flex-start', ('flex-start',)),
+    ('flex-end', ('flex-end',)),
+    ('safe center', ('safe', 'center')),
+    ('unsafe start', ('unsafe', 'start')),
+    ('safe end', ('safe', 'end')),
+    ('safe flex-start', ('safe', 'flex-start')),
+    ('unsafe flex-start', ('unsafe', 'flex-start')),
+))
+def test_align_content(rule, value):
+    assert get_value(f'align-content: {rule}') == value
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', (
+    'auto',
+    'none',
+    'auto auto',
+    'first last',
+    'baseline baseline',
+    'start safe',
+    'start end',
+    'safe unsafe',
+    'left',
+    'right',
+))
+def test_align_content_invalid(rule):
+    assert_invalid(f'align-content: {rule}')
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, value', (
+    ('normal', ('normal',)),
+    ('stretch', ('stretch',)),
+    ('baseline', ('first', 'baseline')),
+    ('first baseline', ('first', 'baseline')),
+    ('last baseline', ('last', 'baseline')),
+    ('baseline last', ('baseline', 'last')),
+    ('center', ('center',)),
+    ('self-start', ('self-start',)),
+    ('self-end', ('self-end',)),
+    ('start', ('start',)),
+    ('end', ('end',)),
+    ('flex-start', ('flex-start',)),
+    ('flex-end', ('flex-end',)),
+    ('safe center', ('safe', 'center')),
+    ('unsafe start', ('unsafe', 'start')),
+    ('safe end', ('safe', 'end')),
+    ('unsafe self-start', ('unsafe', 'self-start')),
+    ('safe self-end', ('safe', 'self-end')),
+    ('safe flex-start', ('safe', 'flex-start')),
+    ('unsafe flex-start', ('unsafe', 'flex-start')),
+))
+def test_align_items(rule, value):
+    assert get_value(f'align-items: {rule}') == value
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', (
+    'auto',
+    'none',
+    'auto auto',
+    'first last',
+    'baseline baseline',
+    'start safe',
+    'start end',
+    'safe unsafe',
+    'left',
+    'right',
+    'space-between',
+))
+def test_align_items_invalid(rule):
+    assert_invalid(f'align-items: {rule}')
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, value', (
+    ('auto', ('auto',)),
+    ('normal', ('normal',)),
+    ('stretch', ('stretch',)),
+    ('baseline', ('first', 'baseline')),
+    ('first baseline', ('first', 'baseline')),
+    ('last baseline', ('last', 'baseline')),
+    ('baseline last', ('baseline', 'last')),
+    ('center', ('center',)),
+    ('self-start', ('self-start',)),
+    ('self-end', ('self-end',)),
+    ('start', ('start',)),
+    ('end', ('end',)),
+    ('flex-start', ('flex-start',)),
+    ('flex-end', ('flex-end',)),
+    ('safe center', ('safe', 'center')),
+    ('unsafe start', ('unsafe', 'start')),
+    ('safe end', ('safe', 'end')),
+    ('unsafe self-start', ('unsafe', 'self-start')),
+    ('safe self-end', ('safe', 'self-end')),
+    ('safe flex-start', ('safe', 'flex-start')),
+    ('unsafe flex-start', ('unsafe', 'flex-start')),
+))
+def test_align_self(rule, value):
+    assert get_value(f'align-self: {rule}') == value
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', (
+    'none',
+    'auto auto',
+    'first last',
+    'baseline baseline',
+    'start safe',
+    'start end',
+    'safe unsafe',
+    'left',
+    'right',
+    'space-between',
+))
+def test_align_self_invalid(rule):
+    assert_invalid(f'align-self: {rule}')
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, value', (
+    ('normal', ('normal',)),
+    ('space-between', ('space-between',)),
+    ('space-around', ('space-around',)),
+    ('space-evenly', ('space-evenly',)),
+    ('stretch', ('stretch',)),
+    ('center', ('center',)),
+    ('left', ('left',)),
+    ('right', ('right',)),
+    ('start', ('start',)),
+    ('end', ('end',)),
+    ('flex-start', ('flex-start',)),
+    ('flex-end', ('flex-end',)),
+    ('safe center', ('safe', 'center')),
+    ('unsafe start', ('unsafe', 'start')),
+    ('safe end', ('safe', 'end')),
+    ('unsafe left', ('unsafe', 'left')),
+    ('safe right', ('safe', 'right')),
+    ('safe flex-start', ('safe', 'flex-start')),
+    ('unsafe flex-start', ('unsafe', 'flex-start')),
+))
+def test_justify_content(rule, value):
+    assert get_value(f'justify-content: {rule}') == value
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', (
+    'auto',
+    'none',
+    'baseline',
+    'auto auto',
+    'first last',
+    'baseline baseline',
+    'start safe',
+    'start end',
+    'safe unsafe',
+))
+def test_justify_content_invalid(rule):
+    assert_invalid(f'justify-content: {rule}')
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, value', (
+    ('normal', ('normal',)),
+    ('stretch', ('stretch',)),
+    ('baseline', ('first', 'baseline')),
+    ('first baseline', ('first', 'baseline')),
+    ('last baseline', ('last', 'baseline')),
+    ('baseline last', ('baseline', 'last')),
+    ('center', ('center',)),
+    ('self-start', ('self-start',)),
+    ('self-end', ('self-end',)),
+    ('start', ('start',)),
+    ('end', ('end',)),
+    ('left', ('left',)),
+    ('right', ('right',)),
+    ('flex-start', ('flex-start',)),
+    ('flex-end', ('flex-end',)),
+    ('safe center', ('safe', 'center')),
+    ('unsafe start', ('unsafe', 'start')),
+    ('safe end', ('safe', 'end')),
+    ('unsafe self-start', ('unsafe', 'self-start')),
+    ('safe self-end', ('safe', 'self-end')),
+    ('safe flex-start', ('safe', 'flex-start')),
+    ('unsafe flex-start', ('unsafe', 'flex-start')),
+    ('legacy', ('legacy',)),
+    ('legacy left', ('legacy', 'left')),
+    ('left legacy', ('left', 'legacy')),
+    ('legacy center', ('legacy', 'center')),
+))
+def test_justify_items(rule, value):
+    assert get_value(f'justify-items: {rule}') == value
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', (
+    'auto',
+    'none',
+    'auto auto',
+    'first last',
+    'baseline baseline',
+    'start safe',
+    'start end',
+    'safe unsafe',
+    'space-between',
+))
+def test_justify_items_invalid(rule):
+    assert_invalid(f'justify-items: {rule}')
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, value', (
+    ('auto', ('auto',)),
+    ('normal', ('normal',)),
+    ('stretch', ('stretch',)),
+    ('baseline', ('first', 'baseline')),
+    ('first baseline', ('first', 'baseline')),
+    ('last baseline', ('last', 'baseline')),
+    ('baseline last', ('baseline', 'last')),
+    ('center', ('center',)),
+    ('self-start', ('self-start',)),
+    ('self-end', ('self-end',)),
+    ('start', ('start',)),
+    ('end', ('end',)),
+    ('left', ('left',)),
+    ('right', ('right',)),
+    ('flex-start', ('flex-start',)),
+    ('flex-end', ('flex-end',)),
+    ('safe center', ('safe', 'center')),
+    ('unsafe start', ('unsafe', 'start')),
+    ('safe end', ('safe', 'end')),
+    ('unsafe left', ('unsafe', 'left')),
+    ('safe right', ('safe', 'right')),
+    ('unsafe self-start', ('unsafe', 'self-start')),
+    ('safe self-end', ('safe', 'self-end')),
+    ('safe flex-start', ('safe', 'flex-start')),
+    ('unsafe flex-start', ('unsafe', 'flex-start')),
+))
+def test_justify_self(rule, value):
+    assert get_value(f'justify-self: {rule}') == value
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', (
+    'none',
+    'auto auto',
+    'first last',
+    'baseline baseline',
+    'start safe',
+    'start end',
+    'safe unsafe',
+    'space-between',
+))
+def test_justify_self_invalid(rule):
+    assert_invalid(f'justify-self: {rule}')

@@ -1630,38 +1630,142 @@ def flex_wrap(keyword):
 
 
 @property()
-@single_keyword
-def justify_content(keyword):
+def justify_content(tokens):
     """``justify-content`` property validation."""
-    return keyword in (
-        'flex-start', 'flex-end', 'center', 'space-between', 'space-around',
-        'space-evenly', 'stretch', 'normal')
+    if len(tokens) == 1:
+        keyword = get_keyword(tokens[0])
+        if keyword in (
+                'center', 'space-between', 'space-around', 'space-evenly',
+                'stretch', 'normal', 'flex-start', 'flex-end',
+                'start', 'end', 'left', 'right'):
+            return (keyword,)
+    elif len(tokens) == 2:
+        keywords = tuple(get_keyword(token) for token in tokens)
+        if keywords[0] in ('safe', 'unsafe'):
+            if keywords[1] in (
+                    'center', 'start', 'end', 'flex-start', 'flex-end', 'left',
+                    'right'):
+                return keywords
 
 
 @property()
-@single_keyword
-def align_items(keyword):
+def justify_items(tokens):
+    """``justify-items`` property validation."""
+    if len(tokens) == 1:
+        keyword = get_keyword(tokens[0])
+        if keyword in (
+                'normal', 'stretch', 'center', 'start', 'end', 'self-start',
+                'self-end', 'flex-start', 'flex-end', 'left', 'right',
+                'legacy'):
+            return (keyword,)
+        elif keyword == 'baseline':
+            return ('first', keyword)
+    elif len(tokens) == 2:
+        keywords = tuple(get_keyword(token) for token in tokens)
+        if keywords[0] in ('safe', 'unsafe'):
+            if keywords[1] in (
+                    'center', 'start', 'end', 'self-start', 'self-end',
+                    'flex-start', 'flex-end', 'left', 'right'):
+                return keywords
+        elif 'baseline' in keywords:
+            if 'first' in keywords or 'last' in keywords:
+                return keywords
+        elif 'legacy' in keywords:
+            if set(keywords) & {'left', 'right', 'center'}:
+                return keywords
+
+
+@property()
+def justify_self(tokens):
+    """``justify-self`` property validation."""
+    if len(tokens) == 1:
+        keyword = get_keyword(tokens[0])
+        if keyword in (
+                'auto', 'normal', 'stretch', 'center', 'start', 'end',
+                'self-start', 'self-end', 'flex-start', 'flex-end', 'left',
+                'right'):
+            return (keyword,)
+        elif keyword == 'baseline':
+            return ('first', keyword)
+    elif len(tokens) == 2:
+        keywords = tuple(get_keyword(token) for token in tokens)
+        if keywords[0] in ('safe', 'unsafe'):
+            if keywords[1] in (
+                    'center', 'start', 'end', 'self-start', 'self-end',
+                    'flex-start', 'flex-end', 'left', 'right'):
+                return keywords
+        elif 'baseline' in keywords:
+            if 'first' in keywords or 'last' in keywords:
+                return keywords
+
+
+@property()
+def align_items(tokens):
     """``align-items`` property validation."""
-    return keyword in (
-        'flex-start', 'flex-end', 'center', 'baseline', 'stretch', 'normal')
+    if len(tokens) == 1:
+        keyword = get_keyword(tokens[0])
+        if keyword in (
+                'normal', 'stretch', 'center', 'start', 'end', 'self-start',
+                'self-end', 'flex-start', 'flex-end'):
+            return (keyword,)
+        elif keyword == 'baseline':
+            return ('first', keyword)
+    elif len(tokens) == 2:
+        keywords = tuple(get_keyword(token) for token in tokens)
+        if keywords[0] in ('safe', 'unsafe'):
+            if keywords[1] in (
+                    'center', 'start', 'end', 'self-start', 'self-end',
+                    'flex-start', 'flex-end'):
+                return keywords
+        elif 'baseline' in keywords:
+            if 'first' in keywords or 'last' in keywords:
+                return keywords
 
 
 @property()
-@single_keyword
-def align_self(keyword):
+def align_self(tokens):
     """``align-self`` property validation."""
-    return keyword in (
-        'auto', 'flex-start', 'flex-end', 'center',
-        'baseline', 'stretch', 'normal')
+    if len(tokens) == 1:
+        keyword = get_keyword(tokens[0])
+        if keyword in (
+                'auto', 'normal', 'stretch', 'center', 'start', 'end',
+                'self-start', 'self-end', 'flex-start', 'flex-end'):
+            return (keyword,)
+        elif keyword == 'baseline':
+            return ('first', keyword)
+    elif len(tokens) == 2:
+        keywords = tuple(get_keyword(token) for token in tokens)
+        if keywords[0] in ('safe', 'unsafe'):
+            if keywords[1] in (
+                    'center', 'start', 'end', 'self-start', 'self-end',
+                    'flex-start', 'flex-end'):
+                return keywords
+        elif 'baseline' in keywords:
+            if 'first' in keywords or 'last' in keywords:
+                return keywords
 
 
 @property()
-@single_keyword
-def align_content(keyword):
+def align_content(tokens):
     """``align-content`` property validation."""
-    return keyword in (
-        'flex-start', 'flex-end', 'center', 'space-between', 'space-around',
-        'space-evenly', 'stretch', 'normal')
+    if len(tokens) == 1:
+        keyword = get_keyword(tokens[0])
+        if keyword in (
+                'center', 'space-between', 'space-around', 'space-evenly',
+                'stretch', 'normal', 'flex-start', 'flex-end',
+                'start', 'end'):
+            return (keyword,)
+        elif keyword == 'baseline':
+            return ('first', keyword)
+    elif len(tokens) == 2:
+        keywords = tuple(get_keyword(token) for token in tokens)
+        if keywords[0] in ('safe', 'unsafe'):
+            if keywords[1] in (
+                    'center', 'start', 'end', 'flex-start', 'flex-end'):
+                return keywords
+        elif 'baseline' in keywords:
+            if 'first' in keywords or 'last' in keywords:
+                return keywords
 
 
 @property()

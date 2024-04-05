@@ -918,6 +918,30 @@ def expand_gap(tokens, name):
     yield 'row-gap', tokens[1:2]
 
 
+@expander('place-content')
+@generic_expander('align-content', 'justify-content')
+def expand_place_content(tokens, name):
+    """Expand the ``place-content`` property."""
+    # TODO
+    raise InvalidValues
+
+
+@expander('place-items')
+@generic_expander('align-items', 'justify-items')
+def expand_place_items(tokens, name):
+    """Expand the ``place-items`` property."""
+    # TODO
+    raise InvalidValues
+
+
+@expander('place-self')
+@generic_expander('align-self', 'justify-self')
+def expand_place_self(tokens, name):
+    """Expand the ``place-self`` property."""
+    # TODO
+    raise InvalidValues
+
+
 @expander('line-clamp')
 @generic_expander('max-lines', 'continue', 'block-ellipsis')
 def expand_line_clamp(tokens, name):
