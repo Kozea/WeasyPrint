@@ -7,6 +7,7 @@ from ..css.properties import Dimension
 from ..formatting_structure import boxes
 from .percent import percentage, resolve_percentages
 from .preferred import max_content_width, min_content_width
+from .table import find_in_flow_baseline
 
 
 def _is_length(sizing):
@@ -117,7 +118,7 @@ def _get_placement(start, end, lines):
 
 
 def _get_span(place):
-    # TODO: handle lines
+    # TODO: Handle lines.
     span = 1
     if place[0] == 'span':
         span = place[1] or 1
@@ -930,6 +931,7 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
 
     # 4. Lay out the grid items into their respective containing blocks.
     new_children = []
+    baseline = None
     for child in children:
         from .block import block_level_layout
         x, y, width, height = children_positions[child]
@@ -956,11 +958,13 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         new_child.height = max(height, new_child.height)
         # TODO: Take care of page fragmentation.
         new_children.append(new_child)
+        if baseline is None and y == implicit_y1:
+            baseline = find_in_flow_baseline(new_child)
 
-    # TODO: Set real baseline value.
     box = box.copy_with_children(box.children)
     if isinstance(box, boxes.InlineGridBox):
-        box.baseline = 0
+        # TODO: Synthetize a real baseline value.
+        box.baseline = baseline or 0
 
     # TODO: Include gutters, margins, borders, paddings.
     box.height = sum(size for size, _ in rows_sizes)
