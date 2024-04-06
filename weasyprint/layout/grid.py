@@ -466,7 +466,7 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
             sizing_functions, tracks_sizes, span, direction, context,
             containing_block)
     # 1.2.4 Increase sizes to accommodate items spanning flexible tracks.
-    # TODO
+    # TODO: Support spans for flexible tracks.
     # 1.2.5 Fix infinite growth limits.
     for sizes in tracks_sizes:
         if sizes[1] is inf:
@@ -547,6 +547,7 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
 
     # Define explicit grid
     grid_areas = box.style['grid_template_areas']
+    # TODO: Support 'column' value in grid-auto-flow.
     flow = box.style['grid_auto_flow']
     auto_rows = cycle(box.style['grid_auto_rows'])
     auto_columns = cycle(box.style['grid_auto_columns'])
@@ -902,7 +903,7 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         from .inline import inline_block_width
         inline_block_width(box, context, containing_block)
     if box.width == 'auto':
-        # TODO: calculate max-width
+        # TODO: Calculate max-width.
         box.width = containing_block.width
 
     # 3. Run the grid sizing algorithm.
