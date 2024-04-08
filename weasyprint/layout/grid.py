@@ -987,9 +987,6 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
     align_content = set(box.style['align_content'])
     y = box.content_box_y()
     if box.height == 'auto':
-        box.height = (
-            sum(size for size, _ in rows_sizes) +
-            (len(rows_sizes) - 1) * row_gap)
         free_height = 0
     else:
         free_height = (
@@ -1031,16 +1028,56 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
             y += size + row_gap
 
     # 4. Lay out the grid items into their respective containing blocks.
+    # Find resume_at row.
+    this_page_children = []
+    resume_row = None
+    if skip_stack:
+        skip_row = next(iter(skip_stack))
+        skip_height = (
+            sum(size for size, _ in rows_sizes[:skip_row]) +
+            (len(rows_sizes[:skip_row]) - 1) * row_gap)
+    else:
+        skip_row = 0
+        skip_height = 0
+    resume_at = None
+    for i, row_y in enumerate(rows_positions[skip_row:], start=skip_row):
+        # TODO: Check that page is not empty.
+        if context.overflows_page(bottom_space, row_y - skip_height):
+            if i == 0:
+                return None, None, {'break': 'any', 'page': None}, [], False
+            resume_row = i - 1
+            resume_at = {i-1: None}
+            for child in children:
+                _, y, _, _ = children_positions[child]
+                if skip_row <= y <= i-2:
+                    this_page_children.append(child)
+            break
+    else:
+        for child in children:
+            _, y, _, _ = children_positions[child]
+            if skip_row <= y:
+                this_page_children.append(child)
+    if box.height == 'auto':
+        box.height = (
+            sum(size for size, _ in rows_sizes[skip_row:resume_row]) +
+            (len(rows_sizes[skip_row:resume_row]) - 1) * row_gap)
+    # Lay out grid items.
     justify_items = set(box.style['justify_items'])
     align_items = set(box.style['align_items'])
     new_children = []
     baseline = None
-    for child in children:
-        from .block import block_level_layout
+    next_page = {'break': 'any', 'page': None}
+    from .block import block_level_layout
+    for child in this_page_children:
         x, y, width, height = children_positions[child]
+        index = box.children.index(child)
+        if skip_stack and skip_stack.get(y) and index in skip_stack[y]:
+            child_skip_stack = skip_stack[y][index]
+        else:
+            child_skip_stack = None
         child = child.deepcopy()
         child.position_x = columns_positions[x]
-        child.position_y = rows_positions[y]
+        child.position_y = rows_positions[y] - skip_height
         width = (
             sum(size for size, _ in columns_sizes[x:x+width]) +
             (width - 1) * column_gap)
@@ -1054,10 +1091,21 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         parent.position_y = child.position_y
         parent.width = width
         parent.height = height
-        bottom_space = -inf
-        new_child, resume_at, next_page, _, _, _ = block_level_layout(
-            context, child, bottom_space, skip_stack, parent,
-            page_is_empty, absolute_boxes, fixed_boxes)
+        new_child, child_resume_at, child_next_page = block_level_layout(
+            context, child, bottom_space, child_skip_stack, parent,
+            page_is_empty, absolute_boxes, fixed_boxes)[:3]
+        if new_child:
+            page_is_empty = False
+        else:
+            if child_resume_at:
+                pass
+                # if not resume_at:
+                #     resume_at = {}
+                # if y in resume_at:
+                #     resume_at[y][index] = child_resume_at
+                # else:
+                #     resume_at[y] = {index: child_resume_at}
+            continue
 
         # TODO: Apply auto margins.
         justify_self = set(new_child.style['justify_self'])
@@ -1093,13 +1141,11 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         if baseline is None and y == implicit_y1:
             baseline = find_in_flow_baseline(new_child)
 
-    box = box.copy_with_children(box.children)
+    box = box.copy_with_children(new_children)
     if isinstance(box, boxes.InlineGridBox):
         # TODO: Synthetize a real baseline value.
         box.baseline = baseline or 0
 
-    box.children = new_children
-
     context.finish_block_formatting_context(box)
 
-    return box, None, {'break': 'any', 'page': None}, [], False
+    return box, resume_at, next_page, [], False
