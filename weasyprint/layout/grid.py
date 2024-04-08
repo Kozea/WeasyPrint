@@ -1042,6 +1042,7 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
             context, child, bottom_space, skip_stack, parent,
             page_is_empty, absolute_boxes, fixed_boxes)
         justify_self = set(new_child.style['justify_self'])
+        width -= new_child.margin_width() - new_child.width
         if justify_self & {'auto'}:
             justify_self = justify_items
         if justify_self & {'normal', 'stretch'}:
@@ -1054,6 +1055,7 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
             elif justify_self & {'right', 'end', 'flex-end', 'self-end'}:
                 new_child.translate(diff, 0)
         align_self = set(new_child.style['align_self'])
+        height -= new_child.margin_height() - new_child.height
         if align_self & {'auto'}:
             align_self = align_items
         if align_self & {'normal', 'stretch'}:
