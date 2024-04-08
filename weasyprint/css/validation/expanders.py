@@ -914,8 +914,8 @@ def expand_gap(tokens, name):
     column_gap, row_gap = gap(tokens[0:1]), gap(tokens[1:2])
     if None in (column_gap, row_gap):
         raise InvalidValues
-    yield 'column-gap', tokens[0:1]
-    yield 'row-gap', tokens[1:2]
+    yield 'row-gap', tokens[0:1]
+    yield 'column-gap', tokens[1:2]
 
 
 @expander('place-content')

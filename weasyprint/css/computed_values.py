@@ -440,8 +440,9 @@ def border_radius(style, name, values):
 
 
 @register_computer('column-gap')
-def column_gap(style, name, value):
-    """Compute the ``column-gap`` property."""
+@register_computer('row-gap')
+def gap(style, name, value):
+    """Compute the ``*-gap`` properties."""
     if value == 'normal':
         return value
     return length(style, name, value, pixels_only=True)
