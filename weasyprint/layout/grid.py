@@ -330,7 +330,7 @@ def _distribute_extra_space(affected_sizes, affected_tracks_types,
 
 def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
                           implicit_start, direction, context,
-                          containing_block):
+                          containing_block, orthogonal_sizes=None):
     assert direction in 'xy'
     tracks_sizes = []
     # TODO: Check that auto box size is 0 for percentages.
@@ -372,12 +372,22 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
             from .block import block_level_layout
             height = 0
             for child in children:
+                x, _, width, _ = children_positions[child]
+                width = sum(orthogonal_sizes[x:x+width])
                 child = child.deepcopy()
                 child.position_x = 0
                 child.position_y = 0
+                parent = boxes.BlockContainerBox.anonymous_from(
+                    containing_block, ())
+                resolve_percentages(parent, containing_block)
+                parent.position_x = child.position_x
+                parent.position_y = child.position_y
+                parent.width = width
+                parent.height = height
+                bottom_space = -inf
                 child, _, _, _, _, _ = block_level_layout(
-                    context, child, bottom_space=-inf, skip_stack=None,
-                    containing_block=containing_block, page_is_empty=True,
+                    context, child, bottom_space, skip_stack=None,
+                    containing_block=parent, page_is_empty=True,
                     absolute_boxes=[], fixed_boxes=[])
                 height = max(height, child.margin_height())
             if min_function in ('min-content', 'max_content', 'auto'):
@@ -921,16 +931,94 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
     # 3.2 Resolve the sizes of the grid rows.
     rows_sizes = _resolve_tracks_sizes(
         row_sizing_functions, box.height, children_positions, implicit_y1, 'y',
-        context, box)
+        context, box, [size for size, _ in columns_sizes])
 
     # 3.3 Re-resolve the sizes of the grid columns with min-/max-content.
     # TODO: Re-resolve.
+
     # 3.4 Re-re-resolve the sizes of the grid columns with min-/max-content.
     # TODO: Re-re-resolve.
+
     # 3.5 Align the tracks within the grid container.
-    # TODO: Align.
+    # TODO: Support safe/unsafe.
+    justify_content = set(box.style['justify_content'])
+    x = box.content_box_x()
+    free_width = max(0, box.width - sum(size for size, _ in columns_sizes))
+    columns_positions = []
+    columns_number = len(columns_sizes)
+    if justify_content & {'center'}:
+        x += free_width / 2
+        for size, _ in columns_sizes:
+            columns_positions.append(x)
+            x += size
+    elif justify_content & {'right', 'end', 'flex-end'}:
+        x += free_width
+        for size, _ in columns_sizes:
+            columns_positions.append(x)
+            x += size
+    elif justify_content & {'space-around'}:
+        x += free_width / 2 / columns_number
+        for size, _ in columns_sizes:
+            columns_positions.append(x)
+            x += size + free_width / columns_number
+    elif justify_content & {'space-between'}:
+        for size, _ in columns_sizes:
+            columns_positions.append(x)
+            if columns_number >= 2:
+                x += size + free_width / (columns_number - 1)
+    elif justify_content & {'space-evenly'}:
+        x += free_width / (columns_number + 1)
+        for size, _ in columns_sizes:
+            columns_positions.append(x)
+            x += size + free_width / (columns_number + 1)
+    else:
+        for size, _ in columns_sizes:
+            columns_positions.append(x)
+            x += size
+
+    align_content = set(box.style['align_content'])
+    y = box.content_box_y()
+    if box.height == 'auto':
+        box.height = sum(size for size, _ in rows_sizes)
+        free_height = 0
+    else:
+        free_height = max(0, box.height - sum(size for size, _ in rows_sizes))
+    rows_positions = []
+    rows_number = len(rows_sizes)
+    if align_content & {'center'}:
+        y += free_height / 2
+        for size, _ in rows_sizes:
+            rows_positions.append(y)
+            y += size
+    elif align_content & {'right', 'end', 'flex-end'}:
+        y += free_height
+        for size, _ in rows_sizes:
+            rows_positions.append(y)
+            y += size
+    elif align_content & {'space-around'}:
+        y += free_height / 2 / rows_number
+        for size, _ in rows_sizes:
+            rows_positions.append(y)
+            y += size + free_height / rows_number
+    elif align_content & {'space-between'}:
+        for size, _ in rows_sizes:
+            rows_positions.append(y)
+            if rows_number >= 2:
+                y += size + free_height / (rows_number - 1)
+    elif align_content & {'space-evenly'}:
+        y += free_height / (rows_number + 1)
+        for size, _ in rows_sizes:
+            rows_positions.append(y)
+            y += size + free_height / (rows_number + 1)
+    else:
+        # TODO: Support baseline value.
+        for size, _ in rows_sizes:
+            rows_positions.append(y)
+            y += size
 
     # 4. Lay out the grid items into their respective containing blocks.
+    justify_items = set(box.style['justify_items'])
+    align_items = set(box.style['align_items'])
     new_children = []
     baseline = None
     for child in children:
@@ -938,10 +1026,8 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         x, y, width, height = children_positions[child]
         # TODO: Include gutters, margins, borders, paddings.
         child = child.deepcopy()
-        child.position_x = box.content_box_x() + sum(
-            size for size, _ in columns_sizes[:x])
-        child.position_y = box.content_box_y() + sum(
-            size for size, _ in rows_sizes[:y])
+        child.position_x = columns_positions[x]
+        child.position_y = rows_positions[y]
         width = sum(size for size, _ in columns_sizes[x:x+width])
         height = sum(size for size, _ in rows_sizes[y:y+height])
         # TODO: Find a better solution for the layout.
@@ -955,8 +1041,29 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         new_child, resume_at, next_page, _, _, _ = block_level_layout(
             context, child, bottom_space, skip_stack, parent,
             page_is_empty, absolute_boxes, fixed_boxes)
-        new_child.width = max(width, new_child.width)
-        new_child.height = max(height, new_child.height)
+        justify_self = set(new_child.style['justify_self'])
+        if justify_self & {'auto'}:
+            justify_self = justify_items
+        if justify_self & {'normal', 'stretch'}:
+            new_child.width = max(width, new_child.width)
+        else:
+            new_child.width = max_content_width(context, new_child)
+            diff = width - new_child.width
+            if justify_self & {'center'}:
+                new_child.translate(diff / 2, 0)
+            elif justify_self & {'right', 'end', 'flex-end', 'self-end'}:
+                new_child.translate(diff, 0)
+        align_self = set(new_child.style['align_self'])
+        if align_self & {'auto'}:
+            align_self = align_items
+        if align_self & {'normal', 'stretch'}:
+            new_child.height = max(height, new_child.height)
+        else:
+            diff = height - new_child.height
+            if align_self & {'center'}:
+                new_child.translate(0, diff / 2)
+            elif align_self & {'end', 'flex-end', 'self-end'}:
+                new_child.translate(0, diff)
         # TODO: Take care of page fragmentation.
         new_children.append(new_child)
         if baseline is None and y == implicit_y1:
@@ -968,7 +1075,6 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         box.baseline = baseline or 0
 
     # TODO: Include gutters, margins, borders, paddings.
-    box.height = sum(size for size, _ in rows_sizes)
     box.children = new_children
 
     context.finish_block_formatting_context(box)

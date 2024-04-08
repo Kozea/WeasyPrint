@@ -206,7 +206,7 @@ INITIAL_VALUES = {
     'align_self': ('auto',),
     'justify_content': ('normal',),
     'justify_items': ('normal',),
-    'justify_self': ('normal',),
+    'justify_self': ('auto',),
     'order': 0,
     'column_gap': 'normal',
     'row_gap': 'normal',
