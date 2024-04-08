@@ -989,7 +989,7 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
     if box.height == 'auto':
         box.height = (
             sum(size for size, _ in rows_sizes) +
-            (len(rows_sizes) - 1)* row_gap)
+            (len(rows_sizes) - 1) * row_gap)
         free_height = 0
     else:
         free_height = (
