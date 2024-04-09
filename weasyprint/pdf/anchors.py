@@ -116,7 +116,7 @@ def add_inputs(inputs, matrix, pdf, page, resources, stream, font_map,
 
         input_type = element.attrib.get('type')
         default_name = f'unknown-{page_reference.decode()}-{i}'
-        input_name = pydyf.String(element.attrib.get('name', default_name))
+        input_name = element.attrib.get('name', default_name)
         # TODO: where does this 0.75 scale come from?
         font_size = style['font_size'] * 0.75
         field_stream = pydyf.Stream(compress=compress)
