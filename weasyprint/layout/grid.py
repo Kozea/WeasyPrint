@@ -1096,15 +1096,9 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
             page_is_empty, absolute_boxes, fixed_boxes)[:3]
         if new_child:
             page_is_empty = False
+            # TODO: Support fragmentation in grid items.
         else:
-            if child_resume_at:
-                pass
-                # if not resume_at:
-                #     resume_at = {}
-                # if y in resume_at:
-                #     resume_at[y][index] = child_resume_at
-                # else:
-                #     resume_at[y] = {index: child_resume_at}
+            # TODO: Support fragmentation in grid rows.
             continue
 
         # TODO: Apply auto margins.
