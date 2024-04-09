@@ -314,7 +314,7 @@ def _distribute_extra_space(affected_sizes, affected_tracks_types,
                         item_incurred_increase)
             # 2.4 Distribute space beyond limits.
             if space:
-                # TODO
+                # TODO: Distribute space beyond limits.
                 pass
             # 2.5. Set the track’s planned increase.
             for k, extra in enumerate(item_incurred_increases):
