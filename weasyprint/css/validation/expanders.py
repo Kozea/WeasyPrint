@@ -285,6 +285,47 @@ def expand_border_side(tokens, name):
         yield suffix, [token]
 
 
+@expander('border-image')
+@generic_expander('-outset', '-repeat', '-slice', '-source', '-width')
+def expand_border_image(tokens, name):
+    """Expand the ``border-image-*`` shorthand properties.
+
+    See https://drafts.csswg.org/css-backgrounds/#the-border-image
+
+    """
+    tokens = list(tokens)
+    while len(tokens) > 0:
+        token = tokens.pop(0)
+        if token.type in ('function', 'url'):
+            yield '-source', [token]
+        elif get_keyword(token) in ('stretch', 'repeat', 'round', 'space'):
+            yield '-repeat', [token]
+        elif (token.type in ('percentage', 'number')
+              or get_keyword(token) == 'fill'):
+            current = [token]
+            numish_suffixes = ['-slice', '-width', '-outset']
+            while len(tokens) > 0 and (
+                    tokens[0].type in (
+                        'percentage', 'number', 'literal', 'dimension')
+                    or get_keyword(tokens[0]) in ('fill', 'auto')):
+                token = tokens.pop(0)
+                if token.type == 'literal' and token.value == '/':
+                    if len(current) == 0:
+                        if numish_suffixes[0] != '-width':
+                            raise InvalidValues
+                    else:
+                        yield numish_suffixes[0], current
+                    current = []
+                    numish_suffixes.pop(0)
+                else:
+                    current.append(token)
+            if len(current) == 0:
+                raise InvalidValues
+            yield numish_suffixes[0], current
+        else:
+            raise InvalidValues
+
+
 @expander('background')
 def expand_background(tokens, name, base_url):
     """Expand the ``background`` shorthand property.

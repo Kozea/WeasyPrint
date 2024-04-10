@@ -47,6 +47,13 @@ def layout_box_backgrounds(page, box, get_image_from_uri, layout_children=True,
     if style is None:
         style = box.style
 
+    # This is for the border image, not the background, but this is a
+    # convenient place to get the image.
+    if (style['border_image_source']
+            and style['border_image_source'][0] != 'none'):
+        box.border_image = get_image_from_uri(
+            url=style['border_image_source'][1])
+
     if style['visibility'] == 'hidden':
         images = []
         color = parse_color('transparent')

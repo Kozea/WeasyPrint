@@ -453,6 +453,110 @@ def draw_border(stream, box):
         draw_column_border()
         return
 
+    # If there's a border image, that takes precedence.
+    if (box.style['border_image_source'][0] != 'none'
+            and box.border_image is not None):
+        should_fill = False
+        image_slice = box.style['border_image_slice']
+        if image_slice[0] == 'fill':
+            image_slice.pop(0)
+            should_fill = True
+        slice_dims = [d.value / 100. for d in image_slice]
+        if len(slice_dims) == 1:
+            slice_top = slice_bottom = slice_left = slice_right = slice_dims[0]
+        elif len(slice_dims) == 2:
+            slice_top = slice_bottom = slice_dims[0]
+            slice_left = slice_right = slice_dims[1]
+        elif len(slice_dims) == 3:
+            slice_top = slice_dims[0]
+            slice_left = slice_right = slice_dims[1]
+            slice_bottom = slice_dims[2]
+        else:
+            slice_top = slice_dims[0]
+            slice_right = slice_dims[1]
+            slice_bottom = slice_dims[2]
+            slice_left = slice_dims[3]
+
+        x, y, w, h, tl, tr, br, bl = box.rounded_border_box()
+        px, py, pw, ph, ptl, ptr, pbr, pbl = box.rounded_padding_box()
+        border_width = px - x
+        border_height = py - y
+
+        img = box.border_image
+        iw, ih, iratio = img.get_intrinsic_size(
+            box.style['image_resolution'],
+            box.style['font_size'])
+
+        def draw_border_image(x, y, width, height,
+                              slice_x_frac, slice_y_frac,
+                              slice_width_frac, slice_height_frac):
+            with stacked(stream):
+                img_width = width / slice_width_frac
+                img_height = height / slice_height_frac
+                scale_x = img_width / iw
+                scale_y = img_height / ih
+                stream.rectangle(x, y, width, height)
+                stream.clip()
+                stream.end()
+                stream.transform(
+                    e=x - img_width * slice_x_frac,
+                    f=y - img_height * slice_y_frac)
+                stream.transform(a=scale_x, d=scale_y)
+                img.draw(stream, iw, ih, box.style['image_rendering'])
+
+        # Top left.
+        draw_border_image(x, y, border_width, border_height,
+                          0, 0, slice_left, slice_top)
+        # Top right.
+        draw_border_image(x + w - border_width, y,
+                          border_width, border_height,
+                          (1-slice_right), 0, slice_right, slice_top)
+        # Bottom right.
+        draw_border_image(x + w - border_width,
+                          y + h - border_height,
+                          border_width, border_height,
+                          (1-slice_right), (1-slice_bottom),
+                          slice_right, slice_bottom)
+        # Bottom left.
+        draw_border_image(x, y + h - border_height,
+                          border_width, border_height,
+                          0, (1-slice_bottom), slice_left, slice_bottom)
+        if slice_left + slice_right < 1.0:
+            # Top middle.
+            draw_border_image(x + border_width, y,
+                              w - 2*border_width, border_height,
+                              slice_left, 0,
+                              1 - slice_left - slice_right, slice_top)
+            # Bottom middle.
+            draw_border_image(x + border_width,
+                              y + h - border_height,
+                              w - 2*border_width, border_height,
+                              slice_left, 1 - slice_bottom,
+                              1 - slice_left - slice_right, slice_bottom)
+        if slice_top + slice_bottom < 1.0:
+            # Right middle.
+            draw_border_image(x + w - border_width,
+                              y + border_height,
+                              border_width, h - 2*border_height,
+                              (1 - slice_right), slice_top,
+                              slice_right, 1 - slice_top - slice_bottom)
+            # Left middle.
+            draw_border_image(x, y + border_height,
+                              border_width, h - 2*border_height,
+                              0, slice_top,
+                              slice_left, 1 - slice_top - slice_bottom)
+        if (should_fill and slice_left + slice_right < 1.0
+                and slice_top + slice_bottom < 1.0):
+            # Fill middle middle.
+            draw_border_image(x + border_width, y + border_height,
+                              w - 2*border_width, h - 2*border_height,
+                              slice_left, slice_top,
+                              1 - slice_left - slice_right,
+                              1 - slice_top - slice_bottom)
+
+        draw_column_border()
+        return
+
     colors = [get_color(box.style, f'border_{side}_color') for side in SIDES]
     styles = [
         colors[i].alpha and box.style[f'border_{side}_style']

@@ -273,3 +273,97 @@ def test_draw_split_border_radius(assert_pixels):
       </style>
       <div>a b c</div>
     ''')
+
+
+@assert_no_logs
+def test_border_image(assert_pixels):
+    # Shows default "stretch" behavior for border images.
+    # Note that we use a svg image to avoid antialiasing.
+    assert_pixels('''
+        __________
+        _RYYYMMMG_
+        _M______C_
+        _M______C_
+        _Y______Y_
+        _Y______Y_
+        _BYYYCCCK_
+        __________
+    ''', '''
+      <style>
+        @page {
+          size: 10px 8px;
+        }
+        div {
+          border: 1px solid black;
+          border-image-source: url(border.svg);
+          border-image-slice: 25%;
+          height: 4px;
+          margin: 1px;
+          width: 6px;
+        }
+      </style>
+      <div></div>
+    ''')
+
+
+@assert_no_logs
+def test_border_image_fill(assert_pixels):
+    assert_pixels('''
+        __________
+        _RYYYMMMG_
+        _MbbbgggC_
+        _MbbbgggC_
+        _YgggbbbY_
+        _YgggbbbY_
+        _BYYYCCCK_
+        __________
+    ''', '''
+      <style>
+        @page {
+          size: 10px 8px;
+        }
+        div {
+          border: 1px solid black;
+          border-image-source: url(border.svg);
+          border-image-slice: 25% fill;
+          height: 4px;
+          margin: 1px;
+          width: 6px;
+        }
+      </style>
+      <div></div>
+    ''')
+
+
+@assert_no_logs
+def test_border_image_default_sllice(assert_pixels):
+    # By default, border-image-slice is 100%, so the whole image is in the
+    # four corners and nothing is in-between.
+    assert_pixels('''
+        _____________
+        _RYMG___RYMG_
+        _MbgC___MbgC_
+        _YgbY___YgbY_
+        _BYCK___BYCK_
+        _____________
+        _____________
+        _RYMG___RYMG_
+        _MbgC___MbgC_
+        _YgbY___YgbY_
+        _BYCK___BYCK_
+        _____________
+    ''', '''
+      <style>
+        @page {
+          size: 13px 12px;
+        }
+        div {
+          border: 4px solid black;
+          border-image-source: url(border.svg);
+          height: 2px;
+          margin: 1px;
+          width: 3px;
+        }
+      </style>
+      <div></div>
+    ''')

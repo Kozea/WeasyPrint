@@ -421,6 +421,80 @@ def border_width(token):
         return keyword
 
 
+@property(wants_base_url=True)
+@single_token
+def border_image_source(token, base_url):
+    if token.type not in ('function', 'url'):
+        if get_keyword(token) == 'none':
+            return 'none', None
+    return get_image(token, base_url)
+
+
+@property()
+def border_image_slice(tokens):
+    values = []
+    keyword_cnt = 0
+    for token in tokens:
+        # Don't use get_length() because a dimension with a unit is disallowed.
+        if token.type == 'percentage' and token.value >= 0:
+            values.append(Dimension(min(token.value, 100), '%'))
+        elif token.type == 'number':
+            values.append(token.value)
+        elif get_keyword(token) == 'fill':
+            keyword_cnt += 1
+        else:
+            return None
+    if keyword_cnt > 0:
+        # Always put it at the beginning to make processing easier.
+        # Would it be better to use some sort of object here?
+        values = ['fill'] + values
+    if keyword_cnt <= 1 and (1 <= len(values) - keyword_cnt <= 4):
+        return values
+
+
+@property()
+def border_image_width(tokens):
+    if get_single_keyword(tokens) == 'auto':
+        return 'auto'
+    values = []
+    for token in tokens:
+        if token.type == 'number' and token.value >= 0:
+            values.append(token.value)
+        else:
+            length = get_length(token, negative=False, percentage=True)
+            if length:
+                values.append(length)
+            else:
+                return None
+    if 1 <= len(values) <= 4:
+        return values
+
+
+@property()
+def border_image_outset(tokens):
+    values = []
+    for token in tokens:
+        if token.type == 'number':
+            values.append(token.value)
+        else:
+            length = get_length(token)
+            if length:
+                values.append(length)
+            else:
+                return None
+    if 1 <= len(values) <= 4:
+        return values
+
+
+@property()
+def border_image_repeat(tokens):
+    if 1 <= len(tokens) <= 2:
+        keywords = tuple(get_keyword(token) for token in tokens)
+        if all(kw in ('stretch', 'repeat', 'round', 'space')
+               for kw in keywords):
+            return keywords
+
+
 @property(unstable=True)
 @single_token
 def column_width(token):
