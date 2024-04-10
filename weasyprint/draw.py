@@ -479,8 +479,10 @@ def draw_border(stream, box):
 
         x, y, w, h, tl, tr, br, bl = box.rounded_border_box()
         px, py, pw, ph, ptl, ptr, pbr, pbl = box.rounded_padding_box()
-        border_width = px - x
-        border_height = py - y
+        border_left = px - x
+        border_top = py - y
+        border_right = w - pw - border_left
+        border_bottom = h - ph - border_top
 
         img = box.border_image
         iw, ih, iratio = img.get_intrinsic_size(
@@ -505,51 +507,52 @@ def draw_border(stream, box):
                 img.draw(stream, iw, ih, box.style['image_rendering'])
 
         # Top left.
-        draw_border_image(x, y, border_width, border_height,
+        draw_border_image(x, y, border_left, border_top,
                           0, 0, slice_left, slice_top)
         # Top right.
-        draw_border_image(x + w - border_width, y,
-                          border_width, border_height,
+        draw_border_image(x + w - border_right, y,
+                          border_right, border_top,
                           (1-slice_right), 0, slice_right, slice_top)
         # Bottom right.
-        draw_border_image(x + w - border_width,
-                          y + h - border_height,
-                          border_width, border_height,
+        draw_border_image(x + w - border_right,
+                          y + h - border_bottom,
+                          border_right, border_bottom,
                           (1-slice_right), (1-slice_bottom),
                           slice_right, slice_bottom)
         # Bottom left.
-        draw_border_image(x, y + h - border_height,
-                          border_width, border_height,
+        draw_border_image(x, y + h - border_bottom,
+                          border_left, border_bottom,
                           0, (1-slice_bottom), slice_left, slice_bottom)
         if slice_left + slice_right < 1.0:
             # Top middle.
-            draw_border_image(x + border_width, y,
-                              w - 2*border_width, border_height,
+            draw_border_image(x + border_left, y,
+                              w - border_left - border_right, border_top,
                               slice_left, 0,
                               1 - slice_left - slice_right, slice_top)
             # Bottom middle.
-            draw_border_image(x + border_width,
-                              y + h - border_height,
-                              w - 2*border_width, border_height,
+            draw_border_image(x + border_left,
+                              y + h - border_bottom,
+                              w - border_left - border_right, border_bottom,
                               slice_left, 1 - slice_bottom,
                               1 - slice_left - slice_right, slice_bottom)
         if slice_top + slice_bottom < 1.0:
             # Right middle.
-            draw_border_image(x + w - border_width,
-                              y + border_height,
-                              border_width, h - 2*border_height,
+            draw_border_image(x + w - border_right,
+                              y + border_top,
+                              border_right, h - border_top - border_bottom,
                               (1 - slice_right), slice_top,
                               slice_right, 1 - slice_top - slice_bottom)
             # Left middle.
-            draw_border_image(x, y + border_height,
-                              border_width, h - 2*border_height,
+            draw_border_image(x, y + border_top,
+                              border_left, h - border_top - border_bottom,
                               0, slice_top,
                               slice_left, 1 - slice_top - slice_bottom)
         if (should_fill and slice_left + slice_right < 1.0
                 and slice_top + slice_bottom < 1.0):
             # Fill middle middle.
-            draw_border_image(x + border_width, y + border_height,
-                              w - 2*border_width, h - 2*border_height,
+            draw_border_image(x + border_top, y + border_left,
+                              w - border_left - border_right,
+                              h - border_top - border_bottom,
                               slice_left, slice_top,
                               1 - slice_left - slice_right,
                               1 - slice_top - slice_bottom)

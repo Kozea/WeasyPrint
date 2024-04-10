@@ -367,3 +367,33 @@ def test_border_image_default_sllice(assert_pixels):
       </style>
       <div></div>
     ''')
+
+
+@assert_no_logs
+def test_border_image_uneven_width(assert_pixels):
+    assert_pixels('''
+        ____________
+        _RRRYYYMMMG_
+        _MMM______C_
+        _MMM______C_
+        _YYY______Y_
+        _YYY______Y_
+        _BBBYYYCCCK_
+        ____________
+    ''', '''
+      <style>
+        @page {
+          size: 12px 8px;
+        }
+        div {
+          border: 1px solid black;
+          border-left-width: 3px;
+          border-image-source: url(border.svg);
+          border-image-slice: 25%;
+          height: 4px;
+          margin: 1px;
+          width: 6px;
+        }
+      </style>
+      <div></div>
+    ''')
