@@ -397,3 +397,32 @@ def test_border_image_uneven_width(assert_pixels):
       </style>
       <div></div>
     ''')
+
+
+@assert_no_logs
+def test_border_image_not_percent(assert_pixels):
+    assert_pixels('''
+        __________
+        _RYYYMMMG_
+        _M______C_
+        _M______C_
+        _Y______Y_
+        _Y______Y_
+        _BYYYCCCK_
+        __________
+    ''', '''
+      <style>
+        @page {
+          size: 10px 8px;
+        }
+        div {
+          border: 1px solid black;
+          border-image-source: url(border.svg);
+          border-image-slice: 1;
+          height: 4px;
+          margin: 1px;
+          width: 6px;
+        }
+      </style>
+      <div></div>
+    ''')
