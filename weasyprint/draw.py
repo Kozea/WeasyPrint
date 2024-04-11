@@ -558,7 +558,7 @@ def draw_border(stream, box):
         if (should_fill and slice_left + slice_right < iw
                 and slice_top + slice_bottom < ih):
             # Fill middle middle.
-            draw_border_image(x + border_top, y + border_left,
+            draw_border_image(x + border_left, y + border_top,
                               w - border_left - border_right,
                               h - border_top - border_bottom,
                               slice_left, slice_top,
