@@ -905,17 +905,44 @@ def expand_grid_area(tokens, name):
         yield f'grid-{side}', tokens
 
 
+@expander('grid-gap')
 @expander('gap')
 @generic_expander('column-gap', 'row-gap')
 def expand_gap(tokens, name):
     """Expand the ``gap`` property."""
-    if len(tokens) != 2:
+    if len(tokens) == 1:
+        if gap(tokens) is None:
+            raise InvalidValues
+        yield 'row-gap', tokens
+        yield 'column-gap', tokens
+    elif len(tokens) == 2:
+        column_gap, row_gap = gap(tokens[0:1]), gap(tokens[1:2])
+        if None in (column_gap, row_gap):
+            raise InvalidValues
+        yield 'row-gap', tokens[0:1]
+        yield 'column-gap', tokens[1:2]
+    else:
         raise InvalidValues
-    column_gap, row_gap = gap(tokens[0:1]), gap(tokens[1:2])
-    if None in (column_gap, row_gap):
+
+
+@expander('grid-column-gap')
+@generic_expander('column-gap')
+def expand_legacy_column_gap(tokens, name):
+    """Expand legacy ``grid-column-gap`` property."""
+    keyword = gap(tokens)
+    if keyword is None:
         raise InvalidValues
-    yield 'row-gap', tokens[0:1]
-    yield 'column-gap', tokens[1:2]
+    yield 'column-gap', tokens
+
+
+@expander('grid-row-gap')
+@generic_expander('row-gap')
+def expand_legacy_row_gap(tokens, name):
+    """Expand legacy ``grid-row-gap`` property."""
+    keyword = gap(tokens)
+    if keyword is None:
+        raise InvalidValues
+    yield 'row-gap', tokens
 
 
 @expander('place-content')
