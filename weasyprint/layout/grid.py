@@ -1084,6 +1084,20 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         height = (
             sum(size for size, _ in rows_sizes[y:y+height]) +
             (height - 1) * row_gap)
+
+        justify_self = set(child.style['justify_self'])
+        if justify_self & {'auto'}:
+            justify_self = justify_items
+        if justify_self & {'normal', 'stretch'}:
+            if child.style['width'] == 'auto':
+                child.style['width'] = Dimension(width, 'px')
+        align_self = set(child.style['align_self'])
+        if align_self & {'auto'}:
+            align_self = align_items
+        if align_self & {'normal', 'stretch'}:
+            if child.style['height'] == 'auto':
+                child.style['height'] = Dimension(height, 'px')
+
         # TODO: Find a better solution for the layout.
         parent = boxes.BlockContainerBox.anonymous_from(box, ())
         resolve_percentages(parent, containing_block)
@@ -1102,10 +1116,7 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
             continue
 
         # TODO: Apply auto margins.
-        justify_self = set(new_child.style['justify_self'])
         width -= new_child.margin_width() - new_child.width
-        if justify_self & {'auto'}:
-            justify_self = justify_items
         if justify_self & {'normal', 'stretch'}:
             new_child.width = max(width, new_child.width)
         else:
@@ -1117,10 +1128,7 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                 new_child.translate(diff, 0)
 
         # TODO: Apply auto margins.
-        align_self = set(new_child.style['align_self'])
         height -= new_child.margin_height() - new_child.height
-        if align_self & {'auto'}:
-            align_self = align_items
         if align_self & {'normal', 'stretch'}:
             new_child.height = max(height, new_child.height)
         else:
