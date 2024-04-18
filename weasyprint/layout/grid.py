@@ -483,13 +483,13 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
             sizes[1] = sizes[0]
     # 1.3 Maximize tracks.
     if box_size == 'auto':
-        free_space = 0
+        free_space = None
     else:
         free_space = (
             box_size -
             sum(size[0] for size in tracks_sizes) -
             (len(tracks_sizes) - 1) * gap)
-    if free_space > 0:
+    if free_space is not None and free_space > 0:
         distributed_free_space = free_space / len(tracks_sizes)
         for i, sizes in enumerate(tracks_sizes):
             base_size, growth_limit = sizes
@@ -501,11 +501,10 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
                 free_space -= distributed_free_space
     # TODO: Respect max-width/-height.
     # 1.4 Expand flexible tracks.
-    if free_space <= 0:
+    if free_space is not None and free_space <= 0:
         # TODO: Respect min-content constraint.
         flex_fraction = 0
-    else:
-        # TODO: Take care of indefinite free space (!).
+    elif free_space is not None:
         stop = False
         inflexible_tracks = set()
         while not stop:
@@ -527,12 +526,25 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
                         inflexible_tracks.add(i)
                         stop = False
         flex_fraction = hypothetical_fr_size
-        iterable = enumerate(zip(tracks_sizes, sizing_functions))
-        for i, (sizes, (_, max_function)) in iterable:
+    else:
+        flex_fraction = 0
+        iterable = zip(tracks_sizes, sizing_functions)
+        for sizes, (_, max_function) in iterable:
             if _is_fr(max_function):
-                if flex_fraction * max_function.value > sizes[0]:
+                if max_function.value > 1:
+                    flex_fraction = max(
+                        flex_fraction, max_function.value * sizes[0])
+                else:
+                    flex_fraction = max(flex_fraction, sizes[0])
+        # TODO: Respect grid items max-content contribution.
+        # TODO: Respect min-* constraint.
+    iterable = enumerate(zip(tracks_sizes, sizing_functions))
+    for i, (sizes, (_, max_function)) in iterable:
+        if _is_fr(max_function):
+            if flex_fraction * max_function.value > sizes[0]:
+                if free_space is not None:
                     free_space -= flex_fraction * max_function.value
-                    sizes[0] = flex_fraction * max_function.value
+                sizes[0] = flex_fraction * max_function.value
     # 1.5 Expand stretched auto tracks.
     justify_content = containing_block.style['justify_content']
     align_content = containing_block.style['align_content']
@@ -540,7 +552,7 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
         direction == 'x' and set(justify_content) & {'normal', 'stretch'})
     y_stretch = (
         direction == 'y' and set(align_content) & {'normal', 'stretch'})
-    if (x_stretch or y_stretch) and free_space > 0:
+    if (x_stretch or y_stretch) and free_space is not None and free_space > 0:
         auto_tracks_sizes = [
             sizes for sizes, (min_function, _)
             in zip(tracks_sizes, sizing_functions)
