@@ -464,7 +464,7 @@ def draw_border(stream, box):
         should_fill = False
         image_slice = box.style['border_image_slice']
         if image_slice[0] == 'fill':
-            image_slice.pop(0)
+            image_slice = image_slice[1:];
             should_fill = True
 
         def compute_dim(d, intrinsic):
