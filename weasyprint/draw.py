@@ -981,6 +981,7 @@ def draw_replacedbox(stream, box):
         return
 
     with stacked(stream):
+        stream.set_alpha(1)
         stream.transform(e=draw_x, f=draw_y)
         with stacked(stream):
             # TODO: Use the real intrinsic size here, not affected by
