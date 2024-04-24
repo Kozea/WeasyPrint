@@ -13,7 +13,7 @@ from .preferred import max_content_width, table_and_columns_preferred_widths
 def table_layout(context, table, bottom_space, skip_stack, containing_block,
                  page_is_empty, absolute_boxes, fixed_boxes):
     """Layout for a table box."""
-    from .block import (
+    from .block import (  # isort:skip
         avoid_page_break, block_container_layout, block_level_page_break,
         find_earlier_page_break, force_page_break)
 

@@ -1,6 +1,7 @@
 """Test the text layout."""
 
 import pytest
+
 from weasyprint.css.properties import INITIAL_VALUES
 from weasyprint.formatting_structure.build import capitalize
 from weasyprint.text.line_break import split_first_line
@@ -946,8 +947,8 @@ def test_overflow_wrap(wrap, text, test, full_text):
     lines = []
     for line in body.children:
         box, = line.children
-        textBox, = box.children
-        lines.append(textBox.text)
+        text_box, = box.children
+        lines.append(text_box.text)
     lines_full_text = ''.join(line for line in lines)
     assert test(len(lines))
     assert full_text == lines_full_text

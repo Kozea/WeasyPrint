@@ -10,7 +10,8 @@ from tinycss2.color3 import parse_color
 
 from .. import computed_values
 from ..properties import KNOWN_PROPERTIES, ZERO_PIXELS, Dimension
-from ..utils import (
+
+from ..utils import (  # isort:skip
     InvalidValues, Pending, check_var_function, comma_separated_list,
     get_angle, get_content_list, get_content_list_token, get_custom_ident,
     get_image, get_keyword, get_length, get_resolution, get_single_keyword,
@@ -712,8 +713,8 @@ def font_variant_ligatures(tokens):
         if token.type != 'ident':
             return None
         if token.value in all_values:
-            concurrent_values = [
-                couple for couple in couples if token.value in couple][0]
+            concurrent_values = next(
+                couple for couple in couples if token.value in couple)
             if any(value in values for value in concurrent_values):
                 return None
             else:
@@ -757,8 +758,8 @@ def font_variant_numeric(tokens):
         if token.type != 'ident':
             return None
         if token.value in all_values:
-            concurrent_values = [
-                couple for couple in couples if token.value in couple][0]
+            concurrent_values = next(
+                couple for couple in couples if token.value in couple)
             if any(value in values for value in concurrent_values):
                 return None
             else:
@@ -827,8 +828,8 @@ def font_variant_east_asian(tokens):
         if token.type != 'ident':
             return None
         if token.value in all_values:
-            concurrent_values = [
-                couple for couple in couples if token.value in couple][0]
+            concurrent_values = next(
+                couple for couple in couples if token.value in couple)
             if any(value in values for value in concurrent_values):
                 return None
             else:

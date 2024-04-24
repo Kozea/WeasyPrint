@@ -1,6 +1,7 @@
 """Test CSS custom properties, also known as CSS variables."""
 
 import pytest
+
 from weasyprint.css.properties import KNOWN_PROPERTIES
 
 from ..testing_utils import assert_no_logs, capture_logs, render_pages

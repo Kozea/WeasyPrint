@@ -1,6 +1,7 @@
 """Test how images are drawn in SVG."""
 
 import pytest
+
 from weasyprint.urls import path2url
 
 from ...testing_utils import assert_no_logs, resource_path

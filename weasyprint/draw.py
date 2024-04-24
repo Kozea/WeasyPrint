@@ -41,7 +41,7 @@ def darken(color):
     hue, saturation, value = rgb_to_hsv(color.red, color.green, color.blue)
     value /= 1.5
     saturation /= 1.25
-    return hsv_to_rgb(hue, saturation, value) + (color.alpha,)
+    return (*hsv_to_rgb(hue, saturation, value), color.alpha)
 
 
 def lighten(color):
@@ -50,7 +50,7 @@ def lighten(color):
     value = 1 - (1 - value) / 1.5
     if saturation:
         saturation = 1 - (1 - saturation) / 1.25
-    return hsv_to_rgb(hue, saturation, value) + (color.alpha,)
+    return (*hsv_to_rgb(hue, saturation, value), color.alpha)
 
 
 def draw_page(page, stream):
@@ -150,7 +150,7 @@ def draw_stacking_context(stream, stacking_context):
                 draw_inline_level(stream, stacking_context.page, box)
 
             # Point 7
-            for block in [box] + stacking_context.blocks_and_cells:
+            for block in (box, *stacking_context.blocks_and_cells):
                 if isinstance(block, boxes.ReplacedBox):
                     draw_replacedbox(stream, block)
                 elif block.children:

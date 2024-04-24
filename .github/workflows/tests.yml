@@ -44,6 +44,4 @@ jobs:
         env:
           DYLD_FALLBACK_LIBRARY_PATH: /opt/homebrew/lib
       - name: Check coding style
-        run: python -m flake8
-      - name: Check imports order
-        run: python -m isort . --check --diff
+        run: python -m ruff check

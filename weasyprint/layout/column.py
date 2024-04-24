@@ -10,7 +10,7 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
                    page_is_empty, absolute_boxes, fixed_boxes,
                    adjoining_margins):
     """Lay out a multi-column ``box``."""
-    from .block import (
+    from .block import (  # isort:skip
         block_box_layout, block_level_layout, block_level_width,
         collapse_margin, remove_placeholders)
 

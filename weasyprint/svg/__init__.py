@@ -8,17 +8,16 @@ from xml.etree import ElementTree
 from cssselect2 import ElementWrapper
 
 from ..urls import get_url_attribute
-from .bounding_box import (
-    EMPTY_BOUNDING_BOX, bounding_box, extend_bounding_box,
-    is_valid_bounding_box)
 from .css import parse_declarations, parse_stylesheets
-from .defs import (
-    apply_filters, clip_path, draw_gradient_or_pattern, paint_mask, use)
+from .defs import apply_filters, clip_path, draw_gradient_or_pattern, paint_mask, use
 from .images import image, svg
 from .path import path
 from .shapes import circle, ellipse, line, polygon, polyline, rect
 from .text import text
-from .utils import (
+
+from .bounding_box import (  # isort:skip
+    EMPTY_BOUNDING_BOX, bounding_box, extend_bounding_box, is_valid_bounding_box)
+from .utils import (  # isort:skip
     PointError, alpha_value, color, normalize, parse_url, preserve_ratio, size,
     transform)
 
