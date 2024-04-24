@@ -454,27 +454,28 @@ def draw_border(stream, box):
         return
 
     # If there's a border image, that takes precedence.
-    if (box.style['border_image_source'][0] != 'none'
-            and box.border_image is not None):
+    if box.style['border_image_source'][0] != 'none' and box.border_image is not None:
         img = box.border_image
-        iw, ih, iratio = img.get_intrinsic_size(
-            box.style['image_resolution'],
-            box.style['font_size'])
+        width, height, ratio = img.get_intrinsic_size(
+            box.style['image_resolution'], box.style['font_size'])
+        intrinsic_width, intrinsic_height = replaced.default_image_sizing(
+            width, height, ratio, specified_width=None, specified_height=None,
+            default_width=box.border_width(), default_height=box.border_height())
 
         image_slice = box.style['border_image_slice'][:4]
         should_fill = box.style['border_image_slice'][4]
 
-        def compute_dim(d, intrinsic):
-            if isinstance(d, (int, float)):
-                return d
+        def compute_slice_dimension(dimension, intrinsic):
+            if isinstance(dimension, (int, float)):
+                return dimension
             else:
-                assert d.unit == '%'
-                return d.value / 100. * intrinsic
+                assert dimension.unit == '%'
+                return dimension.value / 100 * intrinsic
 
-        slice_top = compute_dim(image_slice[0], ih)
-        slice_right = compute_dim(image_slice[1], iw)
-        slice_bottom = compute_dim(image_slice[2], ih)
-        slice_left = compute_dim(image_slice[3], iw)
+        slice_top = compute_slice_dimension(image_slice[0], intrinsic_height)
+        slice_right = compute_slice_dimension(image_slice[1], intrinsic_width)
+        slice_bottom = compute_slice_dimension(image_slice[2], intrinsic_height)
+        slice_left = compute_slice_dimension(image_slice[3], intrinsic_width)
 
         x, y, w, h, tl, tr, br, bl = box.rounded_border_box()
         px, py, pw, ph, ptl, ptr, pbr, pbl = box.rounded_padding_box()
@@ -483,73 +484,70 @@ def draw_border(stream, box):
         border_right = w - pw - border_left
         border_bottom = h - ph - border_top
 
-        def draw_border_image(x, y, width, height,
-                              slice_x, slice_y,
-                              slice_width, slice_height):
+        def draw_border_image(x, y, width, height, slice_x, slice_y, slice_width,
+                              slice_height):
             with stacked(stream):
                 scale_x = width / slice_width
                 scale_y = height / slice_height
-                rendered_width = iw * scale_x
-                rendered_height = ih * scale_y
+                rendered_width = intrinsic_width * scale_x
+                rendered_height = intrinsic_height * scale_y
                 stream.rectangle(x, y, width, height)
                 stream.clip()
                 stream.end()
                 stream.transform(
-                    e=x - rendered_width * slice_x / iw,
-                    f=y - rendered_height * slice_y / ih)
+                    e=x - rendered_width * slice_x / intrinsic_width,
+                    f=y - rendered_height * slice_y / intrinsic_height)
                 stream.transform(a=scale_x, d=scale_y)
-                img.draw(stream, iw, ih, box.style['image_rendering'])
+                img.draw(
+                    stream, intrinsic_width, intrinsic_height,
+                    box.style['image_rendering'])
 
         # Top left.
-        draw_border_image(x, y, border_left, border_top,
-                          0, 0, slice_left, slice_top)
+        draw_border_image(
+            x, y, border_left, border_top, 0, 0, slice_left, slice_top)
         # Top right.
-        draw_border_image(x + w - border_right, y,
-                          border_right, border_top,
-                          iw - slice_right, 0, slice_right, slice_top)
+        draw_border_image(
+            x + w - border_right, y, border_right, border_top,
+            intrinsic_width - slice_right, 0, slice_right, slice_top)
         # Bottom right.
-        draw_border_image(x + w - border_right,
-                          y + h - border_bottom,
-                          border_right, border_bottom,
-                          iw - slice_right, ih - slice_bottom,
-                          slice_right, slice_bottom)
+        draw_border_image(
+            x + w - border_right, y + h - border_bottom, border_right, border_bottom,
+            intrinsic_width - slice_right, intrinsic_height - slice_bottom,
+            slice_right, slice_bottom)
         # Bottom left.
-        draw_border_image(x, y + h - border_bottom,
-                          border_left, border_bottom,
-                          0, ih - slice_bottom, slice_left, slice_bottom)
-        if slice_left + slice_right < iw:
+        draw_border_image(
+            x, y + h - border_bottom, border_left, border_bottom,
+            0, intrinsic_height - slice_bottom, slice_left, slice_bottom)
+        if slice_left + slice_right < intrinsic_width:
             # Top middle.
-            draw_border_image(x + border_left, y,
-                              w - border_left - border_right, border_top,
-                              slice_left, 0,
-                              iw - slice_left - slice_right, slice_top)
+            draw_border_image(
+                x + border_left, y, w - border_left - border_right, border_top,
+                slice_left, 0, intrinsic_width - slice_left - slice_right, slice_top)
             # Bottom middle.
-            draw_border_image(x + border_left,
-                              y + h - border_bottom,
-                              w - border_left - border_right, border_bottom,
-                              slice_left, ih - slice_bottom,
-                              iw - slice_left - slice_right, slice_bottom)
-        if slice_top + slice_bottom < ih:
+            draw_border_image(
+                x + border_left, y + h - border_bottom,
+                w - border_left - border_right, border_bottom,
+                slice_left, intrinsic_height - slice_bottom,
+                intrinsic_width - slice_left - slice_right, slice_bottom)
+        if slice_top + slice_bottom < intrinsic_height:
             # Right middle.
-            draw_border_image(x + w - border_right,
-                              y + border_top,
-                              border_right, h - border_top - border_bottom,
-                              iw - slice_right, slice_top,
-                              slice_right, ih - slice_top - slice_bottom)
+            draw_border_image(
+                x + w - border_right, y + border_top,
+                border_right, h - border_top - border_bottom,
+                intrinsic_width - slice_right, slice_top,
+                slice_right, intrinsic_height - slice_top - slice_bottom)
             # Left middle.
-            draw_border_image(x, y + border_top,
-                              border_left, h - border_top - border_bottom,
-                              0, slice_top,
-                              slice_left, ih - slice_top - slice_bottom)
-        if (should_fill and slice_left + slice_right < iw
-                and slice_top + slice_bottom < ih):
-            # Fill middle middle.
-            draw_border_image(x + border_left, y + border_top,
-                              w - border_left - border_right,
-                              h - border_top - border_bottom,
-                              slice_left, slice_top,
-                              iw - slice_left - slice_right,
-                              ih - slice_top - slice_bottom)
+            draw_border_image(
+                x, y + border_top, border_left, h - border_top - border_bottom,
+                0, slice_top, slice_left, intrinsic_height - slice_top - slice_bottom)
+        if (should_fill and slice_left + slice_right < intrinsic_width
+                and slice_top + slice_bottom < intrinsic_height):
+            # Fill middle.
+            draw_border_image(
+                x + border_left, y + border_top, w - border_left - border_right,
+                h - border_top - border_bottom, slice_left, slice_top,
+                intrinsic_width - slice_left - slice_right,
+                intrinsic_height - slice_top - slice_bottom)
 
         draw_column_border()
         return
@@ -561,8 +559,7 @@ def draw_border(stream, box):
 
     # The 4 sides are solid or double, and they have the same color. Oh yeah!
     # We can draw them so easily!
-    if set(styles) in (set(('solid',)), set(('double',))) and (
-            len(set(colors)) == 1):
+    if set(styles) in (set(('solid',)), set(('double',))) and (len(set(colors)) == 1):
         draw_rounded_border(stream, box, styles[0], colors[0])
         draw_column_border()
         return
