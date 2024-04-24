@@ -830,16 +830,17 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                 # 2. Increment the cursor’s row position.
                 row_start = child.style['grid_row_start']
                 row_end = child.style['grid_row_end']
-                for y in count(cursor_y):
+                for cursor_y in count(cursor_y):
                     if row_start == 'auto':
                         y, height = _get_placement(
-                            (None, y + 1, None), row_end, rows[::2])
+                            (None, cursor_y + 1, None), row_end, rows[::2])
                     else:
                         assert row_start[0] == 'span'
                         assert row_start == 'auto' or row_start[0] == 'span'
                         span = _get_span(row_start)
                         y, height = _get_placement(
-                            row_start, (None, y + 1 + span, None), rows[::2])
+                            row_start, (None, cursor_y + 1 + span, None),
+                            rows[::2])
                     if y < cursor_y:
                         continue
                     for row in range(y, y + height):
