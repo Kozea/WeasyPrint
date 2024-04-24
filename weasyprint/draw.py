@@ -461,11 +461,8 @@ def draw_border(stream, box):
             box.style['image_resolution'],
             box.style['font_size'])
 
-        should_fill = False
-        image_slice = box.style['border_image_slice']
-        if image_slice[0] == 'fill':
-            image_slice = image_slice[1:];
-            should_fill = True
+        image_slice = box.style['border_image_slice'][:4]
+        should_fill = box.style['border_image_slice'][4]
 
         def compute_dim(d, intrinsic):
             if isinstance(d, (int, float)):
@@ -474,21 +471,10 @@ def draw_border(stream, box):
                 assert d.unit == '%'
                 return d.value / 100. * intrinsic
 
-        if len(image_slice) == 1:
-            slice_top = slice_bottom = compute_dim(image_slice[0], ih)
-            slice_left = slice_right = compute_dim(image_slice[0], iw)
-        elif len(image_slice) == 2:
-            slice_top = slice_bottom = compute_dim(image_slice[0], ih)
-            slice_left = slice_right = compute_dim(image_slice[1], iw)
-        elif len(image_slice) == 3:
-            slice_top = compute_dim(image_slice[0], ih)
-            slice_left = slice_right = compute_dim(image_slice[1], iw)
-            slice_bottom = compute_dim(image_slice[2], ih)
-        else:
-            slice_top = compute_dim(image_slice[0], ih)
-            slice_right = compute_dim(image_slice[1], iw)
-            slice_bottom = compute_dim(image_slice[2], ih)
-            slice_left = compute_dim(image_slice[3], iw)
+        slice_top = compute_dim(image_slice[0], ih)
+        slice_right = compute_dim(image_slice[1], iw)
+        slice_bottom = compute_dim(image_slice[2], ih)
+        slice_left = compute_dim(image_slice[3], iw)
 
         x, y, w, h, tl, tr, br, bl = box.rounded_border_box()
         px, py, pw, ph, ptl, ptr, pbr, pbl = box.rounded_padding_box()
