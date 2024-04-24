@@ -160,9 +160,12 @@ def preprocess_declarations(base_url, declarations, prelude=None):
                         declaration_prelude.append(token)
             else:
                 # No & selector, prepend parent.
-                is_token = LiteralToken(1, 1, ':'), FunctionBlock(1, 1, 'is', prelude)
+                is_token = (
+                    LiteralToken(1, 1, ':'),
+                    FunctionBlock(1, 1, 'is', prelude))
                 declaration_prelude = [
-                    *is_token, WhitespaceToken(1, 1, ' '), *declaration.prelude]
+                    *is_token, WhitespaceToken(1, 1, ' '),
+                    *declaration.prelude]
             yield from preprocess_declarations(
                 base_url, parse_blocks_contents(declaration.content),
                 declaration_prelude)
