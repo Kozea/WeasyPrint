@@ -13,6 +13,7 @@ on other functions in this module.
 """
 
 from collections import namedtuple
+from itertools import groupby
 from logging import DEBUG, WARNING
 
 import cssselect2
@@ -297,7 +298,7 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
 
     """
     def check_style_attribute(element, style_attribute):
-        declarations = tinycss2.parse_declaration_list(style_attribute)
+        declarations = tinycss2.parse_blocks_contents(style_attribute)
         return element, declarations, base_url
 
     for element in tree.iter():
@@ -919,33 +920,42 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
             continue
 
         if rule.type == 'qualified-rule':
-            declarations = list(preprocess_declarations(
-                base_url, tinycss2.parse_declaration_list(rule.content)))
-            if declarations:
+            try:
                 logger_level = WARNING
-                try:
-                    selectors = cssselect2.compile_selector_list(rule.prelude)
-                    for selector in selectors:
-                        matcher.add_selector(selector, declarations)
-                        if selector.pseudo_element not in PSEUDO_ELEMENTS:
-                            if selector.pseudo_element.startswith('-'):
-                                logger_level = DEBUG
-                                raise cssselect2.SelectorError(
-                                    'ignored prefixed pseudo-element: '
-                                    f'{selector.pseudo_element}')
-                            else:
-                                raise cssselect2.SelectorError(
-                                    'unknown pseudo-element: '
-                                    f'{selector.pseudo_element}')
+                selectors_declarations = list(
+                    preprocess_declarations(
+                        base_url, tinycss2.parse_blocks_contents(rule.content),
+                        rule.prelude))
+
+                if selectors_declarations:
+                    selectors_declarations = groupby(
+                        selectors_declarations, key=lambda x: x[0])
+                    for selectors, declarations in selectors_declarations:
+                        declarations = [
+                            declaration[1] for declaration in declarations]
+                        for selector in selectors:
+                            matcher.add_selector(selector, declarations)
+                            if selector.pseudo_element not in PSEUDO_ELEMENTS:
+                                prelude = tinycss2.serialize(rule.prelude)
+                                if selector.pseudo_element.startswith('-'):
+                                    logger_level = DEBUG
+                                    raise cssselect2.SelectorError(
+                                        f"'{prelude}', "
+                                        'ignored prefixed pseudo-element: '
+                                        f'{selector.pseudo_element}')
+                                else:
+                                    raise cssselect2.SelectorError(
+                                        f"'{prelude}', "
+                                        'unknown pseudo-element: '
+                                        f'{selector.pseudo_element}')
+                        ignore_imports = True
+                else:
                     ignore_imports = True
-                except cssselect2.SelectorError as exc:
-                    LOGGER.log(
-                        logger_level,
-                        "Invalid or unsupported selector '%s', %s",
-                        tinycss2.serialize(rule.prelude), exc)
-                    continue
-            else:
-                ignore_imports = True
+            except cssselect2.SelectorError as exc:
+                LOGGER.log(
+                    logger_level,
+                    "Invalid or unsupported selector, %s", exc)
+                continue
 
         elif rule.type == 'at-rule' and rule.lower_at_keyword == 'import':
             if ignore_imports:
@@ -1026,7 +1036,7 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
             for page_type in data:
                 specificity = page_type.pop('specificity')
                 page_type = PageType(**page_type)
-                content = tinycss2.parse_declaration_list(rule.content)
+                content = tinycss2.parse_blocks_contents(rule.content)
                 declarations = list(preprocess_declarations(base_url, content))
 
                 if declarations:
@@ -1039,7 +1049,7 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                         continue
                     declarations = list(preprocess_declarations(
                         base_url,
-                        tinycss2.parse_declaration_list(margin_rule.content)))
+                        tinycss2.parse_blocks_contents(margin_rule.content)))
                     if declarations:
                         selector_list = [(
                             specificity, f'@{margin_rule.lower_at_keyword}',
@@ -1049,7 +1059,7 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
 
         elif rule.type == 'at-rule' and rule.lower_at_keyword == 'font-face':
             ignore_imports = True
-            content = tinycss2.parse_declaration_list(rule.content)
+            content = tinycss2.parse_blocks_contents(rule.content)
             rule_descriptors = dict(
                 preprocess_descriptors('font-face', base_url, content))
             for key in ('src', 'font_family'):
@@ -1076,7 +1086,7 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                 continue
 
             ignore_imports = True
-            content = tinycss2.parse_declaration_list(rule.content)
+            content = tinycss2.parse_blocks_contents(rule.content)
             counter = {
                 'system': None,
                 'negative': None,

@@ -19,7 +19,7 @@ def test_font_face_1():
     assert at_rule.at_keyword == 'font-face'
     font_family, src = list(preprocess_descriptors(
         'font-face', 'https://weasyprint.org/foo/',
-        tinycss2.parse_declaration_list(at_rule.content)))
+        tinycss2.parse_blocks_contents(at_rule.content)))
     assert font_family == ('font_family', 'Gentium Hard')
     assert src == (
         'src', (('external', 'https://example.com/fonts/Gentium.woff'),))
@@ -40,7 +40,7 @@ def test_font_face_2():
     font_family, src, font_style, font_weight, font_stretch = list(
         preprocess_descriptors(
             'font-face', 'https://weasyprint.org/foo/',
-            tinycss2.parse_declaration_list(at_rule.content)))
+            tinycss2.parse_blocks_contents(at_rule.content)))
     assert font_family == ('font_family', 'Fonty Smiley')
     assert src == (
         'src', (('external', 'https://weasyprint.org/foo/Fonty-Smiley.woff'),))
@@ -60,7 +60,7 @@ def test_font_face_3():
     assert at_rule.at_keyword == 'font-face'
     font_family, src = list(preprocess_descriptors(
         'font-face', 'https://weasyprint.org/foo/',
-        tinycss2.parse_declaration_list(at_rule.content)))
+        tinycss2.parse_blocks_contents(at_rule.content)))
     assert font_family == ('font_family', 'Gentium Hard')
     assert src == ('src', (('local', None),))
 
@@ -77,7 +77,7 @@ def test_font_face_4():
     assert at_rule.at_keyword == 'font-face'
     font_family, src = list(preprocess_descriptors(
         'font-face', 'https://weasyprint.org/foo/',
-        tinycss2.parse_declaration_list(at_rule.content)))
+        tinycss2.parse_blocks_contents(at_rule.content)))
     assert font_family == ('font_family', 'Gentium Hard')
     assert src == ('src', (('local', 'Gentium Hard'),))
 
@@ -96,7 +96,7 @@ def test_font_face_5():
     with capture_logs() as logs:
         font_family, src = list(preprocess_descriptors(
             'font-face', 'https://weasyprint.org/foo/',
-            tinycss2.parse_declaration_list(at_rule.content)))
+            tinycss2.parse_blocks_contents(at_rule.content)))
     assert font_family == ('font_family', 'Gentium Hard')
     assert src == ('src', (('local', 'Gentium Hard'),))
     assert len(logs) == 1
@@ -119,7 +119,7 @@ def test_font_face_bad_1():
         font_family, src, font_stretch = list(
             preprocess_descriptors(
                 'font-face', 'https://weasyprint.org/foo/',
-                tinycss2.parse_declaration_list(at_rule.content)))
+                tinycss2.parse_blocks_contents(at_rule.content)))
     assert font_family == ('font_family', 'Bad Font')
     assert src == (
         'src', (('external', 'https://weasyprint.org/foo/BadFont.woff'),))
