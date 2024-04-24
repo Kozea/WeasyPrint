@@ -13,7 +13,6 @@ ffi.cdef('''
     typedef ... hb_face_t;
     typedef ... hb_blob_t;
     typedef uint32_t hb_codepoint_t;
-    hb_face_t * hb_font_get_face (hb_font_t *font);
     hb_blob_t * hb_face_reference_blob (hb_face_t *face);
     unsigned int hb_face_get_index (const hb_face_t *face);
     unsigned int hb_face_get_upem (const hb_face_t *face);
@@ -226,12 +225,11 @@ ffi.cdef('''
     PangoLayoutLine * pango_layout_get_line_readonly (
         PangoLayout *layout, int line);
 
-    hb_font_t * pango_font_get_hb_font (PangoFont *font);
-
     PangoFontDescription * pango_font_description_new (void);
     void pango_font_description_free (PangoFontDescription *desc);
     PangoFontDescription * pango_font_description_copy (
         const PangoFontDescription *desc);
+    PangoFontMap* pango_font_get_font_map (PangoFont* font);
 
     void pango_font_description_set_family (
         PangoFontDescription *desc, const char *family);
@@ -390,12 +388,15 @@ ffi.cdef('''
 
     // PangoFT2
 
+    typedef ... PangoFcFont;
     typedef ... PangoFcFontMap;
 
     PangoFontMap * pango_ft2_font_map_new (void);
     void pango_fc_font_map_set_config (
         PangoFcFontMap *fcfontmap, FcConfig *fcconfig);
     void pango_fc_font_map_config_changed (PangoFcFontMap *fcfontmap);
+    hb_face_t* pango_fc_font_map_get_hb_face (
+         PangoFcFontMap* fcfontmap, PangoFcFont* fcfont);
 ''')
 
 

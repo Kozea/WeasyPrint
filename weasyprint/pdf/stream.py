@@ -13,19 +13,13 @@ from ..logger import LOGGER
 from ..matrix import Matrix
 from ..text.constants import PANGO_STRETCH_PERCENT
 from ..text.ffi import ffi, harfbuzz, pango, units_to_double
+from ..text.fonts import get_hb_face_blob_data, get_pango_font_hb_face
 
 
 class Font:
     def __init__(self, pango_font):
-        hb_font = pango.pango_font_get_hb_font(pango_font)
-        hb_face = harfbuzz.hb_font_get_face(hb_font)
-        hb_blob = ffi.gc(
-            harfbuzz.hb_face_reference_blob(hb_face),
-            harfbuzz.hb_blob_destroy)
-        with ffi.new('unsigned int *') as length:
-            hb_data = harfbuzz.hb_blob_get_data(hb_blob, length)
-            self.file_content = ffi.unpack(hb_data, int(length[0]))
-        self.index = harfbuzz.hb_face_get_index(hb_face)
+        hb_face = get_pango_font_hb_face(pango_font)
+        self.file_content = get_hb_face_blob_data(hb_face)
 
         pango_metrics = pango.pango_font_get_metrics(pango_font, ffi.NULL)
         self.description = description = ffi.gc(
@@ -88,18 +82,17 @@ class Font:
 
         # Fonttools
         full_font = io.BytesIO(self.file_content)
+        index = harfbuzz.hb_face_get_index(hb_face)
         try:
-            self.ttfont = TTFont(full_font, fontNumber=self.index)
+            self.ttfont = TTFont(full_font, fontNumber=index)
         except Exception:
             LOGGER.warning('Unable to read font')
             self.ttfont = None
             self.bitmap = False
         else:
             self.bitmap = (
-                'EBDT' in self.ttfont and
-                'EBLC' in self.ttfont and (
-                    'glyf' not in self.ttfont or
-                    not self.ttfont['glyf'].glyphs))
+                'EBDT' in self.ttfont and 'EBLC' in self.ttfont and (
+                    'glyf' not in self.ttfont or not self.ttfont['glyf'].glyphs))
 
         # Various properties
         self.italic_angle = 0  # TODO: this should be different

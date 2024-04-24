@@ -15,7 +15,8 @@ from .layout import replaced
 from .layout.background import BackgroundLayer
 from .matrix import Matrix
 from .stacking import StackingContext
-from .text.ffi import ffi, harfbuzz, pango, units_from_double, units_to_double
+from .text.ffi import ffi, pango, units_from_double, units_to_double
+from .text.fonts import get_hb_face_blob_data, get_pango_font_hb_face
 from .text.line_break import get_last_word_end
 
 SIDES = ('top', 'right', 'bottom', 'left')
@@ -1232,14 +1233,9 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
             previous_utf8_position = utf8_position
 
             if font.svg:
-                hb_font = pango.pango_font_get_hb_font(pango_font)
-                hb_face = harfbuzz.hb_font_get_face(hb_font)
-                hb_blob = ffi.gc(
-                    harfbuzz.hb_ot_color_glyph_reference_svg(hb_face, glyph),
-                    harfbuzz.hb_blob_destroy)
-                hb_data = harfbuzz.hb_blob_get_data(hb_blob, stream.length)
-                if hb_data != ffi.NULL:
-                    svg_data = ffi.unpack(hb_data, int(stream.length[0]))
+                hb_face = get_pango_font_hb_face(pango_font)
+                svg_data = get_hb_face_blob_data(hb_face, ot_color='svg')
+                if svg_data:
                     # Do as explained in specification
                     # https://learn.microsoft.com/typography/opentype/spec/svg
                     tree = ElementTree.fromstring(svg_data)
@@ -1254,13 +1250,9 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
                     a = d = font.widths[glyph] / 1000 / font.upem * font_size
                     emojis.append([image, font, a, d, x_advance, 0])
             elif font.png:
-                hb_font = pango.pango_font_get_hb_font(pango_font)
-                hb_blob = ffi.gc(
-                    harfbuzz.hb_ot_color_glyph_reference_png(hb_font, glyph),
-                    harfbuzz.hb_blob_destroy)
-                hb_data = harfbuzz.hb_blob_get_data(hb_blob, stream.length)
-                if hb_data != ffi.NULL:
-                    png_data = ffi.unpack(hb_data, int(stream.length[0]))
+                hb_face = get_pango_font_hb_face(pango_font)
+                png_data = get_hb_face_blob_data(hb_face, ot_color='png')
+                if png_data:
                     pillow_image = Image.open(BytesIO(png_data))
                     image_id = f'{font.hash}{glyph}'
                     image = RasterImage(pillow_image, image_id, png_data)

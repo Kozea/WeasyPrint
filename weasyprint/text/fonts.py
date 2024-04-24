@@ -16,7 +16,7 @@ from .constants import (  # isort:skip
     CAPS_KEYS, EAST_ASIAN_KEYS, FONTCONFIG_STRETCH, FONTCONFIG_STYLE,
     FONTCONFIG_WEIGHT, LIGATURE_KEYS, NUMERIC_KEYS, PANGO_STRETCH, PANGO_STYLE)
 from .ffi import (  # isort:skip
-    ffi, fontconfig, gobject, pango, pangoft2, unicode_to_char_p,
+    ffi, fontconfig, gobject, harfbuzz, pango, pangoft2, unicode_to_char_p,
     units_from_double)
 
 
@@ -333,6 +333,7 @@ def font_features(font_kerning='normal', font_variant_ligatures='normal',
 
 
 def get_font_description(style):
+    """Get font description string out of given style."""
     font_description = ffi.gc(
         pango.pango_font_description_new(),
         pango.pango_font_description_free)
@@ -353,3 +354,31 @@ def get_font_description(style):
         pango.pango_font_description_set_variations(
             font_description, string)
     return font_description
+
+
+def get_pango_font_hb_face(pango_font):
+    """Get Harfbuzz face out of given Pango font."""
+    fc_font = ffi.cast('PangoFcFont *', pango_font)
+    fontmap = ffi.cast(
+        'PangoFcFontMap *', pango.pango_font_get_font_map(pango_font))
+    return pangoft2.pango_fc_font_map_get_hb_face(fontmap, fc_font)
+
+
+def get_hb_face_blob_data(hb_face, ot_color=None):
+    """Get binary data out of given Harfbuzz face.
+
+    If ``ot_color`` is 'svg', return the SVG color glyph reference. If it’s 'png',
+    return the PNG color glyph reference. Otherwise, return the whole face blob.
+
+    """
+    if ot_color == 'png':
+        function = harfbuzz.hb_ot_color_glyph_reference_svg
+    elif ot_color == 'svg':
+        function = harfbuzz.hb_ot_color_glyph_reference_png
+    else:
+        function = harfbuzz.hb_face_reference_blob
+    hb_blob = ffi.gc(function(hb_face), harfbuzz.hb_blob_destroy)
+    with ffi.new('unsigned int *') as length:
+        hb_data = harfbuzz.hb_blob_get_data(hb_blob, length)
+        if hb_data != ffi.NULL:
+            return ffi.unpack(hb_data, int(length[0]))
