@@ -276,9 +276,7 @@ def test_draw_split_border_radius(assert_pixels):
 
 
 @assert_no_logs
-def test_border_image(assert_pixels):
-    # Shows default "stretch" behavior for border images.
-    # Note that we use a svg image to avoid antialiasing.
+def test_border_image_stretch(assert_pixels):
     assert_pixels('''
         __________
         _RYYYMMMG_
@@ -336,9 +334,7 @@ def test_border_image_fill(assert_pixels):
 
 
 @assert_no_logs
-def test_border_image_default_sllice(assert_pixels):
-    # By default, border-image-slice is 100%, so the whole image is in the
-    # four corners and nothing is in-between.
+def test_border_image_default_slice(assert_pixels):
     assert_pixels('''
         _____________
         _RYMG___RYMG_
