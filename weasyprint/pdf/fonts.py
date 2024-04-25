@@ -37,7 +37,7 @@ def build_fonts_dictionary(pdf, fonts, compress_pdf, subset, options):
         font_references_by_file_hash[file_hash] = font_stream.reference
 
     for font in fonts.values():
-        if subset and font.ttfont and not font.used_in_forms:
+        if not font.ttfont or (subset and not font.used_in_forms):
             # Only store widths and map for used glyphs
             font_widths = font.widths
             cmap = font.cmap
