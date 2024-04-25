@@ -111,9 +111,6 @@ class Font:
             self.flags += 2 ** (7 - 1)  # Italic
         if b'Serif' in fields:
             self.flags += 2 ** (2 - 1)  # Serif
-        widths = self.widths.values()
-        if len(widths) > 1 and len(set(widths)) == 1:
-            self.flags += 2 ** (1 - 1)  # FixedPitch
 
     def clean(self, cmap, hinting):
         if self.ttfont is None:

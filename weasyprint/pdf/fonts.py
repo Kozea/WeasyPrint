@@ -101,11 +101,14 @@ def build_fonts_dictionary(pdf, fonts, compress_pdf, subset, options):
             _build_bitmap_font_dictionary(
                 font_dictionary, pdf, font, widths, compress_pdf, subset)
         else:
+            flags = font.flags
+            if len(widths) > 1 and len(set(font.widths.values())) == 1:
+                flags += 2 ** (1 - 1)  # FixedPitch
             font_descriptor = pydyf.Dictionary({
                 'Type': '/FontDescriptor',
                 'FontName': font.name,
                 'FontFamily': pydyf.String(font.family),
-                'Flags': font.flags,
+                'Flags': flags,
                 'FontBBox': pydyf.Array(bbox),
                 'ItalicAngle': font.italic_angle,
                 'Ascent': font.ascent,
