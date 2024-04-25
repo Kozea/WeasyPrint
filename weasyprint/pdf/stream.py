@@ -1,7 +1,6 @@
 """PDF stream."""
 
 import io
-from functools import lru_cache
 from hashlib import md5
 
 import pydyf
@@ -13,7 +12,7 @@ from ..logger import LOGGER
 from ..matrix import Matrix
 from ..text.constants import PANGO_STRETCH_PERCENT
 from ..text.ffi import ffi, harfbuzz, pango, units_to_double
-from ..text.fonts import get_hb_face_data, get_pango_font_hb_face
+from ..text.fonts import get_hb_face_data, get_pango_font_hb_face, get_pango_font_key
 
 
 class Font:
@@ -323,15 +322,8 @@ class Stream(pydyf.Stream):
             'BM': f'/{mode}',
         }))
 
-    @lru_cache()
     def add_font(self, pango_font):
-        description = pango.pango_font_describe(pango_font)
-        mask = (
-            pango.PANGO_FONT_MASK_SIZE +
-            pango.PANGO_FONT_MASK_GRAVITY)
-        pango.pango_font_description_unset_fields(description, mask)
-        key = pango.pango_font_description_hash(description)
-        pango.pango_font_description_free(description)
+        key = get_pango_font_key(pango_font)
         if key not in self._fonts:
             self._fonts[key] = Font(pango_font)
         return self._fonts[key]
