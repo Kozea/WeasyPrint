@@ -18,7 +18,7 @@ from .metadata import add_metadata
 
 
 def pdfa(pdf, metadata, document, page_streams, attachments, compress,
-         version):
+         version, variant):
     """Set metadata for PDF/A documents."""
     # Add ICC profile.
     profile = pydyf.Stream(
@@ -86,9 +86,29 @@ def pdfa(pdf, metadata, document, page_streams, attachments, compress,
             pdf_object['F'] = 2 ** (3 - 1)
 
     # Common PDF metadata stream.
-    add_metadata(pdf, metadata, 'a', version, 'B', compress)
+    add_metadata(pdf, metadata, 'a', version, variant, compress)
 
 
 VARIANTS = {
-    f'pdf/a-{i}b': (partial(pdfa, version=i), {'version': pdf_version})
-    for i, pdf_version in enumerate(('1.4', '1.7', '1.7', '2.0'), start=1)}
+    'pdf/a-1b': (
+        partial(pdfa, version=1, variant='B'),
+        {'version': '1.4', 'identifier': True}),
+    'pdf/a-2b': (
+        partial(pdfa, version=2, variant='B'),
+        {'version': '1.7', 'identifier': True}),
+    'pdf/a-3b': (
+        partial(pdfa, version=3, variant='B'),
+        {'version': '1.7', 'identifier': True}),
+    'pdf/a-4b': (
+        partial(pdfa, version=4, variant='B'),
+        {'version': '2.0', 'identifier': True}),
+    'pdf/a-2u': (
+        partial(pdfa, version=2, variant='U'),
+        {'version': '1.7', 'identifier': True}),
+    'pdf/a-3u': (
+        partial(pdfa, version=3, variant='U'),
+        {'version': '1.7', 'identifier': True}),
+    'pdf/a-4u': (
+        partial(pdfa, version=4, variant='U'),
+        {'version': '2.0', 'identifier': True}),
+}
