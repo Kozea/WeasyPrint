@@ -83,6 +83,7 @@ class FontConfiguration:
     :class:`weasyprint.CSS` to find fonts in ``@font-face`` rules.
 
     """
+    _folder = None  # required by __del__ when code stops before __init__ finishes
 
     def __init__(self):
         """Create a FreeType font configuration.
