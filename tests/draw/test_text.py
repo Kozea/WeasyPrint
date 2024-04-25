@@ -2,6 +2,8 @@
 
 import pytest
 
+from ..testing_utils import SANS_FONTS
+
 
 def test_text_overflow_clip(assert_pixels):
     assert_pixels('''
@@ -842,13 +844,13 @@ def test_missing_glyph_fallback(assert_pixels):
         }
         body {
           color: red;
-          font-family: weasyprint;
+          font-family: weasyprint, %s;
           font-size: 2px;
           line-height: 0;
           margin: 2px 1px;
           text-align: right;
         }
-      </style>'a''')
+      </style>'a''' % SANS_FONTS)
 
 
 def test_tabulation_character(assert_pixels):
