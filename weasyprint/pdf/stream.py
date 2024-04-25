@@ -13,13 +13,13 @@ from ..logger import LOGGER
 from ..matrix import Matrix
 from ..text.constants import PANGO_STRETCH_PERCENT
 from ..text.ffi import ffi, harfbuzz, pango, units_to_double
-from ..text.fonts import get_hb_face_blob_data, get_pango_font_hb_face
+from ..text.fonts import get_hb_face_data, get_pango_font_hb_face
 
 
 class Font:
     def __init__(self, pango_font):
         hb_face = get_pango_font_hb_face(pango_font)
-        self.file_content = get_hb_face_blob_data(hb_face)
+        self.file_content = get_hb_face_data(hb_face)
 
         pango_metrics = pango.pango_font_get_metrics(pango_font, ffi.NULL)
         self.description = description = ffi.gc(
