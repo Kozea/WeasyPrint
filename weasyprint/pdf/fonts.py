@@ -37,7 +37,7 @@ def build_fonts_dictionary(pdf, fonts, compress_pdf, subset, options):
         font_references_by_file_hash[file_hash] = font_stream.reference
 
     for font in fonts.values():
-        if subset and font.ttfont and not font.used_in_forms:
+        if not font.ttfont or (subset and not font.used_in_forms):
             # Only store widths and map for used glyphs
             font_widths = font.widths
             cmap = font.cmap
@@ -101,11 +101,14 @@ def build_fonts_dictionary(pdf, fonts, compress_pdf, subset, options):
             _build_bitmap_font_dictionary(
                 font_dictionary, pdf, font, widths, compress_pdf, subset)
         else:
+            flags = font.flags
+            if len(widths) > 1 and len(set(font.widths.values())) == 1:
+                flags += 2 ** (1 - 1)  # FixedPitch
             font_descriptor = pydyf.Dictionary({
                 'Type': '/FontDescriptor',
                 'FontName': font.name,
                 'FontFamily': pydyf.String(font.family),
-                'Flags': font.flags,
+                'Flags': flags,
                 'FontBBox': pydyf.Array(bbox),
                 'ItalicAngle': font.italic_angle,
                 'Ascent': font.ascent,

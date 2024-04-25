@@ -1,5 +1,6 @@
 """Interface with external libraries managing fonts installed on the system."""
 
+from functools import lru_cache
 from hashlib import md5
 from io import BytesIO
 from pathlib import Path
@@ -364,7 +365,7 @@ def get_pango_font_hb_face(pango_font):
     return pangoft2.pango_fc_font_map_get_hb_face(fontmap, fc_font)
 
 
-def get_hb_face_blob_data(hb_face, ot_color=None):
+def get_hb_face_data(hb_face, ot_color=None):
     """Get binary data out of given Harfbuzz face.
 
     If ``ot_color`` is 'svg', return the SVG color glyph reference. If it’s 'png',
@@ -382,3 +383,16 @@ def get_hb_face_blob_data(hb_face, ot_color=None):
         hb_data = harfbuzz.hb_blob_get_data(hb_blob, length)
         if hb_data != ffi.NULL:
             return ffi.unpack(hb_data, int(length[0]))
+
+
+@lru_cache()
+def get_pango_font_key(pango_font):
+    """Get key corresponding to given Pango font."""
+    description = ffi.gc(
+        pango.pango_font_describe(pango_font),
+        pango.pango_font_description_free)
+    mask = (
+        pango.PANGO_FONT_MASK_SIZE +
+        pango.PANGO_FONT_MASK_GRAVITY)
+    pango.pango_font_description_unset_fields(description, mask)
+    return pango.pango_font_description_hash(description)

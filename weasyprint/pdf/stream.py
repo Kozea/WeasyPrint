@@ -1,7 +1,6 @@
 """PDF stream."""
 
 import io
-from functools import lru_cache
 from hashlib import md5
 
 import pydyf
@@ -13,13 +12,13 @@ from ..logger import LOGGER
 from ..matrix import Matrix
 from ..text.constants import PANGO_STRETCH_PERCENT
 from ..text.ffi import ffi, harfbuzz, pango, units_to_double
-from ..text.fonts import get_hb_face_blob_data, get_pango_font_hb_face
+from ..text.fonts import get_hb_face_data, get_pango_font_hb_face, get_pango_font_key
 
 
 class Font:
     def __init__(self, pango_font):
         hb_face = get_pango_font_hb_face(pango_font)
-        self.file_content = get_hb_face_blob_data(hb_face)
+        self.file_content = get_hb_face_data(hb_face)
 
         pango_metrics = pango.pango_font_get_metrics(pango_font, ffi.NULL)
         self.description = description = ffi.gc(
@@ -111,9 +110,6 @@ class Font:
             self.flags += 2 ** (7 - 1)  # Italic
         if b'Serif' in fields:
             self.flags += 2 ** (2 - 1)  # Serif
-        widths = self.widths.values()
-        if len(widths) > 1 and len(set(widths)) == 1:
-            self.flags += 2 ** (1 - 1)  # FixedPitch
 
     def clean(self, cmap, hinting):
         if self.ttfont is None:
@@ -326,15 +322,8 @@ class Stream(pydyf.Stream):
             'BM': f'/{mode}',
         }))
 
-    @lru_cache()
     def add_font(self, pango_font):
-        description = pango.pango_font_describe(pango_font)
-        mask = (
-            pango.PANGO_FONT_MASK_SIZE +
-            pango.PANGO_FONT_MASK_GRAVITY)
-        pango.pango_font_description_unset_fields(description, mask)
-        key = pango.pango_font_description_hash(description)
-        pango.pango_font_description_free(description)
+        key = get_pango_font_key(pango_font)
         if key not in self._fonts:
             self._fonts[key] = Font(pango_font)
         return self._fonts[key]
