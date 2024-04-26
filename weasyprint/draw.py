@@ -465,11 +465,8 @@ def draw_border(stream, box):
         image_slice = box.style['border_image_slice'][:4]
         should_fill = box.style['border_image_slice'][4]
 
-        if len(box.style['border_image_repeat']) == 1:
-            style_repeat_x = style_repeat_y = box.style['border_image_repeat']
-        else:
-            style_repeat_y = box.style['border_image_repeat'][0]
-            style_repeat_x = box.style['border_image_repeat'][1]
+        style_repeat_y = box.style['border_image_repeat'][0]
+        style_repeat_x = box.style['border_image_repeat'][1]
 
         def compute_slice_dimension(dimension, intrinsic):
             if isinstance(dimension, (int, float)):
