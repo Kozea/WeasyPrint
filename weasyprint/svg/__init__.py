@@ -491,7 +491,10 @@ class SVG:
             self.stream.push_state()
             if is_valid_bounding_box(node.text_bounding_box):
                 x, y, width, height = node.text_bounding_box
-                group.extra['BBox'][:] = (x, y, x + width, y + height)
+                # Add extra space to include ink extents
+                group.extra['BBox'][:] = (
+                    x - font_size, y - font_size,
+                    x + width + font_size, y + height + font_size)
                 x_align = width / 2 if text_anchor == 'middle' else width
                 self.stream.transform(e=-x_align)
             self.stream.draw_x_object(group_id)
