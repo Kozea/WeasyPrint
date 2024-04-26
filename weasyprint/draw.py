@@ -521,15 +521,15 @@ def draw_border(stream, box):
         # border-image-width. Also, the border image area that is used
         # for percentage-based border-image-width values includes any expanded
         # area due to border-image-outset.
-        width_adjs = box.style['border_image_width']
+        widths = box.style['border_image_width']
         border_top = compute_width_adjustment(
-            width_adjs[0], border_top, slice_top, h)
+            widths[0], border_top, slice_top, h)
         border_right = compute_width_adjustment(
-            width_adjs[1], border_right, slice_right, w)
+            widths[1], border_right, slice_right, w)
         border_bottom = compute_width_adjustment(
-            width_adjs[2], border_bottom, slice_bottom, h)
+            widths[2], border_bottom, slice_bottom, h)
         border_left = compute_width_adjustment(
-            width_adjs[3], border_left, slice_left, w)
+            widths[3], border_left, slice_left, w)
 
         def draw_border_image(x, y, width, height, slice_x, slice_y,
                               slice_width, slice_height,
