@@ -448,215 +448,7 @@ def draw_border(stream, box):
 
     # If there's a border image, that takes precedence.
     if box.style['border_image_source'][0] != 'none' and box.border_image is not None:
-        img = box.border_image
-        width, height, ratio = img.get_intrinsic_size(
-            box.style['image_resolution'], box.style['font_size'])
-        intrinsic_width, intrinsic_height = replaced.default_image_sizing(
-            width, height, ratio, specified_width=None, specified_height=None,
-            default_width=box.border_width(), default_height=box.border_height())
-
-        image_slice = box.style['border_image_slice'][:4]
-        should_fill = box.style['border_image_slice'][4]
-
-        def compute_slice_dimension(dimension, intrinsic):
-            if isinstance(dimension, (int, float)):
-                return min(dimension, intrinsic)
-            else:
-                assert dimension.unit == '%'
-                return min(100, dimension.value) / 100 * intrinsic
-
-        slice_top = compute_slice_dimension(image_slice[0], intrinsic_height)
-        slice_right = compute_slice_dimension(image_slice[1], intrinsic_width)
-        slice_bottom = compute_slice_dimension(image_slice[2], intrinsic_height)
-        slice_left = compute_slice_dimension(image_slice[3], intrinsic_width)
-
-        style_repeat_x, style_repeat_y = box.style['border_image_repeat']
-
-        x, y, w, h, tl, tr, br, bl = box.rounded_border_box()
-        px, py, pw, ph, ptl, ptr, pbr, pbl = box.rounded_padding_box()
-        border_left = px - x
-        border_top = py - y
-        border_right = w - pw - border_left
-        border_bottom = h - ph - border_top
-
-        def compute_outset_dimension(dimension, from_border):
-            if dimension.unit is None:
-                return dimension.value * from_border
-            else:
-                assert dimension.unit == 'px'
-                return dimension.value
-
-        outsets = box.style['border_image_outset']
-        outset_top = compute_outset_dimension(outsets[0], border_top)
-        outset_right = compute_outset_dimension(outsets[1], border_right)
-        outset_bottom = compute_outset_dimension(outsets[2], border_bottom)
-        outset_left = compute_outset_dimension(outsets[3], border_left)
-
-        x -= outset_left
-        y -= outset_top
-        w += outset_left + outset_right
-        h += outset_top + outset_bottom
-
-        def compute_width_adjustment(dimension, original, intrinsic,
-                                     area_dimension):
-            if dimension == 'auto':
-                return intrinsic
-            elif isinstance(dimension, (int, float)):
-                return dimension * original
-            elif dimension.unit == '%':
-                return dimension.value / 100 * area_dimension
-            else:
-                assert dimension.unit == 'px'
-                return dimension.value
-
-        # We make adjustments to the border_* variables after handling outsets
-        # because numerical outsets are relative to border-width, not
-        # border-image-width. Also, the border image area that is used
-        # for percentage-based border-image-width values includes any expanded
-        # area due to border-image-outset.
-        widths = box.style['border_image_width']
-        border_top = compute_width_adjustment(
-            widths[0], border_top, slice_top, h)
-        border_right = compute_width_adjustment(
-            widths[1], border_right, slice_right, w)
-        border_bottom = compute_width_adjustment(
-            widths[2], border_bottom, slice_bottom, h)
-        border_left = compute_width_adjustment(
-            widths[3], border_left, slice_left, w)
-
-        def draw_border_image(x, y, width, height, slice_x, slice_y,
-                              slice_width, slice_height,
-                              repeat_x='stretch', repeat_y='stretch',
-                              scale_x=None, scale_y=None):
-            if 0 in (intrinsic_width, width, slice_width):
-                scale_x = 0
-            else:
-                extra_dx = 0
-                if not scale_x:
-                    scale_x = (height / slice_height) if height and slice_height else 1
-                if repeat_x == 'repeat':
-                    n_repeats_x = ceil(width / slice_width / scale_x)
-                elif repeat_x == 'space':
-                    n_repeats_x = floor(width / slice_width / scale_x)
-                    # Space is before the first repeat and after the last,
-                    # so there's one more space than repeat.
-                    extra_dx = (
-                        (width / scale_x - n_repeats_x * slice_width) /
-                        (n_repeats_x + 1))
-                elif repeat_x == 'round':
-                    n_repeats_x = max(1, round(width / slice_width / scale_x))
-                    scale_x = width / (n_repeats_x * slice_width)
-                else:
-                    n_repeats_x = 1
-                    scale_x = width / slice_width
-
-            if 0 in (intrinsic_height, height, slice_height):
-                scale_y = 0
-            else:
-                extra_dy = 0
-                if not scale_y:
-                    scale_y = (width / slice_width) if width and slice_width else 1
-                if repeat_y == 'repeat':
-                    n_repeats_y = ceil(height / slice_height / scale_y)
-                elif repeat_y == 'space':
-                    n_repeats_y = floor(height / slice_height / scale_y)
-                    # Space is before the first repeat and after the last,
-                    # so there's one more space than repeat.
-                    extra_dy = (
-                        (height / scale_y - n_repeats_y * slice_height) /
-                        (n_repeats_y + 1))
-                elif repeat_y == 'round':
-                    n_repeats_y = max(1, round(height / slice_height / scale_y))
-                    scale_y = height / (n_repeats_y * slice_height)
-                else:
-                    n_repeats_y = 1
-                    scale_y = height / slice_height
-
-            if 0 in (scale_x, scale_y):
-                return scale_x, scale_y
-
-            rendered_width = intrinsic_width * scale_x
-            rendered_height = intrinsic_height * scale_y
-            offset_x = rendered_width * slice_x / intrinsic_width
-            offset_y = rendered_height * slice_y / intrinsic_height
-
-            with stacked(stream):
-                stream.rectangle(x, y, width, height)
-                stream.clip()
-                stream.end()
-                stream.transform(e=x - offset_x + extra_dx, f=y - offset_y + extra_dy)
-                stream.transform(a=scale_x, d=scale_y)
-                for i in range(n_repeats_x):
-                    for j in range(n_repeats_y):
-                        with stacked(stream):
-                            translate_x = i * (slice_width + extra_dx)
-                            translate_y = j * (slice_height + extra_dy)
-                            stream.transform(e=translate_x, f=translate_y)
-                            stream.rectangle(
-                                offset_x / scale_x, offset_y / scale_y,
-                                slice_width, slice_height)
-                            stream.clip()
-                            stream.end()
-                            img.draw(
-                                stream, intrinsic_width, intrinsic_height,
-                                box.style['image_rendering'])
-
-            return scale_x, scale_y
-
-        # Top left.
-        scale_left, scale_top = draw_border_image(
-            x, y, border_left, border_top, 0, 0, slice_left, slice_top)
-        # Top right.
-        draw_border_image(
-            x + w - border_right, y, border_right, border_top,
-            intrinsic_width - slice_right, 0, slice_right, slice_top)
-        # Bottom right.
-        scale_right, scale_bottom = draw_border_image(
-            x + w - border_right, y + h - border_bottom, border_right, border_bottom,
-            intrinsic_width - slice_right, intrinsic_height - slice_bottom,
-            slice_right, slice_bottom)
-        # Bottom left.
-        draw_border_image(
-            x, y + h - border_bottom, border_left, border_bottom,
-            0, intrinsic_height - slice_bottom, slice_left, slice_bottom)
-        if slice_left + slice_right < intrinsic_width:
-            # Top middle.
-            draw_border_image(
-                x + border_left, y, w - border_left - border_right, border_top,
-                slice_left, 0, intrinsic_width - slice_left - slice_right,
-                slice_top, repeat_x=style_repeat_x)
-            # Bottom middle.
-            draw_border_image(
-                x + border_left, y + h - border_bottom,
-                w - border_left - border_right, border_bottom,
-                slice_left, intrinsic_height - slice_bottom,
-                intrinsic_width - slice_left - slice_right, slice_bottom,
-                repeat_x=style_repeat_x)
-        if slice_top + slice_bottom < intrinsic_height:
-            # Right middle.
-            draw_border_image(
-                x + w - border_right, y + border_top,
-                border_right, h - border_top - border_bottom,
-                intrinsic_width - slice_right, slice_top,
-                slice_right, intrinsic_height - slice_top - slice_bottom,
-                repeat_y=style_repeat_y)
-            # Left middle.
-            draw_border_image(
-                x, y + border_top, border_left, h - border_top - border_bottom,
-                0, slice_top, slice_left,
-                intrinsic_height - slice_top - slice_bottom,
-                repeat_y=style_repeat_y)
-        if (should_fill and slice_left + slice_right < intrinsic_width
-                and slice_top + slice_bottom < intrinsic_height):
-            # Fill middle.
-            draw_border_image(
-                x + border_left, y + border_top, w - border_left - border_right,
-                h - border_top - border_bottom, slice_left, slice_top,
-                intrinsic_width - slice_left - slice_right,
-                intrinsic_height - slice_top - slice_bottom,
-                repeat_x=style_repeat_x, repeat_y=style_repeat_y,
-                scale_x=scale_left or scale_right, scale_y=scale_top or scale_bottom)
-
+        draw_border_image(box, stream)
         draw_column_border()
         return
 
@@ -695,6 +487,217 @@ def draw_border(stream, box):
                 stream, box, style, styled_color(style, color, side))
 
     draw_column_border()
+
+
+def draw_border_image(box, stream):
+    """Draw ``box`` border image on ``stream``."""
+    # See https://drafts.csswg.org/css-backgrounds-3/#border-images
+    image = box.border_image
+    width, height, ratio = image.get_intrinsic_size(
+        box.style['image_resolution'], box.style['font_size'])
+    intrinsic_width, intrinsic_height = replaced.default_image_sizing(
+        width, height, ratio, specified_width=None, specified_height=None,
+        default_width=box.border_width(), default_height=box.border_height())
+
+    image_slice = box.style['border_image_slice'][:4]
+    should_fill = box.style['border_image_slice'][4]
+
+    def compute_slice_dimension(dimension, intrinsic):
+        if isinstance(dimension, (int, float)):
+            return min(dimension, intrinsic)
+        else:
+            assert dimension.unit == '%'
+            return min(100, dimension.value) / 100 * intrinsic
+
+    slice_top = compute_slice_dimension(image_slice[0], intrinsic_height)
+    slice_right = compute_slice_dimension(image_slice[1], intrinsic_width)
+    slice_bottom = compute_slice_dimension(image_slice[2], intrinsic_height)
+    slice_left = compute_slice_dimension(image_slice[3], intrinsic_width)
+
+    style_repeat_x, style_repeat_y = box.style['border_image_repeat']
+
+    x, y, w, h, tl, tr, br, bl = box.rounded_border_box()
+    px, py, pw, ph, ptl, ptr, pbr, pbl = box.rounded_padding_box()
+    border_left = px - x
+    border_top = py - y
+    border_right = w - pw - border_left
+    border_bottom = h - ph - border_top
+
+    def compute_outset_dimension(dimension, from_border):
+        if dimension.unit is None:
+            return dimension.value * from_border
+        else:
+            assert dimension.unit == 'px'
+            return dimension.value
+
+    outsets = box.style['border_image_outset']
+    outset_top = compute_outset_dimension(outsets[0], border_top)
+    outset_right = compute_outset_dimension(outsets[1], border_right)
+    outset_bottom = compute_outset_dimension(outsets[2], border_bottom)
+    outset_left = compute_outset_dimension(outsets[3], border_left)
+
+    x -= outset_left
+    y -= outset_top
+    w += outset_left + outset_right
+    h += outset_top + outset_bottom
+
+    def compute_width_adjustment(dimension, original, intrinsic,
+                                 area_dimension):
+        if dimension == 'auto':
+            return intrinsic
+        elif isinstance(dimension, (int, float)):
+            return dimension * original
+        elif dimension.unit == '%':
+            return dimension.value / 100 * area_dimension
+        else:
+            assert dimension.unit == 'px'
+            return dimension.value
+
+    # We make adjustments to the border_* variables after handling outsets
+    # because numerical outsets are relative to border-width, not
+    # border-image-width. Also, the border image area that is used
+    # for percentage-based border-image-width values includes any expanded
+    # area due to border-image-outset.
+    widths = box.style['border_image_width']
+    border_top = compute_width_adjustment(
+        widths[0], border_top, slice_top, h)
+    border_right = compute_width_adjustment(
+        widths[1], border_right, slice_right, w)
+    border_bottom = compute_width_adjustment(
+        widths[2], border_bottom, slice_bottom, h)
+    border_left = compute_width_adjustment(
+        widths[3], border_left, slice_left, w)
+
+    def draw_border_image(x, y, width, height, slice_x, slice_y,
+                          slice_width, slice_height,
+                          repeat_x='stretch', repeat_y='stretch',
+                          scale_x=None, scale_y=None):
+        if 0 in (intrinsic_width, width, slice_width):
+            scale_x = 0
+        else:
+            extra_dx = 0
+            if not scale_x:
+                scale_x = (height / slice_height) if height and slice_height else 1
+            if repeat_x == 'repeat':
+                n_repeats_x = ceil(width / slice_width / scale_x)
+            elif repeat_x == 'space':
+                n_repeats_x = floor(width / slice_width / scale_x)
+                # Space is before the first repeat and after the last,
+                # so there's one more space than repeat.
+                extra_dx = (
+                    (width / scale_x - n_repeats_x * slice_width) / (n_repeats_x + 1))
+            elif repeat_x == 'round':
+                n_repeats_x = max(1, round(width / slice_width / scale_x))
+                scale_x = width / (n_repeats_x * slice_width)
+            else:
+                n_repeats_x = 1
+                scale_x = width / slice_width
+
+        if 0 in (intrinsic_height, height, slice_height):
+            scale_y = 0
+        else:
+            extra_dy = 0
+            if not scale_y:
+                scale_y = (width / slice_width) if width and slice_width else 1
+            if repeat_y == 'repeat':
+                n_repeats_y = ceil(height / slice_height / scale_y)
+            elif repeat_y == 'space':
+                n_repeats_y = floor(height / slice_height / scale_y)
+                # Space is before the first repeat and after the last,
+                # so there's one more space than repeat.
+                extra_dy = (
+                    (height / scale_y - n_repeats_y * slice_height) / (n_repeats_y + 1))
+            elif repeat_y == 'round':
+                n_repeats_y = max(1, round(height / slice_height / scale_y))
+                scale_y = height / (n_repeats_y * slice_height)
+            else:
+                n_repeats_y = 1
+                scale_y = height / slice_height
+
+        if 0 in (scale_x, scale_y):
+            return scale_x, scale_y
+
+        rendered_width = intrinsic_width * scale_x
+        rendered_height = intrinsic_height * scale_y
+        offset_x = rendered_width * slice_x / intrinsic_width
+        offset_y = rendered_height * slice_y / intrinsic_height
+
+        with stacked(stream):
+            stream.rectangle(x, y, width, height)
+            stream.clip()
+            stream.end()
+            stream.transform(e=x - offset_x + extra_dx, f=y - offset_y + extra_dy)
+            stream.transform(a=scale_x, d=scale_y)
+            for i in range(n_repeats_x):
+                for j in range(n_repeats_y):
+                    with stacked(stream):
+                        translate_x = i * (slice_width + extra_dx)
+                        translate_y = j * (slice_height + extra_dy)
+                        stream.transform(e=translate_x, f=translate_y)
+                        stream.rectangle(
+                            offset_x / scale_x, offset_y / scale_y,
+                            slice_width, slice_height)
+                        stream.clip()
+                        stream.end()
+                        image.draw(
+                            stream, intrinsic_width, intrinsic_height,
+                            box.style['image_rendering'])
+
+        return scale_x, scale_y
+
+    # Top left.
+    scale_left, scale_top = draw_border_image(
+        x, y, border_left, border_top, 0, 0, slice_left, slice_top)
+    # Top right.
+    draw_border_image(
+        x + w - border_right, y, border_right, border_top,
+        intrinsic_width - slice_right, 0, slice_right, slice_top)
+    # Bottom right.
+    scale_right, scale_bottom = draw_border_image(
+        x + w - border_right, y + h - border_bottom, border_right, border_bottom,
+        intrinsic_width - slice_right, intrinsic_height - slice_bottom,
+        slice_right, slice_bottom)
+    # Bottom left.
+    draw_border_image(
+        x, y + h - border_bottom, border_left, border_bottom,
+        0, intrinsic_height - slice_bottom, slice_left, slice_bottom)
+    if slice_left + slice_right < intrinsic_width:
+        # Top middle.
+        draw_border_image(
+            x + border_left, y, w - border_left - border_right, border_top,
+            slice_left, 0, intrinsic_width - slice_left - slice_right,
+            slice_top, repeat_x=style_repeat_x)
+        # Bottom middle.
+        draw_border_image(
+            x + border_left, y + h - border_bottom,
+            w - border_left - border_right, border_bottom,
+            slice_left, intrinsic_height - slice_bottom,
+            intrinsic_width - slice_left - slice_right, slice_bottom,
+            repeat_x=style_repeat_x)
+    if slice_top + slice_bottom < intrinsic_height:
+        # Right middle.
+        draw_border_image(
+            x + w - border_right, y + border_top,
+            border_right, h - border_top - border_bottom,
+            intrinsic_width - slice_right, slice_top,
+            slice_right, intrinsic_height - slice_top - slice_bottom,
+            repeat_y=style_repeat_y)
+        # Left middle.
+        draw_border_image(
+            x, y + border_top, border_left, h - border_top - border_bottom,
+            0, slice_top, slice_left,
+            intrinsic_height - slice_top - slice_bottom,
+            repeat_y=style_repeat_y)
+    if (should_fill and slice_left + slice_right < intrinsic_width
+            and slice_top + slice_bottom < intrinsic_height):
+        # Fill middle.
+        draw_border_image(
+            x + border_left, y + border_top, w - border_left - border_right,
+            h - border_top - border_bottom, slice_left, slice_top,
+            intrinsic_width - slice_left - slice_right,
+            intrinsic_height - slice_top - slice_bottom,
+            repeat_x=style_repeat_x, repeat_y=style_repeat_y,
+            scale_x=scale_left or scale_right, scale_y=scale_top or scale_bottom)
 
 
 def clip_border_segment(stream, style, width, side, border_box,
