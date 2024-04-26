@@ -11,14 +11,14 @@ from .descriptors import expand_font_variant
 from ..utils import (  # isort:skip
     InvalidValues, Pending, check_var_function, get_keyword, get_single_keyword,
     split_on_comma)
-from .properties import (  # isort:skip
-    background_attachment, background_image, background_position,
-    background_repeat, background_size, block_ellipsis, border_style,
+from .properties import ( # isort:skip
+    background_attachment, background_image, background_position, background_repeat,
+    background_size, block_ellipsis, border_image_source, border_image_slice,
+    border_image_width, border_image_outset, border_image_repeat, border_style,
     border_width, box, column_count, column_width, flex_basis, flex_direction,
-    flex_grow_shrink, flex_wrap, font_family, font_size, font_stretch,
-    font_style, font_weight, line_height, list_style_image,
-    list_style_position, list_style_type, other_colors, overflow_wrap,
-    validate_non_shorthand)
+    flex_grow_shrink, flex_wrap, font_family, font_size, font_stretch, font_style,
+    font_weight, line_height, list_style_image, list_style_position, list_style_type,
+    other_colors, overflow_wrap, validate_non_shorthand)
 
 EXPANDERS = {}
 
@@ -286,42 +286,65 @@ def expand_border_side(tokens, name):
 
 
 @expander('border-image')
-@generic_expander('-outset', '-repeat', '-slice', '-source', '-width')
-def expand_border_image(tokens, name):
+@generic_expander('-outset', '-repeat', '-slice', '-source', '-width',
+                  wants_base_url=True)
+def expand_border_image(tokens, name, base_url):
     """Expand the ``border-image-*`` shorthand properties.
 
     See https://drafts.csswg.org/css-backgrounds/#the-border-image
 
     """
     tokens = list(tokens)
-    while len(tokens) > 0:
-        token = tokens.pop(0)
-        if token.type in ('function', 'url'):
-            yield '-source', [token]
-        elif get_keyword(token) in ('stretch', 'repeat', 'round', 'space'):
-            yield '-repeat', [token]
-        elif (token.type in ('percentage', 'number')
-              or get_keyword(token) == 'fill'):
-            current = [token]
-            numish_suffixes = ['-slice', '-width', '-outset']
-            while len(tokens) > 0 and (
-                    tokens[0].type in (
-                        'percentage', 'number', 'literal', 'dimension')
-                    or get_keyword(tokens[0]) in ('fill', 'auto')):
-                token = tokens.pop(0)
-                if token.type == 'literal' and token.value == '/':
-                    if len(current) == 0:
-                        if numish_suffixes[0] != '-width':
-                            raise InvalidValues
-                    else:
-                        yield numish_suffixes[0], current
-                    current = []
-                    numish_suffixes.pop(0)
-                else:
-                    current.append(token)
-            if len(current) == 0:
+    while tokens:
+        if border_image_source(tokens[:1], base_url):
+            yield '-source', [tokens.pop(0)]
+        elif border_image_repeat(tokens[:1]):
+            repeats = [tokens.pop(0)]
+            while tokens and border_image_repeat(tokens[:1]):
+                repeats.append(tokens.pop(0))
+            yield '-repeat', repeats
+        elif border_image_slice(tokens[:1]) or get_keyword(tokens[0]) == 'fill':
+            slices = [tokens.pop(0)]
+            while tokens and border_image_slice(slices + tokens[:1]):
+                slices.append(tokens.pop(0))
+            yield '-slice', slices
+            if tokens and tokens[0].type == 'literal' and tokens[0].value == '/':
+                # slices / *
+                tokens.pop(0)
+            else:
+                # slices other
+                continue
+            if not tokens:
+                # slices /
                 raise InvalidValues
-            yield numish_suffixes[0], current
+            if border_image_width(tokens[:1]):
+                widths = [tokens.pop(0)]
+                while tokens and border_image_width(widths + tokens[:1]):
+                    widths.append(tokens.pop(0))
+                yield '-width', widths
+                if tokens and tokens[0].type == 'literal' and tokens[0].value == '/':
+                    # slices / widths / slash *
+                    tokens.pop(0)
+                else:
+                    # slices / widths other
+                    continue
+            elif tokens and tokens[0].type == 'literal' and tokens[0].value == '/':
+                # slices / / *
+                tokens.pop(0)
+            else:
+                # slices / other
+                raise InvalidValues
+            if not tokens:
+                # slices / * /
+                raise InvalidValues
+            if border_image_outset(tokens[:1]):
+                outsets = [tokens.pop(0)]
+                while tokens and border_image_outset(outsets + tokens[:1]):
+                    outsets.append(tokens.pop(0))
+                yield '-outset', outsets
+            else:
+                # slash / * / other
+                raise InvalidValues
         else:
             raise InvalidValues
 
