@@ -58,14 +58,16 @@ NOT_PRINT_MEDIA = {
     'view-timeline-inset',
     'view-timeline-name',
     'view-transition-name',
+    'will-change',
     # Dynamic and interactive
     'caret',
     'caret-color',
     'caret-shape',
     'cursor',
     'field-sizing',
-    'font-display',
+    'pointer-event',
     'resize',
+    'touch-action',
     # Browser viewport scrolling
     'overscroll-behavior',
     'overscroll-behavior-block',

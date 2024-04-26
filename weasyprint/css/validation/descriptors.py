@@ -16,7 +16,9 @@ DESCRIPTORS = {
     'font-face': {},
     'counter-style': {},
 }
-
+NOT_PRINT_MEDIA = (
+    'font-display',
+)
 
 class NoneFakeToken:
     type = 'ident'
@@ -41,8 +43,9 @@ def preprocess_descriptors(rule, base_url, descriptors):
             continue
         tokens = remove_whitespace(descriptor.value)
         try:
-            # Use list() to consume generators now and catch any error.
-            if descriptor.name not in DESCRIPTORS[rule]:
+            if descriptor.name in NOT_PRINT_MEDIA:
+                continue
+            elif descriptor.name not in DESCRIPTORS[rule]:
                 raise InvalidValues('descriptor not supported')
 
             function = DESCRIPTORS[rule][descriptor.name]
