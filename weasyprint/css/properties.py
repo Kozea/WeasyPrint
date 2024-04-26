@@ -67,6 +67,17 @@ INITIAL_VALUES = {
     'border_top_right_radius': (ZERO_PIXELS, ZERO_PIXELS),
     'border_top_style': 'none',
     'border_top_width': 3,  # computed value for 'medium'
+    'border_image_source': ('none', None),
+    'border_image_slice': (
+        Dimension(100, '%'), Dimension(100, '%'),
+        Dimension(100, '%'), Dimension(100, '%'),
+        None),
+    'border_image_width': (1, 1, 1, 1),
+    'border_image_outset': (
+        Dimension(0, None), Dimension(0, None),
+        Dimension(0, None), Dimension(0, None)),
+    'border_image_repeat': ('stretch', 'stretch'),
+
 
     # Color 3 (REC): https://www.w3.org/TR/css-color-3/
     'opacity': 1,

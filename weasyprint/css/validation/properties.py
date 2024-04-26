@@ -167,9 +167,8 @@ def color(token):
 @comma_separated_list
 @single_token
 def background_image(token, base_url):
-    if token.type != 'function':
-        if get_keyword(token) == 'none':
-            return 'none', None
+    if get_keyword(token) == 'none':
+        return 'none', None
     return get_image(token, base_url)
 
 
@@ -419,6 +418,76 @@ def border_width(token):
     keyword = get_keyword(token)
     if keyword in ('thin', 'medium', 'thick'):
         return keyword
+
+
+@property(wants_base_url=True)
+@single_token
+def border_image_source(token, base_url):
+    if get_keyword(token) == 'none':
+        return 'none', None
+    return get_image(token, base_url)
+
+
+@property()
+def border_image_slice(tokens):
+    values = []
+    fill = False
+    for i, token in enumerate(tokens):
+        # Don't use get_length() because a dimension with a unit is disallowed.
+        if token.type == 'percentage' and token.value >= 0:
+            values.append(Dimension(token.value, '%'))
+        elif token.type == 'number' and token.value >= 0:
+            values.append(Dimension(token.value, None))
+        elif get_keyword(token) == 'fill' and not fill and i in (0, len(tokens) - 1):
+            fill = True
+            values.append('fill')
+        else:
+            return
+
+    if 1 <= len(values) - int(fill) <= 4:
+        return tuple(values)
+
+
+@property()
+def border_image_width(tokens):
+    values = []
+    for token in tokens:
+        if get_keyword(token) == 'auto':
+            values.append('auto')
+        elif token.type == 'number' and token.value >= 0:
+            values.append(Dimension(token.value, None))
+        else:
+            if length := get_length(token, negative=False, percentage=True):
+                values.append(length)
+            else:
+                return
+
+    if 1 <= len(values) <= 4:
+        return tuple(values)
+
+
+@property()
+def border_image_outset(tokens):
+    values = []
+    for token in tokens:
+        if token.type == 'number' and token.value >= 0:
+            values.append(Dimension(token.value, None))
+        else:
+            if length := get_length(token, negative=False):
+                values.append(length)
+            else:
+                return
+
+    if 1 <= len(values) <= 4:
+        return tuple(values)
+
+
+@property()
+def border_image_repeat(tokens):
+    if 1 <= len(tokens) <= 2:
+        keywords = tuple(get_keyword(token) for token in tokens)
+        if set(keywords) <= {'stretch', 'repeat', 'round', 'space'}:
+            return keywords
 
 
 @property(unstable=True)

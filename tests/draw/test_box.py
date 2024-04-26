@@ -273,3 +273,306 @@ def test_draw_split_border_radius(assert_pixels):
       </style>
       <div>a b c</div>
     ''')
+
+
+@assert_no_logs
+def test_border_image_stretch(assert_pixels):
+    assert_pixels('''
+        __________
+        _RYYYMMMG_
+        _M______C_
+        _M______C_
+        _Y______Y_
+        _Y______Y_
+        _BYYYCCCK_
+        __________
+    ''', '''
+      <style>
+        @page {
+          size: 10px 8px;
+        }
+        div {
+          border: 1px solid black;
+          border-image-source: url(border.svg);
+          border-image-slice: 25%;
+          height: 4px;
+          margin: 1px;
+          width: 6px;
+        }
+      </style>
+      <div></div>
+    ''')
+
+
+@assert_no_logs
+def test_border_image_fill(assert_pixels):
+    assert_pixels('''
+        __________
+        _RYYYMMMG_
+        _MbbbgggC_
+        _MbbbgggC_
+        _YgggbbbY_
+        _YgggbbbY_
+        _BYYYCCCK_
+        __________
+    ''', '''
+      <style>
+        @page {
+          size: 10px 8px;
+        }
+        div {
+          border: 1px solid black;
+          border-image-source: url(border.svg);
+          border-image-slice: 25% fill;
+          height: 4px;
+          margin: 1px;
+          width: 6px;
+        }
+      </style>
+      <div></div>
+    ''')
+
+
+@assert_no_logs
+def test_border_image_default_slice(assert_pixels):
+    assert_pixels('''
+        _____________
+        _RYMG___RYMG_
+        _MbgC___MbgC_
+        _YgbY___YgbY_
+        _BYCK___BYCK_
+        _____________
+        _____________
+        _RYMG___RYMG_
+        _MbgC___MbgC_
+        _YgbY___YgbY_
+        _BYCK___BYCK_
+        _____________
+    ''', '''
+      <style>
+        @page {
+          size: 13px 12px;
+        }
+        div {
+          border: 4px solid black;
+          border-image-source: url(border.svg);
+          height: 2px;
+          margin: 1px;
+          width: 3px;
+        }
+      </style>
+      <div></div>
+    ''')
+
+
+@assert_no_logs
+def test_border_image_uneven_width(assert_pixels):
+    assert_pixels('''
+        ____________
+        _RRRYYYMMMG_
+        _MMM______C_
+        _MMM______C_
+        _YYY______Y_
+        _YYY______Y_
+        _BBBYYYCCCK_
+        ____________
+    ''', '''
+      <style>
+        @page {
+          size: 12px 8px;
+        }
+        div {
+          border: 1px solid black;
+          border-left-width: 3px;
+          border-image-source: url(border.svg);
+          border-image-slice: 25%;
+          height: 4px;
+          margin: 1px;
+          width: 6px;
+        }
+      </style>
+      <div></div>
+    ''')
+
+
+@assert_no_logs
+def test_border_image_not_percent(assert_pixels):
+    assert_pixels('''
+        __________
+        _RYYYMMMG_
+        _M______C_
+        _M______C_
+        _Y______Y_
+        _Y______Y_
+        _BYYYCCCK_
+        __________
+    ''', '''
+      <style>
+        @page {
+          size: 10px 8px;
+        }
+        div {
+          border: 1px solid black;
+          border-image-source: url(border.svg);
+          border-image-slice: 1;
+          height: 4px;
+          margin: 1px;
+          width: 6px;
+        }
+      </style>
+      <div></div>
+    ''')
+
+
+@assert_no_logs
+def test_border_image_repeat(assert_pixels):
+    assert_pixels('''
+        ___________
+        _RYMYMYMYG_
+        _M_______C_
+        _Y_______Y_
+        _M_______C_
+        _Y_______Y_
+        _BYCYCYCYK_
+        ___________
+    ''', '''
+      <style>
+        @page {
+          size: 11px 8px;
+        }
+        div {
+          border: 1px solid black;
+          border-image-source: url(border.svg);
+          border-image-slice: 25%;
+          border-image-repeat: repeat;
+          height: 4px;
+          margin: 1px;
+          width: 7px;
+        }
+      </style>
+      <div></div>
+    ''')
+
+
+@assert_no_logs
+def test_border_image_space(assert_pixels):
+    assert_pixels('''
+        _________
+        _R_YMC_G_
+        _________
+        _M_____C_
+        _Y_____Y_
+        _C_____M_
+        _________
+        _B_YCM_K_
+        _________
+    ''', '''
+      <style>
+        @page {
+          size: 9px 9px;
+        }
+        div {
+          border: 1px solid black;
+          border-image-source: url(border2.svg);
+          border-image-slice: 20%;
+          border-image-repeat: space;
+          height: 5px;
+          margin: 1px;
+          width: 5px;
+        }
+      </style>
+      <div></div>
+    ''')
+
+
+@assert_no_logs
+def test_border_image_outset(assert_pixels):
+    assert_pixels('''
+        ____________
+        _RYYYYMMMMG_
+        _M________C_
+        _M_bbbbbb_C_
+        _M_bbbbbb_C_
+        _Y_bbbbbb_Y_
+        _Y_bbbbbb_Y_
+        _Y________Y_
+        _BYYYYCCCCK_
+        ____________
+    ''', '''
+      <style>
+        @page {
+          size: 12px 10px;
+        }
+        div {
+          border: 1px solid black;
+          border-image-source: url(border.svg);
+          border-image-slice: 25%;
+          border-image-outset: 2px;
+          height: 2px;
+          margin: 3px;
+          width: 4px;
+          background: #000080
+        }
+      </style>
+      <div></div>
+    ''')
+
+
+@assert_no_logs
+def test_border_image_width(assert_pixels):
+    assert_pixels('''
+        __________
+        _RRYYMMGG_
+        _RRYYMMGG_
+        _MM____CC_
+        _YY____YY_
+        _BBYYCCKK_
+        _BBYYCCKK_
+        __________
+    ''', '''
+      <style>
+        @page {
+          size: 10px 8px;
+        }
+        div {
+          border: 1px solid black;
+          border-image-source: url(border.svg);
+          border-image-slice: 25%;
+          border-image-width: 2;
+          height: 4px;
+          margin: 1px;
+          width: 6px;
+        }
+      </style>
+      <div></div>
+    ''')
+
+
+@assert_no_logs
+def test_border_image_gradient(assert_pixels):
+    assert_pixels('''
+        __________
+        _RRRRRRRR_
+        _RRRRRRRR_
+        _RR____RR_
+        _BB____BB_
+        _BBBBBBBB_
+        _BBBBBBBB_
+        __________
+    ''', '''
+      <style>
+        @page {
+          size: 10px 8px;
+        }
+        div {
+          border: 1px solid black;
+          border-image-source: linear-gradient(to bottom, red, red 50%, blue 50%, blue);
+          border-image-slice: 25%;
+          border-image-width: 2;
+          height: 4px;
+          margin: 1px;
+          width: 6px;
+        }
+      </style>
+      <div></div>
+    ''')

@@ -364,6 +364,114 @@ def test_image_orientation_invalid(rule):
 
 @assert_no_logs
 @pytest.mark.parametrize('rule, value', (
+    ('1', ((1, None),)),
+    ('1 2    3 4', ((1, None), (2, None), (3, None), (4, None))),
+    ('50% 1000.1 0', ((50, '%'), (1000.1, None), (0, None))),
+    ('1% 2% 3% 4%', ((1, '%'), (2, '%'), (3, '%'), (4, '%'))),
+    ('fill 10% 20', ('fill', (10, '%'), (20, None))),
+    ('0 1 0.5 fill', ((0, None), (1, None), (0.5, None), 'fill')),
+))
+def test_border_image_slice(rule, value):
+    assert get_value(f'border-image-slice: {rule}') == value
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', (
+    'none',
+    '1, 2',
+    '-10',
+    '-10%',
+    '1 2 3 -10%',
+    '-0.3',
+    '1 fill 2',
+    'fill 1 2 3 fill',
+))
+def test_border_image_slice_invalid(rule):
+    assert_invalid(f'border-image-slice: {rule}')
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, value', (
+    ('1', ((1, None),)),
+    ('1 2    3 4', ((1, None), (2, None), (3, None), (4, None))),
+    ('50% 1000.1 0', ((50, '%'), (1000.1, None), (0, None))),
+    ('1% 2px 3em 4', ((1, '%'), (2, 'px'), (3, 'em'), (4, None))),
+    ('auto', ('auto',)),
+    ('1 auto', ((1, None), 'auto')),
+    ('auto auto', ('auto', 'auto')),
+    ('auto auto auto 2', ('auto', 'auto', 'auto', (2, None))),
+))
+def test_border_image_width(rule, value):
+    assert get_value(f'border-image-width: {rule}') == value
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', (
+    'none',
+    '1, 2',
+    '1 -2',
+    '-10',
+    '-10%',
+    '1px 2px 3px -10%',
+    '-3px',
+    'auto auto auto auto auto',
+    '1 2 3 4 5',
+))
+def test_border_image_width_invalid(rule):
+    assert_invalid(f'border-image-width: {rule}')
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, value', (
+    ('1', ((1, None),)),
+    ('1 2    3 4', ((1, None), (2, None), (3, None), (4, None))),
+    ('50px 1000.1 0', ((50, 'px'), (1000.1, None), (0, None))),
+    ('1in 2px 3em 4', ((1, 'in'), (2, 'px'), (3, 'em'), (4, None))),
+))
+def test_border_image_outset(rule, value):
+    assert get_value(f'border-image-outset: {rule}') == value
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', (
+    'none',
+    'auto',
+    '1, 2',
+    '-10',
+    '1 -2',
+    '10%',
+    '1px 2px 3px -10px',
+    '-3px',
+    '1 2 3 4 5',
+))
+def test_border_image_outset_invalid(rule):
+    assert_invalid(f'border-image-outset: {rule}')
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, value', (
+    ('stretch', ('stretch',)),
+    ('repeat repeat', ('repeat', 'repeat')),
+    ('round     space', ('round', 'space')),
+))
+def test_border_image_repeat(rule, value):
+    assert get_value(f'border-image-repeat: {rule}') == value
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', (
+    'none',
+    'test',
+    'round round round',
+    'stretch space round',
+    'repeat test',
+))
+def test_border_image_repeat_invalid(rule):
+    assert_invalid(f'border-image-repeat: {rule}')
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, value', (
     ('test content(text)', (('test', (('content()', 'text'),)),)),
     ('test content(before)', (('test', (('content()', 'before'),)),)),
     ('test "string"', (('test', (('string', 'string'),)),)),

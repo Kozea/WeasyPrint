@@ -400,6 +400,62 @@ def test_border_radius_invalid(rule, message):
 
 @assert_no_logs
 @pytest.mark.parametrize('rule, result', (
+    ('url(border.png) 27', {
+        'border_image_source': ('url', 'https://weasyprint.org/foo/border.png'),
+        'border_image_slice': ((27, None),),
+    }),
+    ('url(border.png) 10 / 4 / 2 round stretch', {
+        'border_image_source': ('url', 'https://weasyprint.org/foo/border.png'),
+        'border_image_slice': ((10, None),),
+        'border_image_width': ((4, None),),
+        'border_image_outset': ((2, None),),
+        'border_image_repeat': (('round', 'stretch')),
+    }),
+    ('10 // 2', {
+        'border_image_slice': ((10, None),),
+        'border_image_outset': ((2, None),),
+    }),
+    ('5.5%', {
+        'border_image_slice': ((5.5, '%'),),
+    }),
+    ('stretch 2 url("border.png")', {
+        'border_image_source': ('url', 'https://weasyprint.org/foo/border.png'),
+        'border_image_slice': ((2, None),),
+        'border_image_repeat': (('stretch',)),
+    }),
+    ('1/2 round', {
+        'border_image_slice': ((1, None),),
+        'border_image_width': ((2, None),),
+        'border_image_repeat': (('round',)),
+    }),
+    ('none', {
+        'border_image_source': ('none', None),
+    }),
+))
+def test_border_image(rule, result):
+    assert expand_to_dict(f'border-image: {rule}') == result
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, reason', (
+    ('url(border.png) url(border.png)', 'multiple source'),
+    ('10 10 10 10 10', 'multiple slice'),
+    ('1 / 2 / 3 / 4', 'invalid'),
+    ('/1', 'invalid'),
+    ('/1', 'invalid'),
+    ('round round round', 'invalid'),
+    ('-1', 'invalid'),
+    ('1 repeat 2', 'multiple slice'),
+    ('1% // 1%', 'invalid'),
+    ('1 / repeat', 'invalid'),
+    ('', 'no value'),
+))
+def test_border_image_invalid(rule, reason):
+    assert_invalid(f'border-image: {rule}', reason)
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, result', (
     ('12px My Fancy Font, serif', {
         'font_size': (12, 'px'),
         'font_family': ('My Fancy Font', 'serif'),

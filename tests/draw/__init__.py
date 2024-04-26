@@ -17,6 +17,9 @@ PIXELS_BY_CHAR = {
     'G': (0, 255, 0),  # lime green
     'V': (191, 0, 64),  # average of 1*B and 3*R
     'S': (255, 63, 63),  # R above R above _
+    'C': (0, 255, 255),  # cyan
+    'M': (255, 0, 255),  # magenta
+    'Y': (255, 255, 0),  # yellow
     'K': (0, 0, 0),  # black
     'r': (255, 0, 0),  # red
     'g': (0, 128, 0),  # half green
