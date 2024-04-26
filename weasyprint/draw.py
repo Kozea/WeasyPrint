@@ -540,7 +540,9 @@ def draw_border(stream, box):
                     n_repeats_x = floor(width / slice_width / scale_x)
                     # Space is before the first repeat and after the last,
                     # so there's one more space than repeat.
-                    extra_dx = (width - n_repeats_x * slice_width) / (n_repeats_x + 1)
+                    extra_dx = (
+                        (width / scale_x - n_repeats_x * slice_width) /
+                        (n_repeats_x + 1))
                 elif repeat_x == 'round':
                     n_repeats_x = max(1, round(width / slice_width / scale_x))
                     scale_x = width / (n_repeats_x * slice_width)
@@ -560,7 +562,9 @@ def draw_border(stream, box):
                     n_repeats_y = floor(height / slice_height / scale_y)
                     # Space is before the first repeat and after the last,
                     # so there's one more space than repeat.
-                    extra_dy = (height - n_repeats_y * slice_height) / (n_repeats_y + 1)
+                    extra_dy = (
+                        (height / scale_y - n_repeats_y * slice_height) /
+                        (n_repeats_y + 1))
                 elif repeat_y == 'round':
                     n_repeats_y = max(1, round(height / slice_height / scale_y))
                     scale_y = height / (n_repeats_y * slice_height)
