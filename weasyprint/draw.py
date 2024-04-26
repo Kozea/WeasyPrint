@@ -477,7 +477,7 @@ def draw_border(stream, box):
         slice_bottom = compute_slice_dimension(image_slice[2], intrinsic_height)
         slice_left = compute_slice_dimension(image_slice[3], intrinsic_width)
 
-        style_repeat_y, style_repeat_x = box.style['border_image_repeat']
+        style_repeat_x, style_repeat_y = box.style['border_image_repeat']
 
         x, y, w, h, tl, tr, br, bl = box.rounded_border_box()
         px, py, pw, ph, ptl, ptr, pbr, pbl = box.rounded_padding_box()
