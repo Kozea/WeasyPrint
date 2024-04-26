@@ -558,10 +558,10 @@ background layers per box), including the ``background``, ``background-color``,
 WeasyPrint also supports the `rounded corners part`_ of this module, including
 the ``border-radius`` property.
 
-WeasyPrint does **not** support the `border images part`_ of this module,
-including the ``border-image``, ``border-image-source``,
-``border-image-slice``, ``border-image-width``, ``border-image-outset`` and
-``border-image-repeat`` properties.
+WeasyPrint also supports the `border images part`_ of this module, including the
+``border-image``, ``border-image-source``, ``border-image-slice``,
+``border-image-width``, ``border-image-outset`` and ``border-image-repeat``
+properties.
 
 WeasyPrint does **not** support the `box shadow part`_ of this module,
 including the ``box-shadow`` property. This feature has been implemented in a
