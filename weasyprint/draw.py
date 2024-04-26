@@ -539,49 +539,47 @@ def draw_border(stream, box):
                     width, height, slice_width, slice_height)):
                 return
 
+            extra_dx = 0
+            scale_x = 1
+            if repeat_x == 'repeat':
+                n_repeats_x = ceil(width / slice_width)
+            elif repeat_x == 'space':
+                n_repeats_x = floor(width / slice_width)
+                # Space is before the first repeat and after the last,
+                # so there's one more space than repeat.
+                extra_dx = (width - n_repeats_x * slice_width) / (n_repeats_x + 1)
+            elif repeat_x == 'round':
+                n_repeats_x = max(1, round(width / slice_width))
+                scale_x = width / (n_repeats_x * slice_width)
+            else:
+                n_repeats_x = 1
+                scale_x = width / slice_width
+
+            extra_dy = 0
+            scale_y = 1
+            if repeat_y == 'repeat':
+                n_repeats_y = ceil(height / slice_height)
+            elif repeat_y == 'space':
+                n_repeats_y = floor(height / slice_height)
+                # Space is before the first repeat and after the last,
+                # so there's one more space than repeat.
+                extra_dy = (height - n_repeats_y * slice_height) / (n_repeats_y + 1)
+            elif repeat_y == 'round':
+                n_repeats_y = max(1, round(height / slice_height))
+                scale_y = height / (n_repeats_y * slice_height)
+            else:
+                n_repeats_y = 1
+                scale_y = height / slice_height
+
+            rendered_width = intrinsic_width * scale_x
+            rendered_height = intrinsic_height * scale_y
+            offset_x = rendered_width * slice_x / intrinsic_width
+            offset_y = rendered_height * slice_y / intrinsic_height
+
             with stacked(stream):
                 stream.rectangle(x, y, width, height)
                 stream.clip()
                 stream.end()
-                extra_dx = 0
-                extra_dy = 0
-
-                if repeat_x == 'repeat':
-                    n_repeats_x = ceil(width / slice_width)
-                    scale_x = 1
-                elif repeat_x == 'space':
-                    n_repeats_x = floor(width / slice_width)
-                    scale_x = 1
-                    # Space is before the first repeat and after the last,
-                    # so there's one more space than repeat.
-                    extra_dx = (width - n_repeats_x * slice_width) / (n_repeats_x + 1)
-                elif repeat_x == 'round':
-                    n_repeats_x = max(1, round(width / slice_width))
-                    scale_x = width / (n_repeats_x * slice_width)
-                else:
-                    n_repeats_x = 1
-                    scale_x = width / slice_width
-
-                if repeat_y == 'repeat':
-                    n_repeats_y = ceil(height / slice_height)
-                    scale_y = 1
-                elif repeat_y == 'space':
-                    n_repeats_y = floor(height / slice_height)
-                    scale_y = 1
-                    # Space is before the first repeat and after the last,
-                    # so there's one more space than repeat.
-                    extra_dy = (height - n_repeats_y * slice_height) / (n_repeats_y + 1)
-                elif repeat_y == 'round':
-                    n_repeats_y = max(1, round(height / slice_height))
-                    scale_y = height / (n_repeats_y * slice_height)
-                else:
-                    n_repeats_y = 1
-                    scale_y = height / slice_height
-
-                rendered_width = intrinsic_width * scale_x
-                rendered_height = intrinsic_height * scale_y
-                offset_x = rendered_width * slice_x / intrinsic_width
-                offset_y = rendered_height * slice_y / intrinsic_height
                 stream.transform(e=x - offset_x + extra_dx, f=y - offset_y + extra_dy)
                 stream.transform(a=scale_x, d=scale_y)
                 for xcnt in range(n_repeats_x):
