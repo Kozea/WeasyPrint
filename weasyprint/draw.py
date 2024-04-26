@@ -534,12 +534,18 @@ def draw_border(stream, box):
         def draw_border_image(x, y, width, height, slice_x, slice_y,
                               slice_width, slice_height,
                               repeat_x='stretch', repeat_y='stretch'):
+            if not all((
+                    intrinsic_width, intrinsic_height,
+                    width, height, slice_width, slice_height)):
+                return
+
             with stacked(stream):
                 stream.rectangle(x, y, width, height)
                 stream.clip()
                 stream.end()
                 extra_dx = 0
                 extra_dy = 0
+
                 if repeat_x == 'repeat':
                     n_repeats_x = ceil(width / slice_width)
                     scale_x = 1
@@ -550,11 +556,12 @@ def draw_border(stream, box):
                     # so there's one more space than repeat.
                     extra_dx = (width - n_repeats_x * slice_width) / (n_repeats_x + 1)
                 elif repeat_x == 'round':
-                    n_repeats_x = round(width / slice_width)
-                    scale_x =  width / (n_repeats_x * slice_width)
+                    n_repeats_x = max(1, round(width / slice_width))
+                    scale_x = width / (n_repeats_x * slice_width)
                 else:
                     n_repeats_x = 1
                     scale_x = width / slice_width
+
                 if repeat_y == 'repeat':
                     n_repeats_y = ceil(height / slice_height)
                     scale_y = 1
@@ -565,11 +572,12 @@ def draw_border(stream, box):
                     # so there's one more space than repeat.
                     extra_dy = (height - n_repeats_y * slice_height) / (n_repeats_y + 1)
                 elif repeat_y == 'round':
-                    n_repeats_y = round(height / slice_height)
-                    scale_y =  height / (n_repeats_y * slice_height)
+                    n_repeats_y = max(1, round(height / slice_height))
+                    scale_y = height / (n_repeats_y * slice_height)
                 else:
                     n_repeats_y = 1
                     scale_y = height / slice_height
+
                 rendered_width = intrinsic_width * scale_x
                 rendered_height = intrinsic_height * scale_y
                 offset_x = rendered_width * slice_x / intrinsic_width
@@ -590,7 +598,6 @@ def draw_border(stream, box):
                                     box.style['image_rendering'])
                             stream.transform(f=slice_height + extra_dy)
                     stream.transform(e=slice_width + extra_dx)
-
 
         # Top left.
         draw_border_image(x, y, border_left, border_top, 0, 0, slice_left, slice_top)
