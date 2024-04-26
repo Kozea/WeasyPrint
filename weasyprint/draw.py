@@ -540,7 +540,7 @@ def draw_border(stream, box):
             else:
                 extra_dx = 0
                 if not scale_x:
-                    scale_x = (height / slice_height) if slice_height else 1
+                    scale_x = (height / slice_height) if height and slice_height else 1
                 if repeat_x == 'repeat':
                     n_repeats_x = ceil(width / slice_width / scale_x)
                 elif repeat_x == 'space':
@@ -560,7 +560,7 @@ def draw_border(stream, box):
             else:
                 extra_dy = 0
                 if not scale_y:
-                    scale_y = (width / slice_width) if slice_width else 1
+                    scale_y = (width / slice_width) if width and slice_width else 1
                 if repeat_y == 'repeat':
                     n_repeats_y = ceil(height / slice_height / scale_y)
                 elif repeat_y == 'space':
