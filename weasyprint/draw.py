@@ -477,8 +477,7 @@ def draw_border(stream, box):
         slice_bottom = compute_slice_dimension(image_slice[2], intrinsic_height)
         slice_left = compute_slice_dimension(image_slice[3], intrinsic_width)
 
-        style_repeat_y = box.style['border_image_repeat'][0]
-        style_repeat_x = box.style['border_image_repeat'][1]
+        style_repeat_y, style_repeat_x = box.style['border_image_repeat']
 
         x, y, w, h, tl, tr, br, bl = box.rounded_border_box()
         px, py, pw, ph, ptl, ptr, pbr, pbl = box.rounded_padding_box()
@@ -512,7 +511,7 @@ def draw_border(stream, box):
             elif isinstance(dimension, (int, float)):
                 return dimension * original
             elif dimension.unit == '%':
-                return dimension.value / 100. * area_dimension
+                return dimension.value / 100 * area_dimension
             else:
                 assert dimension.unit == 'px'
                 return dimension.value
@@ -523,14 +522,14 @@ def draw_border(stream, box):
         # for percentage-based border-image-width values includes any expanded
         # area due to border-image-outset.
         width_adjs = box.style['border_image_width']
-        border_top = compute_width_adjustment(width_adjs[0], border_top,
-                                              slice_top, h)
-        border_right = compute_width_adjustment(width_adjs[1], border_right,
-                                                slice_right, w)
-        border_bottom = compute_width_adjustment(width_adjs[2], border_bottom,
-                                                 slice_bottom, h)
-        border_left = compute_width_adjustment(width_adjs[3], border_left,
-                                               slice_left, w)
+        border_top = compute_width_adjustment(
+            width_adjs[0], border_top, slice_top, h)
+        border_right = compute_width_adjustment(
+            width_adjs[1], border_right, slice_right, w)
+        border_bottom = compute_width_adjustment(
+            width_adjs[2], border_bottom, slice_bottom, h)
+        border_left = compute_width_adjustment(
+            width_adjs[3], border_left, slice_left, w)
 
         def draw_border_image(x, y, width, height, slice_x, slice_y,
                               slice_width, slice_height,
@@ -549,8 +548,7 @@ def draw_border(stream, box):
                     scale_x = 1
                     # Space is before the first repeat and after the last,
                     # so there's one more space than repeat.
-                    extra_dx = ((width - n_repeats_x * slice_width)
-                                / (n_repeats_x + 1))
+                    extra_dx = (width - n_repeats_x * slice_width) / (n_repeats_x + 1)
                 elif repeat_x == 'round':
                     n_repeats_x = round(width / slice_width)
                     scale_x =  width / (n_repeats_x * slice_width)
@@ -565,8 +563,7 @@ def draw_border(stream, box):
                     scale_y = 1
                     # Space is before the first repeat and after the last,
                     # so there's one more space than repeat.
-                    extra_dy = ((height - n_repeats_y * slice_height)
-                                / (n_repeats_y + 1))
+                    extra_dy = (height - n_repeats_y * slice_height) / (n_repeats_y + 1)
                 elif repeat_y == 'round':
                     n_repeats_y = round(height / slice_height)
                     scale_y =  height / (n_repeats_y * slice_height)
@@ -577,29 +574,26 @@ def draw_border(stream, box):
                 rendered_height = intrinsic_height * scale_y
                 offset_x = rendered_width * slice_x / intrinsic_width
                 offset_y = rendered_height * slice_y / intrinsic_height
-                stream.transform(e=x - offset_x + extra_dx,
-                                 f=y - offset_y + extra_dy)
+                stream.transform(e=x - offset_x + extra_dx, f=y - offset_y + extra_dy)
                 stream.transform(a=scale_x, d=scale_y)
                 for xcnt in range(n_repeats_x):
                     with stacked(stream):
                         for ycnt in range(n_repeats_y):
                             with stacked(stream):
-                                stream.rectangle(offset_x / scale_x,
-                                                 offset_y / scale_y,
-                                                 slice_width,
-                                                 slice_height)
+                                stream.rectangle(
+                                    offset_x / scale_x, offset_y / scale_y,
+                                    slice_width, slice_height)
                                 stream.clip()
                                 stream.end()
-                                img.draw(stream, intrinsic_width,
-                                         intrinsic_height,
-                                         box.style['image_rendering'])
+                                img.draw(
+                                    stream, intrinsic_width, intrinsic_height,
+                                    box.style['image_rendering'])
                             stream.transform(f=slice_height + extra_dy)
                     stream.transform(e=slice_width + extra_dx)
 
 
         # Top left.
-        draw_border_image(
-            x, y, border_left, border_top, 0, 0, slice_left, slice_top)
+        draw_border_image(x, y, border_left, border_top, 0, 0, slice_left, slice_top)
         # Top right.
         draw_border_image(
             x + w - border_right, y, border_right, border_top,
