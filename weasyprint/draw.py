@@ -467,10 +467,10 @@ def draw_border(stream, box):
 
         def compute_slice_dimension(dimension, intrinsic):
             if isinstance(dimension, (int, float)):
-                return dimension
+                return min(dimension, intrinsic)
             else:
                 assert dimension.unit == '%'
-                return dimension.value / 100 * intrinsic
+                return min(100, dimension.value) / 100 * intrinsic
 
         slice_top = compute_slice_dimension(image_slice[0], intrinsic_height)
         slice_right = compute_slice_dimension(image_slice[1], intrinsic_width)

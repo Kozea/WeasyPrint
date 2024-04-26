@@ -374,7 +374,7 @@ def border_image_slice(style, name, values):
             if unit is None:
                 computed_values.append(number)
             else:
-                computed_values.append(Dimension(min(number, 100), '%'))
+                computed_values.append(Dimension(number, '%'))
     if len(computed_values) == 1:
         computed_values *= 4
     elif len(computed_values) == 2:
