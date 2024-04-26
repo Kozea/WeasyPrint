@@ -516,3 +516,33 @@ def test_border_image_outset(assert_pixels):
       </style>
       <div></div>
     ''')
+
+
+@assert_no_logs
+def test_border_image_width(assert_pixels):
+    assert_pixels('''
+        __________
+        _RRYYMMGG_
+        _RRYYMMGG_
+        _MM____CC_
+        _YY____YY_
+        _BBYYCCKK_
+        _BBYYCCKK_
+        __________
+    ''', '''
+      <style>
+        @page {
+          size: 10px 8px;
+        }
+        div {
+          border: 1px solid black;
+          border-image-source: url(border.svg);
+          border-image-slice: 25%;
+          border-image-width: 2;
+          height: 4px;
+          margin: 1px;
+          width: 6px;
+        }
+      </style>
+      <div></div>
+    ''')

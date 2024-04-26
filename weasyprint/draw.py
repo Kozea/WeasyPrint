@@ -505,6 +505,33 @@ def draw_border(stream, box):
         w += outset_left + outset_right
         h += outset_top + outset_bottom
 
+        def compute_width_adjustment(dimension, original, intrinsic,
+                                     area_dimension):
+            if dimension == 'auto':
+                return intrinsic
+            elif isinstance(dimension, (int, float)):
+                return dimension * original
+            elif dimension.unit == '%':
+                return dimension.value / 100. * area_dimension
+            else:
+                assert dimension.unit == 'px'
+                return dimension.value
+
+        # We make adjustments to the border_* variables after handling outsets
+        # because numerical outsets are relative to border-width, not
+        # border-image-width. Also, the border image area that is used
+        # for percentage-based border-image-width values includes any expanded
+        # area due to border-image-outset.
+        width_adjs = box.style['border_image_width']
+        border_top = compute_width_adjustment(width_adjs[0], border_top,
+                                              slice_top, h)
+        border_right = compute_width_adjustment(width_adjs[1], border_right,
+                                                slice_right, w)
+        border_bottom = compute_width_adjustment(width_adjs[2], border_bottom,
+                                                 slice_bottom, h)
+        border_left = compute_width_adjustment(width_adjs[3], border_left,
+                                               slice_left, w)
+
         def draw_border_image(x, y, width, height, slice_x, slice_y,
                               slice_width, slice_height,
                               repeat_x='stretch', repeat_y='stretch'):
