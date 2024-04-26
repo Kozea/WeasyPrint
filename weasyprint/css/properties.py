@@ -73,7 +73,9 @@ INITIAL_VALUES = {
         Dimension(100, '%'), Dimension(100, '%'),
         None),
     'border_image_width': (1, 1, 1, 1),
-    'border_image_outset': (0, 0, 0, 0),
+    'border_image_outset': (
+        Dimension(0, None), Dimension(0, None),
+        Dimension(0, None), Dimension(0, None)),
     'border_image_repeat': ('stretch', 'stretch'),
 
 

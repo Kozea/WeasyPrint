@@ -423,6 +423,7 @@ def test_border_image_not_percent(assert_pixels):
       <div></div>
     ''')
 
+
 @assert_no_logs
 def test_border_image_repeat(assert_pixels):
     assert_pixels('''
@@ -452,6 +453,7 @@ def test_border_image_repeat(assert_pixels):
       <div></div>
     ''')
 
+
 @assert_no_logs
 def test_border_image_space(assert_pixels):
     assert_pixels('''
@@ -477,6 +479,39 @@ def test_border_image_space(assert_pixels):
           height: 5px;
           margin: 1px;
           width: 5px;
+        }
+      </style>
+      <div></div>
+    ''')
+
+
+@assert_no_logs
+def test_border_image_outset(assert_pixels):
+    assert_pixels('''
+        ____________
+        _RYYYYMMMMG_
+        _M________C_
+        _M_bbbbbb_C_
+        _M_bbbbbb_C_
+        _Y_bbbbbb_Y_
+        _Y_bbbbbb_Y_
+        _Y________Y_
+        _BYYYYCCCCK_
+        ____________
+    ''', '''
+      <style>
+        @page {
+          size: 12px 10px;
+        }
+        div {
+          border: 1px solid black;
+          border-image-source: url(border.svg);
+          border-image-slice: 25%;
+          border-image-outset: 2px;
+          height: 2px;
+          margin: 3px;
+          width: 4px;
+          background: #000080
         }
       </style>
       <div></div>

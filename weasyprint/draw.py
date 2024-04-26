@@ -487,6 +487,24 @@ def draw_border(stream, box):
         border_right = w - pw - border_left
         border_bottom = h - ph - border_top
 
+        def compute_outset_dimension(dimension, from_border):
+            if dimension.unit is None:
+                return dimension.value * from_border
+            else:
+                assert dimension.unit == 'px'
+                return dimension.value
+
+        outsets = box.style['border_image_outset']
+        outset_top = compute_outset_dimension(outsets[0], border_top)
+        outset_right = compute_outset_dimension(outsets[1], border_right)
+        outset_bottom = compute_outset_dimension(outsets[2], border_bottom)
+        outset_left = compute_outset_dimension(outsets[3], border_left)
+
+        x -= outset_left
+        y -= outset_top
+        w += outset_left + outset_right
+        h += outset_top + outset_bottom
+
         def draw_border_image(x, y, width, height, slice_x, slice_y,
                               slice_width, slice_height,
                               repeat_x='stretch', repeat_y='stretch'):
