@@ -51,8 +51,11 @@ def layout_box_backgrounds(page, box, get_image_from_uri, layout_children=True,
     # convenient place to get the image.
     if (style['border_image_source']
             and style['border_image_source'][0] != 'none'):
-        box.border_image = get_image_from_uri(
-            url=style['border_image_source'][1])
+        type_, value = style['border_image_source']
+        if type_ == 'url':
+            box.border_image = get_image_from_uri(url=value)
+        else:
+            box.border_image = value
 
     if style['visibility'] == 'hidden':
         images = []
