@@ -533,43 +533,50 @@ def draw_border(stream, box):
 
         def draw_border_image(x, y, width, height, slice_x, slice_y,
                               slice_width, slice_height,
-                              repeat_x='stretch', repeat_y='stretch'):
-            if not all((
-                    intrinsic_width, intrinsic_height,
-                    width, height, slice_width, slice_height)):
-                return
-
-            extra_dx = 0
-            scale_x = 1
-            if repeat_x == 'repeat':
-                n_repeats_x = ceil(width / slice_width)
-            elif repeat_x == 'space':
-                n_repeats_x = floor(width / slice_width)
-                # Space is before the first repeat and after the last,
-                # so there's one more space than repeat.
-                extra_dx = (width - n_repeats_x * slice_width) / (n_repeats_x + 1)
-            elif repeat_x == 'round':
-                n_repeats_x = max(1, round(width / slice_width))
-                scale_x = width / (n_repeats_x * slice_width)
+                              repeat_x='stretch', repeat_y='stretch',
+                              scale_x=None, scale_y=None):
+            if 0 in (intrinsic_width, width, slice_width):
+                scale_x = 0
             else:
-                n_repeats_x = 1
-                scale_x = width / slice_width
+                extra_dx = 0
+                if not scale_x:
+                    scale_x = (height / slice_height) if slice_height else 1
+                if repeat_x == 'repeat':
+                    n_repeats_x = ceil(width / slice_width / scale_x)
+                elif repeat_x == 'space':
+                    n_repeats_x = floor(width / slice_width / scale_x)
+                    # Space is before the first repeat and after the last,
+                    # so there's one more space than repeat.
+                    extra_dx = (width - n_repeats_x * slice_width) / (n_repeats_x + 1)
+                elif repeat_x == 'round':
+                    n_repeats_x = max(1, round(width / slice_width / scale_x))
+                    scale_x = width / (n_repeats_x * slice_width)
+                else:
+                    n_repeats_x = 1
+                    scale_x = width / slice_width
 
-            extra_dy = 0
-            scale_y = 1
-            if repeat_y == 'repeat':
-                n_repeats_y = ceil(height / slice_height)
-            elif repeat_y == 'space':
-                n_repeats_y = floor(height / slice_height)
-                # Space is before the first repeat and after the last,
-                # so there's one more space than repeat.
-                extra_dy = (height - n_repeats_y * slice_height) / (n_repeats_y + 1)
-            elif repeat_y == 'round':
-                n_repeats_y = max(1, round(height / slice_height))
-                scale_y = height / (n_repeats_y * slice_height)
+            if 0 in (intrinsic_height, height, slice_height):
+                scale_y = 0
             else:
-                n_repeats_y = 1
-                scale_y = height / slice_height
+                extra_dy = 0
+                if not scale_y:
+                    scale_y = (width / slice_width) if slice_width else 1
+                if repeat_y == 'repeat':
+                    n_repeats_y = ceil(height / slice_height / scale_y)
+                elif repeat_y == 'space':
+                    n_repeats_y = floor(height / slice_height / scale_y)
+                    # Space is before the first repeat and after the last,
+                    # so there's one more space than repeat.
+                    extra_dy = (height - n_repeats_y * slice_height) / (n_repeats_y + 1)
+                elif repeat_y == 'round':
+                    n_repeats_y = max(1, round(height / slice_height / scale_y))
+                    scale_y = height / (n_repeats_y * slice_height)
+                else:
+                    n_repeats_y = 1
+                    scale_y = height / slice_height
+
+            if 0 in (scale_x, scale_y):
+                return scale_x, scale_y
 
             rendered_width = intrinsic_width * scale_x
             rendered_height = intrinsic_height * scale_y
@@ -597,14 +604,17 @@ def draw_border(stream, box):
                                 stream, intrinsic_width, intrinsic_height,
                                 box.style['image_rendering'])
 
+            return scale_x, scale_y
+
         # Top left.
-        draw_border_image(x, y, border_left, border_top, 0, 0, slice_left, slice_top)
+        scale_left, scale_top = draw_border_image(
+            x, y, border_left, border_top, 0, 0, slice_left, slice_top)
         # Top right.
         draw_border_image(
             x + w - border_right, y, border_right, border_top,
             intrinsic_width - slice_right, 0, slice_right, slice_top)
         # Bottom right.
-        draw_border_image(
+        scale_right, scale_bottom = draw_border_image(
             x + w - border_right, y + h - border_bottom, border_right, border_bottom,
             intrinsic_width - slice_right, intrinsic_height - slice_bottom,
             slice_right, slice_bottom)
@@ -647,8 +657,8 @@ def draw_border(stream, box):
                 h - border_top - border_bottom, slice_left, slice_top,
                 intrinsic_width - slice_left - slice_right,
                 intrinsic_height - slice_top - slice_bottom,
-                repeat_x=style_repeat_x,
-                repeat_y=style_repeat_y)
+                repeat_x=style_repeat_x, repeat_y=style_repeat_y,
+                scale_x=scale_left or scale_right, scale_y=scale_top or scale_bottom)
 
         draw_column_border()
         return
