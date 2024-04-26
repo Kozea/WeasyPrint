@@ -446,13 +446,6 @@ def draw_border(stream, box):
         draw_column_border()
         return
 
-    widths = [getattr(box, f'border_{side}_width') for side in SIDES]
-
-    # No border, return early.
-    if all(width == 0 for width in widths):
-        draw_column_border()
-        return
-
     # If there's a border image, that takes precedence.
     if box.style['border_image_source'][0] != 'none' and box.border_image is not None:
         img = box.border_image
@@ -660,6 +653,13 @@ def draw_border(stream, box):
                 repeat_x=style_repeat_x, repeat_y=style_repeat_y,
                 scale_x=scale_left or scale_right, scale_y=scale_top or scale_bottom)
 
+        draw_column_border()
+        return
+
+    widths = [getattr(box, f'border_{side}_width') for side in SIDES]
+
+    # No border, return early.
+    if all(width == 0 for width in widths):
         draw_column_border()
         return
 
