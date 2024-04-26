@@ -582,20 +582,20 @@ def draw_border(stream, box):
                 stream.end()
                 stream.transform(e=x - offset_x + extra_dx, f=y - offset_y + extra_dy)
                 stream.transform(a=scale_x, d=scale_y)
-                for xcnt in range(n_repeats_x):
-                    with stacked(stream):
-                        for ycnt in range(n_repeats_y):
-                            with stacked(stream):
-                                stream.rectangle(
-                                    offset_x / scale_x, offset_y / scale_y,
-                                    slice_width, slice_height)
-                                stream.clip()
-                                stream.end()
-                                img.draw(
-                                    stream, intrinsic_width, intrinsic_height,
-                                    box.style['image_rendering'])
-                            stream.transform(f=slice_height + extra_dy)
-                    stream.transform(e=slice_width + extra_dx)
+                for i in range(n_repeats_x):
+                    for j in range(n_repeats_y):
+                        with stacked(stream):
+                            translate_x = i * (slice_width + extra_dx)
+                            translate_y = j * (slice_height + extra_dy)
+                            stream.transform(e=translate_x, f=translate_y)
+                            stream.rectangle(
+                                offset_x / scale_x, offset_y / scale_y,
+                                slice_width, slice_height)
+                            stream.clip()
+                            stream.end()
+                            img.draw(
+                                stream, intrinsic_width, intrinsic_height,
+                                box.style['image_rendering'])
 
         # Top left.
         draw_border_image(x, y, border_left, border_top, 0, 0, slice_left, slice_top)
