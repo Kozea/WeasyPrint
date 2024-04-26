@@ -465,6 +465,12 @@ def draw_border(stream, box):
         image_slice = box.style['border_image_slice'][:4]
         should_fill = box.style['border_image_slice'][4]
 
+        if len(box.style['border_image_repeat']) == 1:
+            style_repeat_x = style_repeat_y = box.style['border_image_repeat']
+        else:
+            style_repeat_y = box.style['border_image_repeat'][0]
+            style_repeat_x = box.style['border_image_repeat'][1]
+
         def compute_slice_dimension(dimension, intrinsic):
             if isinstance(dimension, (int, float)):
                 return dimension
@@ -484,23 +490,70 @@ def draw_border(stream, box):
         border_right = w - pw - border_left
         border_bottom = h - ph - border_top
 
-        def draw_border_image(x, y, width, height, slice_x, slice_y, slice_width,
-                              slice_height):
+        def draw_border_image(x, y, width, height, slice_x, slice_y,
+                              slice_width, slice_height,
+                              repeat_x='stretch', repeat_y='stretch'):
             with stacked(stream):
-                scale_x = width / slice_width
-                scale_y = height / slice_height
-                rendered_width = intrinsic_width * scale_x
-                rendered_height = intrinsic_height * scale_y
                 stream.rectangle(x, y, width, height)
                 stream.clip()
                 stream.end()
-                stream.transform(
-                    e=x - rendered_width * slice_x / intrinsic_width,
-                    f=y - rendered_height * slice_y / intrinsic_height)
+                extra_dx = 0
+                extra_dy = 0
+                if repeat_x == 'repeat':
+                    n_repeats_x = ceil(width / slice_width)
+                    scale_x = 1
+                elif repeat_x == 'space':
+                    n_repeats_x = floor(width / slice_width)
+                    scale_x = 1
+                    # Space is before the first repeat and after the last,
+                    # so there's one more space than repeat.
+                    extra_dx = ((width - n_repeats_x * slice_width)
+                                / (n_repeats_x + 1))
+                elif repeat_x == 'round':
+                    n_repeats_x = round(width / slice_width)
+                    scale_x =  width / (n_repeats_x * slice_width)
+                else:
+                    n_repeats_x = 1
+                    scale_x = width / slice_width
+                if repeat_y == 'repeat':
+                    n_repeats_y = ceil(height / slice_height)
+                    scale_y = 1
+                elif repeat_y == 'space':
+                    n_repeats_y = floor(height / slice_height)
+                    scale_y = 1
+                    # Space is before the first repeat and after the last,
+                    # so there's one more space than repeat.
+                    extra_dy = ((height - n_repeats_y * slice_height)
+                                / (n_repeats_y + 1))
+                elif repeat_y == 'round':
+                    n_repeats_y = round(height / slice_height)
+                    scale_y =  height / (n_repeats_y * slice_height)
+                else:
+                    n_repeats_y = 1
+                    scale_y = height / slice_height
+                rendered_width = intrinsic_width * scale_x
+                rendered_height = intrinsic_height * scale_y
+                offset_x = rendered_width * slice_x / intrinsic_width
+                offset_y = rendered_height * slice_y / intrinsic_height
+                stream.transform(e=x - offset_x + extra_dx,
+                                 f=y - offset_y + extra_dy)
                 stream.transform(a=scale_x, d=scale_y)
-                img.draw(
-                    stream, intrinsic_width, intrinsic_height,
-                    box.style['image_rendering'])
+                for xcnt in range(n_repeats_x):
+                    with stacked(stream):
+                        for ycnt in range(n_repeats_y):
+                            with stacked(stream):
+                                stream.rectangle(offset_x / scale_x,
+                                                 offset_y / scale_y,
+                                                 slice_width,
+                                                 slice_height)
+                                stream.clip()
+                                stream.end()
+                                img.draw(stream, intrinsic_width,
+                                         intrinsic_height,
+                                         box.style['image_rendering'])
+                            stream.transform(f=slice_height + extra_dy)
+                    stream.transform(e=slice_width + extra_dx)
+
 
         # Top left.
         draw_border_image(
@@ -522,24 +575,29 @@ def draw_border(stream, box):
             # Top middle.
             draw_border_image(
                 x + border_left, y, w - border_left - border_right, border_top,
-                slice_left, 0, intrinsic_width - slice_left - slice_right, slice_top)
+                slice_left, 0, intrinsic_width - slice_left - slice_right,
+                slice_top, repeat_x=style_repeat_x)
             # Bottom middle.
             draw_border_image(
                 x + border_left, y + h - border_bottom,
                 w - border_left - border_right, border_bottom,
                 slice_left, intrinsic_height - slice_bottom,
-                intrinsic_width - slice_left - slice_right, slice_bottom)
+                intrinsic_width - slice_left - slice_right, slice_bottom,
+                repeat_x=style_repeat_x)
         if slice_top + slice_bottom < intrinsic_height:
             # Right middle.
             draw_border_image(
                 x + w - border_right, y + border_top,
                 border_right, h - border_top - border_bottom,
                 intrinsic_width - slice_right, slice_top,
-                slice_right, intrinsic_height - slice_top - slice_bottom)
+                slice_right, intrinsic_height - slice_top - slice_bottom,
+                repeat_y=style_repeat_y)
             # Left middle.
             draw_border_image(
                 x, y + border_top, border_left, h - border_top - border_bottom,
-                0, slice_top, slice_left, intrinsic_height - slice_top - slice_bottom)
+                0, slice_top, slice_left,
+                intrinsic_height - slice_top - slice_bottom,
+                repeat_y=style_repeat_y)
         if (should_fill and slice_left + slice_right < intrinsic_width
                 and slice_top + slice_bottom < intrinsic_height):
             # Fill middle.
@@ -547,7 +605,9 @@ def draw_border(stream, box):
                 x + border_left, y + border_top, w - border_left - border_right,
                 h - border_top - border_bottom, slice_left, slice_top,
                 intrinsic_width - slice_left - slice_right,
-                intrinsic_height - slice_top - slice_bottom)
+                intrinsic_height - slice_top - slice_bottom,
+                repeat_x=style_repeat_x,
+                repeat_y=style_repeat_y)
 
         draw_column_border()
         return

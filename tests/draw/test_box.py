@@ -422,3 +422,62 @@ def test_border_image_not_percent(assert_pixels):
       </style>
       <div></div>
     ''')
+
+@assert_no_logs
+def test_border_image_repeat(assert_pixels):
+    assert_pixels('''
+        ___________
+        _RYMYMYMYG_
+        _M_______C_
+        _Y_______Y_
+        _M_______C_
+        _Y_______Y_
+        _BYCYCYCYK_
+        ___________
+    ''', '''
+      <style>
+        @page {
+          size: 11px 8px;
+        }
+        div {
+          border: 1px solid black;
+          border-image-source: url(border.svg);
+          border-image-slice: 25%;
+          border-image-repeat: repeat;
+          height: 4px;
+          margin: 1px;
+          width: 7px;
+        }
+      </style>
+      <div></div>
+    ''')
+
+@assert_no_logs
+def test_border_image_space(assert_pixels):
+    assert_pixels('''
+        _________
+        _R_YMC_G_
+        _________
+        _M_____C_
+        _Y_____Y_
+        _C_____M_
+        _________
+        _B_YCM_K_
+        _________
+    ''', '''
+      <style>
+        @page {
+          size: 9px 9px;
+        }
+        div {
+          border: 1px solid black;
+          border-image-source: url(border2.svg);
+          border-image-slice: 20%;
+          border-image-repeat: space;
+          height: 5px;
+          margin: 1px;
+          width: 5px;
+        }
+      </style>
+      <div></div>
+    ''')
