@@ -545,3 +545,21 @@ def test_flex_absolute():
       <div style="display: flex; position: absolute">
         <div>a</div>
       </div>''')
+
+
+@assert_no_logs
+def test_flex_percent_height():
+    page, = render_pages('''
+      <style>
+        .a { height: 10px; width: 10px; }
+        .b { height: 10%; width: 100%; display: flex; flex-direction: column; }
+      </style>
+      <div class="a"">
+        <div class="b"></div>
+      </div>''')
+    html, = page.children
+    body, = html.children
+    a, = body.children
+    b, = a.children
+    assert a.height == 10
+    assert b.height == 1
