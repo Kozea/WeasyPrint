@@ -16,9 +16,10 @@ from .properties import ( # isort:skip
     background_size, block_ellipsis, border_image_source, border_image_slice,
     border_image_width, border_image_outset, border_image_repeat, border_style,
     border_width, box, column_count, column_width, flex_basis, flex_direction,
-    flex_grow_shrink, flex_wrap, font_family, font_size, font_stretch, font_style,
-    font_weight, line_height, list_style_image, list_style_position, list_style_type,
-    other_colors, overflow_wrap, validate_non_shorthand)
+    flex_grow_shrink, flex_wrap, font_family, font_size, font_stretch,
+    font_style, font_weight, grid_line, line_height, list_style_image,
+    list_style_position, list_style_type, other_colors, overflow_wrap,
+    validate_non_shorthand)
 
 EXPANDERS = {}
 
@@ -752,6 +753,49 @@ def expand_flex_flow(tokens, name):
                 raise InvalidValues
     else:
         raise InvalidValues
+
+
+@expander('grid-template')
+@generic_expander('-columns', '-rows', '-areas')
+def expand_grid_template(tokens, name):
+    """Expand the ``grid-template`` property."""
+    # TODO: write expander
+
+
+@expander('grid')
+@generic_expander('-template-columns', '-template-rows', '-template-areas',
+                  '-auto-columns', '-auto-rows', '-auto-flow')
+def expand_grid(tokens, name):
+    """Expand the ``grid`` property."""
+    # TODO: write expander
+
+
+@expander('grid-column')
+@expander('grid-row')
+@generic_expander('-start', '-end')
+def expand_grid_column_row(tokens, name):
+    """Expand the ``grid-[column|row]`` properties."""
+    grid_lines = [[]]
+    for token in tokens:
+        if token.type == 'literal' and token.value == '/':
+            if len(grid_lines) != 1:
+                raise InvalidValues
+            grid_lines.append([])
+            continue
+        grid_lines[-1].append(token)
+    if len(grid_lines) in (1, 2):
+        for token, side in zip(grid_lines, ('start', 'end')):
+            if not grid_line(token):
+                raise InvalidValues
+            yield f'-{side}', token
+
+
+@expander('grid-area')
+@generic_expander('grid-row-start', 'grid-row-end',
+                  'grid-column-start', 'grid-column-end')
+def expand_grid_area(tokens, name):
+    """Expand the ``grid-area`` property."""
+    # TODO: write expander
 
 
 @expander('line-clamp')
