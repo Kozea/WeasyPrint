@@ -1072,6 +1072,7 @@ def grid_children(box, children):
                 continue
             if isinstance(child, boxes.InlineLevelBox):
                 anonymous = boxes.BlockBox.anonymous_from(child, [child])
+                anonymous.style = child.style
                 child.is_grid_item = False
                 anonymous.is_grid_item = True
                 grid_children.append(anonymous)
