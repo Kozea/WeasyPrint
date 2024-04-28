@@ -537,3 +537,137 @@ def test_grid_template_fr_undefined_free_space():
     assert div_b.width == div_d.width == 5
     assert article.width == 10
     assert article.height == 16
+
+
+@assert_no_logs
+def test_grid_column_start():
+    page, = render_pages('''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        dl {
+          display: grid;
+          font-family: weasyprint;
+          font-size: 2px;
+          grid-template-columns: max-content auto;
+          line-height: 1;
+          width: 10px;
+        }
+        dt {
+          display: block;
+          grid-column-start: 1;
+        }
+        dd {
+          display: block;
+          grid-column-start: 2;
+        }
+      </style>
+      <dl>
+        <dt>A</dt>
+        <dd>A1</dd>
+        <dd>A2</dd>
+        <dt>B</dt>
+        <dd>B1</dd>
+        <dd>B2</dd>
+      </dl>
+    ''')
+    html, = page.children
+    body, = html.children
+    dl, = body.children
+    dt_a, dd_a1, dd_a2, dt_b, dd_b1, dd_b2 = dl.children
+    assert dt_a.position_y == dd_a1.position_y == 0
+    assert dd_a2.position_y == 2
+    assert dt_b.position_y == dd_b1.position_y == 4
+    assert dd_b2.position_y == 6
+    assert dt_a.position_x == dt_b.position_x == 0
+    assert dd_a1.position_x == dd_a2.position_x == 2
+    assert dd_b1.position_x == dd_b2.position_x == 2
+
+
+@assert_no_logs
+def test_grid_column_start_blockified():
+    page, = render_pages('''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        dl {
+          display: grid;
+          font-family: weasyprint;
+          font-size: 2px;
+          grid-template-columns: max-content auto;
+          line-height: 1;
+          width: 10px;
+        }
+        dt {
+          display: inline;
+          grid-column-start: 1;
+        }
+        dd {
+          display: inline;
+          grid-column-start: 2;
+        }
+      </style>
+      <dl>
+        <dt>A</dt>
+        <dd>A1</dd>
+        <dd>A2</dd>
+        <dt>B</dt>
+        <dd>B1</dd>
+        <dd>B2</dd>
+      </dl>
+    ''')
+    html, = page.children
+    body, = html.children
+    dl, = body.children
+    dt_a, dd_a1, dd_a2, dt_b, dd_b1, dd_b2 = dl.children
+    assert dt_a.position_y == dd_a1.position_y == 0
+    assert dd_a2.position_y == 2
+    assert dt_b.position_y == dd_b1.position_y == 4
+    assert dd_b2.position_y == 6
+    assert dt_a.position_x == dt_b.position_x == 0
+    assert dd_a1.position_x == dd_a2.position_x == 2
+    assert dd_b1.position_x == dd_b2.position_x == 2
+
+
+@assert_no_logs
+def test_grid_undefined_free_space():
+    page, = render_pages('''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        body {
+          font-family: weasyprint;
+          font-size: 2px;
+          line-height: 1;
+        }
+        .columns {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          width: 8px;
+        }
+        .rows {
+          display: grid;
+          grid-template-rows: 1fr 1fr;
+        }
+      </style>
+      <div class="columns">
+        <div class="rows">
+          <div>aa</div>
+          <div>b</div>
+        </div>
+        <div class="rows">
+          <div>c<br>c</div>
+          <div>d</div>
+        </div>
+      </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div_c, = body.children
+    div_c1, div_c2 = div_c.children
+    div_r11, div_r12 = div_c1.children
+    div_r21, div_r22 = div_c2.children
+    assert div_r11.position_x == div_r12.position_x == 0
+    assert div_r21.position_x == div_r22.position_x == 4
+    assert div_r11.position_y == div_r21.position_y == 0
+    assert div_r12.position_y == div_r22.position_y == 4
+    assert div_r11.height == div_r12.height == div_r21.height == div_r22.height == 4
+    assert div_r11.width == div_r12.width == div_r21.width == div_r22.width == 4
+    assert div_c.width == 8
