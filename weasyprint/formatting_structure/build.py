@@ -1071,7 +1071,7 @@ def grid_children(box, children):
                 # https://drafts.csswg.org/css-grid-2/#grid-item
                 continue
             if isinstance(child, boxes.InlineLevelBox):
-                anonymous = boxes.BlockBox.anonymous_from(box, [child])
+                anonymous = boxes.BlockBox.anonymous_from(child, [child])
                 child.is_grid_item = False
                 anonymous.is_grid_item = True
                 grid_children.append(anonymous)
