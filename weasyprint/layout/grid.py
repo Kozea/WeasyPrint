@@ -5,6 +5,7 @@ from math import inf
 
 from ..css.properties import Dimension
 from ..formatting_structure import boxes
+from ..logger import LOGGER
 from .percent import percentage, resolve_percentages
 from .preferred import max_content_width, min_content_width
 from .table import find_in_flow_baseline
@@ -186,6 +187,7 @@ def _get_template_tracks(tracks):
         tracks = ((),)
     if 'subgrid' in tracks:
         # TODO: Support subgrids.
+        LOGGER.warning('Subgrids are unsupported')
         return [[]]
     tracks_list = []
     for i, track in enumerate(tracks):
@@ -195,6 +197,8 @@ def _get_template_tracks(tracks):
                 repeat_number, repeat_track_list = track[1:]
                 if not isinstance(repeat_number, int):
                     # TODO: Respect auto-fit and auto-fill.
+                    LOGGER.warning(
+                        '"auto-fit" and "auto-fill" are unsupported in repeat()')
                     repeat_number = 1
                 for _ in range(repeat_number):
                     for j, repeat_track in enumerate(repeat_track_list):
@@ -571,7 +575,6 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
 
     # Define explicit grid
     grid_areas = box.style['grid_template_areas']
-    # TODO: Support 'column' value in grid-auto-flow.
     flow = box.style['grid_auto_flow']
     auto_rows = cycle(box.style['grid_auto_rows'])
     auto_columns = cycle(box.style['grid_auto_columns'])
@@ -583,6 +586,10 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
     row_gap = box.style['row_gap']
     if row_gap == 'normal':
         row_gap = 0
+
+    # TODO: Support 'column' value in grid-auto-flow.
+    if 'column' in flow:
+        LOGGER.warning('"column" is not supported in grid-auto-flow')
 
     if grid_areas == 'none':
         grid_areas = ((None,),)
@@ -1035,7 +1042,9 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
             rows_positions.append(y)
             y += size + free_height / (rows_number + 1) + row_gap
     else:
-        # TODO: Support baseline value.
+        if align_content & {'baseline'}:
+            # TODO: Support baseline value.
+            LOGGER.warning('Baseline alignment is not supported for grid layout')
         for size, _ in rows_sizes:
             rows_positions.append(y)
             y += size + row_gap
@@ -1159,6 +1168,7 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
     box = box.copy_with_children(new_children)
     if isinstance(box, boxes.InlineGridBox):
         # TODO: Synthetize a real baseline value.
+        LOGGER.warning('Inline grids are not supported')
         box.baseline = baseline or 0
 
     context.finish_block_formatting_context(box)

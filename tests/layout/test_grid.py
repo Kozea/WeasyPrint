@@ -474,7 +474,6 @@ def test_grid_shorthand_auto_flow_rows_fr_size():
     assert article.width == 10
 
 
-@assert_no_logs
 def test_grid_shorthand_auto_flow_columns_none_dense():
     page, = render_pages('''
       <style>
