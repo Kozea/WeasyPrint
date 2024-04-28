@@ -56,6 +56,13 @@ def layout_box_backgrounds(page, box, get_image_from_uri, layout_children=True,
         else:
             box.border_image = value
 
+    if style['mask_border_source'][0] != 'none':
+        type_, value = style['mask_border_source']
+        if type_ == 'url':
+            box.mask_border_image = get_image_from_uri(url=value)
+        else:
+            box.mask_border_image = value
+
     if style['visibility'] == 'hidden':
         images = []
         color = parse_color('transparent')
