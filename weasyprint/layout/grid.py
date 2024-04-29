@@ -1100,25 +1100,32 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         child = child.deepcopy()
         child.position_x = columns_positions[x]
         child.position_y = rows_positions[y] - skip_height
+        resolve_percentages(child, box)
         width = (
             sum(size for size, _ in columns_sizes[x:x+width]) +
             (width - 1) * column_gap)
         height = (
             sum(size for size, _ in rows_sizes[y:y+height]) +
             (height - 1) * row_gap)
+        child_width = width - (
+            child.margin_left + child.border_left_width + child.padding_left +
+            child.margin_right + child.border_right_width + child.padding_right)
+        child_height = height - (
+            child.margin_top + child.border_top_width + child.padding_top +
+            child.margin_bottom + child.border_bottom_width + child.padding_bottom)
 
         justify_self = set(child.style['justify_self'])
         if justify_self & {'auto'}:
             justify_self = justify_items
         if justify_self & {'normal', 'stretch'}:
             if child.style['width'] == 'auto':
-                child.style['width'] = Dimension(width, 'px')
+                child.style['width'] = Dimension(child_width, 'px')
         align_self = set(child.style['align_self'])
         if align_self & {'auto'}:
             align_self = align_items
         if align_self & {'normal', 'stretch'}:
             if child.style['height'] == 'auto':
-                child.style['height'] = Dimension(height, 'px')
+                child.style['height'] = Dimension(child_height, 'px')
 
         # TODO: Find a better solution for the layout.
         parent = boxes.BlockContainerBox.anonymous_from(box, ())
@@ -1138,29 +1145,25 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
             continue
 
         # TODO: Apply auto margins.
-        width -= new_child.margin_width() - new_child.width
         if justify_self & {'normal', 'stretch'}:
-            new_child.width = max(width, new_child.width)
+            new_child.width = max(child_width, new_child.width)
         else:
             new_child.width = max_content_width(context, new_child)
-            diff = width - new_child.width
+            diff = child_width - new_child.width
             if justify_self & {'center'}:
                 new_child.translate(diff / 2, 0)
             elif justify_self & {'right', 'end', 'flex-end', 'self-end'}:
                 new_child.translate(diff, 0)
-        new_child.width -= new_child.margin_width() - new_child.width
 
         # TODO: Apply auto margins.
-        height -= new_child.margin_height() - new_child.height
         if align_self & {'normal', 'stretch'}:
-            new_child.height = max(height, new_child.height)
+            new_child.height = max(child_height, new_child.height)
         else:
-            diff = height - new_child.height
+            diff = child_height - new_child.height
             if align_self & {'center'}:
                 new_child.translate(0, diff / 2)
             elif align_self & {'end', 'flex-end', 'self-end'}:
                 new_child.translate(0, diff)
-        new_child.height -= new_child.margin_height() - new_child.height
 
         # TODO: Take care of page fragmentation.
         new_children.append(new_child)
