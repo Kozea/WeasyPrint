@@ -1148,6 +1148,7 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                 new_child.translate(diff / 2, 0)
             elif justify_self & {'right', 'end', 'flex-end', 'self-end'}:
                 new_child.translate(diff, 0)
+        new_child.width -= new_child.margin_width() - new_child.width
 
         # TODO: Apply auto margins.
         height -= new_child.margin_height() - new_child.height
@@ -1159,6 +1160,7 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                 new_child.translate(0, diff / 2)
             elif align_self & {'end', 'flex-end', 'self-end'}:
                 new_child.translate(0, diff)
+        new_child.height -= new_child.margin_height() - new_child.height
 
         # TODO: Take care of page fragmentation.
         new_children.append(new_child)

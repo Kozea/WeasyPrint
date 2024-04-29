@@ -671,3 +671,132 @@ def test_grid_undefined_free_space():
     assert div_r11.height == div_r12.height == div_r21.height == div_r22.height == 4
     assert div_r11.width == div_r12.width == div_r21.width == div_r22.width == 4
     assert div_c.width == 8
+
+
+@assert_no_logs
+def test_grid_padding():
+    page, = render_pages('''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        article {
+          display: grid;
+          font-family: weasyprint;
+          font-size: 2px;
+          grid-template-rows: auto 1fr;
+          grid-template-columns: auto 1fr;
+          line-height: 1;
+          width: 14px;
+        }
+      </style>
+      <article>
+        <div style="padding: 1px">a</div> <div>b</div>
+        <div>c</div> <div style="padding: 2px">d</div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div_a, div_b, div_c, div_d = article.children
+    assert div_a.position_x == div_c.position_x == div_c.content_box_x() == 0
+    assert div_a.content_box_x() == 1
+    assert div_b.position_x == div_b.content_box_x() == div_d.position_x == 4
+    assert div_d.content_box_x() == 6
+    assert div_a.width == 2
+    assert div_b.width == 10
+    assert div_c.width == 4
+    assert div_d.width == 6
+    assert article.width == 14
+    assert div_a.position_y == div_b.position_y == div_b.content_box_y() == 0
+    assert div_a.content_box_y() == 1
+    assert div_c.position_y == div_c.content_box_y() == div_d.position_y == 4
+    assert div_d.content_box_y() == 6
+    assert div_a.height == div_d.height == 2
+    assert div_b.height == 4
+    assert div_c.height == 6
+    assert article.height == 10
+
+
+@assert_no_logs
+def test_grid_border():
+    page, = render_pages('''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        article {
+          display: grid;
+          font-family: weasyprint;
+          font-size: 2px;
+          grid-template-rows: auto 1fr;
+          grid-template-columns: auto 1fr;
+          line-height: 1;
+          width: 14px;
+        }
+      </style>
+      <article>
+        <div style="border: 1px solid">a</div> <div>b</div>
+        <div>c</div> <div style="border: 2px solid">d</div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div_a, div_b, div_c, div_d = article.children
+    assert div_a.position_x == div_c.position_x == div_c.padding_box_x() == 0
+    assert div_a.padding_box_x() == 1
+    assert div_b.position_x == div_b.padding_box_x() == div_d.position_x == 4
+    assert div_d.padding_box_x() == 6
+    assert div_a.width == 2
+    assert div_b.width == 10
+    assert div_c.width == 4
+    assert div_d.width == 6
+    assert article.width == 14
+    assert div_a.position_y == div_b.position_y == div_b.padding_box_y() == 0
+    assert div_a.padding_box_y() == 1
+    assert div_c.position_y == div_c.padding_box_y() == div_d.position_y == 4
+    assert div_d.padding_box_y() == 6
+    assert div_a.height == div_d.height == 2
+    assert div_b.height == 4
+    assert div_c.height == 6
+    assert article.height == 10
+
+
+@assert_no_logs
+def test_grid_margin():
+    page, = render_pages('''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        article {
+          display: grid;
+          font-family: weasyprint;
+          font-size: 2px;
+          grid-template-rows: auto 1fr;
+          grid-template-columns: auto 1fr;
+          line-height: 1;
+          width: 14px;
+        }
+      </style>
+      <article>
+        <div style="margin: 1px">a</div> <div>b</div>
+        <div>c</div> <div style="margin: 2px">d</div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div_a, div_b, div_c, div_d = article.children
+    assert div_a.position_x == div_c.position_x == div_c.border_box_x() == 0
+    assert div_a.border_box_x() == 1
+    assert div_b.position_x == div_b.border_box_x() == div_d.position_x == 4
+    assert div_d.border_box_x() == 6
+    assert div_a.width == 2
+    assert div_b.width == 10
+    assert div_c.width == 4
+    assert div_d.width == 6
+    assert article.width == 14
+    assert div_a.position_y == div_b.position_y == div_b.border_box_y() == 0
+    assert div_a.border_box_y() == 1
+    assert div_c.position_y == div_c.border_box_y() == div_d.position_y == 4
+    assert div_d.border_box_y() == 6
+    assert div_a.height == div_d.height == 2
+    assert div_b.height == 4
+    assert div_c.height == 6
+    assert article.height == 10
