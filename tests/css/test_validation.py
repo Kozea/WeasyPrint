@@ -685,3 +685,451 @@ def test_radial_gradient(rule, value):
 def test_radial_gradient_invalid(rule):
     assert_invalid(f'background-image: radial-gradient({rule})')
     assert_invalid(f'background-image: repeating-radial-gradient({rule})')
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, value', (
+    ('40px', ((40, 'px'),)),
+    ('2fr', ((2, 'fr'),)),
+    ('18%', ((18, '%'),)),
+    ('auto', ('auto',)),
+    ('min-content', ('min-content',)),
+    ('max-content', ('max-content',)),
+    ('fit-content(20%)', (('fit-content()', (20, '%')),)),
+    ('minmax(20px, 25px)', (('minmax()', (20, 'px'), (25, 'px')),)),
+    ('minmax(min-content, max-content)',
+     (('minmax()', 'min-content', 'max-content'),)),
+    ('min-content max-content', ('min-content', 'max-content')),
+))
+def test_grid_auto_columns_rows(rule, value):
+    assert get_value(f'grid-auto-columns: {rule}') == value
+    assert get_value(f'grid-auto-rows: {rule}') == value
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', (
+    '40',
+    'coucou',
+    'fit-content',
+    'fit-content(min-content)',
+    'minmax(40px)',
+    'minmax(2fr, 1fr)',
+    '1fr 1fr coucou',
+    'fit-content()',
+    'fit-content(2%, 18%)',
+))
+def test_grid_auto_columns_rows_invalid(rule):
+    assert_invalid(f'grid-auto-columns: {rule}')
+    assert_invalid(f'grid-auto-rows: {rule}')
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, value', (
+    ('row', ('row',)),
+    ('column', ('column',)),
+    ('row dense', ('row', 'dense')),
+    ('column dense', ('column', 'dense')),
+    ('dense row', ('dense', 'row')),
+    ('dense column', ('dense', 'column')),
+    ('dense', ('dense', 'row')),
+))
+def test_grid_auto_flow(rule, value):
+    assert get_value(f'grid-auto-flow: {rule}') == value
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', (
+    'row row',
+    'column column',
+    'dense dense',
+    'coucou',
+    'row column',
+    'column row',
+    'row coucou',
+    'column coucou',
+    'coucou row',
+    'coucou column',
+    'row column dense',
+))
+def test_grid_auto_flow_invalid(rule):
+    assert_invalid(f'grid-auto-flow: {rule}')
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, value', (
+    ('none', 'none'),
+    ('subgrid', ('subgrid', ())),
+    ('subgrid [a] repeat(auto-fill, [b]) [c]',
+     ('subgrid', (('a',), ('repeat()', 'auto-fill', (('b',),)), ('c',)))),
+    ('subgrid [a] [a] [a] [a] repeat(auto-fill, [b]) [c] [c]',
+     ('subgrid', (('a',), ('a',), ('a',), ('a',),
+      ('repeat()', 'auto-fill', (('b',),)), ('c',), ('c',)))),
+    ('subgrid [] [a]', ('subgrid', ((), ('a',)))),
+    ('subgrid [a] [b] [c] [d] [e] [f]',
+     ('subgrid', (('a',), ('b',), ('c',), ('d',), ('e',), ('f',)))),
+    ('[outer-edge] 20px [main-start] 1fr [center] 1fr max-content [main-end]',
+     (('outer-edge',), (20, 'px'), ('main-start',), (1, 'fr'), ('center',),
+      (1, 'fr'), (), 'max-content', ('main-end',))),
+    ('repeat(auto-fill, minmax(25ch, 1fr))',
+     ((), ('repeat()', 'auto-fill', (
+         (), ('minmax()', (25, 'ch'), (1, 'fr')), ())), ())),
+    ('[a] auto [b] minmax(min-content, 1fr) [b c d] '
+     'repeat(2, [e] 40px) repeat(5, auto)',
+     (('a',), 'auto', ('b',), ('minmax()', 'min-content', (1, 'fr')),
+      ('b', 'c', 'd'), ('repeat()', 2, (('e',), (40, 'px'), ())),
+      (), ('repeat()', 5, ((), 'auto', ())), ())),
+))
+def test_grid_template_columns_rows(rule, value):
+    assert get_value(f'grid-template-columns: {rule}') == value
+    assert get_value(f'grid-template-rows: {rule}') == value
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', (
+    'coucou',
+    'subgrid subgrid',
+    'subgrid coucou',
+    'subgrid [coucou] repeat(0, [wow])',
+    'subgrid [coucou] repeat(auto-fit [wow])',
+    'fit-content(18%) repeat(auto-fill, 15em)',
+    '[coucou] [wow]',
+))
+def test_grid_template_columns_rows_invalid(rule):
+    assert_invalid(f'grid-template-columns: {rule}')
+    assert_invalid(f'grid-template-rows: {rule}')
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, value', (
+    ('none', 'none'),
+    ('"head head" "nav main" "foot ...."',
+     (('head', 'head'), ('nav', 'main'), ('foot', None))),
+    ('"title board" "stats board"',
+     (('title', 'board'), ('stats', 'board'))),
+    ('". a" "b a" ".a"',
+     ((None, 'a'), ('b', 'a'), (None, 'a'))),
+))
+def test_grid_template_areas(rule, value):
+    assert get_value(f'grid-template-areas: {rule}') == value
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', (
+    '"head head coucou" "nav main" "foot ...."',
+    '". a" "b c" ". a"',
+    '". a" "b a" "a a"',
+    '"a a a a" "a b b a" "a a a a"',
+    '" "',
+))
+def test_grid_template_areas_invalid(rule):
+    assert_invalid(f'grid-template-areas: {rule}')
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, value', (
+    ('auto', 'auto'),
+    ('4', (None, 4, None)),
+    ('C', (None, None, 'c')),
+    ('4 c', (None, 4, 'c')),
+    ('col -4', (None, -4, 'col')),
+    ('span c 4', ('span', 4, 'c')),
+    ('span 4 c', ('span', 4, 'c')),
+    ('4 span c', ('span', 4, 'c')),
+    ('super 4 span', ('span', 4, 'super')),
+))
+def test_grid_line(rule, value):
+    assert get_value(f'grid-row-start: {rule}') == value
+    assert get_value(f'grid-row-end: {rule}') == value
+    assert get_value(f'grid-column-start: {rule}') == value
+    assert get_value(f'grid-column-end: {rule}') == value
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', (
+    'span',
+    '0',
+    '1.1',
+    'span 0',
+    'span -1',
+    'span 2.1',
+    'span auto',
+    'auto auto',
+    '-4 cOL span',
+    'span 1.1 col',
+))
+def test_grid_line_invalid(rule):
+    assert_invalid(f'grid-row-start: {rule}')
+    assert_invalid(f'grid-row-end: {rule}')
+    assert_invalid(f'grid-column-start: {rule}')
+    assert_invalid(f'grid-column-end: {rule}')
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, value', (
+    ('normal', ('normal',)),
+    ('baseline', ('first', 'baseline')),
+    ('first baseline', ('first', 'baseline')),
+    ('last baseline', ('last', 'baseline')),
+    ('baseline last', ('baseline', 'last')),
+    ('space-between', ('space-between',)),
+    ('space-around', ('space-around',)),
+    ('space-evenly', ('space-evenly',)),
+    ('stretch', ('stretch',)),
+    ('center', ('center',)),
+    ('start', ('start',)),
+    ('end', ('end',)),
+    ('flex-start', ('flex-start',)),
+    ('flex-end', ('flex-end',)),
+    ('safe center', ('safe', 'center')),
+    ('unsafe start', ('unsafe', 'start')),
+    ('safe end', ('safe', 'end')),
+    ('safe flex-start', ('safe', 'flex-start')),
+    ('unsafe flex-start', ('unsafe', 'flex-start')),
+))
+def test_align_content(rule, value):
+    assert get_value(f'align-content: {rule}') == value
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', (
+    'auto',
+    'none',
+    'auto auto',
+    'first last',
+    'baseline baseline',
+    'start safe',
+    'start end',
+    'safe unsafe',
+    'left',
+    'right',
+))
+def test_align_content_invalid(rule):
+    assert_invalid(f'align-content: {rule}')
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, value', (
+    ('normal', ('normal',)),
+    ('stretch', ('stretch',)),
+    ('baseline', ('first', 'baseline')),
+    ('first baseline', ('first', 'baseline')),
+    ('last baseline', ('last', 'baseline')),
+    ('baseline last', ('baseline', 'last')),
+    ('center', ('center',)),
+    ('self-start', ('self-start',)),
+    ('self-end', ('self-end',)),
+    ('start', ('start',)),
+    ('end', ('end',)),
+    ('flex-start', ('flex-start',)),
+    ('flex-end', ('flex-end',)),
+    ('safe center', ('safe', 'center')),
+    ('unsafe start', ('unsafe', 'start')),
+    ('safe end', ('safe', 'end')),
+    ('unsafe self-start', ('unsafe', 'self-start')),
+    ('safe self-end', ('safe', 'self-end')),
+    ('safe flex-start', ('safe', 'flex-start')),
+    ('unsafe flex-start', ('unsafe', 'flex-start')),
+))
+def test_align_items(rule, value):
+    assert get_value(f'align-items: {rule}') == value
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', (
+    'auto',
+    'none',
+    'auto auto',
+    'first last',
+    'baseline baseline',
+    'start safe',
+    'start end',
+    'safe unsafe',
+    'left',
+    'right',
+    'space-between',
+))
+def test_align_items_invalid(rule):
+    assert_invalid(f'align-items: {rule}')
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, value', (
+    ('auto', ('auto',)),
+    ('normal', ('normal',)),
+    ('stretch', ('stretch',)),
+    ('baseline', ('first', 'baseline')),
+    ('first baseline', ('first', 'baseline')),
+    ('last baseline', ('last', 'baseline')),
+    ('baseline last', ('baseline', 'last')),
+    ('center', ('center',)),
+    ('self-start', ('self-start',)),
+    ('self-end', ('self-end',)),
+    ('start', ('start',)),
+    ('end', ('end',)),
+    ('flex-start', ('flex-start',)),
+    ('flex-end', ('flex-end',)),
+    ('safe center', ('safe', 'center')),
+    ('unsafe start', ('unsafe', 'start')),
+    ('safe end', ('safe', 'end')),
+    ('unsafe self-start', ('unsafe', 'self-start')),
+    ('safe self-end', ('safe', 'self-end')),
+    ('safe flex-start', ('safe', 'flex-start')),
+    ('unsafe flex-start', ('unsafe', 'flex-start')),
+))
+def test_align_self(rule, value):
+    assert get_value(f'align-self: {rule}') == value
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', (
+    'none',
+    'auto auto',
+    'first last',
+    'baseline baseline',
+    'start safe',
+    'start end',
+    'safe unsafe',
+    'left',
+    'right',
+    'space-between',
+))
+def test_align_self_invalid(rule):
+    assert_invalid(f'align-self: {rule}')
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, value', (
+    ('normal', ('normal',)),
+    ('space-between', ('space-between',)),
+    ('space-around', ('space-around',)),
+    ('space-evenly', ('space-evenly',)),
+    ('stretch', ('stretch',)),
+    ('center', ('center',)),
+    ('left', ('left',)),
+    ('right', ('right',)),
+    ('start', ('start',)),
+    ('end', ('end',)),
+    ('flex-start', ('flex-start',)),
+    ('flex-end', ('flex-end',)),
+    ('safe center', ('safe', 'center')),
+    ('unsafe start', ('unsafe', 'start')),
+    ('safe end', ('safe', 'end')),
+    ('unsafe left', ('unsafe', 'left')),
+    ('safe right', ('safe', 'right')),
+    ('safe flex-start', ('safe', 'flex-start')),
+    ('unsafe flex-start', ('unsafe', 'flex-start')),
+))
+def test_justify_content(rule, value):
+    assert get_value(f'justify-content: {rule}') == value
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', (
+    'auto',
+    'none',
+    'baseline',
+    'auto auto',
+    'first last',
+    'baseline baseline',
+    'start safe',
+    'start end',
+    'safe unsafe',
+))
+def test_justify_content_invalid(rule):
+    assert_invalid(f'justify-content: {rule}')
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, value', (
+    ('normal', ('normal',)),
+    ('stretch', ('stretch',)),
+    ('baseline', ('first', 'baseline')),
+    ('first baseline', ('first', 'baseline')),
+    ('last baseline', ('last', 'baseline')),
+    ('baseline last', ('baseline', 'last')),
+    ('center', ('center',)),
+    ('self-start', ('self-start',)),
+    ('self-end', ('self-end',)),
+    ('start', ('start',)),
+    ('end', ('end',)),
+    ('left', ('left',)),
+    ('right', ('right',)),
+    ('flex-start', ('flex-start',)),
+    ('flex-end', ('flex-end',)),
+    ('safe center', ('safe', 'center')),
+    ('unsafe start', ('unsafe', 'start')),
+    ('safe end', ('safe', 'end')),
+    ('unsafe self-start', ('unsafe', 'self-start')),
+    ('safe self-end', ('safe', 'self-end')),
+    ('safe flex-start', ('safe', 'flex-start')),
+    ('unsafe flex-start', ('unsafe', 'flex-start')),
+    ('legacy', ('legacy',)),
+    ('legacy left', ('legacy', 'left')),
+    ('left legacy', ('left', 'legacy')),
+    ('legacy center', ('legacy', 'center')),
+))
+def test_justify_items(rule, value):
+    assert get_value(f'justify-items: {rule}') == value
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', (
+    'auto',
+    'none',
+    'auto auto',
+    'first last',
+    'baseline baseline',
+    'start safe',
+    'start end',
+    'safe unsafe',
+    'space-between',
+))
+def test_justify_items_invalid(rule):
+    assert_invalid(f'justify-items: {rule}')
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, value', (
+    ('auto', ('auto',)),
+    ('normal', ('normal',)),
+    ('stretch', ('stretch',)),
+    ('baseline', ('first', 'baseline')),
+    ('first baseline', ('first', 'baseline')),
+    ('last baseline', ('last', 'baseline')),
+    ('baseline last', ('baseline', 'last')),
+    ('center', ('center',)),
+    ('self-start', ('self-start',)),
+    ('self-end', ('self-end',)),
+    ('start', ('start',)),
+    ('end', ('end',)),
+    ('left', ('left',)),
+    ('right', ('right',)),
+    ('flex-start', ('flex-start',)),
+    ('flex-end', ('flex-end',)),
+    ('safe center', ('safe', 'center')),
+    ('unsafe start', ('unsafe', 'start')),
+    ('safe end', ('safe', 'end')),
+    ('unsafe left', ('unsafe', 'left')),
+    ('safe right', ('safe', 'right')),
+    ('unsafe self-start', ('unsafe', 'self-start')),
+    ('safe self-end', ('safe', 'self-end')),
+    ('safe flex-start', ('safe', 'flex-start')),
+    ('unsafe flex-start', ('unsafe', 'flex-start')),
+))
+def test_justify_self(rule, value):
+    assert get_value(f'justify-self: {rule}') == value
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', (
+    'none',
+    'auto auto',
+    'first last',
+    'baseline baseline',
+    'start safe',
+    'start end',
+    'safe unsafe',
+    'space-between',
+))
+def test_justify_self_invalid(rule):
+    assert_invalid(f'justify-self: {rule}')

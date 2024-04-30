@@ -625,6 +625,91 @@ def test_flex_flow_invalid(rule):
 
 @assert_no_logs
 @pytest.mark.parametrize('rule, result', (
+    ('auto', {'start': 'auto', 'end': 'auto'}),
+    ('auto / auto', {'start': 'auto', 'end': 'auto'}),
+    ('4', {'start': (None, 4, None), 'end': 'auto'}),
+    ('c', {'start': (None, None, 'c'), 'end': (None, None, 'c')}),
+    ('4 / -4', {'start': (None, 4, None), 'end': (None, -4, None)}),
+    ('c / d', {'start': (None, None, 'c'), 'end': (None, None, 'd')}),
+    ('ab / cd 4', {'start': (None, None, 'ab'), 'end': (None, 4, 'cd')}),
+    ('ab 2 span', {'start': ('span', 2, 'ab'), 'end': 'auto'}),
+))
+def test_grid_column_row(rule, result):
+    assert expand_to_dict(f'grid-column: {rule}') == dict(
+        (f'grid_column_{key}', value) for key, value in result.items())
+    assert expand_to_dict(f'grid-row: {rule}') == dict(
+        (f'grid_row_{key}', value) for key, value in result.items())
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', (
+    'auto auto',
+    '4 / 2 / c',
+    'span',
+    '4 / span',
+    'c /',
+    '/4',
+    'col / 2.1',
+))
+def test_grid_column_row_invalid(rule):
+    assert_invalid(f'grid-column: {rule}')
+    assert_invalid(f'grid-row: {rule}')
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, result', (
+    ('auto', {
+        'row_start': 'auto', 'row_end': 'auto',
+        'column_start': 'auto', 'column_end': 'auto'}),
+    ('auto / auto', {
+        'row_start': 'auto', 'row_end': 'auto',
+        'column_start': 'auto', 'column_end': 'auto'}),
+    ('auto / auto / auto', {
+        'row_start': 'auto', 'row_end': 'auto',
+        'column_start': 'auto', 'column_end': 'auto'}),
+    ('auto / auto / auto / auto', {
+        'row_start': 'auto', 'row_end': 'auto',
+        'column_start': 'auto', 'column_end': 'auto'}),
+    ('1/c/2 d/span 2 ab', {
+        'row_start': (None, 1, None), 'row_end': (None, None, 'c'),
+        'column_start': (None, 2, 'd'), 'column_end': ('span', 2, 'ab')}),
+    ('1  /  c', {
+        'row_start': (None, 1, None), 'row_end': (None, None, 'c'),
+        'column_start': 'auto', 'column_end': (None, None, 'c')}),
+    ('a / c 2', {
+        'row_start': (None, None, 'a'), 'row_end': (None, 2, 'c'),
+        'column_start': (None, None, 'a'), 'column_end': 'auto'}),
+    ('a', {
+        'row_start': (None, None, 'a'), 'row_end': (None, None, 'a'),
+        'column_start': (None, None, 'a'), 'column_end': (None, None, 'a')}),
+    ('span 2', {
+        'row_start': ('span', 2, None), 'row_end': 'auto',
+        'column_start': 'auto', 'column_end': 'auto'}),
+))
+def test_grid_area(rule, result):
+    assert expand_to_dict(f'grid-area: {rule}') == dict(
+        (f'grid_{key}', value) for key, value in result.items())
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', (
+    'auto auto',
+    'auto / auto auto',
+    '4 / 2 / c / d / e',
+    'span',
+    '4 / span',
+    'c /',
+    '/4',
+    'c//4',
+    '/',
+    '1 / 2 / 4 / 0.5',
+))
+def test_grid_area_invalid(rule):
+    assert_invalid(f'grid-area: {rule}')
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, result', (
     ('page-break-after: left', {'break_after': 'left'}),
     ('page-break-before: always', {'break_before': 'page'}),
     ('page-break-after: inherit', {'break_after': 'inherit'}),

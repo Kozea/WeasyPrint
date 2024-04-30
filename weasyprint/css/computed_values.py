@@ -440,10 +440,11 @@ def border_radius(style, name, values):
 
 
 @register_computer('column-gap')
-def column_gap(style, name, value):
-    """Compute the ``column-gap`` property."""
+@register_computer('row-gap')
+def gap(style, name, value):
+    """Compute the ``*-gap`` properties."""
     if value == 'normal':
-        value = Dimension(1, 'em')
+        return value
     return length(style, name, value, pixels_only=True)
 
 
@@ -587,6 +588,72 @@ def font_weight(style, name, value):
         return FONT_WEIGHT_RELATIVE[value][parent_value]
     else:
         return value
+
+
+def _compute_track_breadth(style, name, value):
+    """Compute track breadth."""
+    if value in ('auto', 'min-content', 'max-content'):
+        return value
+    elif isinstance(value, Dimension):
+        if value.unit == 'fr':
+            return value
+        else:
+            return length(style, name, value)
+
+
+def _track_size(style, name, values):
+    """Compute track size."""
+    return_values = []
+    for i, value in enumerate(values):
+        if i % 2 == 0:
+            # line name
+            return_values.append(value)
+        else:
+            # track section
+            track_breadth = _compute_track_breadth(style, name, value)
+            if track_breadth:
+                return_values.append(track_breadth)
+            elif value[0] == 'minmax()':
+                return_values.append((
+                    'minmax()',
+                    _compute_track_breadth(style, name, value[1]),
+                    _compute_track_breadth(style, name, value[2])))
+            elif value[0] == 'fit-content()':
+                return_values.append((
+                    'fit-content()', length(style, name, value[1])))
+            elif value[0] == 'repeat()':
+                return_values.append((
+                    'repeat()', value[1], _track_size(style, name, value[2])))
+    return tuple(return_values)
+
+
+@register_computer('grid-template-columns')
+@register_computer('grid-template-rows')
+def grid_template(style, name, values):
+    """Compute the ``grid-template-*`` properties."""
+    if values == 'none' or values[0] == 'subgrid':
+        return values
+    else:
+        return _track_size(style, name, values)
+
+
+@register_computer('grid-auto-columns')
+@register_computer('grid-auto-rows')
+def grid_auto(style, name, values):
+    """Compute the ``grid-auto-*`` properties."""
+    return_values = []
+    for value in values:
+        track_breadth = _compute_track_breadth(style, name, value)
+        if track_breadth:
+            return_values.append(track_breadth)
+        elif value[0] == 'minmax()':
+            return_values.append((
+                'minmax()', grid_auto(style, name, [value[1]])[0],
+                grid_auto(style, name, [value[2]])[0]))
+        elif value[0] == 'fit-content()':
+            return_values.append((
+                'fit-content()', grid_auto(style, name, [value[1]])[0]))
+    return tuple(return_values)
 
 
 @register_computer('line-height')

@@ -54,6 +54,9 @@ def min_content_width(context, box, outer=True):
         return replaced_min_content_width(box, outer)
     elif isinstance(box, boxes.FlexContainerBox):
         return flex_min_content_width(context, box, outer)
+    elif isinstance(box, boxes.GridContainerBox):
+        # TODO: Get real grid size.
+        return block_min_content_width(context, box, outer)
     else:
         raise TypeError(
             f'min-content width for {type(box).__name__} not handled yet')
@@ -81,6 +84,9 @@ def max_content_width(context, box, outer=True):
         return replaced_max_content_width(box, outer)
     elif isinstance(box, boxes.FlexContainerBox):
         return flex_max_content_width(context, box, outer)
+    elif isinstance(box, boxes.GridContainerBox):
+        # TODO: Get real grid size.
+        return block_max_content_width(context, box, outer)
     else:
         raise TypeError(
             f'max-content width for {type(box).__name__} not handled yet')

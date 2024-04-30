@@ -1211,8 +1211,8 @@ def draw_inline_level(stream, page, box, offset_x=0, text_overflow='clip',
                       block_ellipsis='none'):
     if isinstance(box, StackingContext):
         stacking_context = box
-        assert isinstance(
-            stacking_context.box, (boxes.InlineBlockBox, boxes.InlineFlexBox))
+        assert isinstance(stacking_context.box, (
+            boxes.InlineBlockBox, boxes.InlineFlexBox, boxes.InlineGridBox))
         draw_stacking_context(stream, stacking_context)
     else:
         draw_background(stream, box.background)

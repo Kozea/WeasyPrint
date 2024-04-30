@@ -28,6 +28,9 @@ BOX_TYPE_FROM_DISPLAY = {
     ('block', 'flex'): boxes.FlexBox,
     ('inline', 'flex'): boxes.InlineFlexBox,
 
+    ('block', 'grid'): boxes.GridBox,
+    ('inline', 'grid'): boxes.InlineGridBox,
+
     ('table-row',): boxes.TableRowBox,
     ('table-row-group',): boxes.TableRowGroupBox,
     ('table-header-group',): boxes.TableRowGroupBox,
@@ -51,6 +54,7 @@ def create_anonymous_boxes(box):
     """Create anonymous boxes in box descendants according to layout rules."""
     box = anonymous_table_boxes(box)
     box = flex_boxes(box)
+    box = grid_boxes(box)
     box = inline_in_block(box)
     box = block_in_inline(box)
     return box
@@ -1034,6 +1038,47 @@ def flex_children(box, children):
             else:
                 flex_children.append(child)
         return flex_children
+    else:
+        return children
+
+
+def grid_boxes(box):
+    """Remove and add boxes according to the grid model.
+
+    Take and return a ``Box`` object.
+
+    See https://drafts.csswg.org/css-grid-2/#grid-item
+
+    """
+    if not isinstance(box, boxes.ParentBox) or box.is_running():
+        return box
+
+    # Do recursion.
+    children = [grid_boxes(child) for child in box.children]
+    box.children = grid_children(box, children)
+    return box
+
+
+def grid_children(box, children):
+    if isinstance(box, boxes.GridContainerBox):
+        grid_children = []
+        for child in children:
+            if not child.is_absolutely_positioned():
+                child.is_grid_item = True
+            if isinstance(child, boxes.TextBox) and not child.text.strip(' '):
+                # TODO: ignore texts only containing "characters that can be
+                # affected by the white-space property"
+                # https://drafts.csswg.org/css-grid-2/#grid-item
+                continue
+            if isinstance(child, boxes.InlineLevelBox):
+                anonymous = boxes.BlockBox.anonymous_from(child, [child])
+                anonymous.style = child.style
+                child.is_grid_item = False
+                anonymous.is_grid_item = True
+                grid_children.append(anonymous)
+            else:
+                grid_children.append(child)
+        return grid_children
     else:
         return children
 

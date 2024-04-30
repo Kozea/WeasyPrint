@@ -489,7 +489,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
             for i, child in line:
                 align_self = child.style['align_self']
                 if (box.style['flex_direction'].startswith('row') and
-                        align_self == 'baseline' and
+                        'baseline' in align_self and
                         child.margin_top != 'auto' and
                         child.margin_bottom != 'auto'):
                     collected_items.append(child)
@@ -536,7 +536,10 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
             min_cross_size, min(line.cross_size, max_cross_size))
 
     # Step 9
-    if box.style['align_content'] == 'stretch':
+    align_content = box.style['align_content']
+    if 'normal' in align_content:
+        align_content = ('stretch',)
+    if 'stretch' in align_content:
         definite_cross_size = None
         if cross == 'height' and box.style['height'] != 'auto':
             definite_cross_size = box.style['height'].value
@@ -556,12 +559,17 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
     # TODO: Step 10
 
     # Step 11
+    align_items = box.style['align_items']
+    if 'normal' in align_items:
+        align_items = ('stretch',)
     for line in flex_lines:
         for i, child in line:
             align_self = child.style['align_self']
-            if align_self == 'auto':
-                align_self = box.style['align_items']
-            if align_self == 'stretch' and child.style[cross] == 'auto':
+            if 'normal' in align_self:
+                align_self = ('stretch',)
+            elif 'auto' in align_self:
+                align_self = align_items
+            if 'stretch' in align_self and child.style[cross] == 'auto':
                 cross_margins = (
                     (child.margin_top, child.margin_bottom)
                     if cross == 'height'
@@ -590,11 +598,13 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
         box.content_box_x() if axis == 'width'
         else box.content_box_y())
     justify_content = box.style['justify_content']
+    if 'normal' in justify_content:
+        justify_content = ('flex-start',)
     if box.style['flex_direction'].endswith('-reverse'):
-        if justify_content == 'flex-start':
-            justify_content = 'flex-end'
+        if 'flex-start' in justify_content:
+            justify_content = ('flex-end',)
         elif justify_content == 'flex-end':
-            justify_content = 'flex-start'
+            justify_content = ('flex-start',)
 
     for line in flex_lines:
         position_axis = original_position_axis
@@ -645,19 +655,19 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
         if box.style['direction'] == 'rtl' and axis == 'width':
             free_space *= -1
 
-        if justify_content == 'flex-end':
+        if {'end', 'flex-end', 'right'} & set(justify_content):
             position_axis += free_space
-        elif justify_content == 'center':
+        elif 'center' in justify_content:
             position_axis += free_space / 2
-        elif justify_content == 'space-around':
+        elif 'space-around' in justify_content:
             position_axis += free_space / len(line) / 2
-        elif justify_content == 'space-evenly':
+        elif 'space-evenly' in justify_content:
             position_axis += free_space / (len(line) + 1)
 
         for i, child in line:
             if axis == 'width':
                 child.position_x = position_axis
-                if justify_content == 'stretch':
+                if 'stretch' in justify_content:
                     child.width += free_space / len(line)
             else:
                 child.position_y = position_axis
@@ -667,12 +677,12 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
             if box.style['direction'] == 'rtl' and axis == 'width':
                 margin_axis *= -1
             position_axis += margin_axis
-            if justify_content == 'space-around':
+            if 'space-around' in justify_content:
                 position_axis += free_space / len(line)
-            elif justify_content == 'space-between':
+            elif 'space-between' in justify_content:
                 if len(line) > 1:
                     position_axis += free_space / (len(line) - 1)
-            elif justify_content == 'space-evenly':
+            elif 'space-evenly' in justify_content:
                 position_axis += free_space / (len(line) + 1)
 
     # Step 13
@@ -684,9 +694,9 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
         # TODO: don't duplicate this loop
         for i, child in line:
             align_self = child.style['align_self']
-            if align_self == 'auto':
-                align_self = box.style['align_items']
-            if align_self == 'baseline' and axis == 'width':
+            if 'auto' in align_self:
+                align_self = align_items
+            if 'baseline' in align_self and axis == 'width':
                 # TODO: handle vertical text
                 child.baseline = child._baseline - position_cross
                 line.lower_baseline = max(line.lower_baseline, child.baseline)
@@ -735,32 +745,34 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
             else:
                 # Step 14
                 align_self = child.style['align_self']
-                if align_self == 'auto':
-                    align_self = box.style['align_items']
+                if 'normal' in align_self:
+                    align_self = ('stretch',)
+                elif 'auto' in align_self:
+                    align_self = align_items
                 position = 'position_y' if cross == 'height' else 'position_x'
                 setattr(child, position, position_cross)
-                if align_self == 'flex-end':
+                if {'end', 'self-end', 'flex-end'} & set(align_self):
                     if cross == 'height':
                         child.position_y += (
                             line.cross_size - child.margin_height())
                     else:
                         child.position_x += (
                             line.cross_size - child.margin_width())
-                elif align_self == 'center':
+                elif 'center' in align_self:
                     if cross == 'height':
                         child.position_y += (
                             line.cross_size - child.margin_height()) / 2
                     else:
                         child.position_x += (
                             line.cross_size - child.margin_width()) / 2
-                elif align_self == 'baseline':
+                elif 'baseline' in align_self:
                     if cross == 'height':
                         child.position_y += (
                             line.lower_baseline - child.baseline)
                     else:
                         # Handle vertical text
                         pass
-                elif align_self == 'stretch':
+                elif 'stretch' in align_self:
                     if child.style[cross] == 'auto':
                         if cross == 'height':
                             margins = child.margin_top + child.margin_bottom
@@ -801,29 +813,29 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
                         current_value = getattr(child, direction)
                         current_value += cross_translate
                         setattr(child, direction, current_value)
-                        if box.style['align_content'] == 'flex-end':
+                        if {'flex-end', 'end'} & set(align_content):
                             setattr(
                                 child, direction,
                                 current_value + extra_cross_size)
-                        elif box.style['align_content'] == 'center':
+                        elif 'center' in align_content:
                             setattr(
                                 child, direction,
                                 current_value + extra_cross_size / 2)
-                        elif box.style['align_content'] == 'space-around':
+                        elif 'space-around' in align_content:
                             setattr(
                                 child, direction,
                                 current_value + extra_cross_size /
                                 len(flex_lines) / 2)
-                        elif box.style['align_content'] == 'space-evenly':
+                        elif 'space-evenly' in align_content:
                             setattr(
                                 child, direction,
                                 current_value + extra_cross_size /
                                 (len(flex_lines) + 1))
-                if box.style['align_content'] == 'space-between':
+                if 'space-between' in align_content:
                     cross_translate += extra_cross_size / (len(flex_lines) - 1)
-                elif box.style['align_content'] == 'space-around':
+                elif 'space-around' in align_content:
                     cross_translate += extra_cross_size / len(flex_lines)
-                elif box.style['align_content'] == 'space-evenly':
+                elif 'space-evenly' in align_content:
                     cross_translate += extra_cross_size / (len(flex_lines) + 1)
 
     # TODO: don't use block_box_layout, see TODOs in Step 14 and

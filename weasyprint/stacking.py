@@ -74,6 +74,7 @@ def _dispatch(box, page, child_contexts, blocks, floats, blocks_and_cells):
     # Remove boxes defining a new stacking context from the children list.
     defines_stacking_context = (
         (style['position'] != 'static' and style['z_index'] != 'auto') or
+        (box.is_grid_item and style['z_index'] != 'auto') or
         style['opacity'] < 1 or
         style['transform'] or  # 'transform: none' gives a "falsy" empty list
         style['overflow'] != 'visible')
@@ -90,7 +91,8 @@ def _dispatch(box, page, child_contexts, blocks, floats, blocks_and_cells):
         child_contexts.insert(index, stacking_context)
     elif box.is_floated():
         floats.append(StackingContext.from_box(box, page, child_contexts))
-    elif isinstance(box, (boxes.InlineBlockBox, boxes.InlineFlexBox)):
+    elif isinstance(box, (
+            boxes.InlineBlockBox, boxes.InlineFlexBox, boxes.InlineGridBox)):
         # Have this fake stacking context be part of the "normal" box tree,
         # because we need its position in the middle of a tree of inline boxes.
         return StackingContext.from_box(box, page, child_contexts)

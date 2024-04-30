@@ -16,9 +16,10 @@ from .properties import ( # isort:skip
     background_size, block_ellipsis, border_image_source, border_image_slice,
     border_image_width, border_image_outset, border_image_repeat, border_style,
     border_width, box, column_count, column_width, flex_basis, flex_direction,
-    flex_grow_shrink, flex_wrap, font_family, font_size, font_stretch, font_style,
-    font_weight, line_height, list_style_image, list_style_position, list_style_type,
-    other_colors, overflow_wrap, validate_non_shorthand)
+    flex_grow_shrink, flex_wrap, font_family, font_size, font_stretch,
+    font_style, font_weight, gap, grid_line, grid_template, line_height,
+    list_style_image, list_style_position, list_style_type, other_colors,
+    overflow_wrap, validate_non_shorthand)
 
 EXPANDERS = {}
 
@@ -752,6 +753,220 @@ def expand_flex_flow(tokens, name):
                 raise InvalidValues
     else:
         raise InvalidValues
+
+
+def _expand_grid_template(tokens, name):
+    line, column = tokens[0].source_line, tokens[0].source_column
+    none = IdentToken(line, column, 'none')
+    if len(tokens) == 1 and get_keyword(tokens[0]) == 'none':
+        yield '-columns', [none]
+        yield '-rows', [none]
+        yield '-areas', [none]
+        return
+    slash_separated = [[]]
+    for token in tokens:
+        if token.type == 'literal' and token.value == '/':
+            slash_separated.append([])
+        else:
+            slash_separated[-1].append(token)
+    if len(slash_separated) == 2:
+        rows = grid_template(slash_separated[0])
+        columns = grid_template(slash_separated[1])
+        if columns:
+            if rows:
+                yield '-columns', slash_separated[1]
+                yield '-rows', slash_separated[0]
+                yield '-areas', [none]
+                return
+            columns = slash_separated[1]
+        else:
+            raise InvalidValues
+    elif len(slash_separated) == 1:
+        columns = [none]
+    else:
+        raise InvalidValues
+    # TODO: Handle last syntax.
+    raise InvalidValues
+
+
+@expander('grid-template')
+@generic_expander('-columns', '-rows', '-areas')
+def expand_grid_template(tokens, name):
+    """Expand the ``grid-template`` property."""
+    yield from _expand_grid_template(tokens, name)
+
+
+@expander('grid')
+@generic_expander('-template-columns', '-template-rows', '-template-areas',
+                  '-auto-columns', '-auto-rows', '-auto-flow')
+def expand_grid(tokens, name):
+    """Expand the ``grid`` property."""
+    line, column = tokens[0].source_line, tokens[0].source_column
+    auto = IdentToken(line, column, 'auto')
+    none = IdentToken(line, column, 'none')
+    row = IdentToken(line, column, 'row')
+    column = IdentToken(line, column, 'column')
+    try:
+        template = tuple(_expand_grid_template(tokens, 'grid-template'))
+    except InvalidValues:
+        pass
+    else:
+        for key, value in template:
+            yield f'-template-{key.split("-")[-1]}', value
+        yield '-auto-columns', [auto]
+        yield '-auto-rows', [auto]
+        yield '-auto-flow', [row]
+        return
+    split_tokens = [[]]
+    for token in tokens:
+        if token.type == 'literal' and token.value == '/':
+            split_tokens.append([])
+            continue
+        split_tokens[-1].append(token)
+    if len(split_tokens) != 2:
+        raise InvalidValues
+    auto_track = None
+    dense = None
+    templates = {'row': [], 'column': []}
+    iterable = zip(split_tokens, templates.items())
+    for tokens, (track, track_templates) in iterable:
+        for token in tokens:
+            if get_keyword(token) == 'dense':
+                if dense or (auto_track and auto_track != track):
+                    raise InvalidValues
+                dense = token
+            elif get_keyword(token) == 'auto-flow':
+                if auto_track:
+                    raise InvalidValues
+                auto_track = track
+            else:
+                track_templates.append(token)
+    if not auto_track:
+        raise InvalidValues
+    non_auto_track = 'row' if auto_track == 'column' else 'column'
+    auto_track_token = column if auto_track == 'column' else row
+    yield '-auto-flow', (
+        (auto_track_token, dense) if dense else (auto_track_token,))
+    yield f'-auto-{auto_track}s', tuple(templates[auto_track])
+    yield f'-auto-{non_auto_track}s', [auto]
+    yield f'-template-{auto_track}s', [none]
+    yield f'-template-{non_auto_track}s', tuple(templates[non_auto_track])
+    yield '-template-areas', [none]
+
+
+def _expand_grid_column_row_area(tokens, max_number):
+    grid_lines = [[]]
+    for token in tokens:
+        if token.type == 'literal' and token.value == '/':
+            grid_lines.append([])
+            continue
+        grid_lines[-1].append(token)
+    if not 1 <= len(grid_lines) <= max_number:
+        raise InvalidValues
+    validations = []
+    for tokens in grid_lines:
+        if not (validation := grid_line(tokens)):
+            raise InvalidValues
+        validations.append(validation)
+        yield tuple(tokens)
+    auto = IdentToken(token.source_line, token.source_column, 'auto')
+    if (lines := len(grid_lines)) <= 1:
+        custom_ident = set(validations[0][:2]) == {None}
+        value = tuple(grid_lines[0]) if custom_ident else (auto,)
+        grid_lines.append(tokens)
+        validations.append(validations[0])
+        yield value
+    if lines <= 2 < max_number:
+        custom_ident = set(validations[0][:2]) == {None}
+        yield tuple(grid_lines[0]) if custom_ident else (auto,)
+    if lines <= 3 < max_number:
+        custom_ident = set(validations[1][:2]) == {None}
+        yield tuple(grid_lines[1]) if custom_ident else (auto,)
+
+
+@expander('grid-column')
+@expander('grid-row')
+@generic_expander('-start', '-end')
+def expand_grid_column_row(tokens, name):
+    """Expand the ``grid-[column|row]`` properties."""
+    tokens_list = _expand_grid_column_row_area(tokens, 2)
+    for tokens, side in zip(tokens_list, ('start', 'end')):
+        yield f'-{side}', tokens
+
+
+@expander('grid-area')
+@generic_expander('grid-row-start', 'grid-row-end',
+                  'grid-column-start', 'grid-column-end')
+def expand_grid_area(tokens, name):
+    """Expand the ``grid-area`` property."""
+    tokens_list = _expand_grid_column_row_area(tokens, 4)
+    sides = ('row-start', 'row-end', 'column-start', 'column-end')
+    for tokens, side in zip(tokens_list, sides):
+        yield f'grid-{side}', tokens
+
+
+@expander('grid-gap')
+@expander('gap')
+@generic_expander('column-gap', 'row-gap')
+def expand_gap(tokens, name):
+    """Expand the ``gap`` property."""
+    if len(tokens) == 1:
+        if gap(tokens) is None:
+            raise InvalidValues
+        yield 'row-gap', tokens
+        yield 'column-gap', tokens
+    elif len(tokens) == 2:
+        column_gap, row_gap = gap(tokens[0:1]), gap(tokens[1:2])
+        if None in (column_gap, row_gap):
+            raise InvalidValues
+        yield 'row-gap', tokens[0:1]
+        yield 'column-gap', tokens[1:2]
+    else:
+        raise InvalidValues
+
+
+@expander('grid-column-gap')
+@generic_expander('column-gap')
+def expand_legacy_column_gap(tokens, name):
+    """Expand legacy ``grid-column-gap`` property."""
+    keyword = gap(tokens)
+    if keyword is None:
+        raise InvalidValues
+    yield 'column-gap', tokens
+
+
+@expander('grid-row-gap')
+@generic_expander('row-gap')
+def expand_legacy_row_gap(tokens, name):
+    """Expand legacy ``grid-row-gap`` property."""
+    keyword = gap(tokens)
+    if keyword is None:
+        raise InvalidValues
+    yield 'row-gap', tokens
+
+
+@expander('place-content')
+@generic_expander('align-content', 'justify-content')
+def expand_place_content(tokens, name):
+    """Expand the ``place-content`` property."""
+    # TODO
+    raise InvalidValues
+
+
+@expander('place-items')
+@generic_expander('align-items', 'justify-items')
+def expand_place_items(tokens, name):
+    """Expand the ``place-items`` property."""
+    # TODO
+    raise InvalidValues
+
+
+@expander('place-self')
+@generic_expander('align-self', 'justify-self')
+def expand_place_self(tokens, name):
+    """Expand the ``place-self`` property."""
+    # TODO
+    raise InvalidValues
 
 
 @expander('line-clamp')

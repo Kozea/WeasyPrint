@@ -604,7 +604,8 @@ def make_page(context, root_box, page_type, resume_at, page_number,
 
     # TODO: handle cases where the root element is something else.
     # See https://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
-    assert isinstance(root_box, (boxes.BlockBox, boxes.FlexContainerBox))
+    assert isinstance(root_box, (
+        boxes.BlockBox, boxes.FlexContainerBox, boxes.GridContainerBox))
     context.create_block_formatting_context()
     context.current_page = page_number
     context.current_page_footnotes = []

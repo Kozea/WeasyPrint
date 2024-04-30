@@ -7,6 +7,7 @@ from .absolute import AbsolutePlaceholder, absolute_layout
 from .column import columns_layout
 from .flex import flex_layout
 from .float import avoid_collisions, float_layout, get_clearance
+from .grid import grid_layout
 from .inline import iter_line_boxes
 from .min_max import handle_min_max_width
 from .percent import resolve_percentages, resolve_position_percentages
@@ -79,6 +80,10 @@ def block_level_layout_switch(context, box, bottom_space, skip_stack,
         result = block_replaced_box_layout(context, box, containing_block)
     elif isinstance(box, boxes.FlexBox):
         result = flex_layout(
+            context, box, bottom_space, skip_stack, containing_block,
+            page_is_empty, absolute_boxes, fixed_boxes)
+    elif isinstance(box, boxes.GridBox):
+        result = grid_layout(
             context, box, bottom_space, skip_stack, containing_block,
             page_is_empty, absolute_boxes, fixed_boxes)
     else:  # pragma: no cover
@@ -644,7 +649,8 @@ def block_container_layout(context, box, bottom_space, skip_stack,
 
     collapsing_with_children = not (
         box.border_top_width or box.padding_top or box.is_flex_item or
-        establishes_formatting_context(box) or box.is_for_root_element)
+        box.is_grid_item or establishes_formatting_context(box) or
+        box.is_for_root_element)
     if collapsing_with_children:
         # Not counting margins in adjoining_margins, if any
         # (there are not padding or borders, see above)
