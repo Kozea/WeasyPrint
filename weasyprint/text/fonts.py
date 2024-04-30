@@ -366,24 +366,27 @@ def get_pango_font_hb_face(pango_font):
     return pangoft2.pango_fc_font_map_get_hb_face(fontmap, fc_font)
 
 
-def get_hb_face_data(hb_face, ot_color=None):
-    """Get binary data out of given Harfbuzz face.
+def get_hb_object_data(hb_object, ot_color=None, glyph=None):
+    """Get binary data out of given Harfbuzz font or face.
 
     If ``ot_color`` is 'svg', return the SVG color glyph reference. If it’s 'png',
     return the PNG color glyph reference. Otherwise, return the whole face blob.
 
     """
     if ot_color == 'png':
-        function = harfbuzz.hb_ot_color_glyph_reference_svg
+        hb_blob = harfbuzz.hb_ot_color_glyph_reference_png(hb_object, glyph)
     elif ot_color == 'svg':
-        function = harfbuzz.hb_ot_color_glyph_reference_png
+        hb_blob = harfbuzz.hb_ot_color_glyph_reference_svg(hb_object, glyph)
     else:
-        function = harfbuzz.hb_face_reference_blob
-    hb_blob = ffi.gc(function(hb_face), harfbuzz.hb_blob_destroy)
+        hb_blob = harfbuzz.hb_face_reference_blob(hb_object)
     with ffi.new('unsigned int *') as length:
         hb_data = harfbuzz.hb_blob_get_data(hb_blob, length)
-        if hb_data != ffi.NULL:
-            return ffi.unpack(hb_data, int(length[0]))
+        if hb_data == ffi.NULL:
+            data = None
+        else:
+            data = ffi.unpack(hb_data, int(length[0]))
+        harfbuzz.hb_blob_destroy(hb_blob)
+        return data
 
 
 @lru_cache()

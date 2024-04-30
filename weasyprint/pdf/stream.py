@@ -12,13 +12,15 @@ from ..logger import LOGGER
 from ..matrix import Matrix
 from ..text.constants import PANGO_STRETCH_PERCENT
 from ..text.ffi import ffi, harfbuzz, pango, units_to_double
-from ..text.fonts import get_hb_face_data, get_pango_font_hb_face, get_pango_font_key
+from ..text.fonts import get_hb_object_data, get_pango_font_hb_face, get_pango_font_key
 
 
 class Font:
     def __init__(self, pango_font):
-        hb_face = get_pango_font_hb_face(pango_font)
-        self.file_content = get_hb_face_data(hb_face)
+        self.hb_font = pango.pango_font_get_hb_font(pango_font)
+        self.hb_face = get_pango_font_hb_face(pango_font)
+        self.file_content = get_hb_object_data(self.hb_face)
+        self.index = harfbuzz.hb_face_get_index(self.hb_face)
 
         pango_metrics = pango.pango_font_get_metrics(pango_font, ffi.NULL)
         self.description = description = ffi.gc(
@@ -81,9 +83,8 @@ class Font:
 
         # Fonttools
         full_font = io.BytesIO(self.file_content)
-        index = harfbuzz.hb_face_get_index(hb_face)
         try:
-            self.ttfont = TTFont(full_font, fontNumber=index)
+            self.ttfont = TTFont(full_font, fontNumber=self.index)
         except Exception:
             LOGGER.warning('Unable to read font')
             self.ttfont = None
@@ -95,9 +96,9 @@ class Font:
 
         # Various properties
         self.italic_angle = 0  # TODO: this should be different
-        self.upem = harfbuzz.hb_face_get_upem(hb_face)
-        self.png = harfbuzz.hb_ot_color_has_png(hb_face)
-        self.svg = harfbuzz.hb_ot_color_has_svg(hb_face)
+        self.upem = harfbuzz.hb_face_get_upem(self.hb_face)
+        self.png = harfbuzz.hb_ot_color_has_png(self.hb_face)
+        self.svg = harfbuzz.hb_ot_color_has_svg(self.hb_face)
         self.stemv = 80
         self.stemh = 80
         self.widths = {}

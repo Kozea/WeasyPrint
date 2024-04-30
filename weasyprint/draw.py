@@ -16,7 +16,7 @@ from .layout.background import BackgroundLayer
 from .matrix import Matrix
 from .stacking import StackingContext
 from .text.ffi import ffi, pango, units_from_double, units_to_double
-from .text.fonts import get_hb_face_data, get_pango_font_hb_face
+from .text.fonts import get_hb_object_data, get_pango_font_hb_face
 from .text.line_break import get_last_word_end
 
 SIDES = ('top', 'right', 'bottom', 'left')
@@ -1449,8 +1449,7 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
             previous_utf8_position = utf8_position
 
             if font.svg:
-                hb_face = get_pango_font_hb_face(pango_font)
-                svg_data = get_hb_face_data(hb_face, ot_color='svg')
+                svg_data = get_hb_object_data(font.hb_face, 'svg', glyph)
                 if svg_data:
                     # Do as explained in specification
                     # https://learn.microsoft.com/typography/opentype/spec/svg
@@ -1466,8 +1465,7 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
                     a = d = font.widths[glyph] / 1000 / font.upem * font_size
                     emojis.append([image, font, a, d, x_advance, 0])
             elif font.png:
-                hb_face = get_pango_font_hb_face(pango_font)
-                png_data = get_hb_face_data(hb_face, ot_color='png')
+                png_data = get_hb_object_data(font.hb_font, 'png', glyph)
                 if png_data:
                     pillow_image = Image.open(BytesIO(png_data))
                     image_id = f'{font.hash}{glyph}'
