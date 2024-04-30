@@ -16,7 +16,7 @@ from .layout.background import BackgroundLayer
 from .matrix import Matrix
 from .stacking import StackingContext
 from .text.ffi import ffi, pango, units_from_double, units_to_double
-from .text.fonts import get_hb_object_data, get_pango_font_hb_face
+from .text.fonts import get_hb_object_data
 from .text.line_break import get_last_word_end
 
 SIDES = ('top', 'right', 'bottom', 'left')
