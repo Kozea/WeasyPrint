@@ -1,10 +1,258 @@
 """Fonts integration in PDF."""
 
+import io
+from hashlib import md5
 from math import ceil
 
 import pydyf
+from fontTools import subset
+from fontTools.ttLib import TTFont, TTLibError, ttFont
+from fontTools.varLib.mutator import instantiateVariableFont
 
 from ..logger import LOGGER
+from ..text.constants import PANGO_STRETCH_PERCENT
+from ..text.ffi import ffi, harfbuzz, harfbuzz_subset, pango, units_to_double
+from ..text.fonts import get_hb_object_data, get_pango_font_hb_face
+
+
+class Font:
+    def __init__(self, pango_font):
+        self.hb_font = pango.pango_font_get_hb_font(pango_font)
+        self.hb_face = get_pango_font_hb_face(pango_font)
+        self.file_content = get_hb_object_data(self.hb_face)
+        self.index = harfbuzz.hb_face_get_index(self.hb_face)
+
+        pango_metrics = pango.pango_font_get_metrics(pango_font, ffi.NULL)
+        self.description = description = ffi.gc(
+            pango.pango_font_describe(pango_font),
+            pango.pango_font_description_free)
+        self.font_size = pango.pango_font_description_get_size(description)
+        self.style = pango.pango_font_description_get_style(description)
+        self.family = ffi.string(
+            pango.pango_font_description_get_family(description))
+
+        self.variations = {}
+        variations = pango.pango_font_description_get_variations(self.description)
+        if variations != ffi.NULL:
+            self.variations = {
+                part.split('=')[0]: float(part.split('=')[1])
+                for part in ffi.string(variations).decode().split(',')}
+        if 'wght' in self.variations:
+            pango.pango_font_description_set_weight(
+                self.description, int(round(self.variations['wght'])))
+        if self.variations.get('ital'):
+            pango.pango_font_description_set_style(
+                self.description, pango.PANGO_STYLE_ITALIC)
+        elif self.variations.get('slnt'):
+            pango.pango_font_description_set_style(
+                self.description, pango.PANGO_STYLE_OBLIQUE)
+        if 'wdth' in self.variations:
+            stretch = min(
+                PANGO_STRETCH_PERCENT.items(),
+                key=lambda item: abs(item[0] - self.variations['wdth']))[1]
+            pango.pango_font_description_set_stretch(self.description, stretch)
+        description_string = ffi.string(
+            pango.pango_font_description_to_string(description))
+
+        # Never use the built-in hash function here: it’s not stable
+        self.hash = ''.join(
+            chr(65 + letter % 26) for letter
+            in md5(description_string, usedforsecurity=False).digest()[:6])
+
+        # Name
+        fields = description_string.split(b' ')
+        if fields and b'=' in fields[-1]:
+            fields.pop()  # Remove variations
+        if fields:
+            fields.pop()  # Remove font size
+        else:
+            fields = [b'Unknown']
+        self.name = b'/' + self.hash.encode() + b'+' + b'-'.join(fields)
+
+        # Ascent & descent
+        if self.font_size:
+            self.ascent = int(
+                pango.pango_font_metrics_get_ascent(pango_metrics) /
+                self.font_size * 1000)
+            self.descent = -int(
+                pango.pango_font_metrics_get_descent(pango_metrics) /
+                self.font_size * 1000)
+        else:
+            self.ascent = self.descent = 0
+
+        # Tables and metadata
+        table_count = ffi.new('unsigned int *', 100)
+        table_tags = ffi.new('hb_tag_t[100]')
+        table_name = ffi.new('char[4]')
+        harfbuzz.hb_face_get_table_tags(self.hb_face, 0, table_count, table_tags)
+        self.tables = []
+        for i in range(table_count[0]):
+            harfbuzz.hb_tag_to_string(table_tags[i], table_name)
+            self.tables.append(ffi.string(table_name).decode())
+        self.bitmap = 'EBDT' in self.tables and 'EBLC' in self.tables
+        self.italic_angle = 0  # TODO: this should be different
+        self.upem = harfbuzz.hb_face_get_upem(self.hb_face)
+        self.png = harfbuzz.hb_ot_color_has_png(self.hb_face)
+        self.svg = harfbuzz.hb_ot_color_has_svg(self.hb_face)
+        self.stemv = 80
+        self.stemh = 80
+        self.widths = {}
+        self.cmap = {}
+        self.used_in_forms = False
+
+        # Font flags
+        self.flags = 2 ** (3 - 1)  # Symbolic, custom character set
+        if self.style:
+            self.flags += 2 ** (7 - 1)  # Italic
+        if b'Serif' in fields:
+            self.flags += 2 ** (2 - 1)  # Serif
+
+    def clean(self, cmap, hinting):
+        # Subset font.
+        self.subset(cmap, hinting)
+
+        # Transform variable into static font
+        if 'fvar' in self.tables:
+            full_font = io.BytesIO(self.file_content)
+            ttfont = TTFont(full_font, fontNumber=self.index)
+            if 'wght' not in self.variations:
+                weight = pango.pango_font_description_get_weight(
+                    self.description)
+                self.variations['wght'] = weight
+            if 'opsz' not in self.variations:
+                self.variations['opsz'] = units_to_double(self.font_size)
+            if 'slnt' not in self.variations:
+                slnt = 0
+                if self.style == 1:
+                    for axe in ttfont['fvar'].axes:
+                        if axe.axisTag == 'slnt':
+                            if axe.maxValue == 0:
+                                slnt = axe.minValue
+                            else:
+                                slnt = axe.maxValue
+                            break
+                self.variations['slnt'] = slnt
+            if 'ital' not in self.variations:
+                self.variations['ital'] = int(self.style == 2)
+            partial_font = io.BytesIO()
+            try:
+                ttfont = instantiateVariableFont(ttfont, self.variations)
+                for key, (advance, bearing) in ttfont['hmtx'].metrics.items():
+                    if advance < 0:
+                        ttfont['hmtx'].metrics[key] = (0, bearing)
+                ttfont.save(partial_font)
+            except Exception:
+                LOGGER.warning('Unable to mutate variable font')
+            else:
+                self.file_content = partial_font.getvalue()
+
+        if not (self.png or self.svg):
+            return
+
+        full_font = io.BytesIO(self.file_content)
+        ttfont = TTFont(full_font, fontNumber=self.index)
+        try:
+            # Add empty glyphs instead of PNG or SVG emojis
+            if 'loca' not in self.tables or 'glyf' not in self.tables:
+                ttfont['loca'] = ttFont.getTableClass('loca')()
+                ttfont['glyf'] = ttFont.getTableClass('glyf')()
+                ttfont['glyf'].glyphOrder = ttfont.getGlyphOrder()
+                ttfont['glyf'].glyphs = {
+                    name: ttFont.getTableModule('glyf').Glyph()
+                    for name in ttfont['glyf'].glyphOrder}
+            else:
+                for glyph in ttfont['glyf'].glyphs:
+                    ttfont['glyf'][glyph] = (
+                        ttFont.getTableModule('glyf').Glyph())
+            for table_name in ('CBDT', 'CBLC', 'SVG '):
+                if table_name in ttfont:
+                    del ttfont[table_name]
+            output_font = io.BytesIO()
+            ttfont.save(output_font)
+            self.file_content = output_font.getvalue()
+        except TTLibError:
+            LOGGER.warning('Unable to save emoji font')
+
+    @property
+    def type(self):
+        return 'otf' if self.file_content[:4] == b'OTTO' else 'ttf'
+
+    def subset(self, cmap, hinting):
+        if not cmap:
+            return
+
+        if harfbuzz_subset:
+            hb_subset = harfbuzz_subset.hb_subset_input_create_or_fail()
+
+            # Only keep used glyphs.
+            gid_set = harfbuzz_subset.hb_subset_input_glyph_set(hb_subset)
+            gid_array = ffi.new(f'hb_codepoint_t[{len(cmap)}]', sorted(cmap))
+            harfbuzz.hb_set_add_sorted_array(gid_set, gid_array, len(cmap))
+
+            # Set flags.
+            flags = (
+                harfbuzz_subset.HB_SUBSET_FLAGS_RETAIN_GIDS |
+                harfbuzz_subset.HB_SUBSET_FLAGS_PASSTHROUGH_UNRECOGNIZED |
+                harfbuzz_subset.HB_SUBSET_FLAGS_DESUBROUTINIZE)
+            if not hinting:
+                flags |= harfbuzz_subset.HB_SUBSET_FLAGS_NO_HINTING
+            harfbuzz_subset.hb_subset_input_set_flags(hb_subset, flags)
+
+            # Drop useless tables.
+            drop_set = harfbuzz_subset.hb_subset_input_set(
+                hb_subset, harfbuzz_subset.HB_SUBSET_SETS_DROP_TABLE_TAG)
+            drop_tables = tuple(harfbuzz.hb_tag_from_string(name, -1) for name in (
+                b'BASE', b'DSIG', b'EBDT', b'EBLC', b'EBSC', b'GPOS', b'GSUB', b'JSTF',
+                b'LTSH', b'PCLT', b'SVG '))
+            drop_tables_array = ffi.new(
+                f'hb_codepoint_t[{len(drop_tables)}]', drop_tables)
+            harfbuzz.hb_set_add_sorted_array(
+                drop_set, drop_tables_array, len(drop_tables))
+
+            # Subset font.
+            hb_face = harfbuzz_subset.hb_subset_or_fail(self.hb_face, hb_subset)
+
+            # Drop empty glyphs after last one used.
+            gid_set = harfbuzz_subset.hb_subset_input_glyph_set(hb_subset)
+            keep = tuple(range(max(cmap) + 1))
+            gid_array = ffi.new(f'hb_codepoint_t[{len(keep)}]', keep)
+            harfbuzz.hb_set_add_sorted_array(gid_set, gid_array, len(keep))
+
+            # Set flags.
+            flags = (
+                harfbuzz_subset.HB_SUBSET_FLAGS_PASSTHROUGH_UNRECOGNIZED |
+                harfbuzz_subset.HB_SUBSET_FLAGS_DESUBROUTINIZE)
+            if not hinting:
+                flags |= harfbuzz_subset.HB_SUBSET_FLAGS_NO_HINTING
+            harfbuzz_subset.hb_subset_input_set_flags(hb_subset, flags)
+
+            # Subset font.
+            hb_face = harfbuzz_subset.hb_subset_or_fail(hb_face, hb_subset)
+
+            # Store new font.
+            if hb_face:
+                file_content = get_hb_object_data(hb_face)
+                if file_content:
+                    self.file_content = file_content
+                    return
+            LOGGER.warning('Unable to subset font with Harfbuzz')
+        else:
+           full_font = io.BytesIO(self.file_content)
+           optimized_font = io.BytesIO()
+           options = subset.Options(
+               retain_gids=True, passthrough_tables=True, ignore_missing_glyphs=True,
+               hinting=hinting, desubroutinize=True)
+           options.drop_tables += ['GSUB', 'GPOS', 'SVG']
+           subsetter = subset.Subsetter(options)
+           subsetter.populate(gids=cmap)
+           try:
+               ttfont = TTFont(full_font, fontNumber=self.index)
+               subsetter.subset(ttfont)
+           except TTLibError:
+               LOGGER.warning('Unable to subset font with fontTools')
+           else:
+               ttfont.save(optimized_font)
+               self.file_content = optimized_font.getvalue()
 
 
 def build_fonts_dictionary(pdf, fonts, compress_pdf, subset, options):
@@ -37,18 +285,20 @@ def build_fonts_dictionary(pdf, fonts, compress_pdf, subset, options):
         font_references_by_file_hash[file_hash] = font_stream.reference
 
     for font in fonts.values():
-        if not font.ttfont or (subset and not font.used_in_forms):
+        if subset and not font.used_in_forms:
             # Only store widths and map for used glyphs
             font_widths = font.widths
             cmap = font.cmap
         else:
             # Store width and Unicode map for all glyphs
+            full_font = io.BytesIO(font.file_content)
+            ttfont = TTFont(full_font, fontNumber=font.index)
             font_widths, cmap = {}, {}
-            for letter, key in font.ttfont.getBestCmap().items():
-                glyph = font.ttfont.getGlyphID(key)
+            for letter, key in ttfont.getBestCmap().items():
+                glyph = ttfont.getGlyphID(key)
                 if glyph not in cmap:
                     cmap[glyph] = chr(letter)
-                width = font.ttfont.getGlyphSet()[key].width
+                width = ttfont.getGlyphSet()[key].width
                 font_widths[glyph] = width * 1000 / font.upem
 
         max_x = max(font_widths.values()) if font_widths else 0
@@ -178,17 +428,19 @@ def _build_bitmap_font_dictionary(font_dictionary, pdf, font, widths,
         'Differences': pydyf.Array(differences),
     })
     char_procs = pydyf.Dictionary({})
-    font_glyphs = font.ttfont['EBDT'].strikeData[0]
+    full_font = io.BytesIO(font.file_content)
+    ttfont = TTFont(full_font, fontNumber=font.index)
+    font_glyphs = ttfont['EBDT'].strikeData[0]
     widths = [0] * (last - first + 1)
     glyphs_info = {}
     for key, glyph in font_glyphs.items():
         glyph_format = glyph.getFormat()
-        glyph_id = font.ttfont.getGlyphID(key)
+        glyph_id = ttfont.getGlyphID(key)
 
         # Get and store glyph metrics
         if glyph_format == 5:
             data = glyph.data
-            subtables = font.ttfont['EBLC'].strikes[0].indexSubTables
+            subtables = ttfont['EBLC'].strikes[0].indexSubTables
             for subtable in subtables:
                 first_index = subtable.firstGlyphIndex
                 last_index = subtable.lastGlyphIndex

@@ -12,19 +12,66 @@ ffi.cdef('''
     typedef ... hb_font_t;
     typedef ... hb_face_t;
     typedef ... hb_blob_t;
+    typedef uint32_t hb_tag_t;
     typedef uint32_t hb_codepoint_t;
+    hb_tag_t hb_tag_from_string (const char *str, int len);
+    void hb_tag_to_string (hb_tag_t tag, char *buf);
     hb_blob_t * hb_face_reference_blob (hb_face_t *face);
     unsigned int hb_face_get_index (const hb_face_t *face);
     unsigned int hb_face_get_upem (const hb_face_t *face);
     const char * hb_blob_get_data (hb_blob_t *blob, unsigned int *length);
     bool hb_ot_color_has_png (hb_face_t *face);
-    hb_blob_t * hb_ot_color_glyph_reference_png (
-        hb_font_t *font, hb_codepoint_t glyph);
+    hb_blob_t * hb_ot_color_glyph_reference_png (hb_font_t *font, hb_codepoint_t glyph);
     bool hb_ot_color_has_svg (hb_face_t *face);
-    hb_blob_t * hb_ot_color_glyph_reference_svg (
-        hb_face_t *face, hb_codepoint_t glyph);
+    hb_blob_t * hb_ot_color_glyph_reference_svg (hb_face_t *face, hb_codepoint_t glyph);
     void hb_blob_destroy (hb_blob_t *blob);
+    unsigned int hb_face_get_table_tags (
+        const hb_face_t *face, unsigned int start_offset, unsigned int *table_count,
+        hb_tag_t *table_tags);
+    unsigned int hb_face_get_glyph_count (const hb_face_t *face);
+    hb_blob_t * hb_face_reference_table (const hb_face_t *face, hb_tag_t tag);
 
+
+    // HarfBuzz Subset
+
+    typedef ... hb_subset_input_t;
+    typedef ... hb_set_t;
+
+    typedef enum {
+        HB_SUBSET_FLAGS_DEFAULT = 0x00000000u,
+        HB_SUBSET_FLAGS_NO_HINTING = 0x00000001u,
+        HB_SUBSET_FLAGS_RETAIN_GIDS = 0x00000002u,
+        HB_SUBSET_FLAGS_DESUBROUTINIZE = 0x00000004u,
+        HB_SUBSET_FLAGS_NAME_LEGACY = 0x00000008u,
+        HB_SUBSET_FLAGS_SET_OVERLAPS_FLAG = 0x00000010u,
+        HB_SUBSET_FLAGS_PASSTHROUGH_UNRECOGNIZED = 0x00000020u,
+        HB_SUBSET_FLAGS_NOTDEF_OUTLINE = 0x00000040u,
+        HB_SUBSET_FLAGS_GLYPH_NAMES = 0x00000080u,
+        HB_SUBSET_FLAGS_NO_PRUNE_UNICODE_RANGES = 0x00000100u,
+        HB_SUBSET_FLAGS_NO_LAYOUT_CLOSURE = 0x00000200u,
+    } hb_subset_flags_t;
+
+    typedef enum {
+        HB_SUBSET_SETS_GLYPH_INDEX = 0,
+        HB_SUBSET_SETS_UNICODE,
+        HB_SUBSET_SETS_NO_SUBSET_TABLE_TAG,
+        HB_SUBSET_SETS_DROP_TABLE_TAG,
+        HB_SUBSET_SETS_NAME_ID,
+        HB_SUBSET_SETS_NAME_LANG_ID,
+        HB_SUBSET_SETS_LAYOUT_FEATURE_TAG,
+        HB_SUBSET_SETS_LAYOUT_SCRIPT_TAG,
+    } hb_subset_sets_t;
+
+    hb_subset_input_t * hb_subset_input_create_or_fail (void);
+    hb_set_t * hb_subset_input_glyph_set (hb_subset_input_t *input);
+    void hb_set_add (hb_set_t *set, hb_codepoint_t codepoint);
+    void hb_set_add_sorted_array (
+        hb_set_t *set, const hb_codepoint_t *sorted_codepoints,
+        unsigned int num_codepoints);
+    hb_face_t * hb_subset_or_fail (hb_face_t *source, const hb_subset_input_t *input);
+    void hb_subset_input_set_flags (hb_subset_input_t *input, unsigned  value);
+    hb_set_t * hb_subset_input_set (
+        hb_subset_input_t *input, hb_subset_sets_t set_type);
 
     // Pango
 
@@ -402,11 +449,13 @@ ffi.cdef('''
 ''')
 
 
-def _dlopen(ffi, *names):
+def _dlopen(ffi, *names, allow_fail=False):
     """Try various names for the same library, for different platforms."""
     for name in names:
         with suppress(OSError):
             return ffi.dlopen(name)
+    if allow_fail:
+        return
     # Re-raise the exception.
     print(
         '\n-----\n\n'
@@ -439,6 +488,10 @@ harfbuzz = _dlopen(
     ffi, 'harfbuzz', 'harfbuzz-0.0', 'libharfbuzz-0',
     'libharfbuzz.so.0', 'libharfbuzz.so.0', 'libharfbuzz.0.dylib',
     'libharfbuzz-0.dll')
+harfbuzz_subset = _dlopen(
+    ffi, 'harfbuzz-subset', 'harfbuzz-subset-0.0', 'libharfbuzz-subset-0',
+    'libharfbuzz-subset.so.0', 'libharfbuzz-subset.so.0', 'libharfbuzz-subset.0.dylib',
+    'libharfbuzz-subset-0.dll', allow_fail=True)
 fontconfig = _dlopen(
     ffi, 'fontconfig-1', 'fontconfig', 'libfontconfig', 'libfontconfig.so.1',
     'libfontconfig.1.dylib', 'libfontconfig-1.dll')
