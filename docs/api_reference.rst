@@ -168,12 +168,12 @@ or through regular links with ``<a rel=attachment>`` to attach a resource that
 can be saved by clicking on said link. The ``title`` attribute can be used as
 description of the attachment.
 
-The generation of PDF/A documents (A-1b, A-2b, A-3b and A-4b) is supported.
-However, the generated documents are not guaranteed to be valid, and users have
-the responsibility to check that they follow the rules listed by the related
-specifications. The major rules to follow are to include a PDF identifier, to
-check the PDF version, and to avoid anti-aliasing for images using
-``image-rendering: crisp-edges``.
+The generation of PDF/A documents (A-1b, A-2b, A-3b, A-4b, A-2u, A-3u and A-4u) is
+supported. However, the generated documents are not guaranteed to be valid, and users
+have the responsibility to check that they follow the rules listed by the related
+specifications. The major rules to follow are to include a PDF identifier, to check the
+PDF version, and to avoid anti-aliasing for images using ``image-rendering:
+crisp-edges``.
 
 The generation of PDF/UA documents (UA-1) is supported. However, the generated
 documents are not guaranteed to be valid, and users have the responsibility to
