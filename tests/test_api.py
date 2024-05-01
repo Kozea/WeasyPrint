@@ -510,6 +510,15 @@ def test_partial_pdf_custom_metadata():
     ('<input>', ['/Tx', '/V ()']),
     ('<input value="">', ['/Tx', '/V ()']),
     ('<input type="checkbox">', ['/Btn']),
+    ('<input type="radio">',
+     ['/Btn', '/V /Off', '/AS /Off', f'/Ff {1 << (16 - 1)}']),
+    ('<input checked type="radio" name="foo" value="Some Value">',
+     ['/Btn', '/TU (foo)', '/V (Some Value)', '/AS (Some Value)']),
+    ('<form><input type="radio" name="foo" value="v1"></form>'
+     '<form><input checked type="radio" name="foo" value="v1"></form>',
+     ['/Btn', '/V (v1)',
+      '/AS (v1)', '/V (v1)',
+      '/AS /Off', '/V /Off']),
     ('<textarea></textarea>', ['/Tx', '/V ()']),
     ('<select><option value="a">A</option></select>', ['/Ch', '/Opt']),
     ('<select>'
@@ -525,7 +534,8 @@ def test_partial_pdf_custom_metadata():
 def test_pdf_inputs(html, fields):
     stdout = _run('--pdf-forms --uncompressed-pdf - -', html.encode())
     assert b'AcroForm' in stdout
-    assert all(field.encode() in stdout for field in fields)
+    for field in fields:
+        assert field.encode() in stdout
     stdout = _run('--uncompressed-pdf - -', html.encode())
     assert b'AcroForm' not in stdout
 
