@@ -240,11 +240,10 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
     if axis == 'width':
         block.block_level_width(box, containing_block)
     else:
-        if box.style['height'] != 'auto':
-            if box.style['height'].unit == '%':
-                box.height = box.style['height'].value / 100. * containing_block.height
-            else:
-                box.height = box.style['height'].value
+        if box.style['height'] != 'auto' and box.style['height'].unit != '%':
+            box.height = box.style['height'].value
+        elif box.style['height'] != 'auto' and containing_block.height != 'auto':
+            box.height = box.style['height'].value / 100 * containing_block.height
         else:
             box.height = 0
             for i, child in enumerate(children):

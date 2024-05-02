@@ -563,3 +563,16 @@ def test_flex_percent_height():
     b, = a.children
     assert a.height == 10
     assert b.height == 1
+
+
+@assert_no_logs
+def test_flex_percent_height_auto():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/2146
+    page, = render_pages('''
+      <style>
+        .a { width: 10px; }
+        .b { height: 10%; width: 100%; display: flex; flex-direction: column; }
+      </style>
+      <div class="a"">
+        <div class="b"></div>
+      </div>''')
