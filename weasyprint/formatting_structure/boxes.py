@@ -340,7 +340,7 @@ class Box:
         """Return whether this box is a form element."""
         if self.element is None:
             return False
-        return self.element.tag in 'form'
+        return self.element.tag == 'form'
 
 
 class ParentBox(Box):
