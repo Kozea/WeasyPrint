@@ -1063,17 +1063,18 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         skip_height = 0
     resume_at = None
     for i, row_y in enumerate(rows_positions[skip_row:], start=skip_row):
-        # TODO: Check that page is not empty.
         if context.overflows_page(bottom_space, row_y - skip_height):
-            if i == 0:
-                return None, None, {'break': 'any', 'page': None}, [], False
-            resume_row = i - 1
-            resume_at = {i-1: None}
-            for child in children:
-                _, y, _, _ = children_positions[child]
-                if skip_row <= y <= i-2:
-                    this_page_children.append(child)
-            break
+            if not page_is_empty:
+                if i == 0:
+                    return None, None, {'break': 'any', 'page': None}, [], False
+                resume_row = i - 1
+                resume_at = {i-1: None}
+                for child in children:
+                    _, y, _, _ = children_positions[child]
+                    if skip_row <= y <= i-2:
+                        this_page_children.append(child)
+                break
+        page_is_empty = False
     else:
         for child in children:
             _, y, _, _ = children_positions[child]
