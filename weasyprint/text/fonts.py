@@ -1,6 +1,5 @@
 """Interface with external libraries managing fonts installed on the system."""
 
-from functools import lru_cache
 from hashlib import md5
 from io import BytesIO
 from pathlib import Path
@@ -389,9 +388,12 @@ def get_hb_object_data(hb_object, ot_color=None, glyph=None):
         return data
 
 
-@lru_cache()
 def get_pango_font_key(pango_font):
     """Get key corresponding to given Pango font."""
+    # TODO: This value is stable for a given Pango font in a given Pango map, but can’t
+    # be cached with just the Pango font as a key because two Pango fonts could point to
+    # the same address for two different Pango maps. We should cache it in the
+    # FontConfiguration object. See https://github.com/Kozea/WeasyPrint/issues/2144
     description = ffi.gc(
         pango.pango_font_describe(pango_font),
         pango.pango_font_description_free)
