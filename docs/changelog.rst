@@ -2,6 +2,46 @@ Changelog
 =========
 
 
+Version 62.1
+------------
+
+Released on 2024-05-06.
+
+Bug fixes:
+
+* `#2144 <https://github.com/Kozea/WeasyPrint/issues/2144>`_,
+  `#2149 <https://github.com/Kozea/WeasyPrint/pull/2149>`_:
+  Avoid broken fonts when generating multiple documents
+* `c10c6892 <https://github.com/Kozea/WeasyPrint/commit/c10c6892>`_:
+  Display at least one grid row on empty pages
+* `#2146 <https://github.com/Kozea/WeasyPrint/issues/2146>`_:
+  Don’t crash when flex container’s parent’s height is auto
+
+Contributors:
+
+* Guillaume Ayoub
+* Claudius Ellsel
+
+Backers and sponsors:
+
+* Spacinov
+* Kobalt
+* Grip Angebotssoftware
+* Manuel Barkhau
+* SimonSoft
+* Menutech
+* KontextWork
+* Simon Sapin
+* René Fritz
+* TrainingSparkle
+* Healthchecks.io
+* Docraptor
+* Yanal-Yvez Fargialla
+* Douwe van Loenen
+* Morntag
+* Xavid
+
+
 Version 62.0
 ------------
 
