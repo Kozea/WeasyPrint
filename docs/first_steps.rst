@@ -182,13 +182,17 @@ extra steps. Please read this chapter carefully.
 The first step is to install the latest version of Python from the `Microsoft
 Store`_.
 
-When Python is installed, you have to install GTK. Download the latest `GTK3
-installer`_ and launch it. If you don’t know what some options mean, you can
-safely keep the default options selected.
+When Python is installed, you have to install Pango and its dependencies. The
+easiest way to install these libraries is to use MSYS2. Here are the steps you
+have to follow:
 
-You can then launch a command prompt by clicking on the Start menu, typing
-"cmd" and clicking the "Command Prompt" icon. Install WeasyPrint in a `virtual
-environment`_ using `pip`_::
+- Install `MSYS2`_ keeping the default options.
+- After installation, in MSYS2’s shell, execute ``pacman -S mingw-w64-x86_64-pango``.
+- Close MSYS2’s shell.
+
+You can then launch a Windows command prompt by clicking on the Start menu,
+typing ``cmd`` and clicking the "Command Prompt" icon. Install WeasyPrint in a
+`virtual environment`_ using `pip`_::
 
   python3 -m venv venv
   venv\Scripts\activate.bat
@@ -197,7 +201,7 @@ environment`_ using `pip`_::
 
 .. _executable: https://github.com/Kozea/WeasyPrint/releases
 .. _Microsoft Store: https://apps.microsoft.com/store/search/python
-.. _GTK3 installer: https://github.com/tschoonj/GTK-for-Windows-Runtime-Environment-Installer/releases
+.. _MSYS2: https://www.msys2.org/#installation
 
 
 Other Solutions
@@ -260,28 +264,30 @@ Troubleshooting
 ~~~~~~~~~~~~~~~
 
 Most of the installation problems have already been met, and some `issues on
-GitHub`_ could help you to solve them.
+GitHub`_ could help you to solve them. If the solutions here don’t solve your
+problem, please open a new issue (and don’t add comments to closed issues).
+
+.. _issues on GitHub: https://github.com/Kozea/WeasyPrint/issues
 
 Missing Library
 +++++++++++++++
 
-On Windows, most of the problems come from unreachable libraries. If you get an
-error like ``cannot load library 'xxx': error xxx``, it means that WeasyPrint
-can’t find this library.
+On Windows or macOS, most of the problems come from unreachable libraries. If
+you get an error like ``cannot load library 'xxx': error xxx``, it means that
+WeasyPrint can’t find this library.
 
-You can set the ``WEASYPRINT_DLL_DIRECTORIES`` environment variable to list the
-folders where the libraries can be found. For example, in ``cmd.exe``:
+On Windows, you can set the ``WEASYPRINT_DLL_DIRECTORIES`` environment variable
+to list the folders where the DLL files can be found. For example, in
+``cmd.exe``::
 
-.. code-block:: doscon
+  set WEASYPRINT_DLL_DIRECTORIES=C:\msys64\mingw64\bin
 
-    > set WEASYPRINT_DLL_DIRECTORIES=C:\GTK3\bin;D:\GTK3\bin
+On macOS, you can set the ``DYLD_FALLBACK_LIBRARY_PATH`` environment variable::
 
-You can find more about this issue in `#589`_, `#721`_ or `#1240`_.
+  export DYLD_FALLBACK_LIBRARY_PATH=/opt/homebrew/lib:$DYLD_FALLBACK_LIBRARY_PATH
 
-.. _issues on GitHub: https://github.com/Kozea/WeasyPrint/issues
-.. _#589: https://github.com/Kozea/WeasyPrint/issues/589
-.. _#721: https://github.com/Kozea/WeasyPrint/issues/721
-.. _#1240: https://github.com/Kozea/WeasyPrint/issues/1240
+Of course, check that the folders you set actually contain the ``.dll`` (on
+Windows) or ``.dylib`` (on macOS) files WeasyPrint requires.
 
 Missing Fonts
 +++++++++++++
