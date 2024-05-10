@@ -583,9 +583,15 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
     column_gap = box.style['column_gap']
     if column_gap == 'normal':
         column_gap = 0
+    else:
+        refer_to = containing_block.width if box.width == 'auto' else box.width
+        column_gap = percentage(column_gap, refer_to)
     row_gap = box.style['row_gap']
     if row_gap == 'normal':
         row_gap = 0
+    else:
+        refer_to = 0 if box.height == 'auto' else box.height
+        row_gap = percentage(row_gap, refer_to)
 
     # TODO: Support 'column' value in grid-auto-flow.
     if 'column' in flow:

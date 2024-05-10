@@ -445,7 +445,7 @@ def gap(style, name, value):
     """Compute the ``*-gap`` properties."""
     if value == 'normal':
         return value
-    return length(style, name, value, pixels_only=True)
+    return length(style, name, value)
 
 
 def _content_list(style, values):

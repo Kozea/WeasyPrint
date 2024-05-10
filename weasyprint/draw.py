@@ -13,6 +13,7 @@ from .formatting_structure import boxes
 from .images import RasterImage, SVGImage
 from .layout import replaced
 from .layout.background import BackgroundLayer
+from .layout.percent import percentage
 from .matrix import Matrix
 from .stacking import StackingContext
 from .text.ffi import ffi, pango, units_from_double, units_to_double
@@ -425,9 +426,9 @@ def draw_border(stream, box):
             border_widths = (0, 0, 0, box.style['column_rule_width'])
             for child in get_columns_with_rule():
                 with stacked(stream):
+                    gap = percentage(box.style['column_gap'], box.width)
                     position_x = (child.position_x - (
-                        box.style['column_rule_width'] +
-                        box.style['column_gap']) / 2)
+                        box.style['column_rule_width'] + gap) / 2)
                     border_box = (
                         position_x, child.position_y,
                         box.style['column_rule_width'], child.height)

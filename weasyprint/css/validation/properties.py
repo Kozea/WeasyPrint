@@ -664,7 +664,7 @@ def width_height(token):
 @single_token
 def gap(token):
     """Validation for the ``column-gap`` and ``row-gap`` properties."""
-    length = get_length(token, negative=False)
+    length = get_length(token, percentage=True, negative=False)
     if length:
         return length
     keyword = get_keyword(token)
