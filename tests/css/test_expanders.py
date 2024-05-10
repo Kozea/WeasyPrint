@@ -671,14 +671,14 @@ def test_grid_column_row_invalid(rule):
         'row_start': 'auto', 'row_end': 'auto',
         'column_start': 'auto', 'column_end': 'auto'}),
     ('1/c/2 d/span 2 ab', {
-        'row_start': (None, 1, None), 'row_end': (None, None, 'c'),
-        'column_start': (None, 2, 'd'), 'column_end': ('span', 2, 'ab')}),
+        'row_start': (None, 1, None), 'column_start': (None, None, 'c'),
+        'row_end': (None, 2, 'd'), 'column_end': ('span', 2, 'ab')}),
     ('1  /  c', {
-        'row_start': (None, 1, None), 'row_end': (None, None, 'c'),
-        'column_start': 'auto', 'column_end': (None, None, 'c')}),
+        'row_start': (None, 1, None), 'column_start': (None, None, 'c'),
+        'row_end': 'auto', 'column_end': (None, None, 'c')}),
     ('a / c 2', {
-        'row_start': (None, None, 'a'), 'row_end': (None, 2, 'c'),
-        'column_start': (None, None, 'a'), 'column_end': 'auto'}),
+        'row_start': (None, None, 'a'), 'column_start': (None, 2, 'c'),
+        'row_end': (None, None, 'a'), 'column_end': 'auto'}),
     ('a', {
         'row_start': (None, None, 'a'), 'row_end': (None, None, 'a'),
         'column_start': (None, None, 'a'), 'column_end': (None, None, 'a')}),
