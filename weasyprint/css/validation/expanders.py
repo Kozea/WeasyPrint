@@ -900,7 +900,7 @@ def expand_grid_column_row(tokens, name):
 def expand_grid_area(tokens, name):
     """Expand the ``grid-area`` property."""
     tokens_list = _expand_grid_column_row_area(tokens, 4)
-    sides = ('row-start', 'row-end', 'column-start', 'column-end')
+    sides = ('row-start', 'column-start', 'row-end', 'column-end')
     for tokens, side in zip(tokens_list, sides):
         yield f'grid-{side}', tokens
 

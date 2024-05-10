@@ -361,6 +361,41 @@ def test_grid_template_areas_extra_span_dense():
 
 
 @assert_no_logs
+def test_grid_area_multiple_values():
+    page, = render_pages('''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        article {
+          display: grid;
+          font-family: weasyprint;
+          font-size: 2px;
+          grid-template-columns: 5px 5px;
+          grid-template-rows: 2px 2px;
+          line-height: 1;
+          width: 10px;
+        }
+      </style>
+      <article>
+        <div style="grid-area: 2 / 1 / 3 / 2">a</div>
+        <div style="grid-area: 1 / 1 / 2 / 3">b</div>
+        <div style="grid-area: 2 / 2 / 3 / 3">c</div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div_a, div_b, div_c = article.children
+    assert div_a.position_x == div_b.position_x == 0
+    assert div_c.position_x == 5
+    assert div_b.position_y == 0
+    assert div_a.position_y == div_c.position_y == 2
+    assert div_a.height == div_b.height == div_c.height == 2
+    assert div_a.width == div_c.width == 5
+    assert div_b.width == 10
+    assert article.width == 10
+
+
+@assert_no_logs
 def test_grid_template_repeat_fr():
     page, = render_pages('''
       <style>
