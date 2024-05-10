@@ -1062,10 +1062,15 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         skip_row = 0
         skip_height = 0
     resume_at = None
-    for i, row_y in enumerate(rows_positions[skip_row:], start=skip_row):
+    total_height = (
+        sum(size for size, _ in rows_sizes[skip_row:]) +
+        (len(rows_sizes[skip_row:]) - 1) * row_gap)
+    row_lines_positions = (
+        rows_positions[skip_row + 1:] + [box.content_box_y() + total_height])
+    for i, row_y in enumerate(row_lines_positions, start=skip_row + 1):
         if context.overflows_page(bottom_space, row_y - skip_height):
             if not page_is_empty:
-                if i == 0:
+                if i == 1:
                     return None, None, {'break': 'any', 'page': None}, [], False
                 resume_row = i - 1
                 resume_at = {i-1: None}
