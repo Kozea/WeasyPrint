@@ -2800,6 +2800,100 @@ def test_table_empty_body(rows_expected, thead, tfoot, content):
         assert rows == rows_expected[i]
 
 
+def test_table_group_break_inside_avoid_absolute():
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/2134
+    html = '''
+      <style>
+        @page { size: 5cm }
+        tbody { break-inside: avoid; line-height: 2cm }
+        div { position: absolute }
+      </style>
+      <table>
+        <tbody><tr><td>a</td></tr></tbody>
+        <tbody><tr>
+          <td><div>a<br>b</div></td>
+          <td>a<br>b</td>
+        </tr></tbody>
+      </table>
+    '''
+    page1, page2 = render_pages(html)
+
+    html, = page1.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    group, = table.children  # Only first group
+
+    html, = page2.children
+    body, = html.children  # No absolute div here
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    group, = table.children  # Only second group
+
+
+def test_table_row_break_inside_avoid_absolute():
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/2134
+    html = '''
+      <style>
+        @page { size: 5cm }
+        tr { break-inside: avoid; line-height: 2cm }
+        div { position: absolute }
+      </style>
+      <table>
+        <tr><td>a</td></tr>
+        <tr>
+          <td><div>a<br>b</div></td>
+          <td>a<br>b</td>
+        </tr>
+      </table>
+    '''
+    page1, page2 = render_pages(html)
+
+    html, = page1.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    group, = table.children
+    row, = group.children  # Only first row
+
+    html, = page2.children
+    body, = html.children  # No absolute div here
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    group, = table.children
+    row, = group.children  # Only second row
+
+
+def test_table_break_inside_avoid_absolute():
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/2134
+    html = '''
+      <style>
+        @page { size: 5cm }
+        body { line-height: 2cm }
+        table { break-inside: avoid }
+        div { position: absolute }
+      </style>
+      <p>text</p>
+      <table>
+        <tr>
+          <td><div>a<br>b</div></td>
+          <td>a<br>b</td>
+        </tr>
+      </table>
+    '''
+    page1, page2 = render_pages(html)
+
+    html, = page1.children
+    body, = html.children
+    p, = body.children
+    line, = p.children
+    text, = line.children
+    assert text.text == 'text'
+
+    html, = page2.children
+    body, = html.children  # No absolute div here
+
+
 def test_table_break_children_margin():
     # Test regression: https://github.com/Kozea/WeasyPrint/issues/1254
     html = '''

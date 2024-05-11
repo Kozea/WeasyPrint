@@ -313,7 +313,6 @@ TABLE_WRAPPER_BOX_PROPERTIES = {
     'bottom',
     'break_after',
     'break_before',
-    'break_inside',
     'clear',
     'counter_increment',
     'counter_reset',

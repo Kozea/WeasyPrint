@@ -15,7 +15,7 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
     """Layout for a table box."""
     from .block import (  # isort:skip
         avoid_page_break, block_container_layout, block_level_page_break,
-        find_earlier_page_break, force_page_break)
+        find_earlier_page_break, force_page_break, remove_placeholders)
 
     has_header = table.children and table.children[0].is_header
     has_footer = table.children and table.children[-1].is_footer
@@ -209,6 +209,8 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
             if resume_at and not page_is_empty:
                 if avoid_page_break(row.style['break_inside'], context):
                     resume_at = {index_row: {}}
+                    remove_placeholders(
+                        context, new_row_children, absolute_boxes, fixed_boxes)
                     break
 
             row = row.copy_with_children(new_row_children)
@@ -338,9 +340,8 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
         if resume_at and not original_page_is_empty and (
                 avoid_page_break(group.style['break_inside'], context) or
                 not new_group_children):
-            for descendant in group.descendants():
-                if descendant.footnote is not None:
-                    context.unlayout_footnote(descendant.footnote)
+            remove_placeholders(
+                context, new_group_children, absolute_boxes, fixed_boxes)
             return None, None, next_page
 
         group = group.copy_with_children(new_group_children)
@@ -599,6 +600,7 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
 
     avoid_break = avoid_page_break(table.style['break_inside'], context)
     if resume_at and not page_is_empty and avoid_break:
+        remove_placeholders(context, [table], absolute_boxes, fixed_boxes)
         table = None
         resume_at = None
     adjoining_margins = []
