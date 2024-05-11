@@ -793,3 +793,54 @@ def test_absolute_image_background(assert_pixels):
         </style>
         <img src="pattern-transparent.svg" />
     ''')
+
+
+@assert_no_logs
+def test_absolute_in_absolute_break(assert_pixels):
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/2134
+    assert_pixels('''
+        BBBB
+        BBBB
+        BBBB
+        BBBB
+        BBBB
+
+        BBBB
+        BBBB
+        BBBB
+        BBBB
+        BBBB
+
+        BBBB
+        BBBB
+        RRRR
+        RRRR
+        RRRR
+
+        RRRR
+        RRRR
+        ____
+        ____
+        ____
+    ''', '''
+        <style>
+          @page {
+            size: 4px 5px;
+          }
+          body {
+            font-size: 2px;
+            line-height: 1;
+          }
+          div {
+            position: absolute;
+            width: 100%;
+          }
+        </style>
+        <div style="background: blue">
+          <br><br><br><br>
+          <div style="background: red">
+            <br><br>
+          </div>
+        </div>
+        <br><br><br><br><br><br><br>
+    ''')

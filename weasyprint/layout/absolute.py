@@ -215,7 +215,7 @@ def absolute_block(context, box, containing_block, fixed_boxes, bottom_space,
     for child_placeholder in absolute_boxes:
         absolute_layout(
             context, child_placeholder, new_box, fixed_boxes, bottom_space,
-            skip_stack)
+            skip_stack=None)
 
     if translate_box_width:
         translate_x -= new_box.width
