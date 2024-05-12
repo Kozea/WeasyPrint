@@ -184,8 +184,7 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map,
                     'Ff': 1 << (16 - 1),  # Radio flag
                     'F': 1 << (3 - 1),  # Print flag
                     'P': page.reference,
-                    'T': pydyf.String(f'{hash(form)}-{input_name}'),
-                    'TU': pydyf.String(input_name),
+                    'T': pydyf.String(input_name),
                     'V': '/Off',
                     'Kids': pydyf.Array(),
                 })
