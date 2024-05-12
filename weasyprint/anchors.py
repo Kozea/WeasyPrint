@@ -27,8 +27,7 @@ def rectangle_aabb(matrix, pos_x, pos_y, width, height):
     return box_x1, box_y1, box_x2, box_y2
 
 
-def gather_anchors(box, anchors, links, bookmarks, forms,
-                   parent_matrix=None,
+def gather_anchors(box, anchors, links, bookmarks, forms, parent_matrix=None,
                    parent_form=None):
     """Gather anchors and other data related to specific positions in PDF.
 
@@ -123,8 +122,7 @@ def gather_anchors(box, anchors, links, bookmarks, forms,
             anchors[anchor_name] = pos_x, pos_y
 
     for child in box.all_children():
-        gather_anchors(child, anchors, links, bookmarks, forms, matrix,
-                       parent_form=parent_form)
+        gather_anchors(child, anchors, links, bookmarks, forms, matrix, parent_form)
 
 
 def make_page_bookmark_tree(page, skipped_levels, last_by_depth,

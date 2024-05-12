@@ -154,9 +154,8 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map,
             # Checkboxes
             width = rectangle[2] - rectangle[0]
             height = rectangle[1] - rectangle[3]
-            checked_stream = _make_checked_stream(resources,
-                                                  width, height,
-                                                  compress, style, font_size)
+            checked_stream = _make_checked_stream(
+                resources, width, height, compress, style, font_size)
             pdf.add_object(checked_stream)
 
             checked = 'checked' in element.attrib
@@ -196,9 +195,8 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map,
             group = radio_groups[form][input_name]
             width = rectangle[2] - rectangle[0]
             height = rectangle[1] - rectangle[3]
-            on_stream = _make_checked_stream(resources,
-                                             width, height,
-                                             compress, style, font_size)
+            on_stream = _make_checked_stream(
+                resources, width, height, compress, style, font_size)
             checked = 'checked' in element.attrib
             field = pydyf.Dictionary({
                 'Type': '/Annot',
@@ -226,7 +224,7 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map,
             selected_values = []
             for option in element:
                 value = pydyf.String(option.attrib.get('value', ''))
-                text = pydyf.String(option.text or "")
+                text = pydyf.String(option.text or '')
                 options.append(pydyf.Array([value, text]))
                 if 'selected' in option.attrib:
                     selected_values.append(value)
