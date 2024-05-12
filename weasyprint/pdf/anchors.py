@@ -92,7 +92,10 @@ def add_outlines(pdf, bookmarks, parent=None):
     return outlines, count
 
 
-def _make_checked_stream(resources, width, height, compress, style, font_size):
+def _make_checked_stream(resources, rectangle, compress, style, font_size,
+                         character):
+    width = rectangle[2] - rectangle[0]
+    height = rectangle[1] - rectangle[3]
     on_stream = pydyf.Stream(extra={
         'Resources': resources.reference,
         'Type': '/XObject',
@@ -107,7 +110,7 @@ def _make_checked_stream(resources, width, height, compress, style, font_size):
     x = (width - font_size * 0.8) / 2
     y = (height - font_size * 0.8) / 2
     on_stream.move_text_to(x, y)
-    on_stream.show_text_string('4')
+    on_stream.show_text_string(character)
     on_stream.end_text()
     on_stream.pop_state()
     return on_stream
@@ -152,10 +155,9 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map,
         field_stream.set_color_rgb(*style['color'][:3])
         if input_type == 'checkbox':
             # Checkboxes
-            width = rectangle[2] - rectangle[0]
-            height = rectangle[1] - rectangle[3]
             checked_stream = _make_checked_stream(
-                resources, width, height, compress, style, font_size)
+                resources, rectangle, compress, style, font_size,
+                '4')  # Checkbox character in Dingbats
             pdf.add_object(checked_stream)
 
             checked = 'checked' in element.attrib
@@ -192,10 +194,9 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map,
                 page['Annots'].append(new_group.reference)
                 radio_groups[form][input_name] = new_group
             group = radio_groups[form][input_name]
-            width = rectangle[2] - rectangle[0]
-            height = rectangle[1] - rectangle[3]
             on_stream = _make_checked_stream(
-                resources, width, height, compress, style, font_size)
+                resources, rectangle, compress, style, font_size,
+                'l')  # Disc character in Dingbats
             checked = 'checked' in element.attrib
             field = pydyf.Dictionary({
                 'Type': '/Annot',
