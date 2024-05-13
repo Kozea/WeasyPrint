@@ -512,13 +512,11 @@ def test_partial_pdf_custom_metadata():
     ('<input type="checkbox">', ['/Btn']),
     ('<input type="radio">',
      ['/Btn', '/V /Off', '/AS /Off', f'/Ff {1 << (16 - 1)}']),
-    ('<input checked type="radio" name="foo" value="Some Value">',
-     ['/Btn', '/TU (foo)', '/V (Some Value)', '/AS (Some Value)']),
-    ('<form><input type="radio" name="foo" value="v1"></form>'
+    ('<input checked type="radio" name="foo" value="value">',
+     ['/Btn', '/T (foo)', '/V /dmFsdWU=', '/AS /dmFsdWU=']),
+    ('<form><input type="radio" name="foo" value="v0"></form>'
      '<form><input checked type="radio" name="foo" value="v1"></form>',
-     ['/Btn', '/V (v1)',
-      '/AS (v1)', '/V (v1)',
-      '/AS /Off', '/V /Off']),
+     ['/Btn', '/AS /djE=', '/V /djE=', '/AS /Off', '/V /Off']),
     ('<textarea></textarea>', ['/Tx', '/V ()']),
     ('<select><option value="a">A</option></select>', ['/Ch', '/Opt']),
     ('<select>'
