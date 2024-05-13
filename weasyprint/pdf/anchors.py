@@ -93,30 +93,6 @@ def add_outlines(pdf, bookmarks, parent=None):
     return outlines, count
 
 
-def _make_checked_stream(resources, rectangle, compress, style, font_size,
-                         character):
-    width = rectangle[2] - rectangle[0]
-    height = rectangle[1] - rectangle[3]
-    on_stream = pydyf.Stream(extra={
-        'Resources': resources.reference,
-        'Type': '/XObject',
-        'Subtype': '/Form',
-        'BBox': pydyf.Array((0, 0, width, height)),
-    }, compress=compress)
-    on_stream.push_state()
-    on_stream.begin_text()
-    on_stream.set_color_rgb(*style['color'][:3])
-    on_stream.set_font_size('ZaDb', font_size)
-    # Center (let’s assume that Dingbat’s check has a 0.8em size)
-    x = (width - font_size * 0.8) / 2
-    y = (height - font_size * 0.8) / 2
-    on_stream.move_text_to(x, y)
-    on_stream.show_text_string(character)
-    on_stream.end_text()
-    on_stream.pop_state()
-    return on_stream
-
-
 def add_forms(forms, matrix, pdf, page, resources, stream, font_map,
               compress):
     """Include form inputs in PDF."""
@@ -154,15 +130,48 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map,
         font_size = style['font_size'] * 0.75
         field_stream = pydyf.Stream(compress=compress)
         field_stream.set_color_rgb(*style['color'][:3])
-        if input_type == 'checkbox':
-            # Checkboxes
-            checked_stream = _make_checked_stream(
-                resources, rectangle, compress, style, font_size,
-                '4')  # Checkbox character in Dingbats
+        if input_type in ('radio', 'checkbox'):
+            if input_type == 'radio':
+                if input_name not in radio_groups[form]:
+                    radio_groups[form][input_name] = group = pydyf.Dictionary({
+                        'FT': '/Btn',
+                        'Ff': (1 << (15 - 1)) + (1 << (16 - 1)),  # NoToggle & Radio
+                        'T': pydyf.String(f'{len(radio_groups)}'),
+                        'V': '/Off',
+                        'Kids': pydyf.Array(),
+                    })
+                    pdf.add_object(group)
+                    pdf.catalog['AcroForm']['Fields'].append(group.reference)
+                group = radio_groups[form][input_name]
+                character = 'l'  # Disc character in Dingbats
+            else:
+                character = '4'  # Check character in Dingbats
+
+            # Create stream when input is checked
+            width = rectangle[2] - rectangle[0]
+            height = rectangle[1] - rectangle[3]
+            checked_stream = pydyf.Stream(extra={
+                'Resources': resources.reference,
+                'Type': '/XObject',
+                'Subtype': '/Form',
+                'BBox': pydyf.Array((0, 0, width, height)),
+            }, compress=compress)
+            checked_stream.push_state()
+            checked_stream.begin_text()
+            checked_stream.set_color_rgb(*style['color'][:3])
+            checked_stream.set_font_size('ZaDb', font_size)
+            # Center (let’s assume that Dingbat’s characters have a 0.75em size)
+            x = (width - font_size * 0.75) / 2
+            y = (height - font_size * 0.75) / 2
+            checked_stream.move_text_to(x, y)
+            checked_stream.show_text_string(character)
+            checked_stream.end_text()
+            checked_stream.pop_state()
             pdf.add_object(checked_stream)
 
             checked = 'checked' in element.attrib
             field_stream.set_font_size('ZaDb', font_size)
+            key = b64encode(input_value.encode(), altchars=b"+-").decode()
             field = pydyf.Dictionary({
                 'Type': '/Annot',
                 'Subtype': '/Widget',
@@ -170,52 +179,21 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map,
                 'FT': '/Btn',
                 'F': 1 << (3 - 1),  # Print flag
                 'P': page.reference,
-                'T': pydyf.String(input_name),
-                'V': '/Yes' if checked else '/Off',
+                'AS': f'/{key}' if checked else '/Off',
                 'AP': pydyf.Dictionary({'N': pydyf.Dictionary({
-                    'Yes': checked_stream.reference,
-                })}),
-                'AS': '/Yes' if checked else '/Off',
+                    key: checked_stream.reference})}),
+                'MK': pydyf.Dictionary({'CA': pydyf.String(character)}),
                 'DA': pydyf.String(b' '.join(field_stream.stream)),
             })
             pdf.add_object(field)
-        elif input_type == 'radio':
-            if input_name not in radio_groups[form]:
-                new_group = pydyf.Dictionary({
-                    'Type': '/Annot',
-                    'Subtype': '/Widget',
-                    'Rect': pydyf.Array(rectangle),
-                    'FT': '/Btn',
-                    'Ff': 1 << (16 - 1),  # Radio flag
-                    'F': 1 << (3 - 1),  # Print flag
-                    'P': page.reference,
-                    'T': pydyf.String(input_name),
-                    'V': '/Off',
-                    'Kids': pydyf.Array(),
-                })
-                pdf.add_object(new_group)
-                page['Annots'].append(new_group.reference)
-                radio_groups[form][input_name] = new_group
-            group = radio_groups[form][input_name]
-            on_stream = _make_checked_stream(
-                resources, rectangle, compress, style, font_size,
-                'l')  # Disc character in Dingbats
-            pdf.add_object(on_stream)
-            checked = 'checked' in element.attrib
-            key = b64encode(input_value.encode(), altchars=b"+-").decode()
-            field = pydyf.Dictionary({
-                'Type': '/Annot',
-                'Subtype': '/Widget',
-                'Rect': pydyf.Array(rectangle),
-                'Parent': group.reference,
-                'AS': f'/{key}' if checked else '/Off',
-                'AP': pydyf.Dictionary({'N': pydyf.Dictionary({
-                    key: on_stream.reference})}),
-            })
-            if checked:
-                group['V'] = f'/{key}'
-            pdf.add_object(field)
-            group['Kids'].append(field.reference)
+            if input_type == 'radio':
+                field['Parent'] = group.reference
+                if checked:
+                    group['V'] = f'/{key}'
+                group['Kids'].append(field.reference)
+            else:
+                field['T'] = pydyf.String(input_name)
+                field['V'] = field['AS']
         elif element.tag == 'select':
             # Select fields
             font_description = get_font_description(style)
