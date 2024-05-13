@@ -3,6 +3,7 @@
 import collections
 import io
 import mimetypes
+from base64 import b64encode
 from hashlib import md5
 from os.path import basename
 from urllib.parse import unquote, urlsplit
@@ -199,18 +200,18 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map,
                 resources, rectangle, compress, style, font_size,
                 'l')  # Disc character in Dingbats
             checked = 'checked' in element.attrib
+            key = b64encode(input_value.encode(), altchars=b"+-").decode()
             field = pydyf.Dictionary({
                 'Type': '/Annot',
                 'Subtype': '/Widget',
                 'Rect': pydyf.Array(rectangle),
                 'Parent': group.reference,
-                'AS': pydyf.String(input_value) if checked else '/Off',
+                'AS': f'/{key}' if checked else '/Off',
                 'AP': pydyf.Dictionary({'N': pydyf.Dictionary({
-                    pydyf.String(input_value): on_stream.reference,
-                })}),
+                    key: on_stream.reference})}),
             })
             if checked:
-                group['V'] = pydyf.String(input_value)
+                group['V'] = f'/{key}'
             pdf.add_object(field)
             group['Kids'].append(field.reference)
         elif element.tag == 'select':
