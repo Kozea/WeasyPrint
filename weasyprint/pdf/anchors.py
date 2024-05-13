@@ -184,6 +184,7 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map,
                 new_group = pydyf.Dictionary({
                     'Type': '/Annot',
                     'Subtype': '/Widget',
+                    'Rect': pydyf.Array(rectangle),
                     'FT': '/Btn',
                     'Ff': 1 << (16 - 1),  # Radio flag
                     'F': 1 << (3 - 1),  # Print flag
