@@ -177,6 +177,7 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map,
                 'AS': '/Yes' if checked else '/Off',
                 'DA': pydyf.String(b' '.join(field_stream.stream)),
             })
+            pdf.add_object(field)
         elif input_type == 'radio':
             if input_name not in radio_groups[form]:
                 new_group = pydyf.Dictionary({
@@ -210,6 +211,7 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map,
             })
             if checked:
                 group['V'] = pydyf.String(input_value)
+            pdf.add_object(field)
             group['Kids'].append(field.reference)
         elif element.tag == 'select':
             # Select fields
@@ -248,6 +250,7 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map,
                 field['V'] = (
                     selected_values[-1] if selected_values
                     else pydyf.String(''))
+            pdf.add_object(field)
         else:
             # Text, password, textarea, files, and unknown
             font_description = get_font_description(style)
@@ -281,8 +284,8 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map,
             maxlength = element.get('maxlength')
             if maxlength and maxlength.isdigit():
                 field['MaxLen'] = element.get('maxlength')
+            pdf.add_object(field)
 
-        pdf.add_object(field)
         page['Annots'].append(field.reference)
         pdf.catalog['AcroForm']['Fields'].append(field.reference)
 
