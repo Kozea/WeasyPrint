@@ -200,6 +200,7 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map,
             on_stream = _make_checked_stream(
                 resources, rectangle, compress, style, font_size,
                 'l')  # Disc character in Dingbats
+            pdf.add_object(on_stream)
             checked = 'checked' in element.attrib
             key = b64encode(input_value.encode(), altchars=b"+-").decode()
             field = pydyf.Dictionary({
