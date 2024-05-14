@@ -1119,6 +1119,17 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         height = (
             sum(size for size, _ in rows_sizes[y:y+height]) +
             (height - 1) * row_gap)
+
+        # TODO: Apply auto margin.
+        if child.margin_top == 'auto':
+            child.margin_top = 0
+        if child.margin_right == 'auto':
+            child.margin_right = 0
+        if child.margin_bottom == 'auto':
+            child.margin_bottom = 0
+        if child.margin_left == 'auto':
+            child.margin_left = 0
+
         child_width = width - (
             child.margin_left + child.border_left_width + child.padding_left +
             child.margin_right + child.border_right_width + child.padding_right)
@@ -1156,7 +1167,6 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
             # TODO: Support fragmentation in grid rows.
             continue
 
-        # TODO: Apply auto margins.
         if justify_self & {'normal', 'stretch'}:
             new_child.width = max(child_width, new_child.width)
         else:
