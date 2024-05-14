@@ -336,6 +336,12 @@ class Box:
                 return not isinstance(self, (LineBox, TextBox))
         return False
 
+    def is_form(self):
+        """Return whether this box is a form element."""
+        if self.element is None:
+            return False
+        return self.element.tag == 'form'
+
 
 class ParentBox(Box):
     """A box that has children."""

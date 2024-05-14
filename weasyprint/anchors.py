@@ -27,10 +27,11 @@ def rectangle_aabb(matrix, pos_x, pos_y, width, height):
     return box_x1, box_y1, box_x2, box_y2
 
 
-def gather_anchors(box, anchors, links, bookmarks, inputs, parent_matrix=None):
+def gather_anchors(box, anchors, links, bookmarks, forms, parent_matrix=None,
+                   parent_form=None):
     """Gather anchors and other data related to specific positions in PDF.
 
-    Currently finds anchors, links, bookmarks and inputs.
+    Currently finds anchors, links, bookmarks and forms.
 
     """
     # Get box transformation matrix.
@@ -89,6 +90,11 @@ def gather_anchors(box, anchors, links, bookmarks, inputs, parent_matrix=None):
     has_anchor = anchor_name and anchor_name not in anchors
     is_input = box.is_input()
 
+    if box.is_form():
+        parent_form = box.element
+        if parent_form not in forms:
+            forms[parent_form] = []
+
     if has_bookmark or has_link or has_anchor or is_input:
         if is_input:
             pos_x, pos_y = box.content_box_x(), box.content_box_y()
@@ -106,7 +112,7 @@ def gather_anchors(box, anchors, links, bookmarks, inputs, parent_matrix=None):
                 link_type = 'attachment'
             links.append((link_type, target, rectangle, box))
         if is_input:
-            inputs.append((box.element, box.style, rectangle))
+            forms[parent_form].append((box.element, box.style, rectangle))
         if matrix and (has_bookmark or has_anchor):
             pos_x, pos_y = matrix.transform_point(pos_x, pos_y)
         if has_bookmark:
@@ -116,7 +122,7 @@ def gather_anchors(box, anchors, links, bookmarks, inputs, parent_matrix=None):
             anchors[anchor_name] = pos_x, pos_y
 
     for child in box.all_children():
-        gather_anchors(child, anchors, links, bookmarks, inputs, matrix)
+        gather_anchors(child, anchors, links, bookmarks, forms, matrix, parent_form)
 
 
 def make_page_bookmark_tree(page, skipped_levels, last_by_depth,

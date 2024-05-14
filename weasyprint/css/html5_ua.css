@@ -187,8 +187,10 @@ input[value]::before {
   overflow: hidden;
 }
 input::before,
-input[value=""]::before {
-  content: " ";
+input[value=""]::before,
+input[type="checkbox"]::before,
+input[type="radio"]::before {
+  content: "";
 }
 select {
   background: lightgrey;

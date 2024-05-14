@@ -28,6 +28,7 @@ class Page:
     instantiated directly.
 
     """
+
     def __init__(self, page_box):
         #: The page width, including margins, in CSS pixels.
         self.width = page_box.margin_width()
@@ -67,14 +68,15 @@ class Page:
         #: ``(x, y)`` point in CSS pixels from the top-left of the page.
         self.anchors = {}
 
-        #: The :obj:`list` of ``(element, attributes, rectangle)`` :obj:`tuples
-        #: <tuple>`. A ``rectangle`` is ``(x, y, width, height)``, in CSS
+        #: The :obj:`dict` mapping form elements to a list
+        #: of ``(element, attributes, rectangle)`` :obj:`tuples <tuple>`.
+        #: A ``rectangle`` is ``(x, y, width, height)``, in CSS
         #: pixels from the top-left of the page. ``atributes`` is a
         #: :obj:`dict` of HTML tag attributes and values.
-        self.inputs = []
+        #: The key ``None`` will contain inputs that are not part of a form.
+        self.forms = {None: []}
 
-        gather_anchors(
-            page_box, self.anchors, self.links, self.bookmarks, self.inputs)
+        gather_anchors(page_box, self.anchors, self.links, self.bookmarks, self.forms)
         self._page_box = page_box
 
     def paint(self, stream, scale=1):
@@ -105,6 +107,7 @@ class DocumentMetadata:
     New attributes may be added in future versions of WeasyPrint.
 
     """
+
     def __init__(self, title=None, authors=None, description=None,
                  keywords=None, generator=None, created=None, modified=None,
                  attachments=None, lang=None, custom=None):
@@ -162,6 +165,7 @@ class DiskCache:
     (i.e. RasterImage instances) are still stored in memory.
 
     """
+
     def __init__(self, folder):
         self._path = Path(folder)
         self._path.mkdir(parents=True, exist_ok=True)
