@@ -835,3 +835,24 @@ def test_grid_margin():
     assert div_b.height == 4
     assert div_c.height == 6
     assert article.height == 10
+
+
+@assert_no_logs
+def test_grid_item_margin():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/2154
+    page, = render_pages('''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        article { display: grid }
+        div { margin: auto }
+      </style>
+      <article>
+        <div>a</div>
+        <div>b</div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div_a, div_b = article.children
+    # TODO: Test auto margin values.
