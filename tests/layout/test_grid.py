@@ -516,9 +516,9 @@ def test_grid_shorthand_auto_flow_columns_none_dense():
           display: grid;
           font-family: weasyprint;
           font-size: 2px;
-          grid: none / auto-flow 1fr dense;
+          grid: none / auto-flow dense 1fr;
           line-height: 1;
-          width: 10px;
+          width: 12px;
         }
       </style>
       <article>
@@ -531,13 +531,13 @@ def test_grid_shorthand_auto_flow_columns_none_dense():
     body, = html.children
     article, = body.children
     div_a, div_b, div_c = article.children
-    assert div_a.position_x == div_b.position_x == div_c.position_x == 0
-    assert div_a.position_y == 0
-    assert div_b.position_y == 2
-    assert div_c.position_y == 4
-    assert div_a.width == div_b.width == div_c.width == 10
-    assert {div.height for div in article.children} == {2}
-    assert article.width == 10
+    assert div_a.position_x == 0
+    assert div_b.position_x == 4
+    assert div_c.position_x == 8
+    assert div_a.position_y == div_b.position_y == div_c.position_y == 0
+    assert div_a.height == div_b.height == div_c.height == 2
+    assert {div.width for div in article.children} == {4}
+    assert article.width == 12
 
 
 @assert_no_logs
@@ -862,8 +862,8 @@ def test_grid_auto_flow_column():
     page, = render_pages('''
       <article style="display: grid; grid-auto-flow: column">
         <div>a</div>
-        <div>b</div>
-        <div>c</div>
+        <div>a</div>
+        <div>a</div>
       </article>
     ''')
     html, = page.children
