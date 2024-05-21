@@ -50,8 +50,7 @@ def test_grid_rows():
     assert div_a.position_x == div_b.position_x == div_c.position_x == 0
     assert div_a.position_y < div_b.position_y < div_c.position_y
     assert div_a.height == div_b.height == div_c.height
-    assert article.width == html.width
-    assert div_a.width == div_b.width == div_c.width == html.width
+    assert div_a.width == div_b.width == div_c.width == html.width == article.width
 
 
 @assert_no_logs
@@ -856,3 +855,22 @@ def test_grid_item_margin():
     article, = body.children
     div_a, div_b = article.children
     # TODO: Test auto margin values.
+
+
+@assert_no_logs
+def test_grid_auto_flow_column():
+    page, = render_pages('''
+      <article style="display: grid; grid-auto-flow: column">
+        <div>a</div>
+        <div>b</div>
+        <div>c</div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div_a, div_b, div_c = article.children
+    assert div_a.position_x < div_b.position_x < div_c.position_x
+    assert div_a.position_y == div_b.position_y == div_c.position_y == 0
+    assert div_a.width == div_b.width == div_c.width
+    assert div_a.height == div_b.height == div_c.height == html.height == article.height
