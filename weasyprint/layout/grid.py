@@ -126,48 +126,53 @@ def _get_span(place):
     return span
 
 
-def _get_column_placement(row_placement, column_start, column_end,
-                          columns, children_positions, dense):
-    occupied_columns = set()
+def _get_second_placement(first_placement, second_start, second_end,
+                          second_tracks, children_positions, first_flow, dense):
+    occupied_tracks = set()
     for x, y, width, height in children_positions.values():
         # Test whether cells overlap.
-        if _intersect(y, height, *row_placement):
-            for x in range(x, x + width):
-                occupied_columns.add(x)
+        if first_flow == 'row':
+            if _intersect(y, height, *first_placement):
+                for x in range(x, x + width):
+                    occupied_tracks.add(x)
+        else:
+            if _intersect(x, width, *first_placement):
+                for y in range(y, y + height):
+                    occupied_tracks.add(y)
     if dense:
-        for x in count():
-            if x in occupied_columns:
+        for track in count():
+            if track in occupied_tracks:
                 continue
-            if column_start == 'auto':
-                placement = _get_placement(
-                    (None, x + 1, None), column_end, columns)
+            if second_start == 'auto':
+                    placement = _get_placement(
+                        (None, track + 1, None), second_end, second_tracks)
             else:
-                assert column_start[0] == 'span'
+                assert second_start[0] == 'span'
                 # If the placement contains two spans, remove the one
                 # contributed by the end grid-placement property.
                 # https://drafts.csswg.org/css-grid/#grid-placement-errors
-                assert column_start == 'auto' or column_start[0] == 'span'
-                span = _get_span(column_start)
+                assert second_start == 'auto' or second_start[0] == 'span'
+                span = _get_span(second_start)
                 placement = _get_placement(
-                    column_start, (None, x + 1 + span, None), columns)
-            columns = range(placement[0], placement[0] + placement[1])
-            if not set(columns) & occupied_columns:
+                    second_start, (None, track + 1 + span, None), second_tracks)
+            tracks = range(placement[0], placement[0] + placement[1])
+            if not set(tracks) & occupied_tracks:
                 return placement
     else:
-        y = max(occupied_columns or [0]) + 1
-        if column_start == 'auto':
+        track = max(occupied_tracks or [0]) + 1
+        if second_start == 'auto':
             return _get_placement(
-                (None, y + 1, None), column_end, columns)
+                (None, track + 1, None), second_end, second_tracks)
         else:
-            assert column_start[0] == 'span'
+            assert second_start[0] == 'span'
             # If the placement contains two spans, remove the one contributed
             # by the end grid-placement property.
             # https://drafts.csswg.org/css-grid/#grid-placement-errors
-            assert column_start == 'auto' or column_start[0] == 'span'
-            for end_y in count(y + 1):
+            assert second_start == 'auto' or second_start[0] == 'span'
+            for end_track in count(track + 1):
                 placement = _get_placement(
-                    column_start, (None, end_y + 1, None), columns)
-                if placement[0] >= y:
+                    second_start, (None, end_track + 1, None), second_tracks)
+                if placement[0] >= track:
                     return placement
 
 
@@ -593,10 +598,6 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         refer_to = 0 if box.height == 'auto' else box.height
         row_gap = percentage(row_gap, refer_to)
 
-    # TODO: Support 'column' value in grid-auto-flow.
-    if 'column' in flow:
-        LOGGER.warning('"column" is not supported in grid-auto-flow')
-
     if grid_areas == 'none':
         grid_areas = ((None,),)
     grid_areas = [list(row) for row in grid_areas]
@@ -652,6 +653,9 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
 
     # 1. Run the grid placement algorithm.
 
+    first_flow = 'column' if 'column' in flow else 'row'
+    second_flow = 'row' if 'column' in flow else 'column'
+
     # 1.1 Position anything that’s not auto-positioned.
     children_positions = {}
     for child in box.children:
@@ -669,22 +673,29 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
             y, height = row_placement
             children_positions[child] = (x, y, width, height)
 
-    # 1.2 Process the items locked to a given row.
+    # 1.2 Process the items locked to a given row (resp. column).
     children = sorted(box.children, key=lambda item: item.style['order'])
     for child in children:
         if child in children_positions:
             continue
-        row_start = child.style['grid_row_start']
-        row_end = child.style['grid_row_end']
-        row_placement = _get_placement(row_start, row_end, rows[::2])
-        if not row_placement:
+        first_start = child.style[f'grid_{first_flow}_start']
+        first_end = child.style[f'grid_{first_flow}_end']
+        first_tracks = rows if first_flow == 'row' else columns
+        first_placement = _get_placement(first_start, first_end, first_tracks[::2])
+        if not first_placement:
             continue
-        y, height = row_placement
-        column_start = child.style['grid_column_start']
-        column_end = child.style['grid_column_end']
-        x, width = _get_column_placement(
-            row_placement, column_start, column_end, columns,
-            children_positions, 'dense' in flow)
+        second_start = child.style[f'grid_{second_flow}_start']
+        second_end = child.style[f'grid_{second_flow}_end']
+        second_tracks = rows if second_flow == 'row' else columns
+        second_placement = _get_second_placement(
+            first_placement, second_start, second_end, second_tracks,
+            children_positions, first_flow, 'dense' in flow)
+        if first_flow == 'row':
+            y, height = first_placement
+            x, width = second_placement
+        else:
+            x, width = first_placement
+            y, height = second_placement
         children_positions[child] = (x, y, width, height)
 
     # 1.3 Determine the columns in the implicit grid.
