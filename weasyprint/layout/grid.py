@@ -653,8 +653,8 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
 
     # 1. Run the grid placement algorithm.
 
-    first_flow = 'column' if 'column' in flow else 'row'
-    second_flow = 'row' if 'column' in flow else 'column'
+    first_flow = 'column' if 'column' in flow else 'row'  # auto flow axis
+    second_flow = 'row' if 'column' in flow else 'column'  # other axis
 
     # 1.1 Position anything that’s not auto-positioned.
     children_positions = {}
@@ -698,37 +698,44 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
             y, height = second_placement
         children_positions[child] = (x, y, width, height)
 
-    # 1.3 Determine the columns in the implicit grid.
-    # 1.3.1 Start with the columns from the explicit grid.
-    implicit_x1 = 0
-    implicit_x2 = len(grid_areas[0]) if grid_areas else 0
-    # 1.3.2 Add columns to the beginning and end of the implicit grid.
+    # 1.3 Determine the columns (resp. rows) in the implicit grid.
+    # 1.3.1 Start with the columns (resp. rows) from the explicit grid.
+    implicit_second_1 = 0
+    if second_flow == 'column':
+        implicit_second_2 = len(grid_areas[0]) if grid_areas else 0
+    else:
+        implicit_second_2 = len(grid_areas)
+    # 1.3.2 Add columns (resp. rows) to the beginning and end of the implicit grid.
     remaining_grid_items = []
     for child in children:
         if child in children_positions:
-            x, _, width, _ = children_positions[child]
+            if second_flow == 'column':
+                i, _, size, _ = children_positions[child]
+            else:
+                _, i, _, size = children_positions[child]
         else:
-            column_start = child.style['grid_column_start']
-            column_end = child.style['grid_column_end']
-            column_placement = _get_placement(
-                column_start, column_end, columns[::2])
+            second_start = child.style[f'grid_{second_flow}_start']
+            second_end = child.style[f'grid_{second_flow}_end']
+            second_tracks = rows if second_flow == 'row' else columns
+            second_placement = _get_placement(
+                second_start, second_end, second_tracks[::2])
             remaining_grid_items.append(child)
-            if column_placement:
-                x, width = column_placement
+            if second_placement:
+                i, size = second_placement
             else:
                 continue
-        implicit_x1 = min(x, implicit_x1)
-        implicit_x2 = max(x + width, implicit_x2)
-    # 1.3.3 Add columns to accommodate max column span.
+        implicit_second_1 = min(i, implicit_second_1)
+        implicit_second_2 = max(i + size, implicit_second_2)
+    # 1.3.3 Add columns (resp. rows) to accommodate max track span.
     for child in remaining_grid_items:
-        column_start = child.style['grid_column_start']
-        column_end = child.style['grid_column_end']
+        second_start = child.style[f'grid_{second_flow}_start']
+        second_end = child.style[f'grid_{second_flow}_end']
         span = 1
-        if column_start != 'auto' and column_start[0] == 'span':
-            span = column_start[1]
-        elif column_end != 'auto' and column_end[0] == 'span':
-            span = column_end[1]
-        implicit_x2 = max(implicit_x1 + (span or 1), implicit_x2)
+        if second_start != 'auto' and second_start[0] == 'span':
+            span = second_start[1]
+        elif second_end != 'auto' and second_end[0] == 'span':
+            span = second_end[1]
+        implicit_second_2 = max(implicit_second_1 + (span or 1), implicit_second_2)
 
     # 1.4 Position the remaining grid items.
     implicit_y1 = 0
@@ -737,7 +744,7 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         _, y, _, height = position
         implicit_y1 = min(y, implicit_y1)
         implicit_y2 = max(y + height, implicit_y2)
-    cursor_x, cursor_y = implicit_x1, implicit_y1
+    cursor_x, cursor_y = implicit_second_1, implicit_y1
     if 'dense' in flow:
         for child in remaining_grid_items:
             column_start = child.style['grid_column_start']
@@ -785,7 +792,7 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                 children_positions[child] = (x, y, width, height)
             else:
                 # 1. Set the cursor’s row and column positions.
-                cursor_x, cursor_y = implicit_x1, implicit_y1
+                cursor_x, cursor_y = implicit_second_1, implicit_y1
                 while True:
                     # 2. Increment the column position of the cursor.
                     y = cursor_y
@@ -793,7 +800,7 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                     row_end = child.style['grid_row_end']
                     column_start = child.style['grid_column_start']
                     column_end = child.style['grid_column_end']
-                    for x in range(cursor_x, implicit_x2):
+                    for x in range(cursor_x, implicit_second_2):
                         if row_start == 'auto':
                             y, height = _get_placement(
                                 (None, y + 1, None), row_end, rows[::2])
@@ -836,7 +843,7 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                                 rows.append(next(auto_rows))
                                 rows.append([])
                             implicit_y2 = cursor_y
-                        cursor_x = implicit_x1
+                        cursor_x = implicit_second_1
                         continue
                     break
     else:
@@ -894,7 +901,7 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                     row_end = child.style['grid_row_end']
                     column_start = child.style['grid_column_start']
                     column_end = child.style['grid_column_end']
-                    for x in range(cursor_x, implicit_x2):
+                    for x in range(cursor_x, implicit_second_2):
                         if row_start == 'auto':
                             y, height = _get_placement(
                                 (None, y + 1, None), row_end, rows[::2])
@@ -931,14 +938,14 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                                 rows.append(next(auto_rows))
                                 rows.append([])
                             implicit_y2 = cursor_y
-                        cursor_x = implicit_x1
+                        cursor_x = implicit_second_1
                         continue
                     break
 
-    for _ in range(0 - implicit_x1):
+    for _ in range(0 - implicit_second_1):
         columns.insert(0, next(auto_columns_back))
         columns.insert(0, [])
-    for _ in range(len(grid_areas[0]) if grid_areas else 0, implicit_x2):
+    for _ in range(len(grid_areas[0]) if grid_areas else 0, implicit_second_2):
         columns.append(next(auto_columns))
         columns.append([])
     for _ in range(0 - implicit_y1):
@@ -970,7 +977,7 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
 
     # 3.1 Resolve the sizes of the grid columns.
     columns_sizes = _resolve_tracks_sizes(
-        column_sizing_functions, box.width, children_positions, implicit_x1,
+        column_sizing_functions, box.width, children_positions, implicit_second_1,
         'x', column_gap, context, box)
 
     # 3.2 Resolve the sizes of the grid rows.
