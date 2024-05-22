@@ -149,26 +149,33 @@ def preprocess_declarations(base_url, declarations, prelude=None):
             # Nested rule.
             if prelude is None:
                 continue
-            declaration_prelude = declaration.prelude
-            if NESTING_SELECTOR in declaration.prelude:
-                # Replace & selector by parent.
-                declaration_prelude = []
-                for token in declaration.prelude:
-                    if token == NESTING_SELECTOR:
-                        declaration_prelude.extend(is_token)
-                    else:
-                        declaration_prelude.append(token)
-            else:
-                # No & selector, prepend parent.
-                is_token = (
-                    LiteralToken(1, 1, ':'),
-                    FunctionBlock(1, 1, 'is', prelude))
-                declaration_prelude = [
-                    *is_token, WhitespaceToken(1, 1, ' '),
-                    *declaration.prelude]
+            declaration_prelude = []
+            token_groups = [[]]
+            for token in declaration.prelude:
+                if token == ',':
+                    token_groups.append([])
+                else:
+                    token_groups[-1].append(token)
+            for token_group in token_groups:
+                if NESTING_SELECTOR in token_group:
+                    # Replace & selector by parent.
+                    for token in declaration.prelude:
+                        if token == NESTING_SELECTOR:
+                            declaration_prelude.extend(is_token)
+                        else:
+                            declaration_prelude.append(token)
+                else:
+                    # No & selector, prepend parent.
+                    is_token = (
+                        LiteralToken(1, 1, ':'),
+                        FunctionBlock(1, 1, 'is', prelude))
+                    declaration_prelude.extend([
+                        *is_token, WhitespaceToken(1, 1, ' '),
+                        *token_group])
+                declaration_prelude.append(LiteralToken(1, 1, ','))
             yield from preprocess_declarations(
                 base_url, parse_blocks_contents(declaration.content),
-                declaration_prelude)
+                declaration_prelude[:-1])
 
         if declaration.type != 'declaration':
             continue
