@@ -710,6 +710,48 @@ def test_grid_area_invalid(rule):
 
 @assert_no_logs
 @pytest.mark.parametrize('rule, result', (
+    ('none', {
+        'rows': 'none', 'columns': 'none', 'areas': 'none',
+    }),
+    ('subgrid / [outer-edge] 20px [main-start]', {
+        'rows': ('subgrid', ()),
+        'columns': (('outer-edge',), (20, 'px'), ('main-start',)),
+        'areas': 'none',
+    }),
+    ('repeat(2, [e] 40px) repeat(5, auto) / subgrid [a] repeat(auto-fill, [b])', {
+        'rows': (
+            (), ('repeat()', 2, (('e',), (40, 'px'), ())), (),
+            ('repeat()', 5, ((), 'auto', ())), ()),
+        'columns': ('subgrid', (('a',), ('repeat()', 'auto-fill', (('b',),)))),
+        'areas': 'none',
+    }),
+    # TODO: support last syntax
+    # ('[a b] "x y y" [c] [d] "x y y" 1fr [e] / auto 2fr auto', {
+    #     'rows': 'none', 'columns': 'none', 'areas': 'none',
+    # }),
+    # ('[a b c] "x x x" 2fr', {
+    #     'rows': 'none', 'columns': 'none', 'areas': 'none',
+    # }),
+))
+def test_grid_template(rule, result):
+    assert expand_to_dict(f'grid-template: {rule}') == dict(
+        (f'grid_template_{key}', value) for key, value in result.items())
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', (
+    'none none',
+    'auto',
+    'subgrid / subgrid / subgrid',
+    '[a] 1px [b] / none /',
+    '[a] 1px [b] // none',
+    '[a] 1px [b] none',
+))
+def test_grid_template_invalid(rule):
+    assert_invalid(f'grid-template: {rule}')
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, result', (
     ('page-break-after: left', {'break_after': 'left'}),
     ('page-break-before: always', {'break_before': 'page'}),
     ('page-break-after: inherit', {'break_after': 'inherit'}),
