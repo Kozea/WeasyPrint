@@ -13,6 +13,8 @@ from ..testing_utils import assert_no_logs, render_pages
     'p { div & { width: 10px } width: 20px }',
     'div { & { & { p { & { width: 10px } } } } }',
     '@media print { div { p { width: 10px } } }',
+    'div { em, p { width: 10px } }',
+    'p { a, div & { width: 10px } }',
 ))
 def test_nesting_block(style):
     page, = render_pages('''
