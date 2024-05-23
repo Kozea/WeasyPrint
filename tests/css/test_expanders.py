@@ -752,6 +752,70 @@ def test_grid_template_invalid(rule):
 
 @assert_no_logs
 @pytest.mark.parametrize('rule, result', (
+    ('none', {
+        'template_rows': 'none', 'template_columns': 'none',
+        'template_areas': 'none',
+        'auto_rows': ('auto',), 'auto_columns': ('auto',),
+        'auto_flow': ('row',),
+    }),
+    ('subgrid / [outer-edge] 20px [main-start]', {
+        'template_rows': ('subgrid', ()),
+        'template_columns': (('outer-edge',), (20, 'px'), ('main-start',)),
+        'template_areas': 'none',
+        'auto_rows': ('auto',), 'auto_columns': ('auto',),
+        'auto_flow': ('row',),
+    }),
+    ('repeat(2, [e] 40px) repeat(5, auto) / subgrid [a] repeat(auto-fill, [b])', {
+        'template_rows': (
+            (), ('repeat()', 2, (('e',), (40, 'px'), ())), (),
+            ('repeat()', 5, ((), 'auto', ())), ()),
+        'template_columns': ('subgrid', (('a',), ('repeat()', 'auto-fill', (('b',),)))),
+        'template_areas': 'none',
+        'auto_rows': ('auto',), 'auto_columns': ('auto',),
+        'auto_flow': ('row',),
+    }),
+    ('auto-flow 1fr / 100px', {
+        'template_rows': 'none', 'template_columns': ((), (100, 'px'), ()),
+        'template_areas': 'none',
+        'auto_rows': ((1, 'fr'),), 'auto_columns': ('auto',),
+        'auto_flow': ('row',),
+    }),
+    ('none / dense auto-flow 1fr', {
+        'template_rows': 'none', 'template_columns': 'none',
+        'template_areas': 'none',
+        'auto_rows': ('auto',), 'auto_columns': ((1, 'fr'),),
+        'auto_flow': ('column', 'dense'),
+    }),
+    # TODO: support last grid-template syntax
+    # ('[a b] "x y y" [c] [d] "x y y" 1fr [e] / auto 2fr auto', {
+    # }),
+    # ('[a b c] "x x x" 2fr', {
+    # }),
+))
+def test_grid(rule, result):
+    assert expand_to_dict(f'grid: {rule}') == dict(
+        (f'grid_{key}', value) for key, value in result.items())
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', (
+    'none none',
+    'auto',
+    'subgrid / subgrid / subgrid',
+    '[a] 1px [b] / none /',
+    '[a] 1px [b] // none',
+    '[a] 1px [b] none',
+    'none / auto-flow 1fr dense',
+    'none / dense 1fr auto-flow',
+    '100px auto-flow / none',
+    'dense 100px / auto-flow 1fr'
+))
+def test_grid_invalid(rule):
+    assert_invalid(f'grid: {rule}')
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, result', (
     ('page-break-after: left', {'break_after': 'left'}),
     ('page-break-before: always', {'break_before': 'page'}),
     ('page-break-after: inherit', {'break_after': 'inherit'}),

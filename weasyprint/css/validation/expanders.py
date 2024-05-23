@@ -830,17 +830,22 @@ def expand_grid(tokens, name):
     templates = {'row': [], 'column': []}
     iterable = zip(split_tokens, templates.items())
     for tokens, (track, track_templates) in iterable:
+        auto_flow_token = False
         for token in tokens:
             if get_keyword(token) == 'dense':
                 if dense or (auto_track and auto_track != track):
                     raise InvalidValues
                 dense = token
-            elif get_keyword(token) == 'auto-flow':
-                if auto_track:
-                    raise InvalidValues
                 auto_track = track
-            else:
+            elif get_keyword(token) == 'auto-flow':
+                if auto_flow_token or (auto_track and auto_track != track):
+                    raise InvalidValues
+                auto_flow_token = True
+                auto_track = track
+            elif token == tokens[-1]:
                 track_templates.append(token)
+            else:
+                raise InvalidValues
     if not auto_track:
         raise InvalidValues
     non_auto_track = 'row' if auto_track == 'column' else 'column'
