@@ -623,7 +623,6 @@ def test_float_split_9(assert_pixels):
         <div>bbbbb bb</div>''')
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_float_split_10(assert_pixels):
     assert_pixels('''

@@ -275,6 +275,7 @@ def _out_of_flow_layout(context, box, index, child, new_children,
             last_in_flow_child = find_last_in_flow_child(new_children)
             page_break = block_level_page_break(last_in_flow_child, child)
             resume_at = {index: None}
+            out_of_flow_resume_at = None
             stop = True
             if new_children and avoid_page_break(page_break, context):
                 # Can’t break inside float, find an earlier page break.
@@ -283,7 +284,7 @@ def _out_of_flow_layout(context, box, index, child, new_children,
                 if result:
                     # Earlier page break found, drop whole child rendering.
                     new_children[:], resume_at = result
-                    new_child = out_of_flow_resume_at = None
+                    new_child = None
 
     # Running element layout.
     elif child.is_running():
