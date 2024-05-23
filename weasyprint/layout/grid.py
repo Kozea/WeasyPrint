@@ -851,21 +851,15 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                             first_diff = (
                                 cursor_first + first_size - 1 - implicit_first_2)
                             if first_diff > 0:
-                                for _ in range(first_diff):
-                                    first_tracks.append(next(auto_tracks))
-                                    first_tracks.append([])
-                                implicit_first_2 = cursor_first + first_size - 1
+                                implicit_first_2 += first_diff
                             break
                     else:
                         # No room found.
                         # 2. Return to the previous step.
                         cursor_first += 1
-                        first_diff = cursor_first - implicit_first_2
+                        first_diff = cursor_first + 1 - implicit_first_2
                         if first_diff > 0:
-                            for _ in range(first_diff):
-                                first_tracks.append(next(auto_tracks))
-                                first_tracks.append([])
-                            implicit_first_2 = cursor_first
+                            implicit_first_2 += first_diff
                         cursor_second = implicit_second_1
                         continue
                     break
@@ -966,10 +960,7 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                         cursor_first += 1
                         first_diff = cursor_first + 1 - implicit_first_2
                         if first_diff > 0:
-                            for _ in range(first_diff):
-                                first_tracks.append(next(auto_tracks))
-                                first_tracks.append([])
-                            implicit_first_2 = cursor_first
+                            implicit_first_2 += first_diff
                         cursor_second = implicit_second_1
                         continue
                     break
