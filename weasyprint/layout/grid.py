@@ -753,6 +753,8 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
     cursor_first, cursor_second = implicit_first_1, implicit_second_1
     if 'dense' in flow:
         for child in remaining_grid_items:
+            first_start = child.style[f'grid_{first_flow}_start']
+            first_end = child.style[f'grid_{first_flow}_end']
             second_start = child.style[f'grid_{second_flow}_start']
             second_end = child.style[f'grid_{second_flow}_end']
             second_placement = _get_placement(
@@ -763,8 +765,6 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                 second_i, second_size = second_placement
                 cursor_second = second_i
                 # 2. Increment the cursor’s row (resp. column) position.
-                first_start = child.style[f'grid_{first_flow}_start']
-                first_end = child.style[f'grid_{first_flow}_end']
                 for first_i in count(cursor_first):
                     if first_start == 'auto':
                         first_i, first_size = _get_placement(
@@ -814,10 +814,6 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                 while True:
                     # 2. Increment the column (resp. row) position of the cursor.
                     first_i = cursor_first
-                    first_start = child.style[f'grid_{first_flow}_start']
-                    first_end = child.style[f'grid_{first_flow}_end']
-                    second_start = child.style[f'grid_{second_flow}_start']
-                    second_end = child.style[f'grid_{second_flow}_end']
                     for second_i in range(cursor_second, implicit_second_2):
                         if first_start == 'auto':
                             first_i, first_size = _get_placement(
@@ -875,6 +871,8 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                     break
     else:
         for child in remaining_grid_items:
+            first_start = child.style[f'grid_{first_flow}_start']
+            first_end = child.style[f'grid_{first_flow}_end']
             second_start = child.style[f'grid_{second_flow}_start']
             second_end = child.style[f'grid_{second_flow}_end']
             second_placement = _get_placement(
@@ -886,8 +884,6 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                     cursor_first += 1
                 cursor_second = second_i
                 # 2. Increment the cursor’s row (resp. column) position.
-                first_start = child.style[f'grid_{first_flow}_start']
-                first_end = child.style[f'grid_{first_flow}_end']
                 for cursor_first in count(cursor_first):
                     if first_start == 'auto':
                         first_i, first_size = _get_placement(
@@ -930,10 +926,6 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                 while True:
                     # 1. Increment the column position of the cursor.
                     first_i = cursor_first
-                    first_start = child.style[f'grid_{first_flow}_start']
-                    first_end = child.style[f'grid_{first_flow}_end']
-                    second_start = child.style[f'grid_{second_flow}_start']
-                    second_end = child.style[f'grid_{second_flow}_end']
                     for second_i in range(cursor_second, implicit_second_2):
                         if first_start == 'auto':
                             first_i, first_size = _get_placement(
