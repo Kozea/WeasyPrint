@@ -302,6 +302,7 @@ def _break_line(context, box, line, new_children, lines_iterator,
     if over_orphans < 0 and not page_is_empty:
         # Reached the bottom of the page before we had
         # enough lines for orphans, cancel the whole box.
+        remove_placeholders(context, line.children, absolute_boxes, fixed_boxes)
         return True, False, resume_at
     # How many lines we need on the next page to satisfy widows
     # -1 for the current line.
@@ -313,6 +314,7 @@ def _break_line(context, box, line, new_children, lines_iterator,
                 break
     if needed > over_orphans and not page_is_empty:
         # Total number of lines < orphans + widows
+        remove_placeholders(context, line.children, absolute_boxes, fixed_boxes)
         return True, False, resume_at
     if needed and needed <= over_orphans:
         # Remove lines to keep them for the next page
@@ -765,10 +767,8 @@ def block_container_layout(context, box, bottom_space, skip_stack,
     if (box_is_fragmented and
             avoid_page_break(box.style['break_inside'], context) and
             not page_is_empty):
-        for footnote in all_footnotes:
-            context.unlayout_footnote(footnote)
-        return (
-            None, None, {'break': 'any', 'page': None}, [], False, max_lines)
+        remove_placeholders(context, new_children, absolute_boxes, fixed_boxes)
+        return None, None, {'break': 'any', 'page': None}, [], False, max_lines
 
     for key, value in broken_out_of_flow.items():
         context.broken_out_of_flow[key] = value
