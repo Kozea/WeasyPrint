@@ -769,3 +769,49 @@ def test_float_fail():
     body, = html.children
     paragraph, = body.children
     line1, line2, line3 = paragraph.children
+
+
+def test_float_table_aborted_row():
+    page1, page2 = render_pages('''
+      <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page {size: 10px 7px}
+        body {font-family: weasyprint; font-size: 2px; line-height: 1}
+        div {float: right; orphans: 1}
+        td {break-inside: avoid}
+      </style>
+      <table><tbody>
+        <tr><td>abc</td></tr>
+        <tr><td>abc</td></tr>
+        <tr><td>def <div>f<br>g</div> ghi</td></tr>
+      </tbody></table>
+    ''')
+
+    html, = page1.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    tbody, = table.children
+    for tr in tbody.children:
+        td, = tr.children
+        line, = td.children
+        textbox, = line.children
+        assert textbox.text == 'abc'
+
+    html, = page2.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    tbody, = table.children
+    tr, = tbody.children
+    td, = tr.children
+    line1, line2 = td.children
+    textbox, div = line1.children
+    assert textbox.text == 'def '
+    textbox, = line2.children
+    assert textbox.text == 'ghi'
+    line1, line2 = div.children
+    textbox, br = line1.children
+    assert textbox.text == 'f'
+    textbox, = line2.children
+    assert textbox.text == 'g'

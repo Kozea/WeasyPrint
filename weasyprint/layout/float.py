@@ -82,7 +82,6 @@ def float_layout(context, box, containing_block, absolute_boxes, fixed_boxes,
     box = find_float_position(context, box, containing_block)
 
     context.excluded_shapes.append(box)
-
     return box, resume_at
 
 

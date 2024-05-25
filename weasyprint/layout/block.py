@@ -767,7 +767,7 @@ def block_container_layout(context, box, bottom_space, skip_stack,
     if (box_is_fragmented and
             avoid_page_break(box.style['break_inside'], context) and
             not page_is_empty):
-        remove_placeholders(context, new_children, absolute_boxes, fixed_boxes)
+        remove_placeholders(context, box.children[skip:], absolute_boxes, fixed_boxes)
         return None, None, {'break': 'any', 'page': None}, [], False, max_lines
 
     for key, value in broken_out_of_flow.items():
