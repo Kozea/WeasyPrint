@@ -302,9 +302,7 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
             # other content on the page.
             if not page_is_empty and context.overflows_page(
                     bottom_space, next_position_y):
-                for descendant in row.descendants():
-                    if descendant.footnote is not None:
-                        context.unlayout_footnote(descendant.footnote)
+                remove_placeholders(context, row.children, absolute_boxes, fixed_boxes)
                 if new_group_children:
                     previous_row = new_group_children[-1]
                     page_break = block_level_page_break(previous_row, row)

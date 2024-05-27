@@ -399,6 +399,58 @@ def test_absolute_split_11(assert_pixels):
     ''')
 
 
+@assert_no_logs
+def test_absolute_split_12(assert_pixels):
+    assert_pixels('''
+        BBBBBB__
+        BBBBBB__
+        ________
+        ________
+        ________
+        ________
+        ________
+        ________
+        BB______
+        BB______
+        BBRR____
+        BBRR____
+        BBRRRR__
+        BBRRRR__
+        BBRRRRRR
+        BBRRRRRR
+    ''', '''
+        <style>
+            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+            @page {
+                size: 8px;
+            }
+            body {
+                color: blue;
+                font-family: weasyprint;
+                font-size: 2px;
+                line-height: 1;
+            }
+            div {
+                break-inside: avoid;
+            }
+            section {
+                left: 2px;
+                position: absolute;
+                color: red;
+            }
+        </style>
+        aaa
+        <div>
+          a
+          <section>x<br>xx<br>xxx</section>
+          <br>
+          a<br>
+          a<br>
+          a
+        </div>
+    ''')
+
+
 @pytest.mark.xfail
 @assert_no_logs
 def test_absolute_next_page(assert_pixels):
