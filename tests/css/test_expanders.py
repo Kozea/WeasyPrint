@@ -456,6 +456,74 @@ def test_border_image_invalid(rule, reason):
 
 @assert_no_logs
 @pytest.mark.parametrize('rule, result', (
+    ('url(border.png) 27', {
+        'mask_border_source': ('url', 'https://weasyprint.org/foo/border.png'),
+        'mask_border_slice': ((27, None),),
+    }),
+    ('url(border.png) 10 / 4 / 2 round stretch', {
+        'mask_border_source': ('url', 'https://weasyprint.org/foo/border.png'),
+        'mask_border_slice': ((10, None),),
+        'mask_border_width': ((4, None),),
+        'mask_border_outset': ((2, None),),
+        'mask_border_repeat': (('round', 'stretch')),
+    }),
+    ('10 // 2', {
+        'mask_border_slice': ((10, None),),
+        'mask_border_outset': ((2, None),),
+    }),
+    ('5.5%', {
+        'mask_border_slice': ((5.5, '%'),),
+    }),
+    ('stretch 2 url("border.png")', {
+        'mask_border_source': ('url', 'https://weasyprint.org/foo/border.png'),
+        'mask_border_slice': ((2, None),),
+        'mask_border_repeat': (('stretch',)),
+    }),
+    ('1/2 round', {
+        'mask_border_slice': ((1, None),),
+        'mask_border_width': ((2, None),),
+        'mask_border_repeat': (('round',)),
+    }),
+    ('none', {
+        'mask_border_source': ('none', None),
+    }),
+    ('url(border.png) 27 alpha', {
+        'mask_border_source': ('url', 'https://weasyprint.org/foo/border.png'),
+        'mask_border_slice': ((27, None),),
+        'mask_border_mode': 'alpha',
+    }),
+    ('url(border.png) 27 luminance', {
+        'mask_border_source': ('url', 'https://weasyprint.org/foo/border.png'),
+        'mask_border_slice': ((27, None),),
+        'mask_border_mode': 'luminance',
+    }),
+))
+def test_mask_border(rule, result):
+    assert expand_to_dict(f'mask-border: {rule}') == result
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, reason', (
+    ('url(border.png) url(border.png)', 'multiple source'),
+    ('10 10 10 10 10', 'multiple slice'),
+    ('1 / 2 / 3 / 4', 'invalid'),
+    ('/1', 'invalid'),
+    ('/1', 'invalid'),
+    ('round round round', 'invalid'),
+    ('-1', 'invalid'),
+    ('1 repeat 2', 'multiple slice'),
+    ('1% // 1%', 'invalid'),
+    ('1 / repeat', 'invalid'),
+    ('', 'no value'),
+    ('alpha alpha', 'multiple mode'),
+    ('alpha luminance', 'multiple mode'),
+))
+def test_mask_border_invalid(rule, reason):
+    assert_invalid(f'mask-border: {rule}', reason)
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule, result', (
     ('12px My Fancy Font, serif', {
         'font_size': (12, 'px'),
         'font_family': ('My Fancy Font', 'serif'),
