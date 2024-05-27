@@ -164,6 +164,15 @@ def test_variable_chain_root_missing():
     ''')
 
 
+def test_variable_chain_root_missing_inherited():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/2164
+    page, = render_pages('''
+      <style>
+        html { --var1: var(--var-missing); font: var(--var1) }
+      </style>a
+    ''')
+
+
 @assert_no_logs
 def test_variable_shorthand_margin():
     page, = render_pages('''

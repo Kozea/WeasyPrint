@@ -725,7 +725,7 @@ class ComputedStyle(dict):
             try:
                 value = value.solve(solved_tokens, original_key)
             except InvalidValues:
-                if key in INHERITED:
+                if key in INHERITED and parent_style is not None:
                     # Values in parent_style are already computed.
                     self[key] = value = parent_style[key]
                 else:
