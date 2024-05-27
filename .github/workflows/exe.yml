@@ -20,7 +20,7 @@ jobs:
       - name: Install requirements
         run: python -m pip install . pyinstaller
       - name: Generate executable
-        run: python -m PyInstaller weasyprint/__main__.py -n weasyprint -F
+        run: python -m PyInstaller weasyprint/__main__.py -n weasyprint -F --hidden-import "fontTools.ttLib.tables.V_A_R_C_"
       - name: Test executable
         run: dist/weasyprint --info
       - name: Store executable
