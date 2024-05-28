@@ -510,12 +510,12 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
                 free_space -= distributed_free_space
     # TODO: Respect max-width/-height.
     # 1.4 Expand flexible tracks.
+    inflexible_tracks = set()
     if free_space is not None and free_space <= 0:
         # TODO: Respect min-content constraint.
         flex_fraction = 0
     elif free_space is not None:
         stop = False
-        inflexible_tracks = set()
         while not stop:
             leftover_space = free_space
             flex_factor_sum = 0
@@ -533,7 +533,8 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
                 if i not in inflexible_tracks and _is_fr(max_function):
                     if hypothetical_fr_size * max_function.value < sizes[0]:
                         inflexible_tracks.add(i)
-                        stop = False
+                        free_space -= sizes[0]
+                        stop = free_space > 0
         flex_fraction = hypothetical_fr_size
     else:
         flex_fraction = 0
@@ -549,7 +550,7 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
         # TODO: Respect min-* constraint.
     iterable = enumerate(zip(tracks_sizes, sizing_functions))
     for i, (sizes, (_, max_function)) in iterable:
-        if _is_fr(max_function):
+        if _is_fr(max_function) and i not in inflexible_tracks:
             if flex_fraction * max_function.value > sizes[0]:
                 if free_space is not None:
                     free_space -= flex_fraction * max_function.value

@@ -509,6 +509,37 @@ def test_grid_shorthand_auto_flow_rows_fr_size():
     assert article.width == 10
 
 
+@assert_no_logs
+def test_grid_template_fr_too_large():
+    page, = render_pages('''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        article {
+          display: grid;
+          font-family: weasyprint;
+          font-size: 2px;
+          grid-template-columns: 1fr 1fr;
+          line-height: 1;
+          width: 10px;
+        }
+      </style>
+      <article>
+        <div>a</div><div>bbb</div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div_a, div_b = article.children
+    assert div_a.position_x == 0
+    assert div_b.position_x == 4
+    assert div_a.position_y == div_b.position_y == 0
+    assert div_a.height == div_b.height == 2
+    assert div_a.width == 4
+    assert div_b.width == 6
+    assert article.width == 10
+
+
 def test_grid_shorthand_auto_flow_columns_none_dense():
     page, = render_pages('''
       <style>
