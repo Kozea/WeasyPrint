@@ -14,6 +14,19 @@ from ..text.constants import PANGO_STRETCH_PERCENT
 from ..text.ffi import ffi, harfbuzz, pango, units_to_double
 from ..text.fonts import get_hb_object_data, get_pango_font_hb_face, get_pango_font_key
 
+import logging
+
+fonttools_logging = logging.getLogger("fontTools")
+fonttools_logging.setLevel(logging.WARNING)
+fonttools_warning_messages = []
+
+class FontToolsRequestsHandler(logging.Handler):
+    def emit(self, record):
+        """Surface all warning logs to global list fonttools_warning_messages."""
+        global fonttools_warning_messages
+        fonttools_warning_messages.append(record.getMessage())
+
+fonttools_logging.addHandler(FontToolsRequestsHandler())
 
 class Font:
     def __init__(self, pango_font):
@@ -52,16 +65,16 @@ class Font:
                 PANGO_STRETCH_PERCENT.items(),
                 key=lambda item: abs(item[0] - self.variations['wdth']))[1]
             pango.pango_font_description_set_stretch(self.description, stretch)
-        description_string = ffi.string(
+        self.description_string = ffi.string(
             pango.pango_font_description_to_string(description))
 
         # Never use the built-in hash function here: it’s not stable
         self.hash = ''.join(
             chr(65 + letter % 26) for letter
-            in md5(description_string, usedforsecurity=False).digest()[:6])
+            in md5(self.description_string, usedforsecurity=False).digest()[:6])
 
         # Name
-        fields = description_string.split(b' ')
+        fields = self.description_string.split(b' ')
         if fields and b'=' in fields[-1]:
             fields.pop()  # Remove variations
         if fields:
@@ -113,6 +126,7 @@ class Font:
             self.flags += 2 ** (2 - 1)  # Serif
 
     def clean(self, cmap, hinting):
+        global fonttools_warning_messages
         if self.ttfont is None:
             return
 
@@ -127,7 +141,13 @@ class Font:
             subsetter = subset.Subsetter(options)
             subsetter.populate(gids=cmap)
             try:
+                fonttools_warning_messages = []
                 subsetter.subset(self.ttfont)
+                if len(fonttools_warning_messages) > 0:
+                    LOGGER.warning(" ".join([
+                        f"Loading subset font '{self.name}' | '{self.description_string} raised warnings: ",
+                        " ".join(fonttools_warning_messages)
+                    ]))
             except TTLibError:
                 LOGGER.warning('Unable to optimize font')
             else:
