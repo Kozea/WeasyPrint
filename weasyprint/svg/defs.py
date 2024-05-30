@@ -188,6 +188,14 @@ def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
         bx2, by2 = transform_matrix.invert.transform_point(width, height)
         width, height = bx2 - bx1, by2 - by1
 
+    # Ensure that width and height are positive to please some PDF readers
+    if bx1 > bx2:
+        width = -width
+        bx1, bx2 = bx2, bx1
+    if by1 > by2:
+        height = -height
+        by1, by2 = by2, by1
+
     pattern = svg.stream.add_pattern(
         bx1, by1, width, height, width, height, matrix @ svg.stream.ctm)
     group = pattern.add_group(bx1, by1, width, height)
