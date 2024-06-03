@@ -50,8 +50,7 @@ def test_grid_rows():
     assert div_a.position_x == div_b.position_x == div_c.position_x == 0
     assert div_a.position_y < div_b.position_y < div_c.position_y
     assert div_a.height == div_b.height == div_c.height
-    assert article.width == html.width
-    assert div_a.width == div_b.width == div_c.width == html.width
+    assert div_a.width == div_b.width == div_c.width == html.width == article.width
 
 
 @assert_no_logs
@@ -357,6 +356,7 @@ def test_grid_template_areas_extra_span_dense():
     assert div_a.width == div_b.width == div_c.width == div_f.width == 3
     assert div_d.width == div_e.width == 6
     assert {div.height for div in article.children} == {2}
+    assert article.height == 6
     assert article.width == 9
 
 
@@ -509,6 +509,37 @@ def test_grid_shorthand_auto_flow_rows_fr_size():
     assert article.width == 10
 
 
+@assert_no_logs
+def test_grid_template_fr_too_large():
+    page, = render_pages('''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        article {
+          display: grid;
+          font-family: weasyprint;
+          font-size: 2px;
+          grid-template-columns: 1fr 1fr;
+          line-height: 1;
+          width: 10px;
+        }
+      </style>
+      <article>
+        <div>a</div><div>bbb</div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div_a, div_b = article.children
+    assert div_a.position_x == 0
+    assert div_b.position_x == 4
+    assert div_a.position_y == div_b.position_y == 0
+    assert div_a.height == div_b.height == 2
+    assert div_a.width == 4
+    assert div_b.width == 6
+    assert article.width == 10
+
+
 def test_grid_shorthand_auto_flow_columns_none_dense():
     page, = render_pages('''
       <style>
@@ -517,9 +548,9 @@ def test_grid_shorthand_auto_flow_columns_none_dense():
           display: grid;
           font-family: weasyprint;
           font-size: 2px;
-          grid: none / auto-flow 1fr dense;
+          grid: none / auto-flow dense 1fr;
           line-height: 1;
-          width: 10px;
+          width: 12px;
         }
       </style>
       <article>
@@ -532,13 +563,13 @@ def test_grid_shorthand_auto_flow_columns_none_dense():
     body, = html.children
     article, = body.children
     div_a, div_b, div_c = article.children
-    assert div_a.position_x == div_b.position_x == div_c.position_x == 0
-    assert div_a.position_y == 0
-    assert div_b.position_y == 2
-    assert div_c.position_y == 4
-    assert div_a.width == div_b.width == div_c.width == 10
-    assert {div.height for div in article.children} == {2}
-    assert article.width == 10
+    assert div_a.position_x == 0
+    assert div_b.position_x == 4
+    assert div_c.position_x == 8
+    assert div_a.position_y == div_b.position_y == div_c.position_y == 0
+    assert div_a.height == div_b.height == div_c.height == 2
+    assert {div.width for div in article.children} == {4}
+    assert article.width == 12
 
 
 @assert_no_logs
@@ -856,3 +887,70 @@ def test_grid_item_margin():
     article, = body.children
     div_a, div_b = article.children
     # TODO: Test auto margin values.
+
+
+@assert_no_logs
+def test_grid_auto_flow_column():
+    page, = render_pages('''
+      <article style="display: grid; grid-auto-flow: column">
+        <div>a</div>
+        <div>a</div>
+        <div>a</div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div_a, div_b, div_c = article.children
+    assert div_a.position_x < div_b.position_x < div_c.position_x
+    assert div_a.position_y == div_b.position_y == div_c.position_y == 0
+    assert div_a.width == div_b.width == div_c.width
+    assert div_a.height == div_b.height == div_c.height == html.height == article.height
+
+
+@assert_no_logs
+def test_grid_template_areas_extra_span_column_dense():
+    page, = render_pages('''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        article {
+          display: grid;
+          font-family: weasyprint;
+          font-size: 2px;
+          grid-auto-flow: column dense;
+          grid-template-areas: 'a . b' 'c d d';
+          line-height: 1;
+          width: 12px;
+        }
+      </style>
+      <article>
+        <div style="grid-area: a">a</div>
+        <div style="grid-area: b">b</div>
+        <div style="grid-area: c">c</div>
+        <div style="grid-area: d">d</div>
+        <div style="grid-row: span 2">e</div>
+        <div>f</div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div_a, div_b, div_c, div_d, div_e, div_f = article.children
+    assert div_a.position_x == div_c.position_x == 0
+    assert div_d.position_x == div_f.position_x == 3
+    assert div_b.position_x == 6
+    assert div_e.position_x == 9
+    assert (
+        div_a.position_y == div_b.position_y ==
+        div_e.position_y == div_f.position_y == 0)
+    assert div_c.position_y == div_d.position_y == 2
+    assert (
+        div_a.width == div_b.width == div_c.width ==
+        div_e.width == div_f.width == 3)
+    assert div_d.width == 6
+    assert (
+        div_a.height == div_b.height == div_c.height ==
+        div_d.height == div_f.height == 2)
+    assert div_e.height == 4
+    assert article.height == 4
+    assert article.width == 12
