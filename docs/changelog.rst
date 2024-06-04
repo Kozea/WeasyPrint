@@ -2,6 +2,59 @@ Changelog
 =========
 
 
+Version 62.2
+------------
+
+Released on 2024-06-04.
+
+Features:
+
+* `#2142 <https://github.com/Kozea/WeasyPrint/issues/2142>`_,
+  `#2162 <https://github.com/Kozea/WeasyPrint/pull/2162>`_:
+  Support grid-auto-flow: column, with financial support from Menutech
+
+Bug fixes:
+
+* `#2167 <https://github.com/Kozea/WeasyPrint/issues/2167>`_:
+  Fix space added by CSS gap at the end
+* `#2134 <https://github.com/Kozea/WeasyPrint/issues/2134>`_:
+  Remove absolute placeholders from discarded content
+* `#2154 <https://github.com/Kozea/WeasyPrint/issues/2154>`_:
+  Don’t crash when grid items have auto margins
+* `8cdd66f <https://github.com/Kozea/WeasyPrint/commit/8cdd66f>`_:
+  Fix CSS nesting for nested selectors with comma
+* `3359db5 <https://github.com/Kozea/WeasyPrint/commit/3359db5>`_:
+  Fix and test grid shorthand
+* `82deda4 <https://github.com/Kozea/WeasyPrint/commit/82deda4>`_:
+  Fix wrong resume_at for split floats
+* `ff2acf1 <https://github.com/Kozea/WeasyPrint/commit/ff2acf1>`_:
+  Ensure that gradient size is positive to please some PDF readers
+
+Contributors:
+
+* Guillaume Ayoub
+
+Backers and sponsors:
+
+* Spacinov
+* Kobalt
+* Grip Angebotssoftware
+* Manuel Barkhau
+* SimonSoft
+* Menutech
+* KontextWork
+* Simon Sapin
+* René Fritz
+* TrainingSparkle
+* Healthchecks.io
+* Hammerbacher
+* Docraptor
+* Yanal-Yvez Fargialla
+* Douwe van Loenen
+* Morntag
+* Xavid
+
+
 Version 62.1
 ------------
 
