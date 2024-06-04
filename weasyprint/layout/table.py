@@ -7,7 +7,7 @@ import tinycss2.color3
 from ..formatting_structure import boxes
 from ..logger import LOGGER
 from .percent import resolve_one_percentage, resolve_percentages
-from .preferred import max_content_width, table_and_columns_preferred_widths
+from .preferred import table_and_columns_preferred_widths
 
 
 def table_layout(context, table, bottom_space, skip_stack, containing_block,
