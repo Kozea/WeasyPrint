@@ -1317,7 +1317,6 @@ def test_layout_table_auto_42():
     row_group, = table.children
     row, = row_group.children
     td_1, td_2 = row.children
-    print(td_1.width, td_2.width)
     assert td_2.width == 16 * 3  # Percentage column is set to max-width
     assert td_1.width == (16 * 3) * 3  # Pixel column constraint is ignored
     assert table.width == (16 * 3) * 4
