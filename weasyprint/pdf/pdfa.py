@@ -86,6 +86,9 @@ def pdfa(pdf, metadata, document, page_streams, attachments, compress,
             pdf_object['F'] = 2 ** (3 - 1)
 
     # Common PDF metadata stream.
+    if version == 1:
+        # Metadata compression is forbidden for version 1.
+        compress = False
     add_metadata(pdf, metadata, 'a', version, variant, compress)
 
 
