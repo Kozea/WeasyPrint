@@ -392,23 +392,23 @@ class Document:
         new_options = DEFAULT_OPTIONS.copy()
         new_options.update(options)
         options = new_options
+
+        # Set default PDF version for PDF variants.
+        if variant := options['pdf_variant']:
+            _, properties = VARIANTS[variant]
+            if 'version' in properties and not options['pdf_version']:
+                options['pdf_version'] = properties['version']
+            if 'identifier' in properties and not options['pdf_identifier']:
+                options['pdf_identifier'] = properties['identifier']
+
         pdf = generate_pdf(self, target, zoom, **options)
+
+        if finisher:
+            finisher(self, pdf)
 
         identifier = options['pdf_identifier']
         compress = not options['uncompressed_pdf']
         version = options['pdf_version']
-        variant = options['pdf_variant']
-
-        # Set default PDF version for PDF variants.
-        if version is None and variant:
-            _, properties = VARIANTS[variant]
-            if 'version' in properties:
-                version = properties['version']
-            if 'identifier' in properties and not identifier:
-                identifier = properties['identifier']
-
-        if finisher:
-            finisher(self, pdf)
 
         if target is None:
             output = io.BytesIO()
