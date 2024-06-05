@@ -464,6 +464,12 @@ def test_pdfa_compressed(version, pdf_version):
     _run(f'--pdf-variant=pdf/a-{version}b - -', b'test')
 
 
+def test_pdfa1b_cidset():
+    stdout = _run('--pdf-variant=pdf/a-1b --uncompressed-pdf - -', b'test')
+    assert b'PDF-1.4' in stdout
+    assert b'CIDSet' in stdout
+
+
 def test_pdfua():
     stdout = _run('--pdf-variant=pdf/ua-1 --uncompressed-pdf - -', b'test')
     assert b'part="1"' in stdout
