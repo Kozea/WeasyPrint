@@ -401,63 +401,53 @@ def styled_color(style, color, side):
 
 
 def draw_border(stream, box):
-    """Draw the box border to a ``document.Stream``."""
-    # We need a plan to draw beautiful borders, and that's difficult, no need
-    # to lie. Let's try to find the cases that we can handle in a smart way.
+    """Draw the box borders and column rules to a ``document.Stream``."""
 
-    def get_columns_with_rule():
-        """Yield columns that have a rule drawn on the left."""
+    # The box is hidden, easy.
+    if box.style['visibility'] != 'visible':
+        return
+
+    # Draw column borders.
+    columns = (
+        isinstance(box, boxes.BlockContainerBox) and (
+            box.style['column_width'] != 'auto' or
+            box.style['column_count'] != 'auto'))
+    if columns and box.style['column_rule_width']:
+        border_widths = (0, 0, 0, box.style['column_rule_width'])
         skip_next = True
         for child in box.children:
             if child.style['column_span'] == 'all':
                 skip_next = True
+                continue
             elif skip_next:
                 skip_next = False
-            else:
-                yield child
-
-    def draw_column_border():
-        """Draw column borders."""
-        columns = (
-            isinstance(box, boxes.BlockContainerBox) and (
-                box.style['column_width'] != 'auto' or
-                box.style['column_count'] != 'auto'))
-        if columns and box.style['column_rule_width']:
-            border_widths = (0, 0, 0, box.style['column_rule_width'])
-            for child in get_columns_with_rule():
-                with stacked(stream):
-                    gap = percentage(box.style['column_gap'], box.width)
-                    position_x = (child.position_x - (
-                        box.style['column_rule_width'] + gap) / 2)
-                    border_box = (
-                        position_x, child.position_y,
-                        box.style['column_rule_width'], child.height)
-                    clip_border_segment(
-                        stream, box.style['column_rule_style'],
-                        box.style['column_rule_width'], 'left', border_box,
-                        border_widths)
-                    draw_rect_border(
-                        stream, border_box, border_widths,
-                        box.style['column_rule_style'], styled_color(
-                            box.style['column_rule_style'],
-                            get_color(box.style, 'column_rule_color'), 'left'))
-
-    # The box is hidden, easy.
-    if box.style['visibility'] != 'visible':
-        draw_column_border()
-        return
+                continue
+            with stacked(stream):
+                gap = percentage(box.style['column_gap'], box.width)
+                position_x = (child.position_x - (
+                    box.style['column_rule_width'] + gap) / 2)
+                border_box = (
+                    position_x, child.position_y,
+                    box.style['column_rule_width'], child.height)
+                clip_border_segment(
+                    stream, box.style['column_rule_style'],
+                    box.style['column_rule_width'], 'left', border_box,
+                    border_widths)
+                draw_rect_border(
+                    stream, border_box, border_widths,
+                    box.style['column_rule_style'], styled_color(
+                        box.style['column_rule_style'],
+                        get_color(box.style, 'column_rule_color'), 'left'))
 
     # If there's a border image, that takes precedence.
     if box.style['border_image_source'][0] != 'none' and box.border_image is not None:
         draw_border_image(box, stream)
-        draw_column_border()
         return
 
     widths = [getattr(box, f'border_{side}_width') for side in SIDES]
 
-    # No border, return early.
-    if all(width == 0 for width in widths):
-        draw_column_border()
+    if set(widths) == {0}:
+        # No border, return early.
         return
 
     colors = [get_color(box.style, f'border_{side}_color') for side in SIDES]
@@ -471,10 +461,9 @@ def draw_border(stream, box):
     if simple_style and single_color and four_sides:
         # Simple case, we only draw rounded rectangles.
         draw_rounded_border(stream, box, styles[0], colors[0])
-        draw_column_border()
         return
 
-    # We're not smart enough to find a good way to draw the borders :/. We must
+    # We're not smart enough to find a good way to draw the borders, we must
     # draw them side by side. Order is not specified, but this one seems to be
     # close to what other browsers do.
     values = tuple(zip(SIDES, widths, colors, styles))
@@ -488,8 +477,6 @@ def draw_border(stream, box):
                 widths, box.rounded_border_box()[4:])
             draw_rounded_border(
                 stream, box, style, styled_color(style, color, side))
-
-    draw_column_border()
 
 
 def draw_border_image(box, stream):
