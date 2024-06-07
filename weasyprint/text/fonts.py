@@ -213,7 +213,6 @@ class FontConfiguration:
                     continue
                 font_path.write_bytes(font)
 
-                xml_path = self._folder / f'{config_digest}.xml'
                 xml = ''.join((f'''<?xml version="1.0"?>
                 <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
                 <fontconfig>
@@ -248,14 +247,11 @@ class FontConfiguration:
                     <edit name="fontfeatures"
                           mode="assign_replace">{features_string}</edit>
                   </match>
-                </fontconfig>'''))
-                xml_path.write_text(xml)
+                </fontconfig>''')).encode()
 
                 # TODO: We should mask local fonts with the same name
                 # too as explained in Behdad's blog entry.
-                fontconfig.FcConfigParseAndLoad(
-                    config, str(xml_path).encode(FILESYSTEM_ENCODING),
-                    True)
+                fontconfig.FcConfigParseAndLoadFromMemory(config, xml, True)
                 font_added = fontconfig.FcConfigAppFontAddFile(
                     config, str(font_path).encode(FILESYSTEM_ENCODING))
                 if font_added:

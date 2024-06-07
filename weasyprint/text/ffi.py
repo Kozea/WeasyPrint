@@ -367,8 +367,8 @@ ffi.cdef('''
         FcConfig *config, const FcChar8 *file);
     FcConfig * FcConfigGetCurrent (void);
     FcBool FcConfigSetCurrent (FcConfig *config);
-    FcBool FcConfigParseAndLoad (
-        FcConfig *config, const FcChar8 *file, FcBool complain);
+    FcBool FcConfigParseAndLoadFromMemory (
+        FcConfig *config, const FcChar8 *buffer, FcBool complain);
 
     FcFontSet * FcConfigGetFonts(FcConfig *config, FcSetName set);
     FcStrList * FcConfigGetConfigFiles(FcConfig *config);
