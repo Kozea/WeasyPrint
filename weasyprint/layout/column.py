@@ -306,6 +306,7 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
                     containing_block, original_page_is_empty, absolute_boxes,
                     fixed_boxes, None, discard=False, max_lines=None))
             if new_child is None:
+                columns = []
                 break_page = True
                 break
             next_page = column_next_page
