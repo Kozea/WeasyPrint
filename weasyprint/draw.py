@@ -465,9 +465,11 @@ def draw_border(stream, box):
         colors[i].alpha and box.style[f'border_{side}_style']
         for (i, side) in enumerate(SIDES)]
 
-    # The 4 sides are solid or double, and they have the same color. Oh yeah!
-    # We can draw them so easily!
-    if set(styles) in (set(('solid',)), set(('double',))) and (len(set(colors)) == 1):
+    simple_style = set(styles) in ({'solid'}, {'double'})  # one style, simple lines
+    single_color = len(set(colors)) == 1  # one color
+    four_sides = 0 not in widths  # no 0-width border, to avoid PDF artifacts
+    if simple_style and single_color and four_sides:
+        # Simple case, we only draw rounded rectangles.
         draw_rounded_border(stream, box, styles[0], colors[0])
         draw_column_border()
         return
