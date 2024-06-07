@@ -48,9 +48,9 @@ Ubuntu_, Fedora_, Archlinux_, Gentoo_…
 .. _Gentoo: https://packages.gentoo.org/packages/dev-python/weasyprint
 
 If WeasyPrint is not available on your distribution, or if you want to use a
-more recent version of WeasyPrint, you have to be sure that Python_ (at least
-version 3.7.0) and Pango_ (at least version 1.44.0) are installed on your
-system. You can verify this by launching::
+more recent version of WeasyPrint, you have to be sure that Python_ and Pango_
+are installed on your system, and that they are recent enough. You can verify
+this by launching::
 
   python3 --version
   pango-view --version
