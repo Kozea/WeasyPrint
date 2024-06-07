@@ -117,12 +117,13 @@ class FontConfiguration:
         features_string = ''.join(
             f'<string>{key} {value}</string>'
             for key, value in font_features(**features).items())
-        fontconfig_style = FONTCONFIG_STYLE[
-            rule_descriptors.get('font_style', 'normal')]
-        fontconfig_weight = FONTCONFIG_WEIGHT[
-            rule_descriptors.get('font_weight', 'normal')]
-        fontconfig_stretch = FONTCONFIG_STRETCH[
-            rule_descriptors.get('font_stretch', 'normal')]
+        fontconfig_style = fontconfig_weight = fontconfig_stretch = None
+        if 'font_style' in rule_descriptors:
+            fontconfig_style = FONTCONFIG_STYLE[rule_descriptors['font_style']]
+        if 'font_weight' in rule_descriptors:
+            fontconfig_weight = FONTCONFIG_WEIGHT[rule_descriptors['font_weight']]
+        if 'font_stretch' in rule_descriptors:
+            fontconfig_stretch = FONTCONFIG_STRETCH[rule_descriptors['font_stretch']]
         config_key = (
             f'{rule_descriptors["font_family"]}-{fontconfig_style}-'
             f'{fontconfig_weight}-{features_string}').encode()
@@ -213,7 +214,7 @@ class FontConfiguration:
                 font_path.write_bytes(font)
 
                 xml_path = self._folder / f'{config_digest}.xml'
-                xml_path.write_text(f'''<?xml version="1.0"?>
+                xml = ''.join((f'''<?xml version="1.0"?>
                 <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
                 <fontconfig>
                   <match target="scan">
@@ -222,16 +223,23 @@ class FontConfiguration:
                     </test>
                     <edit name="family" mode="assign_replace">
                       <string>{rule_descriptors['font_family']}</string>
-                    </edit>
+                    </edit>''',
+                    f'''
                     <edit name="slant" mode="assign_replace">
                       <const>{fontconfig_style}</const>
                     </edit>
+                    ''' if fontconfig_style else '',
+                    f'''
                     <edit name="weight" mode="assign_replace">
                       <int>{fontconfig_weight}</int>
                     </edit>
+                    ''' if fontconfig_weight else '',
+                    f'''
                     <edit name="width" mode="assign_replace">
                       <const>{fontconfig_stretch}</const>
                     </edit>
+                    ''' if fontconfig_stretch else '',
+                    f'''
                   </match>
                   <match target="font">
                     <test name="file" compare="eq">
@@ -240,7 +248,8 @@ class FontConfiguration:
                     <edit name="fontfeatures"
                           mode="assign_replace">{features_string}</edit>
                   </match>
-                </fontconfig>''')
+                </fontconfig>'''))
+                xml_path.write_text(xml)
 
                 # TODO: We should mask local fonts with the same name
                 # too as explained in Behdad's blog entry.
