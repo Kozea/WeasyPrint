@@ -196,8 +196,8 @@ class FontConfiguration:
                 SubElement(edit, 'const').text = text
             if 'font_weight' in rule_descriptors:
                 edit = SubElement(match, 'edit', name='weight', mode=mode)
-                text = FONTCONFIG_WEIGHT[rule_descriptors['font_weight']]
-                SubElement(edit, 'const').text = text
+                integer = FONTCONFIG_WEIGHT[rule_descriptors['font_weight']]
+                SubElement(edit, 'int').text = str(integer)
             if 'font_stretch' in rule_descriptors:
                 edit = SubElement(match, 'edit', name='width', mode=mode)
                 text = FONTCONFIG_STRETCH[rule_descriptors['font_stretch']]
