@@ -35,7 +35,7 @@ def box_rectangle(box, which_rectangle):
 def layout_box_backgrounds(page, box, get_image_from_uri, layout_children=True,
                            style=None):
     """Fetch and position background images."""
-    from ..draw import get_color
+    from ..draw.color import get_color
 
     # Resolve percentages in border-radius properties
     resolve_radii_percentages(box)

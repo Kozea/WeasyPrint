@@ -21,7 +21,7 @@ class TextBox:
 def text(svg, node, font_size):
     """Draw text node."""
     from ..css.properties import INITIAL_VALUES
-    from ..draw import draw_emojis, draw_first_line
+    from ..draw.text import draw_emojis, draw_first_line
     from ..text.line_break import split_first_line
 
     # TODO: use real computed values

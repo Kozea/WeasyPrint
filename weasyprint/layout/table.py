@@ -949,7 +949,7 @@ def collapse_table_borders(table, grid_width, grid_height):
         [weak_null_border] * grid_width for _ in range(grid_height + 1)]
 
     def set_one_border(border_grid, box_style, side, grid_x, grid_y):
-        from ..draw import get_color
+        from ..draw.color import get_color
 
         style = box_style[f'border_{side}_style']
         width = box_style[f'border_{side}_width']
