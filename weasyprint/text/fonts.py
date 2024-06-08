@@ -6,6 +6,7 @@ from pathlib import Path
 from shutil import rmtree
 from tempfile import mkdtemp
 from warnings import warn
+from xml.etree.ElementTree import Element, SubElement, tostring
 
 from fontTools.ttLib import TTFont, woff2
 
@@ -50,13 +51,13 @@ def _check_font_configuration(font_config):  # pragma: no cover
     """
     # Having fonts means: fontconfig's config file returns fonts or
     # fontconfig managed to retrieve system fallback-fonts. On Windows the
-    # fallback stragegy seems to work since fontconfig >= 2.13
+    # fallback stragegy seems to work since fontconfig >= 2.13.
     fonts = fontconfig.FcConfigGetFonts(font_config, fontconfig.FcSetSystem)
     # Of course, with nfont == 1 the user wont be happy, too…
     if fonts.nfont > 0:
         return
 
-    # Find the reason why we have no fonts
+    # Find the reason why we have no fonts.
     config_files = fontconfig.FcConfigGetConfigFiles(font_config)
     config_file = fontconfig.FcStrListNext(config_files)
     if config_file == ffi.NULL:
@@ -71,7 +72,7 @@ _check_font_configuration(ffi.gc(
 
 
 class FontConfiguration:
-    """A FreeType font configuration.
+    """A Fontconfig font configuration.
 
     Keep a list of fonts, including fonts installed on the system, fonts
     installed for the current user, and fonts referenced by cascading
@@ -85,181 +86,149 @@ class FontConfiguration:
     _folder = None  # required by __del__ when code stops before __init__ finishes
 
     def __init__(self):
-        """Create a FreeType font configuration.
+        """Create a Fontconfig font configuration.
 
         See Behdad's blog:
-        https://mces.blogspot.fr/2015/05/
-                how-to-use-custom-application-fonts.html
+        https://mces.blogspot.fr/2015/05/how-to-use-custom-application-fonts.html
 
         """
         # Load the main config file and the fonts.
-        self._fontconfig_config = ffi.gc(
-            fontconfig.FcInitLoadConfigAndFonts(),
-            fontconfig.FcConfigDestroy)
+        self._config = fontconfig.FcInitLoadConfigAndFonts()
         self.font_map = ffi.gc(
             pangoft2.pango_ft2_font_map_new(), gobject.g_object_unref)
         pangoft2.pango_fc_font_map_set_config(
-            ffi.cast('PangoFcFontMap *', self.font_map),
-            self._fontconfig_config)
-        # pango_fc_font_map_set_config keeps a reference to config
-        fontconfig.FcConfigDestroy(self._fontconfig_config)
+            ffi.cast('PangoFcFontMap *', self.font_map), self._config)
+        # pango_fc_font_map_set_config keeps a reference to config.
+        fontconfig.FcConfigDestroy(self._config)
 
-        # Temporary folder storing fonts and Fontconfig config files
+        # Temporary folder storing fonts.
         self._folder = Path(mkdtemp(prefix='weasyprint-'))
 
     def add_font_face(self, rule_descriptors, url_fetcher):
-        features = {
-            rules[0][0].replace('-', '_'): rules[0][1] for rules in
-            rule_descriptors.get('font_variant', [])}
-        key = 'font_feature_settings'
-        if key in rule_descriptors:
-            features[key] = rule_descriptors[key]
-        features_string = ''.join(
-            f'<string>{key} {value}</string>'
-            for key, value in font_features(**features).items())
-        fontconfig_style = fontconfig_weight = fontconfig_stretch = None
-        if 'font_style' in rule_descriptors:
-            fontconfig_style = FONTCONFIG_STYLE[rule_descriptors['font_style']]
-        if 'font_weight' in rule_descriptors:
-            fontconfig_weight = FONTCONFIG_WEIGHT[rule_descriptors['font_weight']]
-        if 'font_stretch' in rule_descriptors:
-            fontconfig_stretch = FONTCONFIG_STRETCH[rule_descriptors['font_stretch']]
-        config_key = (
-            f'{rule_descriptors["font_family"]}-{fontconfig_style}-'
-            f'{fontconfig_weight}-{features_string}').encode()
-        config_digest = md5(config_key, usedforsecurity=False).hexdigest()
+        """Add a font face to the Fontconfig configuration."""
+
+        # Define path where to save font, depending on the rule descriptors.
+        config_key = str(rule_descriptors)
+        config_digest = md5(config_key.encode(), usedforsecurity=False).hexdigest()
         font_path = self._folder / config_digest
         if font_path.exists():
+            # Font already exists, we have nothing more to do.
             return
 
+        # Try values in "src" descriptor until one works.
+        string = ffi.gc(ffi.new('FcChar8 **'), ffi.release)
         for font_type, url in rule_descriptors['src']:
-            if url is None:
+            # Abort if font URL is broken.
+            if url is None or font_type == 'internal':
                 continue
-            if font_type in ('external', 'local'):
-                config = self._fontconfig_config
-                if font_type == 'local':
-                    font_name = url.encode()
-                    pattern = ffi.gc(
-                        fontconfig.FcPatternCreate(),
-                        fontconfig.FcPatternDestroy)
-                    fontconfig.FcConfigSubstitute(
-                        config, pattern, fontconfig.FcMatchFont)
-                    fontconfig.FcDefaultSubstitute(pattern)
-                    fontconfig.FcPatternAddString(
-                        pattern, b'fullname', font_name)
-                    fontconfig.FcPatternAddString(
-                        pattern, b'postscriptname', font_name)
-                    family = ffi.new('FcChar8 **')
-                    postscript = ffi.new('FcChar8 **')
-                    result = ffi.new('FcResult *')
-                    matching_pattern = fontconfig.FcFontMatch(
-                        config, pattern, result)
-                    # prevent RuntimeError, see issue #677
-                    if matching_pattern == ffi.NULL:
-                        LOGGER.debug(
-                            'Failed to get matching local font for %r',
-                            font_name.decode())
-                        continue
 
-                    # TODO: do many fonts have multiple family values?
-                    fontconfig.FcPatternGetString(
-                        matching_pattern, b'fullname', 0, family)
-                    fontconfig.FcPatternGetString(
-                        matching_pattern, b'postscriptname', 0, postscript)
-                    family = ffi.string(family[0])
-                    postscript = ffi.string(postscript[0])
-                    if font_name.lower() in (
-                            family.lower(), postscript.lower()):
-                        filename = ffi.new('FcChar8 **')
+            # Try to find a font installed on the system that matches descriptors.
+            if font_type == 'local':
+                # Create a pattern that matches font name.
+                font_name = url.encode()
+                pattern = ffi.gc(
+                    fontconfig.FcPatternCreate(), fontconfig.FcPatternDestroy)
+                fontconfig.FcConfigSubstitute(
+                    self._config, pattern, fontconfig.FcMatchFont)
+                fontconfig.FcDefaultSubstitute(pattern)
+                fontconfig.FcPatternAddString(pattern, b'fullname', font_name)
+                fontconfig.FcPatternAddString(pattern, b'postscriptname', font_name)
+                result = ffi.new('FcResult *')
+                matching_pattern = fontconfig.FcFontMatch(self._config, pattern, result)
+                if matching_pattern == ffi.NULL:
+                    # No font has been found, abort.
+                    LOGGER.debug('Failed to get matching local font for %r', url)
+                    continue
+
+                # Check that the font name in descriptor matches name in font.
+                for tag in b'fullname', b'postscriptname':
+                    fontconfig.FcPatternGetString(matching_pattern, tag, 0, string)
+                    name = ffi.string(string[0])
+                    if font_name.lower() in name.lower():
                         fontconfig.FcPatternGetString(
-                            matching_pattern, b'file', 0, filename)
-                        path = ffi.string(filename[0]).decode(
-                            FILESYSTEM_ENCODING)
+                            matching_pattern, b'file', 0, string)
+                        path = ffi.string(string[0]).decode(FILESYSTEM_ENCODING)
                         url = Path(path).as_uri()
-                    else:
-                        LOGGER.debug(
-                            'Failed to load local font %r', font_name.decode())
-                        continue
-
-                # Get font content
-                try:
-                    with fetch(url_fetcher, url) as result:
-                        if 'string' in result:
-                            font = result['string']
-                        else:
-                            font = result['file_obj'].read()
-                except Exception as exc:
-                    LOGGER.debug('Failed to load font at %r (%s)', url, exc)
+                        break
+                else:
+                    # Names don’t match, abort.
+                    LOGGER.debug('Failed to load local font %r', font_name.decode())
                     continue
 
-                # Store font content
-                try:
-                    # Decode woff and woff2 fonts
-                    if font[:3] == b'wOF':
-                        out = BytesIO()
-                        woff_version_byte = font[3:4]
-                        if woff_version_byte == b'F':
-                            # woff font
-                            ttfont = TTFont(BytesIO(font))
-                            ttfont.flavor = ttfont.flavorData = None
-                            ttfont.save(out)
-                        elif woff_version_byte == b'2':
-                            # woff2 font
-                            woff2.decompress(BytesIO(font), out)
-                        font = out.getvalue()
-                except Exception as exc:
-                    LOGGER.debug(
-                        'Failed to handle woff font at %r (%s)', url, exc)
-                    continue
-                font_path.write_bytes(font)
+            # Get font content.
+            try:
+                with fetch(url_fetcher, url) as result:
+                    string = 'string' in result
+                    font = result['string'] if string else result['file_obj'].read()
+            except Exception as exception:
+                LOGGER.debug('Failed to load font at %r (%s)', url, exception)
+                continue
 
-                xml = ''.join((f'''<?xml version="1.0"?>
-                <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
-                <fontconfig>
-                  <match target="scan">
-                    <test name="file" compare="eq">
-                      <string>{font_path}</string>
-                    </test>
-                    <edit name="family" mode="assign_replace">
-                      <string>{rule_descriptors['font_family']}</string>
-                    </edit>''',
-                    f'''
-                    <edit name="slant" mode="assign_replace">
-                      <const>{fontconfig_style}</const>
-                    </edit>
-                    ''' if fontconfig_style else '',
-                    f'''
-                    <edit name="weight" mode="assign_replace">
-                      <int>{fontconfig_weight}</int>
-                    </edit>
-                    ''' if fontconfig_weight else '',
-                    f'''
-                    <edit name="width" mode="assign_replace">
-                      <const>{fontconfig_stretch}</const>
-                    </edit>
-                    ''' if fontconfig_stretch else '',
-                    f'''
-                  </match>
-                  <match target="font">
-                    <test name="file" compare="eq">
-                      <string>{font_path}</string>
-                    </test>
-                    <edit name="fontfeatures"
-                          mode="assign_replace">{features_string}</edit>
-                  </match>
-                </fontconfig>''')).encode()
+            # Store font content.
+            try:
+                # Decode woff and woff2 fonts.
+                if font[:3] == b'wOF':
+                    out = BytesIO()
+                    woff_version_byte = font[3:4]
+                    if woff_version_byte == b'F':  # woff font
+                        ttfont = TTFont(BytesIO(font))
+                        ttfont.flavor = ttfont.flavorData = None
+                        ttfont.save(out)
+                    elif woff_version_byte == b'2':  # woff2 font
+                        woff2.decompress(BytesIO(font), out)
+                    font = out.getvalue()
+            except Exception as exc:
+                LOGGER.debug('Failed to handle woff font at %r (%s)', url, exc)
+                continue
+            font_path.write_bytes(font)
 
-                # TODO: We should mask local fonts with the same name
-                # too as explained in Behdad's blog entry.
-                fontconfig.FcConfigParseAndLoadFromMemory(config, xml, True)
-                font_added = fontconfig.FcConfigAppFontAddFile(
-                    config, str(font_path).encode(FILESYSTEM_ENCODING))
-                if font_added:
-                    return pangoft2.pango_fc_font_map_config_changed(
-                        ffi.cast('PangoFcFontMap *', self.font_map))
-                LOGGER.debug('Failed to load font at %r', url)
-        LOGGER.warning(
-            'Font-face %r cannot be loaded', rule_descriptors['font_family'])
+            # Create Fontconfig XML config file.
+            mode = 'assign_replace'
+            root = Element('fontconfig')
+            match = SubElement(root, 'match', target='scan')
+            test = SubElement(match, 'test', name='file', compare='eq')
+            SubElement(test, 'string').text = str(font_path)
+            edit = SubElement(match, 'edit', name='family', mode=mode)
+            SubElement(edit, 'string').text = rule_descriptors['font_family']
+            if 'font_style' in rule_descriptors:
+                edit = SubElement(match, 'edit', name='slant', mode=mode)
+                text = FONTCONFIG_STYLE[rule_descriptors['font_style']]
+                SubElement(edit, 'const').text = text
+            if 'font_weight' in rule_descriptors:
+                edit = SubElement(match, 'edit', name='weight', mode=mode)
+                text = FONTCONFIG_WEIGHT[rule_descriptors['font_weight']]
+                SubElement(edit, 'const').text = text
+            if 'font_stretch' in rule_descriptors:
+                edit = SubElement(match, 'edit', name='width', mode=mode)
+                text = FONTCONFIG_STRETCH[rule_descriptors['font_stretch']]
+                SubElement(edit, 'const').text = text
+            match = SubElement(root, 'match', target='font')
+            test = SubElement(match, 'test', name='file', compare='eq')
+            SubElement(test, 'string').text = str(font_path)
+            edit = SubElement(match, 'edit', name='fontfeatures', mode=mode)
+            descriptors = {
+                rules[0][0].replace('-', '_'): rules[0][1] for rules in
+                rule_descriptors.get('font_variant', [])}
+            settings = rule_descriptors.get('font_feature_settings', 'normal')
+            features = font_features(font_feature_settings=settings, **descriptors)
+            for key, value in features.items():
+                SubElement(edit, 'string').text = f'{key} {value}'
+            header = (
+                b'<?xml version="1.0"?>',
+                b'<!DOCTYPE fontconfig SYSTEM "urn:fontconfig:fonts.dtd">')
+            xml = b'\n'.join((*header, tostring(root, encoding='utf-8')))
+
+            # Register font and configuration in Fontconfig.
+            # TODO: We should mask local fonts with the same name
+            # too as explained in Behdad's blog entry.
+            fontconfig.FcConfigParseAndLoadFromMemory(self._config, xml, True)
+            font_added = fontconfig.FcConfigAppFontAddFile(
+                self._config, str(font_path).encode(FILESYSTEM_ENCODING))
+            if font_added:
+                return pangoft2.pango_fc_font_map_config_changed(
+                    ffi.cast('PangoFcFontMap *', self.font_map))
+            LOGGER.debug('Failed to load font at %r', url)
+        LOGGER.warning('Font-face %r cannot be loaded', rule_descriptors['font_family'])
 
     def __del__(self):
         """Clean a font configuration for a document."""
@@ -268,10 +237,8 @@ class FontConfiguration:
 
 def font_features(font_kerning='normal', font_variant_ligatures='normal',
                   font_variant_position='normal', font_variant_caps='normal',
-                  font_variant_numeric='normal',
-                  font_variant_alternates='normal',
-                  font_variant_east_asian='normal',
-                  font_feature_settings='normal'):
+                  font_variant_numeric='normal', font_variant_alternates='normal',
+                  font_variant_east_asian='normal', font_feature_settings='normal'):
     """Get the font features from the different properties in style.
 
     See https://www.w3.org/TR/css-fonts-3/#feature-precedence
@@ -279,11 +246,11 @@ def font_features(font_kerning='normal', font_variant_ligatures='normal',
     """
     features = {}
 
-    # Step 1: getting the default, we rely on Pango for this
-    # Step 2: @font-face font-variant, done in fonts.add_font_face
-    # Step 3: @font-face font-feature-settings, done in fonts.add_font_face
+    # Step 1: getting the default, we rely on Pango for this.
+    # Step 2: @font-face font-variant, done in fonts.add_font_face.
+    # Step 3: @font-face font-feature-settings, done in fonts.add_font_face.
 
-    # Step 4: font-variant and OpenType features
+    # Step 4: font-variant and OpenType features.
 
     if font_kerning != 'auto':
         features['kern'] = int(font_kerning == 'normal')
@@ -328,9 +295,9 @@ def font_features(font_kerning='normal', font_variant_ligatures='normal',
         for key in font_variant_east_asian:
             features[EAST_ASIAN_KEYS[key]] = 1
 
-    # Step 5: incompatible non-OpenType features, already handled by Pango
+    # Step 5: incompatible non-OpenType features, already handled by Pango.
 
-    # Step 6: font-feature-settings
+    # Step 6: font-feature-settings.
 
     if font_feature_settings != 'normal':
         features.update(dict(font_feature_settings))
@@ -341,32 +308,29 @@ def font_features(font_kerning='normal', font_variant_ligatures='normal',
 def get_font_description(style):
     """Get font description string out of given style."""
     font_description = ffi.gc(
-        pango.pango_font_description_new(),
-        pango.pango_font_description_free)
+        pango.pango_font_description_new(), pango.pango_font_description_free)
     family_p, family = unicode_to_char_p(','.join(style['font_family']))
     pango.pango_font_description_set_family(font_description, family_p)
-    pango.pango_font_description_set_style(
-        font_description, PANGO_STYLE[style['font_style']])
-    pango.pango_font_description_set_stretch(
-        font_description, PANGO_STRETCH[style['font_stretch']])
-    pango.pango_font_description_set_weight(
-        font_description, style['font_weight'])
-    pango.pango_font_description_set_absolute_size(
-        font_description, units_from_double(style['font_size']))
+    font_style = PANGO_STYLE[style['font_style']]
+    pango.pango_font_description_set_style(font_description, font_style)
+    font_stretch = PANGO_STRETCH[style['font_stretch']]
+    pango.pango_font_description_set_stretch(font_description, font_stretch)
+    font_weight = style['font_weight']
+    pango.pango_font_description_set_weight(font_description, font_weight)
+    font_size = units_from_double(style['font_size'])
+    pango.pango_font_description_set_absolute_size(font_description, font_size)
     if style['font_variation_settings'] != 'normal':
         string = ','.join(
             f'{key}={value}' for key, value in
             style['font_variation_settings']).encode()
-        pango.pango_font_description_set_variations(
-            font_description, string)
+        pango.pango_font_description_set_variations(font_description, string)
     return font_description
 
 
 def get_pango_font_hb_face(pango_font):
     """Get Harfbuzz face out of given Pango font."""
     fc_font = ffi.cast('PangoFcFont *', pango_font)
-    fontmap = ffi.cast(
-        'PangoFcFontMap *', pango.pango_font_get_font_map(pango_font))
+    fontmap = ffi.cast('PangoFcFontMap *', pango.pango_font_get_font_map(pango_font))
     return pangoft2.pango_fc_font_map_get_hb_face(fontmap, fc_font)
 
 
@@ -385,10 +349,7 @@ def get_hb_object_data(hb_object, ot_color=None, glyph=None):
         hb_blob = harfbuzz.hb_face_reference_blob(hb_object)
     with ffi.new('unsigned int *') as length:
         hb_data = harfbuzz.hb_blob_get_data(hb_blob, length)
-        if hb_data == ffi.NULL:
-            data = None
-        else:
-            data = ffi.unpack(hb_data, int(length[0]))
+        data = None if hb_data == ffi.NULL else ffi.unpack(hb_data, int(length[0]))
         harfbuzz.hb_blob_destroy(hb_blob)
         return data
 
@@ -400,10 +361,7 @@ def get_pango_font_key(pango_font):
     # the same address for two different Pango maps. We should cache it in the
     # FontConfiguration object. See https://github.com/Kozea/WeasyPrint/issues/2144
     description = ffi.gc(
-        pango.pango_font_describe(pango_font),
-        pango.pango_font_description_free)
-    mask = (
-        pango.PANGO_FONT_MASK_SIZE +
-        pango.PANGO_FONT_MASK_GRAVITY)
+        pango.pango_font_describe(pango_font), pango.pango_font_description_free)
+    mask = pango.PANGO_FONT_MASK_SIZE + pango.PANGO_FONT_MASK_GRAVITY
     pango.pango_font_description_unset_fields(description, mask)
     return pango.pango_font_description_hash(description)
