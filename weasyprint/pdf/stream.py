@@ -112,13 +112,13 @@ class Stream(pydyf.Stream):
                     self._states[key] = pydyf.Dictionary({'ca': alpha})
                 super().set_state(key)
 
-    def set_alpha_state(self, x, y, width, height, is_alpha_based=False):
+    def set_alpha_state(self, x, y, width, height, mode='luminosity'):
         alpha_stream = self.add_group(x, y, width, height)
         alpha_state = pydyf.Dictionary({
             'Type': '/ExtGState',
             'SMask': pydyf.Dictionary({
                 'Type': '/Mask',
-                'S': '/Alpha' if is_alpha_based else '/Luminosity',
+                'S': f'/{mode.capitalize()}',
                 'G': alpha_stream,
             }),
             'ca': 1,
