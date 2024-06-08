@@ -66,6 +66,7 @@ class RasterImage:
         self.height = pillow_image.height
         self.ratio = (self.width / self.height) if self.height != 0 else inf
         self.optimize = optimize = options['optimize_images']
+        self.app14 = getattr(original_pillow_image, 'app', {}).get('APP14')
 
         if pillow_image.format in ('JPEG', 'MPO'):
             self.format = 'JPEG'
@@ -150,6 +151,11 @@ class RasterImage:
         })
 
         if self.format == 'JPEG':
+            if self.mode == 'CMYK' and self.app14 is not None:
+                # The presence of the APP14 segment indicates an Adobe image
+                # with inverted CMYK data. Specify a Decode Array to invert
+                # it again back to normal.
+                extra['Decode'] = '[1 0 1 0 1 0 1 0]'
             extra['Filter'] = '/DCTDecode'
             return pydyf.Stream([self.image_data], extra)
 
