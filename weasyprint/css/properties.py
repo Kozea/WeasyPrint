@@ -77,6 +77,17 @@ INITIAL_VALUES = {
         Dimension(0, None), Dimension(0, None),
         Dimension(0, None), Dimension(0, None)),
     'border_image_repeat': ('stretch', 'stretch'),
+    'mask_border_source': ('none', None),
+    'mask_border_slice': (
+        Dimension(100, '%'), Dimension(100, '%'),
+        Dimension(100, '%'), Dimension(100, '%'),
+        None),
+    'mask_border_width': ('auto', 'auto', 'auto', 'auto'),
+    'mask_border_outset': (
+        Dimension(0, None), Dimension(0, None),
+        Dimension(0, None), Dimension(0, None)),
+    'mask_border_repeat': ('stretch', 'stretch'),
+    'mask_border_mode': 'alpha',
 
 
     # Color 3 (REC): https://www.w3.org/TR/css-color-3/

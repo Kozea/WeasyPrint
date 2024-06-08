@@ -62,6 +62,7 @@ def draw_page(page, stream):
     draw_background(
         stream, stacking_context.box.background, clip_box=False,
         bleed=page.bleed, marks=marks)
+    set_mask_border(stream, page)
     draw_background(stream, page.canvas_background, clip_box=False)
     draw_border(stream, page)
     draw_stacking_context(stream, stacking_context)
@@ -116,6 +117,7 @@ def draw_stacking_context(stream, stacking_context):
         if isinstance(box, (boxes.BlockBox, boxes.MarginBox,
                             boxes.InlineBlockBox, boxes.TableCellBox,
                             boxes.FlexContainerBox, boxes.ReplacedBox)):
+            set_mask_border(stream, box)
             # The canvas background was removed by layout_backgrounds
             draw_background(stream, box.background)
             draw_border(stream, box)
@@ -137,6 +139,8 @@ def draw_stacking_context(stream, stacking_context):
 
             # Point 4
             for block in stacking_context.block_level_boxes:
+                set_mask_border(stream, block)
+
                 if isinstance(block, boxes.TableBox):
                     draw_table(stream, block)
                 else:
@@ -441,7 +445,10 @@ def draw_border(stream, box):
 
     # If there's a border image, that takes precedence.
     if box.style['border_image_source'][0] != 'none' and box.border_image is not None:
-        draw_border_image(box, stream)
+        draw_border_image(
+            box, stream, box.border_image, box.style['border_image_slice'],
+            box.style['border_image_repeat'], box.style['border_image_outset'],
+            box.style['border_image_width'])
         return
 
     widths = [getattr(box, f'border_{side}_width') for side in SIDES]
@@ -479,18 +486,18 @@ def draw_border(stream, box):
                 stream, box, style, styled_color(style, color, side))
 
 
-def draw_border_image(box, stream):
-    """Draw ``box`` border image on ``stream``."""
-    # See https://drafts.csswg.org/css-backgrounds-3/#border-images
-    image = box.border_image
+def draw_border_image(box, stream, image, border_slice, border_repeat, border_outset,
+                      border_width):
+    """Draw ``image`` as a border image for ``box`` on ``stream`` as specified."""
+    # Shared by border-image-* and mask-border-*
     width, height, ratio = image.get_intrinsic_size(
         box.style['image_resolution'], box.style['font_size'])
     intrinsic_width, intrinsic_height = replaced.default_image_sizing(
         width, height, ratio, specified_width=None, specified_height=None,
         default_width=box.border_width(), default_height=box.border_height())
 
-    image_slice = box.style['border_image_slice'][:4]
-    should_fill = box.style['border_image_slice'][4]
+    image_slice = border_slice[:4]
+    should_fill = border_slice[4]
 
     def compute_slice_dimension(dimension, intrinsic):
         if isinstance(dimension, (int, float)):
@@ -504,7 +511,7 @@ def draw_border_image(box, stream):
     slice_bottom = compute_slice_dimension(image_slice[2], intrinsic_height)
     slice_left = compute_slice_dimension(image_slice[3], intrinsic_width)
 
-    style_repeat_x, style_repeat_y = box.style['border_image_repeat']
+    repeat_x, repeat_y = border_repeat
 
     x, y, w, h, tl, tr, br, bl = box.rounded_border_box()
     px, py, pw, ph, ptl, ptr, pbr, pbl = box.rounded_padding_box()
@@ -520,11 +527,10 @@ def draw_border_image(box, stream):
             assert dimension.unit == 'px'
             return dimension.value
 
-    outsets = box.style['border_image_outset']
-    outset_top = compute_outset_dimension(outsets[0], border_top)
-    outset_right = compute_outset_dimension(outsets[1], border_right)
-    outset_bottom = compute_outset_dimension(outsets[2], border_bottom)
-    outset_left = compute_outset_dimension(outsets[3], border_left)
+    outset_top = compute_outset_dimension(border_outset[0], border_top)
+    outset_right = compute_outset_dimension(border_outset[1], border_right)
+    outset_bottom = compute_outset_dimension(border_outset[2], border_bottom)
+    outset_left = compute_outset_dimension(border_outset[3], border_left)
 
     x -= outset_left
     y -= outset_top
@@ -548,20 +554,18 @@ def draw_border_image(box, stream):
     # border-image-width. Also, the border image area that is used
     # for percentage-based border-image-width values includes any expanded
     # area due to border-image-outset.
-    widths = box.style['border_image_width']
     border_top = compute_width_adjustment(
-        widths[0], border_top, slice_top, h)
+        border_width[0], border_top, slice_top, h)
     border_right = compute_width_adjustment(
-        widths[1], border_right, slice_right, w)
+        border_width[1], border_right, slice_right, w)
     border_bottom = compute_width_adjustment(
-        widths[2], border_bottom, slice_bottom, h)
+        border_width[2], border_bottom, slice_bottom, h)
     border_left = compute_width_adjustment(
-        widths[3], border_left, slice_left, w)
+        border_width[3], border_left, slice_left, w)
 
-    def draw_border_image(x, y, width, height, slice_x, slice_y,
-                          slice_width, slice_height,
-                          repeat_x='stretch', repeat_y='stretch',
-                          scale_x=None, scale_y=None):
+    def draw_border_image_region(x, y, width, height, slice_x, slice_y, slice_width,
+                                 slice_height, repeat_x='stretch', repeat_y='stretch',
+                                 scale_x=None, scale_y=None):
         if 0 in (intrinsic_width, width, slice_width):
             scale_x = 0
         else:
@@ -636,58 +640,71 @@ def draw_border_image(box, stream):
         return scale_x, scale_y
 
     # Top left.
-    scale_left, scale_top = draw_border_image(
+    scale_left, scale_top = draw_border_image_region(
         x, y, border_left, border_top, 0, 0, slice_left, slice_top)
     # Top right.
-    draw_border_image(
+    draw_border_image_region(
         x + w - border_right, y, border_right, border_top,
         intrinsic_width - slice_right, 0, slice_right, slice_top)
     # Bottom right.
-    scale_right, scale_bottom = draw_border_image(
+    scale_right, scale_bottom = draw_border_image_region(
         x + w - border_right, y + h - border_bottom, border_right, border_bottom,
         intrinsic_width - slice_right, intrinsic_height - slice_bottom,
         slice_right, slice_bottom)
     # Bottom left.
-    draw_border_image(
+    draw_border_image_region(
         x, y + h - border_bottom, border_left, border_bottom,
         0, intrinsic_height - slice_bottom, slice_left, slice_bottom)
-    if slice_left + slice_right < intrinsic_width:
+    if x_middle := slice_left + slice_right < intrinsic_width:
         # Top middle.
-        draw_border_image(
+        draw_border_image_region(
             x + border_left, y, w - border_left - border_right, border_top,
             slice_left, 0, intrinsic_width - slice_left - slice_right,
-            slice_top, repeat_x=style_repeat_x)
+            slice_top, repeat_x=repeat_x)
         # Bottom middle.
-        draw_border_image(
+        draw_border_image_region(
             x + border_left, y + h - border_bottom,
             w - border_left - border_right, border_bottom,
             slice_left, intrinsic_height - slice_bottom,
             intrinsic_width - slice_left - slice_right, slice_bottom,
-            repeat_x=style_repeat_x)
-    if slice_top + slice_bottom < intrinsic_height:
+            repeat_x=repeat_x)
+    if y_middle := slice_top + slice_bottom < intrinsic_height:
         # Right middle.
-        draw_border_image(
+        draw_border_image_region(
             x + w - border_right, y + border_top,
             border_right, h - border_top - border_bottom,
             intrinsic_width - slice_right, slice_top,
             slice_right, intrinsic_height - slice_top - slice_bottom,
-            repeat_y=style_repeat_y)
+            repeat_y=repeat_y)
         # Left middle.
-        draw_border_image(
+        draw_border_image_region(
             x, y + border_top, border_left, h - border_top - border_bottom,
             0, slice_top, slice_left,
             intrinsic_height - slice_top - slice_bottom,
-            repeat_y=style_repeat_y)
-    if (should_fill and slice_left + slice_right < intrinsic_width
-            and slice_top + slice_bottom < intrinsic_height):
+            repeat_y=repeat_y)
+    if should_fill and x_middle and y_middle:
         # Fill middle.
-        draw_border_image(
+        draw_border_image_region(
             x + border_left, y + border_top, w - border_left - border_right,
             h - border_top - border_bottom, slice_left, slice_top,
             intrinsic_width - slice_left - slice_right,
             intrinsic_height - slice_top - slice_bottom,
-            repeat_x=style_repeat_x, repeat_y=style_repeat_y,
+            repeat_x=repeat_x, repeat_y=repeat_y,
             scale_x=scale_left or scale_right, scale_y=scale_top or scale_bottom)
+
+
+def set_mask_border(stream, box):
+    """Set ``box`` mask border as alpha state on ``stream``."""
+    if box.style['mask_border_source'][0] == 'none' or box.mask_border_image is None:
+        return
+    x, y, w, h, tl, tr, br, bl = box.rounded_border_box()
+    matrix = Matrix(e=x, f=y)
+    matrix @= stream.ctm
+    mask_stream = stream.set_alpha_state(x, y, w, h, box.style['mask_border_mode'])
+    draw_border_image(
+        box, mask_stream, box.mask_border_image, box.style['mask_border_slice'],
+        box.style['mask_border_repeat'], box.style['mask_border_outset'],
+        box.style['mask_border_width'])
 
 
 def clip_border_segment(stream, style, width, side, border_box,
@@ -1205,6 +1222,7 @@ def draw_inline_level(stream, page, box, offset_x=0, text_overflow='clip',
             boxes.InlineBlockBox, boxes.InlineFlexBox, boxes.InlineGridBox))
         draw_stacking_context(stream, stacking_context)
     else:
+        set_mask_border(stream, box)
         draw_background(stream, box.background)
         draw_border(stream, box)
         if isinstance(box, (boxes.InlineBox, boxes.LineBox)):

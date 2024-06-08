@@ -362,6 +362,7 @@ def border_width(style, name, value):
 
 
 @register_computer('border-image-slice')
+@register_computer('mask-border-slice')
 def border_image_slice(style, name, values):
     """Compute the ``border-image-slice`` property."""
     computed_values = []
@@ -385,6 +386,7 @@ def border_image_slice(style, name, values):
 
 
 @register_computer('border-image-width')
+@register_computer('mask-border-width')
 def border_image_width(style, name, values):
     """Compute the ``border-image-width`` property."""
     computed_values = []
@@ -404,6 +406,7 @@ def border_image_width(style, name, values):
 
 
 @register_computer('border-image-outset')
+@register_computer('mask-border-outset')
 def border_image_outset(style, name, values):
     """Compute the ``border-image-outset`` property."""
     computed_values = [
@@ -419,6 +422,7 @@ def border_image_outset(style, name, values):
 
 
 @register_computer('border-image-repeat')
+@register_computer('mask-border-repeat')
 def border_image_repeat(style, name, values):
     """Compute the ``border-image-repeat`` property."""
     return (values * 2) if len(values) == 1 else values

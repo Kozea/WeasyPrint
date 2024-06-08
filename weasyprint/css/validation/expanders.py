@@ -18,8 +18,8 @@ from .properties import ( # isort:skip
     border_width, box, column_count, column_width, flex_basis, flex_direction,
     flex_grow_shrink, flex_wrap, font_family, font_size, font_stretch,
     font_style, font_weight, gap, grid_line, grid_template, line_height,
-    list_style_image, list_style_position, list_style_type, other_colors,
-    overflow_wrap, validate_non_shorthand)
+    list_style_image, list_style_position, list_style_type, mask_border_mode,
+    other_colors, overflow_wrap, validate_non_shorthand)
 
 EXPANDERS = {}
 
@@ -299,6 +299,72 @@ def expand_border_image(tokens, name, base_url):
     while tokens:
         if border_image_source(tokens[:1], base_url):
             yield '-source', [tokens.pop(0)]
+        elif border_image_repeat(tokens[:1]):
+            repeats = [tokens.pop(0)]
+            while tokens and border_image_repeat(tokens[:1]):
+                repeats.append(tokens.pop(0))
+            yield '-repeat', repeats
+        elif border_image_slice(tokens[:1]) or get_keyword(tokens[0]) == 'fill':
+            slices = [tokens.pop(0)]
+            while tokens and border_image_slice(slices + tokens[:1]):
+                slices.append(tokens.pop(0))
+            yield '-slice', slices
+            if tokens and tokens[0].type == 'literal' and tokens[0].value == '/':
+                # slices / *
+                tokens.pop(0)
+            else:
+                # slices other
+                continue
+            if not tokens:
+                # slices /
+                raise InvalidValues
+            if border_image_width(tokens[:1]):
+                widths = [tokens.pop(0)]
+                while tokens and border_image_width(widths + tokens[:1]):
+                    widths.append(tokens.pop(0))
+                yield '-width', widths
+                if tokens and tokens[0].type == 'literal' and tokens[0].value == '/':
+                    # slices / widths / slash *
+                    tokens.pop(0)
+                else:
+                    # slices / widths other
+                    continue
+            elif tokens and tokens[0].type == 'literal' and tokens[0].value == '/':
+                # slices / / *
+                tokens.pop(0)
+            else:
+                # slices / other
+                raise InvalidValues
+            if not tokens:
+                # slices / * /
+                raise InvalidValues
+            if border_image_outset(tokens[:1]):
+                outsets = [tokens.pop(0)]
+                while tokens and border_image_outset(outsets + tokens[:1]):
+                    outsets.append(tokens.pop(0))
+                yield '-outset', outsets
+            else:
+                # slash / * / other
+                raise InvalidValues
+        else:
+            raise InvalidValues
+
+
+@expander('mask-border')
+@generic_expander('-outset', '-repeat', '-slice', '-source', '-width', '-mode',
+                  wants_base_url=True)
+def expand_mask_border(tokens, name, base_url):
+    """Expand the ``mask-border-*`` shorthand properties.
+
+    See https://drafts.fxtf.org/css-masking/#the-mask-border
+
+    """
+    tokens = list(tokens)
+    while tokens:
+        if border_image_source(tokens[:1], base_url):
+            yield '-source', [tokens.pop(0)]
+        elif mask_border_mode(tokens[:1]):
+            yield '-mode', [tokens.pop(0)]
         elif border_image_repeat(tokens[:1]):
             repeats = [tokens.pop(0)]
             while tokens and border_image_repeat(tokens[:1]):

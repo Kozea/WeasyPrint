@@ -421,7 +421,8 @@ def border_width(token):
         return keyword
 
 
-@property(wants_base_url=True)
+@property('border-image-source', wants_base_url=True)
+@property('mask-border-source', wants_base_url=True)
 @single_token
 def border_image_source(token, base_url):
     if get_keyword(token) == 'none':
@@ -429,7 +430,8 @@ def border_image_source(token, base_url):
     return get_image(token, base_url)
 
 
-@property()
+@property('border-image-slice')
+@property('mask-border-slice')
 def border_image_slice(tokens):
     values = []
     fill = False
@@ -449,7 +451,8 @@ def border_image_slice(tokens):
         return tuple(values)
 
 
-@property()
+@property('border-image-width')
+@property('mask-border-width')
 def border_image_width(tokens):
     values = []
     for token in tokens:
@@ -467,7 +470,8 @@ def border_image_width(tokens):
         return tuple(values)
 
 
-@property()
+@property('border-image-outset')
+@property('mask-border-outset')
 def border_image_outset(tokens):
     values = []
     for token in tokens:
@@ -483,12 +487,19 @@ def border_image_outset(tokens):
         return tuple(values)
 
 
-@property()
+@property('border-image-repeat')
+@property('mask-border-repeat')
 def border_image_repeat(tokens):
     if 1 <= len(tokens) <= 2:
         keywords = tuple(get_keyword(token) for token in tokens)
         if set(keywords) <= {'stretch', 'repeat', 'round', 'space'}:
             return keywords
+
+
+@property()
+@single_keyword
+def mask_border_mode(keyword):
+    return keyword in ('luminance', 'alpha')
 
 
 @property(unstable=True)
