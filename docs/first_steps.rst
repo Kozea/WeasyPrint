@@ -70,7 +70,7 @@ in a `virtual environment`_ using `pip`_::
 .. _pip: https://pip.pypa.io/
 
 
-Alpine ≥ 3.14
+Alpine ≥ 3.17
 +++++++++++++
 
 To install WeasyPrint using your distribution’s package::
@@ -80,12 +80,12 @@ To install WeasyPrint using your distribution’s package::
 To install WeasyPrint inside a virtualenv using wheels (if possible), you need
 the following packages::
 
-  apk add py3-pip gcc musl-dev python3-dev pango zlib-dev jpeg-dev openjpeg-dev g++ libffi-dev
+  apk add py3-pip gcc musl-dev python3-dev pango zlib-dev jpeg-dev openjpeg-dev g++ libffi-dev harfbuzz-subset
 
 To install WeasyPrint inside a virtualenv without using wheels, you need the
 following packages::
 
-  apk add py3-pip gcc musl-dev python3-dev pango zlib-dev jpeg-dev openjpeg-dev g++ libffi-dev
+  apk add py3-pip gcc musl-dev python3-dev pango zlib-dev jpeg-dev openjpeg-dev g++ libffi-dev harfbuzz-subset
 
 
 Archlinux
@@ -116,15 +116,15 @@ To install WeasyPrint using your distribution’s package::
 To install WeasyPrint inside a virtualenv using wheels (if possible), you need
 the following packages::
 
-  apt install python3-pip libpango-1.0-0 libpangoft2-1.0-0
+  apt install python3-pip libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz-subset0
 
 To install WeasyPrint inside a virtualenv without using wheels, you need the
 following packages::
 
-  apt install python3-pip libpango-1.0-0 libpangoft2-1.0-0 libjpeg-dev libopenjp2-7-dev libffi-dev
+  apt install python3-pip libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz-subset0 libjpeg-dev libopenjp2-7-dev libffi-dev
 
 
-Fedora ≥ 34
+Fedora ≥ 39
 +++++++++++
 
 To install WeasyPrint using your distribution’s package::
@@ -152,12 +152,12 @@ To install WeasyPrint using your distribution’s package::
 To install WeasyPrint inside a virtualenv using wheels (if possible), you need
 the following packages::
 
-  apt install python3-pip libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0
+  apt install python3-pip libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0 libharfbuzz-subset0
 
 To install WeasyPrint inside a virtualenv without using wheels, you need the
 following packages::
 
-  apt install python3-pip libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0 libffi-dev libjpeg-dev libopenjp2-7-dev
+  apt install python3-pip libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0 libharfbuzz-subset0 libffi-dev libjpeg-dev libopenjp2-7-dev
 
 
 macOS
