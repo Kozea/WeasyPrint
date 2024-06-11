@@ -124,6 +124,57 @@ def test_footnote_margin(assert_pixels):
 
 
 @assert_no_logs
+def test_footnote_multiple_margin(assert_pixels):
+    assert_pixels('''
+        RRRR___
+        RRRR___
+        RRRR___
+        RRRR___
+        RRRR___
+        RRRR___
+        RRRRRR_
+        RRRRRR_
+        _______
+        _______
+
+        RRRR___
+        RRRR___
+        _______
+        _______
+        _______
+        _______
+        RRRRRR_
+        RRRRRR_
+        RRRRRR_
+        RRRRRR_
+    ''', '''
+    <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page {
+            size: 7px 10px;
+
+            @footnote {
+                margin-top: 1px;
+            }
+        }
+        div {
+            color: red;
+            font-family: weasyprint;
+            font-size: 2px;
+            line-height: 1;
+        }
+        span {
+            float: footnote;
+        }
+    </style>
+    <div>ab</div>
+    <div>ab</div>
+    <div>ab</div>
+    <div>a<span>d</span><span>e</span></div>
+    <div>ab</div>''')
+
+
+@assert_no_logs
 def test_footnote_with_absolute(assert_pixels):
     assert_pixels('''
         _RRRR____
