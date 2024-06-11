@@ -379,4 +379,6 @@ class LayoutContext:
             return overflow
         else:
             self.current_footnote_area.height = 0
+            if not self.in_column:
+                self.page_bottom -= self.current_footnote_area.margin_height()
             return False
