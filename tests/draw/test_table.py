@@ -1301,6 +1301,106 @@ def test_tables_23(assert_pixels):
 
 
 @assert_no_logs
+def test_tables_24(assert_pixels):
+    assert_pixels('''
+        __________________
+        _RKKKKgYYYYYYGGG__
+        _RKKKKgKKYYKKGGG__
+        _BBBBBBKKYYKKGGG__
+        _BBBBBBYYYYYYGGG__
+        _BBBBBBCCCCCCGGG__
+        _BBBBBB___________
+        _BBBBBB___________
+        __________________
+        __________________
+    ''', '''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        @page { size: 18px 10px }
+        table {
+          border-collapse: collapse;
+          font: 2px/1 weasyprint;
+          margin: 1px;
+        }
+        tr {
+          border-left: 1px solid red;
+          border-right: 3px solid lime;
+        }
+        td.left {
+          background-color: magenta;
+          border-bottom: 5px solid blue;
+          border-right: 1px solid green;
+        }
+        td.right {
+          background-color: yellow;
+          border-bottom: 1px solid cyan;
+          border-left: 1px dotted orange;
+        }
+        td {
+          vertical-align: middle;
+        }
+      </style>
+      <table>
+        <tr>
+          <td class="left">XX</td>
+          <td class="right">X X</td>
+        </tr>
+      </table>
+    ''')
+
+
+@assert_no_logs
+def test_tables_24_rtl(assert_pixels):
+    assert_pixels('''
+        __________________
+        _RKKKKgYYYYYYGGG__
+        _RKKKKgKKYYKKGGG__
+        _BBBBBBKKYYKKGGG__
+        _BBBBBBYYYYYYGGG__
+        _BBBBBBCCCCCCGGG__
+        _BBBBBB___________
+        _BBBBBB___________
+        __________________
+        __________________
+    ''', '''
+      <style>
+        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
+        @page { size: 18px 10px }
+        table {
+          border-collapse: collapse;
+          direction: rtl;
+          font: 2px/1 weasyprint;
+          margin: 1px;
+        }
+        tr {
+          border-left: 1px solid red;
+          border-right: 3px solid lime;
+        }
+        td.left {
+          background-color: magenta;
+          border-bottom: 5px solid blue;
+          border-right: 1px solid green;
+        }
+        td.right {
+          background-color: yellow;
+          border-bottom: 1px solid cyan;
+          border-left: 1px dotted orange;
+        }
+        td {
+          vertical-align: middle;
+        }
+      </style>
+      <table>
+        <tr>
+          <td class="right">X X</td>
+          <td class="left">XX</td>
+        </tr>
+      </table>
+    ''')
+
+
+
+@assert_no_logs
 def test_running_elements_table_border_collapse(assert_pixels):
     assert_pixels(2 * '''
       KK_____________
