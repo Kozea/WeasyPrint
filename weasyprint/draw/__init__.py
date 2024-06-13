@@ -364,14 +364,11 @@ def draw_collapsed_borders(stream, table):
     grid_height = len(row_heights)
     grid_width = len(column_widths)
     assert grid_width == len(column_positions)
-    # Add the end of the last column, but make a copy from the table attr.
-    if table.style['direction'] == 'ltr':
-        column_positions.append(column_positions[-1] + column_widths[-1])
-    else:
-        column_positions.insert(0, column_positions[0] + column_widths[0])
-    # Add the end of the last row. No copy here, we own this list.
-    row_positions.append(row_positions[-1] + row_heights[-1])
     vertical_borders, horizontal_borders = table.collapsed_border_grid
+    # Add the end of the last column.
+    column_positions.append(column_positions[-1] + column_widths[-1])
+    # Add the end of the last row.
+    row_positions.append(row_positions[-1] + row_heights[-1])
     if table.children[0].is_header:
         header_rows = len(table.children[0].children)
     else:
@@ -444,12 +441,8 @@ def draw_collapsed_borders(stream, table):
         pos_y = row_positions[y]
         shift_before = half_max_width(vertical_borders, [(y - 1, x), (y, x)])
         shift_after = half_max_width(vertical_borders, [(y - 1, x + 1), (y, x + 1)])
-        if table.style['direction'] == 'ltr':
-            pos_x1 = column_positions[x] - shift_before
-            pos_x2 = column_positions[x + 1] + shift_after
-        else:
-            pos_x1 = column_positions[x + 1] - shift_after
-            pos_x2 = column_positions[x] + shift_before
+        pos_x1 = column_positions[x] - shift_before
+        pos_x2 = column_positions[x + 1] + shift_after
         segments.append((
             score, style, width, color, 'top', (pos_x1, pos_y, pos_x2 - pos_x1, 0)))
 
