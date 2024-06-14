@@ -852,9 +852,12 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
                 if new_child is None:
                     if resume_at:
                         index, = resume_at
-                        if index:
-                            resume_at = {index + i - 1: None}
+                        index -= 1
+                    else:
+                        index = 0
+                    resume_at = {index + i: None}
                 else:
+                    page_is_empty = False
                     box.children.append(new_child)
                     if child_resume_at is not None:
                         if original_skip_stack:

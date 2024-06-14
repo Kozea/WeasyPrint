@@ -576,3 +576,26 @@ def test_flex_percent_height_auto():
       <div class="a"">
         <div class="b"></div>
       </div>''')
+
+
+@assert_no_logs
+def test_flex_break_inside_avoid():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/2183
+    page1, page2= render_pages('''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        @page { size: 6px 4px }
+        html { font-family: weasyprint; font-size: 2px }
+      </style>
+      <article style="display: flex; flex-wrap: wrap">
+        <div>ABC</div>
+        <div style="break-inside: avoid">abc def</div>
+      </article>''')
+    html, = page1.children
+    body, = html.children
+    article, = body.children
+    div, = article.children
+    html, = page2.children
+    body, = html.children
+    article, = body.children
+    div, = article.children
