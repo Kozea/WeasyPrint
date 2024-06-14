@@ -17,19 +17,21 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
         avoid_page_break, block_container_layout, block_level_page_break,
         find_earlier_page_break, force_page_break, remove_placeholders)
 
+    # Remove top and bottom decorations for split tables.
     has_header = table.children and table.children[0].is_header
     has_footer = table.children and table.children[-1].is_footer
     collapse = table.style['border_collapse'] == 'collapse'
     remove_start_decoration = skip_stack is not None and not has_header
     table.remove_decoration(remove_start_decoration, end=False)
 
-    column_widths = table.column_widths
-
+    # Set border spacings.
     if collapse:
         border_spacing_x = border_spacing_y = 0
     else:
         border_spacing_x, border_spacing_y = table.style['border_spacing']
 
+    # Define column positions.
+    column_widths = table.column_widths
     column_positions = table.column_positions = []
     rows_left_x = table.content_box_x() + border_spacing_x
     if table.style['direction'] == 'ltr':
@@ -49,6 +51,7 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
             column_positions.append(position_x)
         rows_width = rows_x - position_x
 
+    # Set border top width on tables with collapsed borders and split cells.
     if collapse:
         table.skip_cell_border_top = False
         table.skip_cell_border_bottom = False
@@ -74,8 +77,7 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
 
     # Make this a sub-function so that many local variables like rows_x
     # don't need to be passed as parameters.
-    def group_layout(group, position_y, bottom_space, page_is_empty,
-                     skip_stack):
+    def group_layout(group, position_y, bottom_space, page_is_empty, skip_stack):
         resume_at = None
         next_page = {'break': 'any', 'page': None}
         original_page_is_empty = page_is_empty
@@ -84,7 +86,7 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
         group.position_y = position_y
         group.width = rows_width
         new_group_children = []
-        # For each rows, cells for which this is the last row (with rowspan)
+        # For each row, cells for which this is the last row (with rowspan).
         ending_cells_by_row = [[] for row in group.children]
 
         is_group_start = skip_stack is None
@@ -107,7 +109,7 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
             row.position_x = rows_left_x
             row.position_y = position_y
             row.width = rows_width
-            # Place cells at the top of the row and layout their content
+            # Place cells at the top of the row and layout their content.
             new_row_children = []
             for index_cell, cell in enumerate(row.children):
                 spanned_widths = column_widths[cell.grid_x:][:cell.colspan]
@@ -130,21 +132,19 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                 if table.style['direction'] == 'ltr':
                     cell.position_x = column_positions[cell.grid_x]
                 else:
-                    cell.position_x = column_positions[
-                        cell.grid_x + cell.colspan - 1]
+                    cell.position_x = column_positions[cell.grid_x + cell.colspan - 1]
                 cell.position_y = row.position_y
                 cell.margin_top = 0
                 cell.margin_left = 0
                 cell.width = 0
                 borders_plus_padding = cell.border_width()  # with width==0
                 # TODO: we should remove the number of columns with no
-                # originating cells to cell.colspan, see
-                # test_layout_table_auto_49
+                # originating cells to cell.colspan, see test_layout_table_auto_49.
                 cell.width = (
                     sum(spanned_widths) +
                     border_spacing_x * (cell.colspan - 1) -
                     borders_plus_padding)
-                # The computed height is a minimum
+                # Set computed height as a minimum.
                 cell.computed_height = cell.height
                 cell.height = 'auto'
                 if skip_stack:
@@ -155,11 +155,11 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                 else:
                     cell_skip_stack = None
 
-                # Adapt cell and table collapsing borders when a row is split
+                # Adapt cell and table collapsing borders when a row is split.
                 if cell_skip_stack and collapse:
                     if has_header:
                         # We have a header, we have to adapt the position of
-                        # the split cell to match the header’s bottom border
+                        # the split cell to match the header’s bottom border.
                         header_rows = table.children[0].children
                         if header_rows and header_rows[-1].children:
                             cell.position_y += max(
@@ -167,7 +167,7 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                                 for header in header_rows[-1].children)
                     else:
                         # We don’t have a header, we have to skip the
-                        # decoration at the top of the table when it’s drawn
+                        # decoration at the top of the table when it’s drawn.
                         table.skip_cell_border_top = True
 
                 # First try to render content as if there was already something
@@ -184,9 +184,8 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                     cell = cell.copy_with_children([])
                     cell, _, _, _, _, _ = block_container_layout(
                         context, cell, bottom_space, cell_skip_stack,
-                        page_is_empty=True, absolute_boxes=[],
-                        fixed_boxes=[], adjoining_margins=None,
-                        discard=False, max_lines=None)
+                        page_is_empty=True, absolute_boxes=[], fixed_boxes=[],
+                        adjoining_margins=None, discard=False, max_lines=None)
                     cell_resume_at = {0: None}
                 else:
                     cell = new_cell
@@ -218,7 +217,7 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
             # Table height algorithm
             # https://www.w3.org/TR/CSS21/tables.html#height-layout
 
-            # cells with vertical-align: baseline
+            # Set row baseline with cells with vertical-align: baseline.
             baseline_cells = []
             for cell in row.children:
                 vertical_align = cell.style['vertical_align']
@@ -236,7 +235,7 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                     if cell.baseline != row.baseline and extra:
                         add_top_padding(cell, extra)
 
-            # row height
+            # Set row height.
             for cell in row.children:
                 ending_cells_by_row[cell.rowspan - 1].append(cell)
             ending_cells = ending_cells_by_row.pop(0)
@@ -258,7 +257,7 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                 row.baseline = row_bottom_y
 
             # Add extra padding to make the cells the same height as the row
-            # and honor vertical-align
+            # and honor vertical-align.
             for cell in ending_cells:
                 cell_bottom_y = cell.position_y + cell.border_height()
                 extra = row_bottom_y - cell_bottom_y
@@ -287,11 +286,11 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
             if resume_at is None:
                 next_position_y += border_spacing_y
 
-            # Break if one cell was broken
+            # Break if one cell was broken.
             break_cell = False
             if resume_at:
                 if all(child.empty for child in row.children):
-                    # No cell was displayed, give up row
+                    # No cell was displayed, give up row.
                     next_position_y = inf
                     page_is_empty = False
                     resume_at = None
@@ -300,16 +299,15 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
 
             # Break if this row overflows the page, unless there is no
             # other content on the page.
-            if not page_is_empty and context.overflows_page(
-                    bottom_space, next_position_y):
+            overflow = context.overflows_page(bottom_space, next_position_y)
+            if not page_is_empty and overflow:
                 remove_placeholders(context, row.children, absolute_boxes, fixed_boxes)
                 if new_group_children:
                     previous_row = new_group_children[-1]
                     page_break = block_level_page_break(previous_row, row)
                     if avoid_page_break(page_break, context):
                         earlier_page_break = find_earlier_page_break(
-                            context, new_group_children, absolute_boxes,
-                            fixed_boxes)
+                            context, new_group_children, absolute_boxes, fixed_boxes)
                         if earlier_page_break:
                             new_group_children, resume_at = earlier_page_break
                             break
@@ -334,23 +332,25 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                 break
 
         # Do not keep the row group if we made a page break
-        # before any of its rows or with 'avoid'
-        if resume_at and not original_page_is_empty and (
+        # before any of its rows or with 'avoid'.
+        abort = (
+            resume_at and
+            not original_page_is_empty and (
                 avoid_page_break(group.style['break_inside'], context) or
-                not new_group_children):
+                not new_group_children))
+        if abort:
             remove_placeholders(
                 context, new_group_children, absolute_boxes, fixed_boxes)
             return None, None, next_page
 
         group = group.copy_with_children(new_group_children)
-        group.remove_decoration(
-            start=not is_group_start, end=resume_at is not None)
+        group.remove_decoration(start=not is_group_start, end=resume_at is not None)
 
-        # Set missing baselines in a second loop because of rowspan
+        # Set missing baselines in a second loop because of rowspan.
         for row in group.children:
             if row.baseline is None:
                 if row.children:
-                    # lowest bottom content edge
+                    # Set baseline to lowest bottom content edge.
                     row.baseline = max(
                         cell.content_box_y() + cell.height
                         for cell in row.children) - row.position_y
@@ -363,8 +363,7 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
 
         return group, resume_at, next_page
 
-    def body_groups_layout(skip_stack, position_y, bottom_space,
-                           page_is_empty):
+    def body_groups_layout(skip_stack, position_y, bottom_space, page_is_empty):
         if skip_stack is None:
             skip = 0
         else:
@@ -383,8 +382,7 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
             group.index = index_group
 
             if new_table_children:
-                page_break = block_level_page_break(
-                    new_table_children[-1], group)
+                page_break = block_level_page_break(new_table_children[-1], group)
                 if force_page_break(page_break, context):
                     next_page['break'] = page_break
                     resume_at = {index_group: None}
@@ -400,8 +398,7 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                     page_break = block_level_page_break(previous_group, group)
                     if avoid_page_break(page_break, context):
                         earlier_page_break = find_earlier_page_break(
-                            context, new_table_children, absolute_boxes,
-                            fixed_boxes)
+                            context, new_table_children, absolute_boxes, fixed_boxes)
                         if earlier_page_break is not None:
                             new_table_children, resume_at = earlier_page_break
                             break
@@ -420,7 +417,7 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
 
         return new_table_children, resume_at, next_page, position_y
 
-    # Layout for row groups, rows and cells
+    # Layout row groups, rows and cells.
     position_y = table.content_box_y()
     if skip_stack is None:
         position_y += border_spacing_y
@@ -450,7 +447,8 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                 skip_stack=None, page_is_empty=False)
             if header and not resume_at:
                 header_height = header.height + border_spacing_y
-            else:  # Header too big for the page
+            else:
+                # Header too big for the page.
                 header = None
         else:
             header = None
@@ -462,7 +460,8 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                 skip_stack=None, page_is_empty=False)
             if footer and not resume_at:
                 footer_height = footer.height + border_spacing_y
-            else:  # Footer too big for the page
+            else:
+                # Footer too big for the page.
                 footer = None
         else:
             footer = None
@@ -475,12 +474,11 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
         avoid_breaks = False
         for group in table.children[skip:]:
             if not group.is_header and not group.is_footer:
-                avoid_breaks = avoid_page_break(
-                    group.style['break_inside'], context)
+                avoid_breaks = avoid_page_break(group.style['break_inside'], context)
                 break
 
         if header and footer:
-            # Try with both the header and footer
+            # Try with both the header and footer.
             new_table_children, resume_at, next_page, end_position_y = (
                 body_groups_layout(
                     skip_stack, position_y + header_height,
@@ -489,28 +487,28 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                 footer.translate(dy=end_position_y - footer.position_y)
                 end_position_y += footer_height
                 return (
-                    header, new_table_children, footer, end_position_y,
-                    resume_at, next_page)
+                    header, new_table_children, footer, end_position_y, resume_at,
+                    next_page)
             else:
-                # We could not fit any content, drop the footer
+                # We could not fit any content, drop the footer.
                 footer = None
 
         if header and not footer:
-            # Try with just the header
+            # Try with just the header.
             new_table_children, resume_at, next_page, end_position_y = (
                 body_groups_layout(
                     skip_stack, position_y + header_height, bottom_space,
                     page_is_empty=avoid_breaks))
             if new_table_children or not table_rows or not page_is_empty:
                 return (
-                    header, new_table_children, footer, end_position_y,
-                    resume_at, next_page)
+                    header, new_table_children, footer, end_position_y, resume_at,
+                    next_page)
             else:
-                # We could not fit any content, drop the header
+                # We could not fit any content, drop the header.
                 header = None
 
         if footer and not header:
-            # Try with just the footer
+            # Try with just the footer.
             new_table_children, resume_at, next_page, end_position_y = (
                 body_groups_layout(
                     skip_stack, position_y, bottom_space + footer_height,
@@ -519,22 +517,19 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                 footer.translate(dy=end_position_y - footer.position_y)
                 end_position_y += footer_height
                 return (
-                    header, new_table_children, footer, end_position_y,
-                    resume_at, next_page)
+                    header, new_table_children, footer, end_position_y, resume_at,
+                    next_page)
             else:
-                # We could not fit any content, drop the footer
+                # We could not fit any content, drop the footer.
                 footer = None
 
         assert not (header or footer)
         new_table_children, resume_at, next_page, end_position_y = (
-            body_groups_layout(
-                skip_stack, position_y, bottom_space, page_is_empty))
-        return (
-            header, new_table_children, footer, end_position_y, resume_at,
-            next_page)
+            body_groups_layout(skip_stack, position_y, bottom_space, page_is_empty))
+        return header, new_table_children, footer, end_position_y, resume_at, next_page
 
     def get_column_cells(table, column):
-        """Closure getting the column cells."""
+        """Return closure getting the column cells."""
         return lambda: [
             cell
             for row_group in table.children
@@ -550,8 +545,7 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
         table = None
         adjoining_margins = []
         collapsing_through = False
-        return (
-            table, resume_at, next_page, adjoining_margins, collapsing_through)
+        return table, resume_at, next_page, adjoining_margins, collapsing_through
 
     table = table.copy_with_children(
         ([header] if header is not None else []) +
@@ -568,7 +562,7 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
         table.height if table.height != 'auto' else 0,
         position_y - table.content_box_y())
 
-    # Layout for column groups and columns
+    # Layout column groups and columns.
     columns_height = position_y - initial_position_y
     if table.children:
         # The last border spacing is below the columns.
@@ -582,7 +576,7 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                 column.width = column_widths[column.grid_x]
                 column.height = columns_height
             else:
-                # Ignore extra empty columns
+                # Ignore extra empty columns.
                 column.position_x = 0
                 column.position_y = 0
                 column.width = 0
@@ -596,6 +590,11 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
         group.width = last.position_x + last.width - first.position_x
         group.height = columns_height
 
+    # Invert columns for drawing.
+    if table.style['direction'] == 'rtl':
+        column_widths.reverse()
+        column_positions.reverse()
+
     avoid_break = avoid_page_break(table.style['break_inside'], context)
     if resume_at and not page_is_empty and avoid_break:
         remove_placeholders(context, [table], absolute_boxes, fixed_boxes)
@@ -603,6 +602,7 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
         resume_at = None
     adjoining_margins = []
     collapsing_through = False
+
     return table, resume_at, next_page, adjoining_margins, collapsing_through
 
 
@@ -626,21 +626,19 @@ def fixed_table_layout(box):
     table = box.get_wrapped_table()
     assert table.width != 'auto'
 
-    all_columns = [column for column_group in table.column_groups
-                   for column in column_group.children]
+    all_columns = [
+        column for column_group in table.column_groups
+        for column in column_group.children]
     if table.children and table.children[0].children:
         first_rowgroup = table.children[0]
         first_row_cells = first_rowgroup.children[0].children
     else:
         first_row_cells = []
-    num_columns = max(
-        len(all_columns),
-        sum(cell.colspan for cell in first_row_cells)
-    )
+    num_columns = max(len(all_columns), sum(cell.colspan for cell in first_row_cells))
     # ``None`` means not know yet.
     column_widths = [None] * num_columns
 
-    # `width` on column boxes
+    # Set width on column boxes.
     for i, column in enumerate(all_columns):
         resolve_one_percentage(column, 'width', table.width)
         if column.width != 'auto':
@@ -651,7 +649,7 @@ def fixed_table_layout(box):
     else:
         border_spacing_x = 0
 
-    # `width` on cells of the first row.
+    # Set width on cells of the first row.
     i = 0
     for cell in first_row_cells:
         resolve_percentages(cell, table)
@@ -686,23 +684,22 @@ def fixed_table_layout(box):
         for i in columns_without_width:
             column_widths[i] = width_per_column
     else:
-        # XXX this is bad, but we were given a broken table to work with...
+        # This is bad, but we were given a broken table.
         for i in columns_without_width:
             column_widths[i] = 0
 
-    # If the sum is less than the table width,
-    # distribute the remaining space equally
+    # If the sum is less than the table width, distribute the remaining space
+    # equally.
     extra_width = table.width - sum(column_widths) - all_border_spacing
     if extra_width <= 0:
-        # substract a negative: widen the table
+        # Substract a negative: widen the table.
         table.width -= extra_width
     elif num_columns:
         extra_per_column = extra_width / num_columns
         column_widths = [w + extra_per_column for w in column_widths]
 
     # Now we have table.width == sum(column_widths) + all_border_spacing
-    # with possible floating point rounding errors.
-    # (unless there is zero column)
+    # with possible floating point rounding errors (unless there is zero column).
     table.column_widths = column_widths
 
 
@@ -716,8 +713,8 @@ def auto_table_layout(context, box, containing_block):
     (table_min_content_width, table_max_content_width,
      column_min_content_widths, column_max_content_widths,
      column_intrinsic_percentages, constrainedness,
-     total_horizontal_border_spacing, grid) = \
-        table_and_columns_preferred_widths(context, box, outer=False)
+     total_horizontal_border_spacing, grid) = table_and_columns_preferred_widths(
+         context, box, outer=False)
 
     margins = 0
     if box.margin_left != 'auto':
@@ -753,7 +750,7 @@ def auto_table_layout(context, box, containing_block):
     guesses = (
         min_content_guess, min_content_percentage_guess,
         min_content_specified_guess, max_content_guess)
-    # https://www.w3.org/TR/css-tables-3/#width-distribution-algorithm
+    # See https://www.w3.org/TR/css-tables-3/#width-distribution-algorithm.
     for i in range(len(grid)):
         if column_intrinsic_percentages[i]:
             min_content_percentage_guess[i] = max(
@@ -762,8 +759,8 @@ def auto_table_layout(context, box, containing_block):
             min_content_specified_guess[i] = min_content_percentage_guess[i]
             max_content_guess[i] = min_content_percentage_guess[i]
         elif constrainedness[i]:
-            # any other column that is constrained is assigned
-            # its max-content width
+            # Any other column that is constrained is assigned its max-content
+            # width.
             min_content_specified_guess[i] = column_max_content_widths[i]
 
     if assignable_width <= sum(max_content_guess):
@@ -789,8 +786,7 @@ def auto_table_layout(context, box, containing_block):
         else:
             added_widths = [
                 upper_guess[i] - lower_guess[i] for i in range(len(grid))]
-            available_ratio = (
-                (assignable_width - sum(lower_guess)) / sum(added_widths))
+            available_ratio = (assignable_width - sum(lower_guess)) / sum(added_widths)
             table.column_widths = [
                 lower_guess[i] + added_widths[i] * available_ratio
                 for i in range(len(grid))]
@@ -821,8 +817,8 @@ def cell_baseline(cell):
     See https://www.w3.org/TR/CSS21/tables.html#height-layout
 
     """
-    result = find_in_flow_baseline(
-        cell, baseline_types=(boxes.LineBox, boxes.TableRowBox))
+    baseline_types = (boxes.LineBox, boxes.TableRowBox)
+    result = find_in_flow_baseline(cell, baseline_types=baseline_types)
     if result is not None:
         return result - cell.position_y
     else:
@@ -836,8 +832,8 @@ def find_in_flow_baseline(box, last=False, baseline_types=(boxes.LineBox,)):
     If there’s no in-flow baseline, return None.
 
     """
-    # TODO: synthetize baseline when needed
-    # See https://www.w3.org/TR/css-align-3/#synthesize-baseline
+    # TODO: synthetize baseline when needed.
+    # See https://www.w3.org/TR/css-align-3/#synthesize-baseline.
     if isinstance(box, baseline_types):
         return box.position_y + box.baseline
     elif isinstance(box, boxes.TableCaptionBox):
@@ -850,16 +846,15 @@ def find_in_flow_baseline(box, last=False, baseline_types=(boxes.LineBox,)):
                 return result
 
 
-def distribute_excess_width(context, grid, excess_width, column_widths,
-                            constrainedness, column_intrinsic_percentages,
-                            column_max_content_widths,
+def distribute_excess_width(context, grid, excess_width, column_widths, constrainedness,
+                            column_intrinsic_percentages, column_max_content_widths,
                             column_slice=slice(0, None)):
     """Distribute available width to columns.
 
     See https://www.w3.org/TR/css-tables-3/#distributing-width-to-columns
 
     """
-    # First group
+    # First group.
     columns = [
         i for i, _ in enumerate(grid[column_slice], start=column_slice.start)
         if not constrainedness[i] and
@@ -872,7 +867,7 @@ def distribute_excess_width(context, grid, excess_width, column_widths,
             column_widths[i] += column_max_content_widths[i] * ratio
         return
 
-    # Second group
+    # Second group.
     columns = [
         i for i, _ in enumerate(grid[column_slice], start=column_slice.start)
         if not constrainedness[i] and column_intrinsic_percentages[i] == 0]
@@ -881,7 +876,7 @@ def distribute_excess_width(context, grid, excess_width, column_widths,
             column_widths[i] += excess_width / len(columns)
         return
 
-    # Third group
+    # Third group.
     columns = [
         i for i, _ in enumerate(grid[column_slice], start=column_slice.start)
         if constrainedness[i] and
@@ -894,7 +889,7 @@ def distribute_excess_width(context, grid, excess_width, column_widths,
             column_widths[i] += column_max_content_widths[i] * ratio
         return
 
-    # Fourth group
+    # Fourth group.
     columns = [
         i for i, _ in enumerate(grid[column_slice], start=column_slice.start)
         if column_intrinsic_percentages[i] > 0 and column_max_content_widths[i] > 0]
@@ -906,7 +901,7 @@ def distribute_excess_width(context, grid, excess_width, column_widths,
             column_widths[i] += column_intrinsic_percentages[i] * ratio
         return
 
-    # Fifth group
+    # Fifth group.
     columns = [
         i for i, column in enumerate(grid[column_slice], start=column_slice.start)
         if column]
@@ -915,7 +910,7 @@ def distribute_excess_width(context, grid, excess_width, column_widths,
             column_widths[i] += excess_width / len(columns)
         return
 
-    # Sixth group
+    # Sixth group.
     columns = [i for i, _ in enumerate(grid[column_slice], start=column_slice.start)]
     for i in columns:
         column_widths[i] += excess_width / len(columns)
@@ -933,7 +928,7 @@ def collapse_table_borders(table, grid_width, grid_height):
 
     """
     if not (grid_width and grid_height):
-        # Don’t bother with empty tables
+        # Don’t bother with empty tables.
         return [], []
 
     styles = reversed([
@@ -941,8 +936,9 @@ def collapse_table_borders(table, grid_width, grid_height):
         'groove', 'inset', 'none'])
     style_scores = {style: score for score, style in enumerate(styles)}
     style_map = {'inset': 'ridge', 'outset': 'groove'}
-    weak_null_border = (
-        (0, 0, style_scores['none']), ('none', 0, TRANSPARENT))
+    weak_null_border = ((0, 0, style_scores['none']), ('none', 0, TRANSPARENT))
+
+    # Borders are always stored left to right, top to bottom.
     vertical_borders = [
         [weak_null_border] * (grid_width + 1) for _ in range(grid_height)]
     horizontal_borders = [
@@ -955,7 +951,7 @@ def collapse_table_borders(table, grid_width, grid_height):
         width = box_style[f'border_{side}_width']
         color = get_color(box_style, f'border_{side}_color')
 
-        # https://www.w3.org/TR/CSS21/tables.html#border-conflict-resolution
+        # See https://www.w3.org/TR/CSS21/tables.html#border-conflict-resolution.
         score = ((1 if style == 'hidden' else 0), width, style_scores[style])
 
         style = style_map.get(style, style)
@@ -966,60 +962,80 @@ def collapse_table_borders(table, grid_width, grid_height):
 
     def set_borders(box, x, y, w, h):
         style = box.style
-        for yy in range(y, y + h):
-            set_one_border(vertical_borders, style, 'left', x, yy)
-            set_one_border(vertical_borders, style, 'right', x + w, yy)
-        for xx in range(x, x + w):
-            set_one_border(horizontal_borders, style, 'top', xx, y)
-            set_one_border(horizontal_borders, style, 'bottom', xx, y + h)
 
-    # The order is important here:
+        # x and y are logical (possibly rtl), but borders are graphical (always ltr).
+        if table.style['direction'] == 'ltr':
+            for yy in range(y, y + h):
+                set_one_border(vertical_borders, style, 'left', x, yy)
+                set_one_border(vertical_borders, style, 'right', x + w, yy)
+            for xx in range(x, x + w):
+                set_one_border(horizontal_borders, style, 'top', xx, y)
+                set_one_border(horizontal_borders, style, 'bottom', xx, y + h)
+        else:
+            for yy in range(y, y + h):
+                set_one_border(vertical_borders, style, 'left', -1 - w - x, yy)
+                set_one_border(vertical_borders, style, 'right', -1 - x, yy)
+            for xx in range(-1 - x, -1 - x - w, -1):
+                set_one_border(horizontal_borders, style, 'top', xx, y)
+                set_one_border(horizontal_borders, style, 'bottom', xx, y + h)
+
+    # Set cell borders. The order is important here:
     # "A style set on a cell wins over one on a row, which wins over a
     #  row group, column, column group and, lastly, table"
-    # See https://www.w3.org/TR/CSS21/tables.html#border-conflict-resolution
-    strong_null_border = (
-        (1, 0, style_scores['hidden']), ('hidden', 0, TRANSPARENT))
+    # See https://www.w3.org/TR/CSS21/tables.html#border-conflict-resolution.
+    strong_null_border = ((1, 0, style_scores['hidden']), ('hidden', 0, TRANSPARENT))
     grid_y = 0
     for row_group in table.children:
         for row in row_group.children:
             for cell in row.children:
-                # No border inside of a cell with rowspan or colspan
-                for xx in range(cell.grid_x + 1, cell.grid_x + cell.colspan):
-                    for yy in range(grid_y, grid_y + cell.rowspan):
+                # Force null border inside of a cell with rowspan or colspan.
+                grid_x, colspan, rowspan = cell.grid_x, cell.colspan, cell.rowspan
+                if table.style['direction'] == 'ltr':
+                    vertical_x_range = range(grid_x + 1, grid_x + colspan)
+                    horizontal_x_range = range(grid_x, grid_x + colspan)
+                else:
+                    vertical_x_range = range(-2 - grid_x, -1 - grid_x - colspan, -1)
+                    horizontal_x_range = range(-1 - grid_x, -1 - grid_x - colspan, -1)
+                for xx in vertical_x_range:
+                    for yy in range(grid_y, grid_y + rowspan):
                         vertical_borders[yy][xx] = strong_null_border
-                for xx in range(cell.grid_x, cell.grid_x + cell.colspan):
-                    for yy in range(grid_y + 1, grid_y + cell.rowspan):
+                for xx in horizontal_x_range:
+                    for yy in range(grid_y + 1, grid_y + rowspan):
                         horizontal_borders[yy][xx] = strong_null_border
-                # The cell’s own borders
-                set_borders(cell, x=cell.grid_x, y=grid_y,
-                            w=cell.colspan, h=cell.rowspan)
+                # Set cell border.
+                set_borders(cell, grid_x, grid_y, colspan, rowspan)
             grid_y += 1
 
+    # Set row borders.
     grid_y = 0
     for row_group in table.children:
         for row in row_group.children:
-            set_borders(row, x=0, y=grid_y, w=grid_width, h=1)
+            set_borders(row, 0, grid_y, grid_width, 1)
             grid_y += 1
 
+    # Set row group borders.
     grid_y = 0
     for row_group in table.children:
         rowspan = len(row_group.children)
-        set_borders(row_group, x=0, y=grid_y, w=grid_width, h=rowspan)
+        set_borders(row_group, 0, grid_y, grid_width, rowspan)
         grid_y += rowspan
 
+    # Set column borders.
     for column_group in table.column_groups:
         for column in column_group.children:
-            set_borders(column, x=column.grid_x, y=0, w=1, h=grid_height)
+            set_borders(column, column.grid_x, 0, 1, grid_height)
 
+    # Set column group group borders.
     for column_group in table.column_groups:
-        set_borders(column_group, x=column_group.grid_x, y=0,
-                    w=column_group.span, h=grid_height)
+        set_borders(
+            column_group, column_group.grid_x, 0, column_group.span, grid_height)
 
-    set_borders(table, x=0, y=0, w=grid_width, h=grid_height)
+    # Set table borders.
+    set_borders(table, 0, 0, grid_width, grid_height)
 
-    # Now that all conflicts are resolved, set transparent borders of
-    # the correct widths on each box. The actual border grid will be
-    # painted separately.
+    # Now that all conflicts are resolved, set transparent borders of the
+    # correct widths on each box. The actual border grid will be painted
+    # separately.
     def set_border_used_width(box, side, twice_width):
         prop = f'border_{side}_width'
         setattr(box, prop, twice_width / 2)
@@ -1030,14 +1046,11 @@ def collapse_table_borders(table, grid_width, grid_height):
         set_border_used_width(box, 'bottom', 0)
         set_border_used_width(box, 'left', 0)
 
-    def max_vertical_width(x, y, h):
-        return max(
-            width for grid_row in vertical_borders[y:y + h]
-            for _, (_, width, _) in [grid_row[x]])
+    def max_vertical_width(x, y1, y2):
+        return max(grid_row[x][1][1] for grid_row in vertical_borders[y1:y2])
 
-    def max_horizontal_width(x, y, w):
-        return max(
-            width for _, (_, width, _) in horizontal_borders[y][x:x + w])
+    def max_horizontal_width(x1, y, x2):
+        return max(width for _, (_, width, _) in horizontal_borders[y][x1:x2])
 
     grid_y = 0
     for row_group in table.children:
@@ -1045,14 +1058,22 @@ def collapse_table_borders(table, grid_width, grid_height):
         for row in row_group.children:
             remove_borders(row)
             for cell in row.children:
-                set_border_used_width(cell, 'top', max_horizontal_width(
-                    x=cell.grid_x, y=grid_y, w=cell.colspan))
-                set_border_used_width(cell, 'bottom', max_horizontal_width(
-                    x=cell.grid_x, y=grid_y + cell.rowspan, w=cell.colspan))
-                set_border_used_width(cell, 'left', max_vertical_width(
-                    x=cell.grid_x, y=grid_y, h=cell.rowspan))
-                set_border_used_width(cell, 'right', max_vertical_width(
-                    x=cell.grid_x + cell.colspan, y=grid_y, h=cell.rowspan))
+                x, y = cell.grid_x, grid_y
+                colspan, rowspan = cell.colspan, cell.rowspan
+                if table.style['direction'] == 'ltr':
+                    top = max_horizontal_width(x, y, x + colspan)
+                    bottom = max_horizontal_width(x, y + rowspan, x + colspan)
+                    left = max_vertical_width(x, y, y + rowspan)
+                    right = max_vertical_width(x + colspan, y, y + rowspan)
+                else:
+                    top = max_horizontal_width(-colspan - x, y, -x or None)
+                    bottom = max_horizontal_width(-colspan - x, y + rowspan, -x or None)
+                    left = max_vertical_width(-1 - colspan - x, y, y + rowspan)
+                    right = max_vertical_width(-1 - x, y, y + rowspan)
+                set_border_used_width(cell, 'top', top)
+                set_border_used_width(cell, 'bottom', bottom)
+                set_border_used_width(cell, 'left', left)
+                set_border_used_width(cell, 'right', right)
             grid_y += 1
 
     for column_group in table.column_groups:
@@ -1060,17 +1081,14 @@ def collapse_table_borders(table, grid_width, grid_height):
         for column in column_group.children:
             remove_borders(column)
 
-    set_border_used_width(table, 'top', max_horizontal_width(
-        x=0, y=0, w=grid_width))
-    set_border_used_width(table, 'bottom', max_horizontal_width(
-        x=0, y=grid_height, w=grid_width))
+    set_border_used_width(table, 'top', max_horizontal_width(0, 0, grid_width))
+    set_border_used_width(
+        table, 'bottom', max_horizontal_width(0, grid_height, grid_width))
     # "UAs must compute an initial left and right border width for the table
     #  by examining the first and last cells in the first row of the table."
     # https://www.w3.org/TR/CSS21/tables.html#collapsing-borders
     # ... so h=1, not grid_height:
-    set_border_used_width(table, 'left', max_vertical_width(
-        x=0, y=0, h=1))
-    set_border_used_width(table, 'right', max_vertical_width(
-        x=grid_width, y=0, h=1))
+    set_border_used_width(table, 'left', max_vertical_width(0, 0, 1))
+    set_border_used_width(table, 'right', max_vertical_width(grid_width, 0, 1))
 
     return vertical_borders, horizontal_borders
