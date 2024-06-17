@@ -180,7 +180,8 @@ class Font:
         if not cmap:
             return
 
-        if harfbuzz_subset:
+        if harfbuzz_subset and harfbuzz.hb_version_atleast(4, 1, 0):
+            # 4.1.0 is required for hb_set_add_sorted_array.
             self._harfbuzz_subset(cmap, hinting)
         else:
             self._fonttools_subset(cmap, hinting)

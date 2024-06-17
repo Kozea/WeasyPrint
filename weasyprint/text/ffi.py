@@ -12,6 +12,7 @@ ffi.cdef('''
     typedef ... hb_font_t;
     typedef ... hb_face_t;
     typedef ... hb_blob_t;
+    typedef int hb_bool_t;
     typedef uint32_t hb_tag_t;
     typedef uint32_t hb_codepoint_t;
     hb_tag_t hb_tag_from_string (const char *str, int len);
@@ -30,7 +31,8 @@ ffi.cdef('''
         hb_tag_t *table_tags);
     unsigned int hb_face_get_glyph_count (const hb_face_t *face);
     hb_blob_t * hb_face_reference_table (const hb_face_t *face, hb_tag_t tag);
-
+    hb_bool_t hb_version_atleast (
+        unsigned int major, unsigned int minor, unsigned int micro);
 
     // HarfBuzz Subset
 
