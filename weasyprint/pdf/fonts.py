@@ -304,12 +304,12 @@ def build_fonts_dictionary(pdf, fonts, compress, subset, options):
             full_font = io.BytesIO(font.file_content)
             ttfont = TTFont(full_font, fontNumber=font.index)
             font_widths, cmap = {}, {}
+            for i, glyph in enumerate(ttfont.getGlyphSet().values()):
+                font_widths[i] = glyph.width * 1000 / font.upem
             for letter, key in ttfont.getBestCmap().items():
                 glyph = ttfont.getGlyphID(key)
                 if glyph not in cmap:
                     cmap[glyph] = chr(letter)
-                width = ttfont.getGlyphSet()[key].width
-                font_widths[glyph] = width * 1000 / font.upem
 
         to_unicode = pydyf.Stream([
             b'/CIDInit /ProcSet findresource begin',
