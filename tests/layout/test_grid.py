@@ -281,6 +281,40 @@ def test_grid_template_areas_overlap():
 
 
 @assert_no_logs
+def test_grid_template_areas_span_overflow():
+    page, = render_pages('''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        article {
+          display: grid;
+          font-family: weasyprint;
+          font-size: 2px;
+          grid-template-columns: 50% 50%;
+          line-height: 1;
+          width: 10px;
+        }
+      </style>
+      <article>
+        <div style="">a</div>
+        <div style="grid-column: span 2">a</div>
+        <div style="">a</div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div_a1, div_a2, div_a3 = article.children
+    assert div_a1.position_x == div_a2.position_x == div_a3.position_x == 0
+    assert div_a1.position_y == 0
+    assert div_a2.position_y == 2
+    assert div_a3.position_y == 4
+    assert div_a1.width == div_a3.width == 5
+    assert div_a2.width == 10
+    assert div_a1.height == div_a2.height == div_a3.height == 2
+    assert article.width == 10
+
+
+@assert_no_logs
 def test_grid_template_areas_extra_span():
     page, = render_pages('''
       <style>

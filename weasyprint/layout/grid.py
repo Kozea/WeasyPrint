@@ -842,8 +842,9 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                             width, height = first_size, second_size
                         intersect = _intersect_with_children(
                             x, y, width, height, children_positions.values())
-                        if intersect:
-                            # Child intersects with a positioned child.
+                        overflow = second_i + second_size > implicit_second_2
+                        if intersect or overflow:
+                            # Child intersects with a positioned child or overflows.
                             continue
                         else:
                             # Free place found.
@@ -947,8 +948,9 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                             width, height = first_size, second_size
                         intersect = _intersect_with_children(
                             x, y, width, height, children_positions.values())
-                        if intersect:
-                            # Child intersects with a positioned child.
+                        overflow = second_i + second_size > implicit_second_2
+                        if intersect or overflow:
+                            # Child intersects with a positioned child or overflows.
                             continue
                         else:
                             # Free place found.
