@@ -2,6 +2,7 @@
 
 import pydyf
 
+from ..logger import LOGGER
 from ..matrix import Matrix
 from ..text.ffi import ffi
 from ..text.fonts import get_pango_font_key
@@ -89,20 +90,32 @@ class Stream(pydyf.Stream):
         super().end_text()
 
     def set_color(self, color, stroke=False):
-        r, g, b, a = color
+        *channels, alpha = color
         if stroke:
-            if (r, g, b) == self._current_color_stroke:
+            if (color.space, *channels) == self._current_color_stroke:
                 return
             else:
-                self._current_color_stroke = (r, g, b)
+                self._current_color_stroke = (color.space, *channels)
         else:
-            if (r, g, b) == self._current_color:
+            if (color.space, *channels) == self._current_color:
                 return
             else:
-                self._current_color = (r, g, b)
+                self._current_color = (color.space, *channels)
 
-        super().set_color_rgb(r, g, b, stroke)
-        self.set_alpha(a, stroke)
+        if color.space in ('srgb', 'hsl', 'hwb'):
+            super().set_color_rgb(*color.to('srgb').coordinates, stroke)
+        elif color.space in ('xyz-d65', 'oklab', 'oklch'):
+            self.set_color_space('lab-d65', stroke)
+            lightness, a, b = color.to('lab').coordinates
+            super().set_color_special(None, stroke, lightness, a, b)
+        elif color.space in ('xyz-d50', 'lab', 'lch'):
+            self.set_color_space('lab-d50', stroke)
+            lightness, a, b = color.to('lab').coordinates
+            super().set_color_special(None, stroke, lightness, a, b)
+        else:
+            LOGGER.warn('Unsupported color space %s, use sRGB instead', color.space)
+            super().set_color_rgb(*channels, stroke)
+        self.set_alpha(alpha, stroke)
 
     def set_font_size(self, font, size):
         if (font, size) == self._current_font:

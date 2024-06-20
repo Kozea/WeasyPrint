@@ -5,7 +5,7 @@ import math
 from abc import ABC, abstractmethod
 from urllib.parse import unquote, urljoin
 
-from tinycss2.color3 import parse_color
+from tinycss2.color4 import parse_color
 
 from .. import LOGGER
 from ..urls import iri_to_uri, url_is_absolute

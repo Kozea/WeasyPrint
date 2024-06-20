@@ -86,9 +86,7 @@ def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
             size(child.get('offset'), font_size, 1)))
         stop_opacity = alpha_value(child.get('stop-opacity', 1)) * opacity
         stop_color = color(child.get('stop-color', 'black'))
-        if stop_opacity < 1:
-            stop_color = tuple(
-                stop_color[:3] + (stop_color[3] * stop_opacity,))
+        stop_color.alpha *= stop_opacity
         colors.append(stop_color)
 
     if not colors:

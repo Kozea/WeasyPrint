@@ -7,7 +7,7 @@ See https://www.w3.org/TR/CSS21/propidx.html and various CSS3 modules.
 from math import inf
 
 from tinycss2 import parse_component_value_list
-from tinycss2.color3 import parse_color
+from tinycss2.color4 import parse_color
 
 from .. import computed_values
 from ..properties import KNOWN_PROPERTIES, ZERO_PIXELS, Dimension
@@ -135,7 +135,7 @@ def other_colors(token):
 @single_token
 def outline_color(token):
     if get_keyword(token) == 'invert':
-        return 'currentColor'
+        return 'currentcolor'
     else:
         return parse_color(token)
 
@@ -158,7 +158,7 @@ def empty_cells(keyword):
 def color(token):
     """``*-color`` and ``color`` properties validation."""
     result = parse_color(token)
-    if result == 'currentColor':
+    if result == 'currentcolor':
         return 'inherit'
     else:
         return result

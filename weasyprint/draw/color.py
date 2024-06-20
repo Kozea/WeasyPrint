@@ -2,28 +2,34 @@
 
 from colorsys import hsv_to_rgb, rgb_to_hsv
 
+from tinycss2.color4 import parse_color
+
 
 def get_color(style, key):
     """Return color, taking care of possible currentColor value."""
     value = style[key]
-    return value if value != 'currentColor' else style['color']
+    return value if value != 'currentcolor' else style['color']
 
 
 def darken(color):
     """Return a darker color."""
-    hue, saturation, value = rgb_to_hsv(color.red, color.green, color.blue)
+    # TODO: handle color spaces.
+    hue, saturation, value = rgb_to_hsv(*color[:3])
     value /= 1.5
     saturation /= 1.25
-    return (*hsv_to_rgb(hue, saturation, value), color.alpha)
+    return parse_color(
+        'rgb(%f%% %f%% %f%%/%f)' % (*hsv_to_rgb(hue, saturation, value), color.alpha))
 
 
 def lighten(color):
     """Return a lighter color."""
-    hue, saturation, value = rgb_to_hsv(color.red, color.green, color.blue)
+    # TODO: handle color spaces.
+    hue, saturation, value = rgb_to_hsv(*color[:3])
     value = 1 - (1 - value) / 1.5
     if saturation:
         saturation = 1 - (1 - saturation) / 1.25
-    return (*hsv_to_rgb(hue, saturation, value), color.alpha)
+    return parse_color(
+        'rgb(%f%% %f%% %f%%/%f)' % (*hsv_to_rgb(hue, saturation, value), color.alpha))
 
 
 def styled_color(style, color, side):

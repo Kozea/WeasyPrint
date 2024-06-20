@@ -672,8 +672,8 @@ class SVG:
         fill_drawn = draw_gradient_or_pattern(
             self, node, fill_source, font_size, fill_opacity, stroke=False)
         if fill_color and not fill_drawn:
-            red, green, blue, alpha = color(fill_color)
-            stream_color = (red, green, blue, alpha * fill_opacity)
+            stream_color = color(fill_color)
+            stream_color.alpha *= fill_opacity
             self.stream.set_color(stream_color)
         fill = fill_color or fill_drawn
 
@@ -683,8 +683,8 @@ class SVG:
         stroke_drawn = draw_gradient_or_pattern(
             self, node, stroke_source, font_size, stroke_opacity, stroke=True)
         if stroke_color and not stroke_drawn:
-            red, green, blue, alpha = color(stroke_color)
-            stream_color = (red, green, blue, alpha * stroke_opacity)
+            stream_color = color(stroke_color)
+            stream_color.alpha *= stroke_opacity
             self.stream.set_color(stream_color, stroke=True)
         stroke = stroke_color or stroke_drawn
         stroke_width = self.length(node.get('stroke-width', '1px'), font_size)

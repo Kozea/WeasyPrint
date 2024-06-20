@@ -3,7 +3,7 @@
 import functools
 
 from tinycss2.ast import DimensionToken, IdentToken, NumberToken
-from tinycss2.color3 import parse_color
+from tinycss2.color4 import parse_color
 
 from ..properties import INITIAL_VALUES
 from .descriptors import expand_font_variant
