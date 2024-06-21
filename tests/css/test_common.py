@@ -179,9 +179,6 @@ def test_important():
 ))
 def test_units(value, width):
     document = FakeHTML(base_url=BASE_URL, string='''
-      <style>@font-face {
-        src: url(weasyprint.otf); font-family: weasyprint
-      }</style>
       <body style="font: 10px weasyprint">
       <p style="margin-left: %s"></p>''' % value)
     page, = document.render().pages

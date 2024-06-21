@@ -13,6 +13,7 @@ from weasyprint.css.targets import TargetCollector
 from weasyprint.formatting_structure import boxes, build
 from weasyprint.html import HTML5_UA_STYLESHEET
 from weasyprint.logger import LOGGER
+from weasyprint.text.fonts import FontConfiguration
 from weasyprint.urls import path2url
 
 # Lists of fonts with many variants (including condensed)
@@ -22,9 +23,6 @@ if sys.platform.startswith('win'):  # pragma: no cover
 else:  # pragma: no cover
     SANS_FONTS = 'DejaVu Sans, sans'
     MONO_FONTS = 'DejaVu Sans Mono, monospace'
-
-TEST_UA_STYLESHEET = CSS(
-    Path(__file__).parent.parent / 'weasyprint' / 'css' / 'tests_ua.css')
 
 PROPER_CHILDREN = {
     # Children can be of *any* type in *one* of the lists.
@@ -54,6 +52,9 @@ class FakeHTML(HTML):
             TEST_UA_STYLESHEET if stylesheet == HTML5_UA_STYLESHEET
             else stylesheet for stylesheet in super()._ua_stylesheets(forms)]
 
+    def render(self, font_config=None, *args, **kwargs):
+        return super().render(TEST_UA_FONT_CONFIG, *args, **kwargs)
+
     def write_pdf(self, target=None, zoom=1, finisher=None, **options):
         # Override function to force the generation of uncompressed PDFs
         if self._force_uncompressed_pdf:
@@ -68,7 +69,9 @@ def resource_path(name):
 
 # Dummy filename, but in the right directory.
 BASE_URL = path2url(resource_path('<test>'))
-
+# Default stylesheet for tests.
+TEST_UA_FONT_CONFIG = FontConfiguration()
+TEST_UA_STYLESHEET = CSS(resource_path('tests_ua.css'), font_config=TEST_UA_FONT_CONFIG)
 
 class CallbackHandler(logging.Handler):
     """A logging handler that calls a function for every message."""

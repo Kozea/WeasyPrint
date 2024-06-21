@@ -7,7 +7,6 @@ from .testing_utils import assert_no_logs, render_pages
 def test_font_face():
     page, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         body { font-family: weasyprint }
       </style>
       <span>abc</span>''')
@@ -22,7 +21,6 @@ def test_kerning_default():
     # Kerning and ligatures are on by default
     page, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         body { font-family: weasyprint }
       </style>
       <span>kk</span><span>liga</span>''')
@@ -40,7 +38,6 @@ def test_ligatures_word_space():
     # https://github.com/Kozea/WeasyPrint/issues/1469
     page, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         body { font-family: weasyprint; word-spacing: 1em; width: 10em }
       </style>
       aa liga aa''')
@@ -109,13 +106,13 @@ def test_font_face_descriptors():
         <style>
           @font-face {
             src: url(weasyprint.otf);
-            font-family: weasyprint;
+            font-family: weasyprint-variant;
             font-variant: sub
                           discretionary-ligatures
                           oldstyle-nums
                           slashed-zero;
           }
-          span { font-family: weasyprint }
+          span { font-family: weasyprint-variant }
         </style>'''
         '<span>kk</span>'
         '<span>subs</span>'

@@ -390,10 +390,6 @@ def test_layout_table_auto_4():
 @assert_no_logs
 def test_layout_table_auto_5():
     page, = render_pages('''
-      <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
-        * { font-family: weasyprint }
-      </style>
       <table style="width: 1000px; font-family: weasyprint">
         <tr>
           <td style="width: 40px">aa aa aa aa</td>
@@ -1251,9 +1247,6 @@ def test_layout_table_auto_40():
     # Test regression: https://github.com/Kozea/WeasyPrint/issues/368
     # Check that white-space is used for the shrink-to-fit algorithm
     page, = render_pages('''
-      <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
-      </style>
       <table style="width: 0">
         <td style="font-family: weasyprint; white-space: nowrap">a a</td>
       </table>
@@ -1298,9 +1291,6 @@ def test_layout_table_auto_41():
 def test_layout_table_auto_42():
     # Cell width as percentage in auto-width table
     page, = render_pages('''
-      <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
-      </style>
       <table style="font-family: weasyprint">
         <tbody>
             <tr>
@@ -1460,9 +1450,6 @@ def test_layout_table_auto_47():
     # Test regression:
     # https://github.com/Kozea/WeasyPrint/issues/666
     page, = render_pages('''
-      <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
-      </style>
       <table style="font-family: weasyprint">
         <tr>
           <td colspan=5>aaa</td>
@@ -1484,9 +1471,6 @@ def test_layout_table_auto_48():
     # Related to:
     # https://github.com/Kozea/WeasyPrint/issues/685
     page, = render_pages('''
-      <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
-      </style>
       <table style="font-family: weasyprint; border-spacing: 100px;
                     border-collapse: collapse">
         <tr>
@@ -1511,9 +1495,6 @@ def test_layout_table_auto_49():
     # https://github.com/Kozea/WeasyPrint/issues/685
     # See TODO in table_layout.group_layout
     page, = render_pages('''
-      <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
-      </style>
       <table style="font-family: weasyprint; border-spacing: 100px">
         <tr>
           <td colspan=5>aaa</td>
@@ -1535,9 +1516,6 @@ def test_layout_table_auto_50():
     # Test regression:
     # https://github.com/Kozea/WeasyPrint/issues/685
     page, = render_pages('''
-      <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
-      </style>
       <table style="font-family: weasyprint; border-spacing: 5px">
        <tr><td>a</td><td>a</td><td>a</td><td>a</td><td>a</td></tr>
        <tr>
@@ -1562,9 +1540,6 @@ def test_layout_table_auto_51():
     # Test regression:
     # https://github.com/Kozea/WeasyPrint/issues/2174
     page, = render_pages('''
-      <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
-      </style>
       <table style="font-family: weasyprint; width: 100px">
         <tr>
           <td style="width: 29.9999%">a</td>
@@ -1889,9 +1864,6 @@ def test_table_row_height_2():
 def test_table_row_height_3():
     # Test regression: https://github.com/Kozea/WeasyPrint/issues/937
     page, = render_pages('''
-      <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
-      </style>
       <table style="border-spacing: 0; font-family: weasyprint;
                     line-height: 20px">
         <tr><td>Table</td><td rowspan="2"></td></tr>
@@ -1943,7 +1915,6 @@ def test_table_vertical_align(assert_pixels):
         rrrrrrrrrrrrrrrrrrrrrrrrrrrr
     ''', '''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 28px 10px }
         html { font-size: 1px; color: red }
         body { margin: 0; width: 28px; height: 10px }
@@ -2693,9 +2664,6 @@ def test_inline_table_baseline(vertical_align, table_position_y):
     # bottom of the row. The first cell's text is aligned with the div's text,
     # and the top of the table is thus 8px above the baseline.
     page, = render_pages('''
-      <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
-      </style>
       <div style="font-family: weasyprint; font-size: 10px; line-height: 30px">
         abc
         <table style="display: inline-table; border-collapse: collapse;

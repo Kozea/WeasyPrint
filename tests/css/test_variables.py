@@ -452,7 +452,6 @@ def test_variable_list_display(var, display):
 def test_variable_list_font(var, font):
     page, = render_pages('''
       <style>
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         html { font-size: 2px; --var: %s }
         div { font-family: %s }
       </style>

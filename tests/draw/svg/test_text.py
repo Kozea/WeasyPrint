@@ -10,7 +10,6 @@ def test_text_fill(assert_pixels):
         BBBBBB__BBBBBB______
     ''', '''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 20px 2px }
         svg { display: block }
       </style>
@@ -31,7 +30,6 @@ def test_text_stroke(assert_pixels):
         _BBBBBBBBBBBB_______
     ''', '''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { font-size: 1px; size: 20em 8ex }
         svg { display: block }
       </style>
@@ -51,7 +49,6 @@ def test_text_x(assert_pixels):
         BB__BB_BBBB_________
     ''', '''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 20px 2px }
         svg { display: block }
       </style>
@@ -79,7 +76,6 @@ def test_text_y(assert_pixels):
         BBBBBBBBBB_____BBBBB__________
     ''', '''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 30px 10px }
         svg { display: block }
       </style>
@@ -107,7 +103,6 @@ def test_text_xy(assert_pixels):
         BBBBB__________BBBBB__________
     ''', '''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 30px 10px }
         svg { display: block }
       </style>
@@ -127,7 +122,6 @@ def test_text_dx(assert_pixels):
         BB__BB_BBBB_________
     ''', '''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 20px 2px }
         svg { display: block }
       </style>
@@ -155,7 +149,6 @@ def test_text_dy(assert_pixels):
         BBBBBBBBBB_____BBBBB__________
     ''', '''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 30px 10px }
         svg { display: block }
       </style>
@@ -183,7 +176,6 @@ def test_text_dx_dy(assert_pixels):
         BBBBB__________BBBBB__________
     ''', '''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 30px 10px }
         svg { display: block }
       </style>
@@ -205,7 +197,6 @@ def test_text_anchor_start(assert_pixels):
         ____BBBBBB__________
     ''', '''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 20px 4px }
         svg { display: block }
       </style>
@@ -229,7 +220,6 @@ def test_text_anchor_middle(assert_pixels):
         _______BBBBBB_______
     ''', '''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 20px 2px }
         svg { display: block }
       </style>
@@ -249,7 +239,6 @@ def test_text_anchor_end(assert_pixels):
         ____________BBBBBB__
     ''', '''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 20px 2px }
         svg { display: block }
       </style>
@@ -269,7 +258,6 @@ def test_text_tspan(assert_pixels):
         BBBBBB__BBBBBB______
     ''', '''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 20px 2px }
         svg { display: block }
       </style>
@@ -288,7 +276,6 @@ def test_text_tspan_anchor_middle(assert_pixels):
         _______BBBBBB_______
     ''', '''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 20px 2px }
         svg { display: block }
       </style>
@@ -307,7 +294,6 @@ def test_text_tspan_anchor_end(assert_pixels):
         ____________BBBBBB__
     ''', '''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 20px 2px }
         svg { display: block }
       </style>
@@ -326,7 +312,6 @@ def test_text_anchor_middle_tspan(assert_pixels):
         _______BBBBBB_______
     ''', '''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 20px 2px }
         svg { display: block }
       </style>
@@ -346,7 +331,6 @@ def test_text_anchor_end_tspan(assert_pixels):
         ____________BBBBBB__
     ''', '''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 20px 2px }
         svg { display: block }
       </style>
@@ -368,7 +352,6 @@ def test_text_rotate(assert_pixels):
         BB__BB__BB__________
     ''', '''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 20px 4px }
         svg { display: block }
       </style>
@@ -390,7 +373,6 @@ def test_text_text_length(assert_pixels):
         __BB__BB__BB________
     ''', '''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 20px 4px }
         svg { display: block }
       </style>
@@ -413,7 +395,6 @@ def test_text_length_adjust_glyphs_only(assert_pixels):
         __BBBBBBBBBBBB______
     ''', '''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 20px 4px }
         svg { display: block }
       </style>
@@ -436,7 +417,6 @@ def test_text_length_adjust_spacing_and_glyphs(assert_pixels):
         __BBBB__BBBB__BBBB__
     ''', '''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 20px 4px }
         svg { display: block }
       </style>

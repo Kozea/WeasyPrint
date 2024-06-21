@@ -16,7 +16,6 @@ def test_leader_simple(assert_pixels):
         RR__BBBB__BBBBBB
     ''', '''
       <style>
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
           size: 16px 6px;
         }
@@ -58,7 +57,6 @@ def test_leader_too_long(assert_pixels):
         RR__BBBB__BBBBBB
     ''', '''
       <style>
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
           size: 16px 14px;
         }
@@ -88,7 +86,6 @@ def test_leader_alone(assert_pixels):
         RRBBBBBBBBBBBBBB
     ''', '''
       <style>
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
           size: 16px 2px;
         }
@@ -114,7 +111,6 @@ def test_leader_content(assert_pixels):
         RR____BB______BB
     ''', '''
       <style>
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
           size: 16px 2px;
         }
@@ -143,7 +139,6 @@ def test_leader_float(assert_pixels):
         ___RR___BB____BB
     ''', '''
       <style>
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
           size: 16px 4px;
         }
@@ -180,7 +175,6 @@ def test_leader_float_small(assert_pixels):
         RR__BB__BB____BB
     ''', '''
       <style>
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
           size: 16px 4px;
         }
@@ -212,7 +206,6 @@ def test_leader_in_inline(assert_pixels):
         RR__GGBBBBBB__RR
     ''', '''
       <style>
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
           size: 16px 2px;
         }
@@ -244,7 +237,6 @@ def test_leader_bad_alignment(assert_pixels):
         ______BB______RR
     ''', '''
       <style>
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
           size: 16px 4px;
         }
@@ -274,7 +266,6 @@ def test_leader_simple_rtl(assert_pixels):
         BBBBBB__BBBB__RR
     ''', '''
       <style>
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
           size: 16px 6px;
         }
@@ -318,7 +309,6 @@ def test_leader_too_long_rtl(assert_pixels):
         BBBBBB__BBBB__RR
     ''', '''
       <style>
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
           size: 16px 14px;
         }
@@ -357,7 +347,6 @@ def test_leader_float_leader(assert_pixels):
         RR____________BB
     ''', '''
       <style>
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
           size: 16px 6px;
         }
@@ -386,7 +375,6 @@ def test_leader_empty_string(assert_pixels):
         ________
     ''', '''
       <style>
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
           size: 8px 2px;
         }
@@ -412,7 +400,6 @@ def test_leader_zero_width_string(assert_pixels):
         ________
     ''', '''
       <style>
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
           size: 8px 2px;
         }
@@ -438,7 +425,6 @@ def test_leader_absolute(assert_pixels):
         ______GG
     ''', '''
       <style>
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
           size: 8px 2px;
         }
@@ -472,7 +458,6 @@ def test_leader_padding(assert_pixels):
         __RR__BBBB__BBBB
     ''', '''
       <style>
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
           size: 16px 4px;
         }
@@ -506,7 +491,6 @@ def test_leader_inline_padding(assert_pixels):
         __RR__BBBB__BBBB
     ''', '''
       <style>
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
           size: 16px 4px;
         }
@@ -540,7 +524,6 @@ def test_leader_margin(assert_pixels):
         __RR__BBBB__BBBB
     ''', '''
       <style>
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
           size: 16px 4px;
         }
@@ -574,7 +557,6 @@ def test_leader_inline_margin(assert_pixels):
         __RR__BBBB__BBBB
     ''', '''
       <style>
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {
           size: 16px 4px;
         }

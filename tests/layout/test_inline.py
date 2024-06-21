@@ -146,9 +146,6 @@ def test_breaking_linebox_regression_1():
 @assert_no_logs
 def test_breaking_linebox_regression_2():
     html_sample = '''
-      <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
-      </style>
       <p style="width: %d.5em; font-family: weasyprint">ab
       <span style="padding-right: 1em; margin-right: 1em">c def</span>g
       hi</p>'''
@@ -228,9 +225,6 @@ def test_breaking_linebox_regression_2():
 def test_breaking_linebox_regression_3():
     # Regression test #1 for https://github.com/Kozea/WeasyPrint/issues/560
     page, = render_pages(
-        '<style>'
-        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
-        '</style>'
         '<div style="width: 5.5em; font-family: weasyprint">'
         'aaaa aaaa a [<span>aaa</span>]')
     html, = page.children
@@ -249,9 +243,6 @@ def test_breaking_linebox_regression_3():
 def test_breaking_linebox_regression_4():
     # Regression test #2 for https://github.com/Kozea/WeasyPrint/issues/560
     page, = render_pages(
-        '<style>'
-        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
-        '</style>'
         '<div style="width: 5.5em; font-family: weasyprint">'
         'aaaa a <span>b c</span>d')
     html, = page.children
@@ -269,9 +260,6 @@ def test_breaking_linebox_regression_4():
 def test_breaking_linebox_regression_5():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/580
     page, = render_pages(
-        '<style>'
-        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
-        '</style>'
         '<div style="width: 5.5em; font-family: weasyprint">'
         '<span>aaaa aaaa a a a</span><span>bc</span>')
     html, = page.children
@@ -289,9 +277,6 @@ def test_breaking_linebox_regression_5():
 def test_breaking_linebox_regression_6():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/586
     page, = render_pages(
-        '<style>'
-        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
-        '</style>'
         '<div style="width: 5.5em; font-family: weasyprint">'
         'a a <span style="white-space: nowrap">/ccc</span>')
     html, = page.children
@@ -306,9 +291,6 @@ def test_breaking_linebox_regression_6():
 def test_breaking_linebox_regression_7():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/660
     page, = render_pages(
-        '<style>'
-        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
-        '</style>'
         '<div style="width: 3.5em; font-family: weasyprint">'
         '<span><span>abc d e</span></span><span>f')
     html, = page.children
@@ -325,9 +307,6 @@ def test_breaking_linebox_regression_7():
 def test_breaking_linebox_regression_8():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/783
     page, = render_pages(
-        '<style>'
-        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
-        '</style>'
         '<p style="font-family: weasyprint"><span>\n'
         'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n'
         'bbbbbbbbbbb\n'
@@ -349,9 +328,6 @@ def test_breaking_linebox_regression_9():
     # TODO: inlines.can_break_inside return False for span but we can break
     # before the <b> tag. can_break_inside should be fixed.
     page, = render_pages(
-        '<style>'
-        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
-        '</style>'
         '<p style="font-family: weasyprint"><span>\n'
         'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbb\n'
         '<b>cccc</b></span>ddd</p>')
@@ -369,9 +345,6 @@ def test_breaking_linebox_regression_9():
 def test_breaking_linebox_regression_10():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/923
     page, = render_pages(
-        '<style>'
-        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
-        '</style>'
         '<p style="width:195px; font-family: weasyprint">'
         '  <span>'
         '    <span>xxxxxx YYY yyyyyy yyy</span>'
@@ -392,9 +365,6 @@ def test_breaking_linebox_regression_10():
 def test_breaking_linebox_regression_11():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/953
     page, = render_pages(
-        '<style>'
-        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
-        '</style>'
         '<p style="width:10em; font-family: weasyprint">'
         '  line 1<br><span>123 567 90</span>x'
         '</p>')
@@ -412,9 +382,6 @@ def test_breaking_linebox_regression_11():
 def test_breaking_linebox_regression_12():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/953
     page, = render_pages(
-        '<style>'
-        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
-        '</style>'
         '<p style="width:10em; font-family: weasyprint">'
         '  <br><span>123 567 90</span>x'
         '</p>')
@@ -431,9 +398,6 @@ def test_breaking_linebox_regression_12():
 def test_breaking_linebox_regression_13():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/953
     page, = render_pages(
-        '<style>'
-        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
-        '</style>'
         '<p style="width:10em; font-family: weasyprint">'
         '  123 567 90 <span>123 567 90</span>x'
         '</p>')
@@ -452,7 +416,6 @@ def test_breaking_linebox_regression_14():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/1638
     page, = render_pages(
         '<style>'
-        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
         '  body {font-family: weasyprint; width: 3em}'
         '</style>'
         '<span> <span>a</span> b</span><span>c</span>')
@@ -469,7 +432,6 @@ def test_breaking_linebox_regression_15():
     # Regression test for https://github.com/ietf-tools/datatracker/issues/5507
     page, = render_pages(
         '<style>'
-        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
         '  body {font-family: weasyprint; font-size: 4px}'
         '  pre {float: left}'
         '</style>'
@@ -497,7 +459,6 @@ def test_breaking_linebox_regression_16():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/1973
     page, = render_pages(
         '<style>'
-        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
         '  body {font-family: weasyprint; font-size: 4px}'
         '  p {float: left}'
         '</style>'
@@ -734,11 +695,7 @@ def test_font_stretch():
     ('<body style="hyphens: none">hyp&shy;hénation', 1),  # … unless disabled
 ))
 def test_line_count(source, lines_count):
-    page, = render_pages(
-        '<html style="width: 5em; font-family: weasyprint">'
-        '<style>@font-face {'
-        '  src:url(weasyprint.otf); font-family :weasyprint'
-        '}</style>' + source)
+    page, = render_pages('<html style="width: 5em; font-family: weasyprint">' + source)
     html, = page.children
     body, = html.children
     lines = body.children
@@ -842,11 +799,7 @@ def test_vertical_align_4():
 def test_vertical_align_5():
     # Same as previously, but with percentages
     page, = render_pages(
-        '<style>'
-        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
-        '</style>'
-        '<span style="line-height: 12px; font-size: 12px;'
-        '             font-family: weasyprint">'
+        '<span style="line-height: 12px; font-size: 12px; font-family: weasyprint">'
         '<img src="pattern.png" style="width: 40px; vertical-align: middle">'
         '<img src="pattern.png" style="width: 60px"></span>')
     html, = page.children
@@ -1067,7 +1020,6 @@ def test_box_decoration_break_inline_slice():
     # https://www.w3.org/TR/css-backgrounds-3/#the-box-decoration-break
     page_1, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 100px }
         span { font-family: weasyprint; box-decoration-break: slice;
                padding: 5px; border: 1px solid black }
@@ -1098,7 +1050,6 @@ def test_box_decoration_break_inline_clone():
     # https://www.w3.org/TR/css-backgrounds-3/#the-box-decoration-break
     page_1, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 100px }
         span { font-size: 12pt; font-family: weasyprint;
                box-decoration-break: clone;

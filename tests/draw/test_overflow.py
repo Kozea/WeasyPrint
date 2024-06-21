@@ -106,7 +106,6 @@ def test_overflow_5(assert_pixels):
         ________
     ''', '''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 8px }
         body { font-family: weasyprint; line-height: 1; font-size: 2px }
         p { color: blue }

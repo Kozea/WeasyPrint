@@ -107,7 +107,6 @@ def test_inline_block_with_margin():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/1235
     page_1, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 100px }
         span { font-family: weasyprint; display: inline-block; margin: 0 30px }
       </style>

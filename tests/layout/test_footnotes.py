@@ -9,7 +9,6 @@ from ..testing_utils import assert_no_logs, render_pages, tree_position
 def test_inline_footnote():
     page, = render_pages('''
         <style>
-            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
                 size: 9px 7px;
             }
@@ -42,18 +41,17 @@ def test_inline_footnote():
 def test_block_footnote():
     page, = render_pages('''
         <style>
-         @font-face {src: url(weasyprint.otf); font-family: weasyprint}
-         @page {
-             size: 9px 7px;
-         }
-         div {
-             font-family: weasyprint;
-             font-size: 2px;
-             line-height: 1;
-         }
-         div.footnote {
-             float: footnote;
-         }
+          @page {
+              size: 9px 7px;
+          }
+          div {
+              font-family: weasyprint;
+              font-size: 2px;
+              line-height: 1;
+          }
+          div.footnote {
+              float: footnote;
+          }
         </style>
         <div>abc<div class="footnote">de</div></div>''')
     html, footnote_area = page.children
@@ -74,7 +72,6 @@ def test_block_footnote():
 def test_long_footnote():
     page, = render_pages('''
         <style>
-            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
                 size: 9px 7px;
             }
@@ -117,7 +114,6 @@ def test_after_marker_footnote():
     # https://drafts.csswg.org/selectors-4/#typedef-compound-selector
     page, = render_pages('''
         <style>
-            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
                 size: 9px 7px;
             }
@@ -143,7 +139,6 @@ def test_after_marker_footnote():
 def test_several_footnote():
     page1, page2, = render_pages('''
         <style>
-            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
                 size: 9px 7px;
             }
@@ -188,7 +183,6 @@ def test_several_footnote():
 def test_reported_footnote_1():
     page1, page2, = render_pages('''
         <style>
-            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
                 size: 9px 7px;
             }
@@ -230,7 +224,6 @@ def test_reported_footnote_1():
 def test_reported_footnote_2():
     page1, page2, = render_pages('''
         <style>
-            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
                 size: 9px 7px;
             }
@@ -274,7 +267,6 @@ def test_reported_footnote_2():
 def test_reported_footnote_3():
     page1, page2, = render_pages('''
         <style>
-            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
                 size: 9px 10px;
             }
@@ -320,7 +312,6 @@ def test_reported_footnote_3():
 def test_reported_sequential_footnote():
     pages = render_pages('''
         <style>
-            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
                 size: 9px 7px;
             }
@@ -347,7 +338,6 @@ def test_reported_sequential_footnote():
 def test_reported_sequential_footnote_second_line():
     pages = render_pages('''
         <style>
-            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
                 size: 9px 7px;
             }
@@ -380,7 +370,6 @@ def test_reported_sequential_footnote_second_line():
 def test_footnote_area_after_call(css, tail):
     pages = render_pages('''
         <style>
-            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
                 size: 9px 10px;
                 margin: 0;
@@ -412,7 +401,6 @@ def test_footnote_area_after_call(css, tail):
 def test_footnote_display_inline():
     page, = render_pages('''
         <style>
-            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
                 size: 9px 50px;
             }
@@ -450,7 +438,6 @@ def test_footnote_display_inline():
 def test_footnote_longer_than_space_left():
     page1, page2 = render_pages('''
         <style>
-            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
                 size: 9px 7px;
             }
@@ -490,7 +477,6 @@ def test_footnote_longer_than_page():
     # the content simply overflows.
     page1, page2 = render_pages('''
         <style>
-            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
                 size: 9px 7px;
             }
@@ -530,7 +516,6 @@ def test_footnote_longer_than_page():
 def test_footnote_policy_line():
     page1, page2 = render_pages('''
         <style>
-            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
                 size: 9px 9px;
             }
@@ -572,7 +557,6 @@ def test_footnote_policy_line():
 def test_footnote_policy_block():
     page1, page2 = render_pages('''
         <style>
-            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
                 size: 9px 9px;
             }
@@ -612,7 +596,6 @@ def test_footnote_policy_block():
 def test_footnote_repagination():
     page, = render_pages('''
         <style>
-            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
                 size: 9px 7px;
             }
@@ -650,7 +633,6 @@ def test_reported_footnote_repagination():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/1700
     page1, page2 = render_pages('''
         <style>
-            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
                 size: 5px;
             }
@@ -696,23 +678,22 @@ def test_reported_footnote_repagination():
 def test_footnote_max_height():
     page1, page2 = render_pages('''
       <style>
-          @font-face {src: url(weasyprint.otf); font-family: weasyprint}
-          @page {
-              size: 12px 6px;
+        @page {
+            size: 12px 6px;
 
-              @footnote {
-                  margin-left: 1px;
-                  max-height: 4px;
-              }
-          }
-          div {
-              font-family: weasyprint;
-              font-size: 2px;
-              line-height: 1;
-          }
-          div.footnote {
-              float: footnote;
-          }
+            @footnote {
+                margin-left: 1px;
+                max-height: 4px;
+            }
+        }
+        div {
+            font-family: weasyprint;
+            font-size: 2px;
+            line-height: 1;
+        }
+        div.footnote {
+            float: footnote;
+        }
       </style>
       <div>ab<div class="footnote">c</div><div class="footnote">d</div>
       <div class="footnote">e</div></div>
@@ -751,7 +732,6 @@ def test_footnote_max_height():
 def test_footnote_table_aborted_row():
     page1, page2 = render_pages('''
       <style>
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {size: 10px 35px}
         body {font-family: weasyprint; font-size: 2px}
         tr {height: 10px}
@@ -795,7 +775,6 @@ def test_footnote_table_aborted_row():
 def test_footnote_table_aborted_group():
     page1, page2 = render_pages('''
       <style>
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page {size: 10px 35px}
         body {font-family: weasyprint; font-size: 2px}
         tr {height: 10px}

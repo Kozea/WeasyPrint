@@ -7,34 +7,33 @@ from ..testing_utils import assert_no_logs
 tables_source = '''
   <style>
     @page { size: 28px }
-    x-table { margin: 1px; padding: 1px; border-spacing: 1px;
-              border: 1px solid transparent }
-    x-td { width: 2px; height: 2px; padding: 1px;
-           border: 1px solid transparent }
+    table { margin: 1px; padding: 1px; border-spacing: 1px;
+            border: 1px solid transparent }
+    td { width: 2px; height: 2px; padding: 1px; border: 1px solid transparent }
     %(extra_css)s
   </style>
-  <x-table>
-    <x-colgroup>
-      <x-col></x-col>
-      <x-col></x-col>
-    </x-colgroup>
-    <x-col></x-col>
-    <x-tbody>
-      <x-tr>
-        <x-td></x-td>
-        <x-td rowspan=2></x-td>
-        <x-td></x-td>
-      </x-tr>
-      <x-tr>
-        <x-td colspan=2></x-td>
-        <x-td></x-td>
-      </x-tr>
-    </x-tbody>
-    <x-tr>
-      <x-td></x-td>
-      <x-td></x-td>
-    </x-tr>
-  </x-table>
+  <table>
+    <colgroup class=colgroup>
+      <col></col>
+      <col></col>
+    </colgroup>
+    <col></col>
+    <tbody id=tbody>
+      <tr>
+        <td></td>
+        <td rowspan=2></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td colspan=2></td>
+        <td></td>
+      </tr>
+    </tbody>
+    <tr>
+      <td></td>
+      <td></td>
+    </tr>
+  </table>
 '''
 
 
@@ -70,8 +69,8 @@ def test_tables_1(assert_pixels):
         _BBBBBBBBBBBBBBBBBBBBBBBBBB_
         ____________________________
     ''', tables_source % {'extra_css': '''
-      x-table { border-color: #00f; table-layout: fixed }
-      x-td { border-color: rgba(255, 0, 0, 0.5) }
+      table { border-color: #00f; table-layout: fixed }
+      td { border-color: rgba(255, 0, 0, 0.5) }
     '''})
 
 
@@ -107,9 +106,9 @@ def test_tables_1_rtl(assert_pixels):
         _BBBBBBBBBBBBBBBBBBBBBBBBBB_
         ____________________________
     ''', tables_source % {'extra_css': '''
-      x-table { border-color: #00f; table-layout: fixed;
+      table { border-color: #00f; table-layout: fixed;
                 direction: rtl; }
-      x-td { border-color: rgba(255, 0, 0, 0.5) }
+      td { border-color: rgba(255, 0, 0, 0.5) }
     '''})
 
 
@@ -145,9 +144,9 @@ def test_tables_2(assert_pixels):
         ____________________________
         ____________________________
     ''', tables_source % {'extra_css': '''
-      x-table { border: 2px solid #00f; table-layout: fixed;
+      table { border: 2px solid #00f; table-layout: fixed;
                 border-collapse: collapse }
-      x-td { border-color: #ff7f7f }
+      td { border-color: #ff7f7f }
     '''})
 
 
@@ -184,9 +183,8 @@ def test_tables_2_rtl(assert_pixels):
         ____________________________
     ''', tables_source % {'extra_css': '''
       body { direction: rtl; }
-      x-table { border: 2px solid #00f; table-layout: fixed;
-                border-collapse: collapse; }
-      x-td { border-color: #ff7f7f }
+      table { border: 2px solid #00f; table-layout: fixed; border-collapse: collapse }
+      td { border-color: #ff7f7f }
     '''})
 
 
@@ -246,9 +244,9 @@ def test_tables_3(assert_pixels):
         _tttttttttttttttttttttttttt_
         ____________________________
     ''', tables_source % {'extra_css': '''
-      x-table { border: solid #00f; border-width: 8px 2px;
-                table-layout: fixed; border-collapse: collapse }
-      x-td { border-color: #ff7f7f }
+      table { border: solid #00f; border-width: 8px 2px;
+              table-layout: fixed; border-collapse: collapse }
+      td { border-color: #ff7f7f }
       @page { size: 28px 26px; margin: 1px;
               border: 1px solid rgba(0, 255, 0, 0.5); }
     '''})
@@ -311,9 +309,9 @@ def test_tables_3_rtl(assert_pixels):
         ____________________________
     ''', tables_source % {'extra_css': '''
       body { direction: rtl; }
-      x-table { border: solid #00f; border-width: 8px 2px;
-                table-layout: fixed; border-collapse: collapse; }
-      x-td { border-color: #ff7f7f }
+      table { border: solid #00f; border-width: 8px 2px;
+              table-layout: fixed; border-collapse: collapse }
+      td { border-color: #ff7f7f }
       @page { size: 28px 26px; margin: 1px;
               border: 1px solid rgba(0, 255, 0, 0.5); }
     '''})
@@ -351,8 +349,8 @@ def test_tables_4(assert_pixels):
         _BBBBBBBBBBBBBBBBBBBBBBBBBB_
         ____________________________
     ''', tables_source % {'extra_css': '''
-      x-table { border-color: #00f; table-layout: fixed }
-      x-td { background: rgba(255, 0, 0, 0.5) }
+      table { border-color: #00f; table-layout: fixed }
+      td { background: rgba(255, 0, 0, 0.5) }
     '''})
 
 
@@ -388,9 +386,8 @@ def test_tables_4_rtl(assert_pixels):
         _BBBBBBBBBBBBBBBBBBBBBBBBBB_
         ____________________________
     ''', tables_source % {'extra_css': '''
-      x-table { border-color: #00f; table-layout: fixed;
-                direction: rtl; }
-      x-td { background: rgba(255, 0, 0, 0.5) }
+      table { border-color: #00f; table-layout: fixed; direction: rtl }
+      td { background: rgba(255, 0, 0, 0.5) }
     '''})
 
 
@@ -426,9 +423,9 @@ def test_tables_5(assert_pixels):
         _BBBBBBBBBBBBBBBBBBBBBBBBBB_
         ____________________________
     ''', tables_source % {'extra_css': '''
-      x-table { border-color: #00f; table-layout: fixed }
-      x-tbody { background: rgba(0, 0, 255, 1) }
-      x-tr { background: rgba(255, 0, 0, 0.5) }
+      table { border-color: #00f; table-layout: fixed }
+      #tbody { background: rgba(0, 0, 255, 1) }
+      tr { background: rgba(255, 0, 0, 0.5) }
     '''})
 
 
@@ -464,10 +461,9 @@ def test_tables_5_rtl(assert_pixels):
         _BBBBBBBBBBBBBBBBBBBBBBBBBB_
         ____________________________
     ''', tables_source % {'extra_css': '''
-      x-table { border-color: #00f; table-layout: fixed;
-                direction: rtl; }
-      x-tbody { background: rgba(0, 0, 255, 1) }
-      x-tr { background: rgba(255, 0, 0, 0.5) }
+      table { border-color: #00f; table-layout: fixed; direction: rtl }
+      #tbody { background: rgba(0, 0, 255, 1) }
+      tr { background: rgba(255, 0, 0, 0.5) }
     '''})
 
 
@@ -503,9 +499,9 @@ def test_tables_6(assert_pixels):
         _BBBBBBBBBBBBBBBBBBBBBBBBBB_
         ____________________________
     ''', tables_source % {'extra_css': '''
-      x-table { border-color: #00f; table-layout: fixed;}
-      x-colgroup { background: rgba(0, 0, 255, 1) }
-      x-col { background: rgba(255, 0, 0, 0.5) }
+      table { border-color: #00f; table-layout: fixed;}
+      .colgroup { background: rgba(0, 0, 255, 1) }
+      col { background: rgba(255, 0, 0, 0.5) }
     '''})
 
 
@@ -541,10 +537,9 @@ def test_tables_6_rtl(assert_pixels):
         _BBBBBBBBBBBBBBBBBBBBBBBBBB_
         ____________________________
     ''', tables_source % {'extra_css': '''
-      x-table { border-color: #00f; table-layout: fixed;
-                direction: rtl; }
-      x-colgroup { background: rgba(0, 0, 255, 1) }
-      x-col { background: rgba(255, 0, 0, 0.5) }
+      table { border-color: #00f; table-layout: fixed; direction: rtl }
+      .colgroup { background: rgba(0, 0, 255, 1) }
+      col { background: rgba(255, 0, 0, 0.5) }
     '''})
 
 
@@ -580,9 +575,9 @@ def test_tables_7(assert_pixels):
         _BBBBBBBBBBBBBBBBBBBBBBBBBB_
         ____________________________
     ''', tables_source % {'extra_css': '''
-      x-table { border-color: #00f; table-layout: fixed }
-      x-tr:first-child { background: blue }
-      x-td { border-color: rgba(255, 0, 0, 0.5) }
+      table { border-color: #00f; table-layout: fixed }
+      #tbody tr:first-child { background: blue }
+      td { border-color: rgba(255, 0, 0, 0.5) }
     '''})
 
 
@@ -618,10 +613,9 @@ def test_tables_7_rtl(assert_pixels):
         _BBBBBBBBBBBBBBBBBBBBBBBBBB_
         ____________________________
     ''', tables_source % {'extra_css': '''
-      x-table { border-color: #00f; table-layout: fixed;
-                direction: rtl; }
-      x-tr:first-child { background: blue }
-      x-td { border-color: rgba(255, 0, 0, 0.5) }
+      table { border-color: #00f; table-layout: fixed; direction: rtl }
+      #tbody tr:first-child { background: blue }
+      td { border-color: rgba(255, 0, 0, 0.5) }
     '''})
 
 
@@ -657,9 +651,9 @@ def test_tables_8(assert_pixels):
         _BBBBBBBBBBBBBBBBBBBBBBBBBB_
         ____________________________
     ''', tables_source % {'extra_css': '''
-      x-table { border-color: #00f; table-layout: fixed }
-      x-col:first-child { background: blue }
-      x-td { border-color: rgba(255, 0, 0, 0.5) }
+      table { border-color: #00f; table-layout: fixed }
+      .colgroup col:first-child { background: blue }
+      td { border-color: rgba(255, 0, 0, 0.5) }
     '''})
 
 
@@ -695,10 +689,9 @@ def test_tables_8_rtl(assert_pixels):
         _BBBBBBBBBBBBBBBBBBBBBBBBBB_
         ____________________________
     ''', tables_source % {'extra_css': '''
-      x-table { border-color: #00f; table-layout: fixed;
-                direction: rtl; }
-      x-col:first-child { background: blue }
-      x-td { border-color: rgba(255, 0, 0, 0.5) }
+      table { border-color: #00f; table-layout: fixed; direction: rtl }
+      .colgroup col:first-child { background: blue }
+      td { border-color: rgba(255, 0, 0, 0.5) }
     '''})
 
 
@@ -796,8 +789,7 @@ def test_tables_10(assert_pixels):
         @page { size: 22px 17px; margin: 1px }
         td { border: 1px red solid; width: 4px; height: 2px; }
       </style>
-      <table style="table-layout: fixed; margin-left: 1px;
-                    border-collapse: collapse">
+      <table style="table-layout: fixed; margin-left: 1px; border-collapse: collapse">
         <tr><td></td><td></td><td></td></tr>
         <tr><td></td><td></td><td></td></tr>
         <tr><td></td><td></td><td></td></tr>
@@ -865,9 +857,8 @@ def test_tables_12(assert_pixels):
         ____________________________
     ''', tables_source % {'extra_css': '''
       body { direction: rtl }
-      x-table { border: 2px solid #00f; table-layout: fixed;
-                border-collapse: collapse }
-      x-td { border-color: #ff7f7f }
+      table { border: 2px solid #00f; table-layout: fixed; border-collapse: collapse }
+      td { border-color: #ff7f7f }
     '''})
 
 
@@ -928,9 +919,9 @@ def test_tables_13(assert_pixels):
         ____________________________
     ''', tables_source % {'extra_css': '''
       body { direction: rtl }
-      x-table { border: solid #00f; border-width: 8px 2px;
-                table-layout: fixed; border-collapse: collapse }
-      x-td { border-color: #ff7f7f }
+      table { border: solid #00f; border-width: 8px 2px;
+              table-layout: fixed; border-collapse: collapse }
+      td { border-color: #ff7f7f }
       @page { size: 28px 26px; margin: 1px;
               border: 1px solid rgba(0, 255, 0, 0.5); }
     '''})
@@ -994,9 +985,9 @@ def test_tables_14(assert_pixels):
         ____________________________
     ''', tables_source % {'extra_css': '''
       @page { size: 28px 26px }
-      x-table { margin: 0; padding: 0; border: 0 }
-      x-col { background: red }
-      x-td { padding: 0; width: 1px; height: 8px }
+      table { margin: 0; padding: 0; border: 0 }
+      col { background: red }
+      td { padding: 0; width: 1px; height: 8px }
     '''})
 
 
@@ -1046,8 +1037,7 @@ def test_tables_15(assert_pixels):
         @page { size: 22px 18px; margin: 1px }
         td { border: 1px red solid; width: 4px; height: 3px; }
       </style>
-      <table style="table-layout: fixed; margin-left: 1px;
-                    border-collapse: collapse">
+      <table style="table-layout: fixed; margin-left: 1px; border-collapse: collapse">
         <tr><td></td><td></td><td></td></tr>
         <tr><td></td><td></td><td></td></tr>
         <tr><td colspan="3"></td></tr>
@@ -1107,7 +1097,6 @@ def test_tables_17(assert_pixels):
       ________________
     ''', '''
       <style>
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page { size: 16px 10px; margin: 1px }
         table { border-collapse: collapse; font-size: 2px; line-height: 1;
                 color: blue; font-family: weasyprint }
@@ -1143,7 +1132,6 @@ def test_tables_18(assert_pixels):
       ____________
     ''', '''
       <style>
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page { size: 12px 11px; margin: 1px }
         table { border: 1px red solid; border-spacing: 1px; font-size: 2px;
                 line-height: 1; color: blue; font-family: weasyprint }
@@ -1166,7 +1154,6 @@ def test_tables_19(assert_pixels):
       RR
     ''', '''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 2px 4px }
         table { border-collapse: collapse; color: red }
         body { font-size: 2px; font-family: weasyprint; line-height: 1 }
@@ -1222,7 +1209,6 @@ def test_tables_21(assert_pixels):
       _________________________
     ''', '''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 25px 11px; margin: 1px }
         table { border-collapse: collapse; font: 2px weasyprint; width: 100% }
         td { background: blue; padding: 1px; border: 1px solid red }
@@ -1255,7 +1241,6 @@ def test_tables_22(assert_pixels):
       _________________________
     ''', '''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 25px 9px; margin: 1px }
         table { border-collapse: collapse; font: 2px/1 weasyprint }
         td { background: blue; border: 1px solid red }
@@ -1289,7 +1274,6 @@ def test_tables_23(assert_pixels):
       _________________________
     ''', '''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 25px 9px; margin: 1px }
         table { border-collapse: collapse; font: 2px/1 weasyprint }
         td { background: blue; border: 1px solid red }
@@ -1315,7 +1299,6 @@ def test_tables_24(assert_pixels):
         __________________
     ''', '''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 18px 10px }
         table {
           border-collapse: collapse;
@@ -1364,7 +1347,6 @@ def test_tables_24_rtl(assert_pixels):
         __________________
     ''', '''
       <style>
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page { size: 18px 10px }
         table {
           border-collapse: collapse;
@@ -1420,7 +1402,6 @@ def test_running_elements_table_border_collapse(assert_pixels):
       _______________
     ''', '''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page {
           margin: 0 0 10px 0;
           size: 15px;
@@ -1460,7 +1441,6 @@ def test_running_elements_table_border_collapse_empty(assert_pixels):
       __________
     ''', '''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page {
           margin: 0 0 5px 0;
           size: 10px;
@@ -1503,7 +1483,6 @@ def test_running_elements_table_border_collapse_border_style(assert_pixels):
       _______________
     ''', '''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page {
           margin: 0 0 10px 0;
           size: 15px;
@@ -1548,7 +1527,6 @@ def test_running_elements_table_border_collapse_span(assert_pixels):
       _______________
     ''', '''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page {
           margin: 0 0 10px 0;
           size: 15px;
@@ -1593,7 +1571,6 @@ def test_running_elements_table_border_collapse_margin(assert_pixels):
       _______________
     ''', '''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page {
           margin: 0 0 10px 0;
           size: 15px;

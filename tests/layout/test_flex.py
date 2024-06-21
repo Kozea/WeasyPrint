@@ -481,7 +481,6 @@ def test_flex_align_content(align, height, y1, y2):
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/811
     page, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         article {
           align-content: %s;
           display: flex;
@@ -583,7 +582,6 @@ def test_flex_break_inside_avoid():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/2183
     page1, page2= render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 6px 4px }
         html { font-family: weasyprint; font-size: 2px }
       </style>

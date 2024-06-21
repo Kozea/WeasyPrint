@@ -57,7 +57,6 @@ def test_grid_rows():
 def test_grid_template_fr():
     page, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         article {
           display: grid;
           font-family: weasyprint;
@@ -89,7 +88,6 @@ def test_grid_template_fr():
 def test_grid_template_areas():
     page, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         article {
           display: grid;
           font-family: weasyprint;
@@ -121,7 +119,6 @@ def test_grid_template_areas():
 def test_grid_template_areas_grid_area():
     page, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         article {
           display: grid;
           font-family: weasyprint;
@@ -153,7 +150,6 @@ def test_grid_template_areas_grid_area():
 def test_grid_template_areas_empty_row():
     page, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         article {
           display: grid;
           font-family: weasyprint;
@@ -185,7 +181,6 @@ def test_grid_template_areas_empty_row():
 def test_grid_template_areas_multiple_rows():
     page, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         article {
           display: grid;
           font-family: weasyprint;
@@ -219,7 +214,6 @@ def test_grid_template_areas_multiple_rows():
 def test_grid_template_areas_multiple_columns():
     page, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         article {
           display: grid;
           font-family: weasyprint;
@@ -253,7 +247,6 @@ def test_grid_template_areas_multiple_columns():
 def test_grid_template_areas_overlap():
     page, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         article {
           display: grid;
           font-family: weasyprint;
@@ -284,7 +277,6 @@ def test_grid_template_areas_overlap():
 def test_grid_template_areas_span_overflow():
     page, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         article {
           display: grid;
           font-family: weasyprint;
@@ -318,7 +310,6 @@ def test_grid_template_areas_span_overflow():
 def test_grid_template_areas_extra_span():
     page, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         article {
           display: grid;
           font-family: weasyprint;
@@ -357,7 +348,6 @@ def test_grid_template_areas_extra_span():
 def test_grid_template_areas_extra_span_dense():
     page, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         article {
           display: grid;
           font-family: weasyprint;
@@ -398,7 +388,6 @@ def test_grid_template_areas_extra_span_dense():
 def test_grid_area_multiple_values():
     page, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         article {
           display: grid;
           font-family: weasyprint;
@@ -433,7 +422,6 @@ def test_grid_area_multiple_values():
 def test_grid_template_repeat_fr():
     page, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         article {
           display: grid;
           font-family: weasyprint;
@@ -476,7 +464,6 @@ def test_grid_template_repeat_fr():
 def test_grid_template_shorthand_fr():
     page, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         article {
           display: grid;
           font-family: weasyprint;
@@ -514,7 +501,6 @@ def test_grid_template_shorthand_fr():
 def test_grid_shorthand_auto_flow_rows_fr_size():
     page, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         article {
           display: grid;
           font-family: weasyprint;
@@ -547,7 +533,6 @@ def test_grid_shorthand_auto_flow_rows_fr_size():
 def test_grid_template_fr_too_large():
     page, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         article {
           display: grid;
           font-family: weasyprint;
@@ -577,7 +562,6 @@ def test_grid_template_fr_too_large():
 def test_grid_shorthand_auto_flow_columns_none_dense():
     page, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         article {
           display: grid;
           font-family: weasyprint;
@@ -610,7 +594,6 @@ def test_grid_shorthand_auto_flow_columns_none_dense():
 def test_grid_template_fr_undefined_free_space():
     page, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         article {
           display: grid;
           font-family: weasyprint;
@@ -643,7 +626,6 @@ def test_grid_template_fr_undefined_free_space():
 def test_grid_column_start():
     page, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         dl {
           display: grid;
           font-family: weasyprint;
@@ -687,7 +669,6 @@ def test_grid_column_start():
 def test_grid_column_start_blockified():
     page, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         dl {
           display: grid;
           font-family: weasyprint;
@@ -731,7 +712,6 @@ def test_grid_column_start_blockified():
 def test_grid_undefined_free_space():
     page, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         body {
           font-family: weasyprint;
           font-size: 2px;
@@ -777,7 +757,6 @@ def test_grid_undefined_free_space():
 def test_grid_padding():
     page, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         article {
           display: grid;
           font-family: weasyprint;
@@ -820,7 +799,6 @@ def test_grid_padding():
 def test_grid_border():
     page, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         article {
           display: grid;
           font-family: weasyprint;
@@ -863,7 +841,6 @@ def test_grid_border():
 def test_grid_margin():
     page, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         article {
           display: grid;
           font-family: weasyprint;
@@ -907,7 +884,6 @@ def test_grid_item_margin():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/2154
     page, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         article { display: grid }
         div { margin: auto }
       </style>
@@ -946,7 +922,6 @@ def test_grid_auto_flow_column():
 def test_grid_template_areas_extra_span_column_dense():
     page, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         article {
           display: grid;
           font-family: weasyprint;
@@ -987,4 +962,35 @@ def test_grid_template_areas_extra_span_column_dense():
         div_d.height == div_f.height == 2)
     assert div_e.height == 4
     assert article.height == 4
+    assert article.width == 12
+
+
+@assert_no_logs
+def test_grid_gap_explicit_grid_column():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/2187
+    page, = render_pages('''
+      <style>
+        article {
+          display: grid;
+          font-family: weasyprint;
+          font-size: 2px;
+          gap: 2px;
+          grid-template-columns: 1fr;
+          line-height: 1;
+          width: 12px;
+        }
+      </style>
+      <article>
+        <div>a</div>
+        <div style="grid-column: 1">b</div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div_a, div_b = article.children
+    assert div_a.position_x == div_b.position_x == 0
+    assert div_a.position_y == 0
+    assert div_b.position_y == 4
+    assert article.height == 6
     assert article.width == 12

@@ -926,7 +926,6 @@ def test_page_and_linebox_breaking():
     # Empty <span/> tests a corner case in skip_first_whitespace()
     pages = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 100px; margin: 2px; border: 1px solid }
         body { margin: 0 }
         div { font-family: weasyprint; font-size: 20px }

@@ -861,7 +861,6 @@ def test_block_in_block_with_bottom_padding():
     # Test regression: https://github.com/Kozea/WeasyPrint/issues/1476
     page_1, page_2 = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 8em 3.5em }
         body { line-height: 1; font-family: weasyprint }
         div { padding-bottom: 1em }

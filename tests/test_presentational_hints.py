@@ -69,9 +69,6 @@ def test_ph_flow():
 @assert_no_logs
 def test_ph_phrasing():
     document = HTML(string='''
-      <style>@font-face {
-        src: url(weasyprint.otf); font-family: weasyprint
-      }</style>
       <br clear=left>
       <br clear=right />
       <br clear=both />
