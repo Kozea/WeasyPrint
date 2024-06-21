@@ -797,10 +797,7 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                         break
                 first_diff = first_i + first_size - implicit_first_2
                 if first_diff > 0:
-                    for _ in range(first_diff):
-                        first_tracks.append(next(auto_tracks))
-                        first_tracks.append([])
-                    implicit_first_2 = first_i + first_size
+                    implicit_first_2 += first_diff
                 # 3. Set the item’s row-start line.
                 if first_flow == 'row':
                     x, y = second_i, first_i
@@ -912,10 +909,7 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                         break
                 first_diff = first_i + first_size - implicit_first_2
                 if first_diff > 0:
-                    for _ in range(first_diff):
-                        first_tracks.append(next(auto_tracks))
-                        first_tracks.append([])
-                    implicit_first_2 = y + height
+                    implicit_first_2 += first_diff
                 # 3. Set the item’s row-start line.
                 children_positions[child] = (x, y, width, height)
             else:
