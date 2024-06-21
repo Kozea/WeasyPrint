@@ -2,6 +2,57 @@ Changelog
 =========
 
 
+Version 62.3
+------------
+
+Released on 2024-06-21.
+
+Bug fixes:
+
+* `#2174 <https://github.com/Kozea/WeasyPrint/issues/2174>`_:
+  Fix extra width distribution for auto table layout
+* `#2175 <https://github.com/Kozea/WeasyPrint/issues/2175>`_:
+  Don’t compress PDF metadata for PDF/A-1
+* `61f8bb3 <https://github.com/Kozea/WeasyPrint/commit/61f8bb3>`_:
+  Set default PDF variant values in options before generating PDF
+* `2c4351e <https://github.com/Kozea/WeasyPrint/commit/2c4351e>`_:
+  Avoid PDF artifacts when drawing 0-width borders
+* `d9d7f62 <https://github.com/Kozea/WeasyPrint/commit/d9d7f62>`_:
+  Don’t duplicate column when container is split on multiple pages
+* `4617b94 <https://github.com/Kozea/WeasyPrint/commit/4617b94>`_:
+  Don’t set default Fontconfig values for unset properties
+* `4c81663 <https://github.com/Kozea/WeasyPrint/commit/4c81663>`_:
+  Fix layout when all footnotes are removed from the footnote area
+* `#2184 <https://github.com/Kozea/WeasyPrint/issues/2184>`_:
+  Make items overflowing grid wrap to the next row/column
+* `#2187 <https://github.com/Kozea/WeasyPrint/issues/2187>`_:
+  Don’t append useless tracks when grid elements are positioned
+
+Contributors:
+
+* Guillaume Ayoub
+
+Backers and sponsors:
+
+* Spacinov
+* Kobalt
+* Grip Angebotssoftware
+* Manuel Barkhau
+* SimonSoft
+* Menutech
+* KontextWork
+* Simon Sapin
+* René Fritz
+* TrainingSparkle
+* Healthchecks.io
+* Hammerbacher
+* Docraptor
+* Yanal-Yvez Fargialla
+* Douwe van Loenen
+* Morntag
+* Xavid
+
+
 Version 62.2
 ------------
 
