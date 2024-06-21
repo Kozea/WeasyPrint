@@ -330,6 +330,15 @@ def test_tables_1():
     # Rule 1.3
     # Also table model: https://www.w3.org/TR/CSS21/tables.html#model
     assert_tree(parse_all('''
+      <style>
+        x-table { display: table }
+        x-tr { display: table-row }
+        x-td, x-th { display: table-cell }
+        x-thead { display: table-header-group }
+        x-tfoot { display: table-footer-group }
+        x-col { display: table-column }
+        x-caption { display: table-caption }
+      </style>
       <x-table>
         <x-tr>
           <x-th>foo</x-th>
@@ -420,7 +429,7 @@ def test_tables_3():
 @assert_no_logs
 def test_tables_4():
     # Rules 2.1 then 2.3
-    assert_tree(parse_all('<x-table>foo <div></div></x-table>'), [
+    assert_tree(parse_all('<x-table style="display:table">foo <div></div></x-table>'), [
         ('x-table', 'Block', [
             ('x-table', 'Table', [
                 ('x-table', 'TableRowGroup', [
@@ -435,8 +444,8 @@ def test_tables_4():
 @assert_no_logs
 def test_tables_5():
     # Rule 2.2
-    assert_tree(parse_all('<x-thead style="display: table-header-group">'
-                          '<div></div><x-td></x-td></x-thead>'), [
+    assert_tree(parse_all('<x-thead style="display: table-header-group"><div></div>'
+                          '<x-td style="display: table-cell"></x-td></x-thead>'), [
         ('body', 'Block', [
             ('body', 'Table', [
                 ('x-thead', 'TableRowGroup', [
@@ -449,7 +458,7 @@ def test_tables_5():
 @assert_no_logs
 def test_tables_6():
     # Rule 3.2
-    assert_tree(parse_all('<span><x-tr></x-tr></span>'), [
+    assert_tree(parse_all('<span><x-tr style="display: table-row"></x-tr></span>'), [
         ('body', 'Line', [
             ('span', 'Inline', [
                 ('span', 'InlineBlock', [
@@ -485,7 +494,10 @@ def test_tables_7():
 @assert_no_logs
 def test_tables_8():
     # Rule 3.2
-    assert_tree(parse_all('<x-tr></x-tr>\t<x-tr></x-tr>'), [
+    assert_tree(parse_all(
+        '<x-tr style="display: table-row"></x-tr>\t'
+        '<x-tr style="display: table-row"></x-tr>'
+    ), [
         ('body', 'Block', [
             ('body', 'Table', [
                 ('body', 'TableRowGroup', [
@@ -495,7 +507,10 @@ def test_tables_8():
 
 @assert_no_logs
 def test_tables_9():
-    assert_tree(parse_all('<x-col></x-col>\n<x-colgroup></x-colgroup>'), [
+    assert_tree(parse_all(
+        '<x-col style="display: table-column"></x-col>\n'
+        '<x-colgroup style="display: table-column-group"></x-colgroup>'
+    ), [
         ('body', 'Block', [
             ('body', 'Table', [
                 ('body', 'TableColumnGroup', [
