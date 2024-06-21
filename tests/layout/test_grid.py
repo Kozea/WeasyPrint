@@ -988,3 +988,35 @@ def test_grid_template_areas_extra_span_column_dense():
     assert div_e.height == 4
     assert article.height == 4
     assert article.width == 12
+
+
+@assert_no_logs
+def test_grid_gap_explicit_grid_column():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/2187
+    page, = render_pages('''
+      <style>
+        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
+        article {
+          display: grid;
+          font-family: weasyprint;
+          font-size: 2px;
+          gap: 2px;
+          grid-template-columns: 1fr;
+          line-height: 1;
+          width: 12px;
+        }
+      </style>
+      <article>
+        <div>a</div>
+        <div style="grid-column: 1">b</div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div_a, div_b = article.children
+    assert div_a.position_x == div_b.position_x == 0
+    assert div_a.position_y == 0
+    assert div_b.position_y == 4
+    assert article.height == 6
+    assert article.width == 12
