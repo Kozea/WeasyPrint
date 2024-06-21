@@ -658,7 +658,6 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
     second_flow = 'row' if 'column' in flow else 'column'  # other axis
     first_tracks = rows if first_flow == 'row' else columns
     second_tracks = rows if second_flow == 'row' else columns
-    auto_tracks = auto_rows if first_flow == 'row' else auto_columns
 
     # 1.1 Position anything that’s not auto-positioned.
     children_positions = {}
