@@ -12,7 +12,6 @@ def test_shrink_to_fit_floating_point_error_1(margin_left, font_size):
     # See bugs #325 and #288, see commit fac5ee9.
     page, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 100000px 100px }
         p { float: left; margin-left: 0.%din; font-size: 0.%dem;
             font-family: weasyprint }
@@ -32,7 +31,6 @@ def test_shrink_to_fit_floating_point_error_2(font_size):
     while True:
         page, = render_pages('''
           <style>
-            @font-face { src: url(weasyprint.otf); font-family: weasyprint }
             @page { size: %d0pt %d0px }
             p { font-size: %dpt; font-family: weasyprint }
           </style>

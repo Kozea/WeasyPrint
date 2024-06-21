@@ -1097,7 +1097,6 @@ def test_tables_17(assert_pixels):
       ________________
     ''', '''
       <style>
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page { size: 16px 10px; margin: 1px }
         table { border-collapse: collapse; font-size: 2px; line-height: 1;
                 color: blue; font-family: weasyprint }
@@ -1133,7 +1132,6 @@ def test_tables_18(assert_pixels):
       ____________
     ''', '''
       <style>
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page { size: 12px 11px; margin: 1px }
         table { border: 1px red solid; border-spacing: 1px; font-size: 2px;
                 line-height: 1; color: blue; font-family: weasyprint }
@@ -1156,7 +1154,6 @@ def test_tables_19(assert_pixels):
       RR
     ''', '''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 2px 4px }
         table { border-collapse: collapse; color: red }
         body { font-size: 2px; font-family: weasyprint; line-height: 1 }
@@ -1212,7 +1209,6 @@ def test_tables_21(assert_pixels):
       _________________________
     ''', '''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 25px 11px; margin: 1px }
         table { border-collapse: collapse; font: 2px weasyprint; width: 100% }
         td { background: blue; padding: 1px; border: 1px solid red }
@@ -1245,7 +1241,6 @@ def test_tables_22(assert_pixels):
       _________________________
     ''', '''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 25px 9px; margin: 1px }
         table { border-collapse: collapse; font: 2px/1 weasyprint }
         td { background: blue; border: 1px solid red }
@@ -1279,7 +1274,6 @@ def test_tables_23(assert_pixels):
       _________________________
     ''', '''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 25px 9px; margin: 1px }
         table { border-collapse: collapse; font: 2px/1 weasyprint }
         td { background: blue; border: 1px solid red }
@@ -1305,7 +1299,6 @@ def test_tables_24(assert_pixels):
         __________________
     ''', '''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 18px 10px }
         table {
           border-collapse: collapse;
@@ -1354,7 +1347,6 @@ def test_tables_24_rtl(assert_pixels):
         __________________
     ''', '''
       <style>
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page { size: 18px 10px }
         table {
           border-collapse: collapse;
@@ -1410,7 +1402,6 @@ def test_running_elements_table_border_collapse(assert_pixels):
       _______________
     ''', '''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page {
           margin: 0 0 10px 0;
           size: 15px;
@@ -1450,7 +1441,6 @@ def test_running_elements_table_border_collapse_empty(assert_pixels):
       __________
     ''', '''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page {
           margin: 0 0 5px 0;
           size: 10px;
@@ -1493,7 +1483,6 @@ def test_running_elements_table_border_collapse_border_style(assert_pixels):
       _______________
     ''', '''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page {
           margin: 0 0 10px 0;
           size: 15px;
@@ -1538,7 +1527,6 @@ def test_running_elements_table_border_collapse_span(assert_pixels):
       _______________
     ''', '''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page {
           margin: 0 0 10px 0;
           size: 15px;
@@ -1583,7 +1571,6 @@ def test_running_elements_table_border_collapse_margin(assert_pixels):
       _______________
     ''', '''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page {
           margin: 0 0 10px 0;
           size: 15px;

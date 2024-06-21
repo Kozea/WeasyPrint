@@ -70,7 +70,6 @@ def test_line_breaking_nbsp():
     # Test regression: https://github.com/Kozea/WeasyPrint/issues/1561
     page, = render_pages('''
       <style>
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         body { font-family: weasyprint; width: 7.5em }
       </style>
       <body>a <span>b</span> c d&nbsp;<span>ef
@@ -433,7 +432,6 @@ def test_text_align_justify_no_break_between_children():
     # Test regression: https://github.com/Kozea/WeasyPrint/issues/637
     page, = render_pages('''
       <style>
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         p { text-align: justify; font-family: weasyprint; width: 7em }
       </style>
       <p>
@@ -576,9 +574,7 @@ def test_text_indent_inline():
     # Test regression: https://github.com/Kozea/WeasyPrint/issues/1000
     page, = render_pages('''
         <style>
-            @font-face { src: url(weasyprint.otf); font-family: weasyprint }
-            p { display: inline-block; text-indent: 1em;
-                font-family: weasyprint }
+            p { display: inline-block; text-indent: 1em; font-family: weasyprint }
         </style>
         <p><span>text
     ''')
@@ -622,9 +618,6 @@ def test_text_indent_multipage(indent):
 def test_hyphenate_character_1():
     page, = render_pages(
         '<html style="width: 5em; font-family: weasyprint">'
-        '<style>'
-        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
-        '</style>'
         '<body style="hyphens: auto;'
         'hyphenate-character: \'!\'" lang=fr>'
         'hyphénation')
@@ -641,9 +634,6 @@ def test_hyphenate_character_1():
 def test_hyphenate_character_2():
     page, = render_pages(
         '<html style="width: 5em; font-family: weasyprint">'
-        '<style>'
-        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
-        '</style>'
         '<body style="hyphens: auto;'
         'hyphenate-character: \'à\'" lang=fr>'
         'hyphénation')
@@ -660,9 +650,6 @@ def test_hyphenate_character_2():
 def test_hyphenate_character_3():
     page, = render_pages(
         '<html style="width: 5em; font-family: weasyprint">'
-        '<style>'
-        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
-        '</style>'
         '<body style="hyphens: auto;'
         'hyphenate-character: \'ù ù\'" lang=fr>'
         'hyphénation')
@@ -679,9 +666,6 @@ def test_hyphenate_character_3():
 def test_hyphenate_character_4():
     page, = render_pages(
         '<html style="width: 5em; font-family: weasyprint">'
-        '<style>'
-        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
-        '</style>'
         '<body style="hyphens: auto;'
         'hyphenate-character: \'\'" lang=fr>'
         'hyphénation')
@@ -697,9 +681,6 @@ def test_hyphenate_character_4():
 def test_hyphenate_character_5():
     page, = render_pages(
         '<html style="width: 5em; font-family: weasyprint">'
-        '<style>'
-        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
-        '</style>'
         '<body style="hyphens: auto;'
         'hyphenate-character: \'———\'" lang=fr>'
         'hyphénation')
@@ -719,8 +700,6 @@ def test_hyphenate_manual_1(i):
         word = f'{"hyphénation"[:i]}\xad{"hyphénation"[i:]}'
         page, = render_pages(
             '<html style="width: 5em; font-family: weasyprint">'
-            '<style>@font-face {'
-            '  src: url(weasyprint.otf); font-family: weasyprint}</style>'
             '<body style="hyphens: manual;'
             f'  hyphenate-character: \'{hyphenate_character}\'"'
             f'  lang=fr>{word}')
@@ -741,8 +720,6 @@ def test_hyphenate_manual_2(i):
         word = f'{"hy phénation"[:i]}\xad{"hy phénation"[i:]}'
         page, = render_pages(
             '<html style="width: 5em; font-family: weasyprint">'
-            '<style>@font-face {'
-            '  src: url(weasyprint.otf); font-family: weasyprint}</style>'
             '<body style="hyphens: manual;'
             f'  hyphenate-character: \'{hyphenate_character}\'"'
             f'  lang=fr>{word}')
@@ -796,9 +773,6 @@ def test_hyphenate_manual_4():
 def test_hyphenate_limit_zone_1():
     page, = render_pages(
         '<html style="width: 12em; font-family: weasyprint">'
-        '<style>'
-        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
-        '</style>'
         '<body style="hyphens: auto;'
         'hyphenate-limit-zone: 0" lang=fr>'
         'mmmmm hyphénation')
@@ -815,9 +789,6 @@ def test_hyphenate_limit_zone_1():
 def test_hyphenate_limit_zone_2():
     page, = render_pages(
         '<html style="width: 12em; font-family: weasyprint">'
-        '<style>'
-        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
-        '</style>'
         '<body style="hyphens: auto;'
         'hyphenate-limit-zone: 9em" lang=fr>'
         'mmmmm hyphénation')
@@ -834,9 +805,6 @@ def test_hyphenate_limit_zone_2():
 def test_hyphenate_limit_zone_3():
     page, = render_pages(
         '<html style="width: 12em; font-family: weasyprint">'
-        '<style>'
-        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
-        '</style>'
         '<body style="hyphens: auto;'
         'hyphenate-limit-zone: 5%" lang=fr>'
         'mmmmm hyphénation')
@@ -853,9 +821,6 @@ def test_hyphenate_limit_zone_3():
 def test_hyphenate_limit_zone_4():
     page, = render_pages(
         '<html style="width: 12em; font-family: weasyprint">'
-        '<style>'
-        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
-        '</style>'
         '<body style="hyphens: auto;'
         'hyphenate-limit-zone: 95%" lang=fr>'
         'mmmmm hyphénation')
@@ -887,9 +852,6 @@ def test_hyphenate_limit_zone_4():
 def test_hyphenate_limit_chars(css, result):
     page, = render_pages(
         '<html style="width: 1em; font-family: weasyprint">'
-        '<style>'
-        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
-        '</style>'
         '<body style="hyphens: auto;'
         f'hyphenate-limit-chars: {css}" lang=en>'
         'hyphen')
@@ -910,9 +872,6 @@ def test_hyphenate_limit_chars_punctuation(css):
     # See https://github.com/Kozea/WeasyPrint/issues/109
     page, = render_pages(
         '<html style="width: 1em; font-family: weasyprint">'
-        '<style>'
-        '  @font-face {src: url(weasyprint.otf); font-family: weasyprint}'
-        '</style>'
         '<body style="hyphens: auto;'
         f'hyphenate-limit-chars: {css}" lang=en>'
         '..lighten..')
@@ -935,7 +894,6 @@ def test_hyphenate_limit_chars_punctuation(css):
 def test_overflow_wrap(wrap, text, test, full_text):
     page, = render_pages('''
       <style>
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         body {width: 80px; overflow: hidden; font-family: weasyprint}
         span {overflow-wrap: %s}
       </style>
@@ -970,7 +928,6 @@ def test_overflow_wrap(wrap, text, test, full_text):
 def test_wrap_overflow_word_break(span_css, expected_lines):
     page, = render_pages('''
       <style>
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         body {width: 80px; overflow: hidden; font-family: weasyprint}
         span {%s}
       </style>
@@ -999,7 +956,6 @@ def test_wrap_overflow_word_break(span_css, expected_lines):
 def test_overflow_wrap_2(wrap, text, body_width, expected_width):
     page, = render_pages('''
       <style>
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         body {width: %dpx; font-family: weasyprint; font-size: 20px}
         table {overflow-wrap: %s}
       </style>
@@ -1024,7 +980,6 @@ def test_overflow_wrap_2(wrap, text, body_width, expected_width):
 def test_overflow_wrap_trailing_space(wrap, text, body_width, expected_width):
     page, = render_pages('''
       <style>
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         body {width: %dpx; font-family: weasyprint; font-size: 20px}
         table {overflow-wrap: %s}
       </style>
@@ -1234,7 +1189,6 @@ def test_white_space_12():
 def test_tab_size(value, width):
     page, = render_pages('''
       <style>
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         pre { tab-size: %s; font-family: weasyprint }
       </style>
       <pre>a&#9;a</pre>
@@ -1338,7 +1292,6 @@ def test_max_lines():
     page, = render_pages('''
       <style>
         @page {size: 10px 10px;}
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         p {
           font-family: weasyprint;
           font-size: 2px;
@@ -1367,7 +1320,6 @@ def test_continue():
     page, = render_pages('''
       <style>
         @page {size: 10px 4px;}
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         div {
           continue: discard;
           font-family: weasyprint;

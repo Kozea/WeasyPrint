@@ -24,7 +24,6 @@ def test_footnote_column_margin_top(assert_pixels):
         _________
     ''', '''
     <style>
-      @font-face {src: url(weasyprint.otf); font-family: weasyprint}
       @page {
         size: 9px 7px;
         @footnote {
@@ -64,7 +63,6 @@ def test_footnote_column_fill_auto(assert_pixels):
         RRRRRRRR_
     ''', '''
     <style>
-      @font-face {src: url(weasyprint.otf); font-family: weasyprint}
       @page {
         size: 9px 13px;
       }
@@ -102,7 +100,6 @@ def test_footnote_column_fill_auto_break_inside_avoid(assert_pixels):
         RRRRRRRR_
     ''', '''
     <style>
-      @font-face {src: url(weasyprint.otf); font-family: weasyprint}
       @page {
         size: 9px 13px;
       }
@@ -157,7 +154,6 @@ def test_footnote_column_p_after(assert_pixels):
         _________
     ''', '''
     <style>
-      @font-face {src: url(weasyprint.otf); font-family: weasyprint}
       @page {
         size: 9px 11px;
       }
@@ -210,7 +206,6 @@ def test_footnote_column_p_before(assert_pixels):
         _________
     ''', '''
     <style>
-      @font-face {src: url(weasyprint.otf); font-family: weasyprint}
       @page {
         size: 9px 13px;
       }
@@ -249,7 +244,6 @@ def test_footnote_column_3(assert_pixels):
         ______________
     ''', '''
     <style>
-      @font-face {src: url(weasyprint.otf); font-family: weasyprint}
       @page {
         size: 14px 5px;
       }
@@ -293,7 +287,6 @@ def test_footnote_column_3_p_before(assert_pixels):
         RRRRRRRR______
     ''', '''
     <style>
-      @font-face {src: url(weasyprint.otf); font-family: weasyprint}
       @page {
         size: 14px 9px;
       }
@@ -334,7 +327,6 @@ def test_footnote_column_clone_decoration(assert_pixels):
         _________
     ''', '''
     <style>
-      @font-face {src: url(weasyprint.otf); font-family: weasyprint}
       @page {
         size: 9px 7px;
       }
@@ -378,7 +370,6 @@ def test_footnote_column_max_height(assert_pixels):
         RRRRRRRR_
     ''', '''
     <style>
-      @font-face {src: url(weasyprint.otf); font-family: weasyprint}
       @page {
         size: 9px 9px;
         @footnote {
@@ -430,7 +421,6 @@ def test_footnote_column_reported_split(assert_pixels):
         RRRRRRRR_
     ''', '''
     <style>
-      @font-face {src: url(weasyprint.otf); font-family: weasyprint}
       @page {
         size: 9px 9px;
       }

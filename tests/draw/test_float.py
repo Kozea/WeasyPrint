@@ -53,7 +53,6 @@ def test_float_inline(assert_pixels):
         _______________
     ''', '''
       <style>
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page { size: 15px 5px }
         body { font-family: weasyprint; font-size: 2px; line-height: 1;
                color: lime }
@@ -76,7 +75,6 @@ def test_float_inline_rtl(assert_pixels):
         _______________
     ''', '''
       <style>
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page { size: 15px 5px }
         body { font-family: weasyprint; font-size: 2px; line-height: 1;
                color: lime }
@@ -99,7 +97,6 @@ def test_float_inline_block(assert_pixels):
         _______________
     ''', '''
       <style>
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page { size: 15px 5px }
         body { font-family: weasyprint; font-size: 2px; line-height: 1;
                color: lime }
@@ -122,7 +119,6 @@ def test_float_inline_block_rtl(assert_pixels):
         _______________
     ''', '''
       <style>
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page { size: 15px 5px }
         body { font-family: weasyprint; font-size: 2px; line-height: 1;
                color: lime }
@@ -145,7 +141,6 @@ def test_float_table(assert_pixels):
         _______________
     ''', '''
       <style>
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page { size: 15px 5px }
         body { font-family: weasyprint; font-size: 2px; line-height: 1;
                color: lime }
@@ -168,7 +163,6 @@ def test_float_table_rtl(assert_pixels):
         _______________
     ''', '''
       <style>
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page { size: 15px 5px }
         body { font-family: weasyprint; font-size: 2px; line-height: 1;
                color: lime }
@@ -191,7 +185,6 @@ def test_float_inline_table(assert_pixels):
         _______________
     ''', '''
       <style>
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page { size: 15px 5px }
         table { display: inline-table }
         body { font-family: weasyprint; font-size: 2px; line-height: 1;
@@ -215,7 +208,6 @@ def test_float_inline_table_rtl(assert_pixels):
         _______________
     ''', '''
       <style>
-        @font-face {src: url(weasyprint.otf); font-family: weasyprint}
         @page { size: 15px 5px }
         table { display: inline-table }
         body { font-family: weasyprint; font-size: 2px; line-height: 1;
@@ -322,7 +314,6 @@ def test_float_margin(assert_pixels):
         __RRRRRRRRRR____
     ''', '''
         <style>
-            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
                 size: 16px 2px;
             }
@@ -354,7 +345,6 @@ def test_float_split_1(assert_pixels):
         BBBBRRRR________
     ''', '''
         <style>
-            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
                 size: 16px 2px;
             }
@@ -383,7 +373,6 @@ def test_float_split_2(assert_pixels):
         RRRR________BBBB
     ''', '''
         <style>
-          @font-face {src: url(weasyprint.otf); font-family: weasyprint}
           @page {
             size: 16px 2px;
           }
@@ -412,7 +401,6 @@ def test_float_split_3(assert_pixels):
         RRRRRRRRRR______
     ''', '''
         <style>
-            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
                 size: 16px 2px;
             }
@@ -441,7 +429,6 @@ def test_float_split_4(assert_pixels):
         RRRRRRRRRR______
     ''', '''
         <style>
-            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
                 size: 16px 2px;
             }
@@ -470,7 +457,6 @@ def test_float_split_5(assert_pixels):
         BBBBRRRR____gggg
     ''', '''
         <style>
-            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
                 size: 16px 2px;
             }
@@ -504,7 +490,6 @@ def test_float_split_6(assert_pixels):
         BBBBRRRR________
     ''', '''
         <style>
-            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
                 size: 16px 2px;
             }
@@ -538,7 +523,6 @@ def test_float_split_7(assert_pixels):
         RRRR________gggg
     ''', '''
         <style>
-            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
                 size: 16px 2px;
             }
@@ -572,7 +556,6 @@ def test_float_split_8(assert_pixels):
         BBBB__RRRR______
     ''', '''
         <style>
-            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
                 size: 16px 2px;
             }
@@ -602,7 +585,6 @@ def test_float_split_9(assert_pixels):
         RRRR______BBBB__
     ''', '''
         <style>
-            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
                 size: 16px 2px;
             }
@@ -638,7 +620,6 @@ def test_float_split_10(assert_pixels):
         ________________
     ''', '''
         <style>
-            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
                 size: 16px 5px;
             }
@@ -679,7 +660,6 @@ def test_float_split_11(assert_pixels):
         ________________
     ''', '''
         <style>
-            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
                 margin: 1px;
                 size: 16px 7px;
@@ -714,7 +694,6 @@ def test_float_split_12(assert_pixels):
         ________________
     ''', '''
         <style>
-            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
                 size: 16px 5px;
             }
@@ -756,7 +735,6 @@ def test_float_split_13(assert_pixels):
         ________________
     ''', '''
         <style>
-            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
                 size: 16px 5px;
             }
@@ -797,7 +775,6 @@ def test_float_split_14(assert_pixels):
         ________________
     ''', '''
         <style>
-            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
                 size: 16px 5px;
             }
@@ -838,7 +815,6 @@ def test_float_split_15(assert_pixels):
         RRRRRRRRRR______
     ''', '''
         <style>
-            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
                 size: 16px 2px;
             }

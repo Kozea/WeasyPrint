@@ -12,7 +12,6 @@ def test_whitespace_inline(assert_pixels):
         ______________
     ''', '''
         <style>
-            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {size: 14px 4px}
             body {
               color: red;
@@ -34,7 +33,6 @@ def test_whitespace_nested_inline(assert_pixels):
         ______________
     ''', '''
         <style>
-            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {size: 14px 4px}
             body {
               color: red;
@@ -56,7 +54,6 @@ def test_whitespace_inline_space_between(assert_pixels):
         ______________
     ''', '''
         <style>
-            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {size: 14px 4px}
             body {
               color: red;
@@ -78,7 +75,6 @@ def test_whitespace_float_between(assert_pixels):
         ______________
     ''', '''
         <style>
-            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {size: 14px 4px}
             body {
               color: red;
@@ -101,7 +97,6 @@ def test_whitespace_in_float(assert_pixels):
         ______________
     ''', '''
         <style>
-            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {size: 14px 4px}
             body {
               color: red;
@@ -127,7 +122,6 @@ def test_whitespace_absolute_between(assert_pixels):
         ______________
     ''', '''
         <style>
-            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {size: 14px 4px}
             body {
               color: red;
@@ -155,7 +149,6 @@ def test_whitespace_in_absolute(assert_pixels):
         ______________
     ''', '''
         <style>
-            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {size: 14px 4px}
             body {
               color: red;
@@ -183,7 +176,6 @@ def test_whitespace_running_between(assert_pixels):
         ______BB______
     ''', '''
         <style>
-            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
               size: 14px 4px;
               margin: 0 0 2px;
@@ -216,7 +208,6 @@ def test_whitespace_in_running(assert_pixels):
         ______BB______
     ''', '''
         <style>
-            @font-face {src: url(weasyprint.otf); font-family: weasyprint}
             @page {
               size: 14px 4px;
               margin: 0 0 2px;

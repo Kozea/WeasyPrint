@@ -17,7 +17,6 @@ from ..testing_utils import assert_no_logs, render_pages
 def test_columns(css):
     page, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         div { %s; column-gap: 0 }
         body { margin: 0; font-family: weasyprint }
         @page { margin: 0; size: 400px 1000px }
@@ -49,7 +48,6 @@ def test_columns(css):
 def test_column_gap(value, width):
     page, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         div { columns: 3; column-gap: %s }
         body { margin: 0; font-family: weasyprint }
         @page { margin: 0; size: 300px 1000px }
@@ -77,7 +75,6 @@ def test_column_gap(value, width):
 def test_column_span_1():
     page, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         body { margin: 0; font-family: weasyprint; line-height: 1 }
         div { columns: 2; width: 10em; column-gap: 0 }
         section { column-span: all; margin: 1em 0 }
@@ -108,7 +105,6 @@ def test_column_span_1():
 def test_column_span_2():
     page, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         body { margin: 0; font-family: weasyprint; line-height: 1 }
         div { columns: 2; width: 10em; column-gap: 0 }
         section { column-span: all; margin: 1em 0 }
@@ -137,7 +133,6 @@ def test_column_span_2():
 def test_column_span_3():
     page1, page2 = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { margin: 0; size: 8px 3px }
         body { font-family: weasyprint; font-size: 1px }
         div { columns: 2; column-gap: 0; line-height: 1 }
@@ -181,7 +176,6 @@ def test_column_span_3():
 def test_column_span_4():
     page1, page2 = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { margin: 0; size: 8px 3px }
         body { font-family: weasyprint; font-size: 1px }
         div { columns: 2; column-gap: 0; line-height: 1 }
@@ -225,7 +219,6 @@ def test_column_span_4():
 def test_column_span_5():
     page1, page2 = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { margin: 0; size: 8px 3px }
         body { font-family: weasyprint; font-size: 1px }
         div { columns: 2; column-gap: 0; line-height: 1 }
@@ -267,7 +260,6 @@ def test_column_span_5():
 def test_column_span_6():
     page1, page2 = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { margin: 0; size: 8px 3px }
         body { font-family: weasyprint; font-size: 1px }
         div { columns: 2; column-gap: 0; line-height: 1 }
@@ -306,7 +298,6 @@ def test_column_span_6():
 def test_column_span_7():
     page1, page2 = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { margin: 0; size: 8px 3px }
         body { font-family: weasyprint; font-size: 1px }
         div { columns: 2; column-gap: 0; line-height: 1 }
@@ -348,7 +339,6 @@ def test_column_span_7():
 def test_column_span_8():
     page1, page2 = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { margin: 0; size: 8px 2px }
         body { font-family: weasyprint; font-size: 1px }
         div { columns: 2; column-gap: 0; line-height: 1 }
@@ -390,7 +380,6 @@ def test_column_span_8():
 def test_column_span_9():
     page1, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { margin: 0; size: 8px 3px }
         body { font-family: weasyprint; font-size: 1px }
         div { columns: 2; column-gap: 0; line-height: 1 }
@@ -421,7 +410,6 @@ def test_column_span_9():
 def test_column_span_balance():
     page, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { margin: 0; size: 8px 5px }
         body { font-family: weasyprint; font-size: 1px }
         div { columns: 2; column-gap: 0; line-height: 1; column-fill: auto }
@@ -453,7 +441,6 @@ def test_column_span_balance():
 def test_columns_multipage():
     page1, page2 = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         div { columns: 2; column-gap: 1px }
         body { margin: 0; font-family: weasyprint;
                font-size: 1px; line-height: 1px }
@@ -489,7 +476,6 @@ def test_columns_multipage():
 def test_columns_breaks():
     page1, page2 = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         div { columns: 2; column-gap: 1px }
         body { margin: 0; font-family: weasyprint;
                font-size: 1px; line-height: 1px }
@@ -521,7 +507,6 @@ def test_columns_breaks():
 def test_columns_break_after_column_1():
     page1, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         div { columns: 2; column-gap: 1px }
         body { margin: 0; font-family: weasyprint;
                font-size: 1px; line-height: 1px }
@@ -545,7 +530,6 @@ def test_columns_break_after_column_1():
 def test_columns_break_after_column_2():
     page1, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         div { columns: 2; column-gap: 1px }
         body { margin: 0; font-family: weasyprint;
                font-size: 1px; line-height: 1px }
@@ -569,7 +553,6 @@ def test_columns_break_after_column_2():
 def test_columns_break_after_avoid_column():
     page1, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         div { columns: 2; column-gap: 1px }
         body { margin: 0; font-family: weasyprint;
                font-size: 1px; line-height: 1px }
@@ -593,7 +576,6 @@ def test_columns_break_after_avoid_column():
 def test_columns_break_before_column_1():
     page1, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         div { columns: 2; column-gap: 1px }
         body { margin: 0; font-family: weasyprint;
                font-size: 1px; line-height: 1px }
@@ -617,7 +599,6 @@ def test_columns_break_before_column_1():
 def test_columns_break_before_column_2():
     page1, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         div { columns: 2; column-gap: 1px }
         body { margin: 0; font-family: weasyprint;
                font-size: 1px; line-height: 1px }
@@ -641,7 +622,6 @@ def test_columns_break_before_column_2():
 def test_columns_break_before_avoid_column():
     page1, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         div { columns: 2; column-gap: 1px }
         body { margin: 0; font-family: weasyprint;
                font-size: 1px; line-height: 1px }
@@ -665,7 +645,6 @@ def test_columns_break_before_avoid_column():
 def test_columns_break_inside_column_1():
     page1, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         div { columns: 2; column-gap: 1px }
         body { margin: 0; font-family: weasyprint;
                font-size: 1px; line-height: 1px }
@@ -689,7 +668,6 @@ def test_columns_break_inside_column_1():
 def test_columns_break_inside_column_2():
     page1, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         div { columns: 2; column-gap: 1px }
         body { margin: 0; font-family: weasyprint;
                font-size: 1px; line-height: 1px }
@@ -713,7 +691,6 @@ def test_columns_break_inside_column_2():
 def test_columns_break_inside_column_not_empty_page():
     page1, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         div { columns: 2; column-gap: 1px }
         body { margin: 0; font-family: weasyprint;
                font-size: 1px; line-height: 1px }
@@ -739,7 +716,6 @@ def test_columns_break_inside_column_not_empty_page():
 def test_columns_not_enough_content():
     page, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         div { columns: 5; column-gap: 0 }
         body { margin: 0; font-family: weasyprint; font-size: 1px }
         @page { margin: 0; size: 5px }
@@ -761,7 +737,6 @@ def test_columns_not_enough_content():
 def test_columns_higher_than_page():
     page1, page2 = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         div { columns: 5; column-gap: 0 }
         body { margin: 0; font-family: weasyprint; font-size: 2px }
         @page { margin: 0; size: 5px 1px }
@@ -795,7 +770,6 @@ def test_columns_higher_than_page():
 def test_columns_empty():
     page, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         div { columns: 3 }
         body { margin: 0; font-family: weasyprint }
         @page { margin: 0; size: 3px; font-size: 1px }
@@ -817,7 +791,6 @@ def test_columns_fixed_height(prop):
     # TODO: we should test when the height is too small
     page, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         div { columns: 4; column-gap: 0; %s: 10px }
         body { margin: 0; font-family: weasyprint; line-height: 1px }
         @page { margin: 0; size: 4px 50px; font-size: 1px }
@@ -840,7 +813,6 @@ def test_columns_fixed_height(prop):
 def test_columns_padding():
     page, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         div { columns: 4; column-gap: 0; padding: 1px }
         body { margin: 0; font-family: weasyprint; line-height: 1px }
         @page { margin: 0; size: 6px 50px; font-size: 1px }
@@ -866,7 +838,6 @@ def test_columns_padding():
 def test_columns_relative():
     page, = render_pages('''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         article { position: absolute; top: 3px }
         div { columns: 4; column-gap: 0; position: relative;
               top: 1px; left: 2px }

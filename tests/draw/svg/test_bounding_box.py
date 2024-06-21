@@ -180,7 +180,6 @@ def test_bounding_box_text(assert_pixels):
         BR
     ''', '''
       <style>
-        @font-face { src: url(weasyprint.otf); font-family: weasyprint }
         @page { size: 2px }
         svg { display: block }
       </style>
