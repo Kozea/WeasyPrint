@@ -262,6 +262,24 @@ def draw_background_image(stream, layer, image_rendering):
     repeat_x, repeat_y = layer.repeat
     image_width, image_height = layer.size
 
+    if repeat_x == 'no-repeat' and repeat_y == 'no-repeat':
+        # We don't use a pattern when we don't need to because some viewers
+        # (e.g., Preview on Mac) introduce unnecessary pixelation when vector
+        # images are used in patterns.
+        if not layer.unbounded:
+            stream.rectangle(painting_x, painting_y, painting_width,
+                             painting_height)
+            stream.clip()
+            stream.end()
+        # Put the image in a group so that masking outside the image and
+        # masking within the image don't conflict.
+        group = stream.add_group(*stream.page_rectangle)
+        group.transform(e=position_x + positioning_x,
+                         f=position_y + positioning_y)
+        layer.image.draw(group, image_width, image_height, image_rendering)
+        stream.draw_x_object(group.id)
+        return
+
     if repeat_x == 'no-repeat':
         # We want at least the whole image_width drawn on sub_surface, but we
         # want to be sure it will not be repeated on the painting_width. We
