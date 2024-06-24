@@ -16,6 +16,8 @@ from .anchors import (  # isort:skip
     add_annotations, add_forms, add_links, add_outlines, resolve_links,
     write_pdf_attachment)
 
+from .debug import (add_debug, resolve_debug)
+
 VARIANTS = {
     name: data for variants in (pdfa.VARIANTS, pdfua.VARIANTS)
     for (name, data) in variants.items()}
@@ -145,11 +147,14 @@ def generate_pdf(document, target, zoom, **options):
     # Links and anchors
     page_links_and_anchors = list(resolve_links(document.pages))
 
+    # Debug links and anchors
+    page_debug = list(resolve_debug(document.pages))
+
     annot_files = {}
     pdf_pages, page_streams = [], []
     compress = not options['uncompressed_pdf']
-    for page_number, (page, links_and_anchors) in enumerate(
-            zip(document.pages, page_links_and_anchors)):
+    for page_number, (page, links_and_anchors, debug) in enumerate(
+            zip(document.pages, page_links_and_anchors, page_debug)):
         # Draw from the top-left corner
         matrix = Matrix(scale, 0, 0, -scale, 0, page.height * scale)
 
@@ -192,6 +197,9 @@ def generate_pdf(document, target, zoom, **options):
         add_forms(
             page.forms, matrix, pdf, pdf_page, resources, stream,
             document.font_config.font_map, compress)
+        add_debug(debug[0], matrix, pdf, pdf_page, pdf_names, mark)
+        page.paint(stream, scale)
+
         page.paint(stream, scale)
 
         # Bleed
