@@ -16,7 +16,7 @@ from .anchors import (  # isort:skip
     add_annotations, add_forms, add_links, add_outlines, resolve_links,
     write_pdf_attachment)
 
-from .debug import (add_debug, resolve_debug)
+from .debug import add_debug, resolve_debug
 
 VARIANTS = {
     name: data for variants in (pdfa.VARIANTS, pdfua.VARIANTS)
