@@ -1,6 +1,7 @@
 
 import pydyf
 
+
 def add_debug(debug, matrix, pdf, page, names, mark):
     """Include anchors for each element with an ID in a given PDF page."""
     if not debug:
@@ -11,7 +12,7 @@ def add_debug(debug, matrix, pdf, page, names, mark):
 
     ids = {}
 
-    for i, (element, style, rectangle, box) in enumerate(debug): # style is usused for now?
+    for i, (element, style, rectangle, box) in enumerate(debug):
         id = element.get("id")
         if id.startswith("auto-id"):
             id = "-".join(id.split("-")[:4])
@@ -56,7 +57,6 @@ def add_debug(debug, matrix, pdf, page, names, mark):
 def resolve_debug(pages):
     '''Resolve the added debug IDs. Inspired from resolve_links.
     '''
-    debug = list()
     paged_debug = []
     for i, page in enumerate(pages):
         paged_debug.append([])

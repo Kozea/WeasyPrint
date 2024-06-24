@@ -132,7 +132,8 @@ def gather_anchors(box, anchors, links, bookmarks, forms, debug, parent_matrix=N
             debug.append((box.element, box.style, rectangle, box))
 
     for child in box.all_children():
-        gather_anchors(child, anchors, links, bookmarks, forms, debug, matrix, parent_form)
+        gather_anchors(child, anchors, links, bookmarks, forms, debug, matrix,
+                       parent_form)
 
 
 def make_page_bookmark_tree(page, skipped_levels, last_by_depth,

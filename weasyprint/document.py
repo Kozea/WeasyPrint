@@ -79,7 +79,8 @@ class Page:
         #: Appended for the debug PDF
         self.debug = []
 
-        gather_anchors(page_box, self.anchors, self.links, self.bookmarks, self.forms, self.debug)
+        gather_anchors(page_box, self.anchors, self.links, self.bookmarks, self.forms,
+                       self.debug)
         self._page_box = page_box
 
     def paint(self, stream, scale=1):
