@@ -516,7 +516,7 @@ Image Cache and Optimization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 WeasyPrint provides many options to deal with images: ``optimize_images``,
-``jpeg_quality``, ``dpi`` and ``image_cache``.
+``jpeg_quality``, ``dpi`` and ``cache``.
 
 ``optimize_images`` can enable size optimization for images. When enabled, the
 generated PDF will include smaller images with no quality penalty, but the
@@ -540,7 +540,7 @@ generated PDF.
     HTML('https://weasyprint.org/').write_pdf(
         'weasyprint.pdf', optimize_images=True, jpeg_quality=60, dpi=150)
 
-``image_cache`` gives the possibility to use a cache for images, avoiding to
+``cache`` gives the possibility to use a cache for images, avoiding to
 download, parse and optimize them each time they are used.
 
 By default, the cache is used document by document, but you can share it
@@ -552,12 +552,12 @@ time when you render a lot of documents that use the same images.
     cache = {}
     for i in range(10):
         HTML(f'https://weasyprint.org/').write_pdf(
-            f'example-{i}.pdf', image_cache=cache)
+            f'example-{i}.pdf', cache=cache)
 
 It’s also possible to cache images on disk instead of keeping them in memory.
 The ``--cache-folder`` CLI option can be used to define the folder used to
 store temporary images. You can also provide this folder path as a string for
-``image_cache``.
+``cache``.
 
 
 Logging
