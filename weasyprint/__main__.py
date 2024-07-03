@@ -165,7 +165,8 @@ def main(argv=None, stdout=None, stdin=None, HTML=HTML):  # noqa: N803
     if args.timeout is not None:
         url_fetcher = partial(default_url_fetcher, timeout=args.timeout)
 
-    options = vars(args)
+    options = {
+        key: value for key, value in vars(args).items() if key in DEFAULT_OPTIONS}
 
     # Default to logging to stderr.
     if args.debug:

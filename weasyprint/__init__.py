@@ -210,6 +210,8 @@ class HTML:
         :returns: A :class:`document.Document` object.
 
         """
+        for unknown in set(options) - set(DEFAULT_OPTIONS):
+            LOGGER.warning('Unknown rendering option: %s.', unknown)
         new_options = DEFAULT_OPTIONS.copy()
         new_options.update(options)
         options = new_options

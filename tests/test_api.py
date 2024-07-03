@@ -306,6 +306,15 @@ def test_python_render(assert_pixels_equal, tmp_path):
 
 
 @assert_no_logs
+def test_unknown_options():
+    with capture_logs() as logs:
+        pdf_bytes = FakeHTML(string='test').write_pdf(zoom=2, unknown=True)
+    assert len(logs) == 1
+    assert 'unknown' in logs[0]
+    assert pdf_bytes
+
+
+@assert_no_logs
 def test_command_line_render(tmp_path):
     css = b'''
         @page { margin: 2px; size: 8px }
