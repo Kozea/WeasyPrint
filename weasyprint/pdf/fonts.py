@@ -2,6 +2,7 @@
 
 import io
 from hashlib import md5
+from logging import WARNING
 from math import ceil
 
 import pydyf
@@ -9,7 +10,7 @@ from fontTools import subset
 from fontTools.ttLib import TTFont, TTLibError, ttFont
 from fontTools.varLib.mutator import instantiateVariableFont
 
-from ..logger import LOGGER
+from ..logger import LOGGER, capture_logs
 from ..text.constants import PANGO_STRETCH_PERCENT
 from ..text.ffi import ffi, harfbuzz, harfbuzz_subset, pango, units_to_double
 from ..text.fonts import get_hb_object_data, get_pango_font_hb_face
@@ -257,7 +258,12 @@ class Font:
         # Subset font.
         try:
             ttfont = TTFont(full_font, fontNumber=self.index)
-            subsetter.subset(ttfont)
+            with capture_logs('fontTools', level=WARNING) as logs:
+                subsetter.subset(ttfont)
+            for log in logs:
+                LOGGER.warning(
+                    'fontTools warning when subsetting "%s": %s',
+                    self.family.decode(), log)
         except TTLibError:
             LOGGER.warning('Unable to subset font with fontTools')
         else:

@@ -1,8 +1,6 @@
 """Helpers for tests."""
 
-import contextlib
 import functools
-import logging
 import sys
 from pathlib import Path
 
@@ -12,7 +10,7 @@ from weasyprint.css.counters import CounterStyle
 from weasyprint.css.targets import TargetCollector
 from weasyprint.formatting_structure import boxes, build
 from weasyprint.html import HTML5_UA_STYLESHEET
-from weasyprint.logger import LOGGER
+from weasyprint.logger import capture_logs
 from weasyprint.text.fonts import FontConfiguration
 from weasyprint.urls import path2url
 
@@ -72,35 +70,6 @@ BASE_URL = path2url(resource_path('<test>'))
 # Default stylesheet for tests.
 TEST_UA_FONT_CONFIG = FontConfiguration()
 TEST_UA_STYLESHEET = CSS(resource_path('tests_ua.css'), font_config=TEST_UA_FONT_CONFIG)
-
-class CallbackHandler(logging.Handler):
-    """A logging handler that calls a function for every message."""
-    def __init__(self, callback):
-        logging.Handler.__init__(self)
-        self.emit = callback
-
-
-@contextlib.contextmanager
-def capture_logs():
-    """Return a context manager that captures all logged messages."""
-    logger = LOGGER
-    messages = []
-
-    def emit(record):
-        if record.name == 'weasyprint.progress':
-            return
-        messages.append(f'{record.levelname.upper()}: {record.getMessage()}')
-
-    previous_handlers = logger.handlers
-    previous_level = logger.level
-    logger.handlers = []
-    logger.addHandler(CallbackHandler(emit))
-    logger.setLevel(logging.DEBUG)
-    try:
-        yield messages
-    finally:
-        logger.handlers = previous_handlers
-        logger.level = previous_level
 
 
 def assert_no_logs(function):
