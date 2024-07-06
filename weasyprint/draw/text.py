@@ -126,7 +126,7 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
 
     utf8_text = textbox.pango_layout.text.encode()
     previous_utf8_position = 0
-    stream.text_matrix(*matrix.values)
+    stream.set_text_matrix(*matrix.values)
     last_font = None
     string = ''
     x_advance = 0

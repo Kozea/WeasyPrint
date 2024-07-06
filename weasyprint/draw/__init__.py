@@ -326,7 +326,7 @@ def draw_background_image(stream, layer, image_rendering):
     with stacked(stream):
         layer.image.draw(group, image_width, image_height, image_rendering)
         pattern.draw_x_object(group.id)
-        stream.color_space('Pattern')
+        stream.set_color_space('Pattern')
         stream.set_color_special(pattern.id)
         if layer.unbounded:
             x1, y1, x2, y2 = stream.page_rectangle

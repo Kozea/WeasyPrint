@@ -539,7 +539,7 @@ class Gradient:
             alpha_stream.transform(d=scale_y)
             alpha_stream.stream = [f'/{alpha_shading.id} sh']
 
-        stream.shading(shading.id)
+        stream.paint_shading(shading.id)
 
     def layout(self, width, height):
         """Get layout information about the gradient.

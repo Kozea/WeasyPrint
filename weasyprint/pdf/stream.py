@@ -53,7 +53,7 @@ class Stream(pydyf.Stream):
         assert self._ctm_stack
 
     def transform(self, a=1, b=0, c=0, d=1, e=0, f=0):
-        super().transform(a, b, c, d, e, f)
+        super().set_matrix(a, b, c, d, e, f)
         self._ctm_stack[-1] = Matrix(a, b, c, d, e, f) @ self.ctm
 
     def begin_text(self):
