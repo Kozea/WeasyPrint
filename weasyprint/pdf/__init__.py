@@ -129,10 +129,6 @@ def generate_pdf(document, target, zoom, **options):
             srgb = properties['srgb']
 
     pdf = pydyf.PDF()
-    states = pydyf.Dictionary()
-    x_objects = pydyf.Dictionary()
-    patterns = pydyf.Dictionary()
-    shadings = pydyf.Dictionary()
     images = {}
     color_space = pydyf.Dictionary({
         'lab-d50': pydyf.Array(('/Lab', pydyf.Dictionary({
@@ -146,21 +142,11 @@ def generate_pdf(document, target, zoom, **options):
     })
     pdf.add_object(color_space)
     resources = pydyf.Dictionary({
-        'ExtGState': states,
-        'XObject': x_objects,
-        'Pattern': patterns,
-        'Shading': shadings,
-        'ColorSpace': pydyf.Dictionary({
-            'xyz': pydyf.Array(('/Lab', pydyf.Dictionary({
-                'WhitePoint': pydyf.Array((1, 1, 1))
-            }))),
-            'xyz-d50': pydyf.Array(('/Lab', pydyf.Dictionary({
-                'WhitePoint': pydyf.Array(D50)
-            }))),
-            'xyz-d65': pydyf.Array(('/Lab', pydyf.Dictionary({
-                'WhitePoint': pydyf.Array(D65)
-            }))),
-        })
+        'ExtGState': pydyf.Dictionary(),
+        'XObject': pydyf.Dictionary(),
+        'Pattern': pydyf.Dictionary(),
+        'Shading': pydyf.Dictionary(),
+        'ColorSpace': color_space.reference,
     })
     pdf.add_object(resources)
     pdf_names = []
@@ -189,8 +175,7 @@ def generate_pdf(document, target, zoom, **options):
             left / scale, top / scale,
             (right - left) / scale, (bottom - top) / scale)
         stream = Stream(
-            document.fonts, page_rectangle, states, x_objects, patterns,
-            shadings, images, mark, compress=compress)
+            document.fonts, page_rectangle, resources, images, mark, compress=compress)
         stream.transform(d=-1, f=(page.height * scale))
         pdf.add_object(stream)
         page_streams.append(stream)

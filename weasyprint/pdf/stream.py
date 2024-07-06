@@ -11,16 +11,12 @@ from .fonts import Font
 
 class Stream(pydyf.Stream):
     """PDF stream object with extra features."""
-    def __init__(self, fonts, page_rectangle, states, x_objects, patterns,
-                 shadings, images, mark, *args, **kwargs):
+    def __init__(self, fonts, page_rectangle, resources, images, mark, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.page_rectangle = page_rectangle
         self.marked = []
         self._fonts = fonts
-        self._states = states
-        self._x_objects = x_objects
-        self._patterns = patterns
-        self._shadings = shadings
+        self._resources = resources
         self._images = images
         self._mark = mark
         self._current_color = self._current_color_stroke = None
@@ -39,14 +35,8 @@ class Stream(pydyf.Stream):
             kwargs['fonts'] = self._fonts
         if 'page_rectangle' not in kwargs:
             kwargs['page_rectangle'] = self.page_rectangle
-        if 'states' not in kwargs:
-            kwargs['states'] = self._states
-        if 'x_objects' not in kwargs:
-            kwargs['x_objects'] = self._x_objects
-        if 'patterns' not in kwargs:
-            kwargs['patterns'] = self._patterns
-        if 'shadings' not in kwargs:
-            kwargs['shadings'] = self._shadings
+        if 'resources' not in kwargs:
+            kwargs['resources'] = self._resources
         if 'images' not in kwargs:
             kwargs['images'] = self._images
         if 'mark' not in kwargs:
@@ -124,8 +114,8 @@ class Stream(pydyf.Stream):
         super().set_font_size(font, size)
 
     def set_state(self, state):
-        key = f's{len(self._states)}'
-        self._states[key] = state
+        key = f's{len(self._resources['ExtGState'])}'
+        self._resources['ExtGState'][key] = state
         super().set_state(key)
 
     def set_alpha(self, alpha, stroke=False, fill=None):
@@ -136,16 +126,16 @@ class Stream(pydyf.Stream):
             key = f'A{alpha}'
             if key != self._current_alpha_stroke:
                 self._current_alpha_stroke = key
-                if key not in self._states:
-                    self._states[key] = pydyf.Dictionary({'CA': alpha})
+                if key not in self._resources['ExtGState']:
+                    self._resources['ExtGState'][key] = pydyf.Dictionary({'CA': alpha})
                 super().set_state(key)
 
         if fill:
             key = f'a{alpha}'
             if key != self._current_alpha:
                 self._current_alpha = key
-                if key not in self._states:
-                    self._states[key] = pydyf.Dictionary({'ca': alpha})
+                if key not in self._resources['ExtGState']:
+                    self._resources['ExtGState'][key] = pydyf.Dictionary({'ca': alpha})
                 super().set_state(key)
 
     def set_alpha_state(self, x, y, width, height, mode='luminosity'):
@@ -176,15 +166,12 @@ class Stream(pydyf.Stream):
         return self._fonts[key]
 
     def add_group(self, x, y, width, height):
-        states = pydyf.Dictionary()
-        x_objects = pydyf.Dictionary()
-        patterns = pydyf.Dictionary()
-        shadings = pydyf.Dictionary()
         resources = pydyf.Dictionary({
-            'ExtGState': states,
-            'XObject': x_objects,
-            'Pattern': patterns,
-            'Shading': shadings,
+            'ExtGState': pydyf.Dictionary(),
+            'XObject': pydyf.Dictionary(),
+            'Pattern': pydyf.Dictionary(),
+            'Shading': pydyf.Dictionary(),
+            'ColorSpace': self._resources['ColorSpace'],
             'Font': None,  # Will be set by _use_references
         })
         extra = pydyf.Dictionary({
@@ -199,16 +186,14 @@ class Stream(pydyf.Stream):
                 'CS': '/DeviceRGB',
             }),
         })
-        group = self.clone(
-            states=states, x_objects=x_objects, patterns=patterns, shadings=shadings,
-            extra=extra)
-        group.id = f'x{len(self._x_objects)}'
-        self._x_objects[group.id] = group
+        group = self.clone(resources=resources, extra=extra)
+        group.id = f'x{len(self._resources['XObject'])}'
+        self._resources['XObject'][group.id] = group
         return group
 
     def add_image(self, image, interpolate, ratio):
         image_name = f'i{image.id}{int(interpolate)}'
-        self._x_objects[image_name] = None  # Set by write_pdf
+        self._resources['XObject'][image_name] = None  # Set by write_pdf
         if image_name in self._images:
             # Reuse image already stored in document
             self._images[image_name]['dpi_ratios'].add(ratio)
@@ -223,15 +208,12 @@ class Stream(pydyf.Stream):
         return image_name
 
     def add_pattern(self, x, y, width, height, repeat_width, repeat_height, matrix):
-        states = pydyf.Dictionary()
-        x_objects = pydyf.Dictionary()
-        patterns = pydyf.Dictionary()
-        shadings = pydyf.Dictionary()
         resources = pydyf.Dictionary({
-            'ExtGState': states,
-            'XObject': x_objects,
-            'Pattern': patterns,
-            'Shading': shadings,
+            'ExtGState': pydyf.Dictionary(),
+            'XObject': pydyf.Dictionary(),
+            'Pattern': pydyf.Dictionary(),
+            'Shading': pydyf.Dictionary(),
+            'ColorSpace': self._resources['ColorSpace'],
             'Font': None,  # Will be set by _use_references
         })
         extra = pydyf.Dictionary({
@@ -245,11 +227,9 @@ class Stream(pydyf.Stream):
             'Matrix': pydyf.Array(matrix.values),
             'Resources': resources,
         })
-        pattern = self.clone(
-            states=states, x_objects=x_objects, patterns=patterns, shadings=shadings,
-            extra=extra)
-        pattern.id = f'p{len(self._patterns)}'
-        self._patterns[pattern.id] = pattern
+        pattern = self.clone(resources=resources, extra=extra)
+        pattern.id = f'p{len(self._resources['Pattern'])}'
+        self._resources['Pattern'][pattern.id] = pattern
         return pattern
 
     def add_shading(self, shading_type, color_space, domain, coords, extend,
@@ -263,8 +243,8 @@ class Stream(pydyf.Stream):
         })
         if extend:
             shading['Extend'] = pydyf.Array((b'true', b'true'))
-        shading.id = f's{len(self._shadings)}'
-        self._shadings[shading.id] = shading
+        shading.id = f's{len(self._resources['Shading'])}'
+        self._resources['Shading'][shading.id] = shading
         return shading
 
     def begin_marked_content(self, box, mcid=False, tag=None):
