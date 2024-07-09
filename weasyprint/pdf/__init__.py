@@ -1,5 +1,7 @@
 """PDF generation management."""
 
+from importlib.resources import files
+
 import pydyf
 
 from .. import VERSION, Attachment
@@ -116,11 +118,14 @@ def generate_pdf(document, target, zoom, **options):
 
     # Set properties according to PDF variants
     mark = False
+    srgb = options['srgb']
     variant = options['pdf_variant']
     if variant:
         variant_function, properties = VARIANTS[variant]
         if 'mark' in properties:
             mark = properties['mark']
+        if 'srgb' in properties:
+            srgb = properties['srgb']
 
     pdf = pydyf.PDF()
     states = pydyf.Dictionary()
@@ -293,6 +298,22 @@ def generate_pdf(document, target, zoom, **options):
         if 'Names' not in pdf.catalog:
             pdf.catalog['Names'] = pydyf.Dictionary()
         pdf.catalog['Names']['Dests'] = dests
+
+    if srgb:
+        # Add ICC profile.
+        profile = pydyf.Stream(
+            [(files(__package__) / 'sRGB2014.icc').read_bytes()],
+            pydyf.Dictionary({'N': 3, 'Alternate': '/DeviceRGB'}),
+            compress=compress)
+        pdf.add_object(profile)
+        pdf.catalog['OutputIntents'] = pydyf.Array([
+            pydyf.Dictionary({
+                'Type': '/OutputIntent',
+                'S': '/GTS_PDFA1',
+                'OutputConditionIdentifier': pydyf.String('sRGB IEC61966-2.1'),
+                'DestOutputProfile': profile.reference,
+            }),
+        ])
 
     # Apply PDF variants functions
     if variant:

@@ -99,6 +99,9 @@ PARSER.add_argument(
     '-p', '--presentational-hints', action='store_true',
     help='follow HTML presentational hints')
 PARSER.add_argument(
+    '--srgb', action='store_true',
+    help='include sRGB color profile')
+PARSER.add_argument(
     '--optimize-images', action='store_true',
     help='optimize size of embedded images with no quality loss')
 PARSER.add_argument(

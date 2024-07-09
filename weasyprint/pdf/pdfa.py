@@ -1,15 +1,5 @@
 """PDF/A generation."""
 
-try:
-    # Available in Python 3.9+
-    from importlib.resources import files
-except ImportError:
-    # Deprecated in Python 3.11+
-    from importlib.resources import read_binary
-else:
-    def read_binary(package, resource):
-        return (files(package) / resource).read_bytes()
-
 from functools import partial
 
 import pydyf
@@ -20,20 +10,6 @@ from .metadata import add_metadata
 def pdfa(pdf, metadata, document, page_streams, attachments, compress,
          version, variant):
     """Set metadata for PDF/A documents."""
-    # Add ICC profile.
-    profile = pydyf.Stream(
-        [read_binary(__package__, 'sRGB2014.icc')],
-        pydyf.Dictionary({'N': 3, 'Alternate': '/DeviceRGB'}),
-        compress=compress)
-    pdf.add_object(profile)
-    pdf.catalog['OutputIntents'] = pydyf.Array([
-        pydyf.Dictionary({
-            'Type': '/OutputIntent',
-            'S': '/GTS_PDFA1',
-            'OutputConditionIdentifier': pydyf.String('sRGB IEC61966-2.1'),
-            'DestOutputProfile': profile.reference,
-        }),
-    ])
 
     # Handle attachments.
     if version == 1:
@@ -95,23 +71,23 @@ def pdfa(pdf, metadata, document, page_streams, attachments, compress,
 VARIANTS = {
     'pdf/a-1b': (
         partial(pdfa, version=1, variant='B'),
-        {'version': '1.4', 'identifier': True}),
+        {'version': '1.4', 'identifier': True, 'srgb': True}),
     'pdf/a-2b': (
         partial(pdfa, version=2, variant='B'),
-        {'version': '1.7', 'identifier': True}),
+        {'version': '1.7', 'identifier': True, 'srgb': True}),
     'pdf/a-3b': (
         partial(pdfa, version=3, variant='B'),
-        {'version': '1.7', 'identifier': True}),
+        {'version': '1.7', 'identifier': True, 'srgb': True}),
     'pdf/a-4b': (
         partial(pdfa, version=4, variant='B'),
-        {'version': '2.0', 'identifier': True}),
+        {'version': '2.0', 'identifier': True, 'srgb': True}),
     'pdf/a-2u': (
         partial(pdfa, version=2, variant='U'),
-        {'version': '1.7', 'identifier': True}),
+        {'version': '1.7', 'identifier': True, 'srgb': True}),
     'pdf/a-3u': (
         partial(pdfa, version=3, variant='U'),
-        {'version': '1.7', 'identifier': True}),
+        {'version': '1.7', 'identifier': True, 'srgb': True}),
     'pdf/a-4u': (
         partial(pdfa, version=4, variant='U'),
-        {'version': '2.0', 'identifier': True}),
+        {'version': '2.0', 'identifier': True, 'srgb': True}),
 }

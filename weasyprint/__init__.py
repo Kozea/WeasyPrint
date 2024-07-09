@@ -45,6 +45,9 @@ VERSION = __version__ = '62.3'
 #:     Whether custom HTML metadata should be stored in the generated PDF.
 #: :param bool presentational_hints:
 #:     Whether HTML presentational hints are followed.
+#: :param bool srgb:
+#:     Whether sRGB color profile should be included and set as default for
+#:     device-dependant RGB colors.
 #: :param bool optimize_images:
 #:     Whether size of embedded images should be optimized, with no quality
 #:     loss.
@@ -71,6 +74,7 @@ DEFAULT_OPTIONS = {
     'uncompressed_pdf': False,
     'custom_metadata': False,
     'presentational_hints': False,
+    'srgb': False,
     'optimize_images': False,
     'jpeg_quality': None,
     'dpi': None,

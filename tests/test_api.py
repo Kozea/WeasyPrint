@@ -521,6 +521,16 @@ def test_partial_pdf_custom_metadata():
     assert b'value' in stdout
 
 
+def test_pdf_srgb():
+    stdout = _run('--srgb --uncompressed-pdf - -', b'test')
+    assert b'sRGB' in stdout
+
+
+def test_pdf_no_srgb():
+    stdout = _run('--uncompressed-pdf - -', b'test')
+    assert b'sRGB' not in stdout
+
+
 @pytest.mark.parametrize('html, fields', (
     ('<input>', ['/Tx', '/V ()']),
     ('<input value="">', ['/Tx', '/V ()']),
