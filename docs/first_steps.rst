@@ -588,12 +588,18 @@ See the documentation of the :mod:`logging` module for details.
 Security
 --------
 
+*This section has been added thanks to the very useful reports and advice from
+Raz Becker.*
+
 When used with untrusted HTML or untrusted CSS, WeasyPrint can meet security
 problems. You will need extra configuration in your Python application to avoid
 high memory use, endless renderings or local files leaks.
 
-*This section has been added thanks to the very useful reports and advice from
-Raz Becker.*
+As for any service dealing with untrusted data, you should at least follow
+basic security rules with WeasyPrint: don’t launch the service as root, launch
+it as a user with limited access to filesystem, network and memory. Using a
+container can also be a simple way to limit the possibilities given to an
+attacker in case of security breach.
 
 Long Renderings
 ~~~~~~~~~~~~~~~
