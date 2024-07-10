@@ -93,18 +93,18 @@ class Stream(pydyf.Stream):
                 self._current_color = (color.space, *channels)
 
         if color.space in ('srgb', 'hsl', 'hwb'):
-            super().set_color_rgb(*color.to('srgb').coordinates, stroke)
+            self.set_color_rgb(*color.to('srgb').coordinates, stroke)
         elif color.space in ('xyz-d65', 'oklab', 'oklch'):
             self.set_color_space('lab-d65', stroke)
             lightness, a, b = color.to('lab').coordinates
-            super().set_color_special(None, stroke, lightness, a, b)
+            self.set_color_special(None, stroke, lightness, a, b)
         elif color.space in ('xyz-d50', 'lab', 'lch'):
             self.set_color_space('lab-d50', stroke)
             lightness, a, b = color.to('lab').coordinates
-            super().set_color_special(None, stroke, lightness, a, b)
+            self.set_color_special(None, stroke, lightness, a, b)
         else:
             LOGGER.warn('Unsupported color space %s, use sRGB instead', color.space)
-            super().set_color_rgb(*channels, stroke)
+            self.set_color_rgb(*channels, stroke)
         self.set_alpha(alpha, stroke)
 
     def set_font_size(self, font, size):
