@@ -247,6 +247,13 @@ def default_url_fetcher(url, timeout=10, ssl_context=None):
         raise ValueError('Not an absolute URI: %r' % url)
 
 
+def safe_url_fetcher(url, timeout=10, ssl_context=None):
+    if url.startswith("file://"):
+        raise ValueError("Attempt to attach a local file: %r" % url)
+
+    return default_url_fetcher(url, timeout, ssl_context)
+
+
 class URLFetchingError(IOError):
     """Some error happened when fetching an URL."""
 

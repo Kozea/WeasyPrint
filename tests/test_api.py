@@ -18,7 +18,7 @@ from PIL import Image
 
 from weasyprint import CSS, HTML, __main__, default_url_fetcher
 from weasyprint.pdf.anchors import resolve_links
-from weasyprint.urls import path2url
+from weasyprint.urls import path2url, safe_url_fetcher
 
 from .draw import parse_pixels
 from .testing_utils import FakeHTML, assert_no_logs, capture_logs, resource_path
@@ -589,6 +589,22 @@ def test_reproducible():
     assert stdout1 == stdout2
 
 
+def test_safe_command_line(tmp_path):
+    html = b'<body><link rel=attachment href="file://local-file">'
+    with chdir(tmp_path):
+        (tmp_path / "safe.html").write_bytes(html)
+        safe_pdf_bytes = FakeHTML(
+            string=html,
+            base_url="dummy.html",
+            media_type="screen",
+            force_uncompressed_pdf=False,
+            url_fetcher=safe_url_fetcher,
+        ).write_pdf()
+
+        _run("safe.html out.pdf --safe")
+        assert (tmp_path / "out.pdf").read_bytes() == safe_pdf_bytes
+
+
 @assert_no_logs
 def test_unicode_filenames(assert_pixels_equal, tmp_path):
     """Test non-ASCII filenames both in Unicode or bytes form."""
@@ -1125,6 +1141,27 @@ def test_url_fetcher(assert_pixels_equal):
     FakeHTML(
         string='<link rel=stylesheet href="weasyprint-custom:é_%e9.css"><body',
         url_fetcher=fetcher_2).render()
+
+
+@pytest.mark.parametrize(
+    "html, error_logs",
+    (
+        (
+            '<link rel=attachment href="file://local-file">',
+            "ERROR: Failed to load attachment",
+        ),
+        ('<img src="file://local-file">', "ERROR: Failed to load image"),
+    ),
+)
+def test_safe_url_fetcher(html, error_logs):
+    def write_pdf(text):
+        FakeHTML(string=text, url_fetcher=safe_url_fetcher).write_png()
+
+    with capture_logs() as logs:
+        write_pdf(html)
+    assert len(logs) == 1
+    assert logs[0].startswith(error_logs)
+
 
 
 def assert_meta(html, **meta):
