@@ -190,9 +190,7 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                 else:
                     cell = new_cell
 
-                cell.remove_decoration(
-                    start=cell_skip_stack is not None,
-                    end=cell_resume_at is not None)
+                cell.remove_decoration(start=cell_skip_stack is not None, end=False)
                 if cell_resume_at:
                     if resume_at is None:
                         resume_at = {index_row: {}}
@@ -207,10 +205,16 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
 
             if resume_at and not page_is_empty:
                 if avoid_page_break(row.style['break_inside'], context):
+                    # Don’t break in row with break-inside: avoid, abort row.
                     resume_at = {index_row: {}}
                     remove_placeholders(
                         context, new_row_children, absolute_boxes, fixed_boxes)
                     break
+
+            if resume_at:
+                # Remove bottom decoration if row is split.
+                for cell in new_row_children:
+                    cell.remove_decoration(start=False, end=True)
 
             row = row.copy_with_children(new_row_children)
 

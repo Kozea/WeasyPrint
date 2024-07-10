@@ -1594,3 +1594,29 @@ def test_running_elements_table_border_collapse_margin(assert_pixels):
       <div>1</div>
       <div>2</div>
     ''')
+
+
+@assert_no_logs
+def test_tables_split_row(assert_pixels):
+    assert_pixels('''
+      KKKKKKKK
+      KRRKKRRK
+      KRRKKRRK
+      K__KK__K
+
+      K__KKRRK
+      K__KKRRK
+      KKKKKKKK
+      ________
+    ''', '''
+      <style>
+        @page { margin: 0; size: 8px 4px }
+        td { border: 1px solid black; color: red; vertical-align: top;
+             font-family: weasyprint; font-size: 2px; line-height: 1 }
+      </style>
+      <table>
+        <tr>
+          <td>a</td>
+          <td>a<br>a</td>
+        </tr>
+      </table>''')
