@@ -2146,6 +2146,39 @@ def test_table_page_breaks(html, rows, positions):
 
 
 @assert_no_logs
+def test_table_page_breaks_in_cell():
+    page1, page2 = render_pages('''
+      <style>
+        @page { size: 120px }
+        h1 { height: 30px}
+        td { line-height: 40px }
+        table { table-layout: fixed; width: 100% }
+      </style>
+      <h1>Dummy title</h1>
+      <table>
+        <tr><td>r1c1l1</td><td>r1c2l1</td></tr>
+        <tr><td>r2c1l1</td><td style="break-inside: avoid">r2c2l1<br>r2c2l2</td></tr>
+        <tr><td>r3c1l1</td><td>r3l1</td></tr>
+      </table>
+    ''')
+    html, = page1.children
+    body, = html.children
+    h1, table_wrapper = body.children
+    table, = table_wrapper.children
+    group, = table.children
+    row, = group.children
+    assert len(row.children) == 2
+
+    html, = page2.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    group, = table.children
+    row1, row2 = group.children
+    assert len(row1.children) == len(row2.children) == 2
+
+
+@assert_no_logs
 def test_table_page_breaks_complex_1():
     pages = render_pages('''
       <style>

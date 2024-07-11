@@ -204,8 +204,13 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                 new_row_children.append(cell)
 
             if resume_at and not page_is_empty:
-                if avoid_page_break(row.style['break_inside'], context):
-                    # Don’t break in row with break-inside: avoid, abort row.
+                # Avoid break when "break-inside: avoid" is set on row or any
+                # on its cells.
+                avoid_break = (
+                    avoid_page_break(row.style['break_inside'], context) or any(
+                        avoid_page_break(cell.style['break_inside'], context)
+                        for cell in row.children))
+                if avoid_break:
                     resume_at = {index_row: {}}
                     remove_placeholders(
                         context, new_row_children, absolute_boxes, fixed_boxes)
