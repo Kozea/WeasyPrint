@@ -317,7 +317,6 @@ def split_first_line(text, style, context, max_width, justification_spacing,
     first_line_text = text.encode()[:resume_index].decode()
     first_line_fits = (
         first_line_width <= max_width or
-        ' ' in first_line_text.strip() or
         can_break_text(first_line_text.strip(), style['lang']))
     if first_line_fits:
         # The first line fits but may have been cut too early by Pango
@@ -327,9 +326,10 @@ def split_first_line(text, style, context, max_width, justification_spacing,
         first_line_text = ''
         second_line_text = text
 
-    next_word = second_line_text.split(' ', 1)[0]
+    break_point = next_break_point(second_line_text, style['lang'])
+    next_word = second_line_text[:break_point].rstrip(' ')
     if next_word:
-        if space_collapse:
+        if space_collapse and second_line_text[break_point or -1] == ' ':
             # next_word might fit without a space afterwards
             # only try when space collapsing is allowed
             new_first_line_text = first_line_text + next_word
@@ -362,7 +362,7 @@ def split_first_line(text, style, context, max_width, justification_spacing,
 
     auto_hyphenation = manual_hyphenation = False
     if hyphens != 'none':
-        manual_hyphenation = soft_hyphen in first_line_text + next_word
+        manual_hyphenation = soft_hyphen in first_line_text + second_line_text
     if hyphens == 'auto' and lang:
         next_word_boundaries = get_next_word_boundaries(second_line_text, lang)
         if next_word_boundaries:
@@ -392,18 +392,11 @@ def split_first_line(text, style, context, max_width, justification_spacing,
         # hyphen and add the missing hyphen
         if first_line_text.endswith(soft_hyphen):
             # The first line has been split on a soft hyphen
-            if ' ' in first_line_text:
-                first_line_text, next_word = first_line_text.rsplit(' ', 1)
-                next_word = f' {next_word}'
-                layout.set_text(first_line_text)
-                first_line, _ = layout.get_first_line()
-                resume_index = len((f'{first_line_text} ').encode())
-            else:
-                first_line_text, next_word = '', first_line_text
+            first_line_text, second_line_text = '', first_line_text
         soft_hyphen_indexes = [
-            match.start() for match in re.finditer(soft_hyphen, next_word)]
+            match.start() for match in re.finditer(soft_hyphen, second_line_text)]
         soft_hyphen_indexes.reverse()
-        dictionary_iterations = [next_word[:i+1] for i in soft_hyphen_indexes]
+        dictionary_iterations = [second_line_text[:i+1] for i in soft_hyphen_indexes]
         start_word = 0
     elif auto_hyphenation:
         dictionary_key = (lang, left, right, total)
@@ -513,12 +506,18 @@ def get_log_attrs(text, lang):
     return bytestring, log_attrs
 
 
-def can_break_text(text, lang):
+def next_break_point(text, lang):
     if not text or len(text) < 2:
         return None
     bytestring, log_attrs = get_log_attrs(text, lang)
     length = len(text) + 1
-    return any(attr.is_line_break for attr in log_attrs[1:length - 1])
+    for i, attr in enumerate(log_attrs[1:length - 1]):
+        if attr.is_line_break:
+            return i
+
+
+def can_break_text(text, lang):
+    return next_break_point(text, lang) is not None
 
 
 def get_next_word_boundaries(text, lang):

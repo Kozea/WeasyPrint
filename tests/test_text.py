@@ -994,6 +994,22 @@ def test_overflow_wrap_trailing_space(wrap, text, body_width, expected_width):
     assert td.width == expected_width
 
 
+def test_overflow_wrap_no_break_on_space():
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1817
+    page, = render_pages('''
+      <style>
+        body {width: 11px; font-family: weasyprint; font-size: 2px;
+              overflow-wrap: anywhere}
+      </style>.jpg, .png''')
+    html, = page.children
+    body, = html.children
+    line1, line2 = body.children
+    text1, = line1.children
+    assert text1.text == '.jpg,'
+    text2, = line2.children
+    assert text2.text == '.png'
+
+
 def test_line_break_before_trailing_space():
     # Test regression: https://github.com/Kozea/WeasyPrint/issues/1852
     page, = render_pages('''
