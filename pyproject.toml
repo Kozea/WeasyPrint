@@ -43,7 +43,7 @@ classifiers = [
 dynamic = ['version']
 
 [project.urls]
-Homepage = 'https://www.courtbouillon.org/weasyprint'
+Homepage = 'https://weasyprint.org/'
 Documentation = 'https://doc.courtbouillon.org/weasyprint/'
 Code = 'https://github.com/Kozea/WeasyPrint'
 Issues = 'https://github.com/Kozea/WeasyPrint/issues'
