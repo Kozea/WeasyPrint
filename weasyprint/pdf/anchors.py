@@ -3,7 +3,6 @@
 import collections
 import io
 import mimetypes
-from base64 import b64encode
 from hashlib import md5
 from os.path import basename
 from urllib.parse import unquote, urlsplit
@@ -117,6 +116,7 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map,
         for element, style, rectangle in inputs
     ]
     radio_groups = collections.defaultdict(dict)
+    forms = collections.defaultdict(dict)
     for i, (form, element, style, rectangle) in enumerate(inputs_with_forms):
         rectangle = (
             *matrix.transform_point(*rectangle[:2]),
@@ -136,9 +136,10 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map,
                     radio_groups[form][input_name] = group = pydyf.Dictionary({
                         'FT': '/Btn',
                         'Ff': (1 << (15 - 1)) + (1 << (16 - 1)),  # NoToggle & Radio
-                        'T': pydyf.String(f'{len(radio_groups)}'),
+                        'T': pydyf.String(input_name),
                         'V': '/Off',
                         'Kids': pydyf.Array(),
+                        'Opt': pydyf.Array(),
                     })
                     pdf.add_object(group)
                     pdf.catalog['AcroForm']['Fields'].append(group.reference)
@@ -172,7 +173,7 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map,
 
             checked = 'checked' in element.attrib
             field_stream.set_font_size('ZaDb', font_size)
-            key = b64encode(input_value.encode(), altchars=b"+-").decode()
+            key = len(group['Kids']) if input_type == 'radio' else 'on'
             field = pydyf.Dictionary({
                 'Type': '/Annot',
                 'Subtype': '/Widget',
@@ -192,6 +193,7 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map,
                 if checked:
                     group['V'] = f'/{key}'
                 group['Kids'].append(field.reference)
+                group['Opt'].append(pydyf.String(input_value))
             else:
                 field['T'] = pydyf.String(input_name)
                 field['V'] = field['AS']
@@ -233,6 +235,31 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map,
                     selected_values[-1] if selected_values
                     else pydyf.String(''))
             pdf.add_object(field)
+        elif input_type == 'submit' or element.tag == 'button':
+            flags = 1 << (3 - 1)  # HTML form format
+            if form.attrib.get('method', '').lower() != 'post':
+                flags += 1 << (4 - 1)  # GET method
+            field = pydyf.Dictionary({
+                'Type': '/Annot',
+                'Subtype': '/Widget',
+                'Rect': pydyf.Array(rectangle),
+                'FT': '/Btn',
+                'T': pydyf.String(input_name),
+                'F': 1 << (3 - 1),  # Print flag
+                'Ff': 1 << (17 - 1),  # Push-button
+                'P': page.reference,
+                'DA': pydyf.String(b' '.join(field_stream.stream)),
+                'V': pydyf.String(form.attrib.get('value', '')),
+                'A': pydyf.Dictionary({
+                    'Type': '/Action',
+                    'S': '/SubmitForm',
+                    'F': pydyf.String(form.attrib.get('action')),
+                    'Fields': pydyf.Array((
+                        field.reference for field in forms[form].values())),
+                    'Flags': flags,
+                }),
+            })
+            pdf.add_object(field)
         else:
             # Text, password, textarea, files, and unknown
             font_description = get_font_description(style)
@@ -270,6 +297,9 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map,
 
         page['Annots'].append(field.reference)
         pdf.catalog['AcroForm']['Fields'].append(field.reference)
+        if input_name not in forms:
+            forms[form][input_name] = field
+
 
 
 def add_annotations(links, matrix, document, pdf, page, annot_files, compress):
