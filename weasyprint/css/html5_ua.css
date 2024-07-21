@@ -161,14 +161,14 @@ input[type="reset"]:not([value])::before {
 }
 input[type="checkbox"],
 input[type="radio"] {
-  height: 1.2em;
-  width: 1.2em;
+  height: 0.7em;
+  vertical-align: -0.2em;
+  width: 0.7em;
 }
 input[type="checkbox"][checked]:before,
 input[type="radio"][checked]:before {
   background: black;
   content: "";
-  display: block;
   height: 100%;
 }
 input[type="radio"][checked]:before {
@@ -179,7 +179,6 @@ input[type="hidden"] {
 }
 input[type="radio"] {
   border-radius: 50%;
-  margin: 0.2em 0.2em 0 0.4em;
 }
 input[value]::before {
   content: attr(value);
@@ -191,6 +190,7 @@ input[value=""]::before,
 input[type="checkbox"]::before,
 input[type="radio"]::before {
   content: "";
+  display: block;
 }
 select {
   background: lightgrey;

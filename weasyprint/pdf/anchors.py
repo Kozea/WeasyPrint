@@ -143,6 +143,7 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map,
                     pdf.add_object(group)
                     pdf.catalog['AcroForm']['Fields'].append(group.reference)
                 group = radio_groups[form][input_name]
+                font_size = style['font_size'] * 0.5
                 character = 'l'  # Disc character in Dingbats
             else:
                 character = '4'  # Check character in Dingbats
