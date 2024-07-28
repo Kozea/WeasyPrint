@@ -45,8 +45,8 @@ class StreamingGzipFile(GzipFile):
         GzipFile.close(self)
         self.fileobj_to_close.close()
 
-    # Inform html5lib to not rely on these:
-    seek = tell = None
+    def seekable(self):
+        return False
 
 
 def iri_to_uri(url):

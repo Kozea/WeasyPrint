@@ -13,7 +13,7 @@ WeasyPrint |version| depends on:
 * Pango_ ≥ 1.44.0
 * pydyf_ ≥ 0.10.0
 * CFFI_ ≥ 0.6
-* html5lib_ ≥ 1.1
+* tinyhtml5_ ≥ 2.0.0b1
 * tinycss2_ ≥ 1.3.0
 * cssselect2_ ≥ 0.1
 * Pyphen_ ≥ 0.9.1
@@ -23,8 +23,8 @@ WeasyPrint |version| depends on:
 .. _Python: https://www.python.org/
 .. _Pango: https://pango.gnome.org/
 .. _CFFI: https://cffi.readthedocs.io/
-.. _html5lib: https://html5lib.readthedocs.io/
 .. _pydyf: https://doc.courtbouillon.org/pydyf/
+.. _tinyhtml5: https://doc.courtbouillon.org/tinyhtml5/
 .. _tinycss2: https://doc.courtbouillon.org/tinycss2/
 .. _cssselect2: https://doc.courtbouillon.org/cssselect2/
 .. _Pyphen: https://pyphen.org/
