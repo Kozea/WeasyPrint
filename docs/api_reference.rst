@@ -154,8 +154,9 @@ can contain hyperlinks, bookmarks and attachments.
 Hyperlinks will be clickable in PDF viewers that support them. They can
 be either internal, to another part of the same document (eg.
 ``<a href="#pdf">``) or external, to an URL. External links are resolved
-to absolute URLs: ``<a href="/samples/">`` on the WeasyPrint website would always
-point to https://weasyprint.org/samples/ in PDF files.
+to absolute URLs: ``<a href="/blog-articles/">`` on the CourtBouillon website
+would always point to https://www.courtbouillon.org/blog-articles/ in PDF
+files.
 
 PDF bookmarks are also called outlines and are generally shown in a
 sidebar. Clicking on an entry scrolls the matching part of the document
