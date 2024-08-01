@@ -597,3 +597,21 @@ def test_flex_break_inside_avoid():
     body, = html.children
     article, = body.children
     div, = article.children
+
+
+@assert_no_logs
+def test_flex_absolute_content():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/996
+    page, = render_pages('''
+      <section style="display: flex; position: relative">
+         <h1 style="position: absolute; top: 0; right: 0">TEST</h1>
+         <p>Hello world!</p>
+      </section>''')
+    html, = page.children
+    body, = html.children
+    section, = body.children
+    h1, p = section.children
+    assert h1.position_x != 0
+    assert h1.position_y == 0
+    assert p.position_x == 0
+    assert p.position_y == 0
