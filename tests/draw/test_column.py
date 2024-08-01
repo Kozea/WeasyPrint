@@ -80,3 +80,25 @@ def test_column_rule_span(assert_pixels):
         <img src=blue.jpg>
         <img src=blue.jpg>
       </div>''')
+
+
+@assert_no_logs
+def test_column_rule_normal(assert_pixels):
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/2217
+    assert_pixels('''
+        a___a
+        a___a
+        _____
+    ''', '''
+      <style>
+        img { display: inline-block; width: 1px; height: 1px }
+        div { columns: 2; column-gap: normal }
+        body { margin: 0; font-size: 3px; line-height: 0 }
+        @page { margin: 0; size: 5px 3px }
+      </style>
+      <div>
+        <img src=blue.jpg>
+        <img src=blue.jpg>
+        <img src=blue.jpg>
+        <img src=blue.jpg>
+      </div>''')

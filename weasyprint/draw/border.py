@@ -51,7 +51,10 @@ def draw_border(stream, box):
             with stacked(stream):
                 rule_width = box.style['column_rule_width']
                 rule_style = box.style['column_rule_style']
-                gap = percentage(box.style['column_gap'], box.width)
+                if box.style['column_gap'] == 'normal':
+                    gap = box.style['font_size']  # normal equals 1em
+                else:
+                    gap = percentage(box.style['column_gap'], box.width)
                 position_x = (
                     child.position_x - (box.style['column_rule_width'] + gap) / 2)
                 border_box = (position_x, child.position_y, rule_width, child.height)
