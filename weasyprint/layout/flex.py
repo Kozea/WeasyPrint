@@ -855,7 +855,8 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
 
     # TODO: don't use block_box_layout, see TODOs in Step 14 and
     # build.flex_children.
-    box = box.copy_with_children([child for child in children if not child.is_flex_item])
+    box = box.copy_with_children([child for child in children
+                                  if not child.is_flex_item])
     child_skip_stack = skip_stack
     for line in flex_lines:
         for i, child in line:
