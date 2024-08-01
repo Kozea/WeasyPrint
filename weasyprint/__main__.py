@@ -178,7 +178,14 @@ def main(argv=None, stdout=None, stdin=None, HTML=HTML):  # noqa: N803
         LOGGER.setLevel(logging.INFO)
     if not args.quiet:
         handler = logging.StreamHandler()
-        handler.setFormatter(logging.Formatter('%(levelname)s: %(message)s'))
+        if args.debug:
+            # Add extra information when debug logging
+            handler.setFormatter(
+                logging.Formatter(
+                    '%(levelname)s: %(filename)s:%(lineno)d '
+                    '(%(funcName)s): %(message)s'))
+        else:
+            handler.setFormatter(logging.Formatter('%(levelname)s: %(message)s'))
         LOGGER.addHandler(handler)
 
     html = HTML(
