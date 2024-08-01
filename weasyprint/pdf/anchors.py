@@ -3,7 +3,6 @@
 import collections
 import io
 import mimetypes
-from base64 import b64encode
 from hashlib import md5
 from os.path import basename
 from urllib.parse import unquote, urlsplit
@@ -117,6 +116,7 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map,
         for element, style, rectangle in inputs
     ]
     radio_groups = collections.defaultdict(dict)
+    forms = collections.defaultdict(dict)
     for i, (form, element, style, rectangle) in enumerate(inputs_with_forms):
         rectangle = (
             *matrix.transform_point(*rectangle[:2]),
@@ -130,24 +130,35 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map,
         font_size = style['font_size'] * 0.75
         field_stream = pydyf.Stream(compress=compress)
         field_stream.set_color_rgb(*style['color'][:3])
+        field = pydyf.Dictionary({
+            'Type': '/Annot',
+            'Subtype': '/Widget',
+            'Rect': pydyf.Array(rectangle),
+            'P': page.reference,
+            'F': 1 << (3 - 1),  # Print flag
+            'T': pydyf.String(input_name),
+        })
+
         if input_type in ('radio', 'checkbox'):
             if input_type == 'radio':
                 if input_name not in radio_groups[form]:
                     radio_groups[form][input_name] = group = pydyf.Dictionary({
                         'FT': '/Btn',
                         'Ff': (1 << (15 - 1)) + (1 << (16 - 1)),  # NoToggle & Radio
-                        'T': pydyf.String(f'{len(radio_groups)}'),
+                        'T': pydyf.String(input_name),
                         'V': '/Off',
                         'Kids': pydyf.Array(),
+                        'Opt': pydyf.Array(),
                     })
                     pdf.add_object(group)
                     pdf.catalog['AcroForm']['Fields'].append(group.reference)
                 group = radio_groups[form][input_name]
+                font_size = style['font_size'] * 0.5
                 character = 'l'  # Disc character in Dingbats
             else:
                 character = '4'  # Check character in Dingbats
 
-            # Create stream when input is checked
+            # Create stream when input is checked.
             width = rectangle[2] - rectangle[0]
             height = rectangle[1] - rectangle[3]
             checked_stream = pydyf.Stream(extra={
@@ -160,7 +171,7 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map,
             checked_stream.begin_text()
             checked_stream.set_color_rgb(*style['color'][:3])
             checked_stream.set_font_size('ZaDb', font_size)
-            # Center (let’s assume that Dingbat’s characters have a 0.75em size)
+            # Center (assuming that Dingbat’s characters have a 0.75em size).
             x = (width - font_size * 0.75) / 2
             y = (height - font_size * 0.75) / 2
             checked_stream.move_text_to(x, y)
@@ -169,33 +180,28 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map,
             checked_stream.pop_state()
             pdf.add_object(checked_stream)
 
-            checked = 'checked' in element.attrib
             field_stream.set_font_size('ZaDb', font_size)
-            key = b64encode(input_value.encode(), altchars=b"+-").decode()
-            field = pydyf.Dictionary({
-                'Type': '/Annot',
-                'Subtype': '/Widget',
-                'Rect': pydyf.Array(rectangle),
-                'FT': '/Btn',
-                'F': 1 << (3 - 1),  # Print flag
-                'P': page.reference,
-                'AS': f'/{key}' if checked else '/Off',
-                'AP': pydyf.Dictionary({'N': pydyf.Dictionary({
-                    key: checked_stream.reference})}),
-                'MK': pydyf.Dictionary({'CA': pydyf.String(character)}),
-                'DA': pydyf.String(b' '.join(field_stream.stream)),
-            })
+
+            checked = 'checked' in element.attrib
+            key = len(group['Kids']) if input_type == 'radio' else 'on'
+            appearance = pydyf.Dictionary({key: checked_stream.reference})
+            field['FT'] = '/Btn'
+            field['DA'] = pydyf.String(b' '.join(field_stream.stream))
+            field['AS'] = f'/{key}' if checked else '/Off'
+            field['AP'] = pydyf.Dictionary({'N': appearance})
+            field['MK'] = pydyf.Dictionary({'CA': pydyf.String(character)})
             pdf.add_object(field)
             if input_type == 'radio':
                 field['Parent'] = group.reference
                 if checked:
                     group['V'] = f'/{key}'
                 group['Kids'].append(field.reference)
+                group['Opt'].append(pydyf.String(input_value))
             else:
                 field['T'] = pydyf.String(input_name)
                 field['V'] = field['AS']
+
         elif element.tag == 'select':
-            # Select fields
             font_description = get_font_description(style)
             font = pango.pango_font_map_load_font(
                 font_map, context, font_description)
@@ -212,17 +218,9 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map,
                 if 'selected' in option.attrib:
                     selected_values.append(value)
 
-            field = pydyf.Dictionary({
-                'DA': pydyf.String(b' '.join(field_stream.stream)),
-                'F': 1 << (3 - 1),  # Print flag
-                'FT': '/Ch',
-                'Opt': pydyf.Array(options),
-                'P': page.reference,
-                'Rect': pydyf.Array(rectangle),
-                'Subtype': '/Widget',
-                'T': pydyf.String(input_name),
-                'Type': '/Annot',
-            })
+            field['FT'] = '/Ch'
+            field['DA'] = pydyf.String(b' '.join(field_stream.stream))
+            field['Opt'] = pydyf.Array(options)
             if 'multiple' in element.attrib:
                 field['Ff'] = 1 << (22 - 1)
                 field['V'] = pydyf.Array(selected_values)
@@ -232,8 +230,27 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map,
                     selected_values[-1] if selected_values
                     else pydyf.String(''))
             pdf.add_object(field)
+
+        elif input_type == 'submit' or element.tag == 'button':
+            flags = 1 << (3 - 1)  # HTML form format
+            if form.attrib.get('method', '').lower() != 'post':
+                flags += 1 << (4 - 1)  # GET method
+            fields = pydyf.Array((field.reference for field in forms[form].values()))
+            field['FT'] = '/Btn'
+            field['DA'] = pydyf.String(b' '.join(field_stream.stream))
+            field['V'] = pydyf.String(form.attrib.get('value', ''))
+            field['Ff'] = 1 << (17 - 1)  # Push-button
+            field['A'] = pydyf.Dictionary({
+                'Type': '/Action',
+                'S': '/SubmitForm',
+                'F': pydyf.String(form.attrib.get('action')),
+                'Fields': fields,
+                'Flags': flags,
+            })
+            pdf.add_object(field)
+
         else:
-            # Text, password, textarea, files, and unknown
+            # Text, password, textarea, files, and other unknown fields.
             font_description = get_font_description(style)
             font = pango.pango_font_map_load_font(
                 font_map, context, font_description)
@@ -241,34 +258,25 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map,
             font.used_in_forms = True
 
             field_stream.set_font_size(font.hash, font_size)
-            value = (
-                element.text if element.tag == 'textarea'
-                else element.attrib.get('value', ''))
-            field = pydyf.Dictionary({
-                'Type': '/Annot',
-                'Subtype': '/Widget',
-                'Rect': pydyf.Array(rectangle),
-                'FT': '/Tx',
-                'F': 1 << (3 - 1),  # Print flag
-                'P': page.reference,
-                'T': pydyf.String(input_name),
-                'V': pydyf.String(value or ''),
-                'DA': pydyf.String(b' '.join(field_stream.stream)),
-            })
+            field['FT'] = '/Tx'
+            field['DA'] = pydyf.String(b' '.join(field_stream.stream))
+            field['V'] = pydyf.String(element.attrib.get('value', ''))
             if element.tag == 'textarea':
                 field['Ff'] = 1 << (13 - 1)
+                field['V'] = pydyf.String(element.text or '')
             elif input_type == 'password':
                 field['Ff'] = 1 << (14 - 1)
             elif input_type == 'file':
                 field['Ff'] = 1 << (21 - 1)
-
-            maxlength = element.get('maxlength')
-            if maxlength and maxlength.isdigit():
-                field['MaxLen'] = element.get('maxlength')
+            if (max_length := element.get('maxlength', '')).isdigit():
+                field['MaxLen'] = max_length
             pdf.add_object(field)
 
         page['Annots'].append(field.reference)
         pdf.catalog['AcroForm']['Fields'].append(field.reference)
+        if input_name not in forms:
+            forms[form][input_name] = field
+
 
 
 def add_annotations(links, matrix, document, pdf, page, annot_files, compress):

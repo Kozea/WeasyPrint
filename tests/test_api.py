@@ -538,10 +538,10 @@ def test_pdf_no_srgb():
     ('<input type="radio">',
      ['/Btn', '/V /Off', '/AS /Off', '/Ff 49152']),
     ('<input checked type="radio" name="foo" value="value">',
-     ['/Btn', '/T (1)', '/V /dmFsdWU=', '/AS /dmFsdWU=']),
+     ['/Btn', '/T (foo)', '/V /0', '/AS /0']),
     ('<form><input type="radio" name="foo" value="v0"></form>'
      '<form><input checked type="radio" name="foo" value="v1"></form>',
-     ['/Btn', '/AS /djE=', '/V /djE=', '/AS /Off', '/V /Off']),
+     ['/Btn', '/AS /0', '/V /0', '/AS /Off', '/V /Off']),
     ('<textarea></textarea>', ['/Tx', '/V ()']),
     ('<select><option value="a">A</option></select>', ['/Ch', '/Opt']),
     ('<select>'

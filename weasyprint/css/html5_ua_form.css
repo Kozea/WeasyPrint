@@ -3,3 +3,13 @@
 button, input, select, textarea {
   appearance: auto;
 }
+
+select option,
+select:not([multiple])::before,
+input:not([type="submit"])::before {
+  visibility: hidden;
+}
+
+textarea {
+  color: transparent;
+}
