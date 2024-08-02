@@ -5,6 +5,7 @@ from math import inf, log10
 
 from ..css.properties import Dimension
 from ..formatting_structure import boxes
+from .absolute import AbsolutePlaceholder, absolute_layout
 from .percent import resolve_one_percentage, resolve_percentages
 from .preferred import max_content_width, min_content_width
 from .table import find_in_flow_baseline
@@ -20,6 +21,10 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
 
     context.create_block_formatting_context()
     resume_at = None
+
+    if box.style['position'] == 'relative':
+        # New containing block, use a new absolute list
+        absolute_boxes = []
 
     # Step 1 is done in formatting_structure.boxes
     # Step 2
@@ -111,8 +116,19 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
     else:
         skip_stack = None
     child_skip_stack = skip_stack
-    for child in children:
+    for index, child in enumerate(children):
         if not child.is_flex_item:
+            # Absolute child layout: create placeholder.
+            if child.is_absolutely_positioned():
+                child.position_x = box.content_box_x()
+                child.position_y = box.content_box_y()
+                new_child = placeholder = AbsolutePlaceholder(child)
+                placeholder.index = index
+                children[index] = placeholder
+                if child.style['position'] == 'absolute':
+                    absolute_boxes.append(placeholder)
+                else:
+                    fixed_boxes.append(placeholder)
             continue
 
         # See https://www.w3.org/TR/css-flexbox-1/#min-size-auto
@@ -839,8 +855,8 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
 
     # TODO: don't use block_box_layout, see TODOs in Step 14 and
     # build.flex_children.
-    box = box.copy()
-    box.children = []
+    box = box.copy_with_children(
+        [child for child in children if not child.is_flex_item])
     child_skip_stack = skip_stack
     for line in flex_lines:
         for i, child in line:
@@ -875,6 +891,13 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
             child_skip_stack = None
         if resume_at:
             break
+
+    if box.style['position'] == 'relative':
+        # New containing block, resolve the layout of the absolute descendants
+        for absolute_box in absolute_boxes:
+            absolute_layout(
+                context, absolute_box, box, fixed_boxes, bottom_space,
+                skip_stack=None)
 
     # Set box height
     # TODO: this is probably useless because of step #15
