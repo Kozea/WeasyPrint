@@ -71,7 +71,7 @@ def max_content_width(context, box, outer=True):
     if box.is_table_wrapper:
         return table_and_columns_preferred_widths(context, box, outer)[1]
     elif isinstance(box, boxes.TableCellBox):
-        return table_cell_max_content_width(context, box, outer)
+        return table_cell_min_max_content_width(context, box, outer)[1]
     elif isinstance(box, (
             boxes.BlockContainerBox, boxes.TableColumnBox, boxes.FlexBox)):
         return block_max_content_width(context, box, outer)
@@ -265,22 +265,18 @@ def table_cell_min_content_width(context, box, outer):
     return children_min_width
 
 
-def table_cell_max_content_width(context, box, outer):
-    """Return the max-content width for a ``TableCellBox``."""
-    return max(
-        table_cell_min_content_width(context, box, outer),
-        block_max_content_width(context, box, outer))
+def table_cell_min_max_content_width(context, box, outer=True):
+    """Return the min- and max-content width for a ``TableCellBox``."""
+    # This is much faster than calling min and max separately.
+    min_width = table_cell_min_content_width(context, box, outer)
+    max_width = max(min_width, block_max_content_width(context, box, outer))
+    return min_width, max_width
 
 
-def inline_line_widths(context, box, outer, is_line_start, minimum,
-                       skip_stack=None, first_line=False):
-    if isinstance(box, boxes.LineBox):
-        if box.style['text_indent'].unit == '%':
-            # TODO: this is wrong, text-indent percentages should be resolved
-            # before calling this function.
-            text_indent = 0
-        else:
-            text_indent = box.style['text_indent'].value
+def inline_line_widths(context, box, outer, is_line_start, minimum, skip_stack=None,
+                       first_line=False):
+    if isinstance(box, boxes.LineBox) and box.style['text_indent'].unit != '%':
+        text_indent = box.style['text_indent'].value
     else:
         text_indent = 0
 
@@ -459,37 +455,31 @@ def table_and_columns_preferred_widths(context, box, outer=True):
     colspan_cells = []
 
     # Define the intermediate content widths
-    min_content_widths = [0 for i in range(grid_width)]
-    max_content_widths = [0 for i in range(grid_width)]
-    intrinsic_percentages = [0 for i in range(grid_width)]
+    min_content_widths = [0] * grid_width
+    max_content_widths = [0] * grid_width
+    intrinsic_percentages = [0] * grid_width
 
     # Intermediate content widths for span 1
     for i in range(grid_width):
         for groups in (column_groups, columns):
-            if groups[i]:
+            if group := groups[i]:
                 min_content_widths[i] = max(
-                    min_content_widths[i],
-                    min_content_width(context, groups[i]))
+                    min_content_widths[i], min_content_width(context, group))
                 max_content_widths[i] = max(
-                    max_content_widths[i],
-                    max_content_width(context, groups[i]))
+                    max_content_widths[i], max_content_width(context, group))
                 intrinsic_percentages[i] = max(
-                    intrinsic_percentages[i],
-                    _percentage_contribution(groups[i]))
+                    intrinsic_percentages[i], _percentage_contribution(group))
         for cell in zipped_grid[i]:
-            if cell:
-                if cell.colspan == 1:
-                    min_content_widths[i] = max(
-                        min_content_widths[i],
-                        min_content_width(context, cell))
-                    max_content_widths[i] = max(
-                        max_content_widths[i],
-                        max_content_width(context, cell))
-                    intrinsic_percentages[i] = max(
-                        intrinsic_percentages[i],
-                        _percentage_contribution(cell))
-                else:
-                    colspan_cells.append(cell)
+            if not cell:
+                continue
+            if cell.colspan == 1:
+                min_width, max_width = table_cell_min_max_content_width(context, cell)
+                min_content_widths[i] = max(min_content_widths[i], min_width)
+                max_content_widths[i] = max(max_content_widths[i], max_width)
+                intrinsic_percentages[i] = max(
+                    intrinsic_percentages[i], _percentage_contribution(cell))
+            else:
+                colspan_cells.append(cell)
 
     # Intermediate content widths for span > 1 is wrong in the 4.1 section, as
     # explained in its third issue. Min- and max-content widths are handled by
@@ -501,7 +491,7 @@ def table_and_columns_preferred_widths(context, box, outer=True):
         percentage_contributions = []
         for i in range(grid_width):
             percentage_contribution = intrinsic_percentages[i]
-            for j, cell in enumerate(zipped_grid[i]):
+            for j in range(len(zipped_grid[i])):
                 indexes = [k for k in range(i + 1) if grid[j][k]]
                 if not indexes:
                     continue
@@ -520,8 +510,7 @@ def table_and_columns_preferred_widths(context, box, outer=True):
                         baseline_percentage)
                     other_columns_contributions = [
                         max_content_widths[j]
-                        for j in range(
-                            origin, origin + origin_cell.colspan)
+                        for j in range(origin, origin + origin_cell.colspan)
                         if intrinsic_percentages[j] == 0]
                     other_columns_contributions_sum = sum(
                         other_columns_contributions)
