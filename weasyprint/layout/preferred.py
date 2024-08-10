@@ -9,6 +9,7 @@ Baron's unofficial draft (https://dbaron.org/css/intrinsic/).
 """
 
 import sys
+from functools import cache
 from math import inf
 
 from ..formatting_structure import boxes
@@ -453,6 +454,7 @@ def table_and_columns_preferred_widths(context, box, outer=True):
         break
 
     colspan_cells = []
+    colspans = set()
 
     # Define the intermediate content widths
     min_content_widths = [0] * grid_width
@@ -480,6 +482,7 @@ def table_and_columns_preferred_widths(context, box, outer=True):
                     intrinsic_percentages[i], _percentage_contribution(cell))
             else:
                 colspan_cells.append(cell)
+                colspans.add(cell.colspan - 1)
 
     # Intermediate content widths for span > 1 is wrong in the 4.1 section, as
     # explained in its third issue. Min- and max-content widths are handled by
@@ -487,45 +490,49 @@ def table_and_columns_preferred_widths(context, box, outer=True):
     # widths to columns that have originating cells.
 
     # Intermediate intrinsic percentage widths for span > 1
-    for span in range(1, grid_width):
+    rows_origins = []
+    for y, row in enumerate(grid):
+        origin = None
+        rows_origins.append(row_origins := [])
+        for x, cell in enumerate(row):
+            if cell:
+                origin = x
+            row_origins.append(origin)
+
+    @cache
+    def get_percentage_contribution(origin_cell, origin, max_content_width):
+        # Cached for big colspan values, see #1155.
+        cell_slice = slice(origin, origin + origin_cell.colspan)
+        baseline_percentage = sum(intrinsic_percentages[cell_slice])
+        cell_percentage_contribution = _percentage_contribution(origin_cell)
+        diff = max(0, cell_percentage_contribution - baseline_percentage)
+        other_columns_contributions = [
+            max_content_widths[j]
+            for j in range(origin, origin + origin_cell.colspan)
+            if intrinsic_percentages[j] == 0]
+        other_columns_contributions_sum = sum(other_columns_contributions)
+        if other_columns_contributions_sum == 0:
+            ratio = 1 / (len(other_columns_contributions) or 1)
+        else:
+            ratio = max_content_width / other_columns_contributions_sum
+        return diff * ratio
+
+    for span in sorted(colspans):
         percentage_contributions = []
         for i in range(grid_width):
-            percentage_contribution = intrinsic_percentages[i]
-            for j in range(len(zipped_grid[i])):
-                indexes = [k for k in range(i + 1) if grid[j][k]]
-                if not indexes:
+            if percentage_contribution := intrinsic_percentages[i]:
+                percentage_contributions.append(percentage_contribution)
+                continue
+            for row, row_origins in zip(grid, rows_origins):
+                if (origin := row_origins[i]) is None:
                     continue
-                origin = max(indexes)
-                origin_cell = grid[j][origin]
+                origin_cell = row[origin]
                 if origin_cell.colspan - 1 != span:
                     continue
-                cell_slice = slice(origin, origin + origin_cell.colspan)
-                baseline_percentage = sum(intrinsic_percentages[cell_slice])
-
-                # Cell contribution to intrinsic percentage width
-                if intrinsic_percentages[i] == 0:
-                    diff = max(
-                        0,
-                        _percentage_contribution(origin_cell) -
-                        baseline_percentage)
-                    other_columns_contributions = [
-                        max_content_widths[j]
-                        for j in range(origin, origin + origin_cell.colspan)
-                        if intrinsic_percentages[j] == 0]
-                    other_columns_contributions_sum = sum(
-                        other_columns_contributions)
-                    if other_columns_contributions_sum == 0:
-                        if other_columns_contributions:
-                            ratio = 1 / len(other_columns_contributions)
-                        else:
-                            ratio = 1
-                    else:
-                        ratio = (
-                            max_content_widths[i] /
-                            other_columns_contributions_sum)
-                    percentage_contribution = max(
-                        percentage_contribution,
-                        diff * ratio)
+                cell_percentage_contribution = get_percentage_contribution(
+                    origin_cell, origin, max_content_widths[i])
+                percentage_contribution = max(
+                    percentage_contribution, cell_percentage_contribution)
 
             percentage_contributions.append(percentage_contribution)
 
