@@ -518,6 +518,11 @@ def test_list_style_types(style_type, values):
     assert li_4.children[0].children[0].children[0].text == values[3]
 
 
+def test_list_style_type_empty_string():
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1883
+    render_pages('<ul><li style="list-style-type: \'\'">')
+
+
 def test_counter_set():
     page, = render_pages('''
       <style>

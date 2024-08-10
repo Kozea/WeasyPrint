@@ -345,11 +345,10 @@ def marker_to_box(element, state, parent_style, style_for, get_image_from_uri,
             counter_value = counter_values.get('list-item', [0])[-1]
             counter_type = style['list_style_type']
             # TODO: rtl numbered list has the dot on the left
-            marker_text = counter_style.render_marker(
-                counter_type, counter_value)
-            box = boxes.TextBox.anonymous_from(box, marker_text)
-            box.style['white_space'] = 'pre-wrap'
-            children.append(box)
+            if marker_text := counter_style.render_marker(counter_type, counter_value):
+                box = boxes.TextBox.anonymous_from(box, marker_text)
+                box.style['white_space'] = 'pre-wrap'
+                children.append(box)
 
     if not children:
         return
