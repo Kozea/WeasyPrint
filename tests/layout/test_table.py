@@ -1965,6 +1965,38 @@ def test_table_vertical_align(assert_pixels):
 
 
 @assert_no_logs
+def test_table_vertical_align_float():
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/2216
+    page, = render_pages('''
+      <style>
+        @page { size: 100px }
+        td { width: 50px; height: 100px }
+        div { width: 25px; height: 20px }
+      </style>
+      <table>
+        <tr>
+          <td style="vertical-align: middle"><div style="float: left"></div></td>
+          <td style="vertical-align: bottom"><div style="float: right"></div></td>
+        </tr>
+      </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    wrapper, = body.children
+    table, = wrapper.children
+    table, = wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, td_2 = row.children
+    div, = td_1.children
+    assert div.position_x == 0
+    assert div.position_y == 40  # (100 - 20) / 2
+    div, = td_2.children
+    assert div.position_x == 75
+    assert div.position_y == 80  # 100 - 20
+
+
+@assert_no_logs
 def test_table_wrapper():
     page, = render_pages('''
       <style>

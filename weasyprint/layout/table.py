@@ -289,7 +289,10 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                             cell.computed_height - cell.content_height)
                     if vertical_align_shift > 0:
                         for child in cell.children:
-                            child.translate(dy=vertical_align_shift)
+                            child_shift = child.margin_height()
+                            if cell.vertical_align == 'middle':
+                                child_shift /= 2
+                            child.translate(dy=vertical_align_shift - child_shift)
 
             next_position_y = row.position_y + row.height
             if resume_at is None:
