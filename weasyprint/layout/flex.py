@@ -266,9 +266,10 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
             # vertical Japanese (vertical writing mode) flex item.)
             #
             # TODO: we *can* have infinite main size (only for
-            # flex-direction: column), but we don't support vertical
-            # writing mode (or writing-mode in general) yet, so this
-            # isn't relevant.
+            # flex-direction: column - see
+            # https://www.w3.org/TR/css-flexbox-1/#pagination), but we
+            # don't support vertical writing mode (or writing-mode in
+            # general) yet, so this isn't relevant.
             pass
         else:
             # Step 3.E (9.2.3.E Otherwise, size the item into the
@@ -292,8 +293,6 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
                         new_child = child.copy_with_children(child.children)
                     else:
                         new_child = child.copy()
-                    # FIXME: Should we set the style here instead,
-                    # since used values get clobbered?
                     new_child.width = inf
                     new_child = block.block_level_layout(
                         context, new_child, -inf, child_skip_stack, parent_box,
@@ -310,8 +309,6 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
                         new_child = child.copy_with_children(child.children)
                     else:
                         new_child = child.copy()
-                    # FIXME: Should we set the style here instead,
-                    # since used values get clobbered?
                     new_child.width = 0
                     new_child = block.block_level_layout(
                         context, new_child, -inf, child_skip_stack, parent_box,
@@ -321,7 +318,10 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
                              box, child, child.flex_base_size)
             else:
                 assert child.style[axis].unit == 'px'
-                # TODO: should we add padding, borders and margins?
+                # FIXME: To be consistent with the above we may wish
+                # to add padding, border, and margins here (but it's
+                # not done consistently above either, and may not be
+                # correct)
                 child.flex_base_size = child.style[axis].value
                 LOGGER.debug("%r 9.2.3.E child %r definite flex_base_size %r",
                              box, child, child.flex_base_size)
@@ -430,7 +430,6 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
     # Step 6 (9.3.6 Resolve the flexible lengths of all the flex items
     # to find their used main size.)  See
     # https://www.w3.org/TR/css-flexbox-1/#resolve-flexible-lengths
-    # FIXME: verify if this is really the *inner* main size (box model?)
     available_main_space = getattr(box, axis)
     LOGGER.debug("%r 9.7.1 inner main size %s %r", box, axis,
                  available_main_space)
@@ -462,11 +461,14 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
                 child.flex_factor = child.style['flex_grow']
             else:
                 child.flex_factor = child.style['flex_shrink']
+            LOGGER.debug("%r child %r flex_factor %s %r flex_base_size %r",
+                         box, child, flex_factor_type, child.flex_factor,
+                         child.flex_base_size)
             if (child.flex_factor == 0 or
-                    (flex_factor_type == 'grow' and
-                        child.flex_base_size > child.hypothetical_main_size) or
-                    (flex_factor_type == 'shrink' and
-                        child.flex_base_size < child.hypothetical_main_size)):
+                (flex_factor_type == 'grow' and
+                 child.flex_base_size > child.hypothetical_main_size) or
+                (flex_factor_type == 'shrink' and
+                 child.flex_base_size < child.hypothetical_main_size)):
                 LOGGER.debug("%r Freeze child %r to hypothetical_main_size %r",
                              box, child, child.hypothetical_main_size)
                 child.target_main_size = child.hypothetical_main_size
@@ -663,7 +665,8 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
             block.block_level_width(child_copy, parent_box)
             # FIXME: We set the style here above, otherwise used main
             # size will get clobbered by resolve_percentages()
-            # somewhere down the line.  Is this the right approach?
+            # somewhere down the line, particularly if the child is
+            # itself a flex container.  Is this the right approach?
             child_copy.style[axis] = Dimension(getattr(child, axis), 'px')
             new_child, _, _, adjoining_margins, _, _ = (
                 block.block_level_layout_switch(
