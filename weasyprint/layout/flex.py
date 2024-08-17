@@ -845,26 +845,24 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
                     (child.margin_top, child.margin_bottom)
                     if cross == 'height'
                     else (child.margin_left, child.margin_right))
-                if child.style[cross] == 'auto':
-                    if 'auto' not in cross_margins:
-                        cross_size = line.cross_size
-                        if cross == 'height':
-                            cross_size -= (
-                                child.margin_top + child.margin_bottom +
-                                child.padding_top + child.padding_bottom +
-                                child.border_top_width +
-                                child.border_bottom_width)
-                        else:
-                            cross_size -= (
-                                child.margin_left + child.margin_right +
-                                child.padding_left + child.padding_right +
-                                child.border_left_width +
-                                child.border_right_width)
-                        # FIXME: incorrect!
-                        setattr(child, cross, cross_size)
-                        LOGGER.debug("%r set child %r cross %r cross_size %r",
-                                     box, child, cross, cross_size)
-                        # TODO: redo layout?
+                if 'auto' not in cross_margins:
+                    cross_size = line.cross_size
+                    if cross == 'height':
+                        cross_size -= (
+                            child.margin_top + child.margin_bottom +
+                            child.padding_top + child.padding_bottom +
+                            child.border_top_width +
+                            child.border_bottom_width)
+                    else:
+                        cross_size -= (
+                            child.margin_left + child.margin_right +
+                            child.padding_left + child.padding_right +
+                            child.border_left_width +
+                            child.border_right_width)
+                    setattr(child, cross, cross_size)
+                    LOGGER.debug("%r 9.4.11 line %d child %r cross %r auto => %r",
+                                 box, lindex, child, cross, cross_size)
+                    # TODO: redo layout?
             # else: Cross size has been set by step 7
 
     # Step 12 - 9.5 Main-Axis Alignment
