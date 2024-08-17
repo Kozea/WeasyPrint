@@ -430,6 +430,10 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
     # Step 6 (9.3.6 Resolve the flexible lengths of all the flex items
     # to find their used main size.)  See
     # https://www.w3.org/TR/css-flexbox-1/#resolve-flexible-lengths
+    # FIXME: verify if this is really the *inner* main size (box model?)
+    available_main_space = getattr(box, axis)
+    LOGGER.debug("%r 9.7.1 inner main size %s %r", box, axis,
+                 available_main_space)
     for line in flex_lines:
         # Step 6 - 9.7.1 Determine the used flex factor. Sum the outer
         # hypothetical main sizes of all items on the line. If the sum
