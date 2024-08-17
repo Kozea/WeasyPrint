@@ -102,7 +102,11 @@ class Box:
         self.children = []
 
     def __repr__(self):
-        return f'<{type(self).__name__} {self.element_tag}>'
+        element_id = self.element.get("id")
+        if element_id is not None:
+            return f'<{type(self).__name__} {self.element_tag} #{element_id}>'
+        else:
+            return f'<{type(self).__name__} {self.element_tag}>'
 
     @classmethod
     def anonymous_from(cls, parent, *args, **kwargs):
