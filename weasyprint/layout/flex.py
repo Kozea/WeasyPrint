@@ -636,10 +636,10 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
                     child.target_main_size -
                     child.padding_top - child.padding_bottom -
                     child.border_top_width - child.border_top_width)
-                if child.margin_left != 'auto':
-                    child.height -= child.margin_left
-                if child.margin_right != 'auto':
-                    child.height -= child.margin_right
+                if child.margin_top != 'auto':
+                    child.height -= child.margin_top
+                if child.margin_bottom != 'auto':
+                    child.height -= child.margin_bottom
             LOGGER.debug("%r 9.7.5 child %r used main size %s %r",
                          box, child, axis, getattr(child, axis))
 
