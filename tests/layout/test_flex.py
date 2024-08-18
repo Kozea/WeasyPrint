@@ -677,3 +677,52 @@ def test_flex_column_height2():
     assert section.height == (a1.height + a2.height
                               + a1.margin_top + a1.margin_bottom
                               + a2.margin_top + a2.margin_bottom)
+
+
+def test_flex_column_width():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/1171
+    page, = render_pages("""
+    <style>
+      #paper {
+          width: 500px;
+          height: 400px;
+          display: flex;
+          flex-direction: column;
+      }
+      #content {
+          width: 100%;
+
+          display: flex;
+          flex-direction: column;
+          flex: auto;
+          justify-content: space-between;
+      }
+      #header {
+          width: 100%;
+          height: 50px;
+      }
+    </style>
+    <div id="paper">
+      <div id="header" style="background-color:lightblue">Header part,
+          should be full width, 50px height</div>
+
+      <div id="content">
+        <div style="background-color:orange" class="toppart">
+          Middle part, should be 100% width, blank space should follow
+          thanks to justify-items: between.
+        </div>
+        <div class="bottompart" style="background-color:yellow">
+          Bottom part. Should be 100% width, blank space before.
+        </div>
+      </div>
+    </div>
+    """)
+    html, = page.children
+    body, = html.children
+    paper, = body.children
+    header, content = paper.children
+    toppart, bottompart = content.children
+    assert header.width == paper.width
+    assert content.width == paper.width
+    assert toppart.width == paper.width
+    assert bottompart.position_y > toppart.position_y + toppart.height

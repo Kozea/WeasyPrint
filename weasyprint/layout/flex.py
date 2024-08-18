@@ -163,7 +163,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
             main_flex_direction = axis
         else:
             main_flex_direction = None
-        resolve_percentages(child, containing_block, main_flex_direction)
+        resolve_percentages(child, parent_box, main_flex_direction)
         child.position_x = parent_box.content_box_x()
         child.position_y = parent_box.content_box_y()
         if child.min_width == 'auto':
@@ -649,9 +649,13 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
     # TODO: Handle breaks
     new_flex_lines = []
     child_skip_stack = skip_stack
+    # 9.4.7 Determine the hypothetical cross size of each item
+    # by performing layout with the used main size and the
+    # available space, treating auto as fit-content.
     for line in flex_lines:
         new_flex_line = FlexLine()
         for index, child in line:
+            # TODO: this *should* do the right thing for auto?
             # TODO: Find another way than calling block_level_layout_switch to
             # get baseline and child.height
             if child.margin_top == 'auto':
@@ -682,8 +686,10 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
                 # to the child bottom margin.
                 child.margin_bottom += block.collapse_margin(adjoining_margins)
             else:
-                child.width = min_content_width(context, child, outer=False)
-            LOGGER.debug("%r 9.4 child %r cross size %s %r",
+                # FIXME: we had min_content_width here but I have no
+                # idea under what circumstance that would be correct
+                child.width = new_child.width
+            LOGGER.debug("%r 9.4.7 child %r cross size %s %r",
                          box, child, cross, getattr(child, cross))
 
             new_flex_line.append((index, child))
@@ -694,7 +700,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
         if new_flex_line:
             new_flex_lines.append(new_flex_line)
     flex_lines = new_flex_lines
-    LOGGER.debug("%r 9.4 new_flex_lines", box)
+    LOGGER.debug("%r 9.4.8 new_flex_lines", box)
     LOGGER.debug("   %r", flex_lines)
 
     # Step 8 (9.4. Cross Size Determination)
@@ -793,14 +799,14 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
         align_content = ('stretch',)
     if 'stretch' in align_content:
         definite_cross_size = None
-        if cross == 'height' and box.style['height'] != 'auto':
-            definite_cross_size = box.style['height'].value
+        if cross == 'height' and box.height != 'auto':
+            definite_cross_size = box.height
         elif cross == 'width':
             if isinstance(box, boxes.FlexBox):
-                if box.style['width'] == 'auto':
+                if box.width == 'auto':
                     definite_cross_size = available_cross_space
                 else:
-                    definite_cross_size = box.style['width'].value
+                    definite_cross_size = box.width
         LOGGER.debug("%r 9.4.9 definite_cross_size %r",
                      box, definite_cross_size)
         if definite_cross_size is not None:
@@ -844,6 +850,8 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
     align_items = box.style['align_items']
     if 'normal' in align_items:
         align_items = ('stretch',)
+    LOGGER.debug("%r 9.4.11 align-items %r align_items %r",
+                 box, box.style['align_items'], align_items)
     for lindex, line in enumerate(flex_lines):
         for index, child in line:
             align_self = child.style['align_self']
@@ -1071,6 +1079,8 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
                     align_self = ('stretch',)
                 elif 'auto' in align_self:
                     align_self = align_items
+                LOGGER.debug("%r 9.6.14 child %r align_self %r",
+                             box, child, align_self)
                 position = 'position_y' if cross == 'height' else 'position_x'
                 setattr(child, position, position_cross)
                 LOGGER.debug("%r 9.6.14 line %d child %r %s %r",
@@ -1098,6 +1108,8 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
                         # Handle vertical text
                         pass
                 elif 'stretch' in align_self:
+                    LOGGER.debug("%r 9.6.14 child %r style[%s] %r",
+                                 box, child, cross, child.style[cross])
                     if child.style[cross] == 'auto':
                         if cross == 'height':
                             margins = child.margin_top + child.margin_bottom
@@ -1212,7 +1224,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
                     resume_at = {resume_index + index: None}
                 else:
                     LOGGER.debug("%r final layout line %d child %r (%r %r %r %r)",
-                                 box, lindex, new_child,
+                                 box, lindex, child,
                                  new_child.position_x, new_child.position_y,
                                  new_child.width, new_child.height)
                     page_is_empty = False
