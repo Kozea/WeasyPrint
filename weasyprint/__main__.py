@@ -8,7 +8,7 @@ from functools import partial
 
 import pydyf
 
-from . import DEFAULT_OPTIONS, HTML, LOGGER, __version__
+from . import DEFAULT_OPTIONS, HTML, XML, LOGGER, __version__
 from .pdf import VARIANTS
 from .text.ffi import pango
 from .urls import default_url_fetcher
@@ -128,6 +128,8 @@ PARSER.add_argument(
 PARSER.add_argument(
     '-q', '--quiet', action='store_true', help='hide logging messages')
 PARSER.add_argument(
+    '-x', '--xml', action='store_true', help='treat input as XML')
+PARSER.add_argument(
     '--version', action='version',
     version=f'WeasyPrint version {__version__}',
     help='print WeasyPrint’s version number and exit')
@@ -187,6 +189,8 @@ def main(argv=None, stdout=None, stdin=None, HTML=HTML):  # noqa: N803
         else:
             handler.setFormatter(logging.Formatter('%(levelname)s: %(message)s'))
         LOGGER.addHandler(handler)
+    if args.xml:
+        HTML = XML
 
     html = HTML(
         source, base_url=args.base_url, encoding=args.encoding,

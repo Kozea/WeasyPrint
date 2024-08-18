@@ -1,5 +1,6 @@
 """Document generation management."""
 
+import itertools
 import functools
 import io
 from hashlib import md5
@@ -226,7 +227,8 @@ class Document:
             cache = {}
         elif not isinstance(cache, (dict, DiskCache)):
             cache = DiskCache(cache)
-        for css in options['stylesheets'] or []:
+        for css in itertools.chain(getattr(html, "stylesheet_urls", []),
+                                   options['stylesheets'] or []):
             if not hasattr(css, 'matcher'):
                 css = CSS(
                     guess=css, media_type=html.media_type,

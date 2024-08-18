@@ -6,6 +6,8 @@ importing sub-modules.
 """
 
 import contextlib
+import re
+import xml.etree.ElementTree as ET
 from datetime import datetime
 from os.path import getctime, getmtime
 from pathlib import Path
@@ -84,7 +86,7 @@ DEFAULT_OPTIONS = {
 }
 
 __all__ = [
-    'HTML', 'CSS', 'DEFAULT_OPTIONS', 'Attachment', 'Document', 'Page',
+    'HTML', 'XML', 'CSS', 'DEFAULT_OPTIONS', 'Attachment', 'Document', 'Page',
     'default_url_fetcher', 'VERSION', '__version__']
 
 
@@ -264,6 +266,97 @@ class HTML:
         return (
             self.render(font_config, counter_style, **options)
             .write_pdf(target, zoom, finisher, **options))
+
+
+PROCESSING_INSTRUCTION = re.compile(
+    r"""
+<\?\s*xml-stylesheet
+  (?:\s+type\s*=\s*["']text/css["'])?
+  \s+href\s*=\s*(?:"([^"]*)"|'([^'])*')
+  (?:\s+type\s*=\s*["']text/css["'])?
+\s*\?>
+    """,
+    re.VERBOSE
+)
+
+
+class XML(HTML):
+    """XML document parsed by html5lib.
+
+    You can just create an instance with a positional argument:
+    ``doc = XML(something)``
+    The class will try to guess if the input is a filename, an absolute URL,
+    or a :term:`file object`.
+
+    Alternatively, use **one** named argument so that no guessing is involved:
+
+    :type filename: str or pathlib.Path
+    :param filename:
+        A filename, relative to the current directory, or absolute.
+    :param str url:
+        An absolute, fully qualified URL.
+    :type file_obj: :term:`file object`
+    :param file_obj:
+        Any object with a ``read`` method.
+    :param str string:
+        A string of XML source.
+
+    Specifying multiple inputs is an error:
+    ``XML(filename="foo.xml", url="localhost://bar.xml")``
+    will raise a :obj:`TypeError`.
+
+    You can also pass optional named arguments:
+
+    :param str encoding:
+        Force the source character encoding.
+    :type base_url: str or pathlib.Path
+    :param base_url:
+        The base used to resolve relative URLs (e.g. in
+        ``<?xml-stylesheet type="text/css" href="../foo.css"?>``). If not
+        provided, try to use the input filename, URL, or ``name`` attribute
+        of :term:`file objects <file object>`.
+    :type url_fetcher: :term:`callable`
+    :param url_fetcher:
+        A function or other callable with the same signature as
+        :func:`default_url_fetcher` called to fetch external resources such as
+        stylesheets and images. (See :ref:`URL Fetchers`.)
+    :param str media_type:
+        The media type to use for ``@media``. Defaults to ``'print'``.
+        **Note:** In some cases like ``HTML(string=foo)`` relative URLs will be
+        invalid if ``base_url`` is not provided.
+
+    """
+    def __init__(self, guess=None, filename=None, url=None, file_obj=None,
+                 string=None, encoding=None, base_url=None,
+                 url_fetcher=default_url_fetcher, media_type='print'):
+        PROGRESS_LOGGER.info(
+            'Step 1 - Fetching and parsing XML - %s',
+            guess or filename or url or
+            getattr(file_obj, 'name', 'XML string'))
+        if isinstance(base_url, Path):
+            base_url = str(base_url)
+        self.stylesheet_urls = []
+        result = _select_source(
+            guess, filename, url, file_obj, string, base_url, url_fetcher)
+        with result as (source_type, source, base_url, protocol_encoding):
+            # Because the built-in ElementTree discards processing
+            # instructions, we will read the data ourselves and detect
+            # them before parsing the XML
+            if source_type == "file_obj":
+                source = source.read()
+            if isinstance(source, bytes):
+                source = source.decode(encoding
+                                       or protocol_encoding
+                                       or "UTF-8")
+            for m in PROCESSING_INSTRUCTION.finditer(source):
+                self.stylesheet_urls.append(m[m.lastindex])
+            root = ET.fromstring(source)
+        self.base_url = base_url
+        self.url_fetcher = url_fetcher
+        self.media_type = media_type
+        self.wrapper_element = cssselect2.ElementWrapper.from_xml_root(
+            root, content_language=None)
+        self.etree_element = self.wrapper_element.etree_element
 
 
 class CSS:
