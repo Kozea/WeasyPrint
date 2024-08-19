@@ -455,9 +455,9 @@ def test_flex_item_min_height():
 @assert_no_logs
 def test_flex_auto_margin():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/800
-    page, = render_pages('<div style="display: flex; margin: auto">')
+    page, = render_pages('<div id="div1" style="display: flex; margin: auto">')
     page, = render_pages(
-        '<div style="display: flex; flex-direction: column; margin: auto">')
+        '<div id="div2" style="display: flex; flex-direction: column; margin: auto">')
 
 
 @assert_no_logs
@@ -679,6 +679,7 @@ def test_flex_column_height2():
                               + a2.margin_top + a2.margin_bottom)
 
 
+@assert_no_logs
 def test_flex_column_width():
     # Regression test for https://github.com/Kozea/WeasyPrint/issues/1171
     page, = render_pages("""
@@ -726,3 +727,31 @@ def test_flex_column_width():
     assert content.width == paper.width
     assert toppart.width == paper.width
     assert bottompart.position_y > toppart.position_y + toppart.height
+
+
+@assert_no_logs
+def test_flex_auto_margin2():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/2054
+    page, = render_pages('''
+<style>
+  #outer {
+    background: red;
+  }
+  #inner {
+    margin: auto;
+    display: flex;
+    width: 160px;
+    height: 160px;
+    background: black;
+  }
+</style>
+
+<div id="outer">
+  <div id="inner"></div>
+</div>
+''')
+    html, = page.children
+    body, = html.children
+    outer, = body.children
+    inner, = outer.children
+    assert inner.margin_left != 0
