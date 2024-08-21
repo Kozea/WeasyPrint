@@ -10,7 +10,7 @@ from .utils import alpha_value, color, parse_url, size, transform
 
 def use(svg, node, font_size):
     """Draw use tags."""
-    from . import NOT_INHERITED_ATTRIBUTES, SVG
+    from . import SVG
 
     x, y = svg.point(node.get('x'), node.get('y'), font_size)
 
