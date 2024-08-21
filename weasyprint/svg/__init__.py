@@ -396,7 +396,7 @@ class SVG:
 
     def draw_node(self, node, font_size, fill_stroke=True):
         """Draw a node."""
-        if node.tag == 'defs':
+        if node.tag in ('defs', 'symbol'):
             return
 
         # Update font size
