@@ -4,7 +4,7 @@ from itertools import cycle
 from math import ceil, hypot
 
 from ..matrix import Matrix
-from .bounding_box import is_valid_bounding_box
+from .bounding_box import bounding_box, is_valid_bounding_box
 from .utils import alpha_value, color, parse_url, size, transform
 
 
@@ -49,10 +49,16 @@ def use(svg, node, font_size):
     if tree.tag in ('svg', 'symbol'):
         # Explicitely specified
         # https://www.w3.org/TR/SVG11/struct.html#UseElement
-        tree._etree_node.tag = 'svg'
         if 'width' in node.attrib and 'height' in node.attrib:
             tree.attrib['width'] = node.attrib['width']
             tree.attrib['height'] = node.attrib['height']
+        else:
+            tree._etree_node.tag = 'g'
+            box = bounding_box(svg, tree, font_size, stroke=True)
+            if is_valid_bounding_box(box):
+                tree.attrib['width'] = box[2]
+                tree.attrib['height'] = box[3]
+        tree._etree_node.tag = 'svg'
 
     # Cascade
     for key, value in node.attrib.items():
