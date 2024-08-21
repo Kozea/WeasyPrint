@@ -60,12 +60,7 @@ def use(svg, node, font_size):
                 tree.attrib['height'] = box[3]
         tree._etree_node.tag = 'svg'
 
-    # Cascade
-    for key, value in node.attrib.items():
-        if key not in NOT_INHERITED_ATTRIBUTES:
-            if key not in tree.attrib:
-                tree.attrib[key] = value
-
+    node.cascade(tree)
     node.override_iter(iter((tree,)))
     svg.stream.transform(e=x, f=y)
 

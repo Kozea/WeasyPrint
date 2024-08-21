@@ -130,69 +130,68 @@ class Node:
         """Whether node is visible."""
         return self.display and self.get('visibility') != 'hidden'
 
+    def cascade(self, child):
+        """Apply CSS cascade and other related operations to given child."""
+        wrapper = child._wrapper
+
+        # Cascade
+        for key, value in self.attrib.items():
+            if key not in NOT_INHERITED_ATTRIBUTES:
+                if key not in child.attrib:
+                    child.attrib[key] = value
+
+        # Apply style attribute
+        if style_attr := child.get('style'):
+            normal_attr, important_attr = parse_declarations(style_attr)
+        else:
+            normal_attr, important_attr = [], []
+        normal_matcher, important_matcher = self._style
+        normal = [rule[-1] for rule in normal_matcher.match(wrapper)]
+        important = [rule[-1] for rule in important_matcher.match(wrapper)]
+        for declarations_list in (normal, [normal_attr], important, [important_attr]):
+            for declarations in declarations_list:
+                for name, value in declarations:
+                    child.attrib[name] = value.strip()
+
+        # Replace 'currentColor' value
+        for key in COLOR_ATTRIBUTES:
+            if child.get(key) == 'currentColor':
+                child.attrib[key] = child.get('color', 'black')
+
+        # Handle 'inherit' values
+        for key, value in child.attrib.copy().items():
+            if value == 'inherit':
+                value = self.get(key)
+                if value is None:
+                    del child.attrib[key]
+                else:
+                    child.attrib[key] = value
+
+        # Fix text in text tags
+        if child.tag in ('text', 'textPath', 'a'):
+            children, _ = child.text_children(
+                wrapper, trailing_space=True, text_root=True)
+            child._wrapper.etree_children = [
+                child._etree_node for child in children]
+
+
     def __iter__(self):
         """Yield node children, handling cascade."""
         for wrapper in self._wrapper:
             child = Node(wrapper, self._style)
-
-            # Cascade
-            for key, value in self.attrib.items():
-                if key not in NOT_INHERITED_ATTRIBUTES:
-                    if key not in child.attrib:
-                        child.attrib[key] = value
-
-            # Apply style attribute
-            style_attr = child.get('style')
-            if style_attr:
-                normal_attr, important_attr = parse_declarations(style_attr)
-            else:
-                normal_attr, important_attr = [], []
-            normal_matcher, important_matcher = self._style
-            normal = [rule[-1] for rule in normal_matcher.match(wrapper)]
-            important = [rule[-1] for rule in important_matcher.match(wrapper)]
-            declarations_lists = (
-                normal, [normal_attr], important, [important_attr])
-            for declarations_list in declarations_lists:
-                for declarations in declarations_list:
-                    for name, value in declarations:
-                        child.attrib[name] = value.strip()
-
-            # Replace 'currentColor' value
-            for key in COLOR_ATTRIBUTES:
-                if child.get(key) == 'currentColor':
-                    child.attrib[key] = child.get('color', 'black')
-
-            # Handle 'inherit' values
-            for key, value in child.attrib.copy().items():
-                if value == 'inherit':
-                    value = self.get(key)
-                    if value is None:
-                        del child.attrib[key]
-                    else:
-                        child.attrib[key] = value
-
-            # Fix text in text tags
-            if child.tag in ('text', 'textPath', 'a'):
-                children, _ = child.text_children(
-                    wrapper, trailing_space=True, text_root=True)
-                child._wrapper.etree_children = [
-                    child._etree_node for child in children]
-
+            self.cascade(child)
             yield child
 
     def get_viewbox(self):
         """Get node viewBox as a tuple of floats."""
         viewbox = self.get('viewBox')
         if viewbox:
-            return tuple(
-                float(number) for number in normalize(viewbox).split())
+            return tuple(float(number) for number in normalize(viewbox).split())
 
     def get_href(self, base_url):
         """Get the href attribute, with or without a namespace."""
         for attr_name in ('{http://www.w3.org/1999/xlink}href', 'href'):
-            url = get_url_attribute(
-                self, attr_name, base_url, allow_relative=True)
-            if url:
+            if url := get_url_attribute(self, attr_name, base_url, allow_relative=True):
                 return url
 
     def del_href(self):
