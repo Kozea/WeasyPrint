@@ -114,11 +114,11 @@ class RasterImage:
             concrete_width, 0, 0, -concrete_height, 0, concrete_height)
         stream.draw_x_object(image_name)
 
-    def cache_image_data(self, data, filename=None, alpha=False):
+    def cache_image_data(self, data, filename=None, slot='source'):
         if filename:
             return LazyLocalImage(filename)
         else:
-            key = f'{self.id}{int(alpha)}{self._dpi or ""}'
+            key = f'{self.id}-{slot}-{self._dpi or ""}'
             return LazyImage(self._cache, key, data)
 
     def get_x_object(self, interpolate, dpi_ratio):
@@ -183,7 +183,7 @@ class RasterImage:
             png_data = self._get_png_data(pillow_image)
             # Save alpha channel as mask
             alpha_data = self._get_png_data(alpha)
-            stream = self.cache_image_data(alpha_data, alpha=True)
+            stream = self.cache_image_data(alpha_data, slot='streamalpha')
             extra['SMask'] = pydyf.Stream([stream], extra={
                 'Filter': '/FlateDecode',
                 'Type': '/XObject',
@@ -202,7 +202,7 @@ class RasterImage:
             png_data = self._get_png_data(
                 Image.open(io.BytesIO(self.image_data.data)))
 
-        return pydyf.Stream([self.cache_image_data(png_data)], extra)
+        return pydyf.Stream([self.cache_image_data(png_data, slot='stream')], extra)
 
     @staticmethod
     def _get_png_data(pillow_image):
