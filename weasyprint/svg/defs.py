@@ -56,8 +56,8 @@ def use(svg, node, font_size):
             tree._etree_node.tag = 'g'
             box = bounding_box(svg, tree, font_size, stroke=True)
             if is_valid_bounding_box(box):
-                tree.attrib['width'] = box[2]
-                tree.attrib['height'] = box[3]
+                tree.attrib['width'] = box[0] + box[2]
+                tree.attrib['height'] = box[1] + box[3]
         tree._etree_node.tag = 'svg'
 
     node.cascade(tree)
