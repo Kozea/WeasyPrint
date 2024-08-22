@@ -315,12 +315,6 @@ class SVG:
         style = parse_stylesheets(wrapper, url)
         self.tree = Node(wrapper, style)
         self.url = url
-
-        # Replace 'currentColor' value
-        for key in COLOR_ATTRIBUTES:
-            if self.tree.get(key) == 'currentColor':
-                self.tree.attrib[key] = self.tree.get('color', 'black')
-
         self.filters = {}
         self.gradients = {}
         self.images = {}
@@ -335,6 +329,7 @@ class SVG:
         self.cursor_d_position = [0, 0]
         self.text_path_width = 0
 
+        self.tree.cascade(self.tree)
         self.parse_defs(self.tree)
         self.inherit_defs()
 
