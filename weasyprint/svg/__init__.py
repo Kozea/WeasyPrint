@@ -554,12 +554,9 @@ class SVG:
                 position = 'end'
 
             # Draw marker
-            marker = markers[position]
-            if not marker:
+            if not (marker_node := self.markers.get(markers[position])):
                 position = 'mid' if angles else 'start'
                 continue
-
-            marker_node = self.markers.get(marker)
 
             # Calculate position, scale and clipping
             translate_x, translate_y = self.point(
