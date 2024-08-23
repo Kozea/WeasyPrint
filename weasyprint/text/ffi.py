@@ -485,24 +485,23 @@ if hasattr(os, 'add_dll_directory'):  # pragma: no cover
             os.add_dll_directory(dll_directory)
 
 gobject = _dlopen(
-    ffi, 'gobject-2.0-0', 'gobject-2.0', 'libgobject-2.0-0',
+    ffi, 'libgobject-2.0-0', 'gobject-2.0-0', 'gobject-2.0',
     'libgobject-2.0.so.0', 'libgobject-2.0.dylib', 'libgobject-2.0-0.dll')
 pango = _dlopen(
-    ffi, 'pango-1.0-0', 'pango-1.0', 'libpango-1.0-0', 'libpango-1.0.so.0',
+    ffi, 'libpango-1.0-0', 'pango-1.0-0', 'pango-1.0', 'libpango-1.0.so.0',
     'libpango-1.0.dylib', 'libpango-1.0-0.dll')
 harfbuzz = _dlopen(
-    ffi, 'harfbuzz', 'harfbuzz-0.0', 'libharfbuzz-0',
-    'libharfbuzz.so.0', 'libharfbuzz.so.0', 'libharfbuzz.0.dylib',
-    'libharfbuzz-0.dll')
+    ffi, 'libharfbuzz-0', 'harfbuzz', 'harfbuzz-0.0',
+    'libharfbuzz.so.0', 'libharfbuzz.0.dylib', 'libharfbuzz-0.dll')
 harfbuzz_subset = _dlopen(
-    ffi, 'harfbuzz-subset', 'harfbuzz-subset-0.0', 'libharfbuzz-subset-0',
-    'libharfbuzz-subset.so.0', 'libharfbuzz-subset.so.0', 'libharfbuzz-subset.0.dylib',
-    'libharfbuzz-subset-0.dll', allow_fail=True)
+    ffi, 'libharfbuzz-subset-0', 'harfbuzz-subset', 'harfbuzz-subset-0.0',
+    'libharfbuzz-subset.so.0', 'libharfbuzz-subset.0.dylib', 'libharfbuzz-subset-0.dll',
+    allow_fail=True)
 fontconfig = _dlopen(
-    ffi, 'fontconfig-1', 'fontconfig', 'libfontconfig', 'libfontconfig.so.1',
-    'libfontconfig.1.dylib', 'libfontconfig-1.dll')
+    ffi, 'libfontconfig-1', 'fontconfig-1', 'fontconfig',
+    'libfontconfig.so.1', 'libfontconfig.1.dylib', 'libfontconfig-1.dll')
 pangoft2 = _dlopen(
-    ffi, 'pangoft2-1.0-0', 'pangoft2-1.0', 'libpangoft2-1.0-0',
+    ffi, 'libpangoft2-1.0-0', 'pangoft2-1.0-0', 'pangoft2-1.0',
     'libpangoft2-1.0.so.0', 'libpangoft2-1.0.dylib', 'libpangoft2-1.0-0.dll')
 
 gobject.g_type_init()
