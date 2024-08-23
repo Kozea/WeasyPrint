@@ -453,9 +453,13 @@ ffi.cdef('''
 
 def _dlopen(ffi, *names, allow_fail=False):
     """Try various names for the same library, for different platforms."""
+    if os.name == 'nt':
+        flags = 0x00001000  # LOAD_LIBRARY_SEARCH_DEFAULT_DIRS
+    else:
+        flags = ffi.RTLD_NOW  # default
     for name in names:
         with suppress(OSError):
-            return ffi.dlopen(name)
+            return ffi.dlopen(name, flags)
     if allow_fail:
         return
     # Re-raise the exception.
@@ -468,7 +472,7 @@ def _dlopen(ffi, *names, allow_fail=False):
         'https://doc.courtbouillon.org/weasyprint/stable/'
         'first_steps.html#troubleshooting',
         '\n\n-----\n')  # pragma: no cover
-    return ffi.dlopen(names[0])  # pragma: no cover
+    return ffi.dlopen(names[0], flags)  # pragma: no cover
 
 
 if hasattr(os, 'add_dll_directory'):  # pragma: no cover
