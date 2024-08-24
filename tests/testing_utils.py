@@ -1,7 +1,6 @@
 """Helpers for tests."""
 
 import functools
-import logging
 import sys
 from pathlib import Path
 
@@ -77,7 +76,7 @@ def assert_no_logs(function):
     """Decorator that asserts that nothing is logged in a function."""
     @functools.wraps(function)
     def wrapper(*args, **kwargs):
-        with capture_logs(level=logging.INFO) as logs:
+        with capture_logs() as logs:
             try:
                 function(*args, **kwargs)
             except Exception:  # pragma: no cover
