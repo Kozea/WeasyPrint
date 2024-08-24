@@ -201,8 +201,6 @@ class Font:
             harfbuzz_subset.HB_SUBSET_FLAGS_RETAIN_GIDS |
             harfbuzz_subset.HB_SUBSET_FLAGS_PASSTHROUGH_UNRECOGNIZED |
             harfbuzz_subset.HB_SUBSET_FLAGS_DESUBROUTINIZE)
-        if not hinting:
-            flags |= harfbuzz_subset.HB_SUBSET_FLAGS_NO_HINTING
         harfbuzz_subset.hb_subset_input_set_flags(hb_subset, flags)
 
         # Drop useless tables.
