@@ -637,7 +637,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
         # each item’s baseline and its hypothetical outer cross-start edge, and
         # the largest of the distances between each item’s baseline and its
         # hypothetical outer cross-end edge, and sum these two values.
-        for lindex, line in enumerate(flex_lines):
+        for line in flex_lines:
             collected_items = []
             not_collected_items = []
             for index, child in line:
@@ -720,7 +720,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
             extra_cross_size = definite_cross_size - sum(
                 line.cross_size for line in flex_lines)
             if extra_cross_size:
-                for lindex, line in enumerate(flex_lines):
+                for line in flex_lines:
                     line.cross_size += extra_cross_size / len(flex_lines)
 
     # TODO: 9.4.10 Collapse visibility:collapse items. If any flex items have
@@ -752,7 +752,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
     align_items = box.style['align_items']
     if 'normal' in align_items:
         align_items = ('stretch',)
-    for lindex, line in enumerate(flex_lines):
+    for line in flex_lines:
         for index, child in line:
             align_self = child.style['align_self']
             if 'normal' in align_self:
@@ -796,7 +796,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
             justify_content = ('flex-start',)
 
     # 9.5.12 Distribute any remaining free space. For each flex line:
-    for lindex, line in enumerate(flex_lines):
+    for line in flex_lines:
         position_axis = original_position_axis
         if axis == 'width':
             free_space = box.width
@@ -887,7 +887,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
     position_cross = (
         box.content_box_y() if cross == 'height'
         else box.content_box_x())
-    for lindex, line in enumerate(flex_lines):
+    for line in flex_lines:
         line.lower_baseline = -inf
         # TODO: don't duplicate this loop.
         for index, child in line:
@@ -1020,7 +1020,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
         direction = 'position_y' if cross == 'height' else 'position_x'
         if extra_cross_size > 0:
             cross_translate = 0
-            for lindex, line in enumerate(flex_lines):
+            for line in flex_lines:
                 for index, child in line:
                     if child.is_flex_item:
                         current_value = getattr(child, direction)
@@ -1056,7 +1056,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
     box = box.copy_with_children(
         [child for child in children if not child.is_flex_item])
     child_skip_stack = skip_stack
-    for lindex, line in enumerate(flex_lines):
+    for line in flex_lines:
         for index, child in line:
             if child.is_flex_item:
                 new_child, child_resume_at = block.block_level_layout_switch(
