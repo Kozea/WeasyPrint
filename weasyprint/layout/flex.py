@@ -333,47 +333,27 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
     # 9.3.5 If the flex container is single-line, collect all the flex items
     # into a single flex line.
     flex_lines = []
-    if box.style['flex_wrap'] == 'nowrap':
-        line = []
-        index = 0
-        for child in children:
-            if not child.is_flex_item:
-                continue
-            line.append((index, child))
-            index += 1
-        if line:
-            flex_lines.append(FlexLine(line))
-    else:
-        line = []
-        line_size = 0
-        axis_size = getattr(box, axis)
-        index = 0
-        for child in children:
-            if not child.is_flex_item:
-                continue
-            line_size += child.hypothetical_main_size
-            # 9.3.5. Otherwise, starting from the first uncollected item,
-            # collect consecutive items one by one until the first time that
-            # the next collected item would not fit into the flex container’s
-            # inner main size (or until a forced break is encountered, see §10
-            # Fragmenting Flex Layout (TODO: not implemented)).
-            if line_size > axis_size:
-                if line:
-                    flex_lines.append(FlexLine(line))
-                    # If the very first uncollected item wouldn’t fit,
-                    # collect just it into the line.
-                    line = [(index, child)]
-                    line_size = child.hypothetical_main_size
-                else:
-                    line.append((index, child))
-                    flex_lines.append(FlexLine(line))
-                    line = []
-                    line_size = 0
+    line = []
+    line_size = 0
+    axis_size = getattr(box, axis)
+    for i, child in enumerate(children):
+        if not child.is_flex_item:
+            continue
+        line_size += child.hypothetical_main_size
+        if box.style['flex_wrap'] != 'nowrap' and line_size > axis_size:
+            if line:
+                flex_lines.append(FlexLine(line))
+                line = [(i, child)]
+                line_size = child.hypothetical_main_size
             else:
-                line.append((index, child))
-            index += 1
-        if line:
-            flex_lines.append(FlexLine(line))
+                line.append((i, child))
+                flex_lines.append(FlexLine(line))
+                line = []
+                line_size = 0
+        else:
+            line.append((i, child))
+    if line:
+        flex_lines.append(FlexLine(line))
 
     # TODO: Handle *-reverse using the terminology from the specification.
     if box.style['flex_wrap'] == 'wrap-reverse':
