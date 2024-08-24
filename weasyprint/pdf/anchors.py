@@ -347,6 +347,7 @@ def write_pdf_attachment(pdf, attachment, compress):
                 stream += data
     except URLFetchingError as exception:
         LOGGER.error('Failed to load attachment: %s', exception)
+        LOGGER.debug('Error while loading attachment:', exc_info=exception)
         return
     attachment.md5 = md5(stream, usedforsecurity=False).hexdigest()
 

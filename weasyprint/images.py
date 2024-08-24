@@ -285,8 +285,9 @@ class SVGImage:
             self._svg.draw(
                 stream, concrete_width, concrete_height, self._base_url,
                 self._url_fetcher, self._context)
-        except BaseException:
+        except BaseException as exception:
             LOGGER.error('Failed to render SVG image %s', self._base_url)
+            LOGGER.debug('Error while rendering SVG image:', exc_info=exception)
 
 
 def get_image_from_uri(cache, url_fetcher, options, url, forced_mime_type=None,
@@ -341,6 +342,7 @@ def get_image_from_uri(cache, url_fetcher, options, url, forced_mime_type=None,
 
     except (URLFetchingError, ImageLoadingError) as exception:
         LOGGER.error('Failed to load image at %r: %s', url, exception)
+        LOGGER.debug('Error while loading image:', exc_info=exception)
         image = None
 
     cache[url] = image

@@ -1,5 +1,6 @@
 """Test validation of properties."""
 
+import logging
 from math import pi
 
 import pytest
@@ -12,10 +13,10 @@ from weasyprint.images import LinearGradient, RadialGradient
 from ..testing_utils import assert_no_logs, capture_logs
 
 
-def get_value(css, expected_error=None):
+def get_value(css, expected_error=None, level=None):
     declarations = tinycss2.parse_blocks_contents(css)
 
-    with capture_logs() as logs:
+    with capture_logs(level=level) as logs:
         base_url = 'https://weasyprint.org/foo/'
         declarations = list(preprocess_declarations(base_url, declarations))
 
@@ -36,13 +37,13 @@ def get_default_value(values, index, default):
     return values[index] or default
 
 
-def assert_invalid(css, message='invalid'):
-    assert get_value(css, message) is None
+def assert_invalid(css, message='invalid', level=None):
+    assert get_value(css, message, level) is None
 
 
 @assert_no_logs
 def test_not_print():
-    assert_invalid('volume: 42', 'does not apply for the print media')
+    assert_invalid('volume: 42', 'does not apply for the print media', logging.DEBUG)
 
 
 @assert_no_logs
@@ -60,7 +61,10 @@ def test_normal_prefix():
 
 @assert_no_logs
 def test_unknown_prefix():
-    assert_invalid('-unknown-display: block', 'prefixed selectors are ignored')
+    assert_invalid(
+        '-unknown-display: block',
+        'prefixed selectors are ignored',
+        logging.DEBUG)
 
 
 @assert_no_logs

@@ -282,9 +282,9 @@ def find_stylesheets(wrapper_element, device_media_type, url_fetcher, base_url,
                         _check_mime_type=True, media_type=device_media_type,
                         font_config=font_config, counter_style=counter_style,
                         page_rules=page_rules)
-                except URLFetchingError as exc:
-                    LOGGER.error(
-                        'Failed to load stylesheet at %s: %s', href, exc)
+                except URLFetchingError as exception:
+                    LOGGER.error('Failed to load stylesheet at %s: %s', href, exception)
+                    LOGGER.debug('Error while loading stylesheet:', exc_info=exception)
 
 
 def find_style_attributes(tree, presentational_hints=False, base_url=None):
@@ -998,9 +998,9 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                         media_type=device_media_type, font_config=font_config,
                         counter_style=counter_style, matcher=matcher,
                         page_rules=page_rules)
-                except URLFetchingError as exc:
-                    LOGGER.error(
-                        'Failed to load stylesheet at %s : %s', url, exc)
+                except URLFetchingError as exception:
+                    LOGGER.error('Failed to load stylesheet at %s : %s', url, exception)
+                    LOGGER.debug('Error while loading stylesheet:', exc_info=exception)
 
         elif rule.type == 'at-rule' and rule.lower_at_keyword == 'media':
             media = media_queries.parse_media_query(rule.prelude)

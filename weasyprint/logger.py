@@ -34,13 +34,15 @@ class CallbackHandler(logging.Handler):
 @contextlib.contextmanager
 def capture_logs(logger='weasyprint', level=None):
     """Return a context manager that captures all logged messages."""
+    if level is None:
+        level = logging.INFO
     logger = logging.getLogger(logger)
     messages = []
 
     def emit(record):
         if record.name == 'weasyprint.progress':
             return
-        if level is not None and record.levelno < level:
+        if record.levelno < level:
             return
         messages.append(f'{record.levelname.upper()}: {record.getMessage()}')
 

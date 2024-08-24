@@ -221,6 +221,7 @@ def handle_svg(element, box, get_image_from_uri, base_url):
         image = SVGImage(element, base_url, url_fetcher, context)
     except Exception as exception:  # pragma: no cover
         LOGGER.error('Failed to load inline SVG: %s', exception)
+        LOGGER.debug('Error while loading inline SVG:', exc_info=exception)
         return []
     else:
         return [make_replaced_box(element, box, image)]
