@@ -81,6 +81,7 @@ DEF_TYPES = frozenset((
     'mask',
     'path',
     'pattern',
+    'symbol',
 ))
 
 
@@ -390,7 +391,7 @@ class SVG:
 
     def draw_node(self, node, font_size, fill_stroke=True):
         """Draw a node."""
-        if node.tag in ('defs', 'symbol'):
+        if node.tag == 'defs':
             return
 
         # Update font size
