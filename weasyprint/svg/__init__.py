@@ -457,6 +457,11 @@ class SVG:
         if node.display and TAGS.get(node.tag) == text:
             node.text_bounding_box = EMPTY_BOUNDING_BOX
 
+        # Save inner size of svg tags
+        if node.tag == 'svg':
+            inner_width = self.inner_width
+            inner_height = self.inner_height
+
         # Draw node
         if node.visible and node.tag in TAGS:
             with suppress(PointError):
@@ -464,11 +469,6 @@ class SVG:
 
         # Draw node children
         if node.display and node.tag not in DEF_TYPES:
-            if node.tag == 'svg':
-                inner_width = self.inner_width
-                inner_height = self.inner_height
-                self.inner_width = node.width
-                self.inner_height = node.height
             for child in node:
                 self.draw_node(child, font_size, fill_stroke)
                 visible_text_child = (
@@ -483,9 +483,11 @@ class SVG:
                     y2 = y1 + child.text_bounding_box[3]
                     node.text_bounding_box = extend_bounding_box(
                         node.text_bounding_box, ((x1, y1), (x2, y2)))
-            if node.tag == 'svg':
-                self.inner_width = inner_width
-                self.inner_height = inner_height
+
+        # Restore inner size of svg tags
+        if node.tag == 'svg':
+            self.inner_width = inner_width
+            self.inner_height = inner_height
 
         # Handle text anchor
         if node.tag == 'text' and text_anchor in ('middle', 'end'):
