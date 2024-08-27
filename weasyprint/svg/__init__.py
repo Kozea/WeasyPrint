@@ -307,6 +307,19 @@ class Node:
         self.__class__ = type(
             'Node', (Node,), {'__iter__': lambda _: iterator})
 
+    def set_svg_size(self, svg, concrete_width, concrete_height):
+        """"Set SVG concrete and inner widths and heights from svg node."""
+        svg.concrete_width = concrete_width
+        svg.concrete_height = concrete_height
+        svg.normalized_diagonal = hypot(concrete_width, concrete_height) / sqrt(2)
+
+        if viewbox := self.get_viewbox():
+            svg.inner_width, svg.inner_height = viewbox[2], viewbox[3]
+        else:
+            svg.inner_width, svg.inner_height = svg.concrete_width, svg.concrete_height
+        svg.inner_diagonal = hypot(svg.inner_width, svg.inner_height) / sqrt(2)
+
+
 
 class SVG:
     """An SVG document."""
@@ -369,19 +382,7 @@ class SVG:
         """Draw image on a stream."""
         self.stream = stream
 
-        self.concrete_width = concrete_width
-        self.concrete_height = concrete_height
-        self.normalized_diagonal = (
-            hypot(concrete_width, concrete_height) / sqrt(2))
-
-        viewbox = self.get_viewbox()
-        if viewbox:
-            self.inner_width, self.inner_height = viewbox[2], viewbox[3]
-        else:
-            self.inner_width = self.concrete_width
-            self.inner_height = self.concrete_height
-        self.inner_diagonal = (
-            hypot(self.inner_width, self.inner_height) / sqrt(2))
+        self.tree.set_svg_size(self, concrete_width, concrete_height)
 
         self.base_url = base_url
         self.url_fetcher = url_fetcher
@@ -457,10 +458,10 @@ class SVG:
         if node.display and TAGS.get(node.tag) == text:
             node.text_bounding_box = EMPTY_BOUNDING_BOX
 
-        # Save inner size of svg tags
+        # Save concrete size of root svg tag
         if node.tag == 'svg':
-            inner_width = self.inner_width
-            inner_height = self.inner_height
+            concrete_width = self.concrete_width
+            concrete_height = self.concrete_height
 
         # Draw node
         if node.visible and node.tag in TAGS:
@@ -484,10 +485,9 @@ class SVG:
                     node.text_bounding_box = extend_bounding_box(
                         node.text_bounding_box, ((x1, y1), (x2, y2)))
 
-        # Restore inner size of svg tags
+        # Restore concrete and inner size of root svg tag
         if node.tag == 'svg':
-            self.inner_width = inner_width
-            self.inner_height = inner_height
+            self.tree.set_svg_size(svg, concrete_width, concrete_height)
 
         # Handle text anchor
         if node.tag == 'text' and text_anchor in ('middle', 'end'):
