@@ -23,6 +23,8 @@ def svg(svg, node, font_size):
             node._etree_node.tag = 'svg'
         else:
             width, height = svg.point(width, height, font_size)
+    node.width = width
+    node.height = height
     scale_x, scale_y, translate_x, translate_y = preserve_ratio(
         svg, node, font_size, width, height)
     if svg.tree != node and node.get('overflow', 'hidden') == 'hidden':
