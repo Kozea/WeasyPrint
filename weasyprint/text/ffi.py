@@ -29,8 +29,6 @@ ffi.cdef('''
     unsigned int hb_face_get_table_tags (
         const hb_face_t *face, unsigned int start_offset, unsigned int *table_count,
         hb_tag_t *table_tags);
-    unsigned int hb_face_get_glyph_count (const hb_face_t *face);
-    hb_blob_t * hb_face_reference_table (const hb_face_t *face, hb_tag_t tag);
     hb_bool_t hb_version_atleast (
         unsigned int major, unsigned int minor, unsigned int micro);
 
@@ -66,7 +64,6 @@ ffi.cdef('''
 
     hb_subset_input_t * hb_subset_input_create_or_fail (void);
     hb_set_t * hb_subset_input_glyph_set (hb_subset_input_t *input);
-    void hb_set_add (hb_set_t *set, hb_codepoint_t codepoint);
     void hb_set_add_sorted_array (
         hb_set_t *set, const hb_codepoint_t *sorted_codepoints,
         unsigned int num_codepoints);
@@ -257,29 +254,24 @@ ffi.cdef('''
 
     PangoLayout * pango_layout_new (PangoContext *context);
     void pango_layout_set_width (PangoLayout *layout, int width);
-    PangoAttrList * pango_layout_get_attributes(PangoLayout *layout);
-    void pango_layout_set_attributes (
-        PangoLayout *layout, PangoAttrList *attrs);
-    void pango_layout_set_text (
-        PangoLayout *layout, const char *text, int length);
-    void pango_layout_set_tabs (
-        PangoLayout *layout, PangoTabArray *tabs);
+    PangoAttrList * pango_layout_get_attributes (PangoLayout *layout);
+    void pango_layout_set_attributes (PangoLayout *layout, PangoAttrList *attrs);
+    void pango_layout_set_text (PangoLayout *layout, const char *text, int length);
+    void pango_layout_set_tabs (PangoLayout *layout, PangoTabArray *tabs);
     void pango_layout_set_font_description (
         PangoLayout *layout, const PangoFontDescription *desc);
-    void pango_layout_set_wrap (
-        PangoLayout *layout, PangoWrapMode wrap);
-    void pango_layout_set_single_paragraph_mode (
-        PangoLayout *layout, gboolean setting);
+    void pango_layout_set_wrap (PangoLayout *layout, PangoWrapMode wrap);
+    void pango_layout_set_single_paragraph_mode (PangoLayout *layout, gboolean setting);
+    void pango_layout_set_ellipsize (PangoLayout *layout, PangoEllipsizeMode ellipsize);
     int pango_layout_get_baseline (PangoLayout *layout);
-    PangoLayoutLine * pango_layout_get_line_readonly (
-        PangoLayout *layout, int line);
+    void pango_layout_line_get_extents (
+        PangoLayoutLine *line, PangoRectangle *ink_rect, PangoRectangle *logical_rect);
+    PangoLayoutLine * pango_layout_get_line_readonly (PangoLayout *layout, int line);
 
     hb_font_t * pango_font_get_hb_font (PangoFont *font);
 
     PangoFontDescription * pango_font_description_new (void);
     void pango_font_description_free (PangoFontDescription *desc);
-    PangoFontDescription * pango_font_description_copy (
-        const PangoFontDescription *desc);
     PangoFontMap* pango_font_get_font_map (PangoFont* font);
 
     void pango_font_description_set_family (
@@ -295,32 +287,24 @@ ffi.cdef('''
     void pango_font_description_set_variations (
         PangoFontDescription* desc, const char* variations);
 
-    PangoStyle pango_font_description_get_style (
-        const PangoFontDescription *desc);
+    PangoStyle pango_font_description_get_style (const PangoFontDescription *desc);
     const char* pango_font_description_get_variations (
         const PangoFontDescription* desc);
-    PangoWeight pango_font_description_get_weight (
-        const PangoFontDescription* desc);
+    PangoWeight pango_font_description_get_weight (const PangoFontDescription* desc);
     int pango_font_description_get_size (PangoFontDescription *desc);
 
     void pango_font_description_unset_fields (
         PangoFontDescription* desc, PangoFontMask to_unset);
 
-    int pango_glyph_string_get_width (PangoGlyphString *glyphs);
-    char * pango_font_description_to_string (
-        const PangoFontDescription *desc);
+    char * pango_font_description_to_string (const PangoFontDescription *desc);
 
     PangoFontDescription * pango_font_describe (PangoFont *font);
-    const char * pango_font_description_get_family (
-        const PangoFontDescription *desc);
+    const char * pango_font_description_get_family (const PangoFontDescription *desc);
     guint pango_font_description_hash (const PangoFontDescription *desc);
 
-    PangoContext * pango_context_new ();
     PangoContext * pango_font_map_create_context (PangoFontMap *fontmap);
-
     PangoFont* pango_font_map_load_font (
-        PangoFontMap* fontmap, PangoContext* context,
-        const PangoFontDescription* desc);
+        PangoFontMap* fontmap, PangoContext* context, const PangoFontDescription* desc);
 
     PangoFontMetrics * pango_context_get_metrics (
         PangoContext *context, const PangoFontDescription *desc,
@@ -330,14 +314,10 @@ ffi.cdef('''
     void pango_font_metrics_unref (PangoFontMetrics *metrics);
     int pango_font_metrics_get_ascent (PangoFontMetrics *metrics);
     int pango_font_metrics_get_descent (PangoFontMetrics *metrics);
-    int pango_font_metrics_get_underline_thickness (
-        PangoFontMetrics *metrics);
-    int pango_font_metrics_get_underline_position (
-        PangoFontMetrics *metrics);
-    int pango_font_metrics_get_strikethrough_thickness (
-        PangoFontMetrics *metrics);
-    int pango_font_metrics_get_strikethrough_position (
-        PangoFontMetrics *metrics);
+    int pango_font_metrics_get_underline_thickness (PangoFontMetrics *metrics);
+    int pango_font_metrics_get_underline_position (PangoFontMetrics *metrics);
+    int pango_font_metrics_get_strikethrough_thickness (PangoFontMetrics *metrics);
+    int pango_font_metrics_get_strikethrough_position (PangoFontMetrics *metrics);
     void pango_font_get_glyph_extents (
         PangoFont *font, PangoGlyph glyph, PangoRectangle *ink_rect,
         PangoRectangle *logical_rect);
@@ -347,14 +327,11 @@ ffi.cdef('''
 
     PangoAttrList * pango_attr_list_new (void);
     void pango_attr_list_unref (PangoAttrList *list);
-    void pango_attr_list_insert (
-        PangoAttrList *list, PangoAttribute *attr);
-    void pango_attr_list_change (
-        PangoAttrList *list, PangoAttribute *attr);
+    void pango_attr_list_insert (PangoAttrList *list, PangoAttribute *attr);
+    void pango_attr_list_change (PangoAttrList *list, PangoAttribute *attr);
     PangoAttribute * pango_attr_font_features_new (const gchar *features);
     PangoAttribute * pango_attr_letter_spacing_new (int letter_spacing);
     PangoAttribute * pango_attr_insert_hyphens_new (gboolean insert_hyphens);
-    void pango_attribute_destroy (PangoAttribute *attr);
 
     PangoTabArray * pango_tab_array_new_with_positions (
         gint size, gboolean positions_in_pixels, PangoTabAlign first_alignment,
@@ -363,19 +340,7 @@ ffi.cdef('''
 
     PangoLanguage * pango_language_from_string (const char *language);
     PangoLanguage * pango_language_get_default (void);
-    void pango_context_set_language (
-        PangoContext *context, PangoLanguage *language);
-    void pango_context_set_font_map (
-        PangoContext *context, PangoFontMap *font_map);
-
-    void pango_layout_line_get_extents (
-        PangoLayoutLine *line,
-        PangoRectangle *ink_rect, PangoRectangle *logical_rect);
-
-    PangoContext * pango_layout_get_context (PangoLayout *layout);
-    void pango_layout_set_ellipsize (
-        PangoLayout *layout,
-        PangoEllipsizeMode ellipsize);
+    void pango_context_set_language (PangoContext *context, PangoLanguage *language);
 
     void pango_get_log_attrs (
         const char *text, int length, int level, PangoLanguage *language,
@@ -412,29 +377,22 @@ ffi.cdef('''
 
     FcConfig * FcInitLoadConfigAndFonts (void);
     void FcConfigDestroy (FcConfig *config);
-    FcBool FcConfigAppFontAddFile (
-        FcConfig *config, const FcChar8 *file);
-    FcConfig * FcConfigGetCurrent (void);
-    FcBool FcConfigSetCurrent (FcConfig *config);
+    FcBool FcConfigAppFontAddFile (FcConfig *config, const FcChar8 *file);
     FcBool FcConfigParseAndLoadFromMemory (
         FcConfig *config, const FcChar8 *buffer, FcBool complain);
 
-    FcFontSet * FcConfigGetFonts(FcConfig *config, FcSetName set);
-    FcStrList * FcConfigGetConfigFiles(FcConfig *config);
-    FcChar8 * FcStrListNext(FcStrList *list);
+    FcFontSet * FcConfigGetFonts (FcConfig *config, FcSetName set);
+    FcStrList * FcConfigGetConfigFiles (FcConfig *config);
+    FcChar8 * FcStrListNext (FcStrList *list);
 
     void FcDefaultSubstitute (FcPattern *pattern);
-    FcBool FcConfigSubstitute (
-        FcConfig *config, FcPattern *p, FcMatchKind kind);
+    FcBool FcConfigSubstitute (FcConfig *config, FcPattern *p, FcMatchKind kind);
 
     FcPattern * FcPatternCreate (void);
     FcPattern * FcPatternDestroy (FcPattern *p);
-    FcBool FcPatternAddString (
-        FcPattern *p, const char *object, const FcChar8 *s);
-    FcResult FcPatternGetString (
-        FcPattern *p, const char *object, int n, FcChar8 **s);
-    FcPattern * FcFontMatch (
-        FcConfig *config, FcPattern *p, FcResult *result);
+    FcBool FcPatternAddString (FcPattern *p, const char *object, const FcChar8 *s);
+    FcResult FcPatternGetString (FcPattern *p, const char *object, int n, FcChar8 **s);
+    FcPattern * FcFontMatch (FcConfig *config, FcPattern *p, FcResult *result);
 
 
     // PangoFT2
@@ -443,8 +401,7 @@ ffi.cdef('''
     typedef ... PangoFcFontMap;
 
     PangoFontMap * pango_ft2_font_map_new (void);
-    void pango_fc_font_map_set_config (
-        PangoFcFontMap *fcfontmap, FcConfig *fcconfig);
+    void pango_fc_font_map_set_config (PangoFcFontMap *fcfontmap, FcConfig *fcconfig);
     void pango_fc_font_map_config_changed (PangoFcFontMap *fcfontmap);
     hb_face_t* pango_fc_font_map_get_hb_face (
          PangoFcFontMap* fcfontmap, PangoFcFont* fcfont);
