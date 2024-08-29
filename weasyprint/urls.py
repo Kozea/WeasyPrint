@@ -9,7 +9,7 @@ import traceback
 import zlib
 from gzip import GzipFile
 from pathlib import Path
-from urllib.parse import quote, unquote, urljoin, urlsplit
+from urllib.parse import quote, unquote, urljoin, urlsplit, urlparse
 from urllib.request import Request, pathname2url, urlopen
 
 from . import __version__
@@ -214,15 +214,87 @@ def default_url_fetcher(url, timeout=10, ssl_context=None):
         has to be closed manually.
 
     """
-    if UNICODE_SCHEME_RE.match(url):
-        # See https://bugs.python.org/issue34702
-        if url.startswith('file://'):
-            url = url.split('?')[0]
+    return UrlFetcher(timeout, ssl_context)(url)
 
-        url = iri_to_uri(url)
+
+class UrlFetcher:
+    """
+    Extensible class used to fetch external resources, such as an image or
+    stylesheet.
+    """
+    def __init__(self, timeout=10, ssl_context=None, allowed_schemes=None, allowed_domains=None):
+        self.timeout = timeout
+        self.ssl_context = ssl_context
+        self.allowed_schemes = allowed_schemes
+        self.allowed_domains = allowed_domains
+    
+    def validate(self, url) -> str:
+        """Checks to ensure that the given URL is both valid and safe.
+
+        This method may modify the URL, or return it unchanged. It will raise
+        an exception for any URLs which are either not valid, or not considered 
+        safe.
+
+        Override this method to add or alter validation rules.
+
+        :param str url:
+            The URL of the resource to check.
+        :raises: An exception indicating failure, e.g. :obj:`ValueError` on
+            syntactically invalid URL.
+        :returns: The validated (and potentially normalized or changed) URL
+        """
+        if UNICODE_SCHEME_RE.match(url):
+            # See https://bugs.python.org/issue34702
+            if url.startswith('file://'):
+                url = url.split('?')[0]
+            url = iri_to_uri(url)
+            # Validate allowed scheme and domain
+            parsed = urlparse(url)
+            if self.allowed_schemes is not None and parsed.scheme not in self.allowed_schemes:
+                raise ValueError('Scheme not allowed: %s' % parsed.scheme)
+            if self.allowed_domains is not None and parsed.hostname not in self.allowed_domains:
+                raise ValueError('Domain not allowed: %s' % parsed.hostname)
+            return url
+        else:  # pragma: no cover
+            raise ValueError('Not an absolute URI: %r' % url)
+
+    def fetch(self, url) -> dict:
+        """Fetch an external resource such as an image or stylesheet.
+
+        This function expects that the URL will already have been validated and
+        normalized. It should not be called directly; rather you should use the 
+        UrlFetcher object itself as a callable. 
+        
+        Override this method to alter fetch behavior.
+
+        :param str url:
+            The URL of the resource to fetch.
+        :raises: An exception indicating failure, e.g. :obj:`ValueError` on
+            syntactically invalid URL.
+        :returns: A :obj:`dict` with the following keys:
+
+            * One of ``string`` (a :obj:`bytestring <bytes>`) or ``file_obj``
+            (a :term:`file object`).
+            * Optionally: ``mime_type``, a MIME type extracted e.g. from a
+            *Content-Type* header. If not provided, the type is guessed from the
+            file extension in the URL.
+            * Optionally: ``encoding``, a character encoding extracted e.g. from a
+            *charset* parameter in a *Content-Type* header
+            * Optionally: ``redirected_url``, the actual URL of the resource
+            if there were e.g. HTTP redirects.
+            * Optionally: ``filename``, the filename of the resource. Usually
+            derived from the *filename* parameter in a *Content-Disposition*
+            header
+
+            If a ``file_obj`` key is given, it is the caller’s responsibility
+            to call ``file_obj.close()``. The default function used internally to
+            fetch data in WeasyPrint tries to close the file object after
+            retreiving; but if this URL fetcher is used elsewhere, the file object
+            has to be closed manually.
+        """
         response = urlopen(
-            Request(url, headers=HTTP_HEADERS), timeout=timeout,
-            context=ssl_context)
+            Request(url, headers=HTTP_HEADERS), timeout=self.timeout,
+            context=self.ssl_context)
         response_info = response.info()
         result = {
             'redirected_url': response.geturl(),
@@ -243,9 +315,10 @@ def default_url_fetcher(url, timeout=10, ssl_context=None):
         else:
             result['file_obj'] = response
         return result
-    else:  # pragma: no cover
-        raise ValueError('Not an absolute URI: %r' % url)
 
+    def __call__(self, url) -> dict:
+        url = self.validate(url)
+        return self.fetch(url)
 
 class URLFetchingError(IOError):
     """Some error happened when fetching an URL."""

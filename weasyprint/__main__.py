@@ -11,7 +11,7 @@ import pydyf
 from . import DEFAULT_OPTIONS, HTML, LOGGER, __version__
 from .pdf import VARIANTS
 from .text.ffi import pango
-from .urls import default_url_fetcher
+from .urls import UrlFetcher
 
 
 class PrintInfo(argparse.Action):
@@ -137,6 +137,14 @@ PARSER.add_argument(
 PARSER.add_argument(
     '-t', '--timeout', type=int,
     help='Set timeout in seconds for HTTP requests')
+PARSER.add_argument(
+    '--fetch-scheme', action='append',
+    help='limit the schemes allowed when fetching external resources'
+)
+PARSER.add_argument(
+    '--fetch-domain', action='append',
+    help='limit the domains allowed when fetching external resources'
+)
 PARSER.set_defaults(**DEFAULT_OPTIONS)
 
 
@@ -164,9 +172,14 @@ def main(argv=None, stdout=None, stdin=None, HTML=HTML):  # noqa: N803
     else:
         output = args.output
 
-    url_fetcher = default_url_fetcher
+    # Build the URL fetcher
+    url_fetcher = UrlFetcher()
     if args.timeout is not None:
-        url_fetcher = partial(default_url_fetcher, timeout=args.timeout)
+        url_fetcher.timeout=args.timeout
+    if args.fetch_scheme is not None:
+        url_fetcher.allowed_schemes = args.fetch_scheme
+    if args.fetch_domain is not None:
+        url_fetcher.allowed_domains = args.fetch_domain
 
     options = {
         key: value for key, value in vars(args).items() if key in DEFAULT_OPTIONS}
