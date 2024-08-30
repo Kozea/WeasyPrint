@@ -32,6 +32,10 @@ def debug(pdf, metadata, document, page_streams, attachments, compress):
                 'T': pydyf.String(id),  # id added as metadata
             })
 
+            # The next line makes all of this relevent to use
+            # with PDFjs
+            annotation['Dest'] = pydyf.String(id)
+
             pdf.add_object(annotation)
             page['Annots'].append(annotation.reference)
 
