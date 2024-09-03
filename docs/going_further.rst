@@ -221,6 +221,7 @@ padding and content areas:
 
 .. image:: https://www.w3.org/TR/CSS21/images/boxdim.png
    :alt: CSS Box Model
+   :class: dark-invert
 
 While ``box.style`` contains computed values, the `used values`_ are set as
 attributes of the ``Box`` object itself during the layout. This include
