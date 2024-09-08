@@ -20,6 +20,8 @@ from .matrix import Matrix
 from .pdf import VARIANTS, generate_pdf
 from .text.fonts import FontConfiguration
 
+import xml.etree.ElementTree as ElementTree
+import time
 
 class Page:
     """Represents a single rendered page.
@@ -247,6 +249,9 @@ class Document:
 
     @classmethod
     def _render(cls, html, font_config, counter_style, options):
+        if html.media_type == 'plotter':
+            return Document._render_plotter(html, font_config, counter_style, options)
+        
         if font_config is None:
             font_config = FontConfiguration()
 
@@ -268,6 +273,25 @@ class Document:
             html.url_fetcher, font_config)
         rendering._html = html
         return rendering
+
+    @classmethod
+    def _render_plotter(cls, html, font_config, counter_style, options):
+        # https://github.com/Kozea/WeasyPrint/issues/193
+        # https://github.com/Kozea/WeasyPrint/issues/2147
+        body = html.etree_element[1]
+        # eod: end of document
+        eod_id = str(time.time_ns())
+        eod_style = "margin:0;height:1px;width:1px;display:block;background-color:red"
+        eod_attrib = {'id': eod_id, 'style': eod_style}
+        eod_mark = ElementTree.SubElement(body, f'{eod_id}', attrib=eod_attrib)
+        options['stylesheets'] = [CSS(string="@page {margin-top:0 !important;height:65536px; /* 17,34 meter */}")]
+        # use @media rollingpaper on css
+        html.media_type = 'rollingpaper'
+        pre_render_page = Document._render(html, font_config, counter_style, options).pages[0]
+        eod_y = pre_render_page.anchors[eod_id][1] + 0.05 # + to avoid calculation approximation
+        options['stylesheets'] = [CSS(string=f"@page {{height:{eod_y}px}}")]
+        body.remove(eod_mark)
+        return Document._render(html, font_config, counter_style, options)
 
     def __init__(self, pages, metadata, url_fetcher, font_config):
         #: A list of :class:`Page` objects.
