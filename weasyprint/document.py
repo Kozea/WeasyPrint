@@ -284,12 +284,17 @@ class Document:
         eod_style = "margin:0;height:1px;width:1px;display:block;background-color:red"
         eod_attrib = {'id': eod_id, 'style': eod_style}
         eod_mark = ElementTree.SubElement(body, f'{eod_id}', attrib=eod_attrib)
-        options['stylesheets'] = [CSS(string="@page {margin-top:0 !important;height:65536px; /* 17,34 meter */}")]
+        css = CSS(string="@page {margin-top:0 !important;height:65536px !important; /* 17,34 meter */}")
+        if options['stylesheets']:
+            options['stylesheets'].append(css)
+        else:
+            options['stylesheets'] = [css]
         # use @media rollingpaper on css
         html.media_type = 'rollingpaper'
         pre_render_page = Document._render(html, font_config, counter_style, options).pages[0]
         eod_y = pre_render_page.anchors[eod_id][1] + 0.05 # + to avoid calculation approximation
-        options['stylesheets'] = [CSS(string=f"@page {{height:{eod_y}px}}")]
+        del options['stylesheets'][-1]
+        options['stylesheets'].append(CSS(string=f"@page {{height:{eod_y}px !important}}"))
         body.remove(eod_mark)
         return Document._render(html, font_config, counter_style, options)
 
