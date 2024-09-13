@@ -123,21 +123,17 @@ class StyleFor:
         self._cascaded_styles.clear()
 
     def __call__(self, element, pseudo_type=None):
-        style = self._computed_styles.get((element, pseudo_type))
-
-        if style:
-            if ('table' in style['display'] and
-                    style['border_collapse'] == 'collapse'):
-                # Padding do not apply
+        if style := self._computed_styles.get((element, pseudo_type)):
+            if 'table' in style['display'] and style['border_collapse'] == 'collapse':
+                # Padding does not apply.
                 for side in ('top', 'bottom', 'left', 'right'):
                     style[f'padding_{side}'] = ZERO_PIXELS
-            if (len(style['display']) == 1 and
-                    style['display'][0].startswith('table-') and
-                    style['display'][0] != 'table-caption'):
-                # Margins do not apply
-                for side in ('top', 'bottom', 'left', 'right'):
-                    style[f'margin_{side}'] = ZERO_PIXELS
-
+            if len(style['display']) == 1:
+                display, = style['display']
+                if display.startswith('table-') and display != 'table-caption':
+                    # Margins do not apply.
+                    for side in ('top', 'bottom', 'left', 'right'):
+                        style[f'margin_{side}'] = ZERO_PIXELS
         return style
 
     def set_computed_styles(self, element, parent, root=None, pseudo_type=None,
@@ -179,8 +175,7 @@ class StyleFor:
                         style = self._cascaded_styles.setdefault(
                             (page_type, pseudo_type), {})
                         for name, values, importance in declarations:
-                            precedence = declaration_precedence(
-                                origin, importance)
+                            precedence = declaration_precedence(origin, importance)
                             weight = (precedence, specificity)
                             old_weight = style.get(name, (None, None))[1]
                             if old_weight is None or old_weight <= weight:
@@ -317,37 +312,28 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
                 style_attribute = None
                 for prop in (f'margin{part}', f'{position}margin'):
                     if element.get(prop):
-                        style_attribute = (
-                            f'margin-{position}:{element.get(prop)}px')
+                        style_attribute = f'margin-{position}:{element.get(prop)}px'
                         break
                 if style_attribute:
-                    yield specificity, check_style_attribute(
-                        element, style_attribute)
+                    yield specificity, check_style_attribute(element, style_attribute)
             if element.get('background'):
-                style_attribute = (
-                    f'background-image:url({element.get("background")})')
-                yield specificity, check_style_attribute(
-                    element, style_attribute)
+                style_attribute = f'background-image:url({element.get("background")})'
+                yield specificity, check_style_attribute(element, style_attribute)
             if element.get('bgcolor'):
                 style_attribute = f'background-color:{element.get("bgcolor")}'
-                yield specificity, check_style_attribute(
-                    element, style_attribute)
+                yield specificity, check_style_attribute(element, style_attribute)
             if element.get('text'):
                 style_attribute = f'color:{element.get("text")}'
-                yield specificity, check_style_attribute(
-                    element, style_attribute)
+                yield specificity, check_style_attribute(element, style_attribute)
             # TODO: we should support link, vlink, alink
         elif element.tag == 'center':
-            yield specificity, check_style_attribute(
-                element, 'text-align:center')
+            yield specificity, check_style_attribute(element, 'text-align:center')
         elif element.tag == 'div':
             align = element.get('align', '').lower()
             if align == 'middle':
-                yield specificity, check_style_attribute(
-                    element, 'text-align:center')
+                yield specificity, check_style_attribute(element, 'text-align:center')
             elif align in ('center', 'left', 'right', 'justify'):
-                yield specificity, check_style_attribute(
-                    element, f'text-align:{align}')
+                yield specificity, check_style_attribute(element, f'text-align:{align}')
         elif element.tag == 'font':
             if element.get('color'):
                 yield specificity, check_style_attribute(
@@ -415,31 +401,25 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
                 style_attribute = f'width:{element.get("width")}'
                 if element.get('width').isdigit():
                     style_attribute += 'px'
-                yield specificity, check_style_attribute(
-                    element, style_attribute)
+                yield specificity, check_style_attribute(element, style_attribute)
             if element.get('height'):
                 style_attribute = f'height:{element.get("height")}'
                 if element.get('height').isdigit():
                     style_attribute += 'px'
-                yield specificity, check_style_attribute(
-                    element, style_attribute)
+                yield specificity, check_style_attribute(element, style_attribute)
             if element.get('background'):
                 style_attribute = (
                     f'background-image:url({element.get("background")})')
-                yield specificity, check_style_attribute(
-                    element, style_attribute)
+                yield specificity, check_style_attribute(element, style_attribute)
             if element.get('bgcolor'):
                 style_attribute = f'background-color:{element.get("bgcolor")}'
-                yield specificity, check_style_attribute(
-                    element, style_attribute)
+                yield specificity, check_style_attribute(element, style_attribute)
             if element.get('bordercolor'):
                 style_attribute = f'border-color:{element.get("bordercolor")}'
-                yield specificity, check_style_attribute(
-                    element, style_attribute)
+                yield specificity, check_style_attribute(element, style_attribute)
             if element.get('border'):
                 style_attribute = f'border-width:{element.get("border")}px'
-                yield specificity, check_style_attribute(
-                    element, style_attribute)
+                yield specificity, check_style_attribute(element, style_attribute)
         elif element.tag in ('tr', 'td', 'th', 'thead', 'tbody', 'tfoot'):
             align = element.get('align', '').lower()
             # TODO: we should align descendants too
@@ -447,24 +427,19 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
                 yield specificity, check_style_attribute(
                     element, 'text-align:center')
             elif align in ('center', 'left', 'right', 'justify'):
-                yield specificity, check_style_attribute(
-                    element, f'text-align:{align}')
+                yield specificity, check_style_attribute(element, f'text-align:{align}')
             if element.get('background'):
-                style_attribute = (
-                    f'background-image:url({element.get("background")})')
-                yield specificity, check_style_attribute(
-                    element, style_attribute)
+                style_attribute = f'background-image:url({element.get("background")})'
+                yield specificity, check_style_attribute(element, style_attribute)
             if element.get('bgcolor'):
                 style_attribute = f'background-color:{element.get("bgcolor")}'
-                yield specificity, check_style_attribute(
-                    element, style_attribute)
+                yield specificity, check_style_attribute(element, style_attribute)
             if element.tag in ('tr', 'td', 'th'):
                 if element.get('height'):
                     style_attribute = f'height:{element.get("height")}'
                     if element.get('height').isdigit():
                         style_attribute += 'px'
-                    yield specificity, check_style_attribute(
-                        element, style_attribute)
+                    yield specificity, check_style_attribute(element, style_attribute)
                 if element.tag in ('td', 'th'):
                     if element.get('width'):
                         style_attribute = f'width:{element.get("width")}'
@@ -476,18 +451,15 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
             align = element.get('align', '').lower()
             # TODO: we should align descendants too
             if align == 'middle':
-                yield specificity, check_style_attribute(
-                    element, 'text-align:center')
+                yield specificity, check_style_attribute(element, 'text-align:center')
             elif align in ('center', 'left', 'right', 'justify'):
-                yield specificity, check_style_attribute(
-                    element, f'text-align:{align}')
+                yield specificity, check_style_attribute(element, f'text-align:{align}')
         elif element.tag == 'col':
             if element.get('width'):
                 style_attribute = f'width:{element.get("width")}'
                 if element.get('width').isdigit():
                     style_attribute += 'px'
-                yield specificity, check_style_attribute(
-                    element, style_attribute)
+                yield specificity, check_style_attribute(element, style_attribute)
         elif element.tag == 'hr':
             size = 0
             if element.get('size'):
@@ -509,8 +481,7 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
                 style_attribute = f'width:{element.get("width")}'
                 if element.get('width').isdigit():
                     style_attribute += 'px'
-                yield specificity, check_style_attribute(
-                    element, style_attribute)
+                yield specificity, check_style_attribute(element, style_attribute)
             if element.get('color'):
                 yield specificity, check_style_attribute(
                     element, f'color:{element.get("color")}')
@@ -541,14 +512,12 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
                     style_attribute = f'width:{element.get("width")}'
                     if element.get('width').isdigit():
                         style_attribute += 'px'
-                    yield specificity, check_style_attribute(
-                        element, style_attribute)
+                    yield specificity, check_style_attribute(element, style_attribute)
                 if element.get('height'):
                     style_attribute = f'height:{element.get("height")}'
                     if element.get('height').isdigit():
                         style_attribute += 'px'
-                    yield specificity, check_style_attribute(
-                        element, style_attribute)
+                    yield specificity, check_style_attribute(element, style_attribute)
                 if element.tag in ('img', 'object', 'input'):
                     if element.get('border'):
                         yield specificity, check_style_attribute(
@@ -653,8 +622,7 @@ class AnonymousStyle(dict):
             value = self[key] = self.parent_style[key]
         elif key[:16] == 'text_decoration_':
             value = self[key] = text_decoration(
-                key, INITIAL_VALUES[key], self.parent_style[key],
-                cascaded=False)
+                key, INITIAL_VALUES[key], self.parent_style[key], cascaded=False)
         else:
             value = self[key] = INITIAL_VALUES[key]
         return value
@@ -746,8 +714,7 @@ class ComputedStyle(dict):
         if key[:16] == 'text_decoration_' and parent_style is not None:
             # Text decorations are not inherited but propagated. See
             # https://www.w3.org/TR/css-text-decor-3/#line-decoration.
-            value = text_decoration(
-                key, value, parent_style[key], key in self.cascaded)
+            value = text_decoration(key, value, parent_style[key], key in self.cascaded)
             if key in self:
                 del self[key]
         elif key == 'page' and value == 'auto':
@@ -910,9 +877,9 @@ def parse_page_selectors(rule):
     return page_data
 
 
-def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
-                          url_fetcher, matcher, page_rules, font_config,
-                          counter_style, ignore_imports=False):
+def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fetcher,
+                          matcher, page_rules, font_config, counter_style,
+                          ignore_imports=False):
     """Do what can be done early on stylesheet, before being in a document."""
     for rule in stylesheet_rules:
         if getattr(rule, 'content', None) is None and (
@@ -922,10 +889,9 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
         if rule.type == 'qualified-rule':
             try:
                 logger_level = WARNING
+                contents = tinycss2.parse_blocks_contents(rule.content)
                 selectors_declarations = list(
-                    preprocess_declarations(
-                        base_url, tinycss2.parse_blocks_contents(rule.content),
-                        rule.prelude))
+                    preprocess_declarations(base_url, contents, rule.prelude))
 
                 if selectors_declarations:
                     selectors_declarations = groupby(
@@ -952,9 +918,7 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                 else:
                     ignore_imports = True
             except cssselect2.SelectorError as exc:
-                LOGGER.log(
-                    logger_level,
-                    "Invalid or unsupported selector, %s", exc)
+                LOGGER.log(logger_level, 'Invalid or unsupported selector, %s', exc)
                 continue
 
         elif rule.type == 'at-rule' and rule.lower_at_keyword == 'import':
@@ -988,16 +952,14 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                     tinycss2.serialize(rule.prelude),
                     rule.source_line, rule.source_column)
                 continue
-            if not media_queries.evaluate_media_query(
-                    media, device_media_type):
+            if not media_queries.evaluate_media_query(media, device_media_type):
                 continue
             if url is not None:
                 try:
                     CSS(
-                        url=url, url_fetcher=url_fetcher,
-                        media_type=device_media_type, font_config=font_config,
-                        counter_style=counter_style, matcher=matcher,
-                        page_rules=page_rules)
+                        url=url, url_fetcher=url_fetcher, media_type=device_media_type,
+                        font_config=font_config, counter_style=counter_style,
+                        matcher=matcher, page_rules=page_rules)
                 except URLFetchingError as exception:
                     LOGGER.error('Failed to load stylesheet at %s : %s', url, exception)
                     LOGGER.debug('Error while loading stylesheet:', exc_info=exception)
@@ -1012,14 +974,12 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                     rule.source_line, rule.source_column)
                 continue
             ignore_imports = True
-            if not media_queries.evaluate_media_query(
-                    media, device_media_type):
+            if not media_queries.evaluate_media_query(media, device_media_type):
                 continue
             content_rules = tinycss2.parse_rule_list(rule.content)
             preprocess_stylesheet(
-                device_media_type, base_url, content_rules, url_fetcher,
-                matcher, page_rules, font_config, counter_style,
-                ignore_imports=True)
+                device_media_type, base_url, content_rules, url_fetcher, matcher,
+                page_rules, font_config, counter_style, ignore_imports=True)
 
         elif rule.type == 'at-rule' and rule.lower_at_keyword == 'page':
             data = parse_page_selectors(rule)
@@ -1044,18 +1004,15 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                     page_rules.append((rule, selector_list, declarations))
 
                 for margin_rule in content:
-                    if margin_rule.type != 'at-rule' or (
-                            margin_rule.content is None):
+                    if margin_rule.type != 'at-rule' or margin_rule.content is None:
                         continue
                     declarations = list(preprocess_declarations(
                         base_url,
                         tinycss2.parse_blocks_contents(margin_rule.content)))
                     if declarations:
                         selector_list = [(
-                            specificity, f'@{margin_rule.lower_at_keyword}',
-                            page_type)]
-                        page_rules.append(
-                            (margin_rule, selector_list, declarations))
+                            specificity, f'@{margin_rule.lower_at_keyword}', page_type)]
+                        page_rules.append((margin_rule, selector_list, declarations))
 
         elif rule.type == 'at-rule' and rule.lower_at_keyword == 'font-face':
             ignore_imports = True
@@ -1066,17 +1023,14 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                 if key not in rule_descriptors:
                     LOGGER.warning(
                         "Missing %s descriptor in '@font-face' rule at %d:%d",
-                        key.replace('_', '-'),
-                        rule.source_line, rule.source_column)
+                        key.replace('_', '-'), rule.source_line, rule.source_column)
                     break
             else:
                 if font_config is not None:
                     font_config.add_font_face(rule_descriptors, url_fetcher)
 
-        elif (rule.type == 'at-rule' and
-                rule.lower_at_keyword == 'counter-style'):
-            name = counters.parse_counter_style_name(
-                rule.prelude, counter_style)
+        elif rule.type == 'at-rule' and rule.lower_at_keyword == 'counter-style':
+            name = counters.parse_counter_style_name(rule.prelude, counter_style)
             if name is None:
                 LOGGER.warning(
                     'Invalid counter style name %r, the whole '
@@ -1115,16 +1069,14 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
                         LOGGER.warning(
                             'In counter style %r at %d:%d, '
                             'counter style %r needs at least one symbol',
-                            name, rule.source_line, rule.source_column,
-                            system[1])
+                            name, rule.source_line, rule.source_column, system[1])
                         continue
                 elif system[1] in ('alphabetic', 'numeric'):
                     if len(counter['symbols'] or []) < 2:
                         LOGGER.warning(
                             'In counter style %r at %d:%d, '
                             'counter style %r needs at least two symbols',
-                            name, rule.source_line, rule.source_column,
-                            system[1])
+                            name, rule.source_line, rule.source_column, system[1])
                         continue
                 elif system[1] == 'additive':
                     if len(counter['additive_symbols'] or []) < 2:
@@ -1138,9 +1090,8 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules,
             counter_style[name] = counter
 
 
-def get_all_computed_styles(html, user_stylesheets=None,
-                            presentational_hints=False, font_config=None,
-                            counter_style=None, page_rules=None,
+def get_all_computed_styles(html, user_stylesheets=None, presentational_hints=False,
+                            font_config=None, counter_style=None, page_rules=None,
                             target_collector=None, forms=False):
     """Compute all the computed styles of all elements in ``html`` document.
 
