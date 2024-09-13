@@ -195,16 +195,15 @@ class StyleFor:
             return False
         if selector_page_type.first not in (None, page_type.first):
             return False
-        if selector_page_type.name not in (None, page_type.name):
+        group_name, group_index = page_type.name
+        if selector_page_type.name not in (None, group_name):
             return False
         if selector_page_type.index is not None:
-            a, b, group = selector_page_type.index
-            # TODO: handle group
-            offset = page_type.index + 1 - b
-            if a == 0:
-                return offset == 0
-            else:
-                return offset / a >= 0 and not offset % a
+            a, b, name = selector_page_type.index
+            if name is not None and name != group_name:
+                return False
+            offset = (page_type.index if name is None else group_index) + 1 - b
+            return offset == 0 if a == 0 else (offset / a >= 0 and not offset % a)
         return True
 
 
@@ -834,7 +833,7 @@ def parse_page_selectors(rule):
                     for i, argument in enumerate(function.arguments):
                         if argument.type == 'ident' and argument.value == 'of':
                             nth = function.arguments[:i - 1]
-                            group = function.arguments[i:]
+                            group = function.arguments[i + 1:]
                             break
                     else:
                         nth = function.arguments
@@ -847,17 +846,13 @@ def parse_page_selectors(rule):
                     if group is not None:
                         group = [
                             token for token in group
-                            if token.type not in (
-                                'comment', 'whitespacespace')]
+                            if token.type not in ('comment', 'whitespace')]
                         if len(group) != 1:
                             return None
                         group, = group
                         if group.type != 'ident':
                             return None
                         group = group.value
-
-                        # TODO: handle page groups
-                        return None
 
                     types['index'] = (*nth_values, group)
                     # TODO: specificity is not specified yet
