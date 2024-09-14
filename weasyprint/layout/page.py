@@ -1,9 +1,10 @@
 """Layout for pages and CSS3 margin boxes."""
 
 import copy
+from collections import namedtuple
 from math import inf
 
-from ..css import PageType, computed_from_cascaded
+from ..css import computed_from_cascaded
 from ..formatting_structure import boxes, build
 from ..logger import PROGRESS_LOGGER
 from .absolute import absolute_box_layout, absolute_layout
@@ -12,6 +13,8 @@ from .float import float_layout
 from .min_max import handle_min_max_height, handle_min_max_width
 from .percent import resolve_percentages
 from .preferred import max_content_width, min_content_width
+
+PageType = namedtuple('PageType', ['side', 'blank', 'name', 'index', 'group_index'])
 
 
 class OrientedBox:
@@ -817,7 +820,6 @@ def remake_page(index, group_index, context, root_box, html):
     # Don't modify actual page_maker[index] values!
     # TODO: should we store (and reuse) page_type in the page_maker?
     page_state = copy.deepcopy(initial_page_state)
-    first = index == 0
     if initial_next_page['break'] in ('left', 'right'):
         next_page_side = initial_next_page['break']
     elif initial_next_page['break'] in ('recto', 'verso'):
@@ -830,15 +832,14 @@ def remake_page(index, group_index, context, root_box, html):
         (next_page_side == 'left' and right_page) or
         (next_page_side == 'right' and not right_page) or
         (context.reported_footnotes and initial_resume_at is None))
-    next_page_name = '' if blank else initial_next_page['page']
-    if next_page_name not in group_index:
+    name = '' if blank else initial_next_page['page']
+    if name not in group_index:
         group_index.clear()
-        group_index[next_page_name] = 0
+        group_index[name] = 0
     side = 'right' if right_page else 'left'
-    name = (next_page_name, group_index[next_page_name])
-    page_type = PageType(side, blank, first, index, name)
+    page_type = PageType(side, blank, name, index, group_index[name])
     set_page_type_computed_styles(page_type, html, context.style_for)
-    group_index[next_page_name] += 1
+    group_index[name] += 1
 
     context.forced_break = (
         initial_next_page['break'] != 'any' or initial_next_page['page'])
