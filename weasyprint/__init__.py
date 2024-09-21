@@ -12,8 +12,8 @@ from pathlib import Path
 from urllib.parse import urljoin
 
 import cssselect2
-import html5lib
 import tinycss2
+import tinyhtml5
 
 VERSION = __version__ = '62.3'
 
@@ -111,7 +111,7 @@ def _find_base_url(html_document, fallback_base_url):
 
 
 class HTML:
-    """HTML document parsed by html5lib.
+    """HTML document parsed by tinyhtml5.
 
     You can just create an instance with a positional argument:
     ``doc = HTML(something)``
@@ -169,14 +169,14 @@ class HTML:
             guess, filename, url, file_obj, string, base_url, url_fetcher)
         with result as (source_type, source, base_url, protocol_encoding):
             if isinstance(source, str):
-                result = html5lib.parse(source, namespaceHTMLElements=False)
+                result = tinyhtml5.parse(source, namespace_html_elements=False)
             else:
-                kwargs = {'namespaceHTMLElements': False}
+                kwargs = {'namespace_html_elements': False}
                 if protocol_encoding is not None:
                     kwargs['transport_encoding'] = protocol_encoding
                 if encoding is not None:
                     kwargs['override_encoding'] = encoding
-                result = html5lib.parse(source, **kwargs)
+                result = tinyhtml5.parse(source, **kwargs)
         self.base_url = _find_base_url(result, base_url)
         self.url_fetcher = url_fetcher
         self.media_type = media_type

@@ -14,7 +14,7 @@ license = {file = 'LICENSE'}
 dependencies = [
   'pydyf >=0.11.0,<0.12',
   'cffi >=0.6,<2',
-  'html5lib >=1.1,<2',
+  'tinyhtml5 >=2.0.0b1,<3',
   'tinycss2 >=1.3.0,<2',
   'cssselect2 >=0.1,<0.8',
   'Pyphen >=0.9.1,<0.16',
