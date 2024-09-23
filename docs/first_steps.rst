@@ -176,6 +176,13 @@ Windows
 To use WeasyPrint on Windows, the easiest way is to use the `executable`_ of
 the latest release.
 
+.. warning::
+
+   WeasyPrint is regularly marked as malware by different antivirus companies.
+   See `#2081`_ or `#2092`_ to get more information on this topic. Don’t
+   hesitate to report the false positive detection to your antivirus company in
+   order to improve malware detection for future versions.
+
 If you want to use WeasyPrint as a Python library, you’ll have to follow a few
 extra steps. Please read this chapter carefully.
 
@@ -200,6 +207,8 @@ typing ``cmd`` and clicking the "Command Prompt" icon. Install WeasyPrint in a
   python3 -m weasyprint --info
 
 .. _executable: https://github.com/Kozea/WeasyPrint/releases
+.. _#2081: https://github.com/Kozea/WeasyPrint/issues/2081
+.. _#2092: https://github.com/Kozea/WeasyPrint/issues/2092
 .. _Microsoft Store: https://apps.microsoft.com/store/search/python
 .. _MSYS2: https://www.msys2.org/#installation
 
