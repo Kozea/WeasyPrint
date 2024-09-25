@@ -309,3 +309,22 @@ def test_bounding_box_path_s(assert_pixels):
         </g>
       </svg>
     ''')
+
+
+@assert_no_logs
+def test_svg_empty_size(assert_pixels):
+    assert_pixels('''
+        BBB__
+        BBB__
+        BBB__
+        BBB__
+        _____
+    ''', '''
+      <style>
+        @page { size: 5px }
+        svg { display: block }
+      </style>
+      <svg xmlns="http://www.w3.org/2000/svg">
+        <rect x="0" y="0" width="3" height="4" fill="blue" />
+      </svg>
+    ''')
