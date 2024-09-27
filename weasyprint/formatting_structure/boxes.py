@@ -310,6 +310,17 @@ class Box:
             (self.style['overflow'] == 'hidden' and
              self.style['height'] != 'auto'))
 
+    def establishes_formatting_context(self):
+        """Return whether this box establishes a block formatting context."""
+        # See https://www.w3.org/TR/CSS2/visuren.html#block-formatting
+        return (
+            self.is_floated() or
+            self.is_absolutely_positioned() or
+            self.is_column or
+            (isinstance(self, BlockContainerBox) and not isinstance(self, BlockBox)) or
+            (isinstance(self, BlockBox) and self.style['overflow'] != 'visible') or
+            'flow-root' in self.style['display'])
+
     # Start and end page values for named pages
 
     def page_values(self):
