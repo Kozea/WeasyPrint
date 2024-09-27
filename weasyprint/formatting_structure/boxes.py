@@ -313,8 +313,6 @@ class Box:
     def establishes_formatting_context(self):
         """Return whether this box establishes a block formatting context."""
         # See https://www.w3.org/TR/CSS2/visuren.html#block-formatting
-        # TODO: columns shouldn't be block boxes, this condition would then be
-        # useless when this is fixed
         return (
             self.is_floated() or
             self.is_absolutely_positioned() or

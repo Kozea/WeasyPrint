@@ -124,8 +124,11 @@ def block_box_layout(context, box, bottom_space, skip_stack,
     result = block_container_layout(
         context, box, bottom_space, skip_stack, page_is_empty,
         absolute_boxes, fixed_boxes, adjoining_margins, discard, max_lines)
-    new_box = result[0]
-    if new_box and new_box.is_table_wrapper:
+    # TODO: columns shouldn't be block boxes, this condition would then be
+    # useless when this is fixed.
+    if not (new_box := result[0]) or new_box.is_column:
+        return result
+    if new_box.is_table_wrapper or new_box.establishes_formatting_context():
         # Don't collide with floats
         # https://www.w3.org/TR/CSS21/visuren.html#floats
         position_x, position_y, _ = avoid_collisions(
