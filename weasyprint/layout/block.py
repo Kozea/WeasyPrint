@@ -630,7 +630,7 @@ def block_container_layout(context, box, bottom_space, skip_stack,
     # block_container_layout, there's probably a better solution.
     assert isinstance(box, (boxes.BlockContainerBox, boxes.FlexBox))
 
-    if establishes_formatting_context(box):
+    if box.establishes_formatting_context():
         context.create_block_formatting_context()
 
     is_start = skip_stack is None
@@ -652,7 +652,7 @@ def block_container_layout(context, box, bottom_space, skip_stack,
 
     collapsing_with_children = not (
         box.border_top_width or box.padding_top or box.is_flex_item or
-        box.is_grid_item or establishes_formatting_context(box) or
+        box.is_grid_item or box.establishes_formatting_context() or
         box.is_for_root_element)
     if collapsing_with_children:
         # Not counting margins in adjoining_margins, if any
@@ -800,7 +800,7 @@ def block_container_layout(context, box, bottom_space, skip_stack,
 
     if (box.border_bottom_width or
             box.padding_bottom or
-            establishes_formatting_context(box) or
+            box.establishes_formatting_context() or
             box.is_for_root_element or
             box.is_table_wrapper):
         position_y += collapse_margin(adjoining_margins)
@@ -837,7 +837,7 @@ def block_container_layout(context, box, bottom_space, skip_stack,
     for child in new_box.children:
         relative_positioning(child, (new_box.width, new_box.height))
 
-    if establishes_formatting_context(new_box):
+    if new_box.establishes_formatting_context():
         context.finish_block_formatting_context(new_box)
 
     if discard or not box_is_fragmented:
@@ -873,30 +873,6 @@ def collapse_margin(adjoining_margins):
     positives = (m for m in margins if m >= 0)
     negatives = (m for m in margins if m <= 0)
     return max(positives) + min(negatives)
-
-
-def establishes_formatting_context(box):
-    """Return whether a box establishes a block formatting context.
-
-    See https://www.w3.org/TR/CSS2/visuren.html#block-formatting
-
-    """
-    return (
-        box.is_floated()
-    ) or (
-        box.is_absolutely_positioned()
-    ) or (
-        # TODO: columns shouldn't be block boxes, this condition would then be
-        # useless when this is fixed
-        box.is_column
-    ) or (
-        isinstance(box, boxes.BlockContainerBox) and
-        not isinstance(box, boxes.BlockBox)
-    ) or (
-        isinstance(box, boxes.BlockBox) and box.style['overflow'] != 'visible'
-    ) or (
-        'flow-root' in box.style['display']
-    )
 
 
 def block_level_page_break(sibling_before, sibling_after):
