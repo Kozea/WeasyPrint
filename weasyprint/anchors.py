@@ -27,11 +27,11 @@ def rectangle_aabb(matrix, pos_x, pos_y, width, height):
     return box_x1, box_y1, box_x2, box_y2
 
 
-def gather_anchors(box, anchors, links, bookmarks, forms, debug, parent_matrix=None,
+def gather_anchors(box, anchors, links, bookmarks, forms, parent_matrix=None,
                    parent_form=None):
     """Gather anchors and other data related to specific positions in PDF.
 
-    Currently finds anchors, links, bookmarks, forms and debug ids.
+    Currently finds anchors, links, bookmarks and forms.
 
     """
     # Get box transformation matrix.
@@ -113,27 +113,20 @@ def gather_anchors(box, anchors, links, bookmarks, forms, debug, parent_matrix=N
             links.append((link_type, target, rectangle, box))
         if is_input:
             forms[parent_form].append((box.element, box.style, rectangle))
-        if matrix and (has_bookmark or has_anchor):
-            pos_x, pos_y = matrix.transform_point(pos_x, pos_y)
         if has_bookmark:
+            if matrix:
+                pos_x, pos_y = matrix.transform_point(pos_x, pos_y)
             bookmark = (bookmark_level, bookmark_label, (pos_x, pos_y), state)
             bookmarks.append(bookmark)
         if has_anchor:
-            anchors[anchor_name] = pos_x, pos_y
-
-    # And this is what got added for debugging,
-    # everything that's not covered by the previous categories
-    else:
-        # Not sure why, but all elements are here twice?
-        if(box.element is not None and box.element.get("id") is not None) :
-            # print(box.element.tag, box.element.get("id"))
-            pos_x, pos_y, width, height = box.hit_area()
-            rectangle = rectangle_aabb(matrix, pos_x, pos_y, width, height)
-            debug.append((box.element, box.style, rectangle, box))
+            pos_x1, pos_y1, pos_x2, pos_y2 = pos_x, pos_y, pos_x + width, pos_y + height
+            if matrix:
+                pos_x1, pos_y1 = matrix.transform_point(pos_x1, pos_y1)
+                pos_x2, pos_y2 = matrix.transform_point(pos_x2, pos_y2)
+            anchors[anchor_name] = (pos_x1, pos_y1, pos_x2, pos_y2)
 
     for child in box.all_children():
-        gather_anchors(child, anchors, links, bookmarks, forms, debug, matrix,
-                       parent_form)
+        gather_anchors(child, anchors, links, bookmarks, forms, matrix, parent_form)
 
 
 def make_page_bookmark_tree(page, skipped_levels, last_by_depth,

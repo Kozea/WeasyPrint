@@ -1,69 +1,39 @@
+"""PDF generation with debug information."""
 
 import pydyf
 
+from ..matrix import Matrix
 
-def add_debug(debug, matrix, pdf, page, names, mark):
-    """Include anchors for each element with an ID in a given PDF page."""
-    if not debug:
-        return
 
-    if 'Annots' not in page:
-        page['Annots'] = pydyf.Array()
+def debug(pdf, metadata, document, page_streams, attachments, compress):
+    """Set debug PDF metadata."""
 
-    ids = {}
+    # Add links on ids.
+    pages = zip(pdf.pages['Kids'][::3], document.pages, page_streams)
+    for pdf_page_number, document_page, stream in pages:
+        if not document_page.anchors:
+            continue
 
-    for i, (element, style, rectangle, box) in enumerate(debug):
-        id = element.get("id")
-        if id.startswith("auto-id"):
-            id = "-".join(id.split("-")[:4])
-            if id in ids:
-                ids[id] += 1
-            else:
-                ids[id] = 0
-            final_id = id + "-" + str(ids[id])
-            element.set("id", final_id)
-            id = final_id
-            # print("add_debug", element.get("id"))
-        x1, y1 = matrix.transform_point(*rectangle[:2])
-        x2, y2 = matrix.transform_point(*rectangle[2:])
-        box.annotation = pydyf.Dictionary({
-            'Type': '/Annot',
-            'Subtype': '/Link',
-            # 'Subtype': '/Square',
-            'Rect': pydyf.Array([x1, y1, x2, y2]),
-            'P': page.reference,
-            # 'BS': pydyf.Dictionary({'W': 1}), # border style
-            'T': pydyf.String(id), # the title element gets added as metadata
-        })
+        page = pdf.objects[pdf_page_number]
+        if 'Annots' not in page:
+            page['Annots'] = pydyf.Array()
 
-        # Internal links are deactivated when in local
-        # See: https://github.com/mozilla/pdf.js/issues/12415
-        # box.annotation['A'] = pydyf.Dictionary({
-        #     'Type': '/Action',
-        #     'S': '/URI',
-        #     'URI': pydyf.String("#" + id)
-        # })
+        for id, (x1, y1, x2, y2) in document_page.anchors.items():
+            # TODO: handle zoom correctly.
+            matrix = Matrix(0.75, 0, 0, 0.75) @ stream.ctm
+            x1, y1 = matrix.transform_point(x1, y1)
+            x2, y2 = matrix.transform_point(x2, y2)
+            annotation = pydyf.Dictionary({
+                'Type': '/Annot',
+                'Subtype': '/Link',
+                'Rect': pydyf.Array([x1, y1, x2, y2]),
+                'BS': pydyf.Dictionary({'W': 0}),
+                'P': page.reference,
+                'T': pydyf.String(id),  # id added as metadata
+            })
 
-        # Internal links - works better with a local version PDFjs... But why?
-        box.annotation['Dest'] = pydyf.String(id)
+            pdf.add_object(annotation)
+            page['Annots'].append(annotation.reference)
 
-        # In order to preserve page references
-        names.append([id, pydyf.Array([page.reference, '/XYZ', x1, y1, 0])])
 
-        # Actually adding the PDF object
-        pdf.add_object(box.annotation)
-        page['Annots'].append(box.annotation.reference)
-
-def resolve_debug(pages):
-    '''Resolve the added debug IDs. Inspired from resolve_links.
-    '''
-    paged_debug = []
-    for i, page in enumerate(pages):
-        paged_debug.append([])
-        # for (element, style, rectangle, box) in page.debug:
-        #     debug.append(element.get('id'))
-    for page in pages:
-        page_debug = []
-        for m in page.debug:
-            page_debug.append(m)
-        yield page_debug, paged_debug.pop(0)
+VARIANTS = {'debug': (debug, {})}

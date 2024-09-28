@@ -8,7 +8,7 @@ from .. import VERSION, Attachment
 from ..html import W3C_DATE_RE
 from ..logger import LOGGER, PROGRESS_LOGGER
 from ..matrix import Matrix
-from . import pdfa, pdfua
+from . import debug, pdfa, pdfua
 from .fonts import build_fonts_dictionary
 from .stream import Stream
 
@@ -16,10 +16,8 @@ from .anchors import (  # isort:skip
     add_annotations, add_forms, add_links, add_outlines, resolve_links,
     write_pdf_attachment)
 
-from .debug import add_debug, resolve_debug
-
 VARIANTS = {
-    name: data for variants in (pdfa.VARIANTS, pdfua.VARIANTS)
+    name: data for variants in (pdfa.VARIANTS, pdfua.VARIANTS, debug.VARIANTS)
     for (name, data) in variants.items()}
 
 
@@ -147,14 +145,11 @@ def generate_pdf(document, target, zoom, **options):
     # Links and anchors
     page_links_and_anchors = list(resolve_links(document.pages))
 
-    # Debug links and anchors
-    page_debug = list(resolve_debug(document.pages))
-
     annot_files = {}
     pdf_pages, page_streams = [], []
     compress = not options['uncompressed_pdf']
-    for page_number, (page, links_and_anchors, debug) in enumerate(
-            zip(document.pages, page_links_and_anchors, page_debug)):
+    for page_number, (page, links_and_anchors) in enumerate(
+            zip(document.pages, page_links_and_anchors)):
         # Draw from the top-left corner
         matrix = Matrix(scale, 0, 0, -scale, 0, page.height * scale)
 
@@ -197,9 +192,6 @@ def generate_pdf(document, target, zoom, **options):
         add_forms(
             page.forms, matrix, pdf, pdf_page, resources, stream,
             document.font_config.font_map, compress)
-        add_debug(debug[0], matrix, pdf, pdf_page, pdf_names, mark)
-        page.paint(stream, scale)
-
         page.paint(stream, scale)
 
         # Bleed
