@@ -1,5 +1,5 @@
 name: WeasyPrint’s macOS binary generation
-on: [push, pull_request]
+on: [push]
 
 jobs:
   generate:
