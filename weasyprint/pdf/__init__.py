@@ -8,7 +8,7 @@ from .. import VERSION, Attachment
 from ..html import W3C_DATE_RE
 from ..logger import LOGGER, PROGRESS_LOGGER
 from ..matrix import Matrix
-from . import pdfa, pdfua
+from . import debug, pdfa, pdfua
 from .fonts import build_fonts_dictionary
 from .stream import Stream
 
@@ -17,7 +17,7 @@ from .anchors import (  # isort:skip
     write_pdf_attachment)
 
 VARIANTS = {
-    name: data for variants in (pdfa.VARIANTS, pdfua.VARIANTS)
+    name: data for variants in (pdfa.VARIANTS, pdfua.VARIANTS, debug.VARIANTS)
     for (name, data) in variants.items()}
 
 

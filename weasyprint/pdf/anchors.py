@@ -406,7 +406,7 @@ def resolve_links(pages):
     paged_anchors = []
     for i, page in enumerate(pages):
         paged_anchors.append([])
-        for anchor_name, (point_x, point_y) in page.anchors.items():
+        for anchor_name, (point_x, point_y, _, _) in page.anchors.items():
             if anchor_name not in anchors:
                 paged_anchors[-1].append((anchor_name, point_x, point_y))
                 anchors.add(anchor_name)

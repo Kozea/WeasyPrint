@@ -113,13 +113,17 @@ def gather_anchors(box, anchors, links, bookmarks, forms, parent_matrix=None,
             links.append((link_type, target, rectangle, box))
         if is_input:
             forms[parent_form].append((box.element, box.style, rectangle))
-        if matrix and (has_bookmark or has_anchor):
-            pos_x, pos_y = matrix.transform_point(pos_x, pos_y)
         if has_bookmark:
+            if matrix:
+                pos_x, pos_y = matrix.transform_point(pos_x, pos_y)
             bookmark = (bookmark_level, bookmark_label, (pos_x, pos_y), state)
             bookmarks.append(bookmark)
         if has_anchor:
-            anchors[anchor_name] = pos_x, pos_y
+            pos_x1, pos_y1, pos_x2, pos_y2 = pos_x, pos_y, pos_x + width, pos_y + height
+            if matrix:
+                pos_x1, pos_y1 = matrix.transform_point(pos_x1, pos_y1)
+                pos_x2, pos_y2 = matrix.transform_point(pos_x2, pos_y2)
+            anchors[anchor_name] = (pos_x1, pos_y1, pos_x2, pos_y2)
 
     for child in box.all_children():
         gather_anchors(child, anchors, links, bookmarks, forms, matrix, parent_form)
