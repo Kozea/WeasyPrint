@@ -1,5 +1,5 @@
-name: WeasyPrint’s exe generation
-on: [pull_request]
+name: WeasyPrint’s macOS binary generation
+on: [push, pull_request]
 
 jobs:
   generate:
