@@ -22,11 +22,7 @@ jobs:
         run: python -m pip install . pyinstaller
       - name: Generate executable with included libraries
         run: |
-          python -m PyInstaller weasyprint/__main__.py -n weasyprint -F --hidden-import "fontTools.ttLib.tables.V_A_R_C_" \
-            --add-binary "/opt/homebrew/lib/libgobject-2.0.dylib:." \
-            --add-binary "/opt/homebrew/lib/libpangocairo-1.0.dylib:." \
-            --add-binary "/opt/homebrew/lib/libpangox-1.0.dylib:." \
-            --add-binary "/opt/homebrew/lib/libpango-1.0.dylib:."
+          python -m PyInstaller weasyprint/__main__.py -n weasyprint -F --add-binary "/opt/homebrew/lib/libgobject-2.0.dylib:."
       - name: Test executable
         run: dist/weasyprint --info
       - name: Store executable
