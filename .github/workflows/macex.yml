@@ -20,9 +20,15 @@ jobs:
           sed -i '' 's/^from \./from weasyprint\./' weasyprint/__main__.py
       - name: Install requirements
         run: python -m pip install . pyinstaller
+      - name: Create dyld PATH hook
+        run: |
+          echo "import os" > weasyprint/set_dyld_path.py
+          echo "import sys" >> weasyprint/set_dyld_path.py
+          echo "lib_path = os.path.join(sys._MEIPASS, 'lib')" >> weasyprint/set_dyld_path.py
+          echo "os.environ['DYLD_LIBRARY_PATH'] = lib_path" >> weasyprint/set_dyld_path.py
       - name: Generate executable with included libraries
         run: |
-          python -m PyInstaller weasyprint/__main__.py -n weasyprint -F --add-binary "/opt/homebrew/lib/libgobject-2.0.dylib:."
+          python -m PyInstaller weasyprint/__main__.py -n weasyprint -F --add-binary "/opt/homebrew/Cellar/glib/2.82.1/lib/libgobject-2.0.0.dylib:./lib" --add-binary "/opt/homebrew/lib/libgobject-2.0.dylib:./lib" --add-binary "/opt/homebrew/Cellar/pango/1.54.0/lib/libpango-1.0.0.dylib:./lib" --add-binary "/opt/homebrew/lib/libpango-1.0.dylib:./lib" --add-binary "/opt/homebrew/Cellar/fontconfig/2.15.0/lib/libfontconfig.1.dylib:./lib" --add-binary "/opt/homebrew/lib/libfontconfig.1.dylib:./lib" --add-binary "/opt/homebrew/lib/libfontconfig.dylib:./lib" --add-binary "/opt/homebrew/lib/libpangoft2-1.0.0.dylib:./lib" --add-binary "/opt/homebrew/lib/libpangoft2-1.0.dylib:./lib" --add-binary "/opt/homebrew/Cellar/pango/1.54.0/lib/libpangoft2-1.0.0.dylib:./lib" --runtime-hook weasyprint/set_dyld_path.py
       - name: Test executable
         run: dist/weasyprint --info
       - name: Store executable
