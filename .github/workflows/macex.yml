@@ -11,7 +11,7 @@ jobs:
           python-version: '3.12'
       - name: Install dependencies
         run: |
-          brew install pango gobject-introspection cairo
+          brew install pango gobject-introspection cairo glib
           brew install python@3.12
           echo "export PATH=\"/opt/homebrew/opt/python@3.12/bin:$PATH\"" >> $GITHUB_ENV
       - name: Ensure absolute imports
