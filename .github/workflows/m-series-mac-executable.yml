@@ -1,4 +1,4 @@
-name: WeasyPrint’s macOS binary generation
+name: WeasyPrint’s M-series macOS binary generation
 on: [push]
 
 jobs:
