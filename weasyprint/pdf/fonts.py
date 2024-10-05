@@ -12,7 +12,7 @@ from fontTools.varLib.mutator import instantiateVariableFont
 
 from ..logger import LOGGER, capture_logs
 from ..text.constants import PANGO_STRETCH_PERCENT
-from ..text.ffi import ffi, harfbuzz, harfbuzz_subset, pango, units_to_double
+from ..text.ffi import FROM_UNITS, ffi, harfbuzz, harfbuzz_subset, pango
 from ..text.fonts import get_hb_object_data, get_pango_font_hb_face
 
 
@@ -121,7 +121,7 @@ class Font:
                     self.description)
                 self.variations['wght'] = weight
             if 'opsz' not in self.variations:
-                self.variations['opsz'] = units_to_double(self.font_size)
+                self.variations['opsz'] = self.font_size * FROM_UNITS
             if 'slnt' not in self.variations:
                 slnt = 0
                 if self.style == 1:

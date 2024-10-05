@@ -875,3 +875,28 @@ def test_otb_font(assert_pixels):
         }
       </style>
       AaA''')
+
+
+def test_huge_justification(assert_pixels):
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/2262
+    assert_pixels('''
+        ____
+        _RR_
+        _RR_
+        ____
+    ''', '''
+      <style>
+        @page {
+          size: 4px 4px;
+          margin: 1px;
+        }
+        body {
+          color: red;
+          font-family: weasyprint;
+          font-size: 2px;
+          line-height: 1;
+          text-align: justify-all;
+          width: 100000px;
+        }
+      </style>
+      A B''')

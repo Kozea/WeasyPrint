@@ -6,11 +6,8 @@ from math import inf
 import pyphen
 
 from .constants import LST_TO_ISO, PANGO_WRAP_MODE
+from .ffi import FROM_UNITS, TO_UNITS, ffi, gobject, pango, pangoft2, unicode_to_char_p
 from .fonts import font_features, get_font_description
-
-from .ffi import (  # isort:skip
-    ffi, gobject, pango, pangoft2, unicode_to_char_p, units_from_double,
-    units_to_double)
 
 
 def line_size(line, style):
@@ -21,8 +18,8 @@ def line_size(line, style):
     """
     logical_extents = ffi.new('PangoRectangle *')
     pango.pango_layout_line_get_extents(line, ffi.NULL, logical_extents)
-    width = units_to_double(logical_extents.width)
-    height = units_to_double(logical_extents.height)
+    width = logical_extents.width * FROM_UNITS
+    height = logical_extents.height * FROM_UNITS
     ffi.release(logical_extents)
     if style['letter_spacing'] != 'normal':
         width += style['letter_spacing']
@@ -52,7 +49,7 @@ def first_line_metrics(first_line, text, layout, resume_at, space_collapse,
         length = first_line.length if first_line is not None else 0
 
     width, height = line_size(first_line, style)
-    baseline = units_to_double(pango.pango_layout_get_baseline(layout.layout))
+    baseline = pango.pango_layout_get_baseline(layout.layout) * FROM_UNITS
     layout.deactivate()
     return layout, length, resume_at, width, height, baseline
 
@@ -107,15 +104,15 @@ class Layout:
                 pango.pango_context_get_metrics(
                     pango_context, font_description, self.language),
                 pango.pango_font_metrics_unref)
-            self.ascent = units_to_double(
+            self.ascent = FROM_UNITS * (
                 pango.pango_font_metrics_get_ascent(metrics))
-            self.underline_position = units_to_double(
+            self.underline_position = FROM_UNITS * (
                 pango.pango_font_metrics_get_underline_position(metrics))
-            self.strikethrough_position = units_to_double(
+            self.strikethrough_position = FROM_UNITS * (
                 pango.pango_font_metrics_get_strikethrough_position(metrics))
-            self.underline_thickness = units_to_double(
+            self.underline_thickness = FROM_UNITS * (
                 pango.pango_font_metrics_get_underline_thickness(metrics))
-            self.strikethrough_thickness = units_to_double(
+            self.strikethrough_thickness = FROM_UNITS * (
                 pango.pango_font_metrics_get_strikethrough_thickness(metrics))
         else:
             self.ascent = None
@@ -179,7 +176,7 @@ class Layout:
                 pango.pango_attr_list_change(attr_list, attr)
 
             if letter_spacing:
-                letter_spacing = units_from_double(letter_spacing)
+                letter_spacing = int(letter_spacing * TO_UNITS)
                 add_attr(0, len(bytestring), letter_spacing)
 
             if word_spacing:
@@ -189,8 +186,7 @@ class Layout:
                     text, bytestring = unicode_to_char_p(self.text)
                     pango.pango_layout_set_text(self.layout, text, -1)
 
-                space_spacing = (
-                    units_from_double(word_spacing) + letter_spacing)
+                space_spacing = int(word_spacing * TO_UNITS + letter_spacing)
                 position = bytestring.find(b' ')
                 # Pango gives only half of word-spacing on boundaries
                 boundary_positions = (0, len(bytestring) - 1)
@@ -243,8 +239,7 @@ def create_layout(text, style, context, max_width, justification_spacing):
     # signed integer. Treat bigger values same as None: unconstrained width.
     text_wrap = style['white_space'] in ('normal', 'pre-wrap', 'pre-line')
     if max_width is not None and text_wrap and max_width < 2 ** 21:
-        pango.pango_layout_set_width(
-            layout.layout, units_from_double(max(0, max_width)))
+        pango.pango_layout_set_width(layout.layout, int(max(0, max_width) * TO_UNITS))
 
     layout.set_text(text)
     return layout
@@ -473,10 +468,8 @@ def split_first_line(text, style, context, max_width, justification_spacing,
         # instance) from keeping their shape when wrapped on the next line with
         # pango layout. Maybe insert Unicode shaping characters in text?
         layout.set_text(text)
-        pango.pango_layout_set_width(
-            layout.layout, units_from_double(max_width))
-        pango.pango_layout_set_wrap(
-            layout.layout, PANGO_WRAP_MODE['WRAP_CHAR'])
+        pango.pango_layout_set_width(layout.layout, int(max_width * TO_UNITS))
+        pango.pango_layout_set_wrap(layout.layout, PANGO_WRAP_MODE['WRAP_CHAR'])
         first_line, index = layout.get_first_line()
         resume_index = index or first_line.length
         if resume_index >= len(text.encode()):

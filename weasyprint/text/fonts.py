@@ -17,8 +17,7 @@ from .constants import (  # isort:skip
     CAPS_KEYS, EAST_ASIAN_KEYS, FONTCONFIG_STRETCH, FONTCONFIG_STYLE,
     FONTCONFIG_WEIGHT, LIGATURE_KEYS, NUMERIC_KEYS, PANGO_STRETCH, PANGO_STYLE)
 from .ffi import (  # isort:skip
-    ffi, fontconfig, gobject, harfbuzz, pango, pangoft2, unicode_to_char_p,
-    units_from_double)
+    TO_UNITS, ffi, fontconfig, gobject, harfbuzz, pango, pangoft2, unicode_to_char_p)
 
 
 def _check_font_configuration(font_config):  # pragma: no cover
@@ -317,7 +316,7 @@ def get_font_description(style):
     pango.pango_font_description_set_stretch(font_description, font_stretch)
     font_weight = style['font_weight']
     pango.pango_font_description_set_weight(font_description, font_weight)
-    font_size = units_from_double(style['font_size'])
+    font_size = int(style['font_size'] * TO_UNITS)
     pango.pango_font_description_set_absolute_size(font_description, font_size)
     if style['font_variation_settings'] != 'normal':
         string = ','.join(

@@ -463,8 +463,9 @@ pangoft2 = _dlopen(
 
 gobject.g_type_init()
 
-units_to_double = pango.pango_units_to_double
-units_from_double = pango.pango_units_from_double
+# Call once to avoid int overflows.
+TO_UNITS = pango.pango_units_from_double(1)
+FROM_UNITS = pango.pango_units_to_double(1)
 
 
 def unicode_to_char_p(string):

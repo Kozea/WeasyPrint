@@ -7,7 +7,7 @@ from PIL import Image
 
 from ..images import RasterImage, SVGImage
 from ..matrix import Matrix
-from ..text.ffi import ffi, pango, units_from_double, units_to_double
+from ..text.ffi import FROM_UNITS, TO_UNITS, ffi, pango
 from ..text.fonts import get_hb_object_data
 from ..text.line_break import get_last_word_end
 from .border import draw_line
@@ -89,7 +89,7 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
         assert textbox.pango_layout.max_width is not None
         max_width = textbox.pango_layout.max_width
         pango.pango_layout_set_width(
-            textbox.pango_layout.layout, units_from_double(max_width))
+            textbox.pango_layout.layout, int(max_width * TO_UNITS))
         if text_overflow == 'ellipsis':
             pango.pango_layout_set_ellipsize(
                 textbox.pango_layout.layout, pango.PANGO_ELLIPSIZE_END)
@@ -194,12 +194,11 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
                 pango.pango_font_get_glyph_extents(
                     pango_font, glyph, stream.ink_rect, stream.logical_rect)
                 font.widths[glyph] = int(round(
-                    units_to_double(stream.logical_rect.width * 1000) /
-                    font_size))
+                    stream.logical_rect.width * 1000 * FROM_UNITS / font_size))
 
             # Set kerning, word spacing, letter spacing.
             kerning = int(
-                font.widths[glyph] - units_to_double(width * 1000) / font_size + offset)
+                font.widths[glyph] + offset - width * 1000 * FROM_UNITS / font_size)
             if kerning:
                 string += f'>{kerning}<'
 
@@ -237,9 +236,8 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
                     pango.pango_font_get_glyph_extents(
                         pango_font, glyph, stream.ink_rect,
                         stream.logical_rect)
-                    f = units_to_double(
-                        (-stream.logical_rect.y - stream.logical_rect.height))
-                    f = f / font_size - font_size
+                    f = -stream.logical_rect.y - stream.logical_rect.height
+                    f = f * FROM_UNITS / font_size - font_size
                     emojis.append([image, font, a, d, x_advance, f])
 
             x_advance += (font.widths[glyph] + offset - kerning) / 1000

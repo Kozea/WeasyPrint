@@ -6,7 +6,7 @@ from urllib.parse import unquote
 from tinycss2.color3 import parse_color
 
 from ..logger import LOGGER
-from ..text.ffi import ffi, pango, units_to_double
+from ..text.ffi import FROM_UNITS, ffi, pango
 from ..text.line_break import Layout, first_line_metrics
 from ..urls import get_link_attribute
 from .properties import INITIAL_VALUES, ZERO_PIXELS, Dimension
@@ -815,9 +815,9 @@ def character_ratio(style, character):
     logical_extents = ffi.new('PangoRectangle *')
     pango.pango_layout_line_get_extents(line, ink_extents, logical_extents)
     if character == 'x':
-        measure = -units_to_double(ink_extents.y)
+        measure = -ink_extents.y * FROM_UNITS
     else:
-        measure = units_to_double(logical_extents.width)
+        measure = logical_extents.width * FROM_UNITS
     ffi.release(ink_extents)
     ffi.release(logical_extents)
 
