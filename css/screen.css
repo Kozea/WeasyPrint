@@ -568,6 +568,10 @@ nav #sponsor a:is(:hover, :focus) {
     display: initial;
   }
 
+  #support #packages article {
+    display: relative;
+  }
+
   #support article section {
     margin: 1em auto;
   }
