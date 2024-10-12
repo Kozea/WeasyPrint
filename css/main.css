@@ -102,6 +102,11 @@ h3 {
   font-weight: normal;
 }
 
+h4 {
+  color: var(--black);
+  font-size: 1.2em;
+  font-weight: normal;
+}
 
 
 /* Specific Classes */

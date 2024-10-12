@@ -431,11 +431,12 @@ nav #sponsor a:is(:hover, :focus) {
   padding: 1em 8em;
 }
 
-#support h3 {
+#support h4 {
   margin-top: 0.5em;
 }
 
-#support article {
+#services article,
+#packages article {
   display: grid;
   gap: 2em;
   grid-auto-columns: 45%;
@@ -443,14 +444,34 @@ nav #sponsor a:is(:hover, :focus) {
   margin: 2em 0;
 }
 
-#support article section {
+#services article section,
+#packages article section {
   background: var(--white);
   border: 1px solid;
   padding: 1em 2em;
   transition: 0.5s;
 }
 
-#support article section:hover {
+#packages article {
+  gap: 1em;
+  grid-auto-columns: 32%;
+  grid-template-areas: "a a a";
+  margin-left: -4.3em;
+  position: relative;
+  width: 120%;
+}
+
+#packages article ul {
+  position: absolute;
+  bottom: 0;
+}
+
+#packages article section {
+  padding-bottom: 5em;
+}
+
+#services article section:hover,
+#packages article section:hover {
   border-color: var(--green);
 }
 
