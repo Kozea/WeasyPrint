@@ -132,6 +132,7 @@ h4 {
   display: inline-block;
   margin: 0;
   padding: 1em;
+  white-space: nowrap;
 }
 
 .buttons a::before {
