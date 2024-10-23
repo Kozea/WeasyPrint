@@ -77,13 +77,7 @@ To install WeasyPrint using your distribution’s package::
 
   apk add weasyprint
 
-To install WeasyPrint inside a virtualenv using wheels (if possible), you need
-the following packages::
-
-  apk add py3-pip gcc musl-dev python3-dev pango zlib-dev jpeg-dev openjpeg-dev g++ libffi-dev harfbuzz-subset
-
-To install WeasyPrint inside a virtualenv without using wheels, you need the
-following packages::
+To install WeasyPrint, you need the following packages::
 
   apk add py3-pip gcc musl-dev python3-dev pango zlib-dev jpeg-dev openjpeg-dev g++ libffi-dev harfbuzz-subset
 
