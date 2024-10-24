@@ -114,7 +114,7 @@ class Stream(pydyf.Stream):
         super().set_font_size(font, size)
 
     def set_state(self, state):
-        key = f's{len(self._resources['ExtGState'])}'
+        key = f's{len(self._resources["ExtGState"])}'
         self._resources['ExtGState'][key] = state
         super().set_state(key)
 
@@ -187,7 +187,7 @@ class Stream(pydyf.Stream):
             }),
         })
         group = self.clone(resources=resources, extra=extra)
-        group.id = f'x{len(self._resources['XObject'])}'
+        group.id = f'x{len(self._resources["XObject"])}'
         self._resources['XObject'][group.id] = group
         return group
 
@@ -228,7 +228,7 @@ class Stream(pydyf.Stream):
             'Resources': resources,
         })
         pattern = self.clone(resources=resources, extra=extra)
-        pattern.id = f'p{len(self._resources['Pattern'])}'
+        pattern.id = f'p{len(self._resources["Pattern"])}'
         self._resources['Pattern'][pattern.id] = pattern
         return pattern
 
@@ -243,7 +243,7 @@ class Stream(pydyf.Stream):
         })
         if extend:
             shading['Extend'] = pydyf.Array((b'true', b'true'))
-        shading.id = f's{len(self._resources['Shading'])}'
+        shading.id = f's{len(self._resources["Shading"])}'
         self._resources['Shading'][shading.id] = shading
         return shading
 
