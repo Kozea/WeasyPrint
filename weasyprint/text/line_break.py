@@ -9,7 +9,6 @@ from .constants import LST_TO_ISO, PANGO_DIRECTION, PANGO_WRAP_MODE
 from .ffi import FROM_UNITS, TO_UNITS, ffi, gobject, pango, pangoft2, unicode_to_char_p
 from .fonts import font_features, get_font_description
 
-
 NBSP = '\u00a0'
 
 def line_size(line, style):
@@ -542,7 +541,8 @@ def get_next_word_boundaries(text, lang):
     log_attrs = get_log_attrs(text, lang)
     for i, attr in enumerate(log_attrs):
         follows_nbsp = (i < len(text) and text[i] == NBSP)
-        if follows_nbsp: continue
+        if follows_nbsp:
+            continue
         if attr.is_word_end:
             word_end = i
             break
