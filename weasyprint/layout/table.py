@@ -2,7 +2,7 @@
 
 from math import inf
 
-import tinycss2.color3
+import tinycss2.color4
 
 from ..formatting_structure import boxes
 from ..logger import LOGGER
@@ -928,7 +928,7 @@ def distribute_excess_width(context, grid, excess_width, column_widths, constrai
         column_widths[i] += excess_width / len(columns)
 
 
-TRANSPARENT = tinycss2.color3.parse_color('transparent')
+TRANSPARENT = tinycss2.color4.parse_color('transparent')
 
 
 def collapse_table_borders(table, grid_width, grid_height):

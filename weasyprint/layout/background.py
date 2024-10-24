@@ -3,7 +3,7 @@
 from collections import namedtuple
 from itertools import cycle
 
-from tinycss2.color3 import parse_color
+from tinycss2.color4 import parse_color
 
 from ..formatting_structure import boxes
 from . import replaced

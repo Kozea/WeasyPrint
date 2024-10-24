@@ -3,7 +3,7 @@
 from math import pi
 from urllib.parse import unquote
 
-from tinycss2.color3 import parse_color
+from tinycss2.color4 import parse_color
 
 from ..logger import LOGGER
 from ..text.ffi import FROM_UNITS, ffi, pango

@@ -45,8 +45,7 @@ def draw_text(stream, textbox, offset_x, text_overflow, block_ellipsis):
 
     # Draw text.
     x, y = textbox.position_x, textbox.position_y + textbox.baseline
-    stream.set_color_rgb(*textbox.style['color'][:3])
-    stream.set_alpha(textbox.style['color'][3])
+    stream.set_color(textbox.style['color'])
     textbox.pango_layout.reactivate(textbox.style)
     stream.begin_text()
     emojis = draw_first_line(

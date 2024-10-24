@@ -2,7 +2,7 @@
 
 import pytest
 import tinycss2
-from tinycss2.color3 import parse_color
+from tinycss2.color4 import parse_color
 
 from weasyprint.css import preprocess_declarations
 from weasyprint.css.properties import INITIAL_VALUES, ZERO_PIXELS

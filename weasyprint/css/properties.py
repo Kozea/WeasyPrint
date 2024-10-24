@@ -3,7 +3,7 @@
 import collections
 from math import inf
 
-from tinycss2.color3 import parse_color
+from tinycss2.color4 import parse_color
 
 Dimension = collections.namedtuple('Dimension', ['value', 'unit'])
 
@@ -49,20 +49,20 @@ INITIAL_VALUES = {
                              'top', Dimension(0, '%')),),
     'background_repeat': (('repeat', 'repeat'),),
     'background_size': (('auto', 'auto'),),
-    'border_bottom_color': 'currentColor',
+    'border_bottom_color': 'currentcolor',
     'border_bottom_left_radius': (ZERO_PIXELS, ZERO_PIXELS),
     'border_bottom_right_radius': (ZERO_PIXELS, ZERO_PIXELS),
     'border_bottom_style': 'none',
     'border_bottom_width': 3,
     'border_collapse': 'separate',
-    'border_left_color': 'currentColor',
+    'border_left_color': 'currentcolor',
     'border_left_style': 'none',
     'border_left_width': 3,
-    'border_right_color': 'currentColor',
+    'border_right_color': 'currentcolor',
     'border_right_style': 'none',
     'border_right_width': 3,
     'border_spacing': (0, 0),
-    'border_top_color': 'currentColor',
+    'border_top_color': 'currentcolor',
     'border_top_left_radius': (ZERO_PIXELS, ZERO_PIXELS),
     'border_top_right_radius': (ZERO_PIXELS, ZERO_PIXELS),
     'border_top_style': 'none',
@@ -96,7 +96,7 @@ INITIAL_VALUES = {
     # Multi-column Layout (WD): https://www.w3.org/TR/css-multicol-1/
     'column_width': 'auto',
     'column_count': 'auto',
-    'column_rule_color': 'currentColor',
+    'column_rule_color': 'currentcolor',
     'column_rule_style': 'none',
     'column_rule_width': 'medium',
     'column_fill': 'balance',
@@ -179,7 +179,7 @@ INITIAL_VALUES = {
 
     # User Interface 3/4 (REC/WD): https://www.w3.org/TR/css-ui-4/
     'appearance': 'none',
-    'outline_color': 'currentColor',  # invert is not supported
+    'outline_color': 'currentcolor',  # invert is not supported
     'outline_style': 'none',
     'outline_width': 3,  # computed value for 'medium'
 
@@ -224,7 +224,7 @@ INITIAL_VALUES = {
 
     # Text Decoration Module 3 (CR): https://www.w3.org/TR/css-text-decor-3/
     'text_decoration_line': 'none',
-    'text_decoration_color': 'currentColor',
+    'text_decoration_color': 'currentcolor',
     'text_decoration_style': 'solid',
 
     # Overflow Module 3/4 (WD): https://www.w3.org/TR/css-overflow-4/
