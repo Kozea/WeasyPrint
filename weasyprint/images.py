@@ -486,10 +486,7 @@ class Gradient:
 
         if type_ == 'solid':
             stream.rectangle(0, 0, concrete_width, concrete_height)
-            red, green, blue, alpha = colors[0]
-            stream.set_color_rgb(red, green, blue)
-            if alpha != 1:
-                stream.set_alpha(alpha, stroke=False)
+            stream.set_color(colors[0])
             stream.fill()
             return
 

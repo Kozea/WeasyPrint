@@ -191,7 +191,7 @@ def generate_pdf(document, target, zoom, **options):
             compress)
         add_forms(
             page.forms, matrix, pdf, pdf_page, resources, stream,
-            document.font_config.font_map, compress)
+            document.font_config.font_map)
         page.paint(stream, scale)
 
         # Bleed

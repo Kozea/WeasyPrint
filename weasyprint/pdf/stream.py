@@ -33,6 +33,27 @@ class Stream(pydyf.Stream):
         self.ink_rect = ffi.new('PangoRectangle *')
         self.logical_rect = ffi.new('PangoRectangle *')
 
+    def clone(self, **kwargs):
+        if 'fonts' not in kwargs:
+            kwargs['fonts'] = self._fonts
+        if 'page_rectangle' not in kwargs:
+            kwargs['page_rectangle'] = self.page_rectangle
+        if 'states' not in kwargs:
+            kwargs['states'] = self._states
+        if 'x_objects' not in kwargs:
+            kwargs['x_objects'] = self._x_objects
+        if 'patterns' not in kwargs:
+            kwargs['patterns'] = self._patterns
+        if 'shadings' not in kwargs:
+            kwargs['shadings'] = self._shadings
+        if 'images' not in kwargs:
+            kwargs['images'] = self._images
+        if 'mark' not in kwargs:
+            kwargs['mark'] = self._mark
+        if 'compress' not in kwargs:
+            kwargs['compress'] = self.compress
+        return Stream(**kwargs)
+
     @property
     def ctm(self):
         return self._ctm_stack[-1]
@@ -67,7 +88,8 @@ class Stream(pydyf.Stream):
         self._old_font, self._current_font = self._current_font, None
         super().end_text()
 
-    def set_color_rgb(self, r, g, b, stroke=False):
+    def set_color(self, color, stroke=False):
+        r, g, b, a = color
         if stroke:
             if (r, g, b) == self._current_color_stroke:
                 return
@@ -80,6 +102,7 @@ class Stream(pydyf.Stream):
                 self._current_color = (r, g, b)
 
         super().set_color_rgb(r, g, b, stroke)
+        self.set_alpha(a, stroke)
 
     def set_font_size(self, font, size):
         if (font, size) == self._current_font:
@@ -163,10 +186,9 @@ class Stream(pydyf.Stream):
                 'CS': '/DeviceRGB',
             }),
         })
-        group = Stream(
-            self._fonts, self.page_rectangle, states, x_objects, patterns,
-            shadings, self._images, self._mark, extra=extra,
-            compress=self.compress)
+        group = self.clone(
+            states=states, x_objects=x_objects, patterns=patterns, shadings=shadings,
+            extra=extra)
         group.id = f'x{len(self._x_objects)}'
         self._x_objects[group.id] = group
         return group
@@ -187,8 +209,7 @@ class Stream(pydyf.Stream):
         }
         return image_name
 
-    def add_pattern(self, x, y, width, height, repeat_width, repeat_height,
-                    matrix):
+    def add_pattern(self, x, y, width, height, repeat_width, repeat_height, matrix):
         states = pydyf.Dictionary()
         x_objects = pydyf.Dictionary()
         patterns = pydyf.Dictionary()
@@ -211,10 +232,9 @@ class Stream(pydyf.Stream):
             'Matrix': pydyf.Array(matrix.values),
             'Resources': resources,
         })
-        pattern = Stream(
-            self._fonts, self.page_rectangle, states, x_objects, patterns,
-            shadings, self._images, self._mark, extra=extra,
-            compress=self.compress)
+        pattern = self.clone(
+            states=states, x_objects=x_objects, patterns=patterns, shadings=shadings,
+            extra=extra)
         pattern.id = f'p{len(self._patterns)}'
         self._patterns[pattern.id] = pattern
         return pattern
