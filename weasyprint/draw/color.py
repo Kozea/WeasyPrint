@@ -14,7 +14,7 @@ def get_color(style, key):
 def darken(color):
     """Return a darker color."""
     # TODO: handle color spaces.
-    hue, saturation, value = rgb_to_hsv(*color[:3])
+    hue, saturation, value = rgb_to_hsv(*color.to('srgb')[:3])
     value /= 1.5
     saturation /= 1.25
     return parse_color(
@@ -24,7 +24,7 @@ def darken(color):
 def lighten(color):
     """Return a lighter color."""
     # TODO: handle color spaces.
-    hue, saturation, value = rgb_to_hsv(*color[:3])
+    hue, saturation, value = rgb_to_hsv(*color.to('srgb')[:3])
     value = 1 - (1 - value) / 1.5
     if saturation:
         saturation = 1 - (1 - saturation) / 1.25
