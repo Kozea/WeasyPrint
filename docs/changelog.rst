@@ -2,6 +2,160 @@ Changelog
 =========
 
 
+Version 63.0
+------------
+
+Released on 2024-10-29.
+
+Dependencies:
+
+* Python 3.13 is now supported
+* pydyf 0.11.0+ is now needed
+* tinycss2 1.4.0+ is now needed
+* tinyhtml5 2.0.0+ is now needed, instead of html5lib
+
+Features:
+
+* `#2252 <https://github.com/Kozea/WeasyPrint/pull/2252>`_,
+  `#895 <https://github.com/Kozea/WeasyPrint/issues/895>`_:
+  Handle page groups, with financial support from Code & Co.
+* `#1630 <https://github.com/Kozea/WeasyPrint/issues/1630>`_,
+  `#2286 <https://github.com/Kozea/WeasyPrint/pull/2286>`_:
+  Support CSS Color Level 4
+* `#2192 <https://github.com/Kozea/WeasyPrint/pull/2192>`_:
+  Add PDF variant for debugging purpose
+* `#2208 <https://github.com/Kozea/WeasyPrint/pull/2208>`_:
+  Support submit inputs in PDF forms
+* `#2139 <https://github.com/Kozea/WeasyPrint/pull/2139>`_:
+  Support ``mask-border-*`` properties
+* `#1831 <https://github.com/Kozea/WeasyPrint/issues/1831>`_,
+  `#2143 <https://github.com/Kozea/WeasyPrint/pull/2143>`_:
+  Support radio inputs in PDF forms
+
+Bug fixes:
+
+* `#2262 <https://github.com/Kozea/WeasyPrint/issues/2262>`_:
+  Avoid integer overflows when converting units from/to doubles
+* `#2260 <https://github.com/Kozea/WeasyPrint/pull/2260>`_:
+  Avoid float collision with box establishing formatting context
+* `#2240 <https://github.com/Kozea/WeasyPrint/issues/2240>`_,
+  `#2242 <https://github.com/Kozea/WeasyPrint/pull/2242>`_:
+  Handle ``svg`` tags with no size
+* `#2231 <https://github.com/Kozea/WeasyPrint/pull/2231>`_,
+  `#1171 <https://github.com/Kozea/WeasyPrint/issues/1171>`_,
+  `#2222 <https://github.com/Kozea/WeasyPrint/issues/2222>`_,
+  `#1208 <https://github.com/Kozea/WeasyPrint/issues/1208>`_:
+  Fix several problems related to ``flex-direction: column``
+* `#2239 <https://github.com/Kozea/WeasyPrint/issues/2239>`_:
+  Don’t fail when SVG markers are undefined references
+* `#2230 <https://github.com/Kozea/WeasyPrint/issues/2230>`_,
+  `#2238 <https://github.com/Kozea/WeasyPrint/pull/2238>`_:
+  Set explicit flags when loading DLLs on Windows
+* `#2228 <https://github.com/Kozea/WeasyPrint/issues/2228>`_,
+  `#1942 <https://github.com/Kozea/WeasyPrint/issues/1942>`_:
+  Store original and PDF stream images in different cache slots
+* `#2234 <https://github.com/Kozea/WeasyPrint/issues/2234>`_:
+  Apply stylesheet and other basic operations to SVG root tag
+* `#2054 <https://github.com/Kozea/WeasyPrint/issues/2054>`_,
+  `#2233 <https://github.com/Kozea/WeasyPrint/pull/2233>`_:
+  Keep auto margins on flex layout boxes
+* `#1883 <https://github.com/Kozea/WeasyPrint/issues/1883>`_:
+  Don’t crash with empty list marker strings
+* `#2216 <https://github.com/Kozea/WeasyPrint/issues/2216>`_:
+  Fix vertical alignment of out-of-flow elements in tables
+* `#996 <https://github.com/Kozea/WeasyPrint/issues/996>`_,
+  `#2219 <https://github.com/Kozea/WeasyPrint/pull/2219>`_:
+  Don’t ignore absolutely positioned elements inside flex boxes
+* `#2217 <https://github.com/Kozea/WeasyPrint/issues/2217>`_:
+  Don’t crash with ``normal`` column gaps
+* `#1817 <https://github.com/Kozea/WeasyPrint/issues/1817>`_:
+  Don’t assume that lines break after spaces
+* `#1868 <https://github.com/Kozea/WeasyPrint/issues/1868>`_:
+  Don’t break rows with atomic cells
+* `#2166 <https://github.com/Kozea/WeasyPrint/issues/2166>`_:
+  Don’t display bottom border on cells in split rows
+* `61852c4 <https://github.com/Kozea/WeasyPrint/commit/61852c4>`_:
+  Capture fontTools logs when subsetting fonts
+* `#2190 <https://github.com/Kozea/WeasyPrint/pull/2190>`_:
+  Don’t use a pattern when drawing backgrounds for no-repeat background images
+* `#2185 <https://github.com/Kozea/WeasyPrint/issues/2185>`_:
+  Check that Harfbuzz version is at least 4.1.0 to subset fonts
+* `#2180 <https://github.com/Kozea/WeasyPrint/issues/2180>`_:
+  Store width for all glyphs when font is not subset
+* `#2183 <https://github.com/Kozea/WeasyPrint/issues/2183>`_:
+  Respect ``break-inside: avoid`` for flex items
+* `#2055 <https://github.com/Kozea/WeasyPrint/issues/2055>`_,
+  `#2058 <https://github.com/Kozea/WeasyPrint/pull/2058>`_:
+  Fix right-to-left tables with collapsed borders
+* `#2179 <https://github.com/Kozea/WeasyPrint/pull/2179>`_,
+  `#1128 <https://github.com/Kozea/WeasyPrint/issues/1128>`_:
+  Handle buggy Adobe Photoshop CMYK JPEGs
+* `#2175 <https://github.com/Kozea/WeasyPrint/issues/2175>`_:
+  Don’t compress PDF metadata for PDF/A-1
+* `#2174 <https://github.com/Kozea/WeasyPrint/issues/2174>`_:
+  Fix extra width distribution for auto table layout
+
+Performance:
+
+* `#1155 <https://github.com/Kozea/WeasyPrint/issues/1155>`_:
+  Improve rendering speed for large colspan values
+* `#2120 <https://github.com/Kozea/WeasyPrint/issues/2120>`_,
+  `#2178 <https://github.com/Kozea/WeasyPrint/pull/2178>`_:
+  Use Harfbuzz to subset fonts by default
+
+Documentation:
+
+* `#2282 <https://github.com/Kozea/WeasyPrint/issues/2282>`_,
+  `#2284 <https://github.com/Kozea/WeasyPrint/pull/2284>`_:
+  Simplify Alpine install instructions
+* `#2254 <https://github.com/Kozea/WeasyPrint/issues/2254>`_:
+  Add warning about antivirus false detection
+* `#2220 <https://github.com/Kozea/WeasyPrint/pull/2220>`_:
+  Add extra information to debug logs
+* `#2211 <https://github.com/Kozea/WeasyPrint/pull/2211>`_:
+  Fix link to samples
+* `#2195 <https://github.com/Kozea/WeasyPrint/pull/2195>`_:
+  Update cache argument documentation
+* `#2105 <https://github.com/Kozea/WeasyPrint/issues/2105>`_,
+  `#2151 <https://github.com/Kozea/WeasyPrint/pull/2151>`_:
+  Use MSYS2 instead of GTK+3 for Windows
+
+Contributors:
+
+* Guillaume Ayoub
+* David Huggins-Daines
+* Xavid Pretzer
+* Yann Trividic
+* Kevin Kays
+* Alejandro Avilés
+* Gianluca Teti
+* Gregory Goodson
+* Lucie Anglade
+* Roman Sirokov
+
+Backers and sponsors:
+
+* Spacinov
+* Kobalt
+* Grip Angebotssoftware
+* Syslifters
+* Manuel Barkhau
+* SimonSoft
+* Menutech
+* KontextWork
+* Simon Sapin
+* TrainingSparkle
+* Healthchecks.io
+* Hammerbacher
+* Advance Insight
+* Docraptor
+* Method B
+* FieldHub
+* Yanal-Yvez Fargialla
+* Morntag
+* Xavid
+
+
 Version 62.3
 ------------
 
