@@ -3,6 +3,7 @@
 from importlib.resources import files
 
 import pydyf
+from tinycss2.color4 import D50, D65
 
 from .. import VERSION, Attachment
 from ..html import W3C_DATE_RE
@@ -128,16 +129,24 @@ def generate_pdf(document, target, zoom, **options):
             srgb = properties['srgb']
 
     pdf = pydyf.PDF()
-    states = pydyf.Dictionary()
-    x_objects = pydyf.Dictionary()
-    patterns = pydyf.Dictionary()
-    shadings = pydyf.Dictionary()
     images = {}
+    color_space = pydyf.Dictionary({
+        'lab-d50': pydyf.Array(('/Lab', pydyf.Dictionary({
+            'WhitePoint': pydyf.Array(D50),
+            'Range': pydyf.Array((-125, 125, -125, 125)),
+        }))),
+        'lab-d65': pydyf.Array(('/Lab', pydyf.Dictionary({
+            'WhitePoint': pydyf.Array(D65),
+            'Range': pydyf.Array((-125, 125, -125, 125)),
+        }))),
+    })
+    pdf.add_object(color_space)
     resources = pydyf.Dictionary({
-        'ExtGState': states,
-        'XObject': x_objects,
-        'Pattern': patterns,
-        'Shading': shadings,
+        'ExtGState': pydyf.Dictionary(),
+        'XObject': pydyf.Dictionary(),
+        'Pattern': pydyf.Dictionary(),
+        'Shading': pydyf.Dictionary(),
+        'ColorSpace': color_space.reference,
     })
     pdf.add_object(resources)
     pdf_names = []
@@ -166,8 +175,7 @@ def generate_pdf(document, target, zoom, **options):
             left / scale, top / scale,
             (right - left) / scale, (bottom - top) / scale)
         stream = Stream(
-            document.fonts, page_rectangle, states, x_objects, patterns,
-            shadings, images, mark, compress=compress)
+            document.fonts, page_rectangle, resources, images, mark, compress=compress)
         stream.transform(d=-1, f=(page.height * scale))
         pdf.add_object(stream)
         page_streams.append(stream)
@@ -191,7 +199,7 @@ def generate_pdf(document, target, zoom, **options):
             compress)
         add_forms(
             page.forms, matrix, pdf, pdf_page, resources, stream,
-            document.font_config.font_map, compress)
+            document.font_config.font_map)
         page.paint(stream, scale)
 
         # Bleed

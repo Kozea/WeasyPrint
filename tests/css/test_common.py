@@ -73,7 +73,7 @@ def test_annotate_document():
     assert p['margin_right'] == (0, 'px')
     assert p['margin_bottom'] == (24, 'px')
     assert p['margin_left'] == (0, 'px')
-    assert p['background_color'] == 'currentColor'
+    assert p['background_color'] == 'currentcolor'
 
     # 2em * 1.25ex = 2 * 20 * 1.25 * 0.8 = 40
     # 2.5ex * 1.25ex = 2.5 * 0.8 * 20 * 1.25 * 0.8 = 40
@@ -108,7 +108,7 @@ def test_annotate_document():
     assert a['border_bottom_width'] == 42
 
     assert a['color'] == (1, 0, 0, 1)
-    assert a['border_top_color'] == 'currentColor'
+    assert a['border_top_color'] == 'currentcolor'
 
     assert div['font_size'] == 40  # 2 * 20px
     assert span1['width'] == (160, 'px')  # 10 * 16px (root default is 16px)

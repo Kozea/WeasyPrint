@@ -5,7 +5,7 @@ from contextlib import suppress
 from math import cos, radians, sin, tan
 from urllib.parse import urlparse
 
-from tinycss2.color3 import parse_color
+from tinycss2.color4 import parse_color
 
 from ..matrix import Matrix
 
@@ -146,7 +146,7 @@ def parse_url(url):
 
 def color(string):
     """Safely parse a color string and return a RGBA tuple."""
-    return parse_color(string or '') or (0, 0, 0, 1)
+    return parse_color(string or '') or parse_color('black')
 
 
 def transform(transform_string, font_size, normalized_diagonal):

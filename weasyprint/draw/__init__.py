@@ -171,8 +171,7 @@ def draw_background(stream, bg, clip_box=True, bleed=None, marks=()):
         # Draw background color.
         if bg.color.alpha > 0:
             with stacked(stream):
-                stream.set_color_rgb(*bg.color[:3])
-                stream.set_alpha(bg.color.alpha)
+                stream.set_color(bg.color)
                 painting_area = bg.layers[-1].painting_area
                 stream.rectangle(*painting_area)
                 stream.clip()
