@@ -12,14 +12,14 @@ requires-python = '>=3.9'
 readme = {file = 'README.rst', content-type = 'text/x-rst'}
 license = {file = 'LICENSE'}
 dependencies = [
-  'pydyf >=0.11.0,<0.12',
-  'cffi >=0.6,<2',
-  'tinyhtml5 >=2.0.0b1,<3',
-  'tinycss2 >=1.4.0,<2',
-  'cssselect2 >=0.1,<0.8',
-  'Pyphen >=0.9.1,<0.16',
-  'Pillow >=9.1.0,<12',
-  'fonttools[woff] >=4.0.0,<5',
+  'pydyf >=0.11.0',
+  'cffi >=0.6',
+  'tinyhtml5 >=2.0.0b1',
+  'tinycss2 >=1.4.0',
+  'cssselect2 >=0.1',
+  'Pyphen >=0.9.1',
+  'Pillow >=9.1.0',
+  'fonttools[woff] >=4.0.0',
 ]
 classifiers = [
   'Development Status :: 5 - Production/Stable',
