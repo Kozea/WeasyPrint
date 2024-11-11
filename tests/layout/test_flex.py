@@ -755,3 +755,30 @@ def test_flex_auto_margin2():
     outer, = body.children
     inner, = outer.children
     assert inner.margin_left != 0
+
+
+@assert_no_logs
+def test_flex_overflow():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/2292
+    page, = render_pages('''
+<style>
+  article {
+    display: flex;
+  }
+  section {
+    overflow: hidden;
+    width: 5px;
+  }
+</style>
+<article>
+  <section>A</section>
+  <section>B</section>
+</article>
+''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    section_1 = article.children[0]
+    section_2 = article.children[1]
+    assert section_1.position_x == 0
+    assert section_2.position_x == 5
