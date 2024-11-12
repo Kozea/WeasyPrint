@@ -81,6 +81,8 @@ class Stream(pydyf.Stream):
 
     def set_color(self, color, stroke=False):
         *channels, alpha = color
+        self.set_alpha(alpha, stroke)
+
         if stroke:
             if (color.space, *channels) == self._current_color_stroke:
                 return
@@ -105,7 +107,6 @@ class Stream(pydyf.Stream):
         else:
             LOGGER.warn('Unsupported color space %s, use sRGB instead', color.space)
             self.set_color_rgb(*channels, stroke)
-        self.set_alpha(alpha, stroke)
 
     def set_font_size(self, font, size):
         if (font, size) == self._current_font:
