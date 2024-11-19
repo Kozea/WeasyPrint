@@ -3378,3 +3378,21 @@ def test_border_collapse_5():
         [None, black_3, black_3],
         [black_3, black_3, black_3],
     ]
+
+
+@assert_no_logs
+def test_table_zero_width():
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/2306
+    page, = render_pages('''
+      <table style="font-family: weasyprint">
+        <thead>
+          <tr>
+            <th colspan="2">aaaaaaaaaaaaaaaaaa</th>
+          </tr>
+          <tr>
+            <th style="width:80px"></th>
+            <th style="width:80px">rrrrr</th>
+          </tr>
+        </thead>
+      </table>
+    ''')
