@@ -85,7 +85,7 @@ DEFAULT_OPTIONS = {
 
 __all__ = [
     'CSS', 'DEFAULT_OPTIONS', 'HTML', 'VERSION', 'Attachment', 'Document', 'Page',
-    'default_url_fetcher', '__version__']
+    '__version__', 'default_url_fetcher']
 
 
 # Import after setting the version, as the version is used in other modules
