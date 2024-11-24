@@ -782,3 +782,18 @@ def test_flex_overflow():
     section_2 = article.children[1]
     assert section_1.position_x == 0
     assert section_2.position_x == 5
+
+
+@assert_no_logs
+def test_flex_column_overflow():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/2304
+    render_pages('''
+<style>
+  @page {size: 20px}
+</style>
+<div style="display: flex; flex-direction: column">
+  <div></div>
+  <div><div style="height: 40px"></div></div>
+  <div><div style="height: 5px"></div></div>
+</div>
+''')

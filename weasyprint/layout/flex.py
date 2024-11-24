@@ -133,6 +133,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
             children = children[skip:]
         skip_stack = skip_stack
     else:
+        skip = 0
         skip_stack = None
     child_skip_stack = skip_stack
 
@@ -336,7 +337,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
     line = []
     line_size = 0
     axis_size = getattr(box, axis)
-    for i, child in enumerate(children):
+    for i, child in enumerate(children, start=skip):
         if not child.is_flex_item:
             continue
         line_size += child.hypothetical_main_size
