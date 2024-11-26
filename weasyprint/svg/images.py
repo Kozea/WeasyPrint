@@ -70,5 +70,7 @@ def image(svg, node, font_size):
     svg.stream.push_state()
     svg.stream.transform(a=scale_x, d=scale_y, e=translate_x, f=translate_y)
     image.draw(
-        svg.stream, intrinsic_width, intrinsic_height, image_rendering='auto')
+        svg.stream, intrinsic_width, intrinsic_height,
+        image_rendering=node.attrib.get('image-rendering', 'auto'),
+    )
     svg.stream.pop_state()

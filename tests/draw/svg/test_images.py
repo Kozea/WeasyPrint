@@ -257,6 +257,27 @@ def test_image_image(assert_pixels):
       </svg>
     ''' % path2url(resource_path('pattern.png')))
 
+@assert_no_logs
+def test_image_image_rendering(assert_pixels):
+    assert_pixels('''
+        rrBBBBBB
+        rrBBBBBB
+        BBBBBBBB
+        BBBBBBBB
+        BBBBBBBB
+        BBBBBBBB
+        BBBBBBBB
+        BBBBBBBB
+    ''', '''
+      <style>
+        @page { size: 8px 8px }
+        svg { display: block }
+      </style>
+      <svg width="8px" height="8px" xmlns="http://www.w3.org/2000/svg">
+        <image width="8px" height="8px" xlink:href="%s"
+            style="image-rendering:pixelated"/>
+      </svg>
+    ''' % path2url(resource_path('pattern.png')))
 
 def test_image_image_wrong(assert_pixels):
     assert_pixels('''
