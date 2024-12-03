@@ -92,7 +92,8 @@ class FontConfiguration:
 
         """
         # Load the main config file and the fonts.
-        self._config = fontconfig.FcInitLoadConfigAndFonts()
+        self._config = ffi.gc(
+            fontconfig.FcInitLoadConfigAndFonts(), fontconfig.FcConfigDestroy)
         self.font_map = ffi.gc(
             pangoft2.pango_ft2_font_map_new(), gobject.g_object_unref)
         pangoft2.pango_fc_font_map_set_config(
