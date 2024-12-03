@@ -336,6 +336,7 @@ class SVG:
         self.masks = {}
         self.patterns = {}
         self.paths = {}
+        self.symbols = {}
 
         self.use_cache = {}
 
