@@ -17,6 +17,7 @@ ffi.cdef('''
     typedef uint32_t hb_codepoint_t;
     hb_tag_t hb_tag_from_string (const char *str, int len);
     void hb_tag_to_string (hb_tag_t tag, char *buf);
+    void hb_face_destroy (hb_face_t *face);
     hb_blob_t * hb_face_reference_blob (hb_face_t *face);
     unsigned int hb_face_get_index (const hb_face_t *face);
     unsigned int hb_face_get_upem (const hb_face_t *face);
@@ -63,6 +64,7 @@ ffi.cdef('''
     } hb_subset_sets_t;
 
     hb_subset_input_t * hb_subset_input_create_or_fail (void);
+    void hb_subset_input_destroy (hb_subset_input_t *input);
     hb_set_t * hb_subset_input_glyph_set (hb_subset_input_t *input);
     void hb_set_add_sorted_array (
         hb_set_t *set, const hb_codepoint_t *sorted_codepoints,

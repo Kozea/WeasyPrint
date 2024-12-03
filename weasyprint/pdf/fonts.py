@@ -189,7 +189,9 @@ class Font:
 
     def _harfbuzz_subset(self, cmap, hinting):
         """Subset font using Harfbuzz."""
-        hb_subset = harfbuzz_subset.hb_subset_input_create_or_fail()
+        hb_subset = ffi.gc(
+            harfbuzz_subset.hb_subset_input_create_or_fail(),
+            harfbuzz_subset.hb_subset_input_destroy)
 
         # Only keep used glyphs.
         gid_set = harfbuzz_subset.hb_subset_input_glyph_set(hb_subset)
@@ -213,7 +215,9 @@ class Font:
         harfbuzz.hb_set_add_sorted_array(drop_set, drop_tables_array, len(drop_tables))
 
         # Subset font.
-        hb_face = harfbuzz_subset.hb_subset_or_fail(self.hb_face, hb_subset)
+        hb_face = ffi.gc(
+            harfbuzz_subset.hb_subset_or_fail(self.hb_face, hb_subset),
+            harfbuzz.hb_face_destroy)
 
         # Drop empty glyphs after last one used.
         gid_set = harfbuzz_subset.hb_subset_input_glyph_set(hb_subset)
@@ -230,7 +234,9 @@ class Font:
         harfbuzz_subset.hb_subset_input_set_flags(hb_subset, flags)
 
         # Subset font.
-        hb_face = harfbuzz_subset.hb_subset_or_fail(hb_face, hb_subset)
+        hb_face = ffi.gc(
+            harfbuzz_subset.hb_subset_or_fail(hb_face, hb_subset),
+            harfbuzz.hb_face_destroy)
 
         # Store new font.
         if hb_face:
