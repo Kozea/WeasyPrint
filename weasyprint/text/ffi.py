@@ -1,6 +1,7 @@
 """Imports of dynamic libraries used for text layout."""
 
 import os
+import sys
 from contextlib import suppress
 
 import cffi
@@ -434,7 +435,7 @@ def _dlopen(ffi, *names, allow_fail=False):
     return ffi.dlopen(names[0], flags)  # pragma: no cover
 
 
-if hasattr(os, 'add_dll_directory'):  # pragma: no cover
+if hasattr(os, 'add_dll_directory') and not hasattr(sys, 'frozen'):  # pragma: no cover
     dll_directories = os.getenv(
         'WEASYPRINT_DLL_DIRECTORIES',
         'C:\\msys64\\mingw64\\bin;'
