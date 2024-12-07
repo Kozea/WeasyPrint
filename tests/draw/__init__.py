@@ -82,7 +82,7 @@ def assert_different_renderings(name, *documents):
 
     for i, pixels_1 in enumerate(pixels_list, start=1):
         for j, pixels_2 in enumerate(pixels_list[i:], start=i+1):
-            if pixels_1 == pixels_2:  # pragma: no cover
+            if tuple(pixels_1) == tuple(pixels_2):  # pragma: no cover
                 name_1, name_2 = f'{name}_{i}', f'{name}_{j}'
                 write_png(name_1, pixels_1, width, height)
                 assert False, f'{name_1} and {name_2} are the same'
