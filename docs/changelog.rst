@@ -2,6 +2,85 @@ Changelog
 =========
 
 
+Version 63.1
+------------
+
+Released on 2024-12-10.
+
+Dependencies:
+
+* `#2297 <https://github.com/Kozea/WeasyPrint/issues/2297>`_:
+  Remove upper bounds for dependencies
+
+Bug fixes:
+
+* `#2300 <https://github.com/Kozea/WeasyPrint/pull/2300>`_,
+  `#2292 <https://github.com/Kozea/WeasyPrint/issues/2292>`_:
+  Don’t avoid floats for flex items
+* `#2301 <https://github.com/Kozea/WeasyPrint/pull/2301>`_,
+  `#2293 <https://github.com/Kozea/WeasyPrint/issues/2293>`_:
+  Include floats in calculation of minimum cell height
+* `#2303 <https://github.com/Kozea/WeasyPrint/pull/2303>`_,
+  `#2302 <https://github.com/Kozea/WeasyPrint/issues/2302>`_:
+  Set alpha even when current color channels didn’t change
+* `#2306 <https://github.com/Kozea/WeasyPrint/issues/2306>`_:
+  Don’t try to increase column width when there’s no extra width
+* `#2304 <https://github.com/Kozea/WeasyPrint/issues/2304>`_:
+  Don’t forget skip stack when drawing flex items
+* `#2316 <https://github.com/Kozea/WeasyPrint/issues/2316>`_:
+  Don’t crash with SVG symbols
+* `#2320 <https://github.com/Kozea/WeasyPrint/issues/2320>`_:
+  Fix currentcolor detection when parsing gradient color stops
+* `#2322 <https://github.com/Kozea/WeasyPrint/pull/2322>`_,
+  `#2289 <https://github.com/Kozea/WeasyPrint/issues/2289>`_:
+  Don’t add DLL directories when using Windows executable
+* `#2323 <https://github.com/Kozea/WeasyPrint/pull/2323>`_,
+  `#2305 <https://github.com/Kozea/WeasyPrint/issues/2305>`_:
+  Fix different rendering test
+
+Performance:
+
+* `#2319 <https://github.com/Kozea/WeasyPrint/issues/2319>`_:
+  Fix memory leaks
+
+Documentation:
+
+* `#2299 <https://github.com/Kozea/WeasyPrint/pull/2299>`_:
+  Update install instructions for Alpine
+* `#2321 <https://github.com/Kozea/WeasyPrint/pull/2321>`_:
+  Add example invocation of WeasyPrint on the "Contribute" page
+
+Contributors:
+
+* Guillaume Ayoub
+* Jó Ágila Bitsch
+* Lucie Anglade
+* Alexander Gitter
+* Luke Cousins
+
+Backers and sponsors:
+
+* Spacinov
+* Kobalt
+* Grip Angebotssoftware
+* Syslifters
+* Manuel Barkhau
+* SimonSoft
+* Menutech
+* KontextWork
+* Simon Sapin
+* TrainingSparkle
+* Healthchecks.io
+* Hammerbacher
+* Advance Insight
+* Docraptor
+* Method B
+* FieldHub
+* Yanal-Yvez Fargialla
+* Morntag
+* Xavid
+
+
 Version 63.0
 ------------
 
