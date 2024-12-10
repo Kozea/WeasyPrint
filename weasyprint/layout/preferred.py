@@ -13,7 +13,7 @@ from functools import cache
 from math import inf
 
 from ..formatting_structure import boxes
-from ..text.line_break import split_first_line
+from ..text.line_break import split_first_line, get_log_attrs
 from .replaced import default_image_sizing
 
 
@@ -314,7 +314,8 @@ def inline_line_widths(context, box, outer, is_line_start, minimum, skip_stack=N
             child_text = child.text.encode()[(skip or 0):]
             if is_line_start and space_collapse:
                 child_text = child_text.lstrip(b' ')
-            if minimum and child_text == b' ':
+            _, log_attrs = get_log_attrs(child_text.strip(b' ').decode(), child.style['lang'])
+            if minimum and (child_text == b' ' or (len(child_text.strip(b' ')) == 1 and log_attrs[0].is_word_boundary)):
                 lines = [0, 0]
             else:
                 max_width = 0 if minimum else None
