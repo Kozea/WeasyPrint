@@ -1559,6 +1559,40 @@ def test_layout_table_auto_51():
 
 
 @assert_no_logs
+def test_layout_table_auto_52():
+    # Test regression:
+    # https://github.com/Kozea/WeasyPrint/issues/2325
+    page, = render_pages('''
+      <style>
+        @page { size: 100px 1000px; }
+      </style>
+      <table style="font-family: weasyprint; border-spacing: 1px;">
+        <tr>
+          <td><img src=pattern.png></td>
+          <td>
+            <span>foobar</span>,
+            <span>foobar</span>
+          </td>
+        </tr>
+      </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, td_2 = row.children
+    assert table_wrapper.position_x == 0
+    assert table.position_x == 0
+    assert td_1.position_x == 1
+    assert td_1.width == 4 # spacing
+    assert td_2.position_x == 6  # 1 + 5 + sp
+    assert td_2.width == 112
+    assert table.width == td_2.width + td_1.width + 3
+
+
+@assert_no_logs
 @pytest.mark.parametrize(
     'body_width, table_width, check_width, positions, widths', (
         ('500px', '230px', 220, [170, 5], [45, 155]),
