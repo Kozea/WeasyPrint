@@ -1564,14 +1564,16 @@ def test_layout_table_auto_52():
     # https://github.com/Kozea/WeasyPrint/issues/2325
     page, = render_pages('''
       <style>
-        @page { size: 100px 1000px; }
+        @page { size: 20px }
       </style>
-      <table style="font-family: weasyprint; border-spacing: 1px;">
+      <table style="font-family: weasyprint; border-spacing: 1px;
+                    font-size: 2px; line-height: 1">
         <tr>
           <td><img src=pattern.png></td>
           <td>
-            <span>foobar</span>,
-            <span>foobar</span>
+            <span>foo</span>,
+            <span>foo</span>,
+            <span>foo</span>
           </td>
         </tr>
       </table>
@@ -1583,13 +1585,14 @@ def test_layout_table_auto_52():
     row_group, = table.children
     row, = row_group.children
     td_1, td_2 = row.children
+    assert table.width == 20
     assert table_wrapper.position_x == 0
     assert table.position_x == 0
-    assert td_1.position_x == 1
-    assert td_1.width == 4 # spacing
-    assert td_2.position_x == 6  # 1 + 5 + sp
-    assert td_2.width == 112
-    assert table.width == td_2.width + td_1.width + 3
+    assert td_1.position_x == 1  # spacing
+    assert td_1.width == 4  # image width
+    assert td_2.position_x == td_1.width + 2 * 1  # 2 * spacing
+    assert td_2.width == table.width - td_1.width - 3 * 1  # 3 * spacing
+    assert td_2.height == 3 * 2  # 3 lines * line height
 
 
 @assert_no_logs
