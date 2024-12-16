@@ -496,13 +496,13 @@ def get_log_attrs(text, lang):
     log_attrs = ffi.new('PangoLogAttr[]', length)
     pango.pango_get_log_attrs(
         text_p, len(bytestring), -1, language, log_attrs, length)
-    return bytestring, log_attrs
+    return log_attrs
 
 
 def next_break_point(text, lang):
     if not text or len(text) < 2:
         return None
-    bytestring, log_attrs = get_log_attrs(text, lang)
+    log_attrs = get_log_attrs(text, lang)
     length = len(text) + 1
     for i, attr in enumerate(log_attrs[1:length - 1]):
         if attr.is_line_break:
@@ -516,7 +516,7 @@ def can_break_text(text, lang):
 def get_next_word_boundaries(text, lang):
     if not text or len(text) < 2:
         return None
-    bytestring, log_attrs = get_log_attrs(text, lang)
+    log_attrs = get_log_attrs(text, lang)
     for i, attr in enumerate(log_attrs):
         if attr.is_word_end:
             word_end = i
@@ -531,7 +531,7 @@ def get_next_word_boundaries(text, lang):
 def get_last_word_end(text, lang):
     if not text or len(text) < 2:
         return None
-    bytestring, log_attrs = get_log_attrs(text, lang)
+    log_attrs = get_log_attrs(text, lang)
     for i, attr in enumerate(list(log_attrs)[::-1]):
         if i and attr.is_word_end:
             return len(text) - i
