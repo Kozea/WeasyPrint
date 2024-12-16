@@ -88,7 +88,16 @@ class Font:
         for i in range(table_count[0]):
             harfbuzz.hb_tag_to_string(table_tags[i], table_name)
             self.tables.append(ffi.string(table_name).decode())
-        self.bitmap = 'EBDT' in self.tables and 'EBLC' in self.tables
+        self.bitmap = False
+        if 'EBDT' in self.tables and 'EBLC' in self.tables:
+            if 'glyf' in self.tables:
+                tag = harfbuzz.hb_tag_from_string(b'glyf', -1)
+                blob = harfbuzz.hb_face_reference_table(self.hb_face, tag)
+                if harfbuzz.hb_blob_get_length(blob) == 0:
+                    self.bitmap = True
+                harfbuzz.hb_blob_destroy(blob)
+            else:
+                self.bitmap = True
         self.italic_angle = 0  # TODO: this should be different
         self.upem = harfbuzz.hb_face_get_upem(self.hb_face)
         self.png = harfbuzz.hb_ot_color_has_png(self.hb_face)

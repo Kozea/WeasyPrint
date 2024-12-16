@@ -22,7 +22,9 @@ ffi.cdef('''
     hb_blob_t * hb_face_reference_blob (hb_face_t *face);
     unsigned int hb_face_get_index (const hb_face_t *face);
     unsigned int hb_face_get_upem (const hb_face_t *face);
+    hb_blob_t * hb_face_reference_table (const hb_face_t *face, hb_tag_t tag);
     const char * hb_blob_get_data (hb_blob_t *blob, unsigned int *length);
+    unsigned int hb_blob_get_length (hb_blob_t *blob);
     bool hb_ot_color_has_png (hb_face_t *face);
     hb_blob_t * hb_ot_color_glyph_reference_png (hb_font_t *font, hb_codepoint_t glyph);
     bool hb_ot_color_has_svg (hb_face_t *face);
