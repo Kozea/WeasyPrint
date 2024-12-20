@@ -144,7 +144,7 @@ class FontConfiguration:
                 for tag in b'fullname', b'postscriptname':
                     fontconfig.FcPatternGetString(matching_pattern, tag, 0, string)
                     name = ffi.string(string[0])
-                    if font_name.lower() in name.lower():
+                    if font_name.lower() == name.lower():
                         fontconfig.FcPatternGetString(
                             matching_pattern, b'file', 0, string)
                         path = ffi.string(string[0]).decode(FILESYSTEM_ENCODING)
