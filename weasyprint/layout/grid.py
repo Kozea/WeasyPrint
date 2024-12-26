@@ -234,7 +234,7 @@ def _distribute_extra_space(affected_sizes, affected_tracks_types,
     assert affected_sizes in ('min', 'max')
     assert affected_tracks_types in (
         'intrinsic', 'content-based', 'max-content')
-    assert size_contribution in ('mininum', 'min-content', 'max-content')
+    assert size_contribution in ('minimum', 'min-content', 'max-content')
     assert direction in 'xy'
 
     # 1. Maintain separately for each affected track a planned increase.
@@ -446,7 +446,7 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
         # 1.2.3.1 For intrinsic minimums.
         # TODO: Respect min-/max-content constraint.
         _distribute_extra_space(
-            'min', 'intrinsic', 'mininum', tracks_children,
+            'min', 'intrinsic', 'minimum', tracks_children,
             sizing_functions, tracks_sizes, span, direction, context,
             containing_block)
         # 1.2.3.2 For content-based minimums.
