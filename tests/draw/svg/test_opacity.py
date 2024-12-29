@@ -145,3 +145,19 @@ def test_translate_opacity(assert_same_renderings):
                   fill="blue" opacity="50%" />
         ''',
     )
+
+
+@assert_no_logs
+def test_translate_use_opacity(assert_same_renderings):
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/1976
+    assert_same_renderings(
+        opacity_source % '''
+            <defs>
+              <rect id="rect" x="-10" y="-10" width="5" height="5" fill="blue" />
+            </defs>
+            <use href="#rect" transform="translate(12, 12)" opacity="0.5" />
+        ''',
+        opacity_source % '''
+            <rect x="2" y="2" width="5" height="5" fill="blue" opacity="50%" />
+        ''',
+    )
