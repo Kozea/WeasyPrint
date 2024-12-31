@@ -4,8 +4,9 @@ import functools
 import io
 from hashlib import md5
 from pathlib import Path
+from typing import Callable, Optional
 
-from . import CSS, DEFAULT_OPTIONS
+from . import CSS, DEFAULT_OPTIONS, Attachment
 from .anchors import gather_anchors, make_page_bookmark_tree
 from .css import get_all_computed_styles
 from .css.counters import CounterStyle
@@ -105,12 +106,33 @@ class DocumentMetadata:
     """Meta-information belonging to a whole :class:`Document`.
 
     New attributes may be added in future versions of WeasyPrint.
-
     """
+    title: Optional[str]
+    authors: list[str]
+    description: Optional[str]
+    keywords: list[str]
+    generator: Optional[str]
+    created: Optional[str]
+    modified: Optional[str]
+    attachments: list[Attachment]
+    lang: Optional[str]
+    custom: dict
+    rdf_metadata_generator: Optional[Callable] = None
 
-    def __init__(self, title=None, authors=None, description=None,
-                 keywords=None, generator=None, created=None, modified=None,
-                 attachments=None, lang=None, custom=None):
+    def __init__(
+        self,
+        title: Optional[str] = None,
+        authors: Optional[list[str]] = None,
+        description: Optional[str] = None,
+        keywords: Optional[list[str]] = None,
+        generator: Optional[str] = None,
+        created: Optional[str] = None,
+        modified: Optional[str] = None,
+        attachments: Optional[list[Attachment]] = None,
+        lang: Optional[str] = None,
+        custom: Optional[dict] = None,
+        rdf_metadata_generator: Optional[Callable] = None,
+    ):
         #: The title of the document, as a string or :obj:`None`.
         #: Extracted from the ``<title>`` element in HTML
         #: and written to the ``/Title`` info field in PDF.
@@ -156,6 +178,9 @@ class DocumentMetadata:
         #: Custom metadata, as a dict whose keys are the metadata names and
         #: values are the metadata values.
         self.custom = custom or {}
+        #: Custom RDF metadata generator, which will replace the default generator.
+        #: The function should return bytes containing an RDF XML.
+        self.rdf_metadata_generator = rdf_metadata_generator
 
 
 class DiskCache:

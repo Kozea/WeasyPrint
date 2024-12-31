@@ -716,3 +716,35 @@ def test_bleed(style, media, bleed, trim):
     assert f'/MediaBox {str(media).replace(",", "")}'.encode() in pdf
     assert f'/BleedBox {str(bleed).replace(",", "")}'.encode() in pdf
     assert f'/TrimBox {str(trim).replace(",", "")}'.encode() in pdf
+
+
+@assert_no_logs
+def test_default_rdf_metadata() -> None:
+    pdf_document = FakeHTML(string='<body>test</body>').render()
+
+    pdf_document.metadata.title = None
+
+    pdf_bytes = pdf_document.write_pdf(
+        pdf_variant='pdf/a-3b',
+        pdf_identifier=b'example-bytes',
+        uncompressed_pdf=True,
+    )
+    assert b'<rdf:RDF xmlns:pdf="http://ns.adobe.com/pdf/1.3/"' in pdf_bytes
+
+
+@assert_no_logs
+def test_custom_rdf_metadata() -> None:
+    def rdf_metadata_generator(*args, **kwargs) -> bytes:
+        return b'TEST_METADATA'
+
+    pdf_document = FakeHTML(string='<body>test</body>').render()
+
+    pdf_document.metadata.title = None
+    pdf_document.metadata.rdf_metadata_generator = rdf_metadata_generator
+
+    pdf_bytes = pdf_document.write_pdf(
+        pdf_variant='pdf/a-3b',
+        pdf_identifier=b'example-bytes',
+        uncompressed_pdf=True,
+    )
+    assert b'TEST_METADATA' in pdf_bytes
