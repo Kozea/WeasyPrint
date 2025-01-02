@@ -1,20 +1,13 @@
-"""
-PDF metadata stream generation.
-"""
+"""PDF metadata stream generation."""
 
-from typing import TYPE_CHECKING
 from xml.etree.ElementTree import Element, SubElement, register_namespace, tostring
 
 import pydyf
 
-from weasyprint import __version__
-
-if TYPE_CHECKING:
-    from weasyprint.document import DocumentMetadata
-
+from .. import __version__
 
 # XML namespaces used for metadata
-NS: dict[str, str] = {
+NS = {
     'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
     'dc': 'http://purl.org/dc/elements/1.1/',
     'xmp': 'http://ns.adobe.com/xap/1.0/',
@@ -26,33 +19,15 @@ for key, value in NS.items():
     register_namespace(key, value)
 
 
-def add_metadata(
-    pdf: pydyf.PDF,
-    metadata: 'DocumentMetadata',
-    variant: str,
-    version: str,
-    conformance: str,
-    compress: bool,
-) -> None:
+def add_metadata(pdf, metadata, variant, version, conformance, compress):
     """Add PDF stream of metadata.
 
     Described in ISO-32000-1:2008, 14.3.2.
 
     """
-    # Add metadata. If `DocumentMetadata` has a generator, we will use it,
-    # otherwise we will use the default generator.
-    if metadata.rdf_metadata_generator is None:
-        xml_data = generate_rdf_metadata(metadata, variant, version, conformance)
-    else:
-        xml_data = metadata.rdf_metadata_generator(
-            metadata=metadata,
-            variant=variant,
-            version=version,
-            conformance=conformance,
-        )
-
     header = b'<?xpacket begin="" id="W5M0MpCehiHzreSzNTczkc9d"?>'
     footer = b'<?xpacket end="r"?>'
+    xml_data = metadata.rdf_metadata_generator(metadata, variant, version, conformance)
     stream_content = b'\n'.join((header, xml_data, footer))
     extra = {'Type': '/Metadata', 'Subtype': '/XML'}
     metadata = pydyf.Stream([stream_content], extra, compress)
@@ -60,14 +35,10 @@ def add_metadata(
     pdf.catalog['Metadata'] = metadata.reference
 
 
-def generate_rdf_metadata(
-    metadata: 'DocumentMetadata',
-    variant: str,
-    version: str,
-    conformance: str,
-) -> bytes:
-    """Generates RDF metadata. Might be replaced by
-    DocumentMetadata.rdf_matadata_generator().
+def generate_rdf_metadata(metadata, variant, version, conformance):
+    """Generate RDF metadata.
+
+    Might be replaced by DocumentMetadata.rdf_matadata_generator().
 
     """
     namespace = f'pdf{variant}id'
