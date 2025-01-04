@@ -67,7 +67,6 @@ include = ['tests/*', 'weasyprint/*']
 
 [tool.coverage.report]
 exclude_lines = ['pragma: no cover', 'def __repr__', 'raise NotImplementedError']
-omit = ['.*']
 
 [tool.ruff.lint]
 select = ['E', 'W', 'F', 'I', 'N', 'RUF']
