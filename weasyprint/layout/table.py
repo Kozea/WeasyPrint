@@ -566,6 +566,8 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
         ([header] if header is not None else []) +
         new_table_children +
         ([footer] if footer is not None else []))
+    table.column_groups = tuple(
+        column_group.deepcopy() for column_group in table.column_groups)
     remove_end_decoration = resume_at is not None and not has_footer
     table.remove_decoration(remove_start_decoration, remove_end_decoration)
     if collapse:
