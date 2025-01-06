@@ -877,7 +877,7 @@ def test_page_names_10():
     page1, page2 = pages
 
     assert (page1.width, page1.height) == (100, 100)
-    html, runing = page1.children
+    html, running = page1.children
     body, = html.children
     fixed, section, = body.children
     h1, pagebreak = section.children
