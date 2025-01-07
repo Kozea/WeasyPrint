@@ -859,6 +859,8 @@ def parse_page_selectors(rule):
                     # TODO: specificity is not specified yet
                     # https://github.com/w3c/csswg-drafts/issues/3524
                     types['specificity'][1] += 1
+                    if group:
+                        types['specificity'][0] += 1
                     continue
 
                 return None
