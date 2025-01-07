@@ -14,7 +14,7 @@ from .min_max import handle_min_max_height, handle_min_max_width
 from .percent import resolve_percentages
 from .preferred import max_content_width, min_content_width
 
-PageType = namedtuple('PageType', ['side', 'blank', 'name', 'index', 'group_index'])
+PageType = namedtuple('PageType', ['side', 'blank', 'name', 'index', 'groups'])
 
 
 class OrientedBox:
@@ -800,7 +800,70 @@ def set_page_type_computed_styles(page_type, html, style_for):
                 base_url=html.base_url)
 
 
-def remake_page(index, group_index, context, root_box, html):
+def _includes_resume_at(resume_at, page_group_resume_at):
+    (page_child_index, page_child_resume_at), = page_group_resume_at.items()
+    if resume_at is None or page_child_index not in resume_at:
+        return False
+    if page_child_resume_at is None:
+        return True
+    return _includes_resume_at(resume_at[page_child_index], page_child_resume_at)
+
+
+def _update_page_groups(page_groups, resume_at, next_page, root_box):
+    # https://www.w3.org/TR/css-gcpm-3/#document-sequence-selectors
+
+    # Remove or increment page groups.
+    page_groups_length = len(page_groups)
+    for i, page_group in enumerate(page_groups[:]):
+        if _includes_resume_at(resume_at, page_group[2]):
+            page_group[1] += 1
+        else:
+            page_groups.pop(i - page_groups_length)
+
+    # Add page groups.
+    if next_page['break'] == 'any' or not next_page['page']:
+        # We don’t have a forced page break or a named page.
+        return
+    if page_groups and page_groups[-1][0] == next_page['page']:
+        # We’re already in an element whose page name is the next page name.
+        return
+
+    # Find the box that has the named page. It is a first in-flow child of the
+    # element corresponding to resume_at.
+
+    # Find element corrensponding to resume_at.
+    page_group_resume_at = copy.deepcopy(resume_at)
+    current_resume_at = page_group_resume_at
+    current_element = root_box
+    while True:
+        child_index, child_resume_at = tuple(current_resume_at.items())[-1]
+        current_element = current_element.children[child_index]
+        if child_resume_at is None:
+            break
+        current_resume_at = child_resume_at
+
+    # Find the descendant with named page.
+    while True:
+        if current_element.style['page'] == next_page['page']:
+            page_groups.append([next_page['page'], 0, page_group_resume_at])
+            return
+        if not isinstance(current_element, boxes.ParentBox):
+            # Shouldn’t happen.
+            return
+        for i, child in enumerate(current_element.children):
+            if not child.is_in_normal_flow():
+                continue
+            current_resume_at[child_index] = {i: None}
+            current_resume_at = current_resume_at[child_index]
+            child_index = i
+            current_element = child
+            break
+        else:
+            # Shouldn’t happen.
+            return
+
+
+def remake_page(index, page_groups, context, root_box, html):
     """Return one laid out page without margin boxes.
 
     Start with the initial values from ``context.page_maker[index]``.
@@ -813,43 +876,37 @@ def remake_page(index, group_index, context, root_box, html):
 
     """
     page_maker = context.page_maker
-    (initial_resume_at, initial_next_page, right_page, initial_page_state,
-     remake_state) = page_maker[index]
+    resume_at, next_page, right_page, page_state, _ = page_maker[index]
 
     # PageType for current page, values for page_maker[index + 1].
     # Don't modify actual page_maker[index] values!
-    # TODO: should we store (and reuse) page_type in the page_maker?
-    page_state = copy.deepcopy(initial_page_state)
-    if initial_next_page['break'] in ('left', 'right'):
-        next_page_side = initial_next_page['break']
-    elif initial_next_page['break'] in ('recto', 'verso'):
+    page_state = copy.deepcopy(page_state)
+    if next_page['break'] in ('left', 'right'):
+        next_page_side = next_page['break']
+    elif next_page['break'] in ('recto', 'verso'):
         direction_ltr = root_box.style['direction'] == 'ltr'
-        break_verso = initial_next_page['break'] == 'verso'
+        break_verso = next_page['break'] == 'verso'
         next_page_side = 'right' if direction_ltr ^ break_verso else 'left'
     else:
         next_page_side = None
     blank = bool(
         (next_page_side == 'left' and right_page) or
         (next_page_side == 'right' and not right_page) or
-        (context.reported_footnotes and initial_resume_at is None))
-    name = '' if blank else initial_next_page['page']
-    if name not in group_index:
-        group_index.clear()
-        group_index[name] = 0
+        (context.reported_footnotes and resume_at is None))
+    name = '' if blank else next_page['page']
     side = 'right' if right_page else 'left'
-    page_type = PageType(side, blank, name, index, group_index[name])
+    _update_page_groups(page_groups, resume_at, next_page, root_box)
+    groups = tuple((name, index) for name, index, _ in page_groups)
+    page_type = PageType(side, blank, name, index, groups)
     set_page_type_computed_styles(page_type, html, context.style_for)
-    group_index[name] += 1
 
-    context.forced_break = (
-        initial_next_page['break'] != 'any' or initial_next_page['page'])
+    context.forced_break = (next_page['break'] != 'any' or next_page['page'])
     context.margin_clearance = False
 
     # make_page wants a page_number of index + 1
     page_number = index + 1
     page, resume_at, next_page = make_page(
-        context, root_box, page_type, initial_resume_at, page_number,
-        page_state)
+        context, root_box, page_type, resume_at, page_number, page_state)
     assert next_page
     right_page = not right_page
 
@@ -859,9 +916,8 @@ def remake_page(index, group_index, context, root_box, html):
         page_maker_next_changed = True
     else:
         # Check whether something changed
-        # TODO: Find what we need to compare. Is resume_at enough?
-        (next_resume_at, next_next_page, next_right_page,
-         next_page_state, _) = page_maker[index + 1]
+        next_resume_at, next_next_page, next_right_page, next_page_state, _ = (
+            page_maker[index + 1])
         page_maker_next_changed = (
             next_resume_at != resume_at or
             next_next_page != next_page or
@@ -880,7 +936,6 @@ def remake_page(index, group_index, context, root_box, html):
         # If resume_at is None (last page) it must be False to prevent endless
         # loops and list index out of range (see #794).
         remake_state['content_changed'] = resume_at is not None
-        # page_state is already a deepcopy
         item = resume_at, next_page, right_page, page_state, remake_state
         if index + 1 >= len(page_maker):
             page_maker.append(item)
@@ -898,7 +953,7 @@ def make_all_pages(context, root_box, html, pages):
     """
     i = 0
     reported_footnotes = None
-    group_i = {'': 0}
+    page_groups = []
     while True:
         remake_state = context.page_maker[i][-1]
         if (len(pages) == 0 or
@@ -910,7 +965,7 @@ def make_all_pages(context, root_box, html, pages):
             remake_state['pages_wanted'] = False
             remake_state['anchors'] = []
             remake_state['content_lookups'] = []
-            page, resume_at = remake_page(i, group_i, context, root_box, html)
+            page, resume_at = remake_page(i, page_groups, context, root_box, html)
             reported_footnotes = context.reported_footnotes
             yield page
         else:

@@ -200,11 +200,19 @@ class StyleFor:
             return False
         if page_selector_type.index is not None:
             a, b, name = page_selector_type.index
-            if name is not None and name != page_type.name:
+            if name is None:
+                index = page_type.index
+                offset = index + 1 - b
+                return offset == 0 if a == 0 else (offset / a >= 0 and not offset % a)
+            if name != page_type.name:
                 return False
-            index = page_type.index if name is None else page_type.group_index
-            offset = index + 1 - b
-            return offset == 0 if a == 0 else (offset / a >= 0 and not offset % a)
+            for group_name, index in page_type.groups:
+                if name != group_name:
+                    continue
+                offset = index + 1 - b
+                if (offset == 0 if a == 0 else (offset / a >= 0 and not offset % a)):
+                    return True
+            return False
         return True
 
 
