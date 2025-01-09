@@ -892,6 +892,84 @@ def test_page_names_10():
 
 
 @assert_no_logs
+def test_page_groups():
+    pages = render_pages('''
+      <style>
+        @page { size: 200px 200px }
+        @page small { size: 100px 100px }
+        @page :nth(1 of small) { size: 50px 50px }
+        section { page: small }
+        div, div section { break-after: page }
+      </style>
+      <div></div>
+      <article></article>
+      <section>
+        <div></div>
+        <div></div>
+      </section>
+      <section>
+      </section>
+      <div></div>
+      <div></div>
+      <section>
+        <div></div>
+      </section>
+      <div>
+        <section></section>
+        <section></section>
+      </div>
+    ''')
+    page1, page2, page3, page4, page5, page6, page7, page8, page9 = pages
+
+    assert (page1.width, page1.height) == (200, 200)
+    div, = page1.children[0].children[0].children
+    assert div.element_tag == 'div'
+
+    assert (page2.width, page2.height) == (200, 200)
+    article, = page2.children[0].children[0].children
+    assert article.element_tag == 'article'
+
+    assert (page3.width, page3.height) == (50, 50)
+    section, = page3.children[0].children[0].children
+    assert section.element_tag == 'section'
+    div, = section.children
+    assert div.element_tag == 'div'
+
+    assert (page4.width, page4.height) == (100, 100)
+    section, = page4.children[0].children[0].children
+    assert section.element_tag == 'section'
+    div, = section.children
+    assert div.element_tag == 'div'
+
+    assert (page5.width, page5.height) == (50, 50)
+    section, div = page5.children[0].children[0].children
+    assert section.element_tag == 'section'
+    assert div.element_tag == 'div'
+
+    assert (page6.width, page6.height) == (200, 200)
+    div, = page6.children[0].children[0].children
+    assert div.element_tag == 'div'
+
+    assert (page7.width, page7.height) == (50, 50)
+    section, = page7.children[0].children[0].children
+    assert section.element_tag == 'section'
+    div, = section.children
+    assert div.element_tag == 'div'
+
+    assert (page8.width, page8.height) == (50, 50)
+    div, = page8.children[0].children[0].children
+    assert div.element_tag == 'div'
+    section, = div.children
+    assert section.element_tag == 'section'
+
+    assert (page9.width, page9.height) == (50, 50)
+    div, = page9.children[0].children[0].children
+    assert div.element_tag == 'div'
+    section, = div.children
+    assert section.element_tag == 'section'
+
+
+@assert_no_logs
 @pytest.mark.parametrize('style, line_counts', (
     ('orphans: 2; widows: 2', [4, 3]),
     ('orphans: 5; widows: 2', [0, 7]),
