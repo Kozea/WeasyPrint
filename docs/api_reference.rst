@@ -814,7 +814,7 @@ The `CSS Basic User Interface Module Level 3/4`_ "enables authors to style user
 interface related properties and values."
 
 The ``outline-width``, ``outline-style``, ``outline-color`` properties and the
-``outline`` shorthand are supported. The ``outline-offset`` property is **not**
+``outline`` shorthand are supported. The ``outline-offset`` property is also
 supported.
 
 The ``resize``, ``cursor``, ``caret-*`` and ``nav-*`` properties are **not**
