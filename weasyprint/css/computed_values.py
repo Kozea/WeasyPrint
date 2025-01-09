@@ -429,8 +429,9 @@ def border_image_repeat(style, name, values):
 
 
 @register_computer('column-width')
-def column_width(style, name, value):
-    """Compute the ``column-width`` property."""
+@register_computer('outline-offset')
+def length_pixels_only(style, name, value):
+    """Compute a pixel length property."""
     return length(style, name, value, pixels_only=True)
 
 

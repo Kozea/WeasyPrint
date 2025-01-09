@@ -616,12 +616,15 @@ def draw_line(stream, x1, y1, x2, y2, thickness, style, color, offset=0):
 
 def draw_outline(stream, box):
     width = box.style['outline_width']
+    offset = box.style['outline_offset']
     color = get_color(box.style, 'outline_color')
     style = box.style['outline_style']
     if box.style['visibility'] == 'visible' and width and color.alpha:
         outline_box = (
-            box.border_box_x() - width, box.border_box_y() - width,
-            box.border_width() + 2 * width, box.border_height() + 2 * width)
+            box.border_box_x() - width - offset,
+            box.border_box_y() - width - offset,
+            box.border_width() + 2 * width + 2 * offset,
+            box.border_height() + 2 * width + 2 * offset)
         for side in SIDES:
             with stacked(stream):
                 clip_border_segment(stream, style, width, side, outline_box)

@@ -182,6 +182,7 @@ INITIAL_VALUES = {
     'outline_color': 'currentcolor',  # invert is not supported
     'outline_style': 'none',
     'outline_width': 3,  # computed value for 'medium'
+    'outline_offset': 0,
 
     # Sizing 3 (WD): https://www.w3.org/TR/css-sizing-3/
     'box_sizing': 'content-box',

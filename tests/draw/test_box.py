@@ -657,3 +657,64 @@ def test_mask_border_fill(assert_pixels):
       </style>
       <div></div>
     ''')
+
+
+@assert_no_logs
+def test_outline_and_border(assert_pixels):
+    assert_pixels('''
+        __________
+        _BBBBBBBB_
+        _BRRRRRRB_
+        _BR____RB_
+        _BRRRRRRB_
+        _BBBBBBBB_
+        __________
+    ''', '''
+      <style>
+        @page {
+          size: 10px 7px;
+        }
+        div {
+          border: 1px solid red;
+          outline: 1px solid blue;
+          height: 1px;
+          margin: 2px;
+          min-height: auto;
+          min-width: auto;
+          width: 4px;
+        }
+      </style>
+      <div></div>
+    ''')
+
+
+@assert_no_logs
+def test_outline_offset(assert_pixels):
+    assert_pixels('''
+        ____________
+        _BBBBBBBBBB_
+        _B________B_
+        _B_RRRRRR_B_
+        _B_R____R_B_
+        _B_RRRRRR_B_
+        _B________B_
+        _BBBBBBBBBB_
+        ____________
+    ''', '''
+      <style>
+        @page {
+          size: 12px 9px;
+        }
+        div {
+          border: 1px solid red;
+          outline: 1px solid blue;
+          outline-offset: 1px;
+          height: 1px;
+          margin: 3px;
+          min-height: auto;
+          min-width: auto;
+          width: 4px;
+        }
+      </style>
+      <div></div>
+    ''')

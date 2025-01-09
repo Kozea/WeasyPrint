@@ -1011,6 +1011,15 @@ def spacing(token):
 
 @property()
 @single_token
+def outline_offset(token):
+    """Validation for ``outline-offset``."""
+    length = get_length(token)
+    if length:
+        return length
+
+
+@property()
+@single_token
 def line_height(token):
     """``line-height`` property validation."""
     if get_keyword(token) == 'normal':
