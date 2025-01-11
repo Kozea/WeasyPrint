@@ -38,6 +38,15 @@ PANGO_WRAP_MODE = {
     'WRAP_CHAR': pango.PANGO_WRAP_CHAR,
     'WRAP_WORD_CHAR': pango.PANGO_WRAP_WORD_CHAR
 }
+PANGO_VARIANT = {
+    'normal': pango.PANGO_VARIANT_NORMAL,
+    'small-caps': pango.PANGO_VARIANT_SMALL_CAPS,
+    'all-small-caps': pango.PANGO_VARIANT_ALL_SMALL_CAPS,
+    'petite-caps': pango.PANGO_VARIANT_PETITE_CAPS,
+    'all-petite-caps': pango.PANGO_VARIANT_ALL_PETITE_CAPS,
+    'unicase': pango.PANGO_VARIANT_UNICASE,
+    'titling-caps': pango.PANGO_VARIANT_TITLE_CAPS,
+}
 
 # Language system tags
 # From https://docs.microsoft.com/typography/opentype/spec/languagetags

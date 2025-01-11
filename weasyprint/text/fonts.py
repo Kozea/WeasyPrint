@@ -14,8 +14,8 @@ from ..logger import LOGGER
 from ..urls import FILESYSTEM_ENCODING, fetch
 
 from .constants import (  # isort:skip
-    CAPS_KEYS, EAST_ASIAN_KEYS, FONTCONFIG_STRETCH, FONTCONFIG_STYLE,
-    FONTCONFIG_WEIGHT, LIGATURE_KEYS, NUMERIC_KEYS, PANGO_STRETCH, PANGO_STYLE)
+    CAPS_KEYS, EAST_ASIAN_KEYS, FONTCONFIG_STRETCH, FONTCONFIG_STYLE, FONTCONFIG_WEIGHT,
+    LIGATURE_KEYS, NUMERIC_KEYS, PANGO_STRETCH, PANGO_STYLE, PANGO_VARIANT)
 from .ffi import (  # isort:skip
     TO_UNITS, ffi, fontconfig, gobject, harfbuzz, pango, pangoft2, unicode_to_char_p)
 
@@ -319,6 +319,8 @@ def get_font_description(style):
     pango.pango_font_description_set_weight(font_description, font_weight)
     font_size = int(style['font_size'] * TO_UNITS)
     pango.pango_font_description_set_absolute_size(font_description, font_size)
+    font_variant = PANGO_VARIANT[style['font_variant_caps']]
+    pango.pango_font_description_set_variant(font_description, font_variant)
     if style['font_variation_settings'] != 'normal':
         string = ','.join(
             f'{key}={value}' for key, value in
