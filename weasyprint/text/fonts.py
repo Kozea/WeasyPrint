@@ -17,7 +17,8 @@ from .constants import (  # isort:skip
     CAPS_KEYS, EAST_ASIAN_KEYS, FONTCONFIG_STRETCH, FONTCONFIG_STYLE, FONTCONFIG_WEIGHT,
     LIGATURE_KEYS, NUMERIC_KEYS, PANGO_STRETCH, PANGO_STYLE, PANGO_VARIANT)
 from .ffi import (  # isort:skip
-    TO_UNITS, ffi, fontconfig, gobject, harfbuzz, pango, pangoft2, unicode_to_char_p)
+    FROM_UNITS, TO_UNITS, ffi, fontconfig, gobject, harfbuzz, pango, pangoft2,
+    unicode_to_char_p)
 
 
 def _check_font_configuration(font_config):  # pragma: no cover
@@ -364,6 +365,7 @@ def get_pango_font_key(pango_font):
     # FontConfiguration object. See https://github.com/Kozea/WeasyPrint/issues/2144
     description = ffi.gc(
         pango.pango_font_describe(pango_font), pango.pango_font_description_free)
+    font_size = pango.pango_font_description_get_size(description) * FROM_UNITS
     mask = pango.PANGO_FONT_MASK_SIZE + pango.PANGO_FONT_MASK_GRAVITY
     pango.pango_font_description_unset_fields(description, mask)
-    return pango.pango_font_description_hash(description)
+    return pango.pango_font_description_hash(description), description, font_size

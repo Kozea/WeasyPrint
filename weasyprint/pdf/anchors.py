@@ -203,7 +203,7 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map):
             font_description = get_font_description(style)
             font = pango.pango_font_map_load_font(
                 font_map, context, font_description)
-            font = stream.add_font(font)
+            font, _ = stream.add_font(font)
             font.used_in_forms = True
 
             field_stream.set_font_size(font.hash, font_size)
@@ -252,7 +252,7 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map):
             font_description = get_font_description(style)
             font = pango.pango_font_map_load_font(
                 font_map, context, font_description)
-            font = stream.add_font(font)
+            font, _ = stream.add_font(font)
             font.used_in_forms = True
 
             field_stream.set_font_size(font.hash, font_size)

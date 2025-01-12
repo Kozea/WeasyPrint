@@ -17,39 +17,38 @@ from ..text.fonts import get_hb_object_data, get_pango_font_hb_face
 
 
 class Font:
-    def __init__(self, pango_font):
+    def __init__(self, pango_font, description, font_size):
         self.hb_font = pango.pango_font_get_hb_font(pango_font)
         self.hb_face = get_pango_font_hb_face(pango_font)
         self.file_content = get_hb_object_data(self.hb_face)
         self.index = harfbuzz.hb_face_get_index(self.hb_face)
 
-        pango_metrics = pango.pango_font_get_metrics(pango_font, ffi.NULL)
-        self.description = description = ffi.gc(
-            pango.pango_font_describe(pango_font), pango.pango_font_description_free)
-        self.font_size = pango.pango_font_description_get_size(description)
+        self.font_size = font_size
         self.style = pango.pango_font_description_get_style(description)
         self.family = ffi.string(pango.pango_font_description_get_family(description))
 
         self.variations = {}
-        variations = pango.pango_font_description_get_variations(self.description)
+        variations = pango.pango_font_description_get_variations(description)
         if variations != ffi.NULL:
             self.variations = {
                 part.split('=')[0]: float(part.split('=')[1])
                 for part in ffi.string(variations).decode().split(',')}
         if weight := self.variations.get('weight'):
-            pango.pango_font_description_set_weight(
-                self.description, int(round(weight)))
+            self.weight = int(round(weight))
+            pango.pango_font_description_set_weight(description, weight)
+        else:
+            self.weight = pango.pango_font_description_get_weight(description)
         if self.variations.get('ital'):
             pango.pango_font_description_set_style(
-                self.description, pango.PANGO_STYLE_ITALIC)
+                description, pango.PANGO_STYLE_ITALIC)
         elif self.variations.get('slnt'):
             pango.pango_font_description_set_style(
-                self.description, pango.PANGO_STYLE_OBLIQUE)
+                description, pango.PANGO_STYLE_OBLIQUE)
         if (width := self.variations.get('wdth')) is not None:
             stretch = min(
                 PANGO_STRETCH_PERCENT.items(),
                 key=lambda item: abs(item[0] - width))[1]
-            pango.pango_font_description_set_stretch(self.description, stretch)
+            pango.pango_font_description_set_stretch(description, stretch)
         description_string = ffi.string(
             pango.pango_font_description_to_string(description))
 
@@ -70,6 +69,7 @@ class Font:
 
         # Set ascent and descent.
         if self.font_size:
+            pango_metrics = pango.pango_font_get_metrics(pango_font, ffi.NULL)
             self.ascent = int(
                 pango.pango_font_metrics_get_ascent(pango_metrics) /
                 self.font_size * 1000)
@@ -126,9 +126,7 @@ class Font:
             full_font = io.BytesIO(self.file_content)
             ttfont = TTFont(full_font, fontNumber=self.index)
             if 'wght' not in self.variations:
-                weight = pango.pango_font_description_get_weight(
-                    self.description)
-                self.variations['wght'] = weight
+                self.variations['wght'] = self.weight
             if 'opsz' not in self.variations:
                 self.variations['opsz'] = self.font_size * FROM_UNITS
             if 'slnt' not in self.variations:
