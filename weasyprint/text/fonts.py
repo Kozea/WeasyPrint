@@ -287,7 +287,7 @@ def font_features(font_kerning='normal', font_variant_ligatures='normal',
 
     if font_variant_alternates != 'normal':
         # TODO: support other values
-        # See https://www.w3.org/TR/css-fonts-3/#font-variant-caps-prop
+        # See https://drafts.csswg.org/css-fonts/#font-variant-alternates-prop
         if font_variant_alternates == 'historical-forms':
             features['hist'] = 1
 
