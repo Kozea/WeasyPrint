@@ -38,6 +38,7 @@ PANGO_WRAP_MODE = {
     'WRAP_CHAR': pango.PANGO_WRAP_CHAR,
     'WRAP_WORD_CHAR': pango.PANGO_WRAP_WORD_CHAR
 }
+# Some variants have been added in Pango 1.50 and are ignored when used.
 PANGO_VARIANT = {
     'normal': pango.PANGO_VARIANT_NORMAL,
     'small-caps': pango.PANGO_VARIANT_SMALL_CAPS,
