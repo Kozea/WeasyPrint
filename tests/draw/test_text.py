@@ -900,3 +900,140 @@ def test_huge_justification(assert_pixels):
         }
       </style>
       A B''')
+
+
+def test_font_variant_caps_small(assert_pixels):
+    assert_pixels('''
+        ________
+        _BB_BB__
+        _BB_B_B_
+        _B__BB__
+        _B__B___
+        ________
+    ''', '''
+      <style>
+        @page {size: 8px 6px}
+        p {
+          color: blue;
+          font-variant-caps: small-caps;
+          font-family: %s;
+          font-size: 6px;
+          line-height: 1;
+        }
+      </style>
+      <p>Pp</p>
+    ''' % SANS_FONTS)
+
+
+def test_font_variant_caps_all_small(assert_pixels):
+    assert_pixels('''
+        ________
+        BB_BB___
+        B_BB_B__
+        BB_BB___
+        B__B____
+        ________
+    ''', '''
+      <style>
+        @page {size: 8px 6px}
+        p {
+          color: blue;
+          font-variant-caps: all-small-caps;
+          font-family: %s;
+          font-size: 6px;
+          line-height: 1;
+        }
+      </style>
+      <p>Pp</p>
+    ''' % SANS_FONTS)
+
+
+def test_font_variant_caps_petite(assert_pixels):
+    assert_pixels('''
+        ________
+        _BB_BB__
+        _BB_B_B_
+        _B__BB__
+        _B__B___
+        ________
+    ''', '''
+      <style>
+        @page {size: 8px 6px}
+        p {
+          color: blue;
+          font-variant-caps: petite-caps;
+          font-family: %s;
+          font-size: 6px;
+          line-height: 1;
+        }
+      </style>
+      <p>Pp</p>
+    ''' % SANS_FONTS)
+
+
+def test_font_variant_caps_all_petite(assert_pixels):
+    assert_pixels('''
+        ________
+        BB_BB___
+        B_BB_B__
+        BB_BB___
+        B__B____
+        ________
+    ''', '''
+      <style>
+        @page {size: 8px 6px}
+        p {
+          color: blue;
+          font-variant-caps: all-petite-caps;
+          font-family: %s;
+          font-size: 6px;
+          line-height: 1;
+        }
+      </style>
+      <p>Pp</p>
+    ''' % SANS_FONTS)
+
+
+def test_font_variant_caps_unicase(assert_pixels):
+    assert_pixels('''
+        ________
+        BB______
+        B_B_BB__
+        BB__B_B_
+        B___BB__
+        ____B___
+    ''', '''
+      <style>
+        @page {size: 8px 6px}
+        p {
+          color: blue;
+          font-variant-caps: unicase;
+          font-family: %s;
+          font-size: 6px;
+          line-height: 1;
+        }
+      </style>
+      <p>Pp</p>
+    ''' % SANS_FONTS)
+
+
+def test_font_variant_caps_titling(assert_pixels):
+    assert_pixels('''
+        _BB_____
+        _BB_____
+        _BB__BB_
+        _B___B_B
+        _____BB_
+        _____B__
+    ''', '''
+      <style>
+        @page {size: 8px 6px}
+        p {
+          color: blue;
+          font-family: %s;
+          font-size: 6px;
+          line-height: 1;
+        }
+      </style>
+      <p>Pp</p>
+    ''' % SANS_FONTS)
