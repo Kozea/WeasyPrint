@@ -369,10 +369,6 @@ WeasyPrint does **not** support the ``@font-feature-values`` rule and the
 values of ``font-variant-alternates`` other than ``normal`` and
 ``historical-forms``.
 
-The ``font-variant-caps`` property is supported but needs the small-caps variant of
-the font to be installed. WeasyPrint does **not** simulate missing small-caps
-fonts.
-
 From `CSS Fonts Module Level 4`_ we only support the
 ``font-variation-settings`` property enabling specific font variations.
 
