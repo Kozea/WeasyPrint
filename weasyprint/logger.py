@@ -55,4 +55,4 @@ def capture_logs(logger='weasyprint', level=None):
         yield messages
     finally:
         logger.handlers = previous_handlers
-        logger.level = previous_level
+        logger.setLevel(previous_level)
