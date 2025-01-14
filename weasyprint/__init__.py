@@ -318,6 +318,9 @@ class Attachment:
     HTML specific arguments (``encoding`` and ``media_type``) are not
     supported.
 
+    :param str name:
+        The name of the attachment to be included in the PDF document.
+        May be :obj:`None`.
     :param str description:
         A description of the attachment to be included in the PDF document.
         May be :obj:`None`.
@@ -335,11 +338,12 @@ class Attachment:
     """
     def __init__(self, guess=None, filename=None, url=None, file_obj=None,
                  string=None, base_url=None, url_fetcher=default_url_fetcher,
-                 description=None, created=None, modified=None,
+                 name=None, description=None, created=None, modified=None,
                  relationship='Unspecified'):
         self.source = _select_source(
             guess, filename, url, file_obj, string, base_url=base_url,
             url_fetcher=url_fetcher)
+        self.name = name
         self.description = description
         self.relationship = relationship
         self.md5 = None

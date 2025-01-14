@@ -351,7 +351,9 @@ def write_pdf_attachment(pdf, attachment, compress):
 
     # TODO: Use the result object from a URL fetch operation to provide more
     # details on the possible filename and MIME type.
-    if url and urlsplit(url).path:
+    if attachment.name:
+        filename = attachment.name
+    elif url and urlsplit(url).path:
         filename = basename(unquote(urlsplit(url).path))
     else:
         filename = 'attachment.bin'
