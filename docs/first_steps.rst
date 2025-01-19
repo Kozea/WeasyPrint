@@ -426,8 +426,8 @@ file name or a writable :term:`file object`, they will write there directly
 instead. (**Warning**: with a filename, these methods will overwrite existing
 files silently.)
 
-Individual Pages & Meta-Data
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Rendering Individual Pages
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you want more than a single PDF, the :meth:`HTML.render` method gives you a
 :class:`document.Document` object with access to individual
@@ -521,78 +521,6 @@ the function internally used by WeasyPrint to retrieve data.
 .. _Flask: https://flask.pocoo.org/
 .. _Django-WeasyPrint: https://github.com/fdemmer/django-weasyprint
 .. _Django: https://www.djangoproject.com/
-
-Image Cache and Optimization
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-WeasyPrint provides many options to deal with images: ``optimize_images``,
-``jpeg_quality``, ``dpi`` and ``cache``.
-
-``optimize_images`` can enable size optimization for images. When enabled, the
-generated PDF will include smaller images with no quality penalty, but the
-rendering time may be slightly increased.
-
-The ``jpeg_quality`` option can be set to decrease the quality of JPEG images
-included in the PDF. You can set a value between 95 (best quality) to 0
-(smaller image size), depending on your needs.
-
-The ``dpi`` option offers the possibility to reduce the size (in pixels, and
-thus in bytes) of all included raster images. The resolution, set in dots per
-inch, indicates the maximum number of pixels included in one inch on the
-generated PDF.
-
-.. code-block:: python
-
-    # Original high-quality images, faster, but generated PDF is larger
-    HTML('https://weasyprint.org/').write_pdf('weasyprint.pdf')
-
-    # Optimized lower-quality images, a bit slower, but generated PDF is smaller
-    HTML('https://weasyprint.org/').write_pdf(
-        'weasyprint.pdf', optimize_images=True, jpeg_quality=60, dpi=150)
-
-``cache`` gives the possibility to use a cache for images, avoiding to
-download, parse and optimize them each time they are used.
-
-By default, the cache is used document by document, but you can share it
-between documents if needed. This feature can save a lot of network and CPU
-time when you render a lot of documents that use the same images.
-
-.. code-block:: python
-
-    cache = {}
-    for i in range(10):
-        HTML(f'https://weasyprint.org/').write_pdf(
-            f'example-{i}.pdf', cache=cache)
-
-It’s also possible to cache images on disk instead of keeping them in memory.
-The ``--cache-folder`` CLI option can be used to define the folder used to
-store temporary images. You can also provide this folder path as a string for
-``cache``.
-
-
-Logging
-~~~~~~~
-
-Most errors (unsupported CSS property, missing image, ...)
-are not fatal and will not prevent a document from being rendered.
-
-WeasyPrint uses the :mod:`logging` module from the Python standard library to
-log these errors and let you know about them. When WeasyPrint is launched in a
-terminal, logged messaged will go to *stderr* by default. You can change that
-by configuring the ``weasyprint`` logger object:
-
-.. code-block:: python
-
-    import logging
-    logger = logging.getLogger('weasyprint')
-    logger.addHandler(logging.FileHandler('/path/to/weasyprint.log'))
-
-The ``weasyprint.progress`` logger is used to report the rendering progress. It
-is useful to get feedback when WeasyPrint is launched in a terminal (using the
-``--verbose`` or ``--debug`` option), or to give this feedback to end users
-when used as a library.
-
-See the documentation of the :mod:`logging` module for details.
 
 
 Security

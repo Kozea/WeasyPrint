@@ -149,7 +149,7 @@ PDF
 ~~~
 
 In addition to text, raster and vector graphics, WeasyPrint’s PDF files
-can contain hyperlinks, bookmarks and attachments.
+can contain hyperlinks, bookmarks, attachments and forms.
 
 Hyperlinks will be clickable in PDF viewers that support them. They can
 be either internal, to another part of the same document (eg.
@@ -169,22 +169,13 @@ or through regular links with ``<a rel=attachment>`` to attach a resource that
 can be saved by clicking on said link. The ``title`` attribute can be used as
 description of the attachment.
 
-The generation of PDF/A documents (A-1b, A-2b, A-3b, A-4b, A-2u, A-3u and A-4u) is
-supported. However, the generated documents are not guaranteed to be valid, and users
-have the responsibility to check that they follow the rules listed by the related
-specifications. The major rules to follow are to include a PDF identifier, to check the
-PDF version, and to avoid anti-aliasing for images using ``image-rendering:
-crisp-edges``.
+Generated documents can also include PDF forms, using the ``appearance: auto``
+CSS property or the ``--pdf-forms`` CLI option.
 
-The generation of PDF/UA documents (UA-1) is supported. However, the generated
-documents are not guaranteed to be valid, and users have the responsibility to
-check that they follow the rules listed by the related specifications. The main
-constraint is to use a correct HTML structure to avoid inconsistencies in the
-PDF structure.
-
-Generated PDFs can include forms, using the ``appearance: auto`` CSS property
-or the ``--pdf-forms`` CLI option. Text inputs, text areas and check boxes are
-supported.
+The generation of PDF/A and PDF/UA documents is supported. However, the
+generated documents are not guaranteed to be valid, and users have the
+responsibility to check that they follow the rules listed by the related
+specifications.
 
 
 Fonts
