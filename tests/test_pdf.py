@@ -598,7 +598,7 @@ def test_embedded_files_attachments(tmp_path):
         ]
     )
     assert f'<{hashlib.md5(b"hi there").hexdigest()}>'.encode() in pdf
-    assert b'/F ()' in pdf
+    assert b'/F (attachment.bin)' in pdf
     assert b'/UF (attachment.bin)' in pdf
     name = BOM_UTF16_BE + 'some file attachment äöü'.encode('utf-16-be')
     assert b'/Desc <' + name.hex().encode() + b'>' in pdf
