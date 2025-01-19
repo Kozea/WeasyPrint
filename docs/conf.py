@@ -58,7 +58,7 @@ html_theme_options = {
     },
     'top_of_page_buttons': ['edit'],
     'source_edit_link':
-    'https://github.com/CourtBouillon/pydyf/edit/main/docs/{filename}',
+    'https://github.com/Kozea/WeasyPrint/edit/main/docs/{filename}',
 }
 
 # Favicon URL
