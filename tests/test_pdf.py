@@ -731,13 +731,13 @@ def test_default_rdf_metadata():
 
 @assert_no_logs
 def test_custom_rdf_metadata():
-    def rdf_metadata_generator(*args, **kwargs):
+    def generate_rdf_metadata(*args, **kwargs):
         return b'TEST_METADATA'
 
     pdf_document = FakeHTML(string='<body>test</body>').render()
 
     pdf_document.metadata.title = None
-    pdf_document.metadata.rdf_metadata_generator = rdf_metadata_generator
+    pdf_document.metadata.generate_rdf_metadata = generate_rdf_metadata
 
     pdf_bytes = pdf_document.write_pdf(
         pdf_variant='pdf/a-3b', pdf_identifier=b'example-bytes', uncompressed_pdf=True)

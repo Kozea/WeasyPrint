@@ -27,7 +27,7 @@ def add_metadata(pdf, metadata, variant, version, conformance, compress):
     """
     header = b'<?xpacket begin="" id="W5M0MpCehiHzreSzNTczkc9d"?>'
     footer = b'<?xpacket end="r"?>'
-    xml_data = metadata.rdf_metadata_generator(metadata, variant, version, conformance)
+    xml_data = metadata.generate_rdf_metadata(metadata, variant, version, conformance)
     stream_content = b'\n'.join((header, xml_data, footer))
     extra = {'Type': '/Metadata', 'Subtype': '/XML'}
     metadata = pydyf.Stream([stream_content], extra, compress)
@@ -36,9 +36,9 @@ def add_metadata(pdf, metadata, variant, version, conformance, compress):
 
 
 def generate_rdf_metadata(metadata, variant, version, conformance):
-    """Generate RDF metadata.
+    """Generate RDF metadata as a bytestring.
 
-    Might be replaced by DocumentMetadata.rdf_matadata_generator().
+    Might be replaced by DocumentMetadata.rdf_metadata_generator().
 
     """
     namespace = f'pdf{variant}id'

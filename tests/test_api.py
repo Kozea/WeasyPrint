@@ -1141,7 +1141,7 @@ def assert_meta(html, **meta):
     meta.setdefault('attachments', [])
     meta.setdefault('lang', None)
     meta.setdefault('custom', {})
-    meta.setdefault('rdf_metadata_generator', generate_rdf_metadata)
+    meta.setdefault('generate_rdf_metadata', generate_rdf_metadata)
     assert vars(FakeHTML(string=html).render().metadata) == meta
 
 

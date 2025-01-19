@@ -109,7 +109,7 @@ class DocumentMetadata:
     """
     def __init__(self, title=None, authors= None, description=None, keywords=None,
                  generator=None, created=None, modified=None, attachments=None,
-                 lang=None, custom=None, rdf_metadata_generator=None):
+                 lang=None, custom=None, generate_rdf_metadata=generate_rdf_metadata):
         #: The title of the document, as a string or :obj:`None`.
         #: Extracted from the ``<title>`` element in HTML
         #: and written to the ``/Title`` info field in PDF.
@@ -157,7 +157,7 @@ class DocumentMetadata:
         self.custom = custom or {}
         #: Custom RDF metadata generator, which will replace the default generator.
         #: The function should return bytes containing an RDF XML.
-        self.rdf_metadata_generator = rdf_metadata_generator or generate_rdf_metadata
+        self.generate_rdf_metadata = generate_rdf_metadata
 
 
 class DiskCache:
