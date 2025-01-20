@@ -235,7 +235,7 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
                     pango.pango_font_get_glyph_extents(
                         pango_font, glyph, stream.ink_rect,
                         stream.logical_rect)
-                    f = -stream.logical_rect.y - stream.logical_rect.height
+                    f = -stream.logical_rect.y
                     f = f * FROM_UNITS / font_size - font_size
                     emojis.append([image, font, a, d, x_advance, f])
 
