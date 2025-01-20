@@ -344,6 +344,27 @@ def test_text_anchor_end_tspan(assert_pixels):
 
 
 @assert_no_logs
+def test_text_anchor_middle_end_tspan(assert_pixels):
+    assert_pixels('''
+        _______BBBBBB_______
+        _______BBBBBB_______
+        ____________BBBBBB__
+        ____________BBBBBB__
+    ''', '''
+      <style>
+        @page { size: 20px 4px }
+        svg { display: block }
+      </style>
+      <svg width="20px" height="4px" xmlns="http://www.w3.org/2000/svg">
+        <text x="10" y="10" font-family="weasyprint" font-size="2" fill="blue">
+          <tspan x="10" y="1.5" text-anchor="middle">ABC</tspan>
+          <tspan x="18" y="3.5" text-anchor="end">ABC</tspan>
+        </text>
+      </svg>
+    ''')
+
+
+@assert_no_logs
 def test_text_rotate(assert_pixels):
     assert_pixels('''
         __RR__RR__RR________
