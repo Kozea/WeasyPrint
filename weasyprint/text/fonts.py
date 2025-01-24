@@ -116,7 +116,7 @@ class FontConfiguration:
             return
 
         # Try values in "src" descriptor until one works.
-        string = ffi.gc(ffi.new('FcChar8 **'), ffi.release)
+        string = ffi.new('FcChar8 **')
         for font_type, url in rule_descriptors['src']:
             # Abort if font URL is broken.
             if url is None or font_type == 'internal':
