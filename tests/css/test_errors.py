@@ -17,6 +17,9 @@ from ..testing_utils import assert_no_logs, capture_logs, render_pages
      ['ERROR: Relative URI reference without a base URI']),
     ('@import "invalid-protocol://absolute-URL"',
      ['ERROR: Failed to load stylesheet at']),
+    ('test', ['WARNING: Parse error']),
+    ('@test', ['WARNING: Unknown empty rule']),
+    ('@test {}', ['WARNING: Unknown rule']),
 ))
 def test_warnings(source, messages):
     with capture_logs() as logs:

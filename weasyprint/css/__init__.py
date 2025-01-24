@@ -888,9 +888,18 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fet
                           ignore_imports=False):
     """Do what can be done early on stylesheet, before being in a document."""
     for rule in stylesheet_rules:
-        if getattr(rule, 'content', None) is None and (
-                rule.type != 'at-rule' or rule.lower_at_keyword != 'import'):
-            continue
+        if getattr(rule, 'content', None) is None:
+            if rule.type == 'error':
+                LOGGER.warning(
+                    "Parse error at %d:%d: %s",
+                    rule.source_line, rule.source_column, rule.message)
+            if rule.type != 'at-rule':
+                continue
+            if rule.lower_at_keyword != 'import':
+                LOGGER.warning(
+                    "Unknown empty rule %s at %d:%d",
+                    rule, rule.source_line, rule.source_column)
+                continue
 
         if rule.type == 'qualified-rule':
             try:
@@ -1095,6 +1104,11 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fet
                         continue
 
             counter_style[name] = counter
+
+        else:
+            LOGGER.warning(
+                "Unknown rule %s at %d:%d",
+                rule, rule.source_line, rule.source_column)
 
 
 def get_all_computed_styles(html, user_stylesheets=None, presentational_hints=False,
