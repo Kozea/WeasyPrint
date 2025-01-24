@@ -146,6 +146,16 @@ ffi.cdef('''
     } PangoWrapMode;
 
     typedef enum {
+        PANGO_VARIANT_NORMAL,
+        PANGO_VARIANT_SMALL_CAPS,
+        PANGO_VARIANT_ALL_SMALL_CAPS,
+        PANGO_VARIANT_PETITE_CAPS,
+        PANGO_VARIANT_ALL_PETITE_CAPS,
+        PANGO_VARIANT_UNICASE,
+        PANGO_VARIANT_TITLE_CAPS,
+    } PangoVariant;
+
+    typedef enum {
         PANGO_TAB_LEFT
     } PangoTabAlign;
 
@@ -291,6 +301,8 @@ ffi.cdef('''
         PangoFontDescription *desc, double size);
     void pango_font_description_set_variations (
         PangoFontDescription* desc, const char* variations);
+    void pango_font_description_set_variant (
+        PangoFontDescription* desc, PangoVariant variant);
 
     PangoStyle pango_font_description_get_style (const PangoFontDescription *desc);
     const char* pango_font_description_get_variations (

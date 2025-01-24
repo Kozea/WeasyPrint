@@ -889,7 +889,7 @@ def font_feature_settings(tokens):
 @single_keyword
 def font_variant_alternates(keyword):
     # TODO: support other values
-    # See https://www.w3.org/TR/css-fonts-3/#font-variant-caps-prop
+    # See https://drafts.csswg.org/css-fonts/#font-variant-alternates-prop
     return keyword in ('normal', 'historical-forms')
 
 

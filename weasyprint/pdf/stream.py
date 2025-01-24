@@ -161,10 +161,10 @@ class Stream(pydyf.Stream):
         }))
 
     def add_font(self, pango_font):
-        key = get_pango_font_key(pango_font)
+        key, description, font_size = get_pango_font_key(pango_font)
         if key not in self._fonts:
-            self._fonts[key] = Font(pango_font)
-        return self._fonts[key]
+            self._fonts[key] = Font(pango_font, description, font_size)
+        return self._fonts[key], font_size
 
     def add_group(self, x, y, width, height):
         resources = pydyf.Dictionary({

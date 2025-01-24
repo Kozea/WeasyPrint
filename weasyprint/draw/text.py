@@ -89,8 +89,7 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
     if not textbox.text.strip():
         return []
 
-    font_size = textbox.style['font_size']
-    if font_size < 1e-6:  # default float precision used by pydyf
+    if textbox.style['font_size'] < 1e-6:  # default float precision used by pydyf
         return []
 
     pango.pango_layout_set_single_paragraph_mode(textbox.pango_layout.layout, True)
@@ -137,7 +136,7 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
     utf8_text = textbox.pango_layout.text.encode()
     previous_utf8_position = 0
     stream.set_text_matrix(*matrix.values)
-    last_font = None
+    previous_pango_font = None
     string = ''
     x_advance = 0
     emojis = []
@@ -152,21 +151,21 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
         offset = glyph_item.item.offset
         clusters = glyph_string.log_clusters
 
-        # Add font file content.
-        pango_font = glyph_item.item.analysis.font
-        font = stream.add_font(pango_font)
-
         # Get positions of the glyphs in the UTF-8 string.
         utf8_positions = [offset + clusters[i] for i in range(1, num_glyphs)]
         utf8_positions.append(offset + glyph_item.item.length)
 
-        # Go through the run glyphs.
-        if font != last_font:
+        pango_font = glyph_item.item.analysis.font
+        if pango_font != previous_pango_font:
+            # Add font file content and get font size.
+            previous_pango_font = pango_font
+            font, font_size = stream.add_font(pango_font)
+
+            # Go through the run glyphs.
             if string:
                 stream.show_text(string)
             string = ''
             stream.set_font_size(font.hash, 1 if font.bitmap else font_size)
-            last_font = font
         string += '<'
         for i in range(num_glyphs):
             glyph_info = glyphs[i]

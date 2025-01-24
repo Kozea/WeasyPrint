@@ -16,8 +16,8 @@ from .properties import ( # isort:skip
     background_size, block_ellipsis, border_image_source, border_image_slice,
     border_image_width, border_image_outset, border_image_repeat, border_style,
     border_width, box, column_count, column_width, flex_basis, flex_direction,
-    flex_grow_shrink, flex_wrap, font_family, font_size, font_stretch,
-    font_style, font_weight, gap, grid_line, grid_template, line_height,
+    flex_grow_shrink, flex_wrap, font_family, font_size, font_stretch, font_style,
+    font_variant_caps, font_weight, gap, grid_line, grid_template, line_height,
     list_style_image, list_style_position, list_style_type, mask_border_mode,
     other_colors, overflow_wrap, text_decoration_thickness, validate_non_shorthand)
 
@@ -678,7 +678,7 @@ def expand_font(tokens, name):
 
         if font_style([token]) is not None:
             suffix = '-style'
-        elif get_keyword(token) in ('normal', 'small-caps'):
+        elif font_variant_caps([token]) is not None:
             suffix = '-variant-caps'
         elif font_weight([token]) is not None:
             suffix = '-weight'
