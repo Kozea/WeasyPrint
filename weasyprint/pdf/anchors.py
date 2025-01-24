@@ -351,7 +351,9 @@ def write_pdf_attachment(pdf, attachment, compress):
 
     # TODO: Use the result object from a URL fetch operation to provide more
     # details on the possible filename and MIME type.
-    if url and urlsplit(url).path:
+    if attachment.name:
+        filename = attachment.name
+    elif url and urlsplit(url).path:
         filename = basename(unquote(urlsplit(url).path))
     else:
         filename = 'attachment.bin'
@@ -376,7 +378,7 @@ def write_pdf_attachment(pdf, attachment, compress):
 
     pdf_attachment = pydyf.Dictionary({
         'Type': '/Filespec',
-        'F': pydyf.String(),
+        'F': pydyf.String(filename.encode(errors='ignore')),
         'UF': pydyf.String(filename),
         'EF': pydyf.Dictionary({'F': file_stream.reference}),
         'Desc': pydyf.String(attachment.description or ''),

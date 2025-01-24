@@ -18,6 +18,7 @@ from PIL import Image
 
 from weasyprint import CSS, HTML, __main__, default_url_fetcher
 from weasyprint.pdf.anchors import resolve_links
+from weasyprint.pdf.metadata import generate_rdf_metadata
 from weasyprint.urls import path2url
 
 from .draw import parse_pixels
@@ -414,14 +415,14 @@ def test_command_line_render(tmp_path):
         os.environ.pop('SOURCE_DATE_EPOCH')
 
         stdout = _run('combined.html --uncompressed-pdf -')
-        assert stdout.count(b'attachment') == 0
+        assert stdout.count(b'Filespec') == 0
         stdout = _run('combined.html --uncompressed-pdf -')
-        assert stdout.count(b'attachment') == 0
+        assert stdout.count(b'Filespec') == 0
         stdout = _run('-a pattern.png --uncompressed-pdf combined.html -')
-        assert stdout.count(b'attachment') == 1
+        assert stdout.count(b'Filespec') == 1
         stdout = _run(
             '-a style.css -a pattern.png --uncompressed-pdf combined.html -')
-        assert stdout.count(b'attachment') == 2
+        assert stdout.count(b'Filespec') == 2
 
         _run('combined.html out23.pdf --timeout 30')
         assert (tmp_path / 'out23.pdf').read_bytes() == pdf_bytes
@@ -1140,6 +1141,7 @@ def assert_meta(html, **meta):
     meta.setdefault('attachments', [])
     meta.setdefault('lang', None)
     meta.setdefault('custom', {})
+    meta.setdefault('generate_rdf_metadata', generate_rdf_metadata)
     assert vars(FakeHTML(string=html).render().metadata) == meta
 
 

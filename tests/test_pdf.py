@@ -598,7 +598,7 @@ def test_embedded_files_attachments(tmp_path):
         ]
     )
     assert f'<{hashlib.md5(b"hi there").hexdigest()}>'.encode() in pdf
-    assert b'/F ()' in pdf
+    assert b'/F (attachment.bin)' in pdf
     assert b'/UF (attachment.bin)' in pdf
     name = BOM_UTF16_BE + 'some file attachment äöü'.encode('utf-16-be')
     assert b'/Desc <' + name.hex().encode() + b'>' in pdf
@@ -716,3 +716,29 @@ def test_bleed(style, media, bleed, trim):
     assert f'/MediaBox {str(media).replace(",", "")}'.encode() in pdf
     assert f'/BleedBox {str(bleed).replace(",", "")}'.encode() in pdf
     assert f'/TrimBox {str(trim).replace(",", "")}'.encode() in pdf
+
+
+@assert_no_logs
+def test_default_rdf_metadata():
+    pdf_document = FakeHTML(string='<body>test</body>').render()
+
+    pdf_document.metadata.title = None
+
+    pdf_bytes = pdf_document.write_pdf(
+        pdf_variant='pdf/a-3b', pdf_identifier=b'example-bytes', uncompressed_pdf=True)
+    assert b'<rdf:RDF xmlns:pdf="http://ns.adobe.com/pdf/1.3/"' in pdf_bytes
+
+
+@assert_no_logs
+def test_custom_rdf_metadata():
+    def generate_rdf_metadata(*args, **kwargs):
+        return b'TEST_METADATA'
+
+    pdf_document = FakeHTML(string='<body>test</body>').render()
+
+    pdf_document.metadata.title = None
+    pdf_document.metadata.generate_rdf_metadata = generate_rdf_metadata
+
+    pdf_bytes = pdf_document.write_pdf(
+        pdf_variant='pdf/a-3b', pdf_identifier=b'example-bytes', uncompressed_pdf=True)
+    assert b'TEST_METADATA' in pdf_bytes

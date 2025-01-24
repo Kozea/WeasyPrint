@@ -18,6 +18,7 @@ from .layout import LayoutContext, layout_document
 from .logger import PROGRESS_LOGGER
 from .matrix import Matrix
 from .pdf import VARIANTS, generate_pdf
+from .pdf.metadata import generate_rdf_metadata
 from .text.fonts import FontConfiguration
 
 
@@ -105,12 +106,10 @@ class DocumentMetadata:
     """Meta-information belonging to a whole :class:`Document`.
 
     New attributes may be added in future versions of WeasyPrint.
-
     """
-
-    def __init__(self, title=None, authors=None, description=None,
-                 keywords=None, generator=None, created=None, modified=None,
-                 attachments=None, lang=None, custom=None):
+    def __init__(self, title=None, authors= None, description=None, keywords=None,
+                 generator=None, created=None, modified=None, attachments=None,
+                 lang=None, custom=None, generate_rdf_metadata=generate_rdf_metadata):
         #: The title of the document, as a string or :obj:`None`.
         #: Extracted from the ``<title>`` element in HTML
         #: and written to the ``/Title`` info field in PDF.
@@ -156,6 +155,9 @@ class DocumentMetadata:
         #: Custom metadata, as a dict whose keys are the metadata names and
         #: values are the metadata values.
         self.custom = custom or {}
+        #: Custom RDF metadata generator, which will replace the default generator.
+        #: The function should return bytes containing an RDF XML.
+        self.generate_rdf_metadata = generate_rdf_metadata
 
 
 class DiskCache:
