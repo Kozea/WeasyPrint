@@ -27,18 +27,29 @@ def draw_text(stream, textbox, offset_x, text_overflow, block_ellipsis):
     # Draw underline and overline.
     text_decoration_values = textbox.style['text_decoration_line']
     text_decoration_color = get_color(textbox.style, 'text_decoration_color')
+    if 'underline' in text_decoration_values or 'overline' in text_decoration_values:
+        if textbox.style['text_decoration_thickness'] in ('auto', 'from-font'):
+            thickness = textbox.pango_layout.underline_thickness
+        elif textbox.style['text_decoration_thickness'].unit == '%':
+            ratio = textbox.style['text_decoration_thickness'].value / 100
+            thickness = textbox.style['font_size'] * ratio
+        else:
+            thickness = textbox.style['text_decoration_thickness'].value
     if 'overline' in text_decoration_values:
-        thickness = textbox.pango_layout.underline_thickness
         offset_y = (
             textbox.baseline - textbox.pango_layout.ascent + thickness / 2)
         draw_text_decoration(
             stream, textbox, offset_x, offset_y, thickness,
             text_decoration_color)
     if 'underline' in text_decoration_values:
-        thickness = textbox.pango_layout.underline_thickness
-        offset_y = (
-            textbox.baseline - textbox.pango_layout.underline_position +
-            thickness / 2)
+        if textbox.style['text_underline_offset'] == 'auto':
+            underline_offset = - textbox.pango_layout.underline_position
+        elif textbox.style['text_underline_offset'].unit == '%':
+            ratio = textbox.style['text_underline_offset'].value / 100
+            underline_offset = textbox.style['font_size'] * ratio
+        else:
+            underline_offset = textbox.style['text_underline_offset'].value
+        offset_y = textbox.baseline + underline_offset + thickness / 2
         draw_text_decoration(
             stream, textbox, offset_x, offset_y, thickness,
             text_decoration_color)

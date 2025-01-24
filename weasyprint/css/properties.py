@@ -223,10 +223,12 @@ INITIAL_VALUES = {
     'column_gap': 'normal',
     'row_gap': 'normal',
 
-    # Text Decoration Module 3 (CR): https://www.w3.org/TR/css-text-decor-3/
+    # Text Decoration Module 3/4 (CR/WD): https://www.w3.org/TR/css-text-decor-4/
     'text_decoration_line': 'none',
     'text_decoration_color': 'currentcolor',
     'text_decoration_style': 'solid',
+    'text_decoration_thickness': 'auto',
+    'text_underline_offset': 'auto',
 
     # Overflow Module 3/4 (WD): https://www.w3.org/TR/css-overflow-4/
     'block_ellipsis': 'none',
@@ -310,6 +312,7 @@ INHERITED = {
     'text_align_last',
     'text_indent',
     'text_transform',
+    'text_underline_offset',
     'visibility',
     'white_space',
     'widows',

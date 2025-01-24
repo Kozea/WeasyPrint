@@ -19,7 +19,7 @@ from .properties import ( # isort:skip
     flex_grow_shrink, flex_wrap, font_family, font_size, font_stretch,
     font_style, font_weight, gap, grid_line, grid_template, line_height,
     list_style_image, list_style_position, list_style_type, mask_border_mode,
-    other_colors, overflow_wrap, validate_non_shorthand)
+    other_colors, overflow_wrap, text_decoration_thickness, validate_non_shorthand)
 
 EXPANDERS = {}
 
@@ -520,43 +520,46 @@ def expand_background(tokens, name, base_url):
 
 
 @expander('text-decoration')
-@generic_expander('-line', '-color', '-style')
+@generic_expander('-line', '-color', '-style', '-thickness')
 def expand_text_decoration(tokens, name):
     """Expand the ``text-decoration`` shorthand property."""
-    text_decoration_line = []
-    text_decoration_color = []
-    text_decoration_style = []
+    line = []
+    color = []
+    style = []
+    thickness = []
     none_in_line = False
 
     for token in tokens:
         keyword = get_keyword(token)
-        if keyword in (
-                'none', 'underline', 'overline', 'line-through', 'blink'):
-            text_decoration_line.append(token)
+        if keyword in ('none', 'underline', 'overline', 'line-through', 'blink'):
+            line.append(token)
             if none_in_line:
                 raise InvalidValues
             elif keyword == 'none':
                 none_in_line = True
         elif keyword in ('solid', 'double', 'dotted', 'dashed', 'wavy'):
-            if text_decoration_style:
+            if style:
                 raise InvalidValues
-            else:
-                text_decoration_style.append(token)
+            style.append(token)
+        elif parse_color(token):
+            if color:
+                raise InvalidValues
+            color.append(token)
+        elif text_decoration_thickness([token]):
+            if thickness:
+                raise InvalidValues
+            thickness.append(token)
         else:
-            color = parse_color(token)
-            if color is None:
-                raise InvalidValues
-            elif text_decoration_color:
-                raise InvalidValues
-            else:
-                text_decoration_color.append(token)
+            raise InvalidValues
 
-    if text_decoration_line:
-        yield '-line', text_decoration_line
-    if text_decoration_color:
-        yield '-color', text_decoration_color
-    if text_decoration_style:
-        yield '-style', text_decoration_style
+    if line:
+        yield '-line', line
+    if color:
+        yield '-color', color
+    if style:
+        yield '-style', style
+    if thickness:
+        yield '-thickness', thickness
 
 
 def expand_page_break_before_after(tokens, name):

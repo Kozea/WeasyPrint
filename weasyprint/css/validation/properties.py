@@ -648,9 +648,10 @@ def counter(tokens, default_integer):
 @property('margin-right')
 @property('margin-bottom')
 @property('margin-left')
+@property('text-underline-offset')
 @single_token
 def lenght_precentage_or_auto(token):
-    """``margin-*`` properties validation."""
+    """``margin-*`` and various other properties validation."""
     length = get_length(token, percentage=True)
     if length:
         return length
@@ -1233,6 +1234,17 @@ def text_decoration_line(tokens):
 def text_decoration_style(keyword):
     """``text-decoration-style`` property validation."""
     if keyword in ('solid', 'double', 'dotted', 'dashed', 'wavy'):
+        return keyword
+
+
+@property()
+@single_token
+def text_decoration_thickness(token):
+    """``text-decoration-thickness`` property validation."""
+    length = get_length(token, percentage=True)
+    if length:
+        return length
+    if keyword := get_keyword(token) in ('auto', 'from-font'):
         return keyword
 
 
