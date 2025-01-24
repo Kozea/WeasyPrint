@@ -152,7 +152,7 @@ def draw_stacking_context(stream, stacking_context):
 
 
 def draw_background(stream, bg, clip_box=True, bleed=None, marks=()):
-    """Draw the background color and image to a ``document.Stream``.
+    """Draw the background color and image to a ``pdf.stream.Stream``.
 
     If ``clip_box`` is set to ``False``, the background is not clipped to the
     border box of the background, but only to the painting area.
@@ -483,7 +483,7 @@ def draw_collapsed_borders(stream, table):
 
 
 def draw_replacedbox(stream, box):
-    """Draw the given :class:`boxes.ReplacedBox` to a ``document.Stream``."""
+    """Draw the given :class:`boxes.ReplacedBox` to a ``pdf.stream.Stream``."""
     if box.style['visibility'] != 'visible' or not box.width or not box.height:
         return
 

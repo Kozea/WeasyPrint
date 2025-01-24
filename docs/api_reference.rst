@@ -66,6 +66,7 @@ Python API
     :members:
 .. autoclass:: Page()
     :members:
+    :exclude-members: paint
 
 .. module:: weasyprint.text.fonts
 .. autoclass:: FontConfiguration()

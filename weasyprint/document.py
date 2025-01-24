@@ -81,22 +81,7 @@ class Page:
         self._page_box = page_box
 
     def paint(self, stream, scale=1):
-        """Paint the page into the PDF file.
-
-        :type stream: ``document.Stream``
-        :param stream:
-            A document stream.
-        :param float left_x:
-            X coordinate of the left of the page, in PDF points.
-        :param float top_y:
-            Y coordinate of the top of the page, in PDF points.
-        :param float scale:
-            Zoom scale.
-        :param bool clip:
-            Whether to clip/cut content outside the page. If false or
-            not provided, content can overflow.
-
-        """
+        """Paint the page into the PDF file."""
         with stacked(stream):
             stream.transform(a=scale, d=scale)
             draw_page(self._page_box, stream)

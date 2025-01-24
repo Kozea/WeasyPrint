@@ -265,7 +265,7 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
 
 
 def draw_text_decoration(stream, textbox, offset_x, offset_y, thickness, color):
-    """Draw text-decoration of ``textbox`` to a ``document.Stream``."""
+    """Draw text-decoration of ``textbox`` to a ``pdf.stream.Stream``."""
     draw_line(
         stream, textbox.position_x, textbox.position_y + offset_y,
         textbox.position_x + textbox.width, textbox.position_y + offset_y,

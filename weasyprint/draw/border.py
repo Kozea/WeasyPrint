@@ -27,7 +27,7 @@ def set_mask_border(stream, box):
 
 
 def draw_border(stream, box):
-    """Draw the box borders and column rules to a ``document.Stream``."""
+    """Draw the box borders and column rules to a ``pdf.stream.Stream``."""
 
     # The box is hidden, easy.
     if box.style['visibility'] != 'visible':

@@ -434,9 +434,7 @@ If you want more than a single PDF, the :meth:`HTML.render` method gives you a
 :class:`document.Page` objects. Thus you can get the number of pages, their
 size\ [#]_, the details of hyperlinks and bookmarks, etc. Documents also have a
 :meth:`document.Document.write_pdf` method, and you can get a subset of the
-pages with :meth:`document.Document.copy()`.  Finally, for ultimate control,
-:meth:`document.Page.paint` individual pages anywhere on any
-:class:`pydyf.Stream`.
+pages with :meth:`document.Document.copy()`.
 
 .. [#] Pages in the same document do not always have the same size.
 
