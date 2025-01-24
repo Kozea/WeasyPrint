@@ -486,7 +486,6 @@ class Gradient:
         return None, None, None
 
     def draw(self, stream, concrete_width, concrete_height, _image_rendering):
-        # TODO: handle color spaces
         scale_y, type_, points, positions, colors = self.layout(
             concrete_width, concrete_height)
 
@@ -500,8 +499,9 @@ class Gradient:
         alpha_couples = [
             (alphas[i], alphas[i + 1])
             for i in range(len(alphas) - 1)]
+        # TODO: handle other color spaces.
         color_couples = [
-            [colors[i][:3], colors[i + 1][:3], 1]
+            [colors[i].to('srgb')[:3], colors[i + 1].to('srgb')[:3], 1]
             for i in range(len(colors) - 1)]
 
         # Premultiply colors
@@ -525,6 +525,7 @@ class Gradient:
             for c0, c1, n in color_couples)
         function = stream.create_stitching_function(
             domain, encode, bounds, sub_functions)
+        # TODO: handle other color spaces.
         shading = stream.add_shading(
             shading_type, 'RGB', domain, points, extend, function)
         stream.transform(d=scale_y)
