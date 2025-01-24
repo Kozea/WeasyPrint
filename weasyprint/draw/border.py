@@ -601,6 +601,7 @@ def draw_line(stream, x1, y1, x2, y2, thickness, style, color, offset=0):
             x = x1 - offset
             stream.move_to(x, y1)
             while x < x2:
+                stream.set_line_width(thickness)
                 stream.curve_to(
                     x + radius / 2, y1 + up * radius,
                     x + 3 * radius / 2, y1 + up * radius,

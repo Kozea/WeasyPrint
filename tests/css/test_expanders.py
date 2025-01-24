@@ -47,9 +47,17 @@ def test_empty_expander_value(expander):
         'text_decoration_line': {'blink', 'line-through', 'overline'},
     }),
     ('red', {'text_decoration_color': parse_color('red')}),
+    ('blue 1px', {
+        'text_decoration_color': parse_color('blue'),
+        'text_decoration_thickness': (1, 'px'),
+    }),
+    ('100% none', {
+        'text_decoration_line': 'none',
+        'text_decoration_thickness': (100, '%'),
+    }),
     ('inherit', {
         f'text_decoration_{key}': 'inherit'
-        for key in ('color', 'line', 'style')}),
+        for key in ('color', 'line', 'style', 'thickness')}),
 ))
 def test_text_decoration(rule, result):
     assert expand_to_dict(f'text-decoration: {rule}') == result
@@ -59,8 +67,8 @@ def test_text_decoration(rule, result):
 @pytest.mark.parametrize('rule', (
     'solid solid',
     'red red',
-    '1px',
     'underline none',
+    '1px 100%',
     'none none',
 ))
 def test_text_decoration_invalid(rule):
