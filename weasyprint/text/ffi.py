@@ -282,6 +282,8 @@ ffi.cdef('''
     void pango_layout_line_get_extents (
         PangoLayoutLine *line, PangoRectangle *ink_rect, PangoRectangle *logical_rect);
     PangoLayoutLine * pango_layout_get_line_readonly (PangoLayout *layout, int line);
+    const PangoLogAttr* pango_layout_get_log_attrs_readonly (
+        PangoLayout* layout, gint* n_attrs);
 
     hb_font_t * pango_font_get_hb_font (PangoFont *font);
 
