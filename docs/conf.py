@@ -43,19 +43,6 @@ pygments_style = 'monokai'
 html_theme = 'furo'
 
 html_theme_options = {
-    'light_css_variables': {
-        'color-brand-primary': 'var(--red)',
-        'color-brand-content': 'var(--red)',
-        'color-brand-visited': 'var(--red)',
-        'font-stack': 'ClarityCity, sans-serif',
-        'font-stack--monospace': 'Inconsolata, monospace',
-        'font-stack--headings': 'Inconsolata, monospace',
-    },
-    'dark_css_variables': {
-        'color-brand-primary': 'var(--red)',
-        'color-brand-content': 'var(--red)',
-        'color-brand-visited': 'var(--red)',
-    },
     'top_of_page_buttons': ['edit'],
     'source_edit_link':
     'https://github.com/Kozea/WeasyPrint/edit/main/docs/{filename}',
