@@ -2,6 +2,93 @@ Changelog
 =========
 
 
+Version 64.0
+------------
+
+Released on 2025-01-30.
+
+Features:
+
+* `#2338 <https://github.com/Kozea/WeasyPrint/pull/2338>`_:
+  Allow custom RDF metadata for PDF/A and eInvoices
+* `#123 <https://github.com/Kozea/WeasyPrint/issues/123>`_,
+  `#2345 <https://github.com/Kozea/WeasyPrint/pull/2345>`_:
+  Handle small-caps synthesis
+* `#2343 <https://github.com/Kozea/WeasyPrint/issues/2343>`_:
+  Support outline-offset
+* `#2361 <https://github.com/Kozea/WeasyPrint/pull/2361>`_:
+  Support text-underline-offset and text-decoration-thickness
+* `#2296 <https://github.com/Kozea/WeasyPrint/issues/2296>`_:
+  Don’t crash with tables with rounded corners split between pages
+
+Bug fixes:
+
+* `#2360 <https://github.com/Kozea/WeasyPrint/issues/2360>`_:
+  Fix gradients with non-RGB colors
+* `#2355 <https://github.com/Kozea/WeasyPrint/issues/2355>`_,
+  `#2358 <https://github.com/Kozea/WeasyPrint/pull/2358>`_:
+  Align png emojis to the surrounding text
+* `#2353 <https://github.com/Kozea/WeasyPrint/issues/2353>`_:
+  Fix alignment of SVG text with multiple nested text-anchor values
+* `#2350 <https://github.com/Kozea/WeasyPrint/pull/2350>`_:
+  Fix logging restoration in capture_logs
+* `#2341 <https://github.com/Kozea/WeasyPrint/pull/2341>`_:
+  Fix page groups
+* `#2314 <https://github.com/Kozea/WeasyPrint/pulls/2314>`_:
+  Use CSS 'image-rendering' attribute for images in SVGs
+* `#2332 <https://github.com/Kozea/WeasyPrint/issues/2332>`_:
+  Fix opacity for translated SVG elements
+* `#2329 <https://github.com/Kozea/WeasyPrint/issues/2329>`_:
+  Refactor text.line_break.get_log_attrs
+* `#2325 <https://github.com/Kozea/WeasyPrint/issues/2325>`_,
+  `#2326 <https://github.com/Kozea/WeasyPrint/pull/2326>`_:
+  Fix table overflow edge cases
+
+Performance:
+
+* `#2347 <https://github.com/Kozea/WeasyPrint/issues/2347>`_,
+  `#2364 <https://github.com/Kozea/WeasyPrint/pull/2364>`_:
+  Improve rendering speed for text
+
+Documentation:
+
+* `#2352 <https://github.com/Kozea/WeasyPrint/pull/2352>`_:
+  Add more use cases in documentation, use Furo theme
+
+Contributors:
+
+* Guillaume Ayoub
+* Kesara Rathnayake
+* Xavid Pretzer
+* David Tagatac
+* Ernesto Ruge
+* Niko Abeler
+* Noam Kushinsky
+
+Backers and sponsors:
+
+* Spacinov
+* Kobalt
+* Grip Angebotssoftware
+* Syslifters
+* Simon Sapin
+* Manuel Barkhau
+* Simonsoft
+* Menutech
+* KontextWork
+* TrainingSparkle
+* Healthchecks.io
+* Hammerbacher
+* DocRaptor
+* Yanal-Yves Fargialla
+* Method B
+* FieldHub
+* Morntag
+* Xavid
+* Kai DeLorenzo
+* Charlie S.
+
+
 Version 63.1
 ------------
 
@@ -76,7 +163,7 @@ Backers and sponsors:
 * Docraptor
 * Method B
 * FieldHub
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Morntag
 * Xavid
 
@@ -230,7 +317,7 @@ Backers and sponsors:
 * Docraptor
 * Method B
 * FieldHub
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Morntag
 * Xavid
 
@@ -280,7 +367,7 @@ Backers and sponsors:
 * Healthchecks.io
 * Hammerbacher
 * Docraptor
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Douwe van Loenen
 * Morntag
 * Xavid
@@ -333,7 +420,7 @@ Backers and sponsors:
 * Healthchecks.io
 * Hammerbacher
 * Docraptor
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Douwe van Loenen
 * Morntag
 * Xavid
@@ -373,7 +460,7 @@ Backers and sponsors:
 * TrainingSparkle
 * Healthchecks.io
 * Docraptor
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Douwe van Loenen
 * Morntag
 * Xavid
@@ -475,7 +562,7 @@ Backers and sponsors:
 * TrainingSparkle
 * Healthchecks.io
 * Docraptor
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Douwe van Loenen
 * Morntag
 * Xavid
@@ -516,7 +603,7 @@ Backers and sponsors:
 * Healthchecks.io
 * Hammerbacher
 * Docraptor
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Morntag
 * NBCO
 
@@ -563,7 +650,7 @@ Backers and sponsors:
 * Healthchecks.io
 * Hammerbacher
 * Docraptor
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Morntag
 * NBCO
 
@@ -673,7 +760,7 @@ Backers and sponsors:
 * Healthchecks.io
 * Hammerbacher
 * Docraptor
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Morntag
 * NBCO
 
@@ -715,7 +802,7 @@ Backers and sponsors:
 * TrainingSparkle
 * Daniel Kucharski
 * Healthchecks.io
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * WakaTime
 * Paheko
 * Synapsium
@@ -753,7 +840,7 @@ Backers and sponsors:
 * TrainingSparkle
 * Daniel Kucharski
 * Healthchecks.io
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * WakaTime
 * Paheko
 * Synapsium
@@ -837,7 +924,7 @@ Backers and sponsors:
 * TrainingSparkle
 * Daniel Kucharski
 * Healthchecks.io
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * WakaTime
 * Paheko
 * Synapsium
@@ -885,7 +972,7 @@ Backers and sponsors:
 * NCC Group
 * René Fritz
 * Moritz Mahringer
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Piotr Horzycki
 * Healthchecks.io
 * TrainingSparkle
@@ -994,7 +1081,7 @@ Backers and sponsors:
 * NCC Group
 * René Fritz
 * Moritz Mahringer
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Piotr Horzycki
 * Healthchecks.io
 * TrainingSparkle
@@ -1041,7 +1128,7 @@ Backers and sponsors:
 * NCC Group
 * René Fritz
 * Moritz Mahringer
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Piotr Horzycki
 * Healthchecks.io
 * Hammerbacher
@@ -1084,7 +1171,7 @@ Backers and sponsors:
 * NCC Group
 * René Fritz
 * Moritz Mahringer
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Piotr Horzycki
 * Healthchecks.io
 
@@ -1131,7 +1218,7 @@ Backers and sponsors:
 * NCC Group
 * René Fritz
 * Moritz Mahringer
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Piotr Horzycki
 * Healthchecks.io
 
@@ -1409,7 +1496,7 @@ Backers and sponsors:
 * Tom Pohl
 * Moritz Mahringer
 * Florian Demmer
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Gábor
 * Piotr Horzycki
 * Andrew Ittner
@@ -1462,7 +1549,7 @@ Backers and sponsors:
 * Tom Pohl
 * Moritz Mahringer
 * Florian Demmer
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Gábor
 * Piotr Horzycki
 
@@ -1531,7 +1618,7 @@ Backers and sponsors:
 * Tom Pohl
 * Moritz Mahringer
 * Florian Demmer
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Gábor
 * Piotr Horzycki
 
@@ -1583,7 +1670,7 @@ Backers and sponsors:
 * Tom Pohl
 * Moritz Mahringer
 * Florian Demmer
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Gábor
 * Piotr Horzycki
 
@@ -1683,7 +1770,7 @@ Backers and sponsors:
 * Kobalt
 * Moritz Mahringer
 * Florian Demmer
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Gábor
 * Piotr Horzycki
 * DeivGuerrero
@@ -1724,7 +1811,7 @@ Backers and sponsors:
 * Kobalt
 * Moritz Mahringer
 * Florian Demmer
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Gábor
 * Piotr Horzycki
 * DeivGuerrero
@@ -1777,7 +1864,7 @@ Backers and sponsors:
 * Kobalt
 * Moritz Mahringer
 * Florian Demmer
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Gábor
 * Piotr Horzycki
 * DeivGuerrero
@@ -1828,7 +1915,7 @@ Backers and sponsors:
 * Des images et des mots
 * Moritz Mahringer
 * Florian Demmer
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Gábor
 * Piotr Horzycki
 
@@ -1872,7 +1959,7 @@ Backers and sponsors:
 * Des images et des mots
 * Moritz Mahringer
 * Florian Demmer
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Gábor
 * Piotr Horzycki
 
@@ -1969,7 +2056,7 @@ Backers and sponsors:
 * Des images et des mots
 * Moritz Mahringer
 * Florian Demmer
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Gábor
 * Piotr Horzycki
 
@@ -2022,7 +2109,7 @@ Backers and sponsors:
 * Tom Pohl
 * Moritz Mahringer
 * Florian Demmer
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * G. Allard
 * Gábor
 
@@ -2065,7 +2152,7 @@ Backers and sponsors:
 * Tom Pohl
 * Moritz Mahringer
 * Florian Demmer
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 
 
 Version 53.2
@@ -2105,7 +2192,7 @@ Backers and sponsors:
 * Tom Pohl
 * Moritz Mahringer
 * Florian Demmer
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 
 
 Version 53.1
@@ -2149,7 +2236,7 @@ Backers and sponsors:
 * Tom Pohl
 * Moritz Mahringer
 * Florian Demmer
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 
 
 Version 53.0
@@ -2252,7 +2339,7 @@ Backers and sponsors:
 * Florian Demmer
 * Des images et des mots
 * Mohammed Y. Alnajdi
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Yevhenii Hyzyla
 
 
@@ -2323,7 +2410,7 @@ Backers and sponsors:
 * Mohammed Y. Alnajdi
 * NCC Group
 * Des images et des mots
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Yevhenii Hyzyla
 
 
@@ -2391,7 +2478,7 @@ Backers and sponsors:
 * Moritz Mahringer
 * Florian Demmer
 * Maykin Media
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Des images et des mots
 * Yevhenii Hyzyla
 
@@ -2427,7 +2514,7 @@ Backers and sponsors:
 * Moritz Mahringer
 * Florian Demmer
 * Maykin Media
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Des images et des mots
 * Yevhenii Hyzyla
 
