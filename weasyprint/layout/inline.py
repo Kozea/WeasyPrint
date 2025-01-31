@@ -1049,8 +1049,7 @@ def inline_box_verticality(box, top_bottom_subtrees, baseline_y):
 
         # the child’s `top` is `child.baseline` above (lower y) its baseline.
         top = child_baseline_y - child.baseline
-        box_types = (
-            boxes.InlineBlockBox, boxes.InlineFlexBox, boxes.InlineGridBox)
+        box_types = (boxes.InlineBlockBox, boxes.InlineFlexBox, boxes.InlineGridBox)
         if isinstance(child, box_types):
             # This also includes table wrappers for inline tables.
             child.translate(dy=top - child.position_y)

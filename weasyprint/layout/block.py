@@ -629,9 +629,7 @@ def block_container_layout(context, box, bottom_space, skip_stack,
                            page_is_empty, absolute_boxes, fixed_boxes,
                            adjoining_margins, discard, max_lines):
     """Set the ``box`` height."""
-    # TODO: boxes.FlexBox is allowed here because flex_layout calls
-    # block_container_layout, there's probably a better solution.
-    assert isinstance(box, (boxes.BlockContainerBox, boxes.FlexBox))
+    assert isinstance(box, boxes.BlockContainerBox)
 
     if box.establishes_formatting_context():
         context.create_block_formatting_context()

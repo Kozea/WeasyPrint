@@ -82,6 +82,7 @@ def _dispatch(box, page, child_contexts, blocks, floats, blocks_and_cells):
         child_contexts.append(StackingContext.from_box(box, page))
         return
 
+    stacking_classes = (boxes.InlineBlockBox, boxes.InlineFlexBox, boxes.InlineGridBox)
     if style['position'] != 'static':
         assert style['z_index'] == 'auto'
         # "Fake" context: sub-contexts will go in this `child_contexts` list.
@@ -91,8 +92,7 @@ def _dispatch(box, page, child_contexts, blocks, floats, blocks_and_cells):
         child_contexts.insert(index, stacking_context)
     elif box.is_floated():
         floats.append(StackingContext.from_box(box, page, child_contexts))
-    elif isinstance(box, (
-            boxes.InlineBlockBox, boxes.InlineFlexBox, boxes.InlineGridBox)):
+    elif isinstance(box, stacking_classes):
         # Have this fake stacking context be part of the "normal" box tree,
         # because we need its position in the middle of a tree of inline boxes.
         return StackingContext.from_box(box, page, child_contexts)

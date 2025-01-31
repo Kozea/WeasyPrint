@@ -43,14 +43,12 @@ def min_content_width(context, box, outer=True):
         return table_and_columns_preferred_widths(context, box, outer)[0]
     elif isinstance(box, boxes.TableCellBox):
         return table_cell_min_content_width(context, box, outer)
-    elif isinstance(box, (
-            boxes.BlockContainerBox, boxes.TableColumnBox, boxes.FlexBox)):
+    elif isinstance(box, (boxes.BlockContainerBox, boxes.TableColumnBox)):
         return block_min_content_width(context, box, outer)
     elif isinstance(box, boxes.TableColumnGroupBox):
         return column_group_content_width(context, box)
     elif isinstance(box, (boxes.InlineBox, boxes.LineBox)):
-        return inline_min_content_width(
-            context, box, outer, is_line_start=True)
+        return inline_min_content_width(context, box, outer, is_line_start=True)
     elif isinstance(box, boxes.ReplacedBox):
         return replaced_min_content_width(box, outer)
     elif isinstance(box, boxes.FlexContainerBox):
@@ -59,8 +57,7 @@ def min_content_width(context, box, outer=True):
         # TODO: Get real grid size.
         return block_min_content_width(context, box, outer)
     else:
-        raise TypeError(
-            f'min-content width for {type(box).__name__} not handled yet')
+        raise TypeError(f'min-content width for {type(box).__name__} not handled yet')
 
 
 def max_content_width(context, box, outer=True):
@@ -73,14 +70,12 @@ def max_content_width(context, box, outer=True):
         return table_and_columns_preferred_widths(context, box, outer)[1]
     elif isinstance(box, boxes.TableCellBox):
         return table_cell_min_max_content_width(context, box, outer)[1]
-    elif isinstance(box, (
-            boxes.BlockContainerBox, boxes.TableColumnBox, boxes.FlexBox)):
+    elif isinstance(box, (boxes.BlockContainerBox, boxes.TableColumnBox)):
         return block_max_content_width(context, box, outer)
     elif isinstance(box, boxes.TableColumnGroupBox):
         return column_group_content_width(context, box)
     elif isinstance(box, (boxes.InlineBox, boxes.LineBox)):
-        return inline_max_content_width(
-            context, box, outer, is_line_start=True)
+        return inline_max_content_width(context, box, outer, is_line_start=True)
     elif isinstance(box, boxes.ReplacedBox):
         return replaced_max_content_width(box, outer)
     elif isinstance(box, boxes.FlexContainerBox):
@@ -89,8 +84,7 @@ def max_content_width(context, box, outer=True):
         # TODO: Get real grid size.
         return block_max_content_width(context, box, outer)
     else:
-        raise TypeError(
-            f'max-content width for {type(box).__name__} not handled yet')
+        raise TypeError(f'max-content width for {type(box).__name__} not handled yet')
 
 
 def _block_content_width(context, box, function, outer):
