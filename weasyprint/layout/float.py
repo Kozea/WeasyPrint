@@ -216,9 +216,11 @@ def avoid_collisions(context, box, containing_block, outer=True):
                 # bound.
                 position_x = max_right_bound - box_width
             else:
-                # The position of the right border of the replaced box is at
-                # the right bound.
-                assert isinstance(box, boxes.BlockReplacedBox)
+                # The position of the right border of the replaced box or
+                # formatting context is at the right bound.
+                assert (
+                    isinstance(box, boxes.BlockReplacedBox) or
+                    box.establishes_formatting_context())
                 position_x = max_right_bound - box_width
 
     available_width = max_right_bound - max_left_bound
