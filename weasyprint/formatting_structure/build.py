@@ -724,9 +724,7 @@ def is_whitespace(box, _has_non_whitespace=re.compile('\\S').search):
 
 
 def wrap_improper(box, children, wrapper_type, test=None):
-    """
-    Wrap consecutive children that do not pass ``test`` in a box of type
-    ``wrapper_type``.
+    """Wrap consecutive children that do not pass ``test`` in a ``wrapper_type`` box.
 
     ``test`` defaults to children being of the same type as ``wrapper_type``.
 
@@ -744,17 +742,7 @@ def wrap_improper(box, children, wrapper_type, test=None):
                 improper = []
             yield child
         else:
-            # Whitespace either fail the test or were removed earlier,
-            # so there is no need to take special care with the definition
-            # of "consecutive".
-            if isinstance(box, boxes.FlexContainerBox):
-                # The display value of a flex item must be "blockified", see
-                # https://www.w3.org/TR/css-flexbox-1/#flex-items
-                # TODO: These blocks are currently ignored, we should
-                # "blockify" them and their children.
-                pass
-            else:
-                improper.append(child)
+            improper.append(child)
     if improper:
         wrapper = wrapper_type.anonymous_from(box, children=[])
         # Apply the rules again on the new wrapper

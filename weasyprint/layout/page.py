@@ -605,10 +605,8 @@ def make_page(context, root_box, page_type, resume_at, page_number,
         previous_resume_at = resume_at
         root_box = root_box.copy_with_children([])
 
-    # TODO: handle cases where the root element is something else.
-    # See https://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo
-    assert isinstance(root_box, (
-        boxes.BlockBox, boxes.FlexContainerBox, boxes.GridContainerBox))
+    # https://www.w3.org/TR/css-display-4/#root
+    assert isinstance(root_box, boxes.BlockLevelBox)
     context.create_block_formatting_context()
     context.current_page = page_number
     context.current_page_footnotes = []
