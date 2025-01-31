@@ -12,7 +12,7 @@ from .table import find_in_flow_baseline
 
 
 class FlexLine(list):
-    pass
+    """Flex container line."""
 
 
 def flex_layout(context, box, bottom_space, skip_stack, containing_block,
