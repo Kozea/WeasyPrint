@@ -797,3 +797,39 @@ def test_flex_column_overflow():
   <div><div style="height: 5px"></div></div>
 </div>
 ''')
+
+
+@assert_no_logs
+def test_inline_flex():
+    render_pages('''
+<style>
+  @page {size: 20px}
+</style>
+<div style="display: inline-flex; flex-direction: column">
+  <div>test</div>
+</div>
+''')
+
+
+@assert_no_logs
+def test_inline_flex_empty_child():
+    render_pages('''
+<style>
+  @page {size: 20px}
+</style>
+<div style="display: inline-flex; flex-direction: column">
+  <div></div>
+</div>
+''')
+
+
+@assert_no_logs
+def test_inline_flex_absolute_baseline():
+    render_pages('''
+<style>
+  @page {size: 20px}
+</style>
+<div style="display: inline-flex; flex-direction: column">
+  <div style="position: absolute">abs</div>
+</div>
+''')

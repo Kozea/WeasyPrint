@@ -1097,9 +1097,12 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
         if axis == 'width':  # and main text direction is horizontal
             box.baseline = flex_lines[0].lower_baseline if flex_lines else 0
         else:
-            box.baseline = ((
-                find_in_flow_baseline(box.children[0])
-                if box.children else 0) or 0)
+            for child in box.children:
+                if child.is_in_normal_flow():
+                    box.baseline = find_in_flow_baseline(child) or 0
+                    break
+            else:
+                box.baseline = 0
 
     context.finish_block_formatting_context(box)
 
