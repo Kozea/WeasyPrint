@@ -70,12 +70,12 @@ class Font:
         # Set ascent and descent.
         if self.font_size:
             pango_metrics = pango.pango_font_get_metrics(pango_font, ffi.NULL)
-            self.ascent = int(
+            self.ascent = int(round(
                 pango.pango_font_metrics_get_ascent(pango_metrics) * FROM_UNITS /
-                self.font_size * 1000)
-            self.descent = -int(
+                self.font_size * 1000))
+            self.descent = -int(round(
                 pango.pango_font_metrics_get_descent(pango_metrics) * FROM_UNITS /
-                self.font_size * 1000)
+                self.font_size * 1000))
         else:
             self.ascent = self.descent = 0
 

@@ -742,3 +742,12 @@ def test_custom_rdf_metadata():
     pdf_bytes = pdf_document.write_pdf(
         pdf_variant='pdf/a-3b', pdf_identifier=b'example-bytes', uncompressed_pdf=True)
     assert b'TEST_METADATA' in pdf_bytes
+
+
+@assert_no_logs
+def test_font_descent_ascent():
+    pdf = FakeHTML(string='''
+      <html style="font-family: weasyprint">abc
+    ''').write_pdf()
+    assert b'/Descent -200' in pdf
+    assert b'/Ascent 800' in pdf
