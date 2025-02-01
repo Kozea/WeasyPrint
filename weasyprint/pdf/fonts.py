@@ -71,10 +71,10 @@ class Font:
         if self.font_size:
             pango_metrics = pango.pango_font_get_metrics(pango_font, ffi.NULL)
             self.ascent = int(
-                pango.pango_font_metrics_get_ascent(pango_metrics) /
+                pango.pango_font_metrics_get_ascent(pango_metrics) * FROM_UNITS /
                 self.font_size * 1000)
             self.descent = -int(
-                pango.pango_font_metrics_get_descent(pango_metrics) /
+                pango.pango_font_metrics_get_descent(pango_metrics) * FROM_UNITS /
                 self.font_size * 1000)
         else:
             self.ascent = self.descent = 0
@@ -128,7 +128,7 @@ class Font:
             if 'wght' not in self.variations:
                 self.variations['wght'] = self.weight
             if 'opsz' not in self.variations:
-                self.variations['opsz'] = self.font_size * FROM_UNITS
+                self.variations['opsz'] = self.font_size
             if 'slnt' not in self.variations:
                 slnt = 0
                 if self.style == 1:
