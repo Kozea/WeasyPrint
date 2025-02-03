@@ -581,7 +581,7 @@ def resolve_var(computed, token, parent_style):
     if token.lower_name != 'var':
         arguments = []
         for i, argument in enumerate(token.arguments):
-            if argument.type == 'function' and argument.lower_name == 'var':
+            if argument.type == 'function':
                 arguments.extend(resolve_var(computed, argument, parent_style))
             else:
                 arguments.append(argument)
