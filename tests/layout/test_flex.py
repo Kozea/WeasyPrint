@@ -217,6 +217,29 @@ def test_flex_direction_column_reverse_rtl():
 
 
 @assert_no_logs
+def test_flex_direction_column_box_sizing():
+    page, = render_pages('''
+      <style>
+        article {
+          box-sizing: border-box;
+          display: flex;
+          flex-direction: column;
+          height: 10px;
+          padding-top: 5px;
+          width: 10px;
+        }
+      </style>
+      <article></article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    assert article.width == 10
+    assert article.height == 5
+    assert article.padding_top == 5
+
+
+@assert_no_logs
 def test_flex_row_wrap():
     page, = render_pages('''
       <article style="display: flex; flex-flow: wrap; width: 50px">

@@ -311,15 +311,10 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
     # using the rules of the formatting context in which it
     # participates. For this computation, auto margins on flex items
     # are treated as 0.
-    # TODO: The whole step has to be fixed.
     if axis == 'width':
         block.block_level_width(box, containing_block)
     else:
-        if box.style['height'] != 'auto' and box.style['height'].unit != '%':
-            box.height = box.style['height'].value
-        elif box.style['height'] != 'auto' and containing_block.height != 'auto':
-            box.height = box.style['height'].value / 100 * containing_block.height
-        else:
+        if box.height == 'auto':
             box.height = 0
             for index, child in enumerate(children):
                 if not child.is_flex_item:
