@@ -596,9 +596,14 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
                 # to the child bottom margin.
                 child.margin_bottom += block.collapse_margin(adjoining_margins)
             else:
-                # TODO: We had min_content_width here but I have no idea under
-                # what circumstance that would be correct.
-                child.width = new_child.width
+                if child.width == 'auto':
+                    child.width = min(
+                        max(
+                            min_content_width(context, child, outer=False),
+                            new_child.width),
+                        max_content_width(context, box, outer=False))
+                else:
+                    child.width = new_child.width
 
             new_flex_line.append((index, child))
 
