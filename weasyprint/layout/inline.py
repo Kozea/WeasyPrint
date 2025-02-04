@@ -782,7 +782,7 @@ def split_inline_box(context, box, position_x, max_x, bottom_space, skip_stack,
 
             if new_position_x > max_x and not trailing_whitespace:
                 previous_resume_at = _break_waiting_children(
-                    context, box, max_x, bottom_space, initial_skip_stack,
+                    context, containing_block, max_x, bottom_space, initial_skip_stack,
                     absolute_boxes, fixed_boxes, line_placeholders,
                     waiting_floats, line_children, children, waiting_children)
                 if previous_resume_at:

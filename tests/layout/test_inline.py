@@ -1102,3 +1102,17 @@ def test_bidi_position_x_invariant():
     assert block_ltr.position_x == block_rtl.position_x
     assert line_ltr.position_x == line_rtl.position_x
     assert text_ltr.position_x == text_rtl.position_x
+
+
+@assert_no_logs
+def test_nested_waiting_children_width():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/2275
+    page, = render_pages(
+        '<body style="width: 3em; font-family: weasyprint">'
+        '<b><i style="width: 100%">a b</i>c')
+    html, = page.children
+    body, = html.children
+    line1, line2 = body.children
+    assert line1.children[0].children[0].children[0].text == 'a'
+    assert line2.children[0].children[0].children[0].text == 'b'
+    assert line2.children[0].children[1].text == 'c'
