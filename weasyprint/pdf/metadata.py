@@ -25,7 +25,22 @@ def add_metadata(pdf, metadata, variant, version, conformance, compress):
     Described in ISO-32000-1:2008, 14.3.2.
 
     """
-    # Add metadata
+    header = b'<?xpacket begin="" id="W5M0MpCehiHzreSzNTczkc9d"?>'
+    footer = b'<?xpacket end="r"?>'
+    xml_data = metadata.generate_rdf_metadata(metadata, variant, version, conformance)
+    stream_content = b'\n'.join((header, xml_data, footer))
+    extra = {'Type': '/Metadata', 'Subtype': '/XML'}
+    metadata = pydyf.Stream([stream_content], extra, compress)
+    pdf.add_object(metadata)
+    pdf.catalog['Metadata'] = metadata.reference
+
+
+def generate_rdf_metadata(metadata, variant, version, conformance):
+    """Generate RDF metadata as a bytestring.
+
+    Might be replaced by DocumentMetadata.rdf_metadata_generator().
+
+    """
     namespace = f'pdf{variant}id'
     rdf = Element(f'{{{NS["rdf"]}}}RDF')
 
@@ -82,11 +97,4 @@ def add_metadata(pdf, metadata, variant, version, conformance, compress):
         element.attrib[f'{{{NS["rdf"]}}}about'] = ''
         element = SubElement(element, f'{{{NS["xmp"]}}}ModifyDate')
         element.text = metadata.modified
-    xml = tostring(rdf, encoding='utf-8')
-    header = b'<?xpacket begin="" id="W5M0MpCehiHzreSzNTczkc9d"?>'
-    footer = b'<?xpacket end="r"?>'
-    stream_content = b'\n'.join((header, xml, footer))
-    extra = {'Type': '/Metadata', 'Subtype': '/XML'}
-    metadata = pydyf.Stream([stream_content], extra, compress)
-    pdf.add_object(metadata)
-    pdf.catalog['Metadata'] = metadata.reference
+    return tostring(rdf, encoding='utf-8')

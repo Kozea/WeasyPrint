@@ -7,7 +7,7 @@ See https://www.w3.org/TR/CSS21/propidx.html and various CSS3 modules.
 from math import inf
 
 from tinycss2 import parse_component_value_list
-from tinycss2.color3 import parse_color
+from tinycss2.color4 import parse_color
 
 from .. import computed_values
 from ..properties import KNOWN_PROPERTIES, ZERO_PIXELS, Dimension
@@ -135,7 +135,7 @@ def other_colors(token):
 @single_token
 def outline_color(token):
     if get_keyword(token) == 'invert':
-        return 'currentColor'
+        return 'currentcolor'
     else:
         return parse_color(token)
 
@@ -158,7 +158,7 @@ def empty_cells(keyword):
 def color(token):
     """``*-color`` and ``color`` properties validation."""
     result = parse_color(token)
-    if result == 'currentColor':
+    if result == 'currentcolor':
         return 'inherit'
     else:
         return result
@@ -648,9 +648,10 @@ def counter(tokens, default_integer):
 @property('margin-right')
 @property('margin-bottom')
 @property('margin-left')
+@property('text-underline-offset')
 @single_token
 def lenght_precentage_or_auto(token):
-    """``margin-*`` properties validation."""
+    """``margin-*`` and various other properties validation."""
     length = get_length(token, percentage=True)
     if length:
         return length
@@ -888,7 +889,7 @@ def font_feature_settings(tokens):
 @single_keyword
 def font_variant_alternates(keyword):
     # TODO: support other values
-    # See https://www.w3.org/TR/css-fonts-3/#font-variant-caps-prop
+    # See https://drafts.csswg.org/css-fonts/#font-variant-alternates-prop
     return keyword in ('normal', 'historical-forms')
 
 
@@ -1004,6 +1005,15 @@ def spacing(token):
     """Validation for ``letter-spacing`` and ``word-spacing``."""
     if get_keyword(token) == 'normal':
         return 'normal'
+    length = get_length(token)
+    if length:
+        return length
+
+
+@property()
+@single_token
+def outline_offset(token):
+    """Validation for ``outline-offset``."""
     length = get_length(token)
     if length:
         return length
@@ -1224,6 +1234,17 @@ def text_decoration_line(tokens):
 def text_decoration_style(keyword):
     """``text-decoration-style`` property validation."""
     if keyword in ('solid', 'double', 'dotted', 'dashed', 'wavy'):
+        return keyword
+
+
+@property()
+@single_token
+def text_decoration_thickness(token):
+    """``text-decoration-thickness`` property validation."""
+    length = get_length(token, percentage=True)
+    if length:
+        return length
+    if keyword := get_keyword(token) in ('auto', 'from-font'):
         return keyword
 
 

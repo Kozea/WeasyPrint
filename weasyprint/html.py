@@ -7,17 +7,8 @@ are images with intrinsic dimensions.
 
 """
 
-try:
-    # Available in Python 3.9+
-    from importlib.resources import files
-except ImportError:  # pragma: no cover
-    # Deprecated in Python 3.11+
-    from importlib.resources import read_text
-else:
-    def read_text(package, resource):
-        return (files(package) / resource).read_text('utf-8')
-
 import re
+from importlib.resources import files
 
 from . import CSS, Attachment, css
 from .css import get_child_text
@@ -28,9 +19,9 @@ from .logger import LOGGER
 from .urls import get_url_attribute
 
 HTML5_UA_COUNTER_STYLE = CounterStyle()
-HTML5_UA = read_text(css, 'html5_ua.css')
-HTML5_UA_FORM = read_text(css, 'html5_ua_form.css')
-HTML5_PH = read_text(css, 'html5_ph.css')
+HTML5_UA = (files(css) / 'html5_ua.css').read_text('utf-8')
+HTML5_UA_FORM = (files(css) / 'html5_ua_form.css').read_text('utf-8')
+HTML5_PH = (files(css) / 'html5_ph.css').read_text('utf-8')
 HTML5_UA_STYLESHEET = CSS(
     string=HTML5_UA, counter_style=HTML5_UA_COUNTER_STYLE)
 HTML5_UA_FORM_STYLESHEET = CSS(

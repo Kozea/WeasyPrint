@@ -92,8 +92,7 @@ def add_outlines(pdf, bookmarks, parent=None):
     return outlines, count
 
 
-def add_forms(forms, matrix, pdf, page, resources, stream, font_map,
-              compress):
+def add_forms(forms, matrix, pdf, page, resources, stream, font_map):
     """Include form inputs in PDF."""
     if not forms or not any(forms.values()):
         return
@@ -128,8 +127,8 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map,
         input_name = element.attrib.get('name', default_name)
         # TODO: where does this 0.75 scale come from?
         font_size = style['font_size'] * 0.75
-        field_stream = pydyf.Stream(compress=compress)
-        field_stream.set_color_rgb(*style['color'][:3])
+        field_stream = stream.clone()
+        field_stream.set_color(style['color'])
         field = pydyf.Dictionary({
             'Type': '/Annot',
             'Subtype': '/Widget',
@@ -138,7 +137,6 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map,
             'F': 1 << (3 - 1),  # Print flag
             'T': pydyf.String(input_name),
         })
-
         if input_type in ('radio', 'checkbox'):
             if input_type == 'radio':
                 if input_name not in radio_groups[form]:
@@ -161,15 +159,15 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map,
             # Create stream when input is checked.
             width = rectangle[2] - rectangle[0]
             height = rectangle[1] - rectangle[3]
-            checked_stream = pydyf.Stream(extra={
+            checked_stream = stream.clone(extra={
                 'Resources': resources.reference,
                 'Type': '/XObject',
                 'Subtype': '/Form',
                 'BBox': pydyf.Array((0, 0, width, height)),
-            }, compress=compress)
+            })
             checked_stream.push_state()
             checked_stream.begin_text()
-            checked_stream.set_color_rgb(*style['color'][:3])
+            checked_stream.set_color(style['color'])
             checked_stream.set_font_size('ZaDb', font_size)
             # Center (assuming that Dingbat’s characters have a 0.75em size).
             x = (width - font_size * 0.75) / 2
@@ -205,7 +203,7 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map,
             font_description = get_font_description(style)
             font = pango.pango_font_map_load_font(
                 font_map, context, font_description)
-            font = stream.add_font(font)
+            font, _ = stream.add_font(font)
             font.used_in_forms = True
 
             field_stream.set_font_size(font.hash, font_size)
@@ -254,7 +252,7 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map,
             font_description = get_font_description(style)
             font = pango.pango_font_map_load_font(
                 font_map, context, font_description)
-            font = stream.add_font(font)
+            font, _ = stream.add_font(font)
             font.used_in_forms = True
 
             field_stream.set_font_size(font.hash, font_size)
@@ -353,7 +351,9 @@ def write_pdf_attachment(pdf, attachment, compress):
 
     # TODO: Use the result object from a URL fetch operation to provide more
     # details on the possible filename and MIME type.
-    if url and urlsplit(url).path:
+    if attachment.name:
+        filename = attachment.name
+    elif url and urlsplit(url).path:
         filename = basename(unquote(urlsplit(url).path))
     else:
         filename = 'attachment.bin'
@@ -378,7 +378,7 @@ def write_pdf_attachment(pdf, attachment, compress):
 
     pdf_attachment = pydyf.Dictionary({
         'Type': '/Filespec',
-        'F': pydyf.String(),
+        'F': pydyf.String(filename.encode(errors='ignore')),
         'UF': pydyf.String(filename),
         'EF': pydyf.Dictionary({'F': file_stream.reference}),
         'Desc': pydyf.String(attachment.description or ''),

@@ -3,7 +3,7 @@
 import functools
 
 from tinycss2.ast import DimensionToken, IdentToken, NumberToken
-from tinycss2.color3 import parse_color
+from tinycss2.color4 import parse_color
 
 from ..properties import INITIAL_VALUES
 from .descriptors import expand_font_variant
@@ -16,10 +16,10 @@ from .properties import ( # isort:skip
     background_size, block_ellipsis, border_image_source, border_image_slice,
     border_image_width, border_image_outset, border_image_repeat, border_style,
     border_width, box, column_count, column_width, flex_basis, flex_direction,
-    flex_grow_shrink, flex_wrap, font_family, font_size, font_stretch,
-    font_style, font_weight, gap, grid_line, grid_template, line_height,
+    flex_grow_shrink, flex_wrap, font_family, font_size, font_stretch, font_style,
+    font_variant_caps, font_weight, gap, grid_line, grid_template, line_height,
     list_style_image, list_style_position, list_style_type, mask_border_mode,
-    other_colors, overflow_wrap, validate_non_shorthand)
+    other_colors, overflow_wrap, text_decoration_thickness, validate_non_shorthand)
 
 EXPANDERS = {}
 
@@ -520,43 +520,46 @@ def expand_background(tokens, name, base_url):
 
 
 @expander('text-decoration')
-@generic_expander('-line', '-color', '-style')
+@generic_expander('-line', '-color', '-style', '-thickness')
 def expand_text_decoration(tokens, name):
     """Expand the ``text-decoration`` shorthand property."""
-    text_decoration_line = []
-    text_decoration_color = []
-    text_decoration_style = []
+    line = []
+    color = []
+    style = []
+    thickness = []
     none_in_line = False
 
     for token in tokens:
         keyword = get_keyword(token)
-        if keyword in (
-                'none', 'underline', 'overline', 'line-through', 'blink'):
-            text_decoration_line.append(token)
+        if keyword in ('none', 'underline', 'overline', 'line-through', 'blink'):
+            line.append(token)
             if none_in_line:
                 raise InvalidValues
             elif keyword == 'none':
                 none_in_line = True
         elif keyword in ('solid', 'double', 'dotted', 'dashed', 'wavy'):
-            if text_decoration_style:
+            if style:
                 raise InvalidValues
-            else:
-                text_decoration_style.append(token)
+            style.append(token)
+        elif parse_color(token):
+            if color:
+                raise InvalidValues
+            color.append(token)
+        elif text_decoration_thickness([token]):
+            if thickness:
+                raise InvalidValues
+            thickness.append(token)
         else:
-            color = parse_color(token)
-            if color is None:
-                raise InvalidValues
-            elif text_decoration_color:
-                raise InvalidValues
-            else:
-                text_decoration_color.append(token)
+            raise InvalidValues
 
-    if text_decoration_line:
-        yield '-line', text_decoration_line
-    if text_decoration_color:
-        yield '-color', text_decoration_color
-    if text_decoration_style:
-        yield '-style', text_decoration_style
+    if line:
+        yield '-line', line
+    if color:
+        yield '-color', color
+    if style:
+        yield '-style', style
+    if thickness:
+        yield '-thickness', thickness
 
 
 def expand_page_break_before_after(tokens, name):
@@ -675,7 +678,7 @@ def expand_font(tokens, name):
 
         if font_style([token]) is not None:
             suffix = '-style'
-        elif get_keyword(token) in ('normal', 'small-caps'):
+        elif font_variant_caps([token]) is not None:
             suffix = '-variant-caps'
         elif font_weight([token]) is not None:
             suffix = '-weight'

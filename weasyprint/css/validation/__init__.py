@@ -65,7 +65,7 @@ NOT_PRINT_MEDIA = {
     'caret-shape',
     'cursor',
     'field-sizing',
-    'pointer-event',
+    'pointer-events',
     'resize',
     'touch-action',
     # Browser viewport scrolling

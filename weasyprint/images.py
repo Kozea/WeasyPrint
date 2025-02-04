@@ -14,6 +14,7 @@ from xml.etree import ElementTree
 
 import pydyf
 from PIL import Image, ImageFile, ImageOps
+from tinycss2.color4 import parse_color
 
 from . import DEFAULT_OPTIONS
 from .layout.percent import percentage
@@ -441,6 +442,7 @@ def gradient_average_color(colors, positions):
     """
     https://drafts.csswg.org/css-images-3/#gradient-average-color
     """
+    # TODO: handle color spaces.
     nb_stops = len(positions)
     assert nb_stops > 1
     assert nb_stops == len(colors)
@@ -461,9 +463,13 @@ def gradient_average_color(colors, positions):
             result_g += premul_g[j] * weight
             result_b += premul_b[j] * weight
             result_a += alpha[j] * weight
-    # Un-premultiply:
-    return (result_r / result_a, result_g / result_a,
-            result_b / result_a, result_a) if result_a != 0 else (0, 0, 0, 0)
+    # Un-premultiply.
+    if result_a == 0:
+        return parse_color('transparent')
+    else:
+        return parse_color(
+            f'rgb({result_r / result_a * 255} {result_g / result_a * 255} '
+            f'{result_b / result_a * 255}/{ result_a })')
 
 
 class Gradient:
@@ -480,16 +486,12 @@ class Gradient:
         return None, None, None
 
     def draw(self, stream, concrete_width, concrete_height, _image_rendering):
-        # TODO: handle color spaces
         scale_y, type_, points, positions, colors = self.layout(
             concrete_width, concrete_height)
 
         if type_ == 'solid':
             stream.rectangle(0, 0, concrete_width, concrete_height)
-            red, green, blue, alpha = colors[0]
-            stream.set_color_rgb(red, green, blue)
-            if alpha != 1:
-                stream.set_alpha(alpha, stroke=False)
+            stream.set_color(colors[0])
             stream.fill()
             return
 
@@ -497,8 +499,9 @@ class Gradient:
         alpha_couples = [
             (alphas[i], alphas[i + 1])
             for i in range(len(alphas) - 1)]
+        # TODO: handle other color spaces.
         color_couples = [
-            [colors[i][:3], colors[i + 1][:3], 1]
+            [colors[i].to('srgb')[:3], colors[i + 1].to('srgb')[:3], 1]
             for i in range(len(colors) - 1)]
 
         # Premultiply colors
@@ -522,6 +525,7 @@ class Gradient:
             for c0, c1, n in color_couples)
         function = stream.create_stitching_function(
             domain, encode, bounds, sub_functions)
+        # TODO: handle other color spaces.
         shading = stream.add_shading(
             shading_type, 'RGB', domain, points, extend, function)
         stream.transform(d=scale_y)

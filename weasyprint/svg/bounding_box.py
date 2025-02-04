@@ -222,6 +222,16 @@ def bounding_box_g(svg, node, font_size):
     return bounding_box
 
 
+def bounding_box_use(svg, node, font_size):
+    """Bounding box for use node."""
+    from .defs import get_use_tree
+
+    if (tree := get_use_tree(svg, node, font_size)) is None:
+        return EMPTY_BOUNDING_BOX
+    else:
+        return bounding_box(svg, tree, font_size, True)
+
+
 def _bounding_box_elliptical_arc(x1, y1, rx, ry, phi, large, sweep, x, y):
     """Bounding box of an elliptical arc in path node."""
     rx, ry = abs(rx), abs(ry)
@@ -349,6 +359,7 @@ BOUNDING_BOX_METHODS = {
     'polygon': bounding_box_polyline,
     'path': bounding_box_path,
     'g': bounding_box_g,
+    'use': bounding_box_use,
     'marker': bounding_box_g,
     'text': bounding_box_text,
     'tspan': bounding_box_text,

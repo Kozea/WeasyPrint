@@ -18,6 +18,7 @@ from .layout import LayoutContext, layout_document
 from .logger import PROGRESS_LOGGER
 from .matrix import Matrix
 from .pdf import VARIANTS, generate_pdf
+from .pdf.metadata import generate_rdf_metadata
 from .text.fonts import FontConfiguration
 
 
@@ -80,22 +81,7 @@ class Page:
         self._page_box = page_box
 
     def paint(self, stream, scale=1):
-        """Paint the page into the PDF file.
-
-        :type stream: ``document.Stream``
-        :param stream:
-            A document stream.
-        :param float left_x:
-            X coordinate of the left of the page, in PDF points.
-        :param float top_y:
-            Y coordinate of the top of the page, in PDF points.
-        :param float scale:
-            Zoom scale.
-        :param bool clip:
-            Whether to clip/cut content outside the page. If false or
-            not provided, content can overflow.
-
-        """
+        """Paint the page into the PDF file."""
         with stacked(stream):
             stream.transform(a=scale, d=scale)
             draw_page(self._page_box, stream)
@@ -105,12 +91,10 @@ class DocumentMetadata:
     """Meta-information belonging to a whole :class:`Document`.
 
     New attributes may be added in future versions of WeasyPrint.
-
     """
-
-    def __init__(self, title=None, authors=None, description=None,
-                 keywords=None, generator=None, created=None, modified=None,
-                 attachments=None, lang=None, custom=None):
+    def __init__(self, title=None, authors= None, description=None, keywords=None,
+                 generator=None, created=None, modified=None, attachments=None,
+                 lang=None, custom=None, generate_rdf_metadata=generate_rdf_metadata):
         #: The title of the document, as a string or :obj:`None`.
         #: Extracted from the ``<title>`` element in HTML
         #: and written to the ``/Title`` info field in PDF.
@@ -156,6 +140,9 @@ class DocumentMetadata:
         #: Custom metadata, as a dict whose keys are the metadata names and
         #: values are the metadata values.
         self.custom = custom or {}
+        #: Custom RDF metadata generator, which will replace the default generator.
+        #: The function should return bytes containing an RDF XML.
+        self.generate_rdf_metadata = generate_rdf_metadata
 
 
 class DiskCache:

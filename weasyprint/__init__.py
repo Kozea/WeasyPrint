@@ -15,7 +15,7 @@ import cssselect2
 import tinycss2
 import tinyhtml5
 
-VERSION = __version__ = '62.3'
+VERSION = __version__ = '64.0'
 
 #: Default values for command-line and Python API options. See
 #: :func:`__main__.main` to learn more about specific options for
@@ -84,8 +84,8 @@ DEFAULT_OPTIONS = {
 }
 
 __all__ = [
-    'HTML', 'CSS', 'DEFAULT_OPTIONS', 'Attachment', 'Document', 'Page',
-    'default_url_fetcher', 'VERSION', '__version__']
+    'CSS', 'DEFAULT_OPTIONS', 'HTML', 'VERSION', 'Attachment', 'Document', 'Page',
+    '__version__', 'default_url_fetcher']
 
 
 # Import after setting the version, as the version is used in other modules
@@ -318,6 +318,9 @@ class Attachment:
     HTML specific arguments (``encoding`` and ``media_type``) are not
     supported.
 
+    :param str name:
+        The name of the attachment to be included in the PDF document.
+        May be :obj:`None`.
     :param str description:
         A description of the attachment to be included in the PDF document.
         May be :obj:`None`.
@@ -335,11 +338,12 @@ class Attachment:
     """
     def __init__(self, guess=None, filename=None, url=None, file_obj=None,
                  string=None, base_url=None, url_fetcher=default_url_fetcher,
-                 description=None, created=None, modified=None,
+                 name=None, description=None, created=None, modified=None,
                  relationship='Unspecified'):
         self.source = _select_source(
             guess, filename, url, file_obj, string, base_url=base_url,
             url_fetcher=url_fetcher)
+        self.name = name
         self.description = description
         self.relationship = relationship
         self.md5 = None

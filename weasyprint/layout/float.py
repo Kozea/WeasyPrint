@@ -179,12 +179,12 @@ def avoid_collisions(context, box, containing_block, outer=True):
             # Points 3, 7 and 8
             if box_width > max_right_bound - max_left_bound:
                 # The box does not fit here
-                new_positon_y = min(
+                new_position_y = min(
                     shape.position_y + shape.margin_height()
                     for shape in colliding_shapes)
-                if new_positon_y > position_y:
+                if new_position_y > position_y:
                     # We can find a solution with a higher position_y
-                    position_y = new_positon_y
+                    position_y = new_position_y
                     continue
                 # No solution, we must put the box here
         break

@@ -8,15 +8,8 @@ from .bounding_box import bounding_box, is_valid_bounding_box
 from .utils import alpha_value, color, parse_url, size, transform
 
 
-def use(svg, node, font_size):
-    """Draw use tags."""
+def get_use_tree(svg, node, font_size):
     from . import SVG
-
-    x, y = svg.point(node.get('x'), node.get('y'), font_size)
-
-    for attribute in ('x', 'y', 'viewBox', 'mask'):
-        if attribute in node.attrib:
-            del node.attrib[attribute]
 
     parsed_url = parse_url(node.get_href(svg.url))
     svg_url = parse_url(svg.url)
@@ -45,6 +38,20 @@ def use(svg, node, font_size):
         else:
             use_svg.get_intrinsic_size(font_size)
             tree = use_svg.tree
+
+    return tree
+
+
+def use(svg, node, font_size):
+    """Draw use tags."""
+    x, y = svg.point(node.get('x'), node.get('y'), font_size)
+
+    for attribute in ('x', 'y', 'viewBox', 'mask'):
+        if attribute in node.attrib:
+            del node.attrib[attribute]
+
+    if (tree := get_use_tree(svg, node, font_size)) is None:
+        return
 
     if tree.tag in ('svg', 'symbol'):
         # Explicitely specified
@@ -86,18 +93,13 @@ def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
             size(child.get('offset'), font_size, 1)))
         stop_opacity = alpha_value(child.get('stop-opacity', 1)) * opacity
         stop_color = color(child.get('stop-color', 'black'))
-        if stop_opacity < 1:
-            stop_color = tuple(
-                stop_color[:3] + (stop_color[3] * stop_opacity,))
+        stop_color.alpha *= stop_opacity
         colors.append(stop_color)
 
     if not colors:
         return False
     elif len(colors) == 1:
-        red, green, blue, alpha = colors[0]
-        svg.stream.set_color_rgb(red, green, blue)
-        if alpha != 1:
-            svg.stream.set_alpha(alpha, stroke=stroke)
+        svg.stream.set_color(colors[0])
         return True
 
     bounding_box = svg.calculate_bounding_box(node, font_size, stroke)

@@ -278,3 +278,15 @@ def test_radial_gradients_5(assert_pixels):
         SzzzzzzzzS
     ''', '''<style>@page { size: 10px 16px; background:
       radial-gradient(red 50%, rgba(255, 0, 0, 0.751) 50%)''')
+
+
+@assert_no_logs
+def test_linear_gradients_currentcolor(assert_pixels):
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1561
+    assert_pixels('''
+        KKKKK
+        KKKKK
+        KKKKK
+        KKKKK
+        KKKKK
+    ''', '<style>@page { size: 5px 5px; background: linear-gradient(currentcolor)')

@@ -27,7 +27,7 @@ def set_mask_border(stream, box):
 
 
 def draw_border(stream, box):
-    """Draw the box borders and column rules to a ``document.Stream``."""
+    """Draw the box borders and column rules to a ``pdf.stream.Stream``."""
 
     # The box is hidden, easy.
     if box.style['visibility'] != 'visible':
@@ -500,19 +500,16 @@ def clip_border_segment(stream, style, width, side, border_box,
 
 def draw_rounded_border(stream, box, style, color):
     if style in ('ridge', 'groove'):
-        stream.set_color_rgb(*color[0][:3])
-        stream.set_alpha(color[0][3])
+        stream.set_color(color[0])
         rounded_box(stream, box.rounded_padding_box())
         rounded_box(stream, box.rounded_box_ratio(1 / 2))
         stream.fill(even_odd=True)
-        stream.set_color_rgb(*color[1][:3])
-        stream.set_alpha(color[1][3])
+        stream.set_color(color[1])
         rounded_box(stream, box.rounded_box_ratio(1 / 2))
         rounded_box(stream, box.rounded_border_box())
         stream.fill(even_odd=True)
         return
-    stream.set_color_rgb(*color[:3])
-    stream.set_alpha(color[3])
+    stream.set_color(color)
     rounded_box(stream, box.rounded_padding_box())
     if style == 'double':
         rounded_box(stream, box.rounded_box_ratio(1 / 3))
@@ -525,8 +522,7 @@ def draw_rect_border(stream, box, widths, style, color):
     bbx, bby, bbw, bbh = box
     bt, br, bb, bl = widths
     if style in ('ridge', 'groove'):
-        stream.set_color_rgb(*color[0][:3])
-        stream.set_alpha(color[0][3])
+        stream.set_color(color[0])
         stream.rectangle(*box)
         stream.rectangle(
             bbx + bl / 2, bby + bt / 2,
@@ -536,12 +532,10 @@ def draw_rect_border(stream, box, widths, style, color):
             bbx + bl / 2, bby + bt / 2,
             bbw - (bl + br) / 2, bbh - (bt + bb) / 2)
         stream.rectangle(bbx + bl, bby + bt, bbw - bl - br, bbh - bt - bb)
-        stream.set_color_rgb(*color[1][:3])
-        stream.set_alpha(color[1][3])
+        stream.set_color(color[1])
         stream.fill(even_odd=True)
         return
-    stream.set_color_rgb(*color[:3])
-    stream.set_alpha(color[3])
+    stream.set_color(color)
     stream.rectangle(*box)
     if style == 'double':
         stream.rectangle(
@@ -559,8 +553,7 @@ def draw_line(stream, x1, y1, x2, y2, thickness, style, color, offset=0):
 
     with stacked(stream):
         if style not in ('ridge', 'groove'):
-            stream.set_color_rgb(*color[:3], stroke=True)
-            stream.set_alpha(color[3], stroke=True)
+            stream.set_color(color, stroke=True)
 
         if style == 'dashed':
             stream.set_dash([5 * thickness], offset)
@@ -581,8 +574,7 @@ def draw_line(stream, x1, y1, x2, y2, thickness, style, color, offset=0):
                 stream.line_to(x2, y2 + thickness / 3)
         elif style in ('ridge', 'groove'):
             stream.set_line_width(thickness / 2)
-            stream.set_color_rgb(*color[0][:3], stroke=True)
-            stream.set_alpha(color[0][3], stroke=True)
+            stream.set_color(color[0], stroke=True)
             if x1 == x2:
                 stream.move_to(x1 + thickness / 4, y1)
                 stream.line_to(x2 + thickness / 4, y2)
@@ -590,8 +582,7 @@ def draw_line(stream, x1, y1, x2, y2, thickness, style, color, offset=0):
                 stream.move_to(x1, y1 + thickness / 4)
                 stream.line_to(x2, y2 + thickness / 4)
             stream.stroke()
-            stream.set_color_rgb(*color[1][:3], stroke=True)
-            stream.set_alpha(color[1][3], stroke=True)
+            stream.set_color(color[1], stroke=True)
             if x1 == x2:
                 stream.move_to(x1 - thickness / 4, y1)
                 stream.line_to(x2 - thickness / 4, y2)
@@ -610,6 +601,7 @@ def draw_line(stream, x1, y1, x2, y2, thickness, style, color, offset=0):
             x = x1 - offset
             stream.move_to(x, y1)
             while x < x2:
+                stream.set_line_width(thickness)
                 stream.curve_to(
                     x + radius / 2, y1 + up * radius,
                     x + 3 * radius / 2, y1 + up * radius,
@@ -625,12 +617,15 @@ def draw_line(stream, x1, y1, x2, y2, thickness, style, color, offset=0):
 
 def draw_outline(stream, box):
     width = box.style['outline_width']
+    offset = box.style['outline_offset']
     color = get_color(box.style, 'outline_color')
     style = box.style['outline_style']
     if box.style['visibility'] == 'visible' and width and color.alpha:
         outline_box = (
-            box.border_box_x() - width, box.border_box_y() - width,
-            box.border_width() + 2 * width, box.border_height() + 2 * width)
+            box.border_box_x() - width - offset,
+            box.border_box_y() - width - offset,
+            box.border_width() + 2 * width + 2 * offset,
+            box.border_height() + 2 * width + 2 * offset)
         for side in SIDES:
             with stacked(stream):
                 clip_border_segment(stream, style, width, side, outline_box)

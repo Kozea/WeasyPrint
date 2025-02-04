@@ -6,7 +6,7 @@ documentation? Thank you very much! Here are some tips to help you play with
 WeasyPrint in good conditions.
 
 The first step is to clone the repository, create a virtual environment and
-install WeasyPrint dependencies.
+install WeasyPrint dependencies:
 
 .. code-block:: shell
 
@@ -15,11 +15,17 @@ install WeasyPrint dependencies.
    python -m venv venv
    venv/bin/pip install -e '.[doc,test]'
 
-You can then launch Python to test your changes.
+You can then launch Python to test your changes:
 
 .. code-block:: shell
 
    venv/bin/python
+
+Running WeasyPrint might look something like this:
+
+.. code-block:: shell
+
+   venv/bin/python -m weasyprint example.html example.pdf
 
 
 Code & Issues

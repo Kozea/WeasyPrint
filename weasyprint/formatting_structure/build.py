@@ -1023,7 +1023,7 @@ def flex_children(box, children):
     if isinstance(box, boxes.FlexContainerBox):
         flex_children = []
         for child in children:
-            if not child.is_absolutely_positioned():
+            if child.is_in_normal_flow():
                 child.is_flex_item = True
             if isinstance(child, boxes.TextBox) and not child.text.strip(' '):
                 # TODO: ignore texts only containing "characters that can be
@@ -1062,7 +1062,7 @@ def grid_children(box, children):
     if isinstance(box, boxes.GridContainerBox):
         grid_children = []
         for child in children:
-            if not child.is_absolutely_positioned():
+            if child.is_in_normal_flow():
                 child.is_grid_item = True
             if isinstance(child, boxes.TextBox) and not child.text.strip(' '):
                 # TODO: ignore texts only containing "characters that can be

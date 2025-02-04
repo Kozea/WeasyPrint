@@ -1620,3 +1620,36 @@ def test_tables_split_row(assert_pixels):
           <td>a<br>a</td>
         </tr>
       </table>''')
+
+
+@assert_no_logs
+def test_tables_column_background(assert_pixels):
+    # Regression test: https://github.com/Kozea/WeasyPrint/issues/2296
+    assert_pixels('''
+      KKKKKKKK
+      KRRBBRRK
+      KRRBBRRK
+      KKKKKKKK
+
+      KKKKKKKK
+      KRRBBRRK
+      KRRBBRRK
+      KKKKKKKK
+    ''', '''
+      <style>
+        @page { margin: 0; size: 8px 4px }
+        col { background: blue }
+        td { border: 1px solid black; color: red; vertical-align: top;
+             font-family: weasyprint; font-size: 2px; line-height: 1 }
+      </style>
+      <table>
+        <colgroup>
+          <col>
+        </colgroup>
+        <tr>
+          <td>a a</td>
+        </tr>
+        <tr>
+          <td>a a</td>
+        </tr>
+      </table>''')

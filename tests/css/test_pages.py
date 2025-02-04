@@ -26,7 +26,7 @@ def test_page():
           }
         ''')])
 
-    page_type = PageType(side='left', blank=False, name='', index=0, group_index=0)
+    page_type = PageType(side='left', blank=False, name='', index=0, groups=())
     set_page_type_computed_styles(page_type, document, style_for)
     style = style_for(page_type)
     assert style['margin_top'] == (5, 'px')
@@ -34,7 +34,7 @@ def test_page():
     assert style['margin_bottom'] == (10, 'px')
     assert style['color'] == (1, 0, 0, 1)  # red, inherited from html
 
-    page_type = PageType(side='right', blank=False, name='', index=0, group_index=0)
+    page_type = PageType(side='right', blank=False, name='', index=0, groups=())
     set_page_type_computed_styles(page_type, document, style_for)
     style = style_for(page_type)
     assert style['margin_top'] == (5, 'px')
@@ -42,7 +42,7 @@ def test_page():
     assert style['margin_bottom'] == (16, 'px')
     assert style['color'] == (0, 0, 1, 1)  # blue
 
-    page_type = PageType(side='left', blank=False, name='', index=1, group_index=1)
+    page_type = PageType(side='left', blank=False, name='', index=1, groups=())
     set_page_type_computed_styles(page_type, document, style_for)
     style = style_for(page_type)
     assert style['margin_top'] == (10, 'px')
@@ -50,7 +50,7 @@ def test_page():
     assert style['margin_bottom'] == (10, 'px')
     assert style['color'] == (1, 0, 0, 1)  # red, inherited from html
 
-    page_type = PageType(side='right', blank=False, name='', index=1, group_index=1)
+    page_type = PageType(side='right', blank=False, name='', index=1, groups=())
     set_page_type_computed_styles(page_type, document, style_for)
     style = style_for(page_type)
     assert style['margin_top'] == (10, 'px')
@@ -58,18 +58,18 @@ def test_page():
     assert style['margin_bottom'] == (16, 'px')
     assert style['color'] == (0, 0, 1, 1)  # blue
 
-    page_type = PageType(side='left', blank=False, name='', index=0, group_index=0)
+    page_type = PageType(side='left', blank=False, name='', index=0, groups=())
     set_page_type_computed_styles(page_type, document, style_for)
     style = style_for(page_type, '@top-left')
     assert style is None
 
-    page_type = PageType(side='right', blank=False, name='', index=0, group_index=0)
+    page_type = PageType(side='right', blank=False, name='', index=0, groups=())
     set_page_type_computed_styles(page_type, document, style_for)
     style = style_for(page_type, '@top-left')
     assert style['font_size'] == 20  # inherited from @page
     assert style['width'] == (200, 'px')
 
-    page_type = PageType(side='right', blank=False, name='', index=0, group_index=0)
+    page_type = PageType(side='right', blank=False, name='', index=0, groups=())
     set_page_type_computed_styles(page_type, document, style_for)
     style = style_for(page_type, '@top-right')
     assert style['font_size'] == 10

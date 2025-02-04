@@ -2,6 +2,326 @@ Changelog
 =========
 
 
+Version 64.0
+------------
+
+Released on 2025-01-30.
+
+Features:
+
+* `#2338 <https://github.com/Kozea/WeasyPrint/pull/2338>`_:
+  Allow custom RDF metadata for PDF/A and eInvoices
+* `#123 <https://github.com/Kozea/WeasyPrint/issues/123>`_,
+  `#2345 <https://github.com/Kozea/WeasyPrint/pull/2345>`_:
+  Handle small-caps synthesis
+* `#2343 <https://github.com/Kozea/WeasyPrint/issues/2343>`_:
+  Support outline-offset
+* `#2361 <https://github.com/Kozea/WeasyPrint/pull/2361>`_:
+  Support text-underline-offset and text-decoration-thickness
+* `#2296 <https://github.com/Kozea/WeasyPrint/issues/2296>`_:
+  Don’t crash with tables with rounded corners split between pages
+
+Bug fixes:
+
+* `#2360 <https://github.com/Kozea/WeasyPrint/issues/2360>`_:
+  Fix gradients with non-RGB colors
+* `#2355 <https://github.com/Kozea/WeasyPrint/issues/2355>`_,
+  `#2358 <https://github.com/Kozea/WeasyPrint/pull/2358>`_:
+  Align png emojis to the surrounding text
+* `#2353 <https://github.com/Kozea/WeasyPrint/issues/2353>`_:
+  Fix alignment of SVG text with multiple nested text-anchor values
+* `#2350 <https://github.com/Kozea/WeasyPrint/pull/2350>`_:
+  Fix logging restoration in capture_logs
+* `#2341 <https://github.com/Kozea/WeasyPrint/pull/2341>`_:
+  Fix page groups
+* `#2314 <https://github.com/Kozea/WeasyPrint/pulls/2314>`_:
+  Use CSS 'image-rendering' attribute for images in SVGs
+* `#2332 <https://github.com/Kozea/WeasyPrint/issues/2332>`_:
+  Fix opacity for translated SVG elements
+* `#2329 <https://github.com/Kozea/WeasyPrint/issues/2329>`_:
+  Refactor text.line_break.get_log_attrs
+* `#2325 <https://github.com/Kozea/WeasyPrint/issues/2325>`_,
+  `#2326 <https://github.com/Kozea/WeasyPrint/pull/2326>`_:
+  Fix table overflow edge cases
+
+Performance:
+
+* `#2347 <https://github.com/Kozea/WeasyPrint/issues/2347>`_,
+  `#2364 <https://github.com/Kozea/WeasyPrint/pull/2364>`_:
+  Improve rendering speed for text
+
+Documentation:
+
+* `#2352 <https://github.com/Kozea/WeasyPrint/pull/2352>`_:
+  Add more use cases in documentation, use Furo theme
+
+Contributors:
+
+* Guillaume Ayoub
+* Kesara Rathnayake
+* Xavid Pretzer
+* David Tagatac
+* Ernesto Ruge
+* Niko Abeler
+* Noam Kushinsky
+
+Backers and sponsors:
+
+* Spacinov
+* Kobalt
+* Grip Angebotssoftware
+* Syslifters
+* Simon Sapin
+* Manuel Barkhau
+* Simonsoft
+* Menutech
+* KontextWork
+* TrainingSparkle
+* Healthchecks.io
+* Hammerbacher
+* DocRaptor
+* Yanal-Yves Fargialla
+* Method B
+* FieldHub
+* Morntag
+* Xavid
+* Kai DeLorenzo
+* Charlie S.
+
+
+Version 63.1
+------------
+
+Released on 2024-12-10.
+
+Dependencies:
+
+* `#2297 <https://github.com/Kozea/WeasyPrint/issues/2297>`_:
+  Remove upper bounds for dependencies
+
+Bug fixes:
+
+* `#2300 <https://github.com/Kozea/WeasyPrint/pull/2300>`_,
+  `#2292 <https://github.com/Kozea/WeasyPrint/issues/2292>`_:
+  Don’t avoid floats for flex items
+* `#2301 <https://github.com/Kozea/WeasyPrint/pull/2301>`_,
+  `#2293 <https://github.com/Kozea/WeasyPrint/issues/2293>`_:
+  Include floats in calculation of minimum cell height
+* `#2303 <https://github.com/Kozea/WeasyPrint/pull/2303>`_,
+  `#2302 <https://github.com/Kozea/WeasyPrint/issues/2302>`_:
+  Set alpha even when current color channels didn’t change
+* `#2306 <https://github.com/Kozea/WeasyPrint/issues/2306>`_:
+  Don’t try to increase column width when there’s no extra width
+* `#2304 <https://github.com/Kozea/WeasyPrint/issues/2304>`_:
+  Don’t forget skip stack when drawing flex items
+* `#2316 <https://github.com/Kozea/WeasyPrint/issues/2316>`_:
+  Don’t crash with SVG symbols
+* `#2320 <https://github.com/Kozea/WeasyPrint/issues/2320>`_:
+  Fix currentcolor detection when parsing gradient color stops
+* `#2322 <https://github.com/Kozea/WeasyPrint/pull/2322>`_,
+  `#2289 <https://github.com/Kozea/WeasyPrint/issues/2289>`_:
+  Don’t add DLL directories when using Windows executable
+* `#2323 <https://github.com/Kozea/WeasyPrint/pull/2323>`_,
+  `#2305 <https://github.com/Kozea/WeasyPrint/issues/2305>`_:
+  Fix different rendering test
+
+Performance:
+
+* `#2319 <https://github.com/Kozea/WeasyPrint/issues/2319>`_:
+  Fix memory leaks
+
+Documentation:
+
+* `#2299 <https://github.com/Kozea/WeasyPrint/pull/2299>`_:
+  Update install instructions for Alpine
+* `#2321 <https://github.com/Kozea/WeasyPrint/pull/2321>`_:
+  Add example invocation of WeasyPrint on the "Contribute" page
+
+Contributors:
+
+* Guillaume Ayoub
+* Jó Ágila Bitsch
+* Lucie Anglade
+* Alexander Gitter
+* Luke Cousins
+
+Backers and sponsors:
+
+* Spacinov
+* Kobalt
+* Grip Angebotssoftware
+* Syslifters
+* Manuel Barkhau
+* SimonSoft
+* Menutech
+* KontextWork
+* Simon Sapin
+* TrainingSparkle
+* Healthchecks.io
+* Hammerbacher
+* Advance Insight
+* Docraptor
+* Method B
+* FieldHub
+* Yanal-Yves Fargialla
+* Morntag
+* Xavid
+
+
+Version 63.0
+------------
+
+Released on 2024-10-29.
+
+Dependencies:
+
+* Python 3.13 is now supported
+* pydyf 0.11.0+ is now needed
+* tinycss2 1.4.0+ is now needed
+* tinyhtml5 2.0.0+ is now needed, instead of html5lib
+
+Features:
+
+* `#2252 <https://github.com/Kozea/WeasyPrint/pull/2252>`_,
+  `#895 <https://github.com/Kozea/WeasyPrint/issues/895>`_:
+  Handle page groups, with financial support from Code & Co.
+* `#1630 <https://github.com/Kozea/WeasyPrint/issues/1630>`_,
+  `#2286 <https://github.com/Kozea/WeasyPrint/pull/2286>`_:
+  Support CSS Color Level 4
+* `#2192 <https://github.com/Kozea/WeasyPrint/pull/2192>`_:
+  Add PDF variant for debugging purpose
+* `#2208 <https://github.com/Kozea/WeasyPrint/pull/2208>`_:
+  Support submit inputs in PDF forms
+* `#2139 <https://github.com/Kozea/WeasyPrint/pull/2139>`_:
+  Support ``mask-border-*`` properties
+* `#1831 <https://github.com/Kozea/WeasyPrint/issues/1831>`_,
+  `#2143 <https://github.com/Kozea/WeasyPrint/pull/2143>`_:
+  Support radio inputs in PDF forms
+
+Bug fixes:
+
+* `#2262 <https://github.com/Kozea/WeasyPrint/issues/2262>`_:
+  Avoid integer overflows when converting units from/to doubles
+* `#2260 <https://github.com/Kozea/WeasyPrint/pull/2260>`_:
+  Avoid float collision with box establishing formatting context
+* `#2240 <https://github.com/Kozea/WeasyPrint/issues/2240>`_,
+  `#2242 <https://github.com/Kozea/WeasyPrint/pull/2242>`_:
+  Handle ``svg`` tags with no size
+* `#2231 <https://github.com/Kozea/WeasyPrint/pull/2231>`_,
+  `#1171 <https://github.com/Kozea/WeasyPrint/issues/1171>`_,
+  `#2222 <https://github.com/Kozea/WeasyPrint/issues/2222>`_,
+  `#1208 <https://github.com/Kozea/WeasyPrint/issues/1208>`_:
+  Fix several problems related to ``flex-direction: column``
+* `#2239 <https://github.com/Kozea/WeasyPrint/issues/2239>`_:
+  Don’t fail when SVG markers are undefined references
+* `#2230 <https://github.com/Kozea/WeasyPrint/issues/2230>`_,
+  `#2238 <https://github.com/Kozea/WeasyPrint/pull/2238>`_:
+  Set explicit flags when loading DLLs on Windows
+* `#2228 <https://github.com/Kozea/WeasyPrint/issues/2228>`_,
+  `#1942 <https://github.com/Kozea/WeasyPrint/issues/1942>`_:
+  Store original and PDF stream images in different cache slots
+* `#2234 <https://github.com/Kozea/WeasyPrint/issues/2234>`_:
+  Apply stylesheet and other basic operations to SVG root tag
+* `#2054 <https://github.com/Kozea/WeasyPrint/issues/2054>`_,
+  `#2233 <https://github.com/Kozea/WeasyPrint/pull/2233>`_:
+  Keep auto margins on flex layout boxes
+* `#1883 <https://github.com/Kozea/WeasyPrint/issues/1883>`_:
+  Don’t crash with empty list marker strings
+* `#2216 <https://github.com/Kozea/WeasyPrint/issues/2216>`_:
+  Fix vertical alignment of out-of-flow elements in tables
+* `#996 <https://github.com/Kozea/WeasyPrint/issues/996>`_,
+  `#2219 <https://github.com/Kozea/WeasyPrint/pull/2219>`_:
+  Don’t ignore absolutely positioned elements inside flex boxes
+* `#2217 <https://github.com/Kozea/WeasyPrint/issues/2217>`_:
+  Don’t crash with ``normal`` column gaps
+* `#1817 <https://github.com/Kozea/WeasyPrint/issues/1817>`_:
+  Don’t assume that lines break after spaces
+* `#1868 <https://github.com/Kozea/WeasyPrint/issues/1868>`_:
+  Don’t break rows with atomic cells
+* `#2166 <https://github.com/Kozea/WeasyPrint/issues/2166>`_:
+  Don’t display bottom border on cells in split rows
+* `61852c4 <https://github.com/Kozea/WeasyPrint/commit/61852c4>`_:
+  Capture fontTools logs when subsetting fonts
+* `#2190 <https://github.com/Kozea/WeasyPrint/pull/2190>`_:
+  Don’t use a pattern when drawing backgrounds for no-repeat background images
+* `#2185 <https://github.com/Kozea/WeasyPrint/issues/2185>`_:
+  Check that Harfbuzz version is at least 4.1.0 to subset fonts
+* `#2180 <https://github.com/Kozea/WeasyPrint/issues/2180>`_:
+  Store width for all glyphs when font is not subset
+* `#2183 <https://github.com/Kozea/WeasyPrint/issues/2183>`_:
+  Respect ``break-inside: avoid`` for flex items
+* `#2055 <https://github.com/Kozea/WeasyPrint/issues/2055>`_,
+  `#2058 <https://github.com/Kozea/WeasyPrint/pull/2058>`_:
+  Fix right-to-left tables with collapsed borders
+* `#2179 <https://github.com/Kozea/WeasyPrint/pull/2179>`_,
+  `#1128 <https://github.com/Kozea/WeasyPrint/issues/1128>`_:
+  Handle buggy Adobe Photoshop CMYK JPEGs
+* `#2175 <https://github.com/Kozea/WeasyPrint/issues/2175>`_:
+  Don’t compress PDF metadata for PDF/A-1
+* `#2174 <https://github.com/Kozea/WeasyPrint/issues/2174>`_:
+  Fix extra width distribution for auto table layout
+
+Performance:
+
+* `#1155 <https://github.com/Kozea/WeasyPrint/issues/1155>`_:
+  Improve rendering speed for large colspan values
+* `#2120 <https://github.com/Kozea/WeasyPrint/issues/2120>`_,
+  `#2178 <https://github.com/Kozea/WeasyPrint/pull/2178>`_:
+  Use Harfbuzz to subset fonts by default
+
+Documentation:
+
+* `#2282 <https://github.com/Kozea/WeasyPrint/issues/2282>`_,
+  `#2284 <https://github.com/Kozea/WeasyPrint/pull/2284>`_:
+  Simplify Alpine install instructions
+* `#2254 <https://github.com/Kozea/WeasyPrint/issues/2254>`_:
+  Add warning about antivirus false detection
+* `#2220 <https://github.com/Kozea/WeasyPrint/pull/2220>`_:
+  Add extra information to debug logs
+* `#2211 <https://github.com/Kozea/WeasyPrint/pull/2211>`_:
+  Fix link to samples
+* `#2195 <https://github.com/Kozea/WeasyPrint/pull/2195>`_:
+  Update cache argument documentation
+* `#2105 <https://github.com/Kozea/WeasyPrint/issues/2105>`_,
+  `#2151 <https://github.com/Kozea/WeasyPrint/pull/2151>`_:
+  Use MSYS2 instead of GTK+3 for Windows
+
+Contributors:
+
+* Guillaume Ayoub
+* David Huggins-Daines
+* Xavid Pretzer
+* Yann Trividic
+* Kevin Kays
+* Alejandro Avilés
+* Gianluca Teti
+* Gregory Goodson
+* Lucie Anglade
+* Roman Sirokov
+
+Backers and sponsors:
+
+* Spacinov
+* Kobalt
+* Grip Angebotssoftware
+* Syslifters
+* Manuel Barkhau
+* SimonSoft
+* Menutech
+* KontextWork
+* Simon Sapin
+* TrainingSparkle
+* Healthchecks.io
+* Hammerbacher
+* Advance Insight
+* Docraptor
+* Method B
+* FieldHub
+* Yanal-Yves Fargialla
+* Morntag
+* Xavid
+
+
 Version 62.3
 ------------
 
@@ -47,7 +367,7 @@ Backers and sponsors:
 * Healthchecks.io
 * Hammerbacher
 * Docraptor
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Douwe van Loenen
 * Morntag
 * Xavid
@@ -100,7 +420,7 @@ Backers and sponsors:
 * Healthchecks.io
 * Hammerbacher
 * Docraptor
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Douwe van Loenen
 * Morntag
 * Xavid
@@ -140,7 +460,7 @@ Backers and sponsors:
 * TrainingSparkle
 * Healthchecks.io
 * Docraptor
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Douwe van Loenen
 * Morntag
 * Xavid
@@ -242,7 +562,7 @@ Backers and sponsors:
 * TrainingSparkle
 * Healthchecks.io
 * Docraptor
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Douwe van Loenen
 * Morntag
 * Xavid
@@ -283,7 +603,7 @@ Backers and sponsors:
 * Healthchecks.io
 * Hammerbacher
 * Docraptor
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Morntag
 * NBCO
 
@@ -330,7 +650,7 @@ Backers and sponsors:
 * Healthchecks.io
 * Hammerbacher
 * Docraptor
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Morntag
 * NBCO
 
@@ -440,7 +760,7 @@ Backers and sponsors:
 * Healthchecks.io
 * Hammerbacher
 * Docraptor
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Morntag
 * NBCO
 
@@ -482,7 +802,7 @@ Backers and sponsors:
 * TrainingSparkle
 * Daniel Kucharski
 * Healthchecks.io
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * WakaTime
 * Paheko
 * Synapsium
@@ -520,7 +840,7 @@ Backers and sponsors:
 * TrainingSparkle
 * Daniel Kucharski
 * Healthchecks.io
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * WakaTime
 * Paheko
 * Synapsium
@@ -604,7 +924,7 @@ Backers and sponsors:
 * TrainingSparkle
 * Daniel Kucharski
 * Healthchecks.io
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * WakaTime
 * Paheko
 * Synapsium
@@ -652,7 +972,7 @@ Backers and sponsors:
 * NCC Group
 * René Fritz
 * Moritz Mahringer
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Piotr Horzycki
 * Healthchecks.io
 * TrainingSparkle
@@ -761,7 +1081,7 @@ Backers and sponsors:
 * NCC Group
 * René Fritz
 * Moritz Mahringer
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Piotr Horzycki
 * Healthchecks.io
 * TrainingSparkle
@@ -808,7 +1128,7 @@ Backers and sponsors:
 * NCC Group
 * René Fritz
 * Moritz Mahringer
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Piotr Horzycki
 * Healthchecks.io
 * Hammerbacher
@@ -851,7 +1171,7 @@ Backers and sponsors:
 * NCC Group
 * René Fritz
 * Moritz Mahringer
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Piotr Horzycki
 * Healthchecks.io
 
@@ -898,7 +1218,7 @@ Backers and sponsors:
 * NCC Group
 * René Fritz
 * Moritz Mahringer
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Piotr Horzycki
 * Healthchecks.io
 
@@ -1176,7 +1496,7 @@ Backers and sponsors:
 * Tom Pohl
 * Moritz Mahringer
 * Florian Demmer
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Gábor
 * Piotr Horzycki
 * Andrew Ittner
@@ -1229,7 +1549,7 @@ Backers and sponsors:
 * Tom Pohl
 * Moritz Mahringer
 * Florian Demmer
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Gábor
 * Piotr Horzycki
 
@@ -1298,7 +1618,7 @@ Backers and sponsors:
 * Tom Pohl
 * Moritz Mahringer
 * Florian Demmer
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Gábor
 * Piotr Horzycki
 
@@ -1350,7 +1670,7 @@ Backers and sponsors:
 * Tom Pohl
 * Moritz Mahringer
 * Florian Demmer
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Gábor
 * Piotr Horzycki
 
@@ -1450,7 +1770,7 @@ Backers and sponsors:
 * Kobalt
 * Moritz Mahringer
 * Florian Demmer
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Gábor
 * Piotr Horzycki
 * DeivGuerrero
@@ -1491,7 +1811,7 @@ Backers and sponsors:
 * Kobalt
 * Moritz Mahringer
 * Florian Demmer
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Gábor
 * Piotr Horzycki
 * DeivGuerrero
@@ -1544,7 +1864,7 @@ Backers and sponsors:
 * Kobalt
 * Moritz Mahringer
 * Florian Demmer
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Gábor
 * Piotr Horzycki
 * DeivGuerrero
@@ -1595,7 +1915,7 @@ Backers and sponsors:
 * Des images et des mots
 * Moritz Mahringer
 * Florian Demmer
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Gábor
 * Piotr Horzycki
 
@@ -1639,7 +1959,7 @@ Backers and sponsors:
 * Des images et des mots
 * Moritz Mahringer
 * Florian Demmer
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Gábor
 * Piotr Horzycki
 
@@ -1736,7 +2056,7 @@ Backers and sponsors:
 * Des images et des mots
 * Moritz Mahringer
 * Florian Demmer
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Gábor
 * Piotr Horzycki
 
@@ -1789,7 +2109,7 @@ Backers and sponsors:
 * Tom Pohl
 * Moritz Mahringer
 * Florian Demmer
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * G. Allard
 * Gábor
 
@@ -1832,7 +2152,7 @@ Backers and sponsors:
 * Tom Pohl
 * Moritz Mahringer
 * Florian Demmer
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 
 
 Version 53.2
@@ -1872,7 +2192,7 @@ Backers and sponsors:
 * Tom Pohl
 * Moritz Mahringer
 * Florian Demmer
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 
 
 Version 53.1
@@ -1916,7 +2236,7 @@ Backers and sponsors:
 * Tom Pohl
 * Moritz Mahringer
 * Florian Demmer
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 
 
 Version 53.0
@@ -2019,7 +2339,7 @@ Backers and sponsors:
 * Florian Demmer
 * Des images et des mots
 * Mohammed Y. Alnajdi
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Yevhenii Hyzyla
 
 
@@ -2090,7 +2410,7 @@ Backers and sponsors:
 * Mohammed Y. Alnajdi
 * NCC Group
 * Des images et des mots
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Yevhenii Hyzyla
 
 
@@ -2158,7 +2478,7 @@ Backers and sponsors:
 * Moritz Mahringer
 * Florian Demmer
 * Maykin Media
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Des images et des mots
 * Yevhenii Hyzyla
 
@@ -2194,7 +2514,7 @@ Backers and sponsors:
 * Moritz Mahringer
 * Florian Demmer
 * Maykin Media
-* Yanal-Yvez Fargialla
+* Yanal-Yves Fargialla
 * Des images et des mots
 * Yevhenii Hyzyla
 

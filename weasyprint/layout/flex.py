@@ -133,6 +133,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
             children = children[skip:]
         skip_stack = skip_stack
     else:
+        skip = 0
         skip_stack = None
     child_skip_stack = skip_stack
 
@@ -149,6 +150,10 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
                     absolute_boxes.append(placeholder)
                 else:
                     fixed_boxes.append(placeholder)
+            elif child.is_running():
+                running_name = child.style['position'][1]
+                page = context.current_page
+                context.running_elements[running_name][page].append(child)
             continue
         # See https://www.w3.org/TR/css-flexbox-1/#min-size-auto.
         if child.style['overflow'] == 'visible':
@@ -336,7 +341,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
     line = []
     line_size = 0
     axis_size = getattr(box, axis)
-    for i, child in enumerate(children):
+    for i, child in enumerate(children, start=skip):
         if not child.is_flex_item:
             continue
         line_size += child.hypothetical_main_size
@@ -1034,7 +1039,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
     # Now we are no longer in the flex algorithm.
     # TODO: Don't use block_box_level_layout_switch.
     box = box.copy_with_children(
-        [child for child in children if not child.is_flex_item])
+        [child for child in children if child.is_absolutely_positioned()])
     child_skip_stack = skip_stack
     for line in flex_lines:
         for index, child in line:

@@ -336,6 +336,7 @@ class SVG:
         self.masks = {}
         self.patterns = {}
         self.paths = {}
+        self.symbols = {}
 
         self.use_cache = {}
 
@@ -444,12 +445,7 @@ class SVG:
                 self.stream.transform(*(old_ctm @ new_ctm.invert).values)
 
         # Handle text anchor
-        if node.tag == 'text':
-            text_anchor = node.get('text-anchor')
-            children = tuple(node)
-            if children and not node.text:
-                text_anchor = children[0].get('text-anchor')
-        if node.tag == 'text' and text_anchor in ('middle', 'end'):
+        if (text_anchor := node.get('text-anchor')) in ('middle', 'end'):
             group = self.stream.add_group(0, 0, 0, 0)  # BBox set after drawing
             original_streams.append(self.stream)
             self.stream = group
@@ -471,7 +467,12 @@ class SVG:
         # Draw node children
         if node.display and node.tag not in DEF_TYPES:
             for child in node:
+                if text_anchor in ('middle', 'end'):
+                    new_stream = self.stream
+                    self.stream = original_streams[-1]
                 self.draw_node(child, font_size, fill_stroke)
+                if text_anchor in ('middle', 'end'):
+                    self.stream = new_stream
                 visible_text_child = (
                     TAGS.get(node.tag) == text and
                     TAGS.get(child.tag) == text and
@@ -490,7 +491,7 @@ class SVG:
             self.tree.set_svg_size(svg, concrete_width, concrete_height)
 
         # Handle text anchor
-        if node.tag == 'text' and text_anchor in ('middle', 'end'):
+        if text_anchor in ('middle', 'end'):
             group_id = self.stream.id
             self.stream = original_streams.pop()
             self.stream.push_state()
@@ -672,9 +673,9 @@ class SVG:
         fill_drawn = draw_gradient_or_pattern(
             self, node, fill_source, font_size, fill_opacity, stroke=False)
         if fill_color and not fill_drawn:
-            red, green, blue, alpha = color(fill_color)
-            self.stream.set_color_rgb(red, green, blue)
-            self.stream.set_alpha(alpha * fill_opacity)
+            stream_color = color(fill_color)
+            stream_color.alpha *= fill_opacity
+            self.stream.set_color(stream_color)
         fill = fill_color or fill_drawn
 
         # Get stroke data
@@ -683,9 +684,9 @@ class SVG:
         stroke_drawn = draw_gradient_or_pattern(
             self, node, stroke_source, font_size, stroke_opacity, stroke=True)
         if stroke_color and not stroke_drawn:
-            red, green, blue, alpha = color(stroke_color)
-            self.stream.set_color_rgb(red, green, blue, stroke=True)
-            self.stream.set_alpha(alpha * stroke_opacity, stroke=True)
+            stream_color = color(stroke_color)
+            stream_color.alpha *= stroke_opacity
+            self.stream.set_color(stream_color, stroke=True)
         stroke = stroke_color or stroke_drawn
         stroke_width = self.length(node.get('stroke-width', '1px'), font_size)
         if stroke_width:

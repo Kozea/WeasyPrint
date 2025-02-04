@@ -8,9 +8,12 @@ SVG = '''
 <svg width="10px" height="10px" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <rect id="rectangle" width="5" height="2" fill="red" />
+    <symbol id="square">
+      <rect width="2" height="2" fill="blue" />
+    </symbol>
   </defs>
   <use href="#rectangle" />
-  <use href="#rectangle" x="3" y="3" />
+  <use href="#square" x="3" y="3" />
   <use href="#rectangle" x="5" y="6" />
 </svg>
 '''
@@ -19,8 +22,8 @@ RESULT = '''
   RRRRR_____
   RRRRR_____
   __________
-  ___RRRRR__
-  ___RRRRR__
+  ___BB_____
+  ___BB_____
   __________
   _____RRRRR
   _____RRRRR

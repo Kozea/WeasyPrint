@@ -51,7 +51,7 @@ def test_borders(assert_pixels, assert_different_renderings, margin='10px',
 
 
 @assert_no_logs
-def test_borders_table_collapse(assert_pixels, assert_different_renderings):
+def test_borders_table_collapse(assert_different_renderings):
     """Test the rendering of collapsing borders."""
     source = '''
       <style>
@@ -67,8 +67,27 @@ def test_borders_table_collapse(assert_pixels, assert_different_renderings):
         source % border_style
         for border_style in (
             'none', 'solid', 'dashed', 'dotted', 'double',
-            'inset', 'outset', 'groove', 'ridge'))
+            'inset', 'groove'))
     assert_different_renderings(*documents)
+
+
+@assert_no_logs
+@pytest.mark.parametrize('styles', (
+    ('groove', 'outset'),
+    ('ridge', 'inset'),
+))
+def test_borders_table_collapse_equivalent(assert_same_renderings, styles):
+    """Test the rendering of equivalent collapsing borders."""
+    source = '''
+      <style>
+        @page { size: 140px 110px }
+        table { width: 100px; height: 70px; margin: 10px;
+                border-collapse: collapse; border: 10px %s blue }
+      </style>
+      <table><td>abc</td>'''
+
+    documents = (source % border_style for border_style in styles)
+    assert_same_renderings(*documents)
 
 
 @assert_no_logs
@@ -634,6 +653,67 @@ def test_mask_border_fill(assert_pixels):
           height: 8px;
           width: 8px;
           margin: 1px;
+        }
+      </style>
+      <div></div>
+    ''')
+
+
+@assert_no_logs
+def test_outline_and_border(assert_pixels):
+    assert_pixels('''
+        __________
+        _BBBBBBBB_
+        _BRRRRRRB_
+        _BR____RB_
+        _BRRRRRRB_
+        _BBBBBBBB_
+        __________
+    ''', '''
+      <style>
+        @page {
+          size: 10px 7px;
+        }
+        div {
+          border: 1px solid red;
+          outline: 1px solid blue;
+          height: 1px;
+          margin: 2px;
+          min-height: auto;
+          min-width: auto;
+          width: 4px;
+        }
+      </style>
+      <div></div>
+    ''')
+
+
+@assert_no_logs
+def test_outline_offset(assert_pixels):
+    assert_pixels('''
+        ____________
+        _BBBBBBBBBB_
+        _B________B_
+        _B_RRRRRR_B_
+        _B_R____R_B_
+        _B_RRRRRR_B_
+        _B________B_
+        _BBBBBBBBBB_
+        ____________
+    ''', '''
+      <style>
+        @page {
+          size: 12px 9px;
+        }
+        div {
+          border: 1px solid red;
+          outline: 1px solid blue;
+          outline-offset: 1px;
+          height: 1px;
+          margin: 3px;
+          min-height: auto;
+          min-width: auto;
+          width: 4px;
         }
       </style>
       <div></div>

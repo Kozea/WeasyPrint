@@ -17,39 +17,38 @@ from ..text.fonts import get_hb_object_data, get_pango_font_hb_face
 
 
 class Font:
-    def __init__(self, pango_font):
+    def __init__(self, pango_font, description, font_size):
         self.hb_font = pango.pango_font_get_hb_font(pango_font)
         self.hb_face = get_pango_font_hb_face(pango_font)
         self.file_content = get_hb_object_data(self.hb_face)
         self.index = harfbuzz.hb_face_get_index(self.hb_face)
 
-        pango_metrics = pango.pango_font_get_metrics(pango_font, ffi.NULL)
-        self.description = description = ffi.gc(
-            pango.pango_font_describe(pango_font), pango.pango_font_description_free)
-        self.font_size = pango.pango_font_description_get_size(description)
+        self.font_size = font_size
         self.style = pango.pango_font_description_get_style(description)
         self.family = ffi.string(pango.pango_font_description_get_family(description))
 
         self.variations = {}
-        variations = pango.pango_font_description_get_variations(self.description)
+        variations = pango.pango_font_description_get_variations(description)
         if variations != ffi.NULL:
             self.variations = {
                 part.split('=')[0]: float(part.split('=')[1])
                 for part in ffi.string(variations).decode().split(',')}
         if weight := self.variations.get('weight'):
-            pango.pango_font_description_set_weight(
-                self.description, int(round(weight)))
+            self.weight = int(round(weight))
+            pango.pango_font_description_set_weight(description, weight)
+        else:
+            self.weight = pango.pango_font_description_get_weight(description)
         if self.variations.get('ital'):
             pango.pango_font_description_set_style(
-                self.description, pango.PANGO_STYLE_ITALIC)
+                description, pango.PANGO_STYLE_ITALIC)
         elif self.variations.get('slnt'):
             pango.pango_font_description_set_style(
-                self.description, pango.PANGO_STYLE_OBLIQUE)
+                description, pango.PANGO_STYLE_OBLIQUE)
         if (width := self.variations.get('wdth')) is not None:
             stretch = min(
                 PANGO_STRETCH_PERCENT.items(),
                 key=lambda item: abs(item[0] - width))[1]
-            pango.pango_font_description_set_stretch(self.description, stretch)
+            pango.pango_font_description_set_stretch(description, stretch)
         description_string = ffi.string(
             pango.pango_font_description_to_string(description))
 
@@ -70,12 +69,13 @@ class Font:
 
         # Set ascent and descent.
         if self.font_size:
-            self.ascent = int(
-                pango.pango_font_metrics_get_ascent(pango_metrics) /
-                self.font_size * 1000)
-            self.descent = -int(
-                pango.pango_font_metrics_get_descent(pango_metrics) /
-                self.font_size * 1000)
+            pango_metrics = pango.pango_font_get_metrics(pango_font, ffi.NULL)
+            self.ascent = int(round(
+                pango.pango_font_metrics_get_ascent(pango_metrics) * FROM_UNITS /
+                self.font_size * 1000))
+            self.descent = -int(round(
+                pango.pango_font_metrics_get_descent(pango_metrics) * FROM_UNITS /
+                self.font_size * 1000))
         else:
             self.ascent = self.descent = 0
 
@@ -88,7 +88,16 @@ class Font:
         for i in range(table_count[0]):
             harfbuzz.hb_tag_to_string(table_tags[i], table_name)
             self.tables.append(ffi.string(table_name).decode())
-        self.bitmap = 'EBDT' in self.tables and 'EBLC' in self.tables
+        self.bitmap = False
+        if 'EBDT' in self.tables and 'EBLC' in self.tables:
+            if 'glyf' in self.tables:
+                tag = harfbuzz.hb_tag_from_string(b'glyf', -1)
+                blob = harfbuzz.hb_face_reference_table(self.hb_face, tag)
+                if harfbuzz.hb_blob_get_length(blob) == 0:
+                    self.bitmap = True
+                harfbuzz.hb_blob_destroy(blob)
+            else:
+                self.bitmap = True
         self.italic_angle = 0  # TODO: this should be different
         self.upem = harfbuzz.hb_face_get_upem(self.hb_face)
         self.png = harfbuzz.hb_ot_color_has_png(self.hb_face)
@@ -117,11 +126,9 @@ class Font:
             full_font = io.BytesIO(self.file_content)
             ttfont = TTFont(full_font, fontNumber=self.index)
             if 'wght' not in self.variations:
-                weight = pango.pango_font_description_get_weight(
-                    self.description)
-                self.variations['wght'] = weight
+                self.variations['wght'] = self.weight
             if 'opsz' not in self.variations:
-                self.variations['opsz'] = self.font_size * FROM_UNITS
+                self.variations['opsz'] = self.font_size
             if 'slnt' not in self.variations:
                 slnt = 0
                 if self.style == 1:
@@ -189,7 +196,9 @@ class Font:
 
     def _harfbuzz_subset(self, cmap, hinting):
         """Subset font using Harfbuzz."""
-        hb_subset = harfbuzz_subset.hb_subset_input_create_or_fail()
+        hb_subset = ffi.gc(
+            harfbuzz_subset.hb_subset_input_create_or_fail(),
+            harfbuzz_subset.hb_subset_input_destroy)
 
         # Only keep used glyphs.
         gid_set = harfbuzz_subset.hb_subset_input_glyph_set(hb_subset)
@@ -213,7 +222,9 @@ class Font:
         harfbuzz.hb_set_add_sorted_array(drop_set, drop_tables_array, len(drop_tables))
 
         # Subset font.
-        hb_face = harfbuzz_subset.hb_subset_or_fail(self.hb_face, hb_subset)
+        hb_face = ffi.gc(
+            harfbuzz_subset.hb_subset_or_fail(self.hb_face, hb_subset),
+            harfbuzz.hb_face_destroy)
 
         # Drop empty glyphs after last one used.
         gid_set = harfbuzz_subset.hb_subset_input_glyph_set(hb_subset)
@@ -230,7 +241,9 @@ class Font:
         harfbuzz_subset.hb_subset_input_set_flags(hb_subset, flags)
 
         # Subset font.
-        hb_face = harfbuzz_subset.hb_subset_or_fail(hb_face, hb_subset)
+        hb_face = ffi.gc(
+            harfbuzz_subset.hb_subset_or_fail(hb_face, hb_subset),
+            harfbuzz.hb_face_destroy)
 
         # Store new font.
         if hb_face:

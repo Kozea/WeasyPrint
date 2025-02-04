@@ -1559,6 +1559,43 @@ def test_layout_table_auto_51():
 
 
 @assert_no_logs
+def test_layout_table_auto_52():
+    # Test regression:
+    # https://github.com/Kozea/WeasyPrint/issues/2325
+    page, = render_pages('''
+      <style>
+        @page { size: 20px }
+      </style>
+      <table style="font-family: weasyprint; border-spacing: 1px;
+                    font-size: 2px; line-height: 1">
+        <tr>
+          <td><img src=pattern.png></td>
+          <td>
+            <span>foo</span>,
+            <span>foo</span>,
+            <span>foo</span>
+          </td>
+        </tr>
+      </table>
+    ''')
+    html, = page.children
+    body, = html.children
+    table_wrapper, = body.children
+    table, = table_wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td_1, td_2 = row.children
+    assert table.width == 20
+    assert table_wrapper.position_x == 0
+    assert table.position_x == 0
+    assert td_1.position_x == 1  # spacing
+    assert td_1.width == 4  # image width
+    assert td_2.position_x == td_1.width + 2 * 1  # 2 * spacing
+    assert td_2.width == table.width - td_1.width - 3 * 1  # 3 * spacing
+    assert td_2.height == 3 * 2  # 3 lines * line height
+
+
+@assert_no_logs
 @pytest.mark.parametrize(
     'body_width, table_width, check_width, positions, widths', (
         ('500px', '230px', 220, [170, 5], [45, 155]),
@@ -1966,17 +2003,50 @@ def test_table_vertical_align(assert_pixels):
 
 @assert_no_logs
 def test_table_vertical_align_float():
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/2216
+    # Test regressions:
+    # https://github.com/Kozea/WeasyPrint/issues/2216
+    # https://github.com/Kozea/WeasyPrint/issues/2293
     page, = render_pages('''
       <style>
-        @page { size: 100px }
-        td { width: 50px; height: 100px }
-        div { width: 25px; height: 20px }
+        @page { size: 100px 400px }
+        td { width: 50px; height: 100px; line-height: 0 }
       </style>
       <table>
         <tr>
-          <td style="vertical-align: middle"><div style="float: left"></div></td>
-          <td style="vertical-align: bottom"><div style="float: right"></div></td>
+          <td style="vertical-align: middle">
+            <div style="float: left; height: 20px; width: 20px"></div>
+            <div style="display: inline-block; height: 30px; width: 30px"></div>
+          </td>
+          <td style="vertical-align: bottom">
+            <div style="display: inline-block; height: 30px; width: 30px"></div>
+            <div style="float: right; height: 20px; width: 20px"></div>
+          </td>
+        </tr>
+        <tr>
+          <td style="vertical-align: middle">
+            <div style="float: left; height: 20px; width: 20px"></div>
+            <div style="display: inline-block; height: 10px; width: 10px"></div>
+          </td>
+          <td style="vertical-align: bottom">
+            <div style="display: inline-block; height: 10px; width: 10px"></div>
+            <div style="float: right; height: 20px; width: 20px"></div>
+          </td>
+        </tr>
+        <tr>
+          <td style="vertical-align: middle">
+            <div style="display: inline-block; height: 10px; width: 10px"></div>
+          </td>
+          <td style="vertical-align: bottom">
+            <div style="display: inline-block; height: 10px; width: 10px"></div>
+          </td>
+        </tr>
+        <tr>
+          <td style="vertical-align: middle">
+            <div style="float: left; height: 20px; width: 20px"></div>
+          </td>
+          <td style="vertical-align: bottom">
+            <div style="float: right; height: 20px; width: 20px"></div>
+          </td>
         </tr>
       </table>
     ''')
@@ -1986,14 +2056,52 @@ def test_table_vertical_align_float():
     table, = wrapper.children
     table, = wrapper.children
     row_group, = table.children
-    row, = row_group.children
-    td_1, td_2 = row.children
+    row_1, row_2, row_3, row_4, = row_group.children
+
+    td_1, td_2 = row_1.children
+    div_1, line_wrapper = td_1.children
+    assert div_1.position_x == 0
+    assert div_1.position_y == (100 - 30) / 2
+    div_2 = line_wrapper.children[0].children[0]
+    assert div_2.position_x == 20
+    assert div_2.position_y == (100 - 30) / 2
+    line_box, = td_2.children
+    div_1, _, div_2 = line_box.children
+    assert div_1.position_x == 50
+    assert div_1.position_y == 100 - 30
+    assert div_2.position_x == 80
+    assert div_2.position_y == 100 - 30
+
+    td_1, td_2 = row_2.children
+    div_1, line_wrapper = td_1.children
+    assert div_1.position_x == 0
+    assert div_1.position_y == 100 + (100 - 20) / 2
+    div_2 = line_wrapper.children[0].children[0]
+    assert div_2.position_x == 20
+    assert div_2.position_y == 100 + (100 - 20) / 2
+    line_box, = td_2.children
+    div_1, _, div_2 = line_box.children
+    assert div_1.position_x == 50
+    assert div_1.position_y == 100 + (100 - 20)
+    assert div_2.position_x == 80
+    assert div_2.position_y == 100 + (100 - 20)
+
+    td_1, td_2 = row_3.children
+    line_box, = td_1.children
+    div, _ = line_box.children
+    assert div.position_x == 0
+    assert div.position_y == 200 + (100 - 10) / 2
+    div, = td_2.children
+    assert div.position_x == 50
+    assert div.position_y == 200 + (100 - 10)
+
+    td_1, td_2 = row_4.children
     div, = td_1.children
     assert div.position_x == 0
-    assert div.position_y == 40  # (100 - 20) / 2
+    assert div.position_y == 300 + (100 - 20) / 2
     div, = td_2.children
-    assert div.position_x == 75
-    assert div.position_y == 80  # 100 - 20
+    assert div.position_x == 80
+    assert div.position_y == 300 + (100 - 20)
 
 
 @assert_no_logs
@@ -3307,3 +3415,21 @@ def test_border_collapse_5():
         [None, black_3, black_3],
         [black_3, black_3, black_3],
     ]
+
+
+@assert_no_logs
+def test_table_zero_width():
+    # Test regression: https://github.com/Kozea/WeasyPrint/issues/2306
+    page, = render_pages('''
+      <table style="font-family: weasyprint">
+        <thead>
+          <tr>
+            <th colspan="2">aaaaaaaaaaaaaaaaaa</th>
+          </tr>
+          <tr>
+            <th style="width:80px"></th>
+            <th style="width:80px">rrrrr</th>
+          </tr>
+        </thead>
+      </table>
+    ''')

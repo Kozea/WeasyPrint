@@ -14,10 +14,11 @@ from ..logger import LOGGER
 from ..urls import FILESYSTEM_ENCODING, fetch
 
 from .constants import (  # isort:skip
-    CAPS_KEYS, EAST_ASIAN_KEYS, FONTCONFIG_STRETCH, FONTCONFIG_STYLE,
-    FONTCONFIG_WEIGHT, LIGATURE_KEYS, NUMERIC_KEYS, PANGO_STRETCH, PANGO_STYLE)
+    CAPS_KEYS, EAST_ASIAN_KEYS, FONTCONFIG_STRETCH, FONTCONFIG_STYLE, FONTCONFIG_WEIGHT,
+    LIGATURE_KEYS, NUMERIC_KEYS, PANGO_STRETCH, PANGO_STYLE, PANGO_VARIANT)
 from .ffi import (  # isort:skip
-    TO_UNITS, ffi, fontconfig, gobject, harfbuzz, pango, pangoft2, unicode_to_char_p)
+    FROM_UNITS, TO_UNITS, ffi, fontconfig, gobject, harfbuzz, pango, pangoft2,
+    unicode_to_char_p)
 
 
 def _check_font_configuration(font_config):  # pragma: no cover
@@ -92,7 +93,8 @@ class FontConfiguration:
 
         """
         # Load the main config file and the fonts.
-        self._config = fontconfig.FcInitLoadConfigAndFonts()
+        self._config = ffi.gc(
+            fontconfig.FcInitLoadConfigAndFonts(), fontconfig.FcConfigDestroy)
         self.font_map = ffi.gc(
             pangoft2.pango_ft2_font_map_new(), gobject.g_object_unref)
         pangoft2.pango_fc_font_map_set_config(
@@ -115,7 +117,7 @@ class FontConfiguration:
             return
 
         # Try values in "src" descriptor until one works.
-        string = ffi.gc(ffi.new('FcChar8 **'), ffi.release)
+        string = ffi.new('FcChar8 **')
         for font_type, url in rule_descriptors['src']:
             # Abort if font URL is broken.
             if url is None or font_type == 'internal':
@@ -143,7 +145,7 @@ class FontConfiguration:
                 for tag in b'fullname', b'postscriptname':
                     fontconfig.FcPatternGetString(matching_pattern, tag, 0, string)
                     name = ffi.string(string[0])
-                    if font_name.lower() in name.lower():
+                    if font_name.lower() == name.lower():
                         fontconfig.FcPatternGetString(
                             matching_pattern, b'file', 0, string)
                         path = ffi.string(string[0]).decode(FILESYSTEM_ENCODING)
@@ -286,7 +288,7 @@ def font_features(font_kerning='normal', font_variant_ligatures='normal',
 
     if font_variant_alternates != 'normal':
         # TODO: support other values
-        # See https://www.w3.org/TR/css-fonts-3/#font-variant-caps-prop
+        # See https://drafts.csswg.org/css-fonts/#font-variant-alternates-prop
         if font_variant_alternates == 'historical-forms':
             features['hist'] = 1
 
@@ -318,6 +320,8 @@ def get_font_description(style):
     pango.pango_font_description_set_weight(font_description, font_weight)
     font_size = int(style['font_size'] * TO_UNITS)
     pango.pango_font_description_set_absolute_size(font_description, font_size)
+    font_variant = PANGO_VARIANT[style['font_variant_caps']]
+    pango.pango_font_description_set_variant(font_description, font_variant)
     if style['font_variation_settings'] != 'normal':
         string = ','.join(
             f'{key}={value}' for key, value in
@@ -361,6 +365,7 @@ def get_pango_font_key(pango_font):
     # FontConfiguration object. See https://github.com/Kozea/WeasyPrint/issues/2144
     description = ffi.gc(
         pango.pango_font_describe(pango_font), pango.pango_font_description_free)
+    font_size = pango.pango_font_description_get_size(description) * FROM_UNITS
     mask = pango.PANGO_FONT_MASK_SIZE + pango.PANGO_FONT_MASK_GRAVITY
     pango.pango_font_description_unset_fields(description, mask)
-    return pango.pango_font_description_hash(description)
+    return pango.pango_font_description_hash(description), description, font_size

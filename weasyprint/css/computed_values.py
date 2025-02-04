@@ -3,7 +3,7 @@
 from math import pi
 from urllib.parse import unquote
 
-from tinycss2.color3 import parse_color
+from tinycss2.color4 import parse_color
 
 from ..logger import LOGGER
 from ..text.ffi import FROM_UNITS, ffi, pango
@@ -267,9 +267,11 @@ def break_before_after(style, name, value):
 @register_computer('text-indent')
 @register_computer('hyphenate-limit-zone')
 @register_computer('flex-basis')
+@register_computer('text-underline-offset')
+@register_computer('text-decoration-thickness')
 def length(style, name, value, font_size=None, pixels_only=False):
     """Compute a length ``value``."""
-    if value in ('auto', 'content'):
+    if value in ('auto', 'content', 'from-font'):
         return value
     if value.value == 0:
         return 0 if pixels_only else ZERO_PIXELS
@@ -429,8 +431,9 @@ def border_image_repeat(style, name, values):
 
 
 @register_computer('column-width')
-def column_width(style, name, value):
-    """Compute the ``column-width`` property."""
+@register_computer('outline-offset')
+def length_pixels_only(style, name, value):
+    """Compute a pixel length property."""
     return length(style, name, value, pixels_only=True)
 
 

@@ -352,7 +352,7 @@ def test_linear_gradient():
         assert result[2] == (None if init is None else pytest.approx(init))
         assert result[3] == pytest.approx(positions)
         for color1, color2 in zip(result[4], colors):
-            assert color1 == pytest.approx(color2)
+            assert tuple(color1) == pytest.approx(color2)
 
     layout('linear-gradient(blue)', 'solid', None, [], [blue])
     layout('repeating-linear-gradient(blue)', 'solid', None, [], [blue])
@@ -417,7 +417,7 @@ def test_radial_gradient():
         assert result[2] == (None if init is None else pytest.approx(init))
         assert result[3] == pytest.approx(positions)
         for color1, color2 in zip(result[4], colors):
-            assert color1 == pytest.approx(color2)
+            assert tuple(color1) == pytest.approx(color2)
 
     layout('radial-gradient(blue)', 'solid', None, [], [blue])
     layout('repeating-radial-gradient(blue)', 'solid', None, [], [blue])

@@ -7,7 +7,7 @@ WeasyPrint
 
 .. toctree::
    :caption: Documentation
-   :maxdepth: 3
+   :maxdepth: 2
 
    first_steps
    common_use_cases
@@ -16,7 +16,7 @@ WeasyPrint
 
 .. toctree::
    :caption: Extra Information
-   :maxdepth: 3
+   :maxdepth: 2
 
    changelog
    contribute

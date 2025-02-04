@@ -489,6 +489,21 @@ def test_variable_in_function():
 
 
 @assert_no_logs
+def test_variable_in_nested_function():
+    page, = render_pages('''
+      <style>
+        body { --var: 255 0 0 }
+        div { background-image: linear-gradient(rgba(var(--var))) }
+      </style>
+      <div></div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    assert div.style['background_image'][0][1].colors[0] == (1, 0, 0, 1)
+
+
+@assert_no_logs
 def test_variable_in_function_multiple_values():
     page, = render_pages('''
       <style>

@@ -200,11 +200,19 @@ class StyleFor:
             return False
         if page_selector_type.index is not None:
             a, b, name = page_selector_type.index
-            if name is not None and name != page_type.name:
+            if name is None:
+                index = page_type.index
+                offset = index + 1 - b
+                return offset == 0 if a == 0 else (offset / a >= 0 and not offset % a)
+            if name != page_type.name:
                 return False
-            index = page_type.index if name is None else page_type.group_index
-            offset = index + 1 - b
-            return offset == 0 if a == 0 else (offset / a >= 0 and not offset % a)
+            for group_name, index in page_type.groups:
+                if name != group_name:
+                    continue
+                offset = index + 1 - b
+                if (offset == 0 if a == 0 else (offset / a >= 0 and not offset % a)):
+                    return True
+            return False
         return True
 
 
@@ -222,7 +230,9 @@ def text_decoration(key, value, parent_value, cascaded):
     # using specific rules.
     # See https://drafts.csswg.org/css-text-decor-3/#line-decoration
     # TODO: these rules don’t follow the specification.
-    if key in ('text_decoration_color', 'text_decoration_style'):
+    text_properties = (
+        'text_decoration_color', 'text_decoration_style', 'text_decoration_thickness')
+    if key in text_properties:
         if not cascaded:
             value = parent_value
     elif key == 'text_decoration_line':
@@ -571,7 +581,7 @@ def resolve_var(computed, token, parent_style):
     if token.lower_name != 'var':
         arguments = []
         for i, argument in enumerate(token.arguments):
-            if argument.type == 'function' and argument.lower_name == 'var':
+            if argument.type == 'function':
                 arguments.extend(resolve_var(computed, argument, parent_style))
             else:
                 arguments.append(argument)
@@ -859,6 +869,8 @@ def parse_page_selectors(rule):
                     # TODO: specificity is not specified yet
                     # https://github.com/w3c/csswg-drafts/issues/3524
                     types['specificity'][1] += 1
+                    if group:
+                        types['specificity'][0] += 1
                     continue
 
                 return None
@@ -878,9 +890,18 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fet
                           ignore_imports=False):
     """Do what can be done early on stylesheet, before being in a document."""
     for rule in stylesheet_rules:
-        if getattr(rule, 'content', None) is None and (
-                rule.type != 'at-rule' or rule.lower_at_keyword != 'import'):
-            continue
+        if getattr(rule, 'content', None) is None:
+            if rule.type == 'error':
+                LOGGER.warning(
+                    "Parse error at %d:%d: %s",
+                    rule.source_line, rule.source_column, rule.message)
+            if rule.type != 'at-rule':
+                continue
+            if rule.lower_at_keyword != 'import':
+                LOGGER.warning(
+                    "Unknown empty rule %s at %d:%d",
+                    rule, rule.source_line, rule.source_column)
+                continue
 
         if rule.type == 'qualified-rule':
             try:
@@ -1085,6 +1106,11 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fet
                         continue
 
             counter_style[name] = counter
+
+        else:
+            LOGGER.warning(
+                "Unknown rule %s at %d:%d",
+                rule, rule.source_line, rule.source_column)
 
 
 def get_all_computed_styles(html, user_stylesheets=None, presentational_hints=False,

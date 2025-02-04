@@ -5,7 +5,7 @@ import math
 from abc import ABC, abstractmethod
 from urllib.parse import unquote, urljoin
 
-from tinycss2.color3 import parse_color
+from tinycss2.color4 import parse_color
 
 from .. import LOGGER
 from ..urls import iri_to_uri, url_is_absolute
@@ -386,7 +386,7 @@ def parse_radial_gradient_parameters(arguments):
 def parse_color_stop(tokens):
     if len(tokens) == 1:
         color = parse_color(tokens[0])
-        if color == 'currentColor':
+        if color == 'currentcolor':
             # TODO: return the current color instead
             return parse_color('black'), None
         if color is not None:

@@ -1,6 +1,7 @@
 """Imports of dynamic libraries used for text layout."""
 
 import os
+import sys
 from contextlib import suppress
 
 import cffi
@@ -17,10 +18,13 @@ ffi.cdef('''
     typedef uint32_t hb_codepoint_t;
     hb_tag_t hb_tag_from_string (const char *str, int len);
     void hb_tag_to_string (hb_tag_t tag, char *buf);
+    void hb_face_destroy (hb_face_t *face);
     hb_blob_t * hb_face_reference_blob (hb_face_t *face);
     unsigned int hb_face_get_index (const hb_face_t *face);
     unsigned int hb_face_get_upem (const hb_face_t *face);
+    hb_blob_t * hb_face_reference_table (const hb_face_t *face, hb_tag_t tag);
     const char * hb_blob_get_data (hb_blob_t *blob, unsigned int *length);
+    unsigned int hb_blob_get_length (hb_blob_t *blob);
     bool hb_ot_color_has_png (hb_face_t *face);
     hb_blob_t * hb_ot_color_glyph_reference_png (hb_font_t *font, hb_codepoint_t glyph);
     bool hb_ot_color_has_svg (hb_face_t *face);
@@ -63,6 +67,7 @@ ffi.cdef('''
     } hb_subset_sets_t;
 
     hb_subset_input_t * hb_subset_input_create_or_fail (void);
+    void hb_subset_input_destroy (hb_subset_input_t *input);
     hb_set_t * hb_subset_input_glyph_set (hb_subset_input_t *input);
     void hb_set_add_sorted_array (
         hb_set_t *set, const hb_codepoint_t *sorted_codepoints,
@@ -139,6 +144,16 @@ ffi.cdef('''
         PANGO_WRAP_CHAR,
         PANGO_WRAP_WORD_CHAR
     } PangoWrapMode;
+
+    typedef enum {
+        PANGO_VARIANT_NORMAL,
+        PANGO_VARIANT_SMALL_CAPS,
+        PANGO_VARIANT_ALL_SMALL_CAPS,
+        PANGO_VARIANT_PETITE_CAPS,
+        PANGO_VARIANT_ALL_PETITE_CAPS,
+        PANGO_VARIANT_UNICASE,
+        PANGO_VARIANT_TITLE_CAPS,
+    } PangoVariant;
 
     typedef enum {
         PANGO_TAB_LEFT
@@ -267,6 +282,8 @@ ffi.cdef('''
     void pango_layout_line_get_extents (
         PangoLayoutLine *line, PangoRectangle *ink_rect, PangoRectangle *logical_rect);
     PangoLayoutLine * pango_layout_get_line_readonly (PangoLayout *layout, int line);
+    const PangoLogAttr* pango_layout_get_log_attrs_readonly (
+        PangoLayout* layout, gint* n_attrs);
 
     hb_font_t * pango_font_get_hb_font (PangoFont *font);
 
@@ -286,6 +303,8 @@ ffi.cdef('''
         PangoFontDescription *desc, double size);
     void pango_font_description_set_variations (
         PangoFontDescription* desc, const char* variations);
+    void pango_font_description_set_variant (
+        PangoFontDescription* desc, PangoVariant variant);
 
     PangoStyle pango_font_description_get_style (const PangoFontDescription *desc);
     const char* pango_font_description_get_variations (
@@ -432,7 +451,7 @@ def _dlopen(ffi, *names, allow_fail=False):
     return ffi.dlopen(names[0], flags)  # pragma: no cover
 
 
-if hasattr(os, 'add_dll_directory'):  # pragma: no cover
+if hasattr(os, 'add_dll_directory') and not hasattr(sys, 'frozen'):  # pragma: no cover
     dll_directories = os.getenv(
         'WEASYPRINT_DLL_DIRECTORIES',
         'C:\\msys64\\mingw64\\bin;'

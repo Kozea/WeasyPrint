@@ -66,6 +66,7 @@ Python API
     :members:
 .. autoclass:: Page()
     :members:
+    :exclude-members: paint
 
 .. module:: weasyprint.text.fonts
 .. autoclass:: FontConfiguration()
@@ -149,7 +150,7 @@ PDF
 ~~~
 
 In addition to text, raster and vector graphics, WeasyPrint’s PDF files
-can contain hyperlinks, bookmarks and attachments.
+can contain hyperlinks, bookmarks, attachments and forms.
 
 Hyperlinks will be clickable in PDF viewers that support them. They can
 be either internal, to another part of the same document (eg.
@@ -169,22 +170,13 @@ or through regular links with ``<a rel=attachment>`` to attach a resource that
 can be saved by clicking on said link. The ``title`` attribute can be used as
 description of the attachment.
 
-The generation of PDF/A documents (A-1b, A-2b, A-3b, A-4b, A-2u, A-3u and A-4u) is
-supported. However, the generated documents are not guaranteed to be valid, and users
-have the responsibility to check that they follow the rules listed by the related
-specifications. The major rules to follow are to include a PDF identifier, to check the
-PDF version, and to avoid anti-aliasing for images using ``image-rendering:
-crisp-edges``.
+Generated documents can also include PDF forms, using the ``appearance: auto``
+CSS property or the ``--pdf-forms`` CLI option.
 
-The generation of PDF/UA documents (UA-1) is supported. However, the generated
-documents are not guaranteed to be valid, and users have the responsibility to
-check that they follow the rules listed by the related specifications. The main
-constraint is to use a correct HTML structure to avoid inconsistencies in the
-PDF structure.
-
-Generated PDFs can include forms, using the ``appearance: auto`` CSS property
-or the ``--pdf-forms`` CLI option. Text inputs, text areas and check boxes are
-supported.
+The generation of PDF/A and PDF/UA documents is supported. However, the
+generated documents are not guaranteed to be valid, and users have the
+responsibility to check that they follow the rules listed by the related
+specifications.
 
 
 Fonts
@@ -368,10 +360,6 @@ WeasyPrint supports the ``@font-face`` rule.
 WeasyPrint does **not** support the ``@font-feature-values`` rule and the
 values of ``font-variant-alternates`` other than ``normal`` and
 ``historical-forms``.
-
-The ``font-variant-caps`` property is supported but needs the small-caps variant of
-the font to be installed. WeasyPrint does **not** simulate missing small-caps
-fonts.
 
 From `CSS Fonts Module Level 4`_ we only support the
 ``font-variation-settings`` property enabling specific font variations.
@@ -727,22 +715,25 @@ The custom properties and the ``var()`` notation are supported.
 
 .. _CSS Custom Properties for Cascading Variables Module Level 1: https://www.w3.org/TR/css-variables/
 
-CSS Text Decoration Module Level 3
-++++++++++++++++++++++++++++++++++
+CSS Text Decoration Module Level 3 / 4
+++++++++++++++++++++++++++++++++++++++
 
 The `CSS Text Decoration Module Level 3`_ "contains the features of CSS
 relating to text decoration, such as underlines, text shadows, and emphasis
 marks."
 
-The ``text-decoration-line``, ``text-decoration-style`` and
-``text-decoration-color`` properties are supported, except from the ``wavy``
-value of ``text-decoration-style``. The ``text-decoration`` shorthand is also
-supported.
+The `CSS Text Decoration Module Level 4`_ is a working draft on the same subject.
+
+The ``text-decoration-line``, ``text-decoration-style``,
+``text-decoration-color``, ``text-decoration-thickness`` and
+``text-underline-offset`` properties are supported. The ``text-decoration``
+shorthand is also supported.
 
 The other properties (``text-underline-position``, ``text-emphasis-*``,
 ``text-shadow``) are not supported.
 
 .. _CSS Text Decoration Module Level 3: https://www.w3.org/TR/css-text-decor-3/
+.. _CSS Text Decoration Module Level 4: https://www.w3.org/TR/css-text-decor-4/
 
 CSS Flexible Box Layout Module Level 1
 ++++++++++++++++++++++++++++++++++++++
@@ -814,7 +805,7 @@ The `CSS Basic User Interface Module Level 3/4`_ "enables authors to style user
 interface related properties and values."
 
 The ``outline-width``, ``outline-style``, ``outline-color`` properties and the
-``outline`` shorthand are supported. The ``outline-offset`` property is **not**
+``outline`` shorthand are supported. The ``outline-offset`` property is also
 supported.
 
 The ``resize``, ``cursor``, ``caret-*`` and ``nav-*`` properties are **not**
