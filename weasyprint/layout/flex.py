@@ -262,43 +262,18 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
             # 'auto' and not definite, in this calculation use 'fit-content' as
             # the flex item’s cross size. The flex base size is the item’s
             # resulting main size.
-            child.style[axis] = 'max-content'
-
-            # TODO: Don't set style value, support *-content values instead.
-            if child.style[axis] == 'max-content':
-                child.style[axis] = 'auto'
-                if axis == 'width':
-                    child.flex_base_size = max_content_width(context, child)
-                else:
-                    if isinstance(child, boxes.ParentBox):
-                        new_child = child.copy_with_children(child.children)
-                    else:
-                        new_child = child.copy()
-                    new_child.width = inf
-                    new_child = block.block_level_layout(
-                        context, new_child, -inf, child_skip_stack, parent_box,
-                        page_is_empty, absolute_boxes, fixed_boxes)[0]
-                    child.flex_base_size = new_child.margin_height()
-            elif child.style[axis] == 'min-content':
-                child.style[axis] = 'auto'
-                if axis == 'width':
-                    child.flex_base_size = min_content_width(context, child)
-                else:
-                    if isinstance(child, boxes.ParentBox):
-                        new_child = child.copy_with_children(child.children)
-                    else:
-                        new_child = child.copy()
-                    new_child.width = 0
-                    new_child = block.block_level_layout(
-                        context, new_child, -inf, child_skip_stack, parent_box,
-                        page_is_empty, absolute_boxes, fixed_boxes)[0]
-                    child.flex_base_size = new_child.margin_height()
+            if axis == 'width':
+                child.flex_base_size = max_content_width(context, child)
             else:
-                assert child.style[axis].unit == 'px'
-                # TODO: To be consistent with the above we may wish to add
-                # padding, border, and margins here (but it's not done
-                # consistently above either, and may not be correct).
-                child.flex_base_size = child.style[axis].value
+                if isinstance(child, boxes.ParentBox):
+                    new_child = child.copy_with_children(child.children)
+                else:
+                    new_child = child.copy()
+                new_child.width = inf
+                new_child = block.block_level_layout(
+                    context, new_child, -inf, child_skip_stack, parent_box,
+                    page_is_empty, absolute_boxes, fixed_boxes)[0]
+                child.flex_base_size = new_child.margin_height()
 
         child.hypothetical_main_size = max(
             getattr(child, f'min_{axis}'), min(
