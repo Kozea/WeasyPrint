@@ -484,9 +484,15 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
             # TODO: First part of this step is useless until 3.E is correct.
             for index, child in line:
                 child.adjustment = 0
-                if not child.frozen and child.target_main_size < 0:
-                    child.adjustment = -child.target_main_size
-                    child.target_main_size = 0
+                if not child.frozen:
+                    if axis == 'width':
+                        min_size = min_content_width(context, child, outer=False)
+                    else:
+                        # TODO: this should be min_content_height
+                        min_size = child.hypothetical_main_size
+                    if child.target_main_size < min_size:
+                        child.adjustment = min_size - child.target_main_size
+                        child.target_main_size = min_size
 
             # 9.7.4.e Freeze over-flexed items. The total violation is the sum
             # of the adjustments from the previous step

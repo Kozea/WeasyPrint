@@ -364,7 +364,6 @@ def test_flex_direction_column_fixed_height_container():
     assert article.height > 10
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_flex_direction_column_fixed_height():
     page, = render_pages('''
@@ -856,3 +855,26 @@ def test_inline_flex_absolute_baseline():
   <div style="position: absolute">abs</div>
 </div>
 ''')
+
+
+@assert_no_logs
+def test_flex_item_overflow():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/2359
+    page, = render_pages('''
+      <div style="display: flex; font: 2px weasyprint; width: 12px">
+        <div>ab</div>
+        <div>c d e</div>
+        <div>f</div>
+      </div>''')
+    html, = page.children
+    body, = html.children
+    flex, = body.children
+    div1, div2, div3 = flex.children
+    assert div1.width == 4
+    assert div2.width == 6
+    assert div3.width == 2
+    line1, line2 = div2.children
+    text1, = line1.children
+    text2, = line2.children
+    assert text1.text == 'c d'
+    assert text2.text == 'e'
