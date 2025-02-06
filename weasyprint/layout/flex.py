@@ -1063,14 +1063,6 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
                 context, absolute_box, box, fixed_boxes, bottom_space,
                 skip_stack=None)
 
-    # Set box height.
-    # TODO: This is probably useless because of 9.6.15.
-    if axis == 'width' and box.height == 'auto':
-        if flex_lines:
-            box.height = sum(line.cross_size for line in flex_lines)
-        else:
-            box.height = 0
-
     # Set baseline.
     # See https://www.w3.org/TR/css-flexbox-1/#flex-baselines
     # TODO: Use the real algorithm.
