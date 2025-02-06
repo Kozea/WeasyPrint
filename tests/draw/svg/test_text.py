@@ -365,6 +365,26 @@ def test_text_anchor_middle_end_tspan(assert_pixels):
 
 
 @assert_no_logs
+def test_text_tspan_anchor_non_text(assert_pixels):
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/2375
+    assert_pixels('''
+        _______BBBBBB_______
+        _______BBBBBB_______
+    ''', '''
+      <style>
+        @page { size: 20px 2px }
+        svg { display: block }
+      </style>
+      <svg width="20px" height="2px" text-anchor="end"
+           xmlns="http://www.w3.org/2000/svg">
+        <text x="10" y="10" font-family="weasyprint" font-size="2" text-anchor="start">
+          <tspan x="10" y="1.5" text-anchor="middle" fill="blue">ABC</tspan>
+        </text>
+      </svg>
+    ''')
+
+
+@assert_no_logs
 def test_text_rotate(assert_pixels):
     assert_pixels('''
         __RR__RR__RR________

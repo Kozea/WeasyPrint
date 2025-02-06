@@ -444,14 +444,14 @@ class SVG:
             if new_ctm.determinant:
                 self.stream.transform(*(old_ctm @ new_ctm.invert).values)
 
-        # Handle text anchor
-        if (text_anchor := node.get('text-anchor')) in ('middle', 'end'):
-            group = self.stream.add_group(0, 0, 0, 0)  # BBox set after drawing
-            original_streams.append(self.stream)
-            self.stream = group
-
-        # Set text bounding box
+        # Handle text anchor and set text bounding box
+        text_anchor_shift = False
         if node.display and TAGS.get(node.tag) == text:
+            if (text_anchor := node.get('text-anchor')) in ('middle', 'end'):
+                text_anchor_shift = True
+                group = self.stream.add_group(0, 0, 0, 0)  # BBox set after drawing
+                original_streams.append(self.stream)
+                self.stream = group
             node.text_bounding_box = EMPTY_BOUNDING_BOX
 
         # Save concrete size of root svg tag
@@ -467,11 +467,11 @@ class SVG:
         # Draw node children
         if node.display and node.tag not in DEF_TYPES:
             for child in node:
-                if text_anchor in ('middle', 'end'):
+                if text_anchor_shift:
                     new_stream = self.stream
                     self.stream = original_streams[-1]
                 self.draw_node(child, font_size, fill_stroke)
-                if text_anchor in ('middle', 'end'):
+                if text_anchor_shift:
                     self.stream = new_stream
                 visible_text_child = (
                     TAGS.get(node.tag) == text and
@@ -491,7 +491,7 @@ class SVG:
             self.tree.set_svg_size(svg, concrete_width, concrete_height)
 
         # Handle text anchor
-        if text_anchor in ('middle', 'end'):
+        if text_anchor_shift:
             group_id = self.stream.id
             self.stream = original_streams.pop()
             self.stream.push_state()
