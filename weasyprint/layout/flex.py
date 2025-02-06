@@ -553,11 +553,6 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
             else:
                 child_copy = child.copy()
             block.block_level_width(child_copy, parent_box)
-            # TODO: We set the style here above, otherwise used main size will
-            # get clobbered by resolve_percentages() somewhere down the line,
-            # particularly if the child is itself a flex container. Is this the
-            # right approach?
-            child_copy.style[axis] = Dimension(getattr(child, axis), 'px')
             new_child, _, _, adjoining_margins, _, _ = (
                 block.block_level_layout_switch(
                     context, child_copy, -inf, child_skip_stack, parent_box,
