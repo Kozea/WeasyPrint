@@ -940,3 +940,21 @@ def test_flex_item_overflow():
     text2, = line2.children
     assert text1.text == 'c d'
     assert text2.text == 'e'
+
+
+@assert_no_logs
+def test_flex_direction_row_inline_block():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/1652
+    page, = render_pages('''
+      <article style="display: flex; font: 2px weasyprint; width: 14px">
+        <div style="display: inline-block">A B C D E F</div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div, = article.children
+    assert div.width == 14
+    line1, = div.children
+    assert line1.children[0].children[0].children[0].text == 'A B C D'
+    assert line1.children[0].children[1].children[0].text == 'E F'
