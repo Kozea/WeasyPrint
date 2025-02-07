@@ -422,6 +422,32 @@ def test_flex_direction_column_fixed_height_wrap():
 
 
 @assert_no_logs
+def test_flex_direction_column_break():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/2066
+    page1, page2 = render_pages('''
+      <style>
+        @page { size: 4px 5px }
+      </style>
+      <article style="display: flex; flex-direction: column; font: 2px weasyprint">
+        <div>A<br>B<br>C</div>
+      </article>
+    ''')
+    html, = page1.children
+    body, = html.children
+    article, = body.children
+    div, = article.children
+    assert div.children[0].children[0].text == 'A'
+    assert div.children[1].children[0].text == 'B'
+    assert div.height == 5
+    html, = page2.children
+    body, = html.children
+    article, = body.children
+    div, = article.children
+    assert div.children[0].children[0].text == 'C'
+    assert div.height == 2
+
+
+@assert_no_logs
 def test_flex_item_min_width():
     page, = render_pages('''
       <article style="display: flex">
