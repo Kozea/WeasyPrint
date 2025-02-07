@@ -958,3 +958,17 @@ def test_flex_direction_row_inline_block():
     line1, = div.children
     assert line1.children[0].children[0].children[0].text == 'A B C D'
     assert line1.children[0].children[1].children[0].text == 'E F'
+
+
+@assert_no_logs
+def test_flex_float():
+    page, = render_pages('''
+      <article style="display: flex">
+        <div style="float: left">A</div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div, = article.children
+    assert div.children[0].children[0].text == 'A'
