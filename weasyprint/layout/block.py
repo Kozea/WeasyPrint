@@ -81,7 +81,7 @@ def block_level_layout_switch(context, box, bottom_space, skip_stack,
     elif isinstance(box, boxes.FlexBox):
         result = flex_layout(
             context, box, bottom_space, skip_stack, containing_block,
-            page_is_empty, absolute_boxes, fixed_boxes)
+            page_is_empty, absolute_boxes, fixed_boxes, discard)
     elif isinstance(box, boxes.GridBox):
         result = grid_layout(
             context, box, bottom_space, skip_stack, containing_block,

@@ -16,11 +16,22 @@ class FlexLine(list):
 
 
 def flex_layout(context, box, bottom_space, skip_stack, containing_block,
-                page_is_empty, absolute_boxes, fixed_boxes):
+                page_is_empty, absolute_boxes, fixed_boxes, discard):
     from . import block, preferred
 
     context.create_block_formatting_context()
     resume_at = None
+
+    is_start = skip_stack is None
+    box.remove_decoration(start=not is_start, end=False)
+
+    discard |= box.style['continue'] == 'discard'
+    draw_bottom_decoration = (
+        discard or box.style['box_decoration_break'] == 'clone')
+
+    if draw_bottom_decoration:
+        bottom_space += (
+            box.padding_bottom + box.border_bottom_width + box.margin_bottom)
 
     if box.style['position'] == 'relative':
         # New containing block, use a new absolute list
@@ -294,10 +305,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
             for index, child in enumerate(children):
                 if not child.is_flex_item:
                     continue
-                child_height = (
-                    child.hypothetical_main_size +
-                    child.border_top_width + child.border_bottom_width +
-                    child.padding_top + child.padding_bottom)
+                child_height = child.hypothetical_main_size
                 if getattr(box, axis) == 'auto' and (
                         child_height + box.height > available_main_space):
                     resume_at = {index: None}
@@ -557,7 +565,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
                 block.block_level_layout_switch(
                     context, child_copy, -inf, child_skip_stack, parent_box,
                     page_is_empty, absolute_boxes, fixed_boxes,
-                    [], False, None))
+                    [], discard, None))
 
             child._baseline = find_in_flow_baseline(new_child) or 0
             if cross == 'height':
@@ -1023,7 +1031,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
                 new_child, child_resume_at = block.block_level_layout_switch(
                     context, child, bottom_space, child_skip_stack, box,
                     page_is_empty, absolute_boxes, fixed_boxes,
-                    adjoining_margins=[], discard=False, max_lines=None)[:2]
+                    adjoining_margins=[], discard=discard, max_lines=None)[:2]
                 if new_child is None:
                     if resume_at:
                         resume_index, = resume_at
@@ -1071,6 +1079,8 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
                     break
             else:
                 box.baseline = 0
+
+    box.remove_decoration(start=False, end=resume_at and not discard)
 
     context.finish_block_formatting_context(box)
 
