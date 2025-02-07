@@ -5,8 +5,8 @@ from math import inf, log10
 
 from ..css.properties import Dimension
 from ..formatting_structure import boxes
+from . import percent
 from .absolute import AbsolutePlaceholder, absolute_layout
-from .percent import percentage, resolve_one_percentage, resolve_percentages
 from .preferred import max_content_width, min_content_width
 from .table import find_in_flow_baseline
 
@@ -117,7 +117,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
     # TODO: Check that we really want to drop already calculated used values.
     children = box.children
     parent_box = box.copy_with_children(children)
-    resolve_percentages(parent_box, containing_block)
+    percent.resolve_percentages(parent_box, containing_block)
     # We remove auto margins from parent_box (which is a throwaway) only but
     # keep them on box itself. They will get computed later, once we have done
     # some layout.
@@ -171,7 +171,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
             main_flex_direction = axis
         else:
             main_flex_direction = None
-        resolve_percentages(child, parent_box, main_flex_direction)
+        percent.resolve_percentages(child, parent_box, main_flex_direction)
         child.position_x = parent_box.content_box_x()
         child.position_y = parent_box.content_box_y()
         if child.min_width == 'auto':
@@ -206,12 +206,14 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
         if child.style['flex_basis'] == 'content':
             flex_basis = 'content'
         else:
-            flex_basis = percentage(child.style['flex_basis'], available_main_space)
+            flex_basis = percent.percentage(
+                child.style['flex_basis'], available_main_space)
 
         # "If a value would resolve to auto for width, it instead resolves
         # to content for flex-basis." Let's do this for height too.
         # See https://www.w3.org/TR/css-flexbox-1/#propdef-flex-basis.
-        resolve_one_percentage(child, axis, available_main_space)
+        percent.resolve_one_percentage(child, axis, available_main_space)
+        percent.adjust_box_sizing(child, axis)
         if flex_basis == 'auto':
             if child.style[axis] == 'auto':
                 flex_basis = 'content'
