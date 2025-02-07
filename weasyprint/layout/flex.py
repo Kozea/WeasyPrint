@@ -203,8 +203,6 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
             content_size = new_child.height
             child.min_height = min(specified_size, content_size)
 
-        child.style = child.style.copy()
-
         if child.style['flex_basis'] == 'content':
             flex_basis = 'content'
         else:
