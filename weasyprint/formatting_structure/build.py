@@ -1011,6 +1011,7 @@ def flex_children(box, children):
     if isinstance(box, boxes.FlexContainerBox):
         flex_children = []
         for child in children:
+            child.is_floated = lambda: False
             if child.is_in_normal_flow():
                 child.is_flex_item = True
             if isinstance(child, boxes.TextBox) and not child.text.strip(' '):
