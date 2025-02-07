@@ -338,7 +338,7 @@ def inline_line_widths(context, box, outer, is_line_start, minimum, skip_stack=N
             # "By default, there is a break opportunity
             #  both before and after any inline object."
             if minimum:
-                lines = [0, max_content_width(context, child), 0]
+                lines = [0, min_content_width(context, child), 0]
             else:
                 lines = [max_content_width(context, child)]
         # The first text line goes on the current line
