@@ -187,7 +187,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
             new_child.style['min_height'] = Dimension(0, 'px')
             new_child.style['max_height'] = Dimension(inf, 'px')
             new_child = block.block_level_layout(
-                context, new_child, -inf, child_skip_stack, parent_box,
+                context, new_child, bottom_space, child_skip_stack, parent_box,
                 page_is_empty)[0]
             content_size = new_child.height
             child.min_height = min(specified_size, content_size)
@@ -271,7 +271,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
                     new_child = child.copy()
                 new_child.width = inf
                 new_child = block.block_level_layout(
-                    context, new_child, -inf, child_skip_stack, parent_box,
+                    context, new_child, bottom_space, child_skip_stack, parent_box,
                     page_is_empty, absolute_boxes, fixed_boxes)[0]
                 child.flex_base_size = new_child.margin_height()
 
