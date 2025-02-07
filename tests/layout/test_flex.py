@@ -971,3 +971,63 @@ def test_flex_float():
     article, = body.children
     div, = article.children
     assert div.children[0].children[0].text == 'A'
+
+
+@assert_no_logs
+def test_flex_direction_row_defined_main():
+    page, = render_pages('''
+      <article style="display: flex">
+        <div style="width: 10px; padding: 1px"></div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div, = article.children
+    assert div.width == 10
+    assert div.margin_width() == 12
+
+
+@assert_no_logs
+def test_flex_direction_row_defined_main_border_box():
+    page, = render_pages('''
+      <article style="display: flex">
+        <div style="box-sizing: border-box; width: 10px; padding: 1px"></div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div, = article.children
+    assert div.width == 8
+    assert div.margin_width() == 10
+
+
+@assert_no_logs
+def test_flex_direction_column_defined_main():
+    page, = render_pages('''
+      <article style="display: flex; flex-direction: column">
+        <div style="height: 10px; padding: 1px"></div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div, = article.children
+    assert div.height == 10
+    assert div.margin_height() == 12
+
+
+@assert_no_logs
+def test_flex_direction_column_defined_main_border_box():
+    page, = render_pages('''
+      <article style="display: flex; flex-direction: column">
+        <div style="box-sizing: border-box; height: 10px; padding: 1px"></div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div, = article.children
+    assert div.height == 8
+    assert div.margin_height() == 10
