@@ -6,7 +6,7 @@ from math import inf, log10
 from ..css.properties import Dimension
 from ..formatting_structure import boxes
 from .absolute import AbsolutePlaceholder, absolute_layout
-from .percent import resolve_one_percentage, resolve_percentages
+from .percent import percentage, resolve_one_percentage, resolve_percentages
 from .preferred import max_content_width, min_content_width
 from .table import find_in_flow_baseline
 
@@ -206,10 +206,9 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
         child.style = child.style.copy()
 
         if child.style['flex_basis'] == 'content':
-            flex_basis = child.flex_basis = 'content'
+            flex_basis = 'content'
         else:
-            resolve_one_percentage(child, 'flex_basis', available_main_space)
-            flex_basis = child.flex_basis
+            flex_basis = percentage(child.style['flex_basis'], available_main_space)
 
         # "If a value would resolve to auto for width, it instead resolves
         # to content for flex-basis." Let's do this for height too.
