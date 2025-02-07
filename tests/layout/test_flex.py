@@ -955,9 +955,8 @@ def test_flex_direction_row_inline_block():
     article, = body.children
     div, = article.children
     assert div.width == 14
-    line1, = div.children
-    assert line1.children[0].children[0].children[0].text == 'A B C D'
-    assert line1.children[0].children[1].children[0].text == 'E F'
+    assert div.children[0].children[0].text == 'A B C D'
+    assert div.children[1].children[0].text == 'E F'
 
 
 @assert_no_logs
