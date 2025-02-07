@@ -68,7 +68,7 @@ def float_layout(context, box, containing_block, absolute_boxes, fixed_boxes,
             context, box, bottom_space=bottom_space,
             skip_stack=skip_stack, containing_block=containing_block,
             page_is_empty=True, absolute_boxes=absolute_boxes,
-            fixed_boxes=fixed_boxes)
+            fixed_boxes=fixed_boxes, discard=False)
     elif isinstance(box, boxes.GridContainerBox):
         box, resume_at, _, _, _ = grid_layout(
             context, box, bottom_space=bottom_space,

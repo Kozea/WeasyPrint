@@ -513,7 +513,7 @@ def split_inline_level(context, box, position_x, max_x, bottom_space,
                 setattr(box, f'margin_{side}', 0)
         new_box, resume_at, _, _, _ = flex_layout(
             context, box, -inf, skip_stack, containing_block, False,
-            absolute_boxes, fixed_boxes)
+            absolute_boxes, fixed_boxes, False)
         preserved_line_break = False
         first_letter = '\u2e80'
         last_letter = '\u2e80'

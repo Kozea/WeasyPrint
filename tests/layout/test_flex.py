@@ -448,6 +448,42 @@ def test_flex_direction_column_break():
 
 
 @assert_no_logs
+def test_flex_direction_column_break_border():
+    page1, page2 = render_pages('''
+      <style>
+        @page { size: 8px 7px }
+        article, div { border: 1px solid black }
+      </style>
+      <article style="display: flex; flex-direction: column; font: 2px weasyprint">
+        <div>A B C</div>
+      </article>
+    ''')
+    html, = page1.children
+    body, = html.children
+    article, = body.children
+    assert article.border_height() == 7
+    assert article.border_top_width == 1
+    assert article.border_bottom_width == 0
+    div, = article.children
+    assert div.children[0].children[0].text == 'A'
+    assert div.children[1].children[0].text == 'B'
+    assert div.border_height() == 6
+    assert div.border_top_width == 1
+    assert div.border_bottom_width == 0
+    html, = page2.children
+    body, = html.children
+    article, = body.children
+    assert article.border_height() == 4
+    assert article.border_top_width == 0
+    assert article.border_bottom_width == 1
+    div, = article.children
+    assert div.children[0].children[0].text == 'C'
+    assert div.border_height() == 3
+    assert div.border_top_width == 0
+    assert div.border_bottom_width == 1
+
+
+@assert_no_logs
 def test_flex_item_min_width():
     page, = render_pages('''
       <article style="display: flex">
