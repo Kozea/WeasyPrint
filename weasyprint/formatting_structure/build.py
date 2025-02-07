@@ -1019,8 +1019,14 @@ def flex_children(box, children):
                 # affected by the white-space property"
                 # https://www.w3.org/TR/css-flexbox-1/#flex-items
                 continue
-            if isinstance(child, boxes.InlineLevelBox):
-                anonymous = boxes.BlockBox.anonymous_from(box, [child])
+            if isinstance(child, boxes.InlineBlockBox):
+                anonymous = boxes.BlockBox.anonymous_from(child, child.children)
+                anonymous.style = child.style
+                anonymous.is_flex_item = True
+                flex_children.append(anonymous)
+            elif isinstance(child, boxes.InlineLevelBox):
+                anonymous = boxes.BlockBox.anonymous_from(child, [child])
+                anonymous.style = child.style
                 anonymous.is_flex_item = True
                 flex_children.append(anonymous)
             else:
@@ -1058,7 +1064,12 @@ def grid_children(box, children):
                 # affected by the white-space property"
                 # https://drafts.csswg.org/css-grid-2/#grid-item
                 continue
-            if isinstance(child, boxes.InlineLevelBox):
+            if isinstance(child, boxes.InlineBlockBox):
+                anonymous = boxes.BlockBox.anonymous_from(child, child.children)
+                anonymous.style = child.style
+                anonymous.is_grid_item = True
+                grid_children.append(anonymous)
+            elif isinstance(child, boxes.InlineLevelBox):
                 anonymous = boxes.BlockBox.anonymous_from(child, [child])
                 anonymous.style = child.style
                 child.is_grid_item = False
