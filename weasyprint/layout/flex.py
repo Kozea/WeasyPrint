@@ -19,7 +19,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
                 page_is_empty, absolute_boxes, fixed_boxes, discard):
     from . import block, preferred
 
-    context.create_block_formatting_context()
+    context.create_flex_formatting_context()
     resume_at = None
 
     is_start = skip_stack is None
@@ -1081,7 +1081,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
 
     box.remove_decoration(start=False, end=resume_at and not discard)
 
-    context.finish_block_formatting_context(box)
+    context.finish_flex_formatting_context(box)
 
     # TODO: Check these returned values.
     return box, resume_at, {'break': 'any', 'page': None}, [], False
