@@ -1119,10 +1119,25 @@ def test_flex_direction_column_defined_main_border_box():
 
 
 @assert_no_logs
-def test_flex_negative_margin():
+def test_flex_item_negative_margin():
     page, = render_pages('''
       <article style="display: flex">
         <div style="margin-left: -20px; height: 10px; width: 10px"></div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div, = article.children
+    assert div.height == 10
+    assert div.width == 10
+
+
+@assert_no_logs
+def test_flex_item_auto_margin():
+    page, = render_pages('''
+      <article style="display: flex">
+        <div style="margin-left: auto; height: 10px; width: 10px"></div>
       </article>
     ''')
     html, = page.children
