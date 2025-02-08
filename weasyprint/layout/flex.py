@@ -311,6 +311,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
                     children = children[:index + 1]
                     break
                 box.height += child_height
+        box.height = max(box.min_height, min(box.height, box.max_height))
 
     # 9.3.5 If the flex container is single-line, collect all the flex items
     # into a single flex line.

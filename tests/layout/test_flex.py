@@ -31,6 +31,32 @@ def test_flex_direction_row():
 
 
 @assert_no_logs
+def test_flex_direction_row_max_width():
+    page, = render_pages('''
+      <article style="display: flex; max-width: 100px">
+        <div></div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    assert article.width == 100
+
+
+@assert_no_logs
+def test_flex_direction_row_min_height():
+    page, = render_pages('''
+      <article style="display: flex; min-height: 100px">
+        <div></div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    assert article.height == 100
+
+
+@assert_no_logs
 def test_flex_direction_row_rtl():
     page, = render_pages('''
       <article style="display: flex; direction: rtl">
@@ -133,6 +159,44 @@ def test_flex_direction_column():
         article.position_x)
     assert div_1.position_y == article.position_y
     assert div_1.position_y < div_2.position_y < div_3.position_y
+
+
+@assert_no_logs
+def test_flex_direction_column_min_width():
+    page, = render_pages('''
+      <article style="display: flex; flex-direction: column; min-height: 100px">
+        <div></div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    assert article.height == 100
+
+
+@assert_no_logs
+def test_flex_direction_column_max_height():
+    page, = render_pages('''
+      <article style="display: flex; flex-flow: column wrap; max-height: 100px">
+        <div style="height: 40px">A</div>
+        <div style="height: 40px">B</div>
+        <div style="height: 40px">C</div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    assert article.height == 100
+    div1, div2, div3 = article.children
+    assert div1.height == 40
+    assert div1.position_x == 0
+    assert div1.position_y == 0
+    assert div2.height == 40
+    assert div2.position_x == 0
+    assert div2.position_y == 40
+    assert div3.height == 40
+    assert div3.position_x == div1.width
+    assert div3.position_y == 0
 
 
 @assert_no_logs
