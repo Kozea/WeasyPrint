@@ -220,10 +220,18 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
             else:
                 if axis == 'width':
                     flex_basis = child.width
-                    outer_extra = child.margin_width() - flex_basis
+                    outer_extra = child.border_width() - flex_basis
+                    if child.margin_left != 'auto':
+                        outer_extra += child.margin_left
+                    if child.margin_right != 'auto':
+                        outer_extra += child.margin_right
                 else:
                     flex_basis = child.height
-                    outer_extra = child.margin_height() - flex_basis
+                    outer_extra = child.border_height() - flex_basis
+                    if child.margin_top != 'auto':
+                        outer_extra += child.margin_top
+                    if child.margin_bottom != 'auto':
+                        outer_extra += child.margin_bottom
         else:
             if axis == 'width':
                 outer_extra = child.margin_width() - flex_basis
