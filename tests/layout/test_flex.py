@@ -1146,3 +1146,18 @@ def test_flex_item_auto_margin():
     div, = article.children
     assert div.height == 10
     assert div.width == 10
+
+
+@assert_no_logs
+def test_flex_item_auto_margin_flex_basis():
+    page, = render_pages('''
+      <article style="display: flex">
+        <div style="margin-left: auto; height: 10px; flex-basis: 10px"></div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div, = article.children
+    assert div.height == 10
+    assert div.width == 10
