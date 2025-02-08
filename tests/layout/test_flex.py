@@ -974,6 +974,27 @@ def test_flex_float():
 
 
 @assert_no_logs
+def test_flex_float_in_flex_item():
+    # Regression test for https://github.com/Kozea/WeasyPrint/issues/1356
+    page, = render_pages('''
+      <article style="display: flex; font: 2px weasyprint">
+        <div style="width: 10px"><span style="float: right">abc</span></div>
+        <div style="width: 10px"><span style="float: right">abc</span></div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div1, div2 = article.children
+    span1, = div1.children
+    assert span1.position_y == 0
+    assert span1.position_x + span1.width == 10
+    span2, = div2.children
+    assert span2.position_y == 0
+    assert span2.position_x + span2.width == 20
+
+
+@assert_no_logs
 def test_flex_direction_row_defined_main():
     page, = render_pages('''
       <article style="display: flex">
