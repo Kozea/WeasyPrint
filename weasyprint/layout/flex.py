@@ -219,17 +219,16 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
                 flex_basis = 'content'
             else:
                 if axis == 'width':
-                    flex_basis = child.border_width()
-                    if child.margin_left != 'auto':
-                        flex_basis += child.margin_left
-                    if child.margin_right != 'auto':
-                        flex_basis += child.margin_right
+                    flex_basis = child.width
+                    outer_extra = child.margin_width() - flex_basis
                 else:
-                    flex_basis = child.border_height()
-                    if child.margin_top != 'auto':
-                        flex_basis += child.margin_top
-                    if child.margin_bottom != 'auto':
-                        flex_basis += child.margin_bottom
+                    flex_basis = child.height
+                    outer_extra = child.margin_height() - flex_basis
+        else:
+            if axis == 'width':
+                outer_extra = child.margin_width() - flex_basis
+            else:
+                outer_extra = child.margin_height() - flex_basis
 
         # 9.2.3.A If the item has a definite used flex basis, that’s the flex
         # base size.
@@ -273,7 +272,8 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
             # the flex item’s cross size. The flex base size is the item’s
             # resulting main size.
             if axis == 'width':
-                child.flex_base_size = max_content_width(context, child)
+                child.flex_base_size = max_content_width(context, child, outer=False)
+                outer_extra = max_content_width(context, child) - child.flex_base_size
             else:
                 if isinstance(child, boxes.ParentBox):
                     new_child = child.copy_with_children(child.children)
@@ -283,11 +283,13 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
                 new_child = block.block_level_layout(
                     context, new_child, bottom_space, child_skip_stack, parent_box,
                     page_is_empty, absolute_boxes, fixed_boxes)[0]
-                child.flex_base_size = new_child.margin_height()
+                child.flex_base_size = new_child.height
+                outer_extra = new_child.margin_height() - new_child.height
 
         child.hypothetical_main_size = max(
             getattr(child, f'min_{axis}'), min(
                 child.flex_base_size, getattr(child, f'max_{axis}')))
+        child.main_outer_extra = outer_extra
 
         # Skip stack is only for the first child.
         child_skip_stack = None
@@ -304,13 +306,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
             for index, child in enumerate(children):
                 if not child.is_flex_item:
                     continue
-                child_height = child.hypothetical_main_size
-                if getattr(box, axis) == 'auto' and (
-                        child_height + box.height > available_main_space):
-                    resume_at = {index: None}
-                    children = children[:index + 1]
-                    break
-                box.height += child_height
+                box.height += child.hypothetical_main_size + child.main_outer_extra
         box.height = max(box.min_height, min(box.height, box.max_height))
 
     # 9.3.5 If the flex container is single-line, collect all the flex items
@@ -322,12 +318,12 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
     for i, child in enumerate(children, start=skip):
         if not child.is_flex_item:
             continue
-        line_size += child.hypothetical_main_size
+        line_size += child.hypothetical_main_size + child.main_outer_extra
         if box.style['flex_wrap'] != 'nowrap' and line_size > axis_size:
             if line:
                 flex_lines.append(FlexLine(line))
                 line = [(i, child)]
-                line_size = child.hypothetical_main_size
+                line_size = child.hypothetical_main_size + child.main_outer_extra
             else:
                 line.append((i, child))
                 flex_lines.append(FlexLine(line))
@@ -355,7 +351,8 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
         # container’s inner main size, use the flex grow factor for the rest of
         # this algorithm; otherwise, use the flex shrink factor.
         hypothetical_main_size = sum(
-            child.hypothetical_main_size for index, child in line)
+            child.hypothetical_main_size + child.main_outer_extra
+            for index, child in line)
         if hypothetical_main_size < available_main_space:
             flex_factor_type = 'grow'
         else:
@@ -390,9 +387,9 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
         initial_free_space = available_main_space
         for index, child in line:
             if child.frozen:
-                initial_free_space -= child.target_main_size
+                initial_free_space -= child.target_main_size + child.main_outer_extra
             else:
-                initial_free_space -= child.flex_base_size
+                initial_free_space -= child.flex_base_size + child.main_outer_extra
 
         # 9.7.4.a Check for flexible items. If all the flex items on the line
         # are frozen, free space has been distributed; exit this loop.
@@ -520,23 +517,9 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block,
         # 9.7.5 Set each item’s used main size to its target main size.
         for index, child in line:
             if axis == 'width':
-                child.width = (
-                    child.target_main_size -
-                    child.padding_left - child.padding_right -
-                    child.border_left_width - child.border_right_width)
-                if child.margin_left != 'auto':
-                    child.width -= child.margin_left
-                if child.margin_right != 'auto':
-                    child.width -= child.margin_right
+                child.width = child.target_main_size
             else:
-                child.height = (
-                    child.target_main_size -
-                    child.padding_top - child.padding_bottom -
-                    child.border_top_width - child.border_top_width)
-                if child.margin_top != 'auto':
-                    child.height -= child.margin_top
-                if child.margin_bottom != 'auto':
-                    child.height -= child.margin_bottom
+                child.height = child.target_main_size
 
     # 9.4. Cross Size Determination.
     # TODO: Fix TODO in build.flex_children.
