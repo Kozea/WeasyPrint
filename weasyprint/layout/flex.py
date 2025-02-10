@@ -28,6 +28,8 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
     discard |= box.style['continue'] == 'discard'
     draw_bottom_decoration = discard or box.style['box_decoration_break'] == 'clone'
 
+    row_gap, column_gap = box.style['row_gap'], box.style['column_gap']
+
     if draw_bottom_decoration:
         bottom_space += box.padding_bottom + box.border_bottom_width + box.margin_bottom
 
@@ -81,8 +83,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
     else:
         # TODO: As above, min- and max-content not implemented correctly.
         if cross == 'height':
-            main_space = (
-                context.page_bottom - bottom_space - box.content_box_y())
+            main_space = context.page_bottom - bottom_space - box.content_box_y()
             if containing_block.height != 'auto':
                 if isinstance(containing_block.height, Dimension):
                     assert containing_block.height.unit == 'px'
@@ -246,15 +247,38 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
 
     # 4 Determine the main size of the flex container using the rules of the formatting
     # context in which it participates.
+    if row_gap == 'normal':
+        row_gap = 0
+    elif row_gap.unit == '%':
+        if box.height == 'auto':
+            row_gap = 0
+        else:
+            row_gap = row_gap.value / 100 * box.height
+    else:
+        row_gap = row_gap.value
+    if column_gap == 'normal':
+        column_gap = 0
+    elif column_gap.unit == '%':
+        if box.width == 'auto':
+            column_gap = 0
+        else:
+            column_gap = column_gap.value / 100 * box.width
+    else:
+        column_gap = column_gap.value
+    if axis == 'width':
+        main_gap, cross_gap = column_gap, row_gap
+    else:
+        main_gap, cross_gap = row_gap, column_gap
     if axis == 'width':
         block.block_level_width(box, containing_block)
     else:
         if box.height == 'auto':
             box.height = 0
-            for index, child in enumerate(children):
-                if not child.is_flex_item:
-                    continue
+            flex_items = (child for child in children if child.is_flex_item)
+            for i, child in enumerate(flex_items):
                 box.height += child.hypothetical_main_size + child.main_outer_extra
+                if i:
+                    box.height += main_gap
         box.height = max(box.min_height, min(box.height, box.max_height))
 
     # 5 If the flex container is single-line, collect all the flex items into a single
@@ -267,6 +291,8 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
         if not child.is_flex_item:
             continue
         line_size += child.hypothetical_main_size + child.main_outer_extra
+        if i > skip:
+            line_size += main_gap
         if box.style['flex_wrap'] != 'nowrap' and line_size > axis_size:
             if line:
                 flex_lines.append(FlexLine(line))
@@ -319,11 +345,13 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
 
         # 9.7.4 Calculate initial free space.
         initial_free_space = available_main_space
-        for index, child in line:
+        for i, (index, child) in enumerate(line):
             if child.frozen:
                 initial_free_space -= child.target_main_size + child.main_outer_extra
             else:
                 initial_free_space -= child.flex_base_size + child.main_outer_extra
+            if i:
+                initial_free_space -= main_gap
 
         # 9.7.5.a Check for flexible items.
         while not all(child.frozen for index, child in line):
@@ -331,12 +359,14 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
             remaining_free_space = available_main_space
 
             # 9.7.5.b Calculate the remaining free space.
-            for index, child in line:
+            for i, (index, child) in enumerate(line):
                 if child.frozen:
                     remaining_free_space -= child.target_main_size
                 else:
                     remaining_free_space -= child.flex_base_size
                     unfrozen_factor_sum += child.flex_factor
+                if i:
+                    remaining_free_space -= main_gap
 
             if unfrozen_factor_sum < 1:
                 initial_free_space *= unfrozen_factor_sum
@@ -550,8 +580,9 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
                 else:
                     definite_cross_size = box.width
         if definite_cross_size is not None:
-            extra_cross_size = definite_cross_size - sum(
-                line.cross_size for line in flex_lines)
+            extra_cross_size = definite_cross_size
+            extra_cross_size -= sum(line.cross_size for line in flex_lines)
+            extra_cross_size -= (len(flex_lines) - 1) * cross_gap
             if extra_cross_size:
                 for line in flex_lines:
                     line.cross_size += extra_cross_size / len(flex_lines)
@@ -602,8 +633,12 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
     if box.style['flex_direction'].endswith('-reverse'):
         if 'flex-start' in justify_content:
             justify_content = ('flex-end',)
-        elif justify_content == 'flex-end':
+        elif 'flex-end' in justify_content:
             justify_content = ('flex-start',)
+        elif 'start' in justify_content:
+            justify_content = ('end',)
+        elif 'end' in justify_content:
+            justify_content = ('start',)
 
     for line in flex_lines:
         position_axis = original_position_axis
@@ -623,6 +658,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
                     free_space -= child.margin_top
                 if child.margin_bottom != 'auto':
                     free_space -= child.margin_bottom
+        free_space -= (len(line) - 1) * main_gap
 
         # 12.1 If the remaining free space is positive…
         margins = 0
@@ -665,11 +701,14 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
         elif 'space-evenly' in justify_content:
             position_axis += free_space / (len(line) + 1)
 
-        for index, child in line:
+        growths = sum(child.style['flex_grow'] for child in children)
+        for i, (index, child) in enumerate(line):
+            if i:
+                position_axis += main_gap
             if axis == 'width':
                 child.position_x = position_axis
-                if 'stretch' in justify_content:
-                    child.width += free_space / len(line)
+                if 'stretch' in justify_content and growths:
+                    child.width += free_space * child.style['flex_grow'] / growths
             else:
                 child.position_y = position_axis
             margin_axis = (
@@ -800,41 +839,46 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
         # Otherwise, use the sum of the flex lines' cross sizes…
         # TODO: Handle min-max.
         # TODO: What about align-content here?
-        setattr(box, cross, sum(line.cross_size for line in flex_lines))
-    elif len(flex_lines) > 1:
+        cross_size = sum(line.cross_size for line in flex_lines)
+        cross_size += (len(flex_lines) - 1) * cross_gap
+        setattr(box, cross, cross_size)
+
+    if len(flex_lines) > 1:
         # 15 If the cross size property is a definite size, use that…
-        extra_cross_size = getattr(box, cross) - sum(
-            line.cross_size for line in flex_lines)
+        extra_cross_size = getattr(box, cross)
+        extra_cross_size -= sum(line.cross_size for line in flex_lines)
+        extra_cross_size -= (len(flex_lines) - 1) * cross_gap
         # 16 Align all flex lines per align-content.
+        cross_translate = 0
         direction = 'position_y' if cross == 'height' else 'position_x'
-        if extra_cross_size > 0:
-            cross_translate = 0
-            for line in flex_lines:
-                for index, child in line:
-                    if not child.is_flex_item:
-                        continue
-                    current_value = getattr(child, direction) + cross_translate
-                    setattr(child, direction, current_value)
-                    if {'flex-end', 'end'} & set(align_content):
-                        setattr(
-                            child, direction, current_value + extra_cross_size)
-                    elif 'center' in align_content:
-                        setattr(
-                            child, direction, current_value + extra_cross_size / 2)
-                    elif 'space-around' in align_content:
-                        setattr(
-                            child, direction,
-                            current_value + extra_cross_size / len(flex_lines) / 2)
-                    elif 'space-evenly' in align_content:
-                        setattr(
-                            child, direction,
-                            current_value + extra_cross_size / (len(flex_lines) + 1))
-                if 'space-between' in align_content:
-                    cross_translate += extra_cross_size / (len(flex_lines) - 1)
+        for i, line in enumerate(flex_lines):
+            flex_items = tuple(child for _, child in line if child.is_flex_item)
+            if i:
+                cross_translate += cross_gap
+            for child in flex_items:
+                current_value = getattr(child, direction) + cross_translate
+                setattr(child, direction, current_value)
+            if extra_cross_size <= 0:
+                continue
+            for child in flex_items:
+                if {'flex-end', 'end'} & set(align_content):
+                    setattr(child, direction, current_value + extra_cross_size)
+                elif 'center' in align_content:
+                    setattr(child, direction, current_value + extra_cross_size / 2)
                 elif 'space-around' in align_content:
-                    cross_translate += extra_cross_size / len(flex_lines)
+                    setattr(
+                        child, direction,
+                        current_value + extra_cross_size / len(flex_lines) / 2)
                 elif 'space-evenly' in align_content:
-                    cross_translate += extra_cross_size / (len(flex_lines) + 1)
+                    setattr(
+                        child, direction,
+                        current_value + extra_cross_size / (len(flex_lines) + 1))
+            if 'space-between' in align_content:
+                cross_translate += extra_cross_size / (len(flex_lines) - 1)
+            elif 'space-around' in align_content:
+                cross_translate += extra_cross_size / len(flex_lines)
+            elif 'space-evenly' in align_content:
+                cross_translate += extra_cross_size / (len(flex_lines) + 1)
 
     # Now we are no longer in the flex algorithm.
     box = box.copy_with_children(
