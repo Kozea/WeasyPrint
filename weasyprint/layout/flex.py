@@ -7,7 +7,7 @@ from ..css.properties import Dimension
 from ..formatting_structure import boxes
 from . import percent
 from .absolute import AbsolutePlaceholder, absolute_layout
-from .preferred import max_content_width, min_content_width
+from .preferred import max_content_width, min_content_width, min_max
 from .table import find_in_flow_baseline
 
 
@@ -423,6 +423,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
                                 child.target_main_size = (
                                     child.flex_base_size +
                                     remaining_free_space * ratio)
+                        child.target_main_size = min_max(child, child.target_main_size)
 
             # 9.7.5.d Fix min/max violations.
             for index, child in line:
