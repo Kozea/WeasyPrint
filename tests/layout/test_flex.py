@@ -1334,3 +1334,83 @@ def test_flex_direction_row_stretch_grow():
     assert div1.position_x == article.position_x == 0
     assert div2.position_x == 2
     assert div3.position_x == 7
+
+
+@assert_no_logs
+@pytest.mark.parametrize('align, x1, x2, x3', (
+    ('start', 0, 6, 12),
+    ('flex-start', 0, 6, 12),
+    ('left', 0, 6, 12),
+    ('end', 6, 12, 18),
+    ('flex-end', 6, 12, 18),
+    ('right', 6, 12, 18),
+    ('center', 3, 9, 15),
+    ('space-between', 0, 9, 18),
+    ('space-around', 1, 9, 17),
+    ('space-evenly', 1.5, 9, 16.5),
+))
+def test_flex_direction_row_justify_margin_padding(align, x1, x2, x3):
+    page, = render_pages(f'''
+      <article style="width: 20px; font: 2px weasyprint;
+                      display: flex; justify-content: {align}">
+        <div style="margin: 0 1em">A</div>
+        <div style="padding: 0 1em">B</div>
+        <div>C</div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div1, div2, div3 = article.children
+    assert div1.children[0].children[0].text == 'A'
+    assert div2.children[0].children[0].text == 'B'
+    assert div3.children[0].children[0].text == 'C'
+    assert div1.position_y == div2.position_y == div3.position_y == article.position_y
+    assert article.position_x == 0
+    assert article.width == 20
+    assert div1.position_x == x1
+    assert div2.position_x == x2
+    assert div3.position_x == x3
+    assert div1.margin_width() == 6
+    assert div2.margin_width() == 6
+    assert div3.margin_width() == 2
+
+
+@assert_no_logs
+@pytest.mark.parametrize('align, y1, y2, y3', (
+    ('start', 0, 6, 12),
+    ('flex-start', 0, 6, 12),
+    ('left', 0, 6, 12),
+    ('end', 6, 12, 18),
+    ('flex-end', 6, 12, 18),
+    ('right', 6, 12, 18),
+    ('center', 3, 9, 15),
+    ('space-between', 0, 9, 18),
+    ('space-around', 1, 9, 17),
+    ('space-evenly', 1.5, 9, 16.5),
+))
+def test_flex_direction_column_justify_margin_padding(align, y1, y2, y3):
+    page, = render_pages(f'''
+      <article style="height: 20px; font: 2px weasyprint;
+                      display: flex; flex-direction: column; justify-content: {align}">
+        <div style="margin: 1em 0">A</div>
+        <div style="padding: 1em 0">B</div>
+        <div>C</div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div1, div2, div3 = article.children
+    assert div1.children[0].children[0].text == 'A'
+    assert div2.children[0].children[0].text == 'B'
+    assert div3.children[0].children[0].text == 'C'
+    assert div1.position_x == div2.position_x == div3.position_x == article.position_x
+    assert article.position_y == 0
+    assert article.height == 20
+    assert div1.position_y == y1
+    assert div2.position_y == y2
+    assert div3.position_y == y3
+    assert div1.margin_height() == 6
+    assert div2.margin_height() == 6
+    assert div3.margin_height() == 2
