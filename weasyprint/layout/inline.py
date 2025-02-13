@@ -370,9 +370,12 @@ def atomic_box(context, box, position_x, skip_stack, containing_block,
         if box.is_table_wrapper:
             containing_size = (containing_block.width, containing_block.height)
             table_wrapper_width(context, box, containing_size)
+            width, min_width, max_width = box.width, box.min_width, box.max_width
         box = inline_block_box_layout(
             context, box, position_x, skip_stack, containing_block,
             absolute_boxes, fixed_boxes)
+        if box.is_table_wrapper:
+            box.width, box.min_width, box.max_width = width, min_width, max_width
     else:  # pragma: no cover
         raise TypeError(f'Layout for {type(box).__name__} not handled yet')
     return box
