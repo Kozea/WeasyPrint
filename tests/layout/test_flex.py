@@ -1414,3 +1414,39 @@ def test_flex_direction_column_justify_margin_padding(align, y1, y2, y3):
     assert div1.margin_height() == 6
     assert div2.margin_height() == 6
     assert div3.margin_height() == 2
+
+
+@assert_no_logs
+def test_flex_item_table():
+    # Regression test for issue #1805.
+    page, = render_pages('''
+      <article style="display: flex; font: 2px weasyprint">
+        <table><tr><td>A</tr></td></table>
+        <table><tr><td>B</tr></td></table>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    table_wrapper1, table_wrapper2 = article.children
+    assert table_wrapper1.width == table_wrapper2.width == 2
+    assert table_wrapper1.position_x == 0
+    assert table_wrapper2.position_x == 2
+
+
+@assert_no_logs
+def test_flex_item_table_width():
+    # Regression test for issue #1805.
+    page, = render_pages('''
+      <article style="display: flex; font: 2px weasyprint; width: 40px">
+        <table style="width: 25%"><tr><td>A</tr></td></table>
+        <table style="width: 25%"><tr><td>B</tr></td></table>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    table_wrapper1, table_wrapper2 = article.children
+    assert table_wrapper1.width == table_wrapper2.width == 10
+    assert table_wrapper1.position_x == 0
+    assert table_wrapper2.position_x == 10

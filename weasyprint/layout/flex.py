@@ -8,7 +8,7 @@ from ..formatting_structure import boxes
 from . import percent
 from .absolute import AbsolutePlaceholder, absolute_layout
 from .preferred import max_content_width, min_content_width, min_max
-from .table import find_in_flow_baseline
+from .table import find_in_flow_baseline, table_wrapper_width
 
 
 class FlexLine(list):
@@ -157,6 +157,8 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
         else:
             main_flex_direction = None
         percent.resolve_percentages(child, parent_box, main_flex_direction)
+        if child.is_table_wrapper:
+            table_wrapper_width(context, child, (parent_box.width, parent_box.height))
         child.position_x = parent_box.content_box_x()
         child.position_y = parent_box.content_box_y()
         if child.min_width == 'auto':
@@ -187,15 +189,9 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
         else:
             flex_basis = percent.percentage(
                 child.style['flex_basis'], available_main_space)
-
-        # If a value would resolve to auto for width…
-        percent.resolve_one_percentage(child, axis, available_main_space)
-        percent.adjust_box_sizing(child, axis)
-        if flex_basis == 'auto':
-            if child.style[axis] == 'auto':
-                flex_basis = 'content'
-            else:
-                flex_basis = child.width if axis == 'width' else child.height
+            if flex_basis == 'auto':
+                if (flex_basis := getattr(child, axis)) == 'auto':
+                    flex_basis = 'content'
 
         # 3.A If the item has a definite used flex basis…
         if flex_basis != 'content':
