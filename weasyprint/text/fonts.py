@@ -103,7 +103,7 @@ class FontConfiguration:
         fontconfig.FcConfigDestroy(self._config)
 
         # Temporary folder storing fonts.
-        self._folder = Path(mkdtemp(prefix='weasyprint-'))
+        self._folder = None
 
     def add_font_face(self, rule_descriptors, url_fetcher):
         """Add a font face to the Fontconfig configuration."""
@@ -111,6 +111,8 @@ class FontConfiguration:
         # Define path where to save font, depending on the rule descriptors.
         config_key = str(rule_descriptors)
         config_digest = md5(config_key.encode(), usedforsecurity=False).hexdigest()
+        if self._folder is None:
+            self._folder = Path(mkdtemp(prefix='weasyprint-'))
         font_path = self._folder / config_digest
         if font_path.exists():
             # Font already exists, we have nothing more to do.
@@ -233,7 +235,8 @@ class FontConfiguration:
 
     def __del__(self):
         """Clean a font configuration for a document."""
-        rmtree(self._folder, ignore_errors=True)
+        if self._folder:
+            rmtree(self._folder, ignore_errors=True)
 
 
 def font_features(font_kerning='normal', font_variant_ligatures='normal',
