@@ -1038,9 +1038,9 @@ def test_flex_item_negative_margin():
 
 
 @assert_no_logs
-def test_flex_item_auto_margin():
+def test_flex_item_auto_margin_main():
     page, = render_pages('''
-      <article style="display: flex">
+      <article style="display: flex; width: 100px">
         <div style="margin-left: auto; height: 10px; width: 10px"></div>
       </article>
     ''')
@@ -1050,6 +1050,41 @@ def test_flex_item_auto_margin():
     div, = article.children
     assert div.height == 10
     assert div.width == 10
+    assert div.margin_left == 90
+
+
+@assert_no_logs
+def test_flex_item_auto_margin_cross():
+    # TODO: we keep this test because it used to crash, but we have to fix the top
+    # margin.
+    page, = render_pages('''
+      <article style="display: flex; height: 100px">
+        <div style="margin-top: auto; height: 10px; width: 10px"></div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div, = article.children
+    assert div.height == 10
+    assert div.width == 10
+    # assert div.margin_top == 90
+
+
+@assert_no_logs
+def test_flex_direction_column_item_auto_margin():
+    page, = render_pages('''
+      <div style="font: 2px weasyprint; width: 30px; display: flex;
+                  flex-direction: column; align-items: flex-start">
+          <article style="margin: 0 auto">XXXX</article>
+      </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    article, = div.children
+    assert article.width == 8
+    assert article.margin_left == 11
 
 
 @assert_no_logs
@@ -1450,3 +1485,50 @@ def test_flex_item_table_width():
     assert table_wrapper1.width == table_wrapper2.width == 10
     assert table_wrapper1.position_x == 0
     assert table_wrapper2.position_x == 10
+
+
+@assert_no_logs
+def test_flex_width_on_parent():
+    page, = render_pages('''
+      <div style="font: 2px weasyprint; width: 30px; display: flex;
+                  flex-direction: column; align-items: flex-start">
+          <article>XXXX</article>
+      </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    article, = div.children
+    assert article.width == 8
+
+
+@assert_no_logs
+def test_flex_column_item_flex_1():
+    page, = render_pages('''
+      <div style="font: 2px weasyprint; display: flex; flex-direction: column">
+          <article>XXXX</article>
+          <article style="flex: 1">XXXX</article>
+      </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    assert div.height == 4
+
+
+@assert_no_logs
+def test_flex_row_item_flex_0():
+    page, = render_pages('''
+      <div style="font: 2px weasyprint; display: flex">
+          <article style="flex: 0">XXXX</article>
+          <article style="flex: 0">XXXX</article>
+      </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    article1, article2 = div.children
+    assert article1.position_x == 0
+    assert article1.width == 8
+    assert article2.position_x == 8
+    assert article2.width == 8

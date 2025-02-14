@@ -17,7 +17,7 @@ class FlexLine(list):
 
 def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_is_empty,
                 absolute_boxes, fixed_boxes, discard):
-    from . import block, preferred
+    from . import block
 
     context.create_flex_formatting_context()
     resume_at = None
@@ -104,7 +104,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
 
     # 3 Determine the flex base size and hypothetical main size of each item.
     children = box.children
-    parent_box = box.copy_with_children(children)
+    parent_box = box.copy()
     percent.resolve_percentages(parent_box, containing_block)
     # We remove auto margins from parent_box (which is a throwaway) only but keep them
     # on box itself. They will get computed later, once we have done some layout.
@@ -116,10 +116,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
         parent_box.margin_left = 0
     if parent_box.margin_right == 'auto':
         parent_box.margin_right = 0
-    if isinstance(parent_box, boxes.FlexBox):
-        block.block_level_width(parent_box, containing_block)
-    else:
-        parent_box.width = preferred.flex_max_content_width(context, parent_box)
+    block.block_level_width(parent_box, containing_block)
     original_skip_stack = skip_stack
     children = sorted(children, key=lambda item: item.style['order'])
     if skip_stack is not None:
@@ -222,10 +219,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
                 child.main_outer_extra = (
                     max_content_width(context, child) - child.flex_base_size)
             else:
-                if isinstance(child, boxes.ParentBox):
-                    new_child = child.copy_with_children(child.children)
-                else:
-                    new_child = child.copy()
+                new_child = child.copy()
                 new_child.width = inf
                 new_child = block.block_level_layout(
                     context, new_child, bottom_space, child_skip_stack, parent_box,
@@ -460,29 +454,23 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
     for line in flex_lines:
         new_flex_line = FlexLine()
         for index, child in line:
-            # TODO: This *should* do the right thing for auto?
-            # TODO: Find another way than calling block_level_layout_switch to
-            # get baseline and child.height.
+            # TODO: Fix this value, see test_flex_item_auto_margin_cross.
             if child.margin_top == 'auto':
                 child.margin_top = 0
             if child.margin_bottom == 'auto':
                 child.margin_bottom = 0
-            if isinstance(child, boxes.ParentBox):
-                child_copy = child.copy_with_children(child.children)
-            else:
-                child_copy = child.copy()
-            block.block_level_width(child_copy, parent_box)
+            # TODO: Find another way than calling block_level_layout_switch.
+            new_child = child.copy()
             new_child, _, _, adjoining_margins, _, _ = (
                 block.block_level_layout_switch(
-                    context, child_copy, -inf, child_skip_stack, parent_box,
+                    context, new_child, -inf, child_skip_stack, parent_box,
                     page_is_empty, absolute_boxes, fixed_boxes, [], discard, None))
-
             child._baseline = find_in_flow_baseline(new_child) or 0
             if cross == 'height':
                 child.height = new_child.height
-                # As flex items margins never collapse (with other flex items or with
-                # the flex container), we can add the adjoining margins to the child
-                # bottom margin.
+                # As flex items margins never collapse (with other flex items or
+                # with the flex container), we can add the adjoining margins to the
+                # child bottom margin.
                 child.margin_bottom += block.collapse_margin(adjoining_margins)
             else:
                 if child.width == 'auto':
