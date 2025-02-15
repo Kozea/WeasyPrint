@@ -1532,3 +1532,20 @@ def test_flex_row_item_flex_0():
     assert article1.width == 8
     assert article2.position_x == 8
     assert article2.width == 8
+
+
+@assert_no_logs
+def test_flex_item_intrinsic_width():
+    page, = render_pages('''
+      <div style="width: 100px; height: 100px;
+                  display: flex; flex-direction: column; align-items: center">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100">
+          <rect width="200" height="100" fill="red" />
+        </svg>
+      </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    svg, = div.children
+    assert svg.width == 100
