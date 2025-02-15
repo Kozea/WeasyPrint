@@ -81,22 +81,11 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
             available_cross_space = inf
 
     # 3 Determine the flex base size and hypothetical main size of each item.
-    children = box.children
     parent_box = box.copy()
     percent.resolve_percentages(parent_box, containing_block)
-    # We remove auto margins from parent_box (which is a throwaway) only but keep them
-    # on box itself. They will get computed later, once we have done some layout.
-    if parent_box.margin_top == 'auto':
-        parent_box.margin_top = 0
-    if parent_box.margin_bottom == 'auto':
-        parent_box.margin_bottom = 0
-    if parent_box.margin_left == 'auto':
-        parent_box.margin_left = 0
-    if parent_box.margin_right == 'auto':
-        parent_box.margin_right = 0
     block.block_level_width(parent_box, containing_block)
+    children = sorted(box.children, key=lambda item: item.style['order'])
     original_skip_stack = skip_stack
-    children = sorted(children, key=lambda item: item.style['order'])
     if skip_stack is not None:
         (skip, skip_stack), = skip_stack.items()
         if box.style['flex_direction'].endswith('-reverse'):
