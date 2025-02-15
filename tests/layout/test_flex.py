@@ -1549,3 +1549,26 @@ def test_flex_item_intrinsic_width():
     div, = body.children
     svg, = div.children
     assert svg.width == 100
+
+
+@assert_no_logs
+def test_flex_align_content_negative():
+    page, = render_pages('''
+      <div style="height: 6px; width: 20px;
+                  display: flex; flex-wrap: wrap; align-content: center">
+        <span style="height: 2px; flex: none; margin: 1px; width: 8px"></span>
+        <span style="height: 2px; flex: none; margin: 1px; width: 8px"></span>
+        <span style="height: 2px; flex: none; margin: 1px; width: 8px"></span>
+        <span style="height: 2px; flex: none; margin: 1px; width: 8px"></span>
+      </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    span1, span2, span3, span4 = div.children
+    span1.height == span2.height == span3.height == span4.height == 2
+    span1.width == span2.width == span3.width == span4.width == 8
+    assert span1.position_x == span3.position_x == 0
+    assert span2.position_x == span4.position_x == 10
+    assert span1.position_y == span2.position_y == -1
+    assert span3.position_y == span4.position_y == 3
