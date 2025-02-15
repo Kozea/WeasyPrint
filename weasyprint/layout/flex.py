@@ -64,43 +64,20 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
                 box.padding_left - box.padding_right -
                 box.border_left_width - box.border_right_width)
         else:
-            main_space = context.page_bottom - bottom_space - box.position_y
-            if containing_block.height != 'auto':
-                if isinstance(containing_block.height, Dimension):
-                    assert containing_block.height.unit == 'px'
-                    main_space = min(main_space, containing_block.height.value)
-                else:
-                    main_space = min(main_space, containing_block.height)
-            available_main_space = (
-                main_space -
-                margin_top - margin_bottom -
-                box.padding_top - box.padding_bottom -
-                box.border_top_width - box.border_bottom_width)
+            available_main_space = inf
 
     # Same as above for available cross space.
     if getattr(box, cross) != 'auto':
         available_cross_space = getattr(box, cross)
     else:
-        # TODO: As above, min- and max-content not implemented correctly.
-        if cross == 'height':
-            main_space = context.page_bottom - bottom_space - box.content_box_y()
-            if containing_block.height != 'auto':
-                if isinstance(containing_block.height, Dimension):
-                    assert containing_block.height.unit == 'px'
-                    main_space = min(main_space, containing_block.height.value)
-                else:
-                    main_space = min(main_space, containing_block.height)
-            available_cross_space = (
-                main_space -
-                margin_top - margin_bottom -
-                box.padding_top - box.padding_bottom -
-                box.border_top_width - box.border_bottom_width)
-        else:
+        if cross == 'width':
             available_cross_space = (
                 containing_block.width -
                 margin_left - margin_right -
                 box.padding_left - box.padding_right -
                 box.border_left_width - box.border_right_width)
+        else:
+            available_cross_space = inf
 
     # 3 Determine the flex base size and hypothetical main size of each item.
     children = box.children
