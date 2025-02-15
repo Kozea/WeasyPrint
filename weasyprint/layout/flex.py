@@ -810,7 +810,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
             for child in flex_items:
                 current_value = getattr(child, direction) + cross_translate
                 setattr(child, direction, current_value)
-            if extra_cross_size <= 0:
+            if extra_cross_size == 0:
                 continue
             for child in flex_items:
                 if {'flex-end', 'end'} & set(align_content):
