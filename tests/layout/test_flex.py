@@ -1572,3 +1572,18 @@ def test_flex_align_content_negative():
     assert span2.position_x == span4.position_x == 10
     assert span1.position_y == span2.position_y == -1
     assert span3.position_y == span4.position_y == 3
+
+
+@assert_no_logs
+def test_flex_shrink():
+    page, = render_pages('''
+      <article style="display: flex; width: 300px">
+        <div style="flex: 0 2 auto; width: 300px"></div>
+        <div style="width: 200px"></div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div1, div2 = article.children
+    assert div1.width == div2.width == 150
