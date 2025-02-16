@@ -1587,3 +1587,35 @@ def test_flex_shrink():
     article, = body.children
     div1, div2 = article.children
     assert div1.width == div2.width == 150
+
+
+@assert_no_logs
+def test_flex_item_intrinsic_width_shrink():
+    page, = render_pages('''
+      <div style="width: 10px; height: 100px; display: flex; flex-direction: column">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100">
+          <rect width="100" height="100" fill="red" />
+        </svg>
+      </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    svg, = div.children
+    assert svg.width == 100
+
+
+@assert_no_logs
+def test_flex_item_intrinsic_height_shrink():
+    page, = render_pages('''
+      <div style="width: 100px; height: 10px; display: flex; line-height: 0">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" height="100">
+          <rect width="100" height="100" fill="red" />
+        </svg>
+      </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    svg, = div.children
+    assert svg.height == 100
