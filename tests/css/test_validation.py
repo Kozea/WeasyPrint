@@ -941,6 +941,8 @@ def test_grid_template_columns_rows_invalid(rule):
      (('title', 'board'), ('stats', 'board'))),
     ('". a" "b a" ".a"',
      ((None, 'a'), ('b', 'a'), (None, 'a'))),
+    ('"a b b" "c b b" "d e f"',
+     (('a', 'b', 'b'), ('c', 'b', 'b'), ('d', 'e', 'f'))),
 ))
 def test_grid_template_areas(rule, value):
     assert get_value(f'grid-template-areas: {rule}') == value

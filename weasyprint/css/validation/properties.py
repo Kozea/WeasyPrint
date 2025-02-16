@@ -1598,11 +1598,13 @@ def grid_template_areas(tokens):
                     return
                 areas.add(area)
                 coordinates.add((x, y))
-                nx = x + 1
+                nx = x
                 for nx, narea in enumerate(row[x+1:], start=x+1):
                     if narea != area:
                         break
                     coordinates.add((nx, y))
+                else:
+                    nx += 1
                 for ny, nrow in enumerate(grid_areas[y+1:], start=y+1):
                     if set(nrow[x:nx]) == {area}:
                         for nnx in range(x, nx):
