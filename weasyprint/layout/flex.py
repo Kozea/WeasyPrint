@@ -125,18 +125,30 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
             table_wrapper_width(context, child, (parent_box.width, parent_box.height))
         child.position_x = parent_box.content_box_x()
         child.position_y = parent_box.content_box_y()
-        if child.min_width == 'auto':
-            specified_size = child.width if child.width != 'auto' else inf
+        if child.style['min_width'] == 'auto':
+            specified_size = child.width
             new_child = child.copy()
             new_child.style = child.style.copy()
             new_child.style['width'] = 'auto'
             new_child.style['min_width'] = Dimension(0, 'px')
             new_child.style['max_width'] = Dimension(inf, 'px')
             content_size = min_content_width(context, new_child, outer=False)
-            child.min_width = min(specified_size, content_size)
-        elif child.min_height == 'auto':
-            # TODO: Find a way to get min-content-height.
-            specified_size = child.height if child.height != 'auto' else inf
+            transferred_size = None
+            if isinstance(child, boxes.ReplacedBox):
+                image = box.replacement
+                _, intrinsic_height, intrinsic_ratio = (
+                    image.get_intrinsic_size(
+                        box.style['image_resolution'], box.style['font_size']))
+                if intrinsic_ratio and intrinsic_height:
+                    transferred_size = intrinsic_height * intrinsic_ratio
+            if specified_size != 'auto':
+                child.min_width = min(specified_size, content_size)
+            elif transferred_size is not None:
+                child.min_width = min(transferred_size, content_size)
+            else:
+                child.min_width = content_size
+        if child.style['min_height'] == 'auto':
+            specified_size = child.height
             new_child = child.copy()
             new_child.style = child.style.copy()
             new_child.style['height'] = 'auto'
@@ -146,7 +158,19 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
                 context, new_child, bottom_space, child_skip_stack, parent_box,
                 page_is_empty)[0]
             content_size = new_child.height
-            child.min_height = min(specified_size, content_size)
+            transferred_size = None
+            if isinstance(child, boxes.ReplacedBox):
+                image = box.replacement
+                intrinsic_width, _, intrinsic_ratio = image.get_intrinsic_size(
+                        box.style['image_resolution'], box.style['font_size'])
+                if intrinsic_ratio and intrinsic_width:
+                    transferred_size = intrinsic_width / intrinsic_ratio
+            if specified_size != 'auto':
+                child.min_height = min(specified_size, content_size)
+            elif transferred_size is not None:
+                child.min_height = min(transferred_size, content_size)
+            else:
+                child.min_height = content_size
 
         if child.style['flex_basis'] == 'content':
             flex_basis = 'content'
