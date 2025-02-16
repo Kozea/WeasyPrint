@@ -964,12 +964,12 @@ def test_grid_template_areas_invalid(rule):
 @pytest.mark.parametrize('rule, value', (
     ('auto', 'auto'),
     ('4', (None, 4, None)),
-    ('C', (None, None, 'c')),
+    ('C', (None, None, 'C')),
     ('4 c', (None, 4, 'c')),
     ('col -4', (None, -4, 'col')),
     ('span c 4', ('span', 4, 'c')),
     ('span 4 c', ('span', 4, 'c')),
-    ('4 span c', ('span', 4, 'c')),
+    ('4 span C', ('span', 4, 'C')),
     ('super 4 span', ('span', 4, 'super')),
 ))
 def test_grid_line(rule, value):

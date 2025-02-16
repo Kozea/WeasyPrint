@@ -1626,7 +1626,7 @@ def grid_line(tokens):
             if keyword == 'auto':
                 return keyword
             elif keyword != 'span':
-                return (None, None, keyword)
+                return (None, None, token.value)
         elif token.type == 'number' and token.is_integer and token.value:
             return (None, token.int_value, None)
         return
@@ -1640,7 +1640,7 @@ def grid_line(tokens):
                     span = 'span'
                     continue
             elif keyword and ident is None:
-                ident = keyword
+                ident = token.value
                 continue
         elif token.type == 'number' and token.is_integer and token.value:
             if number is None:
