@@ -97,12 +97,43 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
         skip, skip_stack = 0, None
     child_skip_stack = skip_stack
 
+    if row_gap == 'normal':
+        row_gap = 0
+    elif row_gap.unit == '%':
+        if box.height == 'auto':
+            row_gap = 0
+        else:
+            row_gap = row_gap.value / 100 * box.height
+    else:
+        row_gap = row_gap.value
+    if column_gap == 'normal':
+        column_gap = 0
+    elif column_gap.unit == '%':
+        if box.width == 'auto':
+            column_gap = 0
+        else:
+            column_gap = column_gap.value / 100 * box.width
+    else:
+        column_gap = column_gap.value
+    if main == 'width':
+        main_gap, cross_gap = column_gap, row_gap
+    else:
+        main_gap, cross_gap = row_gap, column_gap
+
+    position_x = (
+        parent_box.position_x + parent_box.border_left_width + parent_box.padding_left)
+    if parent_box.margin_left != 'auto':
+        position_x += parent_box.margin_left
+    position_y = (
+        parent_box.position_y + parent_box.border_top_width + parent_box.padding_top)
+    if parent_box.margin_top != 'auto':
+        position_y += parent_box.margin_top
     for index, child in enumerate(children):
         if not child.is_flex_item:
             # Absolute child layout: create placeholder.
             if child.is_absolutely_positioned():
-                child.position_x = box.content_box_x()
-                child.position_y = box.content_box_y()
+                child.position_x = position_x
+                child.position_y = position_y
                 new_child = placeholder = AbsolutePlaceholder(child)
                 placeholder.index = index
                 children[index] = placeholder
@@ -123,8 +154,8 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
         percent.resolve_percentages(child, parent_box, main_flex_direction)
         if child.is_table_wrapper:
             table_wrapper_width(context, child, (parent_box.width, parent_box.height))
-        child.position_x = parent_box.content_box_x()
-        child.position_y = parent_box.content_box_y()
+        child.position_x = position_x
+        child.position_y = position_y
         if child.style['min_width'] == 'auto':
             specified_size = child.width
             new_child = child.copy()
@@ -218,6 +249,11 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
                 child.flex_base_size = new_child.height
                 child.main_outer_extra = new_child.margin_height() - new_child.height
 
+        if main == 'width':
+            position_x += child.flex_base_size + child.main_outer_extra
+        else:
+            position_y += child.flex_base_size + child.main_outer_extra
+
         min_size = getattr(child, f'min_{main}')
         max_size = getattr(child, f'max_{main}')
         child.hypothetical_main_size = max(
@@ -228,28 +264,6 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
 
     # 4 Determine the main size of the flex container using the rules of the formatting
     # context in which it participates.
-    if row_gap == 'normal':
-        row_gap = 0
-    elif row_gap.unit == '%':
-        if box.height == 'auto':
-            row_gap = 0
-        else:
-            row_gap = row_gap.value / 100 * box.height
-    else:
-        row_gap = row_gap.value
-    if column_gap == 'normal':
-        column_gap = 0
-    elif column_gap.unit == '%':
-        if box.width == 'auto':
-            column_gap = 0
-        else:
-            column_gap = column_gap.value / 100 * box.width
-    else:
-        column_gap = column_gap.value
-    if main == 'width':
-        main_gap, cross_gap = column_gap, row_gap
-    else:
-        main_gap, cross_gap = row_gap, column_gap
     if main == 'width':
         block.block_level_width(box, containing_block)
     else:

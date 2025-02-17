@@ -487,6 +487,33 @@ def test_flex_direction_column_break_border():
 
 
 @assert_no_logs
+def test_flex_direction_column_break_multiple_children():
+    page1, page2 = render_pages('''
+      <style>
+        @page { size: 4px 5px }
+      </style>
+      <article style="display: flex; flex-direction: column; font: 2px weasyprint">
+        <div>A</div>
+        <div>B<br>C</div>
+      </article>
+    ''')
+    html, = page1.children
+    body, = html.children
+    article, = body.children
+    div1, div2 = article.children
+    assert div1.children[0].children[0].text == 'A'
+    assert div1.height == 2
+    assert div2.children[0].children[0].text == 'B'
+    assert div2.height == 3
+    html, = page2.children
+    body, = html.children
+    article, = body.children
+    div2, = article.children
+    assert div2.children[0].children[0].text == 'C'
+    assert div2.height == 2
+
+
+@assert_no_logs
 def test_flex_item_min_width():
     page, = render_pages('''
       <article style="display: flex">
@@ -533,9 +560,32 @@ def test_flex_item_min_height():
 @assert_no_logs
 def test_flex_auto_margin():
     # Regression test for issue #800.
-    page, = render_pages('<div id="div1" style="display: flex; margin: auto">')
+    page, = render_pages('<div style="display: flex; margin: auto"><div>')
     page, = render_pages(
-        '<div id="div2" style="display: flex; flex-direction: column; margin: auto">')
+        '<div style="display: flex; flex-direction: column; margin: auto"><div>')
+
+
+@assert_no_logs
+def test_flex_item_auto_margin_sized():
+    # Regression test for issue #2054.
+    page, = render_pages('''
+      <style>
+        div {
+          margin: auto;
+          display: flex;
+          width: 160px;
+          height: 160px;
+        }
+      </style>
+      <article>
+        <div></div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div, = article.children
+    assert div.margin_left != 0
 
 
 @assert_no_logs
@@ -780,33 +830,6 @@ def test_flex_column_width():
     assert content.width == paper.width
     assert top.width == paper.width
     assert bottom.position_y > top.position_y + top.height
-
-
-@assert_no_logs
-def test_flex_auto_margin2():
-    # Regression test for issue #2054.
-    page, = render_pages('''
-      <style>
-        #outer {
-          background: red;
-        }
-        #inner {
-          margin: auto;
-          display: flex;
-          width: 160px;
-          height: 160px;
-          background: black;
-        }
-      </style>
-      <div id="outer">
-        <div id="inner"></div>
-      </div>
-    ''')
-    html, = page.children
-    body, = html.children
-    outer, = body.children
-    inner, = outer.children
-    assert inner.margin_left != 0
 
 
 @assert_no_logs
