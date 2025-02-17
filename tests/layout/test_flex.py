@@ -451,6 +451,37 @@ def test_flex_direction_column_break():
 
 
 @assert_no_logs
+def test_flex_direction_column_break_margin():
+    # Regression test for issue #1967.
+    page1, page2 = render_pages('''
+      <style>
+        @page { size: 4px 7px }
+      </style>
+      <body style="font: 2px weasyprint">
+        <p style="margin: 1px 0">a</p>
+        <article style="display: flex; flex-direction: column">
+          <div>A<br>B<br>C</div>
+        </article>
+      </body>
+    ''')
+    html, = page1.children
+    body, = html.children
+    p, article = body.children
+    assert p.margin_height() == 4
+    assert article.position_y == 4
+    div, = article.children
+    assert div.children[0].children[0].text == 'A'
+    assert div.height == 3
+    html, = page2.children
+    body, = html.children
+    article, = body.children
+    div, = article.children
+    assert div.children[0].children[0].text == 'B'
+    assert div.children[1].children[0].text == 'C'
+    assert div.height == 4
+
+
+@assert_no_logs
 def test_flex_direction_column_break_border():
     page1, page2 = render_pages('''
       <style>
