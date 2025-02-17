@@ -10,7 +10,7 @@ from .float import avoid_collisions, float_layout, get_clearance
 from .grid import grid_layout
 from .inline import iter_line_boxes
 from .min_max import handle_min_max_width
-from .percent import resolve_percentages, resolve_position_percentages
+from .percent import percentage, resolve_percentages, resolve_position_percentages
 from .replaced import block_replaced_box_layout
 from .table import table_layout, table_wrapper_width
 
@@ -496,11 +496,24 @@ def _in_flow_layout(context, box, index, child, new_children, page_is_empty,
                 adjoining_margins = []
                 position_y = box.content_box_y()
 
-    if adjoining_margins and box.is_table_wrapper:
-        collapsed_margin = collapse_margin(adjoining_margins)
-        child.position_y += collapsed_margin
-        position_y += collapsed_margin
-        adjoining_margins = []
+    # TODO: Merge this with block_container_layout, block_level_layout, _in_flow_layout,
+    # and check code above.
+    if adjoining_margins:
+        if box.is_table_wrapper:  # should not be a special case
+            collapsed_margin = collapse_margin(adjoining_margins)
+            child.position_y += collapsed_margin
+            position_y += collapsed_margin
+            adjoining_margins = []
+        elif not isinstance(child, boxes.BlockBox):  # blocks handle that themselves
+            if child.style['margin_top'] == 'auto':
+                margin_top = 0
+            else:
+                margin_top = percentage(child.style['margin_top'], box.width)
+            adjoining_margins.append(margin_top)
+            offset_y = collapse_margin(adjoining_margins) - margin_top
+            child.position_y += offset_y
+            position_y += offset_y
+            adjoining_margins = []
 
     page_is_empty_with_no_children = page_is_empty and not any(
         child for child in new_children
@@ -515,15 +528,6 @@ def _in_flow_layout(context, box, index, child, new_children, page_is_empty,
          fixed_boxes, adjoining_margins, discard, max_lines)
 
     if new_child is not None:
-        # We need to do this after the child layout to have the
-        # used value for margin_top (eg. it might be a percentage.)
-        if not isinstance(new_child, (boxes.BlockBox, boxes.TableBox)):
-            adjoining_margins.append(new_child.margin_top)
-            offset_y = (
-                collapse_margin(adjoining_margins) - new_child.margin_top)
-            new_child.translate(0, offset_y)
-        # else: blocks handle that themselves.
-
         if not collapsing_through:
             new_content_position_y = (
                 new_child.content_box_y() + new_child.height)
@@ -634,6 +638,7 @@ def block_container_layout(context, box, bottom_space, skip_stack,
     if box.establishes_formatting_context():
         context.create_block_formatting_context()
 
+    # TODO: merge this with _in_flow_layout, flex_layout…
     is_start = skip_stack is None
     box.remove_decoration(start=not is_start, end=False)
 
