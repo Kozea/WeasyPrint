@@ -342,9 +342,11 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
             # 9.7.5.b Calculate the remaining free space.
             for i, (index, child) in enumerate(line):
                 if child.frozen:
-                    remaining_free_space -= child.target_main_size
+                    remaining_free_space -= (
+                        child.target_main_size + child.main_outer_extra)
                 else:
-                    remaining_free_space -= child.flex_base_size
+                    remaining_free_space -= (
+                        child.flex_base_size + child.main_outer_extra)
                     unfrozen_factor_sum += child.flex_factor
                 if i:
                     remaining_free_space -= main_gap
