@@ -183,9 +183,13 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
             else:
                 child.min_width = content_size
         if child.style['min_height'] == 'auto':
+            # TODO: avoid calling block_level_layout, write min_content_height instead.
             specified_size = child.height
             new_child = child.copy()
             new_child.style = child.style.copy()
+            if new_child.style['width'] == 'auto':
+                new_child.style['width'] = Dimension(
+                    max_content_width(context, new_child), 'px')
             new_child.style['height'] = 'auto'
             new_child.style['min_height'] = Dimension(0, 'px')
             new_child.style['max_height'] = Dimension(inf, 'px')

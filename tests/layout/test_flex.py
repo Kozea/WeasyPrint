@@ -794,42 +794,43 @@ def test_flex_column_height_margin():
 def test_flex_column_width():
     # Regression test for issue #1171.
     page, = render_pages("""
-      <style>
-        #paper {
-          display: flex;
-          flex-direction: column;
-          height: 400px;
-          width: 500px;
-        }
-        #content {
-          display: flex;
-          flex: auto;
-          flex-direction: column;
-          justify-content: space-between;
-          width: 100%;
-        }
-        #header {
-          height: 50px;
-          width: 100%;
-        }
-      </style>
-      <div id="paper">
-        <div id="header">Header</div>
-        <div id="content">
-          <div>Middle</div>
-          <div>Bottom</div>
-        </div>
-      </div>
+      <main style="display: flex; flex-direction: column;
+                   width: 40px; height: 50px; font: 2px weasyprint">
+        <section style="width: 100%; height: 5px">a</section>
+        <section style="display: flex; flex: auto; flex-direction: column;
+                        justify-content: space-between; width: 100%">
+          <div>b</div>
+          <div>c</div>
+        </section>
+      </main>
     """)
     html, = page.children
     body, = html.children
-    paper, = body.children
-    header, content = paper.children
-    top, bottom = content.children
-    assert header.width == paper.width
-    assert content.width == paper.width
-    assert top.width == paper.width
-    assert bottom.position_y > top.position_y + top.height
+    main, = body.children
+    section1, section2 = main.children
+    div1, div2 = section2.children
+    assert section1.width == section2.width == main.width
+    assert div1.width == div2.width
+    assert div1.position_y == 5
+    assert div2.position_y == 48
+
+
+@assert_no_logs
+def test_flex_column_in_flex_row():
+    page, = render_pages("""
+      <body style="display: flex; flex-wrap: wrap; font: 2px weasyprint">
+        <article>1</article>
+        <section style="display: flex; flex-direction: column">
+          <div>2</div>
+        </section>
+      </body>
+    """)
+    html, = page.children
+    body, = html.children
+    article, section = body.children
+    assert article.position_y == section.position_y == 0
+    assert article.position_x == 0
+    assert section.position_x == 2
 
 
 @assert_no_logs
