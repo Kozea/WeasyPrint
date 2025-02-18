@@ -488,7 +488,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
                         max(
                             min_content_width(context, child, outer=False),
                             new_child.width),
-                        max_content_width(context, box, outer=False))
+                        max_content_width(context, child, outer=False))
                 else:
                     child.width = new_child.width
 
