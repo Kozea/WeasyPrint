@@ -147,15 +147,11 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
                 context.running_elements[running_name][page].append(child)
             continue
         # See https://www.w3.org/TR/css-flexbox-1/#min-size-auto.
-        if child.style['overflow'] == 'visible':
-            main_flex_direction = main
-        else:
-            main_flex_direction = None
         if main == 'width':
             child_containing_block = (available_main_space, parent_box.height)
         else:
             child_containing_block = (parent_box.width, available_main_space)
-        percent.resolve_percentages(child, child_containing_block, main_flex_direction)
+        percent.resolve_percentages(child, child_containing_block)
         if child.is_table_wrapper:
             table_wrapper_width(context, child, child_containing_block)
         child.position_x = position_x

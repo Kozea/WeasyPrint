@@ -21,8 +21,7 @@ def percentage(value, refer_to):
         return refer_to * value.value / 100
 
 
-def resolve_one_percentage(box, property_name, refer_to,
-                           main_flex_direction=None):
+def resolve_one_percentage(box, property_name, refer_to):
     """Set a used length value from a computed length value.
 
     ``refer_to`` is the length for 100%. If ``refer_to`` is not a number, it
@@ -35,9 +34,7 @@ def resolve_one_percentage(box, property_name, refer_to,
     percent = percentage(value, refer_to)
     setattr(box, property_name, percent)
     if property_name in ('min_width', 'min_height') and percent == 'auto':
-        if (main_flex_direction is None or
-                property_name != (f'min_{main_flex_direction}')):
-            setattr(box, property_name, 0)
+        setattr(box, property_name, 0)
 
 
 def resolve_position_percentages(box, containing_block):
@@ -48,7 +45,7 @@ def resolve_position_percentages(box, containing_block):
     resolve_one_percentage(box, 'bottom', cb_height)
 
 
-def resolve_percentages(box, containing_block, main_flex_direction=None):
+def resolve_percentages(box, containing_block):
     """Set used values as attributes of the box object."""
     if isinstance(containing_block, boxes.Box):
         # cb is short for containing block
@@ -69,8 +66,8 @@ def resolve_percentages(box, containing_block, main_flex_direction=None):
     resolve_one_percentage(box, 'padding_top', maybe_height)
     resolve_one_percentage(box, 'padding_bottom', maybe_height)
     resolve_one_percentage(box, 'width', cb_width)
-    resolve_one_percentage(box, 'min_width', cb_width, main_flex_direction)
-    resolve_one_percentage(box, 'max_width', cb_width, main_flex_direction)
+    resolve_one_percentage(box, 'min_width', cb_width)
+    resolve_one_percentage(box, 'max_width', cb_width)
 
     # XXX later: top, bottom, left and right on positioned elements
 
@@ -83,14 +80,12 @@ def resolve_percentages(box, containing_block, main_flex_direction=None):
         else:
             assert height.unit == 'px'
             box.height = height.value
-        resolve_one_percentage(box, 'min_height', 0, main_flex_direction)
-        resolve_one_percentage(box, 'max_height', inf, main_flex_direction)
+        resolve_one_percentage(box, 'min_height', 0)
+        resolve_one_percentage(box, 'max_height', inf)
     else:
         resolve_one_percentage(box, 'height', cb_height)
-        resolve_one_percentage(
-            box, 'min_height', cb_height, main_flex_direction)
-        resolve_one_percentage(
-            box, 'max_height', cb_height, main_flex_direction)
+        resolve_one_percentage(box, 'min_height', cb_height)
+        resolve_one_percentage(box, 'max_height', cb_height)
 
     collapse = box.style['border_collapse'] == 'collapse'
     # Used value == computed value
