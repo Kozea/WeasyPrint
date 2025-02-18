@@ -192,7 +192,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
             new_child = block.block_level_layout(
                 context, new_child, bottom_space, child_skip_stack, parent_box,
                 page_is_empty)[0]
-            content_size = new_child.height
+            content_size = new_child.height if new_child else 0
             transferred_size = None
             if isinstance(child, boxes.ReplacedBox):
                 image = box.replacement

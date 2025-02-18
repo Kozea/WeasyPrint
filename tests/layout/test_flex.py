@@ -1662,3 +1662,25 @@ def test_flex_wrap_in_flex():
     assert section1.position_y == section2.position_y == 0
     assert section1.position_x == 0
     assert section2.position_x == 1  # 25% * 4
+
+
+@assert_no_logs
+def test_flex_auto_break_before():
+    page1, page2 = render_pages('''
+      <style>
+        @page { size: 4px 5px }
+        body { font: 2px weasyprint }
+      </style>
+      <p>A<br>B</p>
+      <article style="display: flex">
+        <div>A</div>
+      </article>
+    ''')
+    html, = page1.children
+    body, = html.children
+    p, = body.children
+    assert p.height == 4
+    html, = page2.children
+    body, = html.children
+    article, = body.children
+    assert article.height == 2
