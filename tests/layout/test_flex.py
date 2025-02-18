@@ -1685,3 +1685,22 @@ def test_flex_auto_break_before():
     body, = html.children
     article, = body.children
     assert article.height == 2
+
+
+@assert_no_logs
+def test_flex_grow_in_flex_column():
+    page, = render_pages('''
+      <html style="width: 14px">
+        <body style="display: flex; flex-direction: column;
+                     border: 1px solid; padding: 1px">
+          <main style="flex: 1 1 auto; min-height: 0">
+            <div style="height: 5px">
+    ''')
+    html, = page.children
+    body, = html.children
+    main, = body.children
+    _, div, _ = main.children
+    assert body.height == div.height == 5
+    assert body.width == div.width == 10
+    assert body.margin_width() == 14
+    assert body.margin_height() == 9
