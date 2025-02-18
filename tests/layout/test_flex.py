@@ -1642,3 +1642,23 @@ def test_flex_item_intrinsic_height_shrink():
     div, = body.children
     svg, = div.children
     assert svg.height == 100
+
+
+@assert_no_logs
+def test_flex_wrap_in_flex():
+    page, = render_pages('''
+      <main style="display: flex; font: 2px weasyprint">
+        <div style="display: flex; flex-wrap: wrap">
+          <section style="width: 25%">A</section>
+          <section style="flex: 1 75%">B</section>
+        </div>
+      </main>
+    ''')
+    html, = page.children
+    body, = html.children
+    main, = body.children
+    div, = main.children
+    section1, section2 = div.children
+    assert section1.position_y == section2.position_y == 0
+    assert section1.position_x == 0
+    assert section2.position_x == 1  # 25% * 4

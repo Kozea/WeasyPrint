@@ -151,9 +151,13 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
             main_flex_direction = main
         else:
             main_flex_direction = None
-        percent.resolve_percentages(child, parent_box, main_flex_direction)
+        if main == 'width':
+            containing_block = (available_main_space, parent_box.height)
+        else:
+            containing_block = (parent_box.width, available_main_space)
+        percent.resolve_percentages(child, containing_block, main_flex_direction)
         if child.is_table_wrapper:
-            table_wrapper_width(context, child, (parent_box.width, parent_box.height))
+            table_wrapper_width(context, child, containing_block)
         child.position_x = position_x
         child.position_y = position_y
         if child.style['min_width'] == 'auto':
