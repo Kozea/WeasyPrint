@@ -15,7 +15,7 @@ import cssselect2
 import tinycss2
 import tinyhtml5
 
-VERSION = __version__ = '64.0'
+VERSION = __version__ = '64.1'
 
 #: Default values for command-line and Python API options. See
 #: :func:`__main__.main` to learn more about specific options for

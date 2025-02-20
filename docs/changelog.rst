@@ -2,6 +2,54 @@ Changelog
 =========
 
 
+Version 64.1
+------------
+
+Released on 2025-02-20.
+
+Bug fixes:
+
+* `#2368 <https://github.com/Kozea/WeasyPrint/issues/2368>`_:
+  Fix ascent and descent font values
+* `#2370 <https://github.com/Kozea/WeasyPrint/issues/2370>`_:
+  Avoid endless recursion for variables in nested functions
+* `#2275 <https://github.com/Kozea/WeasyPrint/issues/2275>`_:
+  Use correct containing block to render waiting children
+* `#2375 <https://github.com/Kozea/WeasyPrint/issues/2375>`_:
+  Ensure that we handle text-anchor only on text content elements
+* `#2090 <https://github.com/Kozea/WeasyPrint/issues/2090>`_:
+  Only create font temporary folder when adding fonts
+* `#2383 <https://github.com/Kozea/WeasyPrint/issues/2383>`_:
+  Fix grid-template-areas validation and allow uppercase identifiers for grid lines
+
+Contributors:
+
+* Guillaume Ayoub
+
+Backers and sponsors:
+
+* Spacinov
+* Kobalt
+* Grip Angebotssoftware
+* Syslifters
+* Simon Sapin
+* Manuel Barkhau
+* Simonsoft
+* Menutech
+* KontextWork
+* TrainingSparkle
+* Healthchecks.io
+* Hammerbacher
+* DocRaptor
+* Yanal-Yves Fargialla
+* Method B
+* FieldHub
+* Morntag
+* Xavid
+* Kai DeLorenzo
+* Charlie S.
+
+
 Version 64.0
 ------------
 
