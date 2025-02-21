@@ -43,14 +43,12 @@ def min_content_width(context, box, outer=True):
         return table_and_columns_preferred_widths(context, box, outer)[0]
     elif isinstance(box, boxes.TableCellBox):
         return table_cell_min_content_width(context, box, outer)
-    elif isinstance(box, (
-            boxes.BlockContainerBox, boxes.TableColumnBox, boxes.FlexBox)):
+    elif isinstance(box, (boxes.BlockContainerBox, boxes.TableColumnBox)):
         return block_min_content_width(context, box, outer)
     elif isinstance(box, boxes.TableColumnGroupBox):
         return column_group_content_width(context, box)
     elif isinstance(box, (boxes.InlineBox, boxes.LineBox)):
-        return inline_min_content_width(
-            context, box, outer, is_line_start=True)
+        return inline_min_content_width(context, box, outer, is_line_start=True)
     elif isinstance(box, boxes.ReplacedBox):
         return replaced_min_content_width(box, outer)
     elif isinstance(box, boxes.FlexContainerBox):
@@ -59,8 +57,7 @@ def min_content_width(context, box, outer=True):
         # TODO: Get real grid size.
         return block_min_content_width(context, box, outer)
     else:
-        raise TypeError(
-            f'min-content width for {type(box).__name__} not handled yet')
+        raise TypeError(f'min-content width for {type(box).__name__} not handled yet')
 
 
 def max_content_width(context, box, outer=True):
@@ -73,14 +70,12 @@ def max_content_width(context, box, outer=True):
         return table_and_columns_preferred_widths(context, box, outer)[1]
     elif isinstance(box, boxes.TableCellBox):
         return table_cell_min_max_content_width(context, box, outer)[1]
-    elif isinstance(box, (
-            boxes.BlockContainerBox, boxes.TableColumnBox, boxes.FlexBox)):
+    elif isinstance(box, (boxes.BlockContainerBox, boxes.TableColumnBox)):
         return block_max_content_width(context, box, outer)
     elif isinstance(box, boxes.TableColumnGroupBox):
         return column_group_content_width(context, box)
     elif isinstance(box, (boxes.InlineBox, boxes.LineBox)):
-        return inline_max_content_width(
-            context, box, outer, is_line_start=True)
+        return inline_max_content_width(context, box, outer, is_line_start=True)
     elif isinstance(box, boxes.ReplacedBox):
         return replaced_max_content_width(box, outer)
     elif isinstance(box, boxes.FlexContainerBox):
@@ -89,8 +84,7 @@ def max_content_width(context, box, outer=True):
         # TODO: Get real grid size.
         return block_max_content_width(context, box, outer)
     else:
-        raise TypeError(
-            f'max-content width for {type(box).__name__} not handled yet')
+        raise TypeError(f'max-content width for {type(box).__name__} not handled yet')
 
 
 def _block_content_width(context, box, function, outer):
@@ -344,7 +338,7 @@ def inline_line_widths(context, box, outer, is_line_start, minimum, skip_stack=N
             # "By default, there is a break opportunity
             #  both before and after any inline object."
             if minimum:
-                lines = [0, max_content_width(context, child), 0]
+                lines = [0, min_content_width(context, child), 0]
             else:
                 lines = [max_content_width(context, child)]
         # The first text line goes on the current line
@@ -673,9 +667,12 @@ def replaced_min_content_width(box, outer=True):
             intrinsic_width, intrinsic_height, intrinsic_ratio = (
                 image.get_intrinsic_size(
                     box.style['image_resolution'], box.style['font_size']))
-            width, _ = default_image_sizing(
-                intrinsic_width, intrinsic_height, intrinsic_ratio, 'auto',
-                height, default_width=300, default_height=150)
+            if intrinsic_ratio and not intrinsic_width and not intrinsic_height:
+                width = 0
+            else:
+                width, _ = default_image_sizing(
+                    intrinsic_width, intrinsic_height, intrinsic_ratio, 'auto',
+                    height, default_width=300, default_height=150)
     elif box.style['width'].unit == '%':
         # See https://drafts.csswg.org/css-sizing/#intrinsic-contribution
         width = 0

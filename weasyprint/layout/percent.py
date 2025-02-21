@@ -21,8 +21,7 @@ def percentage(value, refer_to):
         return refer_to * value.value / 100
 
 
-def resolve_one_percentage(box, property_name, refer_to,
-                           main_flex_direction=None):
+def resolve_one_percentage(box, property_name, refer_to):
     """Set a used length value from a computed length value.
 
     ``refer_to`` is the length for 100%. If ``refer_to`` is not a number, it
@@ -35,9 +34,7 @@ def resolve_one_percentage(box, property_name, refer_to,
     percent = percentage(value, refer_to)
     setattr(box, property_name, percent)
     if property_name in ('min_width', 'min_height') and percent == 'auto':
-        if (main_flex_direction is None or
-                property_name != (f'min_{main_flex_direction}')):
-            setattr(box, property_name, 0)
+        setattr(box, property_name, 0)
 
 
 def resolve_position_percentages(box, containing_block):
@@ -48,7 +45,7 @@ def resolve_position_percentages(box, containing_block):
     resolve_one_percentage(box, 'bottom', cb_height)
 
 
-def resolve_percentages(box, containing_block, main_flex_direction=None):
+def resolve_percentages(box, containing_block):
     """Set used values as attributes of the box object."""
     if isinstance(containing_block, boxes.Box):
         # cb is short for containing block
@@ -69,8 +66,8 @@ def resolve_percentages(box, containing_block, main_flex_direction=None):
     resolve_one_percentage(box, 'padding_top', maybe_height)
     resolve_one_percentage(box, 'padding_bottom', maybe_height)
     resolve_one_percentage(box, 'width', cb_width)
-    resolve_one_percentage(box, 'min_width', cb_width, main_flex_direction)
-    resolve_one_percentage(box, 'max_width', cb_width, main_flex_direction)
+    resolve_one_percentage(box, 'min_width', cb_width)
+    resolve_one_percentage(box, 'max_width', cb_width)
 
     # XXX later: top, bottom, left and right on positioned elements
 
@@ -83,14 +80,12 @@ def resolve_percentages(box, containing_block, main_flex_direction=None):
         else:
             assert height.unit == 'px'
             box.height = height.value
-        resolve_one_percentage(box, 'min_height', 0, main_flex_direction)
-        resolve_one_percentage(box, 'max_height', inf, main_flex_direction)
+        resolve_one_percentage(box, 'min_height', 0)
+        resolve_one_percentage(box, 'max_height', inf)
     else:
         resolve_one_percentage(box, 'height', cb_height)
-        resolve_one_percentage(
-            box, 'min_height', cb_height, main_flex_direction)
-        resolve_one_percentage(
-            box, 'max_height', cb_height, main_flex_direction)
+        resolve_one_percentage(box, 'min_height', cb_height)
+        resolve_one_percentage(box, 'max_height', cb_height)
 
     collapse = box.style['border_collapse'] == 'collapse'
     # Used value == computed value
@@ -102,38 +97,8 @@ def resolve_percentages(box, containing_block, main_flex_direction=None):
             setattr(box, prop, box.style[prop])
 
     # Shrink *content* widths and heights according to box-sizing
-    # Thanks heavens and the spec: Our validator rejects negative values
-    # for padding and border-width
-    if box.style['box_sizing'] == 'border-box':
-        horizontal_delta = (
-            box.padding_left + box.padding_right +
-            box.border_left_width + box.border_right_width)
-        vertical_delta = (
-            box.padding_top + box.padding_bottom +
-            box.border_top_width + box.border_bottom_width)
-    elif box.style['box_sizing'] == 'padding-box':
-        horizontal_delta = box.padding_left + box.padding_right
-        vertical_delta = box.padding_top + box.padding_bottom
-    else:
-        assert box.style['box_sizing'] == 'content-box'
-        horizontal_delta = 0
-        vertical_delta = 0
-
-    # Keep at least min_* >= 0 to prevent funny output in case box.width or
-    # box.height become negative.
-    # Restricting max_* seems reasonable, too.
-    if horizontal_delta > 0:
-        if box.width != 'auto':
-            box.width = max(0, box.width - horizontal_delta)
-        box.max_width = max(0, box.max_width - horizontal_delta)
-        if box.min_width != 'auto':
-            box.min_width = max(0, box.min_width - horizontal_delta)
-    if vertical_delta > 0:
-        if box.height != 'auto':
-            box.height = max(0, box.height - vertical_delta)
-        box.max_height = max(0, box.max_height - vertical_delta)
-        if box.min_height != 'auto':
-            box.min_height = max(0, box.min_height - vertical_delta)
+    adjust_box_sizing(box, 'width')
+    adjust_box_sizing(box, 'height')
 
 
 def resolve_radii_percentages(box):
@@ -154,3 +119,33 @@ def resolve_radii_percentages(box):
             rx = percentage(rx, box.border_width())
             ry = percentage(ry, box.border_height())
             setattr(box, property_name, (rx, ry))
+
+
+def adjust_box_sizing(box, axis):
+    if box.style['box_sizing'] == 'border-box':
+        if axis == 'width':
+            delta = (
+                box.padding_left + box.padding_right +
+                box.border_left_width + box.border_right_width)
+        else:
+            delta = (
+                box.padding_top + box.padding_bottom +
+                box.border_top_width + box.border_bottom_width)
+    elif box.style['box_sizing'] == 'padding-box':
+        if axis == 'width':
+            delta = box.padding_left + box.padding_right
+        else:
+            delta = box.padding_top + box.padding_bottom
+    else:
+        assert box.style['box_sizing'] == 'content-box'
+        delta = 0
+
+    # Keep at least min_* >= 0 to prevent funny output in case box.width or
+    # box.height become negative.
+    # Restricting max_* seems reasonable, too.
+    if delta > 0:
+        if getattr(box, axis) != 'auto':
+            setattr(box, axis, max(0, getattr(box, axis) - delta))
+        setattr(box, f'max_{axis}', max(0, getattr(box, f'max_{axis}') - delta))
+        if getattr(box, f'min_{axis}') != 'auto':
+            setattr(box, f'min_{axis}', max(0, getattr(box, f'min_{axis}') - delta))
