@@ -11,5 +11,5 @@ input:not([type="submit"])::before {
 }
 
 textarea {
-  color: transparent;
+  text-indent: 10000%;  /* Hide text but don’t change color used by PDF form */
 }
