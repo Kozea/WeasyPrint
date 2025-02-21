@@ -1152,7 +1152,10 @@ def add_word_spacing(context, box, justification_spacing, x_advance):
     elif isinstance(box, (boxes.LineBox, boxes.InlineBox)):
         box.position_x += x_advance
         previous_x_advance = x_advance
-        for child in box.children:
+        children = box.children
+        if box.style['direction'] == 'rtl':
+            children = children[::-1]
+        for child in children:
             if child.is_in_normal_flow():
                 x_advance = add_word_spacing(
                     context, child, justification_spacing, x_advance)
