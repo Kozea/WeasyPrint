@@ -1128,7 +1128,8 @@ def justify_line(context, line, extra_width):
 def count_spaces(box):
     if isinstance(box, boxes.TextBox):
         # TODO: remove trailing spaces correctly
-        return box.text.count(' ')
+        # here we count spaces and non-breaking spaces
+        return box.text.count(' ') + box.text.count("\u00A0")
     elif isinstance(box, (boxes.LineBox, boxes.InlineBox)):
         return sum(count_spaces(child) for child in box.children)
     else:
