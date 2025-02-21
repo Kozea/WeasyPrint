@@ -2,6 +2,7 @@
 
 import io
 from hashlib import md5
+from itertools import batched
 from logging import WARNING
 from math import ceil
 
@@ -342,15 +343,16 @@ def build_fonts_dictionary(pdf, fonts, compress, subset, options):
             b'/CMapType 2 def',
             b'1 begincodespacerange',
             b'<0000> <ffff>',
-            b'endcodespacerange',
-            f'{len(cmap)} beginbfchar'.encode()], compress=compress)
-        for glyph, text in cmap.items():
-            unicode_codepoints = ''.join(
-                f'{letter.encode("utf-16-be").hex()}' for letter in text)
-            to_unicode.stream.append(
-                f'<{glyph:04x}> <{unicode_codepoints}>'.encode())
+            b'endcodespacerange'], compress=compress)
+        for batch in batched(cmap.items(), 100):
+            to_unicode.stream.append(f'{len(batch)} beginbfchar'.encode())
+            for glyph, text in batch:
+                unicode_codepoints = ''.join(
+                    f'{letter.encode("utf-16-be").hex()}' for letter in text)
+                to_unicode.stream.append(
+                    f'<{glyph:04x}> <{unicode_codepoints}>'.encode())
+            to_unicode.stream.append(b'endbfchar')
         to_unicode.stream.extend([
-            b'endbfchar',
             b'endcmap',
             b'CMapName currentdict /CMap defineresource pop',
             b'end',

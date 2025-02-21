@@ -4,6 +4,7 @@ import contextlib
 import gzip
 import io
 import os
+import re
 import sys
 import threading
 import unicodedata
@@ -532,6 +533,15 @@ def test_pdf_srgb():
 def test_pdf_no_srgb():
     stdout = _run('--uncompressed-pdf - -', b'test')
     assert b'sRGB' not in stdout
+
+
+def test_cmap():
+    # Regression test for #2388.
+    stdout = _run('--uncompressed-pdf --full-fonts - -', b'test')
+    matches = re.findall(b'(\\d+) beginbfchar', stdout)
+    assert matches
+    for match in matches:
+        assert int(match) <= 100
 
 
 @pytest.mark.parametrize('html, fields', (
