@@ -5,7 +5,7 @@ from math import inf
 
 import pyphen
 
-from .constants import LST_TO_ISO, PANGO_WRAP_MODE
+from .constants import LST_TO_ISO, PANGO_DIRECTION, PANGO_WRAP_MODE
 from .ffi import FROM_UNITS, TO_UNITS, ffi, gobject, pango, pangoft2, unicode_to_char_p
 from .fonts import font_features, get_font_description
 
@@ -76,6 +76,8 @@ class Layout:
             pango.pango_font_map_create_context(font_map),
             gobject.g_object_unref)
         pango.pango_context_set_round_glyph_positions(pango_context, False)
+        pango.pango_context_set_base_dir(
+            pango_context, PANGO_DIRECTION[style['direction']])
 
         if style['font_language_override'] != 'normal':
             lang_p, lang = unicode_to_char_p(LST_TO_ISO.get(
@@ -96,6 +98,7 @@ class Layout:
         self.layout = ffi.gc(
             pango.pango_layout_new(pango_context),
             gobject.g_object_unref)
+        pango.pango_layout_set_auto_dir(self.layout, False)
         pango.pango_layout_set_font_description(self.layout, font_description)
 
         text_decoration = style['text_decoration_line']

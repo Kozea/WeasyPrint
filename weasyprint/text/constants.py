@@ -49,6 +49,11 @@ PANGO_VARIANT = {
     'titling-caps': pango.PANGO_VARIANT_TITLE_CAPS,
 }
 
+PANGO_DIRECTION = {
+    'ltr': pango.PANGO_DIRECTION_LTR,
+    'rtl': pango.PANGO_DIRECTION_RTL,
+}
+
 # Language system tags
 # From https://docs.microsoft.com/typography/opentype/spec/languagetags
 LST_TO_ISO = {
