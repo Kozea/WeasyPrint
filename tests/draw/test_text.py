@@ -453,6 +453,59 @@ def test_text_align_justify(assert_pixels):
       <div>a c e</div>''')
 
 
+def test_text_align_justify_nbsp(assert_pixels):
+    assert_pixels('''
+        _________
+        _RR___RR_
+        _RR___RR_
+        _RR______
+        _RR______
+        _________
+    ''', '''
+      <style>
+        @page {
+          size: 9px 6px;
+        }
+        body {
+          color: red;
+          font-family: weasyprint;
+          font-size: 2px;
+        }
+        div {
+          line-height: 1;
+          margin: 1px;
+          text-align: justify;
+        }
+      </style>
+      <div>a&nbsp;c e</div>''')
+
+def test_text_align_justify_nbsp_2(assert_pixels):
+    assert_pixels('''
+        _________
+        _RR_RR_RR
+        _RR_RR_RR
+        _________
+        _________
+        _________
+    ''', '''
+      <style>
+        @page {
+          size: 9px 6px;
+        }
+        body {
+          color: red;
+          font-family: weasyprint;
+          font-size: 2px;
+        }
+        div {
+          line-height: 1;
+          margin: 1px;
+          text-align: justify;
+        }
+      </style>
+      <div>a\u202Fc\u202Fe</div>''')
+
+
 def test_text_word_spacing(assert_pixels):
     assert_pixels('''
         ___________________
