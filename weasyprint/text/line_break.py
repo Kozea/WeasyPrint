@@ -186,31 +186,12 @@ class Layout:
                     text, bytestring = unicode_to_char_p(self.text)
                     pango.pango_layout_set_text(self.layout, text, -1)
 
-                nbsp = b'\xC2\xA0' # somehow \u00A0 is converted into this
                 space_spacing = int(word_spacing * TO_UNITS + letter_spacing)
-
-                def find_next_pos(start=0):
-                    """
-                    search for first occurrence of ' ' or NBSP
-                    return index (or -1) and lenght of searched string
-                    """
-                    p1 = bytestring.find(b' ', start)
-                    p2 = bytestring.find(nbsp, start)
-                    if p1 == -1 and p2 == -1:
-                        return -1, None
-                    if p2 == -1:
-                        return p1, 1
-                    if p1 == -1 or p2 < p1:
-                        return p2, 2
-                    return p1, 1
-
-                position, splen = find_next_pos()
                 # Pango gives only half of word-spacing on boundaries
                 boundary_positions = (0, len(bytestring) - 1)
-                while position != -1:
-                    factor = 1 + (position in boundary_positions)
-                    add_attr(position, position + splen, factor * space_spacing)
-                    position, splen = find_next_pos(position + splen)
+                for match in re.finditer(' |\u00a0'.encode(), bytestring):
+                    factor = 1 + (match.start() in boundary_positions)
+                    add_attr(match.start(), match.end(), factor * space_spacing)
 
             if word_breaking:
                 attr = pango.pango_attr_insert_hyphens_new(False)
