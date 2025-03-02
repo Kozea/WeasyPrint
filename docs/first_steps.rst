@@ -15,7 +15,7 @@ WeasyPrint |version| depends on:
 * CFFI_ ≥ 0.6
 * tinyhtml5_ ≥ 2.0.0b1
 * tinycss2_ ≥ 1.3.0
-* cssselect2_ ≥ 0.1
+* cssselect2_ ≥ 0.8.0
 * Pyphen_ ≥ 0.9.1
 * Pillow_ ≥ 9.1.0
 * fontTools_ ≥ 4.0.0

@@ -306,6 +306,7 @@ class CSS:
         self.base_url = base_url
         self.matcher = matcher or cssselect2.Matcher()
         self.page_rules = [] if page_rules is None else page_rules
+        counter_style = {} if counter_style is None else counter_style
         preprocess_stylesheet(
             media_type, base_url, stylesheet, url_fetcher, self.matcher,
             self.page_rules, font_config, counter_style)
