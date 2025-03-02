@@ -1119,18 +1119,17 @@ def text_align(context, line, available_width, last):
 def justify_line(context, line, extra_width):
     # TODO: We should use a better algorithm here, see
     # https://www.w3.org/TR/css-text-3/#justify-algos
-    nb_spaces = count_spaces(line)
-    if nb_spaces == 0:
-        return
-    add_word_spacing(context, line, extra_width / nb_spaces, 0)
+    if (nb_spaces := count_expandable_spaces(line)):
+        add_word_spacing(context, line, extra_width / nb_spaces, 0)
 
 
-def count_spaces(box):
+def count_expandable_spaces(box):
+    """Count expandable spaces (space and nbsp) for justification."""
     if isinstance(box, boxes.TextBox):
         # TODO: remove trailing spaces correctly
-        return box.text.count(' ')
+        return box.text.count(' ') + box.text.count('\u00a0')
     elif isinstance(box, (boxes.LineBox, boxes.InlineBox)):
-        return sum(count_spaces(child) for child in box.children)
+        return sum(count_expandable_spaces(child) for child in box.children)
     else:
         return 0
 
@@ -1139,7 +1138,7 @@ def add_word_spacing(context, box, justification_spacing, x_advance):
     if isinstance(box, boxes.TextBox):
         box.justification_spacing = justification_spacing
         box.position_x += x_advance
-        nb_spaces = count_spaces(box)
+        nb_spaces = count_expandable_spaces(box)
         if nb_spaces > 0:
             layout = create_layout(
                 box.text, box.style, context, max_width=None,

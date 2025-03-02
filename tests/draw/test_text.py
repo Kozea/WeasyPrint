@@ -453,6 +453,31 @@ def test_text_align_justify(assert_pixels):
       <div>a c e</div>''')
 
 
+def test_text_align_justify_nbsp(assert_pixels):
+    assert_pixels('''
+        ___________________
+        _RR___RR___RR___RR_
+        _RR___RR___RR___RR_
+        ___________________
+    ''', '''
+      <style>
+        @page {
+          size: 19px 4px;
+        }
+        body {
+          color: red;
+          font-family: weasyprint;
+          font-size: 2px;
+        }
+        div {
+          line-height: 1;
+          margin: 1px;
+          text-align: justify-all;
+        }
+      </style>
+      <div>a b&nbsp;c&nbsp;d</div>''')
+
+
 def test_text_word_spacing(assert_pixels):
     assert_pixels('''
         ___________________

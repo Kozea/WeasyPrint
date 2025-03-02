@@ -187,13 +187,11 @@ class Layout:
                     pango.pango_layout_set_text(self.layout, text, -1)
 
                 space_spacing = int(word_spacing * TO_UNITS + letter_spacing)
-                position = bytestring.find(b' ')
                 # Pango gives only half of word-spacing on boundaries
                 boundary_positions = (0, len(bytestring) - 1)
-                while position != -1:
-                    factor = 1 + (position in boundary_positions)
-                    add_attr(position, position + 1, factor * space_spacing)
-                    position = bytestring.find(b' ', position + 1)
+                for match in re.finditer(' |\u00a0'.encode(), bytestring):
+                    factor = 1 + (match.start() in boundary_positions)
+                    add_attr(match.start(), match.end(), factor * space_spacing)
 
             if word_breaking:
                 attr = pango.pango_attr_insert_hyphens_new(False)
