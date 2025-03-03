@@ -215,6 +215,12 @@ def layout_document(html, root_box, context, max_loops=8):
         yield page
 
 
+class FakeList(list):
+    """List in which you can’t append objects."""
+    def append(self, item):
+        pass
+
+
 class LayoutContext:
     def __init__(self, style_for, get_image_from_uri, font_config,
                  counter_style, target_collector):
@@ -265,6 +271,17 @@ class LayoutContext:
                 shape.position_y + shape.margin_height()
                 for shape in self.excluded_shapes] + [box_bottom])
             root_box.height += max_shape_bottom - box_bottom
+        self._excluded_shapes_lists.pop()
+        if self._excluded_shapes_lists:
+            self.excluded_shapes = self._excluded_shapes_lists[-1]
+        else:
+            self.excluded_shapes = None
+
+    def create_flex_formatting_context(self):
+        self.excluded_shapes = FakeList()
+        self._excluded_shapes_lists.append(self.excluded_shapes)
+
+    def finish_flex_formatting_context(self, root_box):
         self._excluded_shapes_lists.pop()
         if self._excluded_shapes_lists:
             self.excluded_shapes = self._excluded_shapes_lists[-1]

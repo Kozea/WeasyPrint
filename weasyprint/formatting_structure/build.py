@@ -724,9 +724,7 @@ def is_whitespace(box, _has_non_whitespace=re.compile('\\S').search):
 
 
 def wrap_improper(box, children, wrapper_type, test=None):
-    """
-    Wrap consecutive children that do not pass ``test`` in a box of type
-    ``wrapper_type``.
+    """Wrap consecutive children that do not pass ``test`` in a ``wrapper_type`` box.
 
     ``test`` defaults to children being of the same type as ``wrapper_type``.
 
@@ -744,17 +742,7 @@ def wrap_improper(box, children, wrapper_type, test=None):
                 improper = []
             yield child
         else:
-            # Whitespace either fail the test or were removed earlier,
-            # so there is no need to take special care with the definition
-            # of "consecutive".
-            if isinstance(box, boxes.FlexContainerBox):
-                # The display value of a flex item must be "blockified", see
-                # https://www.w3.org/TR/css-flexbox-1/#flex-items
-                # TODO: These blocks are currently ignored, we should
-                # "blockify" them and their children.
-                pass
-            else:
-                improper.append(child)
+            improper.append(child)
     if improper:
         wrapper = wrapper_type.anonymous_from(box, children=[])
         # Apply the rules again on the new wrapper
@@ -1023,6 +1011,7 @@ def flex_children(box, children):
     if isinstance(box, boxes.FlexContainerBox):
         flex_children = []
         for child in children:
+            child.is_floated = lambda: False
             if child.is_in_normal_flow():
                 child.is_flex_item = True
             if isinstance(child, boxes.TextBox) and not child.text.strip(' '):
@@ -1030,8 +1019,14 @@ def flex_children(box, children):
                 # affected by the white-space property"
                 # https://www.w3.org/TR/css-flexbox-1/#flex-items
                 continue
-            if isinstance(child, boxes.InlineLevelBox):
-                anonymous = boxes.BlockBox.anonymous_from(box, [child])
+            if isinstance(child, boxes.InlineBlockBox):
+                anonymous = boxes.BlockBox.anonymous_from(child, child.children)
+                anonymous.style = child.style
+                anonymous.is_flex_item = True
+                flex_children.append(anonymous)
+            elif isinstance(child, boxes.InlineLevelBox):
+                anonymous = boxes.BlockBox.anonymous_from(child, [child])
+                anonymous.style = child.style
                 anonymous.is_flex_item = True
                 flex_children.append(anonymous)
             else:
@@ -1069,7 +1064,12 @@ def grid_children(box, children):
                 # affected by the white-space property"
                 # https://drafts.csswg.org/css-grid-2/#grid-item
                 continue
-            if isinstance(child, boxes.InlineLevelBox):
+            if isinstance(child, boxes.InlineBlockBox):
+                anonymous = boxes.BlockBox.anonymous_from(child, child.children)
+                anonymous.style = child.style
+                anonymous.is_grid_item = True
+                grid_children.append(anonymous)
+            elif isinstance(child, boxes.InlineLevelBox):
                 anonymous = boxes.BlockBox.anonymous_from(child, [child])
                 anonymous.style = child.style
                 child.is_grid_item = False

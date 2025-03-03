@@ -205,7 +205,7 @@ def absolute_block(context, box, containing_block, fixed_boxes, bottom_space,
         new_box, resume_at, _, _, _ = flex_layout(
             context, box, bottom_space, skip_stack, containing_block,
             page_is_empty=True, absolute_boxes=absolute_boxes,
-            fixed_boxes=fixed_boxes)
+            fixed_boxes=fixed_boxes, discard=False)
     elif isinstance(box, (boxes.GridContainerBox)):
         new_box, resume_at, _, _, _ = grid_layout(
             context, box, bottom_space, skip_stack, containing_block,

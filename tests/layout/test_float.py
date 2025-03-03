@@ -798,3 +798,11 @@ def test_float_table_aborted_row():
     assert textbox.text == 'f'
     textbox, = line2.children
     assert textbox.text == 'g'
+
+
+def test_formatting_context_avoid_rtl():
+    render_pages('''
+      <div style="direction: rtl">
+        <div style="overflow: hidden"></div>
+      </div>
+    ''')
