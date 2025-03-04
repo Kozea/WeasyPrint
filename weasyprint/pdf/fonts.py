@@ -59,10 +59,11 @@ class Font:
 
         # Set font name.
         fields = description_string.split(b' ')
-        if fields and b'=' in fields[-1]:
-            fields.pop()  # Remove variations
-        if fields:
-            fields.pop()  # Remove font size
+        while fields:
+            # Remove all font variations and font features.
+            last_field = fields.pop()
+            if b'@' not in last_field and b'#' not in last_field:
+                break  # Last removed field is font size.
         else:
             fields = [b'Unknown']
         self.name = b'/' + self.hash.encode() + b'+' + b'-'.join(fields)
