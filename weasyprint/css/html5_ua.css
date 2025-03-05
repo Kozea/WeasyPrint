@@ -6,758 +6,254 @@ Contributed by Peter Moulder.
 Based on suggested styles in the HTML5 specification, CSS 2.1, and
 what various web browsers use.
 
+https://dev.w3.org/html5/spec-LC/rendering.html#the-css-user-agent-style-sheet-and-presentational-hints
+
 */
 
-/* https://www.w3.org/TR/html5/Overview#scroll-to-the-fragment-identifier */
-*[id] { -weasy-anchor: attr(id); }
-a[name] { -weasy-anchor: attr(name); }
+/* WeasyPrint-only features */
 
-*[dir] { /* unicode-bidi: embed; */ }
-*[hidden] { display: none; }
-*[dir=ltr] { direction: ltr; }
-*[dir=rtl] { direction: rtl; }
-/* :dir(ltr) { direction: ltr; } */
-/* :dir(rtl) { direction: rtl; } */
-*[lang] { -weasy-lang: attr(lang); }
-:link { color: #0000EE; text-decoration: underline; }
-a[href] { -weasy-link: attr(href); }
-:visited { color: #551A8B; text-decoration: underline; }
-a:link[rel~=help] { cursor: help; }
-a:visited[rel~=help] { cursor: help; }
-abbr[title] { text-decoration: dotted underline; }
-acronym[title] { text-decoration: dotted underline; }
-address { display: block; font-style: italic; /* unicode-bidi: isolate; */ }
-area { display: none; }
-area:link[rel~=help] { cursor: help; }
-area:visited[rel~=help] { cursor: help; }
-article { display: block; /* unicode-bidi: isolate; */ }
-aside { display: block; /* unicode-bidi: isolate; */ }
-b { font-weight: bold; }
-base { display: none; }
-basefont { display: none; }
-bdi { /* unicode-bidi: isolate; */ }
-bdi[dir] { /* unicode-bidi: isolate; */ }
-bdo { /* unicode-bidi: bidi-override; */ }
-bdo[dir] { /* unicode-bidi: bidi-override; */ }
-big { font-size: larger; }
-blink { text-decoration: blink; }
-blockquote { display: block; margin: 1em 40px; /* unicode-bidi: isolate; */ }
-body { display: block; margin: 8px; }
-br::before { content: '\A'; white-space: pre-line; }
-wbr::before { content: '\200B'; }
-caption { display: table-caption; /* unicode-bidi: isolate; */ }
-center { display: block; text-align: center; /* unicode-bidi: isolate; */ }
-cite { font-style: italic; }
-code { font-family: monospace; }
-col { display: table-column; /* unicode-bidi: isolate; */ }
-col[hidden] { display: table-column; /* unicode-bidi: isolate; */ visibility: collapse; }
-colgroup { display: table-column-group; /* unicode-bidi: isolate; */ }
-colgroup[hidden] { display: table-column-group; /* unicode-bidi: isolate; */ visibility: collapse; }
-command { display: none; }
-datalist { display: none; }
+[id] { -weasy-anchor: attr(id) }
+a[name] { -weasy-anchor: attr(name) }
+[lang] { -weasy-lang: attr(lang) }
+a[href] { -weasy-link: attr(href) }
 
-dd { display: block; margin-left: 40px; /* unicode-bidi: isolate; */ }
+/* Display and visibility */
 
-*[dir=ltr] dd { margin-left: 0; margin-right: 40px; }
-*[dir=rtl] dd { margin-left: 40px; margin-right: 0; }
-*[dir] *[dir=ltr] dd { margin-left: 0; margin-right: 40px; }
-*[dir] *[dir=rtl] dd { margin-left: 40px; margin-right: 0; }
-*[dir] *[dir] *[dir=ltr] dd { margin-left: 0; margin-right: 40px; }
-*[dir] *[dir] *[dir=rtl] dd { margin-left: 40px; margin-right: 0; }
-dd[dir=ltr][dir][dir] { margin-left: 0; margin-right: 40px; }
-dd[dir=rtl][dir][dir] { margin-left: 40px; margin-right: 0; }
+[hidden], area, base, basefont, command, datalist, head, input[type=hidden i], link, menu[type=context i], meta, noembed, noframes, param, rp, script, source, style, template, title, track { display: none }
+address, article, aside, blockquote, body, center, dd, details, dir, div, dl, dt, frame, frameset, fieldset, figure, figcaption, footer, form, h1, h2, h3, h4, h5, h6, header, hgroup, hr, html, legend, listing, menu, nav, ol, p, plaintext, pre, section, summary, ul, xmp { display: block }
+button, input, keygen, select, textarea { display: inline-block }
+li { display: list-item }
+table { display: table }
+caption { display: table-caption }
+colgroup, colgroup[hidden] { display: table-column-group }
+col, col[hidden] { display: table-column }
+thead, thead[hidden] { display: table-header-group }
+tbody, tbody[hidden] { display: table-row-group }
+tfoot, tfoot[hidden] { display: table-footer-group }
+tr, tr[hidden] { display: table-row }
+td, th, td[hidden], th[hidden] { display: table-cell }
+:is(colgroup, col, thead, tbody, tfoot, tr, td, th)[hidden] { visibility: collapse }
 
-details { display: block; /* unicode-bidi: isolate; */ }
-del { text-decoration: line-through; }
-dfn { font-style: italic; }
+/* Margins and padding */
 
-dir { display: block; list-style-type: disc; margin-bottom: 1em; margin-top: 1em; padding-left: 40px; /* unicode-bidi: isolate; */ }
+blockquote, dir, dl, figure, listing, menu, ol, p, plaintext, pre, ul, xmp { margin-top: 1em; margin-bottom: 1em }
+:is(dir, dl, menu, ol, ul) :is(dir, dl, menu, ol, ul) { margin-top: 0; margin-bottom: 0 }
 
-*[dir=rtl] dir { padding-left: 0; padding-right: 40px; }
-*[dir=ltr] dir { padding-left: 40px; padding-right: 0; }
-*[dir] *[dir=rtl] dir { padding-left: 0; padding-right: 40px; }
-*[dir] *[dir=ltr] dir { padding-left: 40px; padding-right: 0; }
-*[dir] *[dir] *[dir=rtl] dir { padding-left: 0; padding-right: 40px; }
-*[dir] *[dir] *[dir=ltr] dir { padding-left: 40px; padding-right: 0; }
-dir[dir=rtl][dir][dir] { padding-left: 0; padding-right: 40px; }
-dir[dir=ltr][dir][dir] { padding-left: 40px; padding-right: 0; }
+body { margin: 8px }
 
-dir dir { list-style-type: circle; margin-bottom: 0; margin-top: 0; }
-dl dir { list-style-type: circle; margin-bottom: 0; margin-top: 0; }
-menu dir { list-style-type: circle; margin-bottom: 0; margin-top: 0; }
-ol dir { list-style-type: circle; margin-bottom: 0; margin-top: 0; }
-ul dir { list-style-type: circle; margin-bottom: 0; margin-top: 0; }
+h1 { margin-top: .67em; margin-bottom: .67em }
+h2 { margin-top: .83em; margin-bottom: .83em }
+h3 { margin-top: 1em; margin-bottom: 1em }
+h4 { margin-top: 1.33em; margin-bottom: 1.33em }
+h5 { margin-top: 1.67em; margin-bottom: 1.67em }
+h6 { margin-top: 2.33em; margin-bottom: 2.33em }
+:is(article, aside, nav, section) h1 { font-size: 1.5em; margin-bottom: .83em; margin-top: .83em }
+:is(article, aside, nav, section) :is(article, aside, nav, section) h1 { font-size: 1.17em; margin-bottom: 1em; margin-top: 1em }
+:is(article, aside, nav, section) :is(article, aside, nav, section) :is(article, aside, nav, section) h1 { font-size: 1em; margin-bottom: 1.33em; margin-top: 1.33em }
+:is(article, aside, nav, section) :is(article, aside, nav, section) :is(article, aside, nav, section) :is(article, aside, nav, section) h1 { font-size: .83em; margin-bottom: 1.67em; margin-top: 1.67em }
+:is(article, aside, nav, section) :is(article, aside, nav, section) :is(article, aside, nav, section) :is(article, aside, nav, section) :is(article, aside, nav, section) h1 { font-size: .67em; margin-bottom: 2.33em; margin-top: 2.33em }
 
-div { display: block; /* unicode-bidi: isolate; */ }
+blockquote, figure { margin-left: 40px; margin-right: 40px }
 
-dl { display: block; margin-bottom: 1em; margin-top: 1em; /* unicode-bidi: isolate; */ }
+dd { margin-left: 40px }
+[dir=ltr i] dd { margin-left: 0; margin-right: 40px }
+[dir=rtl i] dd { margin-left: 40px; margin-right: 0 }
+[dir] [dir=ltr i] dd { margin-left: 0; margin-right: 40px }
+[dir] [dir=rtl i] dd { margin-left: 40px; margin-right: 0 }
+[dir] [dir] [dir=ltr i] dd { margin-left: 0; margin-right: 40px }
+[dir] [dir] [dir=rtl i] dd { margin-left: 40px; margin-right: 0 }
 
-dir dl { list-style-type: circle; margin-bottom: 0; margin-top: 0; }
-dl dl { margin-bottom: 0; margin-top: 0; }
-ol dl { list-style-type: circle; margin-bottom: 0; margin-top: 0; }
-ul dl { list-style-type: circle; margin-bottom: 0; margin-top: 0; }
+dir, menu, ol, ul { padding-left: 40px }
+[dir=rtl i] :is(dir, menu, ol, ul) { padding-left: 0; padding-right: 40px }
+[dir=ltr i] :is(dir, menu, ol, ul) { padding-left: 40px; padding-right: 0 }
+[dir] [dir=rtl i] :is(dir, menu, ol, ul) { padding-left: 0; padding-right: 40px }
+[dir] [dir=ltr i] :is(dir, menu, ol, ul) { padding-left: 40px; padding-right: 0 }
+[dir] [dir] [dir=rtl i] :is(dir, menu, ol, ul) { padding-left: 0; padding-right: 40px }
+[dir] [dir] [dir=ltr i] :is(dir, menu, ol, ul) { padding-left: 40px; padding-right: 0 }
 
-dir dir dl { list-style-type: square; }
-dir menu dl { list-style-type: square; }
-dir ol dl { list-style-type: square; }
-dir ul dl { list-style-type: square; }
-menu dir dl { list-style-type: square; }
-menu dl { list-style-type: circle; margin-bottom: 0; margin-top: 0; }
-menu menu dl { list-style-type: square; }
-menu ol dl { list-style-type: square; }
-menu ul dl { list-style-type: square; }
-ol dir dl { list-style-type: square; }
-ol menu dl { list-style-type: square; }
-ol ol dl { list-style-type: square; }
-ol ul dl { list-style-type: square; }
-ul dir dl { list-style-type: square; }
-ul menu dl { list-style-type: square; }
-ul ol dl { list-style-type: square; }
-ul ul dl { list-style-type: square; }
+table { border-spacing: 2px; border-collapse: separate }
+td, th { padding: 1px }
+
+/* Alignment */
+
+thead, tbody, tfoot, table > tr { vertical-align: middle }
+tr, td, th { vertical-align: inherit }
+sub { vertical-align: sub }
+sup { vertical-align: super }
+
+/* Fonts and colors */
+
+address, cite, dfn, em, i, var { font-style: italic }
+b, strong, th { font-weight: bold }
+code, kbd, listing, plaintext, pre, samp, tt, xmp { font-family: monospace }
+h1 { font-size: 2em; font-weight: bold }
+h2 { font-size: 1.5em; font-weight: bold }
+h3 { font-size: 1.17em; font-weight: bold }
+h4 { font-size: 1em; font-weight: bold }
+h5 { font-size: .83em; font-weight: bold }
+h6 { font-size: .67em; font-weight: bold }
+big { font-size: larger }
+small, sub, sup { font-size: smaller }
+sub, sup { line-height: normal }
+
+:link { color: blue }
+mark { background: yellow; color: black }
+
+table, td, th { border-color: gray }
+thead, tbody, tfoot, tr { border-color: inherit }
+table:is([rules], [frame]):is([frame=above i], [frame=below i], [frame=border i], [frame=box i], [frame=hsides i], [frame=lhs i], [frame=rhs i], [frame=void i], [frame=vsides i], [rules=all i], [rules=cols i], [rules=groups i], [rules=none i], [rules=rows i]), table[rules]:is([rules=all i], [rules=cols i], [rules=groups i], [rules=none i], [rules=rows i]) > tr > :is(td, th), table[rules]:is([rules=all i], [rules=cols i], [rules=groups i], [rules=none i], [rules=rows i]) > :is(thead, tbody, tfoot) > tr > :is(td, th) { border-color: black }
+
+/* Punctuation and decorations */
+
+:link, :visited, ins, u { text-decoration: underline }
+abbr[title], acronym[title] { text-decoration: dotted underline }
+del, s, strike { text-decoration: line-through }
+q::before { content: open-quote }
+q::after { content: close-quote }
+
+br::before { content: "\A"; white-space: pre-line }
+wbr::before { content: "\200B" }
+nobr { white-space: nowrap }
+
+hr { border-style: inset; border-width: 1px; color: gray; margin: .5em auto }
+
+listing, plaintext, pre, xmp { white-space: pre }
+textarea { white-space: pre-wrap }
+ol { list-style-type: decimal }
+dir, menu, ul { list-style-type: disc }
+:is(dir, menu, ol, ul) ul { list-style-type: circle }
+:is(dir, menu, ol, ul) :is(dir, menu, ol, ul) ul { list-style-type: square }
+
+::marker { font-variant-numeric: tabular-nums }
+
+[dir=ltr i] { direction: ltr }
+[dir=rtl i] { direction: rtl }
+
+/* Text indent */
+
+table, input, select, option, optgroup, button, textarea, keygen { text-indent: initial }
+
+/* Specific tags */
+
+center { text-align: center }
+iframe:not([seamless]) { border: 2px inset }
+img, svg { overflow: hidden }
+video { object-fit: contain }
+table { box-sizing: border-box }
+
+/* Footnotes */
+
+::footnote-call { content: counter(footnote); vertical-align: super; font-size: smaller; line-height: inherit }
+::footnote-marker { content: counter(footnote) ". " }
+
+/* Counters and bookmarks */
 
 ol, ul { counter-reset: list-item }
+h1 { bookmark-level: 1 }
+h2 { bookmark-level: 2 }
+h3 { bookmark-level: 3 }
+h4 { bookmark-level: 4 }
+h5 { bookmark-level: 5 }
+h6 { bookmark-level: 6 }
+h1, h2, h3, h4, h5, h6 { bookmark-label: content(text) }
 
+/* Page breaks and hyphens */
 
-dt { display: block; /* unicode-bidi: isolate; */ }
-em { font-style: italic; }
-fieldset { display: block; border-style: groove; border-width: 2px; margin-left: 2px; margin-right: 2px; padding: .35em .625em .75em .625em; }
-figcaption { display: block; /* unicode-bidi: isolate; */ }
-figure { display: block; margin: 1em 40px; /* unicode-bidi: isolate; */ }
-footer { display: block; /* unicode-bidi: isolate; */ }
+h1, h2, h3, h4, h5, h6 { hyphens: manual; break-after: avoid; break-inside: avoid }
+ol, ul { break-before: avoid }
 
-form { display: block; /* unicode-bidi: isolate; */ }
-button,
-input,
-select,
-textarea {
-  border: 1px solid black;
-  display: inline-block;
-  font-size: 0.85em;
-  height: 1.2em;
-  padding: 0.2em;
-  white-space: pre;
-  width: 20em;
-}
-input[type="button"],
-input[type="reset"],
-input[type="submit"],
-button {
-  background: lightgrey;
-  border-radius: 0.25em;
-  text-align: center;
-}
-input[type="button"][value],
-input[type="reset"][value],
-input[type="submit"][value],
-button[value] {
-  max-width: 100%;
-  width: auto;
-}
-input[type="submit"]:not([value])::before {
-  content: "Submit";
-}
-input[type="reset"]:not([value])::before {
-  content: "Reset";
-}
-input[type="checkbox"],
-input[type="radio"] {
-  height: 0.7em;
-  vertical-align: -0.2em;
-  width: 0.7em;
-}
-input[type="checkbox"][checked]:before,
-input[type="radio"][checked]:before {
-  background: black;
-  content: "";
-  height: 100%;
-}
-input[type="radio"][checked]:before {
-  border-radius: 50%;
-}
-input[type="hidden"] {
-  display: none;
-}
-input[type="radio"] {
-  border-radius: 50%;
-}
-input[value]::before {
-  content: attr(value);
-  display: block;
-  overflow: hidden;
-}
-input::before,
-input[value=""]::before,
-input[type="checkbox"]::before,
-input[type="radio"]::before {
-  content: "";
-  display: block;
-}
-select {
-  background: lightgrey;
-  border-radius: 0.25em 0.25em;
-  position: relative;
-  white-space: normal;
-}
-select[multiple] {
-  height: 3.6em;
-}
-select:not([multiple])::before {
-  content: "˅";
-  position: absolute;
-  right: 0;
-  text-align: center;
-  width: 1.5em;
-}
-select option {
-  padding-right: 1.5em;
-  white-space: nowrap;
-}
-select:not([multiple]) option {
-  display: none;
-}
-select[multiple] option,
-select:not(:has(option[selected])) option:first-of-type,
-select option[selected]:not(option[selected] ~ option[selected]) {
-  display: block;
-  overflow: hidden;
-}
-textarea {
-  height: 3em;
-  margin: 0.1em 0;
-  overflow: hidden;
-  overflow-wrap: break-word;
-  padding: 0.2em;
-  white-space: pre-wrap;
-}
-textarea:empty {
-  height: 3em;
-}
+/* Form fields */
 
-frame { display: block; }
-frameset { display: block; }
+button, input, select, textarea { border: 1px solid black; font-size: .85em; height: 1.2em; padding: .2em; white-space: pre; width: 20em }
+input:is([type=button i], [type=reset i], [type=submit i]), button { background: lightgrey; border-radius: .25em; text-align: center }
+input:is([type=button i], [type=reset i], [type=submit i])[value], button[value] { max-width: 100%; width: auto }
+input[type=submit i]:not([value])::before { content: "Submit" }
+input[type=reset i]:not([value])::before { content: "Reset" }
+input:is([type=checkbox i], [type=radio i]) { height: .7em; vertical-align: -.2em; width: .7em }
+input:is([type=checkbox i], [type=radio i])[checked]::before { background: black; content: ""; height: 100% }
+input[type=radio i], input[type=radio][checked]:before { border-radius: 50% }
+input[value]::before { content: attr(value); display: block; overflow: hidden }
+:is(input, input[value=""], input[type=checkbox i], input[type=radio i]) { content: ""; display: block }
+select { background: lightgrey; border-radius: .25em .25em; position: relative; white-space: normal }
+select[multiple] { height: 3.6em }
+select:not([multiple])::before { content: "˅"; position: absolute; right: 0; text-align: center; width: 1.5em }
+select option { padding-right: 1.5em; white-space: nowrap }
+select:not([multiple]) option { display: none }
+select[multiple] option, select:not(:has(option[selected])) option:first-of-type, select option[selected]:not(option[selected] ~ option[selected]) { display: block; overflow: hidden }
+textarea { height: 3em; margin: .1em 0; overflow: hidden; overflow-wrap: break-word; padding: .2em; white-space: pre-wrap }
+textarea:empty { height: 3em }
+fieldset { border: groove 2px; margin-left: 2px; margin-right: 2px; padding: .35em .625em .75em }
 
-h1 { display: block; font-size: 2em; font-weight: bold; hyphens: manual; margin-bottom: .67em; margin-top: .67em; page-break-after: avoid; page-break-inside: avoid; /* unicode-bidi: isolate; */ bookmark-level: 1; bookmark-label: content(text); }
-section h1 { font-size: 1.50em; margin-bottom: .83em; margin-top: .83em; }
-section section h1 { font-size: 1.17em; margin-bottom: 1.00em; margin-top: 1.00em; }
-section section section h1 { font-size: 1.00em; margin-bottom: 1.33em; margin-top: 1.33em; }
-section section section section h1 { font-size: .83em; margin-bottom: 1.67em; margin-top: 1.67em; }
-section section section section section h1 { font-size: .67em; margin-bottom: 2.33em; margin-top: 2.33em; }
-h2 { display: block; font-size: 1.50em; font-weight: bold; hyphens: manual; margin-bottom: .83em; margin-top: .83em; page-break-after: avoid; page-break-inside: avoid; /* unicode-bidi: isolate; */ bookmark-level: 2; bookmark-label: content(text); }
-h3 { display: block; font-size: 1.17em; font-weight: bold; hyphens: manual; margin-bottom: 1.00em; margin-top: 1.00em; page-break-after: avoid; page-break-inside: avoid; /* unicode-bidi: isolate; */ bookmark-level: 3; bookmark-label: content(text); }
-h4 { display: block; font-size: 1.00em; font-weight: bold; hyphens: manual; margin-bottom: 1.33em; margin-top: 1.33em; page-break-after: avoid; page-break-inside: avoid; /* unicode-bidi: isolate; */ bookmark-level: 4; bookmark-label: content(text); }
-h5 { display: block; font-size: .83em; font-weight: bold; hyphens: manual; margin-bottom: 1.67em; margin-top: 1.67em; page-break-after: avoid; /* unicode-bidi: isolate; */ bookmark-level: 5; bookmark-label: content(text); }
-h6 { display: block; font-size: .67em; font-weight: bold; hyphens: manual; margin-bottom: 2.33em; margin-top: 2.33em; page-break-after: avoid; /* unicode-bidi: isolate; */ bookmark-level: 6; bookmark-label: content(text); }
-
-head { display: none; }
-header { display: block; /* unicode-bidi: isolate; */ }
-hgroup { display: block; /* unicode-bidi: isolate; */ }
-
-hr { border-style: inset; border-width: 1px; color: gray; display: block; margin-bottom: .5em; margin-left: auto; margin-right: auto; margin-top: .5em; /* unicode-bidi: isolate; */ }
-html { display: block; }
-i { font-style: italic; }
-*[dir=auto] { /* unicode-bidi: isolate; */ }
-bdo[dir=auto] { /* unicode-bidi: bidi-override isolate; */ }
-input[type=hidden] { display: none; }
-menu[type=context] { display: none; }
-pre[dir=auto] { /* unicode-bidi: plaintext; */ }
-table[frame=above] { border-color: black; }
-table[frame=below] { border-color: black; }
-table[frame=border] { border-color: black; }
-table[frame=box] { border-color: black; }
-table[frame=hsides] { border-color: black; }
-table[frame=lhs] { border-color: black; }
-table[frame=rhs] { border-color: black; }
-table[frame=void] { border-color: black; }
-table[frame=vsides] { border-color: black; }
-table[rules=all] { border-color: black; }
-table[rules=cols] { border-color: black; }
-table[rules=groups] { border-color: black; }
-table[rules=none] { border-color: black; }
-table[rules=rows] { border-color: black; }
-textarea[dir=auto] { /* unicode-bidi: plaintext; */ }
-iframe { border: 2px inset; }
-iframe[seamless] { border: none; }
-input { display: inline-block; text-indent: 0; }
-ins { text-decoration: underline; }
-kbd { font-family: monospace; }
-keygen { display: inline-block; text-indent: 0; }
-legend { display: block; /* unicode-bidi: isolate; */ }
-li { display: list-item; /* unicode-bidi: isolate; */ }
-link { display: none; }
-listing { display: block; font-family: monospace; margin-bottom: 1em; margin-top: 1em; /* unicode-bidi: isolate; */ white-space: pre; }
-mark { background: yellow; color: black; }
-main { display: block; /* unicode-bidi: isolate; */ }
-
-menu { display: block; list-style-type: disc; margin-bottom: 1em; margin-top: 1em; padding-left: 40px; /* unicode-bidi: isolate; */ }
-
-*[dir=rtl] menu { padding-left: 0; padding-right: 40px; }
-*[dir=ltr] menu { padding-left: 40px; padding-right: 0; }
-*[dir] *[dir=rtl] menu { padding-left: 0; padding-right: 40px; }
-*[dir] *[dir=ltr] menu { padding-left: 40px; padding-right: 0; }
-*[dir] *[dir] *[dir=rtl] menu { padding-left: 0; padding-right: 40px; }
-*[dir] *[dir] *[dir=ltr] menu { padding-left: 40px; padding-right: 0; }
-menu[dir=rtl][dir][dir] { padding-left: 0; padding-right: 40px; }
-menu[dir=ltr][dir][dir] { padding-left: 40px; padding-right: 0; }
-
-dir menu { list-style-type: circle; margin-bottom: 0; margin-top: 0; }
-dl menu { margin-bottom: 0; margin-top: 0; }
-menu menu { list-style-type: circle; margin-bottom: 0; margin-top: 0; }
-
-dir dir menu { list-style-type: square; }
-dir menu menu { list-style-type: square; }
-dir ol menu { list-style-type: square; }
-dir ul menu { list-style-type: square; }
-menu dir menu { list-style-type: square; }
-menu menu menu { list-style-type: square; }
-menu ol menu { list-style-type: square; }
-menu ul menu { list-style-type: square; }
-
-ol menu { list-style-type: circle; margin-bottom: 0; margin-top: 0; }
-ol dir menu { list-style-type: square; }
-ol menu menu { list-style-type: square; }
-ol ol menu { list-style-type: square; }
-ol ul menu { list-style-type: square; }
-ul dir menu { list-style-type: square; }
-ul menu menu { list-style-type: square; }
-ul menu { list-style-type: circle; margin-bottom: 0; margin-top: 0; }
-ul ol menu { list-style-type: square; }
-ul ul menu { list-style-type: square; }
-meta { display: none; }
-nav { display: block; /* unicode-bidi: isolate; */ }
-nobr { white-space: nowrap; }
-noembed { display: none; }
-
-/* The HTML5 spec suggests display:none for the old (now forbidden) noframes element,
- * but Morp doesn't currently handle frames, so we might as well render it.
- */
-/*noframes { display: none; }*/
-noframes { display: block; }
-
-ol { page-break-before: avoid; }
-ol { display: block; list-style-type: decimal; margin-bottom: 1em; margin-top: 1em; padding-left: 40px; /* unicode-bidi: isolate; */ }
-
-*[dir=ltr] ol { padding-left: 0; padding-right: 40px; }
-*[dir=rtl] ol { padding-left: 40px; padding-right: 0; }
-*[dir] *[dir=ltr] ol { padding-left: 0; padding-right: 40px; }
-*[dir] *[dir=rtl] ol { padding-left: 40px; padding-right: 0; }
-*[dir] *[dir] *[dir=ltr] ol { padding-left: 0; padding-right: 40px; }
-*[dir] *[dir] *[dir=rtl] ol { padding-left: 40px; padding-right: 0; }
-ol[dir=ltr][dir][dir] { padding-left: 0; padding-right: 40px; }
-ol[dir=rtl][dir][dir] { padding-left: 40px; padding-right: 0; }
-
-dir ol { margin-bottom: 0; margin-top: 0; }
-dl ol { margin-bottom: 0; margin-top: 0; }
-menu ol { margin-bottom: 0; margin-top: 0; }
-ol ol { margin-bottom: 0; margin-top: 0; }
-ul ol { margin-bottom: 0; margin-top: 0; }
-
-optgroup { text-indent: 0; }
-output { /* unicode-bidi: isolate; */ }
-output[dir] { /* unicode-bidi: isolate; */ }
-p { display: block; margin-bottom: 1em; margin-top: 1em; /* unicode-bidi: isolate; */ }
-param { display: none; }
-plaintext { display: block; font-family: monospace; margin-bottom: 1em; margin-top: 1em; /* unicode-bidi: isolate; */ white-space: pre; }
-pre { display: block; font-family: monospace; margin-bottom: 1em; margin-top: 1em; /* unicode-bidi: isolate; */ white-space: pre; }
-q::after { content: close-quote; }
-q::before { content: open-quote; }
-rp { display: none; }
-/* rt { display: ruby-text; } */
-/* ruby { display: ruby; } */
-s { text-decoration: line-through; }
-samp { font-family: monospace; }
-script { display: none; }
-section { display: block; /* unicode-bidi: isolate; */ }
-small { font-size: smaller; }
-source { display: none; }
-strike { text-decoration: line-through; }
-strong { font-weight: bolder; }
-style { display: none; }
-sub { font-size: smaller; line-height: normal; vertical-align: sub; }
-summary { display: block; /* unicode-bidi: isolate; */ }
-sup { font-size: smaller; line-height: normal; vertical-align: super; }
-img, svg { overflow: hidden; }
-
-table { border-collapse: separate; border-color: gray; border-spacing: 2px; display: table; text-indent: 0; /* unicode-bidi: isolate; */ }
-
-/* The html5 spec doesn't mention the following, though the CSS 2.1 spec does
- * hint at its use, and a couple of UAs do have this.  I haven't looked into
- * why the HTML5 spec doesn't include this rule.
- */
-table { box-sizing: border-box; }
-
-tbody { border-color: inherit; display: table-row-group; /* unicode-bidi: isolate; */ vertical-align: middle; }
-tbody[hidden] { display: table-row-group; /* unicode-bidi: isolate; */ visibility: collapse; }
-
-td { border-color: gray; display: table-cell; padding: 1px; /* unicode-bidi: isolate; */ vertical-align: inherit; }
-td[hidden] { display: table-cell; /* unicode-bidi: isolate; */ visibility: collapse; }
-
-textarea { display: inline-block; text-indent: 0; white-space: pre-wrap; }
-
-tfoot { border-color: inherit; display: table-footer-group; /* unicode-bidi: isolate; */ vertical-align: middle; }
-tfoot[hidden] { display: table-footer-group; /* unicode-bidi: isolate; */ visibility: collapse; }
-
-table[rules=none] > tr > td, table[rules=none] > tr > th, table[rules=groups] > tr > td, table[rules=groups] > tr > th, table[rules=rows] > tr > td, table[rules=rows] > tr > th, table[rules=cols] > tr > td, table[rules=cols] > tr > th, table[rules=all] > tr > td, table[rules=all] > tr > th, table[rules=none] > thead > tr > td, table[rules=none] > thead > tr > th, table[rules=groups] > thead > tr > td, table[rules=groups] > thead > tr > th, table[rules=rows] > thead > tr > td, table[rules=rows] > thead > tr > th, table[rules=cols] > thead > tr > td, table[rules=cols] > thead > tr > th, table[rules=all] > thead > tr > td, table[rules=all] > thead > tr > th, table[rules=none] > tbody > tr > td, table[rules=none] > tbody > tr > th, table[rules=groups] > tbody > tr > td, table[rules=groups] > tbody > tr > th, table[rules=rows] > tbody > tr > td, table[rules=rows] > tbody > tr > th, table[rules=cols] > tbody > tr > td, table[rules=cols] > tbody > tr > th, table[rules=all] > tbody > tr > td, table[rules=all] > tbody > tr > th, table[rules=none] > tfoot > tr > td, table[rules=none] > tfoot > tr > th, table[rules=groups] > tfoot > tr > td, table[rules=groups] > tfoot > tr > th, table[rules=rows] > tfoot > tr > td, table[rules=rows] > tfoot > tr > th, table[rules=cols] > tfoot > tr > td, table[rules=cols] > tfoot > tr > th, table[rules=all] > tfoot > tr > td, table[rules=all] > tfoot > tr > th { border-color: black; }
-th { border-color: gray; display: table-cell; font-weight: bold; padding: 1px; /* unicode-bidi: isolate; */ vertical-align: inherit; }
-
-th[hidden] { display: table-cell; /* unicode-bidi: isolate; */ visibility: collapse; }
-thead { border-color: inherit; display: table-header-group; /* unicode-bidi: isolate; */ vertical-align: middle; }
-thead[hidden] { display: table-header-group; /* unicode-bidi: isolate; */ visibility: collapse; }
-table > tr { vertical-align: middle; }
-tr { border-color: inherit; display: table-row; /* unicode-bidi: isolate; */ vertical-align: inherit; }
-tr[hidden] { display: table-row; /* unicode-bidi: isolate; */ visibility: collapse; }
-
-template { display: none; }
-title { display: none; }
-track { display: none; }
-tt { font-family: monospace; }
-u { text-decoration: underline; }
-
-::marker { /* unicode-bidi: isolate; */ font-variant-numeric: tabular-nums; }
-ul { display: block; list-style-type: disc; margin-bottom: 1em; margin-top: 1em; padding-left: 40px; /* unicode-bidi: isolate; */ }
-
-*[dir=ltr] ul { padding-left: 40px; padding-right: 0; }
-*[dir=rtl] ul { padding-left: 0; padding-right: 40px; }
-*[dir] *[dir=ltr] ul { padding-left: 40px; padding-right: 0; }
-*[dir] *[dir=rtl] ul { padding-left: 0; padding-right: 40px; }
-*[dir] *[dir] *[dir=ltr] ul { padding-left: 40px; padding-right: 0; }
-*[dir] *[dir] *[dir=rtl] ul { padding-left: 0; padding-right: 40px; }
-ul[dir=ltr][dir][dir] { padding-left: 40px; padding-right: 0; }
-ul[dir=rtl][dir][dir] { padding-left: 0; padding-right: 40px; }
-
-/* This isn't in the HTML5 spec's suggested styling, and should probably be a
- * mere hint rather than a demand.  It usually is the right thing, though.
- */
-ul { display: block; page-break-before: avoid; }
-
-dir ul { list-style-type: circle; margin-bottom: 0; margin-top: 0; }
-dl ul { margin-bottom: 0; margin-top: 0; }
-menu ul { list-style-type: circle; margin-bottom: 0; margin-top: 0; }
-ol ul { list-style-type: circle; margin-bottom: 0; margin-top: 0; }
-ul ul { list-style-type: circle; margin-bottom: 0; margin-top: 0; }
-
-dir dir ul { list-style-type: square; }
-dir menu ul { list-style-type: square; }
-dir ol ul { list-style-type: square; }
-dir ul ul { list-style-type: square; }
-menu dir ul { list-style-type: square; }
-menu menu ul { list-style-type: square; }
-menu ol ul { list-style-type: square; }
-menu ul ul { list-style-type: square; }
-ol dir ul { list-style-type: square; }
-ol menu ul { list-style-type: square; }
-ol ol ul { list-style-type: square; }
-ol ul ul { list-style-type: square; }
-ul dir ul { list-style-type: square; }
-ul menu ul { list-style-type: square; }
-ul ol ul { list-style-type: square; }
-ul ul ul { list-style-type: square; }
-
-var { font-style: italic; }
-video { object-fit: contain; }
-xmp { display: block; font-family: monospace; margin-bottom: 1em; margin-top: 1em; /* unicode-bidi: isolate; */ white-space: pre; }
-
-::footnote-call { content: counter(footnote); vertical-align: super; font-size: smaller; line-height: inherit; }
-::footnote-marker { content: counter(footnote) '. '; }
+/* Pages */
 
 @page {
-    /* `size: auto` (the initial) is A4 portrait */
-    margin: 75px;
-    @footnote { margin-top: 1em }
-    @top-left-corner     { text-align: right;  vertical-align:  middle }
-    @top-left            { text-align: left;   vertical-align:  middle }
-    @top-center          { text-align: center; vertical-align:  middle }
-    @top-right           { text-align: right;  vertical-align:  middle }
-    @top-right-corner    { text-align: left;   vertical-align:  middle }
-    @left-top            { text-align: center; vertical-align:  top    }
-    @left-middle         { text-align: center; vertical-align:  middle }
-    @left-bottom         { text-align: center; vertical-align:  bottom }
-    @right-top           { text-align: center; vertical-align:  top    }
-    @right-middle        { text-align: center; vertical-align:  middle }
-    @right-bottom        { text-align: center; vertical-align:  bottom }
-    @bottom-left-corner  { text-align: right;  vertical-align:  middle }
-    @bottom-left         { text-align: left;   vertical-align:  middle }
-    @bottom-center       { text-align: center; vertical-align:  middle }
-    @bottom-right        { text-align: right;  vertical-align:  middle }
-    @bottom-right-corner { text-align: left;   vertical-align:  middle }
+  margin: 75px;
+  @footnote { margin-top: 1em }
+  @top-left-corner     { text-align: right;  vertical-align:  middle }
+  @top-left            { text-align: left;   vertical-align:  middle }
+  @top-center          { text-align: center; vertical-align:  middle }
+  @top-right           { text-align: right;  vertical-align:  middle }
+  @top-right-corner    { text-align: left;   vertical-align:  middle }
+  @left-top            { text-align: center; vertical-align:  top    }
+  @left-middle         { text-align: center; vertical-align:  middle }
+  @left-bottom         { text-align: center; vertical-align:  bottom }
+  @right-top           { text-align: center; vertical-align:  top    }
+  @right-middle        { text-align: center; vertical-align:  middle }
+  @right-bottom        { text-align: center; vertical-align:  bottom }
+  @bottom-left-corner  { text-align: right;  vertical-align:  middle }
+  @bottom-left         { text-align: left;   vertical-align:  middle }
+  @bottom-center       { text-align: center; vertical-align:  middle }
+  @bottom-right        { text-align: right;  vertical-align:  middle }
+  @bottom-right-corner { text-align: left;   vertical-align:  middle }
 }
 
+/* Counters */
 
-/* Counters: https://www.w3.org/TR/css-counter-styles-3/#predefined-counters */
-
-@counter-style disc {
-  system: cyclic;
-  symbols: •;
-  suffix: " ";
-}
-
-@counter-style circle {
-  system: cyclic;
-  symbols: ◦;
-  suffix: " ";
-}
-
-@counter-style square {
-  system: cyclic;
-  symbols: ▪;
-  suffix: " ";
-}
-
-@counter-style disclosure-open {
-  system: cyclic;
-  symbols: ▾;
-  suffix: " ";
-}
-
-@counter-style disclosure-closed {
-  system: cyclic;
-  /* TODO: handle rtl */
-  symbols: ▸;
-  suffix: " ";
-}
-
-@counter-style decimal {
-  system: numeric;
-  symbols: '0' '1' '2' '3' '4' '5' '6' '7' '8' '9';
-}
-
-
-@counter-style decimal-leading-zero {
-  system: extends decimal;
-  pad: 2 '0';
-}
-
-@counter-style arabic-indic {
-  system: numeric;
-  symbols: ٠ ١ ٢ ٣ ٤ ٥ ٦ ٧ ٨ ٩;
-}
-
-@counter-style armenian {
-  system: additive;
-  range: 1 9999;
-  additive-symbols: 9000 Ք, 8000 Փ, 7000 Ւ, 6000 Ց, 5000 Ր, 4000 Տ, 3000 Վ, 2000 Ս, 1000 Ռ, 900 Ջ, 800 Պ, 700 Չ, 600 Ո, 500 Շ, 400 Ն, 300 Յ, 200 Մ, 100 Ճ, 90 Ղ, 80 Ձ, 70 Հ, 60 Կ, 50 Ծ, 40 Խ, 30 Լ, 20 Ի, 10 Ժ, 9 Թ, 8 Ը, 7 Է, 6 Զ, 5 Ե, 4 Դ, 3 Գ, 2 Բ, 1 Ա;
-}
-
-@counter-style upper-armenian {
-  system: extends armenian;
-}
-
-@counter-style lower-armenian {
-  system: additive;
-  range: 1 9999;
-  additive-symbols: 9000 ք, 8000 փ, 7000 ւ, 6000 ց, 5000 ր, 4000 տ, 3000 վ, 2000 ս, 1000 ռ, 900 ջ, 800 պ, 700 չ, 600 ո, 500 շ, 400 ն, 300 յ, 200 մ, 100 ճ, 90 ղ, 80 ձ, 70 հ, 60 կ, 50 ծ, 40 խ, 30 լ, 20 ի, 10 ժ, 9 թ, 8 ը, 7 է, 6 զ, 5 ե, 4 դ, 3 գ, 2 բ, 1 ա;
-}
-
-@counter-style bengali {
-  system: numeric;
-  symbols: ০ ১ ২ ৩ ৪ ৫ ৬ ৭ ৮ ৯;
-}
-
-@counter-style cambodian {
-  system: numeric;
-  symbols: ០ ១ ២ ៣ ៤ ៥ ៦ ៧ ៨ ៩;
-}
-
-@counter-style khmer {
-  system: extends cambodian;
-}
-
-@counter-style cjk-decimal {
-  system: numeric;
-  range: 0 infinite;
-  symbols: 〇 一 二 三 四 五 六 七 八 九;
-  suffix: "、";
-}
-
-@counter-style devanagari {
-  system: numeric;
-  symbols: ० १ २ ३ ४ ५ ६ ७ ८ ९;
-}
-
-@counter-style georgian {
-  system: additive;
-  range: 1 19999;
-  additive-symbols: 10000 ჵ, 9000 ჰ, 8000 ჯ, 7000 ჴ, 6000 ხ, 5000 ჭ, 4000 წ, 3000 ძ, 2000 ც, 1000 ჩ, 900 შ, 800 ყ, 700 ღ, 600 ქ, 500 ფ, 400 ჳ, 300 ტ, 200 ს, 100 რ, 90 ჟ, 80 პ, 70 ო, 60 ჲ, 50 ნ, 40 მ, 30 ლ, 20 კ, 10 ი, 9 თ, 8 ჱ, 7 ზ, 6 ვ, 5 ე, 4 დ, 3 გ, 2 ბ, 1 ა;
-}
-
-@counter-style gujarati {
-  system: numeric;
-  symbols: ૦ ૧ ૨ ૩ ૪ ૫ ૬ ૭ ૮ ૯;
-}
-
-@counter-style gurmukhi {
-  system: numeric;
-  symbols: ੦ ੧ ੨ ੩ ੪ ੫ ੬ ੭ ੮ ੯;
-}
-
-@counter-style hebrew {
-  system: additive;
-  range: 1 10999;
-  additive-symbols: 10000 י׳, 9000 ט׳, 8000 ח׳, 7000 ז׳, 6000 ו׳, 5000 ה׳, 4000 ד׳, 3000 ג׳, 2000 ב׳, 1000 א׳, 400 ת, 300 ש, 200 ר, 100 ק, 90 צ, 80 פ, 70 ע, 60 ס, 50 נ, 40 מ, 30 ל, 20 כ, 19 יט, 18 יח, 17 יז, 16 טז, 15 טו, 10 י, 9 ט, 8 ח, 7 ז, 6 ו, 5 ה, 4 ד, 3 ג, 2 ב, 1 א;
-}
-
-@counter-style kannada {
-  system: numeric;
-  symbols: ೦ ೧ ೨ ೩ ೪ ೫ ೬ ೭ ೮ ೯;
-}
-
-@counter-style lao {
-  system: numeric;
-  symbols: ໐ ໑ ໒ ໓ ໔ ໕ ໖ ໗ ໘ ໙;
-}
-
-@counter-style malayalam {
-  system: numeric;
-  symbols: ൦ ൧ ൨ ൩ ൪ ൫ ൬ ൭ ൮ ൯;
-}
-
-@counter-style mongolian {
-  system: numeric;
-  symbols: ᠐ ᠑ ᠒ ᠓ ᠔ ᠕ ᠖ ᠗ ᠘ ᠙;
-}
-
-@counter-style myanmar {
-  system: numeric;
-  symbols: ၀ ၁ ၂ ၃ ၄ ၅ ၆ ၇ ၈ ၉;
-}
-
-@counter-style oriya {
-  system: numeric;
-  symbols: ୦ ୧ ୨ ୩ ୪ ୫ ୬ ୭ ୮ ୯;
-}
-
-@counter-style persian {
-  system: numeric;
-  symbols: ۰ ۱ ۲ ۳ ۴ ۵ ۶ ۷ ۸ ۹;
-}
-
-@counter-style lower-roman {
-  system: additive;
-  range: 1 3999;
-  additive-symbols: 1000 m, 900 cm, 500 d, 400 cd, 100 c, 90 xc, 50 l, 40 xl, 10 x, 9 ix, 5 v, 4 iv, 1 i;
-}
-
-@counter-style upper-roman {
-  system: additive;
-  range: 1 3999;
-  additive-symbols: 1000 M, 900 CM, 500 D, 400 CD, 100 C, 90 XC, 50 L, 40 XL, 10 X, 9 IX, 5 V, 4 IV, 1 I;
-}
-
-@counter-style tamil {
-  system: numeric;
-  symbols: ௦ ௧ ௨ ௩ ௪ ௫ ௬ ௭ ௮ ௯;
-}
-
-@counter-style telugu {
-  system: numeric;
-  symbols: ౦ ౧ ౨ ౩ ౪ ౫ ౬ ౭ ౮ ౯;
-}
-
-@counter-style thai {
-  system: numeric;
-  symbols: ๐ ๑ ๒ ๓ ๔ ๕ ๖ ๗ ๘ ๙;
-}
-
-@counter-style tibetan {
-  system: numeric;
-  symbols: ༠ ༡ ༢ ༣ ༤ ༥ ༦ ༧ ༨ ༩;
-}
-@counter-style lower-alpha {
-  system: alphabetic;
-  symbols: a b c d e f g h i j k l m n o p q r s t u v w x y z;
-}
-
-@counter-style lower-latin {
-  system: extends lower-alpha;
-}
-
-@counter-style upper-alpha {
-  system: alphabetic;
-  symbols: A B C D E F G H I J K L M N O P Q R S T U V W X Y Z;
-}
-
-@counter-style upper-latin {
-  system: extends upper-alpha;
-}
-
-@counter-style cjk-earthly-branch {
-  system: alphabetic;
-  symbols: 子 丑 寅 卯 辰 巳 午 未 申 酉 戌 亥;
-  suffix: "、";
-}
-
-@counter-style cjk-heavenly-stem {
-  system: alphabetic;
-  symbols: 甲 乙 丙 丁 戊 己 庚 辛 壬 癸;
-  suffix: "、";
-}
-
-@counter-style lower-greek {
-  system: alphabetic;
-  symbols: α β γ δ ε ζ η θ ι κ λ μ ν ξ ο π ρ σ τ υ φ χ ψ ω;
-}
-
-@counter-style hiragana {
-  system: alphabetic;
-  symbols: あ い う え お か き く け こ さ し す せ そ た ち つ て と な に ぬ ね の は ひ ふ へ ほ ま み む め も や ゆ よ ら り る れ ろ わ ゐ ゑ を ん;
-  suffix: "、";
-}
-
-@counter-style hiragana-iroha {
-  system: alphabetic;
-  symbols: い ろ は に ほ へ と ち り ぬ る を わ か よ た れ そ つ ね な ら む う ゐ の お く や ま け ふ こ え て あ さ き ゆ め み し ゑ ひ も せ す;
-  suffix: "、";
-}
-
-@counter-style katakana {
-  system: alphabetic;
-  symbols: ア イ ウ エ オ カ キ ク ケ コ サ シ ス セ ソ タ チ ツ テ ト ナ ニ ヌ ネ ノ ハ ヒ フ ヘ ホ マ ミ ム メ モ ヤ ユ ヨ ラ リ ル レ ロ ワ ヰ ヱ ヲ ン;
-  suffix: "、";
-}
-
-@counter-style katakana-iroha {
-  system: alphabetic;
-  symbols: イ ロ ハ ニ ホ ヘ ト チ リ ヌ ル ヲ ワ カ ヨ タ レ ソ ツ ネ ナ ラ ム ウ ヰ ノ オ ク ヤ マ ケ フ コ エ テ ア サ キ ユ メ ミ シ ヱ ヒ モ セ ス;
-  suffix: "、";
-}
-
-@counter-style japanese-informal {
-  system: additive;
-  range: -9999 9999;
-  additive-symbols: 9000 九千, 8000 八千, 7000 七千, 6000 六千, 5000 五千, 4000 四千, 3000 三千, 2000 二千, 1000 千, 900 九百, 800 八百, 700 七百, 600 六百, 500 五百, 400 四百, 300 三百, 200 二百, 100 百, 90 九十, 80 八十, 70 七十, 60 六十, 50 五十, 40 四十, 30 三十, 20 二十, 10 十, 9 九, 8 八, 7 七, 6 六, 5 五, 4 四, 3 三, 2 二, 1 一, 0 〇;
-  suffix: 、;
-  negative: マイナス;
-  fallback: cjk-decimal;
-}
-
-@counter-style japanese-formal {
-  system: additive;
-  range: -9999 9999;
-  additive-symbols: 9000 九阡, 8000 八阡, 7000 七阡, 6000 六阡, 5000 伍阡, 4000 四阡, 3000 参阡, 2000 弐阡, 1000 壱阡, 900 九百, 800 八百, 700 七百, 600 六百, 500 伍百, 400 四百, 300 参百, 200 弐百, 100 壱百, 90 九拾, 80 八拾, 70 七拾, 60 六拾, 50 伍拾, 40 四拾, 30 参拾, 20 弐拾, 10 壱拾, 9 九, 8 八, 7 七, 6 六, 5 伍, 4 四, 3 参, 2 弐, 1 壱, 0 零;
-  suffix: 、;
-  negative: マイナス;
-  fallback: cjk-decimal;
-}
-
-@counter-style korean-hangul-formal {
-  system: additive;
-  range: -9999 9999;
-  additive-symbols: 9000 구천, 8000 팔천, 7000 칠천, 6000 육천, 5000 오천, 4000 사천, 3000 삼천, 2000 이천, 1000 일천, 900 구백, 800 팔백, 700 칠백, 600 육백, 500 오백, 400 사백, 300 삼백, 200 이백, 100 일백, 90 구십, 80 팔십, 70 칠십, 60 육십, 50 오십, 40 사십, 30 삼십, 20 이십, 10 일십, 9 구, 8 팔, 7 칠, 6 육, 5 오, 4 사, 3 삼, 2 이, 1 일, 0 영;
-  suffix: ', ';
-  negative: "마이너스  ";
-}
-
-@counter-style korean-hanja-informal {
-  system: additive;
-  range: -9999 9999;
-  additive-symbols: 9000 九千, 8000 八千, 7000 七千, 6000 六千, 5000 五千, 4000 四千, 3000 三千, 2000 二千, 1000 千, 900 九百, 800 八百, 700 七百, 600 六百, 500 五百, 400 四百, 300 三百, 200 二百, 100 百, 90 九十, 80 八十, 70 七十, 60 六十, 50 五十, 40 四十, 30 三十, 20 二十, 10 十, 9 九, 8 八, 7 七, 6 六, 5 五, 4 四, 3 三, 2 二, 1 一, 0 零;
-  suffix: ', ';
-  negative: "마이너스  ";
-}
-
-@counter-style korean-hanja-formal {
-  system: additive;
-  range: -9999 9999;
-  additive-symbols: 9000 九仟, 8000 八仟, 7000 七仟, 6000 六仟, 5000 五仟, 4000 四仟, 3000 參仟, 2000 貳仟, 1000 壹仟, 900 九百, 800 八百, 700 七百, 600 六百, 500 五百, 400 四百, 300 參百, 200 貳百, 100 壹百, 90 九拾, 80 八拾, 70 七拾, 60 六拾, 50 五拾, 40 四拾, 30 參拾, 20 貳拾, 10 壹拾, 9 九, 8 八, 7 七, 6 六, 5 五, 4 四, 3 參, 2 貳, 1 壹, 0 零;
-  suffix: ', ';
-  negative: "마이너스  ";
-}
+@counter-style disc { system: cyclic; symbols: •; suffix: " " }
+@counter-style circle { system: cyclic; symbols: ◦; suffix: " " }
+@counter-style square { system: cyclic; symbols: ▪; suffix: " " }
+@counter-style disclosure-open { system: cyclic; symbols: ▾; suffix: " " }
+@counter-style disclosure-closed { system: cyclic; symbols: ▸; suffix: " " }
+@counter-style decimal { system: numeric; symbols: "0" "1" "2" "3" "4" "5" "6" "7" "8" "9" }
+@counter-style decimal-leading-zero { system: extends decimal; pad: 2 "0" }
+@counter-style arabic-indic { system: numeric; symbols: ٠ ١ ٢ ٣ ٤ ٥ ٦ ٧ ٨ ٩ }
+@counter-style armenian { system: additive; range: 1 9999; additive-symbols: 9000 Ք, 8000 Փ, 7000 Ւ, 6000 Ց, 5000 Ր, 4000 Տ, 3000 Վ, 2000 Ս, 1000 Ռ, 900 Ջ, 800 Պ, 700 Չ, 600 Ո, 500 Շ, 400 Ն, 300 Յ, 200 Մ, 100 Ճ, 90 Ղ, 80 Ձ, 70 Հ, 60 Կ, 50 Ծ, 40 Խ, 30 Լ, 20 Ի, 10 Ժ, 9 Թ, 8 Ը, 7 Է, 6 Զ, 5 Ե, 4 Դ, 3 Գ, 2 Բ, 1 Ա }
+@counter-style upper-armenian {system: extends armenian }
+@counter-style lower-armenian { system: additive; range: 1 9999; additive-symbols: 9000 ք, 8000 փ, 7000 ւ, 6000 ց, 5000 ր, 4000 տ, 3000 վ, 2000 ս, 1000 ռ, 900 ջ, 800 պ, 700 չ, 600 ո, 500 շ, 400 ն, 300 յ, 200 մ, 100 ճ, 90 ղ, 80 ձ, 70 հ, 60 կ, 50 ծ, 40 խ, 30 լ, 20 ի, 10 ժ, 9 թ, 8 ը, 7 է, 6 զ, 5 ե, 4 դ, 3 գ, 2 բ, 1 ա }
+@counter-style bengali { system: numeric; symbols: ০ ১ ২ ৩ ৪ ৫ ৬ ৭ ৮ ৯ }
+@counter-style cambodian { system: numeric; symbols: ០ ១ ២ ៣ ៤ ៥ ៦ ៧ ៨ ៩ }
+@counter-style khmer { system: extends cambodian }
+@counter-style cjk-decimal { system: numeric; range: 0 infinite; symbols: 〇 一 二 三 四 五 六 七 八 九; suffix: "、" }
+@counter-style devanagari { system: numeric; symbols: ० १ २ ३ ४ ५ ६ ७ ८ ९ }
+@counter-style georgian { system: additive; range: 1 19999; additive-symbols: 10000 ჵ, 9000 ჰ, 8000 ჯ, 7000 ჴ, 6000 ხ, 5000 ჭ, 4000 წ, 3000 ძ, 2000 ც, 1000 ჩ, 900 შ, 800 ყ, 700 ღ, 600 ქ, 500 ფ, 400 ჳ, 300 ტ, 200 ს, 100 რ, 90 ჟ, 80 პ, 70 ო, 60 ჲ, 50 ნ, 40 მ, 30 ლ, 20 კ, 10 ი, 9 თ, 8 ჱ, 7 ზ, 6 ვ, 5 ე, 4 დ, 3 გ, 2 ბ, 1 ა }
+@counter-style gujarati { system: numeric; symbols: ૦ ૧ ૨ ૩ ૪ ૫ ૬ ૭ ૮ ૯ }
+@counter-style gurmukhi { system: numeric; symbols: ੦ ੧ ੨ ੩ ੪ ੫ ੬ ੭ ੮ ੯ }
+@counter-style hebrew { system: additive; range: 1 10999; additive-symbols: 10000 י׳, 9000 ט׳, 8000 ח׳, 7000 ז׳, 6000 ו׳, 5000 ה׳, 4000 ד׳, 3000 ג׳, 2000 ב׳, 1000 א׳, 400 ת, 300 ש, 200 ר, 100 ק, 90 צ, 80 פ, 70 ע, 60 ס, 50 נ, 40 מ, 30 ל, 20 כ, 19 יט, 18 יח, 17 יז, 16 טז, 15 טו, 10 י, 9 ט, 8 ח, 7 ז, 6 ו, 5 ה, 4 ד, 3 ג, 2 ב, 1 א }
+@counter-style kannada { system: numeric; symbols: ೦ ೧ ೨ ೩ ೪ ೫ ೬ ೭ ೮ ೯ }
+@counter-style lao { system: numeric; symbols: ໐ ໑ ໒ ໓ ໔ ໕ ໖ ໗ ໘ ໙ }
+@counter-style malayalam { system: numeric; symbols: ൦ ൧ ൨ ൩ ൪ ൫ ൬ ൭ ൮ ൯ }
+@counter-style mongolian { system: numeric; symbols: ᠐ ᠑ ᠒ ᠓ ᠔ ᠕ ᠖ ᠗ ᠘ ᠙ }
+@counter-style myanmar { system: numeric; symbols: ၀ ၁ ၂ ၃ ၄ ၅ ၆ ၇ ၈ ၉ }
+@counter-style oriya { system: numeric; symbols: ୦ ୧ ୨ ୩ ୪ ୫ ୬ ୭ ୮ ୯ }
+@counter-style persian { system: numeric; symbols: ۰ ۱ ۲ ۳ ۴ ۵ ۶ ۷ ۸ ۹ }
+@counter-style lower-roman { system: additive; range: 1 3999; additive-symbols: 1000 m, 900 cm, 500 d, 400 cd, 100 c, 90 xc, 50 l, 40 xl, 10 x, 9 ix, 5 v, 4 iv, 1 i }
+@counter-style upper-roman { system: additive; range: 1 3999; additive-symbols: 1000 M, 900 CM, 500 D, 400 CD, 100 C, 90 XC, 50 L, 40 XL, 10 X, 9 IX, 5 V, 4 IV, 1 I }
+@counter-style tamil { system: numeric; symbols: ௦ ௧ ௨ ௩ ௪ ௫ ௬ ௭ ௮ ௯ }
+@counter-style telugu { system: numeric; symbols: ౦ ౧ ౨ ౩ ౪ ౫ ౬ ౭ ౮ ౯ }
+@counter-style thai { system: numeric; symbols: ๐ ๑ ๒ ๓ ๔ ๕ ๖ ๗ ๘ ๙ }
+@counter-style tibetan { system: numeric; symbols: ༠ ༡ ༢ ༣ ༤ ༥ ༦ ༧ ༨ ༩ } @counter-style lower-alpha { system: alphabetic; symbols: a b c d e f g h i j k l m n o p q r s t u v w x y z }
+@counter-style lower-latin { system: extends lower-alpha }
+@counter-style upper-alpha { system: alphabetic; symbols: A B C D E F G H I J K L M N O P Q R S T U V W X Y Z }
+@counter-style upper-latin { system: extends upper-alpha }
+@counter-style cjk-earthly-branch { system: alphabetic; symbols: 子 丑 寅 卯 辰 巳 午 未 申 酉 戌 亥; suffix: "、" }
+@counter-style cjk-heavenly-stem { system: alphabetic; symbols: 甲 乙 丙 丁 戊 己 庚 辛 壬 癸; suffix: "、" }
+@counter-style lower-greek { system: alphabetic; symbols: α β γ δ ε ζ η θ ι κ λ μ ν ξ ο π ρ σ τ υ φ χ ψ ω }
+@counter-style hiragana { system: alphabetic; symbols: あ い う え お か き く け こ さ し す せ そ た ち つ て と な に ぬ ね の は ひ ふ へ ほ ま み む め も や ゆ よ ら り る れ ろ わ ゐ ゑ を ん; suffix: "、" }
+@counter-style hiragana-iroha { system: alphabetic; symbols: い ろ は に ほ へ と ち り ぬ る を わ か よ た れ そ つ ね な ら む う ゐ の お く や ま け ふ こ え て あ さ き ゆ め み し ゑ ひ も せ す; suffix: "、" }
+@counter-style katakana { system: alphabetic; symbols: ア イ ウ エ オ カ キ ク ケ コ サ シ ス セ ソ タ チ ツ テ ト ナ ニ ヌ ネ ノ ハ ヒ フ ヘ ホ マ ミ ム メ モ ヤ ユ ヨ ラ リ ル レ ロ ワ ヰ ヱ ヲ ン; suffix: "、" }
+@counter-style katakana-iroha { system: alphabetic; symbols: イ ロ ハ ニ ホ ヘ ト チ リ ヌ ル ヲ ワ カ ヨ タ レ ソ ツ ネ ナ ラ ム ウ ヰ ノ オ ク ヤ マ ケ フ コ エ テ ア サ キ ユ メ ミ シ ヱ ヒ モ セ ス; suffix: "、" }
+@counter-style japanese-informal { system: additive; range: -9999 9999; additive-symbols: 9000 九千, 8000 八千, 7000 七千, 6000 六千, 5000 五千, 4000 四千, 3000 三千, 2000 二千, 1000 千, 900 九百, 800 八百, 700 七百, 600 六百, 500 五百, 400 四百, 300 三百, 200 二百, 100 百, 90 九十, 80 八十, 70 七十, 60 六十, 50 五十, 40 四十, 30 三十, 20 二十, 10 十, 9 九, 8 八, 7 七, 6 六, 5 五, 4 四, 3 三, 2 二, 1 一, 0 〇; suffix: 、; negative: マイナス; fallback: cjk-decimal }
+@counter-style japanese-formal { system: additive; range: -9999 9999; additive-symbols: 9000 九阡, 8000 八阡, 7000 七阡, 6000 六阡, 5000 伍阡, 4000 四阡, 3000 参阡, 2000 弐阡, 1000 壱阡, 900 九百, 800 八百, 700 七百, 600 六百, 500 伍百, 400 四百, 300 参百, 200 弐百, 100 壱百, 90 九拾, 80 八拾, 70 七拾, 60 六拾, 50 伍拾, 40 四拾, 30 参拾, 20 弐拾, 10 壱拾, 9 九, 8 八, 7 七, 6 六, 5 伍, 4 四, 3 参, 2 弐, 1 壱, 0 零; suffix: 、; negative: マイナス; fallback: cjk-decimal }
+@counter-style korean-hangul-formal { system: additive; range: -9999 9999; additive-symbols: 9000 구천, 8000 팔천, 7000 칠천, 6000 육천, 5000 오천, 4000 사천, 3000 삼천, 2000 이천, 1000 일천, 900 구백, 800 팔백, 700 칠백, 600 육백, 500 오백, 400 사백, 300 삼백, 200 이백, 100 일백, 90 구십, 80 팔십, 70 칠십, 60 육십, 50 오십, 40 사십, 30 삼십, 20 이십, 10 일십, 9 구, 8 팔, 7 칠, 6 육, 5 오, 4 사, 3 삼, 2 이, 1 일, 0 영; suffix: ", "; negative: "마이너스  " }
+@counter-style korean-hanja-informal { system: additive; range: -9999 9999; additive-symbols: 9000 九千, 8000 八千, 7000 七千, 6000 六千, 5000 五千, 4000 四千, 3000 三千, 2000 二千, 1000 千, 900 九百, 800 八百, 700 七百, 600 六百, 500 五百, 400 四百, 300 三百, 200 二百, 100 百, 90 九十, 80 八十, 70 七十, 60 六十, 50 五十, 40 四十, 30 三十, 20 二十, 10 十, 9 九, 8 八, 7 七, 6 六, 5 五, 4 四, 3 三, 2 二, 1 一, 0 零; suffix: ", "; negative: "마이너스  " }
+@counter-style korean-hanja-formal { system: additive; range: -9999 9999; additive-symbols: 9000 九仟, 8000 八仟, 7000 七仟, 6000 六仟, 5000 五仟, 4000 四仟, 3000 參仟, 2000 貳仟, 1000 壹仟, 900 九百, 800 八百, 700 七百, 600 六百, 500 五百, 400 四百, 300 參百, 200 貳百, 100 壹百, 90 九拾, 80 八拾, 70 七拾, 60 六拾, 50 五拾, 40 四拾, 30 參拾, 20 貳拾, 10 壹拾, 9 九, 8 八, 7 七, 6 六, 5 五, 4 四, 3 參, 2 貳, 1 壹, 0 零; suffix: ", "; negative: "마이너스  " }
