@@ -535,6 +535,12 @@ def test_pdf_no_srgb():
     assert b'sRGB' not in stdout
 
 
+def test_pdf_font_name():
+    # Regression test for #2396.
+    stdout = _run('--uncompressed-pdf - -', b'<div style="font-family:weasyprint">test')
+    assert b'+weasyprint/' in stdout
+
+
 def test_cmap():
     # Regression test for #2388.
     stdout = _run('--uncompressed-pdf --full-fonts - -', b'test')
