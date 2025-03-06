@@ -344,6 +344,44 @@ def test_text_anchor_end_tspan(assert_pixels):
 
 
 @assert_no_logs
+def test_text_anchor_middle_tspan_head_tail(assert_pixels):
+    assert_pixels('''
+        ____BBBBRRRRRRBB____
+        ____BBBBRRRRRRBB____
+    ''', '''
+      <style>
+        @page { size: 20px 2px }
+        svg { display: block }
+      </style>
+      <svg width="20px" height="2px" xmlns="http://www.w3.org/2000/svg">
+        <text x="10" y="1.5" font-family="weasyprint" font-size="2" fill="blue"
+              text-anchor="middle">
+          AA<tspan fill="red">ABC</tspan>A
+        </text>
+      </svg>
+    ''')
+
+
+@assert_no_logs
+def test_text_anchor_end_tspan_head_tail(assert_pixels):
+    assert_pixels('''
+        ______BBBBRRRRRRBB__
+        ______BBBBRRRRRRBB__
+    ''', '''
+      <style>
+        @page { size: 20px 2px }
+        svg { display: block }
+      </style>
+      <svg width="20px" height="2px" xmlns="http://www.w3.org/2000/svg">
+        <text x="18" y="1.5" font-family="weasyprint" font-size="2" fill="blue"
+              text-anchor="end">
+          AA<tspan fill="red">ABC</tspan>A
+        </text>
+      </svg>
+    ''')
+
+
+@assert_no_logs
 def test_text_anchor_middle_end_tspan(assert_pixels):
     assert_pixels('''
         _______BBBBBB_______

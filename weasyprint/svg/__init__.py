@@ -467,11 +467,13 @@ class SVG:
         # Draw node children
         if node.display and node.tag not in DEF_TYPES:
             for child in node:
-                if text_anchor_shift:
+                new_chunk = text_anchor_shift and (
+                    child.tag == 'text' or 'x' in child.attrib or 'y' in child.attrib)
+                if new_chunk:
                     new_stream = self.stream
                     self.stream = original_streams[-1]
                 self.draw_node(child, font_size, fill_stroke)
-                if text_anchor_shift:
+                if new_chunk:
                     self.stream = new_stream
                 visible_text_child = (
                     TAGS.get(node.tag) == text and
@@ -502,7 +504,8 @@ class SVG:
                     x - font_size, y - font_size,
                     x + width + font_size, y + height + font_size)
                 x_align = width / 2 if text_anchor == 'middle' else width
-                self.stream.transform(e=-x_align)
+                if node.tag == 'text' or 'x' in node.attrib or 'y' in node.attrib:
+                    self.stream.transform(e=-x_align)
             self.stream.draw_x_object(group_id)
             self.stream.pop_state()
 
