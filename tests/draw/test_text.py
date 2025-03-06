@@ -109,6 +109,62 @@ def test_text_align_rtl_trailing_whitespace(assert_pixels):
     ''')
 
 
+def test_rtl_default_direction(assert_pixels):
+    assert_pixels('''
+        _____BBBBB_____
+        _____BBBBB_____
+        _____BBBBB_____
+        _____BBBBB_____
+        BBBBBBBBBB_____
+    ''', '''
+      <style>
+        @page { size: 15px 5px }
+        body { font-family: weasyprint; color: blue; font-size: 5px; line-height: 1 }
+      </style>
+      اب
+    ''')
+
+
+def test_rtl_forced_direction(assert_pixels):
+    assert_pixels('''
+        __________BBBBB
+        __________BBBBB
+        __________BBBBB
+        __________BBBBB
+        _____BBBBBBBBBB
+    ''', '''
+      <style>
+        @page { size: 15px 5px }
+        body { font-family: weasyprint; color: blue; font-size: 5px; line-height: 1 }
+      </style>
+      <div style="direction: rtl">اب</div>
+    ''')
+
+
+def test_rtl_nested_inline(assert_pixels):
+    assert_pixels('''
+        RRRRR________________BBBBB___________RRRRR___________BBBBB
+        RRRRR________________BBBBB___________RRRRR___________BBBBB
+        RRRRR________________BBBBB___________RRRRR___________BBBBB
+        RRRRR________________BBBBB___________RRRRR___________BBBBB
+        RRRRRRRRRR______BBBBBBBBBB______RRRRRRRRRR______BBBBBBBBBB
+        ______________________________________BBBBB__________RRRRR
+        ______________________________________BBBBB__________RRRRR
+        ______________________________________BBBBB__________RRRRR
+        ______________________________________BBBBB__________RRRRR
+        _________________________________BBBBBBBBBB_____RRRRRRRRRR
+    ''', '''
+      <style>
+        @page { size: 58px 10px }
+        body { font-family: weasyprint; color: blue; font-size: 5px; line-height: 1 }
+        span { color: red }
+      </style>
+      <div style="direction: rtl; text-align: justify">
+        اب <span>اب</span> اب <span>با اب</span> اب
+      </div>
+    ''')
+
+
 def test_max_lines_ellipsis(assert_pixels):
     assert_pixels('''
         BBBBBBBB__
