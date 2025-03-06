@@ -52,6 +52,23 @@ def test_inline_table():
 
 
 @assert_no_logs
+def test_inline_table_width():
+    page, = render_pages('''
+      <div style="font: 2px weasyprint; width: 20px">
+        <table style="display: inline-table; width: 20%"><tr><td>A</tr></td></table>
+        <table style="display: inline-table; width: 20%"><tr><td>B</tr></td></table>
+      </div>''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    line, = div.children
+    table_wrapper1, space, table_wrapper2, tail = line.children
+    assert table_wrapper1.width == table_wrapper2.width == 4
+    assert table_wrapper1.position_x == 0
+    assert table_wrapper2.position_x == 6
+
+
+@assert_no_logs
 def test_implicit_width_table_col_percent():
     # See https://github.com/Kozea/WeasyPrint/issues/169
     page, = render_pages('''

@@ -68,7 +68,7 @@ def float_layout(context, box, containing_block, absolute_boxes, fixed_boxes,
             context, box, bottom_space=bottom_space,
             skip_stack=skip_stack, containing_block=containing_block,
             page_is_empty=True, absolute_boxes=absolute_boxes,
-            fixed_boxes=fixed_boxes)
+            fixed_boxes=fixed_boxes, discard=False)
     elif isinstance(box, boxes.GridContainerBox):
         box, resume_at, _, _, _ = grid_layout(
             context, box, bottom_space=bottom_space,
@@ -216,9 +216,11 @@ def avoid_collisions(context, box, containing_block, outer=True):
                 # bound.
                 position_x = max_right_bound - box_width
             else:
-                # The position of the right border of the replaced box is at
-                # the right bound.
-                assert isinstance(box, boxes.BlockReplacedBox)
+                # The position of the right border of the replaced box or
+                # formatting context is at the right bound.
+                assert (
+                    isinstance(box, boxes.BlockReplacedBox) or
+                    box.establishes_formatting_context())
                 position_x = max_right_bound - box_width
 
     available_width = max_right_bound - max_left_bound

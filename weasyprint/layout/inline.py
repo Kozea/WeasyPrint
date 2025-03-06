@@ -362,9 +362,12 @@ def atomic_box(context, box, position_x, skip_stack, containing_block,
         if box.is_table_wrapper:
             containing_size = (containing_block.width, containing_block.height)
             table_wrapper_width(context, box, containing_size)
+            width, min_width, max_width = box.width, box.min_width, box.max_width
         box = inline_block_box_layout(
             context, box, position_x, skip_stack, containing_block,
             absolute_boxes, fixed_boxes)
+        if box.is_table_wrapper:
+            box.width, box.min_width, box.max_width = width, min_width, max_width
     else:  # pragma: no cover
         raise TypeError(f'Layout for {type(box).__name__} not handled yet')
     return box
@@ -505,7 +508,7 @@ def split_inline_level(context, box, position_x, max_x, bottom_space,
                 setattr(box, f'margin_{side}', 0)
         new_box, resume_at, _, _, _ = flex_layout(
             context, box, -inf, skip_stack, containing_block, False,
-            absolute_boxes, fixed_boxes)
+            absolute_boxes, fixed_boxes, False)
         preserved_line_break = False
         first_letter = '\u2e80'
         last_letter = '\u2e80'
@@ -1041,8 +1044,7 @@ def inline_box_verticality(box, top_bottom_subtrees, baseline_y):
 
         # the child’s `top` is `child.baseline` above (lower y) its baseline.
         top = child_baseline_y - child.baseline
-        box_types = (
-            boxes.InlineBlockBox, boxes.InlineFlexBox, boxes.InlineGridBox)
+        box_types = (boxes.InlineBlockBox, boxes.InlineFlexBox, boxes.InlineGridBox)
         if isinstance(child, box_types):
             # This also includes table wrappers for inline tables.
             child.translate(dy=top - child.position_y)
