@@ -166,6 +166,16 @@ ffi.cdef('''
         PANGO_ELLIPSIZE_END
     } PangoEllipsizeMode;
 
+    typedef enum {
+        PANGO_DIRECTION_LTR,
+        PANGO_DIRECTION_RTL,
+        PANGO_DIRECTION_TTB_LTR,
+        PANGO_DIRECTION_TTB_RTL,
+        PANGO_DIRECTION_WEAK_LTR,
+        PANGO_DIRECTION_WEAK_RTL,
+        PANGO_DIRECTION_NEUTRAL
+    } PangoDirection;
+
     typedef struct GSList {
        gpointer data;
        struct GSList *next;
@@ -278,6 +288,7 @@ ffi.cdef('''
     void pango_layout_set_wrap (PangoLayout *layout, PangoWrapMode wrap);
     void pango_layout_set_single_paragraph_mode (PangoLayout *layout, gboolean setting);
     void pango_layout_set_ellipsize (PangoLayout *layout, PangoEllipsizeMode ellipsize);
+    void pango_layout_set_auto_dir (PangoLayout *layout, gboolean auto_dir);
     int pango_layout_get_baseline (PangoLayout *layout);
     void pango_layout_line_get_extents (
         PangoLayoutLine *line, PangoRectangle *ink_rect, PangoRectangle *logical_rect);
@@ -360,6 +371,7 @@ ffi.cdef('''
     PangoLanguage * pango_language_from_string (const char *language);
     PangoLanguage * pango_language_get_default (void);
     void pango_context_set_language (PangoContext *context, PangoLanguage *language);
+    void pango_context_set_base_dir (PangoContext *context, PangoDirection direction);
 
     void pango_get_log_attrs (
         const char *text, int length, int level, PangoLanguage *language,
