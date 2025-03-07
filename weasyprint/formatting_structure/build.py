@@ -365,6 +365,18 @@ def marker_to_box(element, state, parent_style, style_for, get_image_from_uri,
         translate_y = properties.ZERO_PIXELS
         marker_box.style['transform'] = (
             ('translate', (translate_x, translate_y)),)
+
+        # now consider parent padding
+        padding_x = None
+        if parent_style['direction'] == 'ltr' and 'padding_left' in parent_style and \
+            parent_style['padding_left'].value != 0:
+                padding_x = properties.Dimension(-parent_style['padding_left'].value, parent_style['padding_left'].unit)
+        elif parent_style['direction'] != 'ltr' and 'padding_right' in parent_style and \
+            parent_style['padding_right'].value != 0:
+                padding_x = parent_style['padding_right']
+        if padding_x is not None:
+            marker_box.style['transform'] = marker_box.style['transform'] + (
+                ('translate', (padding_x, translate_y)),)
     else:
         marker_box = boxes.InlineBox.anonymous_from(box, children)
     yield marker_box
