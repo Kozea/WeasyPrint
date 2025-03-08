@@ -1230,3 +1230,29 @@ def test_font_variant_caps_titling(assert_pixels):
       </style>
       <p>Pp</p>
     ''' % SANS_FONTS)
+
+
+def test_unicode_range(assert_pixels):
+    assert_pixels('''
+        __________
+        _RRRRRR___
+        _RRRRRRzz_
+        __________
+    ''', '''
+      <style>
+        @font-face {
+          font-family: uni;
+          src: url(weasyprint.otf);
+          unicode-range: u+41, u+043-045, u+005?;
+        }
+        @page {
+          size: 10px 4px;
+        }
+        body {
+          color: red;
+          font-family: uni;
+          font-size: 2px;
+          line-height: 0;
+          margin: 2px 1px;
+        }
+      </style>ADZB''')

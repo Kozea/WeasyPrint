@@ -208,6 +208,15 @@ def font_variant(tokens):
     return values
 
 
+@descriptor('font-face')
+@comma_separated_list
+@single_token
+def unicode_range(token):
+    """``unicode_range`` descriptor validation."""
+    if token.type == 'unicode-range':
+        return token
+
+
 @descriptor('counter-style')
 def system(tokens):
     """``system`` descriptor validation."""
