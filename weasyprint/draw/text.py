@@ -161,6 +161,10 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
             previous_pango_font = pango_font
             font, font_size = stream.add_font(pango_font)
 
+            # Workaround for https://gitlab.gnome.org/GNOME/pango/-/issues/530.
+            if pango.pango_version() < 14802:
+                font_size = textbox.style['font_size']
+
             # Go through the run glyphs.
             if string:
                 stream.show_text(string)
