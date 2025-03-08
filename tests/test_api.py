@@ -550,6 +550,15 @@ def test_cmap():
         assert int(match) <= 100
 
 
+def test_cmap_rtl():
+    # Regression test for #378.
+    stdout = _run(
+        '--uncompressed-pdf -e utf-8 - -',
+        '<div style="font-family: weasyprint">اب'.encode())
+    assert b'<00cf> <0627>' in stdout
+    assert b'<00d0> <0628>' in stdout
+
+
 @pytest.mark.parametrize('html, fields', (
     ('<input>', ['/Tx', '/V ()']),
     ('<input value="">', ['/Tx', '/V ()']),
