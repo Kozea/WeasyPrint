@@ -208,14 +208,23 @@ class FontConfiguration:
             match = SubElement(root, 'match', target='font')
             test = SubElement(match, 'test', name='file', compare='eq')
             SubElement(test, 'string').text = str(font_path)
-            edit = SubElement(match, 'edit', name='fontfeatures', mode=mode)
             descriptors = {
                 rules[0][0].replace('-', '_'): rules[0][1] for rules in
                 rule_descriptors.get('font_variant', [])}
             settings = rule_descriptors.get('font_feature_settings', 'normal')
             features = font_features(font_feature_settings=settings, **descriptors)
-            for key, value in features.items():
-                SubElement(edit, 'string').text = f'{key} {value}'
+            if features:
+                edit = SubElement(match, 'edit', name='fontfeatures', mode=mode)
+                for key, value in features.items():
+                    SubElement(edit, 'string').text = f'{key} {value}'
+            if unicode_ranges := rule_descriptors.get('unicode_range'):
+                edit = SubElement(match, 'edit', name='charset', mode=mode)
+                plus = SubElement(edit, 'plus')
+                for unicode_range in unicode_ranges:
+                    charset = SubElement(plus, 'charset')
+                    range_ = SubElement(charset, 'range')
+                    for value in (unicode_range.start, unicode_range.end):
+                        SubElement(range_, 'int').text = f'0x{value:x}'
             header = (
                 b'<?xml version="1.0"?>',
                 b'<!DOCTYPE fontconfig SYSTEM "urn:fontconfig:fonts.dtd">')
