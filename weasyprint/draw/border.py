@@ -419,9 +419,9 @@ def clip_border_segment(stream, style, width, side, border_box,
             else:
                 # 2x - 1/2 dashes
                 dash = length / (dash_length + dash_length % 2 - 0.5)
-            dashes1 = int(ceil((chl1 - dash / 2) / dash))
-            dashes2 = int(ceil((chl2 - dash / 2) / dash))
-            line = int(floor(line_length / dash))
+            dashes1 = ceil((chl1 - dash / 2) / dash)
+            dashes2 = ceil((chl2 - dash / 2) / dash)
+            line = floor(line_length / dash)
 
             def draw_dots(dashes, line, way, x, y, px, py, chl):
                 if not dashes:
@@ -483,7 +483,7 @@ def clip_border_segment(stream, style, width, side, border_box,
             stream.end()
             dash = length / (
                 round(length / dash) - (round(length / dash) + 1) % 2) or 1
-            for i in range(0, int(round(length / dash)), 2):
+            for i in range(0, round(length / dash), 2):
                 if side == 'top':
                     stream.rectangle(bbx + i * dash, bby, dash, width)
                 elif side == 'right':

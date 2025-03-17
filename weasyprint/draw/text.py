@@ -207,8 +207,8 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
             if glyph not in font.widths:
                 pango.pango_font_get_glyph_extents(
                     pango_font, glyph, stream.ink_rect, stream.logical_rect)
-                font.widths[glyph] = int(round(
-                    stream.logical_rect.width * 1000 * FROM_UNITS / font_size))
+                font.widths[glyph] = round(
+                    stream.logical_rect.width * 1000 * FROM_UNITS / font_size)
 
             # Set kerning, word spacing, letter spacing.
             kerning = int(

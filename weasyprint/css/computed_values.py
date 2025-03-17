@@ -337,7 +337,7 @@ def image_orientation(style, name, values):
     if values in ('none', 'from-image'):
         return values
     angle, flip = values
-    return (int(round(angle / pi * 2)) % 4 * 90, flip)
+    return (round(angle / pi * 2) % 4 * 90, flip)
 
 
 @register_computer('border-top-width')

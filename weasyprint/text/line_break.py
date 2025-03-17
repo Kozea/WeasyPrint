@@ -214,7 +214,7 @@ class Layout:
             layout.set_text(' ' * self.style['tab_size'])
             line, _ = layout.get_first_line()
             width, _ = line_size(line, self.style)
-            width = int(round(width))
+            width = round(width)
         else:
             width = int(self.style['tab_size'].value)
         # 0 is not handled correctly by Pango

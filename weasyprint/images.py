@@ -127,8 +127,8 @@ class RasterImage:
             width, height = self.width, self.height
         else:
             thumbnail = Image.open(io.BytesIO(self.image_data.data))
-            width = max(1, int(round(self.width * dpi_ratio)))
-            height = max(1, int(round(self.height * dpi_ratio)))
+            width = max(1, round(self.width * dpi_ratio))
+            height = max(1, round(self.height * dpi_ratio))
             thumbnail.thumbnail((width, height))
             image_file = io.BytesIO()
             thumbnail.save(

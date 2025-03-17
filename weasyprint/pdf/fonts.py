@@ -35,7 +35,7 @@ class Font:
                 part.split('=')[0]: float(part.split('=')[1])
                 for part in ffi.string(variations).decode().split(',')}
         if weight := self.variations.get('weight'):
-            self.weight = int(round(weight))
+            self.weight = round(weight)
             pango.pango_font_description_set_weight(description, weight)
         else:
             self.weight = pango.pango_font_description_get_weight(description)
@@ -65,12 +65,12 @@ class Font:
         # Set ascent and descent.
         if self.font_size:
             pango_metrics = pango.pango_font_get_metrics(pango_font, ffi.NULL)
-            self.ascent = int(round(
+            self.ascent = round(
                 pango.pango_font_metrics_get_ascent(pango_metrics) * FROM_UNITS /
-                self.font_size * 1000))
-            self.descent = -int(round(
+                self.font_size * 1000)
+            self.descent = -round(
                 pango.pango_font_metrics_get_descent(pango_metrics) * FROM_UNITS /
-                self.font_size * 1000))
+                self.font_size * 1000)
         else:
             self.ascent = self.descent = 0
 
@@ -560,7 +560,7 @@ def _build_vector_font_dictionary(font_dictionary, pdf, font, widths, compress,
     })
     if str(pdf_version) <= '1.4':  # Cast for bytes and None
         cids = sorted(font.widths)
-        padded_width = int(ceil((cids[-1] + 1) / 8))
+        padded_width = ceil((cids[-1] + 1) / 8)
         bits = ['0'] * padded_width * 8
         for cid in cids:
             bits[cid] = '1'
