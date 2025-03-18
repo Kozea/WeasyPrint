@@ -357,6 +357,20 @@ def clip_border_segment(stream, style, width, side, border_box,
         return pi / 8 * (a + b) * (
             1 + 3 * x ** 2 / (10 + sqrt(4 - 3 * x ** 2)))
 
+    def draw_dash(cx, cy, width, height):
+        """Draw a single dash centered on cx, cy."""
+        if style == 'dotted':
+            r = min(width, height) / 2
+            ratio = r / sqrt(pi)
+            stream.move_to(cx + r, cy)
+            stream.curve_to(cx + r, cy + ratio, cx + ratio, cy + r, cx, cy + r)
+            stream.curve_to(cx - ratio, cy + r, cx - r, cy + ratio, cx - r, cy)
+            stream.curve_to(cx - r, cy - ratio, cx - ratio, cy - r, cx, cy - r)
+            stream.curve_to(cx + ratio, cy - r, cx + r, cy - ratio, cx + r, cy)
+            stream.close()
+        elif style == 'dashed':
+            stream.rectangle(cx - width / 2, cy - height / 2, width, height)
+
     if side == 'top':
         (px1, py1), rounded1 = transition_point(tlh, tlv, bl, bt)
         (px2, py2), rounded2 = transition_point(-trh, trv, -br, bt)
@@ -407,65 +421,12 @@ def clip_border_segment(stream, style, width, side, border_box,
 
     if style in ('dotted', 'dashed'):
         dash = width if style == 'dotted' else 3 * width
+        stream.clip(even_odd=True)
+        stream.end()
         if rounded1 or rounded2:
-            # At least one of the two corners is rounded
-            chl1 = corner_half_length(a1, b1)
-            chl2 = corner_half_length(a2, b2)
-            length = line_length + chl1 + chl2
-            dash_length = round(length / dash)
-            if rounded1 and rounded2:
-                # 2x dashes
-                dash = length / (dash_length + dash_length % 2)
-            else:
-                # 2x - 1/2 dashes
-                dash = length / (dash_length + dash_length % 2 - 0.5)
-            dashes1 = ceil((chl1 - dash / 2) / dash)
-            dashes2 = ceil((chl2 - dash / 2) / dash)
             line = floor(line_length / dash)
-
-            def draw_dots(dashes, line, way, x, y, px, py, chl):
-                if not dashes:
-                    return line + 1, 0
-                for i in range(0, dashes, 2):
-                    i += 0.5  # half dash
-                    angle1 = (
-                        ((2 * angle - way) + i * way * dash / chl) /
-                        4 * pi)
-                    angle2 = (min if way > 0 else max)(
-                        ((2 * angle - way) + (i + 1) * way * dash / chl) /
-                        4 * pi,
-                        angle * pi / 2)
-                    if side in ('top', 'bottom'):
-                        stream.move_to(x + px, main_offset + py)
-                        stream.line_to(
-                            x + px - way * px * 1 / tan(angle2), main_offset)
-                        stream.line_to(
-                            x + px - way * px * 1 / tan(angle1), main_offset)
-                    elif side in ('left', 'right'):
-                        stream.move_to(main_offset + px, y + py)
-                        stream.line_to(
-                            main_offset, y + py + way * py * tan(angle2))
-                        stream.line_to(
-                            main_offset, y + py + way * py * tan(angle1))
-                    if angle2 == angle * pi / 2:
-                        offset = (angle1 - angle2) / ((
-                            ((2 * angle - way) + (i + 1) * way * dash / chl) /
-                            4 * pi) - angle1)
-                        line += 1
-                        break
-                else:
-                    offset = 1 - (
-                        (angle * pi / 2 - angle2) / (angle2 - angle1))
-                return line, offset
-
-            line, offset = draw_dots(
-                dashes1, line, way, bbx, bby, px1, py1, chl1)
-            line = draw_dots(
-                dashes2, line, -way, bbx + bbw, bby + bbh, px2, py2, chl2)[0]
-
             if line_length > 1e-6:
                 for i in range(0, line, 2):
-                    i += offset
                     if side in ('top', 'bottom'):
                         x1 = max(bbx + px1 + i * dash, bbx + px1)
                         x2 = min(bbx + px1 + (i + 1) * dash, bbx + bbw + px2)
@@ -476,24 +437,24 @@ def clip_border_segment(stream, style, width, side, border_box,
                         y2 = min(bby + py1 + (i + 1) * dash, bby + bbh + py2)
                         x1 = main_offset - (width if way > 0 else 0)
                         x2 = x1 + width
-                    stream.rectangle(x1, y1, x2 - x1, y2 - y1)
+                    draw_dash(x1 + (x2 - x1) / 2, y1 + (y2 - y1) / 2, x2 - x1, y2 - y1)
         else:
             # 2x + 1 dashes
-            stream.clip(even_odd=True)
-            stream.end()
-            dash = length / (
-                round(length / dash) - (round(length / dash) + 1) % 2) or 1
+            dash = length / (round(length / dash) - (round(length / dash) + 1) % 2) or 1
             for i in range(0, round(length / dash), 2):
                 if side == 'top':
-                    stream.rectangle(bbx + i * dash, bby, dash, width)
+                    cx, cy = bbx + i * dash + dash / 2, bby + width / 2
+                    dash_width, dash_height = dash, width
                 elif side == 'right':
-                    stream.rectangle(
-                        bbx + bbw - width, bby + i * dash, width, dash)
+                    cx, cy = bbx + bbw - width / 2, bby + i * dash + dash / 2
+                    dash_width, dash_height = width, dash
                 elif side == 'bottom':
-                    stream.rectangle(
-                        bbx + i * dash, bby + bbh - width, dash, width)
+                    cx, cy = bbx + i * dash + dash / 2, bby + bbh - width / 2
+                    dash_width, dash_height = dash, width
                 elif side == 'left':
-                    stream.rectangle(bbx, bby + i * dash, width, dash)
+                    cx, cy = bbx + width / 2, bby + i * dash + dash / 2
+                    dash_width, dash_height = width, dash
+                draw_dash(cx, cy, dash_width, dash_height)
     stream.clip(even_odd=True)
     stream.end()
 
@@ -558,7 +519,8 @@ def draw_line(stream, x1, y1, x2, y2, thickness, style, color, offset=0):
         if style == 'dashed':
             stream.set_dash([5 * thickness], offset)
         elif style == 'dotted':
-            stream.set_dash([thickness], offset)
+            stream.set_line_cap(1)
+            stream.set_dash([0, 2 * thickness], offset)
 
         if style == 'double':
             stream.set_line_width(thickness / 3)
