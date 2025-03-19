@@ -170,7 +170,8 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
         marker_boxes = list(marker_to_box(
             element, state, style, style_for, get_image_from_uri,
             target_collector, counter_style))
-        children.extend(marker_boxes)
+        if not style['list_style_position'] == 'outside':
+            children.extend(marker_boxes)
 
     children.extend(before_after_to_box(
         element, 'before', state, style_for, get_image_from_uri,
@@ -255,7 +256,12 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
         box.children.insert(0, marker)
 
     # Specific handling for the element. (eg. replaced element)
-    return html.handle_element(element, box, get_image_from_uri, base_url)
+    box_handled_list = html.handle_element(element, box, get_image_from_uri, base_url)
+
+    if marker_boxes and style['list_style_position'] == 'outside':
+       return list(marker_boxes) + list(box_handled_list)
+    else:
+        return box_handled_list
 
 
 def before_after_to_box(element, pseudo_type, state, style_for,
@@ -358,25 +364,6 @@ def marker_to_box(element, state, parent_style, style_for, get_image_from_uri,
         # We can safely edit everything that can't be changed by user style
         # See https://drafts.csswg.org/css-pseudo-4/#marker-pseudo
         marker_box.style['position'] = 'absolute'
-        if parent_style['direction'] == 'ltr':
-            translate_x = properties.Dimension(-100, '%')
-        else:
-            translate_x = properties.Dimension(100, '%')
-        translate_y = properties.ZERO_PIXELS
-        marker_box.style['transform'] = (
-            ('translate', (translate_x, translate_y)),)
-
-        # now consider parent padding
-        padding_x = None
-        if parent_style['direction'] == 'ltr' and 'padding_left' in parent_style and \
-            parent_style['padding_left'].value != 0:
-                padding_x = properties.Dimension(-parent_style['padding_left'].value, parent_style['padding_left'].unit)
-        elif parent_style['direction'] != 'ltr' and 'padding_right' in parent_style and \
-            parent_style['padding_right'].value != 0:
-                padding_x = parent_style['padding_right']
-        if padding_x is not None:
-            marker_box.style['transform'] = marker_box.style['transform'] + (
-                ('translate', (padding_x, translate_y)),)
     else:
         marker_box = boxes.InlineBox.anonymous_from(box, children)
     yield marker_box
