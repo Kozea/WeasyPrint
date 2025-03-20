@@ -67,7 +67,8 @@ PARSER = Parser(prog='weasyprint', description='Render web pages to PDF.')
 PARSER.add_argument(
     'input', help='URL or filename of the HTML input, or - for stdin')
 PARSER.add_argument(
-    'output', help='filename where output is written, or - for stdout')
+    'output', help='filename where output is written, or - for stdout',
+    nargs="?", default=None)
 PARSER.add_argument(
     '-e', '--encoding', help='force the input character encoding')
 PARSER.add_argument(
@@ -161,6 +162,8 @@ def main(argv=None, stdout=None, stdin=None, HTML=HTML):  # noqa: N803
 
     if args.output == '-':
         output = stdout or sys.stdout.buffer
+    elif args.output is None and args.input != '-':
+        output = args.input + '.pdf'
     else:
         output = args.output
 
