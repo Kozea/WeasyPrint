@@ -2,6 +2,98 @@ Changelog
 =========
 
 
+Version 65.0
+------------
+
+Released on 2025-03-20.
+
+Dependencies:
+
+* CSSSelect2 0.8.0 is now needed
+
+Features:
+
+* `#1665 <https://github.com/Kozea/WeasyPrint/issues/1665>`_:
+  Support gap properties in Flex layout, with financial support from NLnet.
+* `#378 <https://github.com/Kozea/WeasyPrint/issues/378>`_,
+  `#2405 <https://github.com/Kozea/WeasyPrint/pull/2405>`_:
+  Handle @font-face unicode-range
+* `#2394 <https://github.com/Kozea/WeasyPrint/pull/2394>`_:
+  Modernize and improve default user agent stylesheets
+
+Bug fixes:
+
+* `#2362 <https://github.com/Kozea/WeasyPrint/issues/2362>`_,
+  `#2387 <https://github.com/Kozea/WeasyPrint/pull/2387>`_,
+  `#601 <https://github.com/Kozea/WeasyPrint/issues/601>`_,
+  `#1967 <https://github.com/Kozea/WeasyPrint/issues/1967>`_,
+  `#1805 <https://github.com/Kozea/WeasyPrint/issues/1805>`_,
+  `#2163 <https://github.com/Kozea/WeasyPrint/issues/2163>`_,
+  `#2342 <https://github.com/Kozea/WeasyPrint/issues/2342>`_,
+  `#2374 <https://github.com/Kozea/WeasyPrint/issues/2374>`_,
+  `#1109 <https://github.com/Kozea/WeasyPrint/issues/1109>`_,
+  `#1356 <https://github.com/Kozea/WeasyPrint/issues/1356>`_,
+  `#1327 <https://github.com/Kozea/WeasyPrint/issues/1327>`_,
+  `#1563 <https://github.com/Kozea/WeasyPrint/issues/1563>`_,
+  `#1652 <https://github.com/Kozea/WeasyPrint/issues/1652>`_,
+  `#2351 <https://github.com/Kozea/WeasyPrint/issues/2351>`_,
+  `#2312 <https://github.com/Kozea/WeasyPrint/issues/2312>`_,
+  `#2340 <https://github.com/Kozea/WeasyPrint/issues/2340>`_,
+  `#1311 <https://github.com/Kozea/WeasyPrint/issues/1311>`_,
+  `#2066 <https://github.com/Kozea/WeasyPrint/issues/2066>`_,
+  `#2359 <https://github.com/Kozea/WeasyPrint/issues/2359>`_,
+  `#2053 <https://github.com/Kozea/WeasyPrint/issues/2053>`_:
+  Improve Flex layout, with financial support from NLnet.
+* `#1686 <https://github.com/Kozea/WeasyPrint/issues/1686>`_,
+  `#2404 <https://github.com/Kozea/WeasyPrint/pull/2404>`_:
+  Fix duplicate text selection with right-to-left text
+* `#2372 <https://github.com/Kozea/WeasyPrint/issues/2372>`_,
+  `#2389 <https://github.com/Kozea/WeasyPrint/pull/2389>`_:
+  Fix justification of right-to-left text
+* `#2403 <https://github.com/Kozea/WeasyPrint/issues/2403>`_:
+  Fix emoji rendering with older versions of Pango
+* `#2392 <https://github.com/Kozea/WeasyPrint/issues/2392>`_:
+  Fix complex cases involving nested SVG text anchors
+* `#2396 <https://github.com/Kozea/WeasyPrint/issues/2396>`_,
+  `#2398 <https://github.com/Kozea/WeasyPrint/pull/2398>`_:
+  Fix and improve font names in PDF
+* `#2269 <https://github.com/Kozea/WeasyPrint/issues/2269>`_,
+  `#2390 <https://github.com/Kozea/WeasyPrint/pull/2390>`_:
+  Apply justification to non-breaking spaces
+* `#2362 <https://github.com/Kozea/WeasyPrint/issues/2362>`_,
+  `#2387 <https://github.com/Kozea/WeasyPrint/pull/2387>`_:
+  Improve Flex layout, with financial support from NLnet.
+
+Contributors:
+
+* Guillaume Ayoub
+* Luca Vercelli
+
+Backers and sponsors:
+
+* Spacinov
+* Kobalt
+* Grip Angebotssoftware
+* Syslifters
+* Simon Sapin
+* Manuel Barkhau
+* Simonsoft
+* Menutech
+* KontextWork
+* TrainingSparkle
+* Healthchecks.io
+* Hammerbacher
+* DocRaptor
+* Yanal-Yves Fargialla
+* Method B
+* FieldHub
+* Morntag
+* Xavid
+* Kai DeLorenzo
+* Charlie S.
+* Alan Villalobos
+
+
 Version 64.1
 ------------
 
