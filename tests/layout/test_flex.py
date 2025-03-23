@@ -1753,3 +1753,34 @@ def test_flex_collapsing_margin():
     assert p.height == 100
     assert article.position_y == 110
     assert div.position_y == 120
+
+
+@assert_no_logs
+def test_flex_direction_column_next_page():
+    # Regression test for issue #2414.
+    page1, page2 = render_pages('''
+      <style>
+        @page { size: 4px 5px }
+        html { font: 2px/1 weasyprint }
+      </style>
+      <div>1</div>
+      <article style="display: flex; flex-direction: column">
+        <div>A</div>
+        <div>B</div>
+        <div>C</div>
+      </article>
+    ''')
+    html, = page1.children
+    body, = html.children
+    div, article = body.children
+    assert div.children[0].children[0].text == '1'
+    assert div.children[0].children[0].position_y == 0
+    assert article.children[0].children[0].children[0].text == 'A'
+    assert article.children[0].children[0].children[0].position_y == 2
+    html, = page2.children
+    body, = html.children
+    article, = body.children
+    assert article.children[0].children[0].children[0].text == 'B'
+    assert article.children[0].children[0].children[0].position_y == 0
+    assert article.children[1].children[0].children[0].text == 'C'
+    assert article.children[1].children[0].children[0].position_y == 2

@@ -250,8 +250,12 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
                 new_child = block.block_level_layout(
                     context, new_child, bottom_space, child_skip_stack, parent_box,
                     page_is_empty, absolute_boxes, fixed_boxes)[0]
-                child.flex_base_size = new_child.height
-                child.main_outer_extra = new_child.margin_height() - new_child.height
+                if new_child:
+                    child.flex_base_size = new_child.height
+                    child.main_outer_extra = (
+                        new_child.margin_height() - new_child.height)
+                else:
+                    child.flex_base_size = child.main_outer_extra = 0
 
         if main == 'width':
             position_x += child.flex_base_size + child.main_outer_extra
