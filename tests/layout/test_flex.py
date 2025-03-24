@@ -1784,3 +1784,34 @@ def test_flex_direction_column_next_page():
     assert article.children[0].children[0].children[0].position_y == 0
     assert article.children[1].children[0].children[0].text == 'C'
     assert article.children[1].children[0].children[0].position_y == 2
+
+
+@assert_no_logs
+def test_flex_1_item_padding():
+    page, = render_pages('''
+      <article style="display: flex; width: 100px; font: 2px weasyprint">
+        <div>abc</div>
+        <div style="flex: 1; padding-right: 5em">def</div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div1, div2 = article.children
+    assert div1.border_width() + div2.border_width() == article.width
+
+
+@assert_no_logs
+def test_flex_1_item_padding_direction_column():
+    page, = render_pages('''
+      <article style="display: flex; flex-direction: column; height: 100px;
+                      font: 2px weasyprint">
+        <div>abc</div>
+        <div style="flex: 1; padding-top: 5em">def</div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div1, div2 = article.children
+    assert div1.border_height() + div2.border_height() == article.height

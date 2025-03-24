@@ -221,14 +221,16 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
             child.flex_base_size = flex_basis
             if main == 'width':
                 child.main_outer_extra = (
-                    child.border_left_width + child.border_right_width)
+                    child.border_left_width + child.border_right_width +
+                    child.padding_left + child.padding_right)
                 if child.margin_left != 'auto':
                     child.main_outer_extra += child.margin_left
                 if child.margin_right != 'auto':
                     child.main_outer_extra += child.margin_right
             else:
                 child.main_outer_extra = (
-                    child.border_top_width + child.border_bottom_width)
+                    child.border_top_width + child.border_bottom_width +
+                    child.padding_top + child.padding_bottom)
                 if child.margin_top != 'auto':
                     child.main_outer_extra += child.margin_top
                 if child.margin_bottom != 'auto':
