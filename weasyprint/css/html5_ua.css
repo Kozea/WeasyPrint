@@ -20,7 +20,7 @@ a[href] { -weasy-link: attr(href) }
 /* Display and visibility */
 
 [hidden], area, base, basefont, command, datalist, head, input[type=hidden i], link, menu[type=context i], meta, noembed, noframes, param, rp, script, source, style, template, title, track { display: none }
-address, article, aside, blockquote, body, center, dd, details, dir, div, dl, dt, frame, frameset, fieldset, figure, figcaption, footer, form, h1, h2, h3, h4, h5, h6, header, hgroup, hr, html, legend, listing, menu, nav, ol, p, plaintext, pre, section, summary, ul, xmp { display: block }
+address, article, aside, blockquote, body, center, dd, details, dir, div, dl, dt, frame, frameset, fieldset, figure, figcaption, footer, form, h1, h2, h3, h4, h5, h6, header, hgroup, hr, html, legend, listing, main, menu, nav, ol, p, plaintext, pre, section, summary, ul, xmp { display: block }
 button, input, keygen, select, textarea { display: inline-block }
 li { display: list-item }
 table { display: table }
