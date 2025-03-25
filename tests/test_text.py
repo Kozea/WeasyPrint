@@ -833,6 +833,22 @@ def test_hyphenate_limit_zone_4():
     assert full_text == 'mmmmmhyphénation'
 
 
+def test_hyphen_nbsp():
+    # Regression test for issue #1817.
+    page, = render_pages('''
+      <style>
+        body {width: 20px; font: 2px weasyprint}
+      </style>
+      <body style="hyphens: auto;" lang="en">
+        <span>this&nbsp;hyphenation
+    ''')
+    html, = page.children
+    body, = html.children
+    line1, line2 = body.children
+    assert line1.children[0].children[0].text == "this hy‐"
+    assert line2.children[0].children[0].text == "phenation"
+
+
 @assert_no_logs
 @pytest.mark.parametrize('css, result', (
     ('auto', 2),
