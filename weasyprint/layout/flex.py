@@ -167,9 +167,9 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
             content_size = min_content_width(context, new_child, outer=False)
             transferred_size = None
             if isinstance(child, boxes.ReplacedBox):
-                image = box.replacement
+                image = child.replacement
                 _, intrinsic_height, intrinsic_ratio = image.get_intrinsic_size(
-                    box.style['image_resolution'], box.style['font_size'])
+                    child.style['image_resolution'], child.style['font_size'])
                 if intrinsic_ratio and intrinsic_height:
                     transferred_size = intrinsic_height * intrinsic_ratio
             if specified_size != 'auto':
@@ -195,9 +195,9 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
             content_size = new_child.height if new_child else 0
             transferred_size = None
             if isinstance(child, boxes.ReplacedBox):
-                image = box.replacement
+                image = child.replacement
                 intrinsic_width, _, intrinsic_ratio = image.get_intrinsic_size(
-                    box.style['image_resolution'], box.style['font_size'])
+                    child.style['image_resolution'], child.style['font_size'])
                 if intrinsic_ratio and intrinsic_width:
                     transferred_size = intrinsic_width / intrinsic_ratio
             if specified_size != 'auto':

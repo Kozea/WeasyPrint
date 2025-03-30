@@ -1815,3 +1815,19 @@ def test_flex_1_item_padding_direction_column():
     article, = body.children
     div1, div2 = article.children
     assert div1.border_height() + div2.border_height() == article.height
+
+
+@assert_no_logs
+def test_flex_item_replaced():
+    page, = render_pages('''
+      <div style="display: flex">
+        <svg style="display: block" height="100" width="100" xmlns="http://www.w3.org/2000/svg">
+          <circle r="45" cx="50" cy="50" fill="red" />
+        </svg>
+      </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    svg, = div.children
+    assert svg.width == svg.height == 100
