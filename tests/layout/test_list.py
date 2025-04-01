@@ -32,7 +32,7 @@ def test_lists_style(inside, style, character):
         marker_text, = marker.children
     else:
         marker, line_container, = list_item.children
-        assert marker.position_x == list_item.position_x
+        assert marker.position_x == list_item.position_x - marker.width
         assert marker.position_y == list_item.position_y
         line, = line_container.children
         content, = line.children

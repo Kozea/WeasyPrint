@@ -358,7 +358,7 @@ def marker_to_box(element, state, parent_style, style_for, get_image_from_uri,
         # We can safely edit everything that can't be changed by user style
         # See https://drafts.csswg.org/css-pseudo-4/#marker-pseudo
         marker_box.style['position'] = 'absolute'
-        marker_box.border_based = True
+        marker_box.is_outside_marker = True
     else:
         marker_box = boxes.InlineBox.anonymous_from(box, children)
     yield marker_box
