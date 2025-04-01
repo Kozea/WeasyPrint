@@ -692,7 +692,16 @@ def block_container_layout(context, box, bottom_space, skip_stack,
         (skip, skip_stack), = skip_stack.items()
         first_letter_style = None
     for index, child in enumerate(box.children[skip:], start=(skip or 0)):
-        child.position_x = position_x
+        if child.border_based:
+            if hasattr(child, 'width'):
+                child.position_x = box.border_box_x() - child.width
+            else:
+                # child.width is not known yet. FIXME what about LTR ?
+                child.position_x = box.border_box_x()
+                # TODO check this
+                context.page_maker[0][4]['content_changed'] = True
+        else:
+            child.position_x = position_x
         child.position_y = position_y  # doesn’t count adjoining_margins
         new_footnotes = []
 

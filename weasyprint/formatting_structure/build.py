@@ -358,13 +358,7 @@ def marker_to_box(element, state, parent_style, style_for, get_image_from_uri,
         # We can safely edit everything that can't be changed by user style
         # See https://drafts.csswg.org/css-pseudo-4/#marker-pseudo
         marker_box.style['position'] = 'absolute'
-        if parent_style['direction'] == 'ltr':
-            translate_x = properties.Dimension(-100, '%')
-        else:
-            translate_x = properties.Dimension(100, '%')
-        translate_y = properties.ZERO_PIXELS
-        marker_box.style['transform'] = (
-            ('translate', (translate_x, translate_y)),)
+        marker_box.border_based = True
     else:
         marker_box = boxes.InlineBox.anonymous_from(box, children)
     yield marker_box

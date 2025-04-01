@@ -72,6 +72,7 @@ class Box:
     is_for_root_element = False
     is_column = False
     is_leader = False
+    border_based = False        # for list-style-position = 'outside'
 
     # Other properties
     transformation_matrix = None
