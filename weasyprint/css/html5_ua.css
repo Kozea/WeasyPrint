@@ -62,14 +62,18 @@ dd { margin-left: 40px }
 [dir] [dir=rtl i] dd { margin-left: 40px; margin-right: 0 }
 [dir] [dir] [dir=ltr i] dd { margin-left: 0; margin-right: 40px }
 [dir] [dir] [dir=rtl i] dd { margin-left: 40px; margin-right: 0 }
+dd[dir=ltr i][dir][dir] { margin-left: 0; margin-right: 40px }
+dd[dir=rtl i][dir][dir] { margin-left: 40px; margin-right: 0 }
 
 dir, menu, ol, ul { padding-left: 40px }
-[dir=rtl i] :is(dir, menu, ol, ul) { padding-left: 0; padding-right: 40px }
 [dir=ltr i] :is(dir, menu, ol, ul) { padding-left: 40px; padding-right: 0 }
-[dir] [dir=rtl i] :is(dir, menu, ol, ul) { padding-left: 0; padding-right: 40px }
+[dir=rtl i] :is(dir, menu, ol, ul) { padding-left: 0; padding-right: 40px }
 [dir] [dir=ltr i] :is(dir, menu, ol, ul) { padding-left: 40px; padding-right: 0 }
-[dir] [dir] [dir=rtl i] :is(dir, menu, ol, ul) { padding-left: 0; padding-right: 40px }
+[dir] [dir=rtl i] :is(dir, menu, ol, ul) { padding-left: 0; padding-right: 40px }
 [dir] [dir] [dir=ltr i] :is(dir, menu, ol, ul) { padding-left: 40px; padding-right: 0 }
+[dir] [dir] [dir=rtl i] :is(dir, menu, ol, ul) { padding-left: 0; padding-right: 40px }
+:is(dir, menu, ol, ul)[dir=ltr i][dir][dir] { padding-left: 40px; padding-right: 0 }
+:is(dir, menu, ol, ul)[dir=rtl i][dir][dir] { padding-left: 0; padding-right: 40px }
 
 table { border-spacing: 2px; border-collapse: separate }
 td, th { padding: 1px }
