@@ -67,7 +67,9 @@ def absolute_width(box, context, cb_x, cb_y, cb_width, cb_height):
         available_width = cb_width - (
             paddings_borders + box.margin_left + box.margin_right)
         box.width = shrink_to_fit(context, box, available_width)
-        if not ltr:
+        if box.is_outside_marker:
+            translate_box_width = ltr
+        elif not ltr:
             translate_box_width = True
             translate_x = default_translate_x + available_width
     elif box.left != 'auto' and box.right != 'auto' and box.width != 'auto':
@@ -268,6 +270,7 @@ def absolute_box_layout(context, box, containing_block, fixed_boxes,
             context, box, containing_block, fixed_boxes, bottom_space,
             skip_stack, cb_x, cb_y, cb_width, cb_height)
     context.finish_block_formatting_context(new_box)
+
     return new_box, resume_at
 
 

@@ -706,6 +706,10 @@ def block_container_layout(context, box, bottom_space, skip_stack,
             if out_of_flow_resume_at:
                 broken_out_of_flow[new_child] = (
                     child, box, out_of_flow_resume_at)
+            if child.is_outside_marker:
+                new_child.position_x = box.border_box_x()
+                if child.style['direction'] == 'rtl':
+                    new_child.position_x += box.width + box.padding_right
 
         elif isinstance(child, boxes.LineBox):
             (abort, stop, resume_at, position_y,
