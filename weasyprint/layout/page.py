@@ -809,7 +809,7 @@ def _includes_resume_at(resume_at, page_group_resume_at):
     return _includes_resume_at(resume_at[page_child_index], page_child_resume_at)
 
 
-def _update_page_groups(page_groups, resume_at, next_page, root_box):
+def _update_page_groups(page_groups, resume_at, next_page, root_box, blank):
     # https://www.w3.org/TR/css-gcpm-3/#document-sequence-selectors
 
     # Remove or increment page groups.
@@ -821,6 +821,9 @@ def _update_page_groups(page_groups, resume_at, next_page, root_box):
             page_groups.pop(i - page_groups_length)
 
     # Add page groups.
+    if blank:
+        # The page is blank, there’s no new page group.
+        return
     if (resume_at and next_page['break'] == 'any') or not next_page['page']:
         # We don’t have a forced page break or a named page.
         return
@@ -894,7 +897,7 @@ def remake_page(index, page_groups, context, root_box, html):
         (context.reported_footnotes and resume_at is None))
     name = '' if blank else next_page['page']
     side = 'right' if right_page else 'left'
-    _update_page_groups(page_groups, resume_at, next_page, root_box)
+    _update_page_groups(page_groups, resume_at, next_page, root_box, blank)
     groups = tuple((name, index) for name, index, _ in page_groups)
     page_type = PageType(side, blank, name, index, groups)
     set_page_type_computed_styles(page_type, html, context.style_for)
