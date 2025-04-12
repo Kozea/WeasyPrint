@@ -799,6 +799,8 @@ def set_page_type_computed_styles(page_type, html, style_for):
 
 
 def _includes_resume_at(resume_at, page_group_resume_at):
+    if not page_group_resume_at:
+        return True
     (page_child_index, page_child_resume_at), = page_group_resume_at.items()
     if resume_at is None or page_child_index not in resume_at:
         return False
@@ -819,7 +821,7 @@ def _update_page_groups(page_groups, resume_at, next_page, root_box):
             page_groups.pop(i - page_groups_length)
 
     # Add page groups.
-    if next_page['break'] == 'any' or not next_page['page']:
+    if (resume_at and next_page['break'] == 'any') or not next_page['page']:
         # We don’t have a forced page break or a named page.
         return
     if page_groups and page_groups[-1][0] == next_page['page']:
@@ -830,8 +832,7 @@ def _update_page_groups(page_groups, resume_at, next_page, root_box):
     # element corresponding to resume_at.
 
     # Find element corrensponding to resume_at.
-    page_group_resume_at = copy.deepcopy(resume_at)
-    current_resume_at = page_group_resume_at
+    current_resume_at = page_group_resume_at = copy.deepcopy(resume_at) or {0: None}
     current_element = root_box
     while True:
         child_index, child_resume_at = tuple(current_resume_at.items())[-1]
