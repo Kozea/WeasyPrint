@@ -970,6 +970,74 @@ def test_page_groups():
 
 
 @assert_no_logs
+def test_page_groups_blank_inside():
+    # Regression test for #1076.
+    pages = render_pages('''
+      <style>
+        @page { size: 100px }
+        @page div { size: 50px }
+        div { page: div }
+        p { break-before: right }
+      </style>
+      <div>
+        <p>1</p>
+        <p>2</p>
+      </div>
+    ''')
+    assert len(pages) == 3
+    for page in pages:
+        assert (page.width, page.height) == (50, 50)
+
+
+@assert_no_logs
+def test_page_groups_blank_outside():
+    pages = render_pages('''
+      <style>
+        @page { size: 100px }
+        @page p { size: 50px }
+        p { page: p; break-before: right }
+      </style>
+      <div>
+        <p>1</p>
+        <p>2</p>
+      </div>
+    ''')
+    page1, page2, page3 = pages
+    for page in (page1, page3):
+        assert (page.width, page.height) == (50, 50)
+    assert (page2.width, page2.height) == (100, 100)
+
+
+@assert_no_logs
+def test_page_groups_first_nth():
+    # Regression test for #2429.
+    pages = render_pages('''
+      <style>
+        @page { size: 100px }
+        @page div { size: 50px }
+        @page :nth(2n+1 of div) { size: 30px }
+        div { page: div; break-before: right }
+        p { break-before: page }
+      </style>
+      <div>
+        <p>1</p>
+        <p>2</p>
+        <p>3</p>
+      </div>
+      <div>
+        <p>4</p>
+        <p>5</p>
+      </div>
+    ''')
+    page1, page2, page3, page4, page5, page6 = pages
+    for page in (page1, page3, page5):
+        assert (page.width, page.height) == (30, 30)
+    for page in (page2, page6):
+        assert (page.width, page.height) == (50, 50)
+    assert (page4.width, page4.height) == (100, 100)
+
+
+@assert_no_logs
 @pytest.mark.parametrize('style, line_counts', (
     ('orphans: 2; widows: 2', [4, 3]),
     ('orphans: 5; widows: 2', [0, 7]),
