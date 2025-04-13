@@ -799,6 +799,8 @@ def set_page_type_computed_styles(page_type, html, style_for):
 
 
 def _includes_resume_at(resume_at, page_group_resume_at):
+    if not page_group_resume_at:
+        return True
     (page_child_index, page_child_resume_at), = page_group_resume_at.items()
     if resume_at is None or page_child_index not in resume_at:
         return False
@@ -807,7 +809,7 @@ def _includes_resume_at(resume_at, page_group_resume_at):
     return _includes_resume_at(resume_at[page_child_index], page_child_resume_at)
 
 
-def _update_page_groups(page_groups, resume_at, next_page, root_box):
+def _update_page_groups(page_groups, resume_at, next_page, root_box, blank):
     # https://www.w3.org/TR/css-gcpm-3/#document-sequence-selectors
 
     # Remove or increment page groups.
@@ -819,35 +821,40 @@ def _update_page_groups(page_groups, resume_at, next_page, root_box):
             page_groups.pop(i - page_groups_length)
 
     # Add page groups.
-    if next_page['break'] == 'any' or not next_page['page']:
-        # We don’t have a forced page break or a named page.
-        return
-    if page_groups and page_groups[-1][0] == next_page['page']:
-        # We’re already in an element whose page name is the next page name.
-        return
+    if not blank:
+        if (resume_at and next_page['break'] == 'any') or not next_page['page']:
+            # We don’t have a forced page break or a named page.
+            return next_page['page']
+        if page_groups and page_groups[-1][0] == next_page['page']:
+            # We’re already in an element whose page name is the next page name.
+            return next_page['page']
 
     # Find the box that has the named page. It is a first in-flow child of the
     # element corresponding to resume_at.
 
     # Find element corrensponding to resume_at.
-    page_group_resume_at = copy.deepcopy(resume_at)
-    current_resume_at = page_group_resume_at
+    current_resume_at = page_group_resume_at = copy.deepcopy(resume_at) or {0: None}
     current_element = root_box
     while True:
         child_index, child_resume_at = tuple(current_resume_at.items())[-1]
+        parent_element = current_element
         current_element = current_element.children[child_index]
         if child_resume_at is None:
             break
         current_resume_at = child_resume_at
 
+    if blank:
+        # Page is blank, don’t create a new page group and return parent’s page name.
+        return parent_element.style['page']
+
     # Find the descendant with named page.
     while True:
         if current_element.style['page'] == next_page['page']:
             page_groups.append([next_page['page'], 0, page_group_resume_at])
-            return
+            return next_page['page']
         if not isinstance(current_element, boxes.ParentBox):
             # Shouldn’t happen.
-            return
+            return next_page['page']
         for i, child in enumerate(current_element.children):
             if not child.is_in_normal_flow():
                 continue
@@ -858,7 +865,7 @@ def _update_page_groups(page_groups, resume_at, next_page, root_box):
             break
         else:
             # Shouldn’t happen.
-            return
+            return next_page['page']
 
 
 def remake_page(index, page_groups, context, root_box, html):
@@ -891,9 +898,8 @@ def remake_page(index, page_groups, context, root_box, html):
         (next_page_side == 'left' and right_page) or
         (next_page_side == 'right' and not right_page) or
         (context.reported_footnotes and resume_at is None))
-    name = '' if blank else next_page['page']
     side = 'right' if right_page else 'left'
-    _update_page_groups(page_groups, resume_at, next_page, root_box)
+    name = _update_page_groups(page_groups, resume_at, next_page, root_box, blank)
     groups = tuple((name, index) for name, index, _ in page_groups)
     page_type = PageType(side, blank, name, index, groups)
     set_page_type_computed_styles(page_type, html, context.style_for)
