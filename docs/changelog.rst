@@ -2,6 +2,57 @@ Changelog
 =========
 
 
+Version 65.1
+------------
+
+Released on 2025-04-14.
+
+Bug fixes:
+
+* `#2414 <https://github.com/Kozea/WeasyPrint/issues/2414>`_:
+  Correctly handle flex columns split between pages
+* `1b24ad9 <https://github.com/Kozea/WeasyPrint/commit/1b24ad9>`_:
+  Include padding in outer size of item elements
+* `#2419 <https://github.com/Kozea/WeasyPrint/issues/2419>`_:
+  Set main tag as block by default
+* `#2415 <https://github.com/Kozea/WeasyPrint/issues/2415>`_:
+  Fix support of replaced block box as flex items
+* `83da2fe0 <https://github.com/Kozea/WeasyPrint/commit/83da2fe0>`_:
+  Fix margins and padding for rtl lists
+* `#2429 <https://github.com/Kozea/WeasyPrint/issues/2429>`_,
+  `#1076 <https://github.com/Kozea/WeasyPrint/issues/1076>`_,
+  `#2431 <https://github.com/Kozea/WeasyPrint/pull/2431>`_:
+  Fix page groups
+
+Contributors:
+
+* Guillaume Ayoub
+
+Backers and sponsors:
+
+* Spacinov
+* Kobalt
+* Grip Angebotssoftware
+* Syslifters
+* Simon Sapin
+* Manuel Barkhau
+* Simonsoft
+* Menutech
+* KontextWork
+* TrainingSparkle
+* Healthchecks.io
+* Hammerbacher
+* DocRaptor
+* Yanal-Yves Fargialla
+* Method B
+* FieldHub
+* Morntag
+* Xavid
+* Kai DeLorenzo
+* Charlie S.
+* Alan Villalobos
+
+
 Version 65.0
 ------------
 
