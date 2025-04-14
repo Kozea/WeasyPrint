@@ -311,7 +311,7 @@ def test_images_alt(assert_same_renderings):
 
 @assert_no_logs
 def test_images_repeat_transparent(assert_pixels):
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1440
+    # Regression test for #1440.
     assert_pixels('_\n_\n_', '''
       <style>
         @page { size: 1px }
@@ -366,7 +366,7 @@ def test_images_page_break(assert_pixels):
 
 @assert_no_logs
 def test_image_repeat_inline(assert_pixels):
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/808
+    # Regression test for #808.
     assert_pixels(table, '''
       <style>
         @page { size: 8px; margin: 0 }
@@ -389,7 +389,7 @@ def test_image_repeat_inline(assert_pixels):
 
 @assert_no_logs
 def test_image_repeat_block(assert_pixels):
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/808
+    # Regression test for #808.
     assert_pixels(table, '''
       <style>
         @page { size: 8px; margin: 0 }
@@ -412,7 +412,7 @@ def test_image_repeat_block(assert_pixels):
 
 @assert_no_logs
 def test_images_padding(assert_pixels):
-    # Regression test: padding used to be ignored on images
+    # Regression test.
     assert_pixels(centered_image, '''
       <style>
         @page { size: 8px }
@@ -425,7 +425,7 @@ def test_images_padding(assert_pixels):
 
 @assert_no_logs
 def test_images_in_inline_block(assert_pixels):
-    # Regression test: this used to cause an exception
+    # Regression test.
     assert_pixels(centered_image, '''
       <style>
         @page { size: 8px }
@@ -438,7 +438,7 @@ def test_images_in_inline_block(assert_pixels):
 
 @assert_no_logs
 def test_images_transparent_text(assert_pixels):
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/2131
+    # Regression test for #2131.
     assert_pixels(centered_image, '''<style>
         @page { size: 8px }
         body { margin: 2px 0 0 2px; font-size: 2px; line-height: 0 }
@@ -616,7 +616,7 @@ def test_image_exif_image_orientation(assert_same_renderings):
 
 @assert_no_logs
 def test_image_exif_image_orientation_keep_format():
-    # Regression test for https://github.com/Kozea/WeasyPrint/issues/1755
+    # Regression test for #1755.
     pdf = FakeHTML(
         string='''
           <style>@page { size: 10px }</style>

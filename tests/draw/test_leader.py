@@ -335,7 +335,7 @@ def test_leader_too_long_rtl(assert_pixels):
 
 @assert_no_logs
 def test_leader_float_leader(assert_pixels):
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1409
+    # Regression test for #1409.
     # Leaders in floats are not displayed at all in many cases with the current
     # implementation, and this case is not really specified. So…
     assert_pixels('''

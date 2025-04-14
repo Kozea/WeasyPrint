@@ -84,7 +84,7 @@ def test_text_overflow_ellipsis(assert_pixels):
 
 def test_text_align_rtl_trailing_whitespace(assert_pixels):
     # Test text alignment for rtl text with trailing space.
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1111
+    # Regression test for #1111.
     assert_pixels('''
         _________
         _rrrrBBB_
@@ -774,7 +774,7 @@ def test_text_line_through(assert_pixels):
 
 
 def test_text_multiple_text_decoration(assert_pixels):
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1621
+    # Regression test for #1621.
     assert_pixels('''
         _____________
         _zzzzzzzzzzz_
@@ -800,7 +800,7 @@ def test_text_multiple_text_decoration(assert_pixels):
 
 
 def test_text_nested_text_decoration(assert_pixels):
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1621
+    # Regression test for #1621.
     assert_pixels('''
         _____________
         _zzzzzzzzzzz_
@@ -925,7 +925,7 @@ def test_text_float_text_decoration(assert_pixels):
 
 
 def test_text_decoration_var(assert_pixels):
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1697
+    # Regression test for #1697.
     assert_pixels('''
         _____________
         _zzzzzzzzzzz_
@@ -953,7 +953,7 @@ def test_text_decoration_var(assert_pixels):
 
 
 def test_zero_width_character(assert_pixels):
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1508
+    # Regression test for #1508.
     assert_pixels('''
         ______
         _RRRR_
@@ -1019,7 +1019,7 @@ def test_missing_glyph_fallback(assert_pixels):
 
 
 def test_tabulation_character(assert_pixels):
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1515
+    # Regression test for #1515.
     assert_pixels('''
         __________
         _RR____RR_
@@ -1071,7 +1071,7 @@ def test_otb_font(assert_pixels):
 
 
 def test_huge_justification(assert_pixels):
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/2262
+    # Regression test for #2262.
     assert_pixels('''
         ____
         _RR_

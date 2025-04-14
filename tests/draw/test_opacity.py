@@ -62,7 +62,7 @@ def test_opacity_percent_clamp_up(assert_same_renderings):
 
 @assert_no_logs
 def test_opacity_black(assert_same_renderings):
-    # Regression test for https://github.com/Kozea/WeasyPrint/issues/2302
+    # Regression test for #2302.
     assert_same_renderings(
         opacity_source % 'a<span style="color: rgb(0, 0, 0, 0.5)">b</span>',
         opacity_source % 'a<span style="opacity: 0.5">b</span>',

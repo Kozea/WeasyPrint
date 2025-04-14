@@ -742,14 +742,13 @@ def test_before_after_4():
 
 @assert_no_logs
 def test_before_after_5():
+    # Regression test.
     with capture_logs() as logs:
         assert_tree(parse_all('''
           <style>
             p:before {
               content: 'a' url(pattern.png) 'b';
-
-              /* Invalid, ignored in favor of the one above.
-                 Regression test: this used to crash: */
+              /* Invalid, ignored in favor of the one above. */
               content: some-function(nested-function(something));
             }
           </style>
@@ -1109,7 +1108,7 @@ def test_margin_box_string_set_6():
 
 
 def test_margin_box_string_set_7():
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/722
+    # Regression test for #722.
     page_1, = render_pages('''
       <style>
         img { string-set: left attr(alt) }
@@ -1132,7 +1131,7 @@ def test_margin_box_string_set_7():
 
 @assert_no_logs
 def test_margin_box_string_set_8():
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/726
+    # Regression test for #726.
     page_1, page_2, page_3 = render_pages('''
       <style>
         @page { @top-left  { content: '[' string(left) ']' } }
@@ -1164,8 +1163,8 @@ def test_margin_box_string_set_8():
 
 @assert_no_logs
 def test_margin_box_string_set_9():
-    # Test that named strings are case-sensitive
-    # See https://github.com/Kozea/WeasyPrint/pull/827
+    # Regression test for #827.
+    # Test that named strings are case-sensitive.
     page_1, = render_pages('''
       <style>
         @page {

@@ -404,7 +404,7 @@ def test_text_anchor_middle_end_tspan(assert_pixels):
 
 @assert_no_logs
 def test_text_tspan_anchor_non_text(assert_pixels):
-    # Regression test for https://github.com/Kozea/WeasyPrint/issues/2375
+    # Regression test for #2375.
     assert_pixels('''
         _______BBBBBB_______
         _______BBBBBB_______

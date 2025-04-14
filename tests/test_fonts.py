@@ -34,8 +34,8 @@ def test_kerning_default():
 
 @assert_no_logs
 def test_ligatures_word_space():
-    # Kerning and ligatures are on for text with increased word spacing
-    # https://github.com/Kozea/WeasyPrint/issues/1469
+    # Regression test for #1469.
+    # Kerning and ligatures are on for text with increased word spacing.
     page, = render_pages('''
       <style>
         body { font-family: weasyprint; word-spacing: 1em; width: 10em }

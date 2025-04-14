@@ -213,8 +213,7 @@ def test_floats_8():
 
 @assert_no_logs
 def test_floats_9():
-    # Regression test
-    # https://github.com/Kozea/WeasyPrint/issues/263
+    # Regression test for #263.
     page, = render_pages('''<div style="top:100%; float:left">''')
 
 

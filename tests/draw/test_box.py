@@ -100,9 +100,7 @@ def test_outlines(assert_pixels, assert_different_renderings):
 @assert_no_logs
 @pytest.mark.parametrize('border_style', ('none', 'solid', 'dashed', 'dotted'))
 def test_small_borders_1(border_style):
-    # Regression test for ZeroDivisionError on dashed or dotted borders
-    # smaller than a dash/dot.
-    # https://github.com/Kozea/WeasyPrint/issues/49
+    # Regression test for #49.
     html = '''
       <style>
         @page { size: 50px 50px }
@@ -115,9 +113,7 @@ def test_small_borders_1(border_style):
 @assert_no_logs
 @pytest.mark.parametrize('border_style', ('none', 'solid', 'dashed', 'dotted'))
 def test_small_borders_2(border_style):
-    # Regression test for ZeroDivisionError on dashed or dotted borders
-    # smaller than a dash/dot.
-    # https://github.com/Kozea/WeasyPrint/issues/146
+    # Regression test for #146.
     html = '''
       <style>
         @page { size: 50px 50px }
@@ -129,7 +125,7 @@ def test_small_borders_2(border_style):
 
 @assert_no_logs
 def test_em_borders():
-    # Regression test for https://github.com/Kozea/WeasyPrint/issues/1378
+    # Regression test for #1378.
     html = '<body style="border: 1em solid">'
     HTML(string=html).write_pdf()
 
@@ -214,8 +210,7 @@ def test_margin_boxes(assert_pixels):
 
 @assert_no_logs
 def test_display_inline_block_twice():
-    # Regression test for inline blocks displayed twice.
-    # https://github.com/Kozea/WeasyPrint/issues/880
+    # Regression test for #880.
     html = '<div style="background: red; display: inline-block">'
     document = HTML(string=html).render()
     assert document.write_pdf() == document.write_pdf()

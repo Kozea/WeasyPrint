@@ -68,7 +68,7 @@ def test_font_face_3():
 
 @assert_no_logs
 def test_font_face_4():
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/487
+    # Regression test for #487.
     stylesheet = tinycss2.parse_stylesheet(
         '@font-face {'
         '  font-family: Gentium Hard;'
@@ -85,7 +85,7 @@ def test_font_face_4():
 
 @assert_no_logs
 def test_font_face_5():
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1653
+    # Regression test for #1653.
     stylesheet = tinycss2.parse_stylesheet(
         '@font-face {'
         '  font-family: Gentium Hard;'

@@ -1074,7 +1074,7 @@ def test_links_11():
 @assert_no_logs
 def test_links_12():
     # Absolute URI with no fragment and the same base URI: keep external URI
-    # Regression test for https://github.com/Kozea/WeasyPrint/issues/1767
+    # Regression test for #1767.
     assert_links(
         '''
             <body style="width: 200px">
@@ -1305,7 +1305,7 @@ def test_http():
 
 @assert_no_logs
 def test_page_copy_relative():
-    # Regression test for https://github.com/Kozea/WeasyPrint/issues/1473
+    # Regression test for #1473.
     document = FakeHTML(string='<div style="position: relative">a').render()
     duplicated_pages = document.copy([*document.pages, *document.pages])
     pngs = duplicated_pages.write_png(split_images=True)

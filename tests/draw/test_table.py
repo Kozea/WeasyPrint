@@ -799,9 +799,7 @@ def test_tables_10(assert_pixels):
 
 @assert_no_logs
 def test_tables_11(assert_pixels):
-    # Regression test for inline table with collapsed border and alignment
-    # rendering borders incorrectly
-    # https://github.com/Kozea/WeasyPrint/issues/82
+    # Regression test for #82.
     assert_pixels('''
       ____________________
       ________RRRRRRRRRRR_
@@ -993,8 +991,7 @@ def test_tables_14(assert_pixels):
 
 @assert_no_logs
 def test_tables_15(assert_pixels):
-    # Regression test for colspan in last body line with footer
-    # https://github.com/Kozea/WeasyPrint/issues/1250
+    # Regression test for #1250.
     assert_pixels('''
         ______________________
         __RRRRRRRRRRRRRRRRRR__
@@ -1142,7 +1139,7 @@ def test_tables_18(assert_pixels):
 
 @assert_no_logs
 def test_tables_19(assert_pixels):
-    # Regression test: https://github.com/Kozea/WeasyPrint/issues/1523
+    # Regression test for #1523.
     assert_pixels('''
       RR
       RR
@@ -1624,7 +1621,7 @@ def test_tables_split_row(assert_pixels):
 
 @assert_no_logs
 def test_tables_column_background(assert_pixels):
-    # Regression test: https://github.com/Kozea/WeasyPrint/issues/2296
+    # Regression test for #2296.
     assert_pixels('''
       KKKKKKKK
       KRRBBRRK

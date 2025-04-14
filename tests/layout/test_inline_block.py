@@ -104,7 +104,7 @@ def test_inline_block_sizes():
 
 @assert_no_logs
 def test_inline_block_with_margin():
-    # Regression test for https://github.com/Kozea/WeasyPrint/issues/1235
+    # Regression test for #1235.
     page_1, = render_pages('''
       <style>
         @page { size: 100px }

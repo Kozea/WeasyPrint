@@ -484,7 +484,7 @@ def test_background_image(assert_pixels, css, pixels):
 
 @assert_no_logs
 def test_background_image_zero_size_background(assert_pixels):
-    # Regression test for https://github.com/Kozea/WeasyPrint/issues/217
+    # Regression test for #217.
     assert_pixels('''
         __________
         __________
@@ -583,7 +583,7 @@ def test_background_origin(assert_pixels, css, pixels):
 
 @assert_no_logs
 def test_background_transform(assert_pixels):
-    # Regression test for https://github.com/Kozea/WeasyPrint/issues/1809
+    # Regression test for #1809.
     assert_pixels('''
         _______
         _RRRRR_
@@ -1054,7 +1054,7 @@ def test_background_size_clip(assert_pixels):
 
 @assert_no_logs
 def test_page_background_fixed(assert_pixels):
-    # Regression test for https://github.com/Kozea/WeasyPrint/issues/1993
+    # Regression test for #1993.
     assert_pixels('''
         RBBB
         BBBB
@@ -1071,7 +1071,7 @@ def test_page_background_fixed(assert_pixels):
 
 @assert_no_logs
 def test_page_background_fixed_bleed(assert_pixels):
-    # Regression test for https://github.com/Kozea/WeasyPrint/issues/1993
+    # Regression test for #1993.
     assert_pixels('''
         RRRRRR
         RRBBBR
@@ -1090,7 +1090,7 @@ def test_page_background_fixed_bleed(assert_pixels):
 
 @assert_no_logs
 def test_bleed_background_size_clip(assert_pixels):
-    # Regression test for https://github.com/Kozea/WeasyPrint/issues/1943
+    # Regression test for #1943.
     assert_pixels('''
         BBBBBB
         BBBBBB

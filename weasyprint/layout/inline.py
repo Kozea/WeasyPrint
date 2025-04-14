@@ -30,7 +30,7 @@ def iter_line_boxes(context, box, position_y, bottom_space, skip_stack,
     """
     resolve_percentages(box, containing_block)
     if skip_stack is None:
-        # TODO: wrong, see https://github.com/Kozea/WeasyPrint/issues/679
+        # TODO: wrong, see issue #679.
         resolve_one_percentage(box, 'text_indent', containing_block.width)
     else:
         box.text_indent = 0
@@ -126,7 +126,7 @@ def get_next_linebox(context, linebox, position_y, bottom_space, skip_stack,
         line.translate(offset_x, offset_y)
         # Avoid floating point errors, as position_y - top + top != position_y
         # Removing this line breaks the position == linebox.position test below
-        # See https://github.com/Kozea/WeasyPrint/issues/583
+        # See issue #583.
         line.position_y = position_y
 
         if line.height <= candidate_height:

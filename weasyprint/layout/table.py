@@ -782,7 +782,7 @@ def auto_table_layout(context, box, containing_block):
 
     if assignable_width < sum(max_content_guess):
         # Default values shouldn't be used, but we never know.
-        # See https://github.com/Kozea/WeasyPrint/issues/770
+        # See issue #770.
         lower_guess = guesses[0]
         upper_guess = guesses[-1]
 

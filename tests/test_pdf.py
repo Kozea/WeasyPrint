@@ -290,7 +290,7 @@ def test_bookmarks_14():
 
 @assert_no_logs
 def test_bookmarks_15():
-    # Regression test for https://github.com/Kozea/WeasyPrint/issues/1815
+    # Regression test for #1815.
     pdf = FakeHTML(string='''
       <style>@page { size: 10pt 10pt }</style>
       <h1>a</h1>
@@ -369,7 +369,7 @@ def test_links():
 
 @assert_no_logs
 def test_sorted_links():
-    # Regression test for https://github.com/Kozea/WeasyPrint/issues/1352
+    # Regression test for #1352.
     pdf = FakeHTML(string='''
       <p id="zzz">zzz</p>
       <p id="aaa">aaa</p>

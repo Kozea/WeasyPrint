@@ -307,7 +307,7 @@ def test_absolute_positioning_7():
 
 @assert_no_logs
 def test_absolute_positioning_8():
-    # Regression test for https://github.com/Kozea/WeasyPrint/issues/1264
+    # Regression test for #1264.
     page, = render_pages('''
       <style>@page{ width: 50px; height: 50px }</style>
       <body style="font-size: 0">
@@ -377,7 +377,7 @@ def test_fixed_positioning():
 
 @assert_no_logs
 def test_fixed_positioning_regression_1():
-    # Regression test for https://github.com/Kozea/WeasyPrint/pull/641
+    # Regression test for #641.
     page_1, page_2 = render_pages('''
       <style>
         @page:first { size: 100px 200px }
@@ -414,7 +414,7 @@ def test_fixed_positioning_regression_1():
 
 @assert_no_logs
 def test_fixed_positioning_regression_2():
-    # Regression test for https://github.com/Kozea/WeasyPrint/issues/728
+    # Regression test for #728.
     page_1, page_2 = render_pages('''
       <style>
         @page { size: 100px 100px }

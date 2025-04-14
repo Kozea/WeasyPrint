@@ -84,7 +84,7 @@ def test_column_rule_span(assert_pixels):
 
 @assert_no_logs
 def test_column_rule_normal(assert_pixels):
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/2217
+    # Regression test for #2217.
     assert_pixels('''
         a___a
         a___a

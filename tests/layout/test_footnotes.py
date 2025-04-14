@@ -630,7 +630,7 @@ def test_footnote_repagination():
 
 @assert_no_logs
 def test_reported_footnote_repagination():
-    # Regression test for https://github.com/Kozea/WeasyPrint/issues/1700
+    # Regression test for #1700.
     page1, page2 = render_pages('''
         <style>
             @page {

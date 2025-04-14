@@ -313,7 +313,7 @@ def test_images_17():
 
 @assert_no_logs
 def test_images_18():
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1050
+    # Regression test for #1050.
     page, = render_pages('''
         <img style="position: absolute" src="
             data:image/svg+xml,

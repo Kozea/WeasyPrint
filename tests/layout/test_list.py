@@ -43,7 +43,7 @@ def test_lists_style(inside, style, character):
 
 
 def test_lists_empty_item():
-    # Regression test for https://github.com/Kozea/WeasyPrint/issues/873
+    # Regression test for #873.
     page, = render_pages('''
       <ul>
         <li>a</li>
@@ -60,7 +60,7 @@ def test_lists_empty_item():
 
 @pytest.mark.xfail
 def test_lists_whitespace_item():
-    # Regression test for https://github.com/Kozea/WeasyPrint/issues/873
+    # Regression test for #873.
     page, = render_pages('''
       <ul>
         <li>a</li>
@@ -76,7 +76,7 @@ def test_lists_whitespace_item():
 
 
 def test_lists_page_break():
-    # Regression test for https://github.com/Kozea/WeasyPrint/issues/945
+    # Regression test for #945.
     page1, page2 = render_pages('''
       <style>
         @page { size: 300px 100px }
@@ -105,7 +105,7 @@ def test_lists_page_break():
 
 
 def test_lists_page_break_margin():
-    # Regression test for https://github.com/Kozea/WeasyPrint/issues/1058
+    # Regression test for #1058.
     page1, page2 = render_pages('''
       <style>
         @page { size: 300px 100px }

@@ -450,7 +450,7 @@ def test_page_breaks_complex_8():
 
 @assert_no_logs
 def test_page_breaks_complex_9():
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1979
+    # Regression test for #1979.
     page_1, page_2, page_3, page_4, page_5 = render_pages('''
       <style>
         @page { size: 75px; margin: 0 }
@@ -1655,7 +1655,7 @@ def test_running_elements_display():
 
 @assert_no_logs
 def test_running_img():
-    # Test regression
+    # Regression test.
     render_pages('''
       <style>
         img {
@@ -1673,7 +1673,7 @@ def test_running_img():
 
 @assert_no_logs
 def test_running_absolute():
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1540
+    # Regression test for #1540.
     render_pages('''
       <style>
         footer {
@@ -1694,7 +1694,7 @@ def test_running_absolute():
 
 @assert_no_logs
 def test_running_flex():
-    # Test regression
+    # Regression test.
     render_pages('''
       <style>
         footer {
@@ -1715,7 +1715,7 @@ def test_running_flex():
 
 @assert_no_logs
 def test_running_float():
-    # Test regression
+    # Regression test.
     render_pages('''
       <style>
         footer {

@@ -643,7 +643,7 @@ def test_box_decoration_break_block_clone():
     # TODO: bottom margin should be 0
     # https://www.w3.org/TR/css-break-3/#valdef-box-decoration-break-clone
     # "Cloned margins are truncated on block-level boxes."
-    # See https://github.com/Kozea/WeasyPrint/issues/115
+    # See issue #115.
     assert paragraph.margin_bottom == 5
     assert paragraph.border_bottom_width == 3
     assert paragraph.padding_bottom == 2
@@ -772,7 +772,7 @@ def test_overflow_hidden_out_of_flow_layout():
 
 @assert_no_logs
 def test_box_margin_top_repagination():
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/943
+    # Regression test for #943.
     page_1, page_2 = render_pages('''
       <style>
         @page { size: 50px }
@@ -858,7 +858,7 @@ def test_continue_discard_children():
 
 @assert_no_logs
 def test_block_in_block_with_bottom_padding():
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1476
+    # Regression test for #1476.
     page_1, page_2 = render_pages('''
       <style>
         @page { size: 8em 3.5em }

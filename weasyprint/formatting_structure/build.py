@@ -414,7 +414,7 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
         elif type_ == 'url' and get_image_from_uri is not None:
             origin, uri = value
             if origin != 'external':
-                # Embedding internal references is impossible
+                # Embedding internal references is impossible.
                 continue
             image = get_image_from_uri(
                 url=uri, orientation=parent_box.style['image_orientation'])
@@ -424,12 +424,12 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
         elif type_ == 'content()':
             added_text = extract_text(value, parent_box)
             # Simulate the step of white space processing
-            # (normally done during the layout)
+            # (normally done during the layout).
             add_text(added_text.strip())
         elif type_ == 'string()':
             if not in_page_context:
-                # string() is currently only valid in @page context
-                # See https://github.com/Kozea/WeasyPrint/issues/723
+                # string() is currently only valid in @page context.
+                # See issue #723.
                 LOGGER.warning(
                     '"string(%s)" is only allowed in page margins',
                     ' '.join(value))

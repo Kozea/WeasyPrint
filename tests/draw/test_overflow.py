@@ -94,7 +94,7 @@ def test_overflow_4(assert_pixels):
 
 @assert_no_logs
 def test_overflow_5(assert_pixels):
-    # Regression test for https://github.com/Kozea/WeasyPrint/issues/2026
+    # Regression test for #2026.
     assert_pixels('''
         BBBBBB__
         BBBBBB__

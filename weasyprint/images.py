@@ -70,7 +70,7 @@ class RasterImage:
 
         # The presence of the APP14 segment indicates an Adobe image with
         # inverted CMYK data. Specify a Decode Array to invert it again back to
-        # normal. See https://github.com/Kozea/WeasyPrint/pull/2179.
+        # normal. See PR #2179.
         app14 = getattr(original_pillow_image, 'app', {}).get('APP14')
         self.invert_colors = self.mode == 'CMYK' and app14 is not None
 

@@ -201,8 +201,8 @@ def test_counters_6():
 
 @assert_no_logs
 def test_counters_7():
-    # Test that counters are case-sensitive
-    # See https://github.com/Kozea/WeasyPrint/pull/827
+    # Regression test for #827.
+    # Test that counters are case-sensitive.
     assert_tree(parse_all('''
       <style>
         p { counter-increment: p 2 }
@@ -519,7 +519,7 @@ def test_list_style_types(style_type, values):
 
 
 def test_list_style_type_empty_string():
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1883
+    # Regression test for #1883.
     render_pages('<ul><li style="list-style-type: \'\'">')
 
 

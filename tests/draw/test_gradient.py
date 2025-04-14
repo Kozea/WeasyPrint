@@ -282,7 +282,7 @@ def test_radial_gradients_5(assert_pixels):
 
 @assert_no_logs
 def test_linear_gradients_currentcolor(assert_pixels):
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1561
+    # Regression test for #1561.
     assert_pixels('''
         KKKKK
         KKKKK

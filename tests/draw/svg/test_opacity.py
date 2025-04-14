@@ -132,7 +132,7 @@ def test_pattern_gradient_stroke_fill_opacity(assert_same_renderings):
 
 @assert_no_logs
 def test_translate_opacity(assert_same_renderings):
-    # Regression test for https://github.com/Kozea/WeasyPrint/issues/1976
+    # Regression test for #1976.
     assert_same_renderings(
         opacity_source % '''
             <rect transform="translate(2, 2)" width="5" height="5"
@@ -147,7 +147,7 @@ def test_translate_opacity(assert_same_renderings):
 
 @assert_no_logs
 def test_translate_use_opacity(assert_same_renderings):
-    # Regression test for https://github.com/Kozea/WeasyPrint/issues/1976
+    # Regression test for #1976.
     assert_same_renderings(
         opacity_source % '''
             <defs>

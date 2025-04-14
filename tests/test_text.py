@@ -67,7 +67,7 @@ def test_line_breaking_rtl():
 
 @assert_no_logs
 def test_line_breaking_nbsp():
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1561
+    # Regression test for #1561.
     page, = render_pages('''
       <style>
         body { font-family: weasyprint; width: 7.5em }
@@ -113,7 +113,7 @@ def test_text_font_size_zero():
 
 @assert_no_logs
 def test_text_font_size_very_small():
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1499
+    # Regression test for #1499.
     page, = render_pages('''
       <style>
         p { font-size: 0.00000001px }
@@ -429,7 +429,7 @@ def test_text_align_justify_text_indent():
 def test_text_align_justify_no_break_between_children():
     # Test justification when line break happens between two inline children
     # that must stay together.
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/637
+    # Regression test for #637.
     page, = render_pages('''
       <style>
         p { text-align: justify; font-family: weasyprint; width: 7em }
@@ -467,10 +467,9 @@ def test_text_align_justify_no_break_between_children():
 ))
 @assert_no_logs
 def test_word_spacing(text):
-    # keep the empty <style> as a regression test: element.text is None
-    # (Not a string.)
+    # Regression test.
     page, = render_pages('''
-      <style></style>
+      <style></style> <!-- element.text is None -->
       <body><strong>Lorem ipsum dolor<em>sit amet</em></strong>''')
     html, = page.children
     body, = html.children
@@ -542,7 +541,7 @@ def test_letter_spacing_1():
 @pytest.mark.parametrize('spacing', ('word-spacing', 'letter-spacing'))
 @assert_no_logs
 def test_spacing_ex(spacing):
-    # Test regression on ex units in spacing properties
+    # Regression test.
     render_pages(f'<div style="{spacing}: 2ex">abc def')
 
 
@@ -571,7 +570,7 @@ def test_text_indent(indent):
 
 @assert_no_logs
 def test_text_indent_inline():
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1000
+    # Regression test for #1000.
     page, = render_pages('''
         <style>
             p { display: inline-block; text-indent: 1em; font-family: weasyprint }
@@ -588,7 +587,7 @@ def test_text_indent_inline():
 @pytest.mark.parametrize('indent', ('12px', '6%'))
 @assert_no_logs
 def test_text_indent_multipage(indent):
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/706
+    # Regression test for #706.
     pages = render_pages('''
         <style>
             @page { size: 220px 1.5em; margin: 0 }
@@ -758,7 +757,7 @@ def test_hyphenate_manual_3():
 
 @assert_no_logs
 def test_hyphenate_manual_4():
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1878
+    # Regression test for #1878.
     page, = render_pages(
         '<html style="width: 0.1em" lang="en">'
         '<body style="hyphens: auto">test&shy;')
@@ -834,7 +833,7 @@ def test_hyphenate_limit_zone_4():
 
 
 def test_hyphen_nbsp():
-    # Regression test for issue #1817.
+    # Regression test for #1817.
     page, = render_pages('''
       <style>
         body {width: 20px; font: 2px weasyprint}
@@ -885,7 +884,7 @@ def test_hyphenate_limit_chars(css, result):
     '8',  # 'lighten' is shorter than 8
 ))
 def test_hyphenate_limit_chars_punctuation(css):
-    # See https://github.com/Kozea/WeasyPrint/issues/109
+    # Regression test for #109.
     page, = render_pages(
         '<html style="width: 1em; font-family: weasyprint">'
         '<body style="hyphens: auto;'
@@ -1011,7 +1010,7 @@ def test_overflow_wrap_trailing_space(wrap, text, body_width, expected_width):
 
 
 def test_overflow_wrap_no_break_on_space():
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1817
+    # Regression test for #1817.
     page, = render_pages('''
       <style>
         body {width: 11px; font-family: weasyprint; font-size: 2px;
@@ -1027,7 +1026,7 @@ def test_overflow_wrap_no_break_on_space():
 
 
 def test_line_break_before_trailing_space():
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1852
+    # Regression test for #1852.
     page, = render_pages('''
         <p style="display: inline-block">test\u2028 </p>a
         <p style="display: inline-block">test\u2028</p>a
@@ -1175,7 +1174,7 @@ def test_white_space_10():
 
 @assert_no_logs
 def test_white_space_11():
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/813
+    # Regression test for #813.
     page, = render_pages('''
       <style>
         pre { width: 0 }
@@ -1194,7 +1193,7 @@ def test_white_space_11():
 
 @assert_no_logs
 def test_white_space_12():
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/813
+    # Regression test for #813.
     page, = render_pages('''
       <style>
         pre { width: 0 }
@@ -1288,7 +1287,7 @@ def test_text_transform_capitalize(original, transformed):
 
 @assert_no_logs
 def test_text_floating_pre_line():
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/610
+    # Regression test for #610.
     page, = render_pages('''
       <div style="float: left; white-space: pre-line">This is
       oh this end </div>
@@ -1373,7 +1372,7 @@ def test_continue():
 
 
 def test_first_letter_text_transform():
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1906
+    # Regression test for #1906.
     page, = render_pages('''
       <style>
         p:first-letter { text-transform: uppercase }

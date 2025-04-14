@@ -70,7 +70,7 @@ def test_inline_table_width():
 
 @assert_no_logs
 def test_implicit_width_table_col_percent():
-    # See https://github.com/Kozea/WeasyPrint/issues/169
+    # Regression test for #169.
     page, = render_pages('''
       <table>
         <col style="width:25%"></col>
@@ -676,7 +676,7 @@ def test_layout_table_auto_12():
 
 @assert_no_logs
 def test_layout_table_auto_13():
-    # Regression tests: these used to crash
+    # Regression test.
     page, = render_pages('''
       <table style="width: 30px">
         <tr>
@@ -1061,8 +1061,8 @@ def test_layout_table_auto_25():
 
 @assert_no_logs
 def test_layout_table_auto_26():
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/307
-    # Table with a cell larger than the table's max-width
+    # Regression test for #307.
+    # Table with a cell larger than the table's max-width.
     page, = render_pages('''
       <table style="max-width: 300px">
         <td style="width: 400px"></td>
@@ -1072,7 +1072,7 @@ def test_layout_table_auto_26():
 
 @assert_no_logs
 def test_layout_table_auto_27():
-    # Table with a cell larger than the table's width
+    # Table with a cell larger than the table's width.
     page, = render_pages('''
       <table style="width: 300px">
         <td style="width: 400px"></td>
@@ -1082,7 +1082,7 @@ def test_layout_table_auto_27():
 
 @assert_no_logs
 def test_layout_table_auto_28():
-    # Table with a cell larger than the table's width and max-width
+    # Table with a cell larger than the table's width and max-width.
     page, = render_pages('''
       <table style="width: 300px; max-width: 350px">
         <td style="width: 400px"></td>
@@ -1092,7 +1092,7 @@ def test_layout_table_auto_28():
 
 @assert_no_logs
 def test_layout_table_auto_29():
-    # Table with a cell larger than the table's width and max-width
+    # Table with a cell larger than the table's width and max-width.
     page, = render_pages('''
       <table style="width: 300px; max-width: 350px">
         <td style="padding: 50px">
@@ -1104,7 +1104,7 @@ def test_layout_table_auto_29():
 
 @assert_no_logs
 def test_layout_table_auto_30():
-    # Table with a cell larger than the table's max-width
+    # Table with a cell larger than the table's max-width.
     page, = render_pages('''
       <table style="max-width: 300px; margin: 100px">
         <td style="width: 400px"></td>
@@ -1114,7 +1114,7 @@ def test_layout_table_auto_30():
 
 @assert_no_logs
 def test_layout_table_auto_31():
-    # Test a table with column widths < table width < column width + spacing
+    # Test a table with column widths < table width < column width + spacing.
     page, = render_pages('''
       <table style="width: 300px; border-spacing: 2px">
         <td style="width: 299px"></td>
@@ -1124,7 +1124,7 @@ def test_layout_table_auto_31():
 
 @assert_no_logs
 def test_layout_table_auto_32():
-    # Table with a cell larger than the table's width
+    # Table with a cell larger than the table's width.
     page, = render_pages('''
       <table style="width: 400px; margin: 100px">
         <td style="width: 500px"></td>
@@ -1138,7 +1138,7 @@ def test_layout_table_auto_32():
 
 @assert_no_logs
 def test_layout_table_auto_33():
-    # Div with auto width containing a table with a min-width
+    # Div with auto width containing a table with a min-width.
     page, = render_pages('''
       <div style="float: left">
         <table style="min-width: 400px; margin: 100px">
@@ -1156,7 +1156,7 @@ def test_layout_table_auto_33():
 
 @assert_no_logs
 def test_layout_table_auto_34():
-    # Div with auto width containing an empty table with a min-width
+    # Div with auto width containing an empty table with a min-width.
     page, = render_pages('''
       <div style="float: left">
         <table style="min-width: 400px; margin: 100px"></table>
@@ -1173,7 +1173,7 @@ def test_layout_table_auto_34():
 @assert_no_logs
 def test_layout_table_auto_35():
     # Div with auto width containing a table with a cell larger than the
-    # table's max-width
+    # table's max-width.
     page, = render_pages('''
       <div style="float: left">
         <table style="max-width: 300px; margin: 100px">
@@ -1191,7 +1191,7 @@ def test_layout_table_auto_35():
 
 @assert_no_logs
 def test_layout_table_auto_36():
-    # Test regression on a crash: https://github.com/Kozea/WeasyPrint/pull/152
+    # Regression test for #152.
     page, = render_pages('''
       <table>
         <td style="width: 50%">
@@ -1201,7 +1201,7 @@ def test_layout_table_auto_36():
 
 @assert_no_logs
 def test_layout_table_auto_37():
-    # Other crashes: https://github.com/Kozea/WeasyPrint/issues/305
+    # Regression test for #305.
     page, = render_pages('''
       <table>
         <tr>
@@ -1261,8 +1261,8 @@ def test_layout_table_auto_39():
 
 @assert_no_logs
 def test_layout_table_auto_40():
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/368
-    # Check that white-space is used for the shrink-to-fit algorithm
+    # Regression test for #368.
+    # Check that white-space is used for the shrink-to-fit algorithm.
     page, = render_pages('''
       <table style="width: 0">
         <td style="font-family: weasyprint; white-space: nowrap">a a</td>
@@ -1278,7 +1278,7 @@ def test_layout_table_auto_40():
 
 @assert_no_logs
 def test_layout_table_auto_41():
-    # Cell width as percentage in auto-width table
+    # Cell width as percentage in auto-width table.
     page, = render_pages('''
       <div style="width: 100px">
         <table>
@@ -1306,7 +1306,7 @@ def test_layout_table_auto_41():
 
 @assert_no_logs
 def test_layout_table_auto_42():
-    # Cell width as percentage in auto-width table
+    # Cell width as percentage in auto-width table.
     page, = render_pages('''
       <table style="font-family: weasyprint">
         <tbody>
@@ -1331,7 +1331,7 @@ def test_layout_table_auto_42():
 
 @assert_no_logs
 def test_layout_table_auto_43():
-    # Cell width as percentage on colspan cell in auto-width table
+    # Cell width as percentage on colspan cell in auto-width table.
     page, = render_pages('''
       <div style="width: 100px">
         <table>
@@ -1361,7 +1361,7 @@ def test_layout_table_auto_43():
 
 @assert_no_logs
 def test_layout_table_auto_44():
-    # Cells widths as percentages on normal and colspan cells
+    # Cells widths as percentages on normal and colspan cells.
     page, = render_pages('''
       <div style="width: 100px">
         <table>
@@ -1395,7 +1395,7 @@ def test_layout_table_auto_44():
 
 @assert_no_logs
 def test_layout_table_auto_45():
-    # Cells widths as percentage on multiple lines
+    # Cells widths as percentage on multiple lines.
     page, = render_pages('''
       <div style="width: 1000px">
         <table>
@@ -1438,8 +1438,6 @@ def test_layout_table_auto_45():
 
 @assert_no_logs
 def test_layout_table_auto_46():
-    # Test regression:
-    # https://test.weasyprint.org/suite-css21/chapter8/section2/test56/
     page, = render_pages('''
       <div style="position: absolute">
         <table style="margin: 50px; border: 20px solid black">
@@ -1464,8 +1462,7 @@ def test_layout_table_auto_46():
 
 @assert_no_logs
 def test_layout_table_auto_47():
-    # Test regression:
-    # https://github.com/Kozea/WeasyPrint/issues/666
+    # Regression test for #666.
     page, = render_pages('''
       <table style="font-family: weasyprint">
         <tr>
@@ -1485,8 +1482,7 @@ def test_layout_table_auto_47():
 
 @assert_no_logs
 def test_layout_table_auto_48():
-    # Related to:
-    # https://github.com/Kozea/WeasyPrint/issues/685
+    # Regression test for #685.
     page, = render_pages('''
       <table style="font-family: weasyprint; border-spacing: 100px;
                     border-collapse: collapse">
@@ -1508,9 +1504,8 @@ def test_layout_table_auto_48():
 @pytest.mark.xfail
 @assert_no_logs
 def test_layout_table_auto_49():
-    # Related to:
-    # https://github.com/Kozea/WeasyPrint/issues/685
-    # See TODO in table_layout.group_layout
+    # Regression test for #685.
+    # See TODO in table_layout.group_layout.
     page, = render_pages('''
       <table style="font-family: weasyprint; border-spacing: 100px">
         <tr>
@@ -1530,8 +1525,7 @@ def test_layout_table_auto_49():
 
 @assert_no_logs
 def test_layout_table_auto_50():
-    # Test regression:
-    # https://github.com/Kozea/WeasyPrint/issues/685
+    # Regression test for #685.
     page, = render_pages('''
       <table style="font-family: weasyprint; border-spacing: 5px">
        <tr><td>a</td><td>a</td><td>a</td><td>a</td><td>a</td></tr>
@@ -1554,8 +1548,7 @@ def test_layout_table_auto_50():
 
 @assert_no_logs
 def test_layout_table_auto_51():
-    # Test regression:
-    # https://github.com/Kozea/WeasyPrint/issues/2174
+    # Regression test for #2174.
     page, = render_pages('''
       <table style="font-family: weasyprint; width: 100px">
         <tr>
@@ -1577,8 +1570,7 @@ def test_layout_table_auto_51():
 
 @assert_no_logs
 def test_layout_table_auto_52():
-    # Test regression:
-    # https://github.com/Kozea/WeasyPrint/issues/2325
+    # Regression test for #2325.
     page, = render_pages('''
       <style>
         @page { size: 20px }
@@ -1700,7 +1692,7 @@ def test_table_column_width_1():
     cells = [first_row.children, second_row.children, third_row.children]
     assert len(first_row.children) == 2
     assert len(second_row.children) == 4
-    # Third cell here is completly removed
+    # Third cell here is completly removed.
     assert len(third_row.children) == 2
 
     assert body.position_x == 0
@@ -1715,19 +1707,19 @@ def test_table_column_width_1():
     assert first_row.position_x == row_group.position_x
     assert first_row.width == row_group.width
 
-    # This cell has colspan=3
+    # This cell has colspan=3.
     assert cells[0][0].position_x == 5100  # 5000 + border-spacing
-    # `width` on a cell sets the content width
+    # `width` on a cell sets the content width.
     assert cells[0][0].width == 3000  # 30% of 10000px
     assert cells[0][0].border_width() == 3022  # 3000 + borders + padding
 
-    # Second cell of the first line, but on the fourth and last column
+    # Second cell of the first line, but on the fourth and last column.
     assert cells[0][1].position_x == 8222  # 5100 + 3022 + border-spacing
     assert cells[0][1].border_width() == 6678  # 10000 - 3022 - 3*100
     assert cells[0][1].width == 6656  # 6678 - borders - padding
 
     assert cells[1][0].position_x == 5100  # 5000 + border-spacing
-    # `width` on a column sets the border width of cells
+    # `width` on a column sets the border width of cells.
     assert cells[1][0].border_width() == 1000  # 10% of 10000px
     assert cells[1][0].width == 978  # 1000 - borders - padding
 
@@ -1739,12 +1731,12 @@ def test_table_column_width_1():
     assert cells[1][2].border_width() == 911  # (3022 - 1000 - 2*100) / 2
     assert cells[1][2].width == 889  # 911 - borders - padding
 
-    # Same as cells[0][1]
+    # Same as cells[0][1].
     assert cells[1][3].position_x == 8222  # Also 7211 + 911 + border-spacing
     assert cells[1][3].border_width() == 6678
     assert cells[1][3].width == 6656
 
-    # Same as cells[1][0]
+    # Same as cells[1][0].
     assert cells[2][0].position_x == 5100
     assert cells[2][0].border_width() == 1000
     assert cells[2][0].width == 978
@@ -1783,8 +1775,7 @@ def test_table_column_width_2():
 
 @assert_no_logs
 def test_table_column_width_3():
-    # Sum of columns width larger that the table width:
-    # increase the table width
+    # Sum of columns width larger that the table width: increase the table width.
     page, = render_pages('''
       <style>
         table { width: 1000px; border-spacing: 100px; table-layout: fixed }
@@ -1916,7 +1907,7 @@ def test_table_row_height_2():
 
 @assert_no_logs
 def test_table_row_height_3():
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/937
+    # Regression test for #937.
     page, = render_pages('''
       <table style="border-spacing: 0; font-family: weasyprint;
                     line-height: 20px">
@@ -1938,7 +1929,7 @@ def test_table_row_height_3():
 
 @assert_no_logs
 def test_table_row_height_4():
-    # A row cannot be shorter than the border-height of its tallest cell
+    # A row cannot be shorter than the border-height of its tallest cell.
     page, = render_pages('''
       <table style="border-spacing: 0;">
         <tr style="height: 4px;">
@@ -2020,9 +2011,7 @@ def test_table_vertical_align(assert_pixels):
 
 @assert_no_logs
 def test_table_vertical_align_float():
-    # Test regressions:
-    # https://github.com/Kozea/WeasyPrint/issues/2216
-    # https://github.com/Kozea/WeasyPrint/issues/2293
+    # Regression test for #2216 and #2293.
     page, = render_pages('''
       <style>
         @page { size: 100px 400px }
@@ -2136,11 +2125,11 @@ def test_table_wrapper():
     wrapper, = body.children
     table, = wrapper.children
     assert body.width == 1000
-    assert wrapper.width == 600  # Not counting borders or padding
+    assert wrapper.width == 600  # not counting borders or padding
     assert wrapper.margin_left == 100
     assert table.margin_width() == 600
     assert table.width == 578  # 600 - 2*10 - 2*1, no margin
-    # box-sizing in the UA stylesheet  makes `height: 500px` set this
+    # box-sizing in the UA stylesheet makes `height: 500px` set this.
     assert table.border_height() == 500
     assert table.height == 478  # 500 - 2*10 - 2*1
     assert table.margin_height() == 500  # no margin
@@ -2150,7 +2139,7 @@ def test_table_wrapper():
 
 @assert_no_logs
 def test_table_html_tag():
-    # Non-regression test: this used to cause an exception
+    # Regression test.
     page, = render_pages('<html style="display: table">')
 
 
@@ -2447,7 +2436,7 @@ def test_table_page_breaks_complex_2():
          ['head 2'], ['row 2 1'], ['foot 2']],
         [['head 2'], ['row 2 2', 'row 2 3'], ['foot 2']],
     ]
-    # TODO: test positions, the place of footer on the first page is wrong
+    # TODO: test positions, the place of footer on the first page is wrong.
 
 
 @assert_no_logs
@@ -2988,7 +2977,7 @@ def test_table_empty_body(rows_expected, thead, tfoot, content):
 
 
 def test_table_group_break_inside_avoid_absolute():
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/2134
+    # Regression test for #2134.
     html = '''
       <style>
         @page { size: 5cm }
@@ -3019,7 +3008,7 @@ def test_table_group_break_inside_avoid_absolute():
 
 
 def test_table_row_break_inside_avoid_absolute():
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/2134
+    # Regression test for #2134.
     html = '''
       <style>
         @page { size: 5cm }
@@ -3052,7 +3041,7 @@ def test_table_row_break_inside_avoid_absolute():
 
 
 def test_table_break_inside_avoid_absolute():
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/2134
+    # Regression test for #2134.
     html = '''
       <style>
         @page { size: 5cm }
@@ -3082,7 +3071,7 @@ def test_table_break_inside_avoid_absolute():
 
 
 def test_table_break_children_margin():
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1254
+    # Regression test for #1254.
     html = '''
       <style>
         @page { size: 100px }
@@ -3098,7 +3087,7 @@ def test_table_break_children_margin():
 
 
 def test_table_td_break_inside_avoid():
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/1547
+    # Regression test for #1547.
     html = '''
       <style>
         @page { size: 4cm }
@@ -3189,7 +3178,7 @@ def test_table_bad_int_colgroup_span():
 
 @assert_no_logs
 def test_table_different_display():
-    # Test display attribute set on different table elements
+    # Test display attribute set on different table elements.
     render_pages('''
       <table style="font-size: 1px">
         <colgroup style="display: block"><div>a</div></colgroup>
@@ -3231,35 +3220,33 @@ def test_table_different_display():
 
 @assert_no_logs
 def test_min_width_with_overflow():
-    # issue 1383
+    # Regression test for #1383.
     page, = render_pages('''
-<head>
-<style>
-table td { border: 1px solid black; }
-table.key-val tr td:nth-child(1) { min-width: 13em; }
-</style>
-</head>
+      <style>
+        table td { border: 1px solid black }
+        table.key-val tr td:nth-child(1) { min-width: 13em }
+      </style>
 
-<body>
-<table class="key-val">
-    <tbody>
-        <tr>
+      <table class="key-val">
+        <tbody>
+          <tr>
             <td>Normal Key 1</td>
             <td>Normal Value 1</td>
-        </tr>
-        <tr>
+          </tr>
+          <tr>
             <td>Normal Key 2</td>
-           <td>Normal Value 2</td>
-        </tr>
-    </tbody>
-</table>
-<table class="key-val">
-    <tbody>
-        <tr>
+            <td>Normal Value 2</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <table class="key-val">
+        <tbody>
+          <tr>
             <td>Short value</td>
             <td>Works as expected</td>
-        </tr>
-        <tr>
+          </tr>
+          <tr>
             <td>Long Value</td>
             <td>Annoyingly breaks my table layout: Sed ut perspiciatis
                 unde omnis iste natus error sit voluptatem
@@ -3267,10 +3254,9 @@ table.key-val tr td:nth-child(1) { min-width: 13em; }
                 eaque ipsa quae ab illo inventore veritatis et quasi
                 architecto beatae vitae dicta sunt explicabo.
             </td>
-        </tr>
-    </tbody>
-</table>
-</body>
+          </tr>
+        </tbody>
+      </table>
     ''')
     html, = page.children
     body, = html.children
@@ -3293,14 +3279,14 @@ table.key-val tr td:nth-child(1) { min-width: 13em; }
 @assert_no_logs
 def test_table_cell_max_width():
     page, = render_pages('''
-    <style>
-      td {
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        overflow: hidden;
-        max-width: 45px;
-      }
-    </style>
+      <style>
+        td {
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          overflow: hidden;
+          max-width: 45px;
+        }
+      </style>
       <table>
         <tr>
           <td>abcdefghijkl</td>
@@ -3436,7 +3422,7 @@ def test_border_collapse_5():
 
 @assert_no_logs
 def test_table_zero_width():
-    # Test regression: https://github.com/Kozea/WeasyPrint/issues/2306
+    # Regression test for #2306.
     page, = render_pages('''
       <table style="font-family: weasyprint">
         <thead>

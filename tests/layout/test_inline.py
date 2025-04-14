@@ -223,7 +223,7 @@ def test_breaking_linebox_regression_2():
 
 @assert_no_logs
 def test_breaking_linebox_regression_3():
-    # Regression test #1 for https://github.com/Kozea/WeasyPrint/issues/560
+    # Regression test for #560.
     page, = render_pages(
         '<div style="width: 5.5em; font-family: weasyprint">'
         'aaaa aaaa a [<span>aaa</span>]')
@@ -241,7 +241,7 @@ def test_breaking_linebox_regression_3():
 
 @assert_no_logs
 def test_breaking_linebox_regression_4():
-    # Regression test #2 for https://github.com/Kozea/WeasyPrint/issues/560
+    # Regression test for #560.
     page, = render_pages(
         '<div style="width: 5.5em; font-family: weasyprint">'
         'aaaa a <span>b c</span>d')
@@ -258,7 +258,7 @@ def test_breaking_linebox_regression_4():
 
 @assert_no_logs
 def test_breaking_linebox_regression_5():
-    # Regression test for https://github.com/Kozea/WeasyPrint/issues/580
+    # Regression test for #580.
     page, = render_pages(
         '<div style="width: 5.5em; font-family: weasyprint">'
         '<span>aaaa aaaa a a a</span><span>bc</span>')
@@ -275,7 +275,7 @@ def test_breaking_linebox_regression_5():
 
 @assert_no_logs
 def test_breaking_linebox_regression_6():
-    # Regression test for https://github.com/Kozea/WeasyPrint/issues/586
+    # Regression test for #586.
     page, = render_pages(
         '<div style="width: 5.5em; font-family: weasyprint">'
         'a a <span style="white-space: nowrap">/ccc</span>')
@@ -289,7 +289,7 @@ def test_breaking_linebox_regression_6():
 
 @assert_no_logs
 def test_breaking_linebox_regression_7():
-    # Regression test for https://github.com/Kozea/WeasyPrint/issues/660
+    # Regression test for #660.
     page, = render_pages(
         '<div style="width: 3.5em; font-family: weasyprint">'
         '<span><span>abc d e</span></span><span>f')
@@ -305,7 +305,7 @@ def test_breaking_linebox_regression_7():
 
 @assert_no_logs
 def test_breaking_linebox_regression_8():
-    # Regression test for https://github.com/Kozea/WeasyPrint/issues/783
+    # Regression test for #783.
     page, = render_pages(
         '<p style="font-family: weasyprint"><span>\n'
         'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n'
@@ -324,7 +324,7 @@ def test_breaking_linebox_regression_8():
 @pytest.mark.xfail
 @assert_no_logs
 def test_breaking_linebox_regression_9():
-    # Regression test for https://github.com/Kozea/WeasyPrint/issues/783
+    # Regression test for #783.
     # TODO: inlines.can_break_inside return False for span but we can break
     # before the <b> tag. can_break_inside should be fixed.
     page, = render_pages(
@@ -343,7 +343,7 @@ def test_breaking_linebox_regression_9():
 
 @assert_no_logs
 def test_breaking_linebox_regression_10():
-    # Regression test for https://github.com/Kozea/WeasyPrint/issues/923
+    # Regression test for #923.
     page, = render_pages(
         '<p style="width:195px; font-family: weasyprint">'
         '  <span>'
@@ -363,7 +363,7 @@ def test_breaking_linebox_regression_10():
 
 @assert_no_logs
 def test_breaking_linebox_regression_11():
-    # Regression test for https://github.com/Kozea/WeasyPrint/issues/953
+    # Regression test for #953.
     page, = render_pages(
         '<p style="width:10em; font-family: weasyprint">'
         '  line 1<br><span>123 567 90</span>x'
@@ -380,7 +380,7 @@ def test_breaking_linebox_regression_11():
 
 @assert_no_logs
 def test_breaking_linebox_regression_12():
-    # Regression test for https://github.com/Kozea/WeasyPrint/issues/953
+    # Regression test for #953.
     page, = render_pages(
         '<p style="width:10em; font-family: weasyprint">'
         '  <br><span>123 567 90</span>x'
@@ -396,7 +396,7 @@ def test_breaking_linebox_regression_12():
 
 @assert_no_logs
 def test_breaking_linebox_regression_13():
-    # Regression test for https://github.com/Kozea/WeasyPrint/issues/953
+    # Regression test for #953.
     page, = render_pages(
         '<p style="width:10em; font-family: weasyprint">'
         '  123 567 90 <span>123 567 90</span>x'
@@ -413,7 +413,7 @@ def test_breaking_linebox_regression_13():
 
 @assert_no_logs
 def test_breaking_linebox_regression_14():
-    # Regression test for https://github.com/Kozea/WeasyPrint/issues/1638
+    # Regression test for #1638.
     page, = render_pages(
         '<style>'
         '  body {font-family: weasyprint; width: 3em}'
@@ -429,7 +429,7 @@ def test_breaking_linebox_regression_14():
 
 @assert_no_logs
 def test_breaking_linebox_regression_15():
-    # Regression test for https://github.com/ietf-tools/datatracker/issues/5507
+    # Regression test for #5507.
     page, = render_pages(
         '<style>'
         '  body {font-family: weasyprint; font-size: 4px}'
@@ -456,7 +456,7 @@ def test_breaking_linebox_regression_15():
 
 @assert_no_logs
 def test_breaking_linebox_regression_16():
-    # Regression test for https://github.com/Kozea/WeasyPrint/issues/1973
+    # Regression test for #1973.
     page, = render_pages(
         '<style>'
         '  body {font-family: weasyprint; font-size: 4px}'
@@ -582,8 +582,8 @@ def test_forced_line_breaks_paragraph():
 
 @assert_no_logs
 def test_inlinebox_splitting():
-    # The text is strange to test some corner cases
-    # See https://github.com/Kozea/WeasyPrint/issues/389
+    # Regression test for #389.
+    # The text is strange to test some corner cases.
     for width in [10000, 100, 10, 0]:
         page, = render_pages('''
           <style>p { font-family:%(fonts)s; width: %(width)spx; }</style>
@@ -1106,7 +1106,7 @@ def test_bidi_position_x_invariant():
 
 @assert_no_logs
 def test_nested_waiting_children_width():
-    # Regression test for https://github.com/Kozea/WeasyPrint/issues/2275
+    # Regression test for #2275.
     page, = render_pages(
         '<body style="width: 3em; font-family: weasyprint">'
         '<b><i style="width: 100%">a b</i>c')

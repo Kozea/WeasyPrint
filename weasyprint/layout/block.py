@@ -383,7 +383,7 @@ def _linebox_layout(context, box, index, child, new_children, page_is_empty,
         # See https://drafts.csswg.org/css-page-3/#allowed-pg-brk
         # "When an unforced page break occurs here, both the adjoining
         #  ‘margin-top’ and ‘margin-bottom’ are set to zero."
-        # See https://github.com/Kozea/WeasyPrint/issues/115
+        # See issue #115.
         elif page_is_empty and context.overflows_page(
                 bottom_space, new_position_y):
             # Remove the top border when a page is empty and the box is

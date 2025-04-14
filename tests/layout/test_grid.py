@@ -881,7 +881,7 @@ def test_grid_margin():
 
 @assert_no_logs
 def test_grid_item_margin():
-    # Regression test for https://github.com/Kozea/WeasyPrint/issues/2154
+    # Regression test for #2154.
     page, = render_pages('''
       <style>
         article { display: grid }
@@ -967,7 +967,7 @@ def test_grid_template_areas_extra_span_column_dense():
 
 @assert_no_logs
 def test_grid_gap_explicit_grid_column():
-    # Regression test for https://github.com/Kozea/WeasyPrint/issues/2187
+    # Regression test for #2187.
     page, = render_pages('''
       <style>
         article {
