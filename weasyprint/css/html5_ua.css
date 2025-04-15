@@ -47,11 +47,6 @@ h3 { margin-top: 1em; margin-bottom: 1em }
 h4 { margin-top: 1.33em; margin-bottom: 1.33em }
 h5 { margin-top: 1.67em; margin-bottom: 1.67em }
 h6 { margin-top: 2.33em; margin-bottom: 2.33em }
-:is(article, aside, nav, section) h1 { font-size: 1.5em; margin-bottom: .83em; margin-top: .83em }
-:is(article, aside, nav, section) :is(article, aside, nav, section) h1 { font-size: 1.17em; margin-bottom: 1em; margin-top: 1em }
-:is(article, aside, nav, section) :is(article, aside, nav, section) :is(article, aside, nav, section) h1 { font-size: 1em; margin-bottom: 1.33em; margin-top: 1.33em }
-:is(article, aside, nav, section) :is(article, aside, nav, section) :is(article, aside, nav, section) :is(article, aside, nav, section) h1 { font-size: .83em; margin-bottom: 1.67em; margin-top: 1.67em }
-:is(article, aside, nav, section) :is(article, aside, nav, section) :is(article, aside, nav, section) :is(article, aside, nav, section) :is(article, aside, nav, section) h1 { font-size: .67em; margin-bottom: 2.33em; margin-top: 2.33em }
 
 blockquote, figure { margin-left: 40px; margin-right: 40px }
 
