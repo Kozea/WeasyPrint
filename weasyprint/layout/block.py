@@ -675,7 +675,6 @@ def block_container_layout(context, box, bottom_space, skip_stack,
 
     new_children = []
     next_page = {'break': 'any', 'page': None}
-    all_footnotes = []
     broken_out_of_flow = {}
 
     last_in_flow_child = None
@@ -718,7 +717,6 @@ def block_container_layout(context, box, bottom_space, skip_stack,
                 draw_bottom_decoration, max_lines)
             draw_bottom_decoration |= resume_at is None
             adjoining_margins = []
-            all_footnotes += new_footnotes
 
         else:
             (abort, stop, resume_at, position_y, adjoining_margins,
