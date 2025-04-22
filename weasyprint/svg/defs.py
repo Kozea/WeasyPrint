@@ -44,12 +44,6 @@ def get_use_tree(svg, node, font_size):
 
 def use(svg, node, font_size):
     """Draw use tags."""
-    x, y = svg.point(node.get('x'), node.get('y'), font_size)
-
-    for attribute in ('x', 'y', 'viewBox', 'mask'):
-        if attribute in node.attrib:
-            del node.attrib[attribute]
-
     if (tree := get_use_tree(svg, node, font_size)) is None:
         return
 
@@ -69,6 +63,7 @@ def use(svg, node, font_size):
 
     node.cascade(tree)
     node.override_iter(iter((tree,)))
+    x, y = svg.point(node.get('x'), node.get('y'), font_size)
     svg.stream.transform(e=x, f=y)
 
 

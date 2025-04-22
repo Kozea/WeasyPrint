@@ -172,7 +172,6 @@ def test_bounding_box_polyline(assert_pixels):
     ''')
 
 
-@pytest.mark.xfail
 @assert_no_logs
 def test_bounding_box_text(assert_pixels):
     assert_pixels('''
@@ -187,12 +186,11 @@ def test_bounding_box_text(assert_pixels):
         <defs>
           <linearGradient id="grad" x1="0" y1="0" x2="1" y2="1"
             gradientUnits="objectBoundingBox">
-            <stop stop-color="blue" offset="55%"></stop>
-            <stop stop-color="red" offset="55%"></stop>
+            <stop stop-color="blue" offset="65%"></stop>
+            <stop stop-color="red" offset="65%"></stop>
           </linearGradient>
         </defs>
-        <text x="0" y="1" font-family="weasyprint" font-size="2"
-              fill="url(#grad)">
+        <text x="0" y="2" font-family="weasyprint" font-size="2" fill="url(#grad)">
           A
         </text>
       </svg>
