@@ -229,7 +229,9 @@ def bounding_box_use(svg, node, font_size):
     if (tree := get_use_tree(svg, node, font_size)) is None:
         return EMPTY_BOUNDING_BOX
     else:
-        return bounding_box(svg, tree, font_size, True)
+        x, y = svg.point(node.get('x'), node.get('y'), font_size)
+        box = bounding_box(svg, tree, font_size, True)
+        return box[0] + x, box[1] + y, box[2], box[3]
 
 
 def _bounding_box_elliptical_arc(x1, y1, rx, ry, phi, large, sweep, x, y):

@@ -328,3 +328,25 @@ def test_svg_empty_size(assert_pixels):
         <rect x="0" y="0" width="3" height="4" fill="blue" />
       </svg>
     ''')
+
+
+@assert_no_logs
+def test_bounding_box_use_opacity(assert_pixels):
+    assert_pixels('''
+        sssss
+        sssss
+        sssss
+        sssss
+        sssss
+    ''', '''
+      <style>
+        @page { size: 5px }
+        svg { display: block }
+      </style>
+      <svg width="5px" height="5px" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <rect id="rect" x="-10" y="-10" width="5" height="5" fill="red" />
+        </defs>
+        <use href="#rect" opacity="0.5" x="10" y="10" />
+      </svg>
+    ''')
