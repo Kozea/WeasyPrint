@@ -10,7 +10,7 @@ import zlib
 from gzip import GzipFile
 from pathlib import Path
 from urllib.parse import quote, unquote, urljoin, urlsplit
-from urllib.request import Request, pathname2url, urlopen
+from urllib.request import Request, pathname2url, url2pathname, urlopen
 
 from . import __version__
 from .logger import LOGGER
@@ -205,7 +205,9 @@ def default_url_fetcher(url, timeout=10, ssl_context=None):
           if there were e.g. HTTP redirects.
         * Optionally: ``filename``, the filename of the resource. Usually
           derived from the *filename* parameter in a *Content-Disposition*
-          header
+          header.
+        * Optionally: ``path``, the path of the resource if it is stored on the
+          local filesystem.
 
         If a ``file_obj`` key is given, it is the caller’s responsibility
         to call ``file_obj.close()``. The default function used internally to
@@ -218,6 +220,9 @@ def default_url_fetcher(url, timeout=10, ssl_context=None):
         # See https://bugs.python.org/issue34702
         if url.startswith('file://'):
             url = url.split('?')[0]
+            path = url2pathname(url.removeprefix('file:'))
+        else:
+            path = None
 
         url = iri_to_uri(url)
         response = urlopen(
@@ -229,6 +234,7 @@ def default_url_fetcher(url, timeout=10, ssl_context=None):
             'mime_type': response_info.get_content_type(),
             'encoding': response_info.get_param('charset'),
             'filename': response_info.get_filename(),
+            'path': path,
         }
         content_encoding = response_info.get('Content-Encoding')
         if content_encoding == 'gzip':
