@@ -228,15 +228,14 @@ def default_url_fetcher(url, timeout=10, ssl_context=None):
         response = urlopen(
             Request(url, headers=HTTP_HEADERS), timeout=timeout,
             context=ssl_context)
-        response_info = response.info()
         result = {
-            'redirected_url': response.geturl(),
-            'mime_type': response_info.get_content_type(),
-            'encoding': response_info.get_param('charset'),
-            'filename': response_info.get_filename(),
+            'redirected_url': response.url,
+            'mime_type': response.headers.get_content_type(),
+            'encoding': response.headers.get_param('charset'),
+            'filename': response.headers.get_filename(),
             'path': path,
         }
-        content_encoding = response_info.get('Content-Encoding')
+        content_encoding = response.headers.get('Content-Encoding')
         if content_encoding == 'gzip':
             result['file_obj'] = StreamingGzipFile(fileobj=response)
         elif content_encoding == 'deflate':
