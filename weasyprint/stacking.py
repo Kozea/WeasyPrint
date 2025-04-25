@@ -45,7 +45,7 @@ class StackingContext:
         child_contexts = [cls.from_box(child, page) for child in page.children]
         # Children are sub-contexts, remove them from the "normal" tree.
         page = page.copy_with_children([])
-        return cls(page, child_contexts, [], [], [], page)
+        return cls(page, child_contexts, [], [], {}, page)
 
     @classmethod
     def from_box(cls, box, page, child_contexts=None):
@@ -60,7 +60,7 @@ class StackingContext:
         #    context, not this new one."
         blocks = []
         floats = []
-        blocks_and_cells = []
+        blocks_and_cells = {}
         box = _dispatch_children(
             box, page, child_contexts, blocks, floats, blocks_and_cells)
         return cls(box, children, blocks, floats, blocks_and_cells, page)
@@ -99,22 +99,21 @@ def _dispatch(box, page, child_contexts, blocks, floats, blocks_and_cells):
     else:
         if isinstance(box, boxes.BlockLevelBox):
             blocks_index = len(blocks)
-            blocks_and_cells_index = len(blocks_and_cells)
+            box_blocks_and_cells = {}
+            box = _dispatch_children(
+                box, page, child_contexts, blocks, floats, box_blocks_and_cells)
+            blocks.insert(blocks_index, box)
+            blocks_and_cells[box] = box_blocks_and_cells
         elif isinstance(box, boxes.TableCellBox):
-            blocks_index = None
-            blocks_and_cells_index = len(blocks_and_cells)
+            box_blocks_and_cells = {}
+            box = _dispatch_children(
+                box, page, child_contexts, blocks, floats, box_blocks_and_cells)
+            blocks_and_cells[box] = box_blocks_and_cells
         else:
             blocks_index = None
-            blocks_and_cells_index = None
-
-        box = _dispatch_children(
-            box, page, child_contexts, blocks, floats, blocks_and_cells)
-
-        # Insert at the positions before dispatch the children.
-        if blocks_index is not None:
-            blocks.insert(blocks_index, box)
-        if blocks_and_cells_index is not None:
-            blocks_and_cells.insert(blocks_and_cells_index, box)
+            box_blocks_and_cells = None
+            box = _dispatch_children(
+                box, page, child_contexts, blocks, floats, blocks_and_cells)
 
         return box
 
