@@ -118,17 +118,8 @@ def draw_stacking_context(page, stream, stacking_context):
                 draw_inline_level(stream, stacking_context.page, box)
 
             # Point 7.
-            for block in (box, *stacking_context.blocks_and_cells):
-                if isinstance(block, boxes.ReplacedBox):
-                    draw_replacedbox(stream, block)
-                elif block.children:
-                    if block != box:
-                        stream.begin_marked_content(block, page)
-                    if isinstance(block.children[-1], boxes.LineBox):
-                        for child in block.children:
-                            draw_inline_level(stream, stacking_context.page, child)
-                    if block != box:
-                        stream.end_marked_content(page)
+            draw_block_level(
+                stacking_context.page, stream, {box: stacking_context.blocks_and_cells})
 
             # Point 8.
             for child_context in stacking_context.zero_z_contexts:
@@ -543,3 +534,16 @@ def draw_inline_level(stream, page, box, offset_x=0, text_overflow='clip',
             assert isinstance(box, boxes.TextBox)
             # Should only happen for list markers.
             draw_text(stream, box, offset_x, text_overflow)
+
+
+def draw_block_level(page, stream, blocks_and_cells):
+    for block, blocks_and_cells in blocks_and_cells.items():
+        stream.begin_marked_content(block, page)
+        if isinstance(block, boxes.ReplacedBox):
+            draw_replacedbox(stream, block)
+        elif block.children:
+            if isinstance(block.children[-1], boxes.LineBox):
+                for child in block.children:
+                    draw_inline_level(stream, page, child)
+        draw_block_level(page, stream, blocks_and_cells)
+        stream.end_marked_content(page)
