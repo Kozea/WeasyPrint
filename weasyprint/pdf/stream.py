@@ -14,7 +14,6 @@ class Stream(pydyf.Stream):
     def __init__(self, fonts, page_rectangle, resources, images, mark, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.page_rectangle = page_rectangle
-        self.marked = []
         self._fonts = fonts
         self._resources = resources
         self._images = images
@@ -248,20 +247,20 @@ class Stream(pydyf.Stream):
         self._resources['Shading'][shading.id] = shading
         return shading
 
-    def begin_marked_content(self, box, mcid=False, tag=None):
+    def begin_marked_content(self, box, page, tag=None):
         if not self._mark:
             return
         property_list = None
         if tag is None:
             tag = self.get_marked_content_tag(box.element_tag)
-        if mcid:
-            property_list = pydyf.Dictionary({'MCID': len(self.marked)})
-            self.marked.append((tag, box))
+        marked_counter = page.begin_marked(box, tag)
+        property_list = pydyf.Dictionary({'MCID': marked_counter})
         super().begin_marked_content(tag, property_list)
 
-    def end_marked_content(self):
+    def end_marked_content(self, page):
         if not self._mark:
             return
+        page.end_marked()
         super().end_marked_content()
 
     @staticmethod

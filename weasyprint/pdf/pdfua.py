@@ -18,93 +18,57 @@ def pdfua(pdf, metadata, document, page_streams, attachments, compress):
     structure_document = pydyf.Dictionary({
         'Type': '/StructElem',
         'S': '/Document',
+        'K': pydyf.Array(),
         'P': structure_root.reference,
     })
     pdf.add_object(structure_document)
     structure_root['K'] = pydyf.Array([structure_document.reference])
     pdf.catalog['StructTreeRoot'] = structure_root.reference
 
-    document_children = []
     content_mapping['Nums'] = pydyf.Array()
     links = []
-    for page_number, page_stream in enumerate(page_streams):
-        structure = {}
-        document.build_element_structure(structure)
-        parents = [None] * len(page_stream.marked)
-        for mcid, (key, box) in enumerate(page_stream.marked):
-            # Build structure elements
-            kids = [mcid]
-            if key == 'Link':
+    for page_number, page in enumerate(document.pages):
+        elements = []
+        content_mapping['Nums'].append(page_number)
+        content_mapping['Nums'].append(pydyf.Array())
+        for mcid, marked in enumerate(page._page_box.marked):
+            parent = structure_document if mcid == 0 else elements[marked['parent']]
+            tag, box = marked['tag'], marked['box']
+            element = pydyf.Dictionary({
+                'Type': '/StructElem',
+                'S': f'/{tag}',
+                'K': pydyf.Array([mcid]),
+                'Pg': pdf.page_references[page_number],
+                'P': parent.reference,
+            })
+            pdf.add_object(element)
+            if tag == 'LI':
+                if box.element.tag == 'dt':
+                    sub_key = 'Lbl'
+                else:
+                    sub_key = 'LBody'
+                real_element = pydyf.Dictionary({
+                    'Type': '/StructElem',
+                    'S': f'/{sub_key}',
+                    'K': pydyf.Array([mcid]),
+                    'Pg': pdf.page_references[page_number],
+                    'P': element.reference,
+                })
+                pdf.add_object(real_element)
+                element['K'] = pydyf.Array([real_element.reference])
+            elements.append(element)
+            content_mapping['Nums'][-1].append(element.reference)
+            if marked['tag'] == 'Link':
+                annotation = box.link_annotation
                 object_reference = pydyf.Dictionary({
                     'Type': '/OBJR',
-                    'Obj': box.link_annotation.reference,
+                    'Obj': annotation.reference,
                     'Pg': pdf.page_references[page_number],
                 })
                 pdf.add_object(object_reference)
-                links.append((object_reference.reference, box.link_annotation))
-            etree_element = box.element
-            child_structure_data_element = None
-            while True:
-                if etree_element is None:
-                    structure_data = structure.setdefault(
-                        box, {'parent': None})
-                else:
-                    structure_data = structure[etree_element]
-                new_element = 'element' not in structure_data
-                if new_element:
-                    child = structure_data['element'] = pydyf.Dictionary({
-                        'Type': '/StructElem',
-                        'S': f'/{key}',
-                        'K': pydyf.Array(kids),
-                        'Pg': pdf.page_references[page_number],
-                    })
-                    pdf.add_object(child)
-                    if key == 'LI':
-                        if etree_element.tag == 'dt':
-                            sub_key = 'Lbl'
-                        else:
-                            sub_key = 'LBody'
-                        real_child = pydyf.Dictionary({
-                            'Type': '/StructElem',
-                            'S': f'/{sub_key}',
-                            'K': pydyf.Array(kids),
-                            'Pg': pdf.page_references[page_number],
-                            'P': child.reference,
-                        })
-                        pdf.add_object(real_child)
-                        for kid in kids:
-                            if isinstance(kid, int):
-                                parents[kid] = real_child.reference
-                        child['K'] = pydyf.Array([real_child.reference])
-                        structure_data['element'] = real_child
-                    else:
-                        for kid in kids:
-                            if isinstance(kid, int):
-                                parents[kid] = child.reference
-                else:
-                    child = structure_data['element']
-                    child['K'].extend(kids)
-                    for kid in kids:
-                        if isinstance(kid, int):
-                            parents[kid] = child.reference
-                kid = child.reference
-                if child_structure_data_element is not None:
-                    child_structure_data_element['P'] = kid
-                if not new_element:
-                    break
-                kids = [kid]
-                child_structure_data_element = child
-                if structure_data['parent'] is None:
-                    child['P'] = structure_document.reference
-                    document_children.append(child.reference)
-                    break
-                else:
-                    etree_element = structure_data['parent']
-                key = page_stream.get_marked_content_tag(etree_element.tag)
-        content_mapping['Nums'].append(page_number)
-        content_mapping['Nums'].append(pydyf.Array(parents))
-    structure_document['K'] = pydyf.Array(document_children)
-    for i, (link, annotation) in enumerate(links, start=page_number + 1):
+                links.append((object_reference.reference, annotation))
+        structure_document['K'].append(elements[0].reference)
+    for i, (link, annotation) in enumerate(links, start=len(document.pages)):
         content_mapping['Nums'].append(i)
         content_mapping['Nums'].append(link)
         annotation['StructParent'] = i

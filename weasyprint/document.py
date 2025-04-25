@@ -276,14 +276,6 @@ class Document:
         # fonts that may be used when rendering
         self.font_config = font_config
 
-    def build_element_structure(self, structure, etree_element=None):
-        if etree_element is None:
-            etree_element = self._html.etree_element
-            structure[etree_element] = {'parent': None}
-        for child in etree_element:
-            structure[child] = {'parent': etree_element}
-            self.build_element_structure(structure, child)
-
     def copy(self, pages='all'):
         """Take a subset of the pages.
 
