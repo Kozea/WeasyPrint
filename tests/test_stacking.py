@@ -21,11 +21,17 @@ z_index_source = '''
   </div>'''
 
 
+def flatten_blocks_and_cells(blocks_and_cells):
+    for block, blocks_and_cells in blocks_and_cells.items():
+        yield block.element_tag
+        yield from flatten_blocks_and_cells(blocks_and_cells)
+
+
 def serialize_stacking(context):
     return (
         context.box.element_tag,
-        [b.element_tag for b in context.blocks_and_cells],
-        [serialize_stacking(c) for c in context.zero_z_contexts])
+        list(flatten_blocks_and_cells(context.blocks_and_cells)),
+        [serialize_stacking(context) for context in context.zero_z_contexts])
 
 
 @assert_no_logs
