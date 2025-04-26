@@ -56,6 +56,9 @@ def pdfua(pdf, metadata, document, page_streams, attachments, compress):
                 })
                 pdf.add_object(real_element)
                 element['K'] = pydyf.Array([real_element.reference])
+            elif tag == 'Figure':
+                if box.element.tag == 'img' and 'alt' in box.element.attrib:
+                    element['Alt'] = pydyf.String(box.element.attrib['alt'])
             elements.append(element)
             content_mapping['Nums'][-1].append(element.reference)
             if marked['tag'] == 'Link':
