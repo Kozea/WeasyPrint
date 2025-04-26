@@ -288,6 +288,8 @@ class Stream(pydyf.Stream):
             return 'Div'
         elif element_tag == 'span':
             return 'Span'
+        elif element_tag == 'main':
+            return 'Part'
         elif element_tag == 'article':
             return 'Art'
         elif element_tag == 'section':
@@ -308,5 +310,11 @@ class Stream(pydyf.Stream):
             return element_tag.upper()
         elif element_tag in ('thead', 'tbody', 'tfoot'):
             return element_tag[:2].upper() + element_tag[2:]
+        elif element_tag in ('figure', 'img', 'embed'):
+            return 'Figure'
+        elif element_tag in ('caption', 'figcaption'):
+            return 'Caption'
+        elif element_tag and element_tag.endswith('::marker'):
+            return 'Lbl'
         else:
             return 'NonStruct'
