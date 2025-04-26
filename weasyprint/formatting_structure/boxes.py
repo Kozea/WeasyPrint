@@ -757,7 +757,7 @@ class PageBox(ParentBox):
     def begin_marked(self, box, tag):
         parent = self._marked_pile[-1] if self._marked_pile else None
         mcid = len(self.marked)
-        marked = {'tag': tag, 'box': box, 'mcid': mcid, 'parent': parent}
+        marked = {'tag': tag, 'box': box, 'parent': parent}
         self._marked_pile.append(mcid)
         self.marked.append(marked)
         return mcid
