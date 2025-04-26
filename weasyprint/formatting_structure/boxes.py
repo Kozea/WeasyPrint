@@ -732,7 +732,7 @@ class PageBox(ParentBox):
     def __init__(self, page_type, style):
         self.page_type = page_type
         self.marked = []
-        self._marked_pile = []
+        self._marked_pile = [0]
         # Page boxes are not linked to any element.
         super().__init__(
             element_tag=None, style=style, element=None, children=[])

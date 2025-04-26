@@ -119,7 +119,8 @@ def draw_stacking_context(page, stream, stacking_context):
 
             # Point 7.
             draw_block_level(
-                stacking_context.page, stream, {box: stacking_context.blocks_and_cells})
+                stacking_context.page, stream, {box: stacking_context.blocks_and_cells},
+                from_stacking_context=True)
 
             # Point 8.
             for child_context in stacking_context.zero_z_contexts:
@@ -536,9 +537,10 @@ def draw_inline_level(stream, page, box, offset_x=0, text_overflow='clip',
             draw_text(stream, box, offset_x, text_overflow)
 
 
-def draw_block_level(page, stream, blocks_and_cells):
+def draw_block_level(page, stream, blocks_and_cells, from_stacking_context=False):
     for block, blocks_and_cells in blocks_and_cells.items():
-        stream.begin_marked_content(block, page)
+        if not from_stacking_context:
+            stream.begin_marked_content(block, page)
         if isinstance(block, boxes.ReplacedBox):
             draw_replacedbox(stream, block)
         elif block.children:
@@ -546,4 +548,5 @@ def draw_block_level(page, stream, blocks_and_cells):
                 for child in block.children:
                     draw_inline_level(stream, page, child)
         draw_block_level(page, stream, blocks_and_cells)
-        stream.end_marked_content(page)
+        if not from_stacking_context:
+            stream.end_marked_content(page)
