@@ -48,3 +48,18 @@ def test_shrink_to_fit_floating_point_error_2(font_size):
             break
         else:
             letters += 1
+
+
+@assert_no_logs
+def test_preferred_inline_zero_width_inline_block():
+    page, = render_pages('''
+      <style>
+        div { font: 2px weasyprint; float: left }
+      </style>
+      <div><span style="display: inline-block"></span> a</div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    assert div.width == 4
+    assert div.height == 2
