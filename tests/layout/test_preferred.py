@@ -63,3 +63,18 @@ def test_preferred_inline_zero_width_inline_block():
     div, = body.children
     assert div.width == 4
     assert div.height == 2
+
+
+@assert_no_logs
+def test_preferred_inline_nested_trailing_spaces():
+    page, = render_pages('''
+      <style>
+        div { font: 2px weasyprint; float: left }
+      </style>
+      <div><span>a </span> </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    assert div.width == 2
+    assert div.height == 2

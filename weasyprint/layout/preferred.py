@@ -752,10 +752,11 @@ def trailing_whitespace_size(context, box):
     """Return the size of the trailing whitespace of ``box``."""
     from .inline import split_first_line, split_text_box
 
+    last_parent = None
     while isinstance(box, (boxes.InlineBox, boxes.LineBox)):
         if not box.children:
             return 0
-        box = box.children[-1]
+        last_parent, box = box, box.children[-1]
     if not (isinstance(box, boxes.TextBox) and box.text and
             box.style['white_space'] in ('normal', 'nowrap', 'pre-line')):
         return 0
@@ -780,4 +781,7 @@ def trailing_whitespace_size(context, box):
     else:
         _, _, _, width, _, _ = split_first_line(
             box.text, box.style, context, None, box.justification_spacing)
+        # Remove trailing spaces from previous child.
+        if last_parent and len(last_parent.children) >= 2:
+            width += trailing_whitespace_size(context, last_parent.children[-2])
         return width
