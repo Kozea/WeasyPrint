@@ -78,3 +78,18 @@ def test_preferred_inline_nested_trailing_spaces():
     div, = body.children
     assert div.width == 2
     assert div.height == 2
+
+
+@assert_no_logs
+def test_preferred_inline_trailing_space_in_nested():
+    page, = render_pages('''
+      <style>
+        div { font: 2px weasyprint; float: left }
+      </style>
+      <div><span style="display: inline-block"></span><span><span>a</span> </span></div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    assert div.width == 2
+    assert div.height == 2
