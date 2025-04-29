@@ -752,18 +752,30 @@ def trailing_whitespace_size(context, box):
     """Return the size of the trailing whitespace of ``box``."""
     from .inline import split_first_line, split_text_box
 
+    # Find last box child, keep last parent to remove nested trailing spaces.
     last_parent = None
     while isinstance(box, (boxes.InlineBox, boxes.LineBox)):
         if not box.children:
             return 0
         last_parent, box = box, box.children[-1]
-    if not (isinstance(box, boxes.TextBox) and box.text and
-            box.style['white_space'] in ('normal', 'nowrap', 'pre-line')):
+
+    # Return early if possible.
+    if not isinstance(box, boxes.TextBox) or not box.text:
+        # There’s no text in last child.
         return 0
-    stripped_text = box.text.rstrip(' ')
-    if box.style['font_size'] == 0 or len(stripped_text) == len(box.text):
+    elif box.style['white_space'] not in ('normal', 'nowrap', 'pre-line'):
+        # Spaces don’t collapse.
         return 0
-    if stripped_text:
+    elif box.style['font_size'] == 0:
+        # Trailing spaces take no space.
+        return 0
+    elif not box.text.endswith(' '):
+        # No trailing space.
+        return 0
+
+    # Strip text.
+    if stripped_text := box.text.rstrip(' '):
+        # Stripped text is not empty, calculate width difference.
         resume = 0
         while resume is not None:
             old_resume = resume
@@ -773,15 +785,17 @@ def trailing_whitespace_size(context, box):
         stripped_box, resume, _ = split_text_box(
             context, stripped_box, None, old_resume)
         if stripped_box is None:
-            # old_box split just before the trailing spaces
+            # Old box is split just before the trailing spaces.
             return old_box.width
         else:
+            # Return difference between old width and stripped width.
             assert resume is None
             return old_box.width - stripped_box.width
     else:
+        # Stripped text is empty, render spaces to get width.
         _, _, _, width, _, _ = split_first_line(
             box.text, box.style, context, None, box.justification_spacing)
-        # Remove trailing spaces from previous child.
+        # Remove possible trailing spaces from previous child.
         if last_parent and len(last_parent.children) >= 2:
             width += trailing_whitespace_size(context, last_parent.children[-2])
         return width
