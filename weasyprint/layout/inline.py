@@ -771,24 +771,9 @@ def split_inline_box(context, box, position_x, max_x, bottom_space, skip_stack,
             if isinstance(box, boxes.LineBox):
                 line_children.append((index, new_child))
 
-            # Find trailing whitespace.
-            trailing_box = new_child
-            trailing_space = False
-            while not isinstance(trailing_box, boxes.TextBox):
-                # Find nested last text child.
-                if isinstance(trailing_box, boxes.ParentBox) and trailing_box.children:
-                    trailing_box = trailing_box.children[-1]
-                else:
-                    break
-            else:
-                # Last text child found, check trailing whitespace.
-                trailing_space = (
-                    trailing_box.text and
-                    unicodedata.category(trailing_box.text[-1]) == 'Zs')
-
             # Check that text doesn’t overflow.
             new_position_x = new_child.position_x + new_child.margin_width()
-            if new_position_x > max_x and not trailing_space:
+            if new_position_x - trailing_whitespace_size(context, new_child) > max_x:
                 # Text overflows, find previous break point.
                 previous_resume_at = _break_waiting_children(
                     context, containing_block, max_x, bottom_space, initial_skip_stack,
