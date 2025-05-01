@@ -177,7 +177,7 @@ def ensure_url(string):
     return string if url_is_absolute(string) else path2url(string)
 
 
-def default_url_fetcher(url, timeout=10, ssl_context=None):
+def default_url_fetcher(url, timeout=10, ssl_context=None, http_headers=None):
     """Fetch an external resource such as an image or stylesheet.
 
     Another callable with the same signature can be given as the
@@ -190,6 +190,8 @@ def default_url_fetcher(url, timeout=10, ssl_context=None):
         The number of seconds before HTTP requests are dropped.
     :param ssl.SSLContext ssl_context:
         An SSL context used for HTTP requests.
+    :param dict http_headers
+        A dictionary of additional HTTP headers used for HTTP requests.
     :raises: An exception indicating failure, e.g. :obj:`ValueError` on
         syntactically invalid URL.
     :returns: A :obj:`dict` with the following keys:
@@ -220,8 +222,12 @@ def default_url_fetcher(url, timeout=10, ssl_context=None):
             url = url.split('?')[0]
 
         url = iri_to_uri(url)
+        if http_headers is not None:
+            http_headers = {**HTTP_HEADERS, **http_headers}
+        else:
+            http_headers = HTTP_HEADERS
         response = urlopen(
-            Request(url, headers=HTTP_HEADERS), timeout=timeout,
+            Request(url, headers=http_headers), timeout=timeout,
             context=ssl_context)
         response_info = response.info()
         result = {
