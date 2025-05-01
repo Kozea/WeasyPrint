@@ -1831,3 +1831,23 @@ def test_flex_item_replaced():
     div, = body.children
     svg, = div.children
     assert svg.width == svg.height == 100
+
+
+@assert_no_logs
+def test_flex_nested_column():
+    # Regression test for issue #2442.
+    page, = render_pages('''
+      <section style="display: flex; flex-direction: column; width: 200px">
+        <div style="display: flex; flex-direction: column">
+          <p>
+            A
+          </p>
+        </div>
+      </section>
+    ''')
+    html, = page.children
+    body, = html.children
+    section, = body.children
+    div, = section.children
+    p, = div.children
+    assert p.width == 200

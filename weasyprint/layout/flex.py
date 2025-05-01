@@ -815,9 +815,6 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
                                 margins += (
                                     child.border_left_width + child.border_right_width +
                                     child.padding_left + child.padding_right)
-                        # TODO: Don't set style width, find a way to avoid width
-                        # re-calculation after 16.
-                        child.style[cross] = Dimension(line.cross_size - margins, 'px')
         position_cross += line.cross_size
 
     # 15 Determine the flex container’s used cross size.
