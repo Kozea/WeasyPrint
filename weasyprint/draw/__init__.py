@@ -74,11 +74,11 @@ def draw_stacking_context(stream, stacking_context):
         # Point 1 is done in draw_page.
 
         # Point 2.
-        if isinstance(box, (boxes.BlockBox, boxes.MarginBox,
-                            boxes.InlineBlockBox, boxes.TableCellBox,
-                            boxes.FlexContainerBox, boxes.ReplacedBox)):
+        if isinstance(box, (boxes.BlockBox, boxes.MarginBox, boxes.InlineBlockBox,
+                            boxes.TableCellBox, boxes.FlexContainerBox,
+                            boxes.GridContainerBox, boxes.ReplacedBox)):
             set_mask_border(stream, box)
-            # The canvas background was removed by layout_backgrounds
+            # The canvas background was removed by layout_backgrounds.
             draw_background(stream, box.background)
             draw_border(stream, box)
 
