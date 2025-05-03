@@ -966,6 +966,29 @@ def test_flex_item_overflow():
 
 
 @assert_no_logs
+@pytest.mark.parametrize('direction', ('row', 'column'))
+def test_flex_item_child_bottom_margin(direction):
+    # Regression test for issue #2449.
+    page, = render_pages('''
+      <div style="display: flex; font: 2px weasyprint; flex-direction: %s">
+        <section>
+          <div style="margin: 2px 0">ab</div>
+        </section>
+      </div>''' % direction)
+    html, = page.children
+    body, = html.children
+    flex, = body.children
+    assert flex.content_box_y() == 0
+    assert flex.height == 6
+    section, = flex.children
+    assert section.content_box_y() == 0
+    assert section.height == 6
+    div, = section.children
+    assert div.content_box_y() == 2
+    assert div.height == 2
+
+
+@assert_no_logs
 def test_flex_direction_row_inline_block():
     # Regression test for issue #1652.
     page, = render_pages('''

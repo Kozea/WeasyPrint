@@ -249,10 +249,14 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
             else:
                 new_child = child.copy()
                 new_child.width = inf
-                new_child = block.block_level_layout(
+                new_child, _, _, adjoining_margins, _, _ = block.block_level_layout(
                     context, new_child, bottom_space, child_skip_stack, parent_box,
-                    page_is_empty, absolute_boxes, fixed_boxes)[0]
+                    page_is_empty, absolute_boxes, fixed_boxes)
                 if new_child:
+                    # As flex items margins never collapse (with other flex items or
+                    # with the flex container), we can add the adjoining margins to the
+                    # child height.
+                    new_child.height += block.collapse_margin(adjoining_margins)
                     child.flex_base_size = new_child.height
                     child.main_outer_extra = (
                         new_child.margin_height() - new_child.height)
@@ -477,8 +481,8 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
                 child.height = new_child.height
                 # As flex items margins never collapse (with other flex items or
                 # with the flex container), we can add the adjoining margins to the
-                # child bottom margin.
-                child.margin_bottom += block.collapse_margin(adjoining_margins)
+                # child height.
+                child.height += block.collapse_margin(adjoining_margins)
             else:
                 if child.width == 'auto':
                     min_width = min_content_width(context, child, outer=False)
