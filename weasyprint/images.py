@@ -8,8 +8,6 @@ from io import BytesIO
 from itertools import cycle
 from math import inf
 from pathlib import Path
-from urllib.parse import urlparse
-from urllib.request import url2pathname
 from xml.etree import ElementTree
 
 import pydyf
@@ -299,11 +297,6 @@ def get_image_from_uri(cache, url_fetcher, options, url, forced_mime_type=None,
 
     try:
         with fetch(url_fetcher, url) as result:
-            parsed_url = urlparse(result.get('redirected_url'))
-            if parsed_url.scheme == 'file':
-                filename = url2pathname(parsed_url.path)
-            else:
-                filename = None
             if 'string' in result:
                 string = result['string']
             else:
@@ -337,9 +330,9 @@ def get_image_from_uri(cache, url_fetcher, options, url, forced_mime_type=None,
             else:
                 # Store image id to enable cache in Stream.add_image
                 image_id = md5(url.encode(), usedforsecurity=False).hexdigest()
+                path = result.get('path')
                 image = RasterImage(
-                    pillow_image, image_id, string, filename, cache,
-                    orientation, options)
+                    pillow_image, image_id, string, path, cache, orientation, options)
 
     except (URLFetchingError, ImageLoadingError) as exception:
         LOGGER.error('Failed to load image at %r: %s', url, exception)
