@@ -502,7 +502,6 @@ def _in_flow_layout(context, box, index, child, new_children, page_is_empty,
         if box.is_table_wrapper:  # should not be a special case
             collapsed_margin = collapse_margin(adjoining_margins)
             child.position_y += collapsed_margin
-            position_y += collapsed_margin
             adjoining_margins = []
         elif not isinstance(child, boxes.BlockBox):  # blocks handle that themselves
             if child.style['margin_top'] == 'auto':
@@ -512,7 +511,6 @@ def _in_flow_layout(context, box, index, child, new_children, page_is_empty,
             adjoining_margins.append(margin_top)
             offset_y = collapse_margin(adjoining_margins) - margin_top
             child.position_y += offset_y
-            position_y += offset_y
             adjoining_margins = []
 
     page_is_empty_with_no_children = page_is_empty and not any(

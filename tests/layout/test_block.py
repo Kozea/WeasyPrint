@@ -1005,3 +1005,31 @@ def test_page_breaks_3():
         page_divs.append(divs)
     positions_y = [[div.position_y for div in divs] for divs in page_divs]
     assert positions_y == [[10], [10], [10]]
+
+
+@assert_no_logs
+def test_page_break_child_margin_no_collapse():
+    # Regression test for #2453.
+    page1, page2 = render_pages('''
+      <style>
+        @page{ size: 6px }
+      </style>
+      <body>
+        <div style="height: 2px"></div>
+        <section>
+          <div style="height: 3px; margin-bottom: 2px"></div>
+          <div style="display: flex">
+            <span style="font: 2px weasyprint">a</span>
+          </div>
+        </section>
+      </body>
+    ''')
+    html, = page1.children
+    body, = html.children
+    div, section = body.children
+    div, = section.children
+
+    html, = page2.children
+    body, = html.children
+    section, = body.children
+    div, = section.children
