@@ -1038,6 +1038,18 @@ def test_line_break_before_trailing_space():
     assert p1.width == p2.width
 
 
+def test_line_break_before_nested_trailing_space():
+    # Regression test for #2448.
+    page, = render_pages('''
+    <div style="font: 2px weasyprint; width: 6px">
+      AA <span><b><i>BBB</i></b> </span></div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    assert len(div.children) == 2
+
+
 def white_space_lines(width, space):
     page, = render_pages('''
       <style>

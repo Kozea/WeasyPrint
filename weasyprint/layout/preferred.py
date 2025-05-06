@@ -270,37 +270,43 @@ def table_cell_min_max_content_width(context, box, outer=True):
 
 def inline_line_widths(context, box, outer, is_line_start, minimum, skip_stack=None,
                        first_line=False):
+    """Yield line width for each line."""
+
+    # Set text indent.
+    text_indent = 0
     if isinstance(box, boxes.LineBox) and box.style['text_indent'].unit != '%':
         text_indent = box.style['text_indent'].value
-    else:
-        text_indent = 0
 
+    # Yield widths for each line.
     current_line = 0
     if skip_stack is None:
         skip = 0
     else:
         (skip, skip_stack), = skip_stack.items()
     for child in box.children[skip:]:
+        # Skip absolutely positioned elements.
         if child.is_absolutely_positioned():
-            continue  # Skip
+            continue
 
+        # None is used in "lines" to track line breaks, transformed to 0 when yielded.
         if isinstance(child, boxes.InlineBox):
+            # Inline box, call function recursively.
             lines = inline_line_widths(
-                context, child, outer, is_line_start, minimum, skip_stack,
-                first_line)
+                context, child, outer, is_line_start, minimum, skip_stack, first_line)
             if first_line:
-                lines = [next(lines)]
+                lines = [next(lines) or None]
             else:
-                lines = list(lines)
+                lines = [line or None for line in lines]
             if len(lines) == 1:
-                lines[0] = adjust(child, outer, lines[0])
+                lines[0] = adjust(child, outer, lines[0] or 0)
             else:
-                lines[0] = adjust(child, outer, lines[0], right=False)
-                lines[-1] = adjust(child, outer, lines[-1], left=False)
+                lines[0] = adjust(child, outer, lines[0] or 0, right=False) or None
+                lines[-1] = adjust(child, outer, lines[-1] or 0, left=False) or None
         elif isinstance(child, boxes.TextBox):
-            space_collapse = child.style['white_space'] in (
-                'normal', 'nowrap', 'pre-line')
-            text_wrap = child.style['white_space'] in ('normal', 'pre-wrap', 'pre-line')
+            # Text box, split into lines.
+            white_space = child.style['white_space']
+            space_collapse = white_space in ('normal', 'nowrap', 'pre-line')
+            text_wrap = white_space in ('normal', 'pre-wrap', 'pre-line')
             if skip_stack is None:
                 skip = 0
             else:
@@ -318,18 +324,21 @@ def inline_line_widths(context, box, outer, is_line_start, minimum, skip_stack=N
                     child_text[resume_index:].decode(), child.style, context, max_width,
                     child.justification_spacing, is_line_start=is_line_start,
                     minimum=True)
-                lines.append(width)
+                lines.append(width or None)
                 if first_line:
                     break
             if first_line and new_resume_index:
-                current_line += lines[0]
+                # We only need the first line, break early.
+                current_line += lines[0] or 0
                 break
             # TODO: use the real next character instead of 'a' to detect line breaks.
-            can_break = can_break_text(
-                child_text.decode()[-1:] + 'a', child.style['lang'])
+            last_letter = child_text.decode()[-1:]
+            can_break = can_break_text(last_letter + 'a', child.style['lang'])
             if minimum and text_wrap and can_break:
-                lines.append(0)
+                # Add all possible line breaks for minimal width.
+                lines.append(None)
         else:
+            # Replaced elements, inline blocks…
             # https://www.w3.org/TR/css-text-3/#overflow-wrap
             # "The line breaking behavior of a replaced element
             #  or other atomic inline is equivalent to that
@@ -338,20 +347,20 @@ def inline_line_widths(context, box, outer, is_line_start, minimum, skip_stack=N
             # "By default, there is a break opportunity
             #  both before and after any inline object."
             if minimum:
-                lines = [0, min_content_width(context, child), 0]
+                lines = [None, min_content_width(context, child), None]
             else:
                 lines = [max_content_width(context, child)]
-        # The first text line goes on the current line
-        current_line += lines[0]
+        # The first text line goes on the current line.
+        current_line += lines[0] or 0
         if len(lines) > 1:
-            # Forced line break
+            # Forced line break(s).
             yield current_line + text_indent
             text_indent = 0
             if len(lines) > 2:
                 for line in lines[1:-1]:
-                    yield line
-            current_line = lines[-1]
-        is_line_start = lines[-1] == 0
+                    yield line or 0
+            current_line = lines[-1] or 0
+        is_line_start = lines[-1] is None
         skip_stack = None
     yield current_line + text_indent
 
@@ -743,17 +752,30 @@ def trailing_whitespace_size(context, box):
     """Return the size of the trailing whitespace of ``box``."""
     from .inline import split_first_line, split_text_box
 
+    # Find last box child, keep last parent to remove nested trailing spaces.
+    last_parent = None
     while isinstance(box, (boxes.InlineBox, boxes.LineBox)):
         if not box.children:
             return 0
-        box = box.children[-1]
-    if not (isinstance(box, boxes.TextBox) and box.text and
-            box.style['white_space'] in ('normal', 'nowrap', 'pre-line')):
+        last_parent, box = box, box.children[-1]
+
+    # Return early if possible.
+    if not isinstance(box, boxes.TextBox) or not box.text:
+        # There’s no text in last child.
         return 0
-    stripped_text = box.text.rstrip(' ')
-    if box.style['font_size'] == 0 or len(stripped_text) == len(box.text):
+    elif box.style['white_space'] not in ('normal', 'nowrap', 'pre-line'):
+        # Spaces don’t collapse.
         return 0
-    if stripped_text:
+    elif box.style['font_size'] == 0:
+        # Trailing spaces take no space.
+        return 0
+    elif not box.text.endswith(' '):
+        # No trailing space.
+        return 0
+
+    # Strip text.
+    if stripped_text := box.text.rstrip(' '):
+        # Stripped text is not empty, calculate width difference.
         resume = 0
         while resume is not None:
             old_resume = resume
@@ -763,12 +785,17 @@ def trailing_whitespace_size(context, box):
         stripped_box, resume, _ = split_text_box(
             context, stripped_box, None, old_resume)
         if stripped_box is None:
-            # old_box split just before the trailing spaces
+            # Old box is split just before the trailing spaces.
             return old_box.width
         else:
+            # Return difference between old width and stripped width.
             assert resume is None
             return old_box.width - stripped_box.width
     else:
+        # Stripped text is empty, render spaces to get width.
         _, _, _, width, _, _ = split_first_line(
             box.text, box.style, context, None, box.justification_spacing)
+        # Remove possible trailing spaces from previous child.
+        if last_parent and len(last_parent.children) >= 2:
+            width += trailing_whitespace_size(context, last_parent.children[-2])
         return width
