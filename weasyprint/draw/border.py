@@ -524,7 +524,6 @@ def clip_border_segment(stream, style, width, side, border_box,
                     space = (length - number_of_dashes * dash) / number_of_spaces
                 else:
                     space = 0  # no space, unused
-                print(side, dash, space)
             elif style == 'dashed':
                 space = dash = length / (number_of_spaces + number_of_dashes) or 1
             for i in range(0, number_of_dashes + 1):
