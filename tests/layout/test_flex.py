@@ -1133,8 +1133,6 @@ def test_flex_item_auto_margin_main():
 
 @assert_no_logs
 def test_flex_item_auto_margin_cross():
-    # TODO: we keep this test because it used to crash, but we have to fix the top
-    # margin.
     page, = render_pages('''
       <article style="display: flex; height: 100px">
         <div style="margin-top: auto; height: 10px; width: 10px"></div>
@@ -1146,7 +1144,7 @@ def test_flex_item_auto_margin_cross():
     div, = article.children
     assert div.height == 10
     assert div.width == 10
-    # assert div.margin_top == 90
+    assert div.margin_top == 90
 
 
 @assert_no_logs

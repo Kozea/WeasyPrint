@@ -595,9 +595,9 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
                 align_self = align_items
             if 'stretch' in align_self and child.style[cross] == 'auto':
                 cross_margins = (
-                    (child.margin_top, child.margin_bottom)
-                    if cross == 'height'
-                    else (child.margin_left, child.margin_right))
+                    (child.style['margin_top'], child.style['margin_bottom'])
+                    if cross == 'height' else
+                    (child.style['margin_left'], child.style['margin_right']))
                 if 'auto' not in cross_margins:
                     cross_size = line.cross_size
                     if cross == 'height':
@@ -737,8 +737,9 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
             line.lower_baseline = line[0][1]._baseline if line else 0
         for index, child in line:
             cross_margins = (
-                (child.margin_top, child.margin_bottom) if cross == 'height'
-                else (child.margin_left, child.margin_right))
+                (child.style['margin_top'], child.style['margin_bottom'])
+                if cross == 'height' else
+                (child.style['margin_left'], child.style['margin_right']))
             auto_margins = sum([margin == 'auto' for margin in cross_margins])
             # If a flex item has auto cross-axis margins…
             if auto_margins:
@@ -759,14 +760,14 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
                     # If its outer cross size is less than the cross size…
                     extra_cross /= auto_margins
                     if cross == 'height':
-                        if child.margin_top == 'auto':
+                        if child.style['margin_top'] == 'auto':
                             child.margin_top = extra_cross
-                        if child.margin_bottom == 'auto':
+                        if child.style['margin_bottom'] == 'auto':
                             child.margin_bottom = extra_cross
                     else:
-                        if child.margin_left == 'auto':
+                        if child.style['margin_left'] == 'auto':
                             child.margin_left = extra_cross
-                        if child.margin_right == 'auto':
+                        if child.style['margin_right'] == 'auto':
                             child.margin_right = extra_cross
                 else:
                     # Otherwise…
