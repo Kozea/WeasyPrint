@@ -250,12 +250,22 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
             pass
         else:
             # 3.E Otherwise…
+            new_child = child.copy()
+            new_child.style = child.style.copy()
             if main == 'width':
-                child.flex_base_size = max_content_width(context, child, outer=False)
+                # … the item’s min and max main sizes are ignored.
+                new_child.style['min_width'] = Dimension(0, 'px')
+                new_child.style['max_width'] = Dimension(inf, 'px')
+
+                child.flex_base_size = max_content_width(
+                    context, new_child, outer=False)
                 child.main_outer_extra = (
                     max_content_width(context, child) - child.flex_base_size)
             else:
-                new_child = child.copy()
+                # … the item’s min and max main sizes are ignored.
+                new_child.style['min_height'] = Dimension(0, 'px')
+                new_child.style['max_height'] = Dimension(inf, 'px')
+
                 new_child.width = inf
                 new_child, _, _, adjoining_margins, _, _ = block.block_level_layout(
                     context, new_child, bottom_space, child_skip_stack, parent_box,

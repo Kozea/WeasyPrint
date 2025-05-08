@@ -1914,3 +1914,18 @@ def test_flex_image_max_height():
     article, = body.children
     img, = article.children
     assert article.height == img.height == img.width == 2
+
+
+@assert_no_logs
+def test_flex_image_min_width():
+    page, = render_pages('''
+      <article style="display: flex; width: 20px">
+        <img style="min-width: 10px; flex: 1 0 auto" src="pattern.png">
+        <div style="flex: 1 0 1px"></div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    img, div = article.children
+    assert article.height == img.height == img.width == div.height == 10
