@@ -172,6 +172,8 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
                     child.style['image_resolution'], child.style['font_size'])
                 if intrinsic_ratio and intrinsic_height:
                     transferred_size = intrinsic_height * intrinsic_ratio
+                    content_size = max(
+                        child.min_width, min(child.max_width, content_size))
             if specified_size != 'auto':
                 child.min_width = min(specified_size, content_size)
             elif transferred_size is not None:
@@ -183,12 +185,12 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
             specified_size = child.height
             new_child = child.copy()
             new_child.style = child.style.copy()
-            if new_child.style['width'] == 'auto':
-                new_child_width = max_content_width(context, new_child)
-                new_child.style['width'] = Dimension(new_child_width, 'px')
             new_child.style['height'] = 'auto'
             new_child.style['min_height'] = Dimension(0, 'px')
             new_child.style['max_height'] = Dimension(inf, 'px')
+            if new_child.style['width'] == 'auto':
+                new_child_width = max_content_width(context, new_child)
+                new_child.style['width'] = Dimension(new_child_width, 'px')
             new_child = block.block_level_layout(
                 context, new_child, bottom_space, child_skip_stack, parent_box,
                 page_is_empty)[0]
@@ -200,6 +202,12 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
                     child.style['image_resolution'], child.style['font_size'])
                 if intrinsic_ratio and intrinsic_width:
                     transferred_size = intrinsic_width / intrinsic_ratio
+                    content_size = max(
+                        child.min_height, min(child.max_height, content_size))
+                elif not intrinsic_width:
+                    # TODO: wrongly set by block_level_layout, would be OK with
+                    # min_content_height.
+                    content_size = 0
             if specified_size != 'auto':
                 child.min_height = min(specified_size, content_size)
             elif transferred_size is not None:

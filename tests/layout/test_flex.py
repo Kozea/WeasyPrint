@@ -1886,3 +1886,31 @@ def test_flex_blockify_image():
     article, = body.children
     img, = article.children
     assert article.height == img.height == 4
+
+
+@assert_no_logs
+def test_flex_image_max_width():
+    page, = render_pages('''
+      <article style="display: flex">
+        <img src="pattern.png" style="max-width: 2px">
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    img, = article.children
+    assert article.height == img.height == img.width == 2
+
+
+@assert_no_logs
+def test_flex_image_max_height():
+    page, = render_pages('''
+      <article style="display: flex">
+        <img src="pattern.png" style="max-height: 2px">
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    img, = article.children
+    assert article.height == img.height == img.width == 2
