@@ -172,6 +172,8 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
                     child.style['image_resolution'], child.style['font_size'])
                 if intrinsic_ratio and intrinsic_height:
                     transferred_size = intrinsic_height * intrinsic_ratio
+                    content_size = max(
+                        child.min_width, min(child.max_width, content_size))
             if specified_size != 'auto':
                 child.min_width = min(specified_size, content_size)
             elif transferred_size is not None:
@@ -183,12 +185,12 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
             specified_size = child.height
             new_child = child.copy()
             new_child.style = child.style.copy()
-            if new_child.style['width'] == 'auto':
-                new_child_width = max_content_width(context, new_child)
-                new_child.style['width'] = Dimension(new_child_width, 'px')
             new_child.style['height'] = 'auto'
             new_child.style['min_height'] = Dimension(0, 'px')
             new_child.style['max_height'] = Dimension(inf, 'px')
+            if new_child.style['width'] == 'auto':
+                new_child_width = max_content_width(context, new_child)
+                new_child.style['width'] = Dimension(new_child_width, 'px')
             new_child = block.block_level_layout(
                 context, new_child, bottom_space, child_skip_stack, parent_box,
                 page_is_empty)[0]
@@ -200,6 +202,12 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
                     child.style['image_resolution'], child.style['font_size'])
                 if intrinsic_ratio and intrinsic_width:
                     transferred_size = intrinsic_width / intrinsic_ratio
+                    content_size = max(
+                        child.min_height, min(child.max_height, content_size))
+                elif not intrinsic_width:
+                    # TODO: wrongly set by block_level_layout, would be OK with
+                    # min_content_height.
+                    content_size = 0
             if specified_size != 'auto':
                 child.min_height = min(specified_size, content_size)
             elif transferred_size is not None:
@@ -242,17 +250,31 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
             pass
         else:
             # 3.E Otherwise…
+            new_child = child.copy()
+            new_child.style = child.style.copy()
             if main == 'width':
-                child.flex_base_size = max_content_width(context, child, outer=False)
+                # … the item’s min and max main sizes are ignored.
+                new_child.style['min_width'] = Dimension(0, 'px')
+                new_child.style['max_width'] = Dimension(inf, 'px')
+
+                child.flex_base_size = max_content_width(
+                    context, new_child, outer=False)
                 child.main_outer_extra = (
                     max_content_width(context, child) - child.flex_base_size)
             else:
-                new_child = child.copy()
+                # … the item’s min and max main sizes are ignored.
+                new_child.style['min_height'] = Dimension(0, 'px')
+                new_child.style['max_height'] = Dimension(inf, 'px')
+
                 new_child.width = inf
-                new_child = block.block_level_layout(
+                new_child, _, _, adjoining_margins, _, _ = block.block_level_layout(
                     context, new_child, bottom_space, child_skip_stack, parent_box,
-                    page_is_empty, absolute_boxes, fixed_boxes)[0]
+                    page_is_empty, absolute_boxes, fixed_boxes)
                 if new_child:
+                    # As flex items margins never collapse (with other flex items or
+                    # with the flex container), we can add the adjoining margins to the
+                    # child height.
+                    new_child.height += block.collapse_margin(adjoining_margins)
                     child.flex_base_size = new_child.height
                     child.main_outer_extra = (
                         new_child.margin_height() - new_child.height)
@@ -477,8 +499,8 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
                 child.height = new_child.height
                 # As flex items margins never collapse (with other flex items or
                 # with the flex container), we can add the adjoining margins to the
-                # child bottom margin.
-                child.margin_bottom += block.collapse_margin(adjoining_margins)
+                # child height.
+                child.height += block.collapse_margin(adjoining_margins)
             else:
                 if child.width == 'auto':
                     min_width = min_content_width(context, child, outer=False)
@@ -591,9 +613,9 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
                 align_self = align_items
             if 'stretch' in align_self and child.style[cross] == 'auto':
                 cross_margins = (
-                    (child.margin_top, child.margin_bottom)
-                    if cross == 'height'
-                    else (child.margin_left, child.margin_right))
+                    (child.style['margin_top'], child.style['margin_bottom'])
+                    if cross == 'height' else
+                    (child.style['margin_left'], child.style['margin_right']))
                 if 'auto' not in cross_margins:
                     cross_size = line.cross_size
                     if cross == 'height':
@@ -733,8 +755,9 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
             line.lower_baseline = line[0][1]._baseline if line else 0
         for index, child in line:
             cross_margins = (
-                (child.margin_top, child.margin_bottom) if cross == 'height'
-                else (child.margin_left, child.margin_right))
+                (child.style['margin_top'], child.style['margin_bottom'])
+                if cross == 'height' else
+                (child.style['margin_left'], child.style['margin_right']))
             auto_margins = sum([margin == 'auto' for margin in cross_margins])
             # If a flex item has auto cross-axis margins…
             if auto_margins:
@@ -755,14 +778,14 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
                     # If its outer cross size is less than the cross size…
                     extra_cross /= auto_margins
                     if cross == 'height':
-                        if child.margin_top == 'auto':
+                        if child.style['margin_top'] == 'auto':
                             child.margin_top = extra_cross
-                        if child.margin_bottom == 'auto':
+                        if child.style['margin_bottom'] == 'auto':
                             child.margin_bottom = extra_cross
                     else:
-                        if child.margin_left == 'auto':
+                        if child.style['margin_left'] == 'auto':
                             child.margin_left = extra_cross
-                        if child.margin_right == 'auto':
+                        if child.style['margin_right'] == 'auto':
                             child.margin_right = extra_cross
                 else:
                     # Otherwise…
@@ -815,9 +838,6 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
                                 margins += (
                                     child.border_left_width + child.border_right_width +
                                     child.padding_left + child.padding_right)
-                        # TODO: Don't set style width, find a way to avoid width
-                        # re-calculation after 16.
-                        child.style[cross] = Dimension(line.cross_size - margins, 'px')
         position_cross += line.cross_size
 
     # 15 Determine the flex container’s used cross size.
