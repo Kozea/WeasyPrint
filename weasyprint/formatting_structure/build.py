@@ -983,6 +983,25 @@ def wrap_table(box, children):
     return wrapper
 
 
+def blockify(box, layout):
+    """Turn an inline box into a block box."""
+    # See https://drafts.csswg.org/css-display-4/#blockify.
+    if isinstance(box, boxes.InlineBlockBox):
+        anonymous = boxes.BlockBox.anonymous_from(box, box.children)
+    elif isinstance(box, boxes.InlineReplacedBox):
+        replacement = box.replacement
+        anonymous = boxes.BlockReplacedBox.anonymous_from(box, replacement)
+    elif isinstance(box, boxes.InlineLevelBox):
+        anonymous = boxes.BlockBox.anonymous_from(box, [box])
+        setattr(box, f'is_{layout}_item', False)
+    else:
+        return box
+    anonymous.style = box.style
+    setattr(anonymous, f'is_{layout}_item', True)
+    return anonymous
+
+
+
 def flex_boxes(box):
     """Remove and add boxes according to the flex model.
 
@@ -1012,18 +1031,7 @@ def flex_children(box, children):
                 # affected by the white-space property"
                 # https://www.w3.org/TR/css-flexbox-1/#flex-items
                 continue
-            if isinstance(child, boxes.InlineBlockBox):
-                anonymous = boxes.BlockBox.anonymous_from(child, child.children)
-                anonymous.style = child.style
-                anonymous.is_flex_item = True
-                flex_children.append(anonymous)
-            elif isinstance(child, boxes.InlineLevelBox):
-                anonymous = boxes.BlockBox.anonymous_from(child, [child])
-                anonymous.style = child.style
-                anonymous.is_flex_item = True
-                flex_children.append(anonymous)
-            else:
-                flex_children.append(child)
+            flex_children.append(blockify(child, 'flex'))
         return flex_children
     else:
         return children
@@ -1057,19 +1065,7 @@ def grid_children(box, children):
                 # affected by the white-space property"
                 # https://drafts.csswg.org/css-grid-2/#grid-item
                 continue
-            if isinstance(child, boxes.InlineBlockBox):
-                anonymous = boxes.BlockBox.anonymous_from(child, child.children)
-                anonymous.style = child.style
-                anonymous.is_grid_item = True
-                grid_children.append(anonymous)
-            elif isinstance(child, boxes.InlineLevelBox):
-                anonymous = boxes.BlockBox.anonymous_from(child, [child])
-                anonymous.style = child.style
-                child.is_grid_item = False
-                anonymous.is_grid_item = True
-                grid_children.append(anonymous)
-            else:
-                grid_children.append(child)
+            grid_children.append(blockify(child, 'grid'))
         return grid_children
     else:
         return children

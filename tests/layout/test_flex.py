@@ -1872,3 +1872,17 @@ def test_flex_nested_column():
     div, = section.children
     p, = div.children
     assert p.width == 200
+
+
+@assert_no_logs
+def test_flex_blockify_image():
+    page, = render_pages('''
+      <article style="display: flex; line-height: 2">
+        <img src="pattern.png">
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    img, = article.children
+    assert article.height == img.height == 4
