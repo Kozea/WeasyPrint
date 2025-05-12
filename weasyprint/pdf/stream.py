@@ -105,7 +105,7 @@ class Stream(pydyf.Stream):
             lightness, a, b = color.to('lab').coordinates
             self.set_color_special(None, stroke, lightness, a, b)
         else:
-            LOGGER.warn('Unsupported color space %s, use sRGB instead', color.space)
+            LOGGER.warning('Unsupported color space %s, use sRGB instead', color.space)
             self.set_color_rgb(*channels, stroke)
 
     def set_font_size(self, font, size):
