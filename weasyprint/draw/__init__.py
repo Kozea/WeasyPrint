@@ -35,8 +35,6 @@ def draw_stacking_context(page, stream, stacking_context):
     with stacked(stream):
         box = stacking_context.box
 
-        stream.begin_marked_content(box, page)
-
         # Apply the viewport_overflow to the html box, see #35.
         if box.is_for_root_element and (
                 stacking_context.page.style['overflow'] != 'visible'):
@@ -68,7 +66,6 @@ def draw_stacking_context(page, stream, stacking_context):
             if box.transformation_matrix.determinant:
                 stream.transform(*box.transformation_matrix.values)
             else:
-                stream.end_marked_content(page)
                 return
 
         # Point 1 is done in draw_page.
@@ -119,8 +116,7 @@ def draw_stacking_context(page, stream, stacking_context):
 
             # Point 7.
             draw_block_level(
-                stacking_context.page, stream, {box: stacking_context.blocks_and_cells},
-                from_stacking_context=True)
+                stacking_context.page, stream, {box: stacking_context.blocks_and_cells})
 
             # Point 8.
             for child_context in stacking_context.zero_z_contexts:
@@ -139,8 +135,6 @@ def draw_stacking_context(page, stream, stacking_context):
             with stacked(stream):
                 stream.set_alpha(box.style['opacity'], stroke=True, fill=True)
                 stream.draw_x_object(group_id)
-
-        stream.end_marked_content(page)
 
 
 def draw_background(stream, bg, clip_box=True, bleed=None, marks=()):
@@ -493,8 +487,8 @@ def draw_replacedbox(stream, box):
                 stream, draw_width, draw_height, box.style['image_rendering'])
 
 
-def draw_inline_level(stream, page, box, offset_x=0, text_overflow='clip',
-                      block_ellipsis='none'):
+def draw_inline_level(stream, page, box, mapping_parent=None, offset_x=0,
+                      text_overflow='clip', block_ellipsis='none'):
     if isinstance(box, StackingContext):
         stacking_context = box
         allowed_boxes = (boxes.InlineBlockBox, boxes.InlineFlexBox, boxes.InlineGridBox)
@@ -505,15 +499,10 @@ def draw_inline_level(stream, page, box, offset_x=0, text_overflow='clip',
         draw_background(stream, box.background)
         draw_border(stream, box)
         if isinstance(box, (boxes.InlineBox, boxes.LineBox)):
-            link_annotation = None
             if isinstance(box, boxes.LineBox):
                 text_overflow = box.text_overflow
                 block_ellipsis = box.block_ellipsis
-            else:
-                link_annotation = box.link_annotation
             ellipsis = 'none'
-            if link_annotation:
-                stream.begin_marked_content(box, page, tag='Link')
             for i, child in enumerate(box.children):
                 if i == len(box.children) - 1:
                     # Last child
@@ -523,30 +512,31 @@ def draw_inline_level(stream, page, box, offset_x=0, text_overflow='clip',
                 else:
                     child_offset_x = offset_x + child.position_x - box.position_x
                 if isinstance(child, boxes.TextBox):
+                    stream.begin_marked_content(child, page, mapping_parent, 'Span')
                     draw_text(stream, child, child_offset_x, text_overflow, ellipsis)
+                    stream.end_marked_content(page)
                 else:
                     draw_inline_level(
-                        stream, page, child, child_offset_x, text_overflow, ellipsis)
-            if link_annotation:
-                stream.end_marked_content(page)
+                        stream, page, child, child, child_offset_x,
+                        text_overflow, ellipsis)
         elif isinstance(box, boxes.InlineReplacedBox):
+            stream.begin_marked_content(box, page, mapping_parent, 'Figure')
             draw_replacedbox(stream, box)
+            stream.end_marked_content(page)
         else:
             assert isinstance(box, boxes.TextBox)
             # Should only happen for list markers.
             draw_text(stream, box, offset_x, text_overflow)
 
 
-def draw_block_level(page, stream, blocks_and_cells, from_stacking_context=False):
+def draw_block_level(page, stream, blocks_and_cells):
     for block, blocks_and_cells in blocks_and_cells.items():
-        if not from_stacking_context:
-            stream.begin_marked_content(block, page)
         if isinstance(block, boxes.ReplacedBox):
+            stream.begin_marked_content(block, page, block, 'Figure')
             draw_replacedbox(stream, block)
+            stream.end_marked_content(page)
         elif block.children:
             if isinstance(block.children[-1], boxes.LineBox):
                 for child in block.children:
-                    draw_inline_level(stream, page, child)
+                    draw_inline_level(stream, page, child, block)
         draw_block_level(page, stream, blocks_and_cells)
-        if not from_stacking_context:
-            stream.end_marked_content(page)

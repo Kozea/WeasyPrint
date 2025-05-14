@@ -247,20 +247,17 @@ class Stream(pydyf.Stream):
         self._resources['Shading'][shading.id] = shading
         return shading
 
-    def begin_marked_content(self, box, page, tag=None):
+    def begin_marked_content(self, box, page, mapping_parent, tag):
         if not self._mark:
             return
         property_list = None
-        if tag is None:
-            tag = self.get_marked_content_tag(box.element_tag)
-        marked_counter = page.begin_marked(box, tag)
+        marked_counter = page.add_marked(box, tag, mapping_parent)
         property_list = pydyf.Dictionary({'MCID': marked_counter})
         super().begin_marked_content(tag, property_list)
 
     def end_marked_content(self, page):
         if not self._mark:
             return
-        page.end_marked()
         super().end_marked_content()
 
     @staticmethod
@@ -282,39 +279,3 @@ class Stream(pydyf.Stream):
             'Bounds': pydyf.Array(bounds),
             'Functions': pydyf.Array(sub_functions),
         })
-
-    def get_marked_content_tag(self, element_tag):
-        if element_tag == 'div':
-            return 'Div'
-        elif element_tag == 'span':
-            return 'Span'
-        elif element_tag == 'main':
-            return 'Part'
-        elif element_tag == 'article':
-            return 'Art'
-        elif element_tag == 'section':
-            return 'Sect'
-        elif element_tag == 'blockquote':
-            return 'BlockQuote'
-        elif element_tag == 'p':
-            return 'P'
-        elif element_tag in ('h1', 'h2', 'h3', 'h4', 'h5', 'h6'):
-            return element_tag.upper()
-        elif element_tag in ('dl', 'ul', 'ol'):
-            return 'L'
-        elif element_tag in ('li', 'dt', 'dd'):
-            return 'LI'
-        elif element_tag == 'table':
-            return 'Table'
-        elif element_tag in ('tr', 'th', 'td'):
-            return element_tag.upper()
-        elif element_tag in ('thead', 'tbody', 'tfoot'):
-            return element_tag[:2].upper() + element_tag[2:]
-        elif element_tag in ('figure', 'img', 'embed'):
-            return 'Figure'
-        elif element_tag in ('caption', 'figcaption'):
-            return 'Caption'
-        elif element_tag and element_tag.endswith('::marker'):
-            return 'Lbl'
-        else:
-            return 'NonStruct'
