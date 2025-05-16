@@ -2261,6 +2261,27 @@ def test_table_html_tag():
      ''',
      [1, 2],
      [30, 0, 80]),
+    ('''
+      <style>
+        @page { size: 100px }
+        h1 { height: 30px }
+        td { line-height: 40px }
+        table { table-layout: fixed; width: 100% }
+        thead { display: table-row-group; break-after: avoid }
+        thead tr { break-after: avoid }
+      </style>
+      <h1>Dummy title</h1>
+      <table>
+        <thead>
+          <tr><td>r1l1</td></tr>
+        </thead>
+        <tbody>
+          <tr><td>r2l1</td></tr>
+        </tbody>
+      </table>
+     ''',
+     [0, 2],
+     [0, 40]),
 ))
 def test_table_page_breaks(html, rows, positions):
     pages = render_pages(html)

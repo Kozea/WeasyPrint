@@ -414,9 +414,15 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                     if avoid_page_break(page_break, context):
                         earlier_page_break = find_earlier_page_break(
                             context, new_table_children, absolute_boxes, fixed_boxes)
-                        if earlier_page_break is not None:
+                        if earlier_page_break is None:
+                            remove_placeholders(
+                                context, new_table_children, absolute_boxes,
+                                fixed_boxes)
+                            new_table_children.clear()
+                            resume_at = {0: None}
+                        else:
                             new_table_children, resume_at = earlier_page_break
-                            break
+                        break
                     resume_at = {index_group: None}
                 else:
                     return None, None, next_page, position_y
