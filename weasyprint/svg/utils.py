@@ -149,12 +149,21 @@ def color(string):
     return parse_color(string or '') or parse_color('black')
 
 
-def transform(transform_string, font_size, normalized_diagonal):
+def transform(transform_string, transform_origin, font_size, normalized_diagonal):
     """Get a matrix corresponding to the transform string."""
     # TODO: merge with gather_anchors and css.validation.properties.transform
-    transformations = re.findall(
-        r'(\w+) ?\( ?(.*?) ?\)', normalize(transform_string))
-    matrix = Matrix()
+
+    # Parse transform_origin to get 2 sizes in px
+    origin_x, origin_y = 0, 0
+    if transform_origin:
+        size_strings = (
+            transform_origin.strip().split()
+        )
+        if len(size_strings) == 2:
+            origin_x, origin_y = size(size_strings[0]), size(size_strings[1])
+
+    transformations = re.findall(r'(\w+) ?\( ?(.*?) ?\)', normalize(transform_string))
+    matrix = Matrix(e=origin_x, f=origin_y)
 
     for transformation_type, transformation in transformations:
         values = [
@@ -196,4 +205,4 @@ def transform(transform_string, font_size, normalized_diagonal):
             if transformation_type in ('scaleY', 'scale'):
                 matrix = Matrix(d=values.pop(0)) @ matrix
 
-    return matrix
+    return Matrix(e=-origin_x, f=-origin_y) @ matrix

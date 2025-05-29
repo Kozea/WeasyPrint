@@ -415,7 +415,7 @@ class SVG:
             apply_filters(self, node, filter_, font_size)
 
         # Apply transform attribute
-        self.transform(node.get('transform'), font_size)
+        self.transform(node, font_size)
 
         # Create substream for opacity
         opacity = alpha_value(node.get('opacity', 1))
@@ -768,12 +768,14 @@ class SVG:
             else:
                 self.stream.end()
 
-    def transform(self, transform_string, font_size):
+    def transform(self, node, font_size):
         """Apply a transformation string to the node."""
+        transform_origin = node.get("transform-origin")
+        transform_string = node.get("transform")
         if not transform_string:
             return
 
-        matrix = transform(transform_string, font_size, self.inner_diagonal)
+        matrix = transform(transform_string, transform_origin, font_size, self.inner_diagonal)
         if matrix.determinant:
             self.stream.transform(*matrix.values)
 
