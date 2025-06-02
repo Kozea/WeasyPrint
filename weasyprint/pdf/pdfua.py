@@ -1,5 +1,7 @@
 """PDF/UA generation."""
 
+from collections import defaultdict
+
 import pydyf
 
 from ..formatting_structure import boxes
@@ -73,15 +75,14 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, marked_by_parent
 
     # Handle special cases.
     if tag == 'Figure':
-        if box.element.tag == 'img':
-            x1, y1 = box.content_box_x(), box.content_box_y()
-            x2, y2 = x1 + box.width, y1 + box.height
-            element['A'] = pydyf.Dictionary({
-                'O': '/Layout',
-                'BBox': pydyf.Array((x1, y1, x2, y2))
-            })
-            if 'alt' in box.element.attrib:
-                element['Alt'] = pydyf.String(box.element.attrib['alt'])
+        x1, y1 = box.content_box_x(), box.content_box_y()
+        x2, y2 = x1 + box.width, y1 + box.height
+        element['A'] = pydyf.Dictionary({
+            'O': '/Layout',
+            'BBox': pydyf.Array((x1, y1, x2, y2)),
+        })
+        if 'alt' in box.element.attrib:
+            element['Alt'] = pydyf.String(box.element.attrib['alt'])
     elif tag == 'Link':
         annotation = box.link_annotation
         object_reference = pydyf.Dictionary({
@@ -92,8 +93,13 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, marked_by_parent
         pdf.add_object(object_reference)
         links.append((object_reference.reference, annotation))
     elif tag == 'Table':
-        # TODO: handle this
+        # TODO: handle tables correctly.
         box, = box.children
+    elif tag == 'TH':
+        element['ID'] = pydyf.String(id(box))
+    elif tag == 'TD':
+        # TODO: don’t use the box to store this.
+        box.mark = element
 
     # Add marked content.
     if box.element is not None and tag != 'LI':
@@ -127,7 +133,6 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, marked_by_parent
                             marked_by_parent)
                         element['K'].append(child_element.reference)
             elif not isinstance(child, boxes.TextBox):
-                # TODO: L in LI must be in parent L.
                 if child.element_tag in ('ul', 'ol') and element['S'] == '/LI':
                     child_parent = parent
                 else:
@@ -136,6 +141,42 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, marked_by_parent
                     child, child_parent, pdf, page_number, nums, links,
                     marked_by_parent)
                 child_parent['K'].append(child_element.reference)
+
+    if tag == 'Table':
+        def _get_rows(table_box):
+            for child in table_box.children:
+                if child.element_tag == 'tr':
+                    yield child
+                else:
+                    yield from _get_rows(child)
+
+        # Get headers.
+        column_headers = defaultdict(list)
+        line_headers = defaultdict(list)
+        rows = tuple(_get_rows(box))
+        for i, row in enumerate(rows):
+            # TODO: handle rowspan and colspan values.
+            for j, cell in enumerate(row.children):
+                if cell.element is None:
+                    continue
+                if cell.element_tag == 'th':
+                    # TODO: handle rowgroup and colgroup values.
+                    if cell.element.attrib.get('scope') == 'row':
+                        line_headers[i].append(pydyf.String(id(cell)))
+                    else:
+                        column_headers[j].append(pydyf.String(id(cell)))
+        for i, row in enumerate(rows):
+            for j, cell in enumerate(row.children):
+                if cell.element is None:
+                    continue
+                if cell.element_tag == 'td':
+                    headers = []
+                    headers.extend(line_headers[i])
+                    headers.extend(column_headers[j])
+                    cell.mark['A'] = pydyf.Dictionary({
+                        'O': '/Table',
+                        'Headers': pydyf.Array(headers),
+                    })
 
     return element
 
