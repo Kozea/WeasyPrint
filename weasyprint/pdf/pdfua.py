@@ -45,7 +45,7 @@ def _get_marked_content_tag(box):
         return tag.upper()
     elif tag in ('thead', 'tbody', 'tfoot'):
         return tag[:2].upper() + tag[2:]
-    elif tag in ('figure', 'img', 'embed'):
+    elif tag == 'img':
         return 'Figure'
     elif tag in ('caption', 'figcaption'):
         return 'Caption'
