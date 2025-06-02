@@ -33,6 +33,9 @@ def draw_border(stream, box):
     if box.style['visibility'] != 'visible':
         return
 
+    # Mark border as artifact.
+    stream.begin_artifact_content()
+
     # Draw column borders.
     columns = (
         isinstance(box, boxes.BlockContainerBox) and (
@@ -70,12 +73,14 @@ def draw_border(stream, box):
             box, stream, box.border_image, box.style['border_image_slice'],
             box.style['border_image_repeat'], box.style['border_image_outset'],
             box.style['border_image_width'])
+        stream.end_artifact_content()
         return
 
     widths = [getattr(box, f'border_{side}_width') for side in SIDES]
 
     if set(widths) == {0}:
         # No border, return early.
+        stream.end_artifact_content()
         return
 
     colors = [get_color(box.style, f'border_{side}_color') for side in SIDES]
@@ -89,6 +94,7 @@ def draw_border(stream, box):
     if simple_style and single_color and four_sides:
         # Simple case, we only draw rounded rectangles.
         draw_rounded_border(stream, box, styles[0], colors[0])
+        stream.end_artifact_content()
         return
 
     # We're not smart enough to find a good way to draw the borders, we must
@@ -105,6 +111,9 @@ def draw_border(stream, box):
                 widths, box.rounded_border_box()[4:])
             draw_rounded_border(
                 stream, box, style, styled_color(style, color, side))
+
+    # Close artifact.
+    stream.end_artifact_content()
 
 
 def draw_border_image(box, stream, image, border_slice, border_repeat, border_outset,
@@ -674,12 +683,14 @@ def draw_outline(stream, box):
             box.border_box_y() - width - offset,
             box.border_width() + 2 * width + 2 * offset,
             box.border_height() + 2 * width + 2 * offset)
+        stream.begin_artifact_content()
         for side in SIDES:
             with stacked(stream):
                 clip_border_segment(stream, style, width, side, outline_box)
                 draw_rect_border(
                     stream, outline_box, 4 * (width,), style,
                     styled_color(style, color, side))
+        stream.end_artifact_content()
 
     for child in box.children:
         if isinstance(child, boxes.Box):

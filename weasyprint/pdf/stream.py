@@ -260,6 +260,16 @@ class Stream(pydyf.Stream):
             return
         super().end_marked_content()
 
+    def begin_artifact_content(self):
+        if not self._mark:
+            return
+        super().begin_marked_content('Artifact')
+
+    def end_artifact_content(self):
+        if not self._mark:
+            return
+        super().end_marked_content()
+
     @staticmethod
     def create_interpolation_function(domain, c0, c1, n):
         return pydyf.Dictionary({
