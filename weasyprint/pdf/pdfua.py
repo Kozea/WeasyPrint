@@ -73,8 +73,15 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, marked_by_parent
 
     # Handle special cases.
     if tag == 'Figure':
-        if box.element.tag == 'img' and 'alt' in box.element.attrib:
-            element['Alt'] = pydyf.String(box.element.attrib['alt'])
+        if box.element.tag == 'img':
+            x1, y1 = box.content_box_x(), box.content_box_y()
+            x2, y2 = x1 + box.width, y1 + box.height
+            element['A'] = pydyf.Dictionary({
+                'O': '/Layout',
+                'BBox': pydyf.Array((x1, y1, x2, y2))
+            })
+            if 'alt' in box.element.attrib:
+                element['Alt'] = pydyf.String(box.element.attrib['alt'])
     elif tag == 'Link':
         annotation = box.link_annotation
         object_reference = pydyf.Dictionary({
