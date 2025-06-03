@@ -34,7 +34,7 @@ def _get_marked_content_tag(box):
     elif tag == 'p':
         return 'P'
     elif tag in ('h1', 'h2', 'h3', 'h4', 'h5', 'h6'):
-        return 'H' # 2.0: tag.upper()
+        return tag.upper()
     elif tag in ('dl', 'ul', 'ol'):
         return 'L'
     elif tag in ('li', 'dd'):
