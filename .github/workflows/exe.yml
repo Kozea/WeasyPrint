@@ -4,12 +4,12 @@ on: [push]
 jobs:
   generate:
     name: ${{ matrix.os }}
-    runs-on: 'windows-2019'
+    runs-on: 'windows-latest'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: '3.13'
       - name: Use absolute imports and install Pango (Windows)
         run: |
           C:\msys64\usr\bin\bash -lc 'pacman -S mingw-w64-x86_64-pango mingw-w64-x86_64-sed --noconfirm'
