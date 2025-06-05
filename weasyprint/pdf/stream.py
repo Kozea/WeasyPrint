@@ -247,11 +247,11 @@ class Stream(pydyf.Stream):
         self._resources['Shading'][shading.id] = shading
         return shading
 
-    def begin_marked_content(self, box, page, mapping_parent, tag):
+    def begin_marked_content(self, box, page, tag):
         if not self._tag:
             return
         property_list = None
-        marked_counter = page.add_marked(box, tag, mapping_parent)
+        marked_counter = page.add_marked(box, tag)
         property_list = pydyf.Dictionary({'MCID': marked_counter})
         super().begin_marked_content(tag, property_list)
 

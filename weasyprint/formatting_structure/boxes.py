@@ -753,10 +753,9 @@ class PageBox(ParentBox):
             self.margin_width() + self.bleed['left'] + self.bleed['right'],
             self.margin_height() + self.bleed['top'] + self.bleed['bottom'])
 
-    def add_marked(self, box, tag, mapping_parent):
+    def add_marked(self, box, tag):
         mcid = len(self.marked)
-        self.marked.append(
-            {'tag': tag, 'box': box, 'parent': mapping_parent, 'mcid': mcid})
+        self.marked.append({'tag': tag, 'box': box, 'mcid': mcid})
         return mcid
 
 
