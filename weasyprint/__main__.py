@@ -90,6 +90,8 @@ PARSER.add_argument('--pdf-version', help='PDF version number')
 PARSER.add_argument(
     '--pdf-forms', action='store_true', help='include PDF forms')
 PARSER.add_argument(
+    '--pdf-tags', action='store_true', help='tag PDF for accessibility')
+PARSER.add_argument(
     '--uncompressed-pdf', action='store_true',
     help='do not compress PDF content, mainly for debugging purpose')
 PARSER.add_argument(
