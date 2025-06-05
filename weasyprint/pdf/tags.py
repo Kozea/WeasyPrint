@@ -32,15 +32,11 @@ def add_tags(pdf, document):
         content_mapping['Nums'].append(page_number)
         content_mapping['Nums'].append(pydyf.Array())
         nums = {}
-        marked_by_parent = {}
-        for marked in page._page_box.marked:
-            box_id = _get_box_id(marked['parent'])
-            marked_by_parent.setdefault(box_id, []).append(marked)
+        marked = {kid['box']: kid for kid in page._page_box.marked}
         element = _build_box_tree(
-            page._page_box, structure_document, pdf, page_number, nums, links,
-            marked_by_parent)
+            page._page_box, structure_document, pdf, page_number, nums, links, marked)
         structure_document['K'].append(element.reference)
-        assert not marked_by_parent
+        assert not marked
         nums = [reference for mcid, reference in sorted(nums.items())]
         content_mapping['Nums'][-1].extend(nums)
 
@@ -49,10 +45,6 @@ def add_tags(pdf, document):
         content_mapping['Nums'].append(link)
         annotation['StructParent'] = i
         annotation['F'] = 2 ** (2 - 1)
-
-
-def _get_box_id(box):
-    return box.element, box.element_tag
 
 
 def _get_marked_content_tag(box):
@@ -97,7 +89,7 @@ def _get_marked_content_tag(box):
         return 'NonStruct'
 
 
-def _build_box_tree(box, parent, pdf, page_number, nums, links, marked_by_parent):
+def _build_box_tree(box, parent, pdf, page_number, nums, links, marked):
     if isinstance(box, AbsolutePlaceholder):
         box = box._box
 
@@ -113,7 +105,6 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, marked_by_parent
         'P': parent.reference,
     })
     pdf.add_object(element)
-    box_id = _get_box_id(box)
 
     # Handle special cases.
     if tag == 'Figure':
@@ -143,15 +134,10 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, marked_by_parent
         # TODO: don’t use the box to store this.
         box.mark = element
 
-    # Add marked content.
-    if box.element is not None and tag != 'LI':
-        # TODO: li with inline markers generate anonymous li wrapper.
-        for kid in marked_by_parent.pop(box_id, ()):
-            if box == kid['parent']:
-                # TODO: ugly special case for replaced block boxes.
-                kid_element = element
-                kid_element['K'].append(kid['mcid'])
-            else:
+    def _add_children(children):
+        for child in children:
+            if isinstance(child, boxes.TextBox):
+                kid = marked.pop(child)
                 kid_element = pydyf.Dictionary({
                     'Type': '/StructElem',
                     'S': f'/{kid["tag"]}',
@@ -161,28 +147,30 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, marked_by_parent
                 })
                 pdf.add_object(kid_element)
                 element['K'].append(kid_element.reference)
-            assert kid['mcid'] not in nums
-            nums[kid['mcid']] = kid_element.reference
-
-    # Build tree for box children.
-    if isinstance(box, boxes.ParentBox):
-        for child in box.children:
-            if isinstance(child, boxes.LineBox):
-                for child in child.children:
-                    if not isinstance(child, boxes.TextBox):
-                        child_element = _build_box_tree(
-                            child, element, pdf, page_number, nums, links,
-                            marked_by_parent)
-                        element['K'].append(child_element.reference)
-            elif not isinstance(child, boxes.TextBox):
+                assert kid['mcid'] not in nums
+                nums[kid['mcid']] = kid_element.reference
+            else:
                 if child.element_tag in ('ul', 'ol') and element['S'] == '/LI':
                     child_parent = parent
                 else:
                     child_parent = element
                 child_element = _build_box_tree(
-                    child, child_parent, pdf, page_number, nums, links,
-                    marked_by_parent)
+                    child, child_parent, pdf, page_number, nums, links, marked)
                 child_parent['K'].append(child_element.reference)
+
+    if isinstance(box, boxes.ParentBox):
+        # Build tree for box children.
+        for child in box.children:
+            children = child.children if isinstance(child, boxes.LineBox) else [child]
+            _add_children(children)
+    else:
+        # Add replaced box.
+        assert isinstance(box, boxes.ReplacedBox)
+        kid = marked.pop(box)
+        element['K'].append(kid['mcid'])
+        assert kid['mcid'] not in nums
+        nums[kid['mcid']] = element.reference
+
 
     if tag == 'Table':
         def _get_rows(table_box):

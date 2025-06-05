@@ -493,8 +493,8 @@ def draw_replacedbox(stream, box):
                 stream, draw_width, draw_height, box.style['image_rendering'])
 
 
-def draw_inline_level(stream, page, box, mapping_parent=None, offset_x=0,
-                      text_overflow='clip', block_ellipsis='none'):
+def draw_inline_level(stream, page, box, offset_x=0, text_overflow='clip',
+                      block_ellipsis='none'):
     if isinstance(box, StackingContext):
         stacking_context = box
         allowed_boxes = (boxes.InlineBlockBox, boxes.InlineFlexBox, boxes.InlineGridBox)
@@ -518,15 +518,14 @@ def draw_inline_level(stream, page, box, mapping_parent=None, offset_x=0,
                 else:
                     child_offset_x = offset_x + child.position_x - box.position_x
                 if isinstance(child, boxes.TextBox):
-                    stream.begin_marked_content(child, page, mapping_parent, 'Span')
+                    stream.begin_marked_content(child, page, 'Span')
                     draw_text(stream, child, child_offset_x, text_overflow, ellipsis)
                     stream.end_marked_content(page)
                 else:
                     draw_inline_level(
-                        stream, page, child, child, child_offset_x,
-                        text_overflow, ellipsis)
+                        stream, page, child, child_offset_x, text_overflow, ellipsis)
         elif isinstance(box, boxes.InlineReplacedBox):
-            stream.begin_marked_content(box, page, mapping_parent, 'Figure')
+            stream.begin_marked_content(box, page, 'Figure')
             draw_replacedbox(stream, box)
             stream.end_marked_content(page)
         else:
@@ -538,11 +537,11 @@ def draw_inline_level(stream, page, box, mapping_parent=None, offset_x=0,
 def draw_block_level(page, stream, blocks_and_cells):
     for block, blocks_and_cells in blocks_and_cells.items():
         if isinstance(block, boxes.ReplacedBox):
-            stream.begin_marked_content(block, page, block, 'Figure')
+            stream.begin_marked_content(block, page, 'Figure')
             draw_replacedbox(stream, block)
             stream.end_marked_content(page)
         elif block.children:
             if isinstance(block.children[-1], boxes.LineBox):
                 for child in block.children:
-                    draw_inline_level(stream, page, child, block)
+                    draw_inline_level(stream, page, child)
         draw_block_level(page, stream, blocks_and_cells)
