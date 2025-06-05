@@ -147,8 +147,6 @@ def draw_background(stream, bg, clip_box=True, bleed=None, marks=()):
     if bg is None:
         return
 
-    stream.begin_artifact_content()
-
     with stacked(stream):
         if clip_box:
             for box in bg.layers[-1].clipped_boxes:
@@ -158,6 +156,7 @@ def draw_background(stream, bg, clip_box=True, bleed=None, marks=()):
 
         # Draw background color.
         if bg.color.alpha > 0:
+            stream.begin_artifact_content()
             with stacked(stream):
                 stream.set_color(bg.color)
                 painting_area = bg.layers[-1].painting_area
@@ -166,6 +165,7 @@ def draw_background(stream, bg, clip_box=True, bleed=None, marks=()):
                 stream.end()
                 stream.rectangle(*painting_area)
                 stream.fill()
+            stream.end_artifact_content()
 
         # Draw crop marks and crosses.
         if bleed and marks:
@@ -237,12 +237,12 @@ def draw_background(stream, bg, clip_box=True, bleed=None, marks=()):
         for layer in reversed(bg.layers):
             draw_background_image(stream, layer, bg.image_rendering)
 
-    stream.end_artifact_content()
-
 
 def draw_background_image(stream, layer, image_rendering):
     if layer.image is None or 0 in layer.size:
         return
+
+    stream.begin_artifact_content()
 
     painting_x, painting_y, painting_width, painting_height = layer.painting_area
     positioning_x, positioning_y, positioning_width, positioning_height = (
@@ -323,6 +323,8 @@ def draw_background_image(stream, layer, image_rendering):
         else:
             stream.rectangle(painting_x, painting_y, painting_width, painting_height)
         stream.fill()
+
+    stream.end_artifact_content()
 
 
 def draw_table(stream, table):
