@@ -11,13 +11,13 @@ from .fonts import Font
 
 class Stream(pydyf.Stream):
     """PDF stream object with extra features."""
-    def __init__(self, fonts, page_rectangle, resources, images, mark, *args, **kwargs):
+    def __init__(self, fonts, page_rectangle, resources, images, tag, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.page_rectangle = page_rectangle
         self._fonts = fonts
         self._resources = resources
         self._images = images
-        self._mark = mark
+        self._tag = tag
         self._current_color = self._current_color_stroke = None
         self._current_alpha = self._current_alpha_stroke = None
         self._current_font = self._current_font_size = None
@@ -38,8 +38,8 @@ class Stream(pydyf.Stream):
             kwargs['resources'] = self._resources
         if 'images' not in kwargs:
             kwargs['images'] = self._images
-        if 'mark' not in kwargs:
-            kwargs['mark'] = self._mark
+        if 'pdf_tags' not in kwargs:
+            kwargs['tag'] = self._tag
         if 'compress' not in kwargs:
             kwargs['compress'] = self.compress
         return Stream(**kwargs)
@@ -248,7 +248,7 @@ class Stream(pydyf.Stream):
         return shading
 
     def begin_marked_content(self, box, page, mapping_parent, tag):
-        if not self._mark:
+        if not self._tag:
             return
         property_list = None
         marked_counter = page.add_marked(box, tag, mapping_parent)
@@ -256,17 +256,17 @@ class Stream(pydyf.Stream):
         super().begin_marked_content(tag, property_list)
 
     def end_marked_content(self, page):
-        if not self._mark:
+        if not self._tag:
             return
         super().end_marked_content()
 
     def begin_artifact_content(self):
-        if not self._mark:
+        if not self._tag:
             return
         super().begin_marked_content('Artifact')
 
     def end_artifact_content(self):
-        if not self._mark:
+        if not self._tag:
             return
         super().end_marked_content()
 
