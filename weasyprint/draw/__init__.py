@@ -471,7 +471,9 @@ def draw_collapsed_borders(stream, table):
         with stacked(stream):
             bx, by, bw, bh = border_box
             color = styled_color(style, color, side)
+            stream.begin_artifact_content()
             draw_line(stream, bx, by, bx + bw, by + bh, width, style, color)
+            stream.end_artifact_content()
 
 
 def draw_replacedbox(stream, box):
