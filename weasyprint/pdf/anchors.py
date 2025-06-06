@@ -16,7 +16,7 @@ from ..text.fonts import get_font_description
 from ..urls import URLFetchingError
 
 
-def add_links(links_and_anchors, matrix, pdf, page, names, mark):
+def add_links(links_and_anchors, matrix, pdf, page, names, tags):
     """Include hyperlinks in given PDF page."""
     links, anchors = links_and_anchors
 
@@ -30,7 +30,7 @@ def add_links(links_and_anchors, matrix, pdf, page, names, mark):
                 'Rect': pydyf.Array([x1, y1, x2, y2]),
                 'BS': pydyf.Dictionary({'W': 0}),
             })
-            if mark:
+            if tags is not None:
                 box.link_annotation['Contents'] = pydyf.String(link_target)
             if link_type == 'internal':
                 box.link_annotation['Dest'] = pydyf.String(link_target)

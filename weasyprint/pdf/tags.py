@@ -8,7 +8,7 @@ from ..formatting_structure import boxes
 from ..layout.absolute import AbsolutePlaceholder
 
 
-def add_tags(pdf, document):
+def add_tags(pdf, document, page_streams):
     content_mapping = pydyf.Dictionary({})
     pdf.add_object(content_mapping)
     structure_root = pydyf.Dictionary({
@@ -28,15 +28,16 @@ def add_tags(pdf, document):
 
     content_mapping['Nums'] = pydyf.Array()
     links = []
-    for page_number, page in enumerate(document.pages):
+    for page_number, (page, stream) in enumerate(zip(document.pages, page_streams)):
         content_mapping['Nums'].append(page_number)
         content_mapping['Nums'].append(pydyf.Array())
         nums = {}
-        marked = {kid['box']: kid for kid in page._page_box.marked}
+        tags = stream._tags
+        box = page._page_box
         element = _build_box_tree(
-            page._page_box, structure_document, pdf, page_number, nums, links, marked)
+            box, structure_document, pdf, page_number, nums, links, tags)
+        assert not tags, tags
         structure_document['K'].append(element.reference)
-        assert not marked
         nums = [reference for mcid, reference in sorted(nums.items())]
         content_mapping['Nums'][-1].extend(nums)
 
@@ -91,7 +92,7 @@ def _get_marked_content_tag(box):
         return 'NonStruct'
 
 
-def _build_box_tree(box, parent, pdf, page_number, nums, links, marked):
+def _build_box_tree(box, parent, pdf, page_number, nums, links, tags):
     if isinstance(box, AbsolutePlaceholder):
         box = box._box
 
@@ -111,7 +112,7 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, marked):
                 'P': parent.reference,
             })
             pdf.add_object(parent)
-            child = _build_box_tree(box, parent, pdf, page_number, nums, links, marked)
+            child = _build_box_tree(box, parent, pdf, page_number, nums, links, tags)
             parent['K'].append(child.reference)
             return parent
     element = pydyf.Dictionary({
@@ -156,7 +157,7 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, marked):
     def _add_children(children):
         for child in children:
             if isinstance(child, boxes.TextBox):
-                kid = marked.pop(child)
+                kid = tags.pop(child)
                 kid_element = pydyf.Dictionary({
                     'Type': '/StructElem',
                     'S': f'/{kid["tag"]}',
@@ -174,7 +175,7 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, marked):
                 else:
                     child_parent = element
                 child_element = _build_box_tree(
-                    child, child_parent, pdf, page_number, nums, links, marked)
+                    child, child_parent, pdf, page_number, nums, links, tags)
                 child_parent['K'].append(child_element.reference)
 
     if isinstance(box, boxes.ParentBox):
@@ -185,7 +186,7 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, marked):
     else:
         # Add replaced box.
         assert isinstance(box, boxes.ReplacedBox)
-        kid = marked.pop(box)
+        kid = tags.pop(box)
         element['K'].append(kid['mcid'])
         assert kid['mcid'] not in nums
         nums[kid['mcid']] = element.reference

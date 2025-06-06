@@ -120,14 +120,14 @@ def generate_pdf(document, target, zoom, **options):
 
     # Set properties according to PDF variants
     srgb = options['srgb']
-    tag = options['pdf_tags']
+    pdf_tags = options['pdf_tags']
     variant = options['pdf_variant']
     if variant:
         variant_function, properties = VARIANTS[variant]
         if 'srgb' in properties:
             srgb = properties['srgb']
         if 'pdf_tags' in properties:
-            tag = properties['pdf_tags']
+            pdf_tags = properties['pdf_tags']
 
     pdf = pydyf.PDF()
     images = {}
@@ -160,6 +160,8 @@ def generate_pdf(document, target, zoom, **options):
     compress = not options['uncompressed_pdf']
     for page_number, (page, links_and_anchors) in enumerate(
             zip(document.pages, page_links_and_anchors)):
+        tags = {} if pdf_tags else None
+
         # Draw from the top-left corner
         matrix = Matrix(scale, 0, 0, -scale, 0, page.height * scale)
 
@@ -176,7 +178,7 @@ def generate_pdf(document, target, zoom, **options):
             left / scale, top / scale,
             (right - left) / scale, (bottom - top) / scale)
         stream = Stream(
-            document.fonts, page_rectangle, resources, images, tag, compress=compress)
+            document.fonts, page_rectangle, resources, images, tags, compress=compress)
         stream.transform(d=-1, f=(page.height * scale))
         pdf.add_object(stream)
         page_streams.append(stream)
@@ -188,13 +190,13 @@ def generate_pdf(document, target, zoom, **options):
             'Contents': stream.reference,
             'Resources': resources.reference,
         })
-        if tag:
+        if pdf_tags:
             pdf_page['Tabs'] = '/S'
             pdf_page['StructParents'] = page_number
         pdf.add_page(pdf_page)
         pdf_pages.append(pdf_page)
 
-        add_links(links_and_anchors, matrix, pdf, pdf_page, pdf_names, tag)
+        add_links(links_and_anchors, matrix, pdf, pdf_page, pdf_names, tags)
         add_annotations(
             links_and_anchors[0], matrix, document, pdf, pdf_page, annot_files,
             compress)
@@ -325,8 +327,8 @@ def generate_pdf(document, target, zoom, **options):
         ])
 
     # Add tags
-    if tag:
-        add_tags(pdf, document)
+    if pdf_tags:
+        add_tags(pdf, document, page_streams)
 
     # Apply PDF variants functions
     if variant:
