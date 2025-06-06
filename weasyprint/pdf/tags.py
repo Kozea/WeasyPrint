@@ -97,8 +97,23 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, marked):
 
     # Create box element.
     tag = _get_marked_content_tag(box)
-    if tag == 'LI' and parent['S'] == '/LI':
-        tag = 'LBody'
+    if tag == 'LI':
+        if parent['S'] == '/LI':
+            # Anonymous list element, store as list item body.
+            tag = 'LBody'
+        elif box.element_tag in ('dt', 'dd'):
+            # Definition list item, wrap in list item body.
+            parent = pydyf.Dictionary({
+                'Type': '/StructElem',
+                'S': '/LI',
+                'K': pydyf.Array([]),
+                'Pg': pdf.page_references[page_number],
+                'P': parent.reference,
+            })
+            pdf.add_object(parent)
+            child = _build_box_tree(box, parent, pdf, page_number, nums, links, marked)
+            parent['K'].append(child.reference)
+            return parent
     element = pydyf.Dictionary({
         'Type': '/StructElem',
         'S': f'/{tag}',
@@ -172,7 +187,6 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, marked):
         element['K'].append(kid['mcid'])
         assert kid['mcid'] not in nums
         nums[kid['mcid']] = element.reference
-
 
     if tag == 'Table':
         def _get_rows(table_box):
