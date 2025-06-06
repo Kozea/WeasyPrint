@@ -36,7 +36,7 @@ def add_tags(pdf, document, page_streams):
         box = page._page_box
         element = _build_box_tree(
             box, structure_document, pdf, page_number, nums, links, tags)
-        assert not tags, tags
+        assert not tags
         structure_document['K'].append(element.reference)
         nums = [reference for mcid, reference in sorted(nums.items())]
         content_mapping['Nums'][-1].extend(nums)
@@ -46,6 +46,9 @@ def add_tags(pdf, document, page_streams):
         content_mapping['Nums'].append(link)
         annotation['StructParent'] = i
         annotation['F'] = 2 ** (2 - 1)
+
+    pdf.catalog['ViewerPreferences'] = pydyf.Dictionary({'DisplayDocTitle': 'true'})
+    pdf.catalog['MarkInfo'] = pydyf.Dictionary({'Marked': 'true'})
 
 
 def _get_marked_content_tag(box):
