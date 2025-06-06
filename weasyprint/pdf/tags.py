@@ -53,7 +53,8 @@ def _get_marked_content_tag(box):
     tag = box.element_tag
     if tag == 'div':
         return 'Div'
-    elif tag == 'a':
+    elif tag.split(':')[0] == 'a':
+        # Links and link pseudo elements create link annotations.
         return 'Link'
     elif tag == 'span':
         return 'Span'
