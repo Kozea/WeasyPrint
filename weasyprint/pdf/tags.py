@@ -133,15 +133,6 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, marked):
         })
         if 'alt' in box.element.attrib:
             element['Alt'] = pydyf.String(box.element.attrib['alt'])
-    elif tag == 'Link':
-        annotation = box.link_annotation
-        object_reference = pydyf.Dictionary({
-            'Type': '/OBJR',
-            'Obj': annotation.reference,
-            'Pg': pdf.page_references[page_number],
-        })
-        pdf.add_object(object_reference)
-        links.append((object_reference.reference, annotation))
     elif tag == 'Table':
         # TODO: handle tables correctly.
         box, = box.children
@@ -150,6 +141,17 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, marked):
     elif tag == 'TD':
         # TODO: don’t use the box to store this.
         box.mark = element
+
+    # Include link annotations.
+    if box.link_annotation:
+        annotation = box.link_annotation
+        object_reference = pydyf.Dictionary({
+            'Type': '/OBJR',
+            'Obj': annotation.reference,
+            'Pg': pdf.page_references[page_number],
+        })
+        pdf.add_object(object_reference)
+        links.append((object_reference.reference, annotation))
 
     def _add_children(children):
         for child in children:
