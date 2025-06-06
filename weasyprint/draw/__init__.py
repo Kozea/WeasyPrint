@@ -256,8 +256,7 @@ def draw_background_image(stream, layer, image_rendering):
         # (e.g., Preview on Mac) introduce unnecessary pixelation when vector
         # images are used in patterns.
         if not layer.unbounded:
-            stream.rectangle(painting_x, painting_y, painting_width,
-                             painting_height)
+            stream.rectangle(painting_x, painting_y, painting_width, painting_height)
             stream.clip()
             stream.end()
         # Put the image in a group so that masking outside the image and
@@ -267,6 +266,7 @@ def draw_background_image(stream, layer, image_rendering):
                          f=position_y + positioning_y)
         layer.image.draw(group, image_width, image_height, image_rendering)
         stream.draw_x_object(group.id)
+        stream.end_artifact_content()
         return
 
     if repeat_x == 'no-repeat':
