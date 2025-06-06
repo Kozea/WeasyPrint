@@ -71,9 +71,10 @@ def _get_marked_content_tag(box):
         return tag.upper()
     elif tag in ('dl', 'ul', 'ol'):
         return 'L'
-    elif tag in ('li', 'dd'):
+    elif tag in ('li', 'dt', 'dd'):
+        # TODO: dt should be different.
         return 'LI'
-    elif tag in ('dt', 'li::marker'):
+    elif tag == 'li::marker':
         return 'Lbl'
     elif tag == 'table':
         return 'Table'
