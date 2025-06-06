@@ -1,5 +1,7 @@
 """PDF stream."""
 
+from contextlib import contextmanager
+
 import pydyf
 
 from ..logger import LOGGER
@@ -247,28 +249,37 @@ class Stream(pydyf.Stream):
         self._resources['Shading'][shading.id] = shading
         return shading
 
-    def begin_marked_content(self, box, page, tag):
-        if not self._tag:
-            return
-        property_list = None
-        marked_counter = page.add_marked(box, tag)
-        property_list = pydyf.Dictionary({'MCID': marked_counter})
-        super().begin_marked_content(tag, property_list)
+    @contextmanager
+    def stacked(self):
+        """Save and restore stream context when used with the ``with`` keyword."""
+        self.push_state()
+        try:
+            yield
+        finally:
+            self.pop_state()
 
-    def end_marked_content(self, page):
-        if not self._tag:
-            return
-        super().end_marked_content()
+    @contextmanager
+    def marked(self, box, page, tag):
+        if self._tag:
+            property_list = None
+            marked_counter = page.add_marked(box, tag)
+            property_list = pydyf.Dictionary({'MCID': marked_counter})
+            super().begin_marked_content(tag, property_list)
+        try:
+            yield
+        finally:
+            if self._tag:
+                super().end_marked_content()
 
-    def begin_artifact_content(self):
-        if not self._tag:
-            return
-        super().begin_marked_content('Artifact')
-
-    def end_artifact_content(self):
-        if not self._tag:
-            return
-        super().end_marked_content()
+    @contextmanager
+    def artifact(self):
+        if self._tag:
+            super().begin_marked_content('Artifact')
+        try:
+            yield
+        finally:
+            if self._tag:
+                super().end_marked_content()
 
     @staticmethod
     def create_interpolation_function(domain, c0, c1, n):

@@ -12,7 +12,6 @@ from ..matrix import Matrix
 from ..stacking import StackingContext
 from .border import draw_border, draw_line, draw_outline, rounded_box, set_mask_border
 from .color import styled_color
-from .stack import stacked
 from .text import draw_text
 
 
@@ -32,7 +31,7 @@ def draw_page(page, stream):
 def draw_stacking_context(page, stream, stacking_context):
     """Draw a ``stacking_context`` on ``stream``."""
     # See https://www.w3.org/TR/CSS2/zindex.html.
-    with stacked(stream):
+    with stream.stacked():
         box = stacking_context.box
 
         # Apply the viewport_overflow to the html box, see #35.
@@ -79,7 +78,7 @@ def draw_stacking_context(page, stream, stacking_context):
             draw_background(stream, box.background)
             draw_border(stream, box)
 
-        with stacked(stream):
+        with stream.stacked():
             # Dont clip the page box, see #35.
             clip = (
                 box.style['overflow'] != 'visible' and
@@ -132,7 +131,7 @@ def draw_stacking_context(page, stream, stacking_context):
         if box.style['opacity'] < 1:
             group_id = stream.id
             stream = original_stream
-            with stacked(stream):
+            with stream.stacked():
                 stream.set_alpha(box.style['opacity'], stroke=True, fill=True)
                 stream.draw_x_object(group_id)
 
@@ -147,7 +146,7 @@ def draw_background(stream, bg, clip_box=True, bleed=None, marks=()):
     if bg is None:
         return
 
-    with stacked(stream):
+    with stream.stacked():
         if clip_box:
             for box in bg.layers[-1].clipped_boxes:
                 rounded_box(stream, box)
@@ -156,8 +155,7 @@ def draw_background(stream, bg, clip_box=True, bleed=None, marks=()):
 
         # Draw background color.
         if bg.color.alpha > 0:
-            stream.begin_artifact_content()
-            with stacked(stream):
+            with stream.artifact(), stream.stacked():
                 stream.set_color(bg.color)
                 painting_area = bg.layers[-1].painting_area
                 stream.rectangle(*painting_area)
@@ -165,7 +163,6 @@ def draw_background(stream, bg, clip_box=True, bleed=None, marks=()):
                 stream.end()
                 stream.rectangle(*painting_area)
                 stream.fill()
-            stream.end_artifact_content()
 
         # Draw crop marks and crosses.
         if bleed and marks:
@@ -242,8 +239,6 @@ def draw_background_image(stream, layer, image_rendering):
     if layer.image is None or 0 in layer.size:
         return
 
-    stream.begin_artifact_content()
-
     painting_x, painting_y, painting_width, painting_height = layer.painting_area
     positioning_x, positioning_y, positioning_width, positioning_height = (
         layer.positioning_area)
@@ -252,21 +247,22 @@ def draw_background_image(stream, layer, image_rendering):
     image_width, image_height = layer.size
 
     if repeat_x == 'no-repeat' and repeat_y == 'no-repeat':
-        # We don't use a pattern when we don't need to because some viewers
-        # (e.g., Preview on Mac) introduce unnecessary pixelation when vector
-        # images are used in patterns.
-        if not layer.unbounded:
-            stream.rectangle(painting_x, painting_y, painting_width, painting_height)
-            stream.clip()
-            stream.end()
-        # Put the image in a group so that masking outside the image and
-        # masking within the image don't conflict.
-        group = stream.add_group(*stream.page_rectangle)
-        group.transform(e=position_x + positioning_x,
-                         f=position_y + positioning_y)
-        layer.image.draw(group, image_width, image_height, image_rendering)
-        stream.draw_x_object(group.id)
-        stream.end_artifact_content()
+        with stream.artifact():
+            # We don't use a pattern when we don't need to because some viewers
+            # (e.g., Preview on Mac) introduce unnecessary pixelation when vector
+            # images are used in patterns.
+            if not layer.unbounded:
+                stream.rectangle(
+                    painting_x, painting_y, painting_width, painting_height)
+                stream.clip()
+                stream.end()
+            # Put the image in a group so that masking outside the image and
+            # masking within the image don't conflict.
+            group = stream.add_group(*stream.page_rectangle)
+            group.transform(e=position_x + positioning_x,
+                             f=position_y + positioning_y)
+            layer.image.draw(group, image_width, image_height, image_rendering)
+            stream.draw_x_object(group.id)
         return
 
     if repeat_x == 'no-repeat':
@@ -312,7 +308,7 @@ def draw_background_image(stream, layer, image_rendering):
         0, 0, image_width, image_height, repeat_width, repeat_height, matrix)
     group = pattern.add_group(0, 0, repeat_width, repeat_height)
 
-    with stacked(stream):
+    with stream.artifact(), stream.stacked():
         layer.image.draw(group, image_width, image_height, image_rendering)
         pattern.draw_x_object(group.id)
         stream.set_color_space('Pattern')
@@ -323,8 +319,6 @@ def draw_background_image(stream, layer, image_rendering):
         else:
             stream.rectangle(painting_x, painting_y, painting_width, painting_height)
         stream.fill()
-
-    stream.end_artifact_content()
 
 
 def draw_table(stream, table):
@@ -468,12 +462,10 @@ def draw_collapsed_borders(stream, table):
 
     for segment in segments:
         _, style, width, color, side, border_box = segment
-        with stacked(stream):
-            bx, by, bw, bh = border_box
-            color = styled_color(style, color, side)
-            stream.begin_artifact_content()
+        bx, by, bw, bh = border_box
+        color = styled_color(style, color, side)
+        with stream.artifact(), stream.stacked():
             draw_line(stream, bx, by, bx + bw, by + bh, width, style, color)
-            stream.end_artifact_content()
 
 
 def draw_replacedbox(stream, box):
@@ -485,10 +477,10 @@ def draw_replacedbox(stream, box):
     if draw_width <= 0 or draw_height <= 0:
         return
 
-    with stacked(stream):
+    with stream.stacked():
         stream.set_alpha(1)
         stream.transform(e=draw_x, f=draw_y)
-        with stacked(stream):
+        with stream.stacked():
             # TODO: Use the real intrinsic size here, not affected by
             # 'image-resolution'?
             box.replacement.draw(
@@ -520,16 +512,15 @@ def draw_inline_level(stream, page, box, offset_x=0, text_overflow='clip',
                 else:
                     child_offset_x = offset_x + child.position_x - box.position_x
                 if isinstance(child, boxes.TextBox):
-                    stream.begin_marked_content(child, page, 'Span')
-                    draw_text(stream, child, child_offset_x, text_overflow, ellipsis)
-                    stream.end_marked_content(page)
+                    with stream.marked(child, page, 'Span'):
+                        draw_text(
+                            stream, child, child_offset_x, text_overflow, ellipsis)
                 else:
                     draw_inline_level(
                         stream, page, child, child_offset_x, text_overflow, ellipsis)
         elif isinstance(box, boxes.InlineReplacedBox):
-            stream.begin_marked_content(box, page, 'Figure')
-            draw_replacedbox(stream, box)
-            stream.end_marked_content(page)
+            with stream.marked(box, page, 'Figure'):
+                draw_replacedbox(stream, box)
         else:
             assert isinstance(box, boxes.TextBox)
             # Should only happen for list markers.
@@ -539,9 +530,8 @@ def draw_inline_level(stream, page, box, offset_x=0, text_overflow='clip',
 def draw_block_level(page, stream, blocks_and_cells):
     for block, blocks_and_cells in blocks_and_cells.items():
         if isinstance(block, boxes.ReplacedBox):
-            stream.begin_marked_content(block, page, 'Figure')
-            draw_replacedbox(stream, block)
-            stream.end_marked_content(page)
+            with stream.marked(block, page, 'Figure'):
+                draw_replacedbox(stream, block)
         elif block.children:
             if isinstance(block.children[-1], boxes.LineBox):
                 for child in block.children:

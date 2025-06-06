@@ -10,7 +10,7 @@ from .anchors import gather_anchors, make_page_bookmark_tree
 from .css import get_all_computed_styles
 from .css.counters import CounterStyle
 from .css.targets import TargetCollector
-from .draw import draw_page, stacked
+from .draw import draw_page
 from .formatting_structure.build import build_formatting_structure
 from .html import get_html_metadata
 from .images import get_image_from_uri as original_get_image_from_uri
@@ -82,7 +82,7 @@ class Page:
 
     def paint(self, stream, scale=1):
         """Paint the page into the PDF file."""
-        with stacked(stream):
+        with stream.stacked():
             stream.transform(a=scale, d=scale)
             draw_page(self._page_box, stream)
 
