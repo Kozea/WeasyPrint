@@ -13,9 +13,7 @@ def pdfua(pdf, metadata, document, page_streams, attachments, compress):
     # PDF document extra metadata
     if 'Lang' not in pdf.catalog:
         pdf.catalog['Lang'] = pydyf.String()
-    pdf.catalog['ViewerPreferences'] = pydyf.Dictionary({
-        'DisplayDocTitle': 'true',
-    })
+    pdf.catalog['ViewerPreferences'] = pydyf.Dictionary({'DisplayDocTitle': 'true'})
     pdf.catalog['MarkInfo'] = pydyf.Dictionary({'Marked': 'true'})
 
 
