@@ -731,7 +731,6 @@ class PageBox(ParentBox):
     """
     def __init__(self, page_type, style):
         self.page_type = page_type
-        self.marked = []
         # Page boxes are not linked to any element.
         super().__init__(
             element_tag=None, style=style, element=None, children=[])
@@ -751,11 +750,6 @@ class PageBox(ParentBox):
             -self.bleed['left'], -self.bleed['top'],
             self.margin_width() + self.bleed['left'] + self.bleed['right'],
             self.margin_height() + self.bleed['top'] + self.bleed['bottom'])
-
-    def add_marked(self, box, tag):
-        mcid = len(self.marked)
-        self.marked.append({'tag': tag, 'box': box, 'mcid': mcid})
-        return mcid
 
 
 class MarginBox(BlockContainerBox):

@@ -13,13 +13,13 @@ from .fonts import Font
 
 class Stream(pydyf.Stream):
     """PDF stream object with extra features."""
-    def __init__(self, fonts, page_rectangle, resources, images, tag, *args, **kwargs):
+    def __init__(self, fonts, page_rectangle, resources, images, tags, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.page_rectangle = page_rectangle
         self._fonts = fonts
         self._resources = resources
         self._images = images
-        self._tag = tag
+        self._tags = tags
         self._current_color = self._current_color_stroke = None
         self._current_alpha = self._current_alpha_stroke = None
         self._current_font = self._current_font_size = None
@@ -40,8 +40,8 @@ class Stream(pydyf.Stream):
             kwargs['resources'] = self._resources
         if 'images' not in kwargs:
             kwargs['images'] = self._images
-        if 'pdf_tags' not in kwargs:
-            kwargs['tag'] = self._tag
+        if 'tags' not in kwargs:
+            kwargs['tags'] = self._tags
         if 'compress' not in kwargs:
             kwargs['compress'] = self.compress
         return Stream(**kwargs)
@@ -259,26 +259,28 @@ class Stream(pydyf.Stream):
             self.pop_state()
 
     @contextmanager
-    def marked(self, box, page, tag):
-        if self._tag:
+    def marked(self, box, tag):
+        if self._tags is not None:
             property_list = None
-            marked_counter = page.add_marked(box, tag)
-            property_list = pydyf.Dictionary({'MCID': marked_counter})
+            mcid = len(self._tags)
+            assert box not in self._tags
+            self._tags[box] = {'tag': tag, 'mcid': mcid}
+            property_list = pydyf.Dictionary({'MCID': mcid})
             super().begin_marked_content(tag, property_list)
         try:
             yield
         finally:
-            if self._tag:
+            if self._tags is not None:
                 super().end_marked_content()
 
     @contextmanager
     def artifact(self):
-        if self._tag:
+        if self._tags is not None:
             super().begin_marked_content('Artifact')
         try:
             yield
         finally:
-            if self._tag:
+            if self._tags is not None:
                 super().end_marked_content()
 
     @staticmethod

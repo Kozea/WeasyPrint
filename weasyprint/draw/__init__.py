@@ -25,10 +25,10 @@ def draw_page(page, stream):
     set_mask_border(stream, page)
     draw_background(stream, page.canvas_background, clip_box=False)
     draw_border(stream, page)
-    draw_stacking_context(page, stream, stacking_context)
+    draw_stacking_context(stream, stacking_context)
 
 
-def draw_stacking_context(page, stream, stacking_context):
+def draw_stacking_context(stream, stacking_context):
     """Draw a ``stacking_context`` on ``stream``."""
     # See https://www.w3.org/TR/CSS2/zindex.html.
     with stream.stacked():
@@ -93,7 +93,7 @@ def draw_stacking_context(page, stream, stacking_context):
 
             # Point 3.
             for child_context in stacking_context.negative_z_contexts:
-                draw_stacking_context(page, stream, child_context)
+                draw_stacking_context(stream, child_context)
 
             # Point 4.
             for block in stacking_context.block_level_boxes:
@@ -107,7 +107,7 @@ def draw_stacking_context(page, stream, stacking_context):
 
             # Point 5.
             for child_context in stacking_context.float_contexts:
-                draw_stacking_context(page, stream, child_context)
+                draw_stacking_context(stream, child_context)
 
             # Point 6.
             if isinstance(box, boxes.InlineBox):
@@ -119,11 +119,11 @@ def draw_stacking_context(page, stream, stacking_context):
 
             # Point 8.
             for child_context in stacking_context.zero_z_contexts:
-                draw_stacking_context(page, stream, child_context)
+                draw_stacking_context(stream, child_context)
 
             # Point 9.
             for child_context in stacking_context.positive_z_contexts:
-                draw_stacking_context(page, stream, child_context)
+                draw_stacking_context(stream, child_context)
 
         # Point 10.
         draw_outline(stream, box)
@@ -259,8 +259,7 @@ def draw_background_image(stream, layer, image_rendering):
             # Put the image in a group so that masking outside the image and
             # masking within the image don't conflict.
             group = stream.add_group(*stream.page_rectangle)
-            group.transform(e=position_x + positioning_x,
-                             f=position_y + positioning_y)
+            group.transform(e=position_x + positioning_x, f=position_y + positioning_y)
             layer.image.draw(group, image_width, image_height, image_rendering)
             stream.draw_x_object(group.id)
         return
@@ -493,7 +492,7 @@ def draw_inline_level(stream, page, box, offset_x=0, text_overflow='clip',
         stacking_context = box
         allowed_boxes = (boxes.InlineBlockBox, boxes.InlineFlexBox, boxes.InlineGridBox)
         assert isinstance(stacking_context.box, allowed_boxes)
-        draw_stacking_context(page, stream, stacking_context)
+        draw_stacking_context(stream, stacking_context)
     else:
         set_mask_border(stream, box)
         draw_background(stream, box.background)
@@ -512,14 +511,14 @@ def draw_inline_level(stream, page, box, offset_x=0, text_overflow='clip',
                 else:
                     child_offset_x = offset_x + child.position_x - box.position_x
                 if isinstance(child, boxes.TextBox):
-                    with stream.marked(child, page, 'Span'):
+                    with stream.marked(child, 'Span'):
                         draw_text(
                             stream, child, child_offset_x, text_overflow, ellipsis)
                 else:
                     draw_inline_level(
                         stream, page, child, child_offset_x, text_overflow, ellipsis)
         elif isinstance(box, boxes.InlineReplacedBox):
-            with stream.marked(box, page, 'Figure'):
+            with stream.marked(box, 'Figure'):
                 draw_replacedbox(stream, box)
         else:
             assert isinstance(box, boxes.TextBox)
@@ -530,7 +529,7 @@ def draw_inline_level(stream, page, box, offset_x=0, text_overflow='clip',
 def draw_block_level(page, stream, blocks_and_cells):
     for block, blocks_and_cells in blocks_and_cells.items():
         if isinstance(block, boxes.ReplacedBox):
-            with stream.marked(block, page, 'Figure'):
+            with stream.marked(block, 'Figure'):
                 draw_replacedbox(stream, block)
         elif block.children:
             if isinstance(block.children[-1], boxes.LineBox):
