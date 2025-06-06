@@ -7,7 +7,6 @@ from ..layout import replaced
 from ..layout.percent import percentage
 from ..matrix import Matrix
 from .color import get_color, styled_color
-from .stack import stacked
 
 SIDES = ('top', 'right', 'bottom', 'left')
 
@@ -26,6 +25,34 @@ def set_mask_border(stream, box):
         box.style['mask_border_width'])
 
 
+def draw_column_rules(stream, box):
+    """Draw the column rules to a ``pdf.stream.Stream``."""
+    border_widths = (0, 0, 0, box.style['column_rule_width'])
+    skip_next = True
+    for child in box.children:
+        if child.style['column_span'] == 'all':
+            skip_next = True
+            continue
+        elif skip_next:
+            skip_next = False
+            continue
+        with stream.stacked():
+            rule_width = box.style['column_rule_width']
+            rule_style = box.style['column_rule_style']
+            if box.style['column_gap'] == 'normal':
+                gap = box.style['font_size']  # normal equals 1em
+            else:
+                gap = percentage(box.style['column_gap'], box.width)
+            position_x = (
+                child.position_x - (box.style['column_rule_width'] + gap) / 2)
+            border_box = position_x, child.position_y, rule_width, child.height
+            clip_border_segment(
+                stream, rule_style, rule_width, 'left', border_box, border_widths)
+            color = styled_color(
+                rule_style, get_color(box.style, 'column_rule_color'), 'left')
+            draw_rect_border(stream, border_box, border_widths, rule_style, color)
+
+
 def draw_border(stream, box):
     """Draw the box borders and column rules to a ``pdf.stream.Stream``."""
 
@@ -33,47 +60,22 @@ def draw_border(stream, box):
     if box.style['visibility'] != 'visible':
         return
 
-    # Draw column borders.
+    # Draw column rules.
     columns = (
         isinstance(box, boxes.BlockContainerBox) and (
             box.style['column_width'] != 'auto' or
             box.style['column_count'] != 'auto'))
     if columns and box.style['column_rule_width']:
-        stream.begin_artifact_content()
-        border_widths = (0, 0, 0, box.style['column_rule_width'])
-        skip_next = True
-        for child in box.children:
-            if child.style['column_span'] == 'all':
-                skip_next = True
-                continue
-            elif skip_next:
-                skip_next = False
-                continue
-            with stacked(stream):
-                rule_width = box.style['column_rule_width']
-                rule_style = box.style['column_rule_style']
-                if box.style['column_gap'] == 'normal':
-                    gap = box.style['font_size']  # normal equals 1em
-                else:
-                    gap = percentage(box.style['column_gap'], box.width)
-                position_x = (
-                    child.position_x - (box.style['column_rule_width'] + gap) / 2)
-                border_box = (position_x, child.position_y, rule_width, child.height)
-                clip_border_segment(
-                    stream, rule_style, rule_width, 'left', border_box, border_widths)
-                color = styled_color(
-                    rule_style, get_color(box.style, 'column_rule_color'), 'left')
-                draw_rect_border(stream, border_box, border_widths, rule_style, color)
-        stream.end_artifact_content()
+        with stream.artifact():
+            draw_column_rules(stream, box)
 
     # If there's a border image, that takes precedence.
     if box.style['border_image_source'][0] != 'none' and box.border_image is not None:
-        stream.begin_artifact_content()
-        draw_border_image(
-            box, stream, box.border_image, box.style['border_image_slice'],
-            box.style['border_image_repeat'], box.style['border_image_outset'],
-            box.style['border_image_width'])
-        stream.end_artifact_content()
+        with stream.artifact():
+            draw_border_image(
+                box, stream, box.border_image, box.style['border_image_slice'],
+                box.style['border_image_repeat'], box.style['border_image_outset'],
+                box.style['border_image_width'])
         return
 
     widths = [getattr(box, f'border_{side}_width') for side in SIDES]
@@ -92,27 +94,23 @@ def draw_border(stream, box):
     four_sides = 0 not in widths  # no 0-width border, to avoid PDF artifacts
     if simple_style and single_color and four_sides:
         # Simple case, we only draw rounded rectangles.
-        stream.begin_artifact_content()
-        draw_rounded_border(stream, box, styles[0], colors[0])
-        stream.end_artifact_content()
+        with stream.artifact():
+            draw_rounded_border(stream, box, styles[0], colors[0])
         return
 
     # We're not smart enough to find a good way to draw the borders, we must
     # draw them side by side. Order is not specified, but this one seems to be
     # close to what other browsers do.
-    stream.begin_artifact_content()
     values = tuple(zip(SIDES, widths, colors, styles))
     for index in (2, 3, 1, 0):
         side, width, color, style = values[index]
         if width == 0 or not color:
             continue
-        with stacked(stream):
+        with stream.artifact(), stream.stacked():
             clip_border_segment(
                 stream, style, width, side, box.rounded_border_box()[:4],
                 widths, box.rounded_border_box()[4:])
-            draw_rounded_border(
-                stream, box, style, styled_color(style, color, side))
-    stream.end_artifact_content()
+            draw_rounded_border(stream, box, style, styled_color(style, color, side))
 
 
 def draw_border_image(box, stream, image, border_slice, border_repeat, border_outset,
@@ -245,7 +243,7 @@ def draw_border_image(box, stream, image, border_slice, border_repeat, border_ou
         offset_x = rendered_width * slice_x / intrinsic_width
         offset_y = rendered_height * slice_y / intrinsic_height
 
-        with stacked(stream):
+        with stream.stacked():
             stream.rectangle(x, y, width, height)
             stream.clip()
             stream.end()
@@ -253,7 +251,7 @@ def draw_border_image(box, stream, image, border_slice, border_repeat, border_ou
             stream.transform(a=scale_x, d=scale_y)
             for i in range(n_repeats_x):
                 for j in range(n_repeats_y):
-                    with stacked(stream):
+                    with stream.stacked():
                         translate_x = i * (slice_width + extra_dx)
                         translate_y = j * (slice_height + extra_dy)
                         stream.transform(e=translate_x, f=translate_y)
@@ -606,7 +604,7 @@ def draw_rect_border(stream, box, widths, style, color):
 def draw_line(stream, x1, y1, x2, y2, thickness, style, color, offset=0):
     assert x1 == x2 or y1 == y2  # Only works for vertical or horizontal lines
 
-    with stacked(stream):
+    with stream.stacked():
         if style not in ('ridge', 'groove'):
             stream.set_color(color, stroke=True)
 
@@ -682,14 +680,12 @@ def draw_outline(stream, box):
             box.border_box_y() - width - offset,
             box.border_width() + 2 * width + 2 * offset,
             box.border_height() + 2 * width + 2 * offset)
-        stream.begin_artifact_content()
         for side in SIDES:
-            with stacked(stream):
+            with stream.artifact(), stream.stacked():
                 clip_border_segment(stream, style, width, side, outline_box)
                 draw_rect_border(
                     stream, outline_box, 4 * (width,), style,
                     styled_color(style, color, side))
-        stream.end_artifact_content()
 
     for child in box.children:
         if isinstance(child, boxes.Box):

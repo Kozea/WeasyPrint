@@ -12,7 +12,6 @@ from ..text.fonts import get_hb_object_data
 from ..text.line_break import get_last_word_end
 from .border import draw_line
 from .color import get_color
-from .stack import stacked
 
 
 def draw_text(stream, textbox, offset_x, text_overflow, block_ellipsis):
@@ -78,7 +77,7 @@ def draw_text(stream, textbox, offset_x, text_overflow, block_ellipsis):
 def draw_emojis(stream, font_size, x, y, emojis):
     """Draw list of emojis."""
     for image, font, a, d, e, f in emojis:
-        with stacked(stream):
+        with stream.stacked():
             stream.transform(a=a, d=d, e=x + e * font_size, f=y + f)
             image.draw(stream, font_size, font_size, None)
 
