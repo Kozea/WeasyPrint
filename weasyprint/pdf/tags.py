@@ -159,7 +159,12 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, tags):
 
     def _add_children(children):
         for child in children:
-            if isinstance(child, boxes.TextBox):
+            if isinstance(child, boxes.MarginBox):
+                # Build tree but don’t link it to main tree. It ensures that marked
+                # content is mapped in document and removed from list. It could be
+                # included in tree as Artifact, but that’s only allowed in PDF 2.0.
+                _build_box_tree(child, element, pdf, page_number, nums, links, tags)
+            elif isinstance(child, boxes.TextBox):
                 kid = tags.pop(child)
                 kid_element = pydyf.Dictionary({
                     'Type': '/StructElem',
