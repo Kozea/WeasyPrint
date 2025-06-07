@@ -2,6 +2,7 @@
 
 import pydyf
 
+from ..logger import LOGGER
 from .metadata import add_metadata
 
 
@@ -12,6 +13,7 @@ def pdfua(pdf, metadata, document, page_streams, attachments, compress):
 
     # PDF document extra metadata
     if 'Lang' not in pdf.catalog:
+        LOGGER.error('Missing required "lang" attribute at the root of the document')
         pdf.catalog['Lang'] = pydyf.String()
 
 
