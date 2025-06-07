@@ -1,5 +1,7 @@
 """PDF stream."""
 
+from contextlib import contextmanager
+
 import pydyf
 
 from ..logger import LOGGER
@@ -11,14 +13,13 @@ from .fonts import Font
 
 class Stream(pydyf.Stream):
     """PDF stream object with extra features."""
-    def __init__(self, fonts, page_rectangle, resources, images, mark, *args, **kwargs):
+    def __init__(self, fonts, page_rectangle, resources, images, tags, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.page_rectangle = page_rectangle
-        self.marked = []
         self._fonts = fonts
         self._resources = resources
         self._images = images
-        self._mark = mark
+        self._tags = tags
         self._current_color = self._current_color_stroke = None
         self._current_alpha = self._current_alpha_stroke = None
         self._current_font = self._current_font_size = None
@@ -39,8 +40,8 @@ class Stream(pydyf.Stream):
             kwargs['resources'] = self._resources
         if 'images' not in kwargs:
             kwargs['images'] = self._images
-        if 'mark' not in kwargs:
-            kwargs['mark'] = self._mark
+        if 'tags' not in kwargs:
+            kwargs['tags'] = self._tags
         if 'compress' not in kwargs:
             kwargs['compress'] = self.compress
         return Stream(**kwargs)
@@ -248,21 +249,39 @@ class Stream(pydyf.Stream):
         self._resources['Shading'][shading.id] = shading
         return shading
 
-    def begin_marked_content(self, box, mcid=False, tag=None):
-        if not self._mark:
-            return
-        property_list = None
-        if tag is None:
-            tag = self.get_marked_content_tag(box.element_tag)
-        if mcid:
-            property_list = pydyf.Dictionary({'MCID': len(self.marked)})
-            self.marked.append((tag, box))
-        super().begin_marked_content(tag, property_list)
+    @contextmanager
+    def stacked(self):
+        """Save and restore stream context when used with the ``with`` keyword."""
+        self.push_state()
+        try:
+            yield
+        finally:
+            self.pop_state()
 
-    def end_marked_content(self):
-        if not self._mark:
-            return
-        super().end_marked_content()
+    @contextmanager
+    def marked(self, box, tag):
+        if self._tags is not None:
+            property_list = None
+            mcid = len(self._tags)
+            assert box not in self._tags
+            self._tags[box] = {'tag': tag, 'mcid': mcid}
+            property_list = pydyf.Dictionary({'MCID': mcid})
+            super().begin_marked_content(tag, property_list)
+        try:
+            yield
+        finally:
+            if self._tags is not None:
+                super().end_marked_content()
+
+    @contextmanager
+    def artifact(self):
+        if self._tags is not None:
+            super().begin_marked_content('Artifact')
+        try:
+            yield
+        finally:
+            if self._tags is not None:
+                super().end_marked_content()
 
     @staticmethod
     def create_interpolation_function(domain, c0, c1, n):
@@ -283,31 +302,3 @@ class Stream(pydyf.Stream):
             'Bounds': pydyf.Array(bounds),
             'Functions': pydyf.Array(sub_functions),
         })
-
-    def get_marked_content_tag(self, element_tag):
-        if element_tag == 'div':
-            return 'Div'
-        elif element_tag == 'span':
-            return 'Span'
-        elif element_tag == 'article':
-            return 'Art'
-        elif element_tag == 'section':
-            return 'Sect'
-        elif element_tag == 'blockquote':
-            return 'BlockQuote'
-        elif element_tag == 'p':
-            return 'P'
-        elif element_tag in ('h1', 'h2', 'h3', 'h4', 'h5', 'h6'):
-            return element_tag.upper()
-        elif element_tag in ('dl', 'ul', 'ol'):
-            return 'L'
-        elif element_tag in ('li', 'dt', 'dd'):
-            return 'LI'
-        elif element_tag == 'table':
-            return 'Table'
-        elif element_tag in ('tr', 'th', 'td'):
-            return element_tag.upper()
-        elif element_tag in ('thead', 'tbody', 'tfoot'):
-            return element_tag[:2].upper() + element_tag[2:]
-        else:
-            return 'NonStruct'

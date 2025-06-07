@@ -12,6 +12,7 @@ from ..matrix import Matrix
 from . import debug, pdfa, pdfua
 from .fonts import build_fonts_dictionary
 from .stream import Stream
+from .tags import add_tags
 
 from .anchors import (  # isort:skip
     add_annotations, add_forms, add_links, add_outlines, resolve_links,
@@ -118,15 +119,15 @@ def generate_pdf(document, target, zoom, **options):
     PROGRESS_LOGGER.info('Step 6 - Creating PDF')
 
     # Set properties according to PDF variants
-    mark = False
     srgb = options['srgb']
+    pdf_tags = options['pdf_tags']
     variant = options['pdf_variant']
     if variant:
         variant_function, properties = VARIANTS[variant]
-        if 'mark' in properties:
-            mark = properties['mark']
         if 'srgb' in properties:
             srgb = properties['srgb']
+        if 'pdf_tags' in properties:
+            pdf_tags = properties['pdf_tags']
 
     pdf = pydyf.PDF()
     images = {}
@@ -159,6 +160,8 @@ def generate_pdf(document, target, zoom, **options):
     compress = not options['uncompressed_pdf']
     for page_number, (page, links_and_anchors) in enumerate(
             zip(document.pages, page_links_and_anchors)):
+        tags = {} if pdf_tags else None
+
         # Draw from the top-left corner
         matrix = Matrix(scale, 0, 0, -scale, 0, page.height * scale)
 
@@ -175,7 +178,7 @@ def generate_pdf(document, target, zoom, **options):
             left / scale, top / scale,
             (right - left) / scale, (bottom - top) / scale)
         stream = Stream(
-            document.fonts, page_rectangle, resources, images, mark, compress=compress)
+            document.fonts, page_rectangle, resources, images, tags, compress=compress)
         stream.transform(d=-1, f=(page.height * scale))
         pdf.add_object(stream)
         page_streams.append(stream)
@@ -187,13 +190,13 @@ def generate_pdf(document, target, zoom, **options):
             'Contents': stream.reference,
             'Resources': resources.reference,
         })
-        if mark:
+        if pdf_tags:
             pdf_page['Tabs'] = '/S'
             pdf_page['StructParents'] = page_number
         pdf.add_page(pdf_page)
         pdf_pages.append(pdf_page)
 
-        add_links(links_and_anchors, matrix, pdf, pdf_page, pdf_names, mark)
+        add_links(links_and_anchors, matrix, pdf, pdf_page, pdf_names, tags)
         add_annotations(
             links_and_anchors[0], matrix, document, pdf, pdf_page, annot_files,
             compress)
@@ -322,6 +325,10 @@ def generate_pdf(document, target, zoom, **options):
                 'DestOutputProfile': profile.reference,
             }),
         ])
+
+    # Add tags
+    if pdf_tags:
+        add_tags(pdf, document, page_streams)
 
     # Apply PDF variants functions
     if variant:
