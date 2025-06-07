@@ -50,6 +50,9 @@ def add_tags(pdf, document, page_streams):
 
     pdf.catalog['ViewerPreferences'] = pydyf.Dictionary({'DisplayDocTitle': 'true'})
     pdf.catalog['MarkInfo'] = pydyf.Dictionary({'Marked': 'true'})
+    if 'Lang' not in pdf.catalog:
+        LOGGER.error('Missing required "lang" attribute at the root of the document')
+        pdf.catalog['Lang'] = pydyf.String()
 
 
 def _get_marked_content_tag(box):
