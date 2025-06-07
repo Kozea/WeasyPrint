@@ -6,6 +6,7 @@ import pydyf
 
 from ..formatting_structure import boxes
 from ..layout.absolute import AbsolutePlaceholder
+from ..logger import LOGGER
 
 
 def add_tags(pdf, document, page_streams):
@@ -135,8 +136,11 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, tags):
             'O': '/Layout',
             'BBox': pydyf.Array((x1, y1, x2, y2)),
         })
-        if 'alt' in box.element.attrib:
-            element['Alt'] = pydyf.String(box.element.attrib['alt'])
+        if alt := box.element.attrib.get('alt'):
+            element['Alt'] = pydyf.String(alt)
+        else:
+            source = box.element.attrib.get('src', 'unknown')
+            LOGGER.error(f'Image "{source}" has no required alt description')
     elif tag == 'Table':
         # TODO: handle tables correctly.
         box, = box.children
