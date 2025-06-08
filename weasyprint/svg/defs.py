@@ -132,7 +132,7 @@ def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
 
     if 'gradientTransform' in gradient.attrib:
         transform_matrix = transform(
-            gradient.get('gradientTransform'), font_size,
+            gradient.get('gradientTransform'), '0 0', font_size,
             svg.normalized_diagonal)
         matrix = transform_matrix @ matrix
 
@@ -445,7 +445,7 @@ def draw_pattern(svg, node, pattern, font_size, opacity, stroke):
 
     if 'patternTransform' in pattern.attrib:
         transform_matrix = transform(
-            pattern.get('patternTransform'), font_size, svg.inner_diagonal)
+            pattern.get('patternTransform'), '0 0', font_size, svg.inner_diagonal)
         matrix = transform_matrix @ matrix
 
     matrix = matrix @ svg.stream.ctm
