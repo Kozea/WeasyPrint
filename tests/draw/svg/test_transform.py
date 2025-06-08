@@ -411,3 +411,28 @@ def test_transform_unknown(assert_pixels):
               stroke-width="2" stroke="red" fill="none" />
       </svg>
     ''')
+
+
+@assert_no_logs
+def test_transform_origin(assert_pixels):
+    assert_pixels('''
+        ___RRRRRR
+        ___RRRRRR
+        ___RR___R
+        ___RR___R
+        ___RRRRRR
+        ___RRRRRR
+        _________
+        _________
+        _________
+    ''', '''
+      <style>
+        @page { size: 9px }
+        svg { display: block }
+      </style>
+      <svg width="9px" height="9px" xmlns="http://www.w3.org/2000/svg">
+        <rect x="0" y="0" width="4" height="5"
+              transform="rotate(90)" transform-origin="4 5"
+              stroke-width="2" stroke="red" fill="none" />
+      </svg>
+    ''')
