@@ -82,6 +82,7 @@ class Box:
     cached_counter_values = None
     missing_link = None
     link_annotation = None
+    force_fragmentation = False
 
     # Default, overriden on some subclasses
     def all_children(self):

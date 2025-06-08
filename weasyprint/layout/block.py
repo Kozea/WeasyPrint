@@ -794,7 +794,7 @@ def block_container_layout(context, box, bottom_space, skip_stack,
     else:
         resume_at = None
 
-    box_is_fragmented = resume_at is not None
+    box_is_fragmented = resume_at is not None or box.force_fragmentation
     if box.style['continue'] == 'discard':
         resume_at = None
 
