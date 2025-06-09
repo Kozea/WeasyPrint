@@ -282,7 +282,7 @@ def length(style, name, value, font_size=None, pixels_only=False):
     elif unit in LENGTHS_TO_PIXELS:
         # Convert absolute lengths to pixels
         result = value.value * LENGTHS_TO_PIXELS[unit]
-    elif unit in ('em', 'ex', 'ch', 'rem'):
+    elif unit in ('em', 'ex', 'ch', 'rem', 'lh', 'rlh'):
         if font_size is None:
             font_size = style['font_size']
         if unit == 'ex':
@@ -296,6 +296,12 @@ def length(style, name, value, font_size=None, pixels_only=False):
             result = value.value * font_size
         elif unit == 'rem':
             result = value.value * style.root_style['font_size']
+        elif unit == 'lh':
+            line_height, _ = strut_layout(style)
+            result = value.value * line_height
+        elif unit == 'rlh':
+            line_height, _ = strut_layout(style.root_style)
+            result = value.value * line_height
     else:
         # A percentage or 'auto': no conversion needed.
         return value
