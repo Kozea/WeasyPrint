@@ -254,7 +254,6 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, tags):
                 if cell.element is None:
                     continue
                 if cell.element_tag == 'td':
-                    breakpoint()
                     cell.mark['A'] = pydyf.Dictionary({
                         'O': '/Table',
                         'Headers': pydyf.Array(row_headers[i] + column_headers[j]),
