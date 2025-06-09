@@ -30,7 +30,6 @@ def add_tags(pdf, document, page_streams):
     structure_root['K'] = pydyf.Array([structure_document.reference])
     pdf.catalog['StructTreeRoot'] = structure_root.reference
 
-
     # Content mapping
     content_mapping['Nums'] = pydyf.Array()
     links = []
@@ -178,7 +177,7 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, tags, part_conta
         else:
             element = part_container['part']
 
-        # Procesar los hijos dentro del único Part
+        # Process child in an unique Part
         for child in box.children:
             children = child.children if isinstance(child, boxes.LineBox) else [child]
             for grandchild in children:
