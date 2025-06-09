@@ -73,6 +73,8 @@ def _get_pdf_tag(box):
     elif tag.split(':')[0] == 'a':
         # Links and link pseudo elements create link annotations.
         return 'Link'
+    elif tag == 'body' or tag == 'html':
+        return 'Generic'
     elif tag == 'span':
         return 'Span'
     elif tag == 'main':
@@ -135,14 +137,18 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, tags):
             child = _build_box_tree(box, parent, pdf, page_number, nums, links, tags)
             parent['K'].append(child.reference)
             return parent
-    element = pydyf.Dictionary({
-        'Type': '/StructElem',
-        'S': f'/{tag}',
-        'K': pydyf.Array([]),
-        'Pg': pdf.page_references[page_number],
-        'P': parent.reference,
-    })
-    pdf.add_object(element)
+
+    if tag == 'Generic':
+        element = parent
+    else:
+        element = pydyf.Dictionary({
+            'Type': '/StructElem',
+            'S': f'/{tag}',
+            'K': pydyf.Array([]),
+            'Pg': pdf.page_references[page_number],
+            'P': parent.reference,
+        })
+        pdf.add_object(element)
 
     # Handle special cases.
     if tag == 'Figure':
