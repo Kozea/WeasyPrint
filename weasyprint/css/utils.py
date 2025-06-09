@@ -40,7 +40,7 @@ RESOLUTION_TO_DPPX = {
 }
 
 # Sets of possible length units
-LENGTH_UNITS = set(LENGTHS_TO_PIXELS) | set(['ex', 'em', 'ch', 'rem'])
+LENGTH_UNITS = set(LENGTHS_TO_PIXELS) | set(['ex', 'em', 'ch', 'rem', 'lh', 'rlh'])
 
 # Constants about background positions
 ZERO_PERCENT = Dimension(0, '%')
