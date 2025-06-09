@@ -64,6 +64,7 @@ def add_tags(pdf, document, page_streams):
 def _get_pdf_tag(box):
     """Get PDF tag corresponding to box."""
     if box.element is None:
+        LOGGER.warning(f'Box `{str(box)}` element is None -> NoneStruct')
         return 'NonStruct'
 
     tag = box.element_tag
@@ -104,6 +105,7 @@ def _get_pdf_tag(box):
     elif tag in ('caption', 'figcaption'):
         return 'Caption'
     else:
+        LOGGER.warning(f'Unknown tag `{tag}` -> NoneStruct')
         return 'NonStruct'
 
 
