@@ -30,30 +30,42 @@ def add_tags(pdf, document, page_streams):
     structure_root['K'] = pydyf.Array([structure_document.reference])
     pdf.catalog['StructTreeRoot'] = structure_root.reference
 
-    # Add tree content.
+    # Content mapping
     content_mapping['Nums'] = pydyf.Array()
     links = []
+
     for page_number, (page, stream) in enumerate(zip(document.pages, page_streams)):
+        tags = stream._tags
+        page_box = page._page_box
+
+        # Prepare array for this page’s MCID-to-StructElem mapping
         content_mapping['Nums'].append(page_number)
         content_mapping['Nums'].append(pydyf.Array())
-        nums = {}
-        tags = stream._tags
-        box = page._page_box
-        element = _build_box_tree(
-            box, structure_document, pdf, page_number, nums, links, tags)
-        assert not tags
-        structure_document['K'].append(element.reference)
-        nums = [reference for mcid, reference in sorted(nums.items())]
-        content_mapping['Nums'][-1].extend(nums)
+        page_nums = {}
 
-    # Add annotations for links.
-    for i, (link, annotation) in enumerate(links, start=len(document.pages)):
+        # Descend directly into real children (skip PageBox itself)
+        for child in page_box.children:
+            children = child.children if isinstance(child, boxes.LineBox) else [child]
+            for real_child in children:
+                element = _build_box_tree(
+                    real_child, structure_document, pdf, page_number,
+                    page_nums, links, tags
+                )
+                if element is not None:
+                    structure_document['K'].append(element.reference)
+
+        # Flatten page-local nums into global mapping
+        sorted_refs = [ref for _, ref in sorted(page_nums.items())]
+        content_mapping['Nums'][-1].extend(sorted_refs)
+
+    # Add annotations for links
+    for i, (link_objref, annotation) in enumerate(links, start=len(document.pages)):
         content_mapping['Nums'].append(i)
-        content_mapping['Nums'].append(link)
+        content_mapping['Nums'].append(link_objref)
         annotation['StructParent'] = i
         annotation['F'] = 2 ** (2 - 1)
 
-    # Add extra metadata.
+    # Add required metadata
     pdf.catalog['ViewerPreferences'] = pydyf.Dictionary({'DisplayDocTitle': 'true'})
     pdf.catalog['MarkInfo'] = pydyf.Dictionary({'Marked': 'true'})
     if 'Lang' not in pdf.catalog:
@@ -64,7 +76,6 @@ def add_tags(pdf, document, page_streams):
 def _get_pdf_tag(box):
     """Get PDF tag corresponding to box."""
     if box.element is None:
-        LOGGER.warning(f'Box `{str(box)}` element is None -> NoneStruct')
         return 'NonStruct'
 
     tag = box.element_tag
@@ -73,8 +84,10 @@ def _get_pdf_tag(box):
     elif tag.split(':')[0] == 'a':
         # Links and link pseudo elements create link annotations.
         return 'Link'
-    elif tag == 'body' or tag == 'html':
-        return 'Generic'
+    elif tag == 'Body':
+        return 'Body'
+    elif tag == 'html':
+        return 'Html'
     elif tag == 'span':
         return 'Span'
     elif tag == 'main':
@@ -107,7 +120,6 @@ def _get_pdf_tag(box):
     elif tag in ('caption', 'figcaption'):
         return 'Caption'
     else:
-        LOGGER.warning(f'Unknown tag `{tag}` -> NoneStruct')
         return 'NonStruct'
 
 
@@ -120,6 +132,35 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, tags):
 
     # Create box element.
     tag = _get_pdf_tag(box)
+
+    # Avoid generate Html and Body as a semantic node. Children required
+    # to be processed.
+    if tag == 'Html' or tag == 'Body':
+        if isinstance(box, boxes.ParentBox):
+            for child in box.children:
+                children = child.children if isinstance(child, boxes.LineBox) else [child]
+                for child in children:
+                    if isinstance(child, boxes.MarginBox):
+                        _build_box_tree(child, parent, pdf, page_number, nums, links, tags)
+                    elif isinstance(child, boxes.TextBox):
+                        kid = tags.pop(child)
+                        kid_element = pydyf.Dictionary({
+                            'Type': '/StructElem',
+                            'S': f'/{kid["tag"]}',
+                            'K': pydyf.Array([kid['mcid']]),
+                            'Pg': pdf.page_references[page_number],
+                            'P': parent.reference,
+                        })
+                        pdf.add_object(kid_element)
+                        parent['K'].append(kid_element.reference)
+                        nums[kid['mcid']] = kid_element.reference
+                    else:
+                        child_element = _build_box_tree(
+                            child, parent, pdf, page_number, nums, links, tags)
+                        if child_element is not None:
+                            parent['K'].append(child_element.reference)
+        return None  # ← no devolver nuevo nodo
+
     if tag == 'LI':
         if parent['S'] == '/LI':
             # Anonymous list element, store as list item body.
@@ -138,17 +179,14 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, tags):
             parent['K'].append(child.reference)
             return parent
 
-    if tag == 'Generic':
-        element = parent
-    else:
-        element = pydyf.Dictionary({
-            'Type': '/StructElem',
-            'S': f'/{tag}',
-            'K': pydyf.Array([]),
-            'Pg': pdf.page_references[page_number],
-            'P': parent.reference,
-        })
-        pdf.add_object(element)
+    element = pydyf.Dictionary({
+        'Type': '/StructElem',
+        'S': f'/{tag}',
+        'K': pydyf.Array([]),
+        'Pg': pdf.page_references[page_number],
+        'P': parent.reference,
+    })
+    pdf.add_object(element)
 
     # Handle special cases.
     if tag == 'Figure':
@@ -220,7 +258,11 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, tags):
                         child_parent = element
                     child_element = _build_box_tree(
                         child, child_parent, pdf, page_number, nums, links, tags)
-                    child_parent['K'].append(child_element.reference)
+
+                    # Check if it is already been referenced before
+                    if child_element is not None:
+                        child_parent['K'].append(child_element.reference)
+
     else:
         # Add replaced box.
         assert isinstance(box, boxes.ReplacedBox)
