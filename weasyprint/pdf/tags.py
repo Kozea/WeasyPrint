@@ -159,7 +159,7 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, tags):
                             child, parent, pdf, page_number, nums, links, tags)
                         if child_element is not None:
                             parent['K'].append(child_element.reference)
-        return None  # ← no devolver nuevo nodo
+        return None
 
     if tag == 'LI':
         if parent['S'] == '/LI':
