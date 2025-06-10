@@ -1,0 +1,11 @@
+Build image with:
+
+    docker build -t weasyprint .
+
+Run container with:
+
+    weasyprint.bat <args>...
+
+Latter script is a shortcut for command docker run.
+weasyprint can access only files in "." folder, via docker volumes.
+
