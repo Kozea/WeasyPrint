@@ -1,7 +1,8 @@
 Build image with:
 
-    docker build -t weasyprint .
+    docker build -f docker/Dockerfile -t weasyprint .
 
+(launch from root folder)
 Run container with:
 
     weasyprint.bat <args>...
