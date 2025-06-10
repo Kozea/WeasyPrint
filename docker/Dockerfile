@@ -10,7 +10,6 @@ COPY weasyprint/ ./weasyprint/
 RUN pip install --upgrade pip
 RUN pip install build
 RUN python -m build --wheel
-#RUN pip install dist/*.whl
 
 # Phase 2 - about 308MB
 FROM python:3.10.18-alpine3.22
