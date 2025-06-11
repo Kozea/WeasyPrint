@@ -252,6 +252,7 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, tags, part_conta
         })
         pdf.add_object(object_reference)
         links.append((object_reference.reference, annotation))
+        element['K'].append(object_reference.reference)
 
     if isinstance(box, boxes.ParentBox):
         # Build tree for box children.
@@ -266,17 +267,22 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, tags, part_conta
                 elif isinstance(child, boxes.TextBox):
                     # Add marked element from the stream.
                     kid = tags.pop(child)
-                    kid_element = pydyf.Dictionary({
-                        'Type': '/StructElem',
-                        'S': f'/{kid["tag"]}',
-                        'K': pydyf.Array([kid['mcid']]),
-                        'Pg': pdf.page_references[page_number],
-                        'P': element.reference,
-                    })
-                    pdf.add_object(kid_element)
-                    element['K'].append(kid_element.reference)
-                    assert kid['mcid'] not in nums
-                    nums[kid['mcid']] = kid_element.reference
+                    if tag == 'Link':
+                        element['K'].append(kid['mcid'])
+                        assert kid['mcid'] not in nums
+                        nums[kid['mcid']] = element.reference # Associate MCID directly with link reference
+                    else:
+                        kid_element = pydyf.Dictionary({
+                            'Type': '/StructElem',
+                            'S': f'/{kid["tag"]}',
+                            'K': pydyf.Array([kid['mcid']]),
+                            'Pg': pdf.page_references[page_number],
+                            'P': element.reference,
+                        })
+                        pdf.add_object(kid_element)
+                        element['K'].append(kid_element.reference)
+                        assert kid['mcid'] not in nums
+                        nums[kid['mcid']] = kid_element.reference
                 else:
                     # Recursively build tree for child.
                     if child.element_tag in ('ul', 'ol') and element['S'] == '/LI':
