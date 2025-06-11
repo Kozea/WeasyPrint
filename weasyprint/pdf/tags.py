@@ -76,6 +76,11 @@ def add_tags(pdf, document, page_streams):
 
 def _get_pdf_tag(box):
     """Get PDF tag corresponding to box."""
+
+    # Margin boxes should not be included as semantic nodes
+    if isinstance(box, boxes.MarginBox):
+        return 'NonSemantic'
+
     if box.element is None:
         return 'NonStruct'
 
@@ -136,7 +141,7 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, tags, part_conta
 
     # Avoid generate Html and Body as a semantic node. Children required
     # to be processed.
-    if tag == 'Html' or tag == 'Body':
+    if tag == 'Html' or tag == 'Body' or tag == 'NonSemantic':
         if isinstance(box, boxes.ParentBox):
             for child in box.children:
                 children = child.children if isinstance(child, boxes.LineBox) else [child]
