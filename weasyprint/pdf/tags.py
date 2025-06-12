@@ -33,7 +33,6 @@ def add_tags(pdf, document, page_streams):
     # Map content.
     content_mapping['Nums'] = pydyf.Array()
     links = []
-    part_container = {'part': None}
     for page_number, (page, stream) in enumerate(zip(document.pages, page_streams)):
         tags = stream._tags
         page_box = page._page_box
@@ -45,8 +44,7 @@ def add_tags(pdf, document, page_streams):
 
         # Map page box content.
         elements = _build_box_tree(
-            page_box, structure_document, pdf, page_number, page_nums, links, tags,
-            part_container)
+            page_box, structure_document, pdf, page_number, page_nums, links, tags)
         for element in elements:
             structure_document['K'].append(element.reference)
         assert not tags
@@ -114,7 +112,7 @@ def _get_pdf_tag(tag):
         return 'NonStruct'
 
 
-def _build_box_tree(box, parent, pdf, page_number, nums, links, tags, part_container):
+def _build_box_tree(box, parent, pdf, page_number, nums, links, tags):
     """Recursively build tag tree for given box and yield children."""
 
     # Special case for absolute elements.
@@ -128,40 +126,14 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, tags, part_conta
         # Avoid generate page, html and body boxes as a semantic node, yield children.
         if isinstance(box, boxes.ParentBox):
             for child in box.children:
-                yield from _build_box_tree(child, parent, pdf, page_number, nums, links, tags, part_container)
+                yield from _build_box_tree(child, parent, pdf, page_number, nums, links, tags)
             return
     elif isinstance(box, boxes.MarginBox):
         # Build tree for margin boxes but don’t link it to main tree. It ensures that
         # marked content is mapped in document and removed from list. It could be
         # included in tree as Artifact, but that’s only allowed in PDF 2.0.
         for child in box.children:
-            tuple(_build_box_tree(child, parent, pdf, page_number, nums, links, tags, part_container))
-        return
-
-    if tag == 'Part':
-        if part_container['part'] is None:
-            element = pydyf.Dictionary({
-                'Type': '/StructElem',
-                'S': '/Part',
-                'K': pydyf.Array(),
-                'Pg': pdf.page_references[page_number],
-                'P': parent.reference,
-            })
-            pdf.add_object(element)
-            part_container['part'] = element
-            parent['K'].append(element.reference)
-        else:
-            element = part_container['part']
-
-        # Process child in an unique Part.
-        for child in box.children:
-            children = child.children if isinstance(child, boxes.LineBox) else [child]
-            for grandchild in children:
-                child_elements = _build_box_tree(
-                    grandchild, element, pdf, page_number, nums, links, tags, part_container)
-                for child_element in child_elements:
-                    element['K'].append(child_element.reference)
-
+            tuple(_build_box_tree(child, parent, pdf, page_number, nums, links, tags))
         return
 
     # Create box element.
@@ -179,7 +151,7 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, tags, part_conta
                 'P': parent.reference,
             })
             pdf.add_object(parent)
-            children = _build_box_tree(box, parent, pdf, page_number, nums, links, tags, part_container)
+            children = _build_box_tree(box, parent, pdf, page_number, nums, links, tags)
             for child in children:
                 parent['K'].append(child.reference)
             yield parent
@@ -266,7 +238,7 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, tags, part_conta
                     else:
                         child_parent = element
                     child_elements = _build_box_tree(
-                        child, child_parent, pdf, page_number, nums, links, tags, part_container)
+                        child, child_parent, pdf, page_number, nums, links, tags)
 
                     # Check if it is already been referenced before.
                     for child_element in child_elements:
