@@ -54,9 +54,9 @@ def add_tags(pdf, document, page_streams):
         content_mapping['Nums'][-1].extend(sorted_refs)
 
     # Add annotations for links.
-    for i, (link_objref, annotation) in enumerate(links, start=len(document.pages)):
+    for i, (link_reference, annotation) in enumerate(links, start=len(document.pages)):
         content_mapping['Nums'].append(i)
-        content_mapping['Nums'].append(link_objref)
+        content_mapping['Nums'].append(link_reference)
         annotation['StructParent'] = i
         annotation['F'] = 2 ** (2 - 1)
 
@@ -122,11 +122,13 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, tags):
     element_tag = None if box.element is None else box.element_tag
     tag = _get_pdf_tag(element_tag)
 
+    # Special case for html, body, page boxes and margin boxes.
     if element_tag in ('html', 'body') or isinstance(box, boxes.PageBox):
         # Avoid generate page, html and body boxes as a semantic node, yield children.
         if isinstance(box, boxes.ParentBox):
             for child in box.children:
-                yield from _build_box_tree(child, parent, pdf, page_number, nums, links, tags)
+                yield from _build_box_tree(
+                    child, parent, pdf, page_number, nums, links, tags)
             return
     elif isinstance(box, boxes.MarginBox):
         # Build tree for margin boxes but don’t link it to main tree. It ensures that
