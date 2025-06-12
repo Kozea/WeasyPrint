@@ -259,7 +259,6 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, tags, part_conta
         })
         pdf.add_object(object_reference)
         links.append((object_reference.reference, annotation))
-        element['K'].append(object_reference.reference)
 
     if isinstance(box, boxes.ParentBox):
         # Build tree for box children.
@@ -274,10 +273,11 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, tags, part_conta
                 elif isinstance(child, boxes.TextBox):
                     # Add marked element from the stream.
                     kid = tags.pop(child)
+                    assert kid['mcid'] not in nums
                     if tag == 'Link':
+                        # Associate MCID directly with link reference.
                         element['K'].append(kid['mcid'])
-                        assert kid['mcid'] not in nums
-                        nums[kid['mcid']] = element.reference # Associate MCID directly with link reference
+                        nums[kid['mcid']] = element.reference
                     else:
                         kid_element = pydyf.Dictionary({
                             'Type': '/StructElem',
@@ -288,7 +288,6 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, tags, part_conta
                         })
                         pdf.add_object(kid_element)
                         element['K'].append(kid_element.reference)
-                        assert kid['mcid'] not in nums
                         nums[kid['mcid']] = kid_element.reference
                 else:
                     # Recursively build tree for child.
