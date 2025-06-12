@@ -30,16 +30,15 @@ def add_tags(pdf, document, page_streams):
     structure_root['K'] = pydyf.Array([structure_document.reference])
     pdf.catalog['StructTreeRoot'] = structure_root.reference
 
-    # Content mapping
+    # Map content.
     content_mapping['Nums'] = pydyf.Array()
     links = []
     part_container = {'part': None}
-
     for page_number, (page, stream) in enumerate(zip(document.pages, page_streams)):
         tags = stream._tags
         page_box = page._page_box
 
-        # Prepare array for this page’s MCID-to-StructElem mapping
+        # Prepare array for this page’s MCID-to-StructElem mapping.
         content_mapping['Nums'].append(page_number)
         content_mapping['Nums'].append(pydyf.Array())
         page_nums = {}
@@ -54,19 +53,18 @@ def add_tags(pdf, document, page_streams):
                 )
                 if element is not None:
                     structure_document['K'].append(element.reference)
-
-        # Flatten page-local nums into global mapping
+        # Flatten page-local nums into global mapping.
         sorted_refs = [ref for _, ref in sorted(page_nums.items())]
         content_mapping['Nums'][-1].extend(sorted_refs)
 
-    # Add annotations for links
+    # Add annotations for links.
     for i, (link_objref, annotation) in enumerate(links, start=len(document.pages)):
         content_mapping['Nums'].append(i)
         content_mapping['Nums'].append(link_objref)
         annotation['StructParent'] = i
         annotation['F'] = 2 ** (2 - 1)
 
-    # Add required metadata
+    # Add required metadata.
     pdf.catalog['ViewerPreferences'] = pydyf.Dictionary({'DisplayDocTitle': 'true'})
     pdf.catalog['MarkInfo'] = pydyf.Dictionary({'Marked': 'true'})
     if 'Lang' not in pdf.catalog:
@@ -171,7 +169,7 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, tags, part_conta
         else:
             element = part_container['part']
 
-        # Process child in an unique Part
+        # Process child in an unique Part.
         for child in box.children:
             children = child.children if isinstance(child, boxes.LineBox) else [child]
             for grandchild in children:
@@ -290,7 +288,7 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, tags, part_conta
                     child_element = _build_box_tree(
                         child, child_parent, pdf, page_number, nums, links, tags, part_container)
 
-                    # Check if it is already been referenced before
+                    # Check if it is already been referenced before.
                     if child_element is not None:
                         child_parent['K'].append(child_element.reference)
 
