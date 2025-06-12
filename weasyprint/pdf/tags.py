@@ -237,8 +237,15 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, tags, part_conta
             source = box.element.attrib.get('src', 'unknown')
             LOGGER.error(f'Image "{source}" has no required alt description')
     elif tag == 'Table':
-        # Ignore table wrapper, map actual table.
-        box, = box.children
+        actual_table_content_box = None
+        for child_box in box.children:
+            # Check if this child is the actual table content which will contain rows, headers, etc.
+            if _get_pdf_tag(child_box) not in ('Caption', 'NonStruct', 'NonSemantic'):
+                actual_table_content_box = child_box
+                break # Found the core table content box.
+
+        if actual_table_content_box:
+            pass
     elif tag == 'TH':
         # Set identifier for table headers to reference them in cells.
         element['ID'] = pydyf.String(id(box))
