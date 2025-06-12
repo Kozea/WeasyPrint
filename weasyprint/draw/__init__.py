@@ -309,7 +309,8 @@ def draw_background_image(stream, layer, image_rendering):
 
     with stream.artifact(), stream.stacked():
         layer.image.draw(group, image_width, image_height, image_rendering)
-        pattern.draw_x_object(group.id)
+        with pattern.artifact():
+            pattern.draw_x_object(group.id)
         stream.set_color_space('Pattern')
         stream.set_color_special(pattern.id)
         if layer.unbounded:
