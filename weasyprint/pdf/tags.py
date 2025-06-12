@@ -43,15 +43,14 @@ def add_tags(pdf, document, page_streams):
         content_mapping['Nums'].append(pydyf.Array())
         page_nums = {}
 
-        # Descend directly into real children (skip PageBox itself)
-        for child in page_box.children:
-            children = child.children if isinstance(child, boxes.LineBox) else [child]
-            for real_child in children:
-                elements = _build_box_tree(
-                    real_child, structure_document, pdf, page_number, page_nums, links,
-                    tags, part_container)
-                for element in elements:
-                    structure_document['K'].append(element.reference)
+        # Map page box content.
+        elements = _build_box_tree(
+            page_box, structure_document, pdf, page_number, page_nums, links, tags,
+            part_container)
+        for element in elements:
+            structure_document['K'].append(element.reference)
+        assert not tags
+
         # Flatten page-local nums into global mapping.
         sorted_refs = [ref for _, ref in sorted(page_nums.items())]
         content_mapping['Nums'][-1].extend(sorted_refs)
@@ -125,33 +124,19 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, tags, part_conta
     element_tag = None if box.element is None else box.element_tag
     tag = _get_pdf_tag(element_tag)
 
-    # Avoid generate Html and Body as a semantic node. Children required
-    # to be processed.
-    if element_tag in ('html', 'body') or isinstance(box, boxes.MarginBox):
+    if element_tag in ('html', 'body') or isinstance(box, boxes.PageBox):
+        # Avoid generate page, html and body boxes as a semantic node, yield children.
         if isinstance(box, boxes.ParentBox):
             for child in box.children:
-                children = child.children if isinstance(child, boxes.LineBox) else [child]
-                for child in children:
-                    if isinstance(child, boxes.MarginBox):
-                        tuple(_build_box_tree(child, parent, pdf, page_number, nums, links, tags, part_container))
-                    elif isinstance(child, boxes.TextBox):
-                        kid = tags.pop(child)
-                        kid_element = pydyf.Dictionary({
-                            'Type': '/StructElem',
-                            'S': f'/{kid["tag"]}',
-                            'K': pydyf.Array([kid['mcid']]),
-                            'Pg': pdf.page_references[page_number],
-                            'P': parent.reference,
-                        })
-                        pdf.add_object(kid_element)
-                        parent['K'].append(kid_element.reference)
-                        nums[kid['mcid']] = kid_element.reference
-                    else:
-                        child_elements = _build_box_tree(
-                            child, parent, pdf, page_number, nums, links, tags, part_container)
-                        for child_element in child_elements:
-                            parent['K'].append(child_element.reference)
-        return None
+                yield from _build_box_tree(child, parent, pdf, page_number, nums, links, tags, part_container)
+            return
+    elif isinstance(box, boxes.MarginBox):
+        # Build tree for margin boxes but don’t link it to main tree. It ensures that
+        # marked content is mapped in document and removed from list. It could be
+        # included in tree as Artifact, but that’s only allowed in PDF 2.0.
+        for child in box.children:
+            tuple(_build_box_tree(child, parent, pdf, page_number, nums, links, tags, part_container))
+        return
 
     if tag == 'Part':
         if part_container['part'] is None:
@@ -253,12 +238,7 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, tags, part_conta
         for child in box.children:
             children = child.children if isinstance(child, boxes.LineBox) else [child]
             for child in children:
-                if isinstance(child, boxes.MarginBox):
-                    # Build tree but don’t link it to main tree. It ensures that marked
-                    # content is mapped in document and removed from list. It could be
-                    # included in tree as Artifact, but that’s only allowed in PDF 2.0.
-                    tuple(_build_box_tree(child, element, pdf, page_number, nums, links, tags, part_container))
-                elif isinstance(child, boxes.TextBox):
+                if isinstance(child, boxes.TextBox):
                     # Add marked element from the stream.
                     kid = tags.pop(child)
                     assert kid['mcid'] not in nums
