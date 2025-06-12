@@ -194,7 +194,6 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, tags, part_conta
 
         return None
 
-
     if tag == 'LI':
         if parent['S'] == '/LI':
             # Anonymous list element, store as list item body.
@@ -237,15 +236,11 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, tags, part_conta
             source = box.element.attrib.get('src', 'unknown')
             LOGGER.error(f'Image "{source}" has no required alt description')
     elif tag == 'Table':
-        actual_table_content_box = None
-        for child_box in box.children:
-            # Check if this child is the actual table content which will contain rows, headers, etc.
-            if _get_pdf_tag(child_box) not in ('Caption', 'NonStruct', 'NonSemantic'):
-                actual_table_content_box = child_box
-                break # Found the core table content box.
-
-        if actual_table_content_box:
-            pass
+        # Use wrapped table as tagged box, and put captions in it.
+        wrapper, table = box, box.get_wrapped_table()
+        box = table.copy_with_children([])
+        for child in wrapper.children:
+            box.children.extend(child.children if child is table else [child])
     elif tag == 'TH':
         # Set identifier for table headers to reference them in cells.
         element['ID'] = pydyf.String(id(box))
