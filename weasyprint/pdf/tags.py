@@ -125,7 +125,7 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, tags):
     # Special case for html, body, page boxes and margin boxes.
     if element_tag in ('html', 'body') or isinstance(box, boxes.PageBox):
         # Avoid generate page, html and body boxes as a semantic node, yield children.
-        if isinstance(box, boxes.ParentBox):
+        if isinstance(box, boxes.ParentBox) and not isinstance(box, boxes.LineBox):
             for child in box.children:
                 yield from _build_box_tree(
                     child, parent, pdf, page_number, nums, links, tags)
