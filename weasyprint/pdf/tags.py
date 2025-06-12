@@ -74,26 +74,15 @@ def add_tags(pdf, document, page_streams):
         pdf.catalog['Lang'] = pydyf.String()
 
 
-def _get_pdf_tag(box):
-    """Get PDF tag corresponding to box."""
-
-    # Margin boxes should not be included as semantic nodes
-    if isinstance(box, boxes.MarginBox):
-        return 'NonSemantic'
-
-    if box.element is None:
+def _get_pdf_tag(tag):
+    """Get PDF tag corresponding to HTML tag."""
+    if tag is None:
         return 'NonStruct'
-
-    tag = box.element_tag
-    if tag == 'div':
+    elif tag == 'div':
         return 'Div'
     elif tag.split(':')[0] == 'a':
         # Links and link pseudo elements create link annotations.
         return 'Link'
-    elif tag == 'body':
-        return 'Body'
-    elif tag == 'html':
-        return 'Html'
     elif tag == 'span':
         return 'Span'
     elif tag == 'main':
@@ -136,12 +125,12 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, tags, part_conta
     if isinstance(box, AbsolutePlaceholder):
         box = box._box
 
-    # Create box element.
-    tag = _get_pdf_tag(box)
+    element_tag = None if box.element is None else box.element_tag
+    tag = _get_pdf_tag(element_tag)
 
     # Avoid generate Html and Body as a semantic node. Children required
     # to be processed.
-    if tag == 'Html' or tag == 'Body' or tag == 'NonSemantic':
+    if element_tag in ('html', 'body') or isinstance(box, boxes.MarginBox):
         if isinstance(box, boxes.ParentBox):
             for child in box.children:
                 children = child.children if isinstance(child, boxes.LineBox) else [child]
@@ -194,6 +183,7 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, tags, part_conta
 
         return None
 
+    # Create box element.
     if tag == 'LI':
         if parent['S'] == '/LI':
             # Anonymous list element, store as list item body.
