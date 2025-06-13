@@ -269,6 +269,14 @@ information.
 .. _an AWS Lambda layer: https://github.com/kotify/cloud-print-utils
 .. _#1003: https://github.com/Kozea/WeasyPrint/issues/1003
 
+Docker
+++++++
+
+Luca Vercelli maintains `Docker images`_.
+
+.. _an AWS Lambda layer: https://github.com/kotify/cloud-print-utils
+.. _Docker images: https://github.com/luca-vercelli/WeasyPrint-docker-images/
+
 
 Troubleshooting
 ~~~~~~~~~~~~~~~
