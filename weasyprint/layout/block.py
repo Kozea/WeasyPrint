@@ -703,7 +703,7 @@ def block_container_layout(context, box, bottom_space, skip_stack,
 
     new_children = []
     next_page = {'break': 'any', 'page': None}
-    broken_out_of_flow = {}
+    broken_out_of_flow = []
 
     last_in_flow_child = None
 
@@ -729,8 +729,9 @@ def block_container_layout(context, box, bottom_space, skip_stack,
                     absolute_boxes, fixed_boxes, adjoining_margins,
                     bottom_space))
             if out_of_flow_resume_at:
-                broken_out_of_flow[new_child] = (
+                context.broken_out_of_flow[new_child] = (
                     child, box, out_of_flow_resume_at)
+                broken_out_of_flow.append(new_child)
             if child.is_outside_marker:
                 new_child.position_x = box.border_box_x()
                 if child.style['direction'] == 'rtl':
@@ -803,10 +804,9 @@ def block_container_layout(context, box, bottom_space, skip_stack,
             not page_is_empty):
         remove_placeholders(
             context, [*new_children, *box.children[skip:]], absolute_boxes, fixed_boxes)
+        for child in broken_out_of_flow:
+            del context.broken_out_of_flow[child]
         return None, None, {'break': 'any', 'page': None}, [], False, max_lines
-
-    for key, value in broken_out_of_flow.items():
-        context.broken_out_of_flow[key] = value
 
     if collapsing_with_children:
         box.position_y += (
@@ -859,7 +859,10 @@ def block_container_layout(context, box, bottom_space, skip_stack,
                 float_box.position_y + float_box.margin_height()
                 for float_box in context.excluded_shapes)
             position_y = max(max_float_position_y, position_y)
-        new_box.height = position_y - new_box.content_box_y()
+        if position_y == new_box.content_box_y() == inf:
+            new_box.height = 0
+        else:
+            new_box.height = position_y - new_box.content_box_y()
 
     if new_box.style['position'] == 'relative':
         # New containing block, resolve the layout of the absolute descendants
