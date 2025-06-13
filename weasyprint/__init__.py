@@ -39,6 +39,8 @@ VERSION = __version__ = '65.1'
 #:     A PDF version number.
 #: :param bool pdf_forms:
 #:     Whether PDF forms have to be included.
+#: :param bool pdf_tags:
+#:     Whether PDF should be tagged for accessibility.
 #: :param bool uncompressed_pdf:
 #:     Whether PDF content should be compressed.
 #: :param bool custom_metadata:
@@ -71,6 +73,7 @@ DEFAULT_OPTIONS = {
     'pdf_variant': None,
     'pdf_version': None,
     'pdf_forms': None,
+    'pdf_tags': False,
     'uncompressed_pdf': False,
     'custom_metadata': False,
     'presentational_hints': False,
