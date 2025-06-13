@@ -622,6 +622,8 @@ def make_page(context, root_box, page_type, resume_at, page_number,
             context.reported_footnotes = reported_footnotes[i:]
             break
 
+    # Display out-of-flow boxes broken on the previous page.
+    # TODO: we shouldn’t separate broken in-flow and out-of-flow layout.
     page_is_empty = True
     adjoining_margins = []
     positioned_boxes = []  # Mixed absolute and fixed
@@ -641,13 +643,33 @@ def make_page(context, root_box, page_type, resume_at, page_number,
                 context, box, containing_block, positioned_boxes, 0,
                 skip_stack)
         out_of_flow_boxes.append(out_of_flow_box)
+        page_is_empty = False
         if out_of_flow_resume_at:
             broken_out_of_flow[out_of_flow_box] = (
                 box, containing_block, out_of_flow_resume_at)
+
+    # Display in-flow content.
+    initial_root_box = root_box
+    initial_resume_at = resume_at
     root_box, resume_at, next_page, _, _, _ = block_level_layout(
         context, root_box, 0, resume_at, initial_containing_block,
         page_is_empty, positioned_boxes, positioned_boxes, adjoining_margins)
-    assert root_box
+    if not root_box:
+        # In-flow page rendering didn’t progress, only out-of-flow did. Render empty box
+        # at skip_stack and force fragmentation to make the root box and its descendants
+        # cover the whole page height.
+        assert not page_is_empty
+        box = parent = initial_root_box = initial_root_box.deepcopy()
+        skip_stack = initial_resume_at
+        while skip_stack and len(skip_stack) == 1:
+            (skip, skip_stack), = skip_stack.items()
+            box, parent = box.children[skip], box
+        parent.children = []
+        parent.force_fragmentation = True
+        root_box, _, _, _, _, _ = block_level_layout(
+            context, initial_root_box, 0, initial_resume_at, initial_containing_block,
+            page_is_empty, positioned_boxes, positioned_boxes, adjoining_margins)
+        resume_at = initial_resume_at
     root_box.children = out_of_flow_boxes + root_box.children
 
     footnote_area = build.create_anonymous_boxes(footnote_area.deepcopy())

@@ -833,3 +833,75 @@ def test_float_split_15(assert_pixels):
           a a
         </div>
         <div>bbbbb bbbbb bbbbb bbbbb bbbbb</div>''')
+
+
+@assert_no_logs
+def test_float_split_clear(assert_pixels):
+    assert_pixels('''
+        BBBB
+        BBBB
+        BBBB
+        BBBB
+        BBBB
+        BBBB
+        BBBB
+        BBBB
+        BBBB
+        BBBB
+        rrrr
+        rrrr
+    ''', '''
+        <style>
+            @page {
+                size: 4px;
+            }
+            body {
+                color: red;
+                font: 2px / 1 weasyprint;
+            }
+            div {
+                color: blue;
+                float: left;
+            }
+            article {
+                clear: left;
+            }
+        </style>
+        <div>bb bb bb bb bb</div>
+        <article>aa</article>''')
+
+
+@assert_no_logs
+def test_float_split_clear_empty(assert_pixels):
+    assert_pixels('''
+        BBBB
+        BBBB
+        BBBB
+        BBBB
+        BBBB
+        BBBB
+        BBBB
+        BBBB
+        BBBB
+        BBBB
+        ____
+        ____
+    ''', '''
+        <style>
+            @page {
+                size: 4px;
+            }
+            body {
+                color: red;
+                font: 2px / 1 weasyprint;
+            }
+            div {
+                color: blue;
+                float: left;
+            }
+            article {
+                clear: left;
+            }
+        </style>
+        <div>bb bb bb bb bb</div>
+        <article></article>''')

@@ -1,5 +1,7 @@
 """Layout for floating boxes."""
 
+from math import inf
+
 from ..formatting_structure import boxes
 from .min_max import handle_min_max_width
 from .percent import resolve_percentages, resolve_position_percentages
@@ -115,9 +117,14 @@ def find_float_position(context, box, containing_block):
 
 def get_clearance(context, box, collapsed_margin=0):
     """Return None if there is no clearance, otherwise the clearance value."""
+    # Box should be after shape that’s broken on this page.
+    for broken_shape in context.broken_out_of_flow:
+        if broken_shape.is_floated():
+            if box.style['clear'] in (broken_shape.style['float'], 'both'):
+                return inf
+    # Hypothetical position is the position of the top border edge
     clearance = None
     hypothetical_position = box.position_y + collapsed_margin
-    # Hypothetical position is the position of the top border edge
     for excluded_shape in context.excluded_shapes:
         if box.style['clear'] in (excluded_shape.style['float'], 'both'):
             y, h = excluded_shape.position_y, excluded_shape.margin_height()
