@@ -176,10 +176,13 @@ def test_important():
     # TODO: ch and ex units don't work with font-face, see computed_values.py.
     # ('1.1ch', 11),
     # ('1.5ex', 12),
+    # ('1.1lh', 13.2),
+    # ('1.1rlh', 17.6),
 ))
 def test_units(value, width):
     document = FakeHTML(base_url=BASE_URL, string='''
-      <body style="font: 10px weasyprint">
+      <html style="font: 16px / 1.5 weasyprint">
+      <body style="font: 10px / 1.2 weasyprint">
       <p style="margin-left: %s"></p>''' % value)
     page, = document.render().pages
     html, = page._page_box.children
