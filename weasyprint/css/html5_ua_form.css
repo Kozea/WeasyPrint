@@ -1,5 +1,5 @@
 /* Default stylesheet for PDF forms */
 
 button, input, select, textarea { appearance: auto }
-select option, select:not([multiple])::before, input:not([type="submit"])::before {visibility: hidden }
+select option, select:not([multiple])::before, input:not([type="submit"])::before { visibility: hidden }
 textarea { text-indent: 10000% } /* Hide text but don’t change color used by PDF form */
