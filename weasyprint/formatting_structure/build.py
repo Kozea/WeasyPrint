@@ -803,9 +803,9 @@ def table_boxes_children(box, children):
     children = [
         child
         for prev_child, child, next_child in zip(
-            [None] + children[:-1],
+            [None, *children[:-1]],
             children,
-            children[1:] + [None]
+            [*children[1:], None]
         )
         if not (
             # Ignore some whitespace: rule 1.4

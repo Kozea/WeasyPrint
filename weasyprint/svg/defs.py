@@ -402,7 +402,7 @@ def spread_radial_gradient(spread, positions, colors, fx, fy, fr, cx, cy, r,
                 average_positions = [position, ratio, ratio, next_position]
                 zero_color = gradient_average_color(
                     average_colors, average_positions)
-                colors = [zero_color] + original_colors[-(i - 1):] + colors
+                colors = [zero_color, *original_colors[-(i - 1):], *colors]
                 new_positions = [
                     position - 1 - full_repeat for position
                     in original_positions[-(i - 1):]]

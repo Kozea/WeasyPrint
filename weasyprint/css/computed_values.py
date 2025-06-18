@@ -484,7 +484,7 @@ def _content_list(style, values):
                 if attr is None:
                     computed_value = None
                 else:
-                    computed_value = (value[0], ((attr,) + value[1][1:]))
+                    computed_value = (value[0], (attr, *value[1][1:]))
             else:
                 computed_value = value
         if computed_value is None:
