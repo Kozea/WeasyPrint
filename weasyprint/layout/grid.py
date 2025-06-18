@@ -1115,7 +1115,7 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         sum(size for size, _ in rows_sizes[skip_row:]) +
         (len(rows_sizes[skip_row:]) - 1) * row_gap)
     row_lines_positions = (
-        rows_positions[skip_row + 1:] + [box.content_box_y() + total_height])
+        [*rows_positions[skip_row + 1:], box.content_box_y() + total_height])
     for i, row_y in enumerate(row_lines_positions, start=skip_row + 1):
         if context.overflows_page(bottom_space, row_y - skip_height):
             if not page_is_empty:

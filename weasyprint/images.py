@@ -726,8 +726,8 @@ class RadialGradient(Gradient):
                         intermediate_color = gradient_average_color(
                             [previous_color, previous_color, color, color],
                             [previous_position, 0, 0, position])
-                        colors = [intermediate_color] + colors[i:]
-                        positions = [0] + positions[i:]
+                        colors = [intermediate_color, *colors[i:]]
+                        positions = [0, *positions[i:]]
                         break
         first, last, positions = normalize_stop_positions(positions)
 
@@ -768,7 +768,7 @@ class RadialGradient(Gradient):
             colors *= repeat
             positions = [
                 i + position for i in range(repeat) for position in positions]
-            points = points[:5] + (points[5] + gradient_length * repeat_after,)
+            points = (*points[:5], points[5] + gradient_length * repeat_after)
 
         if points[2] == 0:
             # Inner circle has 0 radius, no need to repeat inside, return
@@ -778,7 +778,7 @@ class RadialGradient(Gradient):
         repeat_before = points[2] / gradient_length
 
         # Set the inner circle size to 0
-        points = points[:2] + (0,) + points[3:]
+        points = (*points[:2], 0, *points[3:])
 
         # Find how many times the whole gradient can be repeated
         full_repeat = int(repeat_before)
@@ -823,7 +823,7 @@ class RadialGradient(Gradient):
                 average_positions = [position, ratio, ratio, next_position]
                 zero_color = gradient_average_color(
                     average_colors, average_positions)
-                colors = [zero_color] + original_colors[-(i - 1):] + colors
+                colors = [zero_color, *original_colors[-(i - 1):], *colors]
                 new_positions = [
                     position - 1 - full_repeat for position
                     in original_positions[-(i - 1):]]
