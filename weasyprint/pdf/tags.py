@@ -58,7 +58,6 @@ def add_tags(pdf, document, page_streams):
         content_mapping['Nums'].append(i)
         content_mapping['Nums'].append(link_reference)
         annotation['StructParent'] = i
-        annotation['F'] = 2 ** (2 - 1)
 
     # Add required metadata.
     pdf.catalog['ViewerPreferences'] = pydyf.Dictionary({'DisplayDocTitle': 'true'})
@@ -205,7 +204,8 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, tags):
             'Pg': pdf.page_references[page_number],
         })
         pdf.add_object(object_reference)
-        links.append((object_reference.reference, annotation))
+        links.append((element.reference, annotation))
+        element['K'].append(object_reference.reference)
 
     if isinstance(box, boxes.ParentBox):
         # Build tree for box children.
