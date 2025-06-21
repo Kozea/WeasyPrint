@@ -474,7 +474,8 @@ def test_pdfa(version, pdf_version):
     (4, '2.0'),
 ))
 def test_pdfa_compressed(version, pdf_version):
-    _run(f'--pdf-variant=pdf/a-{version}b - -', b'test')
+    stdout = _run(f'--pdf-variant=pdf/a-{version}b - -', b'test')
+    assert f'PDF-{pdf_version}'.encode() in stdout
 
 
 def test_pdfa1b_cidset():
@@ -483,13 +484,29 @@ def test_pdfa1b_cidset():
     assert b'CIDSet' in stdout
 
 
-def test_pdfua():
-    stdout = _run('--pdf-variant=pdf/ua-1 --uncompressed-pdf - -', b'test')
-    assert b'part="1"' in stdout
+@pytest.mark.parametrize('version, pdf_version', (
+    (1, '1.7'),
+    (2, '2.0'),
+))
+def test_pdfua(version, pdf_version):
+    stdout = _run(f'--pdf-variant=pdf/ua-{version} --uncompressed-pdf - -', b'test')
+    assert f'PDF-{pdf_version}'.encode() in stdout
+    assert f'part="{version}"'.encode() in stdout
 
 
-def test_pdfua_compressed():
-    _run('--pdf-variant=pdf/ua-1 - -', b'test')
+@pytest.mark.parametrize('version, pdf_version', (
+    (1, '1.7'),
+    (2, '2.0'),
+))
+def test_pdfua_compressed(version, pdf_version):
+    stdout = _run(f'--pdf-variant=pdf/ua-{version} - -', b'test')
+    assert f'PDF-{pdf_version}'.encode() in stdout
+
+
+def test_pdf_tags():
+    stdout = _run('--pdf-tags --uncompressed-pdf - -', b'<article>test')
+    assert b'/StructTreeRoot' in stdout
+    assert b'/Art' in stdout
 
 
 def test_pdf_identifier():
