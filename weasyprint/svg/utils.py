@@ -157,7 +157,6 @@ def transform(transform_string, transform_origin, font_size, normalized_diagonal
     size_strings = normalize(transform_origin).split()
     if len(size_strings) == 2:
         origin_x, origin_y = size(size_strings[0]), size(size_strings[1])
-    print(origin_x, origin_y)
     matrix = Matrix(e=origin_x, f=origin_y)
 
     transformations = re.findall(r'(\w+) ?\( ?(.*?) ?\)', normalize(transform_string))
