@@ -211,14 +211,14 @@ def test_footnote_max_height_1(assert_pixels):
         RRRRKKKK_
         RRRR_____
         RRRR_____
-        _BBBBBB__
-        _BBBBBB__
+        _GGGGBB__
+        _GGGGBB__
         _________
         _________
         _________
         _________
-        _BBBBBB__
-        _BBBBBB__
+        _GGGGBB__
+        _GGGGBB__
     ''', '''
     <style>
         @page {
@@ -239,6 +239,7 @@ def test_footnote_max_height_1(assert_pixels):
             float: footnote;
             color: blue;
             &::footnote-call { color: black }
+            &::footnote-marker { color: lime }
         }
     </style>
     <div>ab<div class="footnote">c</div><div class="footnote">d</div></div>

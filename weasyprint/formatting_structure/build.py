@@ -251,7 +251,7 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
         marker = make_box(
             f'{element.tag}::footnote-marker', marker_style, [], element)
         marker.children = content_to_boxes(
-            marker_style, box, quote_depth, counter_values, get_image_from_uri,
+            marker_style, marker, quote_depth, counter_values, get_image_from_uri,
             target_collector, counter_style)
         box.children.insert(0, marker)
 
