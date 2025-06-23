@@ -436,7 +436,7 @@ def test_footnote_area_after_call(css, tail):
         <p>c<br>d<span>x</span>%s</p>''' % (css, tail))
 
     footnote_call = tree_position(
-        pages, lambda box: box.element_tag == 'p::footnote-call')
+        pages, lambda box: box.element_tag == 'span::footnote-call')
     footnote_area = tree_position(
         pages, lambda box: type(box).__name__ == 'FootnoteAreaBox')
     assert footnote_call < footnote_area

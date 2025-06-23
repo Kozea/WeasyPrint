@@ -195,9 +195,10 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
             footnote = child_boxes[0]
             footnote.style['float'] = 'none'
             footnotes.append(footnote)
-            call_style = style_for(element, 'footnote-call')
+            call_style = style_for(footnote.element, 'footnote-call')
             footnote_call = make_box(
-                f'{element.tag}::footnote-call', call_style, [], element)
+                f'{footnote.element.tag}::footnote-call', call_style, [],
+                footnote.element)
             footnote_call.children = content_to_boxes(
                 call_style, footnote_call, quote_depth, counter_values,
                 get_image_from_uri, target_collector, counter_style)
