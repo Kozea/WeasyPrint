@@ -1054,3 +1054,39 @@ def test_columns_regression_7():
     column1, column2 = div.children
     assert column1.position_y == 0
     assert column2.position_y == 0
+
+@assert_no_logs
+def test_issue_1856():
+    page, = render_pages('''
+      <style>
+          @page {
+              size: 100mm 100mm;
+              margin: 0mm 0mm 0mm 0mm;
+          }
+          p {
+              margin-top: 30mm;
+              margin-bottom: 30mm;
+              line-height: 2mm;
+              font-size: 2mm;
+          }
+      </style>
+      <div style='columns: 2'>
+          <p><img src='https://placehold.co/150x20'/>
+              <img src='https://placehold.co/150x20'/>
+              <img src='https://placehold.co/150x20'/>
+              <img src='https://placehold.co/150x20'/>
+              <img src='https://placehold.co/150x20'/>
+              <img src='https://placehold.co/150x20'/>
+              <img src='https://placehold.co/150x20'/>
+              <img src='https://placehold.co/150x20'/>
+              <img src='https://placehold.co/150x20'/>
+              <img src='https://placehold.co/150x20'/>
+          </p>
+      </div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    columns = div.children
+    assert len(columns) == 2
+
