@@ -295,14 +295,31 @@ def get_image_from_uri(cache, url_fetcher, options, url, forced_mime_type=None,
     if url in cache:
         return cache[url]
 
-    try:
-        with fetch(url_fetcher, url) as result:
-            if 'string' in result:
-                string = result['string']
-            else:
-                string = result['file_obj'].read()
-            mime_type = forced_mime_type or result['mime_type']
+    # Check if raw data is cached (for shared cache between runs)
+    raw_data_key = f"raw_data:{url}"
+    result_path = None
+    if raw_data_key in cache:
+        string = cache[raw_data_key]
+        # Try to get cached mime_type, fallback to forced or guess from URL
+        mime_type_key = f"mime_type:{url}"
+        mime_type = forced_mime_type or cache.get(mime_type_key, None)
+    else:
+        try:
+            with fetch(url_fetcher, url) as result:
+                if 'string' in result:
+                    string = result['string']
+                else:
+                    string = result['file_obj'].read()
+                mime_type = forced_mime_type or result['mime_type']
+                result_path = result.get('path')
+            
+            # Cache the raw data and mime_type for future use
+            cache[raw_data_key] = string
+            cache[f"mime_type:{url}"] = mime_type
+        except Exception as fetch_exception:
+            raise fetch_exception
 
+    try:
         image = None
         svg_exceptions = []
         # Try to rely on given mimetype for SVG
@@ -330,9 +347,8 @@ def get_image_from_uri(cache, url_fetcher, options, url, forced_mime_type=None,
             else:
                 # Store image id to enable cache in Stream.add_image
                 image_id = md5(url.encode(), usedforsecurity=False).hexdigest()
-                path = result.get('path')
                 image = RasterImage(
-                    pillow_image, image_id, string, path, cache, orientation, options)
+                    pillow_image, image_id, string, result_path, cache, orientation, options)
 
     except (URLFetchingError, ImageLoadingError) as exception:
         LOGGER.error('Failed to load image at %r: %s', url, exception)

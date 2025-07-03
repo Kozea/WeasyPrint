@@ -84,6 +84,7 @@ DEFAULT_OPTIONS = {
     'full_fonts': False,
     'hinting': False,
     'cache': None,
+    'shared_cache': False,
 }
 
 __all__ = [

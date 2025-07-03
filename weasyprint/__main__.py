@@ -120,6 +120,9 @@ PARSER.add_argument(
     help='store cache on disk instead of memory, folder is '
     'created if needed and cleaned after the PDF is generated')
 PARSER.add_argument(
+    '--shared-cache', action='store_true',
+    help='keep the cache folder after PDF generation for sharing between multiple runs (only works with --cache-folder)')
+PARSER.add_argument(
     '-D', '--dpi', type=int,
     help='set maximum resolution of images embedded in the PDF')
 PARSER.add_argument(
@@ -172,6 +175,7 @@ def main(argv=None, stdout=None, stdin=None, HTML=HTML):  # noqa: N803
 
     options = {
         key: value for key, value in vars(args).items() if key in DEFAULT_OPTIONS}
+    options['shared_cache'] = args.shared_cache
 
     # Default to logging to stderr.
     if args.debug:
