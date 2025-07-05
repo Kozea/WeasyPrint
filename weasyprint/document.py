@@ -153,11 +153,12 @@ class DiskCache:
 
     """
 
-    def __init__(self, folder):
+    def __init__(self, folder, shared_cache=False):
         self._path = Path(folder)
         self._path.mkdir(parents=True, exist_ok=True)
         self._memory_cache = {}
         self._disk_paths = set()
+        self._shared_cache = shared_cache
 
     def _path_from_key(self, key):
         digest = md5(key.encode(), usedforsecurity=False).hexdigest()
@@ -172,8 +173,15 @@ class DiskCache:
     def __setitem__(self, key, value):
         if isinstance(value, bytes):
             path = self._path_from_key(key)
-            self._disk_paths.add(path)
-            path.write_bytes(value)
+            file_existed = path.exists()
+            
+            if not file_existed:
+                # Only write if file doesn't exist
+                path.write_bytes(value)
+            
+            # Track for cleanup: add to _disk_paths if we created it OR if not using shared cache
+            if not file_existed or not self._shared_cache:
+                self._disk_paths.add(path)
         else:
             self._memory_cache[key] = value
 
@@ -181,15 +189,22 @@ class DiskCache:
         return (
             key in self._memory_cache or
             self._path_from_key(key).exists())
+    
+    def get(self, key, default=None):
+        try:
+            return self[key]
+        except (KeyError, FileNotFoundError):
+            return default
 
     def __del__(self):
-        try:
-            for path in self._disk_paths:
-                path.unlink(missing_ok=True)
-            self._path.rmdir()
-        except Exception:
-            # Silently ignore errors while clearing cache
-            pass
+        if not self._shared_cache:
+            try:
+                for path in self._disk_paths:
+                    path.unlink(missing_ok=True)
+                self._path.rmdir()
+            except Exception:
+                # Silently ignore errors while clearing cache
+                pass
 
 
 class Document:
@@ -212,7 +227,8 @@ class Document:
         if cache is None:
             cache = {}
         elif not isinstance(cache, (dict, DiskCache)):
-            cache = DiskCache(cache)
+            shared_cache = options.get('shared_cache', False)
+            cache = DiskCache(cache, shared_cache=shared_cache)
         for css in options['stylesheets'] or []:
             if not hasattr(css, 'matcher'):
                 css = CSS(
