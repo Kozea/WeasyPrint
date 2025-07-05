@@ -419,8 +419,7 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                                 context, new_table_children, absolute_boxes,
                                 fixed_boxes)
                             return None, None, next_page, position_y
-                        else:
-                            new_table_children, resume_at = earlier_page_break
+                        new_table_children, resume_at = earlier_page_break
                         break
                     resume_at = {index_group: None}
                 else:
