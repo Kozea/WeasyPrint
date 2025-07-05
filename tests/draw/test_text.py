@@ -1164,6 +1164,8 @@ def test_font_variant_caps_petite(assert_pixels):
     ''' % SANS_FONTS)
 
 
+# Bug in Pango: https://gitlab.gnome.org/GNOME/pango/-/merge_requests/875
+@pytest.mark.xfail
 def test_font_variant_caps_all_petite(assert_pixels):
     assert_pixels('''
         ________
