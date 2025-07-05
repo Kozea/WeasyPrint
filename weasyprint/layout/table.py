@@ -418,8 +418,7 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                             remove_placeholders(
                                 context, new_table_children, absolute_boxes,
                                 fixed_boxes)
-                            new_table_children.clear()
-                            resume_at = {0: None}
+                            return None, None, next_page, position_y
                         else:
                             new_table_children, resume_at = earlier_page_break
                         break

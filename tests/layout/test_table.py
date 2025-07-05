@@ -2845,6 +2845,74 @@ def test_table_page_break_avoid(html, rows):
 
 
 @assert_no_logs
+def test_table_page_break_avoid_before_table():
+    page1, page2 = render_pages('''
+      <style>
+        @page { size: 100px }
+        h1 { height: 30px }
+        td, p { font: 20px / 1 weasyprint }
+        tr { break-after: avoid }
+        table { table-layout: fixed; width: 100%; break-before: avoid }
+      </style>
+      <h1>Dummy title</h1>
+      <p>paragraph</p>
+      <table>
+        <tbody>
+          <tr><td>row 1</td></tr>
+        </tbody>
+        <tbody>
+          <tr><td>row 2</td></tr>
+          <tr><td>row 3</td></tr>
+        </tbody>
+      </table>
+     ''')
+    html, = page1.children
+    body, = html.children
+    h1, = body.children
+    assert h1.element_tag == 'h1'
+
+    html, = page2.children
+    body, = html.children
+    p, table_wrapper = body.children
+    assert p.element_tag == 'p'
+    assert table_wrapper.element_tag == 'table'
+
+
+@assert_no_logs
+def test_table_page_break_avoid_before_tbody():
+    page1, page2 = render_pages('''
+      <style>
+        @page { size: 100px }
+        h1 { height: 30px }
+        td, p { height: 20px }
+        tr { break-after: avoid }
+        tbody { break-before: avoid }
+      </style>
+      <h1>Dummy title</h1>
+      <p>paragraph</p>
+      <table>
+        <tbody>
+          <tr><td>row 1</td></tr>
+        </tbody>
+        <tbody>
+          <tr><td>row 2</td></tr>
+          <tr><td>row 3</td></tr>
+        </tbody>
+      </table>
+     ''')
+    html, = page1.children
+    body, = html.children
+    h1, = body.children
+    assert h1.element_tag == 'h1'
+
+    html, = page2.children
+    body, = html.children
+    p, table_wrapper = body.children
+    assert p.element_tag == 'p'
+    assert table_wrapper.element_tag == 'table'
+
+
+@assert_no_logs
 @pytest.mark.parametrize('vertical_align, table_position_y', (
     ('top', 8),
     ('bottom', 8),
