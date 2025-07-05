@@ -259,9 +259,10 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
                     footnote_area_heights.append(last_footnotes_height)
                     continue
 
+                available_height = max_height * (count - i)
                 everything_fits = (
                     not column_skip_stack and
-                    max(consumed_heights) <= max_height)
+                    max(consumed_heights) <= available_height)
                 if everything_fits:
                     # Everything fits, start expanding columns at the average
                     # of the column heights
