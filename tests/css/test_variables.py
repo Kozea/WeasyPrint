@@ -150,7 +150,7 @@ def test_variable_self():
 def test_variable_loop():
     page, = render_pages('''
       <style>
-        html { --var1: var(--var2); --var2: var(--var1) }
+        html { --var1: var(--var2); --var2: var(--var1); padding: var(--var1) }
       </style>
     ''')
 

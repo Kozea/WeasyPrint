@@ -573,28 +573,36 @@ def declaration_precedence(origin, importance):
         return 5
 
 
-def resolve_var(computed, token, parent_style):
+def resolve_var(computed, token, parent_style, known_variables=None):
     """Return token with resolved CSS variables."""
     if not check_var_function(token):
         return
+
+    if known_variables is None:
+        known_variables = set()
 
     if token.lower_name != 'var':
         arguments = []
         for i, argument in enumerate(token.arguments):
             if argument.type == 'function':
-                arguments.extend(resolve_var(computed, argument, parent_style))
+                arguments.extend(resolve_var(
+                    computed, argument, parent_style, known_variables))
             else:
                 arguments.append(argument)
         token = tinycss2.ast.FunctionBlock(
             token.source_line, token.source_column, token.name, arguments)
-        return resolve_var(computed, token, parent_style) or (token,)
+        return resolve_var(computed, token, parent_style, known_variables) or (token,)
 
     args = parse_function(token)[1]
     variable_name = args.pop(0).value.replace('-', '_')  # first arg is name
+    if variable_name in known_variables:
+        return []  # endless recursion, returned value is nothing
+    else:
+        known_variables.add(variable_name)
     default = args  # next args are default value
     computed_value = []
     for value in (computed[variable_name] or default):
-        resolved = resolve_var(computed, value, parent_style)
+        resolved = resolve_var(computed, value, parent_style, known_variables)
         computed_value.extend((value,) if resolved is None else resolved)
     return computed_value
 
