@@ -835,6 +835,30 @@ def test_columns_padding():
 
 
 @assert_no_logs
+def test_columns_bottom_margin():
+    page, = render_pages('''
+      <style>
+        div { columns: 2; column-gap: 1px }
+        body { margin: 0; font: 2px / 1 weasyprint }
+        p { margin-bottom: 1em }
+        @page { margin: 0; size: 5px 7px; font-size: 1px }
+      </style>
+      <div><p>a b c</p></div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    column1, column2 = div.children
+    p, = column1.children
+    line1, line2 = p.children
+    assert line1.children[0].text == 'a'
+    assert line2.children[0].text == 'b'
+    p, = column2.children
+    line1, = p.children
+    assert line1.children[0].text == 'c'
+
+
+@assert_no_logs
 def test_columns_relative():
     page, = render_pages('''
       <style>

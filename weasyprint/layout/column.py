@@ -190,6 +190,7 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
                         in_flow_children[-1].margin_height() +
                         in_flow_children[-1].position_y - current_position_y)
                     empty_space = height - consumed_height
+                    consumed_height -= in_flow_children[-1].margin_bottom
 
                     # Get the minimum size needed to render the next box
                     if column_skip_stack:
