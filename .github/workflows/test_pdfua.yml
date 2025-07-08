@@ -45,16 +45,18 @@ jobs:
           image: verapdf/cli:latest
           # We need to define the uid and gid explicitly, else we can’t write from inside the docker.
           # It’d be better to get them automatically rather than using hardcoded ids.
+          # See https://github.com/orgs/community/discussions/44243
           options: -u 1001:118 -v ${{ github.workspace }}:/workspace
           run: |
-            /opt/verapdf/verapdf -f ua1 --success --format html /workspace/${{env.PDF_FOLDER}}/invoice.pdf > /workspace/${{env.VERA_FOLDER}}/invoice-verapdf.html
-            /opt/verapdf/verapdf -f ua1 --success --format html /workspace/${{env.PDF_FOLDER}}/book-classical.pdf > /workspace/${{env.VERA_FOLDER}}/book-classical-verapdf.html
-            /opt/verapdf/verapdf -f ua1 --success --format html /workspace/${{env.PDF_FOLDER}}/book-fancy.pdf > /workspace/${{env.VERA_FOLDER}}/book-fancy-verapdf.html
-            /opt/verapdf/verapdf -f ua1 --success --format html /workspace/${{env.PDF_FOLDER}}/letter.pdf > /workspace/${{env.VERA_FOLDER}}/letter-verapdf.html
-            /opt/verapdf/verapdf -f ua1 --success --format html /workspace/${{env.PDF_FOLDER}}/poster.pdf > /workspace/${{env.VERA_FOLDER}}/poster-verapdf.html
-            /opt/verapdf/verapdf -f ua1 --success --format html /workspace/${{env.PDF_FOLDER}}/flyer.pdf > /workspace/${{env.VERA_FOLDER}}/flyer-verapdf.html
-            /opt/verapdf/verapdf -f ua1 --success --format html /workspace/${{env.PDF_FOLDER}}/report.pdf > /workspace/${{env.VERA_FOLDER}}/report-verapdf.html
-            /opt/verapdf/verapdf -f ua1 --success --format html /workspace/${{env.PDF_FOLDER}}/ticket.pdf > /workspace/${{env.VERA_FOLDER}}/ticket-verapdf.html
+            /opt/verapdf/verapdf -f ua1 --format html /workspace/${{env.PDF_FOLDER}}/invoice.pdf > /workspace/${{env.VERA_FOLDER}}/invoice-verapdf.html
+            /opt/verapdf/verapdf -f ua1 --format html /workspace/${{env.PDF_FOLDER}}/book-classical.pdf > /workspace/${{env.VERA_FOLDER}}/book-classical-verapdf.html
+            /opt/verapdf/verapdf -f ua1 --format html /workspace/${{env.PDF_FOLDER}}/book-fancy.pdf > /workspace/${{env.VERA_FOLDER}}/book-fancy-verapdf.html
+            /opt/verapdf/verapdf -f ua1 --format html /workspace/${{env.PDF_FOLDER}}/letter.pdf > /workspace/${{env.VERA_FOLDER}}/letter-verapdf.html
+            /opt/verapdf/verapdf -f ua1 --format html /workspace/${{env.PDF_FOLDER}}/poster.pdf > /workspace/${{env.VERA_FOLDER}}/poster-verapdf.html
+            /opt/verapdf/verapdf -f ua1 --format html /workspace/${{env.PDF_FOLDER}}/flyer.pdf > /workspace/${{env.VERA_FOLDER}}/flyer-verapdf.html
+            /opt/verapdf/verapdf -f ua1 --format html /workspace/${{env.PDF_FOLDER}}/report.pdf > /workspace/${{env.VERA_FOLDER}}/report-verapdf.html
+            /opt/verapdf/verapdf -f ua1 --format html /workspace/${{env.PDF_FOLDER}}/ticket.pdf > /workspace/${{env.VERA_FOLDER}}/ticket-verapdf.html
+            /opt/verapdf/verapdf -f ua1 --format html /workspace/${{env.PDF_FOLDER}}/ > /workspace/${{env.VERA_FOLDER}}/summary.html
       - name: Archive generated PDFs
         if: ${{ always() }}
         uses: actions/upload-artifact@v4
