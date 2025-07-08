@@ -35,7 +35,7 @@ jobs:
           image: verapdf/cli:latest
           options: -v ${{ github.workspace }}:/workspace
           run: |
-            ls -lah /worspace
+            ls -lah /workspace
             ./verapdf -v -f ua1 --success --progress --format html /github/workspace/${{env.REPORTS_FOLDER}}/invoice.pdf > /workspace/${{env.REPORTS_FOLDER}}/invoice-verapdf.html
       - name: Archive generated PDFs
         uses: actions/upload-artifact@v4
