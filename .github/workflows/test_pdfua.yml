@@ -28,7 +28,7 @@ jobs:
         uses: addnab/docker-run-action@v3
         with:
           image: verapdf/cli:latest
-          options: -v ${{ github.workspace }}:/workspace
+          options: -u $(id -u):$(id -g) -v ${{ github.workspace }}:/workspace
           run: |
             ls -lah /workspace
             ./verapdf -v -f ua1 --success --progress --format html /workspace/invoice.pdf > /workspace/invoice-verapdf.html
