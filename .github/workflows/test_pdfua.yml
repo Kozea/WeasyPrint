@@ -1,9 +1,6 @@
 name: WeasyPrint's PDF/UA tests
 on: [push, pull_request]
 
-env:
-  REPORTS_FOLDER: 'report'
-
 jobs:
   pdf-ua:
     name: Generate samples
@@ -23,7 +20,7 @@ jobs:
         run: mkdir ${{env.REPORTS_FOLDER}}
       - name: Generate samples
         run: |
-          python -m weasyprint --pdf-variant pdf/ua-1 weasyprint-samples/invoice/invoice.html ${{env.REPORTS_FOLDER}}/invoice.pdf
+          python -m weasyprint --pdf-variant pdf/ua-1 weasyprint-samples/invoice/invoice.html invoice.pdf
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
@@ -36,10 +33,4 @@ jobs:
           options: -v ${{ github.workspace }}:/workspace
           run: |
             ls -lah /workspace
-            ./verapdf -v -f ua1 --success --progress --format html /github/workspace/${{env.REPORTS_FOLDER}}/invoice.pdf > /workspace/${{env.REPORTS_FOLDER}}/invoice-verapdf.html
-      - name: Archive generated PDFs
-        uses: actions/upload-artifact@v4
-        with:
-          name: generated-documents
-          path: ${{env.REPORTS_FOLDER}}
-          retention-days: 1
+            ./verapdf -v -f ua1 --success --progress --format html /workspace/invoice.pdf > /workspace/invoice-verapdf.html
