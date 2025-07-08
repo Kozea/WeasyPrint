@@ -30,5 +30,4 @@ jobs:
           image: verapdf/cli:latest
           options: -u 1001:118 -v ${{ github.workspace }}:/workspace
           run: |
-            ls -lah /workspace
-            ./verapdf -v -f ua1 --success --progress --format html /workspace/invoice.pdf > /workspace/invoice-verapdf.html
+            /opt/verapdf/verapdf -v -f ua1 --success --progress --format html /workspace/invoice.pdf > /workspace/invoice-verapdf.html
