@@ -7,7 +7,7 @@ env:
 
 jobs:
   pdf-ua:
-    name: Generate samples
+    name: Test PDF/UA samples
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -27,6 +27,13 @@ jobs:
       - name: Generate samples
         run: |
           python -m weasyprint --pdf-variant pdf/ua-1 weasyprint-samples/invoice/invoice.html ${{env.PDF_FOLDER}}/invoice.pdf
+          python -m weasyprint --pdf-variant pdf/ua-1 weasyprint-samples/book/book.html -s weasyprint-samples/book/book-classical.css ${{env.PDF_FOLDER}}/book-classical.pdf
+          python -m weasyprint --pdf-variant pdf/ua-1 weasyprint-samples/book/book.html -s weasyprint-samples/book/book.css ${{env.PDF_FOLDER}}/book-fancy.pdf
+          python -m weasyprint --pdf-variant pdf/ua-1 weasyprint-samples/letter/letter.html ${{env.PDF_FOLDER}}/letter.pdf
+          python -m weasyprint --pdf-variant pdf/ua-1 weasyprint-samples/poster/poster.html -s weasyprint-samples/poster/poster.css ${{env.PDF_FOLDER}}/poster.pdf
+          python -m weasyprint --pdf-variant pdf/ua-1 weasyprint-samples/poster/poster.html -s weasyprint-samples/poster/flyer.css ${{env.PDF_FOLDER}}/flyer.pdf
+          python -m weasyprint --pdf-variant pdf/ua-1 weasyprint-samples/report/report.html ${{env.PDF_FOLDER}}/report.pdf
+          python -m weasyprint --pdf-variant pdf/ua-1 weasyprint-samples/ticket/ticket.html ${{env.PDF_FOLDER}}/ticket.pdf
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
@@ -36,13 +43,24 @@ jobs:
         uses: addnab/docker-run-action@v3
         with:
           image: verapdf/cli:latest
+          # We need to define the uid and gid explicitly, else we can’t write from inside the docker.
+          # It’d be better to get them automatically rather than using hardcoded ids.
           options: -u 1001:118 -v ${{ github.workspace }}:/workspace
           run: |
             /opt/verapdf/verapdf -f ua1 --success --format html /workspace/${{env.PDF_FOLDER}}/invoice.pdf > /workspace/${{env.VERA_FOLDER}}/invoice-verapdf.html
+            /opt/verapdf/verapdf -f ua1 --success --format html /workspace/${{env.PDF_FOLDER}}/book-classical.pdf > /workspace/${{env.VERA_FOLDER}}/book-classical-verapdf.html
+            /opt/verapdf/verapdf -f ua1 --success --format html /workspace/${{env.PDF_FOLDER}}/book-fancy.pdf > /workspace/${{env.VERA_FOLDER}}/book-fancy-verapdf.html
+            /opt/verapdf/verapdf -f ua1 --success --format html /workspace/${{env.PDF_FOLDER}}/letter.pdf > /workspace/${{env.VERA_FOLDER}}/letter-verapdf.html
+            /opt/verapdf/verapdf -f ua1 --success --format html /workspace/${{env.PDF_FOLDER}}/poster.pdf > /workspace/${{env.VERA_FOLDER}}/poster-verapdf.html
+            /opt/verapdf/verapdf -f ua1 --success --format html /workspace/${{env.PDF_FOLDER}}/flyer.pdf > /workspace/${{env.VERA_FOLDER}}/flyer-verapdf.html
+            /opt/verapdf/verapdf -f ua1 --success --format html /workspace/${{env.PDF_FOLDER}}/report.pdf > /workspace/${{env.VERA_FOLDER}}/report-verapdf.html
+            /opt/verapdf/verapdf -f ua1 --success --format html /workspace/${{env.PDF_FOLDER}}/ticket.pdf > /workspace/${{env.VERA_FOLDER}}/ticket-verapdf.html
       - name: Archive generated PDFs
         if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
           name: vera-results
-          path: ${{env.VERA_FOLDER}}
+          path: |
+            ${{env.VERA_FOLDER}}
+            ${{env.PDF_FOLDER}}
           retention-days: 1
