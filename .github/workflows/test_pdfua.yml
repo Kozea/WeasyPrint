@@ -16,8 +16,6 @@ jobs:
         run: python -m pip install .
       - name: Clone samples repository
         run: git clone https://github.com/CourtBouillon/weasyprint-samples.git
-      - name: Create output folder
-        run: mkdir ${{env.REPORTS_FOLDER}}
       - name: Generate samples
         run: |
           python -m weasyprint --pdf-variant pdf/ua-1 weasyprint-samples/invoice/invoice.html invoice.pdf
