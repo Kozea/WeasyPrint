@@ -1,6 +1,10 @@
 name: WeasyPrint's PDF/UA tests
 on: [push, pull_request]
 
+env:
+  PDF_FOLDER: 'pdfs'
+  VERA_FOLDER: 'vera'
+
 jobs:
   pdf-ua:
     name: Generate samples
@@ -14,11 +18,15 @@ jobs:
         run: python -m pip install --upgrade pip setuptools
       - name: Install requirements
         run: python -m pip install .
+      - name: Create output folders
+        run: |
+          mkdir ${{env.PDF_FOLDER}}
+          mkdir ${{env.VERA_FOLDER}}
       - name: Clone samples repository
         run: git clone https://github.com/CourtBouillon/weasyprint-samples.git
       - name: Generate samples
         run: |
-          python -m weasyprint --pdf-variant pdf/ua-1 weasyprint-samples/invoice/invoice.html invoice.pdf
+          python -m weasyprint --pdf-variant pdf/ua-1 weasyprint-samples/invoice/invoice.html ${{env.PDF_FOLDER}}/invoice.pdf
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
@@ -30,4 +38,10 @@ jobs:
           image: verapdf/cli:latest
           options: -u 1001:118 -v ${{ github.workspace }}:/workspace
           run: |
-            /opt/verapdf/verapdf -v -f ua1 --success --progress --format html /workspace/invoice.pdf > /workspace/invoice-verapdf.html
+            /opt/verapdf/verapdf -f ua1 --success --progress --format html /workspace/${{env.PDF_FOLDER}}/invoice.pdf > /workspace/${{env.VERA_FOLDER}}/invoice-verapdf.html
+      - name: Archive generated PDFs
+        uses: actions/upload-artifact@v4
+        with:
+          name: vera-results
+          path: ${{env.VERA_FOLDER}}
+          retention-days: 1
