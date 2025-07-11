@@ -54,7 +54,15 @@ def iter_line_boxes(context, box, position_y, bottom_space, skip_stack,
 def get_next_linebox(context, linebox, position_y, bottom_space, skip_stack,
                      containing_block, absolute_boxes, fixed_boxes,
                      first_letter_style):
-    """Return ``(line, resume_at)``."""
+    """
+    Return ``(line, resume_at)``.
+    Return next line from given linebox.
+    Returned ``line`` is a new linebox copied from the original one, with replaced children.
+    In this routine we also look at context.excluded_shapes / float.avoid_collisions.
+    It contains a "while True" loop that re-renders the linebox if needed.
+    Internally calls split_inline_box().
+    """
+
     skip_stack = skip_first_whitespace(linebox, skip_stack)
     if skip_stack == 'continue':
         return None, None
@@ -657,7 +665,13 @@ def _break_waiting_children(context, box, max_x, bottom_space,
 def split_inline_box(context, box, position_x, max_x, bottom_space, skip_stack,
                      containing_block, absolute_boxes, fixed_boxes,
                      line_placeholders, waiting_floats, line_children):
-    """Same behavior as split_inline_level."""
+    """
+    Return ``(new_box, resume_at, preserved_line_break, first_letter, last_letter)``
+    Fit as much content as possible from box into width ``max_x``.
+    In this phase ``context.excluded_shapes`` is ignored.
+    This is the recursive step that loops over the children of the box;
+    base steps of recursion are handled by split_inline_level()
+    """
 
     # In some cases (shrink-to-fit result being the preferred width)
     # max_x is coming from Pango itself,
