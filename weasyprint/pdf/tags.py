@@ -140,6 +140,7 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, tags):
     # Create box element.
     if tag == 'LI':
         anonymous_list_element = parent['S'] == '/LI'
+        anonymous_li_child = parent['S'] == '/LBody'
         dl_item = box.element_tag in ('dt', 'dd')
         no_bullet_li = (
             box.element_tag == 'li' and
@@ -147,6 +148,9 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, tags):
         if anonymous_list_element:
             # Store as list item body.
             tag = 'LBody'
+        elif anonymous_li_child:
+            # Store as non struct list item body child.
+            tag = 'NonStruct'
         elif dl_item or no_bullet_li:
             # Wrap in list item.
             tag = 'LBody'
