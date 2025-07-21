@@ -867,3 +867,36 @@ def test_footnote_table_aborted_group():
     line, = footnote.children
     marker, textbox = line.children
     assert textbox.text == 'f'
+
+
+@assert_no_logs
+def test_footnote_bottom_margin():
+    page, = render_pages('''
+        <style>
+            @page {
+                size: 9px 7px;
+            }
+            div {
+                font-family: weasyprint;
+                font-size: 2px;
+                line-height: 1;
+            }
+            span {
+                float: footnote;
+                margin-bottom: 1px;
+            }
+        </style>
+        <div>abc<span>de</span></div>''')
+    html, footnote_area = page.children
+    body, = html.children
+    div, = body.children
+    div_textbox, footnote_call = div.children[0].children
+    assert div_textbox.text == 'abc'
+    assert footnote_call.children[0].text == '1'
+    assert div_textbox.position_y == 0
+
+    footnote_marker, footnote_textbox = (
+        footnote_area.children[0].children[0].children)
+    assert footnote_marker.children[0].text == '1.'
+    assert footnote_textbox.text == 'de'
+    assert footnote_area.position_y == 5

@@ -389,10 +389,13 @@ class LayoutContext:
             if not self.in_column:
                 self.page_bottom -= footnote_area.margin_height()
             last_child = footnote_area.children[-1]
-            overflow = (
-                last_child.position_y + last_child.margin_height() >
+            last_child_bottom = (
+                last_child.position_y + last_child.margin_height() -
+                last_child.margin_bottom)
+            footnote_area_bottom = (
                 footnote_area.position_y + footnote_area.margin_height() -
                 footnote_area.margin_bottom)
+            overflow = last_child_bottom > footnote_area_bottom
             return overflow
         else:
             self.current_footnote_area.height = 0
