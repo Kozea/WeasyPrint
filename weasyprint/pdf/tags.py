@@ -139,11 +139,17 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, tags):
 
     # Create box element.
     if tag == 'LI':
-        if parent['S'] == '/LI':
-            # Anonymous list element, store as list item body.
+        anonymous_list_element = parent['S'] == '/LI'
+        dl_item = box.element_tag in ('dt', 'dd')
+        no_bullet_li = (
+            box.element_tag == 'li' and
+            box.style['list_style_type'] == 'none')
+        if anonymous_list_element:
+            # Store as list item body.
             tag = 'LBody'
-        elif box.element_tag in ('dt', 'dd'):
-            # Definition list item, wrap in list item body.
+        elif dl_item or no_bullet_li:
+            # Wrap in list item.
+            tag = 'LBody'
             parent = pydyf.Dictionary({
                 'Type': '/StructElem',
                 'S': '/LI',
