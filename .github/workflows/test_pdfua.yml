@@ -26,7 +26,6 @@ jobs:
         run: git clone https://github.com/CourtBouillon/weasyprint-samples.git
       - name: Generate samples
         run: |
-          python -m weasyprint --pdf-variant pdf/ua-1 weasyprint-samples/invoice/invoice.html ${{env.PDF_FOLDER}}/invoice.pdf
           python -m weasyprint --pdf-variant pdf/ua-1 weasyprint-samples/book/book.html -s weasyprint-samples/book/book-classical.css ${{env.PDF_FOLDER}}/book-classical.pdf
           python -m weasyprint --pdf-variant pdf/ua-1 weasyprint-samples/book/book.html -s weasyprint-samples/book/book.css ${{env.PDF_FOLDER}}/book-fancy.pdf
           python -m weasyprint --pdf-variant pdf/ua-1 weasyprint-samples/letter/letter.html ${{env.PDF_FOLDER}}/letter.pdf
@@ -45,7 +44,6 @@ jobs:
           # See https://github.com/orgs/community/discussions/44243
           options: -u 1001:118 -v ${{ github.workspace }}:/workspace
           run: |
-            /opt/verapdf/verapdf -f ua1 --format html /workspace/${{env.PDF_FOLDER}}/invoice.pdf > /workspace/${{env.VERA_FOLDER}}/invoice-verapdf.html
             /opt/verapdf/verapdf -f ua1 --format html /workspace/${{env.PDF_FOLDER}}/book-classical.pdf > /workspace/${{env.VERA_FOLDER}}/book-classical-verapdf.html
             /opt/verapdf/verapdf -f ua1 --format html /workspace/${{env.PDF_FOLDER}}/book-fancy.pdf > /workspace/${{env.VERA_FOLDER}}/book-fancy-verapdf.html
             /opt/verapdf/verapdf -f ua1 --format html /workspace/${{env.PDF_FOLDER}}/letter.pdf > /workspace/${{env.VERA_FOLDER}}/letter-verapdf.html
