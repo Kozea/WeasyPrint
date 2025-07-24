@@ -2,6 +2,125 @@ Changelog
 =========
 
 
+Version 66.0
+------------
+
+Released on 2025-07-24.
+
+Features:
+
+* `#2475 <https://github.com/Kozea/WeasyPrint/pull/2475>`_:
+  Add support for 'lh' and 'rlh' units
+* `#2432 <https://github.com/Kozea/WeasyPrint/issues/2432>`_,
+  `#2437 <https://github.com/Kozea/WeasyPrint/pull/2437>`_:
+  Report footnotes when text overflows because of orphans, with financial support from Code & Co.
+* `#2256 <https://github.com/Kozea/WeasyPrint/issues/2256>`_,
+  `#2466 <https://github.com/Kozea/WeasyPrint/pull/2466>`_:
+  Handle transform-origin in SVG
+* `#2445 <https://github.com/Kozea/WeasyPrint/pull/2445>`_:
+  Add parameter to have additional HTTP headers for url_fetcher
+
+Bug fixes:
+
+* `#2471 <https://github.com/Kozea/WeasyPrint/pull/2471>`_,
+  `#2506 <https://github.com/Kozea/WeasyPrint/pull/2506>`_,
+  `#2500 <https://github.com/Kozea/WeasyPrint/issues/2500>`_,
+  `#2460 <https://github.com/Kozea/WeasyPrint/issues/2460>`_,
+  `#2363 <https://github.com/Kozea/WeasyPrint/issues/2363>`_,
+  `#2470 <https://github.com/Kozea/WeasyPrint/issues/2470>`_,
+  `#1872 <https://github.com/Kozea/WeasyPrint/issues/1872>`_,
+  `#2153 <https://github.com/Kozea/WeasyPrint/issues/2153>`_,
+  `#1838 <https://github.com/Kozea/WeasyPrint/issues/1838>`_,
+  `#1837 <https://github.com/Kozea/WeasyPrint/issues/1837>`_,
+  `#1784 <https://github.com/Kozea/WeasyPrint/issues/1784>`_,
+  `#1835 <https://github.com/Kozea/WeasyPrint/issues/1835>`_,
+  `#2444 <https://github.com/Kozea/WeasyPrint/issues/2444>`_,
+  `#2497 <https://github.com/Kozea/WeasyPrint/issues/2497>`_,
+  `#2505 <https://github.com/Kozea/WeasyPrint/issues/2505>`_,
+  `#2503 <https://github.com/Kozea/WeasyPrint/issues/2503>`_,
+  `#1836 <https://github.com/Kozea/WeasyPrint/issues/1836>`_,
+  `#2467 <https://github.com/Kozea/WeasyPrint/issues/2467>`_:
+  Improve PDF/UA support, with financial support from NLnet
+* `#2425 <https://github.com/Kozea/WeasyPrint/pull/2425>`_,
+  `#1557 <https://github.com/Kozea/WeasyPrint/issues/1557>`_:
+  Improve position of outside markers
+* `#2409 <https://github.com/Kozea/WeasyPrint/pull/2409>`_,
+  `#2265 <https://github.com/Kozea/WeasyPrint/issues/2265>`_:
+  Draw circles instead of rectangles when drawing dotted borders
+* `#2416 <https://github.com/Kozea/WeasyPrint/pull/2416>`_,
+  `#2270 <https://github.com/Kozea/WeasyPrint/issues/2270>`_:
+  Correctly split words for automatic hyphenation
+* `#2439 <https://github.com/Kozea/WeasyPrint/pull/2439>`_,
+  `#2426 <https://github.com/Kozea/WeasyPrint/issues/2426>`_:
+  Don’t rely on URL protocols outside URL fetcher function
+* `#2433 <https://github.com/Kozea/WeasyPrint/pull/2433>`_:
+  Disable style for deprecated outline algorithm
+* `#2447 <https://github.com/Kozea/WeasyPrint/pull/2447>`_,
+  `#2441 <https://github.com/Kozea/WeasyPrint/issues/2441>`_,
+  `#2448 <https://github.com/Kozea/WeasyPrint/issues/2448>`_:
+  Improve min- and max-content calculation, with financial support from Menutech
+* `#2454 <https://github.com/Kozea/WeasyPrint/pull/2454>`_,
+  `#2442 <https://github.com/Kozea/WeasyPrint/issues/2442>`_,
+  `#2449 <https://github.com/Kozea/WeasyPrint/issues/2449>`_:
+  Minor fixes for flex layout
+* `#2473 <https://github.com/Kozea/WeasyPrint/pull/2473>`_,
+  `#2459 <https://github.com/Kozea/WeasyPrint/issues/2459>`_:
+  Include out-of-flow boxes in page layout progress, with financial support from Pathfindr
+* `#2458 <https://github.com/Kozea/WeasyPrint/pull/2458>`_:
+  Replace deprecated warn logger function
+* `#2494 <https://github.com/Kozea/WeasyPrint/pull/2494>`_,
+  `#1856 <https://github.com/Kozea/WeasyPrint/issues/1856>`_:
+  Fix bug with bottom margins in columns
+* `#2435 <https://github.com/Kozea/WeasyPrint/issues/2435>`_:
+  Make footnote calls inherit from footnotes
+* `#2484 <https://github.com/Kozea/WeasyPrint/issues/2484>`_,
+  `#2456 <https://github.com/Kozea/WeasyPrint/issues/2456>`_:
+  Allow to avoid page breaks after table-row-group elements
+* `#2450 <https://github.com/Kozea/WeasyPrint/issues/2450>`_:
+  Draw background and borders for relative grid containers
+* `#2453 <https://github.com/Kozea/WeasyPrint/issues/2453>`_:
+  Don’t advance position_y for collapsed margins of discarded children
+* `#2493 <https://github.com/Kozea/WeasyPrint/issues/2493>`_:
+  Fix endless loop with CSS variables referencing each other
+* `#2502 <https://github.com/Kozea/WeasyPrint/issues/2502>`_:
+  Ignore bottom margin when calculating footnote overflow
+
+Contributors:
+
+* Guillaume Ayoub
+* Lucie Anglade
+* Alvaro Garcia Fernandez
+* Emmanuel Ferdman
+* Gabriel Corona
+* Markus Mohanty
+* Luca Vercelli
+* Tre Huang
+
+Backers and sponsors:
+
+* Spacinov
+* Kobalt
+* Grip Angebotssoftware
+* Syslifters
+* Simon Sapin
+* Manuel Barkhau
+* Simonsoft
+* Menutech
+* KontextWork
+* TrainingSparkle
+* Healthchecks.io
+* Hammerbacher
+* DocRaptor
+* Yanal-Yves Fargialla
+* Method B
+* FieldHub
+* Morntag
+* Xavid
+* Kai DeLorenzo
+* Charlie S.
+* Alan Villalobos
+
+
 Version 65.1
 ------------
 
@@ -65,7 +184,7 @@ Dependencies:
 Features:
 
 * `#1665 <https://github.com/Kozea/WeasyPrint/issues/1665>`_:
-  Support gap properties in Flex layout, with financial support from NLnet.
+  Support gap properties in Flex layout, with financial support from NLnet
 * `#378 <https://github.com/Kozea/WeasyPrint/issues/378>`_,
   `#2405 <https://github.com/Kozea/WeasyPrint/pull/2405>`_:
   Handle @font-face unicode-range
