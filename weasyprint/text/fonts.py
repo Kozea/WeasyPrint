@@ -188,23 +188,25 @@ class FontConfiguration:
             # Create Fontconfig XML config file.
             mode = 'assign_replace'
             root = Element('fontconfig')
-            match = SubElement(root, 'match', target='scan')
-            test = SubElement(match, 'test', name='file', compare='eq')
-            SubElement(test, 'string').text = str(font_path)
-            edit = SubElement(match, 'edit', name='family', mode=mode)
-            SubElement(edit, 'string').text = rule_descriptors['font_family']
+
+            match = SubElement(root, 'match', target='pattern')
+            test = SubElement(match, 'test', name='family', compare='eq')
+            SubElement(test, 'string').text = rule_descriptors['font_family']
             if 'font_style' in rule_descriptors:
-                edit = SubElement(match, 'edit', name='slant', mode=mode)
+                test = SubElement(match, 'test', name='slant', compare='eq')
                 text = FONTCONFIG_STYLE[rule_descriptors['font_style']]
-                SubElement(edit, 'const').text = text
+                SubElement(test, 'const').text = text
             if 'font_weight' in rule_descriptors:
-                edit = SubElement(match, 'edit', name='weight', mode=mode)
+                test = SubElement(match, 'test', name='weight', compare='eq')
                 integer = FONTCONFIG_WEIGHT[rule_descriptors['font_weight']]
-                SubElement(edit, 'int').text = str(integer)
+                SubElement(test, 'int').text = str(integer)
             if 'font_stretch' in rule_descriptors:
-                edit = SubElement(match, 'edit', name='width', mode=mode)
+                test = SubElement(match, 'test', name='width', compare='eq')
                 text = FONTCONFIG_STRETCH[rule_descriptors['font_stretch']]
-                SubElement(edit, 'const').text = text
+                SubElement(test, 'const').text = text
+            edit = SubElement(match, 'edit', name='file', mode=mode)
+            SubElement(edit, 'string').text = str(font_path)
+
             match = SubElement(root, 'match', target='font')
             test = SubElement(match, 'test', name='file', compare='eq')
             SubElement(test, 'string').text = str(font_path)
@@ -225,6 +227,7 @@ class FontConfiguration:
                     range_ = SubElement(charset, 'range')
                     for value in (unicode_range.start, unicode_range.end):
                         SubElement(range_, 'int').text = f'0x{value:x}'
+
             header = (
                 b'<?xml version="1.0"?>',
                 b'<!DOCTYPE fontconfig SYSTEM "urn:fontconfig:fonts.dtd">')
