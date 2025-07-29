@@ -474,7 +474,7 @@ if hasattr(os, 'add_dll_directory') and not hasattr(sys, 'frozen'):  # pragma: n
 
 gobject = _dlopen(
     ffi, 'libgobject-2.0-0', 'gobject-2.0-0', 'gobject-2.0',
-    'libgobject-2.0.so.0', 'libgobject-2.0.dylib', 'libgobject-2.0-0.dll')
+    'libgobject-2.0.so.0', 'libgobject-2.0.0.dylib', 'libgobject-2.0-0.dll')
 pango = _dlopen(
     ffi, 'libpango-1.0-0', 'pango-1.0-0', 'pango-1.0', 'libpango-1.0.so.0',
     'libpango-1.0.dylib', 'libpango-1.0-0.dll')
