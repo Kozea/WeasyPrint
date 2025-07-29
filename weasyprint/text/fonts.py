@@ -120,6 +120,7 @@ class FontConfiguration:
 
         # Try values in "src" descriptor until one works.
         string = ffi.new('FcChar8 **')
+        local = False
         for font_type, url in rule_descriptors['src']:
             # Abort if font URL is broken.
             if url is None or font_type == 'internal':
@@ -152,6 +153,7 @@ class FontConfiguration:
                             matching_pattern, b'file', 0, string)
                         path = ffi.string(string[0]).decode(FILESYSTEM_ENCODING)
                         url = Path(path).as_uri()
+                        local = True
                         break
                 else:
                     # Names don’t match, abort.
@@ -207,9 +209,14 @@ class FontConfiguration:
             edit = SubElement(match, 'edit', name='file', mode=mode)
             SubElement(edit, 'string').text = str(font_path)
 
-            match = SubElement(root, 'match', target='font')
+            match = SubElement(root, 'match', target='scan')
             test = SubElement(match, 'test', name='file', compare='eq')
             SubElement(test, 'string').text = str(font_path)
+            if not local:
+                # Makes Pango crash,
+                # see https://gitlab.gnome.org/GNOME/pango/-/issues/862.
+                edit = SubElement(match, 'edit', name='family', mode=mode)
+                SubElement(edit, 'string').text = rule_descriptors['font_family']
             descriptors = {
                 rules[0][0].replace('-', '_'): rules[0][1] for rules in
                 rule_descriptors.get('font_variant', [])}
