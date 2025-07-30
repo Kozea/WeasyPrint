@@ -164,3 +164,40 @@ def check_var(token):
         # https://drafts.csswg.org/css-syntax-3/#typedef-declaration-value
         return ident.type == 'ident' and ident.value.startswith('--')
     return any(check_var(argument) for argument in arguments)
+
+
+def check_math(token):
+    # TODO: validate for real.
+    function = Function(token)
+    if (name := function.name) is None:
+        return
+    arguments = function.split_space()
+    if name == 'calc':
+        return len(arguments) >= 1
+    elif name in ('min', 'max'):
+        return len(arguments) >= 1
+    elif name == 'clamp':
+        return len(arguments) == 3
+    elif name == 'round':
+        return 1 <= len(arguments) <= 3
+    elif name in ('mod', 'rem'):
+        return len(arguments) == 2
+    elif name in ('sin', 'cos', 'tan'):
+        return len(arguments) == 1
+    elif name in ('asin', 'acos', 'atan'):
+        return len(arguments) == 1
+    elif name == 'atan2':
+        return len(arguments) == 2
+    elif name == 'pow':
+        return len(arguments) == 2
+    elif name == 'sqrt':
+        return len(arguments) == 1
+    elif name == 'hypot':
+        return len(arguments) >= 1
+    elif name == 'log':
+        return 1 <= len(arguments) <= 2
+    elif name == 'exp':
+        return len(arguments) == 1
+    elif name in ('abs', 'sign'):
+        return len(arguments) == 1
+    return any(check_math(arguments) for argument in arguments)

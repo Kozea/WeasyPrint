@@ -4,7 +4,7 @@ import functools
 from abc import ABC, abstractmethod
 from math import pi
 
-from tinycss2.ast import IdentToken
+from tinycss2 import ast
 from tinycss2.color4 import parse_color
 
 from ..logger import LOGGER
@@ -144,7 +144,7 @@ def parse_linear_gradient_parameters(arguments):
 def parse_2d_position(tokens):
     """Common syntax of background-position and transform-origin."""
     if len(tokens) == 1:
-        tokens = [tokens[0], IdentToken(0, 0, 'center')]
+        tokens = [tokens[0], ast.IdentToken(0, 0, 'center')]
     elif len(tokens) != 2:
         return None
 
@@ -576,3 +576,25 @@ def comma_separated_list(function):
         return tuple(results)
     wrapper.single_value = function
     return wrapper
+
+
+def tokenize(item, function=None, unit=None):
+    """Transform a computed value result into a token."""
+    if isinstance(item, (ast.DimensionToken, Dimension)):
+        value = function(item.value) if function else item.value
+        return ast.DimensionToken(0, 0, value, None, str(value), item.unit.lower())
+    elif isinstance(item, ast.PercentageToken):
+        value = function(item.value) if function else item.value
+        return ast.PercentageToken(0, 0, value, None, str(value))
+    elif isinstance(item, (ast.NumberToken, int, float)):
+        if isinstance(item, ast.NumberToken):
+            value = item.value
+        else:
+            value = item
+        value = function(value) if function else value
+        int_value = round(value) if value.is_integer() else None
+        representation = str(int_value if value.is_integer() else value)
+        if unit is None:
+            return ast.NumberToken(0, 0, value, int_value, representation)
+        else:
+            return ast.DimensionToken(0, 0, value, int_value, representation, unit)

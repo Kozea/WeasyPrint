@@ -10,7 +10,7 @@ from tinycss2 import parse_component_value_list
 from tinycss2.color4 import parse_color
 
 from .. import computed_values
-from ..functions import Function, check_var
+from ..functions import Function, check_math, check_var
 from ..properties import KNOWN_PROPERTIES, ZERO_PIXELS, Dimension
 
 from ..tokens import (  # isort:skip
@@ -94,7 +94,7 @@ def validate_non_shorthand(tokens, name, base_url=None, required=False):
 
     function = PROPERTIES[name]
     for token in tokens:
-        if check_var(token):
+        if check_var(token) or check_math(token):
             # Found CSS variable, return pending-substitution values.
             return ((name, PendingProperty(tokens, name)),)
 

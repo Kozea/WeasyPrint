@@ -12,6 +12,7 @@ on other functions in this module.
 
 """
 
+import math
 from collections import namedtuple
 from itertools import groupby
 from logging import DEBUG, WARNING
@@ -28,11 +29,15 @@ from ..text.fonts import FontConfiguration
 from ..urls import URLFetchingError, get_url_attribute, url_join
 from . import counters, media_queries
 from .computed_values import COMPUTER_FUNCTIONS
-from .functions import Function, check_var
+from .functions import Function, check_math, check_var
 from .properties import INHERITED, INITIAL_NOT_COMPUTED, INITIAL_VALUES, ZERO_PIXELS
-from .tokens import InvalidValues, Pending, get_url, remove_whitespace, split_on_comma
+from .units import to_pixels
 from .validation import preprocess_declarations
 from .validation.descriptors import preprocess_descriptors
+
+from .tokens import (  # isort:skip
+    InvalidValues, Pending, get_angle, get_url, remove_whitespace, split_on_comma,
+    tokenize)
 
 # Reject anything not in here:
 PSEUDO_ELEMENTS = (
@@ -628,6 +633,134 @@ class InitialStyle(dict):
         return value
 
 
+def resolve_math(computed, token, key):
+    """Return token with resolved math functions."""
+    if not check_math(token):
+        return
+
+    args = []
+    function = Function(token)
+    if function.name is None:
+        return
+
+    for arg in function.split_spaces():
+        if check_math(arg):
+            arg = resolve_math(computed, arg, key)[0]
+        args.append(arg)
+
+    if function.name in ('min', 'max'):
+        target_value = target_token = None
+        for token in args:
+            if getattr(token, 'unit') == '%':
+                raise NotImplementedError
+            value = tokenize(to_pixels(token, computed), unit='px')
+            update_condition = (
+                target_value is None or
+                (function.name == 'min' and value.value < target_value.value) or
+                (function.name == 'max' and value.value > target_value.value))
+            if update_condition:
+                target_value, target_token = value, token
+        return [tokenize(target_token)]
+
+    elif function.name == 'round':
+        strategy, multiple = 'nearest', 1
+        if len(args) == 1:
+            number_token, = args
+        elif len(args) == 2:
+            if args[0].value in ('nearest', 'up', 'down', 'to-zero'):
+                strategy_token, number_token = args
+                strategy = strategy_token.value
+            else:
+                number_token, multiple_token = args
+                multiple = multiple_token.value
+        elif len(args) == 3:
+            strategy_token, number_token, multiple_token = args
+            strategy, multiple = strategy_token.value, multiple_token.value
+        if strategy == 'nearest':
+            function = round
+        elif strategy == 'up':
+            function = math.ceil
+        elif strategy == 'down':
+            function = math.floor
+        elif strategy == 'to-zero':
+            function = math.floor if number_token.value > 0 else math.ceil
+        return [tokenize(number_token, lambda x: function(x / multiple) * multiple)]
+
+    elif function.name in ('mod', 'rem'):
+        number_token, parameter_token = args
+        number, parameter = number_token.value, parameter_token.value
+        value = number % parameter
+        if function.name == 'rem' and number * parameter < 0:
+            value += abs(parameter)
+        return [tokenize(number_token, lambda x: value)]
+
+    elif function.name in ('sin', 'cos', 'tan'):
+        if getattr(args[0], 'unit', None) is None:
+            angle = args[0].value
+        else:
+            angle = get_angle(args[0])
+        value = getattr(math, function.name)(angle)
+        return [tokenize(value)]
+
+    elif function.name in ('asin', 'acos', 'atan'):
+        value = getattr(math, function.name)(args[0].value)
+        return [tokenize(value, unit='rad')]
+
+    elif function.name == 'atan2':
+        y_token, x_token = args
+        y, x = y_token.value, x_token.value
+        return [tokenize(math.atan2(y, x), unit='rad')]
+
+    elif function.name == 'clamp':
+        pixels = []
+        for token in args:
+            if getattr(token, 'unit') == '%':
+                raise NotImplementedError
+            pixels.append(tokenize(to_pixels(token, computed), unit='px'))
+        min_token, token, max_token = pixels
+        if token.value < min_token.value:
+            token = min_token
+        if token.value > max_token.value:
+            token = max_token
+        return [tokenize(token)]
+
+    elif function.name == 'pow':
+        number_token, power_token = args
+        return [tokenize(number_token, lambda x: x ** power_token.value)]
+
+    elif function.name == 'sqrt':
+        number_token, = args
+        return [tokenize(number_token, lambda x: x ** 0.5)]
+
+    elif function.name == 'hypot':
+        value = math.hypot(*[token.value for token in args])
+        return [tokenize(args[0], lambda x: value)]
+
+    elif function.name == 'log':
+        number_token = args[0]
+        base_token = args[1].value if len(args) == 2 else math.e
+        return [tokenize(number_token, lambda x: math.log(x, base_token))]
+
+    elif function.name == 'exp':
+        return [tokenize(args[0], math.exp)]
+
+    elif function.name == 'abs':
+        return [tokenize(args[0], abs)]
+
+    elif function.name == 'sign':
+        return [tokenize(args[0], lambda x: 0 if x == 0 else 1 if x > 0 else -1)]
+
+    arguments = []
+    for i, argument in enumerate(token.arguments):
+        if argument.type == 'function':
+            arguments.extend(resolve_math(computed, argument, key))
+        else:
+            arguments.append(argument)
+    token = tinycss2.ast.FunctionBlock(
+        token.source_line, token.source_column, token.name, arguments)
+    return resolve_math(computed, token, key) or (token,)
+
+
 class AnonymousStyle(dict):
     """Computed style used for anonymous boxes."""
     def __init__(self, parent_style):
@@ -766,6 +899,32 @@ class ComputedStyle(dict):
             # specific properties. See
             # https://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo.
             self.specified[key] = value
+
+        pending = isinstance(value, Pending)
+        if pending:
+            solved_tokens = []
+            try:
+                for token in value.tokens:
+                    tokens = resolve_math(self, token, key)
+                    if tokens is None:
+                        solved_tokens.append(token)
+                    else:
+                        solved_tokens.extend(tokens)
+                original_key = key.replace('_', '-')
+                value = value.solve(solved_tokens, original_key)
+            except Exception:
+                function = value.tokens[0]
+                LOGGER.warning(
+                    'Invalid math function at %d:%d: %s',
+                    function.source_line, function.source_column, function.serialize())
+                if key in INHERITED and parent_style is not None:
+                    # Values in parent_style are already computed.
+                    self[key] = value = parent_style[key]
+                else:
+                    value = INITIAL_VALUES[key]
+                    if key not in INITIAL_NOT_COMPUTED:
+                        # The value is the same as when computed.
+                        self[key] = value
 
         if key in self:
             # Value already computed and saved: return.
