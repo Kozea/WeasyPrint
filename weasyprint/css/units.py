@@ -2,6 +2,8 @@
 
 import math
 
+from ..text.line_break import character_ratio, strut
+
 # How many radians is one <unit>?
 # https://drafts.csswg.org/css-values-4/#angles
 ANGLE_TO_RADIANS = {
@@ -38,3 +40,33 @@ ABSOLUTE_UNITS = set(LENGTHS_TO_PIXELS)
 LENGTH_UNITS = ABSOLUTE_UNITS | FONT_UNITS
 # https://drafts.csswg.org/css-values-4/#angles
 ANGLE_UNITS = set(ANGLE_TO_RADIANS)
+
+
+def to_pixels(value, style=None, font_size=None):
+    """Get number of pixels corresponding to a length."""
+    if (unit := value.unit) == 'px':
+        return value.value
+    elif unit in LENGTHS_TO_PIXELS:
+        # Convert absolute lengths to pixels
+        return value.value * LENGTHS_TO_PIXELS[unit]
+    elif unit in FONT_UNITS:
+        assert style is not None
+        if font_size is None:
+            font_size = style['font_size']
+        if unit == 'ex':
+            # TODO: use context to use @font-face fonts
+            ratio = character_ratio(style, 'x')
+            return value.value * font_size * ratio
+        elif unit == 'ch':
+            ratio = character_ratio(style, '0')
+            return value.value * font_size * ratio
+        elif unit == 'em':
+            return value.value * font_size
+        elif unit == 'rem':
+            return value.value * style.root_style['font_size']
+        elif unit == 'lh':
+            line_height, _ = strut(style)
+            return value.value * line_height
+        elif unit == 'rlh':
+            line_height, _ = strut(style.root_style)
+            return value.value * line_height

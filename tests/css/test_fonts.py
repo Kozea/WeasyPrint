@@ -6,7 +6,7 @@ import pytest
 
 from weasyprint import CSS
 from weasyprint.css import get_all_computed_styles
-from weasyprint.css.computed_values import strut_layout
+from weasyprint.text.line_break import strut
 
 from ..testing_utils import FakeHTML, assert_no_logs, render_pages
 
@@ -64,10 +64,10 @@ def test_line_height_inheritance():
     assert html.style['font_size'] == 10
     assert div.style['font_size'] == 20
     # 140% of 10px = 14px is inherited from html
-    assert strut_layout(div.style)[0] == 14
+    assert strut(div.style)[0] == 14
     assert div.style['vertical_align'] == 7  # 50 % of 14px
 
     assert paragraph.style['font_size'] == 20
     # 1.4 is inherited from p, 1.4 * 20px on em = 28px
-    assert strut_layout(paragraph.style)[0] == 28
+    assert strut(paragraph.style)[0] == 28
     assert paragraph.style['vertical_align'] == 14  # 50% of 28px
