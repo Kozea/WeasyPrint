@@ -516,6 +516,100 @@ def split_first_line(text, style, context, max_width, justification_spacing,
         hyphenated, style['hyphenate_character'])
 
 
+def _font_style_cache_key(style, include_size=False):
+    key = str((
+        style['font_family'],
+        style['font_style'],
+        style['font_stretch'],
+        style['font_weight'],
+        style['font_variant_ligatures'],
+        style['font_variant_position'],
+        style['font_variant_caps'],
+        style['font_variant_numeric'],
+        style['font_variant_alternates'],
+        style['font_variant_east_asian'],
+        style['font_feature_settings'],
+        style['font_variation_settings'],
+        style['font_language_override'],
+        style['lang'],
+    ))
+    if include_size:
+        key += str(style['font_size']) + str(style['line_height'])
+    return key
+
+
+def strut(style, context=None):
+    """Return a tuple of the used value of ``line-height`` and the baseline.
+
+    The baseline is given from the top edge of line height.
+
+    """
+    if style['font_size'] == 0:
+        return 0, 0
+
+    if context:
+        key = _font_style_cache_key(style, include_size=True)
+        if key in context.strut_layouts:
+            return context.strut_layouts[key]
+
+    layout = Layout(context, style)
+    layout.set_text(' ')
+    line, _ = layout.get_first_line()
+    _, _, _, _, text_height, baseline = first_line_metrics(
+        line, '', layout, resume_at=None, space_collapse=False, style=style)
+    if style['line_height'] == 'normal':
+        result = text_height, baseline
+        if context:
+            context.strut_layouts[key] = result
+        return result
+    type_, line_height = style['line_height']
+    if type_ == 'NUMBER':
+        line_height *= style['font_size']
+    result = line_height, baseline + (line_height - text_height) / 2
+    if context:
+        context.strut_layouts[key] = result
+    return result
+
+
+def character_ratio(style, character):
+    """Return the ratio of 1ex/font_size or 1ch/font_size."""
+    # TODO: use context to use @font-face fonts
+
+    assert character in ('x', '0')
+
+    cache = style.cache[f'ratio_{"ex" if character == "x" else "ch"}']
+    cache_key = _font_style_cache_key(style)
+    if cache_key in cache:
+        return cache[cache_key]
+
+    # Avoid recursion for letter-spacing and word-spacing properties
+    style = style.copy()
+    style['letter_spacing'] = 'normal'
+    style['word_spacing'] = 0
+    # Random big value
+    style['font_size'] = 1000
+
+    layout = Layout(context=None, style=style)
+    layout.set_text(character)
+    line, _ = layout.get_first_line()
+
+    ink_extents = ffi.new('PangoRectangle *')
+    logical_extents = ffi.new('PangoRectangle *')
+    pango.pango_layout_line_get_extents(line, ink_extents, logical_extents)
+    if character == 'x':
+        measure = -ink_extents.y * FROM_UNITS
+    else:
+        measure = logical_extents.width * FROM_UNITS
+    ffi.release(ink_extents)
+    ffi.release(logical_extents)
+
+    # Zero means some kind of failure, fallback is 0.5.
+    # We round to try keeping exact values that were altered by Pango.
+    ratio = round(measure / style['font_size'], 5) or 0.5
+    cache[cache_key] = ratio
+    return ratio
+
+
 def get_log_attrs(text, lang):
     if lang:
         lang_p, lang = unicode_to_char_p(lang)
