@@ -1124,6 +1124,10 @@ def test_annidated_floats():
     # I have to specify page margin because FakeHTML sets page margins = 0
     page, = render_pages('''
         <style>
+            @page {
+              size: A4;
+              margin: 20mm;
+            }
             @font-face {
               font-family: Rosario;
               src: url(https://weasyprint.org/css/fonts/rosario-regular.otf);
