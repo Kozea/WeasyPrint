@@ -1116,3 +1116,35 @@ def test_nested_waiting_children_width():
     assert line1.children[0].children[0].children[0].text == 'a'
     assert line2.children[0].children[0].children[0].text == 'b'
     assert line2.children[0].children[1].text == 'c'
+
+
+@assert_no_logs
+def test_annidated_floats():
+    # see issue #1510
+    # I have to specify page margin because FakeHTML sets page margins = 0
+    page, = render_pages('''
+        <style>
+            @font-face {
+              font-family: Rosario;
+              src: url(https://weasyprint.org/css/fonts/rosario-regular.otf);
+            }
+            p {
+              font: 12px Rosario;
+            }
+            img {
+                float: right;
+                width: 350px;
+                z-index: -100;
+            }
+        </style>
+        <p><b><i><img src="https://weasyprint.org/css/img/documents/reports-thumbnail.webp"></i></b>
+        The problem is that the first line of this paragraph is displayed over
+        </p>
+    ''')
+    html, = page.children
+    body, = html.children
+    paragraph, = body.children
+    
+    # tet should be splitted in two lines
+    assert len(paragraph.children) == 2
+    assert paragraph.children[0].width < 280

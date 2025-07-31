@@ -746,6 +746,9 @@ def split_inline_box(context, box, position_x, max_x, bottom_space, skip_stack,
                     skip_stack, containing_block, absolute_boxes, fixed_boxes,
                     line_placeholders, child_waiting_floats, line_children))
 
+        float_widths['left'] = max(float_widths['left'], new_float_widths['left'])
+        float_widths['right'] = max(float_widths['right'], new_float_widths['right'])
+
         skip_stack = None
         if preserved:
             preserved_line_break = True
