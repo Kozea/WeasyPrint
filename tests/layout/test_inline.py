@@ -1148,7 +1148,7 @@ def test_annidated_floats():
     html, = page.children
     body, = html.children
     paragraph, = body.children
-    
-    # tet should be splitted in two lines
+
+    # text should be splitted in two lines
     assert len(paragraph.children) == 2
     assert paragraph.children[0].width < 280

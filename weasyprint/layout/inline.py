@@ -57,8 +57,10 @@ def get_next_linebox(context, linebox, position_y, bottom_space, skip_stack,
     """
     Return ``(line, resume_at)``.
     Return next line from given linebox.
-    Returned ``line`` is a new linebox copied from the original one, with replaced children.
-    In this routine we also look at context.excluded_shapes / float.avoid_collisions.
+    Returned ``line`` is a new linebox copied from the original one,
+    with replaced children.
+    In this routine we also look at context.excluded_shapes /
+    float.avoid_collisions.
     It contains a "while True" loop that re-renders the linebox if needed.
     Internally calls split_inline_box().
     """
