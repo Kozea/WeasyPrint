@@ -7,7 +7,7 @@ https://www.w3.org/TR/mediaqueries-4/
 import tinycss2
 
 from ..logger import LOGGER
-from .utils import remove_whitespace, split_on_comma
+from .tokens import remove_whitespace, split_on_comma
 
 
 def evaluate_media_query(query_list, device_media_type):

@@ -5,12 +5,12 @@ import functools
 from tinycss2.ast import DimensionToken, IdentToken, NumberToken
 from tinycss2.color4 import parse_color
 
+from ..functions import check_var
 from ..properties import INITIAL_VALUES
 from .descriptors import expand_font_variant
 
-from ..utils import (  # isort:skip
-    InvalidValues, Pending, check_var_function, get_keyword, get_single_keyword,
-    split_on_comma)
+from ..tokens import ( # isort:skip
+    InvalidValues, Pending, get_keyword, get_single_keyword, split_on_comma)
 from .properties import ( # isort:skip
     background_attachment, background_image, background_position, background_repeat,
     background_size, block_ellipsis, border_image_source, border_image_slice,
@@ -42,7 +42,7 @@ class PendingExpander(Pending):
 def _find_var(tokens, expander, expanded_names):
     """Return pending expanders when var is found in tokens."""
     for token in tokens:
-        if check_var_function(token):
+        if check_var(token):
             # Found CSS variable, keep pending-substitution values.
             pending = PendingExpander(tokens, expander)
             return {name: pending for name in expanded_names}
