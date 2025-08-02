@@ -1,48 +1,18 @@
-"""Utils for CSS properties."""
+"""CSS tokens parsers."""
 
 import functools
-import math
 from abc import ABC, abstractmethod
-from urllib.parse import unquote, urljoin
+from math import pi
 
+from tinycss2.ast import IdentToken
 from tinycss2.color4 import parse_color
 
-from .. import LOGGER
-from ..urls import iri_to_uri, url_is_absolute
+from ..logger import LOGGER
+from ..urls import get_url_tuple
+from . import functions
 from .properties import Dimension
+from .units import ANGLE_TO_RADIANS, LENGTH_UNITS, RESOLUTION_TO_DPPX
 
-# https://drafts.csswg.org/css-values-3/#angles
-# 1<unit> is this many radians.
-ANGLE_TO_RADIANS = {
-    'rad': 1,
-    'turn': 2 * math.pi,
-    'deg': math.pi / 180,
-    'grad': math.pi / 200,
-}
-
-# How many CSS pixels is one <unit>?
-# https://www.w3.org/TR/CSS21/syndata.html#length-units
-LENGTHS_TO_PIXELS = {
-    'px': 1,
-    'pt': 1. / 0.75,
-    'pc': 16.,  # LENGTHS_TO_PIXELS['pt'] * 12
-    'in': 96.,  # LENGTHS_TO_PIXELS['pt'] * 72
-    'cm': 96. / 2.54,  # LENGTHS_TO_PIXELS['in'] / 2.54
-    'mm': 96. / 25.4,  # LENGTHS_TO_PIXELS['in'] / 25.4
-    'q': 96. / 25.4 / 4,  # LENGTHS_TO_PIXELS['mm'] / 4
-}
-
-# https://drafts.csswg.org/css-values/#resolution
-RESOLUTION_TO_DPPX = {
-    'dppx': 1,
-    'dpi': 1 / LENGTHS_TO_PIXELS['in'],
-    'dpcm': 1 / LENGTHS_TO_PIXELS['cm'],
-}
-
-# Sets of possible length units
-LENGTH_UNITS = set(LENGTHS_TO_PIXELS) | set(['ex', 'em', 'ch', 'rem', 'lh', 'rlh'])
-
-# Constants about background positions
 ZERO_PERCENT = Dimension(0, '%')
 FIFTY_PERCENT = Dimension(50, '%')
 HUNDRED_PERCENT = Dimension(100, '%')
@@ -54,14 +24,13 @@ BACKGROUND_POSITION_PERCENTAGES = {
     'right': HUNDRED_PERCENT,
 }
 
-# Direction keywords used for gradients
 DIRECTION_KEYWORDS = {
-    # ('angle', radians)  0 upwards, then clockwise
+    # ('angle', radians), 0 upwards, then clockwise.
     ('to', 'top'): ('angle', 0),
-    ('to', 'right'): ('angle', math.pi / 2),
-    ('to', 'bottom'): ('angle', math.pi),
-    ('to', 'left'): ('angle', math.pi * 3 / 2),
-    # ('corner', keyword)
+    ('to', 'right'): ('angle', pi / 2),
+    ('to', 'bottom'): ('angle', pi),
+    ('to', 'left'): ('angle', pi * 3 / 2),
+    # ('corner', keyword).
     ('to', 'top', 'left'): ('corner', 'top_left'),
     ('to', 'left', 'top'): ('corner', 'top_left'),
     ('to', 'top', 'right'): ('corner', 'top_right'),
@@ -72,29 +41,9 @@ DIRECTION_KEYWORDS = {
     ('to', 'right', 'bottom'): ('corner', 'bottom_right'),
 }
 
-# Default fallback values used in attr() functions
-ATTR_FALLBACKS = {
-    'string': ('string', ''),
-    'color': ('ident', 'currentcolor'),
-    'url': ('external', 'about:invalid'),
-    'integer': ('number', 0),
-    'number': ('number', 0),
-    '%': ('number', 0),
-}
-for unit in LENGTH_UNITS:
-    ATTR_FALLBACKS[unit] = ('length', Dimension('0', unit))
-for unit in ANGLE_TO_RADIANS:
-    ATTR_FALLBACKS[unit] = ('angle', Dimension('0', unit))
-
 
 class InvalidValues(ValueError):  # noqa: N818
     """Invalid or unsupported values for a known CSS property."""
-
-
-class CenterKeywordFakeToken:
-    type = 'ident'
-    lower_value = 'center'
-    unit = None
 
 
 class Pending(ABC):
@@ -132,141 +81,10 @@ class Pending(ABC):
             raise exc
 
 
-def split_on_comma(tokens):
-    """Split a list of tokens on commas, ie ``LiteralToken(',')``.
-
-    Only "top-level" comma tokens are splitting points, not commas inside a
-    function or blocks.
-
-    """
-    parts = []
-    this_part = []
-    for token in tokens:
-        if token.type == 'literal' and token.value == ',':
-            parts.append(this_part)
-            this_part = []
-        else:
-            this_part.append(token)
-    parts.append(this_part)
-    return tuple(parts)
-
-
-def split_on_optional_comma(tokens):
-    """Split a list of tokens on optional commas, ie ``LiteralToken(',')``."""
-    parts = []
-    for split_part in split_on_comma(tokens):
-        if not split_part:
-            # Happens when there's a comma at the beginning, at the end, or
-            # when two commas are next to each other.
-            return
-        for part in split_part:
-            parts.append(part)
-    return parts
-
-
-def remove_whitespace(tokens):
-    """Remove any top-level whitespace and comments in a token list."""
-    return tuple(
-        token for token in tokens
-        if token.type not in ('whitespace', 'comment'))
-
-
-def safe_urljoin(base_url, url):
-    if url_is_absolute(url):
-        return iri_to_uri(url)
-    elif base_url:
-        return iri_to_uri(urljoin(base_url, url))
-    else:
-        raise InvalidValues(
-            f'Relative URI reference without a base URI: {url!r}')
-
-
-def comma_separated_list(function):
-    """Decorator for validators that accept a comma separated list."""
-    @functools.wraps(function)
-    def wrapper(tokens, *args):
-        results = []
-        for part in split_on_comma(tokens):
-            result = function(remove_whitespace(part), *args)
-            if result is None:
-                return None
-            results.append(result)
-        return tuple(results)
-    wrapper.single_value = function
-    return wrapper
-
-
-def get_keyword(token):
-    """If ``token`` is a keyword, return its lowercase name.
-
-    Otherwise return ``None``.
-
-    """
-    if token.type == 'ident':
-        return token.lower_value
-
-
-def get_custom_ident(token):
-    """If ``token`` is a keyword, return its name.
-
-    Otherwise return ``None``.
-
-    """
-    if token.type == 'ident':
-        return token.value
-
-
-def get_single_keyword(tokens):
-    """If ``values`` is a 1-element list of keywords, return its name.
-
-    Otherwise return ``None``.
-
-    """
-    if len(tokens) == 1:
-        token = tokens[0]
-        if token.type == 'ident':
-            return token.lower_value
-
-
-def single_keyword(function):
-    """Decorator for validators that only accept a single keyword."""
-    @functools.wraps(function)
-    def keyword_validator(tokens):
-        """Wrap a validator to call get_single_keyword on tokens."""
-        keyword = get_single_keyword(tokens)
-        if function(keyword):
-            return keyword
-    return keyword_validator
-
-
-def single_token(function):
-    """Decorator for validators that only accept a single token."""
-    @functools.wraps(function)
-    def single_token_validator(tokens, *args):
-        """Validate a property whose token is single."""
-        if len(tokens) == 1:
-            return function(tokens[0], *args)
-    single_token_validator.__func__ = function
-    return single_token_validator
-
-
-def parse_linear_gradient_parameters(arguments):
-    first_arg = arguments[0]
-    if len(first_arg) == 1:
-        angle = get_angle(first_arg[0])
-        if angle is not None:
-            return ('angle', angle), arguments[1:]
-    else:
-        result = DIRECTION_KEYWORDS.get(tuple(map(get_keyword, first_arg)))
-        if result is not None:
-            return result, arguments[1:]
-    return ('angle', math.pi), arguments  # Default direction is 'to bottom'
-
-
 def parse_2d_position(tokens):
     """Common syntax of background-position and transform-origin."""
     if len(tokens) == 1:
-        tokens = [tokens[0], CenterKeywordFakeToken]
+        tokens = [tokens[0], IdentToken(0, 0, 'center')]
     elif len(tokens) != 2:
         return None
 
@@ -340,6 +158,19 @@ def parse_position(tokens):
                 return other_keyword, ZERO_PERCENT, keyword, length
 
 
+def parse_linear_gradient_parameters(arguments):
+    first_arg = arguments[0]
+    if len(first_arg) == 1:
+        angle = get_angle(first_arg[0])
+        if angle is not None:
+            return ('angle', angle), arguments[1:]
+    else:
+        result = DIRECTION_KEYWORDS.get(tuple(map(get_keyword, first_arg)))
+        if result is not None:
+            return result, arguments[1:]
+    return ('angle', pi), arguments  # Default direction is 'to bottom'
+
+
 def parse_radial_gradient_parameters(arguments):
     shape = None
     position = None
@@ -387,7 +218,7 @@ def parse_color_stop(tokens):
     if len(tokens) == 1:
         color = parse_color(tokens[0])
         if color == 'currentcolor':
-            # TODO: return the current color instead
+            # TODO: return the current color instead.
             return parse_color('black'), None
         if color is not None:
             return color, None
@@ -399,150 +230,75 @@ def parse_color_stop(tokens):
     raise InvalidValues
 
 
-def parse_function(function_token):
-    """Parse functional notation.
+def split_on_comma(tokens):
+    """Split a list of tokens on commas, ie ``LiteralToken(',')``.
 
-    Return ``(name, args)`` if the given token is a function with comma- or
-    space-separated arguments. Return ``None`` otherwise.
+    Only "top-level" comma tokens are splitting points, not commas inside a
+    function or blocks.
 
     """
-    if function_token.type != 'function':
-        return
-
-    content = list(remove_whitespace(function_token.arguments))
-    arguments = []
-    last_is_comma = False
-    while content:
-        token = content.pop(0)
-        is_comma = token.type == 'literal' and token.value == ','
-        if last_is_comma and is_comma:
-            return
-        if is_comma:
-            last_is_comma = True
+    parts = []
+    this_part = []
+    for token in tokens:
+        if token.type == 'literal' and token.value == ',':
+            parts.append(this_part)
+            this_part = []
         else:
-            last_is_comma = False
-            if token.type == 'function':
-                argument_function = parse_function(token)
-                if argument_function is None:
-                    return
-            arguments.append(token)
-    if last_is_comma:
-        return
-    return function_token.lower_name, arguments
+            this_part.append(token)
+    parts.append(this_part)
+    return tuple(parts)
 
 
-def check_attr_function(token, allowed_type=None):
-    function = parse_function(token)
-    if function is None:
-        return
-    name, args = function
-    if name == 'attr' and len(args) in (1, 2, 3):
-        if args[0].type != 'ident':
+def split_on_optional_comma(tokens):
+    """Split a list of tokens on optional commas, ie ``LiteralToken(',')``."""
+    parts = []
+    for split_part in split_on_comma(tokens):
+        if not split_part:
+            # Happens when there's a comma at the beginning, at the end, or
+            # when two commas are next to each other.
             return
-        attr_name = args[0].value
-        if len(args) == 1:
-            type_or_unit = 'string'
-            fallback = ''
-        else:
-            if args[1].type != 'ident':
-                return
-            type_or_unit = args[1].value
-            if type_or_unit not in ATTR_FALLBACKS:
-                return
-            if len(args) == 2:
-                fallback = ATTR_FALLBACKS[type_or_unit]
-            else:
-                fallback_type = args[2].type
-                if fallback_type == 'string':
-                    fallback = args[2].value
-                else:
-                    # TODO: handle other fallback types
-                    return
-        if allowed_type in (None, type_or_unit):
-            return ('attr()', (attr_name, type_or_unit, fallback))
+        for part in split_part:
+            parts.append(part)
+    return parts
 
 
-def check_counter_function(token, allowed_type=None):
-    from .validation.properties import list_style_type
-
-    function = parse_function(token)
-    if function is None:
-        return
-    name, args = function
-    arguments = []
-    if (name == 'counter' and len(args) in (1, 2)) or (
-            name == 'counters' and len(args) in (2, 3)):
-        ident = args.pop(0)
-        if ident.type != 'ident':
-            return
-        arguments.append(ident.value)
-
-        if name == 'counters':
-            string = args.pop(0)
-            if string.type != 'string':
-                return
-            arguments.append(string.value)
-
-        if args:
-            counter_style = list_style_type((args.pop(0),))
-            if counter_style is None:
-                return
-            arguments.append(counter_style)
-        else:
-            arguments.append('decimal')
-
-        return (f'{name}()', tuple(arguments))
+def remove_whitespace(tokens):
+    """Remove any top-level whitespace and comments in a token list."""
+    return tuple(
+        token for token in tokens
+        if token.type not in ('whitespace', 'comment'))
 
 
-def check_content_function(token):
-    function = parse_function(token)
-    if function is None:
-        return
-    name, args = function
-    if name == 'content':
-        if len(args) == 0:
-            return ('content()', 'text')
-        elif len(args) == 1:
-            ident = args.pop(0)
-            if ident.type == 'ident' and ident.lower_value in (
-                    'text', 'before', 'after', 'first-letter', 'marker'):
-                return ('content()', ident.lower_value)
+def get_keyword(token):
+    """If ``token`` is a keyword, return its lowercase name.
+
+    Otherwise return ``None``.
+
+    """
+    if token.type == 'ident':
+        return token.lower_value
 
 
-def check_string_or_element_function(string_or_element, token):
-    function = parse_function(token)
-    if function is None:
-        return
-    name, args = function
-    if name == string_or_element and len(args) in (1, 2):
-        custom_ident = args.pop(0)
-        if custom_ident.type != 'ident':
-            return
-        custom_ident = custom_ident.value
+def get_custom_ident(token):
+    """If ``token`` is a keyword, return its name.
 
-        if args:
-            ident = args.pop(0)
-            if ident.type != 'ident' or ident.lower_value not in (
-                    'first', 'start', 'last', 'first-except'):
-                return
-            ident = ident.lower_value
-        else:
-            ident = 'first'
+    Otherwise return ``None``.
 
-        return (f'{string_or_element}()', (custom_ident, ident))
+    """
+    if token.type == 'ident':
+        return token.value
 
 
-def check_var_function(token):
-    if function := parse_function(token):
-        name, args = function
-        if name == 'var' and args:
-            ident = args.pop(0)
-            # TODO: we should check authorized tokens
-            # https://drafts.csswg.org/css-syntax-3/#typedef-declaration-value
-            return ident.type == 'ident' and ident.value.startswith('--')
-        for arg in args:
-            if check_var_function(arg):
-                return True
+def get_single_keyword(tokens):
+    """If ``values`` is a 1-element list of keywords, return its name.
+
+    Otherwise return ``None``.
+
+    """
+    if len(tokens) == 1:
+        token = tokens[0]
+        if token.type == 'ident':
+            return token.lower_value
 
 
 def get_string(token):
@@ -551,13 +307,13 @@ def get_string(token):
         return ('string', token.value)
     if token.type == 'function':
         if token.name == 'attr':
-            return check_attr_function(token, 'string')
+            return functions.check_attr(token, 'string')
         elif token.name in ('counter', 'counters'):
-            return check_counter_function(token)
+            return functions.check_counter(token)
         elif token.name == 'content':
-            return check_content_function(token)
+            return functions.check_content(token)
         elif token.name == 'string':
-            return check_string_or_element_function('string', token)
+            return functions.check_string_or_element('string', token)
 
 
 def get_length(token, negative=True, percentage=False):
@@ -622,24 +378,26 @@ def get_image(token, base_url):
                 shape, size, position, 'repeating' in name)
 
 
-def _get_url_tuple(string, base_url):
-    if string.startswith('#'):
-        return ('url', ('internal', unquote(string[1:])))
-    else:
-        return ('url', ('external', safe_urljoin(base_url, string)))
-
-
 def get_url(token, base_url):
     """Parse an <url> token."""
     if token.type == 'url':
-        return _get_url_tuple(token.value, base_url)
+        url = get_url_tuple(token.value, base_url)
     elif token.type == 'function':
         if token.name == 'attr':
-            return check_attr_function(token, 'url')
+            return functions.check_attr(token, 'url')
         elif token.name == 'url' and len(token.arguments) in (1, 2):
             # Ignore url modifiers
             # See https://drafts.csswg.org/css-values-3/#urls
-            return _get_url_tuple(token.arguments[0].value, base_url)
+            url = get_url_tuple(token.arguments[0].value, base_url)
+        else:
+            return
+    else:
+        return
+
+    if url is None:
+        raise InvalidValues(f'Relative URI reference without a base URI: {url!r}')
+
+    return ('url', url)
 
 
 def get_quote(token):
@@ -653,7 +411,7 @@ def get_quote(token):
 
 def get_target(token, base_url):
     """Parse a <target> token."""
-    function = parse_function(token)
+    function = functions.parse_function(token)
     if function is None:
         return
     name, args = function
@@ -754,7 +512,7 @@ def get_content_list_token(token, base_url):
     if target is not None:
         return target
 
-    function = parse_function(token)
+    function = functions.parse_function(token)
     if function is None:
         return
     name, args = function
@@ -779,4 +537,41 @@ def get_content_list_token(token, base_url):
 
     # <element()>
     elif name == 'element':
-        return check_string_or_element_function('element', token)
+        return functions.check_string_or_element('element', token)
+
+
+def single_keyword(function):
+    """Decorator for validators that only accept a single keyword."""
+    @functools.wraps(function)
+    def keyword_validator(tokens):
+        """Wrap a validator to call get_single_keyword on tokens."""
+        keyword = get_single_keyword(tokens)
+        if function(keyword):
+            return keyword
+    return keyword_validator
+
+
+def single_token(function):
+    """Decorator for validators that only accept a single token."""
+    @functools.wraps(function)
+    def single_token_validator(tokens, *args):
+        """Validate a property whose token is single."""
+        if len(tokens) == 1:
+            return function(tokens[0], *args)
+    single_token_validator.__func__ = function
+    return single_token_validator
+
+
+def comma_separated_list(function):
+    """Decorator for validators that accept a comma separated list."""
+    @functools.wraps(function)
+    def wrapper(tokens, *args):
+        results = []
+        for part in split_on_comma(tokens):
+            result = function(remove_whitespace(part), *args)
+            if result is None:
+                return None
+            results.append(result)
+        return tuple(results)
+    wrapper.single_value = function
+    return wrapper

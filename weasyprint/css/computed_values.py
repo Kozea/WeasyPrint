@@ -1,16 +1,15 @@
 """Convert specified property values into computed values."""
 
 from math import pi
-from urllib.parse import unquote
 
 from tinycss2.color4 import parse_color
 
 from ..logger import LOGGER
 from ..text.ffi import FROM_UNITS, ffi, pango
 from ..text.line_break import Layout, first_line_metrics
-from ..urls import get_link_attribute
+from ..urls import get_link_attribute, get_url_tuple
 from .properties import INITIAL_VALUES, ZERO_PIXELS, Dimension
-from .utils import ANGLE_TO_RADIANS, LENGTH_UNITS, LENGTHS_TO_PIXELS, safe_urljoin
+from .units import ANGLE_TO_RADIANS, LENGTH_UNITS, LENGTHS_TO_PIXELS
 
 # Value in pixels of font-size for <absolute-size> keywords: 12pt (16px) for
 # medium, and scaling factors given in CSS3 for others:
@@ -172,11 +171,7 @@ def compute_attr(style, values):
         if type_or_unit == 'string':
             pass  # Keep the string
         elif type_or_unit == 'url':
-            if attr_value.startswith('#'):
-                attr_value = ('internal', unquote(attr_value[1:]))
-            else:
-                attr_value = (
-                    'external', safe_urljoin(style.base_url, attr_value))
+            attr_value = get_url_tuple(attr_value, style.base_url)
         elif type_or_unit == 'color':
             attr_value = parse_color(attr_value.strip())
         elif type_or_unit == 'integer':
