@@ -10,13 +10,13 @@ from tinycss2 import parse_component_value_list
 from tinycss2.color4 import parse_color
 
 from .. import computed_values
+from ..functions import check_var, parse_function
 from ..properties import KNOWN_PROPERTIES, ZERO_PIXELS, Dimension
 
-from ..utils import (  # isort:skip
-    InvalidValues, Pending, check_var_function, comma_separated_list,
-    get_angle, get_content_list, get_content_list_token, get_custom_ident,
-    get_image, get_keyword, get_length, get_resolution, get_single_keyword,
-    get_url, parse_2d_position, parse_function, parse_position,
+from ..tokens import (  # isort:skip
+    InvalidValues, Pending, comma_separated_list, get_angle, get_content_list,
+    get_content_list_token, get_custom_ident, get_image, get_keyword, get_length,
+    get_resolution, get_single_keyword, get_url, parse_2d_position, parse_position,
     remove_whitespace, single_keyword, single_token)
 
 PREFIX = '-weasy-'
@@ -94,7 +94,7 @@ def validate_non_shorthand(tokens, name, base_url=None, required=False):
 
     function = PROPERTIES[name]
     for token in tokens:
-        if check_var_function(token):
+        if check_var(token):
             # Found CSS variable, return pending-substitution values.
             return ((name, PendingProperty(tokens, name)),)
 

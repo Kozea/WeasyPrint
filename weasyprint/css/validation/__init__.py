@@ -5,7 +5,7 @@ from tinycss2 import parse_blocks_contents, serialize
 from tinycss2.ast import FunctionBlock, IdentToken, LiteralToken, WhitespaceToken
 
 from ... import LOGGER
-from ..utils import InvalidValues, remove_whitespace
+from ..tokens import InvalidValues, remove_whitespace
 from .expanders import EXPANDERS
 from .properties import PREFIX, PROPRIETARY, UNSTABLE, validate_non_shorthand
 

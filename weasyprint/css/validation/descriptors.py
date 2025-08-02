@@ -7,10 +7,10 @@ import tinycss2
 from ...logger import LOGGER
 from . import properties
 
-from ..utils import (  # isort:skip
+from ..tokens import (  # isort:skip
     InvalidValues, comma_separated_list, get_custom_ident, get_keyword,
-    get_single_keyword, get_url, remove_whitespace, single_keyword,
-    single_token, split_on_comma)
+    get_single_keyword, get_url, remove_whitespace, single_keyword, single_token,
+    split_on_comma)
 
 DESCRIPTORS = {
     'font-face': {},

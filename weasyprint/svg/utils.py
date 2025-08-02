@@ -25,7 +25,7 @@ def normalize(string):
 
 def size(string, font_size=None, percentage_reference=None):
     """Compute size from string, resolving units and percentages."""
-    from ..css.utils import LENGTHS_TO_PIXELS
+    from ..css.units import LENGTHS_TO_PIXELS
 
     if not string:
         return 0
