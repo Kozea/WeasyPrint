@@ -592,13 +592,16 @@ def resolve_var(computed, token, parent_style, known_variables=None):
             token.source_line, token.source_column, token.name, arguments)
         return resolve_var(computed, token, parent_style, known_variables) or (token,)
 
-    args = parse_function(token)[1]
-    variable_name = args.pop(0).value.replace('-', '_')  # first arg is name
+    function = parse_function(token)
+    args = function.split_comma(single_tokens=False, trailing=True)
+    if not args or len(args[0]) != 1:
+        return []
+    variable_name = args[0][0].value.replace('-', '_')  # first arg is name
     if variable_name in known_variables:
-        return []  # endless recursion, returned value is nothing
+        return []  # endless recursion
     else:
         known_variables.add(variable_name)
-    default = args  # next args are default value
+    default = args[1] if len(args) > 1 else []
     computed_value = []
     for value in (computed[variable_name] or default):
         resolved = resolve_var(computed, value, parent_style, known_variables)

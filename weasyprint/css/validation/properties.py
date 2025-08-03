@@ -546,17 +546,15 @@ def clear(keyword):
 @single_token
 def clip(token):
     """Validation for the ``clip`` property."""
-    function = parse_function(token)
-    if function:
-        name, args = function
-        if name == 'rect' and len(args) == 4:
+    if function := parse_function(token):
+        args = function.split_comma()
+        if function.name == 'rect' and len(args) == 4:
             values = []
             for arg in args:
                 if get_keyword(arg) == 'auto':
                     values.append('auto')
                 else:
-                    length = get_length(arg)
-                    if length:
+                    if length := get_length(arg):
                         values.append(length)
             if len(values) == 4:
                 return tuple(values)
@@ -1353,19 +1351,17 @@ def _track_breadth(token):
 
 def _track_size(token):
     """Parse ``track-size``."""
-    track_breadth = _track_breadth(token)
-    if track_breadth:
+    if track_breadth := _track_breadth(token):
         return track_breadth
-    function = parse_function(token)
-    if function:
-        name, args = function
-        if name == 'minmax':
+    if function := parse_function(token):
+        args = function.split_comma()
+        if function.name == 'minmax':
             if len(args) == 2:
                 inflexible_breadth = _inflexible_breadth(args[0])
                 track_breadth = _track_breadth(args[1])
                 if inflexible_breadth and track_breadth:
                     return ('minmax()', inflexible_breadth, track_breadth)
-        elif name == 'fit-content':
+        elif function.name == 'fit-content':
             if len(args) == 1:
                 length = get_length(args[0], negative=False, percentage=True)
                 if length:
@@ -1374,13 +1370,11 @@ def _track_size(token):
 
 def _fixed_size(token):
     """Parse ``fixed-size``."""
-    length = get_length(token, negative=False, percentage=True)
-    if length:
+    if length := get_length(token, negative=False, percentage=True):
         return length
-    function = parse_function(token)
-    if function:
-        name, args = function
-        if name == 'minmax' and len(args) == 2:
+    if function := parse_function(token):
+        args = function.split_comma()
+        if function.name == 'minmax' and len(args) == 2:
             length = get_length(args[0], negative=False, percentage=True)
             if length:
                 track_breadth = _track_breadth(args[1])
@@ -1450,19 +1444,24 @@ def grid_template(tokens):
             if line_names is not None:
                 subgrid_tokens.append(line_names)
                 continue
-            function = parse_function(token)
-            if function:
-                name, args = function
-                if name == 'repeat' and len(args) >= 2:
-                    if (args[0].type == 'number' and
-                            args[0].is_integer and args[0].value >= 1):
-                        number = args[0].int_value
-                    elif get_keyword(args[0]) == 'auto-fill':
+            if function := parse_function(token):
+                args = function.split_comma(single_tokens=False)
+                if len(args) != 2:
+                    return
+                repeat, tracks = args
+                if len(repeat) != 1 or not tracks:
+                    return
+                repeat, = repeat
+                if function.name == 'repeat' and len(args) >= 2:
+                    if (repeat.type == 'number' and
+                            repeat.is_integer and repeat.value >= 1):
+                        number = repeat.int_value
+                    elif get_keyword(repeat) == 'auto-fill':
                         number = 'auto-fill'
                     else:
                         return
                     line_names_list = []
-                    for arg in args[1:]:
+                    for arg in tracks:
                         line_names = _line_names(arg)
                         if line_names is not None:
                             line_names_list.append(line_names)
@@ -1498,24 +1497,29 @@ def grid_template(tokens):
                 return_tokens.append(track_size)
                 includes_track = True
                 continue
-            function = parse_function(token)
-            if function:
-                name, args = function
-                if name == 'repeat' and len(args) >= 2:
-                    if (args[0].type == 'number' and
-                            args[0].is_integer and args[0].value >= 1):
-                        number = args[0].int_value
-                    elif get_keyword(args[0]) in ('auto-fill', 'auto-fit'):
+            if function := parse_function(token):
+                args = function.split_comma(single_tokens=False)
+                if len(args) != 2:
+                    return
+                repeat, tracks = args
+                if len(repeat) != 1 or not tracks:
+                    return
+                repeat, = repeat
+                if function.name == 'repeat' and len(args) >= 2:
+                    if (repeat.type == 'number' and
+                            repeat.is_integer and repeat.value >= 1):
+                        number = repeat.int_value
+                    elif get_keyword(repeat) in ('auto-fill', 'auto-fit'):
                         # auto-repeat
                         if includes_auto_repeat:
                             return
-                        number = args[0].value
+                        number = repeat.value
                         includes_auto_repeat = True
                     else:
                         return
                     names_and_sizes = []
                     repeat_last_is_line_name = False
-                    for arg in args[1:]:
+                    for arg in tracks:
                         line_names = _line_names(arg)
                         if line_names is not None:
                             if repeat_last_is_line_name:
@@ -1523,7 +1527,7 @@ def grid_template(tokens):
                             names_and_sizes.append(line_names)
                             repeat_last_is_line_name = True
                             continue
-                        # fixed-repead
+                        # fixed-repeat
                         fixed_size = _fixed_size(arg)
                         if fixed_size:
                             if not repeat_last_is_line_name:
@@ -1886,10 +1890,9 @@ def anchor(token):
     """Validation for ``anchor``."""
     if get_keyword(token) == 'none':
         return 'none'
-    function = parse_function(token)
-    if function:
-        name, args = function
-        prototype = (name, [arg.type for arg in args])
+    if function := parse_function(token):
+        args = function.split_space()
+        prototype = (function.name, [arg.type for arg in args])
         if prototype == ('attr', ['ident']):
             return ('attr()', args[0].value)
 
@@ -1903,10 +1906,9 @@ def link(token, base_url):
     parsed_url = get_url(token, base_url)
     if parsed_url:
         return parsed_url
-    function = parse_function(token)
-    if function:
-        name, args = function
-        prototype = (name, [arg.type for arg in args])
+    if function := parse_function(token):
+        args = function.split_space()
+        prototype = (function.name, [arg.type for arg in args])
         if prototype == ('attr', ['ident']):
             return ('attr()', args[0].value)
 
@@ -1999,10 +2001,9 @@ def lang(token):
     """Validation for ``lang``."""
     if get_keyword(token) == 'none':
         return 'none'
-    function = parse_function(token)
-    if function:
-        name, args = function
-        prototype = (name, [arg.type for arg in args])
+    if function := parse_function(token):
+        args = function.split_space()
+        prototype = (function.name, [arg.type for arg in args])
         if prototype == ('attr', ['ident']):
             return ('attr()', args[0].value)
     elif token.type == 'string':
@@ -2076,53 +2077,52 @@ def transform(tokens):
     else:
         transforms = []
         for token in tokens:
-            function = parse_function(token)
-            if not function:
+            if (function := parse_function(token)) is None:
                 return
-            name, args = function
+            args = function.split_comma()
 
             if len(args) == 1:
                 angle = get_angle(args[0])
                 length = get_length(args[0], percentage=True)
-                if name == 'rotate' and angle is not None:
-                    transforms.append((name, angle))
-                elif name in ('skewx', 'skew') and angle is not None:
+                if function.name == 'rotate' and angle is not None:
+                    transforms.append((function.name, angle))
+                elif function.name in ('skewx', 'skew') and angle is not None:
                     transforms.append(('skew', (angle, 0)))
-                elif name == 'skewy' and angle is not None:
+                elif function.name == 'skewy' and angle is not None:
                     transforms.append(('skew', (0, angle)))
-                elif name in ('translatex', 'translate') and length:
+                elif function.name in ('translatex', 'translate') and length:
                     transforms.append(('translate', (length, ZERO_PIXELS)))
-                elif name == 'translatey' and length:
+                elif function.name == 'translatey' and length:
                     transforms.append(('translate', (ZERO_PIXELS, length)))
-                elif name == 'scalex' and args[0].type == 'number':
+                elif function.name == 'scalex' and args[0].type == 'number':
                     transforms.append(('scale', (args[0].value, 1)))
-                elif name == 'scaley' and args[0].type == 'number':
+                elif function.name == 'scaley' and args[0].type == 'number':
                     transforms.append(('scale', (1, args[0].value)))
-                elif name == 'scale' and args[0].type == 'number':
+                elif function.name == 'scale' and args[0].type == 'number':
                     transforms.append(('scale', (args[0].value,) * 2))
                 else:
                     return
             elif len(args) == 2:
-                if name == 'scale' and all(a.type == 'number' for a in args):
-                    transforms.append((name, tuple(arg.value for arg in args)))
-                elif name == 'translate':
+                if function.name == 'scale' and all(a.type == 'number' for a in args):
+                    transforms.append((function.name, tuple(arg.value for arg in args)))
+                elif function.name == 'translate':
                     lengths = tuple(
                         get_length(token, percentage=True) for token in args)
                     if all(lengths):
-                        transforms.append((name, lengths))
+                        transforms.append((function.name, lengths))
                     else:
                         return
-                elif name == 'skew':
+                elif function.name == 'skew':
                     angles = tuple(get_angle(token) for token in args)
                     if all(angle is not None for angle in angles):
-                        transforms.append((name, angles))
+                        transforms.append((function.name, angles))
                     else:
                         return
                 else:
                     return
-            elif len(args) == 6 and name == 'matrix' and all(
+            elif len(args) == 6 and function.name == 'matrix' and all(
                     a.type == 'number' for a in args):
-                transforms.append((name, tuple(arg.value for arg in args)))
+                transforms.append((function.name, tuple(arg.value for arg in args)))
             else:
                 return
         return tuple(transforms)
