@@ -620,17 +620,9 @@ def resolve_var(computed, token, parent_style, known_variables=None):
     return computed_value
 
 
-class InitialStyle(dict):
-    """Dummy computed style used to store initial values."""
-    def __init__(self, font_config):
-        self.parent_style = None
-        self.specified = self
-        self.cache = {}
-        self.font_config = font_config
-
-    def __missing__(self, key):
-        value = self[key] = INITIAL_VALUES[key]
-        return value
+def _resolve_calc_sum(tokens):
+    if len(tokens) == 1:
+        return tokens[0]
 
 
 def resolve_math(computed, token, key):
@@ -642,15 +634,17 @@ def resolve_math(computed, token, key):
     function = Function(token)
     if function.name is None:
         return
-
-    for arg in function.split_spaces():
-        if check_math(arg):
-            arg = resolve_math(computed, arg, key)[0]
-        args.append(arg)
+    for part in function.split_comma(single_tokens=False):
+        args.append([])
+        for arg in part:
+            if check_math(arg):
+                arg = resolve_math(computed, arg, key)[0]
+            args[-1].append(arg)
 
     if function.name in ('min', 'max'):
         target_value = target_token = None
-        for token in args:
+        for tokens in args:
+            token = _resolve_calc_sum(tokens)
             if getattr(token, 'unit') == '%':
                 raise NotImplementedError
             value = tokenize(to_pixels(token, computed), unit='px')
@@ -665,17 +659,19 @@ def resolve_math(computed, token, key):
     elif function.name == 'round':
         strategy, multiple = 'nearest', 1
         if len(args) == 1:
-            number_token, = args
+            number_token = _resolve_calc_sum(args[0])
         elif len(args) == 2:
-            if args[0].value in ('nearest', 'up', 'down', 'to-zero'):
-                strategy_token, number_token = args
-                strategy = strategy_token.value
+            strategies = ('nearest', 'up', 'down', 'to-zero')
+            if len(args[0]) == 1 and args[0][0].value in strategies:
+                strategy = args[0][0].value
+                number_token = _resolve_calc_sum(args[1])
             else:
-                number_token, multiple_token = args
+                number_token, multiple_token = [_resolve_calc_sum(arg) for arg in args]
                 multiple = multiple_token.value
         elif len(args) == 3:
-            strategy_token, number_token, multiple_token = args
-            strategy, multiple = strategy_token.value, multiple_token.value
+            strategy = args[0][0].value
+            number_token, multiple_token = [_resolve_calc_sum(arg) for arg in args[1:]]
+            multiple = multiple_token.value
         if strategy == 'nearest':
             function = round
         elif strategy == 'up':
@@ -687,7 +683,7 @@ def resolve_math(computed, token, key):
         return [tokenize(number_token, lambda x: function(x / multiple) * multiple)]
 
     elif function.name in ('mod', 'rem'):
-        number_token, parameter_token = args
+        number_token, parameter_token = [_resolve_calc_sum(arg) for arg in args]
         number, parameter = number_token.value, parameter_token.value
         value = number % parameter
         if function.name == 'rem' and number * parameter < 0:
@@ -695,25 +691,28 @@ def resolve_math(computed, token, key):
         return [tokenize(number_token, lambda x: value)]
 
     elif function.name in ('sin', 'cos', 'tan'):
-        if getattr(args[0], 'unit', None) is None:
-            angle = args[0].value
+        number_token = _resolve_calc_sum(args[0])
+        if getattr(number_token, 'unit', None) is None:
+            angle = number_token.value
         else:
-            angle = get_angle(args[0])
+            angle = get_angle(number_token)
         value = getattr(math, function.name)(angle)
         return [tokenize(value)]
 
     elif function.name in ('asin', 'acos', 'atan'):
-        value = getattr(math, function.name)(args[0].value)
+        number_token = _resolve_calc_sum(args[0])
+        value = getattr(math, function.name)(number_token.value)
         return [tokenize(value, unit='rad')]
 
     elif function.name == 'atan2':
-        y_token, x_token = args
+        y_token, x_token = [_resolve_calc_sum(arg) for arg in args]
         y, x = y_token.value, x_token.value
         return [tokenize(math.atan2(y, x), unit='rad')]
 
     elif function.name == 'clamp':
         pixels = []
-        for token in args:
+        for tokens in args:
+            token = _resolve_calc_sum(tokens)
             if getattr(token, 'unit') == '%':
                 raise NotImplementedError
             pixels.append(tokenize(to_pixels(token, computed), unit='px'))
@@ -725,30 +724,33 @@ def resolve_math(computed, token, key):
         return [tokenize(token)]
 
     elif function.name == 'pow':
-        number_token, power_token = args
+        number_token, power_token = [_resolve_calc_sum(arg) for arg in args]
         return [tokenize(number_token, lambda x: x ** power_token.value)]
 
     elif function.name == 'sqrt':
-        number_token, = args
+        number_token, = [_resolve_calc_sum(arg) for arg in args]
         return [tokenize(number_token, lambda x: x ** 0.5)]
 
     elif function.name == 'hypot':
-        value = math.hypot(*[token.value for token in args])
-        return [tokenize(args[0], lambda x: value)]
+        resolved = [_resolve_calc_sum(tokens) for tokens in args]
+        value = math.hypot(*[token.value for token in resolved])
+        return [tokenize(resolved[0], lambda x: value)]
 
     elif function.name == 'log':
-        number_token = args[0]
-        base_token = args[1].value if len(args) == 2 else math.e
-        return [tokenize(number_token, lambda x: math.log(x, base_token))]
+        number_token = _resolve_calc_sum(args[0])
+        base = _resolve_calc_sum(args[1]).value if len(args) == 2 else math.e
+        return [tokenize(number_token, lambda x: math.log(x, base))]
 
     elif function.name == 'exp':
-        return [tokenize(args[0], math.exp)]
+        return [tokenize(_resolve_calc_sum(args[0]), math.exp)]
 
     elif function.name == 'abs':
-        return [tokenize(args[0], abs)]
+        return [tokenize(_resolve_calc_sum(args[0]), abs)]
 
     elif function.name == 'sign':
-        return [tokenize(args[0], lambda x: 0 if x == 0 else 1 if x > 0 else -1)]
+        return [tokenize(
+            _resolve_calc_sum(args[0]),
+            lambda x: 0 if x == 0 else 1 if x > 0 else -1)]
 
     arguments = []
     for i, argument in enumerate(token.arguments):
@@ -759,6 +761,19 @@ def resolve_math(computed, token, key):
     token = tinycss2.ast.FunctionBlock(
         token.source_line, token.source_column, token.name, arguments)
     return resolve_math(computed, token, key) or (token,)
+
+
+class InitialStyle(dict):
+    """Dummy computed style used to store initial values."""
+    def __init__(self, font_config):
+        self.parent_style = None
+        self.specified = self
+        self.cache = {}
+        self.font_config = font_config
+
+    def __missing__(self, key):
+        value = self[key] = INITIAL_VALUES[key]
+        return value
 
 
 class AnonymousStyle(dict):
