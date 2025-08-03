@@ -139,7 +139,8 @@ def register_computer(name):
 
 
 def compute_attr(style, values):
-    # TODO: use real token parsing instead of casting with Python types
+    # TODO: use real token parsing instead of casting with Python types, and follow new
+    # syntax. See https://drafts.csswg.org/css-values-5/#attr-notation.
     func_name, value = values
     assert func_name == 'attr()'
     attr_name, type_or_unit, fallback = value
@@ -164,6 +165,8 @@ def compute_attr(style, values):
         elif type_or_unit in ANGLE_TO_RADIANS:
             attr_value = Dimension(float(attr_value.strip()), type_or_unit)
             type_or_unit = 'angle'
+        else:
+            return
     except Exception:
         return
     return (type_or_unit, attr_value)

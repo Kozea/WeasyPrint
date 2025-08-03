@@ -599,7 +599,7 @@ def test_background_transform(assert_pixels):
         body { position: absolute;
                width: 5px; height: 5px;
                top: -5px; left: -5px;
-               transform: translate(6px 6px);
+               transform: translate(6px,6px);
                background: red }
       </style>
       <body>''')

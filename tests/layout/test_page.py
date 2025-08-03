@@ -1589,7 +1589,7 @@ def test_running_elements(argument, texts):
         @page {
           margin: 50px;
           size: 200px;
-          @bottom-center { content: element(title %s) }
+          @bottom-center { content: element(title, %s) }
         }
         article { break-after: page }
         h1 { position: running(title) }

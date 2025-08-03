@@ -10,7 +10,7 @@ def test_target_counter():
         div:first-child { counter-reset: div }
         div { counter-increment: div }
         #id1::before { content: target-counter('#id4', div) }
-        #id2::before { content: 'test ' target-counter('#id1' div) }
+        #id2::before { content: 'test ' target-counter('#id1', div) }
         #id3::before { content: target-counter(url(#id4), div, lower-roman) }
         #id4::before { content: target-counter('#id3', div) }
       </style>

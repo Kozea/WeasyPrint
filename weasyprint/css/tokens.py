@@ -280,19 +280,6 @@ def split_on_comma(tokens):
     return tuple(parts)
 
 
-def split_on_optional_comma(tokens):
-    """Split a list of tokens on optional commas, ie ``LiteralToken(',')``."""
-    parts = []
-    for split_part in split_on_comma(tokens):
-        if not split_part:
-            # Happens when there's a comma at the beginning, at the end, or
-            # when two commas are next to each other.
-            return
-        for part in split_part:
-            parts.append(part)
-    return parts
-
-
 def remove_whitespace(tokens):
     """Remove any top-level whitespace and comments in a token list."""
     return tuple(
@@ -379,21 +366,21 @@ def get_image(token, base_url):
     """Parse an <image> token."""
     from ..images import LinearGradient, RadialGradient
 
-    parsed_url = get_url(token, base_url)
-    if parsed_url:
+    if parsed_url := get_url(token, base_url):
         assert parsed_url[0] == 'url'
         if parsed_url[1][0] == 'external':
             return 'url', parsed_url[1][1]
-    if token.type != 'function':
+    if not (function := functions.parse_function(token)):
         return
-    arguments = split_on_comma(remove_whitespace(token.arguments))
-    name = token.lower_name
-    if name in ('linear-gradient', 'repeating-linear-gradient'):
+    if not (arguments := function.split_comma(single_tokens=False)):
+        return
+    repeating = function.name.startswith('repeating-')
+    if function.name in ('linear-gradient', 'repeating-linear-gradient'):
         direction, color_stops = parse_linear_gradient_parameters(arguments)
         color_stops, color_hints = parse_color_stops_and_hints(color_stops)
         return 'linear-gradient', LinearGradient(
-            color_stops, direction, 'repeating' in name, color_hints)
-    elif name in ('radial-gradient', 'repeating-radial-gradient'):
+            color_stops, direction, repeating, color_hints)
+    elif function.name in ('radial-gradient', 'repeating-radial-gradient'):
         result = parse_radial_gradient_parameters(arguments)
         if result is not None:
             shape, size, position, color_stops = result
@@ -404,7 +391,7 @@ def get_image(token, base_url):
             color_stops = arguments
         color_stops, color_hints = parse_color_stops_and_hints(color_stops)
         return 'radial-gradient', RadialGradient(
-            color_stops, shape, size, position, 'repeating' in name, color_hints)
+            color_stops, shape, size, position, repeating, color_hints)
 
 
 def get_url(token, base_url):
@@ -440,21 +427,19 @@ def get_quote(token):
 
 def get_target(token, base_url):
     """Parse a <target> token."""
-    function = functions.parse_function(token)
-    if function is None:
-        return
-    name, args = function
-    args = split_on_optional_comma(args)
-    if not args:
+    if not (function := functions.parse_function(token)):
         return
 
-    if name == 'target-counter':
+    if not (args := function.split_comma()):
+        return
+
+    if function.name == 'target-counter':
         if len(args) not in (2, 3):
             return
-    elif name == 'target-counters':
+    elif function.name == 'target-counters':
         if len(args) not in (3, 4):
             return
-    elif name == 'target-text':
+    elif function.name == 'target-text':
         if len(args) not in (1, 2):
             return
     else:
@@ -472,16 +457,13 @@ def get_target(token, base_url):
     else:
         values.append(string_link)
 
-    if name.startswith('target-counter'):
-        if not args:
-            return
-
+    if function.name.startswith('target-counter'):
         ident = args.pop(0)
         if ident.type != 'ident':
             return
         values.append(ident.value)
 
-        if name == 'target-counters':
+        if function.name == 'target-counters':
             string = get_string(args.pop(0))
             if string is None:
                 return
@@ -501,7 +483,7 @@ def get_target(token, base_url):
             content = 'content'
         values.append(content)
 
-    return (f'{name}()', tuple(values))
+    return (f'{function.name}()', tuple(values))
 
 
 def get_content_list(tokens, base_url):
@@ -515,11 +497,10 @@ def get_content_list(tokens, base_url):
 
 def get_content_list_token(token, base_url):
     """Parse one of the <content-list> tokens."""
-    # See https://www.w3.org/TR/css-content-3/#typedef-content-list
+    # See https://drafts.csswg.org/css-content-3/#content-values.
 
     # <string>
-    string = get_string(token)
-    if string is not None:
+    if (string := get_string(token)) is not None:
         return string
 
     # contents
@@ -527,27 +508,23 @@ def get_content_list_token(token, base_url):
         return ('content()', 'text')
 
     # <uri>
-    url = get_url(token, base_url)
-    if url is not None:
+    if (url := get_url(token, base_url)) is not None:
         return url
 
     # <quote>
-    quote = get_quote(token)
-    if quote is not None:
+    if (quote := get_quote(token)) is not None:
         return ('quote', quote)
 
     # <target>
-    target = get_target(token, base_url)
-    if target is not None:
+    if (target := get_target(token, base_url)) is not None:
         return target
 
-    function = functions.parse_function(token)
-    if function is None:
+    if (function := functions.parse_function(token)) is None:
         return
-    name, args = function
+    args = function.split_comma()
 
     # <leader()>
-    if name == 'leader':
+    if function.name == 'leader':
         if len(args) != 1:
             return
         arg, = args
@@ -565,7 +542,7 @@ def get_content_list_token(token, base_url):
         return ('leader()', ('string', string))
 
     # <element()>
-    elif name == 'element':
+    elif function.name == 'element':
         return functions.check_string_or_element('element', token)
 
 

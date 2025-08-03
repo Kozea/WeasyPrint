@@ -1,20 +1,53 @@
 """CSS functions parsers."""
 
-from .properties import Dimension
-from .units import ANGLE_UNITS, LENGTH_UNITS
+class Function:
+    """CSS function."""
+    # See https://drafts.csswg.org/css-values-4/#functional-notation.
 
-ATTR_FALLBACKS = {
-    'string': ('string', ''),
-    'color': ('ident', 'currentcolor'),
-    'url': ('external', 'about:invalid'),
-    'integer': ('number', 0),
-    'number': ('number', 0),
-    '%': ('number', 0),
-}
-for unit in LENGTH_UNITS:
-    ATTR_FALLBACKS[unit] = ('length', Dimension('0', unit))
-for unit in ANGLE_UNITS:
-    ATTR_FALLBACKS[unit] = ('angle', Dimension('0', unit))
+    def __init__(self, token):
+        """Create Function from function token."""
+        self.name = token.lower_name
+        self.arguments = token.arguments
+
+    def split_space(self):
+        """Split arguments on spaces."""
+        return [
+            argument for argument in self.arguments
+            if argument.type not in ('whitespace', 'comment')]
+
+    def split_comma(self, single_tokens=True, trailing=False):
+        """Split arguments on commas.
+
+        Spaces in parentheses and after commas are removed.
+
+        If ``single_tokens`` is ``True``, check that only a single token is between
+        commas and flatten returned list.
+
+        If ``trailing`` is ``True``, allow a bare comma at the end.
+
+        """
+        parts = [[]]
+        for token in self.arguments:
+            if token.type == 'literal' and token.value == ',':
+                parts.append([])
+                continue
+            if token.type not in ('comment', 'whitespace'):
+                parts[-1].append(token)
+
+        if trailing:
+            if single_tokens:
+                if all(len(part) == 1 for part in parts[:-1]):
+                    if len(parts[-1]) in (0, 1):
+                        return [part[0] if part else None for part in parts[:-1]]
+            elif all(parts[:-1]):
+                return parts
+        else:
+            if single_tokens:
+                if all(len(part) == 1 for part in parts):
+                    return [part[0] for part in parts]
+            elif all(parts):
+                return parts
+        return []
 
 
 def parse_function(function_token):
@@ -42,99 +75,94 @@ def parse_function(function_token):
         else:
             last_is_comma = False
             if token.type == 'function':
-                argument_function = parse_function(token)
-                if argument_function is None:
+                if parse_function(token) is None:
                     return
             arguments.append(token)
     if last_is_comma:
         return
-    return function_token.lower_name, arguments
+    return Function(function_token)
 
 
 def check_attr(token, allowed_type=None):
-    function = parse_function(token)
-    if function is None:
+    if not (function := parse_function(token)) or function.name != 'attr':
         return
-    name, args = function
-    if name == 'attr' and len(args) in (1, 2, 3):
-        if args[0].type != 'ident':
-            return
-        attr_name = args[0].value
-        if len(args) == 1:
-            type_or_unit = 'string'
-            fallback = ''
-        else:
-            if args[1].type != 'ident':
-                return
-            type_or_unit = args[1].value
-            if type_or_unit not in ATTR_FALLBACKS:
-                return
-            if len(args) == 2:
-                fallback = ATTR_FALLBACKS[type_or_unit]
-            else:
-                fallback_type = args[2].type
-                if fallback_type == 'string':
-                    fallback = args[2].value
-                else:
-                    # TODO: handle other fallback types
-                    return
-        if allowed_type in (None, type_or_unit):
-            return ('attr()', (attr_name, type_or_unit, fallback))
+
+    if len(parts := function.split_comma(single_tokens=False, trailing=True)) == 1:
+        name_and_type, fallback = parts[0], ''
+    elif len(parts) == 2:
+        name_and_type, fallback = parts
+    else:
+        return
+
+    if any(token.type != 'ident' for token in name_and_type):
+        return
+    # TODO: follow new syntax, see https://drafts.csswg.org/css-values-5/#attr-notation.
+
+    name = name_and_type[0].value
+    type_or_unit = name_and_type[1].value if len(name_and_type) == 2 else 'string'
+    if allowed_type in (None, type_or_unit):
+        return ('attr()', (name, type_or_unit, fallback))
 
 
 def check_counter(token, allowed_type=None):
     from .validation.properties import list_style_type
 
-    function = parse_function(token)
-    if function is None:
+    if not (function := parse_function(token)):
         return
-    name, args = function
-    arguments = []
-    if (name == 'counter' and len(args) in (1, 2)) or (
-            name == 'counters' and len(args) in (2, 3)):
-        ident = args.pop(0)
-        if ident.type != 'ident':
+
+    args = function.split_comma()
+
+    if function.name == 'counter':
+        if len(args) not in (1, 2):
             return
-        arguments.append(ident.value)
+    elif function.name == 'counters':
+        if len(args) not in (2, 3):
+            return
+    else:
+        return
 
-        if name == 'counters':
-            string = args.pop(0)
-            if string.type != 'string':
-                return
-            arguments.append(string.value)
+    result = []
+    ident = args.pop(0)
+    if ident.type != 'ident':
+        return
+    result.append(ident.value)
 
-        if args:
-            counter_style = list_style_type((args.pop(0),))
-            if counter_style is None:
-                return
-            arguments.append(counter_style)
-        else:
-            arguments.append('decimal')
+    if function.name == 'counters':
+        string = args.pop(0)
+        if string.type != 'string':
+            return
+        result.append(string.value)
 
-        return (f'{name}()', tuple(arguments))
+    if args:
+        counter_style = list_style_type((args.pop(0),))
+        if counter_style is None:
+            return
+        result.append(counter_style)
+    else:
+        result.append('decimal')
+
+    return (f'{function.name}()', tuple(result))
 
 
 def check_content(token):
-    function = parse_function(token)
-    if function is None:
+    if (function := parse_function(token)) is None:
         return
-    name, args = function
-    if name == 'content':
+    args = function.split_comma()
+    if function.name == 'content':
         if len(args) == 0:
             return ('content()', 'text')
         elif len(args) == 1:
             ident = args.pop(0)
-            if ident.type == 'ident' and ident.lower_value in (
-                    'text', 'before', 'after', 'first-letter', 'marker'):
+            values = ('text', 'before', 'after', 'first-letter', 'marker')
+            if ident.type == 'ident' and ident.lower_value in values:
                 return ('content()', ident.lower_value)
 
 
 def check_string_or_element(string_or_element, token):
-    function = parse_function(token)
-    if function is None:
+    if (function := parse_function(token)) is None:
         return
-    name, args = function
-    if name == string_or_element and len(args) in (1, 2):
+    args = function.split_comma()
+    if function.name == string_or_element and len(args) in (1, 2):
         custom_ident = args.pop(0)
         if custom_ident.type != 'ident':
             return
@@ -153,13 +181,12 @@ def check_string_or_element(string_or_element, token):
 
 
 def check_var(token):
-    if function := parse_function(token):
-        name, args = function
-        if name == 'var' and args:
-            ident = args.pop(0)
-            # TODO: we should check authorized tokens
-            # https://drafts.csswg.org/css-syntax-3/#typedef-declaration-value
-            return ident.type == 'ident' and ident.value.startswith('--')
-        for arg in args:
-            if check_var(arg):
-                return True
+    if not (function := parse_function(token)):
+        return
+    arguments = function.split_space()
+    if function.name == 'var':
+        ident = arguments[0]
+        # TODO: we should check authorized tokens
+        # https://drafts.csswg.org/css-syntax-3/#typedef-declaration-value
+        return ident.type == 'ident' and ident.value.startswith('--')
+    return any(check_var(argument) for argument in arguments)
