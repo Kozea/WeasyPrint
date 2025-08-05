@@ -626,6 +626,9 @@ def _resolve_calc_sum(computed, tokens):
         if token.type == 'literal' and token.value in '+-':
             groups.append(token.value)
             groups.append([])
+        elif token.type == '() block':
+            content = remove_whitespace(token.content)
+            groups[-1].append(_resolve_calc_sum(computed, content))
         else:
             groups[-1].append(token)
 
