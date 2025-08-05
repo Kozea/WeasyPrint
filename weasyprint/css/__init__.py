@@ -36,8 +36,8 @@ from .validation import preprocess_declarations
 from .validation.descriptors import preprocess_descriptors
 
 from .tokens import (  # isort:skip
-    InvalidValues, Pending, get_angle, get_url, remove_whitespace, split_on_comma,
-    tokenize)
+    E, MINUS_INFINITY, NAN, PI, PLUS_INFINITY, InvalidValues, Pending, get_angle,
+    get_url, remove_whitespace, split_on_comma, tokenize)
 
 # Reject anything not in here:
 PSEUDO_ELEMENTS = (
@@ -664,7 +664,7 @@ def _resolve_calc_product(computed, tokens):
             groups[-1].append(tokenize(to_pixels(token, computed), unit='px'))
         elif token.type == 'dimension' and token.unit.lower() in ANGLE_UNITS:
             groups[-1].append(tokenize(to_radians(token), unit='rad'))
-        elif token.type == 'percentage':
+        elif token.type in ('percentage', 'ident'):
             groups[-1].append(token)
         else:
             raise NotImplementedError
@@ -694,8 +694,20 @@ def _resolve_calc_product(computed, tokens):
 
 def _resolve_calc_value(computed, tokens):
     if len(tokens) == 1:
-        return tokens[0]
-
+        token, = tokens
+        if token.type in ('number', 'dimension', 'percentage'):
+            return token
+        elif token.type == 'ident':
+            if token.lower_value == 'e':
+                return E
+            elif token.lower_value == 'pi':
+                return PI
+            elif token.lower_value == 'infinity':
+                return PLUS_INFINITY
+            elif token.lower_value == '-infinity':
+                return MINUS_INFINITY
+            elif token.lower_value == 'nan':
+                return NAN
 
 def resolve_math(computed, token, key):
     """Return token with resolved math functions."""

@@ -2,7 +2,7 @@
 
 import functools
 from abc import ABC, abstractmethod
-from math import pi
+from math import e, inf, nan, pi
 
 from tinycss2 import ast
 from tinycss2.color4 import parse_color
@@ -40,6 +40,12 @@ DIRECTION_KEYWORDS = {
     ('to', 'bottom', 'right'): ('corner', 'bottom_right'),
     ('to', 'right', 'bottom'): ('corner', 'bottom_right'),
 }
+
+E = ast.NumberToken(0, 0, e, None, 'e')
+PI = ast.NumberToken(0, 0, pi, None, 'π')
+PLUS_INFINITY = ast.NumberToken(0, 0, inf, None, '∞')
+MINUS_INFINITY = ast.NumberToken(0, 0, -inf, None, '-∞')
+NAN = ast.NumberToken(0, 0, nan, None, 'NaN')
 
 
 class InvalidValues(ValueError):  # noqa: N818
