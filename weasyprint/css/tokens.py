@@ -596,5 +596,7 @@ def tokenize(item, function=None, unit=None):
         representation = str(int_value if value.is_integer() else value)
         if unit is None:
             return ast.NumberToken(0, 0, value, int_value, representation)
+        elif unit == '%':
+            return ast.PercentageToken(0, 0, value, int_value, f'{representation}%')
         else:
             return ast.DimensionToken(0, 0, value, int_value, representation, unit)

@@ -171,7 +171,7 @@ def check_math(token):
     function = Function(token)
     if (name := function.name) is None:
         return
-    arguments = function.split_space()
+    arguments = function.split_comma(single_tokens=False)
     if name == 'calc':
         return len(arguments) >= 1
     elif name in ('min', 'max'):
@@ -200,4 +200,5 @@ def check_math(token):
         return len(arguments) == 1
     elif name in ('abs', 'sign'):
         return len(arguments) == 1
-    return any(check_math(arguments) for argument in arguments)
+    arguments = function.split_space()
+    return any(check_math(argument) for argument in arguments)

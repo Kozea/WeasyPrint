@@ -48,7 +48,7 @@ def to_pixels(value, style, property_name, font_size=None):
     if (unit := value.unit.lower()) == 'px':
         return value.value
     elif unit in LENGTHS_TO_PIXELS:
-        # Convert absolute lengths to pixels
+        # Convert absolute lengths to pixels.
         return value.value * LENGTHS_TO_PIXELS[unit]
     elif unit in FONT_UNITS:
         assert (style, font_size) != (None, None)
@@ -78,3 +78,11 @@ def to_pixels(value, style, property_name, font_size=None):
         else:
             ratio = character_ratio(style, unit)
             return value.value * font_size * ratio
+
+
+def to_radians(value, style=None, font_size=None):
+    """Get number of radians corresponding to an angle."""
+    if (unit := value.unit.lower()) == 'rad':
+        return value.value
+    elif unit in ANGLE_TO_RADIANS:
+        return value.value * ANGLE_TO_RADIANS[unit]
