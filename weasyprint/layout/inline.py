@@ -54,7 +54,15 @@ def iter_line_boxes(context, box, position_y, bottom_space, skip_stack,
 def get_next_linebox(context, linebox, position_y, bottom_space, skip_stack,
                      containing_block, absolute_boxes, fixed_boxes,
                      first_letter_style):
-    """Return ``(line, resume_at)``."""
+    """Return next line from given linebox.
+
+    Return ``(line, resume_at)``, where ``line`` is a new linebox copied from the
+    original one, with replaced children.
+
+    This function takes care of excluded floating shapes to avoid collisions.
+
+    """
+
     skip_stack = skip_first_whitespace(linebox, skip_stack)
     if skip_stack == 'continue':
         return None, None
@@ -441,14 +449,12 @@ def split_inline_level(context, box, position_x, max_x, bottom_space,
                        line_children):
     """Fit as much content as possible from an inline-level box in a width.
 
-    Return ``(new_box, resume_at, preserved_line_break, first_letter,
-    last_letter)``. ``resume_at`` is ``None`` if all of the content
-    fits. Otherwise it can be passed as a ``skip_stack`` parameter to resume
-    where we left off.
+    Return ``(new_box, resume_at, preserved_line_break, first_letter, last_letter)``.
+    ``resume_at`` is ``None`` if all of the content fits. Otherwise it can be passed as
+    a ``skip_stack`` parameter to resume where we left off.
 
     ``new_box`` is non-empty (unless the box is empty) and as big as possible
-    while being narrower than ``available_width``, if possible (may overflow
-    is no split is possible.)
+    while respecting ``max_x``, if possible (may overflow is no split is possible.)
 
     """
     resolve_percentages(box, containing_block)
@@ -657,7 +663,21 @@ def _break_waiting_children(context, box, max_x, bottom_space,
 def split_inline_box(context, box, position_x, max_x, bottom_space, skip_stack,
                      containing_block, absolute_boxes, fixed_boxes,
                      line_placeholders, waiting_floats, line_children):
-    """Same behavior as split_inline_level."""
+    """Fit as much content as possible from an inline box in a width.
+
+    Return ``(new_box, resume_at, preserved_line_break, first_letter, last_letter)``.
+    ``resume_at`` is ``None`` if all of the content fits. Otherwise it can be passed as
+    a ``skip_stack`` parameter to resume where we left off.
+
+    ``new_box`` is non-empty (unless the box is empty) and as big as possible while
+    respecting ``max_x``, if possible (may overflow is no split is possible.)
+
+    This is the recursive step that loops over the children of the box; base steps of
+    recursion are handled by ``split_inline_level()``.
+
+    In this phase, excluded floating shapes are ignored.
+
+    """
 
     # In some cases (shrink-to-fit result being the preferred width)
     # max_x is coming from Pango itself,
@@ -731,6 +751,9 @@ def split_inline_box(context, box, position_x, max_x, bottom_space, skip_stack,
                     context, child, position_x, available_width, bottom_space,
                     skip_stack, containing_block, absolute_boxes, fixed_boxes,
                     line_placeholders, child_waiting_floats, line_children))
+
+        float_widths['left'] = max(float_widths['left'], new_float_widths['left'])
+        float_widths['right'] = max(float_widths['right'], new_float_widths['right'])
 
         skip_stack = None
         if preserved:

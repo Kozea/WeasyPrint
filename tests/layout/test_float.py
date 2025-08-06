@@ -805,3 +805,19 @@ def test_formatting_context_avoid_rtl():
         <div style="overflow: hidden"></div>
       </div>
     ''')
+
+
+@assert_no_logs
+def test_nested_right_float():
+    # Regression test for #1510.
+    page, = render_pages('''
+      <style>
+        body { width: 100px; font: 20px weasyprint }
+        div { float: right; width: 50px }
+      </style>
+      <b><i><div></div></i></b>ab c''')
+    html, = page.children
+    body, = html.children
+    line1, line2 = body.children
+    assert line1.width == 40
+    assert line2.width == 20
