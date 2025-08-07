@@ -120,6 +120,7 @@ class FontConfiguration:
 
         # Try values in "src" descriptor until one works.
         string = ffi.new('FcChar8 **')
+        local = False
         for font_type, url in rule_descriptors['src']:
             # Abort if font URL is broken.
             if url is None or font_type == 'internal':
@@ -152,6 +153,7 @@ class FontConfiguration:
                             matching_pattern, b'file', 0, string)
                         path = ffi.string(string[0]).decode(FILESYSTEM_ENCODING)
                         url = Path(path).as_uri()
+                        local = True
                         break
                 else:
                     # Names don’t match, abort.
@@ -188,26 +190,33 @@ class FontConfiguration:
             # Create Fontconfig XML config file.
             mode = 'assign_replace'
             root = Element('fontconfig')
+
+            match = SubElement(root, 'match', target='pattern')
+            test = SubElement(match, 'test', name='family', compare='eq')
+            SubElement(test, 'string').text = rule_descriptors['font_family']
+            if 'font_style' in rule_descriptors:
+                test = SubElement(match, 'test', name='slant', compare='eq')
+                text = FONTCONFIG_STYLE[rule_descriptors['font_style']]
+                SubElement(test, 'const').text = text
+            if 'font_weight' in rule_descriptors:
+                test = SubElement(match, 'test', name='weight', compare='eq')
+                integer = FONTCONFIG_WEIGHT[rule_descriptors['font_weight']]
+                SubElement(test, 'int').text = str(integer)
+            if 'font_stretch' in rule_descriptors:
+                test = SubElement(match, 'test', name='width', compare='eq')
+                text = FONTCONFIG_STRETCH[rule_descriptors['font_stretch']]
+                SubElement(test, 'const').text = text
+            edit = SubElement(match, 'edit', name='file', mode=mode)
+            SubElement(edit, 'string').text = str(font_path)
+
             match = SubElement(root, 'match', target='scan')
             test = SubElement(match, 'test', name='file', compare='eq')
             SubElement(test, 'string').text = str(font_path)
-            edit = SubElement(match, 'edit', name='family', mode=mode)
-            SubElement(edit, 'string').text = rule_descriptors['font_family']
-            if 'font_style' in rule_descriptors:
-                edit = SubElement(match, 'edit', name='slant', mode=mode)
-                text = FONTCONFIG_STYLE[rule_descriptors['font_style']]
-                SubElement(edit, 'const').text = text
-            if 'font_weight' in rule_descriptors:
-                edit = SubElement(match, 'edit', name='weight', mode=mode)
-                integer = FONTCONFIG_WEIGHT[rule_descriptors['font_weight']]
-                SubElement(edit, 'int').text = str(integer)
-            if 'font_stretch' in rule_descriptors:
-                edit = SubElement(match, 'edit', name='width', mode=mode)
-                text = FONTCONFIG_STRETCH[rule_descriptors['font_stretch']]
-                SubElement(edit, 'const').text = text
-            match = SubElement(root, 'match', target='font')
-            test = SubElement(match, 'test', name='file', compare='eq')
-            SubElement(test, 'string').text = str(font_path)
+            if not local:
+                # Makes Pango crash,
+                # see https://gitlab.gnome.org/GNOME/pango/-/issues/862.
+                edit = SubElement(match, 'edit', name='family', mode=mode)
+                SubElement(edit, 'string').text = rule_descriptors['font_family']
             descriptors = {
                 rules[0][0].replace('-', '_'): rules[0][1] for rules in
                 rule_descriptors.get('font_variant', [])}
@@ -225,6 +234,7 @@ class FontConfiguration:
                     range_ = SubElement(charset, 'range')
                     for value in (unicode_range.start, unicode_range.end):
                         SubElement(range_, 'int').text = f'0x{value:x}'
+
             header = (
                 b'<?xml version="1.0"?>',
                 b'<!DOCTYPE fontconfig SYSTEM "urn:fontconfig:fonts.dtd">')
