@@ -712,7 +712,8 @@ def _resolve_calc_value(computed, tokens):
             elif token.lower_value == 'nan':
                 return NAN
 
-def resolve_math(computed, token, key):
+
+def resolve_math(computed, token):
     """Return token with resolved math functions."""
     if not check_math(token):
         return
@@ -725,7 +726,7 @@ def resolve_math(computed, token, key):
         args.append([])
         for arg in part:
             if check_math(arg):
-                arg = resolve_math(computed, arg, key)[0]
+                arg = resolve_math(computed, arg)[0]
             args[-1].append(arg)
 
     if function.name == 'calc':
@@ -846,12 +847,12 @@ def resolve_math(computed, token, key):
     arguments = []
     for i, argument in enumerate(token.arguments):
         if argument.type == 'function':
-            arguments.extend(resolve_math(computed, argument, key))
+            arguments.extend(resolve_math(computed, argument))
         else:
             arguments.append(argument)
     token = tinycss2.ast.FunctionBlock(
         token.source_line, token.source_column, token.name, arguments)
-    return resolve_math(computed, token, key) or (token,)
+    return resolve_math(computed, token) or (token,)
 
 
 class InitialStyle(dict):
@@ -1011,7 +1012,7 @@ class ComputedStyle(dict):
             solved_tokens = []
             try:
                 for token in value.tokens:
-                    tokens = resolve_math(self, token, key)
+                    tokens = resolve_math(self, token)
                     if tokens is None:
                         solved_tokens.append(token)
                     else:
