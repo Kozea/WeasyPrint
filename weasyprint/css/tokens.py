@@ -603,6 +603,6 @@ def tokenize(item, function=None, unit=None):
         if unit is None:
             return ast.NumberToken(0, 0, value, int_value, representation)
         elif unit == '%':
-            return ast.PercentageToken(0, 0, value, int_value, f'{representation}%')
+            return ast.PercentageToken(0, 0, value, int_value, representation)
         else:
             return ast.DimensionToken(0, 0, value, int_value, representation, unit)
