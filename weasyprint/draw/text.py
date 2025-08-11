@@ -187,7 +187,7 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
                 string += f'>{-width / font_size}<'
                 utf8_slice = slice(*sorted(utf8_positions[i:i+2]))
                 characters = utf8_text[utf8_slice].decode()
-                codepoints = ', '.join(str(ord(character)) for character in characters)
+                codepoints = ', '.join(f'U+{ord(char)}:04x' for char in characters)
                 LOGGER.warning(
                     'Missing glyph when displaying "%s", Unicode codepoint(s) %s',
                     characters, codepoints)
