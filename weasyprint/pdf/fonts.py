@@ -199,6 +199,7 @@ class Font:
 
         # Set flags.
         flags = (
+            harfbuzz_subset.HB_SUBSET_FLAGS_NOTDEF_OUTLINE |
             harfbuzz_subset.HB_SUBSET_FLAGS_RETAIN_GIDS |
             harfbuzz_subset.HB_SUBSET_FLAGS_PASSTHROUGH_UNRECOGNIZED |
             harfbuzz_subset.HB_SUBSET_FLAGS_DESUBROUTINIZE)
@@ -226,6 +227,7 @@ class Font:
 
         # Set flags.
         flags = (
+            harfbuzz_subset.HB_SUBSET_FLAGS_NOTDEF_OUTLINE |
             harfbuzz_subset.HB_SUBSET_FLAGS_PASSTHROUGH_UNRECOGNIZED |
             harfbuzz_subset.HB_SUBSET_FLAGS_DESUBROUTINIZE)
         if not hinting:

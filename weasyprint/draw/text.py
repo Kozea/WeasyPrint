@@ -6,6 +6,7 @@ from xml.etree import ElementTree
 from PIL import Image
 
 from ..images import RasterImage, SVGImage
+from ..logger import LOGGER
 from ..matrix import Matrix
 from ..text.ffi import FROM_UNITS, TO_UNITS, ffi, pango
 from ..text.fonts import get_hb_object_data
@@ -176,9 +177,20 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
             glyph_info = glyphs[i]
             glyph = glyph_info.glyph
             width = glyph_info.geometry.width
-            if (glyph == pango.PANGO_GLYPH_EMPTY or
-                    glyph & pango.PANGO_GLYPH_UNKNOWN_FLAG):
+            if glyph == pango.PANGO_GLYPH_EMPTY:
+                # Display empty glyph, such as space.
                 string += f'>{-width / font_size}<'
+                continue
+            elif glyph & pango.PANGO_GLYPH_UNKNOWN_FLAG:
+                # Display tofu for missing glyph.
+                string += f'{0:02x}' if font.bitmap else f'{0:04x}'
+                string += f'>{-width / font_size}<'
+                utf8_slice = slice(*sorted(utf8_positions[i:i+2]))
+                characters = utf8_text[utf8_slice].decode()
+                codepoints = ', '.join(str(ord(character)) for character in characters)
+                LOGGER.warning(
+                    'Missing glyph when displaying "%s", Unicode codepoint(s) %s',
+                    characters, codepoints)
                 continue
 
             offset = glyph_info.geometry.x_offset / font_size
