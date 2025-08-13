@@ -466,12 +466,14 @@ def gradient_average_color(colors, positions):
 
 
 class Gradient:
-    def __init__(self, color_stops, repeating):
+    def __init__(self, color_stops, repeating, color_hint=None):
         assert color_stops
         # List of (r, g, b, a)
         self.colors = tuple(color for color, _ in color_stops)
         # List of Dimensions
         self.stop_positions = tuple(position for _, position in color_stops)
+        # List of Dimensions
+        self.color_hint = color_hint
         # Boolean
         self.repeating = repeating
 
@@ -565,8 +567,8 @@ class Gradient:
 
 
 class LinearGradient(Gradient):
-    def __init__(self, color_stops, direction, repeating):
-        Gradient.__init__(self, color_stops, repeating)
+    def __init__(self, color_stops, direction, repeating, color_hint=None):
+        Gradient.__init__(self, color_stops, repeating, color_hint)
         # ('corner', keyword) or ('angle', radians)
         self.direction_type, self.direction = direction
 
@@ -656,8 +658,8 @@ class LinearGradient(Gradient):
 
 
 class RadialGradient(Gradient):
-    def __init__(self, color_stops, shape, size, center, repeating):
-        Gradient.__init__(self, color_stops, repeating)
+    def __init__(self, color_stops, shape, size, center, repeating, color_hint=None):
+        Gradient.__init__(self, color_stops, repeating, color_hint)
         # Center of the ending shape. (origin_x, pos_x, origin_y, pos_y)
         self.center = center
         # Type of ending shape: 'circle' or 'ellipse'
