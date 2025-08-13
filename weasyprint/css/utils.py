@@ -5,6 +5,7 @@ import math
 from abc import ABC, abstractmethod
 from urllib.parse import unquote, urljoin
 
+from tinycss2.ast import PercentageToken
 from tinycss2.color4 import parse_color
 
 from .. import LOGGER
