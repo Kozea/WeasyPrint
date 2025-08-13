@@ -620,11 +620,13 @@ def get_image(token, base_url):
     arguments = split_on_comma(remove_whitespace(token.arguments))
     name = token.lower_name
     if name in ('linear-gradient', 'repeating-linear-gradient'):
-        direction, color_stops = parse_linear_gradient_parameters(arguments)
+        direction, color_stops, color_hint = parse_linear_gradient_parameters(arguments)
+        color_stops, color_hint = get_color_stop_and_hint(color_stops)
         if color_stops:
             return 'linear-gradient', LinearGradient(
                 [parse_color_stop(stop) for stop in color_stops],
-                direction, 'repeating' in name)
+                direction, 'repeating' in name,
+                color_hint = [get_length(hint, negative=False, percentage=True) for hint in color_hint])
     elif name in ('radial-gradient', 'repeating-radial-gradient'):
         result = parse_radial_gradient_parameters(arguments)
         if result is not None:
@@ -635,9 +637,12 @@ def get_image(token, base_url):
             position = 'left', FIFTY_PERCENT, 'top', FIFTY_PERCENT
             color_stops = arguments
         if color_stops:
+            color_stops, color_hint = get_color_stop_and_hint(color_stops)
             return 'radial-gradient', RadialGradient(
                 [parse_color_stop(stop) for stop in color_stops],
-                shape, size, position, 'repeating' in name)
+                shape, size, position, 'repeating' in name,
+                color_hint=[get_length(hint, negative=False, percentage=True) for hint in color_hint]
+            )
 
 
 def _get_url_tuple(string, base_url):
