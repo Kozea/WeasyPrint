@@ -183,15 +183,15 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
                 continue
             elif glyph & pango.PANGO_GLYPH_UNKNOWN_FLAG:
                 # Display tofu for missing glyph.
-                string += f'{0:02x}' if font.bitmap else f'{0:04x}'
-                string += f'>{-width / font_size}<'
+                glyph -= pango.PANGO_GLYPH_UNKNOWN_FLAG
+                font.widths[glyph] = round(width * 1000 * FROM_UNITS / font_size)
                 utf8_slice = slice(*sorted(utf8_positions[i:i+2]))
                 characters = utf8_text[utf8_slice].decode()
+                font.cmap[glyph] = utf8_text[utf8_slice].decode()
                 codepoints = ', '.join(f'U+{ord(char):04X}' for char in characters)
                 LOGGER.warning(
                     'Missing glyph when displaying "%s", Unicode codepoint(s) %s',
                     characters, codepoints)
-                continue
 
             offset = glyph_info.geometry.x_offset / font_size
             rise = glyph_info.geometry.y_offset / 1000
