@@ -5,6 +5,7 @@ import math
 from abc import ABC, abstractmethod
 from urllib.parse import unquote, urljoin
 
+from tinycss2.ast import PercentageToken
 from tinycss2.color4 import parse_color
 
 from .. import LOGGER
@@ -226,6 +227,24 @@ def get_single_keyword(tokens):
         token = tokens[0]
         if token.type == 'ident':
             return token.lower_value
+
+
+def get_color_stop_and_hint(color_stop_hint):
+    color_stop = [color_stop_hint[0]]
+    color_hint = []
+    prev_was_color_stop = True
+
+    for arg in color_stop_hint[1:]:
+        if len(arg) == 1 and arg[0].type == 'percentage':
+            color_hint.append(arg[0])
+            prev_was_color_stop = False
+        elif prev_was_color_stop:
+            color_hint.append(PercentageToken(arg[-1].source_line, arg[-1].source_column, 50.0, 50, str(50)))
+            color_stop.append(arg)
+            prev_was_color_stop = True
+        else:
+            color_stop.append(arg)
+    return color_stop, color_hint
 
 
 def single_keyword(function):
@@ -604,9 +623,11 @@ def get_image(token, base_url):
     if name in ('linear-gradient', 'repeating-linear-gradient'):
         direction, color_stops = parse_linear_gradient_parameters(arguments)
         if color_stops:
+            color_stops, color_hint = get_color_stop_and_hint(color_stops)
             return 'linear-gradient', LinearGradient(
                 [parse_color_stop(stop) for stop in color_stops],
-                direction, 'repeating' in name)
+                direction, 'repeating' in name,
+                color_hint = [get_length(hint, negative=False, percentage=True) for hint in color_hint])
     elif name in ('radial-gradient', 'repeating-radial-gradient'):
         result = parse_radial_gradient_parameters(arguments)
         if result is not None:
@@ -617,9 +638,12 @@ def get_image(token, base_url):
             position = 'left', FIFTY_PERCENT, 'top', FIFTY_PERCENT
             color_stops = arguments
         if color_stops:
+            color_stops, color_hint = get_color_stop_and_hint(color_stops)
             return 'radial-gradient', RadialGradient(
                 [parse_color_stop(stop) for stop in color_stops],
-                shape, size, position, 'repeating' in name)
+                shape, size, position, 'repeating' in name,
+                color_hint=[get_length(hint, negative=False, percentage=True) for hint in color_hint]
+            )
 
 
 def _get_url_tuple(string, base_url):

@@ -15,6 +15,7 @@ from PIL import Image, ImageFile, ImageOps
 from tinycss2.color4 import parse_color
 
 from . import DEFAULT_OPTIONS
+from .css.properties import Dimension
 from .layout.percent import percentage
 from .logger import LOGGER
 from .svg import SVG
@@ -466,12 +467,14 @@ def gradient_average_color(colors, positions):
 
 
 class Gradient:
-    def __init__(self, color_stops, repeating):
+    def __init__(self, color_stops, repeating, color_hint=None):
         assert color_stops
         # List of (r, g, b, a)
         self.colors = tuple(color for color, _ in color_stops)
         # List of Dimensions
         self.stop_positions = tuple(position for _, position in color_stops)
+        # List of Dimensions
+        self.color_hint = color_hint
         # Boolean
         self.repeating = repeating
 
@@ -479,7 +482,7 @@ class Gradient:
         return None, None, None
 
     def draw(self, stream, concrete_width, concrete_height, _image_rendering):
-        scale_y, type_, points, positions, colors = self.layout(
+        scale_y, type_, points, positions, colors, color_hints = self.layout(
             concrete_width, concrete_height)
 
         if type_ == 'solid':
@@ -489,9 +492,14 @@ class Gradient:
             return
 
         alphas = [color[3] for color in colors]
-        alpha_couples = [
-            (alphas[i], alphas[i + 1])
-            for i in range(len(alphas) - 1)]
+        if color_hints:
+            alpha_couples = [
+                (alphas[i] * (color_hints[i].value / 100), alphas[i + 1] * (1 - color_hints[i].value / 100) )
+                for i in range(len(alphas) - 1)]
+        else:
+            alpha_couples = [
+                (alphas[i], alphas[i + 1])
+                for i in range(len(alphas) - 1)]
         # TODO: handle other color spaces.
         color_couples = [
             [colors[i].to('srgb')[:3], colors[i + 1].to('srgb')[:3], 1]
@@ -528,6 +536,7 @@ class Gradient:
                 0, 0, concrete_width, concrete_height)
 
             shading_type = 2 if type_ == 'linear' else 3
+            # Todo: the static value 1 has to respect color_hint
             sub_functions = (
                 stream.create_interpolation_function((0, 1), (c0,), (c1,), 1)
                 for c0, c1 in alpha_couples)
@@ -565,15 +574,15 @@ class Gradient:
 
 
 class LinearGradient(Gradient):
-    def __init__(self, color_stops, direction, repeating):
-        Gradient.__init__(self, color_stops, repeating)
+    def __init__(self, color_stops, direction, repeating, color_hint=None):
+        Gradient.__init__(self, color_stops, repeating, color_hint)
         # ('corner', keyword) or ('angle', radians)
         self.direction_type, self.direction = direction
 
     def layout(self, width, height):
         # Only one color, render the gradient as a solid color
         if len(self.colors) == 1:
-            return 1, 'solid', None, [], [self.colors[0]]
+            return 1, 'solid', None, [], [self.colors[0]], None
 
         # Define the (dx, dy) unit vector giving the direction of the gradient.
         # Positive dx: right, positive dy: down.
@@ -598,6 +607,7 @@ class LinearGradient(Gradient):
 
         # Normalize colors positions
         colors = list(self.colors)
+        color_hints = list(self.color_hint)
         vector_length = abs(width * dx) + abs(height * dy)
         positions = process_color_stops(vector_length, self.stop_positions)
         if not self.repeating:
@@ -606,9 +616,11 @@ class LinearGradient(Gradient):
             if positions[0] == positions[1]:
                 positions.insert(0, positions[0] - 1)
                 colors.insert(0, colors[0])
+                color_hints.insert(0, Dimension(50, '%'))
             if positions[-2] == positions[-1]:
                 positions.append(positions[-1] + 1)
                 colors.append(colors[-1])
+                color_hints.append(Dimension(50, '%'))
         first, last, positions = normalize_stop_positions(positions)
 
         if self.repeating:
@@ -616,7 +628,7 @@ class LinearGradient(Gradient):
             # See https://drafts.csswg.org/css-images-3/#repeating-gradients
             if first == last:
                 color = gradient_average_color(colors, positions)
-                return 1, 'solid', None, [], [color]
+                return 1, 'solid', None, [], [color], None
 
             # Define defined gradient length and steps between positions
             stop_length = last - first
@@ -628,13 +640,16 @@ class LinearGradient(Gradient):
             # Create cycles used to add colors
             next_steps = cycle((0, *position_steps))
             next_colors = cycle(colors)
+            next_color_hints = cycle(color_hints)
             previous_steps = cycle((0, *position_steps[::-1]))
             previous_colors = cycle(colors[::-1])
+            previous_color_hints = cycle(color_hints[::-1])
 
             # Add colors after last step
             while last < vector_length:
                 step = next(next_steps)
                 colors.append(next(next_colors))
+                color_hints.append(next(next_color_hints))
                 positions.append(positions[-1] + step)
                 last += step * stop_length
 
@@ -642,6 +657,7 @@ class LinearGradient(Gradient):
             while first > 0:
                 step = next(previous_steps)
                 colors.insert(0, next(previous_colors))
+                color_hints.insert(0, next(previous_color_hints))
                 positions.insert(0, positions[0] - step)
                 first -= step * stop_length
 
@@ -652,12 +668,12 @@ class LinearGradient(Gradient):
             start_x + dx * first, start_y + dy * first,
             start_x + dx * last, start_y + dy * last)
 
-        return 1, 'linear', points, positions, colors
+        return 1, 'linear', points, positions, colors, color_hints
 
 
 class RadialGradient(Gradient):
-    def __init__(self, color_stops, shape, size, center, repeating):
-        Gradient.__init__(self, color_stops, repeating)
+    def __init__(self, color_stops, shape, size, center, repeating, color_hint=None):
+        Gradient.__init__(self, color_stops, repeating, color_hint)
         # Center of the ending shape. (origin_x, pos_x, origin_y, pos_y)
         self.center = center
         # Type of ending shape: 'circle' or 'ellipse'
@@ -672,7 +688,7 @@ class RadialGradient(Gradient):
     def layout(self, width, height):
         # Only one color, render the gradient as a solid color
         if len(self.colors) == 1:
-            return 1, 'solid', None, [], [self.colors[0]]
+            return 1, 'solid', None, [], [self.colors[0]], [self.color_hint]
 
         # Define the center of the gradient
         origin_x, center_x, origin_y, center_y = self.center
@@ -690,6 +706,7 @@ class RadialGradient(Gradient):
 
         # Normalize colors positions
         colors = list(self.colors)
+        color_hints = list(self.color_hint)
         positions = process_color_stops(size_x, self.stop_positions)
         if not self.repeating:
             # Add explicit colors at boundaries if needed, because PDF doesn’t
@@ -697,9 +714,11 @@ class RadialGradient(Gradient):
             if positions[0] > 0 and positions[0] == positions[1]:
                 positions.insert(0, 0)
                 colors.insert(0, colors[0])
+                color_hints.insert(0, Dimension(50, '%'))
             if positions[-2] == positions[-1]:
                 positions.append(positions[-1] + 1)
                 colors.append(colors[-1])
+                color_hints.append( Dimension(50, '%'))
         if positions[0] < 0:
             # PDF doesn’t like negative radiuses, shift into the positive realm
             if self.repeating:
@@ -711,7 +730,7 @@ class RadialGradient(Gradient):
                 # Only keep colors with position >= 0, interpolate if needed
                 if positions[-1] <= 0:
                     # All stops are negative, fill with the last color
-                    return 1, 'solid', None, [], [self.colors[-1]]
+                    return 1, 'solid', None, [], [self.colors[-1]], None
                 for i, position in enumerate(positions):
                     if position == 0:
                         # Keep colors and positions from this rank
@@ -735,7 +754,7 @@ class RadialGradient(Gradient):
         # See https://drafts.csswg.org/css-images-3/#repeating-gradients
         if first == last and self.repeating:
             color = gradient_average_color(colors, positions)
-            return 1, 'solid', None, [], [color]
+            return 1, 'solid', None, [], [color], None
 
         # Define the coordinates of the gradient circles
         points = (
@@ -746,7 +765,7 @@ class RadialGradient(Gradient):
             points, positions, colors = self._repeat(
                 width, height, scale_y, points, positions, colors)
 
-        return scale_y, 'radial', points, positions, colors
+        return scale_y, 'radial', points, positions, colors, color_hints
 
     def _repeat(self, width, height, scale_y, points, positions, colors):
         # Keep original lists and values, they’re useful
