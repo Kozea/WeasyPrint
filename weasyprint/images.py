@@ -491,9 +491,15 @@ class Gradient:
             return
 
         alphas = [color[3] for color in colors]
-        alpha_couples = [
-            (alphas[i], alphas[i + 1])
-            for i in range(len(alphas) - 1)]
+        if self.color_hint:
+            alpha_couples = [
+                (alphas[i] * (self.color_hint[i][0] / 100), alphas[i + 1] * (1 - self.color_hint[i][0] / 100) )
+                for hint_i, i in enumerate(range(len(alphas) - 1))]
+        # Todo: remove else block
+        else:
+            alpha_couples = [
+                (alphas[i], alphas[i + 1])
+                for i in range(len(alphas) - 1)]
         # TODO: handle other color spaces.
         color_couples = [
             [colors[i].to('srgb')[:3], colors[i + 1].to('srgb')[:3], 1]
@@ -530,6 +536,7 @@ class Gradient:
                 0, 0, concrete_width, concrete_height)
 
             shading_type = 2 if type_ == 'linear' else 3
+            # Todo: the static value 1 has to respect color_hint
             sub_functions = (
                 stream.create_interpolation_function((0, 1), (c0,), (c1,), 1)
                 for c0, c1 in alpha_couples)
