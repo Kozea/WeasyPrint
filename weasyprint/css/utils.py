@@ -621,7 +621,7 @@ def get_image(token, base_url):
     arguments = split_on_comma(remove_whitespace(token.arguments))
     name = token.lower_name
     if name in ('linear-gradient', 'repeating-linear-gradient'):
-        direction, color_stops, color_hint = parse_linear_gradient_parameters(arguments)
+        direction, color_stops = parse_linear_gradient_parameters(arguments)
         color_stops, color_hint = get_color_stop_and_hint(color_stops)
         if color_stops:
             return 'linear-gradient', LinearGradient(
