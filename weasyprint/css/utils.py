@@ -228,6 +228,24 @@ def get_single_keyword(tokens):
             return token.lower_value
 
 
+def get_color_stop_and_hint(color_stop_hint):
+    color_stop = [color_stop_hint[0]]
+    color_hint = []
+    prev_was_color_stop = True
+
+    for arg in color_stop_hint[1:]:
+        if len(arg) == 1 and arg[0].type == 'percentage':
+            color_hint.append(arg[0])
+            prev_was_color_stop = False
+        elif prev_was_color_stop:
+            color_hint.append(PercentageToken(arg[-1].source_line, arg[-1].source_column, 50.0, 50, str(50)))
+            color_stop.append(arg)
+            prev_was_color_stop = True
+        else:
+            color_stop.append(arg)
+    return color_stop, color_hint
+
+
 def single_keyword(function):
     """Decorator for validators that only accept a single keyword."""
     @functools.wraps(function)
