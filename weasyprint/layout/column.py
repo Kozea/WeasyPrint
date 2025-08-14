@@ -26,7 +26,7 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
         absolute_boxes = []
 
     box = box.copy_with_children(box.children)
-    box.position_y += collapse_margin(adjoining_margins) - box.margin_top
+    box.position_y += collapse_margin(adjoining_margins)
 
     # Set height if defined
     if height != 'auto' and height.unit != '%':

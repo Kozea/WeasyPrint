@@ -1078,3 +1078,23 @@ def test_columns_regression_7():
     column1, column2 = div.children
     assert column1.position_y == 0
     assert column2.position_y == 0
+
+
+@assert_no_logs
+def test_columns_margin_top():
+    page1, = render_pages('''
+      <style>
+        @page { size: 50px 10px }
+        body { font-size: 2px; line-height: 1 }
+      </style>
+      <div style="column-count: 2; margin-top: 1em">
+        a<br>b
+      </div>
+    ''')
+    html, = page1.children
+    body, = html.children
+    div, = body.children
+    assert div.position_y == 0
+    column1, column2 = div.children
+    assert column1.position_y == column2.position_y == 2
+    assert column1.children[0].position_y == column2.children[0].position_y == 2
