@@ -101,6 +101,7 @@ class Font:
         self.stemh = 80
         self.widths = {}
         self.cmap = {}
+        self.missing = set()
         self.used_in_forms = False
 
         # Set font flags.
@@ -594,5 +595,42 @@ def _build_vector_font_dictionary(font_dictionary, pdf, font, widths, compress,
         'FontDescriptor': font_descriptor.reference,
     })
     pdf.add_object(subfont_dictionary)
-    font_dictionary['Encoding'] = '/Identity-H'
+    if font.missing:
+        # Add CMap that doesn’t include missing glyphs, so that they can be replaced by
+        # .notdef.
+        encoding = pydyf.Stream([
+            b'/CIDInit /ProcSet findresource begin',
+            b'12 dict begin',
+            b'begincmap',
+            b'/CIDSystemInfo',
+            b'3 dict dup begin',
+            b'/Registry (WP) def',
+            b'/Ordering (Encod) def',
+            b'/Supplement 0 def',
+            b'end def',
+            b'/CMapName /WP-Encod-0 def',
+            b'/CMapType 1 def',
+            b'1 begincodespacerange',
+            b'<0000> <ffff>',
+            b'endcodespacerange',
+        ], compress=compress)
+        available = tuple(font.cmap)
+        available_length = len(available)
+        for i in range(ceil(available_length / 100)):
+            batch_length = min(100, available_length - i * 100)
+            encoding.stream.append(f'{batch_length} begincidchar'.encode())
+            for glyph_id in available[i*100:(i+1)*100]:
+                font_glyph_id = 0 if glyph_id in font.missing else glyph_id
+                encoding.stream.append(f'<{glyph_id:04x}> {font_glyph_id}'.encode())
+            encoding.stream.append(b'endcidchar')
+        encoding.stream.extend([
+            b'endcmap',
+            b'CMapName currentdict /CMap defineresource pop',
+            b'end',
+            b'end'])
+        pdf.add_object(encoding)
+        font_dictionary['Encoding'] = encoding.reference
+    else:
+        # No missing glyph in this font, use the identity mapping to map all glyphs.
+        font_dictionary['Encoding'] = '/Identity-H'
     font_dictionary['DescendantFonts'] = pydyf.Array([subfont_dictionary.reference])

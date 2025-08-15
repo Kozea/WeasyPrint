@@ -183,11 +183,18 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
                 continue
             elif glyph & pango.PANGO_GLYPH_UNKNOWN_FLAG:
                 # Display tofu for missing glyph.
+                # TODO: this glyph id may already be used in font.
                 glyph -= pango.PANGO_GLYPH_UNKNOWN_FLAG
                 font.widths[glyph] = round(width * 1000 * FROM_UNITS / font_size)
+                if 0 not in font.widths:
+                    # TODO: we should instead get the real .notdef width, and fix the
+                    # difference between missing glyph width and .notdef width with
+                    # kerning.
+                    font.widths[0] = font.widths[glyph]
                 utf8_slice = slice(*sorted(utf8_positions[i:i+2]))
                 characters = utf8_text[utf8_slice].decode()
                 font.cmap[glyph] = utf8_text[utf8_slice].decode()
+                font.missing.add(glyph)
                 codepoints = ', '.join(f'U+{ord(char):04X}' for char in characters)
                 LOGGER.warning(
                     'Missing glyph when displaying "%s", Unicode codepoint(s) %s',
