@@ -185,6 +185,7 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
                 # Display tofu for missing glyph.
                 # TODO: this glyph id may already be used in font.
                 glyph -= pango.PANGO_GLYPH_UNKNOWN_FLAG
+                glyph %= 0xffff
                 font.widths[glyph] = round(width * 1000 * FROM_UNITS / font_size)
                 if 0 not in font.widths:
                     # TODO: we should instead get the real .notdef width, and fix the
