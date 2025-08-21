@@ -9,7 +9,7 @@ from math import ceil
 import pydyf
 from fontTools import subset
 from fontTools.ttLib import TTFont, TTLibError, ttFont
-from fontTools.varLib.mutator import instantiateVariableFont
+from fontTools.varLib.instancer import instantiateVariableFont
 
 from ..logger import LOGGER, capture_logs
 from ..text.constants import PANGO_STRETCH_PERCENT
