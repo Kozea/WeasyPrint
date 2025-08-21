@@ -191,7 +191,8 @@ class FontConfiguration:
             match = SubElement(root, 'match', target='scan')
             test = SubElement(match, 'test', name='file', compare='eq')
             SubElement(test, 'string').text = str(font_path)
-            edit = SubElement(match, 'edit', name='family', mode=mode)
+            # Prepend, as replacing the font family breaks Pango, see #2510.
+            edit = SubElement(match, 'edit', name='family', mode='prepend')
             SubElement(edit, 'string').text = rule_descriptors['font_family']
             if 'font_style' in rule_descriptors:
                 edit = SubElement(match, 'edit', name='slant', mode=mode)
