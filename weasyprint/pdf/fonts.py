@@ -140,9 +140,6 @@ class Font:
             partial_font = io.BytesIO()
             try:
                 ttfont = instantiateVariableFont(ttfont, self.variations)
-                for key, (advance, bearing) in ttfont['hmtx'].metrics.items():
-                    if advance < 0:
-                        ttfont['hmtx'].metrics[key] = (0, bearing)
                 ttfont.save(partial_font)
             except Exception:
                 LOGGER.warning('Unable to mutate variable font')
