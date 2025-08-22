@@ -18,7 +18,7 @@ WeasyPrint |version| depends on:
 * cssselect2_ ≥ 0.8.0
 * Pyphen_ ≥ 0.9.1
 * Pillow_ ≥ 9.1.0
-* fontTools_ ≥ 4.0.0
+* fontTools_ ≥ 4.52.0
 
 .. _Python: https://www.python.org/
 .. _Pango: https://pango.gnome.org/

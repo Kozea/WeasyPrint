@@ -19,7 +19,7 @@ dependencies = [
   'cssselect2 >=0.8.0',
   'Pyphen >=0.9.1',
   'Pillow >=9.1.0',
-  'fonttools[woff] >=4.0.0',
+  'fonttools[woff] >=4.52.0',
 ]
 classifiers = [
   'Development Status :: 5 - Production/Stable',
