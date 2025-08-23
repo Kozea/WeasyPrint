@@ -227,13 +227,14 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
                     # Do as explained in specification
                     # https://learn.microsoft.com/typography/opentype/spec/svg
                     tree = ElementTree.fromstring(svg_data)
-                    defs = ElementTree.Element('defs')
-                    for child in list(tree):
-                        defs.append(child)
-                        tree.remove(child)
-                    tree.append(defs)
-                    ElementTree.SubElement(
-                        tree, 'use', attrib={'href': f'#glyph{glyph}'})
+                    if tree.get('id') != f'glyph{glyph}':
+                        defs = ElementTree.Element('defs')
+                        for child in list(tree):
+                            defs.append(child)
+                            tree.remove(child)
+                        tree.append(defs)
+                        ElementTree.SubElement(
+                            tree, 'use', attrib={'href': f'#glyph{glyph}'})
                     image = SVGImage(tree, None, None, stream)
                     a = d = font.widths[glyph] / 1000 / font.upem * font_size
                     emojis.append([image, font, a, d, x_advance, 0])
