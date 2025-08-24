@@ -900,3 +900,90 @@ def test_footnote_bottom_margin():
     assert footnote_marker.children[0].text == '1.'
     assert footnote_textbox.text == 'de'
     assert footnote_area.position_y == 5
+
+
+@assert_no_logs
+def test_footnotes_column_converge_end():
+    page1, page2 = render_pages('''
+        <style>
+            @page {
+                size: 9px;
+            }
+            html {
+                font: 2px/1 weasyprint;
+            }
+            div {
+                columns: 2;
+            }
+            span {
+                float: footnote;
+            }
+        </style>
+        <div>
+            a<span>1</span>
+            b<span>2</span>
+            c
+            d<span>3</span>
+        </div>
+        <p>e</p>
+    ''')
+
+    # Page 1 contains a b c d 1 2.
+    html, footnote_area = page1.children
+    body, = html.children
+    div, = body.children
+    column1, column2 = div.children
+    assert column1.height == column2.height == 4
+    assert footnote_area.height == 4
+
+    # Page 2 contains e 3.
+    html, footnote_area = page2.children
+    body, = html.children
+    p, = body.children
+    assert p.height == 2
+    assert footnote_area.height == 2
+
+
+@assert_no_logs
+def test_footnotes_column_converge():
+    page1, page2 = render_pages('''
+        <style>
+            @page {
+                size: 9px;
+            }
+            html {
+                font: 2px/1 weasyprint;
+            }
+            div {
+                columns: 2;
+            }
+            span {
+                float: footnote;
+            }
+        </style>
+        <div>
+            a<span>1</span>
+            b<span>2</span>
+            c
+            d<span>3</span>
+            e
+            f
+        </div>
+        <p>g</p>
+    ''')
+
+    # Page 1 contains a b c d 1 2.
+    html, footnote_area = page1.children
+    body, = html.children
+    div, = body.children
+    column1, column2 = div.children
+    assert column1.height == column2.height == 4
+    assert footnote_area.height == 4
+
+    # Page 2 contains e f g 3.
+    html, footnote_area = page2.children
+    body, = html.children
+    div, p = body.children
+    column1, column2 = div.children
+    assert column1.height == column2.height == p.height == 2
+    assert footnote_area.height == 2
