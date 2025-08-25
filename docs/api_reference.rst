@@ -199,13 +199,7 @@ WeasyPrint supports many of the `CSS specifications`_ written by the W3C. You
 will find in this chapter a comprehensive list of the specifications or drafts
 with at least one feature implemented in WeasyPrint.
 
-The results of some of the test suites provided by the W3C are also available
-at `test.weasyprint.org`_. This website uses a tool called `WeasySuite`_ that
-can be useful if you want to implement new features in WeasyPrint.
-
 .. _CSS specifications: https://www.w3.org/Style/CSS/current-work
-.. _test.weasyprint.org: http://test.weasyprint.org/
-.. _WeasySuite: https://github.com/Kozea/WeasySuite
 
 CSS Level 2 Revision 1
 ++++++++++++++++++++++
