@@ -97,11 +97,12 @@ class Font:
         self.upem = harfbuzz.hb_face_get_upem(self.hb_face)
         self.png = harfbuzz.hb_ot_color_has_png(self.hb_face)
         self.svg = harfbuzz.hb_ot_color_has_svg(self.hb_face)
+        self.glyph_count = harfbuzz.hb_face_get_glyph_count(self.hb_face)
         self.stemv = 80
         self.stemh = 80
         self.widths = {}
         self.to_unicode = {}
-        self.missing = set()
+        self.missing = {}
         self.used_in_forms = False
 
         # Set font flags.
@@ -110,6 +111,18 @@ class Font:
             self.flags += 2 ** (7 - 1)  # Italic
         if b'Serif' in name.split(b' '):
             self.flags += 2 ** (2 - 1)  # Serif
+
+    def get_unused_glyph_id(self, codepoint):
+        """Get a glyph id that’s not used in the font, for given Unicode codepoint."""
+        if codepoint not in self.missing:
+            next_unused_glyph_id = self.glyph_count + len(self.missing)
+            if next_unused_glyph_id > 2 ** 16 - 1:
+                LOGGER.warning(
+                    f'Too many glyphs missing from {self.name}, '
+                    'expect text selection problems')
+                next_unused_glyph_id = 2 ** 16 - 1
+            self.missing[codepoint] = next_unused_glyph_id
+        return self.missing[codepoint]
 
     def clean(self, to_unicode, hinting):
         """Remove useless data from font."""
@@ -621,7 +634,7 @@ def _build_vector_font_dictionary(font_dictionary, pdf, font, widths, compress,
             batch_length = min(100, available_length - i * 100)
             encoding.stream.append(f'{batch_length} begincidchar'.encode())
             for glyph_id in available[i*100:(i+1)*100]:
-                font_glyph_id = 0 if glyph_id in font.missing else glyph_id
+                font_glyph_id = 0 if glyph_id in font.missing.values() else glyph_id
                 encoding.stream.append(f'<{glyph_id:04x}> {font_glyph_id}'.encode())
             encoding.stream.append(b'endcidchar')
         encoding.stream.extend([
