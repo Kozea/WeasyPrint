@@ -200,8 +200,6 @@ will find in this chapter a comprehensive list of the specifications or drafts
 with at least one feature implemented in WeasyPrint.
 
 .. _CSS specifications: https://www.w3.org/Style/CSS/current-work
-.. _test.weasyprint.org: http://test.weasyprint.org/
-.. _WeasySuite: https://github.com/Kozea/WeasySuite
 
 CSS Level 2 Revision 1
 ++++++++++++++++++++++
