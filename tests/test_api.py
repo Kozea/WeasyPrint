@@ -558,7 +558,7 @@ def test_pdf_font_name():
     assert b'+weasyprint/' in stdout
 
 
-def test_cmap():
+def test_to_unicode():
     # Regression test for #2388.
     stdout = _run('--uncompressed-pdf --full-fonts - -', b'test')
     matches = re.findall(b'(\\d+) beginbfchar', stdout)
@@ -567,7 +567,7 @@ def test_cmap():
         assert int(match) <= 100
 
 
-def test_cmap_rtl():
+def test_to_unicode_rtl():
     # Regression test for #378.
     stdout = _run(
         '--uncompressed-pdf -e utf-8 - -',
