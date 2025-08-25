@@ -213,10 +213,11 @@ class Font:
 
         # Set flags.
         flags = (
-            harfbuzz_subset.HB_SUBSET_FLAGS_NOTDEF_OUTLINE |
             harfbuzz_subset.HB_SUBSET_FLAGS_RETAIN_GIDS |
             harfbuzz_subset.HB_SUBSET_FLAGS_PASSTHROUGH_UNRECOGNIZED |
             harfbuzz_subset.HB_SUBSET_FLAGS_DESUBROUTINIZE)
+        if self.missing:
+            flags |= harfbuzz_subset.HB_SUBSET_FLAGS_NOTDEF_OUTLINE
         harfbuzz_subset.hb_subset_input_set_flags(hb_subset, flags)
 
         # Drop useless tables.
@@ -241,11 +242,12 @@ class Font:
 
         # Set flags.
         flags = (
-            harfbuzz_subset.HB_SUBSET_FLAGS_NOTDEF_OUTLINE |
             harfbuzz_subset.HB_SUBSET_FLAGS_PASSTHROUGH_UNRECOGNIZED |
             harfbuzz_subset.HB_SUBSET_FLAGS_DESUBROUTINIZE)
         if not hinting:
             flags |= harfbuzz_subset.HB_SUBSET_FLAGS_NO_HINTING
+        if self.missing:
+            flags |= harfbuzz_subset.HB_SUBSET_FLAGS_NOTDEF_OUTLINE
         harfbuzz_subset.hb_subset_input_set_flags(hb_subset, flags)
 
         # Subset font.
@@ -269,7 +271,7 @@ class Font:
         # Set subset options.
         options = subset.Options(
             retain_gids=True, passthrough_tables=True, ignore_missing_glyphs=True,
-            hinting=hinting, desubroutinize=True, notdef_outline=True)
+            hinting=hinting, desubroutinize=True, notdef_outline=bool(self.missing))
         options.drop_tables += ['GSUB', 'GPOS', 'SVG']
         subsetter = subset.Subsetter(options)
         subsetter.populate(gids=to_unicode)
