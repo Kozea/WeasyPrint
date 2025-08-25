@@ -493,9 +493,12 @@ class Gradient:
 
         alphas = [color[3] for color in colors]
         if color_hints:
-            alpha_couples = [
-                (alphas[i] * (color_hints[i].value / 100), alphas[i + 1] * (1 - color_hints[i].value / 100) )
-                for i in range(len(alphas) - 1)]
+            alpha_couples = []
+            for i in range(len(alphas) - 1):
+                if color_hints[i].value < 0:
+                    alpha_couples.append((alphas[i], alphas[i + 1]))
+                else:
+                    alpha_couples.append((alphas[i] * (color_hints[i].value / 100), alphas[i + 1] * (1 - color_hints[i].value / 100) ))
         else:
             alpha_couples = [
                 (alphas[i], alphas[i + 1])
@@ -616,11 +619,11 @@ class LinearGradient(Gradient):
             if positions[0] == positions[1]:
                 positions.insert(0, positions[0] - 1)
                 colors.insert(0, colors[0])
-                color_hints.insert(0, Dimension(50, '%'))
+                color_hints.insert(0, Dimension(-50, '%'))
             if positions[-2] == positions[-1]:
                 positions.append(positions[-1] + 1)
                 colors.append(colors[-1])
-                color_hints.append(Dimension(50, '%'))
+                color_hints.append(Dimension(-50, '%'))
         first, last, positions = normalize_stop_positions(positions)
 
         if self.repeating:
@@ -714,11 +717,11 @@ class RadialGradient(Gradient):
             if positions[0] > 0 and positions[0] == positions[1]:
                 positions.insert(0, 0)
                 colors.insert(0, colors[0])
-                color_hints.insert(0, Dimension(50, '%'))
+                color_hints.insert(0, Dimension(-50, '%'))
             if positions[-2] == positions[-1]:
                 positions.append(positions[-1] + 1)
                 colors.append(colors[-1])
-                color_hints.append( Dimension(50, '%'))
+                color_hints.append( Dimension(-50, '%'))
         if positions[0] < 0:
             # PDF doesn’t like negative radiuses, shift into the positive realm
             if self.repeating:
