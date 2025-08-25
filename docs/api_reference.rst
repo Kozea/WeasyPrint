@@ -182,14 +182,35 @@ specifications.
 Fonts
 ~~~~~
 
-WeasyPrint can use any font that Pango can find installed on the system. Fonts
-are automatically embedded in PDF files.
+WeasyPrint can use any font that Pango_ can find installed on the system. Fonts are
+automatically embedded in PDF files and are subset by default to only include the glyphs
+used in the PDF. Subsetting is done with Harfbuzz-Subset_ when available on the system,
+or by the slower fontTools_ library as a fallback.
 
-Pango always uses fontconfig to access fonts, even on Windows and macOS. You
+Pango_ always uses Fontconfig_ to access fonts, even on Windows and macOS. You
 can list the available fonts thanks to the ``fc-list`` command, and know which
 font is matched by a given pattern thanks to ``fc-match``. Copying a font file
 into the ``~/.local/share/fonts`` directory is generally enough to install a
-new font. WeasyPrint should support the major font formats handled by Harfbuzz.
+new font. WeasyPrint should support the major font formats handled by HarfBuzz_.
+
+WeasyPrint follows the Fontconfig_ configuration of the system. This default
+configuration is often useful for many cases: font fallbacks for missing glyphs, aliases
+for standard font families like "serif" or "monospace", colored variants for emojis,
+etc. But some of these default rules can sometimes interfere with CSS rules, and it may
+be interesting to disable them if you need to tweak details about font management.
+
+When a glyph is missing from a font and all its fallbacks, a `Notdef glyph`_ is
+displayed instead, and a warning is displayed in logs. Because of the way Pango handles
+this case, the glyph may be larger than the space it’s displayed in, but the layout of
+the other glyphs is correct. Text search and selection work as if the glyph was
+available.
+
+.. _HarfBuzz-Subset: https://harfbuzz.github.io/harfbuzz-hb-subset.html
+.. _fontTools: https://fonttools.readthedocs.io/en/latest/
+.. _Pango: https://www.pango.org/
+.. _Fontconfig: https://www.freedesktop.org/wiki/Software/fontconfig/
+.. _HarfBuzz: https://harfbuzz.github.io/
+.. _Notdef glyph: https://en.wikipedia.org/wiki/Notdef_glyph
 
 
 CSS
