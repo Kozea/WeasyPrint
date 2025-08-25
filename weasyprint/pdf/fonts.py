@@ -256,7 +256,7 @@ class Font:
         # Set subset options.
         options = subset.Options(
             retain_gids=True, passthrough_tables=True, ignore_missing_glyphs=True,
-            hinting=hinting, desubroutinize=True)
+            hinting=hinting, desubroutinize=True, notdef_outline=True)
         options.drop_tables += ['GSUB', 'GPOS', 'SVG']
         subsetter = subset.Subsetter(options)
         subsetter.populate(gids=cmap)
