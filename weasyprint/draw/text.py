@@ -145,13 +145,13 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
         glyph_item = run.data
         run = run.next
         glyph_string = glyph_item.glyphs
-        glyphs = glyph_string.glyphs
-        num_glyphs = glyph_string.num_glyphs
+        glyphs_info = glyph_string.glyphs
+        number_of_glyphs = glyph_string.num_glyphs
         offset = glyph_item.item.offset
         clusters = glyph_string.log_clusters
 
         # Get positions of the glyphs in the UTF-8 string.
-        utf8_positions = [offset + clusters[i] for i in range(num_glyphs)]
+        utf8_positions = [offset + clusters[i] for i in range(number_of_glyphs)]
         if glyph_item.item.analysis.level % 2:
             utf8_positions.insert(0, offset + glyph_item.item.length)  # rtl
         else:
@@ -173,29 +173,29 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
             string = ''
             stream.set_font_size(font.hash, 1 if font.bitmap else font_size)
         string += '<'
-        for i in range(num_glyphs):
-            glyph_info = glyphs[i]
-            glyph = glyph_info.glyph
+        for i in range(number_of_glyphs):
+            glyph_info = glyphs_info[i]
+            glyph_id = glyph_info.glyph
             width = glyph_info.geometry.width
-            if glyph == pango.PANGO_GLYPH_EMPTY:
-                # Display empty glyph, such as space.
+            if glyph_id == pango.PANGO_GLYPH_EMPTY:
+                # Display zero-width empty glyph.
                 string += f'>{-width / font_size}<'
                 continue
-            elif glyph & pango.PANGO_GLYPH_UNKNOWN_FLAG:
+            elif glyph_id & pango.PANGO_GLYPH_UNKNOWN_FLAG:
                 # Display tofu for missing glyph.
                 # TODO: this glyph id may already be used in font.
-                glyph -= pango.PANGO_GLYPH_UNKNOWN_FLAG
-                glyph %= 0xffff
-                font.widths[glyph] = round(width * 1000 * FROM_UNITS / font_size)
+                glyph_id -= pango.PANGO_GLYPH_UNKNOWN_FLAG
+                glyph_id %= 0xffff
+                font.widths[glyph_id] = round(width * 1000 * FROM_UNITS / font_size)
                 if 0 not in font.widths:
                     # TODO: we should instead get the real .notdef width, and fix the
                     # difference between missing glyph width and .notdef width with
                     # kerning.
-                    font.widths[0] = font.widths[glyph]
+                    font.widths[0] = font.widths[glyph_id]
                 utf8_slice = slice(*sorted(utf8_positions[i:i+2]))
                 characters = utf8_text[utf8_slice].decode()
-                font.cmap[glyph] = utf8_text[utf8_slice].decode()
-                font.missing.add(glyph)
+                font.to_unicode[glyph_id] = utf8_text[utf8_slice].decode()
+                font.missing.add(glyph_id)
                 codepoints = ', '.join(f'U+{ord(char):04X}' for char in characters)
                 LOGGER.warning(
                     'Missing glyph when displaying "%s", Unicode codepoint(s) %s',
@@ -213,67 +213,67 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
                 string = ''
                 if offset:
                     string = f'{-offset}'
-                string += f'<{glyph:02x}>' if font.bitmap else f'<{glyph:04x}>'
+                string += f'<{glyph_id:02x}>' if font.bitmap else f'<{glyph_id:04x}>'
                 stream.show_text(string)
                 stream.set_text_rise(0)
                 string = '<'
             else:
                 if offset:
                     string += f'>{-offset}<'
-                string += f'{glyph:02x}' if font.bitmap else f'{glyph:04x}'
+                string += f'{glyph_id:02x}' if font.bitmap else f'{glyph_id:04x}'
 
             # Get ink bounding box and logical widths in font.
-            if glyph not in font.widths:
+            if glyph_id not in font.widths:
                 pango.pango_font_get_glyph_extents(
-                    pango_font, glyph, stream.ink_rect, stream.logical_rect)
-                font.widths[glyph] = round(
+                    pango_font, glyph_id, stream.ink_rect, stream.logical_rect)
+                font.widths[glyph_id] = round(
                     stream.logical_rect.width * 1000 * FROM_UNITS / font_size)
 
             # Set kerning, word spacing, letter spacing.
             kerning = int(
-                font.widths[glyph] + offset - width * 1000 * FROM_UNITS / font_size)
+                font.widths[glyph_id] + offset - width * 1000 * FROM_UNITS / font_size)
             if kerning:
                 string += f'>{kerning}<'
 
             # Create mapping between glyphs and characters.
-            if glyph not in font.cmap:
+            if glyph_id not in font.to_unicode:
                 utf8_slice = slice(*sorted(utf8_positions[i:i+2]))
-                font.cmap[glyph] = utf8_text[utf8_slice].decode()
+                font.to_unicode[glyph_id] = utf8_text[utf8_slice].decode()
 
             # Create list of emojis.
             if font.svg:
-                svg_data = get_hb_object_data(font.hb_face, 'svg', glyph)
+                svg_data = get_hb_object_data(font.hb_face, 'svg', glyph_id)
                 if svg_data:
                     # Do as explained in specification
                     # https://learn.microsoft.com/typography/opentype/spec/svg
                     tree = ElementTree.fromstring(svg_data)
-                    if tree.get('id') != f'glyph{glyph}':
+                    if tree.get('id') != f'glyph{glyph_id}':
                         defs = ElementTree.Element('defs')
                         for child in list(tree):
                             defs.append(child)
                             tree.remove(child)
                         tree.append(defs)
                         ElementTree.SubElement(
-                            tree, 'use', attrib={'href': f'#glyph{glyph}'})
+                            tree, 'use', attrib={'href': f'#glyph{glyph_id}'})
                     image = SVGImage(tree, None, None, stream)
-                    a = d = font.widths[glyph] / 1000 / font.upem * font_size
+                    a = d = font.widths[glyph_id] / 1000 / font.upem * font_size
                     emojis.append([image, font, a, d, x_advance, 0])
             elif font.png:
-                png_data = get_hb_object_data(font.hb_font, 'png', glyph)
+                png_data = get_hb_object_data(font.hb_font, 'png', glyph_id)
                 if png_data:
                     pillow_image = Image.open(BytesIO(png_data))
-                    image_id = f'{font.hash}{glyph}'
+                    image_id = f'{font.hash}{glyph_id}'
                     image = RasterImage(pillow_image, image_id, png_data)
-                    d = font.widths[glyph] / 1000
+                    d = font.widths[glyph_id] / 1000
                     a = pillow_image.width / pillow_image.height * d
                     pango.pango_font_get_glyph_extents(
-                        pango_font, glyph, stream.ink_rect,
+                        pango_font, glyph_id, stream.ink_rect,
                         stream.logical_rect)
                     f = -stream.logical_rect.y
                     f = f * FROM_UNITS / font_size - font_size
                     emojis.append([image, font, a, d, x_advance, f])
 
-            x_advance += (font.widths[glyph] + offset - kerning) / 1000
+            x_advance += (font.widths[glyph_id] + offset - kerning) / 1000
 
         # Close the last glyphs list, remove if empty.
         if string[-1] == '<':
