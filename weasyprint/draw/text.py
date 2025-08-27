@@ -203,7 +203,7 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
             if glyph_id & pango.PANGO_GLYPH_UNKNOWN_FLAG:
                 codepoints = ', '.join(f'U+{ord(character):04X}' for character in text)
                 LOGGER.warning(
-                    'Missing glyph when displaying "%s", Unicode codepoint(s) %s',
+                    '.notdef glyph rendered for Unicode string unsupported by fonts: "%s" (%s)',
                     text, codepoints)
 
             # Set horizontal and vertical offsets.

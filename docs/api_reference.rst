@@ -184,7 +184,7 @@ Fonts
 
 WeasyPrint can use any font that Pango_ can find installed on the system. Fonts are
 automatically embedded in PDF files and are subset by default to only include the glyphs
-used in the PDF. Subsetting is done with Harfbuzz-Subset_ when available on the system,
+used in the PDF. Subsetting is done with hb-subset_ when available on the system,
 or by the slower fontTools_ library as a fallback.
 
 Pango_ always uses Fontconfig_ to access fonts, even on Windows and macOS. You
@@ -199,18 +199,18 @@ for standard font families like "serif" or "monospace", colored variants for emo
 etc. But some of these default rules can sometimes interfere with CSS rules, and it may
 be interesting to disable them if you need to tweak details about font management.
 
-When a glyph is missing from a font and all its fallbacks, a `Notdef glyph`_ is
+When a Unicode code point is not supported by a font and its fallbacks, the font’s `.notdef glyph`_ is
 displayed instead, and a warning is displayed in logs. Because of the way Pango handles
-this case, the glyph may be larger than the space it’s displayed in, but the layout of
+this case, the .notdef glyph may be rendered with an incorrect width (advance), but the layout of
 the other glyphs is correct. Text search and selection work as if the glyph was
 available.
 
-.. _HarfBuzz-Subset: https://harfbuzz.github.io/harfbuzz-hb-subset.html
+.. _hb-subset: https://harfbuzz.github.io/harfbuzz-hb-subset.html
 .. _fontTools: https://fonttools.readthedocs.io/en/latest/
 .. _Pango: https://www.pango.org/
 .. _Fontconfig: https://www.freedesktop.org/wiki/Software/fontconfig/
 .. _HarfBuzz: https://harfbuzz.github.io/
-.. _Notdef glyph: https://en.wikipedia.org/wiki/Notdef_glyph
+.. _.notdef glyph: https://en.wikipedia.org/wiki/Notdef_glyph
 
 
 CSS
