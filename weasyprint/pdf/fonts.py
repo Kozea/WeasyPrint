@@ -26,7 +26,8 @@ class Font:
 
         self.font_size = font_size
         self.style = pango.pango_font_description_get_style(description)
-        self.family = ffi.string(pango.pango_font_description_get_family(description))
+        self.family = ffi.string(
+            pango.pango_font_description_get_family(description)).decode()
 
         self.variations = {}
         variations = pango.pango_font_description_get_variations(description)
@@ -118,7 +119,7 @@ class Font:
             next_unused_glyph_id = self.glyph_count + len(self.missing)
             if next_unused_glyph_id > 2 ** 16 - 1:
                 LOGGER.warning(
-                    f'Too many glyphs missing from {self.name}, '
+                    f'Too many glyphs missing from "{self.family}", '
                     'expect text selection problems')
                 next_unused_glyph_id = 2 ** 16 - 1
             self.missing[codepoint] = next_unused_glyph_id
@@ -155,8 +156,9 @@ class Font:
             try:
                 ttfont = instantiateVariableFont(ttfont, self.variations)
                 ttfont.save(partial_font)
-            except Exception:
-                LOGGER.warning('Unable to mutate variable font')
+            except Exception as exception:
+                LOGGER.warning(f'Unable to instantiate "{self.family}" variable font')
+                LOGGER.debug('Original exception:', exc_info=exception)
             else:
                 self.file_content = partial_font.getvalue()
 
@@ -182,8 +184,9 @@ class Font:
                 output_font = io.BytesIO()
                 ttfont.save(output_font)
                 self.file_content = output_font.getvalue()
-            except TTLibError:
-                LOGGER.warning('Unable to save emoji font')
+            except TTLibError as exception:
+                LOGGER.warning(f'Unable to save emoji font "{self.family}"')
+                LOGGER.debug('Original exception:', exc_info=exception)
 
     @property
     def type(self):
@@ -262,7 +265,7 @@ class Font:
                 self.file_content = file_content
                 return
 
-        LOGGER.warning('Unable to subset font with Harfbuzz')
+        LOGGER.warning(f'Unable to subset "{self.family}" with HarfBuzz')
 
     def _fonttools_subset(self, to_unicode, hinting):
         """Subset font using Fonttools."""
@@ -283,10 +286,11 @@ class Font:
                 subsetter.subset(ttfont)
             for log in logs:
                 LOGGER.warning(
-                    'fontTools warning when subsetting "%s": %s',
-                    self.family.decode(), log)
-        except TTLibError:
-            LOGGER.warning('Unable to subset font with fontTools')
+                    'fontTools warning when subsetting '
+                    f'"{self.family}": {log}')
+        except TTLibError as exception:
+            LOGGER.warning(f'Unable to subset "{self.family}" with fontTools')
+            LOGGER.debug('Original exception:', exc_info=exception)
         else:
             optimized_font = io.BytesIO()
             ttfont.save(optimized_font)
@@ -435,7 +439,8 @@ def _build_bitmap_font_dictionary(font_dictionary, pdf, font, widths, compress, 
                     bearing_y = subtable.metrics.horiBearingY
                     break
             else:
-                LOGGER.warning(f'Unknown bitmap metrics for glyph: {glyph_id}')
+                LOGGER.warning(
+                    f'Unknown bitmap metrics in "{font.family}" for glyph: {glyph_id}')
                 continue
         else:
             data_start = 5 if glyph_format in (1, 2, 8) else 8
@@ -482,7 +487,8 @@ def _build_bitmap_font_dictionary(font_dictionary, pdf, font, widths, compress, 
                 y = int.from_bytes(data[index+3:index+4], 'big', signed=True)
                 subglyphs.append({'id': subglyph_id, 'x': x, 'y': y})
         else:  # pragma: no cover
-            LOGGER.warning(f'Unsupported bitmap glyph format: {glyph_format}')
+            LOGGER.warning(
+                f'Unsupported bitmap glyph format in "{font.family}": {glyph_format}')
             glyph_info['bitmap'] = bytes(height * stride)
 
     for glyph_id, glyph_info in glyphs_info.items():
@@ -504,12 +510,14 @@ def _build_bitmap_font_dictionary(font_dictionary, pdf, font, widths, compress, 
                 sub_y = subglyph['y']
                 sub_id = subglyph['id']
                 if sub_id not in glyphs_info:
-                    LOGGER.warning(f'Unknown subglyph: {sub_id}')
+                    LOGGER.warning(f'Unknown subglyph in "{font.family}": {sub_id}')
                     continue
                 subglyph = glyphs_info[sub_id]
                 if subglyph['bitmap'] is None:
                     # TODO: Support subglyph in subglyph.
-                    LOGGER.warning(f'Unsupported subglyph in subglyph: {sub_id}')
+                    LOGGER.warning(
+                        'Unsupported subglyph in subglyph in '
+                        f'"{font.family}": {sub_id}')
                     continue
                 for row_y in range(subglyph['height']):
                     row_slice = slice(
