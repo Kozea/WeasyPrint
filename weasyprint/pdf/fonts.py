@@ -135,26 +135,29 @@ class Font:
         if 'fvar' in self.tables:
             full_font = io.BytesIO(self.file_content)
             ttfont = TTFont(full_font, fontNumber=self.index)
-            if 'wght' not in self.variations:
+            axes = {axis.axisTag: axis for axis in ttfont['fvar'].axes}
+            if 'wght' in axes and 'wght' not in self.variations:
                 self.variations['wght'] = self.weight
-            if 'opsz' not in self.variations:
+            if 'opsz' in axes and 'opsz' not in self.variations:
                 self.variations['opsz'] = self.font_size
-            if 'slnt' not in self.variations:
+            if 'slnt' in axes and 'slnt' not in self.variations:
                 slnt = 0
                 if self.style == 1:
-                    for axe in ttfont['fvar'].axes:
-                        if axe.axisTag == 'slnt':
-                            if axe.maxValue == 0:
-                                slnt = axe.minValue
-                            else:
-                                slnt = axe.maxValue
-                            break
+                    if axes['slnt'].maxValue == 0:
+                        slnt = axes['slnt'].minValue
+                    else:
+                        slnt = axes['slnt'].maxValue
                 self.variations['slnt'] = slnt
-            if 'ital' not in self.variations:
+            if 'ital' in axes and 'ital' not in self.variations:
                 self.variations['ital'] = int(self.style == 2)
+            # TODO: can use static=True when fontTools 4.60 is out.
+            for axis in axes:
+                if axis not in self.variations:
+                    self.variations[axis] = None
             partial_font = io.BytesIO()
             try:
                 ttfont = instantiateVariableFont(ttfont, self.variations)
+                # TODO: see fonttools#3918, can be removed when 4.60 is out.
                 for key, (advance, bearing) in ttfont['hmtx'].metrics.items():
                     if advance < 0:
                         ttfont['hmtx'].metrics[key] = (0, bearing)
