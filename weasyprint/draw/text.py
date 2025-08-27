@@ -183,9 +183,12 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
                 string += f'>{-width / font_size}<'
                 continue
 
-            # Display .notdef for missing glyphs.
+            # Display .notdef and log warning for missing glyphs.
             if glyph_id & pango.PANGO_GLYPH_UNKNOWN_FLAG:
                 codepoint = glyph_id - pango.PANGO_GLYPH_UNKNOWN_FLAG
+                LOGGER.warning(
+                    '.notdef glyph rendered for Unicode string unsupported by fonts: '
+                    f'"{chr(codepoint)}" (U+{codepoint:04X})')
                 glyph_id = font.get_unused_glyph_id(codepoint)
                 font.widths[glyph_id] = round(width * 1000 * FROM_UNITS / font_size)
                 if 0 not in font.widths:
@@ -197,14 +200,7 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
             # Create mapping between glyphs and Unicode codepoints.
             if glyph_id not in font.to_unicode:
                 utf8_slice = slice(*sorted(utf8_positions[i:i+2]))
-                text = font.to_unicode[glyph_id] = utf8_text[utf8_slice].decode()
-
-            # Log warning for missing glyphs.
-            if glyph_id & pango.PANGO_GLYPH_UNKNOWN_FLAG:
-                codepoints = ', '.join(f'U+{ord(character):04X}' for character in text)
-                LOGGER.warning(
-                    '.notdef glyph rendered for Unicode string unsupported by fonts: "%s" (%s)',
-                    text, codepoints)
+                font.to_unicode[glyph_id] = utf8_text[utf8_slice].decode()
 
             # Set horizontal and vertical offsets.
             offset = glyph_info.geometry.x_offset / font_size
