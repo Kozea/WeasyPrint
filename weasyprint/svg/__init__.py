@@ -406,6 +406,9 @@ class SVG:
 
         original_streams = []
 
+        call_fill_stroke = fill_stroke and node.tag in (
+            'circle', 'ellipse', 'line', 'path', 'polyline', 'polygon', 'rect')
+
         if fill_stroke:
             self.stream.push_state()
 
@@ -422,6 +425,10 @@ class SVG:
         if fill_stroke and 0 <= opacity < 1:
             original_streams.append(self.stream)
             self.stream = self.stream.add_group(0, 0, 0, 0)  # BBox set after drawing
+
+        # Set graphical state
+        if call_fill_stroke:
+            self.set_graphical_state(node, font_size)
 
         # Clip
         clip_path = parse_url(node.get('clip-path')).fragment
@@ -517,7 +524,7 @@ class SVG:
             paint_mask(self, node, mask, opacity)
 
         # Fill and stroke
-        if fill_stroke:
+        if call_fill_stroke:
             self.fill_stroke(node, font_size)
 
         # Draw markers
@@ -673,37 +680,30 @@ class SVG:
 
         return source, color
 
-    def fill_stroke(self, node, font_size, text=False):
-        """Paint fill and stroke for a node."""
-        if node.tag in ('text', 'textPath', 'a') and not text:
-            return
-
+    def set_graphical_state(self, node, font_size, text=False):
+        """Set stroke and fill colors, and line options."""
         # Get fill data
         fill_source, fill_color = self.get_paint(node.get('fill', 'black'))
         fill_opacity = alpha_value(node.get('fill-opacity', 1))
-        fill_drawn = draw_gradient_or_pattern(
-            self, node, fill_source, font_size, fill_opacity, stroke=False)
-        if fill_color and not fill_drawn:
+        fill_in_gradient = fill_source in self.gradients
+        fill_in_pattern = fill_source in self.patterns
+        if fill_color and not (fill_in_gradient or fill_in_pattern):
             stream_color = color(fill_color)
             stream_color.alpha *= fill_opacity
             self.stream.set_color(stream_color)
-        fill = fill_color or fill_drawn
 
         # Get stroke data
         stroke_source, stroke_color = self.get_paint(node.get('stroke'))
         stroke_opacity = alpha_value(node.get('stroke-opacity', 1))
-        stroke_drawn = draw_gradient_or_pattern(
-            self, node, stroke_source, font_size, stroke_opacity, stroke=True)
-        if stroke_color and not stroke_drawn:
+        stroke_in_gradient = stroke_source in self.gradients
+        stroke_in_pattern = stroke_source in self.patterns
+        if stroke_color and not (stroke_in_gradient or stroke_in_pattern):
             stream_color = color(stroke_color)
             stream_color.alpha *= stroke_opacity
             self.stream.set_color(stream_color, stroke=True)
-        stroke = stroke_color or stroke_drawn
         stroke_width = self.length(node.get('stroke-width', '1px'), font_size)
         if stroke_width:
             self.stream.set_line_width(stroke_width)
-        else:
-            stroke = None
 
         # Apply dash array
         dash_array = tuple(
@@ -745,6 +745,23 @@ class SVG:
         if miter_limit < 0:
             miter_limit = 4
         self.stream.set_miter_limit(miter_limit)
+
+    def fill_stroke(self, node, font_size, text=False):
+        """Paint fill and stroke for a node."""
+        # Get fill data
+        fill_source, fill_color = self.get_paint(node.get('fill', 'black'))
+        fill_opacity = alpha_value(node.get('fill-opacity', 1))
+        fill_drawn = draw_gradient_or_pattern(
+            self, node, fill_source, font_size, fill_opacity, stroke=False)
+        fill = fill_color or fill_drawn
+
+        # Get stroke data
+        stroke_source, stroke_color = self.get_paint(node.get('stroke'))
+        stroke_opacity = alpha_value(node.get('stroke-opacity', 1))
+        stroke_drawn = draw_gradient_or_pattern(
+            self, node, stroke_source, font_size, stroke_opacity, stroke=True)
+        stroke_width = self.length(node.get('stroke-width', '1px'), font_size)
+        stroke = (stroke_color or stroke_drawn) and stroke_width
 
         # Fill and stroke
         even_odd = node.get('fill-rule') == 'evenodd'
