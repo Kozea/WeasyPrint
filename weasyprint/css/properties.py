@@ -3,7 +3,7 @@
 import collections
 from math import inf
 
-from tinycss2.color4 import parse_color
+from tinycss2.color5 import parse_color
 
 Dimension = collections.namedtuple('Dimension', ['value', 'unit'])
 

@@ -105,6 +105,10 @@ class Stream(pydyf.Stream):
             self.set_color_space('lab-d50', stroke)
             lightness, a, b = color.to('lab').coordinates
             self.set_color_special(None, stroke, lightness, a, b)
+        elif color.space == 'device-cmyk':
+            self.set_color_space('DeviceCMYK', stroke)
+            c, m, y, k = color.coordinates
+            self.set_color_special(None, stroke, c, m, y, k)
         else:
             LOGGER.warning('Unsupported color space %s, use sRGB instead', color.space)
             self.set_color_rgb(*channels, stroke)

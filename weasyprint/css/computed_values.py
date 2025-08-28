@@ -2,7 +2,7 @@
 
 from math import pi
 
-from tinycss2.color4 import parse_color
+from tinycss2.color5 import parse_color
 
 from ..logger import LOGGER
 from ..text.line_break import strut

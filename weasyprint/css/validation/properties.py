@@ -7,7 +7,7 @@ See https://www.w3.org/TR/CSS21/propidx.html and various CSS3 modules.
 from math import inf
 
 from tinycss2 import parse_component_value_list
-from tinycss2.color4 import parse_color
+from tinycss2.color5 import parse_color
 
 from .. import computed_values
 from ..functions import Function, check_var

@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from math import e, inf, nan, pi
 
 from tinycss2.ast import DimensionToken, IdentToken, NumberToken, PercentageToken
-from tinycss2.color4 import parse_color
+from tinycss2.color5 import parse_color
 
 from ..logger import LOGGER
 from ..urls import get_url_tuple

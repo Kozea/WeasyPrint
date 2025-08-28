@@ -3,7 +3,7 @@
 from importlib.resources import files
 
 import pydyf
-from tinycss2.color4 import D50, D65
+from tinycss2.color5 import D50, D65
 
 from .. import VERSION, Attachment
 from ..html import W3C_DATE_RE
