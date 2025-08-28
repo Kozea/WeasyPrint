@@ -99,6 +99,31 @@ def test_image_svg_align_none(assert_pixels):
 
 
 @assert_no_logs
+def test_image_svg_align_no_viewbox(assert_pixels):
+    assert_pixels('''
+        BBRRRRRR
+        BBRRRRRR
+        RRRRRRGG
+        RRRRRRGG
+        ________
+        ________
+        ________
+        ________
+    ''', '''
+      <style>
+        @page { size: 8px 8px }
+        svg { display: block; height: 4px; width: 8px }
+      </style>
+      <svg width="4px" height="4px"
+           xmlns="http://www.w3.org/2000/svg">
+        <rect width="4" height="4" fill="red" />
+        <rect width="1" height="2" fill="blue" />
+        <rect x="3" y="2" width="1" height="2" fill="lime" />
+      </svg>
+    ''')
+
+
+@assert_no_logs
 def test_image_svg_align_meet_x(assert_pixels):
     assert_pixels('''
         ____BRRR

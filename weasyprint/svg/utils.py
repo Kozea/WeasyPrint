@@ -94,7 +94,10 @@ def preserve_ratio(svg, node, font_size, width, height, viewbox=None):
     scale_x = width / viewbox_width if viewbox_width else 1
     scale_y = height / viewbox_height if viewbox_height else 1
 
-    aspect_ratio = node.get('preserveAspectRatio', 'xMidYMid').split()
+    if viewbox:
+        aspect_ratio = node.get('preserveAspectRatio', 'xMidYMid').split()
+    else:
+        aspect_ratio = ('none',)
     align = aspect_ratio[0]
     if align == 'none':
         x_position = 'min'
