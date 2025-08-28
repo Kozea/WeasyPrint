@@ -150,17 +150,9 @@ class Font:
                 self.variations['slnt'] = slnt
             if 'ital' in axes and 'ital' not in self.variations:
                 self.variations['ital'] = int(self.style == 2)
-            # TODO: can use static=True when fontTools 4.60 is out.
-            for axis in axes:
-                if axis not in self.variations:
-                    self.variations[axis] = None
             partial_font = io.BytesIO()
             try:
-                ttfont = instantiateVariableFont(ttfont, self.variations)
-                # TODO: see fonttools#3918, can be removed when 4.60 is out.
-                for key, (advance, bearing) in ttfont['hmtx'].metrics.items():
-                    if advance < 0:
-                        ttfont['hmtx'].metrics[key] = (0, bearing)
+                ttfont = instantiateVariableFont(ttfont, self.variations, static=True)
                 ttfont.save(partial_font)
             except Exception as exception:
                 LOGGER.warning(f'Unable to instantiate "{self.family}" variable font')
