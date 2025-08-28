@@ -15,6 +15,7 @@ from ..tokens import (  # isort:skip
 DESCRIPTORS = {
     'font-face': {},
     'counter-style': {},
+    'color-profile': {},
 }
 NOT_PRINT_MEDIA = (
     'font-display',
@@ -352,3 +353,32 @@ def additive_symbols(tokens, base_url):
             return
         results.append(result)
     return tuple(results)
+
+
+@descriptor('color-profile', descriptor_name='src', wants_base_url=True)
+@single_token
+def color_profile_src(token, base_url):
+    url = get_url(token, base_url)
+    if url is not None and url[0] == 'url':
+        return url[1]
+
+
+@descriptor('color-profile')
+@single_keyword
+def rendering_intent(keyword):
+    possible_values = (
+        'relative-colorimetric', 'absolute-colorimetric', 'perceptual', 'saturation')
+    if keyword in possible_values:
+        return keyword
+
+
+@descriptor('color-profile')
+@comma_separated_list
+def components(tokens):
+    components = []
+    for token in tokens:
+        if token.type == 'ident':
+            components.append(token.value)
+        else:
+            return
+    return components

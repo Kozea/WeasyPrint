@@ -13,13 +13,15 @@ from .fonts import Font
 
 class Stream(pydyf.Stream):
     """PDF stream object with extra features."""
-    def __init__(self, fonts, page_rectangle, resources, images, tags, *args, **kwargs):
+    def __init__(self, fonts, page_rectangle, resources, images, tags, color_profiles,
+                 *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.page_rectangle = page_rectangle
         self._fonts = fonts
         self._resources = resources
         self._images = images
         self._tags = tags
+        self._color_profiles = color_profiles
         self._current_color = self._current_color_stroke = None
         self._current_alpha = self._current_alpha_stroke = None
         self._current_font = self._current_font_size = None
@@ -42,6 +44,8 @@ class Stream(pydyf.Stream):
             kwargs['images'] = self._images
         if 'tags' not in kwargs:
             kwargs['tags'] = self._tags
+        if 'color_profiles' not in kwargs:
+            kwargs['color_profiles'] = self._color_profiles
         if 'compress' not in kwargs:
             kwargs['compress'] = self.compress
         return Stream(**kwargs)
@@ -109,6 +113,9 @@ class Stream(pydyf.Stream):
             self.set_color_space('DeviceCMYK', stroke)
             c, m, y, k = color.coordinates
             self.set_color_special(None, stroke, c, m, y, k)
+        elif color.space.startswith('--') and color.space in self._color_profiles:
+            self.set_color_space(color.space, stroke)
+            self.set_color_special(None, stroke, *color.coordinates)
         else:
             LOGGER.warning('Unsupported color space %s, use sRGB instead', color.space)
             self.set_color_rgb(*channels, stroke)

@@ -536,7 +536,8 @@ def test_embed_images_from_pages():
         string='<img src="not-optimized.jpg">').render().pages
     document = Document(
         (page1, page2), metadata=DocumentMetadata(),
-        font_config=FontConfiguration(), url_fetcher=None).write_pdf()
+        font_config=FontConfiguration(), color_profiles={},
+        url_fetcher=None).write_pdf()
     assert document.count(b'/Filter /DCTDecode') == 2
 
 

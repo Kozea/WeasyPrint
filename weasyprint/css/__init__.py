@@ -26,7 +26,7 @@ import tinycss2.nth
 from .. import CSS
 from ..logger import LOGGER, PROGRESS_LOGGER
 from ..text.fonts import FontConfiguration
-from ..urls import URLFetchingError, get_url_attribute, url_join
+from ..urls import URLFetchingError, fetch, get_url_attribute, url_join
 from . import counters, media_queries
 from .computed_values import COMPUTER_FUNCTIONS
 from .functions import Function, check_math, check_var
@@ -255,7 +255,7 @@ def text_decoration(key, value, parent_value, cascaded):
 
 
 def find_stylesheets(wrapper_element, device_media_type, url_fetcher, base_url,
-                     font_config, counter_style, page_rules, layers):
+                     font_config, counter_style, color_profiles, page_rules, layers):
     """Yield the stylesheets in ``element_tree``.
 
     The output order is the same as the source order.
@@ -283,7 +283,7 @@ def find_stylesheets(wrapper_element, device_media_type, url_fetcher, base_url,
                 string=content, base_url=base_url,
                 url_fetcher=url_fetcher, media_type=device_media_type,
                 font_config=font_config, counter_style=counter_style,
-                page_rules=page_rules, layers=layers)
+                page_rules=page_rules, color_profiles=color_profiles, layers=layers)
             yield css
         elif element.tag == 'link' and element.get('href'):
             if not element_has_link_type(element, 'stylesheet') or \
@@ -296,7 +296,8 @@ def find_stylesheets(wrapper_element, device_media_type, url_fetcher, base_url,
                         url=href, url_fetcher=url_fetcher,
                         _check_mime_type=True, media_type=device_media_type,
                         font_config=font_config, counter_style=counter_style,
-                        page_rules=page_rules, layers=layers)
+                        color_profiles=color_profiles, page_rules=page_rules,
+                        layers=layers)
                 except URLFetchingError as exception:
                     LOGGER.error('Failed to load stylesheet at %s: %s', href, exception)
                     LOGGER.debug('Error while loading stylesheet:', exc_info=exception)
@@ -1257,6 +1258,20 @@ def _parse_layer(tokens):
         return new_layer
 
 
+def parse_color_profile_name(prelude):
+    tokens = list(remove_whitespace(prelude))
+
+    if len(tokens) != 1:
+        return
+
+    token = tokens[0]
+    if token.type != 'ident':
+        return
+
+    if token.value.startswith('--') or token.value == 'device-cmyk':
+        return token.value
+
+
 def parse_page_selectors(rule):
     """Parse a page selector rule.
 
@@ -1376,7 +1391,7 @@ def parse_page_selectors(rule):
 
 def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fetcher,
                           matcher, page_rules, layers, font_config, counter_style,
-                          ignore_imports=False, layer=None):
+                          color_profiles, ignore_imports=False, layer=None):
     """Do what can be done early on stylesheet, before being in a document."""
     for rule in stylesheet_rules:
         if getattr(rule, 'content', None) is None:
@@ -1486,8 +1501,8 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fet
                     CSS(
                         url=url, url_fetcher=url_fetcher, media_type=device_media_type,
                         font_config=font_config, counter_style=counter_style,
-                        matcher=matcher, page_rules=page_rules, layers=layers,
-                        layer=new_layer)
+                        color_profiles=color_profiles, matcher=matcher,
+                        page_rules=page_rules, layers=layers, layer=new_layer)
                 except URLFetchingError as exception:
                     LOGGER.error('Failed to load stylesheet at %s : %s', url, exception)
                     LOGGER.debug('Error while loading stylesheet:', exc_info=exception)
@@ -1506,7 +1521,8 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fet
             content_rules = tinycss2.parse_rule_list(rule.content)
             preprocess_stylesheet(
                 device_media_type, base_url, content_rules, url_fetcher, matcher,
-                page_rules, layers, font_config, counter_style, ignore_imports=True)
+                page_rules, layers, font_config, counter_style, color_profiles,
+                ignore_imports=True)
 
         elif rule.type == 'at-rule' and rule.lower_at_keyword == 'page':
             data = parse_page_selectors(rule)
@@ -1556,6 +1572,38 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fet
             else:
                 if font_config is not None:
                     font_config.add_font_face(rule_descriptors, url_fetcher)
+
+        elif rule.type == 'at-rule' and rule.lower_at_keyword == 'color-profile':
+            name = parse_color_profile_name(rule.prelude)
+
+            if name is None:
+                LOGGER.warning(
+                    'Invalid color profile name %r, the whole '
+                    '@color-profile rule was ignored at %d:%d.',
+                    tinycss2.serialize(rule.prelude), rule.source_line,
+                    rule.source_column)
+                continue
+
+            ignore_imports = True
+            content = tinycss2.parse_blocks_contents(rule.content)
+            color_profile = {
+                'src': None,
+                'rendering-intent': 'relative-colorimetric',
+                'components': None,
+            }
+            rule_descriptors = preprocess_descriptors(
+                'color-profile', base_url, content)
+
+            for descriptor_name, descriptor_value in rule_descriptors:
+                color_profile[descriptor_name] = descriptor_value
+
+            with fetch(url_fetcher, color_profile['src'][1]) as result:
+                if 'string' in result:
+                    string = result['string']
+                else:
+                    string = result['file_obj'].read()
+                color_profile['_content'] = string
+            color_profiles[name] = color_profile
 
         elif rule.type == 'at-rule' and rule.lower_at_keyword == 'counter-style':
             name = counters.parse_counter_style_name(rule.prelude, counter_style)
@@ -1660,8 +1708,8 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fet
             content_rules = tinycss2.parse_rule_list(rule.content)
             preprocess_stylesheet(
                 device_media_type, base_url, content_rules, url_fetcher, matcher,
-                page_rules, layers, font_config, counter_style, ignore_imports=True,
-                layer=new_layer)
+                page_rules, layers, font_config, counter_style, color_profiles,
+                ignore_imports=True, layer=new_layer)
 
         else:
             LOGGER.warning(
@@ -1670,8 +1718,9 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fet
 
 
 def get_all_computed_styles(html, user_stylesheets=None, presentational_hints=False,
-                            font_config=None, counter_style=None, page_rules=None,
-                            layers=None, target_collector=None, forms=False):
+                            font_config=None, counter_style=None, color_profiles=None,
+                            page_rules=None, layers=None, target_collector=None,
+                            forms=False):
     """Compute all the computed styles of all elements in ``html`` document.
 
     Do everything from finding author stylesheets to parsing and applying them.
@@ -1696,7 +1745,8 @@ def get_all_computed_styles(html, user_stylesheets=None, presentational_hints=Fa
             sheets.append((sheet, 'author', (0, 0, 0)))
     for sheet in find_stylesheets(
             html.wrapper_element, html.media_type, html.url_fetcher,
-            html.base_url, font_config, counter_style, page_rules, layers):
+            html.base_url, font_config, counter_style, color_profiles, page_rules,
+            layers):
         sheets.append((sheet, 'author', None))
     for sheet in (user_stylesheets or []):
         sheets.append((sheet, 'user', None))

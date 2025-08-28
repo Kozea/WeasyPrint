@@ -118,6 +118,8 @@ def generate_pdf(document, target, zoom, **options):
 
     PROGRESS_LOGGER.info('Step 6 - Creating PDF')
 
+    compress = not options['uncompressed_pdf']
+
     # Set properties according to PDF variants
     srgb = options['srgb']
     pdf_tags = options['pdf_tags']
@@ -141,6 +143,14 @@ def generate_pdf(document, target, zoom, **options):
             'Range': pydyf.Array((-125, 125, -125, 125)),
         }))),
     })
+    # Custom color profiles
+    for name, color_profile in document.color_profiles.items():
+        profile = pydyf.Stream(
+            color_profile['_content'],
+            pydyf.Dictionary({'N': len(color_profile['components'])}),
+            compress=compress)
+        pdf.add_object(profile)
+        color_space[name] = pydyf.Array(('/ICCBased', profile.reference))
     pdf.add_object(color_space)
     resources = pydyf.Dictionary({
         'ExtGState': pydyf.Dictionary(),
@@ -157,7 +167,6 @@ def generate_pdf(document, target, zoom, **options):
 
     annot_files = {}
     pdf_pages, page_streams = [], []
-    compress = not options['uncompressed_pdf']
     for page_number, (page, links_and_anchors) in enumerate(
             zip(document.pages, page_links_and_anchors)):
         tags = {} if pdf_tags else None
@@ -178,7 +187,8 @@ def generate_pdf(document, target, zoom, **options):
             left / scale, top / scale,
             (right - left) / scale, (bottom - top) / scale)
         stream = Stream(
-            document.fonts, page_rectangle, resources, images, tags, compress=compress)
+            document.fonts, page_rectangle, resources, images, tags,
+            document.color_profiles, compress=compress)
         stream.transform(d=-1, f=(page.height * scale))
         pdf.add_object(stream)
         page_streams.append(stream)
