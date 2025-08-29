@@ -2,6 +2,7 @@
 
 from hashlib import md5
 from io import BytesIO
+from locale import getpreferredencoding
 from pathlib import Path
 from shutil import rmtree
 from tempfile import mkdtemp
@@ -11,7 +12,7 @@ from xml.etree.ElementTree import Element, SubElement, tostring
 from fontTools.ttLib import TTFont, woff2
 
 from ..logger import LOGGER
-from ..urls import FILESYSTEM_ENCODING, fetch
+from ..urls import fetch
 
 from .constants import (  # isort:skip
     CAPS_KEYS, EAST_ASIAN_KEYS, FONTCONFIG_STRETCH, FONTCONFIG_STYLE, FONTCONFIG_WEIGHT,
@@ -19,6 +20,8 @@ from .constants import (  # isort:skip
 from .ffi import (  # isort:skip
     FROM_UNITS, TO_UNITS, ffi, fontconfig, gobject, harfbuzz, pango, pangoft2,
     unicode_to_char_p)
+
+PREFERRED_ENCODING = getpreferredencoding(False)
 
 
 def _check_font_configuration(font_config):  # pragma: no cover
@@ -150,7 +153,7 @@ class FontConfiguration:
                     if font_name.lower() == name.lower():
                         fontconfig.FcPatternGetString(
                             matching_pattern, b'file', 0, string)
-                        path = ffi.string(string[0]).decode(FILESYSTEM_ENCODING)
+                        path = ffi.string(string[0]).decode(PREFERRED_ENCODING)
                         url = Path(path).as_uri()
                         break
                 else:
@@ -236,7 +239,7 @@ class FontConfiguration:
             # too as explained in Behdad's blog entry.
             fontconfig.FcConfigParseAndLoadFromMemory(self._config, xml, True)
             font_added = fontconfig.FcConfigAppFontAddFile(
-                self._config, str(font_path).encode(FILESYSTEM_ENCODING))
+                self._config, str(font_path).encode(PREFERRED_ENCODING))
             if font_added:
                 return pangoft2.pango_fc_font_map_config_changed(
                     ffi.cast('PangoFcFontMap *', self.font_map))
