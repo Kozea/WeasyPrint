@@ -1,5 +1,5 @@
 name: WeasyPrint's PDF/UA tests
-on: [push, pull_request]
+on: [push]
 
 env:
   PDF_FOLDER: 'pdfs'
