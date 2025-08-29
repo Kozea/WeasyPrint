@@ -585,8 +585,14 @@ def resolve_var(computed, token, parent_style, known_variables=None):
         arguments = []
         for i, argument in enumerate(token.arguments):
             if argument.type == 'function':
-                arguments.extend(resolve_var(
-                    computed, argument, parent_style, known_variables))
+                # arguments.extend(resolve_var(
+                #     computed, argument, parent_style, known_variables))
+                # fix arguments.extend(resolve_var(
+                # TypeError: 'NoneType' object is not iterable
+                resolved_var = resolve_var(
+                    computed, argument, parent_style, known_variables)
+                if resolved_var:
+                    arguments.extend(resolved_var)
             else:
                 arguments.append(argument)
         token = tinycss2.ast.FunctionBlock(
