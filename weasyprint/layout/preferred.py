@@ -675,12 +675,9 @@ def replaced_min_content_width(box, outer=True):
             intrinsic_width, intrinsic_height, intrinsic_ratio = (
                 image.get_intrinsic_size(
                     box.style['image_resolution'], box.style['font_size']))
-            if intrinsic_ratio and not intrinsic_width and not intrinsic_height:
-                width = 0
-            else:
-                width, _ = default_image_sizing(
-                    intrinsic_width, intrinsic_height, intrinsic_ratio, 'auto',
-                    height, default_width=300, default_height=150)
+            width, _ = default_image_sizing(
+                intrinsic_width, intrinsic_height, intrinsic_ratio, 'auto',
+                height, default_width=0, default_height=0)
     elif box.style['width'].unit == '%':
         # See https://drafts.csswg.org/css-sizing/#intrinsic-contribution
         width = 0
