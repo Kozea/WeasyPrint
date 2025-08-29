@@ -123,6 +123,7 @@ def text(svg, node, font_size):
         return
 
     svg.stream.push_state()
+    svg.set_graphical_state(node, font_size, text=True)
     svg.stream.begin_text()
     emoji_lines = []
 
