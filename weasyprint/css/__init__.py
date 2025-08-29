@@ -26,13 +26,11 @@ from ..logger import LOGGER, PROGRESS_LOGGER
 from ..urls import URLFetchingError, get_url_attribute, url_join
 from . import counters, media_queries
 from .computed_values import COMPUTER_FUNCTIONS
+from .functions import Function, check_var
 from .properties import INHERITED, INITIAL_NOT_COMPUTED, INITIAL_VALUES, ZERO_PIXELS
+from .tokens import InvalidValues, Pending, get_url, remove_whitespace
 from .validation import preprocess_declarations
 from .validation.descriptors import preprocess_descriptors
-
-from .utils import (  # isort:skip
-    InvalidValues, Pending, check_var_function, get_url, parse_function,
-    remove_whitespace)
 
 # Reject anything not in here:
 PSEUDO_ELEMENTS = (
@@ -575,7 +573,7 @@ def declaration_precedence(origin, importance):
 
 def resolve_var(computed, token, parent_style, known_variables=None):
     """Return token with resolved CSS variables."""
-    if not check_var_function(token):
+    if not check_var(token):
         return
 
     if known_variables is None:
@@ -594,13 +592,16 @@ def resolve_var(computed, token, parent_style, known_variables=None):
             token.source_line, token.source_column, token.name, arguments)
         return resolve_var(computed, token, parent_style, known_variables) or (token,)
 
-    args = parse_function(token)[1]
-    variable_name = args.pop(0).value.replace('-', '_')  # first arg is name
+    function = Function(token)
+    arguments = function.split_comma(single_tokens=False, trailing=True)
+    if not arguments or len(arguments[0]) != 1:
+        return []
+    variable_name = arguments[0][0].value.replace('-', '_')  # first arg is name
     if variable_name in known_variables:
-        return []  # endless recursion, returned value is nothing
+        return []  # endless recursion
     else:
         known_variables.add(variable_name)
-    default = args  # next args are default value
+    default = arguments[1] if len(arguments) > 1 else []
     computed_value = []
     for value in (computed[variable_name] or default):
         resolved = resolve_var(computed, value, parent_style, known_variables)

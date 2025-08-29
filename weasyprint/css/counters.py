@@ -7,7 +7,7 @@ https://www.w3.org/TR/css-counter-styles-3/#counter-style-system
 
 from math import inf
 
-from .utils import remove_whitespace
+from .tokens import remove_whitespace
 
 
 def symbol(string_or_url):

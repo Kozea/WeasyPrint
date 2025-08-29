@@ -122,6 +122,16 @@ def get_url_attribute(element, attr_name, base_url, allow_relative=False):
             (element.tag, attr_name, value))
 
 
+def get_url_tuple(url, base_url):
+    """Get tuple describing internal or external URI."""
+    if url.startswith('#'):
+        return ('internal', unquote(url[1:]))
+    elif url_is_absolute(url):
+        return ('external', iri_to_uri(url))
+    elif base_url:
+        return ('external', iri_to_uri(urljoin(base_url, url)))
+
+
 def url_join(base_url, url, allow_relative, context, context_args):
     """Like urllib.urljoin, but warn if base_url is required but missing."""
     if url_is_absolute(url):
