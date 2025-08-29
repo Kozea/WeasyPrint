@@ -591,8 +591,6 @@ def _build_vector_font_dictionary(font_dictionary, pdf, font, widths, compress,
             compress=compress)
         pdf.add_object(stream)
         font_descriptor['CIDSet'] = stream.reference
-    if font.type == 'otf':
-        font_descriptor['Subtype'] = '/OpenType'
     pdf.add_object(font_descriptor)
 
     pdf_widths = pydyf.Array()
