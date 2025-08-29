@@ -26,7 +26,8 @@ class Font:
 
         self.font_size = font_size
         self.style = pango.pango_font_description_get_style(description)
-        self.family = ffi.string(pango.pango_font_description_get_family(description))
+        self.family = ffi.string(
+            pango.pango_font_description_get_family(description)).decode()
 
         self.variations = {}
         variations = pango.pango_font_description_get_variations(description)
@@ -97,10 +98,12 @@ class Font:
         self.upem = harfbuzz.hb_face_get_upem(self.hb_face)
         self.png = harfbuzz.hb_ot_color_has_png(self.hb_face)
         self.svg = harfbuzz.hb_ot_color_has_svg(self.hb_face)
+        self.glyph_count = harfbuzz.hb_face_get_glyph_count(self.hb_face)
         self.stemv = 80
         self.stemh = 80
         self.widths = {}
-        self.cmap = {}
+        self.to_unicode = {}
+        self.missing = {}
         self.used_in_forms = False
 
         # Set font flags.
@@ -110,39 +113,50 @@ class Font:
         if b'Serif' in name.split(b' '):
             self.flags += 2 ** (2 - 1)  # Serif
 
-    def clean(self, cmap, hinting):
+    def get_unused_glyph_id(self, codepoint):
+        """Get a glyph id that’s not used in the font, for given Unicode codepoint."""
+        if codepoint not in self.missing:
+            next_unused_glyph_id = self.glyph_count + len(self.missing)
+            if next_unused_glyph_id > 2 ** 16 - 1:
+                LOGGER.warning(
+                    f'Too many glyphs missing from "{self.family}", '
+                    'expect text selection problems')
+                next_unused_glyph_id = 2 ** 16 - 1
+            self.missing[codepoint] = next_unused_glyph_id
+        return self.missing[codepoint]
+
+    def clean(self, to_unicode, hinting):
         """Remove useless data from font."""
 
         # Subset font.
-        self.subset(cmap, hinting)
+        self.subset(to_unicode, hinting)
 
         # Transform variable into static font.
         if 'fvar' in self.tables:
             full_font = io.BytesIO(self.file_content)
             ttfont = TTFont(full_font, fontNumber=self.index)
-            if 'wght' not in self.variations:
+            axes = {axis.axisTag: axis for axis in ttfont['fvar'].axes}
+            if 'wght' in axes and 'wght' not in self.variations:
                 self.variations['wght'] = self.weight
-            if 'opsz' not in self.variations:
+            if 'opsz' in axes and 'opsz' not in self.variations:
                 self.variations['opsz'] = self.font_size
-            if 'slnt' not in self.variations:
+            if 'slnt' in axes and 'slnt' not in self.variations:
                 slnt = 0
                 if self.style == 1:
-                    for axe in ttfont['fvar'].axes:
-                        if axe.axisTag == 'slnt':
-                            if axe.maxValue == 0:
-                                slnt = axe.minValue
-                            else:
-                                slnt = axe.maxValue
-                            break
+                    if axes['slnt'].maxValue == 0:
+                        slnt = axes['slnt'].minValue
+                    else:
+                        slnt = axes['slnt'].maxValue
                 self.variations['slnt'] = slnt
-            if 'ital' not in self.variations:
+            if 'ital' in axes and 'ital' not in self.variations:
                 self.variations['ital'] = int(self.style == 2)
             partial_font = io.BytesIO()
             try:
-                ttfont = instantiateVariableFont(ttfont, self.variations)
+                ttfont = instantiateVariableFont(ttfont, self.variations, static=True)
                 ttfont.save(partial_font)
-            except Exception:
-                LOGGER.warning('Unable to mutate variable font')
+            except Exception as exception:
+                LOGGER.warning(f'Unable to instantiate "{self.family}" variable font')
+                LOGGER.debug('Original exception:', exc_info=exception)
             else:
                 self.file_content = partial_font.getvalue()
 
@@ -168,25 +182,26 @@ class Font:
                 output_font = io.BytesIO()
                 ttfont.save(output_font)
                 self.file_content = output_font.getvalue()
-            except TTLibError:
-                LOGGER.warning('Unable to save emoji font')
+            except TTLibError as exception:
+                LOGGER.warning(f'Unable to save emoji font "{self.family}"')
+                LOGGER.debug('Original exception:', exc_info=exception)
 
     @property
     def type(self):
         return 'otf' if self.file_content[:4] == b'OTTO' else 'ttf'
 
-    def subset(self, cmap, hinting):
+    def subset(self, to_unicode, hinting):
         """Remove unused glyphs and tables from font."""
-        if not cmap:
+        if not to_unicode:
             return
 
         if harfbuzz_subset and harfbuzz.hb_version_atleast(4, 1, 0):
             # 4.1.0 is required for hb_set_add_sorted_array.
-            self._harfbuzz_subset(cmap, hinting)
+            self._harfbuzz_subset(to_unicode, hinting)
         else:
-            self._fonttools_subset(cmap, hinting)
+            self._fonttools_subset(to_unicode, hinting)
 
-    def _harfbuzz_subset(self, cmap, hinting):
+    def _harfbuzz_subset(self, to_unicode, hinting):
         """Subset font using Harfbuzz."""
         hb_subset = ffi.gc(
             harfbuzz_subset.hb_subset_input_create_or_fail(),
@@ -194,14 +209,16 @@ class Font:
 
         # Only keep used glyphs.
         gid_set = harfbuzz_subset.hb_subset_input_glyph_set(hb_subset)
-        gid_array = ffi.new(f'hb_codepoint_t[{len(cmap)}]', sorted(cmap))
-        harfbuzz.hb_set_add_sorted_array(gid_set, gid_array, len(cmap))
+        gid_array = ffi.new(f'hb_codepoint_t[{len(to_unicode)}]', sorted(to_unicode))
+        harfbuzz.hb_set_add_sorted_array(gid_set, gid_array, len(to_unicode))
 
         # Set flags.
         flags = (
             harfbuzz_subset.HB_SUBSET_FLAGS_RETAIN_GIDS |
             harfbuzz_subset.HB_SUBSET_FLAGS_PASSTHROUGH_UNRECOGNIZED |
             harfbuzz_subset.HB_SUBSET_FLAGS_DESUBROUTINIZE)
+        if self.missing:
+            flags |= harfbuzz_subset.HB_SUBSET_FLAGS_NOTDEF_OUTLINE
         harfbuzz_subset.hb_subset_input_set_flags(hb_subset, flags)
 
         # Drop useless tables.
@@ -220,7 +237,7 @@ class Font:
 
         # Drop empty glyphs after last one used.
         gid_set = harfbuzz_subset.hb_subset_input_glyph_set(hb_subset)
-        keep = tuple(range(max(cmap) + 1))
+        keep = tuple(range(max(to_unicode) + 1))
         gid_array = ffi.new(f'hb_codepoint_t[{len(keep)}]', keep)
         harfbuzz.hb_set_add_sorted_array(gid_set, gid_array, len(keep))
 
@@ -230,6 +247,8 @@ class Font:
             harfbuzz_subset.HB_SUBSET_FLAGS_DESUBROUTINIZE)
         if not hinting:
             flags |= harfbuzz_subset.HB_SUBSET_FLAGS_NO_HINTING
+        if self.missing:
+            flags |= harfbuzz_subset.HB_SUBSET_FLAGS_NOTDEF_OUTLINE
         harfbuzz_subset.hb_subset_input_set_flags(hb_subset, flags)
 
         # Subset font.
@@ -244,19 +263,19 @@ class Font:
                 self.file_content = file_content
                 return
 
-        LOGGER.warning('Unable to subset font with Harfbuzz')
+        LOGGER.warning(f'Unable to subset "{self.family}" with HarfBuzz')
 
-    def _fonttools_subset(self, cmap, hinting):
+    def _fonttools_subset(self, to_unicode, hinting):
         """Subset font using Fonttools."""
         full_font = io.BytesIO(self.file_content)
 
         # Set subset options.
         options = subset.Options(
             retain_gids=True, passthrough_tables=True, ignore_missing_glyphs=True,
-            hinting=hinting, desubroutinize=True)
+            hinting=hinting, desubroutinize=True, notdef_outline=bool(self.missing))
         options.drop_tables += ['GSUB', 'GPOS', 'SVG']
         subsetter = subset.Subsetter(options)
-        subsetter.populate(gids=cmap)
+        subsetter.populate(gids=to_unicode)
 
         # Subset font.
         try:
@@ -265,10 +284,11 @@ class Font:
                 subsetter.subset(ttfont)
             for log in logs:
                 LOGGER.warning(
-                    'fontTools warning when subsetting "%s": %s',
-                    self.family.decode(), log)
-        except TTLibError:
-            LOGGER.warning('Unable to subset font with fontTools')
+                    'fontTools warning when subsetting '
+                    f'"{self.family}": {log}')
+        except TTLibError as exception:
+            LOGGER.warning(f'Unable to subset "{self.family}" with fontTools')
+            LOGGER.debug('Original exception:', exc_info=exception)
         else:
             optimized_font = io.BytesIO()
             ttfont.save(optimized_font)
@@ -289,11 +309,11 @@ def build_fonts_dictionary(pdf, fonts, compress, subset, options):
             continue
 
         # Clean font, optimize and handle emojis.
-        cmap = {}
+        to_unicode = {}
         if subset and not font.used_in_forms:
             for file_font in file_fonts:
-                cmap = {**cmap, **file_font.cmap}
-        font.clean(cmap, options['hinting'])
+                to_unicode = {**to_unicode, **file_font.to_unicode}
+        font.clean(to_unicode, options['hinting'])
 
         # Include font.
         if font.type == 'otf':
@@ -308,20 +328,20 @@ def build_fonts_dictionary(pdf, fonts, compress, subset, options):
         if subset and not font.used_in_forms:
             # Only store widths and map for used glyphs
             font_widths = font.widths
-            cmap = font.cmap
+            to_unicode = font.to_unicode
         else:
             # Store width and Unicode map for all glyphs
             full_font = io.BytesIO(font.file_content)
             ttfont = TTFont(full_font, fontNumber=font.index)
-            font_widths, cmap = {}, {}
+            font_widths, to_unicode = {}, {}
             for i, glyph in enumerate(ttfont.getGlyphSet().values()):
                 font_widths[i] = glyph.width * 1000 / font.upem
             for letter, key in ttfont.getBestCmap().items():
-                glyph = ttfont.getGlyphID(key)
-                if glyph not in cmap:
-                    cmap[glyph] = chr(letter)
+                glyph_id = ttfont.getGlyphID(key)
+                if glyph_id not in to_unicode:
+                    to_unicode[glyph_id] = chr(letter)
 
-        to_unicode = pydyf.Stream([
+        to_unicode_object = pydyf.Stream([
             b'/CIDInit /ProcSet findresource begin',
             b'12 dict begin',
             b'begincmap',
@@ -335,28 +355,29 @@ def build_fonts_dictionary(pdf, fonts, compress, subset, options):
             b'1 begincodespacerange',
             b'<0000> <ffff>',
             b'endcodespacerange'], compress=compress)
-        cmap_length = len(cmap)
-        cmap_items = tuple(cmap.items())
-        for i in range(ceil(cmap_length / 100)):
-            batch_length = min(100, cmap_length - i * 100)
-            to_unicode.stream.append(f'{batch_length} beginbfchar'.encode())
-            for glyph, text in cmap_items[i*100:(i+1)*100]:
+        to_unicode_stream = to_unicode_object.stream
+        to_unicode_length = len(to_unicode)
+        to_unicode_items = tuple(to_unicode.items())
+        for i in range(ceil(to_unicode_length / 100)):
+            batch_length = min(100, to_unicode_length - i * 100)
+            to_unicode_stream.append(f'{batch_length} beginbfchar'.encode())
+            for glyph, text in to_unicode_items[i*100:(i+1)*100]:
                 unicode_codepoints = ''.join(
                     f'{letter.encode("utf-16-be").hex()}' for letter in text)
-                to_unicode.stream.append(
+                to_unicode_stream.append(
                     f'<{glyph:04x}> <{unicode_codepoints}>'.encode())
-            to_unicode.stream.append(b'endbfchar')
-        to_unicode.stream.extend([
+            to_unicode_stream.append(b'endbfchar')
+        to_unicode_stream.extend([
             b'endcmap',
             b'CMapName currentdict /CMap defineresource pop',
             b'end',
             b'end'])
-        pdf.add_object(to_unicode)
+        pdf.add_object(to_unicode_object)
         font_dictionary = pydyf.Dictionary({
             'Type': '/Font',
             'Subtype': f'/Type{3 if font.bitmap else 0}',
             'BaseFont': font.name,
-            'ToUnicode': to_unicode.reference,
+            'ToUnicode': to_unicode_object.reference,
         })
 
         if font.bitmap:
@@ -377,7 +398,7 @@ def _build_bitmap_font_dictionary(font_dictionary, pdf, font, widths, compress, 
     font_dictionary['FontBBox'] = pydyf.Array([0, 0, 1, 1])
     font_dictionary['FontMatrix'] = pydyf.Array([1, 0, 0, 1, 0, 0])
     if subset:
-        chars = tuple(sorted(font.cmap))
+        chars = tuple(sorted(font.to_unicode))
     else:
         chars = tuple(range(256))
     first, last = chars[0], chars[-1]
@@ -416,7 +437,8 @@ def _build_bitmap_font_dictionary(font_dictionary, pdf, font, widths, compress, 
                     bearing_y = subtable.metrics.horiBearingY
                     break
             else:
-                LOGGER.warning(f'Unknown bitmap metrics for glyph: {glyph_id}')
+                LOGGER.warning(
+                    f'Unknown bitmap metrics in "{font.family}" for glyph: {glyph_id}')
                 continue
         else:
             data_start = 5 if glyph_format in (1, 2, 8) else 8
@@ -463,11 +485,12 @@ def _build_bitmap_font_dictionary(font_dictionary, pdf, font, widths, compress, 
                 y = int.from_bytes(data[index+3:index+4], 'big', signed=True)
                 subglyphs.append({'id': subglyph_id, 'x': x, 'y': y})
         else:  # pragma: no cover
-            LOGGER.warning(f'Unsupported bitmap glyph format: {glyph_format}')
+            LOGGER.warning(
+                f'Unsupported bitmap glyph format in "{font.family}": {glyph_format}')
             glyph_info['bitmap'] = bytes(height * stride)
 
     for glyph_id, glyph_info in glyphs_info.items():
-        # Don’t store glyph not in cmap.
+        # Don’t store glyph not in to_unicode.
         if glyph_id not in chars:
             continue
 
@@ -485,12 +508,14 @@ def _build_bitmap_font_dictionary(font_dictionary, pdf, font, widths, compress, 
                 sub_y = subglyph['y']
                 sub_id = subglyph['id']
                 if sub_id not in glyphs_info:
-                    LOGGER.warning(f'Unknown subglyph: {sub_id}')
+                    LOGGER.warning(f'Unknown subglyph in "{font.family}": {sub_id}')
                     continue
                 subglyph = glyphs_info[sub_id]
                 if subglyph['bitmap'] is None:
                     # TODO: Support subglyph in subglyph.
-                    LOGGER.warning(f'Unsupported subglyph in subglyph: {sub_id}')
+                    LOGGER.warning(
+                        'Unsupported subglyph in subglyph in '
+                        f'"{font.family}": {sub_id}')
                     continue
                 for row_y in range(subglyph['height']):
                     row_slice = slice(
@@ -592,5 +617,42 @@ def _build_vector_font_dictionary(font_dictionary, pdf, font, widths, compress,
         'FontDescriptor': font_descriptor.reference,
     })
     pdf.add_object(subfont_dictionary)
-    font_dictionary['Encoding'] = '/Identity-H'
+    if font.missing:
+        # Add CMap that doesn’t include missing glyphs, so that they can be replaced by
+        # .notdef.
+        encoding = pydyf.Stream([
+            b'/CIDInit /ProcSet findresource begin',
+            b'12 dict begin',
+            b'begincmap',
+            b'/CIDSystemInfo',
+            b'3 dict dup begin',
+            b'/Registry (WP) def',
+            b'/Ordering (Encod) def',
+            b'/Supplement 0 def',
+            b'end def',
+            b'/CMapName /WP-Encod-0 def',
+            b'/CMapType 1 def',
+            b'1 begincodespacerange',
+            b'<0000> <ffff>',
+            b'endcodespacerange',
+        ], compress=compress)
+        available = tuple(font.to_unicode)
+        available_length = len(available)
+        for i in range(ceil(available_length / 100)):
+            batch_length = min(100, available_length - i * 100)
+            encoding.stream.append(f'{batch_length} begincidchar'.encode())
+            for glyph_id in available[i*100:(i+1)*100]:
+                font_glyph_id = 0 if glyph_id in font.missing.values() else glyph_id
+                encoding.stream.append(f'<{glyph_id:04x}> {font_glyph_id}'.encode())
+            encoding.stream.append(b'endcidchar')
+        encoding.stream.extend([
+            b'endcmap',
+            b'CMapName currentdict /CMap defineresource pop',
+            b'end',
+            b'end'])
+        pdf.add_object(encoding)
+        font_dictionary['Encoding'] = encoding.reference
+    else:
+        # No missing glyph in this font, use the identity mapping to map all glyphs.
+        font_dictionary['Encoding'] = '/Identity-H'
     font_dictionary['DescendantFonts'] = pydyf.Array([subfont_dictionary.reference])
