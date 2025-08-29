@@ -26,7 +26,7 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
         absolute_boxes = []
 
     box = box.copy_with_children(box.children)
-    box.position_y += collapse_margin(adjoining_margins) - box.margin_top
+    box.position_y += collapse_margin(adjoining_margins)
 
     # Set height if defined
     if height != 'auto' and height.unit != '%':
@@ -266,7 +266,6 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
                 if everything_fits:
                     # Everything fits, start expanding columns at the average
                     # of the column heights
-                    max_height -= last_footnotes_height
                     if (style['column_fill'] == 'balance' or
                             index < columns_and_blocks[-1][0]):
                         balancing = True
@@ -276,11 +275,6 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
                 else:
                     # Content overflows even at maximum height, stop now and
                     # let the columns continue on the next page
-                    height += footnote_area_heights[-1]
-                    if len(footnote_area_heights) > 2:
-                        last_footnotes_height = min(
-                            last_footnotes_height, footnote_area_heights[-1])
-                    height -= last_footnotes_height
                     stop_rendering = True
                     break
 
@@ -338,7 +332,7 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
             break
 
     # Report footnotes above the defined footnotes height
-    _report_footnotes(context, last_footnotes_height)
+    _report_footnotes(context, footnote_area_heights[-1])
 
     if box.children and not new_children:
         # The box has children but none can be drawn, let's skip the whole box
