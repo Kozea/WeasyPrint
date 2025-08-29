@@ -667,8 +667,7 @@ def replaced_min_content_width(box, outer=True):
         else:
             assert height.unit == 'px'
             height = height.value
-        if (box.style['max_width'] != 'auto' and
-                box.style['max_width'].unit == '%'):
+        if box.style['max_width'] != 'auto' and box.style['max_width'].unit == '%':
             # See https://drafts.csswg.org/css-sizing/#intrinsic-contribution
             width = 0
         else:
