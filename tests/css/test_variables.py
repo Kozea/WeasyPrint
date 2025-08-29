@@ -604,3 +604,21 @@ def test_variable_in_function_in_variable():
     assert div1.children[0].children[0].children[0].text == 'I'
     assert div2.children[0].children[0].children[0].text == 'II'
     assert div3.children[0].children[0].children[0].text == 'iii'
+
+
+@assert_no_logs
+def test_variable_and_function_in_function():
+    page, = render_pages('''
+      <style>
+        html { --counter-name: page }
+        a::after { content: target-counter(attr(href), var(--counter-name)) }
+      </style>
+      <a id="link" href="#link"></a>
+    ''')
+    html, = page.children
+    body, = html.children
+    line, = body.children
+    a, _ = line.children
+    after, = a.children
+    textbox, = after.children
+    assert textbox.text == '1'
