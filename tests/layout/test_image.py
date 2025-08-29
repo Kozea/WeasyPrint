@@ -546,3 +546,51 @@ def test_image_min_max_width(props, div_width):
     line, = body.children
     div, = line.children
     assert div.width == div_width
+
+
+@pytest.mark.parametrize('css, width', (
+    ('width: 10px', 10),
+    ('width: 1px', 1),
+    ('height: 10px', 20),
+    ('height: 1px', 2),
+))
+def test_svg_no_size_width(css, width):
+    # Size is undefined when both width and heigh are not set.
+    # https://drafts.csswg.org/css2/#inline-replaced-width
+    page, = render_pages('''
+      <style> svg { %s } </style>
+      <div style="display: inline-block">
+        <svg viewBox="0 0 8 4"></svg>
+      </div>''' % css)
+    html, = page.children
+    body, = html.children
+    line, = body.children
+    div, = line.children
+    assert div.width == width
+
+
+@pytest.mark.parametrize('css, width', (
+    ('width: 10px', 10),
+    ('width: 1px', 1),
+    ('height: 10px', 20),
+    ('height: 1px', 2),
+))
+def test_svg_no_size_min_width(css, width):
+    # Size is undefined when both width and heigh are not set.
+    # https://drafts.csswg.org/css2/#inline-replaced-width
+    page, = render_pages('''
+      <style> svg { %s } </style>
+      <table>
+        <tr>
+          <td><svg viewBox="0 0 8 4"></svg></td>
+          <td style="width: 1000mm"></td>
+        </tr>
+      </table>''' % css)
+    html, = page.children
+    body, = html.children
+    wrapper, = body.children
+    table, = wrapper.children
+    row_group, = table.children
+    row, = row_group.children
+    td1, td2 = row.children
+    assert td1.width == width
