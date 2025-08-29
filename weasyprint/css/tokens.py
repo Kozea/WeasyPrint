@@ -370,9 +370,9 @@ def get_image(token, base_url):
         assert parsed_url[0] == 'url'
         if parsed_url[1][0] == 'external':
             return 'url', parsed_url[1][1]
-    if not (function := functions.parse_function(token)):
-        return
-    if not (arguments := function.split_comma(single_tokens=False)):
+    function = functions.Function(token)
+    arguments = function.split_comma(single_tokens=False)
+    if not arguments:
         return
     repeating = function.name.startswith('repeating-')
     if function.name in ('linear-gradient', 'repeating-linear-gradient'):
@@ -427,27 +427,23 @@ def get_quote(token):
 
 def get_target(token, base_url):
     """Parse a <target> token."""
-    if not (function := functions.parse_function(token)):
-        return
-
-    if not (args := function.split_comma()):
-        return
-
+    function = functions.Function(token)
+    arguments = function.split_comma()
     if function.name == 'target-counter':
-        if len(args) not in (2, 3):
+        if len(arguments) not in (2, 3):
             return
     elif function.name == 'target-counters':
-        if len(args) not in (3, 4):
+        if len(arguments) not in (3, 4):
             return
     elif function.name == 'target-text':
-        if len(args) not in (1, 2):
+        if len(arguments) not in (1, 2):
             return
     else:
         return
 
     values = []
 
-    link = args.pop(0)
+    link = arguments.pop(0)
     string_link = get_string(link)
     if string_link is None:
         url = get_url(link, base_url)
@@ -458,25 +454,25 @@ def get_target(token, base_url):
         values.append(string_link)
 
     if function.name.startswith('target-counter'):
-        ident = args.pop(0)
+        ident = arguments.pop(0)
         if ident.type != 'ident':
             return
         values.append(ident.value)
 
         if function.name == 'target-counters':
-            string = get_string(args.pop(0))
+            string = get_string(arguments.pop(0))
             if string is None:
                 return
             values.append(string)
 
-        if args:
-            counter_style = get_keyword(args.pop(0))
+        if arguments:
+            counter_style = get_keyword(arguments.pop(0))
         else:
             counter_style = 'decimal'
         values.append(counter_style)
     else:
-        if args:
-            content = get_keyword(args.pop(0))
+        if arguments:
+            content = get_keyword(arguments.pop(0))
             if content not in ('content', 'before', 'after', 'first-letter'):
                 return
         else:
@@ -519,15 +515,14 @@ def get_content_list_token(token, base_url):
     if (target := get_target(token, base_url)) is not None:
         return target
 
-    if (function := functions.parse_function(token)) is None:
-        return
-    args = function.split_comma()
+    function = functions.Function(token)
+    arguments = function.split_comma()
 
     # <leader()>
     if function.name == 'leader':
-        if len(args) != 1:
+        if len(arguments) != 1:
             return
-        arg, = args
+        arg, = arguments
         if arg.type == 'ident':
             if arg.value == 'dotted':
                 string = '.'

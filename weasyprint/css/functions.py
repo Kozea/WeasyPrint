@@ -6,14 +6,18 @@ class Function:
 
     def __init__(self, token):
         """Create Function from function token."""
-        self.name = token.lower_name
-        self.arguments = token.arguments
+        if token.type == 'function':
+            self.name = token.lower_name
+            self.arguments = token.arguments
+        else:
+            self.name = self.arguments = None
 
     def split_space(self):
         """Split arguments on spaces."""
-        return [
-            argument for argument in self.arguments
-            if argument.type not in ('whitespace', 'comment')]
+        if self.arguments is not None:
+            return [
+                argument for argument in self.arguments
+                if argument.type not in ('whitespace', 'comment')]
 
     def split_comma(self, single_tokens=True, trailing=False):
         """Split arguments on commas.
@@ -26,6 +30,9 @@ class Function:
         If ``trailing`` is ``True``, allow a bare comma at the end.
 
         """
+        if self.arguments is None:
+            return
+
         parts = [[]]
         for token in self.arguments:
             if token.type == 'literal' and token.value == ',':
@@ -50,44 +57,13 @@ class Function:
         return []
 
 
-def parse_function(function_token):
-    """Parse functional notation.
-
-    Return ``(name, args)`` if the given token is a function with comma- or
-    space-separated arguments. Return ``None`` otherwise.
-
-    """
-    if function_token.type != 'function':
-        return
-
-    content = list(function_token.arguments)
-    arguments = []
-    last_is_comma = False
-    while content:
-        token = content.pop(0)
-        if token.type in ('whitespace', 'comment'):
-            continue
-        is_comma = token.type == 'literal' and token.value == ','
-        if last_is_comma and is_comma:
-            return
-        if is_comma:
-            last_is_comma = True
-        else:
-            last_is_comma = False
-            if token.type == 'function':
-                if parse_function(token) is None:
-                    return
-            arguments.append(token)
-    if last_is_comma:
-        return
-    return Function(function_token)
-
-
 def check_attr(token, allowed_type=None):
-    if not (function := parse_function(token)) or function.name != 'attr':
+    function = Function(token)
+    if function.name != 'attr':
         return
 
-    if len(parts := function.split_comma(single_tokens=False, trailing=True)) == 1:
+    parts = function.split_comma(single_tokens=False, trailing=True)
+    if len(parts) == 1:
         name_and_type, fallback = parts[0], ''
     elif len(parts) == 2:
         name_and_type, fallback = parts
@@ -107,34 +83,31 @@ def check_attr(token, allowed_type=None):
 def check_counter(token, allowed_type=None):
     from .validation.properties import list_style_type
 
-    if not (function := parse_function(token)):
-        return
-
-    args = function.split_comma()
-
+    function = Function(token)
+    arguments = function.split_comma()
     if function.name == 'counter':
-        if len(args) not in (1, 2):
+        if len(arguments) not in (1, 2):
             return
     elif function.name == 'counters':
-        if len(args) not in (2, 3):
+        if len(arguments) not in (2, 3):
             return
     else:
         return
 
     result = []
-    ident = args.pop(0)
+    ident = arguments.pop(0)
     if ident.type != 'ident':
         return
     result.append(ident.value)
 
     if function.name == 'counters':
-        string = args.pop(0)
+        string = arguments.pop(0)
         if string.type != 'string':
             return
         result.append(string.value)
 
-    if args:
-        counter_style = list_style_type((args.pop(0),))
+    if arguments:
+        counter_style = list_style_type((arguments.pop(0),))
         if counter_style is None:
             return
         result.append(counter_style)
@@ -145,33 +118,32 @@ def check_counter(token, allowed_type=None):
 
 
 def check_content(token):
-    if (function := parse_function(token)) is None:
-        return
-    args = function.split_comma()
+    function = Function(token)
     if function.name == 'content':
-        if len(args) == 0:
+        arguments = function.split_comma()
+        if len(arguments) == 0:
             return ('content()', 'text')
-        elif len(args) == 1:
-            ident = args.pop(0)
+        elif len(arguments) == 1:
+            ident = arguments.pop(0)
             values = ('text', 'before', 'after', 'first-letter', 'marker')
             if ident.type == 'ident' and ident.lower_value in values:
                 return ('content()', ident.lower_value)
 
 
 def check_string_or_element(string_or_element, token):
-    if (function := parse_function(token)) is None:
-        return
-    args = function.split_comma()
-    if function.name == string_or_element and len(args) in (1, 2):
-        custom_ident = args.pop(0)
+    function = Function(token)
+    arguments = function.split_comma()
+    if function.name == string_or_element and len(arguments) in (1, 2):
+        custom_ident = arguments.pop(0)
         if custom_ident.type != 'ident':
             return
         custom_ident = custom_ident.value
 
-        if args:
-            ident = args.pop(0)
-            if ident.type != 'ident' or ident.lower_value not in (
-                    'first', 'start', 'last', 'first-except'):
+        if arguments:
+            ident = arguments.pop(0)
+            if ident.type != 'ident':
+                return
+            if ident.lower_value not in ('first', 'start', 'last', 'first-except'):
                 return
             ident = ident.lower_value
         else:
@@ -181,7 +153,8 @@ def check_string_or_element(string_or_element, token):
 
 
 def check_var(token):
-    if not (function := parse_function(token)):
+    function = Function(token)
+    if function.name is None:
         return
     arguments = function.split_space()
     if function.name == 'var':
