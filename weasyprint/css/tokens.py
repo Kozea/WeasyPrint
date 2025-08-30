@@ -4,7 +4,7 @@ import functools
 from abc import ABC, abstractmethod
 from math import e, inf, nan, pi
 
-from tinycss2 import ast
+from tinycss2.ast import DimensionToken, IdentToken, NumberToken, PercentageToken
 from tinycss2.color4 import parse_color
 
 from ..logger import LOGGER
@@ -41,11 +41,11 @@ DIRECTION_KEYWORDS = {
     ('to', 'right', 'bottom'): ('corner', 'bottom_right'),
 }
 
-E = ast.NumberToken(0, 0, e, None, 'e')
-PI = ast.NumberToken(0, 0, pi, None, 'π')
-PLUS_INFINITY = ast.NumberToken(0, 0, inf, None, '∞')
-MINUS_INFINITY = ast.NumberToken(0, 0, -inf, None, '-∞')
-NAN = ast.NumberToken(0, 0, nan, None, 'NaN')
+E = NumberToken(0, 0, e, None, 'e')
+PI = NumberToken(0, 0, pi, None, 'π')
+PLUS_INFINITY = NumberToken(0, 0, inf, None, '∞')
+MINUS_INFINITY = NumberToken(0, 0, -inf, None, '-∞')
+NAN = NumberToken(0, 0, nan, None, 'NaN')
 
 
 class InvalidValues(ValueError):  # noqa: N818
@@ -150,7 +150,7 @@ def parse_linear_gradient_parameters(arguments):
 def parse_2d_position(tokens):
     """Common syntax of background-position and transform-origin."""
     if len(tokens) == 1:
-        tokens = [tokens[0], ast.IdentToken(0, 0, 'center')]
+        tokens = [tokens[0], IdentToken(0, 0, 'center')]
     elif len(tokens) != 2:
         return None
 
@@ -586,14 +586,14 @@ def comma_separated_list(function):
 
 def tokenize(item, function=None, unit=None):
     """Transform a computed value result into a token."""
-    if isinstance(item, (ast.DimensionToken, Dimension)):
+    if isinstance(item, (DimensionToken, Dimension)):
         value = function(item.value) if function else item.value
-        return ast.DimensionToken(0, 0, value, None, str(value), item.unit.lower())
-    elif isinstance(item, ast.PercentageToken):
+        return DimensionToken(0, 0, value, None, str(value), item.unit.lower())
+    elif isinstance(item, PercentageToken):
         value = function(item.value) if function else item.value
-        return ast.PercentageToken(0, 0, value, None, str(value))
-    elif isinstance(item, (ast.NumberToken, int, float)):
-        if isinstance(item, ast.NumberToken):
+        return PercentageToken(0, 0, value, None, str(value))
+    elif isinstance(item, (NumberToken, int, float)):
+        if isinstance(item, NumberToken):
             value = item.value
         else:
             value = item
@@ -601,8 +601,8 @@ def tokenize(item, function=None, unit=None):
         int_value = round(value) if value.is_integer() else None
         representation = str(int_value if value.is_integer() else value)
         if unit is None:
-            return ast.NumberToken(0, 0, value, int_value, representation)
+            return NumberToken(0, 0, value, int_value, representation)
         elif unit == '%':
-            return ast.PercentageToken(0, 0, value, int_value, representation)
+            return PercentageToken(0, 0, value, int_value, representation)
         else:
-            return ast.DimensionToken(0, 0, value, int_value, representation, unit)
+            return DimensionToken(0, 0, value, int_value, representation, unit)
