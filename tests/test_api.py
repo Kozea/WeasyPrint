@@ -355,6 +355,9 @@ def test_command_line_render(tmp_path):
         _run('combined.html out2.pdf')
         assert (tmp_path / 'out2.pdf').read_bytes() == pdf_bytes
 
+        _run('combined.html')
+        assert (tmp_path / 'combined.html.pdf').read_bytes() == pdf_bytes
+
         _run('combined-UTF-16BE.html out3.pdf --encoding UTF-16BE')
         assert (tmp_path / 'out3.pdf').read_bytes() == pdf_bytes
 
