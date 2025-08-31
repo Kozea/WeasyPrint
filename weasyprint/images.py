@@ -498,14 +498,14 @@ class Gradient:
                 if color_hints[i].value < 0:
                     alpha_couples.append((alphas[i], alphas[i + 1]))
                 else:
-                    alpha_couples.append((alphas[i], alphas[i + 1], (color_hints[i].value / 100) * 2 ))
+                    alpha_couples.append((alphas[i], alphas[i + 1], color_hints[i].value / 100))
         else:
             alpha_couples = [
                 (alphas[i], alphas[i + 1])
                 for i in range(len(alphas) - 1)]
         # TODO: handle other color spaces.
         color_couples = [
-            [colors[i].to('srgb')[:3], colors[i + 1].to('srgb')[:3], (color_hints[i].value / 100) * 2]
+            [colors[i].to('srgb')[:3], colors[i + 1].to('srgb')[:3], color_hints[i].value / 100]
             for i in range(len(colors) - 1)]
 
         # Premultiply colors
@@ -525,7 +525,7 @@ class Gradient:
         encode = (len(colors) - 1) * (0, 1)
         bounds = positions[1:-1]
         sub_functions = (
-            stream.create_interpolation_function((0, 1), c0, c1, n)
+            stream.create_interpolation_function((0, 1), c0, c1, math.log(0.5, n))
             for c0, c1, n in color_couples)
         function = stream.create_stitching_function(
             domain, encode, bounds, sub_functions)
@@ -541,7 +541,7 @@ class Gradient:
             shading_type = 2 if type_ == 'linear' else 3
             # Todo: the static value 1 has to respect color_hint
             sub_functions = (
-                stream.create_interpolation_function((0, 1), (c0,), (c1,), n)
+                stream.create_interpolation_function((0, 1), (c0,), (c1,), math.log(0.5, n))
                 for c0, c1, n in alpha_couples)
             function = stream.create_stitching_function(
                 domain, encode, bounds, sub_functions)
