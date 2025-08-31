@@ -56,22 +56,21 @@ def first_line_metrics(first_line, text, layout, resume_at, space_collapse,
 
 class Layout:
     """Object holding PangoLayout-related cdata pointers."""
-    def __init__(self, context, style, justification_spacing=0,
-                 max_width=None):
+    def __init__(self, font_config, style, justification_spacing=0, max_width=None):
         self.justification_spacing = justification_spacing
-        self.setup(context, style)
+        self.setup(font_config, style)
         self.max_width = max_width
 
-    def setup(self, context, style):
-        self.context = context
+    def setup(self, font_config, style):
+        self.font_config = font_config
         self.style = style
         self.first_line_direction = 0
 
-        if context is None:
+        if font_config is None:
             font_map = ffi.gc(
                 pangoft2.pango_ft2_font_map_new(), gobject.g_object_unref)
         else:
-            font_map = context.font_config.font_map
+            font_map = font_config.font_map
         pango_context = ffi.gc(
             pango.pango_font_map_create_context(font_map),
             gobject.g_object_unref)
@@ -127,11 +126,11 @@ class Layout:
             style['font_variant_position'], style['font_variant_caps'],
             style['font_variant_numeric'], style['font_variant_alternates'],
             style['font_variant_east_asian'], style['font_feature_settings'])
-        if features and context:
+        if features and font_config:
             features = ','.join(
                 f'{key} {value}' for key, value in features.items()).encode()
             # In the meantime, keep a cache to avoid leaking too many of them.
-            attr = context.font_features.setdefault(
+            attr = font_config.font_features.setdefault(
                 features, pango.pango_attr_font_features_new(features))
             attr_list = pango.pango_attr_list_new()
             pango.pango_attr_list_insert(attr_list, attr)
@@ -210,7 +209,7 @@ class Layout:
     def set_tabs(self):
         if isinstance(self.style['tab_size'], int):
             layout = Layout(
-                self.context, self.style, self.justification_spacing)
+                self.font_config, self.style, self.justification_spacing)
             layout.set_text(' ' * self.style['tab_size'])
             line, _ = layout.get_first_line()
             width, _ = line_size(line, self.style)
@@ -228,13 +227,14 @@ class Layout:
         del self.layout, self.language, self.style
 
     def reactivate(self, style):
-        self.setup(self.context, style)
+        self.setup(self.font_config, style)
         self.set_text(self.text, justify=True)
 
 
 def create_layout(text, style, context, max_width, justification_spacing):
     """Return an opaque Pango layout with default Pango line-breaks."""
-    layout = Layout(context, style, justification_spacing, max_width)
+    font_config = context.font_config if context else None
+    layout = Layout(font_config, style, justification_spacing, max_width)
 
     # Make sure that max_width * Pango.SCALE == max_width * 1024 fits in a
     # signed integer. Treat bigger values same as None: unconstrained width.
@@ -538,7 +538,7 @@ def _font_style_cache_key(style, include_size=False):
     return key
 
 
-def strut(style, context=None):
+def strut(style, font_config=None):
     """Return a tuple of the used value of ``line-height`` and the baseline.
 
     The baseline is given from the top edge of line height.
@@ -547,27 +547,27 @@ def strut(style, context=None):
     if style['font_size'] == 0:
         return 0, 0
 
-    if context:
+    if font_config:
         key = _font_style_cache_key(style, include_size=True)
-        if key in context.strut_layouts:
-            return context.strut_layouts[key]
+        if key in font_config.strut_layouts:
+            return font_config.strut_layouts[key]
 
-    layout = Layout(context, style)
+    layout = Layout(font_config, style)
     layout.set_text(' ')
     line, _ = layout.get_first_line()
     _, _, _, _, text_height, baseline = first_line_metrics(
         line, '', layout, resume_at=None, space_collapse=False, style=style)
     if style['line_height'] == 'normal':
         result = text_height, baseline
-        if context:
-            context.strut_layouts[key] = result
+        if font_config:
+            font_config.strut_layouts[key] = result
         return result
     type_, line_height = style['line_height']
     if type_ == 'NUMBER':
         line_height *= style['font_size']
     result = line_height, baseline + (line_height - text_height) / 2
-    if context:
-        context.strut_layouts[key] = result
+    if font_config:
+        font_config.strut_layouts[key] = result
     return result
 
 
@@ -589,7 +589,7 @@ def character_ratio(style, character):
     # Random big value
     style['font_size'] = 1000
 
-    layout = Layout(context=None, style=style)
+    layout = Layout(font_config=None, style=style)
     layout.set_text(character)
     line, _ = layout.get_first_line()
 
