@@ -5,7 +5,6 @@ import math
 from abc import ABC, abstractmethod
 from urllib.parse import unquote, urljoin
 
-from tinycss2.ast import PercentageToken
 from tinycss2.color4 import parse_color
 
 from .. import LOGGER
@@ -229,22 +228,51 @@ def get_single_keyword(tokens):
             return token.lower_value
 
 
-def get_color_stop_and_hint(color_stop_hint):
-    color_stop = [color_stop_hint[0]]
-    color_hint = []
-    prev_was_color_stop = True
+def parse_color_hint(tokens):
+    if len(tokens) == 1:
+        return get_length(tokens[0], percentage=True)
 
-    for arg in color_stop_hint[1:]:
-        if len(arg) == 1 and arg[0].type == 'percentage':
-            color_hint.append(arg[0])
-            prev_was_color_stop = False
-        elif prev_was_color_stop:
-            color_hint.append(PercentageToken(arg[-1].source_line, arg[-1].source_column, 50.0, 50, str(50)))
-            color_stop.append(arg)
-            prev_was_color_stop = True
+
+def parse_color_stop(tokens):
+    if len(tokens) == 1:
+        color = parse_color(tokens[0])
+        if color == 'currentcolor':
+            # TODO: return the current color instead
+            return parse_color('black'), None
+        if color is not None:
+            return color, None
+    elif len(tokens) == 2:
+        color = parse_color(tokens[0])
+        position = get_length(tokens[1], negative=True, percentage=True)
+        if color is not None and position is not None:
+            return color, position
+    raise InvalidValues
+
+
+def parse_color_stops_and_hints(color_stops_hints):
+    if not color_stops_hints:
+        raise InvalidValues
+
+    color_stops = [parse_color_stop(color_stops_hints[0])]
+    color_hints = []
+    previous_was_color_stop = True
+
+    for tokens in color_stops_hints[1:]:
+        if hint := parse_color_hint(tokens):
+            color_hints.append(hint)
+            previous_was_color_stop = False
+        elif previous_was_color_stop:
+            color_hints.append(FIFTY_PERCENT)
+            color_stops.append(parse_color_stop(tokens))
+            previous_was_color_stop = True
         else:
-            color_stop.append(arg)
-    return color_stop, color_hint
+            color_stops.append(parse_color_stop(tokens))
+            previous_was_color_stop = True
+
+    if not previous_was_color_stop:
+        raise InvalidValues
+
+    return color_stops, color_hints
 
 
 def single_keyword(function):
@@ -400,22 +428,6 @@ def parse_radial_gradient_parameters(arguments):
         size or ('keyword', 'farthest-corner'),
         position or ('left', FIFTY_PERCENT, 'top', FIFTY_PERCENT),
         arguments[1:])
-
-
-def parse_color_stop(tokens):
-    if len(tokens) == 1:
-        color = parse_color(tokens[0])
-        if color == 'currentcolor':
-            # TODO: return the current color instead
-            return parse_color('black'), None
-        if color is not None:
-            return color, None
-    elif len(tokens) == 2:
-        color = parse_color(tokens[0])
-        position = get_length(tokens[1], negative=True, percentage=True)
-        if color is not None and position is not None:
-            return color, position
-    raise InvalidValues
 
 
 def parse_function(function_token):
@@ -622,12 +634,9 @@ def get_image(token, base_url):
     name = token.lower_name
     if name in ('linear-gradient', 'repeating-linear-gradient'):
         direction, color_stops = parse_linear_gradient_parameters(arguments)
-        if color_stops:
-            color_stops, color_hint = get_color_stop_and_hint(color_stops)
-            return 'linear-gradient', LinearGradient(
-                [parse_color_stop(stop) for stop in color_stops],
-                direction, 'repeating' in name,
-                color_hint = [get_length(hint, negative=True, percentage=True) for hint in color_hint])
+        color_stops, color_hints = parse_color_stops_and_hints(color_stops)
+        return 'linear-gradient', LinearGradient(
+            color_stops, direction, 'repeating' in name, color_hints)
     elif name in ('radial-gradient', 'repeating-radial-gradient'):
         result = parse_radial_gradient_parameters(arguments)
         if result is not None:
@@ -637,13 +646,9 @@ def get_image(token, base_url):
             size = 'keyword', 'farthest-corner'
             position = 'left', FIFTY_PERCENT, 'top', FIFTY_PERCENT
             color_stops = arguments
-        if color_stops:
-            color_stops, color_hint = get_color_stop_and_hint(color_stops)
-            return 'radial-gradient', RadialGradient(
-                [parse_color_stop(stop) for stop in color_stops],
-                shape, size, position, 'repeating' in name,
-                color_hint=[get_length(hint, negative=True, percentage=True) for hint in color_hint]
-            )
+        color_stops, color_hints = parse_color_stops_and_hints(color_stops)
+        return 'radial-gradient', RadialGradient(
+            color_stops, shape, size, position, 'repeating' in name, color_hints)
 
 
 def _get_url_tuple(string, base_url):

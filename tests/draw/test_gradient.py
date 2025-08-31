@@ -186,6 +186,52 @@ def test_linear_gradients_13(assert_pixels):
 
 
 @assert_no_logs
+def test_linear_gradients_currentcolor(assert_pixels):
+    # Regression test for #1561.
+    assert_pixels('''
+        KKKKK
+        KKKKK
+        KKKKK
+        KKKKK
+        KKKKK
+    ''', '<style>@page { size: 5px 5px; background: linear-gradient(currentcolor)')
+
+
+@assert_no_logs
+def test_linear_gradients_hints(assert_pixels):
+    assert_pixels('''
+        _____
+        _____
+        _____
+        _____
+        _____
+        _____
+        _____
+        _____
+        zzzzz
+    ''', '''<style>@page { size: 5px 9px; background: linear-gradient(
+      white, 8.9px, red
+    )''')
+
+
+@assert_no_logs
+def test_linear_gradients_hints_percentage(assert_pixels):
+    assert_pixels('''
+        _____
+        _____
+        _____
+        _____
+        _____
+        _____
+        _____
+        _____
+        zzzzz
+    ''', '''<style>@page { size: 5px 9px; background: linear-gradient(
+      white, 99%, red
+    )''')
+
+
+@assert_no_logs
 def test_radial_gradients_1(assert_pixels):
     assert_pixels('''
         BBBBBB
@@ -281,12 +327,26 @@ def test_radial_gradients_5(assert_pixels):
 
 
 @assert_no_logs
-def test_linear_gradients_currentcolor(assert_pixels):
-    # Regression test for #1561.
+def test_radial_gradients_hints(assert_pixels):
     assert_pixels('''
-        KKKKK
-        KKKKK
-        KKKKK
-        KKKKK
-        KKKKK
-    ''', '<style>@page { size: 5px 5px; background: linear-gradient(currentcolor)')
+        zzzzzz
+        zzBBzz
+        zBBBBz
+        zBBBBz
+        zzBBzz
+        zzzzzz
+    ''', '''<style>@page { size: 6px; background:
+      radial-gradient(blue, 4px, white)''')
+
+
+@assert_no_logs
+def test_radial_gradients_hints_percentage(assert_pixels):
+    assert_pixels('''
+        zzzzzz
+        zzBBzz
+        zBBBBz
+        zBBBBz
+        zzBBzz
+        zzzzzz
+    ''', '''<style>@page { size: 6px; background:
+      radial-gradient(blue, 99%, white)''')
