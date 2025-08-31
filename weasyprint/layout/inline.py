@@ -3,7 +3,7 @@
 import unicodedata
 from math import inf
 
-from ..css import computed_from_cascaded
+from ..css import AnonymousStyle
 from ..formatting_structure import boxes, build
 from .absolute import AbsolutePlaceholder, absolute_layout
 from .flex import flex_layout
@@ -289,8 +289,7 @@ def first_letter_to_box(box, skip_stack, first_letter_style):
         first_letter = ''
         child = box.children[0]
         if isinstance(child, boxes.TextBox):
-            letter_style = computed_from_cascaded(
-                cascaded={}, parent_style=first_letter_style, element=None)
+            letter_style = AnonymousStyle(first_letter_style)
             if child.element_tag.endswith('::first-letter'):
                 letter_box = boxes.InlineBox(
                     f'{box.element_tag}::first-letter', letter_style,

@@ -50,7 +50,7 @@ See respective docstrings for details.
 
 import itertools
 
-from ..css import computed_from_cascaded
+from ..css import AnonymousStyle
 
 
 class Box:
@@ -110,8 +110,7 @@ class Box:
     @classmethod
     def anonymous_from(cls, parent, *args, **kwargs):
         """Return an anonymous box that inherits from ``parent``."""
-        style = computed_from_cascaded(
-            cascaded={}, parent_style=parent.style, element=None)
+        style = AnonymousStyle(parent.style)
         return cls(parent.element_tag, style, parent.element, *args, **kwargs)
 
     def copy(self):

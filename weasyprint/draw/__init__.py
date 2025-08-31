@@ -217,7 +217,7 @@ def draw_background(stream, bg, clip_box=True, bleed=None, marks=()):
                 '''
             svg += '</svg>'
             tree = ElementTree.fromstring(svg)
-            image = SVGImage(tree, None, None, stream)
+            image = SVGImage(tree, None, None, None)
             # Painting area is the PDF media box
             size = (width, height)
             position = (x, y)

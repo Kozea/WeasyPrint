@@ -58,6 +58,7 @@ class Layout:
     """Object holding PangoLayout-related cdata pointers."""
     def __init__(self, font_config, style, justification_spacing=0, max_width=None):
         self.justification_spacing = justification_spacing
+        font_config = style.font_config
         self.setup(font_config, style)
         self.max_width = max_width
 

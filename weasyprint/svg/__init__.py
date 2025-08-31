@@ -329,10 +329,11 @@ class Node:
 class SVG:
     """An SVG document."""
 
-    def __init__(self, tree, url):
+    def __init__(self, tree, url, font_config):
         wrapper = ElementWrapper.from_xml_root(tree)
         style = parse_stylesheets(wrapper, url)
         self.tree = Node(wrapper, style)
+        self.font_config = font_config
         self.url = url
         self.filters = {}
         self.gradients = {}
@@ -841,7 +842,7 @@ class SVG:
 class Pattern(SVG):
     """SVG node applied as a pattern."""
     def __init__(self, tree, svg):
-        super().__init__(tree._etree_node, svg.url)
+        super().__init__(tree._etree_node, svg.url, svg.font_config)
         self.svg = svg
         self.tree = tree
 

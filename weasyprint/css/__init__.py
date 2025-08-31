@@ -23,6 +23,7 @@ import tinycss2.nth
 
 from .. import CSS
 from ..logger import LOGGER, PROGRESS_LOGGER
+from ..text.fonts import FontConfiguration
 from ..urls import URLFetchingError, get_url_attribute, url_join
 from . import counters, media_queries
 from .computed_values import COMPUTER_FUNCTIONS
@@ -43,7 +44,8 @@ PageSelectorType = namedtuple(
 
 class StyleFor:
     """Convenience function to get the computed styles for an element."""
-    def __init__(self, html, sheets, presentational_hints, target_collector):
+    def __init__(self, html, sheets, presentational_hints, font_config,
+                 target_collector):
         # keys: (element, pseudo_element_type)
         #    element: an ElementTree Element or the '@page' string
         #    pseudo_element_type: a string such as 'first' (for @page) or
@@ -63,6 +65,7 @@ class StyleFor:
         self._computed_styles = {}
 
         self._sheets = sheets
+        self.font_config = font_config
 
         PROGRESS_LOGGER.info('Step 3 - Applying CSS')
         for specificity, attributes in find_style_attributes(
@@ -149,20 +152,18 @@ class StyleFor:
         if element == root and pseudo_type is None:
             assert parent is None
             parent_style = None
-            root_style = {
-                # When specified on the font-size property of the root element,
-                # the rem units refer to the property’s initial value.
-                'font_size': INITIAL_VALUES['font_size'],
-            }
+            root_style = InitialStyle(self.font_config)
         else:
             assert parent is not None
             parent_style = computed_styles[parent, None]
             root_style = computed_styles[root, None]
 
         cascaded = cascaded_styles.get((element, pseudo_type), {})
-        computed_styles[element, pseudo_type] = computed_from_cascaded(
-            element, cascaded, parent_style, pseudo_type, root_style, base_url,
-            target_collector)
+        computed = computed_styles[element, pseudo_type] = ComputedStyle(
+            parent_style, cascaded, element, pseudo_type, root_style, base_url,
+            self.font_config)
+        if target_collector and computed['anchor']:
+            target_collector.collect_anchor(computed['anchor'])
 
     def add_page_declarations(self, page_type):
         for sheet, origin, sheet_specificity in self._sheets:
@@ -609,6 +610,19 @@ def resolve_var(computed, token, parent_style, known_variables=None):
     return computed_value
 
 
+class InitialStyle(dict):
+    """Dummy computed style used to store initial values."""
+    def __init__(self, font_config):
+        self.parent_style = None
+        self.specified = self
+        self.cache = {'ratio_ch': {}, 'ratio_ex': {}}
+        self.font_config = font_config
+
+    def __missing__(self, key):
+        value = self[key] = INITIAL_VALUES[key]
+        return value
+
+
 class AnonymousStyle(dict):
     """Computed style used for anonymous boxes."""
     def __init__(self, parent_style):
@@ -624,10 +638,8 @@ class AnonymousStyle(dict):
         })
         self.parent_style = parent_style
         self.specified = self
-        if parent_style:
-            self.cache = parent_style.cache
-        else:
-            self.cache = {'ratio_ch': {}, 'ratio_ex': {}}
+        self.cache = parent_style.cache
+        self.font_config = parent_style.font_config
 
     def copy(self):
         copy = AnonymousStyle(self.parent_style)
@@ -651,7 +663,7 @@ class AnonymousStyle(dict):
 class ComputedStyle(dict):
     """Computed style used for non-anonymous boxes."""
     def __init__(self, parent_style, cascaded, element, pseudo_type,
-                 root_style, base_url):
+                 root_style, base_url, font_config):
         self.specified = {}
         self.parent_style = parent_style
         self.cascaded = cascaded
@@ -660,6 +672,7 @@ class ComputedStyle(dict):
         self.pseudo_type = pseudo_type
         self.root_style = root_style
         self.base_url = base_url
+        self.font_config = font_config
         if parent_style:
             self.cache = parent_style.cache
         else:
@@ -668,7 +681,7 @@ class ComputedStyle(dict):
     def copy(self):
         copy = ComputedStyle(
             self.parent_style, self.cascaded, self.element, self.pseudo_type,
-            self.root_style, self.base_url)
+            self.root_style, self.base_url, self.font_config)
         copy.update(self)
         copy.specified = self.specified.copy()
         return copy
@@ -762,20 +775,6 @@ class ComputedStyle(dict):
 
         self[key] = value
         return value
-
-
-def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
-                           root_style=None, base_url=None,
-                           target_collector=None):
-    """Get a dict of computed style mixed from parent and cascaded styles."""
-    if not cascaded and parent_style is not None:
-        return AnonymousStyle(parent_style)
-
-    style = ComputedStyle(
-        parent_style, cascaded, element, pseudo_type, root_style, base_url)
-    if target_collector and style['anchor']:
-        target_collector.collect_anchor(style['anchor'])
-    return style
 
 
 def parse_page_selectors(rule):
@@ -1138,6 +1137,8 @@ def get_all_computed_styles(html, user_stylesheets=None, presentational_hints=Fa
     sheets = []
     if counter_style is None:
         counter_style = counters.CounterStyle()
+    if font_config is None:
+        font_config = FontConfiguration()
     for style in html._ua_counter_style():
         for key, value in style.items():
             counter_style[key] = value
@@ -1153,4 +1154,4 @@ def get_all_computed_styles(html, user_stylesheets=None, presentational_hints=Fa
     for sheet in (user_stylesheets or []):
         sheets.append((sheet, 'user', None))
 
-    return StyleFor(html, sheets, presentational_hints, target_collector)
+    return StyleFor(html, sheets, presentational_hints, font_config, target_collector)

@@ -2,8 +2,9 @@
 
 import pytest
 
-from weasyprint.css.properties import INITIAL_VALUES
+from weasyprint.css import InitialStyle
 from weasyprint.formatting_structure.build import capitalize
+from weasyprint.text.fonts import FontConfiguration
 from weasyprint.text.line_break import split_first_line
 
 from .testing_utils import MONO_FONTS, SANS_FONTS, assert_no_logs, render_pages
@@ -11,7 +12,7 @@ from .testing_utils import MONO_FONTS, SANS_FONTS, assert_no_logs, render_pages
 
 def make_text(text, width=None, **style):
     """Wrapper for split_first_line() creating a style dict."""
-    new_style = INITIAL_VALUES.copy()
+    new_style = InitialStyle(FontConfiguration())
     new_style['font_family'] = MONO_FONTS.split(',')
     new_style.update(style)
     return split_first_line(
