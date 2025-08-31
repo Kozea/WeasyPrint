@@ -76,7 +76,7 @@ def get_next_linebox(context, linebox, position_y, bottom_space, skip_stack,
         # Width and height must be calculated to avoid floats
         linebox.width = inline_min_content_width(
             context, linebox, skip_stack=skip_stack, first_line=True)
-        linebox.height, _ = strut(linebox.style, context.font_config)
+        linebox.height, _ = strut(linebox.style)
     else:
         # No float, width and height will be set by the lines
         linebox.width = linebox.height = 0
@@ -858,7 +858,7 @@ def split_inline_box(context, box, position_x, max_x, bottom_space, skip_stack,
         new_box.width = position_x - content_box_left
         new_box.translate(dx=float_widths['left'], ignore_floats=True)
 
-    line_height, new_box.baseline = strut(box.style, context.font_config)
+    line_height, new_box.baseline = strut(box.style)
     new_box.height = box.style['font_size']
     half_leading = (line_height - new_box.height) / 2
     # Set margins to the half leading but also compensate for borders and
@@ -922,7 +922,7 @@ def split_text_box(context, box, available_width, skip, is_line_start=True):
         # "only the 'line-height' is used when calculating the height
         #  of the line box."
         # Set margins so that margin_height() == line_height
-        line_height, _ = strut(box.style, context.font_config)
+        line_height, _ = strut(box.style)
         half_leading = (line_height - height) / 2
         box.margin_top = half_leading
         box.margin_bottom = half_leading
