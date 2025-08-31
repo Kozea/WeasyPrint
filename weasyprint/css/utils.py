@@ -228,6 +228,53 @@ def get_single_keyword(tokens):
             return token.lower_value
 
 
+def parse_color_hint(tokens):
+    if len(tokens) == 1:
+        return get_length(tokens[0], percentage=True)
+
+
+def parse_color_stop(tokens):
+    if len(tokens) == 1:
+        color = parse_color(tokens[0])
+        if color == 'currentcolor':
+            # TODO: return the current color instead
+            return parse_color('black'), None
+        if color is not None:
+            return color, None
+    elif len(tokens) == 2:
+        color = parse_color(tokens[0])
+        position = get_length(tokens[1], negative=True, percentage=True)
+        if color is not None and position is not None:
+            return color, position
+    raise InvalidValues
+
+
+def parse_color_stops_and_hints(color_stops_hints):
+    if not color_stops_hints:
+        raise InvalidValues
+
+    color_stops = [parse_color_stop(color_stops_hints[0])]
+    color_hints = []
+    previous_was_color_stop = True
+
+    for tokens in color_stops_hints[1:]:
+        if hint := parse_color_hint(tokens):
+            color_hints.append(hint)
+            previous_was_color_stop = False
+        elif previous_was_color_stop:
+            color_hints.append(FIFTY_PERCENT)
+            color_stops.append(parse_color_stop(tokens))
+            previous_was_color_stop = True
+        else:
+            color_stops.append(parse_color_stop(tokens))
+            previous_was_color_stop = True
+
+    if not previous_was_color_stop:
+        raise InvalidValues
+
+    return color_stops, color_hints
+
+
 def single_keyword(function):
     """Decorator for validators that only accept a single keyword."""
     @functools.wraps(function)
@@ -381,22 +428,6 @@ def parse_radial_gradient_parameters(arguments):
         size or ('keyword', 'farthest-corner'),
         position or ('left', FIFTY_PERCENT, 'top', FIFTY_PERCENT),
         arguments[1:])
-
-
-def parse_color_stop(tokens):
-    if len(tokens) == 1:
-        color = parse_color(tokens[0])
-        if color == 'currentcolor':
-            # TODO: return the current color instead
-            return parse_color('black'), None
-        if color is not None:
-            return color, None
-    elif len(tokens) == 2:
-        color = parse_color(tokens[0])
-        position = get_length(tokens[1], negative=True, percentage=True)
-        if color is not None and position is not None:
-            return color, position
-    raise InvalidValues
 
 
 def parse_function(function_token):
@@ -603,10 +634,9 @@ def get_image(token, base_url):
     name = token.lower_name
     if name in ('linear-gradient', 'repeating-linear-gradient'):
         direction, color_stops = parse_linear_gradient_parameters(arguments)
-        if color_stops:
-            return 'linear-gradient', LinearGradient(
-                [parse_color_stop(stop) for stop in color_stops],
-                direction, 'repeating' in name)
+        color_stops, color_hints = parse_color_stops_and_hints(color_stops)
+        return 'linear-gradient', LinearGradient(
+            color_stops, direction, 'repeating' in name, color_hints)
     elif name in ('radial-gradient', 'repeating-radial-gradient'):
         result = parse_radial_gradient_parameters(arguments)
         if result is not None:
@@ -616,10 +646,9 @@ def get_image(token, base_url):
             size = 'keyword', 'farthest-corner'
             position = 'left', FIFTY_PERCENT, 'top', FIFTY_PERCENT
             color_stops = arguments
-        if color_stops:
-            return 'radial-gradient', RadialGradient(
-                [parse_color_stop(stop) for stop in color_stops],
-                shape, size, position, 'repeating' in name)
+        color_stops, color_hints = parse_color_stops_and_hints(color_stops)
+        return 'radial-gradient', RadialGradient(
+            color_stops, shape, size, position, 'repeating' in name, color_hints)
 
 
 def _get_url_tuple(string, base_url):

@@ -6,7 +6,6 @@ import struct
 from hashlib import md5
 from io import BytesIO
 from itertools import cycle
-from math import inf
 from pathlib import Path
 from xml.etree import ElementTree
 
@@ -63,7 +62,7 @@ class RasterImage:
         self.mode = pillow_image.mode
         self.width = pillow_image.width
         self.height = pillow_image.height
-        self.ratio = (self.width / self.height) if self.height != 0 else inf
+        self.ratio = (self.width / self.height) if self.height != 0 else math.inf
         self.optimize = optimize = options['optimize_images']
 
         # The presence of the APP14 segment indicates an Adobe image with
@@ -367,8 +366,8 @@ def rotate_pillow_image(pillow_image, orientation):
     return pillow_image
 
 
-def process_color_stops(vector_length, positions):
-    """Give color stops positions on the gradient vector.
+def process_color_stops(vector_length, positions, hints):
+    """Give color stops positions and hints on the gradient vector.
 
     ``vector_length`` is the distance between the starting point and ending
     point of the vector gradient.
@@ -381,16 +380,17 @@ def process_color_stops(vector_length, positions):
     Return processed color stops, as a list of floats in px.
 
     """
-    # Resolve percentages
+    # Resolve percentages.
     positions = [percentage(position, vector_length) for position in positions]
+    hints = [percentage(hint, vector_length) / vector_length for hint in hints]
 
-    # First and last default to 100%
+    # First and last default to 100%.
     if positions[0] is None:
         positions[0] = 0
     if positions[-1] is None:
         positions[-1] = vector_length
 
-    # Make sure positions are increasing
+    # Make sure positions are increasing.
     previous_pos = positions[0]
     for i, position in enumerate(positions):
         if position is not None:
@@ -399,7 +399,7 @@ def process_color_stops(vector_length, positions):
             else:
                 previous_pos = position
 
-    # Assign missing values
+    # Assign missing values.
     previous_i = -1
     for i, position in enumerate(positions):
         if position is not None:
@@ -409,7 +409,13 @@ def process_color_stops(vector_length, positions):
                 positions[j] = base + j * increment
             previous_i = i
 
-    return positions
+    # Calculate exponential value for PDF hints, avoid big numbers.
+    hints = [
+        0 if hint <= 0 else
+        2 ** 32 if hint >= 1 else
+        min(2 ** 32, math.log(0.5, hint)) for hint in hints]
+
+    return positions, hints
 
 
 def normalize_stop_positions(positions):
@@ -466,12 +472,14 @@ def gradient_average_color(colors, positions):
 
 
 class Gradient:
-    def __init__(self, color_stops, repeating):
+    def __init__(self, color_stops, repeating, color_hints):
         assert color_stops
         # List of (r, g, b, a)
         self.colors = tuple(color for color, _ in color_stops)
         # List of Dimensions
         self.stop_positions = tuple(position for _, position in color_stops)
+        # List of Dimensions
+        self.color_hints = color_hints
         # Boolean
         self.repeating = repeating
 
@@ -479,7 +487,7 @@ class Gradient:
         return None, None, None
 
     def draw(self, stream, concrete_width, concrete_height, _image_rendering):
-        scale_y, type_, points, positions, colors = self.layout(
+        scale_y, type_, points, positions, colors, color_hints = self.layout(
             concrete_width, concrete_height)
 
         if type_ == 'solid':
@@ -490,11 +498,11 @@ class Gradient:
 
         alphas = [color[3] for color in colors]
         alpha_couples = [
-            (alphas[i], alphas[i + 1])
+            [alphas[i], alphas[i + 1], color_hints[i]]
             for i in range(len(alphas) - 1)]
         # TODO: handle other color spaces.
         color_couples = [
-            [colors[i].to('srgb')[:3], colors[i + 1].to('srgb')[:3], 1]
+            [colors[i].to('srgb')[:3], colors[i + 1].to('srgb')[:3], color_hints[i]]
             for i in range(len(colors) - 1)]
 
         # Premultiply colors
@@ -504,7 +512,7 @@ class Gradient:
                     color_couples[i - 1][1] = color_couples[i - 1][0]
                 if i < len(colors) - 1:
                     color_couples[i][0] = color_couples[i][1]
-        for i, (a0, a1) in enumerate(alpha_couples):
+        for i, (a0, a1, hint) in enumerate(alpha_couples):
             if 0 not in (a0, a1) and (a0, a1) != (1, 1):
                 color_couples[i][2] = a0 / a1
 
@@ -514,8 +522,8 @@ class Gradient:
         encode = (len(colors) - 1) * (0, 1)
         bounds = positions[1:-1]
         sub_functions = (
-            stream.create_interpolation_function((0, 1), c0, c1, n)
-            for c0, c1, n in color_couples)
+            stream.create_interpolation_function((0, 1), c0, c1, hint)
+            for c0, c1, hint in color_couples)
         function = stream.create_stitching_function(
             domain, encode, bounds, sub_functions)
         # TODO: handle other color spaces.
@@ -529,8 +537,8 @@ class Gradient:
 
             shading_type = 2 if type_ == 'linear' else 3
             sub_functions = (
-                stream.create_interpolation_function((0, 1), (c0,), (c1,), 1)
-                for c0, c1 in alpha_couples)
+                stream.create_interpolation_function((0, 1), (c0,), (c1,), hint)
+                for c0, c1, hint in alpha_couples)
             function = stream.create_stitching_function(
                 domain, encode, bounds, sub_functions)
             alpha_shading = alpha_stream.add_shading(
@@ -565,15 +573,15 @@ class Gradient:
 
 
 class LinearGradient(Gradient):
-    def __init__(self, color_stops, direction, repeating):
-        Gradient.__init__(self, color_stops, repeating)
+    def __init__(self, color_stops, direction, repeating, color_hints):
+        super().__init__(color_stops, repeating, color_hints)
         # ('corner', keyword) or ('angle', radians)
         self.direction_type, self.direction = direction
 
     def layout(self, width, height):
         # Only one color, render the gradient as a solid color
         if len(self.colors) == 1:
-            return 1, 'solid', None, [], [self.colors[0]]
+            return 1, 'solid', None, [], [self.colors[0]], []
 
         # Define the (dx, dy) unit vector giving the direction of the gradient.
         # Positive dx: right, positive dy: down.
@@ -599,16 +607,19 @@ class LinearGradient(Gradient):
         # Normalize colors positions
         colors = list(self.colors)
         vector_length = abs(width * dx) + abs(height * dy)
-        positions = process_color_stops(vector_length, self.stop_positions)
+        positions, hints = process_color_stops(
+            vector_length, self.stop_positions, self.color_hints)
         if not self.repeating:
             # Add explicit colors at boundaries if needed, because PDF doesn’t
             # extend color stops that are not displayed
             if positions[0] == positions[1]:
                 positions.insert(0, positions[0] - 1)
                 colors.insert(0, colors[0])
+                hints.insert(0, 1)
             if positions[-2] == positions[-1]:
                 positions.append(positions[-1] + 1)
                 colors.append(colors[-1])
+                hints.append(1)
         first, last, positions = normalize_stop_positions(positions)
 
         if self.repeating:
@@ -616,7 +627,7 @@ class LinearGradient(Gradient):
             # See https://drafts.csswg.org/css-images-3/#repeating-gradients
             if first == last:
                 color = gradient_average_color(colors, positions)
-                return 1, 'solid', None, [], [color]
+                return 1, 'solid', None, [], [color], []
 
             # Define defined gradient length and steps between positions
             stop_length = last - first
@@ -628,13 +639,16 @@ class LinearGradient(Gradient):
             # Create cycles used to add colors
             next_steps = cycle((0, *position_steps))
             next_colors = cycle(colors)
+            next_hints = cycle(hints)
             previous_steps = cycle((0, *position_steps[::-1]))
             previous_colors = cycle(colors[::-1])
+            previous_hints = cycle(hints[::-1])
 
             # Add colors after last step
             while last < vector_length:
                 step = next(next_steps)
                 colors.append(next(next_colors))
+                hints.append(next(next_hints))
                 positions.append(positions[-1] + step)
                 last += step * stop_length
 
@@ -642,6 +656,7 @@ class LinearGradient(Gradient):
             while first > 0:
                 step = next(previous_steps)
                 colors.insert(0, next(previous_colors))
+                hints.insert(0, next(previous_hints))
                 positions.insert(0, positions[0] - step)
                 first -= step * stop_length
 
@@ -652,12 +667,12 @@ class LinearGradient(Gradient):
             start_x + dx * first, start_y + dy * first,
             start_x + dx * last, start_y + dy * last)
 
-        return 1, 'linear', points, positions, colors
+        return 1, 'linear', points, positions, colors, hints
 
 
 class RadialGradient(Gradient):
-    def __init__(self, color_stops, shape, size, center, repeating):
-        Gradient.__init__(self, color_stops, repeating)
+    def __init__(self, color_stops, shape, size, center, repeating, color_hints):
+        super().__init__(color_stops, repeating, color_hints)
         # Center of the ending shape. (origin_x, pos_x, origin_y, pos_y)
         self.center = center
         # Type of ending shape: 'circle' or 'ellipse'
@@ -672,7 +687,7 @@ class RadialGradient(Gradient):
     def layout(self, width, height):
         # Only one color, render the gradient as a solid color
         if len(self.colors) == 1:
-            return 1, 'solid', None, [], [self.colors[0]]
+            return 1, 'solid', None, [], [self.colors[0]], []
 
         # Define the center of the gradient
         origin_x, center_x, origin_y, center_y = self.center
@@ -690,16 +705,19 @@ class RadialGradient(Gradient):
 
         # Normalize colors positions
         colors = list(self.colors)
-        positions = process_color_stops(size_x, self.stop_positions)
+        positions, hints = process_color_stops(
+            size_x, self.stop_positions, self.color_hints)
         if not self.repeating:
             # Add explicit colors at boundaries if needed, because PDF doesn’t
             # extend color stops that are not displayed
             if positions[0] > 0 and positions[0] == positions[1]:
                 positions.insert(0, 0)
                 colors.insert(0, colors[0])
+                hints.insert(0, 1)
             if positions[-2] == positions[-1]:
                 positions.append(positions[-1] + 1)
                 colors.append(colors[-1])
+                hints.append(1)
         if positions[0] < 0:
             # PDF doesn’t like negative radiuses, shift into the positive realm
             if self.repeating:
@@ -711,7 +729,7 @@ class RadialGradient(Gradient):
                 # Only keep colors with position >= 0, interpolate if needed
                 if positions[-1] <= 0:
                     # All stops are negative, fill with the last color
-                    return 1, 'solid', None, [], [self.colors[-1]]
+                    return 1, 'solid', None, [], [self.colors[-1]], []
                 for i, position in enumerate(positions):
                     if position == 0:
                         # Keep colors and positions from this rank
@@ -735,7 +753,7 @@ class RadialGradient(Gradient):
         # See https://drafts.csswg.org/css-images-3/#repeating-gradients
         if first == last and self.repeating:
             color = gradient_average_color(colors, positions)
-            return 1, 'solid', None, [], [color]
+            return 1, 'solid', None, [], [color], []
 
         # Define the coordinates of the gradient circles
         points = (
@@ -746,7 +764,7 @@ class RadialGradient(Gradient):
             points, positions, colors = self._repeat(
                 width, height, scale_y, points, positions, colors)
 
-        return scale_y, 'radial', points, positions, colors
+        return scale_y, 'radial', points, positions, colors, hints
 
     def _repeat(self, width, height, scale_y, points, positions, colors):
         # Keep original lists and values, they’re useful

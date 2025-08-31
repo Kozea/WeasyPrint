@@ -205,12 +205,14 @@ def background_image(style, name, values):
             value.stop_positions = tuple(
                 length(style, name, pos) if pos is not None else None
                 for pos in value.stop_positions)
+            value.color_hints = tuple(
+                length(style, name, hint) if hint is not None else None
+                for hint in value.color_hints)
         if type_ == 'radial-gradient':
             value.center, = compute_position(
                 style, name, (value.center,))
             if value.size_type == 'explicit':
-                value.size = length_or_percentage_tuple(
-                    style, name, value.size)
+                value.size = length_or_percentage_tuple(style, name, value.size)
     return values
 
 
