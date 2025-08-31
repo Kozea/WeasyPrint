@@ -7,7 +7,6 @@ from hashlib import md5
 from io import BytesIO
 from itertools import cycle
 from pathlib import Path
-from sys import maxsize
 from xml.etree import ElementTree
 
 import pydyf
