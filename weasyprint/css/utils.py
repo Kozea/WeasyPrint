@@ -239,7 +239,7 @@ def get_color_stop_and_hint(color_stop_hint):
             color_hint.append(arg[0])
             prev_was_color_stop = False
         elif prev_was_color_stop:
-            color_hint.append(PercentageToken(arg[-1].source_line, arg[-1].source_column, -50.0, -50, str(-50)))
+            color_hint.append(PercentageToken(arg[-1].source_line, arg[-1].source_column, 50.0, 50, str(50)))
             color_stop.append(arg)
             prev_was_color_stop = True
         else:

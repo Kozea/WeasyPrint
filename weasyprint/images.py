@@ -498,14 +498,14 @@ class Gradient:
                 if color_hints[i].value < 0:
                     alpha_couples.append((alphas[i], alphas[i + 1]))
                 else:
-                    alpha_couples.append((alphas[i] * (color_hints[i].value / 100), alphas[i + 1] * (1 - color_hints[i].value / 100) ))
+                    alpha_couples.append((alphas[i], alphas[i + 1], (color_hints[i].value / 100) * 2 ))
         else:
             alpha_couples = [
                 (alphas[i], alphas[i + 1])
                 for i in range(len(alphas) - 1)]
         # TODO: handle other color spaces.
         color_couples = [
-            [colors[i].to('srgb')[:3], colors[i + 1].to('srgb')[:3], 1]
+            [colors[i].to('srgb')[:3], colors[i + 1].to('srgb')[:3], (color_hints[i].value / 100) * 2]
             for i in range(len(colors) - 1)]
 
         # Premultiply colors
@@ -515,7 +515,7 @@ class Gradient:
                     color_couples[i - 1][1] = color_couples[i - 1][0]
                 if i < len(colors) - 1:
                     color_couples[i][0] = color_couples[i][1]
-        for i, (a0, a1) in enumerate(alpha_couples):
+        for i, (a0, a1, a2) in enumerate(alpha_couples):
             if 0 not in (a0, a1) and (a0, a1) != (1, 1):
                 color_couples[i][2] = a0 / a1
 
@@ -541,8 +541,8 @@ class Gradient:
             shading_type = 2 if type_ == 'linear' else 3
             # Todo: the static value 1 has to respect color_hint
             sub_functions = (
-                stream.create_interpolation_function((0, 1), (c0,), (c1,), 1)
-                for c0, c1 in alpha_couples)
+                stream.create_interpolation_function((0, 1), (c0,), (c1,), n)
+                for c0, c1, n in alpha_couples)
             function = stream.create_stitching_function(
                 domain, encode, bounds, sub_functions)
             alpha_shading = alpha_stream.add_shading(
@@ -619,11 +619,11 @@ class LinearGradient(Gradient):
             if positions[0] == positions[1]:
                 positions.insert(0, positions[0] - 1)
                 colors.insert(0, colors[0])
-                color_hints.insert(0, Dimension(-50, '%'))
+                color_hints.insert(0, Dimension(50, '%'))
             if positions[-2] == positions[-1]:
                 positions.append(positions[-1] + 1)
                 colors.append(colors[-1])
-                color_hints.append(Dimension(-50, '%'))
+                color_hints.append(Dimension(50, '%'))
         first, last, positions = normalize_stop_positions(positions)
 
         if self.repeating:
@@ -717,11 +717,11 @@ class RadialGradient(Gradient):
             if positions[0] > 0 and positions[0] == positions[1]:
                 positions.insert(0, 0)
                 colors.insert(0, colors[0])
-                color_hints.insert(0, Dimension(-50, '%'))
+                color_hints.insert(0, Dimension(50, '%'))
             if positions[-2] == positions[-1]:
                 positions.append(positions[-1] + 1)
                 colors.append(colors[-1])
-                color_hints.append( Dimension(-50, '%'))
+                color_hints.append( Dimension(50, '%'))
         if positions[0] < 0:
             # PDF doesn’t like negative radiuses, shift into the positive realm
             if self.repeating:
