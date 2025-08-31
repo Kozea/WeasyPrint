@@ -512,7 +512,7 @@ class Gradient:
                     color_couples[i - 1][1] = color_couples[i - 1][0]
                 if i < len(colors) - 1:
                     color_couples[i][0] = color_couples[i][1]
-        for i, (a0, a1, a2) in enumerate(alpha_couples):
+        for i, (a0, a1, hint) in enumerate(alpha_couples):
             if 0 not in (a0, a1) and (a0, a1) != (1, 1):
                 color_couples[i][2] = a0 / a1
 
@@ -581,7 +581,7 @@ class LinearGradient(Gradient):
     def layout(self, width, height):
         # Only one color, render the gradient as a solid color
         if len(self.colors) == 1:
-            return 1, 'solid', None, [], [self.colors[0]], None
+            return 1, 'solid', None, [], [self.colors[0]], []
 
         # Define the (dx, dy) unit vector giving the direction of the gradient.
         # Positive dx: right, positive dy: down.
@@ -627,7 +627,7 @@ class LinearGradient(Gradient):
             # See https://drafts.csswg.org/css-images-3/#repeating-gradients
             if first == last:
                 color = gradient_average_color(colors, positions)
-                return 1, 'solid', None, [], [color], None
+                return 1, 'solid', None, [], [color], []
 
             # Define defined gradient length and steps between positions
             stop_length = last - first
@@ -729,7 +729,7 @@ class RadialGradient(Gradient):
                 # Only keep colors with position >= 0, interpolate if needed
                 if positions[-1] <= 0:
                     # All stops are negative, fill with the last color
-                    return 1, 'solid', None, [], [self.colors[-1]], None
+                    return 1, 'solid', None, [], [self.colors[-1]], []
                 for i, position in enumerate(positions):
                     if position == 0:
                         # Keep colors and positions from this rank
@@ -753,7 +753,7 @@ class RadialGradient(Gradient):
         # See https://drafts.csswg.org/css-images-3/#repeating-gradients
         if first == last and self.repeating:
             color = gradient_average_color(colors, positions)
-            return 1, 'solid', None, [], [color], None
+            return 1, 'solid', None, [], [color], []
 
         # Define the coordinates of the gradient circles
         points = (
