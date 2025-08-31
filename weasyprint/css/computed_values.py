@@ -297,10 +297,21 @@ def length(style, name, value, font_size=None, pixels_only=False):
         elif unit == 'rem':
             result = value.value * style.root_style['font_size']
         elif unit == 'lh':
-            line_height, _ = strut_layout(style)
+            if name in ('font_size', 'line_height'):
+                if style.parent_style is None:
+                    parent_style = INITIAL_VALUES
+                else:
+                    parent_style = style.parent_style
+                line_height, _ = strut_layout(parent_style)
+            else:
+                line_height, _ = strut_layout(style)
             result = value.value * line_height
         elif unit == 'rlh':
-            line_height, _ = strut_layout(style.root_style)
+            parent_style = style.root_style
+            if name in ('font_size', 'line_height'):
+                if style.parent_style is None:
+                    parent_style = INITIAL_VALUES
+            line_height, _ = strut_layout(parent_style)
             result = value.value * line_height
     else:
         # A percentage or 'auto': no conversion needed.

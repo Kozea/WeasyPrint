@@ -191,6 +191,19 @@ def test_units(value, width):
     assert p.margin_left == width
 
 
+@assert_no_logs
+@pytest.mark.parametrize('property', ('line-height', 'font-size'))
+def test_recursive_lh(property):
+    document = FakeHTML(base_url=BASE_URL, string='''
+      <html style="%s: 1lh">
+      <body style="%s: 1rlh">a''' % (property, property))
+    document.render().pages
+    document = FakeHTML(base_url=BASE_URL, string='''
+      <html style="%s: 1rlh">
+      <body style="%s: 1lh">a''' % (property, property))
+    document.render().pages
+
+
 @pytest.mark.parametrize('media, width, warning', (
     ('@media screen { @page { size: 10px } }', 20, False),
     ('@media print { @page { size: 10px } }', 10, False),
