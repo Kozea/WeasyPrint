@@ -80,7 +80,7 @@ def to_pixels(value, style, property_name, font_size=None):
             return value.value * font_size * ratio
 
 
-def to_radians(value, style=None, font_size=None):
+def to_radians(value):
     """Get number of radians corresponding to an angle."""
     if (unit := value.unit.lower()) == 'rad':
         return value.value
