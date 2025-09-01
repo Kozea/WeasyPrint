@@ -120,7 +120,7 @@ assert all(width.value < height.value for width, height in PAGE_SIZES.values())
 
 INITIAL_PAGE_SIZE = PAGE_SIZES['a4']
 INITIAL_VALUES['size'] = tuple(
-    to_pixels(size, None, None, None) for size in INITIAL_PAGE_SIZE)
+    to_pixels(size, None, 'size') for size in INITIAL_PAGE_SIZE)
 
 
 # Maps property names to functions returning the computed values
@@ -256,7 +256,7 @@ def length(style, name, value, font_size=None, pixels_only=False):
         # A percentage or 'auto': no conversion needed.
         return value
 
-    pixels = to_pixels(value, style, font_size, name)
+    pixels = to_pixels(value, style, name, font_size)
     return pixels if pixels_only else Dimension(pixels, 'px')
 
 

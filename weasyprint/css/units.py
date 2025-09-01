@@ -42,7 +42,7 @@ LENGTH_UNITS = ABSOLUTE_UNITS | FONT_UNITS
 ANGLE_UNITS = set(ANGLE_TO_RADIANS)
 
 
-def to_pixels(value, style, font_size, name):
+def to_pixels(value, style, name, font_size=None):
     """Get number of pixels corresponding to a length."""
     if (unit := value.unit) == 'px':
         return value.value
