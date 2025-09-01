@@ -1,5 +1,7 @@
 """Test the CSS parsing, cascade, inherited and computed values."""
 
+from math import isclose
+
 import pytest
 
 from weasyprint import CSS, default_url_fetcher
@@ -173,11 +175,10 @@ def test_important():
     ('101.6q', 96),
     ('1.1em', 11),
     ('1.1rem', 17.6),
-    # TODO: ch and ex units don't work with font-face, see computed_values.py.
-    # ('1.1ch', 11),
-    # ('1.5ex', 12),
-    # ('1.1lh', 13.2),
-    # ('1.1rlh', 17.6),
+    ('1.1ch', 11),
+    ('1.5ex', 12),
+    ('1.1lh', 13.2),
+    ('1.1rlh', 26.4),
 ))
 def test_units(value, width):
     document = FakeHTML(base_url=BASE_URL, string='''
@@ -188,7 +189,7 @@ def test_units(value, width):
     html, = page._page_box.children
     body, = html.children
     p, = body.children
-    assert p.margin_left == width
+    assert isclose(p.margin_left, width, rel_tol=0.01)
 
 
 @assert_no_logs

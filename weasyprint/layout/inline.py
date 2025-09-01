@@ -3,7 +3,7 @@
 import unicodedata
 from math import inf
 
-from ..css import computed_from_cascaded
+from ..css import AnonymousStyle
 from ..formatting_structure import boxes, build
 from .absolute import AbsolutePlaceholder, absolute_layout
 from .flex import flex_layout
@@ -76,7 +76,7 @@ def get_next_linebox(context, linebox, position_y, bottom_space, skip_stack,
         # Width and height must be calculated to avoid floats
         linebox.width = inline_min_content_width(
             context, linebox, skip_stack=skip_stack, first_line=True)
-        linebox.height, _ = strut(linebox.style, context)
+        linebox.height, _ = strut(linebox.style)
     else:
         # No float, width and height will be set by the lines
         linebox.width = linebox.height = 0
@@ -289,8 +289,7 @@ def first_letter_to_box(box, skip_stack, first_letter_style):
         first_letter = ''
         child = box.children[0]
         if isinstance(child, boxes.TextBox):
-            letter_style = computed_from_cascaded(
-                cascaded={}, parent_style=first_letter_style, element=None)
+            letter_style = AnonymousStyle(first_letter_style)
             if child.element_tag.endswith('::first-letter'):
                 letter_box = boxes.InlineBox(
                     f'{box.element_tag}::first-letter', letter_style,
@@ -859,7 +858,7 @@ def split_inline_box(context, box, position_x, max_x, bottom_space, skip_stack,
         new_box.width = position_x - content_box_left
         new_box.translate(dx=float_widths['left'], ignore_floats=True)
 
-    line_height, new_box.baseline = strut(box.style, context)
+    line_height, new_box.baseline = strut(box.style)
     new_box.height = box.style['font_size']
     half_leading = (line_height - new_box.height) / 2
     # Set margins to the half leading but also compensate for borders and
@@ -923,7 +922,7 @@ def split_text_box(context, box, available_width, skip, is_line_start=True):
         # "only the 'line-height' is used when calculating the height
         #  of the line box."
         # Set margins so that margin_height() == line_height
-        line_height, _ = strut(box.style, context)
+        line_height, _ = strut(box.style)
         half_leading = (line_height - height) / 2
         box.margin_top = half_leading
         box.margin_bottom = half_leading

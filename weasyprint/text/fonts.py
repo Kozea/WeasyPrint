@@ -105,6 +105,10 @@ class FontConfiguration:
         # Temporary folder storing fonts.
         self._folder = None
 
+        # Cache.
+        self.strut_layouts = {}
+        self.font_features = {}
+
     def add_font_face(self, rule_descriptors, url_fetcher):
         """Add a font face to the Fontconfig configuration."""
 

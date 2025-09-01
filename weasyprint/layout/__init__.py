@@ -245,8 +245,6 @@ class LayoutContext:
         self.in_column = False
 
         # Cache
-        self.strut_layouts = {}
-        self.font_features = {}
         self.tables = {}
         self.dictionaries = {}
 

@@ -4,7 +4,7 @@ import copy
 from collections import namedtuple
 from math import inf
 
-from ..css import computed_from_cascaded
+from ..css import AnonymousStyle
 from ..formatting_structure import boxes, build
 from ..logger import PROGRESS_LOGGER
 from .absolute import absolute_box_layout, absolute_layout
@@ -377,8 +377,7 @@ def make_margin_boxes(context, page, state):
         style = context.style_for(page.page_type, at_keyword)
         if style is None:
             # doesn't affect counters
-            style = computed_from_cascaded(
-                element=None, cascaded={}, parent_style=page.style)
+            style = AnonymousStyle(page.style)
         _standardize_page_based_counters(style, at_keyword)
         box = boxes.MarginBox(at_keyword, style)
         # Empty boxes should not be generated, but they may be needed for

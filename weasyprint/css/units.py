@@ -3,7 +3,6 @@
 import math
 
 from ..text.line_break import character_ratio, strut
-from .properties import INITIAL_VALUES
 
 # How many radians is one <unit>?
 # https://drafts.csswg.org/css-values-4/#angles
@@ -68,7 +67,7 @@ def to_pixels(value, style, font_size, name):
         elif unit == 'lh':
             if name in ('font_size', 'line_height'):
                 if style.parent_style is None:
-                    parent_style = INITIAL_VALUES
+                    parent_style = style.root_style
                 else:
                     parent_style = style.parent_style
                 line_height, _ = strut(parent_style)
@@ -77,8 +76,5 @@ def to_pixels(value, style, font_size, name):
             return value.value * line_height
         elif unit == 'rlh':
             parent_style = style.root_style
-            if name in ('font_size', 'line_height'):
-                if style.parent_style is None:
-                    parent_style = INITIAL_VALUES
             line_height, _ = strut(parent_style)
             return value.value * line_height
