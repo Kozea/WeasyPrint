@@ -76,8 +76,7 @@ def test_empty_property_value(prop):
 @assert_no_logs
 @pytest.mark.parametrize('rule, value', (
     ('1px, 3em, auto, auto', ((1, 'px'), (3, 'em'), 'auto', 'auto')),
-    ('1px, 3em, auto auto', ((1, 'px'), (3, 'em'), 'auto', 'auto')),
-    ('1px 3em auto 1px', ((1, 'px'), (3, 'em'), 'auto', (1, 'px'))),
+    ('1px,3em,auto,1px', ((1, 'px'), (3, 'em'), 'auto', (1, 'px'))),
 ))
 def test_clip(rule, value):
     assert get_value(f'clip: rect({rule})') == value
@@ -86,6 +85,7 @@ def test_clip(rule, value):
 @assert_no_logs
 @pytest.mark.parametrize('rule', (
     'clip: square(1px, 3em, auto, auto)',
+    'clip: rect(1px 3em auto auto)',
     'clip: rect(1px, 3em, auto)',
     'clip: rect(1px, 3em / auto)',
 ))
@@ -199,7 +199,6 @@ def test_size_invalid(rule):
     ('translate(-4px, 0)', (('translate', ((-4, 'px'), (0, None))),)),
     ('translate(6px, 20%)', (('translate', ((6, 'px'), (20, '%'))),)),
     ('scale(2)', (('scale', (2, 2)),)),
-    ('translate(6px 20%)', (('translate', ((6, 'px'), (20, '%'))),)),
 ))
 def test_transform(rule, value):
     assert get_value(f'transform: {rule}') == value
@@ -211,6 +210,7 @@ def test_transform(rule, value):
     'foo',
     'scale(2) foo',
     '6px',
+    'translate(6px 20%)',
 ))
 def test_transform_invalid(rule):
     assert_invalid(f'transform: {rule}')
@@ -637,7 +637,6 @@ def test_string_set(rule, value):
     'test test1',
     'test content(test)',
     'test unknown()',
-    'test attr(id, class)',
 ))
 def test_string_set_invalid(rule):
     assert_invalid(f'string-set: {rule}')
