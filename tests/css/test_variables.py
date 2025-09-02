@@ -128,6 +128,23 @@ def test_variable_chain():
 
 
 @assert_no_logs
+def test_variable_double_chain():
+    page, = render_pages('''
+      <style>
+        html { --foo: red }
+        body { --var: var(--foo), var(--foo) }
+        div { background-image: linear-gradient(var(--var)) }
+      </style>
+      <div></dib>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    assert div.style['background_image'][0][1].colors[0] == (1, 0, 0, 1)
+    assert div.style['background_image'][0][1].colors[1] == (1, 0, 0, 1)
+
+
+@assert_no_logs
 def test_variable_chain_root():
     # Regression test for #1656.
     page, = render_pages('''
@@ -486,6 +503,22 @@ def test_variable_in_function():
     h11, div1, h12, div2 = section.children
     assert div1.children[0].children[0].children[0].text == '1'
     assert div2.children[0].children[0].children[0].text == '2'
+
+
+@assert_no_logs
+def test_same_variable_in_function():
+    page, = render_pages('''
+      <style>
+        body { --var: red }
+        div { background-image: linear-gradient(var(--var), var(--var)) }
+      </style>
+      <div></div>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    assert div.style['background_image'][0][1].colors[0] == (1, 0, 0, 1)
+    assert div.style['background_image'][0][1].colors[1] == (1, 0, 0, 1)
 
 
 @assert_no_logs

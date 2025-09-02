@@ -585,7 +585,7 @@ def resolve_var(computed, token, parent_style, known_variables=None):
         for i, argument in enumerate(token.arguments):
             if argument.type == 'function':
                 resolved = resolve_var(
-                    computed, argument, parent_style, known_variables)
+                    computed, argument, parent_style, known_variables.copy())
                 arguments.extend((argument,) if resolved is None else resolved)
             else:
                 arguments.append(argument)
@@ -605,7 +605,7 @@ def resolve_var(computed, token, parent_style, known_variables=None):
     default = arguments[1] if len(arguments) > 1 else []
     computed_value = []
     for value in (computed[variable_name] or default):
-        resolved = resolve_var(computed, value, parent_style, known_variables)
+        resolved = resolve_var(computed, value, parent_style, known_variables.copy())
         computed_value.extend((value,) if resolved is None else resolved)
     return computed_value
 
