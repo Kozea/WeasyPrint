@@ -620,22 +620,30 @@ def _build_vector_font_dictionary(font_dictionary, pdf, font, widths, compress,
     if font.missing:
         # Add CMap that doesn’t include missing glyphs, so that they can be replaced by
         # .notdef.
+        extra = pydyf.Dictionary({
+            'Type': '/CMap',
+            'CMapName': '/WP-Encod-0',
+            'CIDSystemInfo': pydyf.Dictionary({
+                'Registry': pydyf.String('Adobe'),
+                'Ordering': pydyf.String('Identity'),
+                'Supplement': 0,
+            }),
+        })
         encoding = pydyf.Stream([
             b'/CIDInit /ProcSet findresource begin',
             b'12 dict begin',
             b'begincmap',
             b'/CIDSystemInfo',
-            b'3 dict dup begin',
-            b'/Registry (WP) def',
-            b'/Ordering (Encod) def',
-            b'/Supplement 0 def',
-            b'end def',
+            b'<< /Registry (Adobe)',
+            b'/Ordering (Identity)',
+            b'/Supplement 0',
+            b'>> def',
             b'/CMapName /WP-Encod-0 def',
             b'/CMapType 1 def',
             b'1 begincodespacerange',
             b'<0000> <ffff>',
             b'endcodespacerange',
-        ], compress=compress)
+        ], extra=extra, compress=compress)
         available = tuple(font.to_unicode)
         available_length = len(available)
         for i in range(ceil(available_length / 100)):
