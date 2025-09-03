@@ -75,7 +75,7 @@ def test_empty_property_value(prop):
 
 @assert_no_logs
 @pytest.mark.parametrize(('rule', 'value'), [
-    ('1px, 3em, auto, auto', ((1, 'px'), (3, 'em'), 'auto', 'auto')),
+    ('1px, 3EM, auto, auto', ((1, 'px'), (3, 'em'), 'auto', 'auto')),
     ('1px,3em,auto,1px', ((1, 'px'), (3, 'em'), 'auto', (1, 'px'))),
 ])
 def test_clip(rule, value):
@@ -116,7 +116,7 @@ def test_counters_warning(rule, warning):
 
 @assert_no_logs
 @pytest.mark.parametrize('rule', [
-    'counter-reset: foo 3px',
+    'counter-reset: foo 3pX',
     'counter-reset: 3',
 ])
 def test_counters_invalid(rule):
@@ -250,7 +250,7 @@ def test_background_image_invalid(rule):
     ('right 10% bottom', (('right', (10, '%'), 'bottom', (0, '%')),)),
 
     # Four tokens
-    ('left 10% bottom 3px', (('left', (10, '%'), 'bottom', (3, 'px')),)),
+    ('left 10% bottom 3PX', (('left', (10, '%'), 'bottom', (3, 'px')),)),
     ('bottom 3px left 10%', (('left', (10, '%'), 'bottom', (3, 'px')),)),
     ('right 10% top 3px', (('right', (10, '%'), 'top', (3, 'px')),)),
     ('top 3px right 10%', (('right', (10, '%'), 'top', (3, 'px')),)),
@@ -298,7 +298,7 @@ def test_font_family_invalid(rule):
 @pytest.mark.parametrize(('rule', 'value'), [
     ('1px', (1, 'px')),
     ('1.1%', (1.1, '%')),
-    ('1em', (1, 'em')),
+    ('1Em', (1, 'em')),
     ('1', (1, None)),
     ('1.3', (1.3, None)),
     ('-0', (0, None)),

@@ -12,11 +12,11 @@ from .table import find_in_flow_baseline
 
 
 def _is_length(sizing):
-    return isinstance(sizing, Dimension) and sizing.unit != 'fr'
+    return isinstance(sizing, Dimension) and sizing.unit.lower() != 'fr'
 
 
 def _is_fr(sizing):
-    return isinstance(sizing, Dimension) and sizing.unit == 'fr'
+    return isinstance(sizing, Dimension) and sizing.unit.lower() == 'fr'
 
 
 def _intersect(position_1, size_1, position_2, size_2):

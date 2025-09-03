@@ -27,7 +27,7 @@ def test_footnote_column_margin_top(assert_pixels):
       @page {
         size: 9px 7px;
         @footnote {
-          margin-top: 2px;
+          margin-top: 2Px;
         }
       }
       div {
@@ -109,7 +109,7 @@ def test_footnote_column_fill_auto_break_inside_avoid(assert_pixels):
         column-fill: auto;
         column-gap: 1px;
         font-family: weasyprint;
-        font-size: 2px;
+        font-size: 2pX;
         line-height: 1;
       }
       article {
@@ -255,7 +255,7 @@ def test_footnote_column_3(assert_pixels):
       div {
         color: red;
         columns: 3;
-        column-gap: 1px;
+        column-gap: 1Px;
       }
       span {
         float: footnote;

@@ -99,7 +99,7 @@ def _block_content_width(context, box, function, outer):
             if not child.is_absolutely_positioned()]
         width = max(children_widths) if children_widths else 0
     else:
-        assert width.unit == 'px'
+        assert width.unit.lower() == 'px'
         width = width.value
 
     return adjust(box, outer, width)
@@ -146,7 +146,7 @@ def margin_width(box, width, left=True, right=True):
     ):
         style_value = box.style[value]
         if style_value != 'auto':
-            if style_value.unit == 'px':
+            if style_value.unit.lower() == 'px':
                 width += style_value.value
             else:
                 assert style_value.unit == '%'
@@ -236,7 +236,7 @@ def column_group_content_width(context, box):
     if width == 'auto' or width.unit == '%':
         width = 0
     else:
-        assert width.unit == 'px'
+        assert width.unit.lower() == 'px'
         width = width.value
 
     return adjust(box, False, width)
@@ -627,7 +627,7 @@ def table_and_columns_preferred_widths(context, box, outer=True):
             sum(max_content_widths), large_percentage_contribution,
             *small_percentage_contributions]))
 
-    if table.style['width'] != 'auto' and table.style['width'].unit == 'px':
+    if table.style['width'] != 'auto' and table.style['width'].unit.lower() == 'px':
         # "percentages on the following properties are treated instead as
         # though they were the following: width: auto"
         # https://dbaron.org/css/intrinsic/#outer-intrinsic
@@ -665,7 +665,7 @@ def replaced_min_content_width(box, outer=True):
         if height == 'auto' or height.unit == '%':
             height = 'auto'
         else:
-            assert height.unit == 'px'
+            assert height.unit.lower() == 'px'
             height = height.value
         if box.style['max_width'] != 'auto' and box.style['max_width'].unit == '%':
             # See https://drafts.csswg.org/css-sizing/#intrinsic-contribution
@@ -682,7 +682,7 @@ def replaced_min_content_width(box, outer=True):
         # See https://drafts.csswg.org/css-sizing/#intrinsic-contribution
         width = 0
     else:
-        assert width.unit == 'px'
+        assert width.unit.lower() == 'px'
         width = width.value
     return adjust(box, outer, width)
 
@@ -695,7 +695,7 @@ def replaced_max_content_width(box, outer=True):
         if height == 'auto' or height.unit == '%':
             height = 'auto'
         else:
-            assert height.unit == 'px'
+            assert height.unit.lower() == 'px'
             height = height.value
         image = box.replacement
         intrinsic_width, intrinsic_height, intrinsic_ratio = (
@@ -708,7 +708,7 @@ def replaced_max_content_width(box, outer=True):
         # See https://drafts.csswg.org/css-sizing/#intrinsic-contribution
         width = 0
     else:
-        assert width.unit == 'px'
+        assert width.unit.lower() == 'px'
         width = width.value
     return adjust(box, outer, width)
 

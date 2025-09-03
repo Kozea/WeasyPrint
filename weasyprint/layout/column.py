@@ -30,7 +30,7 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
 
     # Set height if defined
     if height != 'auto' and height.unit != '%':
-        assert height.unit == 'px'
+        assert height.unit.lower() == 'px'
         height_defined = True
         empty_space = context.page_bottom - box.content_box_y() - height.value
         bottom_space = max(bottom_space, empty_space)

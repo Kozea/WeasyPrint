@@ -44,7 +44,7 @@ def test_block_footnote(assert_pixels):
     ''', '''
     <style>
         @page {
-            size: 9px 7px;
+            size: 9Px 7px;
         }
         div {
             color: red;
@@ -77,7 +77,7 @@ def test_long_footnote(assert_pixels):
         div {
             color: red;
             font-family: weasyprint;
-            font-size: 2px;
+            font-size: 2PX;
             line-height: 1;
         }
         span {
@@ -146,7 +146,7 @@ def test_footnote_multiple_margin(assert_pixels):
     ''', '''
     <style>
         @page {
-            size: 7px 10px;
+            size: 7px 10Px;
 
             @footnote {
                 margin-top: 1px;

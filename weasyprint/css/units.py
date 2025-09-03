@@ -44,7 +44,7 @@ ANGLE_UNITS = set(ANGLE_TO_RADIANS)
 
 def to_pixels(value, style, name, font_size=None):
     """Get number of pixels corresponding to a length."""
-    if (unit := value.unit) == 'px':
+    if (unit := value.unit.lower()) == 'px':
         return value.value
     elif unit in LENGTHS_TO_PIXELS:
         # Convert absolute lengths to pixels

@@ -339,9 +339,9 @@ def get_length(token, negative=True, percentage=False):
     if percentage and token.type == 'percentage':
         if negative or token.value >= 0:
             return Dimension(token.value, '%')
-    if token.type == 'dimension' and token.unit in LENGTH_UNITS:
+    if token.type == 'dimension' and token.unit.lower() in LENGTH_UNITS:
         if negative or token.value >= 0:
-            return Dimension(token.value, token.unit)
+            return Dimension(token.value, token.unit.lower())
     if token.type == 'number' and token.value == 0:
         return Dimension(0, None)
 
@@ -349,7 +349,7 @@ def get_length(token, negative=True, percentage=False):
 def get_angle(token):
     """Parse an <angle> token in radians."""
     if token.type == 'dimension':
-        factor = ANGLE_TO_RADIANS.get(token.unit)
+        factor = ANGLE_TO_RADIANS.get(token.unit.lower())
         if factor is not None:
             return token.value * factor
 
@@ -357,7 +357,7 @@ def get_angle(token):
 def get_resolution(token):
     """Parse a <resolution> token in ddpx."""
     if token.type == 'dimension':
-        factor = RESOLUTION_TO_DPPX.get(token.unit)
+        factor = RESOLUTION_TO_DPPX.get(token.unit.lower())
         if factor is not None:
             return token.value * factor
 
