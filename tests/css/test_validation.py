@@ -1265,3 +1265,33 @@ def test_justify_self(rule, value):
 ])
 def test_justify_self_invalid(rule):
     assert_invalid(f'justify-self: {rule}')
+
+
+@assert_no_logs
+@pytest.mark.parametrize(('rule', 'value'), [
+    ('normal', 'normal'),
+    ('light', ('light',)),
+    ('dark', ('dark',)),
+    ('light dark', ('light', 'dark')),
+    ('dark light', ('dark', 'light')),
+    ('light only', ('light', 'only')),
+    ('only light', ('light', 'only')),
+    ('dark dark', ('dark', 'dark')),
+    ('light something', ('light', 'something')),
+    ('only dark light', ('dark', 'light', 'only')),
+    ('only something light', ('something', 'light', 'only')),
+])
+def test_color_scheme(rule, value):
+    assert get_value(f'color-scheme: {rule}') == value
+
+
+@assert_no_logs
+@pytest.mark.parametrize('rule', [
+    'normal only',
+    'normal something',
+    'only',
+    'only only',
+    'light only dark',
+])
+def test_color_scheme_invalid(rule):
+    assert_invalid(f'color-scheme: {rule}')

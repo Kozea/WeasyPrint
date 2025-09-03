@@ -2094,18 +2094,27 @@ def color_scheme(tokens):
     accepted_color_schemes = ('light', 'dark')
     if len(tokens) == 1:
         keyword = get_single_keyword(tokens)
-        if keyword == 'normal' or keyword in accepted_color_schemes:
+        if keyword == 'normal':
             return keyword
+        elif keyword in accepted_color_schemes:
+            return (keyword,)
         else:
             return
     else:
         keywords = []
+        only = False
         for token in tokens:
             keyword = get_keyword(token)
-            if keyword in accepted_color_schemes or keyword == 'only':
-                keywords.append(keyword)
-            elif keyword == 'normal':
+            if only and len(keywords) >= 1 and keyword in accepted_color_schemes:
                 return
-        if keywords.count('only') > 1 or keywords == ['only']:
+            elif keyword in accepted_color_schemes:
+                keywords.append(keyword)
+            elif keyword == 'only' and not only:
+                only = True
+            elif keyword == 'normal' or (keyword == 'only' and only):
+                return
+        if len(keywords) == 0 and only:
             return
+        if only:
+            keywords.append('only')
         return tuple(keywords)
