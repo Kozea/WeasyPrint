@@ -89,6 +89,8 @@ INITIAL_VALUES = {
     'mask_border_repeat': ('stretch', 'stretch'),
     'mask_border_mode': 'alpha',
 
+    # Color Adjustment 1 (CRD): https://www.w3.org/TR/css-color-adjust-1
+    'color_scheme': 'normal',
 
     # Color 3 (REC): https://www.w3.org/TR/css-color-3/
     'opacity': 1,
@@ -273,6 +275,7 @@ INHERITED = {
     'border_spacing',
     'caption_side',
     'color',
+    'color_scheme',
     'direction',
     'empty_cells',
     'font_family',

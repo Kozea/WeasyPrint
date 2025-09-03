@@ -98,6 +98,8 @@ sub, sup { line-height: normal }
 :link { color: blue }
 mark { background: yellow; color: black }
 
+color-scheme: light;
+
 table, td, th { border-color: gray }
 thead, tbody, tfoot, tr { border-color: inherit }
 table:is([rules], [frame]):is([frame=above i], [frame=below i], [frame=border i], [frame=box i], [frame=hsides i], [frame=lhs i], [frame=rhs i], [frame=void i], [frame=vsides i], [rules=all i], [rules=cols i], [rules=groups i], [rules=none i], [rules=rows i]), table[rules]:is([rules=all i], [rules=cols i], [rules=groups i], [rules=none i], [rules=rows i]) > tr > :is(td, th), table[rules]:is([rules=all i], [rules=cols i], [rules=groups i], [rules=none i], [rules=rows i]) > :is(thead, tbody, tfoot) > tr > :is(td, th) { border-color: black }
