@@ -45,7 +45,7 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
         # 1em because in column context
         gap = style['font_size']
     else:
-        gap = percentage(style['column_gap'], box.width)
+        gap = percentage(style['column_gap'], box.style, box.width)
 
     # Define the number of columns and their widths
     if width == 'auto' and count != 'auto':

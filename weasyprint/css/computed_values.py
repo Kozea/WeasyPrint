@@ -250,6 +250,9 @@ def length(style, name, value, font_size=None, pixels_only=False):
     """Compute a length ``value``."""
     if value in ('auto', 'content', 'from-font'):
         return value
+    elif getattr(value, 'type', None) == 'function':
+        # Math function.
+        return value
     elif value.value == 0:
         return 0 if pixels_only else ZERO_PIXELS
     elif value.unit not in LENGTH_UNITS:

@@ -232,10 +232,10 @@ def draw_background(stream, bg, clip_box=True, bleed=None, marks=()):
             bg.layers.insert(0, layer)
         # Paint in reversed order: first layer is "closest" to the viewer.
         for layer in reversed(bg.layers):
-            draw_background_image(stream, layer, bg.image_rendering)
+            draw_background_image(stream, layer, bg.style)
 
 
-def draw_background_image(stream, layer, image_rendering):
+def draw_background_image(stream, layer, style):
     if layer.image is None or 0 in layer.size:
         return
 
@@ -260,7 +260,7 @@ def draw_background_image(stream, layer, image_rendering):
             # masking within the image don't conflict.
             group = stream.add_group(*stream.page_rectangle)
             group.transform(e=position_x + positioning_x, f=position_y + positioning_y)
-            layer.image.draw(group, image_width, image_height, image_rendering)
+            layer.image.draw(group, image_width, image_height, style)
             stream.draw_x_object(group.id)
         return
 
@@ -308,7 +308,8 @@ def draw_background_image(stream, layer, image_rendering):
     group = pattern.add_group(0, 0, repeat_width, repeat_height)
 
     with stream.artifact(), stream.stacked():
-        layer.image.draw(group, image_width, image_height, image_rendering)
+        # TODO: pass style.
+        layer.image.draw(group, image_width, image_height, style)
         with pattern.artifact():
             pattern.draw_x_object(group.id)
         stream.set_color_space('Pattern')
@@ -483,8 +484,7 @@ def draw_replacedbox(stream, box):
         with stream.stacked():
             # TODO: Use the real intrinsic size here, not affected by
             # 'image-resolution'?
-            box.replacement.draw(
-                stream, draw_width, draw_height, box.style['image_rendering'])
+            box.replacement.draw(stream, draw_width, draw_height, box.style)
 
 
 def draw_inline_level(stream, page, box, offset_x=0, text_overflow='clip',

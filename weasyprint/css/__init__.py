@@ -620,7 +620,7 @@ def resolve_var(computed, token, parent_style, known_variables=None):
     return computed_value
 
 
-def _resolve_calc_sum(computed, tokens, property_name):
+def _resolve_calc_sum(computed, tokens, property_name, refer_to):
     groups = [[]]
     for token in tokens:
         if token.type == 'literal' and token.value in '+-':
@@ -628,7 +628,8 @@ def _resolve_calc_sum(computed, tokens, property_name):
             groups.append([])
         elif token.type == '() block':
             content = remove_whitespace(token.content)
-            groups[-1].append(_resolve_calc_sum(computed, content, property_name))
+            groups[-1].append(_resolve_calc_sum(
+                computed, content, property_name, refer_to))
         else:
             groups[-1].append(token)
 
@@ -641,11 +642,9 @@ def _resolve_calc_sum(computed, tokens, property_name):
             group = groups.pop(0)
             assert group
             assert isinstance(group, list)
-            product = _resolve_calc_product(computed, group, property_name)
+            product = _resolve_calc_product(computed, group, property_name, refer_to)
             if product.type == 'dimension':
                 unit = product.unit.lower()
-            elif product.type == 'percentage':
-                unit = '%'
             if sign == '+':
                 value += product.value
             else:
@@ -655,7 +654,7 @@ def _resolve_calc_sum(computed, tokens, property_name):
     return tokenize(value, unit=unit)
 
 
-def _resolve_calc_product(computed, tokens, property_name):
+def _resolve_calc_product(computed, tokens, property_name, refer_to):
     groups = [[]]
     for token in tokens:
         if token.type == 'literal' and token.value in '*/':
@@ -668,7 +667,12 @@ def _resolve_calc_product(computed, tokens, property_name):
             groups[-1].append(tokenize(pixels, unit='px'))
         elif token.type == 'dimension' and token.unit.lower() in ANGLE_UNITS:
             groups[-1].append(tokenize(to_radians(token), unit='rad'))
-        elif token.type in ('percentage', 'ident'):
+        elif token.type == 'percentage':
+            if refer_to is None:
+                raise InvalidValues
+            else:
+                groups[-1].append(tokenize(token.value / 100 * refer_to, unit='px'))
+        elif token.type == 'ident':
             groups[-1].append(token)
         else:
             raise NotImplementedError
@@ -714,12 +718,13 @@ def _resolve_calc_value(computed, tokens):
                 return NAN
 
 
-def resolve_math(computed, token, property_name):
+def resolve_math(computed, token, property_name, refer_to=None):
     """Return token with resolved math functions."""
     if not check_math(token):
         return
 
     args = []
+    original_token = token
     function = Function(token)
     if function.name is None:
         return
@@ -727,19 +732,26 @@ def resolve_math(computed, token, property_name):
         args.append([])
         for arg in part:
             if check_math(arg):
-                arg = resolve_math(computed, arg, property_name)[0]
+                arg = resolve_math(computed, arg, property_name, refer_to)[0]
             args[-1].append(arg)
 
     if function.name == 'calc':
-        return [tokenize(_resolve_calc_sum(computed, args[0], property_name))]
+        if (result := _resolve_calc_sum(computed, args[0], refer_to)) is None:
+            return [original_token]
+        else:
+            return [tokenize(result)]
 
     elif function.name in ('min', 'max'):
         target_value = target_token = None
         for tokens in args:
-            token = _resolve_calc_sum(computed, tokens, property_name)
-            if getattr(token, 'unit') == '%':
-                raise NotImplementedError
-            value = tokenize(to_pixels(token, computed, property_name), unit='px')
+            token = _resolve_calc_sum(computed, tokens, property_name, refer_to)
+            if token.type == 'percentage':
+                if refer_to is None:
+                    return [original_token]
+                else:
+                    token = value = tokenize(token.value / 100 * refer_to, unit='px')
+            else:
+                value = tokenize(to_pixels(token, computed), unit='px')
             update_condition = (
                 target_value is None or
                 (function.name == 'min' and value.value < target_value.value) or
@@ -807,10 +819,15 @@ def resolve_math(computed, token, property_name):
         pixels_list = []
         for tokens in args:
             token = _resolve_calc_sum(computed, tokens, property_name)
-            if getattr(token, 'unit') == '%':
-                raise NotImplementedError
-            pixels = to_pixels(token, computed, property_name)
-            pixels_list.append(tokenize(pixels, unit='px'))
+            if token.type == 'percentage':
+                if refer_to is None:
+                    return [original_token]
+                else:
+                    token = tokenize(token.value / 100 * refer_to, unit='px')
+            else:
+                pixels = to_pixels(token, computed, property_name)
+                value = tokenize(pixels, unit='px')
+            pixels_list.append(value)
         min_token, token, max_token = pixels_list
         if token.value < min_token.value:
             token = min_token
@@ -1021,7 +1038,10 @@ class ComputedStyle(dict):
             solved_tokens = []
             try:
                 for token in value.tokens:
-                    tokens = resolve_math(self, token, key)
+                    try:
+                        tokens = resolve_math(self, token, key)
+                    except InvalidValues:
+                        tokens = None
                     if tokens is None:
                         solved_tokens.append(token)
                     else:
@@ -1048,7 +1068,8 @@ class ComputedStyle(dict):
 
         if key in COMPUTER_FUNCTIONS:
             # Value not computed yet: compute.
-            value = COMPUTER_FUNCTIONS[key](self, key, value)
+            if not isinstance(value, Pending):
+                value = COMPUTER_FUNCTIONS[key](self, key, value)
 
         self[key] = value
         return value

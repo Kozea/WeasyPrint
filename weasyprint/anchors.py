@@ -2,6 +2,7 @@
 
 import math
 
+from .css import Pending, resolve_math
 from .formatting_structure import boxes
 from .layout.percent import percentage
 from .matrix import Matrix
@@ -42,9 +43,17 @@ def gather_anchors(box, anchors, links, bookmarks, forms, parent_matrix=None,
     if box.style['transform'] and not isinstance(box, boxes.InlineBox):
         border_width = box.border_width()
         border_height = box.border_height()
-        origin_x, origin_y = box.style['transform_origin']
-        offset_x = percentage(origin_x, border_width)
-        offset_y = percentage(origin_y, border_height)
+        origin_token = box.style['transform_origin']
+        if isinstance(origin_token, Pending):
+            origin_x, origin_y = origin_token.tokens
+            if origin_x.type == 'function':
+                origin_x = resolve_math(box.style, origin_x, box.border_width())[0]
+            if origin_y.type == 'function':
+                origin_y = resolve_math(box.style, origin_y, box.border_height())[0]
+        else:
+            origin_x, origin_y = origin_token
+        offset_x = percentage(origin_x, box.style, border_width)
+        offset_y = percentage(origin_y, box.style, border_height)
         origin_x = box.border_box_x() + offset_x
         origin_y = box.border_box_y() + offset_y
 
@@ -58,8 +67,8 @@ def gather_anchors(box, anchors, links, bookmarks, forms, parent_matrix=None,
                 b = math.sin(args)
                 c = -b
             elif name == 'translate':
-                e = percentage(args[0], border_width)
-                f = percentage(args[1], border_height)
+                e = percentage(args[0], box.style, border_width)
+                f = percentage(args[1], box.style, border_height)
             elif name == 'skew':
                 b, c = math.tan(args[1]), math.tan(args[0])
             else:
