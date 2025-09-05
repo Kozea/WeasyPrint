@@ -376,15 +376,18 @@ def _percentage_contribution(box):
     https://dbaron.org/css/intrinsic/#pct-contrib
 
     """
+    min_width = box.style['min_width']
     min_width = (
-        box.style['min_width'].value if box.style['min_width'] != 'auto' and
-        box.style['min_width'].unit == '%' else 0)
+        min_width.value if min_width != 'auto' and
+        not isinstance(min_width, Pending) and min_width.unit == '%' else 0)
+    max_width = box.style['max_width']
     max_width = (
-        box.style['max_width'].value if box.style['max_width'] != 'auto' and
-        box.style['max_width'].unit == '%' else inf)
+        max_width.value if max_width != 'auto' and
+        not isinstance(max_width, Pending) and max_width.unit == '%' else inf)
+    width = box.style['width']
     width = (
-        box.style['width'].value if box.style['width'] != 'auto' and
-        box.style['width'].unit == '%' else 0)
+        width.value if width != 'auto' and
+        not isinstance(width, Pending) and width.unit == '%' else 0)
     return max(min_width, min(width, max_width))
 
 
@@ -562,6 +565,7 @@ def table_and_columns_preferred_widths(context, box, outer=True):
         for cell in zipped_grid[i]:
             if (cell and cell.colspan == 1 and
                     cell.style['width'] != 'auto' and
+                    not isinstance(cell.style['width'], Pending) and
                     cell.style['width'].unit != '%'):
                 constrainedness[i] = True
                 break

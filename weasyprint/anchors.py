@@ -47,9 +47,11 @@ def gather_anchors(box, anchors, links, bookmarks, forms, parent_matrix=None,
         if isinstance(origin_token, Pending):
             origin_x, origin_y = origin_token.tokens
             if origin_x.type == 'function':
-                origin_x = resolve_math(box.style, origin_x, box.border_width())[0]
+                origin_x = resolve_math(
+                    box.style, origin_x, 'transform_origin', box.border_width())[0]
             if origin_y.type == 'function':
-                origin_y = resolve_math(box.style, origin_y, box.border_height())[0]
+                origin_y = resolve_math(
+                    box.style, origin_y, 'transform_origin', box.border_height())[0]
         else:
             origin_x, origin_y = origin_token
         offset_x = percentage(origin_x, box.style, border_width)

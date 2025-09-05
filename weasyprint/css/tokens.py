@@ -52,6 +52,10 @@ class InvalidValues(ValueError):  # noqa: N818
     """Invalid or unsupported values for a known CSS property."""
 
 
+class PercentageInMath(ValueError):  # noqa: N818
+    """Percentage in math function without reference length."""
+
+
 class Pending(ABC):
     """Abstract class representing property value with pending validation."""
     # See https://drafts.csswg.org/css-variables-2/#variables-in-shorthands.

@@ -36,8 +36,8 @@ from .validation import preprocess_declarations
 from .validation.descriptors import preprocess_descriptors
 
 from .tokens import (  # isort:skip
-    E, MINUS_INFINITY, NAN, PI, PLUS_INFINITY, InvalidValues, Pending, get_angle,
-    get_url, remove_whitespace, split_on_comma, tokenize)
+    E, MINUS_INFINITY, NAN, PI, PLUS_INFINITY, InvalidValues, Pending, PercentageInMath,
+    get_angle, get_url, remove_whitespace, split_on_comma, tokenize)
 
 # Reject anything not in here:
 PSEUDO_ELEMENTS = (
@@ -669,7 +669,7 @@ def _resolve_calc_product(computed, tokens, property_name, refer_to):
             groups[-1].append(tokenize(to_radians(token), unit='rad'))
         elif token.type == 'percentage':
             if refer_to is None:
-                raise InvalidValues
+                raise PercentageInMath
             else:
                 groups[-1].append(tokenize(token.value / 100 * refer_to, unit='px'))
         elif token.type == 'ident':
@@ -736,7 +736,8 @@ def resolve_math(computed, token, property_name, refer_to=None):
             args[-1].append(arg)
 
     if function.name == 'calc':
-        if (result := _resolve_calc_sum(computed, args[0], refer_to)) is None:
+        result = _resolve_calc_sum(computed, args[0], property_name, refer_to)
+        if result is None:
             return [original_token]
         else:
             return [tokenize(result)]
@@ -751,7 +752,7 @@ def resolve_math(computed, token, property_name, refer_to=None):
                 else:
                     token = value = tokenize(token.value / 100 * refer_to, unit='px')
             else:
-                value = tokenize(to_pixels(token, computed), unit='px')
+                value = tokenize(to_pixels(token, computed, property_name), unit='px')
             update_condition = (
                 target_value is None or
                 (function.name == 'min' and value.value < target_value.value) or
@@ -873,12 +874,12 @@ def resolve_math(computed, token, property_name, refer_to=None):
     arguments = []
     for i, argument in enumerate(token.arguments):
         if argument.type == 'function':
-            arguments.extend(resolve_math(computed, argument, property_name))
+            arguments.extend(resolve_math(computed, argument, property_name, refer_to))
         else:
             arguments.append(argument)
     token = tinycss2.ast.FunctionBlock(
         token.source_line, token.source_column, token.name, arguments)
-    return resolve_math(computed, token, property_name) or (token,)
+    return resolve_math(computed, token, property_name, refer_to) or (token,)
 
 
 class InitialStyle(dict):
@@ -1040,7 +1041,7 @@ class ComputedStyle(dict):
                 for token in value.tokens:
                     try:
                         tokens = resolve_math(self, token, key)
-                    except InvalidValues:
+                    except PercentageInMath:
                         tokens = None
                     if tokens is None:
                         solved_tokens.append(token)

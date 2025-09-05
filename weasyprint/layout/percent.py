@@ -15,7 +15,7 @@ def percentage(value, computed, refer_to):
 
     """
     if isinstance(value, Pending):
-        value = resolve_math(computed, value.tokens[0], refer_to)[0]
+        value = resolve_math(computed, value.tokens[0], None, refer_to)[0]
     if value is None or value == 'auto':
         return value
     elif value.unit.lower() == 'px':
@@ -112,9 +112,9 @@ def resolve_radii_percentages(box):
         if isinstance(computed, Pending):
             rx, ry = computed.tokens
             if rx.type == 'function':
-                rx = resolve_math(box.style, rx, box.border_width())[0]
+                rx = resolve_math(box.style, rx, property_name, box.border_width())[0]
             if ry.type == 'function':
-                ry = resolve_math(box.style, ry, box.border_height())[0]
+                ry = resolve_math(box.style, ry, property_name, box.border_height())[0]
         else:
             rx, ry = computed
 
