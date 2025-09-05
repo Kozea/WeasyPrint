@@ -970,7 +970,7 @@ def remake_page(index, page_groups, context, root_box, html):
     return page, resume_at
 
 
-def make_all_pages(context, root_box, html, pages):
+def make_all_pages(context, root_box, html, pages, page_groups):
     """Return a list of laid out pages without margin boxes.
 
     Re-make pages only if necessary.
@@ -978,7 +978,6 @@ def make_all_pages(context, root_box, html, pages):
     """
     i = 0
     reported_footnotes = None
-    page_groups = []
     while True:
         remake_state = context.page_maker[i][-1]
         if (len(pages) == 0 or
