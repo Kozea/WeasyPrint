@@ -561,11 +561,12 @@ def strut(style):
     return result
 
 
-def character_ratio(style, character):
-    """Return the ratio of 1ex/font_size or 1ch/font_size."""
-    assert character in ('x', '0')
+def character_ratio(style, unit):
+    """Return the font size ratio used by given unit."""
+    character = {'ex': 'x', 'cap': 'O', 'ic': '水', 'ch': '0'}.get(unit)
+    assert character
 
-    cache = style.cache[f'ratio_{"ex" if character == "x" else "ch"}']
+    cache = style.cache.setdefault(unit, {})
     cache_key = _font_style_cache_key(style)
     if cache_key in cache:
         return cache[cache_key]
@@ -584,8 +585,10 @@ def character_ratio(style, character):
     ink_extents = ffi.new('PangoRectangle *')
     logical_extents = ffi.new('PangoRectangle *')
     pango.pango_layout_line_get_extents(line, ink_extents, logical_extents)
-    if character == 'x':
+    if unit == 'ex':
         measure = -ink_extents.y * FROM_UNITS
+    elif character == 'cap':
+        measure = logical_extents.height * FROM_UNITS
     else:
         measure = logical_extents.width * FROM_UNITS
     ffi.release(ink_extents)
@@ -593,9 +596,8 @@ def character_ratio(style, character):
 
     # Zero means some kind of failure, fallback is 0.5.
     # We round to try keeping exact values that were altered by Pango.
-    ratio = round(measure / style['font_size'], 5) or 0.5
-    cache[cache_key] = ratio
-    return ratio
+    cache[cache_key] = round(measure / style['font_size'], 5) or 0.5
+    return cache[cache_key]
 
 
 def get_log_attrs(text, lang):

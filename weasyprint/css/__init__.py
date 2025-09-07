@@ -620,7 +620,7 @@ class InitialStyle(dict):
     def __init__(self, font_config):
         self.parent_style = None
         self.specified = self
-        self.cache = {'ratio_ch': {}, 'ratio_ex': {}}
+        self.cache = {}
         self.font_config = font_config
 
     def __missing__(self, key):
@@ -678,10 +678,7 @@ class ComputedStyle(dict):
         self.root_style = root_style
         self.base_url = base_url
         self.font_config = font_config
-        if parent_style:
-            self.cache = parent_style.cache
-        else:
-            self.cache = {'ratio_ch': {}, 'ratio_ex': {}}
+        self.cache = parent_style.cache if parent_style else {}
 
     def copy(self):
         copy = ComputedStyle(

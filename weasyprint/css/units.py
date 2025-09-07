@@ -35,7 +35,8 @@ RESOLUTION_TO_DPPX = {
 
 # Sets of units.
 # https://drafts.csswg.org/css-values-4/#lengths
-FONT_UNITS = {'ex', 'em', 'ch', 'rem', 'lh', 'rlh'}
+FONT_UNITS = {'em', 'ex', 'cap', 'ch', 'ic', 'lh'}
+FONT_UNITS |= {f'r{unit}' for unit in FONT_UNITS}
 ABSOLUTE_UNITS = set(LENGTHS_TO_PIXELS)
 LENGTH_UNITS = ABSOLUTE_UNITS | FONT_UNITS
 # https://drafts.csswg.org/css-values-4/#angles
@@ -50,21 +51,10 @@ def to_pixels(value, style, property_name, font_size=None):
         # Convert absolute lengths to pixels
         return value.value * LENGTHS_TO_PIXELS[unit]
     elif unit in FONT_UNITS:
-        assert style is not None
+        assert (style, font_size) != (None, None)
         if font_size is None:
             font_size = style['font_size']
-        if unit == 'ex':
-            # TODO: use context to use @font-face fonts
-            ratio = character_ratio(style, 'x')
-            return value.value * font_size * ratio
-        elif unit == 'ch':
-            ratio = character_ratio(style, '0')
-            return value.value * font_size * ratio
-        elif unit == 'em':
-            return value.value * font_size
-        elif unit == 'rem':
-            return value.value * style.root_style['font_size']
-        elif unit == 'lh':
+        if unit == 'lh':
             if property_name in ('font_size', 'line_height'):
                 if style.parent_style is None:
                     parent_style = style.root_style
@@ -78,3 +68,13 @@ def to_pixels(value, style, property_name, font_size=None):
             parent_style = style.root_style
             line_height, _ = strut(parent_style)
             return value.value * line_height
+        elif unit == 'em':
+            return value.value * font_size
+        elif unit == 'rem':
+            return value.value * style.root_style['font_size']
+        elif unit.startswith('r'):
+            ratio = character_ratio(style.root_style, unit[1:])
+            return value.value * style.root_style['font_size'] * ratio
+        else:
+            ratio = character_ratio(style, unit)
+            return value.value * font_size * ratio
