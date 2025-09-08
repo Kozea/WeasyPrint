@@ -1173,7 +1173,6 @@ class ComputedStyle(dict):
                 value = COMPUTER_FUNCTIONS[key](self, key, value)
             self[key] = text_decoration(
                 key, value, parent_style[key], key in self.cascaded)
-            print(key, value, parent_style[key], self[key])
         elif key == 'page' and value == 'auto':
             # The page property does not inherit. However, if the page value on
             # an element is auto, then its used value is the value specified on
