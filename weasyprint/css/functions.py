@@ -7,7 +7,7 @@ class Function:
 
     def __init__(self, token):
         """Create Function from function token."""
-        if token.type == 'function':
+        if getattr(token, 'type', None) == 'function':
             self.name = token.lower_name
             self.arguments = token.arguments
         else:
@@ -154,6 +154,8 @@ def check_string_or_element(string_or_element, token):
 
 
 def check_var(token):
+    if token.type == '() block':
+        return any(check_var(item) for item in token.content)
     function = Function(token)
     if function.name is None:
         return

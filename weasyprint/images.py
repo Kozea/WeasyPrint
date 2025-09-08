@@ -694,7 +694,6 @@ class RadialGradient(Gradient):
 
         # Define the center of the gradient
         origin_x, center_x, origin_y, center_y = self.center
-        # TODO: percentage
         center_x = percentage(center_x, style, width)
         center_y = percentage(center_y, style, height)
         if origin_x == 'right':

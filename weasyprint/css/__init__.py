@@ -31,13 +31,14 @@ from . import counters, media_queries
 from .computed_values import COMPUTER_FUNCTIONS
 from .functions import Function, check_math, check_var
 from .properties import INHERITED, INITIAL_NOT_COMPUTED, INITIAL_VALUES, ZERO_PIXELS
-from .units import ANGLE_UNITS, LENGTH_UNITS, to_pixels, to_radians
+from .units import ANGLE_UNITS, FONT_UNITS, LENGTH_UNITS, to_pixels, to_radians
 from .validation import preprocess_declarations
 from .validation.descriptors import preprocess_descriptors
+from .validation.properties import validate_non_shorthand
 
 from .tokens import (  # isort:skip
-    E, MINUS_INFINITY, NAN, PI, PLUS_INFINITY, InvalidValues, Pending, PercentageInMath,
-    get_angle, get_url, remove_whitespace, split_on_comma, tokenize)
+    E, MINUS_INFINITY, NAN, PI, PLUS_INFINITY, FontUnitInMath, InvalidValues, Pending,
+    PercentageInMath, get_angle, get_url, remove_whitespace, split_on_comma, tokenize)
 
 # Reject anything not in here:
 PSEUDO_ELEMENTS = (
@@ -590,17 +591,22 @@ def resolve_var(computed, token, parent_style, known_variables=None):
     if known_variables is None:
         known_variables = set()
 
-    if token.lower_name != 'var':
-        arguments = []
-        for i, argument in enumerate(token.arguments):
-            if argument.type == 'function':
+    if token.type == '() block' or token.lower_name != 'var':
+        items = []
+        token_items = token.arguments if token.type == 'function' else token.content
+        for i, argument in enumerate(token_items):
+            if argument.type in ('function', '() block'):
                 resolved = resolve_var(
                     computed, argument, parent_style, known_variables.copy())
-                arguments.extend((argument,) if resolved is None else resolved)
+                items.extend((argument,) if resolved is None else resolved)
             else:
-                arguments.append(argument)
-        token = tinycss2.ast.FunctionBlock(
-            token.source_line, token.source_column, token.name, arguments)
+                items.append(argument)
+        if token.type == '() block':
+            token = tinycss2.ast.ParenthesesBlock(
+                token.source_line, token.source_column, items)
+        else:
+            token = tinycss2.ast.FunctionBlock(
+                token.source_line, token.source_column, token.name, items)
         return resolve_var(computed, token, parent_style, known_variables) or (token,)
 
     function = Function(token)
@@ -643,6 +649,8 @@ def _resolve_calc_sum(computed, tokens, property_name, refer_to):
             assert group
             assert isinstance(group, list)
             product = _resolve_calc_product(computed, group, property_name, refer_to)
+            if product is None:
+                return
             if product.type == 'dimension':
                 unit = product.unit.lower()
             if sign == '+':
@@ -663,19 +671,21 @@ def _resolve_calc_product(computed, tokens, property_name, refer_to):
         elif token.type == 'number':
             groups[-1].append(token)
         elif token.type == 'dimension' and token.unit.lower() in LENGTH_UNITS:
+            if computed is None and token.unit.lower() in FONT_UNITS:
+                raise FontUnitInMath
             pixels = to_pixels(token, computed, property_name)
             groups[-1].append(tokenize(pixels, unit='px'))
         elif token.type == 'dimension' and token.unit.lower() in ANGLE_UNITS:
             groups[-1].append(tokenize(to_radians(token), unit='rad'))
         elif token.type == 'percentage':
             if refer_to is None:
+                # TODO: check percentages correctly.
                 raise PercentageInMath
-            else:
-                groups[-1].append(tokenize(token.value / 100 * refer_to, unit='px'))
+            groups[-1].append(tokenize(token.value / 100 * refer_to, unit='px'))
         elif token.type == 'ident':
             groups[-1].append(token)
         else:
-            raise NotImplementedError
+            return
 
     value, sign, unit = 1, '*', None
     while groups:
@@ -718,7 +728,7 @@ def _resolve_calc_value(computed, tokens):
                 return NAN
 
 
-def resolve_math(computed, token, property_name, refer_to=None):
+def resolve_math(token, computed=None, property_name=None, refer_to=None):
     """Return token with resolved math functions."""
     if not check_math(token):
         return
@@ -732,23 +742,25 @@ def resolve_math(computed, token, property_name, refer_to=None):
         args.append([])
         for arg in part:
             if check_math(arg):
-                arg = resolve_math(computed, arg, property_name, refer_to)[0]
+                arg = resolve_math(arg, computed, property_name, refer_to)
             args[-1].append(arg)
 
     if function.name == 'calc':
         result = _resolve_calc_sum(computed, args[0], property_name, refer_to)
         if result is None:
-            return [original_token]
+            return original_token
         else:
-            return [tokenize(result)]
+            return tokenize(result)
 
     elif function.name in ('min', 'max'):
         target_value = target_token = None
         for tokens in args:
             token = _resolve_calc_sum(computed, tokens, property_name, refer_to)
+            if token is None:
+                return
             if token.type == 'percentage':
                 if refer_to is None:
-                    return [original_token]
+                    return original_token
                 else:
                     token = value = tokenize(token.value / 100 * refer_to, unit='px')
             else:
@@ -759,7 +771,7 @@ def resolve_math(computed, token, property_name, refer_to=None):
                 (function.name == 'max' and value.value > target_value.value))
             if update_condition:
                 target_value, target_token = value, token
-        return [tokenize(target_token)]
+        return tokenize(target_token)
 
     elif function.name == 'round':
         strategy, multiple = 'nearest', 1
@@ -778,6 +790,8 @@ def resolve_math(computed, token, property_name, refer_to=None):
             number_token = _resolve_calc_sum(computed, args[1], property_name)
             multiple = _resolve_calc_sum(computed, args[2], property_name).value
         if strategy == 'nearest':
+            # TODO: always round x.5 to +inf, see
+            # https://drafts.csswg.org/css-values-4/#combine-integers.
             function = round
         elif strategy == 'up':
             function = math.ceil
@@ -785,44 +799,58 @@ def resolve_math(computed, token, property_name, refer_to=None):
             function = math.floor
         elif strategy == 'to-zero':
             function = math.floor if number_token.value > 0 else math.ceil
-        return [tokenize(number_token, lambda x: function(x / multiple) * multiple)]
+        if None in (number_token, multiple):
+            return
+        return tokenize(number_token, lambda x: function(x / multiple) * multiple)
 
     elif function.name in ('mod', 'rem'):
         number_token = _resolve_calc_sum(computed, args[0], property_name)
+        if number_token is None:
+            return
         number = number_token.value
         parameter = _resolve_calc_sum(computed, args[1], property_name).value
+        if parameter is None:
+            return
         value = number % parameter
         if function.name == 'rem' and number * parameter < 0:
             value += abs(parameter)
-        return [tokenize(number_token, lambda x: value)]
+        return tokenize(number_token, lambda x: value)
 
     elif function.name in ('sin', 'cos', 'tan'):
         number_token = _resolve_calc_sum(computed, args[0], property_name)
+        if number_token is None:
+            return
         if getattr(number_token, 'unit', None) is None:
             angle = number_token.value
         else:
             angle = get_angle(number_token)
         value = getattr(math, function.name)(angle)
-        return [tokenize(value)]
+        return tokenize(value)
 
     elif function.name in ('asin', 'acos', 'atan'):
         number_token = _resolve_calc_sum(computed, args[0], property_name)
+        if number_token is None:
+            return
         value = getattr(math, function.name)(number_token.value)
-        return [tokenize(value, unit='rad')]
+        return tokenize(value, unit='rad')
 
     elif function.name == 'atan2':
         y_token, x_token = [
             _resolve_calc_sum(computed, arg, property_name) for arg in args]
+        if None in (y_token, x_token):
+            return
         y, x = y_token.value, x_token.value
-        return [tokenize(math.atan2(y, x), unit='rad')]
+        return tokenize(math.atan2(y, x), unit='rad')
 
     elif function.name == 'clamp':
         pixels_list = []
         for tokens in args:
             token = _resolve_calc_sum(computed, tokens, property_name)
+            if token is None:
+                return
             if token.type == 'percentage':
                 if refer_to is None:
-                    return [original_token]
+                    return original_token
                 else:
                     token = tokenize(token.value / 100 * refer_to, unit='px')
             else:
@@ -834,23 +862,29 @@ def resolve_math(computed, token, property_name, refer_to=None):
             token = min_token
         if token.value > max_token.value:
             token = max_token
-        return [tokenize(token)]
+        return tokenize(token)
 
     elif function.name == 'pow':
         number_token, power_token = [
             _resolve_calc_sum(computed, arg, property_name) for arg in args]
-        return [tokenize(number_token, lambda x: x ** power_token.value)]
+        if None in (number_token, power_token):
+            return
+        return tokenize(number_token, lambda x: x ** power_token.value)
 
     elif function.name == 'sqrt':
         number_token, = [
             _resolve_calc_sum(computed, arg, property_name) for arg in args]
-        return [tokenize(number_token, lambda x: x ** 0.5)]
+        if number_token is None:
+            return
+        return tokenize(number_token, lambda x: x ** 0.5)
 
     elif function.name == 'hypot':
         resolved = [
             _resolve_calc_sum(computed, tokens, property_name) for tokens in args]
+        if None in resolved:
+            return
         value = math.hypot(*[token.value for token in resolved])
-        return [tokenize(resolved[0], lambda x: value)]
+        return tokenize(resolved[0], lambda x: value)
 
     elif function.name == 'log':
         number_token = _resolve_calc_sum(computed, args[0], property_name)
@@ -858,28 +892,40 @@ def resolve_math(computed, token, property_name, refer_to=None):
             base = _resolve_calc_sum(computed, args[1], property_name).value
         else:
             base = math.e
-        return [tokenize(number_token, lambda x: math.log(x, base))]
+        if None in (number_token, base):
+            return
+        return tokenize(number_token, lambda x: math.log(x, base))
 
     elif function.name == 'exp':
-        return [tokenize(_resolve_calc_sum(computed, args[0], property_name), math.exp)]
+        number = _resolve_calc_sum(computed, args[0], property_name)
+        if number is None:
+            return
+        return tokenize(number, math.exp)
 
     elif function.name == 'abs':
-        return [tokenize(_resolve_calc_sum(computed, args[0]), property_name, abs)]
+        number = _resolve_calc_sum(computed, args[0])
+        if number is None:
+            return
+        return tokenize(number, property_name, abs)
 
     elif function.name == 'sign':
-        return [tokenize(
-            _resolve_calc_sum(computed, args[0], property_name),
-            lambda x: 0 if x == 0 else 1 if x > 0 else -1)]
+        number = _resolve_calc_sum(computed, args[0], property_name)
+        if number is None:
+            return
+        return tokenize(number, lambda x: 0 if x == 0 else 1 if x > 0 else -1)
 
     arguments = []
     for i, argument in enumerate(token.arguments):
         if argument.type == 'function':
-            arguments.extend(resolve_math(computed, argument, property_name, refer_to))
+            result = resolve_math(argument, computed, property_name, refer_to)
+            if result is None:
+                return
+            arguments.append(result)
         else:
             arguments.append(argument)
     token = tinycss2.ast.FunctionBlock(
         token.source_line, token.source_column, token.name, arguments)
-    return resolve_math(computed, token, property_name, refer_to) or (token,)
+    return resolve_math(token, computed, property_name, refer_to) or token
 
 
 class InitialStyle(dict):
@@ -1034,23 +1080,21 @@ class ComputedStyle(dict):
             # https://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo.
             self.specified[key] = value
 
-        pending = isinstance(value, Pending)
-        if pending:
+        if check_math(value):
+            function = value
             solved_tokens = []
             try:
-                for token in value.tokens:
-                    try:
-                        tokens = resolve_math(self, token, key)
-                    except PercentageInMath:
-                        tokens = None
-                    if tokens is None:
-                        solved_tokens.append(token)
-                    else:
-                        solved_tokens.extend(tokens)
+                try:
+                    token = resolve_math(function, self, key)
+                except PercentageInMath:
+                    token = None
+                if token is None:
+                    solved_tokens.append(function)
+                else:
+                    solved_tokens.append(token)
                 original_key = key.replace('_', '-')
-                value = value.solve(solved_tokens, original_key)
+                value = validate_non_shorthand(solved_tokens, original_key)[0][1]
             except Exception:
-                function = value.tokens[0]
                 LOGGER.warning(
                     'Invalid math function at %d:%d: %s',
                     function.source_line, function.source_column, function.serialize())
@@ -1069,8 +1113,7 @@ class ComputedStyle(dict):
 
         if key in COMPUTER_FUNCTIONS:
             # Value not computed yet: compute.
-            if not isinstance(value, Pending):
-                value = COMPUTER_FUNCTIONS[key](self, key, value)
+            value = COMPUTER_FUNCTIONS[key](self, key, value)
 
         self[key] = value
         return value

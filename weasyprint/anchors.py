@@ -2,7 +2,6 @@
 
 import math
 
-from .css import Pending, resolve_math
 from .formatting_structure import boxes
 from .layout.percent import percentage
 from .matrix import Matrix
@@ -43,17 +42,7 @@ def gather_anchors(box, anchors, links, bookmarks, forms, parent_matrix=None,
     if box.style['transform'] and not isinstance(box, boxes.InlineBox):
         border_width = box.border_width()
         border_height = box.border_height()
-        origin_token = box.style['transform_origin']
-        if isinstance(origin_token, Pending):
-            origin_x, origin_y = origin_token.tokens
-            if origin_x.type == 'function':
-                origin_x = resolve_math(
-                    box.style, origin_x, 'transform_origin', box.border_width())[0]
-            if origin_y.type == 'function':
-                origin_y = resolve_math(
-                    box.style, origin_y, 'transform_origin', box.border_height())[0]
-        else:
-            origin_x, origin_y = origin_token
+        origin_x, origin_y = box.style['transform_origin']
         offset_x = percentage(origin_x, box.style, border_width)
         offset_y = percentage(origin_y, box.style, border_height)
         origin_x = box.border_box_x() + offset_x

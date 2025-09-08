@@ -308,7 +308,6 @@ def draw_background_image(stream, layer, style):
     group = pattern.add_group(0, 0, repeat_width, repeat_height)
 
     with stream.artifact(), stream.stacked():
-        # TODO: pass style.
         layer.image.draw(group, image_width, image_height, style)
         with pattern.artifact():
             pattern.draw_x_object(group.id)

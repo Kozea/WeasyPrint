@@ -10,14 +10,14 @@ from tinycss2 import parse_component_value_list
 from tinycss2.color4 import parse_color
 
 from .. import computed_values
-from ..functions import Function, check_math, check_var
+from ..functions import Function, check_var
 from ..properties import KNOWN_PROPERTIES, ZERO_PIXELS, Dimension
 
 from ..tokens import (  # isort:skip
     InvalidValues, Pending, comma_separated_list, get_angle, get_content_list,
     get_content_list_token, get_custom_ident, get_image, get_keyword, get_length,
-    get_resolution, get_single_keyword, get_url, parse_2d_position, parse_position,
-    remove_whitespace, single_keyword, single_token)
+    get_number, get_percentage, get_resolution, get_single_keyword, get_url,
+    parse_2d_position, parse_position, remove_whitespace, single_keyword, single_token)
 
 PREFIX = '-weasy-'
 PROPRIETARY = set()
@@ -94,7 +94,7 @@ def validate_non_shorthand(tokens, name, base_url=None, required=False):
 
     function = PROPERTIES[name]
     for token in tokens:
-        if check_var(token) or check_math(token):
+        if check_var(token):
             # Found CSS variable, return pending-substitution values.
             return ((name, PendingProperty(tokens, name)),)
 
@@ -278,8 +278,7 @@ def border_spacing(tokens):
 @property('border-top-left-radius')
 def border_corner_radius(tokens):
     """Validator for the `border-*-radius` properties."""
-    lengths = [
-        get_length(token, negative=False, percentage=True) for token in tokens]
+    lengths = [get_length(token, negative=False, percentage=True) for token in tokens]
     if all(lengths):
         if len(lengths) == 1:
             return (lengths[0], lengths[0])
@@ -344,12 +343,10 @@ def continue_(keyword):
 @property(unstable=True)
 @single_token
 def max_lines(token):
-    if token.type == 'number' and token.int_value is not None:
-        if token.int_value >= 1:
-            return token.int_value
-    keyword = get_keyword(token)
-    if keyword == 'none':
-        return keyword
+    if number := get_number(token, negative=False, integer=True):
+        return number.value
+    elif get_keyword(token) == 'none':
+        return 'none'
 
 
 @property(unstable=True)
@@ -374,8 +371,7 @@ def page(token):
 @single_token
 def bleed(token):
     """``bleed`` property validation."""
-    keyword = get_keyword(token)
-    if keyword == 'auto':
+    if get_keyword(token) == 'auto':
         return 'auto'
     else:
         return get_length(token)
@@ -389,8 +385,7 @@ def marks(tokens):
         if 'crop' in keywords and 'cross' in keywords:
             return keywords
     elif len(tokens) == 1:
-        keyword = get_keyword(tokens[0])
-        if keyword in ('crop', 'cross'):
+        if (keyword := get_keyword(tokens[0])) in ('crop', 'cross'):
             return (keyword,)
         elif keyword == 'none':
             return ()
@@ -413,11 +408,9 @@ def outline_style(keyword):
 @single_token
 def border_width(token):
     """Border, column rule and outline widths properties validation."""
-    length = get_length(token, negative=False)
-    if length:
+    if length := get_length(token, negative=False):
         return length
-    keyword = get_keyword(token)
-    if keyword in ('thin', 'medium', 'thick'):
+    if (keyword := get_keyword(token)) in ('thin', 'medium', 'thick'):
         return keyword
 
 
@@ -437,13 +430,13 @@ def border_image_slice(tokens):
     fill = False
     for i, token in enumerate(tokens):
         # Don't use get_length() because a dimension with a unit is disallowed.
-        if token.type == 'percentage' and token.value >= 0:
-            values.append(Dimension(token.value, '%'))
-        elif token.type == 'number' and token.value >= 0:
-            values.append(Dimension(token.value, None))
+        if percentage := get_percentage(token, negative=False):
+            values.append(percentage)
         elif get_keyword(token) == 'fill' and not fill and i in (0, len(tokens) - 1):
             fill = True
             values.append('fill')
+        elif number := get_number(token, negative=False):
+            values.append(number)
         else:
             return
 
@@ -458,13 +451,12 @@ def border_image_width(tokens):
     for token in tokens:
         if get_keyword(token) == 'auto':
             values.append('auto')
-        elif token.type == 'number' and token.value >= 0:
-            values.append(Dimension(token.value, None))
+        elif number := get_number(token, negative=False):
+            values.append(number)
+        elif length := get_length(token, negative=False, percentage=True):
+            values.append(length)
         else:
-            if length := get_length(token, negative=False, percentage=True):
-                values.append(length)
-            else:
-                return
+            return
 
     if 1 <= len(values) <= 4:
         return tuple(values)
@@ -475,13 +467,12 @@ def border_image_width(tokens):
 def border_image_outset(tokens):
     values = []
     for token in tokens:
-        if token.type == 'number' and token.value >= 0:
-            values.append(Dimension(token.value, None))
+        if number := get_number(token, negative=False):
+            values.append(number)
+        elif length := get_length(token, negative=False):
+            values.append(length)
         else:
-            if length := get_length(token, negative=False):
-                values.append(length)
-            else:
-                return
+            return
 
     if 1 <= len(values) <= 4:
         return tuple(values)
@@ -506,8 +497,7 @@ def mask_border_mode(keyword):
 @single_token
 def column_width(token):
     """``column-width`` property validation."""
-    length = get_length(token, negative=False)
-    if length:
+    if length := get_length(token, negative=False):
         return length
     keyword = get_keyword(token)
     if keyword == 'auto':
@@ -553,12 +543,12 @@ def clip(token):
         for argument in arguments:
             if get_keyword(argument) == 'auto':
                 values.append('auto')
+            elif length := get_length(argument):
+                values.append(length)
             else:
-                if length := get_length(argument):
-                    values.append(length)
-        if len(values) == 4:
-            return tuple(values)
-    if get_keyword(token) == 'auto':
+                return
+        return tuple(values)
+    elif get_keyword(token) == 'auto':
         return ()
 
 
@@ -569,12 +559,9 @@ def content(tokens, base_url):
     tokens = list(tokens)
     parsed_tokens = []
     while tokens:
-        if len(tokens) >= 2 and (
-                tokens[1].type == 'literal' and tokens[1].value == ','):
+        if len(tokens) >= 2 and tokens[1].type == 'literal' and tokens[1].value == ',':
             token, tokens = tokens[0], tokens[2:]
-            parsed_token = (
-                get_image(token, base_url) or get_url(token, base_url))
-            if parsed_token:
+            if parsed_token := get_image(token, base_url) or get_url(token, base_url):
                 parsed_tokens.append(parsed_token)
             else:
                 return
@@ -625,14 +612,13 @@ def counter(tokens, default_integer):
         if counter_name in ('none', 'initial', 'inherit'):
             raise InvalidValues(f'Invalid counter name: {counter_name}')
         token = next(tokens, None)
-        if token is not None and (
-                token.type == 'number' and token.int_value is not None):
-            # Found an integer. Use it and get the next token
-            integer = token.int_value
+        if token and (number := get_number(token, integer=True)):
+            # Found an integer. Use it and get the next token.
+            integer = number.value
             token = next(tokens, None)
         else:
-            # Not an integer. Might be the next counter name.
-            # Keep `token` for the next loop iteration.
+            # Not an integer. Might be the next counter name. Keep `token` for the next
+            # loop iteration.
             integer = default_integer
         results.append((counter_name, integer))
     return tuple(results)
@@ -650,8 +636,7 @@ def counter(tokens, default_integer):
 @single_token
 def lenght_precentage_or_auto(token):
     """``margin-*`` and various other properties validation."""
-    length = get_length(token, percentage=True)
-    if length:
+    if length := get_length(token, percentage=True):
         return length
     if get_keyword(token) == 'auto':
         return 'auto'
@@ -662,8 +647,7 @@ def lenght_precentage_or_auto(token):
 @single_token
 def width_height(token):
     """Validation for the ``width`` and ``height`` properties."""
-    length = get_length(token, negative=False, percentage=True)
-    if length:
+    if length := get_length(token, negative=False, percentage=True):
         return length
     if get_keyword(token) == 'auto':
         return 'auto'
@@ -674,8 +658,7 @@ def width_height(token):
 @single_token
 def gap(token):
     """Validation for the ``column-gap`` and ``row-gap`` properties."""
-    length = get_length(token, percentage=True, negative=False)
-    if length:
+    if length := get_length(token, percentage=True, negative=False):
         return length
     keyword = get_keyword(token)
     if keyword == 'normal':
@@ -865,9 +848,8 @@ def font_feature_settings(tokens):
             tokens, token = tokens[:-1], tokens[-1]
             if token.type == 'ident':
                 value = {'on': 1, 'off': 0}.get(token.value)
-            elif (token.type == 'number' and
-                    token.int_value is not None and token.int_value >= 0):
-                value = token.int_value
+            elif number := get_number(token, negative=False):
+                value = number.value
         elif len(tokens) == 1:
             value = 1
 
@@ -941,8 +923,7 @@ def font_variation_settings(tokens):
 @single_token
 def font_size(token):
     """``font-size`` property validation."""
-    length = get_length(token, negative=False, percentage=True)
-    if length:
+    if length := get_length(token, negative=False, percentage=True):
         return length
     font_size_keyword = get_keyword(token)
     if font_size_keyword in ('smaller', 'larger'):
@@ -1003,8 +984,7 @@ def spacing(token):
     """Validation for ``letter-spacing`` and ``word-spacing``."""
     if get_keyword(token) == 'normal':
         return 'normal'
-    length = get_length(token)
-    if length:
+    if length := get_length(token):
         return length
 
 
@@ -1012,8 +992,7 @@ def spacing(token):
 @single_token
 def outline_offset(token):
     """Validation for ``outline-offset``."""
-    length = get_length(token)
-    if length:
+    if length := get_length(token):
         return length
 
 
@@ -1023,12 +1002,12 @@ def line_height(token):
     """``line-height`` property validation."""
     if get_keyword(token) == 'normal':
         return 'normal'
-    if token.type == 'number' and token.value >= 0:
-        return Dimension(token.value, None)
-    if token.type == 'percentage' and token.value >= 0:
-        return Dimension(token.value, '%')
-    elif token.type == 'dimension' and token.value >= 0:
-        return get_length(token)
+    elif number := get_number(token, negative=False):
+        return number
+    elif percentage := get_percentage(token, negative=False):
+        return percentage
+    elif length := get_length(token, negative=False):
+        return length
 
 
 @property()
@@ -1047,30 +1026,29 @@ def list_style_type(token):
     elif token.type == 'string':
         return ('string', token.value)
     elif token.type == 'function' and token.name == 'symbols':
-        allowed_types = (
-            'cyclic', 'numeric', 'alphabetic', 'symbolic', 'fixed')
-        function_arguments = remove_whitespace(token.arguments)
-        if len(function_arguments) >= 1:
-            arguments = []
-            if function_arguments[0].type == 'ident':
-                if function_arguments[0].value in allowed_types:
-                    index = 1
-                    arguments.append(function_arguments[0].value)
-                else:
-                    return
+        allowed_types = ('cyclic', 'numeric', 'alphabetic', 'symbolic', 'fixed')
+        if not (function_arguments := remove_whitespace(token.arguments)):
+            return
+        arguments = []
+        if function_arguments[0].type == 'ident':
+            if function_arguments[0].value in allowed_types:
+                index = 1
+                arguments.append(function_arguments[0].value)
             else:
-                arguments.append('symbolic')
-                index = 0
-            if len(function_arguments) < index + 1:
                 return
-            for i in range(index, len(function_arguments)):
-                if function_arguments[i].type != 'string':
-                    return
-                arguments.append(function_arguments[i].value)
-            if arguments[0] in ('alphabetic', 'numeric'):
-                if len(arguments) < 3:
-                    return
-            return ('symbols()', tuple(arguments))
+        else:
+            arguments.append('symbolic')
+            index = 0
+        if len(function_arguments) < index + 1:
+            return
+        for i in range(index, len(function_arguments)):
+            if function_arguments[i].type != 'string':
+                return
+            arguments.append(function_arguments[i].value)
+        if arguments[0] in ('alphabetic', 'numeric'):
+            if len(arguments) < 3:
+                return
+        return ('symbols()', tuple(arguments))
 
 
 @property('min-width')
@@ -1079,9 +1057,8 @@ def list_style_type(token):
 def min_width_height(token):
     """``min-width`` and ``min-height`` properties validation."""
     # See https://www.w3.org/TR/css-flexbox-1/#min-size-auto
-    keyword = get_keyword(token)
-    if keyword == 'auto':
-        return keyword
+    if get_keyword(token) == 'auto':
+        return 'auto'
     else:
         return length_or_precentage([token])
 
@@ -1093,8 +1070,7 @@ def min_width_height(token):
 @single_token
 def length_or_precentage(token):
     """``padding-*`` properties validation."""
-    length = get_length(token, negative=False, percentage=True)
-    if length:
+    if length := get_length(token, negative=False, percentage=True):
         return length
 
 
@@ -1103,8 +1079,7 @@ def length_or_precentage(token):
 @single_token
 def max_width_height(token):
     """Validation for max-width and max-height"""
-    length = get_length(token, negative=False, percentage=True)
-    if length:
+    if length := get_length(token, negative=False, percentage=True):
         return length
     if get_keyword(token) == 'none':
         return Dimension(inf, 'px')
@@ -1114,10 +1089,10 @@ def max_width_height(token):
 @single_token
 def opacity(token):
     """Validation for the ``opacity`` property."""
-    if token.type == 'number':
-        return min(1, max(0, token.value))
-    if token.type == 'percentage':
-        return min(1, max(0, token.value / 100))
+    if number := get_number(token):
+        return min(1, max(0, number.value))
+    elif percentage := get_percentage(token):
+        return min(1, max(0, percentage.value / 100))
 
 
 @property()
@@ -1126,8 +1101,8 @@ def z_index(token):
     """Validation for the ``z-index`` property."""
     if get_keyword(token) == 'auto':
         return 'auto'
-    if token.type == 'number' and token.int_value is not None:
-        return token.int_value
+    elif number := get_number(token, integer=True):
+        return number.value
 
 
 @property('orphans')
@@ -1135,21 +1110,19 @@ def z_index(token):
 @single_token
 def orphans_widows(token):
     """Validation for the ``orphans`` and ``widows`` properties."""
-    if token.type == 'number' and token.int_value is not None:
-        value = token.int_value
-        if value >= 1:
-            return value
+    if number := get_number(token, negative=False, integer=True):
+        if number.value >= 1:
+            return number.value
 
 
 @property(unstable=True)
 @single_token
 def column_count(token):
     """Validation for the ``column-count`` property."""
-    if token.type == 'number' and token.int_value is not None:
-        value = token.int_value
-        if value >= 1:
-            return value
-    if get_keyword(token) == 'auto':
+    if number := get_number(token, negative=False, integer=True):
+        if number.value >= 1:
+            return number.value
+    elif get_keyword(token) == 'auto':
         return 'auto'
 
 
@@ -1212,15 +1185,13 @@ def text_align_all(keyword):
 @single_keyword
 def text_align_last(keyword):
     """``text-align-last`` property validation."""
-    return keyword in (
-        'auto', 'left', 'right', 'center', 'justify', 'start', 'end')
+    return keyword in ('auto', 'left', 'right', 'center', 'justify', 'start', 'end')
 
 
 @property()
 def text_decoration_line(tokens):
     """``text-decoration-line`` property validation."""
-    keywords = {get_keyword(token) for token in tokens}
-    if keywords == {'none'}:
+    if (keywords := {get_keyword(token) for token in tokens}) == {'none'}:
         return 'none'
     allowed_values = {'underline', 'overline', 'line-through', 'blink'}
     if len(tokens) == len(keywords) and keywords.issubset(allowed_values):
@@ -1239,10 +1210,9 @@ def text_decoration_style(keyword):
 @single_token
 def text_decoration_thickness(token):
     """``text-decoration-thickness`` property validation."""
-    length = get_length(token, percentage=True)
-    if length:
+    if length := get_length(token, percentage=True):
         return length
-    if keyword := get_keyword(token) in ('auto', 'from-font'):
+    elif keyword := get_keyword(token) in ('auto', 'from-font'):
         return keyword
 
 
@@ -1250,8 +1220,7 @@ def text_decoration_thickness(token):
 @single_token
 def text_indent(token):
     """``text-indent`` property validation."""
-    length = get_length(token, percentage=True)
-    if length:
+    if length := get_length(token, percentage=True):
         return length
 
 
@@ -1259,16 +1228,14 @@ def text_indent(token):
 @single_keyword
 def text_transform(keyword):
     """``text-align`` property validation."""
-    return keyword in (
-        'none', 'uppercase', 'lowercase', 'capitalize', 'full-width')
+    return keyword in ('none', 'uppercase', 'lowercase', 'capitalize', 'full-width')
 
 
 @property()
 @single_token
 def vertical_align(token):
     """Validation for the ``vertical-align`` property"""
-    length = get_length(token, percentage=True)
-    if length:
+    if length := get_length(token, percentage=True):
         return length
     keyword = get_keyword(token)
     if keyword in ('baseline', 'middle', 'sub', 'super',
@@ -1308,10 +1275,9 @@ def word_break(keyword):
 @single_token
 def flex_basis(token):
     """``flex-basis`` property validation."""
-    basis = width_height([token])
-    if basis is not None:
+    if (basis := width_height([token])) is not None:
         return basis
-    if get_keyword(token) == 'content':
+    elif get_keyword(token) == 'content':
         return 'content'
 
 
@@ -1326,19 +1292,17 @@ def flex_direction(keyword):
 @property('flex-shrink')
 @single_token
 def flex_grow_shrink(token):
-    if token.type == 'number':
-        return token.value
+    if number := get_number(token):
+        return number.value
 
 
 def _inflexible_breadth(token):
     """Parse ``inflexible-breadth``."""
-    keyword = get_keyword(token)
-    if keyword in ('auto', 'min-content', 'max-content'):
+    if (keyword := get_keyword(token)) in ('auto', 'min-content', 'max-content'):
         return keyword
     elif keyword:
         return
-    length = get_length(token, negative=False, percentage=True)
-    if length:
+    elif length := get_length(token, negative=False, percentage=True):
         return length
 
 
@@ -1363,8 +1327,7 @@ def _track_size(token):
                 return ('minmax()', inflexible_breadth, track_breadth)
     elif function.name == 'fit-content':
         if len(arguments) == 1:
-            length = get_length(arguments[0], negative=False, percentage=True)
-            if length:
+            if length := get_length(arguments[0], negative=False, percentage=True):
                 return ('fit-content()', length)
 
 
@@ -1375,8 +1338,7 @@ def _fixed_size(token):
     function = Function(token)
     arguments = function.split_comma()
     if function.name == 'minmax' and len(arguments) == 2:
-        length = get_length(arguments[0], negative=False, percentage=True)
-        if length:
+        if length := get_length(arguments[0], negative=False, percentage=True):
             track_breadth = _track_breadth(arguments[1])
             if track_breadth:
                 return ('minmax()', length, track_breadth)
@@ -1387,11 +1349,11 @@ def _fixed_size(token):
                 return ('minmax()', length or keyword, fixed_breadth)
 
 
-def _line_names(arg):
+def _line_names(token):
     """Parse ``line-names``."""
     return_line_names = []
-    if arg.type == '[] block':
-        for token in arg.content:
+    if token.type == '[] block':
+        for token in token.content:
             if token.type == 'ident':
                 return_line_names.append(token.value)
             elif token.type != 'whitespace':
@@ -1405,8 +1367,7 @@ def grid_auto(tokens):
     """``grid-auto-columns`` and ``grid-auto-rows`` properties validation."""
     return_tokens = []
     for token in tokens:
-        track_size = _track_size(token)
-        if track_size:
+        if track_size := _track_size(token):
             return_tokens.append(track_size)
             continue
         return
@@ -1503,8 +1464,9 @@ def grid_template(tokens):
                 return
             repeat, = repeat
             if function.name == 'repeat' and len(arguments) >= 2:
-                if repeat.type == 'number' and repeat.is_integer and repeat.value >= 1:
-                    number = repeat.int_value
+                if number := get_number(repeat, negative=False, integer=True):
+                    if number.value >= 1:
+                        number = number.value
                 elif get_keyword(repeat) in ('auto-fill', 'auto-fit'):
                     # auto-repeat
                     if includes_auto_repeat:
@@ -1626,8 +1588,9 @@ def grid_line(tokens):
                 return keyword
             elif keyword != 'span':
                 return (None, None, token.value)
-        elif token.type == 'number' and token.is_integer and token.value:
-            return (None, token.int_value, None)
+        elif number := get_number(token, integer=True):
+            if number.value != 0:
+                return (None, number.value, None)
         return
     number = ident = span = None
     for token in tokens:
@@ -1641,13 +1604,13 @@ def grid_line(tokens):
             elif keyword and ident is None:
                 ident = token.value
                 continue
-        elif token.type == 'number' and token.is_integer and token.value:
-            if number is None:
-                number = token.int_value
+        elif item := get_number(token, integer=True):
+            if item.value != 0 and number is None:
+                number = item.value
                 continue
         return
     if span:
-        if number and number < 0:
+        if isinstance(number, int) and number < 0:
             return
         elif ident or number:
             return (span, number, ident)
@@ -1804,8 +1767,8 @@ def align_content(tokens):
 @property()
 @single_token
 def order(token):
-    if token.type == 'number' and token.int_value is not None:
-        return token.int_value
+    if number := get_number(token, integer=True):
+        return number.value
 
 
 @property(unstable=True)
@@ -1917,8 +1880,7 @@ def tab_size(token):
 
     """
     if token.type == 'number' and token.int_value is not None:
-        value = token.int_value
-        if value >= 0:
+        if value := token.int_value:
             return value
     return get_length(token, negative=False)
 
@@ -1927,8 +1889,7 @@ def tab_size(token):
 @single_token
 def hyphens(token):
     """Validation for ``hyphens``."""
-    keyword = get_keyword(token)
-    if keyword in ('none', 'manual', 'auto'):
+    if (keyword := get_keyword(token)) in ('none', 'manual', 'auto'):
         return keyword
 
 
@@ -1936,8 +1897,7 @@ def hyphens(token):
 @single_token
 def hyphenate_character(token):
     """Validation for ``hyphenate-character``."""
-    keyword = get_keyword(token)
-    if keyword == 'auto':
+    if get_keyword(token) == 'auto':
         return '‐'
     elif token.type == 'string':
         return token.value
@@ -1958,36 +1918,33 @@ def hyphenate_limit_chars(tokens):
         keyword = get_keyword(token)
         if keyword == 'auto':
             return (5, 2, 2)
-        elif token.type == 'number' and token.int_value is not None:
-            return (token.int_value, 2, 2)
+        elif number := get_number(token, integer=True):
+            return (number.value, 2, 2)
     elif len(tokens) == 2:
         total, left = tokens
         total_keyword = get_keyword(total)
         left_keyword = get_keyword(left)
-        if total.type == 'number' and total.int_value is not None:
-            if left.type == 'number' and left.int_value is not None:
-                return (total.int_value, left.int_value, left.int_value)
+        if total_number := get_number(total, integer=True):
+            if left_number := get_number(left, integer=True):
+                return (total_number.value, left_number.value, left_number.value)
             elif left_keyword == 'auto':
-                return (total.value, 2, 2)
+                return (total_number.value, 2, 2)
         elif total_keyword == 'auto':
-            if left.type == 'number' and left.int_value is not None:
-                return (5, left.int_value, left.int_value)
+            if left_number := get_number(left, integer=True):
+                return (5, left_number.value, left_number.value)
             elif left_keyword == 'auto':
                 return (5, 2, 2)
     elif len(tokens) == 3:
         total, left, right = tokens
-        if (
-            (get_keyword(total) == 'auto' or
-                (total.type == 'number' and total.int_value is not None)) and
-            (get_keyword(left) == 'auto' or
-                (left.type == 'number' and left.int_value is not None)) and
-            (get_keyword(right) == 'auto' or
-                (right.type == 'number' and right.int_value is not None))
-        ):
-            total = total.int_value if total.type == 'number' else 5
-            left = left.int_value if left.type == 'number' else 2
-            right = right.int_value if right.type == 'number' else 2
-            return (total, left, right)
+        result = []
+        for token in total, left, right:
+            if get_keyword(token) == 'auto':
+                result.append(5 if token is total else 2)
+            elif number := get_number(token, integer=True):
+                result.append(number.value)
+            else:
+                return
+        return tuple(result)
 
 
 @property(proprietary=True)
@@ -2017,10 +1974,9 @@ def bookmark_label(tokens, base_url):
 @single_token
 def bookmark_level(token):
     """Validation for ``bookmark-level``."""
-    if token.type == 'number' and token.int_value is not None:
-        value = token.int_value
-        if value >= 1:
-            return value
+    if number := get_number(token, negative=False, integer=True):
+        if number.value >= 1:
+            return number.value
     elif get_keyword(token) == 'none':
         return 'none'
 
@@ -2129,6 +2085,5 @@ def transform(tokens):
 @single_token
 def appearance(token):
     """``appearance`` property validation."""
-    keyword = get_keyword(token)
-    if keyword in ('none', 'auto'):
+    if (keyword := get_keyword(token)) in ('none', 'auto'):
         return keyword

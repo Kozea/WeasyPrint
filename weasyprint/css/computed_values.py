@@ -7,8 +7,10 @@ from tinycss2.color4 import parse_color
 from ..logger import LOGGER
 from ..text.line_break import strut
 from ..urls import get_link_attribute, get_url_tuple
+from .functions import check_math
 from .properties import INITIAL_VALUES, ZERO_PIXELS, Dimension
 from .units import ANGLE_TO_RADIANS, LENGTH_UNITS, to_pixels
+from .validation import validate_non_shorthand
 
 # Value in pixels of font-size for <absolute-size> keywords: 12pt (16px) for
 # medium, and scaling factors given in CSS3 for others:
@@ -212,8 +214,7 @@ def length_or_percentage_tuple(style, name, values):
 @register_computer('clip')
 def length_tuple(style, name, values):
     """Compute the properties with a list of lengths."""
-    return tuple(
-        length(style, name, value, pixels_only=True) for value in values)
+    return tuple(length(style, name, value, pixels_only=True) for value in values)
 
 
 @register_computer('break-after')
@@ -270,16 +271,14 @@ def length(style, name, value, font_size=None, pixels_only=False):
 def bleed(style, name, value):
     if value == 'auto':
         return Dimension(8 if 'crop' in style['marks'] else 0, 'px')
-    else:
-        return length(style, name, value)
+    return length(style, name, value)
 
 
 @register_computer('letter-spacing')
 def pixel_length(style, name, value):
     if value == 'normal':
         return value
-    else:
-        return length(style, name, value, pixels_only=True)
+    return length(style, name, value, pixels_only=True)
 
 
 @register_computer('background-size')
@@ -410,9 +409,7 @@ def border_radius(style, name, values):
 @register_computer('row-gap')
 def gap(style, name, value):
     """Compute the ``*-gap`` properties."""
-    if value == 'normal':
-        return value
-    return length(style, name, value)
+    return value if value == 'normal' else length(style, name, value)
 
 
 def _content_list(style, values):
@@ -483,8 +480,7 @@ def display(style, name, value):
     # See https://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo.
     float_ = style.specified['float']
     position = style.specified['position']
-    if position in ('absolute', 'fixed') or float_ != 'none' or (
-            style.is_root_element):
+    if position in ('absolute', 'fixed') or float_ != 'none' or style.is_root_element:
         if value == ('inline-table',):
             return ('block', 'table')
         elif len(value) == 1 and value[0].startswith('table-'):
@@ -532,7 +528,7 @@ def font_size(style, name, value):
                 return keyword_values[-i - 1]
         else:
             return parent_font_size * 0.8
-    elif value.unit == '%':
+    elif isinstance(value, Dimension) and value.unit == '%':
         return value.value * parent_font_size / 100
     else:
         return length(
@@ -652,26 +648,23 @@ def anchor(style, name, values):
 def link(style, name, values):
     """Compute the ``link`` property."""
     if values == 'none':
-        return None
-    else:
-        type_, value = values
-        if type_ == 'attr()':
-            return get_link_attribute(style.element, value, style.base_url)
-        else:
-            return values
+        return
+    type_, value = values
+    if type_ == 'attr()':
+        return get_link_attribute(style.element, value, style.base_url)
+    return values
 
 
 @register_computer('lang')
 def lang(style, name, values):
     """Compute the ``lang`` property."""
     if values == 'none':
-        return None
-    else:
-        name, key = values
-        if name == 'attr()':
-            return style.element.get(key) or None
-        elif name == 'string':
-            return key
+        return
+    name, key = values
+    if name == 'attr()':
+        return style.element.get(key) or None
+    elif name == 'string':
+        return key
 
 
 @register_computer('tab-size')
@@ -694,10 +687,17 @@ def transform(style, name, value):
 @register_computer('vertical-align')
 def vertical_align(style, name, value):
     """Compute the ``vertical-align`` property."""
+    from ..css import resolve_math
+
     # Use +/- half an em for super and sub, same as Pango.
     # (See the SUPERSUB_RISE constant in pango-markup.c)
-    if value in (
-            'baseline', 'middle', 'text-top', 'text-bottom', 'top', 'bottom'):
+    if check_math(value):
+        height, _ = strut(style)
+        result = resolve_math(value, style, 'vertical_align', height)
+        value = validate_non_shorthand((result,), 'vertical-align')[0][1]
+        if value is None:
+            value = 'baseline'
+    if value in ('baseline', 'middle', 'text-top', 'text-bottom', 'top', 'bottom'):
         return value
     elif value == 'super':
         return style['font_size'] * 0.5
@@ -713,7 +713,4 @@ def vertical_align(style, name, value):
 @register_computer('word-spacing')
 def word_spacing(style, name, value):
     """Compute the ``word-spacing`` property."""
-    if value == 'normal':
-        return 0
-    else:
-        return length(style, name, value, pixels_only=True)
+    return 0 if value == 'normal' else length(style, name, value, pixels_only=True)

@@ -3,19 +3,18 @@
 from math import inf
 
 from ..css import resolve_math
-from ..css.tokens import Pending
+from ..css.functions import check_math
 from ..formatting_structure import boxes
 
 
 def percentage(value, computed, refer_to):
     """Return the percentage of the reference value, or the value unchanged.
 
-    ``refer_to`` is the length for 100%. If ``refer_to`` is not a number, it
-    just replaces percentages.
+    ``refer_to`` is the length for 100%.
 
     """
-    if isinstance(value, Pending):
-        value = resolve_math(computed, value.tokens[0], None, refer_to)[0]
+    if check_math(value):
+        value = resolve_math(value, computed, refer_to=refer_to)
     if value is None or value == 'auto':
         return value
     elif value.unit.lower() == 'px':
@@ -79,7 +78,7 @@ def resolve_percentages(box, containing_block):
         # Special handling when the height of the containing block
         # depends on its content.
         height = box.style['height']
-        if height == 'auto' or isinstance(height, Pending) or height.unit == '%':
+        if height == 'auto' or check_math(height) or height.unit == '%':
             box.height = 'auto'
         else:
             assert height.unit.lower() == 'px'
@@ -109,14 +108,7 @@ def resolve_radii_percentages(box):
     for corner in ('top_left', 'top_right', 'bottom_right', 'bottom_left'):
         property_name = f'border_{corner}_radius'
         computed = box.style[property_name]
-        if isinstance(computed, Pending):
-            rx, ry = computed.tokens
-            if rx.type == 'function':
-                rx = resolve_math(box.style, rx, property_name, box.border_width())[0]
-            if ry.type == 'function':
-                ry = resolve_math(box.style, ry, property_name, box.border_height())[0]
-        else:
-            rx, ry = computed
+        rx, ry = computed
 
         # Short track for common case
         if (0, 'px') in (rx, ry):

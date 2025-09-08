@@ -10,6 +10,7 @@ from tinycss2.color4 import parse_color
 from ..logger import LOGGER
 from ..urls import get_url_tuple
 from . import functions
+from .functions import check_math
 from .properties import Dimension
 from .units import ANGLE_TO_RADIANS, LENGTH_UNITS, RESOLUTION_TO_DPPX
 
@@ -56,6 +57,10 @@ class PercentageInMath(ValueError):  # noqa: N818
     """Percentage in math function without reference length."""
 
 
+class FontUnitInMath(ValueError):  # noqa: N818
+    """Font-relative unit in math function without reference style."""
+
+
 class Pending(ABC):
     """Abstract class representing property value with pending validation."""
     # See https://drafts.csswg.org/css-variables-2/#variables-in-shorthands.
@@ -77,18 +82,18 @@ class Pending(ABC):
                 # properties and expanders.
                 raise InvalidValues('no value')
             return self.validate(tokens, wanted_key)
-        except InvalidValues as exc:
+        except InvalidValues as exception:
             if self._reported_error:
-                raise exc
+                raise exception
             source_line = self.tokens[0].source_line
             source_column = self.tokens[0].source_column
             value = ' '.join(token.serialize() for token in tokens)
-            message = (exc.args and exc.args[0]) or 'invalid value'
+            message = exception.args[0] if exception.args else 'invalid value'
             LOGGER.warning(
                 'Ignored `%s: %s` at %d:%d, %s.',
                 self.name, value, source_line, source_column, message)
             self._reported_error = True
-            raise exc
+            raise exception
 
 
 def parse_color_hint(tokens):
@@ -329,6 +334,37 @@ def get_single_keyword(tokens):
             return token.lower_value
 
 
+def get_number(token, negative=True, integer=False):
+    """Parse a <number> token."""
+    from . import resolve_math
+
+    if check_math(token):
+        try:
+            resolved = resolve_math(token)
+        except (PercentageInMath, FontUnitInMath):
+            return
+        else:
+            if resolved is None:
+                return
+            if resolved.type != 'number':
+                return
+            value = resolved.value
+            if not negative and value < 0:
+                value = 0
+            if integer:
+                # TODO: always round x.5 to +inf, see
+                # https://drafts.csswg.org/css-values-4/#combine-integers.
+                value = round(value)
+            return Dimension(value, None)
+    elif token.type == 'number':
+        if integer:
+            if token.int_value is not None:
+                if negative or token.int_value >= 0:
+                    return Dimension(token.int_value, None)
+        elif negative or token.value >= 0:
+            return Dimension(token.value, None)
+
+
 def get_string(token):
     """Parse a <string> token."""
     if token.type == 'string':
@@ -344,8 +380,30 @@ def get_string(token):
             return functions.check_string_or_element('string', token)
 
 
+def get_percentage(token, negative=True):
+    """Parse a <percentage> token."""
+    from . import resolve_math
+
+    if check_math(token):
+        try:
+            # TODO: range clamp.
+            token = resolve_math(token) or token
+        except (PercentageInMath, FontUnitInMath):
+            return
+    if token.type == 'percentage' and (negative or token.value >= 0):
+        return Dimension(token.value, '%')
+
+
 def get_length(token, negative=True, percentage=False):
     """Parse a <length> token."""
+    from . import resolve_math
+
+    if check_math(token):
+        try:
+            # TODO: range clamp.
+            token = resolve_math(token) or token
+        except (PercentageInMath, FontUnitInMath):
+            return token
     if percentage and token.type == 'percentage':
         if negative or token.value >= 0:
             return Dimension(token.value, '%')
@@ -358,6 +416,12 @@ def get_length(token, negative=True, percentage=False):
 
 def get_angle(token):
     """Parse an <angle> token in radians."""
+    from . import resolve_math
+
+    try:
+        token = resolve_math(token) or token
+    except (PercentageInMath, FontUnitInMath):
+        return
     if token.type == 'dimension':
         factor = ANGLE_TO_RADIANS.get(token.unit.lower())
         if factor is not None:
@@ -366,6 +430,12 @@ def get_angle(token):
 
 def get_resolution(token):
     """Parse a <resolution> token in ddpx."""
+    from . import resolve_math
+
+    try:
+        token = resolve_math(token) or token
+    except (PercentageInMath, FontUnitInMath):
+        return
     if token.type == 'dimension':
         factor = RESOLUTION_TO_DPPX.get(token.unit.lower())
         if factor is not None:
@@ -495,8 +565,7 @@ def get_target(token, base_url):
 def get_content_list(tokens, base_url):
     """Parse <content-list> tokens."""
     # See https://www.w3.org/TR/css-content-3/#typedef-content-list
-    parsed_tokens = [
-        get_content_list_token(token, base_url) for token in tokens]
+    parsed_tokens = [get_content_list_token(token, base_url) for token in tokens]
     if None not in parsed_tokens:
         return parsed_tokens
 
