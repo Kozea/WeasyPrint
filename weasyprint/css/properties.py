@@ -42,7 +42,7 @@ INITIAL_VALUES = {
     # Backgrounds and Borders 3 (CR): https://www.w3.org/TR/css-backgrounds-3/
     'background_attachment': ('scroll',),
     'background_clip': ('border-box',),
-    'background_color': parse_color('transparent'),
+    'background_color': 'transparent',
     'background_image': (('none', None),),
     'background_origin': ('padding-box',),
     'background_position': (('left', Dimension(0, '%'),
@@ -374,4 +374,5 @@ INITIAL_NOT_COMPUTED = {
     'border_left_color',
     'border_bottom_color',
     'border_right_color',
+    'background_color',
 }

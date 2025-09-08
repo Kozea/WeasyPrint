@@ -128,7 +128,8 @@ def background_attachment(keyword):
 @property('text-decoration-color')
 @single_token
 def other_colors(token):
-    return parse_color(token)
+    if parse_color(token):
+        return token
 
 
 @property()
@@ -137,7 +138,7 @@ def outline_color(token):
     if get_keyword(token) == 'invert':
         return 'currentcolor'
     else:
-        return parse_color(token)
+        return token
 
 
 @property()
@@ -161,7 +162,7 @@ def color(token):
     if result == 'currentcolor':
         return 'inherit'
     else:
-        return result
+        return token
 
 
 @property('background-image', wants_base_url=True)
@@ -2091,30 +2092,30 @@ def appearance(token):
 @property()
 def color_scheme(tokens):
     """``color-scheme`` property validation."""
-    accepted_color_schemes = ('light', 'dark')
     if len(tokens) == 1:
         keyword = get_single_keyword(tokens)
         if keyword == 'normal':
             return keyword
-        elif keyword in accepted_color_schemes:
+        elif keyword != 'only':
             return (keyword,)
         else:
             return
     else:
         keywords = []
         only = False
-        for token in tokens:
+        for i, token in enumerate(tokens):
             keyword = get_keyword(token)
-            if only and len(keywords) >= 1 and keyword in accepted_color_schemes:
+            if keyword == 'only':
+                if only or i not in (0, len(tokens) - 1):
+                    return
+                else:
+                    only = True
+            elif keyword == 'normal':
                 return
-            elif keyword in accepted_color_schemes:
+            elif keyword:
                 keywords.append(keyword)
-            elif keyword == 'only' and not only:
-                only = True
-            elif keyword == 'normal' or (keyword == 'only' and only):
+            else:
                 return
-        if len(keywords) == 0 and only:
-            return
         if only:
             keywords.append('only')
         return tuple(keywords)

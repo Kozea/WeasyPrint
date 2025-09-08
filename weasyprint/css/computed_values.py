@@ -153,7 +153,7 @@ def compute_attr(style, values):
         elif type_or_unit == 'url':
             attr_value = get_url_tuple(attr_value, style.base_url)
         elif type_or_unit == 'color':
-            attr_value = parse_color(attr_value.strip())
+            attr_value = parse_color(attr_value.strip(), style['color_scheme'])
         elif type_or_unit == 'integer':
             attr_value = int(attr_value.strip())
         elif type_or_unit == 'number':
@@ -191,6 +191,19 @@ def background_image(style, name, values):
             if value.size_type == 'explicit':
                 value.size = length_or_percentage_tuple(style, name, value.size)
     return values
+
+
+@register_computer('color')
+@register_computer('background-color')
+@register_computer('border-top-color')
+@register_computer('border-right-color')
+@register_computer('border-bottom-color')
+@register_computer('border-left-color')
+@register_computer('column-rule-color')
+@register_computer('outline-color')
+@register_computer('text-decoration-color')
+def color(style, name, values):
+    return parse_color(values, style['color_scheme'])
 
 
 @register_computer('background-position')

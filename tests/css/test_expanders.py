@@ -26,7 +26,9 @@ def expand_to_dict(css, expected_error=None):
         assert not logs
 
     return {
-        name: value for name, value, _ in declarations if value != 'initial'}
+        name: parse_color(value)
+        if name.endswith('_color') and value != 'inherit' else value
+        for name, value, _ in declarations if value != 'initial'}
 
 
 def assert_invalid(css, message='invalid'):
@@ -324,7 +326,7 @@ def test_list_style_invalid(rule):
 def test_background(rule, result):
     expanded = expand_to_dict(f'background: {rule}')
     assert expanded.pop('background_color') == result.pop(
-        'background_color', INITIAL_VALUES['background_color'])
+        'background_color', parse_color(INITIAL_VALUES['background_color']))
     nb_layers = len(expanded['background_image'])
     for name, value in result.items():
         assert expanded.pop(name) == value

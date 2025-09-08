@@ -223,7 +223,8 @@ class HTML:
         new_options = DEFAULT_OPTIONS.copy()
         new_options.update(options)
         options = new_options
-        return Document._render(self, font_config, counter_style, color_profiles, options)
+        return Document._render(
+            self, font_config, counter_style, color_profiles, options)
 
     def write_pdf(self, target=None, zoom=1, finisher=None,
                   font_config=None, counter_style=None, color_profiles=None, **options):
