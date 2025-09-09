@@ -652,7 +652,20 @@ def _resolve_calc_sum(computed, tokens, property_name, refer_to):
             if product is None:
                 return
             if product.type == 'dimension':
-                unit = product.unit.lower()
+                if unit is None:
+                    unit = product.unit.lower()
+                elif unit == '%':
+                    raise PercentageInMath
+                elif unit != product.unit.lower():
+                    return
+            elif product.type == 'percentage':
+                if refer_to is not None:
+                    product.value = product.value / 100 * refer_to
+                else:
+                    if unit is None or unit == '%':
+                        unit = '%'
+                    else:
+                        raise PercentageInMath
             if sign == '+':
                 value += product.value
             else:
@@ -678,10 +691,7 @@ def _resolve_calc_product(computed, tokens, property_name, refer_to):
         elif token.type == 'dimension' and token.unit.lower() in ANGLE_UNITS:
             groups[-1].append(tokenize(to_radians(token), unit='rad'))
         elif token.type == 'percentage':
-            if refer_to is None:
-                # TODO: check percentages correctly.
-                raise PercentageInMath
-            groups[-1].append(tokenize(token.value / 100 * refer_to, unit='px'))
+            groups[-1].append(tokenize(token.value, unit='%'))
         elif token.type == 'ident':
             groups[-1].append(token)
         else:
@@ -698,9 +708,13 @@ def _resolve_calc_product(computed, tokens, property_name, refer_to):
             assert isinstance(group, list)
             calc = _resolve_calc_value(computed, group)
             if calc.type == 'dimension':
-                unit = calc.unit.lower()
+                if unit is None or unit == '%':
+                    unit = calc.unit.lower()
+                else:
+                    return
             elif calc.type == 'percentage':
-                unit = '%'
+                if unit is None:
+                    unit = '%'
             if sign == '*':
                 value *= calc.value
             else:
