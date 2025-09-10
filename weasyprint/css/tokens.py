@@ -408,7 +408,7 @@ def get_length(token, negative=True, percentage=False):
             return token
         else:
             # Range clamp.
-            if not negative:
+            if not negative and token.type != 'function':
                 token.value = max(0, token.value)
     if percentage and token.type == 'percentage':
         if negative or token.value >= 0:
