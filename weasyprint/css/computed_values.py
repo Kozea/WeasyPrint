@@ -249,10 +249,7 @@ def break_before_after(style, name, value):
 @register_computer('text-decoration-thickness')
 def length(style, name, value, font_size=None, pixels_only=False):
     """Compute a length ``value``."""
-    if value in ('auto', 'content', 'from-font'):
-        return value
-    elif getattr(value, 'type', None) == 'function':
-        # Math function.
+    if value in ('auto', 'content', 'from-font') or check_math(value):
         return value
     elif value.value == 0:
         return 0 if pixels_only else ZERO_PIXELS
