@@ -767,17 +767,24 @@ def resolve_math(token, computed=None, property_name=None, refer_to=None):
             return tokenize(result)
 
     elif function.name in ('min', 'max'):
-        target_value = target_token = None
+        target_value = target_token = unit = None
         for tokens in args:
             token = _resolve_calc_sum(computed, tokens, property_name, refer_to)
             if token is None:
                 return
             if token.type == 'percentage':
                 if refer_to is None:
-                    return original_token
+                    if unit == 'px':
+                        return original_token
+                    unit = '%'
+                    value = token
                 else:
+                    unit = 'px'
                     token = value = tokenize(token.value / 100 * refer_to, unit='px')
             else:
+                if unit == '%':
+                    return original_token
+                unit = 'px'
                 value = tokenize(to_pixels(token, computed, property_name), unit='px')
             update_condition = (
                 target_value is None or
@@ -858,16 +865,24 @@ def resolve_math(token, computed=None, property_name=None, refer_to=None):
 
     elif function.name == 'clamp':
         pixels_list = []
+        unit = None
         for tokens in args:
             token = _resolve_calc_sum(computed, tokens, property_name)
             if token is None:
                 return
             if token.type == 'percentage':
                 if refer_to is None:
-                    return original_token
+                    if unit == 'px':
+                        return original_token
+                    unit = '%'
+                    value = token
                 else:
+                    unit = 'px'
                     token = tokenize(token.value / 100 * refer_to, unit='px')
             else:
+                if unit == '%':
+                    return original_token
+                unit = 'px'
                 pixels = to_pixels(token, computed, property_name)
                 value = tokenize(pixels, unit='px')
             pixels_list.append(value)
