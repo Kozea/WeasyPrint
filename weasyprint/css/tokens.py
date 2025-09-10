@@ -386,10 +386,13 @@ def get_percentage(token, negative=True):
 
     if check_math(token):
         try:
-            # TODO: range clamp.
             token = resolve_math(token) or token
         except (PercentageInMath, FontUnitInMath):
             return
+        else:
+            # Range clamp.
+            if not negative:
+                token.value = max(0, token.value)
     if token.type == 'percentage' and (negative or token.value >= 0):
         return Dimension(token.value, '%')
 
@@ -400,10 +403,13 @@ def get_length(token, negative=True, percentage=False):
 
     if check_math(token):
         try:
-            # TODO: range clamp.
             token = resolve_math(token) or token
         except (PercentageInMath, FontUnitInMath):
             return token
+        else:
+            # Range clamp.
+            if not negative:
+                token.value = max(0, token.value)
     if percentage and token.type == 'percentage':
         if negative or token.value >= 0:
             return Dimension(token.value, '%')
