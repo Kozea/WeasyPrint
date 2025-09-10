@@ -12,7 +12,9 @@ import sys
 from functools import cache
 from math import inf
 
+from ..css import resolve_math
 from ..css.functions import check_math
+from ..css.validation import validate_non_shorthand
 from ..formatting_structure import boxes
 from ..text.line_break import can_break_text, split_first_line
 from .replaced import default_image_sizing
@@ -281,7 +283,13 @@ def inline_line_widths(context, box, outer, is_line_start, minimum, skip_stack=N
     text_indent = 0
     if isinstance(box, boxes.LineBox):
         indent_token = box.style['text_indent']
-        if not check_math(indent_token) and indent_token.unit != '%':
+        if check_math(indent_token):
+            # Ignore percentages by setting refer_to to 0.
+            result = resolve_math(indent_token, box.style, 'text_indent', refer_to=0)
+            value = validate_non_shorthand((result,), 'text-indent')[0][1]
+            if value and value.unit != '%':
+                text_indent = value.value
+        elif indent_token.unit != '%':
             text_indent = box.style['text_indent'].value
 
     # Yield widths for each line.
