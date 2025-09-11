@@ -244,7 +244,7 @@ def text_decoration(key, value, parent_value, cascaded):
 
 
 def find_stylesheets(wrapper_element, device_media_type, url_fetcher, base_url,
-                     font_config, counter_style, page_rules):
+                     font_config, counter_style, page_rules, layers):
     """Yield the stylesheets in ``element_tree``.
 
     The output order is the same as the source order.
@@ -272,7 +272,7 @@ def find_stylesheets(wrapper_element, device_media_type, url_fetcher, base_url,
                 string=content, base_url=base_url,
                 url_fetcher=url_fetcher, media_type=device_media_type,
                 font_config=font_config, counter_style=counter_style,
-                page_rules=page_rules)
+                page_rules=page_rules, layers=layers)
             yield css
         elif element.tag == 'link' and element.get('href'):
             if not element_has_link_type(element, 'stylesheet') or \
@@ -285,7 +285,7 @@ def find_stylesheets(wrapper_element, device_media_type, url_fetcher, base_url,
                         url=href, url_fetcher=url_fetcher,
                         _check_mime_type=True, media_type=device_media_type,
                         font_config=font_config, counter_style=counter_style,
-                        page_rules=page_rules)
+                        page_rules=page_rules, layers=layers)
                 except URLFetchingError as exception:
                     LOGGER.error('Failed to load stylesheet at %s: %s', href, exception)
                     LOGGER.debug('Error while loading stylesheet:', exc_info=exception)
@@ -895,7 +895,7 @@ def parse_page_selectors(rule):
 
 
 def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fetcher,
-                          matcher, page_rules, font_config, counter_style,
+                          matcher, page_rules, layers, font_config, counter_style,
                           ignore_imports=False):
     """Do what can be done early on stylesheet, before being in a document."""
     for rule in stylesheet_rules:
@@ -985,7 +985,7 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fet
                     CSS(
                         url=url, url_fetcher=url_fetcher, media_type=device_media_type,
                         font_config=font_config, counter_style=counter_style,
-                        matcher=matcher, page_rules=page_rules)
+                        matcher=matcher, page_rules=page_rules, layers=layers)
                 except URLFetchingError as exception:
                     LOGGER.error('Failed to load stylesheet at %s : %s', url, exception)
                     LOGGER.debug('Error while loading stylesheet:', exc_info=exception)
@@ -1005,7 +1005,7 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fet
             content_rules = tinycss2.parse_rule_list(rule.content)
             preprocess_stylesheet(
                 device_media_type, base_url, content_rules, url_fetcher, matcher,
-                page_rules, font_config, counter_style, ignore_imports=True)
+                page_rules, layers, font_config, counter_style, ignore_imports=True)
 
         elif rule.type == 'at-rule' and rule.lower_at_keyword == 'page':
             data = parse_page_selectors(rule)
@@ -1124,7 +1124,7 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fet
 
 def get_all_computed_styles(html, user_stylesheets=None, presentational_hints=False,
                             font_config=None, counter_style=None, page_rules=None,
-                            target_collector=None, forms=False):
+                            layers=None, target_collector=None, forms=False):
     """Compute all the computed styles of all elements in ``html`` document.
 
     Do everything from finding author stylesheets to parsing and applying them.
@@ -1149,7 +1149,7 @@ def get_all_computed_styles(html, user_stylesheets=None, presentational_hints=Fa
             sheets.append((sheet, 'author', (0, 0, 0)))
     for sheet in find_stylesheets(
             html.wrapper_element, html.media_type, html.url_fetcher,
-            html.base_url, font_config, counter_style, page_rules):
+            html.base_url, font_config, counter_style, page_rules, layers):
         sheets.append((sheet, 'author', None))
     for sheet in (user_stylesheets or []):
         sheets.append((sheet, 'user', None))

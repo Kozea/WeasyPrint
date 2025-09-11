@@ -207,6 +207,7 @@ class Document:
     def _build_layout_context(cls, html, font_config, counter_style, options):
         target_collector = TargetCollector()
         page_rules = []
+        layers = []
         user_stylesheets = []
         cache = options['cache']
         if cache is None:
@@ -221,7 +222,7 @@ class Document:
             user_stylesheets.append(css)
         style_for = get_all_computed_styles(
             html, user_stylesheets, options['presentational_hints'],
-            font_config, counter_style, page_rules, target_collector,
+            font_config, counter_style, page_rules, layers, target_collector,
             options['pdf_forms'])
         get_image_from_uri = functools.partial(
             original_get_image_from_uri, cache=cache,

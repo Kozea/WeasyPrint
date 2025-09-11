@@ -288,7 +288,7 @@ class CSS:
                  string=None, encoding=None, base_url=None,
                  url_fetcher=default_url_fetcher, _check_mime_type=False,
                  media_type='print', font_config=None, counter_style=None,
-                 matcher=None, page_rules=None):
+                 matcher=None, page_rules=None, layers=None):
         PROGRESS_LOGGER.info(
             'Step 2 - Fetching and parsing CSS - %s',
             filename or url or getattr(file_obj, 'name', 'CSS string'))
@@ -309,10 +309,11 @@ class CSS:
         self.base_url = base_url
         self.matcher = matcher or cssselect2.Matcher()
         self.page_rules = [] if page_rules is None else page_rules
+        self.layers = [] if layers is None else layers
         counter_style = {} if counter_style is None else counter_style
         preprocess_stylesheet(
             media_type, base_url, stylesheet, url_fetcher, self.matcher,
-            self.page_rules, font_config, counter_style)
+            self.page_rules, self.layers, font_config, counter_style)
 
 
 class Attachment:
