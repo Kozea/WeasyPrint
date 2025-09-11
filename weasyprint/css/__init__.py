@@ -634,8 +634,10 @@ def _resolve_calc_sum(computed, tokens, property_name, refer_to):
             groups.append([])
         elif token.type == '() block':
             content = remove_whitespace(token.content)
-            groups[-1].append(_resolve_calc_sum(
-                computed, content, property_name, refer_to))
+            result = _resolve_calc_sum(computed, content, property_name, refer_to)
+            if result is None:
+                return
+            groups[-1].append(result)
         else:
             groups[-1].append(token)
 
