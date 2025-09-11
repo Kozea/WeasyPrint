@@ -15,6 +15,7 @@ on other functions in this module.
 from collections import namedtuple
 from itertools import groupby
 from logging import DEBUG, WARNING
+from math import inf
 
 import cssselect2
 import tinycss2
@@ -29,7 +30,7 @@ from . import counters, media_queries
 from .computed_values import COMPUTER_FUNCTIONS
 from .functions import Function, check_var
 from .properties import INHERITED, INITIAL_NOT_COMPUTED, INITIAL_VALUES, ZERO_PIXELS
-from .tokens import InvalidValues, Pending, get_url, remove_whitespace
+from .tokens import InvalidValues, Pending, get_url, remove_whitespace, split_on_comma
 from .validation import preprocess_declarations
 from .validation.descriptors import preprocess_descriptors
 
@@ -68,6 +69,7 @@ class StyleFor:
         self.font_config = font_config
 
         PROGRESS_LOGGER.info('Step 3 - Applying CSS')
+        layer_order = inf
         for specificity, attributes in find_style_attributes(
                 html.etree_element, presentational_hints, html.base_url):
             element, declarations, base_url = attributes
@@ -75,7 +77,7 @@ class StyleFor:
             for name, values, importance in preprocess_declarations(
                     base_url, declarations):
                 precedence = declaration_precedence('author', importance)
-                weight = (precedence, specificity)
+                weight = (precedence, layer_order, specificity)
                 old_weight = style.get(name, (None, None))[1]
                 if old_weight is None or old_weight <= weight:
                     style[name] = values, weight
@@ -89,13 +91,14 @@ class StyleFor:
             for sheet, origin, sheet_specificity in sheets:
                 # Add declarations for matched elements
                 for selector in sheet.matcher.match(element):
-                    specificity, order, pseudo_type, declarations = selector
+                    specificity, order, pseudo_type, (declarations, layer) = selector
+                    layer_order = inf if layer is None else sheet.layers.index(layer)
                     specificity = sheet_specificity or specificity
                     style = cascaded_styles.setdefault(
                         (element.etree_element, pseudo_type), {})
                     for name, values, importance in declarations:
                         precedence = declaration_precedence(origin, importance)
-                        weight = (precedence, specificity)
+                        weight = (precedence, layer_order, specificity)
                         old_weight = style.get(name, (None, None))[1]
                         if old_weight is None or old_weight <= weight:
                             style[name] = values, weight
@@ -166,6 +169,8 @@ class StyleFor:
             target_collector.collect_anchor(computed['anchor'])
 
     def add_page_declarations(self, page_type):
+        # TODO: use real layer order.
+        layer_order = None
         for sheet, origin, sheet_specificity in self._sheets:
             for _rule, selector_list, declarations in sheet.page_rules:
                 for selector in selector_list:
@@ -176,7 +181,7 @@ class StyleFor:
                             (page_type, pseudo_type), {})
                         for name, values, importance in declarations:
                             precedence = declaration_precedence(origin, importance)
-                            weight = (precedence, specificity)
+                            weight = (precedence, layer_order, specificity)
                             old_weight = style.get(name, (None, None))[1]
                             if old_weight is None or old_weight <= weight:
                                 style[name] = values, weight
@@ -896,7 +901,7 @@ def parse_page_selectors(rule):
 
 def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fetcher,
                           matcher, page_rules, layers, font_config, counter_style,
-                          ignore_imports=False):
+                          ignore_imports=False, layer=None):
     """Do what can be done early on stylesheet, before being in a document."""
     for rule in stylesheet_rules:
         if getattr(rule, 'content', None) is None:
@@ -906,7 +911,7 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fet
                     rule.source_line, rule.source_column, rule.message)
             if rule.type != 'at-rule':
                 continue
-            if rule.lower_at_keyword != 'import':
+            if rule.lower_at_keyword not in ('import', 'layer'):
                 LOGGER.warning(
                     "Unknown empty rule %s at %d:%d",
                     rule, rule.source_line, rule.source_column)
@@ -926,7 +931,7 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fet
                         declarations = [
                             declaration[1] for declaration in declarations]
                         for selector in selectors:
-                            matcher.add_selector(selector, declarations)
+                            matcher.add_selector(selector, (declarations, layer))
                             if selector.pseudo_element not in PSEUDO_ELEMENTS:
                                 prelude = tinycss2.serialize(rule.prelude)
                                 if selector.pseudo_element.startswith('-'):
@@ -999,7 +1004,6 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fet
                     tinycss2.serialize(rule.prelude),
                     rule.source_line, rule.source_column)
                 continue
-            ignore_imports = True
             if not media_queries.evaluate_media_query(media, device_media_type):
                 continue
             content_rules = tinycss2.parse_rule_list(rule.content)
@@ -1115,6 +1119,56 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fet
                         continue
 
             counter_style[name] = counter
+
+        elif rule.type == 'at-rule' and rule.lower_at_keyword == 'layer':
+            tokens = [
+                remove_whitespace(tokens) for tokens in split_on_comma(rule.prelude)]
+            if not tokens:
+                LOGGER.warning(
+                    'Unsupported @layer selector %r, '
+                    'the whole @layer rule was ignored at %d:%d.',
+                    tinycss2.serialize(rule.prelude),
+                    rule.source_line, rule.source_column)
+                continue
+            elif len(tokens) > 1:
+                if rule.content:
+                    LOGGER.warning(
+                        '@layer rule with multiple layer names, '
+                        'the whole @layer rule was ignored at %d:%d.',
+                        rule.source_line, rule.source_column)
+                    continue
+                extra_layers = []
+                for tokens in tokens:
+                    if len(tokens) != 1 or tokens[0].type != 'ident':
+                        LOGGER.warning(
+                            'Unsupported layer name %r, '
+                            'the whole @layer rule was ignored at %d:%d.',
+                            tinycss2.serialize(rule.prelude),
+                            rule.source_line, rule.source_column)
+                        break
+                    extra_layers.append(tokens[0].value)
+                else:
+                    layers.extend(extra_layers)
+                continue
+
+            tokens, = tokens
+            if len(tokens) != 1 or tokens[0].type != 'ident':
+                LOGGER.warning(
+                    'Unsupported layer name %r, '
+                    'the whole @layer rule was ignored at %d:%d.',
+                    tinycss2.serialize(rule.prelude),
+                    rule.source_line, rule.source_column)
+            layer = tokens[0].value
+            if layer is not None and layer not in layers:
+                layers.append(layer)
+
+            if rule.content is None:
+                continue
+            content_rules = tinycss2.parse_rule_list(rule.content)
+            preprocess_stylesheet(
+                device_media_type, base_url, content_rules, url_fetcher, matcher,
+                page_rules, layers, font_config, counter_style, ignore_imports=True,
+                layer=layer)
 
         else:
             LOGGER.warning(
