@@ -782,6 +782,26 @@ class ComputedStyle(dict):
         return value
 
 
+def _add_layer(layer, layers):
+    """Add layer to list of layers, handling order."""
+    index = None
+    parts = layer.split('.')
+    full_layer = ''
+    for part in parts:
+        if full_layer:
+            full_layer += '.'
+        full_layer += part
+        if full_layer in layers:
+            index = layers.index(full_layer)
+            continue
+        if index is None:
+            layers.append(full_layer)
+            index = len(layers) - 1
+        else:
+            layers.insert(index, full_layer)
+            index -= 1
+
+
 def parse_page_selectors(rule):
     """Parse a page selector rule.
 
@@ -1121,46 +1141,43 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fet
             counter_style[name] = counter
 
         elif rule.type == 'at-rule' and rule.lower_at_keyword == 'layer':
-            tokens = [
-                remove_whitespace(tokens) for tokens in split_on_comma(rule.prelude)]
-            if not tokens:
+            new_layers = []
+            for tokens in split_on_comma(rule.prelude):
+                tokens = remove_whitespace(tokens)
+                new_layer = f'{layer}.' if layer else ''
+                for token in tokens:
+                    if token.type == 'ident':
+                        new_layer += token.value
+                    elif token.type == 'literal' and token.value == '.':
+                        new_layer += '.'
+                    else:
+                        break
+                else:
+                    if new_layer != '' and not new_layer.endswith('.'):
+                        new_layers.append(new_layer)
+                        continue
+                new_layers = []
+                break
+            if not new_layers:
                 LOGGER.warning(
                     'Unsupported @layer selector %r, '
                     'the whole @layer rule was ignored at %d:%d.',
                     tinycss2.serialize(rule.prelude),
                     rule.source_line, rule.source_column)
                 continue
-            elif len(tokens) > 1:
+            elif len(new_layers) > 1:
                 if rule.content:
                     LOGGER.warning(
                         '@layer rule with multiple layer names, '
                         'the whole @layer rule was ignored at %d:%d.',
                         rule.source_line, rule.source_column)
                     continue
-                extra_layers = []
-                for tokens in tokens:
-                    if len(tokens) != 1 or tokens[0].type != 'ident':
-                        LOGGER.warning(
-                            'Unsupported layer name %r, '
-                            'the whole @layer rule was ignored at %d:%d.',
-                            tinycss2.serialize(rule.prelude),
-                            rule.source_line, rule.source_column)
-                        break
-                    extra_layers.append(tokens[0].value)
-                else:
-                    layers.extend(extra_layers)
+                for new_layer in layers:
+                    _add_layer(new_layer, layers)
                 continue
 
-            tokens, = tokens
-            if len(tokens) != 1 or tokens[0].type != 'ident':
-                LOGGER.warning(
-                    'Unsupported layer name %r, '
-                    'the whole @layer rule was ignored at %d:%d.',
-                    tinycss2.serialize(rule.prelude),
-                    rule.source_line, rule.source_column)
-            layer = tokens[0].value
-            if layer is not None and layer not in layers:
-                layers.append(layer)
+            new_layer, = new_layers
+            _add_layer(new_layer, layers)
 
             if rule.content is None:
                 continue
@@ -1168,7 +1185,7 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fet
             preprocess_stylesheet(
                 device_media_type, base_url, content_rules, url_fetcher, matcher,
                 page_rules, layers, font_config, counter_style, ignore_imports=True,
-                layer=layer)
+                layer=new_layer)
 
         else:
             LOGGER.warning(
