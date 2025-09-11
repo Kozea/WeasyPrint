@@ -995,7 +995,33 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fet
                         url = url_tuple[1][1]
             if url is None:
                 continue
-            media = media_queries.parse_media_query(tokens[1:])
+
+            new_layer = layer
+            next_tokens = list(tokens[1:])
+            if next_tokens:
+                if next_tokens[0].type == 'function' and next_tokens[0].name == 'layer':
+                    function = next_tokens.pop(0)
+                    arguments = remove_whitespace(function.arguments)
+                    if len(arguments) == 1 and arguments[0].type == 'ident':
+                        new_layer = arguments[0].value
+                        if layer is not None:
+                            new_layer = f'{layer}.{new_layer}'
+                        _add_layer(new_layer, layers)
+                    else:
+                        LOGGER.warning(
+                            'Invalid layer name %r '
+                            'the whole @import rule was ignored at %d:%d.',
+                            tinycss2.serialize(function),
+                            rule.source_line, rule.source_column)
+                        continue
+                elif next_tokens[0].type == 'ident' and next_tokens[0].value == 'layer':
+                    next_tokens.pop(0)
+                    new_layer = f'@anonymous{len(layers)}'
+                    if layer is not None:
+                        new_layer = f'{layer}.{new_layer}'
+                    _add_layer(new_layer, layers)
+
+            media = media_queries.parse_media_query(next_tokens)
             if media is None:
                 LOGGER.warning(
                     'Invalid media type %r '
@@ -1010,7 +1036,8 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fet
                     CSS(
                         url=url, url_fetcher=url_fetcher, media_type=device_media_type,
                         font_config=font_config, counter_style=counter_style,
-                        matcher=matcher, page_rules=page_rules, layers=layers)
+                        matcher=matcher, page_rules=page_rules, layers=layers,
+                        layer=new_layer)
                 except URLFetchingError as exception:
                     LOGGER.error('Failed to load stylesheet at %s : %s', url, exception)
                     LOGGER.debug('Error while loading stylesheet:', exc_info=exception)
@@ -1142,8 +1169,9 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fet
 
         elif rule.type == 'at-rule' and rule.lower_at_keyword == 'layer':
             new_layers = []
-            for tokens in split_on_comma(rule.prelude):
-                tokens = remove_whitespace(tokens)
+            prelude = remove_whitespace(rule.prelude)
+            comma_separated_tokens = split_on_comma(prelude) if prelude else ()
+            for tokens in comma_separated_tokens:
                 new_layer = f'{layer}.' if layer else ''
                 for token in tokens:
                     if token.type == 'ident':
@@ -1153,12 +1181,12 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fet
                     else:
                         break
                 else:
-                    if new_layer != '' and not new_layer.endswith('.'):
+                    if not new_layer.endswith('.'):
                         new_layers.append(new_layer)
                         continue
-                new_layers = []
+                new_layers = None
                 break
-            if not new_layers:
+            if new_layers is None:
                 LOGGER.warning(
                     'Unsupported @layer selector %r, '
                     'the whole @layer rule was ignored at %d:%d.',
@@ -1172,11 +1200,16 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fet
                         'the whole @layer rule was ignored at %d:%d.',
                         rule.source_line, rule.source_column)
                     continue
-                for new_layer in layers:
+                for new_layer in new_layers:
                     _add_layer(new_layer, layers)
                 continue
 
-            new_layer, = new_layers
+            if new_layers:
+                new_layer, = new_layers
+            else:
+                new_layer = f'@anonymous{len(layers)}'
+                if layer is not None:
+                    new_layer = f'{layer}.{new_layer}'
             _add_layer(new_layer, layers)
 
             if rule.content is None:
