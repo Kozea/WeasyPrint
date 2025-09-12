@@ -20,6 +20,7 @@ NOT_PRINT_MEDIA = (
     'font-display',
 )
 
+
 class NoneFakeToken:
     type = 'ident'
     lower_value = 'none'

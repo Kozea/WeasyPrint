@@ -813,6 +813,7 @@ def test_grid_template(rule, result):
     assert expand_to_dict(f'grid-template: {rule}') == dict(
         (f'grid_template_{key}', value) for key, value in result.items())
 
+
 @assert_no_logs
 @pytest.mark.parametrize('rule', (
     'none none',

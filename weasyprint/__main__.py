@@ -16,16 +16,18 @@ from .urls import default_url_fetcher
 
 class PrintInfo(argparse.Action):
     def __call__(*_, **__):
+        # TODO: ignore check at block-level when available.
+        # https://github.com/astral-sh/ruff/issues/3711
         uname = platform.uname()
-        print('System:', uname.system)
-        print('Machine:', uname.machine)
-        print('Version:', uname.version)
-        print('Release:', uname.release)
-        print()
-        print('WeasyPrint version:', __version__)
-        print('Python version:', sys.version.split()[0])
-        print('Pydyf version:', pydyf.__version__)
-        print('Pango version:', pango.pango_version())
+        print('System:', uname.system)  # noqa: T201
+        print('Machine:', uname.machine)  # noqa: T201
+        print('Version:', uname.version)  # noqa: T201
+        print('Release:', uname.release)  # noqa: T201
+        print()  # noqa: T201
+        print('WeasyPrint version:', __version__)  # noqa: T201
+        print('Python version:', sys.version.split()[0])  # noqa: T201
+        print('Pydyf version:', pydyf.__version__)  # noqa: T201
+        print('Pango version:', pango.pango_version())  # noqa: T201
         sys.exit()
 
 

@@ -452,7 +452,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
                 if not child.frozen:
                     min_size = getattr(child, f'min_{main}')
                     max_size = getattr(child, f'max_{main}')
-                    min_size = max(min_size , min(child.target_main_size, max_size))
+                    min_size = max(min_size, min(child.target_main_size, max_size))
                     if child.target_main_size < min_size:
                         child.adjustment = min_size - child.target_main_size
                         child.target_main_size = min_size

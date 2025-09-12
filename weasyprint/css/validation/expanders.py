@@ -9,9 +9,9 @@ from ..functions import check_var
 from ..properties import INITIAL_VALUES
 from .descriptors import expand_font_variant
 
-from ..tokens import ( # isort:skip
+from ..tokens import (  # isort:skip
     InvalidValues, Pending, get_keyword, get_single_keyword, split_on_comma)
-from .properties import ( # isort:skip
+from .properties import (  # isort:skip
     background_attachment, background_image, background_position, background_repeat,
     background_size, block_ellipsis, border_image_source, border_image_slice,
     border_image_width, border_image_outset, border_image_repeat, border_style,

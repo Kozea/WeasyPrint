@@ -276,7 +276,6 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map):
             forms[form][input_name] = field
 
 
-
 def add_annotations(links, matrix, document, pdf, page, annot_files, compress):
     """Include annotations in PDF."""
     # TODO: splitting a link into multiple independent rectangular

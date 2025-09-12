@@ -1378,7 +1378,6 @@ def test_tables_24_rtl(assert_pixels):
     ''')
 
 
-
 @assert_no_logs
 def test_running_elements_table_border_collapse(assert_pixels):
     assert_pixels(2 * '''

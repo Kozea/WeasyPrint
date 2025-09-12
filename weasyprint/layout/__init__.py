@@ -237,8 +237,8 @@ class LayoutContext:
         self.current_footnote_area = None  # Not initialized yet
         self.excluded_shapes = None  # Not initialized yet
         self.page_bottom = None
-        self.string_set = defaultdict(lambda: defaultdict(lambda: []))
-        self.running_elements = defaultdict(lambda: defaultdict(lambda: []))
+        self.string_set = defaultdict(lambda: defaultdict(list))
+        self.running_elements = defaultdict(lambda: defaultdict(list))
         self.current_page = None
         self.forced_break = False
         self.broken_out_of_flow = {}

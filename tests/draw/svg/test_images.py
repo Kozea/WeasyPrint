@@ -282,6 +282,7 @@ def test_image_image(assert_pixels):
       </svg>
     ''' % path2url(resource_path('pattern.png')))
 
+
 @assert_no_logs
 def test_image_image_rendering(assert_pixels):
     assert_pixels('''
@@ -303,6 +304,7 @@ def test_image_image_rendering(assert_pixels):
             style="image-rendering:pixelated"/>
       </svg>
     ''' % path2url(resource_path('pattern.png')))
+
 
 def test_image_image_wrong(assert_pixels):
     assert_pixels('''

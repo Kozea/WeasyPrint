@@ -739,7 +739,7 @@ def test_flex_percent_height_auto():
 @assert_no_logs
 def test_flex_break_inside_avoid():
     # Regression test for issue #2183.
-    page1, page2= render_pages('''
+    page1, page2 = render_pages('''
       <style>
         @page { size: 6px 4px }
         html { font-family: weasyprint; font-size: 2px }
