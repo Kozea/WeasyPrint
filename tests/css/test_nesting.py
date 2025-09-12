@@ -6,7 +6,7 @@ from ..testing_utils import assert_no_logs, render_pages
 
 
 @assert_no_logs
-@pytest.mark.parametrize('style', (
+@pytest.mark.parametrize('style', [
     'div { p { width: 10px } }',
     'p { div & { width: 10px } }',
     'p { width: 20px; div & { width: 10px } }',
@@ -15,7 +15,7 @@ from ..testing_utils import assert_no_logs, render_pages
     '@media print { div { p { width: 10px } } }',
     'div { em, p { width: 10px } }',
     'p { a, div & { width: 10px } }',
-))
+])
 def test_nesting_block(style):
     page, = render_pages('''
       <style>%s</style>

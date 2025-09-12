@@ -4,6 +4,7 @@ import io
 from itertools import zip_longest
 from pathlib import Path
 
+import pytest
 from PIL import Image
 
 from ..testing_utils import FakeHTML, resource_path
@@ -85,7 +86,7 @@ def assert_different_renderings(name, *documents):
             if tuple(pixels_1) == tuple(pixels_2):  # pragma: no cover
                 name_1, name_2 = f'{name}_{i}', f'{name}_{j}'
                 write_png(name_1, pixels_1, width, height)
-                assert False, f'{name_1} and {name_2} are the same'
+                pytest.fail(f'{name_1} and {name_2} are the same')
 
 
 def assert_pixels_equal(name, width, height, raw, expected_raw, tolerance=0):
@@ -104,7 +105,7 @@ def assert_pixels_equal(name, width, height, raw, expected_raw, tolerance=0):
                 write_png(f'{name}.expected', expected_raw, width, height)
                 x = i % width
                 y = i // width
-                assert 0, (
+                pytest.fail(
                     f'Pixel ({x}, {y}) in {name}: '
                     f'expected rgba{expected}, got rgba{value}')
 

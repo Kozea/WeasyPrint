@@ -458,14 +458,14 @@ def test_text_align_justify_no_break_between_children():
     assert span_3.position_x == 5 * 16  # (3 + 1) characters + 1 space
 
 
-@pytest.mark.parametrize('text', (
+@pytest.mark.parametrize('text', [
     'Lorem ipsum dolor<em>sit amet</em>',
     'Lorem ipsum <em>dolorsit</em> amet',
     'Lorem ipsum <em></em>dolorsit amet',
     'Lorem ipsum<em> </em>dolorsit amet',
     'Lorem ipsum<em> dolorsit</em> amet',
     'Lorem ipsum <em>dolorsit </em>amet',
-))
+])
 @assert_no_logs
 def test_word_spacing(text):
     # Regression test.
@@ -539,14 +539,14 @@ def test_letter_spacing_1():
     assert line1.children[0].width == strong_2.width
 
 
-@pytest.mark.parametrize('spacing', ('word-spacing', 'letter-spacing'))
+@pytest.mark.parametrize('spacing', ['word-spacing', 'letter-spacing'])
 @assert_no_logs
 def test_spacing_ex(spacing):
     # Regression test.
     render_pages(f'<div style="{spacing}: 2ex">abc def')
 
 
-@pytest.mark.parametrize('indent', ('12px', '6%'))
+@pytest.mark.parametrize('indent', ['12px', '6%'])
 @assert_no_logs
 def test_text_indent(indent):
     page, = render_pages('''
@@ -585,7 +585,7 @@ def test_text_indent_inline():
     assert line.width == (4 + 1) * 16
 
 
-@pytest.mark.parametrize('indent', ('12px', '6%'))
+@pytest.mark.parametrize('indent', ['12px', '6%'])
 @assert_no_logs
 def test_text_indent_multipage(indent):
     # Regression test for #706.
@@ -850,7 +850,7 @@ def test_hyphen_nbsp():
 
 
 @assert_no_logs
-@pytest.mark.parametrize('css, result', (
+@pytest.mark.parametrize(('css', 'result'), [
     ('auto', 2),
     ('auto auto 0', 2),
     ('0 0 0', 2),
@@ -864,7 +864,7 @@ def test_hyphen_nbsp():
     ('2 4 6', 1),
     ('auto 4', 1),
     ('auto 2', 2),
-))
+])
 def test_hyphenate_limit_chars(css, result):
     page, = render_pages(
         '<html style="width: 1em; font-family: weasyprint">'
@@ -878,12 +878,12 @@ def test_hyphenate_limit_chars(css, result):
 
 
 @assert_no_logs
-@pytest.mark.parametrize('css', (
+@pytest.mark.parametrize('css', [
     # light·en
     '3 3 3',  # 'en' is shorter than 3
     '3 6 2',  # 'light' is shorter than 6
     '8',  # 'lighten' is shorter than 8
-))
+])
 def test_hyphenate_limit_chars_punctuation(css):
     # Regression test for #109.
     page, = render_pages(
@@ -898,7 +898,7 @@ def test_hyphenate_limit_chars_punctuation(css):
 
 
 @assert_no_logs
-@pytest.mark.parametrize('wrap, text, test, full_text', (
+@pytest.mark.parametrize(('wrap', 'text', 'test', 'full_text'), [
     ('anywhere', 'aaaaaaaa', lambda a: a > 1, 'aaaaaaaa'),
     ('break-word', 'aaaaaaaa', lambda a: a > 1, 'aaaaaaaa'),
     ('normal', 'aaaaaaaa', lambda a: a == 1, 'aaaaaaaa'),
@@ -906,7 +906,7 @@ def test_hyphenate_limit_chars_punctuation(css):
      'hy\u2010phen\u2010ations'),
     ('break-word', "A splitted word.  An hyphenated word.",
      lambda a: a > 8, "Asplittedword.Anhy\u2010phen\u2010atedword."),
-))
+])
 def test_overflow_wrap(wrap, text, test, full_text):
     page, = render_pages('''
       <style>
@@ -929,7 +929,7 @@ def test_overflow_wrap(wrap, text, test, full_text):
 
 
 @assert_no_logs
-@pytest.mark.parametrize('span_css, expected_lines', (
+@pytest.mark.parametrize(('span_css', 'expected_lines'), [
     # overflow-wrap: anywhere and break-word are only allowed to break a word
     # "if there are no otherwise-acceptable break points in the line", which
     # means they should not split a word if it fits cleanly into the next line.
@@ -940,7 +940,7 @@ def test_overflow_wrap(wrap, text, test, full_text):
     # On the other hand, word-break: break-all mandates a break anywhere at the
     # end of a line, even if the word could fit cleanly onto the next line.
     ('word-break: break-all', ['aaa b', 'bb']),
-))
+])
 def test_wrap_overflow_word_break(span_css, expected_lines):
     page, = render_pages('''
       <style>
@@ -963,12 +963,12 @@ def test_wrap_overflow_word_break(span_css, expected_lines):
 
 
 @assert_no_logs
-@pytest.mark.parametrize('wrap, text, body_width, expected_width', (
+@pytest.mark.parametrize(('wrap', 'text', 'body_width', 'expected_width'), [
     ('anywhere', 'aaaaaa', 10, 20),
     ('anywhere', 'aaaaaa', 40, 40),
     ('break-word', 'aaaaaa', 40, 120),
     ('normal', 'aaaaaa', 40, 120),
-))
+])
 def test_overflow_wrap_2(wrap, text, body_width, expected_width):
     page, = render_pages('''
       <style>
@@ -987,12 +987,12 @@ def test_overflow_wrap_2(wrap, text, body_width, expected_width):
 
 
 @assert_no_logs
-@pytest.mark.parametrize('wrap, text, body_width, expected_width', (
+@pytest.mark.parametrize(('wrap', 'text', 'body_width', 'expected_width'), [
     ('anywhere', 'aaaaaa', 10, 20),
     ('anywhere', 'aaaaaa', 40, 40),
     ('break-word', 'aaaaaa', 40, 120),
     ('normal', 'abcdef', 40, 120),
-))
+])
 def test_overflow_wrap_trailing_space(wrap, text, body_width, expected_width):
     page, = render_pages('''
       <style>
@@ -1223,13 +1223,13 @@ def test_white_space_12():
 
 
 @assert_no_logs
-@pytest.mark.parametrize('value, width', (
+@pytest.mark.parametrize(('value', 'width'), [
     (8, 144),  # (2 + (8 - 1)) * 16
     (4, 80),  # (2 + (4 - 1)) * 16
     ('3em', 64),  # (2 + (3 - 1)) * 16
     ('25px', 41),  # 2 * 16 + 25 - 1 * 16
     # (0, 32),  # See Layout.set_tabs
-))
+])
 def test_tab_size(value, width):
     page, = render_pages('''
       <style>
@@ -1278,7 +1278,7 @@ def test_text_transform():
 
 @assert_no_logs
 @pytest.mark.parametrize(
-    'original, transformed', (
+    ('original', 'transformed'), [
         ('abc def ghi', 'Abc Def Ghi'),
         ('AbC def ghi', 'AbC Def Ghi'),
         ('I’m SO cool', 'I’m SO Cool'),
@@ -1290,7 +1290,7 @@ def test_text_transform():
         ('one/two/three', 'One/two/three'),
         ('supernatural,super', 'Supernatural,super'),
         ('éternel αιώνια', 'Éternel Αιώνια'),
-    )
+    ]
 )
 def test_text_transform_capitalize(original, transformed):
     # Results are different for different browsers, we almost get the same
@@ -1309,12 +1309,12 @@ def test_text_floating_pre_line():
 
 @assert_no_logs
 @pytest.mark.parametrize(
-    'leader, content', (
+    ('leader', 'content'), [
         ('dotted', '.'),
         ('solid', '_'),
         ('space', ' '),
         ('" .-"', ' .-'),
-    )
+    ]
 )
 def test_leader_content(leader, content):
     page, = render_pages('''

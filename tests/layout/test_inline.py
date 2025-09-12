@@ -686,14 +686,14 @@ def test_font_stretch():
 
 
 @assert_no_logs
-@pytest.mark.parametrize('source, lines_count', (
+@pytest.mark.parametrize(('source', 'lines_count'), [
     ('<body>hyphénation', 1),  # Default: no hyphenation
     ('<body lang=fr>hyphénation', 1),  # lang only: no hyphenation
     ('<body style="hyphens: auto">hyphénation', 1),  # hyphens only: no hyph.
     ('<body style="hyphens: auto" lang=fr>hyphénation', 4),  # both: hyph.
     ('<body>hyp&shy;hénation', 2),  # Hyphenation with soft hyphens
     ('<body style="hyphens: none">hyp&shy;hénation', 1),  # … unless disabled
-))
+])
 def test_line_count(source, lines_count):
     page, = render_pages('<html style="width: 5em; font-family: weasyprint">' + source)
     html, = page.children

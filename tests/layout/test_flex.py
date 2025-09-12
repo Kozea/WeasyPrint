@@ -629,13 +629,13 @@ def test_flex_no_baseline():
 
 
 @assert_no_logs
-@pytest.mark.parametrize('align, height, y1, y2', (
+@pytest.mark.parametrize(('align', 'height', 'y1', 'y2'), [
     ('flex-start', 50, 0, 10),
     ('flex-end', 50, 30, 40),
     ('space-around', 60, 10, 40),
     ('space-between', 50, 0, 40),
     ('space-evenly', 50, 10, 30),
-))
+])
 def test_flex_align_content(align, height, y1, y2):
     # Regression test for issue #811.
     page, = render_pages('''
@@ -966,7 +966,7 @@ def test_flex_item_overflow():
 
 
 @assert_no_logs
-@pytest.mark.parametrize('direction', ('row', 'column'))
+@pytest.mark.parametrize('direction', ['row', 'column'])
 def test_flex_item_child_bottom_margin(direction):
     # Regression test for issue #2449.
     page, = render_pages('''
@@ -1179,7 +1179,7 @@ def test_flex_item_auto_margin_flex_basis():
 
 
 @assert_no_logs
-@pytest.mark.parametrize('align, x1, x2, x3', (
+@pytest.mark.parametrize(('align', 'x1', 'x2', 'x3'), [
     ('start', 0, 2, 4),
     ('flex-start', 0, 2, 4),
     ('left', 0, 2, 4),
@@ -1190,7 +1190,7 @@ def test_flex_item_auto_margin_flex_basis():
     ('space-between', 0, 5, 10),
     ('space-around', 1, 5, 9),
     ('space-evenly', 1.5, 5, 8.5),
-))
+])
 def test_flex_direction_row_justify(align, x1, x2, x3):
     page, = render_pages(f'''
       <article style="width: 12px; font: 2px weasyprint;
@@ -1215,7 +1215,7 @@ def test_flex_direction_row_justify(align, x1, x2, x3):
 
 
 @assert_no_logs
-@pytest.mark.parametrize('align, y1, y2, y3', (
+@pytest.mark.parametrize(('align', 'y1', 'y2', 'y3'), [
     ('start', 0, 2, 4),
     ('flex-start', 0, 2, 4),
     ('left', 0, 2, 4),
@@ -1226,7 +1226,7 @@ def test_flex_direction_row_justify(align, x1, x2, x3):
     ('space-between', 0, 5, 10),
     ('space-around', 1, 5, 9),
     ('space-evenly', 1.5, 5, 8.5),
-))
+])
 def test_flex_direction_column_justify(align, y1, y2, y3):
     page, = render_pages(f'''
       <article style="height: 12px; font: 2px weasyprint;
@@ -1251,7 +1251,7 @@ def test_flex_direction_column_justify(align, y1, y2, y3):
 
 
 @assert_no_logs
-@pytest.mark.parametrize('align, x1, x2, x3', (
+@pytest.mark.parametrize(('align', 'x1', 'x2', 'x3'), [
     ('start', 0, 4, 8),
     ('flex-start', 0, 4, 8),
     ('left', 0, 4, 8),
@@ -1262,7 +1262,7 @@ def test_flex_direction_column_justify(align, y1, y2, y3):
     ('space-between', 0, 7, 14),
     ('space-around', 1, 7, 13),
     ('space-evenly', 1.5, 7, 12.5),
-))
+])
 def test_flex_direction_row_justify_gap(align, x1, x2, x3):
     page, = render_pages(f'''
       <article style="width: 16px; font: 2px weasyprint; gap: 2px;
@@ -1287,7 +1287,7 @@ def test_flex_direction_row_justify_gap(align, x1, x2, x3):
 
 
 @assert_no_logs
-@pytest.mark.parametrize('align, y1, y2, y3', (
+@pytest.mark.parametrize(('align', 'y1', 'y2', 'y3'), [
     ('start', 0, 4, 8),
     ('flex-start', 0, 4, 8),
     ('left', 0, 4, 8),
@@ -1298,7 +1298,7 @@ def test_flex_direction_row_justify_gap(align, x1, x2, x3):
     ('space-between', 0, 7, 14),
     ('space-around', 1, 7, 13),
     ('space-evenly', 1.5, 7, 12.5),
-))
+])
 def test_flex_direction_column_justify_gap(align, y1, y2, y3):
     page, = render_pages(f'''
       <article style="height: 16px; font: 2px weasyprint; gap: 2px;
@@ -1323,7 +1323,7 @@ def test_flex_direction_column_justify_gap(align, y1, y2, y3):
 
 
 @assert_no_logs
-@pytest.mark.parametrize('align, x1, x2, x3', (
+@pytest.mark.parametrize(('align', 'x1', 'x2', 'x3'), [
     ('start', 0, 4, 0),
     ('flex-start', 0, 4, 0),
     ('left', 0, 4, 0),
@@ -1334,7 +1334,7 @@ def test_flex_direction_column_justify_gap(align, y1, y2, y3):
     ('space-between', 0, 7, 0),
     ('space-around', 0.75, 6.25, 3.5),
     ('space-evenly', 1, 6, 3.5),
-))
+])
 def test_flex_direction_row_justify_gap_wrap(align, x1, x2, x3):
     page, = render_pages(f'''
       <article style="width: 9px; font: 2px weasyprint; gap: 1px 2px;
@@ -1360,7 +1360,7 @@ def test_flex_direction_row_justify_gap_wrap(align, x1, x2, x3):
 
 
 @assert_no_logs
-@pytest.mark.parametrize('align, y1, y2, y3', (
+@pytest.mark.parametrize(('align', 'y1', 'y2', 'y3'), [
     ('start', 0, 4, 0),
     ('flex-start', 0, 4, 0),
     ('left', 0, 4, 0),
@@ -1371,7 +1371,7 @@ def test_flex_direction_row_justify_gap_wrap(align, x1, x2, x3):
     ('space-between', 0, 7, 0),
     ('space-around', 0.75, 6.25, 3.5),
     ('space-evenly', 1, 6, 3.5),
-))
+])
 def test_flex_direction_column_justify_gap_wrap(align, y1, y2, y3):
     page, = render_pages(f'''
       <article style="height: 9px; width: 9px; font: 2px weasyprint; gap: 2px 1px;
@@ -1448,7 +1448,7 @@ def test_flex_direction_row_stretch_grow():
 
 
 @assert_no_logs
-@pytest.mark.parametrize('align, x1, x2, x3', (
+@pytest.mark.parametrize(('align', 'x1', 'x2', 'x3'), [
     ('start', 0, 6, 12),
     ('flex-start', 0, 6, 12),
     ('left', 0, 6, 12),
@@ -1459,7 +1459,7 @@ def test_flex_direction_row_stretch_grow():
     ('space-between', 0, 9, 18),
     ('space-around', 1, 9, 17),
     ('space-evenly', 1.5, 9, 16.5),
-))
+])
 def test_flex_direction_row_justify_margin_padding(align, x1, x2, x3):
     page, = render_pages(f'''
       <article style="width: 20px; font: 2px weasyprint;
@@ -1488,7 +1488,7 @@ def test_flex_direction_row_justify_margin_padding(align, x1, x2, x3):
 
 
 @assert_no_logs
-@pytest.mark.parametrize('align, y1, y2, y3', (
+@pytest.mark.parametrize(('align', 'y1', 'y2', 'y3'), [
     ('start', 0, 6, 12),
     ('flex-start', 0, 6, 12),
     ('left', 0, 6, 12),
@@ -1499,7 +1499,7 @@ def test_flex_direction_row_justify_margin_padding(align, x1, x2, x3):
     ('space-between', 0, 9, 18),
     ('space-around', 1, 9, 17),
     ('space-evenly', 1.5, 9, 16.5),
-))
+])
 def test_flex_direction_column_justify_margin_padding(align, y1, y2, y3):
     page, = render_pages(f'''
       <article style="height: 20px; font: 2px weasyprint;

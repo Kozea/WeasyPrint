@@ -1606,10 +1606,10 @@ def test_layout_table_auto_52():
 
 @assert_no_logs
 @pytest.mark.parametrize(
-    'body_width, table_width, check_width, positions, widths', (
+    ('body_width', 'table_width', 'check_width', 'positions', 'widths'), [
         ('500px', '230px', 220, [170, 5], [45, 155]),
         ('530px', '100%', 520, [395, 5], [120, 380]),
-    )
+    ]
 )
 def test_explicit_width_table_percent_rtl(body_width, table_width, check_width,
                                           positions, widths):
@@ -2144,7 +2144,7 @@ def test_table_html_tag():
 
 
 @assert_no_logs
-@pytest.mark.parametrize('html, rows, positions', (
+@pytest.mark.parametrize(('html', 'rows', 'positions'), [
     ('''
       <style>
         @page { size: 120px }
@@ -2282,7 +2282,7 @@ def test_table_html_tag():
      ''',
      [0, 2],
      [0, 40]),
-))
+])
 def test_table_page_breaks(html, rows, positions):
     pages = render_pages(html)
     rows_per_page = []
@@ -2622,7 +2622,7 @@ def test_table_page_break_before():
 
 
 @assert_no_logs
-@pytest.mark.parametrize('html, rows', (
+@pytest.mark.parametrize(('html', 'rows'), [
     ('''
       <style>
         @page { size: 100px }
@@ -2821,7 +2821,7 @@ def test_table_page_break_before():
       </table>
      ''',
      [3, 3]),
-))
+])
 def test_table_page_break_avoid(html, rows):
     pages = render_pages(html)
     assert len(pages) == len(rows)
@@ -2913,11 +2913,11 @@ def test_table_page_break_avoid_before_tbody():
 
 
 @assert_no_logs
-@pytest.mark.parametrize('vertical_align, table_position_y', (
+@pytest.mark.parametrize(('vertical_align', 'table_position_y'), [
     ('top', 8),
     ('bottom', 8),
     ('baseline', 10),
-))
+])
 def test_inline_table_baseline(vertical_align, table_position_y):
     # Check that inline table's baseline is its first row's baseline.
     #
@@ -3012,7 +3012,7 @@ def test_table_caption_margin_bottom():
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rows_expected, thead, tfoot, content', (
+@pytest.mark.parametrize(('rows_expected', 'thead', 'tfoot', 'content'), [
     ([[], ['Header', 'Footer']], 45, 45, '<p>content</p>'),
     ([[], ['Header', 'Footer']], 85, 5, '<p>content</p>'),
     ([['Header', 'Footer']], 30, 30, '<p>content</p>'),
@@ -3030,7 +3030,7 @@ def test_table_caption_margin_bottom():
     ([['Header', 'Footer']], 30, 60, ''),
     ([['Footer']], 110, 30, ''),
     ([[]], 110, 110, ''),
-))
+])
 def test_table_empty_body(rows_expected, thead, tfoot, content):
     html = '''
       <style>

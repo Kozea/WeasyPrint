@@ -165,7 +165,7 @@ def test_important():
 
 
 @assert_no_logs
-@pytest.mark.parametrize('value, width', (
+@pytest.mark.parametrize(('value', 'width'), [
     ('96px', 96),
     ('1in', 96),
     ('72pt', 96),
@@ -179,7 +179,7 @@ def test_important():
     ('1.5ex', 12),
     ('1.1lh', 13.2),
     ('1.1rlh', 26.4),
-))
+])
 def test_units(value, width):
     document = FakeHTML(base_url=BASE_URL, string='''
       <html style="font: 16px / 1.5 weasyprint">
@@ -193,7 +193,7 @@ def test_units(value, width):
 
 
 @assert_no_logs
-@pytest.mark.parametrize('property', ('line-height', 'font-size'))
+@pytest.mark.parametrize('property', ['line-height', 'font-size'])
 def test_recursive_lh(property):
     document = FakeHTML(base_url=BASE_URL, string='''
       <html style="%s: 1lh">
@@ -205,11 +205,11 @@ def test_recursive_lh(property):
     document.render().pages
 
 
-@pytest.mark.parametrize('media, width, warning', (
+@pytest.mark.parametrize(('media', 'width', 'warning'), [
     ('@media screen { @page { size: 10px } }', 20, False),
     ('@media print { @page { size: 10px } }', 10, False),
     ('@media ("unknown content") { @page { size: 10px } }', 20, True),
-))
+])
 def test_media_queries(media, width, warning):
     document = FakeHTML(string='<p>a<span>b')
     with capture_logs() as logs:

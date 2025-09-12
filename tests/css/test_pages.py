@@ -76,7 +76,7 @@ def test_page():
 
 
 @assert_no_logs
-@pytest.mark.parametrize('style, selectors', (
+@pytest.mark.parametrize(('style', 'selectors'), [
     ('@page {}', [{
         'side': None, 'blank': None, 'first': None, 'name': None,
         'index': None, 'specificity': [0, 0, 0]}]),
@@ -129,7 +129,7 @@ def test_page():
     ('@page :wrong {}', None),
     ('@page :left:wrong {}', None),
     ('@page :left:right {}', None),
-))
+])
 def test_page_selectors(style, selectors):
     at_rule, = tinycss2.parse_stylesheet(style)
     assert parse_page_selectors(at_rule) == selectors

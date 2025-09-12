@@ -322,13 +322,13 @@ def test_variable_shorthand_border_mixed_invalid():
 
 
 @assert_no_logs
-@pytest.mark.parametrize('var, background', (
+@pytest.mark.parametrize(('var', 'background'), [
     ('blue', 'var(--v)'),
     ('padding-box url(pattern.png)', 'var(--v)'),
     ('padding-box url(pattern.png)', 'white var(--v) center'),
     ('100%', 'url(pattern.png) var(--v) var(--v) / var(--v) var(--v)'),
     ('left / 100%', 'url(pattern.png) top var(--v) 100%'),
-))
+])
 def test_variable_shorthand_background(var, background):
     page, = render_pages('''
       <style>
@@ -339,11 +339,11 @@ def test_variable_shorthand_background(var, background):
     ''' % (var, background))
 
 
-@pytest.mark.parametrize('var, background', (
+@pytest.mark.parametrize(('var', 'background'), [
     ('invalid', 'var(--v)'),
     ('blue', 'var(--v) var(--v)'),
     ('100%', 'url(pattern.png) var(--v) var(--v) var(--v)'),
-))
+])
 def test_variable_shorthand_background_invalid(var, background):
     with capture_logs() as logs:
         page, = render_pages('''
@@ -436,13 +436,13 @@ def test_variable_list_content():
 
 
 @assert_no_logs
-@pytest.mark.parametrize('var, display', (
+@pytest.mark.parametrize(('var', 'display'), [
     ('inline', 'var(--var)'),
     ('inline-block', 'var(--var)'),
     ('inline flow', 'var(--var)'),
     ('inline', 'var(--var) flow'),
     ('flow', 'inline var(--var)'),
-))
+])
 def test_variable_list_display(var, display):
     page, = render_pages('''
       <style>
@@ -459,13 +459,13 @@ def test_variable_list_display(var, display):
 
 
 @assert_no_logs
-@pytest.mark.parametrize('var, font', (
+@pytest.mark.parametrize(('var', 'font'), [
     ('weasyprint', 'var(--var)'),
     ('"weasyprint"', 'var(--var)'),
     ('weasyprint', 'var(--var), monospace'),
     ('weasyprint, monospace', 'var(--var)'),
     ('monospace', 'weasyprint, var(--var)'),
-))
+])
 def test_variable_list_font(var, font):
     page, = render_pages('''
       <style>

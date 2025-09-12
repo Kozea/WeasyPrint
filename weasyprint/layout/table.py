@@ -542,7 +542,8 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                 # We could not fit any content, drop the footer.
                 footer = None
 
-        assert not (header or footer)
+        assert not header
+        assert not footer
         new_table_children, resume_at, next_page, end_position_y = (
             body_groups_layout(skip_stack, position_y, bottom_space, page_is_empty))
         return header, new_table_children, footer, end_position_y, resume_at, next_page

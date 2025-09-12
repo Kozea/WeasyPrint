@@ -116,7 +116,7 @@ def test_overflow_5(assert_pixels):
 
 
 @assert_no_logs
-@pytest.mark.parametrize('number, css, pixels', (
+@pytest.mark.parametrize(('number', 'css', 'pixels'), [
     (1, '5px, 5px, 9px, auto', '''
         ______________
         ______________
@@ -189,7 +189,7 @@ def test_overflow_5(assert_pixels):
         ______________
         ______________
     '''),
-))
+])
 def test_clip(assert_pixels, number, css, pixels):
     assert_pixels(pixels, '''
       <style>

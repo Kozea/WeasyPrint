@@ -21,7 +21,7 @@ RIGHT = round(210 * 72 / 25.4, 6)
 
 
 @assert_no_logs
-@pytest.mark.parametrize('zoom', (1, 1.5, 0.5))
+@pytest.mark.parametrize('zoom', [1, 1.5, 0.5])
 def test_page_size_zoom(zoom):
     pdf = FakeHTML(string='<style>@page{size:3in 4in').write_pdf(zoom=zoom)
     width, height = int(216 * zoom), int(288 * zoom)
@@ -696,7 +696,7 @@ def test_annotations():
     assert b'/EmbeddedFiles' not in pdf
 
 
-@pytest.mark.parametrize('style, media, bleed, trim', (
+@pytest.mark.parametrize(('style', 'media', 'bleed', 'trim'), [
     ('bleed: 30pt; size: 10pt',
      [-30, -30, 40, 40],
      [-10, -10, 20, 20],
@@ -705,7 +705,7 @@ def test_annotations():
      [-18, -15, 15, 21],
      [-10, -10, 15, 21],
      [0, 0, 12, 15]),
-))
+])
 @assert_no_logs
 def test_bleed(style, media, bleed, trim):
     pdf = FakeHTML(string='''

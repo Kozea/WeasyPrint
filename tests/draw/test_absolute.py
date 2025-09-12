@@ -877,12 +877,12 @@ def test_absolute_in_absolute_break(assert_pixels):
 
 
 @assert_no_logs
-@pytest.mark.parametrize('position, display', (
+@pytest.mark.parametrize(('position', 'display'), [
     ('absolute', 'grid'),
     ('absolute', 'flex'),
     ('relative', 'grid'),
     ('relative', 'flex'),
-))
+])
 def test_absolute_alternative_layout(assert_pixels, position, display):
     # Regression test for #2450.
     assert_pixels('''

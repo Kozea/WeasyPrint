@@ -251,12 +251,12 @@ def test_block_percentage_heights():
 
 
 @assert_no_logs
-@pytest.mark.parametrize('size', (
+@pytest.mark.parametrize('size', [
     ('width: 10%; height: 1000px',),
     ('max-width: 10%; max-height: 1000px; height: 2000px',),
     ('width: 5%; min-width: 10%; min-height: 1000px',),
     ('width: 10%; height: 1000px; min-width: auto; max-height: none',),
-))
+])
 def test_box_sizing(size):
     # https://www.w3.org/TR/css-ui-3/#box-sizing
     page, = render_pages('''
@@ -307,11 +307,11 @@ def test_box_sizing(size):
 
 
 @assert_no_logs
-@pytest.mark.parametrize('size', (
+@pytest.mark.parametrize('size', [
     ('width: 0; height: 0'),
     ('max-width: 0; max-height: 0'),
     ('min-width: 0; min-height: 0; width: 0; height: 0'),
-))
+])
 def test_box_sizing_zero(size):
     # https://www.w3.org/TR/css-ui-3/#box-sizing
     page, = render_pages('''
@@ -357,7 +357,7 @@ NOT_COLLAPSING = (
 )
 
 
-@pytest.mark.parametrize('margin_1, margin_2, result', COLLAPSING)
+@pytest.mark.parametrize(('margin_1', 'margin_2', 'result'), COLLAPSING)
 def test_vertical_space_1(margin_1, margin_2, result):
     # Siblings
     page, = render_pages('''
@@ -377,7 +377,7 @@ def test_vertical_space_1(margin_1, margin_2, result):
     assert p2_top - p1_bottom == result
 
 
-@pytest.mark.parametrize('margin_1, margin_2, result', COLLAPSING)
+@pytest.mark.parametrize(('margin_1', 'margin_2', 'result'), COLLAPSING)
 def test_vertical_space_2(margin_1, margin_2, result):
     # Not siblings, first is nested
     page, = render_pages('''
@@ -400,7 +400,7 @@ def test_vertical_space_2(margin_1, margin_2, result):
     assert p2_top - p1_bottom == result
 
 
-@pytest.mark.parametrize('margin_1, margin_2, result', COLLAPSING)
+@pytest.mark.parametrize(('margin_1', 'margin_2', 'result'), COLLAPSING)
 def test_vertical_space_3(margin_1, margin_2, result):
     # Not siblings, second is nested
     page, = render_pages('''
@@ -423,7 +423,7 @@ def test_vertical_space_3(margin_1, margin_2, result):
     assert p2_top - p1_bottom == result
 
 
-@pytest.mark.parametrize('margin_1, margin_2, result', COLLAPSING)
+@pytest.mark.parametrize(('margin_1', 'margin_2', 'result'), COLLAPSING)
 def test_vertical_space_4(margin_1, margin_2, result):
     # Not siblings, second is doubly nested
     page, = render_pages('''
@@ -449,7 +449,7 @@ def test_vertical_space_4(margin_1, margin_2, result):
     assert p2_top - p1_bottom == result
 
 
-@pytest.mark.parametrize('margin_1, margin_2, result', COLLAPSING)
+@pytest.mark.parametrize(('margin_1', 'margin_2', 'result'), COLLAPSING)
 def test_vertical_space_5(margin_1, margin_2, result):
     # Collapsing with children
     page, = render_pages('''
@@ -478,7 +478,7 @@ def test_vertical_space_5(margin_1, margin_2, result):
     assert p2_top - p1_bottom == result
 
 
-@pytest.mark.parametrize('margin_1, margin_2, result', NOT_COLLAPSING)
+@pytest.mark.parametrize(('margin_1', 'margin_2', 'result'), NOT_COLLAPSING)
 def test_vertical_space_6(margin_1, margin_2, result):
     # Block formatting context: Not collapsing with children
     page, = render_pages('''
@@ -504,7 +504,7 @@ def test_vertical_space_6(margin_1, margin_2, result):
     assert p2_top - p1_bottom == result
 
 
-@pytest.mark.parametrize('margin_1, margin_2, result', COLLAPSING)
+@pytest.mark.parametrize(('margin_1', 'margin_2', 'result'), COLLAPSING)
 def test_vertical_space_7(margin_1, margin_2, result):
     # Collapsing through an empty div
     page, = render_pages('''
@@ -526,7 +526,7 @@ def test_vertical_space_7(margin_1, margin_2, result):
     assert p2_top - p1_bottom == result
 
 
-@pytest.mark.parametrize('margin_1, margin_2, result', NOT_COLLAPSING)
+@pytest.mark.parametrize(('margin_1', 'margin_2', 'result'), NOT_COLLAPSING)
 def test_vertical_space_8(margin_1, margin_2, result):
     # The root element does not collapse
     page, = render_pages('''
@@ -544,7 +544,7 @@ def test_vertical_space_8(margin_1, margin_2, result):
     assert p1_top == result
 
 
-@pytest.mark.parametrize('margin_1, margin_2, result', COLLAPSING)
+@pytest.mark.parametrize(('margin_1', 'margin_2', 'result'), COLLAPSING)
 def test_vertical_space_9(margin_1, margin_2, result):
     # <body> DOES collapse
     page, = render_pages('''

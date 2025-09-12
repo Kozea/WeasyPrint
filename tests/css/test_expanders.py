@@ -40,7 +40,7 @@ def test_empty_expander_value(expander):
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule, result', (
+@pytest.mark.parametrize(('rule', 'result'), [
     ('none', {'text_decoration_line': 'none'}),
     ('overline', {'text_decoration_line': {'overline'}}),
     ('overline blink line-through', {
@@ -58,25 +58,25 @@ def test_empty_expander_value(expander):
     ('inherit', {
         f'text_decoration_{key}': 'inherit'
         for key in ('color', 'line', 'style', 'thickness')}),
-))
+])
 def test_text_decoration(rule, result):
     assert expand_to_dict(f'text-decoration: {rule}') == result
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule', (
+@pytest.mark.parametrize('rule', [
     'solid solid',
     'red red',
     'underline none',
     '1px 100%',
     'none none',
-))
+])
 def test_text_decoration_invalid(rule):
     assert_invalid(f'text-decoration: {rule}')
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule, result', (
+@pytest.mark.parametrize(('rule', 'result'), [
     ('margin: inherit', {
         'margin_top': 'inherit',
         'margin_right': 'inherit',
@@ -113,7 +113,7 @@ def test_text_decoration_invalid(rule):
         'padding_bottom': (2, 'em'),
         'padding_left': (5, 'px'),
     }),
-))
+])
 def test_four_sides(rule, result):
     assert expand_to_dict(rule) == result
 
@@ -125,19 +125,19 @@ def test_four_sides_warning():
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule', (
+@pytest.mark.parametrize('rule', [
     'margin: rgb(0, 0, 0)',
     'padding: auto',
     'padding: -12px',
     'border-width: -3em',
     'border-width: 12%',
-))
+])
 def test_four_sides_invalid(rule):
     assert_invalid(rule)
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule, result', (
+@pytest.mark.parametrize(('rule', 'result'), [
     ('border-top: 3px dotted red', {
         'border_top_width': (3, 'px'),
         'border_top_style': 'dotted',
@@ -169,7 +169,7 @@ def test_four_sides_invalid(rule):
         'border_right_style': 'dashed',
         'border_right_color': (0, 1, 0, 1),  # lime
     }),
-))
+])
 def test_borders(rule, result):
     assert expand_to_dict(rule) == result
 
@@ -180,7 +180,7 @@ def test_borders_invalid():
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule, result', (
+@pytest.mark.parametrize(('rule', 'result'), [
     ('list-style: inherit', {
         'list_style_position': 'inherit',
         'list_style_image': 'inherit',
@@ -211,7 +211,7 @@ def test_borders_invalid():
         'list_style_image': ('none', None),
         'list_style_type': 'special',
     }),
-))
+])
 def test_list_style(rule, result):
     assert expand_to_dict(rule) == result
 
@@ -224,16 +224,16 @@ def test_list_style_warning():
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule', (
+@pytest.mark.parametrize('rule', [
     'list-style: none inside none none',
     'list-style: 1px',
-))
+])
 def test_list_style_invalid(rule):
     assert_invalid(rule)
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule, result', (
+@pytest.mark.parametrize(('rule', 'result'), [
     ('red', {'background_color': (1, 0, 0, 1)}),
     ('url(lipsum.png)', {
         'background_image': [
@@ -320,7 +320,7 @@ def test_list_style_invalid(rule):
             ('left', (0, '%'), 'top', (0, '%'))],
         'background_repeat': [
             ('repeat', 'repeat'), ('no-repeat', 'no-repeat')]}),
-))
+])
 def test_background(rule, result):
     expanded = expand_to_dict(f'background: {rule}')
     assert expanded.pop('background_color') == result.pop(
@@ -333,17 +333,17 @@ def test_background(rule, result):
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule', (
+@pytest.mark.parametrize('rule', [
     'red, url(foo)',
     '10px lipsum',
     'content-box red content-box',
-))
+])
 def test_background_invalid(rule):
     assert_invalid(f'background: {rule}')
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule, result', (
+@pytest.mark.parametrize(('rule', 'result'), [
     ('1px', {
         'border_top_left_radius': ((1, 'px'), (1, 'px')),
         'border_top_right_radius': ((1, 'px'), (1, 'px')),
@@ -386,13 +386,13 @@ def test_background_invalid(rule):
         'border_bottom_right_radius': 'inherit',
         'border_bottom_left_radius': 'inherit',
     }),
-))
+])
 def test_border_radius(rule, result):
     assert expand_to_dict(f'border-radius: {rule}') == result
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule, message', (
+@pytest.mark.parametrize(('rule', 'message'), [
     ('1px 1px 1px 1px 1px', '1 to 4 token'),
     ('1px 1px 1px 1px 1px / 1px', '1 to 4 token'),
     ('1px / 1px / 1px', 'only one "/"'),
@@ -401,13 +401,13 @@ def test_border_radius(rule, result):
     ('super', 'invalid'),
     ('1px, 1px', 'invalid'),
     ('1px /', 'value after "/"'),
-))
+])
 def test_border_radius_invalid(rule, message):
     assert_invalid(f'border-radius: {rule}', message)
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule, result', (
+@pytest.mark.parametrize(('rule', 'result'), [
     ('url(border.png) 27', {
         'border_image_source': ('url', 'https://weasyprint.org/foo/border.png'),
         'border_image_slice': ((27, None),),
@@ -439,17 +439,16 @@ def test_border_radius_invalid(rule, message):
     ('none', {
         'border_image_source': ('none', None),
     }),
-))
+])
 def test_border_image(rule, result):
     assert expand_to_dict(f'border-image: {rule}') == result
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule, reason', (
+@pytest.mark.parametrize(('rule', 'reason'), [
     ('url(border.png) url(border.png)', 'multiple source'),
     ('10 10 10 10 10', 'multiple slice'),
     ('1 / 2 / 3 / 4', 'invalid'),
-    ('/1', 'invalid'),
     ('/1', 'invalid'),
     ('round round round', 'invalid'),
     ('-1', 'invalid'),
@@ -457,13 +456,13 @@ def test_border_image(rule, result):
     ('1% // 1%', 'invalid'),
     ('1 / repeat', 'invalid'),
     ('', 'no value'),
-))
+])
 def test_border_image_invalid(rule, reason):
     assert_invalid(f'border-image: {rule}', reason)
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule, result', (
+@pytest.mark.parametrize(('rule', 'result'), [
     ('url(border.png) 27', {
         'mask_border_source': ('url', 'https://weasyprint.org/foo/border.png'),
         'mask_border_slice': ((27, None),),
@@ -505,17 +504,16 @@ def test_border_image_invalid(rule, reason):
         'mask_border_slice': ((27, None),),
         'mask_border_mode': 'luminance',
     }),
-))
+])
 def test_mask_border(rule, result):
     assert expand_to_dict(f'mask-border: {rule}') == result
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule, reason', (
+@pytest.mark.parametrize(('rule', 'reason'), [
     ('url(border.png) url(border.png)', 'multiple source'),
     ('10 10 10 10 10', 'multiple slice'),
     ('1 / 2 / 3 / 4', 'invalid'),
-    ('/1', 'invalid'),
     ('/1', 'invalid'),
     ('round round round', 'invalid'),
     ('-1', 'invalid'),
@@ -525,13 +523,13 @@ def test_mask_border(rule, result):
     ('', 'no value'),
     ('alpha alpha', 'multiple mode'),
     ('alpha luminance', 'multiple mode'),
-))
+])
 def test_mask_border_invalid(rule, reason):
     assert_invalid(f'mask-border: {rule}', reason)
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule, result', (
+@pytest.mark.parametrize(('rule', 'result'), [
     ('12px My Fancy Font, serif', {
         'font_size': (12, 'px'),
         'font_family': ('My Fancy Font', 'serif'),
@@ -555,13 +553,13 @@ def test_mask_border_invalid(rule, reason):
         'font_size': 'large',
         'font_family': ('serif',),
     }),
-))
+])
 def test_font(rule, result):
     assert expand_to_dict(f'font: {rule}') == result
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule, message', (
+@pytest.mark.parametrize(('rule', 'message'), [
     ('menu', 'System fonts are not supported'),
     ('12deg My Fancy Font, serif', 'invalid'),
     ('12px', 'invalid'),
@@ -574,13 +572,13 @@ def test_font(rule, result):
     ('normal normal normal normal', 'invalid'),
     ('normal normal normal italic', 'invalid'),
     ('caption', 'System fonts'),
-))
+])
 def test_font_invalid(rule, message):
     assert_invalid(f'font: {rule}', message)
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule, result', (
+@pytest.mark.parametrize(('rule', 'result'), [
     ('normal', {
         'font_variant_alternates': 'normal',
         'font_variant_caps': 'normal',
@@ -611,13 +609,13 @@ def test_font_invalid(rule, message):
     }),
     # CSS2-style font-variant
     ('small-caps', {'font_variant_caps': 'small-caps'}),
-))
+])
 def test_font_variant(rule, result):
     assert expand_to_dict(f'font-variant: {rule}') == result
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule', (
+@pytest.mark.parametrize('rule', [
     'normal normal',
     '2',
     '""',
@@ -628,7 +626,7 @@ def test_font_variant(rule, result):
     'common-ligatures contextual no-common-ligatures',
     'sub super',
     'slashed-zero slashed-zero',
-))
+])
 def test_font_variant_invalid(rule):
     assert_invalid(f'font-variant: {rule}')
 
@@ -646,7 +644,7 @@ def test_word_wrap():
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule, result', (
+@pytest.mark.parametrize(('rule', 'result'), [
     ('auto', {'flex_grow': 1, 'flex_shrink': 1, 'flex_basis': 'auto'}),
     ('none', {'flex_grow': 0, 'flex_shrink': 0, 'flex_basis': 'auto'}),
     ('10', {'flex_grow': 10, 'flex_shrink': 1, 'flex_basis': ZERO_PIXELS}),
@@ -659,48 +657,48 @@ def test_word_wrap():
         'flex_grow': 'inherit',
         'flex_shrink': 'inherit',
         'flex_basis': 'inherit'}),
-))
+])
 def test_flex(rule, result):
     assert expand_to_dict(f'flex: {rule}') == result
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule', (
+@pytest.mark.parametrize('rule', [
     'auto 0 0 0',
     '1px 2px',
     'auto auto',
     'auto 1 auto',
-))
+])
 def test_flex_invalid(rule):
     assert_invalid(f'flex: {rule}')
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule, result', (
+@pytest.mark.parametrize(('rule', 'result'), [
     ('column', {'flex_direction': 'column'}),
     ('wrap', {'flex_wrap': 'wrap'}),
     ('wrap column', {'flex_direction': 'column', 'flex_wrap': 'wrap'}),
     ('row wrap', {'flex_direction': 'row', 'flex_wrap': 'wrap'}),
     ('inherit', {'flex_direction': 'inherit', 'flex_wrap': 'inherit'}),
-))
+])
 def test_flex_flow(rule, result):
     assert expand_to_dict(f'flex-flow: {rule}') == result
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule', (
+@pytest.mark.parametrize('rule', [
     '1px',
     'wrap 1px',
     'row row',
     'wrap nowrap',
     'column wrap nowrap row',
-))
+])
 def test_flex_flow_invalid(rule):
     assert_invalid(f'flex-flow: {rule}')
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule, result', (
+@pytest.mark.parametrize(('rule', 'result'), [
     ('auto', {'start': 'auto', 'end': 'auto'}),
     ('auto / auto', {'start': 'auto', 'end': 'auto'}),
     ('4', {'start': (None, 4, None), 'end': 'auto'}),
@@ -709,7 +707,7 @@ def test_flex_flow_invalid(rule):
     ('c / d', {'start': (None, None, 'c'), 'end': (None, None, 'd')}),
     ('ab / cd 4', {'start': (None, None, 'ab'), 'end': (None, 4, 'cd')}),
     ('ab 2 span', {'start': ('span', 2, 'ab'), 'end': 'auto'}),
-))
+])
 def test_grid_column_row(rule, result):
     assert expand_to_dict(f'grid-column: {rule}') == dict(
         (f'grid_column_{key}', value) for key, value in result.items())
@@ -718,7 +716,7 @@ def test_grid_column_row(rule, result):
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule', (
+@pytest.mark.parametrize('rule', [
     'auto auto',
     '4 / 2 / c',
     'span',
@@ -726,14 +724,14 @@ def test_grid_column_row(rule, result):
     'c /',
     '/4',
     'col / 2.1',
-))
+])
 def test_grid_column_row_invalid(rule):
     assert_invalid(f'grid-column: {rule}')
     assert_invalid(f'grid-row: {rule}')
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule, result', (
+@pytest.mark.parametrize(('rule', 'result'), [
     ('auto', {
         'row_start': 'auto', 'row_end': 'auto',
         'column_start': 'auto', 'column_end': 'auto'}),
@@ -761,14 +759,14 @@ def test_grid_column_row_invalid(rule):
     ('span 2', {
         'row_start': ('span', 2, None), 'row_end': 'auto',
         'column_start': 'auto', 'column_end': 'auto'}),
-))
+])
 def test_grid_area(rule, result):
     assert expand_to_dict(f'grid-area: {rule}') == dict(
         (f'grid_{key}', value) for key, value in result.items())
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule', (
+@pytest.mark.parametrize('rule', [
     'auto auto',
     'auto / auto auto',
     '4 / 2 / c / d / e',
@@ -779,13 +777,13 @@ def test_grid_area(rule, result):
     'c//4',
     '/',
     '1 / 2 / 4 / 0.5',
-))
+])
 def test_grid_area_invalid(rule):
     assert_invalid(f'grid-area: {rule}')
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule, result', (
+@pytest.mark.parametrize(('rule', 'result'), [
     ('none', {
         'rows': 'none', 'columns': 'none', 'areas': 'none',
     }),
@@ -808,27 +806,27 @@ def test_grid_area_invalid(rule):
     # ('[a b c] "x x x" 2fr', {
     #     'rows': 'none', 'columns': 'none', 'areas': 'none',
     # }),
-))
+])
 def test_grid_template(rule, result):
     assert expand_to_dict(f'grid-template: {rule}') == dict(
         (f'grid_template_{key}', value) for key, value in result.items())
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule', (
+@pytest.mark.parametrize('rule', [
     'none none',
     'auto',
     'subgrid / subgrid / subgrid',
     '[a] 1px [b] / none /',
     '[a] 1px [b] // none',
     '[a] 1px [b] none',
-))
+])
 def test_grid_template_invalid(rule):
     assert_invalid(f'grid-template: {rule}')
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule, result', (
+@pytest.mark.parametrize(('rule', 'result'), [
     ('none', {
         'template_rows': 'none', 'template_columns': 'none',
         'template_areas': 'none',
@@ -868,14 +866,14 @@ def test_grid_template_invalid(rule):
     # }),
     # ('[a b c] "x x x" 2fr', {
     # }),
-))
+])
 def test_grid(rule, result):
     assert expand_to_dict(f'grid: {rule}') == dict(
         (f'grid_{key}', value) for key, value in result.items())
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule', (
+@pytest.mark.parametrize('rule', [
     'none none',
     'auto',
     'subgrid / subgrid / subgrid',
@@ -886,69 +884,69 @@ def test_grid(rule, result):
     'none / dense 1fr auto-flow',
     '100px auto-flow / none',
     'dense 100px / auto-flow 1fr'
-))
+])
 def test_grid_invalid(rule):
     assert_invalid(f'grid: {rule}')
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule, result', (
+@pytest.mark.parametrize(('rule', 'result'), [
     ('page-break-after: left', {'break_after': 'left'}),
     ('page-break-before: always', {'break_before': 'page'}),
     ('page-break-after: inherit', {'break_after': 'inherit'}),
     ('page-break-before: inherit', {'break_before': 'inherit'}),
-))
+])
 def test_page_break(rule, result):
     assert expand_to_dict(rule) == result
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule', (
+@pytest.mark.parametrize('rule', [
     'page-break-after: top',
     'page-break-before: 1px',
-))
+])
 def test_page_break_invalid(rule):
     assert_invalid(rule)
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule, result', (
+@pytest.mark.parametrize(('rule', 'result'), [
     ('avoid', {'break_inside': 'avoid'}),
     ('inherit', {'break_inside': 'inherit'}),
-))
+])
 def test_page_break_inside(rule, result):
     assert expand_to_dict(f'page-break-inside: {rule}') == result
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule', (
+@pytest.mark.parametrize('rule', [
     'top',
-))
+])
 def test_page_break_inside_invalid(rule):
     assert_invalid(f'page-break-inside: {rule}')
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule, result', (
+@pytest.mark.parametrize(('rule', 'result'), [
     ('1em', {'column_width': (1, 'em'), 'column_count': 'auto'}),
     ('auto', {'column_width': 'auto', 'column_count': 'auto'}),
     ('auto auto', {'column_width': 'auto', 'column_count': 'auto'}),
-))
+])
 def test_columns(rule, result):
     assert expand_to_dict(f'columns: {rule}') == result
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule, reason', (
+@pytest.mark.parametrize(('rule', 'reason'), [
     ('1px 2px', 'invalid'),
     ('auto auto auto', 'multiple'),
-))
+])
 def test_columns_invalid(rule, reason):
     assert_invalid(f'columns: {rule}', reason)
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule, result', (
+@pytest.mark.parametrize(('rule', 'result'), [
     ('none', {
         'max_lines': 'none', 'continue': 'auto', 'block_ellipsis': 'none'}),
     ('2', {
@@ -959,37 +957,37 @@ def test_columns_invalid(rule, reason):
     ('inherit', {
         'max_lines': 'inherit', 'continue': 'inherit',
         'block_ellipsis': 'inherit'}),
-))
+])
 def test_line_clamp(rule, result):
     assert expand_to_dict(f'line-clamp: {rule}') == result
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule, reason', (
+@pytest.mark.parametrize(('rule', 'reason'), [
     ('none none none', 'invalid'),
     ('1px', 'invalid'),
     ('0 "…"', 'invalid'),
     ('1px 2px', 'invalid'),
-))
+])
 def test_line_clamp_invalid(rule, reason):
     assert_invalid(f'line-clamp: {rule}', reason)
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule, result', (
+@pytest.mark.parametrize(('rule', 'result'), [
     ('start', {'text_align_all': 'start', 'text_align_last': 'start'}),
     ('right', {'text_align_all': 'right', 'text_align_last': 'right'}),
     ('justify', {'text_align_all': 'justify', 'text_align_last': 'start'}),
     ('justify-all', {
         'text_align_all': 'justify', 'text_align_last': 'justify'}),
     ('inherit', {'text_align_all': 'inherit', 'text_align_last': 'inherit'}),
-))
+])
 def test_text_align(rule, result):
     assert expand_to_dict(f'text-align: {rule}') == result
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule, reason', (
+@pytest.mark.parametrize(('rule', 'reason'), [
     ('none', 'invalid'),
     ('start end', 'invalid'),
     ('1', 'invalid'),
@@ -997,6 +995,6 @@ def test_text_align(rule, result):
     ('top', 'invalid'),
     ('"right"', 'invalid'),
     ('1px', 'invalid'),
-))
+])
 def test_text_align_invalid(rule, reason):
     assert_invalid(f'text-align: {rule}', reason)
