@@ -63,6 +63,14 @@ from ..testing_utils import assert_no_logs, render_pages
     @import url(data:text/css,div{width:100px}) layer(a);
     @layer a.b { div { width: 200px } }
     ''',
+    '''
+    @import url(data:text/css,div{width:200px}) layer(a.b);
+    @layer a { div { width: 100px } }
+    ''',
+    '''
+    @layer a { div { width: 100px } }
+    @import url(data:text/css,div{width:200px}) layer(a.b);
+    ''',
 ])
 def test_layers(style):
     page, = render_pages('''

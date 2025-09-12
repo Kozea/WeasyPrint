@@ -802,6 +802,25 @@ def _add_layer(layer, layers):
             index -= 1
 
 
+def _parse_layer(tokens):
+    """Parse tokens representing a layer name."""
+    if not tokens:
+        return
+    new_layer = ''
+    last_dot = True
+    for token in tokens:
+        if token.type == 'ident' and last_dot:
+            new_layer += token.value
+            last_dot = False
+        elif token.type == 'literal' and token.value == '.' and not last_dot:
+            new_layer += '.'
+            last_dot = True
+        else:
+            return
+    if not last_dot:
+        return new_layer
+
+
 def parse_page_selectors(rule):
     """Parse a page selector rule.
 
@@ -996,18 +1015,12 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fet
             if url is None:
                 continue
 
-            new_layer = layer
+            new_layer = None
             next_tokens = list(tokens[1:])
             if next_tokens:
                 if next_tokens[0].type == 'function' and next_tokens[0].name == 'layer':
                     function = next_tokens.pop(0)
-                    arguments = remove_whitespace(function.arguments)
-                    if len(arguments) == 1 and arguments[0].type == 'ident':
-                        new_layer = arguments[0].value
-                        if layer is not None:
-                            new_layer = f'{layer}.{new_layer}'
-                        _add_layer(new_layer, layers)
-                    else:
+                    if not (new_layer := _parse_layer(function.arguments)):
                         LOGGER.warning(
                             'Invalid layer name %r '
                             'the whole @import rule was ignored at %d:%d.',
@@ -1017,6 +1030,7 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fet
                 elif next_tokens[0].type == 'ident' and next_tokens[0].value == 'layer':
                     next_tokens.pop(0)
                     new_layer = f'@anonymous{len(layers)}'
+                if new_layer:
                     if layer is not None:
                         new_layer = f'{layer}.{new_layer}'
                     _add_layer(new_layer, layers)
@@ -1172,20 +1186,13 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fet
             prelude = remove_whitespace(rule.prelude)
             comma_separated_tokens = split_on_comma(prelude) if prelude else ()
             for tokens in comma_separated_tokens:
-                new_layer = f'{layer}.' if layer else ''
-                for token in tokens:
-                    if token.type == 'ident':
-                        new_layer += token.value
-                    elif token.type == 'literal' and token.value == '.':
-                        new_layer += '.'
-                    else:
-                        break
+                if new_layer := _parse_layer(tokens):
+                    if layer is not None:
+                        new_layer = f'{layer}.{new_layer}'
+                    new_layers.append(new_layer)
                 else:
-                    if not new_layer.endswith('.'):
-                        new_layers.append(new_layer)
-                        continue
-                new_layers = None
-                break
+                    new_layers = None
+                    break
             if new_layers is None:
                 LOGGER.warning(
                     'Unsupported @layer selector %r, '
