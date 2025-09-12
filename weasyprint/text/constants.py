@@ -462,7 +462,7 @@ LANG_QUOTES = {
 }
 
 
-@lru_cache()
+@lru_cache
 def get_lang_quotes(lang):
     if lang in LANG_QUOTES:
         return LANG_QUOTES[lang]

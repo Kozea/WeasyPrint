@@ -257,8 +257,7 @@ def expand_border(tokens, name, base_url):
 
     """
     for suffix in ('-top', '-right', '-bottom', '-left'):
-        for new_prop in expand_border_side(tokens, name + suffix, base_url):
-            yield new_prop
+        yield from expand_border_side(tokens, name + suffix, base_url)
 
 
 @expander('border-top')

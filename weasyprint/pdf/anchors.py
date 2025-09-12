@@ -233,7 +233,7 @@ def add_forms(forms, matrix, pdf, page, resources, stream, font_map):
             flags = 1 << (3 - 1)  # HTML form format
             if form.attrib.get('method', '').lower() != 'post':
                 flags += 1 << (4 - 1)  # GET method
-            fields = pydyf.Array((field.reference for field in forms[form].values()))
+            fields = pydyf.Array(field.reference for field in forms[form].values())
             field['FT'] = '/Btn'
             field['DA'] = pydyf.String(b' '.join(field_stream.stream))
             field['V'] = pydyf.String(form.attrib.get('value', ''))

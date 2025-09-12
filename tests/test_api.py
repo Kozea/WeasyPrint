@@ -361,7 +361,7 @@ def test_command_line_render(tmp_path):
         _run(f'{(tmp_path / "combined.html")} out4.pdf')
         assert (tmp_path / 'out4.pdf').read_bytes() == pdf_bytes
 
-        _run(f'{path2url((tmp_path / "combined.html"))} out5.pdf')
+        _run(f'{path2url(tmp_path / "combined.html")} out5.pdf')
         assert (tmp_path / 'out5.pdf').read_bytes() == pdf_bytes
 
         _run('linked.html --debug out6.pdf')  # test relative URLs
@@ -622,7 +622,7 @@ def test_appearance(css, with_forms, without_forms):
 
 
 def test_appearance_non_input():
-    html = '<div style="appearance: auto">'.encode()
+    html = b'<div style="appearance: auto">'
     assert b'AcroForm' not in _run('--pdf-forms --uncompressed-pdf - -', html)
 
 
@@ -1272,11 +1272,11 @@ def test_http():
         def wsgi_app(environ, start_response):
             handler = handlers.get(environ['PATH_INFO'])
             if handler:
-                status = str('200 OK')
+                status = '200 OK'
                 response, headers = handler(environ)
                 headers = [(str(name), str(value)) for name, value in headers]
             else:  # pragma: no cover
-                status = str('404 Not Found')
+                status = '404 Not Found'
                 response = b''
                 headers = []
             start_response(status, headers)

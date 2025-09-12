@@ -69,5 +69,5 @@ include = ['tests/*', 'weasyprint/*']
 exclude_lines = ['pragma: no cover', 'def __repr__', 'raise NotImplementedError']
 
 [tool.ruff.lint]
-select = ['E', 'W', 'F', 'I', 'N', 'RUF', 'T20', 'PIE', 'PT', 'RSE']
-ignore = ['E226', 'RUF001', 'RUF002', 'RUF003', 'RUF039', 'RUF059']
+select = ['E', 'W', 'F', 'I', 'N', 'RUF', 'T20', 'PIE', 'PT', 'RSE', 'UP']
+ignore = ['E226', 'RUF001', 'RUF002', 'RUF003', 'RUF039', 'RUF059', 'UP031']
