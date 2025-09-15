@@ -1002,7 +1002,6 @@ def blockify(box, layout):
     return anonymous
 
 
-
 def flex_boxes(box):
     """Remove and add boxes according to the flex model.
 

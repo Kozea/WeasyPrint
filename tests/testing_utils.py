@@ -81,14 +81,14 @@ def assert_no_logs(function):
                 function(*args, **kwargs)
             except Exception:  # pragma: no cover
                 if logs:
-                    print(f'{len(logs)} errors logged:', file=sys.stderr)
+                    print(f'{len(logs)} errors logged:', file=sys.stderr)  # noqa: T201
                     for message in logs:
-                        print(message, file=sys.stderr)
+                        print(message, file=sys.stderr)  # noqa: T201
                 raise
             else:
                 if logs:  # pragma: no cover
                     for message in logs:
-                        print(message, file=sys.stderr)
+                        print(message, file=sys.stderr)  # noqa: T201
                     raise AssertionError(f'{len(logs)} errors logged')
     return wrapper
 

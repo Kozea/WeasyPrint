@@ -6,7 +6,7 @@ from ..testing_utils import assert_no_logs
 
 
 @assert_no_logs
-@pytest.mark.parametrize('rule, pixels', (
+@pytest.mark.parametrize(('rule', 'pixels'), [
     ('2n', '_R_R_R_R_R'),
     ('even', '_R_R_R_R_R'),
     ('2n+1', 'R_R_R_R_R_'),
@@ -19,7 +19,7 @@ from ..testing_utils import assert_no_logs
     ('-n-3', '__________'),
     ('3', '__R_______'),
     ('0n+0', '__________'),
-))
+])
 def test_nth_page(assert_pixels, rule, pixels):
     assert_pixels('\n'.join(pixels), '''
       <style>

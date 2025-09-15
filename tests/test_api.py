@@ -361,7 +361,7 @@ def test_command_line_render(tmp_path):
         _run(f'{(tmp_path / "combined.html")} out4.pdf')
         assert (tmp_path / 'out4.pdf').read_bytes() == pdf_bytes
 
-        _run(f'{path2url((tmp_path / "combined.html"))} out5.pdf')
+        _run(f'{path2url(tmp_path / "combined.html")} out5.pdf')
         assert (tmp_path / 'out5.pdf').read_bytes() == pdf_bytes
 
         _run('linked.html --debug out6.pdf')  # test relative URLs
@@ -454,12 +454,12 @@ def test_command_line_render(tmp_path):
         _run('--version')
 
 
-@pytest.mark.parametrize('version, pdf_version', (
+@pytest.mark.parametrize(('version', 'pdf_version'), [
     (1, '1.4'),
     (2, '1.7'),
     (3, '1.7'),
     (4, '2.0'),
-))
+])
 def test_pdfa(version, pdf_version):
     stdout = _run(
         f'--pdf-variant=pdf/a-{version}b --uncompressed-pdf - -', b'test')
@@ -467,12 +467,12 @@ def test_pdfa(version, pdf_version):
     assert f'part="{version}"'.encode() in stdout
 
 
-@pytest.mark.parametrize('version, pdf_version', (
+@pytest.mark.parametrize(('version', 'pdf_version'), [
     (1, '1.4'),
     (2, '1.7'),
     (3, '1.7'),
     (4, '2.0'),
-))
+])
 def test_pdfa_compressed(version, pdf_version):
     stdout = _run(f'--pdf-variant=pdf/a-{version}b - -', b'test')
     assert f'PDF-{pdf_version}'.encode() in stdout
@@ -484,20 +484,20 @@ def test_pdfa1b_cidset():
     assert b'CIDSet' in stdout
 
 
-@pytest.mark.parametrize('version, pdf_version', (
+@pytest.mark.parametrize(('version', 'pdf_version'), [
     (1, '1.7'),
     (2, '2.0'),
-))
+])
 def test_pdfua(version, pdf_version):
     stdout = _run(f'--pdf-variant=pdf/ua-{version} --uncompressed-pdf - -', b'test')
     assert f'PDF-{pdf_version}'.encode() in stdout
     assert f'part="{version}"'.encode() in stdout
 
 
-@pytest.mark.parametrize('version, pdf_version', (
+@pytest.mark.parametrize(('version', 'pdf_version'), [
     (1, '1.7'),
     (2, '2.0'),
-))
+])
 def test_pdfua_compressed(version, pdf_version):
     stdout = _run(f'--pdf-variant=pdf/ua-{version} - -', b'test')
     assert f'PDF-{pdf_version}'.encode() in stdout
@@ -576,7 +576,7 @@ def test_to_unicode_rtl():
     assert b'<00d0> <0628>' in stdout
 
 
-@pytest.mark.parametrize('html, fields', (
+@pytest.mark.parametrize(('html', 'fields'), [
     ('<input>', ['/Tx', '/V ()']),
     ('<input value="">', ['/Tx', '/V ()']),
     ('<input type="checkbox">', ['/Btn']),
@@ -598,7 +598,7 @@ def test_to_unicode_rtl():
      '<option value="b" selected>B</option>'
      '<option value="c" selected>C</option>'
      '</select>', ['/Ch', '/Opt', '[(b) (c)]']),
-))
+])
 def test_pdf_inputs(html, fields):
     stdout = _run('--pdf-forms --uncompressed-pdf - -', html.encode())
     assert b'AcroForm' in stdout
@@ -608,11 +608,11 @@ def test_pdf_inputs(html, fields):
     assert b'AcroForm' not in stdout
 
 
-@pytest.mark.parametrize('css, with_forms, without_forms', (
+@pytest.mark.parametrize(('css', 'with_forms', 'without_forms'), [
     ('appearance: auto', True, True),
     ('appearance: none', False, False),
     ('', True, False),
-))
+])
 def test_appearance(css, with_forms, without_forms):
     html = f'<input style="{css}">'.encode()
     assert with_forms is (
@@ -622,7 +622,7 @@ def test_appearance(css, with_forms, without_forms):
 
 
 def test_appearance_non_input():
-    html = '<div style="appearance: auto">'.encode()
+    html = b'<div style="appearance: auto">'
     assert b'AcroForm' not in _run('--pdf-forms --uncompressed-pdf - -', html)
 
 
@@ -718,7 +718,7 @@ def test_low_level_api(assert_pixels_equal):
     assert _png_size(document.copy([page_2]).write_png()) == (6, 4)
 
 
-@pytest.mark.parametrize('html, expected_by_page, expected_tree, round', (
+@pytest.mark.parametrize(('html', 'expected_by_page', 'expected_tree', 'round'), [
     ('''
         <style>h1, h2, h3, h4 { height: 10px }</style>
         <h1>a</h1>
@@ -867,7 +867,7 @@ def test_low_level_api(assert_pixels_equal):
                    transform: skew(45deg, 45deg)">!
     ''', [[(1, '!', (-5, -5), 'open')]], [('!', (0, -5, -5), [], 'open')],
      True),
-))
+])
 @assert_no_logs
 def test_assert_bookmarks(html, expected_by_page, expected_tree, round):
     document = FakeHTML(string=html).render()
@@ -1272,11 +1272,11 @@ def test_http():
         def wsgi_app(environ, start_response):
             handler = handlers.get(environ['PATH_INFO'])
             if handler:
-                status = str('200 OK')
+                status = '200 OK'
                 response, headers = handler(environ)
                 headers = [(str(name), str(value)) for name, value in headers]
             else:  # pragma: no cover
-                status = str('404 Not Found')
+                status = '404 Not Found'
                 response = b''
                 headers = []
             start_response(status, headers)

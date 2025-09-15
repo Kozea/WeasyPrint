@@ -1,5 +1,6 @@
 """CSS functions parsers."""
 
+
 class Function:
     """CSS function."""
     # See https://drafts.csswg.org/css-values-4/#functional-notation.

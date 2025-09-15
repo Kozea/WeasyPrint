@@ -92,7 +92,7 @@ class DocumentMetadata:
 
     New attributes may be added in future versions of WeasyPrint.
     """
-    def __init__(self, title=None, authors= None, description=None, keywords=None,
+    def __init__(self, title=None, authors=None, description=None, keywords=None,
                  generator=None, created=None, modified=None, attachments=None,
                  lang=None, custom=None, generate_rdf_metadata=generate_rdf_metadata):
         #: The title of the document, as a string or :obj:`None`.

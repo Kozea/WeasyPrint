@@ -8,7 +8,7 @@ from ..testing_utils import assert_no_logs, render_pages
 
 
 @assert_no_logs
-@pytest.mark.parametrize('size, width, height', (
+@pytest.mark.parametrize(('size', 'width', 'height'), [
     ('auto', 793, 1122),
     ('2in 10in', 192, 960),
     ('242px', 242, 242),
@@ -17,7 +17,7 @@ from ..testing_utils import assert_no_logs, render_pages
     ('letter landscape', 1056, 816),
     ('portrait', 793, 1122),
     ('landscape', 1122, 793),
-))
+])
 def test_page_size_basic(size, width, height):
     """Test the layout for ``@page`` properties."""
     page, = render_pages('<style>@page { size: %s; }</style>' % size)
@@ -78,10 +78,10 @@ def test_page_size_with_margin_border_padding():
 
 
 @assert_no_logs
-@pytest.mark.parametrize('margin, top, right, bottom, left', (
+@pytest.mark.parametrize(('margin', 'top', 'right', 'bottom', 'left'), [
     ('auto', 15, 10, 15, 10),
     ('5px 5px auto auto', 5, 5, 25, 15),
-))
+])
 def test_page_size_margins(margin, top, right, bottom, left):
     page, = render_pages('''<style>@page {
       size: 106px 206px; width: 80px; height: 170px;
@@ -93,7 +93,7 @@ def test_page_size_margins(margin, top, right, bottom, left):
 
 
 @assert_no_logs
-@pytest.mark.parametrize('style, width, height', (
+@pytest.mark.parametrize(('style', 'width', 'height'), [
     ('size: 4px 10000px; width: 100px; height: 100px;'
      'padding: 1px; border: 2px solid; margin: 3px',
      112, 112),
@@ -101,7 +101,7 @@ def test_page_size_margins(margin, top, right, bottom, left):
      700, 1700),
     ('size: 1000px; margin: 100px; min-width: 1500px; max-height: 500px',
      1700, 700),
-))
+])
 def test_page_size_over_constrained(style, width, height):
     page, = render_pages('<style>@page { %s }</style>' % style)
     assert page.margin_width() == width
@@ -109,11 +109,11 @@ def test_page_size_over_constrained(style, width, height):
 
 
 @assert_no_logs
-@pytest.mark.parametrize('html', (
+@pytest.mark.parametrize('html', [
     '<div>1</div>',
     '<div></div>',
     '<img src=pattern.png>'
-))
+])
 def test_page_breaks(html):
     pages = render_pages('''
       <style>
@@ -486,14 +486,14 @@ def test_page_breaks_complex_9():
 
 
 @assert_no_logs
-@pytest.mark.parametrize('break_after, margin_break, margin_top', (
+@pytest.mark.parametrize(('break_after', 'margin_break', 'margin_top'), [
     ('page', 'auto', 5),
     ('auto', 'auto', 0),
     ('page', 'keep', 5),
     ('auto', 'keep', 5),
     ('page', 'discard', 0),
     ('auto', 'discard', 0),
-))
+])
 def test_margin_break(break_after, margin_break, margin_top):
     page_1, page_2 = render_pages('''
       <style>
@@ -555,7 +555,7 @@ def test_margin_break_clearance():
 
 
 @assert_no_logs
-@pytest.mark.parametrize('direction, page_break, pages_number', (
+@pytest.mark.parametrize(('direction', 'page_break', 'pages_number'), [
     ('ltr', 'recto', 3),
     ('ltr', 'verso', 2),
     ('rtl', 'recto', 3),
@@ -564,7 +564,7 @@ def test_margin_break_clearance():
     ('ltr', 'left', 2),
     ('rtl', 'right', 2),
     ('rtl', 'left', 3),
-))
+])
 def test_recto_verso_break(direction, page_break, pages_number):
     pages = render_pages('''
       <style>
@@ -578,7 +578,7 @@ def test_recto_verso_break(direction, page_break, pages_number):
 
 
 @assert_no_logs
-@pytest.mark.parametrize('direction, page_break, first_page', (
+@pytest.mark.parametrize(('direction', 'page_break', 'first_page'), [
     ('ltr', 'recto', 'right'),
     ('ltr', 'verso', 'left'),
     ('rtl', 'recto', 'left'),
@@ -587,7 +587,7 @@ def test_recto_verso_break(direction, page_break, pages_number):
     ('ltr', 'left', 'left'),
     ('rtl', 'right', 'right'),
     ('rtl', 'left', 'left'),
-))
+])
 def test_recto_verso_break_root(direction, page_break, first_page):
     page, = render_pages('''
       <style>
@@ -1038,13 +1038,13 @@ def test_page_groups_first_nth():
 
 
 @assert_no_logs
-@pytest.mark.parametrize('style, line_counts', (
+@pytest.mark.parametrize(('style', 'line_counts'), [
     ('orphans: 2; widows: 2', [4, 3]),
     ('orphans: 5; widows: 2', [0, 7]),
     ('orphans: 2; widows: 4', [3, 4]),
     ('orphans: 4; widows: 4', [0, 7]),
     ('orphans: 2; widows: 2; page-break-inside: avoid', [0, 7]),
-))
+])
 def test_orphans_widows_avoid(style, line_counts):
     pages = render_pages('''
       <style>
@@ -1322,7 +1322,7 @@ def images(*widths):
 
 
 @assert_no_logs
-@pytest.mark.parametrize('css, widths', (
+@pytest.mark.parametrize(('css', 'widths'), [
     ('''@top-left { content: %s }
         @top-center { content: %s }
         @top-right { content: %s }
@@ -1375,11 +1375,6 @@ def images(*widths):
      ''' % images(170, 175),
      [200, 300, 175]),
     ('''@top-left { content: ''; width: 200px }
-        @top-center { content: ''; width: 300px }
-        @top-right { content: %s }
-     ''' % images(170, 175),
-     [200, 300, 175]),
-    ('''@top-left { content: ''; width: 200px }
         @top-right { content: ''; width: 500px }
      ''',
      [200, 500]),
@@ -1407,7 +1402,7 @@ def images(*widths):
         @top-right { content: %s }
      ''' % (images(250, 60), images(250, 180)),
      [275, 325]),  # 250 + (100 * 1 / 4), 250 + (100 * 3 / 4)
-))
+])
 def test_page_style(css, widths):
     expected_at_keywords = [
         at_keyword for at_keyword in [
@@ -1571,7 +1566,7 @@ def test_margin_boxes_running_element():
 
 
 @assert_no_logs
-@pytest.mark.parametrize('argument, texts', (
+@pytest.mark.parametrize(('argument', 'texts'), [
     # TODO: start doesn’t work because running elements are removed from the
     # original tree, and the current implentation in
     # layout.get_running_element_for uses the tree to know if it’s at the
@@ -1582,7 +1577,7 @@ def test_margin_boxes_running_element():
     ('first', ('', '2-first', '3-first', '3-last', '5')),
     ('last', ('', '2-last', '3-last', '3-last', '5')),
     ('first-except', ('', '', '', '3-last', '')),
-))
+])
 def test_running_elements(argument, texts):
     pages = render_pages('''
       <style>

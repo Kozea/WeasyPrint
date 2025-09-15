@@ -151,13 +151,13 @@ border_image = '''
 
 
 @assert_no_logs
-@pytest.mark.parametrize('filename, image', (
+@pytest.mark.parametrize(('filename', 'image'), [
     ('pattern.svg', centered_image),
     ('pattern.png', centered_image),
     ('pattern.palette.png', centered_image),
     ('pattern.gif', centered_image),
     ('blue.jpg', blue_image)
-))
+])
 def test_images(assert_pixels, filename, image):
     assert_pixels(image, '''
       <style>
@@ -169,12 +169,12 @@ def test_images(assert_pixels, filename, image):
 
 
 @assert_no_logs
-@pytest.mark.parametrize('filename', (
+@pytest.mark.parametrize('filename', [
     'pattern.svg',
     'pattern.png',
     'pattern.palette.png',
     'pattern.gif',
-))
+])
 def test_resized_images(assert_pixels, filename):
     assert_pixels(resized_image, '''
       <style>
@@ -196,7 +196,7 @@ def test_image_overflow(assert_pixels):
 
 
 @assert_no_logs
-@pytest.mark.parametrize('viewbox, width, height', (
+@pytest.mark.parametrize(('viewbox', 'width', 'height'), [
     (None, None, None),
     (None, 4, None),
     (None, None, 4),
@@ -204,8 +204,7 @@ def test_image_overflow(assert_pixels):
     ('0 0 4 4', 4, None),
     ('0 0 4 4', None, 4),
     ('0 0 4 4', 4, 4),
-    ('0 0 4 4', 4, 4),
-))
+])
 def test_svg_sizing(assert_pixels, viewbox, width, height):
     assert_pixels(centered_image, '''
       <style>
@@ -223,7 +222,7 @@ def test_svg_sizing(assert_pixels, viewbox, width, height):
 
 
 @assert_no_logs
-@pytest.mark.parametrize('viewbox, width, height, image', (
+@pytest.mark.parametrize(('viewbox', 'width', 'height', 'image'), [
     (None, None, None, small_resized_image),
     (None, 8, None, small_resized_image),
     (None, None, 8, small_resized_image),
@@ -233,7 +232,7 @@ def test_svg_sizing(assert_pixels, viewbox, width, height):
     ('0 0 4 4', None, 8, resized_image),
     ('0 0 4 4', 8, 8, resized_image),
     ('0 0 4 4', 800, 800, resized_image),
-))
+])
 def test_svg_resizing(assert_pixels, viewbox, width, height, image):
     assert_pixels(image, '''
       <style>

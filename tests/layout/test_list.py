@@ -6,12 +6,12 @@ from ..testing_utils import assert_no_logs, render_pages
 
 
 @assert_no_logs
-@pytest.mark.parametrize('inside', ('inside', '',))
-@pytest.mark.parametrize('style, character', (
+@pytest.mark.parametrize('inside', ['inside', '',])
+@pytest.mark.parametrize(('style', 'character'), [
     ('circle', '◦ '),
     ('disc', '• '),
     ('square', '▪ '),
-))
+])
 def test_lists_style(inside, style, character):
     page, = render_pages('''
       <style>

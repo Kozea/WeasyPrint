@@ -25,7 +25,7 @@ def test_shrink_to_fit_floating_point_error_1(margin_left, font_size):
 
 
 @assert_no_logs
-@pytest.mark.parametrize('font_size', (1, 5, 10, 50, 100, 1000, 10000))
+@pytest.mark.parametrize('font_size', [1, 5, 10, 50, 100, 1000, 10000])
 def test_shrink_to_fit_floating_point_error_2(font_size):
     letters = 1
     while True:

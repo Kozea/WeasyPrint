@@ -35,7 +35,7 @@ def serialize_stacking(context):
 
 
 @assert_no_logs
-@pytest.mark.parametrize('source, contexts', (
+@pytest.mark.parametrize(('source', 'contexts'), [
     ('''
       <p id=lorem></p>
       <div style="position: relative">
@@ -47,7 +47,7 @@ def serialize_stacking(context):
         <p style="position: relative"></p>
       </div>''',
      ('html', ['body'], [('div', [], []), ('p', [], [])])),
-))
+])
 def test_nested(source, contexts):
     page, = render_pages(source)
     html, = page.children
@@ -72,12 +72,12 @@ def test_image_contexts():
 
 
 @assert_no_logs
-@pytest.mark.parametrize('z_indexes, color', (
+@pytest.mark.parametrize(('z_indexes', 'color'), [
     ((3, 2, 1), 'R'),
     ((1, 2, 3), 'G'),
     ((1, 2, -3), 'B'),
     ((1, 2, 'auto'), 'B'),
     ((-1, 'auto', -2), 'B'),
-))
+])
 def test_z_index(assert_pixels, z_indexes, color):
     assert_pixels('\n'.join([color * 10] * 10), z_index_source % z_indexes)

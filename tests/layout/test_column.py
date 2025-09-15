@@ -6,14 +6,14 @@ from ..testing_utils import assert_no_logs, render_pages
 
 
 @assert_no_logs
-@pytest.mark.parametrize('css', (
+@pytest.mark.parametrize('css', [
     'columns: 4',
     'columns: 100px',
     'columns: 4 100px',
     'columns: 100px 4',
     'column-width: 100px',
     'column-count: 4',
-))
+])
 def test_columns(css):
     page, = render_pages('''
       <style>
@@ -38,13 +38,13 @@ def test_columns(css):
     assert [column.position_y for column in columns] == [0, 0, 0, 0]
 
 
-@pytest.mark.parametrize('value, width', (
+@pytest.mark.parametrize(('value', 'width'), [
     ('normal', 16),  # "normal" is 1em = 16px
     ('unknown', 16),  # default value is normal
     ('15px', 15),
     ('5%', 15),
     ('-1em', 16),  # negative values are not allowed
-))
+])
 def test_column_gap(value, width):
     page, = render_pages('''
       <style>
@@ -786,7 +786,7 @@ def test_columns_empty():
 
 
 @assert_no_logs
-@pytest.mark.parametrize('prop', ('height', 'min-height'))
+@pytest.mark.parametrize('prop', ['height', 'min-height'])
 def test_columns_fixed_height(prop):
     # TODO: we should test when the height is too small
     page, = render_pages('''

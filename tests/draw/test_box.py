@@ -10,9 +10,12 @@ from ..testing_utils import assert_no_logs
 
 
 @assert_no_logs
-def test_borders(assert_pixels, assert_different_renderings, margin='10px',
-                 prop='border'):
-    """Test the rendering of borders"""
+@pytest.mark.parametrize(('margin', 'prop'), [
+    ('10px', 'border'),
+    ('20px', 'outline'),
+])
+def test_outlines_and_borders(assert_pixels, assert_different_renderings, margin, prop):
+    """Test the rendering of outlines and borders."""
     source = '''
       <style>
         @page { size: 140px 110px }
@@ -72,10 +75,10 @@ def test_borders_table_collapse(assert_different_renderings):
 
 
 @assert_no_logs
-@pytest.mark.parametrize('styles', (
+@pytest.mark.parametrize('styles', [
     ('groove', 'outset'),
     ('ridge', 'inset'),
-))
+])
 def test_borders_table_collapse_equivalent(assert_same_renderings, styles):
     """Test the rendering of equivalent collapsing borders."""
     source = '''
@@ -91,14 +94,7 @@ def test_borders_table_collapse_equivalent(assert_same_renderings, styles):
 
 
 @assert_no_logs
-def test_outlines(assert_pixels, assert_different_renderings):
-    return test_borders(
-        assert_pixels, assert_different_renderings,
-        margin='20px', prop='outline')
-
-
-@assert_no_logs
-@pytest.mark.parametrize('border_style', ('none', 'solid', 'dashed', 'dotted'))
+@pytest.mark.parametrize('border_style', ['none', 'solid', 'dashed', 'dotted'])
 def test_small_borders_1(border_style):
     # Regression test for #49.
     html = '''
@@ -111,7 +107,7 @@ def test_small_borders_1(border_style):
 
 
 @assert_no_logs
-@pytest.mark.parametrize('border_style', ('none', 'solid', 'dashed', 'dotted'))
+@pytest.mark.parametrize('border_style', ['none', 'solid', 'dashed', 'dotted'])
 def test_small_borders_2(border_style):
     # Regression test for #146.
     html = '''

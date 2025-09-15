@@ -8,7 +8,7 @@ from ..testing_utils import assert_no_logs, capture_logs, render_pages
 
 
 @assert_no_logs
-@pytest.mark.parametrize('source, messages', (
+@pytest.mark.parametrize(('source', 'messages'), [
     (':lipsum { margin: 2cm', ['WARNING: Invalid or unsupported selector']),
     ('::lipsum { margin: 2cm', ['WARNING: Invalid or unsupported selector']),
     ('foo { margin-color: red', ['WARNING: Ignored', 'unknown property']),
@@ -20,7 +20,7 @@ from ..testing_utils import assert_no_logs, capture_logs, render_pages
     ('test', ['WARNING: Parse error']),
     ('@test', ['WARNING: Unknown empty rule']),
     ('@test {}', ['WARNING: Unknown rule']),
-))
+])
 def test_warnings(source, messages):
     with capture_logs() as logs:
         CSS(string=source)
@@ -38,10 +38,10 @@ def test_warnings_stylesheet():
 
 
 @assert_no_logs
-@pytest.mark.parametrize('style', (
+@pytest.mark.parametrize('style', [
     '<style> html { color red; color: blue; color',
     '<html style="color; color: blue; color red">',
-))
+])
 def test_error_recovery(style):
     with capture_logs() as logs:
         page, = render_pages(style)

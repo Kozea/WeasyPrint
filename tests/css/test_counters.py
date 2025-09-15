@@ -461,14 +461,14 @@ def test_counter_styles_11():
 
 
 @assert_no_logs
-@pytest.mark.parametrize('arguments, values', (
+@pytest.mark.parametrize(('arguments', 'values'), [
     ('cyclic "a" "b" "c"', ('a ', 'b ', 'c ', 'a ')),
     ('symbolic "a" "b"', ('a ', 'b ', 'aa ', 'bb ')),
     ('"a" "b"', ('a ', 'b ', 'aa ', 'bb ')),
     ('alphabetic "a" "b"', ('a ', 'b ', 'aa ', 'ab ')),
     ('fixed "a" "b"', ('a ', 'b ', '3 ', '4 ')),
     ('numeric "0" "1" "2"', ('1 ', '2 ', '10 ', '11 ')),
-))
+])
 def test_counter_symbols(arguments, values):
     page, = render_pages('''
       <style>
@@ -492,10 +492,10 @@ def test_counter_symbols(arguments, values):
 
 
 @assert_no_logs
-@pytest.mark.parametrize('style_type, values', (
+@pytest.mark.parametrize(('style_type', 'values'), [
     ('decimal', ('1. ', '2. ', '3. ', '4. ')),
     ('"/"', ('/', '/', '/', '/')),
-))
+])
 def test_list_style_types(style_type, values):
     page, = render_pages('''
       <style>

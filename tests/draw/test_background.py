@@ -7,7 +7,7 @@ from ..testing_utils import assert_no_logs
 
 @assert_no_logs
 @pytest.mark.parametrize(
-    'expected_pixels, html', (
+    ('expected_pixels', 'html'), [
         ((10 * (10 * 'B' + '\n')), '''
            <style>
              @page { size: 10px }
@@ -35,7 +35,7 @@ from ..testing_utils import assert_no_logs
              body { margin: 1px; background: #00f; height: 5px }
           </style>
           <body>'''),
-    ))
+    ])
 def test_canvas_background(assert_pixels, expected_pixels, html):
     assert_pixels(expected_pixels, html)
 
@@ -66,7 +66,7 @@ def test_canvas_background_size(assert_pixels):
 
 
 @assert_no_logs
-@pytest.mark.parametrize('css, pixels', (
+@pytest.mark.parametrize(('css', 'pixels'), [
     ('url(pattern.png)', '''
         ______________
         ______________
@@ -468,7 +468,7 @@ def test_canvas_background_size(assert_pixels):
         ______________
         ______________
     '''),
-))
+])
 def test_background_image(assert_pixels, css, pixels):
     assert_pixels(pixels, '''
       <style>
@@ -509,7 +509,7 @@ def test_background_image_zero_size_background(assert_pixels):
 
 
 @assert_no_logs
-@pytest.mark.parametrize('css, pixels', (
+@pytest.mark.parametrize(('css', 'pixels'), [
     ('border-box', '''
         ____________
         ____________
@@ -566,7 +566,7 @@ def test_background_image_zero_size_background(assert_pixels):
         ____________
         ____________
     ''')
-))
+])
 def test_background_origin(assert_pixels, css, pixels):
     """Test the background-origin property."""
     assert_pixels(pixels, '''
@@ -825,7 +825,7 @@ def test_background_repeat_round_4(assert_pixels):
 
 
 @assert_no_logs
-@pytest.mark.parametrize('css, pixels', (
+@pytest.mark.parametrize(('css', 'pixels'), [
     ('#00f border-box', '''
         ________
         _BBBBBB_
@@ -866,7 +866,7 @@ def test_background_repeat_round_4(assert_pixels):
         _GGGGGG_
         ________
     '''),
-))
+])
 def test_background_clip(assert_pixels, css, pixels):
     assert_pixels(pixels, '''
       <style>
@@ -880,7 +880,7 @@ def test_background_clip(assert_pixels, css, pixels):
 
 
 @assert_no_logs
-@pytest.mark.parametrize('expected_pixels, html', (
+@pytest.mark.parametrize(('expected_pixels', 'html'), [
     ('''
          ____________
          ____________
@@ -1016,7 +1016,7 @@ def test_background_clip(assert_pixels, css, pixels):
                 background: url(pattern.png) no-repeat right 0/cover }
        </style>
        <body>'''),
-    )
+    ]
 )
 def test_background_size(assert_pixels, expected_pixels, html):
     assert_pixels(expected_pixels, html)

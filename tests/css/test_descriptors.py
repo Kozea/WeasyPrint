@@ -198,12 +198,12 @@ def test_font_face_bad_7():
         "WARNING: Missing src descriptor in '@font-face' rule at 1:1"]
 
 
-@pytest.mark.parametrize('rule', (
+@pytest.mark.parametrize('rule', [
     '@counter-style test {system: alphabetic; symbols: a}',
     '@counter-style test {system: cyclic}',
     '@counter-style test {system: additive; additive-symbols: a 1}',
     '@counter-style test {system: additive; additive-symbols: 10 x, 1 i, 5 v}',
-))
+])
 def test_counter_style_invalid(rule):
     stylesheet = tinycss2.parse_stylesheet(rule)
     with capture_logs() as logs:

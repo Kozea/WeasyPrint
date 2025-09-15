@@ -78,7 +78,7 @@ def path2url(path):
     elif isinstance(path, bytes):
         path = path.decode(FILESYSTEM_ENCODING)
     # If a trailing path.sep is given, keep it
-    wants_trailing_slash = path.endswith(os.path.sep) or path.endswith('/')
+    wants_trailing_slash = path.endswith((os.path.sep, '/'))
     path = os.path.abspath(path)
     if wants_trailing_slash or os.path.isdir(path):
         # Make sure directory names have a trailing slash.

@@ -202,7 +202,8 @@ def test_ph_tables():
     assert table4.style['border_top_width'] == 10
     assert table4.style['border_spacing'] == (3, 3)
     r, g, b, a = table4.style['border_left_color']
-    assert g > r and g > b
+    assert g > r
+    assert g > b
     head_group, rows_group, foot_group = table4.children
     head, = head_group.children
     th, = head.children

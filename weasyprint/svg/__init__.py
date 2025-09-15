@@ -176,7 +176,6 @@ class Node:
             child._wrapper.etree_children = [
                 child._etree_node for child in children]
 
-
     def __iter__(self):
         """Yield node children, handling cascade."""
         if self._children is None:
@@ -215,7 +214,7 @@ class Node:
             return re.sub('[\n\r\t]', ' ', string)
         else:
             string = re.sub('[\n\r]', '', string)
-            string = re.sub('\t', ' ', string)
+            string = string.replace('\t', ' ')
             return re.sub(' +', ' ', string)
 
     def get_child(self, id_):
@@ -323,7 +322,6 @@ class Node:
         else:
             svg.inner_width, svg.inner_height = svg.concrete_width, svg.concrete_height
         svg.inner_diagonal = hypot(svg.inner_width, svg.inner_height) / sqrt(2)
-
 
 
 class SVG:

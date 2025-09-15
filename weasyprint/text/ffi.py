@@ -451,8 +451,8 @@ def _dlopen(ffi, *names, allow_fail=False):
             return ffi.dlopen(name, flags)
     if allow_fail:
         return
-    # Re-raise the exception.
-    print(
+    # Print error message and re-raise the exception.
+    print(  # noqa: T201, logger is not configured yet
         '\n-----\n\n'
         'WeasyPrint could not import some external libraries. Please '
         'carefully follow the installation steps before reporting an issue:\n'

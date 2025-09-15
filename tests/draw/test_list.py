@@ -6,7 +6,7 @@ from ..testing_utils import SANS_FONTS, assert_no_logs
 
 
 @assert_no_logs
-@pytest.mark.parametrize('position, pixels', (
+@pytest.mark.parametrize(('position', 'pixels'), [
     ('outside',
      #  ++++++++++++++      ++++  <li> horizontal margins: 7px 2px
      #                ######      <li> width: 12 - 7 - 2 = 3px
@@ -40,7 +40,7 @@ from ..testing_utils import SANS_FONTS, assert_no_logs
         ____________
         ____________
      ''')
-))
+])
 def test_list_style_image(assert_pixels, position, pixels):
     assert_pixels(pixels, '''
       <style>

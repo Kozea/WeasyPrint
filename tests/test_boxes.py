@@ -247,7 +247,7 @@ def test_whitespace():
 
 
 @assert_no_logs
-@pytest.mark.parametrize('page_type, top, right, bottom, left', (
+@pytest.mark.parametrize(('page_type', 'top', 'right', 'bottom', 'left'), [
     (PageType('left', False, '', 0, ()), 20, 3, 3, 10),
     (PageType('right', False, '', 0, ()), 20, 10, 3, 3),
     (PageType('left', False, '', 1, ()), 10, 3, 3, 10),
@@ -256,7 +256,7 @@ def test_whitespace():
     (PageType('right', False, 'name', 1, (('name', 1),)), 5, 10, 4, 15),
     (PageType('right', False, 'name', 2, (('name', 0),)), 5, 10, 1, 15),
     (PageType('right', False, 'name', 8, (('name', 8),)), 5, 10, 2, 15),
-))
+])
 def test_page_style(page_type, top, right, bottom, left):
     document = FakeHTML(string='''
       <style>
@@ -1246,12 +1246,12 @@ def test_page_counters():
 
 
 @assert_no_logs
-@pytest.mark.parametrize('html', (
+@pytest.mark.parametrize('html', [
     '<html style="display: none">',
     '<html style="display: none">abc',
     '<html style="display: none"><p>abc',
     '<body style="display: none"><p>abc',
-))
+])
 def test_display_none_root(html):
     box = parse_all(html)
     assert box.style['display'] == ('block', 'flow')

@@ -429,6 +429,7 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
         assert string is not None
         yield 'string', string, base_url, None
 
+
 # Work around circular imports.
 from .css import preprocess_stylesheet  # noqa: I001, E402
 from .html import (  # noqa: E402
