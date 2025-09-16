@@ -329,7 +329,6 @@ def first_letter_to_box(box, skip_stack, first_letter_style):
                         letter_box = boxes.BlockBox(
                             f'{box.element_tag}::first-letter',
                             first_letter_style, box.element, [])
-                        letter_box.first_letter_style = None
                         line_box = boxes.LineBox(
                             f'{box.element_tag}::first-letter', letter_style,
                             box.element, [])
@@ -403,10 +402,9 @@ def inline_block_box_layout(context, box, position_x, skip_stack,
     box.position_x = position_x
     box.position_y = 0
     box, _, _, _, _, _ = block_container_layout(
-        context, box, bottom_space=-inf, skip_stack=skip_stack,
-        page_is_empty=True, absolute_boxes=absolute_boxes,
-        fixed_boxes=fixed_boxes, adjoining_margins=None, discard=False,
-        max_lines=None)
+        context, box, bottom_space=-inf, skip_stack=skip_stack, page_is_empty=True,
+        absolute_boxes=absolute_boxes, fixed_boxes=fixed_boxes, adjoining_margins=None,
+        first_letter_style=None, first_line_style=None, discard=False, max_lines=None)
     box.baseline = inline_block_baseline(box)
     return box
 

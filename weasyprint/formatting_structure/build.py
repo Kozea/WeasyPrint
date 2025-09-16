@@ -162,9 +162,6 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
     # names will be in this new list
     counter_scopes.append(set())
 
-    box.first_letter_style = style_for(element, 'first-letter')
-    box.first_line_style = style_for(element, 'first-line')
-
     marker_boxes = []
     if 'list-item' in style['display']:
         marker_boxes = list(marker_to_box(
