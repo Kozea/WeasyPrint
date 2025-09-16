@@ -22,7 +22,7 @@ from ..text.line_break import (  # isort:skip
 
 def iter_line_boxes(context, box, position_y, bottom_space, skip_stack,
                     containing_block, absolute_boxes, fixed_boxes,
-                    first_letter_style):
+                    first_letter_style, first_line_style):
     """Return an iterator of ``(line, resume_at)``.
 
     ``line`` is a laid-out LineBox with as much content as possible that
@@ -37,8 +37,9 @@ def iter_line_boxes(context, box, position_y, bottom_space, skip_stack,
         box.text_indent = 0
     while True:
         line, resume_at = get_next_linebox(
-            context, box, position_y, bottom_space, skip_stack,
-            containing_block, absolute_boxes, fixed_boxes, first_letter_style)
+            context, box, position_y, bottom_space, skip_stack, containing_block,
+            absolute_boxes, fixed_boxes, first_letter_style, first_line_style)
+        first_line_style = None
         if line:
             handle_leader(context, line, containing_block)
             position_y = line.position_y + line.height
@@ -54,7 +55,7 @@ def iter_line_boxes(context, box, position_y, bottom_space, skip_stack,
 
 def get_next_linebox(context, linebox, position_y, bottom_space, skip_stack,
                      containing_block, absolute_boxes, fixed_boxes,
-                     first_letter_style):
+                     first_letter_style, first_line_style):
     """Return next line from given linebox.
 
     Return ``(line, resume_at)``, where ``line`` is a new linebox copied from the
@@ -104,7 +105,7 @@ def get_next_linebox(context, linebox, position_y, bottom_space, skip_stack,
          last_letter, float_width) = split_inline_box(
              context, linebox, position_x, max_x, bottom_space, skip_stack,
              containing_block, line_absolutes, line_fixed, line_placeholders,
-             waiting_floats, line_children)
+             waiting_floats, line_children, first_letter_style, first_line_style)
         linebox.width, linebox.height = line.width, line.height
 
         if is_phantom_linebox(line) and not preserved_line_break:
@@ -444,7 +445,7 @@ def inline_block_width(box, context, containing_block):
 def split_inline_level(context, box, position_x, max_x, bottom_space,
                        skip_stack, containing_block, absolute_boxes,
                        fixed_boxes, line_placeholders, waiting_floats,
-                       line_children):
+                       line_children, first_letter_style, first_line_style):
     """Fit as much content as possible from an inline-level box in a width.
 
     Return ``(new_box, resume_at, preserved_line_break, first_letter, last_letter)``.
@@ -455,6 +456,11 @@ def split_inline_level(context, box, position_x, max_x, bottom_space,
     while respecting ``max_x``, if possible (may overflow is no split is possible.)
 
     """
+    if first_line_style:
+        original_style = box.style
+        box.style = box.style.copy()
+        for key, value in first_line_style.items():
+            box.style[key] = value
     resolve_percentages(box, containing_block)
     float_widths = {'left': 0, 'right': 0}
     if isinstance(box, boxes.TextBox):
@@ -492,7 +498,7 @@ def split_inline_level(context, box, position_x, max_x, bottom_space,
          last_letter, float_widths) = split_inline_box(
              context, box, position_x, max_x, bottom_space, skip_stack,
              containing_block, absolute_boxes, fixed_boxes, line_placeholders,
-             waiting_floats, line_children)
+             waiting_floats, line_children, first_letter_style, first_line_style)
     elif isinstance(box, boxes.AtomicInlineLevelBox):
         new_box = atomic_box(
             context, box, position_x, skip_stack, containing_block,
@@ -530,6 +536,8 @@ def split_inline_level(context, box, position_x, max_x, bottom_space,
         last_letter = '\u2e80'
     else:  # pragma: no cover
         raise TypeError(f'Layout for {type(box).__name__} not handled yet')
+    if first_line_style:
+        box.style = original_style
     return (
         new_box, resume_at, preserved_line_break, first_letter, last_letter,
         float_widths)
@@ -606,10 +614,10 @@ def _out_of_flow_layout(context, box, containing_block, index, child,
         context.running_elements[running_name][page].append(child)
 
 
-def _break_waiting_children(context, box, max_x, bottom_space,
-                            initial_skip_stack, absolute_boxes, fixed_boxes,
-                            line_placeholders, waiting_floats, line_children,
-                            children, waiting_children):
+def _break_waiting_children(context, box, max_x, bottom_space, initial_skip_stack,
+                            absolute_boxes, fixed_boxes, line_placeholders,
+                            waiting_floats, line_children, children, waiting_children,
+                            first_letter_style, first_line_style):
     if waiting_children:
         # Too wide, try to cut inside waiting children, starting from the end.
         # TODO: we should take care of children added into absolute_boxes,
@@ -631,11 +639,11 @@ def _break_waiting_children(context, box, max_x, bottom_space,
             # constraint. We may find a better way.
             max_x = child.position_x + child.margin_width() - 1
             while max_x > child.position_x:
-                new_child, child_resume_at, _, _, _, _ = split_inline_level(
+                new_child, child_resume_at, _, _, _, _ =  split_inline_level(
                     context, original_child, child.position_x, max_x,
                     bottom_space, child_skip_stack, box, absolute_boxes,
                     fixed_boxes, line_placeholders, waiting_floats,
-                    line_children)
+                    line_children, first_letter_style, first_line_style)
                 if child_resume_at:
                     break
                 max_x -= 1
@@ -659,8 +667,9 @@ def _break_waiting_children(context, box, max_x, bottom_space,
 
 
 def split_inline_box(context, box, position_x, max_x, bottom_space, skip_stack,
-                     containing_block, absolute_boxes, fixed_boxes,
-                     line_placeholders, waiting_floats, line_children):
+                     containing_block, absolute_boxes, fixed_boxes, line_placeholders,
+                     waiting_floats, line_children, first_letter_style,
+                     first_line_style):
     """Fit as much content as possible from an inline box in a width.
 
     Return ``(new_box, resume_at, preserved_line_break, first_letter, last_letter)``.
@@ -733,7 +742,8 @@ def split_inline_box(context, box, position_x, max_x, bottom_space, skip_stack,
             split_inline_level(
                 context, child, position_x, available_width, bottom_space,
                 skip_stack, containing_block, absolute_boxes, fixed_boxes,
-                line_placeholders, child_waiting_floats, line_children))
+                line_placeholders, child_waiting_floats, line_children,
+                first_letter_style, first_line_style))
         if box.style['direction'] == 'rtl':
             end_spacing = left_spacing
             max_x -= new_float_widths['left']
@@ -748,7 +758,8 @@ def split_inline_box(context, box, position_x, max_x, bottom_space, skip_stack,
                 split_inline_level(
                     context, child, position_x, available_width, bottom_space,
                     skip_stack, containing_block, absolute_boxes, fixed_boxes,
-                    line_placeholders, child_waiting_floats, line_children))
+                    line_placeholders, child_waiting_floats, line_children,
+                    first_letter_style, first_line_style))
 
         float_widths['left'] = max(float_widths['left'], new_float_widths['left'])
         float_widths['right'] = max(float_widths['right'], new_float_widths['right'])
@@ -798,8 +809,9 @@ def split_inline_box(context, box, position_x, max_x, bottom_space, skip_stack,
                 # Text overflows, find previous break point.
                 previous_resume_at = _break_waiting_children(
                     context, containing_block, max_x, bottom_space, initial_skip_stack,
-                    absolute_boxes, fixed_boxes, line_placeholders,
-                    waiting_floats, line_children, children, waiting_children)
+                    absolute_boxes, fixed_boxes, line_placeholders, waiting_floats,
+                    line_children, children, waiting_children, first_letter_style,
+                    first_line_style)
                 if previous_resume_at:
                     resume_at = previous_resume_at
                     break

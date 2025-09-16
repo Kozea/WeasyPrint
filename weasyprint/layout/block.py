@@ -335,7 +335,7 @@ def _break_line(context, box, line, new_children, next_lines, page_is_empty, ind
 def _linebox_layout(context, box, index, child, new_children, page_is_empty,
                     absolute_boxes, fixed_boxes, adjoining_margins,
                     bottom_space, position_y, skip_stack, first_letter_style,
-                    draw_bottom_decoration, max_lines):
+                    first_line_style, draw_bottom_decoration, max_lines):
     abort = stop = False
     resume_at = None
     new_footnotes = []
@@ -346,8 +346,8 @@ def _linebox_layout(context, box, index, child, new_children, page_is_empty,
         position_y += collapse_margin(adjoining_margins)
     new_containing_block = box
     lines_iterator = iter_line_boxes(
-        context, child, position_y, bottom_space, skip_stack,
-        new_containing_block, absolute_boxes, fixed_boxes, first_letter_style)
+        context, child, position_y, bottom_space, skip_stack, new_containing_block,
+        absolute_boxes, fixed_boxes, first_letter_style, first_line_style)
     for i, (line, resume_at) in enumerate(lines_iterator):
         # Break box if we reached max-lines
         if max_lines is not None:
@@ -712,11 +712,18 @@ def block_container_layout(context, box, bottom_space, skip_stack, page_is_empty
     if box.style['max_lines'] != 'none':
         max_lines = min(box.style['max_lines'], max_lines or inf)
 
+    if box.first_line_style is not None:
+        box_first_line_style = {
+            key: box.first_line_style[key] for key in box.first_line_style.cascaded}
+        if first_line_style is None:
+            first_line_style = box_first_line_style
+        else:
+            first_line_style |= box_first_line_style
+
     if is_start:
         skip = 0
     else:
         (skip, skip_stack), = skip_stack.items()
-        first_letter_style = None
     for index, child in enumerate(box.children[skip:], start=(skip or 0)):
         child.position_x = position_x
         child.position_y = position_y  # doesn’t count adjoining_margins
@@ -743,10 +750,11 @@ def block_container_layout(context, box, bottom_space, skip_stack, page_is_empty
              new_footnotes, max_lines) = _linebox_layout(
                 context, box, index, child, new_children, page_is_empty,
                 absolute_boxes, fixed_boxes, adjoining_margins, bottom_space,
-                position_y, skip_stack, first_letter_style,
+                position_y, skip_stack, first_letter_style, first_line_style,
                 draw_bottom_decoration, max_lines)
             draw_bottom_decoration |= resume_at is None
             adjoining_margins = []
+            first_letter_style = first_line_style = None
 
         else:
             (abort, stop, resume_at, position_y, adjoining_margins,
@@ -757,6 +765,7 @@ def block_container_layout(context, box, bottom_space, skip_stack, page_is_empty
                  draw_bottom_decoration, collapsing_with_children, discard,
                  next_page, max_lines)
             skip_stack = None
+            first_letter_style = first_line_style = None
 
             if None not in (new_max_lines, max_lines):
                 max_lines = new_max_lines
