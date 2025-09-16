@@ -142,6 +142,8 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
             style['display'] = ('inline', 'flow')
 
     box = make_box(element.tag, style, [], element)
+    box.first_letter_style = style_for(element, 'first-letter')
+    box.first_line_style = style_for(element, 'first-line')
 
     if state is None:
         # use a list to have a shared mutable object

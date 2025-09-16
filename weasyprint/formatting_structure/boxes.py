@@ -103,6 +103,8 @@ class Box:
         self.style = style
         self.remove_decoration_sides = set()
         self.children = []
+        self.first_letter_style = None
+        self.first_line_style = None
 
     def __repr__(self):
         return f'<{type(self).__name__} {self.element_tag}>'
