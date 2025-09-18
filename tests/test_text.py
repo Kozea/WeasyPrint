@@ -1384,11 +1384,12 @@ def test_continue():
     assert text2.text == 'efgh'
 
 
-def test_first_letter_text_transform():
-    # Regression test for #1906.
+@assert_no_logs
+def test_first_letter_line_height():
     page, = render_pages('''
       <style>
-        p:first-letter { text-transform: uppercase }
+        p { font-family: weasyprint }
+        p:first-letter { line-height: 1; font-size: 20px }
       </style>
       <p>abc
     ''')
@@ -1398,4 +1399,147 @@ def test_first_letter_text_transform():
     line, = paragraph.children
     first_letter, _ = line.children
     first_letter_text, = first_letter.children
+    assert first_letter_text.text == 'a'
+    assert first_letter_text.height == 20
+
+
+@assert_no_logs
+def test_first_letter_text_transform():
+    # Regression test for #1906.
+    page, = render_pages('''
+      <style>
+        p::first-letter { text-transform: uppercase }
+      </style>
+      <p>abc
+    ''')
+    html, = page.children
+    body, = html.children
+    paragraph, = body.children
+    line, = paragraph.children
+    first_letter, next_text = line.children
+    first_letter_text, = first_letter.children
     assert first_letter_text.text == 'A'
+    assert next_text.text == 'bc'
+
+
+@assert_no_logs
+def test_first_letter_nested():
+    page, = render_pages('''
+      <style>
+        body::first-letter { font-style: italic }
+        p::first-letter { font-weight: 700 }
+      </style>
+      <p>abc</p>
+      <p>abc</p>
+    ''')
+    html, = page.children
+    body, = html.children
+    p1, p2 = body.children
+    line, = p1.children
+    first_letter, next_text = line.children
+    first_letter_text, = first_letter.children
+    assert first_letter_text.style['font_style'] == 'italic'
+    assert first_letter_text.style['font_weight'] == 700
+    assert next_text.style['font_style'] == 'normal'
+    assert next_text.style['font_weight'] == 400
+    line, = p2.children
+    first_letter, next_text = line.children
+    first_letter_text, = first_letter.children
+    assert first_letter_text.style['font_style'] == 'normal'
+    assert first_letter_text.style['font_weight'] == 700
+    assert next_text.style['font_style'] == 'normal'
+    assert next_text.style['font_weight'] == 400
+
+
+@assert_no_logs
+def test_first_line_line_height():
+    page, = render_pages('''
+      <style>
+        p { font-family: weasyprint }
+        p:first-line { line-height: 1; font-size: 20px }
+      </style>
+      <p>abc<br>def
+    ''')
+    html, = page.children
+    body, = html.children
+    paragraph, = body.children
+    line1, line2 = paragraph.children
+    first_line_box, = line1.children
+    first_line_text, br = first_line_box.children
+    assert first_line_text.text == 'abc'
+    assert first_line_text.height == 20
+
+
+@assert_no_logs
+def test_first_line_text_transform():
+    page, = render_pages('''
+      <style>
+        p::first-line { text-transform: uppercase }
+      </style>
+      <p>abc<br>def
+    ''')
+    html, = page.children
+    body, = html.children
+    paragraph, = body.children
+    line1, line2 = paragraph.children
+    first_line_box, = line1.children
+    first_line_text, br = first_line_box.children
+    assert first_line_text.text == 'ABC'
+    next_line_text, = line2.children
+    assert next_line_text.text == 'def'
+
+
+@assert_no_logs
+def test_first_line_nested():
+    page, = render_pages('''
+      <style>
+        body::first-line { font-style: italic }
+        p::first-line { font-weight: 700 }
+      </style>
+      <p>abc<br>def</p>
+      <p>abc<br>def</p>
+    ''')
+    html, = page.children
+    body, = html.children
+    p1, p2 = body.children
+    line1, line2 = p1.children
+    first_line_box, = line1.children
+    first_line_text, br = first_line_box.children
+    assert first_line_text.style['font_style'] == 'italic'
+    assert first_line_text.style['font_weight'] == 700
+    next_line_text, = line2.children
+    assert next_line_text.style['font_style'] == 'normal'
+    assert next_line_text.style['font_weight'] == 400
+    line1, line2 = p2.children
+    first_line_box, = line1.children
+    first_line_text, br = first_line_box.children
+    assert first_line_text.style['font_style'] == 'normal'
+    assert first_line_text.style['font_weight'] == 700
+    next_line_text, = line2.children
+    assert next_line_text.style['font_style'] == 'normal'
+    assert next_line_text.style['font_weight'] == 400
+
+
+@assert_no_logs
+def test_first_line_first_letter():
+    page, = render_pages('''
+      <style>
+        p::first-letter { font-style: italic }
+        p::first-line { font-weight: 700 }
+      </style>
+      <p>abc<br>def</p>
+    ''')
+    html, = page.children
+    body, = html.children
+    paragraph, = body.children
+    line1, line2 = paragraph.children
+    first_line_box, = line1.children
+    first_letter_box, first_line_text, br = first_line_box.children
+    first_letter_text, = first_letter_box.children
+    assert first_letter_text.style['font_style'] == 'italic'
+    assert first_letter_text.style['font_weight'] == 700
+    assert first_line_text.style['font_style'] == 'normal'
+    assert first_line_text.style['font_weight'] == 700
+    next_line_text, = line2.children
+    assert next_line_text.style['font_style'] == 'normal'
+    assert next_line_text.style['font_weight'] == 400
