@@ -146,10 +146,12 @@ def generate_pdf(document, target, zoom, **options):
     # Custom color profiles
     for name, color_profile in document.color_profiles.items():
         profile = pydyf.Stream(
-            color_profile['_content'],
+            [color_profile['_content']],
             pydyf.Dictionary({'N': len(color_profile['components'])}),
             compress=compress)
         pdf.add_object(profile)
+        if name == 'device-cmyk':
+            name = 'DeviceCMYK'
         color_space[name] = pydyf.Array(('/ICCBased', profile.reference))
     pdf.add_object(color_space)
     resources = pydyf.Dictionary({
