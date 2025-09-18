@@ -3,7 +3,6 @@
 import unicodedata
 from math import inf
 
-from ..css import AnonymousStyle
 from ..css.properties import INHERITED
 from ..formatting_structure import boxes, build
 from .absolute import AbsolutePlaceholder, absolute_layout
@@ -468,11 +467,12 @@ def split_inline_level(context, box, position_x, max_x, bottom_space,
 
     """
     if first_line_style:
-        original_style = box.style
+        box = box.copy()
         box.style = box.style.copy()
         for key, value in first_line_style.items():
             if key in INHERITED:
                 box.style[key] = value
+        build.process_text_transform(box)
     resolve_percentages(box, containing_block)
     float_widths = {'left': 0, 'right': 0}
     if isinstance(box, boxes.TextBox):
@@ -548,8 +548,6 @@ def split_inline_level(context, box, position_x, max_x, bottom_space,
         last_letter = '\u2e80'
     else:  # pragma: no cover
         raise TypeError(f'Layout for {type(box).__name__} not handled yet')
-    if first_line_style:
-        box.style = original_style
     return (
         new_box, resume_at, preserved_line_break, first_letter, last_letter,
         float_widths)
@@ -651,7 +649,7 @@ def _break_waiting_children(context, box, max_x, bottom_space, initial_skip_stac
             # constraint. We may find a better way.
             max_x = child.position_x + child.margin_width() - 1
             while max_x > child.position_x:
-                new_child, child_resume_at, _, _, _, _ =  split_inline_level(
+                new_child, child_resume_at, _, _, _, _ = split_inline_level(
                     context, original_child, child.position_x, max_x,
                     bottom_space, child_skip_stack, box, absolute_boxes,
                     fixed_boxes, line_placeholders, waiting_floats,
