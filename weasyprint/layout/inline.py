@@ -301,7 +301,9 @@ def first_letter_to_box(box, skip_stack, first_letter_style):
         first_letter = ''
         child = box.children[0]
         if isinstance(child, boxes.TextBox):
-            letter_style = AnonymousStyle(first_letter_style)
+            letter_style = box.style.copy()
+            for key, value in first_letter_style.items():
+                letter_style[key] = value
             if child.element_tag.endswith('::first-letter'):
                 letter_box = boxes.InlineBox(
                     f'{box.element_tag}::first-letter', letter_style,
@@ -328,10 +330,10 @@ def first_letter_to_box(box, skip_stack, first_letter_style):
                     # "This type of initial letter is similar to an
                     # inline-level element if its 'float' property is 'none',
                     # otherwise it is similar to a floated element."
-                    if first_letter_style['float'] == 'none':
+                    if letter_style['float'] == 'none':
                         letter_box = boxes.InlineBox(
                             f'{box.element_tag}::first-letter',
-                            first_letter_style, box.element, [])
+                            letter_style, box.element, [])
                         text_box = boxes.TextBox(
                             f'{box.element_tag}::first-letter', letter_style,
                             box.element, first_letter)
@@ -340,7 +342,7 @@ def first_letter_to_box(box, skip_stack, first_letter_style):
                     else:
                         letter_box = boxes.BlockBox(
                             f'{box.element_tag}::first-letter',
-                            first_letter_style, box.element, [])
+                            letter_style, box.element, [])
                         line_box = boxes.LineBox(
                             f'{box.element_tag}::first-letter', letter_style,
                             box.element, [])
@@ -353,10 +355,8 @@ def first_letter_to_box(box, skip_stack, first_letter_style):
                     build.process_text_transform(text_box)
                     if skip_stack and child_skip_stack:
                         index, = skip_stack
-                        (child_index, grandchild_skip_stack), = (
-                            child_skip_stack.items())
-                        skip_stack = {
-                            index: {child_index + 1: grandchild_skip_stack}}
+                        (child_index, grandchild_skip_stack), = child_skip_stack.items()
+                        skip_stack = {index: {child_index + 1: grandchild_skip_stack}}
         elif isinstance(child, boxes.ParentBox):
             if skip_stack:
                 child_skip_stack, = skip_stack.values()

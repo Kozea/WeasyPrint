@@ -720,6 +720,14 @@ def block_container_layout(context, box, bottom_space, skip_stack, page_is_empty
         else:
             first_line_style |= box_first_line_style
 
+    if box.first_letter_style is not None:
+        box_first_letter_style = {
+            key: box.first_letter_style[key] for key in box.first_letter_style.cascaded}
+        if first_letter_style is None:
+            first_letter_style = box_first_letter_style
+        else:
+            first_letter_style |= box_first_letter_style
+
     if is_start:
         skip = 0
     else:
