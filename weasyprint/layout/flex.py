@@ -712,6 +712,8 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
             position_main += free_space / (len(line) + 1)
 
         growths = sum(child.style['flex_grow'] for child in children)
+        if box.style['direction'] == 'rtl' and main == 'width':
+            main_gap *= -1
         for i, (index, child) in enumerate(line):
             if i:
                 position_main += main_gap

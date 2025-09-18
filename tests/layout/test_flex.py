@@ -74,6 +74,28 @@ def test_flex_direction_row_rtl():
 
 
 @assert_no_logs
+def test_flex_direction_row_rtl_gap():
+    page, = render_pages('''
+      <article style="display: flex; direction: rtl; gap: 10px">
+        <div>A</div>
+        <div>B</div>
+        <div>C</div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div1, div2, div3 = article.children
+    assert div1.children[0].children[0].text == 'A'
+    assert div2.children[0].children[0].text == 'B'
+    assert div3.children[0].children[0].text == 'C'
+    assert div1.position_y == div2.position_y == div3.position_y == article.position_y
+    assert div1.position_x + div1.width == article.position_x + article.width
+    assert div1.position_x == div2.position_x + div2.width + 10
+    assert div2.position_x == div3.position_x + div3.width + 10
+
+
+@assert_no_logs
 def test_flex_direction_row_reverse():
     page, = render_pages('''
       <article style="display: flex; flex-direction: row-reverse">
