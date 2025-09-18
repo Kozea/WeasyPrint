@@ -4,6 +4,7 @@ import unicodedata
 from math import inf
 
 from ..css import AnonymousStyle
+from ..css.properties import INHERITED
 from ..formatting_structure import boxes, build
 from .absolute import AbsolutePlaceholder, absolute_layout
 from .flex import flex_layout
@@ -147,6 +148,16 @@ def get_next_linebox(context, linebox, position_y, bottom_space, skip_stack,
         context.excluded_shapes = excluded_shapes
         position_x, position_y, available_width = avoid_collisions(
             context, line, containing_block, outer=False)
+
+        if first_line_style:
+            first_line_box = line.copy_with_children(line.children)
+            first_line_box.element_tag += '::first-line'
+            first_line_box.style = first_line_box.style.copy()
+            for key, value in first_line_style.items():
+                first_line_box.style[key] = value
+            line.children = [first_line_box]
+            _adjust_line_height(first_line_box)
+
         if containing_block.style['direction'] == 'ltr':
             condition = (position_x, position_y) == (
                 original_position_x, original_position_y)
@@ -460,7 +471,8 @@ def split_inline_level(context, box, position_x, max_x, bottom_space,
         original_style = box.style
         box.style = box.style.copy()
         for key, value in first_line_style.items():
-            box.style[key] = value
+            if key in INHERITED:
+                box.style[key] = value
     resolve_percentages(box, containing_block)
     float_widths = {'left': 0, 'right': 0}
     if isinstance(box, boxes.TextBox):
@@ -666,6 +678,19 @@ def _break_waiting_children(context, box, max_x, bottom_space, initial_skip_stac
         return {children[-1][0] + 1: None}
 
 
+def _adjust_line_height(box):
+    """Set margins to the half leading to respect line height.
+
+    Also compensate for borders and padding, we want margin_height() == line_height.
+
+    """
+    line_height, box.baseline = strut(box.style)
+    box.height = box.style['font_size']
+    half_leading = (line_height - box.height) / 2
+    box.margin_top = half_leading - box.border_top_width - box.padding_top
+    box.margin_bottom = half_leading - box.border_bottom_width - box.padding_bottom
+
+
 def split_inline_box(context, box, position_x, max_x, bottom_space, skip_stack,
                      containing_block, absolute_boxes, fixed_boxes, line_placeholders,
                      waiting_floats, line_children, first_letter_style,
@@ -868,15 +893,7 @@ def split_inline_box(context, box, position_x, max_x, bottom_space, skip_stack,
         new_box.width = position_x - content_box_left
         new_box.translate(dx=float_widths['left'], ignore_floats=True)
 
-    line_height, new_box.baseline = strut(box.style)
-    new_box.height = box.style['font_size']
-    half_leading = (line_height - new_box.height) / 2
-    # Set margins to the half leading but also compensate for borders and
-    # paddings. We want margin_height() == line_height
-    new_box.margin_top = (
-        half_leading - new_box.border_top_width - new_box.padding_top)
-    new_box.margin_bottom = (
-        half_leading - new_box.border_bottom_width - new_box.padding_bottom)
+    _adjust_line_height(new_box)
 
     if new_box.style['position'] == 'relative':
         for absolute_box in absolute_boxes:
