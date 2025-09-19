@@ -28,6 +28,8 @@ def parse_media_query(tokens):
         return ['all']
     else:
         media = []
+        if tokens[0].type == 'ident' and tokens[0].lower_value == 'only':
+            tokens = tokens[1:]
         for part in split_on_comma(tokens):
             types = [token.type for token in part]
             if types == ['ident']:
