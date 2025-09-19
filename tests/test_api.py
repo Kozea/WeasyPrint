@@ -177,12 +177,12 @@ def test_css_parsing():
         # Using 'encoding' adds a CSSCharsetRule
         h1_rule, = css.matcher.lower_local_name_selectors['h1']
         assert h1_rule[3] == 'before'
-        assert h1_rule[4][0][0] == 'content'
-        assert h1_rule[4][0][1][0][1] == 'I løvë Unicode'
-        assert h1_rule[4][1][0] == 'background_image'
-        assert h1_rule[4][1][1][0][0] == 'url'
-        assert h1_rule[4][1][1][0][1].startswith('file:')
-        assert h1_rule[4][1][1][0][1].endswith('tests/resources/pattern.png')
+        assert h1_rule[4][0][0][0] == 'content'
+        assert h1_rule[4][0][0][1][0][1] == 'I løvë Unicode'
+        assert h1_rule[4][0][1][0] == 'background_image'
+        assert h1_rule[4][0][1][1][0][0] == 'url'
+        assert h1_rule[4][0][1][1][0][1].startswith('file:')
+        assert h1_rule[4][0][1][1][0][1].endswith('tests/resources/pattern.png')
 
     _test_resource(CSS, 'utf8-test.css', check_css)
     _test_resource(CSS, 'latin1-test.css', check_css, encoding='latin1')
