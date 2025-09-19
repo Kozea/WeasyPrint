@@ -53,16 +53,16 @@ def _w3c_date_to_pdf(string, attr_name):
     return f'D:{pdf_date}'
 
 
-def _reference_resources(pdf, resources, images, fonts):
+def _reference_resources(pdf, resources, images, fonts, color_profiles):
     if 'Font' in resources:
         assert resources['Font'] is None
         resources['Font'] = fonts
-    _use_references(pdf, resources, images)
+    _use_references(pdf, resources, images, color_profiles)
     pdf.add_object(resources)
     return resources.reference
 
 
-def _use_references(pdf, resources, images):
+def _use_references(pdf, resources, images, color_profiles):
     # XObjects
     for key, x_object in resources.get('XObject', {}).items():
         # Images
@@ -77,7 +77,8 @@ def _use_references(pdf, resources, images):
 
             image = image_data['image']
             dpi_ratio = max(image_data['dpi_ratios'])
-            x_object = image.get_x_object(image_data['interpolate'], dpi_ratio)
+            x_object = image.get_x_object(
+                image_data['interpolate'], dpi_ratio, color_profiles)
             image_data['x_object'] = x_object
 
         pdf.add_object(x_object)
@@ -91,7 +92,8 @@ def _use_references(pdf, resources, images):
         # Resources
         if 'Resources' in x_object.extra:
             x_object.extra['Resources'] = _reference_resources(
-                pdf, x_object.extra['Resources'], images, resources['Font'])
+                pdf, x_object.extra['Resources'], images, resources['Font'],
+                color_profiles)
 
     # Patterns
     for key, pattern in resources.get('Pattern', {}).items():
@@ -99,7 +101,8 @@ def _use_references(pdf, resources, images):
         resources['Pattern'][key] = pattern.reference
         if 'Resources' in pattern.extra:
             pattern.extra['Resources'] = _reference_resources(
-                pdf, pattern.extra['Resources'], images, resources['Font'])
+                pdf, pattern.extra['Resources'], images, resources['Font'],
+                color_profiles)
 
     # Shadings
     for key, shading in resources.get('Shading', {}).items():
@@ -150,8 +153,7 @@ def generate_pdf(document, target, zoom, **options):
             pydyf.Dictionary({'N': len(color_profile['components'])}),
             compress=compress)
         pdf.add_object(profile)
-        if name == 'device-cmyk':
-            name = 'DeviceCMYK'
+        color_profile['_reference'] = profile.reference
         color_space[name] = pydyf.Array(('/ICCBased', profile.reference))
     pdf.add_object(color_space)
     resources = pydyf.Dictionary({
@@ -308,7 +310,7 @@ def generate_pdf(document, target, zoom, **options):
         pdf.add_object(dingbats)
         pdf_fonts['ZaDb'] = dingbats.reference
     resources['Font'] = pdf_fonts.reference
-    _use_references(pdf, resources, images)
+    _use_references(pdf, resources, images, document.color_profiles)
 
     # Anchors
     if pdf_names:

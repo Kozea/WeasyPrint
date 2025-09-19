@@ -120,7 +120,7 @@ class RasterImage:
             key = f'{self.id}-{slot}-{self._dpi or ""}'
             return LazyImage(self._cache, key, data)
 
-    def get_x_object(self, interpolate, dpi_ratio):
+    def get_x_object(self, interpolate, dpi_ratio, color_profiles):
         if dpi_ratio == 1:
             width, height = self.width, self.height
         else:
@@ -139,7 +139,9 @@ class RasterImage:
         elif self.mode in ('L', 'LA'):
             color_space = '/DeviceGray'
         elif self.mode == 'CMYK':
-            color_space = '/DeviceCMYK'
+            color_space = (
+                pydyf.Array(('/ICCBased', color_profiles['device-cmyk']['_reference']))
+                if 'device-cmyk' in color_profiles else '/DeviceCMYK')
         else:
             LOGGER.warning('Unknown image mode: %s', self.mode)
             color_space = '/DeviceRGB'

@@ -110,7 +110,10 @@ class Stream(pydyf.Stream):
             lightness, a, b = color.to('lab').coordinates
             self.set_color_special(None, stroke, lightness, a, b)
         elif color.space == 'device-cmyk':
-            self.set_color_space('DeviceCMYK', stroke)
+            device_cmyk = (
+                'device-cmyk' if 'device-cmyk' in self._color_profiles
+                else 'DeviceCMYK')
+            self.set_color_space(device_cmyk, stroke)
             c, m, y, k = color.coordinates
             self.set_color_special(None, stroke, c, m, y, k)
         elif color.space.startswith('--') and color.space in self._color_profiles:
