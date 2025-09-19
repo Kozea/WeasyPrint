@@ -278,8 +278,7 @@ def _distribute_extra_space(affected_sizes, affected_tracks_types,
                 item.position_y = 0
                 item, _, _, _, _, _ = block_level_layout(
                     context, item, bottom_space=-inf, skip_stack=None,
-                    containing_block=containing_block, page_is_empty=True,
-                    absolute_boxes=[], fixed_boxes=[])
+                    containing_block=containing_block)
                 space = item.margin_height()
             for sizes in tracks_sizes[i:i+span]:
                 space -= sizes[affected_size_index]
@@ -396,8 +395,7 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
                 bottom_space = -inf
                 child, _, _, _, _, _ = block_level_layout(
                     context, child, bottom_space, skip_stack=None,
-                    containing_block=parent, page_is_empty=True,
-                    absolute_boxes=[], fixed_boxes=[])
+                    containing_block=parent)
                 height = max(height, child.margin_height())
             if min_function in ('min-content', 'max_content', 'auto'):
                 sizes[0] = height

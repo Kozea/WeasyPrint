@@ -184,14 +184,16 @@ def table_layout(context, table, bottom_space, skip_stack, containing_block,
                     context, cell, bottom_space, cell_skip_stack,
                     page_is_empty=page_is_empty, absolute_boxes=absolute_boxes,
                     fixed_boxes=fixed_boxes, adjoining_margins=None,
-                    discard=False, max_lines=None)
+                    first_letter_style=None, first_line_style=None, discard=False,
+                    max_lines=None)
                 cell.style = original_style
                 if new_cell is None:
                     cell = cell.copy_with_children([])
                     cell, _, _, _, _, _ = block_container_layout(
                         context, cell, bottom_space, cell_skip_stack,
                         page_is_empty=True, absolute_boxes=[], fixed_boxes=[],
-                        adjoining_margins=None, discard=False, max_lines=None)
+                        adjoining_margins=None, first_letter_style=None,
+                        first_line_style=None, discard=False, max_lines=None)
                     cell_resume_at = {0: None}
                 else:
                     cell = new_cell

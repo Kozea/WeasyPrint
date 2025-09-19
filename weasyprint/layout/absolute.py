@@ -202,7 +202,8 @@ def absolute_block(context, box, containing_block, fixed_boxes, bottom_space,
         new_box, resume_at, _, _, _, _ = block_container_layout(
             context, box, bottom_space, skip_stack, page_is_empty=True,
             absolute_boxes=absolute_boxes, fixed_boxes=fixed_boxes,
-            adjoining_margins=None, discard=False, max_lines=None)
+            adjoining_margins=None, first_letter_style=None, first_line_style=None,
+            discard=False, max_lines=None)
     elif isinstance(box, (boxes.FlexContainerBox)):
         new_box, resume_at, _, _, _ = flex_layout(
             context, box, bottom_space, skip_stack, containing_block,
