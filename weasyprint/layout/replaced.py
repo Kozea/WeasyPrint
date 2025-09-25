@@ -281,10 +281,13 @@ def block_replaced_box_layout(context, box, containing_block):
         block_replaced_width(box, containing_block)
         replaced_box_height(box)
 
-    # Don't collide with floats
-    # https://www.w3.org/TR/CSS21/visuren.html#floats
-    box.position_x, box.position_y, _ = avoid_collisions(
-        context, box, containing_block, outer=False)
+    # TODO: flex items shouldn't be block boxes, this condition
+    # would then be useless when this is fixed.
+    if not box.is_flex_item:
+        # Don't collide with floats
+        # https://www.w3.org/TR/CSS21/visuren.html#floats
+        box.position_x, box.position_y, _ = avoid_collisions(
+            context, box, containing_block, outer=False)
     resume_at = None
     next_page = {'break': 'any', 'page': None}
     adjoining_margins = []
