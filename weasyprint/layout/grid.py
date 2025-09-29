@@ -402,6 +402,9 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
                     context, child, bottom_space, skip_stack=child_skip_stack,
                     containing_block=parent, page_is_empty=True,
                     absolute_boxes=[], fixed_boxes=[])
+                if skip_stack and y in skip_stack and skip_stack[y]:
+                    if child.style['box_decoration_break'] != 'clone':
+                        child.remove_decoration(start=True, end=False)
                 height = max(height, child.margin_height())
             if min_function in ('min-content', 'max_content', 'auto'):
                 sizes[0] = height
