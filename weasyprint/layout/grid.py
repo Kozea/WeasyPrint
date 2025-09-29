@@ -400,6 +400,9 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
                 child, _, _, _, _, _ = block_level_layout(
                     context, child, bottom_space, skip_stack=child_skip_stack,
                     containing_block=parent)
+                if skip_stack and y in skip_stack and skip_stack[y]:
+                    if child.style['box_decoration_break'] != 'clone':
+                        child.remove_decoration(start=True, end=False)
                 height = max(height, child.margin_height())
             if min_function in ('min-content', 'max_content', 'auto'):
                 sizes[0] = height
@@ -1140,12 +1143,14 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         if overflows and not page_is_empty:
             if box.style['break_inside'] == 'avoid':
                 # Avoid breaks inside grid container, break before.
+                context.finish_block_formatting_context(box)
                 return None, None, {'break': 'any', 'page': None}, [], False
             resume_row = i
             if page_breaks_by_row[i]['inside'] == 'avoid':
                 # Break before current row.
                 if resume_row == 0:
                     # First row, break before grid container.
+                    context.finish_block_formatting_context(box)
                     return None, None, {'break': 'any', 'page': None}, [], False
                 # Mark all children before and in current row as drawn on the page.
                 for j, child in enumerate(children):
