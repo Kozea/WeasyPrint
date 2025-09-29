@@ -1,5 +1,6 @@
 """Layout for grid containers and grid-items."""
 
+from collections import defaultdict
 from itertools import count, cycle
 from math import inf
 
@@ -338,8 +339,8 @@ def _distribute_extra_space(affected_sizes, affected_tracks_types,
 
 
 def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
-                          implicit_start, direction, gap, context,
-                          containing_block, orthogonal_sizes=None):
+                          implicit_start, direction, gap, context, containing_block,
+                          skip_stack, orthogonal_sizes=None):
     assert direction in 'xy'
     tracks_sizes = []
     # TODO: Check that auto box size is 0 for percentages.
@@ -381,13 +382,16 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
             from .block import block_level_layout
             height = 0
             for child in children:
-                x, _, width, _ = children_positions[child]
+                x, y, width, _ = children_positions[child]
                 width = sum(orthogonal_sizes[x:x+width])
+                child_skip_stack = None
+                if skip_stack and y in skip_stack and skip_stack[y]:
+                    index = tuple(children_positions).index(child)
+                    child_skip_stack = skip_stack[y].get(index)
                 child = child.deepcopy()
                 child.position_x = 0
                 child.position_y = 0
-                parent = boxes.BlockContainerBox.anonymous_from(
-                    containing_block, ())
+                parent = boxes.BlockContainerBox.anonymous_from(containing_block, ())
                 resolve_percentages(parent, containing_block)
                 parent.position_x = child.position_x
                 parent.position_y = child.position_y
@@ -395,7 +399,7 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
                 parent.height = height
                 bottom_space = -inf
                 child, _, _, _, _, _ = block_level_layout(
-                    context, child, bottom_space, skip_stack=None,
+                    context, child, bottom_space, skip_stack=child_skip_stack,
                     containing_block=parent, page_is_empty=True,
                     absolute_boxes=[], fixed_boxes=[])
                 height = max(height, child.margin_height())
@@ -660,8 +664,9 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
     second_tracks = rows if second_flow == 'row' else columns
 
     # 1.1 Position anything that’s not auto-positioned.
+    children = sorted(box.children, key=lambda item: item.style['order'])
     children_positions = {}
-    for child in box.children:
+    for child in children:
         column_start = child.style['grid_column_start']
         column_end = child.style['grid_column_end']
         row_start = child.style['grid_row_start']
@@ -677,7 +682,6 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
             children_positions[child] = (x, y, width, height)
 
     # 1.2 Process the items locked to a given row (resp. column).
-    children = sorted(box.children, key=lambda item: item.style['order'])
     for child in children:
         if child in children_positions:
             continue
@@ -980,6 +984,21 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         rows.append(next(auto_rows))
         rows.append([])
 
+    page_breaks_by_row = defaultdict(
+        lambda: {'before': 'auto', 'after': 'auto', 'inside': 'auto'})
+    for child, (x, y, width, height) in children_positions.items():
+        row_page_break = page_breaks_by_row[y]
+        if child.style['break_inside'] in ('avoid', 'avoid-page'):
+            row_page_break['inside'] = 'avoid'
+        for side in ('before', 'after'):
+            if child.style[f'break_{side}'] in ('avoid', 'avoid-page'):
+                if row_page_break[side] != 'page':
+                    row_page_break[side] = 'avoid'
+            elif child.style[f'break_{side}'] in ('page', 'always'):
+                row_page_break[side] = 'page'
+            elif child.style[f'break_{side}'] in ('left', 'right', 'recto', 'verso'):
+                row_page_break[side] = child.style[f'break_{side}']
+
     # 2. Find the size of the grid container.
 
     if isinstance(box, boxes.GridBox):
@@ -1003,12 +1022,12 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
     # 3.1 Resolve the sizes of the grid columns.
     columns_sizes = _resolve_tracks_sizes(
         column_sizing_functions, box.width, children_positions, implicit_second_1,
-        'x', column_gap, context, box)
+        'x', column_gap, context, box, skip_stack)
 
     # 3.2 Resolve the sizes of the grid rows.
     rows_sizes = _resolve_tracks_sizes(
         row_sizing_functions, box.height, children_positions, implicit_y1, 'y',
-        row_gap, context, box, [size for size, _ in columns_sizes])
+        row_gap, context, box, skip_stack, [size for size, _ in columns_sizes])
 
     # 3.3 Re-resolve the sizes of the grid columns with min-/max-content.
     # TODO: Re-resolve.
@@ -1099,6 +1118,7 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
             y += size + row_gap
 
     # 4. Lay out the grid items into their respective containing blocks.
+
     # Find resume_at row.
     this_page_children = []
     resume_row = None
@@ -1116,40 +1136,61 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         (len(rows_sizes[skip_row:]) - 1) * row_gap)
     row_lines_positions = (
         [*rows_positions[skip_row + 1:], box.content_box_y() + total_height])
-    for i, row_y in enumerate(row_lines_positions, start=skip_row + 1):
-        if context.overflows_page(bottom_space, row_y - skip_height):
-            if not page_is_empty:
-                if i == 1:
+    for i, row_y in enumerate(row_lines_positions, start=skip_row):
+        # TODO: handle break-before and break-after for rows.
+        overflows = context.overflows_page(bottom_space, row_y - skip_height)
+        if overflows and not page_is_empty:
+            if box.style['break_inside'] == 'avoid':
+                # Avoid breaks inside grid container, break before.
+                return None, None, {'break': 'any', 'page': None}, [], False
+            resume_row = i
+            if page_breaks_by_row[i]['inside'] == 'avoid':
+                # Break before current row.
+                if resume_row == 0:
+                    # First row, break before grid container.
                     return None, None, {'break': 'any', 'page': None}, [], False
-                resume_row = i - 1
-                resume_at = {i-1: None}
-                for child in children:
+                # Mark all children before and in current row as drawn on the page.
+                for j, child in enumerate(children):
                     _, y, _, _ = children_positions[child]
-                    if skip_row <= y <= i-2:
-                        this_page_children.append(child)
-                break
+                    if skip_row <= y < resume_row:
+                        this_page_children.append((j, child))
+                resume_at = {resume_row: None}
+            else:
+                # Break inside current row.
+                # Mark all children before current row as drawn on the page.
+                for j, child in enumerate(children):
+                    _, y, _, _ = children_positions[child]
+                    if skip_row <= y <= resume_row:
+                        this_page_children.append((j, child))
+            break
         page_is_empty = False
     else:
-        for child in children:
+        for j, child in enumerate(children):
             _, y, _, _ = children_positions[child]
             if skip_row <= y:
-                this_page_children.append(child)
+                this_page_children.append((j, child))
     if box.height == 'auto':
         box.height = (
             sum(size for size, _ in rows_sizes[skip_row:resume_row]) +
             (len(rows_sizes[skip_row:resume_row]) - 1) * row_gap)
+
     # Lay out grid items.
     justify_items = set(box.style['justify_items'])
     align_items = set(box.style['align_items'])
     new_children = []
+    new_children_by_rows = defaultdict(list)
     baseline = None
     next_page = {'break': 'any', 'page': None}
     from .block import block_level_layout
-    for child in this_page_children:
+    for i, child in this_page_children:
         x, y, width, height = children_positions[child]
-        index = box.children.index(child)
-        if skip_stack and skip_stack.get(y) and index in skip_stack[y]:
-            child_skip_stack = skip_stack[y][index]
+        index = children.index(child)
+        if skip_stack and skip_stack.get(y):
+            if index in skip_stack[y]:
+                child_skip_stack = skip_stack[y][index]
+            else:
+                assert isinstance(child, boxes.ParentBox)
+                child_skip_stack = {len(child.children): None}
         else:
             child_skip_stack = None
         child = child.deepcopy()
@@ -1177,20 +1218,24 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
             child.margin_left + child.border_left_width + child.padding_left +
             child.margin_right + child.border_right_width + child.padding_right)
         child_height = height - (
-            child.margin_top + child.border_top_width + child.padding_top +
             child.margin_bottom + child.border_bottom_width + child.padding_bottom)
+        if not child_skip_stack or child.style['box_decoration_break'] == 'clone':
+            child_height -= (
+                child.margin_top + child.border_top_width + child.padding_top)
 
         justify_self = set(child.style['justify_self'])
         if justify_self & {'auto'}:
             justify_self = justify_items
         if justify_self & {'normal', 'stretch'}:
             if child.style['width'] == 'auto':
+                child.style = child.style.copy()
                 child.style['width'] = Dimension(child_width, 'px')
         align_self = set(child.style['align_self'])
         if align_self & {'auto'}:
             align_self = align_items
         if align_self & {'normal', 'stretch'}:
             if child.style['height'] == 'auto':
+                child.style = child.style.copy()
                 child.style['height'] = Dimension(child_height, 'px')
 
         # TODO: Find a better solution for the layout.
@@ -1205,9 +1250,18 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
             page_is_empty, absolute_boxes, fixed_boxes)[:3]
         if new_child:
             page_is_empty = False
-            # TODO: Support fragmentation in grid items.
+            if child_resume_at:
+                if resume_at is None:
+                    resume_at = {}
+                if y not in resume_at:
+                    resume_at[y] = {}
+                resume_at[y][i] = child_resume_at
         else:
-            # TODO: Support fragmentation in grid rows.
+            if resume_at is None:
+                resume_at = {}
+            if y not in resume_at:
+                resume_at[y] = {}
+            resume_at[y][i] = {0: None}
             continue
 
         if justify_self & {'normal', 'stretch'}:
@@ -1230,8 +1284,8 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
             elif align_self & {'end', 'flex-end', 'self-end'}:
                 new_child.translate(0, diff)
 
-        # TODO: Take care of page fragmentation.
         new_children.append(new_child)
+        new_children_by_rows[y].append(new_child)
         if baseline is None and y == implicit_y1:
             baseline = find_in_flow_baseline(new_child)
 
@@ -1240,6 +1294,25 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         # TODO: Synthetize a real baseline value.
         LOGGER.warning('Inline grids are not supported')
         box.baseline = baseline or 0
+
+    # Set broken rows’ bottom at the bottom of the page.
+    for y in (resume_at or []):
+        for child in new_children_by_rows[y]:
+            child.height = (
+                context.page_bottom - bottom_space - child.position_y -
+                child.margin_top - child.border_top_width - child.padding_top)
+            if child.style['box_decoration_break'] != 'clone':
+                child.remove_decoration(start=False, end=True)
+                child.height -= (
+                    child.margin_bottom + child.border_bottom_width +
+                    child.padding_bottom)
+        box.height = (
+            context.page_bottom - bottom_space - box.position_y -
+            box.margin_top - box.border_top_width - box.padding_top)
+        if box.style['box_decoration_break'] != 'clone':
+            box.remove_decoration(start=False, end=True)
+            box.height -= (
+                box.margin_bottom + box.border_bottom_width + box.padding_bottom)
 
     context.finish_block_formatting_context(box)
 
