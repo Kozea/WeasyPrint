@@ -1951,3 +1951,19 @@ def test_flex_image_min_width():
     article, = body.children
     img, div = article.children
     assert article.height == img.height == img.width == div.height == 10
+
+
+@assert_no_logs
+def test_flex_image_justify_content():
+    page, = render_pages('''
+      <article style="width: 100px; display: flex; justify-content: end">
+        <img src="pattern.png">
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    img, = article.children
+    assert article.height == img.height == img.width == 4
+    assert article.width == 100
+    assert img.position_x == 96
