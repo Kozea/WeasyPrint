@@ -42,7 +42,7 @@ LENGTH_UNITS = ABSOLUTE_UNITS | FONT_UNITS
 ANGLE_UNITS = set(ANGLE_TO_RADIANS)
 
 
-def to_pixels(value, style, name, font_size=None):
+def to_pixels(value, style, property_name, font_size=None):
     """Get number of pixels corresponding to a length."""
     if (unit := value.unit.lower()) == 'px':
         return value.value
@@ -65,7 +65,7 @@ def to_pixels(value, style, name, font_size=None):
         elif unit == 'rem':
             return value.value * style.root_style['font_size']
         elif unit == 'lh':
-            if name in ('font_size', 'line_height'):
+            if property_name in ('font_size', 'line_height'):
                 if style.parent_style is None:
                     parent_style = style.root_style
                 else:
