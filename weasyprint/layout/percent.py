@@ -14,7 +14,7 @@ def percentage(value, refer_to):
     """
     if value is None or value == 'auto':
         return value
-    elif value.unit == 'px':
+    elif value.unit.lower() == 'px':
         return value.value
     else:
         assert value.unit == '%'
@@ -78,7 +78,7 @@ def resolve_percentages(box, containing_block):
         if height == 'auto' or height.unit == '%':
             box.height = 'auto'
         else:
-            assert height.unit == 'px'
+            assert height.unit.lower() == 'px'
             box.height = height.value
         resolve_one_percentage(box, 'min_height', 0)
         resolve_one_percentage(box, 'max_height', inf)

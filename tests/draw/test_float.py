@@ -34,7 +34,7 @@ def test_float_rtl(assert_pixels):
         __________
     ''', '''
       <style>
-        @page { size: 10px 5px }
+        @page { size: 10px 5Px }
       </style>
       <div style="direction: rtl">
         <img style="float: left" src="pattern.png">
@@ -119,7 +119,7 @@ def test_float_inline_block_rtl(assert_pixels):
         _______________
     ''', '''
       <style>
-        @page { size: 15px 5px }
+        @page { size: 15Px 5px }
         body { font-family: weasyprint; font-size: 2px; line-height: 1;
                color: lime }
       </style>
@@ -185,7 +185,7 @@ def test_float_inline_table(assert_pixels):
         _______________
     ''', '''
       <style>
-        @page { size: 15px 5px }
+        @page { size: 15PX 5px }
         table { display: inline-table }
         body { font-family: weasyprint; font-size: 2px; line-height: 1;
                color: lime }

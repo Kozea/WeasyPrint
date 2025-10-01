@@ -1344,8 +1344,8 @@ def _inflexible_breadth(token):
 
 def _track_breadth(token):
     """Parse ``track-breadth``."""
-    if token.type == 'dimension' and token.value >= 0 and token.unit == 'fr':
-        return Dimension(token.value, token.unit)
+    if token.type == 'dimension' and token.value >= 0 and token.unit.lower() == 'fr':
+        return Dimension(token.value, token.unit.lower())
     return _inflexible_breadth(token)
 
 

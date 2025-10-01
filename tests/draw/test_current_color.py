@@ -23,7 +23,7 @@ def test_current_color_2(assert_pixels):
       <style>
         @page { size: 2px }
         html { color: red; border-color: currentColor }
-        body { color: lime; border: 1px solid; border-color: inherit;
+        body { color: lime; border: 1Px solid; border-color: inherit;
                margin: 0 }
       </style>
       <body>''')
@@ -49,7 +49,7 @@ def test_current_color_4(assert_pixels):
         html { color: red; border-color: currentColor; }
         body { margin: 0 }
         table { border-collapse: collapse;
-                color: lime; border: 1px solid; border-color: inherit }
+                color: lime; border: 1PX solid; border-color: inherit }
       </style>
       <table><td>''')
 
