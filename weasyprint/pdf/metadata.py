@@ -76,6 +76,7 @@ def generate_rdf_metadata(metadata, variant, version, conformance):
         element = SubElement(element, f'{{{NS["dc"]}}}subject')
         element = SubElement(element, f'{{{NS["rdf"]}}}Bag')
         element = SubElement(element, f'{{{NS["rdf"]}}}li')
+        element.attrib['xml:lang'] = 'x-default'
         element.text = metadata.description
     if metadata.keywords:
         element = SubElement(rdf, f'{{{NS["rdf"]}}}Description')
