@@ -219,7 +219,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
             flex_basis = 'content'
         else:
             flex_basis = percent.percentage(
-                child.style['flex_basis'], available_main_space)
+                child.style['flex_basis'], child.style, available_main_space)
             if flex_basis == 'auto':
                 if (flex_basis := getattr(child, main)) == 'auto':
                     flex_basis = 'content'

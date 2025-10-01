@@ -12,6 +12,9 @@ import sys
 from functools import cache
 from math import inf
 
+from ..css import resolve_math
+from ..css.functions import check_math
+from ..css.validation import validate_non_shorthand
 from ..formatting_structure import boxes
 from ..text.line_break import can_break_text, split_first_line
 from .replaced import default_image_sizing
@@ -90,7 +93,7 @@ def max_content_width(context, box, outer=True):
 def _block_content_width(context, box, function, outer):
     """Helper to create ``block_*_content_width.``"""
     width = box.style['width']
-    if width == 'auto' or width.unit == '%':
+    if width == 'auto' or check_math(width) or width.unit == '%':
         # "percentages on the following properties are treated instead as
         # though they were the following: width: auto"
         # https://dbaron.org/css/intrinsic/#outer-intrinsic
@@ -109,11 +112,13 @@ def min_max(box, width):
     """Get box width from given width and box min- and max-widths."""
     min_width = box.style['min_width']
     max_width = box.style['max_width']
-    if min_width == 'auto' or min_width.unit == '%':
+    min_pending = check_math(min_width)
+    max_pending = check_math(max_width)
+    if min_width == 'auto' or min_pending or min_width.unit == '%':
         min_width = 0
     else:
         min_width = min_width.value
-    if max_width == 'auto' or max_width.unit == '%':
+    if max_width == 'auto' or max_pending or max_width.unit == '%':
         max_width = inf
     else:
         max_width = max_width.value
@@ -123,10 +128,12 @@ def min_max(box, width):
             1, box.style['font_size'])
         if ratio is not None:
             min_height = box.style['min_height']
-            if min_height != 'auto' and min_height.unit != '%':
-                min_width = max(min_width, min_height.value * ratio)
             max_height = box.style['max_height']
-            if max_height != 'auto' and max_height.unit != '%':
+            min_pending = check_math(min_height)
+            max_pending = check_math(max_height)
+            if min_height != 'auto' and not min_pending and min_height.unit != '%':
+                min_width = max(min_width, min_height.value * ratio)
+            if max_height != 'auto' and not min_pending and max_height.unit != '%':
                 max_width = min(max_width, max_height.value * ratio)
 
     return max(min_width, min(width, max_width))
@@ -274,8 +281,16 @@ def inline_line_widths(context, box, outer, is_line_start, minimum, skip_stack=N
 
     # Set text indent.
     text_indent = 0
-    if isinstance(box, boxes.LineBox) and box.style['text_indent'].unit != '%':
-        text_indent = box.style['text_indent'].value
+    if isinstance(box, boxes.LineBox):
+        indent_token = box.style['text_indent']
+        if check_math(indent_token):
+            # Ignore percentages by setting refer_to to 0.
+            result = resolve_math(indent_token, box.style, 'text_indent', refer_to=0)
+            value = validate_non_shorthand((result,), 'text-indent')[0][1]
+            if value and value.unit != '%':
+                text_indent = value.value
+        elif indent_token.unit != '%':
+            text_indent = box.style['text_indent'].value
 
     # Yield widths for each line.
     current_line = 0
@@ -371,15 +386,18 @@ def _percentage_contribution(box):
     https://dbaron.org/css/intrinsic/#pct-contrib
 
     """
+    min_width = box.style['min_width']
     min_width = (
-        box.style['min_width'].value if box.style['min_width'] != 'auto' and
-        box.style['min_width'].unit == '%' else 0)
+        min_width.value if min_width != 'auto' and
+        not check_math(min_width) and min_width.unit == '%' else 0)
+    max_width = box.style['max_width']
     max_width = (
-        box.style['max_width'].value if box.style['max_width'] != 'auto' and
-        box.style['max_width'].unit == '%' else inf)
+        max_width.value if max_width != 'auto' and
+        not check_math(max_width) and max_width.unit == '%' else inf)
+    width = box.style['width']
     width = (
-        box.style['width'].value if box.style['width'] != 'auto' and
-        box.style['width'].unit == '%' else 0)
+        width.value if width != 'auto' and
+        not check_math(width) and width.unit == '%' else 0)
     return max(min_width, min(width, max_width))
 
 
@@ -557,6 +575,7 @@ def table_and_columns_preferred_widths(context, box, outer=True):
         for cell in zipped_grid[i]:
             if (cell and cell.colspan == 1 and
                     cell.style['width'] != 'auto' and
+                    not check_math(cell.style['width']) and
                     cell.style['width'].unit != '%'):
                 constrainedness[i] = True
                 break

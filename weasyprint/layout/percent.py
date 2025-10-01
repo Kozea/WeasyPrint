@@ -2,16 +2,19 @@
 
 from math import inf
 
+from ..css import resolve_math
+from ..css.functions import check_math
 from ..formatting_structure import boxes
 
 
-def percentage(value, refer_to):
+def percentage(value, computed, refer_to):
     """Return the percentage of the reference value, or the value unchanged.
 
-    ``refer_to`` is the length for 100%. If ``refer_to`` is not a number, it
-    just replaces percentages.
+    ``refer_to`` is the length for 100%.
 
     """
+    if check_math(value):
+        value = resolve_math(value, computed, refer_to=refer_to)
     if value is None or value == 'auto':
         return value
     elif value.unit.lower() == 'px':
@@ -31,7 +34,7 @@ def resolve_one_percentage(box, property_name, refer_to):
     # box.style has computed values
     value = box.style[property_name]
     # box attributes are used values
-    percent = percentage(value, refer_to)
+    percent = percentage(value, box.style, refer_to)
     setattr(box, property_name, percent)
     if property_name in ('min_width', 'min_height') and percent == 'auto':
         setattr(box, property_name, 0)
@@ -75,7 +78,7 @@ def resolve_percentages(box, containing_block):
         # Special handling when the height of the containing block
         # depends on its content.
         height = box.style['height']
-        if height == 'auto' or height.unit == '%':
+        if height == 'auto' or check_math(height) or height.unit == '%':
             box.height = 'auto'
         else:
             assert height.unit.lower() == 'px'
@@ -104,7 +107,8 @@ def resolve_percentages(box, containing_block):
 def resolve_radii_percentages(box):
     for corner in ('top_left', 'top_right', 'bottom_right', 'bottom_left'):
         property_name = f'border_{corner}_radius'
-        rx, ry = box.style[property_name]
+        computed = box.style[property_name]
+        rx, ry = computed
 
         # Short track for common case
         if (0, 'px') in (rx, ry):
@@ -116,8 +120,8 @@ def resolve_radii_percentages(box):
                 setattr(box, property_name, (0, 0))
                 break
         else:
-            rx = percentage(rx, box.border_width())
-            ry = percentage(ry, box.border_height())
+            rx = percentage(rx, box.style, box.border_width())
+            ry = percentage(ry, box.style, box.border_height())
             setattr(box, property_name, (rx, ry))
 
 

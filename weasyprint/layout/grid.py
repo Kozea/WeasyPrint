@@ -348,13 +348,15 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
     for min_function, max_function in sizing_functions:
         base_size = None
         if _is_length(min_function):
-            base_size = percentage(min_function, percent_box_size)
+            base_size = percentage(
+                min_function, containing_block.style, percent_box_size)
         elif (min_function in ('min-content', 'max-content', 'auto') or
               min_function[0] == 'fit-content()'):
             base_size = 0
         growth_limit = None
         if _is_length(max_function):
-            growth_limit = percentage(max_function, percent_box_size)
+            growth_limit = percentage(
+                max_function, containing_block.style, percent_box_size)
         elif (max_function in ('min-content', 'max-content', 'auto') or
               max_function[0] == 'fit-content()' or _is_fr(max_function)):
             growth_limit = inf
@@ -591,13 +593,13 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         column_gap = 0
     else:
         refer_to = containing_block.width if box.width == 'auto' else box.width
-        column_gap = percentage(column_gap, refer_to)
+        column_gap = percentage(column_gap, box.style, refer_to)
     row_gap = box.style['row_gap']
     if row_gap == 'normal':
         row_gap = 0
     else:
         refer_to = 0 if box.height == 'auto' else box.height
-        row_gap = percentage(row_gap, refer_to)
+        row_gap = percentage(row_gap, box.style, refer_to)
 
     if grid_areas == 'none':
         grid_areas = ((None,),)
