@@ -492,7 +492,8 @@ def margin_box_content_layout(context, page, box):
     box, resume_at, next_page, _, _, _ = block_container_layout(
         context, box, bottom_space=-inf, skip_stack=None, page_is_empty=True,
         absolute_boxes=positioned_boxes, fixed_boxes=positioned_boxes,
-        adjoining_margins=None, discard=False, max_lines=None)
+        adjoining_margins=None, first_letter_style=None, first_line_style=None,
+        discard=False, max_lines=None)
     assert resume_at is None
     for absolute_box in positioned_boxes:
         absolute_layout(
@@ -673,8 +674,9 @@ def make_page(context, root_box, page_type, resume_at, page_number,
 
     footnote_area = build.create_anonymous_boxes(footnote_area.deepcopy())
     footnote_area = block_level_layout(
-        context, footnote_area, -inf, None, footnote_area.page, True,
-        positioned_boxes, positioned_boxes)[0]
+        context, footnote_area, bottom_space=-inf, skip_stack=None,
+        containing_block=footnote_area.page, page_is_empty=True,
+        absolute_boxes=positioned_boxes, fixed_boxes=positioned_boxes)[0]
     footnote_area.translate(dy=-footnote_area.margin_height())
 
     page.fixed_boxes = [
