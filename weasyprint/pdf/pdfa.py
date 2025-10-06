@@ -90,4 +90,13 @@ VARIANTS = {
     'pdf/a-4u': (
         partial(pdfa, version=4, variant='U'),
         {'version': '2.0', 'identifier': True, 'srgb': True}),
+    'pdf/a-1a': (
+        partial(pdfa, version=1, variant='A'),
+        {'version': '1.4', 'identifier': True, 'srgb': True, 'pdf_tags': True}),
+    'pdf/a-2a': (
+        partial(pdfa, version=2, variant='A'),
+        {'version': '1.7', 'identifier': True, 'srgb': True, 'pdf_tags': True}),
+    'pdf/a-3a': (
+        partial(pdfa, version=3, variant='A'),
+        {'version': '1.7', 'identifier': True, 'srgb': True, 'pdf_tags': True}),
 }
