@@ -1311,9 +1311,20 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         LOGGER.warning('Inline grids are not supported')
         box.baseline = baseline or 0
 
+    # Resume early when there’s no resume_at.
+    if not resume_at:
+        context.finish_block_formatting_context(box)
+        return box, resume_at, next_page, [], False
+
     # Set broken rows’ bottom at the bottom of the page.
-    for y in (resume_at or []):
+    last_row = max(new_children_by_rows)
+    for y in range(last_row, -1, -1):
+        if min(resume_at) > y:
+            continue
         for child in new_children_by_rows[y]:
+            span = _get_span(child.style['grid_row_start'])
+            if y + span < last_row + 1:
+                continue
             child.height = (
                 context.page_bottom - bottom_space - child.position_y -
                 child.margin_top - child.border_top_width - child.padding_top)
@@ -1322,14 +1333,13 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                 child.height -= (
                     child.margin_bottom + child.border_bottom_width +
                     child.padding_bottom)
-        box.height = (
-            context.page_bottom - bottom_space - box.position_y -
-            box.margin_top - box.border_top_width - box.padding_top)
-        if box.style['box_decoration_break'] != 'clone':
-            box.remove_decoration(start=False, end=True)
-            box.height -= (
-                box.margin_bottom + box.border_bottom_width + box.padding_bottom)
+
+    box.height = (
+        context.page_bottom - bottom_space - box.position_y -
+        box.margin_top - box.border_top_width - box.padding_top)
+    if box.style['box_decoration_break'] != 'clone':
+        box.remove_decoration(start=False, end=True)
+        box.height -= box.margin_bottom + box.border_bottom_width + box.padding_bottom
 
     context.finish_block_formatting_context(box)
-
     return box, resume_at, next_page, [], False
