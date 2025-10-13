@@ -274,6 +274,39 @@ def test_grid_template_areas_overlap():
 
 
 @assert_no_logs
+def test_grid_template_big_span():
+    page, = render_pages('''
+      <style>
+        article {
+          display: grid;
+          font-family: weasyprint;
+          font-size: 2px;
+          grid-template-columns: 50% 50%;
+          line-height: 1;
+          width: 6px;
+        }
+      </style>
+      <article>
+        <div>a</div>
+        <div style="grid-row: span 2">b b b b</div>
+        <div>a</div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div_1, div_2, div_3 = article.children
+    assert div_1.position_x == div_3.position_x == 0
+    assert div_2.position_x == 3
+    assert div_1.position_y == div_2.position_y == 0
+    assert div_3.position_y == 4
+    assert div_1.width == div_2.width == div_3.width == 3
+    assert div_1.height == div_3.height == 4
+    assert div_2.height == article.height == 8
+    assert article.width == 6
+
+
+@assert_no_logs
 def test_grid_template_areas_span_overflow():
     page, = render_pages('''
       <style>
