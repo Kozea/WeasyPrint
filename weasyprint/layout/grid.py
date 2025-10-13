@@ -243,7 +243,14 @@ def _distribute_extra_space(affected_sizes, affected_tracks_types, size_contribu
     # 2. Distribute space.
     affected_tracks = []
     affected_size_index = 0 if affected_sizes == 'min' else 1
-    for functions in sizing_functions:
+    current_span = 0
+    for children, functions in zip(tracks_children, sizing_functions):
+        if children:
+            current_span = span
+        if not current_span:
+            affected_tracks.append(False)
+            continue
+        current_span -= 1
         function = functions[affected_size_index]
         if affected_tracks_types == 'intrinsic':
             if (function in ('min-content', 'max-content', 'auto') or
@@ -328,12 +335,16 @@ def _distribute_extra_space(affected_sizes, affected_tracks_types, size_contribu
             for k, extra in enumerate(item_incurred_increases):
                 if extra > planned_increases[k]:
                     planned_increases[k] = extra
+
     # 3. Update the tracks’ affected size.
-    for i, increase in enumerate(planned_increases):
-        if affected_sizes == 'max' and tracks_sizes[i][1] is inf:
-            tracks_sizes[i][1] = tracks_sizes[i][0] + increase
+    iterator = zip(affected_tracks, tracks_sizes, planned_increases)
+    for affected, track_sizes, increase in iterator:
+        if not affected:
+            continue
+        if affected_sizes == 'max' and track_sizes[1] is inf:
+            track_sizes[1] = track_sizes[0] + increase
         else:
-            tracks_sizes[i][affected_size_index] += increase
+            track_sizes[affected_size_index] += increase
 
 
 def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
