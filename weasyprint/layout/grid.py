@@ -228,10 +228,9 @@ def _get_template_tracks(tracks):
     return tracks_list
 
 
-def _distribute_extra_space(affected_sizes, affected_tracks_types,
-                            size_contribution, tracks_children,
-                            sizing_functions, tracks_sizes, span, direction,
-                            context, containing_block):
+def _distribute_extra_space(affected_sizes, affected_tracks_types, size_contribution,
+                            tracks_children, sizing_functions, tracks_sizes, span,
+                            direction, context):
     assert affected_sizes in ('min', 'max')
     assert affected_tracks_types in (
         'intrinsic', 'content-based', 'max-content')
@@ -263,7 +262,7 @@ def _distribute_extra_space(affected_sizes, affected_tracks_types,
     for i, children in enumerate(tracks_children):
         if not children:
             continue
-        for item in children:
+        for item, parent in children:
             # 2.1 Find the space distribution.
             # TODO: Differenciate minimum and min-content values.
             # TODO: Find a better way to get height.
@@ -279,7 +278,7 @@ def _distribute_extra_space(affected_sizes, affected_tracks_types,
                 item.position_y = 0
                 item, _, _, _, _, _ = block_level_layout(
                     context, item, bottom_space=-inf, skip_stack=None,
-                    containing_block=containing_block)
+                    containing_block=parent)
                 space = item.margin_height()
             for sizes in tracks_sizes[i:i+span]:
                 space -= sizes[affected_size_index]
@@ -447,24 +446,25 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
                 if _is_fr(max_function):
                     break
             else:
-                tracks_children[coord - implicit_start].append(child)
+                parent = boxes.BlockContainerBox.anonymous_from(containing_block, ())
+                resolve_percentages(parent, containing_block)
+                if direction == 'y':
+                    parent.width = sum(orthogonal_sizes[x:x+width])
+                tracks_children[coord - implicit_start].append((child, parent))
         # 1.2.3.1 For intrinsic minimums.
         # TODO: Respect min-/max-content constraint.
         _distribute_extra_space(
             'min', 'intrinsic', 'minimum', tracks_children,
-            sizing_functions, tracks_sizes, span, direction, context,
-            containing_block)
+            sizing_functions, tracks_sizes, span, direction, context)
         # 1.2.3.2 For content-based minimums.
         _distribute_extra_space(
             'min', 'content-based', 'min-content', tracks_children,
-            sizing_functions, tracks_sizes, span, direction, context,
-            containing_block)
+            sizing_functions, tracks_sizes, span, direction, context)
         # 1.2.3.3 For max-content minimums.
         # TODO: Respect max-content constraint.
         _distribute_extra_space(
             'min', 'max-content', 'max-content', tracks_children,
-            sizing_functions, tracks_sizes, span, direction, context,
-            containing_block)
+            sizing_functions, tracks_sizes, span, direction, context)
         # 1.2.3.4 Increase growth limit.
         for sizes in tracks_sizes:
             if None not in sizes:
@@ -478,17 +478,19 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
                 if _is_fr(max_function):
                     break
             else:
-                tracks_children[coord - implicit_start].append(child)
+                parent = boxes.BlockContainerBox.anonymous_from(containing_block, ())
+                resolve_percentages(parent, containing_block)
+                if direction == 'y':
+                    parent.width = sum(orthogonal_sizes[x:x+width])
+                tracks_children[coord - implicit_start].append((child, parent))
         # 1.2.3.5 For intrinsic maximums.
         _distribute_extra_space(
             'max', 'intrinsic', 'min-content', tracks_children,
-            sizing_functions, tracks_sizes, span, direction, context,
-            containing_block)
+            sizing_functions, tracks_sizes, span, direction, context)
         # 1.2.3.6 For max-content maximums.
         _distribute_extra_space(
             'max', 'max-content', 'max-content', tracks_children,
-            sizing_functions, tracks_sizes, span, direction, context,
-            containing_block)
+            sizing_functions, tracks_sizes, span, direction, context)
     # 1.2.4 Increase sizes to accommodate items spanning flexible tracks.
     # TODO: Support spans for flexible tracks.
     # 1.2.5 Fix infinite growth limits.
