@@ -1422,6 +1422,90 @@ def test_grid_break_multiple():
 
 
 @assert_no_logs
+def test_grid_break_span():
+    page1, page2 = render_pages('''
+      <style>
+        @page { size: 10px 11px }
+        body { font: 2px / 1 weasyprint }
+        section { display: grid; grid-template-columns: 1fr 1fr }
+      </style>
+      <section>
+        <div>1</div>
+        <div>2</div>
+        <div>3</div>
+        <div>4</div>
+        <div>5</div>
+        <div>6</div>
+        <div style="grid-row: span 3">7a<br>7b<br>7c<br>7d</div>
+        <div>8</div>
+        <div>9</div>
+        <div>10</div>
+        <div>11</div>
+        <div>12</div>
+      </section>
+    ''')
+    html, = page1.children
+    body, = html.children
+    section, = body.children
+    assert section.height == 11
+    div1, div2, div3, div4, div5, div6, div7, div8, div9 = section.children
+    assert div1.position_x == div3.position_x == div5.position_x == div7.position_x == 0
+    assert div2.position_x == div4.position_x == div6.position_x == div8.position_x == 5
+    assert div1.position_y == div2.position_y == 0
+    assert div1.height == div2.height == 2
+    assert div3.position_y == div4.position_y == 2
+    assert div3.height == div4.height == 2
+    assert div5.position_y == div6.position_y == 4
+    assert div5.height == div6.height == 2
+    assert div7.position_y == div8.position_y == 6
+    assert div7.height == 5
+    assert 2.6 < div8.height < 2.7
+    assert 2.3 < div9.height < 2.4
+    line1, line2 = div7.children
+    text, br = line1.children
+    assert text.text == '7a'
+    text, br = line2.children
+    assert text.text == '7b'
+    line, = div8.children
+    text, = line.children
+    assert text.text == '8'
+    line, = div9.children
+    text, = line.children
+    assert text.text == '9'
+
+    # TODO: div7 height could be only 4, but algorithm is not specified.
+    html, = page2.children
+    body, = html.children
+    section, = body.children
+    assert 6.6 < section.height < 6.7
+    div7, div9, div10, div11, div12 = section.children
+    assert div7.position_x == 0
+    assert div8.position_x == 5
+    assert 4.6 < div7.height < 4.7
+    line1, line2 = div7.children
+    text, br = line1.children
+    assert text.text == '7c'
+    text, = line2.children
+    assert text.text == '7d'
+    assert not div9.children
+    assert div10.position_x == 5
+    assert 1.3 < div10.position_y < 1.4
+    line, = div10.children
+    text, = line.children
+    assert text.text == '10'
+    assert div11.position_x == 0
+    assert div12.position_x == 5
+    assert 4.6 < div11.position_y < 4.7
+    assert 4.6 < div12.position_y < 4.7
+    line, = div11.children
+    text, = line.children
+    assert text.text == '11'
+    line, = div12.children
+    text, = line.children
+    assert text.text == '12'
+
+
+@assert_no_logs
 def test_grid_break_item_avoid():
     page1, page2 = render_pages('''
       <style>
