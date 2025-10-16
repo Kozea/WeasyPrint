@@ -597,6 +597,9 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                 page_is_empty, absolute_boxes, fixed_boxes):
     context.create_block_formatting_context(box)
 
+    if skip_stack and box.style['box_decoration_break'] != 'clone':
+        box.remove_decoration(start=True, end=False)
+
     # Define explicit grid
     grid_areas = box.style['grid_template_areas']
     flow = box.style['grid_auto_flow']
