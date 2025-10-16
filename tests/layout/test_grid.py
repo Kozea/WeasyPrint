@@ -912,6 +912,43 @@ def test_grid_border():
 
 
 @assert_no_logs
+def test_grid_border_split():
+    page1, page2 = render_pages('''
+      <style>
+        @page { size: 5px }
+        body { font: 2px / 1 weasyprint }
+      </style>
+      <article style="display: grid; border-top: 1px solid; border-bottom: 1px solid;
+                      margin: 1px 0; padding: 1px 0">
+        <div>a<br>b</div>
+      </article>
+    ''')
+    html, = page1.children
+    body, = html.children
+    article, = body.children
+    assert article.border_top_width == 1
+    assert article.border_bottom_width == 0
+    assert article.margin_height() == 5
+    section, = article.children
+    assert section.position_x == 0
+    assert section.position_y == 3
+    assert section.width == html.width
+    assert section.height == 2
+
+    html, = page2.children
+    body, = html.children
+    article, = body.children
+    assert article.border_top_width == 0
+    assert article.border_bottom_width == 1
+    assert article.margin_height() == 5
+    section, = article.children
+    assert section.position_x == 0
+    assert section.position_y == 0
+    assert section.width == html.width
+    assert section.height == 2
+
+
+@assert_no_logs
 def test_grid_margin():
     page, = render_pages('''
       <style>
