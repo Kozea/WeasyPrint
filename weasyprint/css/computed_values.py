@@ -559,7 +559,7 @@ def _compute_track_breadth(style, name, value):
     if value in ('auto', 'min-content', 'max-content'):
         return value
     elif isinstance(value, Dimension):
-        if value.unit.lower() == 'fr':
+        if value.unit and value.unit.lower() == 'fr':
             return value
         else:
             return length(style, name, value)
