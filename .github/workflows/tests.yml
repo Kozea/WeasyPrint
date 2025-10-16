@@ -13,7 +13,7 @@ jobs:
           - os: ubuntu-latest
             python-version: '3.9'
           - os: ubuntu-latest
-            python-version: 'pypy-3.10'
+            python-version: 'pypy-3.11'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
