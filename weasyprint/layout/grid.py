@@ -1137,28 +1137,41 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
     this_page_children = []
     resume_row = None
     if skip_stack:
-        skip_row = next(iter(skip_stack))
+        first_skip_row = min(skip_stack)
+        last_skip_row = max(skip_stack)
         skip_height = (
-            sum(size for size, _ in rows_sizes[:skip_row]) +
-            (len(rows_sizes[:skip_row]) - 1) * row_gap)
+            sum(size for size, _ in rows_sizes[:last_skip_row]) +
+            (len(rows_sizes[:last_skip_row]) - 1) * row_gap)
     else:
-        skip_row = 0
-        skip_height = 0
+        first_skip_row = last_skip_row = skip_height = 0
     resume_at = None
     total_height = (
-        sum(size for size, _ in rows_sizes[skip_row:]) +
-        (len(rows_sizes[skip_row:]) - 1) * row_gap)
+        sum(size for size, _ in rows_sizes[last_skip_row:]) +
+        (len(rows_sizes[last_skip_row:]) - 1) * row_gap)
+
+    def _add_page_children(max_row=inf):
+        for j, child in enumerate(children):
+            _, y, _, _ = children_positions[child]
+            if not first_skip_row <= y < max_row:
+                # Item in previous or next rows.
+                continue
+            child_skip_stack = (skip_stack or {}).get(y)
+            if child_skip_stack is None or j in child_skip_stack:
+                # No skip stack for this row or child in skip stack.
+                this_page_children.append((j, child))
+
     row_lines_positions = (
-        [*rows_positions[skip_row + 1:], box.content_box_y() + total_height])
-    for i, row_y in enumerate(row_lines_positions, start=skip_row):
+        [*rows_positions[last_skip_row + 1:], box.content_box_y() + total_height])
+    for i, row_y in enumerate(row_lines_positions, start=first_skip_row):
         # TODO: handle break-before and break-after for rows.
         overflows = context.overflows_page(bottom_space, row_y - skip_height)
+        if overflows:
+            resume_row = i
         if overflows and not page_is_empty:
             if box.style['break_inside'] == 'avoid':
                 # Avoid breaks inside grid container, break before.
                 context.finish_block_formatting_context(box)
                 return None, None, {'break': 'any', 'page': None}, [], False
-            resume_row = i
             if page_breaks_by_row[i]['inside'] == 'avoid':
                 # Break before current row.
                 if resume_row == 0:
@@ -1166,29 +1179,21 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                     context.finish_block_formatting_context(box)
                     return None, None, {'break': 'any', 'page': None}, [], False
                 # Mark all children before and in current row as drawn on the page.
-                for j, child in enumerate(children):
-                    _, y, _, _ = children_positions[child]
-                    if skip_row <= y < resume_row:
-                        this_page_children.append((j, child))
+                _add_page_children(resume_row)
                 resume_at = {resume_row: None}
             else:
                 # Break inside current row.
                 # Mark all children before current row as drawn on the page.
-                for j, child in enumerate(children):
-                    _, y, _, _ = children_positions[child]
-                    if skip_row <= y <= resume_row:
-                        this_page_children.append((j, child))
+                _add_page_children(resume_row + 1)
             break
         page_is_empty = False
     else:
-        for j, child in enumerate(children):
-            _, y, _, _ = children_positions[child]
-            if skip_row <= y:
-                this_page_children.append((j, child))
+        # Mark all children as drawn on the page.
+        _add_page_children()
     if box.height == 'auto':
         box.height = (
-            sum(size for size, _ in rows_sizes[skip_row:resume_row]) +
-            (len(rows_sizes[skip_row:resume_row]) - 1) * row_gap)
+            sum(size for size, _ in rows_sizes[last_skip_row:resume_row]) +
+            (len(rows_sizes[last_skip_row:resume_row]) - 1) * row_gap)
 
     # Lay out grid items.
     justify_items = set(box.style['justify_items'])
@@ -1219,6 +1224,13 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         height = (
             sum(size for size, _ in rows_sizes[y:y+height]) +
             (height - 1) * row_gap)
+        if y < last_skip_row:
+            # Shift split spanning item from its row to last skip row.
+            child_skip_height = (
+                sum(size for size, _ in rows_sizes[y:last_skip_row]) +
+                max(0, len(rows_sizes[y:last_skip_row]) - 1) * row_gap)
+            child.position_y += child_skip_height
+            height -= child_skip_height
 
         # TODO: Apply auto margin.
         if child.margin_top == 'auto':
@@ -1266,18 +1278,21 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
             page_is_empty, absolute_boxes, fixed_boxes)[:3]
         if new_child:
             page_is_empty = False
-            if child_resume_at:
+            if child_resume_at or resume_row == y:
+                # Child is broken.
                 if resume_at is None:
                     resume_at = {}
                 if y not in resume_at:
                     resume_at[y] = {}
+            if child_resume_at:
+                # There is some content left for next page.
                 resume_at[y][i] = child_resume_at
+            elif resume_row == y:
+                # Only display the bottom of an empty cell.
+                assert isinstance(new_child, boxes.ParentBox)
+                previous_skip_child = max(child_skip_stack) if child_skip_stack else 0
+                resume_at[y][i] = {previous_skip_child + len(new_child.children): None}
         else:
-            if resume_at is None:
-                resume_at = {}
-            if y not in resume_at:
-                resume_at[y] = {}
-            resume_at[y][i] = {0: None}
             continue
 
         if justify_self & {'normal', 'stretch'}:
