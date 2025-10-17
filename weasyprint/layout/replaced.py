@@ -117,8 +117,8 @@ def replacedbox_layout(box):
     ref_x = box.width - draw_width
     ref_y = box.height - draw_height
 
-    position_x = percentage(position_x, ref_x)
-    position_y = percentage(position_y, ref_y)
+    position_x = percentage(position_x, box.style, ref_x)
+    position_y = percentage(position_y, box.style, ref_y)
     if origin_x == 'right':
         position_x = ref_x - position_x
     if origin_y == 'bottom':

@@ -535,7 +535,8 @@ def _in_flow_layout(context, box, index, child, new_children, page_is_empty,
             if child.style['margin_top'] == 'auto':
                 margin_top = 0
             else:
-                margin_top = percentage(child.style['margin_top'], box.width)
+                margin_top = percentage(
+                    child.style['margin_top'], child.style, box.width)
             adjoining_margins.append(margin_top)
             offset_y = collapse_margin(adjoining_margins) - margin_top
             child.position_y += offset_y
