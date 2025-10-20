@@ -668,7 +668,7 @@ def make_page(context, root_box, page_type, resume_at, page_number,
         parent.force_fragmentation = True
         root_box, _, _, _, _, _ = block_level_layout(
             context, initial_root_box, 0, initial_resume_at, initial_containing_block,
-            page_is_empty, positioned_boxes, positioned_boxes, adjoining_margins)
+            True, positioned_boxes, positioned_boxes, adjoining_margins)
         resume_at = initial_resume_at
     root_box.children = out_of_flow_boxes + root_box.children
 
