@@ -705,7 +705,6 @@ def block_container_layout(context, box, bottom_space, skip_stack, page_is_empty
 
     new_children = []
     next_page = {'break': 'any', 'page': None}
-    broken_out_of_flow = []
 
     last_in_flow_child = None
 
@@ -747,7 +746,6 @@ def block_container_layout(context, box, bottom_space, skip_stack, page_is_empty
             if out_of_flow_resume_at:
                 context.broken_out_of_flow[new_child] = (
                     child, box, out_of_flow_resume_at)
-                broken_out_of_flow.append(new_child)
             if child.is_outside_marker:
                 new_child.position_x = box.border_box_x()
                 if child.style['direction'] == 'rtl':
@@ -822,8 +820,6 @@ def block_container_layout(context, box, bottom_space, skip_stack, page_is_empty
             not page_is_empty):
         remove_placeholders(
             context, [*new_children, *box.children[skip:]], absolute_boxes, fixed_boxes)
-        for child in broken_out_of_flow:
-            del context.broken_out_of_flow[child]
         return None, None, {'break': 'any', 'page': None}, [], False, max_lines
 
     if collapsing_with_children:
