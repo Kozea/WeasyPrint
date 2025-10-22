@@ -1967,3 +1967,18 @@ def test_flex_image_justify_content():
     assert article.height == img.height == img.width == 4
     assert article.width == 100
     assert img.position_x == 96
+
+
+@assert_no_logs
+def test_flex_root_formatting_context():
+    page, = render_pages('''
+      <html style="display: flex">
+        <div>A</div>
+      </html>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    assert div.children[0].children[0].text == 'A'
+    assert div.position_y == body.position_y
+    assert div.position_x == body.position_x

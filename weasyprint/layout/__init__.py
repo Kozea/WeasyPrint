@@ -265,7 +265,7 @@ class LayoutContext:
     def excluded_shapes(self, excluded_shapes):
         self._excluded_shapes[self._excluded_shapes_root_boxes[-1]] = excluded_shapes
 
-    def create_block_formatting_context(self, root_box, new_list=None):
+    def create_block_formatting_context(self, root_box=None, new_list=None):
         assert root_box not in self._excluded_shapes_root_boxes
         self._excluded_shapes_root_boxes.append(root_box)
         if root_box not in self._excluded_shapes:
