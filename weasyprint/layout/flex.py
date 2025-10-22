@@ -20,7 +20,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
     from . import block
 
     # TODO: merge this with block_container_layout.
-    context.create_flex_formatting_context()
+    context.create_flex_formatting_context(box)
     resume_at = None
 
     is_start = skip_stack is None

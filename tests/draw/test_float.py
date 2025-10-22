@@ -905,3 +905,101 @@ def test_float_split_clear_empty(assert_pixels):
         </style>
         <div>bb bb bb bb bb</div>
         <article></article>''')
+
+
+@assert_no_logs
+def test_float_split_large_parent(assert_pixels):
+    assert_pixels('''
+        BBBB
+        BBBB
+        BBBB
+        BBBB
+        GGGG
+
+        BBBB
+        BBBB
+        BBBB
+        BBBB
+        GGGG
+
+        BBBB
+        BBBB
+        GGGG
+        GGGG
+        GGGG
+
+        rrrr
+        rrrr
+        GGGG
+        GGGG
+        GGGG
+    ''', '''
+        <style>
+            @page {
+                size: 4px 5px;
+            }
+            body {
+                color: red;
+                font: 2px / 1 weasyprint;
+            }
+            section {
+                background: lime;
+                height: 100px;
+            }
+            div {
+                color: blue;
+                float: left;
+            }
+            article {
+                clear: left;
+            }
+        </style>
+        <section>
+        <div>bb bb bb bb bb</div>
+        <article>aa</article>''')
+
+
+@assert_no_logs
+def test_float_split_in_stacking_context(assert_pixels):
+    assert_pixels('''
+        RRRR
+        RRRR
+        BBBB
+        BBBB
+        ____
+
+        BBBB
+        BBBB
+        RRRR
+        RRRR
+        ____
+
+        RRRR
+        RRRR
+        ____
+        ____
+        ____
+    ''', '''
+        <style>
+            @page {
+                size: 4px 5px;
+            }
+            body {
+                color: red;
+                font: 2px / 1 weasyprint;
+            }
+            section {
+                display: flow-root;
+            }
+            div {
+                color: blue;
+                float: left;
+            }
+            article {
+                clear: left;
+            }
+        </style>
+        <section>
+        aa
+        <div>bb bb</div>
+        cc cc''')
