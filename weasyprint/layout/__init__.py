@@ -229,13 +229,13 @@ class LayoutContext:
         self.font_config = font_config
         self.counter_style = counter_style
         self.target_collector = target_collector
-        self._excluded_shapes_lists = []
+        self._excluded_shapes_root_boxes = []
+        self._excluded_shapes = {}
         self.footnotes = []
         self.page_footnotes = {}
         self.current_page_footnotes = []
         self.reported_footnotes = []
         self.current_footnote_area = None  # Not initialized yet
-        self.excluded_shapes = None  # Not initialized yet
         self.page_bottom = None
         self.string_set = defaultdict(lambda: defaultdict(list))
         self.running_elements = defaultdict(lambda: defaultdict(list))
@@ -257,34 +257,39 @@ class LayoutContext:
         # The 1e-9 value comes from PEP 485.
         return position_y > bottom * (1 + 1e-9)
 
-    def create_block_formatting_context(self):
-        self.excluded_shapes = []
-        self._excluded_shapes_lists.append(self.excluded_shapes)
+    @property
+    def excluded_shapes(self):
+        return self._excluded_shapes[self._excluded_shapes_root_boxes[-1]]
 
-    def finish_block_formatting_context(self, root_box):
+    @excluded_shapes.setter
+    def excluded_shapes(self, excluded_shapes):
+        self._excluded_shapes[self._excluded_shapes_root_boxes[-1]] = excluded_shapes
+
+    def create_block_formatting_context(self, root_box, new_list=None):
+        assert root_box not in self._excluded_shapes_root_boxes
+        self._excluded_shapes_root_boxes.append(root_box)
+        if root_box not in self._excluded_shapes:
+            self._excluded_shapes[root_box] = [] if new_list is None else new_list
+
+    def finish_block_formatting_context(self, root_box=None):
         # See https://www.w3.org/TR/CSS2/visudet.html#root-height
-        if root_box.style['height'] == 'auto' and self.excluded_shapes:
+        if root_box and root_box.style['height'] == 'auto' and self.excluded_shapes:
             box_bottom = root_box.content_box_y() + root_box.height
             max_shape_bottom = max([
                 shape.position_y + shape.margin_height()
                 for shape in self.excluded_shapes] + [box_bottom])
             root_box.height += max_shape_bottom - box_bottom
-        self._excluded_shapes_lists.pop()
-        if self._excluded_shapes_lists:
-            self.excluded_shapes = self._excluded_shapes_lists[-1]
-        else:
-            self.excluded_shapes = None
+        self._excluded_shapes.pop(self._excluded_shapes_root_boxes.pop())
 
-    def create_flex_formatting_context(self):
-        self.excluded_shapes = FakeList()
-        self._excluded_shapes_lists.append(self.excluded_shapes)
+    def create_flex_formatting_context(self, root_box):
+        self.create_block_formatting_context(root_box, FakeList())
 
     def finish_flex_formatting_context(self, root_box):
-        self._excluded_shapes_lists.pop()
-        if self._excluded_shapes_lists:
-            self.excluded_shapes = self._excluded_shapes_lists[-1]
-        else:
-            self.excluded_shapes = None
+        self.finish_block_formatting_context(root_box)
+
+    def add_broken_out_of_flow(self, new_box, box, containing_block, resume_at):
+        self.broken_out_of_flow[new_box] = (
+            box, containing_block, self._excluded_shapes_root_boxes[-1], resume_at)
 
     def get_string_set_for(self, page, name, keyword='first'):
         """Resolve value of string function."""
