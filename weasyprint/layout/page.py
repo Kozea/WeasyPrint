@@ -607,7 +607,7 @@ def make_page(context, root_box, page_type, resume_at, page_number,
 
     # https://www.w3.org/TR/css-display-4/#root
     assert isinstance(root_box, boxes.BlockLevelBox)
-    context.create_block_formatting_context(root_box)
+    context.create_block_formatting_context()
     context.current_page = page_number
     context.current_page_footnotes = []
     context.current_footnote_area = footnote_area
@@ -633,7 +633,7 @@ def make_page(context, root_box, page_type, resume_at, page_number,
     context_out_of_flow = context.broken_out_of_flow.values()
     context.broken_out_of_flow = broken_out_of_flow
     for box, containing_block, context_box, skip_stack in context_out_of_flow:
-        if context_box != root_box:
+        if context_box:
             context.create_block_formatting_context(context_box)
         box.position_y = root_box.content_box_y()
         if box.is_floated():
@@ -651,7 +651,7 @@ def make_page(context, root_box, page_type, resume_at, page_number,
         if out_of_flow_resume_at:
             context.add_broken_out_of_flow(
                 out_of_flow_box, box, containing_block, out_of_flow_resume_at)
-        if context_box != root_box:
+        if context_box:
             context.finish_block_formatting_context()
 
     # Set excluded shapes from broken out-of-flow for in-flow content.
@@ -697,7 +697,7 @@ def make_page(context, root_box, page_type, resume_at, page_number,
             context, absolute_box, page, positioned_boxes, bottom_space=0,
             skip_stack=None)
 
-    context.finish_block_formatting_context(root_box)
+    context.finish_block_formatting_context()
 
     page.children = [root_box, footnote_area]
 
