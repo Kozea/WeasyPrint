@@ -15,10 +15,10 @@ from .replaced import block_replaced_box_layout
 from .table import table_layout, table_wrapper_width
 
 
-def block_level_layout(context, box, bottom_space, skip_stack,
-                       containing_block, page_is_empty=True,
-                       absolute_boxes=None, fixed_boxes=None,
-                       adjoining_margins=None, discard=False, max_lines=None):
+def block_level_layout(context, box, bottom_space, skip_stack, containing_block,
+                       page_is_empty=True, absolute_boxes=None, fixed_boxes=None,
+                       adjoining_margins=None, first_letter_style=None,
+                       first_line_style=None, discard=False, max_lines=None):
     """Lay out the block-level ``box``."""
     absolute_boxes = [] if absolute_boxes is None else absolute_boxes
     fixed_boxes = [] if fixed_boxes is None else fixed_boxes
@@ -58,14 +58,14 @@ def block_level_layout(context, box, bottom_space, skip_stack,
 
     return block_level_layout_switch(
         context, box, bottom_space, skip_stack, containing_block,
-        page_is_empty, absolute_boxes, fixed_boxes, adjoining_margins, discard,
-        max_lines)
+        page_is_empty, absolute_boxes, fixed_boxes, adjoining_margins,
+        first_letter_style, first_line_style, discard, max_lines)
 
 
-def block_level_layout_switch(context, box, bottom_space, skip_stack,
-                              containing_block, page_is_empty, absolute_boxes,
-                              fixed_boxes, adjoining_margins, discard,
-                              max_lines):
+def block_level_layout_switch(context, box, bottom_space, skip_stack, containing_block,
+                              page_is_empty, absolute_boxes, fixed_boxes,
+                              adjoining_margins, first_letter_style, first_line_style,
+                              discard, max_lines):
     """Call the layout function corresponding to the ``box`` type."""
     if isinstance(box, boxes.TableBox):
         result = table_layout(
@@ -75,7 +75,7 @@ def block_level_layout_switch(context, box, bottom_space, skip_stack,
         return block_box_layout(
             context, box, bottom_space, skip_stack, containing_block,
             page_is_empty, absolute_boxes, fixed_boxes, adjoining_margins,
-            discard, max_lines)
+            first_letter_style, first_line_style, discard, max_lines)
     elif isinstance(box, boxes.BlockReplacedBox):
         result = block_replaced_box_layout(context, box, containing_block)
     elif isinstance(box, boxes.FlexBox):
@@ -93,13 +93,15 @@ def block_level_layout_switch(context, box, bottom_space, skip_stack,
 
 def block_box_layout(context, box, bottom_space, skip_stack,
                      containing_block, page_is_empty, absolute_boxes,
-                     fixed_boxes, adjoining_margins, discard, max_lines):
+                     fixed_boxes, adjoining_margins, first_letter_style,
+                     first_line_style, discard, max_lines):
     """Lay out the block ``box``."""
     if (box.style['column_width'] != 'auto' or
             box.style['column_count'] != 'auto'):
         result = columns_layout(
-            context, box, bottom_space, skip_stack, containing_block,
-            page_is_empty, absolute_boxes, fixed_boxes, adjoining_margins)
+            context, box, bottom_space, skip_stack, containing_block, page_is_empty,
+            absolute_boxes, fixed_boxes, adjoining_margins, first_letter_style,
+            first_line_style)
         resume_at = result[1]
         # TODO: this condition and the whole relayout are probably wrong
         if resume_at is None:
@@ -112,9 +114,9 @@ def block_box_layout(context, box, bottom_space, skip_stack,
                     context, [new_box], absolute_boxes, fixed_boxes)
                 bottom_space += columns_bottom_space
                 result = columns_layout(
-                    context, box, bottom_space, skip_stack,
-                    containing_block, page_is_empty, absolute_boxes,
-                    fixed_boxes, adjoining_margins)
+                    context, box, bottom_space, skip_stack, containing_block,
+                    page_is_empty, absolute_boxes, fixed_boxes, adjoining_margins,
+                    first_letter_style, first_line_style)
         return (*result, None)
     elif box.is_table_wrapper:
         table_wrapper_width(
@@ -122,8 +124,9 @@ def block_box_layout(context, box, bottom_space, skip_stack,
     block_level_width(box, containing_block)
 
     result = block_container_layout(
-        context, box, bottom_space, skip_stack, page_is_empty,
-        absolute_boxes, fixed_boxes, adjoining_margins, discard, max_lines)
+        context, box, bottom_space, skip_stack, page_is_empty, absolute_boxes,
+        fixed_boxes, adjoining_margins, first_letter_style, first_line_style, discard,
+        max_lines)
     # TODO: columns and flex items shouldn't be block boxes, this condition
     # would then be useless when this is fixed.
     if not (new_box := result[0]) or new_box.is_column or new_box.is_flex_item:
@@ -332,7 +335,7 @@ def _break_line(context, box, line, new_children, next_lines, page_is_empty, ind
 def _linebox_layout(context, box, index, child, new_children, page_is_empty,
                     absolute_boxes, fixed_boxes, adjoining_margins,
                     bottom_space, position_y, skip_stack, first_letter_style,
-                    draw_bottom_decoration, max_lines):
+                    first_line_style, draw_bottom_decoration, max_lines):
     abort = stop = False
     resume_at = None
     new_footnotes = []
@@ -343,8 +346,8 @@ def _linebox_layout(context, box, index, child, new_children, page_is_empty,
         position_y += collapse_margin(adjoining_margins)
     new_containing_block = box
     lines_iterator = iter_line_boxes(
-        context, child, position_y, bottom_space, skip_stack,
-        new_containing_block, absolute_boxes, fixed_boxes, first_letter_style)
+        context, child, position_y, bottom_space, skip_stack, new_containing_block,
+        absolute_boxes, fixed_boxes, first_letter_style, first_line_style)
     for i, (line, resume_at) in enumerate(lines_iterator):
         # Break box if we reached max-lines
         if max_lines is not None:
@@ -467,8 +470,8 @@ def _linebox_layout(context, box, index, child, new_children, page_is_empty,
 def _in_flow_layout(context, box, index, child, new_children, page_is_empty,
                     absolute_boxes, fixed_boxes, adjoining_margins,
                     bottom_space, position_y, skip_stack, first_letter_style,
-                    draw_bottom_decoration, collapsing_with_children, discard,
-                    next_page, max_lines):
+                    first_line_style, draw_bottom_decoration, collapsing_with_children,
+                    discard, next_page, max_lines):
     abort = stop = False
 
     last_in_flow_child = find_last_in_flow_child(new_children)
@@ -545,13 +548,12 @@ def _in_flow_layout(context, box, index, child, new_children, page_is_empty,
         child for child in new_children
         if not isinstance(child, AbsolutePlaceholder))
 
-    if not getattr(child, 'first_letter_style', None):
-        child.first_letter_style = first_letter_style
     (new_child, resume_at, next_page, next_adjoining_margins,
      collapsing_through, max_lines) = block_level_layout(
          context, child, bottom_space, skip_stack,
          new_containing_block, page_is_empty_with_no_children, absolute_boxes,
-         fixed_boxes, adjoining_margins, discard, max_lines)
+         fixed_boxes, adjoining_margins, first_letter_style, first_line_style,
+         discard, max_lines)
 
     if new_child is not None:
         if not collapsing_through:
@@ -655,9 +657,9 @@ def _in_flow_layout(context, box, index, child, new_children, page_is_empty,
         new_children, max_lines)
 
 
-def block_container_layout(context, box, bottom_space, skip_stack,
-                           page_is_empty, absolute_boxes, fixed_boxes,
-                           adjoining_margins, discard, max_lines):
+def block_container_layout(context, box, bottom_space, skip_stack, page_is_empty,
+                           absolute_boxes, fixed_boxes, adjoining_margins,
+                           first_letter_style, first_line_style, discard, max_lines):
     """Set the ``box`` height."""
     assert isinstance(box, boxes.BlockContainerBox)
 
@@ -710,12 +712,26 @@ def block_container_layout(context, box, bottom_space, skip_stack,
     if box.style['max_lines'] != 'none':
         max_lines = min(box.style['max_lines'], max_lines or inf)
 
+    if box.first_line_style is not None:
+        box_first_line_style = {
+            key: box.first_line_style[key] for key in box.first_line_style.cascaded}
+        if first_line_style is None:
+            first_line_style = box_first_line_style
+        else:
+            first_line_style |= box_first_line_style
+
+    if box.first_letter_style is not None:
+        box_first_letter_style = {
+            key: box.first_letter_style[key] for key in box.first_letter_style.cascaded}
+        if first_letter_style is None:
+            first_letter_style = box_first_letter_style
+        else:
+            first_letter_style |= box_first_letter_style
+
     if is_start:
         skip = 0
-        first_letter_style = getattr(box, 'first_letter_style', None)
     else:
         (skip, skip_stack), = skip_stack.items()
-        first_letter_style = None
     for index, child in enumerate(box.children[skip:], start=(skip or 0)):
         child.position_x = position_x
         child.position_y = position_y  # doesn’t count adjoining_margins
@@ -742,20 +758,22 @@ def block_container_layout(context, box, bottom_space, skip_stack,
              new_footnotes, max_lines) = _linebox_layout(
                 context, box, index, child, new_children, page_is_empty,
                 absolute_boxes, fixed_boxes, adjoining_margins, bottom_space,
-                position_y, skip_stack, first_letter_style,
+                position_y, skip_stack, first_letter_style, first_line_style,
                 draw_bottom_decoration, max_lines)
             draw_bottom_decoration |= resume_at is None
             adjoining_margins = []
+            first_letter_style = first_line_style = None
 
         else:
             (abort, stop, resume_at, position_y, adjoining_margins,
              next_page, new_children, new_max_lines) = _in_flow_layout(
                  context, box, index, child, new_children, page_is_empty,
                  absolute_boxes, fixed_boxes, adjoining_margins, bottom_space,
-                 position_y, skip_stack, first_letter_style,
+                 position_y, skip_stack, first_letter_style, first_line_style,
                  draw_bottom_decoration, collapsing_with_children, discard,
                  next_page, max_lines)
             skip_stack = None
+            first_letter_style = first_line_style = None
 
             if None not in (new_max_lines, max_lines):
                 max_lines = new_max_lines

@@ -231,7 +231,6 @@ Test`_.
 
 The CSS 2.1 features listed here are **not** supported:
 
-* The `::first-line`_ pseudo-element.
 * On tables: `visibility: collapse`_.
 * Minimum and maximum height_ on table-related boxes.
 * Minimum and maximum width_ and height_ on page-margin boxes.
@@ -243,7 +242,6 @@ The CSS 2.1 features listed here are **not** supported:
 
 .. _CSS Level 2 Revision 1: https://www.w3.org/TR/CSS21/
 .. _Acid2 Test: https://www.webstandards.org/files/acid2/test.html
-.. _::first-line: https://www.w3.org/TR/CSS21/selector.html#first-line-pseudo
 .. _empty-cells: https://www.w3.org/TR/CSS21/tables.html#empty-cells
 .. _visibility\: collapse: https://www.w3.org/TR/CSS21/tables.html#dynamic-effects
 .. _width: https://www.w3.org/TR/CSS21/visudet.html#min-max-widths

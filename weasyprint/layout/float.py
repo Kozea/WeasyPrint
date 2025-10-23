@@ -60,10 +60,10 @@ def float_layout(context, box, containing_block, absolute_boxes, fixed_boxes,
     if isinstance(box, boxes.BlockContainerBox):
         context.create_block_formatting_context()
         box, resume_at, _, _, _, _ = block_container_layout(
-            context, box, bottom_space=bottom_space,
-            skip_stack=skip_stack, page_is_empty=True,
-            absolute_boxes=absolute_boxes, fixed_boxes=fixed_boxes,
-            adjoining_margins=None, discard=False, max_lines=None)
+            context, box, bottom_space=bottom_space, skip_stack=skip_stack,
+            page_is_empty=True, absolute_boxes=absolute_boxes, fixed_boxes=fixed_boxes,
+            adjoining_margins=None, first_letter_style=None, first_line_style=None,
+            discard=False, max_lines=None)
         context.finish_block_formatting_context(box)
     elif isinstance(box, boxes.FlexContainerBox):
         box, resume_at, _, _, _ = flex_layout(
