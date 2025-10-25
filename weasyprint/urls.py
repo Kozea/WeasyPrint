@@ -187,7 +187,7 @@ def ensure_url(string):
     return string if url_is_absolute(string) else path2url(string)
 
 
-def default_url_fetcher(url, timeout=10, ssl_context=None, http_headers=None):
+def default_url_fetcher(url, timeout=10, ssl_context=None, http_headers=None, allowed_protocols=None):
     """Fetch an external resource such as an image or stylesheet.
 
     Another callable with the same signature can be given as the
@@ -202,6 +202,8 @@ def default_url_fetcher(url, timeout=10, ssl_context=None, http_headers=None):
         An SSL context used for HTTP requests.
     :param dict http_headers:
         Additional HTTP headers used for HTTP requests.
+    :param set allowed_protocols:
+        Restrict urls to specific protocols (i.e. to prevent local file inclusion).
     :raises: An exception indicating failure, e.g. :obj:`ValueError` on
         syntactically invalid URL.
     :returns: A :obj:`dict` with the following keys:
@@ -229,6 +231,15 @@ def default_url_fetcher(url, timeout=10, ssl_context=None, http_headers=None):
 
     """
     if UNICODE_SCHEME_RE.match(url):
+        if allowed_protocols is not None:
+            protocol_found = False
+            for protocol in allowed_protocols:
+                if url.lower().startswith(protocol + '://'):
+                    protocol_found = True
+                    break
+            if not protocol_found:
+                raise ValueError('URI uses disallowed protocol: %r' % url)
+
         # See https://bugs.python.org/issue34702
         if url.startswith('file://'):
             url = url.split('?')[0]
