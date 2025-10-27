@@ -1127,10 +1127,11 @@ def process_whitespace(box, following_collapsible_space=False):
 def process_text_transform(box):
     if isinstance(box, boxes.TextBox):
         text_transform = box.style['text_transform']
+        lang = box.style['lang']
         if text_transform != 'none':
             box.text = {
-                'uppercase': lambda text: text.upper(),
-                'lowercase': lambda text: text.lower(),
+                'uppercase': lambda text: uppercase(text, lang),
+                'lowercase': lambda text: lowercase(text, lang),
                 'capitalize': capitalize,
                 'full-width': lambda text: text.translate(ASCII_TO_WIDE),
             }[text_transform](box.text)
@@ -1142,6 +1143,82 @@ def process_text_transform(box):
             if isinstance(child, (boxes.TextBox, boxes.InlineBox)):
                 process_text_transform(child)
 
+def uppercase(text, lang):
+    if lang is None or lang == '':
+        return text.upper()
+    elif is_greek_language(lang):
+        mapper = {
+            'άι': 'ΑΪ',
+            'ήι': 'ΗI',
+            'ά': 'Α',
+            'ή': 'Ή',
+            'έ': 'Ε',
+            'ί': 'Ι',
+            'ό': 'Ο',
+            'ύ': 'Υ',
+            'ώ': 'Ω',
+        }
+        for key, value in mapper.items():
+            text = text.replace(key, value)
+        return text.upper()
+
+    elif is_turkish_language(lang):
+        mapper = {
+            'i': 'İ',
+        }
+
+        for key, value in mapper.items():
+            text = text.replace(key, value)
+        return text.upper()
+    else:
+        return text.upper()
+
+
+def lowercase(text, lang):
+    if lang is None or lang == '':
+        return text.lower()
+    elif is_greek_language(lang):
+        mapper = {
+            'ΑΪ': 'άι',
+            'ΗI': 'ήι',
+            'Α': 'ά',
+            'Ή': 'ή',
+            'Ε': 'έ',
+            'Ι': 'ί',
+            'Ο': 'ό',
+            'Υ': 'ύ',
+            'Ω': 'ώ',
+        }
+        for key, value in mapper.items():
+            text = text.replace(key, value)
+        return text.lower()
+
+    elif is_turkish_language(lang):
+        mapper = {
+            'İ': 'i',
+            'I': 'ı',
+        }
+
+        for key, value in mapper.items():
+            text = text.replace(key, value)
+        return text.lower()
+    else:
+        return text.lower()
+
+def is_turkish_language(lang):
+    """Check if the given language code corresponds to Turkish."""
+    if not lang:
+        return False
+    lang_code = lang.split('-')[0].lower()
+    return lang_code == 'tr'
+
+
+def is_greek_language(lang):
+    """Check if the given language code corresponds to Greek."""
+    if not lang:
+        return False
+    lang_code = lang.split('-')[0].lower()
+    return lang_code == 'el'
 
 def capitalize(text):
     """Capitalize words according to CSS’s "text-transform: capitalize"."""
