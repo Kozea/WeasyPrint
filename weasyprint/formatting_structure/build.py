@@ -1167,14 +1167,14 @@ def uppercase(text, lang):
         mapper = {
             'i': 'İ',
         }
-        
+
         for key, value in mapper.items():
             text = text.replace(key, value)
         return text.upper()
     else:
         return text.upper()
-    
-    
+
+
 def lowercase(text, lang):
     if lang is None or lang == '':
         return text.lower()
@@ -1199,13 +1199,12 @@ def lowercase(text, lang):
             'İ': 'i',
             'I': 'ı',
         }
-        
+
         for key, value in mapper.items():
             text = text.replace(key, value)
         return text.lower()
     else:
         return text.lower()
-
 
 def is_turkish_language(lang):
     """Check if the given language code corresponds to Turkish."""
