@@ -24,7 +24,7 @@ pagination, and meant to be easy to hack on.
 
 WeasyPrint has been created and developed by Kozea (https://kozea.fr/).
 Professional support, maintenance and community management is provided by
-CourtBouillon (https://www.courtbouillon.org/).
+CourtBouillon(https://www.courtbouillon.org/).
 
 Copyrights are retained by their contributors, no copyright assignment is
 required to contribute to WeasyPrint. Unless explicitly stated otherwise, any
