@@ -19,7 +19,9 @@ dependencies = [
   'cssselect2 >=0.8.0',
   'Pyphen >=0.9.1',
   'Pillow >=9.1.0',
-  'fonttools[woff] >=4.59.2',
+  'fonttools >=4.60.1',
+  'brotli >= 1.0.1; platform_python_implementation == "CPython"',
+  'brotlicffi >= 0.8.0; platform_python_implementation != "CPython"',
 ]
 classifiers = [
   'Development Status :: 5 - Production/Stable',
