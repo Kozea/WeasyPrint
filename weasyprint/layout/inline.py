@@ -189,8 +189,9 @@ def get_next_linebox(context, linebox, position_y, bottom_space, skip_stack,
             fixed_boxes, bottom_space, skip_stack=None)
         float_children.append(new_waiting_float)
         if waiting_float_resume_at:
-            context.broken_out_of_flow[new_waiting_float] = (
-                waiting_float, containing_block, waiting_float_resume_at)
+            context.add_broken_out_of_flow(
+                new_waiting_float, waiting_float, containing_block,
+                waiting_float_resume_at)
     if float_children:
         line.children += tuple(float_children)
 
@@ -590,8 +591,8 @@ def _out_of_flow_layout(context, box, containing_block, index, child,
                 context, child, containing_block, absolute_boxes, fixed_boxes,
                 bottom_space, skip_stack=None)
             if float_resume_at:
-                context.broken_out_of_flow[child] = (
-                    child, containing_block, float_resume_at)
+                context.add_broken_out_of_flow(
+                    child, child, containing_block, float_resume_at)
             waiting_children.append((index, new_child, child))
             child = new_child
 

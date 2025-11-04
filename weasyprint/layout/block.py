@@ -664,7 +664,7 @@ def block_container_layout(context, box, bottom_space, skip_stack, page_is_empty
     assert isinstance(box, boxes.BlockContainerBox)
 
     if box.establishes_formatting_context():
-        context.create_block_formatting_context()
+        context.create_block_formatting_context(box)
 
     # TODO: merge this with _in_flow_layout, flex_layout…
     is_start = skip_stack is None
@@ -705,7 +705,6 @@ def block_container_layout(context, box, bottom_space, skip_stack, page_is_empty
 
     new_children = []
     next_page = {'break': 'any', 'page': None}
-    broken_out_of_flow = []
 
     last_in_flow_child = None
 
@@ -745,9 +744,8 @@ def block_container_layout(context, box, bottom_space, skip_stack, page_is_empty
                     absolute_boxes, fixed_boxes, adjoining_margins,
                     bottom_space))
             if out_of_flow_resume_at:
-                context.broken_out_of_flow[new_child] = (
-                    child, box, out_of_flow_resume_at)
-                broken_out_of_flow.append(new_child)
+                context.add_broken_out_of_flow(
+                    new_child, child, box, out_of_flow_resume_at)
             if child.is_outside_marker:
                 new_child.position_x = box.border_box_x()
                 if child.style['direction'] == 'rtl':
@@ -798,6 +796,8 @@ def block_container_layout(context, box, bottom_space, skip_stack, page_is_empty
                 context, box.children[skip:], absolute_boxes, fixed_boxes)
             for footnote in new_footnotes:
                 context.unlayout_footnote(footnote)
+            if box.establishes_formatting_context():
+                context.finish_block_formatting_context()
             return (
                 None, None, {'break': 'any', 'page': page}, [], False,
                 max_lines)
@@ -822,8 +822,8 @@ def block_container_layout(context, box, bottom_space, skip_stack, page_is_empty
             not page_is_empty):
         remove_placeholders(
             context, [*new_children, *box.children[skip:]], absolute_boxes, fixed_boxes)
-        for child in broken_out_of_flow:
-            del context.broken_out_of_flow[child]
+        if box.establishes_formatting_context():
+            context.finish_block_formatting_context()
         return None, None, {'break': 'any', 'page': None}, [], False, max_lines
 
     if collapsing_with_children:
@@ -892,7 +892,7 @@ def block_container_layout(context, box, bottom_space, skip_stack, page_is_empty
     for child in new_box.children:
         relative_positioning(child, (new_box.width, new_box.height))
 
-    if new_box.establishes_formatting_context():
+    if box.establishes_formatting_context():
         context.finish_block_formatting_context(new_box)
 
     if discard or not box_is_fragmented:

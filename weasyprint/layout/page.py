@@ -1,7 +1,7 @@
 """Layout for pages and CSS3 margin boxes."""
 
 import copy
-from collections import namedtuple
+from collections import defaultdict, namedtuple
 from math import inf
 
 from ..css import AnonymousStyle
@@ -628,15 +628,19 @@ def make_page(context, root_box, page_type, resume_at, page_number,
     adjoining_margins = []
     positioned_boxes = []  # Mixed absolute and fixed
     out_of_flow_boxes = []
+    excluded_shapes = defaultdict(list)
     broken_out_of_flow = {}
     context_out_of_flow = context.broken_out_of_flow.values()
     context.broken_out_of_flow = broken_out_of_flow
-    for box, containing_block, skip_stack in context_out_of_flow:
+    for box, containing_block, context_box, skip_stack in context_out_of_flow:
+        if context_box:
+            context.create_block_formatting_context(context_box)
         box.position_y = root_box.content_box_y()
         if box.is_floated():
             out_of_flow_box, out_of_flow_resume_at = float_layout(
                 context, box, containing_block, positioned_boxes,
                 positioned_boxes, 0, skip_stack)
+            excluded_shapes[context_box].append(out_of_flow_box)
         else:
             assert box.is_absolutely_positioned()
             out_of_flow_box, out_of_flow_resume_at = absolute_box_layout(
@@ -645,8 +649,14 @@ def make_page(context, root_box, page_type, resume_at, page_number,
         out_of_flow_boxes.append(out_of_flow_box)
         page_is_empty = False
         if out_of_flow_resume_at:
-            broken_out_of_flow[out_of_flow_box] = (
-                box, containing_block, out_of_flow_resume_at)
+            context.add_broken_out_of_flow(
+                out_of_flow_box, box, containing_block, out_of_flow_resume_at)
+        if context_box:
+            context.finish_block_formatting_context()
+
+    # Set excluded shapes from broken out-of-flow for in-flow content.
+    for context_box, shapes in excluded_shapes.items():
+        context._excluded_shapes[context_box] = shapes
 
     # Display in-flow content.
     initial_root_box = root_box
@@ -668,7 +678,7 @@ def make_page(context, root_box, page_type, resume_at, page_number,
         parent.force_fragmentation = True
         root_box, _, _, _, _, _ = block_level_layout(
             context, initial_root_box, 0, initial_resume_at, initial_containing_block,
-            page_is_empty, positioned_boxes, positioned_boxes, adjoining_margins)
+            True, positioned_boxes, positioned_boxes, adjoining_margins)
         resume_at = initial_resume_at
     root_box.children = out_of_flow_boxes + root_box.children
 
@@ -687,7 +697,7 @@ def make_page(context, root_box, page_type, resume_at, page_number,
             context, absolute_box, page, positioned_boxes, bottom_space=0,
             skip_stack=None)
 
-    context.finish_block_formatting_context(root_box)
+    context.finish_block_formatting_context()
 
     page.children = [root_box, footnote_area]
 

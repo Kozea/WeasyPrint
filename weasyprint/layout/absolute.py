@@ -238,8 +238,7 @@ def absolute_layout(context, placeholder, containing_block, fixed_boxes,
         context, box, containing_block, fixed_boxes, bottom_space, skip_stack)
     placeholder.set_laid_out_box(new_box)
     if resume_at:
-        context.broken_out_of_flow[placeholder] = (
-            box, containing_block, resume_at)
+        context.add_broken_out_of_flow(placeholder, box, containing_block, resume_at)
 
 
 def absolute_box_layout(context, box, containing_block, fixed_boxes,
@@ -260,7 +259,6 @@ def absolute_box_layout(context, box, containing_block, fixed_boxes,
     resolve_percentages(box, (cb_width, cb_height))
     resolve_position_percentages(box, (cb_width, cb_height))
 
-    context.create_block_formatting_context()
     if isinstance(box, boxes.BlockReplacedBox):
         new_box = absolute_replaced(
             context, box, cb_x, cb_y, cb_width, cb_height)
@@ -270,7 +268,6 @@ def absolute_box_layout(context, box, containing_block, fixed_boxes,
         new_box, resume_at = absolute_block(
             context, box, containing_block, fixed_boxes, bottom_space,
             skip_stack, cb_x, cb_y, cb_width, cb_height)
-    context.finish_block_formatting_context(new_box)
 
     return new_box, resume_at
 
