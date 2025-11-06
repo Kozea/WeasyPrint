@@ -479,23 +479,7 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
             'min', 'max-content', 'max-content', tracks_children,
             sizing_functions, tracks_sizes, span, direction, context)
         # 1.2.3.4 Increase growth limit.
-        for sizes in tracks_sizes:
-            if None not in sizes:
-                sizes[1] = max(sizes)
-        iterable = enumerate(children_positions.items())
-        for i, (child, (x, y, width, height)) in iterable:
-            coord, size = (x, width) if direction == 'x' else (y, height)
-            if size != span:
-                continue
-            for _, max_function in sizing_functions[i:i+span+1]:
-                if _is_fr(max_function):
-                    break
-            else:
-                parent = boxes.BlockContainerBox.anonymous_from(containing_block, ())
-                resolve_percentages(parent, containing_block)
-                if direction == 'y':
-                    parent.width = sum(orthogonal_sizes[x:x+width])
-                tracks_children[coord - implicit_start].append((child, parent))
+        # TODO: Increase growth limit.
         # 1.2.3.5 For intrinsic maximums.
         _distribute_extra_space(
             'max', 'intrinsic', 'min-content', tracks_children,
