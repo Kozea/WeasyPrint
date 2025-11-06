@@ -187,7 +187,8 @@ def ensure_url(string):
     return string if url_is_absolute(string) else path2url(string)
 
 
-def default_url_fetcher(url, timeout=10, ssl_context=None, http_headers=None, allowed_protocols=None):
+def default_url_fetcher(url, timeout=10, ssl_context=None, http_headers=None,
+                        allowed_protocols=None):
     """Fetch an external resource such as an image or stylesheet.
 
     Another callable with the same signature can be given as the
@@ -203,7 +204,7 @@ def default_url_fetcher(url, timeout=10, ssl_context=None, http_headers=None, al
     :param dict http_headers:
         Additional HTTP headers used for HTTP requests.
     :param set allowed_protocols:
-        Restrict urls to specific protocols (i.e. to prevent local file inclusion).
+        A set of authorized protocols.
     :raises: An exception indicating failure, e.g. :obj:`ValueError` on
         syntactically invalid URL.
     :returns: A :obj:`dict` with the following keys:

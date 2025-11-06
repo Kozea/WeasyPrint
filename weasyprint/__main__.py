@@ -83,9 +83,6 @@ PARSER.add_argument(
     help='base for relative URLs in the HTML input, defaults to the '
     'input’s own filename or URL or the current directory for stdin')
 PARSER.add_argument(
-    '--allowed-protocols', dest='allowed_protocols',
-    help='allow only a subset of protocols for fetching URLs (e.g. http, https, file, ftp)')
-PARSER.add_argument(
     '-a', '--attachment', action='append', dest='attachments',
     help='URL or filename of a file to attach to the PDF document')
 PARSER.add_argument('--pdf-identifier', help='PDF file identifier')
@@ -143,7 +140,10 @@ PARSER.add_argument(
     help='print system information and exit')
 PARSER.add_argument(
     '-t', '--timeout', type=int,
-    help='Set timeout in seconds for HTTP requests')
+    help='set timeout in seconds for HTTP requests')
+PARSER.add_argument(
+    '--allowed-protocols', dest='allowed_protocols',
+    help='only authorize comma-separated list of protocols for fetching URLs')
 PARSER.set_defaults(**DEFAULT_OPTIONS)
 
 
@@ -175,10 +175,9 @@ def main(argv=None, stdout=None, stdin=None, HTML=HTML):  # noqa: N803
     if args.timeout is not None:
         url_fetcher = partial(default_url_fetcher, timeout=args.timeout)
     if args.allowed_protocols is not None:
-        protocols = set(protocol.strip().lower()
-            for protocol in args.allowed_protocols.split(','))
-        url_fetcher = partial(
-            url_fetcher, allowed_protocols=protocols)
+        protocols = {
+            protocol.strip().lower() for protocol in args.allowed_protocols.split(',')}
+        url_fetcher = partial(url_fetcher, allowed_protocols=protocols)
 
     options = {
         key: value for key, value in vars(args).items() if key in DEFAULT_OPTIONS}
