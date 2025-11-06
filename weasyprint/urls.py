@@ -233,16 +233,11 @@ def default_url_fetcher(url, timeout=10, ssl_context=None, http_headers=None,
     """
     if UNICODE_SCHEME_RE.match(url):
         if allowed_protocols is not None:
-            protocol_found = False
-            for protocol in allowed_protocols:
-                if url.lower().startswith(protocol + '://'):
-                    protocol_found = True
-                    break
-            if not protocol_found:
-                raise ValueError('URI uses disallowed protocol: %r' % url)
+            if url.split('://', 1)[0].lower() not in allowed_protocols:
+                raise ValueError(f'URI uses disallowed protocol: {url}')
 
         # See https://bugs.python.org/issue34702
-        if url.startswith('file://'):
+        if url.lower().startswith('file://'):
             url = url.split('?')[0]
             path = url2pathname(url.removeprefix('file:'))
         else:
@@ -277,7 +272,7 @@ def default_url_fetcher(url, timeout=10, ssl_context=None, http_headers=None,
             result['file_obj'] = response
         return result
     else:  # pragma: no cover
-        raise ValueError('Not an absolute URI: %r' % url)
+        raise ValueError(f'Not an absolute URI: {url}')
 
 
 class URLFetchingError(IOError):
