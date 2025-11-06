@@ -576,6 +576,31 @@ def test_to_unicode_rtl():
     assert b'<00d0> <0628>' in stdout
 
 
+@assert_no_logs
+@pytest.mark.parametrize('command', [
+    '- -',
+    '--allowed-protocols file - -',
+    '--allowed-protocols file,http - -',
+    '--allowed-protocols file,file - -',
+    '--allowed-protocols Http,File - -',
+])
+def test_allowed_protocols(command):
+    _run(command, f'<img src="{path2url(resource_path("pattern.png"))}">'.encode())
+
+
+@pytest.mark.parametrize('command', [
+    '--allowed-protocols http - -',
+    '--allowed-protocols http,https - -',
+    '--allowed-protocols filetest - -',
+    '--allowed-protocols "" - -',
+])
+def test_disallowed_protocols(command):
+    with capture_logs() as logs:
+        _run(command, f'<img src="{path2url(resource_path("pattern.png"))}">'.encode())
+    assert len(logs) == 1
+    assert 'URI uses disallowed protocol' in logs[0]
+
+
 @pytest.mark.parametrize(('html', 'fields'), [
     ('<input>', ['/Tx', '/V ()']),
     ('<input value="">', ['/Tx', '/V ()']),
