@@ -1150,7 +1150,7 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                 this_page_children.append((j, child))
 
     row_lines_positions = (
-        [*rows_positions[last_skip_row + 1:], box.content_box_y() + total_height])
+        [*rows_positions[first_skip_row + 1:], box.content_box_y() + total_height])
     for i, row_y in enumerate(row_lines_positions, start=first_skip_row):
         # TODO: handle break-before and break-after for rows.
         overflows = context.overflows_page(bottom_space, row_y - skip_height)
