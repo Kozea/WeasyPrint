@@ -187,7 +187,8 @@ def ensure_url(string):
     return string if url_is_absolute(string) else path2url(string)
 
 
-def default_url_fetcher(url, timeout=10, ssl_context=None, http_headers=None):
+def default_url_fetcher(url, timeout=10, ssl_context=None, http_headers=None,
+                        allowed_protocols=None):
     """Fetch an external resource such as an image or stylesheet.
 
     Another callable with the same signature can be given as the
@@ -202,6 +203,8 @@ def default_url_fetcher(url, timeout=10, ssl_context=None, http_headers=None):
         An SSL context used for HTTP requests.
     :param dict http_headers:
         Additional HTTP headers used for HTTP requests.
+    :param set allowed_protocols:
+        A set of authorized protocols.
     :raises: An exception indicating failure, e.g. :obj:`ValueError` on
         syntactically invalid URL.
     :returns: A :obj:`dict` with the following keys:
@@ -229,8 +232,12 @@ def default_url_fetcher(url, timeout=10, ssl_context=None, http_headers=None):
 
     """
     if UNICODE_SCHEME_RE.match(url):
+        if allowed_protocols is not None:
+            if url.split('://', 1)[0].lower() not in allowed_protocols:
+                raise ValueError(f'URI uses disallowed protocol: {url}')
+
         # See https://bugs.python.org/issue34702
-        if url.startswith('file://'):
+        if url.lower().startswith('file://'):
             url = url.split('?')[0]
             path = url2pathname(url.removeprefix('file:'))
         else:
@@ -265,7 +272,7 @@ def default_url_fetcher(url, timeout=10, ssl_context=None, http_headers=None):
             result['file_obj'] = response
         return result
     else:  # pragma: no cover
-        raise ValueError('Not an absolute URI: %r' % url)
+        raise ValueError(f'Not an absolute URI: {url}')
 
 
 class URLFetchingError(IOError):
