@@ -1303,17 +1303,25 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
             page_is_empty, absolute_boxes, fixed_boxes)[:3]
         if new_child:
             page_is_empty = False
-            if child_resume_at or resume_row == y:
-                # Child is broken.
+            broken_child = False
+            span = _get_span(child.style['grid_row_start'])
+            if child_resume_at:
+                broken_child = True
+            elif resume_row is not None and y + span >= resume_row + 1:
+                broken_child = True
+            if broken_child:
+                # Child is broken, add row to resume_at.
                 if resume_at is None:
                     resume_at = {}
                 if y not in resume_at:
                     resume_at[y] = {}
             if child_resume_at:
-                # There is some content left for next page.
+                # There is some content left for next page, save the cell’s resume_at.
                 resume_at[y][i] = child_resume_at
-            elif resume_row == y:
-                # Only display the bottom of an empty cell.
+            elif broken_child:
+                # Everything fits but the cell overflows. Only display the bottom of an
+                # empty cell on next page, set the cell’s resume_at after the cell’s
+                # last child.
                 assert isinstance(new_child, boxes.ParentBox)
                 previous_skip_child = max(child_skip_stack) if child_skip_stack else 0
                 resume_at[y][i] = {previous_skip_child + len(new_child.children): None}
