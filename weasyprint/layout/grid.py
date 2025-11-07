@@ -1177,16 +1177,17 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
             if not first_skip_row <= y < max_row:
                 # Item in previous or next rows.
                 continue
-            child_skip_stack = (skip_stack or {}).get(y)
             if skip_stack is None:
                 # No skip stack, draw on this page.
                 this_page_children.append((j, child))
             elif y > last_skip_row:
                 # Row after the skip stack, draw on this page.
                 this_page_children.append((j, child))
-            elif child_skip_stack and j in child_skip_stack:
-                # Child in skip stack, draw on this page.
-                this_page_children.append((j, child))
+            elif y in skip_stack:
+                child_skip_stack = skip_stack[y]
+                if child_skip_stack is None or j in child_skip_stack:
+                    # Child in skip stack, draw on this page.
+                    this_page_children.append((j, child))
 
     row_lines_positions = (
         [*rows_positions[first_skip_row + 1:], box.content_box_y() + total_height])
