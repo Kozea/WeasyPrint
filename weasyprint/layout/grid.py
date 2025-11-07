@@ -1397,11 +1397,7 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
             if not broken_child:
                 # Child fully drawn, no need to keep advancement.
                 continue
-            span_height = (
-                sum(size for size, _ in rows_sizes[y:y+span]) +
-                (span - 1) * row_gap)
-            advancement = child.margin_height()
-            advancements[x, y] = advancement
+            advancements[x, y] = child.margin_height()
             if (x, y) in old_advancements:
                 advancements[x, y] += old_advancements[x, y] - extra_skip_height
 
