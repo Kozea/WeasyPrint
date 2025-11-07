@@ -1192,29 +1192,29 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         [*rows_positions[first_skip_row + 1:], box.content_box_y() + total_height])
     for i, row_y in enumerate(row_lines_positions, start=first_skip_row):
         # TODO: handle break-before and break-after for rows.
-        overflows = context.overflows_page(bottom_space, row_y - skip_height)
-        if overflows:
-            resume_row = i
-        if overflows and not page_is_empty:
-            if box.style['break_inside'] == 'avoid':
-                # Avoid breaks inside grid container, break before.
+        if not context.overflows_page(bottom_space, row_y - skip_height):
+            page_is_empty = False
+            continue
+        resume_row = i
+        if box.style['break_inside'] == 'avoid' and not page_is_empty:
+            # Avoid breaks inside grid container, break before.
+            context.finish_block_formatting_context(box)
+            return None, None, {'break': 'any', 'page': None}, [], False
+        if page_breaks_by_row[i]['inside'] == 'avoid' and not page_is_empty:
+            # Break before current row.
+            if resume_row == 0:
+                # First row, break before grid container.
                 context.finish_block_formatting_context(box)
                 return None, None, {'break': 'any', 'page': None}, [], False
-            if page_breaks_by_row[i]['inside'] == 'avoid':
-                # Break before current row.
-                if resume_row == 0:
-                    # First row, break before grid container.
-                    context.finish_block_formatting_context(box)
-                    return None, None, {'break': 'any', 'page': None}, [], False
-                # Mark all children before and in current row as drawn on the page.
-                _add_page_children(resume_row)
-                resume_at = {resume_row: None}
-            else:
-                # Break inside current row.
-                # Mark all children before current row as drawn on the page.
-                _add_page_children(resume_row + 1)
-            break
-        page_is_empty = False
+            # Mark all children before and in current row as drawn on the page.
+            _add_page_children(resume_row)
+            resume_at = {resume_row: None}
+        else:
+            # Break inside current row.
+            # Mark all children before current row as drawn on the page.
+            page_is_empty = False
+            _add_page_children(resume_row + 1)
+        break
     else:
         # Mark all children as drawn on the page.
         _add_page_children()
