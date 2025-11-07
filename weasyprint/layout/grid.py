@@ -1124,9 +1124,6 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         skip_height = (
             sum(size for size, _ in rows_sizes[:last_skip_row]) +
             (len(rows_sizes[:last_skip_row]) - 1) * row_gap)
-        for (x, y), advancement in box.advancements.items():
-            skip_height += rows_sizes[y][0] * advancement
-            break
         extra_skip_height = 0
         for child, (x, y, width, height) in children_positions.items():
             if (advancement := box.advancements.get((x, y))) is None:
@@ -1158,6 +1155,13 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
             if skip_stack_advancement < previous_advancement:
                 extra_skip_height = max(
                     extra_skip_height, previous_advancement - skip_stack_advancement)
+        for (x, y), advancement in box.advancements.items():
+            if y != last_skip_row:
+                continue
+            skip_height += rows_sizes[y][0] * advancement
+            break
+        else:
+            extra_skip_height = 0
         skip_height -= extra_skip_height
     else:
         first_skip_row = last_skip_row = skip_height = 0
@@ -1313,6 +1317,11 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                 previous_skip_child = max(child_skip_stack) if child_skip_stack else 0
                 resume_at[y][i] = {previous_skip_child + len(new_child.children): None}
         else:
+            if resume_at is None:
+                resume_at = {}
+            if y not in resume_at:
+                resume_at[y] = {}
+            resume_at[y][i] = None
             continue
 
         if justify_self & {'normal', 'stretch'}:
