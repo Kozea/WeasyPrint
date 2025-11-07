@@ -1132,7 +1132,6 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
             span_height = (
                 sum(size for size, _ in rows_sizes[y:y+span]) +
                 (span - 1) * row_gap)
-            previous_advancement = span_height * advancement
             index = tuple(children_positions).index(child)
             width = sum(vertical_sizes[x:x+width])
             child = child.deepcopy()
@@ -1152,13 +1151,13 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                 context, child, bottom_space=-inf, skip_stack=child_skip_stack,
                 containing_block=parent)
             skip_stack_advancement = span_height - child.margin_height()
-            if skip_stack_advancement < previous_advancement:
+            if skip_stack_advancement < advancement:
                 extra_skip_height = max(
-                    extra_skip_height, previous_advancement - skip_stack_advancement)
+                    extra_skip_height, advancement - skip_stack_advancement)
         for (x, y), advancement in box.advancements.items():
             if y != last_skip_row:
                 continue
-            skip_height += rows_sizes[y][0] * advancement
+            skip_height += advancement
             break
         else:
             extra_skip_height = 0
@@ -1252,9 +1251,8 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
             sum(size for size, _ in rows_sizes[y:y+height]) +
             (height - 1) * row_gap)
         if skip_stack and (x, y) in box.advancements:
-            child.position_y += height * box.advancements[x, y] - extra_skip_height
-            height *= (1 - box.advancements[x, y])
-            height += extra_skip_height
+            child.position_y += box.advancements[x, y] - extra_skip_height
+            height -= box.advancements[x, y] - extra_skip_height
 
         # TODO: Apply auto margin.
         if child.margin_top == 'auto':
@@ -1385,11 +1383,10 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
             span_height = (
                 sum(size for size, _ in rows_sizes[y:y+span]) +
                 (span - 1) * row_gap)
-            advancement = child.margin_height() / span_height
+            advancement = child.margin_height()
             advancements[x, y] = advancement
             if (x, y) in old_advancements:
-                advancements[x, y] += (
-                    old_advancements[x, y] - extra_skip_height / span_height)
+                advancements[x, y] += old_advancements[x, y] - extra_skip_height
 
     box.height = (
         context.page_bottom - bottom_space - box.position_y -
