@@ -1335,7 +1335,7 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                 child.height -= (
                     child.margin_bottom + child.border_bottom_width +
                     child.padding_bottom)
-            advancement = child.height / (
+            advancement = child.margin_height() / (
                 sum(size for size, _ in rows_sizes[y:y+span]) +
                 (span - 1) * row_gap)
             advancements[x, y] = advancement
