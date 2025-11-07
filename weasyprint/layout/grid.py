@@ -1363,22 +1363,25 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         return box, resume_at, next_page, [], False
 
     # Set broken rows’ bottom at the bottom of the page.
-    last_row = max(new_children_by_rows)
-    for y in range(last_row, -1, -1):
-        if min(resume_at) > y:
-            continue
+    last_page_row = max(new_children_by_rows)
+    next_page_first_row = min(resume_at)
+    next_page_last_row = max(resume_at)
+    for y in range(last_page_row, next_page_first_row - 1, -1):
         for x, child in new_children_by_rows[y]:
             span = _get_span(child.style['grid_row_start'])
-            if y + span < last_row + 1:
+            if y + span < last_page_row + 1:
+                # Child finishing before the last row, do nothing.
                 continue
+            broken_child = y + span >= next_page_last_row + 1
+            if broken_child and child.style['box_decoration_break'] != 'clone':
+                child.remove_decoration(start=False, end=True)
             child.height = (
                 context.page_bottom - bottom_space - child.position_y -
-                child.margin_top - child.border_top_width - child.padding_top)
-            if child.style['box_decoration_break'] != 'clone':
-                child.remove_decoration(start=False, end=True)
-                child.height -= (
-                    child.margin_bottom + child.border_bottom_width +
-                    child.padding_bottom)
+                child.margin_top - child.border_top_width - child.padding_top -
+                child.margin_bottom - child.border_bottom_width - child.padding_bottom)
+            if not broken_child:
+                # Child fully drawn, no need to keep advancement.
+                continue
             span_height = (
                 sum(size for size, _ in rows_sizes[y:y+span]) +
                 (span - 1) * row_gap)
