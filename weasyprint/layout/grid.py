@@ -1381,6 +1381,7 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
     last_page_row = max(new_children_by_rows)
     next_page_first_row = min(resume_at)
     next_page_last_row = max(resume_at)
+    extra_advancement = 0
     for y in range(last_page_row, next_page_first_row - 1, -1):
         for x, child in new_children_by_rows[y]:
             span = _get_span(child.style['grid_row_start'])
@@ -1394,13 +1395,23 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                 context.page_bottom - bottom_space - child.position_y -
                 child.margin_top - child.border_top_width - child.padding_top -
                 child.margin_bottom - child.border_bottom_width - child.padding_bottom)
-            if not broken_child:
-                # Child fully drawn, no need to keep advancement.
-                continue
-            advancements[x, y] = child.margin_height()
-            if (x, y) in old_advancements:
-                advancements[x, y] += old_advancements[x, y] - extra_skip_height
+            if broken_child:
+                # Child not fully drawn, keep advancement.
+                advancements[x, y] = child.margin_height()
+                if (x, y) in old_advancements:
+                    advancements[x, y] += old_advancements[x, y] - extra_skip_height
+            else:
+                # Child fully drawn, save the extra height added to reach the bottom of
+                # the page to substract it from the advancements.
+                extra_advancement = max(extra_advancement, child.height - child_height)
 
+    # Substract the extra height added to reach the bottom of the page from all the
+    # advancements.
+    if extra_advancement:
+        for x, y in advancements:
+            advancements[x, y] -= extra_advancement
+
+    # Set box height and remove bottom decoration.
     box.height = (
         context.page_bottom - bottom_space - box.position_y -
         box.margin_top - box.border_top_width - box.padding_top)
