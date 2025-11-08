@@ -663,6 +663,7 @@ def _resolve_calc_sum(computed, tokens, property_name, refer_to):
             elif product.type == 'percentage':
                 if refer_to is not None:
                     product.value = product.value / 100 * refer_to
+                    unit = 'px'
                 else:
                     if unit is None or unit == '%':
                         unit = '%'
@@ -777,7 +778,7 @@ def resolve_math(token, computed=None, property_name=None, refer_to=None):
             if token.type == 'percentage':
                 if refer_to is None:
                     if unit == 'px':
-                        return original_token
+                        raise PercentageInMath
                     unit = '%'
                     value = token
                 else:
@@ -785,7 +786,7 @@ def resolve_math(token, computed=None, property_name=None, refer_to=None):
                     token = value = tokenize(token.value / 100 * refer_to, unit='px')
             else:
                 if unit == '%':
-                    return original_token
+                    raise PercentageInMath
                 unit = 'px'
                 value = tokenize(to_pixels(token, computed, property_name), unit='px')
             update_condition = (
@@ -799,19 +800,23 @@ def resolve_math(token, computed=None, property_name=None, refer_to=None):
     elif function.name == 'round':
         strategy, multiple = 'nearest', 1
         if len(args) == 1:
-            number_token = _resolve_calc_sum(computed, args[0], property_name)
+            number_token = _resolve_calc_sum(computed, args[0], property_name, refer_to)
         elif len(args) == 2:
             strategies = ('nearest', 'up', 'down', 'to-zero')
             if len(args[0]) == 1 and args[0][0].value in strategies:
                 strategy = args[0][0].value
-                number_token = _resolve_calc_sum(computed, args[1], property_name)
+                number_token = _resolve_calc_sum(
+                    computed, args[1], property_name, refer_to)
             else:
-                number_token = _resolve_calc_sum(computed, args[0], property_name)
-                multiple = _resolve_calc_sum(computed, args[1], property_name).value
+                number_token = _resolve_calc_sum(
+                    computed, args[0], property_name, refer_to)
+                multiple = _resolve_calc_sum(
+                    computed, args[1], property_name, refer_to).value
         elif len(args) == 3:
             strategy = args[0][0].value
-            number_token = _resolve_calc_sum(computed, args[1], property_name)
-            multiple = _resolve_calc_sum(computed, args[2], property_name).value
+            number_token = _resolve_calc_sum(computed, args[1], property_name, refer_to)
+            multiple = _resolve_calc_sum(
+                computed, args[2], property_name, refer_to).value
         if strategy == 'nearest':
             # TODO: always round x.5 to +inf, see
             # https://drafts.csswg.org/css-values-4/#combine-integers.
@@ -827,11 +832,11 @@ def resolve_math(token, computed=None, property_name=None, refer_to=None):
         return tokenize(number_token, lambda x: function(x / multiple) * multiple)
 
     elif function.name in ('mod', 'rem'):
-        number_token = _resolve_calc_sum(computed, args[0], property_name)
+        number_token = _resolve_calc_sum(computed, args[0], property_name, refer_to)
         if number_token is None:
             return
         number = number_token.value
-        parameter = _resolve_calc_sum(computed, args[1], property_name).value
+        parameter = _resolve_calc_sum(computed, args[1], property_name, refer_to).value
         if parameter is None:
             return
         value = number % parameter
@@ -840,7 +845,7 @@ def resolve_math(token, computed=None, property_name=None, refer_to=None):
         return tokenize(number_token, lambda x: value)
 
     elif function.name in ('sin', 'cos', 'tan'):
-        number_token = _resolve_calc_sum(computed, args[0], property_name)
+        number_token = _resolve_calc_sum(computed, args[0], property_name, refer_to)
         if number_token is None:
             return
         if getattr(number_token, 'unit', None) is None:
@@ -851,7 +856,7 @@ def resolve_math(token, computed=None, property_name=None, refer_to=None):
         return tokenize(value)
 
     elif function.name in ('asin', 'acos', 'atan'):
-        number_token = _resolve_calc_sum(computed, args[0], property_name)
+        number_token = _resolve_calc_sum(computed, args[0], property_name, refer_to)
         if number_token is None:
             return
         value = getattr(math, function.name)(number_token.value)
@@ -859,7 +864,7 @@ def resolve_math(token, computed=None, property_name=None, refer_to=None):
 
     elif function.name == 'atan2':
         y_token, x_token = [
-            _resolve_calc_sum(computed, arg, property_name) for arg in args]
+            _resolve_calc_sum(computed, arg, property_name, refer_to) for arg in args]
         if None in (y_token, x_token):
             return
         y, x = y_token.value, x_token.value
@@ -869,13 +874,13 @@ def resolve_math(token, computed=None, property_name=None, refer_to=None):
         pixels_list = []
         unit = None
         for tokens in args:
-            token = _resolve_calc_sum(computed, tokens, property_name)
+            token = _resolve_calc_sum(computed, tokens, property_name, refer_to)
             if token is None:
                 return
             if token.type == 'percentage':
                 if refer_to is None:
                     if unit == 'px':
-                        return original_token
+                        raise PercentageInMath
                     unit = '%'
                     value = token
                 else:
@@ -883,7 +888,7 @@ def resolve_math(token, computed=None, property_name=None, refer_to=None):
                     token = tokenize(token.value / 100 * refer_to, unit='px')
             else:
                 if unit == '%':
-                    return original_token
+                    raise PercentageInMath
                 unit = 'px'
                 pixels = to_pixels(token, computed, property_name)
                 value = tokenize(pixels, unit='px')
@@ -897,30 +902,31 @@ def resolve_math(token, computed=None, property_name=None, refer_to=None):
 
     elif function.name == 'pow':
         number_token, power_token = [
-            _resolve_calc_sum(computed, arg, property_name) for arg in args]
+            _resolve_calc_sum(computed, arg, property_name, refer_to) for arg in args]
         if None in (number_token, power_token):
             return
         return tokenize(number_token, lambda x: x ** power_token.value)
 
     elif function.name == 'sqrt':
         number_token, = [
-            _resolve_calc_sum(computed, arg, property_name) for arg in args]
+            _resolve_calc_sum(computed, arg, property_name, refer_to) for arg in args]
         if number_token is None:
             return
         return tokenize(number_token, lambda x: x ** 0.5)
 
     elif function.name == 'hypot':
         resolved = [
-            _resolve_calc_sum(computed, tokens, property_name) for tokens in args]
+            _resolve_calc_sum(computed, tokens, property_name, refer_to)
+            for tokens in args]
         if None in resolved:
             return
         value = math.hypot(*[token.value for token in resolved])
         return tokenize(resolved[0], lambda x: value)
 
     elif function.name == 'log':
-        number_token = _resolve_calc_sum(computed, args[0], property_name)
+        number_token = _resolve_calc_sum(computed, args[0], property_name, refer_to)
         if len(args) == 2:
-            base = _resolve_calc_sum(computed, args[1], property_name).value
+            base = _resolve_calc_sum(computed, args[1], property_name, refer_to).value
         else:
             base = math.e
         if None in (number_token, base):
@@ -928,22 +934,22 @@ def resolve_math(token, computed=None, property_name=None, refer_to=None):
         return tokenize(number_token, lambda x: math.log(x, base))
 
     elif function.name == 'exp':
-        number = _resolve_calc_sum(computed, args[0], property_name)
+        number = _resolve_calc_sum(computed, args[0], property_name, refer_to)
         if number is None:
             return
         return tokenize(number, math.exp)
 
     elif function.name == 'abs':
-        number = _resolve_calc_sum(computed, args[0])
+        number = _resolve_calc_sum(computed, args[0], property_name, refer_to)
         if number is None:
             return
-        return tokenize(number, property_name, abs)
+        return tokenize(number, abs)
 
     elif function.name == 'sign':
-        number = _resolve_calc_sum(computed, args[0], property_name)
+        number = _resolve_calc_sum(computed, args[0], property_name, refer_to)
         if number is None:
             return
-        return tokenize(number, lambda x: 0 if x == 0 else 1 if x > 0 else -1)
+        return tokenize(number.value, lambda x: 0 if x == 0 else 1 if x > 0 else -1)
 
     arguments = []
     for i, argument in enumerate(token.arguments):
