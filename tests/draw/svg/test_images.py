@@ -321,3 +321,53 @@ def test_image_image_wrong(assert_pixels):
         <image xlink:href="it doesn’t exist, mouhahahaha" />
       </svg>
     ''')
+
+
+@assert_no_logs
+def test_image_in_g_height_only(assert_pixels):
+    """Test that image inside g with only height set preserves aspect ratio."""
+    assert_pixels('''
+        rrBBBBBB
+        rrBBBBBB
+        BBBBBBBB
+        BBBBBBBB
+        BBBBBBBB
+        BBBBBBBB
+        BBBBBBBB
+        BBBBBBBB
+    ''', '''
+      <style>
+        @page { size: 8px 8px }
+        svg { display: block }
+      </style>
+      <svg width="8px" height="8px" xmlns="http://www.w3.org/2000/svg">
+        <g>
+          <image image-rendering="pixelated" href="%s" height="8px"/>
+        </g>
+      </svg>
+    ''' % path2url(resource_path('pattern.png')))
+
+
+@assert_no_logs
+def test_image_in_g_width_only(assert_pixels):
+    """Test that image inside g with only width set preserves aspect ratio."""
+    assert_pixels('''
+        rrBBBBBB
+        rrBBBBBB
+        BBBBBBBB
+        BBBBBBBB
+        BBBBBBBB
+        BBBBBBBB
+        BBBBBBBB
+        BBBBBBBB
+    ''', '''
+      <style>
+        @page { size: 8px 8px }
+        svg { display: block }
+      </style>
+      <svg width="8px" height="8px" xmlns="http://www.w3.org/2000/svg">
+        <g>
+          <image image-rendering="pixelated" href="%s" width="8px"/>
+        </g>
+      </svg>
+    ''' % path2url(resource_path('pattern.png')))
