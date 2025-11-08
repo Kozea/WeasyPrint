@@ -327,18 +327,22 @@ def test_image_image_wrong(assert_pixels):
 def test_image_in_g_height_only(assert_pixels):
     """Test that image inside g with only height set preserves aspect ratio."""
     assert_pixels('''
-        rBBB
-        BBBB
-        BBBB
-        BBBB
+        rrBBBBBB
+        rrBBBBBB
+        BBBBBBBB
+        BBBBBBBB
+        BBBBBBBB
+        BBBBBBBB
+        BBBBBBBB
+        BBBBBBBB
     ''', '''
       <style>
-        @page { size: 4px 4px }
+        @page { size: 8px 8px }
         svg { display: block }
       </style>
-      <svg width="4px" height="4px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="8px" height="8px" xmlns="http://www.w3.org/2000/svg">
         <g>
-          <image xlink:href="%s" height="4px"/>
+          <image image-rendering="pixelated" href="%s" height="8px"/>
         </g>
       </svg>
     ''' % path2url(resource_path('pattern.png')))
@@ -348,18 +352,22 @@ def test_image_in_g_height_only(assert_pixels):
 def test_image_in_g_width_only(assert_pixels):
     """Test that image inside g with only width set preserves aspect ratio."""
     assert_pixels('''
-        rBBB
-        BBBB
-        BBBB
-        BBBB
+        rrBBBBBB
+        rrBBBBBB
+        BBBBBBBB
+        BBBBBBBB
+        BBBBBBBB
+        BBBBBBBB
+        BBBBBBBB
+        BBBBBBBB
     ''', '''
       <style>
-        @page { size: 4px 4px }
+        @page { size: 8px 8px }
         svg { display: block }
       </style>
-      <svg width="4px" height="4px" xmlns="http://www.w3.org/2000/svg">
+      <svg width="8px" height="8px" xmlns="http://www.w3.org/2000/svg">
         <g>
-          <image xlink:href="%s" width="4px"/>
+          <image image-rendering="pixelated" href="%s" width="8px"/>
         </g>
       </svg>
     ''' % path2url(resource_path('pattern.png')))
