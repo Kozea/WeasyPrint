@@ -175,7 +175,7 @@ def check_math(token):
         return
     arguments = function.split_comma(single_tokens=False)
     if name == 'calc':
-        return len(arguments) >= 1
+        return len(arguments) == 1
     elif name in ('min', 'max'):
         return len(arguments) >= 1
     elif name == 'clamp':

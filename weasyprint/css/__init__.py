@@ -710,6 +710,8 @@ def _resolve_calc_product(computed, tokens, property_name, refer_to):
             assert group
             assert isinstance(group, list)
             calc = _resolve_calc_value(computed, group)
+            if calc is None:
+                return
             if calc.type == 'dimension':
                 if unit is None or unit == '%':
                     unit = calc.unit.lower()
@@ -760,6 +762,8 @@ def resolve_math(token, computed=None, property_name=None, refer_to=None):
         for arg in part:
             if check_math(arg):
                 arg = resolve_math(arg, computed, property_name, refer_to)
+                if arg is None:
+                    return
             args[-1].append(arg)
 
     if function.name == 'calc':
@@ -777,16 +781,25 @@ def resolve_math(token, computed=None, property_name=None, refer_to=None):
                 return
             if token.type == 'percentage':
                 if refer_to is None:
-                    if unit == 'px':
+                    if unit in ('px', ''):
                         raise PercentageInMath
                     unit = '%'
                     value = token
                 else:
                     unit = 'px'
                     token = value = tokenize(token.value / 100 * refer_to, unit='px')
+            elif token.type == 'number':
+                if unit == '%':
+                    raise PercentageInMath
+                elif unit == 'px':
+                    return
+                unit = ''
+                value = tokenize(token.value, unit='px')
             else:
                 if unit == '%':
                     raise PercentageInMath
+                elif unit == '':
+                    return
                 unit = 'px'
                 value = tokenize(to_pixels(token, computed, property_name), unit='px')
             update_condition = (
@@ -807,16 +820,28 @@ def resolve_math(token, computed=None, property_name=None, refer_to=None):
                 strategy = args[0][0].value
                 number_token = _resolve_calc_sum(
                     computed, args[1], property_name, refer_to)
+                if number_token is None:
+                    return
             else:
                 number_token = _resolve_calc_sum(
                     computed, args[0], property_name, refer_to)
-                multiple = _resolve_calc_sum(
-                    computed, args[1], property_name, refer_to).value
+                multiple_token = _resolve_calc_sum(
+                    computed, args[1], property_name, refer_to)
+                if None in (number_token, multiple_token):
+                    return
+                if number_token.type != multiple_token.type:
+                    return
+                multiple = multiple_token.value
         elif len(args) == 3:
             strategy = args[0][0].value
             number_token = _resolve_calc_sum(computed, args[1], property_name, refer_to)
-            multiple = _resolve_calc_sum(
-                computed, args[2], property_name, refer_to).value
+            multiple_token = _resolve_calc_sum(
+                computed, args[2], property_name, refer_to)
+            if None in (number_token, multiple_token):
+                return
+            if number_token.type != multiple_token.type:
+                return
+            multiple = multiple_token.value
         if strategy == 'nearest':
             # TODO: always round x.5 to +inf, see
             # https://drafts.csswg.org/css-values-4/#combine-integers.
@@ -827,18 +852,19 @@ def resolve_math(token, computed=None, property_name=None, refer_to=None):
             function = math.floor
         elif strategy == 'to-zero':
             function = math.floor if number_token.value > 0 else math.ceil
-        if None in (number_token, multiple):
+        else:
             return
         return tokenize(number_token, lambda x: function(x / multiple) * multiple)
 
     elif function.name in ('mod', 'rem'):
         number_token = _resolve_calc_sum(computed, args[0], property_name, refer_to)
-        if number_token is None:
+        parameter_token = _resolve_calc_sum(computed, args[1], property_name, refer_to)
+        if None in (number_token, parameter_token):
+            return
+        if number_token.type != parameter_token.type:
             return
         number = number_token.value
-        parameter = _resolve_calc_sum(computed, args[1], property_name, refer_to).value
-        if parameter is None:
-            return
+        parameter = parameter_token.value
         value = number % parameter
         if function.name == 'rem' and number * parameter < 0:
             value += abs(parameter)
@@ -848,24 +874,29 @@ def resolve_math(token, computed=None, property_name=None, refer_to=None):
         number_token = _resolve_calc_sum(computed, args[0], property_name, refer_to)
         if number_token is None:
             return
-        if getattr(number_token, 'unit', None) is None:
+        if number_token.type == 'number':
             angle = number_token.value
-        else:
-            angle = get_angle(number_token)
+        elif (angle := get_angle(number_token)) is None:
+            return
         value = getattr(math, function.name)(angle)
         return tokenize(value)
 
     elif function.name in ('asin', 'acos', 'atan'):
         number_token = _resolve_calc_sum(computed, args[0], property_name, refer_to)
-        if number_token is None:
+        if number_token is None or number_token.type != 'number':
             return
-        value = getattr(math, function.name)(number_token.value)
+        try:
+            value = getattr(math, function.name)(number_token.value)
+        except ValueError:
+            return
         return tokenize(value, unit='rad')
 
     elif function.name == 'atan2':
         y_token, x_token = [
             _resolve_calc_sum(computed, arg, property_name, refer_to) for arg in args]
         if None in (y_token, x_token):
+            return
+        if {y_token.type, x_token.type} != {'number'}:
             return
         y, x = y_token.value, x_token.value
         return tokenize(math.atan2(y, x), unit='rad')
@@ -905,12 +936,13 @@ def resolve_math(token, computed=None, property_name=None, refer_to=None):
             _resolve_calc_sum(computed, arg, property_name, refer_to) for arg in args]
         if None in (number_token, power_token):
             return
+        if {number_token.type, power_token.type} != {'number'}:
+            return
         return tokenize(number_token, lambda x: x ** power_token.value)
 
     elif function.name == 'sqrt':
-        number_token, = [
-            _resolve_calc_sum(computed, arg, property_name, refer_to) for arg in args]
-        if number_token is None:
+        number_token = _resolve_calc_sum(computed, args[0], property_name, refer_to)
+        if number_token is None or number_token.type != 'number':
             return
         return tokenize(number_token, lambda x: x ** 0.5)
 
@@ -925,31 +957,35 @@ def resolve_math(token, computed=None, property_name=None, refer_to=None):
 
     elif function.name == 'log':
         number_token = _resolve_calc_sum(computed, args[0], property_name, refer_to)
+        if number_token is None or number_token.type != 'number':
+            return
         if len(args) == 2:
-            base = _resolve_calc_sum(computed, args[1], property_name, refer_to).value
+            base_token = _resolve_calc_sum(computed, args[1], property_name, refer_to)
+            if base_token is None or base_token.type != 'number':
+                return
+            base = base_token.value
         else:
             base = math.e
-        if None in (number_token, base):
-            return
         return tokenize(number_token, lambda x: math.log(x, base))
 
     elif function.name == 'exp':
-        number = _resolve_calc_sum(computed, args[0], property_name, refer_to)
-        if number is None:
+        number_token = _resolve_calc_sum(computed, args[0], property_name, refer_to)
+        if number_token is None or number_token.type != 'number':
             return
-        return tokenize(number, math.exp)
+        return tokenize(number_token, math.exp)
 
     elif function.name == 'abs':
-        number = _resolve_calc_sum(computed, args[0], property_name, refer_to)
-        if number is None:
+        number_token = _resolve_calc_sum(computed, args[0], property_name, refer_to)
+        if number_token is None:
             return
-        return tokenize(number, abs)
+        return tokenize(number_token, abs)
 
     elif function.name == 'sign':
-        number = _resolve_calc_sum(computed, args[0], property_name, refer_to)
-        if number is None:
+        number_token = _resolve_calc_sum(computed, args[0], property_name, refer_to)
+        if number_token is None:
             return
-        return tokenize(number.value, lambda x: 0 if x == 0 else 1 if x > 0 else -1)
+        return tokenize(
+            number_token.value, lambda x: 0 if x == 0 else 1 if x > 0 else -1)
 
     arguments = []
     for i, argument in enumerate(token.arguments):
