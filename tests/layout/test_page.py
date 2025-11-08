@@ -1036,6 +1036,34 @@ def test_page_groups_first_nth():
         assert (page.width, page.height) == (50, 50)
     assert (page4.width, page4.height) == (100, 100)
 
+@assert_no_logs
+def test_page_groups_counters():
+    # Regression test for #2485.
+    pages = render_pages('''
+      <style>
+        html { counter-reset: h1-counter }
+        h1 { page-break-before: always; counter-increment: h1-counter; }
+        div.main-content { page: main-content-page-group; break-before: page; }
+        @page { size: 1000px }
+        @page :nth(1 of main-content-page-group) { counter-reset: page 1; size: 500px; }
+        a::after { content: target-counter(attr(href), h1-counter) '.' target-counter(attr(href), page); }
+      </style>
+      <html>
+      <body>
+        INTRO PAGE
+        <div class="main-content">
+        <h1 id="t2">First title</h1>
+        <h1>Title3</h1>
+        <a href="#t2">Second title</a>
+        </div>
+      </body>
+      </html>
+    ''')
+    page1, page2, page3  = pages
+    assert (page1.width, page1.height) == (1000, 1000)
+    assert (page2.width, page2.height) == (500, 500)
+    assert (page3.width, page3.height) == (1000, 1000)
+
 
 @assert_no_logs
 @pytest.mark.parametrize(('style', 'line_counts'), [
