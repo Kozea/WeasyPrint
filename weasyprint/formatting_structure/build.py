@@ -1143,52 +1143,60 @@ def process_text_transform(box):
             if isinstance(child, (boxes.TextBox, boxes.InlineBox)):
                 process_text_transform(child)
 
-
 def uppercase(text, lang):
-    mapper = {
-        'άι': 'ΑΪ',
-        'ήι': 'ΗI',
-        'ά': 'Α',
-        'ή': 'Ή',
-        'έ': 'Ε',
-        'ί': 'Ι',
-        'ό': 'Ο',
-        'ύ': 'Υ',
-        'ώ': 'Ω',
-        'i': 'İ',
-    }
-    if lang: 
-        lang_code = lang.split('-')[0].lower()
-        
-        if lang_code in ('el', 'tr'):
-            for key, value in mapper.items():
-                text = text.replace(key, value)
+    lang_code = (lang or '').split('-')[0].lower()
+    mapper = {}
+
+    if lang_code == 'el':
+        mapper = {
+            'άι': 'ΑΪ',
+            'ήι': 'ΗI',
+            'ά': 'Α',
+            'ή': 'Ή',
+            'έ': 'Ε',
+            'ί': 'Ι',
+            'ό': 'Ο',
+            'ύ': 'Υ',
+            'ώ': 'Ω',
+        }
+    elif lang_code == 'tr':
+        mapper = {
+            'i': 'İ',
+        }
+
+    for key, value in mapper.items():
+        text = text.replace(key, value)
 
     return text.upper()
 
 
 def lowercase(text, lang):
-    mapper = {
-        'ΑΪ': 'άι',
-        'ΗI': 'ήι',
-        'Α': 'ά',
-        'Ή': 'ή',
-        'Ε': 'έ',
-        'Ι': 'ί',
-        'Ο': 'ό',
-        'Υ': 'ύ',
-        'Ω': 'ώ',
-        'İ': 'i',
-        'I': 'ı',
-    }
-    if lang:
-        lang_code = lang.split('-')[0].lower() 
-        
-        if lang_code in ('el', 'tr'):
-            for key, value in mapper.items():
-                text = text.replace(key, value)
+    lang_code = (lang or '').split('-')[0].lower()
+    mapper = {}
+    
+    if lang_code == 'el':
+        mapper = {
+            'ΑΪ': 'άι',
+            'ΗI': 'ήι',
+            'Α': 'ά',
+            'Ή': 'ή',
+            'Ε': 'έ',
+            'Ι': 'ί',
+            'Ο': 'ό',
+            'Υ': 'ύ',
+            'Ω': 'ώ',
+        }
+    elif lang_code == 'tr':
+        mapper = {
+            'İ': 'i',
+            'I': 'ı',
+        }
+
+    for key, value in mapper.items():
+        text = text.replace(key, value)
 
     return text.lower()
+
 
 def capitalize(text):
     """Capitalize words according to CSS’s "text-transform: capitalize"."""
