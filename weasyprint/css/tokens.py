@@ -681,8 +681,8 @@ def tokenize(item, function=None, unit=None):
         else:
             value = item
         value = function(value) if function else value
-        int_value = round(value) if value.is_integer() else None
-        representation = str(int_value if value.is_integer() else value)
+        int_value = round(value) if float(value).is_integer() else None
+        representation = str(int_value if float(value).is_integer() else value)
         if unit is None:
             return NumberToken(0, 0, value, int_value, representation)
         elif unit == '%':

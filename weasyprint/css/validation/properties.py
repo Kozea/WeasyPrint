@@ -1411,7 +1411,8 @@ def grid_template(tokens):
                 return
             repeat, = repeat
             if function.name == 'repeat' and len(arguments) >= 2:
-                if repeat.type == 'number' and repeat.is_integer and repeat.value >= 1:
+                if (repeat.type == 'number' and float(repeat.value).is_integer() and
+                        repeat.value >= 1):
                     number = repeat.int_value
                 elif get_keyword(repeat) == 'auto-fill':
                     number = 'auto-fill'
