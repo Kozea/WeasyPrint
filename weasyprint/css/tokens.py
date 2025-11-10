@@ -404,7 +404,11 @@ def get_length(token, negative=True, percentage=False):
     if check_math(token):
         try:
             token = resolve_math(token) or token
-        except (PercentageInMath, FontUnitInMath):
+        except PercentageInMath:
+            # PercentageInMath is raised in priority to help discarding percentages for
+            # properties that don’t allow them.
+            return token if percentage else None
+        except FontUnitInMath:
             return token
         else:
             # Range clamp.

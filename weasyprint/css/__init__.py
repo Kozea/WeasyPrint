@@ -642,6 +642,7 @@ def _resolve_calc_sum(computed, tokens, property_name, refer_to):
             groups[-1].append(token)
 
     value, sign, unit = 0, '+', None
+    exception = None
     while groups:
         if sign is None:
             sign = groups.pop(0)
@@ -650,9 +651,21 @@ def _resolve_calc_sum(computed, tokens, property_name, refer_to):
             group = groups.pop(0)
             assert group
             assert isinstance(group, list)
-            product = _resolve_calc_product(computed, group, property_name, refer_to)
-            if product is None:
-                return
+            try:
+                product = _resolve_calc_product(
+                    computed, group, property_name, refer_to)
+            except FontUnitInMath as font_exception:
+                # FontUnitInMath raised, assume that we got pixels and continue to find
+                # if we have to raise PercentageInMath first.
+                if unit == '%':
+                    raise PercentageInMath
+                exception = font_exception
+                unit = 'px'
+                sign = None
+                continue
+            else:
+                if product is None:
+                    return
             if product.type == 'dimension':
                 if unit is None:
                     unit = product.unit.lower()
@@ -674,6 +687,10 @@ def _resolve_calc_sum(computed, tokens, property_name, refer_to):
             else:
                 value -= product.value
             sign = None
+
+    # Raise FontUnitInMath, only if we didn’t raise PercentageInMath before.
+    if exception:
+        raise exception
 
     return tokenize(value, unit=unit)
 
@@ -748,7 +765,16 @@ def _resolve_calc_value(computed, tokens):
 
 
 def resolve_math(token, computed=None, property_name=None, refer_to=None):
-    """Return token with resolved math functions."""
+    """Return token with resolved math functions.
+
+    Raise, in order of priority, ``PercentageInMath`` if percentages are mixed with
+    other values with no ``refer_to`` size, or ``FontUnitInMath`` if no ``computed``
+    style is available to get font size.
+
+    ``PercentageInMath`` has to be raised before FontUnitInMath so that it can be used
+    to discard validation of properties that don’t accept percentages.
+
+    """
     if not check_math(token):
         return
 

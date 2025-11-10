@@ -4,6 +4,8 @@ from math import isclose
 
 import pytest
 
+from weasyprint.css.validation.properties import PROPERTIES
+
 from ..testing_utils import assert_no_logs, capture_logs, render_pages
 
 
@@ -214,3 +216,49 @@ def test_math_functions_error(width):
           <div style="--one: 1; height: 1px; width: %s"></div>
         ''' % width)
     assert len(logs) == 1
+
+
+@pytest.mark.parametrize('css_property', PROPERTIES)
+def test_math_functions_percentage_and_font_unit(css_property):
+    with capture_logs() as math_logs:
+        render_pages(f'''
+          <div style="{css_property}: calc(50% + 1em)"></div>
+        ''')
+    with capture_logs() as logs:
+        render_pages(f'''
+          <div style="{css_property}: 50%"></div>
+        ''')
+        if not logs:
+            # Happens when property accepts percentages but not lengths.
+            render_pages(f'''
+              <div style="{css_property}: 1em"></div>
+            ''')
+    assert len(math_logs) == len(logs)
+
+
+@assert_no_logs
+def test_math_functions_gradient():
+    render_pages('''
+      <div style="width: 10px; height: 10px; background: linear-gradient(
+        blue calc(20% + 1em),
+        red calc(80% + 1em))"></div>
+    ''')
+
+
+@pytest.mark.xfail
+@assert_no_logs
+def test_math_functions_color():
+    render_pages('''
+      <div style="width: 10px; height: 10px;
+                  background: rgba(10, 20, calc(30), calc(80%))"></div>
+    ''')
+
+
+@pytest.mark.xfail
+@assert_no_logs
+def test_math_functions_gradient_color():
+    render_pages('''
+      <div style="width: 10px; height: 10px; background: linear-gradient(
+        rgba(10, 20, calc(30), calc(80%)) 10%,
+        hsl(calc(10 + 10), 20%, 20%) 80%"></div>
+    ''')

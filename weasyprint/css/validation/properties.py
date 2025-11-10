@@ -1004,9 +1004,7 @@ def line_height(token):
         return 'normal'
     elif number := get_number(token, negative=False):
         return number
-    elif percentage := get_percentage(token, negative=False):
-        return percentage
-    elif length := get_length(token, negative=False):
+    elif length := get_length(token, negative=False, percentage=True):
         return length
 
 
