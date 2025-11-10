@@ -9,7 +9,7 @@ from ..formatting_structure import boxes
 from . import replaced
 from .percent import percentage, resolve_radii_percentages
 
-Background = namedtuple('Background', 'color, layers, image_rendering')
+Background = namedtuple('Background', 'color, layers, style')
 BackgroundLayer = namedtuple(
     'BackgroundLayer',
     'image, size, position, repeat, unbounded, '
@@ -88,7 +88,7 @@ def layout_box_backgrounds(page, box, get_image_from_uri, layout_children=True,
             style['background_origin'],
             style['background_position'],
             style['background_attachment']]))]
-    box.background = Background(color, layers, style['image_rendering'])
+    box.background = Background(color, layers, style)
 
 
 def layout_background_layer(box, page, resolution, image, size, clip, repeat,
@@ -177,15 +177,15 @@ def layout_background_layer(box, page, resolution, image, size, clip, repeat,
         size_width, size_height = size
         image_width, image_height = replaced.default_image_sizing(
             intrinsic_width, intrinsic_height, ratio,
-            percentage(size_width, positioning_width),
-            percentage(size_height, positioning_height),
+            percentage(size_width, box.style, positioning_width),
+            percentage(size_height, box.style, positioning_height),
             positioning_width, positioning_height)
 
     origin_x, position_x, origin_y, position_y = position
     ref_x = positioning_width - image_width
     ref_y = positioning_height - image_height
-    position_x = percentage(position_x, ref_x)
-    position_y = percentage(position_y, ref_y)
+    position_x = percentage(position_x, box.style, ref_x)
+    position_y = percentage(position_y, box.style, ref_y)
     if origin_x == 'right':
         position_x = ref_x - position_x
     if origin_y == 'bottom':

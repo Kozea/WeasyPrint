@@ -8,7 +8,7 @@ from ...logger import LOGGER
 from . import properties
 
 from ..tokens import (  # isort:skip
-    InvalidValues, comma_separated_list, get_custom_ident, get_keyword,
+    InvalidValues, comma_separated_list, get_custom_ident, get_keyword, get_number,
     get_single_keyword, get_url, remove_whitespace, single_keyword, single_token,
     split_on_comma)
 
@@ -171,9 +171,9 @@ def font_weight(token):
     keyword = get_keyword(token)
     if keyword in ('normal', 'bold'):
         return keyword
-    if token.type == 'number' and token.int_value is not None:
-        if token.int_value in (100, 200, 300, 400, 500, 600, 700, 800, 900):
-            return token.int_value
+    if number := get_number(token, integer=True):
+        if number.value in (100, 200, 300, 400, 500, 600, 700, 800, 900):
+            return number.value
 
 
 @descriptor('font-face')
@@ -225,17 +225,15 @@ def system(tokens):
         return
 
     keyword = get_keyword(tokens[0])
-
     if keyword == 'extends':
         if len(tokens) == 2:
-            second_keyword = get_keyword(tokens[1])
-            if second_keyword:
+            if second_keyword := get_keyword(tokens[1]):
                 return (keyword, second_keyword, None)
     elif keyword == 'fixed':
         if len(tokens) == 1:
             return (None, 'fixed', 1)
-        elif tokens[1].type == 'number' and tokens[1].is_integer:
-            return (None, 'fixed', tokens[1].int_value)
+        elif number := get_number(tokens[1], integer=True):
+            return (None, 'fixed', number.value)
     elif len(tokens) == 1 and keyword in (
             'cyclic', 'numeric', 'alphabetic', 'symbolic', 'additive'):
         return (None, keyword, None)
@@ -293,8 +291,8 @@ def range(tokens):
         for i, token in enumerate(tokens):
             if token.type == 'ident' and token.value == 'infinite':
                 values.append(inf if i else -inf)
-            elif token.type == 'number' and token.is_integer:
-                values.append(token.int_value)
+            elif number := get_number(token, integer=True):
+                values.append(number.value)
         if len(values) == 2 and values[0] <= values[1]:
             return tuple(values)
 
@@ -305,9 +303,9 @@ def pad(tokens, base_url):
     if len(tokens) == 2:
         values = [None, None]
         for token in tokens:
-            if token.type == 'number':
-                if token.is_integer and token.value >= 0 and values[0] is None:
-                    values[0] = token.int_value
+            if number := get_number(token, integer=True, negative=False):
+                if values[0] is None:
+                    values[0] = number.value
             elif token.type in ('string', 'ident'):
                 values[1] = ('string', token.value)
             url = get_url(token, base_url)
@@ -348,8 +346,7 @@ def additive_symbols(tokens, base_url):
     """``additive-symbols`` descriptor validation."""
     results = []
     for part in split_on_comma(tokens):
-        result = pad(remove_whitespace(part), base_url)
-        if result is None:
+        if not (result := pad(remove_whitespace(part), base_url)):
             return
         if results and results[-1][0] <= result[0]:
             return
