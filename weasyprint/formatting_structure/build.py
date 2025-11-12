@@ -1125,13 +1125,20 @@ def process_whitespace(box, following_collapsible_space=False):
 
 
 def process_text_transform(box):
+    # Rules defined in
+    # https://www.unicode.org/versions/latest/core-spec/chapter-3/#G33992
+    # https://www.unicode.org/Public/UCD/latest/ucd/SpecialCasing.txt
+    # https://w3c.github.io/i18n-tests/results/text-transform
+    # Common transformations should be handled by common algorithm in Python, special
+    # casing and tailoring shoud be done here when it depends on the language and not on
+    # only on the glyphs.
     if isinstance(box, boxes.TextBox):
         text_transform = box.style['text_transform']
-        lang = box.style['lang']
+        lang_code = (box.style['lang'] or '').split('-')[0].lower()
         if text_transform != 'none':
             box.text = {
-                'uppercase': lambda text: uppercase(text, lang),
-                'lowercase': lambda text: lowercase(text, lang),
+                'uppercase': lambda text: uppercase(text, lang_code),
+                'lowercase': lambda text: lowercase(text, lang_code),
                 'capitalize': capitalize,
                 'full-width': lambda text: text.translate(ASCII_TO_WIDE),
             }[text_transform](box.text)
@@ -1143,23 +1150,22 @@ def process_text_transform(box):
             if isinstance(child, (boxes.TextBox, boxes.InlineBox)):
                 process_text_transform(child)
 
-def uppercase(text, lang):
-    lang_code = (lang or '').split('-')[0].lower()
+def uppercase(text, lang_code):
     mapper = {}
 
     if lang_code == 'el':
+        # https://w3c.github.io/i18n-tests/css-text/text-transform/
+        #   text-transform-tailoring-003.html
+        # https://en.wikiversity.org/wiki/Greek_Language/Diphthongs
         mapper = {
             'άι': 'ΑΪ',
-            'ήι': 'ΗI',
-            'ά': 'Α',
-            'ή': 'Ή',
-            'έ': 'Ε',
-            'ί': 'Ι',
-            'ό': 'Ο',
-            'ύ': 'Υ',
-            'ώ': 'Ω',
+            'άυ': 'ΑΫ',
+            'όι': 'ΟΪ',
+            'όυ': 'ΟΫ',
+            'έυ': 'ΗΫ',
         }
-    elif lang_code == 'tr':
+    elif lang_code in ('tr', 'az'):
+        # https://github.com/unicode-org/cldr/blob/main/common/transforms/tr-Upper.xml
         mapper = {
             'i': 'İ',
         }
@@ -1167,29 +1173,35 @@ def uppercase(text, lang):
     for key, value in mapper.items():
         text = text.replace(key, value)
 
+    if lang_code == 'el':
+        # Remove diacritics in Greek.
+        # https://github.com/unicode-org/cldr/blob/main/common/transforms/el-Upper.xml
+        # TODO: we should keep tonos on disjunctive eta.
+        # https://w3c.github.io/i18n-tests/css-text/text-transform/
+        #   text-transform-tailoring-005.html
+        text = unicodedata.normalize('NFD', text)
+        for char in '\u0313\u0314\u0301\u0300\u0306\u0342\u0304\u0345':
+            text = text.replace(char, '')
+        text = unicodedata.normalize('NFC', text)
+
     return text.upper()
 
 
-def lowercase(text, lang):
-    lang_code = (lang or '').split('-')[0].lower()
+def lowercase(text, lang_code):
     mapper = {}
-    
-    if lang_code == 'el':
+
+    if lang_code in ('tr', 'az'):
+        # https://github.com/unicode-org/cldr/blob/main/common/transforms/tr-Lower.xml
         mapper = {
-            'ΑΪ': 'άι',
-            'ΗI': 'ήι',
-            'Α': 'ά',
-            'Ή': 'ή',
-            'Ε': 'έ',
-            'Ι': 'ί',
-            'Ο': 'ό',
-            'Υ': 'ύ',
-            'Ω': 'ώ',
-        }
-    elif lang_code == 'tr':
-        mapper = {
-            'İ': 'i',
             'I': 'ı',
+            'İ': 'i',
+        }
+    elif lang_code == 'lt':
+        # https://github.com/unicode-org/cldr/blob/main/common/transforms/lt-Lower.xml
+        mapper = {
+            'Ì': 'i̇̀',
+            'Í': 'i̇́',
+            'Ĩ': 'i̇̃',
         }
 
     for key, value in mapper.items():
