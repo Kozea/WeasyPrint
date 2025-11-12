@@ -751,3 +751,11 @@ def test_font_descent_ascent():
     ''').write_pdf()
     assert b'/Descent -200' in pdf
     assert b'/Ascent 800' in pdf
+
+
+@assert_no_logs
+def test_pdf_tags_inline_table():
+    # Regression test for #2601.
+    FakeHTML(string='''
+      <html lang="en"><table style="display: inline"><td>abc
+    ''').write_pdf(pdf_tags=True)
