@@ -1303,7 +1303,8 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         if justify_self & {'normal', 'stretch'}:
             new_child.width = max(child_width, new_child.width)
         else:
-            new_child.width = max_content_width(context, new_child)
+            if new_child.style['width'] == 'auto':
+                new_child.width = max_content_width(context, new_child, outer=False)
             diff = child_width - new_child.width
             if justify_self & {'center'}:
                 new_child.translate(diff / 2, 0)

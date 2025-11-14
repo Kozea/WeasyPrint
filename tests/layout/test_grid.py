@@ -35,6 +35,40 @@ def test_grid_single_item():
 
 
 @assert_no_logs
+def test_grid_single_auto_width():
+    page, = render_pages('''
+      <article style="display: grid">
+        <div style="padding: 0 2px; justify-self: start"></div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div, = article.children
+    assert article.position_x == div.position_x == 0
+    assert article.position_y == div.position_y == 0
+    assert article.width == html.width
+    assert div.width == 0
+    assert div.padding_width() == 4
+
+
+@assert_no_logs
+def test_grid_single_percentage_width():
+    page, = render_pages('''
+      <article style="display: grid">
+        <div style="justify-self: start; width: 100%"></div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div, = article.children
+    assert article.position_x == div.position_x == 0
+    assert article.position_y == div.position_y == 0
+    assert article.width == html.width == div.padding_width()
+
+
+@assert_no_logs
 def test_grid_rows():
     page, = render_pages('''
       <article style="display: grid">
