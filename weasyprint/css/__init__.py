@@ -14,6 +14,7 @@ on other functions in this module.
 
 import math
 from collections import namedtuple
+from io import BytesIO
 from itertools import groupby
 from logging import DEBUG, WARNING
 from math import inf
@@ -22,6 +23,7 @@ import cssselect2
 import tinycss2
 import tinycss2.ast
 import tinycss2.nth
+from PIL.ImageCms import ImageCmsProfile
 
 from .. import CSS
 from ..logger import LOGGER, PROGRESS_LOGGER
@@ -1227,6 +1229,24 @@ class ComputedStyle(dict):
         return value
 
 
+class ColorProfile:
+    def __init__(self, file_object, descriptors):
+        self.src = descriptors['src'][1]
+        self.renderingintent = descriptors['rendering-intent']
+        self.components = descriptors['components']
+        self._profile = ImageCmsProfile(file_object)
+
+    @property
+    def name(self):
+        return (
+            self._profile.profile.model or
+            self._profile.profile.profile_description)
+
+    @property
+    def content(self):
+        return self._profile.tobytes()
+
+
 def _add_layer(layer, layers):
     """Add layer to list of layers, handling order."""
     index = None
@@ -1245,6 +1265,14 @@ def _add_layer(layer, layers):
         else:
             layers.insert(index, full_layer)
             index -= 1
+
+
+def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
+                           root_style=None, base_url=None,
+                           target_collector=None):
+    """Get a dict of computed style mixed from parent and cascaded styles."""
+    if not cascaded and parent_style is not None:
+        return AnonymousStyle(parent_style)
 
 
 def _parse_layer(tokens):
@@ -1582,45 +1610,58 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fet
                     font_config.add_font_face(rule_descriptors, url_fetcher)
 
         elif rule.type == 'at-rule' and rule.lower_at_keyword == 'color-profile':
-            name = parse_color_profile_name(rule.prelude)
-
             ignore_imports = True
-            content = tinycss2.parse_blocks_contents(rule.content)
-            color_profile = {
-                'src': None,
-                'rendering-intent': 'relative-colorimetric',
-                'components': None,
-            }
-            rule_descriptors = preprocess_descriptors(
-                'color-profile', base_url, content)
 
-            for descriptor_name, descriptor_value in rule_descriptors:
-                color_profile[descriptor_name] = descriptor_value
-
-            if name is None:
+            if (name := parse_color_profile_name(rule.prelude)) is None:
                 LOGGER.warning(
                     'Invalid color profile name %r, the whole '
                     '@color-profile rule was ignored at %d:%d.',
                     tinycss2.serialize(rule.prelude), rule.source_line,
                     rule.source_column)
                 continue
-            elif color_profile.get('src') is None:
+
+            content = tinycss2.parse_blocks_contents(rule.content)
+            rule_descriptors = preprocess_descriptors(
+                'color-profile', base_url, content)
+
+            descriptors = {
+                'src': None,
+                'rendering-intent': 'relative-colorimetric',
+                'components': None,
+            }
+            for descriptor_name, descriptor_value in rule_descriptors:
+                if descriptor_name in descriptors:
+                    descriptors[descriptor_name] = descriptor_value
+                else:
+                    LOGGER.warning(
+                        'Unknown descriptor %r for profile named %r at %d:%d.',
+                        descriptor_name, tinycss2.serialize(rule.prelude),
+                        rule.source_line, rule.source_column)
+
+            if descriptors['src'] is None:
                 LOGGER.warning(
-                    'No source for profile name %r, the whole '
+                    'No source for profile named %r, the whole '
                     '@color-profile rule was ignored at %d:%d.',
                     tinycss2.serialize(rule.prelude), rule.source_line,
                     rule.source_column)
                 continue
 
-            with fetch(url_fetcher, color_profile['src'][1]) as result:
+            with fetch(url_fetcher, descriptors['src'][1]) as result:
                 if 'string' in result:
-                    string = result['string']
+                    file_object = BytesIO(result['string'])
                 else:
-                    string = result['file_obj'].read()
-                # TODO: validate color profile.
-                color_profile['_content'] = string
-
-            color_profiles[name] = color_profile
+                    file_object = result['file_obj']
+                try:
+                    color_profile = ColorProfile(file_object, descriptors)
+                except BaseException:
+                    LOGGER.warning(
+                        'Invalid profile file for profile named %r, the whole '
+                        '@color-profile rule was ignored at %d:%d.',
+                        tinycss2.serialize(rule.prelude), rule.source_line,
+                        rule.source_column)
+                    continue
+                else:
+                    color_profiles[name] = color_profile
 
         elif rule.type == 'at-rule' and rule.lower_at_keyword == 'counter-style':
             name = counters.parse_counter_style_name(rule.prelude, counter_style)

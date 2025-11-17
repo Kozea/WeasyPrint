@@ -110,10 +110,7 @@ class Stream(pydyf.Stream):
             lightness, a, b = color.to('lab').coordinates
             self.set_color_special(None, stroke, lightness, a, b)
         elif color.space == 'device-cmyk':
-            device_cmyk = (
-                'device-cmyk' if 'device-cmyk' in self._color_profiles
-                else 'DeviceCMYK')
-            self.set_color_space(device_cmyk, stroke)
+            self.set_color_space('DeviceCMYK', stroke)
             c, m, y, k = color.coordinates
             self.set_color_special(None, stroke, c, m, y, k)
         elif color.space.startswith('--') and color.space in self._color_profiles:
@@ -121,6 +118,12 @@ class Stream(pydyf.Stream):
             self.set_color_special(None, stroke, *color.coordinates)
         else:
             LOGGER.warning('Unsupported color space %s, use sRGB instead', color.space)
+            if len(channels) > 3:
+                channels = channels[:3]
+            elif len(channels) == 2:
+                channels = *channels, 0
+            elif len(channels) == 1:
+                channels = *channels, 0, 0
             self.set_color_rgb(*channels, stroke)
 
     def set_font_size(self, font, size):

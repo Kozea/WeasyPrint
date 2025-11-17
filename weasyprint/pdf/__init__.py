@@ -78,8 +78,7 @@ def _use_references(pdf, resources, images, color_profiles):
 
             image = image_data['image']
             dpi_ratio = max(image_data['dpi_ratios'])
-            x_object = image.get_x_object(
-                image_data['interpolate'], dpi_ratio, color_profiles)
+            x_object = image.get_x_object(image_data['interpolate'], dpi_ratio)
             image_data['x_object'] = x_object
 
         pdf.add_object(x_object)
@@ -148,14 +147,16 @@ def generate_pdf(document, target, zoom, **options):
         }))),
     })
     # Custom color profiles
-    for name, color_profile in document.color_profiles.items():
+    for key, color_profile in document.color_profiles.items():
+        if key == 'device-cmyk':
+            # Device CMYK profile is stored as OutputIntent.
+            continue
         profile = pydyf.Stream(
-            [color_profile['_content']],
-            pydyf.Dictionary({'N': len(color_profile['components'])}),
+            [color_profile.content],
+            pydyf.Dictionary({'N': len(color_profile.components)}),
             compress=compress)
         pdf.add_object(profile)
-        color_profile['_reference'] = profile.reference
-        color_space[name] = pydyf.Array(('/ICCBased', profile.reference))
+        color_space[key] = pydyf.Array(('/ICCBased', profile.reference))
     pdf.add_object(color_space)
     resources = pydyf.Dictionary({
         'ExtGState': pydyf.Dictionary(),
@@ -325,8 +326,25 @@ def generate_pdf(document, target, zoom, **options):
             pdf.catalog['Names'] = pydyf.Dictionary()
         pdf.catalog['Names']['Dests'] = dests
 
-    if srgb:
-        # Add ICC profile.
+    # Add output ICC profile.
+    # TODO: we should allow the user or the PDF variant code to set custom values in
+    # OutputIntents and remove the "srgb" option. See PDF 2.0 chapter 14.11.5, and
+    # https://www.color.org/chardata/drsection1.xalter for a list of "standard
+    # production conditions".
+    if 'device-cmyk' in document.color_profiles:
+        color_profile = document.color_profiles['device-cmyk']
+        profile = pydyf.Stream(
+            [color_profile.content], pydyf.Dictionary({'N': 4}), compress=compress)
+        pdf.add_object(profile)
+        pdf.catalog['OutputIntents'] = pydyf.Array([
+            pydyf.Dictionary({
+                'Type': '/OutputIntent',
+                'S': '/GTS_PDFX',
+                'OutputConditionIdentifier': pydyf.String(color_profile.name),
+                'DestOutputProfile': profile.reference,
+            }),
+        ])
+    elif srgb:
         profile = pydyf.Stream(
             [(files(__package__) / 'sRGB2014.icc').read_bytes()],
             pydyf.Dictionary({'N': 3, 'Alternate': '/DeviceRGB'}),
