@@ -1584,14 +1584,6 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fet
         elif rule.type == 'at-rule' and rule.lower_at_keyword == 'color-profile':
             name = parse_color_profile_name(rule.prelude)
 
-            if name is None:
-                LOGGER.warning(
-                    'Invalid color profile name %r, the whole '
-                    '@color-profile rule was ignored at %d:%d.',
-                    tinycss2.serialize(rule.prelude), rule.source_line,
-                    rule.source_column)
-                continue
-
             ignore_imports = True
             content = tinycss2.parse_blocks_contents(rule.content)
             color_profile = {
@@ -1605,12 +1597,29 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fet
             for descriptor_name, descriptor_value in rule_descriptors:
                 color_profile[descriptor_name] = descriptor_value
 
+            if name is None:
+                LOGGER.warning(
+                    'Invalid color profile name %r, the whole '
+                    '@color-profile rule was ignored at %d:%d.',
+                    tinycss2.serialize(rule.prelude), rule.source_line,
+                    rule.source_column)
+                continue
+            elif color_profile.get('src') is None:
+                LOGGER.warning(
+                    'No source for profile name %r, the whole '
+                    '@color-profile rule was ignored at %d:%d.',
+                    tinycss2.serialize(rule.prelude), rule.source_line,
+                    rule.source_column)
+                continue
+
             with fetch(url_fetcher, color_profile['src'][1]) as result:
                 if 'string' in result:
                     string = result['string']
                 else:
                     string = result['file_obj'].read()
+                # TODO: validate color profile.
                 color_profile['_content'] = string
+
             color_profiles[name] = color_profile
 
         elif rule.type == 'at-rule' and rule.lower_at_keyword == 'counter-style':
