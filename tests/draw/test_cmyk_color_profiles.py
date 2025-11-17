@@ -1,7 +1,5 @@
 """Test CMYK and Color Profiles."""
 
-import pytest
-
 from ..testing_utils import assert_no_logs
 
 
