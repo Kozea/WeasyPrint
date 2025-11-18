@@ -20,7 +20,7 @@ from PIL import Image
 from weasyprint import CSS, HTML, __main__, default_url_fetcher
 from weasyprint.pdf.anchors import resolve_links
 from weasyprint.pdf.metadata import generate_rdf_metadata
-from weasyprint.urls import path2url
+from weasyprint.urls import path2url, URLFetcherResource
 
 from .draw import parse_pixels
 from .testing_utils import FakeHTML, assert_no_logs, capture_logs, resource_path
@@ -1137,19 +1137,25 @@ def test_url_fetcher(assert_pixels_equal):
     path = resource_path('pattern.png')
     pattern_png = path.read_bytes()
 
-    def fetcher(url):
-        if url == 'weasyprint-custom:foo/%C3%A9_%e9_pattern':
-            return {'string': pattern_png, 'mime_type': 'image/png'}
-        elif url == 'weasyprint-custom:foo/bar.css':
-            return {
-                'string': 'body { background: url(é_%e9_pattern)',
-                'mime_type': 'text/css'}
-        elif url == 'weasyprint-custom:foo/bar.no':
-            return {
-                'string': 'body { background: red }',
-                'mime_type': 'text/no'}
-        else:
-            return default_url_fetcher(url)
+    def mock_fetcher(return_dict=False):
+        def fetcher(url):            
+            if url == 'weasyprint-custom:foo/%C3%A9_%e9_pattern':
+                res_args = {'mime_type': 'image/png', 'bad_key': True, 'string': pattern_png}
+            elif url == 'weasyprint-custom:foo/%C3%A9_%e9_pattern_both':
+                res_args = {'mime_type': 'image/png', 'file_obj': io.StringIO(pattern_png), 'string': pattern_png}
+            elif url == 'weasyprint-custom:foo/bar.css':
+                res_args = {'mime_type': 'text/css', 'string': 'body { background: url(é_%e9_pattern)'}
+            elif url == 'weasyprint-custom:foo/bar.no':
+                res_args = {'mime_type': 'text/no', 'string': 'body { background: red }'}
+            else:
+                return default_url_fetcher(url)
+            
+            if return_dict: return res_args
+
+            return URLFetcherResource(**res_args)
+        return fetcher
+    
+    fetcher = mock_fetcher()
 
     base_url = str(resource_path('dummy.html'))
     css = CSS(string='''
@@ -1157,8 +1163,8 @@ def test_url_fetcher(assert_pixels_equal):
         body { margin: 0; font-size: 0 }
     ''', base_url=base_url)
 
-    def test(html, blank=False):
-        html = FakeHTML(string=html, url_fetcher=fetcher, base_url=base_url)
+    def test(html, blank=False, url_fetcher=fetcher):
+        html = FakeHTML(string=html, url_fetcher=url_fetcher, base_url=base_url)
         check_png_pattern(
             assert_pixels_equal, html.write_png(stylesheets=[css]),
             blank=blank)
@@ -1167,6 +1173,9 @@ def test_url_fetcher(assert_pixels_equal):
     test(f'<body><img src="{path.as_uri()}">')
     test(f'<body><img src="{path.as_uri()}?ignored">')
     test('<body><img src="weasyprint-custom:foo/é_%e9_pattern">')
+    # Test existing fetchers that may return an unpredictable dict
+    test('<body><img src="weasyprint-custom:foo/é_%e9_pattern">', fetcher=mock_fetcher(return_dict=True))
+    test('<body><img src="weasyprint-custom:foo/é_%e9_pattern_both">', fetcher=mock_fetcher(return_dict=True))
     test('<body style="background: url(weasyprint-custom:foo/é_%e9_pattern)">')
     test('<body><li style="list-style: inside '
          'url(weasyprint-custom:foo/é_%e9_pattern)">')
