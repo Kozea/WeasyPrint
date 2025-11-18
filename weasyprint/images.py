@@ -298,11 +298,8 @@ def get_image_from_uri(cache, url_fetcher, options, url, forced_mime_type=None,
 
     try:
         with fetch(url_fetcher, url) as result:
-            if 'string' in result:
-                string = result['string']
-            else:
-                string = result['file_obj'].read()
-            mime_type = forced_mime_type or result['mime_type']
+            string = result.read_contents()
+            mime_type = forced_mime_type or result.mime_type
 
         image = None
         svg_exceptions = []
@@ -331,7 +328,7 @@ def get_image_from_uri(cache, url_fetcher, options, url, forced_mime_type=None,
             else:
                 # Store image id to enable cache in Stream.add_image
                 image_id = md5(url.encode(), usedforsecurity=False).hexdigest()
-                path = result.get('path')
+                path = result.path
                 image = RasterImage(
                     pillow_image, image_id, string, path, cache, orientation, options)
 

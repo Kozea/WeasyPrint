@@ -170,7 +170,7 @@ class HTML:
             base_url = str(base_url)
         result = _select_source(
             guess, filename, url, file_obj, string, base_url, url_fetcher)
-        with result as (source_type, source, base_url, protocol_encoding):
+        with result as (source, base_url, protocol_encoding):
             if isinstance(source, str):
                 result = tinyhtml5.parse(source, namespace_html_elements=False)
             else:
@@ -299,13 +299,14 @@ class CSS:
             guess, filename, url, file_obj, string,
             base_url=base_url, url_fetcher=url_fetcher,
             check_css_mime_type=_check_mime_type)
-        with result as (source_type, source, base_url, protocol_encoding):
-            if source_type == 'file_obj':
+        with result as (source, base_url, protocol_encoding):
+            if hasattr(source, 'read'):
                 source = source.read()
             if isinstance(source, str):
                 # unicode, no encoding
                 stylesheet = tinycss2.parse_stylesheet(source)
             else:
+                # if not isinstance(source, str) and not isinstance(source, bytes): breakpoint()
                 stylesheet, encoding = tinycss2.parse_stylesheet_bytes(
                     source, environment_encoding=encoding,
                     protocol_encoding=protocol_encoding)
@@ -405,24 +406,20 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
         if base_url is None:
             base_url = path2url(filename)
         with open(filename, 'rb') as file_obj:
-            yield 'file_obj', file_obj, base_url, None
+            yield file_obj, base_url, None
     elif url is not None:
         with fetch(url_fetcher, url) as result:
-            if check_css_mime_type and result['mime_type'] != 'text/css':
+            if check_css_mime_type and result.mime_type != 'text/css':
                 LOGGER.error(
                     'Unsupported stylesheet type %s for %s',
-                    result['mime_type'], result['redirected_url'])
-                yield 'string', '', base_url, None
+                    result.mime_type, result.redirected_url)
+                yield '', base_url, None
             else:
-                proto_encoding = result.get('encoding')
+                proto_encoding = result.encoding
                 if base_url is None:
-                    base_url = result.get('redirected_url', url)
-                if 'string' in result:
-                    yield 'string', result['string'], base_url, proto_encoding
-                else:
-                    yield (
-                        'file_obj', result['file_obj'], base_url,
-                        proto_encoding)
+                    base_url = result.redirected_url
+                yield result.string_or_file, base_url, proto_encoding
+
     elif file_obj is not None:
         if base_url is None:
             # filesystem file-like objects have a 'name' attribute.
@@ -430,10 +427,10 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
             # Some streams have a .name like '<stdin>', not a filename.
             if name and not name.startswith('<'):
                 base_url = ensure_url(name)
-        yield 'file_obj', file_obj, base_url, None
+        yield file_obj, base_url, None
     else:
         assert string is not None
-        yield 'string', string, base_url, None
+        yield string, base_url, None
 
 
 # Work around circular imports.
