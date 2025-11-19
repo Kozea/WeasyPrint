@@ -7,7 +7,7 @@ See https://www.w3.org/TR/CSS21/propidx.html and various CSS3 modules.
 from math import inf
 
 from tinycss2 import parse_component_value_list
-from tinycss2.color4 import parse_color
+from tinycss2.color5 import parse_color
 
 from .. import computed_values
 from ..functions import Function, check_var
@@ -128,7 +128,8 @@ def background_attachment(keyword):
 @property('text-decoration-color')
 @single_token
 def other_colors(token):
-    return parse_color(token)
+    if parse_color(token):
+        return token
 
 
 @property()
@@ -137,7 +138,7 @@ def outline_color(token):
     if get_keyword(token) == 'invert':
         return 'currentcolor'
     else:
-        return parse_color(token)
+        return token
 
 
 @property()
@@ -161,7 +162,7 @@ def color(token):
     if result == 'currentcolor':
         return 'inherit'
     else:
-        return result
+        return token
 
 
 @property('background-image', wants_base_url=True)
@@ -2086,3 +2087,35 @@ def appearance(token):
     """``appearance`` property validation."""
     if (keyword := get_keyword(token)) in ('none', 'auto'):
         return keyword
+
+
+@property()
+def color_scheme(tokens):
+    """``color-scheme`` property validation."""
+    if len(tokens) == 1:
+        keyword = get_single_keyword(tokens)
+        if keyword == 'normal':
+            return keyword
+        elif keyword != 'only':
+            return (keyword,)
+        else:
+            return
+    else:
+        keywords = []
+        only = False
+        for i, token in enumerate(tokens):
+            keyword = get_keyword(token)
+            if keyword == 'only':
+                if only or i not in (0, len(tokens) - 1):
+                    return
+                else:
+                    only = True
+            elif keyword == 'normal':
+                return
+            elif keyword:
+                keywords.append(keyword)
+            else:
+                return
+        if only:
+            keywords.append('only')
+        return tuple(keywords)

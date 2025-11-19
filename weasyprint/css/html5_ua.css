@@ -82,6 +82,7 @@ sup { vertical-align: super }
 
 /* Fonts and colors */
 
+html { color-scheme: light }
 address, cite, dfn, em, i, var { font-style: italic }
 b, strong, th { font-weight: bold }
 code, kbd, listing, plaintext, pre, samp, tt, xmp { font-family: monospace }

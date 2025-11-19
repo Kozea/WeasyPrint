@@ -11,7 +11,7 @@ from xml.etree import ElementTree
 
 import pydyf
 from PIL import Image, ImageFile, ImageOps
-from tinycss2.color4 import parse_color
+from tinycss2.color5 import parse_color
 
 from . import DEFAULT_OPTIONS
 from .layout.percent import percentage

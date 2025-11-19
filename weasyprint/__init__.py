@@ -198,7 +198,8 @@ class HTML:
     def _ph_stylesheets(self):
         return [HTML5_PH_STYLESHEET]
 
-    def render(self, font_config=None, counter_style=None, **options):
+    def render(self, font_config=None, counter_style=None, color_profiles=None,
+               **options):
         """Lay out and paginate the document, but do not (yet) export it.
 
         This returns a :class:`document.Document` object which provides
@@ -222,10 +223,11 @@ class HTML:
         new_options = DEFAULT_OPTIONS.copy()
         new_options.update(options)
         options = new_options
-        return Document._render(self, font_config, counter_style, options)
+        return Document._render(
+            self, font_config, counter_style, color_profiles, options)
 
     def write_pdf(self, target=None, zoom=1, finisher=None,
-                  font_config=None, counter_style=None, **options):
+                  font_config=None, counter_style=None, color_profiles=None, **options):
         """Render the document to a PDF file.
 
         This is a shortcut for calling :meth:`render`, then
@@ -265,7 +267,7 @@ class HTML:
         new_options.update(options)
         options = new_options
         return (
-            self.render(font_config, counter_style, **options)
+            self.render(font_config, counter_style, color_profiles, **options)
             .write_pdf(target, zoom, finisher, **options))
 
 
@@ -288,7 +290,8 @@ class CSS:
                  string=None, encoding=None, base_url=None,
                  url_fetcher=default_url_fetcher, _check_mime_type=False,
                  media_type='print', font_config=None, counter_style=None,
-                 matcher=None, page_rules=None, layers=None, layer=None):
+                 color_profiles=None, matcher=None, page_rules=None, layers=None,
+                 layer=None):
         PROGRESS_LOGGER.info(
             'Step 2 - Fetching and parsing CSS - %s',
             filename or url or getattr(file_obj, 'name', 'CSS string'))
@@ -311,9 +314,11 @@ class CSS:
         self.page_rules = [] if page_rules is None else page_rules
         self.layers = [] if layers is None else layers
         counter_style = {} if counter_style is None else counter_style
+        color_profiles = {} if color_profiles is None else color_profiles
         preprocess_stylesheet(
             media_type, base_url, stylesheet, url_fetcher, self.matcher,
-            self.page_rules, self.layers, font_config, counter_style, layer=layer)
+            self.page_rules, self.layers, font_config, counter_style, color_profiles,
+            layer=layer)
 
 
 class Attachment:

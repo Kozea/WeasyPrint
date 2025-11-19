@@ -158,6 +158,32 @@ also used to define the order of the PDF content.
 Some information is required in your HTML file, including a ``<title>`` tag,
 and a ``lang`` attribute set on the ``<html>`` tag.
 
+PDF/X (Graphics Exchange)
+.........................
+
+PDF/X documents facilitate graphics exchange and adds printing-related requirements such
+as color profiles.
+
+The easiest way to fulfill these requirements is to use device-dependent CMYK colors and
+images everywhere in your document. For colors, you can use the ``device-cmyk()``
+function:
+
+.. code-block:: css
+
+   body { color: device-cmyk(0% 10% 0% 80%) }
+
+You also have to define the output profile color to use.
+
+.. code-block:: css
+
+   @color-profile device-cmyk {
+     components: cyan, magenta, yellow, black;
+     src: url(path/to/cmyk-profile.icc);
+   }
+
+If possible, PDF/X-4 should be preferred: it allows transparency layers that are
+forbidden by previous variants.
+
 Factur-X / ZUGFeRD (Electronic Invoices)
 ........................................
 

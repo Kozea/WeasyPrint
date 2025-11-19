@@ -3,13 +3,13 @@
 from importlib.resources import files
 
 import pydyf
-from tinycss2.color4 import D50, D65
+from tinycss2.color5 import D50, D65
 
 from .. import VERSION, Attachment
 from ..html import W3C_DATE_RE
 from ..logger import LOGGER, PROGRESS_LOGGER
 from ..matrix import Matrix
-from . import debug, pdfa, pdfua
+from . import debug, pdfa, pdfua, pdfx
 from .fonts import build_fonts_dictionary
 from .stream import Stream
 from .tags import add_tags
@@ -19,7 +19,8 @@ from .anchors import (  # isort:skip
     write_pdf_attachment)
 
 VARIANTS = {
-    name: data for variants in (pdfa.VARIANTS, pdfua.VARIANTS, debug.VARIANTS)
+    name: data
+    for variants in (pdfa.VARIANTS, pdfua.VARIANTS, pdfx.VARIANTS, debug.VARIANTS)
     for (name, data) in variants.items()}
 
 
@@ -53,16 +54,16 @@ def _w3c_date_to_pdf(string, attr_name):
     return f'D:{pdf_date}'
 
 
-def _reference_resources(pdf, resources, images, fonts):
+def _reference_resources(pdf, resources, images, fonts, color_profiles):
     if 'Font' in resources:
         assert resources['Font'] is None
         resources['Font'] = fonts
-    _use_references(pdf, resources, images)
+    _use_references(pdf, resources, images, color_profiles)
     pdf.add_object(resources)
     return resources.reference
 
 
-def _use_references(pdf, resources, images):
+def _use_references(pdf, resources, images, color_profiles):
     # XObjects
     for key, x_object in resources.get('XObject', {}).items():
         # Images
@@ -91,7 +92,8 @@ def _use_references(pdf, resources, images):
         # Resources
         if 'Resources' in x_object.extra:
             x_object.extra['Resources'] = _reference_resources(
-                pdf, x_object.extra['Resources'], images, resources['Font'])
+                pdf, x_object.extra['Resources'], images, resources['Font'],
+                color_profiles)
 
     # Patterns
     for key, pattern in resources.get('Pattern', {}).items():
@@ -99,7 +101,8 @@ def _use_references(pdf, resources, images):
         resources['Pattern'][key] = pattern.reference
         if 'Resources' in pattern.extra:
             pattern.extra['Resources'] = _reference_resources(
-                pdf, pattern.extra['Resources'], images, resources['Font'])
+                pdf, pattern.extra['Resources'], images, resources['Font'],
+                color_profiles)
 
     # Shadings
     for key, shading in resources.get('Shading', {}).items():
@@ -117,6 +120,8 @@ def generate_pdf(document, target, zoom, **options):
     scale = zoom * 0.75
 
     PROGRESS_LOGGER.info('Step 6 - Creating PDF')
+
+    compress = not options['uncompressed_pdf']
 
     # Set properties according to PDF variants
     srgb = options['srgb']
@@ -141,6 +146,17 @@ def generate_pdf(document, target, zoom, **options):
             'Range': pydyf.Array((-125, 125, -125, 125)),
         }))),
     })
+    # Custom color profiles
+    for key, color_profile in document.color_profiles.items():
+        if key == 'device-cmyk':
+            # Device CMYK profile is stored as OutputIntent.
+            continue
+        profile = pydyf.Stream(
+            [color_profile.content],
+            pydyf.Dictionary({'N': len(color_profile.components)}),
+            compress=compress)
+        pdf.add_object(profile)
+        color_space[key] = pydyf.Array(('/ICCBased', profile.reference))
     pdf.add_object(color_space)
     resources = pydyf.Dictionary({
         'ExtGState': pydyf.Dictionary(),
@@ -157,7 +173,6 @@ def generate_pdf(document, target, zoom, **options):
 
     annot_files = {}
     pdf_pages, page_streams = [], []
-    compress = not options['uncompressed_pdf']
     for page_number, (page, links_and_anchors) in enumerate(
             zip(document.pages, page_links_and_anchors)):
         tags = {} if pdf_tags else None
@@ -178,7 +193,8 @@ def generate_pdf(document, target, zoom, **options):
             left / scale, top / scale,
             (right - left) / scale, (bottom - top) / scale)
         stream = Stream(
-            document.fonts, page_rectangle, resources, images, tags, compress=compress)
+            document.fonts, page_rectangle, resources, images, tags,
+            document.color_profiles, compress=compress)
         stream.transform(d=-1, f=(page.height * scale))
         pdf.add_object(stream)
         page_streams.append(stream)
@@ -296,7 +312,7 @@ def generate_pdf(document, target, zoom, **options):
         pdf.add_object(dingbats)
         pdf_fonts['ZaDb'] = dingbats.reference
     resources['Font'] = pdf_fonts.reference
-    _use_references(pdf, resources, images)
+    _use_references(pdf, resources, images, document.color_profiles)
 
     # Anchors
     if pdf_names:
@@ -310,8 +326,25 @@ def generate_pdf(document, target, zoom, **options):
             pdf.catalog['Names'] = pydyf.Dictionary()
         pdf.catalog['Names']['Dests'] = dests
 
-    if srgb:
-        # Add ICC profile.
+    # Add output ICC profile.
+    # TODO: we should allow the user or the PDF variant code to set custom values in
+    # OutputIntents and remove the "srgb" option. See PDF 2.0 chapter 14.11.5, and
+    # https://www.color.org/chardata/drsection1.xalter for a list of "standard
+    # production conditions".
+    if 'device-cmyk' in document.color_profiles:
+        color_profile = document.color_profiles['device-cmyk']
+        profile = pydyf.Stream(
+            [color_profile.content], pydyf.Dictionary({'N': 4}), compress=compress)
+        pdf.add_object(profile)
+        pdf.catalog['OutputIntents'] = pydyf.Array([
+            pydyf.Dictionary({
+                'Type': '/OutputIntent',
+                'S': '/GTS_PDFX',
+                'OutputConditionIdentifier': pydyf.String(color_profile.name),
+                'DestOutputProfile': profile.reference,
+            }),
+        ])
+    elif srgb:
         profile = pydyf.Stream(
             [(files(__package__) / 'sRGB2014.icc').read_bytes()],
             pydyf.Dictionary({'N': 3, 'Alternate': '/DeviceRGB'}),

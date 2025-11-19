@@ -2,7 +2,7 @@
 
 from colorsys import hsv_to_rgb, rgb_to_hsv
 
-from tinycss2.color4 import parse_color
+from tinycss2.color5 import parse_color
 
 
 def get_color(style, key):
