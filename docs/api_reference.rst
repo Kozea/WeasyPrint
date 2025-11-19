@@ -250,6 +250,7 @@ The CSS 2.1 features listed here are **not** supported:
 .. _Bi-directional text: https://www.w3.org/TR/CSS21/visuren.html#direction
 .. _System colors: https://www.w3.org/TR/CSS21/ui.html#system-colors
 .. _system fonts: https://www.w3.org/TR/CSS21/fonts.html#propdef-font
+.. _CSS Color Module Level 3: https://www.w3.org/TR/css-color-3/
 
 To the best of our knowledge, everything else that applies to the
 print media **is** supported. Please report a bug if you find this list
@@ -505,20 +506,30 @@ The other features of this module are **not** implemented:
 .. _user agent stylesheet: https://github.com/Kozea/WeasyPrint/blob/main/weasyprint/css/html5_ua.css
 .. _Leaders: https://www.w3.org/TR/css-content-3/#leaders
 
-CSS Color Module Level 3
-++++++++++++++++++++++++
+CSS Color Module Level 4 / 5
+++++++++++++++++++++++++++++
 
-The `CSS Color Module Level 3`_ is a recommendation defining "CSS properties
-which allow authors to specify the foreground color and opacity of an
-element". Its main goal is to specify how colors are defined, including color
-keywords and the ``#rgb``, ``#rrggbb``, ``rgb()``, ``rgba()``, ``hsl()``,
-``hsla()`` syntaxes. Opacity and alpha compositing are also defined in this
-document.
+The `CSS Color Module Level 4`_ is a recommendation defining "CSS properties which allow
+authors to specify the foreground color and opacity of the text content of an element".
+Its main goal is to specify how colors are defined, including color keywords and many
+color notations including ``#rgba``, ``rgb()``, ``hsl()``, ``hwb()``, ``lab()``, etc.
+The standard ``color()`` function gives a common way to define colors giving their color
+space. Opacity and alpha compositing are also defined in this document.
 
 This recommendation is fully implemented in WeasyPrint, except the deprecated
 System Colors.
 
-.. _CSS Color Module Level 3: https://www.w3.org/TR/css-color-3/
+The `CSS Color Module Level 5`_ is a working draft adding "color modification functions,
+custom color spaces (ICC profiles), ``contrast-color()``, ``light-dark()`` and
+``device-cmyk()``" to level 4.
+
+WeasyPrint supports the ``light-dark()`` and ``device-cmyk()`` properties, and the
+``@color-profile`` at-rule.
+
+WeasyPrint does **not** support the ``color-mix()`` and ``contrast-color()`` properties.
+
+.. _CSS Color Module Level 4: https://www.w3.org/TR/css-color-4/
+.. _CSS Color Module Level 5: https://www.w3.org/TR/css-color-5/
 
 CSS Transforms Module Level 1
 +++++++++++++++++++++++++++++
