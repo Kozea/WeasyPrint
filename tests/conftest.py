@@ -31,8 +31,8 @@ def document_write_png(document, target=None, resolution=96, antialiasing=1,
     command = (
         'gs', '-q', '-sDEVICE=png16m', f'-dTextAlphaBits={antialiasing}',
         f'-dGraphicsAlphaBits={antialiasing}', '-dBATCH', '-dNOPAUSE',
-        '-dPDFSTOPONERROR', f'-r{resolution / zoom}', '-sOutputFile=-',
-        pdf.name)
+        '-dPDFSTOPONERROR', f'-r{resolution / zoom}', '-dUsePDFX3Profile',
+        '-sOutputFile=-', pdf.name)
     pngs = run(command, stdout=PIPE).stdout
     os.remove(pdf.name)
 

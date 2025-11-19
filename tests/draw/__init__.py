@@ -22,7 +22,7 @@ PIXELS_BY_CHAR = {
     'M': (255, 0, 255),  # magenta
     'Y': (255, 255, 0),  # yellow
     'K': (0, 0, 0),  # black
-    'P': (62, 88, 110),  # blue CMYK with ICC
+    'P': (50, 76, 103),  # blue CMYK with ICC
     'Q': (63, 88, 110),  # blue CMYK without ICC
     'r': (255, 0, 0),  # red
     'g': (0, 128, 0),  # half green
