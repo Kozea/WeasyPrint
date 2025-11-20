@@ -207,29 +207,8 @@ def default_url_fetcher(url, timeout=10, ssl_context=None, http_headers=None,
         A set of authorized protocols.
     :raises: An exception indicating failure, e.g. :obj:`ValueError` on
         syntactically invalid URL.
-    :returns: A :obj:`dict` with the following keys:
-
-        * One of ``string`` (a :obj:`bytestring <bytes>`) or ``file_obj``
-          (a :term:`file object`).
-        * Optionally: ``mime_type``, a MIME type extracted e.g. from a
-          *Content-Type* header. If not provided, the type is guessed from the
-          file extension in the URL.
-        * Optionally: ``encoding``, a character encoding extracted e.g. from a
-          *charset* parameter in a *Content-Type* header
-        * Optionally: ``redirected_url``, the actual URL of the resource
-          if there were e.g. HTTP redirects.
-        * Optionally: ``filename``, the filename of the resource. Usually
-          derived from the *filename* parameter in a *Content-Disposition*
-          header.
-        * Optionally: ``path``, the path of the resource if it is stored on the
-          local filesystem.
-
-        If a ``file_obj`` key is given, it is the caller’s responsibility
-        to call ``file_obj.close()``. The default function used internally to
-        fetch data in WeasyPrint tries to close the file object after
-        retreiving; but if this URL fetcher is used elsewhere, the file object
-        has to be closed manually.
-
+    :returns: A :obj:`URLFetcherResource` instance, or a :obj:`dict` that can
+        be splatted into the constructor.
     """
     if UNICODE_SCHEME_RE.match(url):
         if allowed_protocols is not None:
@@ -251,7 +230,7 @@ def default_url_fetcher(url, timeout=10, ssl_context=None, http_headers=None,
         response = urlopen(
             Request(url, headers=http_headers), timeout=timeout,
             context=ssl_context)
-        result = {
+        res_args = {
             'redirected_url': response.url,
             'mime_type': response.headers.get_content_type(),
             'encoding': response.headers.get_param('charset'),
@@ -260,16 +239,17 @@ def default_url_fetcher(url, timeout=10, ssl_context=None, http_headers=None,
         }
         content_encoding = response.headers.get('Content-Encoding')
         if content_encoding == 'gzip':
-            result['file_obj'] = StreamingGzipFile(fileobj=response)
+            result = URLFetcherResource(file_obj=StreamingGzipFile(fileobj=response), **res_args)
         elif content_encoding == 'deflate':
             data = response.read()
             try:
-                result['string'] = zlib.decompress(data)
+                result = URLFetcherResource(string=zlib.decompress(data), **res_args)
             except zlib.error:
                 # Try without zlib header or checksum
-                result['string'] = zlib.decompress(data, -15)
+                result = URLFetcherResource(string=zlib.decompress(data, -15), **res_args)
         else:
-            result['file_obj'] = response
+            result = URLFetcherResource(file_obj=response, **res_args)
+
         return result
     else:  # pragma: no cover
         raise ValueError(f'Not an absolute URI: {url}')
@@ -279,6 +259,53 @@ class URLFetchingError(IOError):
     """Some error happened when fetching an URL."""
 
 
+class URLFetcherResource:
+  """Represents the result of a URL fetcher invocation."""
+  def __init__(self, string=None, file_obj=None, mime_type=None, encoding=None,
+               redirected_url=None, filename=None, path=None, **kwargs):
+    """Constructs a new instance from a string or file-like object.
+    
+    If a ``file_obj`` is given, it is the caller’s responsibility
+    to call ``file_obj.close()``. The default function used internally to
+    fetch data in WeasyPrint tries to close the file object after
+    retreiving; but if this URL fetcher is used elsewhere, the file object
+    has to be closed manually.
+    """
+    #: The string or file-like object passed to the constructor.
+    self.string_or_file = string or file_obj
+    if self.string_or_file is None:
+      raise ValueError('string or file_obj must be given')
+    #: (optional) a MIME type extracted e.g. from a
+    #: *Content-Type* header. If not provided, the type is guessed from the
+    #: file extension in the URL.
+    self.mime_type = mime_type
+    #: (optional) a character encoding extracted e.g. from a
+    #: *charset* parameter in a *Content-Type* header
+    self.encoding = encoding
+    #: (optional) the actual URL of the resource
+    #: if there were e.g. HTTP redirects.
+    self.redirected_url = redirected_url
+    #: (optional) the filename of the resource. Usually
+    #: derived from the *filename* parameter in a *Content-Disposition*
+    #: header.
+    self.filename = filename
+    #: (optional) the path of the resource if it is stored on the
+    #: local filesystem.
+    self.path = path
+  
+  def read_contents(self):
+    # A few built-in IO objects transparently forward methods like `read` , so
+    # `isinstance(self.string_or_file, io.BytesIO)` will return False on objects
+    # we can actually call `read` or `close` on.
+    if hasattr(self.string_or_file, 'read'):
+        return self.string_or_file.read()
+    return self.string_or_file
+  
+  def close(self):
+    if hasattr(self.string_or_file, 'close'):
+        self.string_or_file.close()
+
+
 @contextlib.contextmanager
 def fetch(url_fetcher, url):
     """Call an url_fetcher, fill in optional data, and clean up."""
@@ -286,19 +313,24 @@ def fetch(url_fetcher, url):
         result = url_fetcher(url)
     except Exception as exception:
         raise URLFetchingError(f'{type(exception).__name__}: {exception}')
-    result.setdefault('redirected_url', url)
-    result.setdefault('mime_type', None)
-    if 'file_obj' in result:
-        try:
-            yield result
-        finally:
-            try:
-                result['file_obj'].close()
-            except Exception:  # pragma: no cover
-                # May already be closed or something.
-                # This is just cleanup anyway: log but make it non-fatal.
-                LOGGER.warning(
-                    'Error when closing stream for %s:\n%s',
-                    url, traceback.format_exc())
-    else:
+    
+    if isinstance(result, dict):
+        result = URLFetcherResource(**result)
+
+    if not isinstance(result, URLFetcherResource):
+        raise ValueError('URL fetcher must return either a dict or a URLFetcherResource instance')
+    
+    if not result.redirected_url:
+        result.redirected_url = url
+
+    try:
         yield result
+    finally:
+        try:
+            result.close()
+        except Exception:  # pragma: no cover
+            # May already be closed or something.
+            # This is just cleanup anyway: log but make it non-fatal.
+            LOGGER.warning(
+                'Error when closing stream for %s:\n%s',
+                url, traceback.format_exc())
