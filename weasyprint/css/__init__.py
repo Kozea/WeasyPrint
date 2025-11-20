@@ -727,7 +727,6 @@ def _resolve_calc_product(computed, tokens, property_name, refer_to):
             assert sign in '*/'
         else:
             group = groups.pop(0)
-            assert group
             assert isinstance(group, list)
             calc = _resolve_calc_value(computed, group)
             if calc is None:
