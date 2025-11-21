@@ -804,8 +804,10 @@ def block_container_layout(context, box, bottom_space, skip_stack, page_is_empty
                 max_lines)
         elif stop:
             if box.height != 'auto':
-                if context.overflows(box.position_y + box.border_height(), position_y):
-                    # Box heigh is fixed and it doesn’t overflow page, forget
+                box_bottom = box.position_y + box.border_height()
+                bottom_margin = collapse_margin(adjoining_margins)
+                if context.overflows(box_bottom, position_y - bottom_margin):
+                    # Box height is fixed and it doesn’t overflow page, forget
                     # overflowing children.
                     resume_at = None
             adjoining_margins = []
