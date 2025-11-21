@@ -744,6 +744,7 @@ def test_overflow_auto():
     assert article.height == 50 + 10 + 10
 
 
+@assert_no_logs
 def test_overflow_hidden_in_flow_layout():
     page, = render_pages('''
       <div style="overflow: hidden; height: 3px;">
@@ -757,6 +758,7 @@ def test_overflow_hidden_in_flow_layout():
     assert parent_div.height == 3
 
 
+@assert_no_logs
 def test_overflow_hidden_out_of_flow_layout():
     page, = render_pages('''
       <div style="overflow: hidden; height: 3px;">
