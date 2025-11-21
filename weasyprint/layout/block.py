@@ -707,8 +707,6 @@ def block_container_layout(context, box, bottom_space, skip_stack, page_is_empty
     new_children = []
     next_page = {'break': 'any', 'page': None}
 
-    last_in_flow_child = None
-
     if box.style['max_lines'] != 'none':
         max_lines = min(box.style['max_lines'], max_lines or inf)
 
