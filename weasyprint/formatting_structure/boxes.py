@@ -799,6 +799,7 @@ class InlineFlexBox(FlexContainerBox, InlineLevelBox):
 
 class GridContainerBox(ParentBox):
     """A box that contains only grid-items."""
+    advancements = None
 
 
 class GridBox(GridContainerBox, BlockLevelBox):
