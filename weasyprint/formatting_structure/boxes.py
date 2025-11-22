@@ -422,6 +422,22 @@ class ParentBox(Box):
                 end_value = end_box.page_values()[1] or end_value
         return start_value, end_value
 
+    def top_margin_collapses(self):
+        return not (
+            self.border_top_width or self.padding_top or
+            self.is_flex_item or self.is_grid_item or
+            self.establishes_formatting_context() or
+            self.is_table_wrapper or
+            self.is_for_root_element)
+
+    def bottom_margin_collapses(self):
+        return not (
+            self.border_bottom_width or self.padding_bottom or
+            self.is_flex_item or self.is_grid_item or
+            self.establishes_formatting_context() or
+            self.is_table_wrapper or
+            self.is_for_root_element)
+
 
 class BlockLevelBox(Box):
     """A box that participates in an block formatting context.
