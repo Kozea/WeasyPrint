@@ -77,6 +77,9 @@ def generate_rdf_metadata(metadata, variant, version, conformance):
                 subelement.text = '1'
         else:
             element.attrib[f'{{{NS[namespace]}}}conformance'] = conformance
+            if variant == 'a' and version == 4:
+                subelement = SubElement(element, f'{{{NS["pdfaid"]}}}rev')
+                subelement.text = '2020'
 
     element = SubElement(rdf, f'{{{NS["rdf"]}}}Description')
     element.attrib[f'{{{NS["rdf"]}}}about'] = ''

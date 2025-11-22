@@ -67,6 +67,10 @@ def pdfa(pdf, metadata, document, page_streams, attachments, compress,
         compress = False
     add_metadata(pdf, metadata, 'a', version, variant, compress)
 
+    # Remove document information.
+    if version >= 4:
+        pdf.info.clear()
+
 
 VARIANTS = {
     'pdf/a-1b': (
@@ -78,9 +82,6 @@ VARIANTS = {
     'pdf/a-3b': (
         partial(pdfa, version=3, variant='B'),
         {'version': '1.7', 'identifier': True, 'srgb': True}),
-    'pdf/a-4b': (
-        partial(pdfa, version=4, variant='B'),
-        {'version': '2.0', 'identifier': True, 'srgb': True}),
     'pdf/a-2u': (
         partial(pdfa, version=2, variant='U'),
         {'version': '1.7', 'identifier': True, 'srgb': True}),
@@ -99,4 +100,10 @@ VARIANTS = {
     'pdf/a-3a': (
         partial(pdfa, version=3, variant='A'),
         {'version': '1.7', 'identifier': True, 'srgb': True, 'pdf_tags': True}),
+    'pdf/a-4e': (
+        partial(pdfa, version=4, variant='E'),
+        {'version': '2.0', 'identifier': True, 'srgb': True}),
+    'pdf/a-4f': (
+        partial(pdfa, version=4, variant='F'),
+        {'version': '2.0', 'identifier': True, 'srgb': True}),
 }

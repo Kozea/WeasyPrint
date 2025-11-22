@@ -455,26 +455,26 @@ def test_command_line_render(tmp_path):
 
 
 @pytest.mark.parametrize(('version', 'pdf_version'), [
-    (1, '1.4'),
-    (2, '1.7'),
-    (3, '1.7'),
-    (4, '2.0'),
+    ('1a', '1.4'),
+    ('2b', '1.7'),
+    ('3u', '1.7'),
+    ('4e', '2.0'),
 ])
 def test_pdfa(version, pdf_version):
     stdout = _run(
-        f'--pdf-variant=pdf/a-{version}b --uncompressed-pdf - -', b'test')
+        f'--pdf-variant=pdf/a-{version} --uncompressed-pdf - -', b'test')
     assert f'PDF-{pdf_version}'.encode() in stdout
-    assert f'part="{version}"'.encode() in stdout
+    assert f'part="{version[0]}"'.encode() in stdout
 
 
 @pytest.mark.parametrize(('version', 'pdf_version'), [
-    (1, '1.4'),
-    (2, '1.7'),
-    (3, '1.7'),
-    (4, '2.0'),
+    ('1a', '1.4'),
+    ('2b', '1.7'),
+    ('3u', '1.7'),
+    ('4e', '2.0'),
 ])
 def test_pdfa_compressed(version, pdf_version):
-    stdout = _run(f'--pdf-variant=pdf/a-{version}b - -', b'test')
+    stdout = _run(f'--pdf-variant=pdf/a-{version} - -', b'test')
     assert f'PDF-{pdf_version}'.encode() in stdout
 
 
