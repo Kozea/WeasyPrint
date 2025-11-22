@@ -767,6 +767,33 @@ def test_nested_blocks_padding_border():  # pragma: no cover
 
 
 @assert_no_logs
+def test_overflow_non_collapsing_parent():
+    page_1, page_2 = render_pages('''
+      <style>
+        @page { size: 6px 10px; margin: 0 }
+        html { font: 2px/1 weasyprint }
+        div { border-bottom: 3px solid }
+        p { margin-bottom: 2px }
+      </style>
+      abc
+      def
+      <div>
+        <p>
+          aaa
+        </p>
+      </div>
+      ghi''')
+    html, = page_1.children
+    body, = html.children
+    lines, = body.children
+    line_1, line_2 = lines.children
+
+    html, = page_2.children
+    body, = html.children
+    section, lines = body.children
+
+
+@assert_no_logs
 def test_overflow_auto():
     page, = render_pages('''
       <article style="overflow: auto">

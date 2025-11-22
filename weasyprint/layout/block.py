@@ -564,8 +564,13 @@ def _in_flow_layout(context, box, index, child, new_children, page_is_empty,
                 new_child.border_box_y() + new_child.border_height())
             content_page_overflow = context.overflows_page(
                 bottom_space, new_content_position_y)
+            parent_collapsing_bottom = not (
+                box.border_bottom_width or box.padding_bottom or box.is_flex_item or
+                box.is_grid_item or box.establishes_formatting_context() or
+                box.is_for_root_element)
+            offset_y = 0 if parent_collapsing_bottom else new_child.margin_bottom
             border_page_overflow = context.overflows_page(
-                bottom_space, new_position_y)
+                bottom_space, new_position_y + offset_y)
             can_break = not (
                 page_is_empty_with_no_children or box.is_monolithic())
             if can_break and content_page_overflow:
@@ -580,7 +585,7 @@ def _in_flow_layout(context, box, index, child, new_children, page_is_empty,
                 remove_placeholders(
                     context, [new_child], absolute_boxes, fixed_boxes)
                 bottom_space += (
-                    new_child.padding_bottom + new_child.border_bottom_width)
+                    new_child.padding_bottom + new_child.border_bottom_width + offset_y)
                 (new_child, resume_at, next_page, next_adjoining_margins,
                  collapsing_through, max_lines) = block_level_layout(
                      context, child, bottom_space, skip_stack,
