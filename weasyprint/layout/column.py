@@ -193,6 +193,7 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
                     consumed_height -= in_flow_children[-1].margin_bottom
 
                     # Get the minimum size needed to render the next box
+                    next_box_height = 0
                     if column_skip_stack:
                         next_box = block_box_layout(
                             context, column_box, inf, column_skip_stack,
@@ -203,8 +204,6 @@ def columns_layout(context, box, bottom_space, skip_stack, containing_block,
                                 next_box_height = child.margin_height()
                                 break
                         remove_placeholders(context, [next_box], [], [])
-                    else:
-                        next_box_height = 0
                 else:
                     consumed_height = empty_space = next_box_height = 0
 
