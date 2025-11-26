@@ -1702,3 +1702,26 @@ def test_grid_break_container():
     body, = html.children
     section, = body.children
     assert len(section.children) == 6
+
+
+@assert_no_logs
+def test_grid_bottom_page():
+    page1, page2 = render_pages('''
+      <style>
+        @page { size: 10px }
+        body { font: 2px / 1 weasyprint }
+        section { display: grid; grid-template-columns: 1fr 1fr }
+      </style>
+      <div style="height: 9px"></div>
+      <section>
+        <div>1</div>
+        <div>2</div>
+      </section>
+    ''')
+    html, = page1.children
+    body, = html.children
+    div, = body.children
+
+    html, = page2.children
+    body, = html.children
+    section, = body.children

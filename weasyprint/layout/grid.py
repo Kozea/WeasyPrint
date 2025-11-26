@@ -1326,6 +1326,11 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         if baseline is None and y == implicit_y1:
             baseline = find_in_flow_baseline(new_child)
 
+    # Abort whole grid rendering if no child fits.
+    if this_page_children and not new_children:
+        context.finish_block_formatting_context(box)
+        return None, None, {'break': 'any', 'page': None}, [], False
+
     box = box.copy_with_children(new_children)
     if isinstance(box, boxes.InlineGridBox):
         # TODO: Synthetize a real baseline value.
