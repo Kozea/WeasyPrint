@@ -1,5 +1,7 @@
 """Tests for grid layout."""
 
+from math import isclose
+
 from ..testing_utils import assert_no_logs, render_pages
 
 
@@ -1530,8 +1532,8 @@ def test_grid_break_span():
     assert div5.height == div6.height == 2
     assert div7.position_y == div8.position_y == 6
     assert div7.height == 5
-    assert 2.6 < div8.height < 2.7
-    assert 2.3 < div9.height < 2.4
+    assert isclose(div8.height, 8 / 3)
+    assert isclose(div9.height, 7 / 3)
     line1, line2 = div7.children
     text, br = line1.children
     assert text.text == '7a'
@@ -1544,15 +1546,14 @@ def test_grid_break_span():
     text, = line.children
     assert text.text == '9'
 
-    # TODO: div7 height could be only 4, but algorithm is not specified.
     html, = page2.children
     body, = html.children
     section, = body.children
-    assert 6.6 < section.height < 6.7
+    assert isclose(section.height, 6)
     div7, div9, div10, div11, div12 = section.children
     assert div7.position_x == 0
     assert div8.position_x == 5
-    assert 4.6 < div7.height < 4.7
+    assert div7.height == 4
     line1, line2 = div7.children
     text, br = line1.children
     assert text.text == '7c'
@@ -1560,14 +1561,14 @@ def test_grid_break_span():
     assert text.text == '7d'
     assert not div9.children
     assert div10.position_x == 5
-    assert 1.3 < div10.position_y < 1.4
+    assert isclose(div10.position_y, 4 / 3)
     line, = div10.children
     text, = line.children
     assert text.text == '10'
     assert div11.position_x == 0
     assert div12.position_x == 5
-    assert 4.6 < div11.position_y < 4.7
-    assert 4.6 < div12.position_y < 4.7
+    assert div11.position_y == div12.position_y
+    assert isclose(div11.position_y, 4)
     line, = div11.children
     text, = line.children
     assert text.text == '11'
