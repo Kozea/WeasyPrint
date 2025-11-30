@@ -575,6 +575,7 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
 def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                 page_is_empty, absolute_boxes, fixed_boxes):
     context.create_block_formatting_context(box)
+    from . import block
 
     if skip_stack and box.style['box_decoration_break'] != 'clone':
         box.remove_decoration(start=True, end=False)
@@ -1358,6 +1359,8 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         new_children_by_rows[y].append((x, new_child))
         if baseline is None and y == implicit_y1:
             baseline = find_in_flow_baseline(new_child)
+
+        block.relative_positioning(new_child, (box.width, box.height))
 
     # Abort whole grid rendering if no child fits.
     if this_page_children and not new_children:

@@ -923,6 +923,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
                             resume_index, = resume_at
                             first_level_skip += resume_index
                         resume_at = {first_level_skip + index: child_resume_at}
+                    block.relative_positioning(new_child, (box.width, box.height))
                 if resume_at:
                     break
 

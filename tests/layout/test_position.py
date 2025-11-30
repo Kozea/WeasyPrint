@@ -445,3 +445,47 @@ def test_fixed_positioning_regression_2():
     assert (article.position_x, article.position_y) == (15, 20)
     header, = article.children
     assert (header.position_x, header.position_y) == (5, 10)
+
+
+@assert_no_logs
+def test_flex_relative_positioning():
+    page, = render_pages('''
+      <style>
+        @page { size: 100px 100px }
+        article { display: flex }
+        .box { width: 20px; height: 20px }
+        .relative { position: relative; top: 10px; left: 10px }
+      </style>
+      <article>
+        <div class="box"></div>
+        <div class="box relative"></div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div1, div2 = article.children
+
+    assert (div2.position_x, div2.position_y) == (30, 10)
+
+
+@assert_no_logs
+def test_grid_relative_positioning():
+    page, = render_pages('''
+      <style>
+        @page { size: 100px 100px }
+        article { display: grid; grid-template-columns: 20px 20px }
+        .box { width: 20px; height: 20px }
+        .relative { position: relative; top: 10px; left: 10px }
+      </style>
+      <article>
+        <div class="box"></div>
+        <div class="box relative"></div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div1, div2 = article.children
+
+    assert (div2.position_x, div2.position_y) == (30, 10)
