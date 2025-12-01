@@ -439,7 +439,7 @@ def get_angle(token):
 
 
 def get_resolution(token):
-    """Parse a <resolution> token in ddpx."""
+    """Parse a <resolution> token in dppx."""
     from . import resolve_math
 
     try:

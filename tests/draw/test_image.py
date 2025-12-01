@@ -493,7 +493,7 @@ def test_image_resolution(assert_same_renderings):
             <style>@page { size: 20px; margin: 2px }
                    div::before { content: url(pattern.png) }
             </style>
-            <div style="image-resolution: .5dppx; font-size: 0"></div>
+            <div style="image-resolution: .5x; font-size: 0"></div>
         ''',
         '''
             <style>@page { size: 20px; margin: 2px }

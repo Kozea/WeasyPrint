@@ -25,10 +25,11 @@ LENGTHS_TO_PIXELS = {
     'q': 96 / 25.4 / 4,
 }
 
-# How many ddpx is one <unit>?
+# How many dppx is one <unit>?
 # https://drafts.csswg.org/css-values/#resolution
 RESOLUTION_TO_DPPX = {
     'dppx': 1,
+    'x': 1,
     'dpi': 1 / LENGTHS_TO_PIXELS['in'],
     'dpcm': 1 / LENGTHS_TO_PIXELS['cm'],
 }
