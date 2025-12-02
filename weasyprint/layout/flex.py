@@ -937,6 +937,9 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
             absolute_layout(
                 context, absolute_box, box, fixed_boxes, bottom_space, skip_stack=None)
 
+    for child in box.children:
+        block.relative_positioning(child, (box.width, box.height))
+
     # TODO: Use real algorithm, see https://www.w3.org/TR/css-flexbox-1/#flex-baselines.
     if isinstance(box, boxes.InlineFlexBox):
         if main == 'width':  # and main text direction is horizontal

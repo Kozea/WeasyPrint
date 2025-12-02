@@ -579,6 +579,10 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
     if skip_stack and box.style['box_decoration_break'] != 'clone':
         box.remove_decoration(start=True, end=False)
 
+    if box.style['position'] == 'relative':
+        # New containing block, use a new absolute list
+        absolute_boxes = []
+
     # Define explicit grid
     grid_areas = box.style['grid_template_areas']
     flow = box.style['grid_auto_flow']
@@ -1371,6 +1375,19 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         # TODO: Synthetize a real baseline value.
         LOGGER.warning('Inline grids are not supported')
         box.baseline = baseline or 0
+
+    from .absolute import absolute_layout
+    from .block import relative_positioning
+
+    if box.style['position'] == 'relative':
+        # New containing block, resolve the layout of the absolute descendants
+        for absolute_box in absolute_boxes:
+            absolute_layout(
+                context, absolute_box, box, fixed_boxes, bottom_space,
+                skip_stack=None)
+
+    for child in box.children:
+        relative_positioning(child, (box.width, box.height))
 
     # Resume early when there’s no resume_at.
     if not resume_at:
