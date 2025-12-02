@@ -575,10 +575,13 @@ def _resolve_tracks_sizes(sizing_functions, box_size, children_positions,
 def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                 page_is_empty, absolute_boxes, fixed_boxes):
     context.create_block_formatting_context(box)
-    from . import block
 
     if skip_stack and box.style['box_decoration_break'] != 'clone':
         box.remove_decoration(start=True, end=False)
+
+    if box.style['position'] == 'relative':
+        # New containing block, use a new absolute list
+        absolute_boxes = []
 
     # Define explicit grid
     grid_areas = box.style['grid_template_areas']
@@ -1360,8 +1363,6 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         if baseline is None and y == implicit_y1:
             baseline = find_in_flow_baseline(new_child)
 
-        block.relative_positioning(new_child, (box.width, box.height))
-
     # Abort whole grid rendering if no child fits.
     if this_page_children and not new_children:
         context.finish_block_formatting_context(box)
@@ -1374,6 +1375,19 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         # TODO: Synthetize a real baseline value.
         LOGGER.warning('Inline grids are not supported')
         box.baseline = baseline or 0
+
+    from .absolute import absolute_layout
+    from .block import relative_positioning
+
+    if box.style['position'] == 'relative':
+        # New containing block, resolve the layout of the absolute descendants
+        for absolute_box in absolute_boxes:
+            absolute_layout(
+                context, absolute_box, box, fixed_boxes, bottom_space,
+                skip_stack=None)
+
+    for child in box.children:
+        relative_positioning(child, (box.width, box.height))
 
     # Resume early when there’s no resume_at.
     if not resume_at:

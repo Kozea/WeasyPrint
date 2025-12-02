@@ -1,5 +1,7 @@
 """Tests for position property."""
 
+import pytest
+
 from ..testing_utils import assert_no_logs, render_pages
 
 
@@ -489,3 +491,52 @@ def test_grid_relative_positioning():
     div1, div2 = article.children
 
     assert (div2.position_x, div2.position_y) == (30, 10)
+
+
+@assert_no_logs
+@pytest.mark.xfail
+def test_flex_absolute_positioning():
+    """TODO: Order is not kept when out-of-flow and in-flow children are mixed."""
+    page, = render_pages('''
+      <style>
+        @page { size: 100px 100px }
+        article { display: flex; position: relative }
+        .box { width: 20px; height: 20px }
+        .absolute { position: absolute; top: 10px; left: 10px }
+      </style>
+      <article>
+        <div class="box"></div>
+        <div class="box absolute"></div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    # That’s currently div2, div1
+    div1, div2 = article.children
+
+    assert (div2.position_x, div2.position_y) == (10, 10)
+
+
+@assert_no_logs
+@pytest.mark.xfail
+def test_grid_absolute_positioning():
+    """TODO: Absolutely positioned grid items are not replaced by placeholders ."""
+    page, = render_pages('''
+      <style>
+        @page { size: 100px 100px }
+        article { display: grid; grid-template-columns: 20px 20px; position: relative }
+        .box { width: 20px; height: 20px }
+        .absolute { position: absolute; top: 10px; left: 10px }
+      </style>
+      <article>
+        <div class="box"></div>
+        <div class="box absolute"></div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div1, div2 = article.children
+
+    assert (div1.position_x, div1.position_y) == (10, 10)

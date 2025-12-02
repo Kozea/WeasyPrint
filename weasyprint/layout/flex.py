@@ -923,7 +923,6 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
                             resume_index, = resume_at
                             first_level_skip += resume_index
                         resume_at = {first_level_skip + index: child_resume_at}
-                    block.relative_positioning(new_child, (box.width, box.height))
                 if resume_at:
                     break
 
@@ -937,6 +936,9 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
         for absolute_box in absolute_boxes:
             absolute_layout(
                 context, absolute_box, box, fixed_boxes, bottom_space, skip_stack=None)
+
+    for child in box.children:
+        block.relative_positioning(child, (box.width, box.height))
 
     # TODO: Use real algorithm, see https://www.w3.org/TR/css-flexbox-1/#flex-baselines.
     if isinstance(box, boxes.InlineFlexBox):
