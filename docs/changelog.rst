@@ -2,6 +2,165 @@ Changelog
 =========
 
 
+Version 67.0
+------------
+
+Released on 2025-12-02.
+
+Dependencies:
+
+* Python 3.10+ is now needed, Python 3.9 is not supported anymore
+* tinycss2 1.5.0+ is now needed
+* fontTools 4.59.2+ is now needed
+
+Features:
+
+* `#2560 <https://github.com/Kozea/WeasyPrint/pull/2560>`_,
+  `#640 <https://github.com/Kozea/WeasyPrint/issues/640>`_,
+  `#844 <https://github.com/Kozea/WeasyPrint/issues/844>`_,
+  `#1091 <https://github.com/Kozea/WeasyPrint/issues/1091>`_,
+  `#2517 <https://github.com/Kozea/WeasyPrint/issues/2517>`_:
+  Support CMYK colors, PDF/X, color profiles and light-dark() function
+* `#2558 <https://github.com/Kozea/WeasyPrint/pull/2558>`_,
+  `#1175 <https://github.com/Kozea/WeasyPrint/issues/1175>`_:
+  Support ::first-line, with financial support from Karte Technology
+* `#2552 <https://github.com/Kozea/WeasyPrint/pull/2552>`_:
+  Support CSS layers, with financial support from Code & Co.
+* `#2564 <https://github.com/Kozea/WeasyPrint/pull/2564>`_,
+  `#2599 <https://github.com/Kozea/WeasyPrint/pull/2599>`_,
+  `#2397 <https://github.com/Kozea/WeasyPrint/issues/2397>`_:
+  Allow page breaks in grid rows, with financial support from Ocean Recap
+* `#2568 <https://github.com/Kozea/WeasyPrint/pull/2568>`_,
+  `#357 <https://github.com/Kozea/WeasyPrint/issues/357>`_:
+  Support calc() and other mathematical functions
+* `#2575 <https://github.com/Kozea/WeasyPrint/pull/2575>`_,
+  `#2574 <https://github.com/Kozea/WeasyPrint/issues/2574>`_:
+  Support PDF/A-1a, PDF/A-2a and PDF/A-3a
+* `#2611 <https://github.com/Kozea/WeasyPrint/pull/2611>`_,
+  `#2573 <https://github.com/Kozea/WeasyPrint/issues/2573>`_:
+  Support PDF/A-4e and PDF/A-4f
+* `#2523 <https://github.com/Kozea/WeasyPrint/pull/2523>`_:
+  Display tofu for missing glyphs
+* `#2581 <https://github.com/Kozea/WeasyPrint/pull/2581>`_:
+  Add option to disable protocols in URL resolution
+* `#2570 <https://github.com/Kozea/WeasyPrint/pull/2570>`_:
+  Support rch, cap, rcap, rex, ic and ric font-relative units
+* `#2547 <https://github.com/Kozea/WeasyPrint/pull/2547>`_,
+  `#2140 <https://github.com/Kozea/WeasyPrint/issues/2140>`_:
+  Support "only" keyword in media queries
+
+Bug fixes:
+
+* `#2516 <https://github.com/Kozea/WeasyPrint/pull/2516>`_,
+  `#1510 <https://github.com/Kozea/WeasyPrint/issues/1510>`_:
+  Fix rendering of first line of text with nested right float
+* `#2510 <https://github.com/Kozea/WeasyPrint/pull/2510>`_,
+  `#1073 <https://github.com/Kozea/WeasyPrint/issues/1073>`_,
+  `#2507 <https://github.com/Kozea/WeasyPrint/issues/2507>`_:
+  Avoid Pango crashes and font mismatches with @font-face rules referencing local fonts
+* `#2532 <https://github.com/Kozea/WeasyPrint/pull/2532>`_,
+  `#2531 <https://github.com/Kozea/WeasyPrint/issues/2531>`_:
+  Use fonttools instancer instead of deprecated mutator API
+* `#2541 <https://github.com/Kozea/WeasyPrint/pull/2541>`_:
+  Fix syntax of functions
+* `#2543 <https://github.com/Kozea/WeasyPrint/pull/2543>`_:
+  Allow font-related units to access @font-face fonts
+* `#2525 <https://github.com/Kozea/WeasyPrint/pull/2525>`_:
+  Respect top margins and avoid overlapping footnotes for columns, with financial support from Code & Co.
+* `#2536 <https://github.com/Kozea/WeasyPrint/pull/2536>`_:
+  Remove Subtype key from font descriptor
+* `#2539 <https://github.com/Kozea/WeasyPrint/pull/2539>`_:
+  Fix min width for SVGs with intrinsic ratio but no intrinsic size
+* `#2537 <https://github.com/Kozea/WeasyPrint/pull/2537>`_,
+  `#2533 <https://github.com/Kozea/WeasyPrint/issues/2533>`_:
+  Fix order of operators when drawing SVGs
+* `#2538 <https://github.com/Kozea/WeasyPrint/pull/2538>`_:
+  Don’t crash with nested unknown functions
+* `#2542 <https://github.com/Kozea/WeasyPrint/pull/2542>`_:
+  Don’t crash when lh and rlh are used for line height or font size
+* `#2540 <https://github.com/Kozea/WeasyPrint/pull/2540>`_,
+  `#2528 <https://github.com/Kozea/WeasyPrint/issues/2528>`_:
+  Use locale encoding instead of filesystem encoding for font paths
+* `#2563 <https://github.com/Kozea/WeasyPrint/pull/2563>`_,
+  `#2479 <https://github.com/Kozea/WeasyPrint/issues/2479>`_:
+  Don’t avoid float collisions for atomic flex items
+* `#2569 <https://github.com/Kozea/WeasyPrint/pull/2569>`_:
+  Don’t be case-sensitive for units
+* `#2567 <https://github.com/Kozea/WeasyPrint/pull/2567>`_,
+  `#2566 <https://github.com/Kozea/WeasyPrint/issues/2566>`_:
+  Add x-default attribute for metadata description to be compliant with PDF/A
+* `#2586 <https://github.com/Kozea/WeasyPrint/pull/2586>`_,
+  `#2571 <https://github.com/Kozea/WeasyPrint/issues/2571>`_:
+  Improve formatting contexts management
+* `#2600 <https://github.com/Kozea/WeasyPrint/pull/2600>`_:
+  Fix SVG image aspect ratio when only width or height is specified
+* `#2612 <https://github.com/Kozea/WeasyPrint/pull/2612>`_,
+  `#2595 <https://github.com/Kozea/WeasyPrint/pull/2595>`_:
+  Clean block layout and fix corner cases
+* `#2522 <https://github.com/Kozea/WeasyPrint/issues/2522>`_:
+  Ignore preserveAspectRatio when SVG has no viewBox
+* `#2544 <https://github.com/Kozea/WeasyPrint/issues/2544>`_:
+  Allow to use a variable twice in a function
+* `#2555 <https://github.com/Kozea/WeasyPrint/issues/2555>`_:
+  Fix flex gap in right-to-left context
+* `#2591 <https://github.com/Kozea/WeasyPrint/issues/2591>`_:
+  Respect non-auto widths and fix padding of grid items
+* `#2601 <https://github.com/Kozea/WeasyPrint/issues/2601>`_:
+  Don’t crash when tagged tables are not displayed as tables
+* `#2607 <https://github.com/Kozea/WeasyPrint/issues/2607>`_:
+  Fix rendering of multiline textareas with PDF forms
+* `#2106 <https://github.com/Kozea/WeasyPrint/issues/2106>`_:
+  Force variable initialization to avoid crashes during column layout
+* `#2618 <https://github.com/Kozea/WeasyPrint/pull/2618>`_,
+  `#2617 <https://github.com/Kozea/WeasyPrint/issues/2617>`_:
+  Fix rendering of relative grid and flex items
+
+Documentation:
+
+* `#2535 <https://github.com/Kozea/WeasyPrint/pull/2535>`_:
+  `#2534 <https://github.com/Kozea/WeasyPrint/issues/2534>`_:
+  Removed reference to defunct site
+
+Contributors:
+
+* Guillaume Ayoub
+* Fazle Rabbi Ferdaus
+* Lucie Anglade
+* Luca Vercelli
+* ChickenF622
+* Ernie Chu
+* Mark Pullin
+* Malte Laukötter
+* Markus Mohanty
+* Yvonne Kothmeier
+* Jarom Ort
+* kuypan
+
+Backers and sponsors:
+
+* Spacinov
+* Syslifters
+* Kobalt
+* Simon Sapin
+* Grip Angebotssoftware
+* Manuel Barkhau
+* Simonsoft
+* KontextWork
+* Menutech
+* TrainingSparkle
+* Healthchecks.io
+* Method B
+* FieldHub
+* Hammerbacher
+* Yanal-Yves Fargialla
+* Morntag
+* Piloterr
+* Xavid
+* Charlie S.
+* Prothesis Dental Solutions
+* Kai DeLorenzo
+
+
 Version 66.0
 ------------
 
