@@ -254,7 +254,7 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
                         tree.append(defs)
                         ElementTree.SubElement(
                             tree, 'use', attrib={'href': f'#glyph{glyph_id}'})
-                    image = SVGImage(tree, None, None, stream)
+                    image = SVGImage(tree, None, None, None)
                     a = d = logical_width / 1000 / font.upem * font_size
                     emojis.append([image, font, a, d, x_advance, 0])
             elif font.png:
