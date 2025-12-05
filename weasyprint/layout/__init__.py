@@ -60,7 +60,8 @@ def initialize_page_maker(context, root_box):
         # Shared mutable objects:
         [0],  # quote_depth: single integer
         {'pages': [0]},
-        [{'pages'}]  # counter_scopes
+        [{'pages'}],  # counter_scopes
+        [] # page_groups
     )
 
     # Initial values
@@ -117,6 +118,7 @@ def layout_document(html, root_box, context, max_loops=8):
     pages = []
     original_footnotes = []
     actual_total_pages = 0
+    page_groups = []
 
     for loop in range(max_loops):
         if loop > 0:
