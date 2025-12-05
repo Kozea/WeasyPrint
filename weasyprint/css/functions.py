@@ -68,6 +68,11 @@ def check_attr(token, allowed_type=None):
         name_and_type, fallback = parts[0], ''
     elif len(parts) == 2:
         name_and_type, fallback = parts
+        # TODO: support fallbacks with multiple tokens and follow type.
+        if len(fallback) >= 1 and fallback[0].type == 'string':
+            fallback = fallback[0].value
+        else:
+            fallback = ''
     else:
         return
 

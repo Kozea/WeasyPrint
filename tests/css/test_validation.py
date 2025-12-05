@@ -612,6 +612,11 @@ def test_mask_border_mode_invalid(rule):
         ('test1', (('string', 'string'),)),
         ('test2', (('string', 'string'),)))),
     ('test attr(class)', (('test', (('attr()', ('class', 'string', '')),)),)),
+    ('test attr(class url)', (('test', (('attr()', ('class', 'url', '')),)),)),
+    ('test attr(class, "test")', (
+        ('test', (('attr()', ('class', 'string', 'test')),)),)),
+    ('test attr(class string, "test")', (
+        ('test', (('attr()', ('class', 'string', 'test')),)),)),
     ('test counter(count)', (
         ('test', (('counter()', ('count', 'decimal')),)),)),
     ('test counter(count, upper-roman)', (

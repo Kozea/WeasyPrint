@@ -40,7 +40,7 @@ def test_target_counter_attr():
         div:first-child { counter-reset: div }
         div { counter-increment: div }
         div::before { content: target-counter(attr(data-count), div) }
-        #id2::before { content: target-counter(attr(data-count, url), div) }
+        #id2::before { content: target-counter(attr(data-count url), div) }
         #id4::before {
           content: target-counter(attr(data-count), div, lower-alpha) }
       </style>
