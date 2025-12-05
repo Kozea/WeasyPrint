@@ -1278,6 +1278,47 @@ def test_text_transform():
 
 @assert_no_logs
 @pytest.mark.parametrize(
+    ('lang', 'lowercase', 'uppercase'), [
+        ('az', 'ı i', 'I İ'),
+        ('tr', 'ı i', 'I İ'),
+        ('el', 'καλημέρα αύριο θεϊκό ευφυΐα Νεράιδα',
+         'ΚΑΛΗΜΕΡΑ ΑΥΡΙΟ ΘΕΪΚΟ ΕΥΦΥΪΑ ΝΕΡΑΪΔΑ'),
+])
+def test_text_transform_lang_uppercase(lang, lowercase, uppercase):
+    page, = render_pages(f'''
+      <html lang="{lang}">
+        <p style="text-transform: uppercase">{lowercase}
+    ''')
+    html, = page.children
+    body, = html.children
+    p, = body.children
+    line, = p.children
+    text, = line.children
+    assert text.text == uppercase
+
+
+@assert_no_logs
+@pytest.mark.parametrize(
+    ('lang', 'uppercase', 'lowercase'), [
+        ('az', 'İ I', 'i ı'),
+        ('tr', 'İ I', 'i ı'),
+        ('lt', 'Ì Í Ĩ', 'i̇̀ i̇́ i̇̃'),
+])
+def test_text_transform_lang_lowercase(lang, uppercase, lowercase):
+    page, = render_pages(f'''
+      <html lang="{lang}">
+        <p style="text-transform: lowercase">{uppercase}
+    ''')
+    html, = page.children
+    body, = html.children
+    p, = body.children
+    line, = p.children
+    text, = line.children
+    assert text.text == lowercase
+
+
+@assert_no_logs
+@pytest.mark.parametrize(
     ('original', 'transformed'), [
         ('abc def ghi', 'Abc Def Ghi'),
         ('AbC def ghi', 'AbC Def Ghi'),
