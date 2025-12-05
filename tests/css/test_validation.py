@@ -1273,6 +1273,24 @@ def test_justify_self_invalid(rule):
 
 
 @assert_no_logs
+@pytest.mark.parametrize('rule', [
+    'color',
+    'background',
+    'background-color',
+    'border-color',
+    'border-left-color',
+    'outline-color',
+])
+@pytest.mark.parametrize('value', [
+    'rgb()',
+    'device-cmyk(0%, 0%, 0%, 30%)',
+    '#abcde',
+])
+def test_colors_invalid(rule, value):
+    assert_invalid(f'{rule}: {value}')
+
+
+@assert_no_logs
 @pytest.mark.parametrize(('rule', 'value'), [
     ('normal', 'normal'),
     ('light', ('light',)),

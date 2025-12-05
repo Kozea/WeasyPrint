@@ -137,7 +137,7 @@ def other_colors(token):
 def outline_color(token):
     if get_keyword(token) == 'invert':
         return 'currentcolor'
-    else:
+    elif parse_color(token):
         return token
 
 
@@ -161,7 +161,7 @@ def color(token):
     result = parse_color(token)
     if result == 'currentcolor':
         return 'inherit'
-    else:
+    elif result:
         return token
 
 
