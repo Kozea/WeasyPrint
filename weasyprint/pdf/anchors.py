@@ -334,7 +334,7 @@ def write_pdf_attachment(pdf, attachment, compress):
     uncompressed_length = 0
     stream = b''
     try:
-        with attachment.source as (_, source, url, _):
+        with attachment.source as (source, url, _):
             if isinstance(source, str):
                 source = source.encode()
             if isinstance(source, bytes):
