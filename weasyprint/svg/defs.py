@@ -146,6 +146,7 @@ def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
             size(gradient.get('y2', 0), font_size, height))
         positions, colors, coords = spread_linear_gradient(
             spread, positions, colors, x1, y1, x2, y2, bounding_box, matrix)
+        bx1, by1 = x1, y1
     else:
         assert gradient.tag == 'radialGradient'
         shading_type = 3
@@ -160,6 +161,7 @@ def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
         positions, colors, coords = spread_radial_gradient(
             spread, positions, colors, fx, fy, fr, cx, cy, r, width, height,
             matrix)
+        bx1, by1 = cx - r, cy - r
 
     alphas = [color[3] for color in colors]
     alpha_couples = [
@@ -180,10 +182,10 @@ def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
         if 0 not in (a0, a1) and (a0, a1) != (1, 1):
             color_couples[i][2] = a0 / a1
 
-    bx1, by1 = 0, 0
     if 'gradientTransform' in gradient.attrib:
+        bx2, by2 = bx1 + width, by1 + width
         bx1, by1 = transform_matrix.invert.transform_point(bx1, by1)
-        bx2, by2 = transform_matrix.invert.transform_point(width, height)
+        bx2, by2 = transform_matrix.invert.transform_point(bx2, by2)
         width, height = bx2 - bx1, by2 - by1
 
         # Ensure that width and height are positive to please some PDF readers
