@@ -254,8 +254,10 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
                         tree.append(defs)
                         ElementTree.SubElement(
                             tree, 'use', attrib={'href': f'#glyph{glyph_id}'})
+                    if 'viewBox' not in tree.attrib:
+                        tree.attrib['viewBox'] = f'0 0 {font.upem} {font.upem}'
                     image = SVGImage(tree, None, None, None)
-                    a = d = logical_width / 1000 / font.upem * font_size
+                    a = d = 1
                     emojis.append([image, font, a, d, x_advance, 0])
             elif font.png:
                 png_data = get_hb_object_data(font.hb_font, 'png', glyph_id)
