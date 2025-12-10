@@ -327,9 +327,9 @@ class Node:
 class SVG:
     """An SVG document."""
 
-    def __init__(self, tree, url, font_config):
+    def __init__(self, tree, url, font_config, url_fetcher = None):
         wrapper = ElementWrapper.from_xml_root(tree)
-        style = parse_stylesheets(wrapper, url)
+        style = parse_stylesheets(wrapper, url, font_config, url_fetcher)
         self.tree = Node(wrapper, style)
         self.font_config = font_config
         self.url = url
