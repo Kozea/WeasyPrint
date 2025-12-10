@@ -5,11 +5,12 @@ from urllib.parse import urljoin
 import cssselect2
 import tinycss2
 
+from ..css.validation.descriptors import preprocess_descriptors
 from ..logger import LOGGER
 from .utils import parse_url
 
 
-def find_stylesheets_rules(tree, stylesheet_rules, url):
+def find_stylesheets_rules(tree, stylesheet_rules, url, font_config, url_fetcher):
     """Find rules among stylesheet rules and imports."""
     for rule in stylesheet_rules:
         if rule.type == 'at-rule':
@@ -22,7 +23,23 @@ def find_stylesheets_rules(tree, stylesheet_rules, url):
                 stylesheet = tinycss2.parse_stylesheet(
                     tree.fetch_url(css_url, 'text/css').decode())
                 url = css_url.geturl()
-                yield from find_stylesheets_rules(tree, stylesheet, url)
+                yield from find_stylesheets_rules(
+                    tree, stylesheet, url, font_config, url_fetcher)
+            elif rule.lower_at_keyword == 'font-face':
+                if font_config and url_fetcher:
+                    content = tinycss2.parse_blocks_contents(rule.content)
+                    rule_descriptors = dict(
+                        preprocess_descriptors('font-face', url, content))
+                    for key in ('src', 'font_family'):
+                        if key not in rule_descriptors:
+                            LOGGER.warning(
+                                "Missing %s descriptor in '@font-face' rule at "
+                                "%d:%d", key.replace('_', '-'),
+                                rule.source_line, rule.source_column)
+                            break
+                    else:
+                        if font_config is not None and url_fetcher is not None:
+                            font_config.add_font_face(rule_descriptors, url_fetcher)
             # TODO: support media types
             # if rule.lower_at_keyword == 'media':
         elif rule.type == 'qualified-rule':
@@ -49,7 +66,7 @@ def parse_declarations(input):
     return normal_declarations, important_declarations
 
 
-def parse_stylesheets(tree, url):
+def parse_stylesheets(tree, url, font_config, url_fetcher):
     """Find stylesheets and return rule matchers in given tree."""
     normal_matcher = cssselect2.Matcher()
     important_matcher = cssselect2.Matcher()
@@ -70,7 +87,8 @@ def parse_stylesheets(tree, url):
 
     # Parse rules and fill matchers
     for stylesheet in stylesheets:
-        for rule in find_stylesheets_rules(tree, stylesheet, url):
+        for rule in find_stylesheets_rules(
+                tree, stylesheet, url, font_config, url_fetcher):
             normal_declarations, important_declarations = parse_declarations(
                 rule.content)
             try:
