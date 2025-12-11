@@ -389,7 +389,7 @@ def make_margin_boxes(context, page, state):
         if box.is_generated:
             # @margins mustn't manipulate page-context counters
             margin_state = copy.deepcopy(state)
-            quote_depth, counter_values, counter_scopes = margin_state
+            quote_depth, counter_values, counter_scopes, _page_groups = margin_state
             # TODO: check this, probably useless
             counter_scopes.append(set())
             build.update_counters(margin_state, box.style)
@@ -901,7 +901,7 @@ def _update_page_groups(page_groups, resume_at, next_page, root_box, blank):
             return next_page['page']
 
 
-def remake_page(index, page_groups, context, root_box, html):
+def remake_page(index, context, root_box, html):
     """Return one laid out page without margin boxes.
 
     Start with the initial values from ``context.page_maker[index]``.
@@ -932,6 +932,7 @@ def remake_page(index, page_groups, context, root_box, html):
         (next_page_side == 'right' and not right_page) or
         (context.reported_footnotes and resume_at is None))
     side = 'right' if right_page else 'left'
+    page_groups = page_state[3]
     name = _update_page_groups(page_groups, resume_at, next_page, root_box, blank)
     groups = tuple((name, index) for name, index, _ in page_groups)
     page_type = PageType(side, blank, name, index, groups)
@@ -990,7 +991,6 @@ def make_all_pages(context, root_box, html, pages):
     """
     i = 0
     reported_footnotes = None
-    page_groups = []
     while True:
         remake_state = context.page_maker[i][-1]
         if (len(pages) == 0 or
@@ -1002,7 +1002,7 @@ def make_all_pages(context, root_box, html, pages):
             remake_state['pages_wanted'] = False
             remake_state['anchors'] = []
             remake_state['content_lookups'] = []
-            page, resume_at = remake_page(i, page_groups, context, root_box, html)
+            page, resume_at = remake_page(i, context, root_box, html)
             reported_footnotes = context.reported_footnotes
             yield page
         else:
