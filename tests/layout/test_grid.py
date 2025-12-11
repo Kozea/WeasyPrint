@@ -1726,3 +1726,47 @@ def test_grid_bottom_page():
     html, = page2.children
     body, = html.children
     section, = body.children
+
+
+@assert_no_logs
+def test_grid_in_grid():
+    # Regression test for #2626.
+    page1, page2, = render_pages('''
+      <style>
+        @page { size: 10px }
+        body { font: 2px / 1 weasyprint }
+        section { display: grid; grid-template-columns: 1fr 1fr }
+      </style>
+      <div style="height: 7px"></div>
+      <section>
+        <section>
+          <div>1 2</div>
+          <div>3 4</div>
+        </section>
+        <section>
+          <div>5 6</div>
+          <div>7 8</div>
+        </section>
+      </section>
+    ''')
+    html, = page1.children
+    body, = html.children
+    div, section = body.children
+    subsection1, subsection2 = section.children
+    div1, div2 = subsection1.children
+    assert div1.children[0].children[0].text == '1'
+    assert div2.children[0].children[0].text == '3'
+    div3, div4 = subsection2.children
+    assert div3.children[0].children[0].text == '5'
+    assert div4.children[0].children[0].text == '7'
+
+    html, = page2.children
+    body, = html.children
+    section, = body.children
+    subsection1, subsection2 = section.children
+    div1, div2 = subsection1.children
+    assert div1.children[0].children[0].text == '2'
+    assert div2.children[0].children[0].text == '4'
+    div3, div4 = subsection2.children
+    assert div3.children[0].children[0].text == '6'
+    assert div4.children[0].children[0].text == '8'

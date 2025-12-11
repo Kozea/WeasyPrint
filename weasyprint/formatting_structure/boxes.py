@@ -815,7 +815,10 @@ class InlineFlexBox(FlexContainerBox, InlineLevelBox):
 
 class GridContainerBox(ParentBox):
     """A box that contains only grid-items."""
-    advancements = None
+    def __init__(self, element_tag, style, element, children):
+        super().__init__(element_tag, style, element, children)
+        # TODO: we shouldn’t store this in the box but in the rendering context instead.
+        self.advancements = {}
 
 
 class GridBox(GridContainerBox, BlockLevelBox):

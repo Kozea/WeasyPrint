@@ -1368,8 +1368,9 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         context.finish_block_formatting_context(box)
         return None, None, {'break': 'any', 'page': None}, [], False
 
-    old_advancements = box.advancements or {}
-    advancements = box.advancements = {}
+    old_advancements = box.advancements.copy()
+    advancements = box.advancements
+    advancements.clear()
     box = box.copy_with_children(new_children)
     if isinstance(box, boxes.InlineGridBox):
         # TODO: Synthetize a real baseline value.
