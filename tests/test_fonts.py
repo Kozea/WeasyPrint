@@ -1,5 +1,5 @@
 """Test the fonts features."""
-
+from weasyprint.text.fonts import FontConfiguration
 from .testing_utils import assert_no_logs, render_pages
 
 
@@ -166,3 +166,12 @@ def test_woff_simple():
     assert span1.width == span3.width
     # the default font does not match the loaded fonts
     assert span1.width != span4.width
+
+
+@assert_no_logs
+def test_font_cleanup():
+    font_config = FontConfiguration()
+    font_folder = font_config.font_folder
+    assert font_folder.exists()
+    font_config.cleanup()
+    assert not font_folder.exists()
