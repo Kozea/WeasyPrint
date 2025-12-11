@@ -257,7 +257,7 @@ class LazyLocalImage(pydyf.Object):
 class SVGImage:
     def __init__(self, tree, base_url, url_fetcher, context):
         font_config = context.font_config if context else None
-        self._svg = SVG(tree, base_url, font_config)
+        self._svg = SVG(tree, base_url, font_config, url_fetcher)
         self._base_url = base_url
         self._url_fetcher = url_fetcher
         self._context = context
