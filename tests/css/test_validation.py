@@ -196,6 +196,7 @@ def test_size_invalid(rule):
     ('none', ()),
     ('translate(6px) rotate(90deg)', (
         ('translate', ((6, 'px'), (0, 'px'))), ('rotate', pi / 2))),
+    ('rotate(0)', (('rotate', 0),)),
     ('translate(-4px, 0)', (('translate', ((-4, 'px'), (0, None))),)),
     ('translate(6px, 20%)', (('translate', ((6, 'px'), (20, '%'))),)),
     ('scale(2)', (('scale', (2, 2)),)),
