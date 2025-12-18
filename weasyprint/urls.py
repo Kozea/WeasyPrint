@@ -260,50 +260,51 @@ class URLFetchingError(IOError):
 
 
 class URLFetcherResource:
-  """Represents the result of a URL fetcher invocation."""
-  def __init__(self, string=None, file_obj=None, mime_type=None, encoding=None,
-               redirected_url=None, filename=None, path=None, **kwargs):
-    """Constructs a new instance from a string or file-like object.
-    
-    If a ``file_obj`` is given, it is the caller’s responsibility
-    to call ``file_obj.close()``. The default function used internally to
-    fetch data in WeasyPrint tries to close the file object after
-    retreiving; but if this URL fetcher is used elsewhere, the file object
-    has to be closed manually.
-    """
-    #: The string or file-like object passed to the constructor.
-    self.string_or_file = string or file_obj
-    if self.string_or_file is None:
-      raise ValueError('string or file_obj must be given')
-    #: (optional) a MIME type extracted e.g. from a
-    #: *Content-Type* header. If not provided, the type is guessed from the
-    #: file extension in the URL.
-    self.mime_type = mime_type
-    #: (optional) a character encoding extracted e.g. from a
-    #: *charset* parameter in a *Content-Type* header
-    self.encoding = encoding
-    #: (optional) the actual URL of the resource
-    #: if there were e.g. HTTP redirects.
-    self.redirected_url = redirected_url
-    #: (optional) the filename of the resource. Usually
-    #: derived from the *filename* parameter in a *Content-Disposition*
-    #: header.
-    self.filename = filename
-    #: (optional) the path of the resource if it is stored on the
-    #: local filesystem.
-    self.path = path
-  
-  def read_contents(self):
-    # A few built-in IO objects transparently forward methods like `read` , so
-    # `isinstance(self.string_or_file, io.BytesIO)` will return False on objects
-    # we can actually call `read` or `close` on.
-    if hasattr(self.string_or_file, 'read'):
-        return self.string_or_file.read()
-    return self.string_or_file
-  
-  def close(self):
-    if hasattr(self.string_or_file, 'close'):
-        self.string_or_file.close()
+    """Represents the result of a URL fetcher invocation."""
+    def __init__(self, string=None, file_obj=None, mime_type=None, encoding=None,
+                 redirected_url=None, filename=None, path=None, **kwargs):
+        """Constructs a new instance from a string or file-like object.
+
+        If a ``file_obj`` is given, it is the caller’s responsibility
+        to call ``file_obj.close()``. The default function used internally to
+        fetch data in WeasyPrint tries to close the file object after
+        retreiving; but if this URL fetcher is used elsewhere, the file object
+        has to be closed manually.
+
+        """
+        assert {string, file_obj} != {None}, 'string or file_obj must be given'
+
+        #: The string or file-like object passed to the constructor.
+        self.string_or_file = string if string is not None else file_obj
+        #: (optional) a MIME type extracted e.g. from a
+        #: *Content-Type* header. If not provided, the type is guessed from the
+        #: file extension in the URL.
+        self.mime_type = mime_type
+        #: (optional) a character encoding extracted e.g. from a
+        #: *charset* parameter in a *Content-Type* header
+        self.encoding = encoding
+        #: (optional) the actual URL of the resource
+        #: if there were e.g. HTTP redirects.
+        self.redirected_url = redirected_url
+        #: (optional) the filename of the resource. Usually
+        #: derived from the *filename* parameter in a *Content-Disposition*
+        #: header.
+        self.filename = filename
+        #: (optional) the path of the resource if it is stored on the
+        #: local filesystem.
+        self.path = path
+
+    def read_contents(self):
+        # A few built-in IO objects transparently forward methods like `read` , so
+        # `isinstance(self.string_or_file, io.BytesIO)` will return False on objects
+        # we can actually call `read` or `close` on.
+        if hasattr(self.string_or_file, 'read'):
+            return self.string_or_file.read()
+        return self.string_or_file
+
+    def close(self):
+        if hasattr(self.string_or_file, 'close'):
+            self.string_or_file.close()
 
 
 @contextlib.contextmanager
@@ -313,13 +314,14 @@ def fetch(url_fetcher, url):
         result = url_fetcher(url)
     except Exception as exception:
         raise URLFetchingError(f'{type(exception).__name__}: {exception}')
-    
+
     if isinstance(result, dict):
         result = URLFetcherResource(**result)
 
     if not isinstance(result, URLFetcherResource):
-        raise ValueError('URL fetcher must return either a dict or a URLFetcherResource instance')
-    
+        raise ValueError(
+            'URL fetcher must return either a dict or a URLFetcherResource instance')
+
     if not result.redirected_url:
         result.redirected_url = url
 

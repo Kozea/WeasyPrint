@@ -306,7 +306,6 @@ class CSS:
                 # unicode, no encoding
                 stylesheet = tinycss2.parse_stylesheet(source)
             else:
-                # if not isinstance(source, str) and not isinstance(source, bytes): breakpoint()
                 stylesheet, encoding = tinycss2.parse_stylesheet_bytes(
                     source, environment_encoding=encoding,
                     protocol_encoding=protocol_encoding)
