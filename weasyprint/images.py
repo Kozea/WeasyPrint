@@ -298,7 +298,7 @@ def get_image_from_uri(cache, url_fetcher, options, url, forced_mime_type=None,
 
     try:
         with fetch(url_fetcher, url) as result:
-            string = result.read_contents()
+            string = result.file_obj.read()
             mime_type = forced_mime_type or result.mime_type
 
         image = None

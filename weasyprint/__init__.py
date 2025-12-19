@@ -7,6 +7,7 @@ importing sub-modules.
 
 import contextlib
 from datetime import datetime
+from io import BytesIO, StringIO
 from os.path import getctime, getmtime
 from pathlib import Path
 from urllib.parse import urljoin
@@ -170,16 +171,13 @@ class HTML:
             base_url = str(base_url)
         result = _select_source(
             guess, filename, url, file_obj, string, base_url, url_fetcher)
-        with result as (source, base_url, protocol_encoding):
-            if isinstance(source, str):
-                result = tinyhtml5.parse(source, namespace_html_elements=False)
-            else:
-                kwargs = {'namespace_html_elements': False}
-                if protocol_encoding is not None:
-                    kwargs['transport_encoding'] = protocol_encoding
-                if encoding is not None:
-                    kwargs['override_encoding'] = encoding
-                result = tinyhtml5.parse(source, **kwargs)
+        with result as (file_obj, base_url, protocol_encoding, _):
+            kwargs = {'namespace_html_elements': False}
+            if protocol_encoding is not None:
+                kwargs['transport_encoding'] = protocol_encoding
+            if encoding is not None:
+                kwargs['override_encoding'] = encoding
+            result = tinyhtml5.parse(file_obj, **kwargs)
         self.base_url = _find_base_url(result, base_url)
         self.url_fetcher = url_fetcher
         self.media_type = media_type
@@ -286,28 +284,24 @@ class CSS:
     of :class:`HTML` objects.
 
     """
-    def __init__(self, guess=None, filename=None, url=None, file_obj=None,
-                 string=None, encoding=None, base_url=None,
-                 url_fetcher=default_url_fetcher, _check_mime_type=False,
-                 media_type='print', font_config=None, counter_style=None,
-                 color_profiles=None, matcher=None, page_rules=None, layers=None,
-                 layer=None):
+    def __init__(self, guess=None, filename=None, url=None, file_obj=None, string=None,
+                 encoding=None, base_url=None, url_fetcher=default_url_fetcher,
+                 _check_mime_type=False, media_type='print', font_config=None,
+                 counter_style=None, color_profiles=None, matcher=None, page_rules=None,
+                 layers=None, layer=None):
         PROGRESS_LOGGER.info(
             'Step 2 - Fetching and parsing CSS - %s',
             filename or url or getattr(file_obj, 'name', 'CSS string'))
         result = _select_source(
-            guess, filename, url, file_obj, string,
-            base_url=base_url, url_fetcher=url_fetcher,
-            check_css_mime_type=_check_mime_type)
-        with result as (source, base_url, protocol_encoding):
-            if hasattr(source, 'read'):
-                source = source.read()
-            if isinstance(source, str):
-                # unicode, no encoding
-                stylesheet = tinycss2.parse_stylesheet(source)
+            guess, filename, url, file_obj, string, base_url=base_url,
+            url_fetcher=url_fetcher, check_css_mime_type=_check_mime_type)
+        with result as (file_obj, base_url, protocol_encoding, mime_type):
+            css = file_obj.read()
+            if isinstance(css, str):
+                stylesheet = tinycss2.parse_stylesheet(css)
             else:
-                stylesheet, encoding = tinycss2.parse_stylesheet_bytes(
-                    source, environment_encoding=encoding,
+                stylesheet, _ = tinycss2.parse_stylesheet_bytes(
+                    css, environment_encoding=encoding,
                     protocol_encoding=protocol_encoding)
         self.base_url = base_url
         self.matcher = matcher or cssselect2.Matcher()
@@ -373,10 +367,14 @@ class Attachment:
 
 
 @contextlib.contextmanager
-def _select_source(guess=None, filename=None, url=None, file_obj=None,
-                   string=None, base_url=None, url_fetcher=default_url_fetcher,
+def _select_source(guess=None, filename=None, url=None, file_obj=None, string=None,
+                   base_url=None, url_fetcher=default_url_fetcher,
                    check_css_mime_type=False):
-    """If only one input is given, return it with normalized ``base_url``."""
+    """If only one input is given, return it.
+
+    Yield a file object, the base url, the protocol encoding and the protocol mime-type.
+
+    """
     if base_url is not None:
         base_url = ensure_url(base_url)
 
@@ -387,38 +385,38 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
         source = ', '.join(selected_params) or 'nothing'
         raise TypeError(f'Expected exactly one source, got {source}')
     elif guess is not None:
+        kwargs = {
+            'base_url': base_url,
+            'url_fetcher': url_fetcher,
+            'check_css_mime_type': check_css_mime_type,
+        }
         if hasattr(guess, 'read'):
-            type_ = 'file_obj'
+            kwargs['file_obj'] = guess
         elif isinstance(guess, Path):
-            type_ = 'filename'
+            kwargs['filename'] = guess
         elif url_is_absolute(guess):
-            type_ = 'url'
+            kwargs['url'] = guess
         else:
-            type_ = 'filename'
-        result = _select_source(
-            base_url=base_url, url_fetcher=url_fetcher,
-            check_css_mime_type=check_css_mime_type,
-            **{type_: guess})
+            kwargs['filename'] = guess
+        result = _select_source(**kwargs)
         with result as result:
             yield result
     elif filename is not None:
         if base_url is None:
             base_url = path2url(filename)
         with open(filename, 'rb') as file_obj:
-            yield file_obj, base_url, None
+            yield file_obj, base_url, None, None
     elif url is not None:
-        with fetch(url_fetcher, url) as result:
-            if check_css_mime_type and result.mime_type != 'text/css':
+        with fetch(url_fetcher, url) as resource:
+            if check_css_mime_type and resource.mime_type != 'text/css':
+                mime_type, url = resource.mime_type, resource.url
                 LOGGER.error(
-                    'Unsupported stylesheet type %s for %s',
-                    result.mime_type, result.redirected_url)
-                yield '', base_url, None
+                    f'Unsupported stylesheet type {mime_type} for {url}')
+                yield StringIO(''), base_url, None, None
             else:
-                proto_encoding = result.encoding
                 if base_url is None:
-                    base_url = result.redirected_url
-                yield result.string_or_file, base_url, proto_encoding
-
+                    base_url = resource.url
+                yield resource.file_obj, base_url, resource.encoding, resource.mime_type
     elif file_obj is not None:
         if base_url is None:
             # filesystem file-like objects have a 'name' attribute.
@@ -426,10 +424,12 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None,
             # Some streams have a .name like '<stdin>', not a filename.
             if name and not name.startswith('<'):
                 base_url = ensure_url(name)
-        yield file_obj, base_url, None
+        yield file_obj, base_url, None, None
     else:
-        assert string is not None
-        yield string, base_url, None
+        if isinstance(string, str):
+            yield StringIO(string), base_url, None, None
+        else:
+            yield BytesIO(string), base_url, None, None
 
 
 # Work around circular imports.

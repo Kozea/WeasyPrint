@@ -14,7 +14,6 @@ on other functions in this module.
 
 import math
 from collections import namedtuple
-from io import BytesIO
 from itertools import groupby
 from logging import DEBUG, WARNING
 from math import inf
@@ -295,11 +294,10 @@ def find_stylesheets(wrapper_element, device_media_type, url_fetcher, base_url,
             if href is not None:
                 try:
                     yield CSS(
-                        url=href, url_fetcher=url_fetcher,
-                        _check_mime_type=True, media_type=device_media_type,
+                        url=href, url_fetcher=url_fetcher, media_type=device_media_type,
                         font_config=font_config, counter_style=counter_style,
                         color_profiles=color_profiles, page_rules=page_rules,
-                        layers=layers)
+                        layers=layers, _check_mime_type=True)
                 except URLFetchingError as exception:
                     LOGGER.error('Failed to load stylesheet at %s: %s', href, exception)
                     LOGGER.debug('Error while loading stylesheet:', exc_info=exception)
@@ -1645,13 +1643,9 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fet
                     rule.source_column)
                 continue
 
-            with fetch(url_fetcher, descriptors['src'][1]) as result:
-                if 'string' in result:
-                    file_object = BytesIO(result['string'])
-                else:
-                    file_object = result['file_obj']
+            with fetch(url_fetcher, descriptors['src'][1]) as resource:
                 try:
-                    color_profile = ColorProfile(file_object, descriptors)
+                    color_profile = ColorProfile(resource.file_obj, descriptors)
                 except BaseException:
                     LOGGER.warning(
                         'Invalid profile file for profile named %r, the whole '

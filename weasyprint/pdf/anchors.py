@@ -330,18 +330,12 @@ def write_pdf_attachment(pdf, attachment, compress):
     """Write an attachment to the PDF stream."""
     # Attachments from document links like <link> or <a> can only be URLs.
     # They're passed in as tuples
-    url = None
-    uncompressed_length = 0
-    stream = b''
+    url = mime_type = None
     try:
-        with attachment.source as (source, url, _):
-            if isinstance(source, str):
-                source = source.encode()
-            if isinstance(source, bytes):
-                source = io.BytesIO(source)
-            for data in iter(lambda: source.read(4096), b''):
-                uncompressed_length += len(data)
-                stream += data
+        with attachment.source as (file_obj, url, _, mime_type):
+            stream = file_obj.read()
+            if isinstance(stream, str):
+                stream = stream.encode()
     except URLFetchingError as exception:
         LOGGER.error('Failed to load attachment: %s', exception)
         LOGGER.debug('Error while loading attachment:', exc_info=exception)
@@ -356,9 +350,10 @@ def write_pdf_attachment(pdf, attachment, compress):
         filename = basename(unquote(urlsplit(url).path))
     else:
         filename = 'attachment.bin'
-    mime_type = mimetypes.guess_type(filename, strict=False)[0]
-    if not mime_type:
-        mime_type = 'application/octet-stream'
+    mime_type = (
+        mime_type or
+        mimetypes.guess_type(filename, strict=False)[0] or
+        'application/octet-stream')
 
     creation = pydyf.String(attachment.created.strftime('D:%Y%m%d%H%M%SZ'))
     mod = pydyf.String(attachment.modified.strftime('D:%Y%m%d%H%M%SZ'))
@@ -367,7 +362,7 @@ def write_pdf_attachment(pdf, attachment, compress):
         'Subtype': f'/{mime_type.replace("/", "#2f")}',
         'Params': pydyf.Dictionary({
             'CheckSum': f'<{attachment.md5}>',
-            'Size': uncompressed_length,
+            'Size': len(stream),
             'CreationDate': creation,
             'ModDate': mod,
         })
