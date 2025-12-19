@@ -69,6 +69,8 @@ Python API
 
 .. module:: weasyprint.urls
 .. autoclass:: URLFetcher
+    :members:
+    :member-order: bysource
 .. autoclass:: URLFetcherResource
 .. autoclass:: FatalURLFetchingError
 

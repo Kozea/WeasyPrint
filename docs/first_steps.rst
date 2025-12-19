@@ -482,7 +482,8 @@ WeasyPrint goes through a *URL fetcher* to fetch external resources such as
 images or CSS stylesheets. The default fetcher can natively open file and
 HTTP URLs, but the HTTP client does not support advanced features like cookies
 or authentication. This can be worked-around by passing a custom
-``url_fetcher`` to the :class:`HTML` or :class:`CSS` classes.
+:class:`url_fetcher <urls.URLFetcher>` to the :class:`HTML` or :class:`CSS`
+classes.
 
 Custom fetchers can choose to handle some URLs and defer others
 to the default fetcher:
@@ -507,7 +508,7 @@ Flask-WeasyPrint_ for Flask_ and Django-Weasyprint_ for Django_ both make
 use of a custom URL fetcher to integrate WeasyPrint and use the filesystem
 instead of a network call for static and media files.
 
-A custom fetcher should be returning a :class:`URLFetcherResource`.
+A custom fetcher should be returning a :class:`urls.URLFetcherResource`.
 
 If a ``file_obj`` is given, the resource will be closed automatically by
 the function internally used by WeasyPrint to retrieve data.

@@ -215,8 +215,8 @@ class URLFetcher:
     """Fetcher of external resources such as images or stylesheets.
 
     Another class inheriting from this class, with a ``fetch`` method that has a
-    compatible signature, can be given as the ``url_fetcher`` argument to :class:`HTML`
-    or :class:`CSS`. (See :ref:`URL Fetchers`.)
+    compatible signature, can be given as the ``url_fetcher`` argument to
+    :class:`weasyprint.HTML` or :class:`weasyprint.CSS`. (See :ref:`URL Fetchers`.)
 
     """
 
@@ -235,9 +235,10 @@ class URLFetcher:
         """Fetch a given URL.
 
         :raises: An exception indicating failure, e.g. :obj:`ValueError` on
-            syntactically invalid URL.
-        :returns: A :obj:`URLFetcherResource` instance, or a :obj:`dict` that can
-            be splatted into the constructor.
+            syntactically invalid URL. All exceptions are catched internally
+            by WeasyPrint, except when they inherit from
+            :obj:`FatalURLFetchingError`.
+        :returns: A :obj:`URLFetcherResource` instance.
 
         """
 

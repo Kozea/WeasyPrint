@@ -197,8 +197,8 @@ class Document:
 
     Typically obtained from :meth:`HTML.render() <weasyprint.HTML.render>`, but
     can also be instantiated directly with a list of :class:`pages <Page>`, a
-    set of :class:`metadata <DocumentMetadata>`, a :func:`url_fetcher
-    <weasyprint.urls.URLFetcher>` function, and a :class:`font_config
+    set of :class:`metadata <DocumentMetadata>`, a :class:`url_fetcher
+    <weasyprint.urls.URLFetcher>`, and a :class:`font_config
     <weasyprint.text.fonts.FontConfiguration>`.
 
     """
@@ -269,7 +269,7 @@ class Document:
         #: Contains information that does not belong to a specific page
         #: but to the whole document.
         self.metadata = metadata
-        #: A :class:`urls.URLFetcher` object (see :ref:`URL Fetchers`.)
+        #: A :class:`weasyprint.urls.URLFetcher` object (see :ref:`URL Fetchers`.)
         self.url_fetcher = url_fetcher
         #: A :obj:`dict` of fonts used by the document. Keys are hashes used to
         #: identify fonts, values are ``Font`` objects.
