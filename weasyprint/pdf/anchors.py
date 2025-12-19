@@ -1,7 +1,6 @@
 """Insert anchors, links, bookmarks and inputs in PDFs."""
 
 import collections
-import io
 import mimetypes
 from hashlib import md5
 from os.path import basename

@@ -196,8 +196,8 @@ def default_url_fetcher(url, timeout=10, ssl_context=None, http_headers=None,
 
     """
     warnings.warn(
-        "default_url=fetcher is deprecated and will be removed "
-        "in WeasyPrint 69.0. Please use URLFetcher instead.",
+        "default_url_fetcher is deprecated and will be removed in WeasyPrint 69.0, "
+        "please use URLFetcher instead.",
         category=DeprecationWarning)
     fetcher = URLFetcher(timeout, ssl_context, http_headers, allowed_protocols)
     return fetcher.fetch(url)
@@ -272,7 +272,7 @@ class URLFetcher:
         response = urlopen(
             Request(url, headers=http_headers), timeout=self.timeout,
             context=self.ssl_context)
-        response_args = {
+        resource_args = {
             'url': response.url,
             'mime_type': response.headers.get_content_type(),
             'encoding': response.headers.get_param('charset'),
@@ -283,26 +283,26 @@ class URLFetcher:
         # Decompress response.
         content_encoding = response.headers.get('Content-Encoding')
         if content_encoding == 'gzip':
-            result = URLFetcherResource(
-                file_obj=StreamingGzipFile(fileobj=response), **response_args)
+            resource_args['file_obj'] = StreamingGzipFile(fileobj=response)
         elif content_encoding == 'deflate':
             data = response.read()
             try:
-                result = URLFetcherResource(
-                    string=zlib.decompress(data), **response_args)
+                resource_args['string'] = zlib.decompress(data)
             except zlib.error:
-                # Try without zlib header or checksum
-                result = URLFetcherResource(
-                    string=zlib.decompress(data, -15), **response_args)
+                # Try without zlib header or checksum.
+                resource_args['string'] = zlib.decompress(data, -15)
         else:
-            result = URLFetcherResource(file_obj=response, **response_args)
+            resource_args['file_obj'] = response
 
-        return result
+        return URLFetcherResource(**resource_args)
+
+    def __call__(self, url):
+        return self.fetch(url)
 
 
 class URLFetcherResource:
     """The result of a URL fetcher invocation."""
-    def __init__(self, string=None, file_obj=None, url=None, mime_type=None,
+    def __init__(self, url, string=None, file_obj=None, mime_type=None,
                  encoding=None, filename=None, path=None, **kwargs):
         """Constructs a new instance from a string or file-like object.
 
@@ -355,6 +355,10 @@ def fetch(url_fetcher, url):
         raise URLFetchingError(f'{type(exception).__name__}: {exception}')
 
     if isinstance(resource, dict):
+        warnings.warn(
+            "Returning dicts in URL fetchers is deprecated and will be removed "
+            "in WeasyPrint 69.0, please return URLFetcherResource instead.",
+            category=DeprecationWarning)
         if 'url' not in resource:
             resource['url'] = resource.get('redirected_url', url)
         resource = URLFetcherResource(**resource)

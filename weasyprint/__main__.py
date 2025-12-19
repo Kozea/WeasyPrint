@@ -4,14 +4,13 @@ import argparse
 import logging
 import platform
 import sys
-from functools import partial
 
 import pydyf
 
 from . import DEFAULT_OPTIONS, HTML, LOGGER, __version__
 from .pdf import VARIANTS
 from .text.ffi import pango
-from .urls import default_url_fetcher
+from .urls import URLFetcher
 
 
 class PrintInfo(argparse.Action):
@@ -171,13 +170,13 @@ def main(argv=None, stdout=None, stdin=None, HTML=HTML):  # noqa: N803
     else:
         output = args.output
 
-    url_fetcher = default_url_fetcher
+    fetcher_args = {}
     if args.timeout is not None:
-        url_fetcher = partial(default_url_fetcher, timeout=args.timeout)
+        fetcher_args['timeout'] = args.timeout
     if args.allowed_protocols is not None:
-        protocols = {
+        fetcher_args['allowed_protocols'] = {
             protocol.strip().lower() for protocol in args.allowed_protocols.split(',')}
-        url_fetcher = partial(url_fetcher, allowed_protocols=protocols)
+    url_fetcher = URLFetcher(**fetcher_args)
 
     options = {
         key: value for key, value in vars(args).items() if key in DEFAULT_OPTIONS}

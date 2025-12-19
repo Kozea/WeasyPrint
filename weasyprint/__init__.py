@@ -94,7 +94,7 @@ __all__ = [
 
 # Import after setting the version, as the version is used in other modules
 from .urls import (  # noqa: I001, E402
-    fetch, default_url_fetcher, path2url, ensure_url, url_is_absolute)
+    URLFetcher, fetch, default_url_fetcher, path2url, ensure_url, url_is_absolute)
 from .logger import LOGGER, PROGRESS_LOGGER  # noqa: E402
 # Some imports are at the end of the file (after the CSS class)
 # to work around circular imports.
@@ -151,9 +151,7 @@ class HTML:
         :term:`file objects <file object>`.
     :type url_fetcher: :term:`callable`
     :param url_fetcher:
-        A function or other callable with the same signature as
-        :func:`default_url_fetcher` called to fetch external resources such as
-        stylesheets and images. (See :ref:`URL Fetchers`.)
+        An instance of :class:`urls.URLFetcher`. (See :ref:`URL Fetchers`.)
     :param str media_type:
         The media type to use for ``@media``. Defaults to ``'print'``.
         **Note:** In some cases like ``HTML(string=foo)`` relative URLs will be
@@ -162,13 +160,15 @@ class HTML:
     """
     def __init__(self, guess=None, filename=None, url=None, file_obj=None,
                  string=None, encoding=None, base_url=None,
-                 url_fetcher=default_url_fetcher, media_type='print'):
+                 url_fetcher=None, media_type='print'):
         PROGRESS_LOGGER.info(
             'Step 1 - Fetching and parsing HTML - %s',
             guess or filename or url or
             getattr(file_obj, 'name', 'HTML string'))
         if isinstance(base_url, Path):
             base_url = str(base_url)
+        if url_fetcher is None:
+            url_fetcher = URLFetcher()
         result = _select_source(
             guess, filename, url, file_obj, string, base_url, url_fetcher)
         with result as (file_obj, base_url, protocol_encoding, _):
@@ -285,13 +285,15 @@ class CSS:
 
     """
     def __init__(self, guess=None, filename=None, url=None, file_obj=None, string=None,
-                 encoding=None, base_url=None, url_fetcher=default_url_fetcher,
-                 _check_mime_type=False, media_type='print', font_config=None,
-                 counter_style=None, color_profiles=None, matcher=None, page_rules=None,
-                 layers=None, layer=None):
+                 encoding=None, base_url=None, url_fetcher=None, _check_mime_type=False,
+                 media_type='print', font_config=None, counter_style=None,
+                 color_profiles=None, matcher=None, page_rules=None, layers=None,
+                 layer=None):
         PROGRESS_LOGGER.info(
             'Step 2 - Fetching and parsing CSS - %s',
             filename or url or getattr(file_obj, 'name', 'CSS string'))
+        if url_fetcher is None:
+            url_fetcher = URLFetcher()
         result = _select_source(
             guess, filename, url, file_obj, string, base_url=base_url,
             url_fetcher=url_fetcher, check_css_mime_type=_check_mime_type)
@@ -341,9 +343,11 @@ class Attachment:
 
     """
     def __init__(self, guess=None, filename=None, url=None, file_obj=None,
-                 string=None, base_url=None, url_fetcher=default_url_fetcher,
-                 name=None, description=None, created=None, modified=None,
+                 string=None, base_url=None, url_fetcher=None, name=None,
+                 description=None, created=None, modified=None,
                  relationship='Unspecified'):
+        if url_fetcher is None:
+            url_fetcher = URLFetcher()
         self.source = _select_source(
             guess, filename, url, file_obj, string, base_url=base_url,
             url_fetcher=url_fetcher)
@@ -368,8 +372,7 @@ class Attachment:
 
 @contextlib.contextmanager
 def _select_source(guess=None, filename=None, url=None, file_obj=None, string=None,
-                   base_url=None, url_fetcher=default_url_fetcher,
-                   check_css_mime_type=False):
+                   base_url=None, url_fetcher=None, check_css_mime_type=False):
     """If only one input is given, return it.
 
     Yield a file object, the base url, the protocol encoding and the protocol mime-type.
@@ -377,6 +380,8 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None, string=No
     """
     if base_url is not None:
         base_url = ensure_url(base_url)
+    if url_fetcher is None:
+        url_fetcher = URLFetcher()
 
     selected_params = [
         param for param in (guess, filename, url, file_obj, string) if

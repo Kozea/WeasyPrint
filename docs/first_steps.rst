@@ -482,22 +482,23 @@ WeasyPrint goes through a *URL fetcher* to fetch external resources such as
 images or CSS stylesheets. The default fetcher can natively open file and
 HTTP URLs, but the HTTP client does not support advanced features like cookies
 or authentication. This can be worked-around by passing a custom
-``url_fetcher`` callable to the :class:`HTML` or :class:`CSS` classes.
-It must have the same signature as :func:`default_url_fetcher`.
+``url_fetcher`` to the :class:`HTML` or :class:`CSS` classes.
 
 Custom fetchers can choose to handle some URLs and defer others
 to the default fetcher:
 
 .. code-block:: python
 
-    from weasyprint import default_url_fetcher, HTML
+    from weasyprint import HTML
+    from weasyprint.urls import URLFetcher, URLFetcherResource
 
-    def my_fetcher(url):
-        if url.startswith('graph:'):
-            graph_data = map(float, url[6:].split(','))
-            string = generate_graph(graph_data)
-            return {'string': string, 'mime_type': 'image/png'}
-        return default_url_fetcher(url)
+    class MyFetcher(URLFetcher):
+        def fetch(self, url):
+            if url.startswith('graph:'):
+                graph_data = [float(value) for value in url[6:].split(',')]
+                string = generate_graph(graph_data)
+                return URLFetcherResource(url, string=string, mime_type='image/png')
+            return super().fetch(url)
 
     source = '<img src="graph:42,10.3,87">'
     HTML(string=source, url_fetcher=my_fetcher).write_pdf('out.pdf')
@@ -506,19 +507,7 @@ Flask-WeasyPrint_ for Flask_ and Django-Weasyprint_ for Django_ both make
 use of a custom URL fetcher to integrate WeasyPrint and use the filesystem
 instead of a network call for static and media files.
 
-A custom fetcher should be returning a :obj:`dict` with
-
-* One of ``string`` (a :obj:`bytestring <bytes>`) or ``file_obj`` (a
-  :term:`file object`).
-* Optionally: ``mime_type``, a MIME type extracted e.g. from a *Content-Type*
-  header. If not provided, the type is guessed from the file extension in the
-  URL.
-* Optionally: ``encoding``, a character encoding extracted e.g. from a
-  *charset* parameter in a *Content-Type* header
-* Optionally: ``redirected_url``, the actual URL of the resource if there were
-  e.g. HTTP redirects.
-* Optionally: ``filename``, the filename of the resource. Usually derived from
-  the *filename* parameter in a *Content-Disposition* header
+A custom fetcher should be returning a :class:`URLFetcherResource`.
 
 If a ``file_obj`` is given, the resource will be closed automatically by
 the function internally used by WeasyPrint to retrieve data.

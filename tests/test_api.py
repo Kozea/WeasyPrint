@@ -20,7 +20,7 @@ from PIL import Image
 from weasyprint import CSS, HTML, __main__, default_url_fetcher
 from weasyprint.pdf.anchors import resolve_links
 from weasyprint.pdf.metadata import generate_rdf_metadata
-from weasyprint.urls import path2url, URLFetcherResource
+from weasyprint.urls import path2url
 
 from .draw import parse_pixels
 from .testing_utils import FakeHTML, assert_no_logs, capture_logs, resource_path
@@ -1132,8 +1132,9 @@ def test_links_12():
 uses_relative.append('weasyprint-custom')
 
 
+@pytest.mark.filterwarnings('ignore')
 @assert_no_logs
-def test_url_fetcher(assert_pixels_equal):
+def test_deprecated_url_fetcher(assert_pixels_equal):
     path = resource_path('pattern.png')
     pattern_png = path.read_bytes()
 
