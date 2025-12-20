@@ -20,10 +20,12 @@ from PIL import Image
 from weasyprint import CSS, HTML, __main__, default_url_fetcher
 from weasyprint.pdf.anchors import resolve_links
 from weasyprint.pdf.metadata import generate_rdf_metadata
-from weasyprint.urls import path2url
 
 from .draw import parse_pixels
 from .testing_utils import FakeHTML, assert_no_logs, capture_logs, resource_path
+
+from weasyprint.urls import (  # isort:skip
+    FatalURLFetchingError, URLFetcher, URLFetcherResource, path2url)
 
 try:
     # Available in Python 3.11+
@@ -1175,7 +1177,6 @@ def test_deprecated_url_fetcher(assert_pixels_equal):
     test('<style>@import "weasyprint-custom:foo/bar.css";</style><body>')
     test('<style>@import url(weasyprint-custom:foo/bar.css);</style><body>')
     test('<style>@import url("weasyprint-custom:foo/bar.css");</style><body>')
-    test('<link rel=stylesheet href="weasyprint-custom:foo/bar.css"><body>')
 
     with capture_logs() as logs:
         test('<body><img src="custom:foo/bar">', blank=True)
@@ -1196,6 +1197,94 @@ def test_deprecated_url_fetcher(assert_pixels_equal):
     FakeHTML(
         string='<link rel=stylesheet href="weasyprint-custom:é_%e9.css"><body',
         url_fetcher=fetcher_2).render()
+
+
+class Fetcher(URLFetcher):
+    def fetch(self, url):
+        if url == 'weasyprint-custom:foo/%C3%A9_%e9_pattern':
+            pattern_png = resource_path('pattern.png').read_bytes()
+            return URLFetcherResource(url, string=pattern_png, mime_type='image/png')
+        elif url == 'weasyprint-custom:foo/bar.css':
+            return URLFetcherResource(
+                url, string='body { background: url(é_%e9_pattern)',
+                mime_type='text/css')
+        elif url == 'weasyprint-custom:foo/bar.no':
+            return URLFetcherResource(
+                url, string='body { background: red }', mime_type='text/no')
+        elif url.startswith('bad:'):
+            raise ValueError('Bad protocol')
+        elif url.startswith('fatal:'):
+            raise FatalURLFetchingError('Fatal error')
+        else:
+            return super().fetch(url)
+
+
+@pytest.mark.parametrize('html', [
+    '<body><img src="pattern.png">',
+    f'<body><img src="{resource_path("pattern.png").as_uri()}">',
+    f'<body><img src="{resource_path("pattern.png").as_uri()}?ignored">',
+    '<body><img src="weasyprint-custom:foo/é_%e9_pattern">',
+    '<body style="background: url(weasyprint-custom:foo/é_%e9_pattern)">',
+    '<body><li style="list-style: inside url(weasyprint-custom:foo/é_%e9_pattern)">',
+    '<link rel=stylesheet href="weasyprint-custom:foo/bar.css"><body>',
+    '<style>@import "weasyprint-custom:foo/bar.css";</style><body>',
+    '<style>@import url(weasyprint-custom:foo/bar.css);</style><body>',
+    '<style>@import url("weasyprint-custom:foo/bar.css");</style><body>',
+])
+@assert_no_logs
+def test_url_fetcher(html, assert_pixels_equal):
+    base_url = str(resource_path('dummy.html'))
+    css = CSS(string='@page{size:8px;margin:2px} body{font-size:0}', base_url=base_url)
+    html = FakeHTML(string=html, url_fetcher=Fetcher(), base_url=base_url)
+    check_png_pattern(assert_pixels_equal, html.write_png(stylesheets=[css]))
+
+
+@assert_no_logs
+def test_url_fetcher_default(assert_pixels_equal):
+    html = '<body><img src="pattern.png">'
+    base_url = str(resource_path('dummy.html'))
+    css = CSS(string='@page{size:8px;margin:2px} body{font-size:0}', base_url=base_url)
+    html = FakeHTML(string=html, url_fetcher=URLFetcher(), base_url=base_url)
+    check_png_pattern(assert_pixels_equal, html.write_png(stylesheets=[css]))
+
+
+@assert_no_logs
+def test_url_fetcher_bad_image(assert_pixels_equal):
+    string = '<body><img src="custom:foo/bar">'
+    css = CSS(string='@page { size: 8px; margin: 2px } body { font-size: 0 }')
+    with capture_logs() as logs:
+        html = FakeHTML(string=string, url_fetcher=Fetcher())
+        png = html.write_png(stylesheets=[css])
+    assert len(logs) == 1
+    assert logs[0].startswith("ERROR: Failed to load image at 'custom:foo/bar'")
+    check_png_pattern(assert_pixels_equal, png, blank=True)
+
+
+@assert_no_logs
+def test_url_fetcher_bad_stylesheet(assert_pixels_equal):
+    string = (
+        '<link rel=stylesheet href="weasyprint-custom:foo/bar.css">'
+        '<link rel=stylesheet href="weasyprint-custom:foo/bar.no"><body>')
+    with capture_logs() as logs:
+        FakeHTML(string=string, url_fetcher=Fetcher()).write_png()
+    assert len(logs) == 1
+    assert logs[0].startswith('ERROR: Unsupported stylesheet type text/no')
+
+
+@assert_no_logs
+def test_url_fetcher_non_fatal_error(assert_pixels_equal):
+    string = ('<link rel=stylesheet href="bad:foo/bar.no"><body>')
+    with capture_logs() as logs:
+        FakeHTML(string=string, url_fetcher=Fetcher()).write_png()
+    assert len(logs) == 1
+    assert 'Bad protocol' in logs[0]
+
+
+@assert_no_logs
+def test_url_fetcher_fatal_error(assert_pixels_equal):
+    string = ('<link rel=stylesheet href="fatal:foo/bar.no"><body>')
+    with pytest.raises(FatalURLFetchingError, match='Fatal error'):
+        FakeHTML(string=string, url_fetcher=Fetcher()).write_png()
 
 
 def assert_meta(html, **meta):
