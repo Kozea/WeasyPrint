@@ -482,11 +482,20 @@ WeasyPrint goes through a *URL fetcher* to fetch external resources such as
 images or CSS stylesheets. The default fetcher can natively open file and
 HTTP URLs, but the HTTP client does not support advanced features like cookies
 or authentication. This can be worked-around by passing a custom
-:class:`url_fetcher <urls.URLFetcher>` to the :class:`HTML` or :class:`CSS`
+:class:`URLFetcher <urls.URLFetcher>` to the :class:`HTML` or :class:`CSS`
 classes.
 
-Custom fetchers can choose to handle some URLs and defer others
-to the default fetcher:
+Some features, such as the timeout delay, can be configured as parameters:
+
+.. code-block:: python
+
+    from weasyprint import HTML
+    from weasyprint.urls import URLFetcher
+
+    HTML(string='<html>', url_fetcher=URLFetcher(timeout=20)).write_pdf('out.pdf')
+
+Custom fetchers can also choose to handle some URLs and defer others to the default
+fetcher:
 
 .. code-block:: python
 
@@ -502,7 +511,31 @@ to the default fetcher:
             return super().fetch(url)
 
     source = '<img src="graph:42,10.3,87">'
-    HTML(string=source, url_fetcher=my_fetcher).write_pdf('out.pdf')
+    HTML(string=source, url_fetcher=MyFetcher()).write_pdf('out.pdf')
+
+By default, all errors raised by the fetcher are caught by WeasyPrint and emit a
+warning. If you want some errors to be fatal and stop the rendering, you can raise a
+:class:`urls.FatalURLFetchingError`.
+
+.. code-block:: python
+
+    from weasyprint import HTML
+    from weasyprint.urls import URLFetcher, FatalURLFetchingError
+
+    class MyFetcher(URLFetcher):
+        def fetch(self, url):
+            try:
+                return super().fetch(url)
+            except Exception as exception:
+                if url.endswith('.css'):
+                    # Stop the rendering if a problem happens with a stylesheet.
+                    message = f'Problem with stylesheet at {url}'
+                    raise FatalURLFetchingError(message) from exception
+                else:
+                    # Raise original error that will be caught by WeasyPrint.
+                    raise exception
+
+    HTML(string='<html>', url_fetcher=MyFetcher()).write_pdf('out.pdf')
 
 Flask-WeasyPrint_ for Flask_ and Django-Weasyprint_ for Django_ both make
 use of a custom URL fetcher to integrate WeasyPrint and use the filesystem
