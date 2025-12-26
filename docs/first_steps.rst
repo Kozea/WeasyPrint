@@ -202,10 +202,10 @@ You can then launch a Windows command prompt by clicking on the Start menu,
 typing ``cmd`` and clicking the "Command Prompt" icon. Install WeasyPrint in a
 `virtual environment`_ using `pip`_::
 
-  python3 -m venv venv
+  python -m venv venv
   venv\Scripts\activate.bat
-  python3 -m pip install weasyprint
-  python3 -m weasyprint --info
+  python -m pip install weasyprint
+  python -m weasyprint --info
 
 .. _executable: https://github.com/Kozea/WeasyPrint/releases
 .. _#2081: https://github.com/Kozea/WeasyPrint/issues/2081
