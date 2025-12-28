@@ -655,7 +655,7 @@ class LinearGradient(Gradient):
                 positions.append(positions[-1] + step)
                 last += step * stop_length
 
-            # Add colors before last step
+            # Add colors before first step
             while first > 0:
                 step = next(previous_steps)
                 colors.insert(0, next(previous_colors))
@@ -764,14 +764,15 @@ class RadialGradient(Gradient):
             center_x, center_y / scale_y, last)
 
         if self.repeating:
-            points, positions, colors = self._repeat(
-                width, height, scale_y, points, positions, colors)
+            points, positions, colors, hints = self._repeat(
+                width, height, scale_y, points, positions, colors, hints)
 
         return scale_y, 'radial', points, positions, colors, hints
 
-    def _repeat(self, width, height, scale_y, points, positions, colors):
+    def _repeat(self, width, height, scale_y, points, positions, colors, hints):
         # Keep original lists and values, they’re useful
         original_colors = colors.copy()
+        original_hints = hints.copy()
         original_positions = positions.copy()
         gradient_length = points[5] - points[2]
 
@@ -787,13 +788,14 @@ class RadialGradient(Gradient):
             # Repeat colors and extrapolate positions
             repeat = 1 + repeat_after
             colors *= repeat
+            hints = ([*hints, 1] * repeat)[:-1]
             positions = [
                 i + position for i in range(repeat) for position in positions]
             points = (*points[:5], points[5] + gradient_length * repeat_after)
 
         if points[2] == 0:
             # Inner circle has 0 radius, no need to repeat inside, return
-            return points, positions, colors
+            return points, positions, colors, hints
 
         # Find how many times we have to repeat the colors inside
         repeat_before = points[2] / gradient_length
@@ -806,6 +808,7 @@ class RadialGradient(Gradient):
         if full_repeat:
             # Repeat colors and extrapolate positions
             colors += original_colors * full_repeat
+            hints += [1, *original_hints] * full_repeat
             positions = [
                 i - full_repeat + position for i in range(full_repeat)
                 for position in original_positions] + positions
@@ -814,7 +817,7 @@ class RadialGradient(Gradient):
         partial_repeat = repeat_before - full_repeat
         if partial_repeat == 0:
             # No partial repeat, return
-            return points, positions, colors
+            return points, positions, colors, hints
 
         # Iterate through positions in reverse order, from the outer
         # circle to the original inner circle, to find positions from
@@ -828,11 +831,12 @@ class RadialGradient(Gradient):
                 # The center is a color of the gradient, truncate original
                 # colors and positions and prepend them
                 colors = original_colors[-i:] + colors
+                hints = [*original_hints[-i:], 1, *hints]
                 new_positions = [
                     position - full_repeat - 1
                     for position in original_positions[-i:]]
                 positions = new_positions + positions
-                return points, positions, colors
+                return points, positions, colors, hints
             if position < ratio:
                 # The center is between two colors of the gradient,
                 # define the center color as the average of these two
@@ -842,14 +846,14 @@ class RadialGradient(Gradient):
                 next_position = original_positions[-(i - 1)]
                 average_colors = [color, color, next_color, next_color]
                 average_positions = [position, ratio, ratio, next_position]
-                zero_color = gradient_average_color(
-                    average_colors, average_positions)
-                colors = [zero_color, *original_colors[-(i - 1):], *colors]
+                zero_color = gradient_average_color(average_colors, average_positions)
+                colors = [zero_color, *original_colors[-(i-1):], *colors]
+                hints = [1, *original_hints[-(i-1):], 1, *hints]
                 new_positions = [
                     position - 1 - full_repeat for position
                     in original_positions[-(i - 1):]]
                 positions = (ratio - 1 - full_repeat, *new_positions, *positions)
-                return points, positions, colors
+                return points, positions, colors, hints
 
     def _resolve_size(self, width, height, center_x, center_y, style):
         """Resolve circle size of the radial gradient."""
