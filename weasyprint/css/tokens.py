@@ -432,7 +432,10 @@ def get_angle(token):
         token = resolve_math(token) or token
     except (PercentageInMath, FontUnitInMath):
         return
-    if token.type == 'dimension':
+    if token.type == 'number' and token.value == 0:
+        # Legacy syntax: https://drafts.csswg.org/css-values-4/#angles.
+        return 0
+    elif token.type == 'dimension':
         factor = ANGLE_TO_RADIANS.get(token.unit.lower())
         if factor is not None:
             return token.value * factor
