@@ -124,7 +124,7 @@ dir, menu, ul { list-style-type: disc }
 :is(dir, menu, ol, ul) ul { list-style-type: circle }
 :is(dir, menu, ol, ul) :is(dir, menu, ol, ul) ul { list-style-type: square }
 
-::marker { font-variant-numeric: tabular-nums }
+::marker { font-variant-numeric: tabular-nums; white-space: pre; text-transform: none }
 
 [dir=ltr i] { direction: ltr }
 [dir=rtl i] { direction: rtl }
