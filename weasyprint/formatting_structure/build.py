@@ -598,7 +598,6 @@ def compute_string_set(element, box, string_name, content_list,
     """Parse the content-list value of ``string_name`` for ``string-set``."""
     def parse_again(mixin_pagebased_counters=None):
         """Closure to parse the string-set string value all again."""
-
         # Neither alters the mixed-in nor the cached counter values, no
         # need to deepcopy here
         if mixin_pagebased_counters is None:
@@ -606,7 +605,6 @@ def compute_string_set(element, box, string_name, content_list,
         else:
             local_counters = mixin_pagebased_counters.copy()
         local_counters.update(box.cached_counter_values)
-
         compute_string_set(
             element, box, string_name, content_list, local_counters,
             target_collector, counter_style)
@@ -630,7 +628,7 @@ def compute_string_set(element, box, string_name, content_list,
 def compute_bookmark_label(element, box, content_list, counter_values,
                            target_collector, counter_style):
     """Parses the content-list value for ``bookmark-label``."""
-    def parse_again(mixin_pagebased_counters={}):
+    def parse_again(mixin_pagebased_counters=None):
         """Closure to parse the bookmark-label all again."""
         # Neither alters the mixed-in nor the cached counter values, no
         # need to deepcopy here
@@ -638,7 +636,6 @@ def compute_bookmark_label(element, box, content_list, counter_values,
             local_counters = {}
         else:
             local_counters = mixin_pagebased_counters.copy()
-        local_counters = mixin_pagebased_counters.copy()
         local_counters.update(box.cached_counter_values)
         compute_bookmark_label(
             element, box, content_list, local_counters, target_collector,
@@ -662,7 +659,7 @@ def set_content_lists(element, box, style, counter_values, target_collector,
     """
     box.string_set = []
     if style['string_set'] != 'none':
-        for i, (string_name, string_values) in enumerate(style['string_set']):
+        for string_name, string_values in style['string_set']:
             compute_string_set(
                 element, box, string_name, string_values, counter_values,
                 target_collector, counter_style)
