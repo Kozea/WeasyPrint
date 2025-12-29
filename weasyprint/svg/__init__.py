@@ -839,7 +839,7 @@ class SVG:
 class Pattern(SVG):
     """SVG node applied as a pattern."""
     def __init__(self, tree, svg):
-        super().__init__(tree._etree_node, svg.url, svg.font_config)
+        super().__init__(tree._etree_node, svg.url, svg.font_config, svg.url_fetcher)
         self.svg = svg
         self.tree = tree
 
