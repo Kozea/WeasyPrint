@@ -488,6 +488,59 @@ def test_text_length_adjust_glyphs_only(assert_pixels):
 
 
 @assert_no_logs
+def test_text_font_face(assert_pixels):
+    assert_pixels('''
+        BBBBBB__BBBBBB______
+        BBBBBB__BBBBBB______
+    ''', '''
+      <style>
+        @page { size: 20px 2px }
+        svg { display: block }
+      </style>
+      <svg width="20px" height="2px" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <style>
+            @font-face {
+              font-family: "SVGFont";
+              src: url(weasyprint.otf);
+            }
+          </style>
+        </defs>
+        <text x="0" y="1.5" font-family="SVGFont" font-size="2" fill="blue">
+          ABC DEF
+        </text>
+      </svg>
+    ''')
+
+
+@assert_no_logs
+def test_text_font_face_css(assert_pixels):
+    assert_pixels('''
+        BBBBBB__BBBBBB______
+        BBBBBB__BBBBBB______
+    ''', '''
+      <style>
+        @page { size: 20px 2px }
+        svg { display: block }
+      </style>
+      <svg width="20px" height="2px" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <style>
+            @font-face {
+              font-family: "SVGFont";
+              src: url(weasyprint.otf);
+            }
+            text { font-family: "SVGFont" }
+          </style>
+        </defs>
+        <text x="0" y="1.5" font-size="2" fill="blue">
+          ABC DEF
+        </text>
+      </svg>
+    ''')
+
+
+@assert_no_logs
 def test_text_length_adjust_spacing_and_glyphs(assert_pixels):
     assert_pixels('''
         __RR_RR_RR__________
