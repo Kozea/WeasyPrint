@@ -84,6 +84,8 @@ def build_formatting_structure(element_tree, style_for, get_image_from_uri,
             target_collector, counter_style, footnotes)
 
     target_collector.check_pending_targets()
+    process_whitespace(box)
+    process_text_transform(box)
 
     box.is_for_root_element = True
     # If this is changed, maybe update weasy.layout.page.make_margin_boxes()
@@ -224,10 +226,8 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
             counter_values.pop(name)
 
     box.children = children
-    process_whitespace(box)
     set_content_lists(
         element, box, style, counter_values, target_collector, counter_style)
-    process_text_transform(box)
 
     if marker_boxes and len(box.children) == 1:
         # See https://www.w3.org/TR/css-lists-3/#list-style-position-outside
@@ -423,9 +423,7 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
                     boxes.InlineReplacedBox.anonymous_from(parent_box, image))
         elif type_ == 'content()':
             added_text = extract_text(value, parent_box)
-            # Simulate the step of white space processing
-            # (normally done during the layout).
-            add_text(added_text.strip())
+            add_text(added_text)
         elif type_ == 'string()':
             if not in_page_context:
                 # string() is currently only valid in @page context.
@@ -491,9 +489,7 @@ def compute_content_list(content_list, parent_box, counter_values, css_token,
                 # TODO: 'before'- and 'after'- content referring missing
                 # counters are not properly set.
                 text = extract_text(text_style, target_box)
-                # Simulate the step of white space processing
-                # (normally done during the layout)
-                add_text(text.strip())
+                add_text(text)
             else:
                 break
         elif type_ == 'quote' and None not in (quote_depth, quote_style):
@@ -1110,15 +1106,14 @@ def process_whitespace(box, following_collapsible_space=False):
 
     else:
         for child in box.children:
+            child_collapsible_space = process_whitespace(
+                child, following_collapsible_space)
             if isinstance(child, (boxes.TextBox, boxes.InlineBox)):
-                child_collapsible_space = process_whitespace(
-                    child, following_collapsible_space)
-                if box.is_in_normal_flow() and child.is_in_normal_flow():
-                    following_collapsible_space = child_collapsible_space
+                following_collapsible_space = child_collapsible_space
             elif child.is_in_normal_flow():
                 following_collapsible_space = False
 
-    return following_collapsible_space and not box.is_running()
+    return following_collapsible_space
 
 
 def process_text_transform(box):
@@ -1136,8 +1131,7 @@ def process_text_transform(box):
 
     elif not box.is_running():
         for child in box.children:
-            if isinstance(child, (boxes.TextBox, boxes.InlineBox)):
-                process_text_transform(child)
+            process_text_transform(child)
 
 
 def capitalize(text):
@@ -1445,15 +1439,20 @@ def set_viewport_overflow(root_box):
 
 
 def box_text(box):
+    # Stripping may not be the "right" way, but it seems to be what users usually want
+    # in this case. The specification asks for the "text content", probably as defined
+    # in DOM.
+    box = box.deepcopy()
+    process_whitespace(box)
     if isinstance(box, boxes.TextBox):
-        return box.text
+        return box.text.strip()
     elif isinstance(box, boxes.ParentBox):
         return ''.join(
             child.text for child in box.descendants()
             if not child.element_tag.endswith('::before') and
             not child.element_tag.endswith('::after') and
             not child.element_tag.endswith('::marker') and
-            isinstance(child, boxes.TextBox))
+            isinstance(child, boxes.TextBox)).strip()
     return ''
 
 
