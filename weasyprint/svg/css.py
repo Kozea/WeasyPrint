@@ -26,7 +26,7 @@ def find_stylesheets_rules(tree, stylesheet_rules, url, font_config, url_fetcher
                 yield from find_stylesheets_rules(
                     tree, stylesheet, url, font_config, url_fetcher)
             elif rule.lower_at_keyword == 'font-face':
-                if font_config and url_fetcher:
+                if font_config is not None and url_fetcher is not None:
                     content = tinycss2.parse_blocks_contents(rule.content)
                     rule_descriptors = dict(
                         preprocess_descriptors('font-face', url, content))
@@ -38,8 +38,7 @@ def find_stylesheets_rules(tree, stylesheet_rules, url, font_config, url_fetcher
                                 rule.source_line, rule.source_column)
                             break
                     else:
-                        if font_config is not None and url_fetcher is not None:
-                            font_config.add_font_face(rule_descriptors, url_fetcher)
+                        font_config.add_font_face(rule_descriptors, url_fetcher)
             # TODO: support media types
             # if rule.lower_at_keyword == 'media':
         elif rule.type == 'qualified-rule':

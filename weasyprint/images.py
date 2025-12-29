@@ -284,7 +284,7 @@ class SVGImage:
         try:
             self._svg.draw(
                 stream, concrete_width, concrete_height, self._base_url,
-                self._url_fetcher, self._context)
+                self._context)
         except BaseException as exception:
             LOGGER.error('Failed to render SVG image %s', self._base_url)
             LOGGER.debug('Error while rendering SVG image:', exc_info=exception)
