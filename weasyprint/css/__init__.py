@@ -12,7 +12,9 @@ on other functions in this module.
 
 """
 
+import math
 from collections import namedtuple
+from io import BytesIO
 from itertools import groupby
 from logging import DEBUG, WARNING
 from math import inf
@@ -21,18 +23,24 @@ import cssselect2
 import tinycss2
 import tinycss2.ast
 import tinycss2.nth
+from PIL.ImageCms import ImageCmsProfile
 
 from .. import CSS
 from ..logger import LOGGER, PROGRESS_LOGGER
 from ..text.fonts import FontConfiguration
-from ..urls import URLFetchingError, get_url_attribute, url_join
+from ..urls import URLFetchingError, fetch, get_url_attribute, url_join
 from . import counters, media_queries
 from .computed_values import COMPUTER_FUNCTIONS
-from .functions import Function, check_var
+from .functions import Function, check_math, check_var
 from .properties import INHERITED, INITIAL_NOT_COMPUTED, INITIAL_VALUES, ZERO_PIXELS
-from .tokens import InvalidValues, Pending, get_url, remove_whitespace, split_on_comma
+from .units import ANGLE_UNITS, FONT_UNITS, LENGTH_UNITS, to_pixels, to_radians
 from .validation import preprocess_declarations
 from .validation.descriptors import preprocess_descriptors
+from .validation.properties import validate_non_shorthand
+
+from .tokens import (  # isort:skip
+    E, MINUS_INFINITY, NAN, PI, PLUS_INFINITY, FontUnitInMath, InvalidValues, Pending,
+    PercentageInMath, get_angle, get_url, remove_whitespace, split_on_comma, tokenize)
 
 # Reject anything not in here:
 PSEUDO_ELEMENTS = (
@@ -249,7 +257,7 @@ def text_decoration(key, value, parent_value, cascaded):
 
 
 def find_stylesheets(wrapper_element, device_media_type, url_fetcher, base_url,
-                     font_config, counter_style, page_rules, layers):
+                     font_config, counter_style, color_profiles, page_rules, layers):
     """Yield the stylesheets in ``element_tree``.
 
     The output order is the same as the source order.
@@ -277,7 +285,7 @@ def find_stylesheets(wrapper_element, device_media_type, url_fetcher, base_url,
                 string=content, base_url=base_url,
                 url_fetcher=url_fetcher, media_type=device_media_type,
                 font_config=font_config, counter_style=counter_style,
-                page_rules=page_rules, layers=layers)
+                page_rules=page_rules, color_profiles=color_profiles, layers=layers)
             yield css
         elif element.tag == 'link' and element.get('href'):
             if not element_has_link_type(element, 'stylesheet') or \
@@ -290,7 +298,8 @@ def find_stylesheets(wrapper_element, device_media_type, url_fetcher, base_url,
                         url=href, url_fetcher=url_fetcher,
                         _check_mime_type=True, media_type=device_media_type,
                         font_config=font_config, counter_style=counter_style,
-                        page_rules=page_rules, layers=layers)
+                        color_profiles=color_profiles, page_rules=page_rules,
+                        layers=layers)
                 except URLFetchingError as exception:
                     LOGGER.error('Failed to load stylesheet at %s: %s', href, exception)
                     LOGGER.debug('Error while loading stylesheet:', exc_info=exception)
@@ -585,17 +594,22 @@ def resolve_var(computed, token, parent_style, known_variables=None):
     if known_variables is None:
         known_variables = set()
 
-    if token.lower_name != 'var':
-        arguments = []
-        for i, argument in enumerate(token.arguments):
-            if argument.type == 'function':
+    if token.type == '() block' or token.lower_name != 'var':
+        items = []
+        token_items = token.arguments if token.type == 'function' else token.content
+        for i, argument in enumerate(token_items):
+            if argument.type in ('function', '() block'):
                 resolved = resolve_var(
                     computed, argument, parent_style, known_variables.copy())
-                arguments.extend((argument,) if resolved is None else resolved)
+                items.extend((argument,) if resolved is None else resolved)
             else:
-                arguments.append(argument)
-        token = tinycss2.ast.FunctionBlock(
-            token.source_line, token.source_column, token.name, arguments)
+                items.append(argument)
+        if token.type == '() block':
+            token = tinycss2.ast.ParenthesesBlock(
+                token.source_line, token.source_column, items)
+        else:
+            token = tinycss2.ast.FunctionBlock(
+                token.source_line, token.source_column, token.name, items)
         return resolve_var(computed, token, parent_style, known_variables) or (token,)
 
     function = Function(token)
@@ -615,12 +629,412 @@ def resolve_var(computed, token, parent_style, known_variables=None):
     return computed_value
 
 
+def _resolve_calc_sum(computed, tokens, property_name, refer_to):
+    groups = [[]]
+    for token in tokens:
+        if token.type == 'literal' and token.value in '+-':
+            groups.append(token.value)
+            groups.append([])
+        elif token.type == '() block':
+            content = remove_whitespace(token.content)
+            result = _resolve_calc_sum(computed, content, property_name, refer_to)
+            if result is None:
+                return
+            groups[-1].append(result)
+        else:
+            groups[-1].append(token)
+
+    value, sign, unit = 0, '+', None
+    exception = None
+    while groups:
+        if sign is None:
+            sign = groups.pop(0)
+            assert sign in '+-'
+        else:
+            group = groups.pop(0)
+            assert group
+            assert isinstance(group, list)
+            try:
+                product = _resolve_calc_product(
+                    computed, group, property_name, refer_to)
+            except FontUnitInMath as font_exception:
+                # FontUnitInMath raised, assume that we got pixels and continue to find
+                # if we have to raise PercentageInMath first.
+                if unit == '%':
+                    raise PercentageInMath
+                exception = font_exception
+                unit = 'px'
+                sign = None
+                continue
+            else:
+                if product is None:
+                    return
+            if product.type == 'dimension':
+                if unit is None:
+                    unit = product.unit.lower()
+                elif unit == '%':
+                    raise PercentageInMath
+                elif unit != product.unit.lower():
+                    return
+            elif product.type == 'percentage':
+                if refer_to is not None:
+                    product.value = product.value / 100 * refer_to
+                    unit = 'px'
+                else:
+                    if unit is None or unit == '%':
+                        unit = '%'
+                    else:
+                        raise PercentageInMath
+            if sign == '+':
+                value += product.value
+            else:
+                value -= product.value
+            sign = None
+
+    # Raise FontUnitInMath, only if we didn’t raise PercentageInMath before.
+    if exception:
+        raise exception
+
+    return tokenize(value, unit=unit)
+
+
+def _resolve_calc_product(computed, tokens, property_name, refer_to):
+    groups = [[]]
+    for token in tokens:
+        if token.type == 'literal' and token.value in '*/':
+            groups.append(token.value)
+            groups.append([])
+        elif token.type == 'number':
+            groups[-1].append(token)
+        elif token.type == 'dimension' and token.unit.lower() in LENGTH_UNITS:
+            if computed is None and token.unit.lower() in FONT_UNITS:
+                raise FontUnitInMath
+            pixels = to_pixels(token, computed, property_name)
+            groups[-1].append(tokenize(pixels, unit='px'))
+        elif token.type == 'dimension' and token.unit.lower() in ANGLE_UNITS:
+            groups[-1].append(tokenize(to_radians(token), unit='rad'))
+        elif token.type == 'percentage':
+            groups[-1].append(tokenize(token.value, unit='%'))
+        elif token.type == 'ident':
+            groups[-1].append(token)
+        else:
+            return
+
+    value, sign, unit = 1, '*', None
+    while groups:
+        if sign is None:
+            sign = groups.pop(0)
+            assert sign in '*/'
+        else:
+            group = groups.pop(0)
+            assert isinstance(group, list)
+            calc = _resolve_calc_value(computed, group)
+            if calc is None:
+                return
+            if calc.type == 'dimension':
+                if unit is None or unit == '%':
+                    unit = calc.unit.lower()
+                else:
+                    return
+            elif calc.type == 'percentage':
+                if unit is None:
+                    unit = '%'
+            if sign == '*':
+                value *= calc.value
+            else:
+                value /= calc.value
+            sign = None
+
+    return tokenize(value, unit=unit)
+
+
+def _resolve_calc_value(computed, tokens):
+    if len(tokens) == 1:
+        token, = tokens
+        if token.type in ('number', 'dimension', 'percentage'):
+            return token
+        elif token.type == 'ident':
+            if token.lower_value == 'e':
+                return E
+            elif token.lower_value == 'pi':
+                return PI
+            elif token.lower_value == 'infinity':
+                return PLUS_INFINITY
+            elif token.lower_value == '-infinity':
+                return MINUS_INFINITY
+            elif token.lower_value == 'nan':
+                return NAN
+
+
+def resolve_math(token, computed=None, property_name=None, refer_to=None):
+    """Return token with resolved math functions.
+
+    Raise, in order of priority, ``PercentageInMath`` if percentages are mixed with
+    other values with no ``refer_to`` size, or ``FontUnitInMath`` if no ``computed``
+    style is available to get font size.
+
+    ``PercentageInMath`` has to be raised before FontUnitInMath so that it can be used
+    to discard validation of properties that don’t accept percentages.
+
+    """
+    if not check_math(token):
+        return
+
+    args = []
+    original_token = token
+    function = Function(token)
+    if function.name is None:
+        return
+    for part in function.split_comma(single_tokens=False):
+        args.append([])
+        for arg in part:
+            if check_math(arg):
+                arg = resolve_math(arg, computed, property_name, refer_to)
+                if arg is None:
+                    return
+            args[-1].append(arg)
+
+    if function.name == 'calc':
+        result = _resolve_calc_sum(computed, args[0], property_name, refer_to)
+        if result is None:
+            return original_token
+        else:
+            return tokenize(result)
+
+    elif function.name in ('min', 'max'):
+        target_value = target_token = unit = None
+        for tokens in args:
+            token = _resolve_calc_sum(computed, tokens, property_name, refer_to)
+            if token is None:
+                return
+            if token.type == 'percentage':
+                if refer_to is None:
+                    if unit in ('px', ''):
+                        raise PercentageInMath
+                    unit = '%'
+                    value = token
+                else:
+                    unit = 'px'
+                    token = value = tokenize(token.value / 100 * refer_to, unit='px')
+            elif token.type == 'number':
+                if unit == '%':
+                    raise PercentageInMath
+                elif unit == 'px':
+                    return
+                unit = ''
+                value = tokenize(token.value, unit='px')
+            else:
+                if unit == '%':
+                    raise PercentageInMath
+                elif unit == '':
+                    return
+                unit = 'px'
+                value = tokenize(to_pixels(token, computed, property_name), unit='px')
+            update_condition = (
+                target_value is None or
+                (function.name == 'min' and value.value < target_value.value) or
+                (function.name == 'max' and value.value > target_value.value))
+            if update_condition:
+                target_value, target_token = value, token
+        return tokenize(target_token)
+
+    elif function.name == 'round':
+        strategy, multiple = 'nearest', 1
+        if len(args) == 1:
+            number_token = _resolve_calc_sum(computed, args[0], property_name, refer_to)
+        elif len(args) == 2:
+            strategies = ('nearest', 'up', 'down', 'to-zero')
+            if len(args[0]) == 1 and args[0][0].value in strategies:
+                strategy = args[0][0].value
+                number_token = _resolve_calc_sum(
+                    computed, args[1], property_name, refer_to)
+                if number_token is None:
+                    return
+            else:
+                number_token = _resolve_calc_sum(
+                    computed, args[0], property_name, refer_to)
+                multiple_token = _resolve_calc_sum(
+                    computed, args[1], property_name, refer_to)
+                if None in (number_token, multiple_token):
+                    return
+                if number_token.type != multiple_token.type:
+                    return
+                multiple = multiple_token.value
+        elif len(args) == 3:
+            strategy = args[0][0].value
+            number_token = _resolve_calc_sum(computed, args[1], property_name, refer_to)
+            multiple_token = _resolve_calc_sum(
+                computed, args[2], property_name, refer_to)
+            if None in (number_token, multiple_token):
+                return
+            if number_token.type != multiple_token.type:
+                return
+            multiple = multiple_token.value
+        if strategy == 'nearest':
+            # TODO: always round x.5 to +inf, see
+            # https://drafts.csswg.org/css-values-4/#combine-integers.
+            function = round
+        elif strategy == 'up':
+            function = math.ceil
+        elif strategy == 'down':
+            function = math.floor
+        elif strategy == 'to-zero':
+            function = math.floor if number_token.value > 0 else math.ceil
+        else:
+            return
+        return tokenize(number_token, lambda x: function(x / multiple) * multiple)
+
+    elif function.name in ('mod', 'rem'):
+        number_token = _resolve_calc_sum(computed, args[0], property_name, refer_to)
+        parameter_token = _resolve_calc_sum(computed, args[1], property_name, refer_to)
+        if None in (number_token, parameter_token):
+            return
+        if number_token.type != parameter_token.type:
+            return
+        number = number_token.value
+        parameter = parameter_token.value
+        value = number % parameter
+        if function.name == 'rem' and number * parameter < 0:
+            value += abs(parameter)
+        return tokenize(number_token, lambda x: value)
+
+    elif function.name in ('sin', 'cos', 'tan'):
+        number_token = _resolve_calc_sum(computed, args[0], property_name, refer_to)
+        if number_token is None:
+            return
+        if number_token.type == 'number':
+            angle = number_token.value
+        elif (angle := get_angle(number_token)) is None:
+            return
+        value = getattr(math, function.name)(angle)
+        return tokenize(value)
+
+    elif function.name in ('asin', 'acos', 'atan'):
+        number_token = _resolve_calc_sum(computed, args[0], property_name, refer_to)
+        if number_token is None or number_token.type != 'number':
+            return
+        try:
+            value = getattr(math, function.name)(number_token.value)
+        except ValueError:
+            return
+        return tokenize(value, unit='rad')
+
+    elif function.name == 'atan2':
+        y_token, x_token = [
+            _resolve_calc_sum(computed, arg, property_name, refer_to) for arg in args]
+        if None in (y_token, x_token):
+            return
+        if {y_token.type, x_token.type} != {'number'}:
+            return
+        y, x = y_token.value, x_token.value
+        return tokenize(math.atan2(y, x), unit='rad')
+
+    elif function.name == 'clamp':
+        pixels_list = []
+        unit = None
+        for tokens in args:
+            token = _resolve_calc_sum(computed, tokens, property_name, refer_to)
+            if token is None:
+                return
+            if token.type == 'percentage':
+                if refer_to is None:
+                    if unit == 'px':
+                        raise PercentageInMath
+                    unit = '%'
+                    value = token
+                else:
+                    unit = 'px'
+                    token = tokenize(token.value / 100 * refer_to, unit='px')
+            else:
+                if unit == '%':
+                    raise PercentageInMath
+                unit = 'px'
+                pixels = to_pixels(token, computed, property_name)
+                value = tokenize(pixels, unit='px')
+            pixels_list.append(value)
+        min_token, token, max_token = pixels_list
+        if token.value < min_token.value:
+            token = min_token
+        if token.value > max_token.value:
+            token = max_token
+        return tokenize(token)
+
+    elif function.name == 'pow':
+        number_token, power_token = [
+            _resolve_calc_sum(computed, arg, property_name, refer_to) for arg in args]
+        if None in (number_token, power_token):
+            return
+        if {number_token.type, power_token.type} != {'number'}:
+            return
+        return tokenize(number_token, lambda x: x ** power_token.value)
+
+    elif function.name == 'sqrt':
+        number_token = _resolve_calc_sum(computed, args[0], property_name, refer_to)
+        if number_token is None or number_token.type != 'number':
+            return
+        return tokenize(number_token, lambda x: x ** 0.5)
+
+    elif function.name == 'hypot':
+        resolved = [
+            _resolve_calc_sum(computed, tokens, property_name, refer_to)
+            for tokens in args]
+        if None in resolved:
+            return
+        value = math.hypot(*[token.value for token in resolved])
+        return tokenize(resolved[0], lambda x: value)
+
+    elif function.name == 'log':
+        number_token = _resolve_calc_sum(computed, args[0], property_name, refer_to)
+        if number_token is None or number_token.type != 'number':
+            return
+        if len(args) == 2:
+            base_token = _resolve_calc_sum(computed, args[1], property_name, refer_to)
+            if base_token is None or base_token.type != 'number':
+                return
+            base = base_token.value
+        else:
+            base = math.e
+        return tokenize(number_token, lambda x: math.log(x, base))
+
+    elif function.name == 'exp':
+        number_token = _resolve_calc_sum(computed, args[0], property_name, refer_to)
+        if number_token is None or number_token.type != 'number':
+            return
+        return tokenize(number_token, math.exp)
+
+    elif function.name == 'abs':
+        number_token = _resolve_calc_sum(computed, args[0], property_name, refer_to)
+        if number_token is None:
+            return
+        return tokenize(number_token, abs)
+
+    elif function.name == 'sign':
+        number_token = _resolve_calc_sum(computed, args[0], property_name, refer_to)
+        if number_token is None:
+            return
+        return tokenize(
+            number_token.value, lambda x: 0 if x == 0 else 1 if x > 0 else -1)
+
+    arguments = []
+    for i, argument in enumerate(token.arguments):
+        if argument.type == 'function':
+            result = resolve_math(argument, computed, property_name, refer_to)
+            if result is None:
+                return
+            arguments.append(result)
+        else:
+            arguments.append(argument)
+    token = tinycss2.ast.FunctionBlock(
+        token.source_line, token.source_column, token.name, arguments)
+    return resolve_math(token, computed, property_name, refer_to) or token
+
+
 class InitialStyle(dict):
     """Dummy computed style used to store initial values."""
     def __init__(self, font_config):
         self.parent_style = None
         self.specified = self
-        self.cache = {'ratio_ch': {}, 'ratio_ex': {}}
+        self.cache = {}
         self.font_config = font_config
 
     def __missing__(self, key):
@@ -642,6 +1056,7 @@ class AnonymousStyle(dict):
             'outline_width': 0,
         })
         self.parent_style = parent_style
+        self.is_root_element = False
         self.specified = self
         self.cache = parent_style.cache
         self.font_config = parent_style.font_config
@@ -661,7 +1076,13 @@ class AnonymousStyle(dict):
             value = self[key] = text_decoration(
                 key, INITIAL_VALUES[key], self.parent_style[key], cascaded=False)
         else:
-            value = self[key] = INITIAL_VALUES[key]
+            value = INITIAL_VALUES[key]
+            if key in INITIAL_NOT_COMPUTED:
+                # Value not computed yet: compute.
+                value = self[key] = COMPUTER_FUNCTIONS[key](self, key, value)
+            else:
+                # The value is the same as when computed.
+                self[key] = value
         return value
 
 
@@ -678,10 +1099,7 @@ class ComputedStyle(dict):
         self.root_style = root_style
         self.base_url = base_url
         self.font_config = font_config
-        if parent_style:
-            self.cache = parent_style.cache
-        else:
-            self.cache = {'ratio_ch': {}, 'ratio_ex': {}}
+        self.cache = parent_style.cache if parent_style else {}
 
     def copy(self):
         copy = ComputedStyle(
@@ -752,9 +1170,10 @@ class ComputedStyle(dict):
         if key[:16] == 'text_decoration_' and parent_style is not None:
             # Text decorations are not inherited but propagated. See
             # https://www.w3.org/TR/css-text-decor-3/#line-decoration.
-            value = text_decoration(key, value, parent_style[key], key in self.cascaded)
-            if key in self:
-                del self[key]
+            if key in COMPUTER_FUNCTIONS:
+                value = COMPUTER_FUNCTIONS[key](self, key, value)
+            self[key] = text_decoration(
+                key, value, parent_style[key], key in self.cascaded)
         elif key == 'page' and value == 'auto':
             # The page property does not inherit. However, if the page value on
             # an element is auto, then its used value is the value specified on
@@ -770,6 +1189,33 @@ class ComputedStyle(dict):
             # https://www.w3.org/TR/CSS21/visuren.html#dis-pos-flo.
             self.specified[key] = value
 
+        if check_math(value):
+            function = value
+            solved_tokens = []
+            try:
+                try:
+                    token = resolve_math(function, self, key)
+                except PercentageInMath:
+                    token = None
+                if token is None:
+                    solved_tokens.append(function)
+                else:
+                    solved_tokens.append(token)
+                original_key = key.replace('_', '-')
+                value = validate_non_shorthand(solved_tokens, original_key)[0][1]
+            except Exception:
+                LOGGER.warning(
+                    'Invalid math function at %d:%d: %s',
+                    function.source_line, function.source_column, function.serialize())
+                if key in INHERITED and parent_style is not None:
+                    # Values in parent_style are already computed.
+                    self[key] = value = parent_style[key]
+                else:
+                    value = INITIAL_VALUES[key]
+                    if key not in INITIAL_NOT_COMPUTED:
+                        # The value is the same as when computed.
+                        self[key] = value
+
         if key in self:
             # Value already computed and saved: return.
             return self[key]
@@ -780,6 +1226,24 @@ class ComputedStyle(dict):
 
         self[key] = value
         return value
+
+
+class ColorProfile:
+    def __init__(self, file_object, descriptors):
+        self.src = descriptors['src'][1]
+        self.renderingintent = descriptors['rendering-intent']
+        self.components = descriptors['components']
+        self._profile = ImageCmsProfile(file_object)
+
+    @property
+    def name(self):
+        return (
+            self._profile.profile.model or
+            self._profile.profile.profile_description)
+
+    @property
+    def content(self):
+        return self._profile.tobytes()
 
 
 def _add_layer(layer, layers):
@@ -802,6 +1266,14 @@ def _add_layer(layer, layers):
             index -= 1
 
 
+def computed_from_cascaded(element, cascaded, parent_style, pseudo_type=None,
+                           root_style=None, base_url=None,
+                           target_collector=None):
+    """Get a dict of computed style mixed from parent and cascaded styles."""
+    if not cascaded and parent_style is not None:
+        return AnonymousStyle(parent_style)
+
+
 def _parse_layer(tokens):
     """Parse tokens representing a layer name."""
     if not tokens:
@@ -819,6 +1291,20 @@ def _parse_layer(tokens):
             return
     if not last_dot:
         return new_layer
+
+
+def parse_color_profile_name(prelude):
+    tokens = list(remove_whitespace(prelude))
+
+    if len(tokens) != 1:
+        return
+
+    token = tokens[0]
+    if token.type != 'ident':
+        return
+
+    if token.value.startswith('--') or token.value == 'device-cmyk':
+        return token.value
 
 
 def parse_page_selectors(rule):
@@ -940,7 +1426,7 @@ def parse_page_selectors(rule):
 
 def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fetcher,
                           matcher, page_rules, layers, font_config, counter_style,
-                          ignore_imports=False, layer=None):
+                          color_profiles, ignore_imports=False, layer=None):
     """Do what can be done early on stylesheet, before being in a document."""
     for rule in stylesheet_rules:
         if getattr(rule, 'content', None) is None:
@@ -1050,8 +1536,8 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fet
                     CSS(
                         url=url, url_fetcher=url_fetcher, media_type=device_media_type,
                         font_config=font_config, counter_style=counter_style,
-                        matcher=matcher, page_rules=page_rules, layers=layers,
-                        layer=new_layer)
+                        color_profiles=color_profiles, matcher=matcher,
+                        page_rules=page_rules, layers=layers, layer=new_layer)
                 except URLFetchingError as exception:
                     LOGGER.error('Failed to load stylesheet at %s : %s', url, exception)
                     LOGGER.debug('Error while loading stylesheet:', exc_info=exception)
@@ -1070,7 +1556,8 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fet
             content_rules = tinycss2.parse_rule_list(rule.content)
             preprocess_stylesheet(
                 device_media_type, base_url, content_rules, url_fetcher, matcher,
-                page_rules, layers, font_config, counter_style, ignore_imports=True)
+                page_rules, layers, font_config, counter_style, color_profiles,
+                ignore_imports=True)
 
         elif rule.type == 'at-rule' and rule.lower_at_keyword == 'page':
             data = parse_page_selectors(rule)
@@ -1120,6 +1607,60 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fet
             else:
                 if font_config is not None:
                     font_config.add_font_face(rule_descriptors, url_fetcher)
+
+        elif rule.type == 'at-rule' and rule.lower_at_keyword == 'color-profile':
+            ignore_imports = True
+
+            if (name := parse_color_profile_name(rule.prelude)) is None:
+                LOGGER.warning(
+                    'Invalid color profile name %r, the whole '
+                    '@color-profile rule was ignored at %d:%d.',
+                    tinycss2.serialize(rule.prelude), rule.source_line,
+                    rule.source_column)
+                continue
+
+            content = tinycss2.parse_blocks_contents(rule.content)
+            rule_descriptors = preprocess_descriptors(
+                'color-profile', base_url, content)
+
+            descriptors = {
+                'src': None,
+                'rendering-intent': 'relative-colorimetric',
+                'components': None,
+            }
+            for descriptor_name, descriptor_value in rule_descriptors:
+                if descriptor_name in descriptors:
+                    descriptors[descriptor_name] = descriptor_value
+                else:
+                    LOGGER.warning(
+                        'Unknown descriptor %r for profile named %r at %d:%d.',
+                        descriptor_name, tinycss2.serialize(rule.prelude),
+                        rule.source_line, rule.source_column)
+
+            if descriptors['src'] is None:
+                LOGGER.warning(
+                    'No source for profile named %r, the whole '
+                    '@color-profile rule was ignored at %d:%d.',
+                    tinycss2.serialize(rule.prelude), rule.source_line,
+                    rule.source_column)
+                continue
+
+            with fetch(url_fetcher, descriptors['src'][1]) as result:
+                if 'string' in result:
+                    file_object = BytesIO(result['string'])
+                else:
+                    file_object = result['file_obj']
+                try:
+                    color_profile = ColorProfile(file_object, descriptors)
+                except BaseException:
+                    LOGGER.warning(
+                        'Invalid profile file for profile named %r, the whole '
+                        '@color-profile rule was ignored at %d:%d.',
+                        tinycss2.serialize(rule.prelude), rule.source_line,
+                        rule.source_column)
+                    continue
+                else:
+                    color_profiles[name] = color_profile
 
         elif rule.type == 'at-rule' and rule.lower_at_keyword == 'counter-style':
             name = counters.parse_counter_style_name(rule.prelude, counter_style)
@@ -1224,8 +1765,8 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fet
             content_rules = tinycss2.parse_rule_list(rule.content)
             preprocess_stylesheet(
                 device_media_type, base_url, content_rules, url_fetcher, matcher,
-                page_rules, layers, font_config, counter_style, ignore_imports=True,
-                layer=new_layer)
+                page_rules, layers, font_config, counter_style, color_profiles,
+                ignore_imports=True, layer=new_layer)
 
         else:
             LOGGER.warning(
@@ -1234,8 +1775,9 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fet
 
 
 def get_all_computed_styles(html, user_stylesheets=None, presentational_hints=False,
-                            font_config=None, counter_style=None, page_rules=None,
-                            layers=None, target_collector=None, forms=False):
+                            font_config=None, counter_style=None, color_profiles=None,
+                            page_rules=None, layers=None, target_collector=None,
+                            forms=False):
     """Compute all the computed styles of all elements in ``html`` document.
 
     Do everything from finding author stylesheets to parsing and applying them.
@@ -1260,7 +1802,8 @@ def get_all_computed_styles(html, user_stylesheets=None, presentational_hints=Fa
             sheets.append((sheet, 'author', (0, 0, 0)))
     for sheet in find_stylesheets(
             html.wrapper_element, html.media_type, html.url_fetcher,
-            html.base_url, font_config, counter_style, page_rules, layers):
+            html.base_url, font_config, counter_style, color_profiles, page_rules,
+            layers):
         sheets.append((sheet, 'author', None))
     for sheet in (user_stylesheets or []):
         sheets.append((sheet, 'user', None))

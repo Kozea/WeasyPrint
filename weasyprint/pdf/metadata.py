@@ -1,5 +1,6 @@
 """PDF metadata stream generation."""
 
+from uuid import uuid4
 from xml.etree.ElementTree import Element, SubElement, register_namespace, tostring
 
 import pydyf
@@ -11,9 +12,12 @@ NS = {
     'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
     'dc': 'http://purl.org/dc/elements/1.1/',
     'xmp': 'http://ns.adobe.com/xap/1.0/',
+    'xmpMM': 'http://ns.adobe.com/xap/1.0/mm/',
     'pdf': 'http://ns.adobe.com/pdf/1.3/',
     'pdfaid': 'http://www.aiim.org/pdfa/ns/id/',
     'pdfuaid': 'http://www.aiim.org/pdfua/ns/id/',
+    'pdfxid': 'http://www.npes.org/pdfx/ns/id/',
+    'pdfx': 'http://ns.adobe.com/pdfx/1.3/',
 }
 for key, value in NS.items():
     register_namespace(key, value)
@@ -35,12 +39,6 @@ def add_metadata(pdf, metadata, variant, version, conformance, compress):
     pdf.catalog['Metadata'] = metadata.reference
 
 
-def description_element(rdf):
-    element = SubElement(rdf, f'{{{NS["rdf"]}}}Description')
-    element.attrib[f'{{{NS["rdf"]}}}about'] = ''
-    return element
-
-
 def generate_rdf_metadata(metadata, variant, version, conformance):
     """Generate RDF metadata as a bytestring.
 
@@ -50,49 +48,85 @@ def generate_rdf_metadata(metadata, variant, version, conformance):
     namespace = f'pdf{variant}id'
     rdf = Element(f'{{{NS["rdf"]}}}RDF')
 
-    element = description_element(rdf)
-    element.attrib[f'{{{NS[namespace]}}}part'] = str(version)
+    if version:
+        element = SubElement(rdf, f'{{{NS["rdf"]}}}Description')
+        element.attrib[f'{{{NS["rdf"]}}}about'] = ''
+        element.attrib[f'{{{NS[namespace]}}}part'] = str(version)
     if conformance:
-        element.attrib[f'{{{NS[namespace]}}}conformance'] = conformance
+        assert version
+        if variant == 'x':
+            for key in (
+                f'{{{NS["pdfxid"]}}}GTS_PDFXVersion',
+                f'{{{NS["pdfx"]}}}GTS_PDFXVersion',
+                f'{{{NS["pdfx"]}}}GTS_PDFXConformance',
+            ):
+                subelement = SubElement(element, key)
+                subelement.text = conformance
+            subelement = SubElement(element, f'{{{NS["pdf"]}}}Trapped')
+            subelement.text = 'False'
+            if version >= 4:
+                # TODO: these values could be useful instead of using random values.
+                assert metadata.modified
+                subelement = SubElement(element, f'{{{NS["xmp"]}}}MetadataDate')
+                subelement.text = metadata.modified
+                subelement = SubElement(element, f'{{{NS["xmpMM"]}}}DocumentID')
+                subelement.text = f'xmp.did:{uuid4()}'
+                subelement = SubElement(element, f'{{{NS["xmpMM"]}}}RenditionClass')
+                subelement.text = 'proof:pdf'
+                subelement = SubElement(element, f'{{{NS["xmpMM"]}}}VersionID')
+                subelement.text = '1'
+        else:
+            element.attrib[f'{{{NS[namespace]}}}conformance'] = conformance
+            if variant == 'a' and version == 4:
+                subelement = SubElement(element, f'{{{NS["pdfaid"]}}}rev')
+                subelement.text = '2020'
 
-    element = description_element(rdf)
+    element = SubElement(rdf, f'{{{NS["rdf"]}}}Description')
+    element.attrib[f'{{{NS["rdf"]}}}about'] = ''
     element.attrib[f'{{{NS["pdf"]}}}Producer'] = f'WeasyPrint {__version__}'
 
     if metadata.title:
-        element = description_element(rdf)
+        element = SubElement(rdf, f'{{{NS["rdf"]}}}Description')
+        element.attrib[f'{{{NS["rdf"]}}}about'] = ''
         element = SubElement(element, f'{{{NS["dc"]}}}title')
         element = SubElement(element, f'{{{NS["rdf"]}}}Alt')
         element = SubElement(element, f'{{{NS["rdf"]}}}li')
         element.attrib['xml:lang'] = 'x-default'
         element.text = metadata.title
     if metadata.authors:
-        element = description_element(rdf)
+        element = SubElement(rdf, f'{{{NS["rdf"]}}}Description')
+        element.attrib[f'{{{NS["rdf"]}}}about'] = ''
         element = SubElement(element, f'{{{NS["dc"]}}}creator')
         element = SubElement(element, f'{{{NS["rdf"]}}}Seq')
         for author in metadata.authors:
             author_element = SubElement(element, f'{{{NS["rdf"]}}}li')
             author_element.text = author
     if metadata.description:
-        element = description_element(rdf)
-        element = SubElement(element, f'{{{NS["dc"]}}}subject')
-        element = SubElement(element, f'{{{NS["rdf"]}}}Bag')
+        element = SubElement(rdf, f'{{{NS["rdf"]}}}Description')
+        element.attrib[f'{{{NS["rdf"]}}}about'] = ''
+        element = SubElement(element, f'{{{NS["dc"]}}}description')
+        element = SubElement(element, f'{{{NS["rdf"]}}}Alt')
         element = SubElement(element, f'{{{NS["rdf"]}}}li')
         element.attrib['xml:lang'] = 'x-default'
         element.text = metadata.description
     if metadata.keywords:
-        element = description_element(rdf)
+        element = SubElement(rdf, f'{{{NS["rdf"]}}}Description')
+        element.attrib[f'{{{NS["rdf"]}}}about'] = ''
         element = SubElement(element, f'{{{NS["pdf"]}}}Keywords')
         element.text = ', '.join(metadata.keywords)
     if metadata.generator:
-        element = description_element(rdf)
+        element = SubElement(rdf, f'{{{NS["rdf"]}}}Description')
+        element.attrib[f'{{{NS["rdf"]}}}about'] = ''
         element = SubElement(element, f'{{{NS["xmp"]}}}CreatorTool')
         element.text = metadata.generator
     if metadata.created:
-        element = description_element(rdf)
+        element = SubElement(rdf, f'{{{NS["rdf"]}}}Description')
+        element.attrib[f'{{{NS["rdf"]}}}about'] = ''
         element = SubElement(element, f'{{{NS["xmp"]}}}CreateDate')
         element.text = metadata.created
     if metadata.modified:
-        element = description_element(rdf)
+        element = SubElement(rdf, f'{{{NS["rdf"]}}}Description')
+        element.attrib[f'{{{NS["rdf"]}}}about'] = ''
         element = SubElement(element, f'{{{NS["xmp"]}}}ModifyDate')
         element.text = metadata.modified
     return tostring(rdf, encoding='utf-8')

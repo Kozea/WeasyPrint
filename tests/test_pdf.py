@@ -536,7 +536,8 @@ def test_embed_images_from_pages():
         string='<img src="not-optimized.jpg">').render().pages
     document = Document(
         (page1, page2), metadata=DocumentMetadata(),
-        font_config=FontConfiguration(), url_fetcher=None).write_pdf()
+        font_config=FontConfiguration(), color_profiles={},
+        url_fetcher=None).write_pdf()
     assert document.count(b'/Filter /DCTDecode') == 2
 
 
@@ -751,3 +752,11 @@ def test_font_descent_ascent():
     ''').write_pdf()
     assert b'/Descent -200' in pdf
     assert b'/Ascent 800' in pdf
+
+
+@assert_no_logs
+def test_pdf_tags_inline_table():
+    # Regression test for #2601.
+    FakeHTML(string='''
+      <html lang="en"><table style="display: inline"><td>abc
+    ''').write_pdf(pdf_tags=True)

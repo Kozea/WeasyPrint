@@ -20,7 +20,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
     from . import block
 
     # TODO: merge this with block_container_layout.
-    context.create_flex_formatting_context()
+    context.create_flex_formatting_context(box)
     resume_at = None
 
     is_start = skip_stack is None
@@ -219,7 +219,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
             flex_basis = 'content'
         else:
             flex_basis = percent.percentage(
-                child.style['flex_basis'], available_main_space)
+                child.style['flex_basis'], child.style, available_main_space)
             if flex_basis == 'auto':
                 if (flex_basis := getattr(child, main)) == 'auto':
                     flex_basis = 'content'
@@ -493,7 +493,9 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
             new_child = child.copy()
             new_child, _, _, adjoining_margins, _, _ = block.block_level_layout_switch(
                 context, new_child, -inf, child_skip_stack, parent_box, page_is_empty,
-                absolute_boxes, fixed_boxes, [], discard, None)
+                absolute_boxes, fixed_boxes, adjoining_margins=[],
+                first_letter_style=None, first_line_style=None, discard=discard,
+                max_lines=None)
             child._baseline = find_in_flow_baseline(new_child) or 0
             if cross == 'height':
                 child.height = new_child.height
@@ -899,7 +901,8 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
                 # TODO: Don't use block_level_layout_switch.
                 new_child, child_resume_at = block.block_level_layout_switch(
                     context, child, bottom_space, child_skip_stack, box, page_is_empty,
-                    absolute_boxes, fixed_boxes, adjoining_margins=[], discard=discard,
+                    absolute_boxes, fixed_boxes, adjoining_margins=[],
+                    first_letter_style=None, first_line_style=None, discard=discard,
                     max_lines=None)[:2]
                 if new_child is None:
                     if resume_at:
@@ -933,6 +936,9 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
         for absolute_box in absolute_boxes:
             absolute_layout(
                 context, absolute_box, box, fixed_boxes, bottom_space, skip_stack=None)
+
+    for child in box.children:
+        block.relative_positioning(child, (box.width, box.height))
 
     # TODO: Use real algorithm, see https://www.w3.org/TR/css-flexbox-1/#flex-baselines.
     if isinstance(box, boxes.InlineFlexBox):

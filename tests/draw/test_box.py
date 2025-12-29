@@ -19,7 +19,7 @@ def test_outlines_and_borders(assert_pixels, assert_different_renderings, margin
     source = '''
       <style>
         @page { size: 140px 110px }
-        body { width: 100px; height: 70px; margin: %s; %s: 10px %s blue }
+        body { width: 100px; height: 70px; margin: %s; %s: 10PX %s blue }
       </style>
       <body>'''
 
@@ -85,7 +85,7 @@ def test_borders_table_collapse_equivalent(assert_same_renderings, styles):
       <style>
         @page { size: 140px 110px }
         table { width: 100px; height: 70px; margin: 10px;
-                border-collapse: collapse; border: 10px %s blue }
+                border-collapse: collapse; border: 10pX %s blue }
       </style>
       <table><td>abc</td>'''
 
@@ -112,7 +112,7 @@ def test_small_borders_2(border_style):
     # Regression test for #146.
     html = '''
       <style>
-        @page { size: 50px 50px }
+        @page { size: 50Px 50px }
         body { height: 0; width: 0; border-width: 1px 0; border-style: %s }
       </style>
       <body>''' % border_style
@@ -177,7 +177,7 @@ def test_margin_boxes(assert_pixels):
         body { background: #f00; height: 100% }
         @page {
           size: 15px;
-          margin: 4px 6px 7px 5px;
+          margin: 4px 6Px 7px 5px;
 
           @top-left-corner {
             margin: 1px;
@@ -229,10 +229,10 @@ def test_draw_border_radius(assert_pixels):
           size: 8px 8px;
         }
         div {
-          background: red;
+          background: Red;
           border-radius: 50% 0 0 0;
           height: 16px;
-          width: 16px;
+          width: 16PX;
         }
       </style>
       <div></div>
@@ -550,7 +550,7 @@ def test_border_image_width(assert_pixels):
           border-image-slice: 25%;
           border-image-width: 2;
           height: 4px;
-          margin: 1px;
+          margin: 1PX;
           width: 6px;
         }
       </style>

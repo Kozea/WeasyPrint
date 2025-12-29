@@ -3,7 +3,7 @@
 import collections
 from math import inf
 
-from tinycss2.color4 import parse_color
+from tinycss2.color5 import parse_color
 
 Dimension = collections.namedtuple('Dimension', ['value', 'unit'])
 
@@ -42,7 +42,7 @@ INITIAL_VALUES = {
     # Backgrounds and Borders 3 (CR): https://www.w3.org/TR/css-backgrounds-3/
     'background_attachment': ('scroll',),
     'background_clip': ('border-box',),
-    'background_color': parse_color('transparent'),
+    'background_color': 'transparent',
     'background_image': (('none', None),),
     'background_origin': ('padding-box',),
     'background_position': (('left', Dimension(0, '%'),
@@ -89,6 +89,8 @@ INITIAL_VALUES = {
     'mask_border_repeat': ('stretch', 'stretch'),
     'mask_border_mode': 'alpha',
 
+    # Color Adjustment 1 (CRD): https://www.w3.org/TR/css-color-adjust-1
+    'color_scheme': 'normal',
 
     # Color 3 (REC): https://www.w3.org/TR/css-color-3/
     'opacity': 1,
@@ -273,6 +275,7 @@ INHERITED = {
     'border_spacing',
     'caption_side',
     'color',
+    'color_scheme',
     'direction',
     'empty_cells',
     'font_family',
@@ -371,4 +374,5 @@ INITIAL_NOT_COMPUTED = {
     'border_left_color',
     'border_bottom_color',
     'border_right_color',
+    'background_color',
 }

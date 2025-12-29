@@ -64,7 +64,7 @@ def draw_text(stream, textbox, offset_x, text_overflow, block_ellipsis):
     stream.end_text()
 
     # Draw emojis.
-    draw_emojis(stream, textbox.style['font_size'], x, y, emojis)
+    draw_emojis(stream, textbox.style, x, y, emojis)
 
     # Draw line through.
     if 'line-through' in text_decoration_values:
@@ -75,12 +75,13 @@ def draw_text(stream, textbox, offset_x, text_overflow, block_ellipsis):
     textbox.pango_layout.deactivate()
 
 
-def draw_emojis(stream, font_size, x, y, emojis):
+def draw_emojis(stream, style, x, y, emojis):
     """Draw list of emojis."""
+    font_size = style['font_size']
     for image, font, a, d, e, f in emojis:
         with stream.stacked():
             stream.transform(a=a, d=d, e=x + e * font_size, f=y + f)
-            image.draw(stream, font_size, font_size, None)
+            image.draw(stream, font_size, font_size, style)
 
 
 def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
@@ -253,7 +254,7 @@ def draw_first_line(stream, textbox, text_overflow, block_ellipsis, matrix):
                         tree.append(defs)
                         ElementTree.SubElement(
                             tree, 'use', attrib={'href': f'#glyph{glyph_id}'})
-                    image = SVGImage(tree, None, None, stream)
+                    image = SVGImage(tree, None, None, None)
                     a = d = logical_width / 1000 / font.upem * font_size
                     emojis.append([image, font, a, d, x_advance, 0])
             elif font.png:

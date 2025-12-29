@@ -16,7 +16,7 @@ def test_column_rule_1(assert_pixels):
               column-rule-width: 1px; column-gap: 3px;
               column-rule-color: red }
         body { margin: 0; font-size: 0 }
-        @page { margin: 0; size: 5px 3px }
+        @page { margin: 0; size: 5px 3Px }
       </style>
       <div>
         <img src=blue.jpg>
@@ -94,7 +94,7 @@ def test_column_rule_normal(assert_pixels):
         img { display: inline-block; width: 1px; height: 1px }
         div { columns: 2; column-gap: normal }
         body { margin: 0; font-size: 3px; line-height: 0 }
-        @page { margin: 0; size: 5px 3px }
+        @page { margin: 0; size: 5PX 3px }
       </style>
       <div>
         <img src=blue.jpg>

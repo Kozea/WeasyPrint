@@ -455,26 +455,26 @@ def test_command_line_render(tmp_path):
 
 
 @pytest.mark.parametrize(('version', 'pdf_version'), [
-    (1, '1.4'),
-    (2, '1.7'),
-    (3, '1.7'),
-    (4, '2.0'),
+    ('1a', '1.4'),
+    ('2b', '1.7'),
+    ('3u', '1.7'),
+    ('4e', '2.0'),
 ])
 def test_pdfa(version, pdf_version):
     stdout = _run(
-        f'--pdf-variant=pdf/a-{version}b --uncompressed-pdf - -', b'test')
+        f'--pdf-variant=pdf/a-{version} --uncompressed-pdf - -', b'test')
     assert f'PDF-{pdf_version}'.encode() in stdout
-    assert f'part="{version}"'.encode() in stdout
+    assert f'part="{version[0]}"'.encode() in stdout
 
 
 @pytest.mark.parametrize(('version', 'pdf_version'), [
-    (1, '1.4'),
-    (2, '1.7'),
-    (3, '1.7'),
-    (4, '2.0'),
+    ('1a', '1.4'),
+    ('2b', '1.7'),
+    ('3u', '1.7'),
+    ('4e', '2.0'),
 ])
 def test_pdfa_compressed(version, pdf_version):
-    stdout = _run(f'--pdf-variant=pdf/a-{version}b - -', b'test')
+    stdout = _run(f'--pdf-variant=pdf/a-{version} - -', b'test')
     assert f'PDF-{pdf_version}'.encode() in stdout
 
 
@@ -574,6 +574,31 @@ def test_to_unicode_rtl():
         '<div style="font-family: weasyprint">اب'.encode())
     assert b'<00cf> <0627>' in stdout
     assert b'<00d0> <0628>' in stdout
+
+
+@assert_no_logs
+@pytest.mark.parametrize('command', [
+    '- -',
+    '--allowed-protocols file - -',
+    '--allowed-protocols file,http - -',
+    '--allowed-protocols file,file - -',
+    '--allowed-protocols Http,File - -',
+])
+def test_allowed_protocols(command):
+    _run(command, f'<img src="{path2url(resource_path("pattern.png"))}">'.encode())
+
+
+@pytest.mark.parametrize('command', [
+    '--allowed-protocols http - -',
+    '--allowed-protocols http,https - -',
+    '--allowed-protocols filetest - -',
+    '--allowed-protocols "" - -',
+])
+def test_disallowed_protocols(command):
+    with capture_logs() as logs:
+        _run(command, f'<img src="{path2url(resource_path("pattern.png"))}">'.encode())
+    assert len(logs) == 1
+    assert 'URI uses disallowed protocol' in logs[0]
 
 
 @pytest.mark.parametrize(('html', 'fields'), [

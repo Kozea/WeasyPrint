@@ -25,47 +25,40 @@ LENGTHS_TO_PIXELS = {
     'q': 96 / 25.4 / 4,
 }
 
-# How many ddpx is one <unit>?
+# How many dppx is one <unit>?
 # https://drafts.csswg.org/css-values/#resolution
 RESOLUTION_TO_DPPX = {
     'dppx': 1,
+    'x': 1,
     'dpi': 1 / LENGTHS_TO_PIXELS['in'],
     'dpcm': 1 / LENGTHS_TO_PIXELS['cm'],
 }
 
 # Sets of units.
 # https://drafts.csswg.org/css-values-4/#lengths
-FONT_UNITS = {'ex', 'em', 'ch', 'rem', 'lh', 'rlh'}
+FONT_UNITS = {'em', 'ex', 'cap', 'ch', 'ic', 'lh'}
+FONT_UNITS |= {f'r{unit}' for unit in FONT_UNITS}
 ABSOLUTE_UNITS = set(LENGTHS_TO_PIXELS)
 LENGTH_UNITS = ABSOLUTE_UNITS | FONT_UNITS
 # https://drafts.csswg.org/css-values-4/#angles
 ANGLE_UNITS = set(ANGLE_TO_RADIANS)
 
 
-def to_pixels(value, style, name, font_size=None):
+def to_pixels(value, style, property_name, font_size=None):
     """Get number of pixels corresponding to a length."""
-    if (unit := value.unit) == 'px':
+    if value.value == 0:
+        return 0
+    elif (unit := value.unit.lower()) == 'px':
         return value.value
     elif unit in LENGTHS_TO_PIXELS:
-        # Convert absolute lengths to pixels
+        # Convert absolute lengths to pixels.
         return value.value * LENGTHS_TO_PIXELS[unit]
     elif unit in FONT_UNITS:
-        assert style is not None
+        assert (style, font_size) != (None, None)
         if font_size is None:
             font_size = style['font_size']
-        if unit == 'ex':
-            # TODO: use context to use @font-face fonts
-            ratio = character_ratio(style, 'x')
-            return value.value * font_size * ratio
-        elif unit == 'ch':
-            ratio = character_ratio(style, '0')
-            return value.value * font_size * ratio
-        elif unit == 'em':
-            return value.value * font_size
-        elif unit == 'rem':
-            return value.value * style.root_style['font_size']
-        elif unit == 'lh':
-            if name in ('font_size', 'line_height'):
+        if unit == 'lh':
+            if property_name in ('font_size', 'line_height'):
                 if style.parent_style is None:
                     parent_style = style.root_style
                 else:
@@ -78,3 +71,21 @@ def to_pixels(value, style, name, font_size=None):
             parent_style = style.root_style
             line_height, _ = strut(parent_style)
             return value.value * line_height
+        elif unit == 'em':
+            return value.value * font_size
+        elif unit == 'rem':
+            return value.value * style.root_style['font_size']
+        elif unit.startswith('r'):
+            ratio = character_ratio(style.root_style, unit[1:])
+            return value.value * style.root_style['font_size'] * ratio
+        else:
+            ratio = character_ratio(style, unit)
+            return value.value * font_size * ratio
+
+
+def to_radians(value):
+    """Get number of radians corresponding to an angle."""
+    if (unit := value.unit.lower()) == 'rad':
+        return value.value
+    elif unit in ANGLE_TO_RADIANS:
+        return value.value * ANGLE_TO_RADIANS[unit]

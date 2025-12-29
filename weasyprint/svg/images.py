@@ -58,8 +58,15 @@ def image(svg, node, font_size):
         intrinsic_width = intrinsic_ratio * intrinsic_height
     elif intrinsic_height is None:
         intrinsic_height = intrinsic_width / intrinsic_ratio
-    width = width or intrinsic_width
-    height = height or intrinsic_height
+
+    # Calculate final dimensions while preserving aspect ratio
+    if width and not height:
+        height = width / intrinsic_ratio
+    elif height and not width:
+        width = height * intrinsic_ratio
+    else:
+        width = width or intrinsic_width
+        height = height or intrinsic_height
 
     scale_x, scale_y, translate_x, translate_y = preserve_ratio(
         svg, node, font_size, width, height,
@@ -69,8 +76,9 @@ def image(svg, node, font_size):
     svg.stream.end()
     svg.stream.push_state()
     svg.stream.transform(a=scale_x, d=scale_y, e=translate_x, f=translate_y)
+    # TODO: pass real style instead of dict.
     image.draw(
         svg.stream, intrinsic_width, intrinsic_height,
-        image_rendering=node.attrib.get('image-rendering', 'auto'),
+        {'image_rendering': node.attrib.get('image-rendering', 'auto')},
     )
     svg.stream.pop_state()

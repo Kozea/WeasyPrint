@@ -11,7 +11,7 @@ from xml.etree import ElementTree
 
 import pydyf
 from PIL import Image, ImageFile, ImageOps
-from tinycss2.color4 import parse_color
+from tinycss2.color5 import parse_color
 
 from . import DEFAULT_OPTIONS
 from .layout.percent import percentage
@@ -93,10 +93,11 @@ class RasterImage:
     def get_intrinsic_size(self, resolution, font_size):
         return self.width / resolution, self.height / resolution, self.ratio
 
-    def draw(self, stream, concrete_width, concrete_height, image_rendering):
+    def draw(self, stream, concrete_width, concrete_height, style):
         if self.width <= 0 or self.height <= 0:
             return
 
+        image_rendering = style['image_rendering']
         interpolate = image_rendering == 'auto'
         ratio = 1
         if self._dpi:
@@ -279,7 +280,7 @@ class SVGImage:
             ratio = 1
         return width, height, ratio
 
-    def draw(self, stream, concrete_width, concrete_height, image_rendering):
+    def draw(self, stream, concrete_width, concrete_height, _style):
         try:
             self._svg.draw(
                 stream, concrete_width, concrete_height, self._base_url,
@@ -367,7 +368,7 @@ def rotate_pillow_image(pillow_image, orientation):
     return pillow_image
 
 
-def process_color_stops(vector_length, positions, hints):
+def process_color_stops(vector_length, positions, hints, style):
     """Give color stops positions and hints on the gradient vector.
 
     ``vector_length`` is the distance between the starting point and ending
@@ -382,8 +383,8 @@ def process_color_stops(vector_length, positions, hints):
 
     """
     # Resolve percentages.
-    positions = [percentage(position, vector_length) for position in positions]
-    hints = [percentage(hint, vector_length) / vector_length for hint in hints]
+    positions = [percentage(position, style, vector_length) for position in positions]
+    hints = [percentage(hint, style, vector_length) / vector_length for hint in hints]
 
     # First and last default to 100%.
     if positions[0] is None:
@@ -487,9 +488,9 @@ class Gradient:
     def get_intrinsic_size(self, image_resolution, font_size):
         return None, None, None
 
-    def draw(self, stream, concrete_width, concrete_height, _image_rendering):
+    def draw(self, stream, concrete_width, concrete_height, style):
         scale_y, type_, points, positions, colors, color_hints = self.layout(
-            concrete_width, concrete_height)
+            concrete_width, concrete_height, style)
 
         if type_ == 'solid':
             stream.rectangle(0, 0, concrete_width, concrete_height)
@@ -549,10 +550,11 @@ class Gradient:
 
         stream.paint_shading(shading.id)
 
-    def layout(self, width, height):
+    def layout(self, width, height, style):
         """Get layout information about the gradient.
 
         width, height: Gradient box. Top-left is at coordinates (0, 0).
+        style: box computed style.
 
         Returns (scale_y, type_, points, positions, colors).
 
@@ -579,7 +581,7 @@ class LinearGradient(Gradient):
         # ('corner', keyword) or ('angle', radians)
         self.direction_type, self.direction = direction
 
-    def layout(self, width, height):
+    def layout(self, width, height, style):
         # Only one color, render the gradient as a solid color
         if len(self.colors) == 1:
             return 1, 'solid', None, [], [self.colors[0]], []
@@ -609,7 +611,7 @@ class LinearGradient(Gradient):
         colors = list(self.colors)
         vector_length = abs(width * dx) + abs(height * dy)
         positions, hints = process_color_stops(
-            vector_length, self.stop_positions, self.color_hints)
+            vector_length, self.stop_positions, self.color_hints, style)
         if not self.repeating:
             # Add explicit colors at boundaries if needed, because PDF doesn’t
             # extend color stops that are not displayed
@@ -653,7 +655,7 @@ class LinearGradient(Gradient):
                 positions.append(positions[-1] + step)
                 last += step * stop_length
 
-            # Add colors before last step
+            # Add colors before first step
             while first > 0:
                 step = next(previous_steps)
                 colors.insert(0, next(previous_colors))
@@ -685,15 +687,15 @@ class RadialGradient(Gradient):
         #   size: (radius_x, radius_y)
         self.size_type, self.size = size
 
-    def layout(self, width, height):
+    def layout(self, width, height, style):
         # Only one color, render the gradient as a solid color
         if len(self.colors) == 1:
             return 1, 'solid', None, [], [self.colors[0]], []
 
         # Define the center of the gradient
         origin_x, center_x, origin_y, center_y = self.center
-        center_x = percentage(center_x, width)
-        center_y = percentage(center_y, height)
+        center_x = percentage(center_x, style, width)
+        center_y = percentage(center_y, style, height)
         if origin_x == 'right':
             center_x = width - center_x
         if origin_y == 'bottom':
@@ -701,13 +703,13 @@ class RadialGradient(Gradient):
 
         # Resolve sizes and vertical scale
         size_x, size_y = self._handle_degenerate(
-            *self._resolve_size(width, height, center_x, center_y))
+            *self._resolve_size(width, height, center_x, center_y, style))
         scale_y = size_y / size_x
 
         # Normalize colors positions
         colors = list(self.colors)
         positions, hints = process_color_stops(
-            size_x, self.stop_positions, self.color_hints)
+            size_x, self.stop_positions, self.color_hints, style)
         if not self.repeating:
             # Add explicit colors at boundaries if needed, because PDF doesn’t
             # extend color stops that are not displayed
@@ -762,14 +764,15 @@ class RadialGradient(Gradient):
             center_x, center_y / scale_y, last)
 
         if self.repeating:
-            points, positions, colors = self._repeat(
-                width, height, scale_y, points, positions, colors)
+            points, positions, colors, hints = self._repeat(
+                width, height, scale_y, points, positions, colors, hints)
 
         return scale_y, 'radial', points, positions, colors, hints
 
-    def _repeat(self, width, height, scale_y, points, positions, colors):
+    def _repeat(self, width, height, scale_y, points, positions, colors, hints):
         # Keep original lists and values, they’re useful
         original_colors = colors.copy()
+        original_hints = hints.copy()
         original_positions = positions.copy()
         gradient_length = points[5] - points[2]
 
@@ -785,13 +788,14 @@ class RadialGradient(Gradient):
             # Repeat colors and extrapolate positions
             repeat = 1 + repeat_after
             colors *= repeat
+            hints = ([*hints, 1] * repeat)[:-1]
             positions = [
                 i + position for i in range(repeat) for position in positions]
             points = (*points[:5], points[5] + gradient_length * repeat_after)
 
         if points[2] == 0:
             # Inner circle has 0 radius, no need to repeat inside, return
-            return points, positions, colors
+            return points, positions, colors, hints
 
         # Find how many times we have to repeat the colors inside
         repeat_before = points[2] / gradient_length
@@ -804,6 +808,7 @@ class RadialGradient(Gradient):
         if full_repeat:
             # Repeat colors and extrapolate positions
             colors += original_colors * full_repeat
+            hints += [1, *original_hints] * full_repeat
             positions = [
                 i - full_repeat + position for i in range(full_repeat)
                 for position in original_positions] + positions
@@ -812,7 +817,7 @@ class RadialGradient(Gradient):
         partial_repeat = repeat_before - full_repeat
         if partial_repeat == 0:
             # No partial repeat, return
-            return points, positions, colors
+            return points, positions, colors, hints
 
         # Iterate through positions in reverse order, from the outer
         # circle to the original inner circle, to find positions from
@@ -826,11 +831,12 @@ class RadialGradient(Gradient):
                 # The center is a color of the gradient, truncate original
                 # colors and positions and prepend them
                 colors = original_colors[-i:] + colors
+                hints = [*original_hints[-i:], 1, *hints]
                 new_positions = [
                     position - full_repeat - 1
                     for position in original_positions[-i:]]
                 positions = new_positions + positions
-                return points, positions, colors
+                return points, positions, colors, hints
             if position < ratio:
                 # The center is between two colors of the gradient,
                 # define the center color as the average of these two
@@ -840,21 +846,21 @@ class RadialGradient(Gradient):
                 next_position = original_positions[-(i - 1)]
                 average_colors = [color, color, next_color, next_color]
                 average_positions = [position, ratio, ratio, next_position]
-                zero_color = gradient_average_color(
-                    average_colors, average_positions)
-                colors = [zero_color, *original_colors[-(i - 1):], *colors]
+                zero_color = gradient_average_color(average_colors, average_positions)
+                colors = [zero_color, *original_colors[-(i-1):], *colors]
+                hints = [1, *original_hints[-(i-1):], 1, *hints]
                 new_positions = [
                     position - 1 - full_repeat for position
                     in original_positions[-(i - 1):]]
                 positions = (ratio - 1 - full_repeat, *new_positions, *positions)
-                return points, positions, colors
+                return points, positions, colors, hints
 
-    def _resolve_size(self, width, height, center_x, center_y):
+    def _resolve_size(self, width, height, center_x, center_y, style):
         """Resolve circle size of the radial gradient."""
         if self.size_type == 'explicit':
             size_x, size_y = self.size
-            size_x = percentage(size_x, width)
-            size_y = percentage(size_y, height)
+            size_x = percentage(size_x, style, width)
+            size_y = percentage(size_y, style, height)
             return size_x, size_y
         left = abs(center_x)
         right = abs(width - center_x)

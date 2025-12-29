@@ -5,7 +5,7 @@ from contextlib import suppress
 from math import cos, radians, sin, tan
 from urllib.parse import urlparse
 
-from tinycss2.color4 import parse_color
+from tinycss2.color5 import parse_color
 
 from ..matrix import Matrix
 

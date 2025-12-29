@@ -173,4 +173,6 @@ def text(svg, node, font_size):
     svg.stream.pop_state()
 
     for font_size, x, y, emojis in emoji_lines:
-        draw_emojis(svg.stream, font_size, x, y, emojis)
+        # TODO: pass real style instead of dict.
+        style = {'font_size': font_size}
+        draw_emojis(svg.stream, style, x, y, emojis)

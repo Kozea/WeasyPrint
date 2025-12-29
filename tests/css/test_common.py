@@ -18,7 +18,8 @@ def test_find_stylesheets():
 
     sheets = list(find_stylesheets(
         html.wrapper_element, 'print', default_url_fetcher, html.base_url,
-        font_config=None, counter_style=None, page_rules=None, layers=None))
+        font_config=None, counter_style=None, color_profiles=None, page_rules=None,
+        layers=None))
     assert len(sheets) == 2
     # Also test that stylesheets are in tree order.
     sheet_names = [
@@ -176,7 +177,13 @@ def test_important():
     ('1.1em', 11),
     ('1.1rem', 17.6),
     ('1.1ch', 11),
+    ('1.1rch', 17.6),
+    ('1.1cap', 11),
+    ('1.1rcap', 17.6),
     ('1.5ex', 12),
+    ('2rex', 25.6),
+    ('1ic', 20),
+    ('1ric', 32),
     ('1.1lh', 13.2),
     ('1.1rlh', 26.4),
 ])
@@ -184,12 +191,15 @@ def test_units(value, width):
     document = FakeHTML(base_url=BASE_URL, string='''
       <html style="font: 16px / 1.5 weasyprint">
       <body style="font: 10px / 1.2 weasyprint">
-      <p style="margin-left: %s"></p>''' % value)
+      <p style="margin-left: %s"></p>
+      <p style="margin-left: %s"></p>
+      ''' % (value, value.upper()))
     page, = document.render().pages
     html, = page._page_box.children
     body, = html.children
-    p, = body.children
-    assert isclose(p.margin_left, width, rel_tol=0.01)
+    p1, p2 = body.children
+    assert p1.margin_left == p2.margin_left
+    assert isclose(p1.margin_left, width, rel_tol=0.01)
 
 
 @assert_no_logs

@@ -15,7 +15,7 @@ def test_absolute_split_1(assert_pixels):
     ''', '''
         <style>
             @page {
-                size: 16px 2px;
+                size: 16px 2Px;
             }
             body {
                 color: red;
@@ -82,7 +82,7 @@ def test_absolute_split_3(assert_pixels):
             body {
                 color: red;
                 font-family: weasyprint;
-                font-size: 2px;
+                font-size: 2PX;
                 line-height: 1;
             }
             div.split {
@@ -683,7 +683,7 @@ def test_absolute_pages_counter_orphans(assert_pixels):
                 @bottom-right-corner {
                     color: blue;
                     content: counter(pages);
-                    font-size: 1px;
+                    font-size: 1PX;
                 }
             }
             body {
@@ -785,7 +785,7 @@ def test_fixed_in_inline(assert_pixels):
             body {
                 color: red;
                 font-family: weasyprint;
-                font-size: 2px;
+                font-size: 2PX;
                 line-height: 1;
                 orphans: 2;
                 widows: 2;

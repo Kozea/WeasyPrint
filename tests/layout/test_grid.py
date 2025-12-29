@@ -1,5 +1,7 @@
 """Tests for grid layout."""
 
+from math import isclose
+
 from ..testing_utils import assert_no_logs, render_pages
 
 
@@ -32,6 +34,40 @@ def test_grid_single_item():
     assert article.position_x == div.position_x == 0
     assert article.position_y == div.position_y == 0
     assert article.width == div.width == html.width
+
+
+@assert_no_logs
+def test_grid_single_auto_width():
+    page, = render_pages('''
+      <article style="display: grid">
+        <div style="padding: 0 2px; justify-self: start"></div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div, = article.children
+    assert article.position_x == div.position_x == 0
+    assert article.position_y == div.position_y == 0
+    assert article.width == html.width
+    assert div.width == 0
+    assert div.padding_width() == 4
+
+
+@assert_no_logs
+def test_grid_single_percentage_width():
+    page, = render_pages('''
+      <article style="display: grid">
+        <div style="justify-self: start; width: 100%"></div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div, = article.children
+    assert article.position_x == div.position_x == 0
+    assert article.position_y == div.position_y == 0
+    assert article.width == html.width == div.padding_width()
 
 
 @assert_no_logs
@@ -271,6 +307,80 @@ def test_grid_template_areas_overlap():
     assert div_a1.width == div_a2.width == div_a3.width == 6  # 2 + (10-2) / 2
     assert div_a1.height == div_a2.height == div_a3.height == 2
     assert article.width == 10
+
+
+@assert_no_logs
+def test_grid_template_big_span():
+    page, = render_pages('''
+      <style>
+        article {
+          display: grid;
+          font-family: weasyprint;
+          font-size: 2px;
+          grid-template-columns: 50% 50%;
+          line-height: 1;
+          width: 6px;
+        }
+      </style>
+      <article>
+        <div>a</div>
+        <div style="grid-row: span 2">b b b b</div>
+        <div>a</div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div_1, div_2, div_3 = article.children
+    assert div_1.position_x == div_3.position_x == 0
+    assert div_2.position_x == 3
+    assert div_1.position_y == div_2.position_y == 0
+    assert div_3.position_y == 4
+    assert div_1.width == div_2.width == div_3.width == 3
+    assert div_1.height == div_3.height == 4
+    assert div_2.height == article.height == 8
+    assert article.width == 6
+
+
+@assert_no_logs
+def test_grid_template_multiple_big_span():
+    page, = render_pages('''
+      <style>
+        article {
+          display: grid;
+          font-family: weasyprint;
+          font-size: 2px;
+          grid-template-columns: 50% 50%;
+          line-height: 1;
+          width: 6px;
+        }
+      </style>
+      <article>
+        <div>a</div>
+        <div style="grid-row: span 3">b b b b b b</div>
+        <div>a</div>
+        <div>a</div>
+        <div style="grid-row: span 2">c</div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div_1, div_2, div_3, div_4, div_5 = article.children
+    assert div_1.position_x == div_3.position_x == div_4.position_x == 0
+    assert div_5.position_x == 0
+    assert div_2.position_x == 3
+    assert div_1.position_y == div_2.position_y == 0
+    assert div_3.position_y == 4
+    assert div_4.position_y == 8
+    assert div_5.position_y == 12
+    assert div_1.width == div_2.width == div_3.width == div_5.width == 3
+    assert div_4.width == 3
+    assert div_1.height == div_3.height == div_4.height == 4
+    assert div_2.height == 12
+    assert div_5.height == 2
+    assert article.height == 14
+    assert article.width == 6
 
 
 @assert_no_logs
@@ -838,6 +948,43 @@ def test_grid_border():
 
 
 @assert_no_logs
+def test_grid_border_split():
+    page1, page2 = render_pages('''
+      <style>
+        @page { size: 5px }
+        body { font: 2px / 1 weasyprint }
+      </style>
+      <article style="display: grid; border-top: 1px solid; border-bottom: 1px solid;
+                      margin: 1px 0; padding: 1px 0">
+        <div>a<br>b</div>
+      </article>
+    ''')
+    html, = page1.children
+    body, = html.children
+    article, = body.children
+    assert article.border_top_width == 1
+    assert article.border_bottom_width == 0
+    assert article.margin_height() == 5
+    section, = article.children
+    assert section.position_x == 0
+    assert section.position_y == 3
+    assert section.width == html.width
+    assert section.height == 2
+
+    html, = page2.children
+    body, = html.children
+    article, = body.children
+    assert article.border_top_width == 0
+    assert article.border_bottom_width == 1
+    assert article.margin_height() == 5
+    section, = article.children
+    assert section.position_x == 0
+    assert section.position_y == 0
+    assert section.width == html.width
+    assert section.height == 2
+
+
+@assert_no_logs
 def test_grid_margin():
     page, = render_pages('''
       <style>
@@ -994,3 +1141,632 @@ def test_grid_gap_explicit_grid_column():
     assert div_b.position_y == 4
     assert article.height == 6
     assert article.width == 12
+
+
+@assert_no_logs
+def test_grid_break():
+    page1, page2 = render_pages('''
+      <style>
+        @page { size: 10px 11px }
+        body { font: 2px / 1 weasyprint }
+        section { display: grid; grid-template-columns: 1fr 1fr }
+      </style>
+      <section>
+        <div>1</div>
+        <div>2</div>
+        <div>3</div>
+        <div>4</div>
+        <div>5</div>
+        <div>6</div>
+        <div>7a<br>7b<br>7c</div>
+        <div>8</div>
+        <div>9</div>
+        <div>10</div>
+      </section>
+    ''')
+    html, = page1.children
+    body, = html.children
+    section, = body.children
+    assert section.height == 11
+    div1, div2, div3, div4, div5, div6, div7, div8 = section.children
+    assert div1.position_x == div3.position_x == div5.position_x == div7.position_x == 0
+    assert div2.position_x == div4.position_x == div6.position_x == div8.position_x == 5
+    assert div1.position_y == div2.position_y == 0
+    assert div1.height == div2.height == 2
+    assert div3.position_y == div4.position_y == 2
+    assert div3.height == div4.height == 2
+    assert div5.position_y == div6.position_y == 4
+    assert div5.height == div6.height == 2
+    assert div7.position_y == div8.position_y == 6
+    assert div7.height == div8.height == 5
+    line1, line2 = div7.children
+    text, br = line1.children
+    assert text.text == '7a'
+    text, br = line2.children
+    assert text.text == '7b'
+    line, = div8.children
+    text, = line.children
+    assert text.text == '8'
+
+    html, = page2.children
+    body, = html.children
+    section, = body.children
+    assert section.height == 4
+    div7, div8, div9, div10 = section.children
+    assert div7.position_x == div9.position_x == 0
+    assert div8.position_x == div10.position_x == 5
+    assert div7.position_y == div8.position_y == 0
+    assert div9.position_y == div10.position_y == 2
+    assert div7.height == div8.height == div9.height == div10.height == 2
+    line, = div7.children
+    text, = line.children
+    assert text.text == '7c'
+    assert not div8.children
+
+
+@assert_no_logs
+def test_grid_break_order_negative():
+    page1, page2 = render_pages('''
+      <style>
+        @page { size: 10px 11px }
+        body { font: 2px / 1 weasyprint }
+        section { display: grid; grid-template-columns: 1fr 1fr }
+      </style>
+      <section>
+        <div>3</div>
+        <div>4</div>
+        <div>5</div>
+        <div>6</div>
+        <div>7a<br>7b<br>7c</div>
+        <div>8</div>
+        <div>9</div>
+        <div>10</div>
+        <div style="order: -2">1</div>
+        <div style="order: -1">2</div>
+      </section>
+    ''')
+    html, = page1.children
+    body, = html.children
+    section, = body.children
+    assert section.height == 11
+    div1, div2, div3, div4, div5, div6, div7, div8 = section.children
+    assert div1.position_x == div3.position_x == div5.position_x == div7.position_x == 0
+    assert div2.position_x == div4.position_x == div6.position_x == div8.position_x == 5
+    assert div1.position_y == div2.position_y == 0
+    assert div1.height == div2.height == 2
+    assert div3.position_y == div4.position_y == 2
+    assert div3.height == div4.height == 2
+    assert div5.position_y == div6.position_y == 4
+    assert div5.height == div6.height == 2
+    assert div7.position_y == div8.position_y == 6
+    assert div7.height == div8.height == 5
+    line1, line2 = div7.children
+    text, br = line1.children
+    assert text.text == '7a'
+    text, br = line2.children
+    assert text.text == '7b'
+    line, = div8.children
+    text, = line.children
+    assert text.text == '8'
+
+    html, = page2.children
+    body, = html.children
+    section, = body.children
+    assert section.height == 4
+    div7, div8, div9, div10 = section.children
+    assert div7.position_x == div9.position_x == 0
+    assert div8.position_x == div10.position_x == 5
+    assert div7.position_y == div8.position_y == 0
+    assert div9.position_y == div10.position_y == 2
+    assert div7.height == div8.height == div9.height == div10.height == 2
+    line, = div7.children
+    text, = line.children
+    assert text.text == '7c'
+    assert not div8.children
+
+
+@assert_no_logs
+def test_grid_break_order_positive():
+    page1, page2 = render_pages('''
+      <style>
+        @page { size: 10px 11px }
+        body { font: 2px / 1 weasyprint }
+        section { display: grid; grid-template-columns: 1fr 1fr }
+      </style>
+      <section>
+        <div>1</div>
+        <div>2</div>
+        <div style="order: 9">9</div>
+        <div style="order: 10">10</div>
+        <div>3</div>
+        <div>4</div>
+        <div>5</div>
+        <div>6</div>
+        <div>7a<br>7b<br>7c</div>
+        <div>8</div>
+      </section>
+    ''')
+    html, = page1.children
+    body, = html.children
+    section, = body.children
+    assert section.height == 11
+    div1, div2, div3, div4, div5, div6, div7, div8 = section.children
+    assert div1.position_x == div3.position_x == div5.position_x == div7.position_x == 0
+    assert div2.position_x == div4.position_x == div6.position_x == div8.position_x == 5
+    assert div1.position_y == div2.position_y == 0
+    assert div1.height == div2.height == 2
+    assert div3.position_y == div4.position_y == 2
+    assert div3.height == div4.height == 2
+    assert div5.position_y == div6.position_y == 4
+    assert div5.height == div6.height == 2
+    assert div7.position_y == div8.position_y == 6
+    assert div7.height == div8.height == 5
+    line1, line2 = div7.children
+    text, br = line1.children
+    assert text.text == '7a'
+    text, br = line2.children
+    assert text.text == '7b'
+    line, = div8.children
+    text, = line.children
+    assert text.text == '8'
+
+    html, = page2.children
+    body, = html.children
+    section, = body.children
+    assert section.height == 4
+    div7, div8, div9, div10 = section.children
+    assert div7.position_x == div9.position_x == 0
+    assert div8.position_x == div10.position_x == 5
+    assert div7.position_y == div8.position_y == 0
+    assert div9.position_y == div10.position_y == 2
+    assert div7.height == div8.height == div9.height == div10.height == 2
+    line, = div7.children
+    text, = line.children
+    assert text.text == '7c'
+    assert not div8.children
+    line, = div9.children
+    text, = line.children
+    assert text.text == '9'
+    line, = div10.children
+    text, = line.children
+    assert text.text == '10'
+
+
+@assert_no_logs
+def test_grid_break_border():
+    page1, page2 = render_pages('''
+      <style>
+        @page { size: 12px 18px }
+        body { font: 2px / 1 weasyprint }
+        section { display: grid; grid-template-columns: 1fr 1fr }
+        div { border: 1px solid }
+      </style>
+      <section>
+        <div>1</div>
+        <div>2</div>
+        <div>3</div>
+        <div>4</div>
+        <div>5</div>
+        <div>6</div>
+        <div>7a<br>7b<br>7c</div>
+        <div>8</div>
+        <div>9</div>
+        <div>10</div>
+      </section>
+    ''')
+    html, = page1.children
+    body, = html.children
+    section, = body.children
+    assert section.height == 18
+    div1, div2, div3, div4, div5, div6, div7, div8 = section.children
+    for div in section.children:
+        assert div.border_top_width == 1
+        assert div.border_left_width == 1
+        assert div.border_right_width == 1
+    for div in div1, div2, div3, div4, div5, div6:
+        assert div.border_bottom_width == 1
+    for div in div7, div8:
+        assert div.border_bottom_width == 0
+    assert div1.position_x == div3.position_x == div5.position_x == div7.position_x == 0
+    assert div2.position_x == div4.position_x == div6.position_x == div8.position_x == 6
+    assert div1.position_y == div2.position_y == 0
+    assert div1.height == div2.height == 2
+    assert div1.width == div2.width == 4
+    assert div3.position_y == div4.position_y == 4
+    assert div3.height == div4.height == 2
+    assert div5.position_y == div6.position_y == 8
+    assert div5.height == div6.height == 2
+    assert div7.position_y == div8.position_y == 12
+    assert div7.height == div8.height == 5
+    line1, line2 = div7.children
+    text, br = line1.children
+    assert text.text == '7a'
+    text, br = line2.children
+    assert text.text == '7b'
+    line, = div8.children
+    text, = line.children
+    assert text.text == '8'
+
+    html, = page2.children
+    body, = html.children
+    section, = body.children
+    # assert section.height == 7
+    div7, div8, div9, div10 = section.children
+    for div in section.children:
+        assert div.border_bottom_width == 1
+        assert div.border_left_width == 1
+        assert div.border_right_width == 1
+    for div in div7, div8:
+        assert div.border_top_width == 0
+    for div in div9, div10:
+        assert div.border_top_width == 1
+    assert div7.position_x == div9.position_x == 0
+    assert div8.position_x == div10.position_x == 6
+    assert div7.position_y == div8.position_y == 0
+    assert div9.position_y == div10.position_y == 3
+    assert div7.height == div8.height == div9.height == div10.height == 2
+    assert div7.width == div8.width == div9.width == div10.width == 4
+    line, = div7.children
+    text, = line.children
+    assert text.text == '7c'
+    assert not div8.children
+
+
+@assert_no_logs
+def test_grid_break_multiple():
+    page1, page2, page3 = render_pages('''
+      <style>
+        @page { size: 10px 11px }
+        body { font: 2px / 1 weasyprint }
+        section { display: grid; grid-template-columns: 1fr 1fr }
+      </style>
+      <section>
+        <div>1</div>
+        <div>2</div>
+        <div>3</div>
+        <div>4</div>
+        <div>5</div>
+        <div>6</div>
+        <div>7a<br>7b<br>7c<br>7d<br>7e<br>7f<br>7g<br>7h</div>
+        <div>8</div>
+        <div>9</div>
+        <div>10</div>
+      </section>
+    ''')
+    html, = page1.children
+    body, = html.children
+    section, = body.children
+    assert section.height == 11
+    div1, div2, div3, div4, div5, div6, div7, div8 = section.children
+    assert div1.position_x == div3.position_x == div5.position_x == div7.position_x == 0
+    assert div2.position_x == div4.position_x == div6.position_x == div8.position_x == 5
+    assert div1.position_y == div2.position_y == 0
+    assert div1.height == div2.height == 2
+    assert div3.position_y == div4.position_y == 2
+    assert div3.height == div4.height == 2
+    assert div5.position_y == div6.position_y == 4
+    assert div5.height == div6.height == 2
+    assert div7.position_y == div8.position_y == 6
+    assert div7.height == div8.height == 5
+    line1, line2 = div7.children
+    text, br = line1.children
+    assert text.text == '7a'
+    text, br = line2.children
+    assert text.text == '7b'
+    line, = div8.children
+    text, = line.children
+    assert text.text == '8'
+
+    html, = page2.children
+    body, = html.children
+    section, = body.children
+    assert section.height == 11
+    div7, div8 = section.children
+    assert div7.position_x == 0
+    assert div8.position_x == 5
+    assert div7.height == div8.height == 11
+    line1, line2, line3, line4, line5 = div7.children
+    text, _ = line1.children
+    assert text.text == '7c'
+    text, _ = line2.children
+    assert text.text == '7d'
+    text, _ = line3.children
+    assert text.text == '7e'
+    text, _ = line4.children
+    assert text.text == '7f'
+    text, _ = line5.children
+    assert text.text == '7g'
+    assert not div8.children
+
+    html, = page3.children
+    body, = html.children
+    section, = body.children
+    assert section.height == 4
+    div7, div8, div9, div10 = section.children
+    assert div7.position_x == div9.position_x == 0
+    assert div8.position_x == div10.position_x == 5
+    assert div7.position_y == div8.position_y == 0
+    assert div9.position_y == div10.position_y == 2
+    assert div7.height == div8.height == div9.height == div10.height == 2
+    line, = div7.children
+    text, = line.children
+    assert text.text == '7h'
+    assert not div8.children
+
+
+@assert_no_logs
+def test_grid_break_span():
+    page1, page2 = render_pages('''
+      <style>
+        @page { size: 10px 11px }
+        body { font: 2px / 1 weasyprint }
+        section { display: grid; grid-template-columns: 1fr 1fr }
+      </style>
+      <section>
+        <div>1</div>
+        <div>2</div>
+        <div>3</div>
+        <div>4</div>
+        <div>5</div>
+        <div>6</div>
+        <div style="grid-row: span 3">7a<br>7b<br>7c<br>7d</div>
+        <div>8</div>
+        <div>9</div>
+        <div>10</div>
+        <div>11</div>
+        <div>12</div>
+      </section>
+    ''')
+    html, = page1.children
+    body, = html.children
+    section, = body.children
+    assert section.height == 11
+    div1, div2, div3, div4, div5, div6, div7, div8, div9 = section.children
+    assert div1.position_x == div3.position_x == div5.position_x == div7.position_x == 0
+    assert div2.position_x == div4.position_x == div6.position_x == div8.position_x == 5
+    assert div1.position_y == div2.position_y == 0
+    assert div1.height == div2.height == 2
+    assert div3.position_y == div4.position_y == 2
+    assert div3.height == div4.height == 2
+    assert div5.position_y == div6.position_y == 4
+    assert div5.height == div6.height == 2
+    assert div7.position_y == div8.position_y == 6
+    assert div7.height == 5
+    assert isclose(div8.height, 8 / 3)
+    assert isclose(div9.height, 7 / 3)
+    line1, line2 = div7.children
+    text, br = line1.children
+    assert text.text == '7a'
+    text, br = line2.children
+    assert text.text == '7b'
+    line, = div8.children
+    text, = line.children
+    assert text.text == '8'
+    line, = div9.children
+    text, = line.children
+    assert text.text == '9'
+
+    html, = page2.children
+    body, = html.children
+    section, = body.children
+    assert isclose(section.height, 6)
+    div7, div9, div10, div11, div12 = section.children
+    assert div7.position_x == 0
+    assert div8.position_x == 5
+    assert div7.height == 4
+    line1, line2 = div7.children
+    text, br = line1.children
+    assert text.text == '7c'
+    text, = line2.children
+    assert text.text == '7d'
+    assert not div9.children
+    assert div10.position_x == 5
+    assert isclose(div10.position_y, 4 / 3)
+    line, = div10.children
+    text, = line.children
+    assert text.text == '10'
+    assert div11.position_x == 0
+    assert div12.position_x == 5
+    assert div11.position_y == div12.position_y
+    assert isclose(div11.position_y, 4)
+    line, = div11.children
+    text, = line.children
+    assert text.text == '11'
+    line, = div12.children
+    text, = line.children
+    assert text.text == '12'
+
+
+@assert_no_logs
+def test_grid_break_item_avoid():
+    page1, page2 = render_pages('''
+      <style>
+        @page { size: 10px 11px }
+        body { font: 2px / 1 weasyprint }
+        section { display: grid; grid-template-columns: 1fr 1fr }
+      </style>
+      <section>
+        <div>1</div>
+        <div>2</div>
+        <div>3</div>
+        <div>4</div>
+        <div>5</div>
+        <div>6</div>
+        <div>7a<br>7b<br>7c</div>
+        <div style="break-inside: avoid">8</div>
+        <div>9</div>
+        <div>10</div>
+      </section>
+    ''')
+    html, = page1.children
+    body, = html.children
+    section, = body.children
+    assert section.height == 11
+    div1, div2, div3, div4, div5, div6 = section.children
+    assert div1.position_x == div3.position_x == div5.position_x == 0
+    assert div2.position_x == div4.position_x == div6.position_x == 5
+    assert div1.position_y == div2.position_y == 0
+    assert div1.height == div2.height == 2
+    assert div3.position_y == div4.position_y == 2
+    assert div3.height == div4.height == 2
+    assert div5.position_y == div6.position_y == 4
+    assert div5.height == div6.height == 2
+
+    html, = page2.children
+    body, = html.children
+    section, = body.children
+    assert section.height == 8
+    div7, div8, div9, div10 = section.children
+    assert div7.position_x == div9.position_x == 0
+    assert div8.position_x == div10.position_x == 5
+    assert div7.position_y == div8.position_y == 0
+    assert div9.position_y == div10.position_y == 6
+    assert div7.height == div8.height == 6
+    assert div9.height == div10.height == 2
+    assert len(div7.children) == 3
+    assert len(div8.children) == 1
+
+
+@assert_no_logs
+def test_grid_break_item_avoid_auto():
+    page1, page2 = render_pages('''
+      <style>
+        @page { size: 10px 11px }
+        body { font: 2px / 1 weasyprint }
+        section { display: grid; grid-template-columns: 1fr 1fr }
+      </style>
+      <section>
+        <div>1</div>
+        <div>2</div>
+        <div>3</div>
+        <div>4</div>
+        <div>5</div>
+        <div>6</div>
+        <div style="break-inside: avoid">7a<br>7b<br>7c</div>
+        <div style="break-inside: auto">8</div>
+        <div>9</div>
+        <div>10</div>
+      </section>
+    ''')
+    html, = page1.children
+    body, = html.children
+    section, = body.children
+    assert section.height == 11
+    div1, div2, div3, div4, div5, div6 = section.children
+    assert div1.position_x == div3.position_x == div5.position_x == 0
+    assert div2.position_x == div4.position_x == div6.position_x == 5
+    assert div1.position_y == div2.position_y == 0
+    assert div1.height == div2.height == 2
+    assert div3.position_y == div4.position_y == 2
+    assert div3.height == div4.height == 2
+    assert div5.position_y == div6.position_y == 4
+    assert div5.height == div6.height == 2
+
+    html, = page2.children
+    body, = html.children
+    section, = body.children
+    assert section.height == 8
+    div7, div8, div9, div10 = section.children
+    assert div7.position_x == div9.position_x == 0
+    assert div8.position_x == div10.position_x == 5
+    assert div7.position_y == div8.position_y == 0
+    assert div9.position_y == div10.position_y == 6
+    assert div7.height == div8.height == 6
+    assert div9.height == div10.height == 2
+    assert len(div7.children) == 3
+    assert len(div8.children) == 1
+
+
+@assert_no_logs
+def test_grid_break_container():
+    page1, page2 = render_pages('''
+      <style>
+        @page { size: 10px 11px }
+        body { font: 2px / 1 weasyprint }
+        section { display: grid; grid-template-columns: 1fr 1fr }
+      </style>
+      <p>1<br>2<br>3<br>4</p>
+      <section style="break-inside: avoid">
+        <div>5</div>
+        <div>6</div>
+        <div>7</div>
+        <div>8</div>
+        <div>9</div>
+        <div>10</div>
+      </section>
+    ''')
+    html, = page1.children
+    body, = html.children
+    p, = body.children
+    assert len(p.children) == 4
+    html, = page2.children
+    body, = html.children
+    section, = body.children
+    assert len(section.children) == 6
+
+
+@assert_no_logs
+def test_grid_bottom_page():
+    page1, page2 = render_pages('''
+      <style>
+        @page { size: 10px }
+        body { font: 2px / 1 weasyprint }
+        section { display: grid; grid-template-columns: 1fr 1fr }
+      </style>
+      <div style="height: 9px"></div>
+      <section>
+        <div>1</div>
+        <div>2</div>
+      </section>
+    ''')
+    html, = page1.children
+    body, = html.children
+    div, = body.children
+
+    html, = page2.children
+    body, = html.children
+    section, = body.children
+
+
+@assert_no_logs
+def test_grid_in_grid():
+    # Regression test for #2626.
+    page1, page2, = render_pages('''
+      <style>
+        @page { size: 10px }
+        body { font: 2px / 1 weasyprint }
+        section { display: grid; grid-template-columns: 1fr 1fr }
+      </style>
+      <div style="height: 7px"></div>
+      <section>
+        <section>
+          <div>1 2</div>
+          <div>3 4</div>
+        </section>
+        <section>
+          <div>5 6</div>
+          <div>7 8</div>
+        </section>
+      </section>
+    ''')
+    html, = page1.children
+    body, = html.children
+    div, section = body.children
+    subsection1, subsection2 = section.children
+    div1, div2 = subsection1.children
+    assert div1.children[0].children[0].text == '1'
+    assert div2.children[0].children[0].text == '3'
+    div3, div4 = subsection2.children
+    assert div3.children[0].children[0].text == '5'
+    assert div4.children[0].children[0].text == '7'
+
+    html, = page2.children
+    body, = html.children
+    section, = body.children
+    subsection1, subsection2 = section.children
+    div1, div2 = subsection1.children
+    assert div1.children[0].children[0].text == '2'
+    assert div2.children[0].children[0].text == '4'
+    div3, div4 = subsection2.children
+    assert div3.children[0].children[0].text == '6'
+    assert div4.children[0].children[0].text == '8'

@@ -103,6 +103,8 @@ class Box:
         self.style = style
         self.remove_decoration_sides = set()
         self.children = []
+        self.first_letter_style = None
+        self.first_line_style = None
 
     def __repr__(self):
         return f'<{type(self).__name__} {self.element_tag}>'
@@ -419,6 +421,22 @@ class ParentBox(Box):
                 start_value = start_box.page_values()[0] or start_value
                 end_value = end_box.page_values()[1] or end_value
         return start_value, end_value
+
+    def top_margin_collapses(self):
+        return not (
+            self.border_top_width or self.padding_top or
+            self.is_flex_item or self.is_grid_item or
+            self.establishes_formatting_context() or
+            self.is_table_wrapper or
+            self.is_for_root_element)
+
+    def bottom_margin_collapses(self):
+        return not (
+            self.border_bottom_width or self.padding_bottom or
+            self.is_flex_item or self.is_grid_item or
+            self.establishes_formatting_context() or
+            self.is_table_wrapper or
+            self.is_for_root_element)
 
 
 class BlockLevelBox(Box):
@@ -797,6 +815,10 @@ class InlineFlexBox(FlexContainerBox, InlineLevelBox):
 
 class GridContainerBox(ParentBox):
     """A box that contains only grid-items."""
+    def __init__(self, element_tag, style, element, children):
+        super().__init__(element_tag, style, element, children)
+        # TODO: we shouldn’t store this in the box but in the rendering context instead.
+        self.advancements = {}
 
 
 class GridBox(GridContainerBox, BlockLevelBox):

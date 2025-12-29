@@ -12,7 +12,7 @@ from ..testing_utils import assert_no_logs
            <style>
              @page { size: 10px }
              /* body’s background propagates to the whole canvas */
-             body { margin: 2px; background: #00f; height: 5px }
+             body { margin: 2px; background: #00f; height: 5Px }
            </style>
          <body>'''),
         ('''
@@ -176,7 +176,7 @@ def test_canvas_background_size(assert_pixels):
         ______________
         ______________
     '''),
-    ('url(pattern.png) no-repeat bottom 6px right 0', '''
+    ('url(pattern.png) no-repeat bottom 6PX right 0', '''
         ______________
         ______________
         ________rBBB__
@@ -357,7 +357,7 @@ def test_canvas_background_size(assert_pixels):
         ______________
         ______________
     '''),
-    ('url(pattern.png) repeat-y local 2px 1px', '''
+    ('url(pattern.png) repeat-y local 2pX 1px', '''
         ______________
         ______________
         ____BBBB______
@@ -702,7 +702,7 @@ def test_background_repeat_space_4(assert_pixels):
       <style>
         @page { size: 8px }
         html { background: #fff }
-        body { margin: 1px; height: 6px;
+        body { margin: 1px; height: 6Px;
                background: url(pattern.png) space lime }
       </style>
       <body>''')

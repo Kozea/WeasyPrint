@@ -136,7 +136,7 @@ def test_font_face_bad_2():
     with capture_logs() as logs:
         preprocess_stylesheet(
             'print', 'https://wp.org/foo/', stylesheet, None, None, None,
-            None, None, None)
+            None, None, None, None)
     assert logs == [
         "WARNING: Missing src descriptor in '@font-face' rule at 1:1"]
 
@@ -146,7 +146,7 @@ def test_font_face_bad_3():
     with capture_logs() as logs:
         preprocess_stylesheet(
             'print', 'https://wp.org/foo/', stylesheet, None, None, None,
-            None, None, None)
+            None, None, None, None)
     assert logs == [
         "WARNING: Missing font-family descriptor in '@font-face' rule at 1:1"]
 
@@ -156,7 +156,7 @@ def test_font_face_bad_4():
     with capture_logs() as logs:
         preprocess_stylesheet(
             'print', 'https://wp.org/foo/', stylesheet, None, None, None,
-            None, None, None)
+            None, None, None, None)
     assert logs == [
         "WARNING: Missing src descriptor in '@font-face' rule at 1:1"]
 
@@ -167,7 +167,7 @@ def test_font_face_bad_5():
     with capture_logs() as logs:
         preprocess_stylesheet(
             'print', 'https://wp.org/foo/', stylesheet, None, None, None,
-            None, None, None)
+            None, None, None, None)
     assert logs == [
         'WARNING: Ignored `src: wrong ` at 1:33, invalid value.',
         "WARNING: Missing src descriptor in '@font-face' rule at 1:1"]
@@ -179,7 +179,7 @@ def test_font_face_bad_6():
     with capture_logs() as logs:
         preprocess_stylesheet(
             'print', 'https://wp.org/foo/', stylesheet, None, None, None,
-            None, None, None)
+            None, None, None, None)
     assert logs == [
         'WARNING: Ignored `font-family: good, bad` at 1:14, invalid value.',
         "WARNING: Missing font-family descriptor in '@font-face' rule at 1:1"]
@@ -191,7 +191,7 @@ def test_font_face_bad_7():
     with capture_logs() as logs:
         preprocess_stylesheet(
             'print', 'https://wp.org/foo/', stylesheet, None, None, None,
-            None, None, None)
+            None, None, None, None)
     assert logs == [
         'WARNING: Ignored `font-family: good, bad` at 1:14, invalid value.',
         'WARNING: Ignored `src: really bad ` at 1:38, invalid value.',
@@ -209,5 +209,5 @@ def test_counter_style_invalid(rule):
     with capture_logs() as logs:
         preprocess_stylesheet(
             'print', 'https://wp.org/foo/', stylesheet, None, None, None,
-            None, None, {})
+            None, None, None, {})
     assert len(logs) >= 1

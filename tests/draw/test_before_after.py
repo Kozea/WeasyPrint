@@ -16,7 +16,7 @@ def test_before_after_1(assert_same_renderings):
         ''',
         '''
             <style>
-                @page { size: 300px 30px }
+                @page { size: 300px 30PX }
                 body { margin: 0 }
             </style>
             <p><a href="another url"><span>[some url] </span>some content</p>
@@ -37,7 +37,7 @@ def test_before_after_2(assert_same_renderings):
         ''',
         '''
             <style>
-                @page { size: 500px 30px }
+                @page { size: 500px 30Px }
                 body { margin: 0 }
                 q:before, q:after { content: none }
             </style>
@@ -60,7 +60,7 @@ def test_before_after_3(assert_same_renderings):
         ''',
         '''
             <style>
-                @page { size: 100px 30px }
+                @page { size: 100PX 30px }
                 body { margin: 0 }
             </style>
             <p><span>a<img src="pattern.png" alt="Missing image">b</span>c</p>

@@ -346,7 +346,7 @@ def test_linear_gradient():
                positions=[0, 1], colors=[blue, lime]):
         page, = render_pages('<style>@page { background: ' + gradient_css)
         layer, = page.background.layers
-        result = layer.image.layout(400, 300)
+        result = layer.image.layout(400, 300, {})
         assert result[0] == 1
         assert result[1] == type_
         assert result[2] == (None if init is None else pytest.approx(init))
@@ -411,7 +411,7 @@ def test_radial_gradient():
                     center_x, center_y / scale_y, radius1)
         page, = render_pages('<style>@page { background: ' + gradient_css)
         layer, = page.background.layers
-        result = layer.image.layout(400, 300)
+        result = layer.image.layout(400, 300, {})
         assert result[0] == scale_y
         assert result[1] == type_
         assert result[2] == (None if init is None else pytest.approx(init))

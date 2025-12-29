@@ -193,10 +193,12 @@ def _build_box_tree(box, parent, pdf, page_number, nums, links, tags):
             LOGGER.error(f'Image "{source}" has no required alt description')
     elif tag == 'Table':
         # Use wrapped table as tagged box, and put captions in it.
-        wrapper, table = box, box.get_wrapped_table()
-        box = table.copy_with_children([])
-        for child in wrapper.children:
-            box.children.extend(child.children if child is table else [child])
+        if box.is_table_wrapper:
+            # Can be false if table has another display type.
+            wrapper, table = box, box.get_wrapped_table()
+            box = table.copy_with_children([])
+            for child in wrapper.children:
+                box.children.extend(child.children if child is table else [child])
     elif tag == 'TH':
         # Set identifier for table headers to reference them in cells.
         element['ID'] = pydyf.String(id(box))

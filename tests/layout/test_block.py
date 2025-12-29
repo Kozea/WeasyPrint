@@ -732,6 +732,67 @@ def test_box_decoration_break_slice_bottom_padding():  # pragma: no cover
     assert div.position_y == 0
 
 
+@pytest.mark.xfail
+@assert_no_logs
+def test_nested_blocks_padding_border():  # pragma: no cover
+    # Same as previous issue, with nested blocks.
+    page_1, page_2 = render_pages('''
+      <style>
+        @page { size: 4px 12px; margin: 0 }
+        html { font: 2px/1 weasyprint }
+        article, section, div {
+          border-top: 1px solid; border-bottom: 1px solid;
+          padding-top: 1px; padding-bottom: 1px;
+        }
+      </style>
+      <article>
+        <section>
+          <div>
+            aaa
+            bbb
+          </div>
+        </section>
+      </article>''')
+    html, = page_1.children
+    body, = html.children
+    div_1, = body.children
+    div_2, = div_1.children
+    div_3, = div_2.children
+
+    html, = page_2.children
+    body, = html.children
+    div_1, = body.children
+    div_2, = div_1.children
+    div_3, = div_2.children
+
+
+@assert_no_logs
+def test_overflow_non_collapsing_parent():
+    page_1, page_2 = render_pages('''
+      <style>
+        @page { size: 6px 10px; margin: 0 }
+        html { font: 2px/1 weasyprint }
+        div { border-bottom: 3px solid }
+        p { margin-bottom: 2px }
+      </style>
+      abc
+      def
+      <div>
+        <p>
+          aaa
+        </p>
+      </div>
+      ghi''')
+    html, = page_1.children
+    body, = html.children
+    lines, = body.children
+    line_1, line_2 = lines.children
+
+    html, = page_2.children
+    body, = html.children
+    section, lines = body.children
+
+
 @assert_no_logs
 def test_overflow_auto():
     page, = render_pages('''
@@ -744,6 +805,7 @@ def test_overflow_auto():
     assert article.height == 50 + 10 + 10
 
 
+@assert_no_logs
 def test_overflow_hidden_in_flow_layout():
     page, = render_pages('''
       <div style="overflow: hidden; height: 3px;">
@@ -757,6 +819,7 @@ def test_overflow_hidden_in_flow_layout():
     assert parent_div.height == 3
 
 
+@assert_no_logs
 def test_overflow_hidden_out_of_flow_layout():
     page, = render_pages('''
       <div style="overflow: hidden; height: 3px;">
