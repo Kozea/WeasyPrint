@@ -198,9 +198,12 @@ def default_url_fetcher(url, timeout=10, ssl_context=None, http_headers=None,
     """
     warnings.warn(
         "default_url_fetcher is deprecated and will be removed in WeasyPrint 69.0, "
-        "please use URLFetcher instead.",
+        "please use URLFetcher instead. For security reasons, HTTP redirects are not "
+        "supported anymore with default_url_fetcher, but are with URLFetcher.\n\nSee "
+        "https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#url-fetchers",
         category=DeprecationWarning)
-    fetcher = URLFetcher(timeout, ssl_context, http_headers, allowed_protocols)
+    fetcher = URLFetcher(
+        timeout, ssl_context, http_headers, allowed_protocols, allow_redirects=False)
     return fetcher.fetch(url)
 
 
