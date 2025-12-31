@@ -71,7 +71,7 @@ Python API
 .. autoclass:: URLFetcher
     :members:
     :member-order: bysource
-.. autoclass:: URLFetcherResource
+.. autoclass:: URLFetcherResponse
 .. autoclass:: FatalURLFetchingError
 
 .. module:: weasyprint.text.fonts

@@ -1643,9 +1643,9 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fet
                     rule.source_column)
                 continue
 
-            with fetch(url_fetcher, descriptors['src'][1]) as resource:
+            with fetch(url_fetcher, descriptors['src'][1]) as response:
                 try:
-                    color_profile = ColorProfile(resource.file_obj, descriptors)
+                    color_profile = ColorProfile(response, descriptors)
                 except BaseException:
                     LOGGER.warning(
                         'Invalid profile file for profile named %r, the whole '

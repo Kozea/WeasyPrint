@@ -500,15 +500,15 @@ fetcher:
 .. code-block:: python
 
     from weasyprint import HTML
-    from weasyprint.urls import URLFetcher, URLFetcherResource
+    from weasyprint.urls import URLFetcher, URLFetcherResponse
 
     class MyFetcher(URLFetcher):
-        def fetch(self, url):
+        def fetch(self, url, headers=None):
             if url.startswith('graph:'):
                 graph_data = [float(value) for value in url[6:].split(',')]
                 string = generate_graph(graph_data)
-                return URLFetcherResource(url, string=string, mime_type='image/png')
-            return super().fetch(url)
+                return URLFetcherResponse(url, string=string, mime_type='image/png')
+            return super().fetch(url, headers)
 
     source = '<img src="graph:42,10.3,87">'
     HTML(string=source, url_fetcher=MyFetcher()).write_pdf('out.pdf')
@@ -523,9 +523,9 @@ warning. If you want some errors to be fatal and stop the rendering, you can rai
     from weasyprint.urls import URLFetcher, FatalURLFetchingError
 
     class MyFetcher(URLFetcher):
-        def fetch(self, url):
+        def fetch(self, url, headers=None):
             try:
-                return super().fetch(url)
+                return super().fetch(url, headers)
             except Exception as exception:
                 if url.endswith('.css'):
                     # Stop the rendering if a problem happens with a stylesheet.
@@ -541,7 +541,7 @@ Flask-WeasyPrint_ for Flask_ and Django-Weasyprint_ for Django_ both make
 use of a custom URL fetcher to integrate WeasyPrint and use the filesystem
 instead of a network call for static and media files.
 
-A custom fetcher should be returning a :class:`urls.URLFetcherResource`.
+A custom fetcher should be returning a :class:`urls.URLFetcherResponse`.
 
 If a ``file_obj`` is given, the resource will be closed automatically by
 the function internally used by WeasyPrint to retrieve data.

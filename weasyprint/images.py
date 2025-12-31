@@ -30,12 +30,6 @@ class ImageLoadingError(ValueError):
 
     """
 
-    @classmethod
-    def from_exception(cls, exception):
-        name = type(exception).__name__
-        value = str(exception)
-        return cls(f'{name}: {value}' if value else name)
-
 
 class RasterImage:
     def __init__(self, pillow_image, image_id, image_data, filename=None,
@@ -297,40 +291,40 @@ def get_image_from_uri(cache, url_fetcher, options, url, forced_mime_type=None,
         return cache[url]
 
     try:
-        with fetch(url_fetcher, url) as result:
-            string = result.file_obj.read()
-            mime_type = forced_mime_type or result.mime_type
+        with fetch(url_fetcher, url) as response:
+            bytestring = response.read()
+            mime_type = forced_mime_type or response.content_type
 
         image = None
         svg_exceptions = []
         # Try to rely on given mimetype for SVG
         if mime_type == 'image/svg+xml':
             try:
-                tree = ElementTree.fromstring(string)
+                tree = ElementTree.fromstring(bytestring)
                 image = SVGImage(tree, url, url_fetcher, context)
             except Exception as svg_exception:
                 svg_exceptions.append(svg_exception)
         # Try pillow for raster images, or for failing SVG
         if image is None:
             try:
-                pillow_image = Image.open(BytesIO(string))
+                pillow_image = Image.open(BytesIO(bytestring))
             except Exception as raster_exception:
                 if mime_type == 'image/svg+xml':
                     # Tried SVGImage then Pillow for a SVG, abort
-                    raise ImageLoadingError.from_exception(svg_exceptions[0])
+                    raise ImageLoadingError from svg_exceptions[0]
                 try:
                     # Last chance, try SVG
-                    tree = ElementTree.fromstring(string)
+                    tree = ElementTree.fromstring(bytestring)
                     image = SVGImage(tree, url, url_fetcher, context)
                 except Exception:
                     # Tried Pillow then SVGImage for a raster, abort
-                    raise ImageLoadingError.from_exception(raster_exception)
+                    raise ImageLoadingError from raster_exception
             else:
                 # Store image id to enable cache in Stream.add_image
                 image_id = md5(url.encode(), usedforsecurity=False).hexdigest()
-                path = result.path
                 image = RasterImage(
-                    pillow_image, image_id, string, path, cache, orientation, options)
+                    pillow_image, image_id, bytestring, response.path, cache,
+                    orientation, options)
 
     except (URLFetchingError, ImageLoadingError) as exception:
         LOGGER.error('Failed to load image at %r: %s', url, exception)

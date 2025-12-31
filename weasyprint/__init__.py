@@ -18,7 +18,7 @@ import tinyhtml5
 
 VERSION = __version__ = '67.0'
 
-#: Default values for command-line and Python API options. See
+#: Default values for command-line and Python API rendering options. See
 #: :func:`__main__.main` to learn more about specific options for
 #: command-line.
 #:
@@ -68,7 +68,6 @@ VERSION = __version__ = '67.0'
 #:     images are temporarily stored.
 DEFAULT_OPTIONS = {
     'stylesheets': None,
-    'media_type': 'print',
     'attachments': None,
     'pdf_identifier': None,
     'pdf_variant': None,
@@ -412,16 +411,16 @@ def _select_source(guess=None, filename=None, url=None, file_obj=None, string=No
         with open(filename, 'rb') as file_obj:
             yield file_obj, base_url, None, None
     elif url is not None:
-        with fetch(url_fetcher, url) as resource:
-            if check_css_mime_type and resource.mime_type != 'text/css':
-                mime_type, url = resource.mime_type, resource.url
+        with fetch(url_fetcher, url) as response:
+            if check_css_mime_type and response.content_type != 'text/css':
                 LOGGER.error(
-                    f'Unsupported stylesheet type {mime_type} for {url}')
+                    f'Unsupported stylesheet type {response.content_type} '
+                    f'for {response.url}')
                 yield StringIO(''), base_url, None, None
             else:
                 if base_url is None:
-                    base_url = resource.url
-                yield resource.file_obj, base_url, resource.encoding, resource.mime_type
+                    base_url = response.url
+                yield response, base_url, response.charset, response.content_type
     elif file_obj is not None:
         if base_url is None:
             # filesystem file-like objects have a 'name' attribute.

@@ -8,11 +8,12 @@ import sys
 import traceback
 import warnings
 import zlib
+from email.message import EmailMessage
 from gzip import GzipFile
-from io import BytesIO, StringIO
+from io import BytesIO
 from pathlib import Path
+from urllib import request
 from urllib.parse import quote, unquote, urljoin, urlsplit
-from urllib.request import Request, pathname2url, url2pathname, urlopen
 
 from . import __version__
 from .logger import LOGGER
@@ -86,7 +87,7 @@ def path2url(path):
         # Otherwise relative URIs are resolved from the parent directory.
         path += os.path.sep
         wants_trailing_slash = True
-    path = pathname2url(path)
+    path = request.pathname2url(path)
     # On Windows pathname2url cuts off trailing slash
     if wants_trailing_slash and not path.endswith('/'):
         path += '/'  # pragma: no cover
@@ -207,135 +208,159 @@ class URLFetchingError(IOError):
     """Some error happened when fetching an URL."""
 
 
-class FatalURLFetchingError(IOError):
+class FatalURLFetchingError(BaseException):
     """Some error happened when fetching an URL and must stop the rendering."""
 
 
-class URLFetcher:
+class URLFetcher(request.OpenerDirector):
     """Fetcher of external resources such as images or stylesheets.
 
     Another class inheriting from this class, with a ``fetch`` method that has a
     compatible signature, can be given as the ``url_fetcher`` argument to
-    :class:`weasyprint.HTML` or :class:`weasyprint.CSS`. (See :ref:`URL Fetchers`.)
+    :class:`weasyprint.HTML` or :class:`weasyprint.CSS`.
+
+    See :ref:`URL Fetchers` for more information and examples.
 
     """
 
     def __init__(self, timeout=10, ssl_context=None, http_headers=None,
-                 allowed_protocols=None, **kwargs):
-        #: The number of seconds before HTTP requests are dropped.
-        self.timeout = timeout
-        #: An SSL context used for HTTP requests.
-        self.ssl_context = ssl_context
-        #: Additional HTTP headers used for HTTP requests.
-        self.http_headers = http_headers
-        #: A set of authorized protocols.
-        self.allowed_protocols = allowed_protocols
+                 allowed_protocols=None, allow_redirects=True, fail_on_errors=False,
+                 **kwargs):
+        super().__init__()
+        handlers = [
+            request.ProxyHandler(), request.UnknownHandler(), request.HTTPHandler(),
+            request.HTTPDefaultErrorHandler(), request.FTPHandler(),
+            request.FileHandler(), request.HTTPErrorProcessor(), request.DataHandler(),
+            request.HTTPSHandler(context=ssl_context)]
+        if allow_redirects:
+            handlers.append(request.HTTPRedirectHandler())
+        for handler in handlers:
+            self.add_handler(handler)
 
-    def fetch(self, url):
+        # The default number of seconds before HTTP requests are dropped.
+        # An SSL context used for HTTPS requests.
+        # Additional HTTP headers used for HTTP requests.
+        # A set of authorized protocols.
+        self._timeout = timeout
+        self._http_headers = {**HTTP_HEADERS, **(http_headers or {})}
+        self._allowed_protocols = allowed_protocols
+        self._fail_on_errors = fail_on_errors
+
+    def fetch(self, url, headers=None):
         """Fetch a given URL.
 
         :raises: An exception indicating failure, e.g. :obj:`ValueError` on
-            syntactically invalid URL. All exceptions are catched internally
-            by WeasyPrint, except when they inherit from
-            :obj:`FatalURLFetchingError`.
-        :returns: A :obj:`URLFetcherResource` instance.
+            syntactically invalid URL. All exceptions are catched internally by
+            WeasyPrint, except when they inherit from :obj:`FatalURLFetchingError`.
+        :returns: A :obj:`URLFetcherResponse` instance.
 
         """
-
         # Discard URLs with no or invalid protocol.
         if not UNICODE_SCHEME_RE.match(url):  # pragma: no cover
             raise ValueError(f'Not an absolute URI: {url}')
 
-
         # Discard URLs with forbidden protocol.
-        if self.allowed_protocols is not None:
-            if url.split('://', 1)[0].lower() not in self.allowed_protocols:
+        if self._allowed_protocols is not None:
+            if url.split('://', 1)[0].lower() not in self._allowed_protocols:
                 raise ValueError(f'URI uses disallowed protocol: {url}')
 
         # Remove query and fragment parts from file URLs.
         # See https://bugs.python.org/issue34702.
         if url.lower().startswith('file://'):
             url = url.split('?')[0]
-            path = url2pathname(url.removeprefix('file:'))
-        else:
-            path = None
 
         # Transform Unicode IRI to ASCII URI.
         url = iri_to_uri(url)
 
-        # Define HTTP headers.
-        if self.http_headers is not None:
-            http_headers = {**HTTP_HEADERS, **self.http_headers}
-        else:
-            http_headers = HTTP_HEADERS
-
         # Open URL.
-        response = urlopen(
-            Request(url, headers=http_headers), timeout=self.timeout,
-            context=self.ssl_context)
-        resource_args = {
-            'url': response.url,
-            'mime_type': response.headers.get_content_type(),
-            'encoding': response.headers.get_param('charset'),
-            'filename': response.headers.get_filename(),
-            'path': path,
-        }
+        headers = {**self._http_headers, **(headers or {})}
+        http_request = request.Request(url, headers=headers)
+        response = super().open(http_request, timeout=self._timeout)
 
         # Decompress response.
-        content_encoding = response.headers.get('Content-Encoding')
-        if content_encoding == 'gzip':
-            resource_args['file_obj'] = StreamingGzipFile(fileobj=response)
-        elif content_encoding == 'deflate':
-            data = response.read()
-            try:
-                resource_args['string'] = zlib.decompress(data)
-            except zlib.error:
-                # Try without zlib header or checksum.
-                resource_args['string'] = zlib.decompress(data, -15)
-        else:
-            resource_args['file_obj'] = response
+        body = response
+        if 'Content-Encoding' in response.headers:
+            content_encoding = response.headers['Content-Encoding']
+            del response.headers['Content-Encoding']
+            if content_encoding == 'gzip':
+                body = StreamingGzipFile(fileobj=response)
+            elif content_encoding == 'deflate':
+                data = response.read()
+                try:
+                    body = zlib.decompress(data)
+                except zlib.error:
+                    # Try without zlib header or checksum.
+                    body = zlib.decompress(data, -15)
 
-        return URLFetcherResource(**resource_args)
+        return URLFetcherResponse(response.url, body, response.headers, response.status)
+
+    def open(self, url, data=None, timeout=None):
+        if isinstance(url, request.Request):
+            return self.fetch(url.full_url, url.headers)
+        return self.fetch(url)
 
     def __call__(self, url):
         return self.fetch(url)
 
 
-class URLFetcherResource:
-    """The result of a URL fetcher invocation."""
-    def __init__(self, url, string=None, file_obj=None, mime_type=None,
-                 encoding=None, filename=None, path=None, **kwargs):
-        """Constructs a new instance from a string or file-like object.
+class URLFetcherResponse:
+    """The HTTP response of a URL fetcher invocation.
 
-        If a ``file_obj`` is given, it is the caller’s responsibility
-        to call ``file_obj.close()``. The default function used internally to
-        fetch data in WeasyPrint tries to close the file object after
-        retreiving; but if this URL fetcher is used elsewhere, the file object
-        has to be closed manually.
+    Has the same interface as :class:`urllib.response.addinfourl`.
+
+    """
+    def __init__(self, url, body=None, headers=None, status=None, **kwargs):
+        """Construct a new response from a bytestring, string or file-like object.
+
+        If a ``file_obj`` is given, it is the caller’s responsibility to call
+        ``file_obj.close()``. The default function used internally to fetch data in
+        WeasyPrint tries to close the file object after retreiving; but if this URL
+        fetcher is used elsewhere, the file object has to be closed manually.
 
         """
-
-        #: The string or file-like object passed to the constructor.
-        if string is None:
-            assert file_obj is not None, 'string or file_obj must be given'
-            self.file_obj = file_obj
-        elif isinstance(string, str):
-            self.file_obj = StringIO(string)
-        else:
-            self.file_obj = BytesIO(string)
-        #: The URL of the resource.
         self.url = url
-        #: An optional MIME type extracted e.g. from a *Content-Type* header. If not
-        #: provided, the type is guessed from the file extension in the URL.
-        self.mime_type = mime_type
-        #: An optional character encoding, extracted from a *charset* parameter in a
-        #: *Content-Type* header.
-        self.encoding = encoding
-        #: The possible filename of the resource, usually derived from the *filename*
-        #: parameter in a *Content-Disposition* : header.
-        self.filename = filename
-        #: The path of the resource, if it is stored on the local filesystem.
-        self.path = path
+        self.status = status or '200 OK'
+
+        if isinstance(headers, EmailMessage):
+            self.headers = headers
+        else:
+            self.headers = EmailMessage()
+            for key, value in (headers or {}).items():
+                self.headers[key] = value
+
+        if hasattr(body, 'read'):
+            self._file_obj = body
+        elif isinstance(body, str):
+            self.headers.set_param('charset', 'utf-8')
+            self._file_obj = BytesIO(body.encode('utf-8'))
+        else:
+            self._file_obj = BytesIO(body)
+
+    def read(self, *args, **kwargs):
+        return self._file_obj.read(*args, **kwargs)
+
+    def close(self):
+        try:
+            self._file_obj.close()
+        except Exception:  # pragma: no cover
+            # May already be closed or something.
+            # This is just cleanup anyway: log but make it non-fatal.
+            LOGGER.warning(
+                'Error when closing stream for %s:\n%s',
+                self.url, traceback.format_exc())
+
+    @property
+    def path(self):
+        if self.url.startswith('file:'):
+            return request.url2pathname(self.url.split('?')[0].removeprefix('file:'))
+
+    @property
+    def content_type(self):
+        return self.headers.get_content_type()
+
+    @property
+    def charset(self):
+        return self.headers.get_param('charset')
 
 
 @contextlib.contextmanager
@@ -347,34 +372,31 @@ def fetch(url_fetcher, url):
     catched by the code that fetches the resource and emits a warning.
 
     """
-
     try:
         resource = url_fetcher(url)
-    except FatalURLFetchingError as exception:
-        raise exception
     except Exception as exception:
+        if getattr(url_fetcher, '_fail_on_errors', False):
+            raise FatalURLFetchingError(f'Error fetching "{url}"') from exception
         raise URLFetchingError(f'{type(exception).__name__}: {exception}')
 
     if isinstance(resource, dict):
         warnings.warn(
             "Returning dicts in URL fetchers is deprecated and will be removed "
-            "in WeasyPrint 69.0, please return URLFetcherResource instead.",
+            "in WeasyPrint 69.0, please return URLFetcherResponse instead.",
             category=DeprecationWarning)
         if 'url' not in resource:
             resource['url'] = resource.get('redirected_url', url)
-        resource = URLFetcherResource(**resource)
+        resource['body'] = resource.get('file_obj', resource.get('string'))
+        content_type = resource.get('mime_type', 'application/octet-stream')
+        if charset := resource.get('encoding'):
+            content_type += f';{charset}'
+        resource['headers'] = {'Content-Type': content_type}
+        resource = URLFetcherResponse(**resource)
 
-    assert isinstance(resource, URLFetcherResource), (
-        'URL fetcher must return either a dict or a URLFetcherResource instance')
+    assert isinstance(resource, URLFetcherResponse), (
+        'URL fetcher must return either a dict or a URLFetcherResponse instance')
 
     try:
         yield resource
     finally:
-        try:
-            resource.file_obj.close()
-        except Exception:  # pragma: no cover
-            # May already be closed or something.
-            # This is just cleanup anyway: log but make it non-fatal.
-            LOGGER.warning(
-                'Error when closing stream for %s:\n%s',
-                url, traceback.format_exc())
+        resource.close()
