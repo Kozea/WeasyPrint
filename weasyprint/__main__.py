@@ -135,12 +135,12 @@ group = PARSER.add_argument_group('HTML options')
 group.add_argument('-e', '--encoding', help='force the input character encoding')
 group.add_argument(
     '-m', '--media-type', help='media type to use for @media, defaults to print')
-
-group = PARSER.add_argument_group('URL fetcher options')
 group.add_argument(
     '-u', '--base-url',
     help='base for relative URLs in the HTML input, defaults to the '
     'input’s own filename or URL or the current directory for stdin')
+
+group = PARSER.add_argument_group('URL fetcher options')
 group.add_argument(
     '-t', '--timeout', type=int, help='set timeout in seconds for HTTP requests')
 group.add_argument(
