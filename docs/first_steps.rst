@@ -507,7 +507,7 @@ fetcher:
             if url.startswith('graph:'):
                 graph_data = [float(value) for value in url[6:].split(',')]
                 string = generate_graph(graph_data)
-                return URLFetcherResponse(url, string=string, mime_type='image/png')
+                return URLFetcherResponse(url, string, {'Content-Type': 'image/png'})
             return super().fetch(url, headers)
 
     source = '<img src="graph:42,10.3,87">'

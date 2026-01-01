@@ -215,6 +215,14 @@ class FatalURLFetchingError(BaseException):
 class URLFetcher(request.OpenerDirector):
     """Fetcher of external resources such as images or stylesheets.
 
+    :param int timeout: The number of seconds before HTTP requests are dropped.
+    :param ssl.SSLContext ssl_context: An SSL context used for HTTPS requests.
+    :param dict http_headers: Additional HTTP headers used for HTTP requests.
+    :type allowed_protocols: :term:`sequence`
+    :param allowed_protocols: A set of authorized protocols, :obj:`None` means all.
+    :param bool allow_redirects: Whether HTTP redirects must be followed.
+    :param bool fail_on_errors: Whether HTTP errors should stop the rendering.
+
     Another class inheriting from this class, with a ``fetch`` method that has a
     compatible signature, can be given as the ``url_fetcher`` argument to
     :class:`weasyprint.HTML` or :class:`weasyprint.CSS`.
@@ -237,10 +245,6 @@ class URLFetcher(request.OpenerDirector):
         for handler in handlers:
             self.add_handler(handler)
 
-        # The default number of seconds before HTTP requests are dropped.
-        # An SSL context used for HTTPS requests.
-        # Additional HTTP headers used for HTTP requests.
-        # A set of authorized protocols.
         self._timeout = timeout
         self._http_headers = {**HTTP_HEADERS, **(http_headers or {})}
         self._allowed_protocols = allowed_protocols
@@ -249,10 +253,10 @@ class URLFetcher(request.OpenerDirector):
     def fetch(self, url, headers=None):
         """Fetch a given URL.
 
+        :returns: A :obj:`URLFetcherResponse` instance.
         :raises: An exception indicating failure, e.g. :obj:`ValueError` on
             syntactically invalid URL. All exceptions are catched internally by
             WeasyPrint, except when they inherit from :obj:`FatalURLFetchingError`.
-        :returns: A :obj:`URLFetcherResponse` instance.
 
         """
         # Discard URLs with no or invalid protocol.
@@ -304,22 +308,26 @@ class URLFetcher(request.OpenerDirector):
 
 
 class URLFetcherResponse:
-    """The HTTP response of a URL fetcher invocation.
+    """The HTTP response of an URL fetcher.
+
+    :param str url: The URL of the HTTP response.
+    :type body: :class:`str`, :class:`bytes` or :term:`file object`
+    :param body: The body of the HTTP response.
+    :type headers: dict or email.message.EmailMessage
+    :param headers: The headers of the HTTP response.
+    :param str status: The status of the HTTP response.
 
     Has the same interface as :class:`urllib.response.addinfourl`.
 
+    If a :term:`file object` is given for the body, it is the caller’s responsibility to
+    call ``close()`` on it. The default function used internally to fetch data in
+    WeasyPrint tries to close the file object after retreiving; but if this URL fetcher
+    is used elsewhere, the file object has to be closed manually.
+
     """
-    def __init__(self, url, body=None, headers=None, status=None, **kwargs):
-        """Construct a new response from a bytestring, string or file-like object.
-
-        If a ``file_obj`` is given, it is the caller’s responsibility to call
-        ``file_obj.close()``. The default function used internally to fetch data in
-        WeasyPrint tries to close the file object after retreiving; but if this URL
-        fetcher is used elsewhere, the file object has to be closed manually.
-
-        """
+    def __init__(self, url, body=None, headers=None, status='200 OK', **kwargs):
         self.url = url
-        self.status = status or '200 OK'
+        self.status = status
 
         if isinstance(headers, EmailMessage):
             self.headers = headers
