@@ -187,8 +187,8 @@ the latest release.
 If you want to use WeasyPrint as a Python library, you’ll have to follow a few
 extra steps. Please read this chapter carefully.
 
-The first step is to install the latest version of Python from the `Microsoft
-Store`_.
+The first step is to install the `Python Install Manager`_ from the Microsoft
+Store.
 
 When Python is installed, you have to install Pango and its dependencies. The
 easiest way to install these libraries is to use MSYS2. Here are the steps you
@@ -210,7 +210,7 @@ typing ``cmd`` and clicking the "Command Prompt" icon. Install WeasyPrint in a
 .. _executable: https://github.com/Kozea/WeasyPrint/releases
 .. _#2081: https://github.com/Kozea/WeasyPrint/issues/2081
 .. _#2092: https://github.com/Kozea/WeasyPrint/issues/2092
-.. _Microsoft Store: https://apps.microsoft.com/store/search/python
+.. _Python Install Manager: https://apps.microsoft.com/detail/9nq7512cxl7t
 .. _MSYS2: https://www.msys2.org/#installation
 
 
