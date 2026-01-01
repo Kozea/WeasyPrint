@@ -133,6 +133,26 @@ def test_target_text():
 
 
 @assert_no_logs
+def test_target_text_whitespace_around_target():
+    # Regression test for #1875.
+    page, = render_pages('''
+      <style>
+        a::before { content: target-text(attr(href)) }
+      </style>
+      <p>before <a href="#ref"></a> after</p>
+      <h2 id="ref">text</h2>
+    ''')
+    html, = page.children
+    body, = html.children
+    p, h2 = body.children
+    line, = p.children
+    before, a, after = line.children
+    assert before.text == 'before '
+    assert after.text == ' after'
+    assert a.children[0].children[0].text == 'text'
+
+
+@assert_no_logs
 def test_target_float():
     page, = render_pages('''
       <style>

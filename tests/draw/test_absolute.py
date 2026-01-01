@@ -867,7 +867,7 @@ def test_absolute_in_absolute_break(assert_pixels):
           }
         </style>
         <div style="background: blue">
-          <br><br><br><br>
+          <br><br><br><br><br>
           <div style="background: red">
             <br><br>
           </div>
