@@ -152,9 +152,10 @@ def element_to_box(element, style_for, get_image_from_uri, base_url,
             [0],  # quote_depth: single integer
             # TODO: define the footnote counter where it can be updated by page
             {'footnote': [0]},  # counter_values: name -> stacked/scoped values
-            [{'footnote'}]  # counter_scopes: element depths -> counter names
+            [{'footnote'}],  # counter_scopes: element depths -> counter names
+            [] # page_groups
         )
-    quote_depth, counter_values, counter_scopes = state
+    quote_depth, counter_values, counter_scopes, _page_groups = state
 
     update_counters(state, style)
 
@@ -278,7 +279,7 @@ def before_after_to_box(element, pseudo_type, state, style_for,
         return []
     box = make_box(f'{element.tag}::{pseudo_type}', style, [], element)
 
-    quote_depth, counter_values, _counter_scopes = state
+    quote_depth, counter_values, _counter_scopes, _page_groups = state
     update_counters(state, style)
 
     children = []
@@ -297,7 +298,7 @@ def before_after_to_box(element, pseudo_type, state, style_for,
 
     # calculate the bookmark-label
     if style['bookmark_level'] != 'none':
-        _quote_depth, counter_values, _counter_scopes = state
+        _quote_depth, counter_values, _counter_scopes, _page_groups = state
         compute_bookmark_label(
             element, box, style['bookmark_label'], counter_values,
             target_collector, counter_style)
@@ -318,7 +319,7 @@ def marker_to_box(element, state, parent_style, style_for, get_image_from_uri,
     # TODO: should be the computed value. When does the used value for
     # `display` differ from the computer value? It's at least wrong for
     # `content` where 'normal' computes as 'inhibit' for pseudo elements.
-    quote_depth, counter_values, _counter_scopes = state
+    quote_depth, counter_values, _counter_scopes, _page_groups = state
 
     box = make_box(f'{element.tag}::marker', style, children, element)
 
@@ -671,7 +672,7 @@ def set_content_lists(element, box, style, counter_values, target_collector,
 
 def update_counters(state, style):
     """Handle the ``counter-*`` properties."""
-    _quote_depth, counter_values, counter_scopes = state
+    _quote_depth, counter_values, counter_scopes, _page_groups = state
     sibling_scopes = counter_scopes[-1]
 
     for name, value in style['counter_reset']:
