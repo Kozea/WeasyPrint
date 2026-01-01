@@ -1046,7 +1046,10 @@ def test_page_groups_counters():
         div.main-content { page: main-content-page-group; break-before: page; }
         @page { size: 1000px }
         @page :nth(1 of main-content-page-group) { counter-reset: page 1; size: 500px; }
-        a::after { content: target-counter(attr(href), h1-counter) '.' target-counter(attr(href), page); }
+        a::after {
+          content: target-counter(attr(href), h1-counter) '.'
+          target-counter(attr(href), page);
+        }
       </style>
       <html>
       <body>
