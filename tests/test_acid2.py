@@ -23,12 +23,12 @@ def test_acid2(assert_pixels_equal):
         intro_page, test_page = document.pages
         # Ignore the intro page: it is not in the reference
         test_png = document.copy([test_page]).write_png()
-        test_pixels = Image.open(io.BytesIO(test_png)).getdata()
+        test_pixels = Image.open(io.BytesIO(test_png)).get_flattened_data()
 
     # This is a copy of https://www.webstandards.org/files/acid2/reference.html
     ref_png = render('acid2-reference.html').write_png()
     ref_image = Image.open(io.BytesIO(ref_png))
-    ref_pixels = ref_image.getdata()
+    ref_pixels = ref_image.get_flattened_data()
     width, height = ref_image.size
 
     assert_pixels_equal(width, height, test_pixels, ref_pixels, tolerance=2)

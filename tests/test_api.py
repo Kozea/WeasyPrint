@@ -244,7 +244,7 @@ def check_png_pattern(assert_pixels_equal, png_bytes, x2=False, blank=False,
         '''
     image = Image.open(io.BytesIO(png_bytes))
     width, height, pixels = parse_pixels(expected_pixels)
-    assert_pixels_equal(width, height, image.getdata(), pixels)
+    assert_pixels_equal(width, height, image.get_flattened_data(), pixels)
 
 
 @assert_no_logs

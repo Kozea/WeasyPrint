@@ -52,7 +52,7 @@ Donation = 'https://opencollective.com/courtbouillon'
 
 [project.optional-dependencies]
 doc = ['sphinx', 'furo']
-test = ['pytest', 'ruff']
+test = ['pytest', 'ruff', 'Pillow >=12.1.0']
 
 [project.scripts]
 weasyprint = 'weasyprint.__main__:main'
