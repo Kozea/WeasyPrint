@@ -327,11 +327,12 @@ class Node:
 class SVG:
     """An SVG document."""
 
-    def __init__(self, tree, url, font_config):
+    def __init__(self, tree, url, font_config, url_fetcher=None):
         wrapper = ElementWrapper.from_xml_root(tree)
-        style = parse_stylesheets(wrapper, url)
+        style = parse_stylesheets(wrapper, url, font_config, url_fetcher)
         self.tree = Node(wrapper, style)
         self.font_config = font_config
+        self.url_fetcher = url_fetcher
         self.url = url
         self.filters = {}
         self.gradients = {}
@@ -382,15 +383,13 @@ class SVG:
         """Compute size of an arbirtary attribute."""
         return size(length, font_size, self.inner_diagonal)
 
-    def draw(self, stream, concrete_width, concrete_height, base_url,
-             url_fetcher, context):
+    def draw(self, stream, concrete_width, concrete_height, base_url, context):
         """Draw image on a stream."""
         self.stream = stream
 
         self.tree.set_svg_size(self, concrete_width, concrete_height)
 
         self.base_url = base_url
-        self.url_fetcher = url_fetcher
         self.context = context
 
         self.draw_node(self.tree, size('12pt'))
@@ -840,7 +839,7 @@ class SVG:
 class Pattern(SVG):
     """SVG node applied as a pattern."""
     def __init__(self, tree, svg):
-        super().__init__(tree._etree_node, svg.url, svg.font_config)
+        super().__init__(tree._etree_node, svg.url, svg.font_config, svg.url_fetcher)
         self.svg = svg
         self.tree = tree
 
