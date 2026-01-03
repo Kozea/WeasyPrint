@@ -1118,15 +1118,23 @@ def process_whitespace(box, following_collapsible_space=False):
 
 
 def process_text_transform(box):
+    # Rules defined in
+    # https://www.unicode.org/versions/latest/core-spec/chapter-3/#G33992
+    # https://www.unicode.org/Public/UCD/latest/ucd/SpecialCasing.txt
+    # https://w3c.github.io/i18n-tests/results/text-transform
+    # Common transformations should be handled by common algorithm in Python, special
+    # casing and tailoring shoud be done here when it depends on the language and not on
+    # only on the glyphs.
     if isinstance(box, boxes.TextBox):
         text_transform = box.style['text_transform']
+        lang_code = (box.style['lang'] or '').split('-')[0].lower()
         if text_transform != 'none':
             box.text = {
-                'uppercase': lambda text: text.upper(),
-                'lowercase': lambda text: text.lower(),
+                'uppercase': uppercase,
+                'lowercase': lowercase,
                 'capitalize': capitalize,
-                'full-width': lambda text: text.translate(ASCII_TO_WIDE),
-            }[text_transform](box.text)
+                'full-width': lambda text, lang_code: text.translate(ASCII_TO_WIDE),
+            }[text_transform](box.text, lang_code)
         if box.style['hyphens'] == 'none':
             box.text = box.text.replace('\u00AD', '')  # U+00AD is soft hyphen
 
@@ -1134,16 +1142,85 @@ def process_text_transform(box):
         for child in box.children:
             process_text_transform(child)
 
+def uppercase(text, lang_code):
+    mapper = {}
 
-def capitalize(text):
+    if lang_code == 'el':
+        # https://w3c.github.io/i18n-tests/css-text/text-transform/
+        #   text-transform-tailoring-003.html
+        # https://en.wikiversity.org/wiki/Greek_Language/Diphthongs
+        mapper = {
+            'άι': 'ΑΪ',
+            'άυ': 'ΑΫ',
+            'όι': 'ΟΪ',
+            'όυ': 'ΟΫ',
+            'έυ': 'ΗΫ',
+        }
+    elif lang_code in ('tr', 'az'):
+        # https://github.com/unicode-org/cldr/blob/main/common/transforms/tr-Upper.xml
+        mapper = {
+            'i': 'İ',
+        }
+
+    for key, value in mapper.items():
+        text = text.replace(key, value)
+
+    if lang_code == 'el':
+        # Remove diacritics in Greek.
+        # https://github.com/unicode-org/cldr/blob/main/common/transforms/el-Upper.xml
+        # TODO: we should keep tonos on disjunctive eta.
+        # https://w3c.github.io/i18n-tests/css-text/text-transform/
+        #   text-transform-tailoring-005.html
+        text = unicodedata.normalize('NFD', text)
+        for char in '\u0313\u0314\u0301\u0300\u0306\u0342\u0304\u0345':
+            text = text.replace(char, '')
+        text = unicodedata.normalize('NFC', text)
+
+    return text.upper()
+
+
+def lowercase(text, lang_code):
+    mapper = {}
+
+    if lang_code in ('tr', 'az'):
+        # https://github.com/unicode-org/cldr/blob/main/common/transforms/tr-Lower.xml
+        mapper = {
+            'I': 'ı',
+            'İ': 'i',
+        }
+    elif lang_code == 'lt':
+        # https://github.com/unicode-org/cldr/blob/main/common/transforms/lt-Lower.xml
+        mapper = {
+            'Ì': 'i̇̀',
+            'Í': 'i̇́',
+            'Ĩ': 'i̇̃',
+        }
+
+    for key, value in mapper.items():
+        text = text.replace(key, value)
+
+    return text.lower()
+
+
+def capitalize(text, lang_code):
     """Capitalize words according to CSS’s "text-transform: capitalize"."""
     letter_found = False
+    skip_next_letter = False
     output = ''
-    for letter in text:
+    for i, letter in enumerate(text):
+        if skip_next_letter:
+            skip_next_letter = False
+            continue
         category = unicodedata.category(letter)[0]
         if not letter_found and category in ('L', 'N'):
             letter_found = True
-            letter = letter.upper()
+            if lang_code == 'nl' and text[i:i+2] == 'ij':
+                skip_next_letter = True
+                letter = 'IJ'
+            elif lang_code in ('tr', 'az'):
+                letter = uppercase(letter, lang_code)
+            else:
+                letter = letter.upper()
         elif category == 'Z':
             letter_found = False
         output += letter
