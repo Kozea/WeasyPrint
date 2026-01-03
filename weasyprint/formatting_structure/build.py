@@ -1137,11 +1137,11 @@ def process_text_transform(box):
         lang_code = (box.style['lang'] or '').split('-')[0].lower()
         if text_transform != 'none':
             box.text = {
-                'uppercase': lambda text: uppercase(text, lang_code),
-                'lowercase': lambda text: lowercase(text, lang_code),
+                'uppercase': uppercase,
+                'lowercase': lowercase,
                 'capitalize': capitalize,
-                'full-width': lambda text: text.translate(ASCII_TO_WIDE),
-            }[text_transform](box.text)
+                'full-width': lambda text, lang_code: text.translate(ASCII_TO_WIDE),
+            }[text_transform](box.text, lang_code)
         if box.style['hyphens'] == 'none':
             box.text = box.text.replace('\u00AD', '')  # U+00AD is soft hyphen
 
@@ -1210,15 +1210,25 @@ def lowercase(text, lang_code):
     return text.lower()
 
 
-def capitalize(text):
+def capitalize(text, lang_code):
     """Capitalize words according to CSS’s "text-transform: capitalize"."""
     letter_found = False
+    skip_next_letter = False
     output = ''
-    for letter in text:
+    for i, letter in enumerate(text):
+        if skip_next_letter:
+            skip_next_letter = False
+            continue
         category = unicodedata.category(letter)[0]
         if not letter_found and category in ('L', 'N'):
             letter_found = True
-            letter = letter.upper()
+            if lang_code == 'nl' and text[i:i+2] == 'ij':
+                skip_next_letter = True
+                letter = 'IJ'
+            elif lang_code in ('tr', 'az'):
+                letter = uppercase(letter, lang_code)
+            else:
+                letter = letter.upper()
         elif category == 'Z':
             letter_found = False
         output += letter

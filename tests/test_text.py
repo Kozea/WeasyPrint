@@ -1319,24 +1319,27 @@ def test_text_transform_lang_lowercase(lang, uppercase, lowercase):
 
 @assert_no_logs
 @pytest.mark.parametrize(
-    ('original', 'transformed'), [
-        ('abc def ghi', 'Abc Def Ghi'),
-        ('AbC def ghi', 'AbC Def Ghi'),
-        ('I’m SO cool', 'I’m SO Cool'),
-        ('Wow.wow!wow', 'Wow.wow!wow'),
-        ('!now not tomorrow', '!Now Not Tomorrow'),
-        ('SUPER cool', 'SUPER Cool'),
-        ('i 😻 non‑breaking characters', 'I 😻 Non‑breaking Characters'),
-        ('3lite 3lite', '3lite 3lite'),
-        ('one/two/three', 'One/two/three'),
-        ('supernatural,super', 'Supernatural,super'),
-        ('éternel αιώνια', 'Éternel Αιώνια'),
+    ('original', 'transformed', 'lang_code'), [
+        ('abc def ghi', 'Abc Def Ghi', None),
+        ('AbC def ghi', 'AbC Def Ghi', None),
+        ('I’m SO cool', 'I’m SO Cool', None),
+        ('Wow.wow!wow', 'Wow.wow!wow', None),
+        ('!now not tomorrow', '!Now Not Tomorrow', None),
+        ('SUPER cool', 'SUPER Cool', None),
+        ('i 😻 non‑breaking characters', 'I 😻 Non‑breaking Characters', None),
+        ('3lite 3lite', '3lite 3lite', None),
+        ('one/two/three', 'One/two/three', None),
+        ('supernatural,super', 'Supernatural,super', None),
+        ('éternel αιώνια', 'Éternel Αιώνια', None),
+        ('great ijland', 'Great Ijland', 'fr'),
+        ('great ijland', 'Great IJland', 'nl'),
+        ('great ijland', 'Great İjland', 'az'),
     ]
 )
-def test_text_transform_capitalize(original, transformed):
+def test_text_transform_capitalize(original, transformed, lang_code):
     # Results are different for different browsers, we almost get the same
     # results as Firefox, that’s good enough!
-    assert capitalize(original) == transformed
+    assert capitalize(original, lang_code) == transformed
 
 
 @assert_no_logs
