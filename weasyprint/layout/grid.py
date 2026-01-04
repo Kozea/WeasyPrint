@@ -1123,6 +1123,7 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
     # Find resume_at row.
     this_page_children = []
     resume_row = None
+    extra_skip_height = 0
     if skip_stack:
         from .block import block_level_layout
         first_skip_row = min(skip_stack)
@@ -1130,7 +1131,6 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         skip_height = (
             sum(size for size, _ in rows_sizes[:last_skip_row]) +
             (len(rows_sizes[:last_skip_row]) - 1) * row_gap)
-        extra_skip_height = 0
         for child, (x, y, width, height) in children_positions.items():
             if (advancement := box.advancements.get((x, y))) is None:
                 continue

@@ -1770,3 +1770,30 @@ def test_grid_in_grid():
     div3, div4 = subsection2.children
     assert div3.children[0].children[0].text == '6'
     assert div4.children[0].children[0].text == '8'
+
+
+@assert_no_logs
+def test_grid_in_flex_after_full_height():
+    # Regression test for #2629.
+    page1, page2, = render_pages('''
+      <style>
+        @page { size: 10px }
+      </style>
+      <div style="height: 15px"></div>
+      <div style="display: flex; flex-direction: column">
+        <div style="display: grid">
+          <div></div>
+        </div>
+      </div>
+    ''')
+    html, = page1.children
+    body, = html.children
+    div, = body.children
+    assert not div.children
+
+    html, = page2.children
+    body, = html.children
+    flex, = body.children
+    grid, = flex.children
+    grid_item, = grid.children
+    assert not grid_item.children
