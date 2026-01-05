@@ -1271,13 +1271,16 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         if child.margin_left == 'auto':
             child.margin_left = 0
 
-        child_width = width - (
-            child.margin_left + child.border_left_width + child.padding_left +
-            child.margin_right + child.border_right_width + child.padding_right)
-        child_height = height - (
-            child.margin_bottom + child.border_bottom_width + child.padding_bottom)
+        child_border_width = width - (child.margin_left + child.margin_right)
+        child_content_width = child_border_width - (
+                child.border_left_width + child.padding_left +
+                child.border_right_width + child.padding_right)
+        child_border_height = height - child.margin_bottom
+        child_content_height = child_border_height - (
+            child.border_bottom_width + child.padding_bottom)
         if not child_skip_stack or child.style['box_decoration_break'] == 'clone':
-            child_height -= (
+            child_border_height -= child.margin_top
+            child_content_height -= (
                 child.margin_top + child.border_top_width + child.padding_top)
 
         justify_self = set(child.style['justify_self'])
@@ -1286,6 +1289,9 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         if justify_self & {'normal', 'stretch'}:
             if child.style['width'] == 'auto':
                 child.style = child.style.copy()
+                child_width = (
+                    child_content_width if child.style['box_sizing'] == 'content-box'
+                    else child_border_width)
                 child.style['width'] = Dimension(child_width, 'px')
         align_self = set(child.style['align_self'])
         if align_self & {'auto'}:
@@ -1293,6 +1299,9 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         if align_self & {'normal', 'stretch'}:
             if child.style['height'] == 'auto':
                 child.style = child.style.copy()
+                child_height = (
+                    child_content_height if child.style['box_sizing'] == 'content-box'
+                    else child_border_height)
                 child.style['height'] = Dimension(child_height, 'px')
 
         # TODO: Find a better solution for the layout.
@@ -1338,11 +1347,11 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
             continue
 
         if justify_self & {'normal', 'stretch'}:
-            new_child.width = max(child_width, new_child.width)
+            new_child.width = max(child_content_width, new_child.width)
         else:
             if new_child.style['width'] == 'auto':
                 new_child.width = max_content_width(context, new_child, outer=False)
-            diff = child_width - new_child.width
+            diff = child_content_width - new_child.width
             if justify_self & {'center'}:
                 new_child.translate(diff / 2, 0)
             elif justify_self & {'right', 'end', 'flex-end', 'self-end'}:
@@ -1350,9 +1359,9 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
 
         # TODO: Apply auto margins.
         if align_self & {'normal', 'stretch'}:
-            new_child.height = max(child_height, new_child.height)
+            new_child.height = max(child_content_height, new_child.height)
         else:
-            diff = child_height - new_child.height
+            diff = child_content_height - new_child.height
             if align_self & {'center'}:
                 new_child.translate(0, diff / 2)
             elif align_self & {'end', 'flex-end', 'self-end'}:
@@ -1421,7 +1430,8 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
             else:
                 # Child fully drawn, save the extra height added to reach the bottom of
                 # the page to substract it from the advancements.
-                extra_advancement = max(extra_advancement, child.height - child_height)
+                extra_advancement = max(
+                    extra_advancement, child.height - child_content_height)
 
     # Substract the extra height added to reach the bottom of the page from all the
     # advancements.
