@@ -4,9 +4,9 @@ from math import isclose
 
 import pytest
 
-from weasyprint import CSS, default_url_fetcher
+from weasyprint import CSS
 from weasyprint.css import find_stylesheets, get_all_computed_styles
-from weasyprint.urls import path2url
+from weasyprint.urls import URLFetcher, path2url
 
 from ..testing_utils import (  # isort:skip
     BASE_URL, FakeHTML, assert_no_logs, capture_logs, resource_path)
@@ -17,9 +17,8 @@ def test_find_stylesheets():
     html = FakeHTML(resource_path('doc1.html'))
 
     sheets = list(find_stylesheets(
-        html.wrapper_element, 'print', default_url_fetcher, html.base_url,
-        font_config=None, counter_style=None, color_profiles=None, page_rules=None,
-        layers=None))
+        html.wrapper_element, 'print', URLFetcher(), html.base_url, font_config=None,
+        counter_style=None, color_profiles=None, page_rules=None, layers=None))
     assert len(sheets) == 2
     # Also test that stylesheets are in tree order.
     sheet_names = [

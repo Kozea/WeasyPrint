@@ -4,14 +4,13 @@ import argparse
 import logging
 import platform
 import sys
-from functools import partial
 
 import pydyf
 
 from . import DEFAULT_OPTIONS, HTML, LOGGER, __version__
 from .pdf import VARIANTS
 from .text.ffi import pango
-from .urls import default_url_fetcher
+from .urls import URLFetcher
 
 
 class PrintInfo(argparse.Action):
@@ -33,117 +32,134 @@ class PrintInfo(argparse.Action):
 
 class Parser(argparse.ArgumentParser):
     def __init__(self, *args, **kwargs):
-        self._arguments = {}
+        self._groups = {None: {}}
         super().__init__(*args, **kwargs)
 
-    def add_argument(self, *args, **kwargs):
-        super().add_argument(*args, **kwargs)
+    def add_argument(self, *args, _group_name=None, **kwargs):
+        if _group_name is None:
+            super().add_argument(*args, **kwargs)
         key = args[-1].lstrip('-')
         kwargs['flags'] = args
         kwargs['positional'] = args[-1][0] != '-'
-        self._arguments[key] = kwargs
+        self._groups[_group_name][key] = kwargs
+
+    def add_argument_group(self, name, *args, **kwargs):
+        group = super().add_argument_group(name, *args, **kwargs)
+        self._groups[name] = {}
+        def add_argument(*args, **kwargs):
+            group._add_argument(*args, **kwargs)
+            self.add_argument(*args, _group_name=name, **kwargs)
+        group._add_argument = group.add_argument
+        group.add_argument = add_argument
+        return group
 
     @property
     def docstring(self):
-        self._arguments['help'] = self._arguments.pop('help')
+        self._groups[None].pop('help')
         data = []
-        for key, args in self._arguments.items():
-            data.append('.. option:: ')
-            action = args.get('action', 'store')
-            for flag in args['flags']:
-                data.append(flag)
-                if not args['positional'] and action in ('store', 'append'):
-                    data.append(f' <{key}>')
-                data.append(', ')
-            data[-1] = '\n\n'
-            data.append(f'  {args["help"][0].upper()}{args["help"][1:]}.\n\n')
-            if 'choices' in args:
-                choices = ", ".join(args['choices'])
-                data.append(f'  Possible choices: {choices}.\n\n')
-            if action == 'append':
-                data.append('  This option can be passed multiple times.\n\n')
+        for group, arguments in self._groups.items():
+            if not arguments:
+                continue
+            if group:
+                data.append(f'{group[0].title()}{group[1:]}\n')
+                data.append(f'{"~" * len(group)}\n\n')
+            for key, args in arguments.items():
+                data.append('.. option:: ')
+                action = args.get('action', 'store')
+                for flag in args['flags']:
+                    data.append(flag)
+                    if not args['positional'] and action in ('store', 'append'):
+                        data.append(f' <{key}>')
+                    data.append(', ')
+                data[-1] = '\n\n'
+                data.append(f'  {args["help"][0].upper()}{args["help"][1:]}.\n\n')
+                if 'choices' in args:
+                    choices = ", ".join(args['choices'])
+                    data.append(f'  Possible choices: {choices}.\n\n')
+                if action == 'append':
+                    data.append('  This option can be passed multiple times.\n\n')
         return ''.join(data)
 
 
 PARSER = Parser(prog='weasyprint', description='Render web pages to PDF.')
+PARSER.add_argument('input', help='URL or filename of the HTML input, or - for stdin')
+PARSER.add_argument('output', help='filename where output is written, or - for stdout')
 PARSER.add_argument(
-    'input', help='URL or filename of the HTML input, or - for stdin')
+    '-i', '--info', action=PrintInfo, nargs=0, help='print system information and exit')
 PARSER.add_argument(
-    'output', help='filename where output is written, or - for stdout')
-PARSER.add_argument(
-    '-e', '--encoding', help='force the input character encoding')
-PARSER.add_argument(
+    '--version', action='version', version=f'WeasyPrint version {__version__}',
+    help='print WeasyPrint’s version number and exit')
+
+group = PARSER.add_argument_group('rendering options')
+group.add_argument(
     '-s', '--stylesheet', action='append', dest='stylesheets',
     help='URL or filename for a user CSS stylesheet')
-PARSER.add_argument(
-    '-m', '--media-type',
-    help='media type to use for @media, defaults to print')
-PARSER.add_argument(
-    '-u', '--base-url',
-    help='base for relative URLs in the HTML input, defaults to the '
-    'input’s own filename or URL or the current directory for stdin')
-PARSER.add_argument(
+group.add_argument(
     '-a', '--attachment', action='append', dest='attachments',
     help='URL or filename of a file to attach to the PDF document')
-PARSER.add_argument('--pdf-identifier', help='PDF file identifier')
-PARSER.add_argument(
-    '--pdf-variant', choices=VARIANTS, help='PDF variant to generate')
-PARSER.add_argument('--pdf-version', help='PDF version number')
-PARSER.add_argument(
-    '--pdf-forms', action='store_true', help='include PDF forms')
-PARSER.add_argument(
-    '--pdf-tags', action='store_true', help='tag PDF for accessibility')
-PARSER.add_argument(
+group.add_argument('--pdf-identifier', help='PDF file identifier')
+group.add_argument('--pdf-variant', choices=VARIANTS, help='PDF variant to generate')
+group.add_argument('--pdf-version', help='PDF version number')
+group.add_argument('--pdf-forms', action='store_true', help='include PDF forms')
+group.add_argument('--pdf-tags', action='store_true', help='tag PDF for accessibility')
+group.add_argument(
     '--uncompressed-pdf', action='store_true',
     help='do not compress PDF content, mainly for debugging purpose')
-PARSER.add_argument(
+group.add_argument(
     '--custom-metadata', action='store_true',
     help='include custom HTML meta tags in PDF metadata')
-PARSER.add_argument(
+group.add_argument(
     '-p', '--presentational-hints', action='store_true',
     help='follow HTML presentational hints')
-PARSER.add_argument(
-    '--srgb', action='store_true',
-    help='include sRGB color profile')
-PARSER.add_argument(
+group.add_argument('--srgb', action='store_true', help='include sRGB color profile')
+group.add_argument(
     '--optimize-images', action='store_true',
     help='optimize size of embedded images with no quality loss')
-PARSER.add_argument(
+group.add_argument(
     '-j', '--jpeg-quality', type=int,
     help='JPEG quality between 0 (worst) to 95 (best)')
-PARSER.add_argument(
+group.add_argument(
+    '-D', '--dpi', type=int,
+    help='set maximum resolution of images embedded in the PDF')
+group.add_argument(
     '--full-fonts', action='store_true',
     help='embed unmodified font files when possible')
-PARSER.add_argument(
-    '--hinting', action='store_true',
-    help='keep hinting information in embedded fonts')
-PARSER.add_argument(
+group.add_argument(
+    '--hinting', action='store_true', help='keep hinting information in embedded fonts')
+group.add_argument(
     '-c', '--cache-folder', dest='cache',
     help='store cache on disk instead of memory, folder is '
     'created if needed and cleaned after the PDF is generated')
-PARSER.add_argument(
-    '-D', '--dpi', type=int,
-    help='set maximum resolution of images embedded in the PDF')
-PARSER.add_argument(
-    '-v', '--verbose', action='store_true',
-    help='show warnings and information messages')
-PARSER.add_argument(
-    '-d', '--debug', action='store_true', help='show debugging messages')
-PARSER.add_argument(
-    '-q', '--quiet', action='store_true', help='hide logging messages')
-PARSER.add_argument(
-    '--version', action='version',
-    version=f'WeasyPrint version {__version__}',
-    help='print WeasyPrint’s version number and exit')
-PARSER.add_argument(
-    '-i', '--info', action=PrintInfo, nargs=0,
-    help='print system information and exit')
-PARSER.add_argument(
-    '-t', '--timeout', type=int,
-    help='set timeout in seconds for HTTP requests')
-PARSER.add_argument(
+
+group = PARSER.add_argument_group('HTML options')
+group.add_argument('-e', '--encoding', help='force the input character encoding')
+group.add_argument(
+    '-m', '--media-type', help='media type to use for @media, defaults to print')
+group.add_argument(
+    '-u', '--base-url',
+    help='base for relative URLs in the HTML input, defaults to the '
+    'input’s own filename or URL or the current directory for stdin')
+
+group = PARSER.add_argument_group('URL fetcher options')
+group.add_argument(
+    '-t', '--timeout', type=int, help='set timeout in seconds for HTTP requests')
+group.add_argument(
     '--allowed-protocols', dest='allowed_protocols',
     help='only authorize comma-separated list of protocols for fetching URLs')
+group.add_argument(
+    '--no-http-redirects', action='store_true', help='do not follow HTTP redirects')
+group.add_argument(
+    '--fail-on-http-errors', action='store_true',
+    help='abort document rendering on any HTTP error')
+
+group = PARSER.add_argument_group('command-line logging options')
+group.add_argument(
+    '-v', '--verbose', action='store_true',
+    help='show warnings and information messages')
+group.add_argument(
+    '-d', '--debug', action='store_true', help='show debugging messages')
+group.add_argument('-q', '--quiet', action='store_true', help='hide logging messages')
+
 PARSER.set_defaults(**DEFAULT_OPTIONS)
 
 
@@ -171,13 +187,17 @@ def main(argv=None, stdout=None, stdin=None, HTML=HTML):  # noqa: N803
     else:
         output = args.output
 
-    url_fetcher = default_url_fetcher
+    fetcher_args = {}
     if args.timeout is not None:
-        url_fetcher = partial(default_url_fetcher, timeout=args.timeout)
+        fetcher_args['timeout'] = args.timeout
     if args.allowed_protocols is not None:
-        protocols = {
+        fetcher_args['allowed_protocols'] = {
             protocol.strip().lower() for protocol in args.allowed_protocols.split(',')}
-        url_fetcher = partial(url_fetcher, allowed_protocols=protocols)
+    if args.no_http_redirects:
+        fetcher_args['allow_redirects'] = False
+    if args.fail_on_http_errors:
+        fetcher_args['fail_on_errors'] = True
+    url_fetcher = URLFetcher(**fetcher_args)
 
     options = {
         key: value for key, value in vars(args).items() if key in DEFAULT_OPTIONS}

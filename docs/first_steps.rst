@@ -482,43 +482,66 @@ WeasyPrint goes through a *URL fetcher* to fetch external resources such as
 images or CSS stylesheets. The default fetcher can natively open file and
 HTTP URLs, but the HTTP client does not support advanced features like cookies
 or authentication. This can be worked-around by passing a custom
-``url_fetcher`` callable to the :class:`HTML` or :class:`CSS` classes.
-It must have the same signature as :func:`default_url_fetcher`.
+:class:`URLFetcher <urls.URLFetcher>` to the :class:`HTML` or :class:`CSS`
+classes.
 
-Custom fetchers can choose to handle some URLs and defer others
-to the default fetcher:
+Some features, such as the timeout delay, can be configured as parameters:
 
 .. code-block:: python
 
-    from weasyprint import default_url_fetcher, HTML
+    from weasyprint import HTML
+    from weasyprint.urls import URLFetcher
 
-    def my_fetcher(url):
-        if url.startswith('graph:'):
-            graph_data = map(float, url[6:].split(','))
-            string = generate_graph(graph_data)
-            return {'string': string, 'mime_type': 'image/png'}
-        return default_url_fetcher(url)
+    HTML(string='<html>', url_fetcher=URLFetcher(timeout=20)).write_pdf('out.pdf')
+
+Custom fetchers can also choose to handle some URLs and defer others to the default
+fetcher:
+
+.. code-block:: python
+
+    from weasyprint import HTML
+    from weasyprint.urls import URLFetcher, URLFetcherResponse
+
+    class MyFetcher(URLFetcher):
+        def fetch(self, url, headers=None):
+            if url.startswith('graph:'):
+                graph_data = [float(value) for value in url[6:].split(',')]
+                string = generate_graph(graph_data)
+                return URLFetcherResponse(url, string, {'Content-Type': 'image/png'})
+            return super().fetch(url, headers)
 
     source = '<img src="graph:42,10.3,87">'
-    HTML(string=source, url_fetcher=my_fetcher).write_pdf('out.pdf')
+    HTML(string=source, url_fetcher=MyFetcher()).write_pdf('out.pdf')
+
+By default, all errors raised by the fetcher are caught by WeasyPrint and emit a
+warning. If you want some errors to be fatal and stop the rendering, you can raise a
+:class:`urls.FatalURLFetchingError`.
+
+.. code-block:: python
+
+    from weasyprint import HTML
+    from weasyprint.urls import URLFetcher, FatalURLFetchingError
+
+    class MyFetcher(URLFetcher):
+        def fetch(self, url, headers=None):
+            try:
+                return super().fetch(url, headers)
+            except Exception as exception:
+                if url.endswith('.css'):
+                    # Stop the rendering if a problem happens with a stylesheet.
+                    message = f'Problem with stylesheet at {url}'
+                    raise FatalURLFetchingError(message) from exception
+                else:
+                    # Raise original error that will be caught by WeasyPrint.
+                    raise exception
+
+    HTML(string='<html>', url_fetcher=MyFetcher()).write_pdf('out.pdf')
 
 Flask-WeasyPrint_ for Flask_ and Django-Weasyprint_ for Django_ both make
 use of a custom URL fetcher to integrate WeasyPrint and use the filesystem
 instead of a network call for static and media files.
 
-A custom fetcher should be returning a :obj:`dict` with
-
-* One of ``string`` (a :obj:`bytestring <bytes>`) or ``file_obj`` (a
-  :term:`file object`).
-* Optionally: ``mime_type``, a MIME type extracted e.g. from a *Content-Type*
-  header. If not provided, the type is guessed from the file extension in the
-  URL.
-* Optionally: ``encoding``, a character encoding extracted e.g. from a
-  *charset* parameter in a *Content-Type* header
-* Optionally: ``redirected_url``, the actual URL of the resource if there were
-  e.g. HTTP redirects.
-* Optionally: ``filename``, the filename of the resource. Usually derived from
-  the *filename* parameter in a *Content-Disposition* header
+A custom fetcher should be returning a :class:`urls.URLFetcherResponse`.
 
 If a ``file_obj`` is given, the resource will be closed automatically by
 the function internally used by WeasyPrint to retrieve data.
