@@ -992,6 +992,28 @@ def test_grid_border_box():
 
 
 @assert_no_logs
+def test_grid_item_border_box():
+    page, = render_pages('''
+      <style>
+        @page { size: 50px }
+      </style>
+      <article style="display: grid">
+        <section style="box-sizing: border-box; padding: 5px">
+          <div>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    section, = article.children
+    assert section.margin_width() == 50
+    assert section.width == 40
+    assert section.position_x == section.position_y == 0
+    div, = section.children
+    assert div.width == div.margin_width() == 40
+    assert div.position_x == div.position_y == 5
+
+
+@assert_no_logs
 def test_grid_border_split():
     page1, page2 = render_pages('''
       <style>
