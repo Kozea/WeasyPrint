@@ -101,9 +101,32 @@ def _block_content_width(context, box, function, outer):
             function(context, child, outer=True) for child in box.children
             if not child.is_absolutely_positioned()]
         width = max(children_widths) if children_widths else 0
-    else:
-        assert width.unit.lower() == 'px'
+    elif box.style['box_sizing'] == 'content-box':
         width = width.value
+    else:
+        width = width.value
+        percentages = 0
+
+        for value in ('padding_left', 'padding_right'):
+            style_value = box.style[value]
+            if style_value != 'auto':
+                if style_value.unit.lower() == 'px':
+                    width -= style_value.value
+                else:
+                    assert style_value.unit == '%'
+                    percentages += style_value.value
+
+        # Same as margin_width().
+        collapse = box.style['border_collapse'] == 'collapse'
+        if collapse and hasattr(box, 'border_left_width'):
+            width -= box.border_left_width
+        else:
+            width -= box.style['border_left_width']
+        if collapse and hasattr(box, 'border_right_width'):
+            width -= box.border_right_width
+        else:
+            width -= box.style['border_right_width']
+        width = (100 - min(100, percentages)) * max(0, width) / 100
 
     return adjust(box, outer, width)
 

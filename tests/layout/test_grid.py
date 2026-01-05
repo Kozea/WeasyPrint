@@ -948,6 +948,50 @@ def test_grid_border():
 
 
 @assert_no_logs
+def test_grid_border_box():
+    page, = render_pages('''
+      <style>
+        article {
+          display: grid;
+          font-family: weasyprint;
+          font-size: 2px;
+          grid-template-rows: auto 1fr;
+          grid-template-columns: auto 1fr;
+          line-height: 1;
+          width: 14px;
+        }
+        div { box-sizing: border-box }
+      </style>
+      <article>
+        <div style="border: 1px solid; width: 7px">a</div> <div>b</div>
+        <div>c</div> <div style="padding: 2px; height: 7px">d</div>
+      </article>
+    ''')
+    html, = page.children
+    body, = html.children
+    article, = body.children
+    div_a, div_b, div_c, div_d = article.children
+    assert div_a.position_x == div_c.position_x == div_c.padding_box_x() == 0
+    assert div_a.padding_box_x() == 1
+    assert div_b.position_x == div_b.padding_box_x() == div_d.position_x == 7
+    assert div_d.content_box_x() == 9
+    assert div_a.width == 5
+    assert div_b.width == 7
+    assert div_c.width == 7
+    assert div_d.width == 3
+    assert article.width == 14
+    assert div_a.position_y == div_b.position_y == div_b.padding_box_y() == 0
+    assert div_a.padding_box_y() == 1
+    assert div_c.position_y == div_c.padding_box_y() == div_d.position_y == 4
+    assert div_d.content_box_y() == 6
+    assert div_a.height == 2
+    assert div_b.height == 4
+    assert div_c.height == 7
+    assert div_d.height == 3
+    assert article.height == 11
+
+
+@assert_no_logs
 def test_grid_border_split():
     page1, page2 = render_pages('''
       <style>
