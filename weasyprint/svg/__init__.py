@@ -155,6 +155,14 @@ class Node:
                 for name, value in declarations:
                     child.attrib[name] = value.strip()
 
+        # Expand
+        # TODO: simplified expanders, use CSS expander code instead.
+        if font := child.attrib.pop('font', None):
+            parts = font.strip().split(maxsplit=1)
+            if len(parts) == 2:
+                child.attrib['font-size'] = parts[0]
+                child.attrib['font-family'] = parts[1]
+
         # Replace 'currentColor' value
         for key in COLOR_ATTRIBUTES:
             if child.get(key) == 'currentColor':
