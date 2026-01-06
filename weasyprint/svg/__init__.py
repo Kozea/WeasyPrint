@@ -131,33 +131,6 @@ class Node:
     def visible(self):
         """Whether node is visible."""
         return self.display and self.get('visibility') != 'hidden'
-    
-    def _parse_simple_font_shorthand(self, font_value):
-        """
-        Parse minimal font shorthand for SVG.
-
-        Only supports: <font-size> <font-family>
-
-        Note: This is a simplified parser for SVG only.
-        Complex font shorthand (with style/weight/line-height) is not
-        supported and will be ignored.
-        """
-        parts = font_value.strip().split(None, 1)
-
-        if len(parts) == 2:
-            font_size, font_family = parts
-            if any(
-                font_size.endswith(unit)
-                for unit in ["px", "em", "rem", "pt", "%", "mm", "cm"]
-            ):
-                return {
-                    "font-size": font_size,
-                    "font-family": font_family,
-                }
-            else:
-                return {}
-        else:
-            return {}
 
     def cascade(self, child):
         """Apply CSS cascade and other related operations to given child."""
@@ -180,12 +153,15 @@ class Node:
         for declarations_list in (normal, [normal_attr], important, [important_attr]):
             for declarations in declarations_list:
                 for name, value in declarations:
-                    if name == "font":
-                        parsed = self._parse_simple_font_shorthand(value)
-                        for prop, val in parsed.items():
-                            child.attrib[prop] = val
-                        continue
                     child.attrib[name] = value.strip()
+
+        # Expand
+        # TODO: simplified expanders, use CSS expander code instead.
+        if font := child.attrib.pop('font', None):
+            parts = font.strip().split(maxsplit=1)
+            if len(parts) == 2:
+                child.attrib['font-size'] = parts[0]
+                child.attrib['font-family'] = parts[1]
 
         # Replace 'currentColor' value
         for key in COLOR_ATTRIBUTES:
