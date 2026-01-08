@@ -1,5 +1,5 @@
 name: WeasyPrint's PDF/A tests
-on: [push]
+on: [push, pull_request]
 
 env:
   PDF_FOLDER: 'pdfs'
@@ -11,11 +11,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Upgrade pip and setuptools
-        run: python -m pip install --upgrade pip setuptools
       - name: Install requirements
         run: python -m pip install .
       - name: Create output folders
@@ -30,25 +25,18 @@ jobs:
           python -m weasyprint --pdf-variant pdf/a-2u weasyprint-samples/book/book.html -s weasyprint-samples/book/book.css -s <(echo '* { image-rendering: crisp-edges }') ${{env.PDF_FOLDER}}/book-fancy.pdf
           python -m weasyprint --pdf-variant pdf/a-2b weasyprint-samples/letter/letter.html -s <(echo '* { image-rendering: crisp-edges }') ${{env.PDF_FOLDER}}/letter.pdf
           python -m weasyprint --pdf-variant pdf/a-3a -s <(echo '* { image-rendering: crisp-edges }') weasyprint-samples/report/report.html ${{env.PDF_FOLDER}}/report.pdf
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USER }}
-          password: ${{ secrets.DOCKER_TOKEN }}
+      - name: Install VeraPDF
+        run: |
+          wget https://software.verapdf.org/releases/verapdf-installer.zip
+          unzip verapdf-installer.zip
+          java -DINSTALL_PATH=/tmp -jar verapdf-greenfield-*/verapdf-izpack-installer-*.jar -options-system
       - name: Generate VeraPDF reports
-        uses: addnab/docker-run-action@v3
-        with:
-          image: verapdf/cli:latest
-          # We need to define the uid and gid explicitly, else we can’t write from inside the docker.
-          # It’d be better to get them automatically rather than using hardcoded ids.
-          # See https://github.com/orgs/community/discussions/44243
-          options: -u 1001:118 -v ${{ github.workspace }}:/workspace
-          run: |
-            /opt/verapdf/verapdf -f 1a --format html /workspace/${{env.PDF_FOLDER}}/book-classical.pdf > /workspace/${{env.VERA_FOLDER}}/book-classical-verapdf.html
-            /opt/verapdf/verapdf -f 2u --format html /workspace/${{env.PDF_FOLDER}}/book-fancy.pdf > /workspace/${{env.VERA_FOLDER}}/book-fancy-verapdf.html
-            /opt/verapdf/verapdf -f 2b --format html /workspace/${{env.PDF_FOLDER}}/letter.pdf > /workspace/${{env.VERA_FOLDER}}/letter-verapdf.html
-            /opt/verapdf/verapdf -f 3a --format html /workspace/${{env.PDF_FOLDER}}/report.pdf > /workspace/${{env.VERA_FOLDER}}/report-verapdf.html
-            /opt/verapdf/verapdf --format html /workspace/${{env.PDF_FOLDER}}/ > /workspace/${{env.VERA_FOLDER}}/summary.html
+        run: |
+          /tmp/verapdf -f 1a --format html ${{env.PDF_FOLDER}}/book-classical.pdf > ${{env.VERA_FOLDER}}/book-classical-verapdf.html
+          /tmp/verapdf -f 2u --format html ${{env.PDF_FOLDER}}/book-fancy.pdf > ${{env.VERA_FOLDER}}/book-fancy-verapdf.html
+          /tmp/verapdf -f 2b --format html ${{env.PDF_FOLDER}}/letter.pdf > ${{env.VERA_FOLDER}}/letter-verapdf.html
+          /tmp/verapdf -f 3a --format html ${{env.PDF_FOLDER}}/report.pdf > ${{env.VERA_FOLDER}}/report-verapdf.html
+          /tmp/verapdf --format html ${{env.PDF_FOLDER}}/ > ${{env.VERA_FOLDER}}/summary.html
       - name: Archive generated PDFs
         if: ${{ always() }}
         uses: actions/upload-artifact@v4
