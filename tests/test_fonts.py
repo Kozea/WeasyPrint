@@ -54,7 +54,7 @@ def test_kerning_deactivate():
         @font-face {
           src: url(weasyprint.otf);
           font-family: no-kern;
-          font-feature-settings: 'kern' off;
+          font-feature-settings: 'kern' 0;
         }
         @font-face {
           src: url(weasyprint.otf);

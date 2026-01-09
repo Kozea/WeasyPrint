@@ -849,7 +849,7 @@ def font_feature_settings(tokens):
             tokens, token = tokens[:-1], tokens[-1]
             if token.type == 'ident':
                 value = {'on': 1, 'off': 0}.get(token.value)
-            elif number := get_number(token, negative=False):
+            elif number := get_number(token, negative=False, integer=True):
                 value = number.value
         elif len(tokens) == 1:
             value = 1
