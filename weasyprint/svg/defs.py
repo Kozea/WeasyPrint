@@ -102,10 +102,12 @@ def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
         return False
     if gradient.get('gradientUnits') == 'userSpaceOnUse':
         width, height = svg.inner_width, svg.inner_height
+        bx1, by1 = bounding_box[:2]
         matrix = Matrix()
     else:
         width, height = 1, 1
         e, f, a, d = bounding_box
+        bx1, by1 = 0, 0
         matrix = Matrix(a=a, d=d, e=e, f=f)
 
     spread = gradient.get('spreadMethod', 'pad')
@@ -180,10 +182,10 @@ def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
         if 0 not in (a0, a1) and (a0, a1) != (1, 1):
             color_couples[i][2] = a0 / a1
 
-    bx1, by1 = 0, 0
     if 'gradientTransform' in gradient.attrib:
+        bx2, by2 = bx1 + width, by1 + height
         bx1, by1 = transform_matrix.invert.transform_point(bx1, by1)
-        bx2, by2 = transform_matrix.invert.transform_point(width, height)
+        bx2, by2 = transform_matrix.invert.transform_point(bx2, by2)
         width, height = bx2 - bx1, by2 - by1
 
         # Ensure that width and height are positive to please some PDF readers
