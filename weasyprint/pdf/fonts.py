@@ -317,7 +317,7 @@ def build_fonts_dictionary(pdf, fonts, compress, subset, options):
 
         # Include font.
         if font.type == 'otf':
-            font_extra = pydyf.Dictionary({'Subtype': '/CIDFontType0C'})
+            font_extra = pydyf.Dictionary({'Subtype': '/OpenType'})
         else:
             font_extra = pydyf.Dictionary({'Length1': len(font.file_content)})
         font_stream = pydyf.Stream([font.file_content], font_extra, compress=compress)
