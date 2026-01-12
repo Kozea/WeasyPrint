@@ -56,7 +56,6 @@ Python API
     :members:
 .. autoclass:: CSS(input, **kwargs)
 .. autoclass:: Attachment(input, **kwargs)
-.. autofunction:: default_url_fetcher
 .. autodata:: DEFAULT_OPTIONS
 
 .. module:: weasyprint.document
@@ -67,6 +66,13 @@ Python API
 .. autoclass:: Page()
     :members:
     :exclude-members: paint
+
+.. module:: weasyprint.urls
+.. autoclass:: URLFetcher
+    :members:
+    :member-order: bysource
+.. autoclass:: URLFetcherResponse
+.. autoclass:: FatalURLFetchingError
 
 .. module:: weasyprint.text.fonts
 .. autoclass:: FontConfiguration()

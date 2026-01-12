@@ -72,9 +72,11 @@ man_pages = [
      ['Simon Sapin and contributors'], 1)
 ]
 
+# Don’t autolabel man page titles.
+autosectionlabel_maxdepth = 4
+
 # Grouping the document tree into Texinfo files. List of tuples
-# (source start file, target name, title, author,
-#  dir menu entry, description, category)
+# (source start file, target name, title, author, dir menu entry, description, category)
 texinfo_documents = [(
     'index', 'WeasyPrint', 'WeasyPrint Documentation',
     'Simon Sapin and contributors', 'WeasyPrint',

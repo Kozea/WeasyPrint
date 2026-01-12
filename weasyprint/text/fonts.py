@@ -167,9 +167,8 @@ class FontConfiguration:
 
             # Get font content.
             try:
-                with fetch(url_fetcher, url) as result:
-                    string = 'string' in result
-                    font = result['string'] if string else result['file_obj'].read()
+                with fetch(url_fetcher, url) as response:
+                    font = response.read()
             except Exception as exception:
                 LOGGER.debug('Failed to load font at %r (%s)', url, exception)
                 continue
