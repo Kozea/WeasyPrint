@@ -9,6 +9,7 @@ from .. import VERSION, Attachment
 from ..html import W3C_DATE_RE
 from ..logger import LOGGER, PROGRESS_LOGGER
 from ..matrix import Matrix
+from ..urls import select_source
 from . import debug, pdfa, pdfua, pdfx
 from .fonts import build_fonts_dictionary
 from .stream import Stream
@@ -273,6 +274,14 @@ def generate_pdf(document, target, zoom, **options):
             key = key.encode('ascii', errors='ignore').decode()
             if key:
                 pdf.info[key] = pydyf.String(value)
+    if options['xmp_metadata']:
+        for url in options['xmp_metadata']:
+            result = select_source(url)
+            with result as (file_obj, base_url, charset, _):
+                xmp_metadata = file_obj.read()
+                if charset:
+                    xmp_metadata = xmp_metadata.decode(charset).encode()
+                metadata.xmp_metadata.append(xmp_metadata)
 
     # Embedded files
     attachments = metadata.attachments.copy()

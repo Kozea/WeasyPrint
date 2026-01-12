@@ -5,9 +5,7 @@ importing sub-modules.
 
 """
 
-import contextlib
 from datetime import datetime
-from io import BytesIO, StringIO
 from os.path import getctime, getmtime
 from pathlib import Path
 from urllib.parse import urljoin
@@ -76,6 +74,7 @@ DEFAULT_OPTIONS = {
     'pdf_forms': None,
     'pdf_tags': False,
     'uncompressed_pdf': False,
+    'xmp_metadata': None,
     'custom_metadata': False,
     'presentational_hints': False,
     'srgb': False,
@@ -93,8 +92,7 @@ __all__ = [
 
 
 # Import after setting the version, as the version is used in other modules
-from .urls import (  # noqa: I001, E402
-    URLFetcher, fetch, default_url_fetcher, path2url, ensure_url, url_is_absolute)
+from .urls import URLFetcher, default_url_fetcher, select_source  # noqa: I001, E402
 from .logger import LOGGER, PROGRESS_LOGGER  # noqa: E402
 # Some imports are at the end of the file (after the CSS class)
 # to work around circular imports.
@@ -169,7 +167,7 @@ class HTML:
             base_url = str(base_url)
         if url_fetcher is None:
             url_fetcher = URLFetcher()
-        result = _select_source(
+        result = select_source(
             guess, filename, url, file_obj, string, base_url, url_fetcher)
         with result as (file_obj, base_url, protocol_encoding, _):
             kwargs = {'namespace_html_elements': False}
@@ -294,7 +292,7 @@ class CSS:
             filename or url or getattr(file_obj, 'name', 'CSS string'))
         if url_fetcher is None:
             url_fetcher = URLFetcher()
-        result = _select_source(
+        result = select_source(
             guess, filename, url, file_obj, string, base_url=base_url,
             url_fetcher=url_fetcher, check_css_mime_type=_check_mime_type)
         with result as (file_obj, base_url, protocol_encoding, mime_type):
@@ -348,7 +346,7 @@ class Attachment:
                  relationship='Unspecified'):
         if url_fetcher is None:
             url_fetcher = URLFetcher()
-        self.source = _select_source(
+        self.source = select_source(
             guess, filename, url, file_obj, string, base_url=base_url,
             url_fetcher=url_fetcher)
         self.name = name
@@ -368,73 +366,6 @@ class Attachment:
                 modified = datetime.now()
         self.created = created
         self.modified = modified
-
-
-@contextlib.contextmanager
-def _select_source(guess=None, filename=None, url=None, file_obj=None, string=None,
-                   base_url=None, url_fetcher=None, check_css_mime_type=False):
-    """If only one input is given, return it.
-
-    Yield a file object, the base url, the protocol encoding and the protocol mime-type.
-
-    """
-    if base_url is not None:
-        base_url = ensure_url(base_url)
-    if url_fetcher is None:
-        url_fetcher = URLFetcher()
-
-    selected_params = [
-        param for param in (guess, filename, url, file_obj, string) if
-        param is not None]
-    if len(selected_params) != 1:
-        source = ', '.join(selected_params) or 'nothing'
-        raise TypeError(f'Expected exactly one source, got {source}')
-    elif guess is not None:
-        kwargs = {
-            'base_url': base_url,
-            'url_fetcher': url_fetcher,
-            'check_css_mime_type': check_css_mime_type,
-        }
-        if hasattr(guess, 'read'):
-            kwargs['file_obj'] = guess
-        elif isinstance(guess, Path):
-            kwargs['filename'] = guess
-        elif url_is_absolute(guess):
-            kwargs['url'] = guess
-        else:
-            kwargs['filename'] = guess
-        result = _select_source(**kwargs)
-        with result as result:
-            yield result
-    elif filename is not None:
-        if base_url is None:
-            base_url = path2url(filename)
-        with open(filename, 'rb') as file_obj:
-            yield file_obj, base_url, None, None
-    elif url is not None:
-        with fetch(url_fetcher, url) as response:
-            if check_css_mime_type and response.content_type != 'text/css':
-                LOGGER.error(
-                    f'Unsupported stylesheet type {response.content_type} '
-                    f'for {response.url}')
-                yield StringIO(''), base_url, None, None
-            else:
-                if base_url is None:
-                    base_url = response.url
-                yield response, base_url, response.charset, response.content_type
-    elif file_obj is not None:
-        if base_url is None:
-            # filesystem file-like objects have a 'name' attribute.
-            name = getattr(file_obj, 'name', None)
-            # Some streams have a .name like '<stdin>', not a filename.
-            if name and not name.startswith('<'):
-                base_url = ensure_url(name)
-        yield file_obj, base_url, None, None
-    else:
-        if isinstance(string, str):
-            yield StringIO(string), base_url, None, None
-        else:
-            yield BytesIO(string), base_url, None, None
 
 
 # Work around circular imports.

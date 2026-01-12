@@ -5,8 +5,6 @@ from time import localtime
 
 import pydyf
 
-from .metadata import add_metadata
-
 
 def pdfx(pdf, metadata, document, page_streams, attachments, compress, version,
          variant):
@@ -47,7 +45,7 @@ def pdfx(pdf, metadata, document, page_streams, attachments, compress, version,
         ])
 
     # Common PDF metadata stream.
-    add_metadata(pdf, metadata, 'x', version, conformance, compress=compress)
+    metadata.include_in_pdf(pdf, 'x', version, conformance, compress=compress)
 
 
 VARIANTS = {

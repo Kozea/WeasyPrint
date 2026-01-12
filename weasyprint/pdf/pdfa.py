@@ -4,8 +4,6 @@ from functools import partial
 
 import pydyf
 
-from .metadata import add_metadata
-
 
 def pdfa(pdf, metadata, document, page_streams, attachments, compress,
          version, variant):
@@ -65,7 +63,7 @@ def pdfa(pdf, metadata, document, page_streams, attachments, compress,
     if version == 1:
         # Metadata compression is forbidden for version 1.
         compress = False
-    add_metadata(pdf, metadata, 'a', version, variant, compress)
+    metadata.include_in_pdf(pdf, 'a', version, variant, compress)
 
     # Remove document information.
     if version >= 4:

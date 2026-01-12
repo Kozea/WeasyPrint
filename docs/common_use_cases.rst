@@ -208,63 +208,58 @@ Here is an example of Factur-X document generation.
 
 .. code-block:: xml
 
-  <x:xmpmeta
-      xmlns:x="adobe:ns:meta/"
+  <rdf:RDF
       xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-      xmlns:pdf="http://ns.adobe.com/pdf/1.3/"
       xmlns:fx="urn:factur-x:pdfa:CrossIndustryDocument:invoice:1p0#"
       xmlns:pdfaExtension="http://www.aiim.org/pdfa/ns/extension/"
       xmlns:pdfaSchema="http://www.aiim.org/pdfa/ns/schema#"
       xmlns:pdfaProperty="http://www.aiim.org/pdfa/ns/property#">
-    <!-- placeholder -->
-    <rdf:RDF>
-      <rdf:Description rdf:about="">
-        <fx:ConformanceLevel>MINIMUM</fx:ConformanceLevel>
-        <fx:DocumentFileName>factur-x.xml</fx:DocumentFileName>
-        <fx:DocumentType>INVOICE</fx:DocumentType>
-        <fx:Version>1.0</fx:Version>
-      </rdf:Description>
-      <rdf:Description rdf:about="">
-        <pdfaExtension:schemas>
-          <rdf:Bag>
-            <rdf:li rdf:parseType="Resource">
-              <pdfaSchema:schema>Factur-X PDFA Extension Schema</pdfaSchema:schema>
-              <pdfaSchema:namespaceURI>urn:factur-x:pdfa:CrossIndustryDocument:invoice:1p0#</pdfaSchema:namespaceURI>
-              <pdfaSchema:prefix>fx</pdfaSchema:prefix>
-              <pdfaSchema:property>
-                <rdf:Seq>
-                  <rdf:li rdf:parseType="Resource">
-                    <pdfaProperty:name>DocumentFileName</pdfaProperty:name>
-                    <pdfaProperty:valueType>Text</pdfaProperty:valueType>
-                    <pdfaProperty:category>external</pdfaProperty:category>
-                    <pdfaProperty:description>name of the embedded XML invoice file</pdfaProperty:description>
-                  </rdf:li>
-                  <rdf:li rdf:parseType="Resource">
-                    <pdfaProperty:name>DocumentType</pdfaProperty:name>
-                    <pdfaProperty:valueType>Text</pdfaProperty:valueType>
-                    <pdfaProperty:category>external</pdfaProperty:category>
-                    <pdfaProperty:description>INVOICE</pdfaProperty:description>
-                  </rdf:li>
-                  <rdf:li rdf:parseType="Resource">
-                    <pdfaProperty:name>Version</pdfaProperty:name>
-                    <pdfaProperty:valueType>Text</pdfaProperty:valueType>
-                    <pdfaProperty:category>external</pdfaProperty:category>
-                    <pdfaProperty:description>The actual version of the Factur-X XML schema</pdfaProperty:description>
-                  </rdf:li>
-                  <rdf:li rdf:parseType="Resource">
-                    <pdfaProperty:name>ConformanceLevel</pdfaProperty:name>
-                    <pdfaProperty:valueType>Text</pdfaProperty:valueType>
-                    <pdfaProperty:category>external</pdfaProperty:category>
-                    <pdfaProperty:description>The conformance level of the embedded Factur-X data</pdfaProperty:description>
-                  </rdf:li>
-                </rdf:Seq>
-              </pdfaSchema:property>
-            </rdf:li>
-          </rdf:Bag>
-        </pdfaExtension:schemas>
-      </rdf:Description>
-    </rdf:RDF>
-  </x:xmpmeta>
+    <rdf:Description rdf:about="">
+      <fx:ConformanceLevel>MINIMUM</fx:ConformanceLevel>
+      <fx:DocumentFileName>factur-x.xml</fx:DocumentFileName>
+      <fx:DocumentType>INVOICE</fx:DocumentType>
+      <fx:Version>1.0</fx:Version>
+    </rdf:Description>
+    <rdf:Description rdf:about="">
+      <pdfaExtension:schemas>
+        <rdf:Bag>
+          <rdf:li rdf:parseType="Resource">
+            <pdfaSchema:schema>Factur-X PDFA Extension Schema</pdfaSchema:schema>
+            <pdfaSchema:namespaceURI>urn:factur-x:pdfa:CrossIndustryDocument:invoice:1p0#</pdfaSchema:namespaceURI>
+            <pdfaSchema:prefix>fx</pdfaSchema:prefix>
+            <pdfaSchema:property>
+              <rdf:Seq>
+                <rdf:li rdf:parseType="Resource">
+                  <pdfaProperty:name>DocumentFileName</pdfaProperty:name>
+                  <pdfaProperty:valueType>Text</pdfaProperty:valueType>
+                  <pdfaProperty:category>external</pdfaProperty:category>
+                  <pdfaProperty:description>name of the embedded XML invoice file</pdfaProperty:description>
+                </rdf:li>
+                <rdf:li rdf:parseType="Resource">
+                  <pdfaProperty:name>DocumentType</pdfaProperty:name>
+                  <pdfaProperty:valueType>Text</pdfaProperty:valueType>
+                  <pdfaProperty:category>external</pdfaProperty:category>
+                  <pdfaProperty:description>INVOICE</pdfaProperty:description>
+                </rdf:li>
+                <rdf:li rdf:parseType="Resource">
+                  <pdfaProperty:name>Version</pdfaProperty:name>
+                  <pdfaProperty:valueType>Text</pdfaProperty:valueType>
+                  <pdfaProperty:category>external</pdfaProperty:category>
+                  <pdfaProperty:description>The actual version of the Factur-X XML schema</pdfaProperty:description>
+                </rdf:li>
+                <rdf:li rdf:parseType="Resource">
+                  <pdfaProperty:name>ConformanceLevel</pdfaProperty:name>
+                  <pdfaProperty:valueType>Text</pdfaProperty:valueType>
+                  <pdfaProperty:category>external</pdfaProperty:category>
+                  <pdfaProperty:description>The conformance level of the embedded Factur-X data</pdfaProperty:description>
+                </rdf:li>
+              </rdf:Seq>
+            </pdfaSchema:property>
+          </rdf:li>
+        </rdf:Bag>
+      </pdfaExtension:schemas>
+    </rdf:Description>
+  </rdf:RDF>
 
 ``factur-x.xml``:
 
@@ -329,33 +324,35 @@ Here is an example of Factur-X document generation.
     </rsm:SupplyChainTradeTransaction>
   </rsm:CrossIndustryInvoice>
 
-``invoice.py``:
+``invoice.html``:
+
+.. code-block:: html
+
+  <h1>Invoice</h1>
+
+Command-line::
+
+  weasyprint invoice.html invoice.pdf --attachment=factur-x.xml --attachment-relationship=Data --xmp-metadata=rdf.xml --pdf-variant=pdf/a-3a
+
+Or Python API:
 
 .. code-block:: python
 
-  from pathlib import Path
   from weasyprint import Attachment, HTML
 
-  def generate_rdf_metadata(metadata, variant, version, conformance):
-      original_rdf = generate_original_rdf_metadata(metadata, variant, version, conformance)
-      return Path("rdf.xml").read_bytes().replace(b"<!-- placeholder -->", original_rdf)
-
-  document = HTML(string="<h1>Invoice</h1>").render()
-  generate_original_rdf_metadata = document.metadata.generate_rdf_metadata
+  document = HTML("invoice.html").render()
 
   factur_x_xml = Path("factur-x.xml").read_text()
   attachment = Attachment(string=factur_x_xml, name="factur-x.xml", relationship="Data")
   document.metadata.attachments = [attachment]
 
-  document.metadata.generate_rdf_metadata = generate_rdf_metadata
+  xmp_metadata = Path("rdf.xml").read_text().encode()
+  document.metadata.xmp_metadata = [xmp_metadata]
+
   document.write_pdf("invoice.pdf", pdf_variant="pdf/a-3b")
 
 Of course, the content of these files has to be adapted to the content of real
-invoices. Using XML generators instead of plain text manipulation is also
-highly recommended.
-
-A more detailed blog article is available on `Binary Butterfly’s website
-<https://binary-butterfly.de/artikel/factur-x-zugferd-e-invoices-with-python/>`_.
+invoices.
 
 
 Include PDF Forms

@@ -109,6 +109,9 @@ group.add_argument(
     '--uncompressed-pdf', action='store_true',
     help='do not compress PDF content, mainly for debugging purpose')
 group.add_argument(
+    '--xmp-metadata', action='append',
+    help='URL or filename of a file to include into the XMP metadata')
+group.add_argument(
     '--custom-metadata', action='store_true',
     help='include custom HTML meta tags in PDF metadata')
 group.add_argument(
