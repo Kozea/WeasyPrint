@@ -97,6 +97,9 @@ group.add_argument(
 group.add_argument(
     '-a', '--attachment', action='append', dest='attachments',
     help='URL or filename of a file to attach to the PDF document')
+group.add_argument(
+    '--attachment-relationship', action='append', dest='attachment_relationships',
+    help='Relationship of the attachment file to attach to the PDF')
 group.add_argument('--pdf-identifier', help='PDF file identifier')
 group.add_argument('--pdf-variant', choices=VARIANTS, help='PDF variant to generate')
 group.add_argument('--pdf-version', help='PDF version number')

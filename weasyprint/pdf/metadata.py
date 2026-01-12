@@ -40,11 +40,7 @@ def add_metadata(pdf, metadata, variant, version, conformance, compress):
 
 
 def generate_rdf_metadata(metadata, variant, version, conformance):
-    """Generate RDF metadata as a bytestring.
-
-    Might be replaced by DocumentMetadata.rdf_metadata_generator().
-
-    """
+    """Generate RDF metadata as a bytestring."""
     namespace = f'pdf{variant}id'
     rdf = Element(f'{{{NS["rdf"]}}}RDF')
 

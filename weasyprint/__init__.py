@@ -69,6 +69,7 @@ VERSION = __version__ = '67.0'
 DEFAULT_OPTIONS = {
     'stylesheets': None,
     'attachments': None,
+    'attachment_relationships': None,
     'pdf_identifier': None,
     'pdf_variant': None,
     'pdf_version': None,

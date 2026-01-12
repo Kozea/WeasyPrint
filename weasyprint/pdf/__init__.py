@@ -277,10 +277,12 @@ def generate_pdf(document, target, zoom, **options):
     # Embedded files
     attachments = metadata.attachments.copy()
     if options['attachments']:
+        relationships = iter(options['attachment_relationships'] or [])
         for attachment in options['attachments']:
             if not isinstance(attachment, Attachment):
                 attachment = Attachment(
-                    attachment, url_fetcher=document.url_fetcher)
+                    attachment, url_fetcher=document.url_fetcher,
+                    relationship=next(relationships, 'Unspecified'))
             attachments.append(attachment)
     pdf_attachments = []
     for attachment in attachments:
