@@ -2,6 +2,79 @@ Changelog
 =========
 
 
+Version 68.0
+------------
+
+Released on .
+
+Python API:
+
+* ``default_url_fetcher()`` is deprecated, use the new ``URLFetcher`` class instead, see
+  :ref:`URL Fetchers` for more information about URL fetchers
+* ``DocumentMetadata.generate_rdf_metadata`` is now a method that can be overridden
+  instead of a parameter, see :ref:`Factur-X / ZUGFeRD (Electronic Invoices)` for
+  examples to create e-invoices
+
+Features:
+
+* `#2609 <https://github.com/Kozea/WeasyPrint/pull/2609>`_,
+  `#2603 <https://github.com/Kozea/WeasyPrint/issues/2603>`_,
+  `#351 <https://github.com/Kozea/WeasyPrint/issues/351>`_:
+  Refactor URL fetcher API
+* `#2632 <https://github.com/Kozea/WeasyPrint/pull/2632>`_:
+  Support legacy 0 value for angles
+* `#2627 <https://github.com/Kozea/WeasyPrint/pull/2627>`_:
+  Add font-face support to SVG
+* `#2646 <https://github.com/Kozea/WeasyPrint/pull/2646>`_,
+  `#2255 <https://github.com/Kozea/WeasyPrint/issues/2255>`_:
+  Add font shorthand support for SVG text elements
+* `#2590 <https://github.com/Kozea/WeasyPrint/pull/2590>`_,
+  `#1749 <https://github.com/Kozea/WeasyPrint/issues/1749>`_:
+  Honor language-specific rules for text-transform
+* `#2645 <https://github.com/Kozea/WeasyPrint/pull/2645>`_,
+  `#2613 <https://github.com/Kozea/WeasyPrint/issues/2613>`_:
+  Improve SVG and SVG emojis rendering
+* `#2658 <https://github.com/Kozea/WeasyPrint/pull/2658>`_,
+  `#2583 <https://github.com/Kozea/WeasyPrint/issues/2583>`_:
+  Add CLI for Factur-X / ZUGFeRD e-invoices
+
+Bug fixes:
+
+* `#2649 <https://github.com/Kozea/WeasyPrint/issues/2649>`_:
+  Refactor URL fetcher API
+* `#2643 <https://github.com/Kozea/WeasyPrint/pull/2643>`_,
+  `#2628 <https://github.com/Kozea/WeasyPrint/issues/2628>`_:
+  Handle box-sizing: border-box in grid layout
+* `#2641 <https://github.com/Kozea/WeasyPrint/pull/2641>`_,
+  `#1875 <https://github.com/Kozea/WeasyPrint/issues/1875>`_:
+  Process whitespace after checking all pending targets
+* `#2488 <https://github.com/Kozea/WeasyPrint/pull/2488>`_,
+  `#2485 <https://github.com/Kozea/WeasyPrint/issues/2485>`_:
+  Preserve page groups during layout repagination
+* `#2642 <https://github.com/Kozea/WeasyPrint/pull/2642>`_,
+  `#2631 <https://github.com/Kozea/WeasyPrint/issues/2631>`_:
+  Don’t use isolated transparency groups
+* `#2637 <https://github.com/Kozea/WeasyPrint/issues/2637>`_:
+  Fix repeating radial gradients rendering
+* `#2622 <https://github.com/Kozea/WeasyPrint/issues/2622>`_:
+  Fix validation of colors
+* `#2626 <https://github.com/Kozea/WeasyPrint/issues/2626>`_:
+  Share grid items rendering advancement between a box and its copies
+* `#2621 <https://github.com/Kozea/WeasyPrint/issues/2621>`_:
+  Correctly handle fallback values of attr()
+* `#2619 <https://github.com/Kozea/WeasyPrint/issues/2619>`_:
+  Fix SVG fonts
+* `#2629 <https://github.com/Kozea/WeasyPrint/issues/2629>`_:
+  Always define extra skip height that may be used after
+* `#2648 <https://github.com/Kozea/WeasyPrint/issues/2648>`_:
+  Fix numbers validation in font-feature-settings
+
+Documentation:
+
+* `#2638 <https://github.com/Kozea/WeasyPrint/pull/2638>`_:
+  Update Python command for Windows installation steps
+
+
 Version 67.0
 ------------
 
