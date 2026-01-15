@@ -605,7 +605,7 @@ def test_text_underline(assert_pixels):
           color: rgba(255, 0, 0, 0.5);
           font-family: weasyprint;
           font-size: 3px;
-          text-decoration: underline blue;
+          text-decoration: underline blue auto;
         }
       </style>
       <div>abc</div>''')

@@ -1211,7 +1211,7 @@ def text_decoration_thickness(token):
     """``text-decoration-thickness`` property validation."""
     if length := get_length(token, percentage=True):
         return length
-    elif keyword := get_keyword(token) in ('auto', 'from-font'):
+    elif (keyword := get_keyword(token)) in ('auto', 'from-font'):
         return keyword
 
 
