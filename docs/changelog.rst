@@ -68,6 +68,8 @@ Bug fixes:
   Always define extra skip height that may be used after
 * `#2648 <https://github.com/Kozea/WeasyPrint/issues/2648>`_:
   Fix numbers validation in font-feature-settings
+* `#2648 <https://github.com/Kozea/WeasyPrint/issues/2660>`_:
+  Fix keyword values for text-decoration-thickness
 
 Documentation:
 
