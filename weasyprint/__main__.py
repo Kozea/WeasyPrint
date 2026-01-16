@@ -134,7 +134,8 @@ group.add_argument(
 group = PARSER.add_argument_group('HTML options')
 group.add_argument('-e', '--encoding', help='force the input character encoding')
 group.add_argument(
-    '-m', '--media-type', help='media type to use for @media, defaults to print')
+    '-m', '--media-type', help='media type to use for @media, defaults to print',
+    default='print')
 group.add_argument(
     '-u', '--base-url',
     help='base for relative URLs in the HTML input, defaults to the '
