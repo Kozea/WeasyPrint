@@ -3525,3 +3525,20 @@ def test_table_zero_width():
         </thead>
       </table>
     ''')
+
+
+@assert_no_logs
+def test_table_inline_atomic_nowrap():
+    # Regression test for #2661.
+    page, = render_pages('''
+      <div style="width: 0; font: 2px weasyprint; white-space: nowrap">
+        <table>
+          <tr>
+            <td>a<img src=pattern.png></td>
+    ''')
+    html, = page.children
+    body, = html.children
+    div, = body.children
+    table_wrapper, = div.children
+    assert div.width == 0
+    assert table_wrapper.width == 6

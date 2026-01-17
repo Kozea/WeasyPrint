@@ -385,7 +385,17 @@ def inline_line_widths(context, box, outer, is_line_start, minimum, skip_stack=N
             # "By default, there is a break opportunity
             #  both before and after any inline object."
             if minimum:
-                lines = [None, min_content_width(context, child), None]
+                # "For soft wrap opportunities defined by the boundary between two
+                # characters or atomic inlines, the white-space property on the nearest
+                # common ancestor of the two characters controls breaking; which
+                # elements’ line-break, word-break, and overflow-wrap properties control
+                # the determination of soft wrap opportunities at such boundaries is
+                # undefined in this level." We choose to always follow the parent’s
+                # value here, other parts of the line-breaking algorithm do the same.
+                if box.style['white_space'] in ('normal', 'pre-wrap', 'pre-line'):
+                    lines = [None, min_content_width(context, child), None]
+                else:
+                    lines = [min_content_width(context, child)]
             else:
                 lines = [max_content_width(context, child)]
         # The first text line goes on the current line.
