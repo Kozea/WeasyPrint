@@ -70,6 +70,8 @@ Bug fixes:
   Fix numbers validation in font-feature-settings
 * `#2648 <https://github.com/Kozea/WeasyPrint/issues/2660>`_:
   Fix keyword values for text-decoration-thickness
+* `#2661 <https://github.com/Kozea/WeasyPrint/issues/2661>`_:
+  Respect inline images when defining minimum table width
 
 Documentation:
 
