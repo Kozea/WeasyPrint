@@ -2,13 +2,11 @@
 
 from functools import partial
 
-from .metadata import add_metadata
-
 
 def pdfua(pdf, metadata, document, page_streams, attachments, compress, version):
     """Set metadata for PDF/UA documents."""
     # Common PDF metadata stream
-    add_metadata(pdf, metadata, 'ua', version, conformance=None, compress=compress)
+    metadata.include_in_pdf(pdf, 'ua', version, conformance=None, compress=compress)
 
 
 VARIANTS = {

@@ -18,7 +18,7 @@ from .layout import LayoutContext, layout_document
 from .logger import PROGRESS_LOGGER
 from .matrix import Matrix
 from .pdf import VARIANTS, generate_pdf
-from .pdf.metadata import generate_rdf_metadata
+from .pdf.metadata import DocumentMetadata
 from .text.fonts import FontConfiguration
 
 
@@ -85,64 +85,6 @@ class Page:
         with stream.stacked():
             stream.transform(a=scale, d=scale)
             draw_page(self._page_box, stream)
-
-
-class DocumentMetadata:
-    """Meta-information belonging to a whole :class:`Document`.
-
-    New attributes may be added in future versions of WeasyPrint.
-    """
-    def __init__(self, title=None, authors=None, description=None, keywords=None,
-                 generator=None, created=None, modified=None, attachments=None,
-                 lang=None, custom=None, generate_rdf_metadata=generate_rdf_metadata):
-        #: The title of the document, as a string or :obj:`None`.
-        #: Extracted from the ``<title>`` element in HTML
-        #: and written to the ``/Title`` info field in PDF.
-        self.title = title
-        #: The authors of the document, as a list of strings.
-        #: (Defaults to the empty list.)
-        #: Extracted from the ``<meta name=author>`` elements in HTML
-        #: and written to the ``/Author`` info field in PDF.
-        self.authors = authors or []
-        #: The description of the document, as a string or :obj:`None`.
-        #: Extracted from the ``<meta name=description>`` element in HTML
-        #: and written to the ``/Subject`` info field in PDF.
-        self.description = description
-        #: Keywords associated with the document, as a list of strings.
-        #: (Defaults to the empty list.)
-        #: Extracted from ``<meta name=keywords>`` elements in HTML
-        #: and written to the ``/Keywords`` info field in PDF.
-        self.keywords = keywords or []
-        #: The name of one of the software packages
-        #: used to generate the document, as a string or :obj:`None`.
-        #: Extracted from the ``<meta name=generator>`` element in HTML
-        #: and written to the ``/Creator`` info field in PDF.
-        self.generator = generator
-        #: The creation date of the document, as a string or :obj:`None`.
-        #: Dates are in one of the six formats specified in
-        #: `W3C’s profile of ISO 8601 <https://www.w3.org/TR/NOTE-datetime>`_.
-        #: Extracted from the ``<meta name=dcterms.created>`` element in HTML
-        #: and written to the ``/CreationDate`` info field in PDF.
-        self.created = created
-        #: The modification date of the document, as a string or :obj:`None`.
-        #: Dates are in one of the six formats specified in
-        #: `W3C’s profile of ISO 8601 <https://www.w3.org/TR/NOTE-datetime>`_.
-        #: Extracted from the ``<meta name=dcterms.modified>`` element in HTML
-        #: and written to the ``/ModDate`` info field in PDF.
-        self.modified = modified
-        #: A list of :class:`attachments <weasyprint.Attachment>`, empty by default.
-        #: Extracted from the ``<link rel=attachment>`` elements in HTML
-        #: and written to the ``/EmbeddedFiles`` dictionary in PDF.
-        self.attachments = attachments or []
-        #: Document language as BCP 47 language tags.
-        #: Extracted from ``<html lang=lang>`` in HTML.
-        self.lang = lang
-        #: Custom metadata, as a dict whose keys are the metadata names and
-        #: values are the metadata values.
-        self.custom = custom or {}
-        #: Custom RDF metadata generator, which will replace the default generator.
-        #: The function should return bytes containing an RDF XML.
-        self.generate_rdf_metadata = generate_rdf_metadata
 
 
 class DiskCache:

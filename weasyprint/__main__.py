@@ -97,6 +97,9 @@ group.add_argument(
 group.add_argument(
     '-a', '--attachment', action='append', dest='attachments',
     help='URL or filename of a file to attach to the PDF document')
+group.add_argument(
+    '--attachment-relationship', action='append', dest='attachment_relationships',
+    help='Relationship of the attachment file to attach to the PDF')
 group.add_argument('--pdf-identifier', help='PDF file identifier')
 group.add_argument('--pdf-variant', choices=VARIANTS, help='PDF variant to generate')
 group.add_argument('--pdf-version', help='PDF version number')
@@ -105,6 +108,9 @@ group.add_argument('--pdf-tags', action='store_true', help='tag PDF for accessib
 group.add_argument(
     '--uncompressed-pdf', action='store_true',
     help='do not compress PDF content, mainly for debugging purpose')
+group.add_argument(
+    '--xmp-metadata', action='append',
+    help='URL or filename of a file to include into the XMP metadata')
 group.add_argument(
     '--custom-metadata', action='store_true',
     help='include custom HTML meta tags in PDF metadata')

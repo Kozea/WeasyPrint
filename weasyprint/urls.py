@@ -10,7 +10,7 @@ import warnings
 import zlib
 from email.message import EmailMessage
 from gzip import GzipFile
-from io import BytesIO
+from io import BytesIO, StringIO
 from pathlib import Path
 from urllib import request
 from urllib.parse import quote, unquote, urljoin, urlsplit
@@ -202,6 +202,73 @@ def default_url_fetcher(url, timeout=10, ssl_context=None, http_headers=None,
         category=DeprecationWarning)
     fetcher = URLFetcher(timeout, ssl_context, http_headers, allowed_protocols)
     return fetcher.fetch(url)
+
+
+@contextlib.contextmanager
+def select_source(guess=None, filename=None, url=None, file_obj=None, string=None,
+                  base_url=None, url_fetcher=None, check_css_mime_type=False):
+    """If only one input is given, return it.
+
+    Yield a file object, the base url, the protocol encoding and the protocol mime-type.
+
+    """
+    if base_url is not None:
+        base_url = ensure_url(base_url)
+    if url_fetcher is None:
+        url_fetcher = URLFetcher()
+
+    selected_params = [
+        param for param in (guess, filename, url, file_obj, string) if
+        param is not None]
+    if len(selected_params) != 1:
+        source = ', '.join(selected_params) or 'nothing'
+        raise TypeError(f'Expected exactly one source, got {source}')
+    elif guess is not None:
+        kwargs = {
+            'base_url': base_url,
+            'url_fetcher': url_fetcher,
+            'check_css_mime_type': check_css_mime_type,
+        }
+        if hasattr(guess, 'read'):
+            kwargs['file_obj'] = guess
+        elif isinstance(guess, Path):
+            kwargs['filename'] = guess
+        elif url_is_absolute(guess):
+            kwargs['url'] = guess
+        else:
+            kwargs['filename'] = guess
+        result = select_source(**kwargs)
+        with result as result:
+            yield result
+    elif filename is not None:
+        if base_url is None:
+            base_url = path2url(filename)
+        with open(filename, 'rb') as file_obj:
+            yield file_obj, base_url, None, None
+    elif url is not None:
+        with fetch(url_fetcher, url) as response:
+            if check_css_mime_type and response.content_type != 'text/css':
+                LOGGER.error(
+                    f'Unsupported stylesheet type {response.content_type} '
+                    f'for {response.url}')
+                yield StringIO(''), base_url, None, None
+            else:
+                if base_url is None:
+                    base_url = response.url
+                yield response, base_url, response.charset, response.content_type
+    elif file_obj is not None:
+        if base_url is None:
+            # filesystem file-like objects have a 'name' attribute.
+            name = getattr(file_obj, 'name', None)
+            # Some streams have a .name like '<stdin>', not a filename.
+            if name and not name.startswith('<'):
+                base_url = ensure_url(name)
+        yield file_obj, base_url, None, None
+    else:
+        if isinstance(string, str):
+            yield StringIO(string), base_url, None, None
+        else:
+            yield BytesIO(string), base_url, None, None
 
 
 class URLFetchingError(IOError):

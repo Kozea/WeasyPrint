@@ -19,7 +19,6 @@ from PIL import Image
 
 from weasyprint import CSS, HTML, __main__, default_url_fetcher
 from weasyprint.pdf.anchors import resolve_links
-from weasyprint.pdf.metadata import generate_rdf_metadata
 
 from .draw import parse_pixels
 from .testing_utils import FakeHTML, assert_no_logs, capture_logs, resource_path
@@ -1427,7 +1426,7 @@ def assert_meta(html, **meta):
     meta.setdefault('attachments', [])
     meta.setdefault('lang', None)
     meta.setdefault('custom', {})
-    meta.setdefault('generate_rdf_metadata', generate_rdf_metadata)
+    meta.setdefault('xmp_metadata', [])
     assert vars(FakeHTML(string=html).render().metadata) == meta
 
 
