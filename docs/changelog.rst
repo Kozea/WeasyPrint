@@ -5,7 +5,7 @@ Changelog
 Version 68.0
 ------------
 
-Released on .
+Released on 2026-01-19.
 
 Python API:
 
@@ -77,6 +77,40 @@ Documentation:
 
 * `#2638 <https://github.com/Kozea/WeasyPrint/pull/2638>`_:
   Update Python command for Windows installation steps
+
+Contributors:
+
+* Guillaume Ayoub
+* Jurriaan Pruis
+* Mohamed Hamed
+* Alexandra Usatenko
+* Andrea Corna
+* Aoishik Khan
+* Joe
+
+Backers and sponsors:
+
+* Spacinov
+* Syslifters
+* Kobalt
+* Simon Sapin
+* Grip Angebotssoftware
+* Manuel Barkhau
+* Simonsoft
+* KontextWork
+* Menutech
+* TrainingSparkle
+* Healthchecks.io
+* Method B
+* FieldHub
+* Hammerbacher
+* Yanal-Yves Fargialla
+* Morntag
+* Piloterr
+* Xavid
+* Charlie S.
+* Prothesis Dental Solutions
+* Kai DeLorenzo
 
 
 Version 67.0
