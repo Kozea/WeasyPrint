@@ -15,7 +15,7 @@ We strongly recommend to upgrade WeasyPrint to the latest version if you use the
 
 Security:
 
-- Always use URL fetcher for HTTP redirects
+* Always use URL fetcher for HTTP redirects
 
 Python API:
 
