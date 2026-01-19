@@ -7,6 +7,16 @@ Version 68.0
 
 Released on 2026-01-19.
 
+**This is a security update (CVE-2025-68616).**
+
+We strongly recommend to upgrade WeasyPrint to the latest version if you use the
+``default_url_fetcher`` function in your custom URL fetcher, or if you use the
+``allowed_protocols`` parameter of the ``default_url_fetcher`` function.
+
+Security:
+
+- Always use URL fetcher for HTTP redirects
+
 Python API:
 
 * ``default_url_fetcher()`` is deprecated, use the new ``URLFetcher`` class instead, see
