@@ -517,9 +517,3 @@ def paint_mask(svg, node, mask, font_size):
     svg.stream = svg.stream.set_alpha_state(x, y, width, height)
     svg.draw_node(mask, font_size)
     svg.stream = svg_stream
-
-
-def clip_path(svg, node, font_size):
-    """Store a clip path definition."""
-    if 'id' in node.attrib:
-        svg.paths[node.attrib['id']] = node

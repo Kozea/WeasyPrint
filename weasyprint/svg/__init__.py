@@ -9,7 +9,7 @@ from cssselect2 import ElementWrapper
 
 from ..urls import get_url_attribute
 from .css import parse_declarations, parse_stylesheets
-from .defs import apply_filters, clip_path, draw_gradient_or_pattern, paint_mask, use
+from .defs import apply_filters, draw_gradient_or_pattern, paint_mask, use
 from .images import image, svg
 from .path import path
 from .shapes import circle, ellipse, line, polygon, polyline, rect
@@ -24,7 +24,6 @@ from .utils import (  # isort:skip
 TAGS = {
     'a': text,
     'circle': circle,
-    'clipPath': clip_path,
     'ellipse': ellipse,
     'image': image,
     'line': line,

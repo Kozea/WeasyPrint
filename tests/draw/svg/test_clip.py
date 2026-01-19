@@ -96,3 +96,31 @@ def test_clip_path_group_on_group(assert_pixels):
         </g>
       </svg>
     ''')
+
+
+@assert_no_logs
+def test_clip_path_outside_defs(assert_pixels):
+    # Regression test for #2662.
+    assert_pixels('''
+        _________
+        _________
+        __RRRRR__
+        __RBBBR__
+        __RBBBR__
+        __RBBBR__
+        __RRRRR__
+        _________
+        _________
+    ''', '''
+      <style>
+        @page { size: 9px }
+        svg { display: block }
+      </style>
+      <svg width="9px" height="9px" xmlns="http://www.w3.org/2000/svg">
+        <clipPath id="clip">
+          <rect x="2" y="2" width="5" height="5" />
+        </clipPath>
+        <rect x="2" y="2" width="5" height="5" stroke-width="2"
+              stroke="red" fill="blue" clip-path="url(#clip)" />
+      </svg>
+    ''')
