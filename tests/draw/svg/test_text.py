@@ -687,3 +687,26 @@ def test_mixed_explicit_and_shorthand_across_levels(assert_pixels):
       </svg>
     ''',
     )
+
+
+@assert_no_logs
+def test_text_fill_opacity(assert_pixels):
+    # Regression text for #2665.
+    assert_pixels('''
+        ______
+        _ssss_
+        _ssss_
+        _ssss_
+        _ssss_
+        ______
+    ''', '''
+      <style>
+        @page { size: 6px 6px }
+        svg { display: block }
+      </style>
+      <svg width="6px" height="6px" xmlns="http://www.w3.org/2000/svg">
+        <text x="1" y="4" font="4px weasyprint" fill="red" opacity="0.5">
+          A
+        </text>
+      </svg>
+    ''')

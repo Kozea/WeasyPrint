@@ -141,7 +141,7 @@ def text(svg, node, font_size):
             svg.cursor_d_position[1] = 0
         svg.cursor_d_position[0] += dx or 0
         svg.cursor_d_position[1] += dy or 0
-        layout, _, _, width, height, _ = split_first_line(
+        layout, _, _, width, height, baseline = split_first_line(
             letter, style, svg.context, inf, 0)
         x = svg.cursor_position[0] if x is None else x
         y = svg.cursor_position[1] if y is None else y
@@ -154,8 +154,9 @@ def text(svg, node, font_size):
         y_position = y + svg.cursor_d_position[1] + y_align
         angle = last_r if r is None else r
         points = (
-            (x_position, y_position),
-            (x_position + width, y_position - height))
+            (x_position, y_position - baseline),
+            (x_position + width, y_position - baseline + height))
+        # TODO: Use ink extents instead of logical from line_break.line_size().
         node.text_bounding_box = extend_bounding_box(
             node.text_bounding_box, points)
 
