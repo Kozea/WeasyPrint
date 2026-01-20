@@ -201,6 +201,8 @@ class Stream(pydyf.Stream):
             'Group': pydyf.Dictionary({
                 'Type': '/Group',
                 'S': '/Transparency',
+                'I': 'true',
+                'CS': '/DeviceRGB',
             }),
         })
         group = self.clone(resources=resources, extra=extra)
