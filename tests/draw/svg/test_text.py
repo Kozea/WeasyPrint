@@ -30,7 +30,7 @@ def test_text_stroke(assert_pixels):
         _BBBBBBBBBBBB_______
     ''', '''
       <style>
-        @page { font-size: 1px; size: 20em 8ex }
+        @page { font-size: 1px; size: 20em 4em }
         svg { display: block }
       </style>
       <svg width="20px" height="4px" xmlns="http://www.w3.org/2000/svg">
