@@ -9,6 +9,8 @@ import math
 from abc import ABC, abstractmethod
 
 from ..css.units import LENGTHS_TO_PIXELS
+from ..logger import LOGGER
+from ..urls import URLFetchingError, fetch
 
 
 class ShapeBoundary(ABC):
@@ -444,21 +446,22 @@ class ImageBoundary(ShapeBoundary):
             self.img_width = img.width
             self.img_height = img.height
 
-            # Extract alpha channel as a 2D array
-            # We'll store as a list of rows for efficient access
+            # Extract alpha channel as a 2D array using img.load() for faster access
+            # img.load() returns a PixelAccess object that is much faster than getpixel()
+            pixels = img.load()
             self.alpha_data = []
             for y in range(img.height):
                 row = []
                 for x in range(img.width):
                     # Get alpha value (0-255), normalize to 0-1
-                    pixel = img.getpixel((x, y))
+                    pixel = pixels[x, y]
                     alpha = pixel[3] / 255.0 if len(pixel) > 3 else 1.0
                     row.append(alpha)
                 self.alpha_data.append(row)
 
-        except Exception:
+        except Exception as exc:
             # If image loading fails, alpha_data remains None
-            pass
+            LOGGER.warning('Failed to extract alpha channel from shape image: %s', exc)
 
     def get_bounds_at_y(self, y):
         """Get horizontal bounds at Y by scanning alpha channel."""
@@ -527,11 +530,12 @@ class ImageBoundary(ShapeBoundary):
         return (min_y, max_y + pixel_height)
 
 
-def create_shape_boundary(box):
+def create_shape_boundary(box, context=None):
     """Create a shape boundary for a floated box.
 
     Args:
         box: The float box with shape_outside style.
+        context: The layout context (provides access to url_fetcher for images).
 
     Returns:
         ShapeBoundary: A boundary object for computing shape exclusions.
@@ -547,7 +551,7 @@ def create_shape_boundary(box):
         _, shape_outside, ref_box_type = shape_outside
 
     # Create the base boundary
-    boundary = _create_base_boundary(box, shape_outside, ref_box_type)
+    boundary = _create_base_boundary(box, shape_outside, ref_box_type, context)
 
     # Apply shape-margin if specified (check value > 0)
     if hasattr(shape_margin, 'value') and shape_margin.value > 0:
@@ -557,13 +561,14 @@ def create_shape_boundary(box):
     return boundary
 
 
-def _create_base_boundary(box, shape_outside, ref_box_type='margin-box'):
+def _create_base_boundary(box, shape_outside, ref_box_type='margin-box', context=None):
     """Create the base shape boundary without margin.
 
     Args:
         box: The float box with shape_outside style.
         shape_outside: The shape specification (string or tuple).
         ref_box_type: The reference box type for shape functions.
+        context: The layout context (provides access to url_fetcher for images).
 
     Returns:
         ShapeBoundary: A boundary object for computing shape exclusions.
@@ -613,19 +618,20 @@ def _create_base_boundary(box, shape_outside, ref_box_type='margin-box'):
             # Image-based shape: ('image', url_info, ref_box_type)
             url_info = shape_outside[1]
             image_ref_box = shape_outside[2] if len(shape_outside) > 2 else 'margin-box'
-            return _create_image_boundary(box, url_info, image_ref_box)
+            return _create_image_boundary(box, url_info, image_ref_box, context)
 
     # Fallback
     return BoxBoundary(box, 'margin-box')
 
 
-def _create_image_boundary(box, url_info, ref_box_type):
+def _create_image_boundary(box, url_info, ref_box_type, context=None):
     """Create an ImageBoundary from a URL.
 
     Args:
         box: The float box
-        url_info: URL info tuple from CSS parsing
+        url_info: URL info tuple from CSS parsing (e.g., ('external', url))
         ref_box_type: Reference box type for the image
+        context: The layout context (provides access to url_fetcher for images)
 
     Returns:
         ImageBoundary or BoxBoundary fallback
@@ -638,34 +644,55 @@ def _create_image_boundary(box, url_info, ref_box_type):
     if threshold is None:
         threshold = 0.0
 
-    # Try to load the image
+    # Try to load the image using WeasyPrint's URL fetcher
     try:
         # URL info can be ('external', url) or ('internal', data)
         if isinstance(url_info, tuple):
             url_type, url_data = url_info
             if url_type == 'external':
-                # Load external image
-                import urllib.request
-                with urllib.request.urlopen(url_data) as response:
+                # Load external image using WeasyPrint's URL fetcher
+                if context is not None:
+                    # Get the url_fetcher from the context's get_image_from_uri partial
+                    url_fetcher = context.get_image_from_uri.keywords.get('url_fetcher')
+                    if url_fetcher is not None:
+                        with fetch(url_fetcher, url_data) as response:
+                            image_data = response.read()
+                        return ImageBoundary(
+                            image_data, threshold, ref_x, ref_y, ref_w, ref_h)
+
+                # Fallback: if no context or url_fetcher, use URLFetcher directly
+                from ..urls import URLFetcher
+                url_fetcher = URLFetcher()
+                with fetch(url_fetcher, url_data) as response:
                     image_data = response.read()
                 return ImageBoundary(image_data, threshold, ref_x, ref_y, ref_w, ref_h)
+
             elif url_type == 'internal':
                 # Internal data (already loaded)
                 return ImageBoundary(url_data, threshold, ref_x, ref_y, ref_w, ref_h)
+
         elif isinstance(url_info, str):
-            # Direct file path or URL
-            if url_info.startswith(('http://', 'https://')):
-                import urllib.request
-                with urllib.request.urlopen(url_info) as response:
-                    image_data = response.read()
-            else:
-                # Local file
-                with open(url_info, 'rb') as f:
-                    image_data = f.read()
+            # Direct file path or URL string
+            # Use WeasyPrint's URL fetcher for proper handling
+            if context is not None:
+                url_fetcher = context.get_image_from_uri.keywords.get('url_fetcher')
+                if url_fetcher is not None:
+                    with fetch(url_fetcher, url_info) as response:
+                        image_data = response.read()
+                    return ImageBoundary(
+                        image_data, threshold, ref_x, ref_y, ref_w, ref_h)
+
+            # Fallback: use URLFetcher directly
+            from ..urls import URLFetcher
+            url_fetcher = URLFetcher()
+            with fetch(url_fetcher, url_info) as response:
+                image_data = response.read()
             return ImageBoundary(image_data, threshold, ref_x, ref_y, ref_w, ref_h)
-    except Exception:
-        # If image loading fails, fall back to box boundary
-        pass
+
+    except URLFetchingError as exc:
+        LOGGER.warning('Failed to load shape image at %r: %s', url_info, exc)
+    except Exception as exc:
+        LOGGER.warning('Failed to load shape image at %r: %s', url_info, exc)
 
     return BoxBoundary(box, ref_box_type)
 

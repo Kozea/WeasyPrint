@@ -119,7 +119,7 @@ def float_layout(context, box, containing_block, absolute_boxes, fixed_boxes,
     box = find_float_position(context, box, containing_block)
 
     # Attach shape boundary for shape-outside calculations
-    box.shape_boundary = create_shape_boundary(box)
+    box.shape_boundary = create_shape_boundary(box, context)
 
     context.excluded_shapes.append(box)
     return box, resume_at
