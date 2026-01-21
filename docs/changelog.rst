@@ -2,6 +2,24 @@ Changelog
 =========
 
 
+Unreleased
+----------
+
+Features:
+
+* Implement CSS Shapes Level 1 specification (``shape-outside`` property):
+
+  - Support for basic shape functions: ``circle()``, ``ellipse()``, ``inset()``, ``polygon()``
+  - Support for ``shape-margin`` property to add spacing between shapes and text
+  - Support for reference box keywords: ``margin-box``, ``border-box``, ``padding-box``, ``content-box``
+  - Support for ``url()`` image references for shape extraction
+  - Text flows naturally around floated elements with custom shapes
+
+Documentation:
+
+* Add CSS Shapes Level 1 documentation to API reference
+
+
 Version 68.0
 ------------
 
