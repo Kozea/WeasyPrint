@@ -12,7 +12,8 @@ Features:
   - Support for basic shape functions: ``circle()``, ``ellipse()``, ``inset()``, ``polygon()``
   - Support for ``shape-margin`` property to add spacing between shapes and text
   - Support for reference box keywords: ``margin-box``, ``border-box``, ``padding-box``, ``content-box``
-  - Support for ``url()`` image references for shape extraction
+  - Support for ``url()`` image-based shapes using alpha channel extraction
+  - Support for ``shape-image-threshold`` property to control alpha threshold
   - Text flows naturally around floated elements with custom shapes
 
 Documentation:

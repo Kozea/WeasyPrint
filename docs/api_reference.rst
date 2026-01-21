@@ -881,10 +881,14 @@ WeasyPrint supports the following features:
 - ``shape-margin`` property to expand the exclusion area by a specified amount
 - Reference box combinations (e.g., ``circle(50%) border-box``)
 
+**Image-based shapes**:
+
+- ``url()`` image-based shapes using the image's alpha channel
+- ``shape-image-threshold`` property to define the alpha threshold (0.0-1.0)
+  for extracting the shape from an image
+
 The following features are **not** supported:
 
-- ``shape-image-threshold`` property
-- ``url()`` image-based shapes
 - ``path()`` function
 
 Example usage:
@@ -911,6 +915,16 @@ Example usage:
         width: 200px;
         height: 200px;
         shape-outside: inset(10px 20px 10px 20px round 15px);
+    }
+
+    /* Image-based shape using alpha channel */
+    .float-image {
+        float: left;
+        width: 200px;
+        height: 200px;
+        shape-outside: url('shape-mask.png');
+        shape-image-threshold: 0.5;
+        shape-margin: 10px;
     }
 
 .. _CSS Shapes Module Level 1: https://drafts.csswg.org/css-shapes/
