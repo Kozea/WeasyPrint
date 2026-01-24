@@ -330,17 +330,18 @@ class URLFetcher(request.OpenerDirector):
 
         """
         # Discard URLs with no or invalid protocol.
-        if not UNICODE_SCHEME_RE.match(url):  # pragma: no cover
+        if not (match := UNICODE_SCHEME_RE.match(url)):  # pragma: no cover
             raise ValueError(f'Not an absolute URI: {url}')
+        scheme = match[1].lower()
 
         # Discard URLs with forbidden protocol.
         if self._allowed_protocols is not None:
-            if url.split('://', 1)[0].lower() not in self._allowed_protocols:
+            if scheme not in self._allowed_protocols:
                 raise ValueError(f'URI uses disallowed protocol: {url}')
 
         # Remove query and fragment parts from file URLs.
         # See https://bugs.python.org/issue34702.
-        if url.lower().startswith('file://'):
+        if scheme == 'file':
             url = url.split('?')[0]
 
         # Transform Unicode IRI to ASCII URI.

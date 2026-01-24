@@ -10,6 +10,7 @@ import threading
 import unicodedata
 import wsgiref.simple_server
 import zlib
+from base64 import b64encode
 from functools import partial
 from pathlib import Path
 from urllib.parse import urljoin, uses_relative
@@ -702,6 +703,17 @@ def test_no_redirect_fail_on_error():
 ])
 def test_allowed_protocols(command):
     _run(command, f'<img src="{path2url(resource_path("pattern.png"))}">'.encode())
+
+
+@assert_no_logs
+@pytest.mark.parametrize('command', [
+    '- -',
+    '--allowed-protocols data - -',
+    '--allowed-protocols File,Data - -',
+])
+def test_allowed_protocols_data(command):
+    data = b64encode(resource_path('pattern.png').read_bytes()).decode()
+    _run(command, f'<img src="data:image/png;base64,{data}">'.encode())
 
 
 @pytest.mark.parametrize('command', [
