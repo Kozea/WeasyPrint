@@ -386,7 +386,7 @@ class URLFetcherResponse:
     :param body: The body of the HTTP response.
     :type headers: dict or email.message.EmailMessage
     :param headers: The headers of the HTTP response.
-    :param str status: The status of the HTTP response.
+    :param int status: The status of the HTTP response.
 
     Has the same interface as :class:`urllib.response.addinfourl`.
 
@@ -396,7 +396,7 @@ class URLFetcherResponse:
     is used elsewhere, the file object has to be closed manually.
 
     """
-    def __init__(self, url, body=None, headers=None, status='200 OK', **kwargs):
+    def __init__(self, url, body=None, headers=None, status=200, **kwargs):
         self.url = url
         self.status = status
 
@@ -440,6 +440,19 @@ class URLFetcherResponse:
     @property
     def charset(self):
         return self.headers.get_param('charset')
+
+    def geturl(self):
+        return self.url
+
+    def info(self):
+        return self.headers
+
+    @property
+    def code(self):
+        return self.status
+
+    def getcode(self):
+        return self.status
 
 
 @contextlib.contextmanager
