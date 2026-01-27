@@ -6,8 +6,7 @@ from time import localtime
 import pydyf
 
 
-def pdfx(pdf, metadata, document, page_streams, attachments, compress, version,
-         variant):
+def pdfx(pdf, document, page_streams, attachments, compress, version, variant):
     """Set metadata for PDF/X documents."""
 
     # Add conformance metadata.
@@ -25,57 +24,44 @@ def pdfx(pdf, metadata, document, page_streams, attachments, compress, version,
     now_pdf = (
         f'(D:{year:04}{month:02}{day:02}{hour:02}{minute:02}{second:02}'
         f"{tz_hour:+03}'{tz_minute:02}')")
-    if not metadata.modified:
-        metadata.modified = now_iso
+    if not document.metadata.modified:
+        document.metadata.modified = now_iso
         pdf.info['ModDate'] = now_pdf
-    if not metadata.created:
-        metadata.created = now_iso
+    if not document.metadata.created:
+        document.metadata.created = now_iso
         pdf.info['CreationDate'] = now_pdf
 
-    # Add output intents.
-    if 'device-cmyk' not in document.color_profiles:
-        # Add standard CMYK profile.
-        pdf.catalog['OutputIntents'] = pydyf.Array([
-            pydyf.Dictionary({
-                'Type': '/OutputIntent',
-                'S': '/GTS_PDFX',
-                'OutputConditionIdentifier': pydyf.String('CGATS TR 001'),
-                'RegistryName': pydyf.String('http://www.color.org'),
-            }),
-        ])
-
     # Common PDF metadata stream.
-    metadata.include_in_pdf(pdf, 'x', version, conformance, compress=compress)
+    document.metadata.include_in_pdf(pdf, 'x', version, conformance, compress=compress)
+
+    # Add output intents.
+    intents = pydyf.Dictionary({
+        'Type': '/OutputIntent',
+        'S': '/GTS_PDFX',
+        'OutputConditionIdentifier': pydyf.String('CGATS TR 001'),
+    }),
+    pdf.catalog['OutputIntents'] = pydyf.Array([intents])
+    allow_inclusion = not ('p' in variant or 'n' in variant)
+    if allow_inclusion and document.output_intent in document.color_profiles:
+        color_profile = document.color_profile[document.output_intent]
+        intents['OutputConditionIdentifier'] = pydyf.String(color_profile.name)
+        intents['Info'] = pydyf.String(color_profile.name)
+        intents['DestOutputProfile'] = color_profile.pdf_reference
+    elif document.output_intent:
+        intents['OutputConditionIdentifier'] = pydyf.String(document.output_intent)
+
+
+def _values(version):
+    output = 'CGATS TR 001'
+    return {'pdf_version': version, 'pdf_identifier': True, 'output_intent': output}
 
 
 VARIANTS = {
-    'pdf/x-1a': (
-        partial(pdfx, version=1, variant='a:2003'),
-        {'version': '1.4', 'identifier': True},
-    ),
-    'pdf/x-3': (
-        partial(pdfx, version=3, variant=':2003'),
-        {'version': '1.4', 'identifier': True},
-    ),
-    'pdf/x-4': (
-        partial(pdfx, version=4, variant=''),
-        {'version': '1.6', 'identifier': True},
-    ),
-    'pdf/x-5g': (
-        partial(pdfx, version=5, variant='g'),
-        {'version': '1.6', 'identifier': True},
-    ),
-    # TODO: these variants forbid OutputIntent to include ICC file.
-    # 'pdf/x-4p': (
-    #     partial(pdfx, version=4, variant='p'),
-    #     {'version': '1.6', 'identifier': True},
-    # ),
-    # 'pdf/x-5pg': (
-    #     partial(pdfx, version=5, variant='pg'),
-    #     {'version': '1.6', 'identifier': True},
-    # ),
-    # 'pdf/x-5n': (
-    #     partial(pdfx, version=5, variant='n'),
-    #     {'version': '1.6', 'identifier': True},
-    # ),
+    'pdf/x-1a': (partial(pdfx, version=1, variant='a:2003'), _values('1.4')),
+    'pdf/x-3': (partial(pdfx, version=3, variant=':2003'), _values('1.4')),
+    'pdf/x-4': (partial(pdfx, version=4, variant=''), _values('1.6')),
+    'pdf/x-4p': (partial(pdfx, version=4, variant='p'), _values('1.6')),
+    'pdf/x-5g': (partial(pdfx, version=5, variant='g'), _values('1.6')),
+    'pdf/x-5pg': (partial(pdfx, version=5, variant='pg'), _values('1.6')),
+    'pdf/x-5n': (partial(pdfx, version=5, variant='n'), _values('1.6')),
 }

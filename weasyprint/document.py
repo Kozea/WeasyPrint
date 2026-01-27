@@ -188,6 +188,13 @@ class Document:
         if color_profiles is None:
             color_profiles = {}
 
+        # Set default PDF options for PDF variants.
+        if variant := options['pdf_variant']:
+            _, properties = VARIANTS[variant]
+            for key, value in tuple(options.items()):
+                if value is None and key in properties:
+                    options[key] = properties[key]
+
         context = cls._build_layout_context(
             html, font_config, counter_style, color_profiles, options)
 
@@ -200,11 +207,12 @@ class Document:
         rendering = cls(
             [Page(page_box) for page_box in page_boxes],
             DocumentMetadata(**get_html_metadata(html)),
-            html.url_fetcher, font_config, color_profiles)
+            html.url_fetcher, font_config, color_profiles, options['output_intent'])
         rendering._html = html
         return rendering
 
-    def __init__(self, pages, metadata, url_fetcher, font_config, color_profiles):
+    def __init__(self, pages, metadata, url_fetcher, font_config, color_profiles,
+                 output_intent):
         #: A list of :class:`Page` objects.
         self.pages = pages
         #: A :class:`DocumentMetadata` object.
@@ -221,8 +229,10 @@ class Document:
         # rendering is destroyed. This is needed as font_config.__del__ removes
         # fonts that may be used when rendering
         self.font_config = font_config
-
+        # List of color profiles.
         self.color_profiles = color_profiles
+        # Output intent identifier.
+        self.output_intent = output_intent
 
     def copy(self, pages='all'):
         """Take a subset of the pages.
@@ -255,7 +265,7 @@ class Document:
             pages = list(pages)
         return type(self)(
             pages, self.metadata, self.url_fetcher, self.font_config,
-            self.color_profiles)
+            self.color_profiles, self.output_intent)
 
     def make_bookmark_tree(self, scale=1, transform_pages=False):
         """Make a tree of all bookmarks in the document.
@@ -321,13 +331,12 @@ class Document:
         new_options.update(options)
         options = new_options
 
-        # Set default PDF version for PDF variants.
+        # Set default PDF options for PDF variants.
         if variant := options['pdf_variant']:
             _, properties = VARIANTS[variant]
-            if 'version' in properties and not options['pdf_version']:
-                options['pdf_version'] = properties['version']
-            if 'identifier' in properties and not options['pdf_identifier']:
-                options['pdf_identifier'] = properties['identifier']
+            for key, value in tuple(options.items()):
+                if value is None and key in properties:
+                    options[key] = properties[key]
 
         pdf = generate_pdf(self, target, zoom, **options)
 

@@ -209,8 +209,7 @@ def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
         for c0, c1, n in color_couples)
     function = group.create_stitching_function(
         domain, encode, bounds, sub_functions)
-    shading = group.add_shading(
-        shading_type, 'RGB', domain, coords, extend, function)
+    shading = group.add_shading(shading_type, domain, coords, extend, function)
 
     if any(alpha != 1 for alpha in alphas):
         alpha_stream = group.set_alpha_state(bx1, by1, width, height)
@@ -224,7 +223,7 @@ def draw_gradient(svg, node, gradient, font_size, opacity, stroke):
         function = group.create_stitching_function(
             domain, encode, bounds, sub_functions)
         alpha_shading = alpha_stream.add_shading(
-            shading_type, 'Gray', domain, coords, extend, function)
+            shading_type, domain, coords, extend, function, 'DeviceGray')
         alpha_stream.stream = [f'/{alpha_shading.id} sh']
 
     group.paint_shading(shading.id)

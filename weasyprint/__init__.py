@@ -46,9 +46,8 @@ VERSION = __version__ = '68.0'
 #:     Whether custom HTML metadata should be stored in the generated PDF.
 #: :param bool presentational_hints:
 #:     Whether HTML presentational hints are followed.
-#: :param bool srgb:
-#:     Whether sRGB color profile should be included and set as default for
-#:     device-dependant RGB colors.
+#: :param string output_intent:
+#:     CSS identifier or registered name of the output intent color space.
 #: :param bool optimize_images:
 #:     Whether size of embedded images should be optimized, with no quality
 #:     loss.
@@ -77,7 +76,7 @@ DEFAULT_OPTIONS = {
     'xmp_metadata': None,
     'custom_metadata': False,
     'presentational_hints': False,
-    'srgb': False,
+    'output_intent': None,
     'optimize_images': False,
     'jpeg_quality': None,
     'dpi': None,

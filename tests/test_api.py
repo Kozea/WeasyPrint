@@ -612,15 +612,21 @@ def test_partial_pdf_custom_metadata():
 
 
 @assert_no_logs
-def test_pdf_srgb():
-    stdout = _run('--srgb --uncompressed-pdf - -', b'test')
+def test_output_intent():
+    stdout = _run(
+        '--uncompressed-pdf --output-intent="sRGB" - -',
+        b'<div style="color: red">test')
     assert b'sRGB' in stdout
 
 
 @assert_no_logs
-def test_pdf_no_srgb():
-    stdout = _run('--uncompressed-pdf - -', b'test')
-    assert b'sRGB' not in stdout
+def test_output_intent_device_cmyk():
+    stdout = _run('--uncompressed-pdf - -', b''.join((
+        b'<style>@color-profile device-cmyk { src: url(',
+        path2url(resource_path('cmyk.icc')).encode(),
+        b'); components: c, m, y, k }</style>',
+        b'<div style="color: device-cmyk(1 0 0 0)">test')))
+    assert b'OutputIntents' in stdout
 
 
 @assert_no_logs

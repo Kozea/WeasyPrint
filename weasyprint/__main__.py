@@ -115,9 +115,11 @@ group.add_argument(
     '--custom-metadata', action='store_true',
     help='include custom HTML meta tags in PDF metadata')
 group.add_argument(
+    '--output-intent',
+    help='CSS identifier or registered name of the output intent color space')
+group.add_argument(
     '-p', '--presentational-hints', action='store_true',
     help='follow HTML presentational hints')
-group.add_argument('--srgb', action='store_true', help='include sRGB color profile')
 group.add_argument(
     '--optimize-images', action='store_true',
     help='optimize size of embedded images with no quality loss')

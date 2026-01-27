@@ -1227,10 +1227,11 @@ class ComputedStyle(dict):
 
 
 class ColorProfile:
-    def __init__(self, file_object, descriptors):
-        self.src = descriptors['src'][1]
-        self.renderingintent = descriptors['rendering-intent']
-        self.components = descriptors['components']
+    def __init__(self, file_object, src, rendering_intent, components):
+        self.src = src
+        self.rendering_intent = rendering_intent
+        self.components = components
+        self.pdf_reference = None
         self._profile = ImageCmsProfile(file_object)
 
     @property
@@ -1643,14 +1644,17 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fet
                     rule.source_column)
                 continue
 
-            with fetch(url_fetcher, descriptors['src'][1]) as response:
+            url = descriptors['src'][1]
+            with fetch(url_fetcher, url) as response:
                 try:
-                    color_profile = ColorProfile(response, descriptors)
+                    color_profile = ColorProfile(
+                        response, url, descriptors['rendering-intent'],
+                        descriptors['components'])
                 except BaseException:
                     LOGGER.warning(
                         'Invalid profile file for profile named %r, the whole '
                         '@color-profile rule was ignored at %d:%d.',
-                        tinycss2.serialize(rule.prelude), rule.source_line,
+                        tinycss2.serialize(rule.prelude).strip(), rule.source_line,
                         rule.source_column)
                     continue
                 else:

@@ -5,8 +5,7 @@ from functools import partial
 import pydyf
 
 
-def pdfa(pdf, metadata, document, page_streams, attachments, compress,
-         version, variant):
+def pdfa(pdf, document, page_streams, attachments, compress, version, variant):
     """Set metadata for PDF/A documents."""
 
     # Handle attachments.
@@ -63,45 +62,30 @@ def pdfa(pdf, metadata, document, page_streams, attachments, compress,
     if version == 1:
         # Metadata compression is forbidden for version 1.
         compress = False
-    metadata.include_in_pdf(pdf, 'a', version, variant, compress)
+    document.metadata.include_in_pdf(pdf, 'a', version, variant, compress)
 
     # Remove document information.
     if version >= 4:
         pdf.info.clear()
 
 
+def _values(version, pdf_tags=None):
+    values = {'pdf_version': version, 'pdf_identifier': True, 'output_intent': 'sRGB'}
+    if pdf_tags is not None:
+        values['pdf_tags'] = pdf_tags
+    return values
+
+
 VARIANTS = {
-    'pdf/a-1b': (
-        partial(pdfa, version=1, variant='B'),
-        {'version': '1.4', 'identifier': True, 'srgb': True}),
-    'pdf/a-2b': (
-        partial(pdfa, version=2, variant='B'),
-        {'version': '1.7', 'identifier': True, 'srgb': True}),
-    'pdf/a-3b': (
-        partial(pdfa, version=3, variant='B'),
-        {'version': '1.7', 'identifier': True, 'srgb': True}),
-    'pdf/a-2u': (
-        partial(pdfa, version=2, variant='U'),
-        {'version': '1.7', 'identifier': True, 'srgb': True}),
-    'pdf/a-3u': (
-        partial(pdfa, version=3, variant='U'),
-        {'version': '1.7', 'identifier': True, 'srgb': True}),
-    'pdf/a-4u': (
-        partial(pdfa, version=4, variant='U'),
-        {'version': '2.0', 'identifier': True, 'srgb': True}),
-    'pdf/a-1a': (
-        partial(pdfa, version=1, variant='A'),
-        {'version': '1.4', 'identifier': True, 'srgb': True, 'pdf_tags': True}),
-    'pdf/a-2a': (
-        partial(pdfa, version=2, variant='A'),
-        {'version': '1.7', 'identifier': True, 'srgb': True, 'pdf_tags': True}),
-    'pdf/a-3a': (
-        partial(pdfa, version=3, variant='A'),
-        {'version': '1.7', 'identifier': True, 'srgb': True, 'pdf_tags': True}),
-    'pdf/a-4e': (
-        partial(pdfa, version=4, variant='E'),
-        {'version': '2.0', 'identifier': True, 'srgb': True}),
-    'pdf/a-4f': (
-        partial(pdfa, version=4, variant='F'),
-        {'version': '2.0', 'identifier': True, 'srgb': True}),
+    'pdf/a-1b': (partial(pdfa, version=1, variant='B'), _values('1.4')),
+    'pdf/a-2b': (partial(pdfa, version=2, variant='B'), _values('1.7')),
+    'pdf/a-3b': (partial(pdfa, version=3, variant='B'), _values('1.7')),
+    'pdf/a-2u': (partial(pdfa, version=2, variant='U'), _values('1.7')),
+    'pdf/a-3u': (partial(pdfa, version=3, variant='U'), _values('1.7')),
+    'pdf/a-4u': (partial(pdfa, version=4, variant='U'), _values('2.0')),
+    'pdf/a-1a': (partial(pdfa, version=1, variant='A'), _values('1.4', pdf_tags=True)),
+    'pdf/a-2a': (partial(pdfa, version=2, variant='A'), _values('1.7', pdf_tags=True)),
+    'pdf/a-3a': (partial(pdfa, version=3, variant='A'), _values('1.7', pdf_tags=True)),
+    'pdf/a-4e': (partial(pdfa, version=4, variant='E'), _values('2.0')),
+    'pdf/a-4f': (partial(pdfa, version=4, variant='F'), _values('2.0')),
 }
