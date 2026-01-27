@@ -106,7 +106,8 @@ class DocumentMetadata:
         if version:
             element = SubElement(rdf, f'{{{NS["rdf"]}}}Description')
             element.attrib[f'{{{NS["rdf"]}}}about'] = ''
-            element.attrib[f'{{{NS[namespace]}}}part'] = str(version)
+            if not (variant == 'x' and version >= 4):
+                element.attrib[f'{{{NS[namespace]}}}part'] = str(version)
         if conformance:
             assert version
             if variant == 'x':
