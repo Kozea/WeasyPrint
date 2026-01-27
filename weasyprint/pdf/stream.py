@@ -14,7 +14,7 @@ from .fonts import Font
 class Stream(pydyf.Stream):
     """PDF stream object with extra features."""
     def __init__(self, fonts, page_rectangle, resources, images, tags, color_profiles,
-                 *args, **kwargs):
+                 output_intent, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.page_rectangle = page_rectangle
         self._fonts = fonts
@@ -22,6 +22,7 @@ class Stream(pydyf.Stream):
         self._images = images
         self._tags = tags
         self._color_profiles = color_profiles
+        self._output_intent = output_intent
         self._current_color = self._current_color_stroke = None
         self._current_alpha = self._current_alpha_stroke = None
         self._current_font = self._current_font_size = None
@@ -46,6 +47,8 @@ class Stream(pydyf.Stream):
             kwargs['tags'] = self._tags
         if 'color_profiles' not in kwargs:
             kwargs['color_profiles'] = self._color_profiles
+        if 'output_intent' not in kwargs:
+            kwargs['output_intent'] = self._output_intent
         if 'compress' not in kwargs:
             kwargs['compress'] = self.compress
         return Stream(**kwargs)
@@ -113,7 +116,7 @@ class Stream(pydyf.Stream):
             self.set_color_space('DeviceCMYK', stroke)
             c, m, y, k = color.coordinates
             self.set_color_special(None, stroke, c, m, y, k)
-        elif color.space.startswith('--') and color.space in self._color_profiles:
+        elif color.space.startswith('--') and self._color_profiles.get(color.space):
             self.set_color_space(color.space, stroke)
             self.set_color_special(None, stroke, *color.coordinates)
         else:
@@ -202,7 +205,7 @@ class Stream(pydyf.Stream):
                 'Type': '/Group',
                 'S': '/Transparency',
                 'I': 'true',
-                'CS': '/DeviceRGB',
+                'CS': f'/{self._default_color_space}',
             }),
         })
         group = self.clone(resources=resources, extra=extra)
@@ -251,11 +254,11 @@ class Stream(pydyf.Stream):
         self._resources['Pattern'][pattern.id] = pattern
         return pattern
 
-    def add_shading(self, shading_type, color_space, domain, coords, extend,
-                    function):
+    def add_shading(self, shading_type, domain, coords, extend, function,
+                    color_space=None):
         shading = pydyf.Dictionary({
             'ShadingType': shading_type,
-            'ColorSpace': f'/Device{color_space}',
+            'ColorSpace': f'/{color_space or self._default_color_space}',
             'Domain': pydyf.Array(domain),
             'Coords': pydyf.Array(coords),
             'Function': function,
@@ -319,3 +322,16 @@ class Stream(pydyf.Stream):
             'Bounds': pydyf.Array(bounds),
             'Functions': pydyf.Array(sub_functions),
         })
+
+    @property
+    def _default_color_space(self):
+        if 'device-cmyk' in self._color_profiles:
+            return 'DeviceCMYK'
+        elif self._output_intent in self._color_profiles:
+            return self._output_intent
+        elif self._output_intent:
+            return 'DeviceCMYK'
+        elif self._color_profiles:
+            return next(iter(self._color_profiles))
+        else:
+            return 'DeviceRGB'

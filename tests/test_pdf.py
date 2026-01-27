@@ -537,7 +537,7 @@ def test_embed_images_from_pages():
     document = Document(
         (page1, page2), metadata=DocumentMetadata(),
         font_config=FontConfiguration(), color_profiles={},
-        url_fetcher=None).write_pdf()
+        url_fetcher=None, output_intent=None).write_pdf()
     assert document.count(b'/Filter /DCTDecode') == 2
 
 

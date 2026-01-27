@@ -519,9 +519,7 @@ class Gradient:
             for c0, c1, hint in color_couples)
         function = stream.create_stitching_function(
             domain, encode, bounds, sub_functions)
-        # TODO: handle other color spaces.
-        shading = stream.add_shading(
-            shading_type, 'RGB', domain, points, extend, function)
+        shading = stream.add_shading(shading_type, domain, points, extend, function)
         stream.transform(d=scale_y)
 
         if any(alpha != 1 for alpha in alphas):
@@ -535,7 +533,7 @@ class Gradient:
             function = stream.create_stitching_function(
                 domain, encode, bounds, sub_functions)
             alpha_shading = alpha_stream.add_shading(
-                shading_type, 'Gray', domain, points, extend, function)
+                shading_type, domain, points, extend, function, 'DeviceGray')
             alpha_stream.transform(d=scale_y)
             alpha_stream.stream = [f'/{alpha_shading.id} sh']
 
