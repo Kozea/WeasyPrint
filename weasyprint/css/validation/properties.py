@@ -14,10 +14,11 @@ from ..functions import Function, check_var
 from ..properties import KNOWN_PROPERTIES, ZERO_PIXELS, Dimension
 
 from ..tokens import (  # isort:skip
-    InvalidValues, Pending, comma_separated_list, get_angle, get_content_list,
-    get_content_list_token, get_custom_ident, get_image, get_keyword, get_length,
-    get_number, get_percentage, get_resolution, get_single_keyword, get_url,
-    parse_2d_position, parse_position, remove_whitespace, single_keyword, single_token)
+    FIFTY_PERCENT, InvalidValues, Pending, comma_separated_list, get_angle,
+    get_content_list, get_content_list_token, get_custom_ident, get_image,
+    get_keyword, get_length, get_number, get_percentage, get_resolution,
+    get_single_keyword, get_url, parse_2d_position, parse_position,
+    remove_whitespace, single_keyword, single_token)
 
 PREFIX = '-weasy-'
 PROPRIETARY = set()
@@ -517,6 +518,450 @@ def column_span(keyword):
 def box_sizing(keyword):
     """Validation for the ``box-sizing`` property from css3-ui"""
     return keyword in ('padding-box', 'border-box', 'content-box')
+
+
+@property(wants_base_url=True)
+def shape_outside(tokens, base_url):
+    """``shape-outside`` property validation.
+
+    Validates the shape-outside property with box keyword values, shape functions,
+    and image URLs.
+    This property specifies the shape around which inline content wraps
+    when flowing around a floated element.
+
+    Supported values:
+    - none: No shape is applied (default).
+    - margin-box: Uses the margin box as the reference shape.
+    - border-box: Uses the border box as the reference shape.
+    - padding-box: Uses the padding box as the reference shape.
+    - content-box: Uses the content box as the reference shape.
+    - circle(): Defines a circular shape.
+    - ellipse(): Defines an elliptical shape.
+    - polygon(): Defines a polygonal shape.
+    - inset(): Defines a rectangular inset shape.
+    - url(): Uses an image's alpha channel to define the shape.
+    - Shape function + box keyword combination (e.g., circle(50%) border-box)
+
+    See https://www.w3.org/TR/css-shapes-1/#shape-outside-property
+    """
+    box_keywords = ('margin-box', 'border-box', 'padding-box', 'content-box')
+
+    if len(tokens) == 1:
+        token = tokens[0]
+        if token.type == 'ident':
+            keyword = token.lower_value
+            if keyword == 'none' or keyword in box_keywords:
+                return keyword
+        # Handle shape functions (circle, ellipse, polygon, inset)
+        if token.type == 'function':
+            result = _parse_shape_function(token)
+            if result is not None:
+                return result
+        # Handle URL for image-based shapes (url() is also a function token)
+        url = get_url(token, base_url)
+        if url is not None and url[0] == 'url':
+            # Return image tuple: ('image', url_info, ref_box)
+            return ('image', url[1], 'margin-box')
+
+    elif len(tokens) == 2:
+        # Handle shape function + reference box combination
+        # Can be: function box-keyword OR box-keyword function
+        # Or: url box-keyword OR box-keyword url
+        first, second = tokens
+
+        shape = None
+        ref_box = None
+
+        if first.type == 'function' and second.type == 'ident':
+            shape = _parse_shape_function(first)
+            if second.lower_value in box_keywords:
+                ref_box = second.lower_value
+        elif first.type == 'ident' and second.type == 'function':
+            if first.lower_value in box_keywords:
+                ref_box = first.lower_value
+            shape = _parse_shape_function(second)
+
+        # Handle url() with box keyword
+        if shape is None:
+            url = get_url(first, base_url)
+            if url is not None and url[0] == 'url':
+                if second.type == 'ident' and second.lower_value in box_keywords:
+                    return ('image', url[1], second.lower_value)
+            url = get_url(second, base_url)
+            if url is not None and url[0] == 'url':
+                if first.type == 'ident' and first.lower_value in box_keywords:
+                    return ('image', url[1], first.lower_value)
+
+        if shape and ref_box:
+            # Return shape with reference box as a combined tuple
+            return ('shape_with_box', shape, ref_box)
+
+    return None
+
+
+@property()
+@single_token
+def shape_margin(token):
+    """``shape-margin`` property validation.
+
+    Adds a margin to the shape-outside, expanding the area around which
+    content wraps. Must be a non-negative length or percentage.
+
+    See https://www.w3.org/TR/css-shapes-1/#shape-margin-property
+    """
+    length = get_length(token, negative=False, percentage=True)
+    if length is not None:
+        return length
+    return None
+
+
+@property()
+@single_token
+def shape_image_threshold(token):
+    """``shape-image-threshold`` property validation.
+
+    Defines the alpha channel threshold for extracting the shape from an image.
+    Pixels with alpha values greater than this threshold are considered
+    inside the shape. Must be a number between 0.0 and 1.0.
+
+    See https://www.w3.org/TR/css-shapes-1/#shape-image-threshold-property
+    """
+    number = get_number(token)
+    if number is not None:
+        # Clamp to valid range [0, 1]
+        return max(0.0, min(1.0, number.value))
+    return None
+
+
+def _parse_shape_function(token):
+    """Parse a shape function (circle, ellipse, polygon, inset)."""
+    name = token.lower_name
+
+    if name == 'circle':
+        return _parse_circle(token)
+    elif name == 'ellipse':
+        return _parse_ellipse(token)
+    elif name == 'polygon':
+        return _parse_polygon(token)
+    elif name == 'inset':
+        return _parse_inset(token)
+
+    return None
+
+
+def _parse_circle(token):
+    """Parse circle() shape function.
+
+    Syntax: circle(radius? at position?)
+    - radius: length, percentage, or 'closest-side' | 'farthest-side'
+    - position: 2D position (defaults to center)
+
+    Returns: ('circle', radius, (cx, cy)) or None if invalid
+    """
+    arguments = remove_whitespace(token.arguments)
+
+    # Default values
+    radius = 'closest-side'
+    position = (FIFTY_PERCENT, FIFTY_PERCENT)
+
+    if not arguments:
+        # circle() with no arguments - use defaults
+        return ('circle', radius, position)
+
+    # Find 'at' keyword to split radius from position
+    at_index = None
+    for i, arg in enumerate(arguments):
+        if arg.type == 'ident' and arg.lower_value == 'at':
+            at_index = i
+            break
+
+    if at_index is not None:
+        # Parse radius (if any before 'at')
+        if at_index > 0:
+            radius_tokens = arguments[:at_index]
+            radius = _parse_shape_radius(radius_tokens)
+            if radius is None:
+                return None
+
+        # Parse position (after 'at')
+        position_tokens = arguments[at_index + 1:]
+        if not position_tokens:
+            return None
+        position = _parse_shape_position(position_tokens)
+        if position is None:
+            return None
+    else:
+        # No 'at', so all tokens are for radius
+        radius = _parse_shape_radius(arguments)
+        if radius is None:
+            return None
+
+    return ('circle', radius, position)
+
+
+def _parse_ellipse(token):
+    """Parse ellipse() shape function.
+
+    Syntax: ellipse(rx ry? at position?)
+    - rx, ry: length, percentage, or 'closest-side' | 'farthest-side'
+    - position: 2D position (defaults to center)
+
+    Returns: ('ellipse', rx, ry, (cx, cy)) or None if invalid
+    """
+    arguments = remove_whitespace(token.arguments)
+
+    # Default values
+    rx = 'closest-side'
+    ry = 'closest-side'
+    position = (FIFTY_PERCENT, FIFTY_PERCENT)
+
+    if not arguments:
+        # ellipse() with no arguments - use defaults
+        return ('ellipse', rx, ry, position)
+
+    # Find 'at' keyword to split radii from position
+    at_index = None
+    for i, arg in enumerate(arguments):
+        if arg.type == 'ident' and arg.lower_value == 'at':
+            at_index = i
+            break
+
+    if at_index is not None:
+        # Parse radii (if any before 'at')
+        if at_index > 0:
+            radii_tokens = arguments[:at_index]
+            radii = _parse_ellipse_radii(radii_tokens)
+            if radii is None:
+                return None
+            rx, ry = radii
+
+        # Parse position (after 'at')
+        position_tokens = arguments[at_index + 1:]
+        if not position_tokens:
+            return None
+        position = _parse_shape_position(position_tokens)
+        if position is None:
+            return None
+    else:
+        # No 'at', so all tokens are for radii
+        radii = _parse_ellipse_radii(arguments)
+        if radii is None:
+            return None
+        rx, ry = radii
+
+    return ('ellipse', rx, ry, position)
+
+
+def _parse_polygon(token):
+    """Parse polygon() shape function.
+
+    Syntax: polygon(fill-rule?, point, point, ...)
+    - fill-rule: 'nonzero' | 'evenodd' (optional, defaults to 'nonzero')
+    - point: x y pairs (comma-separated)
+
+    Returns: ('polygon', fill_rule, ((x1,y1), (x2,y2), ...)) or None if invalid
+    """
+    from ..functions import Function
+    func = Function(token)
+    # Split by comma but keep multi-token parts (for x y pairs)
+    parts = func.split_comma(single_tokens=False)
+
+    if parts is None or len(parts) < 3:
+        # Need at least 3 points for a polygon
+        return None
+
+    fill_rule = 'nonzero'
+    points = []
+    first_part = parts[0]
+
+    # Check if first part is a fill-rule keyword
+    if len(first_part) == 1 and first_part[0].type == 'ident':
+        keyword = first_part[0].lower_value
+        if keyword in ('nonzero', 'evenodd'):
+            fill_rule = keyword
+            parts = parts[1:]
+        elif keyword not in ('nonzero', 'evenodd'):
+            # First part might be a single-token x value (invalid for point)
+            # Try to parse as point
+            pass
+
+    # Need at least 3 points
+    if len(parts) < 3:
+        return None
+
+    for part in parts:
+        point = _parse_polygon_point(part)
+        if point is None:
+            return None
+        points.append(point)
+
+    return ('polygon', fill_rule, tuple(points))
+
+
+def _parse_shape_radius(tokens):
+    """Parse a shape radius value (for circle).
+
+    Returns: 'closest-side', 'farthest-side', or Dimension, or None if invalid
+    """
+    if len(tokens) != 1:
+        return None
+
+    token = tokens[0]
+
+    # Check for keywords
+    if token.type == 'ident':
+        keyword = token.lower_value
+        if keyword in ('closest-side', 'farthest-side'):
+            return keyword
+        return None
+
+    # Check for length or percentage
+    length = get_length(token, negative=False, percentage=True)
+    if length:
+        return length
+
+    return None
+
+
+def _parse_ellipse_radii(tokens):
+    """Parse ellipse radii (rx and ry).
+
+    Returns: (rx, ry) tuple or None if invalid
+    """
+    if len(tokens) == 1:
+        # Single value - applies to both rx and ry
+        radius = _parse_shape_radius(tokens)
+        if radius is None:
+            return None
+        return (radius, radius)
+    elif len(tokens) == 2:
+        # Two values - rx and ry
+        rx = _parse_shape_radius([tokens[0]])
+        ry = _parse_shape_radius([tokens[1]])
+        if rx is None or ry is None:
+            return None
+        return (rx, ry)
+
+    return None
+
+
+def _parse_shape_position(tokens):
+    """Parse a position value for shape functions.
+
+    Returns: (x, y) tuple of Dimension values or None if invalid
+    """
+    # Use the existing parse_2d_position function
+    result = parse_2d_position(tokens)
+    if result:
+        return result
+
+    # Also try with position keywords
+    if len(tokens) == 1:
+        token = tokens[0]
+        if token.type == 'ident':
+            keyword = token.lower_value
+            if keyword == 'center':
+                return (FIFTY_PERCENT, FIFTY_PERCENT)
+            elif keyword == 'left':
+                return (Dimension(0, '%'), FIFTY_PERCENT)
+            elif keyword == 'right':
+                return (Dimension(100, '%'), FIFTY_PERCENT)
+            elif keyword == 'top':
+                return (FIFTY_PERCENT, Dimension(0, '%'))
+            elif keyword == 'bottom':
+                return (FIFTY_PERCENT, Dimension(100, '%'))
+
+    return None
+
+
+def _parse_polygon_point(tokens):
+    """Parse a polygon point (x y pair).
+
+    Returns: (x, y) tuple of Dimension values or None if invalid
+    """
+    if len(tokens) != 2:
+        return None
+
+    x = get_length(tokens[0], percentage=True)
+    y = get_length(tokens[1], percentage=True)
+
+    if x is None or y is None:
+        return None
+
+    return (x, y)
+
+
+def _parse_inset(token):
+    """Parse inset() shape function.
+
+    Syntax: inset(offset{1,4} round border-radius?)
+    - offset: 1-4 length/percentage values (like margin/padding shorthand)
+    - border-radius: optional corner radii after 'round' keyword
+
+    Returns: ('inset', (top, right, bottom, left), border_radius) or None if invalid
+    """
+    arguments = list(token.arguments)
+
+    # Find 'round' keyword if present
+    round_index = None
+    for i, arg in enumerate(arguments):
+        if arg.type == 'ident' and arg.lower_value == 'round':
+            round_index = i
+            break
+
+    # Split tokens into offsets and radius parts
+    if round_index is not None:
+        offset_tokens = arguments[:round_index]
+        radius_tokens = arguments[round_index + 1:]
+    else:
+        offset_tokens = arguments
+        radius_tokens = []
+
+    # Remove whitespace from offset tokens
+    offset_tokens = [t for t in offset_tokens if t.type != 'whitespace']
+
+    # Parse 1-4 offset values
+    offsets = []
+    for tok in offset_tokens:
+        length = get_length(tok, percentage=True)
+        if length is None:
+            return None
+        offsets.append(length)
+
+    if not offsets or len(offsets) > 4:
+        return None
+
+    # Expand to 4 values (top, right, bottom, left) like CSS margin/padding
+    if len(offsets) == 1:
+        offsets = [offsets[0], offsets[0], offsets[0], offsets[0]]
+    elif len(offsets) == 2:
+        offsets = [offsets[0], offsets[1], offsets[0], offsets[1]]
+    elif len(offsets) == 3:
+        offsets = [offsets[0], offsets[1], offsets[2], offsets[1]]
+
+    # Parse border-radius (simplified - just get the values)
+    border_radius = None
+    if radius_tokens:
+        # Remove whitespace
+        radius_tokens = [t for t in radius_tokens if t.type != 'whitespace']
+        radii = []
+        for tok in radius_tokens:
+            length = get_length(tok, negative=False, percentage=True)
+            if length:
+                radii.append(length)
+        if radii:
+            # Expand radii to 4 values (top-left, top-right, bottom-right, bottom-left)
+            if len(radii) == 1:
+                radii = [radii[0], radii[0], radii[0], radii[0]]
+            elif len(radii) == 2:
+                radii = [radii[0], radii[1], radii[0], radii[1]]
+            elif len(radii) == 3:
+                radii = [radii[0], radii[1], radii[2], radii[1]]
+            elif len(radii) > 4:
+                radii = radii[:4]
+            border_radius = tuple(radii)
+
+    return ('inset', tuple(offsets), border_radius)
 
 
 @property()
