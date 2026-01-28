@@ -481,7 +481,7 @@ def fetch(url_fetcher, url):
         resource['body'] = resource.get('file_obj', resource.get('string'))
         content_type = resource.get('mime_type', 'application/octet-stream')
         if charset := resource.get('encoding'):
-            content_type += f';{charset}'
+            content_type += f'; charset={charset}'
         resource['headers'] = {'Content-Type': content_type}
         resource = URLFetcherResponse(**resource)
 
