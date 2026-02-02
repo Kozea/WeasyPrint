@@ -301,7 +301,7 @@ def _out_of_flow_layout(context, box, index, child, new_children,
     return stop, resume_at, new_child, out_of_flow_resume_at
 
 
-def _break_line(context, box, line, new_children, next_lines, page_is_empty, index,
+def _break_line(context, box, line, new_children, needed, page_is_empty, index,
                 skip_stack, resume_at, absolute_boxes, fixed_boxes):
     """Break line where allowed by orphans and widows.
 
@@ -316,7 +316,6 @@ def _break_line(context, box, line, new_children, next_lines, page_is_empty, ind
         return True, False, resume_at
     # How many lines we need on the next page to satisfy widows
     # -1 for the current line.
-    needed = max(box.style['widows'] - 1 - next_lines, 0)
     if needed > over_orphans and not page_is_empty:
         # Total number of lines < orphans + widows
         remove_placeholders(context, line.children, absolute_boxes, fixed_boxes)
@@ -377,15 +376,21 @@ def _linebox_layout(context, box, index, child, new_children, page_is_empty,
             # If we couldn’t break the line before but can break now, first try to
             # report footnotes and see if we don’t overflow.
             could_break_before = can_break_now = True
-            next_lines = len(tuple(lines_iterator))
+            needed = box.style['widows'] - 1
+            for _ in lines_iterator:
+                needed -= 1
+                # Don’t iterate over all lines as it can be long.
+                if needed == -1:
+                    break
             if len(new_children) + 1 < box.style['orphans']:
                 can_break_now = False
-            elif next_lines < box.style['widows']:
+            elif needed >= 0:
                 can_break_now = False
             if len(new_children) < box.style['orphans']:
                 could_break_before = False
-            elif next_lines + 1 < box.style['widows']:
+            elif needed > 0:
                 could_break_before = False
+            needed = max(0, needed)
             report = not context.in_column and can_break_now and not could_break_before
             reported_footnotes = 0
             while report and context.current_page_footnotes:
@@ -397,9 +402,8 @@ def _linebox_layout(context, box, index, child, new_children, page_is_empty,
                     break
             else:
                 abort, stop, resume_at = _break_line(
-                    context, box, line, new_children, next_lines,
-                    page_is_empty, index, skip_stack, resume_at, absolute_boxes,
-                    fixed_boxes)
+                    context, box, line, new_children, needed, page_is_empty, index,
+                    skip_stack, resume_at, absolute_boxes, fixed_boxes)
 
             # Revert reported footnotes, as they’ve been reported starting from the last
             # one.
@@ -414,8 +418,7 @@ def _linebox_layout(context, box, index, child, new_children, page_is_empty,
         # "When an unforced page break occurs here, both the adjoining
         #  ‘margin-top’ and ‘margin-bottom’ are set to zero."
         # See issue #115.
-        elif page_is_empty and context.overflows_page(
-                bottom_space, new_position_y):
+        elif page_is_empty and context.overflows_page(bottom_space, new_position_y):
             # Remove the top border when a page is empty and the box is
             # too high to be drawn in one page
             new_position_y -= box.margin_top
@@ -433,8 +436,7 @@ def _linebox_layout(context, box, index, child, new_children, page_is_empty,
                 overflow = (
                     overflow or
                     context.reported_footnotes or
-                    context.overflows_page(
-                        bottom_space, new_position_y + offset_y))
+                    context.overflows_page(bottom_space, new_position_y + offset_y))
                 if overflow:
                     context.report_footnote(footnote)
                     # If we've put other content on this page, then we may want
@@ -443,11 +445,15 @@ def _linebox_layout(context, box, index, child, new_children, page_is_empty,
                     # even try.
                     if new_children or not page_is_empty:
                         if footnote.style['footnote_policy'] == 'line':
-                            next_lines = len(tuple(lines_iterator))
+                            if needed := box.style['widows'] - 1:
+                                for _ in lines_iterator:
+                                    needed -= 1
+                                    # Don’t iterate over all lines as it can be long.
+                                    if needed == 0:
+                                        break
                             abort, stop, resume_at = _break_line(
-                                context, box, line, new_children,
-                                next_lines, page_is_empty, index,
-                                skip_stack, resume_at, absolute_boxes,
+                                context, box, line, new_children, needed, page_is_empty,
+                                index, skip_stack, resume_at, absolute_boxes,
                                 fixed_boxes)
                             break_linebox = True
                             break
