@@ -405,7 +405,10 @@ class URLFetcherResponse:
         else:
             self.headers = EmailMessage()
             for key, value in (headers or {}).items():
-                self.headers[key] = value
+                try:
+                    self.headers[key] = value
+                except ValueError:
+                    pass  # Ignore forbidden duplicated headers.
 
         if hasattr(body, 'read'):
             self._file_obj = body
