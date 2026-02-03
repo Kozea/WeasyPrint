@@ -679,7 +679,8 @@ def table_and_columns_preferred_widths(context, box, outer=True):
             sum(max_content_widths), large_percentage_contribution,
             *small_percentage_contributions]))
 
-    if table.style['width'] != 'auto' and table.style['width'].unit.lower() == 'px':
+    width = table.style['width']
+    if width != 'auto' and not check_math(width) and width.unit.lower() == 'px':
         # "percentages on the following properties are treated instead as
         # though they were the following: width: auto"
         # https://dbaron.org/css/intrinsic/#outer-intrinsic

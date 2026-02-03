@@ -236,6 +236,27 @@ def test_math_functions_percentage_and_font_unit(css_property):
     assert len(math_logs) == len(logs)
 
 
+@pytest.mark.parametrize('display', [
+    'block', 'inline', 'flex', 'grid',
+    'list', 'list-item',
+    'table', 'table-row-group', 'table-cell',
+    'inline-block', 'inline-table', 'inline-flex', 'inline-grid',
+])
+def test_math_functions_display_size(display):
+    # Regression test for #2673.
+    render_pages(f'''
+    <div style="display: {display};
+     min-width: calc(50% + 1em); max-width: calc(50% + 1em); width: calc(50% + 1em);
+     min-height: calc(50% + 1em); max-height: calc(50% + 1em); height: calc(50% + 1em)
+    ">
+      <div style="
+       min-width: calc(50% + 1em); max-width: calc(50% + 1em); width: calc(50% + 1em);
+       min-height: calc(50% + 1em); max-height: calc(50% + 1em); height: calc(50% + 1em)
+      "></div>
+    </div>
+    ''')
+
+
 @assert_no_logs
 def test_math_functions_gradient():
     render_pages('''
