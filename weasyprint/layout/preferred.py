@@ -715,12 +715,16 @@ def replaced_min_content_width(box, outer=True):
     width = box.style['width']
     if width == 'auto':
         height = box.style['height']
-        if height == 'auto' or height.unit == '%':
+        if height == 'auto' or check_math(height) or height.unit == '%':
             height = 'auto'
         else:
             assert height.unit.lower() == 'px'
             height = height.value
-        if box.style['max_width'] != 'auto' and box.style['max_width'].unit == '%':
+        unknown_max_width = (
+            box.style['max_width'] != 'auto' and
+            not check_math(box.style['max_width']) and
+            box.style['max_width'].unit == '%')
+        if unknown_max_width:
             # See https://drafts.csswg.org/css-sizing/#intrinsic-contribution
             width = 0
         else:
@@ -731,7 +735,7 @@ def replaced_min_content_width(box, outer=True):
             width, _ = default_image_sizing(
                 intrinsic_width, intrinsic_height, intrinsic_ratio, 'auto',
                 height, default_width=0, default_height=0)
-    elif box.style['width'].unit == '%':
+    elif check_math(box.style['width']) or box.style['width'].unit == '%':
         # See https://drafts.csswg.org/css-sizing/#intrinsic-contribution
         width = 0
     else:
@@ -745,7 +749,7 @@ def replaced_max_content_width(box, outer=True):
     width = box.style['width']
     if width == 'auto':
         height = box.style['height']
-        if height == 'auto' or height.unit == '%':
+        if height == 'auto' or check_math(height) or height.unit == '%':
             height = 'auto'
         else:
             assert height.unit.lower() == 'px'
@@ -757,7 +761,7 @@ def replaced_max_content_width(box, outer=True):
         width, _ = default_image_sizing(
             intrinsic_width, intrinsic_height, intrinsic_ratio, 'auto', height,
             default_width=300, default_height=150)
-    elif box.style['width'].unit == '%':
+    elif check_math(box.style['width']) or box.style['width'].unit == '%':
         # See https://drafts.csswg.org/css-sizing/#intrinsic-contribution
         width = 0
     else:

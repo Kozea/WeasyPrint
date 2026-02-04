@@ -295,3 +295,48 @@ def test_math_functions_gradient_color():
         rgba(10, 20, calc(30), calc(80%)) 10%,
         hsl(calc(10 + 10), 20%, 20%) 80%"></div>
     ''')
+
+
+@assert_no_logs
+def test_math_image_min_content_calc():
+    render_pages('''
+      <table>
+        <td>
+          <img src="pattern.png" style="
+            height: calc(10% + 1em);
+            width: calc(10% + 1em);
+            max-height: calc(10% + 1em);
+            max-width: calc(10% + 1em);
+            min-height: calc(10% + 1em);
+            min-width: calc(10% + 1em);
+          ">
+    ''')
+
+
+@assert_no_logs
+def test_math_image_min_content_auto_width_calc():
+    render_pages('''
+      <table>
+        <td>
+          <img src="pattern.png" style="
+            height: calc(10% + 1em);
+            max-height: calc(10% + 1em);
+            max-width: calc(10% + 1em);
+            min-height: calc(10% + 1em);
+            min-width: calc(10% + 1em);
+          ">
+    ''')
+
+
+@assert_no_logs
+def test_math_image_min_content_auto_width_height_calc():
+    render_pages('''
+      <table>
+        <td>
+          <img src="pattern.png" style="
+            max-height: calc(10% + 1em);
+            max-width: calc(10% + 1em);
+            min-height: calc(10% + 1em);
+            min-width: calc(10% + 1em);
+          ">
+    ''')
