@@ -45,11 +45,10 @@ def draw_text(stream, textbox, offset_x, text_overflow, block_ellipsis):
     if 'underline' in text_decoration_values:
         if textbox.style['text_underline_offset'] == 'auto':
             underline_offset = - textbox.pango_layout.underline_position
-        elif textbox.style['text_underline_offset'].unit == '%':
-            ratio = textbox.style['text_underline_offset'].value / 100
-            underline_offset = textbox.style['font_size'] * ratio
         else:
-            underline_offset = textbox.style['text_underline_offset'].value
+            underline_offset = percentage(
+                textbox.style['text_underline_offset'], textbox.style,
+                textbox.style['font_size'])
         offset_y = textbox.baseline + underline_offset + thickness / 2
         draw_text_decoration(
             stream, textbox, offset_x, offset_y, thickness,

@@ -667,6 +667,34 @@ def test_text_underline_offset_percentage(assert_pixels):
       <div>abc</div>''')
 
 
+def test_text_underline_offset_calc(assert_pixels):
+    assert_pixels('''
+        _____________
+        _zzzzzzzzzzz_
+        _zRRRRRRRRRz_
+        _zRRRRRRRRRz_
+        _zzzzzzzzzzz_
+        _zzzzzzzzzzz_
+        _zBBBBBBBBBz_
+        _zzzzzzzzzzz_
+        _____________
+    ''', '''
+      <style>
+        @page {
+          size: 13px 9px;
+          margin: 2px;
+        }
+        body {
+          color: red;
+          font-family: weasyprint;
+          font-size: 3px;
+          text-decoration: underline blue;
+          text-underline-offset: calc(0.5em + 20%);
+        }
+      </style>
+      <div>abc</div>''')
+
+
 def test_text_underline_thickness(assert_pixels):
     assert_pixels('''
         _____________
