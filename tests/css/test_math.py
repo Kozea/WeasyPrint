@@ -260,6 +260,16 @@ def test_math_functions_display_size(display):
 
 
 @assert_no_logs
+def test_math_functions_hyphenate():
+    render_pages('''
+      <div lang="en"
+        style="hyphens: auto; hyphenate-limit-zone: calc(1em + 100%); width: 2em">
+        absolute
+      </div>
+    ''')
+
+
+@assert_no_logs
 def test_math_functions_gradient():
     render_pages('''
       <div style="width: 10px; height: 10px; background: linear-gradient(
