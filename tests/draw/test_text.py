@@ -723,6 +723,34 @@ def test_text_underline_thickness_percentage(assert_pixels):
       <div>abc</div>''')
 
 
+def test_text_underline_thickness_calc(assert_pixels):
+    assert_pixels('''
+        _____________
+        _zzzzzzzzzzz_
+        _zRRRRRRRRRz_
+        _zRRRRRRRRRz_
+        _zzzzzzzzzzz_
+        _zzzzzzzzzzz_
+        _zBBBBBBBBBz_
+        _zBBBBBBBBBz_
+        _zzzzzzzzzzz_
+    ''', '''
+      <style>
+        @page {
+          size: 13px 9px;
+          margin: 2px;
+        }
+        body {
+          color: red;
+          font-family: weasyprint;
+          font-size: 3px;
+          text-decoration: underline blue calc(0.5em + 50%);
+          text-underline-offset: 2px;
+        }
+      </style>
+      <div>abc</div>''')
+
+
 def test_text_overline(assert_pixels):
     # Ascent value seems to be a bit random, don’t try to get the exact
     # position of the line

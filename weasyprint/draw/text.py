@@ -17,6 +17,8 @@ from .color import get_color
 
 def draw_text(stream, textbox, offset_x, text_overflow, block_ellipsis):
     """Draw a textbox to a pydyf stream."""
+    from ..layout.percent import percentage
+
     # Pango crashes with font-size: 0.
     assert textbox.style['font_size']
 
@@ -30,11 +32,10 @@ def draw_text(stream, textbox, offset_x, text_overflow, block_ellipsis):
     if 'underline' in text_decoration_values or 'overline' in text_decoration_values:
         if textbox.style['text_decoration_thickness'] in ('auto', 'from-font'):
             thickness = textbox.pango_layout.underline_thickness
-        elif textbox.style['text_decoration_thickness'].unit == '%':
-            ratio = textbox.style['text_decoration_thickness'].value / 100
-            thickness = textbox.style['font_size'] * ratio
         else:
-            thickness = textbox.style['text_decoration_thickness'].value
+            thickness = percentage(
+                textbox.style['text_decoration_thickness'], textbox.style,
+                textbox.style['font_size'])
     if 'overline' in text_decoration_values:
         offset_y = (
             textbox.baseline - textbox.pango_layout.ascent + thickness / 2)
