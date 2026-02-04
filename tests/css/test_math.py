@@ -340,3 +340,36 @@ def test_math_image_min_content_auto_width_height_calc():
             min-width: calc(10% + 1em);
           ">
     ''')
+
+
+@assert_no_logs
+def test_math_table_margin():
+    render_pages('<table style="margin: calc(1em + 10%)">')
+
+
+@assert_no_logs
+def test_math_grid_padding():
+    render_pages('''
+      <article style="display: grid">
+        <div style="box-sizing: border-box; border: 1px solid;
+                    padding: calc(2px + 10%); width: 7px">a</div>
+      </article>
+    ''')
+
+
+@assert_no_logs
+def test_math_table_column():
+    render_pages('''
+      <table style="width: 200px">
+        <colgroup style="width: calc(1em + 10%)">
+          <col />
+        </colgroup>
+        <col style="width: calc(1em + 10%)" />
+        <tbody>
+          <tr>
+            <td>a</td>
+            <td>a</td>
+          </tr>
+        </tbody>
+      </table>
+    ''')

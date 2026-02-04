@@ -109,7 +109,7 @@ def _block_content_width(context, box, function, outer):
 
         for value in ('padding_left', 'padding_right'):
             style_value = box.style[value]
-            if style_value != 'auto':
+            if style_value != 'auto' and not check_math(style_value):
                 if style_value.unit.lower() == 'px':
                     width -= style_value.value
                 else:
@@ -175,7 +175,7 @@ def margin_width(box, width, left=True, right=True):
         (['margin_right', 'padding_right'] if right else [])
     ):
         style_value = box.style[value]
-        if style_value != 'auto':
+        if style_value != 'auto' and not check_math(style_value):
             if style_value.unit.lower() == 'px':
                 width += style_value.value
             else:
@@ -263,7 +263,7 @@ def inline_max_content_width(context, box, outer=True, is_line_start=False):
 def column_group_content_width(context, box):
     """Return the *-content width for a ``TableColumnGroupBox``."""
     width = box.style['width']
-    if width == 'auto' or width.unit == '%':
+    if width == 'auto' or check_math(width) or width.unit == '%':
         width = 0
     else:
         assert width.unit.lower() == 'px'
@@ -597,21 +597,22 @@ def table_and_columns_preferred_widths(context, box, outer=True):
     # Define constrainedness
     constrainedness = [False for i in range(grid_width)]
     for i in range(grid_width):
-        if (column_groups[i] and column_groups[i].style['width'] != 'auto' and
-                column_groups[i].style['width'].unit != '%'):
-            constrainedness[i] = True
-            continue
-        if (columns[i] and columns[i].style['width'] != 'auto' and
-                columns[i].style['width'].unit != '%'):
-            constrainedness[i] = True
-            continue
-        for cell in zipped_grid[i]:
-            if (cell and cell.colspan == 1 and
-                    cell.style['width'] != 'auto' and
-                    not check_math(cell.style['width']) and
-                    cell.style['width'].unit != '%'):
+        if column_groups[i]:
+            width = column_groups[i].style['width']
+            if width != 'auto' and not check_math(width) and width.unit != '%':
                 constrainedness[i] = True
-                break
+                continue
+        if columns[i]:
+            width = columns[i].style['width']
+            if width != 'auto' and not check_math(width) and width.unit != '%':
+                constrainedness[i] = True
+                continue
+        for cell in zipped_grid[i]:
+            if cell and cell.colspan == 1:
+                width = cell.style['width']
+                if width != 'auto' and not check_math(width) and width.unit != '%':
+                    constrainedness[i] = True
+                    break
 
     intrinsic_percentages = [
         min(percentage, 100 - sum(intrinsic_percentages[:i]))
