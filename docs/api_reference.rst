@@ -846,3 +846,85 @@ form fields as PDF form fields (supported for text inputs, check boxes, text
 areas, and select only).
 
 The ``accent-color`` property is **not** supported.
+
+.. _CSS Basic User Interface Module Level 3/4: https://www.w3.org/TR/css-ui-4/
+
+CSS Shapes Module Level 1
++++++++++++++++++++++++++
+
+The `CSS Shapes Module Level 1`_ "defines the ``shape-outside`` property
+that controls how exclusion areas are computed around floated elements,
+enabling text to wrap around complex shapes rather than just rectangular boxes."
+
+WeasyPrint supports the following features:
+
+**Box keywords** for ``shape-outside``:
+
+- ``none`` (default)
+- ``margin-box``
+- ``border-box``
+- ``padding-box``
+- ``content-box``
+
+**Basic shape functions**:
+
+- ``circle()`` with radius keywords (``closest-side``, ``farthest-side``),
+  explicit lengths/percentages, and position values
+- ``ellipse()`` with radius keywords, explicit lengths/percentages,
+  and position values
+- ``polygon()`` with percentage and length coordinates, and fill rules
+  (``nonzero``, ``evenodd``)
+- ``inset()`` with 1-4 offset values and optional ``round`` for border-radius
+
+**Shape modifiers**:
+
+- ``shape-margin`` property to expand the exclusion area by a specified amount
+- Reference box combinations (e.g., ``circle(50%) border-box``)
+
+**Image-based shapes**:
+
+- ``url()`` image-based shapes using the image's alpha channel
+- ``shape-image-threshold`` property to define the alpha threshold (0.0-1.0)
+  for extracting the shape from an image
+
+The following features are **not** supported:
+
+- ``path()`` function
+
+Example usage:
+
+.. code-block:: css
+
+    .float-circle {
+        float: left;
+        width: 200px;
+        height: 200px;
+        shape-outside: circle(50%);
+        shape-margin: 10px;
+    }
+
+    .float-polygon {
+        float: right;
+        width: 150px;
+        height: 150px;
+        shape-outside: polygon(0 0, 100% 0, 100% 100%);
+    }
+
+    .float-inset {
+        float: left;
+        width: 200px;
+        height: 200px;
+        shape-outside: inset(10px 20px 10px 20px round 15px);
+    }
+
+    /* Image-based shape using alpha channel */
+    .float-image {
+        float: left;
+        width: 200px;
+        height: 200px;
+        shape-outside: url('shape-mask.png');
+        shape-image-threshold: 0.5;
+        shape-margin: 10px;
+    }
+
+.. _CSS Shapes Module Level 1: https://drafts.csswg.org/css-shapes/
