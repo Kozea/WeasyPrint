@@ -256,6 +256,8 @@ def split_first_line(text, style, context, max_width, justification_spacing,
     ``baseline``: baseline in pixels of the first line
 
     """
+    from ..layout.percent import percentage
+
     # See https://www.w3.org/TR/css-text-3/#white-space-property
     text_wrap = style['white_space'] in ('normal', 'pre-wrap', 'pre-line')
     space_collapse = style['white_space'] in ('normal', 'nowrap', 'pre-line')
@@ -392,11 +394,8 @@ def split_first_line(text, style, context, max_width, justification_spacing,
                     # This word is long enough.
                     first_line_width, _ = line_size(first_line, style)
                     space = max_width - first_line_width
-                    if style['hyphenate_limit_zone'].unit == '%':
-                        limit_zone = (
-                            max_width * style['hyphenate_limit_zone'].value / 100)
-                    else:
-                        limit_zone = style['hyphenate_limit_zone'].value
+                    limit_zone = percentage(
+                        style['hyphenate_limit_zone'], style, max_width)
                     if space > limit_zone or space < 0:
                         # Available space is worth the try, or the line is even too long
                         # to fit: try to hyphenate.

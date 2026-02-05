@@ -779,7 +779,6 @@ def resolve_math(token, computed=None, property_name=None, refer_to=None):
         return
 
     args = []
-    original_token = token
     function = Function(token)
     if function.name is None:
         return
@@ -795,7 +794,7 @@ def resolve_math(token, computed=None, property_name=None, refer_to=None):
     if function.name == 'calc':
         result = _resolve_calc_sum(computed, args[0], property_name, refer_to)
         if result is None:
-            return original_token
+            return
         else:
             return tokenize(result)
 
@@ -1194,10 +1193,10 @@ class ComputedStyle(dict):
                 try:
                     token = resolve_math(function, self, key)
                 except PercentageInMath:
-                    token = None
-                if token is None:
                     solved_tokens.append(function)
                 else:
+                    if token is None:
+                        raise Exception
                     solved_tokens.append(token)
                 original_key = key.replace('_', '-')
                 value = validate_non_shorthand(solved_tokens, original_key)[0][1]

@@ -109,7 +109,7 @@ def _block_content_width(context, box, function, outer):
 
         for value in ('padding_left', 'padding_right'):
             style_value = box.style[value]
-            if style_value != 'auto':
+            if style_value != 'auto' and not check_math(style_value):
                 if style_value.unit.lower() == 'px':
                     width -= style_value.value
                 else:
@@ -175,7 +175,7 @@ def margin_width(box, width, left=True, right=True):
         (['margin_right', 'padding_right'] if right else [])
     ):
         style_value = box.style[value]
-        if style_value != 'auto':
+        if style_value != 'auto' and not check_math(style_value):
             if style_value.unit.lower() == 'px':
                 width += style_value.value
             else:
@@ -263,7 +263,7 @@ def inline_max_content_width(context, box, outer=True, is_line_start=False):
 def column_group_content_width(context, box):
     """Return the *-content width for a ``TableColumnGroupBox``."""
     width = box.style['width']
-    if width == 'auto' or width.unit == '%':
+    if width == 'auto' or check_math(width) or width.unit == '%':
         width = 0
     else:
         assert width.unit.lower() == 'px'
@@ -597,21 +597,22 @@ def table_and_columns_preferred_widths(context, box, outer=True):
     # Define constrainedness
     constrainedness = [False for i in range(grid_width)]
     for i in range(grid_width):
-        if (column_groups[i] and column_groups[i].style['width'] != 'auto' and
-                column_groups[i].style['width'].unit != '%'):
-            constrainedness[i] = True
-            continue
-        if (columns[i] and columns[i].style['width'] != 'auto' and
-                columns[i].style['width'].unit != '%'):
-            constrainedness[i] = True
-            continue
-        for cell in zipped_grid[i]:
-            if (cell and cell.colspan == 1 and
-                    cell.style['width'] != 'auto' and
-                    not check_math(cell.style['width']) and
-                    cell.style['width'].unit != '%'):
+        if column_groups[i]:
+            width = column_groups[i].style['width']
+            if width != 'auto' and not check_math(width) and width.unit != '%':
                 constrainedness[i] = True
-                break
+                continue
+        if columns[i]:
+            width = columns[i].style['width']
+            if width != 'auto' and not check_math(width) and width.unit != '%':
+                constrainedness[i] = True
+                continue
+        for cell in zipped_grid[i]:
+            if cell and cell.colspan == 1:
+                width = cell.style['width']
+                if width != 'auto' and not check_math(width) and width.unit != '%':
+                    constrainedness[i] = True
+                    break
 
     intrinsic_percentages = [
         min(percentage, 100 - sum(intrinsic_percentages[:i]))
@@ -679,7 +680,8 @@ def table_and_columns_preferred_widths(context, box, outer=True):
             sum(max_content_widths), large_percentage_contribution,
             *small_percentage_contributions]))
 
-    if table.style['width'] != 'auto' and table.style['width'].unit.lower() == 'px':
+    width = table.style['width']
+    if width != 'auto' and not check_math(width) and width.unit.lower() == 'px':
         # "percentages on the following properties are treated instead as
         # though they were the following: width: auto"
         # https://dbaron.org/css/intrinsic/#outer-intrinsic
@@ -714,12 +716,16 @@ def replaced_min_content_width(box, outer=True):
     width = box.style['width']
     if width == 'auto':
         height = box.style['height']
-        if height == 'auto' or height.unit == '%':
+        if height == 'auto' or check_math(height) or height.unit == '%':
             height = 'auto'
         else:
             assert height.unit.lower() == 'px'
             height = height.value
-        if box.style['max_width'] != 'auto' and box.style['max_width'].unit == '%':
+        unknown_max_width = (
+            box.style['max_width'] != 'auto' and
+            not check_math(box.style['max_width']) and
+            box.style['max_width'].unit == '%')
+        if unknown_max_width:
             # See https://drafts.csswg.org/css-sizing/#intrinsic-contribution
             width = 0
         else:
@@ -730,7 +736,7 @@ def replaced_min_content_width(box, outer=True):
             width, _ = default_image_sizing(
                 intrinsic_width, intrinsic_height, intrinsic_ratio, 'auto',
                 height, default_width=0, default_height=0)
-    elif box.style['width'].unit == '%':
+    elif check_math(box.style['width']) or box.style['width'].unit == '%':
         # See https://drafts.csswg.org/css-sizing/#intrinsic-contribution
         width = 0
     else:
@@ -744,7 +750,7 @@ def replaced_max_content_width(box, outer=True):
     width = box.style['width']
     if width == 'auto':
         height = box.style['height']
-        if height == 'auto' or height.unit == '%':
+        if height == 'auto' or check_math(height) or height.unit == '%':
             height = 'auto'
         else:
             assert height.unit.lower() == 'px'
@@ -756,7 +762,7 @@ def replaced_max_content_width(box, outer=True):
         width, _ = default_image_sizing(
             intrinsic_width, intrinsic_height, intrinsic_ratio, 'auto', height,
             default_width=300, default_height=150)
-    elif box.style['width'].unit == '%':
+    elif check_math(box.style['width']) or box.style['width'].unit == '%':
         # See https://drafts.csswg.org/css-sizing/#intrinsic-contribution
         width = 0
     else:

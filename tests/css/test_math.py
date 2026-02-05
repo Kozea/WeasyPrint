@@ -94,6 +94,7 @@ def test_math_functions(width):
     'calc(100px, 100px)',
     'calc(100px * 100px)',
     'calc(100 * 100)',
+    'calc(calc(100vw))',
     'calc(0.1)',
     'calc(-1)',
     'min()',
@@ -106,6 +107,7 @@ def test_math_functions(width):
     'max("10px")',
     'max(10, 50px)',
     'calc(max(100, 5px) * 10px)',
+    'calc(100* - max(56px, 1rem)',
     'clamp()',
     'clamp(10px)',
     'clamp(10px, 50px)',
@@ -236,6 +238,37 @@ def test_math_functions_percentage_and_font_unit(css_property):
     assert len(math_logs) == len(logs)
 
 
+@pytest.mark.parametrize('display', [
+    'block', 'inline', 'flex', 'grid',
+    'list', 'list-item',
+    'table', 'table-row-group', 'table-cell',
+    'inline-block', 'inline-table', 'inline-flex', 'inline-grid',
+])
+def test_math_functions_display_size(display):
+    # Regression test for #2673.
+    render_pages(f'''
+    <div style="display: {display};
+     min-width: calc(50% + 1em); max-width: calc(50% + 1em); width: calc(50% + 1em);
+     min-height: calc(50% + 1em); max-height: calc(50% + 1em); height: calc(50% + 1em)
+    ">
+      <div style="
+       min-width: calc(50% + 1em); max-width: calc(50% + 1em); width: calc(50% + 1em);
+       min-height: calc(50% + 1em); max-height: calc(50% + 1em); height: calc(50% + 1em)
+      "></div>
+    </div>
+    ''')
+
+
+@assert_no_logs
+def test_math_functions_hyphenate():
+    render_pages('''
+      <div lang="en"
+        style="hyphens: auto; hyphenate-limit-zone: calc(1em + 100%); width: 2em">
+        absolute
+      </div>
+    ''')
+
+
 @assert_no_logs
 def test_math_functions_gradient():
     render_pages('''
@@ -261,4 +294,82 @@ def test_math_functions_gradient_color():
       <div style="width: 10px; height: 10px; background: linear-gradient(
         rgba(10, 20, calc(30), calc(80%)) 10%,
         hsl(calc(10 + 10), 20%, 20%) 80%"></div>
+    ''')
+
+
+@assert_no_logs
+def test_math_image_min_content_calc():
+    render_pages('''
+      <table>
+        <td>
+          <img src="pattern.png" style="
+            height: calc(10% + 1em);
+            width: calc(10% + 1em);
+            max-height: calc(10% + 1em);
+            max-width: calc(10% + 1em);
+            min-height: calc(10% + 1em);
+            min-width: calc(10% + 1em);
+          ">
+    ''')
+
+
+@assert_no_logs
+def test_math_image_min_content_auto_width_calc():
+    render_pages('''
+      <table>
+        <td>
+          <img src="pattern.png" style="
+            height: calc(10% + 1em);
+            max-height: calc(10% + 1em);
+            max-width: calc(10% + 1em);
+            min-height: calc(10% + 1em);
+            min-width: calc(10% + 1em);
+          ">
+    ''')
+
+
+@assert_no_logs
+def test_math_image_min_content_auto_width_height_calc():
+    render_pages('''
+      <table>
+        <td>
+          <img src="pattern.png" style="
+            max-height: calc(10% + 1em);
+            max-width: calc(10% + 1em);
+            min-height: calc(10% + 1em);
+            min-width: calc(10% + 1em);
+          ">
+    ''')
+
+
+@assert_no_logs
+def test_math_table_margin():
+    render_pages('<table style="margin: calc(1em + 10%)">')
+
+
+@assert_no_logs
+def test_math_grid_padding():
+    render_pages('''
+      <article style="display: grid">
+        <div style="box-sizing: border-box; border: 1px solid;
+                    padding: calc(2px + 10%); width: 7px">a</div>
+      </article>
+    ''')
+
+
+@assert_no_logs
+def test_math_table_column():
+    render_pages('''
+      <table style="width: 200px">
+        <colgroup style="width: calc(1em + 10%)">
+          <col />
+        </colgroup>
+        <col style="width: calc(1em + 10%)" />
+        <tbody>
+          <tr>
+            <td>a</td>
+            <td>a</td>
+          </tr>
+        </tbody>
+      </table>
     ''')
