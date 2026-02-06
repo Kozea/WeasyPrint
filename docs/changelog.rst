@@ -2,6 +2,60 @@ Changelog
 =========
 
 
+Version 68.1
+------------
+
+Released on 2026-02-06.
+
+Bug fixes:
+
+* `#2662 <https://github.com/Kozea/WeasyPrint/issues/2662>`_:
+  Don’t crash when SVG clip paths are not in defs tags
+* `#2665 <https://github.com/Kozea/WeasyPrint/issues/2665>`_:
+  Fix position of box bounding box
+* `#2663 <https://github.com/Kozea/WeasyPrint/issues/2663>`_:
+  Fix transparency with Acrobat and Edge
+* `#2666 <https://github.com/Kozea/WeasyPrint/issues/2666>`_:
+  Don’t rely on random default font to define test page size
+* `#2670 <https://github.com/Kozea/WeasyPrint/issues/2670>`_:
+  Fix pattern detection of URL schemes
+* `#2671 <https://github.com/Kozea/WeasyPrint/pull/2671>`_:
+  Improve API compatibility between URLFetcherResponse and addinfourl
+* `#2672 <https://github.com/Kozea/WeasyPrint/issues/2672>`_:
+  Fix charset for old URL fetcher requests
+* `#2675 <https://github.com/Kozea/WeasyPrint/pull/2675>`_,
+  `#2673 <https://github.com/Kozea/WeasyPrint/issues/2673>`_:
+  Fix calc for many properties
+
+Contributors:
+
+* Guillaume Ayoub
+
+Backers and sponsors:
+
+* Spacinov
+* Syslifters
+* Kobalt
+* Simon Sapin
+* Grip Angebotssoftware
+* Manuel Barkhau
+* Simonsoft
+* KontextWork
+* Menutech
+* TrainingSparkle
+* Healthchecks.io
+* Method B
+* FieldHub
+* Hammerbacher
+* Yanal-Yves Fargialla
+* Morntag
+* Piloterr
+* Xavid
+* Charlie S.
+* Prothesis Dental Solutions
+* Kai DeLorenzo
+
+
 Version 68.0
 ------------
 
