@@ -61,6 +61,7 @@ def use(svg, node, font_size):
                 tree.attrib['height'] = box[1] + box[3]
         tree._etree_node.tag = 'svg'
 
+    tree._children = None  # Force cascade to go through children again
     node.cascade(tree)
     node.override_iter(iter((tree,)))
     x, y = svg.point(node.get('x'), node.get('y'), font_size)

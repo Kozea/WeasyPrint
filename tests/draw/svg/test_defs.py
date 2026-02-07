@@ -18,6 +18,13 @@ SVG = '''
 </svg>
 '''
 
+STYLE = '''
+<style>
+  @page { size: 10px }
+  svg, img { display: block }
+</style>
+'''
+
 RESULT = '''
   RRRRR_____
   RRRRR_____
@@ -34,20 +41,18 @@ RESULT = '''
 
 @assert_no_logs
 def test_use(assert_pixels):
-    assert_pixels(RESULT, '''
-      <style>
-        @page { size: 10px }
-        svg { display: block }
-      </style>
-    ''' + SVG)
+    assert_pixels(RESULT, STYLE + SVG)
 
 
 @assert_no_logs
 def test_use_base64(assert_pixels):
     base64_svg = b64encode(SVG.encode()).decode()
-    assert_pixels(RESULT, '''
-      <style>
-        @page { size: 10px }
-        img { display: block }
-      </style>
-      <img src="data:image/svg+xml;base64,''' + base64_svg + '"/>')
+    assert_pixels(RESULT, f'{STYLE}<img src="data:image/svg+xml;base64,{base64_svg}"/>')
+
+
+@assert_no_logs
+def test_use_symbol_color(assert_pixels):
+    # Regression test for #2676.
+    svg = SVG.replace('fill="blue"', '')
+    svg = svg.replace('href="#square"', 'href="#square" fill="blue"')
+    assert_pixels(RESULT, STYLE + svg)
