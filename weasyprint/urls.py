@@ -1,6 +1,5 @@
 """Various utility functions and classes for URL management."""
 
-import codecs
 import contextlib
 import os.path
 import re
@@ -24,13 +23,7 @@ from .logger import LOGGER
 UNICODE_SCHEME_RE = re.compile('^([a-zA-Z][a-zA-Z0-9.+-]+):')
 BYTES_SCHEME_RE = re.compile(b'^([a-zA-Z][a-zA-Z0-9.+-]+):')
 
-# getfilesystemencoding() on Linux is sometimes stupid…
 FILESYSTEM_ENCODING = sys.getfilesystemencoding()
-try:  # pragma: no cover
-    if codecs.lookup(FILESYSTEM_ENCODING).name == 'ascii':
-        FILESYSTEM_ENCODING = 'utf-8'
-except LookupError:  # pragma: no cover
-    FILESYSTEM_ENCODING = 'utf-8'
 
 HTTP_HEADERS = {
     'User-Agent': f'WeasyPrint {__version__}',
