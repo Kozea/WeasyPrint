@@ -963,7 +963,7 @@ def test_margin_box_string_set_1():
 
 @assert_no_logs
 def test_margin_box_string_set_2():
-    def simple_string_set_test(content_val, extra_style=""):
+    def simple_string_set_test(content_val, extra_style=''):
         page_1, = render_pages('''
           <style>
             @page {

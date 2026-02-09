@@ -801,7 +801,7 @@ def test_flex_absolute_content():
 @assert_no_logs
 def test_flex_column_height():
     # Regression test for issue #2222.
-    page, = render_pages("""
+    page, = render_pages('''
       <section style="display: flex; width: 10em">
         <article style="display: flex; flex-direction: column">
           <div>
@@ -814,7 +814,7 @@ def test_flex_column_height():
           </div>
         </article>
       </section>
-    """)
+    ''')
     html, = page.children
     body, = html.children
     section, = body.children
@@ -826,7 +826,7 @@ def test_flex_column_height():
 @assert_no_logs
 def test_flex_column_height_margin():
     # Regression test for issue #2222.
-    page, = render_pages("""
+    page, = render_pages('''
       <section style="display: flex; flex-direction: column; width: 10em">
         <article style="margin: 5px">
           Lorem ipsum dolor sit amet
@@ -835,7 +835,7 @@ def test_flex_column_height_margin():
           Lorem ipsum dolor sit amet
         </article>
       </section>
-    """)
+    ''')
     html, = page.children
     body, = html.children
     section, = body.children
@@ -846,7 +846,7 @@ def test_flex_column_height_margin():
 @assert_no_logs
 def test_flex_column_width():
     # Regression test for issue #1171.
-    page, = render_pages("""
+    page, = render_pages('''
       <main style="display: flex; flex-direction: column;
                    width: 40px; height: 50px; font: 2px weasyprint">
         <section style="width: 100%; height: 5px">a</section>
@@ -856,7 +856,7 @@ def test_flex_column_width():
           <div>c</div>
         </section>
       </main>
-    """)
+    ''')
     html, = page.children
     body, = html.children
     main, = body.children
@@ -870,14 +870,14 @@ def test_flex_column_width():
 
 @assert_no_logs
 def test_flex_column_in_flex_row():
-    page, = render_pages("""
+    page, = render_pages('''
       <body style="display: flex; flex-wrap: wrap; font: 2px weasyprint">
         <article>1</article>
         <section style="display: flex; flex-direction: column">
           <div>2</div>
         </section>
       </body>
-    """)
+    ''')
     html, = page.children
     body, = html.children
     article, section = body.children

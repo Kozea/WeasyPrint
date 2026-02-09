@@ -1160,7 +1160,7 @@ def test_gradient_opacity(assert_pixels):
 
 
 @assert_no_logs
-@pytest.mark.parametrize('url', ['#grad\'', '\'#gra', '!', '#'])
+@pytest.mark.parametrize('url', ["#grad'", "'#gra", '!', '#'])
 def test_gradient_bad_url(assert_pixels, url):
     assert_pixels('''
         __________

@@ -1477,7 +1477,7 @@ def test_html_meta_2():
         title='Test document',
         generator='Human after all',
         keywords=['html', 'css', 'pdf', 'Python; pydyf'],
-        description="Blah… ",
+        description='Blah… ',
         created='2011-04',
         modified='2013',
         lang='en',

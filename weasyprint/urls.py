@@ -197,10 +197,10 @@ def default_url_fetcher(url, timeout=10, ssl_context=None, http_headers=None,
 
     """
     warnings.warn(
-        "default_url_fetcher is deprecated and will be removed in WeasyPrint 69.0, "
-        "please use URLFetcher instead. For security reasons, HTTP redirects are not "
-        "supported anymore with default_url_fetcher, but are with URLFetcher.\n\nSee "
-        "https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#url-fetchers",
+        'default_url_fetcher is deprecated and will be removed in WeasyPrint 69.0, '
+        'please use URLFetcher instead. For security reasons, HTTP redirects are not '
+        'supported anymore with default_url_fetcher, but are with URLFetcher.\n\nSee '
+        'https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#url-fetchers',
         category=DeprecationWarning)
     fetcher = URLFetcher(
         timeout, ssl_context, http_headers, allowed_protocols, allow_redirects=False)
@@ -476,8 +476,8 @@ def fetch(url_fetcher, url):
 
     if isinstance(resource, dict):
         warnings.warn(
-            "Returning dicts in URL fetchers is deprecated and will be removed "
-            "in WeasyPrint 69.0, please return URLFetcherResponse instead.",
+            'Returning dicts in URL fetchers is deprecated and will be removed '
+            'in WeasyPrint 69.0, please return URLFetcherResponse instead.',
             category=DeprecationWarning)
         if 'url' not in resource:
             resource['url'] = resource.get('redirected_url', url)

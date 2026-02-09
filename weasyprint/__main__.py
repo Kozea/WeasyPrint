@@ -74,7 +74,7 @@ class Parser(argparse.ArgumentParser):
                 data[-1] = '\n\n'
                 data.append(f'  {args["help"][0].upper()}{args["help"][1:]}.\n\n')
                 if 'choices' in args:
-                    choices = ", ".join(args['choices'])
+                    choices = ', '.join(args['choices'])
                     data.append(f'  Possible choices: {choices}.\n\n')
                 if action == 'append':
                     data.append('  This option can be passed multiple times.\n\n')

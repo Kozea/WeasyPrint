@@ -845,8 +845,8 @@ def test_hyphen_nbsp():
     html, = page.children
     body, = html.children
     line1, line2 = body.children
-    assert line1.children[0].children[0].text == "this hy‐"
-    assert line2.children[0].children[0].text == "phenation"
+    assert line1.children[0].children[0].text == 'this hy‐'
+    assert line2.children[0].children[0].text == 'phenation'
 
 
 @assert_no_logs
@@ -904,8 +904,8 @@ def test_hyphenate_limit_chars_punctuation(css):
     ('normal', 'aaaaaaaa', lambda a: a == 1, 'aaaaaaaa'),
     ('break-word', 'hyphenations', lambda a: a > 3,
      'hy\u2010phen\u2010ations'),
-    ('break-word', "A splitted word.  An hyphenated word.",
-     lambda a: a > 8, "Asplittedword.Anhy\u2010phen\u2010atedword."),
+    ('break-word', 'A splitted word.  An hyphenated word.',
+     lambda a: a > 8, 'Asplittedword.Anhy\u2010phen\u2010atedword.'),
 ])
 def test_overflow_wrap(wrap, text, test, full_text):
     page, = render_pages('''

@@ -20,8 +20,8 @@ def test_malformed_url_link(url, base_url):
             base_url=base_url).write_pdf()
 
     assert len(logs) == 1
-    assert "Malformed" in logs[0]
-    assert "]" in logs[0]
+    assert 'Malformed' in logs[0]
+    assert ']' in logs[0]
 
     uris = re.findall(b'/URI \\((.*)\\)', pdf)
     types = re.findall(b'/S (/\\w*)', pdf)

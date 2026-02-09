@@ -1429,13 +1429,13 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fet
         if getattr(rule, 'content', None) is None:
             if rule.type == 'error':
                 LOGGER.warning(
-                    "Parse error at %d:%d: %s",
+                    'Parse error at %d:%d: %s',
                     rule.source_line, rule.source_column, rule.message)
             if rule.type != 'at-rule':
                 continue
             if rule.lower_at_keyword not in ('import', 'layer'):
                 LOGGER.warning(
-                    "Unknown empty rule %s at %d:%d",
+                    'Unknown empty rule %s at %d:%d',
                     rule, rule.source_line, rule.source_column)
                 continue
 
@@ -1763,7 +1763,7 @@ def preprocess_stylesheet(device_media_type, base_url, stylesheet_rules, url_fet
 
         else:
             LOGGER.warning(
-                "Unknown rule %s at %d:%d",
+                'Unknown rule %s at %d:%d',
                 rule, rule.source_line, rule.source_column)
 
 
