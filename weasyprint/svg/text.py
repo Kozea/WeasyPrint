@@ -168,12 +168,10 @@ def text(svg, node, font_size):
             matrix = Matrix(a, -c, c, a) @ matrix
         emojis = draw_first_line(
             svg.stream, TextBox(layout, style), 'none', 'none', matrix)
-        emoji_lines.append((font_size, x, y, emojis))
+        emoji_lines.append((x, y, emojis))
 
     svg.stream.end_text()
     svg.stream.pop_state()
 
-    for font_size, x, y, emojis in emoji_lines:
-        # TODO: pass real style instead of dict.
-        style = {'font_size': font_size}
+    for x, y, emojis in emoji_lines:
         draw_emojis(svg.stream, style, x, y, emojis)

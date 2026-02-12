@@ -710,3 +710,23 @@ def test_text_fill_opacity(assert_pixels):
         </text>
       </svg>
     ''')
+
+
+@assert_no_logs
+def test_emoji_text_svg(assert_pixels):
+    # Regression text for #2683.
+    assert_pixels('''
+        zzzzz
+        zzzzz
+        zzzzz
+        zzzzz
+        zzzzz
+    ''', '''
+      <style>
+        @page { size: 5px 5px }
+        svg { display: block }
+      </style>    
+      <svg viewBox="0 0 5 5">
+        <text>🚀</text>
+      </svg>
+    ''')
