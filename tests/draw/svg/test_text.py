@@ -725,7 +725,7 @@ def test_emoji_text_svg(assert_pixels):
       <style>
         @page { size: 5px 5px }
         svg { display: block }
-      </style>    
+      </style>
       <svg viewBox="0 0 5 5">
         <text>🚀</text>
       </svg>
