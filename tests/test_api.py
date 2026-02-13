@@ -139,6 +139,8 @@ def http_server():
             (b'<html test=accept-encoding-header-fail>', {})
         ),
         '/redirect': lambda env: (b'', {'Location': '/gzip'}),
+        '/redirect-loop': lambda env: (b'', {'Location': '/redirect-loop-2'}),
+        '/redirect-loop-2': lambda env: (b'', {'Location': '/redirect-loop'}),
     }
 
     def wsgi_app(environ, start_response):
@@ -727,6 +729,13 @@ def test_disallowed_protocols(command):
         _run(command, f'<img src="{path2url(resource_path("pattern.png"))}">'.encode())
     assert len(logs) == 1
     assert 'URI uses disallowed protocol' in logs[0]
+
+
+@assert_no_logs
+def test_redirect_loop():
+    with http_server() as root_url:
+        with pytest.raises(URLFetchingError, match='infinite loop'):
+            _run(f'{root_url}/redirect-loop -')
 
 
 @pytest.mark.parametrize(('html', 'fields'), [

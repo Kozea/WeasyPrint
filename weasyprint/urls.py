@@ -312,6 +312,7 @@ class URLFetcher(request.OpenerDirector):
         self._http_headers = {**HTTP_HEADERS, **(http_headers or {})}
         self._allowed_protocols = allowed_protocols
         self._fail_on_errors = fail_on_errors
+        self._request = None
 
     def fetch(self, url, headers=None):
         """Fetch a given URL.
@@ -342,7 +343,8 @@ class URLFetcher(request.OpenerDirector):
 
         # Open URL.
         headers = {**self._http_headers, **(headers or {})}
-        http_request = request.Request(url, headers=headers)
+        http_request = self._request or request.Request(url, headers=headers)
+        self._request = None
         response = super().open(http_request, timeout=self._timeout)
 
         # Decompress response.
@@ -364,6 +366,7 @@ class URLFetcher(request.OpenerDirector):
 
     def open(self, url, data=None, timeout=None):
         if isinstance(url, request.Request):
+            self._request = url
             return self.fetch(url.full_url, url.headers)
         return self.fetch(url)
 
