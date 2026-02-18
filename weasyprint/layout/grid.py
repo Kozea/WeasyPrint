@@ -1198,6 +1198,7 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
     for i, row_y in enumerate(row_lines_positions, start=first_skip_row):
         # TODO: handle break-before and break-after for rows.
         if not context.overflows_page(bottom_space, row_y - skip_height):
+            # No need to force rendering, at least a whole row fits in page.
             page_is_empty = False
             continue
         resume_row = i
@@ -1217,7 +1218,6 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
         else:
             # Break inside current row.
             # Mark all children before current row as drawn on the page.
-            page_is_empty = False
             _add_page_children(resume_row + 1)
         break
     else:
