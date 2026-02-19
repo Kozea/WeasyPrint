@@ -589,6 +589,39 @@ def test_border_image_gradient(assert_pixels):
 
 
 @assert_no_logs
+def test_border_image_gradient_units(assert_pixels):
+    # Regression test for #2690.
+    assert_pixels('''
+        __________
+        _RRRRRRRR_
+        _RRRRRRRR_
+        _RR____RR_
+        _BB____BB_
+        _BBBBBBBB_
+        _BBBBBBBB_
+        __________
+    ''', '''
+      <style>
+        @page {
+          size: 10px 8px;
+        }
+        div {
+          border: 1px solid black;
+          border-image-source: linear-gradient(
+            to bottom, red 0, red 50%, blue 0.5em, blue);
+          border-image-slice: 25%;
+          border-image-width: 2;
+          font-size: 6px;
+          height: 4px;
+          margin: 1px;
+          width: 6px;
+        }
+      </style>
+      <div></div>
+    ''')
+
+
+@assert_no_logs
 def test_mask_border(assert_pixels):
     assert_pixels('''
         __________

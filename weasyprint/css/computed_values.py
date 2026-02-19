@@ -177,20 +177,25 @@ def compute_attr(style, values):
 @register_computer('background-image')
 def background_image(style, name, values):
     """Compute lenghts in gradient background-image."""
-    for type_, value in values:
-        if type_ in ('linear-gradient', 'radial-gradient'):
-            value.stop_positions = tuple(
-                length(style, name, pos) if pos is not None else None
-                for pos in value.stop_positions)
-            value.color_hints = tuple(
-                length(style, name, hint) if hint is not None else None
-                for hint in value.color_hints)
-        if type_ == 'radial-gradient':
-            value.center, = compute_position(
-                style, name, (value.center,))
-            if value.size_type == 'explicit':
-                value.size = length_or_percentage_tuple(style, name, value.size)
-    return values
+    return tuple(image(style, name, value) for value in values)
+
+
+@register_computer('border-image-source')
+def image(style, name, image):
+    """Compute lenghts in gradient border-image-source."""
+    type_, value = image
+    if type_ in ('linear-gradient', 'radial-gradient'):
+        value.stop_positions = tuple(
+            length(style, name, pos) if pos is not None else None
+            for pos in value.stop_positions)
+        value.color_hints = tuple(
+            length(style, name, hint) if hint is not None else None
+            for hint in value.color_hints)
+    if type_ == 'radial-gradient':
+        value.center, = compute_position(style, name, (value.center,))
+        if value.size_type == 'explicit':
+            value.size = length_or_percentage_tuple(style, name, value.size)
+    return image
 
 
 @register_computer('color')
