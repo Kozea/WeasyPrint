@@ -383,7 +383,8 @@ def get_pango_font_key(pango_font):
     # the same address for two different Pango maps. We should cache it in the
     # FontConfiguration object. See issue #2144.
     description = ffi.gc(
-        pango.pango_font_describe(pango_font), pango.pango_font_description_free)
+        pango.pango_font_describe_with_absolute_size(pango_font),
+        pango.pango_font_description_free)
     font_size = pango.pango_font_description_get_size(description) * FROM_UNITS
     mask = pango.PANGO_FONT_MASK_SIZE + pango.PANGO_FONT_MASK_GRAVITY
     pango.pango_font_description_unset_fields(description, mask)

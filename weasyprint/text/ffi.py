@@ -329,7 +329,7 @@ ffi.cdef('''
 
     char * pango_font_description_to_string (const PangoFontDescription *desc);
 
-    PangoFontDescription * pango_font_describe (PangoFont *font);
+    PangoFontDescription * pango_font_describe_with_absolute_size (PangoFont *font);
     const char * pango_font_description_get_family (const PangoFontDescription *desc);
     guint pango_font_description_hash (const PangoFontDescription *desc);
 
