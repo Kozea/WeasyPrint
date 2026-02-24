@@ -296,6 +296,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
 
     # 4 Determine the main size of the flex container using the rules of the formatting
     # context in which it participates.
+    original_box_height = box.height
     if main == 'width':
         block.block_level_width(box, containing_block)
     else:
@@ -914,6 +915,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
                 else:
                     page_is_empty = False
                     box.children.append(new_child)
+                    position_y = new_child.position_y + new_child.border_height()
                     if child_resume_at is not None:
                         if original_skip_stack:
                             first_level_skip, = original_skip_stack
@@ -930,6 +932,12 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
             child_skip_stack = None
         if resume_at:
             break
+
+    if original_box_height != 'auto':
+        # Don’t resume if flex items overflow flex container bottom.
+        box_bottom = box.position_y + box.border_height()
+        if context.overflows(box_bottom, position_y):
+            resume_at = None
 
     if box.style['position'] == 'relative':
         # New containing block, resolve the layout of the absolute descendants.

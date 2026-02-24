@@ -1982,3 +1982,21 @@ def test_flex_root_formatting_context():
     assert div.children[0].children[0].text == 'A'
     assert div.position_y == body.position_y
     assert div.position_x == body.position_x
+
+
+@assert_no_logs
+def test_flex_height_page_overflow():
+    # Regression test for #2689.
+    page, = render_pages('''
+      <style>
+        @page { size: 4px 6px }
+      </style>
+      <section style="display: flex; font: 2px weasyprint; height: 2px">
+        <div style="width: 100%; display: flex; align-content: flex-start">a b c d</div>
+      </section>
+    ''')
+    html, = page.children
+    body, = html.children
+    section, = body.children
+    div, = section.children
+    assert len(div.children[0].children) == 3
