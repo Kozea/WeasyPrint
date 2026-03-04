@@ -1315,7 +1315,6 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
             context, child, bottom_space, child_skip_stack, parent,
             page_is_empty, absolute_boxes, fixed_boxes)[:3]
         if new_child:
-            page_is_empty = False
             broken_child = False
             span = _get_span(child.style['grid_row_start'])
             if child_resume_at:
@@ -1337,7 +1336,10 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
                 # last child.
                 assert isinstance(new_child, boxes.ParentBox)
                 previous_skip_child = max(child_skip_stack) if child_skip_stack else 0
-                resume_at[y][i] = {previous_skip_child + len(new_child.children): None}
+                if not page_is_empty:
+                    resume_at[y][i] = {
+                        previous_skip_child + len(new_child.children): None}
+            page_is_empty = False
         else:
             if resume_at is None:
                 resume_at = {}
@@ -1418,10 +1420,10 @@ def grid_layout(context, box, bottom_space, skip_stack, containing_block,
             broken_child = y + span >= next_page_last_row + 1
             if broken_child and child.style['box_decoration_break'] != 'clone':
                 child.remove_decoration(start=False, end=True)
-            child.height = (
+            child.height = max(0, (
                 context.page_bottom - bottom_space - child.position_y -
                 child.margin_top - child.border_top_width - child.padding_top -
-                child.margin_bottom - child.border_bottom_width - child.padding_bottom)
+                child.margin_bottom - child.border_bottom_width - child.padding_bottom))
             if broken_child:
                 # Child not fully drawn, keep advancement.
                 advancements[x, y] = child.margin_height()

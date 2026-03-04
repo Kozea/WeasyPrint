@@ -1863,3 +1863,40 @@ def test_grid_in_flex_after_full_height():
     grid, = flex.children
     grid_item, = grid.children
     assert not grid_item.children
+
+
+@assert_no_logs
+def test_grid_in_columns():
+    # Regression test for #2691.
+    page1, page2, = render_pages('''
+      <style>
+        @page { size: 12cm }
+        section { height: 10cm }
+      </style>
+      <div style="columns: 2">
+        <div style="display: grid">
+          <div>
+            <section></section>
+            <section></section>
+            <section></section>
+          </div>
+        </div>
+      </div>
+    ''')
+    html, = page1.children
+    body, = html.children
+    div, = body.children
+    column1, column2 = div.children
+    grid, = column1.children
+    assert len(grid.children) == 1
+    grid, = column2.children
+    assert len(grid.children) == 1
+
+    html, = page2.children
+    body, = html.children
+    div, = body.children
+    column1, column2 = div.children
+    grid, = column1.children
+    assert len(grid.children) == 1
+    grid, = column2.children
+    assert len(grid.children) == 0
