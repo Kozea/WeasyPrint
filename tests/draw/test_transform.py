@@ -16,10 +16,11 @@ def test_2d_transform_1(assert_pixels):
         ________
     ''', '''
       <style>
-        @page { size: 8px; margin: 2px; }
-        div { transform: rotate(90deg); font-size: 0 }
+        @page { size: 8px; margin: 2px }
+        body { font: 0/0 weasyprint }
+        div { transform: rotate(90deg) }
       </style>
-      <div><img src="pattern.png"></div>''')
+      <body><div><img src="pattern.png"></div>''')
 
 
 @assert_no_logs

@@ -93,7 +93,7 @@ def test_column_rule_normal(assert_pixels):
       <style>
         img { display: inline-block; width: 1px; height: 1px }
         div { columns: 2; column-gap: normal }
-        body { margin: 0; font-size: 3px; line-height: 0 }
+        body { margin: 0; font: 3px/0 weasyprint }
         @page { margin: 0; size: 5PX 3px }
       </style>
       <div>

@@ -5,8 +5,8 @@ from ..testing_utils import assert_no_logs
 visibility_source = '''
   <style>
     @page { size: 12px 7px }
-    body { font: 1px/1 serif }
-    img { margin: 1px 0 0 1px; }
+    body { font-size: 0; line-height: 0 }
+    img { margin: 1px 0 0 1px }
     %s
   </style>
   <div>
