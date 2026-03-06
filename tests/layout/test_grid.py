@@ -2,6 +2,8 @@
 
 from math import isclose
 
+import pytest
+
 from ..testing_utils import assert_no_logs, render_pages
 
 
@@ -1900,3 +1902,40 @@ def test_grid_in_columns():
     assert len(grid.children) == 1
     grid, = column2.children
     assert len(grid.children) == 0
+
+
+@pytest.mark.xfail
+@assert_no_logs
+def test_grid_in_columns_with_break():
+    # Regression test for #2695.
+    page1, page2, = render_pages('''
+      <style>
+        @page { size: 12px }
+        section { height: 4px }
+      </style>
+      <div style="columns: 1">
+        <div style="display: grid; margin-top: 6px">
+          <div>
+            <section></section>
+            <section></section>
+            <section></section>
+          </div>
+        </div>
+      </div>
+    ''')
+    html, = page1.children
+    body, = html.children
+    div, = body.children
+    column1, = div.children
+    grid, = column1.children
+    section1, = grid.children
+    assert section1.position_y == 6
+
+    html, = page2.children
+    body, = html.children
+    div, = body.children
+    column1, = div.children
+    grid, = column1.children
+    section2, section3 = grid.children
+    assert section2.position_y == 0
+    assert section3.position_y == 4
