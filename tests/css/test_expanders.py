@@ -122,8 +122,7 @@ def test_four_sides(rule, result):
 
 @assert_no_logs
 def test_four_sides_warning():
-    assert expand_to_dict(
-        'padding: 1 2 3 4 5', 'Expected 1 to 4 token components got 5') == {}
+    assert expand_to_dict('padding: 1 2 3 4 5', 'Expected 1 to 4 tokens, got 5') == {}
 
 
 @assert_no_logs

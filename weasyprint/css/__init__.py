@@ -29,7 +29,7 @@ from ..logger import LOGGER, PROGRESS_LOGGER
 from ..text.fonts import FontConfiguration
 from ..urls import URLFetchingError, fetch, get_url_attribute, url_join
 from . import counters, media_queries
-from .computed_values import COMPUTER_FUNCTIONS
+from .computed_values import COMPUTER_FUNCTIONS, PHYSICAL_FUNCTIONS
 from .functions import Function, check_math, check_var
 from .properties import INHERITED, INITIAL_NOT_COMPUTED, INITIAL_VALUES, ZERO_PIXELS
 from .units import ANGLE_UNITS, FONT_UNITS, LENGTH_UNITS, to_pixels, to_radians
@@ -1118,7 +1118,7 @@ class ComputedStyle(dict):
 
         if key in self.cascaded:
             # Property defined in cascaded properties.
-            value = self.cascaded[key][0]
+            value, weight = self.cascaded[key]
             pending = isinstance(value, Pending)
         else:
             # Property not defined in cascaded properties, define as inherited
@@ -1127,7 +1127,17 @@ class ComputedStyle(dict):
                 value = 'inherit'
             else:
                 value = 'initial'
+            weight = (0, 0, (0, 0, 0))
             pending = False
+
+        if logical_function := PHYSICAL_FUNCTIONS.get(key):
+            # TODO: use writing-mode and text-orientation.
+            logical_key = logical_function(block='ttb', inline=self['direction'])
+            if logical_key in self.cascaded:
+                logical_value, logical_weight = self.cascaded[logical_key]
+                if logical_weight >= weight:
+                    value = logical_value
+                    pending = isinstance(value, Pending)
 
         if value == 'inherit' and parent_style is None:
             # On the root element, 'inherit' from initial values

@@ -122,46 +122,72 @@ def generic_expander(*expanded_names, **kwargs):
     return generic_expander_decorator
 
 
+@expander('margin-block')
+@expander('margin-inline')
+@expander('padding-block')
+@expander('padding-inline')
+@expander('border-block-color')
+@expander('border-block-style')
+@expander('border-block-width')
+@expander('border-inline-color')
+@expander('border-inline-style')
+@expander('border-inline-width')
+@expander('inset-block')
+@expander('inset-inline')
+def expand_two_logical_sides(tokens, name, base_url):
+    """Expand properties setting a token for two logical sides of a box."""
+    yield from _expand_sides(tokens, name, base_url, ('start', 'end'))
+
+
 @expander('border-color')
 @expander('border-style')
 @expander('border-width')
 @expander('margin')
 @expander('padding')
 @expander('bleed')
+@expander('inset')
 def expand_four_sides(tokens, name, base_url):
-    """Expand properties setting a token for the four sides of a box."""
+    """Expand properties setting a token for four sides of a box, possibly logical."""
+    sides = ('top', 'right', 'bottom', 'left')
+    if tokens and get_keyword(tokens[0]) == 'logical':
+        sides = ('block-start', 'inline-start', 'block-end', 'inline-end')
+        tokens = tokens[1:]
+    yield from _expand_sides(tokens, name, base_url, sides)
+
+
+def _expand_sides(tokens, name, base_url, sides):
+    """Expand properties setting a token for two or four sides of a box."""
     # Define expanded names.
     expanded_names = []
-    for suffix in ('-top', '-right', '-bottom', '-left'):
-        if (i := name.rfind('-')) == -1:
-            expanded_names.append(f'{name}{suffix}')
+    for side in sides:
+        if name.endswith(('-color', '-style', '-width')):
+            # For example, border-color becomes border-*-color, not border-color-*.
+            expanded_names.append(f'{name[:-6]}-{side}-{name[-5:]}')
         else:
-            # eg. border-color becomes border-*-color, not border-color-*
-            expanded_names.append(f'{name[:i]}{suffix}{name[i:]}')
+            if name == 'inset' and '-' not in side:
+                # Physical "inset" does not yield "inset-top", just "top".
+                expanded_names.append(side)
+            else:
+                expanded_names.append(f'{name}-{side}')
 
     # Return pending expanders if var is found.
-    expander = functools.partial(
-        expand_four_sides, name=name, base_url=base_url)
+    expander = functools.partial(expand_four_sides, name=name, base_url=base_url)
     if result := _find_var(tokens, expander, expanded_names):
         yield from result.items()
         return
 
-    # Make sure we have 4 tokens.
+    # Make sure we have the right number of tokens.
     if len(tokens) == 1:
-        tokens *= 4
-    elif len(tokens) == 2:
+        tokens *= len(sides)
+    elif len(sides) == 4 and len(tokens) == 2:
         tokens *= 2  # (bottom, left) defaults to (top, right)
-    elif len(tokens) == 3:
+    elif len(sides) == 4 and len(tokens) == 3:
         tokens += (tokens[1],)  # left defaults to right
-    elif len(tokens) != 4:
-        raise InvalidValues(
-            f'Expected 1 to 4 token components got {len(tokens)}')
+    elif len(tokens) != len(sides):
+        raise InvalidValues(f'Expected 1 to {len(sides)} tokens, got {len(tokens)}')
     for expanded_name, token in zip(expanded_names, tokens):
-        # validate_non_shorthand returns ((name, value),), we want
-        # to yield (name, value).
-        result, = validate_non_shorthand(
-            [token], expanded_name, base_url, required=True)
-        yield result
+        # validate_non_shorthand returns ((name, value),), we yield (name, value).
+        yield validate_non_shorthand([token], expanded_name, base_url, required=True)[0]
 
 
 @expander('border-radius')
@@ -256,14 +282,26 @@ def expand_border(tokens, name, base_url):
     See https://www.w3.org/TR/CSS21/box.html#propdef-border
 
     """
-    for suffix in ('-top', '-right', '-bottom', '-left'):
-        yield from expand_border_side(tokens, name + suffix, base_url)
+    for suffix in ('top', 'right', 'bottom', 'left'):
+        yield from expand_border_side(tokens, f'{name}-{suffix}', base_url)
+
+
+@expander('border-block')
+@expander('border-inline')
+def expand_logical_border(tokens, name, base_url):
+    """Expand the logical ``border-*`` shorthands property."""
+    for suffix in ('start', 'end'):
+        yield from expand_border_side(tokens, f'{name}-{suffix}', base_url)
 
 
 @expander('border-top')
 @expander('border-right')
 @expander('border-bottom')
 @expander('border-left')
+@expander('border-block-start')
+@expander('border-block-end')
+@expander('border-inline-start')
+@expander('border-block-inline')
 @expander('column-rule')
 @expander('outline')
 @generic_expander('-width', '-color', '-style')

@@ -1,5 +1,6 @@
 """Convert specified property values into computed values."""
 
+from functools import partial
 from math import pi
 
 from tinycss2.color5 import parse_color
@@ -123,6 +124,87 @@ assert all(width.value < height.value for width, height in PAGE_SIZES.values())
 INITIAL_PAGE_SIZE = PAGE_SIZES['a4']
 INITIAL_VALUES['size'] = tuple(
     to_pixels(size, None, 'size') for size in INITIAL_PAGE_SIZE)
+
+
+# Maps physical to functions getting block and inline directions.
+PHYSICAL_FUNCTIONS = {}
+
+
+def register_logical(names, prefixes=('',), suffixes=('',)):
+    """Decorator registering logical properties matching physical ``names``."""
+
+    def decorator(function):
+        """Register the properties ``names`` for ``function``."""
+        for name in names:
+            name = name.replace('-', '_')
+            for prefix in prefixes:
+                for suffix in suffixes:
+                    property_name = name
+                    if prefix:
+                        property_name = f'{prefix}_{property_name}'
+                    if suffix:
+                        property_name = f'{property_name}_{suffix}'
+                    PHYSICAL_FUNCTIONS[property_name] = partial(
+                        function, name=name, prefix=prefix, suffix=suffix)
+        return function
+    return decorator
+
+
+@register_logical(('width', 'height'), prefixes=('', 'max', 'min'))
+def physical_size(name, prefix, suffix, block, inline):
+    vertical_main_direction = block in ('ttb', 'btt')
+    vertical_property = 'height' in name
+    logical = 'block' if (vertical_property == vertical_main_direction) else 'inline'
+    return f'{prefix}_{logical}_size' if prefix else f'{logical}_size'
+
+
+@register_logical(
+    ('top', 'left', 'bottom', 'right'),
+    prefixes=('', 'padding', 'margin'))
+@register_logical(
+    ('top', 'left', 'bottom', 'right'),
+    prefixes=('border',), suffixes=('width', 'style', 'color'))
+def physical_inset(name, prefix, suffix, block, inline):
+    if name == 'top':
+        logical = 'block' if block in ('ttb', 'btt') else 'inline'
+        side = 'start' if 'ttb' in (block, inline) else 'end'
+    elif name == 'bottom':
+        logical = 'block' if block in ('ttb', 'btt') else 'inline'
+        side = 'start' if 'btt' in (block, inline) else 'end'
+    elif name == 'left':
+        logical = 'block' if block in ('ltr', 'rtl') else 'inline'
+        side = 'start' if 'ltr' in (block, inline) else 'end'
+    elif name == 'right':
+        logical = 'block' if block in ('ltr', 'rtl') else 'inline'
+        side = 'start' if 'rtl' in (block, inline) else 'end'
+    prefix = f'{prefix or "inset"}_'
+    if suffix:
+        suffix = f'_{suffix}'
+    return f'{prefix}{logical}_{side}{suffix}'
+
+
+@register_logical(
+    ('top_left', 'top_right', 'bottom_left', 'bottom_right'),
+    prefixes=('border',), suffixes=('radius',))
+def physical_radius(name, prefix, suffix, block, inline):
+    vertical, horizontal = name.split('_')
+    if block == 'ttb':
+        block = 'start' if vertical == 'top' else 'end'
+    elif block == 'btt':
+        block = 'start' if vertical == 'bottom' else 'end'
+    elif block == 'ltr':
+        block = 'start' if horizontal == 'left' else 'end'
+    elif block == 'rtl':
+        block = 'start' if horizontal == 'right' else 'end'
+    if inline == 'ttb':
+        inline = 'start' if vertical == 'top' else 'end'
+    elif inline == 'btt':
+        inline = 'start' if vertical == 'bottom' else 'end'
+    elif inline == 'ltr':
+        inline = 'start' if horizontal == 'left' else 'end'
+    elif inline == 'rtl':
+        inline = 'start' if horizontal == 'right' else 'end'
+    return f'{prefix}_{block}_{inline}_{suffix}'
 
 
 # Maps property names to functions returning the computed values
@@ -252,10 +334,16 @@ def break_before_after(style, name, value):
 @register_computer('margin-left')
 @register_computer('height')
 @register_computer('width')
+@register_computer('block-size')
+@register_computer('inline-size')
 @register_computer('min-width')
 @register_computer('min-height')
+@register_computer('min-block-size')
+@register_computer('min-inline-size')
 @register_computer('max-width')
 @register_computer('max-height')
+@register_computer('max-block-size')
+@register_computer('max-inline-size')
 @register_computer('padding-top')
 @register_computer('padding-right')
 @register_computer('padding-bottom')
