@@ -7,15 +7,12 @@ def handle_min_max_width(function):
     """Decorate a function setting used width, handling {min,max}-width."""
     @functools.wraps(function)
     def wrapper(box, *args):
-        computed_margins = box.margin_left, box.margin_right
         result = function(box, *args)
         if box.width > box.max_width:
             box.width = box.max_width
-            box.margin_left, box.margin_right = computed_margins
             result = function(box, *args)
         if box.width < box.min_width:
             box.width = box.min_width
-            box.margin_left, box.margin_right = computed_margins
             result = function(box, *args)
         return result
     wrapper.without_min_max = function
@@ -26,15 +23,12 @@ def handle_min_max_height(function):
     """Decorate a function setting used height, handling {min,max}-height."""
     @functools.wraps(function)
     def wrapper(box, *args):
-        computed_margins = box.margin_top, box.margin_bottom
         result = function(box, *args)
         if box.height > box.max_height:
             box.height = box.max_height
-            box.margin_top, box.margin_bottom = computed_margins
             result = function(box, *args)
         if box.height < box.min_height:
             box.height = box.min_height
-            box.margin_top, box.margin_bottom = computed_margins
             result = function(box, *args)
         return result
     wrapper.without_min_max = function
