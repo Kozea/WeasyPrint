@@ -31,8 +31,7 @@ def float_layout(context, box, containing_block, absolute_boxes, fixed_boxes,
     # TODO: This is only handled later in blocks.block_container_layout
     # https://www.w3.org/TR/CSS21/visudet.html#normal-block
     if cb_height == 'auto':
-        cb_height = (
-            containing_block.position_y - containing_block.content_box_y())
+        cb_height = containing_block.position_y - containing_block.content_box_y()
 
     resolve_position_percentages(box, (cb_width, cb_height))
 
@@ -45,7 +44,7 @@ def float_layout(context, box, containing_block, absolute_boxes, fixed_boxes,
     if box.margin_bottom == 'auto':
         box.margin_bottom = 0
 
-    clearance = get_clearance(context, box)
+    clearance = get_clearance(context, box, containing_block.style['direction'])
     if clearance is not None:
         box.position_y += clearance
 
@@ -105,7 +104,11 @@ def find_float_position(context, box, containing_block):
     # Point 9
     # position_y is set now, let's define position_x
     # for float: left elements, it's already done!
-    if box.style['float'] == 'right':
+    float_right = (
+        box.style['float'] == 'right' or
+        (box.style['direction'] == 'ltr' and box.style['float'] == 'inline-end') or
+        (box.style['direction'] == 'rtl' and box.style['float'] == 'inline-start'))
+    if float_right:
         position_x += available_width - box.margin_width()
 
     box.translate(position_x - box.position_x, position_y - box.position_y)
@@ -113,22 +116,34 @@ def find_float_position(context, box, containing_block):
     return box
 
 
-def get_clearance(context, box, collapsed_margin=0):
+def get_clearance(context, box, direction, collapsed_margin=0):
     """Return None if there is no clearance, otherwise the clearance value."""
+
+    def clear(clear_value, float_value):
+        """Closure returning whether clear and float values match."""
+        if clear_value == 'inline-start':
+            clear_value = 'left' if direction == 'ltr' else 'right'
+        if clear_value == 'inline-end':
+            clear_value = 'left' if direction == 'rtl' else 'right'
+        if float_value == 'inline-start':
+            float_value = 'left' if direction == 'ltr' else 'right'
+        if float_value == 'inline-end':
+            float_value = 'left' if direction == 'rtl' else 'right'
+        return clear_value in (float_value, 'both')
+
     # Box should be after shape that’s broken on this page.
     for broken_shape in context.broken_out_of_flow:
         if broken_shape.is_floated():
-            if box.style['clear'] in (broken_shape.style['float'], 'both'):
+            if clear(box.style['clear'], broken_shape.style['float']):
                 return inf
     # Hypothetical position is the position of the top border edge
     clearance = None
     hypothetical_position = box.position_y + collapsed_margin
     for excluded_shape in context.excluded_shapes:
-        if box.style['clear'] in (excluded_shape.style['float'], 'both'):
+        if clear(box.style['clear'], excluded_shape.style['float']):
             y, h = excluded_shape.position_y, excluded_shape.margin_height()
             if hypothetical_position < y + h:
-                clearance = max(
-                    (clearance or 0), y + h - hypothetical_position)
+                clearance = max((clearance or 0), y + h - hypothetical_position)
     return clearance
 
 
@@ -141,6 +156,15 @@ def avoid_collisions(context, box, containing_block, outer=True):
 
     if box.border_height() == 0 and box.is_floated():
         return 0, 0, containing_block.width
+
+    left_keywords = ['left']
+    right_keywords = ['right']
+    if containing_block.style['direction'] == 'ltr':
+        left_keywords.append('inline-start')
+        right_keywords.append('inline-end')
+    else:
+        left_keywords.append('inline-end')
+        right_keywords.append('inline-start')
 
     while True:
         colliding_shapes = []
@@ -159,16 +183,15 @@ def avoid_collisions(context, box, containing_block, outer=True):
         left_bounds = [
             shape.position_x + shape.margin_width()
             for shape in colliding_shapes
-            if shape.style['float'] == 'left']
+            if shape.style['float'] in left_keywords]
         right_bounds = [
             shape.position_x
             for shape in colliding_shapes
-            if shape.style['float'] == 'right']
+            if shape.style['float'] in right_keywords]
 
         # Set the default maximum bounds
         max_left_bound = containing_block.content_box_x()
-        max_right_bound = \
-            containing_block.content_box_x() + containing_block.width
+        max_right_bound = max_left_bound + containing_block.width
 
         if not outer:
             max_left_bound += box.margin_left
@@ -202,7 +225,7 @@ def avoid_collisions(context, box, containing_block, outer=True):
     # - block-level replaced box
     # - element establishing new formatting contexts
     assert (
-        (box.style['float'] in ('right', 'left')) or
+        box.is_floated() or
         isinstance(box, boxes.LineBox) or
         box.is_table_wrapper or
         isinstance(box, boxes.BlockReplacedBox) or

@@ -40,8 +40,7 @@ def block_level_layout(context, box, bottom_space, skip_stack, containing_block,
             # one of the ancestors breaks collapsing margins.
             # See test_margin_break_clearance.
             collapse_with_page = (
-                containing_block.is_for_root_element or
-                adjoining_margins)
+                containing_block.is_for_root_element or adjoining_margins)
             if collapse_with_page:
                 if box.style['margin_break'] == 'discard':
                     box.margin_top = 0
@@ -50,16 +49,17 @@ def block_level_layout(context, box, bottom_space, skip_stack, containing_block,
                         box.margin_top = 0
 
         collapsed_margin = collapse_margin([*adjoining_margins, box.margin_top])
-        box.clearance = get_clearance(context, box, collapsed_margin)
+        direction = containing_block.style['direction']
+        box.clearance = get_clearance(context, box, direction, collapsed_margin)
         if box.clearance is not None:
             top_border_edge = box.position_y + collapsed_margin + box.clearance
             box.position_y = top_border_edge - box.margin_top
             adjoining_margins = []
 
     return block_level_layout_switch(
-        context, box, bottom_space, skip_stack, containing_block,
-        page_is_empty, absolute_boxes, fixed_boxes, adjoining_margins,
-        first_letter_style, first_line_style, discard, max_lines)
+        context, box, bottom_space, skip_stack, containing_block, page_is_empty,
+        absolute_boxes, fixed_boxes, adjoining_margins, first_letter_style,
+        first_line_style, discard, max_lines)
 
 
 def block_level_layout_switch(context, box, bottom_space, skip_stack, containing_block,
@@ -519,7 +519,8 @@ def _in_flow_layout(context, box, index, child, new_children, page_is_empty,
                 new_collapsed_margin - old_collapsed_margin)
             for previous_new_child in new_children:
                 previous_new_child.translate(dy=collapsed_margin_difference)
-            clearance = get_clearance(context, child, new_collapsed_margin)
+            direction = box.style['direction']
+            clearance = get_clearance(context, child, direction, new_collapsed_margin)
             if clearance is not None:
                 for previous_new_child in new_children:
                     previous_new_child.translate(
@@ -837,8 +838,9 @@ def block_container_layout(context, box, bottom_space, skip_stack, page_is_empty
     if last_in_flow_child is None:
         # No in-flow child in box, collapse its top and bottom margins.
         collapsed_margin = collapse_margin(adjoining_margins)
+        direction = box.style['direction']  # TODO: should be parent’s one instead
         if (box.height in ('auto', 0) and
-            get_clearance(context, box, collapsed_margin) is None and
+            get_clearance(context, box, direction, collapsed_margin) is None and
             all(value == 0 for value in (
                 box.min_height, box.border_top_width, box.padding_top,
                 box.border_bottom_width, box.padding_bottom))):
