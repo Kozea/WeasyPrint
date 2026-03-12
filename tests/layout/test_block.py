@@ -1096,3 +1096,27 @@ def test_page_break_child_margin_no_collapse():
     body, = html.children
     section, = body.children
     div, = section.children
+
+
+@assert_no_logs
+def test_min_max_rtl():
+    page1, = render_pages('''
+      <style>
+        @page{ size: 10px }
+      </style>
+      <body style="direction: rtl">
+        <div style="height: 5px; width: 1px; max-height: 4px; min-width: 3px"></div>
+        <div style="height: 1px; width: 5px; min-height: 4px; max-width: 3px"></div>
+      </body>
+    ''')
+    html, = page1.children
+    body, = html.children
+    div1, div2 = body.children
+    assert div1.position_x == 7
+    assert div1.position_y == 0
+    assert div1.height == 4
+    assert div1.width == 3
+    assert div2.position_x == 7
+    assert div2.position_y == 4
+    assert div2.height == 4
+    assert div2.width == 3

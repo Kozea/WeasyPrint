@@ -1,5 +1,6 @@
 """Page breaking and layout for block-level and block-container boxes."""
 
+from functools import partial
 from math import inf
 
 from ..formatting_structure import boxes
@@ -9,7 +10,6 @@ from .flex import flex_layout
 from .float import avoid_collisions, float_layout, get_clearance
 from .grid import grid_layout
 from .inline import iter_line_boxes
-from .min_max import handle_min_max_width
 from .percent import percentage, resolve_percentages, resolve_position_percentages
 from .replaced import block_replaced_box_layout
 from .table import table_layout, table_wrapper_width
@@ -141,8 +141,7 @@ def block_box_layout(context, box, bottom_space, skip_stack,
     return result
 
 
-@handle_min_max_width
-def block_level_width(box, containing_block):
+def block_level_width(box, containing_block, with_min_max=True):
     """Set the ``box`` width."""
     # 'cb' stands for 'containing block'
     if isinstance(containing_block, boxes.Box):
@@ -153,55 +152,56 @@ def block_level_width(box, containing_block):
         # TODO: what is the real text direction?
         direction = 'ltr'
 
-    # https://www.w3.org/TR/CSS21/visudet.html#blockwidth
+    padding_plus_border = (
+        box.padding_left + box.padding_right +
+        box.border_left_width + box.border_right_width)
 
-    # These names are waaay too long
-    margin_l = box.margin_left
-    margin_r = box.margin_right
-    padding_l = box.padding_left
-    padding_r = box.padding_right
-    border_l = box.border_left_width
-    border_r = box.border_right_width
-    width = box.width
-
-    # Only margin-left, margin-right and width can be 'auto'.
+    # See https://www.w3.org/TR/CSS21/visudet.html#blockwidth.
+    # Set width. Only margin-left, margin-right and width can be 'auto'.
     # We want:  width of containing block ==
     #               margin-left + border-left-width + padding-left + width
     #               + padding-right + border-right-width + margin-right
+    if box.width == 'auto':
+        box.width = cb_width - padding_plus_border
+        if box.margin_left != 'auto':
+            box.width -= box.margin_left
+        if box.margin_right != 'auto':
+            box.width -= box.margin_right
+    if with_min_max:
+        box.width = max(box.min_width, min(box.max_width, box.width))
 
-    paddings_plus_borders = padding_l + padding_r + border_l + border_r
-    if box.width != 'auto':
-        total = paddings_plus_borders + width
-        if margin_l != 'auto':
-            total += margin_l
-        if margin_r != 'auto':
-            total += margin_r
-        if total > cb_width:
-            if margin_l == 'auto':
-                margin_l = box.margin_left = 0
-            if margin_r == 'auto':
-                margin_r = box.margin_right = 0
-    if width != 'auto' and margin_l != 'auto' and margin_r != 'auto':
-        # The equation is over-constrained.
-        if direction == 'rtl' and not box.is_column:
-            box.position_x += (
-                cb_width - paddings_plus_borders - width - margin_r - margin_l)
-        # Do nothing in ltr.
-    if width == 'auto':
-        if margin_l == 'auto':
-            margin_l = box.margin_left = 0
-        if margin_r == 'auto':
-            margin_r = box.margin_right = 0
-        width = box.width = cb_width - (
-            paddings_plus_borders + margin_l + margin_r)
-    margin_sum = cb_width - paddings_plus_borders - width
-    if margin_l == margin_r == 'auto':
+    # Set auto margins to 0 for boxes larger than containing block.
+    margin_width = padding_plus_border + box.width
+    if box.margin_left != 'auto':
+        margin_width += box.margin_left
+    if box.margin_right != 'auto':
+        margin_width += box.margin_right
+    if margin_width > cb_width:
+        if box.margin_left == 'auto':
+            box.margin_left = 0
+        if box.margin_right == 'auto':
+            box.margin_right = 0
+
+    # Right-align right-to-left boxes.
+    if direction == 'rtl' and not box.is_column:
+        box.position_x += cb_width - padding_plus_border - box.width
+        if box.margin_left != 'auto':
+            box.position_x -= box.margin_left
+        if box.margin_right != 'auto':
+            box.position_x -= box.margin_right
+
+    # Set margins according to width.
+    margin_sum = cb_width - padding_plus_border - box.width
+    if box.margin_left == box.margin_right == 'auto':
         box.margin_left = margin_sum / 2
         box.margin_right = margin_sum / 2
-    elif margin_l == 'auto' and margin_r != 'auto':
-        box.margin_left = margin_sum - margin_r
-    elif margin_l != 'auto' and margin_r == 'auto':
-        box.margin_right = margin_sum - margin_l
+    elif box.margin_left == 'auto' and box.margin_right != 'auto':
+        box.margin_left = margin_sum - box.margin_right
+    elif box.margin_left != 'auto' and box.margin_right == 'auto':
+        box.margin_right = margin_sum - box.margin_left
+
+
+block_level_width.without_min_max = partial(block_level_width, with_min_max=False)
 
 
 def relative_positioning(box, containing_block):
