@@ -2,6 +2,7 @@
 
 import math
 
+from ..logger import LOGGER
 from ..text.line_break import character_ratio, strut
 
 # How many radians is one <unit>?
@@ -36,10 +37,20 @@ RESOLUTION_TO_DPPX = {
 
 # Sets of units.
 # https://drafts.csswg.org/css-values-4/#lengths
-FONT_UNITS = {'em', 'ex', 'cap', 'ch', 'ic', 'lh'}
-FONT_UNITS |= {f'r{unit}' for unit in FONT_UNITS}
 ABSOLUTE_UNITS = set(LENGTHS_TO_PIXELS)
-LENGTH_UNITS = ABSOLUTE_UNITS | FONT_UNITS
+FONT_UNITS = {
+     'em',  'ex',  'cap',  'ch',  'ic',  'lh',
+    'rem', 'rex', 'rcap', 'rch', 'ric', 'rlh',
+}
+VIEWPORT_UNITS = {
+     'vw',  'vh',  'vi',  'vb',  'vmin',  'vmax',
+    'lvw', 'lvh', 'lvi', 'lvb', 'lvmin', 'lvmax',
+    'svw', 'svh', 'svi', 'svb', 'svmin', 'svmax',
+    'dvw', 'dvh', 'dvi', 'dvb', 'dvmin', 'dvmax',
+    'pvw', 'pvh', 'pvi', 'pvb', 'pvmin', 'pvmax',
+}
+RELATIVE_UNITS = FONT_UNITS | VIEWPORT_UNITS
+LENGTH_UNITS = ABSOLUTE_UNITS | RELATIVE_UNITS
 # https://drafts.csswg.org/css-values-4/#angles
 ANGLE_UNITS = set(ANGLE_TO_RADIANS)
 
@@ -81,6 +92,24 @@ def to_pixels(value, style, property_name, font_size=None):
         else:
             ratio = character_ratio(style, unit)
             return value.value * font_size * ratio
+    elif unit in VIEWPORT_UNITS:
+        page_size = style.initial_page_sizes['box' if unit[0] == 'p' else 'area']
+        if page_size is None:
+            LOGGER.warn(f'{unit} unit resolved before first page layout')
+            from .computed_values import INITIAL_PAGE_SIZE
+            page_width = to_pixels(INITIAL_PAGE_SIZE[0], None, None)
+            page_height = to_pixels(INITIAL_PAGE_SIZE[1], None, None)
+        else:
+            page_width, page_height = page_size
+        # TODO: use writing-mode for vi and vb.
+        if unit.endswith(('vw', 'vi')):
+            return value.value / 100 * page_width
+        elif unit.endswith(('vh', 'vb')):
+            return value.value / 100 * page_height
+        elif unit.endswith('vmin'):
+            return value.value / 100 * min(page_width, page_height)
+        elif unit.endswith('vmax'):
+            return value.value / 100 * max(page_width, page_height)
 
 
 def to_radians(value):

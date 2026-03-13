@@ -590,6 +590,10 @@ def make_page(context, root_box, page_type, resume_at, page_number,
     page_width(page, context, cb_width)
     page_height(page, context, cb_height)
 
+    if page_number == 1:
+        context.style_for.initial_page_sizes['box'] = device_size
+        context.style_for.initial_page_sizes['area'] = (page.width, page.height)
+
     root_box.position_x = page.content_box_x()
     root_box.position_y = page.content_box_y()
     context.page_bottom = root_box.position_y + page.height

@@ -166,6 +166,7 @@ def test_important():
 
 @assert_no_logs
 @pytest.mark.parametrize(('value', 'width'), [
+    # Absolute units.
     ('96px', 96),
     ('1in', 96),
     ('72pt', 96),
@@ -173,6 +174,7 @@ def test_important():
     ('2.54cm', 96),
     ('25.4mm', 96),
     ('101.6q', 96),
+    # Font-relative units.
     ('1.1em', 11),
     ('1.1rem', 17.6),
     ('1.1ch', 11),
@@ -185,10 +187,42 @@ def test_important():
     ('1ric', 32),
     ('1.1lh', 13.2),
     ('1.1rlh', 26.4),
+    # Viewport-relative units.
+    ('50vh', 50),
+    ('50vw', 100),
+    ('25vb', 25),
+    ('1.25vi', 2.5),
+    ('10vmin', 10),
+    ('20vmax', 40),
+    ('50lvh', 50),
+    ('50lvw', 100),
+    ('25lvb', 25),
+    ('1.25lvi', 2.5),
+    ('10lvmin', 10),
+    ('20lvmax', 40),
+    ('50svh', 50),
+    ('50svw', 100),
+    ('25svb', 25),
+    ('1.25svi', 2.5),
+    ('10svmin', 10),
+    ('20svmax', 40),
+    ('50dvh', 50),
+    ('50dvw', 100),
+    ('25dvb', 25),
+    ('1.25dvi', 2.5),
+    ('10dvmin', 10),
+    ('20dvmax', 40),
+    ('50pvh', 100),
+    ('50pvw', 150),
+    ('25pvb', 50),
+    ('1.5pvi', 4.5),
+    ('10pvmin', 20),
+    ('20pvmax', 60),
 ])
 def test_units(value, width):
     document = FakeHTML(base_url=BASE_URL, string='''
       <html style="font: 16px / 1.5 weasyprint">
+      <style>@page { size: 300px 200px; margin: 50px }</style>
       <body style="font: 10px / 1.2 weasyprint">
       <p style="margin-left: %s"></p>
       <p style="margin-left: %s"></p>

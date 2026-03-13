@@ -32,14 +32,15 @@ from . import counters, media_queries
 from .computed_values import COMPUTER_FUNCTIONS
 from .functions import Function, check_math, check_var
 from .properties import INHERITED, INITIAL_NOT_COMPUTED, INITIAL_VALUES, ZERO_PIXELS
-from .units import ANGLE_UNITS, FONT_UNITS, LENGTH_UNITS, to_pixels, to_radians
+from .units import ANGLE_UNITS, LENGTH_UNITS, RELATIVE_UNITS, to_pixels, to_radians
 from .validation import preprocess_declarations
 from .validation.descriptors import preprocess_descriptors
 from .validation.properties import validate_non_shorthand
 
 from .tokens import (  # isort:skip
-    E, MINUS_INFINITY, NAN, PI, PLUS_INFINITY, FontUnitInMath, InvalidValues, Pending,
-    PercentageInMath, get_angle, get_url, remove_whitespace, split_on_comma, tokenize)
+    E, MINUS_INFINITY, NAN, PI, PLUS_INFINITY, InvalidValues, Pending, PercentageInMath,
+    RelativeLengthInMath, get_angle, get_url, remove_whitespace, split_on_comma,
+    tokenize)
 
 # Reject anything not in here:
 PSEUDO_ELEMENTS = (
@@ -71,6 +72,9 @@ class StyleFor:
         #     keys: property name as a string
         #     values: a PropertyValue-like object
         self._computed_styles = {}
+
+        # Set when the first page is created, used for viewport-based units.
+        self.initial_page_sizes = {'box': None, 'area': None}
 
         self._sheets = sheets
         self.font_config = font_config
@@ -171,7 +175,7 @@ class StyleFor:
         cascaded = cascaded_styles.get((element, pseudo_type), {})
         computed = computed_styles[element, pseudo_type] = ComputedStyle(
             parent_style, cascaded, element, pseudo_type, root_style, base_url,
-            self.font_config)
+            self.font_config, self.initial_page_sizes)
         if target_collector and computed['anchor']:
             target_collector.collect_anchor(computed['anchor'])
 
@@ -655,12 +659,12 @@ def _resolve_calc_sum(computed, tokens, property_name, refer_to):
             try:
                 product = _resolve_calc_product(
                     computed, group, property_name, refer_to)
-            except FontUnitInMath as font_exception:
-                # FontUnitInMath raised, assume that we got pixels and continue to find
-                # if we have to raise PercentageInMath first.
+            except RelativeLengthInMath as relative_exception:
+                # RelativeLengthInMath raised, assume that we got pixels and continue to
+                # find if we have to raise PercentageInMath first.
                 if unit == '%':
                     raise PercentageInMath
-                exception = font_exception
+                exception = relative_exception
                 unit = 'px'
                 sign = None
                 continue
@@ -689,7 +693,7 @@ def _resolve_calc_sum(computed, tokens, property_name, refer_to):
                 value -= product.value
             sign = None
 
-    # Raise FontUnitInMath, only if we didn’t raise PercentageInMath before.
+    # Raise RelativeLengthInMath, only if we didn’t raise PercentageInMath before.
     if exception:
         raise exception
 
@@ -705,8 +709,8 @@ def _resolve_calc_product(computed, tokens, property_name, refer_to):
         elif token.type == 'number':
             groups[-1].append(token)
         elif token.type == 'dimension' and token.unit.lower() in LENGTH_UNITS:
-            if computed is None and token.unit.lower() in FONT_UNITS:
-                raise FontUnitInMath
+            if computed is None and token.unit.lower() in RELATIVE_UNITS:
+                raise RelativeLengthInMath
             pixels = to_pixels(token, computed, property_name)
             groups[-1].append(tokenize(pixels, unit='px'))
         elif token.type == 'dimension' and token.unit.lower() in ANGLE_UNITS:
@@ -768,11 +772,11 @@ def resolve_math(token, computed=None, property_name=None, refer_to=None):
     """Return token with resolved math functions.
 
     Raise, in order of priority, ``PercentageInMath`` if percentages are mixed with
-    other values with no ``refer_to`` size, or ``FontUnitInMath`` if no ``computed``
-    style is available to get font size.
+    other values with no ``refer_to`` size, or ``RelativeLengthInMath`` if no
+    ``computed`` style is available to get font / viewport size.
 
-    ``PercentageInMath`` has to be raised before FontUnitInMath so that it can be used
-    to discard validation of properties that don’t accept percentages.
+    ``PercentageInMath`` has to be raised before ``RelativeLengthInMath`` so that it can
+    be used to discard validation of properties that don’t accept percentages.
 
     """
     if not check_math(token):
@@ -1086,7 +1090,7 @@ class AnonymousStyle(dict):
 class ComputedStyle(dict):
     """Computed style used for non-anonymous boxes."""
     def __init__(self, parent_style, cascaded, element, pseudo_type,
-                 root_style, base_url, font_config):
+                 root_style, base_url, font_config, initial_page_sizes):
         self.specified = {}
         self.parent_style = parent_style
         self.cascaded = cascaded
@@ -1096,12 +1100,13 @@ class ComputedStyle(dict):
         self.root_style = root_style
         self.base_url = base_url
         self.font_config = font_config
+        self.initial_page_sizes = initial_page_sizes
         self.cache = parent_style.cache if parent_style else {}
 
     def copy(self):
         copy = ComputedStyle(
             self.parent_style, self.cascaded, self.element, self.pseudo_type,
-            self.root_style, self.base_url, self.font_config)
+            self.root_style, self.base_url, self.font_config, self.initial_page_sizes)
         copy.update(self)
         copy.specified = self.specified.copy()
         return copy
