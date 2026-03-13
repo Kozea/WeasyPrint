@@ -301,7 +301,7 @@ def expand_logical_border(tokens, name, base_url):
 @expander('border-block-start')
 @expander('border-block-end')
 @expander('border-inline-start')
-@expander('border-block-inline')
+@expander('border-inline-end')
 @expander('column-rule')
 @expander('outline')
 @generic_expander('-width', '-color', '-style')
