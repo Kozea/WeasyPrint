@@ -821,3 +821,22 @@ def test_nested_right_float():
     line1, line2 = body.children
     assert line1.width == 40
     assert line2.width == 20
+
+
+@assert_no_logs
+def test_first_letter_float():
+    # Regression test for #1859.
+    page, = render_pages('''
+      <style>
+        body { width: 100px; font: 20px weasyprint }
+        p:first-letter { float: left }
+      </style>
+      <p>Lor''')
+    html, = page.children
+    body, = html.children
+    p, = body.children
+    line1, = p.children
+    first_letter, text = line1.children
+    assert first_letter.position_x == 0
+    # TODO: fix problem described in #1859.
+    # assert text.position_x == 20

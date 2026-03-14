@@ -3,7 +3,7 @@
 import unicodedata
 from math import inf
 
-from ..css import Pending
+from ..css import AnonymousStyle, Pending
 from ..css.properties import INHERITED
 from ..formatting_structure import boxes, build
 from .absolute import AbsolutePlaceholder, absolute_layout
@@ -331,12 +331,13 @@ def first_letter_to_box(box, skip_stack, first_letter_style):
                     # "This type of initial letter is similar to an
                     # inline-level element if its 'float' property is 'none',
                     # otherwise it is similar to a floated element."
+                    children_style = AnonymousStyle(letter_style)
                     if letter_style['float'] == 'none':
                         letter_box = boxes.InlineBox(
                             f'{box.element_tag}::first-letter',
                             letter_style, box.element, [])
                         text_box = boxes.TextBox(
-                            f'{box.element_tag}::first-letter', letter_style,
+                            f'{box.element_tag}::first-letter', children_style,
                             box.element, first_letter)
                         letter_box.children = (text_box,)
                         box.children = (letter_box, *box.children)
@@ -345,11 +346,11 @@ def first_letter_to_box(box, skip_stack, first_letter_style):
                             f'{box.element_tag}::first-letter',
                             letter_style, box.element, [])
                         line_box = boxes.LineBox(
-                            f'{box.element_tag}::first-letter', letter_style,
+                            f'{box.element_tag}::first-letter', children_style,
                             box.element, [])
                         letter_box.children = (line_box,)
                         text_box = boxes.TextBox(
-                            f'{box.element_tag}::first-letter', letter_style,
+                            f'{box.element_tag}::first-letter', children_style,
                             box.element, first_letter)
                         line_box.children = (text_box,)
                         box.children = (letter_box, *box.children)
