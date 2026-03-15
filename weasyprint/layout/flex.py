@@ -22,6 +22,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
     # TODO: merge this with block_container_layout.
     context.create_flex_formatting_context(box)
     resume_at = None
+    next_page = {'break': 'any', 'page': None}
 
     is_start = skip_stack is None
     box.remove_decoration(start=not is_start, end=False)
@@ -900,11 +901,11 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
         for index, child in line:
             if child.is_flex_item:
                 # TODO: Don't use block_level_layout_switch.
-                new_child, child_resume_at = block.block_level_layout_switch(
+                new_child, child_resume_at, next_page = block.block_level_layout_switch(
                     context, child, bottom_space, child_skip_stack, box, page_is_empty,
                     absolute_boxes, fixed_boxes, adjoining_margins=[],
                     first_letter_style=None, first_line_style=None, discard=discard,
-                    max_lines=None)[:2]
+                    max_lines=None)[:3]
                 if new_child is None:
                     if resume_at:
                         resume_index, = resume_at
@@ -964,5 +965,4 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
 
     context.finish_flex_formatting_context(box)
 
-    # TODO: Check these returned values.
-    return box, resume_at, {'break': 'any', 'page': None}, [], False
+    return box, resume_at, next_page, [], False
