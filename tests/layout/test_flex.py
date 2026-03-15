@@ -2000,3 +2000,33 @@ def test_flex_height_page_overflow():
     section, = body.children
     div, = section.children
     assert len(div.children[0].children) == 3
+
+
+@assert_no_logs
+def test_flex_break_after_page():
+    # Regression test for #2469.
+    page1, page2, page3 = render_pages('''
+      <style>
+        @page { size: 5px }
+        body { display: flex; flex-direction: column; font: 2px/1 weasyprint }
+      </style>
+      <div style="height: 10px">a</div>
+      <section>
+        <div style="break-after: page">b</div>
+        <div>c</div>
+      </section>
+    ''')
+    html, = page1.children
+    body, = html.children
+    div, = html.children
+    assert div.children[0].children[0].children[0].text == 'a'
+    html, = page2.children
+    body, = html.children
+    section, = html.children
+    div, = section.children
+    assert div.children[0].children[0].children[0].text == 'b'
+    html, = page3.children
+    body, = html.children
+    section, = html.children
+    div, = section.children
+    assert div.children[0].children[0].children[0].text == 'c'

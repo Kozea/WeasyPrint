@@ -87,7 +87,6 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
     percent.resolve_percentages(parent_box, containing_block)
     block.block_level_width(parent_box, containing_block)
     children = sorted(box.children, key=lambda item: item.style['order'])
-    original_skip_stack = skip_stack
     if skip_stack is not None:
         (skip, skip_stack), = skip_stack.items()
         if box.style['flex_direction'].endswith('-reverse'):
@@ -918,13 +917,10 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
                     box.children.append(new_child)
                     position_y = new_child.position_y + new_child.border_height()
                     if child_resume_at is not None:
-                        if original_skip_stack:
-                            first_level_skip, = original_skip_stack
-                        else:
-                            first_level_skip = 0
+                        first_level_skip = 0
                         if resume_at:
                             resume_index, = resume_at
-                            first_level_skip += resume_index
+                            first_level_skip = resume_index
                         resume_at = {first_level_skip + index: child_resume_at}
                 if resume_at:
                     break
