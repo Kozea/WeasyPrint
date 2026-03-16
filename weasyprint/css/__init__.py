@@ -507,7 +507,8 @@ def find_style_attributes(tree, presentational_hints=False, base_url=None):
                 yield specificity, check_style_attribute(
                     element, f'color:{element.get("color")}')
         elif element.tag in (
-                'iframe', 'applet', 'embed', 'img', 'input', 'object'):
+                'iframe', 'applet', 'embed', 'img', 'input', 'object',
+                '{http://www.w3.org/2000/svg}svg'):
             if (element.tag != 'input' or
                     element.get('type', '').lower() == 'image'):
                 align = element.get('align', '').lower()
