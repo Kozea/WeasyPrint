@@ -2008,7 +2008,10 @@ def test_flex_break_after_page():
     page1, page2, page3 = render_pages('''
       <style>
         @page { size: 5px }
-        body { display: flex; flex-direction: column; font: 2px/1 weasyprint }
+        body {
+          display: flex; flex-direction: column;
+          font: 2px/1 weasyprint; margin-top: 1px;
+        }
       </style>
       <div style="height: 10px">a</div>
       <section>
@@ -2018,15 +2021,25 @@ def test_flex_break_after_page():
     ''')
     html, = page1.children
     body, = html.children
-    div, = html.children
-    assert div.children[0].children[0].children[0].text == 'a'
+    div, = body.children
+    assert div.position_y == 1
+    assert div.height == 10
+    assert div.children[0].children[0].text == 'a'
     html, = page2.children
     body, = html.children
-    section, = html.children
+    assert body.position_y == 0
+    assert body.height == 5
+    section, = body.children
     div, = section.children
-    assert div.children[0].children[0].children[0].text == 'b'
+    assert div.position_y == 0
+    assert div.height == 2
+    assert div.children[0].children[0].text == 'b'
     html, = page3.children
     body, = html.children
-    section, = html.children
+    assert body.position_y == 0
+    assert body.height == 2
+    section, = body.children
     div, = section.children
-    assert div.children[0].children[0].children[0].text == 'c'
+    assert div.position_y == 0
+    assert div.height == 2
+    assert div.children[0].children[0].text == 'c'

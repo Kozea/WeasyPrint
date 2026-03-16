@@ -85,6 +85,7 @@ def flex_layout(context, box, bottom_space, skip_stack, containing_block, page_i
     # 3 Determine the flex base size and hypothetical main size of each item.
     parent_box = box.copy()
     percent.resolve_percentages(parent_box, containing_block)
+    parent_box.remove_decoration(start=not is_start, end=False)
     block.block_level_width(parent_box, containing_block)
     children = sorted(box.children, key=lambda item: item.style['order'])
     if skip_stack is not None:
