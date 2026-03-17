@@ -49,6 +49,7 @@ See respective docstrings for details.
 """
 
 import itertools
+import sys
 
 from ..css import AnonymousStyle
 
@@ -220,14 +221,15 @@ class Box:
         brrx, brry = self.border_bottom_right_radius
         blrx, blry = self.border_bottom_left_radius
 
-        tlrx = max(0, tlrx - bl)
-        tlry = max(0, tlry - bt)
-        trrx = max(0, trrx - br)
-        trry = max(0, trry - bt)
-        brrx = max(0, brrx - br)
-        brry = max(0, brry - bb)
-        blrx = max(0, blrx - bl)
-        blry = max(0, blry - bb)
+        # TODO: clamp all computed values, see #2705.
+        tlrx = min(max(0, tlrx - bl), sys.maxsize)
+        tlry = min(max(0, tlry - bt), sys.maxsize)
+        trrx = min(max(0, trrx - br), sys.maxsize)
+        trry = min(max(0, trry - bt), sys.maxsize)
+        brrx = min(max(0, brrx - br), sys.maxsize)
+        brry = min(max(0, brry - bb), sys.maxsize)
+        blrx = min(max(0, blrx - bl), sys.maxsize)
+        blry = min(max(0, blry - bb), sys.maxsize)
 
         x = self.border_box_x() + bl
         y = self.border_box_y() + bt

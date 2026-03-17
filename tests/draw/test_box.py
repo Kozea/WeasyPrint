@@ -742,3 +742,34 @@ def test_outline_offset(assert_pixels):
       </style>
       <div></div>
     ''')
+
+
+@assert_no_logs
+def test_infinite_border_radius(assert_pixels):
+    # Regression test for #2706.
+    assert_pixels('''
+        __________
+        __zzzzzz__
+        _zzzzzzzz_
+        _zzzRRzzz_
+        _zzRRRRzz_
+        _zzRRRRzz_
+        _zzzRRzzz_
+        _zzzzzzzz_
+        __zzzzzz__
+        __________
+    ''', '''
+      <style>
+        @page {
+          size: 10px;
+        }
+        div {
+          background-color: red;
+          border-radius: calc(infinity * 1px);
+          height: 8px;
+          margin: 1px;
+          width: 8px;
+        }
+      </style>
+      <div></div>
+    ''')
