@@ -6,89 +6,86 @@ from ..testing_utils import assert_no_logs
 @assert_no_logs
 def test_2d_transform_1(assert_pixels):
     assert_pixels('''
-        ________
-        ________
-        __BBBr__
-        __BBBB__
-        __BBBB__
-        __BBBB__
-        ________
-        ________
+        __________
+        __________
+        __BBBr____
+        __BBBB____
+        __BBBB____
+        __BBBB____
+        __________
+        __________
+        __________
+        __________
     ''', '''
       <style>
-        @page { size: 8px; margin: 2px; }
-        div { transform: rotate(90deg); font-size: 0 }
+        @page { size: 10px; margin: 2px }
+        body { font-size: 0 }
+        img { transform: rotate(90deg) }
       </style>
-      <div><img src="pattern.png"></div>''')
+      <body><img src="pattern.png">''')
 
 
 @assert_no_logs
 def test_2d_transform_2(assert_pixels):
     assert_pixels('''
-        ____________
-        ____________
-        _____BBBr___
-        _____BBBB___
-        _____BBBB___
-        _____BBBB___
-        ____________
-        ____________
-        ____________
-        ____________
-        ____________
-        ____________
+        __________
+        __________
+        _____BBBr_
+        _____BBBB_
+        _____BBBB_
+        _____BBBB_
+        __________
+        __________
+        __________
+        __________
     ''', '''
       <style>
-        @page { size: 12px; margin: 2px; }
-        div { transform: translateX(3px) rotate(90deg);
-              font-size: 0; width: 4px }
+        @page { size: 10px; margin: 2px }
+        body { font-size: 0 }
+        img { transform: translateX(3px) rotate(90deg) }
       </style>
-      <div><img src="pattern.png"></div>''')
+      <body><img src="pattern.png">''')
 
 
 @assert_no_logs
 def test_2d_transform_3(assert_pixels):
     # A translateX after the rotation is actually a translateY
     assert_pixels('''
-        ____________
-        ____________
-        ____________
-        ____________
-        ____________
-        __BBBr______
-        __BBBB______
-        __BBBB______
-        __BBBB______
-        ____________
-        ____________
-        ____________
+        __________
+        __________
+        __________
+        __________
+        __________
+        __BBBr____
+        __BBBB____
+        __BBBB____
+        __BBBB____
+        __________
     ''', '''
       <style>
-        @page { size: 12px; margin: 2px; }
-        div { transform: rotate(90deg) translateX(3px);
-              font-size: 0; width: 4px }
+        @page { size: 10px; margin: 2px }
+        body { font-size: 0 }
+        img { transform: rotate(90deg) translateX(3px) }
       </style>
-      <div><img src="pattern.png"></div>''')
+      <body><img src="pattern.png">''')
 
 
 @assert_no_logs
 def test_2d_transform_4(assert_pixels):
     assert_pixels('''
-        ____________
-        ____________
-        ____________
-        ____________
-        ____________
-        __BBBr______
-        __BBBB______
-        __BBBB______
-        __BBBB______
-        ____________
-        ____________
-        ____________
+        __________
+        __________
+        __________
+        __________
+        __________
+        __BBBr____
+        __BBBB____
+        __BBBB____
+        __BBBB____
+        __________
     ''', '''
       <style>
-        @page { size: 12px; margin: 2px; }
+        @page { size: 10px; margin: 2px }
         div { transform: rotate(90deg); font-size: 0; width: 4px }
         img { transform: translateX(3px) }
       </style>
