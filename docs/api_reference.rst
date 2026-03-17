@@ -653,31 +653,37 @@ The ``text-overflow``, ``block-ellipsis``, ``line-clamp``, ``max-lines`` and
 
 .. _CSS Overflow Module Level 3: https://www.w3.org/TR/2020/WD-css-overflow-3-20200603/
 
-CSS Values and Units Module Level 3
-+++++++++++++++++++++++++++++++++++
+CSS Values and Units Module Level 3 / 4
++++++++++++++++++++++++++++++++++++++++
 
 The `CSS Values and Units Module Level 3`_ defines various units and
 keywords used in "value definition field of each CSS property".
+
+The `CSS Values and Units Module Level 4`_ adds many new units, unit types and math
+functions.
 
 The ``initial`` and ``inherit`` CSS-wide keywords are supported, but the
 ``unset`` keyword is **not** supported.
 
 Quoted strings, URLs and numeric data types are supported.
 
-Font-related lengths (``em``, ``ex``, ``ch``, ``rem``), absolute lengths
-(``cm``, ``mm``, ``q``, ``in``, ``pt``, ``pc``, ``px``), angles (``rad``,
-``grad``, ``turn``, ``deg``), resolutions (``dpi``, ``dpcm``, ``dppx``) are
-supported.
+Font-relative lengths (``*em``, ``*ex``, ``*ch``, ``*cap``, ``*ic``, ``*lh``),
+viewport-relative lengths (``*vw``, ``*vh``, ``*vi``, ``*vb``, ``*vmin``, ``*vmax``),
+absolute lengths (``cm``, ``mm``, ``q``, ``in``, ``pt``, ``pc``, ``px``), angles
+(``rad``, ``grad``, ``turn``, ``deg``), resolutions (``dpi``, ``dpcm``, ``dppx``, ``x``)
+are supported.
+
+Unspecified page-relative units (``pvw``, ``pvh``…) are also supported. They are
+relative to the whole page size (including page margins), while all the other units are
+relative to the page area size (without page margins).
 
 The ``attr()`` functional notation is allowed in the ``content`` and
 ``string-set`` properties.
 
-The ``calc()`` function is **not** supported.
-
-Viewport-percentage lengths (``vw``, ``vh``, ``vmin``, ``vmax``) are **not**
-supported.
+All the mathematical functions (``calc()``…) are supported.
 
 .. _CSS Values and Units Module Level 3: https://www.w3.org/TR/css3-values/
+.. _CSS Values and Units Module Level 4: https://www.w3.org/TR/css4-values/
 
 CSS Multi-column Layout Module
 ++++++++++++++++++++++++++++++

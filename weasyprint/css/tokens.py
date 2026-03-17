@@ -57,8 +57,8 @@ class PercentageInMath(ValueError):  # noqa: N818
     """Percentage in math function without reference length."""
 
 
-class FontUnitInMath(ValueError):  # noqa: N818
-    """Font-relative unit in math function without reference style."""
+class RelativeLengthInMath(ValueError):  # noqa: N818
+    """Relative length unit in math function without reference style."""
 
 
 class Pending(ABC):
@@ -341,7 +341,7 @@ def get_number(token, negative=True, integer=False):
     if check_math(token):
         try:
             resolved = resolve_math(token)
-        except (PercentageInMath, FontUnitInMath):
+        except (PercentageInMath, RelativeLengthInMath):
             return
         else:
             if resolved is None:
@@ -387,7 +387,7 @@ def get_percentage(token, negative=True):
     if check_math(token):
         try:
             token = resolve_math(token) or token
-        except (PercentageInMath, FontUnitInMath):
+        except (PercentageInMath, RelativeLengthInMath):
             return
         else:
             # Range clamp.
@@ -408,7 +408,7 @@ def get_length(token, negative=True, percentage=False):
             # PercentageInMath is raised in priority to help discarding percentages for
             # properties that don’t allow them.
             return token if percentage else None
-        except FontUnitInMath:
+        except RelativeLengthInMath:
             return token
         else:
             # Range clamp.
@@ -430,7 +430,7 @@ def get_angle(token):
 
     try:
         token = resolve_math(token) or token
-    except (PercentageInMath, FontUnitInMath):
+    except (PercentageInMath, RelativeLengthInMath):
         return
     if token.type == 'number' and token.value == 0:
         # Legacy syntax: https://drafts.csswg.org/css-values-4/#angles.
@@ -447,7 +447,7 @@ def get_resolution(token):
 
     try:
         token = resolve_math(token) or token
-    except (PercentageInMath, FontUnitInMath):
+    except (PercentageInMath, RelativeLengthInMath):
         return
     if token.type == 'dimension':
         factor = RESOLUTION_TO_DPPX.get(token.unit.lower())
