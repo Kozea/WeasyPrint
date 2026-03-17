@@ -46,8 +46,8 @@ def test_canvas_background_size(assert_pixels):
         __________
         __RRRRRR__
         __RGGGGR__
-        __RRRRRR__
-        __BBBBBB__
+        __zzzzzz__
+        __zzzzzz__
         __BBBBBB__
         __BBBBBB__
         __________
