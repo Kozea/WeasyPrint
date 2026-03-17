@@ -601,7 +601,21 @@ def _out_of_flow_layout(context, box, containing_block, index, child,
             # Translate previous line children
             dx = max(child.margin_width(), 0)
             float_widths[child.style['float']] += dx
-            if child.style['float'] == 'left':
+
+            float_left = child.style['float'] == 'left'
+            float_right = child.style['float'] == 'right'
+            if box.style['direction'] == 'ltr':
+                if child.style['float'] == 'inline-start':
+                    float_left = True
+                if child.style['float'] == 'inline-end':
+                    float_right = True
+            else:
+                if child.style['float'] == 'inline-start':
+                    float_right = True
+                if child.style['float'] == 'inline-end':
+                    float_left = True
+
+            if float_left:
                 if isinstance(box, boxes.LineBox):
                     # The parent is the line, update the current position
                     # for the next child. When the parent is not the line
@@ -609,16 +623,16 @@ def _out_of_flow_layout(context, box, containing_block, index, child,
                     # line is updated by the box itself (see next
                     # split_inline_level call).
                     position_x += dx
-            elif child.style['float'] == 'right':
+            elif float_right:
                 # Update the maximum x position for the next children
                 max_x -= dx
             for _, old_child in line_children:
                 if not old_child.is_in_normal_flow():
                     continue
-                if ((child.style['float'] == 'left' and
-                        box.style['direction'] == 'ltr') or
-                    (child.style['float'] == 'right' and
-                        box.style['direction'] == 'rtl')):
+                float_align = (
+                    (float_left and box.style['direction'] == 'ltr') or
+                    (float_right and box.style['direction'] == 'rtl'))
+                if float_align:
                     old_child.translate(dx=dx)
 
     elif child.is_running():

@@ -124,6 +124,10 @@ def background_attachment(keyword):
 @property('border-right-color')
 @property('border-bottom-color')
 @property('border-left-color')
+@property('border-block-start-color')
+@property('border-block-end-color')
+@property('border-inline-start-color')
+@property('border-inline-end-color')
 @property('column-rule-color', unstable=True)
 @property('text-decoration-color')
 @single_token
@@ -277,6 +281,10 @@ def border_spacing(tokens):
 @property('border-bottom-right-radius')
 @property('border-bottom-left-radius')
 @property('border-top-left-radius')
+@property('border-start-start-radius')
+@property('border-start-end-radius')
+@property('border-end-start-radius')
+@property('border-end-end-radius')
 def border_corner_radius(tokens):
     """Validator for the `border-*-radius` properties."""
     lengths = [get_length(token, negative=False, percentage=True) for token in tokens]
@@ -291,6 +299,10 @@ def border_corner_radius(tokens):
 @property('border-right-style')
 @property('border-left-style')
 @property('border-bottom-style')
+@property('border-block-start-style')
+@property('border-block-end-style')
+@property('border-inline-start-style')
+@property('border-inline-end-style')
 @property('column-rule-style', unstable=True)
 @single_keyword
 def border_style(keyword):
@@ -404,6 +416,10 @@ def outline_style(keyword):
 @property('border-right-width')
 @property('border-left-width')
 @property('border-bottom-width')
+@property('border-block-start-width')
+@property('border-block-end-width')
+@property('border-inline-start-width')
+@property('border-inline-end-width')
 @property('column-rule-width', unstable=True)
 @property('outline-width')
 @single_token
@@ -530,7 +546,7 @@ def caption_side(keyword):
 @single_keyword
 def clear(keyword):
     """``clear`` property validation."""
-    return keyword in ('left', 'right', 'both', 'none')
+    return keyword in ('left', 'right', 'inline-start', 'inline-end', 'both', 'none')
 
 
 @property()
@@ -629,10 +645,18 @@ def counter(tokens, default_integer):
 @property('right')
 @property('left')
 @property('bottom')
+@property('inset-block-start')
+@property('inset-block-end')
+@property('inset-inline-start')
+@property('inset-inline-end')
 @property('margin-top')
 @property('margin-right')
 @property('margin-bottom')
 @property('margin-left')
+@property('margin-block-start')
+@property('margin-block-end')
+@property('margin-inline-start')
+@property('margin-inline-end')
 @property('text-underline-offset')
 @single_token
 def lenght_precentage_or_auto(token):
@@ -645,6 +669,8 @@ def lenght_precentage_or_auto(token):
 
 @property('height')
 @property('width')
+@property('block-size')
+@property('inline-size')
 @single_token
 def width_height(token):
     """Validation for the ``width`` and ``height`` properties."""
@@ -730,7 +756,8 @@ def display(tokens):
 @single_keyword
 def float_(keyword):  # XXX do not hide the "float" builtin
     """``float`` property validation."""
-    return keyword in ('left', 'right', 'footnote', 'none')
+    return keyword in (
+        'left', 'right', 'inline-start', 'inline-end', 'footnote', 'none')
 
 
 @property()
@@ -1052,6 +1079,8 @@ def list_style_type(token):
 
 @property('min-width')
 @property('min-height')
+@property('min-block-size')
+@property('min-inline-size')
 @single_token
 def min_width_height(token):
     """``min-width`` and ``min-height`` properties validation."""
@@ -1066,6 +1095,10 @@ def min_width_height(token):
 @property('padding-right')
 @property('padding-bottom')
 @property('padding-left')
+@property('padding-block-start')
+@property('padding-block-end')
+@property('padding-inline-start')
+@property('padding-inline-end')
 @single_token
 def length_or_precentage(token):
     """``padding-*`` properties validation."""
@@ -1075,6 +1108,8 @@ def length_or_precentage(token):
 
 @property('max-width')
 @property('max-height')
+@property('max-block-size')
+@property('max-inline-size')
 @single_token
 def max_width_height(token):
     """Validation for max-width and max-height"""
