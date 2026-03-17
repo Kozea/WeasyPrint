@@ -66,11 +66,11 @@ def test_linear_gradients_4(assert_pixels):
 @assert_no_logs
 def test_linear_gradients_5(assert_pixels):
     assert_pixels('''
+        rBrrzBrrrB
         rBrrrBrrrB
         rBrrrBrrrB
         rBrrrBrrrB
-        rBrrrBrrrB
-        rBrrrBrrrB
+        rBrrzBrrrB
     ''', '''
       <style>@page { size: 10px 5px; background: repeating-linear-gradient(
       to right, blue 50%, blue 60%, red 60%, red 90%
@@ -332,16 +332,16 @@ def test_radial_gradients_negative(assert_pixels):
         BzzzzzzzzB
         zzzzzzzzzz
         zzzzzzzzzz
-        zzzzzzzzzz
         zzzzBBzzzz
         zzzzzzzzzz
         zzzzzzzzzz
-        zBzzRRzzBz
-        zBzzRRzzBz
+        zzzzzzzzzz
+        BzzzRRzzzB
+        BzzzRRzzzB
+        zzzzzzzzzz
         zzzzzzzzzz
         zzzzzzzzzz
         zzzzBBzzzz
-        zzzzzzzzzz
         zzzzzzzzzz
         zzzzzzzzzz
         BzzzzzzzzB

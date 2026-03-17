@@ -217,7 +217,7 @@ def test_linear_gradient_transform_repeat(assert_pixels):
         BBBBBBBBBB
         RRRRRRRRRR
         GGGGGGGGGG
-        vvvvvvvvvv
+        zvvvvvvvvz
         BBBBBBBBBB
         RRRRRRRRRR
         GGGGGGGGGG
@@ -326,7 +326,7 @@ def test_linear_gradient_transform_repeat_userspace(assert_pixels):
         BBBBBBBBBB
         RRRRRRRRRR
         GGGGGGGGGG
-        vvvvvvvvvv
+        zvvvvvvvvz
         BBBBBBBBBB
         RRRRRRRRRR
         GGGGGGGGGG
@@ -955,16 +955,16 @@ def test_radial_gradient_multicolor_userspace(assert_pixels):
 def test_radial_gradient_repeat(assert_pixels):
     assert_pixels('''
         ____________
-        _GBBrrrrBBG_
+        _GBBzzzzBBG_
         _BrrGGGGrrB_
         _BrGBBBBGrB_
-        _rGBBrrBBGr_
-        _rGBrGGrBGr_
-        _rGBrGGrBGr_
-        _rGBBrrBBGr_
+        _zGBBrrBBGz_
+        _zGBrGGrBGz_
+        _zGBrGGrBGz_
+        _zGBBrrBBGz_
         _BrGBBBBGrB_
         _BrrGGGGrrB_
-        _GBBrrrrBBG_
+        _GBBzzzzBBG_
         ____________
     ''', '''
       <style>
@@ -991,16 +991,16 @@ def test_radial_gradient_repeat(assert_pixels):
 def test_radial_gradient_reflect(assert_pixels):
     assert_pixels('''
         ____________
-        _GrrrrrrrrG_
+        _GrrzzzzrrG_
         _rrrGGGGrrr_
         _rrGBBBBGrr_
-        _rGBBBBBBGr_
-        _rGBBGGBBGr_
-        _rGBBGGBBGr_
-        _rGBBBBBBGr_
+        _zGBBBBBBGz_
+        _zGBBGGBBGz_
+        _zGBBGGBBGz_
+        _zGBBBBBBGz_
         _rrGBBBBGrr_
         _rrrGGGGrrr_
-        _GrrrrrrrrG_
+        _GrrzzzzrrG_
         ____________
     ''', '''
       <style>

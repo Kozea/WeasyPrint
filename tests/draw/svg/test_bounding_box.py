@@ -36,13 +36,13 @@ def test_bounding_box_circle(assert_pixels):
     assert_pixels('''
         __________
         __BBBBBB__
-        _BBBBBBBR_
-        _BBBBBBRR_
-        _BBBBBRRR_
-        _BBBBRRRR_
-        _BBBRRRRR_
-        _BBRRRRRR_
-        __RRRRRR__
+        _BBBBBBBz_
+        _BBBBBBzR_
+        _BBBBBzRR_
+        _BBBBzRRR_
+        _BBBzRRRR_
+        _BBzRRRRR_
+        __zRRRRR__
         __________
     ''', '''
       <style>
@@ -67,13 +67,13 @@ def test_bounding_box_ellipse(assert_pixels):
     assert_pixels('''
         __________
         __BBBBBB__
-        _BBBBBBBR_
-        _BBBBBBRR_
-        _BBBBBRRR_
-        _BBBBRRRR_
-        _BBBRRRRR_
-        _BBRRRRRR_
-        __RRRRRR__
+        _BBBBBBBz_
+        _BBBBBBzR_
+        _BBBBBzRR_
+        _BBBBzRRR_
+        _BBBzRRRR_
+        _BBzRRRRR_
+        __zRRRRR__
         __________
     ''', '''
       <style>
