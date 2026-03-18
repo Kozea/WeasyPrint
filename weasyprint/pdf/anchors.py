@@ -14,6 +14,9 @@ from ..text.ffi import ffi, gobject, pango
 from ..text.fonts import get_font_description
 from ..urls import URLFetchingError
 
+# Get mimetypes from Python code, not from various files. See #2707.
+MIMETYPES = mimetypes.MimeTypes()
+
 
 def add_links(links_and_anchors, matrix, pdf, page, names, tags):
     """Include hyperlinks in given PDF page."""
@@ -351,7 +354,7 @@ def write_pdf_attachment(pdf, attachment, compress):
         filename = 'attachment.bin'
     mime_type = (
         mime_type or
-        mimetypes.guess_type(filename, strict=False)[0] or
+        MIMETYPES.guess_type(filename, strict=False)[0] or
         'application/octet-stream')
 
     creation = pydyf.String(attachment.created.strftime('D:%Y%m%d%H%M%SZ'))
