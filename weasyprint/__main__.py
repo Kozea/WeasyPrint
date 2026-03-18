@@ -160,6 +160,7 @@ group.add_argument(
     help='abort document rendering on any HTTP error')
 
 group = PARSER.add_argument_group('command-line logging options')
+group = group.add_mutually_exclusive_group()
 group.add_argument(
     '-v', '--verbose', action='store_true',
     help='show warnings and information messages')
@@ -209,22 +210,16 @@ def main(argv=None, stdout=None, stdin=None, HTML=HTML):  # noqa: N803
     options = {
         key: value for key, value in vars(args).items() if key in DEFAULT_OPTIONS}
 
-    # Default to logging to stderr.
-    if args.debug:
-        LOGGER.setLevel(logging.DEBUG)
-    elif args.verbose:
-        LOGGER.setLevel(logging.INFO)
     if not args.quiet:
-        handler = logging.StreamHandler()
         if args.debug:
-            # Add extra information when debug logging
-            handler.setFormatter(
-                logging.Formatter(
-                    '%(levelname)s: %(filename)s:%(lineno)d '
-                    '(%(funcName)s): %(message)s'))
-        else:
-            handler.setFormatter(logging.Formatter('%(levelname)s: %(message)s'))
-        LOGGER.addHandler(handler)
+            LOGGER.setLevel(logging.DEBUG)
+        elif args.verbose:
+            LOGGER.setLevel(logging.INFO)
+        logging.basicConfig(format=
+            '%(levelname)s: %(name)s %(filename)s:%(lineno)d '
+            '(%(funcName)s): %(message)s'
+            if args.debug else '%(levelname)s: %(message)s',
+            level=logging.DEBUG if args.debug else None)
 
     html = HTML(
         source, base_url=args.base_url, encoding=args.encoding,
