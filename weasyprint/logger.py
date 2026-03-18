@@ -17,9 +17,7 @@ import contextlib
 import logging
 
 LOGGER = logging.getLogger('weasyprint')
-if not LOGGER.handlers:  # pragma: no cover
-    LOGGER.setLevel(logging.WARNING)
-    LOGGER.addHandler(logging.NullHandler())
+LOGGER.addHandler(logging.NullHandler())
 
 PROGRESS_LOGGER = logging.getLogger('weasyprint.progress')
 
