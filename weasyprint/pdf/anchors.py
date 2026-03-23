@@ -14,7 +14,7 @@ from ..text.ffi import ffi, gobject, pango
 from ..text.fonts import get_font_description
 from ..urls import URLFetchingError
 
-# Get mimetypes from Python code, not from various files. See #2707.
+# Mimetypes datastore with only types registered in the stdlib.
 MIMETYPES = mimetypes.MimeTypes()
 
 
@@ -354,7 +354,12 @@ def write_pdf_attachment(pdf, attachment, compress):
         filename = 'attachment.bin'
     mime_type = (
         mime_type or
+        # First try the stdlib mimetype datastore and then fall back
+        # to trying the extended lookup utilizing more OS specific databases.
+        # This ensure consistent behaviour across platforms for common file types.
+        # See #2707.
         MIMETYPES.guess_type(filename, strict=False)[0] or
+        mimetypes.guess_type(filename, strict=False)[0] or
         'application/octet-stream')
 
     creation = pydyf.String(attachment.created.strftime('D:%Y%m%d%H%M%SZ'))
