@@ -13,46 +13,9 @@ Logging levels are used for specific purposes:
 
 """
 
-import contextlib
 import logging
 
 LOGGER = logging.getLogger('weasyprint')
-if not LOGGER.handlers:  # pragma: no cover
-    LOGGER.setLevel(logging.WARNING)
-    LOGGER.addHandler(logging.NullHandler())
+LOGGER.addHandler(logging.NullHandler())
 
 PROGRESS_LOGGER = logging.getLogger('weasyprint.progress')
-
-
-class CallbackHandler(logging.Handler):
-    """A logging handler that calls a function for every message."""
-    def __init__(self, callback):
-        logging.Handler.__init__(self)
-        self.emit = callback
-
-
-@contextlib.contextmanager
-def capture_logs(logger='weasyprint', level=None):
-    """Return a context manager that captures all logged messages."""
-    if level is None:
-        level = logging.INFO
-    logger = logging.getLogger(logger)
-    messages = []
-
-    def emit(record):
-        if record.name == 'weasyprint.progress':
-            return
-        if record.levelno < level:
-            return
-        messages.append(f'{record.levelname.upper()}: {record.getMessage()}')
-
-    previous_handlers = logger.handlers
-    previous_level = logger.level
-    logger.handlers = []
-    logger.addHandler(CallbackHandler(emit))
-    logger.setLevel(logging.DEBUG)
-    try:
-        yield messages
-    finally:
-        logger.handlers = previous_handlers
-        logger.setLevel(previous_level)
