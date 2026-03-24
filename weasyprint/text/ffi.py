@@ -70,6 +70,7 @@ ffi.cdef('''
     hb_subset_input_t * hb_subset_input_create_or_fail (void);
     void hb_subset_input_destroy (hb_subset_input_t *input);
     hb_set_t * hb_subset_input_glyph_set (hb_subset_input_t *input);
+    void hb_set_add (hb_set_t *set, hb_codepoint_t codepoint);
     void hb_set_add_sorted_array (
         hb_set_t *set, const hb_codepoint_t *sorted_codepoints,
         unsigned int num_codepoints);

@@ -6,7 +6,6 @@ from hashlib import md5
 from math import ceil
 
 import pydyf
-from fontTools import subset
 from fontTools.ttLib import TTFont, TTLibError, ttFont
 from fontTools.varLib.instancer import instantiateVariableFont
 
@@ -194,22 +193,19 @@ class Font:
         if not to_unicode:
             return
 
-        if harfbuzz_subset and harfbuzz.hb_version_atleast(4, 1, 0):
-            # 4.1.0 is required for hb_set_add_sorted_array.
-            self._harfbuzz_subset(to_unicode, hinting)
-        else:
-            self._fonttools_subset(to_unicode, hinting)
+        if not harfbuzz_subset:
+            LOGGER.warning(
+                'Harfbuzz-Subset must be installed to subset fonts, '
+                'generated PDFs will be larger than expected.')
+            return
 
-    def _harfbuzz_subset(self, to_unicode, hinting):
-        """Subset font using Harfbuzz."""
         hb_subset = ffi.gc(
             harfbuzz_subset.hb_subset_input_create_or_fail(),
             harfbuzz_subset.hb_subset_input_destroy)
 
         # Only keep used glyphs.
         gid_set = harfbuzz_subset.hb_subset_input_glyph_set(hb_subset)
-        gid_array = ffi.new(f'hb_codepoint_t[{len(to_unicode)}]', sorted(to_unicode))
-        harfbuzz.hb_set_add_sorted_array(gid_set, gid_array, len(to_unicode))
+        self.hb_set_add_array(gid_set, sorted(to_unicode))
 
         # Set flags.
         flags = (
@@ -226,8 +222,7 @@ class Font:
         drop_tables = tuple(harfbuzz.hb_tag_from_string(name, -1) for name in (
             b'BASE', b'DSIG', b'EBDT', b'EBLC', b'EBSC', b'GPOS', b'GSUB', b'JSTF',
             b'LTSH', b'PCLT', b'SVG '))
-        drop_tables_array = ffi.new(f'hb_codepoint_t[{len(drop_tables)}]', drop_tables)
-        harfbuzz.hb_set_add_sorted_array(drop_set, drop_tables_array, len(drop_tables))
+        self.hb_set_add_array(drop_set, drop_tables)
 
         # Subset font.
         hb_face = ffi.gc(
@@ -237,8 +232,7 @@ class Font:
         # Drop empty glyphs after last one used.
         gid_set = harfbuzz_subset.hb_subset_input_glyph_set(hb_subset)
         keep = tuple(range(max(to_unicode) + 1))
-        gid_array = ffi.new(f'hb_codepoint_t[{len(keep)}]', keep)
-        harfbuzz.hb_set_add_sorted_array(gid_set, gid_array, len(keep))
+        self.hb_set_add_array(gid_set, keep)
 
         # Set flags.
         flags = (
@@ -264,29 +258,14 @@ class Font:
 
         LOGGER.warning(f'Unable to subset "{self.family}" with HarfBuzz')
 
-    def _fonttools_subset(self, to_unicode, hinting):
-        """Subset font using Fonttools."""
-        full_font = io.BytesIO(self.file_content)
-
-        # Set subset options.
-        options = subset.Options(
-            retain_gids=True, passthrough_tables=True, ignore_missing_glyphs=True,
-            hinting=hinting, desubroutinize=True, notdef_outline=bool(self.missing))
-        options.drop_tables += ['GSUB', 'GPOS', 'SVG']
-        subsetter = subset.Subsetter(options)
-        subsetter.populate(gids=to_unicode)
-
-        # Subset font.
-        try:
-            ttfont = TTFont(full_font, fontNumber=self.index)
-            subsetter.subset(ttfont)
-        except TTLibError as exception:
-            LOGGER.warning(f'Unable to subset "{self.family}" with fontTools')
-            LOGGER.debug('Original exception:', exc_info=exception)
+    @staticmethod
+    def hb_set_add_array(gid_set, codepoints):
+        if harfbuzz.hb_version_atleast(4, 1, 0):
+            gid_array = ffi.new(f'hb_codepoint_t[{len(codepoints)}]', codepoints)
+            harfbuzz.hb_set_add_sorted_array(gid_set, gid_array, len(codepoints))
         else:
-            optimized_font = io.BytesIO()
-            ttfont.save(optimized_font)
-            self.file_content = optimized_font.getvalue()
+            for codepoint in codepoints:
+                harfbuzz.hb_set_add(gid_set, codepoint)
 
 
 def build_fonts_dictionary(pdf, fonts, compress, subset, options):
