@@ -2,6 +2,7 @@
 
 import os
 import sys
+import warnings
 from contextlib import suppress
 
 import cffi
@@ -492,6 +493,12 @@ fontconfig = _dlopen(
 pangoft2 = _dlopen(
     ffi, 'libpangoft2-1.0-0', 'pangoft2-1.0-0', 'pangoft2-1.0',
     'libpangoft2-1.0.so.0', 'libpangoft2-1.0.dylib', 'libpangoft2-1.0-0.dll')
+
+if harfbuzz_subset is None:
+    warnings.warn(
+        'HarfBuzz-Subset will be required by future versions of WeasyPrint. '
+        'Please install this library with your package manager.',
+        category=DeprecationWarning)
 
 gobject.g_type_init()
 

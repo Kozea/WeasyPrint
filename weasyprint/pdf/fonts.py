@@ -198,6 +198,10 @@ class Font:
             # 4.1.0 is required for hb_set_add_sorted_array.
             self._harfbuzz_subset(to_unicode, hinting)
         else:
+            LOGGER.warning(
+                f'Using fontTools instead of HarfBuzz-Subset for font "{self.family}". '
+                'This will be unsupported in future versions of WeasyPrint. '
+                'Please install HarfBuzz-Subset >= 4.1.0 with your package manager.')
             self._fonttools_subset(to_unicode, hinting)
 
     def _harfbuzz_subset(self, to_unicode, hinting):

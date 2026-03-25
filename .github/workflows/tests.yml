@@ -19,9 +19,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install Ghostscript (Ubuntu)
+      - name: Install Ghostscript and HarfBuzz-Subset (Ubuntu)
         if: matrix.os == 'ubuntu-latest'
-        run: sudo apt-get update -y && sudo apt-get install ghostscript -y
+        run: sudo apt-get update -y && sudo apt-get install ghostscript libharfbuzz-subset0 -y
       - name: Install DejaVu, Pango and Ghostscript (MacOS)
         if: matrix.os == 'macos-latest'
         run: |
