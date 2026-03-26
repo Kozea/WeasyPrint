@@ -1,0 +1,63 @@
+name: WeasyPrint’s wheel for macOS
+on: [push]
+
+jobs:
+  generate:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: ['macos-15', 'macos-15-intel']
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build wheel
+        run: |
+          brew install pango
+          pip install flit wheel
+          flit build --format wheel
+          cd dist
+          wheel unpack *.whl
+          rm *.whl
+          cd weasyprint-*
+          sed -i '' 's/^from \. /from weasyprint /' ./weasyprint/__main__.py
+          sed -i '' 's/^from \./from weasyprint\./' ./weasyprint/__main__.py
+          sed -i '' 's/py3-none-any/py3-none-macosx_11_0_${{ matrix.os == 'macos-15' && 'arm64' || 'x86_64' }}/' ./weasyprint-*/WHEEL
+          mkdir weasyprint/lib
+          mkdir weasyprint/etc
+          mkdir weasyprint/etc/fonts
+          cp -L \
+            $HOMEBREW_PREFIX/lib/libharfbuzz-subset.0.dylib \
+            $HOMEBREW_PREFIX/lib/libharfbuzz.0.dylib \
+            $HOMEBREW_PREFIX/lib/libpango-1.0.0.dylib \
+            $HOMEBREW_PREFIX/lib/libgobject-2.0.0.dylib \
+            $HOMEBREW_PREFIX/lib/libfontconfig.1.dylib \
+            $HOMEBREW_PREFIX/lib/libpangoft2-1.0.0.dylib \
+            $HOMEBREW_PREFIX/lib/libbrotlicommon.dylib \
+            $HOMEBREW_PREFIX/lib/libbrotlidec.dylib \
+            $HOMEBREW_PREFIX/lib/libdatrie.1.dylib \
+            $HOMEBREW_PREFIX/lib/libfreetype.6.dylib \
+            $HOMEBREW_PREFIX/lib/libfribidi.0.dylib \
+            $HOMEBREW_PREFIX/lib/libgio-2.0.0.dylib \
+            $HOMEBREW_PREFIX/lib/libglib-2.0.0.dylib \
+            $HOMEBREW_PREFIX/lib/libgmodule-2.0.0.dylib \
+            $HOMEBREW_PREFIX/lib/libgraphite2.dylib \
+            $HOMEBREW_PREFIX/lib/libintl.8.dylib \
+            $HOMEBREW_PREFIX/lib/libpcre2-8.0.dylib \
+            $HOMEBREW_PREFIX/lib/libpng16.16.dylib \
+            $HOMEBREW_PREFIX/lib/libthai.0.dylib \
+            weasyprint/lib
+          cp -L $HOMEBREW_PREFIX/etc/fonts/fonts.conf weasyprint/etc/fonts
+          cd ..
+          wheel pack weasyprint-*
+          cd ..
+        env:
+          HOMEBREW_PREFIX: ${{ matrix.os == 'macos-15' && '/opt/homebrew' || '/usr/local' }}
+      - name: Test wheel
+        run: |
+          pip install dist/weasyprint-*.whl
+          weasyprint --info
+      - name: Store wheel
+        uses: actions/upload-artifact@v7
+        with:
+          name: weasyprint-${{ matrix.os }}
+          path: "dist/weasyprint-*.whl"

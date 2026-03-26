@@ -1,0 +1,62 @@
+name: WeasyPrint’s wheel for Windows
+on: [push]
+
+jobs:
+  generate:
+    runs-on: 'windows-latest'
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build wheel
+        run: |
+          C:\msys64\usr\bin\bash -lc 'pacman -S mingw-w64-x86_64-pango mingw-w64-x86_64-sed --noconfirm'
+          pip install flit wheel
+          flit build --format wheel
+          cd dist
+          wheel unpack $(ls *.whl | foreach { $_.FullName })
+          rm *.whl
+          cd weasyprint-*
+          C:\msys64\mingw64\bin\sed -i 's/^from \. /from weasyprint /' weasyprint/__main__.py
+          C:\msys64\mingw64\bin\sed -i 's/^from \./from weasyprint\./' weasyprint/__main__.py
+          C:\msys64\mingw64\bin\sed -i 's/py3-none-any/py3-none-win_amd64/' $(ls weasyprint-*/WHEEL | foreach { $_.FullName })
+          mkdir weasyprint/lib
+          mkdir weasyprint/etc
+          mkdir weasyprint/etc/fonts
+          cp C:\msys64\mingw64\bin\libharfbuzz-subset-0.dll weasyprint/lib
+          cp C:\msys64\mingw64\bin\libharfbuzz-0.dll weasyprint/lib
+          cp C:\msys64\mingw64\bin\libpango-1.0-0.dll weasyprint/lib
+          cp C:\msys64\mingw64\bin\libgobject-2.0-0.dll weasyprint/lib
+          cp C:\msys64\mingw64\bin\libfontconfig-1.dll weasyprint/lib
+          cp C:\msys64\mingw64\bin\libpangoft2-1.0-0.dll weasyprint/lib
+          cp C:\msys64\mingw64\bin\libbrotlicommon.dll weasyprint/lib
+          cp C:\msys64\mingw64\bin\libbrotlidec.dll weasyprint/lib
+          cp C:\msys64\mingw64\bin\libbz2-1.dll weasyprint/lib
+          cp C:\msys64\mingw64\bin\libdatrie-1.dll weasyprint/lib
+          cp C:\msys64\mingw64\bin\libexpat-1.dll weasyprint/lib
+          cp C:\msys64\mingw64\bin\libfreetype-6.dll weasyprint/lib
+          cp C:\msys64\mingw64\bin\libfribidi-0.dll weasyprint/lib
+          cp C:\msys64\mingw64\bin\libgcc_s_seh-1.dll weasyprint/lib
+          cp C:\msys64\mingw64\bin\libgio-2.0-0.dll weasyprint/lib
+          cp C:\msys64\mingw64\bin\libglib-2.0-0.dll weasyprint/lib
+          cp C:\msys64\mingw64\bin\libgmodule-2.0-0.dll weasyprint/lib
+          cp C:\msys64\mingw64\bin\libgraphite2.dll weasyprint/lib
+          cp C:\msys64\mingw64\bin\libiconv-2.dll weasyprint/lib
+          cp C:\msys64\mingw64\bin\libintl-8.dll weasyprint/lib
+          cp C:\msys64\mingw64\bin\libpcre2-8-0.dll weasyprint/lib
+          cp C:\msys64\mingw64\bin\libpng16-16.dll weasyprint/lib
+          cp C:\msys64\mingw64\bin\libstdc++-6.dll weasyprint/lib
+          cp C:\msys64\mingw64\bin\libthai-0.dll weasyprint/lib
+          cp C:\msys64\mingw64\bin\libwinpthread-1.dll weasyprint/lib
+          cp C:\msys64\mingw64\bin\zlib1.dll weasyprint/lib
+          cp C:\msys64\mingw64\etc\fonts\fonts.conf weasyprint/etc/fonts
+          cd ..
+          wheel pack $(ls weasyprint-* | foreach { $_.FullName })
+          cd ..
+      - name: Test wheel
+        run: |
+          pip install $(ls dist/weasyprint-*.whl | foreach { $_.FullName })
+          weasyprint --info
+      - name: Store wheel
+        uses: actions/upload-artifact@v7
+        with:
+          name: weasyprint-windows-amd64
+          path: "dist/weasyprint-*.whl"

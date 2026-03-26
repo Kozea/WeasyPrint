@@ -3,6 +3,7 @@
 import os
 import sys
 from contextlib import suppress
+from pathlib import Path
 
 import cffi
 
@@ -442,7 +443,7 @@ ffi.cdef('''
 
 def _dlopen(ffi, *names, allow_fail=False):
     """Try various names for the same library, for different platforms."""
-    if os.name == 'nt':
+    if sys.platform == 'win32':
         flags = 0x00001000  # LOAD_LIBRARY_SEARCH_DEFAULT_DIRS
     else:
         flags = ffi.RTLD_NOW  # default
@@ -464,21 +465,28 @@ def _dlopen(ffi, *names, allow_fail=False):
     return ffi.dlopen(names[0], flags)  # pragma: no cover
 
 
-if hasattr(os, 'add_dll_directory') and not hasattr(sys, 'frozen'):  # pragma: no cover
-    dll_directories = os.getenv(
-        'WEASYPRINT_DLL_DIRECTORIES',
-        'C:\\msys64\\mingw64\\bin;'
-        'C:\\Program Files\\GTK3-Runtime Win64\\bin').split(';')
-    for dll_directory in dll_directories:
-        with suppress((OSError, FileNotFoundError)):
-            os.add_dll_directory(dll_directory)
+wheel_folder = Path(__file__).parent.parent / 'lib'
+if sys.platform == 'win32':
+    if wheel_folder.exists():  # pragma: no cover
+        os.add_dll_directory(wheel_folder)
+    elif not hasattr(sys, 'frozen'):  # pragma: no cover
+        dll_directories = os.getenv(
+            'WEASYPRINT_DLL_DIRECTORIES',
+            'C:\\msys64\\mingw64\\bin;'
+            'C:\\Program Files\\GTK3-Runtime Win64\\bin').split(';')
+        for dll_directory in dll_directories:
+            with suppress((OSError, FileNotFoundError)):
+                os.add_dll_directory(dll_directory)
+elif sys.platform == 'darwin':
+    if wheel_folder.exists():  # pragma: no cover
+        os.environ['DYLD_FALLBACK_LIBRARY_PATH'] = str(wheel_folder)
 
 gobject = _dlopen(
     ffi, 'libgobject-2.0-0', 'gobject-2.0-0', 'gobject-2.0',
     'libgobject-2.0.so.0', 'libgobject-2.0.0.dylib', 'libgobject-2.0-0.dll')
 pango = _dlopen(
     ffi, 'libpango-1.0-0', 'pango-1.0-0', 'pango-1.0', 'libpango-1.0.so.0',
-    'libpango-1.0.dylib', 'libpango-1.0-0.dll')
+    'libpango-1.0.0.dylib', 'libpango-1.0-0.dll')
 harfbuzz = _dlopen(
     ffi, 'libharfbuzz-0', 'harfbuzz', 'harfbuzz-0.0',
     'libharfbuzz.so.0', 'libharfbuzz.0.dylib', 'libharfbuzz-0.dll')
@@ -491,7 +499,7 @@ fontconfig = _dlopen(
     'libfontconfig.so.1', 'libfontconfig.1.dylib', 'libfontconfig-1.dll')
 pangoft2 = _dlopen(
     ffi, 'libpangoft2-1.0-0', 'pangoft2-1.0-0', 'pangoft2-1.0',
-    'libpangoft2-1.0.so.0', 'libpangoft2-1.0.dylib', 'libpangoft2-1.0-0.dll')
+    'libpangoft2-1.0.so.0', 'libpangoft2-1.0.0.dylib', 'libpangoft2-1.0-0.dll')
 
 gobject.g_type_init()
 
