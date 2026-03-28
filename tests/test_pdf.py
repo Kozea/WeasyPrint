@@ -1,5 +1,6 @@
 """Test PDF-related code, including metadata, bookmarks and hyperlinks."""
 
+from collections import defaultdict
 import hashlib
 import io
 import re
@@ -9,6 +10,7 @@ import pytest
 
 from weasyprint import Attachment
 from weasyprint.document import Document, DocumentMetadata
+from weasyprint.pdf.stream import Stream
 from weasyprint.text.fonts import FontConfiguration
 from weasyprint.urls import path2url
 
@@ -760,3 +762,111 @@ def test_pdf_tags_inline_table():
     FakeHTML(string='''
       <html lang="en"><table style="display: inline"><td>abc
     ''').write_pdf(pdf_tags=True)
+
+
+def _assert_text_objects_do_not_split_lines(html):
+    streams = []
+
+    def capture_streams(document, pdf):
+        streams.extend(
+            list(object_.stream) for object_ in pdf.objects if isinstance(object_, Stream))
+
+    FakeHTML(string=html).write_pdf(finisher=capture_streams)
+
+    for stream in streams:
+        text_objects = []
+        current_object = None
+        for command in stream:
+            if command == b'BT':
+                current_object = []
+            elif command == b'ET':
+                text_objects.append(current_object)
+                current_object = None
+            elif current_object is not None:
+                current_object.append(command)
+
+        object_y_positions = defaultdict(int)
+        for text_object in text_objects:
+            y_positions = {
+                float(command.split()[5])
+                for command in text_object
+                if command.endswith(b' Tm')
+            }
+            for y_position in y_positions:
+                object_y_positions[y_position] += 1
+
+        assert max(object_y_positions.values(), default=0) <= 1
+
+
+@assert_no_logs
+def test_list_markers_share_text_object():
+    # Regression test for extra standalone bullet markers in extracted PDF text.
+    _assert_text_objects_do_not_split_lines('''
+      <style>
+        ul { margin: 1em 0; padding-left: 40px }
+        li { display: list-item }
+      </style>
+      <ul>
+        <li>One short bullet</li>
+        <li>Two short bullet</li>
+        <li>Three short bullet</li>
+      </ul>
+    ''')
+
+
+@assert_no_logs
+def test_nested_list_markers_share_text_object():
+    _assert_text_objects_do_not_split_lines('''
+      <style>
+        ul { margin: 1em 0; padding-left: 40px }
+        li { display: list-item }
+      </style>
+      <ul>
+        <li>One short bullet
+          <ul>
+            <li>Nested item one</li>
+            <li>Nested item two</li>
+          </ul>
+        </li>
+        <li>Two short bullet</li>
+      </ul>
+    ''')
+
+
+@assert_no_logs
+def test_rtl_list_markers_share_text_object():
+    _assert_text_objects_do_not_split_lines('''
+      <style>
+        ul { margin: 1em 0; padding-left: 40px }
+        li { display: list-item }
+      </style>
+      <div dir="rtl">
+        <ul>
+          <li>One short bullet</li>
+          <li>Two short bullet</li>
+          <li>Three short bullet</li>
+        </ul>
+      </div>
+    ''')
+
+
+@assert_no_logs
+def test_page_break_list_markers_share_text_object():
+    _assert_text_objects_do_not_split_lines('''
+      <style>
+        @page { size: 80px 100px }
+        body { margin: 0 }
+        ul { margin: 0; padding-left: 18px }
+        li { display: list-item; margin: 0 0 6px }
+      </style>
+      <ul>
+        <li>One short bullet</li>
+        <li>Two short bullet</li>
+        <li>Three short bullet</li>
+        <li>Four short bullet</li>
+        <li>Five short bullet</li>
+        <li>Six short bullet</li>
+        <li>Seven short bullet</li>
+        <li>Eight short bullet</li>
+      </ul>
+    ''')

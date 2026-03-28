@@ -70,10 +70,11 @@ def _dispatch(box, page, child_contexts, blocks, floats, blocks_and_cells):
     if isinstance(box, AbsolutePlaceholder):
         box = box._box
     style = box.style
+    positioned = style['position'] != 'static' and not box.is_outside_marker
 
     # Remove boxes defining a new stacking context from the children list.
     defines_stacking_context = (
-        (style['position'] != 'static' and style['z_index'] != 'auto') or
+        (positioned and style['z_index'] != 'auto') or
         (box.is_grid_item and style['z_index'] != 'auto') or
         style['opacity'] < 1 or
         style['transform'] or  # 'transform: none' gives a "falsy" empty list
@@ -83,7 +84,7 @@ def _dispatch(box, page, child_contexts, blocks, floats, blocks_and_cells):
         return
 
     stacking_classes = (boxes.InlineBlockBox, boxes.InlineFlexBox, boxes.InlineGridBox)
-    if style['position'] != 'static':
+    if positioned:
         assert style['z_index'] == 'auto'
         # "Fake" context: sub-contexts will go in this `child_contexts` list.
         # Insert at the position before creating the sub-context.
